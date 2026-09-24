@@ -101,7 +101,7 @@ flowchart TD
 
 **Lookup vs. search.** Where the law says where to look, the engine fetches the provision by number (the article text, the obligations). Where it doesn't, it searches by meaning:
 - to match a description to the closest Annex III or Annex I points, even when the wording differs ("estimates whether a tenant will pay rent" → creditworthiness?)
-- to find the most similar Commission guideline examples and reason by analogy, especially for Article 6(3) borderline cases
+- to find the most similar Commission guideline examples and reason by analogy, especially for Article 6(3) borderline cases. Only the retrievable half of the examples is searched; the other half is held out as the benchmark (see Benchmark isolation)
 - to find recitals that clarify grey areas
 - to answer users' questions about their result
 
@@ -160,7 +160,7 @@ The assistant reasons only over official texts and Commission guidance. Each doc
 | Consolidated AI Act as of 27 July 2026 (CELEX 02024R1689-20260727) | Official consolidation, for documentation only; the Official Journal texts are binding | All steps (the current text) | EN confirmed; DE likely (consolidations sometimes appear in English first) | [EUR-Lex](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02024R1689-20260727) |
 | Guidelines on the AI system definition (6 Feb 2025) | Final, non-binding | Scope step | EN; DE likely (all EU languages since 29 July 2025) | [regulations.ai](https://regulations.ai/regulations/RAI-EU-NA-ECGRDXX-2025) |
 | Guidelines on prohibited AI practices (4 Feb 2025) | Final, non-binding | Prohibited step | EN; DE likely (all EU languages since 29 July 2025) | [Commission](https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai) |
-| Guidelines on high-risk classification: general principles, Annex I, Annex III (19 May 2026) | **Draft**, not finalised as of 24 Sep 2026; consultation closed 23 July 2026 (extended from 23 June); adoption expected by end of 2026 | High-risk step; practical high-risk and not-high-risk examples | EN only (no official German version found) | [Commission](https://digital-strategy.ec.europa.eu/en/consultations/targeted-consultation-draft-guidelines-classification-high-risk-artificial-intelligence-systems), [DLA Piper](https://www.dlapiper.com/en/insights/publications/2026/06/eu-commission-draft-guidelines-on-classification-of-high-risk-ai-systems-key-points) |
+| Guidelines on high-risk classification: general principles, Annex I, Annex III (19 May 2026) | **Draft**, not finalised as of 24 Sep 2026; consultation closed 23 July 2026 (extended from 23 June); adoption expected by end of 2026 | High-risk step. The guideline text is fully retrievable; the worked examples are split, and only the retrievable half enters the corpus (see Benchmark isolation) | EN only (no official German version found) | [Commission](https://digital-strategy.ec.europa.eu/en/consultations/targeted-consultation-draft-guidelines-classification-high-risk-artificial-intelligence-systems), [DLA Piper](https://www.dlapiper.com/en/insights/publications/2026/06/eu-commission-draft-guidelines-on-classification-of-high-risk-ai-systems-key-points) |
 | Guidelines on Article 50 transparency obligations (20 July 2026) | Final, non-binding | Transparency step | EN; DE unverified (German press release exists) | [Commission](https://digital-strategy.ec.europa.eu/en/policies/guidelines-transparency-ai-generated-content), [Faegre Drinker](https://www.faegredrinker.com/en/insights/publications/2026/7/eu-ai-act-commission-confirms-transparency-code-of-practice-as-adequate-and-publishes-final-version-of-its-guidelines-on-transparency-obligations) |
 | Code of Practice on Transparency of AI-generated Content (10 June 2026) | Confirmed adequate by the Commission and AI Board; covers Art. 50(2), (4), (5) | Transparency step, practical measures | EN; DE unverified (German press release exists) | [Commission](https://digital-strategy.ec.europa.eu/en/policies/code-practice-ai-generated-content) |
 
@@ -173,6 +173,7 @@ The assistant reasons only over official texts and Commission guidance. Each doc
 - **The amended text wins.** The consolidated text is the default. Where the Omnibus changed a provision, the answer says so.
 - **Drafts are labelled as drafts.** The high-risk guidelines may be finalised during the project; check before the build freezes and update if so.
 - **Quote in the user's language where official.** Citations quote the official text in the user's language. Guidance that exists only in English is quoted in English, marked "official text available in English only", and explained in the user's language.
+- **The corpus holds law and guidance, never benchmark cases.** No test description or label from any evaluation set is ever ingested. Commission guideline examples used as test cases are held out of retrieval. Every corpus row carries a `source_example_id` where it comes from a worked example, so the exclusion is a metadata filter that can be checked automatically.
 
 ## Evaluation
 
@@ -182,12 +183,24 @@ The evaluation supports the product. It proves the classification can be trusted
 
 | Set | Role | What it contains | Weakness |
 | --- | --- | --- | --- |
-| Commission draft high-risk guidelines (May 2026) | **Headline benchmark** | The regulator's practical examples of systems that are and are not high-risk | Draft; examples are short and extracted by hand; high-risk step only |
+| Commission draft high-risk guidelines (May 2026), held-out half | **Headline benchmark** | The regulator's practical examples of systems that are and are not high-risk, rewritten as company descriptions and removed from the retrieval corpus | Draft; examples are short and extracted by hand; high-risk step only; only half the examples are available for scoring |
 | Own cases | **Headline benchmark** | Cases for Article 50, out-of-scope software, the new December 2026 prohibitions, Article 25 role switches, Annex I flags, and English and German descriptions | Labels are the student's own (see label rules) |
 | [appliedAI Risk Classification Database](https://www.appliedai-institute.de/en/resources/risk-classification-database/) | Second benchmark, reported separately | About 106 real enterprise AI systems with expert labels (high, low, prohibited, unclear) | Labelled in 2023 against the 2021 proposal (no Art. 6(3) filter; refers to Annex II, now Annex I); only a PDF (Sep 2024) found; described as a "free, open dataset" but no named licence; mostly industrial and German-focused |
 | [AI Act Evaluation Benchmark](https://github.com/davidath/ai-act-evaluation-benchmark) (arXiv 2603.09435) | Extra check, reported separately | Ready-made scenarios with risk-level labels; CC BY 4.0 | Synthetic, LLM-written cases are cleaner than real descriptions; labels spot-checked before use |
 | Soft-wording pairs (10–20) | Robustness test | Known high-risk systems described plainly and in softened language ("helps HR organise applications") | Own cases |
 | Q&A set (20–30 questions) | Q&A feature | Questions with the provisions a correct answer must cite | Own cases |
+
+**Benchmark isolation**
+
+The Commission's worked examples are both the best available answer key and useful retrieval material. Using the same example in both roles would let the engine find the example a test case was written from, read the regulator's verdict, and repeat it. The accuracy would then measure near-duplicate search, not classification. The rules below prevent that.
+
+1. **Split the examples.** Every worked example in the high-risk guidelines gets an ID. The examples are randomly assigned, stratified by Annex III area and by verdict (high-risk / not high-risk), to two piles. Pile A stays in the corpus as retrievable guidance. Pile B is removed from the corpus and becomes the headline benchmark. The assignment is committed to the repository before the engine exists and never changes.
+2. **Leave-one-out if the count is too small.** If fewer than about 40 examples exist, all examples stay in the corpus and every benchmark run filters out the example a test case was written from, using `source_example_id` on the search query. This costs no extra tokens.
+3. **Rewrite every test description.** Benchmark descriptions are written the way a company would describe its tool: company size, role (bought or built), business context, and some irrelevant detail. They never reuse the Commission's wording. This weakens near-duplicate matching and brings the benchmark closer to real input.
+4. **Report the gap.** The headline benchmark is run twice at the end: once with the held-out examples excluded from retrieval (the reported number) and once with all examples retrievable. Both numbers go in the README. The difference shows how much the engine leans on memorised examples versus reasoning from the Act.
+5. **Automatic check.** A test asserts that no corpus row shares a `source_example_id` with any benchmark case, and that no benchmark description appears in the corpus by text similarity. It runs in CI.
+
+The same isolation applies to the appliedAI cases, the academic benchmark and the own cases: none of their descriptions or labels is ever ingested.
 
 **Label rules for own cases**
 - **Cite or ambiguous.** Every label cites the provision or Commission example that settles it. If nothing settles it, the correct answer is "legally ambiguous".
@@ -199,7 +212,8 @@ The evaluation supports the product. It proves the classification can be trusted
 
 | Metric | What it measures |
 | --- | --- |
-| Risk-class accuracy | Match with the label, per benchmark |
+| Risk-class accuracy | Match with the label, per benchmark. For the headline benchmark, the reported figure is with the test examples held out of retrieval |
+| Held-out vs. in-corpus gap | Headline accuracy with test examples excluded from retrieval minus accuracy with them included. A large gap means the engine leans on memorised examples |
 | False-low-risk rate | How often a high-risk or prohibited system is labelled lower. Reported separately as the costliest error |
 | Annex point accuracy | For high-risk results, is the Annex point right? |
 | Role accuracy | Provider, deployer, importer or distributor, including Article 25 switches |
@@ -234,7 +248,7 @@ flowchart LR
     MCP --> ENG
     API --> ENG[LangGraph engine]
     ENG -->|models| OR[OpenRouter]
-    ENG -->|embeddings| OAI[OpenAI embeddings]
+    ENG -->|embeddings| EMB[Qwen3-Embedding-8B<br/>via OpenRouter, EU provider]
     ENG --> DB[(Supabase: Postgres + pgvector)]
     API --> DB
     UI -->|anonymous session| DB
@@ -247,7 +261,7 @@ flowchart LR
 | API | FastAPI | One set of Pydantic models defines the engine result, the API (automatic OpenAPI) and the MCP tool outputs; streams progress per step |
 | Model access | OpenRouter | One API for all models, so switching models for baselines, judges and comparisons is a setting |
 | Models | Engine: GPT-6 Luna (version pinned). Judge: Jev first pass, Claude Haiku 4.5 backup. Label filter: Claude Haiku 4.5. RAGAS: Gemini 3.1 Flash-Lite. Baselines: Luna without retrieval, and Jev. Premium comparison: Claude Sonnet 5 on 25 cases | Engine and judges come from different companies, so checks are independent. Estimated total ≈ €20–30, within a €50 budget. DeepSeek (China-based, subject to EU data protection actions) and Mistral were considered and excluded |
-| Embeddings | OpenAI text-embedding-3-large (shortened to 1536 dimensions) | Multilingual quality; embedding the whole corpus costs a few cents |
+| Embeddings | Qwen3-Embedding-8B via OpenRouter, provider pinned to Nebius (EU), truncated to 1536 dimensions, with a fixed query-side task instruction. OpenAI text-embedding-3-large as the comparison arm | Top of the MTEB multilingual leaderboard at release, so German is a first-class language; instruction-aware, which suits the asymmetric task of matching an informal description to Annex III wording; open weights, so it can't be deprecated and the 0.6B sibling can run locally in CI; $0.01 per million tokens. The 4096-dimension default is truncated because pgvector's HNSW index caps at 2000 dimensions. Confirmed in week one by RAGAS context recall on the Annex-matching and Q&A sets against the OpenAI model, with both numbers recorded. Embedding the whole corpus costs cents either way |
 | Database | Supabase (Postgres + pgvector) | One database for the legal corpus, hybrid keyword + meaning search (with German keyword support), the obligations table, evaluation records and user data |
 | User data | Supabase anonymous sessions, row-level security | Stored per user from day one; upgraded to real accounts at deployment |
 | Auth (at deployment) | Supabase Auth: magic link, Microsoft, Google, email + password | Built into the database platform and its row-level security |
@@ -284,7 +298,7 @@ The main ethical risk is a wrong classification that a company trusts. Calling a
 | Confidential company information | Each user's data is stored separately and enforced by the database (row-level security); a "delete my data" function and automatic deletion of inactive anonymous data; model providers and OpenRouter configured not to train on or retain inputs where possible, and named on screen; a warning when descriptions contain personal data; no real user input in evaluation logs or production traces (metadata only) |
 | Over-reliance on automation | Step-by-step reasoning with evidence tags, so users can challenge each decision |
 | Problem not validated with users | Problem evidence comes from secondary sources; no user interviews or user tests are planned, stated as a limitation |
-| Choice of model providers | Providers that EU data protection authorities have acted against (e.g. DeepSeek) are excluded; every provider in the data chain (OpenRouter and the model providers) is named in the privacy notice |
+| Choice of model providers | Providers that EU data protection authorities have acted against (e.g. DeepSeek) are excluded; every provider in the data chain (OpenRouter and the model providers) is named in the privacy notice. The embedding model is Alibaba's open-weights Qwen3-Embedding-8B, but it is served from an EU-based host pinned in OpenRouter, so user descriptions never reach Alibaba; the host is named in the privacy notice |
 | The assistant is itself an AI system | It is most likely minimal-risk; because it interacts with people, it discloses that it is an AI (Art. 50(1)) |
 
 ## Risks and mitigations
@@ -295,12 +309,15 @@ The main ethical risk is a wrong classification that a company trusts. Calling a
 | 2023 labels conflict with current law | High | Disagreement review; report accuracy before and after excluding outdated labels |
 | High-risk guidelines finalised mid-project | Medium | The corpus stores versions; re-run the evaluation if the examples change |
 | Headline benchmark too small or too narrow | Medium | Cover every step with own cases; report counts per step; use the appliedAI and academic sets as extra checks |
+| Benchmark cases leak into the retrieval corpus, inflating accuracy | High before mitigation | Benchmark isolation rules: split or leave-one-out on Commission examples, rewritten descriptions, `source_example_id` filter, CI check, both numbers reported |
+| Holding out half the Commission examples makes the headline benchmark smaller | Medium | Stratified split keeps every Annex III area in both piles; switch to leave-one-out below about 40 examples; own cases cover the rest |
 | Misreading the law as a non-lawyer | Medium | Cite-or-ambiguous rule; label freeze; second-model filter |
 | German quality lower than English | Medium | Separate German test cases; report per-language results |
 | Model costs exceed the €50 budget | Medium | Hard spending caps on the OpenRouter keys; subset-based development; token usage measured in the first week |
 | GPT-6 Luna is new (Sep 2026) and untested on legal reasoning, tool use or German | High | First-week smoke test with a fixed pass/fail rule; Gemini 3.1 Flash-Lite as the fallback engine; the 25-case Sonnet 5 comparison shows what a premium model would add |
 | Jev is new (Sep 2026) and unproven on legal or German text | Medium | Validate it as a judge before relying on it; the LLM judge is the fallback |
 | OpenRouter doesn't pass through a needed feature (e.g. prompt caching, provider citations) | Medium | Check early; citations are implemented as article IDs checked against the corpus, independent of the provider |
+| Qwen3 embeddings underperform on this small legal corpus despite leaderboard results | Medium | Week-one retrieval comparison against OpenAI text-embedding-3-large on RAGAS context recall; the embedding model is a setting and the corpus re-embeds in minutes; a reranker and structure-aligned chunking are the next levers if recall is the problem |
 | Scope creep: the MVP is broad | High | The engine and its evaluation come first; product features are built as views on the same result; stretch goals stay locked until the MVP is evaluated |
 
 ## Open questions
@@ -312,11 +329,13 @@ The main ethical risk is a wrong classification that a company trusts. Calling a
 - German texts: confirm that German versions of the Article 50 guidelines, the Code of Practice and the consolidated text exist. Until then they're quoted in English and labelled. The draft high-risk guidelines appear to be English-only.
 - Check again before the build freezes: whether the high-risk guidelines have been finalised (not yet as of 24 Sep 2026) and whether the simplified technical documentation form has been published (not yet found).
 - Confirm the "69% need help" figure and sample size in Bitkom's February 2026 AI report.
+- Count the worked examples in the draft high-risk guidelines, per Annex III area and verdict. This decides between a split and leave-one-out (see Benchmark isolation).
 
 **Implementation decisions still open**
 
 - GPT-6 Luna's context window, tool-calling reliability and structured output through OpenRouter (checked by the smoke test).
-- Does OpenRouter pass through prompt caching for the chosen models, offer EU routes, and serve embeddings (otherwise use a direct OpenAI key)?
+- Does OpenRouter pass through prompt caching for the chosen models and offer EU routes? (Embeddings are confirmed: Qwen3-Embedding-8B is served by Nebius, DeepInfra and SiliconFlow.)
+- Embedding details to fix in week one: the exact query instruction text, whether 1536 or 1024 truncated dimensions holds up on the Annex-matching set, and that the pinned provider returns normalised vectors. Stored vectors and query vectors must always come from the same provider; switching providers means re-embedding the corpus.
 - What exact shape should the structured result and the MCP tool results have (text, version, status, language, citations, evidence tags, disclaimer)?
 - Retention period for inactive anonymous data.
 - Which MCP client to demo with.
