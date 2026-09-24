@@ -109,6 +109,20 @@ flowchart TD
 - **Needs more information:** a fact is missing. The result names the fact, and the interface asks for it.
 - **Legally ambiguous:** the facts are known, but the law and guidance don't settle the answer. The result names the open question and both possible readings, and recommends legal review. The rest of the product shows both readings, with the stricter one as the labelled working assumption ("assumed high-risk pending legal review"). Documents and the inventory follow the stricter reading, with a flag.
 
+**Risk classes.** Every result carries exactly one `RiskClass`, which is what the user sees as the headline:
+
+| `RiskClass` | Meaning | Set by |
+| --- | --- | --- |
+| `out_of_scope` | Not an AI system under Art. 3(1), or an exclusion applies | Scope step, Art. 2–3 |
+| `prohibited` | Matches a prohibited practice; the remaining checks are not run | Prohibited step, Art. 5 |
+| `high_risk` | Listed in Annex III and not exempted by Art. 6(3), or an Annex I safety component that needs third-party conformity assessment | High-risk step, Art. 6 |
+| `limited_risk` | Not high-risk, but at least one Art. 50 transparency duty applies | Transparency step, Art. 50 |
+| `minimal_risk` | In scope, and no class above applies | Falls through every step |
+
+Transparency duties are a separate list on the result, not only a class, because they stack: a high-risk chatbot is `high_risk` *and* has Art. 50(1) duties. The list is non-empty for every `limited_risk` result and may be non-empty for `high_risk`.
+
+The two uncertain outcomes are not risk classes. They are a separate status (`decided`, `needs_more_information`, `legally_ambiguous`) next to the class. When the status is uncertain, `RiskClass` holds the stricter reading as the labelled working assumption, so the inventory, obligations and documents always have a class to work from.
+
 **Evidence tags instead of a confidence score.** Each step shows where its key fact came from: **stated** by the user, **inferred** by the engine, or **assumed** by default. Inferred and assumed facts become "please confirm" questions. A numeric self-reported confidence isn't used, because it isn't calibrated.
 
 **Deciding facts.** Every result lists the few facts the outcome depends on, next to the notice "this assessment is only as accurate as the description provided", so a reviewer can spot a misleading description.
@@ -189,6 +203,19 @@ The evaluation supports the product. It proves the classification can be trusted
 | [AI Act Evaluation Benchmark](https://github.com/davidath/ai-act-evaluation-benchmark) (arXiv 2603.09435) | Extra check, reported separately | Ready-made scenarios with risk-level labels; CC BY 4.0 | Synthetic, LLM-written cases are cleaner than real descriptions; labels spot-checked before use |
 | Soft-wording pairs (10–20) | Robustness test | Known high-risk systems described plainly and in softened language ("helps HR organise applications") | Own cases |
 | Q&A set (20–30 questions) | Q&A feature | Questions with the provisions a correct answer must cite | Own cases |
+
+**Label mapping (appliedAI)**
+
+The appliedAI labels are coarser than the engine's `RiskClass` and status (see Risk classes), so each label is mapped before scoring:
+
+| appliedAI label | Counts as a match when the engine returns | Notes |
+| --- | --- | --- |
+| high | `high_risk` | Annex II references in the labels are read as Annex I |
+| prohibited | `prohibited` | |
+| low | `limited_risk` or `minimal_risk` | The dataset doesn't separate transparency duties from none, so either counts. `out_of_scope` also counts, but these cases are listed in the disagreement review |
+| unclear | status `legally_ambiguous` | Status `needs_more_information` is counted separately, as in the uncertain-outcome metric |
+
+For the labels high, prohibited and low, an uncertain result is scored on its working-assumption class. For example, "assumed high-risk pending legal review" matches the label high. The false-low-risk rate uses the same class.
 
 **Benchmark isolation**
 
