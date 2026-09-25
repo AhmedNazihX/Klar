@@ -45,3 +45,14 @@ frontend/           Vite + React (later)
 - **Library APIs.** Check LangGraph, Docling, the MCP SDK, RAGAS, FastAPI and similar libraries through context7 before writing code against them.
 - **Every result carries** the law version it used and the "guidance, not legal advice" notice.
 - **Secrets.** Secrets live in `.env` (never committed); `.env.example` lists the keys.
+
+## Parallel work (worktrees)
+- **One worktree per story.** Every agent running in parallel works in its own git worktree (`isolation: "worktree"`) on a branch named `story/<ID>-<slug>`, for example `story/C1-eurlex-parser`.
+- **Branch from a merged base.** A story's worktree is created only after all its Deps are merged into the base branch. Engine worktrees (E*) must branch from a commit that already contains `eval/split.json` (the B3 gate).
+- **Run alone.** F1 (every worktree needs its base) and the chain E8 → E9 → E10 run serially, without parallel agents.
+- **The orchestrator owns the backlog.** Only the main session ticks boxes in `docs/BACKLOG.md`, after a merge. Agents report their outcome in their final message instead.
+- **Merge flow.** When a story is done: the `diff-reviewer` agent checks the diff, then ruff, pyright and pytest run on the branch, then the branch is merged into the base. Dependent stories start only after that merge.
+- **Shared files.** Keep edits to `pyproject.toml`, `settings.py` and `.env.example` minimal and additive. If `uv.lock` conflicts, regenerate it with `uv lock` rather than merging it by hand.
+- **Gitignored files.** `.env` and `data/raw/` are not in a new worktree. Copy or symlink `.env` into the worktree at the start. Point `AIACT_DATA_DIR` at the one shared absolute data path.
+- **Database is shared.** All worktrees use the same local Supabase instance. Create migrations only with `supabase migration new` (timestamped names). Only one running story at a time may change the schema. Tests isolate themselves with a transaction per test or a per-story schema.
+- **Enforced isolation.** Corpus-lane worktrees (B1, C*) use sparse checkout to leave out `eval/` entirely. C2 is the exception: it gets `eval/split.json` only.
