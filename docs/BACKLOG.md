@@ -34,15 +34,14 @@ INIT sets hard ordering rules that this backlog enforces:
 
 ## Critical path
 
+Computed from the Deps by `python3 ~/.claude/skills/work-breakdown/scripts/backlog.py graph` (the `work-breakdown` skill's helper), with sizes weighted and E5 tagged `Size: L`. Re-run it after any change to the Deps; don't edit this by hand.
+
 ```mermaid
 flowchart LR
-  F1 --> B1 --> C1 --> C3 --> C4 --> C6 --> E5 --> E8 --> E9 --> E10 --> V8 --> W1 --> W2
-  F1 --> F3 --> F7 --> B5 --> B9 --> B10 --> V8
-  B1 --> B2 --> B3 --> E1 --> E5
-  F4 --> C3
+  F1 --> B1 --> B2 --> B3 --> C2 --> C3 --> C4 --> C6 --> E5 --> E8 --> E9 --> E10 --> V8 --> V9 --> W1 --> W2 --> W3
 ```
 
-**Critical path (longest chain):** F1 → B1 → C1 → C3 → C4 → C6 → E5 (high-risk node, the hardest step) → E8 → E9 → E10 → V8 (first headline run) → W1 → W2.
+**Critical path (longest chain):** F1 → B1 → B2 → B3 → C2 → C3 → C4 → C6 → E5 (high-risk node, the hardest step) → E8 → E9 → E10 → V8 (first headline run) → V9 → W1 → W2 → W3. The split (B2, B3) is on the path, because C2 needs the Pile B list before the corpus can be loaded. V9 is `human`, so your time is on the path there.
 **Second chain that must converge on V8 in time:** F3 → F7 → B5/B4 → B9 → B10 (label freeze). It is human-heavy, so it should start in week 1.
 **Hard gate:** B3 (split committed) must land before E1 opens.
 
@@ -76,14 +75,27 @@ flowchart LR
 
 ---
 
+## Tooling — Claude Code setup
+
+The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` › Tooling). Two items wait for later stories:
+
+- [ ] **T1 · `/eval` skill** · Deps: V1 · Type: agent
+  Context: INIT › Evaluation (Metrics, Budget rules), Benchmark isolation 4. Input: the `aiact eval run` CLI from V1, and `eval_runs`. Output: `.claude/skills/eval/SKILL.md`. The skill runs a benchmark with a subset size, a cost cap and a held-out/all mode, refuses a full run without the user's go-ahead, and writes `eval/reports/run-<date>.md` quoting only stored numbers (with run_ids).
+  DoD: a dry run on a 3-case subset works end to end through the skill; the report cites its run_id.
+
+- [ ] **T2 · Permission allowlist** · Deps: F2, F3, F4 (a few stories have run) · Type: agent
+  Output: an allowlist in `.claude/settings.json` built with the `fewer-permission-prompts` skill from real session history (for example `uv run`, `supabase`, `git worktree` and read-only git commands). Never allow `git push`, force operations or anything that reads secrets.
+  DoD: the user has reviewed the allowlist; parallel workers run a story without read-only permission prompts.
+
 ## Phase 0 — Foundations
 
-- [ ] **F0 · Put the backlog in the repo** · Deps: – · Type: agent
+- [x] **F0 · Put the backlog in the repo** · Deps: – · Type: agent
   Input: this plan file. Output: `docs/BACKLOG.md` (a copy of this plan), a `CLAUDE.md` holding the global rules above, the repo layout and the standard commands.
   DoD: both files committed; `CLAUDE.md` is under 100 lines and links to INIT and `docs/BACKLOG.md`.
+  **Outcome:** docs/BACKLOG.md and CLAUDE.md committed (997862b, 62db1f9); Tooling section added
 
 - [ ] **F1 · Backend scaffold** · Deps: – · Type: agent
-  Context: INIT › Tech stack (Dev tooling). Output: `backend/pyproject.toml` (uv, Python 3.12), package `backend/aiact/` with empty subpackages `schemas, corpus, retrieval, obligations, engine, eval, mcp, api, llm`, `backend/tests/`, Ruff and pyright config, `aiact/settings.py` (pydantic-settings reading `.env`), `.env.example` (OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, DATABASE_URL, LANGSMITH_API_KEY, model ids), `.gitignore` (including `.env`, `data/raw/`, `eval/private/`).
+  Context: INIT › Tech stack (Dev tooling). Output: `backend/pyproject.toml` (uv, Python 3.12), package `backend/aiact/` with empty subpackages `schemas, corpus, retrieval, obligations, eval, mcp, api, llm` (**not** `engine`: E1 creates it after the B3 gate, and a hook blocks it before then), `backend/tests/`, Ruff and pyright config, `aiact/settings.py` (pydantic-settings reading `.env`), `.env.example` (OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, DATABASE_URL, LANGSMITH_API_KEY, model ids), `.gitignore` (including `.env`, `data/raw/`, `eval/private/`).
   DoD: `uv sync && uv run pytest && uv run ruff check && uv run pyright` all pass with one trivial test.
 
 - [ ] **F2 · CI workflow** · Deps: F1 · Parallel: F3–F6 · Type: agent
@@ -230,7 +242,7 @@ flowchart LR
 - [ ] **E4 · Prohibited node (Art. 5)** · Deps: E1, C5, C6 · Parallel: E3, E5–E7 · Type: agent
   Output: `nodes/prohibited.py`, which always fetches Art. 5 and applies date logic to the December 2026 prohibitions against `as_of`. DoD: replay tests on the B5c cases pass, including one case dated before 2 December 2026 and one after.
 
-- [ ] **E5 · High-risk node (Art. 6, Annex III, Annex I flag)** · Deps: E1, C5, C6 · Parallel: E3, E4, E6, E7 · Type: agent · **critical**
+- [ ] **E5 · High-risk node (Art. 6, Annex III, Annex I flag)** · Deps: E1, C5, C6 · Size: L · Parallel: E3, E4, E6, E7 · Type: agent · **critical**
   Output: `nodes/high_risk.py`: Annex III matching through search, analogy against Pile A examples (in LOO mode the exclude filter comes from the case), the Art. 6(3) filter with the profiling rule, and an Annex I flag that names the product law and asks the decisive question.
   DoD: replay tests on INIT's worked example and on 5 own cases; a test proves the exclude filter is passed through.
 
@@ -278,11 +290,13 @@ flowchart LR
   Context: INIT › Benchmark isolation 4, Budget rules. Output: `eval/reports/run-<date>.md` with the headline sets run with held-out examples excluded and with all examples retrievable, the baselines, and the per-metric table.
   DoD: the numbers are stored; the failure cases are listed, grouped by step, to guide the engine fixes.
 
-- [ ] **V9 · appliedAI run + disagreement review** · Deps: V8, B11 · Type: human-led
+- [ ] **V9 · appliedAI run + disagreement review** · Deps: V8, B11 · Type: human (an agent runs the benchmark and drafts the table)
   Output: `eval/reports/appliedai_review.md` (a verdict per disagreement: engine error, outdated label, or ambiguous; Annex I reported separately; accuracy before and after excluding outdated labels).
+  DoD: every disagreement has a verdict written by the user; accuracy before and after excluding outdated labels is reported with its run_id; Annex I cases are listed separately.
 
 - [ ] **V10 · Head-to-head with an existing checker** · Deps: B10 · Parallel: everything after the freeze · Type: human
   Output: `eval/reports/head_to_head.md` (20–30 headline cases run by hand through the FLI or Commission checker, with the raw answers). The engine column is filled in after V8.
+  DoD: 20–30 cases are saved with the checker's raw answers and the date run; after V8, the engine column is filled from a stored run_id; both scores are reported, whichever way they fall.
 
 ## Phase 5 — Product surfaces
 
@@ -333,24 +347,31 @@ flowchart LR
 
 - [ ] **W0 · Freshness check before the build freezes** · Deps: – (run in week 9) · Type: agent
   Output: `docs/decisions/007-freshness.md`: are the high-risk guidelines final? Has the simplified tech-doc form been published? Confirm the Bitkom 69% figure. If the guidelines changed: re-run B2–B4 as a logged label change and re-ingest.
+  DoD: each of the three questions is answered with a source link and the date checked; if the guidelines changed, the follow-up label changes are logged in `eval/LABEL_CHANGES.md` and the re-ingestion is added to the backlog as a new story.
 
 - [ ] **W1 · Final evaluation (2 full runs)** · Deps: V5–V10, P7 · Type: agent
   Output: `eval/reports/final.md` with every INIT metric, per benchmark, per language and per business function, the gap number, and head-to-head.
+  DoD: every metric in INIT › Metrics has a number with its run_id; both full runs are stored in `eval_runs`; the total cost is recorded and is within the budget.
 
 - [ ] **S2 · Premium comparison** · Deps: V8 · Type: agent
   Output: Claude Sonnet 5 on 25 cases, added to the report.
+  DoD: 25 cases run with Claude Sonnet 5; a comparison table (accuracy, cost) is added to the report with its run_id.
 
 - [ ] **S1 · Stretch: fixed order vs free agent** · Deps: V8, P2a · Type: agent
   Output: a free agent with only the lookup tools, run on the headline set; accuracy, skipped checks (Art. 5) and cost compared.
+  DoD: both arms ran on the same headline set, with stored run_ids; the report compares accuracy, skipped checks (especially Art. 5), and cost and tool calls per case.
 
 - [ ] **S3 · Stretch: deployment** · Deps: MVP done · Type: mixed
   Output: EU hosting, real accounts (upgrade from anonymous sessions), MCP over HTTP, a GDPR data policy.
+  DoD: the app is reachable at a public URL hosted in an EU region; anonymous sessions upgrade to real accounts in a tested flow; the GDPR data policy is published and the user has reviewed it.
 
 - [ ] **W2 · README + showcase** · Deps: W1 · Type: mixed
   Output: the README paragraph from INIT, architecture, setup, measured accuracy tables, limitations, and the showcase link near the top.
+  DoD: the README contains INIT's paragraph, the showcase link near the top, and setup steps that work from a clean clone (checked); its accuracy tables match `eval/reports/final.md`; the user has reviewed it.
 
 - [ ] **W3 · Presentation** · Deps: W2 · Type: mixed
   Output: a 10-minute deck on the six points from `AE.CAP_afa.md`, with an SCR framing.
+  DoD: the deck covers all six points from `AE.CAP_afa.md` in 10 minutes or less (timed run-through); the user has reviewed it.
 
 ---
 

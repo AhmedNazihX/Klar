@@ -1,0 +1,15 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Claude Code: agent worktrees and personal settings
+.claude/worktrees/
+.claude/settings.local.json
+
+# Data that must not be committed (see CLAUDE.md › Global rules)
+data/raw/
+eval/private/
+
+# OS
+.DS_Store

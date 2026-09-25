@@ -46,8 +46,30 @@ frontend/           Vite + React (later)
 - **Every result carries** the law version it used and the "guidance, not legal advice" notice.
 - **Secrets.** Secrets live in `.env` (never committed); `.env.example` lists the keys.
 
+## Tooling (`.claude/`)
+- **Skills:**
+  - `/status`: what's done, ready or blocked, and what to launch next.
+  - `/story-start <IDs>`: checks deps and rules, then launches `story-worker` agents.
+  - `/story-finish <ID>`: verify, review, merge, tick.
+  - `/decision`: records in `docs/decisions/`.
+  - `/case`: benchmark cases and labels.
+- **Agents:**
+  - `story-worker`: implements one story in its own worktree.
+  - `dod-verifier`: checks a story's DoD independently.
+  - `isolation-auditor`: benchmark-leak audit.
+  - The global `diff-reviewer` reviews diffs.
+- **Hooks** (`.claude/settings.json`):
+  - `engine-gate.sh`: no `backend/aiact/engine/` before `eval/split.json` is committed.
+  - `isolation-guard.sh`: no `eval/` access on Corpus-lane branches.
+  - `ruff-format.sh`: formats edited `.py` files.
+  - The global git and secrets guards also apply.
+  - Checks on file tools (Read, Write, Edit, Grep, Glob) are exact. Checks on shell commands are best effort, because shell text can hide a path. The sparse checkout, `isolation-auditor` and `dod-verifier` are the backstops.
+  - After changing a hook, run `bash .claude/hooks/test-hooks.sh`.
+- **Scoped rules:** `.claude/rules/*.md` load only when working on matching paths (eval, corpus, supabase, engine).
+- **Backlog helper:** `.claude/scripts/backlog.py` (`status`, `show`, `deps`, `info`, `tick`). The skills use it.
+
 ## Parallel work (worktrees)
-- **One worktree per story.** Every agent running in parallel works in its own git worktree (`isolation: "worktree"`) on a branch named `story/<ID>-<slug>`, for example `story/C1-eurlex-parser`.
+- **One worktree per story.** Every agent running in parallel works in its own git worktree. `story-worker` has `isolation: worktree`; worktrees live in `.claude/worktrees/` (gitignored) and branch from the local HEAD (`worktree.baseRef: head`). The worker renames its branch to `story/<ID>-<slug>`, for example `story/C1-eurlex-parser`.
 - **Branch from a merged base.** A story's worktree is created only after all its Deps are merged into the base branch. Engine worktrees (E*) must branch from a commit that already contains `eval/split.json` (the B3 gate).
 - **Run alone.** F1 (every worktree needs its base) and the chain E8 → E9 → E10 run serially, without parallel agents.
 - **The orchestrator owns the backlog.** Only the main session ticks boxes in `docs/BACKLOG.md`, after a merge. Agents report their outcome in their final message instead.
@@ -55,4 +77,4 @@ frontend/           Vite + React (later)
 - **Shared files.** Keep edits to `pyproject.toml`, `settings.py` and `.env.example` minimal and additive. If `uv.lock` conflicts, regenerate it with `uv lock` rather than merging it by hand.
 - **Gitignored files.** `.env` and `data/raw/` are not in a new worktree. Copy or symlink `.env` into the worktree at the start. Point `AIACT_DATA_DIR` at the one shared absolute data path.
 - **Database is shared.** All worktrees use the same local Supabase instance. Create migrations only with `supabase migration new` (timestamped names). Only one running story at a time may change the schema. Tests isolate themselves with a transaction per test or a per-story schema.
-- **Enforced isolation.** Corpus-lane worktrees (B1, C*) use sparse checkout to leave out `eval/` entirely. C2 is the exception: it gets `eval/split.json` only.
+- **Enforced isolation.** Corpus-lane worktrees (B1, C*) use sparse checkout to leave out `eval/` entirely. C2 is the exception: it gets `eval/split.json` only. The worker sets the sparse checkout before renaming its branch, and `isolation-guard.sh` blocks any `eval/` access after that.
