@@ -11,22 +11,19 @@ This assistant classifies AI systems under the EU AI Act. Each result shows its 
 Read this file, then the story in `docs/BACKLOG.md`, then the INIT sections named in its *Context* line, then the files in its *Input*. That should be all the context a story needs.
 
 ## Repo layout
+The full layout lives in **`docs/LAYOUT.md`**: the tree down to key files, which story creates each path, and the placement rules. Every new file must fit it, and a story that adds a new folder updates it. Summary:
 ```
-backend/            uv project, Python package `aiact/`
-  aiact/schemas/    Pydantic result contract (RiskClass, Status, ClassificationResult, …)
-  aiact/corpus/     fetch, parse, load, embed the legal corpus
-  aiact/retrieval/  get_provision, search_ai_act (no LLM)
-  aiact/obligations/list_obligations
-  aiact/engine/     LangGraph staged engine: DO NOT create before story B3 is committed
-  aiact/eval/       case schema, runner, metrics, judge
-  aiact/llm/        OpenRouter chat + embeddings clients, record/replay
-  aiact/mcp/        MCP server
-  aiact/api/        FastAPI
-  tests/
-eval/               benchmark cases, split, reports (eval/private/ is gitignored)
-data/               raw and parsed legal texts (data/raw/ is gitignored)
-supabase/           migrations and seeds
-frontend/           Vite + React (later)
+backend/            the only Python project (uv); all Python lives in package `aiact/`
+  aiact/cli.py      `aiact` command root: scripts are subcommands (`aiact corpus …`, `aiact eval …`)
+  aiact/schemas/ llm/ corpus/ retrieval/ obligations/ qa/ drafting/ mcp/ api/
+  aiact/engine/     staged LangGraph engine: DO NOT create before story B3 is committed
+  aiact/eval/       evaluation *code*: cases, split, runner, metrics, judge, experiments/
+  tests/            mirrors the package; tests/recordings/ holds recorded model responses
+data/               legal texts only: manifest.yaml, raw/ (gitignored), parsed/
+eval/               benchmark *data* and reports only, no code (eval/private/ is gitignored)
+supabase/           config, migrations/, seed/
+frontend/           Vite + React + TypeScript
+docs/               BACKLOG.md, LAYOUT.md, decisions/
 ```
 
 ## Commands (run from `backend/`)
@@ -65,7 +62,10 @@ frontend/           Vite + React (later)
   - The global git and secrets guards also apply.
   - Checks on file tools (Read, Write, Edit, Grep, Glob) are exact. Checks on shell commands are best effort, because shell text can hide a path. The sparse checkout, `isolation-auditor` and `dod-verifier` are the backstops.
   - After changing a hook, run `bash .claude/hooks/test-hooks.sh`.
-- **Scoped rules:** `.claude/rules/*.md` load only when working on matching paths (eval, corpus, supabase, engine).
+- **Scoped rules:** `.claude/rules/*.md` load only when Claude reads matching files. Subfolders are read too, so keep this folder small and specific to this project.
+  - Areas: `eval`, `corpus`, `engine`, `supabase`.
+  - Code: `python` (backend), `api` (FastAPI and MCP), `frontend`, `frontend-security`, `frontend-testing`.
+  - Visual design direction comes from the `frontend-design` skill, not from a rule.
 - **Backlog helper:** `.claude/scripts/backlog.py` (`status`, `show`, `deps`, `info`, `tick`). The skills use it.
 
 ## Parallel work (worktrees)
