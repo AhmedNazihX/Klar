@@ -33,6 +33,8 @@ default: a claim counts only when you have checked it yourself.
    ```
    Tests must not make live model calls: tests marked `live` must be skipped by default.
 5. **Rules.**
+   - Every new file fits `docs/LAYOUT.md`: Python only under `backend/aiact/` (no loose scripts), no code under
+     `eval/`, and tests mirroring the package. A new folder or package area has a matching entry in `docs/LAYOUT.md`.
    - No file under `backend/aiact/engine/` unless `eval/split.json` is committed.
    - No secrets in the diff.
    - Decision stories wrote their `docs/decisions/NNN-*.md`.

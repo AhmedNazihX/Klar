@@ -35,7 +35,8 @@ Your prompt gives you:
 ## 2. Load the context (and nothing more)
 
 Read these, in order:
-1. `CLAUDE.md`
+1. `CLAUDE.md`, then `docs/LAYOUT.md`. Every file you create must go where the layout says. If your story
+   needs a folder or package area that isn't there yet, add it to `docs/LAYOUT.md` in the same branch.
 2. Your story in `docs/BACKLOG.md` (search for `**<STORY> ·`)
 3. The INIT sections named in the story's *Context* line. INIT is
    `AI Act Classification Assistant — Capstone Init Document.md`.
