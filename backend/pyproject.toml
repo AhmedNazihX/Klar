@@ -1,0 +1,50 @@
+[project]
+name = "aiact"
+version = "0.1.0"
+description = "AI Act Classification Assistant: classifies AI systems under the EU AI Act, with steps, citations and measured accuracy."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pydantic-settings>=2.15.0",
+    "typer>=0.27.2",
+]
+
+[project.scripts]
+aiact = "aiact.cli:app"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.414",
+    "pytest>=9.1.1",
+    "ruff>=0.16.9",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.33,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "aiact"
+module-root = ""
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+include = ["aiact", "tests"]
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Live model tests are skipped by default; run them with `uv run pytest -m live`
+# (a later -m on the command line overrides this one).
+addopts = ["-m", "not live", "--strict-markers"]
+markers = [
+    "live: calls a real model or service; skipped unless run with -m live",
+]
