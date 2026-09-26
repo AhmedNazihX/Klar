@@ -49,7 +49,7 @@ flowchart LR
 
 | Lane | Stories | Notes |
 | --- | --- | --- |
-| Infra | F0, F1, F2, F4, F5, F6, X3 | F1 first; the rest fan out right after |
+| Infra | F0, F1, F8, F2, F4, F5, F6, X3 | F1 first; the rest fan out right after (F2 waits for F8) |
 | Contract & eval | F3, F7, V1, V2, V3, V4 | Pure code; can run well ahead of the engine using dummy classifiers |
 | Corpus | B1, C1, C2, C3, C4, C5, C6 | The critical path. Never reads `eval/` |
 | Benchmark | B2–B12, V10 | Human-heavy. Agents draft, the user approves |
@@ -62,8 +62,8 @@ flowchart LR
 | Wave | Launch in parallel | Gate to next wave |
 | --- | --- | --- |
 | 0 | F0, F1 | F1 done |
-| 1 | F2, F3, F4, F6, B1, B11 (human, long) | F3 done → F7; F4 done → F5, C7; B1 done → B2, C1 |
-| 2 | F5, F7, B2, C1, X3, C7, B12 | B2 → B3 |
+| 1 | F8, F3, F4, F6, B1, B11 (human, long) | F8 done → F2; F3 done → F7; F4 done → F5, C7; B1 done → B2, C1 |
+| 2 | F2, F5, F7, B2, C1, X3, C7, B12 | B2 → B3 |
 | 3 | B3, C2, C3, V1, V2, B5a–e, B7 | B3 committed; C3 done |
 | 4 | C4, C5, B4, B6, B8, E1, V4, V10 | C4 → C6 |
 | 5 | C6, B9, X0, P2a, P3 | C6 done |
@@ -98,8 +98,8 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: INIT › Tech stack (Dev tooling). Output: `backend/pyproject.toml` (uv, Python 3.12), package `backend/aiact/` with empty subpackages `schemas, corpus, retrieval, obligations, eval, mcp, api, llm` (**not** `engine`: E1 creates it after the B3 gate, and a hook blocks it before then), `backend/tests/`, Ruff and pyright config, `aiact/settings.py` (pydantic-settings reading `.env`), `aiact/cli.py` (the `aiact` console script with empty `corpus` and `eval` command groups; F1 picks the CLI library), `.env.example` (OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, DATABASE_URL, LANGSMITH_API_KEY, model ids), `.gitignore` (including `.env`, `data/raw/`, `eval/private/`).
   DoD: `uv sync && uv run pytest && uv run ruff check && uv run pyright` all pass with one trivial test.
 
-- [ ] **F2 · CI workflow** · Deps: F1 · Parallel: F3–F6 · Type: agent
-  Output: `.github/workflows/ci.yml` running uv sync, ruff, pyright and pytest on push and PR. It gets a placeholder job for the isolation check (enabled in B13).
+- [ ] **F2 · CI workflow** · Deps: F1, F8 · Parallel: F3–F7 · Type: agent
+  Output: `.github/workflows/ci.yml` running uv sync, ruff, pyright, pytest and `aiact deps check` (F8) on push and PR. It gets a placeholder job for the isolation check (enabled in B13).
   DoD: the workflow passes on a pushed branch (or with `act`, if pushing is not wanted yet).
 
 - [ ] **F3 · Result contract (Pydantic schemas)** · Deps: F1 · Parallel: F2, F4–F6 · Type: agent
@@ -127,6 +127,10 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **F7 · Eval case schema + loader** · Deps: F3 · Type: agent
   Context: INIT › Evaluation (Test sets, Label mapping, Label rules). Output: `aiact/eval/cases.py`: `BenchmarkCase` (id, set name, language, description, label: risk_class / status / role / annex_point, label_citation, `source_example_id`, notes, tags), a YAML/JSONL loader for `eval/cases/<set>/*.yaml`, and the appliedAI label mapping as code. Directory skeleton `eval/cases/{commission_b,own,soft_pairs,consistency,qa,academic}/` and `eval/private/` (gitignored).
   DoD: the loader validates example files; the appliedAI mapping is unit-tested for all four labels, including the `out_of_scope` → disagreement-review flag.
+
+- [ ] **F8 · Dependency manifest** · Deps: F1 · Parallel: F3–F7 · Type: agent
+  Context: INIT › Tech stack (Dev tooling), Risks (licence). Input: `backend/pyproject.toml`, `backend/uv.lock`. Output: `backend/aiact/deps.py` with a CLI group `aiact deps generate|check`; `docs/DEPENDENCIES.md`, generated and never edited by hand (a header saying so and naming the command; a table of direct deps with group runtime/dev, version constraint, locked version, licence and one-line summary; a table of every transitive package with locked version, licence and the direct deps that pull it in); `.githooks/pre-commit` (runs `generate` and stages the file when `pyproject.toml` or `uv.lock` is staged) and `.githooks/pre-push` (runs `check`), enabled with `git config core.hooksPath .githooks`, documented in `CLAUDE.md` › Commands. Versions and the dependency graph come from `uv.lock` (`tomllib`); licence and summary come from installed package metadata (`importlib.metadata`), `unknown` when missing. The output is deterministic (sorted, no timestamps) and leaves room for P4 to add a frontend section from the pnpm lockfile.
+  DoD: `check` exits 0 on a fresh file and non-zero with a clear message after a dependency is added without regenerating (tested on a fixture lockfile); running `generate` twice gives no diff; `uv add <pkg>` then a commit updates the file through the pre-commit hook; a push with a stale file is refused by the pre-push hook.
 
 ## Phase 1 — Benchmark before the engine
 
@@ -314,7 +318,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   DoD: RLS tests show user A cannot read user B's rows; delete and cleanup are tested.
 
 - [ ] **P4 · Frontend scaffold** · Deps: – (the client is generated after P1) · Type: agent
-  Output: `frontend/` (Vite, React, TS, Tailwind, shadcn/ui, TanStack Router and Query, react-i18next with EN and DE, React Hook Form with Zod, a generated API client, Supabase anonymous auth, ESLint, Prettier, Vitest). DoD: `pnpm build && pnpm test` pass; the language switch works.
+  Output: `frontend/` (Vite, React, TS, Tailwind, shadcn/ui, TanStack Router and Query, react-i18next with EN and DE, React Hook Form with Zod, a generated API client, Supabase anonymous auth, ESLint, Prettier, Vitest). DoD: `pnpm build && pnpm test` pass; the language switch works; `docs/DEPENDENCIES.md` (F8) also lists the frontend packages from the pnpm lockfile, and `aiact deps check` covers them.
 
 - [ ] **P5 · Classification UI** · Deps: P4, P1 · Type: agent
   Output: a description form; live step progress; a follow-up question loop (answers are added and the engine re-runs); a summary view (plain language and to-do list, with steps collapsed) and a reviewer view (every step expanded with its fact, evidence tag and quoted provision); the disclaimer and AI disclosure (Art. 50(1)). DoD: Vitest component tests pass; a manual run of the worked example looks right. Load the `frontend-design` skill.

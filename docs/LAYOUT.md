@@ -13,7 +13,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── AI Act Classification Assistant — Capstone Init Document.md   the design (INIT)
 ├── AE.CAP_afa.md                    course brief
 ├── .gitignore
-├── .github/workflows/ci.yml         lint, types, tests, isolation check, label-freeze check (F2, B10, B13)
+├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check, label-freeze check (F2, B10, B13)
+├── .githooks/                       pre-commit regenerates DEPENDENCIES.md, pre-push checks it (F8)
 │
 ├── backend/                         the only Python project (uv)
 │   ├── pyproject.toml               deps, ruff, pyright, pytest config; `aiact` console script (F1)
@@ -21,6 +22,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── aiact/                       the package: all Python code lives here
 │   │   ├── cli.py                   `aiact` command root; subcommands per area: corpus, eval (F1)
 │   │   ├── settings.py              pydantic-settings, read from .env (F1)
+│   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6)
 │   │   ├── corpus/                  fetch.py (B1), eurlex.py (C1), guidelines.py (C2), load.py (C3), embed.py (C4)
@@ -86,6 +88,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves
 │   ├── LAYOUT.md                    this file
+│   ├── DEPENDENCIES.md              generated from pyproject + lockfiles; never edited by hand (F8)
 │   ├── corpus_stats.md              row counts per document (C3)
 │   └── decisions/NNN-<slug>.md      decision records (/decision skill)
 │
