@@ -7,7 +7,7 @@ Secrets are `SecretStr`, so they never show up in logs or reprs.
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     embedding_model: str | None = None
     embedding_provider: str | None = None
     embedding_dimensions: int = 1536
+
+    @field_validator("aiact_data_dir")
+    @classmethod
+    def _resolve_data_dir(cls, value: Path) -> Path:
+        """Resolve a relative data dir against `backend/`, so it doesn't depend on the cwd."""
+        return value if value.is_absolute() else (BACKEND_DIR / value).resolve()
 
 
 @lru_cache
