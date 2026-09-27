@@ -4,41 +4,20 @@ from pydantic import ValidationError
 from aiact.schemas import (
     ClassificationResult,
     FollowUpQuestion,
-    OpenQuestion,
     RiskClass,
     Role,
     Status,
     StepName,
-    StepResult,
 )
-from tests.schemas.worked_example import worked_example_result
-
-ART_5_QUESTION = OpenQuestion(
-    question="Does ranking applicants by inferred emotion fall under Art. 5(1)(f)?",
-    readings=("Yes, the practice is prohibited", "No, the practice is not covered"),
+from tests.schemas.builders import (
+    ambiguous,
+    dumped_steps,
+    ends_early,
+    missing_fact,
+    rebuild,
+    steps_with,
 )
-
-
-def rebuild(result: ClassificationResult, **changes: object) -> ClassificationResult:
-    """Validate a changed copy (model_copy would skip the validators)."""
-    return ClassificationResult.model_validate({**result.model_dump(), **changes})
-
-
-def dumped_steps(result: ClassificationResult, count: int | None = None) -> list[dict[str, object]]:
-    return [step.model_dump() for step in result.steps[:count]]
-
-
-def ambiguous_art_5_steps(result: ClassificationResult) -> list[dict[str, object]]:
-    """The worked example's steps with an ambiguous Art. 5 step."""
-    art_5 = StepResult(
-        step=StepName.PROHIBITED,
-        decision="Unsettled whether the practice is prohibited",
-        status=Status.LEGALLY_AMBIGUOUS,
-        open_question=ART_5_QUESTION,
-    )
-    steps = dumped_steps(result)
-    steps[1] = art_5.model_dump()
-    return steps
+from tests.schemas.worked_example import OBLIGATIONS, worked_example_result
 
 
 def test_worked_example_is_a_valid_high_risk_deployer_result() -> None:
@@ -66,7 +45,7 @@ def test_unknown_field_is_rejected() -> None:
         rebuild(worked_example_result(), confidence=0.9)
 
 
-# limited_risk
+# class-specific fields
 
 
 def test_limited_risk_without_transparency_duties_is_rejected() -> None:
@@ -83,82 +62,18 @@ def test_limited_risk_with_transparency_duties_is_accepted() -> None:
     assert result.transparency_duties == ("art:50:1",)
 
 
-# step sequence and early ends
-
-
-def test_decided_prohibited_with_steps_after_art_5_is_rejected() -> None:
-    with pytest.raises(ValidationError, match=r"after the Art\. 5 check"):
-        rebuild(worked_example_result(), risk_class=RiskClass.PROHIBITED)
-
-
-def test_decided_prohibited_ending_at_art_5_is_accepted() -> None:
-    good = worked_example_result()
-    result = rebuild(good, risk_class=RiskClass.PROHIBITED, steps=dumped_steps(good, 2), role=None)
-    assert result.steps[-1].step is StepName.PROHIBITED
-    assert result.role is None
-
-
-def test_ambiguous_art_5_keeps_running_the_remaining_checks() -> None:
-    good = worked_example_result()
-    result = rebuild(
-        good,
-        risk_class=RiskClass.PROHIBITED,
-        status=Status.LEGALLY_AMBIGUOUS,
-        steps=ambiguous_art_5_steps(good),
-    )
-    assert [step.step for step in result.steps] == list(StepName)
-
-
-def test_ambiguous_art_5_stopping_early_is_rejected() -> None:
-    good = worked_example_result()
-    with pytest.raises(ValidationError, match="needs the steps"):
-        rebuild(
-            good,
-            risk_class=RiskClass.PROHIBITED,
-            status=Status.LEGALLY_AMBIGUOUS,
-            steps=ambiguous_art_5_steps(good)[:2],
-            role=None,
-        )
-
-
-def test_out_of_scope_ending_after_scope_is_accepted() -> None:
-    good = worked_example_result()
-    result = rebuild(
-        good, risk_class=RiskClass.OUT_OF_SCOPE, steps=dumped_steps(good, 1), role=None
-    )
-    assert [step.step for step in result.steps] == [StepName.SCOPE]
-
-
-def test_out_of_scope_running_further_checks_is_rejected() -> None:
-    with pytest.raises(ValidationError, match="needs the steps"):
-        rebuild(worked_example_result(), risk_class=RiskClass.OUT_OF_SCOPE)
-
-
-def test_incomplete_steps_are_rejected() -> None:
-    good = worked_example_result()
-    with pytest.raises(ValidationError, match="needs the steps"):
-        rebuild(good, steps=dumped_steps(good, 3), role=None)
-
-
-def test_skipped_step_is_rejected() -> None:
-    good = worked_example_result()
-    steps = dumped_steps(good)
-    del steps[2]
-    with pytest.raises(ValidationError, match="none skipped"):
-        rebuild(good, steps=steps)
-
-
-def test_steps_out_of_order_are_rejected() -> None:
-    good = worked_example_result()
-    with pytest.raises(ValidationError, match="check order"):
-        rebuild(good, steps=list(reversed(dumped_steps(good))))
-
-
-def test_duplicate_steps_are_rejected() -> None:
-    good = worked_example_result()
-    steps = [good.steps[0].model_dump(), good.steps[0].model_dump()]
-    with pytest.raises(ValidationError, match="check order"):
-        rebuild(good, steps=steps)
+@pytest.mark.parametrize(
+    "field",
+    [
+        {"obligations": OBLIGATIONS},
+        {"annex_point": "annex:III:4:a"},
+        {"transparency_duties": ("art:50:1",)},
+    ],
+)
+def test_out_of_scope_with_class_fields_is_rejected(field: dict[str, object]) -> None:
+    result = ends_early(RiskClass.OUT_OF_SCOPE, dumped_steps(1), Status.DECIDED)
+    with pytest.raises(ValidationError, match="out_of_scope result has no"):
+        rebuild(result, **field)
 
 
 # role
@@ -170,44 +85,47 @@ def test_role_step_without_role_is_rejected() -> None:
 
 
 def test_role_without_role_step_is_rejected() -> None:
-    good = worked_example_result()
+    result = ends_early(RiskClass.OUT_OF_SCOPE, dumped_steps(1), Status.DECIDED)
     with pytest.raises(ValidationError, match="role is set exactly"):
-        rebuild(good, risk_class=RiskClass.OUT_OF_SCOPE, steps=dumped_steps(good, 1))
+        rebuild(result, role=Role.DEPLOYER)
 
 
 def test_role_switch_reason_without_role_is_rejected() -> None:
-    good = worked_example_result()
+    result = ends_early(RiskClass.OUT_OF_SCOPE, dumped_steps(1), Status.DECIDED)
     with pytest.raises(ValidationError, match="role_switch_reason needs a role"):
-        rebuild(
-            good,
-            risk_class=RiskClass.OUT_OF_SCOPE,
-            steps=dumped_steps(good, 1),
-            role=None,
-            role_switch_reason="Rebranded the system",
-        )
+        rebuild(result, role_switch_reason="Rebranded the system")
 
 
-# uncertain status
+# status derived from the steps
 
 
 @pytest.mark.parametrize("status", [Status.NEEDS_MORE_INFORMATION, Status.LEGALLY_AMBIGUOUS])
 def test_uncertain_result_without_an_uncertain_step_is_rejected(status: Status) -> None:
-    with pytest.raises(ValidationError, match="needs a step with that status"):
+    with pytest.raises(ValidationError, match="steps imply status decided"):
         rebuild(worked_example_result(), status=status)
 
 
+def test_decided_result_with_an_uncertain_step_is_rejected() -> None:
+    steps = steps_with(ambiguous(StepName.HIGH_RISK))
+    with pytest.raises(ValidationError, match="steps imply status legally_ambiguous"):
+        rebuild(worked_example_result(), steps=steps)
+
+
+def test_ambiguous_step_outranks_missing_information() -> None:
+    steps = steps_with(missing_fact(StepName.SCOPE))
+    steps[2] = ambiguous(StepName.HIGH_RISK).model_dump()
+    with pytest.raises(ValidationError, match="steps imply status legally_ambiguous"):
+        rebuild(worked_example_result(), status=Status.NEEDS_MORE_INFORMATION, steps=steps)
+    result = rebuild(worked_example_result(), status=Status.LEGALLY_AMBIGUOUS, steps=steps)
+    assert result.status is Status.LEGALLY_AMBIGUOUS
+
+
 def test_needs_more_information_result_with_its_step_is_accepted() -> None:
-    good = worked_example_result()
-    question = FollowUpQuestion(id="eu_use", text="Is the tool used in the EU?", about="scope")
-    scope = StepResult(
-        step=StepName.SCOPE,
-        decision="Unclear whether the tool is used in the EU",
-        status=Status.NEEDS_MORE_INFORMATION,
-        missing_fact=question,
-    )
-    steps = [scope.model_dump(), *dumped_steps(good)[1:]]
-    result = rebuild(good, status=Status.NEEDS_MORE_INFORMATION, steps=steps)
-    assert result.steps[0].missing_fact == question
+    steps = steps_with(missing_fact(StepName.SCOPE))
+    result = rebuild(worked_example_result(), status=Status.NEEDS_MORE_INFORMATION, steps=steps)
+    missing = result.steps[0].missing_fact
+    assert missing is not None
+    assert missing.id == "eu_use"
 
 
 # follow-up questions
@@ -218,6 +136,30 @@ def test_duplicate_follow_up_ids_are_rejected() -> None:
     question = good.follow_up_questions[0].model_dump()
     with pytest.raises(ValidationError, match="ids must be unique"):
         rebuild(good, follow_up_questions=[question, question])
+
+
+def test_missing_fact_absent_from_follow_ups_is_rejected() -> None:
+    good = worked_example_result()
+    steps = steps_with(missing_fact(StepName.SCOPE))
+    with pytest.raises(ValidationError, match="must appear"):
+        rebuild(
+            good,
+            status=Status.NEEDS_MORE_INFORMATION,
+            steps=steps,
+            follow_up_questions=good.follow_up_questions[:1],
+        )
+
+
+def test_missing_fact_with_different_follow_up_text_is_rejected() -> None:
+    good = worked_example_result()
+    reworded = FollowUpQuestion(id="eu_use", text="Where is the tool used?")
+    with pytest.raises(ValidationError, match="same text"):
+        rebuild(
+            good,
+            status=Status.NEEDS_MORE_INFORMATION,
+            steps=steps_with(missing_fact(StepName.SCOPE)),
+            follow_up_questions=(good.follow_up_questions[0], reworded),
+        )
 
 
 @pytest.mark.parametrize("bad_id", ["", "Ranks_People", "ranks-people", "1st", "a" * 65])

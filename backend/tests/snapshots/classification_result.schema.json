@@ -220,16 +220,11 @@
         },
         "readings": {
           "description": "The two possible readings, stricter first.",
+          "items": {
+            "type": "string"
+          },
           "maxItems": 2,
           "minItems": 2,
-          "prefixItems": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "title": "Readings",
           "type": "array"
         }
@@ -410,7 +405,8 @@
       "$ref": "#/$defs/RiskClass"
     },
     "status": {
-      "$ref": "#/$defs/Status"
+      "$ref": "#/$defs/Status",
+      "description": "Derived from the steps; see `derived_status`."
     },
     "role": {
       "anyOf": [

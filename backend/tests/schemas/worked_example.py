@@ -133,6 +133,9 @@ OBLIGATIONS = tuple(
 )
 
 
+EU_USE_QUESTION = FollowUpQuestion(id="eu_use", text="Is the tool used in the EU?", about="scope")
+
+
 def worked_example_result() -> ClassificationResult:
     return ClassificationResult(
         facts=(BOUGHT, RANKS, UNMODIFIED, NOT_REBRANDED, EU_USE),
@@ -152,6 +155,6 @@ def worked_example_result() -> ClassificationResult:
                 text="Do you use the tool under the vendor's name, without your own branding?",
                 about="art:25:1",
             ),
-            FollowUpQuestion(id="eu_use", text="Is the tool used in the EU?", about="scope"),
+            EU_USE_QUESTION,
         ),
     )

@@ -34,3 +34,23 @@ requirement to show both readings.
 - E8 (finalize) keeps `prohibited` as the working assumption and uses the later steps' outcome as the lenient
   reading. Role and obligations are therefore present on an ambiguous prohibited result.
 - Revisit this if legal review says an ambiguous Art. 5 match must never show obligations for the lenient reading.
+
+## Addendum (F3 second review)
+These rules extend the decision and follow INIT > How it works, Outcomes (the stricter reading is the working
+assumption).
+- **Which stopping steps may end the run.** An early end (`out_of_scope` after scope, `prohibited` after Art. 5) is
+  allowed only when the stopping step is `decided`, or is `needs_more_information` with `error` set and no
+  `missing_fact`. The second case is a verification failure that E9 marks after routing; E9 does not re-route.
+  A `legally_ambiguous` stopping step, or one missing a real fact, means the remaining checks run and all five steps
+  are present.
+- **Scope follows the same rule.** `out_of_scope` needs a decided (or error-only) scope step. An uncertain scope
+  question has "in scope" as its stricter reading, so the engine goes on and the class comes from the later steps.
+- **An out_of_scope result has no obligations, annex_point or transparency_duties.**
+- **The status is derived from the steps:** `legally_ambiguous` if any step is, otherwise `needs_more_information`
+  if any step is, otherwise `decided`. The contract requires this equality, so V2 can't under-report uncertain
+  outcomes.
+- **Every step's `missing_fact` appears, by id and with the same text, in `follow_up_questions`.**
+- **JSON Schema limits.** These cross-field rules can't be expressed in JSON Schema. A model's structured output can
+  match the schema and still fail validation, so X2 and V3 count a contract failure as a broken output.
+  `OpenQuestion.readings` is an array with exactly two items (minItems/maxItems, not prefixItems), which structured
+  output modes support more widely.

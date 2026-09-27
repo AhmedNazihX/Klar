@@ -1,5 +1,9 @@
-"""The structured result of classifying one AI system."""
+"""The structured result of classifying one AI system.
 
+The cross-field rules below can't be expressed in JSON Schema; decision 010 covers them.
+"""
+
+from collections.abc import Iterable
 from datetime import date
 from typing import Self
 
@@ -16,6 +20,29 @@ SCOPE_ONLY = STEP_ORDER[: STEP_ORDER.index(StepName.SCOPE) + 1]
 UP_TO_ART_5 = STEP_ORDER[: STEP_ORDER.index(StepName.PROHIBITED) + 1]
 
 
+def can_end_run(step: StepResult) -> bool:
+    """Whether a stopping step may end the run: it is decided, or only failed verification (E9).
+
+    An ambiguous step or a real missing fact means the stricter reading runs on (decision 010).
+    """
+    if step.status is Status.DECIDED:
+        return True
+    return (
+        step.status is Status.NEEDS_MORE_INFORMATION
+        and step.error is not None
+        and step.missing_fact is None
+    )
+
+
+def derived_status(steps: Iterable[StepResult]) -> Status:
+    """The result status the steps imply: ambiguous beats missing information beats decided."""
+    statuses = {step.status for step in steps}
+    for status in (Status.LEGALLY_AMBIGUOUS, Status.NEEDS_MORE_INFORMATION):
+        if status in statuses:
+            return status
+    return Status.DECIDED
+
+
 class ClassificationResult(ContractModel):
     """The engine's answer. When `status` is uncertain, `risk_class` is the stricter reading,
     kept as the labelled working assumption."""
@@ -23,7 +50,7 @@ class ClassificationResult(ContractModel):
     facts: tuple[Fact, ...] = Field(description="Facts extracted from the description.")
     steps: tuple[StepResult, ...] = Field(min_length=1, description="In the Act's check order.")
     risk_class: RiskClass
-    status: Status
+    status: Status = Field(description="Derived from the steps; see `derived_status`.")
     role: Role | None = Field(
         default=None, description="Set exactly when the role_obligations step ran."
     )
@@ -44,31 +71,35 @@ class ClassificationResult(ContractModel):
     def _step(self, name: StepName) -> StepResult | None:
         return next((step for step in self.steps if step.step is name), None)
 
-    def _stops_at_art_5(self) -> bool:
-        """A decided Art. 5 match ends the run; an ambiguous one keeps going (decision 010)."""
-        prohibited = self._step(StepName.PROHIBITED)
-        return (
-            self.risk_class is RiskClass.PROHIBITED
-            and prohibited is not None
-            and prohibited.status is Status.DECIDED
-        )
+    def _ends_at(self, name: StepName) -> bool:
+        step = self._step(name)
+        return step is not None and can_end_run(step)
 
     def _expected_steps(self) -> tuple[StepName, ...]:
         if self.risk_class is RiskClass.OUT_OF_SCOPE:
             return SCOPE_ONLY
-        return UP_TO_ART_5 if self._stops_at_art_5() else STEP_ORDER
+        if self.risk_class is RiskClass.PROHIBITED and self._ends_at(StepName.PROHIBITED):
+            return UP_TO_ART_5
+        return STEP_ORDER
 
     @model_validator(mode="after")
     def _no_check_skipped(self) -> Self:
         names = tuple(step.step for step in self.steps)
         if names != STEP_ORDER[: len(names)]:
             raise ValueError("steps must follow the check order, each once, with none skipped")
-        if self._stops_at_art_5() and len(names) > len(UP_TO_ART_5):
-            raise ValueError("a decided prohibited result has no steps after the Art. 5 check")
+        if self.risk_class is RiskClass.OUT_OF_SCOPE and not self._ends_at(StepName.SCOPE):
+            raise ValueError("an out_of_scope result needs a decided scope step")
         if names != self._expected_steps():
             raise ValueError(
                 f"a {self.risk_class.value} result needs the steps {list(self._expected_steps())}"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _status_matches_steps(self) -> Self:
+        expected = derived_status(self.steps)
+        if self.status is not expected:
+            raise ValueError(f"the steps imply status {expected.value}, not {self.status.value}")
         return self
 
     @model_validator(mode="after")
@@ -81,25 +112,30 @@ class ClassificationResult(ContractModel):
         return self
 
     @model_validator(mode="after")
-    def _limited_risk_has_duties(self) -> Self:
+    def _class_specific_fields(self) -> Self:
         if self.risk_class is RiskClass.LIMITED_RISK and not self.transparency_duties:
             raise ValueError("a limited_risk result must list its transparency_duties")
-        return self
-
-    @model_validator(mode="after")
-    def _uncertain_status_has_source(self) -> Self:
-        if self.status is Status.DECIDED:
-            return self
-        if not any(step.status is self.status for step in self.steps):
+        if self.risk_class is RiskClass.OUT_OF_SCOPE and (
+            self.obligations or self.annex_point or self.transparency_duties
+        ):
             raise ValueError(
-                f"a {self.status.value} result needs a step with that status, "
-                "naming its missing_fact, open_question or error"
+                "an out_of_scope result has no obligations, annex_point or transparency_duties"
             )
         return self
 
     @model_validator(mode="after")
-    def _follow_up_ids_unique(self) -> Self:
-        ids = [question.id for question in self.follow_up_questions]
-        if len(ids) != len(set(ids)):
+    def _follow_ups_cover_missing_facts(self) -> Self:
+        by_id = {question.id: question for question in self.follow_up_questions}
+        if len(by_id) != len(self.follow_up_questions):
             raise ValueError("follow_up_questions ids must be unique")
+        for step in self.steps:
+            missing = step.missing_fact
+            if missing is None:
+                continue
+            listed = by_id.get(missing.id)
+            if listed is None or listed.text != missing.text:
+                raise ValueError(
+                    f"missing_fact {missing.id!r} of step {step.step.value} must appear "
+                    "with the same text in follow_up_questions"
+                )
         return self

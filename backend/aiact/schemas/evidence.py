@@ -59,4 +59,7 @@ class OpenQuestion(ContractModel):
     """A question the law and guidance don't settle, with both possible readings."""
 
     question: str = Field(min_length=1)
-    readings: tuple[str, str] = Field(description="The two possible readings, stricter first.")
+    # A variable-length tuple, so the JSON Schema uses minItems/maxItems rather than prefixItems.
+    readings: tuple[str, ...] = Field(
+        min_length=2, max_length=2, description="The two possible readings, stricter first."
+    )
