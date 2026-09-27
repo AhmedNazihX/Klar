@@ -1,0 +1,18 @@
+interactions:
+- request:
+    body: '{"messages":[{"content":"Reply with the single word: pong","role":"user"}],"max_tokens":200,"model":"openai/gpt-6-luna","provider":{"data_collection":"deny","zdr":true},"stream":false,"temperature":0.0}'
+    headers:
+      content-type:
+      - application/json
+    method: POST
+    uri: https://openrouter.ai/api/v1/chat/completions
+  response:
+    body:
+      string: "\n         \n{\"id\":\"gen-1790529898-HEIewAofWysSS99HRbVB\",\"object\":\"chat.completion\",\"created\":1790529898,\"model\":\"openai/gpt-6-luna\",\"provider\":\"Azure\",\"system_fingerprint\":null,\"service_tier\":\"default\",\"choices\":[{\"index\":0,\"logprobs\":null,\"finish_reason\":\"stop\",\"native_finish_reason\":\"completed\",\"message\":{\"role\":\"assistant\",\"content\":\"pong\",\"refusal\":null,\"reasoning\":null,\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABquVFsI5MlBd2wZJLVEunrlMa8eLhqHgUFUipiHvqp0IHY7Lp53PREEpoX3-Vvbm0msRHag7XgKjrs2IsTl9fJVk4HIYz9y3sG2rA2OUKTK4p-YpEcIUXGemlwT5eAft8pQIwhpSYRao7r8YW2AfyEHnZd4jqk4KYkjNo0pQCwLftJX4ydRvGyfTFblq5SXgIBg-83oSH9vtXmWnx95l3_uhGwHe2PHKYgEl38gWEDgopREc76Iz90lZzDvtY0xJ87JogZdMNKpDLS6_m99Z-3GhxOA4swXiB6NMzo_4pgTghVxZ4OgV5QIyMlUYfoax_s68gT0Y8mUccV0MY-K8kIh1UiF7U8cK5mA17bHg4enxJ6hoSKjHo7BjsnGZCzgoOAZ_nB9qDBDisxTsHFNWue2GAUSWMyDMxgqcAl4m4uSqVVYSXfXQ2GSNND7cKdJzyqcXIiSFoiK5szxyoodKOHV7grP8k9EAFYCyI8spa-XPI70WvMeGuQ2NZ6X_5GgEUFyh7pYzDOOmaIaUi6rywtikx-1QTsTH8gbisjF4uQymkevSu4w0lCBCMCzGob_9G8gp9kZP5LmyRHygs1ob4Vr2cewlzt_d4iKfpi7J2m2NkEOkJR3yvo_0OsCq8GG9k4P7_IklGGVJvYpEwHTbqI3SZ73KHkyvMKmM87RONTNXGqd4pPSuKi38BiCbJaNPvn2C1Qr5CZZbmffVB3oZRtPQNdhGPK_vDLBey66K-GRVUWYjqQUUB3FyOl_MJKDqXHvST7KxtmWgmYXY4vJOlD7_QHf73Bp-1GuRWDyxizNCYMN9RU_zVs--GJOgUpkxwl2nwY6CTAwajGopJ_3TKBB6NAxv5CBekyzJ3a0sNyUb3ZuOhiKDu_VGFffQu4Em9bl3_I4LcHHWIRGFx7TjIoEUGgaJG5qOR1bSVhYFmIjd-MiSCVUFNPB9E-ar4BQcGDFP9YSUkmxd4NosBvKrF6Ksgmx0Ph8-53GceT3Lr7tpSyLFLqN5RdkTCApqnS48VtQeNMv3ZfWqOxOdsDuViZoLrSm5tuymY27XJxtd1lbfkTRhmAwvpkZLFUG1on3UTk_T7fdwPos2AcoiBWRXHpj6602zb-m94m7BnmZ4xvrTm9b7IBw4_EQN-nqBFe894saetC.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_08fd1ae97e2e008c016ab9516b81ac81979688a5600f5c3402\",\"index\":0}]}}],\"usage\":{\"prompt_tokens\":13,\"completion_tokens\":16,\"total_tokens\":29,\"cost\":0.0000093,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0000093,\"upstream_inference_prompt_cost\":0.0000013,\"upstream_inference_completions_cost\":0.000008},\"completion_tokens_details\":{\"reasoning_tokens\":9,\"image_tokens\":0,\"audio_tokens\":0}}}"
+    headers:
+      content-type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1
