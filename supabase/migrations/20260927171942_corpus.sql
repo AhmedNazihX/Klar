@@ -8,6 +8,22 @@ create extension if not exists vector with schema extensions;
 -- Equality on bigint/text inside the gist exclusion constraint on provisions.
 create extension if not exists btree_gist with schema extensions;
 
+-- sha256 of a provision's heading and text, for spotting stale embeddings. convert_to() is only
+-- STABLE (it depends on the encoding), so it can't sit in a generated column directly; the database
+-- encoding is fixed at UTF8, which makes this wrapper deterministic.
+create function public.provision_content_sha256(heading text, body text)
+returns text
+language sql
+immutable
+parallel safe
+set search_path = ''
+as $$
+  select encode(sha256(convert_to(coalesce(heading, '') || E'\n' || body, 'UTF8')), 'hex')
+$$;
+
+revoke execute on function public.provision_content_sha256(text, text) from public, anon, authenticated;
+grant execute on function public.provision_content_sha256(text, text) to service_role;
+
 -- One row per text, law version and language (the EN and DE versions of a law are two rows).
 create table public.documents (
   id bigint generated always as identity primary key,
@@ -64,11 +80,15 @@ create table public.provisions (
       coalesce(heading, '') || ' ' || text
     )
   ) stored,
+  -- Compared with provision_embeddings.content_sha256 to find embeddings of an older text.
+  content_sha256 text generated always as (public.provision_content_sha256(heading, text)) stored,
   check (valid_to is null or valid_to > valid_from),
   foreign key (document_id, language) references public.documents (id, language) on delete cascade,
   -- Keeps a parent in the same document and language (not checked while parent_id is null).
+  -- No action, checked at the end of the statement: a reload deletes all of a document's
+  -- provisions in one statement, while deleting a single parent still fails loudly.
   foreign key (parent_id, document_id, language)
-    references public.provisions (id, document_id, language) on delete cascade,
+    references public.provisions (id, document_id, language),
   -- The loader's upsert target; language follows from document_id and leads so this index also
   -- covers the documents foreign key.
   unique (document_id, language, provision_id, valid_from),
@@ -99,6 +119,8 @@ create table public.provision_embeddings (
   model text not null,
   dims integer not null check (dims > 0),
   embedding extensions.vector not null,
+  -- The provision's content_sha256 when this was embedded (copied by C4); a mismatch means stale.
+  content_sha256 text not null check (content_sha256 ~ '^[0-9a-f]{64}$'),
   created_at timestamptz not null default now(),
   check (extensions.vector_dims(embedding) = dims),
   primary key (provision_row_id, model, dims)
@@ -123,3 +145,4 @@ alter table public.provisions enable row level security;
 alter table public.provision_embeddings enable row level security;
 
 revoke all on public.documents, public.provisions, public.provision_embeddings from anon, authenticated;
+revoke all on sequence public.documents_id_seq, public.provisions_id_seq from anon, authenticated;

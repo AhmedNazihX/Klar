@@ -11,6 +11,9 @@ CORPUS_TABLES = ("documents", "provisions", "provision_embeddings")
 DEFAULT_MODEL = "qwen/qwen3-embedding-8b"
 DEFAULT_DIMS = 1536
 SHA256 = "a" * 64
+AI_ACT_IN_FORCE = "2024-08-01"
+DRAFT_DATES = ("2026-05-19", None)
+OMNIBUS_DATE = "2026-12-02"
 
 # The default arm's query shape: the same cast and predicate as its partial HNSW index.
 DEFAULT_ARM_NEAREST = """
@@ -82,10 +85,10 @@ def _insert_embedding(
 ) -> None:
     db.execute(
         """
-        insert into provision_embeddings (provision_row_id, model, dims, embedding)
-        values (%s, %s, %s, %s::vector)
+        insert into provision_embeddings (provision_row_id, model, dims, embedding, content_sha256)
+        select id, %s, %s, %s::vector, content_sha256 from provisions where id = %s
         """,
-        (provision_row_id, model, dims, vector),
+        (model, dims, vector, provision_row_id),
     )
 
 
@@ -239,6 +242,104 @@ def test_only_amending_acts_may_be_laws_without_a_version(db: psycopg.Connection
     assert omnibus == (None,)
     with pytest.raises(psycopg.errors.CheckViolation), db.transaction():
         _insert_document(db, "en", doc_key="ai-act", law_version=None)
+
+
+def test_reload_replaces_a_documents_provisions_in_one_transaction(
+    db: psycopg.Connection,
+) -> None:
+    document_id = _insert_document(db, "en", doc_key="guide-art50", doc_type="guideline")
+    parent = _insert_provision(db, document_id, "en", "guide:art50", "Draft.", valid=DRAFT_DATES)
+    child = _insert_provision(
+        db, document_id, "en", "guide:art50:1", "Draft point.", parent, valid=DRAFT_DATES
+    )
+    _insert_embedding(db, child, _vector((0, 1.0)))
+
+    # C3's reload after a sha256 change: delete everything, insert the final text with new dates.
+    with db.transaction():
+        db.execute("delete from provisions where document_id = %s", (document_id,))
+        parent = _insert_provision(db, document_id, "en", "guide:art50", "Final.")
+        _insert_provision(db, document_id, "en", "guide:art50:1", "Final point.", parent)
+
+    counts = db.execute(
+        """
+        select (select count(*) from provisions where document_id = %s),
+               (select count(*) from provision_embeddings where provision_row_id = %s)
+        """,
+        (document_id, child),
+    ).fetchone()
+    assert counts == (2, 0)
+
+
+def test_deleting_a_single_parent_fails(db: psycopg.Connection) -> None:
+    document_id = _insert_document(db, "en")
+    parent = _insert_provision(db, document_id, "en", "art:6", "Classification rules.")
+    _insert_provision(db, document_id, "en", "art:6:3", "An AI system ...", parent)
+    with pytest.raises(psycopg.errors.ForeignKeyViolation), db.transaction():
+        db.execute("delete from provisions where id = %s", (parent,))
+
+
+def test_text_change_makes_the_stored_embedding_stale(db: psycopg.Connection) -> None:
+    document_id = _insert_document(db, "en")
+    provision = _insert_provision(db, document_id, "en", "art:3:1", "AI system means ...")
+    _insert_embedding(db, provision, _vector((0, 1.0)))
+
+    def is_fresh() -> bool:
+        row = db.execute(
+            """
+            select p.content_sha256 = e.content_sha256
+            from provisions p join provision_embeddings e on e.provision_row_id = p.id
+            where p.id = %s
+            """,
+            (provision,),
+        ).fetchone()
+        assert row is not None
+        return row[0]
+
+    assert is_fresh()
+    db.execute(
+        "update provisions set text = 'AI system means a machine-based system' where id = %s",
+        (provision,),
+    )
+    assert not is_fresh()
+
+
+def test_as_of_picks_the_slice_in_force(db: psycopg.Connection) -> None:
+    amended = _insert_document(db, "en")
+    _insert_provision(
+        db, amended, "en", "art:50:2", "Before.", valid=(AI_ACT_IN_FORCE, OMNIBUS_DATE)
+    )
+    _insert_provision(db, amended, "en", "art:50:2", "After.", valid=(OMNIBUS_DATE, None))
+
+    def text_as_of(as_of: str) -> str:
+        row = db.execute(
+            """
+            select p.text from provisions p join documents d on d.id = p.document_id
+            where p.provision_id = 'art:50:2' and p.language = 'en' and d.id = %s
+              and d.law_version = 'amended' and not d.is_amending
+              and daterange(p.valid_from, p.valid_to) @> %s::date
+            """,
+            (amended, as_of),
+        ).fetchone()
+        assert row is not None
+        return row[0]
+
+    assert text_as_of("2026-12-01") == "Before."
+    assert text_as_of(OMNIBUS_DATE) == "After."
+
+
+def test_data_api_roles_get_no_sequences_or_functions(db: psycopg.Connection) -> None:
+    for role in ("anon", "authenticated"):
+        row = db.execute(
+            """
+            select
+              has_sequence_privilege(%(role)s, 'public.documents_id_seq', 'usage,select,update'),
+              has_sequence_privilege(%(role)s, 'public.provisions_id_seq', 'usage,select,update'),
+              has_function_privilege(
+                %(role)s, 'public.provision_content_sha256(text, text)', 'execute')
+            """,
+            {"role": role},
+        ).fetchone()
+        assert row == (False, False, False), role
 
 
 def test_corpus_tables_have_rls_and_no_data_api_grants(db: psycopg.Connection) -> None:
