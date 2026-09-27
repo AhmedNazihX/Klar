@@ -53,7 +53,8 @@ git merge --no-ff story/<ID>-<slug> -m "merge: story <ID> <title>"
 ```
 
 If the merge changed `backend/pyproject.toml` or `backend/uv.lock`, make sure the dependency manifest
-matches. The `pre-merge-commit` hook does this when hooks are enabled; the check catches it when they aren't:
+matches. With hooks enabled, `pre-merge-commit` regenerates and stages the files, then stops the merge;
+finish it with `git commit --no-edit`. Without hooks, the check catches it:
 
 ```bash
 uv run --project backend aiact deps check \
