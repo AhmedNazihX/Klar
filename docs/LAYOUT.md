@@ -55,6 +55,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
 │       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases)
 │       ├── recordings/              recorded model responses for replay (F6)
+│       ├── snapshots/               committed JSON snapshots, e.g. the result's JSON Schema (F3)
 │       └── test_isolation.py        benchmark isolation check (B13)
 │
 ├── data/                            legal texts only — never benchmark material
