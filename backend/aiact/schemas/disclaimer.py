@@ -10,7 +10,6 @@ DISCLAIMER_EN = (
     "the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
 )
 
-# German copy awaits the user's review (story P11).
 DISCLAIMER_DE = (
     "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der "
     "angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie "

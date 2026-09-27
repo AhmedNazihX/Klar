@@ -8,6 +8,7 @@ from aiact.schemas import (
     ClassificationResult,
     EvidenceTag,
     Fact,
+    FollowUpQuestion,
     Language,
     LawVersion,
     Obligation,
@@ -146,7 +147,11 @@ def worked_example_result() -> ClassificationResult:
         as_of=date(2026, 9, 27),
         disclaimer=DISCLAIMER_EN,
         follow_up_questions=(
-            "Do you use the tool under the vendor's name, without your own branding?",
-            "Is the tool used in the EU?",
+            FollowUpQuestion(
+                id="own_branding",
+                text="Do you use the tool under the vendor's name, without your own branding?",
+                about="art:25:1",
+            ),
+            FollowUpQuestion(id="eu_use", text="Is the tool used in the EU?", about="scope"),
         ),
     )

@@ -45,6 +45,14 @@ class LawVersion(StrEnum):
     AMENDED = "amended"
 
 
+class DocumentStatus(StrEnum):
+    """The status of a corpus document (matches F4's `documents.status`)."""
+
+    FINAL = "final"
+    DRAFT = "draft"
+    CONSOLIDATED = "consolidated"
+
+
 class Language(StrEnum):
     """The languages the assistant answers and quotes in."""
 

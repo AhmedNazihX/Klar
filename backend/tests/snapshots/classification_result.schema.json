@@ -16,7 +16,28 @@
           "type": "string"
         },
         "law_version": {
-          "$ref": "#/$defs/LawVersion"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LawVersion"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The AI Act text quoted; None for guidance, which belongs to neither text."
+        },
+        "document_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DocumentStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lets draft guidance be labelled as a draft."
         },
         "language": {
           "$ref": "#/$defs/Language",
@@ -36,12 +57,21 @@
       "required": [
         "provision_id",
         "document_id",
-        "law_version",
         "language",
         "quote"
       ],
       "title": "Citation",
       "type": "object"
+    },
+    "DocumentStatus": {
+      "description": "The status of a corpus document (matches F4's `documents.status`).",
+      "enum": [
+        "final",
+        "draft",
+        "consolidated"
+      ],
+      "title": "DocumentStatus",
+      "type": "string"
     },
     "EvidenceTag": {
       "description": "Where a fact came from; used instead of a numeric confidence score.",
@@ -82,6 +112,42 @@
         "evidence"
       ],
       "title": "Fact",
+      "type": "object"
+    },
+    "FollowUpQuestion": {
+      "additionalProperties": false,
+      "description": "A key-fact question. Its `id` keys the user's answer when the engine runs again.",
+      "properties": {
+        "id": {
+          "description": "Stable slug, for example `human_review`.",
+          "pattern": "^[a-z][a-z0-9_]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "about": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the answer settles, for example a step or provision_id.",
+          "title": "About"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "FollowUpQuestion",
       "type": "object"
     },
     "Language": {
@@ -277,15 +343,14 @@
         "missing_fact": {
           "anyOf": [
             {
-              "minLength": 1,
-              "type": "string"
+              "$ref": "#/$defs/FollowUpQuestion"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "title": "Missing Fact"
+          "description": "The question that would supply the missing fact."
         },
         "open_question": {
           "anyOf": [
@@ -297,6 +362,20 @@
             }
           ],
           "default": null
+        },
+        "error": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A machine-readable failure code, for example `citation_unverified`.",
+          "title": "Error"
         }
       },
       "required": [
@@ -334,7 +413,16 @@
       "$ref": "#/$defs/Status"
     },
     "role": {
-      "$ref": "#/$defs/Role"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Role"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Set exactly when the role_obligations step ran."
     },
     "role_switch_reason": {
       "anyOf": [
@@ -403,7 +491,7 @@
     "follow_up_questions": {
       "default": [],
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/FollowUpQuestion"
       },
       "title": "Follow Up Questions",
       "type": "array"
@@ -414,7 +502,6 @@
     "steps",
     "risk_class",
     "status",
-    "role",
     "law_version",
     "as_of",
     "disclaimer"
