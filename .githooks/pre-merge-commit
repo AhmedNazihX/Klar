@@ -1,0 +1,5 @@
+#!/bin/sh
+# A merge commit skips pre-commit, so run it here: when the merge brings in changes to
+# backend/pyproject.toml or backend/uv.lock, regenerate docs/DEPENDENCIES.md and stage it (story F8).
+# Enable once per clone: git config core.hooksPath .githooks
+exec "$(git rev-parse --show-toplevel)/.githooks/pre-commit"

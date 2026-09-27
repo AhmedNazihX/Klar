@@ -1,18 +1,31 @@
 #!/bin/sh
-# Regenerates docs/DEPENDENCIES.md and stages it when backend/pyproject.toml or backend/uv.lock
-# is staged (story F8). Enable once per clone: git config core.hooksPath .githooks
+# Regenerates docs/DEPENDENCIES.md and its licence cache, and stages both, when
+# backend/pyproject.toml or backend/uv.lock is staged (story F8). pre-merge-commit runs this too.
+# Enable once per clone: git config core.hooksPath .githooks
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
 
+lockfiles="backend/pyproject.toml backend/uv.lock"
+generated="docs/DEPENDENCIES.md docs/dependency-licences.json"
+fix="Run: uv run --project backend aiact deps generate, then stage $generated."
+
+# The index is compared with HEAD, so during a merge this sees what the merge brings in.
 if ! git diff --cached --name-only | grep -Eq '^backend/(pyproject\.toml|uv\.lock)$'; then
     exit 0
 fi
 
-# --frozen: never re-lock during a commit; install from uv.lock as it is.
-if ! uv run --frozen --quiet --project backend aiact deps generate >/dev/null; then
-    echo "pre-commit: could not regenerate docs/DEPENDENCIES.md." >&2
-    echo "Run: uv run --project backend aiact deps generate" >&2
+# generate renders the working-tree lock, so it must be the one being committed.
+# shellcheck disable=SC2086
+if ! git diff --quiet -- $lockfiles; then
+    echo "pre-commit: $lockfiles have unstaged changes; stage or stash them first." >&2
     exit 1
 fi
-git add docs/DEPENDENCIES.md
+
+# --frozen: never re-lock during a commit; install from uv.lock as it is.
+if ! uv run --frozen --quiet --project backend aiact deps generate >/dev/null; then
+    echo "pre-commit: could not regenerate docs/DEPENDENCIES.md. $fix" >&2
+    exit 1
+fi
+# shellcheck disable=SC2086
+git add -- $generated

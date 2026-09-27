@@ -5,14 +5,21 @@ set -eu
 
 cd "$(git rev-parse --show-toplevel)"
 
-fix="Run: uv run --project backend aiact deps generate, then commit docs/DEPENDENCIES.md."
+files="backend/pyproject.toml backend/uv.lock docs/DEPENDENCIES.md docs/dependency-licences.json"
 
-if ! uv run --frozen --quiet --project backend aiact deps check; then
-    echo "pre-push: push refused, docs/DEPENDENCIES.md is stale. $fix" >&2
+# The check reads the working tree. With these files matching HEAD, it validates the commit.
+# shellcheck disable=SC2086
+if ! git diff --quiet HEAD -- $files; then
+    echo "pre-push: push refused, uncommitted changes to the dependency files:" >&2
+    # shellcheck disable=SC2086
+    git diff --name-only HEAD -- $files >&2
+    echo "Commit or stash them, then push again." >&2
     exit 1
 fi
-# The check reads the working tree; a fresh file that isn't committed would still push stale.
-if ! git diff --quiet HEAD -- docs/DEPENDENCIES.md; then
-    echo "pre-push: push refused, docs/DEPENDENCIES.md has uncommitted changes. $fix" >&2
+
+if ! uv run --frozen --quiet --project backend aiact deps check; then
+    echo "pre-push: push refused, docs/DEPENDENCIES.md is stale." >&2
+    echo "Run: uv run --project backend aiact deps generate, then commit" \
+        "docs/DEPENDENCIES.md and docs/dependency-licences.json." >&2
     exit 1
 fi

@@ -43,10 +43,13 @@ def deps_() -> None:
 
 LockOption = typer.Option(deps.LOCK_PATH, "--lock", help="The uv.lock to read.")
 OutputOption = typer.Option(deps.OUTPUT_PATH, "--output", help="The manifest to write or check.")
+LicencesOption = typer.Option(
+    deps.LICENCES_PATH, "--licences", help="The licence cache (name==version to licence, summary)."
+)
 
 
 def _or_exit[T](action: Callable[[], T]) -> T:
-    """Run a deps action; a missing or unreadable lockfile exits 2 with the reason."""
+    """Run a deps action; a missing or unreadable input file exits 2 with the reason."""
     try:
         return action()
     except (FileNotFoundError, ValueError) as error:
@@ -55,16 +58,20 @@ def _or_exit[T](action: Callable[[], T]) -> T:
 
 
 @deps_app.command("generate")
-def deps_generate(lock: Path = LockOption, output: Path = OutputOption) -> None:
-    """Write docs/DEPENDENCIES.md from uv.lock and the installed package metadata."""
-    is_changed = _or_exit(lambda: deps.generate(lock, output))
+def deps_generate(
+    lock: Path = LockOption, output: Path = OutputOption, licences: Path = LicencesOption
+) -> None:
+    """Update the licence cache (installed metadata, else PyPI) and write docs/DEPENDENCIES.md."""
+    is_changed = _or_exit(lambda: deps.generate(lock, output, licences))
     typer.echo(f"{'Updated' if is_changed else 'Unchanged'}: {output}")
 
 
 @deps_app.command("check")
-def deps_check(lock: Path = LockOption, output: Path = OutputOption) -> None:
-    """Exit non-zero when docs/DEPENDENCIES.md is stale or missing."""
-    result = _or_exit(lambda: deps.check(lock, output))
+def deps_check(
+    lock: Path = LockOption, output: Path = OutputOption, licences: Path = LicencesOption
+) -> None:
+    """Exit non-zero when docs/DEPENDENCIES.md or the licence cache is stale. Works offline."""
+    result = _or_exit(lambda: deps.check(lock, output, licences))
     typer.echo(result.message, err=not result.is_fresh)
     if not result.is_fresh:
         raise typer.Exit(code=1)

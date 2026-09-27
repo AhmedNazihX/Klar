@@ -72,11 +72,21 @@ dependencies = [
     { name = "leaf" },
 ]
 
+[package.optional-dependencies]
+extra = [
+    { name = "leaf" },
+]
+
 [[package]]
 name = "shared"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = ["sys_platform != 'linux'"]
+
+[package.optional-dependencies]
+extra = [
+    { name = "speedup" },
+]
 
 [[package]]
 name = "speedup"

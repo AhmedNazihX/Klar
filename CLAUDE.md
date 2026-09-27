@@ -32,7 +32,7 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 - `uv run ruff check . && uv run ruff format --check .`: lint and format
 - `uv run pyright`: type check
 - `uv run aiact deps generate` / `uv run aiact deps check`: regenerate or check `docs/DEPENDENCIES.md` (generated, never edit by hand)
-- `git config core.hooksPath .githooks` (once per clone): pre-commit regenerates `DEPENDENCIES.md`, pre-push runs `deps check`
+- `git config core.hooksPath .githooks` (once per clone): pre-commit and pre-merge-commit regenerate `DEPENDENCIES.md`, pre-push runs `deps check`
 - `supabase start` / `supabase db reset` (from the repo root): local database
 
 ## Global rules
@@ -76,7 +76,7 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 - **Run alone.** F1 (every worktree needs its base) and the chain E8 → E9 → E10 run serially, without parallel agents.
 - **The orchestrator owns the backlog.** Only the main session ticks boxes in `docs/BACKLOG.md`, after a merge. Agents report their outcome in their final message instead.
 - **Merge flow.** When a story is done: the `diff-reviewer` agent checks the diff, then ruff, pyright and pytest run on the branch, then the branch is merged into the base. Dependent stories start only after that merge.
-- **Shared files.** Keep edits to `pyproject.toml`, `settings.py` and `.env.example` minimal and additive. If `uv.lock` conflicts, regenerate it with `uv lock` rather than merging it by hand.
+- **Shared files.** Keep edits to `pyproject.toml`, `settings.py` and `.env.example` minimal and additive. If `uv.lock` conflicts, regenerate it with `uv lock` rather than merging it by hand. Then run `uv run aiact deps generate` and commit `docs/DEPENDENCIES.md` and `docs/dependency-licences.json` with it.
 - **Gitignored files.** `.env` and `data/raw/` are not in a new worktree. Copy or symlink `.env` into the worktree at the start. Point `AIACT_DATA_DIR` at the one shared absolute data path.
 - **Database is shared.** All worktrees use the same local Supabase instance. Create migrations only with `supabase migration new` (timestamped names). Only one running story at a time may change the schema. Tests isolate themselves with a transaction per test or a per-story schema.
 - **Enforced isolation.** Corpus-lane worktrees (B1, C*) use sparse checkout to leave out `eval/` entirely. C2 is the exception: it gets `eval/split.json` only. The worker sets the sparse checkout before renaming its branch, and `isolation-guard.sh` blocks any `eval/` access after that.

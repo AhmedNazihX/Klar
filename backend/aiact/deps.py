@@ -1,43 +1,65 @@
 """Generate and check `docs/DEPENDENCIES.md`, the dependency manifest (`aiact deps generate|check`).
 
 Versions and the dependency graph come from `backend/uv.lock`. Licence and summary come from the
-installed package metadata, or `unknown` when a package isn't installed here (for example a
-Windows-only package on macOS). The output is deterministic: sorted rows, no timestamps.
+committed cache `docs/dependency-licences.json`, keyed by `name==version`, so the manifest depends
+only on committed files and renders the same on every platform. `generate` fills missing cache
+entries from the installed metadata (when that exact version is installed) or else the PyPI JSON
+API, writes `unknown` when both fail, and prunes entries no longer in the lock. `check` never
+touches the network or the installed packages.
 
 The document is a header plus one section per lockfile. Only the Python section exists now; the
 frontend story (P4) adds its own section from the pnpm lockfile through `render_document`.
 """
 
 import difflib
+import json
+import logging
 import re
 import tomllib
+import urllib.error
+import urllib.parse
+import urllib.request
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from email.message import Message
-from functools import cache
 from importlib import metadata
 from pathlib import Path
 
+from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
+
 from aiact.settings import BACKEND_DIR
+
+logger = logging.getLogger(__name__)
 
 REPO_ROOT = BACKEND_DIR.parent
 LOCK_PATH = BACKEND_DIR / "uv.lock"
 OUTPUT_PATH = REPO_ROOT / "docs" / "DEPENDENCIES.md"
+LICENCES_PATH = REPO_ROOT / "docs" / "dependency-licences.json"
 GENERATE_COMMAND = "uv run --project backend aiact deps generate"
 CHECK_COMMAND = "uv run --project backend aiact deps check"
+PYPI_URL = "https://pypi.org/pypi/{name}/{version}/json"
+PYPI_TIMEOUT_SECONDS = 10
 
 UNKNOWN = "unknown"
 RUNTIME_GROUP = "runtime"
 MAX_CELL_LENGTH = 80
 MAX_DIFF_LINES = 20
+MAX_NAMES_SHOWN = 10
 
 
-@dataclass(frozen=True)
-class PackageInfo:
-    """What the installed metadata says about a package."""
+class PackageInfo(BaseModel):
+    """Licence and one-line summary of one package version, as stored in the licence cache."""
+
+    model_config = ConfigDict(frozen=True)
 
     licence: str
     summary: str
+
+
+UNKNOWN_INFO = PackageInfo(licence=UNKNOWN, summary=UNKNOWN)
+LicenceCache = dict[str, PackageInfo]
+InfoFetch = Callable[[str, str], PackageInfo | None]
+_CACHE_ADAPTER = TypeAdapter(LicenceCache)
 
 
 @dataclass(frozen=True)
@@ -82,9 +104,6 @@ class CheckResult:
 
     is_fresh: bool
     message: str
-
-
-InfoLookup = Callable[[str], PackageInfo]
 
 
 # --- Reading the lockfile ------------------------------------------------------------------
@@ -145,10 +164,17 @@ def _merge_packages(raw_packages: Iterable[dict[str, object]]) -> dict[str, Lock
         merged[name] = LockedPackage(
             name=name,
             versions=tuple(sorted({*previous.versions, str(raw.get("version", UNKNOWN))})),
-            edges=tuple(dict.fromkeys((*previous.edges, *_edges(raw.get("dependencies", []))))),
-            optional={**previous.optional, **optional},
+            edges=_union(previous.edges, _edges(raw.get("dependencies", []))),
+            optional={
+                extra: _union(previous.optional.get(extra, ()), optional.get(extra, ()))
+                for extra in sorted({*previous.optional, *optional})
+            },
         )
     return merged
+
+
+def _union(first: tuple[Edge, ...], second: tuple[Edge, ...]) -> tuple[Edge, ...]:
+    return tuple(dict.fromkeys((*first, *second)))
 
 
 def _edges(entries: object) -> tuple[Edge, ...]:
@@ -206,16 +232,49 @@ def pulled_in_by(lock: Lock) -> dict[str, tuple[str, ...]]:
 # --- Package metadata ----------------------------------------------------------------------
 
 
-@cache
-def installed_info(name: str) -> PackageInfo:
-    """Licence and summary from the installed distribution, `unknown` when it isn't installed."""
+def installed_info(name: str, version: str) -> PackageInfo | None:
+    """Licence and summary from the installed distribution, if exactly `version` is installed."""
     try:
+        if metadata.version(name) != version:
+            return None
         meta = metadata.metadata(name)
     except metadata.PackageNotFoundError:
-        return PackageInfo(UNKNOWN, UNKNOWN)
+        return None
     # `PackageMetadata` is a protocol; the object behind it is an `email.message.Message`.
-    message = meta if isinstance(meta, Message) else Message()
-    return PackageInfo(licence_of(message), _clean(message.get("Summary")) or UNKNOWN)
+    return _info_from(meta) if isinstance(meta, Message) else None
+
+
+def pypi_info(name: str, version: str) -> PackageInfo | None:
+    """Licence and summary from the PyPI JSON API, or `None` when PyPI can't be reached or read."""
+    url = PYPI_URL.format(
+        name=urllib.parse.quote(name, safe=""), version=urllib.parse.quote(version, safe="")
+    )
+    try:
+        with urllib.request.urlopen(url, timeout=PYPI_TIMEOUT_SECONDS) as response:
+            info = json.loads(response.read().decode("utf-8")).get("info")
+    except (urllib.error.URLError, TimeoutError, ValueError, AttributeError) as error:
+        logger.warning("PyPI lookup failed for %s==%s: %s", name, version, error)
+        return None
+    if not isinstance(info, dict):
+        return None
+    message = Message()
+    for field, key in (("License-Expression", "license_expression"), ("License", "license")):
+        if info.get(key):
+            message[field] = str(info[key])
+    for classifier in info.get("classifiers") or []:
+        message["Classifier"] = str(classifier)
+    if info.get("summary"):
+        message["Summary"] = str(info["summary"])
+    return _info_from(message)
+
+
+def fetch_info(name: str, version: str) -> PackageInfo | None:
+    """The installed metadata when that version is installed, else PyPI."""
+    return installed_info(name, version) or pypi_info(name, version)
+
+
+def _info_from(meta: Message) -> PackageInfo:
+    return PackageInfo(licence=licence_of(meta), summary=_clean(meta.get("Summary")) or UNKNOWN)
 
 
 def licence_of(meta: Message) -> str:
@@ -242,6 +301,57 @@ def _clean(value: object) -> str:
     return re.sub(r"\s+", " ", str(value)).strip() if value else ""
 
 
+# --- The licence cache ---------------------------------------------------------------------
+
+
+def cache_key(name: str, version: str) -> str:
+    return f"{name}=={version}"
+
+
+def locked_keys(lock: Lock) -> list[tuple[str, str]]:
+    """Every (name, version) pair in the lock, sorted."""
+    return sorted((p.name, v) for p in lock.packages.values() for v in p.versions)
+
+
+def load_cache(path: Path) -> LicenceCache:
+    """Read the licence cache; a missing file is an empty cache."""
+    if not path.exists():
+        return {}
+    try:
+        return _CACHE_ADAPTER.validate_json(path.read_bytes())
+    except ValidationError as error:
+        raise ValueError(f"{path} is not a valid licence cache: {error}") from error
+
+
+def dump_cache(cache: Mapping[str, PackageInfo]) -> str:
+    entries = {key: cache[key].model_dump() for key in sorted(cache)}
+    return json.dumps(entries, indent=2, ensure_ascii=False) + "\n"
+
+
+def fill_cache(lock: Lock, cache: Mapping[str, PackageInfo], fetch: InfoFetch) -> LicenceCache:
+    """A cache of exactly the locked versions: kept entries, fetched missing ones, none stale."""
+    return {
+        cache_key(name, version): cache.get(cache_key(name, version))
+        or fetch(name, version)
+        or UNKNOWN_INFO
+        for name, version in locked_keys(lock)
+    }
+
+
+def _cache_mismatch(lock: Lock, cache: Mapping[str, PackageInfo]) -> str:
+    """Why the cache doesn't match the lock, or an empty string when it does."""
+    expected = {cache_key(name, version) for name, version in locked_keys(lock)}
+    problems = [
+        f"{label}: {', '.join(keys[:MAX_NAMES_SHOWN])}{' …' if len(keys) > MAX_NAMES_SHOWN else ''}"
+        for label, keys in (
+            ("missing", sorted(expected - cache.keys())),
+            ("stale", sorted(cache.keys() - expected)),
+        )
+        if keys
+    ]
+    return "; ".join(problems)
+
+
 # --- Rendering -----------------------------------------------------------------------------
 
 
@@ -263,12 +373,27 @@ def _group_order(group: str) -> tuple[bool, str]:
     return (group != RUNTIME_GROUP, group)
 
 
-def render_python_section(lock: Lock, source_label: str, lookup: InfoLookup) -> str:
+def _package_info(lock: Lock, cache: Mapping[str, PackageInfo], name: str) -> PackageInfo:
+    """One row's info: each distinct licence across the locked versions, the last summary."""
+    package = lock.packages.get(name)
+    infos = (
+        [cache.get(cache_key(name, v), UNKNOWN_INFO) for v in package.versions] if package else []
+    )
+    if not infos:
+        return UNKNOWN_INFO
+    licences = dict.fromkeys(info.licence for info in infos)
+    return PackageInfo(licence=" / ".join(licences), summary=infos[-1].summary)
+
+
+def render_python_section(lock: Lock, source_label: str, cache: Mapping[str, PackageInfo]) -> str:
     """The backend section: a table of direct deps and a table of transitive packages."""
 
     def locked(name: str) -> str:
         package = lock.packages.get(name)
         return ", ".join(package.versions) if package else UNKNOWN
+
+    def info(name: str) -> PackageInfo:
+        return _package_info(lock, cache, name)
 
     direct = sorted(lock.direct, key=lambda dep: (_group_order(dep.group), dep.name))
     direct_rows = [
@@ -277,13 +402,13 @@ def render_python_section(lock: Lock, source_label: str, lookup: InfoLookup) -> 
             dep.group,
             dep.constraint,
             locked(dep.name),
-            lookup(dep.name).licence,
-            lookup(dep.name).summary,
+            info(dep.name).licence,
+            info(dep.name).summary,
         )
         for dep in direct
     ]
     transitive_rows = [
-        (name, locked(name), lookup(name).licence, ", ".join(owners))
+        (name, locked(name), info(name).licence, ", ".join(owners))
         for name, owners in pulled_in_by(lock).items()
     ]
     lines = [
@@ -311,16 +436,15 @@ def render_document(sections: Sequence[str]) -> str:
         f"> Generated by `{GENERATE_COMMAND}`. Do not edit by hand.",
         "> The pre-commit hook regenerates it when `pyproject.toml` or `uv.lock` is committed,",
         f"> and `{CHECK_COMMAND}` fails when it is stale.",
-        "> Licence and summary come from the installed package metadata; `unknown` means the",
-        "> metadata was missing or the package isn't installed on the machine that generated it.",
+        "> Licence and summary come from `docs/dependency-licences.json`, filled from the",
+        "> installed package metadata or PyPI; `unknown` means neither had it.",
     ]
     return "\n\n".join(["\n".join(header), *sections]) + "\n"
 
 
-def render(lock_path: Path = LOCK_PATH, lookup: InfoLookup = installed_info) -> str:
-    """Render the full manifest from a lockfile."""
-    section = render_python_section(load_lock(lock_path), _label(lock_path), lookup)
-    return render_document([section])
+def render(lock: Lock, lock_path: Path, cache: Mapping[str, PackageInfo]) -> str:
+    """Render the full manifest from a parsed lockfile and the licence cache."""
+    return render_document([render_python_section(lock, _label(lock_path), cache)])
 
 
 def _label(path: Path) -> str:
@@ -335,31 +459,46 @@ def _label(path: Path) -> str:
 # --- Commands ------------------------------------------------------------------------------
 
 
+def _write_if_changed(path: Path, content: str) -> bool:
+    if path.exists() and path.read_text(encoding="utf-8") == content:
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8", newline="\n")
+    return True
+
+
 def generate(
     lock_path: Path = LOCK_PATH,
     output_path: Path = OUTPUT_PATH,
-    lookup: InfoLookup = installed_info,
+    licences_path: Path = LICENCES_PATH,
+    fetch: InfoFetch = fetch_info,
 ) -> bool:
-    """Write the manifest. Returns whether the file changed."""
-    content = render(lock_path, lookup)
-    if output_path.exists() and output_path.read_text(encoding="utf-8") == content:
-        return False
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(content, encoding="utf-8", newline="\n")
-    return True
+    """Update the licence cache and write the manifest. Returns whether either file changed."""
+    lock = load_lock(lock_path)
+    cache = fill_cache(lock, load_cache(licences_path), fetch)
+    is_cache_changed = _write_if_changed(licences_path, dump_cache(cache))
+    is_output_changed = _write_if_changed(output_path, render(lock, lock_path, cache))
+    return is_cache_changed or is_output_changed
 
 
 def check(
     lock_path: Path = LOCK_PATH,
     output_path: Path = OUTPUT_PATH,
-    lookup: InfoLookup = installed_info,
+    licences_path: Path = LICENCES_PATH,
 ) -> CheckResult:
-    """Compare the manifest on disk with a fresh render."""
+    """Compare the manifest on disk with a render from the lock and the cache. Offline."""
     label = _label(output_path)
-    fix = f"Run `{GENERATE_COMMAND}` and commit {label}."
-    expected = render(lock_path, lookup)
+    fix = f"Run `{GENERATE_COMMAND}` and commit {label} and {_label(licences_path)}."
+    lock = load_lock(lock_path)
+    cache = load_cache(licences_path)
+    mismatch = _cache_mismatch(lock, cache)
+    if mismatch:
+        return CheckResult(
+            False, f"{_label(licences_path)} doesn't match {_label(lock_path)} ({mismatch}). {fix}"
+        )
     if not output_path.exists():
         return CheckResult(False, f"{label} does not exist. {fix}")
+    expected = render(lock, lock_path, cache)
     actual = output_path.read_text(encoding="utf-8")
     if actual == expected:
         return CheckResult(True, f"{label} is up to date with {_label(lock_path)}.")
