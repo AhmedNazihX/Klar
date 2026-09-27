@@ -305,6 +305,12 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 ## Phase 5 — Product surfaces
 
+**Design reference (every frontend story reads this first).** The user's UI/UX mockup is a claude.ai Design canvas, "AI Act Classification Assistant — UI/UX": https://claude.ai/artifact/9f2ghnteUy1kbPyUa63PEv (owned by the user; read it with the Artifact tool's `read` action, list its files with `scope: "files"`, and read the `project/*.dc.html` artboards; don't use a web fetch). It is the reference design. Use it and edit it (with the user) rather than inventing a new look; the `frontend-design` skill only fills gaps it doesn't cover.
+- Artboards → stories: `Brand` (tokens, P4), `Main` (landing page, P5), `Classify` ("Describe a tool", P5), `Result` (summary view, P5), `Reviewer` (reviewer view, P5), `Inventory` (P6), `Documents` (draft documents, P9).
+- Brand (from `Brand.dc.html`): working name **Klar**, "AI Act classification you can check." Colours: Mist `#E6ECF3` ground, Ink `#0F1B2D` text, Slate `#4A5670` muted, Lens blue `#2D4BE0` accent. Type: Geist for the product UI, Newsreader (serif) for everything the Act says: quoted provisions and the class itself. Frosted-glass panels (the recipe is on the Brand board). The logo is four stacked panes, one per check in the Act's order (Scope, Prohibited, High-risk, Transparency).
+- Risk classes and statuses are pills that always carry a word, never colour alone: Prohibited red, High-risk orange, Limited risk blue, Minimal risk green, Out of scope grey, Legally ambiguous purple, Needs more information dashed outline.
+- If the canvas changes, the canvas wins over this summary; update this note in the same story.
+
 - [ ] **P1 · FastAPI** · Deps: E10 · Type: agent
   Output: `aiact/api/` with `POST /classify` (SSE step events and the final result), `GET /provisions/{id}`, `GET /obligations`, `POST /qa`, the OpenAPI schema exported to `frontend/openapi.json`, and rate limiting. DoD: httpx tests with the engine in replay mode.
 
@@ -319,13 +325,13 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   DoD: RLS tests show user A cannot read user B's rows; delete and cleanup are tested.
 
 - [ ] **P4 · Frontend scaffold** · Deps: – (the client is generated after P1) · Type: agent
-  Output: `frontend/` (Vite, React, TS, Tailwind, shadcn/ui, TanStack Router and Query, react-i18next with EN and DE, React Hook Form with Zod, a generated API client, Supabase anonymous auth, ESLint, Prettier, Vitest). DoD: `pnpm build && pnpm test` pass; the language switch works; `docs/DEPENDENCIES.md` (F8) also lists the frontend packages from the pnpm lockfile, and `aiact deps check` covers them.
+  Context: Design reference (above), `Brand` artboard. Output: `frontend/` (Vite, React, TS, Tailwind, shadcn/ui, TanStack Router and Query, react-i18next with EN and DE, React Hook Form with Zod, a generated API client, Supabase anonymous auth, ESLint, Prettier, Vitest), with the Brand board's colours, fonts, glass panel and risk-class pills set up as Tailwind theme tokens and shared components. DoD: `pnpm build && pnpm test` pass; the language switch works; the tokens match the Brand board; `docs/DEPENDENCIES.md` (F8) also lists the frontend packages from the pnpm lockfile, and `aiact deps check` covers them.
 
 - [ ] **P5 · Classification UI** · Deps: P4, P1 · Type: agent
-  Output: a description form; live step progress; a follow-up question loop (answers are added and the engine re-runs); a summary view (plain language and to-do list, with steps collapsed) and a reviewer view (every step expanded with its fact, evidence tag and quoted provision); the disclaimer and AI disclosure (Art. 50(1)). DoD: Vitest component tests pass; a manual run of the worked example looks right. Load the `frontend-design` skill.
+  Context: Design reference (above), artboards `Main`, `Classify`, `Result`, `Reviewer`. Output: the landing page; a description form; live step progress; a follow-up question loop (answers are added and the engine re-runs); a summary view (plain language and to-do list, with steps collapsed) and a reviewer view (every step expanded with its fact, evidence tag and quoted provision); the disclaimer and AI disclosure (Art. 50(1)). DoD: Vitest component tests pass; a manual run of the worked example looks right and matches the artboards. Load the `frontend-design` skill for anything the artboards don't cover.
 
 - [ ] **P6 · AI inventory** · Deps: P5, P3 · Type: agent
-  Output: add and classify many systems, an overview table, a company-level summary (the stricter reading flagged). DoD: component and API tests.
+  Context: Design reference (above), `Inventory` artboard. Output: add and classify many systems, an overview table, a company-level summary (the stricter reading flagged). DoD: component and API tests.
 
 - [ ] **P7 · Q&A with citations** · Deps: C6, P1 · Type: agent
   Output: `aiact/qa/` (a retrieval-grounded answer that cites provisions, steers away from "are we compliant?", and stays within the corpus) and the UI panel. DoD: V6 faithfulness on the Q&A set is recorded.
@@ -334,7 +340,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: INIT › Documentation drafting. Output: `aiact/drafting/`: short deployer documents generated from facts; skeleton templates (Annex IV, Art. 17, Art. 9, Art. 27) listing every required section with its quoted requirement; the three automatic checks (all sections present, no content the user did not supply, pre-filled facts match the result); a DRAFT label and the disclaimer. DoD: all three checks are tested, including a failing case for each.
 
 - [ ] **P9 · Guided interview + Word/PDF export** · Deps: P8, P3, P5 · Type: agent
-  Output: interview endpoints and UI; answers written up as prose; `.docx` and PDF export from Python. DoD: an end-to-end test fills one skeleton, and the automatic checks pass.
+  Context: Design reference (above), `Documents` artboard. Output: interview endpoints and UI; answers written up as prose; `.docx` and PDF export from Python. DoD: an end-to-end test fills one skeleton, and the automatic checks pass.
 
 - [ ] **P10 · Original vs amended toggle** · Deps: E10, P5 · Type: agent
   Output: a UI toggle, plus a diff view that shows which steps changed and why (citing the Omnibus). DoD: a test case whose outcome differs between the two versions shows the difference.

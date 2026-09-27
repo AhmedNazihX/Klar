@@ -49,4 +49,4 @@ joining strings. Format dates and numbers with `Intl`, using the active locale.
 - Plain hierarchy, readable type and generous line length. Use colour for meaning, such as risk class and status, and always with text too, never colour alone.
 - WCAG 2.2 AA, full keyboard use, visible focus, and respect for `prefers-reduced-motion`.
 - Style with Tailwind and the shadcn CSS variables. Don't hard-code colours.
-- Choose a visual direction with the `frontend-design` skill, not here.
+- The visual direction is the user's Design canvas (`docs/BACKLOG.md` › Phase 5 › Design reference). Use the `frontend-design` skill only for gaps, not here.

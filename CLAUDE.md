@@ -65,7 +65,7 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 - **Scoped rules:** `.claude/rules/*.md` load only when Claude reads matching files. Subfolders are read too, so keep this folder small and specific to this project.
   - Areas: `eval`, `corpus`, `engine`, `supabase`.
   - Code: `python` (backend), `api` (FastAPI and MCP), `frontend`, `frontend-security`, `frontend-testing`.
-  - Visual design direction comes from the `frontend-design` skill, not from a rule.
+  - Visual design comes from the user's Design canvas (see `docs/BACKLOG.md` › Phase 5 › Design reference), and the `frontend-design` skill covers gaps. It doesn't come from a rule.
 - **Backlog helper:** `.claude/scripts/backlog.py` (`status`, `show`, `deps`, `info`, `tick`). The skills use it.
 
 ## Parallel work (worktrees)
