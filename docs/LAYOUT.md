@@ -53,6 +53,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── mcp/                     server.py: the 4 MCP tools (P2a, P2b)
 │   │   └── api/                     FastAPI app, SSE (P1)
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
+│       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)
 │       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases)
 │       ├── recordings/              recorded model responses for replay (F6)
 │       └── test_isolation.py        benchmark isolation check (B13)
