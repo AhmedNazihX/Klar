@@ -1,0 +1,18 @@
+#!/bin/sh
+# Refuses a push when docs/DEPENDENCIES.md is stale (story F8). It runs only the deps check.
+# Enable once per clone: git config core.hooksPath .githooks
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+fix="Run: uv run --project backend aiact deps generate, then commit docs/DEPENDENCIES.md."
+
+if ! uv run --frozen --quiet --project backend aiact deps check; then
+    echo "pre-push: push refused, docs/DEPENDENCIES.md is stale. $fix" >&2
+    exit 1
+fi
+# The check reads the working tree; a fresh file that isn't committed would still push stale.
+if ! git diff --quiet HEAD -- docs/DEPENDENCIES.md; then
+    echo "pre-push: push refused, docs/DEPENDENCIES.md has uncommitted changes. $fix" >&2
+    exit 1
+fi

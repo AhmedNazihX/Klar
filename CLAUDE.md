@@ -31,6 +31,8 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 - `uv run pytest`: tests (live model tests are skipped unless `-m live`)
 - `uv run ruff check . && uv run ruff format --check .`: lint and format
 - `uv run pyright`: type check
+- `uv run aiact deps generate` / `uv run aiact deps check`: regenerate or check `docs/DEPENDENCIES.md` (generated, never edit by hand)
+- `git config core.hooksPath .githooks` (once per clone): pre-commit regenerates `DEPENDENCIES.md`, pre-push runs `deps check`
 - `supabase start` / `supabase db reset` (from the repo root): local database
 
 ## Global rules
