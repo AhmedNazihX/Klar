@@ -26,18 +26,29 @@ def _client(settings: Settings) -> OpenRouterEmbeddings:
     )
 
 
-def test_normalise_scales_to_unit_length() -> None:
-    assert l2_normalise([3.0, 4.0], 2) == pytest.approx([0.6, 0.8])
+def test_unit_vector_passes_without_a_warning(caplog: pytest.LogCaptureFixture) -> None:
+    assert l2_normalise([0.6, 0.8], 2) == pytest.approx([0.6, 0.8])
+    assert caplog.records == []
+
+
+def test_slightly_off_length_is_rescaled_with_a_warning(caplog: pytest.LogCaptureFixture) -> None:
+    # Length 1.01: past the warning tolerance, well inside the error bound.
+    unit = l2_normalise([0.606, 0.808], 2)
+    assert math.fsum(x * x for x in unit) == pytest.approx(1.0)
+    assert [r.levelname for r in caplog.records] == ["WARNING"]
+    assert "length 1.01" in caplog.text
 
 
 def test_normalise_rejects_wrong_dimensions() -> None:
     with pytest.raises(EmbeddingError, match="expected 3 dimensions, got 2"):
-        l2_normalise([3.0, 4.0], 3)
+        l2_normalise([0.6, 0.8], 3)
 
 
-@pytest.mark.parametrize("vector", [[0.0, 0.0], [math.nan, 1.0], [math.inf, 1.0]])
-def test_normalise_rejects_unusable_vectors(vector: list[float]) -> None:
-    with pytest.raises(EmbeddingError, match="no usable length"):
+@pytest.mark.parametrize(
+    "vector", [[3.0, 4.0], [0.2, 0.3], [0.0, 0.0], [math.nan, 1.0], [math.inf, 1.0]]
+)
+def test_far_off_length_points_to_wrong_model_or_provider(vector: list[float]) -> None:
+    with pytest.raises(EmbeddingError, match="check the embedding model and provider"):
         l2_normalise(vector, 2)
 
 

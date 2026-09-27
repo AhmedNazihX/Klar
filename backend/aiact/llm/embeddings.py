@@ -26,8 +26,11 @@ DEFAULT_QUERY_INSTRUCTION = (
 )
 """Placeholder task text; story X1 fixes the exact wording on the Annex-matching set."""
 
-NORM_TOLERANCE = 1e-6
-"""How far a normalised vector's length may be from 1 before it counts as broken."""
+NORM_WARN_TOLERANCE = 1e-3
+"""Nebius returns unit vectors; a raw length further than this from 1 is logged as a warning."""
+
+NORM_ERROR_TOLERANCE = 0.5
+"""A raw length this far from 1 means the wrong model or provider answered, so it's an error."""
 
 
 class EmbeddingError(RuntimeError):
@@ -40,17 +43,22 @@ def format_query(text: str, instruction: str) -> str:
 
 
 def l2_normalise(vector: Sequence[float], dimensions: int) -> list[float]:
-    """Return `vector` scaled to unit length, after checking its dimension count."""
+    """Return `vector` scaled to unit length, after checking its dimensions and raw length.
+
+    The provider's own length is checked before rescaling: slightly off is logged, far off
+    (or zero, NaN, infinite) raises, since rescaling would hide a wrong model or provider.
+    """
     if len(vector) != dimensions:
         raise EmbeddingError(f"expected {dimensions} dimensions, got {len(vector)}")
     norm = math.sqrt(math.fsum(x * x for x in vector))
-    if norm == 0.0 or not math.isfinite(norm):
-        raise EmbeddingError(f"vector has no usable length (norm={norm})")
-    unit = [x / norm for x in vector]
-    unit_norm = math.sqrt(math.fsum(x * x for x in unit))
-    if abs(unit_norm - 1.0) > NORM_TOLERANCE:
-        raise EmbeddingError(f"normalised vector has length {unit_norm}")
-    return unit
+    if not math.isfinite(norm) or abs(norm - 1.0) > NORM_ERROR_TOLERANCE:
+        raise EmbeddingError(
+            f"provider returned a vector of length {norm}, expected about 1; "
+            "check the embedding model and provider"
+        )
+    if abs(norm - 1.0) > NORM_WARN_TOLERANCE:
+        logger.warning("provider returned a vector of length %.6f; rescaling to 1", norm)
+    return [x / norm for x in vector]
 
 
 class OpenRouterEmbeddings(Embeddings):
