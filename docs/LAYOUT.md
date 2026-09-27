@@ -54,7 +54,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   └── api/                     FastAPI app, SSE (P1)
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
 │       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases)
-│       ├── recordings/              recorded model responses for replay (F6)
+│       ├── conftest.py              record/replay config (pytest-recording) for tests/recordings/ (F6)
+│       ├── recordings/              recorded model responses for replay, <test module>/<test>.yaml (F6)
 │       └── test_isolation.py        benchmark isolation check (B13)
 │
 ├── data/                            legal texts only — never benchmark material

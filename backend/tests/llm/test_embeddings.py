@@ -1,0 +1,105 @@
+import math
+
+import pytest
+from pydantic import SecretStr
+
+from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
+from aiact.llm.embeddings import format_query, l2_normalise
+from aiact.settings import Settings, get_settings
+
+MODEL = "qwen/qwen3-embedding-8b"
+PROVIDER = "nebius"
+DIMENSIONS = 1536
+TEXTS = [
+    "Providers of high-risk AI systems shall establish a risk management system.",
+    "Anbieter von KI-Systemen mit hohem Risiko richten ein Risikomanagementsystem ein.",
+]
+
+
+def _settings(**values: object) -> Settings:
+    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **values)  # pyright: ignore[reportCallIssue]
+
+
+def _client(settings: Settings) -> OpenRouterEmbeddings:
+    return OpenRouterEmbeddings(
+        model=MODEL, provider=PROVIDER, dimensions=DIMENSIONS, settings=settings
+    )
+
+
+def test_normalise_scales_to_unit_length() -> None:
+    assert l2_normalise([3.0, 4.0], 2) == pytest.approx([0.6, 0.8])
+
+
+def test_normalise_rejects_wrong_dimensions() -> None:
+    with pytest.raises(EmbeddingError, match="expected 3 dimensions, got 2"):
+        l2_normalise([3.0, 4.0], 3)
+
+
+@pytest.mark.parametrize("vector", [[0.0, 0.0], [math.nan, 1.0], [math.inf, 1.0]])
+def test_normalise_rejects_unusable_vectors(vector: list[float]) -> None:
+    with pytest.raises(EmbeddingError, match="no usable length"):
+        l2_normalise(vector, 2)
+
+
+def test_query_gets_the_qwen3_instruction_format() -> None:
+    assert format_query("chatbot for HR", "Find provisions") == (
+        "Instruct: Find provisions\nQuery:chatbot for HR"
+    )
+
+
+def test_embed_query_sends_the_configured_instruction(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = OpenRouterEmbeddings(
+        model=MODEL, provider=PROVIDER, query_instruction="Find provisions", settings=_settings()
+    )
+    sent: list[list[str]] = []
+
+    def fake_embed(texts: list[str]) -> list[list[float]]:
+        sent.append(texts)
+        return [[1.0]]
+
+    monkeypatch.setattr(client, "_embed", fake_embed)
+    client.embed_query("chatbot for HR")
+    assert sent == [["Instruct: Find provisions\nQuery:chatbot for HR"]]
+
+
+def test_settings_supply_model_provider_and_dimensions() -> None:
+    client = OpenRouterEmbeddings(
+        settings=_settings(embedding_model=MODEL, embedding_provider=PROVIDER)
+    )
+    assert (client.model, client.provider, client.dimensions) == (MODEL, PROVIDER, 1536)
+
+
+@pytest.mark.parametrize(
+    ("values", "missing"),
+    [
+        ({"embedding_provider": PROVIDER}, "EMBEDDING_MODEL"),
+        ({"embedding_model": MODEL}, "EMBEDDING_PROVIDER"),
+    ],
+)
+def test_unset_embedding_setting_is_a_config_error(
+    monkeypatch: pytest.MonkeyPatch, values: dict[str, object], missing: str
+) -> None:
+    monkeypatch.delenv(missing, raising=False)
+    with pytest.raises(LLMConfigError, match=f"{missing} is not set"):
+        OpenRouterEmbeddings(settings=_settings(**values))
+
+
+def _assert_embeddings_roundtrip(settings: Settings) -> None:
+    vectors = _client(settings).embed_documents(TEXTS)
+    assert len(vectors) == len(TEXTS)
+    for vector in vectors:
+        assert len(vector) == DIMENSIONS
+        assert math.fsum(x * x for x in vector) == pytest.approx(1.0, abs=1e-6)
+    similarity = math.fsum(a * b for a, b in zip(*vectors, strict=True))
+    # The English and German sentences say the same thing, so they should sit close.
+    assert 0.5 < similarity < 1.0
+
+
+@pytest.mark.vcr
+def test_embeddings_roundtrip(openrouter_settings: Settings) -> None:
+    _assert_embeddings_roundtrip(openrouter_settings)
+
+
+@pytest.mark.live
+def test_embeddings_roundtrip_live() -> None:
+    _assert_embeddings_roundtrip(get_settings())
