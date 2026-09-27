@@ -8,8 +8,9 @@ Laws are the XHTML that EUR-Lex shows (`source_page`), downloaded from the Publi
 Cellar by CELEX number with `Accept-Language` picking the language. EUR-Lex itself sits behind a
 bot challenge (HTTP 202) after a few requests and injects a per-response tracking script, so its
 bytes differ on every download and a sha256 comparison would never be stable; Cellar serves the
-same document without either. Guidelines are the Commission's PDFs, whose download links
-(`ec.europa.eu/newsroom/dae/redirection/document/<n>`) are listed on `source_page`.
+same document without either (docs/decisions/008-cellar-source.md). Guidelines are the
+Commission's PDFs, whose download links (`ec.europa.eu/newsroom/dae/redirection/document/<n>`)
+are listed on `source_page`.
 """
 
 from typing import Literal
@@ -49,6 +50,8 @@ class Source(BaseModel):
     """The human-facing page the download URL comes from."""
     url: str | None = None
     absent_reason: str | None = None
+    celex: str | None = None
+    """CELEX number of a law; None for guidance."""
     accept_language: str | None = None
     """For a Cellar URL: the ISO 639-2 language to request (the URL itself is language-neutral)."""
 
@@ -78,6 +81,7 @@ def _eurlex(
             version=version,
             source_page=EURLEX_PAGE.format(lang=lang.upper(), celex=celex),
             url=CELLAR.format(celex=celex),
+            celex=celex,
             accept_language=CELLAR_LANGUAGE[lang],
         )
         for lang in LANGUAGES

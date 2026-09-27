@@ -158,16 +158,43 @@ def test_failure_keeps_the_earlier_entry_and_is_reported(tmp_path: Path) -> None
     assert not second.manifest_written
 
 
-def test_failure_without_earlier_entry_is_recorded_absent(tmp_path: Path) -> None:
+def test_failed_first_fetch_is_unknown_never_absent(tmp_path: Path) -> None:
     def challenge(request: httpx.Request) -> httpx.Response:
         return httpx.Response(202, headers={"x-amzn-waf-action": "challenge"})
 
     report = run(tmp_path, challenge, clock())
 
-    law_en = report.manifest.documents[0]
-    assert not law_en.available
-    assert law_en.absent_reason is not None and law_en.absent_reason.startswith("Fetch failed")
-    assert len(report.failures) == 3  # both laws and the English guideline
+    stored = load_manifest(tmp_path / "manifest.yaml").documents
+    failed = [entry for entry in stored if entry.url is not None]
+    assert len(failed) == 3 and len(report.failures) == 3  # both laws and the English guideline
+    for entry in failed:
+        assert entry.available is None, entry.key
+        assert entry.absent_reason is None
+        assert entry.fetch_error == "gave up after 4 attempts (HTTP 202)"
+
+
+def test_later_success_replaces_a_failed_entry(tmp_path: Path) -> None:
+    now = clock()
+    run(tmp_path, lambda _: httpx.Response(503), now)
+
+    report = run(tmp_path, serve(ALL_PRESENT), now)
+
+    assert report.failures == ()
+    assert all(entry.fetch_error is None for entry in report.manifest.documents)
+    assert report.manifest.documents[0].available is True
+
+
+def test_non_transport_http_error_fails_one_document_only(tmp_path: Path) -> None:
+    def redirect_loop(request: httpx.Request) -> httpx.Response:
+        if str(request.url) == LAW_EN.url:
+            return httpx.Response(302, headers={"Location": LAW_EN.url or ""})
+        return serve(ALL_PRESENT)(request)
+
+    report = run(tmp_path, redirect_loop, clock())
+
+    assert report.failures == ("law.en: TooManyRedirects",)
+    assert report.manifest.documents[0].available is None
+    assert report.manifest.documents[1].available is True
 
 
 def test_waf_challenge_is_retried_with_backoff(tmp_path: Path) -> None:

@@ -36,6 +36,14 @@ def test_laws_are_eurlex_xhtml_from_cellar_in_the_right_language() -> None:
         assert (law.url or "").startswith("https://publications.europa.eu/resource/celex/")
         assert law.source_page.startswith("https://eur-lex.europa.eu/")
         assert law.accept_language == {"en": "eng", "de": "deu"}[law.language]
+        assert law.celex is not None and (law.url or "").endswith(law.celex)
+
+
+def test_only_laws_carry_a_celex_number() -> None:
+    guidance = [s for s in SOURCES if s.status in ("final", "draft")]
+    assert guidance and all(s.celex is None for s in guidance)
+    omnibus = {s.celex for s in SOURCES if s.id == "omnibus"}
+    assert omnibus == {"32026R1744"}
 
 
 def test_source_needs_exactly_one_of_url_and_reason() -> None:

@@ -45,8 +45,9 @@ def corpus_fetch(
     with make_client() as client:
         report = fetch_all(manifest_path, raw_path, Fetcher(client))
     for entry in report.manifest.documents:
-        state = "present" if entry.available else "absent "
-        typer.echo(f"{state} {entry.id}.{entry.language}  {entry.absent_reason or entry.sha256}")
+        state = {True: "present", False: "absent ", None: "FAILED "}[entry.available]
+        detail = entry.sha256 or entry.absent_reason or entry.fetch_error
+        typer.echo(f"{state} {entry.id}.{entry.language}  {detail}")
     typer.echo(
         f"changed: {len(report.changed)}, failed: {len(report.failures)}, "
         f"manifest {'written' if report.manifest_written else 'unchanged'}: {manifest_path}"
