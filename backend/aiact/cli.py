@@ -13,6 +13,7 @@ import typer
 from aiact import deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
+from aiact.eval import split as eval_split
 from aiact.settings import get_settings
 
 app = typer.Typer(no_args_is_help=True)
@@ -94,6 +95,33 @@ def corpus_parse(
 @eval_app.callback()
 def eval_() -> None:
     """Benchmark split, runs and metrics."""
+
+
+@eval_app.command("split")
+def eval_split_command(
+    examples: Annotated[
+        Path, typer.Option(help="The Commission example rows to split.")
+    ] = eval_split.EXAMPLES_FILE,
+    output: Annotated[Path, typer.Option(help="Where the split goes.")] = eval_split.SPLIT_FILE,
+    seed: Annotated[int, typer.Option(help="The shuffle seed.")] = eval_split.DEFAULT_SEED,
+    pile_b_fraction: Annotated[
+        float, typer.Option(help="The share of each stratum held out as Pile B.")
+    ] = eval_split.DEFAULT_PILE_B_FRACTION,
+) -> None:
+    """Split the Commission examples into Pile A and Pile B, stratified by area x verdict.
+
+    The written split is frozen: re-running with the same inputs changes nothing, and a
+    different assignment is refused.
+    """
+    try:
+        rows = eval_split.load_examples(examples)
+        split = eval_split.make_split(rows, seed, pile_b_fraction)
+        is_written = eval_split.write_split(split, output)
+    except (eval_split.SplitError, FileNotFoundError, ValueError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"Pile A: {len(split.pile_a)}, Pile B: {len(split.pile_b)} (seed {split.seed})")
+    typer.echo(f"{'Written' if is_written else 'Unchanged'}: {output}")
 
 
 @deps_app.callback()
