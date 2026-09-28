@@ -206,6 +206,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: INIT › Benchmark isolation 5. Output: `backend/tests/test_isolation.py`: (1) no `provisions.source_example_id` is in Pile B (or, in LOO mode, the retrieval filter is always applied), (2) no benchmark description has near-duplicate text in the corpus (embedding cosine above a threshold, and an n-gram check). The CI job from F2 is enabled.
   DoD: the check passes, and it fails when a Pile B example is deliberately injected into a test DB.
   Notes from merged stories: F2: the `isolation` job in `.github/workflows/ci.yml` exists with `if: false` and runs `pytest -q tests/test_isolation.py`; remove the `if: false`. B2 (001): the isolation test must confirm every `pile_b` hr-ex ID was found and dropped by C2; C2's derivation can be checked against the 79-row anchor table in docs/decisions/001.
+  **Decision 012 (overrides check 1):** Pile B rows exist in `provisions`, tagged. Check behaviour instead: every search entry point applies the Pile B exclusion by default; a default search (including a query copied from a Pile B example) never returns a Pile B row; every `pile_b` ID is tagged. The near-duplicate check runs against the retrievable corpus.
 
 ## Phase 2 — Corpus and retrieval
 
@@ -220,6 +221,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   DoD: the chunk count and dropped IDs are logged; a test asserts that no Pile B ID appears in the output in split mode.
   Notes from merged stories: Select guideline PDFs by `kind == "pdf"` in the manifest, not by `guide-*` id (the Code of Practice id is `code-of-practice-transparency`). The high-risk draft is 3 documents (see B2). PDF language is trusted from the registry: check it once Docling text exists. DE exists only for the definition and prohibited guidelines. B2 (decision 001, in docs/, readable): assign `hr-ex-NNN` to guideline examples with 001's counting rules 1–3 (heading line beginning a)/b)/c) and containing "Practical example"; exactly the two named extra lists; one bullet = one example; the named unbulleted gas/heating/electricity paragraphs; Section 5 lists what is NOT counted) and check the result against 001's anchor table (first/last ID and row count per list, total 307). Read only the `pile_b` IDs from eval/split.json. Any example you can't map is an isolation gap.
 
+  **Decision 012 (accepted, overrides the Output/DoD above):** Pile B chunks are KEPT, tagged with `source_example_id`, not dropped. DoD test: every `pile_b` ID is present and tagged; no Pile B example text is untagged. Log the chunk count and the tagged Pile B IDs.
 - [ ] **C3 · Load the corpus into Postgres** · Deps: C1, C2, F4 · Type: agent · Lane: Corpus (critical)
   Output: `aiact/corpus/load.py` (upsert documents and provisions, set valid_from/valid_to for the original and amended versions, link EN and DE); a CLI `uv run aiact corpus load`.
   DoD: re-running changes nothing; row counts per document are printed and saved to `docs/corpus_stats.md`.
@@ -240,6 +242,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   DoD: tests show a softly worded tenant-rent query retrieves Annex III 5(b) in the top 5; a German query works; the exclude filter works.
   Notes from merged stories: Use the decision-009 lookup rule so guidance (law_version null) stays searchable. Vector queries must use the index's cast and predicate and `set local hnsw.iterative_scan = relaxed_order`. Exclude filter: `source_example_id is null or not (source_example_id = any(...))`. The German stemmer is uneven (System→syst, Systeme→system): consider prefix queries. C1: parent rows include their children's text: search leaves, or dedupe hits by `parent_id`.
 
+  **Decision 012:** exclude the Pile B IDs by default in every search; turning it off is an explicit opt-in used only by the gap run (V8), never by the engine, API, MCP or Q&A. Test that a default search never returns a Pile B row.
 - [ ] **C7 · Obligations table + `list_obligations`** · Deps: F3, F4 · Parallel: the whole Corpus lane · Type: mixed
   Context: INIT › Scope (Obligations checklist), Roles, Omnibus details, Situation (dates). Output: `supabase/seed/obligations.yaml` (role × risk class → duty, article ref, applies_from date, SME/small-mid-cap relief note), migration `003_obligations.sql`, and `aiact/obligations/list.py`.
   DoD: every row cites an article; hand-checked tests for deployer/high-risk (Art. 26 duties from 2 Dec 2027), provider/high-risk, limited-risk transparency, and importer/distributor; the user has reviewed the dates.
@@ -337,6 +340,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: INIT › Benchmark isolation 4, Budget rules. Output: `eval/reports/run-<date>.md` with the headline sets run with held-out examples excluded and with all examples retrievable, the baselines, and the per-metric table.
   DoD: the numbers are stored; the failure cases are listed, grouped by step, to guide the engine fixes.
 
+  **Decision 012:** the gap run is `--exclude-mode all`, which turns C6's default Pile B exclusion off; the reported number keeps it on.
 - [ ] **V9 · appliedAI run + disagreement review** · Deps: V8, B11 · Type: human (an agent runs the benchmark and drafts the table)
   Output: `eval/reports/appliedai_review.md` (a verdict per disagreement: engine error, outdated label, or ambiguous; Annex I reported separately; accuracy before and after excluding outdated labels).
   DoD: every disagreement has a verdict written by the user; accuracy before and after excluding outdated labels is reported with its run_id; Annex I cases are listed separately.
