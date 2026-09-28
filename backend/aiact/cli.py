@@ -1,4 +1,4 @@
-"""The `aiact` command root. Scripts are subcommands per area: `aiact corpus …`, `aiact eval …`.
+"""The `aiact` command root. Scripts are subcommands per area: `aiact corpus …`, `aiact evaluate …`.
 
 Each area adds its commands to its group here (for example `@corpus_app.command()`).
 Help texts come from the callback docstrings.
@@ -22,7 +22,7 @@ eval_app = typer.Typer(no_args_is_help=True)
 deps_app = typer.Typer(no_args_is_help=True)
 
 app.add_typer(corpus_app, name="corpus")
-app.add_typer(eval_app, name="eval")
+app.add_typer(eval_app, name="evaluate")
 app.add_typer(deps_app, name="deps")
 
 

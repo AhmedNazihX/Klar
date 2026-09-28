@@ -40,10 +40,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data
 │   │   │   ├── cases.py             BenchmarkCase schema + loader + appliedAI mapping (F7)
-│   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact eval split` (B3)
-│   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact eval similarity` (B4)
-│   │   │   ├── label_filter.py      second-model label filter; `aiact eval label-filter` (B9)
-│   │   │   ├── runner.py            `aiact eval run` (V1)
+│   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact evaluate split` (B3)
+│   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact evaluate similarity` (B4)
+│   │   │   ├── label_filter.py      second-model label filter; `aiact evaluate label-filter` (B9)
+│   │   │   ├── runner.py            `aiact evaluate run` (V1)
 │   │   │   ├── metrics.py           deterministic metrics + report tables (V2)
 │   │   │   ├── baselines.py         (V3)
 │   │   │   ├── judge.py             (V4)
@@ -111,7 +111,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 
 | Rule | Why |
 | --- | --- |
-| All Python lives in `backend/aiact/`; scripts are CLI subcommands (`aiact corpus …`, `aiact eval …`), not loose files | One lint, type-check and test setup; scripts can import the package |
+| All Python lives in `backend/aiact/`; scripts are CLI subcommands (`aiact corpus …`, `aiact evaluate …`), not loose files | One lint, type-check and test setup; scripts can import the package |
 | `eval/` holds benchmark data and reports only; `backend/aiact/eval/` holds evaluation code | Keeps the answer key a pure data folder that hooks and sparse checkout can fence off |
 | `data/` holds legal texts only; nothing from `eval/` is ever copied there | INIT › Benchmark isolation |
 | `backend/aiact/engine/` doesn't exist before `eval/split.json` is committed | INIT › Benchmark isolation 1; `engine-gate.sh` |

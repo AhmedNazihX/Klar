@@ -142,7 +142,16 @@ def test_cli_writes_the_split(tmp_path: Path) -> None:
     records = [row.model_dump() for row in ROWS]
     examples = write_jsonl(tmp_path / "examples.jsonl", records)
     output = tmp_path / "split.json"
-    args = ["eval", "split", "--examples", str(examples), "--output", str(output), "--seed", "1"]
+    args = [
+        "evaluate",
+        "split",
+        "--examples",
+        str(examples),
+        "--output",
+        str(output),
+        "--seed",
+        "1",
+    ]
     result = CliRunner().invoke(app, args)
     assert result.exit_code == 0, result.output
     assert f"Pile B: {len(ROWS) // 2}" in result.output

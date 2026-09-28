@@ -65,6 +65,7 @@ load the `supabase-postgres-best-practices` and `supabase` skills first.
   - Read, search and edit `eval/` files with the file tools (Read, Grep, Glob, Write, Edit), not
     with `cat`, `ls`, `grep` or `find`.
   - Pick names that are not the bare word, for example `supabase migration new eval_records`.
+    The benchmark CLI group is `aiact evaluate …` for this reason; add new benchmark commands there.
   - For git on `eval/` paths, stage with `git add -A` from the repo root. If you must untrack or
     delete an `eval/` file, stop and report it for the orchestrator to run.
   - If a command is still blocked, stop and report it with the exact command. Never split or

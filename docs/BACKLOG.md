@@ -80,7 +80,7 @@ flowchart LR
 The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` › Tooling). Two items wait for later stories:
 
 - [ ] **T1 · `/eval` skill** · Deps: V1 · Type: agent
-  Context: INIT › Evaluation (Metrics, Budget rules), Benchmark isolation 4. Input: the `aiact eval run` CLI from V1, and `eval_runs`. Output: `.claude/skills/eval/SKILL.md`. The skill runs a benchmark with a subset size, a cost cap and a held-out/all mode, refuses a full run without the user's go-ahead, and writes `eval/reports/run-<date>.md` quoting only stored numbers (with run_ids).
+  Context: INIT › Evaluation (Metrics, Budget rules), Benchmark isolation 4. Input: the `aiact evaluate run` CLI from V1, and `eval_runs`. Output: `.claude/skills/eval/SKILL.md`. The skill runs a benchmark with a subset size, a cost cap and a held-out/all mode, refuses a full run without the user's go-ahead, and writes `eval/reports/run-<date>.md` quoting only stored numbers (with run_ids).
   DoD: a dry run on a 3-case subset works end to end through the skill; the report cites its run_id.
 
 - [ ] **T2 · Permission allowlist** · Deps: F2, F3, F4 (a few stories have run) · Type: agent
@@ -156,14 +156,14 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   **Outcome:** 307 examples extracted and reviewed by the user (12 Annex I + 295 Annex III; 122 high / 185 not_high; 1 legally_ambiguous; 15 with verdict-flipping variants). Decision 001 accepted: split, with a mechanical counting rule and a 79-list anchor table for C2; Pile B size left open for B3.
 
 - [x] **B3 · Commit the split (gate)** · Deps: B2 · Type: agent
-  Output: `backend/aiact/eval/split.py` (`aiact eval split`: seeded, stratified by area × verdict), which writes `eval/split.json` (`{mode: split|loo, seed, pile_a: [...], pile_b: [...]}`).
+  Output: `backend/aiact/eval/split.py` (`aiact evaluate split`: seeded, stratified by area × verdict), which writes `eval/split.json` (`{mode: split|loo, seed, pile_a: [...], pile_b: [...]}`).
   DoD: committed in a commit of its own **before any file under `aiact/engine/` exists** (check: `git log --diff-filter=A -- backend/aiact/engine` is empty at that commit). Every area appears in both piles, where there is more than one example.
   Notes from merged stories: B2 (decision 001, accepted): mode `split`, 307 examples (hr-ex-001…307), stratify by `area` × `verdict` (18 strata, each ≥ 4). OPEN QUESTION to settle with the user first: Pile B size (a half split means ~150 examples for B4 to rewrite and the user to approve). Once split.json is committed the IDs are frozen.
-  **Outcome:** eval/split.json committed alone (2692490) before any engine file: half split, seed 20260928, Pile A 154 / Pile B 153 of 307, every area x verdict stratum in both piles; aiact eval split refuses to change it; test pins the frozen IDs, not a fresh run (decision 011).
+  **Outcome:** eval/split.json committed alone (2692490) before any engine file: half split, seed 20260928, Pile A 154 / Pile B 153 of 307, every area x verdict stratum in both piles; aiact evaluate split refuses to change it; test pins the frozen IDs, not a fresh run (decision 011).
 
 - [ ] **B4 · Rewrite the Pile B examples as company descriptions** · Deps: B3, F7 · Type: mixed
   Context: INIT › Benchmark isolation 3. Output: `eval/cases/commission_b/*.yaml` (description written in a company's voice: size, bought or built, business context, some irrelevant detail; label, label_citation, source_example_id). In LOO mode this covers all examples.
-  DoD: every Pile B example has a case; `backend/aiact/eval/similarity.py` (`aiact eval similarity`) reports the maximum similarity between each case and its source example (embedding cosine plus longest shared n-gram), and no case shares more than an agreed threshold, for example an 8-word run; the user has approved every label.
+  DoD: every Pile B example has a case; `backend/aiact/eval/similarity.py` (`aiact evaluate similarity`) reports the maximum similarity between each case and its source example (embedding cosine plus longest shared n-gram), and no case shares more than an agreed threshold, for example an 8-word run; the user has approved every label.
   Notes from merged stories: B2 (001): carry `accepted_bases`, `label_status` and `flip_variants` from examples.jsonl into the cases; hr-ex-307 becomes a `legally_ambiguous` case. Write each description WITHOUT the row's flip-variant feature, and expect the engine to ask about or flag it (user product rule); a flip-variant row may also yield a variant case with the variant's verdict. hr-ex-283: describe all three steps. Annex I high rows carry the Art. 6(1) third-party-assessment note. F7 follow-up lands here: extend `BenchmarkCase` for any-of basis/citation matching (bare `art_6_3_filter` matches any lettered entry; a lettered answer matches the same letter or the bare form) and a `label_status` field.
 
 - [ ] **B5a–e · Own cases, one sub-story per category** · Deps: F7 · Parallel: with each other and with B2–B4 · Type: mixed
@@ -183,7 +183,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Output: `eval/cases/consistency/`: 3 paraphrases per system, LLM-generated and then checked by hand. DoD: approved by the user.
 
 - [ ] **B9 · Second-model label filter** · Deps: B4, B5, F6 · Type: agent, then human
-  Context: INIT › Label rules (Second-model filter). Output: `backend/aiact/eval/label_filter.py` (`aiact eval label-filter`: Claude Haiku 4.5 via OpenRouter labels every case blind) and `eval/reports/label_disagreements.md`. The user resolves each disagreement.
+  Context: INIT › Label rules (Second-model filter). Output: `backend/aiact/eval/label_filter.py` (`aiact evaluate label-filter`: Claude Haiku 4.5 via OpenRouter labels every case blind) and `eval/reports/label_disagreements.md`. The user resolves each disagreement.
   DoD: every disagreement has a written resolution (label kept or changed, with a reason).
   Notes from merged stories: X3 (005): pin Haiku 4.5 to `google-vertex/europe` (or `amazon-bedrock/eu-west-1`) with `allow_fallbacks=False`. Vertex Haiku rejects `response_format: json_object`: use a JSON schema (structured outputs). Haiku caches only with a top-level `cache_control`; check `langchain-openrouter` passes it through. About $0.02 per cold call (~10x Luna).
 
@@ -307,7 +307,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 ## Phase 4b — Evaluation harness (the early parts run in parallel with the engine)
 
 - [ ] **V1 · Eval runner** · Deps: F5, F7 · Parallel: C*, E* · Type: agent
-  Output: `aiact/eval/runner.py` and a CLI `aiact eval run --set <name> --classifier engine|baseline_* --subset N --exclude-mode heldout|all`, writing to `eval_runs` and `eval_case_results`, with concurrency and a cost cap. DoD: runs end to end with a dummy classifier.
+  Output: `aiact/eval/runner.py` and a CLI `aiact evaluate run --set <name> --classifier engine|baseline_* --subset N --exclude-mode heldout|all`, writing to `eval_runs` and `eval_case_results`, with concurrency and a cost cap. DoD: runs end to end with a dummy classifier.
   Notes from merged stories: F5: `eval_runs.id` is a uuid; `config` must hold the keys `model`, `embedding`, `retrieval` (null allowed); `scores` maps metric → number/bool/null (strict). Consider `finished_at`/status on `eval_runs` and per-case cost/error columns (a new migration: the one-schema-story rule applies). Both tables are server-only (RLS on, no grants).
 
 - [ ] **V2 · Deterministic metrics** · Deps: F3, F7 · Parallel · Type: agent
