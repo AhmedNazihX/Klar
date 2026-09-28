@@ -293,10 +293,12 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **E4 · Prohibited node (Art. 5)** · Deps: E1, C5, C6 · Parallel: E3, E5–E7 · Type: agent
   Output: `aiact/engine/nodes/prohibited.py`, which always fetches Art. 5 and applies date logic to the December 2026 prohibitions against `as_of`. DoD: replay tests on the B5c cases pass, including one case dated before 2 December 2026 and one after.
   **Follow-up from C7's date review (user, 2026-09-28):** law-enforcement users are in scope. Cover the Art. 5(2)–(7) conditions for real-time remote biometric identification (the Art. 5(1)(h) exceptions: authorisation, necessity, notification) rather than treating every 5(1)(h) case as a plain ban.
+  **From B12's spot-check (user, 2026-09-28):** for workplace or education monitoring (webcams, voice, keystrokes), ask whether the system infers emotions: a yes makes it prohibited under Art. 5(1)(f) (academic-0096). For Art. 5(1)(a)/(b), treat the significant-harm condition as a deciding fact: flag it as needing information or legally ambiguous when the description can't settle it (academic-0005).
 
 - [ ] **E5 · High-risk node (Art. 6, Annex III, Annex I flag)** · Deps: E1, C5, C6 · Size: L · Parallel: E3, E4, E6, E7 · Type: agent · **critical**
   Output: `aiact/engine/nodes/high_risk.py`: Annex III matching through search, analogy against Pile A examples (in LOO mode the exclude filter comes from the case), the Art. 6(3) filter with the profiling rule, and an Annex I flag that names the product law and asks the decisive question.
   DoD: replay tests on INIT's worked example and on 5 own cases; a test proves the exclude filter is passed through.
+  **From B12's spot-check (user, 2026-09-28):** key-fact questions where Annex III depends on who deploys or what a decision means: ask whether a benefits/pension scheme is public or private (5(a) needs a public authority; academic-0136); ask whether a scholarship or funding decision decides admission (3(a)/(c)) or only funds students already admitted (academic-0150); for Annex III 7, state the assumption "used by or on behalf of a competent public authority" in the deciding facts (academic-0116).
 
 - [ ] **E6 · Transparency node (Art. 50)** · Deps: E1, C5, C6 · Parallel · Type: agent
   Output: `aiact/engine/nodes/transparency.py`: a list of duties that stack on top of any class, and the 50(2) grace period for systems placed on the market before 2 August 2026. DoD: replay tests on the B5a cases pass.
