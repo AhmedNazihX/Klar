@@ -307,6 +307,7 @@
   - related:art:2
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0172
   set_name: academic
   language: en
@@ -362,6 +363,7 @@
   - related:art:62
   - related:art:63
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0175
   set_name: academic
   language: en
@@ -382,6 +384,7 @@
   - related:art:6
   - related:art:50
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0176
   set_name: academic
   language: en
@@ -558,6 +561,7 @@
   - related:art:95
   - related:art:96
   - related:art:99
+  - scoring:low-or-out-of-scope
 - id: academic-0184
   set_name: academic
   language: en
@@ -728,6 +732,7 @@
   - related:art:71
   - related:art:78
   - related:art:99
+  - scoring:low-or-out-of-scope
 - id: academic-0192
   set_name: academic
   language: en

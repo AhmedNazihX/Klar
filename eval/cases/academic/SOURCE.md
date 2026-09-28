@@ -34,8 +34,16 @@ changes, and no others:
   - academic-0005, academic-0136 and academic-0150 become `legally_ambiguous` (the class keeps the
     source's reading as the working assumption), with the open question and both readings in `notes`;
   - academic-0116 gets a note: Annex III 7(b) applies only for competent public authorities;
-  - academic-0160, 0253, 0308, 0314, 0324 and 0327 (rule- or template-based) get the tag
-    `scoring:low-or-out-of-scope`, and a note.
+  - academic-0160, 0253, 0308, 0314, 0324 and 0327 (the reviewed rule- or template-based cases) get a
+    note.
+  Each override names the source risk level and a fragment of the description it expects; the import
+  fails if either doesn't match.
+- Pattern 2, by rule (user decision, 2026-09-28): every case whose source label is `limited` or
+  `minimal` (still decided after the overrides) and whose `system_type` starts with "Rule-based" or
+  "Template-based" (either hyphen, including the source's non-breaking U+2011; any case) gets the tag
+  `scoring:low-or-out-of-scope`. At the pinned commit the rule tags 95 cases.
+- The import refuses any `scenarios.json` whose sha256 isn't the pinned value above
+  (`SOURCE_COMMIT` and `SOURCE_SHA256` in `backend/aiact/eval/academic.py`; keep them in sync).
 
 The labels are otherwise the authors', not this project's. Two scoring rules apply to this set only
 (`backend/aiact/eval/metrics.py`): `limited_risk` and `minimal_risk` count as one low bucket, and a case

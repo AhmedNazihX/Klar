@@ -1,11 +1,16 @@
 # Spot-check decisions for the academic set (eval/reports/academic_spotcheck.md), applied on top
 # of the source by `aiact evaluate academic-import`. Every change is logged in eval/LABEL_CHANGES.md.
-# Fields: id, optional status / risk_class / label_citation / add_tags, notes (written into the
-# case), reason (why, citing the provision), approved (who and when).
+# Fields: id; expect_class (the source risk level) and expect_text (a fragment of the description),
+# which the import checks so an override can't land on the wrong case; optional status /
+# risk_class / label_citation / add_tags; notes (written into the case); reason (why, citing the
+# provision); approved (who and when).
+# The pattern-2 tag `scoring:low-or-out-of-scope` is applied by rule in the importer, not here.
 
 # --- source label -> legally_ambiguous (risk_class keeps the stricter reading) ------------------
 
 - id: academic-0005
+  expect_class: prohibited
+  expect_text: barely perceptible visual prompts
   status: legally_ambiguous
   label_citation: ["art:5:1:a"]
   notes: >-
@@ -19,6 +24,8 @@
   approved: user, 2026-09-28 (B12 spot-check)
 
 - id: academic-0136
+  expect_class: high-risk
+  expect_text: eligibility for pension benefits
   status: legally_ambiguous
   label_citation: ["annex:III:5:a"]
   notes: >-
@@ -32,6 +39,8 @@
   approved: user, 2026-09-28 (B12 spot-check)
 
 - id: academic-0150
+  expect_class: high-risk
+  expect_text: doctoral scholarships
   status: legally_ambiguous
   label_citation: ["annex:III:3:a", "annex:III:3:c"]
   notes: >-
@@ -48,6 +57,8 @@
 # --- label kept, note added -----------------------------------------------------------------------
 
 - id: academic-0116
+  expect_class: high-risk
+  expect_text: profiles migrants
   label_citation: ["annex:III:7:b"]
   notes: >-
     High-risk under Annex III 7(b) only when used by or on behalf of competent public
@@ -57,10 +68,11 @@
     doesn't state it.
   approved: user, 2026-09-28 (B12 spot-check)
 
-# --- pattern 2: rule- or template-based; out_of_scope also counts, with a review ----------------
+# --- pattern 2, the reviewed cases: notes only (the importer's rule adds the tag) ----------------
 
 - id: academic-0160
-  add_tags: ["scoring:low-or-out-of-scope"]
+  expect_class: limited
+  expect_text: tips to reduce bills
   notes: &pattern2 >-
     Rule- or template-based: it may not be an AI system under Art. 3(1). The source's low label
     is kept; out_of_scope also counts as correct and goes to the disagreement review.
@@ -70,31 +82,36 @@
   approved: &pattern2approved user, 2026-09-28 (B12 spot-check, pattern 2)
 
 - id: academic-0253
-  add_tags: ["scoring:low-or-out-of-scope"]
+  expect_class: minimal
+  expect_text: basic budgeting tips
   notes: *pattern2
   reason: *pattern2reason
   approved: *pattern2approved
 
 - id: academic-0308
-  add_tags: ["scoring:low-or-out-of-scope"]
+  expect_class: minimal
+  expect_text: simple visual mood boards
   notes: *pattern2
   reason: *pattern2reason
   approved: *pattern2approved
 
 - id: academic-0314
-  add_tags: ["scoring:low-or-out-of-scope"]
+  expect_class: minimal
+  expect_text: short product description snippets
   notes: *pattern2
   reason: *pattern2reason
   approved: *pattern2approved
 
 - id: academic-0324
-  add_tags: ["scoring:low-or-out-of-scope"]
+  expect_class: minimal
+  expect_text: basic greeting card designs
   notes: *pattern2
   reason: *pattern2reason
   approved: *pattern2approved
 
 - id: academic-0327
-  add_tags: ["scoring:low-or-out-of-scope"]
+  expect_class: minimal
+  expect_text: basic pet grooming tips
   notes: *pattern2
   reason: *pattern2reason
   approved: *pattern2approved

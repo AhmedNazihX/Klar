@@ -120,14 +120,15 @@ def eval_academic_import(
     with the spot-check overrides applied."""
     out_path = out_dir or academic.ACADEMIC_DIR
     try:
-        converted = academic.convert(academic.read_scenarios(source))
-        cases = academic.apply_overrides(converted, academic.read_overrides(overrides))
-    except (CaseFileError, FileNotFoundError) as error:
+        scenarios = academic.read_scenarios(source, academic.SOURCE_SHA256)
+        cases = academic.build_cases(scenarios, academic.read_overrides(overrides))
+    except CaseFileError as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error
     for path in academic.write_cases(cases, out_path):
         typer.echo(f"written: {path}")
-    typer.echo(f"{len(cases)} cases")
+    tag = metrics.LOW_OR_OUT_OF_SCOPE_TAG
+    typer.echo(f"{len(cases)} cases, {sum(tag in case.tags for case in cases)} tagged {tag}")
 
 
 @eval_app.command("academic-sample")

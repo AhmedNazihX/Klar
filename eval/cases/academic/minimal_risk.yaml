@@ -19,6 +19,7 @@
   - related:art:50
   - related:art:62
   - related:art:63
+  - scoring:low-or-out-of-scope
 - id: academic-0242
   set_name: academic
   language: en
@@ -73,6 +74,7 @@
   - related:art:5
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0245
   set_name: academic
   language: en
@@ -133,6 +135,7 @@
   - related:art:6
   - related:art:50
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0248
   set_name: academic
   language: en
@@ -169,6 +172,7 @@
   - related:art:4
   - related:art:26
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0250
   set_name: academic
   language: en
@@ -204,6 +208,7 @@
   - related:art:4
   - related:art:50
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0252
   set_name: academic
   language: en
@@ -255,6 +260,7 @@
   - source:scenarios.json:data:253
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0255
   set_name: academic
   language: en
@@ -274,6 +280,7 @@
   - related:art:5
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0256
   set_name: academic
   language: en
@@ -295,6 +302,7 @@
   - related:art:50
   - related:art:62
   - related:art:63
+  - scoring:low-or-out-of-scope
 - id: academic-0257
   set_name: academic
   language: en
@@ -313,6 +321,7 @@
   - related:art:6
   - related:art:50
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0258
   set_name: academic
   language: en
@@ -363,6 +372,7 @@
   - related:art:4
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0261
   set_name: academic
   language: en
@@ -382,6 +392,7 @@
   - related:art:50
   - related:art:62
   - related:art:63
+  - scoring:low-or-out-of-scope
 - id: academic-0262
   set_name: academic
   language: en
@@ -402,6 +413,7 @@
   - related:art:50
   - related:art:80
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0263
   set_name: academic
   language: en
@@ -422,6 +434,7 @@
   - related:art:62
   - related:art:63
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0264
   set_name: academic
   language: en
@@ -439,6 +452,7 @@
   - related:art:2
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0265
   set_name: academic
   language: en
@@ -459,6 +473,7 @@
   - related:art:62
   - related:art:95
   - related:art:96
+  - scoring:low-or-out-of-scope
 - id: academic-0266
   set_name: academic
   language: en
@@ -476,6 +491,7 @@
   - related:art:6
   - related:art:50
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0267
   set_name: academic
   language: en
@@ -495,6 +511,7 @@
   - related:art:50
   - related:art:62
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0268
   set_name: academic
   language: en
@@ -515,6 +532,7 @@
   - related:art:50
   - related:art:62
   - related:art:99
+  - scoring:low-or-out-of-scope
 - id: academic-0269
   set_name: academic
   language: en
@@ -536,6 +554,7 @@
   - related:art:74
   - related:art:95
   - related:art:96
+  - scoring:low-or-out-of-scope
 - id: academic-0270
   set_name: academic
   language: en
@@ -553,6 +572,7 @@
   - related:art:4
   - related:art:62
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0271
   set_name: academic
   language: en
@@ -569,6 +589,7 @@
   - source:scenarios.json:data:270
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0272
   set_name: academic
   language: en
@@ -585,6 +606,7 @@
   - source:scenarios.json:data:271
   - related:art:2
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0273
   set_name: academic
   language: en
@@ -602,6 +624,7 @@
   - related:art:4
   - related:art:50
   - related:art:62
+  - scoring:low-or-out-of-scope
 - id: academic-0274
   set_name: academic
   language: en
@@ -623,6 +646,7 @@
   - related:art:50
   - related:art:62
   - related:art:63
+  - scoring:low-or-out-of-scope
 - id: academic-0275
   set_name: academic
   language: en
@@ -640,6 +664,7 @@
   - related:art:2
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0276
   set_name: academic
   language: en
@@ -658,6 +683,7 @@
   - related:art:50
   - related:art:62
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0277
   set_name: academic
   language: en
@@ -676,6 +702,7 @@
   - related:art:50
   - related:art:62
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0278
   set_name: academic
   language: en
@@ -693,6 +720,7 @@
   - related:art:4
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0279
   set_name: academic
   language: en
@@ -709,6 +737,7 @@
   - source:scenarios.json:data:278
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0280
   set_name: academic
   language: en
@@ -726,6 +755,7 @@
   - related:art:4
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0281
   set_name: academic
   language: en
@@ -745,6 +775,7 @@
   - related:art:62
   - related:art:63
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0282
   set_name: academic
   language: en
@@ -761,6 +792,7 @@
   - source:scenarios.json:data:281
   - related:art:2
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0283
   set_name: academic
   language: en
@@ -779,6 +811,7 @@
   - related:art:5
   - related:art:50
   - related:art:62
+  - scoring:low-or-out-of-scope
 - id: academic-0284
   set_name: academic
   language: en
@@ -801,6 +834,7 @@
   - related:art:80
   - related:art:95
   - related:art:96
+  - scoring:low-or-out-of-scope
 - id: academic-0285
   set_name: academic
   language: en
@@ -819,6 +853,7 @@
   - related:art:50
   - related:art:62
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0286
   set_name: academic
   language: en
@@ -840,6 +875,7 @@
   - related:art:62
   - related:art:80
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0287
   set_name: academic
   language: en
@@ -858,6 +894,7 @@
   - related:art:4
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0288
   set_name: academic
   language: en
@@ -892,6 +929,7 @@
   - related:art:50
   - related:art:95
   - related:art:99
+  - scoring:low-or-out-of-scope
 - id: academic-0290
   set_name: academic
   language: en
@@ -910,6 +948,7 @@
   - related:art:6
   - related:art:50
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0291
   set_name: academic
   language: en
@@ -929,6 +968,7 @@
   - related:art:50
   - related:art:62
   - related:art:63
+  - scoring:low-or-out-of-scope
 - id: academic-0292
   set_name: academic
   language: en
@@ -944,6 +984,7 @@
   tags:
   - source:scenarios.json:data:291
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0293
   set_name: academic
   language: en
@@ -963,6 +1004,7 @@
   - related:art:50
   - related:art:62
   - related:art:63
+  - scoring:low-or-out-of-scope
 - id: academic-0294
   set_name: academic
   language: en
@@ -979,6 +1021,7 @@
   - source:scenarios.json:data:293
   - related:art:5
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0295
   set_name: academic
   language: en
@@ -995,6 +1038,7 @@
   - source:scenarios.json:data:294
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0296
   set_name: academic
   language: en
@@ -1017,6 +1061,7 @@
   - related:art:63
   - related:art:80
   - related:art:96
+  - scoring:low-or-out-of-scope
 - id: academic-0297
   set_name: academic
   language: en
@@ -1035,6 +1080,7 @@
   - related:art:5
   - related:art:50
   - related:art:62
+  - scoring:low-or-out-of-scope
 - id: academic-0298
   set_name: academic
   language: en
@@ -1054,6 +1100,7 @@
   - related:art:4
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0299
   set_name: academic
   language: en
@@ -1070,6 +1117,7 @@
   - source:scenarios.json:data:298
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0300
   set_name: academic
   language: en
@@ -1087,6 +1135,7 @@
   - related:art:2
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0301
   set_name: academic
   language: en
@@ -1107,6 +1156,7 @@
   - related:art:62
   - related:art:95
   - related:art:96
+  - scoring:low-or-out-of-scope
 - id: academic-0302
   set_name: academic
   language: en
@@ -1126,6 +1176,7 @@
   - related:art:6
   - related:art:50
   - related:art:62
+  - scoring:low-or-out-of-scope
 - id: academic-0303
   set_name: academic
   language: en
@@ -1143,6 +1194,7 @@
   - related:art:2
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0304
   set_name: academic
   language: en
@@ -1165,6 +1217,7 @@
   - related:art:50
   - related:art:62
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0305
   set_name: academic
   language: en
@@ -1182,6 +1235,7 @@
   - related:art:4
   - related:art:26
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0306
   set_name: academic
   language: en
@@ -1199,6 +1253,7 @@
   - related:art:2
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0307
   set_name: academic
   language: en
@@ -1217,6 +1272,7 @@
   - related:art:4
   - related:art:5
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0308
   set_name: academic
   language: en
@@ -1253,6 +1309,7 @@
   - related:art:2
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0310
   set_name: academic
   language: en
@@ -1271,6 +1328,7 @@
   - related:art:6
   - related:art:50
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0311
   set_name: academic
   language: en
@@ -1288,6 +1346,7 @@
   - related:art:4
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0312
   set_name: academic
   language: en
@@ -1308,6 +1367,7 @@
   - related:art:62
   - related:art:80
   - related:art:96
+  - scoring:low-or-out-of-scope
 - id: academic-0313
   set_name: academic
   language: en
@@ -1324,6 +1384,7 @@
   - source:scenarios.json:data:312
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0314
   set_name: academic
   language: en
@@ -1366,6 +1427,7 @@
   - related:art:56
   - related:art:62
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0316
   set_name: academic
   language: en
@@ -1385,6 +1447,7 @@
   - related:art:6
   - related:art:50
   - related:art:62
+  - scoring:low-or-out-of-scope
 - id: academic-0317
   set_name: academic
   language: en
@@ -1402,6 +1465,7 @@
   - related:art:4
   - related:art:50
   - related:art:62
+  - scoring:low-or-out-of-scope
 - id: academic-0318
   set_name: academic
   language: en
@@ -1417,6 +1481,7 @@
   tags:
   - source:scenarios.json:data:317
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0319
   set_name: academic
   language: en
@@ -1436,6 +1501,7 @@
   - related:art:50
   - related:art:62
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0320
   set_name: academic
   language: en
@@ -1455,6 +1521,7 @@
   - related:art:4
   - related:art:5
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0321
   set_name: academic
   language: en
@@ -1475,6 +1542,7 @@
   - related:art:80
   - related:art:95
   - related:art:96
+  - scoring:low-or-out-of-scope
 - id: academic-0322
   set_name: academic
   language: en
@@ -1490,6 +1558,7 @@
   tags:
   - source:scenarios.json:data:321
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0323
   set_name: academic
   language: en
@@ -1507,6 +1576,7 @@
   - related:art:4
   - related:art:6
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0324
   set_name: academic
   language: en
@@ -1543,6 +1613,7 @@
   - source:scenarios.json:data:324
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0326
   set_name: academic
   language: en
@@ -1560,6 +1631,7 @@
   - related:art:4
   - related:art:5
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0327
   set_name: academic
   language: en
@@ -1598,6 +1670,7 @@
   - related:art:6
   - related:art:50
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0329
   set_name: academic
   language: en
@@ -1614,6 +1687,7 @@
   - source:scenarios.json:data:328
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0330
   set_name: academic
   language: en
@@ -1636,6 +1710,7 @@
   - related:art:63
   - related:art:95
   - related:art:96
+  - scoring:low-or-out-of-scope
 - id: academic-0331
   set_name: academic
   language: en
@@ -1652,6 +1727,7 @@
   - source:scenarios.json:data:330
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0332
   set_name: academic
   language: en
@@ -1671,6 +1747,7 @@
   - related:art:6
   - related:art:50
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0333
   set_name: academic
   language: en
@@ -1689,6 +1766,7 @@
   - related:art:6
   - related:art:50
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0334
   set_name: academic
   language: en
@@ -1709,6 +1787,7 @@
   - related:art:50
   - related:art:62
   - related:art:80
+  - scoring:low-or-out-of-scope
 - id: academic-0335
   set_name: academic
   language: en
@@ -1725,6 +1804,7 @@
   - source:scenarios.json:data:334
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0336
   set_name: academic
   language: en
@@ -1745,6 +1825,7 @@
   - related:art:62
   - related:art:63
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0337
   set_name: academic
   language: en
@@ -1763,6 +1844,7 @@
   - related:art:6
   - related:art:50
   - related:art:95
+  - scoring:low-or-out-of-scope
 - id: academic-0338
   set_name: academic
   language: en
@@ -1780,6 +1862,7 @@
   - related:art:4
   - related:art:5
   - related:art:50
+  - scoring:low-or-out-of-scope
 - id: academic-0339
   set_name: academic
   language: en
@@ -1797,3 +1880,4 @@
   - related:art:2
   - related:art:4
   - related:art:50
+  - scoring:low-or-out-of-scope

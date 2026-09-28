@@ -315,13 +315,15 @@ def appliedai_review_count(outcomes: Iterable[Outcome]) -> int:
 
 
 def academic_review_count(outcomes: Iterable[Outcome]) -> int:
-    """Academic low-or-out-of-scope cases answered `out_of_scope`: a match, but each goes to the
-    disagreement review (B12 spot-check)."""
+    """Academic cases answered `out_of_scope` that `risk_class_match` accepts only through the
+    low-or-out-of-scope rule (no academic label is `out_of_scope` itself): a match, but each goes
+    to the disagreement review (B12 spot-check).
+    Built on the same rule, so the count and the accuracy can't drift apart."""
     return sum(
         outcome.case.set_name is CaseSet.ACADEMIC
-        and LOW_OR_OUT_OF_SCOPE_TAG in outcome.case.tags
         and outcome.result is not None
         and outcome.result.risk_class is RiskClass.OUT_OF_SCOPE
+        and risk_class_match(outcome) is True
         for outcome in outcomes
     )
 

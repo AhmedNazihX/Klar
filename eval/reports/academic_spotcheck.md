@@ -37,8 +37,10 @@ change.
   accuracy (cases 0161, 0190, 0208, 0216). Other sets still score them exactly.
 - **Pattern 2:** a rule- or template-based system may not be an AI system under Art. 3(1). The source's
   low label is kept, but `out_of_scope` also counts as correct, and each such answer is listed for the
-  disagreement review, as with appliedAI `low` (cases 0160, 0253, 0308, 0314, 0324, 0327, tagged
-  `scoring:low-or-out-of-scope`).
+  disagreement review, as with appliedAI `low` (cases 0160, 0253, 0308, 0314, 0324, 0327).
+  **Extended (user, 2026-09-28, option (a)):** the tag `scoring:low-or-out-of-scope` is applied by rule
+  to every decided `limited` or `minimal` case whose system type starts with "Rule-based" or
+  "Template-based": 95 cases at the pinned source commit, the six reviewed ones included.
 
 ## Cases
 

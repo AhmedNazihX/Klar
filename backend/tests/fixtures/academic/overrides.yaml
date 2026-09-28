@@ -1,12 +1,16 @@
 # Made-up overrides for the fixture scenarios; not benchmark decisions.
 - id: academic-0002
+  expect_class: high-risk
+  expect_text: Ranks job applicants
   status: legally_ambiguous
   label_citation: ["annex:III:4:a"]
   notes: Open question and both readings.
   reason: Made-up reason.
   approved: fixture
 - id: academic-0001
-  add_tags: ["scoring:low-or-out-of-scope"]
+  expect_class: minimal
+  expect_text: invoices
+  add_tags: ["fixture:extra"]
   notes: Made-up note.
   reason: Made-up reason.
   approved: fixture

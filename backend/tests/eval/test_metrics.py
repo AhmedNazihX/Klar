@@ -173,6 +173,23 @@ def test_academic_review_counts_out_of_scope_answers_on_tagged_cases() -> None:
     assert summarize(outcomes, None).academic_disagreement_review == 1
 
 
+@pytest.mark.parametrize(
+    "labelled",
+    [
+        case("acad", R.MINIMAL_RISK, status=Status.LEGALLY_AMBIGUOUS),
+        case("acad", R.HIGH_RISK),
+    ],
+    ids=["ambiguous", "high-risk"],
+)
+def test_review_count_follows_accuracy_for_tagged_non_low_cases(labelled: BenchmarkCase) -> None:
+    tagged = labelled.model_copy(
+        update={"set_name": CaseSet.ACADEMIC, "tags": (LOW_OR_OUT_OF_SCOPE_TAG,)}
+    )
+    answered = outcome(tagged, result(R.OUT_OF_SCOPE))
+    assert risk_class_match(answered) is not True
+    assert academic_review_count([answered]) == 0
+
+
 # --- false-low-risk and downgrade --------------------------------------------------------------
 
 
