@@ -50,7 +50,11 @@ uv run aiact evaluate run --set <set> --classifier <classifier> --subset <N> \
   --exclude-mode <mode> --max-cost-usd <cap> --seed <seed>
 ```
 
-(Leave out `--subset` only for a confirmed full run.) The last line reads
+(Leave out `--subset` only for a confirmed full run.) If it says `DATABASE_URL is not set`, the
+local database is the Supabase CLI default: prefix the command with
+`DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres` (never read `.env` to find
+out). Commit first when you can: the runner warns about uncommitted changes, and a dirty tree
+means the recorded git_sha may not reproduce. The last line reads
 `run <run_id>: <status>, <scored>/<planned> cases (<failed> failed), $<cost>, <tokens> tokens`.
 Keep that line exactly. On a non-zero exit, show the error and stop; nothing is reported.
 If the status is `cost_cap_reached`, say so plainly: the run covers fewer cases than planned.
