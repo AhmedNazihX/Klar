@@ -9,7 +9,7 @@
       "Bash(uv run pyright)",
       "Bash(uv run pyright *)",
       "Bash(uv run pytest)",
-      "Bash(uv run pytest *)",
+      "Bash(uv run pytest -q)",
       "Bash(uv run aiact deps check)",
       "Bash(uv run aiact --help)",
       "Bash(python3 .claude/scripts/backlog.py status)",
