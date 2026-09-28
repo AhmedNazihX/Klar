@@ -6,14 +6,18 @@ Help texts come from the callback docstrings.
 
 from collections.abc import Callable
 from pathlib import Path
+from subprocess import CalledProcessError
 from typing import Annotated
 
+import psycopg
 import typer
 
 from aiact import deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
+from aiact.eval import records, runner
 from aiact.eval import split as eval_split
+from aiact.eval.cases import CaseFileError, CaseSet
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
 from aiact.settings import get_settings
@@ -99,6 +103,74 @@ def corpus_parse(
 @eval_app.callback()
 def eval_() -> None:
     """Benchmark split, runs and metrics."""
+
+
+@eval_app.command("run")
+def eval_run(
+    set_name: Annotated[CaseSet, typer.Option("--set", help="The case set to run")],
+    classifier: Annotated[
+        str, typer.Option(help=f"One of: {', '.join(sorted(runner.CLASSIFIERS))}")
+    ],
+    subset: Annotated[
+        int | None, typer.Option(min=1, help="Run a seeded random sample of N cases")
+    ] = None,
+    exclude_mode: Annotated[
+        runner.ExcludeMode,
+        typer.Option(help="heldout: keep held-out examples out of retrieval; all: exclude none"),
+    ] = runner.ExcludeMode.HELDOUT,
+    concurrency: Annotated[
+        int, typer.Option(min=1, max=runner.MAX_CONCURRENCY, help="Cases in flight at once")
+    ] = runner.DEFAULT_CONCURRENCY,
+    max_cost_usd: Annotated[
+        float, typer.Option(min=0.000001, help="Start no new case once this much is spent")
+    ] = runner.DEFAULT_MAX_COST_USD,
+    seed: Annotated[int, typer.Option(help="Seed for the --subset sample")] = 0,
+) -> None:
+    """Run a classifier over a benchmark set and record it in eval_runs / eval_case_results."""
+    try:
+        chosen = runner.build_classifier(classifier)
+        split = runner.load_split() if exclude_mode is runner.ExcludeMode.HELDOUT else None
+        cases = runner.load_benchmark(set_name)
+        git_sha, is_dirty = runner.current_git_state()
+    except (
+        runner.ClassifierUnavailableError,
+        runner.SplitError,
+        CaseFileError,
+        FileNotFoundError,
+        CalledProcessError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    options = runner.RunOptions(
+        benchmark=set_name,
+        classifier_name=classifier,
+        exclude_mode=exclude_mode,
+        git_sha=git_sha,
+        is_git_dirty=is_dirty,
+        subset=subset,
+        seed=seed,
+        concurrency=concurrency,
+        max_cost_usd=max_cost_usd,
+    )
+    try:
+        with records.connect() as connection:
+            summary = runner.run_benchmark(
+                cases, chosen, records.PostgresRunStore(connection), options, split
+            )
+    except (records.DatabaseNotConfiguredError, runner.SplitError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(
+        f"run {summary.run_id}: {summary.status.value}, {summary.cases_scored}/"
+        f"{summary.cases_planned} cases ({summary.cases_failed} failed), "
+        f"${summary.cost_usd:.4f}, {summary.tokens} tokens"
+    )
+    if is_dirty:
+        typer.echo("Warning: uncommitted changes; the recorded git_sha may not reproduce", err=True)
 
 
 @eval_app.command("split")
