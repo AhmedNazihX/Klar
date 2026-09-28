@@ -43,13 +43,16 @@ cap on the OpenRouter key as the budget guard. The answers decide how every mode
 - **Gemini 3.1 Flash-Lite** caches implicitly with no write charge; the cached read is 0.1× input. Prompt cost fell
   from $0.00166485 to $0.00016946.
 - **Claude Haiku 4.5** caches only when asked: the request sets top-level `cache_control: {"type": "ephemeral"}`.
-  Prompt cost fell from $0.0088858 to $0.0007139. The same holds for Claude Sonnet 5 (same provider mechanism; not
-  called, to save budget).
+  Prompt cost fell from $0.0088858 to $0.0007139. Claude Sonnet 5 should cache the same way (same provider
+  mechanism, and its endpoints list cache-read and cache-write prices), but this is **unverified**: it was not
+  called, to save budget.
 - Caching needs an identical prefix: static instructions and retrieved provisions first, the user's description last.
   With one pinned endpoint the second call hit the cache without a `session_id`.
 - The Vertex Haiku endpoints reject `response_format: json_object` (routing error "Filter by Parameters removed
-  google-vertex/global, google-vertex/europe"). They list `structured_outputs` as supported, so V4 and B8 should
+  google-vertex/global, google-vertex/europe"). They list `structured_outputs` as supported, so V4 and B9 should
   use a JSON schema, not JSON mode, on that route.
+- X3 checked only that the chosen models list tools and structured output. How reliable GPT-6 Luna's tool calls
+  and structured output are through OpenRouter is measured by X2 (engine smoke test).
 
 ### Token use of one sample classification
 - One single-prompt classification with Articles 5, 6, 50 and Annex III as context costs about **6,000 prompt
@@ -71,15 +74,17 @@ Context and prices are per endpoint from `GET /api/v1/models/<slug>/endpoints`; 
 | Judge backup, label filter | `anthropic/claude-haiku-4.5` | 200,000 (64,000) | `amazon-bedrock/eu-west-1`, `google-vertex/europe` | 1.10 / 5.50 / 0.11 | `anthropic` and `azure/global` are removed by `data_collection: deny` + `zdr`. Vertex: no `response_format`, has `structured_outputs` |
 | Premium comparison | `anthropic/claude-sonnet-5` | 1,000,000 (128,000) | `amazon-bedrock/eu-west-1`, `google-vertex/europe` | 2.20 / 11.00 / 0.22 | Bedrock endpoints do not list `structured_outputs`; use `google-vertex/europe` |
 | Judge (first pass) | `typesafe/jev-router`, `typesafe/jev-1.13` | router: 1,000,000; jev-1.13: 32,000 | none with an EU tag | jev-1.13: 0.042 input | See Jev below |
-| Embeddings | `qwen/qwen3-embedding-8b` | Nebius 32,000 | `nebius` (ZDR) | 0.01 input | Nebius is the EU host named in INIT; OpenRouter gives no region tag for it. `deepinfra/us` and `siliconflow/fp8` are also ZDR but not EU |
+| Embeddings | `qwen/qwen3-embedding-8b` | Nebius 32,000 | `nebius` (ZDR; EU per INIT, not per OpenRouter) | 0.01 input | The EU claim rests on INIT › Tech stack (Embeddings: "provider pinned to Nebius (EU)"); OpenRouter gives no region tag for it, so X3 did not verify the region. `deepinfra/us` and `siliconflow/fp8` are also ZDR but not EU |
 | Embedding comparison arm | `openai/text-embedding-3-large` | 8,192 | none (`azure` is ZDR, no EU tag) | 0.13 input | Evaluation only: embeds corpus text and benchmark queries, never user input |
 
 - **Regional endpoints must be pinned by full slug.** On the global domain, OpenRouter's default routing skips
   endpoints with a regional surcharge whenever a standard-priced endpoint exists ("Filter by Regional Surcharge" in
   the routing error above). A request reaches `azure/eu`, `google-vertex/eu`, `google-vertex/europe` or
   `amazon-bedrock/eu-west-1` only when that slug is in `provider.order` or `provider.only`; a bare `azure` or
-  `google-vertex` does not select them (OpenRouter docs, guides/features/in-region-routing). The EU surcharge is 10%
-  over the standard price for every model above.
+  `google-vertex` does not select them (OpenRouter docs, guides/features/in-region-routing). For Luna, Flash-Lite,
+  Haiku 4.5 and Sonnet 5 the EU endpoint costs 10% more than the standard price (endpoint listing). Jev and
+  text-embedding-3-large have no EU endpoint, and Nebius has a single endpoint at $0.01/M, the same as the
+  non-EU Qwen3 endpoint on DeepInfra, so no surcharge applies to them.
 - **In-region processing at OpenRouter itself** (`https://eu.openrouter.ai`, requests decrypted and handled in the
   EU) exists only on Business and Enterprise plans (OpenRouter docs, guides/features/sovereign-ai). This key reports
   `allowed_data_regions: ["global"]`, so OpenRouter's own hop stays global; only the model provider is pinned to the
@@ -105,31 +110,47 @@ Context and prices are per endpoint from `GET /api/v1/models/<slug>/endpoints`; 
 ## Options
 | Option | What was measured | Result | Source |
 | --- | --- | --- | --- |
-| A. Default routing with ZDR + no-training only | Where requests land | Luna goes to `azure` (global ZDR); EU endpoints are skipped as surcharge endpoints | endpoints listing; OpenRouter in-region routing docs |
-| B. Pin each chat model's EU ZDR endpoint in `provider.order`, fallbacks off | Cost, caching, availability | Works for Luna, Flash-Lite, Haiku; +10% price; caching hits on the second call | generation ids above |
+| A. Default routing with ZDR + no-training only | Where requests would land (inferred from the listing, not called) | Luna would go to a standard-priced ZDR endpoint (`azure`, not region-tagged); EU endpoints are skipped as surcharge endpoints | endpoints listing; OpenRouter in-region routing docs; no live call |
+| B. Pin each model's EU ZDR endpoint in `provider.order`, fallbacks off | Cost, caching, availability | Works for Luna, Flash-Lite, Haiku (called); Sonnet 5 not called; +10% price; caching hits on the second call | generation ids above |
 | C. `eu.openrouter.ai` in-region routing | Plan requirement | Needs Business/Enterprise; key is `global` | `GET /api/v1/key`; sovereign-ai docs |
 
 ## Decision
-Option B: every model call pins its EU ZDR endpoint (`azure/eu` for Luna, `google-vertex/eu` for Flash-Lite,
-`google-vertex/europe` for Haiku 4.5 and Sonnet 5, `nebius` for embeddings) by its full provider slug in
-`provider.order` with `allow_fallbacks=False`, sends `zdr` and `data_collection: deny`, and uses
-static-prefix-first prompts so caching applies. The 10% EU surcharge is accepted. The user approved this option. The rule that decided it is INIT › Ethical considerations (confidential company information:
-"model providers and OpenRouter configured not to train on or retain inputs where possible") together with the EU host already
-chosen for embeddings; the 10% surcharge is small against the per-case cost measured above.
+Option B, approved by the user. Every model that has an EU ZDR endpoint is pinned to it by its full provider slug
+in `provider.order` with `allow_fallbacks=False`: `azure/eu` for Luna, `google-vertex/eu` for Flash-Lite,
+`google-vertex/europe` for Haiku 4.5 and Sonnet 5, and `nebius` for Qwen3 embeddings (EU per INIT, see the table).
+The 10% EU surcharge is accepted. Prompts put the static prefix first so caching applies.
+
+The two models without an EU endpoint are routed as follows:
+- **Jev** has no EU route and is not pinned here. `typesafe/jev-1.13` is on the ZDR list (endpoint `typesafe`).
+  `typesafe/jev-router` has no endpoint of its own, so it has no ZDR entry, and it forwards to other models. V3 and
+  V4 settle whether Jev is used at all (see Consequences).
+- **text-embedding-3-large** (on the ZDR list via `azure`, no EU tag) is sent with `zdr` and `data_collection: deny`
+  but no region pin. It is the X1 comparison arm and only embeds corpus text and benchmark queries, never user
+  input.
+
+The deciding rule between Options A and B is **data residency**: INIT › Tech stack (Hosting: "Keeps data in the
+EU") and the EU host already chosen for embeddings (INIT › Tech stack, Embeddings: "provider pinned to Nebius (EU)").
+Option A keeps no retention but lets requests leave the EU; Option B keeps them there. The flags both options share,
+`zdr` and `data_collection: deny`, follow from INIT › Ethical considerations (confidential company information:
+"model providers and OpenRouter configured not to train on or retain inputs where possible"). The 10% surcharge is
+small against the per-case cost measured above.
 
 ## Consequences
 - **Settings (not applied; X3's DoD doesn't ask for it).** `ENGINE_MODEL=openai/gpt-6-luna-20260922` is X2's call.
   The chat factory needs a provider-order setting per role (for example `ENGINE_PROVIDER=azure/eu`), passed as
   `provider_order` with `allow_fallbacks=False`, the way embeddings already pin `EMBEDDING_PROVIDER=nebius`.
 - **Anthropic caching** needs top-level `cache_control: {"type": "ephemeral"}` in the request body. Whoever builds
-  the Haiku calls (B8 label filter, V4 judge backup) must check that `langchain-openrouter` passes it through.
+  the Haiku calls (B9 label filter, V4 judge backup) must check that `langchain-openrouter` passes it through.
 - **Prompt layout.** E-stories put instructions and retrieved provisions before the user's description, so the
   prefix is cacheable across checks and cases.
-- **Jev (V4).** Don't use `typesafe/jev-router` as the judge: it can route to Luna. `typesafe/jev-1.13` needs the
-  `/api/alpha/decisions` endpoint, not chat completions, so V4 must check whether that API can act as a judge at all,
-  or fall back to Claude Haiku 4.5.
-- **Budget.** The key has $9.95 of its $35 cap left. That covers X1, X2 and early E-stories at the measured cost,
-  but not the full plan (INIT estimates €20–30 in total). This is known and handled by the user, who will switch
+- **Jev (V3 and V4).** Don't use `typesafe/jev-router` as the judge (V4) or as the "Jev classifying directly"
+  baseline (V3): it can route to Luna, so the judge or baseline would be the engine model. `typesafe/jev-1.13` needs
+  the `/api/alpha/decisions` endpoint, not chat completions. V4 must check whether that API can act as a judge at
+  all, or fall back to Claude Haiku 4.5; V3 must check whether it can classify a description, or drop the Jev
+  baseline.
+- **Budget.** The key has $9.95 of its $35 cap left. INIT › Tech stack estimates €20–30 for the whole plan, and
+  $9.95 is well below that: the cap as it stands does not cover the plan. X3 made no per-story estimate, so it
+  claims nothing about which stories the remainder covers. This is known and handled by the user, who will switch
   to another key or raise the cap when needed.
 - **Privacy notice (P-stories).** Name OpenRouter (global processing on this plan), Microsoft Azure (EU) for Luna,
   Google Vertex (EU) for Gemini and Claude, and Nebius for embeddings.
