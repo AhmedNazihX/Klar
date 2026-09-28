@@ -58,6 +58,17 @@ load the `supabase-postgres-best-practices` and `supabase` skills first.
   story, and never create `backend/aiact/engine/` before `eval/split.json` is committed.
   Hooks enforce these rules. If a hook blocks you, don't look for a way around it. Stop and report
   the block.
+- **The word "eval" in shell commands.** Outside the Corpus lane, a Bash command that contains the
+  bare word `eval` (a path like `eval/cases/…`, or an argument like `supabase migration new eval`)
+  can be blocked by Claude Code's own safety check, which mistakes it for the shell builtin. This
+  is not a project hook. Avoid it:
+  - Read, search and edit `eval/` files with the file tools (Read, Grep, Glob, Write, Edit), not
+    with `cat`, `ls`, `grep` or `find`.
+  - Pick names that are not the bare word, for example `supabase migration new eval_records`.
+  - For git on `eval/` paths, stage with `git add -A` from the repo root. If you must untrack or
+    delete an `eval/` file, stop and report it for the orchestrator to run.
+  - If a command is still blocked, stop and report it with the exact command. Never split or
+    disguise the word (`'eva''l'`, `printf`, variables) to get past the check.
 - For `mixed` or `human` stories: produce the draft, then report exactly what the user must review
   or supply. Never mark a user-approval item as done yourself.
 - If the story is ambiguous, or its Deps' outputs are missing, stop and report `BLOCKED` with the
