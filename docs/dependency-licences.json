@@ -87,6 +87,14 @@
     "licence": "MIT",
     "summary": "Client library to connect to the LangSmith Observability and Evaluation Platform."
   },
+  "lxml-stubs==0.5.1": {
+    "licence": "Apache Software License",
+    "summary": "Type annotations for the lxml package"
+  },
+  "lxml==6.1.3": {
+    "licence": "BSD-3-Clause",
+    "summary": "Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API."
+  },
   "markdown-it-py==4.2.0": {
     "licence": "MIT License",
     "summary": "Python port of markdown-it. Markdown parsing, done right!"

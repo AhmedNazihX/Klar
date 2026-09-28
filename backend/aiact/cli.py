@@ -11,6 +11,7 @@ from typing import Annotated
 import typer
 
 from aiact import deps
+from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
 from aiact.settings import get_settings
 
@@ -60,6 +61,34 @@ def corpus_fetch(
         typer.echo(f"FAILED {failure}", err=True)
     if report.failures:
         raise typer.Exit(code=1)
+
+
+@corpus_app.command("parse")
+def corpus_parse(
+    manifest: Annotated[
+        Path | None, typer.Option(help="Manifest to read [default: repo data/manifest.yaml]")
+    ] = None,
+    raw_dir: Annotated[
+        Path | None, typer.Option(help="Where raw files are [default: $AIACT_DATA_DIR/raw]")
+    ] = None,
+    out_dir: Annotated[
+        Path | None, typer.Option(help="Where JSONL goes [default: repo data/parsed]")
+    ] = None,
+) -> None:
+    """Parse the EUR-Lex laws into provisions, one JSONL file per document and language."""
+    out_path = out_dir or DEFAULT_PARSED_DIR
+    try:
+        report = parse_all(
+            manifest or DEFAULT_MANIFEST, raw_dir or get_settings().aiact_data_dir / "raw", out_path
+        )
+    except (RawFileError, ParseError, FileNotFoundError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    for label, count in report.counts:
+        typer.echo(f"{label}: {count} provisions")
+    typer.echo(
+        f"written: {len(report.written)}, unchanged: {len(report.counts) - len(report.written)}"
+    )
 
 
 @eval_app.callback()
