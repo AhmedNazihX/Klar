@@ -14,7 +14,7 @@ from pydantic import JsonValue
 from typer.testing import CliRunner, Result
 
 from aiact.cli import app
-from aiact.eval import records, runner
+from aiact.eval import citation_index, records, runner
 from aiact.eval import split as split_module
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.runner import (
@@ -211,6 +211,15 @@ def test_metric_scores_are_merged_and_reserved_names_rejected() -> None:
         run_benchmark(
             CASES[:1], DummyClassifier(), clashing, options(), SPLIT, lambda c, r: {"tokens": 1}
         )
+    with pytest.raises(ValueError, match="reserved"):
+        run_benchmark(
+            CASES[:1],
+            DummyClassifier(),
+            MemoryStore(),
+            options(),
+            SPLIT,
+            lambda c, r: {"scoring_error": False},
+        )
     (outcome,) = clashing.outcomes.values()
     assert outcome["status"] == "interrupted"
 
@@ -343,9 +352,18 @@ def test_a_scorer_error_records_the_cases_in_flight_before_raising() -> None:
     assert sorted(record.case_id for _, record in store.cases) == [c.id for c in CASES]
     assert store.stored_cost() == pytest.approx(0.6)
     failed = next(record for _, record in store.cases if record.case_id == "case-001")
-    assert failed.scores == {"cost_usd": 0.1, "tokens": 100, "is_error": False}
+    assert failed.scores == {
+        "cost_usd": 0.1,
+        "tokens": 100,
+        "is_error": False,
+        "scoring_error": True,
+    }
     (outcome,) = store.outcomes.values()
-    assert (outcome["status"], outcome["cases_scored"]) == ("interrupted", 6)
+    assert (outcome["status"], outcome["cases_scored"], outcome["cases_scoring_failed"]) == (
+        "interrupted",
+        5,
+        1,
+    )
 
 
 @dataclass
@@ -394,6 +412,7 @@ SECRET_URL = "postgresql://postgres:hunter2@db.example:5432/postgres"
 
 def _cli_with_database(monkeypatch: pytest.MonkeyPatch, connect: Callable[[], object]) -> Result:
     monkeypatch.setattr(runner, "load_benchmark", lambda case_set: CASES)
+    monkeypatch.setattr(citation_index, "load_citation_index", lambda connection: frozenset())
     monkeypatch.setattr(records, "connect", connect)
     return cli.invoke(
         app,
@@ -423,3 +442,21 @@ def test_cli_reports_a_database_error_during_the_run(monkeypatch: pytest.MonkeyP
     assert result.exit_code == 2
     assert "Error: database error (CheckViolation)" in result.stderr
     assert "hunter2" not in result.output
+
+
+def test_cli_run_scores_cases_with_the_v2_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[runner.Scorer] = []
+
+    def capturing_run(*args: object) -> None:
+        scorer = args[-1]
+        assert callable(scorer)
+        captured.append(scorer)  # pyright: ignore[reportArgumentType]
+        raise psycopg.errors.CheckViolation("stop here")
+
+    monkeypatch.setattr(runner, "run_benchmark", capturing_run)
+    _cli_with_database(monkeypatch, contextlib.nullcontext)
+    (scorer,) = captured
+    answer = DummyClassifier().classify(ClassifierInput("x", Language.EN, ())).result
+    scores = scorer(CASES[0], answer)
+    assert scores["risk_class_accuracy"] is False
+    assert "citation_existence" not in scores  # empty corpus: nothing to check against
