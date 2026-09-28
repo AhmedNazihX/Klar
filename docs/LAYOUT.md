@@ -19,6 +19,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── backend/                         the only Python project (uv)
 │   ├── pyproject.toml               deps, ruff, pyright, pytest config; `aiact` console script (F1)
 │   ├── uv.lock                      locked dependencies; regenerate with `uv lock` on conflict (F1)
+│   ├── .python-version              the Python uv and CI install (F2)
 │   ├── .env.example                 every key the app reads, with placeholder values (F1)
 │   ├── aiact/                       the package: all Python code lives here
 │   │   ├── cli.py                   `aiact` command root; subcommands per area: corpus, eval (F1)

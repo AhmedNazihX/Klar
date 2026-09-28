@@ -1,0 +1,88 @@
+# Lint, types, tests and the dependency-manifest check on every push and pull request (story F2).
+# No secrets are needed: model calls replay from tests/recordings/ and the network is blocked
+# (see backend/tests/conftest.py). GitHub sets CI=true, so `db` tests fail rather than skip when
+# the database is missing; the local Supabase Postgres is started with the repo's migrations.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (ruff, pyright, pytest, deps check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          working-directory: backend
+          enable-cache: true
+          # Resolved relative to working-directory (backend/).
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Check docs/DEPENDENCIES.md is up to date
+        run: uv run aiact deps check
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Pyright
+        run: uv run pyright
+
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.117.0
+
+      # Only Postgres is needed; `supabase start` applies supabase/migrations/*.sql.
+      - name: Start the local Supabase database
+        working-directory: .
+        run: >-
+          supabase start
+          -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: Pytest
+        run: uv run pytest -q
+
+  isolation:
+    # Placeholder: story B13 adds backend/tests/test_isolation.py and removes the `if: false`.
+    name: Benchmark isolation check
+    if: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          working-directory: backend
+          enable-cache: true
+          # Resolved relative to working-directory (backend/).
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Isolation check
+        run: uv run pytest -q tests/test_isolation.py
