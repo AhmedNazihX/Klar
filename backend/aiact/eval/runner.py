@@ -13,7 +13,8 @@ the example the case was written from. `--exclude-mode all` excludes nothing, fo
 A cost cap is checked before each case starts, so a run can overshoot it by at most the cost of
 the cases already in flight. A classifier that fails after spending raises `ClassifierFailedError`
 so the spend still counts. Each case's cost, tokens and failure flag are stored in that case's
-`eval_case_results.scores` (`cost_usd`, `tokens`, `is_error`) next to its metric scores, and the
+`eval_case_results.scores` (`cost_usd`, `tokens`, `is_error`, and `scoring_error` when the scorer
+raised) next to its metric scores (V2's `metrics.metric_scorer` for `aiact evaluate run`), and the
 run's final status is merged into `eval_runs.config.outcome`, because the F5 schema has no columns
 for them yet. When a run stops on an error, the cases already in flight are still recorded, so the
 stored total matches what was spent.
@@ -61,8 +62,10 @@ MAX_CONCURRENCY = 16
 DEFAULT_MAX_COST_USD = 1.0
 """The default spending cap per run; the whole project has a €50 budget (INIT > Budget rules)."""
 
-RUN_SCORE_KEYS = frozenset({"cost_usd", "tokens", "is_error"})
-"""Scores the runner itself writes for every case; a metric scorer may not use these names."""
+SCORING_ERROR_KEY = "scoring_error"
+"""Set (true) on a case whose scorer raised: the prediction is kept, no metric scores are."""
+RUN_SCORE_KEYS = frozenset({"cost_usd", "tokens", "is_error", SCORING_ERROR_KEY})
+"""Scores the runner itself writes; a metric scorer may not use these names."""
 
 ERROR_MESSAGE_LIMIT = 300
 
@@ -350,7 +353,7 @@ def run_benchmark(
     except BaseException:
         _finish_after_failure(store, run_id, tally.outcome(RunStatus.INTERRUPTED, len(planned)))
         raise
-    status = RunStatus.COST_CAP_REACHED if tally.scored < len(planned) else RunStatus.COMPLETED
+    status = RunStatus.COST_CAP_REACHED if tally.recorded < len(planned) else RunStatus.COMPLETED
     store.finish_run(run_id, tally.outcome(status, len(planned)))
     return RunSummary(
         run_id, status, len(planned), tally.scored, tally.failed, tally.cost_usd, tally.tokens
@@ -361,13 +364,19 @@ class _Tally:
     """Running totals of one run, owned by the thread that records results."""
 
     def __init__(self) -> None:
+        self.recorded = 0
         self.scored = 0
         self.failed = 0
+        self.scoring_failed = 0
         self.cost_usd = 0.0
         self.tokens = 0
 
     def add(self, record: CaseRecord) -> None:
-        self.scored += 1
+        """A case whose scorer raised is recorded but not counted as scored."""
+        is_scoring_error = record.scores.get(SCORING_ERROR_KEY) is True
+        self.recorded += 1
+        self.scored += int(not is_scoring_error)
+        self.scoring_failed += int(is_scoring_error)
         self.failed += int(record.scores["is_error"] is True)
         self.cost_usd += record.cost_usd
         self.tokens += record.tokens
@@ -379,6 +388,7 @@ class _Tally:
             "cases_planned": planned,
             "cases_scored": self.scored,
             "cases_failed": self.failed,
+            "cases_scoring_failed": self.scoring_failed,
         }
 
 
@@ -460,7 +470,8 @@ def _drain(pending: set[Future[_Done]], record: Callable[[CaseRecord], None]) ->
 
 def _classify_one(item: _Planned, classifier: Classifier, scorer: Scorer) -> _Done:
     """Classify and score one case. A classifier failure becomes an `is_error` row; a scorer
-    failure keeps the prediction and its cost without metric scores, and stops the run."""
+    failure keeps the prediction and its cost, marks the row `scoring_error` without metric
+    scores, and stops the run."""
     case = item.case
     try:
         answer = classifier.classify(item.request)
@@ -487,7 +498,8 @@ def _classify_one(item: _Planned, classifier: Classifier, scorer: Scorer) -> _Do
             raise ValueError(f"scorer used reserved score names: {sorted(clashing)}")
     except Exception as exc:
         logger.warning("scoring case %s failed: %s", case.id, type(exc).__name__)
-        return _Done(unscored, exc)
+        marked = {**run_scores, SCORING_ERROR_KEY: True}
+        return _Done(replace(unscored, scores=marked), exc)
     return _Done(replace(unscored, scores=metric_scores | run_scores))
 
 

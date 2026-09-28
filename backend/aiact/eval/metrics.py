@@ -177,12 +177,24 @@ def citations_exist(outcome: Outcome, exists: CitationExists) -> bool | None:
     return all(exists(citation) for citation in citations) if citations else None
 
 
-def case_scores(outcome: Outcome, exists: CitationExists) -> dict[str, bool | None]:
-    """Every per-case score, keyed as `eval_case_results.scores` stores them."""
-    return {
-        **{name: scorer(outcome) for name, scorer in SCORERS.items()},
-        "citation_existence": citations_exist(outcome, exists),
-    }
+def case_scores(outcome: Outcome, exists: CitationExists | None = None) -> dict[str, bool | None]:
+    """Every per-case score, keyed as `eval_case_results.scores` stores them. Without a citation
+    resolver (for example an empty corpus) citation existence is left out."""
+    scores = {name: scorer(outcome) for name, scorer in SCORERS.items()}
+    if exists is None:
+        return scores
+    return scores | {"citation_existence": citations_exist(outcome, exists)}
+
+
+def metric_scorer(
+    exists: CitationExists | None = None,
+) -> Callable[[BenchmarkCase, ClassificationResult], dict[str, bool | None]]:
+    """`case_scores` in the runner's scorer shape: `(case, result) -> scores` (V1)."""
+
+    def score(case: BenchmarkCase, result: ClassificationResult) -> dict[str, bool | None]:
+        return case_scores(Outcome(case=case, result=result), exists)
+
+    return score
 
 
 SCORERS: dict[str, Scorer] = {
@@ -253,8 +265,11 @@ def _same_class(members: Sequence[Outcome]) -> bool:
     return len(classes) == 1 and None not in classes
 
 
-def citation_existence(outcomes: Iterable[Outcome], exists: CitationExists) -> Rate:
-    """Citations that resolve over all citations in all results (hard rule: 100%)."""
+def citation_existence(outcomes: Iterable[Outcome], exists: CitationExists | None) -> Rate:
+    """Citations that resolve over all citations in all results (hard rule: 100%); an empty
+    rate without a resolver."""
+    if exists is None:
+        return Rate(hits=0, total=0)
     citations = [citation for outcome in outcomes for citation in _citations(outcome.result)]
     return Rate(hits=sum(map(exists, citations)), total=len(citations))
 
@@ -337,7 +352,7 @@ class RunMetrics(ContractModel):
     appliedai_disagreement_review: int
 
 
-def summarize(outcomes: Sequence[Outcome], exists: CitationExists) -> RunMetrics:
+def summarize(outcomes: Sequence[Outcome], exists: CitationExists | None) -> RunMetrics:
     """Compute every deterministic metric over one run's outcomes."""
     return RunMetrics(
         cases=len(outcomes),

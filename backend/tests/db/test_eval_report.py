@@ -1,20 +1,25 @@
 """The run report read from stored eval records (aiact/eval/report.py) against local Postgres."""
 
+from collections.abc import Mapping
 from uuid import UUID, uuid4
 
 import psycopg
 import pytest
 from psycopg.types.json import Jsonb
-from pydantic import BaseModel
+from pydantic import BaseModel, JsonValue
 
+from aiact.eval.cases import BenchmarkCase, CaseSet
+from aiact.eval.metrics import metric_scorer
+from aiact.eval.records import PostgresRunStore
 from aiact.eval.report import (
     RunNotFoundError,
     RunRecordError,
     load_citation_index,
-    load_outcomes,
+    load_stored_cases,
     run_report,
 )
-from aiact.schemas import RiskClass, Role
+from aiact.eval.runner import DummyClassifier, ExcludeMode, RunOptions, run_benchmark
+from aiact.schemas import ClassificationResult, RiskClass, Role
 from tests.eval.outcomes import HIGH_ANNEX_POINT, WORKED_EXAMPLE_PROVISIONS, case, result
 
 pytestmark = pytest.mark.db
@@ -74,9 +79,9 @@ def test_report_from_a_stored_run(db: psycopg.Connection) -> None:
     _insert_case(db, run_id, _dump(case("b")), _dump(result(RiskClass.MINIMAL_RISK)))
     _insert_case(db, run_id, _dump(case("c")), {"error": "timeout"})
 
-    outcomes = load_outcomes(db, run_id)
-    assert [o.case.id for o in outcomes] == ["a", "b", "c"]
-    assert outcomes[2].result is None
+    stored = load_stored_cases(db, run_id)
+    assert [row.outcome.case.id for row in stored] == ["a", "b", "c"]
+    assert stored[2].outcome.result is None
     assert {pid for pid, _ in load_citation_index(db)} >= WORKED_EXAMPLE_PROVISIONS
 
     report = run_report(db, run_id)
@@ -94,5 +99,46 @@ def test_unknown_run_is_an_error(db: psycopg.Connection) -> None:
 def test_invalid_stored_prediction_names_the_case(db: psycopg.Connection) -> None:
     run_id = _insert_run(db)
     _insert_case(db, run_id, _dump(case("a")), {"risk_class": "high_risk"})
-    with pytest.raises(RunRecordError, match="case a"):
-        load_outcomes(db, run_id)
+    with pytest.raises(RunRecordError, match="case a") as raised:
+        load_stored_cases(db, run_id)
+    assert "made-up system" not in str(raised.value).lower()
+
+
+class RecordingStore(PostgresRunStore):
+    """The production store, remembering the run id it created."""
+
+    run_id: UUID | None = None
+
+    def start_run(self, git_sha: str, benchmark: str, config: Mapping[str, JsonValue]) -> UUID:
+        self.run_id = super().start_run(git_sha, benchmark, config)
+        return self.run_id
+
+
+def test_a_dummy_run_written_by_the_runner_reads_back_into_the_report(
+    db: psycopg.Connection,
+) -> None:
+    cases = (case("a"), case("b", tags=("triple:t1",)), case("c", tags=("triple:t1",)))
+
+    def scorer(label: BenchmarkCase, predicted: ClassificationResult) -> dict[str, bool | None]:
+        if label.id == "c":
+            raise ValueError("scorer bug")
+        return metric_scorer()(label, predicted)
+
+    options = RunOptions(
+        benchmark=CaseSet.OWN,
+        classifier_name="dummy",
+        exclude_mode=ExcludeMode.ALL,
+        git_sha=GIT_SHA,
+        concurrency=1,
+    )
+    db.execute("select 1")  # opens the test's transaction, so the store's writes nest in it
+    store = RecordingStore(db)
+    with pytest.raises(ValueError, match="scorer bug"):
+        run_benchmark(cases, DummyClassifier(), store, options, None, scorer)
+    assert store.run_id is not None
+
+    report = run_report(db, store.run_id)
+    # The dummy answers out_of_scope; a and b are labelled high_risk; c's scoring failed.
+    assert "- Cases: 2 (0 failed)" in report
+    assert "| Risk-class accuracy | 0.0% | 0/2 |" in report
+    assert "Scoring failed, left out of the metrics: c" in report

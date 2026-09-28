@@ -8,6 +8,7 @@ from collections.abc import Callable
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Annotated
+from uuid import UUID
 
 import psycopg
 import typer
@@ -15,7 +16,7 @@ import typer
 from aiact import deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
-from aiact.eval import records, runner
+from aiact.eval import metrics, records, report, runner
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CaseFileError, CaseSet
 from aiact.obligations import list as obligations_list
@@ -154,8 +155,10 @@ def eval_run(
     )
     try:
         with records.connect() as connection:
+            index = report.load_citation_index(connection)
+            scorer = metrics.metric_scorer(report.citation_checker(index))
             summary = runner.run_benchmark(
-                cases, chosen, records.PostgresRunStore(connection), options, split
+                cases, chosen, records.PostgresRunStore(connection), options, split, scorer
             )
     except (records.DatabaseNotConfiguredError, runner.SplitError) as error:
         typer.echo(f"Error: {error}", err=True)
@@ -171,6 +174,28 @@ def eval_run(
     )
     if is_dirty:
         typer.echo("Warning: uncommitted changes; the recorded git_sha may not reproduce", err=True)
+
+
+@eval_app.command("report")
+def eval_report(
+    run_id: Annotated[UUID, typer.Argument(help="The eval_runs id to report on")],
+) -> None:
+    """Print a stored run's deterministic metrics as a markdown table (read-only)."""
+    try:
+        with records.connect() as connection:
+            text = report.run_report(connection, run_id)
+    except (
+        records.DatabaseNotConfiguredError,
+        report.RunNotFoundError,
+        report.RunRecordError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(text, nl=False)
 
 
 @eval_app.command("split")

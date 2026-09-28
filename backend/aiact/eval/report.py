@@ -1,12 +1,16 @@
 """The run report: one stored run's deterministic metrics as a markdown table (INIT > Metrics).
 
 Reports quote numbers only from stored runs, so everything here is read from `eval_runs` and
-`eval_case_results` by run id. Each case row is expected to hold:
+`eval_case_results` by run id. Each case row holds (V1's runner writes it so):
 - `label`: the `BenchmarkCase` the case was scored against, as `model_dump(mode="json")`;
-- `predicted`: the `ClassificationResult` as `model_dump(mode="json")`, or an object with an
-  `error` key when the classifier failed.
+- `predicted`: the `ClassificationResult` as `model_dump(mode="json")`, or `{"error": {...}}`
+  when the classifier failed.
+The metrics are recomputed from those two columns, so the runner's own per-case scores
+(`runner.RUN_SCORE_KEYS`: cost, tokens, error flags) never appear in the metric table. A case
+marked `scoring_error` is left out of the metrics and listed by id instead.
 Citation existence resolves `(provision_id, language)` against the corpus `provisions` table,
-which is only read. The report names case counts, never descriptions.
+which is only read; with an empty corpus it is reported as n/a. The report never prints a
+description.
 """
 
 from collections.abc import Mapping
@@ -17,13 +21,23 @@ import psycopg
 from pydantic import ValidationError
 
 from aiact.eval.cases import BenchmarkCase
-from aiact.eval.metrics import Outcome, PrecisionRecall, Rate, RunMetrics, summarize
+from aiact.eval.metrics import (
+    CitationExists,
+    Outcome,
+    PrecisionRecall,
+    Rate,
+    RunMetrics,
+    summarize,
+)
+from aiact.eval.runner import SCORING_ERROR_KEY
 from aiact.schemas.base import ContractModel
 from aiact.schemas.evidence import Citation
 from aiact.schemas.result import ClassificationResult
 
 FAILED_KEY = "error"
 """A `predicted` object with this key records a failed classifier call."""
+
+CitationIndex = frozenset[tuple[str, str]]
 
 
 class RunNotFoundError(LookupError):
@@ -42,63 +56,103 @@ class RunInfo(ContractModel):
     git_sha: str
     started_at: datetime
     model: str | None
+    cost_usd: float = 0.0
+    tokens: int = 0
+
+
+class StoredCase(ContractModel):
+    """One stored case row, parsed."""
+
+    outcome: Outcome
+    is_scoring_error: bool = False
 
 
 def load_run_info(conn: psycopg.Connection, run_id: UUID) -> RunInfo:
     row = conn.execute(
-        "select id, benchmark, git_sha, started_at, config ->> 'model' "
+        "select id, benchmark, git_sha, started_at, config ->> 'model', cost_usd, tokens "
         "from eval_runs where id = %s",
         (run_id,),
     ).fetchone()
     if row is None:
         raise RunNotFoundError(f"no eval run with id {run_id}")
-    run_id_value, benchmark, git_sha, started_at, model = row
+    run_id_value, benchmark, git_sha, started_at, model, cost_usd, tokens = row
     return RunInfo(
-        id=run_id_value, benchmark=benchmark, git_sha=git_sha, started_at=started_at, model=model
+        id=run_id_value,
+        benchmark=benchmark,
+        git_sha=git_sha,
+        started_at=started_at,
+        model=model,
+        cost_usd=float(cost_usd),
+        tokens=tokens,
     )
 
 
-def load_outcomes(conn: psycopg.Connection, run_id: UUID) -> tuple[Outcome, ...]:
+def load_stored_cases(conn: psycopg.Connection, run_id: UUID) -> tuple[StoredCase, ...]:
     rows = conn.execute(
-        "select case_id, label, predicted from eval_case_results "
+        "select case_id, label, predicted, scores from eval_case_results "
         "where run_id = %s order by case_id",
         (run_id,),
     ).fetchall()
-    return tuple(_outcome(case_id, label, predicted) for case_id, label, predicted in rows)
+    return tuple(stored_case(*row) for row in rows)
 
 
-def _outcome(case_id: str, label: object, predicted: object) -> Outcome:
+def stored_case(
+    case_id: str, label: object, predicted: object, scores: object = None
+) -> StoredCase:
+    """Parse one `eval_case_results` row (its `label`, `predicted` and `scores` columns)."""
     try:
         case = BenchmarkCase.model_validate(label)
         is_failed = isinstance(predicted, Mapping) and FAILED_KEY in predicted
         result = None if is_failed else ClassificationResult.model_validate(predicted)
     except ValidationError as exc:
+        # Only the failing fields: pydantic's message would quote the stored values, descriptions
+        # included.
+        fields = sorted({".".join(str(part) for part in error["loc"]) for error in exc.errors()})
         raise RunRecordError(
-            f"case {case_id}: stored label or prediction is invalid: {exc}"
+            f"case {case_id}: stored label or prediction is invalid at {', '.join(fields)}"
         ) from exc
     if case.id != case_id:
         raise RunRecordError(f"case {case_id}: stored label belongs to case {case.id}")
-    return Outcome(case=case, result=result)
+    is_scoring_error = isinstance(scores, Mapping) and scores.get(SCORING_ERROR_KEY) is True
+    return StoredCase(outcome=Outcome(case=case, result=result), is_scoring_error=is_scoring_error)
 
 
-def load_citation_index(conn: psycopg.Connection) -> frozenset[tuple[str, str]]:
+def load_citation_index(conn: psycopg.Connection) -> CitationIndex:
     """Every `(provision_id, language)` in the corpus."""
     rows = conn.execute("select distinct provision_id, language from provisions").fetchall()
     return frozenset((provision_id, language) for provision_id, language in rows)
 
 
-def run_report(conn: psycopg.Connection, run_id: UUID) -> str:
-    """The markdown report for one stored run."""
-    info = load_run_info(conn, run_id)
-    index = load_citation_index(conn)
+def citation_checker(index: CitationIndex) -> CitationExists | None:
+    """A resolver over the index, or None when the corpus is empty (nothing to check against)."""
+    if not index:
+        return None
 
     def exists(citation: Citation) -> bool:
         return (citation.provision_id, citation.language.value) in index
 
-    return render_markdown(info, summarize(load_outcomes(conn, run_id), exists))
+    return exists
 
 
-def render_markdown(info: RunInfo, metrics: RunMetrics) -> str:
+def run_report(conn: psycopg.Connection, run_id: UUID) -> str:
+    """The markdown report for one stored run."""
+    info = load_run_info(conn, run_id)
+    return build_report(
+        info, load_stored_cases(conn, run_id), citation_checker(load_citation_index(conn))
+    )
+
+
+def build_report(
+    info: RunInfo, cases: tuple[StoredCase, ...], exists: CitationExists | None
+) -> str:
+    scored = [case.outcome for case in cases if not case.is_scoring_error]
+    scoring_errors = [case.outcome.case.id for case in cases if case.is_scoring_error]
+    return render_markdown(info, summarize(scored, exists), scoring_errors)
+
+
+def render_markdown(
+    info: RunInfo, metrics: RunMetrics, scoring_errors: list[str] | None = None
+) -> str:
     header = [
         f"## Run {info.id}",
         "",
@@ -106,12 +160,16 @@ def render_markdown(info: RunInfo, metrics: RunMetrics) -> str:
         f"- Commit: `{info.git_sha}`",
         f"- Started: {info.started_at.isoformat()}",
         f"- Model: {info.model or 'n/a'}",
+        f"- Cost: ${info.cost_usd:.4f}, {info.tokens} tokens",
         f"- Cases: {metrics.cases} ({metrics.failed} failed)",
         "",
         "| Metric | Value | Count |",
         "| --- | ---: | ---: |",
     ]
-    return "\n".join([*header, *(_row(name, value) for name, value in _rows(metrics))]) + "\n"
+    lines = [*header, *(_row(name, value) for name, value in _rows(metrics))]
+    if scoring_errors:
+        lines += ["", f"Scoring failed, left out of the metrics: {', '.join(scoring_errors)}"]
+    return "\n".join(lines) + "\n"
 
 
 def _rows(metrics: RunMetrics) -> list[tuple[str, Rate | int]]:
