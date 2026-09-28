@@ -2,6 +2,29 @@
   "worktree": {
     "baseRef": "head"
   },
+  "permissions": {
+    "allow": [
+      "Bash(uv run ruff check .)",
+      "Bash(uv run ruff format --check .)",
+      "Bash(uv run pyright)",
+      "Bash(uv run pytest)",
+      "Bash(uv run pytest -q)",
+      "Bash(uv run aiact deps check)",
+      "Bash(uv run aiact --help)",
+      "Bash(python3 .claude/scripts/backlog.py status)",
+      "Bash(python3 .claude/scripts/backlog.py status *)",
+      "Bash(python3 .claude/scripts/backlog.py show *)",
+      "Bash(python3 .claude/scripts/backlog.py info *)",
+      "Bash(python3 .claude/scripts/backlog.py deps *)",
+      "Bash(git merge-base *)",
+      "Bash(git sparse-checkout list)",
+      "Bash(bash .claude/hooks/test-hooks.sh)",
+      "Bash(supabase migration list)",
+      "Bash(supabase db advisors --local)",
+      "mcp__plugin_context7_context7__query-docs",
+      "mcp__plugin_context7_context7__resolve-library-id"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
