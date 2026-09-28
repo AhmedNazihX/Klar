@@ -197,10 +197,11 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 ## Phase 2 — Corpus and retrieval
 
-- [ ] **C1 · EUR-Lex HTML parser** · Deps: B1 · Type: agent · Lane: Corpus (critical)
+- [x] **C1 · EUR-Lex HTML parser** · Deps: B1 · Type: agent · Lane: Corpus (critical)
   Context: INIT › Tech stack (Ingestion), Corpus rules. Input: `data/raw/*` HTML. Output: `aiact/corpus/eurlex.py` → `data/parsed/<doc>.<lang>.jsonl`, split into article › paragraph › point, annex › point, and recital, with stable `provision_id`s that are identical across EN and DE. The Omnibus is parsed as amending text (which provisions it changes and the dates).
   DoD: tests against known provisions (Art. 5(1)(a), Art. 6(3), Annex III 4(a), Art. 50(2), Recital 53) in both languages; the EN and DE provision_id sets match for each document.
   Notes from merged stories: Input list: `data/manifest.yaml` (B1). Raw file = `$AIACT_DATA_DIR/raw/<entry.file>`, set only when `available: true`; `available: null` means a failed fetch (re-run `aiact corpus fetch`, never treat as absent). Laws carry `celex`; the Omnibus is `32026R1744`. Verify each file's sha256 against the manifest before parsing (raw dir is shared across worktrees). Laws are Cellar XHTML identical to EUR-Lex (decision 008). DE exists for the Act, Omnibus and consolidated text.
+  **Outcome:** aiact corpus parse writes data/parsed/<doc>.<lang>.jsonl for the Act, Omnibus and consolidated text (1486/152/1421 provisions, EN and DE ids identical); a restarted subparagraph list goes under sub<n> as a whole (art:43:1:sub2:a-d); Omnibus carries 72 amendment records (action, targets, in force 2026-07-27, dates) resolved against AI Act ids with no truncations; rows are nested (parent text includes children).
 
 - [ ] **C2 · Guideline PDF ingestion (Docling)** · Deps: B1, B3 · Parallel: C1 · Type: agent · Lane: Corpus
   Input: guideline PDFs; `eval/split.json` is the **only** file under `eval/` this story may read, and only its `pile_b` ID list. Output: `aiact/corpus/guidelines.py` → `data/parsed/guide-*.jsonl`: chunks by section, each worked example as its own chunk tagged with `source_example_id`; Pile B chunks are dropped in split mode and kept but tagged in LOO mode.
