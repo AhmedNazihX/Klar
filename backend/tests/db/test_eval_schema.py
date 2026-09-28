@@ -118,10 +118,17 @@ def test_config_keys_may_hold_null(db: psycopg.Connection) -> None:
     _insert_run(db, config={"model": "m", "embedding": None, "retrieval": None})
 
 
-def test_scores_must_map_metrics_to_numbers_booleans_or_null(db: psycopg.Connection) -> None:
+@pytest.mark.parametrize(
+    "score",
+    ["yes", [1, 2], []],
+    ids=["string", "array", "empty-array"],
+)
+def test_scores_must_map_metrics_to_numbers_booleans_or_null(
+    db: psycopg.Connection, score: object
+) -> None:
     run_id = _insert_run(db)
     with pytest.raises(psycopg.errors.CheckViolation):
-        _insert_result(db, run_id, scores={"risk_class_accuracy": "yes"})
+        _insert_result(db, run_id, scores={"risk_class_accuracy": score})
 
 
 def test_eval_tables_have_rls_and_no_data_api_grants(db: psycopg.Connection) -> None:

@@ -38,7 +38,7 @@ create table public.eval_case_results (
   scores jsonb not null default '{}' check (
     jsonb_typeof(scores) = 'object'
     and not jsonb_path_exists(
-      scores, '$.* ? (@.type() != "number" && @.type() != "boolean" && @.type() != "null")'
+      scores, 'strict $.* ? (@.type() != "number" && @.type() != "boolean" && @.type() != "null")'
     )
   ),
   -- LangSmith trace of the case, for tool-call checks; null when tracing was off.
