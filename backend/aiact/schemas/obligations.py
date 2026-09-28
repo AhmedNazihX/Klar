@@ -26,6 +26,11 @@ class Obligation(ContractModel):
         description="The condition under which the duty applies; None when it applies to every "
         "system of this role and class.",
     )
+    is_informational: bool = Field(
+        default=False,
+        description="True when the row informs (e.g. a distributor of a prohibited system) rather "
+        "than stating a formal duty the Act puts on this role.",
+    )
     relief_note: str | None = Field(
         default=None, description="Relief for SMEs, start-ups and small mid-caps (SMCs), if any."
     )

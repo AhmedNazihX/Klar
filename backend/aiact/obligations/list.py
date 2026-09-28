@@ -37,6 +37,7 @@ class ObligationEntry(ContractModel):
     article: str = Field(min_length=1)
     applies_from: date | Mapping[HighRiskRoute, date]
     applies_if: str | None = None
+    is_informational: bool = False
     relief_note: str | None = None
     note: str | None = None
 
@@ -96,6 +97,7 @@ class ObligationTable(ContractModel):
                     applies_from=applies_from,
                     high_risk_route=route,
                     applies_if=entry.applies_if,
+                    is_informational=entry.is_informational,
                     relief_note=entry.relief_note,
                     note=entry.note,
                 ),

@@ -21,6 +21,7 @@ COLUMNS = (
     "article",
     "applies_from",
     "applies_if",
+    "is_informational",
     "relief_note",
     "note",
     "law_version",
@@ -28,9 +29,12 @@ COLUMNS = (
 
 
 def _literal(value: object) -> str:
-    """A SQL literal: null, a bare integer, or a single-quoted string with quotes doubled."""
+    """A SQL literal: null, a boolean, a bare integer, or a single-quoted string with quotes
+    doubled."""
     if value is None:
         return "null"
+    if isinstance(value, bool):
+        return "true" if value else "false"
     if isinstance(value, int):
         return str(value)
     return "'" + str(value).replace("'", "''") + "'"
@@ -48,6 +52,7 @@ def _values(position: int, row: ObligationRow, table: ObligationTable) -> str:
         obligation.article,
         obligation.applies_from.isoformat(),
         obligation.applies_if,
+        obligation.is_informational,
         obligation.relief_note,
         obligation.note,
         table.law_version.value,

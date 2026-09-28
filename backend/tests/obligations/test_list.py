@@ -47,14 +47,17 @@ def test_deployer_high_risk_annex_iii_gets_the_art_26_duties_from_2_dec_2027() -
         "art:26:7",
         "art:26:8",
         "art:26:9",
+        "art:26:10",
         "art:26:11",
         "art:26:12",
         "art:27:1",
+        "art:86:1",
         "art:50:3",
         "art:50:4",
     ]
-    art_26 = [d for d in duties if d.article.startswith(("art:26:", "art:27:"))]
+    art_26 = [d for d in duties if d.article.startswith(("art:26:", "art:27:", "art:86:"))]
     assert {d.applies_from for d in art_26} == {ANNEX_III_FROM}
+    assert not any(d.is_informational for d in duties)
     # The worked example's duties (INIT > How it works) apply to every deployer of the system.
     unconditional = {d.article for d in art_26 if d.applies_if is None}
     assert {"art:26:1", "art:26:2", "art:26:6"} <= unconditional
@@ -67,8 +70,8 @@ def test_deployer_high_risk_annex_i_has_later_dates_and_no_annex_iii_only_duties
     duties = list_obligations(Role.DEPLOYER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_I)
     articles = _articles(duties)
     assert "art:26:1" in articles
-    # Art. 26(8) via Art. 49(3), Art. 26(11) and Art. 27(1) are limited to Annex III systems.
-    assert not {"art:26:8", "art:26:11", "art:27:1"} & set(articles)
+    # Art. 26(8) via Art. 49(3), 26(10), 26(11), 27(1) and 86(1) are limited to Annex III systems.
+    assert not {"art:26:8", "art:26:10", "art:26:11", "art:27:1", "art:86:1"} & set(articles)
     art_26 = [d for d in duties if d.article.startswith("art:26:")]
     assert {d.applies_from for d in art_26} == {ANNEX_I_FROM}
     assert {d.high_risk_route for d in art_26} == {HighRiskRoute.ANNEX_I}
@@ -157,6 +160,67 @@ def test_minimal_risk_brings_only_ai_literacy_and_the_art_6_3_registration() -> 
     provider = list_obligations(Role.PROVIDER, RiskClass.MINIMAL_RISK)
     assert _articles(provider) == ["art:4:1", "art:6:4"]
     assert provider[0].applies_from == CHAPTER_I_II_FROM
+
+
+def test_deployer_right_to_explanation_is_conditional_with_the_chapter_ix_note() -> None:
+    by_article = _by_article(
+        list_obligations(Role.DEPLOYER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
+    )
+    explanation = by_article["art:86:1"]
+    assert explanation.applies_from == ANNEX_III_FROM
+    assert explanation.high_risk_route is HighRiskRoute.ANNEX_III
+    assert explanation.applies_if is not None
+    assert "legal effects" in explanation.applies_if
+    assert "point 2" in explanation.applies_if
+    assert explanation.note is not None
+    assert "Chapter IX" in explanation.note
+
+
+def test_deployer_post_remote_biometric_identification_is_conditional() -> None:
+    by_article = _by_article(
+        list_obligations(Role.DEPLOYER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
+    )
+    biometric = by_article["art:26:10"]
+    assert biometric.applies_from == ANNEX_III_FROM
+    assert biometric.applies_if is not None
+    assert "post-remote biometric identification" in biometric.applies_if
+    assert "law enforcement" in biometric.applies_if
+
+
+def test_chapter_ix_duties_keep_the_high_risk_dates_with_a_note() -> None:
+    by_article = _by_article(
+        list_obligations(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_I)
+    )
+    for article in ("art:72:1", "art:73:1"):
+        assert by_article[article].applies_from == ANNEX_I_FROM
+        note = by_article[article].note
+        assert note is not None
+        assert "2 August 2026" in note
+
+
+def test_art_6_4_keeps_2_dec_2027_and_flags_the_literal_reading() -> None:
+    exemption = _by_article(list_obligations(Role.PROVIDER, RiskClass.MINIMAL_RISK))["art:6:4"]
+    assert exemption.applies_from == ANNEX_III_FROM
+    assert exemption.note is not None
+    assert "2 August 2026" in exemption.note
+    assert "lawyer" in exemption.note
+
+
+def test_distributor_of_a_prohibited_system_gets_information_not_a_duty() -> None:
+    rows = list_obligations(Role.DISTRIBUTOR, RiskClass.PROHIBITED)
+    assert [(d.article, d.applies_from) for d in rows] == [
+        ("art:5:1", CHAPTER_I_II_FROM),
+        ("art:5:1:ba", NEW_PROHIBITIONS_FROM),
+        ("art:5:1:bb", NEW_PROHIBITIONS_FROM),
+    ]
+    assert all(d.is_informational for d in rows)
+    assert all("don't supply it" in d.duty for d in rows)
+    formal = list_obligations(Role.DEPLOYER, RiskClass.PROHIBITED)
+    assert not any(d.is_informational for d in formal)
+
+
+def test_the_dates_have_been_reviewed() -> None:
+    assert load_table().dates_reviewed is True
 
 
 def test_prohibited_dates_follow_art_113_a() -> None:

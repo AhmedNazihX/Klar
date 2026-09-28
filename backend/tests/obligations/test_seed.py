@@ -39,7 +39,7 @@ def test_seed_escapes_quotes_and_writes_nulls() -> None:
     assert "'Tell people it''s an AI system.'" in sql
     assert (
         "('quoted', 0, 'deployer', 'limited_risk', null, 'Tell people it''s an AI system.', "
-        "'art:50:1', '2026-08-02', null, null, null, 'amended')"
+        "'art:50:1', '2026-08-02', null, false, null, null, 'amended')"
     ) in sql
     assert "delete from public.obligations where law_version = 'amended';" in sql
 

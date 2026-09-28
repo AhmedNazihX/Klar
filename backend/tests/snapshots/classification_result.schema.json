@@ -223,6 +223,12 @@
           "description": "The condition under which the duty applies; None when it applies to every system of this role and class.",
           "title": "Applies If"
         },
+        "is_informational": {
+          "default": false,
+          "description": "True when the row informs (e.g. a distributor of a prohibited system) rather than stating a formal duty the Act puts on this role.",
+          "title": "Is Informational",
+          "type": "boolean"
+        },
         "relief_note": {
           "anyOf": [
             {

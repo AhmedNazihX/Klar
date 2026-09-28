@@ -21,6 +21,9 @@ create table public.obligations (
   article text not null check (article ~ '^art:[0-9]+[a-z]?(:[A-Za-z0-9]+)*$'),
   applies_from date not null,
   applies_if text,
+  -- True when the row informs rather than states a formal duty of this role (e.g. a distributor of a
+  -- prohibited system: Art. 5 doesn't name distributors).
+  is_informational boolean not null default false,
   relief_note text,
   note text,
   law_version text not null check (law_version in ('original', 'amended')),

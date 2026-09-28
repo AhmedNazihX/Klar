@@ -13,11 +13,12 @@
 # (Art. 113(a)), 2026-08-02 for everything else (Art. 113, second paragraph).
 #
 # Article ids are provision ids of the consolidated AI Act (data/parsed/ai-act-consolidated.en.jsonl);
-# a test checks that each one exists there. `dates_reviewed` turns true once the user has checked the dates.
+# a test checks that each one exists there. `dates_reviewed`: the user checked the dates (2026-09-28).
+# `is_informational: true` marks a row that informs rather than states a formal duty of that role.
 
 law_version: amended
 checked_on: 2026-09-28
-dates_reviewed: false
+dates_reviewed: true
 
 obligations:
   # --- Every in-scope class except prohibited -------------------------------------------------
@@ -59,6 +60,35 @@ obligations:
     applies_if: >-
       The system generates or manipulates child sexual abuse material (new prohibition added by the
       Omnibus).
+
+  - key: prohibited-distributor
+    roles: [distributor]
+    risk_classes: [prohibited]
+    duty: &distributor-prohibited >-
+      This system can't lawfully be placed on the EU market or used (Art. 5). The Act doesn't name
+      distributors in Art. 5, but don't supply it.
+    article: art:5:1
+    applies_from: 2025-02-02
+    is_informational: true
+    applies_if: The practice falls under Art. 5(1) points (a) to (h).
+
+  - key: prohibited-distributor-intimate-imagery
+    roles: [distributor]
+    risk_classes: [prohibited]
+    duty: *distributor-prohibited
+    article: art:5:1:ba
+    applies_from: 2026-12-02
+    is_informational: true
+    applies_if: The system generates or manipulates realistic intimate or sexually explicit images, video or audio of an identifiable person without their explicit consent.
+
+  - key: prohibited-distributor-csam
+    roles: [distributor]
+    risk_classes: [prohibited]
+    duty: *distributor-prohibited
+    article: art:5:1:bb
+    applies_from: 2026-12-02
+    is_informational: true
+    applies_if: The system generates or manipulates child sexual abuse material.
 
   # --- High-risk: provider (Art. 16 and the duties it points to) --------------------------------
   - key: hr-provider-requirements
@@ -179,8 +209,8 @@ obligations:
     article: art:72:1
     applies_from: {annex_iii: 2027-12-02, annex_i: 2028-08-02}
     note: >-
-      Art. 72 is in Chapter IX, which applies from 2 August 2026, but it only bites on systems that
-      are subject to the high-risk rules, so the high-risk date is used here.
+      Chapter IX formally applies from 2 August 2026 (Art. 113, general date), but these duties
+      only reach high-risk systems once their high-risk rules apply.
 
   - key: hr-provider-serious-incidents
     roles: [provider]
@@ -191,8 +221,8 @@ obligations:
     article: art:73:1
     applies_from: {annex_iii: 2027-12-02, annex_i: 2028-08-02}
     note: >-
-      Art. 73 is in Chapter IX, which applies from 2 August 2026, but it only bites on systems that
-      are subject to the high-risk rules, so the high-risk date is used here.
+      Chapter IX formally applies from 2 August 2026 (Art. 113, general date), but these duties
+      only reach high-risk systems once their high-risk rules apply.
 
   # --- High-risk: deployer (Art. 26, 27) --------------------------------------------------------
   - key: hr-deployer-instructions
@@ -257,6 +287,19 @@ obligations:
     applies_from: {annex_iii: 2027-12-02, annex_i: 2028-08-02}
     applies_if: A data protection impact assessment is required under Art. 35 GDPR or Art. 27 of Directive (EU) 2016/680.
 
+  - key: hr-deployer-post-remote-biometric
+    roles: [deployer]
+    risk_classes: [high_risk]
+    duty: >-
+      Get prior (or, at the latest within 48 hours, subsequent) authorisation from a judicial or
+      binding administrative authority for each use, limit each use to a specific offence, document
+      every use in the police file and report annually to the authorities.
+    article: art:26:10
+    applies_from: {annex_iii: 2027-12-02}
+    applies_if: >-
+      You use post-remote biometric identification for law enforcement (targeted search of a person
+      suspected or convicted of a criminal offence).
+
   - key: hr-deployer-inform-persons
     roles: [deployer]
     risk_classes: [high_risk]
@@ -283,6 +326,21 @@ obligations:
       Annex III point 2), or the system is used for creditworthiness or credit scoring, or for risk
       assessment and pricing in life and health insurance (Annex III points 5(b) and (c)).
     note: The AI Office is to publish a questionnaire template to simplify this assessment (Art. 27(5)).
+
+  - key: hr-deployer-explanation
+    roles: [deployer]
+    risk_classes: [high_risk]
+    duty: >-
+      On request, give an affected person clear and meaningful explanations of the role of the system
+      in the decision and the main elements of the decision taken.
+    article: art:86:1
+    applies_from: {annex_iii: 2027-12-02}
+    applies_if: >-
+      Decisions taken on the basis of the system's output produce legal effects on people or
+      similarly significantly affect them (not for Annex III point 2, critical infrastructure).
+    note: >-
+      Chapter IX formally applies from 2 August 2026 (Art. 113, general date), but these duties
+      only reach high-risk systems once their high-risk rules apply.
 
   # --- High-risk: importer (Art. 23) ------------------------------------------------------------
   - key: hr-importer-verify
@@ -434,5 +492,5 @@ obligations:
     applies_if: The system is listed in Annex III, but you concluded under Art. 6(3) that it is not high-risk.
     note: >-
       The Omnibus kept this registration but simplified its content (Omnibus recital 22). The date
-      follows Art. 113(c)(i), which applies Chapter III Sections 1 to 3 to Annex III systems from
-      2 December 2027.
+      follows Art. 113(c)(i), but that covers systems "classified as high-risk"; a literal reading
+      (and Art. 49 being in Chapter VIII) gives 2 August 2026. Check with a lawyer.
