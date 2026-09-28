@@ -26,6 +26,15 @@ Your prompt gives you:
    - `LANE=c2`: `git sparse-checkout set --no-cone '/*' '!/eval/' '/eval/split.json'`
    - `LANE=other`: skip this step.
    Then check that `eval/` is absent (or holds only `split.json` for C2).
+   Claude Code's worktree-isolation check usually refuses this command from a worker (it reads the
+   word in the pattern as the shell's `eval`). If it does, never work around it (no `--stdin`
+   pattern files, no wrappers). The user runs it instead:
+   - SendMessage to `main`: "<STORY> worker waiting: please run `! git -C <absolute worktree path>
+     sparse-checkout set …`" with the exact patterns above.
+   - Do **not** end your turn: a worktree with no changes is deleted when you stop, and the user's
+     fix is lost. Wait with the Monitor tool (load it via ToolSearch `select:Monitor`), polling every
+     10 seconds for up to 45 minutes until `git sparse-checkout list` shows the patterns and the check
+     above passes. No foreground `sleep`. After 45 minutes, report `BLOCKED` with the command.
 3. **Rename the branch.** `git branch -m story/<STORY>-<SLUG>`
 4. **Link the secrets and data.**
    - For each of `.env` and `backend/.env`: if the file exists in `MAIN`, run `ln -s "<MAIN>/<file>" <file>`. Never open, print or copy the contents.
