@@ -17,11 +17,13 @@ Source: `backend/uv.lock`.
 | --- | --- | --- | --- | --- | --- |
 | httpx | runtime | >=0.28.1 | 0.28.1 | BSD-3-Clause | The next generation HTTP client. |
 | langchain-openrouter | runtime | >=0.2.9 | 0.2.9 | MIT | An integration package connecting OpenRouter and LangChain |
+| lxml | runtime | >=6.1.3 | 6.1.3 | BSD-3-Clause | Powerful and Pythonic XML processing library combining libxml2/libxslt with the… |
 | openrouter | runtime | >=0.11.46 | 0.11.46 | Apache-2.0 | Official Python Client SDK for OpenRouter. |
 | psycopg[binary] | runtime | >=3.3.6 | 3.3.6 | LGPL-3.0-only | PostgreSQL database adapter for Python |
 | pydantic-settings | runtime | >=2.15.0 | 2.15.0 | MIT | Settings management using Pydantic |
 | pyyaml | runtime | >=6.0.3 | 6.0.3 | MIT | YAML parser and emitter for Python |
 | typer | runtime | >=0.27.2 | 0.27.2 | MIT | Typer, build great CLIs. Easy to code. Based on Python type hints. |
+| lxml-stubs | dev | >=0.5.1 | 0.5.1 | Apache Software License | Type annotations for the lxml package |
 | pyright | dev | >=1.1.414 | 1.1.414 | MIT | Command line wrapper for pyright |
 | pytest | dev | >=9.1.1 | 9.1.1 | MIT | pytest: simple powerful testing with Python |
 | pytest-recording | dev | >=0.13.4 | 0.13.4 | MIT | A pytest plugin powered by VCR.py to record and replay HTTP traffic |
