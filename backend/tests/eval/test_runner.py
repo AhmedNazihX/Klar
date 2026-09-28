@@ -348,6 +348,26 @@ def test_a_scorer_error_records_the_cases_in_flight_before_raising() -> None:
     assert (outcome["status"], outcome["cases_scored"]) == ("interrupted", 6)
 
 
+@dataclass
+class InterruptingStore(MemoryStore):
+    """Raises KeyboardInterrupt right after writing the first case, as a Ctrl-C mid-write would."""
+
+    is_interrupted: bool = False
+
+    def add_case(self, run_id: UUID, record: CaseRecord) -> None:
+        super().add_case(run_id, record)
+        if not self.is_interrupted:
+            self.is_interrupted = True
+            raise KeyboardInterrupt
+
+
+def test_an_interrupt_during_a_write_records_every_case_in_flight_once() -> None:
+    store = InterruptingStore()
+    with pytest.raises(KeyboardInterrupt):
+        run_benchmark(CASES, PricedClassifier(cost_usd=0.1), store, options(concurrency=6), SPLIT)
+    assert sorted(record.case_id for _, record in store.cases) == [c.id for c in CASES]
+
+
 def test_a_scorer_error_stops_new_cases_from_starting() -> None:
     store = MemoryStore()
 

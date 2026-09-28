@@ -428,9 +428,9 @@ def _classify_all(
                     break
                 done, _ = wait(pending, return_when=FIRST_COMPLETED)
                 for future in done:
+                    pending.discard(future)
                     error = _record_done(future, record)
                     failure = failure or error
-                    pending.discard(future)
         except BaseException:
             _drain(pending, record)
             raise
@@ -445,8 +445,12 @@ def _record_done(future: Future[_Done], record: Callable[[CaseRecord], None]) ->
 
 
 def _drain(pending: set[Future[_Done]], record: Callable[[CaseRecord], None]) -> None:
-    """Record the cases still in flight after an interruption; stop at the first failed write."""
-    for future in pending:
+    """Record the cases still in flight after an interruption; stop at the first failed write.
+
+    A case is taken off `pending` before it is recorded (here and in the main loop), so an
+    interruption during a write never records it twice."""
+    for future in tuple(pending):
+        pending.discard(future)
         try:
             _record_done(future, record)
         except Exception as exc:
