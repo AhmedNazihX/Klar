@@ -27,6 +27,10 @@ class ObligationsError(ValueError):
     """The obligations file is missing, unreadable or breaks the table's rules."""
 
 
+class UnknownLawVersionError(ObligationsError):
+    """The table has no rows for the requested law version."""
+
+
 class ObligationEntry(ContractModel):
     """One duty in the YAML: it may cover several roles and classes, and one date per route."""
 
@@ -42,7 +46,10 @@ class ObligationEntry(ContractModel):
     note: str | None = None
 
     @model_validator(mode="after")
-    def _routes_only_for_high_risk(self) -> Self:
+    def _consistent(self) -> Self:
+        for name, values in (("roles", self.roles), ("risk_classes", self.risk_classes)):
+            if len(set(values)) != len(values):
+                raise ValueError(f"{self.key}: repeated value in {name}")
         if isinstance(self.applies_from, Mapping):
             if not self.applies_from:
                 raise ValueError(f"{self.key}: applies_from needs at least one route")
@@ -122,27 +129,45 @@ def load_table(path: Path = OBLIGATIONS_FILE) -> ObligationTable:
 
 
 @cache
-def _default_table() -> ObligationTable:
+def default_table() -> ObligationTable:
+    """The committed table, read once."""
     return load_table()
 
 
+class ObligationList(ContractModel):
+    """The duties `list_obligations` found, with the law version they come from."""
+
+    law_version: LawVersion
+    obligations: tuple[Obligation, ...]
+
+
 def list_obligations(
-    role: Role,
-    risk_class: RiskClass,
-    route: HighRiskRoute | None = None,
+    role: Role | str,
+    risk_class: RiskClass | str,
+    route: HighRiskRoute | str | None = None,
+    law_version: LawVersion | str = LawVersion.AMENDED,
     table: ObligationTable | None = None,
-) -> tuple[Obligation, ...]:
+) -> ObligationList:
     """The duties of `role` for a system of `risk_class`, in table order.
 
     For a high-risk system, `route` picks the dates of that route (Annex III or Annex I); without
     it, route-dependent duties appear once per route, each tagged with its `high_risk_route`.
-    Duties that exist on one route only are left out for the other.
+    Duties that exist on one route only are left out for the other. Plain strings are accepted
+    for the enums; an unknown value raises ValueError, and a law version the table doesn't hold
+    raises UnknownLawVersionError.
     """
-    rows = (table or _default_table()).rows()
-    return tuple(
+    role, risk_class, version = Role(role), RiskClass(risk_class), LawVersion(law_version)
+    wanted_route = HighRiskRoute(route) if route is not None else None
+    source = table or default_table()
+    if source.law_version != version:
+        raise UnknownLawVersionError(
+            f"the obligations table holds the {source.law_version.value} text, not {version.value}"
+        )
+    obligations = tuple(
         row.obligation
-        for row in rows
-        if row.role is role
-        and row.risk_class is risk_class
-        and (route is None or row.obligation.high_risk_route in (None, route))
+        for row in source.rows()
+        if row.role == role
+        and row.risk_class == risk_class
+        and (wanted_route is None or row.obligation.high_risk_route in (None, wanted_route))
     )
+    return ObligationList(law_version=source.law_version, obligations=obligations)
