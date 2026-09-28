@@ -116,10 +116,7 @@ def load_cases(case_set: CaseSet, cases_dir: Path = CASES_DIR) -> tuple[Benchmar
     if not set_dir.is_dir():
         raise FileNotFoundError(f"no case folder for set {case_set.value}: {set_dir}")
     cases = tuple(case for path in sorted(set_dir.rglob("*.yaml")) for case in load_yaml_file(path))
-    for case in cases:
-        if case.set_name is not case_set:
-            raise CaseFileError(f"case {case.id} has set_name {case.set_name} in {set_dir}")
-    return _unique(cases, set_dir)
+    return _unique(_in_set(cases, case_set, set_dir), set_dir)
 
 
 def load_yaml_file(path: Path) -> tuple[BenchmarkCase, ...]:
@@ -134,8 +131,11 @@ def load_yaml_file(path: Path) -> tuple[BenchmarkCase, ...]:
     return tuple(_validate(record, f"{path}[{index}]") for index, record in enumerate(records))
 
 
-def load_jsonl(path: Path) -> tuple[BenchmarkCase, ...]:
-    """Validate a JSONL file with one case per non-blank line, such as `APPLIEDAI_FILE`."""
+def load_jsonl(path: Path, case_set: CaseSet = CaseSet.APPLIEDAI) -> tuple[BenchmarkCase, ...]:
+    """Validate a JSONL file with one `case_set` case per non-blank line, such as `APPLIEDAI_FILE`.
+
+    `eval/private/` is gitignored and may be absent; a missing file raises `FileNotFoundError`.
+    """
     cases: list[BenchmarkCase] = []
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
@@ -145,7 +145,17 @@ def load_jsonl(path: Path) -> tuple[BenchmarkCase, ...]:
         except json.JSONDecodeError as exc:
             raise CaseFileError(f"{path}:{number}: not valid JSON: {exc.msg}") from exc
         cases.append(_validate(record, f"{path}:{number}"))
-    return _unique(cases, path)
+    return _unique(_in_set(cases, case_set, path), path)
+
+
+def _in_set(
+    cases: Iterable[BenchmarkCase], case_set: CaseSet, where: Path
+) -> tuple[BenchmarkCase, ...]:
+    checked = tuple(cases)
+    for case in checked:
+        if case.set_name is not case_set:
+            raise CaseFileError(f"case {case.id} has set_name {case.set_name} in {where}")
+    return checked
 
 
 def _validate(record: object, where: str) -> BenchmarkCase:

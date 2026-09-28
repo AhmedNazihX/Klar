@@ -71,7 +71,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── split.json                   Pile A / Pile B, committed once and never changed (B3; C2 may read it)
 │   ├── commission_examples/         examples.jsonl extracted from the draft guidelines (B2)
 │   ├── cases/                       labelled cases, frozen at tag labels-v1 (B10); folders created by F7,
-│   │                                <set>/**/*.yaml, one case or a list per file, schema in aiact/eval/cases.py
+│   │                                <set>/**/*.yaml, one case or a list per file, BenchmarkCase schema
+│   │                                in aiact/eval/cases.py (except qa/, whose item shape comes with B7)
 │   │   ├── commission_b/            (B4)
 │   │   ├── own/<category>/          (B5a–e)
 │   │   ├── soft_pairs/              (B6)
@@ -82,7 +83,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── judge_validation/            hand-labelled judge cases (V4)
 │   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1)
 │   ├── LABEL_CHANGES.md             log of label changes after the freeze (B10)
-│   └── private/                     appliedai.jsonl (B11; gitignored except .gitkeep, F7)
+│   └── private/                     appliedai.jsonl (B11; gitignored, never tracked; may be absent)
 │
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)

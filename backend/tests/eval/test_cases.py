@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -63,6 +64,19 @@ def test_a_yaml_file_can_hold_a_list_of_cases() -> None:
 def test_loads_appliedai_jsonl_skipping_blank_lines() -> None:
     cases = load_jsonl(FIXTURES / "appliedai.jsonl")
     assert [case.label for case in cases] == [AppliedAILabel.LOW, AppliedAILabel.HIGH]
+
+
+def test_jsonl_case_from_another_set_is_rejected(tmp_path: Path) -> None:
+    path = tmp_path / "appliedai.jsonl"
+    path.write_text(json.dumps(VALID_CASE) + "\n", encoding="utf-8")
+    with pytest.raises(CaseFileError, match="set_name"):
+        load_jsonl(path)
+    assert [case.id for case in load_jsonl(path, CaseSet.OWN)] == ["tmp-001"]
+
+
+def test_missing_jsonl_file_is_an_error(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        load_jsonl(tmp_path / "private" / "appliedai.jsonl")
 
 
 def test_missing_set_folder_is_an_error(tmp_path: Path) -> None:
