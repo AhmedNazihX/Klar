@@ -165,12 +165,15 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **B5a–e · Own cases, one sub-story per category** · Deps: F7 · Parallel: with each other and with B2–B4 · Type: mixed
   Context: INIT › Test sets (Own cases), Label rules, Omnibus details. Categories: **a** Art. 50 transparency (including the 50(2) grace period), **b** out-of-scope software (not an AI system under Art. 3(1), exclusions), **c** the December 2026 prohibitions plus the classic Art. 5 practices, **d** Art. 25 role switches, GPAI-based systems, importer and distributor, **e** Annex I flags. At least 25% of each category in German. Output: `eval/cases/own/<category>/*.yaml`.
   DoD: every label cites the provision or example that settles it, or is `legally_ambiguous`; the user has approved each file.
+  Notes from merged stories: F7: cases are `BenchmarkCase` in `aiact/eval/cases.py`; `label_citation` is a list; a label that isn't `legally_ambiguous` needs a citation, an ambiguous one needs `notes` (the open question and both readings: checked in review, not by the schema).
 
 - [ ] **B6 · Soft-wording pairs** · Deps: F7, B5 · Type: mixed
   Output: `eval/cases/soft_pairs/` with 10–20 pairs (plain and softened wording of the same known high-risk system, linked by pair_id). DoD: approved by the user.
+  Notes from merged stories: F7: `BenchmarkCase` has no `pair_id` and rejects unknown fields; link pairs with a `pair:<id>` tag (as the fixtures do) or add the field in `cases.py`.
 
 - [ ] **B7 · Q&A set** · Deps: F7 · Parallel: B5 · Type: mixed
   Output: `eval/cases/qa/` with 20–30 questions (EN and DE), each with the required provision_ids and a reference answer. DoD: approved by the user.
+  Notes from merged stories: F7: `CaseSet` has no `qa` member and Q&A items don't fit `BenchmarkCase`; add a Q&A item model (question, required provision_ids, reference answer) and a loader entry in `aiact/eval/cases.py`. The `eval/cases/qa/` folder exists.
 
 - [ ] **B8 · Consistency triples** · Deps: B5 · Type: mixed
   Output: `eval/cases/consistency/`: 3 paraphrases per system, LLM-generated and then checked by hand. DoD: approved by the user.
@@ -178,14 +181,17 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **B9 · Second-model label filter** · Deps: B4, B5, F6 · Type: agent, then human
   Context: INIT › Label rules (Second-model filter). Output: `backend/aiact/eval/label_filter.py` (`aiact eval label-filter`: Claude Haiku 4.5 via OpenRouter labels every case blind) and `eval/reports/label_disagreements.md`. The user resolves each disagreement.
   DoD: every disagreement has a written resolution (label kept or changed, with a reason).
+  Notes from merged stories: X3 (005): pin Haiku 4.5 to `google-vertex/europe` (or `amazon-bedrock/eu-west-1`) with `allow_fallbacks=False`. Vertex Haiku rejects `response_format: json_object`: use a JSON schema (structured outputs). Haiku caches only with a top-level `cache_control`; check `langchain-openrouter` passes it through. About $0.02 per cold call (~10x Luna).
 
 - [ ] **B10 · Label freeze** · Deps: B9, B6, B7, B8 · Type: agent
   Output: git tag `labels-v1`, `eval/LABEL_CHANGES.md` (a log for later changes, with a review note per change), and a CI test that fails if a file under `eval/cases/` changes without a matching entry in `LABEL_CHANGES.md`.
   DoD: tag pushed; the test is in CI.
+  Notes from merged stories: F2: add the label-freeze check as a new job in `.github/workflows/ci.yml`.
 
 - [ ] **B11 · appliedAI dataset** · Deps: F7 · Parallel: everything · Type: human (agent helps with the format)
   Context: INIT › Test sets, Risks (licence). Output: `eval/private/appliedai.jsonl` (gitignored) and `docs/decisions/002-appliedai-licence.md` (fields, languages, licence statement found or not found).
   DoD: all ~106 cases extracted; only case IDs will ever be published.
+  Notes from merged stories: F7: keep the experts' raw label (`high`/`prohibited`/`low`/`unclear`) with set_name `appliedai` in `eval/private/appliedai.jsonl`; `load_jsonl` and `score_appliedai` map it at scoring time. Add a helper that reads Annex II references as Annex I, and agree a tag for Annex I cases (INIT reports them separately). `eval/private/` is gitignored and untracked: create it locally.
 
 - [ ] **B12 · Academic benchmark import** · Deps: F7 · Type: agent, plus a human spot-check
   Output: `eval/cases/academic/` converted from the davidath repo (CC BY 4.0, with attribution) and `eval/reports/academic_spotcheck.md` (about 20 cases checked).
@@ -194,6 +200,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **B13 · Isolation check in CI** · Deps: B3, C3, F7 · Type: agent
   Context: INIT › Benchmark isolation 5. Output: `backend/tests/test_isolation.py`: (1) no `provisions.source_example_id` is in Pile B (or, in LOO mode, the retrieval filter is always applied), (2) no benchmark description has near-duplicate text in the corpus (embedding cosine above a threshold, and an n-gram check). The CI job from F2 is enabled.
   DoD: the check passes, and it fails when a Pile B example is deliberately injected into a test DB.
+  Notes from merged stories: F2: the `isolation` job in `.github/workflows/ci.yml` exists with `if: false` and runs `pytest -q tests/test_isolation.py`; remove the `if: false`.
 
 ## Phase 2 — Corpus and retrieval
 
@@ -211,22 +218,22 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **C3 · Load the corpus into Postgres** · Deps: C1, C2, F4 · Type: agent · Lane: Corpus (critical)
   Output: `aiact/corpus/load.py` (upsert documents and provisions, set valid_from/valid_to for the original and amended versions, link EN and DE); a CLI `uv run aiact corpus load`.
   DoD: re-running changes nothing; row counts per document are printed and saved to `docs/corpus_stats.md`.
-  Notes from merged stories: Follow decision 009: upsert documents on `(doc_key, law_version, language)` (nulls not distinct); `doc_key` = manifest id; the Omnibus is `is_amending`; when a document's sha256 changes, replace its provisions in one transaction, unchanged means skip; amended document carries the full history with slices from 2024-08-01 split at Omnibus dates parsed by C1; `valid_from` is required.
+  Notes from merged stories: Follow decision 009: upsert documents on `(doc_key, law_version, language)` (nulls not distinct); `doc_key` = manifest id; the Omnibus is `is_amending`; when a document's sha256 changes, replace its provisions in one transaction, unchanged means skip; amended document carries the full history with slices from 2024-08-01 split at Omnibus dates parsed by C1; `valid_from` is required. C1: split the consolidated time slices at the Omnibus `amendment.in_force_from` (2026-07-27); decide whether the deferred application dates in `amendment.dates` (e.g. 2026-12-02 for Art. 5(1)(ba)/(bb)) affect `as_of` lookups. Rows are nested (a unit's `text` includes its children; `kind` and `parent_id` give the tree).
 
 - [ ] **C4 · Embed the corpus** · Deps: C3, F6 · Type: agent · Lane: Corpus (critical)
   Output: `aiact/corpus/embed.py` (batching, model name recorded per row, skips rows already embedded with the same model); a CLI `aiact corpus embed --model qwen3|openai3l --dims 1536|1024`.
   DoD: every provision has a Qwen3 1536-d vector; the vectors are normalised; the cost is logged.
-  Notes from merged stories: Skip a provision only if `(provision_row_id, model, dims)` exists AND `content_sha256` matches the provision's (decision 009). Only the `qwen/qwen3-embedding-8b` / 1536 arm has a partial HNSW index; each new (model, dims) arm needs its own partial index (new migration). F6 found Nebius returns vectors already normalised.
+  Notes from merged stories: Skip a provision only if `(provision_row_id, model, dims)` exists AND `content_sha256` matches the provision's (decision 009). Only the `qwen/qwen3-embedding-8b` / 1536 arm has a partial HNSW index; each new (model, dims) arm needs its own partial index (new migration). F6 found Nebius returns vectors already normalised. C1: parent rows include their children's text: embed leaves only (or dedupe) to avoid duplicate vectors. X3 (005): Qwen3-Embedding-8B is pinned to `nebius`; `text-embedding-3-large` has no EU endpoint (ZDR via `azure`, no region pin).
 
 - [ ] **C5 · `get_provision`** · Deps: C3 · Parallel: C4 · Type: agent
   Context: INIT › MCP tools. Output: `aiact/retrieval/provisions.py`: `get_provision(provision_id, language, law_version|as_of)` → text, version, language, status, english_only flag, and the DISCLAIMER; a fallback to EN with the flag set when DE is missing.
   DoD: tests cover the original and amended text of an article changed by the Omnibus, and the fallback for a guideline that exists only in English.
-  Notes from merged stories: Lookup rule (decision 009): `(d.law_version = $v or d.law_version is null) and not d.is_amending`; `as_of` resolves only against the amended document; `original` is an explicit view, never a fallback.
+  Notes from merged stories: Lookup rule (decision 009): `(d.law_version = $v or d.law_version is null) and not d.is_amending`; `as_of` resolves only against the amended document; `original` is an explicit view, never a fallback. C1: provision ids follow `.claude/rules/corpus.md` and the `eurlex.py` docstring: points of an article without numbered paragraphs sit under the article (`art:3:14`), annex sections are included (`annex:VIII:B:7`), a restarted list goes under `sub<n>` as a whole (`art:43:1:sub2:a`).
 
 - [ ] **C6 · `search_ai_act` (hybrid)** · Deps: C4 · Type: agent · Lane: Corpus (critical)
   Output: `aiact/retrieval/search.py`: vector and full-text search fused with RRF; filters for as_of date, law_version, language, doc_type, and `exclude_source_example_ids`; the query-side instruction is applied only to queries.
   DoD: tests show a softly worded tenant-rent query retrieves Annex III 5(b) in the top 5; a German query works; the exclude filter works.
-  Notes from merged stories: Use the decision-009 lookup rule so guidance (law_version null) stays searchable. Vector queries must use the index's cast and predicate and `set local hnsw.iterative_scan = relaxed_order`. Exclude filter: `source_example_id is null or not (source_example_id = any(...))`. The German stemmer is uneven (System→syst, Systeme→system): consider prefix queries.
+  Notes from merged stories: Use the decision-009 lookup rule so guidance (law_version null) stays searchable. Vector queries must use the index's cast and predicate and `set local hnsw.iterative_scan = relaxed_order`. Exclude filter: `source_example_id is null or not (source_example_id = any(...))`. The German stemmer is uneven (System→syst, Systeme→system): consider prefix queries. C1: parent rows include their children's text: search leaves, or dedupe hits by `parent_id`.
 
 - [ ] **C7 · Obligations table + `list_obligations`** · Deps: F3, F4 · Parallel: the whole Corpus lane · Type: mixed
   Context: INIT › Scope (Obligations checklist), Roles, Omnibus details, Situation (dates). Output: `supabase/seed/obligations.yaml` (role × risk class → duty, article ref, applies_from date, SME/small-mid-cap relief note), migration `003_obligations.sql`, and `aiact/obligations/list.py`.
@@ -237,6 +244,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 - [ ] **X0 · Annex-matching set** · Deps: F7 · Type: mixed
   Output: `eval/cases/annex_match/`: 30–50 informal descriptions → expected Annex III/I points, **written from scratch** (never from Commission examples). DoD: approved by the user.
+  Notes from merged stories: F7: add `annex_match` to `CaseSet` in `aiact/eval/cases.py` and create `eval/cases/annex_match/`; `CaseLabel.annex_point` holds one point, so allow several if needed.
 
 - [ ] **X1 · Embedding comparison** · Deps: C6, X0, B7, V6 · Type: agent
   Output: `backend/aiact/eval/experiments/embeddings.py` and `docs/decisions/003-embeddings.md`: RAGAS context recall and precision for Qwen3 at 1536-d, Qwen3 at 1024-d and OpenAI 3-large, on the Annex-matching and Q&A sets, with results stored in `eval_runs`.
@@ -246,7 +254,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **X2 · Engine model smoke test** · Deps: F3, F6, C5, C6, B4 · Type: agent
   Context: INIT › Engine safety net. Output: `backend/aiact/eval/experiments/smoke.py`, a single-prompt classifier with tool calls to `get_provision` and `search_ai_act` and structured output as `ClassificationResult`, run with GPT-6 Luna and with Gemini 3.1 Flash-Lite on 20 headline cases; `docs/decisions/004-engine-model.md`.
   DoD: the rate of broken outputs or tool calls and the accuracy are recorded for both models; the INIT rule is applied (Luna is dropped if more than 10% broken or clearly worse); the engine model is set in settings.
-  Notes from merged stories: Structured output: cross-field validators aren't in the JSON Schema, so contract failures count as broken outputs (decision 010 addendum). Gemini 3.1 Flash-Lite was allowed in the user's OpenRouter guardrail on 2026-09-28. Slugs checked by F6: `openai/gpt-6-luna` (pinned `openai/gpt-6-luna-20260922`), `google/gemini-3.1-flash-lite`.
+  Notes from merged stories: Structured output: cross-field validators aren't in the JSON Schema, so contract failures count as broken outputs (decision 010 addendum). Gemini 3.1 Flash-Lite was allowed in the user's OpenRouter guardrail on 2026-09-28. Slugs checked by F6: `openai/gpt-6-luna` (pinned `openai/gpt-6-luna-20260922`), `google/gemini-3.1-flash-lite`. X3 (005): add a provider-order setting per role (e.g. `ENGINE_PROVIDER=azure/eu`) passed through `provider_preferences(order, allow_fallbacks=False)`; EU endpoints are used only when pinned by full slug. Luna: ~6k in + ~1.7k out per classification, $0.0018 cold / $0.0009 cached. The key has $9.95 left (the user handles the cap).
 
 - [x] **X3 · OpenRouter feature and cost check** · Deps: F6 · Type: agent
   Output: `docs/decisions/005-openrouter.md`: whether prompt caching works for the chosen models, which EU routes and ZDR options exist, the context window, and token use for one sample classification; the spending cap is set (the user sets it in the OpenRouter dashboard).
@@ -259,6 +267,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **E1 · Graph skeleton** · Deps: F3, **B3 committed** · Type: agent
   Context: INIT › How it works (flowchart). Output: `aiact/engine/graph.py` (a LangGraph StateGraph with the nodes facts → scope → prohibited → high_risk → transparency → role_obligations → finalize; `out_of_scope` and `prohibited` short-circuit to finalize; the order is fixed) and `aiact/engine/state.py`. Nodes are stubs that read scripted outputs.
   DoD: tests cover every routing path with stub nodes; no path can skip a check.
+  Notes from merged stories: X3 (005): order prompts with the fixed instructions and retrieved provisions first and the user's description last, so the shared prefix is cached (Luna on `azure/eu` caches automatically).
 
 - [ ] **E2 · Fact extraction and key-fact questions** · Deps: E1, F6 · Type: agent
   Output: `aiact/engine/nodes/facts.py` and `aiact/engine/prompts/facts.md`: facts with evidence tags, a source span for each stated fact, and key-fact questions for inferred or assumed facts; EN and DE.
@@ -294,17 +303,20 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 - [ ] **V1 · Eval runner** · Deps: F5, F7 · Parallel: C*, E* · Type: agent
   Output: `aiact/eval/runner.py` and a CLI `aiact eval run --set <name> --classifier engine|baseline_* --subset N --exclude-mode heldout|all`, writing to `eval_runs` and `eval_case_results`, with concurrency and a cost cap. DoD: runs end to end with a dummy classifier.
+  Notes from merged stories: F5: `eval_runs.id` is a uuid; `config` must hold the keys `model`, `embedding`, `retrieval` (null allowed); `scores` maps metric → number/bool/null (strict). Consider `finished_at`/status on `eval_runs` and per-case cost/error columns (a new migration: the one-schema-story rule applies). Both tables are server-only (RLS on, no grants).
 
 - [ ] **V2 · Deterministic metrics** · Deps: F3, F7 · Parallel · Type: agent
   Context: INIT › Metrics. Output: `aiact/eval/metrics.py`: risk-class accuracy (with the appliedAI mapping), false-low-risk rate, Annex point accuracy, role accuracy, uncertain-outcome precision and recall (needs-info separate), downgrade rate, consistency, citation existence. A report generator produces a markdown table from a run_id. DoD: every metric is unit-tested on fixtures.
+  Notes from merged stories: F7: `score_appliedai` marks unclear + `needs_more_information` as both `is_counted_separately` and `needs_disagreement_review`; decide whether these cases leave the accuracy denominator (INIT: "reported separately").
 
 - [ ] **V3 · Baselines** · Deps: V1, F6 · Type: agent
   Output: `aiact/eval/baselines.py`: Luna without retrieval or staged checks, and Jev classifying directly. DoD: both run through V1 on a 5-case subset.
+  Notes from merged stories: X3 (005): don't use `typesafe/jev-router` for the Jev baseline (it can route to Luna, the engine model). `typesafe/jev-1.13` refuses chat completions and works only through `/api/alpha/decisions`; check it can classify a description, or drop the baseline.
 
 - [ ] **V4 · Judge + judge validation** · Deps: F6 · Type: mixed
   Context: INIT › Judge. Output: `aiact/eval/judge.py` (Jev returns yes/no with a probability; unsure cases go to Claude Haiku 4.5 with a written reason) and `eval/judge_validation/` (about 50 hand-labelled EN and DE cases, labelled by the user); `docs/decisions/006-judge.md` (agreement and calibration).
   DoD: the validation report exists; the unsure threshold is chosen.
-  Notes from merged stories: Jev's OpenRouter slug is unclear: the model list shows only `typesafe/jev-router`, the ZDR list has `typesafe/jev-1.13-20260917`. Judge backup: `anthropic/claude-haiku-4.5`.
+  Notes from merged stories: Jev's OpenRouter slug is unclear: the model list shows only `typesafe/jev-router`, the ZDR list has `typesafe/jev-1.13-20260917`. Judge backup: `anthropic/claude-haiku-4.5`. X3 (005): `typesafe/jev-router` forwarded a request to Luna, which breaks the different-company rule; `jev-1.13` works only through `/api/alpha/decisions`. Rethink Jev or fall back to Claude Haiku 4.5 (Vertex: JSON schema, not `json_object`; top-level `cache_control`).
 
 - [ ] **V5 · Judged metrics** · Deps: V4, E10 · Type: agent
   Output: citation support, evidence-tag accuracy and a Q&A support scorer, plugged into V1. DoD: scores appear in the run report.
@@ -374,6 +386,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 - [ ] **P12 · Privacy surface** · Deps: P5 · Type: agent
   Output: a warning when a description contains personal data, a privacy notice naming OpenRouter, the model providers and the Nebius host, and a delete-my-data button. DoD: component tests.
+  Notes from merged stories: X3 (005): OpenRouter's own processing is global on this plan (`eu.openrouter.ai` needs Business). Name the EU providers: Azure EU (Luna), Google Vertex EU (Flash-Lite, Haiku, Sonnet), Nebius (embeddings; EU per INIT, no region tag).
 
 - [ ] **P13 · Playwright e2e** · Deps: P5, P6, P9 · Type: agent
   Output: e2e tests for classifying the worked example, the inventory, one document, and delete-my-data (backend in replay mode). DoD: runs in CI.
