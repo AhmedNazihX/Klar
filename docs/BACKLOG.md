@@ -139,9 +139,10 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 ## Phase 1 — Benchmark before the engine
 
-- [ ] **B1 · Fetch source documents** · Deps: F1 · Parallel: F2–F7 · Type: agent · Lane: Corpus
+- [x] **B1 · Fetch source documents** · Deps: F1 · Parallel: F2–F7 · Type: agent · Lane: Corpus
   Context: INIT › Legal corpus table. Output: `backend/aiact/corpus/fetch.py` and `data/manifest.yaml` (per document: id, URL, language, status, version, fetched_at, sha256); raw files in `data/raw/` (gitignored). Covers the AI Act original (EN, DE), the Omnibus 2026/1744 (EN, DE), the consolidated text 02024R1689-20260727 (EN, and DE if it exists), and the guidelines (definition, prohibited, high-risk draft, Art. 50) plus the Code of Practice, in EN and in DE where it exists.
   DoD: the script is re-runnable and idempotent (same sha256 means no change); the manifest records which DE versions exist and which don't (this closes the INIT open question on German texts).
+  **Outcome:** aiact corpus fetch downloads 15 of 20 document/language versions (laws as XHTML via Cellar, decision 008; guidelines as Commission PDFs) into the shared data/raw; German exists for the Act, Omnibus, consolidated text and definition/prohibited guidelines, while the high-risk draft (3 parts), Art. 50 guidelines and Code of Practice are English only; failed fetches are recorded as unknown (available: null); a re-run leaves data/manifest.yaml byte-identical
 
 - [ ] **B2 · Extract and count the Commission high-risk examples** · Deps: B1 · Type: mixed · Lane: Benchmark
   Context: INIT › Benchmark isolation 1–2, Open questions (count examples). Input: the draft high-risk guidelines PDF. Output: `eval/commission_examples/examples.jsonl` (example_id `hr-ex-001…`, Annex III area or Annex I, verdict high/not-high, page, original text) and `docs/decisions/001-commission-example-count.md` (counts per area and verdict).
