@@ -8,6 +8,8 @@ from typer.testing import CliRunner
 
 from aiact.cli import app
 from aiact.eval.split import (
+    EXAMPLES_FILE,
+    SPLIT_FILE,
     ExampleRow,
     Split,
     SplitError,
@@ -15,6 +17,7 @@ from aiact.eval.split import (
     check_every_area_in_both_piles,
     load_examples,
     make_split,
+    render,
     write_split,
 )
 
@@ -143,3 +146,15 @@ def test_cli_writes_the_split(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert f"Pile B: {len(ROWS) // 2}" in result.output
     assert CliRunner().invoke(app, [*args[:-1], "2"]).exit_code == 1
+
+
+# --- the committed split -----------------------------------------------------------------------
+
+
+def test_the_committed_split_matches_a_fresh_run_on_the_examples() -> None:
+    """`eval/split.json` is what `aiact eval split` produces, and it covers all 307 examples."""
+    rows = load_examples(EXAMPLES_FILE)
+    committed = Split.model_validate_json(SPLIT_FILE.read_text(encoding="utf-8"))
+    assert SPLIT_FILE.read_text(encoding="utf-8") == render(make_split(rows))
+    assert len(committed.pile_a) + len(committed.pile_b) == len(rows) == 307
+    check_every_area_in_both_piles(rows, committed)
