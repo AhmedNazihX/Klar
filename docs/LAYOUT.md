@@ -47,6 +47,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── records.py           writes eval_runs / eval_case_results over a direct connection (V1)
 │   │   │   ├── metrics.py           deterministic metrics, per-case scores and run summary (V2)
 │   │   │   ├── report.py            markdown metrics table for a stored run_id; `aiact evaluate report` (V2)
+│   │   │   ├── citation_index.py    citation existence against the corpus (doc_key, provision, language, version) (V2)
 │   │   │   ├── baselines.py         (V3)
 │   │   │   ├── judge.py             (V4)
 │   │   │   ├── ragas_metrics.py     (V6)

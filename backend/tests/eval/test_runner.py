@@ -14,7 +14,7 @@ from pydantic import JsonValue
 from typer.testing import CliRunner, Result
 
 from aiact.cli import app
-from aiact.eval import records, report, runner
+from aiact.eval import citation_index, records, runner
 from aiact.eval import split as split_module
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.runner import (
@@ -412,7 +412,7 @@ SECRET_URL = "postgresql://postgres:hunter2@db.example:5432/postgres"
 
 def _cli_with_database(monkeypatch: pytest.MonkeyPatch, connect: Callable[[], object]) -> Result:
     monkeypatch.setattr(runner, "load_benchmark", lambda case_set: CASES)
-    monkeypatch.setattr(report, "load_citation_index", lambda connection: frozenset())
+    monkeypatch.setattr(citation_index, "load_citation_index", lambda connection: frozenset())
     monkeypatch.setattr(records, "connect", connect)
     return cli.invoke(
         app,

@@ -40,7 +40,6 @@ CASES = tuple(
 
 
 def test_dummy_run_writes_runs_and_case_results(db: psycopg.Connection) -> None:
-    db.execute("select 1")  # opens the test's transaction, so the store's writes nest in it
     options = RunOptions(
         benchmark=CaseSet.OWN,
         classifier_name="dummy",
@@ -85,7 +84,6 @@ class SpendingFailureClassifier:
 
 
 def test_failed_cases_that_spent_are_in_the_stored_total(db: psycopg.Connection) -> None:
-    db.execute("select 1")
     options = RunOptions(
         benchmark=CaseSet.OWN,
         classifier_name="fake",

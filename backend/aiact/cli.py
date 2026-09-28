@@ -16,7 +16,7 @@ import typer
 from aiact import deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
-from aiact.eval import metrics, records, report, runner
+from aiact.eval import citation_index, metrics, records, report, runner
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CaseFileError, CaseSet
 from aiact.obligations import list as obligations_list
@@ -155,8 +155,8 @@ def eval_run(
     )
     try:
         with records.connect() as connection:
-            index = report.load_citation_index(connection)
-            scorer = metrics.metric_scorer(report.citation_checker(index))
+            index = citation_index.load_citation_index(connection)
+            scorer = metrics.metric_scorer(citation_index.citation_checker(index))
             summary = runner.run_benchmark(
                 cases, chosen, records.PostgresRunStore(connection), options, split, scorer
             )

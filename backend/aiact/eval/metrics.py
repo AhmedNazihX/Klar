@@ -1,18 +1,25 @@
 """Deterministic metrics: a result compared with its case label, no model involved (INIT > Metrics).
 
 Each per-case scorer returns True (hit), False (miss) or None (the metric doesn't apply), the
-shape `eval_case_results.scores` stores; a rate is hits over the cases where it applies. A case
-whose classifier failed has no result: it counts as a miss for risk-class and role accuracy, and
-is left out of the metrics that are defined on answers (false-low-risk, Annex point, downgrade).
+shape `eval_case_results.scores` stores; a rate is hits over the cases where it applies.
 
 Scoring rules decided here:
-- A `legally_ambiguous` label is scored under uncertain-outcome handling, not risk-class accuracy
-  (decision 001 for hr-ex-307; INIT > Label rules). The same holds for appliedAI `unclear`, which
-  INIT scores on status.
+- An own `legally_ambiguous` label (for example hr-ex-307, decision 001) is scored only under
+  uncertain-outcome handling, not risk-class accuracy (INIT > Label rules).
+- appliedAI `unclear` follows INIT's appliedAI mapping table: it stays in risk-class accuracy and
+  is a hit only when the result is `legally_ambiguous`. It also counts as an ambiguous label for
+  uncertain-outcome precision and recall.
 - `needs_more_information` is reported separately (INIT > Metrics): an ambiguous-labelled case
-  answered with it leaves both the risk-class accuracy and the ambiguous recall denominator and
-  is counted on its own. For appliedAI this is `score_appliedai`'s `is_counted_separately`.
+  (own ambiguous or appliedAI unclear) answered with it is counted only in its own row
+  (`needs_info_on_ambiguous`). It leaves risk-class accuracy and both uncertain-outcome
+  precision/recall pairs. For appliedAI this is `score_appliedai`'s `is_counted_separately`.
 - Every other label is scored on the result's working-assumption class, whatever its status.
+- A failed case (no result) is a miss wherever its label is scored: risk-class and role accuracy,
+  and recall of an uncertain status, whatever the label. So a failed appliedAI `unclear` case is an
+  accuracy miss and an ambiguous recall miss; a failed own ambiguous case is an ambiguous recall
+  miss only. Metrics defined on an answer (false-low-risk, Annex point, downgrade, citation
+  existence) leave failed cases out.
+- Citation existence is per case: a case hits when every citation in its result resolves.
 """
 
 from collections import defaultdict
@@ -177,13 +184,16 @@ def citations_exist(outcome: Outcome, exists: CitationExists) -> bool | None:
     return all(exists(citation) for citation in citations) if citations else None
 
 
+CITATION_EXISTENCE_KEY = "citation_existence"
+
+
 def case_scores(outcome: Outcome, exists: CitationExists | None = None) -> dict[str, bool | None]:
     """Every per-case score, keyed as `eval_case_results.scores` stores them. Without a citation
     resolver (for example an empty corpus) citation existence is left out."""
     scores = {name: scorer(outcome) for name, scorer in SCORERS.items()}
     if exists is None:
         return scores
-    return scores | {"citation_existence": citations_exist(outcome, exists)}
+    return scores | {CITATION_EXISTENCE_KEY: citations_exist(outcome, exists)}
 
 
 def metric_scorer(
@@ -224,14 +234,10 @@ def rate(outcomes: Iterable[Outcome], scorer: Scorer) -> Rate:
 def uncertain_outcomes(outcomes: Sequence[Outcome], status: Status) -> PrecisionRecall:
     """Precision and recall of one uncertain status against the labels that carry it.
 
-    For `legally_ambiguous`, ambiguous-labelled cases answered `needs_more_information` are left
-    out (see `needs_info_on_ambiguous`). A failed case counts only against recall.
+    Ambiguous-labelled cases answered `needs_more_information` are left out for either status
+    (they are counted only by `needs_info_on_ambiguous`). A failed case counts only against recall.
     """
-    scored = [
-        outcome
-        for outcome in outcomes
-        if status is not Status.LEGALLY_AMBIGUOUS or not _answered_needs_info_on_ambiguous(outcome)
-    ]
+    scored = [outcome for outcome in outcomes if not _answered_needs_info_on_ambiguous(outcome)]
     pairs = [
         (o.result is not None and o.result.status is status, label_status(o.case) is status)
         for o in scored
@@ -266,12 +272,11 @@ def _same_class(members: Sequence[Outcome]) -> bool:
 
 
 def citation_existence(outcomes: Iterable[Outcome], exists: CitationExists | None) -> Rate:
-    """Citations that resolve over all citations in all results (hard rule: 100%); an empty
-    rate without a resolver."""
+    """Cases whose citations all resolve, over the cases with citations (hard rule: 100%); an
+    empty rate without a resolver."""
     if exists is None:
         return Rate(hits=0, total=0)
-    citations = [citation for outcome in outcomes for citation in _citations(outcome.result)]
-    return Rate(hits=sum(map(exists, citations)), total=len(citations))
+    return rate(outcomes, lambda outcome: citations_exist(outcome, exists))
 
 
 def appliedai_review_count(outcomes: Iterable[Outcome]) -> int:

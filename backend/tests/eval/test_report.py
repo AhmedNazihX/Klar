@@ -14,8 +14,8 @@ from aiact.eval.metrics import metric_scorer, summarize
 from aiact.eval.report import (
     RunInfo,
     RunNotFoundError,
+    StoredCase,
     build_report,
-    citation_checker,
     render_markdown,
     stored_case,
 )
@@ -61,7 +61,7 @@ def test_report_is_a_markdown_table_of_every_metric() -> None:
     assert "| False-low-risk rate | 50.0% | 1/2 |" in lines
     assert "| Annex point accuracy | 100.0% | 1/1 |" in lines
     assert "| Consistency | n/a | 0/0 |" in lines
-    assert "| Citation existence | 100.0% | 12/12 |" in lines
+    assert "| Citation existence (at run time) | 100.0% | 2/2 |" in lines
     assert "| Ambiguous answered needs-more-information | 0 | |" in lines
     table = [line for line in lines if line.startswith("| ")]
     assert len(table) == 15  # header, separator and 13 metric rows
@@ -119,7 +119,7 @@ def run_cases(cases: tuple[BenchmarkCase, ...]) -> MemoryStore:
 
 def report_of(store: MemoryStore) -> str:
     rows = tuple(stored_case(r.case_id, r.label, r.predicted, r.scores) for r in store.records)
-    return build_report(INFO, rows, always)
+    return build_report(INFO, rows)
 
 
 def test_runner_rows_feed_the_report() -> None:
@@ -168,14 +168,24 @@ def test_a_scoring_error_is_listed_and_left_out_of_the_metrics() -> None:
     assert "Scoring failed, left out of the metrics: c" in text
 
 
-def test_an_empty_corpus_reports_citation_existence_as_na() -> None:
-    assert citation_checker(frozenset()) is None
-    text = build_report(
-        INFO,
-        (stored_case("a", case("a").model_dump(mode="json"), result().model_dump(mode="json")),),
-        None,
+def _row(case_id: str, scores: dict[str, object]) -> StoredCase:
+    label = case(case_id).model_dump(mode="json")
+    return stored_case(case_id, label, result().model_dump(mode="json"), scores)
+
+
+def test_citation_existence_comes_from_the_scores_stored_at_run_time() -> None:
+    rows = (
+        _row("a", {"citation_existence": True}),
+        _row("b", {"citation_existence": False}),
+        _row("c", {"citation_existence": None}),
     )
-    assert "| Citation existence | n/a | 0/0 |" in text
+    text = build_report(INFO, rows)
+    assert "| Citation existence (at run time) | 50.0% | 1/2 |" in text
+
+
+def test_a_run_without_stored_citation_scores_shows_na() -> None:
+    text = build_report(INFO, (_row("a", {"risk_class_accuracy": True}),))
+    assert "| Citation existence (at run time) | n/a | 0/0 |" in text
 
 
 # --- CLI ---------------------------------------------------------------------------------------

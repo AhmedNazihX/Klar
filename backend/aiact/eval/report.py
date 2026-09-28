@@ -8,8 +8,9 @@ Reports quote numbers only from stored runs, so everything here is read from `ev
 The metrics are recomputed from those two columns, so the runner's own per-case scores
 (`runner.RUN_SCORE_KEYS`: cost, tokens, error flags) never appear in the metric table. A case
 marked `scoring_error` is left out of the metrics and listed by id instead.
-Citation existence resolves `(provision_id, language)` against the corpus `provisions` table,
-which is only read; with an empty corpus it is reported as n/a. The report never prints a
+Citation existence is the exception: it depends on the corpus at run time, so the report uses the
+per-case `citation_existence` score `aiact evaluate run` stored and never re-checks against
+today's corpus. A run without stored citation scores shows n/a. The report never prints a
 description.
 """
 
@@ -22,7 +23,7 @@ from pydantic import ValidationError
 
 from aiact.eval.cases import BenchmarkCase
 from aiact.eval.metrics import (
-    CitationExists,
+    CITATION_EXISTENCE_KEY,
     Outcome,
     PrecisionRecall,
     Rate,
@@ -31,13 +32,10 @@ from aiact.eval.metrics import (
 )
 from aiact.eval.runner import SCORING_ERROR_KEY
 from aiact.schemas.base import ContractModel
-from aiact.schemas.evidence import Citation
 from aiact.schemas.result import ClassificationResult
 
 FAILED_KEY = "error"
 """A `predicted` object with this key records a failed classifier call."""
-
-CitationIndex = frozenset[tuple[str, str]]
 
 
 class RunNotFoundError(LookupError):
@@ -65,6 +63,7 @@ class StoredCase(ContractModel):
 
     outcome: Outcome
     is_scoring_error: bool = False
+    citation_existence: bool | None = None
 
 
 def load_run_info(conn: psycopg.Connection, run_id: UUID) -> RunInfo:
@@ -113,41 +112,28 @@ def stored_case(
         ) from exc
     if case.id != case_id:
         raise RunRecordError(f"case {case_id}: stored label belongs to case {case.id}")
-    is_scoring_error = isinstance(scores, Mapping) and scores.get(SCORING_ERROR_KEY) is True
-    return StoredCase(outcome=Outcome(case=case, result=result), is_scoring_error=is_scoring_error)
-
-
-def load_citation_index(conn: psycopg.Connection) -> CitationIndex:
-    """Every `(provision_id, language)` in the corpus."""
-    rows = conn.execute("select distinct provision_id, language from provisions").fetchall()
-    return frozenset((provision_id, language) for provision_id, language in rows)
-
-
-def citation_checker(index: CitationIndex) -> CitationExists | None:
-    """A resolver over the index, or None when the corpus is empty (nothing to check against)."""
-    if not index:
-        return None
-
-    def exists(citation: Citation) -> bool:
-        return (citation.provision_id, citation.language.value) in index
-
-    return exists
+    stored = scores if isinstance(scores, Mapping) else {}
+    citation_score = stored.get(CITATION_EXISTENCE_KEY)
+    return StoredCase(
+        outcome=Outcome(case=case, result=result),
+        is_scoring_error=stored.get(SCORING_ERROR_KEY) is True,
+        citation_existence=citation_score if isinstance(citation_score, bool) else None,
+    )
 
 
 def run_report(conn: psycopg.Connection, run_id: UUID) -> str:
     """The markdown report for one stored run."""
-    info = load_run_info(conn, run_id)
-    return build_report(
-        info, load_stored_cases(conn, run_id), citation_checker(load_citation_index(conn))
-    )
+    return build_report(load_run_info(conn, run_id), load_stored_cases(conn, run_id))
 
 
-def build_report(
-    info: RunInfo, cases: tuple[StoredCase, ...], exists: CitationExists | None
-) -> str:
-    scored = [case.outcome for case in cases if not case.is_scoring_error]
+def build_report(info: RunInfo, cases: tuple[StoredCase, ...]) -> str:
+    scored = [case for case in cases if not case.is_scoring_error]
     scoring_errors = [case.outcome.case.id for case in cases if case.is_scoring_error]
-    return render_markdown(info, summarize(scored, exists), scoring_errors)
+    citations = [case.citation_existence for case in scored if case.citation_existence is not None]
+    metrics = summarize([case.outcome for case in scored], None).model_copy(
+        update={"citation_existence": Rate(hits=sum(citations), total=len(citations))}
+    )
+    return render_markdown(info, metrics, scoring_errors)
 
 
 def render_markdown(
@@ -183,7 +169,7 @@ def _rows(metrics: RunMetrics) -> list[tuple[str, Rate | int]]:
         *_precision_recall("Needs more information", metrics.needs_more_information),
         ("Downgrade rate (soft wording)", metrics.downgrade),
         ("Consistency", metrics.consistency),
-        ("Citation existence", metrics.citation_existence),
+        ("Citation existence (at run time)", metrics.citation_existence),
         ("appliedAI disagreement review", metrics.appliedai_disagreement_review),
     ]
 

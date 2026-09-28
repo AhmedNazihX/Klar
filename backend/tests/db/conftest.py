@@ -7,6 +7,7 @@ database skips the tests locally but fails them when the `CI` environment variab
 
 import os
 from collections.abc import Iterator
+from contextlib import contextmanager
 
 import psycopg
 import pytest
@@ -42,8 +43,16 @@ def db_connection() -> Iterator[psycopg.Connection]:
 
 @pytest.fixture
 def db(db_connection: psycopg.Connection) -> Iterator[psycopg.Connection]:
-    """The shared connection inside a transaction that is rolled back after the test."""
-    try:
-        yield db_connection
-    finally:
-        db_connection.rollback()
+    """The shared connection inside a transaction that is always rolled back after the test."""
+    with rolled_back(db_connection) as connection:
+        yield connection
+
+
+@contextmanager
+def rolled_back(connection: psycopg.Connection) -> Iterator[psycopg.Connection]:
+    """Open a `transaction(force_rollback=True)` block before the test's code runs, so every
+    `transaction()` that code opens becomes a savepoint: nothing can be committed to the shared
+    database, even by code that commits its own writes."""
+    connection.rollback()  # start from idle, whatever an earlier test left behind
+    with connection.transaction(force_rollback=True):
+        yield connection

@@ -209,9 +209,27 @@ def test_needs_info_on_an_ambiguous_label_is_counted_separately() -> None:
     ambiguous = uncertain_outcomes(outcomes, Status.LEGALLY_AMBIGUOUS)
     assert (ambiguous.predicted, ambiguous.labelled) == (0, 0)
     assert needs_info_on_ambiguous(outcomes) == 2
+    # Counted only in their own row: not false positives for needs-more-information either.
     needs_info = uncertain_outcomes(outcomes, Status.NEEDS_MORE_INFORMATION)
-    assert needs_info.precision == Rate(hits=1, total=3)
+    assert needs_info.precision == Rate(hits=1, total=1)
     assert needs_info.recall == Rate(hits=1, total=1)
+    assert risk_class_match(outcomes[0]) is None
+    assert risk_class_match(outcomes[1]) is None
+
+
+def test_a_failed_case_with_an_uncertain_label_is_a_miss_where_its_label_is_scored() -> None:
+    unclear = outcome(appliedai_case("ai-unclear", AppliedAILabel.UNCLEAR), failed=True)
+    ambiguous = outcome(case("amb", status=Status.LEGALLY_AMBIGUOUS), failed=True)
+    needs_info = outcome(case("nmi", status=Status.NEEDS_MORE_INFORMATION), failed=True)
+    assert risk_class_match(unclear) is False  # appliedAI unclear stays in accuracy (INIT table)
+    assert risk_class_match(ambiguous) is None  # own ambiguous labels are not in accuracy
+    assert risk_class_match(needs_info) is False
+    outcomes = [unclear, ambiguous, needs_info]
+    assert uncertain_outcomes(outcomes, Status.LEGALLY_AMBIGUOUS).recall == Rate(hits=0, total=2)
+    assert uncertain_outcomes(outcomes, Status.NEEDS_MORE_INFORMATION).recall == Rate(
+        hits=0, total=1
+    )
+    assert needs_info_on_ambiguous(outcomes) == 0
 
 
 # --- consistency -------------------------------------------------------------------------------
@@ -242,8 +260,10 @@ def test_a_failed_paraphrase_makes_its_group_inconsistent() -> None:
 
 def test_citation_existence_counts_every_citation() -> None:
     outcomes = [outcome(case("a")), outcome(case("b"), failed=True)]
-    assert citation_existence(outcomes, exists_in_worked_example) == Rate(hits=6, total=6)
-    assert citation_existence(outcomes, exists_except_art_5) == Rate(hits=5, total=6)
+    # Per case: the failed case has no citations; one missing citation misses the whole case.
+    assert citation_existence(outcomes, exists_in_worked_example) == Rate(hits=1, total=1)
+    assert citation_existence(outcomes, exists_except_art_5) == Rate(hits=0, total=1)
+    assert citation_existence(outcomes, None) == Rate(hits=0, total=0)
 
 
 def test_citations_exist_per_case() -> None:
