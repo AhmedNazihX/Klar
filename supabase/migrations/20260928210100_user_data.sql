@@ -11,22 +11,31 @@
 
 create extension if not exists pg_cron with schema pg_catalog;
 
--- Functions the Data API must not expose: the updated_at trigger and the cleanup.
+-- Functions the Data API must not expose: the timestamp trigger and the cleanup.
 create schema if not exists private;
 revoke all on schema private from public, anon, authenticated;
 
-create function private.set_updated_at()
+-- Timestamps are server-owned, whatever the client sends. updated_at is always now(): it is the
+-- activity the inactivity cleanup reads, so no client can push it into the future. created_at may
+-- be set on insert (import_my_data keeps a file's dates) but never later than now(), and never
+-- changes afterwards; it orders rows only and the cleanup never reads it.
+create function private.stamp_timestamps()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
+  if tg_op = 'INSERT' then
+    new.created_at := least(coalesce(new.created_at, now()), now());
+  else
+    new.created_at := old.created_at;
+  end if;
   new.updated_at := now();
   return new;
 end
 $$;
 
-revoke execute on function private.set_updated_at() from public, anon, authenticated;
+revoke execute on function private.stamp_timestamps() from public, anon, authenticated;
 
 -- A named collection of a company's AI systems (the Inventory view, P6).
 create table public.inventories (
@@ -69,6 +78,10 @@ create table public.classifications (
   law_version text not null check (law_version in ('original', 'amended')),
   result jsonb not null check (jsonb_typeof(result) = 'object'),
   created_at timestamptz not null default now(),
+  -- Set when the row is written (rows are never updated); the cleanup's activity for this table.
+  updated_at timestamptz not null default now(),
+  -- A real result is a few tens of kB; 256 kB (262144 bytes) keeps one row from filling the table.
+  constraint classifications_result_size check (octet_length(result::text) <= 262144),
   foreign key (system_id, user_id) references public.systems (id, user_id) on delete cascade
 );
 
@@ -97,12 +110,15 @@ create index systems_user_inventory_idx on public.systems (user_id, inventory_id
 create index classifications_user_system_idx on public.classifications (user_id, system_id, created_at);
 create index interview_answers_user_system_idx on public.interview_answers (user_id, system_id);
 
-create trigger inventories_set_updated_at before update on public.inventories
-  for each row execute function private.set_updated_at();
-create trigger systems_set_updated_at before update on public.systems
-  for each row execute function private.set_updated_at();
-create trigger interview_answers_set_updated_at before update on public.interview_answers
-  for each row execute function private.set_updated_at();
+create trigger inventories_stamp_timestamps before insert or update on public.inventories
+  for each row execute function private.stamp_timestamps();
+create trigger systems_stamp_timestamps before insert or update on public.systems
+  for each row execute function private.stamp_timestamps();
+create trigger classifications_stamp_timestamps before insert or update on public.classifications
+  for each row execute function private.stamp_timestamps();
+create trigger interview_answers_stamp_timestamps before insert or update
+  on public.interview_answers
+  for each row execute function private.stamp_timestamps();
 
 -- RLS: each signed-in visitor (anonymous or not) sees and changes only their own rows; the anon role
 -- (no session) gets nothing. `(select auth.uid())` is evaluated once per statement, not per row.
@@ -243,6 +259,7 @@ comment on function public.export_my_data() is 'The caller''s data as a nested J
 
 -- Import: adds the inventories of an export_my_data() document to the caller's data, with new ids.
 -- Existing rows are kept. The table checks validate every field; any error rolls the import back.
+-- The file's created_at values are kept (so the order survives), clamped to now() by the trigger.
 -- Returns the number of rows added per table.
 create function public.import_my_data(data jsonb)
 returns jsonb
@@ -251,7 +268,8 @@ security invoker
 set search_path = ''
 as $$
 declare
-  -- Far above a real inventory, well below what would strain the database.
+  -- A sanity check that rejects a file that can't be an export (a real one is far smaller); not a
+  -- storage quota or an abuse limit.
   max_bytes constant integer := 5 * 1024 * 1024;
   uid uuid := auth.uid();
   inventory jsonb;
@@ -276,21 +294,21 @@ begin
   end if;
 
   for inventory in select value from jsonb_array_elements(data -> 'inventories') loop
-    insert into public.inventories (user_id, name)
-    values (uid, inventory ->> 'name')
+    insert into public.inventories (user_id, name, created_at)
+    values (uid, inventory ->> 'name', (inventory ->> 'created_at')::timestamptz)
     returning id into new_inventory_id;
     added_inventories := added_inventories + 1;
 
     for item in select value from jsonb_array_elements(coalesce(inventory -> 'systems', '[]')) loop
-      insert into public.systems (user_id, inventory_id, name, description)
-      values (uid, new_inventory_id, item ->> 'name', item ->> 'description')
+      insert into public.systems (user_id, inventory_id, name, description, created_at)
+      values (uid, new_inventory_id, item ->> 'name', item ->> 'description',
+              (item ->> 'created_at')::timestamptz)
       returning id into new_system_id;
       added_systems := added_systems + 1;
 
       insert into public.classifications
         (user_id, system_id, risk_class, status, law_version, result, created_at)
-      select uid, new_system_id, c.risk_class, c.status, c.law_version, c.result,
-             coalesce(c.created_at, now())
+      select uid, new_system_id, c.risk_class, c.status, c.law_version, c.result, c.created_at
       from jsonb_to_recordset(coalesce(item -> 'classifications', '[]')) as c(
         risk_class text, status text, law_version text, result jsonb, created_at timestamptz
       );
@@ -325,9 +343,14 @@ grant execute on function public.delete_my_data(), public.export_my_data(),
 
 -- Inactivity cleanup: deletes anonymous users whose last activity is older than `retention`; their
 -- data goes with them (on delete cascade). Activity is the latest of sign-in, session refresh (the
--- client refreshes its token while the app is open) and any change to their data. Accounts that are
--- no longer anonymous are never touched. Returns the number of users deleted.
-create function private.purge_inactive_anonymous_users(retention interval)
+-- client refreshes its token while the app is open) and the server-set updated_at of their rows,
+-- never a timestamp a client can choose. Accounts that are no longer anonymous are never touched.
+-- `as_of` is the time the cleanup measures from (now() in the cron job; tests pass a later time).
+-- Returns the number of users deleted.
+create function private.purge_inactive_anonymous_users(
+  retention interval,
+  as_of timestamptz default now()
+)
 returns bigint
 language plpgsql
 set search_path = ''
@@ -338,6 +361,9 @@ begin
   if retention is null or retention < interval '1 day' then
     raise exception 'retention must be at least one day, got %', retention using errcode = '22023';
   end if;
+  if as_of is null then
+    raise exception 'as_of must be a time' using errcode = '22023';
+  end if;
   delete from auth.users u
   where u.is_anonymous
     and greatest(
@@ -347,15 +373,15 @@ begin
       (select max(greatest(s.updated_at, s.refreshed_at)) from auth.sessions s where s.user_id = u.id),
       (select max(i.updated_at) from public.inventories i where i.user_id = u.id),
       (select max(s.updated_at) from public.systems s where s.user_id = u.id),
-      (select max(c.created_at) from public.classifications c where c.user_id = u.id),
+      (select max(c.updated_at) from public.classifications c where c.user_id = u.id),
       (select max(a.updated_at) from public.interview_answers a where a.user_id = u.id)
-    ) < now() - retention;
+    ) < as_of - retention;
   get diagnostics deleted = row_count;
   return deleted;
 end
 $$;
 
-revoke execute on function private.purge_inactive_anonymous_users(interval)
+revoke execute on function private.purge_inactive_anonymous_users(interval, timestamptz)
   from public, anon, authenticated;
 
 -- Daily at 03:17 UTC. The retention period is the argument; to change it, run cron.schedule again

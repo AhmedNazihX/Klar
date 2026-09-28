@@ -9,6 +9,7 @@ Each test runs as postgres inside the rolled-back `db` transaction; `as_user` sw
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import timedelta
 from typing import Any, LiteralString
 from uuid import UUID, uuid4
 
@@ -24,6 +25,10 @@ USER_TABLES = ("inventories", "systems", "classifications", "interview_answers")
 CRON_JOB = "purge-inactive-anonymous-users"
 RETENTION = "30 days"
 RESULT = {"risk_class": "high_risk", "law_version": "amended", "disclaimer": "Guidance only."}
+RESULT_MAX_BYTES = 262144
+FUTURE = "2999-01-01T00:00:00+00:00"
+EMPTY_EXPORT = {"format": "aiact-user-data", "version": 1, "inventories": []}
+RPC_CALLS = ("select delete_my_data()", "select export_my_data()", "select import_my_data(%s)")
 
 
 def _create_user(db: psycopg.Connection, *, is_anonymous: bool = True, age: str = "0 days") -> UUID:
@@ -90,37 +95,6 @@ def _add_system(db: psycopg.Connection, name: str = "CV screener") -> dict[str, 
         "classifications": classification,
         "interview_answers": answer,
     }
-
-
-def _add_old_system(db: psycopg.Connection, user_id: UUID, age: str) -> None:
-    """As postgres: one row per table for this user, created and last updated `age` ago (an
-    update would reset updated_at, so the times are set on insert)."""
-    params = {"user": user_id, "age": age}
-    db.execute(
-        """
-        with inventory as (
-          insert into inventories (user_id, name, created_at, updated_at)
-          values (%(user)s, 'Old', now() - %(age)s::interval, now() - %(age)s::interval)
-          returning id
-        ), system as (
-          insert into systems (user_id, inventory_id, name, description, created_at, updated_at)
-          select %(user)s, id, 'Old', 'Old.', now() - %(age)s::interval, now() - %(age)s::interval
-          from inventory
-          returning id
-        ), classification as (
-          insert into classifications
-            (user_id, system_id, risk_class, status, law_version, result, created_at)
-          select %(user)s, id, 'minimal_risk', 'decided', 'amended', '{}', now() - %(age)s::interval
-          from system
-        )
-        insert into interview_answers
-          (user_id, system_id, template, question_key, answer, created_at, updated_at)
-        select %(user)s, id, 'art_27', 'q', 'a',
-               now() - %(age)s::interval, now() - %(age)s::interval
-        from system
-        """,
-        params,
-    )
 
 
 def _on(template: LiteralString, table: str) -> sql.Composed:
@@ -209,8 +183,9 @@ def test_anon_role_without_a_session_gets_no_access(db: psycopg.Connection) -> N
         for table in USER_TABLES:
             with pytest.raises(psycopg.errors.InsufficientPrivilege), db.transaction():
                 db.execute(_on("select 1 from {}", table))
-        with pytest.raises(psycopg.errors.InsufficientPrivilege), db.transaction():
-            db.execute("select delete_my_data()")
+        for call in RPC_CALLS:
+            with pytest.raises(psycopg.errors.InsufficientPrivilege), db.transaction():
+                db.execute(call, (Jsonb(EMPTY_EXPORT),) if "%s" in call else None)
     finally:
         db.execute("reset role")
 
@@ -226,15 +201,46 @@ def test_classifications_cannot_be_rewritten(
         )
 
 
-def test_updates_bump_updated_at(db: psycopg.Connection) -> None:
+def test_timestamps_are_set_by_the_server(db: psycopg.Connection) -> None:
     user = _create_user(db)
-    _add_old_system(db, user, age="1 day")
     with as_user(db, user):
-        db.execute("update inventories set name = 'Renamed'")
-        db.execute("update systems set name = 'Renamed'")
-        db.execute("update interview_answers set answer = 'Changed'")
-        for table in ("inventories", "systems", "interview_answers"):
-            assert _one(db, _on("select bool_and(updated_at = now()) from {}", table))
+        _add_system(db)
+        for table in USER_TABLES:
+            db.execute(
+                _on("update {} set created_at = %s, updated_at = %s", table),
+                (FUTURE, "infinity"),
+            )
+            assert _one(
+                db,
+                _on("select bool_and(created_at <= now() and updated_at = now()) from {}", table),
+            )
+        forged = db.execute(
+            "insert into inventories (name, created_at, updated_at) values ('X', %s, 'infinity')"
+            " returning created_at = now() and updated_at = now()",
+            (FUTURE,),
+        ).fetchone()
+        assert forged == (True,)
+        past = _one(
+            db,
+            "insert into inventories (name, created_at) values ('Y', now() - interval '3 days')"
+            " returning now() - created_at",
+        )
+        assert past == timedelta(days=3)
+
+
+def test_a_classification_result_has_a_size_limit(
+    db: psycopg.Connection, two_users: tuple[UUID, UUID, dict[str, UUID]]
+) -> None:
+    user_a, _, rows = two_users
+    oversized = {"text": "x" * RESULT_MAX_BYTES}
+    with as_user(db, user_a), pytest.raises(psycopg.errors.CheckViolation), db.transaction():
+        db.execute(
+            """
+            insert into classifications (system_id, risk_class, status, law_version, result)
+            values (%s, 'high_risk', 'decided', 'amended', %s)
+            """,
+            (rows["systems"], Jsonb(oversized)),
+        )
 
 
 def test_delete_my_data_removes_only_the_callers_rows(
@@ -259,38 +265,63 @@ def test_delete_my_data_needs_a_session(db: psycopg.Connection) -> None:
         db.execute("select delete_my_data()")
 
 
-def test_export_then_import_copies_the_data_into_another_session(
-    db: psycopg.Connection, two_users: tuple[UUID, UUID, dict[str, UUID]]
-) -> None:
-    user_a, user_b, rows = two_users
+def _add_dated_inventory(db: psycopg.Connection, name: str, days_ago: int) -> None:
+    """As the current user: an inventory and one system, both created `days_ago` days ago."""
+    db.execute(
+        """
+        with inventory as (
+          insert into inventories (name, created_at)
+          values (%(name)s, now() - make_interval(days => %(days)s))
+          returning id, created_at
+        ), system as (
+          insert into systems (inventory_id, name, description, created_at)
+          select id, %(name)s || ' system', 'Ranks job applicants.', created_at from inventory
+          returning id, created_at
+        )
+        insert into classifications (system_id, risk_class, status, law_version, result, created_at)
+        select id, 'high_risk', 'decided', 'amended', %(result)s, created_at from system
+        """,
+        {"name": name, "days": days_ago, "result": Jsonb(RESULT)},
+    )
+
+
+def test_export_then_import_keeps_content_dates_and_order(db: psycopg.Connection) -> None:
+    user_a, user_b = _create_user(db), _create_user(db)
     with as_user(db, user_a):
+        _add_dated_inventory(db, "Second", days_ago=1)  # inserted first, created later
+        _add_dated_inventory(db, "First", days_ago=3)
         exported = _one(db, "select export_my_data()")
     assert exported["format"] == "aiact-user-data"
     assert exported["version"] == 1
-    [inventory] = exported["inventories"]
-    [system] = inventory["systems"]
-    assert "id" not in inventory and "user_id" not in system
+    inventories = exported["inventories"]
+    assert [inventory["name"] for inventory in inventories] == ["First", "Second"]
+    system = inventories[0]["systems"][0]
+    assert "id" not in inventories[0] and "user_id" not in system
     assert system["classifications"][0]["result"] == RESULT
-    assert system["interview_answers"] == [
-        {"template": "annex_iv", "question_key": "intended_purpose", "answer": "Shortlisting."}
-    ]
 
     with as_user(db, user_b):
         added = _one(db, "select import_my_data(%s)", (Jsonb(exported),))
-        assert added == dict.fromkeys(USER_TABLES, 1)
+        assert added == {
+            "inventories": 2,
+            "systems": 2,
+            "classifications": 2,
+            "interview_answers": 0,
+        }
         reexported = _one(db, "select export_my_data()")
-        assert (
-            db.execute(
-                "select id from inventories where id = %s", (rows["inventories"],)
-            ).fetchall()
-            == []
-        )
+    assert reexported["inventories"] == inventories
 
-    def content(document: dict[str, Any]) -> list[Any]:
-        return document["inventories"]
-
-    assert content(reexported) == content(exported)
-    assert _counts(db, user_a) == dict.fromkeys(USER_TABLES, 1)
+    # The dates are the file's, not the import's now().
+    dates = db.execute(
+        "select user_id = %s, name, now() - created_at from inventories"
+        " where user_id in (%s, %s) order by user_id = %s, created_at",
+        (user_b, user_a, user_b, user_b),
+    ).fetchall()
+    ages = [timedelta(days=3), timedelta(days=1)]
+    assert dates == [
+        *((False, name, age) for name, age in zip(("First", "Second"), ages, strict=True)),
+        *((True, name, age) for name, age in zip(("First", "Second"), ages, strict=True)),
+    ]
+    assert _counts(db, user_a) == {**dict.fromkeys(USER_TABLES, 2), "interview_answers": 0}
 
 
 @pytest.mark.parametrize(
@@ -338,8 +369,13 @@ def test_import_with_an_invalid_row_adds_nothing(db: psycopg.Connection) -> None
     assert _counts(db, user) == dict.fromkeys(USER_TABLES, 0)
 
 
-def _purge(db: psycopg.Connection, retention: str = RETENTION) -> int:
-    return _one(db, "select private.purge_inactive_anonymous_users(%s::interval)", (retention,))
+def _purge(db: psycopg.Connection, retention: str = RETENTION, later: str = "0 days") -> int:
+    """Run the cleanup as if it were `later` from now."""
+    return _one(
+        db,
+        "select private.purge_inactive_anonymous_users(%s::interval, now() + %s::interval)",
+        (retention, later),
+    )
 
 
 def _user_exists(db: psycopg.Connection, user_id: UUID) -> bool:
@@ -347,34 +383,78 @@ def _user_exists(db: psycopg.Connection, user_id: UUID) -> bool:
 
 
 def test_cleanup_deletes_inactive_anonymous_users_and_their_data(db: psycopg.Connection) -> None:
-    stale = _create_user(db, age="31 days")
-    _add_old_system(db, stale, age="31 days")
-    fresh = _create_user(db, age="29 days")
+    stale = _create_user(db, age="1 day")
+    with as_user(db, stale):
+        _add_system(db)
     registered = _create_user(db, is_anonymous=False, age="400 days")
 
-    assert _purge(db) >= 1  # the shared database may hold other stale anonymous users
+    assert _purge(db, later="31 days") >= 1  # the shared database may hold other stale users
     assert not _user_exists(db, stale)
     assert _counts(db, stale) == dict.fromkeys(USER_TABLES, 0)
-    assert _user_exists(db, fresh)
     assert _user_exists(db, registered)
 
 
-def test_cleanup_counts_recent_data_and_session_refreshes_as_activity(
-    db: psycopg.Connection,
-) -> None:
+def test_cleanup_keeps_users_active_within_the_retention(db: psycopg.Connection) -> None:
     edited = _create_user(db, age="60 days")
     with as_user(db, edited):
         _add_system(db)  # written now
     visited = _create_user(db, age="60 days")
     db.execute(
         "insert into auth.sessions (id, user_id, created_at, updated_at, refreshed_at)"
-        " values (%s, %s, now() - interval '60 days', now() - interval '2 days', now())",
+        " values (%s, %s, now() - interval '60 days', now() - interval '60 days', now())",
         (uuid4(), visited),
     )
+    idle = _create_user(db, age="60 days")
 
-    _purge(db)
+    _purge(db, later="29 days")
     assert _user_exists(db, edited)
     assert _user_exists(db, visited)
+    assert not _user_exists(db, idle)
+
+
+def test_a_future_timestamp_written_directly_does_not_block_the_cleanup(
+    db: psycopg.Connection,
+) -> None:
+    user = _create_user(db, age="90 days")
+    with as_user(db, user):
+        db.execute(
+            "insert into inventories (name, created_at, updated_at) values ('X', %s, 'infinity')",
+            (FUTURE,),
+        )
+        db.execute("update inventories set updated_at = 'infinity', created_at = %s", (FUTURE,))
+
+    _purge(db, later="31 days")
+    assert not _user_exists(db, user)
+
+
+def test_a_future_timestamp_in_an_import_does_not_block_the_cleanup(
+    db: psycopg.Connection,
+) -> None:
+    user = _create_user(db, age="90 days")
+    classification = {
+        "risk_class": "minimal_risk",
+        "status": "decided",
+        "law_version": "amended",
+        "result": {},
+        "created_at": FUTURE,
+    }
+    system = {
+        "name": "X",
+        "description": "Y",
+        "created_at": FUTURE,
+        "classifications": [classification],
+    }
+    document = {
+        **EMPTY_EXPORT,
+        "inventories": [{"name": "Z", "created_at": FUTURE, "systems": [system]}],
+    }
+    with as_user(db, user):
+        db.execute("select import_my_data(%s)", (Jsonb(document),))
+        for table in ("inventories", "systems", "classifications"):
+            assert _one(db, _on("select bool_and(created_at <= now()) from {}", table))
+
+    _purge(db, later="31 days")
+    assert not _user_exists(db, user)
 
 
 def test_cleanup_refuses_a_retention_under_one_day(db: psycopg.Connection) -> None:
