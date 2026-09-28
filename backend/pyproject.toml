@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "AI Act Classification Assistant: classifies AI systems under the EU AI Act, with steps, citations and measured accuracy."
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
     "typer>=0.27.2",
 ]
@@ -47,4 +48,5 @@ testpaths = ["tests"]
 addopts = ["-m", "not live", "--strict-markers"]
 markers = [
     "live: calls a real model or service; skipped unless run with -m live",
+    "db: needs the local Supabase Postgres (`supabase start`); skipped when it isn't reachable",
 ]

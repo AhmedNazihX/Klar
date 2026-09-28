@@ -15,6 +15,7 @@ Source: `backend/uv.lock`.
 
 | Package | Group | Constraint | Locked | Licence | Summary |
 | --- | --- | --- | --- | --- | --- |
+| psycopg[binary] | runtime | >=3.3.6 | 3.3.6 | LGPL-3.0-only | PostgreSQL database adapter for Python |
 | pydantic-settings | runtime | >=2.15.0 | 2.15.0 | MIT | Settings management using Pydantic |
 | typer | runtime | >=0.27.2 | 0.27.2 | MIT | Typer, build great CLIs. Easy to code. Based on Python type hints. |
 | pyright | dev | >=1.1.414 | 1.1.414 | MIT | Command line wrapper for pyright |
@@ -34,11 +35,13 @@ Source: `backend/uv.lock`.
 | nodeenv | 1.10.0 | BSD | pyright |
 | packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | pytest |
 | pluggy | 1.6.0 | MIT | pytest |
+| psycopg-binary | 3.3.6 | LGPL-3.0-only | psycopg |
 | pydantic | 2.13.5 | MIT | pydantic-settings |
 | pydantic-core | 2.46.5 | MIT | pydantic-settings |
 | pygments | 2.21.0 | BSD-2-Clause | pytest, typer |
 | python-dotenv | 1.2.3 | BSD-3-Clause | pydantic-settings |
 | rich | 15.0.0 | MIT | typer |
 | shellingham | 1.5.4 | ISC License | typer |
-| typing-extensions | 4.16.0 | PSF-2.0 | pydantic-settings, pyright |
+| typing-extensions | 4.16.0 | PSF-2.0 | psycopg, pydantic-settings, pyright |
 | typing-inspection | 0.4.4 | MIT | pydantic-settings |
+| tzdata | 2026.4 | Apache-2.0 | psycopg |

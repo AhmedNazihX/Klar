@@ -35,6 +35,14 @@
     "licence": "MIT",
     "summary": "plugin and hook calling mechanisms for python"
   },
+  "psycopg-binary==3.3.6": {
+    "licence": "LGPL-3.0-only",
+    "summary": "PostgreSQL database adapter for Python -- C optimisation distribution"
+  },
+  "psycopg==3.3.6": {
+    "licence": "LGPL-3.0-only",
+    "summary": "PostgreSQL database adapter for Python"
+  },
   "pydantic-core==2.46.5": {
     "licence": "MIT",
     "summary": "Core functionality for Pydantic validation and serialization"
@@ -86,5 +94,9 @@
   "typing-inspection==0.4.4": {
     "licence": "MIT",
     "summary": "Runtime typing introspection tools"
+  },
+  "tzdata==2026.4": {
+    "licence": "Apache-2.0",
+    "summary": "Provider of IANA time zone data"
   }
 }
