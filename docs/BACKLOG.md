@@ -166,6 +166,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: INIT › Benchmark isolation 3. Output: `eval/cases/commission_b/*.yaml` (description written in a company's voice: size, bought or built, business context, some irrelevant detail; label, label_citation, source_example_id). In LOO mode this covers all examples.
   DoD: every Pile B example has a case; `backend/aiact/eval/similarity.py` (`aiact evaluate similarity`) reports the maximum similarity between each case and its source example (embedding cosine plus longest shared n-gram), and no case shares more than an agreed threshold, for example an 8-word run; the user has approved every label.
   Notes from merged stories: B2 (001): carry `accepted_bases`, `label_status` and `flip_variants` from examples.jsonl into the cases; hr-ex-307 becomes a `legally_ambiguous` case. Write each description WITHOUT the row's flip-variant feature, and expect the engine to ask about or flag it (user product rule); a flip-variant row may also yield a variant case with the variant's verdict. hr-ex-283: describe all three steps. Annex I high rows carry the Art. 6(1) third-party-assessment note. F7 follow-up lands here: extend `BenchmarkCase` for any-of basis/citation matching (bare `art_6_3_filter` matches any lettered entry; a lettered answer matches the same letter or the bare form) and a `label_status` field.
+  **From V2 (merged):** add `accepted_bases` and the flip-variant provisions to the case model so `metrics.basis_matches` and `flags_flip_variant` can be wired into `case_scores`/`summarize` (tested helpers, not yet reached).
 
 - [ ] **B5a–e · Own cases, one sub-story per category** · Deps: F7 · Parallel: with each other and with B2–B4 · Type: mixed
   Context: INIT › Test sets (Own cases), Label rules, Omnibus details. Categories: **a** Art. 50 transparency (including the 50(2) grace period), **b** out-of-scope software (not an AI system under Art. 3(1), exclusions), **c** the December 2026 prohibitions plus the classic Art. 5 practices, **d** Art. 25 role switches, GPAI-based systems, importer and distributor, **e** Annex I flags. At least 25% of each category in German. Output: `eval/cases/own/<category>/*.yaml`.
@@ -175,6 +176,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **B6 · Soft-wording pairs** · Deps: F7, B5 · Type: mixed
   Output: `eval/cases/soft_pairs/` with 10–20 pairs (plain and softened wording of the same known high-risk system, linked by pair_id). DoD: approved by the user.
   Notes from merged stories: F7: `BenchmarkCase` has no `pair_id` and rejects unknown fields; link pairs with a `pair:<id>` tag (as the fixtures do) or add the field in `cases.py`. B2 (001): the 15 rows with `flip_variants` in eval/commission_examples/examples.jsonl are ready-made base/variant pairs (e.g. place-based vs person-based crime prediction, 6(a)/6(d); onboarding chatbot vs performance-review feed, 4(a)/4(b); 283 step-(i)-only → Art. 6(3)(d); 244/245 → prohibited under Art. 5). Cite the Commission's own "however" sentence for the variant.
+  **From V2 (merged):** tag the softened description of each pair `wording:soft`; the downgrade-rate metric finds pairs only by that tag and reports 0/0 otherwise.
 
 - [ ] **B7 · Q&A set** · Deps: F7 · Parallel: B5 · Type: mixed
   Output: `eval/cases/qa/` with 20–30 questions (EN and DE), each with the required provision_ids and a reference answer. DoD: approved by the user.
@@ -182,6 +184,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 - [ ] **B8 · Consistency triples** · Deps: B5 · Type: mixed
   Output: `eval/cases/consistency/`: 3 paraphrases per system, LLM-generated and then checked by hand. DoD: approved by the user.
+  **From V2 (merged):** tag every paraphrase of a triple `triple:<id>`; the consistency metric groups only by that tag and reports 0/0 otherwise.
 
 - [ ] **B9 · Second-model label filter** · Deps: B4, B5, F6 · Type: agent, then human
   Context: INIT › Label rules (Second-model filter). Output: `backend/aiact/eval/label_filter.py` (`aiact evaluate label-filter`: Claude Haiku 4.5 via OpenRouter labels every case blind) and `eval/reports/label_disagreements.md`. The user resolves each disagreement.
@@ -236,6 +239,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: INIT › MCP tools. Output: `aiact/retrieval/provisions.py`: `get_provision(provision_id, language, law_version|as_of)` → text, version, language, status, english_only flag, and the DISCLAIMER; a fallback to EN with the flag set when DE is missing.
   DoD: tests cover the original and amended text of an article changed by the Omnibus, and the fallback for a guideline that exists only in English.
   Notes from merged stories: Lookup rule (decision 009): `(d.law_version = $v or d.law_version is null) and not d.is_amending`; `as_of` resolves only against the amended document; `original` is an explicit view, never a fallback. C1: provision ids follow `.claude/rules/corpus.md` and the `eurlex.py` docstring: points of an article without numbered paragraphs sit under the article (`art:3:14`), annex sections are included (`annex:VIII:B:7`), a restarted list goes under `sub<n>` as a whole (`art:43:1:sub2:a`).
+  **From V2 (merged):** citations resolve on the manifest `doc_key` (e.g. `ai-act-consolidated`), provision_id, language and law_version (aiact/eval/citation_index.py). The F3 worked example uses document_id `ai-act-consolidated-2026-07-27`, which is not a doc_key: align it.
 
 - [ ] **C6 · `search_ai_act` (hybrid)** · Deps: C4 · Type: agent · Lane: Corpus (critical)
   Output: `aiact/retrieval/search.py`: vector and full-text search fused with RRF; filters for as_of date, law_version, language, doc_type, and `exclude_source_example_ids`; the query-side instruction is applied only to queries.
@@ -306,6 +310,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 - [ ] **E9 · Citation existence validator** · Deps: E8, C5 · Type: agent · **critical**
   Output: `aiact/engine/citations.py`: every citation must resolve through `get_provision`; an unknown citation triggers one repair retry of that step, and if it still fails the step becomes `needs_more_information` with an error flag. DoD: tests show 100% of citations exist in replay runs; an injected fake citation is caught.
+  **From V2 (merged):** emit the manifest `doc_key` as `Citation.document_id`; the eval citation check (aiact/eval/citation_index.py) counts anything else as missing. Consider reusing its exact rule.
 
 - [ ] **E10 · `classify_system` public API** · Deps: E8, E9 · Type: agent · **critical**
   Output: `aiact/engine/__init__.py`: `classify_system(description, language, law_version="amended", as_of=today, answers={}, exclude_source_example_ids=[]) -> ClassificationResult`, with LangSmith tracing (metadata only in production mode) and streaming of step events.
@@ -319,10 +324,11 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Notes from merged stories: F5: `eval_runs.id` is a uuid; `config` must hold the keys `model`, `embedding`, `retrieval` (null allowed); `scores` maps metric → number/bool/null (strict). Consider `finished_at`/status on `eval_runs` and per-case cost/error columns (a new migration: the one-schema-story rule applies). Both tables are server-only (RLS on, no grants).
   **Outcome:** aiact evaluate run (runner.py + records.py): seeded subset, thread-pool concurrency, cost cap checked before each case that also counts spend on failed cases (ClassifierFailedError); heldout uses B3's Split (Pile B excluded, decision 012), all = gap run; label = full BenchmarkCase dump, predicted = ClassificationResult dump or {error}; in-flight cases recorded once when a run stops; run status in config.outcome, per-case cost/tokens/is_error in scores (no migration); dummy run end to end against Postgres.
 
-- [ ] **V2 · Deterministic metrics** · Deps: F3, F7 · Parallel · Type: agent
+- [x] **V2 · Deterministic metrics** · Deps: F3, F7 · Parallel · Type: agent
   Context: INIT › Metrics. Output: `aiact/eval/metrics.py`: risk-class accuracy (with the appliedAI mapping), false-low-risk rate, Annex point accuracy, role accuracy, uncertain-outcome precision and recall (needs-info separate), downgrade rate, consistency, citation existence. A report generator produces a markdown table from a run_id. DoD: every metric is unit-tested on fixtures.
   Notes from merged stories: F7: `score_appliedai` marks unclear + `needs_more_information` as both `is_counted_separately` and `needs_disagreement_review`; decide whether these cases leave the accuracy denominator (INIT: "reported separately"). B2 (001): score a result's basis under the `accepted_bases` rule (bare `art_6_3_filter` matches any lettered entry; a lettered answer matches the same letter or the bare form; anything else exact). Report `legally_ambiguous` rows (hr-ex-307) under uncertain-outcome handling, not plain accuracy. Score whether the engine asked about or flagged a row's flip-variant feature (user product rule).
   **From V1 (merged):** pass your scorer as `run_benchmark(..., scorer)`; the score keys `cost_usd`, `tokens`, `is_error` are reserved (per case) and must be left out of the metric tables. V1 already stores `label` = full BenchmarkCase dump and `predicted` = ClassificationResult dump or `{error}`, matching report.py. Add a scoring-failed marker to a case whose scorer raised (today it is stored with `is_error: false` and no metric scores, counted in `cases_scored`).
+  **Outcome:** aiact/eval/metrics.py (per-case scores + run metrics: risk-class accuracy with the appliedAI mapping, false-low-risk, Annex point, role, uncertain-outcome P/R with NMI-on-ambiguous counted only on its own row, downgrade, consistency, citation existence; accepted_bases and flip-variant helpers not yet wired) and report.py (aiact evaluate report <run_id>, reads run-time scores only); exact citation index on (doc_key, provision, language, law_version); metric_scorer wired into aiact evaluate run; scoring_error marker; db test fixture always rolls back.
 
 - [ ] **V3 · Baselines** · Deps: V1, F6 · Type: agent
   Output: `aiact/eval/baselines.py`: Luna without retrieval or staged checks, and Jev classifying directly. DoD: both run through V1 on a 5-case subset.
@@ -347,6 +353,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: INIT › Benchmark isolation 4, Budget rules. Output: `eval/reports/run-<date>.md` with the headline sets run with held-out examples excluded and with all examples retrievable, the baselines, and the per-metric table.
   DoD: the numbers are stored; the failure cases are listed, grouped by step, to guide the engine fixes.
   **From V1:** before the first real run, consider a migration adding `eval_runs.status`/`finished_at` and per-case `cost_usd`/`tokens`/`error` columns (today in `config.outcome` and reserved scores); the one-schema-story rule applies. The CLI needs `DATABASE_URL` set (no fallback to the local Supabase URL).
+  **From V2:** the downgrade rate "with and without key-fact questions" (INIT › Metrics) comes from two runs, not one metric; plan both. Consider a /decision record for V2's denominator rules (module docstring of metrics.py).
 
   **Decision 012:** the gap run is `--exclude-mode all`, which turns C6's default Pile B exclusion off; the reported number keeps it on.
 - [ ] **V9 · appliedAI run + disagreement review** · Deps: V8, B11 · Type: human (an agent runs the benchmark and drafts the table)
