@@ -1,0 +1,1788 @@
+# Converted by `aiact eval academic-import`; do not edit by hand. See SOURCE.md.
+- id: academic-0241
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Rule‑based conversational agent
+    Intended use: AI-powered chatbot that answers general product FAQs on an e‑commerce site
+    Input data: User text queries, product catalogue, public FAQ documents
+    Domain: Customer service
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:240
+  - related:art:2
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0242
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Simple recommendation engine
+    Intended use: AI tool that suggests playlist songs based on user‑selected mood tags
+    Input data: Public music metadata, user‑selected mood tags (non‑personal)
+    Domain: Entertainment
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:241
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0243
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Generative language model with limited scope
+    Intended use: AI assistant that drafts informal email replies for personal use
+    Input data: User‑provided email text, public language corpora
+    Domain: Personal productivity
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:242
+  - related:art:2
+  - related:art:50
+  - related:art:95
+- id: academic-0244
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based recipe generator
+    Intended use: AI that generates cooking recipes from a list of ingredients supplied by the user
+    Input data: User‑provided ingredient list, public recipe database
+    Domain: Lifestyle
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:243
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+- id: academic-0245
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Statistical forecasting model
+    Intended use: AI that provides weather forecasts for a specific city using public meteorological data
+    Input data: Public weather APIs, location name
+    Domain: Information services
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:244
+  - related:art:2
+  - related:art:4
+- id: academic-0246
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Image style‑transfer model
+    Intended use: AI that creates simple cartoon avatars from user‑drawn sketches
+    Input data: User sketch images, publicly available cartoon style datasets
+    Domain: Creative tools
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:245
+  - related:art:50
+  - related:art:53
+  - related:art:54
+  - related:art:88
+  - related:art:89
+  - related:art:91
+  - related:art:92
+  - related:art:93
+  - related:art:94
+  - related:art:99
+  - related:art:101
+- id: academic-0247
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based fitness planner
+    Intended use: AI that suggests daily workout routines based on user‑selected fitness goals
+    Input data: User‑selected goals, public exercise database
+    Domain: Health & fitness (non‑medical)
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:246
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+  - related:art:95
+- id: academic-0248
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Statistical machine translation
+    Intended use: AI that translates short phrases between common languages for casual conversation
+    Input data: User‑provided text, public bilingual corpora
+    Domain: Communication
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:247
+  - related:art:2
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:96
+- id: academic-0249
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Template‑based graphic generator
+    Intended use: AI that generates decorative holiday greeting cards from user‑provided text
+    Input data: User text, public holiday image assets
+    Domain: Personalisation
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:248
+  - related:art:4
+  - related:art:26
+  - related:art:50
+- id: academic-0250
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Content‑based recommendation system
+    Intended use: AI that recommends books based on genre preferences entered by the user
+    Input data: User‑selected genres, public book metadata
+    Domain: Literature
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:249
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+- id: academic-0251
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based horticulture advisor
+    Intended use: AI that suggests garden plant arrangements based on sunlight exposure entered by the user
+    Input data: User‑provided garden parameters, public plant database
+    Domain: Gardening
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:250
+  - related:art:4
+  - related:art:50
+  - related:art:95
+- id: academic-0252
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Generative text model with limited scope
+    Intended use: AI that creates simple meme captions from user‑provided images
+    Input data: User images, public meme text corpus
+    Domain: Social media
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:251
+  - related:art:6
+  - related:art:50
+- id: academic-0253
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based financial advisor
+    Intended use: AI that offers basic budgeting tips based on user‑entered expense categories
+    Input data: User expense categories, public budgeting guidelines
+    Domain: Personal finance
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:252
+  - related:art:4
+  - related:art:50
+  - related:art:95
+- id: academic-0254
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based poem generator
+    Intended use: AI that generates short poetry from user‑provided themes
+    Input data: User themes, public poetry corpus
+    Domain: Creative writing
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:253
+  - related:art:6
+  - related:art:50
+- id: academic-0255
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based strategy suggester
+    Intended use: AI that suggests board game strategies for casual players
+    Input data: User game state description, public game rulebooks
+    Domain: Gaming
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:254
+  - related:art:2
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+- id: academic-0256
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based itinerary generator
+    Intended use: AI that provides simple travel itinerary ideas based on destination and trip length
+    Input data: User destination and duration, public travel guide data
+    Domain: Travel
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:255
+  - related:art:2
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0257
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based decor advisor
+    Intended use: AI that offers basic home‑decor suggestions using user‑selected colour palettes
+    Input data: User colour choices, public interior design image set
+    Domain: Home improvement
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:256
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:95
+- id: academic-0258
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Puzzle‑generation algorithm
+    Intended use: AI that creates simple crossword puzzles from user‑provided word lists
+    Input data: User word list, public crossword patterns
+    Domain: Education (recreational)
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:257
+  - related:art:4
+  - related:art:50
+- id: academic-0259
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Content‑based recommendation engine
+    Intended use: AI that suggests movie titles based on genre and mood selected by the user
+    Input data: User genre/mood selections, public movie metadata
+    Domain: Entertainment
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:258
+  - related:art:4
+  - related:art:50
+- id: academic-0260
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based graphic generator
+    Intended use: AI that generates simple SVG icons from textual descriptions
+    Input data: User text description, public icon library
+    Domain: Design tools
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:259
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0261
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based flashcard creator
+    Intended use: AI that offers basic language learning flashcards based on user‑chosen vocabulary
+    Input data: User vocabulary list, public bilingual word lists
+    Domain: Education
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:260
+  - related:art:4
+  - related:art:5
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0262
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Rule‑based project recommender
+    Intended use: AI that suggests simple DIY craft projects based on materials the user has at home
+    Input data: User‑listed materials, public craft instructions
+    Domain: Hobbies
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:261
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:80
+  - related:art:95
+- id: academic-0263
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based advice system
+    Intended use: AI that provides basic pet‑care tips based on animal type selected by the user
+    Input data: User animal type, public pet‑care guidelines
+    Domain: Pet care
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:262
+  - related:art:4
+  - related:art:50
+  - related:art:56
+  - related:art:62
+  - related:art:63
+  - related:art:95
+- id: academic-0264
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based quote generator
+    Intended use: AI that generates short motivational quotes from user‑provided keywords
+    Input data: User keywords, public quote database
+    Domain: Personal development
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:263
+  - related:art:2
+  - related:art:4
+  - related:art:50
+- id: academic-0265
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based scheduler
+    Intended use: AI that offers simple garden watering schedules based on plant type and climate zone
+    Input data: User plant type, public climate data
+    Domain: Gardening
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:264
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:95
+  - related:art:96
+- id: academic-0266
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based infographic generator
+    Intended use: AI that creates basic infographic layouts from user‑provided statistics
+    Input data: User statistics, public icon sets
+    Domain: Data visualisation
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:265
+  - related:art:6
+  - related:art:50
+  - related:art:80
+- id: academic-0267
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based pattern recommender
+    Intended use: AI that suggests simple knitting patterns based on yarn weight selected by the user
+    Input data: User yarn weight, public knitting pattern database
+    Domain: Crafts
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:266
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:80
+- id: academic-0268
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based story generator
+    Intended use: AI that generates short bedtime stories from user‑provided characters and setting
+    Input data: User characters and setting, public story templates
+    Domain: Family entertainment
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:267
+  - related:art:2
+  - related:art:4
+  - related:art:5
+  - related:art:50
+  - related:art:62
+  - related:art:99
+- id: academic-0269
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based reminder system
+    Intended use: AI that offers basic car‑maintenance reminders based on vehicle model entered by the user
+    Input data: User vehicle model, public maintenance schedule data
+    Domain: Automotive (non‑critical)
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:268
+  - related:art:2
+  - related:art:4
+  - related:art:62
+  - related:art:63
+  - related:art:74
+  - related:art:95
+  - related:art:96
+- id: academic-0270
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Rule‑based drink recommender
+    Intended use: AI that suggests simple cocktail recipes from user‑selected ingredients
+    Input data: User ingredients, public cocktail database
+    Domain: Food & beverage
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:269
+  - related:art:4
+  - related:art:62
+  - related:art:80
+- id: academic-0271
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based scheduler
+    Intended use: AI that creates basic study schedules based on user‑selected subjects and available hours
+    Input data: User subjects and time availability, public study‑tip resources
+    Domain: Education
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:270
+  - related:art:4
+  - related:art:50
+- id: academic-0272
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based logo generator
+    Intended use: AI that generates simple logo concepts from user‑provided brand keywords
+    Input data: User brand keywords, public icon library
+    Domain: Design
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:271
+  - related:art:2
+  - related:art:50
+- id: academic-0273
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based audio guide generator
+    Intended use: AI that offers basic meditation guidance based on user‑selected duration
+    Input data: User duration choice, public meditation scripts
+    Domain: Wellbeing
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:272
+  - related:art:4
+  - related:art:50
+  - related:art:62
+- id: academic-0274
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Rule‑based game idea generator
+    Intended use: AI that suggests simple board game ideas for family gatherings
+    Input data: User age range, public game concept database
+    Domain: Family entertainment
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:273
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:49
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0275
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based time estimator
+    Intended use: AI that provides basic cooking time estimates for common ingredients
+    Input data: User ingredient, public cooking time tables
+    Domain: Cooking
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:274
+  - related:art:2
+  - related:art:4
+  - related:art:50
+- id: academic-0276
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based caption generator
+    Intended use: AI that creates short social media captions from user‑provided image description
+    Input data: User image description, public caption corpus
+    Domain: Social media
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:275
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:95
+- id: academic-0277
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based routing assistant
+    Intended use: AI that suggests simple bike route alternatives based on user‑selected start and end points
+    Input data: User locations, public map data
+    Domain: Transportation (non‑critical)
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:276
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:80
+- id: academic-0278
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Rule‑based music selector
+    Intended use: AI that generates basic workout playlists matching user‑selected tempo
+    Input data: User tempo preference, public music metadata
+    Domain: Fitness
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:277
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0279
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based phonetics helper
+    Intended use: AI that offers simple language pronunciation tips for user‑entered words
+    Input data: User words, public phonetic dictionaries
+    Domain: Language learning
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:278
+  - related:art:4
+  - related:art:50
+- id: academic-0280
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based invitation generator
+    Intended use: AI that creates basic birthday invitation text from user‑provided details
+    Input data: User event details, public invitation templates
+    Domain: Event planning
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:279
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0281
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based lighting advisor
+    Intended use: AI that suggests simple indoor lighting setups based on room size entered by the user
+    Input data: User room dimensions, public lighting guidelines
+    Domain: Home improvement
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:280
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:95
+- id: academic-0282
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based joke generator
+    Intended use: AI that generates short jokes from user‑provided topics
+    Input data: User topics, public joke corpus
+    Domain: Entertainment
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:281
+  - related:art:2
+  - related:art:50
+- id: academic-0283
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based reminder system
+    Intended use: AI that offers basic plant watering reminders based on plant type selected by the user
+    Input data: User plant type, public watering schedule data
+    Domain: Gardening
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:282
+  - related:art:4
+  - related:art:5
+  - related:art:50
+  - related:art:62
+- id: academic-0284
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based list generator
+    Intended use: AI that creates simple travel packing lists from user‑selected destination and duration
+    Input data: User destination and trip length, public packing guidelines
+    Domain: Travel
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:283
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:80
+  - related:art:95
+  - related:art:96
+- id: academic-0285
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based photography guide
+    Intended use: AI that suggests basic photo composition tips based on user‑selected scene type
+    Input data: User scene type, public composition rules
+    Domain: Photography
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:284
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:95
+- id: academic-0286
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based tagline generator
+    Intended use: AI that generates short product taglines from user‑provided product description
+    Input data: User product description, public marketing copy
+    Domain: Marketing
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:285
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:56
+  - related:art:62
+  - related:art:80
+  - related:art:95
+- id: academic-0287
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based habit recommender
+    Intended use: AI that offers simple daily habit suggestions based on user‑selected improvement area
+    Input data: User improvement area, public habit‑building tips
+    Domain: Personal development
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:286
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0288
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Puzzle‑generation algorithm
+    Intended use: AI that creates basic crossword clues from user‑provided answer words
+    Input data: User answer list, public clue patterns
+    Domain: Recreational
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:287
+  - related:art:5
+  - related:art:50
+- id: academic-0289
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based placement advisor
+    Intended use: AI that suggests simple indoor plant placement based on light level entered by the user
+    Input data: User light level, public plant light requirements
+    Domain: Home gardening
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:288
+  - related:art:4
+  - related:art:50
+  - related:art:95
+  - related:art:99
+- id: academic-0290
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based subject line generator
+    Intended use: AI that generates short email subject lines from user‑provided email content
+    Input data: User email body, public subject line corpus
+    Domain: Productivity
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:289
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:80
+- id: academic-0291
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based substitution engine
+    Intended use: AI that offers basic recipe substitution suggestions based on user‑listed unavailable ingredients
+    Input data: User ingredient list, public substitution database
+    Domain: Cooking
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:290
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0292
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based GIF generator
+    Intended use: AI that creates simple animated GIFs from user‑provided short video clips
+    Input data: User video clip, public animation presets
+    Domain: Social media
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:291
+  - related:art:50
+- id: academic-0293
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based flashcard creator
+    Intended use: AI that suggests basic study flashcards for language vocabulary entered by the user
+    Input data: User word list, public bilingual dictionaries
+    Domain: Education
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:292
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0294
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based affirmation generator
+    Intended use: AI that generates short motivational affirmations from user‑selected personal goals
+    Input data: User goals, public affirmation corpus
+    Domain: Wellbeing
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:293
+  - related:art:5
+  - related:art:50
+- id: academic-0295
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based advice system
+    Intended use: AI that offers simple DIY home repair tips based on user‑selected problem description
+    Input data: User problem description, public repair guides
+    Domain: Home improvement
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:294
+  - related:art:4
+  - related:art:50
+- id: academic-0296
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based itinerary generator
+    Intended use: AI that creates basic travel itineraries for road trips based on user‑selected stops
+    Input data: User stop list, public road map data
+    Domain: Travel
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:295
+  - related:art:2
+  - related:art:6
+  - related:art:50
+  - related:art:57
+  - related:art:62
+  - related:art:63
+  - related:art:80
+  - related:art:96
+- id: academic-0297
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based routine planner
+    Intended use: AI that suggests simple bedtime routines based on user‑selected sleep goals
+    Input data: User sleep goal, public sleep hygiene tips
+    Domain: Health & wellness
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:296
+  - related:art:4
+  - related:art:5
+  - related:art:50
+  - related:art:62
+- id: academic-0298
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based summariser
+    Intended use: AI that generates short product review summaries from user‑provided review texts
+    Input data: User review texts, public summarisation patterns
+    Domain: E‑commerce
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:297
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0299
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based image classifier (non‑medical)
+    Intended use: AI that offers basic garden pest identification based on user‑uploaded photos
+    Input data: User garden photos, public pest image database
+    Domain: Gardening
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:298
+  - related:art:4
+  - related:art:50
+- id: academic-0300
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based video generator
+    Intended use: AI that creates simple birthday greeting videos from user‑provided photos and text
+    Input data: User photos and text, public video templates
+    Domain: Personalisation
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:299
+  - related:art:2
+  - related:art:6
+  - related:art:50
+- id: academic-0301
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based advice system
+    Intended use: AI that suggests basic indoor air‑quality improvement tips based on user‑selected room type
+    Input data: User room type, public air‑quality guidelines
+    Domain: Home health
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:300
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:95
+  - related:art:96
+- id: academic-0302
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based quote generator
+    Intended use: AI that generates short inspirational quotes from user‑selected themes
+    Input data: User themes, public quote database
+    Domain: Motivation
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:301
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+- id: academic-0303
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based scaling tool
+    Intended use: AI that offers simple recipe scaling based on desired serving size entered by the user
+    Input data: User recipe and serving size, public ingredient ratios
+    Domain: Cooking
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:302
+  - related:art:2
+  - related:art:4
+  - related:art:50
+- id: academic-0304
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based outline generator
+    Intended use: AI that creates basic slide deck outlines from user‑provided presentation topic
+    Input data: User topic, public slide structure templates
+    Domain: Productivity
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:303
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:80
+- id: academic-0305
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based activity recommender
+    Intended use: AI that suggests simple outdoor activity ideas based on weather forecast and user preferences
+    Input data: User preferences, public weather forecast data
+    Domain: Leisure
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:304
+  - related:art:4
+  - related:art:26
+  - related:art:50
+- id: academic-0306
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based note generator
+    Intended use: AI that generates short thank‑you note drafts from user‑provided occasion details
+    Input data: User occasion details, public thank‑you note corpus
+    Domain: Personal communication
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:305
+  - related:art:2
+  - related:art:4
+  - related:art:50
+- id: academic-0307
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based scheduler
+    Intended use: AI that offers basic pet feeding schedule suggestions based on pet type and age entered by the user
+    Input data: User pet type and age, public feeding guidelines
+    Domain: Pet care
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:306
+  - related:art:2
+  - related:art:4
+  - related:art:5
+  - related:art:50
+- id: academic-0308
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based mood‑board generator
+    Intended use: AI that creates simple visual mood boards from user‑provided colour palettes
+    Input data: User colour palette, public image assets
+    Domain: Design
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:307
+  - related:art:4
+  - related:art:5
+  - related:art:50
+- id: academic-0309
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based advice system
+    Intended use: AI that suggests basic bike maintenance tips based on user‑selected bike model
+    Input data: User bike model, public maintenance guides
+    Domain: Transportation (non‑critical)
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:308
+  - related:art:2
+  - related:art:4
+  - related:art:50
+- id: academic-0310
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based title generator
+    Intended use: AI that generates short podcast episode titles from user‑provided topic description
+    Input data: User topic description, public podcast title corpus
+    Domain: Media
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:309
+  - related:art:2
+  - related:art:6
+  - related:art:50
+  - related:art:80
+- id: academic-0311
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based reminder system
+    Intended use: AI that offers simple daily water‑intake reminders based on user‑selected weight and activity level
+    Input data: User weight and activity level, public hydration guidelines
+    Domain: Health & wellness
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:310
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0312
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based agenda generator
+    Intended use: AI that creates basic event agenda outlines from user‑provided event type and duration
+    Input data: User event type and duration, public agenda templates
+    Domain: Event planning
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:311
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:80
+  - related:art:96
+- id: academic-0313
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based workout planner
+    Intended use: AI that suggests simple indoor workout routines based on user‑selected equipment availability
+    Input data: User equipment list, public exercise database
+    Domain: Fitness
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:312
+  - related:art:4
+  - related:art:50
+- id: academic-0314
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based description generator
+    Intended use: AI that generates short product description snippets from user‑provided feature list
+    Input data: User feature list, public marketing copy
+    Domain: E‑commerce
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:313
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:62
+  - related:art:63
+  - related:art:95
+- id: academic-0315
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based advice system
+    Intended use: AI that offers basic garden composting tips based on user‑selected waste types
+    Input data: User waste types, public composting guidelines
+    Domain: Gardening
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:314
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:56
+  - related:art:62
+  - related:art:80
+- id: academic-0316
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based sticker generator
+    Intended use: AI that creates simple animated stickers from user‑provided text and emojis
+    Input data: User text and emojis, public sticker templates
+    Domain: Social media
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:315
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+- id: academic-0317
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based activity suggester
+    Intended use: AI that suggests basic study break activities based on user‑selected subject and time constraints
+    Input data: User subject and time, public break activity ideas
+    Domain: Education
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:316
+  - related:art:4
+  - related:art:50
+  - related:art:62
+- id: academic-0318
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based checklist generator
+    Intended use: AI that generates short onboarding checklists for new software tools from user‑provided feature list
+    Input data: User feature list, public onboarding best practices
+    Domain: Productivity
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:317
+  - related:art:50
+- id: academic-0319
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based scheduler
+    Intended use: AI that offers simple indoor plant fertilisation schedule based on plant type entered by the user
+    Input data: User plant type, public fertilisation guidelines
+    Domain: Home gardening
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:318
+  - related:art:2
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:95
+- id: academic-0320
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based tip generator
+    Intended use: AI that creates short travel safety tips from user‑selected destination
+    Input data: User destination, public travel safety advisories
+    Domain: Travel
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:319
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:5
+  - related:art:50
+- id: academic-0321
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based meal planner
+    Intended use: AI that suggests basic meal planning ideas based on user‑selected dietary preferences
+    Input data: User dietary preferences, public recipe database
+    Domain: Food & nutrition
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:320
+  - related:art:4
+  - related:art:50
+  - related:art:63
+  - related:art:80
+  - related:art:95
+  - related:art:96
+- id: academic-0322
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based hashtag generator
+    Intended use: AI that generates short social media post hashtags from user‑provided content theme
+    Input data: User content theme, public hashtag corpus
+    Domain: Social media
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:321
+  - related:art:50
+- id: academic-0323
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based advice system
+    Intended use: AI that offers simple home energy‑saving tips based on user‑selected appliance list
+    Input data: User appliance list, public energy‑saving guidelines
+    Domain: Home improvement
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:322
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0324
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based card generator
+    Intended use: AI that creates basic greeting card designs from user‑provided occasion and message
+    Input data: User occasion and message, public design assets
+    Domain: Personalisation
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:323
+  - related:art:4
+  - related:art:50
+  - related:art:96
+  - related:art:99
+- id: academic-0325
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based music selector
+    Intended use: AI that suggests simple indoor workout music playlists based on user‑selected intensity level
+    Input data: User intensity level, public music metadata
+    Domain: Fitness
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:324
+  - related:art:4
+  - related:art:50
+- id: academic-0326
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based FAQ generator
+    Intended use: AI that generates short FAQ entries from user‑provided product questions
+    Input data: User questions, public answer templates
+    Domain: Customer service
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:325
+  - related:art:4
+  - related:art:5
+  - related:art:50
+- id: academic-0327
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based advice system
+    Intended use: AI that offers basic pet grooming tips based on pet type entered by the user
+    Input data: User pet type, public grooming guidelines
+    Domain: Pet care
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:326
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:5
+  - related:art:50
+- id: academic-0328
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based infographic generator
+    Intended use: AI that creates simple visual infographics from user‑provided statistical data
+    Input data: User statistics, public icon sets
+    Domain: Data visualisation
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:327
+  - related:art:6
+  - related:art:50
+  - related:art:95
+- id: academic-0329
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based story suggester
+    Intended use: AI that suggests basic bedtime story ideas based on child’s age entered by the user
+    Input data: User child age, public story templates
+    Domain: Family entertainment
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:328
+  - related:art:4
+  - related:art:50
+- id: academic-0330
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based table generator
+    Intended use: AI that generates short product comparison tables from user‑provided feature lists
+    Input data: User feature lists, public comparison formats
+    Domain: E‑commerce
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:329
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:95
+  - related:art:96
+- id: academic-0331
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based advice system
+    Intended use: AI that offers simple indoor air‑quality monitoring tips based on user‑selected sensor data
+    Input data: User sensor readings, public air‑quality guidelines
+    Domain: Home health
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:330
+  - related:art:4
+  - related:art:50
+- id: academic-0332
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based poster generator
+    Intended use: AI that creates short motivational posters from user‑provided quotes and images
+    Input data: User quote and image, public design templates
+    Domain: Design
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:331
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:95
+- id: academic-0333
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based routine planner
+    Intended use: AI that suggests basic daily stretch routines based on user‑selected flexibility level
+    Input data: User flexibility level, public stretch guide
+    Domain: Wellbeing
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:332
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:95
+- id: academic-0334
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based signature generator
+    Intended use: AI that generates short email signature blocks from user‑provided contact details
+    Input data: User contact details, public signature templates
+    Domain: Productivity
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:333
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:80
+- id: academic-0335
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based layout advisor
+    Intended use: AI that offers simple garden layout suggestions based on user‑selected plot dimensions
+    Input data: User plot dimensions, public garden design patterns
+    Domain: Gardening
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:334
+  - related:art:4
+  - related:art:50
+- id: academic-0336
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based caption generator
+    Intended use: AI that creates short social media story captions from user‑provided event description
+    Input data: User event description, public story caption corpus
+    Domain: Social media
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:335
+  - related:art:4
+  - related:art:5
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:95
+- id: academic-0337
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based lighting advisor
+    Intended use: AI that suggests basic indoor lighting colour temperature settings based on user‑selected mood
+    Input data: User mood, public lighting colour guidelines
+    Domain: Home improvement
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:336
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:95
+- id: academic-0338
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Template‑based summariser
+    Intended use: AI that generates short product warranty summaries from user‑provided warranty text
+    Input data: User warranty text, public summarisation patterns
+    Domain: Consumer goods
+  label:
+    risk_class: minimal_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:337
+  - related:art:4
+  - related:art:5
+  - related:art:50
+- id: academic-0339
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based tip generator
+    Intended use: AI that offers simple pet training tip cards based on pet type entered by the user
+    Input data: User pet type, public training guides
+    Domain: Pet care
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:338
+  - related:art:2
+  - related:art:4
+  - related:art:50

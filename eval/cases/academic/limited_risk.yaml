@@ -1,0 +1,1811 @@
+# Converted by `aiact eval academic-import`; do not edit by hand. See SOURCE.md.
+- id: academic-0157
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Predictive routing engine using anonymised traffic and weather data
+    Intended use: AI tool that suggests optimal delivery routes for small‑business couriers, avoiding emergency or critical‑infrastructure corridors
+    Input data: Public traffic flow data, open‑source weather forecasts, anonymised GPS traces
+    Domain: Logistics
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:156
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:80
+- id: academic-0158
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Conversational AI with predefined answer templates
+    Intended use: Chatbot that assists citizens with non‑urgent municipal service queries (e.g., waste collection schedules)
+    Input data: Public service FAQs, anonymised user interaction logs
+    Domain: Public Services
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:157
+  - related:art:4
+  - related:art:50
+  - related:art:80
+- id: academic-0159
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Collaborative filtering model
+    Intended use: Recommendation system for online retailers that suggests complementary products without influencing purchase decisions
+    Input data: Aggregated, anonymised purchase histories, product metadata
+    Domain: E‑commerce
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:158
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:80
+- id: academic-0160
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based optimizer using consumption patterns
+    Intended use: AI‑driven energy‑consumption advisory for residential users, offering tips to reduce bills
+    Input data: Anonymised household electricity usage statistics, public weather data
+    Domain: Energy
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:159
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:78
+  - related:art:85
+- id: academic-0161
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Time‑series forecasting model
+    Intended use: Tool that forecasts agricultural yield for small farms to aid planning, not used for insurance underwriting
+    Input data: Open satellite imagery, weather forecasts, anonymised farm production records
+    Domain: Agriculture
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:160
+  - related:art:2
+  - related:art:3
+  - related:art:5
+  - related:art:6
+  - related:art:62
+  - related:art:63
+  - related:art:80
+- id: academic-0162
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Natural language generation and assessment
+    Intended use: AI assistant that helps students practice language skills through interactive exercises
+    Input data: Public language corpora, anonymised learner interaction data
+    Domain: Education
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:161
+  - related:art:4
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0163
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Anomaly detection on usage logs
+    Intended use: Predictive maintenance scheduler for non‑critical office equipment (e.g., printers)
+    Input data: Anonymised device usage logs, manufacturer specifications
+    Domain: Facilities Management
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:162
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:62
+  - related:art:63
+  - related:art:80
+- id: academic-0164
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Content‑based recommendation engine
+    Intended use: AI‑based itinerary planner for tourists that suggests attractions based on preferences
+    Input data: Public points‑of‑interest data, anonymised user preference surveys
+    Domain: Tourism
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:163
+  - related:art:2
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:80
+- id: academic-0165
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Real‑time occupancy predictor
+    Intended use: System that predicts parking space availability in city centres for drivers
+    Input data: Public parking sensor feeds, anonymised historical occupancy data
+    Domain: Urban Mobility
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:164
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:80
+  - related:art:96
+- id: academic-0166
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Extractive summarisation model
+    Intended use: AI‑enhanced document summarisation tool for corporate reports
+    Input data: Corporate documents (non‑personal), publicly available reports
+    Domain: Business Services
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:165
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:62
+  - related:art:63
+  - related:art:80
+  - related:art:85
+  - related:art:96
+- id: academic-0167
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Sentiment analysis classifier
+    Intended use: Tool that analyses social‑media sentiment for market research, without influencing political opinions
+    Input data: Public social‑media posts, anonymised text data
+    Domain: Market Research
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:166
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:56
+  - related:art:62
+  - related:art:95
+- id: academic-0168
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Hybrid recommendation system
+    Intended use: AI‑driven music recommendation service for streaming platforms
+    Input data: Public music metadata, anonymised listening histories
+    Domain: Entertainment
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:167
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:95
+- id: academic-0169
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Adaptive learning engine
+    Intended use: Virtual tutor that offers personalized math practice problems for secondary students
+    Input data: Open educational resources, anonymised student performance data
+    Domain: Education
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:168
+  - related:art:2
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:80
+- id: academic-0170
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Demand forecasting model
+    Intended use: AI system that predicts demand for non‑perishable goods in small retail stores
+    Input data: Aggregated sales data, public holiday calendars, weather forecasts
+    Domain: Retail
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:169
+  - related:art:2
+  - related:art:4
+  - related:art:62
+  - related:art:63
+  - related:art:95
+  - related:art:96
+- id: academic-0171
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Rule‑based Q&A system
+    Intended use: Chatbot that provides basic legal information on consumer rights (non‑advisory)
+    Input data: Public consumer law texts, anonymised query logs
+    Domain: Legal Services
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:170
+  - related:art:2
+  - related:art:6
+  - related:art:50
+- id: academic-0172
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Computer‑vision classifier
+    Intended use: AI‑assisted image tagging for personal photo libraries
+    Input data: User‑uploaded images (non‑personal identifiers), public image datasets
+    Domain: Consumer Technology
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:171
+  - related:art:4
+  - related:art:50
+  - related:art:62
+- id: academic-0173
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Spatio‑temporal prediction model
+    Intended use: Tool that forecasts short‑term air‑quality levels for city districts to inform citizens
+    Input data: Public sensor data, weather forecasts, traffic volume statistics
+    Domain: Environment
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:172
+  - related:art:4
+  - related:art:6
+  - related:art:13
+  - related:art:50
+  - related:art:62
+- id: academic-0174
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Rule‑based recommendation engine
+    Intended use: AI‑driven personal finance budgeting assistant that suggests savings plans
+    Input data: Anonymised transaction categories, public cost‑of‑living indices
+    Domain: FinTech
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:173
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:95
+- id: academic-0175
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Rule‑based scheduler using weather forecasts
+    Intended use: System that predicts optimal irrigation schedules for private gardens
+    Input data: Public weather data, soil moisture sensor readings (non‑personal)
+    Domain: Home Gardening
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:174
+  - related:art:2
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+  - related:art:80
+- id: academic-0176
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Video summarisation model
+    Intended use: AI‑enhanced video summarisation for user‑generated content platforms
+    Input data: Publicly shared videos, anonymised metadata
+    Domain: Social Media
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:175
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:50
+  - related:art:56
+  - related:art:62
+  - related:art:80
+- id: academic-0177
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Predictive staffing optimizer
+    Intended use: Tool that suggests optimal staffing levels for small cafés based on foot traffic forecasts
+    Input data: Public foot‑traffic data, anonymised sales records, weather forecasts
+    Domain: Hospitality
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:176
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:57
+  - related:art:60
+  - related:art:61
+  - related:art:62
+  - related:art:63
+  - related:art:80
+  - related:art:95
+- id: academic-0178
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Neural machine translation model
+    Intended use: AI‑based language translation service for travel documents
+    Input data: Public multilingual corpora, anonymised user inputs
+    Domain: Travel
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:177
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:95
+- id: academic-0179
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Route optimisation algorithm
+    Intended use: System that predicts waste‑collection truck routes to improve efficiency without affecting emergency services
+    Input data: Public road network data, anonymised waste‑generation statistics, traffic forecasts
+    Domain: Waste Management
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:178
+  - related:art:4
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:18
+  - related:art:27
+  - related:art:49
+  - related:art:62
+  - related:art:71
+- id: academic-0180
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Recommendation engine
+    Intended use: AI‑driven personal fitness coach that suggests workout plans based on user goals
+    Input data: Anonymised activity logs, public exercise databases
+    Domain: Health & Wellness
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:179
+  - related:art:4
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:50
+  - related:art:86
+- id: academic-0181
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Time‑series demand predictor
+    Intended use: Tool that forecasts demand for seasonal tourism services in coastal towns
+    Input data: Public tourism statistics, weather forecasts, event calendars
+    Domain: Tourism
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:180
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:6
+  - related:art:57
+  - related:art:62
+  - related:art:63
+  - related:art:74
+  - related:art:79
+  - related:art:80
+  - related:art:95
+  - related:art:96
+- id: academic-0182
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Similarity detection algorithm
+    Intended use: AI‑assisted plagiarism detection for academic essays (non‑decision‑making)
+    Input data: Publicly available academic texts, anonymised student submissions
+    Domain: Education
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:181
+  - related:art:4
+  - related:art:26
+  - related:art:50
+- id: academic-0183
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Rule‑based optimizer
+    Intended use: System that predicts optimal lighting schedules for office buildings to reduce energy use
+    Input data: Public daylight data, anonymised building occupancy patterns
+    Domain: Facilities Management
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:182
+  - related:art:4
+  - related:art:62
+  - related:art:95
+  - related:art:96
+  - related:art:99
+- id: academic-0184
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Content‑based recommendation system
+    Intended use: AI‑driven recipe recommender that suggests meals based on pantry inventory
+    Input data: Public recipe databases, anonymised user pantry lists
+    Domain: Consumer Technology
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:183
+  - related:art:4
+  - related:art:26
+  - related:art:50
+- id: academic-0185
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Statistical analysis dashboard
+    Intended use: Tool that analyses public transport punctuality trends to inform commuters
+    Input data: Open transport schedule data, real‑time arrival feeds
+    Domain: Urban Mobility
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:184
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:95
+  - related:art:96
+- id: academic-0186
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Conversational agent with multimedia content
+    Intended use: AI‑based virtual museum guide that provides contextual information to visitors
+    Input data: Public museum collections data, anonymised visitor interaction logs
+    Domain: Culture
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:185
+  - related:art:4
+  - related:art:50
+  - related:art:62
+- id: academic-0187
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Predictive analytics model
+    Intended use: System that predicts short‑term water‑usage peaks for residential districts to aid utility planning
+    Input data: Anonymised household water consumption data, weather forecasts
+    Domain: Utilities
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:186
+  - related:art:2
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:79
+  - related:art:99
+- id: academic-0188
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Template recommendation engine
+    Intended use: AI‑enhanced resume formatting assistant that suggests layout improvements
+    Input data: Public resume templates, anonymised user drafts
+    Domain: Career Services
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:187
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:86
+  - related:art:95
+- id: academic-0189
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Predictive foot‑traffic model
+    Intended use: Tool that forecasts foot‑traffic for retail malls to optimise shop‑front displays
+    Input data: Public pedestrian count data, anonymised sales figures, weather forecasts
+    Domain: Retail
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:188
+  - related:art:5
+  - related:art:6
+- id: academic-0190
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Collaborative filtering engine
+    Intended use: AI‑driven personal reading recommender for e‑book platforms
+    Input data: Public book metadata, anonymised reading histories
+    Domain: Publishing
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:189
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0191
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Rule‑based scheduler
+    Intended use: System that predicts optimal cleaning schedules for office spaces based on occupancy patterns
+    Input data: Anonymised badge‑in data, public building usage statistics
+    Domain: Facilities Management
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:190
+  - related:art:4
+  - related:art:6
+  - related:art:49
+  - related:art:62
+  - related:art:71
+  - related:art:78
+  - related:art:99
+- id: academic-0192
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Content generation model
+    Intended use: AI‑based language learning flashcard generator for learners
+    Input data: Open linguistic corpora, anonymised learner progress data
+    Domain: Education
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:191
+  - related:art:4
+  - related:art:50
+  - related:art:56
+  - related:art:62
+  - related:art:95
+- id: academic-0193
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Demand forecasting algorithm
+    Intended use: Tool that forecasts demand for public library books to aid acquisition planning
+    Input data: Public library circulation data, anonymised patron demographics, event calendars
+    Domain: Public Services
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:192
+  - related:art:4
+  - related:art:57
+  - related:art:59
+  - related:art:62
+- id: academic-0194
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Image enhancement neural network
+    Intended use: AI‑assisted photo‑enhancement app for consumer use (non‑biometric)
+    Input data: User‑uploaded photos, public image datasets
+    Domain: Consumer Technology
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:193
+  - related:art:4
+  - related:art:13
+  - related:art:50
+  - related:art:62
+  - related:art:95
+- id: academic-0195
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Staffing optimizer
+    Intended use: System that predicts optimal staffing for community centres based on program schedules
+    Input data: Public program calendars, anonymised attendance records
+    Domain: Community Services
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:194
+  - related:art:2
+  - related:art:6
+  - related:art:80
+- id: academic-0196
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Multi‑objective optimization engine
+    Intended use: AI‑driven personal travel itinerary optimizer that balances cost and time
+    Input data: Public transport timetables, flight price APIs, anonymised user preferences
+    Domain: Travel
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:195
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+- id: academic-0197
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Sentiment aggregation platform
+    Intended use: Tool that analyses public sentiment on product reviews to provide manufacturers with insights
+    Input data: Public product review texts, anonymised rating data
+    Domain: Manufacturing
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:196
+  - related:art:4
+  - related:art:5
+  - related:art:62
+  - related:art:78
+  - related:art:80
+  - related:art:99
+- id: academic-0198
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Generative design model
+    Intended use: AI‑based virtual interior designer that suggests furniture layouts
+    Input data: Public furniture catalogs, anonymised room dimensions
+    Domain: Home Improvement
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:197
+  - related:art:2
+  - related:art:4
+  - related:art:50
+- id: academic-0199
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Time‑series price predictor
+    Intended use: System that predicts short‑term electricity price fluctuations for residential users
+    Input data: Public market price data, weather forecasts, anonymised consumption patterns
+    Domain: Energy
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:198
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:42
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+- id: academic-0200
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Retrieval‑augmented generation model
+    Intended use: AI‑enhanced chatbot for non‑critical IT help‑desk support
+    Input data: Public knowledge‑base articles, anonymised ticket logs
+    Domain: IT Services
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:199
+  - related:art:4
+  - related:art:5
+  - related:art:50
+  - related:art:53
+  - related:art:62
+- id: academic-0201
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Demand forecasting model
+    Intended use: Tool that forecasts demand for seasonal agricultural equipment rentals
+    Input data: Public agricultural activity statistics, weather forecasts, anonymised rental histories
+    Domain: Agriculture
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:200
+  - related:art:2
+  - related:art:3
+  - related:art:6
+  - related:art:57
+  - related:art:62
+  - related:art:78
+  - related:art:80
+  - related:art:96
+  - related:art:99
+- id: academic-0202
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Pattern‑recognition dashboard
+    Intended use: AI‑driven personal habit‑tracker that visualises daily routines
+    Input data: Anonymised user activity logs, public habit‑formation research
+    Domain: Consumer Technology
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:201
+  - related:art:4
+  - related:art:50
+- id: academic-0203
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Transit demand predictor
+    Intended use: System that predicts optimal bus frequencies for non‑peak hours to reduce emissions
+    Input data: Public ridership data, anonymised ticket sales, weather forecasts
+    Domain: Urban Mobility
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:202
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+- id: academic-0204
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Nutritional analysis engine
+    Intended use: AI‑based recipe nutrition analyser that provides macro‑nutrient breakdowns
+    Input data: Public food composition databases, user‑submitted recipes
+    Domain: Health & Wellness
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:203
+  - related:art:4
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:50
+- id: academic-0205
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Acoustic prediction model
+    Intended use: Tool that forecasts short‑term noise levels in city districts for residents
+    Input data: Public traffic data, weather forecasts, anonymised noise sensor readings
+    Domain: Environment
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:204
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:62
+  - related:art:72
+- id: academic-0206
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Classification model
+    Intended use: AI‑assisted personal budgeting spreadsheet that auto‑categorises expenses
+    Input data: Anonymised transaction data, public expense category taxonomies
+    Domain: FinTech
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:205
+  - related:art:4
+  - related:art:50
+  - related:art:85
+  - related:art:86
+  - related:art:95
+  - related:art:96
+- id: academic-0207
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Phenology forecasting model
+    Intended use: System that predicts optimal planting dates for hobby gardeners based on climate
+    Input data: Public climate data, horticultural calendars
+    Domain: Home Gardening
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:206
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+- id: academic-0208
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Recommendation engine
+    Intended use: AI‑driven virtual career mentor that suggests skill‑development pathways
+    Input data: Public occupational standards, anonymised user skill profiles
+    Domain: Career Services
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:207
+  - related:art:4
+  - related:art:6
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0209
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Statistical reporting dashboard
+    Intended use: Tool that analyses public transport punctuality to generate performance reports for city planners
+    Input data: Open transport schedule data, real‑time arrival feeds
+    Domain: Urban Mobility
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:208
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:62
+  - related:art:63
+  - related:art:80
+- id: academic-0210
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Pattern‑recognition model
+    Intended use: AI‑based personal sleep‑quality coach that offers non‑medical advice
+    Input data: Anonymised sleep sensor data, public sleep research findings
+    Domain: Health & Wellness
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:209
+  - related:art:4
+  - related:art:50
+  - related:art:62
+- id: academic-0211
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Demand forecasting algorithm
+    Intended use: System that predicts short‑term demand for public bike‑sharing stations
+    Input data: Public bike‑share usage data, weather forecasts, event calendars
+    Domain: Urban Mobility
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:210
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:62
+  - related:art:63
+  - related:art:79
+  - related:art:80
+- id: academic-0212
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Speech‑to‑text model
+    Intended use: AI‑enhanced video captioning tool for creators of non‑commercial content
+    Input data: User‑uploaded video audio tracks, public language corpora
+    Domain: Content Creation
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:211
+  - related:art:2
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:95
+- id: academic-0213
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Attendance predictor
+    Intended use: Tool that forecasts short‑term demand for community‑center workshops
+    Input data: Public event calendars, anonymised past attendance records, weather forecasts
+    Domain: Community Services
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:212
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:62
+  - related:art:63
+  - related:art:80
+- id: academic-0214
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Image classification model
+    Intended use: AI‑driven personal garden pest identifier that suggests non‑chemical remedies
+    Input data: Public pest image datasets, user‑uploaded garden photos
+    Domain: Home Gardening
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:213
+  - related:art:2
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0215
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Reservation demand predictor
+    Intended use: System that predicts short‑term demand for library study rooms
+    Input data: Public library usage statistics, anonymised reservation logs, academic calendar data
+    Domain: Public Services
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:214
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:96
+  - related:art:99
+- id: academic-0216
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Recommendation engine
+    Intended use: AI‑based personal habit‑formation coach that suggests incremental changes
+    Input data: Anonymised habit logs, public behaviour change research
+    Domain: Consumer Technology
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:215
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:80
+- id: academic-0217
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Sentiment aggregation platform
+    Intended use: Tool that analyses public sentiment on municipal projects to inform city council decisions
+    Input data: Public social‑media posts, anonymised citizen survey responses
+    Domain: Public Services
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:216
+  - related:art:4
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:25
+  - related:art:27
+  - related:art:70
+  - related:art:71
+  - related:art:72
+  - related:art:73
+- id: academic-0218
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Speech analysis model
+    Intended use: AI‑driven personal language pronunciation trainer for learners
+    Input data: Public phonetic corpora, anonymised user recordings
+    Domain: Education
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:217
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:85
+- id: academic-0219
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Usage forecasting model
+    Intended use: System that predicts short‑term demand for community‑center sports facilities
+    Input data: Public facility booking data, anonymised attendance records, weather forecasts
+    Domain: Community Services
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:218
+  - related:art:4
+  - related:art:6
+  - related:art:62
+- id: academic-0220
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Nutrient estimation engine
+    Intended use: AI‑enhanced personal recipe nutrition calculator for home cooks
+    Input data: Public food composition tables, user‑submitted recipes
+    Domain: Health & Wellness
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:219
+  - related:art:4
+  - related:art:5
+  - related:art:50
+  - related:art:56
+  - related:art:62
+- id: academic-0221
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Occupancy prediction model
+    Intended use: Tool that forecasts short‑term demand for public parking spaces in city centres
+    Input data: Public parking sensor data, anonymised historical occupancy, event calendars
+    Domain: Urban Mobility
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:220
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:62
+  - related:art:79
+  - related:art:80
+- id: academic-0222
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Content recommendation engine
+    Intended use: AI‑based virtual book club facilitator that suggests discussion topics
+    Input data: Public book summaries, anonymised user reading preferences
+    Domain: Publishing
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:221
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0223
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Demand forecasting algorithm
+    Intended use: System that predicts short‑term demand for municipal recycling collection services
+    Input data: Public waste generation statistics, anonymised household recycling data, weather forecasts
+    Domain: Environment
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:222
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:6
+  - related:art:10
+  - related:art:62
+  - related:art:63
+  - related:art:80
+- id: academic-0224
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Adaptive scheduling engine
+    Intended use: AI‑driven personal study‑plan generator for students
+    Input data: Public curriculum outlines, anonymised student performance data
+    Domain: Education
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:223
+  - related:art:4
+  - related:art:5
+  - related:art:9
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:62
+  - related:art:70
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0225
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Data analytics dashboard
+    Intended use: Tool that analyses public transport ticketing data to identify under‑served routes
+    Input data: Open ticketing datasets, anonymised ridership statistics
+    Domain: Urban Mobility
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:224
+  - related:art:2
+  - related:art:3
+  - related:art:4
+  - related:art:6
+  - related:art:49
+  - related:art:57
+  - related:art:58
+  - related:art:62
+  - related:art:96
+- id: academic-0226
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Generative layout model
+    Intended use: AI‑enhanced personal garden layout planner that suggests plant placement
+    Input data: Public plant hardiness data, user‑provided garden dimensions
+    Domain: Home Gardening
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:225
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:80
+- id: academic-0227
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Reservation demand predictor
+    Intended use: System that predicts short‑term demand for community‑center meeting rooms
+    Input data: Public meeting‑room booking data, anonymised usage logs, local event calendars
+    Domain: Community Services
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:226
+  - related:art:2
+  - related:art:4
+  - related:art:5
+  - related:art:56
+  - related:art:57
+  - related:art:58
+  - related:art:62
+  - related:art:63
+  - related:art:78
+  - related:art:95
+- id: academic-0228
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Recommendation engine
+    Intended use: AI‑based personal productivity assistant that suggests task prioritisation
+    Input data: Anonymised task lists, public productivity research
+    Domain: Consumer Technology
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:227
+  - related:art:4
+  - related:art:6
+  - related:art:50
+  - related:art:62
+  - related:art:80
+  - related:art:95
+- id: academic-0229
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Usage prediction model
+    Intended use: Tool that forecasts short‑term demand for public Wi‑Fi hotspots in city parks
+    Input data: Public hotspot usage statistics, anonymised connection logs, weather forecasts
+    Domain: Public Services
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:228
+  - related:art:2
+  - related:art:4
+  - related:art:5
+  - related:art:56
+  - related:art:57
+  - related:art:62
+  - related:art:95
+- id: academic-0230
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Progress tracking and feedback model
+    Intended use: AI‑driven personal reading speed trainer for learners
+    Input data: Anonymised reading session data, public literacy research
+    Domain: Education
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:229
+  - related:art:4
+  - related:art:50
+- id: academic-0231
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Demand forecasting algorithm
+    Intended use: System that predicts short‑term demand for municipal bike‑repair stations
+    Input data: Public bike‑share usage data, anonymised repair logs, weather forecasts
+    Domain: Urban Mobility
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:230
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:25
+  - related:art:57
+  - related:art:58
+  - related:art:59
+  - related:art:62
+  - related:art:80
+- id: academic-0232
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Pattern‑recognition dashboard
+    Intended use: AI‑enhanced personal habit‑tracking app that visualises weekly patterns
+    Input data: Anonymised habit logs, public habit‑formation studies
+    Domain: Consumer Technology
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:231
+  - related:art:4
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0233
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Sentiment aggregation platform
+    Intended use: Tool that analyses public sentiment on local cultural events to aid organizers
+    Input data: Public social‑media posts, anonymised event feedback surveys
+    Domain: Culture
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:232
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:56
+  - related:art:62
+  - related:art:77
+  - related:art:95
+- id: academic-0234
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Procedural generation model
+    Intended use: AI‑based virtual cooking assistant that suggests step‑by‑step instructions
+    Input data: Public recipe databases, anonymised user ingredient lists
+    Domain: Consumer Technology
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:233
+  - related:art:4
+  - related:art:6
+  - related:art:50
+- id: academic-0235
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Occupancy prediction model
+    Intended use: System that predicts short‑term demand for public charging stations for electric vehicles
+    Input data: Public charging station usage data, anonymised vehicle charging logs, weather forecasts
+    Domain: Energy
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:234
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+- id: academic-0236
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Recommendation engine
+    Intended use: AI‑driven personal mindfulness coach that offers non‑clinical guidance
+    Input data: Anonymised user mood logs, public mindfulness research
+    Domain: Health & Wellness
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:235
+  - related:art:4
+  - related:art:50
+  - related:art:62
+- id: academic-0237
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Predictive maintenance scheduler
+    Intended use: Tool that forecasts short‑term demand for municipal water‑distribution maintenance
+    Input data: Public water‑network sensor data, anonymised consumption patterns, weather forecasts
+    Domain: Utilities
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:236
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+- id: academic-0238
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Content generation model
+    Intended use: AI‑enhanced personal language flashcard generator for vocabulary building
+    Input data: Public lexical databases, anonymised learner progress data
+    Domain: Education
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:237
+  - related:art:4
+  - related:art:5
+  - related:art:50
+  - related:art:62
+  - related:art:63
+- id: academic-0239
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Reservation demand predictor
+    Intended use: System that predicts short‑term demand for community‑center art‑exhibition spaces
+    Input data: Public exhibition booking data, anonymised attendance records, local event calendars
+    Domain: Culture
+  label:
+    risk_class: limited_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:238
+  - related:art:2
+  - related:art:4
+  - related:art:56
+  - related:art:57
+  - related:art:58
+  - related:art:62
+  - related:art:63
+  - related:art:84
+  - related:art:95
+  - related:art:96
+- id: academic-0240
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Goal‑recommendation engine
+    Intended use: AI‑based personal finance goal tracker that suggests saving milestones
+    Input data: Anonymised financial transaction categories, public cost‑of‑living data
+    Domain: FinTech
+  label:
+    risk_class: limited_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:239
+  - related:art:2
+  - related:art:4
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:25
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:62
+  - related:art:63
+  - related:art:95

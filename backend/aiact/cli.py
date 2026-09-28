@@ -13,6 +13,8 @@ import typer
 from aiact import deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
+from aiact.eval import academic
+from aiact.eval.cases import CaseFileError, CaseSet, load_cases
 from aiact.settings import get_settings
 
 app = typer.Typer(no_args_is_help=True)
@@ -94,6 +96,32 @@ def corpus_parse(
 @eval_app.callback()
 def eval_() -> None:
     """Benchmark split, runs and metrics."""
+
+
+@eval_app.command("academic-import")
+def eval_academic_import(
+    source: Annotated[Path, typer.Argument(help="scenarios.json from the davidath repo")],
+    out_dir: Annotated[
+        Path | None, typer.Option(help="Where the YAML goes [default: repo eval/cases/academic]")
+    ] = None,
+) -> None:
+    """Convert the academic benchmark's scenarios into cases, one YAML file per risk class."""
+    out_path = out_dir or academic.ACADEMIC_DIR
+    try:
+        cases = academic.convert(academic.read_scenarios(source))
+    except (CaseFileError, FileNotFoundError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    for path in academic.write_cases(cases, out_path):
+        typer.echo(f"written: {path}")
+    typer.echo(f"{len(cases)} cases")
+
+
+@eval_app.command("academic-sample")
+def eval_academic_sample() -> None:
+    """Print the seeded spot-check sample (5 cases per risk class) of the imported cases."""
+    for case in academic.spotcheck_sample(load_cases(CaseSet.ACADEMIC)):
+        typer.echo(case.id)
 
 
 @deps_app.callback()

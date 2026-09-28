@@ -1,0 +1,1800 @@
+# Converted by `aiact eval academic-import`; do not edit by hand. See SOURCE.md.
+- id: academic-0001
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Subconscious influence engine
+    Intended use: Deploy a hidden‑audio influence platform that subtly nudges shoppers to purchase high‑margin products without their conscious awareness
+    Input data: Audio streams, browsing history, purchase records, demographic profiles
+    Domain: Retail
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:0
+  - related:art:5
+  - related:art:10
+  - related:art:16
+  - related:art:27
+  - related:art:50
+- id: academic-0002
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Subliminal visual persuasion tool
+    Intended use: Use a visual cue manipulation system that embeds subliminal images in online news feeds to sway political opinions
+    Input data: News article content, user click data, location data, political affiliation indicators
+    Domain: Media
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:1
+  - related:art:5
+  - related:art:13
+  - related:art:26
+  - related:art:27
+  - related:art:50
+- id: academic-0003
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Behavioral audio influence platform
+    Intended use: Offer a background music AI that embeds low‑frequency tones to increase impulse buying in supermarkets
+    Input data: In‑store audio feeds, sales data, shopper movement patterns, age data
+    Domain: Supermarket
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:2
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:49
+  - related:art:50
+- id: academic-0004
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Subliminal haptic persuasion system
+    Intended use: Implement a mobile app that uses hidden haptic feedback to encourage users to accept higher‑interest loans
+    Input data: Touchscreen interactions, credit scores, financial history, device sensor data
+    Domain: Finance
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:3
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:86
+- id: academic-0005
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Subliminal visual cue engine
+    Intended use: Provide a video streaming service that inserts barely perceptible visual prompts to increase subscription upgrades
+    Input data: Video frames, user watch history, subscription status, demographic data
+    Domain: Entertainment
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:4
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:14
+  - related:art:16
+  - related:art:50
+- id: academic-0006
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Subliminal visual influence system
+    Intended use: Operate an AI‑driven billboard network that flashes ultra‑fast images to influence driver route choices
+    Input data: Traffic camera feeds, driver location data, advertisement inventory, vehicle type
+    Domain: Transportation
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:5
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:49
+  - related:art:73
+  - related:art:79
+- id: academic-0007
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Covert conversational influence AI
+    Intended use: Sell a chatbot that uses covert language patterns to steer users toward purchasing insurance policies
+    Input data: Chat logs, user age, income level, previous insurance claims
+    Domain: Insurance
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:6
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:27
+  - related:art:50
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0008
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Subliminal emoji insertion tool
+    Intended use: Run a social media filter that embeds subliminal emojis to increase engagement with sponsored posts
+    Input data: Post content, user interaction data, follower demographics, ad targeting parameters
+    Domain: Social media
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:7
+  - related:art:5
+  - related:art:26
+  - related:art:27
+  - related:art:50
+- id: academic-0009
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Subconscious audio persuasion module
+    Intended use: Launch a gaming platform that uses hidden sound frequencies to encourage in‑game purchases
+    Input data: Game audio streams, player purchase history, session duration, age verification data
+    Domain: Gaming
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:8
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:16
+  - related:art:50
+  - related:art:70
+  - related:art:71
+- id: academic-0010
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Subliminal audio suggestion system
+    Intended use: Deploy a smart‑home speaker that emits low‑volume cues to promote subscription to premium services
+    Input data: Voice command logs, household device usage, subscription status, household income
+    Domain: Smart home
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:9
+  - related:art:4
+  - related:art:5
+  - related:art:6
+  - related:art:50
+  - related:art:99
+- id: academic-0011
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Vulnerability targeting advertising platform
+    Intended use: Offer a targeted advertising AI that exploits the cognitive vulnerabilities of users with dementia to sell unnecessary health supplements
+    Input data: Medical records, cognitive assessment scores, browsing history, purchase logs
+    Domain: Healthcare
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:10
+  - related:art:5
+  - related:art:50
+  - related:art:79
+- id: academic-0012
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Exploitation‑aware loan persuasion system
+    Intended use: Operate a loan‑approval chatbot that manipulates financially illiterate seniors into accepting predatory loan terms
+    Input data: Credit history, age, financial literacy test results, income statements
+    Domain: Finance
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:11
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0013
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Disability exploitation marketing engine
+    Intended use: Provide a marketing AI that leverages disability‑related data to push high‑priced assistive devices to vulnerable users
+    Input data: Medical disability reports, purchase history, income data, location data
+    Domain: Assistive technology
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:12
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:50
+- id: academic-0014
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Vulnerability‑driven employment matching AI
+    Intended use: Run a job‑matching platform that exploits the low‑skill status of unemployed youths to funnel them into low‑pay gig work
+    Input data: Education level, employment history, socioeconomic status, skill assessments
+    Domain: Employment
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:13
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0015
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Economic vulnerability persuasion tool
+    Intended use: Sell an AI‑driven charity donation app that manipulates low‑income families into over‑donating by highlighting emotional stories
+    Input data: Income data, donation history, demographic profiles, emotional content analysis
+    Domain: Non‑profit
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:14
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:16
+  - related:art:50
+- id: academic-0016
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Psychological vulnerability targeting system
+    Intended use: Deploy a travel‑booking assistant that exploits the fear of missing out among young adults to upsell premium packages
+    Input data: Social media activity, age, travel preferences, browsing patterns
+    Domain: Travel
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:15
+  - related:art:5
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:50
+- id: academic-0017
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Emotional vulnerability exploitation platform
+    Intended use: Offer a subscription service that uses AI to identify and exploit the loneliness of elderly users for paid companionship services
+    Input data: Health records, social interaction logs, location data, age
+    Domain: Elder care
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:16
+  - related:art:5
+  - related:art:6
+  - related:art:16
+  - related:art:50
+- id: academic-0018
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Academic vulnerability persuasion engine
+    Intended use: Run an AI‑powered education portal that manipulates low‑performing students into purchasing expensive tutoring packages
+    Input data: Test scores, socioeconomic background, device usage, learning style data
+    Domain: Education
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:17
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:50
+- id: academic-0019
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Social credit scoring AI
+    Intended use: Provide a social‑scoring system that assigns credit scores based on citizens’ online behaviour and restricts access to public housing for low scores
+    Input data: Social media activity, browsing history, geolocation data, public service usage
+    Domain: Public services
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:18
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0020
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Behavioural evaluation and scoring system
+    Intended use: Implement a city‑wide citizen rating platform that limits eligibility for municipal permits based on a behavioural score
+    Input data: Public transport usage, waste disposal records, online interactions, demographic data
+    Domain: Local government
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:19
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0021
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Social behaviour classification tool
+    Intended use: Sell a recruitment AI that gives lower ranking to candidates with certain social media habits, affecting job offers
+    Input data: LinkedIn activity, personal posts, network size, location data
+    Domain: Human resources
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:20
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0022
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Social interaction based credit assessment system
+    Intended use: Deploy a banking AI that reduces loan limits for users with low social engagement scores
+    Input data: Social media engagement, transaction history, credit score, age
+    Domain: Banking
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:21
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:86
+- id: academic-0023
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Online reputation scoring engine
+    Intended use: Offer a rental platform that denies housing applications for tenants with low online reputation scores
+    Input data: Search engine results, forum participation, complaint records, income data
+    Domain: Real estate
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:22
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:16
+- id: academic-0024
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Digital wellbeing scoring AI
+    Intended use: Run a health‑insurance pricing model that penalises users with low digital wellbeing scores
+    Input data: App usage patterns, sleep tracking data, fitness tracker data, medical history
+    Domain: Insurance
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:23
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:86
+- id: academic-0025
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Civic participation scoring system
+    Intended use: Provide a public‑service access system that blocks low‑scoring citizens from voting assistance tools
+    Input data: Voting history, online political activity, demographic data, location
+    Domain: Public administration
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:24
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:16
+  - related:art:27
+  - related:art:50
+- id: academic-0026
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Social influence evaluation platform
+    Intended use: Implement a university admissions AI that lowers acceptance chances for applicants with low social media influence scores
+    Input data: Follower counts, post engagement, extracurricular activity logs, academic records
+    Domain: Education
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:25
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0027
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Behavioural loyalty scoring engine
+    Intended use: Sell a consumer‑loyalty program that reduces reward tiers for users with undesirable online behaviour patterns
+    Input data: Purchase history, online reviews, social media sentiment, demographic data
+    Domain: Retail
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:26
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0028
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Civic engagement scoring tool
+    Intended use: Run a transportation‑ticketing system that denies discounts to passengers with low civic engagement scores
+    Input data: Public transport usage, community event participation, social media activity, age
+    Domain: Transportation
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:27
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:86
+- id: academic-0029
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Criminal propensity risk assessment tool
+    Intended use: Offer a predictive policing AI that assesses the likelihood of individuals committing crimes based solely on personality traits extracted from social media
+    Input data: Social media posts, sentiment analysis, psychometric profiling, location data
+    Domain: Law enforcement
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:28
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:86
+- id: academic-0030
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Aggression inference risk scoring system
+    Intended use: Deploy a neighborhood safety platform that flags residents as high‑risk based on inferred aggression levels from online comments
+    Input data: Forum comments, video uploads, facial expression analysis, demographic data
+    Domain: Public safety
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:29
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0031
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Student criminal risk prediction engine
+    Intended use: Provide a school‑discipline AI that predicts which students are likely to commit violent acts using personality profiling
+    Input data: Student essays, social media activity, behavioural logs, psychometric test results
+    Domain: Education
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:30
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:50
+  - related:art:72
+  - related:art:86
+- id: academic-0032
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Facial micro‑expression crime risk assessor
+    Intended use: Run an employment screening tool that estimates future criminal behaviour of applicants based on facial micro‑expressions
+    Input data: Interview video recordings, facial landmark data, demographic information, prior convictions
+    Domain: Human resources
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:31
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:73
+  - related:art:86
+- id: academic-0033
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Personality‑based fraud risk predictor
+    Intended use: Sell a credit‑card fraud detection system that denies credit to users predicted to commit fraud based on personality analysis
+    Input data: Transaction history, social media sentiment, psychometric scores, location data
+    Domain: Finance
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:32
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:43
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0034
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Online behaviour crime risk evaluator
+    Intended use: Implement a public‑housing allocation AI that excludes applicants deemed likely to engage in illegal activities based on online behaviour
+    Input data: Search queries, forum participation, social media posts, income data
+    Domain: Housing
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:33
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:86
+- id: academic-0035
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Partner violence risk assessment tool
+    Intended use: Offer a dating‑app AI that blocks users predicted to become violent partners based on personality traits inferred from profile text
+    Input data: Profile descriptions, message content, psycholinguistic analysis, age
+    Domain: Online dating
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:34
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:86
+- id: academic-0036
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Leadership corruption risk scorer
+    Intended use: Run a community‑grant allocation system that denies funds to organisations whose leaders are flagged as high‑risk for corruption based on personality profiling
+    Input data: Public speeches, social media posts, psychometric data, financial disclosures
+    Domain: Non‑profit
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:35
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:86
+  - related:art:99
+- id: academic-0037
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Automated facial data aggregation service
+    Intended use: Provide a facial‑image scraper that continuously harvests public photos from social networks to enlarge a commercial facial‑recognition database
+    Input data: Publicly posted images, metadata, geotags, user profile information
+    Domain: Marketing
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:36
+  - related:art:5
+- id: academic-0038
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: CCTV facial data collection engine
+    Intended use: Operate a retail analytics platform that builds a massive facial‑recognition database by extracting faces from CCTV feeds across shopping malls
+    Input data: Video streams, timestamp data, location coordinates, shopper demographics
+    Domain: Retail
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:37
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+- id: academic-0039
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Cross‑platform facial image harvesting system
+    Intended use: Sell a social‑media monitoring tool that scrapes user‑uploaded photos to create a cross‑platform facial‑recognition repository for targeted advertising
+    Input data: User photos, hashtags, upload timestamps, device identifiers
+    Domain: Advertising
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:38
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:25
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:49
+  - related:art:50
+- id: academic-0040
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Event‑based facial data collector
+    Intended use: Run an event‑management AI that collects attendee facial images from ticket scans to expand a commercial facial‑recognition dataset
+    Input data: Ticket scan images, attendee names, event location, timestamps
+    Domain: Event services
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:39
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:50
+- id: academic-0041
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Travel photo facial data scraper
+    Intended use: Offer a tourism‑promotion platform that harvests tourists’ facial photos from travel blogs to enrich a facial‑recognition database for future marketing
+    Input data: Blog images, GPS tags, user comments, travel dates
+    Domain: Tourism
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:40
+  - related:art:5
+  - related:art:6
+  - related:art:10
+- id: academic-0042
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Urban facial data accumulation system
+    Intended use: Deploy a smart‑city surveillance network that continuously captures and stores facial images from public streets to build a city‑wide facial‑recognition repository
+    Input data: Street‑level video feeds, timestamps, location coordinates, vehicle plate data
+    Domain: Smart city
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:41
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+- id: academic-0043
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: User‑video facial feature extractor
+    Intended use: Provide an AI that extracts facial features from user‑generated video content to create a commercial biometric database for product personalization
+    Input data: Uploaded videos, frame timestamps, user profile data, device metadata
+    Domain: E‑commerce
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:42
+  - related:art:6
+  - related:art:10
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+- id: academic-0044
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Workout video facial data collector
+    Intended use: Run a fitness‑app that collects users’ facial images during workout recordings to enlarge a facial‑recognition dataset for health‑related advertising
+    Input data: Video recordings, heart‑rate data, user demographics, location data
+    Domain: Health & fitness
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:43
+  - related:art:4
+  - related:art:6
+  - related:art:12
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+- id: academic-0045
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Workplace emotion analytics platform
+    Intended use: Offer an emotion‑detection system for workplace monitoring that evaluates employees’ feelings in real time to adjust performance bonuses
+    Input data: Facial video streams, voice tone analysis, keystroke dynamics, employee ID
+    Domain: Human resources
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:44
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:45
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:86
+- id: academic-0046
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Educational emotion inference engine
+    Intended use: Deploy an AI that monitors students’ facial expressions during online classes to infer engagement levels and assign grades
+    Input data: Webcam video, audio tone, interaction timestamps, student identifiers
+    Domain: Education
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:45
+  - related:art:5
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:86
+- id: academic-0047
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: In‑store emotion detection system
+    Intended use: Sell a retail‑store AI that analyzes shoppers’ micro‑expressions to gauge satisfaction and trigger upselling prompts
+    Input data: CCTV facial video, purchase history, demographic data, time‑of‑day
+    Domain: Retail
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:46
+  - related:art:3
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:49
+  - related:art:50
+- id: academic-0048
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Voice‑based emotion recognition platform
+    Intended use: Run a call‑center monitoring tool that infers caller emotions to adjust script aggressiveness for sales conversion
+    Input data: Call audio recordings, speech sentiment, caller ID, purchase outcome
+    Domain: Customer service
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:47
+  - related:art:9
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:50
+  - related:art:86
+- id: academic-0049
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Educator emotion assessment system
+    Intended use: Provide an AI that evaluates teachers’ emotional states during lectures to determine salary bonuses
+    Input data: Classroom video, audio tone, teacher ID, student feedback scores
+    Domain: Education
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:48
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+  - related:art:99
+- id: academic-0050
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Meeting emotion analytics engine
+    Intended use: Deploy a corporate meeting analytics tool that reads participants’ emotions to rank performance for promotions
+    Input data: Video conference streams, voice analysis, participant IDs, meeting agenda
+    Domain: Corporate
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:49
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0051
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Transit emotion detection platform
+    Intended use: Offer a public‑transport monitoring AI that infers commuter stress levels to adjust ticket pricing dynamically
+    Input data: Onboard camera footage, ambient noise, passenger IDs, ticket data
+    Domain: Transportation
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:50
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:40
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:62
+  - related:art:72
+  - related:art:73
+- id: academic-0052
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Guest emotion personalization system
+    Intended use: Run a hotel‑service AI that reads guests’ facial expressions to customize room amenities and charge extra fees
+    Input data: In‑room camera video, reservation details, guest profile, billing information
+    Domain: Hospitality
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:51
+  - related:art:3
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0053
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Political orientation profiling engine
+    Intended use: Provide a biometric categorisation tool that infers users’ political affiliations from facial micro‑features for targeted political advertising
+    Input data: Facial images, video clips, demographic data, browsing history
+    Domain: Advertising
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:52
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:16
+  - related:art:27
+  - related:art:50
+- id: academic-0054
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Racial segmentation profiling system
+    Intended use: Deploy an AI that analyses customers’ facial characteristics to assign them to racial market segments for product pricing
+    Input data: Store camera footage, purchase history, demographic data, location
+    Domain: Retail
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:53
+  - related:art:5
+  - related:art:50
+- id: academic-0055
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Sexual orientation inference tool
+    Intended use: Sell a social‑media analytics platform that categorises users by inferred sexual orientation from image data for niche advertising
+    Input data: User‑uploaded photos, image metadata, interaction logs, age
+    Domain: Marketing
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:54
+  - related:art:2
+  - related:art:3
+  - related:art:5
+  - related:art:99
+- id: academic-0056
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Religious belief biometric classifier
+    Intended use: Run a recruitment AI that filters candidates based on inferred religious beliefs derived from facial features
+    Input data: Video interview recordings, facial landmark data, CV data, location
+    Domain: Human resources
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:55
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:50
+  - related:art:86
+- id: academic-0057
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Trade‑union membership inference engine
+    Intended use: Provide a consumer‑insights platform that groups shoppers by inferred trade‑union membership from facial cues for price discrimination
+    Input data: In‑store camera images, purchase logs, demographic data, loyalty card ID
+    Domain: Retail
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:56
+  - related:art:5
+  - related:art:50
+  - related:art:86
+- id: academic-0058
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Sexual preference profiling system
+    Intended use: Deploy an AI that analyses facial expressions to deduce users’ sex life preferences for targeted adult‑content recommendations
+    Input data: User video streams, facial micro‑expressions, browsing history, age
+    Domain: Adult entertainment
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:57
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:26
+  - related:art:50
+  - related:art:86
+- id: academic-0059
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Mass surveillance facial identification platform
+    Intended use: Offer a real‑time crowd monitoring system that continuously scans public squares with facial recognition to identify and track all individuals for commercial profiling
+    Input data: Live video feeds, facial image database, timestamp, location coordinates
+    Domain: Public spaces
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:58
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:77
+  - related:art:79
+  - related:art:82
+  - related:art:86
+  - related:art:99
+- id: academic-0060
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Real‑time biometric tracking engine
+    Intended use: Run a city‑wide AI that uses real‑time remote biometric identification to monitor foot traffic and sell movement data to advertisers
+    Input data: Street‑level camera streams, facial embeddings, device IDs, time stamps
+    Domain: Smart city
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:59
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:77
+  - related:art:86
+- id: academic-0061
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Real‑time passenger identification system
+    Intended use: Provide a transport hub AI that identifies every traveler in real time to build behavioural profiles for targeted ticket offers
+    Input data: CCTV facial video, ticket scan data, travel itinerary, demographic data
+    Domain: Transportation
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:60
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:49
+  - related:art:71
+  - related:art:72
+- id: academic-0062
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Event‑scale real‑time facial ID system
+    Intended use: Deploy a stadium security AI that continuously matches faces of all attendees against a commercial database for marketing purposes
+    Input data: Live video streams, facial feature vectors, ticket holder information, timestamps
+    Domain: Entertainment
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:61
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+- id: academic-0063
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Real‑time shopper tracking platform
+    Intended use: Offer a mall‑wide monitoring AI that uses remote biometric identification to track shoppers’ movements and sell heat‑map data to retailers
+    Input data: CCTV video, facial embeddings, store layout maps, time data
+    Domain: Retail
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:62
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+  - related:art:99
+- id: academic-0064
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Real‑time park visitor identification system
+    Intended use: Run a public‑park AI that identifies every visitor in real time to generate demographic analytics for city planners and advertisers
+    Input data: Outdoor camera feeds, facial feature data, location tags, timestamps
+    Domain: Public spaces
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:63
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0065
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Instantaneous facial ID advertising engine
+    Intended use: Provide a real‑time facial recognition system for a shopping centre that flags all customers for personalized ad delivery without consent
+    Input data: Live video streams, facial templates, purchase history, demographic profiles
+    Domain: Retail
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:64
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:72
+  - related:art:73
+  - related:art:74
+- id: academic-0066
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Real‑time driver biometric monitoring system
+    Intended use: Deploy a city‑traffic AI that uses remote biometric identification to monitor drivers and sell driver‑profile data to insurance companies
+    Input data: Road‑side camera footage, facial images, vehicle registration data, timestamps
+    Domain: Transportation
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:65
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+  - related:art:81
+  - related:art:82
+  - related:art:83
+  - related:art:86
+  - related:art:99
+- id: academic-0067
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Real‑time library visitor profiling system
+    Intended use: Offer a public‑library AI that scans visitors’ faces in real time to infer reading preferences and push targeted book recommendations
+    Input data: Entrance camera video, facial embeddings, borrowing history, demographic data
+    Domain: Public services
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:66
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0068
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Real‑time biometric ambience controller
+    Intended use: Run a corporate lobby AI that continuously identifies employees and visitors to tailor background music and lighting based on inferred mood
+    Input data: Lobby camera feeds, facial feature vectors, employee IDs, time of day
+    Domain: Corporate
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:67
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:50
+- id: academic-0069
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Theme‑park visitor tracking engine
+    Intended use: Provide a real‑time facial recognition system for a theme park that tracks all guests to sell detailed movement patterns to third‑party marketers
+    Input data: Live video streams, facial embeddings, ride usage logs, timestamps
+    Domain: Entertainment
+  label:
+    risk_class: prohibited
+    role: provider
+  tags:
+  - source:scenarios.json:data:68
+  - related:art:5
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:25
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:61
+  - related:art:72
+  - related:art:73
+  - related:art:79
+  - related:art:86
+- id: academic-0070
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Crowd density biometric monitoring system
+    Intended use: Deploy a public‑square AI that uses remote biometric identification to monitor crowd density and sell real‑time occupancy data to event organizers
+    Input data: CCTV video, facial detection data, location coordinates, time stamps
+    Domain: Public spaces
+  label:
+    risk_class: prohibited
+    role: deployer
+  tags:
+  - source:scenarios.json:data:69
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:73

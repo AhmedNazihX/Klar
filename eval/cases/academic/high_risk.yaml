@@ -1,0 +1,2701 @@
+# Converted by `aiact eval academic-import`; do not edit by hand. See SOURCE.md.
+- id: academic-0071
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Real‑time safety monitoring AI for medical robots
+    Intended use: AI safety component for autonomous surgical robots that monitors instrument positioning and triggers emergency stop
+    Input data: Live video feed, force‑torque sensor data, patient vital signs
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:70
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:72
+  - related:art:73
+- id: academic-0072
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Remote facial recognition system
+    Intended use: Remote biometric identification system deployed in public transport hubs to identify persons of interest in real time
+    Input data: CCTV video, facial images, gait patterns, geolocation metadata
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:71
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:73
+  - related:art:77
+  - related:art:79
+  - related:art:86
+- id: academic-0073
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Critical‑infrastructure grid management AI
+    Intended use: AI system controlling the load balancing of a national electricity grid, acting as a safety component subject to the EU Electricity Directive conformity assessment
+    Input data: Real‑time power demand, generation forecasts, sensor data from substations
+    Domain: Management and operation of critical infrastructure
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:72
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:25
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+- id: academic-0074
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Admission decision AI
+    Intended use: AI platform that determines admission to university programmes based on academic records and socio‑economic background
+    Input data: Academic transcripts, standardized test scores, demographic data
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:73
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:12
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:79
+  - related:art:86
+- id: academic-0075
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Automated recruitment and candidate ranking AI
+    Intended use: AI system used by a recruitment agency to filter and rank job applicants, including automated targeting of advertisements
+    Input data: CVs, cover letters, online profiles, psychometric test results
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:74
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:25
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+  - related:art:86
+- id: academic-0076
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Public assistance eligibility AI
+    Intended use: AI tool that evaluates eligibility for social housing benefits, calculating entitlement and potential revocation
+    Input data: Income statements, household composition, rental market data
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:75
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:79
+  - related:art:86
+- id: academic-0077
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Victim risk assessment AI
+    Intended use: AI system used by police to assess the risk of a person becoming a victim of violent crime, influencing resource allocation
+    Input data: Crime statistics, personal history, location data, social network analysis
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:76
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:77
+  - related:art:79
+  - related:art:81
+  - related:art:86
+- id: academic-0078
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Asylum claim outcome prediction AI
+    Intended use: AI system that profiles asylum seekers to predict likelihood of successful claim, influencing decision making
+    Input data: Personal narratives, country‑of‑origin risk data, health records
+    Domain: Migration, asylum and border‑control management
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:77
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:43
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0079
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Judicial decision‑support AI
+    Intended use: AI assistant for judges that analyses case law and suggests legal reasoning, directly influencing judicial decisions
+    Input data: Legal texts, precedent databases, case facts
+    Domain: Administration of justice and democratic processes
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:78
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0080
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Election influence AI
+    Intended use: AI system that manipulates social media content to influence voting behaviour in an election
+    Input data: User profiles, political sentiment analysis, content recommendation algorithms
+    Domain: Administration of justice and democratic processes
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:79
+  - related:art:5
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+- id: academic-0081
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Railway signalling safety AI
+    Intended use: AI safety component for autonomous railway signalling that detects anomalies and triggers emergency braking
+    Input data: Track sensor data, train speed, signal status
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:80
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:72
+  - related:art:73
+  - related:art:79
+- id: academic-0082
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Emotion detection AI
+    Intended use: Emotion recognition AI used in retail stores to assess shopper stress levels for targeted advertising
+    Input data: Facial video, voice tone, physiological sensors
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:81
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:50
+- id: academic-0083
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Biometric categorisation AI
+    Intended use: AI system that categorises individuals by ethnicity based on facial features for law‑enforcement profiling
+    Input data: High‑resolution facial images, demographic databases
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:82
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:16
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:79
+  - related:art:99
+- id: academic-0084
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Water supply safety AI
+    Intended use: AI that manages water distribution network pressure to prevent pipe bursts, acting as a safety component under the Water Framework Directive
+    Input data: Pressure sensor readings, flow rates, weather forecasts
+    Domain: Management and operation of critical infrastructure
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:83
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:62
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:79
+- id: academic-0085
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Exam monitoring AI
+    Intended use: AI platform that evaluates student exam submissions for plagiarism and cheating in real time
+    Input data: Student code submissions, text similarity databases, webcam feeds
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:84
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+  - related:art:86
+- id: academic-0086
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Workforce scheduling AI
+    Intended use: AI system that assigns employees to shifts based on health data and performance metrics, affecting work conditions
+    Input data: Health records, performance logs, availability calendars
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:85
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0087
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Credit scoring AI
+    Intended use: AI that calculates credit scores for loan applicants, influencing creditworthiness decisions
+    Input data: Financial history, transaction data, employment records
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:86
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0088
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Emergency call triage AI
+    Intended use: AI system that triages emergency medical calls, prioritising patients based on symptom analysis
+    Input data: Voice recordings, caller location, medical history
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:87
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:62
+  - related:art:86
+- id: academic-0089
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Recidivism risk assessment AI
+    Intended use: AI tool that predicts recidivism risk for parole decisions, influencing release
+    Input data: Criminal record, behavioural reports, socio‑economic data
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:88
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:49
+  - related:art:71
+- id: academic-0090
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Evidence reliability AI
+    Intended use: AI system that evaluates the reliability of digital evidence in criminal investigations
+    Input data: Metadata of digital files, chain‑of‑custody logs, forensic analysis results
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:89
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:73
+  - related:art:86
+- id: academic-0091
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Migration health‑risk assessment AI
+    Intended use: AI that assesses health risks of migrants entering the EU, influencing border‑control decisions
+    Input data: Medical records, travel history, epidemiological data
+    Domain: Migration, asylum and border‑control management
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:90
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:79
+  - related:art:83
+- id: academic-0092
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Asylum application analysis AI
+    Intended use: AI system that assists officials in examining asylum applications by extracting relevant facts and scoring credibility
+    Input data: Applicant statements, country‑of‑origin reports, supporting documents
+    Domain: Migration, asylum and border‑control management
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:91
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:86
+- id: academic-0093
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Gas pipeline safety AI
+    Intended use: AI safety component for autonomous gas pipeline monitoring that detects leaks and initiates shutdown
+    Input data: Pressure sensors, acoustic emission data, temperature readings
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:92
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:25
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+- id: academic-0094
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Law‑enforcement profiling AI
+    Intended use: AI system that profiles individuals for law‑enforcement investigations based on behavioural patterns
+    Input data: Social media activity, location history, prior convictions
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:93
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0095
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Education placement AI
+    Intended use: AI that determines the appropriate level of education for students based on prior achievement and aptitude tests
+    Input data: Test scores, learning analytics, socio‑demographic data
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:94
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0096
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Employee performance monitoring AI
+    Intended use: AI system that monitors employee productivity through webcam and keystroke analysis, influencing performance evaluations
+    Input data: Video feeds, keyboard/mouse activity, task completion timestamps
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:95
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0097
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Insurance pricing AI
+    Intended use: AI that calculates life‑insurance premiums based on health data and lifestyle, affecting pricing
+    Input data: Medical records, wearable device data, lifestyle questionnaires
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:96
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0098
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Forensic DNA reliability AI
+    Intended use: AI system that evaluates the reliability of forensic DNA evidence in criminal cases
+    Input data: DNA sample metadata, laboratory quality metrics, chain‑of‑custody logs
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:97
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+  - related:art:80
+  - related:art:81
+  - related:art:82
+  - related:art:86
+- id: academic-0099
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Border‑control facial recognition AI
+    Intended use: Remote biometric identification AI deployed at border checkpoints to identify persons of interest in real time
+    Input data: CCTV video, facial images, passport photo databases, geolocation data
+    Domain: Migration, asylum and border‑control management
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:98
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0100
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Political persuasion AI
+    Intended use: AI system that predicts the likelihood of a citizen voting for a particular party and tailors political advertising accordingly
+    Input data: Voting history, social media activity, demographic data
+    Domain: Administration of justice and democratic processes
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:99
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:71
+  - related:art:79
+  - related:art:82
+  - related:art:86
+- id: academic-0101
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Automotive emergency braking AI
+    Intended use: AI safety component for autonomous vehicle braking systems, required to undergo EU type‑approval conformity assessment
+    Input data: Lidar, radar, camera feeds, vehicle speed
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:100
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+- id: academic-0102
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Disability categorisation AI
+    Intended use: AI that categorises individuals by disability status using visual cues for targeted service provision
+    Input data: Facial video, gait analysis, medical records
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:101
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+- id: academic-0103
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Grid load‑shedding AI
+    Intended use: AI system that manages the load shedding of an electricity grid during peak demand, acting as a safety component
+    Input data: Demand forecasts, generation capacity, real‑time consumption data
+    Domain: Management and operation of critical infrastructure
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:102
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:25
+  - related:art:40
+  - related:art:41
+  - related:art:49
+  - related:art:62
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:79
+- id: academic-0104
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Adaptive learning outcome AI
+    Intended use: AI that evaluates student learning outcomes and automatically adjusts curriculum pathways
+    Input data: Assessment scores, interaction logs, learning analytics
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:103
+  - related:art:4
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0105
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Public‑sector recruitment AI
+    Intended use: AI system that automates the selection of candidates for public sector jobs, including ranking and shortlisting
+    Input data: CVs, application forms, competency test results
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:104
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0106
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Unemployment benefit eligibility AI
+    Intended use: AI that determines eligibility for unemployment benefits based on income and work history, with automatic benefit allocation
+    Input data: Tax records, employment contracts, bank statements
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:105
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0107
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Re‑offending risk AI
+    Intended use: AI system used by police to assess the probability that a suspect will re‑offend, influencing parole decisions
+    Input data: Criminal history, psychological assessments, social environment data
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:106
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0108
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Travel‑document fraud detection AI
+    Intended use: AI that assists immigration officers in verifying the authenticity of travel documents and detecting forged passports
+    Input data: Scanned passport images, security feature databases, biometric data
+    Domain: Migration, asylum and border‑control management
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:107
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:77
+  - related:art:79
+  - related:art:86
+- id: academic-0109
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Residential heating safety AI
+    Intended use: AI safety component for automated gas valve control in residential heating systems, subject to EU gas appliance conformity assessment
+    Input data: Temperature sensors, pressure sensors, user settings
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:108
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+- id: academic-0110
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Student emotion analytics AI
+    Intended use: Emotion recognition AI used in online learning platforms to gauge student engagement and adapt content delivery
+    Input data: Webcam video, voice tone, interaction timestamps
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:109
+  - related:art:5
+  - related:art:13
+  - related:art:26
+  - related:art:50
+- id: academic-0111
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Water treatment safety AI
+    Intended use: AI system that monitors and controls water treatment plant chemical dosing to prevent contamination, acting as a safety component
+    Input data: Chemical concentration sensors, flow rates, water quality metrics
+    Domain: Management and operation of critical infrastructure
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:110
+  - related:art:3
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+  - related:art:82
+- id: academic-0112
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Dropout risk prediction AI
+    Intended use: AI that predicts student dropout risk and triggers early‑intervention measures
+    Input data: Attendance records, grades, socio‑economic background
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:111
+  - related:art:4
+  - related:art:9
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0113
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Corporate recruitment AI
+    Intended use: AI platform that automates the evaluation of job applicants for a multinational corporation, including bias‑mitigation scoring
+    Input data: Resumes, online profiles, assessment results
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:112
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0114
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Child benefit eligibility AI
+    Intended use: AI that calculates eligibility for child benefit payments based on family income and composition
+    Input data: Household income, number of dependents, tax records
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:113
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:71
+  - related:art:86
+- id: academic-0115
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: CCTV evidence reliability AI
+    Intended use: AI system that assists law‑enforcement officers in evaluating the reliability of CCTV footage as evidence
+    Input data: Video metadata, timestamps, chain‑of‑custody logs
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:114
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:43
+  - related:art:44
+  - related:art:45
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:72
+  - related:art:73
+  - related:art:74
+- id: academic-0116
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Migration security profiling AI
+    Intended use: AI that profiles migrants based on travel routes and biometric data to assess security risk
+    Input data: Passport scans, travel itineraries, facial images
+    Domain: Migration, asylum and border‑control management
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:115
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0117
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Smart‑grid fault detection AI
+    Intended use: AI safety component for smart grid fault detection that triggers automatic isolation of affected sections
+    Input data: Voltage, current, frequency measurements, fault indicators
+    Domain: Management and operation of critical infrastructure
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:116
+  - related:art:3
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:25
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+  - related:art:82
+  - related:art:83
+- id: academic-0118
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Apprenticeship placement AI
+    Intended use: AI that evaluates the suitability of candidates for vocational apprenticeship programmes based on prior skill assessments
+    Input data: Skill test results, educational background, work experience
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:117
+  - related:art:4
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:86
+- id: academic-0119
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Executive recruitment AI
+    Intended use: AI system that automates the selection of candidates for senior management positions, including predictive performance modelling
+    Input data: Leadership assessments, career history, psychometric data
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:118
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0120
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Disability benefit eligibility AI
+    Intended use: AI that determines eligibility for disability benefits by analysing medical reports and income data
+    Input data: Medical certificates, income statements, employment history
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:119
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0121
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Legal fact‑extraction AI
+    Intended use: AI system used by courts to automatically extract relevant facts from large document bundles and suggest legal arguments
+    Input data: Case files, statutes, prior judgments
+    Domain: Administration of justice and democratic processes
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:120
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:72
+  - related:art:73
+  - related:art:79
+  - related:art:86
+- id: academic-0122
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Referendum influence AI
+    Intended use: AI that manipulates online news feeds to sway public opinion ahead of a referendum
+    Input data: User browsing history, sentiment analysis, content recommendation algorithms
+    Domain: Administration of justice and democratic processes
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:121
+  - related:art:5
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:77
+- id: academic-0123
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Drone traffic safety AI
+    Intended use: AI safety component for autonomous drone traffic management, required to undergo conformity assessment under EU aviation regulations
+    Input data: Airspace data, drone telemetry, weather conditions
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:122
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:40
+  - related:art:41
+  - related:art:42
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:72
+  - related:art:73
+- id: academic-0124
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Call‑centre emotion detection AI
+    Intended use: Emotion recognition AI used in customer service call centres to detect frustration and trigger supervisor intervention
+    Input data: Voice tone, speech content, interaction duration
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:123
+  - related:art:5
+  - related:art:50
+- id: academic-0125
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Gas network pressure control AI
+    Intended use: AI system that controls the pressure valves of a natural‑gas distribution network to prevent over‑pressurisation
+    Input data: Pressure sensor data, flow rates, demand forecasts
+    Domain: Management and operation of critical infrastructure
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:124
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+  - related:art:99
+- id: academic-0126
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Standardized‑test performance AI
+    Intended use: AI that predicts student performance in standardized tests and automatically adjusts teaching resources
+    Input data: Past test scores, learning behavior logs, demographic data
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:125
+  - related:art:5
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0127
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Government recruitment AI
+    Intended use: AI platform that automates the screening of job applications for a government agency, including bias‑checking
+    Input data: Applicant CVs, questionnaire responses, background checks
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:126
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0128
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Housing subsidy eligibility AI
+    Intended use: AI that evaluates eligibility for housing subsidies based on income, family size and regional cost indices
+    Input data: Income statements, household composition, regional housing price data
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:127
+  - related:art:6
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:71
+  - related:art:86
+- id: academic-0129
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Witness credibility AI
+    Intended use: AI system that assists police in assessing the credibility of witness statements using linguistic analysis
+    Input data: Transcripts, voice recordings, prior statements
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:128
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:77
+  - related:art:86
+- id: academic-0130
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Asylum‑seeker prioritisation AI
+    Intended use: AI that profiles asylum seekers based on travel routes, health status and demographic data to prioritize processing
+    Input data: Travel documents, medical records, demographic attributes
+    Domain: Migration, asylum and border‑control management
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:129
+  - related:art:6
+  - related:art:10
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:86
+- id: academic-0131
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Building fire‑suppression AI
+    Intended use: AI safety component for automated fire‑suppression systems in high‑rise buildings, subject to EU construction product conformity assessment
+    Input data: Smoke detectors, temperature sensors, building layout data
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:130
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:40
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:79
+- id: academic-0132
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Mental‑health emotion detection AI
+    Intended use: Emotion recognition AI used in mental‑health apps to detect signs of depression and trigger alerts to clinicians
+    Input data: Facial video, voice tone, interaction patterns
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:131
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:86
+- id: academic-0133
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Emergency power‑grid management AI
+    Intended use: AI system that manages the distribution of electricity during emergencies, automatically isolating faulty sections
+    Input data: Grid sensor data, outage reports, load forecasts
+    Domain: Management and operation of critical infrastructure
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:132
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:25
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:45
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:74
+  - related:art:75
+  - related:art:76
+  - related:art:77
+  - related:art:78
+  - related:art:79
+  - related:art:80
+  - related:art:81
+  - related:art:82
+  - related:art:83
+- id: academic-0134
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Scholarship allocation AI
+    Intended use: AI that evaluates the suitability of candidates for scholarship programmes based on academic merit and socio‑economic background
+    Input data: Grades, test scores, household income, demographic data
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:133
+  - related:art:5
+  - related:art:13
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:86
+- id: academic-0135
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Civil‑service recruitment AI
+    Intended use: AI platform that automates the selection of candidates for senior civil‑service positions, including predictive performance analytics
+    Input data: Career histories, assessment scores, psychometric tests
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:134
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:77
+  - related:art:79
+  - related:art:86
+  - related:art:99
+- id: academic-0136
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Pension eligibility AI
+    Intended use: AI that determines eligibility for pension benefits based on contribution history and age
+    Input data: Contribution records, employment history, demographic data
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:135
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:86
+- id: academic-0137
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Verdict drafting AI
+    Intended use: AI system that assists judges in drafting verdicts by summarising evidence and suggesting legal citations
+    Input data: Evidence files, legal statutes, prior judgments
+    Domain: Administration of justice and democratic processes
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:136
+  - related:art:6
+  - related:art:13
+  - related:art:14
+  - related:art:16
+  - related:art:17
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:77
+  - related:art:79
+  - related:art:80
+  - related:art:86
+- id: academic-0138
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Micro‑targeted political ad AI
+    Intended use: AI that creates micro‑targeted political advertisements to influence voter preferences during an election
+    Input data: User profiles, browsing history, sentiment analysis
+    Domain: Administration of justice and democratic processes
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:137
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0139
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Level‑crossing safety AI
+    Intended use: AI safety component for automated railway level‑crossing barriers, required to undergo conformity assessment under EU rail safety directives
+    Input data: Train detection sensors, barrier status, timing data
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:138
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:72
+  - related:art:73
+  - related:art:79
+- id: academic-0140
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Exam stress detection AI
+    Intended use: Emotion recognition AI used in online examinations to detect stress and possible cheating behaviour
+    Input data: Webcam video, voice analysis, keystroke dynamics
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:139
+  - related:art:5
+  - related:art:10
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:49
+  - related:art:50
+  - related:art:71
+- id: academic-0141
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Municipal water flow control AI
+    Intended use: AI system that controls the pressure and flow in municipal water distribution to prevent pipe bursts, acting as a safety component
+    Input data: Pressure sensors, flow meters, consumption forecasts
+    Domain: Management and operation of critical infrastructure
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:140
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:72
+  - related:art:73
+  - related:art:74
+- id: academic-0142
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: University dropout prediction AI
+    Intended use: AI that predicts dropout risk for university students and automatically triggers remedial tutoring
+    Input data: Academic records, attendance, socio‑economic data
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:141
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0143
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Leadership development recruitment AI
+    Intended use: AI platform that automates the screening of candidates for a multinational's leadership development program
+    Input data: Performance reviews, psychometric tests, career trajectories
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:142
+  - related:art:5
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:79
+  - related:art:86
+- id: academic-0144
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Social security disability AI
+    Intended use: AI that evaluates eligibility for social security disability benefits based on medical and employment data
+    Input data: Medical reports, employment history, income statements
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:143
+  - related:art:6
+  - related:art:14
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:73
+  - related:art:86
+- id: academic-0145
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Digital forensic reliability AI
+    Intended use: AI system that assists prosecutors in assessing the reliability of digital forensic evidence
+    Input data: File metadata, hash values, chain‑of‑custody documentation
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:144
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:27
+  - related:art:43
+  - related:art:46
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:77
+  - related:art:86
+  - related:art:91
+  - related:art:92
+  - related:art:93
+  - related:art:94
+  - related:art:99
+- id: academic-0146
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Border‑crossing security profiling AI
+    Intended use: AI that profiles individuals crossing borders based on biometric and travel data to assess security risk
+    Input data: Facial images, passport data, travel itineraries
+    Domain: Migration, asylum and border‑control management
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:145
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0147
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Chemical reactor emergency shutdown AI
+    Intended use: AI safety component for automated emergency shutdown of industrial chemical reactors, subject to EU chemical safety conformity assessment
+    Input data: Temperature, pressure, gas concentration sensors
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:146
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:40
+  - related:art:41
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:72
+  - related:art:73
+  - related:art:79
+  - related:art:83
+  - related:art:99
+- id: academic-0148
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Retail mood‑adaptive AI
+    Intended use: Emotion recognition AI used in retail environments to adapt lighting and music based on shopper mood
+    Input data: Facial video, voice tone, movement patterns
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:147
+  - related:art:5
+  - related:art:26
+  - related:art:27
+  - related:art:50
+- id: academic-0149
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Smart‑grid balancing AI
+    Intended use: AI system that manages the real‑time balancing of electricity supply and demand in a smart‑grid, acting as a safety component
+    Input data: Generation output, consumption data, storage levels
+    Domain: Management and operation of critical infrastructure
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:148
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:40
+  - related:art:41
+  - related:art:42
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:62
+  - related:art:72
+  - related:art:73
+- id: academic-0150
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Doctoral scholarship allocation AI
+    Intended use: AI that evaluates the suitability of candidates for doctoral scholarships based on research output and academic record
+    Input data: Publications, citation counts, grades, demographic data
+    Domain: Education and vocational training
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:149
+  - related:art:5
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:50
+  - related:art:71
+  - related:art:86
+- id: academic-0151
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: High‑skill immigration recruitment AI
+    Intended use: AI platform that automates the selection of candidates for high‑skill immigration programmes, including predictive success modelling
+    Input data: Education credentials, work experience, language test scores
+    Domain: Employment, workers’ management and access to self‑employment
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:150
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:25
+  - related:art:27
+  - related:art:43
+  - related:art:47
+  - related:art:48
+  - related:art:49
+  - related:art:50
+  - related:art:72
+  - related:art:73
+- id: academic-0152
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Emergency medical assistance eligibility AI
+    Intended use: AI that determines eligibility for emergency medical assistance subsidies based on income and health status
+    Input data: Medical records, income statements, household composition
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:151
+  - related:art:6
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:86
+- id: academic-0153
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Emergency call classification AI
+    Intended use: AI system that assists courts in classifying emergency calls and prioritising dispatch of first responders
+    Input data: Call audio, caller location, incident description
+    Domain: Access to and enjoyment of essential private services and essential public services and benefits
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:152
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:22
+  - related:art:27
+  - related:art:43
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:72
+  - related:art:73
+  - related:art:79
+  - related:art:86
+  - related:art:99
+- id: academic-0154
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Social‑media profiling AI
+    Intended use: AI that profiles individuals for law‑enforcement investigations based on social media activity and location data
+    Input data: Posts, likes, check‑ins, device geolocation
+    Domain: Law enforcement
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:153
+  - related:art:5
+  - related:art:6
+  - related:art:10
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:27
+  - related:art:49
+  - related:art:50
+  - related:art:71
+  - related:art:77
+  - related:art:86
+- id: academic-0155
+  set_name: academic
+  language: en
+  description: |-
+    Role: Provider
+    System type: Industrial fire‑detection AI
+    Intended use: AI safety component for automated fire‑detection and sprinkler activation in industrial facilities, subject to EU machinery conformity assessment
+    Input data: Smoke detectors, temperature sensors, airflow data
+    Domain: Product safety AI systems
+  label:
+    risk_class: high_risk
+    role: provider
+  tags:
+  - source:scenarios.json:data:154
+  - related:art:6
+  - related:art:8
+  - related:art:9
+  - related:art:10
+  - related:art:11
+  - related:art:12
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:16
+  - related:art:17
+  - related:art:18
+  - related:art:19
+  - related:art:20
+  - related:art:21
+  - related:art:43
+  - related:art:44
+  - related:art:47
+  - related:art:48
+  - related:art:72
+  - related:art:73
+  - related:art:79
+- id: academic-0156
+  set_name: academic
+  language: en
+  description: |-
+    Role: Deployer
+    System type: Therapy emotion detection AI
+    Intended use: Emotion recognition AI used in online therapy platforms to detect signs of anxiety and trigger therapist alerts
+    Input data: Facial video, voice tone, interaction timing
+    Domain: Biometrics
+  label:
+    risk_class: high_risk
+    role: deployer
+  tags:
+  - source:scenarios.json:data:155
+  - related:art:5
+  - related:art:13
+  - related:art:14
+  - related:art:15
+  - related:art:26
+  - related:art:50
+  - related:art:86

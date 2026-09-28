@@ -40,6 +40,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data
 │   │   │   ├── cases.py             BenchmarkCase schema + loader + appliedAI mapping (F7)
+│   │   │   ├── academic.py          davidath scenarios → cases; `aiact eval academic-import|academic-sample` (B12)
 │   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact eval split` (B3)
 │   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact eval similarity` (B4)
 │   │   │   ├── label_filter.py      second-model label filter; `aiact eval label-filter` (B9)
@@ -79,7 +80,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── soft_pairs/              (B6)
 │   │   ├── qa/                      (B7)
 │   │   ├── consistency/             (B8)
-│   │   ├── academic/                (B12)
+│   │   ├── academic/                <risk_class>.yaml + SOURCE.md (attribution, CC BY 4.0) (B12)
 │   │   └── annex_match/             (X0)
 │   ├── judge_validation/            hand-labelled judge cases (V4)
 │   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1)

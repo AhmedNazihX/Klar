@@ -1,0 +1,9 @@
+{
+  "license": "Made-up loader fixture in the source's shape; not taken from the benchmark.",
+  "data": [
+    {"role": "Provider", "intended_use": "Sorts incoming invoices into folders", "system_type": "Text classifier", "input_data": "Invoice PDFs", "domain": "Accounting", "related_articles": [50, 4, 50], "obligations": ["None beyond AI literacy."], "risk_level": "minimal"},
+    {"role": "Deployer", "intended_use": "Ranks job applicants for interview", "system_type": "Ranking model", "input_data": "CVs", "domain": "Human resources", "related_articles": [6, 26], "obligations": ["Follow the instructions for use."], "risk_level": "high-risk"},
+    {"role": "Provider", "intended_use": "Answers customer questions in a chat window", "system_type": "Chatbot", "input_data": "Customer messages", "domain": "Retail", "related_articles": [], "obligations": [], "risk_level": "limited"},
+    {"role": "Deployer", "intended_use": "Scores residents on social behaviour to ration library access", "system_type": "Scoring engine", "input_data": "Social media posts", "domain": "Public services", "related_articles": [5], "obligations": ["Stop using it."], "risk_level": "prohibited"}
+  ]
+}
