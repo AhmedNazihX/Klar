@@ -310,20 +310,24 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **E10 · `classify_system` public API** · Deps: E8, E9 · Type: agent · **critical**
   Output: `aiact/engine/__init__.py`: `classify_system(description, language, law_version="amended", as_of=today, answers={}, exclude_source_example_ids=[]) -> ClassificationResult`, with LangSmith tracing (metadata only in production mode) and streaming of step events.
   DoD: live run on INIT's worked example gives the expected result; the replay test is in CI; cost per case is logged.
+  **From V1:** replace the `engine` stub in `runner.CLASSIFIERS` with an adapter over `classify_system` that reports cost, tokens and trace_id, and raises `ClassifierFailedError(cost_usd, tokens, cause)` when a paid run fails late.
 
 ## Phase 4b — Evaluation harness (the early parts run in parallel with the engine)
 
-- [ ] **V1 · Eval runner** · Deps: F5, F7 · Parallel: C*, E* · Type: agent
+- [x] **V1 · Eval runner** · Deps: F5, F7 · Parallel: C*, E* · Type: agent
   Output: `aiact/eval/runner.py` and a CLI `aiact evaluate run --set <name> --classifier engine|baseline_* --subset N --exclude-mode heldout|all`, writing to `eval_runs` and `eval_case_results`, with concurrency and a cost cap. DoD: runs end to end with a dummy classifier.
   Notes from merged stories: F5: `eval_runs.id` is a uuid; `config` must hold the keys `model`, `embedding`, `retrieval` (null allowed); `scores` maps metric → number/bool/null (strict). Consider `finished_at`/status on `eval_runs` and per-case cost/error columns (a new migration: the one-schema-story rule applies). Both tables are server-only (RLS on, no grants).
+  **Outcome:** aiact evaluate run (runner.py + records.py): seeded subset, thread-pool concurrency, cost cap checked before each case that also counts spend on failed cases (ClassifierFailedError); heldout uses B3's Split (Pile B excluded, decision 012), all = gap run; label = full BenchmarkCase dump, predicted = ClassificationResult dump or {error}; in-flight cases recorded once when a run stops; run status in config.outcome, per-case cost/tokens/is_error in scores (no migration); dummy run end to end against Postgres.
 
 - [ ] **V2 · Deterministic metrics** · Deps: F3, F7 · Parallel · Type: agent
   Context: INIT › Metrics. Output: `aiact/eval/metrics.py`: risk-class accuracy (with the appliedAI mapping), false-low-risk rate, Annex point accuracy, role accuracy, uncertain-outcome precision and recall (needs-info separate), downgrade rate, consistency, citation existence. A report generator produces a markdown table from a run_id. DoD: every metric is unit-tested on fixtures.
   Notes from merged stories: F7: `score_appliedai` marks unclear + `needs_more_information` as both `is_counted_separately` and `needs_disagreement_review`; decide whether these cases leave the accuracy denominator (INIT: "reported separately"). B2 (001): score a result's basis under the `accepted_bases` rule (bare `art_6_3_filter` matches any lettered entry; a lettered answer matches the same letter or the bare form; anything else exact). Report `legally_ambiguous` rows (hr-ex-307) under uncertain-outcome handling, not plain accuracy. Score whether the engine asked about or flagged a row's flip-variant feature (user product rule).
+  **From V1 (merged):** pass your scorer as `run_benchmark(..., scorer)`; the score keys `cost_usd`, `tokens`, `is_error` are reserved (per case) and must be left out of the metric tables. V1 already stores `label` = full BenchmarkCase dump and `predicted` = ClassificationResult dump or `{error}`, matching report.py. Add a scoring-failed marker to a case whose scorer raised (today it is stored with `is_error: false` and no metric scores, counted in `cases_scored`).
 
 - [ ] **V3 · Baselines** · Deps: V1, F6 · Type: agent
   Output: `aiact/eval/baselines.py`: Luna without retrieval or staged checks, and Jev classifying directly. DoD: both run through V1 on a 5-case subset.
   Notes from merged stories: X3 (005): don't use `typesafe/jev-router` for the Jev baseline (it can route to Luna, the engine model). `typesafe/jev-1.13` refuses chat completions and works only through `/api/alpha/decisions`; check it can classify a description, or drop the baseline.
+  **From V1:** register the `baseline_*` classifiers in `runner.CLASSIFIERS`; a baseline that fails after paying raises `ClassifierFailedError(cost_usd, tokens)` so the cap counts it.
 
 - [ ] **V4 · Judge + judge validation** · Deps: F6 · Type: mixed
   Context: INIT › Judge. Output: `aiact/eval/judge.py` (Jev returns yes/no with a probability; unsure cases go to Claude Haiku 4.5 with a written reason) and `eval/judge_validation/` (about 50 hand-labelled EN and DE cases, labelled by the user); `docs/decisions/006-judge.md` (agreement and calibration).
@@ -342,6 +346,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **V8 · First headline run + gap run** · Deps: E10, V1, V2, B10 · Type: agent · **critical**
   Context: INIT › Benchmark isolation 4, Budget rules. Output: `eval/reports/run-<date>.md` with the headline sets run with held-out examples excluded and with all examples retrievable, the baselines, and the per-metric table.
   DoD: the numbers are stored; the failure cases are listed, grouped by step, to guide the engine fixes.
+  **From V1:** before the first real run, consider a migration adding `eval_runs.status`/`finished_at` and per-case `cost_usd`/`tokens`/`error` columns (today in `config.outcome` and reserved scores); the one-schema-story rule applies. The CLI needs `DATABASE_URL` set (no fallback to the local Supabase URL).
 
   **Decision 012:** the gap run is `--exclude-mode all`, which turns C6's default Pile B exclusion off; the reported number keeps it on.
 - [ ] **V9 · appliedAI run + disagreement review** · Deps: V8, B11 · Type: human (an agent runs the benchmark and drafts the table)
