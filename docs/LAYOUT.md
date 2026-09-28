@@ -26,8 +26,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6)
-│   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py (C1), guidelines.py (C2), load.py (C3),
-│   │   │                            embed.py (C4)
+│   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py (C1),
+│   │   │                            guidelines.py (C2), load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6)
 │   │   ├── obligations/             list.py: list_obligations (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
@@ -55,7 +55,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   └── api/                     FastAPI app, SSE (P1)
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)
-│       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases)
+│       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases); eurlex/ (C1)
 │       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6)
 │       ├── recordings/              recorded model responses, <module path under tests/>/<test>.yaml, e.g. llm/test_chat/ (F6)
 │       ├── snapshots/               committed JSON snapshots, e.g. the result's JSON Schema (F3)
