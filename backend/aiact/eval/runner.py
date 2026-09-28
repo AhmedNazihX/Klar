@@ -11,17 +11,20 @@ the example the case was written from. `--exclude-mode all` excludes nothing, fo
 (INIT > Benchmark isolation 4; decision 012).
 
 A cost cap is checked before each case starts, so a run can overshoot it by at most the cost of
-the cases already in flight. Per-case cost, tokens and failures are stored as run-level scores
-(`cost_usd`, `tokens`, `is_error`) next to the metric scores, and the run's final status is merged
-into `config.outcome`, because the F5 schema has no columns for them yet.
+the cases already in flight. A classifier that fails after spending raises `ClassifierFailedError`
+so the spend still counts. Each case's cost, tokens and failure flag are stored in that case's
+`eval_case_results.scores` (`cost_usd`, `tokens`, `is_error`) next to its metric scores, and the
+run's final status is merged into `eval_runs.config.outcome`, because the F5 schema has no columns
+for them yet. When a run stops on an error, the cases already in flight are still recorded, so the
+stored total matches what was spent.
 """
 
 import logging
 import random
 import subprocess
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -85,6 +88,16 @@ class ClassifierUnavailableError(RuntimeError):
     """The named classifier can't be built (unknown name, or its story isn't merged yet)."""
 
 
+class ClassifierFailedError(Exception):
+    """A classification that failed after spending: carries what it cost, so the cap counts it."""
+
+    def __init__(self, cost_usd: float, tokens: int, cause: BaseException | None = None) -> None:
+        super().__init__(str(cause) if cause is not None else "classification failed")
+        self.cost_usd = cost_usd
+        self.tokens = tokens
+        self.cause = cause
+
+
 @dataclass(frozen=True)
 class ClassifierInput:
     """What a classifier may see of a case: never its label."""
@@ -114,7 +127,12 @@ class ClassifierInfo:
 
 
 class Classifier(Protocol):
-    """Anything that turns a description into a `ClassificationResult`; must be thread-safe."""
+    """Anything that turns a description into a `ClassificationResult`; must be thread-safe.
+
+    `classify` may raise any exception for a failed case. One that already spent money raises
+    `ClassifierFailedError(cost_usd, tokens, cause)`, so the cost cap and the run totals count it;
+    any other exception is recorded as costing nothing.
+    """
 
     @property
     def info(self) -> ClassifierInfo: ...
@@ -322,13 +340,18 @@ def run_benchmark(
         options.git_sha, options.benchmark.value, run_config(options, classifier.info, active_split)
     )
     tally = _Tally()
-    status = RunStatus.INTERRUPTED
+
+    def record(case_record: CaseRecord) -> None:
+        store.add_case(run_id, case_record)
+        tally.add(case_record)
+
     try:
-        for record in _classify_all(planned, classifier, scorer, options, tally):
-            store.add_case(run_id, record)
-        status = RunStatus.COST_CAP_REACHED if tally.scored < len(planned) else RunStatus.COMPLETED
-    finally:
-        store.finish_run(run_id, tally.outcome(status, len(planned)))
+        _classify_all(planned, classifier, scorer, options, tally, record)
+    except BaseException:
+        _finish_after_failure(store, run_id, tally.outcome(RunStatus.INTERRUPTED, len(planned)))
+        raise
+    status = RunStatus.COST_CAP_REACHED if tally.scored < len(planned) else RunStatus.COMPLETED
+    store.finish_run(run_id, tally.outcome(status, len(planned)))
     return RunSummary(
         run_id, status, len(planned), tally.scored, tally.failed, tally.cost_usd, tally.tokens
     )
@@ -359,69 +382,130 @@ class _Tally:
         }
 
 
+def _finish_after_failure(store: RunStore, run_id: UUID, outcome: Mapping[str, JsonValue]) -> None:
+    """Mark a failed run; if that fails too, log it and let the original error propagate."""
+    try:
+        store.finish_run(run_id, outcome)
+    except Exception as exc:
+        logger.warning("could not mark run %s as interrupted: %s", run_id, type(exc).__name__)
+
+
+@dataclass(frozen=True)
+class _Done:
+    """A finished case: its record, and the scorer error that stops the run, if any."""
+
+    record: CaseRecord
+    error: Exception | None = None
+
+
 def _classify_all(
     planned: Sequence[_Planned],
     classifier: Classifier,
     scorer: Scorer,
     options: RunOptions,
     tally: _Tally,
-) -> Iterator[CaseRecord]:
-    """Yield records as cases finish, starting a new case only while under the cost cap."""
+    record: Callable[[CaseRecord], None],
+) -> None:
+    """Record cases as they finish, starting a new one only while under the cost cap and no
+    scorer has failed. On a scorer error the cases in flight are recorded, then it is raised; on
+    any other interruption they are drained the same way before re-raising."""
     queue = iter(planned)
+    failure: Exception | None = None
     with ThreadPoolExecutor(max_workers=options.concurrency) as pool:
-        pending: set[Future[CaseRecord]] = set()
-        while True:
-            while len(pending) < options.concurrency and tally.cost_usd < options.max_cost_usd:
-                item = next(queue, None)
-                if item is None:
+        pending: set[Future[_Done]] = set()
+        try:
+            while True:
+                while (
+                    failure is None
+                    and len(pending) < options.concurrency
+                    and tally.cost_usd < options.max_cost_usd
+                ):
+                    item = next(queue, None)
+                    if item is None:
+                        break
+                    pending.add(pool.submit(_classify_one, item, classifier, scorer))
+                if not pending:
                     break
-                pending.add(pool.submit(_classify_one, item, classifier, scorer))
-            if not pending:
-                return
-            done, pending = wait(pending, return_when=FIRST_COMPLETED)
-            for future in done:
-                record = future.result()
-                tally.add(record)
-                yield record
+                done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                for future in done:
+                    error = _record_done(future, record)
+                    failure = failure or error
+                    pending.discard(future)
+        except BaseException:
+            _drain(pending, record)
+            raise
+    if failure is not None:
+        raise failure
 
 
-def _classify_one(item: _Planned, classifier: Classifier, scorer: Scorer) -> CaseRecord:
-    """Classify and score one case; a classifier failure becomes an `is_error` row, not a crash."""
+def _record_done(future: Future[_Done], record: Callable[[CaseRecord], None]) -> Exception | None:
+    done = future.result()
+    record(done.record)
+    return done.error
+
+
+def _drain(pending: set[Future[_Done]], record: Callable[[CaseRecord], None]) -> None:
+    """Record the cases still in flight after an interruption; stop at the first failed write."""
+    for future in pending:
+        try:
+            _record_done(future, record)
+        except Exception as exc:
+            logger.warning("could not record an in-flight case: %s", type(exc).__name__)
+            return
+
+
+def _classify_one(item: _Planned, classifier: Classifier, scorer: Scorer) -> _Done:
+    """Classify and score one case. A classifier failure becomes an `is_error` row; a scorer
+    failure keeps the prediction and its cost without metric scores, and stops the run."""
     case = item.case
     try:
         answer = classifier.classify(item.request)
     except Exception as exc:
-        logger.warning("case %s failed: %s", case.id, type(exc).__name__)
-        error: dict[str, JsonValue] = {
-            "type": type(exc).__name__,
-            "message": str(exc)[:ERROR_MESSAGE_LIMIT],
-        }
-        return CaseRecord(
-            case.id,
-            {"error": error},
-            label_record(case),
-            {"cost_usd": 0.0, "tokens": 0, "is_error": True},
-            None,
-            0.0,
-            0,
-        )
-    metric_scores = dict(scorer(case, answer.result))
-    clashing = RUN_SCORE_KEYS & metric_scores.keys()
-    if clashing:
-        raise ValueError(f"scorer used reserved score names: {sorted(clashing)}")
+        return _Done(_failed_record(case, exc))
     run_scores: dict[str, Score] = {
         "cost_usd": answer.cost_usd,
         "tokens": answer.tokens,
         "is_error": False,
     }
-    return CaseRecord(
+    unscored = CaseRecord(
         case.id,
         answer.result.model_dump(mode="json"),
         label_record(case),
-        metric_scores | run_scores,
+        run_scores,
         answer.trace_id,
         answer.cost_usd,
         answer.tokens,
+    )
+    try:
+        metric_scores = dict(scorer(case, answer.result))
+        clashing = RUN_SCORE_KEYS & metric_scores.keys()
+        if clashing:
+            raise ValueError(f"scorer used reserved score names: {sorted(clashing)}")
+    except Exception as exc:
+        logger.warning("scoring case %s failed: %s", case.id, type(exc).__name__)
+        return _Done(unscored, exc)
+    return _Done(replace(unscored, scores=metric_scores | run_scores))
+
+
+def _failed_record(case: BenchmarkCase, exc: Exception) -> CaseRecord:
+    """The row for a failed classification, with whatever it reported spending."""
+    cost_usd, tokens = (
+        (exc.cost_usd, exc.tokens) if isinstance(exc, ClassifierFailedError) else (0.0, 0)
+    )
+    reported = exc.cause if isinstance(exc, ClassifierFailedError) and exc.cause else exc
+    logger.warning("case %s failed: %s", case.id, type(reported).__name__)
+    error: dict[str, JsonValue] = {
+        "type": type(reported).__name__,
+        "message": str(reported)[:ERROR_MESSAGE_LIMIT],
+    }
+    return CaseRecord(
+        case.id,
+        {"error": error},
+        label_record(case),
+        {"cost_usd": cost_usd, "tokens": tokens, "is_error": True},
+        None,
+        cost_usd,
+        tokens,
     )
 
 

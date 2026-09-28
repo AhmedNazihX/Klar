@@ -9,6 +9,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Annotated
 
+import psycopg
 import typer
 
 from aiact import deps
@@ -152,18 +153,17 @@ def eval_run(
         max_cost_usd=max_cost_usd,
     )
     try:
-        connection = records.connect()
-    except records.DatabaseNotConfiguredError as error:
-        typer.echo(f"Error: {error}", err=True)
-        raise typer.Exit(code=2) from error
-    with connection:
-        try:
+        with records.connect() as connection:
             summary = runner.run_benchmark(
                 cases, chosen, records.PostgresRunStore(connection), options, split
             )
-        except runner.SplitError as error:
-            typer.echo(f"Error: {error}", err=True)
-            raise typer.Exit(code=2) from error
+    except (records.DatabaseNotConfiguredError, runner.SplitError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
     typer.echo(
         f"run {summary.run_id}: {summary.status.value}, {summary.cases_scored}/"
         f"{summary.cases_planned} cases ({summary.cases_failed} failed), "

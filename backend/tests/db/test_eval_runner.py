@@ -10,7 +10,17 @@ import pytest
 
 from aiact.eval.cases import BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.records import PostgresRunStore
-from aiact.eval.runner import DummyClassifier, ExcludeMode, RunOptions, RunStatus, run_benchmark
+from aiact.eval.runner import (
+    Classification,
+    ClassifierFailedError,
+    ClassifierInfo,
+    ClassifierInput,
+    DummyClassifier,
+    ExcludeMode,
+    RunOptions,
+    RunStatus,
+    run_benchmark,
+)
 from aiact.schemas import ClassificationResult, Language, RiskClass
 
 pytestmark = pytest.mark.db
@@ -65,3 +75,36 @@ def test_dummy_run_writes_runs_and_case_results(db: psycopg.Connection) -> None:
         assert label["label"]["risk_class"] == "minimal_risk"
         assert label["set_name"] == "own"
         assert scores == {"cost_usd": 0.0, "tokens": 0, "is_error": False}
+
+
+class SpendingFailureClassifier:
+    info = ClassifierInfo(model="fake/model")
+
+    def classify(self, request: ClassifierInput) -> Classification:
+        raise ClassifierFailedError(0.4, 50, RuntimeError("answer did not validate"))
+
+
+def test_failed_cases_that_spent_are_in_the_stored_total(db: psycopg.Connection) -> None:
+    db.execute("select 1")
+    options = RunOptions(
+        benchmark=CaseSet.OWN,
+        classifier_name="fake",
+        exclude_mode=ExcludeMode.ALL,
+        git_sha=GIT_SHA,
+        concurrency=1,
+        max_cost_usd=1.0,
+    )
+    summary = run_benchmark(CASES, SpendingFailureClassifier(), PostgresRunStore(db), options, None)
+    assert summary.status is RunStatus.COST_CAP_REACHED
+
+    run = db.execute(
+        "select cost_usd, tokens, config -> 'outcome' ->> 'status' from eval_runs where id = %s",
+        (summary.run_id,),
+    ).fetchone()
+    assert run == (Decimal("1.2"), 150, "cost_cap_reached")
+    row = db.execute(
+        "select count(*), sum((scores ->> 'cost_usd')::numeric) from eval_case_results"
+        " where run_id = %s and (scores ->> 'is_error')::boolean",
+        (summary.run_id,),
+    ).fetchone()
+    assert row == (3, Decimal("1.2"))

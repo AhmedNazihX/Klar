@@ -1,23 +1,26 @@
 """The eval runner with an in-memory store and fake classifiers (no database, no models)."""
 
+import contextlib
 import json
 import threading
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from uuid import UUID, uuid4
 
+import psycopg
 import pytest
 from pydantic import JsonValue
-from typer.testing import CliRunner
+from typer.testing import CliRunner, Result
 
 from aiact.cli import app
-from aiact.eval import runner
+from aiact.eval import records, runner
 from aiact.eval import split as split_module
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.runner import (
     CaseRecord,
     Classification,
+    ClassifierFailedError,
     ClassifierInfo,
     ClassifierInput,
     DummyClassifier,
@@ -70,6 +73,7 @@ class MemoryStore:
     runs: dict[UUID, dict[str, object]] = field(default_factory=dict)
     cases: list[tuple[UUID, CaseRecord]] = field(default_factory=list)
     outcomes: dict[UUID, dict[str, JsonValue]] = field(default_factory=dict)
+    is_finish_broken: bool = False
 
     def start_run(self, git_sha: str, benchmark: str, config: Mapping[str, JsonValue]) -> UUID:
         run_id = uuid4()
@@ -80,7 +84,12 @@ class MemoryStore:
         self.cases.append((run_id, record))
 
     def finish_run(self, run_id: UUID, outcome: Mapping[str, JsonValue]) -> None:
+        if self.is_finish_broken:
+            raise RuntimeError("database went away")
         self.outcomes[run_id] = dict(outcome)
+
+    def stored_cost(self) -> float:
+        return sum(record.cost_usd for _, record in self.cases)
 
 
 class PricedClassifier:
@@ -101,6 +110,15 @@ class PricedClassifier:
             raise RuntimeError("model timed out")
         answer = DummyClassifier().classify(request)
         return Classification(answer.result, cost_usd=self.cost_usd, tokens=100, trace_id="t-1")
+
+
+class SpendingFailureClassifier:
+    """Fails every case after spending, like a model call whose answer didn't validate."""
+
+    info = ClassifierInfo(model="fake/model")
+
+    def classify(self, request: ClassifierInput) -> Classification:
+        raise ClassifierFailedError(0.4, 50, RuntimeError("answer did not validate"))
 
 
 def options(**changes: object) -> RunOptions:
@@ -292,3 +310,96 @@ def test_cli_heldout_without_split_fails_clearly(
     result = cli.invoke(app, ["evaluate", "run", "--set", "own", "--classifier", "dummy"])
     assert result.exit_code == 2
     assert "--exclude-mode all" in result.stderr
+
+
+def test_a_failure_that_spent_counts_toward_the_cap_and_the_totals() -> None:
+    store = MemoryStore()
+    summary = run_benchmark(
+        CASES, SpendingFailureClassifier(), store, options(concurrency=1, max_cost_usd=1.0), SPLIT
+    )
+    assert summary.status is RunStatus.COST_CAP_REACHED
+    assert (summary.cases_scored, summary.cases_failed, summary.tokens) == (3, 3, 150)
+    assert summary.cost_usd == pytest.approx(1.2)
+    assert store.stored_cost() == pytest.approx(1.2)
+    _, first = store.cases[0]
+    assert first.predicted == {
+        "error": {"type": "RuntimeError", "message": "answer did not validate"}
+    }
+    assert first.scores == {"cost_usd": 0.4, "tokens": 50, "is_error": True}
+
+
+def test_a_scorer_error_records_the_cases_in_flight_before_raising() -> None:
+    store = MemoryStore()
+
+    def scorer(case: BenchmarkCase, result: ClassificationResult) -> dict[str, float | bool | None]:
+        if case.id == "case-001":
+            raise ValueError("scorer bug")
+        return {"risk_class_accuracy": False}
+
+    with pytest.raises(ValueError, match="scorer bug"):
+        run_benchmark(
+            CASES, PricedClassifier(cost_usd=0.1), store, options(concurrency=6), SPLIT, scorer
+        )
+    assert sorted(record.case_id for _, record in store.cases) == [c.id for c in CASES]
+    assert store.stored_cost() == pytest.approx(0.6)
+    failed = next(record for _, record in store.cases if record.case_id == "case-001")
+    assert failed.scores == {"cost_usd": 0.1, "tokens": 100, "is_error": False}
+    (outcome,) = store.outcomes.values()
+    assert (outcome["status"], outcome["cases_scored"]) == ("interrupted", 6)
+
+
+def test_a_scorer_error_stops_new_cases_from_starting() -> None:
+    store = MemoryStore()
+
+    def scorer(case: BenchmarkCase, result: ClassificationResult) -> dict[str, float | bool | None]:
+        raise ValueError("scorer bug")
+
+    with pytest.raises(ValueError):
+        run_benchmark(CASES, DummyClassifier(), store, options(concurrency=1), SPLIT, scorer)
+    assert [record.case_id for _, record in store.cases] == ["case-001"]
+
+
+def test_a_failing_finish_does_not_replace_the_original_error() -> None:
+    store = MemoryStore(is_finish_broken=True)
+
+    def scorer(case: BenchmarkCase, result: ClassificationResult) -> dict[str, float | bool | None]:
+        raise ValueError("scorer bug")
+
+    with pytest.raises(ValueError, match="scorer bug"):
+        run_benchmark(CASES, DummyClassifier(), store, options(concurrency=1), SPLIT, scorer)
+
+
+SECRET_URL = "postgresql://postgres:hunter2@db.example:5432/postgres"
+
+
+def _cli_with_database(monkeypatch: pytest.MonkeyPatch, connect: Callable[[], object]) -> Result:
+    monkeypatch.setattr(runner, "load_benchmark", lambda case_set: CASES)
+    monkeypatch.setattr(records, "connect", connect)
+    return cli.invoke(
+        app,
+        [
+            *("evaluate", "run", "--set", "commission_b"),
+            *("--classifier", "dummy", "--exclude-mode", "all"),
+        ],
+    )
+
+
+def test_cli_reports_a_connection_error_without_the_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    def connect() -> object:
+        raise psycopg.OperationalError(f"could not connect to {SECRET_URL}")
+
+    result = _cli_with_database(monkeypatch, connect)
+    assert result.exit_code == 2
+    assert "Error: database error (OperationalError)" in result.stderr
+    assert "hunter2" not in result.output
+
+
+def test_cli_reports_a_database_error_during_the_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    def failing_run(*args: object, **kwargs: object) -> None:
+        raise psycopg.errors.CheckViolation(f"check failed at {SECRET_URL}")
+
+    monkeypatch.setattr(runner, "run_benchmark", failing_run)
+    result = _cli_with_database(monkeypatch, contextlib.nullcontext)
+    assert result.exit_code == 2
+    assert "Error: database error (CheckViolation)" in result.stderr
+    assert "hunter2" not in result.output
