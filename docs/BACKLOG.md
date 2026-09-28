@@ -420,6 +420,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` 鈥
 - [ ] **P12 路 Privacy surface** 路 Deps: P5 路 Type: agent
   Output: a warning when a description contains personal data, a privacy notice naming OpenRouter, the model providers and the Nebius host, and a delete-my-data button. DoD: component tests.
   Notes from merged stories: X3 (005): OpenRouter's own processing is global on this plan (`eu.openrouter.ai` needs Business). Name the EU providers: Azure EU (Luna), Google Vertex EU (Flash-Lite, Haiku, Sonnet), Nebius (embeddings; EU per INIT, no region tag).
+  **From P3 (security audit):** state the 30-day deletion of inactive anonymous data (decision 013). Anonymous visitors share the `authenticated` role with real accounts: any table or bucket that should need a real account adds a restrictive policy on `(auth.jwt()->>'is_anonymous')::boolean is false`. The browser writes `classifications` rows itself, so a user can forge their own result. If those rows are ever shown as authoritative (exports, reports), write them from the backend and grant the browser SELECT and DELETE only.
 
 - [ ] **P13 路 Playwright e2e** 路 Deps: P5, P6, P9 路 Type: agent
   Output: e2e tests for classifying the worked example, the inventory, one document, and delete-my-data (backend in replay mode). DoD: runs in CI.
@@ -446,6 +447,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` 鈥
 - [ ] **S3 路 Stretch: deployment** 路 Deps: MVP done 路 Type: mixed
   Output: EU hosting, real accounts (upgrade from anonymous sessions), MCP over HTTP, a GDPR data policy.
   DoD: the app is reachable at a public URL hosted in an EU region; anonymous sessions upgrade to real accounts in a tested flow; the GDPR data policy is published and the user has reviewed it.
+  **From P3 (security audit):** anonymous sign-in is on with no captcha (`[auth.captcha]` commented out; only `anonymous_users = 30`/h per IP), and there is no per-user row cap: enable Turnstile or hCaptcha, and consider a row quota. Email sign-up needs no confirmation (`enable_confirmations = false`, 6-char passwords), so anyone can escape the 30-day purge (decision 013) with a permanent account: require confirmation and set a retention for permanent users, or turn email sign-up off until real accounts exist. `config.toml` covers only local; apply the same auth settings on the hosted project, and after the first hosted purge check `cron.job_run_details` (`postgres` must be able to delete from `auth.users`).
 
 - [ ] **W2 路 README + showcase** 路 Deps: W1 路 Type: mixed
   Output: the README paragraph from INIT, architecture, setup, measured accuracy tables, limitations, and the showcase link near the top.
