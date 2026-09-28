@@ -14,7 +14,7 @@ Read this file, then the story in `docs/BACKLOG.md`, then the INIT sections name
 The full layout lives in **`docs/LAYOUT.md`**: the tree down to key files, which story creates each path, and the placement rules. Every new file must fit it, and a story that adds a new folder updates it. Summary:
 ```
 backend/            the only Python project (uv); all Python lives in package `aiact/`
-  aiact/cli.py      `aiact` command root: scripts are subcommands (`aiact corpus …`, `aiact eval …`)
+  aiact/cli.py      `aiact` command root: scripts are subcommands (`aiact corpus …`, `aiact evaluate …`)
   aiact/schemas/ llm/ corpus/ retrieval/ obligations/ qa/ drafting/ mcp/ api/
   aiact/engine/     staged LangGraph engine: DO NOT create before story B3 is committed
   aiact/eval/       evaluation *code*: cases, split, runner, metrics, judge, experiments/

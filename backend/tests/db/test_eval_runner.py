@@ -62,5 +62,6 @@ def test_dummy_run_writes_runs_and_case_results(db: psycopg.Connection) -> None:
     assert len(rows) == 3
     for _, predicted, label, scores in rows:
         assert ClassificationResult.model_validate(predicted).risk_class is RiskClass.OUT_OF_SCOPE
-        assert label["risk_class"] == "minimal_risk"
+        assert label["label"]["risk_class"] == "minimal_risk"
+        assert label["set_name"] == "own"
         assert scores == {"cost_usd": 0.0, "tokens": 0, "is_error": False}

@@ -1,14 +1,14 @@
 """The benchmark runner: classify a set of cases and record every result (INIT > Evaluation).
 
-`aiact eval run` loads a case set, optionally draws a seeded subset, runs a classifier over it with
-a few cases in flight at once, and writes one `eval_runs` row plus one `eval_case_results` row per
-case. Reports quote numbers only from these rows, by run id.
+`aiact evaluate run` loads a case set, optionally draws a seeded subset, runs a classifier over it
+with a few cases in flight at once, and writes one `eval_runs` row plus one `eval_case_results` row
+per case (`label` holds the whole case). Reports quote numbers only from these rows, by run id.
 
 The classifier sees the description, the language and the source example ids to keep out of
 retrieval; it never sees the label. `--exclude-mode heldout` (the reported number) reads the
 committed `eval/split.json`: in split mode every Pile B example is excluded, in leave-one-out mode
 the example the case was written from. `--exclude-mode all` excludes nothing, for the gap run
-(INIT > Benchmark isolation 4).
+(INIT > Benchmark isolation 4; decision 012).
 
 A cost cap is checked before each case starts, so a run can overshoot it by at most the cost of
 the cases already in flight. Per-case cost, tokens and failures are stored as run-level scores
@@ -16,7 +16,6 @@ the cases already in flight. Per-case cost, tokens and failures are stored as ru
 into `config.outcome`, because the F5 schema has no columns for them yet.
 """
 
-import json
 import logging
 import random
 import subprocess
@@ -29,18 +28,18 @@ from pathlib import Path
 from typing import Protocol
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, JsonValue
+from pydantic import JsonValue, ValidationError
 
+from aiact.eval import split as split_module
 from aiact.eval.cases import (
     APPLIEDAI_FILE,
     CASES_DIR,
-    EVAL_DIR,
-    AppliedAILabel,
     BenchmarkCase,
     CaseSet,
     load_cases,
     load_jsonl,
 )
+from aiact.eval.split import Split, SplitError, SplitMode
 from aiact.schemas import (
     DISCLAIMER,
     ClassificationResult,
@@ -54,7 +53,6 @@ from aiact.settings import BACKEND_DIR
 
 logger = logging.getLogger(__name__)
 
-SPLIT_FILE = EVAL_DIR / "split.json"
 DEFAULT_CONCURRENCY = 4
 MAX_CONCURRENCY = 16
 DEFAULT_MAX_COST_USD = 1.0
@@ -81,10 +79,6 @@ class RunStatus(StrEnum):
     COMPLETED = "completed"
     COST_CAP_REACHED = "cost_cap_reached"
     INTERRUPTED = "interrupted"
-
-
-class SplitError(ValueError):
-    """`eval/split.json` is missing or unusable, or a case contradicts it."""
 
 
 class ClassifierUnavailableError(RuntimeError):
@@ -167,45 +161,26 @@ def build_classifier(name: str) -> Classifier:
     return factory()
 
 
-class _SplitFile(BaseModel):
-    """The part of B3's `eval/split.json` the runner reads."""
-
-    model_config = ConfigDict(frozen=True)
-
-    mode: str
-    pile_a: tuple[str, ...]
-    pile_b: tuple[str, ...]
-
-
-@dataclass(frozen=True)
-class Split:
-    is_loo: bool
-    pile_a: frozenset[str]
-    pile_b: tuple[str, ...]
-
-
 def load_split(path: Path | None = None) -> Split:
-    """Read the committed split (default `SPLIT_FILE`); a missing or bad file is a `SplitError`."""
-    path = path or SPLIT_FILE
+    """Read B3's committed split (default `split.SPLIT_FILE`); a missing or bad file is a
+    `SplitError`."""
+    path = path or split_module.SPLIT_FILE
     if not path.is_file():
         raise SplitError(
             f"{path} not found: --exclude-mode heldout needs the committed split (story B3); "
             "use --exclude-mode all for a development run"
         )
     try:
-        split = _SplitFile.model_validate(json.loads(path.read_text(encoding="utf-8")))
-    except (json.JSONDecodeError, ValueError) as exc:
+        return Split.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValidationError as exc:
         raise SplitError(f"{path}: not a valid split file: {exc}") from exc
-    if split.mode not in {"split", "loo"}:
-        raise SplitError(f"{path}: mode must be split or loo, not {split.mode!r}")
-    return Split(split.mode == "loo", frozenset(split.pile_a), tuple(sorted(split.pile_b)))
 
 
 def exclusions_for(case: BenchmarkCase, split: Split | None) -> tuple[str, ...]:
     """The source example ids retrieval must leave out for `case`; no split means none."""
     if split is None:
         return ()
-    if not split.is_loo:
+    if split.mode is SplitMode.SPLIT:
         if case.source_example_id in split.pile_a:
             raise SplitError(f"case {case.id} comes from a Pile A example, not a held-out one")
         return split.pile_b
@@ -230,10 +205,9 @@ def select_subset(
 
 
 def label_record(case: BenchmarkCase) -> dict[str, JsonValue]:
-    """The frozen label as stored in `eval_case_results.label`."""
-    if isinstance(case.label, AppliedAILabel):
-        return {"appliedai": case.label.value}
-    return case.label.model_dump(mode="json")
+    """`eval_case_results.label`: the whole case (label, set, tags, citations), so reports can
+    group and score without re-reading the case files."""
+    return case.model_dump(mode="json")
 
 
 def no_metric_scores(case: BenchmarkCase, result: ClassificationResult) -> Mapping[str, Score]:
@@ -306,7 +280,7 @@ def run_config(
         "retrieval": info.retrieval,
         "classifier": options.classifier_name,
         "exclude_mode": options.exclude_mode.value,
-        "split_mode": None if split is None else ("loo" if split.is_loo else "split"),
+        "split_mode": None if split is None else split.mode.value,
         "subset": options.subset,
         "seed": options.seed,
         "concurrency": options.concurrency,

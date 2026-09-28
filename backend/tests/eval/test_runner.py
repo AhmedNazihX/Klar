@@ -13,6 +13,7 @@ from typer.testing import CliRunner
 
 from aiact.cli import app
 from aiact.eval import runner
+from aiact.eval import split as split_module
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.runner import (
     CaseRecord,
@@ -23,18 +24,30 @@ from aiact.eval.runner import (
     ExcludeMode,
     RunOptions,
     RunStatus,
-    Split,
-    SplitError,
     exclusions_for,
     load_split,
     run_benchmark,
     select_subset,
 )
+from aiact.eval.split import Split, SplitError, SplitMode
 from aiact.schemas import ClassificationResult, Language, RiskClass
 
 GIT_SHA = "0" * 40
-SPLIT = Split(is_loo=False, pile_a=frozenset({"hr-ex-001"}), pile_b=("hr-ex-002", "hr-ex-003"))
-LOO = Split(is_loo=True, pile_a=frozenset(), pile_b=())
+
+
+def make_split(mode: SplitMode, pile_a: tuple[str, ...], pile_b: tuple[str, ...]) -> Split:
+    return Split(
+        mode=mode,
+        seed=1,
+        pile_b_fraction=0.5,
+        stratify_by=("area", "verdict"),
+        pile_a=pile_a,
+        pile_b=pile_b,
+    )
+
+
+SPLIT = make_split(SplitMode.SPLIT, ("hr-ex-001",), ("hr-ex-002", "hr-ex-003"))
+LOO = make_split(SplitMode.LOO, (), ())
 
 
 def make_case(number: int, source: str | None = None) -> BenchmarkCase:
@@ -119,12 +132,9 @@ def test_dummy_run_records_every_case_and_a_completed_outcome() -> None:
     assert sorted(record.case_id for _, record in store.cases) == [c.id for c in CASES]
     _, first = store.cases[0]
     assert ClassificationResult.model_validate(first.predicted).risk_class is RiskClass.OUT_OF_SCOPE
-    assert first.label == {
-        "risk_class": "high_risk",
-        "status": "decided",
-        "role": None,
-        "annex_point": None,
-    }
+    assert BenchmarkCase.model_validate(first.label) == next(
+        c for c in CASES if c.id == first.case_id
+    )
     assert first.scores == {"cost_usd": 0.0, "tokens": 0, "is_error": False}
 
 
@@ -228,19 +238,23 @@ def test_load_split_reads_b3_format_and_fails_clearly(tmp_path: Path) -> None:
     path = tmp_path / "split.json"
     with pytest.raises(SplitError, match="needs the committed split"):
         load_split(path)
-    path.write_text(
-        json.dumps({"mode": "split", "seed": 1, "pile_a": ["hr-ex-001"], "pile_b": ["hr-ex-3"]})
-    )
-    assert load_split(path) == Split(False, frozenset({"hr-ex-001"}), ("hr-ex-3",))
-    path.write_text(json.dumps({"mode": "halves", "pile_a": [], "pile_b": []}))
-    with pytest.raises(SplitError, match="mode"):
+    path.write_text(split_module.render(SPLIT))
+    assert load_split(path) == SPLIT
+    path.write_text(json.dumps({**SPLIT.model_dump(mode="json"), "mode": "halves"}))
+    with pytest.raises(SplitError, match="not a valid split"):
         load_split(path)
     path.write_text("{not json")
     with pytest.raises(SplitError, match="not a valid split"):
         load_split(path)
 
 
-def test_appliedai_labels_are_stored_as_an_object() -> None:
+def test_the_committed_split_loads() -> None:
+    split = load_split()
+    assert split.mode is SplitMode.SPLIT
+    assert split.pile_b
+
+
+def test_appliedai_cases_are_stored_whole() -> None:
     case = BenchmarkCase(
         id="aai-001",
         set_name=CaseSet.APPLIEDAI,
@@ -248,7 +262,9 @@ def test_appliedai_labels_are_stored_as_an_object() -> None:
         description="Made-up",
         label=AppliedAILabel.HIGH,
     )
-    assert runner.label_record(case) == {"appliedai": "high"}
+    record = runner.label_record(case)
+    assert (record["label"], record["set_name"]) == ("high", "appliedai")
+    assert BenchmarkCase.model_validate(record) == case
 
 
 @pytest.mark.parametrize(
@@ -264,7 +280,7 @@ cli = CliRunner()
 
 def test_cli_rejects_an_unknown_or_unbuilt_classifier() -> None:
     for name, message in (("nope", "unknown classifier"), ("engine", "E10")):
-        result = cli.invoke(app, ["eval", "run", "--set", "own", "--classifier", name])
+        result = cli.invoke(app, ["evaluate", "run", "--set", "own", "--classifier", name])
         assert result.exit_code == 2, name
         assert message in result.stderr
 
@@ -272,7 +288,7 @@ def test_cli_rejects_an_unknown_or_unbuilt_classifier() -> None:
 def test_cli_heldout_without_split_fails_clearly(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(runner, "SPLIT_FILE", tmp_path / "split.json")
-    result = cli.invoke(app, ["eval", "run", "--set", "own", "--classifier", "dummy"])
+    monkeypatch.setattr(split_module, "SPLIT_FILE", tmp_path / "split.json")
+    result = cli.invoke(app, ["evaluate", "run", "--set", "own", "--classifier", "dummy"])
     assert result.exit_code == 2
     assert "--exclude-mode all" in result.stderr

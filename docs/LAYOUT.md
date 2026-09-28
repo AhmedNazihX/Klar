@@ -30,7 +30,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py (C2), load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6)
-│   │   ├── obligations/             list.py: list_obligations (C7)
+│   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)
 │   │   │   ├── nodes/               facts.py (E2), scope.py (E3), prohibited.py (E4), high_risk.py (E5),
@@ -40,10 +40,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data
 │   │   │   ├── cases.py             BenchmarkCase schema + loader + appliedAI mapping (F7)
-│   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact eval split` (B3)
-│   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact eval similarity` (B4)
-│   │   │   ├── label_filter.py      second-model label filter; `aiact eval label-filter` (B9)
-│   │   │   ├── runner.py            `aiact eval run`: classifier protocol + registry, subset, exclusions, cost cap (V1)
+│   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact evaluate split` (B3)
+│   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact evaluate similarity` (B4)
+│   │   │   ├── label_filter.py      second-model label filter; `aiact evaluate label-filter` (B9)
+│   │   │   ├── runner.py            `aiact evaluate run`: classifier registry, subset, exclusions, cost cap (V1)
 │   │   │   ├── records.py           writes eval_runs / eval_case_results over a direct connection (V1)
 │   │   │   ├── metrics.py           deterministic metrics + report tables (V2)
 │   │   │   ├── baselines.py         (V3)
@@ -90,7 +90,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)
 │   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3)
-│   └── seed/                        obligations.yaml (C7)
+│   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7)
 │
 ├── frontend/                        Vite + React + TypeScript (P4); its inner layout is recorded here by P4
 │   └── openapi.json                 exported from FastAPI; the TS client is generated from it (P1)
@@ -112,7 +112,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 
 | Rule | Why |
 | --- | --- |
-| All Python lives in `backend/aiact/`; scripts are CLI subcommands (`aiact corpus …`, `aiact eval …`), not loose files | One lint, type-check and test setup; scripts can import the package |
+| All Python lives in `backend/aiact/`; scripts are CLI subcommands (`aiact corpus …`, `aiact evaluate …`), not loose files | One lint, type-check and test setup; scripts can import the package |
 | `eval/` holds benchmark data and reports only; `backend/aiact/eval/` holds evaluation code | Keeps the answer key a pure data folder that hooks and sparse checkout can fence off |
 | `data/` holds legal texts only; nothing from `eval/` is ever copied there | INIT › Benchmark isolation |
 | `backend/aiact/engine/` doesn't exist before `eval/split.json` is committed | INIT › Benchmark isolation 1; `engine-gate.sh` |
