@@ -26,7 +26,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── settings.py              pydantic-settings, read from .env (F1)
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
-│   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6)
+│   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py (C2), load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6)
@@ -49,7 +49,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── metrics.py           deterministic metrics, per-case scores and run summary (V2)
 │   │   │   ├── report.py            markdown metrics table for a stored run_id; `aiact evaluate report` (V2)
 │   │   │   ├── citation_index.py    citation existence against the corpus (doc_key, provision, language, version) (V2)
-│   │   │   ├── baselines.py         (V3)
+│   │   │   ├── baselines.py         `baseline_luna` (engine model, one prompt, no retrieval) and `baseline_jev` (V3)
 │   │   │   ├── judge.py             (V4)
 │   │   │   ├── ragas_metrics.py     (V6)
 │   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)

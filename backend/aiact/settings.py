@@ -44,6 +44,7 @@ class Settings(BaseSettings):
 
     # Model ids (OpenRouter slugs; confirmed by stories X2 and X3)
     engine_model: str | None = None
+    engine_provider: str | None = None
     judge_model: str | None = None
     judge_backup_model: str | None = None
     label_filter_model: str | None = None

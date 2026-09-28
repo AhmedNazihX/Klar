@@ -1,0 +1,60 @@
+interactions:
+- request:
+    body: '{"messages":[{"content":"You classify an AI system under the EU AI Act
+      (Regulation (EU) 2024/1689, as amended by the Digital Omnibus), using only the
+      description you are given. Nothing will be looked up for you.\n\nCheck in this
+      order and stop at the first class that applies:\n1. Scope: is it an AI system
+      (Art. 3(1)) within the Act''s scope (Art. 2)? If not: out_of_scope.\n2. Prohibited
+      practices (Art. 5): prohibited.\n3. High-risk (Art. 6 with Annex I or Annex
+      III, including the Art. 6(3) exception): high_risk.\n4. Transparency duties
+      (Art. 50): limited_risk.\n5. Otherwise: minimal_risk.\n\nAnswer with JSON matching
+      the schema:\n- risk_class: the class.\n- status: \"decided\" when the description
+      settles the class; \"needs_more_information\" when a fact that is missing would
+      change it (give missing_fact: an id in snake_case and the question to ask);
+      \"legally_ambiguous\" when the law itself doesn''t settle it (give open_question:
+      the question and exactly two readings, stricter first). When uncertain, risk_class
+      is the stricter reading. out_of_scope is always \"decided\".\n- role: provider,
+      deployer, importer or distributor, for the company describing the system.\n-
+      annex_point: for high_risk under Annex III or Annex I, the point, for example
+      \"annex:III:4:a\"; otherwise null.\n- transparency_duties: the Art. 50 paragraphs
+      that apply, for example [\"art:50:1\"]; at least one for limited_risk.\n- reason:
+      one or two sentences, in the language asked for.\n","role":"system"},{"content":"Language
+      for reason and questions: en\n\nDescription:\nWe are a 40-person staffing agency.
+      We bought a tool that reads applicants'' CVs and ranks them for each vacancy;
+      recruiters only interview the top ten.","role":"user"}],"max_tokens":4000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"baseline_answer","schema":{"$defs":{"FollowUpQuestion":{"additionalProperties":false,"description":"A
+      key-fact question. Its `id` keys the user''s answer when the engine runs again.","properties":{"id":{"description":"Stable
+      slug, for example `human_review`.","pattern":"^[a-z][a-z0-9_]{0,63}$","title":"Id","type":"string"},"text":{"minLength":1,"title":"Text","type":"string"},"about":{"anyOf":[{"type":"string"},{"type":"null"}],"default":null,"description":"What
+      the answer settles, for example a step or provision_id.","title":"About"}},"required":["id","text","about"],"title":"FollowUpQuestion","type":"object"},"OpenQuestion":{"additionalProperties":false,"description":"A
+      question the law and guidance don''t settle, with both possible readings.","properties":{"question":{"minLength":1,"title":"Question","type":"string"},"readings":{"description":"The
+      two possible readings, stricter first.","items":{"type":"string"},"maxItems":2,"minItems":2,"title":"Readings","type":"array"}},"required":["question","readings"],"title":"OpenQuestion","type":"object"},"RiskClass":{"description":"The
+      headline class. Every result carries exactly one.","enum":["out_of_scope","prohibited","high_risk","limited_risk","minimal_risk"],"title":"RiskClass","type":"string"},"Role":{"description":"The
+      operator role the obligations follow from (Art. 3, 16, 23-26).","enum":["provider","deployer","importer","distributor"],"title":"Role","type":"string"},"Status":{"description":"Whether
+      a step or result is settled. The two uncertain values are not risk classes.","enum":["decided","needs_more_information","legally_ambiguous"],"title":"Status","type":"string"}},"additionalProperties":false,"description":"A
+      baseline''s whole answer; also the JSON schema the Luna baseline must fill.\n\nEnum
+      fields carry no description: strict structured output rejects keywords next
+      to a\n`$ref`. `LUNA_INSTRUCTIONS` explains every field instead.","properties":{"risk_class":{"$ref":"#/$defs/RiskClass"},"status":{"$ref":"#/$defs/Status"},"role":{"$ref":"#/$defs/Role"},"annex_point":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"For
+      a high_risk system, the Annex point, for example annex:III:4:a.","title":"Annex
+      Point"},"transparency_duties":{"description":"The Art. 50 paragraphs that apply,
+      for example art:50:1.","items":{"type":"string"},"title":"Transparency Duties","type":"array"},"reason":{"description":"One
+      or two sentences.","minLength":1,"title":"Reason","type":"string"},"missing_fact":{"anyOf":[{"$ref":"#/$defs/FollowUpQuestion"},{"type":"null"}],"description":"Required
+      when status is needs_more_information: the question to ask."},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}],"description":"Required
+      when status is legally_ambiguous: the question and both readings."}},"required":["risk_class","status","role","annex_point","transparency_duties","reason","missing_fact","open_question"],"title":"BaselineAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+    headers:
+      content-type:
+      - application/json
+    method: POST
+    uri: https://openrouter.ai/api/v1/chat/completions
+  response:
+    body:
+      string: "\n         \n\n         \n\n         \n{\"id\":\"gen-1790629758-I3Q4u5P3ZVoC448vhhKg\",\"object\":\"chat.completion\",\"created\":1790629758,\"model\":\"openai/gpt-6-luna\",\"provider\":\"Azure\",\"system_fingerprint\":null,\"service_tier\":\"default\",\"choices\":[{\"index\":0,\"logprobs\":null,\"finish_reason\":\"stop\",\"native_finish_reason\":\"completed\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"risk_class\\\":\\\"high_risk\\\",\\\"status\\\":\\\"decided\\\",\\\"role\\\":\\\"deployer\\\",\\\"annex_point\\\":\\\"annex:III:4:a\\\",\\\"transparency_duties\\\":[],\\\"reason\\\":\\\"Ranking
+        applicants and limiting interviews to the top ten is an AI use in recruitment
+        or selection covered by Annex III, point 4(a). The ranking materially affects
+        applicants\u2019 access to employment, so the Art. 6(3) exception does not
+        apply.\\\",\\\"missing_fact\\\":null,\\\"open_question\\\":null}\",\"refusal\":null,\"reasoning\":null,\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABquteEmiDjBe4O5LoF-ZYM21HCd34Cv9VNfXEDpL59ZZ9mCWX6ZoxXJvz324irADZ5oNQLSFyGypz8a4Ik4B67s9GKDYCEbHkH_aHAbX-1fYQyQFcj5rcxoWk3iwpw4qs1846f2iD90oldlxljviz2pXqcy1khc5JGRcuafL2G1MxAaVRUswQm90yNgfF7fnPgo0xsgAF8FAKoQEPKuLsn9qJV7a0OYrxWxUGKdOMjGfMyG8ylh6IcqDJLzUspBaWib9j3WTpj40RsONPJYQkGvWOhRzv-p5EPQ-oMc67TZyZvvvHbwwGlk3fC8Qh5N1YkOziK1E0WrbpaK8mdInb2RbWtMYB2_xrLEMGwFFEx0SpYOYEQeOE0cLdZhFnBYn4D8GZjBn_hMWSKFNGJpskIlr7LTGI2GidB4iqGSKDa1pEieoD_ccve-GX-7a6lXvXSbAliYdH23zNhi2MliEgG-In1WPijBqH4leHapI0wVz94GkBel3l79bKRbP_KrCrbiqaDss7-dUGgU0oea1o3clC94krfw7bVMP5zeYrzQmcb1FkratYRthqOQ0YhTv_5t6P5Z6dUjV_zVxQgrAm-xs5vX8mRksKkMsBqAGcMuJpDDNoHLclw7HRXmF89Vx7R-ilrkLchikrLtm1-EJuZkOUjOeAmMoExc5zsMmW60eBHsGff96i8LZJPfB8nmxJbjMVJTh2OKoUx5m21U1NX9EIL91v0nWM0XN-kC2OiJx2YHXJnZPGdmrAu-jqLYANh4Z1kVqqh6xmTQ2N4BEScggqUQ04wGAlEGKFjV1qoRh_T8xcBDTYRtUi6GhweG6og-i9Cy2hYl6liGoAi14bF_K7352erQeCeQT-i_Q1ygIafC4TuPsmTXlc9noJpDMl-U-27CTqLCjNCE41dn-pZ2Hpckpztszt7tAuVeGJtDWVqK7UhDox7DZvo9ZeKVmIHuZ4lvyC3c02EnnLsCQVMh27QzkDsKb-uQqGIdVDcEfxWNQ6qxBYBjht6XLKIXhwoXZpDnJ_u2zMOquIy8KTdFeHGEz9xylUW_iuJ11xYAxWv8ZXnEmXWV26rzi07ZzWZtIZQrlukMESO8IyeT_pqBo_sl1s13wZ4WFgHRFINLv4tjuOVlAya3hBz40doJx869MpLeenJJ_X6xzNtgpXvEz7vukpeFRWv4BQZF_o_0E-eT8czUgA6FLAuCgdIcJzgVWhf6TRDh-nXFLoSMtGKWG5Baugx6Y1-1ihLf-JiCpR5x8GtW6CRJ0FvTBxuhhSmDg-sQabv_7a6AyZza1BCj4OZUmwXTSQ1pbNjUAa35QAVJINbxd0BD1MKGfVCmy05uuaYtX2iK1sfdUIjIoKDShMNuqfvlJ85O7ZHFul4vxd05U_7r-XbFQRiBEFqY63qpqV94-4PfK08aoVkTg927kYM2hHhUn0lqeQUl12jxIe6b4sc2RCfUIIz9vg-ku6rn9ueKgmAnRq3pcB7snmKD-3LNBidhQUd8XiJKQs5HtZUgm_yof6M_ioA3zTTwcd-LsbaQ89j0I5V9zsMYeNt5jNtJNAEp47Vs8QCVORkfiFTc1TjXRFxTkRZ-g8G-SQHF8D7GG4bIVqqyGbWz39V0mUYX5JV8yVCVAmooYLgtafOA84f7H_0G8JfCDXejlALVOILbaRnrn9XjvPYd_PZO_UPXac-BNcmaByqJYQJlUht1jSbY2Q6EpWTBsLbNbkkl9b3LRu8LRw4oAHPfQpAQOXufCDSP8IIPOATHuuES8wVyMMacVXBvtEonkKXOtJBqEAkrtlIScyeX5zvR9cOK9M6z5-ck1ETGKTBzJ1iOtlU7z7FeC2JbrJ9IlX2ZIwdOCVp2EdjG1Eeu8V05d3Rr3galCuMhmUgt1OfdAcafrjldYAXBAo-Pw9r77W-sB-tvovXXFo5j30z5IW57wLob1lNT5eM5ojIgSQzrfi7jIv6X3KOQDJKlVLpM3M9UQSv8f_UbFz7JYheLXbcqul7uck9dtCg_eHcds2-ZmSjNoNs6xmMEECIW2h3c6oYsgB2_yaxneMYqbfecKEP2GYUn2R8SzKu0RaMyyKRwdk30yawdaMn4aylATf3_DwCPg05diacrI2DposOavhIzcVEpNjJx2Mi5CBbSunIhw1duKxOFjK67BlMYpMWnGo2XOuC4RA8VgFx-tuOG5vTT3ERilznSZ1yi5iNHVpDmdHjqA0MoC5oLxppvCcxQ03GB0w5CzYwDmy8c2aKu2eDgCCHd9OIhopbyGQ9wNoTux7rqAqoaiSlAI_dT1q6eqpw6r1edOh8Tuc19SslpUgYPMVzolRDF-fTRKUlIbhy7JZUoO1ZSlTwQQsA66b92UpuqpLLBOfnnkoacSTXObqBd-FcgkfPU7_Xate4WHjaR_VsyIdDfxGAemvfqDyy75efD50f88qSzBFOS7J0HmDAeXWwsnFShq5V4m2pOK_lBk_1sm3sehpL5eW0l8Y34Q298fTx_lW3ehFSrOexClOCAgpwiD-5Z7-rCi8K5qQOc6BEtgSAFy_rg0v8Yrh1ZxAdFP1g-yu1DB9EfDJGmCsdzaJoUUWVlpfatH7BCs-mrdJYk0bSzW-zKboPrHf5RisBq2EgUOdL64ATYyzPXM7s3soZzj-XUuSqykJjYByXSJeT4KAZXtkYEBSsgHcbsfmFyDoyBqfTySe084g2LqF_cFU8N2bLrz580tGwMYJRhMQbUxh9nUDaZMGb1tx5yYdkNUOOd7uOitj21hHWxXzocsJnxqLh0Nvf34af_TajX6dM1GDoddisCjRy0XMJtyhbH7lakD-ybEoSBSxb8p8MijxwHpcTfwSBjWosuUaqb0vON_8MzZNgov5wuhi2jm6a34RH6xG-bmXyvY9JFKVoLe5DBsjMgH0BdPqOemFdQjcuh18h2aukRJnShwNcSGHuPgZVfuKmbsfS7o8SALBRzfh-tdcin70f3v-yeE7zZorZFbu9kxbTcHl3Aq5e4LJOv8iXksJGg-Zk2nw1oTjFIc4UIg3scaDgYAcCcZuy14aG8fIBc7JNycsKIE1GSygFVKOZzr4m7TmqKtuONg5P38EBTGmhrXus4NhnNqlCDHNFZ6Ucfn1Sp7n-Cf_iA4kl2wvEIAm5rUfRJrqp0EibP7DAGGSrQffwAHF8rf_eIHSkcB9UWg5xUMMLAiPsVxEfWfxB4s_Hrzt3NSowNSdF14C2lom-QQ==.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_00863497ec54a448016abad780713c819693fd67ca71f9f30b\",\"index\":0}]}}],\"usage\":{\"prompt_tokens\":1038,\"completion_tokens\":420,\"total_tokens\":1458,\"cost\":0.0003736425,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":1035,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0003736425,\"upstream_inference_prompt_cost\":0.0001426425,\"upstream_inference_completions_cost\":0.000231},\"completion_tokens_details\":{\"reasoning_tokens\":310,\"image_tokens\":0,\"audio_tokens\":0}}}"
+    headers:
+      content-type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1
