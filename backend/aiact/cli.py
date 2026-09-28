@@ -112,11 +112,16 @@ def eval_academic_import(
     out_dir: Annotated[
         Path | None, typer.Option(help="Where the YAML goes [default: repo eval/cases/academic]")
     ] = None,
+    overrides: Annotated[
+        Path, typer.Option(help="The spot-check label overrides to apply.")
+    ] = academic.OVERRIDES_FILE,
 ) -> None:
-    """Convert the academic benchmark's scenarios into cases, one YAML file per risk class."""
+    """Convert the academic benchmark's scenarios into cases, one YAML file per risk class,
+    with the spot-check overrides applied."""
     out_path = out_dir or academic.ACADEMIC_DIR
     try:
-        cases = academic.convert(academic.read_scenarios(source))
+        converted = academic.convert(academic.read_scenarios(source))
+        cases = academic.apply_overrides(converted, academic.read_overrides(overrides))
     except (CaseFileError, FileNotFoundError) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error

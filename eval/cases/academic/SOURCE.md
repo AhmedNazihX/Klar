@@ -29,6 +29,15 @@ changes, and no others:
   that settle the label.
 - The generated `obligations` are left out: this set checks the risk class and the role only.
 - The cases are grouped into one file per risk class.
+- The user's spot-check decisions (2026-09-28, `eval/reports/academic_spotcheck.md`) are applied from
+  `eval/cases/academic_overrides.yaml`, and each is logged in `eval/LABEL_CHANGES.md`:
+  - academic-0005, academic-0136 and academic-0150 become `legally_ambiguous` (the class keeps the
+    source's reading as the working assumption), with the open question and both readings in `notes`;
+  - academic-0116 gets a note: Annex III 7(b) applies only for competent public authorities;
+  - academic-0160, 0253, 0308, 0314, 0324 and 0327 (rule- or template-based) get the tag
+    `scoring:low-or-out-of-scope`, and a note.
 
-The labels are the authors', not this project's. They are spot-checked in
-`eval/reports/academic_spotcheck.md`, and results on this set are reported separately (INIT › Test sets).
+The labels are otherwise the authors', not this project's. Two scoring rules apply to this set only
+(`backend/aiact/eval/metrics.py`): `limited_risk` and `minimal_risk` count as one low bucket, and a case
+tagged `scoring:low-or-out-of-scope` also accepts `out_of_scope`, with a disagreement review. Results on
+this set are reported separately (INIT › Test sets).

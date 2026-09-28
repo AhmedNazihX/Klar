@@ -5,13 +5,16 @@ from pathlib import Path
 import pytest
 
 from aiact.eval.academic import (
+    apply_overrides,
     convert,
+    read_overrides,
     read_scenarios,
     spotcheck_sample,
     write_cases,
 )
 from aiact.eval.cases import BenchmarkCase, CaseFileError, CaseLabel, CaseSet, load_cases
-from aiact.schemas import Language, RiskClass, Role
+from aiact.eval.metrics import LOW_OR_OUT_OF_SCOPE_TAG
+from aiact.schemas import Language, RiskClass, Role, Status
 
 FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "academic" / "scenarios.json"
 IMPORTED_COUNT = 339
@@ -79,6 +82,59 @@ def test_written_files_load_back_unchanged(tmp_path: Path) -> None:
     ]
     loaded = load_cases(CaseSet.ACADEMIC, tmp_path)
     assert sorted(loaded, key=lambda case: case.id) == list(cases)
+
+
+FIXTURE_OVERRIDES = FIXTURE.with_name("overrides.yaml")
+
+
+def test_overrides_change_status_notes_citations_and_tags() -> None:
+    cases = apply_overrides(fixture_cases(), read_overrides(FIXTURE_OVERRIDES))
+    tagged, ambiguous, untouched = cases[0], cases[1], cases[2]
+    assert ambiguous.label == CaseLabel(
+        risk_class=RiskClass.HIGH_RISK, status=Status.LEGALLY_AMBIGUOUS, role=Role.DEPLOYER
+    )
+    assert ambiguous.label_citation == ("annex:III:4:a",)
+    assert ambiguous.notes == "Open question and both readings."
+    assert tagged.label == fixture_cases()[0].label
+    assert tagged.tags[-1] == LOW_OR_OUT_OF_SCOPE_TAG
+    assert untouched == fixture_cases()[2]
+
+
+def test_override_for_an_unknown_id_fails_loudly(tmp_path: Path) -> None:
+    path = tmp_path / "overrides.yaml"
+    path.write_text("- {id: academic-9999, notes: n, reason: r, approved: a}\n", encoding="utf-8")
+    with pytest.raises(CaseFileError, match="academic-9999"):
+        apply_overrides(fixture_cases(), read_overrides(path))
+
+
+def test_duplicate_or_invalid_overrides_are_rejected(tmp_path: Path) -> None:
+    path = tmp_path / "overrides.yaml"
+    entry = "- {id: academic-0001, notes: n, reason: r, approved: a}\n"
+    path.write_text(entry * 2, encoding="utf-8")
+    with pytest.raises(CaseFileError, match="more than one override for academic-0001"):
+        read_overrides(path)
+    path.write_text("- {id: academic-0001, notes: n}\n", encoding="utf-8")
+    with pytest.raises(CaseFileError, match="reason"):
+        read_overrides(path)
+
+
+def test_committed_overrides_are_applied_to_the_committed_set() -> None:
+    by_id = {case.id: case for case in load_cases(CaseSet.ACADEMIC)}
+    overrides = read_overrides()
+    for override in overrides:
+        case = by_id[override.id]
+        assert case.notes == override.notes
+        assert set(override.add_tags) <= set(case.tags)
+        if override.status is not None and isinstance(case.label, CaseLabel):
+            assert case.label.status is override.status
+    ambiguous = sorted(
+        case.id
+        for case in by_id.values()
+        if isinstance(case.label, CaseLabel) and case.label.status is Status.LEGALLY_AMBIGUOUS
+    )
+    assert ambiguous == ["academic-0005", "academic-0136", "academic-0150"]
+    low_or_oos = sorted(case.id for case in by_id.values() if LOW_OR_OUT_OF_SCOPE_TAG in case.tags)
+    assert low_or_oos == [f"academic-0{n}" for n in (160, 253, 308, 314, 324, 327)]
 
 
 def test_spotcheck_sample_is_seeded_and_stratified() -> None:

@@ -40,7 +40,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data
 │   │   │   ├── cases.py             BenchmarkCase schema + loader + appliedAI mapping (F7)
-│   │   │   ├── academic.py          davidath scenarios → cases + overrides.yaml; `aiact evaluate academic-import|academic-sample` (B12)
+│   │   │   ├── academic.py          davidath scenarios → cases + overrides; `aiact evaluate academic-import|academic-sample` (B12)
 │   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact evaluate split` (B3)
 │   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact evaluate similarity` (B4)
 │   │   │   ├── label_filter.py      second-model label filter; `aiact evaluate label-filter` (B9)
@@ -83,11 +83,12 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── soft_pairs/              (B6)
 │   │   ├── qa/                      (B7)
 │   │   ├── consistency/             (B8)
-│   │   ├── academic/                <risk_class>.yaml (generated), overrides.yaml, SOURCE.md (CC BY 4.0) (B12)
+│   │   ├── academic/                <risk_class>.yaml (generated), SOURCE.md (CC BY 4.0) (B12)
+│   │   ├── academic_overrides.yaml  spot-check label overrides the academic import applies (B12)
 │   │   └── annex_match/             (X0)
 │   ├── judge_validation/            hand-labelled judge cases (V4)
 │   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1)
-│   ├── LABEL_CHANGES.md             log of label changes after the freeze (B10)
+│   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10)
 │   └── private/                     appliedai.jsonl (B11; gitignored, never tracked; may be absent)
 │
 ├── supabase/                        Supabase CLI project

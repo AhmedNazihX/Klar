@@ -23,9 +23,9 @@ def test_command_groups_are_invocable() -> None:
 
 def test_academic_import_writes_cases_and_reports_bad_input(tmp_path: Path) -> None:
     out_dir = tmp_path / "academic"
-    result = runner.invoke(
-        app, ["evaluate", "academic-import", str(ACADEMIC_FIXTURE), "--out-dir", str(out_dir)]
-    )
+    overrides = ACADEMIC_FIXTURE.with_name("overrides.yaml")
+    arguments = ["--out-dir", str(out_dir), "--overrides", str(overrides)]
+    result = runner.invoke(app, ["evaluate", "academic-import", str(ACADEMIC_FIXTURE), *arguments])
     assert result.exit_code == 0, result.output
     assert "4 cases" in result.stdout
     assert len(list(out_dir.glob("*.yaml"))) == 4

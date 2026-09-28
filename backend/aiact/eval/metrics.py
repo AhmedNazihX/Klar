@@ -20,6 +20,13 @@ Scoring rules decided here:
   miss only. Metrics defined on an answer (false-low-risk, Annex point, downgrade, citation
   existence) leave failed cases out.
 - Citation existence is per case: a case hits when every citation in its result resolves.
+- Academic set (B12 spot-check, user decision 2026-09-28): its `limited`/`minimal` labels don't
+  track Art. 50, so `limited_risk` and `minimal_risk` count as one low bucket there. A low case
+  tagged `scoring:low-or-out-of-scope` (a rule- or template-based system that may not be an AI
+  system under Art. 3(1)) also accepts `out_of_scope`, and each such answer goes to the
+  disagreement review, as appliedAI `low` does. Every other set scores classes exactly.
+  False-low-risk needs no change: it scores only high-risk and prohibited labels, and both low
+  classes already rank below them, so the two count as the same (lower) rank there.
 """
 
 from collections import defaultdict
@@ -27,7 +34,7 @@ from collections.abc import Callable, Collection, Iterable, Sequence
 
 from pydantic import Field
 
-from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, score_appliedai
+from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet, score_appliedai
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import RiskClass, Status
 from aiact.schemas.evidence import Citation
@@ -51,6 +58,10 @@ APPLIEDAI_CLASS: dict[AppliedAILabel, RiskClass] = {
 
 SOFT_WORDING_TAG = "wording:soft"
 """Marks the softened description of a soft-wording pair (B6); the downgrade rate scores these."""
+LOW_BUCKET = frozenset({RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK})
+"""The academic set's low bucket: either class matches a label of either."""
+LOW_OR_OUT_OF_SCOPE_TAG = "scoring:low-or-out-of-scope"
+"""Marks an academic low case where `out_of_scope` also counts, with a disagreement review."""
 CONSISTENCY_GROUP_PREFIX = "triple:"
 """Tag prefix linking the paraphrases of one system in the consistency set (B8)."""
 
@@ -118,6 +129,15 @@ def _unsafe_label_class(case: BenchmarkCase) -> RiskClass | None:
     return risk_class if risk_class in UNSAFE_CLASSES else None
 
 
+def accepted_classes(case: BenchmarkCase, label: CaseLabel) -> frozenset[RiskClass]:
+    """The result classes that match a case's label, with the academic set's low bucket."""
+    if case.set_name is not CaseSet.ACADEMIC or label.risk_class not in LOW_BUCKET:
+        return frozenset({label.risk_class})
+    if LOW_OR_OUT_OF_SCOPE_TAG in case.tags:
+        return LOW_BUCKET | {RiskClass.OUT_OF_SCOPE}
+    return LOW_BUCKET
+
+
 def _answered_needs_info_on_ambiguous(outcome: Outcome) -> bool:
     result = outcome.result
     return (
@@ -131,7 +151,7 @@ def _answered_needs_info_on_ambiguous(outcome: Outcome) -> bool:
 
 
 def risk_class_match(outcome: Outcome) -> bool | None:
-    """Risk-class accuracy, with the appliedAI mapping for that set."""
+    """Risk-class accuracy, with the appliedAI mapping and the academic low bucket."""
     label, result = outcome.case.label, outcome.result
     if isinstance(label, AppliedAILabel):
         if result is None:
@@ -140,7 +160,7 @@ def risk_class_match(outcome: Outcome) -> bool | None:
         return None if score.is_counted_separately else score.is_match
     if label.status is Status.LEGALLY_AMBIGUOUS:
         return None
-    return result is not None and result.risk_class is label.risk_class
+    return result is not None and result.risk_class in accepted_classes(outcome.case, label)
 
 
 def false_low_risk(outcome: Outcome) -> bool | None:
@@ -294,6 +314,18 @@ def appliedai_review_count(outcomes: Iterable[Outcome]) -> int:
     return count
 
 
+def academic_review_count(outcomes: Iterable[Outcome]) -> int:
+    """Academic low-or-out-of-scope cases answered `out_of_scope`: a match, but each goes to the
+    disagreement review (B12 spot-check)."""
+    return sum(
+        outcome.case.set_name is CaseSet.ACADEMIC
+        and LOW_OR_OUT_OF_SCOPE_TAG in outcome.case.tags
+        and outcome.result is not None
+        and outcome.result.risk_class is RiskClass.OUT_OF_SCOPE
+        for outcome in outcomes
+    )
+
+
 # --- Commission example rules (decision 001) ---------------------------------------------------
 
 
@@ -355,6 +387,7 @@ class RunMetrics(ContractModel):
     consistency: Rate
     citation_existence: Rate
     appliedai_disagreement_review: int
+    academic_disagreement_review: int
 
 
 def summarize(outcomes: Sequence[Outcome], exists: CitationExists | None) -> RunMetrics:
@@ -373,4 +406,5 @@ def summarize(outcomes: Sequence[Outcome], exists: CitationExists | None) -> Run
         consistency=consistency(outcomes),
         citation_existence=citation_existence(outcomes, exists),
         appliedai_disagreement_review=appliedai_review_count(outcomes),
+        academic_disagreement_review=academic_review_count(outcomes),
     )

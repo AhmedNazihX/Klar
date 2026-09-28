@@ -1,0 +1,100 @@
+# Spot-check decisions for the academic set (eval/reports/academic_spotcheck.md), applied on top
+# of the source by `aiact evaluate academic-import`. Every change is logged in eval/LABEL_CHANGES.md.
+# Fields: id, optional status / risk_class / label_citation / add_tags, notes (written into the
+# case), reason (why, citing the provision), approved (who and when).
+
+# --- source label -> legally_ambiguous (risk_class keeps the stricter reading) ------------------
+
+- id: academic-0005
+  status: legally_ambiguous
+  label_citation: ["art:5:1:a"]
+  notes: >-
+    Open question: does nudging viewers into subscription upgrades cause, or reasonably risk,
+    significant harm? Reading 1: yes, so the subliminal technique is prohibited under
+    Art. 5(1)(a). Reading 2: no, so Art. 5(1)(a) doesn't apply and the system is not prohibited.
+    Working assumption: prohibited.
+  reason: >-
+    Art. 5(1)(a) requires that the distortion causes or is reasonably likely to cause significant
+    harm; the description can't settle that condition.
+  approved: user, 2026-09-28 (B12 spot-check)
+
+- id: academic-0136
+  status: legally_ambiguous
+  label_citation: ["annex:III:5:a"]
+  notes: >-
+    Open question: is the pension scheme public or private? Reading 1: a public authority (or
+    someone on its behalf) evaluates eligibility for public benefits, so high-risk under
+    Annex III 5(a). Reading 2: a private pension scheme, which Annex III 5(a) doesn't cover.
+    Follow-up question: is the pension scheme public or private? Working assumption: high-risk.
+  reason: >-
+    Annex III 5(a) covers only AI systems used by or on behalf of public authorities; the
+    description doesn't say who runs the scheme.
+  approved: user, 2026-09-28 (B12 spot-check)
+
+- id: academic-0150
+  status: legally_ambiguous
+  label_citation: ["annex:III:3:a", "annex:III:3:c"]
+  notes: >-
+    Open question: does the scholarship decide admission to the doctoral programme, or fund
+    students already admitted? Reading 1: it decides admission or the level of education a
+    person can access, so high-risk under Annex III 3(a) or 3(c). Reading 2: it only funds
+    admitted students, which no Annex III point clearly covers. Follow-up question: does the
+    scholarship decide admission? Working assumption: high-risk.
+  reason: >-
+    Annex III 3(a) and 3(c) cover access or admission to, and the level of, education; a
+    scholarship is funding, and the description doesn't say whether it decides admission.
+  approved: user, 2026-09-28 (B12 spot-check)
+
+# --- label kept, note added -----------------------------------------------------------------------
+
+- id: academic-0116
+  label_citation: ["annex:III:7:b"]
+  notes: >-
+    High-risk under Annex III 7(b) only when used by or on behalf of competent public
+    authorities (or Union institutions, bodies, offices or agencies).
+  reason: >-
+    Annex III 7(b) is limited to competent public authorities; the description implies this but
+    doesn't state it.
+  approved: user, 2026-09-28 (B12 spot-check)
+
+# --- pattern 2: rule- or template-based; out_of_scope also counts, with a review ----------------
+
+- id: academic-0160
+  add_tags: ["scoring:low-or-out-of-scope"]
+  notes: &pattern2 >-
+    Rule- or template-based: it may not be an AI system under Art. 3(1). The source's low label
+    is kept; out_of_scope also counts as correct and goes to the disagreement review.
+  reason: &pattern2reason >-
+    Art. 3(1) requires a system that infers how to generate outputs; a fixed rule or template
+    may not, so the description can't separate out_of_scope from a low class.
+  approved: &pattern2approved user, 2026-09-28 (B12 spot-check, pattern 2)
+
+- id: academic-0253
+  add_tags: ["scoring:low-or-out-of-scope"]
+  notes: *pattern2
+  reason: *pattern2reason
+  approved: *pattern2approved
+
+- id: academic-0308
+  add_tags: ["scoring:low-or-out-of-scope"]
+  notes: *pattern2
+  reason: *pattern2reason
+  approved: *pattern2approved
+
+- id: academic-0314
+  add_tags: ["scoring:low-or-out-of-scope"]
+  notes: *pattern2
+  reason: *pattern2reason
+  approved: *pattern2approved
+
+- id: academic-0324
+  add_tags: ["scoring:low-or-out-of-scope"]
+  notes: *pattern2
+  reason: *pattern2reason
+  approved: *pattern2approved
+
+- id: academic-0327
+  add_tags: ["scoring:low-or-out-of-scope"]
+  notes: *pattern2
+  reason: *pattern2reason
+  approved: *pattern2approved
