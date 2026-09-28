@@ -2,7 +2,7 @@
 
 - **Date:** 2026-09-28
 - **Story:** X3 (docs/BACKLOG.md)
-- **Status:** proposed (waiting for the user: confirm the spending cap, see Consequences)
+- **Status:** accepted (Option B and the spending-cap handling approved by the user in the X3 review, as relayed by the orchestrator)
 
 ## Question
 INIT › Open questions (Implementation decisions still open) asks whether OpenRouter passes prompt caching through
@@ -100,6 +100,7 @@ Context and prices are per endpoint from `GET /api/v1/models/<slug>/endpoints`; 
 - `GET /api/v1/key` for the project key reports `limit: 35` (USD), `limit_reset: null` (a one-off cap, not
   monthly), `usage: 25.051323419` and `limit_remaining: 9.948676581` after X3's calls (read 2026-09-28). A cap is
   therefore set on the key. The key's lifetime usage is already $25.05 of it.
+- The user knows this state and handles it: they will switch to another key or raise the cap when needed.
 
 ## Options
 | Option | What was measured | Result | Source |
@@ -110,8 +111,9 @@ Context and prices are per endpoint from `GET /api/v1/models/<slug>/endpoints`; 
 
 ## Decision
 Option B: every model call pins its EU ZDR endpoint (`azure/eu` for Luna, `google-vertex/eu` for Flash-Lite,
-`google-vertex/europe` for Haiku 4.5 and Sonnet 5, `nebius` for embeddings) with `zdr`, `data_collection: deny`, and
-static-prefix-first prompts so caching applies. The rule that decided it is INIT › Ethical considerations (confidential company information:
+`google-vertex/europe` for Haiku 4.5 and Sonnet 5, `nebius` for embeddings) by its full provider slug in
+`provider.order` with `allow_fallbacks=False`, sends `zdr` and `data_collection: deny`, and uses
+static-prefix-first prompts so caching applies. The 10% EU surcharge is accepted. The user approved this option. The rule that decided it is INIT › Ethical considerations (confidential company information:
 "model providers and OpenRouter configured not to train on or retain inputs where possible") together with the EU host already
 chosen for embeddings; the 10% surcharge is small against the per-case cost measured above.
 
@@ -127,7 +129,8 @@ chosen for embeddings; the 10% surcharge is small against the per-case cost meas
   `/api/alpha/decisions` endpoint, not chat completions, so V4 must check whether that API can act as a judge at all,
   or fall back to Claude Haiku 4.5.
 - **Budget.** The key has $9.95 of its $35 cap left. That covers X1, X2 and early E-stories at the measured cost,
-  but not the full plan (INIT estimates €20–30 in total). The user decides whether to raise the cap.
+  but not the full plan (INIT estimates €20–30 in total). This is known and handled by the user, who will switch
+  to another key or raise the cap when needed.
 - **Privacy notice (P-stories).** Name OpenRouter (global processing on this plan), Microsoft Azure (EU) for Luna,
   Google Vertex (EU) for Gemini and Claude, and Nebius for embeddings.
 - **Revisit** if a pinned EU endpoint goes down for long (Option A as a fallback keeps ZDR but leaves the EU), if
