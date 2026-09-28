@@ -99,10 +99,11 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   DoD: `uv sync && uv run pytest && uv run ruff check && uv run pyright` all pass with one trivial test.
   **Outcome:** uv/Py3.12 backend with a Typer aiact CLI (empty corpus and eval groups), pydantic-settings reading the backend env file (AIACT_DATA_DIR resolved against backend/), model ids empty until X1–X3 confirm them, live marker deselected by default; ruff, pyright, pytest (6) green
 
-- [ ] **F2 · CI workflow** · Deps: F1, F8 · Parallel: F3–F7 · Type: agent
+- [x] **F2 · CI workflow** · Deps: F1, F8 · Parallel: F3–F7 · Type: agent
   Output: `.github/workflows/ci.yml` running uv sync, ruff, pyright, pytest and `aiact deps check` (F8) on push and PR. It gets a placeholder job for the isolation check (enabled in B13).
   DoD: the workflow passes on a pushed branch (or with `act`, if pushing is not wanted yet).
   Notes from merged stories: db-marked tests FAIL (not skip) when `CI` is set, so the job must run `supabase start` (or a Postgres+pgvector service with `supabase/migrations/*.sql` applied), or deselect with `-m "not db"`. Run `uv run --project backend aiact deps check` after `uv sync` (offline). pytest already has `--block-network` (localhost allowed). Consider a `.python-version` file.
+  **Outcome:** CI (.github/workflows/ci.yml): uv sync --locked, deps check, ruff, pyright, pytest against a Postgres-only supabase start built from the migrations (db tests run under CI=true); disabled isolation job for B13; backend/.python-version 3.12. Green on GitHub (run 36406630736).
 
 - [x] **F3 · Result contract (Pydantic schemas)** · Deps: F1 · Parallel: F2, F4–F6 · Type: agent
   Context: INIT › How it works (Outcomes, Risk classes, Evidence tags, Deciding facts, Roles, Worked example), MCP tools. Output: `aiact/schemas/` with:
