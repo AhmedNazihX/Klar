@@ -195,15 +195,17 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Output: git tag `labels-v1`, `eval/LABEL_CHANGES.md` (a log for later changes, with a review note per change), and a CI test that fails if a file under `eval/cases/` changes without a matching entry in `LABEL_CHANGES.md`.
   DoD: tag pushed; the test is in CI.
   Notes from merged stories: F2: add the label-freeze check as a new job in `.github/workflows/ci.yml`.
+  **From B12 (merged):** the freeze covers `eval/cases/academic_overrides.yaml` and the generated `eval/cases/academic/*.yaml`; `eval/LABEL_CHANGES.md` already exists (started by B12) — extend it rather than creating it. The academic importer refuses any source but the pinned sha256, so a re-import can't change labels silently.
 
 - [ ] **B11 · appliedAI dataset** · Deps: F7 · Parallel: everything · Type: human (agent helps with the format)
   Context: INIT › Test sets, Risks (licence). Output: `eval/private/appliedai.jsonl` (gitignored) and `docs/decisions/002-appliedai-licence.md` (fields, languages, licence statement found or not found).
   DoD: all ~106 cases extracted; only case IDs will ever be published.
   Notes from merged stories: F7: keep the experts' raw label (`high`/`prohibited`/`low`/`unclear`) with set_name `appliedai` in `eval/private/appliedai.jsonl`; `load_jsonl` and `score_appliedai` map it at scoring time. Add a helper that reads Annex II references as Annex I, and agree a tag for Annex I cases (INIT reports them separately). `eval/private/` is gitignored and untracked: create it locally.
 
-- [ ] **B12 · Academic benchmark import** · Deps: F7 · Type: agent, plus a human spot-check
+- [x] **B12 · Academic benchmark import** · Deps: F7 · Type: agent, plus a human spot-check
   Output: `eval/cases/academic/` converted from the davidath repo (CC BY 4.0, with attribution) and `eval/reports/academic_spotcheck.md` (about 20 cases checked).
   DoD: the loader validates every case; the spot-check is recorded.
+  **Outcome:** 339 davidath scenarios (CC BY 4.0, commit d323167) imported with aiact evaluate academic-import from a sha256-pinned source; the user's 20-case spot-check applied through target-checked overrides (17 agree, 3 changed to legally_ambiguous, logged in eval/LABEL_CHANGES.md); academic set scores limited+minimal as one low bucket; 95 rule-/template-based low cases also accept out_of_scope, with a disagreement-review row.
 
 - [ ] **B13 · Isolation check in CI** · Deps: B3, C3, F7 · Type: agent
   Context: INIT › Benchmark isolation 5. Output: `backend/tests/test_isolation.py`: (1) no `provisions.source_example_id` is in Pile B (or, in LOO mode, the retrieval filter is always applied), (2) no benchmark description has near-duplicate text in the corpus (embedding cosine above a threshold, and an n-gram check). The CI job from F2 is enabled.
