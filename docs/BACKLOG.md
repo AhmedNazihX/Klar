@@ -280,10 +280,11 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 ## Phase 4 — Engine
 
-- [ ] **E1 · Graph skeleton** · Deps: F3, **B3 committed** · Type: agent
+- [x] **E1 · Graph skeleton** · Deps: F3, **B3 committed** · Type: agent
   Context: INIT › How it works (flowchart). Output: `aiact/engine/graph.py` (a LangGraph StateGraph with the nodes facts → scope → prohibited → high_risk → transparency → role_obligations → finalize; `out_of_scope` and `prohibited` short-circuit to finalize; the order is fixed) and `aiact/engine/state.py`. Nodes are stubs that read scripted outputs.
   DoD: tests cover every routing path with stub nodes; no path can skip a check.
   Notes from merged stories: X3 (005): order prompts with the fixed instructions and retrieved provisions first and the user's description last, so the shared prefix is cached (Luna on `azure/eu` caches automatically).
+  **Outcome:** build_graph(EngineNodes): fixed 7-node LangGraph, early exit only after scope/prohibited on a matched step that can_end_run (decision 010); scripted_nodes(Script) stubs; 45 tests over 36 routing combinations plus exact-edge and all-paths checks; adds langgraph (forces websockets 16.1.1).
 
 - [ ] **E2 · Fact extraction and key-fact questions** · Deps: E1, F6 · Type: agent
   Output: `aiact/engine/nodes/facts.py` and `aiact/engine/prompts/facts.md`: facts with evidence tags, a source span for each stated fact, and key-fact questions for inferred or assumed facts; EN and DE.
