@@ -53,7 +53,8 @@ load the `supabase-postgres-best-practices` and `supabase` skills first.
   else worth doing, put it in your report under "Follow-ups" instead of doing it.
 - Tests use recorded model responses. Mark any live test `@pytest.mark.live`.
 - Keep edits to shared files (`pyproject.toml`, `settings.py`, `.env.example`) minimal and additive.
-  Create migrations only with `supabase migration new <name>`.
+  Create migrations only with `supabase migration new <name>`. Never run `supabase db reset`: the local
+  database is shared by every worktree. If a story needs it, stop and report the exact command.
 - Never read `eval/` in a Corpus-lane story, never write to `data/` or the corpus from a benchmark
   story, and never create `backend/aiact/engine/` before `eval/split.json` is committed.
   Hooks enforce these rules. If a hook blocks you, don't look for a way around it. Stop and report
@@ -65,6 +66,7 @@ load the `supabase-postgres-best-practices` and `supabase` skills first.
   - Read, search and edit `eval/` files with the file tools (Read, Grep, Glob, Write, Edit), not
     with `cat`, `ls`, `grep` or `find`.
   - Pick names that are not the bare word, for example `supabase migration new eval_records`.
+    The benchmark CLI group is `aiact evaluate …` for this reason; add new benchmark commands there.
   - For git on `eval/` paths, stage with `git add -A` from the repo root. If you must untrack or
     delete an `eval/` file, stop and report it for the orchestrator to run.
   - If a command is still blocked, stop and report it with the exact command. Never split or

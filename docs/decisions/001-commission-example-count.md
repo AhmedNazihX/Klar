@@ -292,7 +292,7 @@ No rows were added, dropped, merged or split, so the count stays at 307 and the 
   before any file under `backend/aiact/engine/` exists. After that commit the IDs are frozen.
 - **Open question for B3/B4: Pile B size.** A half split puts about 150 examples in Pile B, and B4 rewrites every
   one with a user-approved label. That is a large authoring and approval load. Whether to use a smaller Pile B is
-  still to be decided.
+  still to be decided. Settled by decision 011: a half split, Pile B 153 of 307.
 - **B4:** carry `accepted_bases`, `label_status` and `flip_variants` into the cases. A Pile B row with a flip
   variant can also produce a variant case labelled with the variant's verdict. hr-ex-307 becomes a
   `legally_ambiguous` case.

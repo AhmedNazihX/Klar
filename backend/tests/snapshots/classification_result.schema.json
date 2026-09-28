@@ -150,6 +150,15 @@
       "title": "FollowUpQuestion",
       "type": "object"
     },
+    "HighRiskRoute": {
+      "description": "How a system became high-risk; the two routes have different dates (Art. 113(c)).",
+      "enum": [
+        "annex_iii",
+        "annex_i"
+      ],
+      "title": "HighRiskRoute",
+      "type": "string"
+    },
     "Language": {
       "description": "The languages the assistant answers and quotes in.",
       "enum": [
@@ -178,8 +187,9 @@
           "type": "string"
         },
         "article": {
-          "description": "For example `art:26:1`.",
+          "description": "E.g. `art:26:1`.",
           "minLength": 1,
+          "pattern": "^art:[0-9]+[a-z]?(:[A-Za-z0-9]+)*$",
           "title": "Article",
           "type": "string"
         },
@@ -187,6 +197,50 @@
           "format": "date",
           "title": "Applies From",
           "type": "string"
+        },
+        "high_risk_route": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HighRiskRoute"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The high-risk route `applies_from` belongs to; None when the date is the same for every route (or the class is not high-risk)."
+        },
+        "applies_if": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The condition under which the duty applies; None when it applies to every system of this role and class.",
+          "title": "Applies If"
+        },
+        "is_informational": {
+          "default": false,
+          "description": "True when the row informs (e.g. a distributor of a prohibited system) rather than stating a formal duty the Act puts on this role.",
+          "title": "Is Informational",
+          "type": "boolean"
+        },
+        "relief_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Relief for SMEs, start-ups and small mid-caps (SMCs), if any.",
+          "title": "Relief Note"
         },
         "note": {
           "anyOf": [

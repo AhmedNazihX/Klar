@@ -1,4 +1,4 @@
-"""The `aiact` command root. Scripts are subcommands per area: `aiact corpus …`, `aiact eval …`.
+"""The `aiact` command root. Scripts are subcommands per area: `aiact corpus …`, `aiact evaluate …`.
 
 Each area adds its commands to its group here (for example `@corpus_app.command()`).
 Help texts come from the callback docstrings.
@@ -6,23 +6,32 @@ Help texts come from the callback docstrings.
 
 from collections.abc import Callable
 from pathlib import Path
+from subprocess import CalledProcessError
 from typing import Annotated
 
+import psycopg
 import typer
 
 from aiact import deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
+from aiact.eval import records, runner
+from aiact.eval import split as eval_split
+from aiact.eval.cases import CaseFileError, CaseSet
+from aiact.obligations import list as obligations_list
+from aiact.obligations import seed as obligations_seed
 from aiact.settings import get_settings
 
 app = typer.Typer(no_args_is_help=True)
 corpus_app = typer.Typer(no_args_is_help=True)
 eval_app = typer.Typer(no_args_is_help=True)
 deps_app = typer.Typer(no_args_is_help=True)
+obligations_app = typer.Typer(no_args_is_help=True)
 
 app.add_typer(corpus_app, name="corpus")
-app.add_typer(eval_app, name="eval")
+app.add_typer(eval_app, name="evaluate")
 app.add_typer(deps_app, name="deps")
+app.add_typer(obligations_app, name="obligations")
 
 
 @app.callback()
@@ -94,6 +103,126 @@ def corpus_parse(
 @eval_app.callback()
 def eval_() -> None:
     """Benchmark split, runs and metrics."""
+
+
+@eval_app.command("run")
+def eval_run(
+    set_name: Annotated[CaseSet, typer.Option("--set", help="The case set to run")],
+    classifier: Annotated[
+        str, typer.Option(help=f"One of: {', '.join(sorted(runner.CLASSIFIERS))}")
+    ],
+    subset: Annotated[
+        int | None, typer.Option(min=1, help="Run a seeded random sample of N cases")
+    ] = None,
+    exclude_mode: Annotated[
+        runner.ExcludeMode,
+        typer.Option(help="heldout: keep held-out examples out of retrieval; all: exclude none"),
+    ] = runner.ExcludeMode.HELDOUT,
+    concurrency: Annotated[
+        int, typer.Option(min=1, max=runner.MAX_CONCURRENCY, help="Cases in flight at once")
+    ] = runner.DEFAULT_CONCURRENCY,
+    max_cost_usd: Annotated[
+        float, typer.Option(min=0.000001, help="Start no new case once this much is spent")
+    ] = runner.DEFAULT_MAX_COST_USD,
+    seed: Annotated[int, typer.Option(help="Seed for the --subset sample")] = 0,
+) -> None:
+    """Run a classifier over a benchmark set and record it in eval_runs / eval_case_results."""
+    try:
+        chosen = runner.build_classifier(classifier)
+        split = runner.load_split() if exclude_mode is runner.ExcludeMode.HELDOUT else None
+        cases = runner.load_benchmark(set_name)
+        git_sha, is_dirty = runner.current_git_state()
+    except (
+        runner.ClassifierUnavailableError,
+        runner.SplitError,
+        CaseFileError,
+        FileNotFoundError,
+        CalledProcessError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    options = runner.RunOptions(
+        benchmark=set_name,
+        classifier_name=classifier,
+        exclude_mode=exclude_mode,
+        git_sha=git_sha,
+        is_git_dirty=is_dirty,
+        subset=subset,
+        seed=seed,
+        concurrency=concurrency,
+        max_cost_usd=max_cost_usd,
+    )
+    try:
+        with records.connect() as connection:
+            summary = runner.run_benchmark(
+                cases, chosen, records.PostgresRunStore(connection), options, split
+            )
+    except (records.DatabaseNotConfiguredError, runner.SplitError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(
+        f"run {summary.run_id}: {summary.status.value}, {summary.cases_scored}/"
+        f"{summary.cases_planned} cases ({summary.cases_failed} failed), "
+        f"${summary.cost_usd:.4f}, {summary.tokens} tokens"
+    )
+    if is_dirty:
+        typer.echo("Warning: uncommitted changes; the recorded git_sha may not reproduce", err=True)
+
+
+@eval_app.command("split")
+def eval_split_command(
+    examples: Annotated[
+        Path, typer.Option(help="The Commission example rows to split.")
+    ] = eval_split.EXAMPLES_FILE,
+    output: Annotated[Path, typer.Option(help="Where the split goes.")] = eval_split.SPLIT_FILE,
+    seed: Annotated[int, typer.Option(help="The shuffle seed.")] = eval_split.DEFAULT_SEED,
+    pile_b_fraction: Annotated[
+        float, typer.Option(help="The share of each stratum held out as Pile B.")
+    ] = eval_split.DEFAULT_PILE_B_FRACTION,
+) -> None:
+    """Split the Commission examples into Pile A and Pile B, stratified by area x verdict.
+
+    The written split is frozen: re-running with the same inputs changes nothing, and a
+    different assignment is refused.
+    """
+    try:
+        rows = eval_split.load_examples(examples)
+        split = eval_split.make_split(rows, seed, pile_b_fraction)
+        is_written = eval_split.write_split(split, output)
+    except (eval_split.SplitError, FileNotFoundError, ValueError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"Pile A: {len(split.pile_a)}, Pile B: {len(split.pile_b)} (seed {split.seed})")
+    typer.echo(f"{'Written' if is_written else 'Unchanged'}: {output}")
+
+
+@obligations_app.callback()
+def obligations() -> None:
+    """The obligations table: duties per role and risk class."""
+
+
+@obligations_app.command("seed")
+def obligations_seed_command(
+    source: Annotated[
+        Path, typer.Option(help="The obligations YAML.")
+    ] = obligations_list.OBLIGATIONS_FILE,
+    output: Annotated[
+        Path, typer.Option(help="Where the SQL seed goes.")
+    ] = obligations_seed.SEED_SQL_FILE,
+) -> None:
+    """Validate the obligations YAML and regenerate the SQL seed `supabase db reset` loads."""
+    try:
+        table = obligations_list.load_table(source)
+        is_written = obligations_seed.write_seed_sql(table, output)
+    except obligations_list.ObligationsError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"{len(table.rows())} rows from {len(table.obligations)} entries")
+    typer.echo(f"{'Written' if is_written else 'Unchanged'}: {output}")
 
 
 @deps_app.callback()

@@ -32,10 +32,14 @@ For each check, report **PASS**, **FAIL** or **N/A** (the files it needs don't e
    The one allowed use is C2's guideline ingestion, which may read the `pile_b` ID list in
    `eval/split.json` and must use it only to drop or tag chunks. Anything else that reads
    benchmark files, labels or descriptions is a FAIL.
-2. **Pile B never reaches the corpus.** If `eval/split.json` exists and `mode` is `split`, collect
-   `pile_b`, then grep `data/parsed/` and any seed or fixture files for those IDs. A match is a FAIL.
-   If a local database is running (`supabase status` succeeds), also run:
-   `select source_example_id from provisions where source_example_id = any(<pile_b>)`.
+2. **Pile B is never retrievable by default** (decision 012). If `eval/split.json` exists and `mode`
+   is `split`, collect `pile_b`. Pile B chunks may exist in `data/parsed/` and `provisions`, but only
+   tagged with their `source_example_id`: a Pile B example's text in an untagged chunk is a FAIL.
+   If a local database is running, also run:
+   `select count(*) from provisions where source_example_id = any(<pile_b>)` (expect every ID tagged).
+   Then check that every search entry point (`aiact/retrieval/`, and its callers in engine, API, MCP
+   and Q&A code) excludes the Pile B IDs by default, and that only the gap run (`--exclude-mode all`)
+   turns the exclusion off. A default path that can return a Pile B row is a FAIL.
    In `loo` mode, check instead that every retrieval call from engine and eval code passes
    `exclude_source_example_ids` (grep the call sites).
 3. **No benchmark text in the corpus.** Take the descriptions from `eval/cases/**`. For each, take

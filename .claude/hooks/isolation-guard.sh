@@ -28,8 +28,8 @@ strip_allowed() {
 
 # An "eval" path segment in shell text: `eval/…`, `$MAIN/eval`, `-- eval`, `main:eval/…`, `'eval'`.
 # Best effort: matching shell text can't catch every indirection (variables, scripts). The sparse
-# checkout and the isolation-auditor are the backstops. Side effect on Corpus-lane branches: the word
-# "eval" as a command argument (for example `aiact eval run`) is blocked too, which that lane never needs.
+# checkout and the isolation-auditor are the backstops. Side effect on Corpus-lane branches: the bare word
+# "eval" as a command argument is blocked too, which that lane never needs (the CLI group is `evaluate`).
 EVAL_SEGMENT_RE="(^|[/[:space:]'\"=:(])eval(/|[[:space:];&|'\")]|$)"
 
 touches_eval_path() {
