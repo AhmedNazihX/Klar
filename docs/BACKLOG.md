@@ -210,6 +210,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` â€
   DoD: the check passes, and it fails when a Pile B example is deliberately injected into a test DB.
   Notes from merged stories: F2: the `isolation` job in `.github/workflows/ci.yml` exists with `if: false` and runs `pytest -q tests/test_isolation.py`; remove the `if: false`. B2 (001): the isolation test must confirm every `pile_b` hr-ex ID was found and dropped by C2; C2's derivation can be checked against the 79-row anchor table in docs/decisions/001.
   **Decision 012 (overrides check 1):** Pile B rows exist in `provisions`, tagged. Check behaviour instead: every search entry point applies the Pile B exclusion by default; a default search (including a query copied from a Pile B example) never returns a Pile B row; every `pile_b` ID is tagged. The near-duplicate check runs against the retrievable corpus.
+  **From B12's isolation audit:** the academic cases' `Domain:` lines quote Annex III area headings verbatim, so an n-gram check against `data/parsed/` matches them (94 hits, all statutory wording copied from the Act into the benchmark). Allow verbatim statutory headings, or check only the non-Domain fields, so they aren't false positives. Include the academic descriptions in the near-duplicate check.
 
 ## Phase 2 â€” Corpus and retrieval
 

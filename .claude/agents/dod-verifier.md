@@ -31,7 +31,8 @@ default: a claim counts only when you have checked it yourself.
    uv run pyright
    uv run pytest -q
    ```
-   Tests must not make live model calls: tests marked `live` must be skipped by default.
+   Tests must not make live model calls: tests marked `live` must be skipped by default. Never run
+   `pytest -m live` yourself: those tests make real, paid model calls.
 5. **Rules.**
    - Every new file fits `docs/LAYOUT.md`: Python only under `backend/aiact/` (no loose scripts), no code under
      `eval/`, and tests mirroring the package. A new folder or package area has a matching entry in `docs/LAYOUT.md`.
