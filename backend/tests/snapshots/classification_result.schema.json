@@ -1,0 +1,507 @@
+{
+  "$defs": {
+    "Citation": {
+      "additionalProperties": false,
+      "description": "One quoted provision. `english_only` marks guidance that has no official text in `de`.",
+      "properties": {
+        "provision_id": {
+          "description": "For example `art:6:3` or `annex:III:4:a`.",
+          "minLength": 1,
+          "title": "Provision Id",
+          "type": "string"
+        },
+        "document_id": {
+          "minLength": 1,
+          "title": "Document Id",
+          "type": "string"
+        },
+        "law_version": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LawVersion"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The AI Act text quoted; None for guidance, which belongs to neither text."
+        },
+        "document_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DocumentStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lets draft guidance be labelled as a draft."
+        },
+        "language": {
+          "$ref": "#/$defs/Language",
+          "description": "The language of `quote`."
+        },
+        "quote": {
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        },
+        "english_only": {
+          "default": false,
+          "title": "English Only",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "provision_id",
+        "document_id",
+        "language",
+        "quote"
+      ],
+      "title": "Citation",
+      "type": "object"
+    },
+    "DocumentStatus": {
+      "description": "The status of a corpus document (matches F4's `documents.status`).",
+      "enum": [
+        "final",
+        "draft",
+        "consolidated"
+      ],
+      "title": "DocumentStatus",
+      "type": "string"
+    },
+    "EvidenceTag": {
+      "description": "Where a fact came from; used instead of a numeric confidence score.",
+      "enum": [
+        "stated",
+        "inferred",
+        "assumed"
+      ],
+      "title": "EvidenceTag",
+      "type": "string"
+    },
+    "Fact": {
+      "additionalProperties": false,
+      "description": "A fact about the system and where it came from. Only stated facts point into the text.",
+      "properties": {
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/EvidenceTag"
+        },
+        "source_span": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceSpan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "text",
+        "evidence"
+      ],
+      "title": "Fact",
+      "type": "object"
+    },
+    "FollowUpQuestion": {
+      "additionalProperties": false,
+      "description": "A key-fact question. Its `id` keys the user's answer when the engine runs again.",
+      "properties": {
+        "id": {
+          "description": "Stable slug, for example `human_review`.",
+          "pattern": "^[a-z][a-z0-9_]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "about": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the answer settles, for example a step or provision_id.",
+          "title": "About"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "FollowUpQuestion",
+      "type": "object"
+    },
+    "Language": {
+      "description": "The languages the assistant answers and quotes in.",
+      "enum": [
+        "en",
+        "de"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "LawVersion": {
+      "description": "The AI Act text a result relies on: as published in 2024, or as amended by the Omnibus.",
+      "enum": [
+        "original",
+        "amended"
+      ],
+      "title": "LawVersion",
+      "type": "string"
+    },
+    "Obligation": {
+      "additionalProperties": false,
+      "description": "One duty with its article reference and the date it applies from.",
+      "properties": {
+        "duty": {
+          "minLength": 1,
+          "title": "Duty",
+          "type": "string"
+        },
+        "article": {
+          "description": "For example `art:26:1`.",
+          "minLength": 1,
+          "title": "Article",
+          "type": "string"
+        },
+        "applies_from": {
+          "format": "date",
+          "title": "Applies From",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "duty",
+        "article",
+        "applies_from"
+      ],
+      "title": "Obligation",
+      "type": "object"
+    },
+    "OpenQuestion": {
+      "additionalProperties": false,
+      "description": "A question the law and guidance don't settle, with both possible readings.",
+      "properties": {
+        "question": {
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        },
+        "readings": {
+          "description": "The two possible readings, stricter first.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Readings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "question",
+        "readings"
+      ],
+      "title": "OpenQuestion",
+      "type": "object"
+    },
+    "RiskClass": {
+      "description": "The headline class. Every result carries exactly one.",
+      "enum": [
+        "out_of_scope",
+        "prohibited",
+        "high_risk",
+        "limited_risk",
+        "minimal_risk"
+      ],
+      "title": "RiskClass",
+      "type": "string"
+    },
+    "Role": {
+      "description": "The operator role the obligations follow from (Art. 3, 16, 23-26).",
+      "enum": [
+        "provider",
+        "deployer",
+        "importer",
+        "distributor"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "SourceSpan": {
+      "additionalProperties": false,
+      "description": "Character offsets `[start, end)` of a fact in the user's description.",
+      "properties": {
+        "start": {
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "exclusiveMinimum": 0,
+          "title": "End",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "SourceSpan",
+      "type": "object"
+    },
+    "Status": {
+      "description": "Whether a step or result is settled. The two uncertain values are not risk classes.",
+      "enum": [
+        "decided",
+        "needs_more_information",
+        "legally_ambiguous"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "StepName": {
+      "description": "The checks in the Act's fixed order (INIT > How it works).",
+      "enum": [
+        "scope",
+        "prohibited",
+        "high_risk",
+        "transparency",
+        "role_obligations"
+      ],
+      "title": "StepName",
+      "type": "string"
+    },
+    "StepResult": {
+      "additionalProperties": false,
+      "description": "The outcome of one check. An uncertain status names what is missing or open.",
+      "properties": {
+        "step": {
+          "$ref": "#/$defs/StepName"
+        },
+        "decision": {
+          "minLength": 1,
+          "title": "Decision",
+          "type": "string"
+        },
+        "facts_used": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "title": "Facts Used",
+          "type": "array"
+        },
+        "citations": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/Status",
+          "default": "decided"
+        },
+        "missing_fact": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FollowUpQuestion"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The question that would supply the missing fact."
+        },
+        "open_question": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OpenQuestion"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "error": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A machine-readable failure code, for example `citation_unverified`.",
+          "title": "Error"
+        }
+      },
+      "required": [
+        "step",
+        "decision"
+      ],
+      "title": "StepResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The engine's answer. When `status` is uncertain, `risk_class` is the stricter reading,\nkept as the labelled working assumption.",
+  "properties": {
+    "facts": {
+      "description": "Facts extracted from the description.",
+      "items": {
+        "$ref": "#/$defs/Fact"
+      },
+      "title": "Facts",
+      "type": "array"
+    },
+    "steps": {
+      "description": "In the Act's check order.",
+      "items": {
+        "$ref": "#/$defs/StepResult"
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    },
+    "risk_class": {
+      "$ref": "#/$defs/RiskClass"
+    },
+    "status": {
+      "$ref": "#/$defs/Status",
+      "description": "Derived from the steps; see `derived_status`."
+    },
+    "role": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Role"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Set exactly when the role_obligations step ran."
+    },
+    "role_switch_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Why the Art. 25 switch to provider applies, when it does.",
+      "title": "Role Switch Reason"
+    },
+    "annex_point": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "For example `annex:III:4:a`.",
+      "title": "Annex Point"
+    },
+    "transparency_duties": {
+      "default": [],
+      "description": "Art. 50 provisions that apply, for example `art:50:1`.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Transparency Duties",
+      "type": "array"
+    },
+    "deciding_facts": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Fact"
+      },
+      "title": "Deciding Facts",
+      "type": "array"
+    },
+    "obligations": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Obligation"
+      },
+      "title": "Obligations",
+      "type": "array"
+    },
+    "law_version": {
+      "$ref": "#/$defs/LawVersion"
+    },
+    "as_of": {
+      "format": "date",
+      "title": "As Of",
+      "type": "string"
+    },
+    "disclaimer": {
+      "minLength": 1,
+      "title": "Disclaimer",
+      "type": "string"
+    },
+    "follow_up_questions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/FollowUpQuestion"
+      },
+      "title": "Follow Up Questions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "facts",
+    "steps",
+    "risk_class",
+    "status",
+    "law_version",
+    "as_of",
+    "disclaimer"
+  ],
+  "title": "ClassificationResult",
+  "type": "object"
+}
