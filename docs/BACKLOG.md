@@ -120,9 +120,10 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   DoD: `supabase start && supabase db reset` applies cleanly; a pytest inserts and reads a provision and runs a vector and a keyword query.
   **Outcome:** Corpus migration 20260927171942_corpus.sql: documents keyed (doc_key, law_version, language) with Omnibus as is_amending; time-sliced provisions (no overlaps, reload-safe parent FK, content_sha256); untyped embeddings keyed (model, dims) with partial HNSW for Qwen3-1536; RLS on, no Data API grants; decision 009 (versions, as_of, reload rules); db tests fail under CI
 
-- [ ] **F5 · Eval-records migration** · Deps: F4 · Type: agent
+- [x] **F5 · Eval-records migration** · Deps: F4 · Type: agent
   Output: migration `002_eval.sql`: `eval_runs` (id, git_sha, benchmark, config json with model, embedding and retrieval settings, started_at, cost_usd, tokens), `eval_case_results` (run_id, case_id, predicted json, label json, per-metric scores, trace_id).
   DoD: migration applies; a round-trip test passes.
+  **Outcome:** Migration 20260928093526_eval_records.sql (timestamped, not 002_eval.sql): eval_runs (uuid id, 40-hex git_sha, config must hold model/embedding/retrieval keys, cost_usd/tokens) and eval_case_results (PK run_id+case_id, cascade, scores = metric→number/bool/null via strict jsonpath, trace_id); server-only (RLS on, no grants); 13 db tests incl. round trip.
 
 - [x] **F6 · OpenRouter client + recorded responses** · Deps: F1 · Parallel: F2–F5 · Type: agent
   Context: INIT › Tech stack (Model access, Models, Embeddings, Billing). Output: `aiact/llm/` with a LangChain chat model factory over OpenRouter (model id from settings, provider routing, zero-data-retention and no-training flags where OpenRouter supports them) and an embeddings client (Qwen3-Embedding-8B, provider pinned to Nebius, `dimensions=1536`, query instruction prefix configurable, L2-normalise and assert). A record/replay fixture (for example pytest-recording or a small custom cache keyed by request hash) so CI never calls the network.
