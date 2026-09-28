@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "AI Act Classification Assistant: classifies AI systems under the EU AI Act, with steps, citations and measured accuracy."
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "langchain-openrouter>=0.2.9",
+    "openrouter>=0.11.46",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
     "typer>=0.27.2",
@@ -16,6 +18,7 @@ aiact = "aiact.cli:app"
 dev = [
     "pyright>=1.1.414",
     "pytest>=9.1.1",
+    "pytest-recording>=0.13.4",
     "ruff>=0.16.9",
 ]
 
@@ -44,8 +47,15 @@ venv = ".venv"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Live model tests are skipped by default; run them with `uv run pytest -m live`
-# (a later -m on the command line overrides this one).
-addopts = ["-m", "not live", "--strict-markers"]
+# (a later -m on the command line overrides this one). The network is blocked except for
+# local hosts (the database) and tests marked live; see tests/conftest.py.
+addopts = [
+    "-m",
+    "not live",
+    "--strict-markers",
+    "--block-network",
+    "--allowed-hosts=127.0.0.1,localhost",
+]
 markers = [
     "live: calls a real model or service; skipped unless run with -m live",
     "db: needs the local Supabase Postgres (`supabase start`); skipped when it isn't reachable",

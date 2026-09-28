@@ -15,11 +15,14 @@ Source: `backend/uv.lock`.
 
 | Package | Group | Constraint | Locked | Licence | Summary |
 | --- | --- | --- | --- | --- | --- |
+| langchain-openrouter | runtime | >=0.2.9 | 0.2.9 | MIT | An integration package connecting OpenRouter and LangChain |
+| openrouter | runtime | >=0.11.46 | 0.11.46 | Apache-2.0 | Official Python Client SDK for OpenRouter. |
 | psycopg[binary] | runtime | >=3.3.6 | 3.3.6 | LGPL-3.0-only | PostgreSQL database adapter for Python |
 | pydantic-settings | runtime | >=2.15.0 | 2.15.0 | MIT | Settings management using Pydantic |
 | typer | runtime | >=0.27.2 | 0.27.2 | MIT | Typer, build great CLIs. Easy to code. Based on Python type hints. |
 | pyright | dev | >=1.1.414 | 1.1.414 | MIT | Command line wrapper for pyright |
 | pytest | dev | >=9.1.1 | 9.1.1 | MIT | pytest: simple powerful testing with Python |
+| pytest-recording | dev | >=0.13.4 | 0.13.4 | MIT | A pytest plugin powered by VCR.py to record and replay HTTP traffic |
 | ruff | dev | >=0.16.9 | 0.16.9 | MIT | An extremely fast Python linter and code formatter, written in Rust. |
 
 ### Transitive packages
@@ -27,21 +30,52 @@ Source: `backend/uv.lock`.
 | Package | Locked | Licence | Pulled in by |
 | --- | --- | --- | --- |
 | annotated-doc | 0.0.5 | MIT | typer |
-| annotated-types | 0.8.0 | MIT | pydantic-settings |
-| colorama | 0.4.6 | BSD License | pytest, typer |
-| iniconfig | 2.3.0 | MIT | pytest |
+| annotated-types | 0.8.0 | MIT | langchain-openrouter, openrouter, pydantic-settings |
+| anyio | 4.15.1 | MIT | langchain-openrouter, openrouter |
+| certifi | 2026.7.22 | MPL-2.0 | langchain-openrouter, openrouter |
+| charset-normalizer | 3.5.1 | MIT | langchain-openrouter |
+| colorama | 0.4.6 | BSD License | pytest, pytest-recording, typer |
+| distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter |
+| h11 | 0.16.0 | MIT | langchain-openrouter, openrouter |
+| httpcore | 1.0.9 | BSD-3-Clause | langchain-openrouter, openrouter |
+| httpcore2 | 2.13.1 | BSD-3-Clause | langchain-openrouter |
+| httpx | 0.28.1 | BSD-3-Clause | langchain-openrouter, openrouter |
+| httpx2 | 2.13.1 | BSD-3-Clause | langchain-openrouter |
+| httpx2-jsfetch | 1.0 | BSD-3-Clause | langchain-openrouter |
+| idna | 3.20 | BSD-3-Clause | langchain-openrouter, openrouter |
+| iniconfig | 2.3.0 | MIT | pytest, pytest-recording |
+| jsonpatch | 1.33 | Modified BSD License | langchain-openrouter |
+| jsonpath-python | 1.1.6 | MIT License | langchain-openrouter, openrouter |
+| jsonpointer | 3.1.1 | Modified BSD License | langchain-openrouter |
+| langchain-core | 1.6.5 | MIT | langchain-openrouter |
+| langchain-protocol | 0.0.19 | MIT | langchain-openrouter |
+| langsmith | 0.14.1 | MIT | langchain-openrouter |
 | markdown-it-py | 4.2.0 | MIT License | typer |
 | mdurl | 0.1.2 | MIT License | typer |
 | nodeenv | 1.10.0 | BSD | pyright |
-| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | pytest |
-| pluggy | 1.6.0 | MIT | pytest |
+| orjson | 3.12.0 | MPL-2.0 AND (Apache-2.0 OR MIT) | langchain-openrouter |
+| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | langchain-openrouter, pytest, pytest-recording |
+| pluggy | 1.6.0 | MIT | pytest, pytest-recording |
 | psycopg-binary | 3.3.6 | LGPL-3.0-only | psycopg |
-| pydantic | 2.13.5 | MIT | pydantic-settings |
-| pydantic-core | 2.46.5 | MIT | pydantic-settings |
-| pygments | 2.21.0 | BSD-2-Clause | pytest, typer |
+| pydantic | 2.12.5 | MIT | langchain-openrouter, openrouter, pydantic-settings |
+| pydantic-core | 2.41.5 | MIT | langchain-openrouter, openrouter, pydantic-settings |
+| pygments | 2.21.0 | BSD-2-Clause | pytest, pytest-recording, typer |
 | python-dotenv | 1.2.3 | BSD-3-Clause | pydantic-settings |
+| pyyaml | 6.0.3 | MIT | langchain-openrouter, pytest-recording |
+| requests | 2.34.2 | Apache-2.0 | langchain-openrouter |
+| requests-toolbelt | 1.0.0 | Apache 2.0 | langchain-openrouter |
 | rich | 15.0.0 | MIT | typer |
 | shellingham | 1.5.4 | ISC License | typer |
-| typing-extensions | 4.16.0 | PSF-2.0 | psycopg, pydantic-settings, pyright |
-| typing-inspection | 0.4.4 | MIT | pydantic-settings |
+| sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter |
+| tenacity | 9.1.4 | Apache 2.0 | langchain-openrouter |
+| truststore | 0.10.4 | MIT | langchain-openrouter |
+| typing-extensions | 4.16.0 | PSF-2.0 | langchain-openrouter, openrouter, psycopg, pydantic-settings, pyright |
+| typing-inspection | 0.4.4 | MIT | langchain-openrouter, openrouter, pydantic-settings |
 | tzdata | 2026.4 | Apache-2.0 | psycopg |
+| urllib3 | 2.8.0 | MIT | langchain-openrouter |
+| uuid-utils | 0.17.1 | BSD-3-Clause | langchain-openrouter |
+| vcrpy | 8.3.0 | MIT | pytest-recording |
+| websockets | 17.1 | BSD-3-Clause | langchain-openrouter |
+| wrapt | 2.5.0 | BSD-2-Clause | pytest-recording |
+| xxhash | 4.0.1 | BSD-2-Clause | langchain-openrouter |
+| zstandard | 0.25.0 | BSD-3-Clause | langchain-openrouter |
