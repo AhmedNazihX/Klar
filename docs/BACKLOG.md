@@ -123,9 +123,10 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Output: migration `002_eval.sql`: `eval_runs` (id, git_sha, benchmark, config json with model, embedding and retrieval settings, started_at, cost_usd, tokens), `eval_case_results` (run_id, case_id, predicted json, label json, per-metric scores, trace_id).
   DoD: migration applies; a round-trip test passes.
 
-- [ ] **F6 · OpenRouter client + recorded responses** · Deps: F1 · Parallel: F2–F5 · Type: agent
+- [x] **F6 · OpenRouter client + recorded responses** · Deps: F1 · Parallel: F2–F5 · Type: agent
   Context: INIT › Tech stack (Model access, Models, Embeddings, Billing). Output: `aiact/llm/` with a LangChain chat model factory over OpenRouter (model id from settings, provider routing, zero-data-retention and no-training flags where OpenRouter supports them) and an embeddings client (Qwen3-Embedding-8B, provider pinned to Nebius, `dimensions=1536`, query instruction prefix configurable, L2-normalise and assert). A record/replay fixture (for example pytest-recording or a small custom cache keyed by request hash) so CI never calls the network.
   DoD: one live test marked `@pytest.mark.live` (skipped by default) and the same test passing in replay mode in CI.
+  **Outcome:** aiact.llm: chat factory by role (langchain-openrouter) and OpenRouterEmbeddings (Qwen3-8B pinned to Nebius, 1536-d, raw norm checked), both sending data_collection=deny and zdr=true; replay via pytest-recording from tests/recordings/<module path>/ with the network blocked (only live-marked tests connect); Gemini Flash-Lite allowed in the user's guardrail on 2026-09-28
 
 - [ ] **F7 · Eval case schema + loader** · Deps: F3 · Type: agent
   Context: INIT › Evaluation (Test sets, Label mapping, Label rules). Output: `aiact/eval/cases.py`: `BenchmarkCase` (id, set name, language, description, label: risk_class / status / role / annex_point, label_citation, `source_example_id`, notes, tags), a YAML/JSONL loader for `eval/cases/<set>/*.yaml`, and the appliedAI label mapping as code. Directory skeleton `eval/cases/{commission_b,own,soft_pairs,consistency,qa,academic}/` and `eval/private/` (gitignored).
