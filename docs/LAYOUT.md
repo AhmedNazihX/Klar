@@ -28,7 +28,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
-│   │   │                            guidelines.py (C2), load.py (C3), embed.py (C4)
+│   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
+│   │   │                            load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6)
 │   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
@@ -70,7 +71,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── data/                            legal texts only — never benchmark material
 │   ├── manifest.yaml                what was fetched: URL, language, version, sha256 (B1; committed)
 │   ├── raw/                         downloaded HTML and PDFs (B1; gitignored)
-│   └── parsed/                      <doc>.<lang>.jsonl, guide-*.jsonl (C1, C2)
+│   └── parsed/                      <doc>.<lang>.jsonl: laws (C1), guideline PDFs (C2)
 │
 ├── eval/                            benchmark data and reports only — no code; the Corpus lane never reads it
 │   ├── split.json                   Pile A / Pile B, committed once and never changed (B3; C2 may read it)

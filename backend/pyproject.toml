@@ -4,9 +4,11 @@ version = "0.1.0"
 description = "AI Act Classification Assistant: classifies AI systems under the EU AI Act, with steps, citations and measured accuracy."
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "docling-slim[convert-core,format-pdf,models-local]>=2.130.0",
     "httpx>=0.28.1",
     "langchain-openrouter>=0.2.9",
     "lxml>=6.1.3",
+    "opencv-python-headless>=5.0.0.93",
     "openrouter>=0.11.46",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
@@ -29,6 +31,12 @@ dev = [
 [build-system]
 requires = ["uv_build>=0.11.33,<0.12"]
 build-backend = "uv_build"
+
+[tool.uv]
+# docling-core caps typer below 0.27 for its own CLI tools, which aiact never calls; the
+# override keeps our typer. Torch has no Intel-mac wheels, so the lock skips that platform.
+override-dependencies = ["typer>=0.27.2"]
+environments = ["sys_platform != 'darwin' or platform_machine != 'x86_64'"]
 
 [tool.uv.build-backend]
 module-name = "aiact"

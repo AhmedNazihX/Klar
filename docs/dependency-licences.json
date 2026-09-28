@@ -1,4 +1,8 @@
 {
+  "accelerate==1.15.0": {
+    "licence": "Apache",
+    "summary": "Accelerate"
+  },
   "annotated-doc==0.0.5": {
     "licence": "MIT",
     "summary": "Document parameters, class attributes, return types, and variables inline, with Annotated."
@@ -11,6 +15,10 @@
     "licence": "MIT",
     "summary": "High-level concurrency and networking framework on top of asyncio or Trio"
   },
+  "attrs==26.1.0": {
+    "licence": "MIT",
+    "summary": "Classes Without Boilerplate"
+  },
   "certifi==2026.7.22": {
     "licence": "MPL-2.0",
     "summary": "Python package for providing Mozilla's CA Bundle."
@@ -19,17 +27,73 @@
     "licence": "MIT",
     "summary": "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
   },
+  "click==8.5.0": {
+    "licence": "BSD-3-Clause",
+    "summary": "Composable command line interface toolkit"
+  },
   "colorama==0.4.6": {
     "licence": "BSD License",
     "summary": "Cross-platform colored terminal text."
+  },
+  "cuda-bindings==13.4.3": {
+    "licence": "Apache-2.0",
+    "summary": "Python bindings for CUDA"
+  },
+  "cuda-pathfinder==1.8.2": {
+    "licence": "Apache-2.0",
+    "summary": "Pathfinder for CUDA components"
+  },
+  "cuda-toolkit==13.0.3.0": {
+    "licence": "unknown",
+    "summary": "CUDA Toolkit meta-package"
+  },
+  "defusedxml==0.7.1": {
+    "licence": "PSFL",
+    "summary": "XML bomb protection for Python stdlib modules"
   },
   "distro==1.9.0": {
     "licence": "Apache License, Version 2.0",
     "summary": "Distro - an OS platform information API"
   },
+  "doclang==0.7.3": {
+    "licence": "Apache-2.0",
+    "summary": "DocLang reference toolkit"
+  },
+  "docling-core==2.99.0": {
+    "licence": "MIT",
+    "summary": "A python library to define and validate data types in Docling."
+  },
+  "docling-ibm-models==4.0.3": {
+    "licence": "MIT",
+    "summary": "This package contains the AI models used by the Docling PDF conversion package"
+  },
+  "docling-parse==7.22.1": {
+    "licence": "MIT",
+    "summary": "Simple package to extract text with coordinates from programmatic PDFs"
+  },
+  "docling-slim==2.130.0": {
+    "licence": "MIT",
+    "summary": "Modular version of the Docling package: SDK and CLI for parsing PDF, DOCX, HTML, and more, to a unified document representation for powering downstream workflows such as gen AI applications."
+  },
+  "filelock==4.0.5": {
+    "licence": "MIT",
+    "summary": "A platform independent file lock."
+  },
+  "filetype==1.2.0": {
+    "licence": "MIT",
+    "summary": "Infer file type and MIME type of any file/buffer. No external dependencies."
+  },
+  "fsspec==2026.9.0": {
+    "licence": "BSD-3-Clause",
+    "summary": "File-system specification"
+  },
   "h11==0.16.0": {
     "licence": "MIT",
     "summary": "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
+  },
+  "hf-xet==1.6.0": {
+    "licence": "Apache-2.0",
+    "summary": "Fast transfer of large files with the Hugging Face Hub."
   },
   "httpcore2==2.13.1": {
     "licence": "BSD-3-Clause",
@@ -51,6 +115,10 @@
     "licence": "BSD-3-Clause",
     "summary": "The next generation HTTP client."
   },
+  "huggingface-hub==1.33.0": {
+    "licence": "Apache-2.0",
+    "summary": "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
+  },
   "idna==3.20": {
     "licence": "BSD-3-Clause",
     "summary": "Internationalized Domain Names in Applications (IDNA)"
@@ -58,6 +126,10 @@
   "iniconfig==2.3.0": {
     "licence": "MIT",
     "summary": "brain-dead simple config-ini parsing"
+  },
+  "jinja2==3.1.6": {
+    "licence": "BSD License",
+    "summary": "A very fast and expressive template engine."
   },
   "jsonpatch==1.33": {
     "licence": "Modified BSD License",
@@ -71,6 +143,18 @@
     "licence": "Modified BSD License",
     "summary": "Identify specific nodes in a JSON document (RFC 6901)"
   },
+  "jsonref==1.1.0": {
+    "licence": "MIT",
+    "summary": "jsonref is a library for automatic dereferencing of JSON Reference objects for Python."
+  },
+  "jsonschema-specifications==2025.9.1": {
+    "licence": "MIT",
+    "summary": "The JSON Schema meta-schemas and vocabularies, exposed as a Registry"
+  },
+  "jsonschema==4.26.0": {
+    "licence": "MIT",
+    "summary": "An implementation of JSON Schema validation for Python"
+  },
   "langchain-core==1.6.5": {
     "licence": "MIT",
     "summary": "Building applications with LLMs through composability"
@@ -83,9 +167,17 @@
     "licence": "MIT",
     "summary": "Python bindings for the LangChain agent streaming protocol"
   },
+  "langcodes==3.5.1": {
+    "licence": "MIT License",
+    "summary": "Tools for labeling human languages with IETF language tags"
+  },
   "langsmith==0.14.1": {
     "licence": "MIT",
     "summary": "Client library to connect to the LangSmith Observability and Evaluation Platform."
+  },
+  "latex2mathml==3.81.1": {
+    "licence": "MIT",
+    "summary": "Pure Python library for LaTeX to MathML conversion"
   },
   "lxml-stubs==0.5.1": {
     "licence": "Apache Software License",
@@ -99,13 +191,93 @@
     "licence": "MIT License",
     "summary": "Python port of markdown-it. Markdown parsing, done right!"
   },
+  "markupsafe==3.0.3": {
+    "licence": "BSD-3-Clause",
+    "summary": "Safely add untrusted strings to HTML/XML markup."
+  },
   "mdurl==0.1.2": {
     "licence": "MIT License",
     "summary": "Markdown URL utilities"
   },
+  "mpmath==1.3.0": {
+    "licence": "BSD",
+    "summary": "Python library for arbitrary-precision floating-point arithmetic"
+  },
+  "networkx==3.7": {
+    "licence": "BSD-3-Clause",
+    "summary": "Python package for creating and manipulating graphs and networks"
+  },
   "nodeenv==1.10.0": {
     "licence": "BSD",
     "summary": "Node.js virtual environment builder"
+  },
+  "numpy==2.5.3": {
+    "licence": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+    "summary": "Fundamental package for array computing in Python"
+  },
+  "nvidia-cublas==13.1.1.3": {
+    "licence": "LicenseRef-NVIDIA-Proprietary",
+    "summary": "CUBLAS native runtime libraries"
+  },
+  "nvidia-cuda-cupti==13.0.85": {
+    "licence": "LicenseRef-NVIDIA-Proprietary",
+    "summary": "CUDA profiling tools runtime libs."
+  },
+  "nvidia-cuda-nvrtc==13.0.88": {
+    "licence": "LicenseRef-NVIDIA-Proprietary",
+    "summary": "NVRTC native runtime libraries"
+  },
+  "nvidia-cuda-runtime==13.0.96": {
+    "licence": "unknown",
+    "summary": "CUDA Runtime native Libraries"
+  },
+  "nvidia-cudnn-cu13==9.24.0.43": {
+    "licence": "unknown",
+    "summary": "cuDNN runtime libraries"
+  },
+  "nvidia-cufft==12.0.0.61": {
+    "licence": "LicenseRef-NVIDIA-Proprietary",
+    "summary": "CUFFT native runtime libraries"
+  },
+  "nvidia-cufile==1.15.1.6": {
+    "licence": "LicenseRef-NVIDIA-Proprietary",
+    "summary": "cuFile GPUDirect libraries"
+  },
+  "nvidia-curand==10.4.0.35": {
+    "licence": "LicenseRef-NVIDIA-Proprietary",
+    "summary": "CURAND native runtime libraries"
+  },
+  "nvidia-cusolver==12.0.4.66": {
+    "licence": "LicenseRef-NVIDIA-Proprietary",
+    "summary": "CUDA solver native runtime libraries"
+  },
+  "nvidia-cusparse==12.6.3.3": {
+    "licence": "LicenseRef-NVIDIA-Proprietary",
+    "summary": "CUSPARSE native runtime libraries"
+  },
+  "nvidia-cusparselt-cu13==0.8.1": {
+    "licence": "NVIDIA Proprietary Software",
+    "summary": "NVIDIA cuSPARSELt"
+  },
+  "nvidia-nccl-cu13==2.30.7": {
+    "licence": "unknown",
+    "summary": "NVIDIA Collective Communication Library (NCCL) Runtime"
+  },
+  "nvidia-nvjitlink==13.4.92": {
+    "licence": "LicenseRef-NVIDIA-Proprietary",
+    "summary": "Nvidia JIT LTO Library"
+  },
+  "nvidia-nvshmem-cu13==3.4.5": {
+    "licence": "unknown",
+    "summary": "NVSHMEM creates a global address space that provides efficient and scalable communication for NVIDIA GPU clusters."
+  },
+  "nvidia-nvtx==13.0.85": {
+    "licence": "Apache 2.0",
+    "summary": "NVIDIA Tools Extension"
+  },
+  "opencv-python-headless==5.0.0.93": {
+    "licence": "Apache 2.0",
+    "summary": "Wrapper package for OpenCV python bindings."
   },
   "openrouter==0.11.46": {
     "licence": "Apache-2.0",
@@ -119,9 +291,21 @@
     "licence": "Apache-2.0 OR BSD-2-Clause",
     "summary": "Core utilities for Python packages"
   },
+  "pandas==3.0.6": {
+    "licence": "BSD License",
+    "summary": "Powerful data structures for data analysis, time series, and statistics"
+  },
+  "pillow==12.3.0": {
+    "licence": "MIT-CMU",
+    "summary": "Python Imaging Library (fork)"
+  },
   "pluggy==1.6.0": {
     "licence": "MIT",
     "summary": "plugin and hook calling mechanisms for python"
+  },
+  "psutil==7.2.2": {
+    "licence": "BSD-3-Clause",
+    "summary": "Cross-platform lib for process and system monitoring."
   },
   "psycopg-binary==3.3.6": {
     "licence": "LGPL-3.0-only",
@@ -147,6 +331,10 @@
     "licence": "BSD-2-Clause",
     "summary": "Pygments is a syntax highlighting package written in Python."
   },
+  "pypdfium2==5.13.0": {
+    "licence": "BSD-3-Clause, Apache-2.0, dependency licenses",
+    "summary": "Python bindings to PDFium"
+  },
   "pyright==1.1.414": {
     "licence": "MIT",
     "summary": "Command line wrapper for pyright"
@@ -159,13 +347,29 @@
     "licence": "MIT",
     "summary": "pytest: simple powerful testing with Python"
   },
+  "python-dateutil==2.9.0.post0": {
+    "licence": "Dual License",
+    "summary": "Extensions to the standard Python datetime module"
+  },
   "python-dotenv==1.2.3": {
     "licence": "BSD-3-Clause",
     "summary": "Read key-value pairs from a .env file and set them as environment variables"
   },
+  "pywin32==312": {
+    "licence": "PSF",
+    "summary": "Python for Windows Extensions"
+  },
   "pyyaml==6.0.3": {
     "licence": "MIT",
     "summary": "YAML parser and emitter for Python"
+  },
+  "referencing==0.37.0": {
+    "licence": "MIT",
+    "summary": "JSON Referencing + Python"
+  },
+  "regex==2026.9.10": {
+    "licence": "Apache-2.0 AND CNRI-Python",
+    "summary": "Alternative regular expression module, to replace re."
   },
   "requests-toolbelt==1.0.0": {
     "licence": "Apache 2.0",
@@ -179,21 +383,77 @@
     "licence": "MIT",
     "summary": "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
   },
+  "rpds-py==2026.6.3": {
+    "licence": "MIT",
+    "summary": "Python bindings to Rust's persistent data structures (rpds)"
+  },
+  "rtree==1.4.1": {
+    "licence": "MIT",
+    "summary": "R-Tree spatial index for Python GIS"
+  },
   "ruff==0.16.9": {
     "licence": "MIT",
     "summary": "An extremely fast Python linter and code formatter, written in Rust."
+  },
+  "safetensors==0.8.0": {
+    "licence": "Apache Software License",
+    "summary": "unknown"
+  },
+  "scipy==1.18.1": {
+    "licence": "BSD License",
+    "summary": "Fundamental algorithms for scientific computing in Python"
+  },
+  "setuptools==84.0.0": {
+    "licence": "MIT",
+    "summary": "Most extensible Python build backend with support for C/C++ extension modules"
   },
   "shellingham==1.5.4": {
     "licence": "ISC License",
     "summary": "Tool to Detect Surrounding Shell"
   },
+  "six==1.17.0": {
+    "licence": "MIT",
+    "summary": "Python 2 and 3 compatibility utilities"
+  },
   "sniffio==1.3.1": {
     "licence": "MIT OR Apache-2.0",
     "summary": "Sniff out which async library your code is running under"
   },
+  "sympy==1.14.0": {
+    "licence": "BSD",
+    "summary": "Computer algebra system (CAS) in Python"
+  },
+  "tabulate==0.10.0": {
+    "licence": "MIT",
+    "summary": "Pretty-print tabular data"
+  },
   "tenacity==9.1.4": {
     "licence": "Apache 2.0",
     "summary": "Retry code until it succeeds"
+  },
+  "tokenizers==0.23.2": {
+    "licence": "Apache Software License",
+    "summary": "unknown"
+  },
+  "torch==2.14.0": {
+    "licence": "Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT",
+    "summary": "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
+  },
+  "torchvision==0.29.0": {
+    "licence": "BSD",
+    "summary": "image and video datasets and models for torch deep learning"
+  },
+  "tqdm==4.70.1": {
+    "licence": "MPL-2.0 AND MIT",
+    "summary": "Fast, Extensible Progress Meter"
+  },
+  "transformers==5.17.0": {
+    "licence": "Apache 2.0 License",
+    "summary": "Transformers: the model-definition framework for state-of-the-art machine learning models in text, vision, audio, and multimodal models, for both inference and training."
+  },
+  "triton==3.8.0": {
+    "licence": "MIT",
+    "summary": "A language and compiler for custom Deep Learning operations"
   },
   "truststore==0.10.4": {
     "licence": "MIT",

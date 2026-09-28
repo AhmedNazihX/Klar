@@ -19,6 +19,7 @@ from aiact.corpus.eurlex import (
     parse_document,
 )
 from aiact.corpus.fetch import DEFAULT_MANIFEST
+from aiact.corpus.guidelines import pdf_entries
 from aiact.corpus.sources import Language
 from aiact.settings import get_settings
 
@@ -378,7 +379,9 @@ def test_committed_rows_are_well_formed(doc: str, language: Language) -> None:
 
 
 def test_every_html_entry_of_the_manifest_is_parsed() -> None:
-    labels = {f"{e.id}.{e.language}" for e in html_entries(DEFAULT_MANIFEST)}
+    """The PDF entries' files come from `aiact corpus guidelines` (tests/corpus/test_guidelines)."""
+    entries = html_entries(DEFAULT_MANIFEST) + pdf_entries(DEFAULT_MANIFEST)
+    labels = {f"{e.id}.{e.language}" for e in entries}
 
     assert {p.name.removesuffix(".jsonl") for p in DEFAULT_PARSED_DIR.glob("*.jsonl")} == labels
 

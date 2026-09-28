@@ -14,8 +14,10 @@ import psycopg
 import typer
 
 from aiact import deps
+from aiact.corpus import guidelines
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
+from aiact.corpus.guideline_examples import ExampleCountError
 from aiact.eval import academic, citation_index, metrics, records, report, runner
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CaseFileError, CaseSet, load_cases
@@ -96,6 +98,47 @@ def corpus_parse(
         raise typer.Exit(code=1) from error
     for label, count in report.counts:
         typer.echo(f"{label}: {count} provisions")
+    typer.echo(
+        f"written: {len(report.written)}, unchanged: {len(report.counts) - len(report.written)}"
+    )
+
+
+@corpus_app.command("guidelines")
+def corpus_guidelines(
+    manifest: Annotated[
+        Path | None, typer.Option(help="Manifest to read [default: repo data/manifest.yaml]")
+    ] = None,
+    raw_dir: Annotated[
+        Path | None, typer.Option(help="Where raw files are [default: $AIACT_DATA_DIR/raw]")
+    ] = None,
+    out_dir: Annotated[
+        Path | None, typer.Option(help="Where JSONL goes [default: repo data/parsed]")
+    ] = None,
+    split: Annotated[
+        Path, typer.Option(help="The committed split; only its pile_b list is read.")
+    ] = guidelines.DEFAULT_SPLIT_FILE,
+) -> None:
+    """Parse the guideline PDFs (Docling) into section and worked-example chunks, one JSONL
+    file per document and language; Pile B examples are kept and tagged as held out."""
+    try:
+        report = guidelines.parse_guidelines(
+            manifest or DEFAULT_MANIFEST,
+            raw_dir or get_settings().aiact_data_dir / "raw",
+            out_dir or DEFAULT_PARSED_DIR,
+            split,
+        )
+    except (
+        RawFileError,
+        guidelines.GuidelineError,
+        ExampleCountError,
+        FileNotFoundError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    for label, chunks, examples in report.counts:
+        typer.echo(f"{label}: {chunks} chunks ({examples} examples)")
+    typer.echo(f"tagged held out (Pile B): {len(report.held_out_ids)}")
+    typer.echo(" ".join(report.held_out_ids))
     typer.echo(
         f"written: {len(report.written)}, unchanged: {len(report.counts) - len(report.written)}"
     )
