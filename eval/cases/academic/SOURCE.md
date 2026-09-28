@@ -14,7 +14,7 @@ Michael Papademas, Xenia Ziouvelou and Vangelis Karkaletsis:
 
 ## Changes made
 
-`aiact eval academic-import <path to scenarios.json>` (code in `backend/aiact/eval/academic.py`) made these
+`aiact evaluate academic-import <path to scenarios.json>` (code in `backend/aiact/eval/academic.py`) made these
 changes, and no others:
 
 - Each scenario's `role`, `system_type`, `intended_use`, `input_data` and `domain` are joined, one labelled

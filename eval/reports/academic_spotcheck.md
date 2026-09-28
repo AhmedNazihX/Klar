@@ -18,7 +18,7 @@ Record *agree*, or *disagree* with the label you would give, and a short reason.
 ## How the sample was chosen
 
 Five cases per risk class, drawn with a fixed seed by `spotcheck_sample` in
-`backend/aiact/eval/academic.py` (seed `20260928`); `aiact eval academic-sample` prints the same 20 ids.
+`backend/aiact/eval/academic.py` (seed `20260928`); `aiact evaluate academic-sample` prints the same 20 ids.
 The set holds 70 prohibited, 86 high-risk, 84 limited and 99 minimal cases.
 
 ## A pattern to decide on first
