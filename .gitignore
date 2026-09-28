@@ -9,7 +9,8 @@
 
 # Data that must not be committed (see CLAUDE.md › Global rules)
 data/raw/
-eval/private/
+eval/private/*
+!eval/private/.gitkeep
 
 # Python / uv
 .venv/

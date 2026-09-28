@@ -1,0 +1,12 @@
+# Loader fixture only: a made-up case, not a benchmark case and never labelled for scoring.
+id: fixture-own-001
+set_name: own
+language: en
+description: >-
+  A 12-person travel agency built a website chat assistant on a hosted language model.
+  It answers customers' questions about bookings.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:50:1"]
+tags: ["category:transparency"]

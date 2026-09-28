@@ -1,0 +1,15 @@
+# Loader fixture only: a made-up case, not a benchmark case and never labelled for scoring.
+id: fixture-own-002
+set_name: own
+language: de
+description: >-
+  Ein Maschinenbauer mit 300 Mitarbeitenden setzt eine Software ein, die Kameradaten an einer
+  Presse auswertet und die Maschine bei Gefahr stoppt.
+label:
+  risk_class: high_risk
+  status: legally_ambiguous
+  role: provider
+  annex_point: "annex:I:1"
+notes: >-
+  Open question: does the product need a third-party conformity assessment? Readings: yes
+  (high_risk) or no (minimal_risk).
