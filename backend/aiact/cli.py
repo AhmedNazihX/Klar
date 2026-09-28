@@ -14,16 +14,20 @@ from aiact import deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
 from aiact.eval import split as eval_split
+from aiact.obligations import list as obligations_list
+from aiact.obligations import seed as obligations_seed
 from aiact.settings import get_settings
 
 app = typer.Typer(no_args_is_help=True)
 corpus_app = typer.Typer(no_args_is_help=True)
 eval_app = typer.Typer(no_args_is_help=True)
 deps_app = typer.Typer(no_args_is_help=True)
+obligations_app = typer.Typer(no_args_is_help=True)
 
 app.add_typer(corpus_app, name="corpus")
 app.add_typer(eval_app, name="evaluate")
 app.add_typer(deps_app, name="deps")
+app.add_typer(obligations_app, name="obligations")
 
 
 @app.callback()
@@ -121,6 +125,31 @@ def eval_split_command(
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error
     typer.echo(f"Pile A: {len(split.pile_a)}, Pile B: {len(split.pile_b)} (seed {split.seed})")
+    typer.echo(f"{'Written' if is_written else 'Unchanged'}: {output}")
+
+
+@obligations_app.callback()
+def obligations() -> None:
+    """The obligations table: duties per role and risk class."""
+
+
+@obligations_app.command("seed")
+def obligations_seed_command(
+    source: Annotated[
+        Path, typer.Option(help="The obligations YAML.")
+    ] = obligations_list.OBLIGATIONS_FILE,
+    output: Annotated[
+        Path, typer.Option(help="Where the SQL seed goes.")
+    ] = obligations_seed.SEED_SQL_FILE,
+) -> None:
+    """Validate the obligations YAML and regenerate the SQL seed `supabase db reset` loads."""
+    try:
+        table = obligations_list.load_table(source)
+        is_written = obligations_seed.write_seed_sql(table, output)
+    except obligations_list.ObligationsError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"{len(table.rows())} rows from {len(table.obligations)} entries")
     typer.echo(f"{'Written' if is_written else 'Unchanged'}: {output}")
 
 

@@ -4,6 +4,7 @@ from aiact.schemas.disclaimer import DISCLAIMER, DISCLAIMER_DE, DISCLAIMER_EN
 from aiact.schemas.enums import (
     DocumentStatus,
     EvidenceTag,
+    HighRiskRoute,
     Language,
     LawVersion,
     RiskClass,
@@ -27,6 +28,7 @@ __all__ = [
     "EvidenceTag",
     "Fact",
     "FollowUpQuestion",
+    "HighRiskRoute",
     "Language",
     "LawVersion",
     "Obligation",

@@ -38,6 +38,13 @@ class Role(StrEnum):
     DISTRIBUTOR = "distributor"
 
 
+class HighRiskRoute(StrEnum):
+    """How a system became high-risk; the two routes have different dates (Art. 113(c))."""
+
+    ANNEX_III = "annex_iii"
+    ANNEX_I = "annex_i"
+
+
 class LawVersion(StrEnum):
     """The AI Act text a result relies on: as published in 2024, or as amended by the Omnibus."""
 
