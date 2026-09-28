@@ -29,6 +29,7 @@ import httpx
 import yaml
 from pydantic import BaseModel, ConfigDict
 
+from aiact.corpus.files import write_atomic
 from aiact.corpus.sources import SOURCES, DocStatus, Kind, Language, Source
 from aiact.settings import DEFAULT_DATA_DIR
 
@@ -231,19 +232,11 @@ def _present(source: Source, content: bytes, fetched_at: str) -> ManifestEntry:
     )
 
 
-def _write_atomic(path: Path, content: bytes) -> None:
-    """Write via a temporary file and rename, so a crash never leaves a half-written file."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".part")
-    tmp.write_bytes(content)
-    tmp.replace(path)
-
-
 def _write_raw(path: Path, content: bytes, sha256: str) -> None:
     """Write the raw file, unless it's already there with the same content."""
     if path.exists() and sha256_of(path.read_bytes()) == sha256:
         return
-    _write_atomic(path, content)
+    write_atomic(path, content)
 
 
 def utc_now() -> str:
@@ -321,5 +314,5 @@ def fetch_all(
     new_text = dump_manifest(manifest)
     is_written = new_text != old_text
     if is_written:
-        _write_atomic(manifest_path, new_text.encode("utf-8"))
+        write_atomic(manifest_path, new_text.encode("utf-8"))
     return FetchReport(manifest, tuple(changed), tuple(failures), is_written)

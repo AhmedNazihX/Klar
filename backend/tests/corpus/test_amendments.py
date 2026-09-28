@@ -1,13 +1,23 @@
 """The Omnibus as amending text: which AI Act provisions each instruction changes, and when."""
 
+import logging
 from datetime import date
 from pathlib import Path
 
 import pytest
 
 from aiact.corpus.amendments import Amendment
-from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParsedProvision, load_jsonl, parse_document
+from aiact.corpus.eurlex import (
+    DEFAULT_PARSED_DIR,
+    ParsedProvision,
+    ParseError,
+    load_jsonl,
+    parse_all,
+    parse_document,
+)
+from aiact.corpus.fetch import DEFAULT_MANIFEST
 from aiact.corpus.sources import Language
+from aiact.settings import get_settings
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "eurlex"
 LANGUAGES: tuple[Language, ...] = ("en", "de")
@@ -91,13 +101,41 @@ def test_dates_in_the_instruction_are_kept_but_dates_of_cited_acts_are_not(
     assert amendment(rows, "art:1:4").dates == ()  # Regulation … of 25 October 2012
 
 
-def test_without_the_ai_act_ids_the_german_paragraph_level_is_kept() -> None:
-    """German counts the unnumbered third paragraph of Article 113 as `Absatz 3`; only the AI
-    Act's ids show that level doesn't exist."""
-    content = (FIXTURES / "omnibus.de.html").read_bytes()
-    rows = {r.provision_id: r for r in parse_document(content, "omnibus", "de")}
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_an_amending_act_cannot_be_parsed_without_the_ai_act_ids(language: Language) -> None:
+    """Without them, German `Artikel 113 Absatz 3` would keep a paragraph level that doesn't
+    exist, and the two languages would disagree."""
+    content = (FIXTURES / f"omnibus.{language}.html").read_bytes()
 
-    assert amendment(rows, "art:1:6:a").targets == ("art:113:3:a",)
+    with pytest.raises(ParseError, match="no AI Act provision ids"):
+        parse_document(content, "omnibus", language)
+
+
+def test_a_target_missing_from_the_ai_act_is_truncated_with_a_warning(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    content = (FIXTURES / "omnibus.en.html").read_bytes()
+    known = AI_ACT_IDS - {"art:113:a"}
+
+    with caplog.at_level(logging.WARNING, logger="aiact.corpus.amendments"):
+        rows = {r.provision_id: r for r in parse_document(content, "omnibus", "en", known)}
+
+    assert amendment(rows, "art:1:6:a").targets == ("art:113",)
+    assert "art:113:a isn't in the AI Act; truncated to art:113" in caplog.text
+
+
+def test_resolving_the_real_omnibus_truncates_nothing(
+    caplog: pytest.LogCaptureFixture, tmp_path: Path
+) -> None:
+    """Needs the shared raw folder; skipped where it isn't there."""
+    raw = get_settings().aiact_data_dir / "raw"
+    if not (raw / "ai-act.en.html").exists():
+        pytest.skip("raw files not fetched")
+
+    with caplog.at_level(logging.WARNING, logger="aiact.corpus.amendments"):
+        parse_all(DEFAULT_MANIFEST, raw, tmp_path)
+
+    assert "truncated" not in caplog.text
 
 
 # --- The committed Omnibus ---------------------------------------------------------------------

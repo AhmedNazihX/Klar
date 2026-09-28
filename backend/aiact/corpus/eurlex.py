@@ -14,8 +14,9 @@ are normalised like the English `(a)` and `1.`):
   between (`annex:VIII:B`, `annex:VIII:B:7`, `annex:VII:3`), and a dotted point drops its section
   number (point 3.1 of Annex VII is `annex:VII:3:1`);
 - `recital:53`;
-- a list that restarts its labels in a later subparagraph gets that subparagraph's number
-  (`art:43:1:sub2:a`), while the first list keeps the ids citations use (`art:43:1:a`).
+- a list that restarts its labels in a later subparagraph goes, as a whole, under that
+  subparagraph's number (`art:43:1:sub2:a` to `art:43:1:sub2:d`), while the first list keeps
+  the ids citations use (`art:43:1:a`, `art:43:1:b`).
 The consolidated text has no recitals: consolidations leave out the preamble.
 
 The Digital Omnibus is parsed like any act, but it amends the AI Act: the entries of its amending
@@ -43,6 +44,7 @@ from aiact.corpus.amendments import (
 )
 from aiact.corpus.eurlex_html import Block, Item, Text, blocks_of, parse_html, render
 from aiact.corpus.fetch import ManifestEntry, load_manifest, sha256_of
+from aiact.corpus.files import write_atomic
 from aiact.corpus.sources import Language
 from aiact.settings import DEFAULT_DATA_DIR
 
@@ -137,22 +139,37 @@ def _units(
 
 def _item_ids(parent: str, blocks: tuple[Block, ...]) -> Iterator[tuple[str, Item]]:
     """Each labelled item with its id. A list that restarts its labels in a later subparagraph
-    (Art. 43(1) has points (a)-(b), then a second subparagraph with points (a)-(d)) gets that
-    subparagraph's number as an extra level: `art:43:1:sub2:a`. The first list keeps the plain
-    ids that citations use (`art:6:3:a`)."""
+    (Art. 43(1) has points (a)-(b), then a second subparagraph with points (a)-(d)) puts the whole
+    of that list under the subparagraph's number: `art:43:1:sub2:a` to `art:43:1:sub2:d`. The
+    first list keeps the plain ids that citations use (`art:6:3:a`)."""
     seen: set[str] = set()
+    for subparagraph, items in _lists(parent, blocks):
+        labels = [label for label, _ in items]
+        prefix = f"{parent}:sub{subparagraph}" if seen.intersection(labels) else parent
+        seen.update(labels)
+        for label, item in items:
+            yield f"{prefix}:{label}", item
+
+
+def _lists(parent: str, blocks: tuple[Block, ...]) -> Iterator[tuple[int, list[tuple[str, Item]]]]:
+    """The labelled items of `blocks`, grouped into lists: a run of items between text lines.
+
+    Each list comes with the number of the subparagraph it belongs to (text lines so far).
+    """
     subparagraph = 0
+    items: list[tuple[str, Item]] = []
     for block in blocks:
         if isinstance(block, Text):
-            subparagraph += block.role == "text"
-            continue
-        if block.label is None:
-            continue
-        label = _local_label(parent, block.label)
-        is_repeat = label in seen
-        seen.add(label)
-        pid = f"{parent}:sub{subparagraph}:{label}" if is_repeat else f"{parent}:{label}"
-        yield pid, block
+            if block.role != "text":
+                continue
+            if items:
+                yield subparagraph, items
+                items = []
+            subparagraph += 1
+        elif block.label is not None:
+            items.append((_local_label(parent, block.label), block))
+    if items:
+        yield subparagraph, items
 
 
 def _local_label(parent: str, label: str) -> str:
@@ -193,12 +210,18 @@ def _article(
     blocks = tuple(b for b in all_blocks if not _has_role(b, "title"))
     intro = _first_text(blocks)
     is_amending = is_instruction_group(intro, blocks, language)
+    context = amending_context(intro, language, div, amended_ids)
+    if context is not None and not amended_ids:
+        raise ParseError(
+            f"{doc}.{language} amends the AI Act, but no AI Act provision ids were given for "
+            f"{language}; parse the AI Act ({AI_ACT_DOC}.{language}) first"
+        )
     scope = _Scope(
         doc,
         language,
         _article_heading(div, all_blocks, number),
         _descend_into_instructions(language) if is_amending else _always,
-        amending_context(intro, language, div, amended_ids),
+        context,
     )
     pid = f"art:{number}"
     yield _row(scope, pid, "article", None, render(blocks))
@@ -254,8 +277,9 @@ def parse_document(
 ) -> tuple[ParsedProvision, ...]:
     """Every provision of one EUR-Lex XHTML document, in document order.
 
-    `amended_ids` are the AI Act's provision ids; an amending act resolves its targets against
-    them. Raises `ParseError` if two units get the same id or no unit is found.
+    `amended_ids` are the AI Act's provision ids in `language`; an amending act resolves its
+    targets against them and can't be parsed without them. Raises `ParseError` if they are
+    missing for an amending act, if two units get the same id, or if no unit is found.
     """
     root = parse_html(content)
     rows: list[ParsedProvision] = []
@@ -323,10 +347,7 @@ def _write_if_changed(path: Path, text: str) -> bool:
     """Write `text` via a temporary file and rename, unless the file already holds it."""
     if path.exists() and path.read_text(encoding="utf-8") == text:
         return False
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".part")
-    tmp.write_text(text, encoding="utf-8")
-    tmp.replace(path)
+    write_atomic(path, text.encode("utf-8"))
     return True
 
 

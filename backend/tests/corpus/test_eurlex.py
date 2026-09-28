@@ -28,8 +28,10 @@ PARSED_DOCS = ("ai-act", "omnibus", "ai-act-consolidated")
 
 
 def parse_fixture(name: str, language: Language) -> dict[str, ParsedProvision]:
+    """An amending fixture (the Omnibus) resolves against the `oj` fixture's AI Act ids."""
     content = (FIXTURES / f"{name}.{language}.html").read_bytes()
-    return {row.provision_id: row for row in parse_document(content, name, language)}
+    ai_act_ids = frozenset(parse_fixture("oj", language)) if name == "omnibus" else frozenset()
+    return {row.provision_id: row for row in parse_document(content, name, language, ai_act_ids)}
 
 
 # --- Official Journal layout -------------------------------------------------------------------
@@ -54,6 +56,8 @@ def test_oj_layout_gives_article_paragraph_point_annex_and_recital_ids(language:
         "art:43:1",
         "art:43:1:a",
         "art:43:1:sub2:a",
+        "art:43:1:sub2:b",
+        "art:43:1:sub2:c",
         "annex:I",
         "annex:I:A",
         "annex:I:A:1",
@@ -93,6 +97,24 @@ def test_footnote_references_and_bodies_are_left_out() -> None:
 
     assert rows["art:3:14"].text.endswith("means a component of a product;")
     assert "footnote" not in rows["art:3"].text
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_a_restarted_list_goes_under_its_subparagraph_as_a_whole(language: Language) -> None:
+    """Art. 43(1): list one is (a); list two is (a)-(c), so its (b) and (c) are sub2 too, even
+    though list one has no (b) or (c)."""
+    rows = parse_fixture("oj", language)
+    points = [pid for pid in rows if pid.startswith("art:43:1:")]
+
+    assert points == ["art:43:1:a", "art:43:1:sub2:a", "art:43:1:sub2:b", "art:43:1:sub2:c"]
+    assert all(rows[pid].parent_id == "art:43:1" for pid in points)
+
+
+def test_committed_art_43_1_second_list_is_under_sub2() -> None:
+    rows = committed("ai-act", "en")
+    points = [pid for pid in rows if pid.startswith("art:43:1:")]
+
+    assert points == ["art:43:1:a", "art:43:1:b"] + [f"art:43:1:sub2:{x}" for x in "abcd"]
 
 
 def test_oj_layout_first_paragraph_line_loses_its_number() -> None:
@@ -273,7 +295,7 @@ def test_cli_parse_prints_counts_and_fails_cleanly(tmp_path: Path, raw_dir: Path
     failed = runner.invoke(cli.app, [*args, "--out-dir", str(tmp_path / "out")])
 
     assert ok.exit_code == 0, ok.output
-    assert "ai-act.en: 24 provisions" in ok.output
+    assert "ai-act.en: 26 provisions" in ok.output
     assert failed.exit_code == 1
     assert "sha256 differs" in failed.output
 

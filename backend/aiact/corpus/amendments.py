@@ -20,6 +20,7 @@ the AI Act's provision ids of the same language: where German counts an unnumber
 resolve to the same ids.
 """
 
+import logging
 import re
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -38,6 +39,8 @@ from aiact.corpus.eurlex_html import (
     render,
 )
 from aiact.corpus.sources import Language
+
+logger = logging.getLogger(__name__)
 
 AmendmentAction = Literal["replace", "insert", "add", "delete", "amend"]
 
@@ -172,7 +175,7 @@ class AmendingContext:
 
     language: Language
     known_ids: frozenset[str]
-    """The AI Act's provision ids in this language; empty means targets aren't checked."""
+    """The AI Act's provision ids in this language, which targets are checked against."""
     in_force_from: date | None
 
 
@@ -292,18 +295,26 @@ def _new_labels(noun: str | None, quoted: tuple[Block, ...], patterns: _Patterns
     return labels
 
 
+def _without_unknown_paragraph(container: list[str], known: frozenset[str]) -> list[str]:
+    """Drop a paragraph the article doesn't number: German `Artikel 113 Absatz 3` is the third
+    unnumbered paragraph, whose points are `art:113:<point>`."""
+    is_paragraph = container[0] == "art" and len(container) == 3
+    if is_paragraph and ":".join(container) not in known and ":".join(container[:2]) in known:
+        return container[:2]
+    return container
+
+
 def _fit(parts: list[str], known: frozenset[str]) -> str:
-    """The id for `parts`, adjusted to one the AI Act has (see the module docstring)."""
+    """The id for `parts`, or its longest prefix the AI Act has, with a warning if cut short."""
     pid = ":".join(parts)
-    if not known or pid in known:
+    if pid in known:
         return pid
-    if parts[0] == "art" and len(parts) >= 4:
-        without_paragraph = ":".join(parts[:2] + parts[3:])
-        if without_paragraph in known:
-            return without_paragraph
-    while len(parts) > 2 and ":".join(parts) not in known:
-        parts = parts[:-1]
-    return ":".join(parts)
+    fitted = parts
+    while len(fitted) > 2 and ":".join(fitted) not in known:
+        fitted = fitted[:-1]
+    truncated = ":".join(fitted)
+    logger.warning("amendment target %s isn't in the AI Act; truncated to %s", pid, truncated)
+    return truncated
 
 
 def _targets(
@@ -313,7 +324,7 @@ def _targets(
     quoted: tuple[Block, ...],
     ctx: AmendingContext,
 ) -> tuple[str, ...]:
-    containers = ref.containers()
+    containers = [_without_unknown_paragraph(c, ctx.known_ids) for c in ref.containers()]
     if action in ("insert", "add"):
         new = _new_labels(noun, quoted, PATTERNS[ctx.language])
         if noun in ("article", "annex") and new:
