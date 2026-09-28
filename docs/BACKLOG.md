@@ -83,9 +83,10 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: INIT › Evaluation (Metrics, Budget rules), Benchmark isolation 4. Input: the `aiact evaluate run` CLI from V1, and `eval_runs`. Output: `.claude/skills/eval/SKILL.md`. The skill runs a benchmark with a subset size, a cost cap and a held-out/all mode, refuses a full run without the user's go-ahead, and writes `eval/reports/run-<date>.md` quoting only stored numbers (with run_ids).
   DoD: a dry run on a 3-case subset works end to end through the skill; the report cites its run_id.
 
-- [ ] **T2 · Permission allowlist** · Deps: F2, F3, F4 (a few stories have run) · Type: agent
+- [x] **T2 · Permission allowlist** · Deps: F2, F3, F4 (a few stories have run) · Type: agent
   Output: an allowlist in `.claude/settings.json` built with the `fewer-permission-prompts` skill from real session history (for example `uv run`, `supabase`, `git worktree` and read-only git commands). Never allow `git push`, force operations or anything that reads secrets.
   DoD: the user has reviewed the allowlist; parallel workers run a story without read-only permission prompts.
+  **Outcome:** 19-entry read-only allowlist in .claude/settings.json (exact check commands, backlog reads, local supabase migration list and advisors, context7); no push, force, install, db reset, pytest/pyright wildcards or secret-printing commands; reviewed by the user. Parallel-run observation pending on the next wave.
 
 ## Phase 0 — Foundations
 
