@@ -155,10 +155,11 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Notes from merged stories: The draft high-risk guidelines are three EN-only PDFs in `data/raw/`: `guide-high-risk-general.en.pdf`, `guide-high-risk-annex-i.en.pdf`, `guide-high-risk-annex-iii.en.pdf` (ids in `data/manifest.yaml`).
   **Outcome:** 307 examples extracted and reviewed by the user (12 Annex I + 295 Annex III; 122 high / 185 not_high; 1 legally_ambiguous; 15 with verdict-flipping variants). Decision 001 accepted: split, with a mechanical counting rule and a 79-list anchor table for C2; Pile B size left open for B3.
 
-- [ ] **B3 · Commit the split (gate)** · Deps: B2 · Type: agent
+- [x] **B3 · Commit the split (gate)** · Deps: B2 · Type: agent
   Output: `backend/aiact/eval/split.py` (`aiact eval split`: seeded, stratified by area × verdict), which writes `eval/split.json` (`{mode: split|loo, seed, pile_a: [...], pile_b: [...]}`).
   DoD: committed in a commit of its own **before any file under `aiact/engine/` exists** (check: `git log --diff-filter=A -- backend/aiact/engine` is empty at that commit). Every area appears in both piles, where there is more than one example.
   Notes from merged stories: B2 (decision 001, accepted): mode `split`, 307 examples (hr-ex-001…307), stratify by `area` × `verdict` (18 strata, each ≥ 4). OPEN QUESTION to settle with the user first: Pile B size (a half split means ~150 examples for B4 to rewrite and the user to approve). Once split.json is committed the IDs are frozen.
+  **Outcome:** eval/split.json committed alone (2692490) before any engine file: half split, seed 20260928, Pile A 154 / Pile B 153 of 307, every area x verdict stratum in both piles; aiact eval split refuses to change it; test pins the frozen IDs, not a fresh run (decision 011).
 
 - [ ] **B4 · Rewrite the Pile B examples as company descriptions** · Deps: B3, F7 · Type: mixed
   Context: INIT › Benchmark isolation 3. Output: `eval/cases/commission_b/*.yaml` (description written in a company's voice: size, bought or built, business context, some irrelevant detail; label, label_citation, source_example_id). In LOO mode this covers all examples.
