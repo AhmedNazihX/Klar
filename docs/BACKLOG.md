@@ -102,6 +102,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **F2 · CI workflow** · Deps: F1, F8 · Parallel: F3–F7 · Type: agent
   Output: `.github/workflows/ci.yml` running uv sync, ruff, pyright, pytest and `aiact deps check` (F8) on push and PR. It gets a placeholder job for the isolation check (enabled in B13).
   DoD: the workflow passes on a pushed branch (or with `act`, if pushing is not wanted yet).
+  Notes from merged stories: db-marked tests FAIL (not skip) when `CI` is set, so the job must run `supabase start` (or a Postgres+pgvector service with `supabase/migrations/*.sql` applied), or deselect with `-m "not db"`. Run `uv run --project backend aiact deps check` after `uv sync` (offline). pytest already has `--block-network` (localhost allowed). Consider a `.python-version` file.
 
 - [x] **F3 · Result contract (Pydantic schemas)** · Deps: F1 · Parallel: F2, F4–F6 · Type: agent
   Context: INIT › How it works (Outcomes, Risk classes, Evidence tags, Deciding facts, Roles, Worked example), MCP tools. Output: `aiact/schemas/` with:
@@ -131,6 +132,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **F7 · Eval case schema + loader** · Deps: F3 · Type: agent
   Context: INIT › Evaluation (Test sets, Label mapping, Label rules). Output: `aiact/eval/cases.py`: `BenchmarkCase` (id, set name, language, description, label: risk_class / status / role / annex_point, label_citation, `source_example_id`, notes, tags), a YAML/JSONL loader for `eval/cases/<set>/*.yaml`, and the appliedAI label mapping as code. Directory skeleton `eval/cases/{commission_b,own,soft_pairs,consistency,qa,academic}/` and `eval/private/` (gitignored).
   DoD: the loader validates example files; the appliedAI mapping is unit-tested for all four labels, including the `out_of_scope` → disagreement-review flag.
+  Notes from merged stories: Result contract rules to respect: decision 010 + addendum (early ends only when the stopping step is settled; status derived from steps; `FollowUpQuestion` slug ids). `Obligation` in `aiact/schemas/obligations.py` is a placeholder for C7.
 
 - [x] **F8 · Dependency manifest** · Deps: F1 · Parallel: F3–F7 · Type: agent
   Context: INIT › Tech stack (Dev tooling), Risks (licence). Input: `backend/pyproject.toml`, `backend/uv.lock`. Output: `backend/aiact/deps.py` with a CLI group `aiact deps generate|check`; `docs/DEPENDENCIES.md`, generated and never edited by hand (a header saying so and naming the command; a table of direct deps with group runtime/dev, version constraint, locked version, licence and one-line summary; a table of every transitive package with locked version, licence and the direct deps that pull it in); `.githooks/pre-commit` (runs `generate` and stages the file when `pyproject.toml` or `uv.lock` is staged) and `.githooks/pre-push` (runs `check`), enabled with `git config core.hooksPath .githooks`, documented in `CLAUDE.md` › Commands. Versions and the dependency graph come from `uv.lock` (`tomllib`); licence and summary come from installed package metadata (`importlib.metadata`), `unknown` when missing. The output is deterministic (sorted, no timestamps) and leaves room for P4 to add a frontend section from the pnpm lockfile.
@@ -147,6 +149,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **B2 · Extract and count the Commission high-risk examples** · Deps: B1 · Type: mixed · Lane: Benchmark
   Context: INIT › Benchmark isolation 1–2, Open questions (count examples). Input: the draft high-risk guidelines PDF. Output: `eval/commission_examples/examples.jsonl` (example_id `hr-ex-001…`, Annex III area or Annex I, verdict high/not-high, page, original text) and `docs/decisions/001-commission-example-count.md` (counts per area and verdict).
   DoD: the user has checked the extraction against the PDF; the count is recorded, together with the resulting choice: split if there are about 40 or more examples, leave-one-out otherwise.
+  Notes from merged stories: The draft high-risk guidelines are three EN-only PDFs in `data/raw/`: `guide-high-risk-general.en.pdf`, `guide-high-risk-annex-i.en.pdf`, `guide-high-risk-annex-iii.en.pdf` (ids in `data/manifest.yaml`).
 
 - [ ] **B3 · Commit the split (gate)** · Deps: B2 · Type: agent
   Output: `backend/aiact/eval/split.py` (`aiact eval split`: seeded, stratified by area × verdict), which writes `eval/split.json` (`{mode: split|loo, seed, pile_a: [...], pile_b: [...]}`).
@@ -194,30 +197,37 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **C1 · EUR-Lex HTML parser** · Deps: B1 · Type: agent · Lane: Corpus (critical)
   Context: INIT › Tech stack (Ingestion), Corpus rules. Input: `data/raw/*` HTML. Output: `aiact/corpus/eurlex.py` → `data/parsed/<doc>.<lang>.jsonl`, split into article › paragraph › point, annex › point, and recital, with stable `provision_id`s that are identical across EN and DE. The Omnibus is parsed as amending text (which provisions it changes and the dates).
   DoD: tests against known provisions (Art. 5(1)(a), Art. 6(3), Annex III 4(a), Art. 50(2), Recital 53) in both languages; the EN and DE provision_id sets match for each document.
+  Notes from merged stories: Input list: `data/manifest.yaml` (B1). Raw file = `$AIACT_DATA_DIR/raw/<entry.file>`, set only when `available: true`; `available: null` means a failed fetch (re-run `aiact corpus fetch`, never treat as absent). Laws carry `celex`; the Omnibus is `32026R1744`. Verify each file's sha256 against the manifest before parsing (raw dir is shared across worktrees). Laws are Cellar XHTML identical to EUR-Lex (decision 008). DE exists for the Act, Omnibus and consolidated text.
 
 - [ ] **C2 · Guideline PDF ingestion (Docling)** · Deps: B1, B3 · Parallel: C1 · Type: agent · Lane: Corpus
   Input: guideline PDFs; `eval/split.json` is the **only** file under `eval/` this story may read, and only its `pile_b` ID list. Output: `aiact/corpus/guidelines.py` → `data/parsed/guide-*.jsonl`: chunks by section, each worked example as its own chunk tagged with `source_example_id`; Pile B chunks are dropped in split mode and kept but tagged in LOO mode.
   DoD: the chunk count and dropped IDs are logged; a test asserts that no Pile B ID appears in the output in split mode.
+  Notes from merged stories: Select guideline PDFs by `kind == "pdf"` in the manifest, not by `guide-*` id (the Code of Practice id is `code-of-practice-transparency`). The high-risk draft is 3 documents (see B2). PDF language is trusted from the registry: check it once Docling text exists. DE exists only for the definition and prohibited guidelines.
 
 - [ ] **C3 · Load the corpus into Postgres** · Deps: C1, C2, F4 · Type: agent · Lane: Corpus (critical)
   Output: `aiact/corpus/load.py` (upsert documents and provisions, set valid_from/valid_to for the original and amended versions, link EN and DE); a CLI `uv run aiact corpus load`.
   DoD: re-running changes nothing; row counts per document are printed and saved to `docs/corpus_stats.md`.
+  Notes from merged stories: Follow decision 009: upsert documents on `(doc_key, law_version, language)` (nulls not distinct); `doc_key` = manifest id; the Omnibus is `is_amending`; when a document's sha256 changes, replace its provisions in one transaction, unchanged means skip; amended document carries the full history with slices from 2024-08-01 split at Omnibus dates parsed by C1; `valid_from` is required.
 
 - [ ] **C4 · Embed the corpus** · Deps: C3, F6 · Type: agent · Lane: Corpus (critical)
   Output: `aiact/corpus/embed.py` (batching, model name recorded per row, skips rows already embedded with the same model); a CLI `aiact corpus embed --model qwen3|openai3l --dims 1536|1024`.
   DoD: every provision has a Qwen3 1536-d vector; the vectors are normalised; the cost is logged.
+  Notes from merged stories: Skip a provision only if `(provision_row_id, model, dims)` exists AND `content_sha256` matches the provision's (decision 009). Only the `qwen/qwen3-embedding-8b` / 1536 arm has a partial HNSW index; each new (model, dims) arm needs its own partial index (new migration). F6 found Nebius returns vectors already normalised.
 
 - [ ] **C5 · `get_provision`** · Deps: C3 · Parallel: C4 · Type: agent
   Context: INIT › MCP tools. Output: `aiact/retrieval/provisions.py`: `get_provision(provision_id, language, law_version|as_of)` → text, version, language, status, english_only flag, and the DISCLAIMER; a fallback to EN with the flag set when DE is missing.
   DoD: tests cover the original and amended text of an article changed by the Omnibus, and the fallback for a guideline that exists only in English.
+  Notes from merged stories: Lookup rule (decision 009): `(d.law_version = $v or d.law_version is null) and not d.is_amending`; `as_of` resolves only against the amended document; `original` is an explicit view, never a fallback.
 
 - [ ] **C6 · `search_ai_act` (hybrid)** · Deps: C4 · Type: agent · Lane: Corpus (critical)
   Output: `aiact/retrieval/search.py`: vector and full-text search fused with RRF; filters for as_of date, law_version, language, doc_type, and `exclude_source_example_ids`; the query-side instruction is applied only to queries.
   DoD: tests show a softly worded tenant-rent query retrieves Annex III 5(b) in the top 5; a German query works; the exclude filter works.
+  Notes from merged stories: Use the decision-009 lookup rule so guidance (law_version null) stays searchable. Vector queries must use the index's cast and predicate and `set local hnsw.iterative_scan = relaxed_order`. Exclude filter: `source_example_id is null or not (source_example_id = any(...))`. The German stemmer is uneven (System→syst, Systeme→system): consider prefix queries.
 
 - [ ] **C7 · Obligations table + `list_obligations`** · Deps: F3, F4 · Parallel: the whole Corpus lane · Type: mixed
   Context: INIT › Scope (Obligations checklist), Roles, Omnibus details, Situation (dates). Output: `supabase/seed/obligations.yaml` (role × risk class → duty, article ref, applies_from date, SME/small-mid-cap relief note), migration `003_obligations.sql`, and `aiact/obligations/list.py`.
   DoD: every row cites an article; hand-checked tests for deployer/high-risk (Art. 26 duties from 2 Dec 2027), provider/high-risk, limited-risk transparency, and importer/distributor; the user has reviewed the dates.
+  Notes from merged stories: Replace or extend the placeholder `Obligation` model in `aiact/schemas/obligations.py`. Point `[db.seed] sql_paths` in `supabase/config.toml` at the seed. Schema-changing: run it alone.
 
 ## Phase 3 — Week-one experiments
 
@@ -227,14 +237,17 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **X1 · Embedding comparison** · Deps: C6, X0, B7, V6 · Type: agent
   Output: `backend/aiact/eval/experiments/embeddings.py` and `docs/decisions/003-embeddings.md`: RAGAS context recall and precision for Qwen3 at 1536-d, Qwen3 at 1024-d and OpenAI 3-large, on the Annex-matching and Q&A sets, with results stored in `eval_runs`.
   DoD: a decision is recorded with the numbers; the default in settings is updated if it changes.
+  Notes from merged stories: Make the embedding query instruction a setting (e.g. `EMBEDDING_QUERY_INSTRUCTION`); the current default in `aiact/llm/embeddings.py` is a placeholder. Model/provider settings are still empty in the env example.
 
 - [ ] **X2 · Engine model smoke test** · Deps: F3, F6, C5, C6, B4 · Type: agent
   Context: INIT › Engine safety net. Output: `backend/aiact/eval/experiments/smoke.py`, a single-prompt classifier with tool calls to `get_provision` and `search_ai_act` and structured output as `ClassificationResult`, run with GPT-6 Luna and with Gemini 3.1 Flash-Lite on 20 headline cases; `docs/decisions/004-engine-model.md`.
   DoD: the rate of broken outputs or tool calls and the accuracy are recorded for both models; the INIT rule is applied (Luna is dropped if more than 10% broken or clearly worse); the engine model is set in settings.
+  Notes from merged stories: Structured output: cross-field validators aren't in the JSON Schema, so contract failures count as broken outputs (decision 010 addendum). Gemini 3.1 Flash-Lite was allowed in the user's OpenRouter guardrail on 2026-09-28. Slugs checked by F6: `openai/gpt-6-luna` (pinned `openai/gpt-6-luna-20260922`), `google/gemini-3.1-flash-lite`.
 
 - [ ] **X3 · OpenRouter feature and cost check** · Deps: F6 · Type: agent
   Output: `docs/decisions/005-openrouter.md`: whether prompt caching works for the chosen models, which EU routes and ZDR options exist, the context window, and token use for one sample classification; the spending cap is set (the user sets it in the OpenRouter dashboard).
   DoD: every question in INIT › Open questions about OpenRouter has an answer.
+  Notes from merged stories: Already known from F6: GPT-6 Luna works with `zdr` + `data_collection: deny` via Azure (an `azure/eu` endpoint exists) and spends reasoning tokens; Qwen3-Embedding-8B on Nebius honours `dimensions=1536` and returns normalised vectors; ZDR endpoints are listed at `GET https://openrouter.ai/api/v1/endpoints/zdr`; F6's recording calls cost about $0.00002.
 
 ## Phase 4 — Engine
 
@@ -286,6 +299,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **V4 · Judge + judge validation** · Deps: F6 · Type: mixed
   Context: INIT › Judge. Output: `aiact/eval/judge.py` (Jev returns yes/no with a probability; unsure cases go to Claude Haiku 4.5 with a written reason) and `eval/judge_validation/` (about 50 hand-labelled EN and DE cases, labelled by the user); `docs/decisions/006-judge.md` (agreement and calibration).
   DoD: the validation report exists; the unsure threshold is chosen.
+  Notes from merged stories: Jev's OpenRouter slug is unclear: the model list shows only `typesafe/jev-router`, the ZDR list has `typesafe/jev-1.13-20260917`. Judge backup: `anthropic/claude-haiku-4.5`.
 
 - [ ] **V5 · Judged metrics** · Deps: V4, E10 · Type: agent
   Output: citation support, evidence-tag accuracy and a Q&A support scorer, plugged into V1. DoD: scores appear in the run report.
