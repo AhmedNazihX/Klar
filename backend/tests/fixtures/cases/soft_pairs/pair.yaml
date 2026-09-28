@@ -1,0 +1,21 @@
+# Loader fixture only: made-up cases, not benchmark cases and never labelled for scoring.
+- id: fixture-soft-001a
+  set_name: soft_pairs
+  language: en
+  description: A retailer's tool scores and ranks job applicants for HR.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:a"
+  label_citation: ["annex:III:4:a", "art:6:3"]
+  tags: ["pair:fixture-001"]
+- id: fixture-soft-001b
+  set_name: soft_pairs
+  language: en
+  description: A retailer's tool helps HR organise incoming applications.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:a"
+  label_citation: ["annex:III:4:a", "art:6:3"]
+  tags: ["pair:fixture-001"]
