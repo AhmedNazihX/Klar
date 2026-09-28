@@ -39,7 +39,8 @@ Per stratum (total / Pile A / Pile B):
 ## Consequences
 - `eval/split.json` is committed in a commit of its own, before any file under `backend/aiact/engine/` exists.
   From then on the IDs are frozen: `aiact eval split` refuses to write a different assignment, and a test checks
-  that the committed file equals a fresh run on `examples.jsonl`.
+  that the committed file covers exactly the IDs in `examples.jsonl` with every area in both piles. A later
+  verdict correction in `examples.jsonl` changes the strata but never moves an example between piles.
 - B4 rewrites the 153 Pile B examples. C2 drops the same 153 IDs from the guideline chunks.
 - Revisit only if the Commission adopts final high-risk guidelines that renumber the examples (see 001); that
   would mean a new extraction and a new split, not an edit of this one.

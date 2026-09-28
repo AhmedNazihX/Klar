@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from aiact.cli import app
 from aiact.eval.split import (
+    DEFAULT_SEED,
     EXAMPLES_FILE,
     SPLIT_FILE,
     ExampleRow,
@@ -17,7 +18,6 @@ from aiact.eval.split import (
     check_every_area_in_both_piles,
     load_examples,
     make_split,
-    render,
     write_split,
 )
 
@@ -94,10 +94,11 @@ def test_a_single_example_area_may_sit_in_one_pile() -> None:
     assert len(split.pile_b) == 2
 
 
-def test_piles_that_overlap_are_rejected() -> None:
+@pytest.mark.parametrize("mode", list(SplitMode))
+def test_piles_that_overlap_are_rejected(mode: SplitMode) -> None:
     with pytest.raises(ValueError, match="never both"):
         Split(
-            mode=SplitMode.SPLIT,
+            mode=mode,
             seed=0,
             pile_b_fraction=0.5,
             stratify_by=("area",),
@@ -151,10 +152,16 @@ def test_cli_writes_the_split(tmp_path: Path) -> None:
 # --- the committed split -----------------------------------------------------------------------
 
 
-def test_the_committed_split_matches_a_fresh_run_on_the_examples() -> None:
-    """`eval/split.json` is what `aiact eval split` produces, and it covers all 307 examples."""
+def test_the_committed_split_covers_exactly_the_examples() -> None:
+    """`eval/split.json` freezes the IDs: all 307 examples, every area in both piles.
+
+    It is not compared with a fresh run, because a later verdict correction in `examples.jsonl`
+    changes the strata but must not move an example between piles (decision 011).
+    """
     rows = load_examples(EXAMPLES_FILE)
     committed = Split.model_validate_json(SPLIT_FILE.read_text(encoding="utf-8"))
-    assert SPLIT_FILE.read_text(encoding="utf-8") == render(make_split(rows))
+    assert committed.mode is SplitMode.SPLIT
+    assert committed.seed == DEFAULT_SEED
+    assert set(committed.pile_a) | set(committed.pile_b) == {row.example_id for row in rows}
     assert len(committed.pile_a) + len(committed.pile_b) == len(rows) == 307
     check_every_area_in_both_piles(rows, committed)

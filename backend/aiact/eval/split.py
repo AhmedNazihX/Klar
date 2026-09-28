@@ -64,8 +64,8 @@ class Split(ContractModel):
 
     @model_validator(mode="after")
     def _piles_are_disjoint(self) -> Self:
-        if self.mode is SplitMode.SPLIT and set(self.pile_a) & set(self.pile_b):
-            raise ValueError("in split mode an example is in Pile A or Pile B, never both")
+        if set(self.pile_a) & set(self.pile_b):
+            raise ValueError("an example is in Pile A or Pile B, never both")
         return self
 
 
