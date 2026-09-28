@@ -1,0 +1,94 @@
+# Hand-made lockfile for tests/test_deps.py, in the uv.lock format.
+version = 1
+revision = 3
+requires-python = "==3.12.*"
+
+[[package]]
+name = "demo"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "alpha", extra = ["fast"] },
+    { name = "beta" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "gamma" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alpha", extras = ["fast"], specifier = ">=1.0" },
+    { name = "beta", marker = "sys_platform == 'linux'" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "gamma", specifier = ">=3" },
+]
+
+[[package]]
+name = "alpha"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "shared" },
+]
+
+[package.optional-dependencies]
+fast = [
+    { name = "speedup" },
+]
+
+[[package]]
+name = "beta"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "shared" },
+    { name = "leaf", marker = "sys_platform == 'win32'" },
+]
+
+[[package]]
+name = "gamma"
+version = "3.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "alpha" },
+]
+
+[[package]]
+name = "leaf"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "shared"
+version = "5.0.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = ["sys_platform == 'linux'"]
+dependencies = [
+    { name = "leaf" },
+]
+
+[package.optional-dependencies]
+extra = [
+    { name = "leaf" },
+]
+
+[[package]]
+name = "shared"
+version = "4.9.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = ["sys_platform != 'linux'"]
+
+[package.optional-dependencies]
+extra = [
+    { name = "speedup" },
+]
+
+[[package]]
+name = "speedup"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }

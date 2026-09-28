@@ -1,0 +1,90 @@
+{
+  "annotated-doc==0.0.5": {
+    "licence": "MIT",
+    "summary": "Document parameters, class attributes, return types, and variables inline, with Annotated."
+  },
+  "annotated-types==0.8.0": {
+    "licence": "MIT",
+    "summary": "Reusable constraint types to use with typing.Annotated"
+  },
+  "colorama==0.4.6": {
+    "licence": "BSD License",
+    "summary": "Cross-platform colored terminal text."
+  },
+  "iniconfig==2.3.0": {
+    "licence": "MIT",
+    "summary": "brain-dead simple config-ini parsing"
+  },
+  "markdown-it-py==4.2.0": {
+    "licence": "MIT License",
+    "summary": "Python port of markdown-it. Markdown parsing, done right!"
+  },
+  "mdurl==0.1.2": {
+    "licence": "MIT License",
+    "summary": "Markdown URL utilities"
+  },
+  "nodeenv==1.10.0": {
+    "licence": "BSD",
+    "summary": "Node.js virtual environment builder"
+  },
+  "packaging==26.3": {
+    "licence": "Apache-2.0 OR BSD-2-Clause",
+    "summary": "Core utilities for Python packages"
+  },
+  "pluggy==1.6.0": {
+    "licence": "MIT",
+    "summary": "plugin and hook calling mechanisms for python"
+  },
+  "pydantic-core==2.46.5": {
+    "licence": "MIT",
+    "summary": "Core functionality for Pydantic validation and serialization"
+  },
+  "pydantic-settings==2.15.0": {
+    "licence": "MIT",
+    "summary": "Settings management using Pydantic"
+  },
+  "pydantic==2.13.5": {
+    "licence": "MIT",
+    "summary": "Data validation using Python type hints"
+  },
+  "pygments==2.21.0": {
+    "licence": "BSD-2-Clause",
+    "summary": "Pygments is a syntax highlighting package written in Python."
+  },
+  "pyright==1.1.414": {
+    "licence": "MIT",
+    "summary": "Command line wrapper for pyright"
+  },
+  "pytest==9.1.1": {
+    "licence": "MIT",
+    "summary": "pytest: simple powerful testing with Python"
+  },
+  "python-dotenv==1.2.3": {
+    "licence": "BSD-3-Clause",
+    "summary": "Read key-value pairs from a .env file and set them as environment variables"
+  },
+  "rich==15.0.0": {
+    "licence": "MIT",
+    "summary": "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
+  },
+  "ruff==0.16.9": {
+    "licence": "MIT",
+    "summary": "An extremely fast Python linter and code formatter, written in Rust."
+  },
+  "shellingham==1.5.4": {
+    "licence": "ISC License",
+    "summary": "Tool to Detect Surrounding Shell"
+  },
+  "typer==0.27.2": {
+    "licence": "MIT",
+    "summary": "Typer, build great CLIs. Easy to code. Based on Python type hints."
+  },
+  "typing-extensions==4.16.0": {
+    "licence": "PSF-2.0",
+    "summary": "Backported and Experimental Type Hints for Python 3.9+"
+  },
+  "typing-inspection==0.4.4": {
+    "licence": "MIT",
+    "summary": "Runtime typing introspection tools"
+  }
+}

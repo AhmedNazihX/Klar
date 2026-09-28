@@ -1,0 +1,17 @@
+#!/bin/sh
+# A merge commit skips pre-commit, so a merge can bring in lockfile changes with a stale
+# docs/DEPENDENCIES.md (story F8). This runs the pre-commit regeneration. Git has already written
+# the merge tree, so files staged here would not reach the merge commit: when regeneration changed
+# anything, the merge stops with the files staged, and `git commit --no-edit` finishes it.
+# Enable once per clone: git config core.hooksPath .githooks
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+before=$(git write-tree)
+.githooks/pre-commit
+if [ "$(git write-tree)" != "$before" ]; then
+    echo "pre-merge-commit: the merge left docs/DEPENDENCIES.md stale; it is now regenerated and staged." >&2
+    echo "Finish the merge with: git commit --no-edit" >&2
+    exit 1
+fi

@@ -52,6 +52,19 @@ When the user confirms, run from the main checkout:
 git merge --no-ff story/<ID>-<slug> -m "merge: story <ID> <title>"
 ```
 
+If the merge changed `backend/pyproject.toml` or `backend/uv.lock`, make sure the dependency manifest
+matches. With hooks enabled, `pre-merge-commit` regenerates and stages the files, then stops the merge;
+finish it with `git commit --no-edit`. Without hooks, the check catches it:
+
+```bash
+uv run --project backend aiact deps check \
+  || { uv run --project backend aiact deps generate \
+       && git add docs/DEPENDENCIES.md docs/dependency-licences.json \
+       && git commit --amend --no-edit; }
+```
+
+The amend folds the regenerated files into the merge commit, which is still local and unpushed.
+
 Then check that the tests still pass on `main` after the merge (skip this if `backend/` doesn't exist yet):
 
 ```bash

@@ -14,7 +14,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── AE.CAP_afa.md                    course brief
 ├── .gitignore
 ├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check, label-freeze check (F2, B10, B13)
-├── .githooks/                       pre-commit regenerates DEPENDENCIES.md, pre-push checks it (F8)
+├── .githooks/                       pre-commit and pre-merge-commit regenerate DEPENDENCIES.md, pre-push checks it (F8)
 │
 ├── backend/                         the only Python project (uv)
 │   ├── pyproject.toml               deps, ruff, pyright, pytest config; `aiact` console script (F1)
@@ -90,6 +90,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── BACKLOG.md                   stories, critical path, waves
 │   ├── LAYOUT.md                    this file
 │   ├── DEPENDENCIES.md              generated from pyproject + lockfiles; never edited by hand (F8)
+│   ├── dependency-licences.json     licence + summary cache per name==version, written by `aiact deps generate` (F8)
 │   ├── corpus_stats.md              row counts per document (C3)
 │   └── decisions/NNN-<slug>.md      decision records (/decision skill)
 │
