@@ -63,8 +63,9 @@ def test_report_is_a_markdown_table_of_every_metric() -> None:
     assert "| Consistency | n/a | 0/0 |" in lines
     assert "| Citation existence (at run time) | 100.0% | 2/2 |" in lines
     assert "| Ambiguous answered needs-more-information | 0 | |" in lines
+    assert "| Academic out-of-scope review | 0 | |" in lines
     table = [line for line in lines if line.startswith("| ")]
-    assert len(table) == 15  # header, separator and 13 metric rows
+    assert len(table) == 16  # header, separator and 14 metric rows
 
 
 def test_report_names_no_description() -> None:

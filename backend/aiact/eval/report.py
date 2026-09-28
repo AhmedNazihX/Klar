@@ -171,6 +171,7 @@ def _rows(metrics: RunMetrics) -> list[tuple[str, Rate | int]]:
         ("Consistency", metrics.consistency),
         ("Citation existence (at run time)", metrics.citation_existence),
         ("appliedAI disagreement review", metrics.appliedai_disagreement_review),
+        ("Academic out-of-scope review", metrics.academic_disagreement_review),
     ]
 
 

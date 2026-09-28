@@ -3,8 +3,10 @@ import pytest
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseSet
 from aiact.eval.metrics import (
     CONSISTENCY_GROUP_PREFIX,
+    LOW_OR_OUT_OF_SCOPE_TAG,
     SOFT_WORDING_TAG,
     Rate,
+    academic_review_count,
     annex_point_match,
     basis_matches,
     case_scores,
@@ -102,6 +104,90 @@ def test_appliedai_accuracy_uses_the_mapping(
 ) -> None:
     labelled = appliedai_case("ai-1", label)
     assert risk_class_match(outcome(labelled, result(predicted, status))) is expected
+
+
+# --- academic set: low bucket and low-or-out-of-scope ------------------------------------------
+
+LOW = [R.LIMITED_RISK, R.MINIMAL_RISK]
+
+
+@pytest.mark.parametrize("labelled", LOW)
+@pytest.mark.parametrize("predicted", list(RiskClass))
+def test_academic_low_labels_share_one_bucket(labelled: RiskClass, predicted: RiskClass) -> None:
+    academic = case("acad", labelled, set_name=CaseSet.ACADEMIC)
+    assert risk_class_match(outcome(academic, result(predicted))) is (predicted in LOW)
+
+
+@pytest.mark.parametrize(
+    ("labelled", "predicted"),
+    [(R.LIMITED_RISK, R.MINIMAL_RISK), (R.MINIMAL_RISK, R.LIMITED_RISK)],
+)
+def test_own_set_still_scores_limited_and_minimal_exactly(
+    labelled: RiskClass, predicted: RiskClass
+) -> None:
+    assert risk_class_match(outcome(case("own", labelled), result(predicted))) is False
+    assert risk_class_match(outcome(case("own", labelled), result(labelled))) is True
+
+
+def test_academic_high_label_is_still_exact() -> None:
+    academic = case("acad", R.HIGH_RISK, set_name=CaseSet.ACADEMIC)
+    assert risk_class_match(outcome(academic, result(R.LIMITED_RISK))) is False
+    assert false_low_risk(outcome(academic, result(R.LIMITED_RISK))) is True
+    assert false_low_risk(outcome(academic, result(R.MINIMAL_RISK))) is True
+
+
+@pytest.mark.parametrize("predicted", list(RiskClass))
+def test_tagged_academic_low_case_also_accepts_out_of_scope(predicted: RiskClass) -> None:
+    tagged = case(
+        "acad", R.MINIMAL_RISK, set_name=CaseSet.ACADEMIC, tags=(LOW_OR_OUT_OF_SCOPE_TAG,)
+    )
+    expected = predicted in {*LOW, R.OUT_OF_SCOPE}
+    assert risk_class_match(outcome(tagged, result(predicted))) is expected
+
+
+def test_untagged_academic_low_case_rejects_out_of_scope() -> None:
+    academic = case("acad", R.MINIMAL_RISK, set_name=CaseSet.ACADEMIC)
+    assert risk_class_match(outcome(academic, result(R.OUT_OF_SCOPE))) is False
+
+
+def test_the_tag_means_nothing_outside_the_academic_set() -> None:
+    own = case("own", R.MINIMAL_RISK, tags=(LOW_OR_OUT_OF_SCOPE_TAG,))
+    assert risk_class_match(outcome(own, result(R.OUT_OF_SCOPE))) is False
+    assert risk_class_match(outcome(own, result(R.LIMITED_RISK))) is False
+
+
+def test_academic_review_counts_out_of_scope_answers_on_tagged_cases() -> None:
+    tag = (LOW_OR_OUT_OF_SCOPE_TAG,)
+    outcomes = [
+        outcome(
+            case("a", R.MINIMAL_RISK, set_name=CaseSet.ACADEMIC, tags=tag), result(R.OUT_OF_SCOPE)
+        ),
+        outcome(
+            case("b", R.MINIMAL_RISK, set_name=CaseSet.ACADEMIC, tags=tag), result(R.MINIMAL_RISK)
+        ),
+        outcome(case("c", R.MINIMAL_RISK, set_name=CaseSet.ACADEMIC, tags=tag), failed=True),
+        outcome(case("d", R.MINIMAL_RISK, set_name=CaseSet.ACADEMIC), result(R.OUT_OF_SCOPE)),
+        outcome(case("e", R.MINIMAL_RISK, tags=tag), result(R.OUT_OF_SCOPE)),
+    ]
+    assert academic_review_count(outcomes) == 1
+    assert summarize(outcomes, None).academic_disagreement_review == 1
+
+
+@pytest.mark.parametrize(
+    "labelled",
+    [
+        case("acad", R.MINIMAL_RISK, status=Status.LEGALLY_AMBIGUOUS),
+        case("acad", R.HIGH_RISK),
+    ],
+    ids=["ambiguous", "high-risk"],
+)
+def test_review_count_follows_accuracy_for_tagged_non_low_cases(labelled: BenchmarkCase) -> None:
+    tagged = labelled.model_copy(
+        update={"set_name": CaseSet.ACADEMIC, "tags": (LOW_OR_OUT_OF_SCOPE_TAG,)}
+    )
+    answered = outcome(tagged, result(R.OUT_OF_SCOPE))
+    assert risk_class_match(answered) is not True
+    assert academic_review_count([answered]) == 0
 
 
 # --- false-low-risk and downgrade --------------------------------------------------------------

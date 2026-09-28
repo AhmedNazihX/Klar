@@ -16,9 +16,9 @@ import typer
 from aiact import deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
-from aiact.eval import citation_index, metrics, records, report, runner
+from aiact.eval import academic, citation_index, metrics, records, report, runner
 from aiact.eval import split as eval_split
-from aiact.eval.cases import CaseFileError, CaseSet
+from aiact.eval.cases import CaseFileError, CaseSet, load_cases
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
 from aiact.settings import get_settings
@@ -104,6 +104,38 @@ def corpus_parse(
 @eval_app.callback()
 def eval_() -> None:
     """Benchmark split, runs and metrics."""
+
+
+@eval_app.command("academic-import")
+def eval_academic_import(
+    source: Annotated[Path, typer.Argument(help="scenarios.json from the davidath repo")],
+    out_dir: Annotated[
+        Path | None, typer.Option(help="Where the YAML goes [default: repo eval/cases/academic]")
+    ] = None,
+    overrides: Annotated[
+        Path, typer.Option(help="The spot-check label overrides to apply.")
+    ] = academic.OVERRIDES_FILE,
+) -> None:
+    """Convert the academic benchmark's scenarios into cases, one YAML file per risk class,
+    with the spot-check overrides applied."""
+    out_path = out_dir or academic.ACADEMIC_DIR
+    try:
+        scenarios = academic.read_scenarios(source, academic.SOURCE_SHA256)
+        cases = academic.build_cases(scenarios, academic.read_overrides(overrides))
+    except CaseFileError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    for path in academic.write_cases(cases, out_path):
+        typer.echo(f"written: {path}")
+    tag = metrics.LOW_OR_OUT_OF_SCOPE_TAG
+    typer.echo(f"{len(cases)} cases, {sum(tag in case.tags for case in cases)} tagged {tag}")
+
+
+@eval_app.command("academic-sample")
+def eval_academic_sample() -> None:
+    """Print the seeded spot-check sample (5 cases per risk class) of the imported cases."""
+    for case in academic.spotcheck_sample(load_cases(CaseSet.ACADEMIC)):
+        typer.echo(case.id)
 
 
 @eval_app.command("run")
