@@ -7,10 +7,12 @@ name = "aiact"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "httpx" },
     { name = "langchain-openrouter" },
     { name = "openrouter" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
+    { name = "pyyaml" },
     { name = "typer" },
 ]
 
@@ -24,10 +26,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "langchain-openrouter", specifier = ">=0.2.9" },
     { name = "openrouter", specifier = ">=0.11.46" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.6" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "typer", specifier = ">=0.27.2" },
 ]
 

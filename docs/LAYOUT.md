@@ -26,7 +26,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6)
-│   │   ├── corpus/                  fetch.py (B1), eurlex.py (C1), guidelines.py (C2), load.py (C3), embed.py (C4)
+│   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py (C1), guidelines.py (C2), load.py (C3),
+│   │   │                            embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6)
 │   │   ├── obligations/             list.py: list_obligations (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)

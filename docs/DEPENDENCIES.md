@@ -15,10 +15,12 @@ Source: `backend/uv.lock`.
 
 | Package | Group | Constraint | Locked | Licence | Summary |
 | --- | --- | --- | --- | --- | --- |
+| httpx | runtime | >=0.28.1 | 0.28.1 | BSD-3-Clause | The next generation HTTP client. |
 | langchain-openrouter | runtime | >=0.2.9 | 0.2.9 | MIT | An integration package connecting OpenRouter and LangChain |
 | openrouter | runtime | >=0.11.46 | 0.11.46 | Apache-2.0 | Official Python Client SDK for OpenRouter. |
 | psycopg[binary] | runtime | >=3.3.6 | 3.3.6 | LGPL-3.0-only | PostgreSQL database adapter for Python |
 | pydantic-settings | runtime | >=2.15.0 | 2.15.0 | MIT | Settings management using Pydantic |
+| pyyaml | runtime | >=6.0.3 | 6.0.3 | MIT | YAML parser and emitter for Python |
 | typer | runtime | >=0.27.2 | 0.27.2 | MIT | Typer, build great CLIs. Easy to code. Based on Python type hints. |
 | pyright | dev | >=1.1.414 | 1.1.414 | MIT | Command line wrapper for pyright |
 | pytest | dev | >=9.1.1 | 9.1.1 | MIT | pytest: simple powerful testing with Python |
@@ -31,18 +33,17 @@ Source: `backend/uv.lock`.
 | --- | --- | --- | --- |
 | annotated-doc | 0.0.5 | MIT | typer |
 | annotated-types | 0.8.0 | MIT | langchain-openrouter, openrouter, pydantic-settings |
-| anyio | 4.15.1 | MIT | langchain-openrouter, openrouter |
-| certifi | 2026.7.22 | MPL-2.0 | langchain-openrouter, openrouter |
+| anyio | 4.15.1 | MIT | httpx, langchain-openrouter, openrouter |
+| certifi | 2026.7.22 | MPL-2.0 | httpx, langchain-openrouter, openrouter |
 | charset-normalizer | 3.5.1 | MIT | langchain-openrouter |
 | colorama | 0.4.6 | BSD License | pytest, pytest-recording, typer |
 | distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter |
-| h11 | 0.16.0 | MIT | langchain-openrouter, openrouter |
-| httpcore | 1.0.9 | BSD-3-Clause | langchain-openrouter, openrouter |
+| h11 | 0.16.0 | MIT | httpx, langchain-openrouter, openrouter |
+| httpcore | 1.0.9 | BSD-3-Clause | httpx, langchain-openrouter, openrouter |
 | httpcore2 | 2.13.1 | BSD-3-Clause | langchain-openrouter |
-| httpx | 0.28.1 | BSD-3-Clause | langchain-openrouter, openrouter |
 | httpx2 | 2.13.1 | BSD-3-Clause | langchain-openrouter |
 | httpx2-jsfetch | 1.0 | BSD-3-Clause | langchain-openrouter |
-| idna | 3.20 | BSD-3-Clause | langchain-openrouter, openrouter |
+| idna | 3.20 | BSD-3-Clause | httpx, langchain-openrouter, openrouter |
 | iniconfig | 2.3.0 | MIT | pytest, pytest-recording |
 | jsonpatch | 1.33 | Modified BSD License | langchain-openrouter |
 | jsonpath-python | 1.1.6 | MIT License | langchain-openrouter, openrouter |
@@ -61,7 +62,6 @@ Source: `backend/uv.lock`.
 | pydantic-core | 2.41.5 | MIT | langchain-openrouter, openrouter, pydantic-settings |
 | pygments | 2.21.0 | BSD-2-Clause | pytest, pytest-recording, typer |
 | python-dotenv | 1.2.3 | BSD-3-Clause | pydantic-settings |
-| pyyaml | 6.0.3 | MIT | langchain-openrouter, pytest-recording |
 | requests | 2.34.2 | Apache-2.0 | langchain-openrouter |
 | requests-toolbelt | 1.0.0 | Apache 2.0 | langchain-openrouter |
 | rich | 15.0.0 | MIT | typer |
@@ -69,7 +69,7 @@ Source: `backend/uv.lock`.
 | sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter |
 | tenacity | 9.1.4 | Apache 2.0 | langchain-openrouter |
 | truststore | 0.10.4 | MIT | langchain-openrouter |
-| typing-extensions | 4.16.0 | PSF-2.0 | langchain-openrouter, openrouter, psycopg, pydantic-settings, pyright |
+| typing-extensions | 4.16.0 | PSF-2.0 | httpx, langchain-openrouter, openrouter, psycopg, pydantic-settings, pyright |
 | typing-inspection | 0.4.4 | MIT | langchain-openrouter, openrouter, pydantic-settings |
 | tzdata | 2026.4 | Apache-2.0 | psycopg |
 | urllib3 | 2.8.0 | MIT | langchain-openrouter |
