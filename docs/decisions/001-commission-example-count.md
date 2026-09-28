@@ -22,13 +22,15 @@ further down names every counted list with its first and last ID, so the rule ca
      (anchor rows 1–5). Para. (43) holds two systems: the gas-appliance optimiser, then the heating-schedule
      optimiser ("Conversely, …"). Para. (49) is one example, the smart thermostat.
    - `guide-high-risk-annex-iii`:
-     - every list under a heading that contains "Practical example", singular or plural, matched
-       case-insensitively. There are 72 of these. The printed headings vary: most read "a)/b)/c) Practical
+     - every list under a heading line that begins with "a)", "b)" or "c)" and contains "Practical example",
+       singular or plural, matched case-insensitively. There are 72 of these. Two running-text sentences also
+       mention practical examples (the disclaimer on p. 5 and para. (434) on p. 142); they are not headings and no
+       list follows them. The printed headings vary: most read "a)/b)/c) Practical
        examples of AI systems falling within / outside …", but variants include "Practical example**s for** AI
        systems" (4(b) c), 6(b) a) and b)), "Practical example **of an AI system**" (for example critical digital
        infrastructure a), gas a), 7(a) a)), a heading without "falling" (heating a)), and "falling within **the
-       scope of** point 6(b)". Three headings print the letter on a line of its own (5(c) a), 5(d) a) and c));
-       it is still part of the heading.
+       scope of** point 6(b)". Three headings wrap onto a second line (5(c) a), 5(d) a) and c)), and some
+       text extractors split the letter from the rest; the letter is still part of the heading.
      - exactly two further lists that have no such heading, named here explicitly:
        - the cybersecurity list in section 3.2.1, introduced by "Examples of AI systems used solely for
          cybersecurity purposes, thus falling outside the use case of point 2 of Annex III AI Act:" (PDF page 41,
