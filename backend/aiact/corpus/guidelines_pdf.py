@@ -7,9 +7,11 @@ item. This module turns that into a flat, normalised sequence the chunker can wa
 - a list marker that Docling left inside the text ("- Facial …", "(196) An AI …", "o AI …") or
   mislabelled (a bold bullet title read as a heading) becomes the block's `marker`;
 - a paragraph that runs over a page break is joined back: a block that opens a new page with a
-  lower-case letter continues the previous body block (footnotes in between are skipped).
+  lower-case letter continues the previous body block (footnotes in between are skipped);
+- a paragraph number that breaks the document's sequence (a quoted "(1)") becomes plain text.
 """
 
+import importlib.util
 import re
 from dataclasses import dataclass, replace
 from io import BytesIO
@@ -48,6 +50,16 @@ KIND_OF_LABEL: dict[DocItemLabel, BlockKind] = {
 }
 
 
+INGEST_HINT = (
+    "Docling's PDF converter is not installed; install it with `uv sync --group ingest` "
+    "(from backend/)"
+)
+
+
+class IngestNotInstalledError(RuntimeError):
+    """The optional `ingest` dependency group (Docling's PDF pipeline) is not installed."""
+
+
 @dataclass(frozen=True)
 class Block:
     """One layout item of a guideline PDF, in reading order."""
@@ -78,16 +90,34 @@ class Block:
         return self.kind == "list_item" and PARAGRAPH_MARKER_RE.match(self.marker) is not None
 
 
+def require_ingest() -> None:
+    """Raise `IngestNotInstalledError` unless Docling's PDF converter can be imported."""
+    if importlib.util.find_spec("docling") is None:
+        raise IngestNotInstalledError(INGEST_HINT)
+
+
 def convert_pdf(content: bytes, name: str) -> DoclingDocument:
     """Run Docling's PDF pipeline on the PDF bytes `content` (`name` is the file name).
 
     The PDFs have a text layer, so OCR is off. Docling downloads its layout and table models on
     first use and caches them.
     """
-    # Imported here: the converter pulls in torch, which the rest of the corpus code never needs.
-    from docling.datamodel.base_models import DocumentStream, InputFormat
-    from docling.datamodel.pipeline_options import PdfPipelineOptions
-    from docling.document_converter import DocumentConverter, PdfFormatOption
+    # Imported here: the converter pulls in torch, which only the optional `ingest` group
+    # installs (CI and the rest of the app never need it).
+    try:
+        from docling.datamodel.base_models import (  # pyright: ignore[reportMissingImports]
+            DocumentStream,
+            InputFormat,
+        )
+        from docling.datamodel.pipeline_options import (  # pyright: ignore[reportMissingImports]
+            PdfPipelineOptions,
+        )
+        from docling.document_converter import (  # pyright: ignore[reportMissingImports]
+            DocumentConverter,
+            PdfFormatOption,
+        )
+    except ImportError as error:
+        raise IngestNotInstalledError(INGEST_HINT) from error
 
     options = PdfPipelineOptions()
     options.do_ocr = False
@@ -101,7 +131,8 @@ def convert_pdf(content: bytes, name: str) -> DoclingDocument:
 def blocks_of(document: DoclingDocument) -> tuple[Block, ...]:
     """The body of `document` as normalised blocks, page breaks inside paragraphs joined."""
     raw = (_block(document, item) for item, _level in document.iterate_items())
-    return _join_page_breaks([block for block in raw if block is not None and block.text])
+    joined = _join_page_breaks([block for block in raw if block is not None and block.text])
+    return _in_sequence(joined)
 
 
 def _block(document: DoclingDocument, item: object) -> Block | None:
@@ -133,12 +164,12 @@ def _clean(text: str) -> str:
 def _normalise(block: Block) -> Block:
     """Move a list marker that Docling left in the text, or missed, into `marker`.
 
-    A heading only ever hides a bullet (a bold bullet title); other blocks can also hide a
-    paragraph number or an `o` sub-bullet.
+    A heading can hide a bullet (a bold bullet title) or a paragraph number ("(9) Overview on
+    the Prohibitions"); other blocks can also hide an `o` sub-bullet.
     """
     if block.kind == "footnote" or block.marker:
         return block
-    patterns = (INLINE_BULLET_RE,)
+    patterns = (INLINE_BULLET_RE, INLINE_PARAGRAPH_RE)
     if block.kind != "heading":
         patterns = (INLINE_BULLET_RE, INLINE_PARAGRAPH_RE, INLINE_SUB_BULLET_RE)
     for pattern in patterns:
@@ -167,6 +198,35 @@ def _join_page_breaks(blocks: list[Block]) -> tuple[Block, ...]:
         last_body = len(joined)
         joined.append(block)
     return tuple(joined)
+
+
+def paragraph_number(block: Block) -> int | None:
+    """The printed number of a numbered paragraph, `(43)` → 43; None for any other block."""
+    return int(block.marker[1:-1]) if block.is_numbered_paragraph else None
+
+
+def _in_sequence(blocks: tuple[Block, ...]) -> tuple[Block, ...]:
+    """Keep a paragraph number only if it continues the document's numbering.
+
+    A number is kept when it is the next one, when it is higher and the next higher number
+    after it is its successor (a number Docling didn't recover, or a part starting at (15)), or
+    when it is the document's last. Anything else, such as a quoted "(1) The following
+    practices shall be prohibited", becomes plain text.
+    """
+    numbers = [(i, n) for i, b in enumerate(blocks) if (n := paragraph_number(b)) is not None]
+    demoted: set[int] = set()
+    last = 0
+    for position, (index, number) in enumerate(numbers):
+        later = [n for _, n in numbers[position + 1 :]]
+        following = next((n for n in later if n > number), None)
+        if number == last + 1 or (number > last and (following == number + 1 or not later)):
+            last = number
+        else:
+            demoted.add(index)
+    return tuple(
+        replace(b, kind="paragraph", text=b.rendered, marker="") if i in demoted else b
+        for i, b in enumerate(blocks)
+    )
 
 
 def _continues(block: Block) -> bool:

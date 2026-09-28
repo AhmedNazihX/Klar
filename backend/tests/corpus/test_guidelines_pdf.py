@@ -7,7 +7,7 @@ from docling_core.types.doc.document import DoclingDocument
 from docling_core.types.doc.items.table.table_data import TableCell, TableData
 from docling_core.types.doc.labels import DocItemLabel
 
-from aiact.corpus.guidelines_pdf import Block, blocks_of
+from aiact.corpus.guidelines_pdf import Block, blocks_of, paragraph_number
 
 
 def on_page(page: int) -> ProvenanceItem:
@@ -48,7 +48,7 @@ def sample_document() -> DoclingDocument:
     document.add_list_item("networks for drinking water.", marker="", parent=group, prov=on_page(2))
     document.add_list_item("o AI based solutions to unlock a phone.", parent=group, prov=on_page(2))
     document.add_heading("- AI system for pilot recruitment", prov=on_page(2))
-    document.add_text(DocItemLabel.TEXT, "(196) An AI system used in road traffic", prov=on_page(2))
+    document.add_text(DocItemLabel.TEXT, "(187) An AI system used in road traffic", prov=on_page(2))
     document.add_text(
         DocItemLabel.PAGE_FOOTER, "2", prov=on_page(2), content_layer=ContentLayer.FURNITURE
     )
@@ -70,7 +70,7 @@ def test_blocks_normalise_markers_and_join_page_breaks() -> None:
         Block("list_item", "AI based solutions to unlock a phone.", 2, "o"),
         # A bold bullet title that Docling read as a heading is a bullet.
         Block("list_item", "AI system for pilot recruitment", 2, "-"),
-        Block("list_item", "An AI system used in road traffic", 2, "(196)"),
+        Block("list_item", "An AI system used in road traffic", 2, "(187)"),
     )
     assert blocks[5].is_sub_bullet
     assert blocks[7].is_numbered_paragraph
@@ -100,3 +100,23 @@ def test_a_capitalised_block_on_a_new_page_starts_a_new_paragraph() -> None:
     document.add_text(DocItemLabel.TEXT, "Second paragraph.", prov=on_page(4))
 
     assert [b.text for b in blocks_of(document)] == ["First paragraph.", "Second paragraph."]
+
+
+def test_a_paragraph_number_out_of_sequence_becomes_text() -> None:
+    document = DoclingDocument(name="sequence")
+    group = document.add_list_group()
+    for marker, text in (
+        ("(59)", "Article 5 AI Act reads:"),
+        ("(1)", "The following AI practices shall be prohibited:"),
+        ("(60)", "The prohibition applies to providers."),
+        ("(62)", "A number was not recovered before this one."),
+        ("(63)", "The numbering goes on."),
+    ):
+        document.add_list_item(text, enumerated=True, marker=marker, parent=group, prov=on_page(5))
+    document.add_heading("(64) Overview on the Prohibitions", prov=on_page(6))
+
+    blocks = blocks_of(document)
+
+    assert [paragraph_number(b) for b in blocks] == [59, None, 60, 62, 63, 64]
+    assert blocks[1] == Block("paragraph", "(1) The following AI practices shall be prohibited:", 5)
+    assert blocks[5] == Block("list_item", "Overview on the Prohibitions", 6, "(64)")

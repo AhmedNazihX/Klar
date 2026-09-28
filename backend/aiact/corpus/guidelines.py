@@ -3,9 +3,12 @@
 `aiact corpus guidelines` reads every PDF entry of `data/manifest.yaml` (`kind: pdf`: the
 Commission guidelines and the Code of Practice), checks its sha256, converts it with Docling
 (`aiact.corpus.guidelines_pdf`) and writes one JSON line per chunk:
-- a **section** chunk is the text under one heading, in reading order; a long section is split
-  at block boundaries into several chunks with the same heading. Footnotes stay in the section
-  where they are printed. `provision_id` is `guide:<doc>:sec:<n>`, numbered through the document.
+- a **section** chunk is guideline prose. In a guideline with numbered paragraphs it is one
+  numbered paragraph with everything printed up to the next one (bullets, sub-headings, tables,
+  footnotes): `provision_id` is `guide:<doc>:para:<n>`, from the printed number, so it names
+  the same passage in EN and DE; what comes before paragraph (1) is `guide:<doc>:front`. The
+  Code of Practice has no numbered paragraphs: its chunks are the text under one heading, split
+  when long, numbered through the document (`guide:<doc>:sec:<n>`; it exists in English only).
 - an **example** chunk is one Commission worked example of the high-risk guidelines
   (`aiact.corpus.guideline_examples`, decision 001), with `source_example_id` = `hr-ex-NNN` and
   `provision_id` = `guide:<doc>:ex:<NNN>`. Its text never appears in a section chunk, so the
@@ -16,8 +19,7 @@ Held-out examples (Pile B) are kept and tagged (decision 012): their chunks carr
 list of `eval/split.json`, the one benchmark file corpus code may read; nothing else in it is
 used. Every Pile B ID must be found in the PDFs, or the parse stops (an isolation gap).
 
-Section numbers come from the layout Docling finds, so the EN and DE versions of a guideline can
-number their sections differently; example IDs don't depend on the layout.
+Example IDs don't depend on the layout either: they follow decision 001's counting rules.
 """
 
 import json
@@ -41,7 +43,13 @@ from aiact.corpus.guideline_examples import (
     extract_examples,
     number_examples,
 )
-from aiact.corpus.guidelines_pdf import Block, blocks_of, convert_pdf
+from aiact.corpus.guidelines_pdf import (
+    Block,
+    blocks_of,
+    convert_pdf,
+    paragraph_number,
+    require_ingest,
+)
 from aiact.corpus.sources import Language
 from aiact.settings import BACKEND_DIR
 
@@ -79,7 +87,8 @@ class GuidelineChunk(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     provision_id: str
-    """`guide:<doc>:sec:<n>` for a section chunk, `guide:<doc>:ex:<NNN>` for an example."""
+    """`guide:<doc>:para:<n>` / `front` / `sec:<n>` for prose, `guide:<doc>:ex:<NNN>` for an
+    example."""
     doc: str
     """The manifest id of the document (`guide-prohibited`, `code-of-practice-transparency`)."""
     language: Language
@@ -128,48 +137,83 @@ def check_language(blocks: tuple[Block, ...], language: Language, label: str) ->
 
 
 @dataclass
-class _Sections:
-    """Builds section chunks while walking a document's segments."""
+class _Chunker:
+    """Builds the prose chunks of one document while walking its segments.
+
+    With `by_paragraph`, a chunk starts at each numbered paragraph and runs to the next one
+    (headings in between are kept in its text); blocks before paragraph (1) form the `front`
+    chunk. Otherwise a chunk is the text under one heading, split when it grows too long.
+    """
 
     doc: str
     language: Language
-    chunks: list[GuidelineChunk] = field(default_factory=list)
-    headings: list[str] = field(default_factory=list)
-    """Headings seen since the last body block; they head the next section."""
+    by_paragraph: bool
+    chunks: list[GuidelineChunk | None] = field(default_factory=list)
+    """In reading order; a prose chunk keeps its slot (None) until it is complete."""
+    pending: list[str] = field(default_factory=list)
+    """Headings seen since the last body block."""
     heading: str | None = None
+    """The heading path in force: that of the last body block."""
+    anchor: str = "front"
+    chunk_heading: str | None = None
+    slot: int | None = None
     body: list[Block] = field(default_factory=list)
     count: int = 0
 
     def add_heading(self, text: str) -> None:
-        if self.body:
+        if self.body and not self.by_paragraph:
             self.flush()
-            self.headings = []
-        self.headings.append(text)
+        self.pending.append(text)
 
     def add_body(self, block: Block) -> None:
-        if not self.body and self.headings:
-            self.heading, self.headings = HEADING_SEPARATOR.join(self.headings), []
+        number = paragraph_number(block) if self.by_paragraph else None
+        if number is not None:
+            self.flush()
+            self.anchor = f"para:{number}"
+        headings, self.pending = self.pending, []
+        if headings:
+            self.heading = HEADING_SEPARATOR.join(headings)
+            if self.body:
+                # A heading inside a paragraph's run stays in its text.
+                self.body.extend(Block("heading", h, block.page) for h in headings)
+        if not self.body:
+            self.chunk_heading = self.heading
+            self.slot = len(self.chunks)
+            self.chunks.append(None)
         self.body.append(block)
 
-    def flush(self) -> None:
-        for part in _parts(self.body):
-            self.count += 1
-            self.chunks.append(
-                GuidelineChunk(
-                    provision_id=f"guide:{self.doc}:sec:{self.count}",
-                    doc=self.doc,
-                    language=self.language,
-                    kind="section",
-                    heading=self.heading,
-                    text="\n\n".join(b.rendered for b in part),
-                    page=part[0].page,
-                )
-            )
-        self.body = []
+    def add_examples(self, chunks: Iterator[GuidelineChunk]) -> None:
+        if not self.by_paragraph:
+            self.flush()
+        self.chunks.extend(chunks)
 
     def context(self) -> str | None:
         """The heading an example list sits under."""
-        return HEADING_SEPARATOR.join(self.headings) if self.headings else self.heading
+        return HEADING_SEPARATOR.join(self.pending) if self.pending else self.heading
+
+    def flush(self) -> None:
+        if not self.body or self.slot is None:
+            return
+        parts = [self.body] if self.by_paragraph else list(_parts(self.body))
+        prose = [self._chunk(part) for part in parts]
+        self.chunks[self.slot : self.slot + 1] = prose
+        self.body, self.slot = [], None
+
+    def _chunk(self, part: list[Block]) -> GuidelineChunk:
+        if self.by_paragraph:
+            anchor = self.anchor
+        else:
+            self.count += 1
+            anchor = f"sec:{self.count}"
+        return GuidelineChunk(
+            provision_id=f"guide:{self.doc}:{anchor}",
+            doc=self.doc,
+            language=self.language,
+            kind="section",
+            heading=self.chunk_heading,
+            text="\n\n".join(b.rendered for b in part),
+            page=part[0].page,
+        )
 
 
 def _parts(blocks: list[Block]) -> Iterator[list[Block]]:
@@ -189,33 +233,40 @@ def _parts(blocks: list[Block]) -> Iterator[list[Block]]:
 def chunk_document(
     doc: str, language: Language, segments: tuple[Segment, ...], held_out: frozenset[str]
 ) -> tuple[GuidelineChunk, ...]:
-    """The chunks of one document, in reading order. Examples must already be numbered."""
-    sections = _Sections(doc, language)
+    """The chunks of one document, in reading order. Examples must already be numbered.
+
+    A document with numbered paragraphs is chunked by paragraph, so a chunk id names the same
+    passage in every language; one without (the Code of Practice) is chunked by heading.
+    """
+    by_paragraph = any(isinstance(s, Block) and paragraph_number(s) is not None for s in segments)
+    chunker = _Chunker(doc, language, by_paragraph)
     for segment in segments:
         if isinstance(segment, ExampleList):
-            sections.flush()
-            sections.chunks.extend(_example_chunks(sections, segment, held_out))
+            chunker.add_examples(_example_chunks(chunker, segment, held_out))
         elif segment.kind == "heading":
-            sections.add_heading(segment.text)
+            chunker.add_heading(segment.text)
         else:
-            sections.add_body(segment)
-    sections.flush()
-    return tuple(sections.chunks)
+            chunker.add_body(segment)
+    for text in chunker.pending:
+        chunker.body.append(Block("heading", text, chunker.body[-1].page if chunker.body else 0))
+    chunker.pending = []
+    chunker.flush()
+    return tuple(c for c in chunker.chunks if c is not None)
 
 
 def _example_chunks(
-    sections: _Sections, example_list: ExampleList, held_out: frozenset[str]
+    chunker: _Chunker, example_list: ExampleList, held_out: frozenset[str]
 ) -> Iterator[GuidelineChunk]:
-    context = sections.context()
+    context = chunker.context()
     for example in example_list.examples:
         if example.example_id is None:
-            raise GuidelineError(f"{sections.doc}: an example on p. {example.page} has no id")
+            raise GuidelineError(f"{chunker.doc}: an example on p. {example.page} has no id")
         number = example.example_id.removeprefix("hr-ex-")
         headings = (context, example_list.heading, example.subheading)
         yield GuidelineChunk(
-            provision_id=f"guide:{sections.doc}:ex:{number}",
-            doc=sections.doc,
-            language=sections.language,
+            provision_id=f"guide:{chunker.doc}:ex:{number}",
+            doc=chunker.doc,
+            language=chunker.language,
             kind="example",
             heading=HEADING_SEPARATOR.join(h for h in headings if h),
             text="\n".join(t for t in (example.lead_in, example.text) if t),
@@ -278,9 +329,12 @@ def parse_guidelines(
 ) -> GuidelineReport:
     """Parse every PDF of the manifest; rewrite an output file only if it changed.
 
-    `convert` turns PDF bytes into a Docling document (default: `convert_pdf`). Raises
-    `IsolationGapError` before writing anything if a Pile B example isn't found.
+    `convert` turns PDF bytes into a Docling document (default: `convert_pdf`, which needs the
+    `ingest` group). Raises `IsolationGapError` before writing anything if a Pile B example
+    isn't found.
     """
+    if convert is None:
+        require_ingest()
     pile_b = load_pile_b(split_path)
     entries = pdf_entries(manifest_path)
     labels = {f"{e.id}.{e.language}" for e in entries}

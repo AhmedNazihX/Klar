@@ -36,11 +36,10 @@ name = "aiact"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "docling-slim", extra = ["convert-core", "format-pdf", "models-local"] },
+    { name = "docling-core" },
     { name = "httpx" },
     { name = "langchain-openrouter" },
     { name = "lxml" },
-    { name = "opencv-python-headless" },
     { name = "openrouter" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
@@ -56,14 +55,17 @@ dev = [
     { name = "pytest-recording" },
     { name = "ruff" },
 ]
+ingest = [
+    { name = "docling-slim", extra = ["convert-core", "format-pdf", "models-local"] },
+    { name = "opencv-python-headless" },
+]
 
 [package.metadata]
 requires-dist = [
-    { name = "docling-slim", extras = ["convert-core", "format-pdf", "models-local"], specifier = ">=2.130.0" },
+    { name = "docling-core", specifier = ">=2.96.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "langchain-openrouter", specifier = ">=0.2.9" },
     { name = "lxml", specifier = ">=6.1.3" },
-    { name = "opencv-python-headless", specifier = ">=5.0.0.93" },
     { name = "openrouter", specifier = ">=0.11.46" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.6" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
@@ -78,6 +80,10 @@ dev = [
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-recording", specifier = ">=0.13.4" },
     { name = "ruff", specifier = ">=0.16.9" },
+]
+ingest = [
+    { name = "docling-slim", extras = ["convert-core", "format-pdf", "models-local"], specifier = ">=2.130.0" },
+    { name = "opencv-python-headless", specifier = ">=5.0.0.93" },
 ]
 
 [[package]]

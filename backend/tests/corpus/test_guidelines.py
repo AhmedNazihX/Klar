@@ -6,6 +6,7 @@ no held-out example text sits in an untagged chunk.
 """
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 
@@ -78,11 +79,25 @@ def annex_iii() -> DoclingDocument:
 
 def german() -> DoclingDocument:
     document = DoclingDocument(name="guide-prohibited")
-    document.add_heading("1. Hintergrund und Ziele", prov=on_page(1))
-    document.add_text(
-        DocItemLabel.TEXT,
+    document.add_text(DocItemLabel.TEXT, "Brüssel, den 29.7.2025", prov=on_page(1))
+    document.add_heading("1. Hintergrund und Ziele", prov=on_page(2))
+    group = document.add_list_group()
+    document.add_list_item(
         "Die Leitlinien erläutern die Verbote und das ist der Kern.",
-        prov=on_page(1),
+        enumerated=True,
+        marker="(1)",
+        parent=group,
+        prov=on_page(2),
+    )
+    document.add_heading("Verbotene Praktiken", prov=on_page(2))
+    document.add_text(DocItemLabel.TEXT, "Die Liste ist abschließend.", prov=on_page(2))
+    document.add_heading("2. Überblick", prov=on_page(3))
+    document.add_list_item(
+        "Artikel 5 der KI-Verordnung verbietet das.",
+        enumerated=True,
+        marker="(2)",
+        parent=document.add_list_group(),
+        prov=on_page(3),
     )
     return document
 
@@ -148,7 +163,7 @@ def test_parse_writes_sections_and_tagged_examples(
     assert report.counts == (
         (f"{ANNEX_I_DOC}.en", 4, 3),
         (f"{ANNEX_III_DOC}.en", 4, 2),
-        ("guide-prohibited.de", 1, 0),
+        ("guide-prohibited.de", 3, 0),
     )
     assert report.held_out_ids == ("hr-ex-002", "hr-ex-004")
     chunks = load_jsonl(out / f"{ANNEX_III_DOC}.en.jsonl")
@@ -171,6 +186,27 @@ def test_parse_writes_sections_and_tagged_examples(
         "hr-ex-003",
     ]
     assert annex_i_chunks[2].text == "Conversely, a scheduler is not."
+    assert annex_i_chunks[0].provision_id == f"guide:{ANNEX_I_DOC}:para:42"
+
+
+def test_a_guideline_with_numbered_paragraphs_is_chunked_by_paragraph(
+    tmp_path: Path, setup: tuple[Path, Path, Path]
+) -> None:
+    manifest, raw_dir, split = setup
+    out = tmp_path / "parsed"
+    parse_guidelines(manifest, raw_dir, out, split, fake_convert)
+    chunks = load_jsonl(out / "guide-prohibited.de.jsonl")
+
+    assert [(c.provision_id, c.heading, c.page) for c in chunks] == [
+        ("guide:guide-prohibited:front", None, 1),
+        ("guide:guide-prohibited:para:1", "1. Hintergrund und Ziele", 2),
+        ("guide:guide-prohibited:para:2", "2. Überblick", 3),
+    ]
+    # A heading inside a paragraph's run stays in that paragraph's text.
+    assert chunks[1].text == (
+        "(1) Die Leitlinien erläutern die Verbote und das ist der Kern.\n\n"
+        "Verbotene Praktiken\n\nDie Liste ist abschließend."
+    )
 
 
 def test_a_second_run_changes_nothing(tmp_path: Path, setup: tuple[Path, Path, Path]) -> None:
@@ -210,6 +246,7 @@ def test_the_cli_prints_counts_and_the_tagged_ids(
 ) -> None:
     manifest, raw_dir, split = setup
     monkeypatch.setattr(guidelines, "convert_pdf", fake_convert)
+    monkeypatch.setattr(guidelines, "require_ingest", lambda: None)
     arguments = ["--manifest", str(manifest), "--raw-dir", str(raw_dir), "--split", str(split)]
     result = CliRunner().invoke(
         cli.app, ["corpus", "guidelines", *arguments, "--out-dir", str(tmp_path / "out")]
@@ -218,6 +255,23 @@ def test_the_cli_prints_counts_and_the_tagged_ids(
     assert result.exit_code == 0, result.output
     assert f"{ANNEX_III_DOC}.en: 4 chunks (2 examples)" in result.stdout
     assert "tagged held out (Pile B): 2\nhr-ex-002 hr-ex-004" in result.stdout
+
+
+def test_the_cli_names_the_ingest_group_when_docling_is_missing(
+    tmp_path: Path, setup: tuple[Path, Path, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest, raw_dir, split = setup
+    find_spec = importlib.util.find_spec
+    monkeypatch.setattr(
+        importlib.util, "find_spec", lambda name: None if name == "docling" else find_spec(name)
+    )
+    arguments = ["--manifest", str(manifest), "--raw-dir", str(raw_dir), "--split", str(split)]
+    result = CliRunner().invoke(
+        cli.app, ["corpus", "guidelines", *arguments, "--out-dir", str(tmp_path / "out")]
+    )
+
+    assert result.exit_code == 1
+    assert "uv sync --group ingest" in result.stderr
 
 
 def test_pdf_entries_reject_a_failed_fetch(tmp_path: Path) -> None:
@@ -295,3 +349,28 @@ def test_no_pile_b_example_text_is_untagged() -> None:
     assert len(held_out_lines) >= len(load_pile_b(DEFAULT_SPLIT_FILE))
     leaks = [(i, line[:60]) for i, line in held_out_lines if any(line in t for t in untagged)]
     assert leaks == []
+
+
+def bilingual_docs() -> list[str]:
+    languages: dict[str, set[str]] = {}
+    for entry in pdf_entries(DEFAULT_MANIFEST):
+        languages.setdefault(entry.id, set()).add(entry.language)
+    return sorted(doc for doc, found in languages.items() if found == {"en", "de"})
+
+
+def test_bilingual_guidelines_share_their_section_ids() -> None:
+    """A section id names the same passage in EN and DE: both start at the same paragraph."""
+    docs = bilingual_docs()
+    assert docs == ["guide-definition", "guide-prohibited"]
+    for doc in docs:
+        en, de = (
+            {c.provision_id: c for c in load_jsonl(DEFAULT_PARSED_DIR / f"{doc}.{lang}.jsonl")}
+            for lang in ("en", "de")
+        )
+        assert en.keys() == de.keys(), doc
+        for provision_id, chunk in en.items():
+            number = provision_id.rsplit(":", 1)[-1]
+            if provision_id.endswith(":front"):
+                continue
+            assert chunk.text.startswith(f"({number}) "), provision_id
+            assert de[provision_id].text.startswith(f"({number}) "), provision_id

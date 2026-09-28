@@ -14,10 +14,8 @@ import psycopg
 import typer
 
 from aiact import deps
-from aiact.corpus import guidelines
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
-from aiact.corpus.guideline_examples import ExampleCountError
 from aiact.eval import academic, citation_index, metrics, records, report, runner
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CaseFileError, CaseSet, load_cases
@@ -115,22 +113,31 @@ def corpus_guidelines(
         Path | None, typer.Option(help="Where JSONL goes [default: repo data/parsed]")
     ] = None,
     split: Annotated[
-        Path, typer.Option(help="The committed split; only its pile_b list is read.")
-    ] = guidelines.DEFAULT_SPLIT_FILE,
+        Path | None,
+        typer.Option(help="The committed split; only its pile_b list is read [default: repo]"),
+    ] = None,
 ) -> None:
     """Parse the guideline PDFs (Docling) into section and worked-example chunks, one JSONL
-    file per document and language; Pile B examples are kept and tagged as held out."""
+    file per document and language; Pile B examples are kept and tagged as held out.
+
+    Needs the optional `ingest` group: `uv sync --group ingest`."""
+    # Imported here: docling-core and pandas load slowly, and no other command needs them.
+    from aiact.corpus import guidelines
+    from aiact.corpus.guideline_examples import ExampleCountError
+    from aiact.corpus.guidelines_pdf import IngestNotInstalledError
+
     try:
         report = guidelines.parse_guidelines(
             manifest or DEFAULT_MANIFEST,
             raw_dir or get_settings().aiact_data_dir / "raw",
             out_dir or DEFAULT_PARSED_DIR,
-            split,
+            split or guidelines.DEFAULT_SPLIT_FILE,
         )
     except (
         RawFileError,
         guidelines.GuidelineError,
         ExampleCountError,
+        IngestNotInstalledError,
         FileNotFoundError,
     ) as error:
         typer.echo(f"Error: {error}", err=True)
