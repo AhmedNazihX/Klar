@@ -247,10 +247,11 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   DoD: the rate of broken outputs or tool calls and the accuracy are recorded for both models; the INIT rule is applied (Luna is dropped if more than 10% broken or clearly worse); the engine model is set in settings.
   Notes from merged stories: Structured output: cross-field validators aren't in the JSON Schema, so contract failures count as broken outputs (decision 010 addendum). Gemini 3.1 Flash-Lite was allowed in the user's OpenRouter guardrail on 2026-09-28. Slugs checked by F6: `openai/gpt-6-luna` (pinned `openai/gpt-6-luna-20260922`), `google/gemini-3.1-flash-lite`.
 
-- [ ] **X3 · OpenRouter feature and cost check** · Deps: F6 · Type: agent
+- [x] **X3 · OpenRouter feature and cost check** · Deps: F6 · Type: agent
   Output: `docs/decisions/005-openrouter.md`: whether prompt caching works for the chosen models, which EU routes and ZDR options exist, the context window, and token use for one sample classification; the spending cap is set (the user sets it in the OpenRouter dashboard).
   DoD: every question in INIT › Open questions about OpenRouter has an answer.
   Notes from merged stories: Already known from F6: GPT-6 Luna works with `zdr` + `data_collection: deny` via Azure (an `azure/eu` endpoint exists) and spends reasoning tokens; Qwen3-Embedding-8B on Nebius honours `dimensions=1536` and returns normalised vectors; ZDR endpoints are listed at `GET https://openrouter.ai/api/v1/endpoints/zdr`; F6's recording calls cost about $0.00002.
+  **Outcome:** 005 accepted: caching works on EU no-retention routes (Luna azure/eu, Flash-Lite vertex/eu, Haiku vertex/europe with cache_control); one classification ~6k in + ~1.7k out = $0.0018 cold / $0.0009 cached on Luna; models with an EU ZDR endpoint pinned by full slug, allow_fallbacks=False (+10%), data residency is the deciding rule; Jev router forwards to Luna (V3/V4 must rethink); key cap $35 with $9.95 left, handled by the user.
 
 ## Phase 4 — Engine
 
