@@ -84,7 +84,6 @@ class DecisionsClient:
         model: str,
         *,
         settings: Settings | None = None,
-        timeout: float = DEFAULT_TIMEOUT_SECONDS,
         http: httpx.Client | None = None,
     ) -> None:
         """Raises `LLMConfigError` when the API key is not set."""
@@ -94,7 +93,7 @@ class DecisionsClient:
             "Authorization": f"Bearer {require_api_key(settings).get_secret_value()}",
             "X-Title": APP_TITLE,
         }
-        self._http = http or httpx.Client(timeout=timeout)
+        self._http = http or httpx.Client(timeout=DEFAULT_TIMEOUT_SECONDS)
 
     def choose(self, state: str, questions: Mapping[str, ChoiceQuestion]) -> DecisionsResponse:
         """Ask every question about `state`; each answer's choice is one of its criteria keys.

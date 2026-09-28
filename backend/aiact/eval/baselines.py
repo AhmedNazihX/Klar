@@ -60,6 +60,9 @@ DECIDING_STEP: dict[RiskClass, StepName] = {
 }
 """The step a baseline's class rests on: where the staged engine would have settled it."""
 
+CLASSES_WITH_DUTIES = frozenset({RiskClass.LIMITED_RISK, RiskClass.HIGH_RISK})
+"""The classes a result may list Art. 50 duties for."""
+
 
 class BaselineAnswer(ContractModel):
     """A baseline's whole answer; also the JSON schema the Luna baseline must fill.
@@ -92,6 +95,10 @@ class BaselineOutputError(ValueError):
 def to_result(answer: BaselineAnswer, language: Language, label: str) -> ClassificationResult:
     """The contract result for `answer`; fields that don't apply to its class are dropped.
 
+    The Annex point is kept only for high_risk. Art. 50 duties are kept only for limited_risk
+    and high_risk (Art. 50 applies alongside Chapter III); for out_of_scope, prohibited and
+    minimal_risk they contradict the class and are dropped, as `jev_answer` does.
+
     Raises `BaselineOutputError` when the answer can't be a valid result (for example an
     uncertain out_of_scope, or limited_risk without an Art. 50 duty).
     """
@@ -108,7 +115,7 @@ def to_result(answer: BaselineAnswer, language: Language, label: str) -> Classif
             role=answer.role if has_role else None,
             annex_point=answer.annex_point if answer.risk_class is RiskClass.HIGH_RISK else None,
             transparency_duties=(
-                () if answer.risk_class is RiskClass.OUT_OF_SCOPE else answer.transparency_duties
+                answer.transparency_duties if answer.risk_class in CLASSES_WITH_DUTIES else ()
             ),
             law_version=LawVersion.AMENDED,
             as_of=date.today(),
@@ -222,18 +229,19 @@ class LunaBaseline:
 
     def __init__(self, settings: Settings | None = None, chat: BaseChatModel | None = None) -> None:
         """`chat` replaces the OpenRouter model (tests). Raises `LLMConfigError` when
-        `ENGINE_MODEL` or the API key is not set."""
+        `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the model is always pinned
+        to its EU endpoint with fallbacks off (decision 005), so descriptions stay in the EU."""
         settings = settings or get_settings()
         model_id = require_setting(settings.engine_model, "ENGINE_MODEL")
-        provider = settings.engine_provider
+        provider = require_setting(settings.engine_provider, "ENGINE_PROVIDER")
         self._model = chat or chat_model(
             model=model_id,
-            provider_order=[provider] if provider else None,
-            allow_fallbacks=provider is None,
+            provider_order=[provider],
+            allow_fallbacks=False,
             max_tokens=MAX_OUTPUT_TOKENS,
             settings=settings,
         )
-        self.info = ClassifierInfo(model=model_id)
+        self.info = ClassifierInfo(model=model_id, provider=provider)
 
     def classify(self, request: ClassifierInput) -> Classification:
         reply = self._model.invoke(luna_messages(request), response_format=LUNA_RESPONSE_FORMAT)

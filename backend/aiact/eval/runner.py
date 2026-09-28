@@ -122,11 +122,13 @@ class Classification:
 
 @dataclass(frozen=True)
 class ClassifierInfo:
-    """The settings recorded in `eval_runs.config` (F5 requires the three keys; null allowed)."""
+    """The settings recorded in `eval_runs.config` (F5 requires model, embedding and retrieval;
+    null allowed). `provider` is the pinned OpenRouter endpoint, when there is one."""
 
     model: str | None
     embedding: JsonValue = None
     retrieval: JsonValue = None
+    provider: str | None = None
 
 
 class Classifier(Protocol):
@@ -324,6 +326,7 @@ def run_config(
         "model": info.model,
         "embedding": info.embedding,
         "retrieval": info.retrieval,
+        "provider": info.provider,
         "classifier": options.classifier_name,
         "exclude_mode": options.exclude_mode.value,
         "split_mode": None if split is None else split.mode.value,

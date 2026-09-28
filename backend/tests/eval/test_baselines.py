@@ -102,6 +102,19 @@ def test_out_of_scope_stops_at_scope_and_drops_what_does_not_apply() -> None:
     assert (result.role, result.annex_point, result.transparency_duties) == (None, None, ())
 
 
+@pytest.mark.parametrize("risk_class", [RiskClass.MINIMAL_RISK, RiskClass.PROHIBITED])
+def test_article_50_duties_that_contradict_the_class_are_dropped(risk_class: RiskClass) -> None:
+    result = to_result(
+        answer(risk_class=risk_class, transparency_duties=("art:50:1",)), Language.EN, "Test"
+    )
+    assert result.transparency_duties == ()
+
+
+def test_high_risk_keeps_its_article_50_duties() -> None:
+    result = to_result(answer(transparency_duties=("art:50:1",)), Language.EN, "Test")
+    assert result.transparency_duties == ("art:50:1",)
+
+
 def test_decided_prohibited_stops_after_article_5() -> None:
     result = to_result(answer(risk_class=RiskClass.PROHIBITED), Language.EN, "Test")
     assert [step.step for step in result.steps] == [StepName.SCOPE, StepName.PROHIBITED]
@@ -166,14 +179,15 @@ def test_answers_that_break_the_contract_are_broken_outputs(
 # --- Luna baseline -------------------------------------------------------------------------------
 
 
-def _fake_luna(content: str, cost: float = 0.0018) -> LunaBaseline:
+def _fake_luna(content: str, cost: float = 0.0018, replies: int = 1) -> LunaBaseline:
     reply = AIMessage(
         content=content,
         response_metadata={"cost": cost},
         usage_metadata={"input_tokens": 1200, "output_tokens": 300, "total_tokens": 1500},
     )
-    chat = GenericFakeChatModel(messages=iter([reply]))
-    return LunaBaseline(_settings(engine_model=LUNA), chat=chat)
+    chat = GenericFakeChatModel(messages=iter([reply] * replies))
+    settings = _settings(engine_model=LUNA, engine_provider=LUNA_PROVIDER)
+    return LunaBaseline(settings, chat=chat)
 
 
 def test_luna_answer_becomes_a_result_with_its_cost() -> None:
@@ -200,7 +214,7 @@ def test_broken_luna_output_fails_after_paying(content: str) -> None:
 
 def test_luna_is_pinned_to_the_engine_provider() -> None:
     luna = LunaBaseline(_settings(engine_model=LUNA, engine_provider=LUNA_PROVIDER))
-    assert luna.info.model == LUNA
+    assert (luna.info.model, luna.info.provider) == (LUNA, LUNA_PROVIDER)
     assert luna._model.openrouter_provider == {  # pyright: ignore[reportAttributeAccessIssue]
         "data_collection": "deny",
         "zdr": True,
@@ -301,6 +315,24 @@ def test_unconfigured_luna_baseline_is_unavailable(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(baselines, "get_settings", lambda: _settings())
     with pytest.raises(ClassifierUnavailableError, match="ENGINE_MODEL is not set"):
         runner.build_classifier("baseline_luna")
+
+
+def test_luna_without_a_pinned_provider_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(baselines, "get_settings", lambda: _settings(engine_model=LUNA))
+    with pytest.raises(ClassifierUnavailableError, match="ENGINE_PROVIDER is not set"):
+        runner.build_classifier("baseline_luna")
+
+
+def test_luna_baseline_runs_a_five_case_subset_through_the_runner() -> None:
+    store = MemoryStore()
+    luna = _fake_luna(answer().model_dump_json(), replies=5)
+    run_options = options(classifier_name="baseline_luna", subset=5, concurrency=1)
+    summary = run_benchmark(CASES, luna, store, run_options, SPLIT)
+    assert summary.status is RunStatus.COMPLETED
+    assert (summary.cases_planned, summary.cases_scored, summary.cases_failed) == (5, 5, 0)
+    assert summary.cost_usd == pytest.approx(5 * 0.0018)
+    config = store.runs[summary.run_id]["config"]
+    assert (config["model"], config["provider"]) == (LUNA, LUNA_PROVIDER)  # pyright: ignore[reportIndexIssue]
 
 
 def test_jev_baseline_runs_a_five_case_subset_through_the_runner() -> None:
