@@ -30,7 +30,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py (C2), load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6)
-│   │   ├── obligations/             list.py: list_obligations (C7)
+│   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)
 │   │   │   ├── nodes/               facts.py (E2), scope.py (E3), prohibited.py (E4), high_risk.py (E5),
@@ -89,7 +89,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)
 │   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3)
-│   └── seed/                        obligations.yaml (C7)
+│   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7)
 │
 ├── frontend/                        Vite + React + TypeScript (P4); its inner layout is recorded here by P4
 │   └── openapi.json                 exported from FastAPI; the TS client is generated from it (P1)
