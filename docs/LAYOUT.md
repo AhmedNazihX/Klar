@@ -33,6 +33,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)
+│   │   │   ├── scripted.py          stub nodes that return scripted outcomes, for tests (E1)
 │   │   │   ├── nodes/               facts.py (E2), scope.py (E3), prohibited.py (E4), high_risk.py (E5),
 │   │   │   │                        transparency.py (E6), role_obligations.py (E7), finalize.py (E8)
 │   │   │   ├── prompts/             prompt files, one per node (E2–E8)

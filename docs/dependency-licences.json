@@ -83,6 +83,22 @@
     "licence": "MIT",
     "summary": "Python bindings for the LangChain agent streaming protocol"
   },
+  "langgraph-checkpoint==4.2.0": {
+    "licence": "MIT",
+    "summary": "Library with base interfaces for LangGraph checkpoint savers."
+  },
+  "langgraph-prebuilt==1.1.0": {
+    "licence": "MIT",
+    "summary": "Library with high-level APIs for creating and executing LangGraph agents and tools."
+  },
+  "langgraph-sdk==0.4.5": {
+    "licence": "MIT",
+    "summary": "SDK for interacting with LangGraph API"
+  },
+  "langgraph==1.2.12": {
+    "licence": "MIT",
+    "summary": "Building stateful, multi-actor applications with LLMs"
+  },
   "langsmith==0.14.1": {
     "licence": "MIT",
     "summary": "Client library to connect to the LangSmith Observability and Evaluation Platform."
@@ -114,6 +130,10 @@
   "orjson==3.12.0": {
     "licence": "MPL-2.0 AND (Apache-2.0 OR MIT)",
     "summary": "Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy"
+  },
+  "ormsgpack==1.12.2": {
+    "licence": "Apache-2.0 OR MIT",
+    "summary": "Fast, correct Python msgpack library supporting dataclasses, datetimes, and numpy"
   },
   "packaging==26.3": {
     "licence": "Apache-2.0 OR BSD-2-Clause",
@@ -227,7 +247,7 @@
     "licence": "MIT",
     "summary": "Automatically mock your HTTP interactions to simplify and speed up testing"
   },
-  "websockets==17.1": {
+  "websockets==16.1.1": {
     "licence": "BSD-3-Clause",
     "summary": "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
   },

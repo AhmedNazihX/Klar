@@ -17,6 +17,7 @@ Source: `backend/uv.lock`.
 | --- | --- | --- | --- | --- | --- |
 | httpx | runtime | >=0.28.1 | 0.28.1 | BSD-3-Clause | The next generation HTTP client. |
 | langchain-openrouter | runtime | >=0.2.9 | 0.2.9 | MIT | An integration package connecting OpenRouter and LangChain |
+| langgraph | runtime | >=1.2.12 | 1.2.12 | MIT | Building stateful, multi-actor applications with LLMs |
 | lxml | runtime | >=6.1.3 | 6.1.3 | BSD-3-Clause | Powerful and Pythonic XML processing library combining libxml2/libxslt with the… |
 | openrouter | runtime | >=0.11.46 | 0.11.46 | Apache-2.0 | Official Python Client SDK for OpenRouter. |
 | psycopg[binary] | runtime | >=3.3.6 | 3.3.6 | LGPL-3.0-only | PostgreSQL database adapter for Python |
@@ -34,50 +35,54 @@ Source: `backend/uv.lock`.
 | Package | Locked | Licence | Pulled in by |
 | --- | --- | --- | --- |
 | annotated-doc | 0.0.5 | MIT | typer |
-| annotated-types | 0.8.0 | MIT | langchain-openrouter, openrouter, pydantic-settings |
-| anyio | 4.15.1 | MIT | httpx, langchain-openrouter, openrouter |
-| certifi | 2026.7.22 | MPL-2.0 | httpx, langchain-openrouter, openrouter |
-| charset-normalizer | 3.5.1 | MIT | langchain-openrouter |
+| annotated-types | 0.8.0 | MIT | langchain-openrouter, langgraph, openrouter, pydantic-settings |
+| anyio | 4.15.1 | MIT | httpx, langchain-openrouter, langgraph, openrouter |
+| certifi | 2026.7.22 | MPL-2.0 | httpx, langchain-openrouter, langgraph, openrouter |
+| charset-normalizer | 3.5.1 | MIT | langchain-openrouter, langgraph |
 | colorama | 0.4.6 | BSD License | pytest, pytest-recording, typer |
-| distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter |
-| h11 | 0.16.0 | MIT | httpx, langchain-openrouter, openrouter |
-| httpcore | 1.0.9 | BSD-3-Clause | httpx, langchain-openrouter, openrouter |
-| httpcore2 | 2.13.1 | BSD-3-Clause | langchain-openrouter |
-| httpx2 | 2.13.1 | BSD-3-Clause | langchain-openrouter |
-| httpx2-jsfetch | 1.0 | BSD-3-Clause | langchain-openrouter |
-| idna | 3.20 | BSD-3-Clause | httpx, langchain-openrouter, openrouter |
+| distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter, langgraph |
+| h11 | 0.16.0 | MIT | httpx, langchain-openrouter, langgraph, openrouter |
+| httpcore | 1.0.9 | BSD-3-Clause | httpx, langchain-openrouter, langgraph, openrouter |
+| httpcore2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph |
+| httpx2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph |
+| httpx2-jsfetch | 1.0 | BSD-3-Clause | langchain-openrouter, langgraph |
+| idna | 3.20 | BSD-3-Clause | httpx, langchain-openrouter, langgraph, openrouter |
 | iniconfig | 2.3.0 | MIT | pytest, pytest-recording |
-| jsonpatch | 1.33 | Modified BSD License | langchain-openrouter |
+| jsonpatch | 1.33 | Modified BSD License | langchain-openrouter, langgraph |
 | jsonpath-python | 1.1.6 | MIT License | langchain-openrouter, openrouter |
-| jsonpointer | 3.1.1 | Modified BSD License | langchain-openrouter |
-| langchain-core | 1.6.5 | MIT | langchain-openrouter |
-| langchain-protocol | 0.0.19 | MIT | langchain-openrouter |
-| langsmith | 0.14.1 | MIT | langchain-openrouter |
+| jsonpointer | 3.1.1 | Modified BSD License | langchain-openrouter, langgraph |
+| langchain-core | 1.6.5 | MIT | langchain-openrouter, langgraph |
+| langchain-protocol | 0.0.19 | MIT | langchain-openrouter, langgraph |
+| langgraph-checkpoint | 4.2.0 | MIT | langgraph |
+| langgraph-prebuilt | 1.1.0 | MIT | langgraph |
+| langgraph-sdk | 0.4.5 | MIT | langgraph |
+| langsmith | 0.14.1 | MIT | langchain-openrouter, langgraph |
 | markdown-it-py | 4.2.0 | MIT License | typer |
 | mdurl | 0.1.2 | MIT License | typer |
 | nodeenv | 1.10.0 | BSD | pyright |
-| orjson | 3.12.0 | MPL-2.0 AND (Apache-2.0 OR MIT) | langchain-openrouter |
-| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | langchain-openrouter, pytest, pytest-recording |
+| orjson | 3.12.0 | MPL-2.0 AND (Apache-2.0 OR MIT) | langchain-openrouter, langgraph |
+| ormsgpack | 1.12.2 | Apache-2.0 OR MIT | langgraph |
+| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | langchain-openrouter, langgraph, pytest, pytest-recording |
 | pluggy | 1.6.0 | MIT | pytest, pytest-recording |
 | psycopg-binary | 3.3.6 | LGPL-3.0-only | psycopg |
-| pydantic | 2.12.5 | MIT | langchain-openrouter, openrouter, pydantic-settings |
-| pydantic-core | 2.41.5 | MIT | langchain-openrouter, openrouter, pydantic-settings |
+| pydantic | 2.12.5 | MIT | langchain-openrouter, langgraph, openrouter, pydantic-settings |
+| pydantic-core | 2.41.5 | MIT | langchain-openrouter, langgraph, openrouter, pydantic-settings |
 | pygments | 2.21.0 | BSD-2-Clause | pytest, pytest-recording, typer |
 | python-dotenv | 1.2.3 | BSD-3-Clause | pydantic-settings |
-| requests | 2.34.2 | Apache-2.0 | langchain-openrouter |
-| requests-toolbelt | 1.0.0 | Apache 2.0 | langchain-openrouter |
+| requests | 2.34.2 | Apache-2.0 | langchain-openrouter, langgraph |
+| requests-toolbelt | 1.0.0 | Apache 2.0 | langchain-openrouter, langgraph |
 | rich | 15.0.0 | MIT | typer |
 | shellingham | 1.5.4 | ISC License | typer |
-| sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter |
-| tenacity | 9.1.4 | Apache 2.0 | langchain-openrouter |
-| truststore | 0.10.4 | MIT | langchain-openrouter |
-| typing-extensions | 4.16.0 | PSF-2.0 | httpx, langchain-openrouter, openrouter, psycopg, pydantic-settings, pyright |
-| typing-inspection | 0.4.4 | MIT | langchain-openrouter, openrouter, pydantic-settings |
+| sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter, langgraph |
+| tenacity | 9.1.4 | Apache 2.0 | langchain-openrouter, langgraph |
+| truststore | 0.10.4 | MIT | langchain-openrouter, langgraph |
+| typing-extensions | 4.16.0 | PSF-2.0 | httpx, langchain-openrouter, langgraph, openrouter, psycopg, pydantic-settings,… |
+| typing-inspection | 0.4.4 | MIT | langchain-openrouter, langgraph, openrouter, pydantic-settings |
 | tzdata | 2026.4 | Apache-2.0 | psycopg |
-| urllib3 | 2.8.0 | MIT | langchain-openrouter |
-| uuid-utils | 0.17.1 | BSD-3-Clause | langchain-openrouter |
+| urllib3 | 2.8.0 | MIT | langchain-openrouter, langgraph |
+| uuid-utils | 0.17.1 | BSD-3-Clause | langchain-openrouter, langgraph |
 | vcrpy | 8.3.0 | MIT | pytest-recording |
-| websockets | 17.1 | BSD-3-Clause | langchain-openrouter |
+| websockets | 16.1.1 | BSD-3-Clause | langchain-openrouter, langgraph |
 | wrapt | 2.5.0 | BSD-2-Clause | pytest-recording |
-| xxhash | 4.0.1 | BSD-2-Clause | langchain-openrouter |
-| zstandard | 0.25.0 | BSD-3-Clause | langchain-openrouter |
+| xxhash | 4.0.1 | BSD-2-Clause | langchain-openrouter, langgraph |
+| zstandard | 0.25.0 | BSD-3-Clause | langchain-openrouter, langgraph |
