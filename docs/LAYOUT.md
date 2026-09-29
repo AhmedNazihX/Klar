@@ -28,6 +28,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── db.py                    direct Postgres connection (DATABASE_URL) for server-only tables (C3)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
+│   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
 │   │   │                            build.py + load.py (C3), embed.py (C4)
@@ -38,7 +39,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── scripted.py          stub nodes that return scripted outcomes, for tests (E1)
 │   │   │   ├── nodes/               facts.py (E2), scope.py (E3), prohibited.py (E4), high_risk.py (E5),
 │   │   │   │                        transparency.py (E6), role_obligations.py (E7), finalize.py (E8)
-│   │   │   ├── prompts/             prompt files, one per node (E2–E8)
+│   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   ├── citations.py         citation existence validator (E9)
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data

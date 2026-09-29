@@ -20,7 +20,7 @@ from datetime import date
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
-from pydantic import Field, JsonValue, ValidationError
+from pydantic import Field, ValidationError
 
 from aiact.eval.runner import (
     Classification,
@@ -30,6 +30,7 @@ from aiact.eval.runner import (
 )
 from aiact.llm import ChoiceQuestion, DecisionsClient, DecisionsError, chat_model
 from aiact.llm.routing import require_setting
+from aiact.llm.structured import describe_validation_error, json_schema_format
 from aiact.schemas import (
     DISCLAIMER,
     STEP_ORDER,
@@ -152,12 +153,7 @@ def _step(name: StepName, answer: BaselineAnswer, label: str, *, is_deciding: bo
 
 
 def _describe(exc: ValidationError) -> str:
-    """The validation errors by location and message, without the input values they quote."""
-    problems = "; ".join(
-        f"{'.'.join(str(part) for part in error['loc']) or 'answer'}: {error['msg']}"
-        for error in exc.errors()
-    )
-    return f"answer doesn't fit the result contract: {problems}"
+    return f"answer doesn't fit the result contract: {describe_validation_error(exc)}"
 
 
 # --- Luna without retrieval or staged checks ----------------------------------------------------
@@ -191,28 +187,7 @@ one for limited_risk.
 """
 
 
-def all_required(schema: JsonValue) -> JsonValue:
-    """`schema` with every object's properties listed as required, as OpenAI-style structured
-    output demands (Azure rejects a schema whose optional fields, like `about`, aren't listed).
-    Optional fields stay nullable, so the model sends null for them."""
-    if isinstance(schema, list):
-        return [all_required(item) for item in schema]
-    if not isinstance(schema, dict):
-        return schema
-    updated = {key: all_required(value) for key, value in schema.items()}
-    properties = schema.get("properties")
-    if isinstance(properties, dict):
-        updated["required"] = list(properties)
-    return updated
-
-
-LUNA_RESPONSE_FORMAT = {
-    "type": "json_schema",
-    "json_schema": {
-        "name": "baseline_answer",
-        "schema": all_required(BaselineAnswer.model_json_schema()),
-    },
-}
+LUNA_RESPONSE_FORMAT = json_schema_format("baseline_answer", BaselineAnswer)
 
 
 def luna_messages(request: ClassifierInput) -> list[BaseMessage]:
