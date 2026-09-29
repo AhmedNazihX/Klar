@@ -9,9 +9,10 @@ No model is involved: this is a plain lookup over the corpus tables (decisions 0
   `(d.law_version = $v or d.law_version is null) and not d.is_amending`, so the Omnibus itself is
   never returned.
 - **Which date.** `as_of` resolves only against the amended text and defaults to today; the
-  original text is an explicit view (one open slice per unit), never a fallback, so asking for
-  `original` together with `as_of` is an error. A recital ignores `as_of` (the Omnibus doesn't
-  amend recitals, decision 014). Guidance slices start at its publication date.
+  original text is an explicit view (one open slice per unit), never a fallback, so asking for an
+  article or annex point in `original` together with `as_of` is an error. A recital ignores
+  `as_of` (the Omnibus doesn't amend recitals, decision 014). Guidance always honours `as_of`
+  against its own slices, which start at its publication date, whatever the law version.
 - **Which language.** When the German text is missing (most guidance exists only in English), the
   English text is returned with `english_only` set. The notice is in the language asked for.
 - **Held-out examples.** A Pile B worked example is stored but not retrievable by default
@@ -97,20 +98,18 @@ def get_provision(
 
     `law_version` defaults to `amended`; `as_of` (the amended text on that date) defaults to
     today. Plain strings are accepted for the enums. Raises ValueError for a malformed id or an
-    `original` + `as_of` request, and ProvisionNotFoundError when no row matches. Without a
-    `connection`, one is opened from DATABASE_URL.
+    `original` + `as_of` request for an article or annex point, and ProvisionNotFoundError when
+    no row matches. Without a `connection`, one is opened from DATABASE_URL.
     """
     wanted_language = Language(language)
     version = LawVersion(law_version) if law_version is not None else LawVersion.AMENDED
-    if version is LawVersion.ORIGINAL and as_of is not None:
-        raise ValueError("as_of resolves only against the amended text; drop it for 'original'")
-    doc_key, version = _document_for(provision_id, version, ai_act_doc_keys)
+    doc_key, version, slice_date = _document_for(provision_id, version, as_of, ai_act_doc_keys)
     params = {
         "provision_id": provision_id,
         "languages": sorted({wanted_language.value, Language.EN.value}),
         "doc_key": doc_key,
         "law_version": version.value,
-        "as_of": _effective_date(version, as_of),
+        "as_of": slice_date,
         "include_held_out": include_held_out,
     }
     if connection is None:
@@ -122,26 +121,29 @@ def get_provision(
 
 
 def _document_for(
-    provision_id: str, version: LawVersion, ai_act_doc_keys: Mapping[LawVersion, str]
-) -> tuple[str, LawVersion]:
-    """The `doc_key` that holds the id, and the law version it is read under."""
+    provision_id: str,
+    version: LawVersion,
+    as_of: date | None,
+    ai_act_doc_keys: Mapping[LawVersion, str],
+) -> tuple[str, LawVersion, date | None]:
+    """The `doc_key` that holds the id, the law version it is read under, and the date its slice
+    must cover (None for the original text's single open slice)."""
     if not PROVISION_ID_RE.fullmatch(provision_id):
         raise ValueError(f"malformed provision id {provision_id!r}")
     prefix, first, *_ = provision_id.split(":")
     if prefix in LAW_PREFIXES:
-        return ai_act_doc_keys[version], version
+        if version is LawVersion.ORIGINAL:
+            if as_of is not None:
+                raise ValueError(
+                    "as_of resolves only against the amended text; drop it for 'original'"
+                )
+            return ai_act_doc_keys[version], version, None
+        return ai_act_doc_keys[version], version, as_of or date.today()
     if prefix == RECITAL_PREFIX:
-        return ai_act_doc_keys[LawVersion.ORIGINAL], LawVersion.ORIGINAL
+        return ai_act_doc_keys[LawVersion.ORIGINAL], LawVersion.ORIGINAL, None
     if prefix == GUIDANCE_PREFIX:
-        return first, version
+        return first, version, as_of or date.today()
     raise ValueError(f"unknown provision id prefix {prefix!r} in {provision_id!r}")
-
-
-def _effective_date(version: LawVersion, as_of: date | None) -> date | None:
-    """The date the slice must cover: none for the original text's single open slice."""
-    if version is LawVersion.ORIGINAL:
-        return None
-    return as_of or date.today()
 
 
 def _select(connection: psycopg.Connection, params: dict[str, Any]) -> list[dict[str, Any]]:

@@ -194,6 +194,15 @@ def test_a_guideline_before_its_publication_is_not_found(corpus: psycopg.Connect
         _get(corpus, "guide:test-c5-guide:para:1", as_of=BEFORE_OMNIBUS)
 
 
+def test_a_guideline_honours_as_of_under_the_original_version(corpus: psycopg.Connection):
+    guide_id = "guide:test-c5-guide:para:1"
+    provision = _get(corpus, guide_id, law_version="original", as_of=AFTER_OMNIBUS)
+    assert provision.text == "(1) Guidance."
+    assert provision.law_version is None
+    with pytest.raises(ProvisionNotFoundError):
+        _get(corpus, guide_id, law_version="original", as_of=BEFORE_OMNIBUS)
+
+
 def test_a_held_out_example_is_not_retrievable_by_default(corpus: psycopg.Connection):
     with pytest.raises(ProvisionNotFoundError):
         _get(corpus, "guide:test-c5-guide:ex:001", as_of=AFTER_OMNIBUS)
@@ -204,6 +213,12 @@ def test_a_held_out_example_is_not_retrievable_by_default(corpus: psycopg.Connec
 
 def test_a_recital_comes_from_the_original_text(corpus: psycopg.Connection):
     provision = _get(corpus, "recital:1", as_of=AFTER_OMNIBUS)
+    assert provision.text == RECITAL_1
+    assert provision.law_version is LawVersion.ORIGINAL
+
+
+def test_a_recital_with_original_and_as_of_is_accepted(corpus: psycopg.Connection):
+    provision = _get(corpus, "recital:1", law_version="original", as_of=BEFORE_OMNIBUS)
     assert provision.text == RECITAL_1
     assert provision.law_version is LawVersion.ORIGINAL
 
