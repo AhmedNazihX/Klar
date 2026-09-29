@@ -1,0 +1,127 @@
+interactions:
+- request:
+    body: '{"messages":[{"content":"You extract the facts about one AI system from
+      a company''s description of it, as the first step of a classification under
+      the EU AI Act (Regulation (EU) 2024/1689, as amended by the Digital Omnibus).
+      You do not classify the system. Later steps check, in this order: scope (Art.
+      2-3), prohibited practices (Art. 5), high-risk (Art. 6 with Annex I and Annex
+      III, and the Art. 6(3) exception), transparency duties (Art. 50), and the company''s
+      role and obligations (Art. 16, 23-26). Extract the facts those checks depend
+      on, and ask about the ones the description leaves open.\n\n## Facts\n\nList
+      the facts that matter for the checks above, one fact per entry, each a short
+      sentence. Tag each one with its evidence:\n\n- `stated`: the description says
+      it. Give `quote`: the shortest passage of the description that says it, copied
+      character for character, in the description''s own language. Do not fix typos,
+      translate, shorten with \"...\" or join separate passages. A stated fact has
+      no `question`.\n- `inferred`: the description doesn''t say it, but it follows
+      from what it says (for example, a tool that \"shows HR a ranked shortlist\"
+      ranks people). `quote` is null. Give a `question` asking the user to confirm
+      it.\n- `assumed`: nothing in the description points either way, and you take
+      the usual default (for example, that the system is used in the EU). `quote`
+      is null. Give a `question` asking the user to confirm it.\n\nNever tag a fact
+      `stated` unless the quote really says it. When in doubt, tag it `inferred`.\n\nThe
+      facts the checks usually depend on:\n\n- What the system does and what it is
+      for: its purpose, its outputs, and the area it is used in (employment, education,
+      credit, insurance, public benefits, law enforcement, migration, justice, elections,
+      critical infrastructure, biometrics, a product covered by EU product law).\n-
+      Whether it is an AI system at all: it infers from inputs how to produce outputs
+      such as predictions, content, recommendations or decisions, rather than following
+      fixed rules written by people.\n- Where it is used or placed on the market (the
+      EU or not), and any exclusion: military or national security use, scientific
+      research only, purely personal use.\n- Whether it ranks, scores, filters, profiles
+      or makes decisions about people, and what those decisions affect.\n- Whether
+      a person reviews its outputs before they take effect.\n- Who uses it: the company
+      itself, its customers, a public authority, or someone acting on behalf of one.\n-
+      The company''s role: whether it built the system or had it built, bought it,
+      puts its own name or brand on it, modified it substantially, or uses it for
+      a purpose other than the one it was sold for; whether it is built on a general-purpose
+      AI model; whether the company imports or resells it.\n- Whether it talks to
+      people, generates or edits text, images, audio or video, or recognises emotions
+      or sorts people by biometric data.\n\n## Key-fact questions\n\n`questions` lists
+      what the user should be asked about facts the description does not settle, when
+      the answer could change the outcome of a check. Each question asks about one
+      fact, in plain words, and can be answered in a sentence. Ask at most 6, most
+      decisive first. Do not repeat a question already attached to an inferred or
+      assumed fact.\n\nSome features flip an outcome when present. When the description
+      matches the base case but does not say whether the feature is there, ask about
+      it:\n\n- Checking transactions or customers for fraud or money laundering: does
+      it enrich the data with other personal data or build profiles of individuals?\n-
+      Analysing faces, voices or behaviour (for example in interviews, exams, border
+      checks or at work): does it infer emotions, stress, truthfulness or deception?\n-
+      Supporting a court, authority or dispute body with documents or cases: does
+      it recommend whether something is admissible or how to decide, or does it change
+      the content of a decision?\n- Supporting political campaigns or public debate:
+      does it generate new content, or target or profile voters?\n- Rating or scoring
+      people''s reliability or behaviour: is the score used outside the context where
+      the data was collected, or does it predict whether a person will commit a crime?\n-
+      Workplace or education monitoring by webcam, voice or keystrokes: does it infer
+      emotions?\n- Public benefits, pensions or social services: is the scheme run
+      by or for a public authority?\n- Scholarships or funding: does the decision
+      decide admission, or only fund students already admitted?\n\n## Ids and language\n\nEach
+      question has an `id`: a short snake_case name for the fact it asks about, starting
+      with a letter, for example `human_review`, `eu_use`, `infers_emotions`. Use
+      the same id every time you ask about the same fact. `about` names the check
+      the answer matters for: `scope`, `prohibited`, `high_risk`, `transparency` or
+      `role_obligations`.\n\nWrite every fact `text` and question `text` in the language
+      the user message asks for (`en`: English, `de`: German). Quotes stay in the
+      description''s own language.\n\nAnswer with JSON matching the schema, and nothing
+      else.\n","role":"system"},{"content":"Language for facts and questions: en\n\nDescription:\nOur
+      bank runs a model that flags unusual card transactions. Our compliance analysts
+      look at every flag and decide whether to report it to the authorities.","role":"user"}],"max_tokens":4000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"facts_answer","schema":{"$defs":{"EvidenceTag":{"description":"Where
+      a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"ExtractedFact":{"additionalProperties":false,"description":"One
+      fact as the model returns it. Enum fields carry no description: strict structured\noutput
+      rejects keywords next to a `$ref`; the prompt explains every field instead.","properties":{"text":{"minLength":1,"title":"Text","type":"string"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"quote":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"For
+      a stated fact: the passage, copied verbatim.","title":"Quote"},"question":{"anyOf":[{"$ref":"#/$defs/FollowUpQuestion"},{"type":"null"}],"description":"For
+      an inferred or assumed fact: the question that confirms it."}},"required":["text","evidence","quote","question"],"title":"ExtractedFact","type":"object"},"FollowUpQuestion":{"additionalProperties":false,"description":"A
+      key-fact question. Its `id` keys the user''s answer when the engine runs again.","properties":{"id":{"description":"Stable
+      slug, for example `human_review`.","pattern":"^[a-z][a-z0-9_]{0,63}$","title":"Id","type":"string"},"text":{"minLength":1,"title":"Text","type":"string"},"about":{"anyOf":[{"type":"string"},{"type":"null"}],"default":null,"description":"What
+      the answer settles, for example a step or provision_id.","title":"About"}},"required":["id","text","about"],"title":"FollowUpQuestion","type":"object"}},"additionalProperties":false,"description":"The
+      model''s whole answer; also the JSON schema it must fill.","properties":{"facts":{"items":{"$ref":"#/$defs/ExtractedFact"},"title":"Facts","type":"array"},"questions":{"description":"Key-fact
+      questions the description leaves open, most decisive first.","items":{"$ref":"#/$defs/FollowUpQuestion"},"title":"Questions","type":"array"}},"required":["facts","questions"],"title":"FactsAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+    headers:
+      content-type:
+      - application/json
+    method: POST
+    uri: https://openrouter.ai/api/v1/chat/completions
+  response:
+    body:
+      string: "\n         \n\n         \n\n         \n\n         \n{\"id\":\"gen-1790674011-bJej35VxB0px7FG5cYWx\",\"object\":\"chat.completion\",\"created\":1790674011,\"model\":\"openai/gpt-6-luna\",\"provider\":\"Azure\",\"system_fingerprint\":null,\"service_tier\":\"default\",\"choices\":[{\"index\":0,\"logprobs\":null,\"finish_reason\":\"stop\",\"native_finish_reason\":\"completed\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\n
+        \ \\\"facts\\\": [\\n    {\\n      \\\"text\\\": \\\"The system flags unusual
+        card transactions for review in a banking compliance context.\\\",\\n      \\\"evidence\\\":
+        \\\"stated\\\",\\n      \\\"quote\\\": \\\"Our bank runs a model that flags
+        unusual card transactions.\\\",\\n      \\\"question\\\": null\\n    },\\n
+        \   {\\n      \\\"text\\\": \\\"Compliance analysts review every flag and
+        decide whether to report it to the authorities.\\\",\\n      \\\"evidence\\\":
+        \\\"stated\\\",\\n      \\\"quote\\\": \\\"Our compliance analysts look at
+        every flag and decide whether to report it to the authorities.\\\",\\n      \\\"question\\\":
+        null\\n    },\\n    {\\n      \\\"text\\\": \\\"The bank runs the model.\\\",\\n
+        \     \\\"evidence\\\": \\\"stated\\\",\\n      \\\"quote\\\": \\\"Our bank
+        runs a model\\\",\\n      \\\"question\\\": null\\n    },\\n    {\\n      \\\"text\\\":
+        \\\"The model infers unusualness from transaction inputs rather than merely
+        applying fixed, human-written rules.\\\",\\n      \\\"evidence\\\": \\\"inferred\\\",\\n
+        \     \\\"quote\\\": null,\\n      \\\"question\\\": {\\n        \\\"id\\\":
+        \\\"ai_inference\\\",\\n        \\\"text\\\": \\\"Does the model infer unusualness
+        from transaction data, rather than only applying fixed rules written by people?\\\",\\n
+        \       \\\"about\\\": \\\"scope\\\"\\n      }\\n    }\\n  ],\\n  \\\"questions\\\":
+        [\\n    {\\n      \\\"id\\\": \\\"eu_use\\\",\\n      \\\"text\\\": \\\"Is
+        the system used in the EU or placed on the EU market?\\\",\\n      \\\"about\\\":
+        \\\"scope\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"fraud_aml_purpose\\\",\\n
+        \     \\\"text\\\": \\\"Is the system intended to detect or prevent fraud
+        or money laundering?\\\",\\n      \\\"about\\\": \\\"high_risk\\\"\\n    },\\n
+        \   {\\n      \\\"id\\\": \\\"transaction_enrichment_profiles\\\",\\n      \\\"text\\\":
+        \\\"Does the system add other personal data to transaction data or create
+        profiles of individual customers?\\\",\\n      \\\"about\\\": \\\"high_risk\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"provider_role\\\",\\n      \\\"text\\\":
+        \\\"Did the bank develop or commission the model, put its own name or brand
+        on it, substantially modify it, or is it only using a supplier's system?\\\",\\n
+        \     \\\"about\\\": \\\"role_obligations\\\"\\n    },\\n    {\\n      \\\"id\\\":
+        \\\"gpai_basis\\\",\\n      \\\"text\\\": \\\"Is the model built on a general-purpose
+        AI model?\\\",\\n      \\\"about\\\": \\\"role_obligations\\\"\\n    }\\n
+        \ ]\\n}\",\"refusal\":null,\"reasoning\":null,\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqu4RgOnz2QKv3bbIExmpsRJgkbT-ZfbGxev7mKvoCZhvWJ2-0GAC804Me4LaTCwLHvPyQvFwxfZBK9eBCwOw17qElGT1v7_uRD7x5Xbu84P_7NggDGND1DC5SYyQiXhPmdX_o0tcJUhJb_vbpI46t0mNPGHrdvtOSmCumRxxMNu9Yc_vViyeXzotwGcaExUmbnp12gKf8kvJCL19tfoWeIIryG6ALNIkBwHG6CHh0JVhLs72uHcE2H7AxTOhIz4dFpRChbsjXdUlKqhrg98Rf8HryUMIgwi2w6LsIslvLcB6hvGCe7Yh_Y8PERwM5oLi77CIrCztHz7jdDPmtBcT0b_2xpnBAVT-3QB7DWHiEVwYwhin5AW5M4sWUnFgWRMjKurSGZkmrrRbyBOg3jC5jS0HUKyOcM0CW995ktPcHpDJS9nrmg9RxPu0VybSbErNzrL-Y4vsjtfyVXfdMJkRT2xPi9W--kZrgo6Iu6QDc9zquyCHcHAUT-t2ToT4Px3BdO10F_ih7drtdsKjXFHRSfejvRzkrtnsq0XpvrECI4X4uKBqe00zuy_XGS9fujMeyy9PcVgRRdoERwmZ8BOFrdIlCeKBsW6vwUlPVm931ALyxmnim97oax_L9N3WKs73RboPdpg0Dp41YdMkMIYv-fCRyl1Fv3L1cI0HlQNFtXBGivDfnczScehhxyCiu-x3ychGvR__1doLuTEVClt2U4NElC0jhgWA9x8s895EUdlj8zodBKEB5jxaJxXB-gorLc01H9V6XFIPI8RIK24f4zo1BQs3vUSkdnZ2z8_zZp6Xa_GhLinKvtysyLAFQQzVINH_wwmgkrr2-lWZkJhaYDGg4TQ6m0To6nWpHf_2I40ecASrfmSZ1hI34D-q6bzlLfnKNilBZYpcMJ7NXNWucoO0Q6gHxFXlF-7K2ipXilM8bLaHSSiUMzJUgFHaaWVh3fyH2dbIE4q-He5CSGISYUuK-3LqNwhXw_T-Tm2TcPwnhwRtwkUnixD4r4MS11oygWCqwKGE-kxGe6KOjUsMEtBZ6hht1Tn1CWXFzcwjZFELxAEaPwXUeUmz2g6y1QpB2a1OLFoLMA5aVCZ5QAEgrxdNPMT_6C4BPV2HmUENKnSq3Yv2rXKcup7K8gYgqUG8em5sqGCkvudzhHCY9lZk4-BlbbVLSUbY5O_rJ8rtlikPE22oS0gFfIxH7eF2Vb1tm-vLU2757f_SmX4xKY37rswAQkG2jdV1cEz2OxwL9DP51qknizPOWEnIm4MDrP8UOG9xl0T77mTi8iWp-QctbkD3dREQ0YTnGuWEK6kO5yFebopqFpsXpf_1-nLr4G8jHZZWZmE4CyelKsWxCh5LLIsxcfQ33jZPx4Z8SnzB4CdOMxQbCchSGI0ESTsR8vaNYX9REFLEiMMMBz1gu-SpDmLMm4dNH0b1e9Zv2JvRpHcEDOCKTuPvdjWOXAg9PKvQNHh2dFr5E6HOgqen-y4fSs3-LUOACkS6JuziC5kLvkAJOJPlPbUuEXWCmxMV4LmJtTGtSbpixuLUj2wKiJpla6x_BQcWcgLVkR6YDsgqeYaAyih-TLldcRKjVjsjYkZ0ZzyOa0clg3t5_VK1F8g6rHZaM4A0gMwtWY26OmZoWGlxQGVrpYJmoIRtNDx6xNT93lhVaAZuhGLq7vBtFWaek9vxeFofegcn-2m2KOst3ooRNi_acc_BCIVNuu6g0K36Cjaf3yfZJq6ZtWCo8VhCo-9UMrS1KMe1gCze5cxDNUYHoXdnFq97IlXEE2be95DTlxbUjqM23NYWKMTPmsD4rDfa6VhoGKgWGzLFuvU0TYMmoFDsjoEeZY24h9U_J0cs4nIzaqN6TvqHvbcNRNvmGIhPy9ktfifHaG2Ym4AKnuq22PzxuAtDSeNpmFPhZ_GWw2nIEWyJiFZUMbq5DlSw9zlRY3rBqNR393gK3lYyZ9LGN6TpuyXvQUAPgI9ed4lFaqXNgpejWmj_7eBzD5LIsObajElIQuM7wgZiCoJQ01jBNvJVgueMB2XPjLCOSE0tkZxZtha_p7VIl0SaXlNibevCBfYjLjCx3aPMUVjYtdjtsv_a3FcKpK_s1Bw0A0eM0ie5nUyttps44LiWmG0pxvrJ1ZBjoZ0bCHPrqW95mSu6pdUjZZb_QJEn63_DJeProFI10l345gxsBEu-7z9xQNWjIXpcV_BmjOA-66Ga24bKqD25T_WQVb6AhO0wU2NJfFw9CGpQmDdBO9JhDT8Q5iHE6t3I3awR0YUBz_XZEnzgvOIdtnIeUgoQ_ma71gMtGhZ_yuY19aEIWLh4SFlkWiBleIxWDuhSnLrfbGjc_GddGL8nVWHCLcXdVT_02Ny9JDKWGhnDaCupqoyG6I_a0EcDU7Pd9qu8Zos5lcgAHS2pQYDSQRlGVCwE3qkZcMbAymH7ssW3vLxFxKUeSHlfQS2QzssPYeVLJabkikHhLb1XCl9aLOZYNaEhLC1ax6cqLI3_HIMA0cHCxS65fQBJ2QqbQF8OilVN7FZgNixILqKyazzSTyrEv0tUTwfifeDRqn9WdbjA0y0_5EChxZFXFzKyZPhZMk0sVnvXo1ReNq0jqfzTkuTjmgtHg9RiZPfrJSicWgJbHyuAvuuxIpJIQWggIy6sFGaY8FkNeDoz8DjhvpkQrwWkg7RDIkxkqEXtypVo9GkfpHvbvmG9I2V-XeLUdGXopUiDoEYm5ZrbpUQ7JCnRCnjT3JmXMjnNyPpaNfkX16P45ikhOebf7pzD6hZ50ZQugbjt1M0ubhqVM2RomtEMoG7fJ9LF6iQEgXPFK4EZ73qOnYYv0G0y-MlEmAmVAKNgHMufo_JSIR6AjHdCxGK67QDexZnsKAY1cHObt1yvVipsiQdQDzYYEje5LlbZsYPIPEbnszfM8sjIPYY1a6mBixoS6nU_2AhqsEIeZZoLKa0hkNCxHP0eveeQuY2sYTfqTQIB9bBgMT0Fy9ObkoMRqpJBVtAx3y1yOcjecatBia7iyGC2WuY7TNpkUZrrN18UBrQK7XXy1QC8uzqZmmKl6K4KYE0jLTZ4bPIcbCT04psj9wdnCkpQG4lkaFIyy1OSlbPCtqetQUMu8XSKE5sZKD-qIXhgtFZ-tdHvcBLdwJ6Yu8NVyWVfEc4EclgkVkMLDxu8bHUDk2XZzn6LRApvk0ZWO_U7LyCD8W4YdRhmW3oLW4GlliDzb8IuqeqKFUEEWO-un7MBoswJlw8MgeZ1gWgrdK9Wpckfp1E4tGcr2RCn8ne3nJiR9sXhJfl4QJnlqwui00XLPIGt7P-TZiqe75qXymIvldQFcO4lwQjbGtvgde5KTpqUaD6rbDo7VXZSIgPYQ0aDAJp2GvL8wM37pBFGk6Y48xRIV4Ilpm79UQNhxphVX871a0uIO3BiI0j36emczHFI6KOJGitYK8dJoJ94H72PocJkoEdnBrGOw6YVJ-MlUmEaIzjnwBZCpednpx0jrv3P4Qy5CtYnUfvcRLb5I-3k410KwQ6y12MFlLaLTeo-Bmx1j2qMe80oNW-ou7Tyz4cySWNAmmGl2wnDUeDtCdrpKdSdGgrJUVj5HmiNxFaBsGr9cs4moHxEm3L13WySQ9HHd8kqEXY0tiQlmVPE7dWus2uBaONzZ8nHEQeWY71G2yjiixiLBykba6JDYyUXyF7hnuP4qvUrdI2oWOFF85oCuLZ3VuCgHKK25lbkZ87JB-yduP7cSuobMdagUQrQB0urYlxUkgyl6l3JSgqTbH8PJ6ryiQHc06uurew196YqMRuwUWbi4soghkGaT81uPUFP4Nr6p3p-StmQ4ttEyCwClfyMDM7F61JUEkthQoVczaOTutpwGgEj8d4ASX31sXxv_03xFGo4b7E51IhfnhkmrS-416vqGn7YMMqH-wf9sDLXeeU99kH7Yz_QTFJcHYYhd43AKqnBi3m_7PagTvmpwt6EXCPghk87LIsAHFqwCdx1BukfRoZghqb24voVFbKt9HfoCQbT_6yy22R1b-AZOWNcz-_Ez84JNMEe_Oc62-y6n5_NaGTN_xbQ8tdnx9MdXxGRsqF7pBOltC1sefC3lkVRbLJXKqwT4cV4wCE0o4uISYkGUSAWts_P8ms9zCt5HGpIBmhljQj4trmkMpxy39Vj6YymvgKIba9WlQcki1EpIzW6za2TvmhTNLrhA3prMw_Pym0fJ1wdItIWnuLlTjNdBusRuI4vGeCtSe7SMoRTc-umbp_L4wknsVbt4HKLwT6-bVqrLi18--Vl_QfY5M_l-BCzwvSNBckFzhMW3oMF7Qz9J3-dLpPfQJUL8dm6wIUifrXNSK4XzEaDkmwaxYH4V1T6nnVlC63OQ9OY5ifBTJc6Gwwi_8lBvptlMqMS7YbZ3nivn1EAHsWL2oRAkmkBkFQlldh0iDDHkgX5FmYMM9EKVzHTNU4GjBt_bFpsbsRIxC7hvx8WCtX5D-53ZNKEyyWwINe7iK_xiHd9hoc61-8RdlL4V6SSLOQ7nvdKKkdcMWLUEdZoYsAooTTe-Fn1vKf-V8MvWYt3gjzeQ8CV4dOwO-vJ-bYWazG8FFRd6Nj_QiaC8aeZZwcR_dOpwtRyN8U4RXCS7YPWZyrtd7qszc9-4fWi0HAWNmAc7pmDUsiyzDR1xdideyF6p1ViU4frsQFb57UohZTKTnUU9SkS06wc_wNGs9udeEg8mTZErbYnwWp6tQqOY0cSbc4_CR192ZTRYU1_O.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_00f3017172818908016abb845c21b481939b4638f73035af29\",\"index\":0},{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqu4Rk6JN4yERsuaiXU1E0_o_z602wnv-U9-btPijZEu7HUwsdcBEcObO0VDbmIO1vbMu8AInqV1_B3JRcDhf4khRG50_xNh0HbHE5VG4RZoEjrA4fvTbX_WaGAD3siyySyydWyFS9DACeWA1x3SL6GjRFfkhzZ2sqhTWXw81IfnHaiErVN2u8_ClV9Ydqv26u5ASIqkNdM3X8Ci-60MqWLHBOHx4ySvKFgLLGDOvwoXfq3TIJHKAqhyLKgsVKKjNCSRY7QrNlVRqWFSzvWFj60cPPOPvMRsxVqo-GyEZSleNDrPn2zQfy_JpaAUuYZE7WttHiyo_y2JsQlWha2f9zXNb17rRonUmbRtM4Wp2X-zU-3_NkG8Bn_XOKtkQnVCAdX9aQSNDGnYzyTJULNpLvFs1nV12MZLeJqlMgYixU23k8Xkk9k67ggvYzGvGc2nk6mkut1AmFnP4wccyjEhpanWslLrltaWhxydMbPeszxWy6xtSRI7RDzpoz_LrOnmFiPuVuQfKkJS-D7AnGZ18d5ZEHzwUh77p16Sv8-L5HuIg5jKvoETOhfGM7gBUb7rX_JHaGINUOnbTrQyf0kEWeArps9Lm-idQW9v3COqagO05KwRSrtYDV8ZwkfEit2Mnu6msHyP2ZJhxIgLbdZt8ZdxDhucVDUvXiU-DEQyHSmvfSYTFOg_ovBN8OGSdrt_nVbVpnZetRvWCTXgS2ahnXEXSabuDXtg-l29TEaP7dsdkz_dh7lSYU5MiGVsFeCc08P5J3mRUuEN3KhbAfLdKHH0z8Oi2FygRyfdEpifv9nfPx7lAvJz8SHpD0DysrZW-vpq1qjN44PiYLnO3AkbrrRpu5yzI5XFhhLhjbpI4PmH4F6ckBXVCdd3YQkVLiCWlit0LS5OvnM0T8VykIWkhvFlfoNkbVXMQr0hVBWBH3vTncc_8rps2qBID4B-wO0RfR71wH3QdPsGZ4R4pVWwBlWWlswe7GwzNFYpmxEjU7eSPakK20BMBAXFvkL37EN9Rz3lSby2Y0ggEYgyCd5hm1vQ2aLeIHCvmgalBLscdTr7pBKbE_VUPy-xYFOOkHdcrxtP5ts6tXW-T88juSes974M69Y0xtQyF79IhcXtQoW6L7btUkS9aamk2dSmPJbvjmJqU2OTFo_AIPqkbaLNcgdUWpfU88M3KfG2cO5xYlURo6B18xAdTnDs2jh3TwGRl6tU0kEmmG9eYgH9bQgO65fahLz54c-ogEbVD2U1wZ_DTIcJ7CTLCkJRpP-GSZ_iY2cKXCOPPKLc8oYR2nswLZunTlpNRKjMnv-TKfIbiOiD3XsgLeWphU-UCAUr8_GIxjNAbPZRiZDOLa-t4oBRJRgSAHM7YfqeIEpKKWa3Las-DwgN1L8jsbsnxeEBx5TisHAAT4mu29tAWiQb_IWCql4GBYw60jpjmrSCk08Ufb4IjxgGVoqzhcisFVI8BgLu2zGSMPx0-jmchsAHS1knaIlpAIE8RoLm6REahWbM3VJJ2ZPdSF2wRCIWNt9I0GBhDyn5pb0pxGKwVXM5XgxmkNqWf8eXcDqpMF7CjHc6ePpZBpasVU8A9IinnLS455tR1L4BZHS2xBVqkhLwM-JHMrB9yr6c8mtYKBKstjlEQjRAoLEYdwbZ-nh9M7ssAQnOB8sx9qhkvUJQozZuF0TaW5xYiHZV-GEm-rFGa7lmUq8WlT58RjBiMaS7uHClJEmOXJeCDu9V1i9i1UOw95ETUAuZg8LCHvdEEQaNAVFSdjRDaCDoRTiF8QVfgf9FDrSmhWMHDG44DFSepjcLeeZvUqyhz_iF1tOviCira1NZxrGqwvqBN5n8FT0odj4TRQCtt-IsAUDxnvxUkOfXXm3hy_UedxszTVrxLYeAMFnMD65M6KDICy_5ovgB9BAdJqKOJ7Lfr0vS3vx5i4fr9Tcq7VZgHMBwrl5n2zH_hjnHr88zhbQkvtsfr-jNDBzqQ0n0QFC6gQxhbaFFZhLvQ6WK1AviWC0e0FIovQqacBhbAKZmMAVPH48bZnnxcRUyD5Ysq8ElX-GIzrmO0I30WwCyd8ZTkj3hK80eqe6pQDhN_MzSY7YlSYRnGzskzvnSGsgIf1QRpYvAVeARxyWiCWvw-bbRKZekZV0znt-f2ElJ6gNzb7Xjx-wGPjGspyFMQDKbdMmH5oZs7JLkC2L-AiORshzfYyiA4qnnYdHPgLMCxBlU4j7YPS9stZWHWI6fEToCMD3MkohIyGFrP6tp5tISsk_v4hG5RW28TFvg3tT6tP48vq7zPPT36oUWlsTwHvOZPS1rHX7aTBSqZ4AOPcvDsDlleF8fkyaw-idTaiBSf-U3XqiBFON-P7xngix0JWQIkCcQ-44CLa3lzJW5YOCse8k63jliZj6uuYzmRpPBb5raqmjHLKA_dw5ljbcRNGyadcZzQnjYe-6T1TbyIJs7JE2p3sRr_JIdu0dWvOgrivs1x1ozPYJOWcIPbeORfWlb1UhMFc_bnz4q2NZs8pqcv4MCmgCWVCK-CdKai2D-fPbt6YYJ9dFYTqY-nNq5AhAgICyHFxeM1NwN4uuAHUe_OSSFxPLFwbk39su2GT7i2wUcGM8g2hbsjDmMtAE5ezKRxCklO3Blsj-It-8lSQgkWl7fDyTdH89e_XiTy746lfHo8k23WO8ckaL78LIDenFe2OUCMClPP8pASswSQVgjzQnPh30byz6pqXLa4bTIAA-Y1rY0p9FKRAix0uon0YIZNSfXNaA-41HoS0CB9ZCZpUN2-0pxSCTA96hTh233pXknj1oG_k_JcOgpjsz4k1twfuxWmPRtr8l3w09TmStoP2J5UTiuOIIhsOyE5k5FDALOzOgcqgqmI1BZNfq_AUehFxsibJcZPaEiMQsMEBs7UvPUnu093ynVs2CqFUpC30vHIMzgd8tifpkHcQt76h1FmC5X9L4FAct3rCc7FBcZkjiMyeTpp4pgiqErvdXxs_t3QkCPrSvDOomFE6d7VLhtsutaGWWCIgro9NLjMrRrCI9ngLagE1PncrXrUwbcS0JEVa-S4RMoj-nOHgJ2hAtJEXj9kbzYk3ZRYIApUz7_428LZwfBTzuuBWuNdBSfZ5YY9Kmc2ODbk820x6uAM2RmMw0BsltSu213Xj_6uNxOzDNyR7Jk2Yqs3cfBALpaXRajd_g0pkFDfN4lt4Q3_RJfBo5a-cSAhSYlQIQJlHi3pyAOv39XLJptuRsX8uaYox9T2G5AQQn64R1PsHhS9OUceQnbzQU6KlIFhx0bFkQvwr5PnCCBn8NAlbnChcBC5Opn1HKaNMeHP5fHKLOzkuDkXJ3B7_O8uK61d1V0jf1TiccHJeKlx8PF-4eJ_GFIHQWx9FkC4pvB1zRrMM4YDj7cNb05QGdhBukg7gcU5jQZsIT85qxTn8jox1reZiMHb7hYtK1TaT72IK33vEap4V9HIqwWhgejCLWfnzna1wNBg2G3LIW6ZoewgrNqi97gdUqFv7DDA9wvHUUuuTDbPB13q-nbEFLLTSoqGTUMKYqGmw3XFvV0V5UXuXGqKpsJ9Mw0TLHICt2iJ0378a_fAUebX_Y8X6llz1vmBJEJtZeRnvoOP3J8RcAnS1gvikcfx2Wn49VvFRpRFjxFsZbr35it1Krnerr17ZTPFc7kMntUFAwVe56z9P-ZocxEBSmm64frPb0H3WrRickMpJ3WL0b_8HdqOhqpT734SKP_-W-32dEGYvTWp5uUVkXIpgVkdfsdTDkqaHnVF9AePmjp7Cs1tTV7AjUz5qZVVVJflus2aKJ3AUn-vAGrEMDNEg-JdnH_fdsnYTZ_ZxmkjltvmPoJSkvwwjXAMxi1bXtgRjnxjgwPwOKfbYPZpaSE14NB5SAGGLPQowrt66mimwZu3iFFwGjowWuNPciekftaHMLbsutjs1NIShx2af8AkeDoHOx2feYLkjgVzKNHvjvkoI81WbMjgaNjQ6EQbN_ueJyMzHodFpYcQDY3NdUtFV__N0hSNySc0JC5Z8Af53ORtk0OPIm_v5k2xIfWYYyNStZvOc_sig1eDOBeMkLpi20tBoKnYrtAxAX4zfS-JDZ0bnS-StBDxGFeFvyuYBNMIZ_Xwxab6GwmzvYmlZ7AWjrdMbVl0JtDAcI9p3jTfPL05jWWVVba9PERWuieo8eChVqF12N2o8_k1MySJgkSgAhao8bc8hpi4zSOp6-LmFfTvAWWHhVN2JfEbLvkuvirDnC8H4rOloGaUlaMINxie4OiiAANh9xT5Su79jRdPC4eBXL_mx3UwBv2QUIUvTuDoFr6okrDJr0hEiSiGPlQuqmTkhODBoQdZw-q4MqcZx0ml33FmdRrtWr7sZ0wvzpOW0jAwhMRZSB4Jg4yQ8-xmfdjo-xva3ygq2sNHT5wujNz3wO0FOoeoKPNl5NGQuXNSUVude9diF9N9vRY03_Wb0sPfzmD3SgEXliXumOLsJBtb0Nr6rtPRLi5u-Ec2c4YjZMTSbW2hnqpE3W4vOgx6moPI_knBqPtQzedjt0yUvlF14_OAlQyyHCD3FycUFA6UoE0oXVnXMb6LpKuYp6GwaB-Kk6ENmUag9iTmv6FryukYaqFiMe8yPFXTC57p6OzZihaf4XLbCWbgnBm97xLIHJcToZFmqD1tU1w8YuagmUCZrcYXFLRTwQpSJL2K8Mz3QlFGq1_h-Fsq1-1XpaZKiXGkpKl1y2-agd1NkxFEabOeiXvZ0Fkb8RckqjTVhisi0kY_W9w0GHdNQw5tNtHoagk4NbjKFkXc6Ixra0RpIDKJV3PeSIQjw1GW9O975Ygj_-42W2KQqIA==.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_00f3017172818908016abb846087648193b10f9cfe3a0590e2\",\"index\":1},{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqu4RkIUJcEH3Hn9Oab-8lWfb3eGgfmspV1unFV9wNyUlYD-g_jzWEnyCzc1ELSTqOYSlzb7RT03MLP8DQv5w_lnf-reom0m1dGuBKwDMOTjXpTAaYeAC1E_SAAXIF5kl0TpkwGK9z6-YdgQsaOOJZHbSvhqcjiEF-w0La-1xzPjqwTpRlri_m3SRb1Dm53grv2gSu3IrJ6l0dpjj-CP06OySSLuy5spSvTeiwYzUxr046pVAoY899z2r03AalRhdZtLOG4Y21TeOvHX7ngIDVGZI9e_V9lOt92S6p1NQLgDdA32nvGCg3wNWlZ9JzhR_uFHxk5RBSyeOnO6JEEtHr0MJe8w5FztO5bj61oVaXFWoI2BT2t0UplLSWdEBtBUJTNyvVJJ33_SJSyVEIN4C9CWoz4qvq3mBZAphg-I2eopcvG8-WZtS9UhHBpvQ24U1AY9KywDy-a50XMr9P4u73JA82o39dW9xatFoacjTvFhMLyz-sfVlJ9A2YmOH7VdC0jJCgAFHAb52zHrNzCsnZ58H3h59yNdfg0nycJ-u5dXpxwaN-x3dja3SVNA8mQaN3lxLk4eFHocO8mf4fDnFwCF6trEUJqOgOvSRGg7J8yV_ZuVahBjtczUZ44DYZmdJJHUZNpji0zkQqF786PqTzhgDoYwyC_g84X3f8UpYvCJjs4LXFoDSs0ZnNIEXrCC5jCEHXx2Pg3071sCqOTEPCiO0z1dRJ7AAbfxch1KI-Z6oamxRG005twKdFLVVPBGRUyxbKkz9Wld0n6ws6xeH81DkINmQGY05-aamnuF5bsfbSY05QhEk4GP5nAbAPm3nE2roS_b5zutHIqeVRQom46vVfin6q6wzuJWuAUN9cTn9Ahpo_DXsUvb-MKtuPqXEcfwaQSvkwmGnjCX7ptbUCyEj0eAqlbD5-5S7jo25hUqgDvdzZfBqDiO33odHP3WGuI0k5cZk60fuxAGX-DpJizWf-UvaXhTxxoxvg-ctdQRYxYCxHyrPO-_bnoKmhwv1FWfMxGCP-9RVq06K7Fq2blHJdsxK-BQUvmNurUJiggV4VjCFE5jX-i20tvtJ6efKjdv6Oz7lIq1lTClS8QwexGOgpztUs8fRqpGj1Lq80htfbltrQqyaiNsfj9xGmRChWIplKL2jB8taakiyR7SB6Xzwug21snUNkulf_HJ4kSruF3Bk94wsPSdD7t8P0FDu-AR2Iwjix98yzPeuQ5QymPCmx1f7iZknTd8JB53uaSHDdHtEUeUGI5e8i4t905D7UATuzT9yUDdoxdkWr-tk4ZUx2-CWWony1pySfG8KJYNK9ChPDtP-nkC_JYPW1q3b7Q9quCRbI3Wzqgi_DLrZJ6ifL936OaU0uyhkfPMJnn5rPzDekEsiiQGLnwX0DWFI7cZjy.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_00f3017172818908016abb8464358c8193bb93e968b601aac5\",\"index\":2}]}}],\"usage\":{\"prompt_tokens\":1568,\"completion_tokens\":1578,\"total_tokens\":3146,\"cost\":0.000890758,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":1523,\"cache_write_tokens\":42,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.000890758,\"upstream_inference_prompt_cost\":0.000022858,\"upstream_inference_completions_cost\":0.0008679},\"completion_tokens_details\":{\"reasoning_tokens\":1081,\"image_tokens\":0,\"audio_tokens\":0}}}"
+    headers:
+      content-type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1
