@@ -79,6 +79,7 @@ MAX_OUTPUT_TOKENS = 3000
 
 TRANSPARENCY_PREFIX = "art:50:"
 GPAI_FLAG_ARTICLE = "art:53:1:b"
+DOWNSTREAM_PROVIDER_ARTICLE = "art:3:68"
 EXEMPTION_ARTICLE = "art:6:4"
 PROHIBITION_ARTICLE = "art:5:1"
 """Rows whose condition is settled by another finding, not asked of the model."""
@@ -181,10 +182,14 @@ class RoleSettlement:
 
     def cited_articles(self) -> tuple[str, ...]:
         """The provisions the role rests on: the base role's definition (provider and deployer
-        when it is unknown), the switch or GPAI rule that made a provider, and the switches an
+        when it is unknown), what made a provider (the Art. 25(1) point, or for a system built on
+        a GPAI model the provider and downstream-provider definitions), and the facts an
         assumption waits on."""
         bases = (self.base,) if self.base else (Role.PROVIDER, Role.DEPLOYER)
-        made = (self.made_by.article,) if self.made_by else ()
+        if self.made_by is BUILDS_ON_GPAI:
+            made: tuple[str, ...] = (ROLE_ARTICLES[Role.PROVIDER], DOWNSTREAM_PROVIDER_ARTICLE)
+        else:
+            made = (self.made_by.article,) if self.made_by else ()
         waiting = tuple(q.article for q in self.missing if q is not OPERATOR_ROLE)
         return tuple(dict.fromkeys((*(ROLE_ARTICLES[r] for r in bases), *made, *waiting)))
 
@@ -195,7 +200,7 @@ def _kept_role(base: Role | None, *, is_assumed: bool) -> Role | None:
     an importer or distributor keeps its own duties too."""
     if base is None or base is Role.DEPLOYER:
         return Role.DEPLOYER
-    return base if is_assumed and base is not Role.PROVIDER else None
+    return base if is_assumed else None
 
 
 def _settlement(
@@ -226,7 +231,9 @@ def settle_role(answer: RoleAnswer, risk_class: RiskClass) -> RoleSettlement:
     used: tuple[KeyFact | RoleFact, ...] = (answer.role, answer.builds_on_gpai)
     gpai_open = (BUILDS_ON_GPAI,) if gpai is Answer.UNKNOWN else ()
     if gpai is Answer.YES:
-        return _settlement(answer, Role.PROVIDER, used, made_by=BUILDS_ON_GPAI)
+        # The provider role is settled; with an unknown base, whether it also deploys is not.
+        unsettled = (OPERATOR_ROLE,) if base is None else ()
+        return _settlement(answer, Role.PROVIDER, used, made_by=BUILDS_ON_GPAI, missing=unsettled)
     if base is None:
         return _settlement(answer, Role.PROVIDER, used, missing=(OPERATOR_ROLE, *gpai_open))
     if base is Role.PROVIDER:
@@ -293,21 +300,36 @@ def condition_ids(conditions: Sequence[str]) -> dict[str, str]:
     return {condition: f"c{number}" for number, condition in enumerate(conditions, 1)}
 
 
-def _applies(
+class Kept(StrEnum):
+    """Whether a listed duty stays, and why not when it doesn't."""
+
+    YES = "yes"
+    CONDITION_NOT_MET = "condition_not_met"
+    NOT_FOUND = "not_found"
+    """Another check settles the row and didn't report it (or hasn't run: E5, E6)."""
+
+
+def _found(is_found: bool) -> Kept:
+    return Kept.YES if is_found else Kept.NOT_FOUND
+
+
+def _kept(
     obligation: Obligation, answers: Mapping[str, Answer], state: EngineState, gpai: Answer
-) -> bool:
+) -> Kept:
     if obligation.applies_if is None:
-        return True
+        return Kept.YES
     article = obligation.article
     if article.startswith(TRANSPARENCY_PREFIX):
-        return article in state.get("transparency_duties", ())
-    if article == GPAI_FLAG_ARTICLE:
-        return gpai is not Answer.NO
+        return _found(article in state.get("transparency_duties", ()))
     if article == EXEMPTION_ARTICLE:
-        return state.get("annex_iii_exempt", False)
-    if _is_art_5(article):
-        return True  # listed only for the prohibited class, which E4's finding settled
-    return answers.get(obligation.applies_if, Answer.UNKNOWN) is not Answer.NO
+        return _found(state.get("annex_iii_exempt", False))
+    if article == GPAI_FLAG_ARTICLE:
+        is_met = gpai is not Answer.NO
+    elif _is_art_5(article):
+        is_met = True  # listed only for the prohibited class, which E4's finding settled
+    else:
+        is_met = answers.get(obligation.applies_if, Answer.UNKNOWN) is not Answer.NO
+    return Kept.YES if is_met else Kept.CONDITION_NOT_MET
 
 
 # --- Citations ----------------------------------------------------------------------------------
@@ -321,10 +343,14 @@ class ProvisionTextError(LookupError):
 def _provision_texts(path: Path) -> Mapping[str, str]:
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
+        rows = [json.loads(line) for line in lines if line.strip()]
+        return {row["provision_id"]: row["text"] for row in rows}
     except OSError as error:
         raise ProvisionTextError(f"cannot read {path}: {error}") from error
-    rows = (json.loads(line) for line in lines if line.strip())
-    return {row["provision_id"]: row["text"] for row in rows}
+    except json.JSONDecodeError as error:
+        raise ProvisionTextError(f"{path}: line {error.lineno} is not valid JSON") from error
+    except (KeyError, TypeError) as error:
+        raise ProvisionTextError(f"{path}: a row lacks provision_id or text ({error})") from error
 
 
 def citations(
@@ -445,14 +471,14 @@ def select_obligations(
     ids = condition_ids(conditions_to_ask(risk_class, route, law_version, table))
     by_id = {given.id: given.answer for given in answer.conditions}
     answers = {condition: by_id.get(cid, Answer.UNKNOWN) for condition, cid in ids.items()}
-    kept = tuple(o for o in listed if _applies(o, answers, state, settled.gpai))
+    verdicts = [(o, _kept(o, answers, state, settled.gpai)) for o in listed]
+    kept = tuple(o for o, verdict in verdicts if verdict is Kept.YES)
     version = lists[0].law_version.value
+    counts = {v: sum(verdict is v for _, verdict in verdicts) for v in Kept if v is not Kept.YES}
     summary = (
         texts["duties"].format(count=len(kept), risk_class=risk_class.value, version=version),
+        *(texts[verdict.value].format(count=count) for verdict, count in counts.items() if count),
     )
-    dropped = len(listed) - len(kept)
-    if dropped:
-        summary = (*summary, texts["dropped"].format(count=dropped))
     return kept, summary
 
 
@@ -535,6 +561,7 @@ class RoleObligationsCheck:
             settings=settings,
         )
         self._table = table
+        self._data_dir = settings.aiact_data_dir
 
     def __call__(self, state: EngineState) -> CheckOutcome:
         """Raises `RoleOutputError` when the reply doesn't fit `RoleAnswer`."""
@@ -548,4 +575,4 @@ class RoleObligationsCheck:
         except ValidationError as exc:
             message = f"role answer doesn't fit the schema: {_describe(exc)}"
             raise RoleOutputError(message) from exc
-        return to_outcome(answer, state, self._table)
+        return to_outcome(answer, state, self._table, self._data_dir)

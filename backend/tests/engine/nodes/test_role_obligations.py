@@ -18,10 +18,12 @@ from aiact.engine.nodes.role_obligations import (
     Answer,
     ConditionAnswer,
     KeyFact,
+    ProvisionTextError,
     RoleAnswer,
     RoleFact,
     RoleObligationsCheck,
     RoleOutputError,
+    citations,
     condition_ids,
     conditions_to_ask,
     to_outcome,
@@ -281,7 +283,9 @@ def test_a_system_built_on_gpai_is_its_builders_and_flags_the_model_provider(bas
     flag = next(o for o in finding(outcome).obligations if o.article == "art:53:1:b")
     assert flag.is_informational
     assert "Art. 53" in outcome.step.decision
-    assert "art:53:1:b" in [c.provision_id for c in outcome.step.citations]
+    cited = [c.provision_id for c in outcome.step.citations]
+    assert {"art:3:3", "art:3:68"} <= set(cited)
+    assert "art:53:1:b" not in cited  # a duty of the model provider, not this role's basis
 
 
 def test_a_provider_that_does_not_build_on_gpai_gets_no_flag() -> None:
@@ -296,6 +300,17 @@ def test_an_unknown_gpai_base_needs_information() -> None:
     outcome = to_outcome(answer, state(RiskClass.MINIMAL_RISK, None))
     assert outcome.step.missing_fact is not None
     assert outcome.step.missing_fact.id == "builds_on_gpai"
+
+
+def test_gpai_with_an_unknown_role_asks_whether_it_also_deploys() -> None:
+    answer = role_answer(None, builds_on_gpai=key_fact(Answer.YES, EvidenceTag.STATED))
+    outcome = to_outcome(answer, state())
+    assert outcome.step.status is Status.NEEDS_MORE_INFORMATION
+    assert outcome.step.missing_fact is not None
+    assert outcome.step.missing_fact.id == "operator_role"
+    assert [q.id for q in outcome.follow_up_questions] == ["operator_role"]
+    assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
+    assert "Working assumption: provider" in outcome.step.decision
 
 
 def test_an_unknown_gpai_base_keeps_the_flag_and_asks_a_provider() -> None:
@@ -461,9 +476,57 @@ def test_the_base_role_cites_its_definition(role: Role, article: str) -> None:
     assert [c.provision_id for c in cited] == [article]
 
 
+@pytest.mark.parametrize("base", [Role.DEPLOYER, Role.IMPORTER, Role.DISTRIBUTOR])
+def test_the_gpai_rule_cites_the_provider_and_downstream_provider_definitions(base: Role) -> None:
+    answer = role_answer(base, builds_on_gpai=key_fact(Answer.YES, EvidenceTag.STATED))
+    outcome = to_outcome(answer, state())
+    cited = [c.provision_id for c in outcome.step.citations]
+    own = {Role.DEPLOYER: "art:3:4", Role.IMPORTER: "art:3:6", Role.DISTRIBUTOR: "art:3:7"}[base]
+    assert cited == [own, "art:3:3", "art:3:68"]
+    assert "art:53:1:b" in articles(outcome)  # the flag row keeps its own provision
+
+
 def test_an_unknown_role_cites_both_definitions_it_assumes() -> None:
     cited = to_outcome(role_answer(None), state()).step.citations
     assert [c.provision_id for c in cited] == ["art:3:3", "art:3:4"]
+
+
+def test_the_node_quotes_from_its_own_settings_data_dir(tmp_path: Path) -> None:
+    content = role_answer().model_dump_json()
+    chat = GenericFakeChatModel(messages=iter([AIMessage(content=content)]))
+    settings = _settings().model_copy(update={"aiact_data_dir": tmp_path})
+    with pytest.raises(ProvisionTextError, match="cannot read"):
+        RoleObligationsCheck(settings, chat=chat)(state())
+
+
+@pytest.mark.parametrize(
+    ("content", "problem"),
+    [
+        ("not json\n", "not valid JSON"),
+        ('{"provision_id": "art:3:4"}\n', "lacks provision_id or text"),
+        ('{"provision_id": "art:3:3", "text": "Provider."}\n', "has no art:3:4"),
+    ],
+)
+def test_a_broken_parsed_text_raises_a_provision_error(
+    tmp_path: Path, content: str, problem: str
+) -> None:
+    parsed = tmp_path / "parsed"
+    parsed.mkdir()
+    (parsed / "ai-act-consolidated.en.jsonl").write_text(content, encoding="utf-8")
+    with pytest.raises(ProvisionTextError, match=problem):
+        citations(["art:3:4"], LawVersion.AMENDED, Language.EN, tmp_path)
+
+
+def test_a_duty_waiting_on_an_absent_finding_is_not_called_a_failed_condition() -> None:
+    answer = role_answer(
+        Role.PROVIDER,
+        risk_class=RiskClass.MINIMAL_RISK,
+        route=None,
+        builds_on_gpai=key_fact(Answer.UNKNOWN),  # keeps the GPAI flag, so only Art. 6(4) drops
+    )
+    decision = to_outcome(answer, state(RiskClass.MINIMAL_RISK, None)).step.decision
+    assert "1 duties left out because no earlier check reported the finding" in decision
+    assert "condition doesn't apply" not in decision
 
 
 # --- Facts used ---------------------------------------------------------------------------------

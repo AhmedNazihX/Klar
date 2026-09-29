@@ -39,7 +39,7 @@ OPERATOR_ROLE = KeyQuestion(
 )
 BUILDS_ON_GPAI = KeyQuestion(
     id="builds_on_gpai",
-    article="art:53:1:b",
+    article="art:3:68",
     question={
         Language.EN: "Is the system built on a general-purpose AI model from another provider "
         "(for example a foundation model integrated through an API)?",
@@ -119,7 +119,10 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "assumption": "Working assumption: provider, keeping the other role's duties, pending an "
         "answer to: {question}",
         "duties": "{count} duties listed for a {risk_class} system ({version} text).",
-        "dropped": "{count} conditional duties left out because their condition doesn't apply.",
+        "condition_not_met": "{count} conditional duties left out because their condition "
+        "doesn't apply.",
+        "not_found": "{count} duties left out because no earlier check reported the finding they "
+        "depend on.",
         "no_table": "No duties listed: the obligations table covers only the {version} text, "
         "not the {asked} text.",
     },
@@ -129,7 +132,10 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "assumption": "Arbeitsannahme: Anbieter, mit den Pflichten der anderen Rolle, bis diese "
         "Frage beantwortet ist: {question}",
         "duties": "{count} Pflichten für ein System der Klasse {risk_class} ({version} Fassung).",
-        "dropped": "{count} bedingte Pflichten entfallen, weil ihre Bedingung nicht erfüllt ist.",
+        "condition_not_met": "{count} bedingte Pflichten entfallen, weil ihre Bedingung nicht "
+        "erfüllt ist.",
+        "not_found": "{count} Pflichten entfallen, weil keine frühere Prüfung den Befund gemeldet "
+        "hat, von dem sie abhängen.",
         "no_table": "Keine Pflichten aufgeführt: Die Pflichtentabelle deckt nur die "
         "{version} Fassung ab, nicht die {asked} Fassung.",
     },

@@ -60,7 +60,8 @@ def _risk_class(state: EngineState, steps: tuple[StepResult, ...], script: Scrip
 
 
 def _follow_ups(state: EngineState) -> tuple[FollowUpQuestion, ...]:
-    """The facts node's questions plus every step's missing fact, each id once."""
+    """The questions in the state (from the facts node and the checks) plus every step's
+    missing fact, each id once."""
     missing = (step.missing_fact for step in state.get("steps", ()) if step.missing_fact)
     by_id = {q.id: q for q in (*state.get("follow_up_questions", ()), *missing)}
     return tuple(by_id.values())

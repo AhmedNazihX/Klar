@@ -65,8 +65,8 @@ class CheckOutcome(ContractModel):
       `art:50:1`, including duties that are only assumed or uncertain. The role step lists an
       Art. 50 duty only when it is here, so a duty left out is a duty the result drops.
     - `role` (role_obligations).
-    `follow_up_questions` may come from any check: the questions it wants asked besides its step's
-    `missing_fact`; finalize collects them.
+    `follow_up_questions` may come from any check: every question it wants asked, which may
+    include its step's `missing_fact`; finalize collects them and de-duplicates by id.
     """
 
     step: StepResult
