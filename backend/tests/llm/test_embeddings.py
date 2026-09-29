@@ -1,6 +1,10 @@
 import math
+from collections.abc import Callable
+from types import SimpleNamespace
 
+import httpx
 import pytest
+from openrouter.errors import NoResponseError, OpenRouterError
 from pydantic import SecretStr
 
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
@@ -122,3 +126,30 @@ def test_embed_batch_reports_tokens_and_cost(openrouter_settings: Settings) -> N
     batch = _client(openrouter_settings).embed_batch(TEXTS)
     assert len(batch.vectors) == len(TEXTS)
     assert (batch.tokens, batch.cost_usd) == (40, pytest.approx(4e-7))
+
+
+def _http_error() -> Exception:
+    request = httpx.Request("POST", "https://openrouter.ai/api/v1/embeddings")
+    response = httpx.Response(402, text="Insufficient credits for: the input text", request=request)
+    return OpenRouterError("Insufficient credits for: the input text", response)
+
+
+@pytest.mark.parametrize(
+    ("make_error", "expected"),
+    [(_http_error, r"OpenRouterError \(HTTP 402\)"), (NoResponseError, "NoResponseError")],
+)
+def test_sdk_errors_become_embedding_errors(
+    monkeypatch: pytest.MonkeyPatch, make_error: Callable[[], Exception], expected: str
+) -> None:
+    client = _client(_settings())
+    raised = make_error()
+
+    def fail(**_: object) -> None:
+        raise raised
+
+    fake_sdk = SimpleNamespace(embeddings=SimpleNamespace(generate=fail))
+    monkeypatch.setattr(client, "_client", fake_sdk)
+    with pytest.raises(EmbeddingError, match=expected) as info:
+        client.embed_batch(TEXTS)
+    assert info.value.__cause__ is raised
+    assert "input text" not in str(info.value)

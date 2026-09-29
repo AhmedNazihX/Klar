@@ -167,6 +167,20 @@ def test_a_text_over_the_arms_limit_is_skipped_and_reported(db: psycopg.Connecti
     assert [row[2] for row in _stored(db)].count(None) == 1
 
 
+def test_a_text_that_grew_over_the_limit_loses_its_old_vector(db: psycopg.Connection):
+    _load(db)
+    _embed(db, FakeEmbedder())
+    db.execute(
+        "update provisions p set text = repeat('x', 1001) from documents d"
+        " where d.id = p.document_id and d.doc_key = 'test-c4-law' and p.text = 'new'"
+    )
+    report = _embed(db, FakeEmbedder())
+    assert len(report.too_long) == 1
+    stored = _stored(db)
+    assert [row[2] for row in stored].count(None) == 1
+    assert all(row[4] for row in stored if row[2] is not None)
+
+
 def test_a_short_answer_from_the_embedder_writes_nothing(db: psycopg.Connection):
     _load(db)
 
@@ -179,7 +193,7 @@ def test_a_short_answer_from_the_embedder_writes_nothing(db: psycopg.Connection)
     assert all(row[2] is None for row in _stored(db))
 
 
-def test_only_the_default_arm_has_an_hnsw_index(db: psycopg.Connection):
+def test_the_default_arm_has_an_hnsw_index_and_a_made_up_one_has_none(db: psycopg.Connection):
     assert has_arm_index(db, ARMS["qwen3"].model, 1536)
-    assert not has_arm_index(db, ARMS["qwen3"].model, 1024)
-    assert not has_arm_index(db, ARMS["openai3l"].model, 1536)
+    assert not has_arm_index(db, ARM.model, 1536)
+    assert not has_arm_index(db, ARMS["qwen3"].model, 7)

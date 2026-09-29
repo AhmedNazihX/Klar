@@ -11,9 +11,11 @@ import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+import httpx
 import openrouter
 from langchain_core.embeddings import Embeddings
 from openrouter.components import ProviderPreferences
+from openrouter.errors import NoResponseError, OpenRouterError
 from openrouter.operations import CreateEmbeddingsResponseBody, CreateEmbeddingsUsage
 
 from aiact.llm.routing import APP_TITLE, provider_preferences, require_api_key, require_setting
@@ -114,13 +116,21 @@ class OpenRouterEmbeddings(Embeddings):
         """Embed corpus texts in one request and report its tokens and cost (0 if not given)."""
         if not texts:
             return EmbeddingBatch([], 0, 0.0)
-        response = self._client.embeddings.generate(
-            input=texts,
-            model=self.model,
-            dimensions=self.dimensions,
-            encoding_format="float",
-            provider=self._routing,
-        )
+        try:
+            response = self._client.embeddings.generate(
+                input=texts,
+                model=self.model,
+                dimensions=self.dimensions,
+                encoding_format="float",
+                provider=self._routing,
+            )
+        except OpenRouterError as error:
+            # The type and status only: the response body may echo the request.
+            raise EmbeddingError(
+                f"embeddings request failed: {type(error).__name__} (HTTP {error.status_code})"
+            ) from error
+        except (NoResponseError, httpx.HTTPError) as error:
+            raise EmbeddingError(f"embeddings request failed: {type(error).__name__}") from error
         vectors, usage = _vectors(response, expected=len(texts))
         return EmbeddingBatch(
             vectors=[l2_normalise(vector, self.dimensions) for vector in vectors],

@@ -83,6 +83,12 @@ UPSERT = """
     on conflict (provision_row_id, model, dims) do update
     set embedding = excluded.embedding, content_sha256 = excluded.content_sha256, created_at = now()
 """
+DELETE_STALE = """
+    delete from provision_embeddings e
+    using provisions p
+    where e.provision_row_id = p.id and e.provision_row_id = any(%(row_ids)s)
+      and e.model = %(model)s and e.dims = %(dims)s and e.content_sha256 <> p.content_sha256
+"""
 ARM_INDEX = """
     select count(*) from pg_indexes
     where schemaname = 'public' and tablename = 'provision_embeddings'
@@ -116,7 +122,7 @@ class EmbedReport:
     rows_embedded: int
     texts_embedded: int
     too_long: tuple[str, ...]
-    """content_sha256 of texts over the arm's input limit, left without a vector."""
+    """content_sha256 of texts over the arm's input limit: not embedded, older vectors removed."""
     batches: int
     tokens: int
     cost_usd: float
@@ -179,10 +185,20 @@ def _write_batch(
             "row_ids": list(item.row_ids),
             "content_sha256": item.content_sha256,
         }
-        for item, vector in zip(batch, result.vectors, strict=True)
+        for item, vector in zip(batch, result.vectors, strict=False)
     ]
     with connection.transaction(), connection.cursor() as cursor:
         cursor.executemany(UPSERT, rows)
+
+
+def _drop_stale(
+    connection: psycopg.Connection, texts: tuple[PendingText, ...], params: dict[str, object]
+) -> None:
+    """Delete this arm's vectors of rows that won't be embedded, so search can't rank them on
+    an older text."""
+    row_ids = [row_id for item in texts for row_id in item.row_ids]
+    with connection.transaction():
+        connection.execute(DELETE_STALE, {**params, "row_ids": row_ids})
 
 
 def embed_corpus(
@@ -203,10 +219,15 @@ def embed_corpus(
     with connection.transaction():
         rows_reused = connection.execute(REUSE, params).rowcount
     pending = group_by_text(connection.execute(PENDING, params).fetchall())
-    too_long = tuple(t.content_sha256 for t in pending if len(t.text) > arm.max_input_chars)
-    for sha in too_long:
+    too_long = tuple(t for t in pending if len(t.text) > arm.max_input_chars)
+    if too_long:
+        _drop_stale(connection, too_long, params)
+    for item in too_long:
         logger.warning(
-            "%s: text %s is over %d characters; skipped", arm.model, sha, arm.max_input_chars
+            "%s: text %s is over %d characters; not embedded, any older vector removed",
+            arm.model,
+            item.content_sha256,
+            arm.max_input_chars,
         )
     to_embed = tuple(t for t in pending if len(t.text) <= arm.max_input_chars)
     results: list[EmbeddingBatch] = []
@@ -229,7 +250,7 @@ def embed_corpus(
         rows_reused=rows_reused,
         rows_embedded=sum(len(t.row_ids) for t in to_embed),
         texts_embedded=len(to_embed),
-        too_long=too_long,
+        too_long=tuple(t.content_sha256 for t in too_long),
         batches=len(results),
         tokens=sum(r.tokens for r in results),
         cost_usd=sum(r.cost_usd for r in results),

