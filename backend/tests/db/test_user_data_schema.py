@@ -201,31 +201,58 @@ def test_classifications_cannot_be_rewritten(
         )
 
 
-def test_timestamps_are_set_by_the_server(db: psycopg.Connection) -> None:
+UPDATABLE_TABLES = ("inventories", "systems", "interview_answers")
+"""Classifications are insert-and-delete only (see test_classifications_cannot_be_rewritten)."""
+
+FORGED_INSERT = """
+    with inventory as (
+      insert into inventories (name, created_at, updated_at)
+      values ('X', %(future)s, 'infinity') returning id
+    ), system as (
+      insert into systems (inventory_id, name, description, created_at, updated_at)
+      select id, 'X', 'Y', %(future)s, 'infinity' from inventory returning id
+    ), classification as (
+      insert into classifications
+        (system_id, risk_class, status, law_version, result, created_at, updated_at)
+      select id, 'minimal_risk', 'decided', 'amended', '{}', %(future)s, 'infinity' from system
+    )
+    insert into interview_answers
+      (system_id, template, question_key, answer, created_at, updated_at)
+    select id, 'art_27', 'q', 'a', %(future)s, 'infinity' from system
+"""
+
+
+def _all_stamped_now(db: psycopg.Connection, table: str) -> bool:
+    return _one(
+        db, _on("select bool_and(created_at <= now() and updated_at = now()) from {}", table)
+    )
+
+
+def test_timestamps_are_set_by_the_server_on_insert(db: psycopg.Connection) -> None:
     user = _create_user(db)
     with as_user(db, user):
-        _add_system(db)
+        db.execute(FORGED_INSERT, {"future": FUTURE})
         for table in USER_TABLES:
-            db.execute(
-                _on("update {} set created_at = %s, updated_at = %s", table),
-                (FUTURE, "infinity"),
-            )
-            assert _one(
-                db,
-                _on("select bool_and(created_at <= now() and updated_at = now()) from {}", table),
-            )
-        forged = db.execute(
-            "insert into inventories (name, created_at, updated_at) values ('X', %s, 'infinity')"
-            " returning created_at = now() and updated_at = now()",
-            (FUTURE,),
-        ).fetchone()
-        assert forged == (True,)
+            assert _one(db, _on("select count(*) from {}", table)) == 1
+            assert _all_stamped_now(db, table)
         past = _one(
             db,
             "insert into inventories (name, created_at) values ('Y', now() - interval '3 days')"
             " returning now() - created_at",
         )
         assert past == timedelta(days=3)
+
+
+def test_timestamps_are_set_by_the_server_on_update(db: psycopg.Connection) -> None:
+    user = _create_user(db)
+    with as_user(db, user):
+        _add_system(db)
+        for table in UPDATABLE_TABLES:
+            db.execute(
+                _on("update {} set created_at = %s, updated_at = %s", table),
+                (FUTURE, "infinity"),
+            )
+            assert _all_stamped_now(db, table)
 
 
 def test_a_classification_result_has_a_size_limit(
