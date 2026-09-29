@@ -58,18 +58,25 @@ def _slices(rows: tuple[ProvisionRow, ...], pid: str) -> list[tuple[date, date |
     return [(r.valid_from, r.valid_to, r.text) for r in rows if r.provision_id == pid]
 
 
-# art:5:1:a is a corrigendum ("aa typo" -> "a") under art:5:1, which the Omnibus amends.
+# art:8:1:a is a corrigendum ("aa typo" -> "a") under art:8:1, whose point (c) the Omnibus
+# replaces; (a) is two points from (c), so no neighbour rule reaches it.
 # art:9's title is a corrigendum too, while its paragraph 1 is amended.
 ORIGINAL = (
     _law("recital:1", "A recital.", kind="recital"),
-    _law("art:5", "1. (a) aa typo (b) b 2. old", kind="article"),
-    _law("art:5:1", "(a) aa typo (b) b", "art:5", "paragraph"),
-    _law("art:5:1:a", "aa typo", "art:5:1"),
+    _law("art:5", "1. (a) a (b) b 2. old", kind="article"),
+    _law("art:5:1", "(a) a (b) b", "art:5", "paragraph"),
+    _law("art:5:1:a", "a", "art:5:1"),
     _law("art:5:1:b", "b", "art:5:1"),
     _law("art:5:2", "old", "art:5", "paragraph"),
     _law("art:5:3", "gone", "art:5", "paragraph"),
     _law("art:6", "typo", kind="article"),
     _law("art:7", "same", kind="article"),
+    _law("art:8", "1. (a) aa typo (b) b (c) old c (d) d", kind="article"),
+    _law("art:8:1", "(a) aa typo (b) b (c) old c (d) d", "art:8", "paragraph"),
+    _law("art:8:1:a", "aa typo", "art:8:1"),
+    _law("art:8:1:b", "b", "art:8:1"),
+    _law("art:8:1:c", "old c", "art:8:1"),
+    _law("art:8:1:d", "d", "art:8:1"),
     _law("art:9", "1. old", kind="article", heading=OLD_TITLE),
     _law("art:9:1", "old", "art:9", "paragraph", heading=OLD_TITLE),
 )
@@ -82,15 +89,22 @@ CONSOLIDATED = (
     _law("art:5:2", "new", "art:5", "paragraph"),
     _law("art:6", "fixed", kind="article"),
     _law("art:7", "same", kind="article"),
+    _law("art:8", "1. (a) a (b) b (c) new c (d) d", kind="article"),
+    _law("art:8:1", "(a) a (b) b (c) new c (d) d", "art:8", "paragraph"),
+    _law("art:8:1:a", "a", "art:8:1"),
+    _law("art:8:1:b", "b", "art:8:1"),
+    _law("art:8:1:c", "new c", "art:8:1"),
+    _law("art:8:1:d", "d", "art:8:1"),
     _law("art:9", "1. new", kind="article", heading=NEW_TITLE),
     _law("art:9:1", "new", "art:9", "paragraph", heading=NEW_TITLE),
 )
-TARGETS = frozenset({"art:5:1:ba", "art:5:2", "art:5:3", "art:9:1"})
+TARGETS = frozenset({"art:5:1:ba", "art:5:2", "art:5:3", "art:8:1:c", "art:9:1"})
+FIXTURE_CORRIGENDA = frozenset({"art:6", "art:8:1:a", "art:9"})
 
 
 @pytest.fixture(scope="module")
 def slices() -> tuple[ProvisionRow, ...]:
-    return amended_slices(ORIGINAL, CONSOLIDATED, OMNIBUS_IN_FORCE, TARGETS)
+    return amended_slices(ORIGINAL, CONSOLIDATED, OMNIBUS_IN_FORCE, TARGETS, FIXTURE_CORRIGENDA)
 
 
 def test_an_amended_provision_is_split_at_the_omnibus_date(slices: tuple[ProvisionRow, ...]):
@@ -123,15 +137,16 @@ def test_an_untouched_difference_is_a_corrigendum_from_the_start(slices: tuple[P
 def test_a_corrigendum_under_an_amended_parent_applies_from_the_start(
     slices: tuple[ProvisionRow, ...],
 ):
-    """Both slices of art:5:1:a have the corrected text, and so do the old slices of the
+    """Both slices of art:8:1:a have the corrected text, and so do the old slices of the
     ancestors that quote it; they still split for the amendment."""
-    assert _slices(slices, "art:5:1:a") == [
+    assert _slices(slices, "art:8:1:a") == [
         (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "a"),
         (OMNIBUS_IN_FORCE, None, "a"),
     ]
-    assert _slices(slices, "art:5:1")[0] == (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "(a) a (b) b")
-    old_article = (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "1. (a) a (b) b 2. old")
-    assert _slices(slices, "art:5")[0] == old_article
+    old_paragraph = (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "(a) a (b) b (c) old c (d) d")
+    assert _slices(slices, "art:8:1")[0] == old_paragraph
+    old_article = (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "1. (a) a (b) b (c) old c (d) d")
+    assert _slices(slices, "art:8")[0] == old_article
 
 
 def test_a_title_corrigendum_applies_to_every_unit_of_the_article(
@@ -142,18 +157,27 @@ def test_a_title_corrigendum_applies_to_every_unit_of_the_article(
     assert {r.heading for r in rows} == {NEW_TITLE}
 
 
+def _article(points: dict[str, str]) -> tuple[ParsedProvision, ...]:
+    """Art. 6 with the points `{label: text}`, in order; a label `b:i` is a sub-point of (b)."""
+    units = []
+    for label, text in points.items():
+        parent = "art:6:" + label.rsplit(":", 1)[0] if ":" in label else "art:6"
+        units.append(_law(f"art:6:{label}", text, parent))
+    return (_law("art:6", " ".join(points.values()), kind="article"), *units)
+
+
 def _list_slices(
-    original_points: dict[str, str], consolidated_points: dict[str, str], targets: set[str]
+    original_points: dict[str, str],
+    consolidated_points: dict[str, str],
+    targets: set[str],
+    corrigenda: frozenset[str] = frozenset(),
 ) -> tuple[ProvisionRow, ...]:
-    """Slices of an article whose points are `{label: text}`, in order."""
-
-    def article(points: dict[str, str]) -> tuple[ParsedProvision, ...]:
-        body = " ".join(f"({label}) {text}" for label, text in points.items())
-        units = [_law(f"art:6:{label}", text, "art:6") for label, text in points.items()]
-        return (_law("art:6", body, kind="article"), *units)
-
     return amended_slices(
-        article(original_points), article(consolidated_points), OMNIBUS_IN_FORCE, frozenset(targets)
+        _article(original_points),
+        _article(consolidated_points),
+        OMNIBUS_IN_FORCE,
+        frozenset(targets),
+        corrigenda,
     )
 
 
@@ -192,11 +216,64 @@ def test_a_difference_away_from_the_targets_stays_a_corrigendum():
         {"a": "x;", "b": "y;", "c": "z;", "d": "wrong."},
         {"a": "x;", "b": "y;", "b1": "new;", "c": "z;", "d": "right."},
         {"art:6:b1"},
+        frozenset({"art:6:d"}),
     )
     assert _slices(rows, "art:6:d") == [
         (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "right."),
         (OMNIBUS_IN_FORCE, None, "right."),
     ]
+
+
+def test_the_and_moves_two_points_back_when_a_point_is_appended():
+    """Appending (d) moves the "and" from (b) to (c): (b) is two points from the target."""
+    rows = _list_slices(
+        {"a": "x;", "b": "y; and", "c": "z."},
+        {"a": "x;", "b": "y;", "c": "z; and", "d": "w."},
+        {"art:6:d"},
+    )
+    assert _slices(rows, "art:6:b") == [
+        (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "y; and"),
+        (OMNIBUS_IN_FORCE, None, "y;"),
+    ]
+
+
+def test_deleting_the_last_point_moves_the_and_two_points_back():
+    """Deleting (c) moves the "and" from (b) to (a) and the full stop to (b)."""
+    rows = _list_slices(
+        {"a": "x;", "b": "y; and", "c": "z."},
+        {"a": "x; and", "b": "y."},
+        {"art:6:c"},
+    )
+    assert _slices(rows, "art:6:a")[0] == (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "x;")
+    assert _slices(rows, "art:6:b")[0] == (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "y; and")
+
+
+def test_an_insertion_after_a_point_with_sub_points_reaches_its_last_sub_point():
+    """Inserting (c) after (b) puts the "; or" on (b)(ii)."""
+    rows = _list_slices(
+        {"a": "x;", "b": "y:", "b:i": "p;", "b:ii": "q."},
+        {"a": "x;", "b": "y:", "b:i": "p;", "b:ii": "q; or", "c": "z."},
+        {"art:6:c"},
+    )
+    assert _slices(rows, "art:6:b:ii") == [
+        (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "q."),
+        (OMNIBUS_IN_FORCE, None, "q; or"),
+    ]
+
+
+def test_an_unexpected_corrigendum_fails_the_load():
+    with pytest.raises(LoadError, match=r"unexpected corrigendum art:6:d \(text: 'wrong\.'"):
+        _list_slices(
+            {"a": "x;", "b": "y;", "c": "z;", "d": "wrong."},
+            {"a": "x;", "b": "y;", "b1": "new;", "c": "z;", "d": "right."},
+            {"art:6:b1"},
+        )
+
+
+def test_an_unexpected_title_corrigendum_fails_the_load():
+    corrigenda = FIXTURE_CORRIGENDA - {"art:9"}
+    with pytest.raises(LoadError, match="unexpected corrigendum art:9 \\(title"):
+        amended_slices(ORIGINAL, CONSOLIDATED, OMNIBUS_IN_FORCE, TARGETS, corrigenda)
 
 
 def test_a_corrigendum_the_parent_quotes_twice_fails():
@@ -209,13 +286,14 @@ def test_a_corrigendum_the_parent_quotes_twice_fails():
         _law("art:5:1", "c", "art:5", "paragraph"),
     )
     with pytest.raises(LoadError, match="found 2 times"):
-        amended_slices(original, consolidated, OMNIBUS_IN_FORCE, frozenset({"art:5:2"}))
+        targets = frozenset({"art:5:2"})
+        amended_slices(original, consolidated, OMNIBUS_IN_FORCE, targets, frozenset({"art:5:1"}))
 
 
 def test_an_unknown_parent_fails():
     rows = (_law("art:5:1", "a", "art:5", "paragraph"),)
     with pytest.raises(LoadError, match="parent art:5 is not a provision"):
-        amended_slices(rows, rows, OMNIBUS_IN_FORCE, frozenset())
+        amended_slices(rows, rows, OMNIBUS_IN_FORCE, frozenset(), frozenset())
 
 
 def test_recitals_stay_in_the_original(slices: tuple[ProvisionRow, ...]):
