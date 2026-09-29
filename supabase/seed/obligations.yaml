@@ -342,6 +342,23 @@ obligations:
       Chapter IX formally applies from 2 August 2026 (Art. 113, general date), but these duties
       only reach high-risk systems once their high-risk rules apply.
 
+  # --- High-risk: law enforcement, migration, asylum and border control (Art. 49(4)) -------------
+  # Added by E7 (C7 follow-up). The date follows the registrations it modifies (Art. 113(c)(i));
+  # the user has not reviewed it yet.
+  - key: hr-registration-non-public
+    roles: [provider, deployer]
+    risk_classes: [high_risk]
+    duty: >-
+      Register in the secure non-public section of the EU database, with only the reduced set of
+      information Art. 49(4) lists; only the Commission and the authorities in Art. 74(8) can see it.
+    article: art:49:4
+    applies_from: {annex_iii: 2027-12-02}
+    applies_if: >-
+      The system is listed in Annex III point 1, 6 or 7 and is used in law enforcement, migration,
+      asylum or border control management.
+    note: >-
+      Replaces the public registration of Art. 49(1) to (3) for these systems.
+
   # --- High-risk: importer (Art. 23) ------------------------------------------------------------
   - key: hr-importer-verify
     roles: [importer]
@@ -494,3 +511,19 @@ obligations:
       The Omnibus kept this registration but simplified its content (Omnibus recital 22). The date
       follows Art. 113(c)(i), but that covers systems "classified as high-risk"; a literal reading
       (and Art. 49 being in Chapter VIII) gives 2 August 2026. Check with a lawyer.
+
+  # --- Systems built on a general-purpose AI model (Art. 53) -------------------------------------
+  # Added by E7: flags the model provider's duties (INIT > Roles). The user has not reviewed the date yet.
+  - key: gpai-model-provider-duties
+    roles: [provider]
+    risk_classes: [high_risk, limited_risk, minimal_risk]
+    duty: >-
+      The provider of the general-purpose AI model has its own duties under Chapter V (Art. 53, and
+      Art. 55 for models with systemic risk), which this assessment doesn't cover. It must give you
+      the information and documentation you need to understand the model's capabilities and
+      limitations and to meet your own duties (Art. 53(1)(b)).
+    article: art:53:1:b
+    applies_from: 2025-08-02
+    is_informational: true
+    applies_if: The system is built on a general-purpose AI model from another provider.
+    note: Chapter V applies from 2 August 2025 (Art. 113(b)).

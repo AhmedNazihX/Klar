@@ -63,10 +63,13 @@ def test_deployer_high_risk_annex_iii_gets_the_art_26_duties_from_2_dec_2027() -
         "art:26:12",
         "art:27:1",
         "art:86:1",
+        "art:49:4",
         "art:50:3",
         "art:50:4",
     ]
-    art_26 = [d for d in duties if d.article.startswith(("art:26:", "art:27:", "art:86:"))]
+    art_26 = [
+        d for d in duties if d.article.startswith(("art:26:", "art:27:", "art:86:", "art:49:"))
+    ]
     assert {d.applies_from for d in art_26} == {ANNEX_III_FROM}
     assert not any(d.is_informational for d in duties)
     # The worked example's duties (INIT > How it works) apply to every deployer of the system.
@@ -81,8 +84,9 @@ def test_deployer_high_risk_annex_i_has_later_dates_and_no_annex_iii_only_duties
     duties = _list(Role.DEPLOYER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_I)
     articles = _articles(duties)
     assert "art:26:1" in articles
-    # Art. 26(8) via Art. 49(3), 26(10), 26(11), 27(1) and 86(1) are limited to Annex III systems.
-    assert not {"art:26:8", "art:26:10", "art:26:11", "art:27:1", "art:86:1"} & set(articles)
+    # Art. 26(8) via Art. 49(3), 26(10), 26(11), 27(1), 86(1) and 49(4) are limited to Annex III.
+    annex_iii_only = {"art:26:8", "art:26:10", "art:26:11", "art:27:1", "art:86:1", "art:49:4"}
+    assert not annex_iii_only & set(articles)
     art_26 = [d for d in duties if d.article.startswith("art:26:")]
     assert {d.applies_from for d in art_26} == {ANNEX_I_FROM}
     assert {d.high_risk_route for d in art_26} == {HighRiskRoute.ANNEX_I}
@@ -104,7 +108,7 @@ def test_provider_high_risk_gets_art_16_and_the_duties_it_points_to() -> None:
     art_16 = [f"art:16:{point}" for point in "abcdefghijkl"]
     assert set(art_16) <= set(articles)
     assert {"art:11:1", "art:22:1", "art:72:1", "art:73:1", "art:50:1", "art:50:2"} <= set(articles)
-    high_risk = [d for d in duties if not d.article.startswith(("art:4:", "art:50:"))]
+    high_risk = [d for d in duties if not d.article.startswith(("art:4:", "art:50:", "art:53:"))]
     assert {d.applies_from for d in high_risk} == {ANNEX_III_FROM}
     by_article = _by_article(duties)
     assert by_article["art:22:1"].applies_if is not None  # providers outside the Union
@@ -129,7 +133,7 @@ def test_provider_registration_in_the_eu_database_is_annex_iii_only() -> None:
 def test_limited_risk_transparency_duties_apply_from_2_aug_2026() -> None:
     provider = _list(Role.PROVIDER, RiskClass.LIMITED_RISK)
     deployer = _list(Role.DEPLOYER, RiskClass.LIMITED_RISK)
-    assert _articles(provider) == ["art:4:1", "art:50:1", "art:50:2", "art:6:4"]
+    assert _articles(provider) == ["art:4:1", "art:50:1", "art:50:2", "art:6:4", "art:53:1:b"]
     assert _articles(deployer) == ["art:4:1", "art:50:3", "art:50:4"]
     transparency = [d for d in provider + deployer if d.article.startswith("art:50:")]
     assert {d.applies_from for d in transparency} == {ART_50_FROM}
@@ -167,7 +171,7 @@ def test_importers_and_distributors_have_no_duties_below_high_risk(
 def test_minimal_risk_brings_only_ai_literacy_and_the_art_6_3_registration() -> None:
     assert _articles(_list(Role.DEPLOYER, RiskClass.MINIMAL_RISK)) == ["art:4:1"]
     provider = _list(Role.PROVIDER, RiskClass.MINIMAL_RISK)
-    assert _articles(provider) == ["art:4:1", "art:6:4"]
+    assert _articles(provider) == ["art:4:1", "art:6:4", "art:53:1:b"]
     assert provider[0].applies_from == CHAPTER_I_II_FROM
 
 
@@ -190,6 +194,35 @@ def test_deployer_post_remote_biometric_identification_is_conditional() -> None:
     assert biometric.applies_if is not None
     assert "post-remote biometric identification" in biometric.applies_if
     assert "law enforcement" in biometric.applies_if
+
+
+@pytest.mark.parametrize("role", [Role.PROVIDER, Role.DEPLOYER])
+def test_law_enforcement_and_migration_register_in_the_non_public_section(role: Role) -> None:
+    # Art. 49(4): Annex III points 1, 6 and 7 in law enforcement, migration, asylum and border
+    # control register in a secure non-public section; it modifies the Art. 49(1)-(3) registrations,
+    # so it follows their Annex III date (Art. 113(c)(i)).
+    by_article = _by_article(_list(role, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III))
+    registration = by_article["art:49:4"]
+    assert registration.applies_from == ANNEX_III_FROM
+    assert registration.high_risk_route is HighRiskRoute.ANNEX_III
+    assert registration.applies_if is not None
+    assert "point 1, 6 or 7" in registration.applies_if
+    assert "law enforcement" in registration.applies_if
+    assert "non-public" in registration.duty
+    assert not registration.is_informational
+    annex_i = _articles(_list(role, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_I))
+    assert "art:49:4" not in annex_i
+
+
+def test_a_system_built_on_a_gpai_model_flags_the_model_providers_duties() -> None:
+    for risk_class in (RiskClass.HIGH_RISK, RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK):
+        flag = _by_article(_list(Role.PROVIDER, risk_class, HighRiskRoute.ANNEX_III))["art:53:1:b"]
+        assert flag.is_informational
+        assert flag.applies_from == date(2025, 8, 2)  # Chapter V, Art. 113(b)
+        assert flag.applies_if is not None
+        assert "general-purpose AI model" in flag.applies_if
+    for role in (Role.DEPLOYER, Role.IMPORTER, Role.DISTRIBUTOR):
+        assert "art:53:1:b" not in _articles(_list(role, RiskClass.HIGH_RISK))
 
 
 def test_chapter_ix_duties_keep_the_high_risk_dates_with_a_note() -> None:
