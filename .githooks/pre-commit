@@ -1,17 +1,18 @@
 #!/bin/sh
 # Regenerates docs/DEPENDENCIES.md and its licence cache, and stages both, when
-# backend/pyproject.toml or backend/uv.lock is staged (story F8). pre-merge-commit runs this too.
+# a lockfile or manifest is staged: backend/pyproject.toml, backend/uv.lock, frontend/package.json
+# or frontend/pnpm-lock.yaml (stories F8, P4). pre-merge-commit runs this too.
 # Enable once per clone: git config core.hooksPath .githooks
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
 
-lockfiles="backend/pyproject.toml backend/uv.lock"
+lockfiles="backend/pyproject.toml backend/uv.lock frontend/package.json frontend/pnpm-lock.yaml"
 generated="docs/DEPENDENCIES.md docs/dependency-licences.json"
 fix="Run: uv run --project backend aiact deps generate, then stage $generated."
 
 # The index is compared with HEAD, so during a merge this sees what the merge brings in.
-if ! git diff --cached --name-only | grep -Eq '^backend/(pyproject\.toml|uv\.lock)$'; then
+if ! git diff --cached --name-only | grep -Eq '^(backend/(pyproject\.toml|uv\.lock)|frontend/(package\.json|pnpm-lock\.yaml))$'; then
     exit 0
 fi
 

@@ -1,0 +1,7 @@
+# Generated or tool-owned files: the lockfile, the API client, the route tree, shadcn primitives.
+dist
+pnpm-lock.yaml
+openapi.json
+src/api
+src/routeTree.gen.ts
+src/components/ui

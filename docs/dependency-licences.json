@@ -227,6 +227,2930 @@
     "licence": "BSD",
     "summary": "Node.js virtual environment builder"
   },
+  "npm:@adobe/css-tools==4.5.0": {
+    "licence": "MIT",
+    "summary": "A modern CSS parser and stringifier with TypeScript support"
+  },
+  "npm:@asamuzakjp/css-color==7.1.2": {
+    "licence": "MIT",
+    "summary": "CSS color - Resolve and convert CSS colors."
+  },
+  "npm:@asamuzakjp/dom-selector==9.2.2": {
+    "licence": "MIT",
+    "summary": "A CSS selector engine."
+  },
+  "npm:@babel/code-frame==7.29.7": {
+    "licence": "MIT",
+    "summary": "Generate errors that contain a code frame that point to source locations."
+  },
+  "npm:@babel/compat-data==7.29.7": {
+    "licence": "MIT",
+    "summary": "The compat-data to determine required Babel plugins"
+  },
+  "npm:@babel/core==7.29.7": {
+    "licence": "MIT",
+    "summary": "Babel compiler core."
+  },
+  "npm:@babel/generator==7.29.8": {
+    "licence": "MIT",
+    "summary": "Turns an AST into code."
+  },
+  "npm:@babel/helper-annotate-as-pure==7.29.7": {
+    "licence": "MIT",
+    "summary": "Helper function to annotate paths and nodes with #__PURE__ comment"
+  },
+  "npm:@babel/helper-compilation-targets==7.29.7": {
+    "licence": "MIT",
+    "summary": "Helper functions on Babel compilation targets"
+  },
+  "npm:@babel/helper-create-class-features-plugin==7.29.7": {
+    "licence": "MIT",
+    "summary": "Compile class public and private fields, private methods and decorators to ES6"
+  },
+  "npm:@babel/helper-globals==7.29.7": {
+    "licence": "MIT",
+    "summary": "A collection of JavaScript globals for Babel internal usage"
+  },
+  "npm:@babel/helper-member-expression-to-functions==7.29.7": {
+    "licence": "MIT",
+    "summary": "Helper function to replace certain member expressions with function calls"
+  },
+  "npm:@babel/helper-module-imports==7.29.7": {
+    "licence": "MIT",
+    "summary": "Babel helper functions for inserting module loads"
+  },
+  "npm:@babel/helper-module-transforms==7.29.7": {
+    "licence": "MIT",
+    "summary": "Babel helper functions for implementing ES6 module transformations"
+  },
+  "npm:@babel/helper-optimise-call-expression==7.29.7": {
+    "licence": "MIT",
+    "summary": "Helper function to optimise call expression"
+  },
+  "npm:@babel/helper-plugin-utils==7.29.7": {
+    "licence": "MIT",
+    "summary": "General utilities for plugins to use"
+  },
+  "npm:@babel/helper-replace-supers==7.29.7": {
+    "licence": "MIT",
+    "summary": "Helper function to replace supers"
+  },
+  "npm:@babel/helper-skip-transparent-expression-wrappers==7.29.7": {
+    "licence": "MIT",
+    "summary": "Helper which skips types and parentheses"
+  },
+  "npm:@babel/helper-string-parser==7.29.7": {
+    "licence": "MIT",
+    "summary": "A utility package to parse strings"
+  },
+  "npm:@babel/helper-validator-identifier==7.29.7": {
+    "licence": "MIT",
+    "summary": "Validate identifier/keywords name"
+  },
+  "npm:@babel/helper-validator-option==7.29.7": {
+    "licence": "MIT",
+    "summary": "Validate plugin/preset options"
+  },
+  "npm:@babel/helpers==7.29.7": {
+    "licence": "MIT",
+    "summary": "Collection of helper functions used by Babel transforms."
+  },
+  "npm:@babel/parser==7.29.9": {
+    "licence": "MIT",
+    "summary": "A JavaScript parser"
+  },
+  "npm:@babel/plugin-syntax-jsx==7.29.7": {
+    "licence": "MIT",
+    "summary": "Allow parsing of jsx"
+  },
+  "npm:@babel/plugin-syntax-typescript==7.29.7": {
+    "licence": "MIT",
+    "summary": "Allow parsing of TypeScript syntax"
+  },
+  "npm:@babel/plugin-transform-modules-commonjs==7.29.7": {
+    "licence": "MIT",
+    "summary": "This plugin transforms ES2015 modules to CommonJS"
+  },
+  "npm:@babel/plugin-transform-typescript==7.29.9": {
+    "licence": "MIT",
+    "summary": "Transform TypeScript into ES.next"
+  },
+  "npm:@babel/preset-typescript==7.29.7": {
+    "licence": "MIT",
+    "summary": "Babel preset for TypeScript."
+  },
+  "npm:@babel/runtime==7.29.7": {
+    "licence": "MIT",
+    "summary": "babel's modular runtime helpers"
+  },
+  "npm:@babel/template==7.29.7": {
+    "licence": "MIT",
+    "summary": "Generate an AST from a string template."
+  },
+  "npm:@babel/traverse==7.29.8": {
+    "licence": "MIT",
+    "summary": "The Babel Traverse module maintains the overall tree state, and is responsible for replacing, removing, and adding nodes"
+  },
+  "npm:@babel/types==7.29.8": {
+    "licence": "MIT",
+    "summary": "Babel Types is a Lodash-esque utility library for AST nodes"
+  },
+  "npm:@bramus/specificity==2.4.2": {
+    "licence": "MIT",
+    "summary": "Calculate specificity of a CSS Selector"
+  },
+  "npm:@cacheable/memory==2.2.0": {
+    "licence": "MIT",
+    "summary": "High Performance In-Memory Cache for Node.js"
+  },
+  "npm:@cacheable/utils==2.5.0": {
+    "licence": "MIT",
+    "summary": "Cacheable Utilities for Caching Libraries"
+  },
+  "npm:@csstools/color-helpers==6.1.2": {
+    "licence": "MIT-0",
+    "summary": "Color helpers to ease transformation between formats, gamut, etc"
+  },
+  "npm:@csstools/css-calc==3.4.1": {
+    "licence": "MIT",
+    "summary": "Solve CSS math expressions"
+  },
+  "npm:@csstools/css-color-parser==4.2.4": {
+    "licence": "MIT",
+    "summary": "Parse CSS color values"
+  },
+  "npm:@csstools/css-parser-algorithms==4.0.1": {
+    "licence": "MIT",
+    "summary": "Algorithms to help you parse CSS from an array of tokens."
+  },
+  "npm:@csstools/css-syntax-patches-for-csstree==1.1.14": {
+    "licence": "MIT-0",
+    "summary": "CSS syntax patches for CSS tree"
+  },
+  "npm:@csstools/css-tokenizer==4.0.2": {
+    "licence": "MIT",
+    "summary": "Tokenize CSS"
+  },
+  "npm:@dotenvx/dotenvx==1.75.1": {
+    "licence": "BSD-3-Clause",
+    "summary": "a secure dotenv–from the creator of `dotenv`"
+  },
+  "npm:@dotenvx/primitives==0.8.0": {
+    "licence": "BSD-3-Clause",
+    "summary": "a secure dotenv–from the creator of `dotenv`"
+  },
+  "npm:@eslint-community/eslint-utils==4.10.1": {
+    "licence": "MIT",
+    "summary": "Utilities for ESLint plugins."
+  },
+  "npm:@eslint-community/regexpp==4.12.2": {
+    "licence": "MIT",
+    "summary": "Regular expression parser for ECMAScript."
+  },
+  "npm:@eslint/config-array==0.23.5": {
+    "licence": "Apache-2.0",
+    "summary": "General purpose glob-based configuration matching."
+  },
+  "npm:@eslint/config-helpers==0.7.0": {
+    "licence": "Apache-2.0",
+    "summary": "Helper utilities for creating ESLint configuration"
+  },
+  "npm:@eslint/core==1.2.1": {
+    "licence": "Apache-2.0",
+    "summary": "Runtime-agnostic core of ESLint"
+  },
+  "npm:@eslint/js==10.0.1": {
+    "licence": "MIT",
+    "summary": "ESLint JavaScript language implementation"
+  },
+  "npm:@eslint/object-schema==3.0.5": {
+    "licence": "Apache-2.0",
+    "summary": "An object schema merger/validator"
+  },
+  "npm:@eslint/plugin-kit==0.7.3": {
+    "licence": "Apache-2.0",
+    "summary": "Utilities for building ESLint plugins."
+  },
+  "npm:@exodus/bytes==1.16.0": {
+    "licence": "MIT",
+    "summary": "Various operations on Uint8Array data"
+  },
+  "npm:@floating-ui/core==1.8.0": {
+    "licence": "MIT",
+    "summary": "Positioning library for floating elements: tooltips, popovers, dropdowns, and more"
+  },
+  "npm:@floating-ui/dom==1.8.0": {
+    "licence": "MIT",
+    "summary": "Floating UI for the web"
+  },
+  "npm:@floating-ui/react-dom==2.1.9": {
+    "licence": "MIT",
+    "summary": "Floating UI for React DOM"
+  },
+  "npm:@floating-ui/utils==0.2.12": {
+    "licence": "MIT",
+    "summary": "Utilities for Floating UI"
+  },
+  "npm:@fontsource-variable/geist==5.3.0": {
+    "licence": "OFL-1.1",
+    "summary": "Self-host the Geist font in a neatly bundled NPM package."
+  },
+  "npm:@fontsource-variable/newsreader==5.3.0": {
+    "licence": "OFL-1.1",
+    "summary": "Self-host the Newsreader font in a neatly bundled NPM package."
+  },
+  "npm:@hey-api/codegen-core==0.9.1": {
+    "licence": "MIT",
+    "summary": "🧱 TypeScript framework for generating files."
+  },
+  "npm:@hey-api/json-schema-ref-parser==1.4.4": {
+    "licence": "MIT",
+    "summary": "Parse, Resolve, and Dereference JSON Schema $ref pointers"
+  },
+  "npm:@hey-api/openapi-ts==0.99.0": {
+    "licence": "MIT",
+    "summary": "🌀 OpenAPI to TypeScript code generator. Production-grade SDKs, Zod schemas, TanStack Query hooks, and 20+ plugins. Used by Vercel, OpenCode, and PayPal."
+  },
+  "npm:@hey-api/shared==0.5.0": {
+    "licence": "MIT",
+    "summary": "Temporary home for cross-package utilities. Contents will migrate to proper packages as architecture stabilizes."
+  },
+  "npm:@hey-api/spec-types==0.2.0": {
+    "licence": "MIT",
+    "summary": "📃 TypeScript definitions for OpenAPI and JSON Schema specifications with complete inline documentation."
+  },
+  "npm:@hey-api/types==0.1.4": {
+    "licence": "MIT",
+    "summary": "Shared utility types."
+  },
+  "npm:@hono/node-server==2.1.1": {
+    "licence": "MIT",
+    "summary": "Node.js Adapter for Hono"
+  },
+  "npm:@hookform/resolvers==5.9.1": {
+    "licence": "MIT",
+    "summary": "React Hook Form validation resolvers: Yup, Joi, Superstruct, Zod, Vest, Class Validator, io-ts, Nope, computed-types, TypeBox, arktype, Typanion, Effect-TS and VineJS"
+  },
+  "npm:@humanfs/core==0.19.2": {
+    "licence": "Apache-2.0",
+    "summary": "The core of the humanfs library."
+  },
+  "npm:@humanfs/node==0.16.8": {
+    "licence": "Apache-2.0",
+    "summary": "The Node.js bindings of the humanfs library."
+  },
+  "npm:@humanfs/types==0.15.0": {
+    "licence": "Apache-2.0",
+    "summary": "The TypeScript types for the hfs project."
+  },
+  "npm:@humanwhocodes/module-importer==1.0.1": {
+    "licence": "Apache-2.0",
+    "summary": "Universal module importer for Node.js"
+  },
+  "npm:@humanwhocodes/retry==0.4.3": {
+    "licence": "Apache-2.0",
+    "summary": "A utility to retry failed async methods."
+  },
+  "npm:@inquirer/ansi==2.0.8": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@inquirer/confirm==6.3.2": {
+    "licence": "MIT",
+    "summary": "Inquirer confirm prompt"
+  },
+  "npm:@inquirer/core==12.0.3": {
+    "licence": "MIT",
+    "summary": "Core Inquirer prompt API"
+  },
+  "npm:@inquirer/figures==2.0.9": {
+    "licence": "MIT",
+    "summary": "Vendored version of figures, for CJS compatibility"
+  },
+  "npm:@inquirer/type==4.1.1": {
+    "licence": "MIT",
+    "summary": "Inquirer core TS types"
+  },
+  "npm:@jridgewell/gen-mapping==0.3.13": {
+    "licence": "MIT",
+    "summary": "Generate source maps"
+  },
+  "npm:@jridgewell/remapping==2.3.5": {
+    "licence": "MIT",
+    "summary": "Remap sequential sourcemaps through transformations to point at the original source code"
+  },
+  "npm:@jridgewell/resolve-uri==3.1.2": {
+    "licence": "MIT",
+    "summary": "Resolve a URI relative to an optional base URI"
+  },
+  "npm:@jridgewell/sourcemap-codec==1.6.0": {
+    "licence": "MIT",
+    "summary": "Encode/decode sourcemap mappings"
+  },
+  "npm:@jridgewell/trace-mapping==0.3.31": {
+    "licence": "MIT",
+    "summary": "Trace the original position through a source map"
+  },
+  "npm:@jsdevtools/ono==7.1.3": {
+    "licence": "MIT",
+    "summary": "Throw better errors."
+  },
+  "npm:@keyv/bigmap==1.3.1": {
+    "licence": "MIT",
+    "summary": "Bigmap for Keyv"
+  },
+  "npm:@keyv/serialize==1.1.1": {
+    "licence": "MIT",
+    "summary": "Serialization for Keyv"
+  },
+  "npm:@lukeed/ms==2.0.2": {
+    "licence": "MIT",
+    "summary": "A tiny (414B) and fast utility to convert milliseconds to and from strings."
+  },
+  "npm:@modelcontextprotocol/sdk==1.31.0": {
+    "licence": "MIT",
+    "summary": "Model Context Protocol implementation for TypeScript"
+  },
+  "npm:@mswjs/interceptors==0.41.9": {
+    "licence": "MIT",
+    "summary": "Low-level HTTP/HTTPS/XHR/fetch request interception library."
+  },
+  "npm:@nodelib/fs.scandir==2.1.5": {
+    "licence": "MIT",
+    "summary": "List files and directories inside the specified directory"
+  },
+  "npm:@nodelib/fs.stat==2.0.5": {
+    "licence": "MIT",
+    "summary": "Get the status of a file with some features"
+  },
+  "npm:@nodelib/fs.walk==1.2.8": {
+    "licence": "MIT",
+    "summary": "A library for efficiently walking a directory recursively"
+  },
+  "npm:@open-draft/deferred-promise==2.2.0": {
+    "licence": "MIT",
+    "summary": "A Promise-compatible abstraction that defers resolving/rejecting promises to another closure."
+  },
+  "npm:@open-draft/deferred-promise==3.0.0": {
+    "licence": "MIT",
+    "summary": "A Promise-compatible abstraction that defers resolving/rejecting promises to another closure."
+  },
+  "npm:@open-draft/logger==0.3.0": {
+    "licence": "MIT",
+    "summary": "Environment-agnostic, ESM-friendly logger for simple needs."
+  },
+  "npm:@open-draft/until==2.1.0": {
+    "licence": "MIT",
+    "summary": "Gracefully handle a Promise using async/await."
+  },
+  "npm:@oxc-project/types==0.151.0": {
+    "licence": "MIT",
+    "summary": "Types for Oxc AST nodes"
+  },
+  "npm:@radix-ui/number==1.1.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/primitive==1.1.7": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-accessible-icon==1.1.15": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-accordion==1.2.20": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-alert-dialog==1.1.23": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-arrow==1.1.15": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-aspect-ratio==1.1.15": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-avatar==1.2.6": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-checkbox==1.3.11": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-collapsible==1.1.20": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-collection==1.1.15": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-compose-refs==1.1.5": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-context-menu==2.3.7": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-context==1.2.2": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-dialog==1.1.23": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-direction==1.1.4": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-dismissable-layer==1.1.19": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-dropdown-menu==2.1.24": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-focus-guards==1.1.6": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-focus-scope==1.1.16": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-form==0.1.16": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-hover-card==1.1.23": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-id==1.1.4": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-label==2.1.15": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-menu==2.1.24": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-menubar==1.1.24": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-navigation-menu==1.2.22": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-one-time-password-field==0.1.16": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-password-toggle-field==0.1.11": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-popover==1.1.23": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-popper==1.3.7": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-portal==1.1.17": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-presence==1.1.10": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-primitive==2.1.10": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-progress==1.1.16": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-radio-group==1.4.7": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-roving-focus==1.1.19": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-scroll-area==1.2.18": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-select==2.3.7": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-separator==1.1.15": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-slider==1.4.7": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-slot==1.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-switch==1.3.7": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-tabs==1.1.21": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-toast==1.2.23": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-toggle-group==1.1.19": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-toggle==1.1.18": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-toolbar==1.1.19": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-tooltip==1.2.16": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-use-callback-ref==1.1.4": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-use-controllable-state==1.2.6": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-use-effect-event==0.0.5": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-use-escape-keydown==1.1.5": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-use-is-hydrated==0.1.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-use-layout-effect==1.1.4": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-use-previous==1.1.4": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-use-rect==1.1.4": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-use-size==1.1.4": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/react-visually-hidden==1.2.11": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@radix-ui/rect==1.1.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@rolldown/binding-android-arm-eabi==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-android-arm64==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-darwin-arm64==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-darwin-x64==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-freebsd-x64==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-linux-arm-gnueabihf==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-linux-arm64-gnu==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-linux-arm64-musl==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-linux-ppc64-gnu==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-linux-s390x-gnu==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-linux-x64-gnu==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-linux-x64-musl==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-openharmony-arm64==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-win32-arm64-msvc==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/binding-win32-x64-msvc==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:@rolldown/pluginutils==1.0.1": {
+    "licence": "MIT",
+    "summary": "Plugin utilities for Rolldown"
+  },
+  "npm:@sec-ant/readable-stream==0.4.1": {
+    "licence": "MIT",
+    "summary": "A tiny, zero-dependency yet spec-compliant asynchronous iterator polyfill/ponyfill for ReadableStreams."
+  },
+  "npm:@sindresorhus/merge-streams==4.0.0": {
+    "licence": "MIT",
+    "summary": "Merge multiple streams into a unified stream"
+  },
+  "npm:@standard-schema/utils==0.3.0": {
+    "licence": "MIT",
+    "summary": "The official runtime utils for Standard Schema"
+  },
+  "npm:@supabase/auth-js==2.117.2": {
+    "licence": "MIT",
+    "summary": "Official SDK for Supabase Auth"
+  },
+  "npm:@supabase/functions-js==2.117.2": {
+    "licence": "MIT",
+    "summary": "JS SDK to interact with Supabase Functions."
+  },
+  "npm:@supabase/phoenix==0.4.5": {
+    "licence": "MIT",
+    "summary": "The official JavaScript client for the Phoenix web framework."
+  },
+  "npm:@supabase/postgrest-js==2.117.2": {
+    "licence": "MIT",
+    "summary": "Isomorphic PostgREST client"
+  },
+  "npm:@supabase/realtime-js==2.117.2": {
+    "licence": "MIT",
+    "summary": "Listen to realtime updates to your PostgreSQL database"
+  },
+  "npm:@supabase/storage-js==2.117.2": {
+    "licence": "MIT",
+    "summary": "Isomorphic storage client for Supabase."
+  },
+  "npm:@supabase/supabase-js==2.117.2": {
+    "licence": "MIT",
+    "summary": "Isomorphic Javascript SDK for Supabase"
+  },
+  "npm:@tailwindcss/node==4.3.3": {
+    "licence": "MIT",
+    "summary": "A utility-first CSS framework for rapidly building custom user interfaces."
+  },
+  "npm:@tailwindcss/oxide-android-arm64==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-darwin-arm64==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-darwin-x64==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-freebsd-x64==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-linux-arm-gnueabihf==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-linux-arm64-gnu==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-linux-arm64-musl==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-linux-x64-gnu==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-linux-x64-musl==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-wasm32-wasi==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-win32-arm64-msvc==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide-win32-x64-msvc==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/oxide==4.3.3": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:@tailwindcss/vite==4.3.3": {
+    "licence": "MIT",
+    "summary": "A utility-first CSS framework for rapidly building custom user interfaces."
+  },
+  "npm:@tanstack/history==1.162.4": {
+    "licence": "MIT",
+    "summary": "Modern and scalable routing for React applications"
+  },
+  "npm:@tanstack/query-core==5.104.0": {
+    "licence": "MIT",
+    "summary": "The framework agnostic core that powers TanStack Query"
+  },
+  "npm:@tanstack/react-query==5.104.0": {
+    "licence": "MIT",
+    "summary": "Hooks for managing, caching and syncing asynchronous and remote data in React"
+  },
+  "npm:@tanstack/react-router==1.170.40": {
+    "licence": "MIT",
+    "summary": "Modern and scalable routing for React applications"
+  },
+  "npm:@tanstack/react-store==0.11.1": {
+    "licence": "MIT",
+    "summary": "Framework agnostic type-safe store w/ reactive framework adapters"
+  },
+  "npm:@tanstack/router-core==1.171.33": {
+    "licence": "MIT",
+    "summary": "Modern and scalable routing for React applications"
+  },
+  "npm:@tanstack/router-generator==1.167.39": {
+    "licence": "MIT",
+    "summary": "Modern and scalable routing for React applications"
+  },
+  "npm:@tanstack/router-plugin==1.168.41": {
+    "licence": "MIT",
+    "summary": "Modern and scalable routing for React applications"
+  },
+  "npm:@tanstack/router-utils==1.162.3": {
+    "licence": "MIT",
+    "summary": "Modern and scalable routing for React applications"
+  },
+  "npm:@tanstack/store==0.11.1": {
+    "licence": "MIT",
+    "summary": "Framework agnostic type-safe store w/ reactive framework adapters"
+  },
+  "npm:@tanstack/virtual-file-routes==1.162.0": {
+    "licence": "MIT",
+    "summary": "Modern and scalable routing for React applications"
+  },
+  "npm:@testing-library/dom==10.4.2": {
+    "licence": "MIT",
+    "summary": "Simple and complete DOM testing utilities that encourage good testing practices."
+  },
+  "npm:@testing-library/jest-dom==7.0.1": {
+    "licence": "MIT",
+    "summary": "Custom jest matchers to test the state of the DOM"
+  },
+  "npm:@testing-library/react==16.3.3": {
+    "licence": "MIT",
+    "summary": "Simple and complete React DOM testing utilities that encourage good testing practices."
+  },
+  "npm:@testing-library/user-event==14.6.7": {
+    "licence": "MIT",
+    "summary": "Fire events the same way the user does"
+  },
+  "npm:@ts-morph/common==0.27.0": {
+    "licence": "MIT",
+    "summary": "Common functionality for ts-morph packages."
+  },
+  "npm:@types/aria-query==5.0.4": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for aria-query"
+  },
+  "npm:@types/chai==5.2.3": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for chai"
+  },
+  "npm:@types/deep-eql==4.0.2": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for deep-eql"
+  },
+  "npm:@types/esrecurse==4.3.1": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for esrecurse"
+  },
+  "npm:@types/estree==1.0.9": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for estree"
+  },
+  "npm:@types/json-schema==7.0.15": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for json-schema"
+  },
+  "npm:@types/node==24.19.0": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for node"
+  },
+  "npm:@types/react-dom==19.3.0": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for react-dom"
+  },
+  "npm:@types/react==19.3.0": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for react"
+  },
+  "npm:@types/set-cookie-parser==2.4.10": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for set-cookie-parser"
+  },
+  "npm:@types/statuses==2.0.6": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for statuses"
+  },
+  "npm:@types/validate-npm-package-name==4.0.2": {
+    "licence": "MIT",
+    "summary": "TypeScript definitions for validate-npm-package-name"
+  },
+  "npm:@typescript-eslint/eslint-plugin==8.71.0": {
+    "licence": "MIT",
+    "summary": "TypeScript plugin for ESLint"
+  },
+  "npm:@typescript-eslint/parser==8.71.0": {
+    "licence": "MIT",
+    "summary": "An ESLint custom parser which leverages TypeScript ESTree"
+  },
+  "npm:@typescript-eslint/project-service==8.71.0": {
+    "licence": "MIT",
+    "summary": "Standalone TypeScript project service wrapper for linting."
+  },
+  "npm:@typescript-eslint/scope-manager==8.71.0": {
+    "licence": "MIT",
+    "summary": "TypeScript scope analyser for ESLint"
+  },
+  "npm:@typescript-eslint/tsconfig-utils==8.71.0": {
+    "licence": "MIT",
+    "summary": "Utilities for collecting TSConfigs for linting scenarios."
+  },
+  "npm:@typescript-eslint/type-utils==8.71.0": {
+    "licence": "MIT",
+    "summary": "Type utilities for working with TypeScript + ESLint together"
+  },
+  "npm:@typescript-eslint/types==8.71.0": {
+    "licence": "MIT",
+    "summary": "Types for the TypeScript-ESTree AST spec"
+  },
+  "npm:@typescript-eslint/typescript-estree==8.71.0": {
+    "licence": "MIT",
+    "summary": "A parser that converts TypeScript source code into an ESTree compatible form"
+  },
+  "npm:@typescript-eslint/utils==8.71.0": {
+    "licence": "MIT",
+    "summary": "Utilities for working with TypeScript + ESLint together"
+  },
+  "npm:@typescript-eslint/visitor-keys==8.71.0": {
+    "licence": "MIT",
+    "summary": "Visitor keys used to help traverse the TypeScript-ESTree AST"
+  },
+  "npm:@vitejs/plugin-react==6.1.1": {
+    "licence": "MIT",
+    "summary": "The default Vite plugin for React projects"
+  },
+  "npm:@vitest/mocker==5.0.2": {
+    "licence": "MIT",
+    "summary": "Vitest module mocker implementation"
+  },
+  "npm:@vitest/spy==5.0.2": {
+    "licence": "MIT",
+    "summary": "Lightweight Jest compatible spy implementation"
+  },
+  "npm:accepts==2.0.0": {
+    "licence": "MIT",
+    "summary": "Higher-level content negotiation"
+  },
+  "npm:acorn-jsx==5.3.2": {
+    "licence": "MIT",
+    "summary": "Modern, fast React.js JSX parser"
+  },
+  "npm:acorn==8.18.0": {
+    "licence": "MIT",
+    "summary": "ECMAScript parser"
+  },
+  "npm:ajv-formats==2.1.1": {
+    "licence": "MIT",
+    "summary": "Format validation for Ajv v7+"
+  },
+  "npm:ajv-formats==3.0.1": {
+    "licence": "MIT",
+    "summary": "Format validation for Ajv v7+"
+  },
+  "npm:ajv==6.15.0": {
+    "licence": "MIT",
+    "summary": "Another JSON Schema Validator"
+  },
+  "npm:ajv==8.20.0": {
+    "licence": "MIT",
+    "summary": "Another JSON Schema Validator"
+  },
+  "npm:ansi-colors==4.1.3": {
+    "licence": "MIT",
+    "summary": "Easily add ANSI colors to your text and symbols in the terminal. A faster drop-in replacement for chalk, kleur and turbocolor (without the dependencies and rendering bugs)."
+  },
+  "npm:ansi-regex==5.0.1": {
+    "licence": "MIT",
+    "summary": "Regular expression for matching ANSI escape codes"
+  },
+  "npm:ansi-regex==6.4.0": {
+    "licence": "MIT",
+    "summary": "Regular expression for matching ANSI escape codes"
+  },
+  "npm:ansi-styles==4.3.0": {
+    "licence": "MIT",
+    "summary": "ANSI escape codes for styling strings in the terminal"
+  },
+  "npm:ansi-styles==5.2.0": {
+    "licence": "MIT",
+    "summary": "ANSI escape codes for styling strings in the terminal"
+  },
+  "npm:ansis==4.4.0": {
+    "licence": "ISC",
+    "summary": "ANSI color lib"
+  },
+  "npm:argparse==2.0.1": {
+    "licence": "Python-2.0",
+    "summary": "CLI arguments parser. Native port of python's argparse."
+  },
+  "npm:aria-hidden==1.2.6": {
+    "licence": "MIT",
+    "summary": "Cast aria-hidden to everything, except..."
+  },
+  "npm:aria-query==5.3.0": {
+    "licence": "Apache-2.0",
+    "summary": "Programmatic access to the ARIA specification"
+  },
+  "npm:aria-query==5.3.2": {
+    "licence": "Apache-2.0",
+    "summary": "Programmatic access to the ARIA specification"
+  },
+  "npm:assertion-error==2.0.1": {
+    "licence": "MIT",
+    "summary": "Error constructor for test and validation frameworks that implements standardized AssertionError specification."
+  },
+  "npm:ast-types==0.16.3": {
+    "licence": "MIT",
+    "summary": "Esprima-compatible implementation of the Mozilla JS Parser API"
+  },
+  "npm:atomically==1.7.0": {
+    "licence": "MIT",
+    "summary": "Read and write files atomically and reliably."
+  },
+  "npm:axe-core==4.13.0": {
+    "licence": "MPL-2.0",
+    "summary": "Accessibility engine for automated Web UI testing"
+  },
+  "npm:babel-dead-code-elimination==1.0.12": {
+    "licence": "MIT",
+    "summary": "Composable primitives for dead code elimination in Babel"
+  },
+  "npm:balanced-match==4.0.4": {
+    "licence": "MIT",
+    "summary": "Match balanced character pairs, like \"{\" and \"}\""
+  },
+  "npm:baseline-browser-mapping==2.11.26": {
+    "licence": "Apache-2.0",
+    "summary": "A library for obtaining browser versions with their maximum supported Baseline feature set and Widely Available status."
+  },
+  "npm:bidi-js==1.1.0": {
+    "licence": "MIT",
+    "summary": "A JavaScript implementation of the Unicode Bidirectional Algorithm"
+  },
+  "npm:body-parser==2.3.0": {
+    "licence": "MIT",
+    "summary": "Node.js body parsing middleware"
+  },
+  "npm:brace-expansion==5.0.12": {
+    "licence": "MIT",
+    "summary": "Brace expansion as known from sh/bash"
+  },
+  "npm:braces==3.0.3": {
+    "licence": "MIT",
+    "summary": "Bash-like brace expansion, implemented in JavaScript. Safer than other brace expansion libs, with complete support for the Bash 4.3 braces specification, without sacrificing speed."
+  },
+  "npm:browserslist==4.29.2": {
+    "licence": "MIT",
+    "summary": "Share target browsers between different front-end tools, like Autoprefixer, Stylelint and babel-env-preset"
+  },
+  "npm:bundle-name==4.1.1": {
+    "licence": "MIT",
+    "summary": "Get bundle name from a bundle identifier (macOS): `com.apple.Safari` → `Safari`"
+  },
+  "npm:bytes==3.1.2": {
+    "licence": "MIT",
+    "summary": "Utility to parse a string bytes to bytes and vice-versa"
+  },
+  "npm:c12==3.3.4": {
+    "licence": "MIT",
+    "summary": "Smart Config Loader"
+  },
+  "npm:cacheable==2.5.0": {
+    "licence": "MIT",
+    "summary": "High Performance Layer 1 / Layer 2 Caching with Keyv Storage"
+  },
+  "npm:call-bind-apply-helpers==1.0.2": {
+    "licence": "MIT",
+    "summary": "Helper functions around Function call/apply/bind, for use in `call-bind`"
+  },
+  "npm:call-bound==1.0.4": {
+    "licence": "MIT",
+    "summary": "Robust call-bound JavaScript intrinsics, using `call-bind` and `get-intrinsic`."
+  },
+  "npm:callsites==3.1.0": {
+    "licence": "MIT",
+    "summary": "Get callsites from the V8 stack trace API"
+  },
+  "npm:caniuse-lite==1.0.30001813": {
+    "licence": "CC-BY-4.0",
+    "summary": "A smaller version of caniuse-db, with only the essentials!"
+  },
+  "npm:chai==6.2.2": {
+    "licence": "MIT",
+    "summary": "BDD/TDD assertion library for node.js and the browser. Test framework agnostic."
+  },
+  "npm:chalk==5.6.2": {
+    "licence": "MIT",
+    "summary": "Terminal string styling done right"
+  },
+  "npm:chokidar==5.0.0": {
+    "licence": "MIT",
+    "summary": "Minimal and efficient cross-platform file watching library"
+  },
+  "npm:class-variance-authority==0.7.1": {
+    "licence": "Apache-2.0",
+    "summary": "Class Variance Authority 🧬"
+  },
+  "npm:cli-cursor==5.0.0": {
+    "licence": "MIT",
+    "summary": "Toggle the CLI cursor"
+  },
+  "npm:cli-spinners==2.9.2": {
+    "licence": "MIT",
+    "summary": "Spinners for use in the terminal"
+  },
+  "npm:cli-width==4.1.0": {
+    "licence": "ISC",
+    "summary": "Get stdout window width, with two fallbacks, tty and then a default."
+  },
+  "npm:cliui==8.0.1": {
+    "licence": "ISC",
+    "summary": "easily create complex multi-column command-line-interfaces"
+  },
+  "npm:clsx==2.1.1": {
+    "licence": "MIT",
+    "summary": "A tiny (239B) utility for constructing className strings conditionally."
+  },
+  "npm:cn==0.2.6": {
+    "licence": "MIT",
+    "summary": "Fast, small, compiled class-name merging for Tailwind CSS. Drop-in replacement for clsx + tailwind-merge."
+  },
+  "npm:cn==0.4.0": {
+    "licence": "MIT",
+    "summary": "Fast, small, compiled class-name merging for Tailwind CSS. Drop-in replacement for clsx + tailwind-merge."
+  },
+  "npm:code-block-writer==13.0.3": {
+    "licence": "MIT",
+    "summary": "A simple code writer that assists with formatting and visualizing blocks of code."
+  },
+  "npm:color-convert==2.0.1": {
+    "licence": "MIT",
+    "summary": "Plain color conversion functions"
+  },
+  "npm:color-name==1.1.4": {
+    "licence": "MIT",
+    "summary": "A list of color names and its values"
+  },
+  "npm:color-support==1.1.3": {
+    "licence": "ISC",
+    "summary": "A module which will endeavor to guess your terminal's level of color support."
+  },
+  "npm:commander==11.1.0": {
+    "licence": "MIT",
+    "summary": "the complete solution for node.js command-line programs"
+  },
+  "npm:commander==14.0.3": {
+    "licence": "MIT",
+    "summary": "the complete solution for node.js command-line programs"
+  },
+  "npm:commander==15.0.0": {
+    "licence": "MIT",
+    "summary": "the complete solution for node.js command-line programs"
+  },
+  "npm:conf==10.2.0": {
+    "licence": "MIT",
+    "summary": "Simple config handling for your app or module"
+  },
+  "npm:confbox==0.2.4": {
+    "licence": "MIT",
+    "summary": "Compact YAML, TOML, JSONC, JSON5 and INI parser and serializer"
+  },
+  "npm:confbox==0.3.1": {
+    "licence": "MIT",
+    "summary": "Compact YAML, TOML, JSONC, JSON5 and INI parser and serializer"
+  },
+  "npm:content-disposition==1.1.0": {
+    "licence": "MIT",
+    "summary": "Create and parse Content-Disposition header"
+  },
+  "npm:content-type==1.0.5": {
+    "licence": "MIT",
+    "summary": "Create and parse HTTP Content-Type header"
+  },
+  "npm:content-type==2.1.0": {
+    "licence": "MIT",
+    "summary": "Create and parse HTTP Content-Type header"
+  },
+  "npm:convert-source-map==2.0.0": {
+    "licence": "MIT",
+    "summary": "Converts a source-map from/to different formats and allows adding/changing properties."
+  },
+  "npm:cookie-es==3.1.1": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:cookie-signature==1.2.2": {
+    "licence": "MIT",
+    "summary": "Sign and unsign cookies"
+  },
+  "npm:cookie==0.7.2": {
+    "licence": "MIT",
+    "summary": "HTTP server cookie parsing and serialization"
+  },
+  "npm:cookie==1.1.1": {
+    "licence": "MIT",
+    "summary": "HTTP server cookie parsing and serialization"
+  },
+  "npm:cors==2.8.6": {
+    "licence": "MIT",
+    "summary": "Node.js CORS middleware"
+  },
+  "npm:cosmiconfig==9.0.2": {
+    "licence": "MIT",
+    "summary": "Find and load configuration from a package.json property, rc file, TypeScript module, and more!"
+  },
+  "npm:cross-spawn==7.0.6": {
+    "licence": "MIT",
+    "summary": "Cross platform child_process#spawn and child_process#spawnSync"
+  },
+  "npm:css-tree==3.2.1": {
+    "licence": "MIT",
+    "summary": "A tool set for CSS: fast detailed parser (CSS → AST), walker (AST traversal), generator (AST → CSS) and lexer (validation and matching) based on specs and browser implementations"
+  },
+  "npm:css.escape==1.5.1": {
+    "licence": "MIT",
+    "summary": "A robust polyfill for the `CSS.escape` utility method as defined in CSSOM."
+  },
+  "npm:cssesc==3.0.0": {
+    "licence": "MIT",
+    "summary": "A JavaScript library for escaping CSS strings and identifiers while generating the shortest possible ASCII-only output."
+  },
+  "npm:csstype==3.2.3": {
+    "licence": "MIT",
+    "summary": "Strict TypeScript and Flow types for style based on MDN data"
+  },
+  "npm:data-urls==7.0.0": {
+    "licence": "MIT",
+    "summary": "Parses data: URLs"
+  },
+  "npm:debounce-fn==4.0.0": {
+    "licence": "MIT",
+    "summary": "Debounce a function"
+  },
+  "npm:debug==4.4.3": {
+    "licence": "MIT",
+    "summary": "Lightweight debugging utility for Node.js and the browser"
+  },
+  "npm:decimal.js==10.6.0": {
+    "licence": "MIT",
+    "summary": "An arbitrary-precision Decimal type for JavaScript."
+  },
+  "npm:dedent==1.7.2": {
+    "licence": "MIT",
+    "summary": "A string tag that strips indentation from multi-line strings. ⬅️"
+  },
+  "npm:deep-is==0.1.4": {
+    "licence": "MIT",
+    "summary": "node's assert.deepEqual algorithm except for NaN being equal to NaN"
+  },
+  "npm:deepmerge==4.3.1": {
+    "licence": "MIT",
+    "summary": "A library for deep (recursive) merging of Javascript objects"
+  },
+  "npm:default-browser-id==5.0.1": {
+    "licence": "MIT",
+    "summary": "Get the bundle identifier of the default browser (macOS). Example: com.apple.Safari"
+  },
+  "npm:default-browser==5.5.1": {
+    "licence": "MIT",
+    "summary": "Get the default browser"
+  },
+  "npm:define-lazy-prop==2.0.0": {
+    "licence": "MIT",
+    "summary": "Define a lazily evaluated property on an object"
+  },
+  "npm:define-lazy-prop==3.0.0": {
+    "licence": "MIT",
+    "summary": "Define a lazily evaluated property on an object"
+  },
+  "npm:defu==6.1.7": {
+    "licence": "MIT",
+    "summary": "Recursively assign default properties. Lightweight and Fast!"
+  },
+  "npm:depd==2.0.0": {
+    "licence": "MIT",
+    "summary": "Deprecate all the things"
+  },
+  "npm:dequal==2.0.3": {
+    "licence": "MIT",
+    "summary": "A tiny (304B to 489B) utility for check for deep equality"
+  },
+  "npm:destr==2.0.5": {
+    "licence": "MIT",
+    "summary": "A faster, secure and convenient alternative for JSON.parse"
+  },
+  "npm:detect-libc==2.1.2": {
+    "licence": "Apache-2.0",
+    "summary": "Node.js module to detect the C standard library (libc) implementation family and version"
+  },
+  "npm:detect-node-es==1.1.0": {
+    "licence": "MIT",
+    "summary": "Detect Node.JS (as opposite to browser environment). ESM modification"
+  },
+  "npm:diff==8.0.4": {
+    "licence": "BSD-3-Clause",
+    "summary": "A JavaScript text diff implementation."
+  },
+  "npm:dom-accessibility-api==0.5.16": {
+    "licence": "MIT",
+    "summary": "Implements https://w3c.github.io/accname/"
+  },
+  "npm:dom-accessibility-api==0.6.3": {
+    "licence": "MIT",
+    "summary": "Implements https://w3c.github.io/accname/"
+  },
+  "npm:dot-prop==6.0.1": {
+    "licence": "MIT",
+    "summary": "Get, set, or delete a property from a nested object using a dot path"
+  },
+  "npm:dotenv==17.4.2": {
+    "licence": "BSD-2-Clause",
+    "summary": "Loads environment variables from .env file"
+  },
+  "npm:dunder-proto==1.0.1": {
+    "licence": "MIT",
+    "summary": "If available, the `Object.prototype.__proto__` accessor and mutator, call-bound"
+  },
+  "npm:ee-first==1.1.1": {
+    "licence": "MIT",
+    "summary": "return the first event in a set of ee/event pairs"
+  },
+  "npm:electron-to-chromium==1.5.439": {
+    "licence": "ISC",
+    "summary": "Provides a list of electron-to-chromium version mappings"
+  },
+  "npm:emoji-regex==10.6.0": {
+    "licence": "MIT",
+    "summary": "A regular expression to match all Emoji-only symbols as per the Unicode Standard."
+  },
+  "npm:emoji-regex==8.0.0": {
+    "licence": "MIT",
+    "summary": "A regular expression to match all Emoji-only symbols as per the Unicode Standard."
+  },
+  "npm:encodeurl==2.0.0": {
+    "licence": "MIT",
+    "summary": "Encode a URL to a percent-encoded form, excluding already-encoded sequences"
+  },
+  "npm:enhanced-resolve==5.25.1": {
+    "licence": "MIT",
+    "summary": "Offers a async require.resolve function. It's highly configurable."
+  },
+  "npm:enquirer==2.4.1": {
+    "licence": "MIT",
+    "summary": "Stylish, intuitive and user-friendly prompt system. Fast and lightweight enough for small projects, powerful and extensible enough for the most advanced use cases."
+  },
+  "npm:entities==8.1.0": {
+    "licence": "BSD-2-Clause",
+    "summary": "Encode & decode XML and HTML entities with ease & speed"
+  },
+  "npm:env-paths==2.2.1": {
+    "licence": "MIT",
+    "summary": "Get paths for storing things like data, config, cache, etc"
+  },
+  "npm:error-ex==1.3.4": {
+    "licence": "MIT",
+    "summary": "Easy error subclassing and stack customization"
+  },
+  "npm:es-define-property==1.0.1": {
+    "licence": "MIT",
+    "summary": "`Object.defineProperty`, but not IE 8's broken one."
+  },
+  "npm:es-errors==1.3.0": {
+    "licence": "MIT",
+    "summary": "A simple cache for a few of the JS Error constructors."
+  },
+  "npm:es-module-lexer==2.3.2": {
+    "licence": "MIT",
+    "summary": "Lexes ES modules returning their import/export metadata"
+  },
+  "npm:es-object-atoms==1.1.2": {
+    "licence": "MIT",
+    "summary": "ES Object-related atoms: Object, ToObject, RequireObjectCoercible"
+  },
+  "npm:escalade==3.2.0": {
+    "licence": "MIT",
+    "summary": "A tiny (183B to 210B) and fast utility to ascend parent directories"
+  },
+  "npm:escape-html==1.0.3": {
+    "licence": "MIT",
+    "summary": "Escape string for use in HTML"
+  },
+  "npm:escape-string-regexp==4.0.0": {
+    "licence": "MIT",
+    "summary": "Escape RegExp special characters"
+  },
+  "npm:eslint-config-prettier==10.1.8": {
+    "licence": "MIT",
+    "summary": "Turns off all rules that are unnecessary or might conflict with Prettier."
+  },
+  "npm:eslint-plugin-react-hooks==7.1.1": {
+    "licence": "MIT",
+    "summary": "ESLint rules for React Hooks"
+  },
+  "npm:eslint-plugin-react-refresh==0.5.7": {
+    "licence": "MIT",
+    "summary": "Validate that your components can safely be updated with Fast Refresh"
+  },
+  "npm:eslint-scope==9.1.2": {
+    "licence": "BSD-2-Clause",
+    "summary": "ECMAScript scope analyzer for ESLint"
+  },
+  "npm:eslint-visitor-keys==3.4.3": {
+    "licence": "Apache-2.0",
+    "summary": "Constants and utilities about visitor keys to traverse AST."
+  },
+  "npm:eslint-visitor-keys==5.0.1": {
+    "licence": "Apache-2.0",
+    "summary": "Constants and utilities about visitor keys to traverse AST."
+  },
+  "npm:eslint==10.11.0": {
+    "licence": "MIT",
+    "summary": "An AST-based pattern checker for JavaScript."
+  },
+  "npm:espree==11.2.0": {
+    "licence": "BSD-2-Clause",
+    "summary": "An Esprima-compatible JavaScript parser built on Acorn"
+  },
+  "npm:esprima==4.0.1": {
+    "licence": "BSD-2-Clause",
+    "summary": "ECMAScript parsing infrastructure for multipurpose analysis"
+  },
+  "npm:esquery==1.7.0": {
+    "licence": "BSD-3-Clause",
+    "summary": "A query library for ECMAScript AST using a CSS selector like query language."
+  },
+  "npm:esrecurse==4.3.0": {
+    "licence": "BSD-2-Clause",
+    "summary": "ECMAScript AST recursive visitor"
+  },
+  "npm:estraverse==5.3.0": {
+    "licence": "BSD-2-Clause",
+    "summary": "ECMAScript JS AST traversal functions"
+  },
+  "npm:estree-walker==3.0.3": {
+    "licence": "MIT",
+    "summary": "Traverse an ESTree-compliant AST"
+  },
+  "npm:esutils==2.0.3": {
+    "licence": "BSD-2-Clause",
+    "summary": "utility box for ECMAScript language tools"
+  },
+  "npm:etag==1.8.1": {
+    "licence": "MIT",
+    "summary": "Create simple HTTP ETags"
+  },
+  "npm:eventsource-parser==3.1.1": {
+    "licence": "MIT",
+    "summary": "Streaming, source-agnostic EventSource/Server-Sent Events parser"
+  },
+  "npm:eventsource==3.0.7": {
+    "licence": "MIT",
+    "summary": "WhatWG/W3C compliant EventSource client for Node.js and browsers"
+  },
+  "npm:execa==5.1.1": {
+    "licence": "MIT",
+    "summary": "Process execution for humans"
+  },
+  "npm:execa==9.6.1": {
+    "licence": "MIT",
+    "summary": "Process execution for humans"
+  },
+  "npm:expect-type==1.4.0": {
+    "licence": "Apache-2.0",
+    "summary": "unknown"
+  },
+  "npm:express-rate-limit==8.7.0": {
+    "licence": "MIT",
+    "summary": "Basic IP rate-limiting middleware for Express. Use to limit repeated requests to public APIs and/or endpoints such as password reset."
+  },
+  "npm:express==5.2.1": {
+    "licence": "MIT",
+    "summary": "Fast, unopinionated, minimalist web framework"
+  },
+  "npm:exsolve==1.1.1": {
+    "licence": "MIT",
+    "summary": "Module resolution utilities based on Node.js upstream implementation."
+  },
+  "npm:fast-deep-equal==3.1.3": {
+    "licence": "MIT",
+    "summary": "Fast deep equal"
+  },
+  "npm:fast-glob==3.3.3": {
+    "licence": "MIT",
+    "summary": "It's a very fast and efficient glob library for Node.js"
+  },
+  "npm:fast-json-stable-stringify==2.1.0": {
+    "licence": "MIT",
+    "summary": "deterministic `JSON.stringify()` - a faster version of substack's json-stable-strigify without jsonify"
+  },
+  "npm:fast-levenshtein==2.0.6": {
+    "licence": "MIT",
+    "summary": "Efficient implementation of Levenshtein algorithm with locale-specific collator support."
+  },
+  "npm:fast-string-truncated-width==3.0.3": {
+    "licence": "MIT",
+    "summary": "A fast function for calculating where a string should be truncated, given an optional width limit and an ellipsis string."
+  },
+  "npm:fast-string-width==3.0.2": {
+    "licence": "MIT",
+    "summary": "A fast function for calculating the visual width of a string once printed to the terminal."
+  },
+  "npm:fast-uri==3.1.8": {
+    "licence": "BSD-3-Clause",
+    "summary": "Dependency-free RFC 3986 URI toolbox"
+  },
+  "npm:fast-wrap-ansi==0.2.2": {
+    "licence": "MIT",
+    "summary": "A tiny and fast text wrap library which takes ANSI escapes into account."
+  },
+  "npm:fastq==1.20.3": {
+    "licence": "ISC",
+    "summary": "Fast, in memory work queue"
+  },
+  "npm:fdir==6.5.0": {
+    "licence": "MIT",
+    "summary": "The fastest directory crawler & globbing alternative to glob, fast-glob, & tiny-glob. Crawls 1m files in < 1s"
+  },
+  "npm:figures==6.1.0": {
+    "licence": "MIT",
+    "summary": "Unicode symbols with fallbacks for older terminals"
+  },
+  "npm:file-entry-cache==11.1.5": {
+    "licence": "MIT",
+    "summary": "A lightweight cache for file metadata, ideal for processes that work on a specific set of files and only need to reprocess files that have changed since the last run"
+  },
+  "npm:fill-range==7.1.1": {
+    "licence": "MIT",
+    "summary": "Fill in a range of numbers or letters, optionally passing an increment or `step` to use, or create a regex-compatible range with `options.toRegex`"
+  },
+  "npm:finalhandler==2.1.1": {
+    "licence": "MIT",
+    "summary": "Node.js final http responder"
+  },
+  "npm:find-up==3.0.0": {
+    "licence": "MIT",
+    "summary": "Find a file or directory by walking up parent directories"
+  },
+  "npm:find-up==5.0.0": {
+    "licence": "MIT",
+    "summary": "Find a file or directory by walking up parent directories"
+  },
+  "npm:flat-cache==6.1.23": {
+    "licence": "MIT",
+    "summary": "A simple key/value storage using files to persist the data"
+  },
+  "npm:flatted==3.4.4": {
+    "licence": "ISC",
+    "summary": "A super light and fast circular JSON parser."
+  },
+  "npm:forwarded==0.2.0": {
+    "licence": "MIT",
+    "summary": "Parse HTTP X-Forwarded-For header"
+  },
+  "npm:fresh==2.0.0": {
+    "licence": "MIT",
+    "summary": "HTTP response freshness testing"
+  },
+  "npm:fs-extra==11.4.1": {
+    "licence": "MIT",
+    "summary": "fs-extra contains methods that aren't included in the vanilla Node.js fs package. Such as recursive mkdir, copy, and remove."
+  },
+  "npm:fsevents==2.3.3": {
+    "licence": "MIT",
+    "summary": "Native Access to MacOS FSEvents"
+  },
+  "npm:function-bind==1.1.2": {
+    "licence": "MIT",
+    "summary": "Implementation of Function.prototype.bind"
+  },
+  "npm:fuzzysort==3.1.0": {
+    "licence": "MIT",
+    "summary": "Fast SublimeText-like fuzzy search for JavaScript"
+  },
+  "npm:gensync==1.0.0-beta.2": {
+    "licence": "MIT",
+    "summary": "Allows users to use generators in order to write common functions that can be both sync or async."
+  },
+  "npm:get-caller-file==2.0.5": {
+    "licence": "ISC",
+    "summary": "unknown"
+  },
+  "npm:get-east-asian-width==1.7.0": {
+    "licence": "MIT",
+    "summary": "Determine the East Asian Width of a Unicode character"
+  },
+  "npm:get-intrinsic==1.3.0": {
+    "licence": "MIT",
+    "summary": "Get and robustly cache all JS language-level intrinsics at first require time"
+  },
+  "npm:get-nonce==1.0.1": {
+    "licence": "MIT",
+    "summary": "returns nonce"
+  },
+  "npm:get-own-enumerable-keys==1.0.0": {
+    "licence": "MIT",
+    "summary": "Like `Object.keys()` but also includes symbols"
+  },
+  "npm:get-proto==1.0.1": {
+    "licence": "MIT",
+    "summary": "Robustly get the [[Prototype]] of an object"
+  },
+  "npm:get-stream==6.0.1": {
+    "licence": "MIT",
+    "summary": "Get a stream as a string, buffer, or array"
+  },
+  "npm:get-stream==9.0.1": {
+    "licence": "MIT",
+    "summary": "Get a stream as a string, Buffer, ArrayBuffer or array"
+  },
+  "npm:get-tsconfig==4.14.0": {
+    "licence": "MIT",
+    "summary": "Find and parse the tsconfig.json file from a directory path"
+  },
+  "npm:giget==3.3.1": {
+    "licence": "MIT",
+    "summary": "Download templates and git repositories with pleasure!"
+  },
+  "npm:glob-parent==5.1.2": {
+    "licence": "ISC",
+    "summary": "Extract the non-magic parent path from a glob string."
+  },
+  "npm:glob-parent==6.0.2": {
+    "licence": "ISC",
+    "summary": "Extract the non-magic parent path from a glob string."
+  },
+  "npm:globals==17.12.0": {
+    "licence": "MIT",
+    "summary": "Global identifiers from different JavaScript environments"
+  },
+  "npm:gopd==1.2.0": {
+    "licence": "MIT",
+    "summary": "`Object.getOwnPropertyDescriptor`, but accounts for IE's broken implementation."
+  },
+  "npm:graceful-fs==4.2.11": {
+    "licence": "ISC",
+    "summary": "A drop-in replacement for fs, making various improvements."
+  },
+  "npm:graphql==16.14.2": {
+    "licence": "MIT",
+    "summary": "A Query Language and Runtime which can target any service."
+  },
+  "npm:has-symbols==1.1.0": {
+    "licence": "MIT",
+    "summary": "Determine if the JS environment has Symbol support. Supports spec, or shams."
+  },
+  "npm:hashery==1.5.1": {
+    "licence": "MIT",
+    "summary": "Browser Compatible Object Hashing"
+  },
+  "npm:hasown==2.0.4": {
+    "licence": "MIT",
+    "summary": "A robust, ES3 compatible, \"has own property\" predicate."
+  },
+  "npm:headers-polyfill==5.0.1": {
+    "licence": "MIT",
+    "summary": "A native \"Headers\" class polyfill."
+  },
+  "npm:hermes-estree==0.25.1": {
+    "licence": "MIT",
+    "summary": "Flow types for the Flow-ESTree spec produced by the hermes parser"
+  },
+  "npm:hermes-parser==0.25.1": {
+    "licence": "MIT",
+    "summary": "A JavaScript parser built from the Hermes engine"
+  },
+  "npm:hono==4.13.10": {
+    "licence": "MIT",
+    "summary": "Web framework built on Web Standards"
+  },
+  "npm:hookified==1.15.1": {
+    "licence": "MIT",
+    "summary": "Event Emitting and Middleware Hooks"
+  },
+  "npm:hookified==2.2.0": {
+    "licence": "MIT",
+    "summary": "Event Emitting and Middleware Hooks"
+  },
+  "npm:html-encoding-sniffer==7.0.0": {
+    "licence": "MIT",
+    "summary": "Sniff the encoding of an HTML or XML byte stream"
+  },
+  "npm:html-parse-stringify==4.0.1": {
+    "licence": "MIT",
+    "summary": "Parses well-formed HTML (meaning all tags closed) into an AST and back. quickly."
+  },
+  "npm:http-errors==2.0.1": {
+    "licence": "MIT",
+    "summary": "Create HTTP error objects"
+  },
+  "npm:human-signals==2.1.0": {
+    "licence": "Apache-2.0",
+    "summary": "Human-friendly process signals"
+  },
+  "npm:human-signals==8.0.1": {
+    "licence": "Apache-2.0",
+    "summary": "Human-friendly process signals"
+  },
+  "npm:i18next-browser-languagedetector==8.2.1": {
+    "licence": "MIT",
+    "summary": "language detector used in browser environment for i18next"
+  },
+  "npm:i18next==26.4.2": {
+    "licence": "MIT",
+    "summary": "i18next internationalization framework"
+  },
+  "npm:iceberg-js==0.8.1": {
+    "licence": "MIT",
+    "summary": "A small, framework-agnostic JavaScript/TypeScript client for the Apache Iceberg REST Catalog"
+  },
+  "npm:iconv-lite==0.7.3": {
+    "licence": "MIT",
+    "summary": "Convert character encodings in pure javascript."
+  },
+  "npm:ignore==5.3.2": {
+    "licence": "MIT",
+    "summary": "Ignore is a manager and filter for .gitignore rules, the one used by eslint, gitbook and many others."
+  },
+  "npm:ignore==7.0.10": {
+    "licence": "MIT",
+    "summary": "Ignore is a manager and filter for .gitignore rules, the one used by eslint, gitbook and many others."
+  },
+  "npm:import-fresh==3.3.1": {
+    "licence": "MIT",
+    "summary": "Import a module while bypassing the cache"
+  },
+  "npm:imurmurhash==0.1.4": {
+    "licence": "MIT",
+    "summary": "An incremental implementation of MurmurHash3"
+  },
+  "npm:indent-string==4.0.0": {
+    "licence": "MIT",
+    "summary": "Indent each line in a string"
+  },
+  "npm:inherits==2.0.4": {
+    "licence": "ISC",
+    "summary": "Browser-friendly inheritance fully compatible with standard node.js inherits()"
+  },
+  "npm:ip-address==10.7.2": {
+    "licence": "MIT",
+    "summary": "A library for parsing IPv4 and IPv6 IP addresses in node and the browser."
+  },
+  "npm:ipaddr.js==1.9.1": {
+    "licence": "MIT",
+    "summary": "A library for manipulating IPv4 and IPv6 addresses in JavaScript."
+  },
+  "npm:is-arrayish==0.2.1": {
+    "licence": "MIT",
+    "summary": "Determines if an object can be used as an array"
+  },
+  "npm:is-docker==2.2.1": {
+    "licence": "MIT",
+    "summary": "Check if the process is running inside a Docker container"
+  },
+  "npm:is-docker==3.0.0": {
+    "licence": "MIT",
+    "summary": "Check if the process is running inside a Docker container"
+  },
+  "npm:is-extglob==2.1.1": {
+    "licence": "MIT",
+    "summary": "Returns true if a string has an extglob."
+  },
+  "npm:is-fullwidth-code-point==3.0.0": {
+    "licence": "MIT",
+    "summary": "Check if the character represented by a given Unicode code point is fullwidth"
+  },
+  "npm:is-glob==4.0.3": {
+    "licence": "MIT",
+    "summary": "Returns `true` if the given string looks like a glob pattern or an extglob pattern. This makes it easy to create code that only uses external modules like node-glob when necessary, resulting in much faster code execution and initialization time, and a better user experience."
+  },
+  "npm:is-in-ssh==1.0.0": {
+    "licence": "MIT",
+    "summary": "Check if the process is running in an SSH session"
+  },
+  "npm:is-inside-container==1.0.0": {
+    "licence": "MIT",
+    "summary": "Check if the process is running inside a container (Docker/Podman)"
+  },
+  "npm:is-interactive==2.0.0": {
+    "licence": "MIT",
+    "summary": "Check if stdout or stderr is interactive"
+  },
+  "npm:is-node-process==1.2.0": {
+    "licence": "MIT",
+    "summary": "Reliably determines if the code is running in Node.js"
+  },
+  "npm:is-number==7.0.0": {
+    "licence": "MIT",
+    "summary": "Returns true if a number or string value is a finite number. Useful for regex matches, parsing, user input, etc."
+  },
+  "npm:is-obj==2.0.0": {
+    "licence": "MIT",
+    "summary": "Check if a value is an object"
+  },
+  "npm:is-obj==3.0.0": {
+    "licence": "MIT",
+    "summary": "Check if a value is an object"
+  },
+  "npm:is-plain-obj==4.1.0": {
+    "licence": "MIT",
+    "summary": "Check if a value is a plain object"
+  },
+  "npm:is-potential-custom-element-name==1.0.1": {
+    "licence": "MIT",
+    "summary": "Check whether a given string matches the `PotentialCustomElementName` production as defined in the HTML Standard."
+  },
+  "npm:is-promise==4.0.0": {
+    "licence": "MIT",
+    "summary": "Test whether an object looks like a promises-a+ promise"
+  },
+  "npm:is-regexp==3.1.0": {
+    "licence": "MIT",
+    "summary": "Check if a value is a regular expression"
+  },
+  "npm:is-stream==2.0.1": {
+    "licence": "MIT",
+    "summary": "Check if something is a Node.js stream"
+  },
+  "npm:is-stream==4.0.1": {
+    "licence": "MIT",
+    "summary": "Check if something is a Node.js stream"
+  },
+  "npm:is-unicode-supported==1.3.0": {
+    "licence": "MIT",
+    "summary": "Detect whether the terminal supports Unicode"
+  },
+  "npm:is-unicode-supported==2.1.0": {
+    "licence": "MIT",
+    "summary": "Detect whether the terminal supports Unicode"
+  },
+  "npm:is-wsl==2.2.0": {
+    "licence": "MIT",
+    "summary": "Check if the process is running inside Windows Subsystem for Linux (Bash on Windows)"
+  },
+  "npm:is-wsl==3.1.1": {
+    "licence": "MIT",
+    "summary": "Check if the process is running inside Windows Subsystem for Linux (Bash on Windows)"
+  },
+  "npm:isbot==5.2.2": {
+    "licence": "Unlicense",
+    "summary": "🤖/👨‍🦰 Recognise bots/crawlers/spiders using the user agent string."
+  },
+  "npm:isexe==2.0.0": {
+    "licence": "ISC",
+    "summary": "Minimal module to check if a file is executable."
+  },
+  "npm:isexe==3.1.5": {
+    "licence": "BlueOak-1.0.0",
+    "summary": "Minimal module to check if a file is executable."
+  },
+  "npm:jiti==2.7.0": {
+    "licence": "MIT",
+    "summary": "Runtime typescript and ESM support for Node.js"
+  },
+  "npm:jose==6.2.12": {
+    "licence": "MIT",
+    "summary": "JWA, JWS, JWE, JWT, JWK, JWKS for Node.js, Browser, Cloudflare Workers, Deno, Bun, and other Web-interoperable runtimes"
+  },
+  "npm:js-tokens==4.0.0": {
+    "licence": "MIT",
+    "summary": "A regex that tokenizes JavaScript."
+  },
+  "npm:js-yaml==4.2.0": {
+    "licence": "MIT",
+    "summary": "YAML 1.2 parser and serializer"
+  },
+  "npm:jsdom==30.1.1": {
+    "licence": "MIT",
+    "summary": "A JavaScript implementation of many web standards"
+  },
+  "npm:jsesc==3.1.0": {
+    "licence": "MIT",
+    "summary": "Given some data, jsesc returns the shortest possible stringified & ASCII-safe representation of that data."
+  },
+  "npm:json-parse-even-better-errors==2.3.1": {
+    "licence": "MIT",
+    "summary": "JSON.parse with context information on error"
+  },
+  "npm:json-schema-traverse==0.4.1": {
+    "licence": "MIT",
+    "summary": "Traverse JSON Schema passing each schema object to callback"
+  },
+  "npm:json-schema-traverse==1.0.0": {
+    "licence": "MIT",
+    "summary": "Traverse JSON Schema passing each schema object to callback"
+  },
+  "npm:json-schema-typed==7.0.3": {
+    "licence": "BSD-2-Clause",
+    "summary": "JSONSchema TypeScript definitions."
+  },
+  "npm:json-schema-typed==8.0.2": {
+    "licence": "BSD-2-Clause",
+    "summary": "JSON Schema TypeScript definitions with complete inline documentation."
+  },
+  "npm:json-stable-stringify-without-jsonify==1.0.1": {
+    "licence": "MIT",
+    "summary": "deterministic JSON.stringify() with custom sorting to get deterministic hashes from stringified results, with no public domain dependencies"
+  },
+  "npm:json5==2.2.3": {
+    "licence": "MIT",
+    "summary": "JSON for Humans"
+  },
+  "npm:jsonfile==6.2.1": {
+    "licence": "MIT",
+    "summary": "Easily read/write JSON files."
+  },
+  "npm:keyv==5.6.0": {
+    "licence": "MIT",
+    "summary": "Simple key-value storage with support for multiple backends"
+  },
+  "npm:kleur==3.0.3": {
+    "licence": "MIT",
+    "summary": "The fastest Node.js library for formatting terminal text with ANSI colors~!"
+  },
+  "npm:kleur==4.1.5": {
+    "licence": "MIT",
+    "summary": "The fastest Node.js library for formatting terminal text with ANSI colors~!"
+  },
+  "npm:levn==0.4.1": {
+    "licence": "MIT",
+    "summary": "Light ECMAScript (JavaScript) Value Notation - human written, concise, typed, flexible"
+  },
+  "npm:lightningcss-android-arm64==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-android-arm64==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-darwin-arm64==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-darwin-arm64==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-darwin-x64==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-darwin-x64==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-freebsd-x64==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-freebsd-x64==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-arm-gnueabihf==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-arm-gnueabihf==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-arm64-gnu==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-arm64-gnu==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-arm64-musl==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-arm64-musl==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-x64-gnu==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-x64-gnu==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-x64-musl==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-linux-x64-musl==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-win32-arm64-msvc==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-win32-arm64-msvc==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-win32-x64-msvc==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss-win32-x64-msvc==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss==1.32.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lightningcss==1.33.0": {
+    "licence": "MPL-2.0",
+    "summary": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  "npm:lines-and-columns==1.2.4": {
+    "licence": "MIT",
+    "summary": "Maps lines and columns to character offsets and back."
+  },
+  "npm:locate-path==3.0.0": {
+    "licence": "MIT",
+    "summary": "Get the first path that exists on disk of multiple paths"
+  },
+  "npm:locate-path==6.0.0": {
+    "licence": "MIT",
+    "summary": "Get the first path that exists on disk of multiple paths"
+  },
+  "npm:lodash-es==4.18.1": {
+    "licence": "MIT",
+    "summary": "Lodash exported as ES modules."
+  },
+  "npm:log-symbols==6.0.0": {
+    "licence": "MIT",
+    "summary": "Colored symbols for various log levels. Example: `✔︎ Success`"
+  },
+  "npm:lru-cache==11.5.3": {
+    "licence": "BlueOak-1.0.0",
+    "summary": "A cache object that deletes the least-recently-used items."
+  },
+  "npm:lru-cache==5.1.1": {
+    "licence": "ISC",
+    "summary": "A cache object that deletes the least-recently-used items."
+  },
+  "npm:lucide-react==1.48.0": {
+    "licence": "ISC",
+    "summary": "A Lucide icon library package for React applications."
+  },
+  "npm:lz-string==1.5.0": {
+    "licence": "MIT",
+    "summary": "LZ-based compression algorithm"
+  },
+  "npm:magic-string==0.30.21": {
+    "licence": "MIT",
+    "summary": "Modify strings, generate sourcemaps"
+  },
+  "npm:magic-string==1.4.2": {
+    "licence": "MIT",
+    "summary": "Modify strings, generate sourcemaps"
+  },
+  "npm:math-intrinsics==1.1.0": {
+    "licence": "MIT",
+    "summary": "ES Math-related intrinsics and helpers, robustly cached."
+  },
+  "npm:mdn-data==2.27.1": {
+    "licence": "CC0-1.0",
+    "summary": "Open Web data by the Mozilla Developer Network"
+  },
+  "npm:media-typer==1.1.1": {
+    "licence": "MIT",
+    "summary": "Simple RFC 6838 media type parser and formatter"
+  },
+  "npm:merge-descriptors==2.0.0": {
+    "licence": "MIT",
+    "summary": "Merge objects using their property descriptors"
+  },
+  "npm:merge-stream==2.0.0": {
+    "licence": "MIT",
+    "summary": "Create a stream that emits events from multiple other streams"
+  },
+  "npm:merge2==1.4.1": {
+    "licence": "MIT",
+    "summary": "Merge multiple streams into one stream in sequence or parallel."
+  },
+  "npm:micromatch==4.0.8": {
+    "licence": "MIT",
+    "summary": "Glob matching for javascript/node.js. A replacement and faster alternative to minimatch and multimatch."
+  },
+  "npm:mime-db==1.54.0": {
+    "licence": "MIT",
+    "summary": "Media Type Database"
+  },
+  "npm:mime-types==3.0.2": {
+    "licence": "MIT",
+    "summary": "The ultimate javascript content-type utility."
+  },
+  "npm:mimic-fn==2.1.0": {
+    "licence": "MIT",
+    "summary": "Make a function mimic another one"
+  },
+  "npm:mimic-fn==3.1.0": {
+    "licence": "MIT",
+    "summary": "Make a function mimic another one"
+  },
+  "npm:mimic-function==5.0.1": {
+    "licence": "MIT",
+    "summary": "Make a function mimic another one"
+  },
+  "npm:min-indent==1.0.1": {
+    "licence": "MIT",
+    "summary": "Get the shortest leading whitespace from lines in a string"
+  },
+  "npm:minimatch==10.2.6": {
+    "licence": "BlueOak-1.0.0",
+    "summary": "a glob matcher in javascript"
+  },
+  "npm:minimist==1.2.8": {
+    "licence": "MIT",
+    "summary": "parse argument options"
+  },
+  "npm:ms==2.1.3": {
+    "licence": "MIT",
+    "summary": "Tiny millisecond conversion utility"
+  },
+  "npm:msw==2.15.0": {
+    "licence": "MIT",
+    "summary": "Seamless REST/GraphQL API mocking library for browser and Node.js."
+  },
+  "npm:mute-stream==3.0.0": {
+    "licence": "ISC",
+    "summary": "Bytes go in, but they don't come out (when muted)."
+  },
+  "npm:nanoid==3.3.19": {
+    "licence": "MIT",
+    "summary": "A tiny (116 bytes), secure URL-friendly unique string ID generator"
+  },
+  "npm:natural-compare==1.4.0": {
+    "licence": "MIT",
+    "summary": "Compare strings containing a mix of letters and numbers in the way a human being would in sort order."
+  },
+  "npm:negotiator==1.1.0": {
+    "licence": "MIT",
+    "summary": "HTTP content negotiation"
+  },
+  "npm:node-releases==2.0.57": {
+    "licence": "MIT",
+    "summary": "Node.js releases data"
+  },
+  "npm:npm-run-path==4.0.1": {
+    "licence": "MIT",
+    "summary": "Get your PATH prepended with locally installed binaries"
+  },
+  "npm:npm-run-path==6.0.0": {
+    "licence": "MIT",
+    "summary": "Get your PATH prepended with locally installed binaries"
+  },
+  "npm:object-assign==4.1.1": {
+    "licence": "MIT",
+    "summary": "ES2015 `Object.assign()` ponyfill"
+  },
+  "npm:object-inspect==1.13.4": {
+    "licence": "MIT",
+    "summary": "string representations of objects in node and the browser"
+  },
+  "npm:object-treeify==1.1.33": {
+    "licence": "MIT",
+    "summary": "Stringify Object as tree structure"
+  },
+  "npm:obug==2.2.1": {
+    "licence": "MIT",
+    "summary": "A lightweight JavaScript debugging utility, forked from debug, featuring TypeScript and ESM support."
+  },
+  "npm:ohash==2.0.12": {
+    "licence": "MIT",
+    "summary": "Simple object hashing, serialization and comparison utils."
+  },
+  "npm:on-finished==2.4.1": {
+    "licence": "MIT",
+    "summary": "Execute a callback when a request closes, finishes, or errors"
+  },
+  "npm:once==1.4.0": {
+    "licence": "ISC",
+    "summary": "Run a function exactly one time"
+  },
+  "npm:onetime==5.1.2": {
+    "licence": "MIT",
+    "summary": "Ensure a function is only called once"
+  },
+  "npm:onetime==7.0.0": {
+    "licence": "MIT",
+    "summary": "Ensure a function is only called once"
+  },
+  "npm:open==11.0.0": {
+    "licence": "MIT",
+    "summary": "Open stuff like URLs, files, executables. Cross-platform."
+  },
+  "npm:open==8.4.2": {
+    "licence": "MIT",
+    "summary": "Open stuff like URLs, files, executables. Cross-platform."
+  },
+  "npm:optionator==0.9.4": {
+    "licence": "MIT",
+    "summary": "option parsing and help generation"
+  },
+  "npm:ora==8.2.0": {
+    "licence": "MIT",
+    "summary": "Elegant terminal spinner"
+  },
+  "npm:outvariant==1.4.3": {
+    "licence": "MIT",
+    "summary": "Type-safe implementation of invariant with positionals."
+  },
+  "npm:p-limit==2.3.0": {
+    "licence": "MIT",
+    "summary": "Run multiple promise-returning & async functions with limited concurrency"
+  },
+  "npm:p-limit==3.1.0": {
+    "licence": "MIT",
+    "summary": "Run multiple promise-returning & async functions with limited concurrency"
+  },
+  "npm:p-locate==3.0.0": {
+    "licence": "MIT",
+    "summary": "Get the first fulfilled promise that satisfies the provided testing function"
+  },
+  "npm:p-locate==5.0.0": {
+    "licence": "MIT",
+    "summary": "Get the first fulfilled promise that satisfies the provided testing function"
+  },
+  "npm:p-try==2.2.0": {
+    "licence": "MIT",
+    "summary": "`Start a promise chain"
+  },
+  "npm:parent-module==1.0.1": {
+    "licence": "MIT",
+    "summary": "Get the path of the parent module"
+  },
+  "npm:parse-json==5.2.0": {
+    "licence": "MIT",
+    "summary": "Parse JSON with more helpful errors"
+  },
+  "npm:parse-ms==4.0.0": {
+    "licence": "MIT",
+    "summary": "Parse milliseconds into an object"
+  },
+  "npm:parse5==8.0.1": {
+    "licence": "MIT",
+    "summary": "HTML parser and serializer."
+  },
+  "npm:parseurl==1.3.3": {
+    "licence": "MIT",
+    "summary": "parse a url with memoization"
+  },
+  "npm:path-browserify==1.0.1": {
+    "licence": "MIT",
+    "summary": "the path module from node core for browsers"
+  },
+  "npm:path-exists==3.0.0": {
+    "licence": "MIT",
+    "summary": "Check if a path exists"
+  },
+  "npm:path-exists==4.0.0": {
+    "licence": "MIT",
+    "summary": "Check if a path exists"
+  },
+  "npm:path-key==3.1.1": {
+    "licence": "MIT",
+    "summary": "Get the PATH environment variable key cross-platform"
+  },
+  "npm:path-key==4.0.0": {
+    "licence": "MIT",
+    "summary": "Get the PATH environment variable key cross-platform"
+  },
+  "npm:path-to-regexp==6.3.0": {
+    "licence": "MIT",
+    "summary": "Express style path to RegExp utility"
+  },
+  "npm:path-to-regexp==8.4.2": {
+    "licence": "MIT",
+    "summary": "Express style path to RegExp utility"
+  },
+  "npm:pathe==2.0.3": {
+    "licence": "MIT",
+    "summary": "Universal filesystem path utils"
+  },
+  "npm:perfect-debounce==2.1.0": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:picocolors==1.1.1": {
+    "licence": "ISC",
+    "summary": "The tiniest and the fastest library for terminal output formatting with ANSI colors"
+  },
+  "npm:picomatch==2.3.2": {
+    "licence": "MIT",
+    "summary": "Blazing fast and accurate glob matcher written in JavaScript, with no dependencies and full support for standard and extended Bash glob features, including braces, extglobs, POSIX brackets, and regular expressions."
+  },
+  "npm:picomatch==4.0.7": {
+    "licence": "MIT",
+    "summary": "Blazing fast and accurate glob matcher written in JavaScript, with no dependencies and full support for standard and extended Bash glob features, including braces, extglobs, POSIX brackets, and regular expressions."
+  },
+  "npm:pkce-challenge==5.0.1": {
+    "licence": "MIT",
+    "summary": "Generate or verify a Proof Key for Code Exchange (PKCE) challenge pair"
+  },
+  "npm:pkg-types==2.3.3": {
+    "licence": "MIT",
+    "summary": "Node.js utilities and TypeScript definitions for `package.json` and `tsconfig.json`"
+  },
+  "npm:pkg-up==3.1.0": {
+    "licence": "MIT",
+    "summary": "Find the closest package.json file"
+  },
+  "npm:postcss-selector-parser==7.1.6": {
+    "licence": "MIT",
+    "summary": "Selector parser with built in methods for working with selector strings."
+  },
+  "npm:postcss==8.5.28": {
+    "licence": "MIT",
+    "summary": "Tool for transforming styles with JS plugins"
+  },
+  "npm:powershell-utils==0.1.0": {
+    "licence": "MIT",
+    "summary": "Utilities for executing PowerShell commands"
+  },
+  "npm:prelude-ls==1.2.1": {
+    "licence": "MIT",
+    "summary": "prelude.ls is a functionally oriented utility library. It is powerful and flexible. Almost all of its functions are curried. It is written in, and is the recommended base library for, LiveScript."
+  },
+  "npm:prettier-plugin-tailwindcss==0.8.1": {
+    "licence": "MIT",
+    "summary": "A Prettier plugin for sorting Tailwind CSS classes."
+  },
+  "npm:prettier==3.9.9": {
+    "licence": "MIT",
+    "summary": "Prettier is an opinionated code formatter"
+  },
+  "npm:pretty-format==27.5.1": {
+    "licence": "MIT",
+    "summary": "Stringify any JavaScript value."
+  },
+  "npm:pretty-ms==9.3.1": {
+    "licence": "MIT",
+    "summary": "Convert milliseconds to a human readable string: `1337000000` → `15d 11h 23m 20s`"
+  },
+  "npm:prompts==2.4.2": {
+    "licence": "MIT",
+    "summary": "Lightweight, beautiful and user-friendly prompts"
+  },
+  "npm:proxy-addr==2.0.8": {
+    "licence": "MIT",
+    "summary": "Determine address of proxied request"
+  },
+  "npm:punycode==2.3.1": {
+    "licence": "MIT",
+    "summary": "A robust Punycode converter that fully complies to RFC 3492 and RFC 5891, and works on nearly all JavaScript platforms."
+  },
+  "npm:qified==0.10.1": {
+    "licence": "MIT",
+    "summary": "Task and Message Queues with Multiple Providers"
+  },
+  "npm:qs==6.16.0": {
+    "licence": "BSD-3-Clause",
+    "summary": "A querystring parser that supports nesting and arrays, with a depth limit"
+  },
+  "npm:queue-microtask==1.2.3": {
+    "licence": "MIT",
+    "summary": "fast, tiny `queueMicrotask` shim for modern engines"
+  },
+  "npm:radix-ui==1.6.7": {
+    "licence": "MIT",
+    "summary": "unknown"
+  },
+  "npm:range-parser==1.3.0": {
+    "licence": "MIT",
+    "summary": "Range header field string parser"
+  },
+  "npm:raw-body==3.0.2": {
+    "licence": "MIT",
+    "summary": "Get and validate the raw body of a readable stream."
+  },
+  "npm:rc9==3.1.0": {
+    "licence": "MIT",
+    "summary": "Read/Write config couldn't be easier!"
+  },
+  "npm:react-dom==19.3.0": {
+    "licence": "MIT",
+    "summary": "React package for working with the DOM."
+  },
+  "npm:react-error-boundary==6.1.6": {
+    "licence": "MIT",
+    "summary": "Simple reusable React error boundary component"
+  },
+  "npm:react-hook-form==7.89.0": {
+    "licence": "MIT",
+    "summary": "Performant, flexible and extensible forms library for React Hooks"
+  },
+  "npm:react-i18next==17.0.15": {
+    "licence": "MIT",
+    "summary": "Internationalization for react done right. Using the i18next i18n ecosystem."
+  },
+  "npm:react-is==17.0.2": {
+    "licence": "MIT",
+    "summary": "Brand checking of React Elements."
+  },
+  "npm:react-remove-scroll-bar==2.3.8": {
+    "licence": "MIT",
+    "summary": "Removes body scroll without content _shake_"
+  },
+  "npm:react-remove-scroll==2.7.2": {
+    "licence": "MIT",
+    "summary": "Disables scroll outside of `children` node."
+  },
+  "npm:react-style-singleton==2.2.3": {
+    "licence": "MIT",
+    "summary": "Just create a single stylesheet..."
+  },
+  "npm:react==19.3.0": {
+    "licence": "MIT",
+    "summary": "React is a JavaScript library for building user interfaces."
+  },
+  "npm:readdirp==5.1.1": {
+    "licence": "MIT",
+    "summary": "Recursive version of fs.readdir with small RAM & CPU footprint"
+  },
+  "npm:recast==0.23.21": {
+    "licence": "MIT",
+    "summary": "JavaScript syntax tree transformer, nondestructive pretty-printer, and automatic source map generator"
+  },
+  "npm:redent==3.0.0": {
+    "licence": "MIT",
+    "summary": "Strip redundant indentation and indent the string"
+  },
+  "npm:require-directory==2.1.1": {
+    "licence": "MIT",
+    "summary": "Recursively iterates over specified directory, require()'ing each file, and returning a nested hash structure containing those modules."
+  },
+  "npm:require-from-string==2.0.2": {
+    "licence": "MIT",
+    "summary": "Require module from string"
+  },
+  "npm:resolve-from==4.0.0": {
+    "licence": "MIT",
+    "summary": "Resolve the path of a module like `require.resolve()` but from a given path"
+  },
+  "npm:resolve-pkg-maps==1.0.0": {
+    "licence": "MIT",
+    "summary": "Resolve package.json exports & imports maps"
+  },
+  "npm:restore-cursor==5.1.0": {
+    "licence": "MIT",
+    "summary": "Gracefully restore the CLI cursor on exit"
+  },
+  "npm:rettime==0.11.12": {
+    "licence": "MIT",
+    "summary": "A type-safe marriage of `EventTarget` and `EventEmitter`."
+  },
+  "npm:reusify==1.1.0": {
+    "licence": "MIT",
+    "summary": "Reuse objects and functions with style"
+  },
+  "npm:rolldown==1.2.11": {
+    "licence": "MIT",
+    "summary": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  "npm:router==2.2.0": {
+    "licence": "MIT",
+    "summary": "Simple middleware-style router"
+  },
+  "npm:run-applescript==7.1.0": {
+    "licence": "MIT",
+    "summary": "Run AppleScript and get the result"
+  },
+  "npm:run-parallel==1.2.0": {
+    "licence": "MIT",
+    "summary": "Run an array of functions in parallel"
+  },
+  "npm:safer-buffer==2.1.2": {
+    "licence": "MIT",
+    "summary": "Modern Buffer API polyfill without footguns"
+  },
+  "npm:saxes==6.0.0": {
+    "licence": "ISC",
+    "summary": "An evented streaming XML parser in JavaScript"
+  },
+  "npm:scheduler==0.28.0": {
+    "licence": "MIT",
+    "summary": "Cooperative scheduler for the browser environment."
+  },
+  "npm:semver==6.3.1": {
+    "licence": "ISC",
+    "summary": "The semantic version parser used by npm."
+  },
+  "npm:semver==7.8.4": {
+    "licence": "ISC",
+    "summary": "The semantic version parser used by npm."
+  },
+  "npm:semver==7.8.5": {
+    "licence": "ISC",
+    "summary": "The semantic version parser used by npm."
+  },
+  "npm:send==1.2.1": {
+    "licence": "MIT",
+    "summary": "Better streaming static file server with Range and conditional-GET support"
+  },
+  "npm:seroval-plugins==1.6.7": {
+    "licence": "MIT",
+    "summary": "Stringify JS values"
+  },
+  "npm:seroval==1.6.7": {
+    "licence": "MIT",
+    "summary": "Stringify JS values"
+  },
+  "npm:serve-static==2.2.1": {
+    "licence": "MIT",
+    "summary": "Serve static files"
+  },
+  "npm:set-cookie-parser==3.1.2": {
+    "licence": "MIT",
+    "summary": "Parses set-cookie headers into objects"
+  },
+  "npm:setprototypeof==1.2.0": {
+    "licence": "ISC",
+    "summary": "A small polyfill for Object.setprototypeof"
+  },
+  "npm:shadcn==4.21.0": {
+    "licence": "MIT",
+    "summary": "Add components to your apps."
+  },
+  "npm:shebang-command==2.0.0": {
+    "licence": "MIT",
+    "summary": "Get the command from a shebang"
+  },
+  "npm:shebang-regex==3.0.0": {
+    "licence": "MIT",
+    "summary": "Regular expression for matching a shebang line"
+  },
+  "npm:side-channel-list==1.0.1": {
+    "licence": "MIT",
+    "summary": "Store information about any JS value in a side channel, using a linked list"
+  },
+  "npm:side-channel-map==1.0.1": {
+    "licence": "MIT",
+    "summary": "Store information about any JS value in a side channel, using a Map"
+  },
+  "npm:side-channel-weakmap==1.0.2": {
+    "licence": "MIT",
+    "summary": "Store information about any JS value in a side channel. Uses WeakMap if available."
+  },
+  "npm:side-channel==1.1.1": {
+    "licence": "MIT",
+    "summary": "Store information about any JS value in a side channel. Uses WeakMap if available."
+  },
+  "npm:signal-exit==3.0.7": {
+    "licence": "ISC",
+    "summary": "when you want to fire an event no matter how a process exits."
+  },
+  "npm:signal-exit==4.1.0": {
+    "licence": "ISC",
+    "summary": "when you want to fire an event no matter how a process exits."
+  },
+  "npm:sisteransi==1.0.5": {
+    "licence": "MIT",
+    "summary": "ANSI escape codes for some terminal swag"
+  },
+  "npm:smart-buffer==4.2.0": {
+    "licence": "MIT",
+    "summary": "smart-buffer is a Buffer wrapper that adds automatic read & write offset tracking, string operations, data insertions, and more."
+  },
+  "npm:socks==2.8.10": {
+    "licence": "MIT",
+    "summary": "Fully featured SOCKS proxy client supporting SOCKSv4, SOCKSv4a, and SOCKSv5. Includes Bind and Associate functionality."
+  },
+  "npm:source-map-js==1.2.1": {
+    "licence": "BSD-3-Clause",
+    "summary": "Generates and consumes source maps"
+  },
+  "npm:source-map==0.6.1": {
+    "licence": "BSD-3-Clause",
+    "summary": "Generates and consumes source maps"
+  },
+  "npm:statuses==2.0.2": {
+    "licence": "MIT",
+    "summary": "HTTP status utility"
+  },
+  "npm:std-env==4.2.0": {
+    "licence": "MIT",
+    "summary": "Runtime agnostic JS utils"
+  },
+  "npm:stdin-discarder==0.2.2": {
+    "licence": "MIT",
+    "summary": "Discard stdin input except for Ctrl+C"
+  },
+  "npm:strict-event-emitter==0.5.1": {
+    "licence": "MIT",
+    "summary": "Type-safe implementation of EventEmitter for browser and Node.js"
+  },
+  "npm:string-width==4.2.3": {
+    "licence": "MIT",
+    "summary": "Get the visual width of a string - the number of columns required to display it"
+  },
+  "npm:string-width==7.2.0": {
+    "licence": "MIT",
+    "summary": "Get the visual width of a string - the number of columns required to display it"
+  },
+  "npm:stringify-object==5.0.0": {
+    "licence": "BSD-2-Clause",
+    "summary": "Stringify an object/array like JSON.stringify just without all the double-quotes"
+  },
+  "npm:strip-ansi==6.0.1": {
+    "licence": "MIT",
+    "summary": "Strip ANSI escape codes from a string"
+  },
+  "npm:strip-ansi==7.2.0": {
+    "licence": "MIT",
+    "summary": "Strip ANSI escape codes from a string"
+  },
+  "npm:strip-bom==3.0.0": {
+    "licence": "MIT",
+    "summary": "Strip UTF-8 byte order mark (BOM) from a string"
+  },
+  "npm:strip-final-newline==2.0.0": {
+    "licence": "MIT",
+    "summary": "Strip the final newline character from a string/buffer"
+  },
+  "npm:strip-final-newline==4.0.0": {
+    "licence": "MIT",
+    "summary": "Strip the final newline character from a string or Uint8Array"
+  },
+  "npm:strip-indent==3.0.0": {
+    "licence": "MIT",
+    "summary": "Strip leading whitespace from each line in a string"
+  },
+  "npm:systeminformation==5.33.14": {
+    "licence": "MIT",
+    "summary": "Advanced, lightweight system and OS information library"
+  },
+  "npm:tagged-tag==1.0.0": {
+    "licence": "MIT",
+    "summary": "Unique tag for use in the type-fest Tagged type"
+  },
+  "npm:tailwindcss==4.3.3": {
+    "licence": "MIT",
+    "summary": "A utility-first CSS framework for rapidly building custom user interfaces."
+  },
+  "npm:tapable==2.3.3": {
+    "licence": "MIT",
+    "summary": "Just a little module for plugins."
+  },
+  "npm:tiny-invariant==1.3.3": {
+    "licence": "MIT",
+    "summary": "A tiny invariant function"
+  },
+  "npm:tinybench==6.2.0": {
+    "licence": "MIT",
+    "summary": "🔎 A simple, tiny and lightweight benchmarking library!"
+  },
+  "npm:tinyexec==1.3.1": {
+    "licence": "MIT",
+    "summary": "A minimal library for executing processes in Node"
+  },
+  "npm:tinyglobby==0.2.17": {
+    "licence": "MIT",
+    "summary": "A fast and minimal alternative to globby and fast-glob"
+  },
+  "npm:tldts-core==7.4.16": {
+    "licence": "MIT",
+    "summary": "tldts core primitives (internal module)"
+  },
+  "npm:tldts==7.4.16": {
+    "licence": "MIT",
+    "summary": "Library to work against complex domain names, subdomains and URIs."
+  },
+  "npm:to-regex-range==5.0.1": {
+    "licence": "MIT",
+    "summary": "Pass two numbers, get a regex-compatible source string for matching ranges. Validated against more than 2.78 million test assertions."
+  },
+  "npm:toidentifier==1.0.1": {
+    "licence": "MIT",
+    "summary": "Convert a string of words to a JavaScript identifier"
+  },
+  "npm:tough-cookie==6.0.2": {
+    "licence": "BSD-3-Clause",
+    "summary": "RFC6265 Cookies and Cookie Jar for node.js"
+  },
+  "npm:tr46==6.0.0": {
+    "licence": "MIT",
+    "summary": "An implementation of the Unicode UTS #46: Unicode IDNA Compatibility Processing"
+  },
+  "npm:ts-api-utils==2.5.0": {
+    "licence": "MIT",
+    "summary": "Utility functions for working with TypeScript's API. Successor to the wonderful tsutils. 🛠️️"
+  },
+  "npm:ts-morph==26.0.0": {
+    "licence": "MIT",
+    "summary": "TypeScript compiler wrapper for static analysis and code manipulation."
+  },
+  "npm:tsconfig-paths==4.2.0": {
+    "licence": "MIT",
+    "summary": "Load node modules according to tsconfig paths, in run-time or via API."
+  },
+  "npm:tslib==2.8.1": {
+    "licence": "0BSD",
+    "summary": "Runtime library for TypeScript helper functions"
+  },
+  "npm:tw-animate-css==1.4.0": {
+    "licence": "MIT",
+    "summary": "TailwindCSS v4.0 compatible replacement for `tailwindcss-animate`."
+  },
+  "npm:type-check==0.4.0": {
+    "licence": "MIT",
+    "summary": "type-check allows you to check the types of JavaScript values at runtime with a Haskell like type syntax."
+  },
+  "npm:type-fest==5.10.0": {
+    "licence": "(MIT OR CC0-1.0)",
+    "summary": "A collection of essential TypeScript types"
+  },
+  "npm:type-is==2.1.0": {
+    "licence": "MIT",
+    "summary": "Infer the content-type of a request."
+  },
+  "npm:typescript-eslint==8.71.0": {
+    "licence": "MIT",
+    "summary": "Tooling which enables you to use TypeScript with ESLint"
+  },
+  "npm:typescript==6.0.3": {
+    "licence": "Apache-2.0",
+    "summary": "TypeScript is a language for application scale JavaScript development"
+  },
+  "npm:undici-types==7.24.6": {
+    "licence": "MIT",
+    "summary": "A stand-alone types package for Undici"
+  },
+  "npm:undici==7.30.0": {
+    "licence": "MIT",
+    "summary": "An HTTP/1.1 client, written from scratch for Node.js"
+  },
+  "npm:undici==8.11.2": {
+    "licence": "MIT",
+    "summary": "An HTTP/1.1 client, written from scratch for Node.js"
+  },
+  "npm:unicorn-magic==0.3.0": {
+    "licence": "MIT",
+    "summary": "Some useful utilities I often need"
+  },
+  "npm:universalify==2.0.1": {
+    "licence": "MIT",
+    "summary": "Make a callback- or promise-based function support both promises and callbacks."
+  },
+  "npm:unpipe==1.0.0": {
+    "licence": "MIT",
+    "summary": "Unpipe a stream from all destinations"
+  },
+  "npm:unplugin==3.4.0": {
+    "licence": "MIT",
+    "summary": "Unified plugin system for build tools"
+  },
+  "npm:until-async==3.0.2": {
+    "licence": "MIT",
+    "summary": "Gracefully handle a Promise using async/await."
+  },
+  "npm:update-browserslist-db==1.3.3": {
+    "licence": "MIT",
+    "summary": "CLI tool to update caniuse-lite to refresh target browsers from Browserslist config"
+  },
+  "npm:uri-js==4.4.1": {
+    "licence": "BSD-2-Clause",
+    "summary": "An RFC 3986/3987 compliant, scheme extendable URI/IRI parsing/validating/resolving library for JavaScript."
+  },
+  "npm:use-callback-ref==1.3.3": {
+    "licence": "MIT",
+    "summary": "The same useRef, but with callback"
+  },
+  "npm:use-sidecar==1.1.3": {
+    "licence": "MIT",
+    "summary": "Sidecar code splitting utils"
+  },
+  "npm:use-sync-external-store==1.7.0": {
+    "licence": "MIT",
+    "summary": "Backwards compatible shim for React's useSyncExternalStore. Works with any React that supports hooks."
+  },
+  "npm:util-deprecate==1.0.2": {
+    "licence": "MIT",
+    "summary": "The Node.js `util.deprecate()` function with browser support"
+  },
+  "npm:validate-npm-package-name==7.0.2": {
+    "licence": "ISC",
+    "summary": "Give me a string and I'll tell you if it's a valid npm package name"
+  },
+  "npm:vary==1.1.2": {
+    "licence": "MIT",
+    "summary": "Manipulate the HTTP Vary header"
+  },
+  "npm:vite==8.3.1": {
+    "licence": "MIT",
+    "summary": "Native-ESM powered web dev build tool"
+  },
+  "npm:vitest-axe==0.1.0": {
+    "licence": "MIT",
+    "summary": "Custom Vitest matcher for testing accessibility with aXe. Forked from jest-axe."
+  },
+  "npm:vitest==5.0.2": {
+    "licence": "MIT",
+    "summary": "Next generation testing framework powered by Vite"
+  },
+  "npm:w3c-xmlserializer==6.0.0": {
+    "licence": "MIT",
+    "summary": "A per-spec XML serializer implementation"
+  },
+  "npm:webidl-conversions==8.0.1": {
+    "licence": "BSD-2-Clause",
+    "summary": "Implements the WebIDL algorithms for converting to and from JavaScript values"
+  },
+  "npm:webpack-virtual-modules==0.6.2": {
+    "licence": "MIT",
+    "summary": "Webpack Virtual Modules"
+  },
+  "npm:whatwg-mimetype==5.0.0": {
+    "licence": "MIT",
+    "summary": "Parses, serializes, and manipulates MIME types, according to the WHATWG MIME Sniffing Standard"
+  },
+  "npm:whatwg-url==16.0.1": {
+    "licence": "MIT",
+    "summary": "An implementation of the WHATWG URL Standard's URL API and parsing machinery"
+  },
+  "npm:whatwg-url==17.1.2": {
+    "licence": "MIT",
+    "summary": "An implementation of the WHATWG URL Standard's URL API and parsing machinery"
+  },
+  "npm:which==2.0.2": {
+    "licence": "ISC",
+    "summary": "Like which(1) unix command. Find the first instance of an executable in the PATH."
+  },
+  "npm:which==4.0.0": {
+    "licence": "ISC",
+    "summary": "Like which(1) unix command. Find the first instance of an executable in the PATH."
+  },
+  "npm:why-is-node-running==3.2.2": {
+    "licence": "MIT",
+    "summary": "Node is running but you don't know why? why-is-node-running is here to help you."
+  },
+  "npm:word-wrap==1.2.5": {
+    "licence": "MIT",
+    "summary": "Wrap words to a specified length."
+  },
+  "npm:wrap-ansi==7.0.0": {
+    "licence": "MIT",
+    "summary": "Wordwrap a string with ANSI escape codes"
+  },
+  "npm:wrappy==1.0.2": {
+    "licence": "ISC",
+    "summary": "Callback wrapping utility"
+  },
+  "npm:wsl-utils==0.3.1": {
+    "licence": "MIT",
+    "summary": "Utilities for working with Windows Subsystem for Linux (WSL)"
+  },
+  "npm:xml-name-validator==5.0.0": {
+    "licence": "Apache-2.0",
+    "summary": "Validates whether a string matches the production for an XML name or qualified name"
+  },
+  "npm:xmlchars==2.2.0": {
+    "licence": "MIT",
+    "summary": "Utilities for determining if characters belong to character classes defined by the XML specs."
+  },
+  "npm:y18n==5.0.8": {
+    "licence": "ISC",
+    "summary": "the bare-bones internationalization library used by yargs"
+  },
+  "npm:yallist==3.1.1": {
+    "licence": "ISC",
+    "summary": "Yet Another Linked List"
+  },
+  "npm:yargs-parser==21.1.1": {
+    "licence": "ISC",
+    "summary": "the mighty option parser used by yargs"
+  },
+  "npm:yargs==17.7.3": {
+    "licence": "MIT",
+    "summary": "yargs the modern, pirate-themed, successor to optimist."
+  },
+  "npm:yocto-queue==0.1.0": {
+    "licence": "MIT",
+    "summary": "Tiny queue data structure"
+  },
+  "npm:yocto-spinner==1.2.2": {
+    "licence": "MIT",
+    "summary": "Tiny terminal spinner"
+  },
+  "npm:yoctocolors==2.2.0": {
+    "licence": "MIT",
+    "summary": "The smallest and fastest command-line coloring package on the internet"
+  },
+  "npm:zod-to-json-schema==3.25.2": {
+    "licence": "ISC",
+    "summary": "Converts Zod schemas to Json Schemas"
+  },
+  "npm:zod-validation-error==4.0.2": {
+    "licence": "MIT",
+    "summary": "Wrap zod validation errors in user-friendly readable messages"
+  },
+  "npm:zod==3.25.76": {
+    "licence": "MIT",
+    "summary": "TypeScript-first schema declaration and validation library with static type inference"
+  },
+  "npm:zod==4.6.5": {
+    "licence": "MIT",
+    "summary": "TypeScript-first schema declaration and validation library with static type inference"
+  },
   "numpy==2.5.3": {
     "licence": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
     "summary": "Fundamental package for array computing in Python"

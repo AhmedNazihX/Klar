@@ -1,0 +1,5 @@
+# pnpm settings for the frontend (a single package, not a monorepo).
+# Install scripts are off unless listed here. msw's postinstall only copies its service worker
+# into a public folder, which the tests don't need (they use msw/node).
+allowBuilds:
+  msw: false
