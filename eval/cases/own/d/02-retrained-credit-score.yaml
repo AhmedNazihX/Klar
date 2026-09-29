@@ -1,0 +1,60 @@
+id: own-d-02-retrained-credit-score
+set_name: own
+language: de
+description: >-
+  Wir sind ein Konsumkreditanbieter aus Leipzig mit rund 90 Beschäftigten und finanzieren Möbel
+  und Elektrogeräte in Raten. Seit 2025 nutzen wir die Bonitätsbewertung eines externen Anbieters:
+  Sie berechnet für jeden Antrag einen Score, und unterhalb eines Schwellenwerts lehnen wir den
+  Kredit ab. Laut Handbuch des Anbieters ist das Modell fertig trainiert, ein Nachtraining durch
+  Kunden ist ausdrücklich nicht vorgesehen. Unser Data-Science-Team hat es trotzdem mit unseren
+  eigenen Rückzahlungsdaten neu trainiert und zusätzlich Zahlungsverläufe aus Handyverträgen als
+  neue Eingabe eingebaut. Die angepasste Version läuft seit Juli bei uns produktiv, weiterhin unter
+  dem Namen des Anbieters. Intern heißt das Projekt „Kolibri“, gestartet wurde es auf einer
+  Teamklausur im Harz.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:5:b"
+label_citation: ["art:25:1:b", "art:3:23", "annex:III:5:b", "art:6:3"]
+notes: >-
+  Draft (B5d, 2026-09-29), awaiting user review. Class: creditworthiness scoring of natural persons
+  is Annex III 5(b); scoring applicants is profiling, so no Art. 6(3) exemption. Role: retraining
+  that the vendor's documentation rules out, plus a new input source, is a change not foreseen in
+  the initial conformity assessment that affects compliance with Chapter III Section 2 (data
+  governance, accuracy): a substantial modification (Art. 3(23)), and the system stays high-risk,
+  so the lender becomes its provider under Art. 25(1)(b). It keeps using the system itself, so it
+  is also the deployer (tag also_role:deployer) and its deployer duties are listed too. Conditional
+  deployer duties included: Art. 26(4) (it controls the input data), 26(11) and 86(1) (it declines
+  credit), 27(1) (Annex III 5(b) always needs a FRIA). Left out: Art. 26(9), because whether a GDPR
+  DPIA is required is not settled by the description; Art. 26(7), because no workers are subject to
+  the system. Doubt: Art. 111(2) (systems put into service before the Annex III date are covered
+  only after later significant changes) is not modelled by the obligations table.
+tags:
+  - "category:d"
+  - "role_switch:art25_1_b"
+  - "also_role:deployer"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:i"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:27:1"
+  - "obligation:art:86:1"

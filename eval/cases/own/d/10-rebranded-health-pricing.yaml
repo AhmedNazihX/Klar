@@ -1,0 +1,45 @@
+id: own-d-10-rebranded-health-pricing
+set_name: own
+language: de
+description: >-
+  Unser Unternehmen in Köln mit rund 60 Beschäftigten vertreibt Software für Versicherer. Von einem
+  Entwickler aus Seoul haben wir die Rechte an einem System erworben, das für private
+  Krankenversicherungen aus den Gesundheitsfragebögen der Antragsteller einen Risikozuschlag pro
+  Person vorschlägt. In Deutschland bieten wir es seit diesem Frühjahr als „TarifKompass“ an, mit
+  unserem Logo, unserer Hotline und unseren eigenen Handbüchern; der Name des Entwicklers taucht
+  bei den Kunden nirgends auf. Technisch ist das System unverändert. Die Versicherer übernehmen den
+  vorgeschlagenen Zuschlag in der Regel direkt ins Angebot. Außerdem sponsern wir einen
+  Handballverein in Porz.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:5:c"
+label_citation: ["art:3:3", "art:25:1:a", "art:3:6", "annex:III:5:c", "art:6:3"]
+notes: >-
+  Draft (B5d, 2026-09-29), awaiting user review. Class: risk assessment and pricing of natural
+  persons for health insurance is Annex III 5(c); scoring applicants is profiling, so no Art. 6(3)
+  exemption. Role: the Cologne company places the system on the Union market under its own name
+  and trademark, so it is the provider (Art. 3(3): it had the system developed; and in any case
+  Art. 25(1)(a) if the Seoul developer is taken to have placed it on the market first). It is not
+  an importer, because the system does not bear the name of a third-country company (Art. 3(6)).
+  Both routes give the same role. Established in the EU, so no Art. 22 authorised representative.
+  The insurers are deployers (their FRIA under Art. 27 is not this company's duty).
+tags:
+  - "category:d"
+  - "role_switch:art25_1_a"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:i"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"
