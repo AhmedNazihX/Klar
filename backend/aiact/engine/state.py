@@ -15,8 +15,11 @@ from aiact.schemas import (
     ClassificationResult,
     Fact,
     FollowUpQuestion,
+    HighRiskRoute,
     Language,
     LawVersion,
+    Obligation,
+    Role,
     StepName,
     StepResult,
 )
@@ -33,21 +36,66 @@ class FactsOutcome(ContractModel):
     follow_up_questions: tuple[FollowUpQuestion, ...] = ()
 
 
+class RoleFinding(ContractModel):
+    """What the role_obligations check settled: the role, why it switched, and its duties (E7).
+
+    `also_role` is a role the company keeps next to `role`: a deployer that becomes the provider
+    under Art. 25(1) still uses the system, so it keeps its deployer duties; a working assumption
+    of provider keeps the base role's duties too. `obligations` covers both roles.
+    """
+
+    role: Role
+    also_role: Role | None = None
+    role_switch_reason: str | None = None
+    obligations: tuple[Obligation, ...] = ()
+
+
 class CheckOutcome(ContractModel):
     """What one check returns: its step, and whether it matched the class that stops the run.
 
     `matched` is the check's finding (scope: not in scope; prohibited: a prohibited practice).
     Whether the run really ends also depends on the step's status (decision 010): an ambiguous
     or missing-fact match keeps the run going, with the stricter reading as the assumption.
+
+    The other findings belong to one check each, and later checks read them from the state:
+    - `high_risk_route` (high_risk): the system is, or is assumed, high-risk on this route.
+    - `annex_iii_exempt` (high_risk): the system is listed in Annex III but, or is assumed to be,
+      exempted under Art. 6(3); the provider then has the Art. 6(4) duty.
+    - `transparency_duties` (transparency): every Art. 50 provision that applies, e.g.
+      `art:50:1`, including duties that are only assumed or uncertain. The role step lists an
+      Art. 50 duty only when it is here, so a duty left out is a duty the result drops.
+    - `role` (role_obligations).
+    `follow_up_questions` may come from any check: every question it wants asked, which may
+    include its step's `missing_fact`; finalize collects them and de-duplicates by id.
     """
 
     step: StepResult
     matched: bool = False
+    high_risk_route: HighRiskRoute | None = None
+    annex_iii_exempt: bool = False
+    transparency_duties: tuple[str, ...] = ()
+    role: RoleFinding | None = None
+    follow_up_questions: tuple[FollowUpQuestion, ...] = ()
 
     @model_validator(mode="after")
     def _only_stopping_steps_match(self) -> Self:
         if self.matched and self.step.step not in STOPPING_STEPS:
             raise ValueError(f"the {self.step.step.value} check has no class that stops the run")
+        return self
+
+    @model_validator(mode="after")
+    def _findings_belong_to_their_step(self) -> Self:
+        owners = (
+            (self.high_risk_route is not None, StepName.HIGH_RISK, "high_risk_route"),
+            (self.annex_iii_exempt, StepName.HIGH_RISK, "annex_iii_exempt"),
+            (bool(self.transparency_duties), StepName.TRANSPARENCY, "transparency_duties"),
+            (self.role is not None, StepName.ROLE_OBLIGATIONS, "role"),
+        )
+        for is_set, owner, name in owners:
+            if is_set and self.step.step is not owner:
+                raise ValueError(f"only the {owner.value} check sets {name}")
+        if self.annex_iii_exempt and self.high_risk_route is not None:
+            raise ValueError("an Art. 6(3)-exempt system is not high-risk")
         return self
 
 
@@ -63,10 +111,15 @@ class EngineInput(TypedDict):
 
 
 class EngineState(EngineInput, total=False):
-    """The graph state. `steps` and `matches` only grow, one entry per check that ran."""
+    """The graph state. `steps` and `matches` only grow, one entry per check that ran; the
+    per-check findings are present only when their check set them (see `CheckOutcome`)."""
 
     facts: tuple[Fact, ...]
-    follow_up_questions: tuple[FollowUpQuestion, ...]
+    follow_up_questions: Annotated[tuple[FollowUpQuestion, ...], operator.add]
     steps: Annotated[tuple[StepResult, ...], operator.add]
     matches: Annotated[tuple[StepName, ...], operator.add]
+    high_risk_route: HighRiskRoute
+    annex_iii_exempt: bool
+    transparency_duties: tuple[str, ...]
+    role: RoleFinding
     result: ClassificationResult

@@ -85,9 +85,29 @@ def _check_node(name: StepName, node: CheckNode) -> GraphNode:
             raise NodeContractError(
                 f"the {name.value} node returned a step for {outcome.step.step.value}"
             )
-        return {"steps": (outcome.step,), "matches": (name,) if outcome.matched else ()}
+        return {
+            "steps": (outcome.step,),
+            "matches": (name,) if outcome.matched else (),
+            **_findings(outcome),
+        }
 
     return run
+
+
+def _findings(outcome: CheckOutcome) -> StateUpdate:
+    """The findings a check set, as state keys; unset findings leave the state alone."""
+    findings: StateUpdate = {}
+    if outcome.high_risk_route is not None:
+        findings["high_risk_route"] = outcome.high_risk_route
+    if outcome.annex_iii_exempt:
+        findings["annex_iii_exempt"] = True
+    if outcome.transparency_duties:
+        findings["transparency_duties"] = outcome.transparency_duties
+    if outcome.role is not None:
+        findings["role"] = outcome.role
+    if outcome.follow_up_questions:
+        findings["follow_up_questions"] = outcome.follow_up_questions
+    return findings
 
 
 def _finalize_node(node: FinalizeNode) -> GraphNode:
