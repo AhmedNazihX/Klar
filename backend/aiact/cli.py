@@ -386,6 +386,9 @@ OutputOption = typer.Option(deps.OUTPUT_PATH, "--output", help="The manifest to 
 LicencesOption = typer.Option(
     deps.LICENCES_PATH, "--licences", help="The licence cache (name==version to licence, summary)."
 )
+FrontendLockOption = typer.Option(
+    deps.FRONTEND_LOCK_PATH, "--frontend-lock", help="The frontend's pnpm-lock.yaml to read."
+)
 
 
 def _or_exit[T](action: Callable[[], T]) -> T:
@@ -399,19 +402,27 @@ def _or_exit[T](action: Callable[[], T]) -> T:
 
 @deps_app.command("generate")
 def deps_generate(
-    lock: Path = LockOption, output: Path = OutputOption, licences: Path = LicencesOption
+    lock: Path = LockOption,
+    output: Path = OutputOption,
+    licences: Path = LicencesOption,
+    frontend_lock: Path = FrontendLockOption,
 ) -> None:
-    """Update the licence cache (installed metadata, else PyPI) and write docs/DEPENDENCIES.md."""
-    is_changed = _or_exit(lambda: deps.generate(lock, output, licences))
+    """Update the licence cache (installed metadata, else PyPI or npm) and write DEPENDENCIES.md."""
+    is_changed = _or_exit(
+        lambda: deps.generate(lock, output, licences, frontend_lock_path=frontend_lock)
+    )
     typer.echo(f"{'Updated' if is_changed else 'Unchanged'}: {output}")
 
 
 @deps_app.command("check")
 def deps_check(
-    lock: Path = LockOption, output: Path = OutputOption, licences: Path = LicencesOption
+    lock: Path = LockOption,
+    output: Path = OutputOption,
+    licences: Path = LicencesOption,
+    frontend_lock: Path = FrontendLockOption,
 ) -> None:
     """Exit non-zero when docs/DEPENDENCIES.md or the licence cache is stale. Works offline."""
-    result = _or_exit(lambda: deps.check(lock, output, licences))
+    result = _or_exit(lambda: deps.check(lock, output, licences, frontend_lock))
     typer.echo(result.message, err=not result.is_fresh)
     if not result.is_fresh:
         raise typer.Exit(code=1)

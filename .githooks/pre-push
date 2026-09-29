@@ -5,7 +5,7 @@ set -eu
 
 cd "$(git rev-parse --show-toplevel)"
 
-files="backend/pyproject.toml backend/uv.lock docs/DEPENDENCIES.md docs/dependency-licences.json"
+files="backend/pyproject.toml backend/uv.lock frontend/package.json frontend/pnpm-lock.yaml docs/DEPENDENCIES.md docs/dependency-licences.json"
 
 # The check reads the working tree. With these files matching HEAD, it validates the commit.
 # shellcheck disable=SC2086
