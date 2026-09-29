@@ -25,6 +25,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── cli.py                   `aiact` command root; subcommands per area: corpus, eval (F1)
 │   │   ├── settings.py              pydantic-settings, read from .env (F1)
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
+│   │   ├── db.py                    direct Postgres connection (DATABASE_URL) for server-only tables (C3)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),

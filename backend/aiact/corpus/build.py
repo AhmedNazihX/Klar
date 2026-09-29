@@ -4,14 +4,18 @@ Reads only `data/manifest.yaml` and the parsed JSONL (`data/parsed/<doc>.<lang>.
 here touches the database (that is `aiact.corpus.load`). The rules are decision 009's:
 - The original AI Act (`law_version = 'original'`) has one open-ended slice per provision from
   the AI Act's entry into force, 2024-08-01.
-- The consolidated text (`'amended'`) carries the full history. A provision the Digital Omnibus
-  touches (it, an ancestor or a descendant is an amendment target) and whose text differs from the
-  original gets two slices, split at the Omnibus's entry into force (`amendment.in_force_from`,
-  2026-07-27): the original text before, the consolidated text after. Its descendants are split
-  too, so a slice's parent always covers the same dates. A provision the Omnibus deleted keeps
-  only the old slice, an inserted one only the new. Every other provision has one slice from
-  2024-08-01, with the consolidated text: a difference the Omnibus doesn't explain is a corrigendum,
-  which applies from the start. The consolidation has no recitals; they stay in the original.
+- The consolidated text (`'amended'`) carries the full history (decision 014). A difference
+  between the original and the consolidation that the Digital Omnibus doesn't explain (no
+  amendment targets the provision, an ancestor or a descendant) is a corrigendum, which applies
+  from the start: the "corrected original" is the original with every corrigendum's consolidated
+  text put in, in the provision and in the text of each of its ancestors. A provision whose
+  corrected original still differs from the consolidation gets two slices, split at the
+  Omnibus's entry into force (`amendment.in_force_from`, 2026-07-27): the corrected original
+  before, the consolidated text after. Its descendants are split too (both slices from their
+  own corrected original and consolidated text), so a slice's parent always covers the same
+  dates. A provision the Omnibus deleted keeps only the old slice, an inserted one only the new.
+  Every other provision has one slice from 2024-08-01 with the consolidated text. The
+  consolidation has no recitals; they stay in the original.
 - Deferred application dates inside an amendment (`amendment.dates`, such as 2 December 2026 for
   the new Art. 5(1) points) are not slice boundaries: the text is law from 2026-07-27, and when a
   rule starts to apply is what the text itself says (decision 014).
@@ -28,7 +32,7 @@ import hashlib
 import json
 import re
 from collections.abc import Iterable
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import date
 from pathlib import Path
 from typing import Literal
@@ -174,6 +178,68 @@ def _is_touched(provision_id: str, targets: frozenset[str]) -> bool:
     )
 
 
+def _content(unit: _Unit) -> tuple[str | None, str]:
+    return unit.heading, unit.text
+
+
+def corrected_original(
+    old: dict[str, _Unit], new: dict[str, _Unit], targets: frozenset[str]
+) -> dict[str, _Unit]:
+    """The original units with every corrigendum applied: a unit that differs from the
+    consolidation although the Omnibus doesn't touch it takes the consolidated unit, and each
+    ancestor's text takes its corrected child's text in place of the old one. An article's or
+    annex's heading is shared by all its units, so a heading corrigendum (the title changed,
+    but the Omnibus doesn't target the article itself) is applied to all of them."""
+    children: dict[str, list[str]] = {}
+    for pid, unit in old.items():
+        if unit.parent_id is not None:
+            children.setdefault(unit.parent_id, []).append(pid)
+    headings = {
+        pid: new[pid].heading
+        for pid, unit in old.items()
+        if unit.parent_id is None and pid in new and pid not in targets
+        if unit.heading != new[pid].heading
+    }
+    corrected: dict[str, _Unit] = {}
+
+    def correct(pid: str, heading: str | None = None) -> _Unit:
+        if pid in corrected:
+            return corrected[pid]
+        heading = headings.get(pid, heading)
+        unit, after = old[pid], new.get(pid)
+        if heading is not None:
+            unit = replace(unit, heading=heading)
+        is_corrigendum = (
+            after is not None
+            and _content(unit) != _content(after)
+            and not _is_touched(pid, targets)
+        )
+        if is_corrigendum:
+            assert after is not None
+            result = after
+        else:
+            text = unit.text
+            for child in children.get(pid, []):
+                fixed = correct(child, heading).text
+                if fixed != old[child].text:
+                    text = _replace_once(text, old[child].text, fixed, f"{pid} > {child}")
+            result = replace(unit, text=text)
+        corrected[pid] = result
+        return result
+
+    return {pid: correct(pid) for pid in old}
+
+
+def _replace_once(text: str, old: str, new: str, where: str) -> str:
+    """`text` with its one copy of `old` replaced; fails when `old` isn't there exactly once."""
+    count = text.count(old)
+    if count != 1:
+        raise LoadError(
+            f"{CONSOLIDATED_DOC}: corrigendum {where} found {count} times in the parent"
+        )
+    return text.replace(old, new)
+
+
 def amended_slices(
     original: tuple[ParsedProvision, ...],
     consolidated: tuple[ParsedProvision, ...],
@@ -181,19 +247,22 @@ def amended_slices(
     targets: frozenset[str],
 ) -> tuple[ProvisionRow, ...]:
     """The consolidated document's full history (see the module docstring)."""
-    old = {r.provision_id: _unit(r) for r in original if r.kind != "recital"}
     new = {r.provision_id: _unit(r) for r in consolidated}
+    old = corrected_original(
+        {r.provision_id: _unit(r) for r in original if r.kind != "recital"}, new, targets
+    )
     parents = {pid: u.parent_id for pid, u in (old | new).items()}
 
     def is_changed(pid: str) -> bool:
         before, after = old.get(pid), new.get(pid)
-        if before is None or after is None:
-            return True
-        differs = (before.heading, before.text) != (after.heading, after.text)
-        return differs and _is_touched(pid, targets)
+        return before is None or after is None or _content(before) != _content(after)
 
     def is_split(pid: str | None) -> bool:
-        return pid is not None and (is_changed(pid) or is_split(parents[pid]))
+        if pid is None:
+            return False
+        if pid not in parents:
+            raise LoadError(f"{CONSOLIDATED_DOC}: parent {pid} is not a provision of either text")
+        return is_changed(pid) or is_split(parents[pid])
 
     # Parents come before their children: the consolidated order, then the deleted provisions.
     order = [*new, *(pid for pid in old if pid not in new)]

@@ -20,10 +20,16 @@ from aiact.corpus.fetch import DEFAULT_MANIFEST
 from aiact.corpus.guidelines import GuidelineChunk
 
 OMNIBUS_IN_FORCE = date(2026, 7, 27)
+OLD_TITLE = "Article 9 \u2014 Title\u0060"
+NEW_TITLE = "Article 9 \u2014 Title'"
 
 
 def _law(
-    pid: str, text: str, parent: str | None = None, kind: ProvisionKind = "point"
+    pid: str,
+    text: str,
+    parent: str | None = None,
+    kind: ProvisionKind = "point",
+    heading: str = "Article 5",
 ) -> ParsedProvision:
     return ParsedProvision(
         provision_id=pid,
@@ -31,7 +37,7 @@ def _law(
         language="en",
         kind=kind,
         parent_id=parent,
-        heading="Article 5",
+        heading=heading,
         text=text,
     )
 
@@ -52,16 +58,20 @@ def _slices(rows: tuple[ProvisionRow, ...], pid: str) -> list[tuple[date, date |
     return [(r.valid_from, r.valid_to, r.text) for r in rows if r.provision_id == pid]
 
 
+# art:5:1:b is a corrigendum ("bb typo" -> "b") under art:5:1, which the Omnibus amends.
+# art:9's title is a corrigendum too, while its paragraph 1 is amended.
 ORIGINAL = (
     _law("recital:1", "A recital.", kind="recital"),
-    _law("art:5", "1. (a) a (b) b 2. old", kind="article"),
-    _law("art:5:1", "(a) a (b) b", "art:5", "paragraph"),
+    _law("art:5", "1. (a) a (b) bb typo 2. old", kind="article"),
+    _law("art:5:1", "(a) a (b) bb typo", "art:5", "paragraph"),
     _law("art:5:1:a", "a", "art:5:1"),
-    _law("art:5:1:b", "b", "art:5:1"),
+    _law("art:5:1:b", "bb typo", "art:5:1"),
     _law("art:5:2", "old", "art:5", "paragraph"),
     _law("art:5:3", "gone", "art:5", "paragraph"),
     _law("art:6", "typo", kind="article"),
     _law("art:7", "same", kind="article"),
+    _law("art:9", "1. old", kind="article", heading=OLD_TITLE),
+    _law("art:9:1", "old", "art:9", "paragraph", heading=OLD_TITLE),
 )
 CONSOLIDATED = (
     _law("art:5", "1. (a) a (b) b (ba) ba 2. new", kind="article"),
@@ -72,8 +82,10 @@ CONSOLIDATED = (
     _law("art:5:2", "new", "art:5", "paragraph"),
     _law("art:6", "fixed", kind="article"),
     _law("art:7", "same", kind="article"),
+    _law("art:9", "1. new", kind="article", heading=NEW_TITLE),
+    _law("art:9:1", "new", "art:9", "paragraph", heading=NEW_TITLE),
 )
-TARGETS = frozenset({"art:5:1:ba", "art:5:2", "art:5:3"})
+TARGETS = frozenset({"art:5:1:ba", "art:5:2", "art:5:3", "art:9:1"})
 
 
 @pytest.fixture(scope="module")
@@ -106,6 +118,47 @@ def test_children_of_a_split_parent_are_split_with_it(slices: tuple[ProvisionRow
 def test_an_untouched_difference_is_a_corrigendum_from_the_start(slices: tuple[ProvisionRow, ...]):
     assert _slices(slices, "art:6") == [(AI_ACT_IN_FORCE, None, "fixed")]
     assert _slices(slices, "art:7") == [(AI_ACT_IN_FORCE, None, "same")]
+
+
+def test_a_corrigendum_under_an_amended_parent_applies_from_the_start(
+    slices: tuple[ProvisionRow, ...],
+):
+    """Both slices of art:5:1:b have the corrected text, and so do the old slices of the
+    ancestors that quote it; they still split for the amendment."""
+    assert _slices(slices, "art:5:1:b") == [
+        (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "b"),
+        (OMNIBUS_IN_FORCE, None, "b"),
+    ]
+    assert _slices(slices, "art:5:1")[0] == (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "(a) a (b) b")
+    old_article = (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "1. (a) a (b) b 2. old")
+    assert _slices(slices, "art:5")[0] == old_article
+
+
+def test_a_title_corrigendum_applies_to_every_unit_of_the_article(
+    slices: tuple[ProvisionRow, ...],
+):
+    rows = [r for r in slices if r.provision_id in ("art:9", "art:9:1")]
+    assert len(rows) == 4
+    assert {r.heading for r in rows} == {NEW_TITLE}
+
+
+def test_a_corrigendum_the_parent_quotes_twice_fails():
+    original = (
+        _law("art:5", "b b", kind="article"),
+        _law("art:5:1", "b", "art:5", "paragraph"),
+    )
+    consolidated = (
+        _law("art:5", "c c", kind="article"),
+        _law("art:5:1", "c", "art:5", "paragraph"),
+    )
+    with pytest.raises(LoadError, match="found 2 times"):
+        amended_slices(original, consolidated, OMNIBUS_IN_FORCE, frozenset({"art:5:2"}))
+
+
+def test_an_unknown_parent_fails():
+    rows = (_law("art:5:1", "a", "art:5", "paragraph"),)
+    with pytest.raises(LoadError, match="parent art:5 is not a provision"):
+        amended_slices(rows, rows, OMNIBUS_IN_FORCE, frozenset())
 
 
 def test_recitals_stay_in_the_original(slices: tuple[ProvisionRow, ...]):

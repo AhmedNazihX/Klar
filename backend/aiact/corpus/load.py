@@ -10,8 +10,10 @@ transaction (decision 009):
   re-run changes nothing.
 
 The corpus tables are server-only (RLS on, no Data API grants), so the loader writes over a
-direct connection (`DATABASE_URL`). Afterwards it counts the rows per document from the database
-and writes them to `docs/corpus_stats.md`.
+direct connection (`aiact.db.connect`). Two loaders running at once wait for each other per
+document (a transaction-level advisory lock). Documents in the database that the manifest no
+longer lists are reported, never deleted. Afterwards it counts the rows per document from the
+database and writes them to `docs/corpus_stats.md`.
 """
 
 import logging
@@ -23,7 +25,7 @@ import psycopg
 
 from aiact.corpus.build import DocumentLoad, LoadError
 from aiact.corpus.files import write_if_changed
-from aiact.settings import BACKEND_DIR, get_settings
+from aiact.settings import BACKEND_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +76,9 @@ INSERT_PROVISION = """
       %(heading)s, %(text)s, %(valid_from)s, %(valid_to)s, %(source_example_id)s, %(is_held_out)s
     )
 """
+# Serialises two loaders on the same document, so the second sees the first's row.
+LOCK_DOCUMENT = "select pg_advisory_xact_lock(hashtextextended(%s, 0))"
+DOCUMENT_KEYS = "select doc_key, law_version, language from documents order by 1, 2, 3"
 COUNT_ROOTS = "select count(*) from provisions where document_id = %s and parent_id is null"
 STATS_QUERY = """
     with ids as (
@@ -107,18 +112,6 @@ STATS_QUERY = """
     group by d.id
     order by d.doc_key, d.law_version nulls first, d.language
 """
-
-
-class DatabaseNotConfiguredError(RuntimeError):
-    """DATABASE_URL is not set."""
-
-
-def connect() -> psycopg.Connection:
-    """An autocommit connection to the database in DATABASE_URL."""
-    url = get_settings().database_url
-    if url is None:
-        raise DatabaseNotConfiguredError("DATABASE_URL is not set; see backend/.env.example")
-    return psycopg.connect(url.get_secret_value(), autocommit=True)
 
 
 def _document_params(load: DocumentLoad) -> dict[str, object]:
@@ -171,7 +164,9 @@ def _insert_provisions(
 def load_document(connection: psycopg.Connection, load: DocumentLoad) -> Outcome:
     """Upsert one document and, if its text changed, replace its provisions; one transaction."""
     params = _document_params(load)
+    lock_key = f"corpus:{load.label}:{load.document.law_version}"
     with connection.transaction():
+        connection.execute(LOCK_DOCUMENT, (lock_key,))
         existing = connection.execute(SELECT_DOCUMENT, params).fetchone()
         written = connection.execute(UPSERT_DOCUMENT, params).fetchone()
         document_id = written[0] if written is not None else existing[0] if existing else None
@@ -197,6 +192,18 @@ def load_all(
         logger.info("%s: %s (%d provision rows)", load.label, outcome, len(load.provisions))
         outcomes.append((load.label, outcome))
     return tuple(outcomes)
+
+
+def unlisted_documents(
+    connection: psycopg.Connection, loads: tuple[DocumentLoad, ...]
+) -> tuple[str, ...]:
+    """`doc_key.lang (law_version)` of stored documents the loads don't include."""
+    listed = {(d.document.doc_key, d.document.law_version, d.document.language) for d in loads}
+    return tuple(
+        f"{key}.{language} ({version or '-'})"
+        for key, version, language in connection.execute(DOCUMENT_KEYS).fetchall()
+        if (key, version, language) not in listed
+    )
 
 
 @dataclass(frozen=True)

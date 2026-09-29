@@ -13,7 +13,7 @@ from uuid import UUID
 import psycopg
 import typer
 
-from aiact import deps
+from aiact import db, deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
 from aiact.eval import academic, citation_index, metrics, records, report, runner
@@ -175,10 +175,11 @@ def corpus_load(
         loads = corpus_build.build_all(
             manifest or DEFAULT_MANIFEST, parsed_dir or DEFAULT_PARSED_DIR
         )
-        with corpus_load_module.connect() as connection:
+        with db.connect() as connection:
             outcomes = corpus_load_module.load_all(connection, loads)
+            unlisted = corpus_load_module.unlisted_documents(connection, loads)
             counts = corpus_load_module.corpus_stats(connection)
-    except (corpus_build.LoadError, corpus_load_module.DatabaseNotConfiguredError) as error:
+    except (corpus_build.LoadError, db.DatabaseNotConfiguredError) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error
     except psycopg.Error as error:
@@ -187,6 +188,8 @@ def corpus_load(
         raise typer.Exit(code=1) from error
     for label, outcome in outcomes:
         typer.echo(f"{outcome:<9} {label}")
+    for label in unlisted:
+        typer.echo(f"Warning: {label} is in the database but not in the manifest; kept", err=True)
     typer.echo(corpus_load_module.render_stats(counts), nl=False)
     is_written = corpus_load_module.write_stats(counts, stats_path)
     typer.echo(f"{'Written' if is_written else 'Unchanged'}: {stats_path}")

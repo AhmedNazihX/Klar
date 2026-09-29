@@ -11,7 +11,7 @@ import psycopg
 import pytest
 
 from aiact.corpus.build import AI_ACT_IN_FORCE, DocumentLoad, DocumentRow, ProvisionRow
-from aiact.corpus.load import corpus_stats, load_all, load_document
+from aiact.corpus.load import corpus_stats, load_all, load_document, unlisted_documents
 
 pytestmark = pytest.mark.db
 
@@ -147,6 +147,14 @@ def test_a_held_out_row_must_be_an_example(db: psycopg.Connection):
     bad = DocumentLoad(GUIDE.document, (replace(GUIDE.provisions[0], is_held_out=True),))
     with pytest.raises(psycopg.errors.CheckViolation):
         load_document(db, bad)
+
+
+def test_documents_missing_from_the_manifest_are_reported_not_deleted(db: psycopg.Connection):
+    load_all(db, (DocumentLoad(LAW, PROVISIONS), GUIDE))
+    unlisted = unlisted_documents(db, (GUIDE,))
+    assert "test-c3-law.en (amended)" in unlisted
+    assert not any(label.startswith("test-c3-guide.") for label in unlisted)
+    assert len(_rows(db, "test-c3-law")) == len(PROVISIONS)
 
 
 def test_stats_count_rows_slices_and_links(db: psycopg.Connection):
