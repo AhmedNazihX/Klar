@@ -13,6 +13,7 @@ flip an outcome when present (decision 001, product rule).
 """
 
 import re
+import unicodedata
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
@@ -41,6 +42,16 @@ CONFIRM_TEXT: dict[Language, str] = {
     Language.DE: "Bitte bestätigen Sie: {fact}",
 }
 """The confirm question for an inferred or assumed fact that came without one."""
+
+WORD_CHAR = re.compile(r"\w")
+
+GERMAN_ASCII = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"})
+"""German letters spelled out in ASCII for ids; other accents are dropped (é → e)."""
+CONFIRM_PREFIX = "confirm_"
+SLUG_WORDS = 6
+"""How many words of a fact's text its fallback question id keeps."""
+MAX_SLUG_LENGTH = 64
+"""The longest id `FollowUpQuestion` accepts (`SLUG_PATTERN`)."""
 
 
 class ExtractedFact(ContractModel):
@@ -71,20 +82,27 @@ class FactsOutputError(ValueError):
     """The model's answer isn't usable as facts (a broken output)."""
 
 
+def _word_edges(pattern: str, trimmed: str) -> str:
+    """`pattern` anchored so it can't start or end inside a word ("EU" never matches in "EUR").
+    Only an edge that is a word character is anchored, so a quote may end in punctuation."""
+    before = r"(?<!\w)" if WORD_CHAR.match(trimmed[0]) else ""
+    after = r"(?!\w)" if WORD_CHAR.match(trimmed[-1]) else ""
+    return f"{before}{pattern}{after}"
+
+
 def find_span(description: str, quote: str) -> SourceSpan | None:
-    """Where `quote` occurs in `description`, or None.
+    """Where `quote` occurs in `description` as whole words, or None.
 
     An exact match comes first. Failing that, the quote matches ignoring case and with any run
     of whitespace standing for any other, since models tend to reflow a quoted line break.
+    Both steps match whole words only, so a short invented quote can't land inside another word.
     """
     trimmed = quote.strip(QUOTE_EDGES)
     if not trimmed:
         return None
-    start = description.find(trimmed)
-    if start >= 0:
-        return SourceSpan(start=start, end=start + len(trimmed))
-    pattern = r"\s+".join(re.escape(word) for word in trimmed.split())
-    match = re.search(pattern, description, re.IGNORECASE)
+    exact = _word_edges(re.escape(trimmed), trimmed)
+    loose = _word_edges(r"\s+".join(re.escape(word) for word in trimmed.split()), trimmed)
+    match = re.search(exact, description) or re.search(loose, description, re.IGNORECASE)
     return SourceSpan(start=match.start(), end=match.end()) if match else None
 
 
@@ -98,30 +116,49 @@ def _fact(extracted: ExtractedFact, description: str) -> Fact:
     return Fact(text=extracted.text, evidence=EvidenceTag.STATED, source_span=span)
 
 
+def fact_slug(text: str) -> str:
+    """A stable question id from a fact's text: `confirm_` and its first words in ASCII
+    snake_case, so the same fact gets the same id when the engine runs again."""
+    german = text.lower().translate(GERMAN_ASCII)
+    folded = unicodedata.normalize("NFKD", german).encode("ascii", "ignore").decode()
+    words = re.findall(r"[a-z0-9]+", folded)[:SLUG_WORDS]
+    return f"{CONFIRM_PREFIX}{'_'.join(words)}"[:MAX_SLUG_LENGTH].rstrip("_")
+
+
+def _unique(slug: str, taken: set[str]) -> str:
+    """`slug`, or `slug_2`, `slug_3`, … when an earlier question already has that id."""
+    candidate, number = slug, 1
+    while candidate in taken:
+        number += 1
+        suffix = f"_{number}"
+        candidate = f"{slug[: MAX_SLUG_LENGTH - len(suffix)]}{suffix}"
+    return candidate
+
+
 def _confirm_question(
-    extracted: ExtractedFact, fact: Fact, number: int, language: Language
+    extracted: ExtractedFact, fact: Fact, language: Language, taken: set[str]
 ) -> FollowUpQuestion | None:
-    """The question that confirms an inferred or assumed fact; none for a stated one."""
+    """The question that confirms an inferred or assumed fact; none for a stated one. A fact
+    without the model's own question gets one whose id comes from the fact's text."""
     if fact.evidence is EvidenceTag.STATED:
         return None
     if extracted.question is not None:
         return extracted.question
     text = CONFIRM_TEXT[language].format(fact=fact.text)
-    return FollowUpQuestion(id=f"confirm_fact_{number}", text=text)
+    return FollowUpQuestion(id=_unique(fact_slug(fact.text), taken), text=text)
 
 
 def to_outcome(answer: FactsAnswer, description: str, language: Language) -> FactsOutcome:
     """The facts and questions for the graph. Key-fact questions come first, then the
     confirm questions, each id once (the first one asked wins)."""
     facts = tuple(_fact(extracted, description) for extracted in answer.facts)
-    confirms = (
-        _confirm_question(extracted, fact, number, language)
-        for number, (extracted, fact) in enumerate(zip(answer.facts, facts, strict=True), 1)
-    )
     by_id: dict[str, FollowUpQuestion] = {}
-    for question in (*answer.questions, *confirms):
-        if question is not None and question.id not in by_id:
-            by_id[question.id] = question
+    for question in answer.questions:
+        by_id.setdefault(question.id, question)
+    for extracted, fact in zip(answer.facts, facts, strict=True):
+        question = _confirm_question(extracted, fact, language, set(by_id))
+        if question is not None:
+            by_id.setdefault(question.id, question)
     return FactsOutcome(facts=facts, follow_up_questions=tuple(by_id.values()))
 
 

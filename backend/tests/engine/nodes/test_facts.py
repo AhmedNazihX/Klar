@@ -105,6 +105,49 @@ def test_a_quote_that_is_not_in_the_description_has_no_span(quote: str) -> None:
     assert find_span(WORKED_EXAMPLE, quote) is None
 
 
+PAYMENTS = "We process EUR payments for merchants and email offers to users."
+UMLAUTS = "Über die Webcam prüft die Software Prüfungen und markiert Auffälligkeiten."
+
+
+@pytest.mark.parametrize(
+    ("description", "quote"),
+    [
+        (PAYMENTS, "AI"),  # the "ai" in "email"
+        (PAYMENTS, "EU"),  # inside "EUR"
+        (PAYMENTS, "mail"),
+        (UMLAUTS, "ber die Webcam"),  # starts inside "Über"
+        (UMLAUTS, "Prüfung"),  # ends inside "Prüfungen"
+        (UMLAUTS, "Auffälligkeit"),
+    ],
+)
+def test_a_quote_never_matches_inside_a_word(description: str, quote: str) -> None:
+    assert find_span(description, quote) is None
+
+
+@pytest.mark.parametrize(
+    ("description", "quote", "expected"),
+    [
+        (PAYMENTS, "EUR", "EUR"),
+        (PAYMENTS, "email", "email"),
+        (PAYMENTS, "users.", "users"),
+        (UMLAUTS, "über die webcam", "Über die Webcam"),
+        (UMLAUTS, "Prüfungen", "Prüfungen"),
+        (UMLAUTS, "markiert Auffälligkeiten.", "markiert Auffälligkeiten"),
+    ],
+)
+def test_a_whole_word_quote_still_matches(description: str, quote: str, expected: str) -> None:
+    span = find_span(description, quote)
+    assert span is not None
+    assert description[span.start : span.end] == expected
+
+
+def test_an_invented_short_quote_is_downgraded_and_asked() -> None:
+    answer = FactsAnswer(facts=(stated("It is an AI system", "AI"),), questions=())
+    outcome = to_outcome(answer, PAYMENTS, Language.EN)
+    assert outcome.facts[0].evidence is EvidenceTag.INFERRED
+    assert [q.id for q in outcome.follow_up_questions] == ["confirm_it_is_an_ai_system"]
+
+
 # --- evidence rules and questions ----------------------------------------------------------------
 
 
@@ -129,7 +172,55 @@ def test_a_stated_fact_without_a_findable_quote_becomes_inferred_and_asked(
     (fact,) = outcome.facts
     assert (fact.evidence, fact.source_span) == (EvidenceTag.INFERRED, None)
     (question,) = outcome.follow_up_questions
-    assert (question.id, question.text) == ("confirm_fact_1", "Please confirm: Filters applicants")
+    assert (question.id, question.text) == (
+        "confirm_filters_applicants",
+        "Please confirm: Filters applicants",
+    )
+
+
+def test_a_confirm_question_id_comes_from_the_fact_not_its_position() -> None:
+    fact = unstated("Nobody reviews the ranking", EvidenceTag.INFERRED)
+    alone = to_outcome(FactsAnswer(facts=(fact,), questions=()), WORKED_EXAMPLE, Language.EN)
+    later = to_outcome(
+        FactsAnswer(facts=(stated("Scores", "scores them"), fact), questions=()),
+        WORKED_EXAMPLE,
+        Language.EN,
+    )
+    assert alone.follow_up_questions == later.follow_up_questions
+    assert alone.follow_up_questions[0].id == "confirm_nobody_reviews_the_ranking"
+
+
+def test_confirm_question_ids_are_unique_within_a_reply() -> None:
+    clash = FollowUpQuestion(id="confirm_used_in_the_eu", text="Is it used in the EU?")
+    answer = FactsAnswer(
+        facts=(
+            unstated("Used in the EU", EvidenceTag.ASSUMED),
+            unstated("Used in the EU.", EvidenceTag.ASSUMED),
+        ),
+        questions=(clash,),
+    )
+    outcome = to_outcome(answer, WORKED_EXAMPLE, Language.EN)
+    assert [q.id for q in outcome.follow_up_questions] == [
+        "confirm_used_in_the_eu",
+        "confirm_used_in_the_eu_2",
+        "confirm_used_in_the_eu_3",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("text", "slug"),
+    [
+        (
+            "Die Prüfung läuft über größere Straßen, Café",
+            "confirm_die_pruefung_laeuft_ueber_groessere_strassen",
+        ),
+        ("Café-Kasse", "confirm_cafe_kasse"),
+        ("Wird in der EU genutzt", "confirm_wird_in_der_eu_genutzt"),
+        ("«…»", "confirm"),
+    ],
+)
+def test_fact_slugs_are_ascii_snake_case(text: str, slug: str) -> None:
+    assert facts.fact_slug(text) == slug
 
 
 @pytest.mark.parametrize("evidence", [EvidenceTag.INFERRED, EvidenceTag.ASSUMED])
