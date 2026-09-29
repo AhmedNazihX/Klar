@@ -116,9 +116,14 @@ def _fact(extracted: ExtractedFact, description: str) -> Fact:
 
 
 def fact_slug(text: str) -> str:
-    """A stable question id from a fact's text: `confirm_` and as many of its words, in ASCII
-    snake_case, as fit in an id, so the same fact gets the same id when the engine runs again.
-    Only a first word too long to fit is cut."""
+    """A question id from a fact's text: `confirm_` and as many of its words, in ASCII
+    snake_case, as fit in an id. Only a first word too long to fit is cut.
+
+    Stability trade-off: the id follows the fact's wording, not its position, so a re-run that
+    phrases the fact the same way keys the user's earlier answer to it, even if the facts come
+    back in another order. A re-run that words the fact differently gets a new id, and the
+    question is asked again. The model's own question ids (given for most facts) avoid this.
+    """
     german = text.lower().translate(GERMAN_ASCII)
     folded = unicodedata.normalize("NFKD", german).encode("ascii", "ignore").decode()
     slug = CONFIRM_STEM
@@ -131,12 +136,16 @@ def fact_slug(text: str) -> str:
 
 
 def _unique(slug: str, taken: set[str]) -> str:
-    """`slug`, or `slug_2`, `slug_3`, … when an earlier question already has that id."""
+    """`slug`, or `slug_2`, `slug_3`, … when an earlier question already has that id. When the
+    suffix wouldn't fit, whole words are dropped from the end first, never half a word."""
     candidate, number = slug, 1
     while candidate in taken:
         number += 1
         suffix = f"_{number}"
-        candidate = f"{slug[: MAX_SLUG_LENGTH - len(suffix)]}{suffix}"
+        base = slug
+        while len(base) + len(suffix) > MAX_SLUG_LENGTH and "_" in base:
+            base = base.rsplit("_", 1)[0]
+        candidate = f"{base}{suffix}"
     return candidate
 
 

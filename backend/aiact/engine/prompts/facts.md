@@ -27,10 +27,10 @@ The facts the checks usually depend on:
 
 Some features flip an outcome when present. When the description matches the base case but does not say whether the feature is there, ask about it:
 
-- Checking payments or customers for fraud or money laundering: is it only detecting financial fraud, or does it also assess creditworthiness or build profiles of individuals?
+- Checking payments or customers for fraud or money laundering: does it also assess creditworthiness or set credit scores for individuals?
 - Analysing faces, voices or behaviour (for example in interviews, exams, border checks or at work): is it used as a polygraph or similar tool, or does it infer emotions?
 - Supporting a court, authority or dispute body with documents or cases: does it recommend whether something is admissible or how to decide, or does it change the content of a decision?
-- Supporting political campaigns or public debate: is it meant to sway how people vote, or the result of an election or referendum?
+- Supporting political campaigns: do voters see its output directly, or is it only used to organise or run the campaign?
 - Rating or scoring people's reliability or behaviour: is the score used outside the context where the data was collected, or does it predict whether a person will commit a crime?
 - Workplace or education monitoring by webcam, voice or keystrokes: does it infer emotions?
 - Public benefits, pensions or social services: is the scheme run by or for a public authority?

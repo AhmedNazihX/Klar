@@ -237,6 +237,22 @@ def test_fact_slugs_keep_every_word_that_fits() -> None:
     assert len(slug) <= facts.MAX_SLUG_LENGTH
 
 
+def test_a_repeated_long_id_drops_whole_words_before_its_number() -> None:
+    long_fact = "The system is used by the human resources department to rank every applicant"
+    answer = FactsAnswer(
+        facts=(
+            unstated(long_fact, EvidenceTag.INFERRED),
+            unstated(long_fact + ".", EvidenceTag.INFERRED),
+        ),
+        questions=(),
+    )
+    ids = [q.id for q in to_outcome(answer, WORKED_EXAMPLE, Language.EN).follow_up_questions]
+    assert ids == [
+        "confirm_the_system_is_used_by_the_human_resources_department_to",
+        "confirm_the_system_is_used_by_the_human_resources_department_2",
+    ]
+
+
 @pytest.mark.parametrize("evidence", [EvidenceTag.INFERRED, EvidenceTag.ASSUMED])
 def test_an_unstated_fact_keeps_the_models_confirm_question(evidence: EvidenceTag) -> None:
     answer = FactsAnswer(facts=(unstated("Used in the EU", evidence, EU_USE),), questions=())
@@ -344,37 +360,38 @@ def test_the_graph_runs_the_node_and_carries_its_facts_and_questions() -> None:
 
 # --- replays of recorded answers -----------------------------------------------------------------
 
-# Each case: the description, the answer language, and question ids the answer must include.
-# The money-laundering, safety-component and emotion cases have outcome-flipping features the
-# description doesn't settle, so the node has to ask about them (decision 001, product rule).
+# Each case: the description, the answer language, and the questions the answer must include,
+# as question id -> a word its text must contain (lowercase). The money-laundering,
+# safety-component and exam-proctoring cases have outcome-flipping conditions the description
+# doesn't settle, so the node has to ask about them (decisions 001 and 015).
 
-REPLAY_CASES: dict[str, tuple[str, Language, frozenset[str]]] = {
-    "worked_example_en": (WORKED_EXAMPLE, Language.EN, frozenset({"human_review"})),
+REPLAY_CASES: dict[str, tuple[str, Language, dict[str, str]]] = {
+    "worked_example_en": (WORKED_EXAMPLE, Language.EN, {"human_review": "review"}),
     "transaction_monitoring_en": (
         "Our bank runs a model that flags unusual card transactions. Our compliance analysts "
         "look at every flag and decide whether to report it to the authorities.",
         Language.EN,
-        frozenset({"fraud_only"}),
+        {"creditworthiness": "credit"},
     ),
     "predictive_maintenance_en": (
         "We make packaging machines. A model we trained on sensor data predicts when a bearing "
         "will fail, so our service team can replace it before the machine stops.",
         Language.EN,
-        frozenset({"machinery_safety_function"}),
+        {"safety_function": "safety"},
     ),
     "exam_proctoring_de": (
         "Unsere Hochschule nutzt bei Online-Prüfungen eine gekaufte Software, die über die "
         "Webcam das Verhalten der Studierenden auswertet und auffällige Stellen für die "
         "Aufsicht markiert.",
         Language.DE,
-        frozenset({"emotions_or_polygraph"}),
+        {"emotion_inference": "emotion"},
     ),
     "customer_chatbot_de": (
         "Wir sind ein Stadtwerk mit 300 Mitarbeitenden. Auf unserer Website beantwortet ein "
         "Chatbot Fragen zu Tarifen und Rechnungen. Wir haben ihn selbst auf Basis eines großen "
         "Sprachmodells gebaut.",
         Language.DE,
-        frozenset({"eu_use"}),
+        {"eu_use": "eu"},
     ),
 }
 
@@ -396,4 +413,6 @@ def test_recorded_facts(case: str, engine_settings: Settings) -> None:
     assert_stated_facts_point_into(outcome, description)
     if any(fact.evidence is not EvidenceTag.STATED for fact in outcome.facts):
         assert outcome.follow_up_questions
-    assert must_ask <= {question.id for question in outcome.follow_up_questions}
+    asked = {question.id: question.text.lower() for question in outcome.follow_up_questions}
+    for question_id, keyword in must_ask.items():
+        assert keyword in asked.get(question_id, ""), question_id
