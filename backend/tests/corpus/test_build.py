@@ -8,6 +8,7 @@ import pytest
 from aiact.corpus.amendments import Amendment
 from aiact.corpus.build import (
     AI_ACT_IN_FORCE,
+    CORRIGENDA,
     Corrigendum,
     LoadError,
     ProvisionRow,
@@ -15,8 +16,10 @@ from aiact.corpus.build import (
     build_all,
     check_paragraphs,
     omnibus_in_force,
+    original_slices,
+    pin_hash,
 )
-from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParsedProvision, ProvisionKind
+from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParsedProvision, ProvisionKind, load_jsonl
 from aiact.corpus.fetch import DEFAULT_MANIFEST
 from aiact.corpus.guidelines import GuidelineChunk
 
@@ -284,6 +287,25 @@ def test_an_unexpected_title_corrigendum_fails_the_load():
         amended_slices(ORIGINAL, CONSOLIDATED, OMNIBUS_IN_FORCE, TARGETS, corrigenda)
 
 
+def test_the_original_document_carries_the_corrigenda_and_nothing_else():
+    """Option B of decision 014: the original differs from the amended text only by the
+    Omnibus. The corrigenda (art:6, art:8:1:a, the art:9 title) are applied, amendments aren't,
+    and recitals stay as printed."""
+    rows = {
+        r.provision_id: r
+        for r in original_slices(ORIGINAL, CONSOLIDATED, TARGETS, FIXTURE_CORRIGENDA)
+    }
+    assert rows["art:6"].text == "fixed"
+    assert rows["art:8:1:a"].text == "a"
+    assert rows["art:8"].text == "1. (a) a (b) b (c) old c (d) d"
+    assert {rows["art:9"].heading, rows["art:9:1"].heading} == {NEW_TITLE}
+    assert rows["art:5:2"].text == "old"
+    assert rows["art:5:3"].text == "gone"
+    assert rows["recital:1"].text == "A recital."
+    assert all((r.valid_from, r.valid_to) == (AI_ACT_IN_FORCE, None) for r in rows.values())
+    assert list(rows) == [r.provision_id for r in ORIGINAL]
+
+
 def test_a_reviewed_corrigendum_that_no_longer_occurs_fails_the_load():
     """If a rule change made art:7 look amended, its reviewed fix must not vanish silently."""
     corrigenda = {**FIXTURE_CORRIGENDA, "art:7": Corrigendum.of("text", "same", "typo")}
@@ -388,6 +410,49 @@ def committed() -> dict[str, tuple[ProvisionRow, ...]]:
 def test_every_available_document_is_built(committed: dict[str, tuple[ProvisionRow, ...]]):
     assert len(committed) == 15
     assert {"ai-act-consolidated.de", "guide-high-risk-annex-iii.en"} <= set(committed)
+
+
+def _differences(committed: dict[str, tuple[ProvisionRow, ...]], language: str) -> set[str]:
+    """Provision ids of the loaded original that differ from the parsed Official Journal text."""
+    printed = {
+        r.provision_id: r for r in load_jsonl(DEFAULT_PARSED_DIR / f"ai-act.{language}.jsonl")
+    }
+    return {
+        r.provision_id
+        for r in committed[f"ai-act.{language}"]
+        if (r.heading, r.text) != (printed[r.provision_id].heading, printed[r.provision_id].text)
+    }
+
+
+ART_1_UNITS = {"art:1", "art:1:1", "art:1:2"} | {f"art:1:2:{x}" for x in "abcdefg"}
+ART_108_UNITS = {"art:108", "art:108:2", "art:108:3", "art:108:4"}
+
+
+def test_the_original_differs_from_the_oj_text_only_by_the_corrigenda(
+    committed: dict[str, tuple[ProvisionRow, ...]],
+):
+    assert _differences(committed, "en") == ART_1_UNITS | ART_108_UNITS
+    assert _differences(committed, "de") == {"art:3", "art:3:40"}
+
+
+def test_the_original_carries_the_pinned_corrected_texts(
+    committed: dict[str, tuple[ProvisionRow, ...]],
+):
+    consolidated = {
+        lang: {
+            r.provision_id: r
+            for r in load_jsonl(DEFAULT_PARSED_DIR / f"ai-act-consolidated.{lang}.jsonl")
+        }
+        for lang in ("en", "de")
+    }
+    en = {r.provision_id: r for r in committed["ai-act.en"]}
+    de = {r.provision_id: r for r in committed["ai-act.de"]}
+    for pid in ("art:3", "art:3:40"):
+        assert "sofern es sich nicht um" in de[pid].text, pid
+    assert en["art:1"].heading == consolidated["en"]["art:1"].heading
+    for pid in ART_108_UNITS - {"art:108"}:
+        assert en[pid].text == consolidated["en"][pid].text, pid
+        assert pin_hash(en[pid].text) == CORRIGENDA["en"][pid].consolidated_sha, pid
 
 
 def test_the_de_art_3_40_corrigendum_applies_before_the_omnibus(

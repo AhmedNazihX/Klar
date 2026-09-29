@@ -3,7 +3,10 @@
 Reads only `data/manifest.yaml` and the parsed JSONL (`data/parsed/<doc>.<lang>.jsonl`); nothing
 here touches the database (that is `aiact.corpus.load`). The rules are decision 009's:
 - The original AI Act (`law_version = 'original'`) has one open-ended slice per provision from
-  the AI Act's entry into force, 2024-08-01.
+  the AI Act's entry into force, 2024-08-01, with the pinned corrigenda applied (the "corrected
+  original" below): a published corrigendum corrects the text retroactively, so the original
+  and the amended text differ only by the Omnibus. Recitals are as printed (no consolidation to
+  correct them against).
 - The consolidated text (`'amended'`) carries the full history (decision 014). A difference
   between the original and the consolidation that the Digital Omnibus doesn't explain (no
   amendment targets the provision, an ancestor, a descendant or a neighbour, see
@@ -392,6 +395,31 @@ def _replace_once(text: str, old: str, new: str, where: str) -> str:
     return text.replace(old, new)
 
 
+def _corrected(
+    original: tuple[ParsedProvision, ...],
+    new: dict[str, _Unit],
+    targets: frozenset[str],
+    corrigenda: Mapping[str, Corrigendum],
+) -> dict[str, _Unit]:
+    """The corrected original of every unit but the recitals (the consolidation has none)."""
+    originals = {r.provision_id: _unit(r) for r in original if r.kind != "recital"}
+    return corrected_original(originals, new, targets, corrigenda)
+
+
+def original_slices(
+    original: tuple[ParsedProvision, ...],
+    consolidated: tuple[ParsedProvision, ...],
+    targets: frozenset[str],
+    corrigenda: Mapping[str, Corrigendum],
+) -> tuple[ProvisionRow, ...]:
+    """The original document: one open slice per unit from 2024-08-01, with the pinned
+    corrigenda applied (decision 014, option B); recitals as printed."""
+    new = {r.provision_id: _unit(r) for r in consolidated}
+    fixed = _corrected(original, new, targets, corrigenda)
+    units = (fixed.get(r.provision_id, _unit(r)) for r in original)
+    return _open_slices(units, AI_ACT_IN_FORCE)
+
+
 def amended_slices(
     original: tuple[ParsedProvision, ...],
     consolidated: tuple[ParsedProvision, ...],
@@ -402,8 +430,7 @@ def amended_slices(
     """The consolidated document's full history (see the module docstring); `corrigenda` are
     the reviewed differences without an amendment, which must all occur."""
     new = {r.provision_id: _unit(r) for r in consolidated}
-    originals = {r.provision_id: _unit(r) for r in original if r.kind != "recital"}
-    old = corrected_original(originals, new, targets, corrigenda)
+    old = _corrected(original, new, targets, corrigenda)
     parents = {pid: u.parent_id for pid, u in (old | new).items()}
 
     def is_changed(pid: str) -> bool:
@@ -556,10 +583,12 @@ def _build(entry: ManifestEntry, parsed_dir: Path) -> DocumentLoad:
     laws = _laws(parsed_dir, entry.language)
     in_force, targets = omnibus_in_force(laws[OMNIBUS_DOC])
     document = document_row(entry, in_force)
+    original, consolidated = laws[AI_ACT_DOC], laws[CONSOLIDATED_DOC]
+    corrigenda = CORRIGENDA[entry.language]
     if entry.id == CONSOLIDATED_DOC:
-        corrigenda = CORRIGENDA[entry.language]
-        slices = amended_slices(laws[AI_ACT_DOC], laws[entry.id], in_force, targets, corrigenda)
+        slices = amended_slices(original, consolidated, in_force, targets, corrigenda)
+    elif entry.id == AI_ACT_DOC:
+        slices = original_slices(original, consolidated, targets, corrigenda)
     else:
-        start = in_force if entry.id == OMNIBUS_DOC else AI_ACT_IN_FORCE
-        slices = _open_slices(map(_unit, laws[entry.id]), start)
+        slices = _open_slices(map(_unit, laws[entry.id]), in_force)
     return DocumentLoad(document, slices)
