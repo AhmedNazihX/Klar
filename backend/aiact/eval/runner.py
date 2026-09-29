@@ -122,11 +122,13 @@ class Classification:
 
 @dataclass(frozen=True)
 class ClassifierInfo:
-    """The settings recorded in `eval_runs.config` (F5 requires the three keys; null allowed)."""
+    """The settings recorded in `eval_runs.config` (F5 requires model, embedding and retrieval;
+    null allowed). `provider` is the pinned OpenRouter endpoint, when there is one."""
 
     model: str | None
     embedding: JsonValue = None
     retrieval: JsonValue = None
+    provider: str | None = None
 
 
 class Classifier(Protocol):
@@ -166,11 +168,36 @@ def _engine_classifier() -> Classifier:
     raise ClassifierUnavailableError("the engine classifier is wired in once E10 is merged")
 
 
+def _configured(build: Callable[[], Classifier]) -> Classifier:
+    """Build a model-backed classifier; a missing setting makes it unavailable."""
+    from aiact.llm import LLMConfigError
+
+    try:
+        return build()
+    except LLMConfigError as exc:
+        raise ClassifierUnavailableError(str(exc)) from exc
+
+
+# The baselines are imported on first use: `aiact.eval.baselines` imports this module.
+def _baseline_luna() -> Classifier:
+    from aiact.eval.baselines import LunaBaseline
+
+    return _configured(LunaBaseline)
+
+
+def _baseline_jev() -> Classifier:
+    from aiact.eval.baselines import JevBaseline
+
+    return _configured(JevBaseline)
+
+
 CLASSIFIERS: Mapping[str, Callable[[], Classifier]] = {
     "dummy": DummyClassifier,
     "engine": _engine_classifier,
+    "baseline_luna": _baseline_luna,
+    "baseline_jev": _baseline_jev,
 }
-"""Classifier factories by CLI name. V3 adds the `baseline_*` entries."""
+"""Classifier factories by CLI name."""
 
 
 def build_classifier(name: str) -> Classifier:
@@ -299,6 +326,7 @@ def run_config(
         "model": info.model,
         "embedding": info.embedding,
         "retrieval": info.retrieval,
+        "provider": info.provider,
         "classifier": options.classifier_name,
         "exclude_mode": options.exclude_mode.value,
         "split_mode": None if split is None else split.mode.value,
