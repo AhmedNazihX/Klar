@@ -24,7 +24,7 @@ DESCRIPTION = (
     "We're a 40-person logistics company. We use a tool that reads incoming job applications, "
     "scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it."
 )
-DOCUMENT_ID = "ai-act-consolidated-2026-07-27"
+DOCUMENT_ID = "ai-act-consolidated"  # the manifest doc_key, as get_provision returns it
 HIGH_RISK_DUTIES_FROM = date(2027, 12, 2)
 
 

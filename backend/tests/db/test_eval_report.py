@@ -54,12 +54,16 @@ def _insert_case(
 
 
 def _insert_worked_example_provisions(db: psycopg.Connection) -> None:
+    """Make sure the worked example's provisions exist. DOCUMENT_ID is the real doc_key, so on a
+    database with the corpus loaded the document (and most provisions) already exist: reuse the
+    row and add only the missing provisions (all inside the test's rolled-back transaction)."""
     row = db.execute(
         """
         insert into documents
           (doc_key, title, doc_type, status, law_version, language, source_url, sha256)
         values
           (%s, 'Test', 'law', 'final', 'amended', 'en', 'https://example.eu/', %s)
+        on conflict (doc_key, law_version, language) do update set doc_key = documents.doc_key
         returning id
         """,
         (DOCUMENT_ID, "b" * 64),
@@ -69,9 +73,13 @@ def _insert_worked_example_provisions(db: psycopg.Connection) -> None:
         db.execute(
             """
             insert into provisions (provision_id, document_id, language, heading, text, valid_from)
-            values (%s, %s, 'en', 'Heading', 'Text', '2024-08-01')
+            select %(pid)s, %(doc)s, 'en', 'Heading', 'Text', '2024-08-01'
+            where not exists (
+              select 1 from provisions
+              where document_id = %(doc)s and language = 'en' and provision_id = %(pid)s
+            )
             """,
-            (provision_id, row[0]),
+            {"pid": provision_id, "doc": row[0]},
         )
 
 
@@ -111,10 +119,12 @@ def test_report_from_a_stored_run_uses_the_citation_scores_of_run_time(
     assert "| Risk-class accuracy | 33.3% | 1/3 |" in report
     assert "| Citation existence (at run time) | 100.0% | 2/2 |" in report
 
-    # Today's corpus loses a cited provision: the stored run's report must not change.
+    # Today's corpus loses a cited provision: the stored run's report must not change. Its
+    # children go in the same statement (the loaded corpus has them; the parent key needs it).
     db.execute(
         "delete from provisions p using documents d"
-        " where d.id = p.document_id and d.doc_key = %s and p.provision_id = 'art:5:1'",
+        " where d.id = p.document_id and d.doc_key = %s"
+        " and (p.provision_id = 'art:5:1' or p.provision_id like 'art:5:1:%%')",
         (DOCUMENT_ID,),
     )
     assert "art:5:1" in WORKED_EXAMPLE_PROVISIONS
