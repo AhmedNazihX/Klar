@@ -173,6 +173,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: INIT › Test sets (Own cases), Label rules, Omnibus details. Categories: **a** Art. 50 transparency (including the 50(2) grace period), **b** out-of-scope software (not an AI system under Art. 3(1), exclusions), **c** the December 2026 prohibitions plus the classic Art. 5 practices, **d** Art. 25 role switches, GPAI-based systems, importer and distributor, **e** Annex I flags. At least 25% of each category in German. Output: `eval/cases/own/<category>/*.yaml`.
   DoD: every label cites the provision or example that settles it, or is `legally_ambiguous`; the user has approved each file.
   Notes from merged stories: F7: cases are `BenchmarkCase` in `aiact/eval/cases.py`; `label_citation` is a list; a label that isn't `legally_ambiguous` needs a citation, an ambiguous one needs `notes` (the open question and both readings: checked in review, not by the schema).
+  **Outcome (B5d):** 13 own cases in eval/cases/own/d/ (7 EN, 6 DE; 2 legally_ambiguous) covering Art. 25(1)(a)/(b)/(c), GPAI-based systems, importer and distributor; expected obligations tagged obligation:<article> (unsettled conditions kept, user rule 2026-09-29), plus gpai_based, also_role:deployer and role_switch tags; each file approved by the user 2026-09-29.
 
 - [ ] **B6 · Soft-wording pairs** · Deps: F7, B5 · Type: mixed
   Output: `eval/cases/soft_pairs/` with 10–20 pairs (plain and softened wording of the same known high-risk system, linked by pair_id). DoD: approved by the user.
