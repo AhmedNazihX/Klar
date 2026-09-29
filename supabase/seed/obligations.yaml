@@ -13,7 +13,7 @@
 # (Art. 113(a)), 2026-08-02 for everything else (Art. 113, second paragraph).
 #
 # Article ids are provision ids of the consolidated AI Act (data/parsed/ai-act-consolidated.en.jsonl);
-# a test checks that each one exists there. `dates_reviewed`: the user checked the dates (2026-09-28).
+# a test checks that each one exists there. `dates_reviewed`: the user checked the dates (2026-09-28; the Art. 49(4) and Art. 53(1)(b) rows on 2026-09-29).
 # `is_informational: true` marks a row that informs rather than states a formal duty of that role.
 
 law_version: amended
@@ -344,7 +344,7 @@ obligations:
 
   # --- High-risk: law enforcement, migration, asylum and border control (Art. 49(4)) -------------
   # Added by E7 (C7 follow-up). The date follows the registrations it modifies (Art. 113(c)(i));
-  # the user has not reviewed it yet.
+  # the user reviewed it on 2026-09-29.
   - key: hr-registration-non-public
     roles: [provider, deployer]
     risk_classes: [high_risk]
@@ -513,7 +513,7 @@ obligations:
       (and Art. 49 being in Chapter VIII) gives 2 August 2026. Check with a lawyer.
 
   # --- Systems built on a general-purpose AI model (Art. 53) -------------------------------------
-  # Added by E7: flags the model provider's duties (INIT > Roles). The user has not reviewed the date yet.
+  # Added by E7: flags the model provider's duties (INIT > Roles). The user reviewed the date on 2026-09-29.
   - key: gpai-model-provider-duties
     roles: [provider]
     risk_classes: [high_risk, limited_risk, minimal_risk]
