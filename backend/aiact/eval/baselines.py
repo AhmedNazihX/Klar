@@ -1,8 +1,9 @@
 """The baselines the engine is measured against (INIT > Evaluation > Baselines).
 
-- `baseline_luna`: the engine model (`ENGINE_MODEL`, pinned to `ENGINE_PROVIDER` when set)
-  answering in a single prompt, with no retrieval and no staged checks. It returns one JSON
-  answer: class, status, role, Annex point, Art. 50 duties and a short reason.
+- `baseline_luna`: the engine model (`ENGINE_MODEL`) answering in a single prompt, with no
+  retrieval and no staged checks. It requires `ENGINE_PROVIDER` and is always pinned to that
+  endpoint with fallbacks off (decision 005). It returns one JSON answer: class, status, role,
+  Annex point, Art. 50 duties and a short reason.
 - `baseline_jev`: TypeSafe's Jev decision model choosing the class directly, through OpenRouter's
   Decisions API (decision 005: `typesafe/jev-1.13`, never `typesafe/jev-router`, which can
   forward to Luna). Jev answers choice questions with probabilities, so it only ever gives a
@@ -97,7 +98,8 @@ def to_result(answer: BaselineAnswer, language: Language, label: str) -> Classif
 
     The Annex point is kept only for high_risk. Art. 50 duties are kept only for limited_risk
     and high_risk (Art. 50 applies alongside Chapter III); for out_of_scope, prohibited and
-    minimal_risk they contradict the class and are dropped, as `jev_answer` does.
+    minimal_risk they contradict the class and are dropped. (`jev_answer` is stricter: its duty
+    question is always answered, so it keeps the duty for limited_risk only.)
 
     Raises `BaselineOutputError` when the answer can't be a valid result (for example an
     uncertain out_of_scope, or limited_risk without an Art. 50 duty).
