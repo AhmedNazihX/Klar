@@ -52,6 +52,7 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
   - `/story-finish <ID>`: verify, review, merge, tick.
   - `/decision`: records in `docs/decisions/`.
   - `/case`: benchmark cases and labels.
+  - `/eval`: runs a benchmark with a subset, cost cap and held-out/all mode; asks before a full or paid run; writes `eval/reports/run-<date>.md` from stored numbers.
 - **Agents:**
   - `story-worker`: implements one story in its own worktree.
   - `dod-verifier`: checks a story's DoD independently.

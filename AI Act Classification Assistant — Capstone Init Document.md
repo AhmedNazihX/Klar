@@ -143,7 +143,7 @@ Input: *"We're a 40-person logistics company. We use a tool that reads incoming 
 | Prohibited | No match | Inferred | Art. 5 |
 | High-risk | Yes: recruitment use; ranking candidates counts as profiling, so the Article 6(3) exemption does not apply | Stated (scores and ranks) | Annex III point 4(a), Art. 6(3) |
 | Transparency | No separate duty identified from the description | Inferred | Art. 50 |
-| Result | High-risk, deployer. Duties include following the provider's instructions, assigning human oversight, keeping logs, informing workers' representatives and informing applicants, from 2 December 2027 | — | Art. 26 |
+| Result | High-risk, deployer. Duties include following the provider's instructions, assigning human oversight, keeping logs and informing the applicants who are subject to it (Art. 26(11)), from 2 December 2027 | — | Art. 26 |
 
 Deciding facts: the tool scores and ranks applicants; it was not modified or rebranded. The expected answers in this example are the design intent, to be checked against the legal text during the build.
 
@@ -326,7 +326,7 @@ The main ethical risk is a wrong classification that a company trusts. Calling a
 | Over-reliance on automation | Step-by-step reasoning with evidence tags, so users can challenge each decision |
 | Problem not validated with users | Problem evidence comes from secondary sources; no user interviews or user tests are planned, stated as a limitation |
 | Choice of model providers | Providers that EU data protection authorities have acted against (e.g. DeepSeek) are excluded; every provider in the data chain (OpenRouter and the model providers) is named in the privacy notice. The embedding model is Alibaba's open-weights Qwen3-Embedding-8B, but it is served from an EU-based host pinned in OpenRouter, so user descriptions never reach Alibaba; the host is named in the privacy notice |
-| The assistant is itself an AI system | It is most likely minimal-risk; because it interacts with people, it discloses that it is an AI (Art. 50(1)) |
+| The assistant is itself an AI system | It is most likely limited-risk: it is not high-risk, but because it interacts with people it must disclose that it is an AI (Art. 50(1)) |
 
 ## Risks and mitigations
 
