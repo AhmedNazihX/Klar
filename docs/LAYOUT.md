@@ -36,7 +36,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)
 │   │   │   ├── scripted.py          stub nodes that return scripted outcomes, for tests (E1)
 │   │   │   ├── nodes/               facts.py (E2), scope.py (E3), prohibited.py (E4), high_risk.py (E5),
-│   │   │   │                        transparency.py (E6), role_obligations.py (E7), finalize.py (E8)
+│   │   │   │                        transparency.py (E6), role_obligations.py + role_texts.py (E7), finalize.py (E8)
 │   │   │   ├── prompts/             prompt files, one per node (E2–E8)
 │   │   │   ├── citations.py         citation existence validator (E9)
 │   │   │   └── __init__.py          classify_system (E10)

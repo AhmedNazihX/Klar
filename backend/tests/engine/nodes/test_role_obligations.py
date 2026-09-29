@@ -100,6 +100,7 @@ def state(
     transparency_duties: tuple[str, ...] = (),
     facts: tuple[Fact, ...] = (),
     description: str = CV_TOOL,
+    annex_iii_exempt: bool = False,
 ) -> EngineState:
     """The state the node sees after the earlier checks put the system in `risk_class`."""
     built: EngineState = {
@@ -117,6 +118,8 @@ def state(
         built["high_risk_route"] = route
     if transparency_duties:
         built["transparency_duties"] = transparency_duties
+    if annex_iii_exempt:
+        built["annex_iii_exempt"] = True
     return built
 
 
@@ -184,7 +187,23 @@ def test_each_art_25_switch_makes_a_provider_of_a_high_risk_system(
     assert f"Art. {article}" in reason
     assert outcome.step.status is Status.DECIDED
     assert "art:16:a" in articles(outcome)
-    assert not any(a.startswith(("art:23:", "art:24:", "art:26:")) for a in articles(outcome))
+    # A deployer still uses the system, so it keeps its duties; an importer or distributor that
+    # became the provider has the provider's duties instead of its own (Art. 25(1)).
+    uses_it = base is Role.DEPLOYER
+    assert finding(outcome).also_role is (Role.DEPLOYER if uses_it else None)
+    assert ({"art:26:1", "art:26:2", "art:26:6"} <= set(articles(outcome))) is uses_it
+    assert not any(a.startswith(("art:23:", "art:24:")) for a in articles(outcome))
+
+
+def test_a_switched_deployer_gets_provider_and_deployer_duties_once_each() -> None:
+    answer = role_answer(
+        conditions={EMPLOYER: Answer.YES}, own_brand=key_fact(Answer.YES, EvidenceTag.STATED)
+    )
+    outcome = to_outcome(answer, state())
+    kept = articles(outcome)
+    assert {"art:16:a", "art:16:i", "art:26:1", "art:26:2", "art:26:6", "art:26:7"} <= set(kept)
+    assert kept.count("art:4:1") == 1  # AI literacy is on both lists, listed once
+    assert outcome.step.decision.startswith("Role: provider, and also deployer.")
 
 
 @pytest.mark.parametrize("risk_class", [RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK])
@@ -208,6 +227,35 @@ def test_an_unsettled_switch_needs_information_with_provider_as_the_assumption()
     assert "Working assumption: provider" in outcome.step.decision
 
 
+@pytest.mark.parametrize(
+    ("base", "own_duties"),
+    [
+        (Role.DEPLOYER, {"art:26:1", "art:26:2", "art:26:6"}),
+        (Role.IMPORTER, {"art:23:1", "art:23:2"}),
+        (Role.DISTRIBUTOR, {"art:24:1", "art:24:2"}),
+    ],
+)
+def test_the_working_assumption_keeps_the_base_roles_duties(
+    base: Role, own_duties: set[str]
+) -> None:
+    answer = role_answer(base, changed_purpose=key_fact(Answer.UNKNOWN))
+    outcome = to_outcome(answer, state())
+    assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, base)
+    assert own_duties | {"art:16:a"} <= set(articles(outcome))
+
+
+def test_every_unknown_deciding_fact_becomes_a_follow_up_question() -> None:
+    answer = role_answer(
+        builds_on_gpai=key_fact(Answer.UNKNOWN),
+        own_brand=key_fact(Answer.UNKNOWN),
+        changed_purpose=key_fact(Answer.UNKNOWN),
+    )
+    outcome = to_outcome(answer, state())
+    ids = [question.id for question in outcome.follow_up_questions]
+    assert ids == ["builds_on_gpai", "own_brand", "changed_purpose"]
+    assert outcome.step.missing_fact == outcome.follow_up_questions[0]
+
+
 def test_a_yes_switch_wins_over_an_unsettled_one() -> None:
     answer = role_answer(own_brand=key_fact(Answer.UNKNOWN), changed_purpose=key_fact(Answer.YES))
     outcome = to_outcome(answer, state())
@@ -219,7 +267,8 @@ def test_an_unknown_role_asks_for_it() -> None:
     outcome = to_outcome(role_answer(None), state())
     assert outcome.step.missing_fact is not None
     assert outcome.step.missing_fact.id == "operator_role"
-    assert finding(outcome).role is Role.PROVIDER
+    assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
+    assert {"art:16:a", "art:26:1"} <= set(articles(outcome))
 
 
 @pytest.mark.parametrize("base", [Role.DEPLOYER, Role.PROVIDER])
@@ -228,9 +277,11 @@ def test_a_system_built_on_gpai_is_its_builders_and_flags_the_model_provider(bas
     outcome = to_outcome(answer, state())
     assert finding(outcome).role is Role.PROVIDER
     assert finding(outcome).role_switch_reason is None  # not an Art. 25 switch
+    assert finding(outcome).also_role is (Role.DEPLOYER if base is Role.DEPLOYER else None)
     flag = next(o for o in finding(outcome).obligations if o.article == "art:53:1:b")
     assert flag.is_informational
     assert "Art. 53" in outcome.step.decision
+    assert "art:53:1:b" in [c.provision_id for c in outcome.step.citations]
 
 
 def test_a_provider_that_does_not_build_on_gpai_gets_no_flag() -> None:
@@ -247,6 +298,14 @@ def test_an_unknown_gpai_base_needs_information() -> None:
     assert outcome.step.missing_fact.id == "builds_on_gpai"
 
 
+def test_an_unknown_gpai_base_keeps_the_flag_and_asks_a_provider() -> None:
+    answer = role_answer(Role.PROVIDER, builds_on_gpai=key_fact(Answer.UNKNOWN))
+    outcome = to_outcome(answer, state())
+    assert outcome.step.status is Status.DECIDED  # a provider either way
+    assert "art:53:1:b" in articles(outcome)  # kept, with its condition shown
+    assert [q.id for q in outcome.follow_up_questions] == ["builds_on_gpai"]
+
+
 @pytest.mark.parametrize(
     ("role", "prefix", "count"), [(Role.IMPORTER, "art:23:", 7), (Role.DISTRIBUTOR, "art:24:", 6)]
 )
@@ -259,7 +318,7 @@ def test_importer_and_distributor_get_their_own_duties(role: Role, prefix: str, 
 def test_german_decision_and_question_texts() -> None:
     answer = role_answer(own_brand=key_fact(Answer.UNKNOWN))
     outcome = to_outcome(answer, state(language=Language.DE))
-    assert outcome.step.decision.startswith("Rolle: Anbieter.")
+    assert outcome.step.decision.startswith("Rolle: Anbieter, zugleich Betreiber.")
     assert outcome.step.missing_fact is not None
     assert "Marke" in outcome.step.missing_fact.text
 
@@ -309,17 +368,102 @@ def test_conditions_asked_leave_out_those_settled_by_other_findings() -> None:
     assert not any("interact directly" in c for c in asked)
 
 
-def test_an_ambiguous_art_5_match_lists_the_prohibition() -> None:
+def test_an_ambiguous_art_5_match_keeps_every_prohibition_without_asking() -> None:
+    assert conditions_to_ask(RiskClass.PROHIBITED, None, LawVersion.AMENDED) == ()
     answer = role_answer(risk_class=RiskClass.PROHIBITED, route=None)
     outcome = to_outcome(answer, state(RiskClass.PROHIBITED, None))
-    assert articles(outcome)[0] == "art:5:1"
+    assert articles(outcome) == ["art:5:1", "art:5:1:ba", "art:5:1:bb"]
+
+
+@pytest.mark.parametrize("risk_class", [RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK])
+def test_art_6_4_follows_the_high_risk_steps_exemption(risk_class: RiskClass) -> None:
+    assert not any(
+        "Art. 6(3)" in c for c in conditions_to_ask(risk_class, None, LawVersion.AMENDED)
+    )
+    answer = role_answer(Role.PROVIDER, risk_class=risk_class, route=None)
+    duties = ("art:50:1",) if risk_class is RiskClass.LIMITED_RISK else ()
+    exempt = to_outcome(
+        answer, state(risk_class, None, transparency_duties=duties, annex_iii_exempt=True)
+    )
+    assert "art:6:4" in articles(exempt)
+    plain = to_outcome(answer, state(risk_class, None, transparency_duties=duties))
+    assert "art:6:4" not in articles(plain)
 
 
 def test_the_original_text_lists_no_duties_and_says_why() -> None:
     outcome = to_outcome(role_answer(), state(law_version=LawVersion.ORIGINAL))
     assert finding(outcome).obligations == ()
-    assert "covers only the amended text" in outcome.step.decision
+    assert "covers only the amended text, not the original text" in outcome.step.decision
     assert finding(outcome).role is Role.DEPLOYER
+
+
+# --- Citations ----------------------------------------------------------------------------------
+
+EVERY_BRANCH = [
+    pytest.param(role_answer(), state(), id="deployer"),
+    pytest.param(role_answer(None), state(), id="unknown-role"),
+    pytest.param(role_answer(Role.IMPORTER), state(), id="importer"),
+    pytest.param(role_answer(Role.DISTRIBUTOR), state(), id="distributor"),
+    pytest.param(role_answer(Role.PROVIDER), state(), id="provider"),
+    pytest.param(role_answer(builds_on_gpai=key_fact(Answer.YES)), state(), id="gpai"),
+    pytest.param(
+        role_answer(own_brand=key_fact(Answer.UNKNOWN)), state(language=Language.DE), id="de"
+    ),
+    pytest.param(
+        role_answer(risk_class=RiskClass.PROHIBITED, route=None),
+        state(RiskClass.PROHIBITED, None, law_version=LawVersion.ORIGINAL),
+        id="original",
+    ),
+]
+
+
+@pytest.mark.parametrize(("answer", "given"), EVERY_BRANCH)
+def test_every_outcome_cites_the_provisions_its_role_rests_on(
+    answer: RoleAnswer, given: EngineState
+) -> None:
+    cited = to_outcome(answer, given).step.citations
+    assert cited
+    for citation in cited:
+        assert citation.language is given["language"]
+        assert citation.law_version is given["law_version"]
+        assert citation.quote
+
+
+@pytest.mark.parametrize(
+    ("switch", "article"),
+    [
+        ("own_brand", "art:25:1:a"),
+        ("substantial_modification", "art:25:1:b"),
+        ("changed_purpose", "art:25:1:c"),
+    ],
+)
+def test_a_switch_cites_its_point_of_art_25_and_the_base_role(switch: str, article: str) -> None:
+    answer = role_answer().model_copy(update={switch: key_fact(Answer.YES)})
+    cited = to_outcome(answer, state()).step.citations
+    assert [(c.provision_id, c.document_id) for c in cited] == [
+        ("art:3:4", "ai-act-consolidated"),
+        (article, "ai-act-consolidated"),
+    ]
+    assert "deployer" in cited[0].quote
+
+
+@pytest.mark.parametrize(
+    ("role", "article"),
+    [
+        (Role.PROVIDER, "art:3:3"),
+        (Role.DEPLOYER, "art:3:4"),
+        (Role.IMPORTER, "art:3:6"),
+        (Role.DISTRIBUTOR, "art:3:7"),
+    ],
+)
+def test_the_base_role_cites_its_definition(role: Role, article: str) -> None:
+    cited = to_outcome(role_answer(role), state()).step.citations
+    assert [c.provision_id for c in cited] == [article]
+
+
+def test_an_unknown_role_cites_both_definitions_it_assumes() -> None:
+    cited = to_outcome(role_answer(None), state()).step.citations
+    assert [c.provision_id for c in cited] == ["art:3:3", "art:3:4"]
 
 
 # --- Facts used ---------------------------------------------------------------------------------
@@ -359,6 +503,9 @@ def test_findings_are_only_accepted_from_their_own_check() -> None:
     role_step = StepResult(step=StepName.ROLE_OBLIGATIONS, decision="Role: deployer.")
     with pytest.raises(ValidationError, match="only the transparency check"):
         CheckOutcome(step=role_step, transparency_duties=("art:50:1",))
+    high_risk = StepResult(step=StepName.HIGH_RISK, decision="Exempt under Art. 6(3)")
+    with pytest.raises(ValidationError, match="not high-risk"):
+        CheckOutcome(step=high_risk, high_risk_route=HighRiskRoute.ANNEX_III, annex_iii_exempt=True)
 
 
 def _settings() -> Settings:
@@ -501,6 +648,9 @@ def test_b5d_case_replay(
         pytest.skip("the role check doesn't run for this case, or its label names no role")
     cassette = Path(vcr_cassette_dir) / f"{default_cassette_name}.yaml"
     if record_mode == "none" and not cassette.exists():
-        pytest.skip(f"no recording yet for {case.id}")
+        pytest.skip(
+            f"B5d case {case.id} has no recording yet; record it with "
+            "`uv run pytest tests/engine/nodes/test_role_obligations.py -k b5d --record-mode=once`"
+        )
     outcome = RoleObligationsCheck(luna_settings)(_case_state(label, case))
     assert finding(outcome).role is label.role

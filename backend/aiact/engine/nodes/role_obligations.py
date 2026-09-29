@@ -9,32 +9,52 @@ applied here, in code:
   and the model provider's own duties are flagged (the informational Art. 53(1)(b) row).
 - A deployer, importer or distributor of a high-risk system becomes its provider under Art. 25(1)
   when it rebrands it (a), substantially modifies it (b) or repurposes it into high-risk (c).
-- A deciding fact the model can't settle makes the step `needs_more_information`, with provider,
-  the role with the most duties, as the labelled working assumption.
+  Art. 25 adds the provider's duties; a deployer still uses the system and keeps its own.
+- A deciding fact the model can't settle makes the step `needs_more_information`. The labelled
+  working assumption is provider plus the base role (deployer when the role itself is unknown),
+  so no duty that may apply is dropped. Every unknown fact becomes a follow-up question.
 
-Conditional duties are filtered by their `applies_if`: Art. 50 rows by the transparency step's
-findings, the GPAI flag by the GPAI answer, every other condition by the model's answer. A duty
-whose condition is "no" is dropped; "yes" and "unknown" keep it, with its condition shown.
+Conditional duties are filtered by their `applies_if`. Rows another finding settles are never
+asked of the model: Art. 50 by the transparency step's duties, Art. 5 by the prohibited class,
+Art. 6(4) by the high-risk step's Art. 6(3) exemption, the GPAI flag by the GPAI answer. Every
+other condition goes to the model. A duty whose condition is "no" is dropped; "yes" and
+"unknown" keep it, with its condition shown.
+
+Each step cites the provisions its role rests on (Art. 3 definitions, the Art. 25(1) switch,
+Art. 53(1)(b)), quoted from the parsed AI Act until `get_provision` (C5) serves them.
 """
 
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
+from functools import cache
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import BaseModel, Field, JsonValue, ValidationError
 
+from aiact.engine.nodes.role_texts import (
+    BUILDS_ON_GPAI,
+    OPERATOR_ROLE,
+    ROLE_ARTICLES,
+    ROLE_NAMES,
+    SWITCHES,
+    TEXTS,
+    KeyQuestion,
+)
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.llm import chat_model
 from aiact.llm.routing import require_setting
 from aiact.obligations.list import (
     ObligationTable,
     UnknownLawVersionError,
+    default_table,
     list_obligations,
 )
 from aiact.schemas import (
+    Citation,
     EvidenceTag,
     Fact,
     FollowUpQuestion,
@@ -59,7 +79,15 @@ MAX_OUTPUT_TOKENS = 3000
 
 TRANSPARENCY_PREFIX = "art:50:"
 GPAI_FLAG_ARTICLE = "art:53:1:b"
+EXEMPTION_ARTICLE = "art:6:4"
+PROHIBITION_ARTICLE = "art:5:1"
 """Rows whose condition is settled by another finding, not asked of the model."""
+
+ACT_DOCUMENTS: Mapping[LawVersion, str] = {
+    LawVersion.ORIGINAL: "ai-act",
+    LawVersion.AMENDED: "ai-act-consolidated",
+}
+"""The manifest key of each AI Act text, as a citation's `document_id`."""
 
 
 class Answer(StrEnum):
@@ -107,123 +135,6 @@ class RoleOutputError(ValueError):
     """The model's answer doesn't fit `RoleAnswer` (a broken output)."""
 
 
-# --- Fixed texts: stable question ids, EN and DE ------------------------------------------------
-
-
-@dataclass(frozen=True)
-class KeyQuestion:
-    """A deciding fact: its follow-up question and, when a "yes" makes a provider, why."""
-
-    id: str
-    article: str
-    question: Mapping[Language, str]
-    reason: Mapping[Language, str] | None = None
-
-
-OPERATOR_ROLE = KeyQuestion(
-    id="operator_role",
-    article="art:3:3",
-    question={
-        Language.EN: "Does your company develop the system, use a system someone else provides, "
-        "import it into the EU, or distribute it?",
-        Language.DE: "Entwickelt Ihr Unternehmen das System, nutzt es ein System eines anderen "
-        "Anbieters, führt es das System in die EU ein oder vertreibt es es?",
-    },
-)
-BUILDS_ON_GPAI = KeyQuestion(
-    id="builds_on_gpai",
-    article="art:53:1:b",
-    question={
-        Language.EN: "Is the system built on a general-purpose AI model from another provider "
-        "(for example a foundation model integrated through an API)?",
-        Language.DE: "Beruht das System auf einem KI-Modell mit allgemeinem Verwendungszweck eines "
-        "anderen Anbieters (zum Beispiel ein über eine API eingebundenes Basismodell)?",
-    },
-    reason={
-        Language.EN: "It builds its own system on a general-purpose AI model, so it is the "
-        "provider of that system; the model provider's own duties (Art. 53) are flagged.",
-        Language.DE: "Es baut ein eigenes System auf einem KI-Modell mit allgemeinem "
-        "Verwendungszweck auf und ist daher dessen Anbieter; die eigenen Pflichten des "
-        "Modellanbieters (Art. 53) werden ausgewiesen.",
-    },
-)
-SWITCHES: Mapping[str, KeyQuestion] = {
-    "own_brand": KeyQuestion(
-        id="own_brand",
-        article="art:25:1:a",
-        question={
-            Language.EN: "Do you put your own name or trademark on the system?",
-            Language.DE: "Bringen Sie Ihren eigenen Namen oder Ihre Marke auf dem System an?",
-        },
-        reason={
-            Language.EN: "Art. 25(1)(a): it puts its own name or trademark on the high-risk "
-            "system, so it is considered its provider.",
-            Language.DE: "Art. 25 Abs. 1 Buchst. a: Es bringt seinen Namen oder seine Marke auf "
-            "dem Hochrisiko-System an und gilt daher als dessen Anbieter.",
-        },
-    ),
-    "substantial_modification": KeyQuestion(
-        id="substantial_modification",
-        article="art:25:1:b",
-        question={
-            Language.EN: "Have you changed the system beyond the provider's configuration "
-            "options, for example by retraining it or changing how it decides?",
-            Language.DE: "Haben Sie das System über die Einstellmöglichkeiten des Anbieters "
-            "hinaus verändert, zum Beispiel neu trainiert oder seine Entscheidungslogik geändert?",
-        },
-        reason={
-            Language.EN: "Art. 25(1)(b): it substantially modifies the high-risk system, so it "
-            "is considered its provider.",
-            Language.DE: "Art. 25 Abs. 1 Buchst. b: Es nimmt eine wesentliche Veränderung am "
-            "Hochrisiko-System vor und gilt daher als dessen Anbieter.",
-        },
-    ),
-    "changed_purpose": KeyQuestion(
-        id="changed_purpose",
-        article="art:25:1:c",
-        question={
-            Language.EN: "Do you use the system for a purpose its provider did not intend?",
-            Language.DE: "Nutzen Sie das System für einen Zweck, den sein Anbieter nicht "
-            "vorgesehen hat?",
-        },
-        reason={
-            Language.EN: "Art. 25(1)(c): it uses the system for a new purpose that makes it "
-            "high-risk, so it is considered its provider.",
-            Language.DE: "Art. 25 Abs. 1 Buchst. c: Es ändert die Zweckbestimmung so, dass das "
-            "System hochriskant wird, und gilt daher als dessen Anbieter.",
-        },
-    ),
-}
-"""The Art. 25(1) switches, in the order of the Act; keys are `RoleAnswer` fields."""
-
-ROLE_NAMES: Mapping[Language, Mapping[Role, str]] = {
-    Language.EN: {role: role.value for role in Role},
-    Language.DE: {
-        Role.PROVIDER: "Anbieter",
-        Role.DEPLOYER: "Betreiber",
-        Role.IMPORTER: "Einführer",
-        Role.DISTRIBUTOR: "Händler",
-    },
-}
-TEXTS: Mapping[Language, Mapping[str, str]] = {
-    Language.EN: {
-        "role": "Role: {role}.",
-        "assumption": "Working assumption: provider, pending an answer to: {question}",
-        "duties": "{count} duties listed for a {risk_class} system ({version} text).",
-        "dropped": "{count} conditional duties left out because their condition doesn't apply.",
-        "no_table": "No duties listed: the obligations table covers only the {version} text.",
-    },
-    Language.DE: {
-        "role": "Rolle: {role}.",
-        "assumption": "Arbeitsannahme: Anbieter, bis diese Frage beantwortet ist: {question}",
-        "duties": "{count} Pflichten für ein System der Klasse {risk_class} ({version} Fassung).",
-        "dropped": "{count} bedingte Pflichten entfallen, weil ihre Bedingung nicht erfüllt ist.",
-        "no_table": "Keine Pflichten aufgeführt: Die Pflichtentabelle deckt nur die "
-        "{version} Fassung ab.",
-    },
-}
-
-
 # --- The class the earlier checks settled -----------------------------------------------------
 
 
@@ -245,54 +156,113 @@ def working_class(state: EngineState) -> tuple[RiskClass, HighRiskRoute | None]:
 
 @dataclass(frozen=True)
 class RoleSettlement:
-    """The role the rules give, the key question that made it (a switch or GPAI), the deciding
-    facts still missing (the role is then the working assumption) and the answers relied on."""
+    """What the rules give: the role and a role kept next to it, the key question that made the
+    company a provider (a switch or GPAI), the deciding facts still missing (the role is then the
+    working assumption), other open questions, and the answers relied on."""
 
+    base: Role | None
     role: Role
-    made_by: KeyQuestion | None
-    missing: tuple[KeyQuestion, ...]
+    also_role: Role | None
+    gpai: Answer
     used: tuple[KeyFact | RoleFact, ...]
-
-    @property
-    def is_gpai_based(self) -> bool:
-        return self.made_by is BUILDS_ON_GPAI
+    made_by: KeyQuestion | None = None
+    missing: tuple[KeyQuestion, ...] = ()
+    open_questions: tuple[KeyQuestion, ...] = ()
 
     def switch_reason(self, language: Language) -> str | None:
         """Why the Art. 25 switch to provider applies, when one does."""
-        if self.made_by is None or self.is_gpai_based or self.made_by.reason is None:
+        if self.made_by is None or self.made_by is BUILDS_ON_GPAI or self.made_by.reason is None:
             return None
         return self.made_by.reason[language]
+
+    def questions(self) -> tuple[KeyQuestion, ...]:
+        """Every unknown fact worth asking, the deciding ones first."""
+        return (*self.missing, *self.open_questions)
+
+    def cited_articles(self) -> tuple[str, ...]:
+        """The provisions the role rests on: the base role's definition (provider and deployer
+        when it is unknown), the switch or GPAI rule that made a provider, and the switches an
+        assumption waits on."""
+        bases = (self.base,) if self.base else (Role.PROVIDER, Role.DEPLOYER)
+        made = (self.made_by.article,) if self.made_by else ()
+        waiting = tuple(q.article for q in self.missing if q is not OPERATOR_ROLE)
+        return tuple(dict.fromkeys((*(ROLE_ARTICLES[r] for r in bases), *made, *waiting)))
+
+
+def _kept_role(base: Role | None, *, is_assumed: bool) -> Role | None:
+    """The role a company that became (or is assumed to be) the provider keeps: a deployer still
+    uses the system, and so is assumed to when its role is unknown; under a working assumption
+    an importer or distributor keeps its own duties too."""
+    if base is None or base is Role.DEPLOYER:
+        return Role.DEPLOYER
+    return base if is_assumed and base is not Role.PROVIDER else None
+
+
+def _settlement(
+    answer: RoleAnswer,
+    role: Role,
+    used: tuple[KeyFact | RoleFact, ...],
+    made_by: KeyQuestion | None = None,
+    missing: tuple[KeyQuestion, ...] = (),
+    open_questions: tuple[KeyQuestion, ...] = (),
+) -> RoleSettlement:
+    base = answer.role.role
+    kept = None if role is base else _kept_role(base, is_assumed=bool(missing))
+    return RoleSettlement(
+        base=base,
+        role=role,
+        also_role=kept,
+        gpai=answer.builds_on_gpai.answer,
+        used=used,
+        made_by=made_by,
+        missing=missing,
+        open_questions=open_questions,
+    )
 
 
 def settle_role(answer: RoleAnswer, risk_class: RiskClass) -> RoleSettlement:
     """Apply the GPAI rule and the Art. 25(1) switches to the model's answers."""
-    gpai = answer.builds_on_gpai
-    used: tuple[KeyFact | RoleFact, ...] = (answer.role, gpai)
-    if gpai.answer is Answer.YES:
-        return RoleSettlement(Role.PROVIDER, BUILDS_ON_GPAI, (), used)
-    base = answer.role.role
+    gpai, base = answer.builds_on_gpai.answer, answer.role.role
+    used: tuple[KeyFact | RoleFact, ...] = (answer.role, answer.builds_on_gpai)
+    gpai_open = (BUILDS_ON_GPAI,) if gpai is Answer.UNKNOWN else ()
+    if gpai is Answer.YES:
+        return _settlement(answer, Role.PROVIDER, used, made_by=BUILDS_ON_GPAI)
     if base is None:
-        return RoleSettlement(Role.PROVIDER, None, (OPERATOR_ROLE,), used)
-    missing: tuple[KeyQuestion, ...] = ()
-    if base is not Role.PROVIDER and risk_class is RiskClass.HIGH_RISK:
+        return _settlement(answer, Role.PROVIDER, used, missing=(OPERATOR_ROLE, *gpai_open))
+    if base is Role.PROVIDER:
+        return _settlement(answer, Role.PROVIDER, used, open_questions=gpai_open)
+    unknown: tuple[KeyQuestion, ...] = ()
+    if risk_class is RiskClass.HIGH_RISK:
         for field, switch in SWITCHES.items():
             key_fact: KeyFact = getattr(answer, field)
             used = (*used, key_fact)
             if key_fact.answer is Answer.YES:
-                return RoleSettlement(Role.PROVIDER, switch, (), used)
+                return _settlement(
+                    answer, Role.PROVIDER, used, made_by=switch, open_questions=gpai_open
+                )
             if key_fact.answer is Answer.UNKNOWN:
-                missing = (*missing, switch)
-    if gpai.answer is Answer.UNKNOWN and base is not Role.PROVIDER:
-        missing = (BUILDS_ON_GPAI, *missing)
-    return RoleSettlement(Role.PROVIDER if missing else base, None, missing, used)
+                unknown = (*unknown, switch)
+    missing = (*gpai_open, *unknown)
+    if missing:
+        return _settlement(answer, Role.PROVIDER, used, missing=missing)
+    return _settlement(answer, base, used)
 
 
 # --- Conditional duties -------------------------------------------------------------------------
 
 
+def _is_art_5(article: str) -> bool:
+    return article == PROHIBITION_ARTICLE or article.startswith(f"{PROHIBITION_ARTICLE}:")
+
+
 def _is_settled_elsewhere(obligation: Obligation) -> bool:
-    return obligation.article.startswith(TRANSPARENCY_PREFIX) or (
-        obligation.article == GPAI_FLAG_ARTICLE
+    """Rows another finding settles: Art. 50 (transparency), Art. 53(1)(b) (the GPAI answer),
+    Art. 5 (the class: E4 found the practice) and Art. 6(4) (E5's Art. 6(3) exemption)."""
+    article = obligation.article
+    return (
+        article.startswith(TRANSPARENCY_PREFIX)
+        or article in (GPAI_FLAG_ARTICLE, EXEMPTION_ARTICLE)
+        or _is_art_5(article)
     )
 
 
@@ -302,8 +272,9 @@ def conditions_to_ask(
     law_version: LawVersion,
     table: ObligationTable | None = None,
 ) -> tuple[str, ...]:
-    """The distinct conditions of every role's duties at this class, in table order; empty when
-    the table doesn't hold `law_version`. Asked before the role is known, in one call."""
+    """The distinct conditions of every role's duties at this class, in table order, less those
+    another finding settles; empty when the table doesn't hold `law_version`. Asked before the
+    role is known, in one call."""
     try:
         lists = [list_obligations(role, risk_class, route, law_version, table) for role in Role]
     except UnknownLawVersionError:
@@ -323,18 +294,62 @@ def condition_ids(conditions: Sequence[str]) -> dict[str, str]:
 
 
 def _applies(
-    obligation: Obligation,
-    answers: Mapping[str, Answer],
-    transparency_duties: tuple[str, ...],
-    is_gpai_based: bool,
+    obligation: Obligation, answers: Mapping[str, Answer], state: EngineState, gpai: Answer
 ) -> bool:
     if obligation.applies_if is None:
         return True
-    if obligation.article.startswith(TRANSPARENCY_PREFIX):
-        return obligation.article in transparency_duties
-    if obligation.article == GPAI_FLAG_ARTICLE:
-        return is_gpai_based
+    article = obligation.article
+    if article.startswith(TRANSPARENCY_PREFIX):
+        return article in state.get("transparency_duties", ())
+    if article == GPAI_FLAG_ARTICLE:
+        return gpai is not Answer.NO
+    if article == EXEMPTION_ARTICLE:
+        return state.get("annex_iii_exempt", False)
+    if _is_art_5(article):
+        return True  # listed only for the prohibited class, which E4's finding settled
     return answers.get(obligation.applies_if, Answer.UNKNOWN) is not Answer.NO
+
+
+# --- Citations ----------------------------------------------------------------------------------
+
+
+class ProvisionTextError(LookupError):
+    """A provision the step cites has no text in the parsed AI Act."""
+
+
+@cache
+def _provision_texts(path: Path) -> Mapping[str, str]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as error:
+        raise ProvisionTextError(f"cannot read {path}: {error}") from error
+    rows = (json.loads(line) for line in lines if line.strip())
+    return {row["provision_id"]: row["text"] for row in rows}
+
+
+def citations(
+    articles: Sequence[str], law_version: LawVersion, language: Language, data_dir: Path
+) -> tuple[Citation, ...]:
+    """Citations quoting `articles` from the parsed AI Act text of `law_version`.
+
+    A stopgap until `get_provision` (C5) serves the same text from the corpus. The document id is
+    the manifest key, which the citation check expects (V2).
+    """
+    doc_key = ACT_DOCUMENTS[law_version]
+    texts = _provision_texts(data_dir / "parsed" / f"{doc_key}.{language.value}.jsonl")
+    missing = [article for article in articles if article not in texts]
+    if missing:
+        raise ProvisionTextError(f"{doc_key}.{language.value} has no {', '.join(missing)}")
+    return tuple(
+        Citation(
+            provision_id=article,
+            document_id=doc_key,
+            law_version=law_version,
+            language=language,
+            quote=texts[article],
+        )
+        for article in articles
+    )
 
 
 # --- The step -----------------------------------------------------------------------------------
@@ -361,36 +376,52 @@ def _question(key: KeyQuestion, language: Language) -> FollowUpQuestion:
     return FollowUpQuestion(id=key.id, text=key.question[language], about=key.article)
 
 
+def _decision(settled: RoleSettlement, language: Language, summary: Sequence[str]) -> str:
+    names, texts = ROLE_NAMES[language], TEXTS[language]
+    also = settled.also_role
+    sentences = [
+        texts["role"].format(role=names[settled.role])
+        if also is None
+        else texts["role_also"].format(role=names[settled.role], also=names[also])
+    ]
+    if settled.made_by and settled.made_by.reason:
+        sentences.append(settled.made_by.reason[language])
+    if settled.missing:
+        question = settled.missing[0].question[language]
+        sentences.append(texts["assumption"].format(question=question))
+    return " ".join((*sentences, *summary))
+
+
 def to_outcome(
-    answer: RoleAnswer, state: EngineState, table: ObligationTable | None = None
+    answer: RoleAnswer,
+    state: EngineState,
+    table: ObligationTable | None = None,
+    data_dir: Path | None = None,
 ) -> CheckOutcome:
-    """The role_obligations step and its finding, from the model's answer and the state."""
+    """The role_obligations step and its finding, from the model's answer and the state.
+    `data_dir` holds the parsed AI Act the citations quote (default: the settings')."""
     language = state["language"]
     risk_class, _ = working_class(state)
     settled = settle_role(answer, risk_class)
-    texts = TEXTS[language]
     missing = settled.missing[0] if settled.missing else None
-    made_by = settled.made_by
     obligations, summary = select_obligations(answer, state, settled, table)
-    decision = (
-        texts["role"].format(role=ROLE_NAMES[language][settled.role]),
-        *((made_by.reason[language],) if made_by and made_by.reason else ()),
-        *((texts["assumption"].format(question=missing.question[language]),) if missing else ()),
-        *summary,
-    )
+    source = data_dir or get_settings().aiact_data_dir
     step = StepResult(
         step=StepName.ROLE_OBLIGATIONS,
-        decision=" ".join(decision),
+        decision=_decision(settled, language, summary),
         facts_used=_facts_used(settled.used, state.get("facts", ())),
+        citations=citations(settled.cited_articles(), state["law_version"], language, source),
         status=Status.NEEDS_MORE_INFORMATION if missing else Status.DECIDED,
         missing_fact=_question(missing, language) if missing else None,
     )
     finding = RoleFinding(
         role=settled.role,
+        also_role=settled.also_role,
         role_switch_reason=settled.switch_reason(language),
         obligations=obligations,
     )
-    return CheckOutcome(step=step, role=finding)
+    questions = tuple(_question(key, language) for key in settled.questions())
+    return CheckOutcome(step=step, role=finding, follow_up_questions=questions)
 
 
 def select_obligations(
@@ -399,27 +430,27 @@ def select_obligations(
     settled: RoleSettlement,
     table: ObligationTable | None = None,
 ) -> tuple[tuple[Obligation, ...], tuple[str, ...]]:
-    """The settled role's duties, less those whose condition doesn't apply, and the sentences
-    that summarise them for the step's decision."""
+    """The duties of the settled role and the role it keeps, less those whose condition doesn't
+    apply, and the sentences that summarise them for the step's decision."""
     language, law_version = state["language"], state["law_version"]
     risk_class, route = working_class(state)
     texts = TEXTS[language]
+    roles = (settled.role, *((settled.also_role,) if settled.also_role else ()))
     try:
-        listed = list_obligations(settled.role, risk_class, route, law_version, table)
+        lists = [list_obligations(role, risk_class, route, law_version, table) for role in roles]
     except UnknownLawVersionError:
-        return (), (texts["no_table"].format(version=LawVersion.AMENDED.value),)
+        held = (table or default_table()).law_version.value
+        return (), (texts["no_table"].format(version=held, asked=law_version.value),)
+    listed = tuple(dict.fromkeys(o for duties in lists for o in duties.obligations))
     ids = condition_ids(conditions_to_ask(risk_class, route, law_version, table))
     by_id = {given.id: given.answer for given in answer.conditions}
     answers = {condition: by_id.get(cid, Answer.UNKNOWN) for condition, cid in ids.items()}
-    duties = state.get("transparency_duties", ())
-    kept = tuple(
-        o for o in listed.obligations if _applies(o, answers, duties, settled.is_gpai_based)
-    )
-    version = listed.law_version.value
+    kept = tuple(o for o in listed if _applies(o, answers, state, settled.gpai))
+    version = lists[0].law_version.value
     summary = (
         texts["duties"].format(count=len(kept), risk_class=risk_class.value, version=version),
     )
-    dropped = len(listed.obligations) - len(kept)
+    dropped = len(listed) - len(kept)
     if dropped:
         summary = (*summary, texts["dropped"].format(count=dropped))
     return kept, summary
