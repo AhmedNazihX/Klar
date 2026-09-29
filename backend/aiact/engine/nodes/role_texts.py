@@ -116,6 +116,7 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
     Language.EN: {
         "role": "Role: {role}.",
         "role_also": "Role: {role}, and also {also}.",
+        "assumption_also": "Working assumption: also {also}, pending an answer to: {question}",
         "assumption": "Working assumption: provider, keeping the other role's duties, pending an "
         "answer to: {question}",
         "duties": "{count} duties listed for a {risk_class} system ({version} text).",
@@ -129,6 +130,8 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
     Language.DE: {
         "role": "Rolle: {role}.",
         "role_also": "Rolle: {role}, zugleich {also}.",
+        "assumption_also": "Arbeitsannahme: zugleich {also}, bis diese Frage beantwortet ist: "
+        "{question}",
         "assumption": "Arbeitsannahme: Anbieter, mit den Pflichten der anderen Rolle, bis diese "
         "Frage beantwortet ist: {question}",
         "duties": "{count} Pflichten für ein System der Klasse {risk_class} ({version} Fassung).",

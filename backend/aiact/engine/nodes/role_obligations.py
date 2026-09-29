@@ -306,11 +306,16 @@ class Kept(StrEnum):
     YES = "yes"
     CONDITION_NOT_MET = "condition_not_met"
     NOT_FOUND = "not_found"
-    """Another check settles the row and didn't report it (or hasn't run: E5, E6)."""
+    """The check that settles the row is absent from the run (a scripted or partial run). When
+    it ran and didn't report the row, it decided the row doesn't apply: `CONDITION_NOT_MET`."""
 
 
-def _found(is_found: bool) -> Kept:
-    return Kept.YES if is_found else Kept.NOT_FOUND
+def _found(is_found: bool, settled_by: StepName, state: EngineState) -> Kept:
+    """A row another check settles: kept when reported; otherwise not met if that check ran."""
+    if is_found:
+        return Kept.YES
+    ran = any(step.step is settled_by for step in state.get("steps", ()))
+    return Kept.CONDITION_NOT_MET if ran else Kept.NOT_FOUND
 
 
 def _kept(
@@ -320,9 +325,9 @@ def _kept(
         return Kept.YES
     article = obligation.article
     if article.startswith(TRANSPARENCY_PREFIX):
-        return _found(article in state.get("transparency_duties", ()))
+        return _found(article in state.get("transparency_duties", ()), StepName.TRANSPARENCY, state)
     if article == EXEMPTION_ARTICLE:
-        return _found(state.get("annex_iii_exempt", False))
+        return _found(state.get("annex_iii_exempt", False), StepName.HIGH_RISK, state)
     if article == GPAI_FLAG_ARTICLE:
         is_met = gpai is not Answer.NO
     elif _is_art_5(article):
@@ -347,6 +352,8 @@ def _provision_texts(path: Path) -> Mapping[str, str]:
         return {row["provision_id"]: row["text"] for row in rows}
     except OSError as error:
         raise ProvisionTextError(f"cannot read {path}: {error}") from error
+    except UnicodeDecodeError as error:
+        raise ProvisionTextError(f"{path} is not valid UTF-8") from error
     except json.JSONDecodeError as error:
         raise ProvisionTextError(f"{path}: line {error.lineno} is not valid JSON") from error
     except (KeyError, TypeError) as error:
@@ -414,7 +421,11 @@ def _decision(settled: RoleSettlement, language: Language, summary: Sequence[str
         sentences.append(settled.made_by.reason[language])
     if settled.missing:
         question = settled.missing[0].question[language]
-        sentences.append(texts["assumption"].format(question=question))
+        if settled.made_by is BUILDS_ON_GPAI and also is not None:
+            # The GPAI rule settled the provider role; only the kept role is assumed.
+            sentences.append(texts["assumption_also"].format(also=names[also], question=question))
+        else:
+            sentences.append(texts["assumption"].format(question=question))
     return " ".join((*sentences, *summary))
 
 

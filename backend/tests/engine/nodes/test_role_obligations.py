@@ -310,7 +310,10 @@ def test_gpai_with_an_unknown_role_asks_whether_it_also_deploys() -> None:
     assert outcome.step.missing_fact.id == "operator_role"
     assert [q.id for q in outcome.follow_up_questions] == ["operator_role"]
     assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
-    assert "Working assumption: provider" in outcome.step.decision
+    assert "Working assumption: also deployer, pending an answer to:" in outcome.step.decision
+    assert "Working assumption: provider" not in outcome.step.decision  # the GPAI rule settled it
+    german = to_outcome(answer, state(language=Language.DE)).step.decision
+    assert "Arbeitsannahme: zugleich Betreiber" in german
 
 
 def test_an_unknown_gpai_base_keeps_the_flag_and_asks_a_provider() -> None:
@@ -517,16 +520,45 @@ def test_a_broken_parsed_text_raises_a_provision_error(
         citations(["art:3:4"], LawVersion.AMENDED, Language.EN, tmp_path)
 
 
-def test_a_duty_waiting_on_an_absent_finding_is_not_called_a_failed_condition() -> None:
+def test_a_parsed_text_that_is_not_utf8_raises_a_provision_error(tmp_path: Path) -> None:
+    parsed = tmp_path / "parsed"
+    parsed.mkdir()
+    (parsed / "ai-act-consolidated.en.jsonl").write_bytes(b"\xff\xfe not utf-8\n")
+    with pytest.raises(ProvisionTextError, match="not valid UTF-8"):
+        citations(["art:3:4"], LawVersion.AMENDED, Language.EN, tmp_path)
+
+
+def _with_steps(given: EngineState, *names: StepName) -> EngineState:
+    ran = tuple(StepResult(step=name, decision=f"{name.value} ran") for name in names)
+    return {**given, "steps": ran}
+
+
+def test_rows_the_earlier_checks_left_out_count_as_conditions_not_met() -> None:
+    # Transparency reported only Art. 50(1) and the high-risk step no Art. 6(3) exemption, so
+    # Art. 50(2) and Art. 6(4) don't apply: nothing about the input is missing.
+    answer = role_answer(
+        Role.PROVIDER,
+        risk_class=RiskClass.LIMITED_RISK,
+        route=None,
+        builds_on_gpai=key_fact(Answer.UNKNOWN),  # keeps the GPAI flag out of the count
+    )
+    given = state(RiskClass.LIMITED_RISK, None, transparency_duties=("art:50:1",))
+    ran = _with_steps(given, StepName.HIGH_RISK, StepName.TRANSPARENCY)
+    decision = to_outcome(answer, ran).step.decision
+    assert "2 conditional duties left out because their condition doesn't apply" in decision
+    assert "no earlier check reported" not in decision
+
+
+def test_rows_whose_settling_check_is_absent_say_so() -> None:
     answer = role_answer(
         Role.PROVIDER,
         risk_class=RiskClass.MINIMAL_RISK,
         route=None,
         builds_on_gpai=key_fact(Answer.UNKNOWN),  # keeps the GPAI flag, so only Art. 6(4) drops
     )
-    decision = to_outcome(answer, state(RiskClass.MINIMAL_RISK, None)).step.decision
-    assert "1 duties left out because no earlier check reported the finding" in decision
-    assert "condition doesn't apply" not in decision
+    partial = to_outcome(answer, state(RiskClass.MINIMAL_RISK, None)).step.decision
+    assert "1 duties left out because no earlier check reported the finding" in partial
+    assert "condition doesn't apply" not in partial
 
 
 # --- Facts used ---------------------------------------------------------------------------------
