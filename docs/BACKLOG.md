@@ -395,9 +395,10 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **P2b · MCP `classify_system`** · Deps: P2a, E10 · Type: agent
   Output: the fourth tool, with a bring-your-own OpenRouter key. DoD: a demo from one MCP client (the user picks it; INIT open question) is recorded in the README.
 
-- [ ] **P3 · User data + RLS** · Deps: F4 · Parallel: the engine · Type: agent
+- [x] **P3 · User data + RLS** · Deps: F4 · Parallel: the engine · Type: agent
   Context: INIT › Scope (Storage), Ethical considerations (Confidential information). Output: migration `004_user_data.sql` (inventories, systems, classifications, interview_answers, all keyed by `auth.uid()` from anonymous sign-in; RLS on every table), a delete-my-data RPC, a pg_cron cleanup of inactive anonymous data (retention period set by the user), and export/import JSON.
   DoD: RLS tests show user A cannot read user B's rows; delete and cleanup are tested.
+  **Outcome:** migration *_user_data.sql: owner-only RLS on 4 tables (composite FKs keep children under their owner); server-owned activity timestamps (updated_at always now(), created_at capped), so no client can block the daily pg_cron purge of anonymous users inactive for 30 days (decision 013); delete/export/import RPCs (invoker, authenticated only), import keeps dates and order; 256 kB cap on classifications.result; anonymous sign-ins on; 23 db tests.
 
 - [ ] **P4 · Frontend scaffold** · Deps: – (the client is generated after P1) · Type: agent
   Context: Design reference (above), `Brand` artboard. Output: `frontend/` (Vite, React, TS, Tailwind, shadcn/ui, TanStack Router and Query, react-i18next with EN and DE, React Hook Form with Zod, a generated API client, Supabase anonymous auth, ESLint, Prettier, Vitest), with the Brand board's colours, fonts, glass panel and risk-class pills set up as Tailwind theme tokens and shared components. DoD: `pnpm build && pnpm test` pass; the language switch works; the tokens match the Brand board; `docs/DEPENDENCIES.md` (F8) also lists the frontend packages from the pnpm lockfile, and `aiact deps check` covers them.
@@ -407,6 +408,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 - [ ] **P6 · AI inventory** · Deps: P5, P3 · Type: agent
   Context: Design reference (above), `Inventory` artboard. Output: add and classify many systems, an overview table, a company-level summary (the stricter reading flagged). DoD: component and API tests.
+  **From P3's review:** export and import go through `public.export_my_data()` / `public.import_my_data(jsonb)`. Two schema follow-ups, each a new migration (the one-schema-story rule applies): (1) `private.stamp_timestamps()` caps `created_at` at `now()` but sets no lower limit, so a client can store `-infinity` or year 0001, which breaks sorting, the export and date decoding (psycopg fails on it); add a lower limit, e.g. no earlier than the owner's `auth.users.created_at`. (2) The 5 MB import cap can reject a genuine export (results may be up to 256 kB each, so about 170 typical or 20 maximum-size classifications exceed it); raise the cap to match the largest export, and add a round-trip test at that size.
 
 - [ ] **P7 · Q&A with citations** · Deps: C6, P1 · Type: agent
   Output: `aiact/qa/` (a retrieval-grounded answer that cites provisions, steers away from "are we compliant?", and stays within the corpus) and the UI panel. DoD: V6 faithfulness on the Q&A set is recorded.

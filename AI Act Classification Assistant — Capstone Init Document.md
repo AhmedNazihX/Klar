@@ -364,7 +364,7 @@ The main ethical risk is a wrong classification that a company trusts. Calling a
 - Does OpenRouter pass through prompt caching for the chosen models and offer EU routes? (Embeddings are confirmed: Qwen3-Embedding-8B is served by Nebius, DeepInfra and SiliconFlow.)
 - Embedding details to fix in week one: the exact query instruction text, whether 1536 or 1024 truncated dimensions holds up on the Annex-matching set, and that the pinned provider returns normalised vectors. Stored vectors and query vectors must always come from the same provider; switching providers means re-embedding the corpus.
 - What exact shape should the structured result and the MCP tool results have (text, version, status, language, citations, evidence tags, disclaimer)?
-- Retention period for inactive anonymous data.
+- Retention period for inactive anonymous data. *Settled: 30 days (docs/decisions/013-anonymous-data-retention.md).*
 - Which MCP client to demo with.
 - Hosting providers, at the deployment step.
 
