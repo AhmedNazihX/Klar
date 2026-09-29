@@ -47,6 +47,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── academic.py          davidath scenarios → cases + overrides; `aiact evaluate academic-import|academic-sample` (B12)
 │   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact evaluate split` (B3)
 │   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact evaluate similarity` (B4)
+│   │   │   ├── isolation.py         isolation measurements: Pile B tags, n-gram and embedding closeness to the
+│   │   │   │                        retrievable corpus; `aiact evaluate isolation-embed` (B13)
 │   │   │   ├── label_filter.py      second-model label filter; `aiact evaluate label-filter` (B9)
 │   │   │   ├── runner.py            `aiact evaluate run`: classifier registry, subset, exclusions, cost cap (V1)
 │   │   │   ├── records.py           writes eval_runs / eval_case_results over a direct connection (V1)
@@ -90,6 +92,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── academic/                <risk_class>.yaml (generated), SOURCE.md (CC BY 4.0) (B12)
 │   │   ├── academic_overrides.yaml  spot-check label overrides the academic import applies (B12)
 │   │   └── annex_match/             (X0)
+│   ├── isolation/                   embeddings.json: vectors of the benchmark texts for the isolation check,
+│   │                                never in the corpus tables; `aiact evaluate isolation-embed` (B13)
 │   ├── judge_validation/            hand-labelled judge cases (V4)
 │   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1)
 │   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10)
