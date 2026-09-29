@@ -103,6 +103,13 @@ LOADS = (
                      AI_ACT_IN_FORCE),
         ProvisionRow("art:3:1:a", "art:3:1", AI_ACT_IN_FORCE, "Article 3", "a plimbo point.",
                      AI_ACT_IN_FORCE),
+        # Word statistics count units, not slices: snorfle is in 2 units, quibbet in 1 unit with
+        # 2 slices. The snorfle rows come first, so a tie would rank them first.
+        ProvisionRow("art:5", None, None, "Article 5", "Snorfle.", AI_ACT_IN_FORCE),
+        ProvisionRow("art:6", None, None, "Article 6", "Snorfle.", AI_ACT_IN_FORCE),
+        ProvisionRow("art:4", None, None, "Article 4", "Old quibbet.", AI_ACT_IN_FORCE,
+                     OMNIBUS_IN_FORCE),
+        ProvisionRow("art:4", None, None, "Article 4", "New quibbet.", OMNIBUS_IN_FORCE),
     )),
     DocumentLoad(replace(AMENDED, language="de"), (
         ProvisionRow("art:1", None, None, "Artikel 1", "Pflichten für Quuxsysteme.",
@@ -134,6 +141,8 @@ LOADS = (
                          GUIDE_PUBLISHED, source_example_id=f"hr-ex-10{n}", is_held_out=True)
             for n in range(1, 4)
         ),
+        ProvisionRow("guide:test-c6-guide:ex:104", None, None, None, "A voiceprintzz example.",
+                     GUIDE_PUBLISHED, source_example_id="hr-ex-104", is_held_out=True),
     )),
     DocumentLoad(CODE, (
         ProvisionRow("guide:test-c6-code:para:1", None, None, None, "A code on zorblax.",
@@ -347,6 +356,27 @@ def test_word_statistics_ignore_held_out_rows_and_the_omnibus(corpus: psycopg.Co
     glimmet = rank.get("guide:test-c6-guide:para:4")
     assert brastle is not None
     assert glimmet is None or brastle < glimmet
+
+
+def test_word_statistics_count_each_unit_once(corpus: psycopg.Connection):
+    hits = _search(corpus, "quibbet snorfle", [0.0, 0.0, 1.0], as_of=AFTER_OMNIBUS).hits
+    rank = {h.provision_id: h.keyword_rank for h in hits if h.doc_key == AMENDED.doc_key}
+    quibbet = rank["art:4"]
+    assert quibbet is not None
+    assert all(r is not None and quibbet < r for r in (rank["art:5"], rank["art:6"]))
+
+
+def test_a_word_only_held_out_rows_use_finds_them_only_when_opted_in(corpus: psycopg.Connection):
+    """The statistics never count held-out rows, but such a word still gets a weight, so the gap
+    run (V8) can find an example by its own words."""
+    example = "guide:test-c6-guide:ex:104"
+    default = _search(corpus, "voiceprintzz", [0.0, 0.0, 1.0], as_of=AFTER_OMNIBUS)
+    assert example not in {h.provision_id for h in default.hits}
+    assert all(h.keyword_rank is None for h in default.hits)
+    opted_in = _search(corpus, "voiceprintzz", [0.0, 0.0, 1.0], as_of=AFTER_OMNIBUS,
+                       include_held_out=True)  # fmt: skip
+    keyword = [h.provision_id for h in opted_in.hits if h.keyword_rank is not None]
+    assert keyword == [example]
 
 
 def test_the_iterative_scan_setting_does_not_leak(db: psycopg.Connection):

@@ -8,8 +8,9 @@ No model is involved apart from the query embedding.
   (`PREFIX_LANGUAGES`), whose stemmer is uneven: `syst:*` matches System and Systeme. A row
   scores the summed IDF (`ln(rows / rows with the word)`) of the words it has; words in more than
   `MAX_TERM_SHARE` (and `MIN_COMMON_ROWS`) of the rows are dropped, since a soft description is
-  mostly such words and they would flood the arm with noise. The counts cover the searched
-  language and law version only, never held-out rows or the Omnibus (`STATISTICS_SCOPE`).
+  mostly such words and they would flood the arm with noise. The counts cover each unit of the
+  searched language and law version once, never held-out rows or the Omnibus
+  (`STATISTICS_SCOPE`); a word they don't contain gets the highest weight.
 - **Fusion.** Each arm keeps its best `CANDIDATES` rows; weighted Reciprocal Rank Fusion adds
   `weight / (RRF_K + rank)` per arm. The keyword arm weighs `KEYWORD_WEIGHT`: soft descriptions
   rarely share the law's wording, so its top ranks shouldn't displace the meaning arm's.
@@ -99,8 +100,12 @@ STATISTICS_SCOPE: LiteralString = """
          or (d.law_version = 'original' and p.provision_id like 'recital:%%'))
 """
 """The rows the keyword arm's word statistics count: the searched language and law version,
-without held-out examples or the Omnibus, so neither can sway a default ranking (decision 012).
-No date filter: the statistics describe the text, not one day of it."""
+without held-out examples or the Omnibus, so neither can sway a ranking (decision 012), also not
+when `include_held_out` is set. Each unit (document, provision id) counts once, however many
+time slices it has; no date filter, since the statistics describe the text, not one day of it.
+A word no counted unit has (for instance one only held-out examples use) gets the highest
+weight, as if it were in one unit: it can only match a held-out row, and only when those are
+opted in, so the gap run (V8) can still find an example by its own words."""
 
 HYBRID_SEARCH: LiteralString = """
     with recursive vector_hits as materialized (
@@ -123,21 +128,25 @@ HYBRID_SEARCH: LiteralString = """
       from unnest(to_tsvector(%(fts_config)s::regconfig, %(query)s))
       where position(E'\\\\' in lexeme) = 0
     ),
-    statistics_rows as materialized (
-      select p.fts
+    statistics_total as materialized (
+      select greatest(count(distinct (p.document_id, p.provision_id)), 1) as total
       from provisions p
       join documents d on d.id = p.document_id and d.language = p.language
       where {statistics_scope}
     ),
+    -- One count per query word, straight on provisions so provisions_fts_idx serves it. The
+    -- distinct count costs about 1-2 ms a word (about 60 ms for a 40-word description).
     term_weights as materialized (
-      select t.term, ln(n.total::float8 / f.frequency) as idf
+      select t.term, ln(n.total::float8 / greatest(f.frequency, 1)) as idf
       from query_terms t
-      cross join (select count(*) as total from statistics_rows) n
+      cross join statistics_total n
       cross join lateral (
-        select count(*) as frequency from statistics_rows r where r.fts @@ t.term
+        select count(distinct (p.document_id, p.provision_id)) as frequency
+        from provisions p
+        join documents d on d.id = p.document_id and d.language = p.language
+        where p.fts @@ t.term and {statistics_scope}
       ) f
-      where f.frequency > 0
-        and f.frequency <= greatest(n.total * %(max_term_share)s, %(min_common_rows)s)
+      where f.frequency <= greatest(n.total * %(max_term_share)s, %(min_common_rows)s)
     ),
     keyword_ranked as (
       select p.id, row_number() over (order by sum(w.idf) desc, p.id) as rank
