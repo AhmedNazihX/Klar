@@ -1,0 +1,52 @@
+{
+  "app": {
+    "name": "Klar",
+    "tagline": "Einstufung nach der KI-Verordnung, die Sie nachprüfen können.",
+    "home": "Klar, Startseite",
+    "notice": "Sie nutzen ein KI-System. Ergebnisse sind eine Orientierungshilfe, keine Rechtsberatung."
+  },
+  "language": {
+    "label": "Sprache",
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "home": {
+    "title": "Ist Ihr KI-Werkzeug nach der KI-Verordnung ein Hochrisiko-System?",
+    "body": "Beschreiben Sie das Werkzeug in eigenen Worten. Klar geht die Prüfungen der Verordnung der Reihe nach durch, zeigt jeden Schritt und zitiert die Vorschrift, auf die er sich stützt."
+  },
+  "brand": {
+    "title": "Marken-Tokens",
+    "intro": "Farben, Schrift, Glas und Pillen vom Brand-Board, so wie die App sie darstellt.",
+    "colour": "Farbe",
+    "pills": "Risikoklassen und Status: immer ein Wort, nie nur eine Farbe",
+    "voices": "Zwei Stimmen",
+    "voicesFonts": "Geist und Newsreader",
+    "productVoice": "Das Produkt spricht in Geist.",
+    "actVoice": "Die Verordnung spricht in Newsreader: jede zitierte Vorschrift und die Klasse selbst.",
+    "glass": "Glas-Rezept",
+    "glassRecipe": "Füllung Weiß 68 % bis 30 % bei 150°. Unschärfe 26 px, Sättigung 175 %. Rand 1 px Weiß 80 %. Innere Lichtkante oben 1 px. Schatten 0 22 50 −20 Ink bei 30 %. Text steht nie auf Glas unter 40 %.",
+    "onLight": "Auf hell",
+    "onDark": "Auf dunkel",
+    "swatch": {
+      "mist": "Mist",
+      "ink": "Ink",
+      "slate": "Slate",
+      "lens": "Lens blue"
+    }
+  },
+  "pill": {
+    "prohibited": "Verboten",
+    "high_risk": "Hochrisiko",
+    "limited_risk": "Begrenztes Risiko",
+    "minimal_risk": "Minimales Risiko",
+    "out_of_scope": "Nicht erfasst",
+    "legally_ambiguous": "Rechtlich unklar",
+    "needs_more_information": "Weitere Angaben nötig"
+  },
+  "error": {
+    "title": "Etwas ist schiefgelaufen",
+    "body": "Diese Seite konnte nicht angezeigt werden. Laden Sie sie neu oder kehren Sie zum Anfang zurück.",
+    "home": "Zurück zum Anfang",
+    "notFound": "Diese Seite gibt es nicht."
+  }
+}
