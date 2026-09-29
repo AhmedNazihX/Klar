@@ -4,11 +4,12 @@ INIT > MCP tools, Tech stack).
 No model is involved apart from the query embedding.
 - **Two arms.** The meaning arm ranks provisions by cosine distance between their stored vector
   and the query vector (`embed_query`, so the task instruction goes on the query only). The
-  keyword arm matches the `fts` column against each of the query's lexemes as a prefix: the
-  German stemmer is uneven (System -> syst, Systeme -> system), so `syst:*` matches both. A row
+  keyword arm matches the `fts` column against each of the query's lexemes, as a prefix in German
+  (`PREFIX_LANGUAGES`), whose stemmer is uneven: `syst:*` matches System and Systeme. A row
   scores the summed IDF (`ln(rows / rows with the word)`) of the words it has; words in more than
-  `MAX_TERM_SHARE` of the rows are dropped, since a soft description is mostly such words and
-  they would flood the arm with noise.
+  `MAX_TERM_SHARE` (and `MIN_COMMON_ROWS`) of the rows are dropped, since a soft description is
+  mostly such words and they would flood the arm with noise. The counts cover the searched
+  language and law version only, never held-out rows or the Omnibus (`STATISTICS_SCOPE`).
 - **Fusion.** Each arm keeps its best `CANDIDATES` rows; weighted Reciprocal Rank Fusion adds
   `weight / (RRF_K + rank)` per arm. The keyword arm weighs `KEYWORD_WEIGHT`: soft descriptions
   rarely share the law's wording, so its top ranks shouldn't displace the meaning arm's.
@@ -28,8 +29,8 @@ No model is involved apart from the query embedding.
   - `doc_types` (`law`, `guideline`, `code`);
   - held-out (Pile B) examples are excluded by default (decision 012); only the gap run (V8) may
     set `include_held_out`. `exclude_source_example_ids` removes further examples by id.
-- **Parents.** A parent row includes its children's text (C1), so when a parent and one of its
-  children both come back, only the child, the more specific unit, is kept.
+- **Parents.** A parent row includes all its descendants' text (C1), so a row that is an
+  ancestor or a descendant of a better-ranked hit is skipped (`distinct_units`).
 """
 
 from collections.abc import Collection, Sequence
@@ -40,6 +41,7 @@ import psycopg
 from psycopg import sql
 from psycopg.rows import dict_row
 
+from aiact.corpus.embed import vector_literal
 from aiact.db import connect
 from aiact.llm.embeddings import OpenRouterEmbeddings
 from aiact.schemas import DISCLAIMER, DocumentStatus, Language, LawVersion
@@ -59,9 +61,18 @@ MAX_TERM_SHARE = 0.05
 """A query word found in more than this share of the rows in its language is left out of the
 keyword arm: it says little and would flood the arm (soft descriptions are full of such words)."""
 
+MIN_COMMON_ROWS = 50
+"""A word is only too common when it is also in more than this many rows, so a small corpus
+(tests, a partial load) doesn't lose all its words to the share rule."""
+
 DOC_TYPES = frozenset({"law", "guideline", "code"})
 FTS_CONFIGS = {Language.EN: "english", Language.DE: "german"}
 """The text search configuration per language, as the `provisions.fts` column uses it."""
+
+PREFIX_LANGUAGES = frozenset({Language.DE})
+"""Languages whose query words match as prefixes. The German stemmer is uneven (System -> syst,
+Systeme -> system); the English one isn't, and there a prefix only adds noise (`app:*` matches
+every `applic…`)."""
 
 SCOPE: LiteralString = """
     not d.is_amending
@@ -79,8 +90,20 @@ SCOPE: LiteralString = """
 """
 """The filters both arms apply; `p` is the provision, `d` its document in the same language."""
 
+STATISTICS_SCOPE: LiteralString = """
+    not d.is_amending
+    and not p.is_held_out
+    and p.language = %(language)s
+    and (d.law_version is null
+         or d.law_version = %(law_version)s
+         or (d.law_version = 'original' and p.provision_id like 'recital:%%'))
+"""
+"""The rows the keyword arm's word statistics count: the searched language and law version,
+without held-out examples or the Omnibus, so neither can sway a default ranking (decision 012).
+No date filter: the statistics describe the text, not one day of it."""
+
 HYBRID_SEARCH: LiteralString = """
-    with vector_hits as materialized (
+    with recursive vector_hits as materialized (
       select p.id,
              e.embedding::extensions.vector({dims})
                <=> %(query_vector)s::extensions.vector({dims}) as distance
@@ -95,19 +118,26 @@ HYBRID_SEARCH: LiteralString = """
       select id, row_number() over (order by distance + 0, id) as rank from vector_hits
     ),
     query_terms as materialized (
-      select format('%%L:*', lexeme)::tsquery as term
+      select format(case when %(prefix_terms)s then '%%L:*' else '%%L' end, lexeme)::tsquery
+             as term
       from unnest(to_tsvector(%(fts_config)s::regconfig, %(query)s))
       where position(E'\\\\' in lexeme) = 0
+    ),
+    statistics_rows as materialized (
+      select p.fts
+      from provisions p
+      join documents d on d.id = p.document_id and d.language = p.language
+      where {statistics_scope}
     ),
     term_weights as materialized (
       select t.term, ln(n.total::float8 / f.frequency) as idf
       from query_terms t
-      cross join (select count(*) as total from provisions where language = %(language)s) n
+      cross join (select count(*) as total from statistics_rows) n
       cross join lateral (
-        select count(*) as frequency from provisions p
-        where p.language = %(language)s and p.fts @@ t.term
+        select count(*) as frequency from statistics_rows r where r.fts @@ t.term
       ) f
-      where f.frequency > 0 and f.frequency <= n.total * %(max_term_share)s
+      where f.frequency > 0
+        and f.frequency <= greatest(n.total * %(max_term_share)s, %(min_common_rows)s)
     ),
     keyword_ranked as (
       select p.id, row_number() over (order by sum(w.idf) desc, p.id) as rank
@@ -130,8 +160,18 @@ HYBRID_SEARCH: LiteralString = """
         select id, rank, 'keyword' as arm, %(keyword_weight)s as weight from keyword_ranked
       ) ranked
       group by id
+    ),
+    lineage as (
+      select f.id, p.parent_id as ancestor
+      from fused f join provisions p on p.id = f.id
+      where p.parent_id is not null
+      union all
+      select l.id, p.parent_id
+      from lineage l join provisions p on p.id = l.ancestor
+      where p.parent_id is not null
     )
-    select f.id, f.score, f.vector_rank, f.keyword_rank, p.parent_id, p.provision_id,
+    select f.id, f.score, f.vector_rank, f.keyword_rank, p.provision_id,
+           array(select l.ancestor from lineage l where l.id = f.id) as ancestors,
            d.doc_key, d.title, d.doc_type, d.status, d.law_version, p.language,
            p.heading, p.text, p.valid_from, p.valid_to
     from fused f
@@ -229,7 +269,7 @@ def search_ai_act(
         language=params["language"],
         law_version=version,
         as_of=None if version is LawVersion.ORIGINAL else params["on"],
-        hits=tuple(_hit(row) for row in prefer_children(rows)[:limit]),
+        hits=tuple(_hit(row) for row in distinct_units(rows, limit)),
         disclaimer=DISCLAIMER[Language(params["language"])],
     )
 
@@ -259,8 +299,9 @@ def prepare_search(
     vector = embedder.embed_query(query)
     params: dict[str, Any] = {
         "query": query,
-        "query_vector": _vector_literal(vector),
+        "query_vector": vector_literal(vector),
         "fts_config": FTS_CONFIGS[language],
+        "prefix_terms": language in PREFIX_LANGUAGES,
         "language": language.value,
         "law_version": version.value,
         "on": as_of or date.today(),
@@ -270,6 +311,7 @@ def prepare_search(
         "candidates": CANDIDATES,
         "rrf_k": RRF_K,
         "max_term_share": MAX_TERM_SHARE,
+        "min_common_rows": MIN_COMMON_ROWS,
         "keyword_weight": KEYWORD_WEIGHT,
     }
     return params, _statement(embedder.model, embedder.dimensions)
@@ -281,30 +323,59 @@ def _statement(model: str, dims: int) -> sql.Composed:
     if isinstance(dims, bool) or not isinstance(dims, int) or dims <= 0:
         raise ValueError(f"embedding dimensions must be a positive integer, got {dims!r}")
     return sql.SQL(HYBRID_SEARCH).format(
-        dims=sql.Literal(dims), model=sql.Literal(model), scope=sql.SQL(SCOPE)
+        dims=sql.Literal(dims),
+        model=sql.Literal(model),
+        scope=sql.SQL(SCOPE),
+        statistics_scope=sql.SQL(STATISTICS_SCOPE),
     )
 
 
-def _vector_literal(vector: Sequence[float]) -> str:
-    return "[" + ",".join(repr(float(x)) for x in vector) + "]"
+ITERATIVE_SCAN = "hnsw.iterative_scan"
+SET_ITERATIVE_SCAN = "select set_config(%s, %s, true)"
+PREVIOUS_ITERATIVE_SCAN = "select coalesce(current_setting(%s, true), '')"
 
 
 def _run(
     connection: psycopg.Connection, statement: sql.Composed, params: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    """Run the search in its own transaction, so `set local` stays inside it."""
-    with connection.transaction(), connection.cursor(row_factory=dict_row) as cursor:
-        cursor.execute("set local hnsw.iterative_scan = relaxed_order")
-        return cursor.execute(statement, params).fetchall()
+    """Run the search with `hnsw.iterative_scan = relaxed_order`, then put the setting back.
 
-
-def prefer_children(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Drop every row whose child is also among `rows`, keeping the order of the rest.
-
-    A parent's text includes its children's (C1), so the child is the more specific hit.
+    Inside a caller's open transaction, `transaction()` is a savepoint and a local setting would
+    outlive it, so the previous value is restored after the query. If the query fails, rolling
+    back the savepoint (or transaction) undoes the setting anyway.
     """
-    parents = {row["parent_id"] for row in rows if row["parent_id"] is not None}
-    return [row for row in rows if row["id"] not in parents]
+    with connection.transaction(), connection.cursor(row_factory=dict_row) as cursor:
+        previous = cursor.execute(PREVIOUS_ITERATIVE_SCAN, (ITERATIVE_SCAN,)).fetchone()
+        cursor.execute(SET_ITERATIVE_SCAN, (ITERATIVE_SCAN, "relaxed_order"))
+        rows = cursor.execute(statement, params).fetchall()
+        restore = next(iter(previous.values())) if previous else ""
+        cursor.execute(SET_ITERATIVE_SCAN, (ITERATIVE_SCAN, restore or "off"))
+        return rows
+
+
+def distinct_units(rows: Sequence[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
+    """The first `limit` rows, in fused order, that don't overlap a row already taken.
+
+    A parent's text includes all its descendants' (C1), so a row overlaps a taken row when one
+    is an ancestor of the other (`ancestors` holds a row's full chain of parent ids). The
+    better-ranked of the two wins, whether that is the parent or the child: only rows that
+    compete for the returned slots are compared, so a parent is never dropped for a child
+    ranked far below it.
+    """
+    taken: list[dict[str, Any]] = []
+    taken_ids: set[int] = set()
+    covered: set[int] = set()
+    """The taken rows' ids and all their ancestors' ids."""
+    for row in rows:
+        if len(taken) == limit:
+            break
+        ancestors = set(row["ancestors"])
+        if row["id"] in covered or ancestors & taken_ids:
+            continue
+        taken.append(row)
+        taken_ids.add(row["id"])
+        covered |= ancestors | {row["id"]}
+    return taken
 
 
 def _hit(row: dict[str, Any]) -> SearchHit:

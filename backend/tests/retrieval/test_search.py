@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from aiact.retrieval.search import CANDIDATES, prefer_children, search_ai_act
+from aiact.retrieval.search import CANDIDATES, distinct_units, search_ai_act
 
 
 class RecordingEmbedder:
@@ -81,15 +81,32 @@ def test_the_query_goes_through_embed_query_as_given() -> None:
     assert embedder.queries == ["tenant screening"]
 
 
-def _row(row_id: int, parent_id: int | None) -> dict[str, Any]:
-    return {"id": row_id, "parent_id": parent_id}
+def _row(row_id: int, *ancestors: int) -> dict[str, Any]:
+    return {"id": row_id, "ancestors": list(ancestors)}
 
 
-def test_a_parent_gives_way_to_its_child() -> None:
-    rows = [_row(1, None), _row(2, 1), _row(3, 2), _row(4, None), _row(5, 9)]
-    assert [row["id"] for row in prefer_children(rows)] == [3, 4, 5]
+def _ids(rows: list[dict[str, Any]]) -> list[int]:
+    return [row["id"] for row in rows]
 
 
-def test_prefer_children_keeps_the_order() -> None:
-    rows = [_row(3, 1), _row(4, None), _row(1, None), _row(2, 1)]
-    assert [row["id"] for row in prefer_children(rows)] == [3, 4, 2]
+def test_the_better_ranked_of_parent_and_child_wins() -> None:
+    parent_first = [_row(1), _row(2, 1), _row(4)]
+    child_first = [_row(2, 1), _row(1), _row(4)]
+    assert _ids(distinct_units(parent_first, 10)) == [1, 4]
+    assert _ids(distinct_units(child_first, 10)) == [2, 4]
+
+
+def test_the_whole_ancestry_counts_even_without_the_middle_level() -> None:
+    """Row 3's chain is 2 -> 1; row 2 isn't a hit, yet 3 and 1 still overlap."""
+    assert _ids(distinct_units([_row(1), _row(3, 2, 1), _row(5)], 10)) == [1, 5]
+    assert _ids(distinct_units([_row(3, 2, 1), _row(1), _row(5)], 10)) == [3, 5]
+
+
+def test_a_child_below_the_limit_doesnt_remove_its_parent() -> None:
+    rows = [_row(1), _row(4), _row(6), _row(2, 1)]
+    assert _ids(distinct_units(rows, 2)) == [1, 4]
+
+
+def test_the_limit_counts_distinct_units() -> None:
+    rows = [_row(1), _row(2, 1), _row(3, 1), _row(4), _row(5)]
+    assert _ids(distinct_units(rows, 3)) == [1, 4, 5]

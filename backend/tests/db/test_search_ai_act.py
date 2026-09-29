@@ -18,7 +18,7 @@ from aiact.corpus.build import AI_ACT_IN_FORCE, DocumentLoad, DocumentRow, Provi
 from aiact.corpus.embed import ARMS, vector_literal
 from aiact.corpus.load import load_all
 from aiact.llm.embeddings import OpenRouterEmbeddings
-from aiact.retrieval.search import SearchResults, prepare_search, search_ai_act
+from aiact.retrieval.search import CANDIDATES, SearchResults, prepare_search, search_ai_act
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, Language, LawVersion
 from aiact.settings import Settings
 
@@ -96,6 +96,13 @@ LOADS = (
                      AI_ACT_IN_FORCE),
         ProvisionRow("art:2:a", "art:2", AI_ACT_IN_FORCE, "Article 2", "a frobnic point.",
                      AI_ACT_IN_FORCE),
+        # Three levels; the middle one has no vector and no query word, so it is never a hit.
+        ProvisionRow("art:3", None, None, "Article 3", "Plimbo rules: 1. (a) a plimbo point.",
+                     AI_ACT_IN_FORCE),
+        ProvisionRow("art:3:1", "art:3", AI_ACT_IN_FORCE, "Article 3", "1. (a) point.",
+                     AI_ACT_IN_FORCE),
+        ProvisionRow("art:3:1:a", "art:3:1", AI_ACT_IN_FORCE, "Article 3", "a plimbo point.",
+                     AI_ACT_IN_FORCE),
     )),
     DocumentLoad(replace(AMENDED, language="de"), (
         ProvisionRow("art:1", None, None, "Artikel 1", "Pflichten für Quuxsysteme.",
@@ -103,6 +110,7 @@ LOADS = (
     )),
     DocumentLoad(OMNIBUS, (
         ProvisionRow("art:1", None, None, None, "Omnibus zorblax amendment.", OMNIBUS_IN_FORCE),
+        ProvisionRow("art:2", None, None, None, "Omnibus brastle.", OMNIBUS_IN_FORCE),
     )),
     DocumentLoad(GUIDE, (
         ProvisionRow("guide:test-c6-guide:para:1", None, None, None, "Guidance on zorblax.",
@@ -111,6 +119,21 @@ LOADS = (
                      GUIDE_PUBLISHED, source_example_id="hr-ex-001", is_held_out=True),
         ProvisionRow("guide:test-c6-guide:ex:002", None, None, None, "Visible zorblax example.",
                      GUIDE_PUBLISHED, source_example_id="hr-ex-002"),
+        ProvisionRow("guide:test-c6-guide:para:2", None, None, None, "The zorbapp.",
+                     GUIDE_PUBLISHED),
+        ProvisionRow("guide:test-c6-guide:para:3", None, None, None, "Zorbapplications.",
+                     GUIDE_PUBLISHED),
+        # Word statistics: visible, glimmet is in 2 rows and brastle in 1; the held-out rows and
+        # the Omnibus would make brastle the commoner word if they were counted.
+        ProvisionRow("guide:test-c6-guide:para:4", None, None, None, "Glimmet.", GUIDE_PUBLISHED),
+        ProvisionRow("guide:test-c6-guide:para:5", None, None, None, "The glimmet.",
+                     GUIDE_PUBLISHED),
+        ProvisionRow("guide:test-c6-guide:para:6", None, None, None, "Brastle.", GUIDE_PUBLISHED),
+        *(
+            ProvisionRow(f"guide:test-c6-guide:ex:10{n}", None, None, None, f"Brastle {n}.",
+                         GUIDE_PUBLISHED, source_example_id=f"hr-ex-10{n}", is_held_out=True)
+            for n in range(1, 4)
+        ),
     )),
     DocumentLoad(CODE, (
         ProvisionRow("guide:test-c6-code:para:1", None, None, None, "A code on zorblax.",
@@ -136,6 +159,8 @@ VECTORS = {
     ("art:1", "New zorblax duty."): ZORBLAX_NEW,
     ("art:2", "Frobnic rules: (a) a frobnic point."): [0.0, 1.0, 0.0],
     ("art:2:a", "a frobnic point."): [0.1, 0.9, 0.0],
+    ("art:3", "Plimbo rules: 1. (a) a plimbo point."): [0.0, -0.9, -0.1],
+    ("art:3:1:a", "a plimbo point."): [0.0, -1.0, 0.0],
     ("art:1", "Pflichten für Quuxsysteme."): [0.8, 0.2, 0.0],
     ("art:1", "Omnibus zorblax amendment."): ZORBLAX_NEW,
     ("guide:test-c6-guide:para:1", "Guidance on zorblax."): [0.7, 0.3, 0.0],
@@ -164,7 +189,7 @@ def _search(
         query,
         embedder=FixedEmbedder(vector),
         connection=connection,
-        **kwargs,  # pyright: ignore[reportArgumentType]
+        **{"limit": CANDIDATES, **kwargs},  # pyright: ignore[reportArgumentType]
     )
 
 
@@ -281,10 +306,56 @@ def test_a_german_query_matches_through_prefixes(corpus: psycopg.Connection):
     assert results.disclaimer == DISCLAIMER_DE
 
 
-def test_a_parent_gives_way_to_its_child(corpus: psycopg.Connection):
-    found = _found(_search(corpus, "frobnic point", [0.0, 1.0, 0.0], as_of=AFTER_OMNIBUS))
-    assert found[0] == ("test-c6-act-consolidated", "art:2:a")
-    assert ("test-c6-act-consolidated", "art:2") not in found
+NO_WORDS = "qwxyz vlorp"
+"""A query no row shares a word with, so only the meaning arm ranks."""
+
+
+def test_the_better_ranked_of_parent_and_child_wins(corpus: psycopg.Connection):
+    nearer_child = _found(_search(corpus, NO_WORDS, [0.1, 0.9, 0.0], as_of=AFTER_OMNIBUS))
+    nearer_parent = _found(_search(corpus, NO_WORDS, [0.0, 1.0, 0.0], as_of=AFTER_OMNIBUS))
+    assert nearer_child[0] == (AMENDED.doc_key, "art:2:a")
+    assert (AMENDED.doc_key, "art:2") not in nearer_child
+    assert nearer_parent[0] == (AMENDED.doc_key, "art:2")
+    assert (AMENDED.doc_key, "art:2:a") not in nearer_parent
+
+
+def test_a_parent_is_kept_when_its_child_is_beyond_the_limit(corpus: psycopg.Connection):
+    found = _found(_search(corpus, NO_WORDS, [0.0, 1.0, 0.0], as_of=AFTER_OMNIBUS, limit=1))
+    assert found == [(AMENDED.doc_key, "art:2")]
+
+
+def test_a_grandparent_and_grandchild_overlap_without_the_middle_level(
+    corpus: psycopg.Connection,
+):
+    found = _found(_search(corpus, NO_WORDS, [0.0, -1.0, 0.0], as_of=AFTER_OMNIBUS))
+    plimbo = [pid for key, pid in found if key == AMENDED.doc_key and pid.startswith("art:3")]
+    assert plimbo == ["art:3:1:a"]
+
+
+def test_english_words_match_exactly_not_as_prefixes(corpus: psycopg.Connection):
+    hits = _search(corpus, "zorbapp", [0.0, 0.0, 1.0], as_of=AFTER_OMNIBUS).hits
+    keyword = {h.provision_id for h in hits if h.keyword_rank is not None}
+    assert "guide:test-c6-guide:para:2" in keyword
+    assert "guide:test-c6-guide:para:3" not in keyword
+
+
+def test_word_statistics_ignore_held_out_rows_and_the_omnibus(corpus: psycopg.Connection):
+    """The rarer visible word ranks first: brastle (1 visible row) over glimmet (2)."""
+    hits = _search(corpus, "glimmet brastle", [0.0, 0.0, 1.0], as_of=AFTER_OMNIBUS).hits
+    rank = {h.provision_id: h.keyword_rank for h in hits}
+    brastle = rank["guide:test-c6-guide:para:6"]
+    glimmet = rank.get("guide:test-c6-guide:para:4")
+    assert brastle is not None
+    assert glimmet is None or brastle < glimmet
+
+
+def test_the_iterative_scan_setting_does_not_leak(db: psycopg.Connection):
+    """Inside a caller's transaction the search runs in a savepoint; its setting must not
+    outlive it."""
+    db.execute("set local hnsw.iterative_scan = strict_order")
+    search_ai_act(NO_WORDS, embedder=FixedEmbedder([1.0, 0.0, 0.0]), connection=db)
+    row = db.execute("select current_setting('hnsw.iterative_scan')").fetchone()
+    assert row == ("strict_order",)
 
 
 def test_a_stale_vector_is_never_ranked(corpus: psycopg.Connection):
