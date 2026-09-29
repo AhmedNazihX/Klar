@@ -1,0 +1,39 @@
+"""Structured output helpers shared by every caller that asks a chat model for JSON (V3, E2).
+
+The model fills a JSON Schema built from a Pydantic model, and the reply is validated against
+the same model. Validation errors are described by location and message only, so a user's
+description quoted back in an error never reaches a log or an exception.
+"""
+
+from pydantic import BaseModel, JsonValue, ValidationError
+
+
+def all_required(schema: JsonValue) -> JsonValue:
+    """`schema` with every object's properties listed as required, as OpenAI-style structured
+    output demands (Azure rejects a schema whose optional fields, like `about`, aren't listed).
+    Optional fields stay nullable, so the model sends null for them."""
+    if isinstance(schema, list):
+        return [all_required(item) for item in schema]
+    if not isinstance(schema, dict):
+        return schema
+    updated = {key: all_required(value) for key, value in schema.items()}
+    properties = schema.get("properties")
+    if isinstance(properties, dict):
+        updated["required"] = list(properties)
+    return updated
+
+
+def json_schema_format(name: str, model: type[BaseModel]) -> dict[str, object]:
+    """The `response_format` that asks for JSON matching `model`."""
+    return {
+        "type": "json_schema",
+        "json_schema": {"name": name, "schema": all_required(model.model_json_schema())},
+    }
+
+
+def describe_validation_error(exc: ValidationError) -> str:
+    """The validation errors by location and message, without the input values they quote."""
+    return "; ".join(
+        f"{'.'.join(str(part) for part in error['loc']) or 'answer'}: {error['msg']}"
+        for error in exc.errors()
+    )

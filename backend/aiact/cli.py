@@ -13,7 +13,7 @@ from uuid import UUID
 import psycopg
 import typer
 
-from aiact import deps
+from aiact import db, deps
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
 from aiact.eval import academic, citation_index, metrics, records, report, runner
@@ -149,6 +149,50 @@ def corpus_guidelines(
     typer.echo(
         f"written: {len(report.written)}, unchanged: {len(report.counts) - len(report.written)}"
     )
+
+
+@corpus_app.command("load")
+def corpus_load(
+    manifest: Annotated[
+        Path | None, typer.Option(help="Manifest to read [default: repo data/manifest.yaml]")
+    ] = None,
+    parsed_dir: Annotated[
+        Path | None, typer.Option(help="Where the parsed JSONL is [default: repo data/parsed]")
+    ] = None,
+    stats: Annotated[
+        Path | None,
+        typer.Option(help="Where the row counts go [default: repo docs/corpus_stats.md]"),
+    ] = None,
+) -> None:
+    """Load the parsed laws and guidelines into Postgres (documents, provisions) and write the
+    row counts per document to docs/corpus_stats.md. Re-running changes nothing."""
+    # Imported here: the guideline rows pull in docling-core, which loads slowly.
+    from aiact.corpus import build as corpus_build
+    from aiact.corpus import load as corpus_load_module
+
+    stats_path = stats or corpus_load_module.STATS_FILE
+    try:
+        loads = corpus_build.build_all(
+            manifest or DEFAULT_MANIFEST, parsed_dir or DEFAULT_PARSED_DIR
+        )
+        with db.connect() as connection:
+            outcomes = corpus_load_module.load_all(connection, loads)
+            unlisted = corpus_load_module.unlisted_documents(connection, loads)
+            counts = corpus_load_module.corpus_stats(connection)
+    except (corpus_build.LoadError, db.DatabaseNotConfiguredError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=1) from error
+    for label, outcome in outcomes:
+        typer.echo(f"{outcome:<9} {label}")
+    for label in unlisted:
+        typer.echo(f"Warning: {label} is in the database but not in the manifest; kept", err=True)
+    typer.echo(corpus_load_module.render_stats(counts), nl=False)
+    is_written = corpus_load_module.write_stats(counts, stats_path)
+    typer.echo(f"{'Written' if is_written else 'Unchanged'}: {stats_path}")
 
 
 @eval_app.callback()

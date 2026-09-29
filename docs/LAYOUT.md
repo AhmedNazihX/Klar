@@ -25,11 +25,13 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── cli.py                   `aiact` command root; subcommands per area: corpus, eval (F1)
 │   │   ├── settings.py              pydantic-settings, read from .env (F1)
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
+│   │   ├── db.py                    direct Postgres connection (DATABASE_URL) for server-only tables (C3)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
+│   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
-│   │   │                            load.py (C3), embed.py (C4)
+│   │   │                            build.py + load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6)
 │   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
@@ -37,7 +39,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── scripted.py          stub nodes that return scripted outcomes, for tests (E1)
 │   │   │   ├── nodes/               facts.py (E2), scope.py (E3), prohibited.py (E4), high_risk.py (E5),
 │   │   │   │                        transparency.py (E6), role_obligations.py + role_texts.py (E7), finalize.py (E8)
-│   │   │   ├── prompts/             prompt files, one per node (E2–E8)
+│   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   ├── citations.py         citation existence validator (E9)
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data
@@ -95,7 +97,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)
-│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3)
+│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3)
 │   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7)
 │
 ├── frontend/                        Vite + React + TypeScript (P4); its inner layout is recorded here by P4

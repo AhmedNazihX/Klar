@@ -1,0 +1,32 @@
+id: own-d-06-shop-chat-on-llm
+set_name: own
+language: de
+description: >-
+  Wir sind ein Start-up aus Graz mit elf Leuten und verkaufen Onlineshops einen Kundenservice-Chat,
+  der auf der Shopseite Fragen zu Lieferzeiten, Retouren und Größen beantwortet. Dahinter steckt
+  ein großes Sprachmodell eines amerikanischen Anbieters, das wir über dessen Schnittstelle
+  anbinden; von uns kommen die Oberfläche, die Anbindung an die Shopsysteme und die Regeln, wie der
+  Chat antworten darf. Verkauft wird er unter unserem Produktnamen „Frieda“, auf dem Markt ist er
+  seit März 2025. Er trifft keine Entscheidungen über Kunden, sondern gibt nur Auskunft und leitet
+  Beschwerden an Menschen weiter. Unser Büro teilen wir mit einer Kaffeerösterei.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:3:3", "art:3:68", "art:50:1", "art:50:2", "art:111:4"]
+notes: >-
+  Approved by user 2026-09-29. Role: the start-up builds its own AI system on a
+  third-party general-purpose AI model and places it on the market under its own name, so it is
+  the provider (Art. 3(3)) and a downstream provider (Art. 3(68)). GPAI flag: the model provider's
+  Art. 53 duties (documentation, information for downstream providers, copyright policy, training
+  data summary) are the model provider's, not the start-up's; only flagged (INIT > Scope). Class:
+  it chats directly with shop customers (Art. 50(1)) and generates text (Art. 50(2)); no Annex III
+  use, so limited_risk. Art. 50(2) grace period: placed on the market in March 2025, before 2
+  August 2026, so marking is due by 2 December 2026 (Art. 111(4)). Doubt: whether a customer
+  service chat's answers count as "synthetic text content" for Art. 50(2) is read here as yes.
+tags:
+  - "category:d"
+  - "role_switch:none"
+  - "gpai_based"
+  - "obligation:art:4:1"
+  - "obligation:art:50:1"
+  - "obligation:art:50:2"

@@ -1,0 +1,63 @@
+id: own-d-12-lender-extra-input
+set_name: own
+language: en
+description: >-
+  We're an online lender in Lisbon with about 200 staff, offering personal loans. Our
+  credit-decisioning software comes from a specialist vendor, and its manual lets customers
+  recalibrate the model on their own repayment history with the vendor's built-in retraining tool.
+  We did that, and we also added an input the vendor never listed: how applicants behave in our
+  mobile app, such as session times and how long they hesitate on the loan-amount slider. The
+  vendor's documentation neither allows nor forbids extra inputs. Below a set amount the system
+  approves or declines applications on its own. It still runs under the vendor's name. Our
+  marketing team just calls it "the engine".
+label:
+  risk_class: high_risk
+  status: legally_ambiguous
+  role: provider
+  annex_point: "annex:III:5:b"
+label_citation: ["art:3:23", "art:25:1:b", "annex:III:5:b"]
+notes: >-
+  Approved by user 2026-09-29 as legally_ambiguous (Art. 26(9) kept as conditional: whether a GDPR
+  DPIA is required isn't settled by the facts). Class (not in doubt): creditworthiness assessment
+  of natural persons, Annex III 5(b), deciding on its own, so high-risk. Open question: is adding
+  an input feature that the vendor's documentation neither foresees nor forbids a "substantial
+  modification" (Art. 3(23): a change not foreseen or planned in the initial conformity assessment
+  that affects compliance with Chapter III Section 2 or the intended purpose)? Reading A (provider,
+  the stricter reading and the label): the new behavioural input was not foreseen and changes what
+  the model learns from, which affects data governance and accuracy (Art. 10, 15), so the lender
+  becomes the provider under Art. 25(1)(b) and is also the deployer. Reading B (deployer): the
+  recalibration is a feature the vendor planned for, the extra input is a use of the deployer's own
+  input data (Art. 26(4)), and without evidence that compliance is affected there is no
+  substantial modification, so the lender stays a deployer with Art. 26 duties only. Compare
+  own-d-02 (retraining expressly ruled out: decided, provider). Obligations listed follow reading
+  A (provider plus deployer, as in own-d-02).
+tags:
+  - "category:d"
+  - "role_switch:art25_1_b"
+  - "also_role:deployer"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:i"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:9"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:27:1"
+  - "obligation:art:86:1"

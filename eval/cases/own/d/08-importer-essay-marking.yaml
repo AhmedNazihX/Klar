@@ -1,0 +1,35 @@
+id: own-d-08-importer-essay-marking
+set_name: own
+language: en
+description: >-
+  We're an educational publisher in Vienna with 70 staff. We've signed an exclusive deal with a
+  Californian ed-tech company to bring its essay-marking software to secondary schools in Austria
+  and Germany; nobody sold it in the EU before us. Teachers upload students' essays and the
+  software proposes a grade and written feedback against the curriculum rubric; the grade goes
+  into the term report unless the teacher overrides it. The product keeps the Californian
+  company's name and logo, and we translate the manuals and handle invoicing and support. The
+  Californian company has no office in Europe. We also publish printed school atlases.
+label:
+  risk_class: high_risk
+  role: importer
+  annex_point: "annex:III:3:b"
+label_citation: ["art:3:6", "art:23:1", "annex:III:3:b"]
+notes: >-
+  Approved by user 2026-09-29. Role: an EU-established company placing on the
+  Union market a system that bears the name of a company established in a third country is the
+  importer (Art. 3(6)); it keeps the provider's brand and doesn't modify the system, so Art. 25
+  does not apply. Class: evaluating learning outcomes in schools is Annex III 3(b); the proposed
+  grade goes into the report unless overridden, so it materially influences the outcome and no
+  Art. 6(3) condition fits. Obligations: Art. 23(1) to (7); Art. 23(1)(d) makes the importer
+  verify that the Californian provider has appointed an EU authorised representative. Selling on
+  to schools does not make it a distributor as well (Art. 3(7) excludes the importer).
+tags:
+  - "category:d"
+  - "role_switch:none"
+  - "obligation:art:23:1"
+  - "obligation:art:23:2"
+  - "obligation:art:23:3"
+  - "obligation:art:23:4"
+  - "obligation:art:23:5"
+  - "obligation:art:23:6"
+  - "obligation:art:23:7"

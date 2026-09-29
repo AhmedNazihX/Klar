@@ -1,4 +1,7 @@
-"""The corpus migration (supabase/migrations/*_corpus.sql) against the local Supabase Postgres."""
+"""The corpus migration (supabase/migrations/*_corpus.sql) against the local Supabase Postgres.
+
+The documents use `test-` keys: `aiact corpus load` fills the shared database with the real ones.
+"""
 
 import psycopg
 import pytest
@@ -37,7 +40,7 @@ def _vector(*weights: tuple[int, float], dims: int = DEFAULT_DIMS) -> str:
 def _insert_document(
     db: psycopg.Connection,
     language: str,
-    doc_key: str = "ai-act",
+    doc_key: str = "test-ai-act",
     doc_type: str = "law",
     law_version: str | None = "amended",
 ) -> int:
@@ -223,10 +226,12 @@ def test_time_slices_may_follow_but_not_overlap(db: psycopg.Connection) -> None:
 
 
 def test_document_key_treats_null_law_versions_as_equal(db: psycopg.Connection) -> None:
-    _insert_document(db, "en", doc_key="guide-art50", doc_type="guideline", law_version=None)
-    _insert_document(db, "de", doc_key="guide-art50", doc_type="guideline", law_version=None)
+    _insert_document(db, "en", doc_key="test-guide-art50", doc_type="guideline", law_version=None)
+    _insert_document(db, "de", doc_key="test-guide-art50", doc_type="guideline", law_version=None)
     with pytest.raises(psycopg.errors.UniqueViolation), db.transaction():
-        _insert_document(db, "en", doc_key="guide-art50", doc_type="guideline", law_version=None)
+        _insert_document(
+            db, "en", doc_key="test-guide-art50", doc_type="guideline", law_version=None
+        )
 
 
 def test_only_amending_acts_may_be_laws_without_a_version(db: psycopg.Connection) -> None:
@@ -234,20 +239,20 @@ def test_only_amending_acts_may_be_laws_without_a_version(db: psycopg.Connection
         """
         insert into documents
           (doc_key, title, doc_type, is_amending, status, language, source_url, sha256)
-        values ('omnibus', 'Digital Omnibus on AI', 'law', true, 'final', 'en', 'https://x', %s)
+        values ('test-omnibus', 'Digital Omnibus', 'law', true, 'final', 'en', 'https://x', %s)
         returning law_version
         """,
         (SHA256,),
     ).fetchone()
     assert omnibus == (None,)
     with pytest.raises(psycopg.errors.CheckViolation), db.transaction():
-        _insert_document(db, "en", doc_key="ai-act", law_version=None)
+        _insert_document(db, "en", doc_key="test-ai-act", law_version=None)
 
 
 def test_reload_replaces_a_documents_provisions_in_one_transaction(
     db: psycopg.Connection,
 ) -> None:
-    document_id = _insert_document(db, "en", doc_key="guide-art50", doc_type="guideline")
+    document_id = _insert_document(db, "en", doc_key="test-guide-art50", doc_type="guideline")
     parent = _insert_provision(db, document_id, "en", "guide:art50", "Draft.", valid=DRAFT_DATES)
     child = _insert_provision(
         db, document_id, "en", "guide:art50:1", "Draft point.", parent, valid=DRAFT_DATES

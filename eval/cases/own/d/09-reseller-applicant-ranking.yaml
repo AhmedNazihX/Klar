@@ -1,0 +1,32 @@
+id: own-d-09-reseller-applicant-ranking
+set_name: own
+language: de
+description: >-
+  Wir sind ein IT-Systemhaus in Linz mit 35 Mitarbeitenden und betreuen vor allem mittelständische
+  Industriebetriebe. Seit Herbst haben wir auch eine Bewerbermanagement-Software eines Münchner
+  Herstellers im Sortiment. Sie bewertet eingehende Bewerbungen danach, wie gut sie zur Stelle
+  passen, und erstellt für die Personalabteilung eine Rangliste. Wir kaufen die Lizenzen beim
+  Hersteller ein, verkaufen sie an unsere Kunden weiter und übernehmen die Installation. An der
+  Software selbst ändern wir nichts, sie trägt weiterhin Namen und Logo des Herstellers. Wir nutzen
+  sie auch nicht selbst, nur unsere Kunden. Daneben verkaufen wir Wartungsverträge für Drucker.
+label:
+  risk_class: high_risk
+  role: distributor
+  annex_point: "annex:III:4:a"
+label_citation: ["art:3:7", "art:24:1", "annex:III:4:a", "art:6:3"]
+notes: >-
+  Approved by user 2026-09-29. Role: the reseller makes a system from an
+  EU-based provider available on the market and is neither provider nor importer, so it is a
+  distributor (Art. 3(7)); it keeps the provider's brand, doesn't change the system and doesn't
+  use it, so neither Art. 25 nor the deployer role applies. Installing it is not a modification.
+  Class: ranking applicants is Annex III 4(a) and profiling, so no Art. 6(3) exemption.
+  Obligations: Art. 24(1) to (6).
+tags:
+  - "category:d"
+  - "role_switch:none"
+  - "obligation:art:24:1"
+  - "obligation:art:24:2"
+  - "obligation:art:24:3"
+  - "obligation:art:24:4"
+  - "obligation:art:24:5"
+  - "obligation:art:24:6"
