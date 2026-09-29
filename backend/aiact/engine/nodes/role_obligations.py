@@ -33,7 +33,7 @@ from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
-from pydantic import BaseModel, Field, JsonValue, ValidationError
+from pydantic import Field, ValidationError
 
 from aiact.engine.nodes.role_texts import (
     BUILDS_ON_GPAI,
@@ -47,6 +47,7 @@ from aiact.engine.nodes.role_texts import (
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.llm import chat_model
 from aiact.llm.routing import require_setting
+from aiact.llm.structured import describe_validation_error, json_schema_format
 from aiact.obligations.list import (
     ObligationTable,
     UnknownLawVersionError,
@@ -496,34 +497,7 @@ def select_obligations(
 # --- The model call -----------------------------------------------------------------------------
 
 
-def _all_required(schema: JsonValue) -> JsonValue:
-    """`schema` with every object's properties required, as OpenAI-style structured output
-    demands; optional fields stay nullable. (Same rule as `aiact.eval.baselines.all_required`.)"""
-    if isinstance(schema, list):
-        return [_all_required(item) for item in schema]
-    if not isinstance(schema, dict):
-        return schema
-    updated = {key: _all_required(value) for key, value in schema.items()}
-    properties = schema.get("properties")
-    if isinstance(properties, dict):
-        updated["required"] = list(properties)
-    return updated
-
-
-def _response_format(name: str, model: type[BaseModel]) -> dict[str, object]:
-    schema = _all_required(model.model_json_schema())
-    return {"type": "json_schema", "json_schema": {"name": name, "schema": schema}}
-
-
-ROLE_RESPONSE_FORMAT = _response_format("role_answer", RoleAnswer)
-
-
-def _describe(exc: ValidationError) -> str:
-    """The validation errors by location and message, without the input values they quote."""
-    return "; ".join(
-        f"{'.'.join(str(part) for part in error['loc']) or 'answer'}: {error['msg']}"
-        for error in exc.errors()
-    )
+ROLE_RESPONSE_FORMAT = json_schema_format("role_answer", RoleAnswer)
 
 
 def role_messages(state: EngineState, conditions: Sequence[str]) -> list[BaseMessage]:
@@ -584,6 +558,6 @@ class RoleObligationsCheck:
         try:
             answer = RoleAnswer.model_validate_json(reply.text)
         except ValidationError as exc:
-            message = f"role answer doesn't fit the schema: {_describe(exc)}"
+            message = f"role answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise RoleOutputError(message) from exc
         return to_outcome(answer, state, self._table, self._data_dir)
