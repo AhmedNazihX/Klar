@@ -1,0 +1,43 @@
+id: own-d-04-warehouse-task-allocation
+set_name: own
+language: de
+description: >-
+  Wir betreiben ein Versandlager bei Kassel mit etwa 400 Beschäftigten und einem Betriebsrat. Seit
+  diesem Sommer verteilt ein Lagersteuerungssystem eines großen Softwareherstellers die
+  Kommissionieraufträge für jede Schicht. Es erfasst für jede Person Pickrate und Fehlerquote,
+  teilt die Schnellsten automatisch den eiligen Aufträgen zu, und wer mehrere Wochen unter dem
+  Durchschnitt liegt, landet auf einer Liste für die Schichtleitung. Eingeführt haben wir es so,
+  wie der Hersteller es anbietet; wir haben nur Lagerplätze und Schichtzeiten eingepflegt. Name,
+  Logo und Oberfläche sind die des Herstellers, am Code haben wir nichts verändert. Im gleichen Zug
+  wurde übrigens die Kantine renoviert.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:4:b"
+label_citation: ["art:3:4", "annex:III:4:b", "art:6:3", "art:26:1"]
+notes: >-
+  Approved by user 2026-09-29. Class: allocating tasks based on individual
+  behaviour and monitoring and evaluating workers' performance is Annex III 4(b); measuring each
+  person's pick rate and error rate is profiling, so no Art. 6(3) exemption. Role: the company uses
+  the system under its authority (Art. 3(4)) and none of the Art. 25(1) triggers applies (no own
+  brand, no change to the system, used for the vendor's intended purpose). Conditional duties
+  included: Art. 26(7) (employer, used at the workplace, workers are subject to it) and 26(11) (it
+  helps make decisions about workers). Kept as conditional because the description doesn't settle
+  their conditions (user rule 2026-09-29: an unsettled condition keeps the duty): Art. 26(4) (the
+  performance data comes from the system itself; whether the company "controls the input data" is
+  unclear), 26(9) (DPIA) and 86(1) (whether task allocation and a watch list produce legal or
+  similarly significant effects).
+tags:
+  - "category:d"
+  - "role_switch:none"
+  - "obligation:art:4:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:7"
+  - "obligation:art:26:9"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:86:1"

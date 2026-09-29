@@ -1,0 +1,29 @@
+id: own-d-11-importer-stock-forecast
+set_name: own
+language: en
+description: >-
+  We're a kitchen-equipment wholesaler in Antwerp with 150 people. We're the exclusive EU importer
+  of a Canadian company's inventory-forecasting software: its machine-learning model learns from
+  a restaurant's past orders, the season and local events and predicts how many units of each
+  product it will need next month. We sell it to restaurant and hotel groups across the Benelux,
+  unchanged and under the Canadian brand. It never looks at people, only stock levels, and its
+  suggestions are just that: the purchasing manager accepts or ignores them. Customers pay per
+  location per month. We're also opening a showroom in Ghent next spring.
+label:
+  risk_class: minimal_risk
+  role: importer
+label_citation: ["art:3:1", "art:3:6", "art:6:2", "art:50:1"]
+notes: >-
+  Approved by user 2026-09-29 (Art. 3(1) added: in scope as an AI system, then no class above
+  applies). Role: EU-established, places on the Union market
+  a system bearing a third-country company's name, unchanged: importer (Art. 3(6)). Class: an AI
+  system (it learns from data and infers predictions), not in Annex III or Annex I, and no Art. 50
+  function (no interaction with natural persons as an AI chat, no synthetic content), so
+  minimal_risk. Obligations: none for an importer of a minimal-risk system (the table's AI
+  literacy duty covers providers and deployers only; Art. 23 is for high-risk systems). This case
+  checks that the obligations list can be empty. Doubt: citing Art. 6(2) and Art. 50(1) for a
+  negative finding.
+tags:
+  - "category:d"
+  - "role_switch:none"
+  - "obligations:none"

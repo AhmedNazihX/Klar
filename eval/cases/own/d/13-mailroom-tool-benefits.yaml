@@ -1,0 +1,61 @@
+id: own-d-13-mailroom-tool-benefits
+set_name: own
+language: de
+description: >-
+  Wir sind das Sozialamt einer Kreisstadt in Niedersachsen mit 25 Sachbearbeiterinnen und
+  Sachbearbeitern. Für die Poststelle haben wir eine KI-Software gekauft, die eingescannte Briefe
+  liest und dem zuständigen Team zuordnet; der Hersteller bietet sie genau dafür an und schließt
+  in seinen Unterlagen jeden anderen Einsatz aus. Unsere IT hat sie inzwischen erweitert: Sie liest
+  bei Anträgen auf Wohngeld die Einkommensnachweise aus und markiert jeden Antrag als
+  „voraussichtlich berechtigt“ oder „voraussichtlich abzulehnen“. Die Sachbearbeitung übernimmt
+  die Markierung meistens, unterschrieben wird der Bescheid aber weiter von einem Menschen.
+  Nebenbei stellen wir gerade komplett auf die E-Akte um.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:5:a"
+label_citation: ["art:25:1:c", "annex:III:5:a", "art:6:3", "art:3:11"]
+notes: >-
+  Approved by user 2026-09-29. Class: a public authority's system that evaluates
+  eligibility for a public assistance benefit (housing benefit) is Annex III 5(a); assessing each
+  applicant's income situation is profiling, so no Art. 6(3) exemption even though a person signs
+  the decision. Role: the mailroom tool was not high-risk and its provider excludes other uses; the
+  authority changed its intended purpose so that it became high-risk, so it is the provider under
+  Art. 25(1)(c), putting it into service for its own use (Art. 3(11)), and also the deployer.
+  Conditional duties included: Art. 26(4) (own input data), 26(8) (public authority: registration),
+  26(11) and 86(1) (benefit decisions about persons), 27(1) (body governed by public law: FRIA).
+  Kept as conditional because the facts don't settle it (user rule 2026-09-29): 26(9) (DPIA). Left
+  out because the facts rule it out: 26(7) (workers are not subject to the system). Doubt: a
+  reader could argue Art. 6(3)(d) (preparatory task) because a caseworker signs; the profiling
+  sentence of Art. 6(3) is read here as closing that route.
+tags:
+  - "category:d"
+  - "role_switch:art25_1_c"
+  - "also_role:deployer"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:i"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:8"
+  - "obligation:art:26:9"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:27:1"
+  - "obligation:art:86:1"

@@ -1,0 +1,37 @@
+id: own-d-05-white-label-captions
+set_name: own
+language: en
+description: >-
+  We're a six-person social media agency in Rotterdam. We pay a US start-up for a caption-writing
+  tool: you upload a product photo and it writes three post texts in the brand's tone of voice.
+  Their white-label plan lets us offer it to our retail clients under our own name, "PostPilot",
+  on our own domain, and clients log in and generate posts themselves. We don't change how it
+  works and we never built any part of it. The start-up launched the tool in 2024; we started
+  reselling it in September 2026. Clients publish the texts on Instagram and in their newsletters.
+  Most of our clients sell garden furniture.
+label:
+  risk_class: limited_risk
+  status: legally_ambiguous
+  role: provider
+label_citation: ["art:3:3", "art:50:2", "art:111:4", "guide:guide-art50:para:11"]
+notes: >-
+  Approved by user 2026-09-29 as legally_ambiguous (a question of legal reading, not a missing
+  fact). Class (not in doubt): the tool generates synthetic
+  text, so the provider must mark outputs under Art. 50(2); not high-risk; limited_risk. Art. 25
+  does not apply because the system is not high-risk. Open question: is an agency that only
+  white-labels another company's generative tool, without developing it or having it developed,
+  the provider under Art. 3(3)? Reading A (provider, the stricter reading and the label): it places
+  the system on the Union market under its own name, and the Commission's Art. 50 guidelines treat
+  a company that offers a generative application under its own name as the provider responsible
+  for Art. 50(1) and (2) (guide:guide-art50:para:11). Its own-name offer started in September 2026,
+  after 2 August 2026, so the Art. 111(4) grace period to 2 December 2026 would not cover it and
+  Art. 50(2) applies now. Reading B (distributor): Art. 3(3) needs the provider to develop the
+  system or have it developed; the agency did neither, so the US start-up stays the provider and
+  the agency is a distributor with no Art. 50 duty of its own; the start-up placed the tool on the
+  market in 2024 and so would have the grace period until 2 December 2026. Obligations listed
+  follow reading A.
+tags:
+  - "category:d"
+  - "role_switch:none"
+  - "obligation:art:4:1"
+  - "obligation:art:50:2"
