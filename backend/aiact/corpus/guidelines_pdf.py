@@ -206,27 +206,55 @@ def paragraph_number(block: Block) -> int | None:
 
 
 def _in_sequence(blocks: tuple[Block, ...]) -> tuple[Block, ...]:
-    """Keep a paragraph number only if it continues the document's numbering.
-
-    A number is kept when it is the next one, when it is higher and the next higher number
-    after it is its successor (a number Docling didn't recover, or a part starting at (15)), or
-    when it is the document's last. Anything else, such as a quoted "(1) The following
-    practices shall be prohibited", becomes plain text.
-    """
-    numbers = [(i, n) for i, b in enumerate(blocks) if (n := paragraph_number(b)) is not None]
-    demoted: set[int] = set()
-    last = 0
-    for position, (index, number) in enumerate(numbers):
-        later = [n for _, n in numbers[position + 1 :]]
-        following = next((n for n in later if n > number), None)
-        if number == last + 1 or (number > last and (following == number + 1 or not later)):
-            last = number
-        else:
-            demoted.add(index)
+    """Keep only the paragraph numbers that form the document's numbering; the rest (a quoted
+    "(1) The following practices shall be prohibited") become plain text."""
+    positions = [i for i, b in enumerate(blocks) if paragraph_number(b) is not None]
+    numbers = [n for i in positions if (n := paragraph_number(blocks[i])) is not None]
+    kept = {positions[k] for k in numbering(numbers)}
     return tuple(
-        replace(b, kind="paragraph", text=b.rendered, marker="") if i in demoted else b
+        replace(b, kind="paragraph", text=b.rendered, marker="")
+        if i in positions and i not in kept
+        else b
         for i, b in enumerate(blocks)
     )
+
+
+Chain = tuple[int, int, tuple[int, ...]]
+"""A candidate numbering: (numbers kept, minus the total size of its jumps, kept indexes)."""
+
+
+def numbering(numbers: list[int]) -> tuple[int, ...]:
+    """The indexes of `numbers` that form the paragraph numbering, in order.
+
+    The numbering is the longest chain in which each number is the one after its predecessor,
+    or jumps ahead and is confirmed by its own successor coming next (a number Docling didn't
+    recover, or a part that starts at (15) or (448)). A chain that doesn't start at (1) needs
+    the same confirmation. Of equally long chains, the one with the smallest jumps wins, so a
+    quoted "(60)" among (3) and (4) never takes the place of the real paragraphs; an
+    unconfirmed high number at the end is text.
+    """
+    # best[i][needs_successor]: the best chain that starts by keeping numbers[i]; with
+    # needs_successor, the next kept number must be numbers[i] + 1.
+    count = len(numbers)
+    best: list[list[Chain | None]] = [[None, None] for _ in range(count)]
+    for i in reversed(range(count)):
+        for needs_successor in (False, True):
+            options: list[Chain] = [] if needs_successor else [(1, 0, (i,))]
+            for j in range(i + 1, count):
+                step = numbers[j] - numbers[i]
+                if step == 1:
+                    tail = best[j][False]
+                elif step > 1 and not needs_successor:
+                    tail = best[j][True]
+                else:
+                    continue
+                if tail is not None:
+                    jump = step - 1
+                    options.append((tail[0] + 1, tail[1] - jump, (i, *tail[2])))
+            best[i][needs_successor] = max(options, default=None)
+    starts = [best[i][numbers[i] != 1] for i in range(count)]
+    chosen = max((chain for chain in starts if chain is not None), default=(0, 0, ()))
+    return chosen[2]
 
 
 def _continues(block: Block) -> bool:

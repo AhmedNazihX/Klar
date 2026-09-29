@@ -1,5 +1,6 @@
 """Flattening a Docling document into blocks: markers, page breaks, furniture and tables."""
 
+import pytest
 from docling_core.types.doc.base import BoundingBox
 from docling_core.types.doc.common.content_layer import ContentLayer
 from docling_core.types.doc.common.reference import ProvenanceItem
@@ -7,7 +8,7 @@ from docling_core.types.doc.document import DoclingDocument
 from docling_core.types.doc.items.table.table_data import TableCell, TableData
 from docling_core.types.doc.labels import DocItemLabel
 
-from aiact.corpus.guidelines_pdf import Block, blocks_of, paragraph_number
+from aiact.corpus.guidelines_pdf import Block, blocks_of, numbering, paragraph_number
 
 
 def on_page(page: int) -> ProvenanceItem:
@@ -120,3 +121,26 @@ def test_a_paragraph_number_out_of_sequence_becomes_text() -> None:
     assert [paragraph_number(b) for b in blocks] == [59, None, 60, 62, 63, 64]
     assert blocks[1] == Block("paragraph", "(1) The following AI practices shall be prohibited:", 5)
     assert blocks[5] == Block("list_item", "Overview on the Prohibitions", 6, "(64)")
+
+
+@pytest.mark.parametrize(
+    ("numbers", "kept"),
+    [
+        # A quoted higher number never displaces the real paragraphs after it.
+        ([1, 2, 3, 60, 4, 5, 61], [1, 2, 3, None, 4, 5, None]),
+        ([1, 2, 3, 5, 4, 5, 6, 7], [1, 2, 3, None, 4, 5, 6, 7]),
+        # Paragraph (5) quoting "(12) The notion of 'AI system'".
+        ([4, 5, 12, 6, 7, 8, 9, 10, 11, 12, 13], [4, 5, None, 6, 7, 8, 9, 10, 11, 12, 13]),
+        # A stray high number at the end is text.
+        ([10, 11, 12, 13, 20], [10, 11, 12, 13, None]),
+        # A quoted "(1)", an unrecovered number, and a part starting further on are fine.
+        ([59, 1, 60, 62, 63], [59, None, 60, 62, 63]),
+        ([1, 2, 14, 448, 449], [1, 2, None, 448, 449]),
+        ([15, 16, 17], [15, 16, 17]),
+    ],
+)
+def test_the_numbering_keeps_only_the_real_paragraph_numbers(
+    numbers: list[int], kept: list[int | None]
+) -> None:
+    indexes = set(numbering(numbers))
+    assert [n if i in indexes else None for i, n in enumerate(numbers)] == kept

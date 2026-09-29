@@ -20,6 +20,13 @@ list of `eval/split.json`, the one benchmark file corpus code may read; nothing 
 used. Every Pile B ID must be found in the PDFs, or the parse stops (an isolation gap).
 
 Example IDs don't depend on the layout either: they follow decision 001's counting rules.
+
+Known limit: a footnote's text goes into the chunk of the paragraph printed before it on the
+page, not the paragraph that cites it, so it can land in different chunks in EN and DE (EN
+guide-prohibited para:49 holds footnotes 41-43; in DE, footnote 43 is in para:51, and para:11
+holds footnotes 4 and 5 mid-paragraph). Footnote reference numbers stay in the text ("chatbot
+114"): Docling doesn't mark them, and stripping numbers by guesswork could remove paragraph or
+article numbers.
 """
 
 import json

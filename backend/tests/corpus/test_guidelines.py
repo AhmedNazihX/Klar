@@ -8,6 +8,7 @@ no held-out example text sits in an untagged chunk.
 import hashlib
 import importlib.util
 import json
+from itertools import pairwise
 from pathlib import Path
 
 import pytest
@@ -38,6 +39,10 @@ from aiact.corpus.guidelines_pdf import Block
 from aiact.corpus.sources import Language
 
 EXAMPLE_COUNT = 307
+MAX_PAGE_OFFSET_STEP = 2
+"""How far the EN/DE page offset may move between two consecutive paragraphs."""
+MAX_PAGE_OFFSET_DROP = 2
+"""How far the offset may fall back below its running maximum (DE only ever runs longer)."""
 MIN_QUOTED_LINE = 40
 """Shorter lines ("AI system for office space optimization") can recur in running text."""
 
@@ -53,6 +58,7 @@ def annex_i() -> DoclingDocument:
         ("(42)", "An AI system does not fulfil a safety function where it only optimises the use."),
         ("(43)", "By way of illustration, an optimiser is one. Conversely, a scheduler is not."),
         ("(49)", "By way of example, a smart thermostat is not a safety component of the product."),
+        ("(50)", "To be classified as high-risk, the product needs a third-party assessment."),
     ]
     for marker, text in items:
         group = document.add_list_group()
@@ -161,7 +167,7 @@ def test_parse_writes_sections_and_tagged_examples(
     report = parse_guidelines(manifest, raw_dir, out, split, fake_convert)
 
     assert report.counts == (
-        (f"{ANNEX_I_DOC}.en", 4, 3),
+        (f"{ANNEX_I_DOC}.en", 5, 3),
         (f"{ANNEX_III_DOC}.en", 4, 2),
         ("guide-prohibited.de", 3, 0),
     )
@@ -184,6 +190,7 @@ def test_parse_writes_sections_and_tagged_examples(
         "hr-ex-001",
         "hr-ex-002",
         "hr-ex-003",
+        None,
     ]
     assert annex_i_chunks[2].text == "Conversely, a scheduler is not."
     assert annex_i_chunks[0].provision_id == f"guide:{ANNEX_I_DOC}:para:42"
@@ -358,19 +365,56 @@ def bilingual_docs() -> list[str]:
     return sorted(doc for doc, found in languages.items() if found == {"en", "de"})
 
 
+def paragraph_pages(doc: str, language: Language) -> dict[int, int]:
+    chunks = load_jsonl(DEFAULT_PARSED_DIR / f"{doc}.{language}.jsonl")
+    prefix = f"guide:{doc}:para:"
+    return {
+        int(c.provision_id.removeprefix(prefix)): c.page
+        for c in chunks
+        if c.provision_id.startswith(prefix)
+    }
+
+
 def test_bilingual_guidelines_share_their_section_ids() -> None:
-    """A section id names the same passage in EN and DE: both start at the same paragraph."""
+    """A section id names the same passage in EN and DE.
+
+    The German text runs longer, so its page drifts ahead of the English one, but only
+    gradually: a paragraph boundary that slipped in one language would jump the offset.
+    """
     docs = bilingual_docs()
     assert docs == ["guide-definition", "guide-prohibited"]
     for doc in docs:
-        en, de = (
-            {c.provision_id: c for c in load_jsonl(DEFAULT_PARSED_DIR / f"{doc}.{lang}.jsonl")}
+        ids = [
+            {c.provision_id for c in load_jsonl(DEFAULT_PARSED_DIR / f"{doc}.{lang}.jsonl")}
             for lang in ("en", "de")
-        )
-        assert en.keys() == de.keys(), doc
-        for provision_id, chunk in en.items():
-            number = provision_id.rsplit(":", 1)[-1]
-            if provision_id.endswith(":front"):
-                continue
-            assert chunk.text.startswith(f"({number}) "), provision_id
-            assert de[provision_id].text.startswith(f"({number}) "), provision_id
+        ]
+        assert ids[0] == ids[1], doc
+        en, de = paragraph_pages(doc, "en"), paragraph_pages(doc, "de")
+        offsets = [de[n] - en[n] for n in sorted(en)]
+        for number, (before, after) in enumerate(pairwise(offsets), 2):
+            assert abs(after - before) <= MAX_PAGE_OFFSET_STEP, (doc, number, before, after)
+        for number, offset in enumerate(offsets, 1):
+            assert offset >= max(offsets[:number]) - MAX_PAGE_OFFSET_DROP, (doc, number, offset)
+
+
+PARAGRAPH_GAPS: dict[str, frozenset[int]] = {
+    # Paras. (43) and (49) are worked examples as a whole (decision 001, rule 1): example chunks.
+    "guide-high-risk-annex-i": frozenset({43, 49}),
+    # The three high-risk parts share one numbering: the general part holds (1)-(14), Annex I
+    # (15)-(62), Annex III (63)-(447), and the general part's closing chapters (448)-(451).
+    "guide-high-risk-general": frozenset(range(15, 448)),
+}
+PARAGRAPH_STARTS = {"guide-high-risk-annex-i": 15, "guide-high-risk-annex-iii": 63}
+
+
+def test_paragraph_numbers_are_contiguous_in_every_guideline() -> None:
+    """No paragraph number is skipped or merged away, in any language, save the listed gaps."""
+    for entry in pdf_entries(DEFAULT_MANIFEST):
+        numbers = paragraph_pages(entry.id, entry.language)
+        if not numbers:
+            assert entry.id == "code-of-practice-transparency"
+            continue
+        first = PARAGRAPH_STARTS.get(entry.id, 1)
+        gaps = PARAGRAPH_GAPS.get(entry.id, frozenset())
+        expected = set(range(first, max(numbers) + 1)) - gaps
+        assert set(numbers) == expected, f"{entry.id}.{entry.language}"
