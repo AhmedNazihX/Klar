@@ -212,15 +212,29 @@ def test_confirm_question_ids_are_unique_within_a_reply() -> None:
     [
         (
             "Die Prüfung läuft über größere Straßen, Café",
-            "confirm_die_pruefung_laeuft_ueber_groessere_strassen",
+            "confirm_die_pruefung_laeuft_ueber_groessere_strassen_cafe",
         ),
         ("Café-Kasse", "confirm_cafe_kasse"),
         ("Wird in der EU genutzt", "confirm_wird_in_der_eu_genutzt"),
         ("«…»", "confirm"),
+        ("x" * 80, "confirm_" + "x" * 56),
     ],
 )
 def test_fact_slugs_are_ascii_snake_case(text: str, slug: str) -> None:
     assert facts.fact_slug(text) == slug
+
+
+def test_fact_slugs_keep_every_word_that_fits() -> None:
+    eu = facts.fact_slug("The system is used in the EU")
+    workplace = facts.fact_slug("The system is used in the workplace")
+    assert (eu, workplace) == (
+        "confirm_the_system_is_used_in_the_eu",
+        "confirm_the_system_is_used_in_the_workplace",
+    )
+    long_fact = "The system is used by the human resources department to rank every applicant"
+    slug = facts.fact_slug(long_fact)
+    assert slug == "confirm_the_system_is_used_by_the_human_resources_department_to"
+    assert len(slug) <= facts.MAX_SLUG_LENGTH
 
 
 @pytest.mark.parametrize("evidence", [EvidenceTag.INFERRED, EvidenceTag.ASSUMED])
@@ -340,20 +354,20 @@ REPLAY_CASES: dict[str, tuple[str, Language, frozenset[str]]] = {
         "Our bank runs a model that flags unusual card transactions. Our compliance analysts "
         "look at every flag and decide whether to report it to the authorities.",
         Language.EN,
-        frozenset({"transaction_enrichment_profiles"}),
+        frozenset({"fraud_only"}),
     ),
     "predictive_maintenance_en": (
         "We make packaging machines. A model we trained on sensor data predicts when a bearing "
         "will fail, so our service team can replace it before the machine stops.",
         Language.EN,
-        frozenset({"safety_component"}),
+        frozenset({"machinery_safety_function"}),
     ),
     "exam_proctoring_de": (
         "Unsere Hochschule nutzt bei Online-Prüfungen eine gekaufte Software, die über die "
         "Webcam das Verhalten der Studierenden auswertet und auffällige Stellen für die "
         "Aufsicht markiert.",
         Language.DE,
-        frozenset({"infers_emotions"}),
+        frozenset({"emotions_or_polygraph"}),
     ),
     "customer_chatbot_de": (
         "Wir sind ein Stadtwerk mit 300 Mitarbeitenden. Auf unserer Website beantwortet ein "

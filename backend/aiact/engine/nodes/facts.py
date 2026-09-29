@@ -47,9 +47,8 @@ WORD_CHAR = re.compile(r"\w")
 
 GERMAN_ASCII = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"})
 """German letters spelled out in ASCII for ids; other accents are dropped (é → e)."""
-CONFIRM_PREFIX = "confirm_"
-SLUG_WORDS = 6
-"""How many words of a fact's text its fallback question id keeps."""
+CONFIRM_STEM = "confirm"
+"""The first word of every fallback question id."""
 MAX_SLUG_LENGTH = 64
 """The longest id `FollowUpQuestion` accepts (`SLUG_PATTERN`)."""
 
@@ -117,12 +116,18 @@ def _fact(extracted: ExtractedFact, description: str) -> Fact:
 
 
 def fact_slug(text: str) -> str:
-    """A stable question id from a fact's text: `confirm_` and its first words in ASCII
-    snake_case, so the same fact gets the same id when the engine runs again."""
+    """A stable question id from a fact's text: `confirm_` and as many of its words, in ASCII
+    snake_case, as fit in an id, so the same fact gets the same id when the engine runs again.
+    Only a first word too long to fit is cut."""
     german = text.lower().translate(GERMAN_ASCII)
     folded = unicodedata.normalize("NFKD", german).encode("ascii", "ignore").decode()
-    words = re.findall(r"[a-z0-9]+", folded)[:SLUG_WORDS]
-    return f"{CONFIRM_PREFIX}{'_'.join(words)}"[:MAX_SLUG_LENGTH].rstrip("_")
+    slug = CONFIRM_STEM
+    for word in re.findall(r"[a-z0-9]+", folded):
+        longer = f"{slug}_{word}"
+        if len(longer) > MAX_SLUG_LENGTH:
+            return slug if slug != CONFIRM_STEM else longer[:MAX_SLUG_LENGTH]
+        slug = longer
+    return slug
 
 
 def _unique(slug: str, taken: set[str]) -> str:
