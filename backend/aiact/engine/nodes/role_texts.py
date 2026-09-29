@@ -116,13 +116,15 @@ OWN_NAME = KeyQuestion(
 """The own-brand question for a system that isn't high-risk, where Art. 25(1) doesn't apply and
 the answer bears on Art. 3(3) instead (user decision on own-d-05, 2026-09-29)."""
 
+# The readings mention the Commission's Art. 50 guidelines, which the step doesn't cite yet:
+# guidance citations wait on get_provision (C5) and the citation validator (E9).
 OWN_NAME_QUESTION: Mapping[Language, str] = {
     Language.EN: "Does placing a system you didn't develop, or have developed, on the market under "
-    "your own name or trademark make you its provider under Art. 3(3), which defines the provider "
-    'as one that "develops … or has … developed" the system "and places it on the market … under '
-    'its own name or trademark"?',
+    "your own name or trademark make you its provider under Art. 3(3)? It defines the provider as "
+    'a body "that develops an AI system … or that has an AI system … developed and places it on '
+    'the market or puts the AI system into service under its own name or trademark".',
     Language.DE: "Wird man Anbieter nach Art. 3 Nr. 3, wenn man ein System, das man weder "
-    "entwickelt noch entwickeln lassen hat, unter eigenem Namen oder eigener Marke in Verkehr "
+    "entwickelt noch hat entwickeln lassen, unter eigenem Namen oder eigener Marke in Verkehr "
     'bringt? Art. 3 Nr. 3 nennt als Anbieter, wer ein System "entwickelt oder entwickeln lässt und '
     'es unter ihrem eigenen Namen oder ihrer Handelsmarke in Verkehr bringt".',
 }
@@ -164,6 +166,10 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "assumption_also": "Working assumption: also {also}, pending an answer to: {question}",
         "assumption": "Working assumption: provider, keeping the other role's duties, pending an "
         "answer to: {question}",
+        "still_asked": "Still to confirm: {question}",
+        "assumption_own_name": "Working assumption: provider, keeping the {base} duties. If you "
+        "do place it under your own name, whether that makes you its provider is legally open "
+        "(Art. 3(3)); if not, you stay a {base}. Please answer: {question}",
         "duties": "{count} duties listed for a {risk_class} system ({version} text).",
         "condition_not_met": "{count} conditional duties left out because their condition "
         "doesn't apply.",
@@ -184,6 +190,10 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "{question}",
         "assumption": "Arbeitsannahme: Anbieter, mit den Pflichten der anderen Rolle, bis diese "
         "Frage beantwortet ist: {question}",
+        "still_asked": "Noch zu bestätigen: {question}",
+        "assumption_own_name": "Arbeitsannahme: Anbieter, mit den Pflichten als {base}. Bringen "
+        "Sie es unter eigenem Namen in Verkehr, ist rechtlich offen, ob Sie damit Anbieter werden "
+        "(Art. 3 Nr. 3); wenn nicht, bleiben Sie {base}. Bitte beantworten Sie: {question}",
         "duties": "{count} Pflichten für ein System der Klasse {risk_class} ({version} Fassung).",
         "condition_not_met": "{count} bedingte Pflichten entfallen, weil ihre Bedingung nicht "
         "erfüllt ist.",

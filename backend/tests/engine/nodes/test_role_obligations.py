@@ -259,6 +259,10 @@ def test_a_white_labeller_below_high_risk_is_ambiguous_with_provider_assumed(
         Role.PROVIDER,
         Role.DISTRIBUTOR,
     )
+    if outcome.step.missing_fact is not None:  # the unknown own-name case
+        decision = outcome.step.decision
+        assert "whether that makes you its provider is legally open" in decision
+        assert "pending an answer to" not in decision  # a yes doesn't settle the role
     assert finding(outcome).role_switch_reason is None  # no Art. 25 switch
     assert [c.provision_id for c in step.citations] == ["art:3:7", "art:3:3"]
     assert "Art. 50 guidelines point to provider" in step.decision
@@ -316,6 +320,34 @@ def test_a_company_that_develops_its_system_stays_a_decided_provider() -> None:
     assert finding(outcome).role is Role.PROVIDER
 
 
+@pytest.mark.parametrize("own_brand", [Answer.YES, Answer.UNKNOWN])
+def test_a_prohibited_system_keeps_its_base_role_whatever_the_name(own_brand: Answer) -> None:
+    # Art. 5 bans placing on the market, putting into service and use, whoever the operator is.
+    answer = role_answer(
+        Role.DEPLOYER,
+        risk_class=RiskClass.PROHIBITED,
+        route=None,
+        own_brand=key_fact(own_brand, EvidenceTag.STATED),
+    )
+    outcome = to_outcome(answer, state(RiskClass.PROHIBITED, None))
+    assert outcome.step.status is Status.DECIDED
+    assert (finding(outcome).role, finding(outcome).also_role) == (Role.DEPLOYER, None)
+    assert outcome.follow_up_questions == ()
+    assert outcome.step.open_question is None
+
+
+def test_ambiguity_with_an_open_gpai_answer_states_the_assumption_once() -> None:
+    answer = _white_labeller(RiskClass.MINIMAL_RISK).model_copy(
+        update={"builds_on_gpai": key_fact(Answer.UNKNOWN)}
+    )
+    step = to_outcome(answer, state(RiskClass.MINIMAL_RISK, None)).step
+    assert step.status is Status.LEGALLY_AMBIGUOUS
+    assert step.decision.count("Working assumption") == 1
+    assert "Still to confirm: Is the system built on a general-purpose AI model" in step.decision
+    german = to_outcome(answer, state(RiskClass.MINIMAL_RISK, None, language=Language.DE))
+    assert german.step.decision.count("Arbeitsannahme") == 1
+
+
 def test_an_unknown_own_name_below_high_risk_asks_for_it() -> None:
     answer = _white_labeller(RiskClass.LIMITED_RISK, Answer.UNKNOWN)
     given = state(RiskClass.LIMITED_RISK, None, transparency_duties=("art:50:1",))
@@ -330,6 +362,10 @@ def test_an_unknown_own_name_below_high_risk_asks_for_it() -> None:
         Role.PROVIDER,
         Role.DISTRIBUTOR,
     )
+    if outcome.step.missing_fact is not None:  # the unknown own-name case
+        decision = outcome.step.decision
+        assert "whether that makes you its provider is legally open" in decision
+        assert "pending an answer to" not in decision  # a yes doesn't settle the role
 
 
 def test_an_unsettled_switch_needs_information_with_provider_as_the_assumption() -> None:
@@ -835,11 +871,15 @@ def _case_state(label: CaseLabel, case: BenchmarkCase) -> EngineState:
 
 B5D_CASES = _role_cases()
 
-KNOWN_STATUS_GAPS: dict[str, str] = {
-    "own-d-12-lender-extra-input": "node returns needs_more_information (substantial "
-    "modification unknown) where the label is legally_ambiguous; open for the user",
+KNOWN_STATUS_GAPS: dict[str, tuple[Status, str]] = {
+    "own-d-12-lender-extra-input": (
+        Status.NEEDS_MORE_INFORMATION,
+        "node asks about the substantial modification where the label is legally_ambiguous; "
+        "the user chose a role-only replay on 2026-09-29, and the status gap is logged on E8/V5",
+    ),
 }
-"""Status mismatches reported to the user, not yet decided; the role still has to match."""
+"""Recorded status gaps: the exact status the node returns instead of the label's. A listed
+case that returns anything else, including the label's status, fails so the entry is removed."""
 
 
 @pytest.mark.vcr
@@ -870,8 +910,11 @@ def test_b5d_case_replay(
         )
     outcome = RoleObligationsCheck(luna_settings)(_case_state(label, case))
     assert finding(outcome).role is label.role
+    gap = KNOWN_STATUS_GAPS.get(case.id)
+    if gap is not None:
+        gap_status, reason = gap
+        if outcome.step.status is not gap_status:
+            pytest.fail(f"{case.id} no longer shows its recorded status gap; update the list")
+        pytest.xfail(reason)
     if label.status is Status.LEGALLY_AMBIGUOUS:
-        gap = KNOWN_STATUS_GAPS.get(case.id)
-        if gap and outcome.step.status is not label.status:
-            pytest.xfail(gap)
         assert outcome.step.status is label.status

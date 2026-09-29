@@ -89,6 +89,9 @@ EXEMPTION_ARTICLE = "art:6:4"
 PROHIBITION_ARTICLE = "art:5:1"
 """Rows whose condition is settled by another finding, not asked of the model."""
 
+OWN_NAME_CLASSES = frozenset({RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK})
+"""The classes where own-name placement makes the role legally ambiguous under Art. 3(3)."""
+
 ACT_DOCUMENTS: Mapping[LawVersion, str] = {
     LawVersion.ORIGINAL: "ai-act",
     LawVersion.AMENDED: "ai-act-consolidated",
@@ -270,9 +273,10 @@ def settle_role(answer: RoleAnswer, risk_class: RiskClass) -> RoleSettlement:
                 )
             if key_fact.answer is Answer.UNKNOWN:
                 unknown = (*unknown, switch)
-    else:
-        # Not high-risk: Art. 25(1) can't make a provider, but own-name placement bears on
-        # Art. 3(3), which the law leaves open (user decision on own-d-05, 2026-09-29).
+    elif risk_class in OWN_NAME_CLASSES:
+        # Limited or minimal risk: Art. 25(1) can't make a provider, but own-name placement bears
+        # on Art. 3(3), which the law leaves open (user decisions on own-d-05, 2026-09-29). A
+        # prohibited system keeps its base role: Art. 5 bans it whoever the operator is.
         used = (*used, answer.own_brand)
         if answer.own_brand.answer is Answer.YES:
             return _settlement(answer, Role.PROVIDER, used, missing=gpai_open, is_ambiguous=True)
@@ -455,10 +459,17 @@ def _decision(settled: RoleSettlement, language: Language, summary: Sequence[str
     if settled.made_by and settled.made_by.reason:
         sentences.append(settled.made_by.reason[language])
     if settled.is_ambiguous and settled.base is not None:
+        # The ambiguity states the working assumption; a pending question doesn't settle it.
         sentences.append(texts["ambiguous"].format(base=names[settled.base]))
-    if settled.missing:
+        sentences.extend(
+            texts["still_asked"].format(question=q.question[language]) for q in settled.missing
+        )
+    elif settled.missing:
         question = settled.missing[0].question[language]
-        if settled.made_by is BUILDS_ON_GPAI and also is not None:
+        if settled.missing[0] is OWN_NAME and settled.base is not None:
+            base = names[settled.base]
+            sentences.append(texts["assumption_own_name"].format(base=base, question=question))
+        elif settled.made_by is BUILDS_ON_GPAI and also is not None:
             # The GPAI rule settled the provider role; only the kept role is assumed.
             sentences.append(texts["assumption_also"].format(also=names[also], question=question))
         else:
