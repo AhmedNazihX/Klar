@@ -6,9 +6,10 @@ here touches the database (that is `aiact.corpus.load`). The rules are decision 
   the AI Act's entry into force, 2024-08-01.
 - The consolidated text (`'amended'`) carries the full history (decision 014). A difference
   between the original and the consolidation that the Digital Omnibus doesn't explain (no
-  amendment targets the provision, an ancestor or a descendant) is a corrigendum, which applies
-  from the start: the "corrected original" is the original with every corrigendum's consolidated
-  text put in, in the provision and in the text of each of its ancestors. A provision whose
+  amendment targets the provision, an ancestor, a descendant or an adjacent sibling) is a
+  corrigendum, which applies from the start: the "corrected original" is the original with every
+  corrigendum's consolidated text put in, in the provision and in the text of each of its
+  ancestors. A provision whose
   corrected original still differs from the consolidation gets two slices, split at the
   Omnibus's entry into force (`amendment.in_force_from`, 2026-07-27): the corrected original
   before, the consolidated text after. Its descendants are split too (both slices from their
@@ -182,25 +183,47 @@ def _content(unit: _Unit) -> tuple[str | None, str]:
     return unit.heading, unit.text
 
 
+def _children(units: dict[str, _Unit]) -> dict[str, list[str]]:
+    """Each parent's children, in document order."""
+    children: dict[str, list[str]] = {}
+    for pid, unit in units.items():
+        if unit.parent_id is not None:
+            children.setdefault(unit.parent_id, []).append(pid)
+    return children
+
+
+def _neighbours(children: dict[str, list[str]], targets: frozenset[str]) -> set[str]:
+    """The siblings right before and after each target. Inserting or deleting a point changes
+    its neighbours' closing punctuation or moves a trailing "and"/"or", so they are touched."""
+    found: set[str] = set()
+    for siblings in children.values():
+        for i, pid in enumerate(siblings):
+            if pid in targets:
+                found.update(siblings[max(i - 1, 0) : i] + siblings[i + 1 : i + 2])
+    return found
+
+
 def corrected_original(
     old: dict[str, _Unit], new: dict[str, _Unit], targets: frozenset[str]
 ) -> dict[str, _Unit]:
     """The original units with every corrigendum applied: a unit that differs from the
-    consolidation although the Omnibus doesn't touch it takes the consolidated unit, and each
-    ancestor's text takes its corrected child's text in place of the old one. An article's or
-    annex's heading is shared by all its units, so a heading corrigendum (the title changed,
-    but the Omnibus doesn't target the article itself) is applied to all of them."""
-    children: dict[str, list[str]] = {}
-    for pid, unit in old.items():
-        if unit.parent_id is not None:
-            children.setdefault(unit.parent_id, []).append(pid)
+    consolidation although the Omnibus doesn't touch it (no target is the unit, an ancestor, a
+    descendant or an adjacent sibling) takes the consolidated unit, and each ancestor's text
+    takes its corrected child's text in place of the old one. An article's or annex's heading
+    is shared by all its units, so a heading corrigendum (the title changed, but the Omnibus
+    doesn't target the article itself) is applied to all of them."""
+    children = _children(old)
     headings = {
         pid: new[pid].heading
         for pid, unit in old.items()
         if unit.parent_id is None and pid in new and pid not in targets
         if unit.heading != new[pid].heading
     }
+    neighbours = _neighbours(children, targets) | _neighbours(_children(new), targets)
     corrected: dict[str, _Unit] = {}
+
+    def is_touched(pid: str) -> bool:
+        return _is_touched(pid, targets) or pid in neighbours
 
     def correct(pid: str, heading: str | None = None) -> _Unit:
         if pid in corrected:
@@ -210,9 +233,7 @@ def corrected_original(
         if heading is not None:
             unit = replace(unit, heading=heading)
         is_corrigendum = (
-            after is not None
-            and _content(unit) != _content(after)
-            and not _is_touched(pid, targets)
+            after is not None and _content(unit) != _content(after) and not is_touched(pid)
         )
         if is_corrigendum:
             assert after is not None

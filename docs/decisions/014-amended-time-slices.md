@@ -14,9 +14,11 @@ lookups?
 ## Options
 | Option | What was measured | Result | Source |
 | --- | --- | --- | --- |
-| Split every provision whose text differs between the original and the consolidation | Units that differ although no Omnibus amendment targets them, their ancestors or their descendants | Rejected: these are corrigenda, which apply from the start. 13 EN units (Art. 108 and its paragraphs 2–4; Annex I Section B point 20; Annex VIII Section B point 8; and 7 heading-only differences in Art. 1(1) and 1(2)(a)–(f), see below) and 2 DE units (Art. 3(40), "sofern es sich **nicht** um …"; Annex VIII Section B point 8) | `data/parsed/ai-act*.jsonl` |
+| Split every provision whose text differs between the original and the consolidation | Units that differ although no Omnibus amendment targets them, an ancestor, a descendant or an adjacent sibling | Rejected: these are corrigenda, which apply from the start. 11 EN units: Art. 108 and its paragraphs 2–4 (a formatting difference), and 7 heading-only differences in Art. 1(1) and 1(2)(a)–(f) (see below). 1 DE unit: Art. 3(40), "sofern es sich **nicht** um …" | `data/parsed/ai-act*.jsonl` |
+| Count only targets, ancestors and descendants as touched | Units next to an inserted or deleted point | Rejected: the neighbours' punctuation changes with the Omnibus (Annex I Section B point 20 "concerned." → "concerned;" because point 21 is inserted; Annex VIII Section B point 8 "recalled);" → "recalled)." in EN and "zurückgerufen)" → "zurückgerufen)." in DE because points 7 and 9 are deleted) and would be backdated to 2024-08-01 | same |
+| **Also count the siblings right before and after a target as touched** (in the original and in the consolidated order) | Same | Chosen: those points split normally, with the original punctuation before 2026-07-27. A whole-list sibling rule was rejected: it would turn DE Art. 3(40) into an amendment, because the Omnibus inserts other points of Art. 3 | same, local DB |
 | Take the old slice from the original text as printed | DE Art. 3(40) `as_of` 2025-01-01 | Rejected: returns the uncorrected text, which says the opposite | same |
-| Old slice = the **corrected original**: the original with each corrigendum's consolidated text put in, in the unit itself and in the text of every ancestor that quotes it | Same lookup | Chosen: DE Art. 3 and Art. 3(40) before 2026-07-27 both carry "nicht". EN 20 / DE 5 units get corrected text (the corrigenda plus 7 EN / 3 DE amended ancestors that quote them) | `aiact/corpus/build.py`, local DB |
+| Old slice = the **corrected original**: the original with each corrigendum's consolidated text put in, in the unit itself and in the text of every ancestor that quotes it | Same lookup | Chosen: DE Art. 3 and Art. 3(40) before 2026-07-27 both carry "nicht". EN 14 / DE 2 units get corrected text (the corrigenda plus the amended ancestors that quote them or share the corrected title: EN Art. 1, 1(2), 1(2)(g); DE Art. 3) | `aiact/corpus/build.py`, local DB |
 | Split a provision when its corrected original still differs from the consolidation | Same | Chosen: every remaining difference is explained by the 88 Omnibus targets | same |
 | Split only the changed provision, not its unchanged children | Parent of an unchanged child | Rejected: the child's parent row would be the old slice after 2026-07-27 | `aiact/corpus/build.py` |
 | Split the descendants of a split provision too | Same | Chosen: every slice's parent covers the same dates; 487 provisions have two slices per language | `docs/corpus_stats.md` |
@@ -26,7 +28,9 @@ lookups?
 - The amended document's slices split only at the Omnibus's entry into force, **2026-07-27**
   (`amendment.in_force_from`, the same for every instruction; the loader fails if it isn't).
 - **Corrigenda apply from the start.** A unit that differs from the consolidation although the
-  Omnibus touches neither it, an ancestor nor a descendant is a corrigendum: its corrected original
+  Omnibus touches neither it, an ancestor, a descendant nor an **adjacent sibling** (the point
+  right before or after a target, in either text: inserting or deleting a point changes its
+  neighbours' closing punctuation or moves a trailing "and"/"or") is a corrigendum: its corrected original
   is the consolidated unit, and each ancestor's corrected original quotes the corrected text in place
   of the old one (the loader fails if an ancestor doesn't quote the old text exactly once). A title
   that changed while the Omnibus doesn't target the article (or annex) itself is a corrigendum for
