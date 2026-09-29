@@ -3,13 +3,14 @@ set_name: own
 language: en
 description: >-
   We're a recruitment agency with about 120 staff in Lyon and Brussels. Since last spring we've
-  licensed a candidate-screening engine from a software house in Tallinn. It reads the CVs that
-  come in for our clients' vacancies, gives every applicant a fit score and sorts them into a
-  shortlist. We now sell it to our corporate clients as "HireLens by Duval Talent": our logo is on
-  the login page, the reports and the user manual, and the Tallinn company's name no longer
-  appears anywhere. The licence is a standard reseller licence and doesn't reallocate the
-  provider's obligations. We haven't touched the model itself. Our clients' HR teams use the shortlist to decide whom to invite to interviews. The
-  launch campaign ran on LinkedIn and at a trade fair in Lille.
+  licensed a candidate-screening engine from a software house in Tallinn. It reads CVs, gives
+  every applicant a fit score and sorts them into a shortlist. We now sell it to our corporate
+  clients as "HireLens by Duval Talent": our logo is on the login page, the reports and the user
+  manual, and the Tallinn company's name no longer appears anywhere. The licence is a standard
+  reseller licence and doesn't reallocate the provider's obligations. We haven't touched the model
+  itself. Our clients log in and run it on the applications for their own vacancies; we don't use
+  it ourselves. Their HR teams use the shortlist to decide whom to invite to interviews. The launch
+  campaign ran on LinkedIn and at a trade fair in Lille.
 label:
   risk_class: high_risk
   role: provider
@@ -17,7 +18,8 @@ label:
 label_citation: ["art:25:1:a", "annex:III:4:a", "art:6:2", "art:6:3"]
 notes: >-
   Approved by user 2026-09-29 (the description states that the licence doesn't reallocate the
-  provider's obligations). Role: the agency puts its own name and trademark on a high-risk system
+  provider's obligations, and that the clients run the system while the agency doesn't use it, so
+  the agency is not also a deployer). Role: the agency puts its own name and trademark on a high-risk system
   already on the market, so it is the provider under Art. 25(1)(a) and the Tallinn company stops
   being the provider of this system (Art. 25(2)). Class: analysing and filtering applications is
   Annex III 4(a); scoring and ranking applicants is profiling, so the Art. 6(3) exemption cannot
