@@ -114,3 +114,11 @@ def test_embeddings_roundtrip(openrouter_settings: Settings) -> None:
 @pytest.mark.live
 def test_embeddings_roundtrip_live() -> None:
     _assert_embeddings_roundtrip(get_settings())
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_embeddings_roundtrip.yaml")
+def test_embed_batch_reports_tokens_and_cost(openrouter_settings: Settings) -> None:
+    batch = _client(openrouter_settings).embed_batch(TEXTS)
+    assert len(batch.vectors) == len(TEXTS)
+    assert (batch.tokens, batch.cost_usd) == (40, pytest.approx(4e-7))

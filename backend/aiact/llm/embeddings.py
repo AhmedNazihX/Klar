@@ -9,11 +9,12 @@ Every vector is L2-normalised here and checked, whatever the provider returned.
 import logging
 import math
 from collections.abc import Sequence
+from dataclasses import dataclass
 
 import openrouter
 from langchain_core.embeddings import Embeddings
 from openrouter.components import ProviderPreferences
-from openrouter.operations import CreateEmbeddingsResponseBody
+from openrouter.operations import CreateEmbeddingsResponseBody, CreateEmbeddingsUsage
 
 from aiact.llm.routing import APP_TITLE, provider_preferences, require_api_key, require_setting
 from aiact.settings import Settings, get_settings
@@ -61,6 +62,15 @@ def l2_normalise(vector: Sequence[float], dimensions: int) -> list[float]:
     return [x / norm for x in vector]
 
 
+@dataclass(frozen=True)
+class EmbeddingBatch:
+    """The unit vectors of one request, in input order, with what OpenRouter billed for it."""
+
+    vectors: list[list[float]]
+    tokens: int
+    cost_usd: float
+
+
 class OpenRouterEmbeddings(Embeddings):
     """LangChain `Embeddings` over OpenRouter's `/embeddings` endpoint, provider pinned."""
 
@@ -100,9 +110,10 @@ class OpenRouterEmbeddings(Embeddings):
         """Embed a search query with the task instruction prefix."""
         return self._embed([format_query(text, self.query_instruction)])[0]
 
-    def _embed(self, texts: list[str]) -> list[list[float]]:
+    def embed_batch(self, texts: list[str]) -> EmbeddingBatch:
+        """Embed corpus texts in one request and report its tokens and cost (0 if not given)."""
         if not texts:
-            return []
+            return EmbeddingBatch([], 0, 0.0)
         response = self._client.embeddings.generate(
             input=texts,
             model=self.model,
@@ -110,12 +121,21 @@ class OpenRouterEmbeddings(Embeddings):
             encoding_format="float",
             provider=self._routing,
         )
-        vectors = _vectors(response, expected=len(texts))
-        return [l2_normalise(vector, self.dimensions) for vector in vectors]
+        vectors, usage = _vectors(response, expected=len(texts))
+        return EmbeddingBatch(
+            vectors=[l2_normalise(vector, self.dimensions) for vector in vectors],
+            tokens=usage.prompt_tokens if usage is not None else 0,
+            cost_usd=float(usage.cost or 0.0) if usage is not None else 0.0,
+        )
+
+    def _embed(self, texts: list[str]) -> list[list[float]]:
+        return self.embed_batch(texts).vectors
 
 
-def _vectors(response: object, *, expected: int) -> list[list[float]]:
-    """Pull the float vectors out of a response, in input order."""
+def _vectors(
+    response: object, *, expected: int
+) -> tuple[list[list[float]], CreateEmbeddingsUsage | None]:
+    """Pull the float vectors (in input order) and the usage out of a response."""
     if not isinstance(response, CreateEmbeddingsResponseBody):
         raise EmbeddingError(f"unexpected embeddings response type {type(response).__name__}")
     if len(response.data) != expected:
@@ -133,4 +153,4 @@ def _vectors(response: object, *, expected: int) -> list[list[float]]:
         if isinstance(item.embedding, str):
             raise EmbeddingError("got a base64 embedding; expected floats")
         vectors.append(item.embedding)
-    return vectors
+    return vectors, response.usage

@@ -14,11 +14,13 @@ import psycopg
 import typer
 
 from aiact import db, deps
+from aiact.corpus import embed as corpus_embed_module
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
 from aiact.eval import academic, citation_index, metrics, records, report, runner
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CaseFileError, CaseSet, load_cases
+from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
 from aiact.settings import get_settings
@@ -193,6 +195,59 @@ def corpus_load(
     typer.echo(corpus_load_module.render_stats(counts), nl=False)
     is_written = corpus_load_module.write_stats(counts, stats_path)
     typer.echo(f"{'Written' if is_written else 'Unchanged'}: {stats_path}")
+
+
+@corpus_app.command("embed")
+def corpus_embed(
+    model: Annotated[
+        str, typer.Option(help=f"The embedding arm: {' | '.join(corpus_embed_module.ARMS)}")
+    ] = "qwen3",
+    dims: Annotated[
+        int | None,
+        typer.Option(
+            help=f"Vector size: {' | '.join(map(str, corpus_embed_module.DIMENSION_CHOICES))}"
+            " [default: EMBEDDING_DIMENSIONS]"
+        ),
+    ] = None,
+    doc_key: Annotated[
+        list[str] | None, typer.Option(help="Embed only these documents (repeatable)")
+    ] = None,
+    batch_size: Annotated[
+        int, typer.Option(min=1, max=256, help="Texts per request")
+    ] = corpus_embed_module.DEFAULT_BATCH_SIZE,
+) -> None:
+    """Embed every provision row that has no current vector for the arm (skips rows already
+    embedded with the same model, size and text), and log the tokens and cost."""
+    size = dims or get_settings().embedding_dimensions
+    arm = corpus_embed_module.ARMS.get(model)
+    if arm is None or size not in corpus_embed_module.DIMENSION_CHOICES:
+        typer.echo(f"Error: unknown --model {model!r} or --dims {size}", err=True)
+        raise typer.Exit(code=2)
+    try:
+        embedder = OpenRouterEmbeddings(model=arm.model, provider=arm.provider, dimensions=size)
+        with db.connect() as connection:
+            if not corpus_embed_module.has_arm_index(connection, arm.model, size):
+                typer.echo(
+                    f"Warning: no HNSW index for {arm.model}/{size}; add one in a migration",
+                    err=True,
+                )
+            result = corpus_embed_module.embed_corpus(
+                connection, embedder, arm, size, doc_keys=doc_key, batch_size=batch_size
+            )
+    except (LLMConfigError, EmbeddingError, db.DatabaseNotConfiguredError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=1) from error
+    typer.echo(
+        f"{result.model}/{result.dims}: {result.texts_embedded} texts embedded for "
+        f"{result.rows_embedded} rows in {result.batches} batches, {result.rows_reused} rows "
+        f"reused; {result.tokens} tokens, ${result.cost_usd:.6f}"
+    )
+    for sha in result.too_long:
+        typer.echo(f"Warning: text {sha} is too long for {result.model}; not embedded", err=True)
 
 
 @eval_app.callback()
