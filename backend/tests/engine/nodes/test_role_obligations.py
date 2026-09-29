@@ -33,6 +33,9 @@ from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
 from aiact.schemas import (
+    DISCLAIMER,
+    STEP_ORDER,
+    ClassificationResult,
     EvidenceTag,
     Fact,
     HighRiskRoute,
@@ -45,6 +48,7 @@ from aiact.schemas import (
     StepName,
     StepResult,
 )
+from aiact.schemas.result import derived_status
 from aiact.settings import Settings
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -209,12 +213,123 @@ def test_a_switched_deployer_gets_provider_and_deployer_duties_once_each() -> No
 
 
 @pytest.mark.parametrize("risk_class", [RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK])
-def test_art_25_switches_only_apply_to_high_risk_systems(risk_class: RiskClass) -> None:
-    answer = role_answer(own_brand=key_fact(Answer.YES), risk_class=risk_class, route=None)
+@pytest.mark.parametrize("switch", ["substantial_modification", "changed_purpose"])
+def test_art_25_switches_only_apply_to_high_risk_systems(
+    risk_class: RiskClass, switch: str
+) -> None:
+    answer = role_answer(risk_class=risk_class, route=None).model_copy(
+        update={switch: key_fact(Answer.YES)}
+    )
     duties = ("art:50:1",) if risk_class is RiskClass.LIMITED_RISK else ()
     outcome = to_outcome(answer, state(risk_class, None, transparency_duties=duties))
     assert finding(outcome).role is Role.DEPLOYER
     assert finding(outcome).role_switch_reason is None
+    assert outcome.step.status is Status.DECIDED
+
+
+# --- Own name on a system that isn't high-risk (Art. 3(3), user decision on own-d-05) -----------
+
+
+def _white_labeller(risk_class: RiskClass, own_brand: Answer = Answer.YES) -> RoleAnswer:
+    return role_answer(
+        Role.DISTRIBUTOR,
+        risk_class=risk_class,
+        route=None,
+        own_brand=key_fact(own_brand, EvidenceTag.STATED),
+    )
+
+
+@pytest.mark.parametrize(
+    ("risk_class", "duties"),
+    [(RiskClass.LIMITED_RISK, ("art:50:2",)), (RiskClass.MINIMAL_RISK, ())],
+)
+def test_a_white_labeller_below_high_risk_is_ambiguous_with_provider_assumed(
+    risk_class: RiskClass, duties: tuple[str, ...]
+) -> None:
+    given = state(risk_class, None, transparency_duties=duties)
+    outcome = to_outcome(_white_labeller(risk_class), given)
+    step = outcome.step
+    assert step.status is Status.LEGALLY_AMBIGUOUS
+    assert step.missing_fact is None
+    assert step.open_question is not None
+    assert "Art. 3(3)" in step.open_question.question
+    assert step.open_question.readings[0].startswith("Provider")  # the stricter reading first
+    assert step.open_question.readings[1].startswith("Distributor")
+    assert (finding(outcome).role, finding(outcome).also_role) == (
+        Role.PROVIDER,
+        Role.DISTRIBUTOR,
+    )
+    assert finding(outcome).role_switch_reason is None  # no Art. 25 switch
+    assert [c.provision_id for c in step.citations] == ["art:3:7", "art:3:3"]
+    assert "Art. 50 guidelines point to provider" in step.decision
+    assert "Working assumption: provider, keeping the distributor duties" in step.decision
+    assert ("art:50:2" in articles(outcome)) is bool(duties)  # the provider's marking duty
+
+
+def test_the_ambiguous_white_labeller_fits_the_result_contract() -> None:
+    role_step = to_outcome(
+        _white_labeller(RiskClass.MINIMAL_RISK), state(RiskClass.MINIMAL_RISK, None)
+    ).step
+    earlier = (
+        StepResult(step=name, decision=f"{name.value}: no finding")
+        for name in STEP_ORDER
+        if name is not StepName.ROLE_OBLIGATIONS
+    )
+    steps = (*earlier, role_step)
+    result = ClassificationResult(
+        facts=(),
+        steps=steps,
+        risk_class=RiskClass.MINIMAL_RISK,
+        status=derived_status(steps),
+        role=Role.PROVIDER,
+        law_version=LawVersion.AMENDED,
+        as_of=date(2026, 9, 29),
+        disclaimer=DISCLAIMER[Language.EN],
+    )
+    assert result.status is Status.LEGALLY_AMBIGUOUS
+
+
+def test_the_ambiguity_reads_in_german() -> None:
+    given = state(RiskClass.MINIMAL_RISK, None, language=Language.DE)
+    step = to_outcome(_white_labeller(RiskClass.MINIMAL_RISK), given).step
+    assert step.open_question is not None
+    assert "Art. 3 Nr. 3" in step.open_question.question
+    assert step.open_question.readings[1].startswith("Händler")
+    assert "Rechtlich offen" in step.decision
+
+
+def test_the_same_white_labeller_at_high_risk_is_a_decided_art_25_1_a_provider() -> None:
+    answer = role_answer(Role.DISTRIBUTOR, own_brand=key_fact(Answer.YES, EvidenceTag.STATED))
+    outcome = to_outcome(answer, state())
+    assert outcome.step.status is Status.DECIDED
+    assert outcome.step.open_question is None
+    assert "25(1)(a)" in (finding(outcome).role_switch_reason or "")
+    assert finding(outcome).also_role is None
+
+
+def test_a_company_that_develops_its_system_stays_a_decided_provider() -> None:
+    answer = role_answer(
+        Role.PROVIDER, risk_class=RiskClass.MINIMAL_RISK, route=None, own_brand=key_fact(Answer.YES)
+    )
+    outcome = to_outcome(answer, state(RiskClass.MINIMAL_RISK, None))
+    assert outcome.step.status is Status.DECIDED
+    assert finding(outcome).role is Role.PROVIDER
+
+
+def test_an_unknown_own_name_below_high_risk_asks_for_it() -> None:
+    answer = _white_labeller(RiskClass.LIMITED_RISK, Answer.UNKNOWN)
+    given = state(RiskClass.LIMITED_RISK, None, transparency_duties=("art:50:1",))
+    outcome = to_outcome(answer, given)
+    assert outcome.step.status is Status.NEEDS_MORE_INFORMATION
+    assert outcome.step.missing_fact is not None
+    assert (outcome.step.missing_fact.id, outcome.step.missing_fact.about) == (
+        "own_name",
+        "art:3:3",
+    )
+    assert (finding(outcome).role, finding(outcome).also_role) == (
+        Role.PROVIDER,
+        Role.DISTRIBUTOR,
+    )
 
 
 def test_an_unsettled_switch_needs_information_with_provider_as_the_assumption() -> None:
@@ -720,6 +835,12 @@ def _case_state(label: CaseLabel, case: BenchmarkCase) -> EngineState:
 
 B5D_CASES = _role_cases()
 
+KNOWN_STATUS_GAPS: dict[str, str] = {
+    "own-d-12-lender-extra-input": "node returns needs_more_information (substantial "
+    "modification unknown) where the label is legally_ambiguous; open for the user",
+}
+"""Status mismatches reported to the user, not yet decided; the role still has to match."""
+
 
 @pytest.mark.vcr
 @pytest.mark.parametrize(
@@ -749,3 +870,8 @@ def test_b5d_case_replay(
         )
     outcome = RoleObligationsCheck(luna_settings)(_case_state(label, case))
     assert finding(outcome).role is label.role
+    if label.status is Status.LEGALLY_AMBIGUOUS:
+        gap = KNOWN_STATUS_GAPS.get(case.id)
+        if gap and outcome.step.status is not label.status:
+            pytest.xfail(gap)
+        assert outcome.step.status is label.status

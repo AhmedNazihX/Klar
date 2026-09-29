@@ -103,6 +103,47 @@ SWITCHES: Mapping[str, KeyQuestion] = {
 }
 """The Art. 25(1) switches, in the order of the Act; keys are `RoleAnswer` fields."""
 
+OWN_NAME = KeyQuestion(
+    id="own_name",
+    article="art:3:3",
+    question={
+        Language.EN: "Do you place the system on the market or put it into service under your "
+        "own name or trademark?",
+        Language.DE: "Bringen Sie das System unter Ihrem eigenen Namen oder Ihrer Marke in Verkehr "
+        "oder nehmen Sie es so in Betrieb?",
+    },
+)
+"""The own-brand question for a system that isn't high-risk, where Art. 25(1) doesn't apply and
+the answer bears on Art. 3(3) instead (user decision on own-d-05, 2026-09-29)."""
+
+OWN_NAME_QUESTION: Mapping[Language, str] = {
+    Language.EN: "Does placing a system you didn't develop, or have developed, on the market under "
+    "your own name or trademark make you its provider under Art. 3(3), which defines the provider "
+    'as one that "develops … or has … developed" the system "and places it on the market … under '
+    'its own name or trademark"?',
+    Language.DE: "Wird man Anbieter nach Art. 3 Nr. 3, wenn man ein System, das man weder "
+    "entwickelt noch entwickeln lassen hat, unter eigenem Namen oder eigener Marke in Verkehr "
+    'bringt? Art. 3 Nr. 3 nennt als Anbieter, wer ein System "entwickelt oder entwickeln lässt und '
+    'es unter ihrem eigenen Namen oder ihrer Handelsmarke in Verkehr bringt".',
+}
+OWN_NAME_READINGS: Mapping[Language, tuple[str, str]] = {
+    Language.EN: (
+        "Provider: it places the system on the Union market under its own name; the Commission's "
+        "Art. 50 guidelines treat a company that offers an application under its own name as its "
+        "provider.",
+        "{base}: Art. 3(3) also needs the system to be developed by or for it, so the developer "
+        "stays the provider.",
+    ),
+    Language.DE: (
+        "Anbieter: Es bringt das System unter eigenem Namen in der Union in Verkehr; die "
+        "Art.-50-Leitlinien der Kommission behandeln ein Unternehmen, das eine Anwendung unter "
+        "eigenem Namen anbietet, als deren Anbieter.",
+        "{base}: Art. 3 Nr. 3 verlangt auch, dass das System von ihm oder für es entwickelt wurde; "
+        "Anbieter bleibt der Entwickler.",
+    ),
+}
+"""The two readings, the stricter (provider) first; `{base}` is the base role's name."""
+
 ROLE_NAMES: Mapping[Language, Mapping[Role, str]] = {
     Language.EN: {role: role.value for role in Role},
     Language.DE: {
@@ -116,6 +157,10 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
     Language.EN: {
         "role": "Role: {role}.",
         "role_also": "Role: {role}, and also {also}.",
+        "ambiguous": "Legally ambiguous: the system isn't high-risk, so Art. 25(1) doesn't settle "
+        "the role, and it is open whether placing a system you didn't develop under your own name "
+        "makes you its provider under Art. 3(3); the Commission's Art. 50 guidelines point to "
+        "provider. Working assumption: provider, keeping the {base} duties.",
         "assumption_also": "Working assumption: also {also}, pending an answer to: {question}",
         "assumption": "Working assumption: provider, keeping the other role's duties, pending an "
         "answer to: {question}",
@@ -130,6 +175,11 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
     Language.DE: {
         "role": "Rolle: {role}.",
         "role_also": "Rolle: {role}, zugleich {also}.",
+        "ambiguous": "Rechtlich offen: Das System ist nicht hochriskant, daher klärt Art. 25 "
+        "Abs. 1 die Rolle nicht, und es ist offen, ob man mit dem Inverkehrbringen eines nicht "
+        "selbst entwickelten Systems unter eigenem Namen dessen Anbieter nach Art. 3 Nr. 3 wird; "
+        "die Art.-50-Leitlinien der Kommission sprechen für Anbieter. Arbeitsannahme: Anbieter, "
+        "mit den Pflichten als {base}.",
         "assumption_also": "Arbeitsannahme: zugleich {also}, bis diese Frage beantwortet ist: "
         "{question}",
         "assumption": "Arbeitsannahme: Anbieter, mit den Pflichten der anderen Rolle, bis diese "

@@ -38,6 +38,9 @@ from pydantic import Field, ValidationError
 from aiact.engine.nodes.role_texts import (
     BUILDS_ON_GPAI,
     OPERATOR_ROLE,
+    OWN_NAME,
+    OWN_NAME_QUESTION,
+    OWN_NAME_READINGS,
     ROLE_ARTICLES,
     ROLE_NAMES,
     SWITCHES,
@@ -63,6 +66,7 @@ from aiact.schemas import (
     Language,
     LawVersion,
     Obligation,
+    OpenQuestion,
     RiskClass,
     Role,
     Status,
@@ -170,6 +174,8 @@ class RoleSettlement:
     made_by: KeyQuestion | None = None
     missing: tuple[KeyQuestion, ...] = ()
     open_questions: tuple[KeyQuestion, ...] = ()
+    is_ambiguous: bool = False
+    """Own name on a system that isn't high-risk: Art. 3(3) doesn't settle the role."""
 
     def switch_reason(self, language: Language) -> str | None:
         """Why the Art. 25 switch to provider applies, when one does."""
@@ -192,7 +198,18 @@ class RoleSettlement:
         else:
             made = (self.made_by.article,) if self.made_by else ()
         waiting = tuple(q.article for q in self.missing if q is not OPERATOR_ROLE)
-        return tuple(dict.fromkeys((*(ROLE_ARTICLES[r] for r in bases), *made, *waiting)))
+        ambiguous = (ROLE_ARTICLES[Role.PROVIDER],) if self.is_ambiguous else ()
+        cited = (*(ROLE_ARTICLES[r] for r in bases), *ambiguous, *made, *waiting)
+        return tuple(dict.fromkeys(cited))
+
+    def open_question(self, language: Language) -> OpenQuestion | None:
+        """The Art. 3(3) question an ambiguous own-name placement leaves open."""
+        if not self.is_ambiguous or self.base is None:
+            return None
+        base = ROLE_NAMES[language][self.base]
+        stricter, lenient = OWN_NAME_READINGS[language]
+        readings = (stricter, lenient.format(base=base[:1].upper() + base[1:]))
+        return OpenQuestion(question=OWN_NAME_QUESTION[language], readings=readings)
 
 
 def _kept_role(base: Role | None, *, is_assumed: bool) -> Role | None:
@@ -211,9 +228,11 @@ def _settlement(
     made_by: KeyQuestion | None = None,
     missing: tuple[KeyQuestion, ...] = (),
     open_questions: tuple[KeyQuestion, ...] = (),
+    is_ambiguous: bool = False,
 ) -> RoleSettlement:
     base = answer.role.role
-    kept = None if role is base else _kept_role(base, is_assumed=bool(missing))
+    is_assumed = bool(missing) or is_ambiguous
+    kept = None if role is base else _kept_role(base, is_assumed=is_assumed)
     return RoleSettlement(
         base=base,
         role=role,
@@ -223,6 +242,7 @@ def _settlement(
         made_by=made_by,
         missing=missing,
         open_questions=open_questions,
+        is_ambiguous=is_ambiguous,
     )
 
 
@@ -250,6 +270,14 @@ def settle_role(answer: RoleAnswer, risk_class: RiskClass) -> RoleSettlement:
                 )
             if key_fact.answer is Answer.UNKNOWN:
                 unknown = (*unknown, switch)
+    else:
+        # Not high-risk: Art. 25(1) can't make a provider, but own-name placement bears on
+        # Art. 3(3), which the law leaves open (user decision on own-d-05, 2026-09-29).
+        used = (*used, answer.own_brand)
+        if answer.own_brand.answer is Answer.YES:
+            return _settlement(answer, Role.PROVIDER, used, missing=gpai_open, is_ambiguous=True)
+        if answer.own_brand.answer is Answer.UNKNOWN:
+            unknown = (OWN_NAME,)
     missing = (*gpai_open, *unknown)
     if missing:
         return _settlement(answer, Role.PROVIDER, used, missing=missing)
@@ -410,6 +438,12 @@ def _question(key: KeyQuestion, language: Language) -> FollowUpQuestion:
     return FollowUpQuestion(id=key.id, text=key.question[language], about=key.article)
 
 
+def _status(settled: RoleSettlement) -> Status:
+    if settled.is_ambiguous:
+        return Status.LEGALLY_AMBIGUOUS
+    return Status.NEEDS_MORE_INFORMATION if settled.missing else Status.DECIDED
+
+
 def _decision(settled: RoleSettlement, language: Language, summary: Sequence[str]) -> str:
     names, texts = ROLE_NAMES[language], TEXTS[language]
     also = settled.also_role
@@ -420,6 +454,8 @@ def _decision(settled: RoleSettlement, language: Language, summary: Sequence[str
     ]
     if settled.made_by and settled.made_by.reason:
         sentences.append(settled.made_by.reason[language])
+    if settled.is_ambiguous and settled.base is not None:
+        sentences.append(texts["ambiguous"].format(base=names[settled.base]))
     if settled.missing:
         question = settled.missing[0].question[language]
         if settled.made_by is BUILDS_ON_GPAI and also is not None:
@@ -449,8 +485,9 @@ def to_outcome(
         decision=_decision(settled, language, summary),
         facts_used=_facts_used(settled.used, state.get("facts", ())),
         citations=citations(settled.cited_articles(), state["law_version"], language, source),
-        status=Status.NEEDS_MORE_INFORMATION if missing else Status.DECIDED,
+        status=_status(settled),
         missing_fact=_question(missing, language) if missing else None,
+        open_question=settled.open_question(language),
     )
     finding = RoleFinding(
         role=settled.role,
