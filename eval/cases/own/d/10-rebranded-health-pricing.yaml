@@ -14,19 +14,20 @@ label:
   risk_class: high_risk
   role: provider
   annex_point: "annex:III:5:c"
-label_citation: ["art:3:3", "art:25:1:a", "art:3:6", "annex:III:5:c", "art:6:3"]
+label_citation: ["art:3:3", "art:3:6", "annex:III:5:c", "art:6:3"]
 notes: >-
-  Draft (B5d, 2026-09-29), awaiting user review. Class: risk assessment and pricing of natural
-  persons for health insurance is Annex III 5(c); scoring applicants is profiling, so no Art. 6(3)
-  exemption. Role: the Cologne company places the system on the Union market under its own name
-  and trademark, so it is the provider (Art. 3(3): it had the system developed; and in any case
-  Art. 25(1)(a) if the Seoul developer is taken to have placed it on the market first). It is not
-  an importer, because the system does not bear the name of a third-country company (Art. 3(6)).
-  Both routes give the same role. Established in the EU, so no Art. 22 authorised representative.
+  Approved by user 2026-09-29 (role_switch set to none; Art. 3(3) is the basis). Class: risk
+  assessment and pricing of natural persons for health insurance is Annex III 5(c); scoring
+  applicants is profiling, so no Art. 6(3) exemption. Role: the Cologne company is the first to
+  place the system on the Union market, under its own name and trademark, having acquired it from
+  the developer, so it is the provider (Art. 3(3)). No Art. 25 switch is shown: the facts don't say
+  the Seoul developer ever placed it on the Union market. If it had, Art. 25(1)(a) would give the
+  same role. It is not an importer, because the system does not bear the name of a third-country
+  company (Art. 3(6)). Established in the EU, so no Art. 22 authorised representative.
   The insurers are deployers (their FRIA under Art. 27 is not this company's duty).
 tags:
   - "category:d"
-  - "role_switch:art25_1_a"
+  - "role_switch:none"
   - "obligation:art:4:1"
   - "obligation:art:16:a"
   - "obligation:art:16:b"

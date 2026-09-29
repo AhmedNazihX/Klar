@@ -16,7 +16,7 @@ label:
   annex_point: "annex:III:5:a"
 label_citation: ["art:25:1:c", "annex:III:5:a", "art:6:3", "art:3:11"]
 notes: >-
-  Draft (B5d, 2026-09-29), awaiting user review. Class: a public authority's system that evaluates
+  Approved by user 2026-09-29. Class: a public authority's system that evaluates
   eligibility for a public assistance benefit (housing benefit) is Annex III 5(a); assessing each
   applicant's income situation is profiling, so no Art. 6(3) exemption even though a person signs
   the decision. Role: the mailroom tool was not high-risk and its provider excludes other uses; the
@@ -24,7 +24,8 @@ notes: >-
   Art. 25(1)(c), putting it into service for its own use (Art. 3(11)), and also the deployer.
   Conditional duties included: Art. 26(4) (own input data), 26(8) (public authority: registration),
   26(11) and 86(1) (benefit decisions about persons), 27(1) (body governed by public law: FRIA).
-  Left out: 26(7) (workers are not subject to the system), 26(9) (DPIA not settled). Doubt: a
+  Kept as conditional because the facts don't settle it (user rule 2026-09-29): 26(9) (DPIA). Left
+  out because the facts rule it out: 26(7) (workers are not subject to the system). Doubt: a
   reader could argue Art. 6(3)(d) (preparatory task) because a caseworker signs; the profiling
   sentence of Art. 6(3) is read here as closing that route.
 tags:
@@ -53,6 +54,7 @@ tags:
   - "obligation:art:26:5"
   - "obligation:art:26:6"
   - "obligation:art:26:8"
+  - "obligation:art:26:9"
   - "obligation:art:26:11"
   - "obligation:art:26:12"
   - "obligation:art:27:1"

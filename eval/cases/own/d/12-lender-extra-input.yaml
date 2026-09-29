@@ -17,7 +17,8 @@ label:
   annex_point: "annex:III:5:b"
 label_citation: ["art:3:23", "art:25:1:b", "annex:III:5:b"]
 notes: >-
-  Draft (B5d, 2026-09-29), awaiting user review. Class (not in doubt): creditworthiness assessment
+  Approved by user 2026-09-29 as legally_ambiguous (Art. 26(9) kept as conditional: whether a GDPR
+  DPIA is required isn't settled by the facts). Class (not in doubt): creditworthiness assessment
   of natural persons, Annex III 5(b), deciding on its own, so high-risk. Open question: is adding
   an input feature that the vendor's documentation neither foresees nor forbids a "substantial
   modification" (Art. 3(23): a change not foreseen or planned in the initial conformity assessment
@@ -55,6 +56,7 @@ tags:
   - "obligation:art:26:4"
   - "obligation:art:26:5"
   - "obligation:art:26:6"
+  - "obligation:art:26:9"
   - "obligation:art:26:11"
   - "obligation:art:26:12"
   - "obligation:art:27:1"

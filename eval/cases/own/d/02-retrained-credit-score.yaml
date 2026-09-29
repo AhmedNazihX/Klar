@@ -17,7 +17,7 @@ label:
   annex_point: "annex:III:5:b"
 label_citation: ["art:25:1:b", "art:3:23", "annex:III:5:b", "art:6:3"]
 notes: >-
-  Draft (B5d, 2026-09-29), awaiting user review. Class: creditworthiness scoring of natural persons
+  Approved by user 2026-09-29. Class: creditworthiness scoring of natural persons
   is Annex III 5(b); scoring applicants is profiling, so no Art. 6(3) exemption. Role: retraining
   that the vendor's documentation rules out, plus a new input source, is a change not foreseen in
   the initial conformity assessment that affects compliance with Chapter III Section 2 (data
@@ -25,9 +25,10 @@ notes: >-
   so the lender becomes its provider under Art. 25(1)(b). It keeps using the system itself, so it
   is also the deployer (tag also_role:deployer) and its deployer duties are listed too. Conditional
   deployer duties included: Art. 26(4) (it controls the input data), 26(11) and 86(1) (it declines
-  credit), 27(1) (Annex III 5(b) always needs a FRIA). Left out: Art. 26(9), because whether a GDPR
-  DPIA is required is not settled by the description; Art. 26(7), because no workers are subject to
-  the system. Doubt: Art. 111(2) (systems put into service before the Annex III date are covered
+  credit), 27(1) (Annex III 5(b) always needs a FRIA). Kept as conditional because the description
+  doesn't settle its condition (user rule 2026-09-29: an unsettled condition keeps the duty): Art.
+  26(9), whether a GDPR DPIA is required. Left out because the facts rule it out: Art. 26(7), since
+  no workers are subject to the system. Doubt: Art. 111(2) (systems put into service before the Annex III date are covered
   only after later significant changes) is not modelled by the obligations table.
 tags:
   - "category:d"
@@ -54,6 +55,7 @@ tags:
   - "obligation:art:26:4"
   - "obligation:art:26:5"
   - "obligation:art:26:6"
+  - "obligation:art:26:9"
   - "obligation:art:26:11"
   - "obligation:art:26:12"
   - "obligation:art:27:1"

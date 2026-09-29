@@ -14,7 +14,8 @@ label:
   role: deployer
 label_citation: ["art:3:4", "art:50:1", "art:50:2", "art:4:1"]
 notes: >-
-  Draft (B5d, 2026-09-29), awaiting user review. Role: the firm uses a general-purpose AI system
+  Approved by user 2026-09-29 as limited_risk: the class describes the system (INIT › Risk
+  classes), whoever bears its Art. 50 duties. Role: the firm uses a general-purpose AI system
   under its authority as supplied, so it is a deployer (Art. 3(4)); nothing triggers Art. 25. GPAI
   flag: the assistant's provider and the model provider carry their own duties (Art. 50(1) and (2)
   for the system, Art. 53 for the model); only flagged. Obligations of the firm: AI literacy only

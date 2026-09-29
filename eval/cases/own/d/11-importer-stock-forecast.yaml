@@ -12,9 +12,10 @@ description: >-
 label:
   risk_class: minimal_risk
   role: importer
-label_citation: ["art:3:6", "art:6:2", "art:50:1"]
+label_citation: ["art:3:1", "art:3:6", "art:6:2", "art:50:1"]
 notes: >-
-  Draft (B5d, 2026-09-29), awaiting user review. Role: EU-established, places on the Union market
+  Approved by user 2026-09-29 (Art. 3(1) added: in scope as an AI system, then no class above
+  applies). Role: EU-established, places on the Union market
   a system bearing a third-country company's name, unchanged: importer (Art. 3(6)). Class: an AI
   system (it learns from data and infers predictions), not in Annex III or Annex I, and no Art. 50
   function (no interaction with natural persons as an AI chat, no synthetic content), so

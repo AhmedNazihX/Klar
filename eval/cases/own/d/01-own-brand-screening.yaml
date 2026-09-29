@@ -7,8 +7,8 @@ description: >-
   come in for our clients' vacancies, gives every applicant a fit score and sorts them into a
   shortlist. We now sell it to our corporate clients as "HireLens by Duval Talent": our logo is on
   the login page, the reports and the user manual, and the Tallinn company's name no longer
-  appears anywhere. The licence is a standard reseller licence. We haven't touched the model
-  itself. Our clients' HR teams use the shortlist to decide whom to invite to interviews. The
+  appears anywhere. The licence is a standard reseller licence and doesn't reallocate the
+  provider's obligations. We haven't touched the model itself. Our clients' HR teams use the shortlist to decide whom to invite to interviews. The
   launch campaign ran on LinkedIn and at a trade fair in Lille.
 label:
   risk_class: high_risk
@@ -16,13 +16,13 @@ label:
   annex_point: "annex:III:4:a"
 label_citation: ["art:25:1:a", "annex:III:4:a", "art:6:2", "art:6:3"]
 notes: >-
-  Draft (B5d, 2026-09-29), awaiting user review. Role: the agency puts its own name and trademark
-  on a high-risk system already on the market, so it is the provider under Art. 25(1)(a) and the
-  Tallinn company stops being the provider of this system (Art. 25(2)). Class: analysing and
-  filtering applications is Annex III 4(a); scoring and ranking applicants is profiling, so the
-  Art. 6(3) exemption cannot apply. Doubt: Art. 25(1)(a) is "without prejudice to contractual
-  arrangements"; the description says only "standard reseller licence", read here as not
-  allocating the obligations elsewhere. Established in the EU, so no Art. 22 authorised
+  Approved by user 2026-09-29 (the description states that the licence doesn't reallocate the
+  provider's obligations). Role: the agency puts its own name and trademark on a high-risk system
+  already on the market, so it is the provider under Art. 25(1)(a) and the Tallinn company stops
+  being the provider of this system (Art. 25(2)). Class: analysing and filtering applications is
+  Annex III 4(a); scoring and ranking applicants is profiling, so the Art. 6(3) exemption cannot
+  apply. The "without prejudice to contractual arrangements" clause of Art. 25(1)(a) does not
+  apply: the licence leaves the obligations with the agency. Established in the EU, so no Art. 22 authorised
   representative. Obligations: the provider's high-risk duties, Annex III dates; no Art. 50 duty
   (the tool does not interact with applicants).
 tags:

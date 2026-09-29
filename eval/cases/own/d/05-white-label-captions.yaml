@@ -15,7 +15,8 @@ label:
   role: provider
 label_citation: ["art:3:3", "art:50:2", "art:111:4", "guide:guide-art50:para:11"]
 notes: >-
-  Draft (B5d, 2026-09-29), awaiting user review. Class (not in doubt): the tool generates synthetic
+  Approved by user 2026-09-29 as legally_ambiguous (a question of legal reading, not a missing
+  fact). Class (not in doubt): the tool generates synthetic
   text, so the provider must mark outputs under Art. 50(2); not high-risk; limited_risk. Art. 25
   does not apply because the system is not high-risk. Open question: is an agency that only
   white-labels another company's generative tool, without developing it or having it developed,

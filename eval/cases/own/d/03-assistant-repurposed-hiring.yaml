@@ -16,7 +16,8 @@ label:
   annex_point: "annex:III:4:a"
 label_citation: ["art:25:1:c", "art:3:66", "annex:III:4:a", "art:6:3"]
 notes: >-
-  Draft (B5d, 2026-09-29), awaiting user review. The assistant is a general-purpose AI system
+  Approved by user 2026-09-29 (Art. 26(7) left out: applicants are not workers subject to the
+  system). The assistant is a general-purpose AI system
   (Art. 3(66)) whose provider excludes hiring decisions, so it was not classified as high-risk
   (compare guide:guide-high-risk-general:para:12: a clear, consistent exclusion matters). Using it
   to filter applications changes its intended purpose so that it becomes an Annex III 4(a) system:
@@ -24,10 +25,11 @@ notes: >-
   use (Art. 3(11)); it is also the deployer (also_role:deployer). Filtering applicants is
   profiling, so no Art. 6(3) exemption. GPAI flag: the model provider's Art. 53 duties stay with
   the model provider and are only flagged (INIT > Scope, out of scope). Conditional duties
-  included: Art. 26(4) (it controls the input), 26(11) and 86(1) (automatic rejections). Left out:
-  Art. 26(9) (DPIA not settled by the facts), Art. 27(1) (private employer, not a public service),
-  Art. 26(7) (applicants are not workers; note that INIT's worked example lists informing workers'
-  representatives for a recruitment tool; user to decide). No Art. 50 duty: applicants do not
+  included: Art. 26(4) (it controls the input), 26(11) and 86(1) (automatic rejections). Kept as
+  conditional because the facts don't settle it (user rule 2026-09-29): Art. 26(9) (DPIA). Left
+  out because the facts rule them out: Art. 27(1) (private employer, not a public service),
+  Art. 26(7) (applicants are not workers; INIT's worked example, which lists informing workers'
+  representatives for a recruitment tool, is to be checked against this). No Art. 50 duty: applicants do not
   interact with the system and the rejection email is a fixed template.
 tags:
   - "category:d"
@@ -55,6 +57,7 @@ tags:
   - "obligation:art:26:4"
   - "obligation:art:26:5"
   - "obligation:art:26:6"
+  - "obligation:art:26:9"
   - "obligation:art:26:11"
   - "obligation:art:26:12"
   - "obligation:art:86:1"
