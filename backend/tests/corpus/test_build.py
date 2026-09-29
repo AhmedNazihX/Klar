@@ -8,6 +8,7 @@ import pytest
 from aiact.corpus.amendments import Amendment
 from aiact.corpus.build import (
     AI_ACT_IN_FORCE,
+    Corrigendum,
     LoadError,
     ProvisionRow,
     amended_slices,
@@ -99,7 +100,11 @@ CONSOLIDATED = (
     _law("art:9:1", "new", "art:9", "paragraph", heading=NEW_TITLE),
 )
 TARGETS = frozenset({"art:5:1:ba", "art:5:2", "art:5:3", "art:8:1:c", "art:9:1"})
-FIXTURE_CORRIGENDA = frozenset({"art:6", "art:8:1:a", "art:9"})
+FIXTURE_CORRIGENDA = {
+    "art:6": Corrigendum.of("text", "fixed", "typo"),
+    "art:8:1:a": Corrigendum.of("text", "a", "typo"),
+    "art:9": Corrigendum.of("title", NEW_TITLE, "stray backtick"),
+}
 
 
 @pytest.fixture(scope="module")
@@ -157,6 +162,9 @@ def test_a_title_corrigendum_applies_to_every_unit_of_the_article(
     assert {r.heading for r in rows} == {NEW_TITLE}
 
 
+RIGHT = Corrigendum.of("text", "right.", "typo")
+
+
 def _article(points: dict[str, str]) -> tuple[ParsedProvision, ...]:
     """Art. 6 with the points `{label: text}`, in order; a label `b:i` is a sub-point of (b)."""
     units = []
@@ -170,14 +178,14 @@ def _list_slices(
     original_points: dict[str, str],
     consolidated_points: dict[str, str],
     targets: set[str],
-    corrigenda: frozenset[str] = frozenset(),
+    corrigenda: dict[str, Corrigendum] | None = None,
 ) -> tuple[ProvisionRow, ...]:
     return amended_slices(
         _article(original_points),
         _article(consolidated_points),
         OMNIBUS_IN_FORCE,
         frozenset(targets),
-        corrigenda,
+        corrigenda or {},
     )
 
 
@@ -216,7 +224,7 @@ def test_a_difference_away_from_the_targets_stays_a_corrigendum():
         {"a": "x;", "b": "y;", "c": "z;", "d": "wrong."},
         {"a": "x;", "b": "y;", "b1": "new;", "c": "z;", "d": "right."},
         {"art:6:b1"},
-        frozenset({"art:6:d"}),
+        {"art:6:d": RIGHT},
     )
     assert _slices(rows, "art:6:d") == [
         (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "right."),
@@ -271,9 +279,42 @@ def test_an_unexpected_corrigendum_fails_the_load():
 
 
 def test_an_unexpected_title_corrigendum_fails_the_load():
-    corrigenda = FIXTURE_CORRIGENDA - {"art:9"}
+    corrigenda = {k: v for k, v in FIXTURE_CORRIGENDA.items() if k != "art:9"}
     with pytest.raises(LoadError, match="unexpected corrigendum art:9 \\(title"):
         amended_slices(ORIGINAL, CONSOLIDATED, OMNIBUS_IN_FORCE, TARGETS, corrigenda)
+
+
+def test_a_reviewed_corrigendum_that_no_longer_occurs_fails_the_load():
+    """If a rule change made art:7 look amended, its reviewed fix must not vanish silently."""
+    corrigenda = {**FIXTURE_CORRIGENDA, "art:7": Corrigendum.of("text", "same", "typo")}
+    with pytest.raises(LoadError, match="reviewed corrigenda art:7 no longer occur"):
+        amended_slices(ORIGINAL, CONSOLIDATED, OMNIBUS_IN_FORCE, TARGETS, corrigenda)
+
+
+def test_a_reviewed_corrigendum_with_a_new_consolidated_text_fails_the_load():
+    corrigenda = {**FIXTURE_CORRIGENDA, "art:6": Corrigendum.of("text", "fixed again", "typo")}
+    with pytest.raises(LoadError, match="corrigendum art:6 changed"):
+        amended_slices(ORIGINAL, CONSOLIDATED, OMNIBUS_IN_FORCE, TARGETS, corrigenda)
+
+
+def test_a_reviewed_corrigendum_of_another_kind_fails_the_load():
+    corrigenda = {**FIXTURE_CORRIGENDA, "art:6": Corrigendum.of("heading", "fixed", "typo")}
+    with pytest.raises(LoadError, match="corrigendum art:6 changed"):
+        amended_slices(ORIGINAL, CONSOLIDATED, OMNIBUS_IN_FORCE, TARGETS, corrigenda)
+
+
+def test_replacing_the_last_point_leaves_the_point_two_back_alone():
+    """Only an appended or dropped last point moves the "and"; (b)'s fix stays a corrigendum."""
+    rows = _list_slices(
+        {"a": "x;", "b": "wrong;", "c": "z;", "d": "old."},
+        {"a": "x;", "b": "right;", "c": "z;", "d": "new."},
+        {"art:6:d"},
+        {"art:6:b": Corrigendum.of("text", "right;", "typo")},
+    )
+    assert _slices(rows, "art:6:b") == [
+        (AI_ACT_IN_FORCE, OMNIBUS_IN_FORCE, "right;"),
+        (OMNIBUS_IN_FORCE, None, "right;"),
+    ]
 
 
 def test_a_corrigendum_the_parent_quotes_twice_fails():
@@ -287,13 +328,14 @@ def test_a_corrigendum_the_parent_quotes_twice_fails():
     )
     with pytest.raises(LoadError, match="found 2 times"):
         targets = frozenset({"art:5:2"})
-        amended_slices(original, consolidated, OMNIBUS_IN_FORCE, targets, frozenset({"art:5:1"}))
+        corrigenda = {"art:5:1": Corrigendum.of("text", "c", "typo")}
+        amended_slices(original, consolidated, OMNIBUS_IN_FORCE, targets, corrigenda)
 
 
 def test_an_unknown_parent_fails():
     rows = (_law("art:5:1", "a", "art:5", "paragraph"),)
     with pytest.raises(LoadError, match="parent art:5 is not a provision"):
-        amended_slices(rows, rows, OMNIBUS_IN_FORCE, frozenset(), frozenset())
+        amended_slices(rows, rows, OMNIBUS_IN_FORCE, frozenset(), {})
 
 
 def test_recitals_stay_in_the_original(slices: tuple[ProvisionRow, ...]):
@@ -346,6 +388,15 @@ def committed() -> dict[str, tuple[ProvisionRow, ...]]:
 def test_every_available_document_is_built(committed: dict[str, tuple[ProvisionRow, ...]]):
     assert len(committed) == 15
     assert {"ai-act-consolidated.de", "guide-high-risk-annex-iii.en"} <= set(committed)
+
+
+def test_the_de_art_3_40_corrigendum_applies_before_the_omnibus(
+    committed: dict[str, tuple[ProvisionRow, ...]],
+):
+    rows = committed["ai-act-consolidated.de"]
+    for pid in ("art:3", "art:3:40"):
+        before = next(r for r in rows if r.provision_id == pid and r.valid_to == OMNIBUS_IN_FORCE)
+        assert "sofern es sich nicht um" in before.text, pid
 
 
 def test_new_prohibitions_start_with_the_omnibus(committed: dict[str, tuple[ProvisionRow, ...]]):

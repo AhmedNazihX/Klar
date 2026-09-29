@@ -7,12 +7,13 @@ here touches the database (that is `aiact.corpus.load`). The rules are decision 
 - The consolidated text (`'amended'`) carries the full history (decision 014). A difference
   between the original and the consolidation that the Digital Omnibus doesn't explain (no
   amendment targets the provision, an ancestor, a descendant or a neighbour, see
-  `corrected_original`) is a corrigendum, which applies from the start. Corrigenda are pinned:
-  one that isn't in `CORRIGENDA` fails the load: the "corrected original" is the original with every
-  corrigendum's consolidated text put in, in the provision and in the text of each of its
-  ancestors. A provision whose
-  corrected original still differs from the consolidation gets two slices, split at the
-  Omnibus's entry into force (`amendment.in_force_from`, 2026-07-27): the corrected original
+  `corrected_original`) is a corrigendum, which applies from the start. The "corrected
+  original" is the original with every corrigendum's consolidated text put in, in the provision
+  and in the text of each of its ancestors. Corrigenda are pinned to `CORRIGENDA`: an unlisted
+  one, a listed one whose consolidated text changed, or a listed one that no longer occurs fails
+  the load. A provision whose corrected original still differs from the consolidation gets two
+  slices, split at the Omnibus's entry into force (`amendment.in_force_from`, 2026-07-27): the
+  corrected original
   before, the consolidated text after. Its descendants are split too (both slices from their
   own corrected original and consolidated text), so a slice's parent always covers the same
   dates. A provision the Omnibus deleted keeps only the old slice, an inserted one only the new.
@@ -33,7 +34,7 @@ its number, so a numbering slip in the parse fails the load instead of mislinkin
 import hashlib
 import json
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass, replace
 from datetime import date
 from pathlib import Path
@@ -64,21 +65,53 @@ LAST_PARAGRAPH: dict[str, int] = {
     "guide-high-risk-annex-i": 62,
 }
 """The last numbered paragraph as printed in each guideline (read off the PDFs in C2's review)."""
-CORRIGENDA: dict[Language, dict[str, str]] = {
+CorrigendumKind = Literal["title", "text", "heading"]
+PIN_HASH_CHARS = 12
+"""Length of the sha256 prefix that pins a corrigendum's consolidated value."""
+
+
+def pin_hash(value: str | None) -> str:
+    """The short sha256 that pins a corrigendum's consolidated text or heading."""
+    return hashlib.sha256((value or "").encode("utf-8")).hexdigest()[:PIN_HASH_CHARS]
+
+
+@dataclass(frozen=True)
+class Corrigendum:
+    """A reviewed difference that applies from the start: what differs (the article's title,
+    the unit's text or its heading), the consolidated value it was reviewed with, and why."""
+
+    kind: CorrigendumKind
+    consolidated_sha: str
+    """`pin_hash` of the consolidated title, text or heading."""
+    reason: str
+
+    @classmethod
+    def of(cls, kind: CorrigendumKind, consolidated: str, reason: str) -> "Corrigendum":
+        return cls(kind, pin_hash(consolidated), reason)
+
+
+_ART_108 = 'the consolidation adds a stray ";" line after the quoted text'
+CORRIGENDA: dict[Language, dict[str, Corrigendum]] = {
     "en": {
-        "art:1": "title: the Official Journal HTML prints a stray backtick (Subject matter`)",
-        "art:108": 'amends Reg. 2018/1139: the consolidation adds a stray ";" line after a quote',
-        "art:108:2": 'the same stray ";" line as art:108',
-        "art:108:3": 'the same stray ";" line as art:108',
-        "art:108:4": 'the same stray ";" line as art:108',
+        "art:1": Corrigendum(
+            "title", "cebe93bf3f19", "the Official Journal HTML prints a stray backtick"
+        ),
+        "art:108": Corrigendum("text", "495b88d7eb54", f"amends Reg. 2018/1139; {_ART_108}"),
+        "art:108:2": Corrigendum("text", "671f57778b06", _ART_108),
+        "art:108:3": Corrigendum("text", "cc0213295b32", _ART_108),
+        "art:108:4": Corrigendum("text", "166b693ed90d", _ART_108),
     },
     "de": {
-        "art:3:40": "the Official Journal text lacks 'nicht' (sofern es sich nicht um ...)",
+        "art:3:40": Corrigendum(
+            "text",
+            "ff6dc3a1b754",
+            "the Official Journal text lacks 'nicht' (sofern es sich nicht um)",
+        ),
     },
 }
-"""The reviewed corrigenda (decision 014): units, or article titles, that differ between the
-original and the consolidation without an Omnibus amendment. Any other such difference fails the
-load. Heading-only differences of Art. 1's units follow from the Art. 1 title entry."""
+"""The reviewed corrigenda (decision 014), per language: units, or article titles, that differ
+between the original and the consolidation without an Omnibus amendment. The heading-only
+differences of Art. 1's units follow from the Art. 1 title entry."""
 DIFF_CONTEXT = 30
 """Characters shown on each side of the first difference in an unexpected-corrigendum error."""
 PARAGRAPH_ID_RE = re.compile(r":para:(\d+)$")
@@ -210,18 +243,21 @@ def _children(units: dict[str, _Unit]) -> dict[str, list[str]]:
     return children
 
 
-def _neighbours(children: dict[str, list[str]], targets: frozenset[str]) -> set[str]:
+def _neighbours(
+    children: dict[str, list[str]], targets: frozenset[str], added_or_removed: frozenset[str]
+) -> set[str]:
     """The siblings right before and after each target, and the second-to-last point of a list
-    whose last point is a target. Inserting or deleting a point changes its neighbours' closing
-    punctuation or moves a trailing "and"/"or" (to the second-to-last point when a point is
-    appended or the last one deleted), so they are touched."""
+    whose last point is inserted or deleted (a target in only one of the two texts). Inserting
+    or deleting a point changes its neighbours' closing punctuation or moves a trailing
+    "and"/"or" (to the second-to-last point when a point is appended or the last one deleted),
+    so they are touched. Replacing the last point moves nothing, so it adds no second-to-last."""
     found: set[str] = set()
     for siblings in children.values():
         for i, pid in enumerate(siblings):
             if pid not in targets:
                 continue
-            is_last = i == len(siblings) - 1
-            start = max(i - (2 if is_last else 1), 0)
+            is_appended_or_dropped = i == len(siblings) - 1 and pid in added_or_removed
+            start = max(i - (2 if is_appended_or_dropped else 1), 0)
             found.update(siblings[start:i] + siblings[i + 1 : i + 2])
     return found
 
@@ -238,12 +274,26 @@ def _diff(before: str | None, after: str | None) -> str:
     return f"{before[start:end]!r} -> {after[start:end]!r}"
 
 
-def _check_corrigendum(pid: str, what: str, diff: str, corrigenda: frozenset[str]) -> None:
-    if pid not in corrigenda:
+def _check_corrigendum(
+    pid: str,
+    kind: CorrigendumKind,
+    before: str | None,
+    after: str | None,
+    corrigenda: Mapping[str, Corrigendum],
+) -> None:
+    """Fail unless `pid` is a reviewed corrigendum of this kind with this consolidated value."""
+    found = f"{kind}: {_diff(before, after)}; got {kind} {pin_hash(after)}"
+    expected = corrigenda.get(pid)
+    if expected is None:
         raise LoadError(
-            f"{CONSOLIDATED_DOC}: unexpected corrigendum {pid} ({what}: {diff}); the Omnibus "
-            "doesn't explain it. Check it and add it to aiact.corpus.build.CORRIGENDA, or fix "
-            "the parse"
+            f"{CONSOLIDATED_DOC}: unexpected corrigendum {pid} ({found}); the Omnibus doesn't "
+            "explain it. Check it and add it to aiact.corpus.build.CORRIGENDA, or fix the parse"
+        )
+    if (expected.kind, expected.consolidated_sha) != (kind, pin_hash(after)):
+        raise LoadError(
+            f"{CONSOLIDATED_DOC}: corrigendum {pid} changed ({found}; reviewed "
+            f"{expected.kind} {expected.consolidated_sha}). Review it again in "
+            "aiact.corpus.build.CORRIGENDA"
         )
 
 
@@ -251,17 +301,20 @@ def corrected_original(
     old: dict[str, _Unit],
     new: dict[str, _Unit],
     targets: frozenset[str],
-    corrigenda: frozenset[str],
+    corrigenda: Mapping[str, Corrigendum],
 ) -> dict[str, _Unit]:
     """The original units with every corrigendum applied: a unit that differs from the
-    consolidation although the Omnibus doesn't touch it (no target is the unit, an ancestor, a
-    descendant, an adjacent sibling or an ancestor's adjacent sibling) takes the consolidated
-    unit, and each ancestor's text takes its corrected child's text in place of the old one. An
-    article's or annex's heading is shared by all its units, so a heading corrigendum (the title
-    changed, but the Omnibus doesn't target the article itself) is applied to all of them.
+    consolidation although the Omnibus doesn't touch it takes the consolidated unit, and each
+    ancestor's text takes its corrected child's text in place of the old one. A unit is touched
+    when a target is the unit, an ancestor or a descendant, or when the unit or an ancestor is a
+    target's neighbour: the sibling right before or after a target, or the second-to-last point
+    of a list whose last point is inserted or deleted (`_neighbours`). An article's or annex's
+    heading is shared by all its units, so a heading corrigendum (the title changed, but the
+    Omnibus doesn't target the article itself) is applied to all of them.
 
-    Every corrigendum must be one of `corrigenda` (the reviewed ones, `CORRIGENDA`); any other
-    raises `LoadError` naming the unit and the difference, so a person decides."""
+    The corrigenda found must be exactly `corrigenda` (the reviewed ones, `CORRIGENDA`), each
+    with its reviewed kind and consolidated value; anything else raises `LoadError` naming the
+    unit and the difference, so a person decides."""
     children = _children(old)
     headings = {
         pid: new[pid].heading
@@ -270,8 +323,12 @@ def corrected_original(
         if unit.heading != new[pid].heading
     }
     for pid, heading in headings.items():
-        _check_corrigendum(pid, "title", _diff(old[pid].heading, heading), corrigenda)
-    neighbours = _neighbours(children, targets) | _neighbours(_children(new), targets)
+        _check_corrigendum(pid, "title", old[pid].heading, heading, corrigenda)
+    added_or_removed = frozenset(t for t in targets if (t in old) != (t in new))
+    neighbours = _neighbours(children, targets, added_or_removed) | _neighbours(
+        _children(new), targets, added_or_removed
+    )
+    found: set[str] = set(headings)
     corrected: dict[str, _Unit] = {}
 
     def is_touched(pid: str) -> bool:
@@ -298,9 +355,11 @@ def corrected_original(
         )
         if is_corrigendum:
             assert after is not None
-            is_text = unit.text != after.text
-            diff = _diff(unit.text, after.text) if is_text else _diff(unit.heading, after.heading)
-            _check_corrigendum(pid, "text" if is_text else "heading", diff, corrigenda)
+            if unit.text != after.text:
+                _check_corrigendum(pid, "text", unit.text, after.text, corrigenda)
+            else:
+                _check_corrigendum(pid, "heading", unit.heading, after.heading, corrigenda)
+            found.add(pid)
             result = after
         else:
             text = unit.text
@@ -312,7 +371,15 @@ def corrected_original(
         corrected[pid] = result
         return result
 
-    return {pid: correct(pid) for pid in old}
+    result = {pid: correct(pid) for pid in old}
+    missing = sorted(set(corrigenda) - found)
+    if missing:
+        raise LoadError(
+            f"{CONSOLIDATED_DOC}: reviewed corrigenda {', '.join(missing)} no longer occur; a rule "
+            "or the text changed. Check them before they turn into amendments, then update "
+            "aiact.corpus.build.CORRIGENDA"
+        )
+    return result
 
 
 def _replace_once(text: str, old: str, new: str, where: str) -> str:
@@ -330,10 +397,10 @@ def amended_slices(
     consolidated: tuple[ParsedProvision, ...],
     in_force: date,
     targets: frozenset[str],
-    corrigenda: frozenset[str],
+    corrigenda: Mapping[str, Corrigendum],
 ) -> tuple[ProvisionRow, ...]:
     """The consolidated document's full history (see the module docstring); `corrigenda` are
-    the reviewed units that may differ without an amendment."""
+    the reviewed differences without an amendment, which must all occur."""
     new = {r.provision_id: _unit(r) for r in consolidated}
     originals = {r.provision_id: _unit(r) for r in original if r.kind != "recital"}
     old = corrected_original(originals, new, targets, corrigenda)
@@ -490,7 +557,7 @@ def _build(entry: ManifestEntry, parsed_dir: Path) -> DocumentLoad:
     in_force, targets = omnibus_in_force(laws[OMNIBUS_DOC])
     document = document_row(entry, in_force)
     if entry.id == CONSOLIDATED_DOC:
-        corrigenda = frozenset(CORRIGENDA[entry.language])
+        corrigenda = CORRIGENDA[entry.language]
         slices = amended_slices(laws[AI_ACT_DOC], laws[entry.id], in_force, targets, corrigenda)
     else:
         start = in_force if entry.id == OMNIBUS_DOC else AI_ACT_IN_FORCE
