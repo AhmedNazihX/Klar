@@ -650,11 +650,12 @@ def generate(
     output_path: Path = OUTPUT_PATH,
     licences_path: Path = LICENCES_PATH,
     fetch: InfoFetch = fetch_info,
-    frontend_lock_path: Path | None = None,
+    frontend_lock_path: Path | None = FRONTEND_LOCK_PATH,
     npm_fetch: InfoFetch | None = None,
 ) -> bool:
     """Update the licence cache and write the manifest. Returns whether either file changed.
 
+    `frontend_lock_path=None` renders the backend only (tests); it drops every `npm:` entry.
     `npm_fetch` defaults to the frontend's installed packages, else the npm registry.
     """
     sections = _sections(lock_path, frontend_lock_path)
@@ -674,7 +675,7 @@ def check(
     lock_path: Path = LOCK_PATH,
     output_path: Path = OUTPUT_PATH,
     licences_path: Path = LICENCES_PATH,
-    frontend_lock_path: Path | None = None,
+    frontend_lock_path: Path | None = FRONTEND_LOCK_PATH,
 ) -> CheckResult:
     """Compare the manifest on disk with a render from the locks and the cache. Offline."""
     label = _label(output_path)

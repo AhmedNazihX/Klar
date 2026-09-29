@@ -11,11 +11,7 @@ export const SUPPORTED_LANGUAGES = ['en', 'de'] as const
 export type Language = (typeof SUPPORTED_LANGUAGES)[number]
 
 export const LANGUAGE_STORAGE_KEY = 'klar.language'
-export const resources = { en: { translation: en }, de: { translation: de } } as const
-
-export function isLanguage(value: unknown): value is Language {
-  return SUPPORTED_LANGUAGES.some((language) => language === value)
-}
+const resources = { en: { translation: en }, de: { translation: de } } as const
 
 void i18n
   .use(LanguageDetector)

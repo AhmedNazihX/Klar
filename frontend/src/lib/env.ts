@@ -16,7 +16,7 @@ const EnvSchema = z.object({
 
 export type AppEnv = {
   apiUrl: string
-  /** Both set, or neither: without them the app runs without a session. */
+  /** Both set, or neither (then the app runs without a session); one alone is an error. */
   supabase: { url: string; anonKey: string } | null
 }
 
@@ -28,6 +28,14 @@ export function readEnv(raw: Record<string, unknown>): AppEnv {
     throw new Error(`Invalid frontend environment variables: ${names}. See frontend/.env.example.`)
   }
   const { VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = parsed.data
+  // Half a Supabase configuration is a mistake, not a choice to run without sessions.
+  if (Boolean(VITE_SUPABASE_URL) !== Boolean(VITE_SUPABASE_ANON_KEY)) {
+    const missing = VITE_SUPABASE_URL ? 'VITE_SUPABASE_ANON_KEY' : 'VITE_SUPABASE_URL'
+    throw new Error(
+      `${missing} is not set, but the other Supabase variable is. Set both or neither. ` +
+        'See frontend/.env.example.',
+    )
+  }
   return {
     apiUrl: VITE_API_URL ?? DEFAULT_API_URL,
     supabase:

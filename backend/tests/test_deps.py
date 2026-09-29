@@ -1,3 +1,4 @@
+import inspect
 import io
 import json
 import urllib.error
@@ -31,7 +32,7 @@ def paths(directory: Path) -> tuple[Path, Path]:
 
 def generate_into(directory: Path, lock: Path = FIXTURE_LOCK) -> tuple[Path, Path]:
     output, licences = paths(directory)
-    deps.generate(lock, output, licences, fake_fetch)
+    deps.generate(lock, output, licences, fake_fetch, None)
     return output, licences
 
 
@@ -127,9 +128,9 @@ def test_cache_has_one_sorted_entry_per_locked_version(tmp_path: Path) -> None:
 
 def test_generate_twice_gives_no_diff(tmp_path: Path) -> None:
     output, licences = paths(tmp_path)
-    assert deps.generate(FIXTURE_LOCK, output, licences, fake_fetch) is True
+    assert deps.generate(FIXTURE_LOCK, output, licences, fake_fetch, None) is True
     first = (output.read_bytes(), licences.read_bytes())
-    assert deps.generate(FIXTURE_LOCK, output, licences, fake_fetch) is False
+    assert deps.generate(FIXTURE_LOCK, output, licences, fake_fetch, None) is False
     assert (output.read_bytes(), licences.read_bytes()) == first
 
 
@@ -138,7 +139,7 @@ def test_generate_keeps_cached_entries_and_prunes_stale_ones(tmp_path: Path) -> 
     stale = {"gone==1.0": {"licence": "X", "summary": "x"}}
     kept = {"alpha==1.2.0": {"licence": "Cached", "summary": "from the cache"}}
     licences.write_text(json.dumps(stale | kept), encoding="utf-8")
-    deps.generate(FIXTURE_LOCK, output, licences, fake_fetch)
+    deps.generate(FIXTURE_LOCK, output, licences, fake_fetch, None)
     cache = json.loads(licences.read_text(encoding="utf-8"))
     assert "gone==1.0" not in cache
     assert cache["alpha==1.2.0"]["licence"] == "Cached"
@@ -158,7 +159,8 @@ def test_output_is_identical_whether_a_marker_gated_package_is_installed(
         )
         directory.mkdir()
         output, licences = paths(directory)
-        deps.generate(FIXTURE_LOCK, output, licences)  # the default fetch: installed, else PyPI
+        # The default fetch: installed, else PyPI.
+        deps.generate(FIXTURE_LOCK, output, licences, frontend_lock_path=None)
         return output.read_bytes(), licences.read_bytes()
 
     assert run(tmp_path / "linux", is_installed=True) == run(tmp_path / "mac", is_installed=False)
@@ -175,12 +177,12 @@ def test_check_never_reads_installed_metadata_or_the_network(
     monkeypatch.setattr(deps, "installed_info", forbidden)
     monkeypatch.setattr(deps, "pypi_info", forbidden)
     monkeypatch.setattr(deps.urllib.request, "urlopen", forbidden)
-    assert deps.check(FIXTURE_LOCK, output, licences).is_fresh
+    assert deps.check(FIXTURE_LOCK, output, licences, None).is_fresh
 
 
 def test_check_fails_with_the_fix_after_a_dependency_is_added(tmp_path: Path) -> None:
     output, licences = generate_into(tmp_path)
-    result = deps.check(with_new_dependency(tmp_path), output, licences)
+    result = deps.check(with_new_dependency(tmp_path), output, licences, None)
     assert not result.is_fresh
     assert "missing: delta==0.5.1" in result.message
     assert deps.GENERATE_COMMAND in result.message
@@ -189,7 +191,7 @@ def test_check_fails_with_the_fix_after_a_dependency_is_added(tmp_path: Path) ->
 def test_check_fails_with_a_diff_when_only_the_manifest_is_stale(tmp_path: Path) -> None:
     output, licences = generate_into(tmp_path)
     output.write_text(output.read_text(encoding="utf-8").replace("| gamma |", "| gama |"))
-    result = deps.check(FIXTURE_LOCK, output, licences)
+    result = deps.check(FIXTURE_LOCK, output, licences, None)
     assert not result.is_fresh
     assert "out of date" in result.message
     assert "+| gamma | dev |" in result.message
@@ -199,7 +201,7 @@ def test_check_fails_on_stale_cache_entries(tmp_path: Path) -> None:
     output, licences = generate_into(tmp_path)
     cache = json.loads(licences.read_text(encoding="utf-8"))
     licences.write_text(json.dumps(cache | {"gone==1.0": cache["leaf==0.1.0"]}), encoding="utf-8")
-    result = deps.check(FIXTURE_LOCK, output, licences)
+    result = deps.check(FIXTURE_LOCK, output, licences, None)
     assert not result.is_fresh
     assert "stale: gone==1.0" in result.message
 
@@ -207,7 +209,7 @@ def test_check_fails_on_stale_cache_entries(tmp_path: Path) -> None:
 def test_check_fails_when_the_file_is_missing(tmp_path: Path) -> None:
     output, licences = generate_into(tmp_path)
     output.unlink()
-    result = deps.check(FIXTURE_LOCK, output, licences)
+    result = deps.check(FIXTURE_LOCK, output, licences, None)
     assert not result.is_fresh
     assert "does not exist" in result.message
 
@@ -395,9 +397,16 @@ def test_check_covers_the_frontend_lock(tmp_path: Path) -> None:
     assert deps.GENERATE_COMMAND in result.message
 
 
+def test_generate_and_check_read_the_frontend_lock_by_default() -> None:
+    for command in (deps.generate, deps.check):
+        default = inspect.signature(command).parameters["frontend_lock_path"].default
+        assert default == deps.FRONTEND_LOCK_PATH
+
+
 def test_check_without_the_frontend_lock_calls_its_entries_stale(tmp_path: Path) -> None:
     output, licences = generate_with_frontend(tmp_path)
-    result = deps.check(FIXTURE_LOCK, output, licences)
+    # None opts out of the frontend section explicitly.
+    result = deps.check(FIXTURE_LOCK, output, licences, None)
     assert not result.is_fresh
     assert "stale: npm:" in result.message
 

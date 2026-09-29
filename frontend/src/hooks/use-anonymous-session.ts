@@ -4,7 +4,7 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { ensureAnonymousSession } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 
-export const anonymousSessionKey = ['auth', 'anonymous-session'] as const
+const anonymousSessionKey = ['auth', 'anonymous-session'] as const
 
 /**
  * The visitor's user id, signing in anonymously on first use. Disabled (no data) when Supabase is

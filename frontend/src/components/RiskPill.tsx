@@ -6,8 +6,10 @@ import { cn } from '@/lib/utils'
 
 import type { PillKind } from './pill-kinds'
 
+// One line at 26 px as on the board. A label longer than its container (German runs about 30%
+// longer, e.g. "Außerhalb des Anwendungsbereichs") wraps inside the pill instead of overflowing.
 const pillVariants = cva(
-  'inline-flex h-[26px] shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold whitespace-nowrap',
+  'inline-flex min-h-[26px] max-w-full items-center gap-1.5 rounded-[13px] px-2.5 py-1 text-[13px] leading-tight font-semibold',
   {
     variants: {
       kind: {

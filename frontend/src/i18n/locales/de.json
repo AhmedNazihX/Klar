@@ -10,6 +10,9 @@
     "en": "English",
     "de": "Deutsch"
   },
+  "session": {
+    "failed": "In diesem Browser konnte keine Sitzung gestartet werden, daher kann nichts gespeichert werden. Laden Sie die Seite neu, um es erneut zu versuchen."
+  },
   "home": {
     "title": "Ist Ihr KI-Werkzeug nach der KI-Verordnung ein Hochrisiko-System?",
     "body": "Beschreiben Sie das Werkzeug in eigenen Worten. Klar geht die Prüfungen der Verordnung der Reihe nach durch, zeigt jeden Schritt und zitiert die Vorschrift, auf die er sich stützt."
@@ -39,7 +42,7 @@
     "high_risk": "Hochrisiko",
     "limited_risk": "Begrenztes Risiko",
     "minimal_risk": "Minimales Risiko",
-    "out_of_scope": "Nicht erfasst",
+    "out_of_scope": "Außerhalb des Anwendungsbereichs",
     "legally_ambiguous": "Rechtlich unklar",
     "needs_more_information": "Weitere Angaben nötig"
   },

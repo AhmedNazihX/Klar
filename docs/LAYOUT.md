@@ -117,14 +117,14 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── api/                     GENERATED client (`pnpm gen:api`), never edited; a placeholder until P1
 │       ├── routes/                  TanStack Router file routes: __root, index, brand (token sheet) (P4); P5+
 │       ├── components/              shared components in PascalCase: GlassPanel, RiskPill, KlarLogo,
-│       │                            LanguageSwitch, AppShell, ErrorView (P4)
+│       │                            LanguageSwitch, AppShell, SessionNotice, ErrorView (P4)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. classify/ (P5), inventory/ (P6)
 │       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
-│       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts (P4)
+│       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4)
 │
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves

@@ -23,8 +23,13 @@ describe('readEnv', () => {
     })
   })
 
-  it('needs both Supabase values before it builds a client config', () => {
-    expect(readEnv({ VITE_SUPABASE_URL: 'http://127.0.0.1:54321' }).supabase).toBeNull()
+  it('refuses half a Supabase configuration and names the missing variable', () => {
+    expect(() => readEnv({ VITE_SUPABASE_URL: 'http://127.0.0.1:54321' })).toThrow(
+      /VITE_SUPABASE_ANON_KEY is not set/,
+    )
+    expect(() =>
+      readEnv({ VITE_SUPABASE_URL: '', VITE_SUPABASE_ANON_KEY: 'public-anon-key' }),
+    ).toThrow(/VITE_SUPABASE_URL is not set/)
   })
 
   it('names the variable that is not a http(s) URL', () => {

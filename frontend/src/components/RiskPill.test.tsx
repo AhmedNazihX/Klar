@@ -43,7 +43,7 @@ describe('RiskPill', () => {
       'Hochrisiko',
       'Begrenztes Risiko',
       'Minimales Risiko',
-      'Nicht erfasst',
+      'Außerhalb des Anwendungsbereichs',
       'Rechtlich unklar',
       'Weitere Angaben nötig',
     ]) {

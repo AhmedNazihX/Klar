@@ -10,6 +10,9 @@
     "en": "English",
     "de": "Deutsch"
   },
+  "session": {
+    "failed": "We couldn't start a session in this browser, so nothing you do here can be saved. Reload the page to try again."
+  },
   "home": {
     "title": "Is your AI tool high-risk under the EU AI Act?",
     "body": "Describe the tool in your own words. Klar works through the Act's checks in order, shows each step and quotes the provision it relies on."
