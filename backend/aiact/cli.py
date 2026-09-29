@@ -101,6 +101,56 @@ def corpus_parse(
     )
 
 
+@corpus_app.command("guidelines")
+def corpus_guidelines(
+    manifest: Annotated[
+        Path | None, typer.Option(help="Manifest to read [default: repo data/manifest.yaml]")
+    ] = None,
+    raw_dir: Annotated[
+        Path | None, typer.Option(help="Where raw files are [default: $AIACT_DATA_DIR/raw]")
+    ] = None,
+    out_dir: Annotated[
+        Path | None, typer.Option(help="Where JSONL goes [default: repo data/parsed]")
+    ] = None,
+    split: Annotated[
+        Path | None,
+        typer.Option(help="The committed split; only its pile_b list is read [default: repo]"),
+    ] = None,
+) -> None:
+    """Parse the guideline PDFs (Docling) into section and worked-example chunks, one JSONL
+    file per document and language; Pile B examples are kept and tagged as held out.
+
+    Needs the optional `ingest` group: `uv sync --group ingest`."""
+    # Imported here: docling-core and pandas load slowly, and no other command needs them.
+    from aiact.corpus import guidelines
+    from aiact.corpus.guideline_examples import ExampleCountError
+    from aiact.corpus.guidelines_pdf import IngestNotInstalledError
+
+    try:
+        report = guidelines.parse_guidelines(
+            manifest or DEFAULT_MANIFEST,
+            raw_dir or get_settings().aiact_data_dir / "raw",
+            out_dir or DEFAULT_PARSED_DIR,
+            split or guidelines.DEFAULT_SPLIT_FILE,
+        )
+    except (
+        RawFileError,
+        guidelines.GuidelineError,
+        ExampleCountError,
+        IngestNotInstalledError,
+        FileNotFoundError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    for label, chunks, examples in report.counts:
+        typer.echo(f"{label}: {chunks} chunks ({examples} examples)")
+    typer.echo(f"tagged held out (Pile B): {len(report.held_out_ids)}")
+    typer.echo(" ".join(report.held_out_ids))
+    typer.echo(
+        f"written: {len(report.written)}, unchanged: {len(report.counts) - len(report.written)}"
+    )
+
+
 @eval_app.callback()
 def eval_() -> None:
     """Benchmark split, runs and metrics."""

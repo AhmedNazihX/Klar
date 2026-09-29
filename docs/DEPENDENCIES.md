@@ -15,6 +15,7 @@ Source: `backend/uv.lock`.
 
 | Package | Group | Constraint | Locked | Licence | Summary |
 | --- | --- | --- | --- | --- | --- |
+| docling-core | runtime | >=2.96.0 | 2.99.0 | MIT | A python library to define and validate data types in Docling. |
 | httpx | runtime | >=0.28.1 | 0.28.1 | BSD-3-Clause | The next generation HTTP client. |
 | langchain-openrouter | runtime | >=0.2.9 | 0.2.9 | MIT | An integration package connecting OpenRouter and LangChain |
 | langgraph | runtime | >=1.2.12 | 1.2.12 | MIT | Building stateful, multi-actor applications with LLMs |
@@ -29,57 +30,112 @@ Source: `backend/uv.lock`.
 | pytest | dev | >=9.1.1 | 9.1.1 | MIT | pytest: simple powerful testing with Python |
 | pytest-recording | dev | >=0.13.4 | 0.13.4 | MIT | A pytest plugin powered by VCR.py to record and replay HTTP traffic |
 | ruff | dev | >=0.16.9 | 0.16.9 | MIT | An extremely fast Python linter and code formatter, written in Rust. |
+| docling-slim[convert-core,format-pdf,models-local] | ingest | >=2.130.0 | 2.131.0 | MIT | Modular version of the Docling package: SDK and CLI for parsing PDF, DOCX, HTML… |
+| opencv-python-headless | ingest | >=5.0.0.93 | 5.0.0.93 | Apache 2.0 | Wrapper package for OpenCV python bindings. |
 
 ### Transitive packages
 
 | Package | Locked | Licence | Pulled in by |
 | --- | --- | --- | --- |
-| annotated-doc | 0.0.5 | MIT | typer |
-| annotated-types | 0.8.0 | MIT | langchain-openrouter, langgraph, openrouter, pydantic-settings |
-| anyio | 4.15.1 | MIT | httpx, langchain-openrouter, langgraph, openrouter |
-| certifi | 2026.7.22 | MPL-2.0 | httpx, langchain-openrouter, langgraph, openrouter |
-| charset-normalizer | 3.5.1 | MIT | langchain-openrouter, langgraph |
-| colorama | 0.4.6 | BSD License | pytest, pytest-recording, typer |
+| accelerate | 1.15.0 | Apache | docling-slim |
+| annotated-doc | 0.0.5 | MIT | docling-core, docling-slim, typer |
+| annotated-types | 0.8.0 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, openrouter, pydant… |
+| anyio | 4.15.1 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, openrouter |
+| attrs | 26.1.0 | MIT | docling-core, docling-slim |
+| certifi | 2026.7.22 | MPL-2.0 | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, openrouter |
+| charset-normalizer | 3.5.1 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph |
+| click | 8.5.0 | BSD-3-Clause | docling-slim |
+| colorama | 0.4.6 | BSD License | docling-core, docling-slim, pytest, pytest-recording, typer |
+| cuda-bindings | 13.4.3 | Apache-2.0 | docling-slim |
+| cuda-pathfinder | 1.8.2 | Apache-2.0 | docling-slim |
+| cuda-toolkit | 13.0.3.0 | unknown | docling-slim |
+| defusedxml | 0.7.1 | PSFL | docling-core, docling-slim |
 | distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter, langgraph |
-| h11 | 0.16.0 | MIT | httpx, langchain-openrouter, langgraph, openrouter |
-| httpcore | 1.0.9 | BSD-3-Clause | httpx, langchain-openrouter, langgraph, openrouter |
+| doclang | 0.7.3 | Apache-2.0 | docling-core, docling-slim |
+| docling-ibm-models | 4.0.3 | MIT | docling-slim |
+| docling-parse | 7.22.1 | MIT | docling-slim |
+| filelock | 4.0.6 | MIT | docling-slim |
+| filetype | 1.2.0 | MIT | docling-slim |
+| fsspec | 2026.9.0 | BSD-3-Clause | docling-slim |
+| h11 | 0.16.0 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, openrouter |
+| hf-xet | 1.6.0 | Apache-2.0 | docling-slim |
+| httpcore | 1.0.9 | BSD-3-Clause | docling-slim, httpx, langchain-openrouter, langgraph, openrouter |
 | httpcore2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph |
 | httpx2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph |
 | httpx2-jsfetch | 1.0 | BSD-3-Clause | langchain-openrouter, langgraph |
-| idna | 3.20 | BSD-3-Clause | httpx, langchain-openrouter, langgraph, openrouter |
+| huggingface-hub | 1.33.0 | Apache-2.0 | docling-slim |
+| idna | 3.20 | BSD-3-Clause | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, openrouter |
 | iniconfig | 2.3.0 | MIT | pytest, pytest-recording |
+| jinja2 | 3.1.6 | BSD License | docling-slim |
 | jsonpatch | 1.33 | Modified BSD License | langchain-openrouter, langgraph |
 | jsonpath-python | 1.1.6 | MIT License | langchain-openrouter, openrouter |
 | jsonpointer | 3.1.1 | Modified BSD License | langchain-openrouter, langgraph |
+| jsonref | 1.1.0 | MIT | docling-core, docling-slim |
+| jsonschema | 4.26.0 | MIT | docling-core, docling-slim |
+| jsonschema-specifications | 2025.9.1 | MIT | docling-core, docling-slim |
 | langchain-core | 1.6.5 | MIT | langchain-openrouter, langgraph |
 | langchain-protocol | 0.0.19 | MIT | langchain-openrouter, langgraph |
+| langcodes | 3.5.1 | MIT License | docling-slim |
 | langgraph-checkpoint | 4.2.0 | MIT | langgraph |
 | langgraph-prebuilt | 1.1.0 | MIT | langgraph |
 | langgraph-sdk | 0.4.5 | MIT | langgraph |
 | langsmith | 0.14.1 | MIT | langchain-openrouter, langgraph |
-| markdown-it-py | 4.2.0 | MIT License | typer |
-| mdurl | 0.1.2 | MIT License | typer |
+| latex2mathml | 3.81.1 | MIT | docling-core, docling-slim |
+| markdown-it-py | 4.2.0 | MIT License | docling-core, docling-slim, typer |
+| markupsafe | 3.0.3 | BSD-3-Clause | docling-slim |
+| mdurl | 0.1.2 | MIT License | docling-core, docling-slim, typer |
+| mpmath | 1.3.0 | BSD | docling-slim |
+| networkx | 3.7 | BSD-3-Clause | docling-slim |
 | nodeenv | 1.10.0 | BSD | pyright |
+| numpy | 2.5.3 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | docling-core, docling-slim, opencv-python-headless |
+| nvidia-cublas | 13.1.1.3 | LicenseRef-NVIDIA-Proprietary | docling-slim |
+| nvidia-cuda-nvrtc | 13.0.88 | LicenseRef-NVIDIA-Proprietary | docling-slim |
+| nvidia-cudnn-cu13 | 9.24.0.43 | unknown | docling-slim |
+| nvidia-cusparselt-cu13 | 0.8.1 | NVIDIA Proprietary Software | docling-slim |
+| nvidia-nccl-cu13 | 2.30.7 | unknown | docling-slim |
+| nvidia-nvshmem-cu13 | 3.4.5 | unknown | docling-slim |
 | orjson | 3.12.0 | MPL-2.0 AND (Apache-2.0 OR MIT) | langchain-openrouter, langgraph |
 | ormsgpack | 1.12.2 | Apache-2.0 OR MIT | langgraph |
-| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | langchain-openrouter, langgraph, pytest, pytest-recording |
-| pluggy | 1.6.0 | MIT | pytest, pytest-recording |
+| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | docling-slim, langchain-openrouter, langgraph, pytest, pytest-recording |
+| pandas | 3.0.6 | BSD License | docling-core, docling-slim |
+| pillow | 12.3.0 | MIT-CMU | docling-core, docling-slim |
+| pluggy | 1.6.0 | MIT | docling-slim, pytest, pytest-recording |
+| psutil | 7.2.2 | BSD-3-Clause | docling-slim |
 | psycopg-binary | 3.3.6 | LGPL-3.0-only | psycopg |
-| pydantic | 2.12.5 | MIT | langchain-openrouter, langgraph, openrouter, pydantic-settings |
-| pydantic-core | 2.41.5 | MIT | langchain-openrouter, langgraph, openrouter, pydantic-settings |
-| pygments | 2.21.0 | BSD-2-Clause | pytest, pytest-recording, typer |
-| python-dotenv | 1.2.3 | BSD-3-Clause | pydantic-settings |
-| requests | 2.34.2 | Apache-2.0 | langchain-openrouter, langgraph |
+| pydantic | 2.12.5 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, openrouter, pydant… |
+| pydantic-core | 2.41.5 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, openrouter, pydant… |
+| pygments | 2.21.0 | BSD-2-Clause | docling-core, docling-slim, pytest, pytest-recording, typer |
+| pypdfium2 | 5.13.0 | BSD-3-Clause, Apache-2.0, dependency licenses | docling-slim |
+| python-dateutil | 2.9.0.post0 | Dual License | docling-core, docling-slim |
+| python-dotenv | 1.2.3 | BSD-3-Clause | docling-core, docling-slim, pydantic-settings |
+| pywin32 | 312 | PSF | docling-slim |
+| referencing | 0.37.0 | MIT | docling-core, docling-slim |
+| regex | 2026.9.29 | Apache-2.0 AND CNRI-Python | docling-slim |
+| requests | 2.34.2 | Apache-2.0 | docling-core, docling-slim, langchain-openrouter, langgraph |
 | requests-toolbelt | 1.0.0 | Apache 2.0 | langchain-openrouter, langgraph |
-| rich | 15.0.0 | MIT | typer |
-| shellingham | 1.5.4 | ISC License | typer |
+| rich | 15.0.0 | MIT | docling-core, docling-slim, typer |
+| rpds-py | 2026.6.3 | MIT | docling-core, docling-slim |
+| rtree | 1.4.1 | MIT | docling-slim |
+| safetensors | 0.8.0 | Apache Software License | docling-slim |
+| scipy | 1.18.1 | BSD License | docling-slim |
+| setuptools | 84.0.0 | MIT | docling-slim |
+| shellingham | 1.5.4 | ISC License | docling-core, docling-slim, typer |
+| six | 1.17.0 | MIT | docling-core, docling-slim |
 | sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter, langgraph |
+| sympy | 1.14.0 | BSD | docling-slim |
+| tabulate | 0.10.0 | MIT | docling-core, docling-slim |
 | tenacity | 9.1.4 | Apache 2.0 | langchain-openrouter, langgraph |
+| tokenizers | 0.23.2 | Apache Software License | docling-slim |
+| torch | 2.14.0 | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause… | docling-slim |
+| torchvision | 0.29.0 | BSD | docling-slim |
+| tqdm | 4.70.1 | MPL-2.0 AND MIT | docling-slim |
+| transformers | 5.17.0 | Apache 2.0 License | docling-slim |
+| triton | 3.8.0 | MIT | docling-slim |
 | truststore | 0.10.4 | MIT | langchain-openrouter, langgraph |
-| typing-extensions | 4.16.0 | PSF-2.0 | httpx, langchain-openrouter, langgraph, openrouter, psycopg, pydantic-settings,… |
-| typing-inspection | 0.4.4 | MIT | langchain-openrouter, langgraph, openrouter, pydantic-settings |
-| tzdata | 2026.4 | Apache-2.0 | psycopg |
-| urllib3 | 2.8.0 | MIT | langchain-openrouter, langgraph |
+| typing-extensions | 4.16.0 | PSF-2.0 | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, openrouter,… |
+| typing-inspection | 0.4.4 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, openrouter, pydant… |
+| tzdata | 2026.4 | Apache-2.0 | docling-core, docling-slim, psycopg |
+| urllib3 | 2.8.0 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph |
 | uuid-utils | 0.17.1 | BSD-3-Clause | langchain-openrouter, langgraph |
 | vcrpy | 8.3.0 | MIT | pytest-recording |
 | websockets | 16.1.1 | BSD-3-Clause | langchain-openrouter, langgraph |

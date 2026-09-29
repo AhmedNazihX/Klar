@@ -44,7 +44,7 @@ from aiact.corpus.amendments import (
 )
 from aiact.corpus.eurlex_html import Block, Item, Text, blocks_of, parse_html, render
 from aiact.corpus.fetch import ManifestEntry, load_manifest, sha256_of
-from aiact.corpus.files import write_atomic
+from aiact.corpus.files import write_if_changed
 from aiact.corpus.sources import Language
 from aiact.settings import DEFAULT_DATA_DIR
 
@@ -343,14 +343,6 @@ def html_entries(manifest_path: Path) -> tuple[ManifestEntry, ...]:
     return tuple(e for e in entries if e.available)
 
 
-def _write_if_changed(path: Path, text: str) -> bool:
-    """Write `text` via a temporary file and rename, unless the file already holds it."""
-    if path.exists() and path.read_text(encoding="utf-8") == text:
-        return False
-    write_atomic(path, text.encode("utf-8"))
-    return True
-
-
 def _ai_act_first(entries: tuple[ManifestEntry, ...]) -> list[ManifestEntry]:
     """The AI Act comes first, so its ids are known when the Omnibus is parsed."""
     return sorted(entries, key=lambda e: e.id != AI_ACT_DOC)
@@ -374,7 +366,7 @@ def parse_all(manifest_path: Path, raw_dir: Path, out_dir: Path) -> ParseReport:
         label = f"{entry.id}.{entry.language}"
         counts[label] = len(rows)
         path = out_dir / f"{label}.jsonl"
-        if _write_if_changed(path, dump_jsonl(rows)):
+        if write_if_changed(path, dump_jsonl(rows)):
             written.append(str(path))
         logger.info("parsed %s: %d provisions", label, len(rows))
     ordered = tuple((f"{e.id}.{e.language}", counts[f"{e.id}.{e.language}"]) for e in entries)
