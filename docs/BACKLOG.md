@@ -298,26 +298,31 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Notes from merged stories: X3 (005): order prompts with the fixed instructions and retrieved provisions first and the user's description last, so the shared prefix is cached (Luna on `azure/eu` caches automatically).
   **Outcome:** build_graph(EngineNodes): fixed 7-node LangGraph, early exit only after scope/prohibited on a matched step that can_end_run (decision 010); scripted_nodes(Script) stubs; 45 tests over 36 routing combinations plus exact-edge and all-paths checks; adds langgraph (forces websockets 16.1.1).
 
-- [ ] **E2 · Fact extraction and key-fact questions** · Deps: E1, F6 · Type: agent
+- [x] **E2 · Fact extraction and key-fact questions** · Deps: E1, F6 · Type: agent
   Output: `aiact/engine/nodes/facts.py` and `aiact/engine/prompts/facts.md`: facts with evidence tags, a source span for each stated fact, and key-fact questions for inferred or assumed facts; EN and DE.
   DoD: replay tests on 5 cases; every `stated` fact has a span that exists in the description.
   Notes from merged stories: B2 (001), USER PRODUCT RULE: when a described system matches a guideline example that has a verdict-flipping "however / if" feature, the engine must ask a key-fact follow-up question about that feature or flag it (a user may describe the base version while the real system has the feature). Examples: personal-data enrichment (AML, 6(e)); deception hints from facial landmarks (7(a)); admissibility recommendations (8(a)); content changes (8(a)); new content or voter targeting (8(b)); general social scoring or crime prediction (Art. 5(1)(c)/(d)).
+  **Outcome:** FactExtractor (aiact/engine/nodes/facts.py, prompts/facts.md): stated facts get a whole-word span from a verbatim quote, an unfound quote downgrades the fact to inferred with a confirm question (ids from the fact's text); key-fact questions ask the Act's own flip conditions, never a Pile B feature (decision 015); pinned to ENGINE_PROVIDER; structured-output helpers in aiact/llm/structured.py; 5 recorded EN/DE replays.
 
 - [ ] **E3 · Scope node (Art. 2–3)** · Deps: E1, C5, C6 · Parallel: E4–E7 · Type: agent
   Output: `aiact/engine/nodes/scope.py`, which fetches Art. 3(1) and Art. 2 and searches the definition guidelines. DoD: replay tests on the B5b out-of-scope cases pass.
+  **From E2 (decision 015):** no prompt line may paraphrase a Pile B example's deciding feature or share a 5-word run with any Pile B field (text, lead_in, use_case, flip_variants); run decision 015's leak-check command on every new prompt. Pin the engine model with `require_setting(settings.engine_provider, "ENGINE_PROVIDER")` and no fallbacks, and reuse `aiact.llm.structured` (a third copy of the pinning code should become an `engine_chat_model` helper).
 
 - [ ] **E4 · Prohibited node (Art. 5)** · Deps: E1, C5, C6 · Parallel: E3, E5–E7 · Type: agent
   Output: `aiact/engine/nodes/prohibited.py`, which always fetches Art. 5 and applies date logic to the December 2026 prohibitions against `as_of`. DoD: replay tests on the B5c cases pass, including one case dated before 2 December 2026 and one after.
   **Follow-up from C7's date review (user, 2026-09-28):** law-enforcement users are in scope. Cover the Art. 5(2)–(7) conditions for real-time remote biometric identification (the Art. 5(1)(h) exceptions: authorisation, necessity, notification) rather than treating every 5(1)(h) case as a plain ban.
   **From B12's spot-check (user, 2026-09-28):** for workplace or education monitoring (webcams, voice, keystrokes), ask whether the system infers emotions: a yes makes it prohibited under Art. 5(1)(f) (academic-0096). For Art. 5(1)(a)/(b), treat the significant-harm condition as a deciding fact: flag it as needing information or legally ambiguous when the description can't settle it (academic-0005).
+  **From E2 (decision 015):** no prompt line may paraphrase a Pile B example's deciding feature or share a 5-word run with any Pile B field (text, lead_in, use_case, flip_variants); run decision 015's leak-check command on every new prompt. Pin the engine model with `require_setting(settings.engine_provider, "ENGINE_PROVIDER")` and no fallbacks, and reuse `aiact.llm.structured` (a third copy of the pinning code should become an `engine_chat_model` helper).
 
 - [ ] **E5 · High-risk node (Art. 6, Annex III, Annex I flag)** · Deps: E1, C5, C6 · Size: L · Parallel: E3, E4, E6, E7 · Type: agent · **critical**
   Output: `aiact/engine/nodes/high_risk.py`: Annex III matching through search, analogy against Pile A examples (in LOO mode the exclude filter comes from the case), the Art. 6(3) filter with the profiling rule, and an Annex I flag that names the product law and asks the decisive question.
   DoD: replay tests on INIT's worked example and on 5 own cases; a test proves the exclude filter is passed through.
   **From B12's spot-check (user, 2026-09-28):** key-fact questions where Annex III depends on who deploys or what a decision means: ask whether a benefits/pension scheme is public or private (5(a) needs a public authority; academic-0136); ask whether a scholarship or funding decision decides admission (3(a)/(c)) or only funds students already admitted (academic-0150); for Annex III 7, state the assumption "used by or on behalf of a competent public authority" in the deciding facts (academic-0116).
+  **From E2 (decision 015):** no prompt line may paraphrase a Pile B example's deciding feature or share a 5-word run with any Pile B field (text, lead_in, use_case, flip_variants); run decision 015's leak-check command on every new prompt. Pin the engine model with `require_setting(settings.engine_provider, "ENGINE_PROVIDER")` and no fallbacks, and reuse `aiact.llm.structured` (a third copy of the pinning code should become an `engine_chat_model` helper).
 
 - [ ] **E6 · Transparency node (Art. 50)** · Deps: E1, C5, C6 · Parallel · Type: agent
   Output: `aiact/engine/nodes/transparency.py`: a list of duties that stack on top of any class, and the 50(2) grace period for systems placed on the market before 2 August 2026. DoD: replay tests on the B5a cases pass.
+  **From E2 (decision 015):** no prompt line may paraphrase a Pile B example's deciding feature or share a 5-word run with any Pile B field (text, lead_in, use_case, flip_variants); run decision 015's leak-check command on every new prompt. Pin the engine model with `require_setting(settings.engine_provider, "ENGINE_PROVIDER")` and no fallbacks, and reuse `aiact.llm.structured` (a third copy of the pinning code should become an `engine_chat_model` helper).
 
 - [ ] **E7 · Role and obligations node** · Deps: E1, C7 · Parallel · Type: agent
   Output: `aiact/engine/nodes/role_obligations.py`: the Art. 25 switch checks (own brand, substantial modification, change of purpose), GPAI-based systems (flag the model provider's duties), importer and distributor, and a call to `list_obligations`. DoD: replay tests on the B5d cases pass.
@@ -325,6 +330,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 
 - [ ] **E8 · Finalize and aggregate** · Deps: E2–E7 · Type: agent · **critical**
   Output: `aiact/engine/nodes/finalize.py`: the overall status, the stricter reading as the labelled working assumption when uncertain, deciding facts, law version, as_of date, disclaimer, and follow-up questions collected from all steps. DoD: tests on constructed ambiguous and needs-info states.
+  **From E2:** question ids come from the model and vary between runs; E8 needs stable ids to score flip variants (consider a fixed id vocabulary for common facts). hr-ex-226's enrichment/profiling feature is no longer asked about in the facts prompt (decision 015), so its variant depends on the high-risk check alone.
 
 - [ ] **E9 · Citation existence validator** · Deps: E8, C5 · Type: agent · **critical**
   Output: `aiact/engine/citations.py`: every citation must resolve through `get_provision`; an unknown citation triggers one repair retry of that step, and if it still fails the step becomes `needs_more_information` with an error flag. DoD: tests show 100% of citations exist in replay runs; an injected fake citation is caught.
@@ -334,6 +340,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Output: `aiact/engine/__init__.py`: `classify_system(description, language, law_version="amended", as_of=today, answers={}, exclude_source_example_ids=[]) -> ClassificationResult`, with LangSmith tracing (metadata only in production mode) and streaming of step events.
   DoD: live run on INIT's worked example gives the expected result; the replay test is in CI; cost per case is logged.
   **From V1:** replace the `engine` stub in `runner.CLASSIFIERS` with an adapter over `classify_system` that reports cost, tokens and trace_id, and raises `ClassifierFailedError(cost_usd, tokens, cause)` when a paid run fails late.
+  **From E2:** `EngineInput.answers` is not used yet: answers aren't fed back to the facts node, and a fact resting on an answer can't be `stated` (SourceSpan points only into the description); decide how answers enter. `FactsOutcome` carries no cost or tokens; the V1 runner needs per-node cost aggregation.
 
 ## Phase 4b — Evaluation harness (the early parts run in parallel with the engine)
 
