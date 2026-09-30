@@ -13,7 +13,15 @@ from typing import Self
 import yaml
 from pydantic import Field, ValidationError, model_validator
 
-from aiact.schemas import HighRiskRoute, LawVersion, Obligation, RiskClass, Role
+from aiact.schemas import (
+    DISCLAIMER,
+    HighRiskRoute,
+    Language,
+    LawVersion,
+    Obligation,
+    RiskClass,
+    Role,
+)
 from aiact.schemas.base import ContractModel
 from aiact.settings import BACKEND_DIR
 
@@ -135,10 +143,11 @@ def default_table() -> ObligationTable:
 
 
 class ObligationList(ContractModel):
-    """The duties `list_obligations` found, with the law version they come from."""
+    """The duties `list_obligations` found, with the law version they come from and the notice."""
 
     law_version: LawVersion
     obligations: tuple[Obligation, ...]
+    disclaimer: str
 
 
 def list_obligations(
@@ -147,6 +156,8 @@ def list_obligations(
     route: HighRiskRoute | str | None = None,
     law_version: LawVersion | str = LawVersion.AMENDED,
     table: ObligationTable | None = None,
+    *,
+    language: Language | str = Language.EN,
 ) -> ObligationList:
     """The duties of `role` for a system of `risk_class`, in table order.
 
@@ -154,9 +165,11 @@ def list_obligations(
     it, route-dependent duties appear once per route, each tagged with its `high_risk_route`.
     Duties that exist on one route only are left out for the other. Plain strings are accepted
     for the enums; an unknown value raises ValueError, and a law version the table doesn't hold
-    raises UnknownLawVersionError.
+    raises UnknownLawVersionError. `language` picks the notice's language (the duties are in
+    English).
     """
     role, risk_class, version = Role(role), RiskClass(risk_class), LawVersion(law_version)
+    notice = DISCLAIMER[Language(language)]
     wanted_route = HighRiskRoute(route) if route is not None else None
     source = table or default_table()
     if source.law_version != version:
@@ -170,4 +183,6 @@ def list_obligations(
         and row.risk_class == risk_class
         and (wanted_route is None or row.obligation.high_risk_route in (None, wanted_route))
     )
-    return ObligationList(law_version=source.law_version, obligations=obligations)
+    return ObligationList(
+        law_version=source.law_version, obligations=obligations, disclaimer=notice
+    )
