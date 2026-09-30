@@ -418,13 +418,17 @@ def eval_isolation_embed(
     arm = corpus_embed_module.ARMS["qwen3"]
     dims = get_settings().embedding_dimensions
     try:
-        split = isolation.load_split()
-        texts = isolation.pile_b_texts(isolation.load_example_texts(), split.pile_b)
-        texts += isolation.case_texts(appliedai_file=None)
+        texts = isolation.embedded_texts()
         cache = isolation.load_cache(output, arm.model, dims)
         embedder = OpenRouterEmbeddings(model=arm.model, provider=arm.provider, dimensions=dims)
         outcome = isolation.refresh_cache(cache, texts, embedder)
-    except (LLMConfigError, EmbeddingError, CaseFileError, FileNotFoundError) as error:
+    except (
+        LLMConfigError,
+        EmbeddingError,
+        CaseFileError,
+        isolation.IsolationFileError,
+        FileNotFoundError,
+    ) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error
     isolation.write_cache(outcome.cache, output)

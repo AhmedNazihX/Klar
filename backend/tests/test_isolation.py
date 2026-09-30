@@ -4,11 +4,12 @@ Pile B examples are stored in `provisions`, tagged and held out, so this checks 
 1. `eval/split.json` is in split mode, every Pile B id sits on a held-out row, no retrievable
    row carries one, and every example row holds the text B2 extracted for its id.
 2. Every retrieval entry point hides held-out rows by default. `ENTRY_POINTS` lists them with a
-   probe; a public function added to `aiact/retrieval/` fails
-   `test_every_retrieval_function_is_registered` until it is listed (C6's `search_ai_act`
-   plugs in there, with a probe that searches with each Pile B example's own text).
+   probe (`get_provision` by id; `search_ai_act` with each held-out row's own text and stored
+   vector). Every other public callable of `aiact/retrieval/` must be in `NOT_ENTRY_POINTS` with
+   a reason, or `test_every_retrieval_callable_is_registered_or_explained` fails.
 3. No benchmark text (Pile B example or case description) is repeated in a retrievable row:
-   by word 6-grams everywhere, and by embedding cosine where the corpus vectors exist.
+   by word 6-grams everywhere, and by embedding cosine where the corpus vectors exist. The two
+   retellings decision 016 keeps (`eval/isolation/contaminated.json`) are recorded, not failed on.
 The injection tests show each check fails on a planted leak, inside a rolled-back transaction.
 
 The corpus checks read the loaded corpus. CI's isolation job loads it from the committed
@@ -19,11 +20,14 @@ calls), so the embedding check runs only locally, after `aiact corpus embed`.
 
 import importlib
 import inspect
+import json
 import os
 import pkgutil
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import date
+from pathlib import Path
+from types import ModuleType
 
 import psycopg
 import pytest
@@ -33,10 +37,12 @@ from aiact.corpus.build import DocumentLoad, DocumentRow, ProvisionRow
 from aiact.corpus.embed import ARMS, vector_literal
 from aiact.corpus.load import load_all
 from aiact.eval import isolation
-from aiact.eval.isolation import BenchmarkText, EmbeddingCache, ExampleText
+from aiact.eval.isolation import BenchmarkText, ContaminatedList, EmbeddingCache, ExampleText
 from aiact.eval.split import SPLIT_FILE, Split, SplitMode
 from aiact.retrieval.provisions import ProvisionNotFoundError, get_provision
-from aiact.settings import get_settings
+from aiact.retrieval.search import CANDIDATES as SEARCH_CANDIDATES
+from aiact.retrieval.search import search_ai_act
+from aiact.settings import BACKEND_DIR, get_settings
 from tests.db.conftest import db, db_connection  # noqa: F401  (fixtures)
 
 pytestmark = pytest.mark.db
@@ -149,33 +155,139 @@ def _probe_get_provision(
     return frozenset({found.provision_id})
 
 
+class StoredVectorEmbedder:
+    """A query embedder for the probe: returns the held-out row's own stored vector, so the
+    vector arm is asked for the row too. Without corpus vectors (CI) it returns a fixed unit
+    vector and the keyword arm does the finding. No model is called."""
+
+    def __init__(self, connection: psycopg.Connection, provision_id: str) -> None:
+        self.model = ARMS["qwen3"].model
+        self.dimensions = get_settings().embedding_dimensions
+        row = connection.execute(
+            STORED_VECTOR, (provision_id, self.model, self.dimensions)
+        ).fetchone()
+        self.vector: list[float] = (
+            json.loads(row[0]) if row else [1.0] + [0.0] * (self.dimensions - 1)
+        )
+
+    def embed_query(self, text: str) -> list[float]:
+        return self.vector
+
+
+STORED_VECTOR = """
+    select e.embedding::text from provision_embeddings e join provisions p
+      on p.id = e.provision_row_id and p.content_sha256 = e.content_sha256
+    where p.provision_id = %s and e.model = %s and e.dims = %s
+    limit 1
+"""
+
+
+def _probe_search_ai_act(
+    connection: psycopg.Connection, row: HeldOutRow, include_held_out: bool
+) -> frozenset[str]:
+    results = search_ai_act(
+        row.text,
+        as_of=AFTER_THE_GUIDELINES,
+        include_held_out=include_held_out,
+        limit=SEARCH_CANDIDATES,
+        embedder=StoredVectorEmbedder(connection, row.provision_id),
+        connection=connection,
+    )
+    return frozenset(hit.provision_id for hit in results.hits)
+
+
 ENTRY_POINTS: dict[str, Probe] = {
     "aiact.retrieval.provisions.get_provision": _probe_get_provision,
+    "aiact.retrieval.search.search_ai_act": _probe_search_ai_act,
 }
-"""Every public function of `aiact.retrieval`, with its probe."""
+"""The retrieval entry points, each with its probe."""
+NOT_ENTRY_POINTS: dict[str, str] = {
+    "aiact.retrieval.provisions.Provision": "the result type of get_provision",
+    "aiact.retrieval.provisions.ProvisionNotFoundError": "an error type",
+    "aiact.retrieval.search.QueryEmbedder": "the protocol a caller's embedder follows",
+    "aiact.retrieval.search.QueryEmbedder.embed_query": "a protocol stub",
+    "aiact.retrieval.search.SearchHit": "a result type of search_ai_act",
+    "aiact.retrieval.search.SearchResults": "the result type of search_ai_act",
+    "aiact.retrieval.search.prepare_search": "builds search_ai_act's statement; runs no query",
+    "aiact.retrieval.search.distinct_units": "dedupes rows search_ai_act already fetched",
+}
+"""Public callables of `aiact.retrieval` that return no corpus rows by themselves, and why."""
 OPT_IN_PARAMETER = "include_held_out"
 
 
-def _retrieval_functions() -> dict[str, Callable[..., object]]:
-    functions: dict[str, Callable[..., object]] = {}
-    for info in pkgutil.iter_modules(aiact.retrieval.__path__, "aiact.retrieval."):
-        module = importlib.import_module(info.name)
-        for name, function in inspect.getmembers(module, inspect.isfunction):
-            if not name.startswith("_") and function.__module__ == module.__name__:
-                functions[f"{module.__name__}.{name}"] = function
-    return functions
+def public_callables(package: ModuleType) -> dict[str, object]:
+    """Every public callable a package defines, by dotted name: functions (decorated ones too),
+    classes and their own public methods and properties, in the package's `__init__` and in every
+    module and sub-package below it. Names imported from elsewhere are left out."""
+    modules = [package] + [
+        importlib.import_module(info.name)
+        for info in pkgutil.walk_packages(package.__path__, f"{package.__name__}.")
+    ]
+    found: dict[str, object] = {}
+    for module in modules:
+        for name, value in vars(module).items():
+            if name.startswith("_") or getattr(value, "__module__", None) != module.__name__:
+                continue
+            if not callable(value):
+                continue
+            found[f"{module.__name__}.{name}"] = value
+            if inspect.isclass(value):
+                found |= _public_members(f"{module.__name__}.{name}", value)
+    return found
 
 
-def test_every_retrieval_function_is_registered() -> None:
-    assert set(_retrieval_functions()) == set(ENTRY_POINTS), (
-        "add each new retrieval function to ENTRY_POINTS with a probe (decision 012: every "
-        "search entry point hides Pile B by default)"
+def _public_members(prefix: str, cls: type) -> dict[str, object]:
+    members: dict[str, object] = {}
+    for name, member in vars(cls).items():
+        if name.startswith("_"):
+            continue
+        if isinstance(member, staticmethod | classmethod | property) or callable(member):
+            members[f"{prefix}.{name}"] = member
+    return members
+
+
+def test_every_retrieval_callable_is_registered_or_explained() -> None:
+    found = set(public_callables(aiact.retrieval))
+    unlisted = sorted(found - set(ENTRY_POINTS) - set(NOT_ENTRY_POINTS))
+    assert unlisted == [], (
+        "add each to ENTRY_POINTS with a probe (decision 012: every search entry point hides "
+        "Pile B by default), or to NOT_ENTRY_POINTS with the reason it returns no rows"
     )
+    assert sorted((set(ENTRY_POINTS) | set(NOT_ENTRY_POINTS)) - found) == []  # no stale entries
+
+
+def test_the_discovery_finds_decorated_nested_and_class_callables(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    package = tmp_path / "b13_discovery_fixture"
+    (package / "sub").mkdir(parents=True)
+    (package / "__init__.py").write_text("def in_init(): ...\n")
+    (package / "sub" / "__init__.py").write_text("")
+    (package / "sub" / "nested.py").write_text(
+        "import functools\nfrom os.path import join\n\n"
+        "@functools.lru_cache\ndef cached(): ...\n\n"
+        "def _private(): ...\n\n"
+        "class Finder:\n"
+        "    def find(self): ...\n"
+        "    @staticmethod\n    def lookup(): ...\n"
+        "    def _helper(self): ...\n"
+    )
+    monkeypatch.syspath_prepend(str(tmp_path))
+    found = public_callables(importlib.import_module("b13_discovery_fixture"))
+    assert set(found) == {
+        "b13_discovery_fixture.in_init",
+        "b13_discovery_fixture.sub.nested.cached",
+        "b13_discovery_fixture.sub.nested.Finder",
+        "b13_discovery_fixture.sub.nested.Finder.find",
+        "b13_discovery_fixture.sub.nested.Finder.lookup",
+    }
 
 
 @pytest.mark.parametrize("name", sorted(ENTRY_POINTS))
 def test_the_held_out_opt_in_is_off_by_default(name: str) -> None:
-    parameter = inspect.signature(_retrieval_functions()[name]).parameters.get(OPT_IN_PARAMETER)
+    entry_point = public_callables(aiact.retrieval)[name]
+    assert callable(entry_point)
+    parameter = inspect.signature(entry_point).parameters.get(OPT_IN_PARAMETER)
     assert parameter is not None, f"{name} has no `{OPT_IN_PARAMETER}` opt-in"
     assert parameter.kind is inspect.Parameter.KEYWORD_ONLY
     assert parameter.default is False
@@ -196,18 +308,60 @@ def test_a_default_call_never_returns_a_pile_b_row(name: str, corpus: psycopg.Co
     assert len(held_out) == 153
     leaked = {row.source_example_id: probe(corpus, row, False) & held_out_ids for row in held_out}
     assert {k: v for k, v in leaked.items() if v} == {}
-    # The probe reaches the rows: with the opt-in they come back, so the check can fail.
-    assert all(probe(corpus, row, True) for row in held_out)
+    # The probe reaches the rows: with the opt-in each comes back, so the check can fail.
+    missed = [
+        row.source_example_id
+        for row in held_out
+        if row.provision_id not in probe(corpus, row, True)
+    ]
+    assert missed == []
 
 
 # --- 3. Near-duplicates ---------------------------------------------------------------------
 
 
+@pytest.fixture(scope="module")
+def contaminated(split: Split) -> ContaminatedList:
+    return isolation.load_contaminated()
+
+
+def _known(contaminated: ContaminatedList) -> frozenset[tuple[str, str]]:
+    """The (example, passage) pairs decision 016 keeps: recorded, not failed on."""
+    return frozenset((e.example_id, e.passage) for e in contaminated.examples)
+
+
 def test_no_benchmark_text_repeats_a_retrievable_row(
-    corpus: psycopg.Connection, benchmark_texts: tuple[BenchmarkText, ...]
+    corpus: psycopg.Connection,
+    benchmark_texts: tuple[BenchmarkText, ...],
+    contaminated: ContaminatedList,
 ) -> None:
     matches = isolation.closest_by_ngram(benchmark_texts, isolation.retrievable_rows(corpus))
-    assert [m for m in matches if m.is_near_duplicate] == [], matches[:5]
+    known = _known(contaminated)
+    repeats = [m for m in matches if m.is_near_duplicate and (m.key, m.provision_id) not in known]
+    assert repeats == [], matches[:5]
+
+
+def test_the_contaminated_examples_are_pile_b(contaminated: ContaminatedList, split: Split) -> None:
+    assert contaminated.decision == "docs/decisions/016-contaminated-pile-b-cases.md"
+    assert (BACKEND_DIR.parent / contaminated.decision).is_file()
+    ids = [e.example_id for e in contaminated.examples]
+    assert sorted(ids) == ["hr-ex-031", "hr-ex-269"]
+    assert set(ids) <= set(split.pile_b)
+
+
+def test_the_contaminated_overlaps_are_as_recorded(
+    corpus: psycopg.Connection,
+    contaminated: ContaminatedList,
+    pile_b_texts: tuple[BenchmarkText, ...],
+) -> None:
+    """The file documents the measured overlap; a corpus or normalisation change that moves it
+    shows up here (and may need decision 016 revisited)."""
+    texts = {t.key: t for t in pile_b_texts}
+    rows = isolation.retrievable_rows(corpus)
+    for known in contaminated.examples:
+        passage = tuple(r for r in rows if r.provision_id == known.passage and r.language == "en")
+        (match,) = isolation.closest_by_ngram((texts[known.example_id],), passage)
+        assert (round(match.coverage, 3), match.longest_run) == (known.coverage, known.longest_run)
 
 
 def _embedding_cache() -> EmbeddingCache:
@@ -225,16 +379,22 @@ def _require_corpus_vectors(connection: psycopg.Connection, cache: EmbeddingCach
 
 
 def test_no_benchmark_text_is_a_close_paraphrase_of_a_retrievable_row(
-    corpus: psycopg.Connection, benchmark_texts: tuple[BenchmarkText, ...]
+    corpus: psycopg.Connection, split: Split, contaminated: ContaminatedList
 ) -> None:
     cache = _embedding_cache()
     _require_corpus_vectors(corpus, cache)
-    # The appliedAI extraction is left out of the committed vectors (its licence is unclear).
-    texts = tuple(t for t in benchmark_texts if not t.key.startswith("appliedai"))
+    texts = isolation.embedded_texts()  # the texts `aiact evaluate isolation-embed` embeds
     missing = [t.key for t in texts if isolation.text_key(t.text) not in cache.vectors]
     assert missing == [], "run `aiact evaluate isolation-embed` for the new or changed texts"
     matches = isolation.nearest_by_embedding(corpus, texts, cache)
-    assert [m for m in matches if m.is_near_duplicate] == [], matches[:5]
+    known = _known(contaminated)
+    close = [m for m in matches if m.is_near_duplicate and (m.key, m.provision_id) not in known]
+    assert close == [], matches[:5]
+    cosines = {(m.key, m.provision_id): m.cosine for m in matches}
+    for example in contaminated.examples:
+        pair = (example.example_id, example.passage)
+        if pair in cosines:  # otherwise another row is nearer; the recorded value still holds
+            assert round(cosines[pair], 3) == example.cosine
 
 
 # --- Planted leaks: each check fails on one (rolled back) -------------------------------------

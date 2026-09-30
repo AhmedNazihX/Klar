@@ -1,0 +1,19 @@
+{
+  "decision": "docs/decisions/016-contaminated-pile-b-cases.md",
+  "examples": [
+    {
+      "example_id": "hr-ex-269",
+      "passage": "guide:guide-high-risk-annex-iii:para:102",
+      "coverage": 0.318,
+      "longest_run": 10,
+      "cosine": 0.764
+    },
+    {
+      "example_id": "hr-ex-031",
+      "passage": "guide:guide-high-risk-annex-iii:para:152",
+      "coverage": 0.213,
+      "longest_run": 12,
+      "cosine": 0.847
+    }
+  ]
+}

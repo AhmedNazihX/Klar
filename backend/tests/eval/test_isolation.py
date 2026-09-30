@@ -106,4 +106,27 @@ def test_refresh_embeds_only_missing_texts_and_drops_stale_ones(tmp_path: Path) 
     path = tmp_path / "embeddings.json"
     isolation.write_cache(outcome.cache, path)
     assert isolation.load_cache(path, "m", 2) == outcome.cache
-    assert isolation.load_cache(path, "other-model", 2).vectors == {}
+    with pytest.raises(isolation.IsolationFileError, match="delete the file"):
+        isolation.load_cache(path, "other-model", 2)
+    assert isolation.load_cache(tmp_path / "absent.json", "m", 2).vectors == {}
+
+
+def test_a_corrupt_cache_is_a_clear_error(tmp_path: Path) -> None:
+    path = tmp_path / "embeddings.json"
+    path.write_text("{not json", encoding="utf-8")
+    with pytest.raises(isolation.IsolationFileError, match="not a valid vector cache"):
+        isolation.load_cache(path, "m", 2)
+
+
+def test_a_long_verbatim_run_in_prose_is_a_repeat_at_low_coverage() -> None:
+    def words(prefix: str, count: int) -> str:
+        return " ".join(f"{prefix}{chr(97 + i % 26)}{chr(97 + i // 26)}" for i in range(count))
+
+    quote = words("q", isolation.PROSE_RUN_LIMIT)  # statutory-length quote, then 60 new words
+    text = BenchmarkText("hr-ex-900", f"{quote} {words('z', 60)}")
+    (match,) = isolation.closest_by_ngram((text,), _rows((quote, None)))
+    assert match.coverage < isolation.PROSE_COVERAGE_LIMIT
+    assert match.longest_run == isolation.PROSE_RUN_LIMIT
+    assert match.is_near_duplicate
+    example_row = isolation.NgramMatch("k", "guide:x:ex:001", True, match.coverage, 60)
+    assert not example_row.is_near_duplicate  # sibling examples: coverage only

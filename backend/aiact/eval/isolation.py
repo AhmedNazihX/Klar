@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Protocol
 
 import psycopg
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from aiact.corpus.embed import vector_literal
 from aiact.eval.cases import APPLIEDAI_FILE, CASES_DIR, EVAL_DIR, CaseSet, load_cases, load_jsonl
@@ -40,9 +40,14 @@ from aiact.eval.split import EXAMPLES_FILE, SPLIT_FILE, Split
 from aiact.llm.embeddings import EmbeddingBatch
 
 EMBEDDINGS_FILE = EVAL_DIR / "isolation" / "embeddings.json"
+CONTAMINATED_FILE = EVAL_DIR / "isolation" / "contaminated.json"
 NGRAM_WORDS = 6
 PROSE_COVERAGE_LIMIT = 0.5
 """A benchmark text with half its 6-word runs in one guideline or law row repeats that row."""
+PROSE_RUN_LIMIT = 30
+"""A verbatim run this long (in words) shared with a guideline or law row is a repeat, whatever
+the coverage. The longest legitimate run measured on 2026-09-30 is 27 words: hr-ex-028 quoting
+recital 54, statutory text the Commission copies into its examples."""
 EXAMPLE_COVERAGE_LIMIT = 0.8
 """Against a Pile A example row the limit is higher: examples of one list share their reasoning
 sentence ("It therefore falls outside the use case of point 4(a)"), and the split keeps such
@@ -65,6 +70,11 @@ INNER_HYPHEN_RE = re.compile("(?<=[^\\W\\d_])[-‐‑](?=[^\\W\\d_])")  # noqa: 
 APOSTROPHE_RE = re.compile("['’]")  # noqa: RUF001
 
 type Ngram = tuple[str, ...]
+
+
+class IsolationFileError(ValueError):
+    """An input file that can't be read as expected, or a vector cache that doesn't match the
+    corpus arm; the message names the file."""
 
 
 def normalised_words(text: str) -> tuple[str, ...]:
@@ -114,12 +124,18 @@ class ExampleText(BaseModel):
 
 
 def load_split(path: Path = SPLIT_FILE) -> Split:
-    return Split.model_validate_json(path.read_text(encoding="utf-8"))
+    try:
+        return Split.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValidationError as error:
+        raise IsolationFileError(f"{path}: not a valid split: {error}") from error
 
 
 def load_example_texts(path: Path = EXAMPLES_FILE) -> tuple[ExampleText, ...]:
     lines = path.read_text(encoding="utf-8").splitlines()
-    return tuple(ExampleText.model_validate(json.loads(line)) for line in lines if line.strip())
+    try:
+        return tuple(ExampleText.model_validate(json.loads(line)) for line in lines if line.strip())
+    except (json.JSONDecodeError, ValidationError) as error:
+        raise IsolationFileError(f"{path}: not a valid example row: {error}") from error
 
 
 def pile_b_texts(
@@ -155,6 +171,48 @@ def case_texts(
     if appliedai_file is not None and appliedai_file.is_file():
         texts.extend(BenchmarkText(c.id, c.description) for c in load_jsonl(appliedai_file))
     return tuple(texts)
+
+
+def embedded_texts(
+    split_file: Path = SPLIT_FILE, examples_file: Path = EXAMPLES_FILE, cases_dir: Path = CASES_DIR
+) -> tuple[BenchmarkText, ...]:
+    """The texts whose vectors `EMBEDDINGS_FILE` holds: Pile B and the committed case sets. The
+    appliedAI extraction is left out (its licence is unclear, so nothing derived is committed)."""
+    pile_b = load_split(split_file).pile_b
+    examples = pile_b_texts(load_example_texts(examples_file), pile_b)
+    return examples + case_texts(cases_dir, appliedai_file=None)
+
+
+class ContaminatedExample(BaseModel):
+    """A Pile B example retold in a retrievable passage and kept there (decision 016), with the
+    overlap measured when it was decided."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    example_id: str = Field(pattern=r"^hr-ex-[0-9]{3}$")
+    passage: str
+    """The retrievable provision_id that retells the example."""
+    coverage: float = Field(ge=0, le=1)
+    longest_run: int = Field(ge=0)
+    cosine: float = Field(ge=-1, le=1)
+
+
+class ContaminatedList(BaseModel):
+    """The content of `CONTAMINATED_FILE`."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    decision: str
+    """The decision record that flagged the examples."""
+    examples: tuple[ContaminatedExample, ...]
+
+
+def load_contaminated(path: Path = CONTAMINATED_FILE) -> ContaminatedList:
+    """The Pile B examples whose cases are reported separately (decision 016)."""
+    try:
+        return ContaminatedList.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValidationError as error:
+        raise IsolationFileError(f"{path}: not a valid contaminated list: {error}") from error
 
 
 # --- The corpus side ------------------------------------------------------------------------
@@ -259,8 +317,21 @@ class NgramMatch:
 
     @property
     def is_near_duplicate(self) -> bool:
-        limit = EXAMPLE_COVERAGE_LIMIT if self.is_example_row else PROSE_COVERAGE_LIMIT
-        return self.coverage >= limit
+        """Pile A example rows: coverage only (siblings share long reasoning sentences by design).
+        Prose rows: coverage, or one long verbatim run."""
+        if self.is_example_row:
+            return self.coverage >= EXAMPLE_COVERAGE_LIMIT
+        return self.coverage >= PROSE_COVERAGE_LIMIT or self.longest_run >= PROSE_RUN_LIMIT
+
+    @property
+    def rank(self) -> tuple[bool, float, int]:
+        """Orders matches worst first: a near-duplicate, then coverage, then run length."""
+        return (self.is_near_duplicate, self.coverage, self.longest_run)
+
+
+RUN_CANDIDATE_HITS = PROSE_RUN_LIMIT - NGRAM_WORDS + 1
+"""A row shares a run of PROSE_RUN_LIMIT words only if it holds at least this many of the text's
+6-word runs, so only such rows need the (slower) run length."""
 
 
 @dataclass
@@ -280,24 +351,36 @@ class NgramIndex:
         self._index = dict(index)
 
     def closest(self, text: BenchmarkText) -> tuple[NgramMatch, ...]:
-        """The best prose row and the best example row, each only when one shares a run."""
+        """The worst prose row and the worst example row (see `NgramMatch.rank`), each only when
+        one shares a 6-word run. Candidates are each kind's highest-coverage row and every row
+        with enough shared runs to hold a PROSE_RUN_LIMIT-word run."""
         words = normalised_words(text.text)
         grams = ngrams(words)
         hits = Counter(position for gram in grams for position in self._index.get(gram, ()))
-        best: dict[bool, tuple[int, int]] = {}
+        top: dict[bool, tuple[int, int]] = {}
         for position, count in hits.items():
             kind = self.rows[position].source_example_id is not None
-            if kind not in best or count > best[kind][1]:
-                best[kind] = (position, count)
-        return tuple(
-            NgramMatch(
-                key=text.key,
-                provision_id=self.rows[position].provision_id,
-                is_example_row=kind,
-                coverage=count / len(grams),
-                longest_run=longest_shared_run(words, self._words[position]),
-            )
-            for kind, (position, count) in sorted(best.items())
+            if kind not in top or count > top[kind][1]:
+                top[kind] = (position, count)
+        candidates = {position for position, _ in top.values()}
+        candidates |= {position for position, count in hits.items() if count >= RUN_CANDIDATE_HITS}
+        worst: dict[bool, NgramMatch] = {}
+        for position in candidates:
+            match = self._match(text.key, words, position, hits[position] / len(grams))
+            if match.is_example_row not in worst or match.rank > worst[match.is_example_row].rank:
+                worst[match.is_example_row] = match
+        return tuple(match for _, match in sorted(worst.items()))
+
+    def _match(
+        self, key: str, words: tuple[str, ...], position: int, coverage: float
+    ) -> NgramMatch:
+        row = self.rows[position]
+        return NgramMatch(
+            key=key,
+            provision_id=row.provision_id,
+            is_example_row=row.source_example_id is not None,
+            coverage=coverage,
+            longest_run=longest_shared_run(words, self._words[position]),
         )
 
 
@@ -342,13 +425,21 @@ def decode_vector(encoded: str) -> tuple[float, ...]:
 
 
 def load_cache(path: Path, model: str, dims: int) -> EmbeddingCache:
-    """The cache at `path`, or an empty one; a cache for another model or size starts over."""
+    """The cache at `path`, or an empty one when there is none. A cache for another model or size
+    raises IsolationFileError: re-embedding every text should be a deliberate choice (delete the
+    file), not a side effect of a changed setting."""
     if not path.is_file():
         return EmbeddingCache(model=model, dims=dims)
-    cache = EmbeddingCache.model_validate_json(path.read_text(encoding="utf-8"))
-    return cache if (cache.model, cache.dims) == (model, dims) else EmbeddingCache(
-        model=model, dims=dims
-    )  # fmt: skip
+    try:
+        cache = EmbeddingCache.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValidationError as error:
+        raise IsolationFileError(f"{path}: not a valid vector cache: {error}") from error
+    if (cache.model, cache.dims) != (model, dims):
+        raise IsolationFileError(
+            f"{path} holds {cache.model}/{cache.dims} vectors, but the corpus arm is "
+            f"{model}/{dims}; delete the file to re-embed every text"
+        )
+    return cache
 
 
 def write_cache(cache: EmbeddingCache, path: Path) -> None:

@@ -93,7 +93,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── academic_overrides.yaml  spot-check label overrides the academic import applies (B12)
 │   │   └── annex_match/             (X0)
 │   ├── isolation/                   embeddings.json: vectors of the benchmark texts for the isolation check,
-│   │                                never in the corpus tables; `aiact evaluate isolation-embed` (B13)
+│   │                                never in the corpus tables; `aiact evaluate isolation-embed` (B13);
+│   │                                contaminated.json: Pile B examples retold in the corpus, with the
+│   │                                measured overlap (decision 016; `isolation.load_contaminated`)
 │   ├── judge_validation/            hand-labelled judge cases (V4)
 │   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1)
 │   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10)
