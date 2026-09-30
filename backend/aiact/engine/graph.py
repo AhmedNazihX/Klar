@@ -101,6 +101,8 @@ def _findings(outcome: CheckOutcome) -> StateUpdate:
         findings["high_risk_route"] = outcome.high_risk_route
     if outcome.annex_iii_exempt:
         findings["annex_iii_exempt"] = True
+    if outcome.annex_point is not None:
+        findings["annex_point"] = outcome.annex_point
     if outcome.transparency_duties:
         findings["transparency_duties"] = outcome.transparency_duties
     if outcome.role is not None:
