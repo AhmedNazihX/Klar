@@ -51,7 +51,7 @@ flowchart LR
 | --- | --- | --- |
 | Infra | F0, F1, F8, F2, F4, F5, F6, X3 | F1 first; the rest fan out right after (F2 waits for F8) |
 | Contract & eval | F3, F7, V1, V2, V3, V4 | Pure code; can run well ahead of the engine using dummy classifiers |
-| Corpus | B1, C1, C2, C3, C4, C5, C6 | The critical path. Never reads `eval/` |
+| Corpus | B1, C1, C2, C3, C4, C5, C6, C8 | The critical path (C8 is off it). Never reads `eval/` |
 | Benchmark | B2–B12, V10 | Human-heavy. Agents draft, the user approves |
 | Obligations | C7 | Independent after F3 and F4 |
 | Engine | E1–E10 | E3, E4, E5, E6 and E7 are fully parallel once E1, C5, C6 (and C7 for E7) are done |
@@ -186,6 +186,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **B7 · Q&A set** · Deps: F7 · Parallel: B5 · Type: mixed
   Output: `eval/cases/qa/` with 20–30 questions (EN and DE), each with the required provision_ids and a reference answer. DoD: approved by the user.
   Notes from merged stories: F7: `CaseSet` has no `qa` member and Q&A items don't fit `BenchmarkCase`; add a Q&A item model (question, required provision_ids, reference answer) and a loader entry in `aiact/eval/cases.py`. The `eval/cases/qa/` folder exists.
+  **Relevance cut-off (C8, X1):** also write about 8–10 unanswerable questions (EN and DE): off-topic ones and ones about other laws the corpus doesn't hold (GDPR, the Data Act, national law), each marked `answerable: false` with no required provisions. X1 calibrates the search cut-off on them and P7's DoD tests them.
 
 - [ ] **B8 · Consistency triples** · Deps: B5 · Type: mixed
   Output: `eval/cases/consistency/`: 3 paraphrases per system, LLM-generated and then checked by hand. DoD: approved by the user.
@@ -274,17 +275,22 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Notes from merged stories: Replace or extend the placeholder `Obligation` model in `aiact/schemas/obligations.py`. Point `[db.seed] sql_paths` in `supabase/config.toml` at the seed. Schema-changing: run it alone.
   **Outcome:** Obligations table: 54 YAML entries -> 106 rows (Annex III and Annex I route dates, applies_if conditions, SME/SMC relief, informational distributor rows for prohibited systems, Art. 86 and conditional Art. 26(10)), timestamped migration 20260928135941_obligations.sql (RLS on, no grants), generated SQL seed, list_obligations returning an ObligationList that carries its law version; hand-checked tests. User reviewed the dates on 2026-09-28.
 
+- [ ] **C8 · Search relevance score and cut-off** · Deps: C6 · Parallel: C7, the engine · Type: agent · Lane: Corpus
+  Context: INIT › MCP tools, Q&A ("stays within the corpus"). Why: the meaning arm orders by distance and keeps the nearest `CANDIDATES`, with no distance predicate, so a search returns hits for any query ("hello" gets 10); the RRF score is rank-based and has no absolute meaning, and `SearchHit` doesn't expose the distance, so no caller can tell "nothing relevant" from a match. Output in `aiact/retrieval/search.py`: `SearchHit.similarity` (1 − cosine distance of the meaning arm; None when only the keywords found it) and the keyword arm's summed IDF; a keyword-only `max_distance: float | None` argument (default from a new setting `SEARCH_MAX_DISTANCE`, None = no cut-off) applied inside the vector arm's SQL, not afterwards in Python; `SearchResults.found`: True when at least one hit passes the cut-off, or the keyword arm has a strong match on rare terms (a minimum summed IDF, so exact references like "Article 50" still count). The engine nodes call without a cut-off (a signal, not a filter: a softly worded description must still reach its Annex point); Q&A and MCP use it. No threshold is guessed here: Qwen3 cosines are compressed (B13: same-topic prose 0.894, a word-for-word repeat 0.904), so X1 calibrates the value.
+  DoD: tests show `similarity` and the IDF score on hits; with `max_distance` set, a synthetic off-topic query returns no meaning-arm hit and `found` is False, while a matching query stays found; a keyword-only strong match stays found; the cut-off is inside the SQL of the vector arm (EXPLAIN or a statement test); with the setting unset the search behaves exactly as before (the C6 DoD tests still pass).
+
 ## Phase 3 — Week-one experiments
 
 - [ ] **X0 · Annex-matching set** · Deps: F7 · Type: mixed
   Output: `eval/cases/annex_match/`: 30–50 informal descriptions → expected Annex III/I points, **written from scratch** (never from Commission examples). DoD: approved by the user.
   Notes from merged stories: F7: add `annex_match` to `CaseSet` in `aiact/eval/cases.py` and create `eval/cases/annex_match/`; `CaseLabel.annex_point` holds one point, so allow several if needed.
 
-- [ ] **X1 · Embedding comparison** · Deps: C6, X0, B7, V6 · Type: agent
+- [ ] **X1 · Embedding comparison** · Deps: C6, C8, X0, B7, V6 · Type: agent
   Output: `backend/aiact/eval/experiments/embeddings.py` and `docs/decisions/003-embeddings.md`: RAGAS context recall and precision for Qwen3 at 1536-d, Qwen3 at 1024-d and OpenAI 3-large, on the Annex-matching and Q&A sets, with results stored in `eval_runs`.
   DoD: a decision is recorded with the numbers; the default in settings is updated if it changes.
   Notes from merged stories: Make the embedding query instruction a setting (e.g. `EMBEDDING_QUERY_INSTRUCTION`); the current default in `aiact/llm/embeddings.py` is a placeholder. Model/provider settings are still empty in the env example.
   **From C6 (merged):** `KEYWORD_WEIGHT` (0.5), `MAX_TERM_SHARE` (0.05), `MIN_COMMON_ROWS` (50), `RRF_K` (60) and `CANDIDATES` in `aiact/retrieval/search.py` are hand-set: tune them on the Annex-matching and Q&A sets. The DoD margin is thin (Annex III 5(b) 3rd in EN, 5th in DE). The recordings in `tests/recordings/db/test_search_ai_act/` embed today's `DEFAULT_QUERY_INSTRUCTION`: if X1 changes it, re-record with `uv run pytest tests/db/test_search_ai_act.py -k iii_5b --record-mode=once`. Long descriptions cost about 1–2 ms per query word in the keyword statistics (EN ~57 ms, DE ~77 ms end to end).
+  **Relevance cut-off (C8):** calibrate `SEARCH_MAX_DISTANCE` for the chosen arm: compare the best-hit similarity of answerable Q&A and Annex-matching queries with B7's unanswerable questions (and random off-topic strings); pick the value that keeps answerable recall and rejects most unanswerable ones, record both distributions and the choice in decision 003 (or a record of its own), and set the default in settings.
 
 - [ ] **X2 · Engine model smoke test** · Deps: F3, F6, C5, C6, B4 · Type: agent
   Context: INIT › Engine safety net. Output: `backend/aiact/eval/experiments/smoke.py`, a single-prompt classifier with tool calls to `get_provision` and `search_ai_act` and structured output as `ClassificationResult`, run with GPT-6 Luna and with Gemini 3.1 Flash-Lite on 20 headline cases; `docs/decisions/004-engine-model.md`.
@@ -427,9 +433,10 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Output: `aiact/api/` with `POST /classify` (SSE step events and the final result), `GET /provisions/{id}`, `GET /obligations`, `POST /qa`, the OpenAPI schema exported to `frontend/openapi.json`, and rate limiting. DoD: httpx tests with the engine in replay mode.
   **From P4 (merged):** `frontend/` has `pnpm gen:api` (hey-api, `frontend/openapi-ts.config.ts`): it reads `frontend/openapi.json` (or `OPENAPI_INPUT=http://localhost:8000/openapi.json`) and writes `frontend/src/api/`, which is a placeholder (`export {}`) until then. After exporting the schema, run `pnpm gen:api` and commit `src/api/`. `GET /provisions/{id}` wraps `get_provision` (C5): keep held-out rows hidden (no `include_held_out` in the public API).
 
-- [ ] **P2a · MCP server with the lookup tools** · Deps: C5, C6, C7 · Parallel: the engine · Type: agent
+- [ ] **P2a · MCP server with the lookup tools** · Deps: C5, C6, C7, C8 · Parallel: the engine · Type: agent
   Output: `aiact/mcp/server.py` (official MCP Python SDK, stdio) with `search_ai_act`, `get_provision` and `list_obligations`, each result carrying the law version and the disclaimer. DoD: tested with the MCP inspector; pytest runs the tools in-process.
   **From C6 (merged):** `aiact.retrieval.search.search_ai_act(query, language, law_version, as_of, *, doc_types, exclude_source_example_ids, include_held_out=False, limit)` returns hits with `law_version`, `as_of` and the disclaimer; never pass `include_held_out` (only V8's gap run may). The language filter is exact, so a German search skips English-only guidance (most guidance): add a German-then-English fallback like `get_provision`'s if the step needs guidance in DE.
+  **Relevance cut-off (C8):** `search_ai_act` passes the calibrated `max_distance` and returns `found` and each hit's `similarity`, so an outside agent can tell "nothing relevant" from a match.
 
 - [ ] **P2b · MCP `classify_system`** · Deps: P2a, E10 · Type: agent
   Output: the fourth tool, with a bring-your-own OpenRouter key. DoD: a demo from one MCP client (the user picks it; INIT open question) is recorded in the README.
@@ -451,9 +458,10 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: Design reference (above), `Inventory` artboard. Output: add and classify many systems, an overview table, a company-level summary (the stricter reading flagged). DoD: component and API tests.
   **From P3's review:** export and import go through `public.export_my_data()` / `public.import_my_data(jsonb)`. Two schema follow-ups, each a new migration (the one-schema-story rule applies): (1) `private.stamp_timestamps()` caps `created_at` at `now()` but sets no lower limit, so a client can store `-infinity` or year 0001, which breaks sorting, the export and date decoding (psycopg fails on it); add a lower limit, e.g. no earlier than the owner's `auth.users.created_at`. (2) The 5 MB import cap can reject a genuine export (results may be up to 256 kB each, so about 170 typical or 20 maximum-size classifications exceed it); raise the cap to match the largest export, and add a round-trip test at that size.
 
-- [ ] **P7 · Q&A with citations** · Deps: C6, P1 · Type: agent
+- [ ] **P7 · Q&A with citations** · Deps: C6, C8, X1, P1 · Type: agent
   Output: `aiact/qa/` (a retrieval-grounded answer that cites provisions, steers away from "are we compliant?", and stays within the corpus) and the UI panel. DoD: V6 faithfulness on the Q&A set is recorded.
   **From C6 (merged):** `aiact.retrieval.search.search_ai_act(query, language, law_version, as_of, *, doc_types, exclude_source_example_ids, include_held_out=False, limit)` returns hits with `law_version`, `as_of` and the disclaimer; never pass `include_held_out` (only V8's gap run may). The language filter is exact, so a German search skips English-only guidance (most guidance): add a German-then-English fallback like `get_provision`'s if the step needs guidance in DE.
+  **Relevance cut-off (C8, X1):** search with the calibrated `max_distance`; when `SearchResults.found` is False, answer that the AI Act corpus doesn't cover the question, without calling the model. DoD addition: B7's unanswerable questions get that answer, and the answerable ones are unaffected.
 
 - [ ] **P8 · Document drafting backend** · Deps: E10 · Type: agent
   Context: INIT › Documentation drafting. Output: `aiact/drafting/`: short deployer documents generated from facts; skeleton templates (Annex IV, Art. 17, Art. 9, Art. 27) listing every required section with its quoted requirement; the three automatic checks (all sections present, no content the user did not supply, pre-filled facts match the result); a DRAFT label and the disclaimer. DoD: all three checks are tested, including a failing case for each.
