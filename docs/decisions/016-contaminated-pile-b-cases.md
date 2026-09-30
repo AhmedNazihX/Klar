@@ -15,12 +15,13 @@ cases, or accept them.
 ## The two passages
 | Held-out example | Retrievable passage | What they share | 6-gram coverage | Longest run | Cosine |
 | --- | --- | --- | --- | --- | --- |
-| hr-ex-269 (7(c), not high-risk, Art. 6(3)(c); p. 130) | `guide:guide-high-risk-annex-iii:para:102` ("c) Detect decision-making patterns or deviations"; general Art. 6(3)(c) section) | Its "Example:" and "Assessment:" describe the same quality-assurance analysis of completed eligibility files, exempt under Art. 6(3)(c) | 0.375 (worker) / 0.318 (verifier) | 12 / 10 words | 0.764 |
-| hr-ex-031 (1(a), not high-risk, outside the use case; p. 27) | `guide:guide-high-risk-annex-iii:para:152` ("a) Subparagraphs 1 and 2 of Article 26(10) AI Act") | Retells the crime-scene analysis sentence by sentence, verdict included (closed dataset, not RBI, not high-risk) | 0.217 (worker) / 0.213 (verifier) | 12 words | 0.847 |
+| hr-ex-269 (7(c), not high-risk, Art. 6(3)(c); p. 130) | `guide:guide-high-risk-annex-iii:para:102` ("c) Detect decision-making patterns or deviations"; general Art. 6(3)(c) section) | Its "Example:" and "Assessment:" describe the same quality-assurance analysis of completed eligibility files, exempt under Art. 6(3)(c) | 0.318 | 10 words | 0.764 |
+| hr-ex-031 (1(a), not high-risk, outside the use case; p. 27) | `guide:guide-high-risk-annex-iii:para:152` ("a) Subparagraphs 1 and 2 of Article 26(10) AI Act") | Retells the crime-scene analysis sentence by sentence, verdict included (closed dataset, not RBI, not high-risk) | 0.213 | 12 words | 0.847 |
 
 Sources: `backend/aiact/eval/isolation.py` (B13, branch `story/B13-isolation-check-ci`, commit 2019fa1),
-run by the B13 worker and again, independently, by the DoD verifier; the two differ slightly on para:102
-through normalisation. Cosines are Qwen3-Embedding-8B/1536 (`eval/isolation/embeddings.json` against the
+measured by the DoD verifier and re-measured by the committed code; the numbers are stored in
+`eval/isolation/contaminated.json`, and `test_the_contaminated_overlaps_are_as_recorded` re-checks them. (The
+worker's first report gave 0.375 / 12 words and 0.217 from a scratch script that didn't join hyphens.) Cosines are Qwen3-Embedding-8B/1536 (`eval/isolation/embeddings.json` against the
 corpus vectors). Neither passage crosses B13's thresholds (6-gram coverage 0.5 for prose rows, cosine 0.9),
 so the automatic check passes while both overlaps remain.
 
