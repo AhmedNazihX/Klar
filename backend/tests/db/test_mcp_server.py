@@ -21,9 +21,11 @@ from aiact.corpus.build import DocumentLoad, DocumentRow, ProvisionRow
 from aiact.corpus.embed import vector_literal
 from aiact.corpus.load import load_all
 from aiact.mcp.server import build_server
+from aiact.retrieval import search as search_module
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchResults
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, Language, LawVersion
+from aiact.settings import Settings
 
 pytestmark = pytest.mark.db
 
@@ -31,6 +33,7 @@ TEST_MODEL = "test-p2a/fake"
 PUBLISHED = date(2026, 5, 19)
 AFTER_OMNIBUS = "2026-09-29"
 QUERY_VECTOR = [1.0, 0.0, 0.0]
+MAX_DISTANCE = 0.1
 
 GUIDE = DocumentRow(
     doc_key="test-p2a-guide",
@@ -48,12 +51,14 @@ GUIDE = DocumentRow(
 )
 VISIBLE_ID = "guide:test-p2a-guide:para:1"
 HELD_OUT_ID = "guide:test-p2a-guide:ex:001"
+FAR_ID = "guide:test-p2a-guide:para:2"
 LOADS = (
     DocumentLoad(GUIDE, (
         ProvisionRow(VISIBLE_ID, None, None, "I. Purpose", "Guidance on vorpalix systems.",
                      PUBLISHED),
         ProvisionRow(HELD_OUT_ID, None, None, None, "A held-out vorpalix example.", PUBLISHED,
                      source_example_id="hr-ex-001", is_held_out=True),
+        ProvisionRow(FAR_ID, None, None, None, "An unrelated passage.", PUBLISHED),
     )),
 )  # fmt: skip
 
@@ -84,7 +89,12 @@ def anyio_backend() -> str:
 def corpus(db: psycopg.Connection) -> psycopg.Connection:
     load_all(db, LOADS)
     # The held-out row is the query's exact match: only the filter keeps it out.
-    for provision_id, vector in ((VISIBLE_ID, [0.9, 0.1, 0.0]), (HELD_OUT_ID, QUERY_VECTOR)):
+    vectors = (
+        (VISIBLE_ID, [0.9, 0.1, 0.0]),
+        (HELD_OUT_ID, QUERY_VECTOR),
+        (FAR_ID, [0.0, 1.0, 0.0]),
+    )
+    for provision_id, vector in vectors:
         params = {
             "model": TEST_MODEL,
             "vector": vector_literal(vector),
@@ -130,12 +140,32 @@ async def test_search_returns_hits_with_version_notice_found_and_similarity(
 ) -> None:
     results = await _search(client)
     hits = [hit for hit in results.hits if hit.doc_key == "test-p2a-guide"]
-    assert [hit.provision_id for hit in hits] == [VISIBLE_ID]
+    assert [hit.provision_id for hit in hits][:1] == [VISIBLE_ID]
+    assert HELD_OUT_ID not in {hit.provision_id for hit in hits}
     assert results.found
     assert hits[0].similarity is not None and hits[0].similarity > 0.9
     assert results.law_version is LawVersion.AMENDED
     assert results.as_of == date(2026, 9, 29)
     assert results.disclaimer == DISCLAIMER_EN
+
+
+@pytest.mark.anyio
+async def test_search_applies_the_configured_cut_off(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The tool leaves `max_distance` to search_ai_act, whose default is SEARCH_MAX_DISTANCE:
+    the near row (distance about 0.006) stays, the far one (distance 1) is cut."""
+    unset = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+    monkeypatch.setattr(search_module, "get_settings", lambda: unset)
+    without = await _search(client)
+    assert without.max_distance is None
+    assert FAR_ID in {hit.provision_id for hit in without.hits}
+    tight = Settings(_env_file=None, search_max_distance=MAX_DISTANCE)  # pyright: ignore[reportCallIssue]
+    monkeypatch.setattr(search_module, "get_settings", lambda: tight)
+    results = await _search(client)
+    assert results.max_distance == MAX_DISTANCE
+    assert [hit.provision_id for hit in results.hits] == [VISIBLE_ID]
+    assert results.found
 
 
 @pytest.mark.anyio

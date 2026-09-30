@@ -32,8 +32,13 @@ from pydantic import Field, ValidationError
 from aiact import db
 from aiact.corpus.build import AI_ACT_IN_FORCE
 from aiact.llm import EmbeddingError
-from aiact.obligations.list import ObligationList, list_obligations
-from aiact.retrieval.provisions import PROVISION_ID_RE, Provision, get_provision
+from aiact.obligations.list import ObligationList, UnknownLawVersionError, list_obligations
+from aiact.retrieval.provisions import (
+    PROVISION_ID_RE,
+    Provision,
+    ProvisionNotFoundError,
+    get_provision,
+)
 from aiact.retrieval.search import (
     CANDIDATES,
     DEFAULT_LIMIT,
@@ -123,7 +128,8 @@ def build_server(
         false when nothing relevant was found; each hit's `similarity` (1 is closest) shows how
         close it is. For an exact article or annex reference, use get_provision instead.
         """
-        with _tool_errors(), connect() as connection:
+        # ValueError: the search's own argument checks (an empty query, `original` with as_of).
+        with _tool_errors(ValueError), connect() as connection:
             return search_ai_act(
                 query,
                 language,
@@ -156,7 +162,8 @@ def build_server(
         When German is asked for but only the English text exists (most guidance), the English
         text is returned with `english_only` set.
         """
-        with _tool_errors(), connect() as connection:
+        # ValueError: a malformed id or prefix, or `original` with as_of.
+        with _tool_errors(ValueError, ProvisionNotFoundError), connect() as connection:
             return get_provision(provision_id, language, law_version, as_of, connection=connection)
 
     def obligations_tool(
@@ -169,12 +176,17 @@ def build_server(
                 "sets the dates; without it, route-dependent duties appear once per route."
             ),
         ] = None,
-        law_version: LawVersionArg = LawVersion.AMENDED,
+        law_version: Annotated[
+            Literal["amended"],
+            Field(description="The table covers the AI Act as amended by the Digital Omnibus."),
+        ] = "amended",
         language: LanguageArg = Language.EN,
     ) -> ObligationList:
         """List the duties, article references and dates that apply to a role for a system of
         a risk class, with any relief for SMEs and small mid-caps. The duties are in English."""
-        with _tool_errors():
+        # Only UnknownLawVersionError: any other ObligationsError is a broken table (ours), and
+        # its message names a server path.
+        with _tool_errors(UnknownLawVersionError):
             return list_obligations(role, risk_class, route, law_version, language=language)
 
     for name, tool in (
@@ -189,14 +201,15 @@ def build_server(
 
 
 @contextmanager
-def _tool_errors() -> Iterator[None]:
-    """Turn the errors a caller can fix into tool errors with their message. A failed output
-    validation is our bug, not the caller's, so it stays a crash."""
+def _tool_errors(*fixable: type[Exception]) -> Iterator[None]:
+    """Turn the `fixable` errors, which a caller can fix, into tool errors with their message.
+    Everything else stays a crash, whose text the SDK keeps on the server; so does a failed
+    pydantic validation (a ValueError too), which is our bug, not the caller's."""
     try:
         yield
     except ValidationError:
         raise
-    except (ValueError, LookupError) as error:
+    except fixable as error:
         raise ToolError(str(error)) from error
     except EmbeddingError as error:
         raise ToolError("the query could not be embedded just now; try again later") from error
