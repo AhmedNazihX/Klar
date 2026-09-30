@@ -125,7 +125,7 @@ def fake_lookup(
     return provision(provision_id, table.get(provision_id), language)
 
 
-def hit(pid: str, language: Language = Language.EN, text: str | None = None) -> SearchHit:
+def hit(pid: str, language: Language = Language.EN) -> SearchHit:
     is_guidance = pid.startswith("guide:")
     return SearchHit(
         provision_id=pid,
@@ -136,7 +136,7 @@ def hit(pid: str, language: Language = Language.EN, text: str | None = None) -> 
         status=DocumentStatus.DRAFT if is_guidance else DocumentStatus.CONSOLIDATED,
         language=language,
         heading="A heading",
-        text=text or f"Text of {pid}.",
+        text=f"Text of {pid}.",
         valid_from=date(2026, 5, 19),
         valid_to=None,
         score=0.03,
@@ -821,10 +821,51 @@ def test_a_leaf_text_spread_over_lines_is_shown_on_one() -> None:
 
 @pytest.mark.parametrize("language", [Language.EN, Language.DE])
 def test_the_annex_iii_point_enum_is_the_prompts_ids(language: Language) -> None:
-    sent = node.high_risk_response_format(_prompt_annex_i_ids(language))
+    sent = node.high_risk_response_format(
+        _prompt_annex_iii_ids(language), _prompt_annex_i_ids(language)
+    )
     point = _point_schema(sent, "AnnexIIIAnswer")
     leaves = {"type": "string", "enum": _prompt_annex_iii_ids(language)}
     assert point == {"anyOf": [leaves, {"type": "null"}], "title": "Point"}
+
+
+class LibraryWithoutLeaf(FakeLibrary):
+    """A text without Annex III 8(b), as an older or partial corpus might have."""
+
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
+        if provision_id == "annex:III:8:b":
+            raise ProvisionNotFoundError(provision_id)
+        return super().provision(provision_id, lookup)
+
+
+def test_a_leaf_the_text_lacks_is_neither_shown_nor_allowed() -> None:
+    content = answer(RANKS_APPLICANTS).model_dump_json()
+    chat = RecordingChat(messages=iter([AIMessage(content=content)]))
+    library = LibraryWithoutLeaf()
+    HighRiskCheck(_settings(), chat=chat, library=library)(state())
+    human = node.high_risk_messages(state(), retrieve(state(), library))[1].content
+    shown = [line.split("]", 1)[0].removeprefix("[") for line in _prompt_block(human, "Annex III")]
+    [sent] = chat.formats
+    point = _point_schema(sent, "AnnexIIIAnswer")
+    assert isinstance(point, dict)
+    assert len(shown) == 24
+    assert "annex:III:8:b" not in shown
+    assert point["anyOf"][0]["enum"] == shown
+
+
+def test_the_chosen_annex_iii_point_is_cited_from_the_lookup_already_made() -> None:
+    fetched: list[str] = []
+
+    class Counting(FakeLibrary):
+        def provision(self, provision_id: str, lookup: Lookup) -> Provision:
+            fetched.append(provision_id)
+            return super().provision(provision_id, lookup)
+
+    content = answer(RANKS_APPLICANTS).model_dump_json()
+    chat = _fake_chat(content)
+    result = HighRiskCheck(_settings(), chat=chat, library=Counting())(state())
+    assert "annex:III:4:a" in cited(result)
+    assert fetched.count("annex:III:4:a") == 1  # the Annex III lookup, not again for the citation
 
 
 def test_annex_i_is_shown_one_line_per_existing_point_with_its_id() -> None:
@@ -988,7 +1029,7 @@ def test_the_annex_i_point_enum_is_the_prompts_ids(language: Language) -> None:
     the shared format keeps its free string."""
     ids = _prompt_annex_i_ids(language)
     assert ids == list(DE_ANNEX_I_TEXT if language is Language.DE else ANNEX_I_TEXT)
-    limited = node.high_risk_response_format(ids)
+    limited = node.high_risk_response_format(ANNEX_III_POINTS, ids)
     assert _annex_i_point_schema(limited) == {
         "anyOf": [{"type": "string", "enum": ids}, {"type": "null"}],
         "title": "Point",
@@ -1001,13 +1042,13 @@ def test_the_annex_i_point_enum_is_the_prompts_ids(language: Language) -> None:
 def test_the_enum_leaves_out_an_annex_i_id_the_prompt_does_not_show() -> None:
     """own-e-07's first recording named `annex:I:A:21`, which no text has."""
     ids = _prompt_annex_i_ids(Language.EN)
-    point = _annex_i_point_schema(node.high_risk_response_format(ids))
+    point = _annex_i_point_schema(node.high_risk_response_format(ANNEX_III_POINTS, ids))
     assert isinstance(point, dict)
     assert "annex:I:A:21" not in point["anyOf"][0]["enum"]
 
 
 def test_no_annex_i_text_leaves_only_null() -> None:
-    assert _annex_i_point_schema(node.high_risk_response_format([])) == {
+    assert _annex_i_point_schema(node.high_risk_response_format(ANNEX_III_POINTS, [])) == {
         "anyOf": [{"type": "null"}],
         "title": "Point",
     }
@@ -1018,7 +1059,8 @@ def test_the_check_sends_the_limited_schema() -> None:
     chat = RecordingChat(messages=iter([AIMessage(content=content)]))
     HighRiskCheck(_settings(), chat=chat, library=FakeLibrary())(state())
     [sent] = chat.formats
-    assert sent == node.high_risk_response_format(_prompt_annex_i_ids(Language.EN))
+    expected = (_prompt_annex_iii_ids(Language.EN), _prompt_annex_i_ids(Language.EN))
+    assert sent == node.high_risk_response_format(*expected)
 
 
 # --- Replays: INIT's worked example and the Annex I own cases ------------------------------------
@@ -1155,17 +1197,18 @@ def _tag(case: BenchmarkCase, name: str) -> list[str]:
 @dataclass(frozen=True)
 class KnownGap:
     reason: str
-    reads: Callable[[CheckOutcome], bool]
+    reads: Callable[[CheckOutcome, BenchmarkCase], bool]
     """The documented wrong reading; any other miss fails the replay."""
 
 
-def _asks_for_third_party_assessment(result: CheckOutcome) -> bool:
-    """High-risk assumed on the Annex I route, asking whether a third-party conformity assessment
-    is required (Art. 6(1)(b))."""
+def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """High-risk assumed on the case's Annex I point, asking whether a third-party conformity
+    assessment is required (Art. 6(1)(b))."""
     missing = result.step.missing_fact
     return (
         result.step.status is Status.NEEDS_MORE_INFORMATION
         and result.high_risk_route is HighRiskRoute.ANNEX_I
+        and result.annex_point in _tag(case, "annex_i_point")
         and missing is not None
         and missing.id == "third_party_assessment"
         and missing.about == "art:6:1:b"
@@ -1193,6 +1236,7 @@ def _matches_label(result: CheckOutcome, case: BenchmarkCase) -> bool:
         return (
             result.high_risk_route is None
             and not result.annex_iii_exempt
+            and result.annex_point is None
             and step.status is label.status
         )
     also_iii = "annex_iii" in _tag(case, "also_route")
@@ -1204,6 +1248,7 @@ def _matches_label(result: CheckOutcome, case: BenchmarkCase) -> bool:
     names_art_2_2 = "2(2)" in step.decision or "Art. 2 Abs. 2" in step.decision
     return (
         result.high_risk_route is expected
+        and not result.annex_iii_exempt
         and result.annex_point in points
         and step.status is label.status
         and all(asked == fact for fact in missing)
@@ -1225,7 +1270,7 @@ def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -
     if gap is not None:
         if matches:
             pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        assert gap.reads(result), (
+        assert gap.reads(result, case), (
             result.high_risk_route,
             result.step.status,
             result.step.decision,

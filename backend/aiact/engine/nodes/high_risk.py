@@ -585,7 +585,7 @@ def to_outcome(
     law = _law(answer.annex_i.point, retrieved)
     missing = _missing_question(settled, answer, language, law)
     examples = _examples(answer, retrieved.guidance)
-    known = {p.provision_id: p for p in retrieved.annex_i}
+    known = {p.provision_id: p for p in (*retrieved.annex_i, *retrieved.annex_iii)}
     provisions = [
         known.get(pid) or library.provision(pid, lookup) for pid in dict.fromkeys(settled.cited)
     ]
@@ -625,16 +625,18 @@ def _point_among(ids: Sequence[str]) -> dict[str, object]:
     return {"anyOf": [*allowed, {"type": "null"}], "title": "Point"}
 
 
-def high_risk_response_format(annex_i_ids: Sequence[str]) -> dict[str, object]:
-    """`HIGH_RISK_RESPONSE_FORMAT` with each route's `point` limited to real ids (or null):
-    `annex_iii.point` to the Annex III leaves, `annex_i.point` to `annex_i_ids`, the ids shown in
-    the prompt. Those differ by law version, so the format is built per call as a new copy;
+def high_risk_response_format(
+    annex_iii_ids: Sequence[str], annex_i_ids: Sequence[str]
+) -> dict[str, object]:
+    """`HIGH_RISK_RESPONSE_FORMAT` with each route's `point` limited to the ids shown in the
+    prompt (or null): `annex_iii.point` to `annex_iii_ids`, `annex_i.point` to `annex_i_ids`.
+    Those depend on the law version's text, so the format is built per call as a new copy;
     `read_annex_iii`, `read_annex_i` and `_law` still reject an unknown id, as a backstop."""
     spec = HIGH_RISK_RESPONSE_FORMAT["json_schema"]
     assert isinstance(spec, dict)
     schema = spec["schema"]
     definitions = schema["$defs"]
-    limits = {"AnnexIIIAnswer": ANNEX_III_POINTS, "AnnexIAnswer": annex_i_ids}
+    limits = {"AnnexIIIAnswer": annex_iii_ids, "AnnexIAnswer": annex_i_ids}
     limited = {
         name: {
             **definitions[name],
@@ -712,10 +714,11 @@ class HighRiskCheck:
     def __call__(self, state: EngineState) -> CheckOutcome:
         """Raises `HighRiskOutputError` when the reply doesn't fit `HighRiskAnswer`."""
         retrieved = self._reading(lambda library: retrieve(state, library))
+        annex_iii_ids = [p.provision_id for p in retrieved.annex_iii]
         annex_i_ids = [p.provision_id for p in retrieved.annex_i]
         reply = self._model.invoke(
             high_risk_messages(state, retrieved),
-            response_format=high_risk_response_format(annex_i_ids),
+            response_format=high_risk_response_format(annex_iii_ids, annex_i_ids),
         )
         try:
             answer = HighRiskAnswer.model_validate_json(reply.text)

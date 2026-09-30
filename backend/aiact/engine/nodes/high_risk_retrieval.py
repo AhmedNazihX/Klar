@@ -48,6 +48,8 @@ class HighRiskLibrary(Protocol):
 
     def provision(self, provision_id: str, lookup: Lookup) -> Provision: ...
 
+    # `doc_type` and `limit` stay although only the guideline search uses them: they key the
+    # recorded corpus calls (`CorpusRecording`), so changing them would re-key every replay.
     def search(
         self, query: str, lookup: Lookup, *, language: Language, doc_type: str, limit: int
     ) -> tuple[SearchHit, ...]: ...
