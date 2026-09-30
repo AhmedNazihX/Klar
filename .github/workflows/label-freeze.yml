@@ -1,0 +1,79 @@
+# The label-freeze check (story B10a, decision 017): an approved case, one under eval/cases/ at
+# the comparison base, that changes needs a new row in eval/LABEL_CHANGES.md; new cases need none.
+#
+# A workflow of its own, with no concurrency group, so no run is ever cancelled. ci.yml cancels
+# a ref's older run when a newer push arrives; a job can't opt out of that (the workflow-level
+# group cancels the whole run), and even with cancel-in-progress off GitHub keeps only one
+# pending run per group and cancels the one before. A cancelled push-to-main run would leave the
+# commits of that push unchecked, because the next run starts from that push's tip.
+#
+# The base (the check uses its merge base with HEAD):
+# - pull requests and pushes to other branches: origin/main, since approved means on main, so the
+#   whole branch is checked every time;
+# - pushes to main: the tip before the push. After a force-push that tip may be gone; then tag
+#   labels-v1 if it exists, else the run fails and asks for a manual check. (The root commit isn't
+#   a fallback: no case is approved there, so the check would pass without checking anything.)
+name: Label freeze
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  label-freeze:
+    name: Label freeze check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The merge base needs the history, origin/main and the tags.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          working-directory: backend
+          enable-cache: true
+          # Resolved relative to working-directory (backend/).
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Pick the comparison base
+        id: base
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          REF: ${{ github.ref }}
+        run: |
+          zero="0000000000000000000000000000000000000000"
+          if [ "$EVENT_NAME" != "push" ] || [ "$REF" != "refs/heads/main" ]; then
+            base="origin/main"
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "$zero" ]; then
+            # The first push of main: nothing was approved before it.
+            base="origin/main"
+          elif git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            base="$BEFORE"
+          elif git rev-parse --quiet --verify "refs/tags/labels-v1^{commit}" >/dev/null; then
+            echo "::warning::$BEFORE is not reachable (force-push?); comparing with labels-v1"
+            base="labels-v1"
+          else
+            echo "::error::$BEFORE is not reachable (force-push?) and there is no labels-v1 tag." \
+              "Run 'aiact evaluate label-freeze --base <old main tip>' by hand."
+            exit 1
+          fi
+          echo "Comparing with $base"
+          echo "ref=$base" >> "$GITHUB_OUTPUT"
+
+      - name: Label freeze check
+        env:
+          FREEZE_BASE: ${{ steps.base.outputs.ref }}
+        run: uv run aiact evaluate label-freeze --base "$FREEZE_BASE"

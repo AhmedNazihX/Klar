@@ -13,7 +13,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── AI Act Classification Assistant — Capstone Init Document.md   the design (INIT)
 ├── AE.CAP_afa.md                    course brief
 ├── .gitignore
-├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check, label-freeze check (F2, B10a, B13)
+├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check (F2, B13)
+├── .github/workflows/label-freeze.yml  label-freeze check, never cancelled (B10a)
 ├── .githooks/                       pre-commit and pre-merge-commit regenerate DEPENDENCIES.md, pre-push checks it (F8)
 │
 ├── backend/                         the only Python project (uv)
@@ -49,6 +50,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── academic.py          davidath scenarios → cases + overrides; `aiact evaluate academic-import|academic-sample` (B12)
 │   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact evaluate split` (B3)
 │   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact evaluate similarity` (B4a)
+│   │   │   ├── label_freeze.py      approved cases changed without a new LABEL_CHANGES.md row; `aiact evaluate label-freeze` (B10a)
 │   │   │   ├── isolation.py         isolation measurements: Pile B tags, n-gram and embedding closeness to the
 │   │   │   │                        retrievable corpus; `aiact evaluate isolation-embed` (B13)
 │   │   │   ├── label_filter.py      second-model label filter; `aiact evaluate label-filter` (B9)
