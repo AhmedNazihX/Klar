@@ -1,18 +1,16 @@
-"""The corpus side of the high-risk node (E5): what it searches and looks up before the model
+"""The corpus side of the high-risk node (E5): what it looks up and searches before the model
 answers. No model is involved here.
 
-- **Annex III by search.** The description is searched in the law (`search_ai_act`, no distance
-  cut-off, so a softly worded use still reaches its point: C8), and the Annex III rows among the
-  hits are the candidate points. An area row (`annex:III:4`) stands for its leaf points, which
-  are fetched, since the answer must name a leaf; the annex's own row is dropped.
-- **Analogy.** The guidelines are searched the same way; their worked examples (Pile A only: held-
-  out examples are never retrievable, decision 012) are shown for reasoning by analogy. The
-  caller's `exclude_source_example_ids` go into every search, so a leave-one-out run drops the
-  example a case was written from. Guidance is mostly English only, so a German search that finds
-  none is repeated in English.
-- **Annex I by lookup.** The Annex I list is short and the law says where to look, so each of its
-  points is fetched (`get_provision`) and shown as one line with its id and short title: the
-  model can only pick an id the text of this law version has.
+- **Annex III and Annex I by lookup.** Both lists are short and the law says where to look, so
+  every Annex III point (the 25 leaves) and every Annex I point is fetched (`get_provision`) in
+  the case's language and law version and shown as one line with its id: the model can only pick
+  an id the text has, and a softly worded use can't miss its point because a search ranked it
+  low (user, 2026-09-30).
+- **Analogy.** The guidelines are searched with the description (`search_ai_act`, no distance
+  cut-off: C8); their worked examples (Pile A only: held-out examples are never retrievable,
+  decision 012) are shown for reasoning by analogy. The caller's `exclude_source_example_ids` go
+  into every search, so a leave-one-out run drops the example a case was written from. Guidance
+  is mostly English only, so a German search that finds none is repeated in English.
 """
 
 from collections.abc import Sequence
@@ -27,9 +25,6 @@ from aiact.retrieval.provisions import Provision, ProvisionNotFoundError, get_pr
 from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
 from aiact.schemas import Language
 
-LAW_SEARCH_LIMIT = 50
-"""Hits asked of the law search; the Annex III rows among them are the candidates."""
-MAX_ANNEX_CANDIDATES = 8
 GUIDANCE_SEARCH_LIMIT = 8
 
 ANNEX_I_CANDIDATES: tuple[str, ...] = (
@@ -37,7 +32,6 @@ ANNEX_I_CANDIDATES: tuple[str, ...] = (
     *(f"annex:I:B:{number}" for number in range(13, 22)),
 )
 """Every Annex I point id either text may have: A.1-12 and B.13-21."""
-ANNEX_III_PREFIX = "annex:III"
 ANNEX_III_POINTS: tuple[str, ...] = tuple(
     f"annex:III:{point}"
     for point in (
@@ -96,18 +90,14 @@ class HighRiskCorpus:
         return results.hits
 
 
-Passage = SearchHit | Provision
-"""A retrieved text shown to the model: a search hit, or a provision fetched by id."""
-
-
 @dataclass(frozen=True)
 class Retrieved:
-    """What the searches and the lookup found for one description."""
+    """What the lookups and the guidance search found for one description."""
 
     annex_i: tuple[Provision, ...]
     """Every Annex I point the text of this law version has, in order."""
-    annex_iii: tuple[Passage, ...]
-    """The candidate Annex III points: leaves only, so every id shown can be answered."""
+    annex_iii: tuple[Provision, ...]
+    """Every Annex III point (leaf) the text of this law version has, in annex order."""
     guidance: tuple[SearchHit, ...]
 
 
@@ -129,46 +119,29 @@ def annex_i_points(library: HighRiskLibrary, lookup: Lookup) -> tuple[Provision,
     return _fetched(library, ANNEX_I_CANDIDATES, lookup)
 
 
-def _leaves(provision_id: str) -> tuple[str, ...]:
-    """The Annex III points a law hit stands for: a leaf itself, an area row (`annex:III:4`) its
-    leaves; the annex's own row and any other provision none."""
-    if provision_id in ANNEX_III_POINTS:
-        return (provision_id,)
-    if not provision_id.startswith(f"{ANNEX_III_PREFIX}:"):
-        return ()
-    return tuple(point for point in ANNEX_III_POINTS if point.startswith(f"{provision_id}:"))
-
-
-def annex_iii_candidates(
-    law: Sequence[SearchHit], library: HighRiskLibrary, lookup: Lookup
-) -> tuple[Passage, ...]:
-    """The Annex III points among the law hits, in rank order. The answer must name a leaf, so
-    an area row is replaced by its leaves (fetched unless found themselves)."""
-    hits = {hit.provision_id: hit for hit in law}
-    ids = tuple(dict.fromkeys(leaf for hit in law for leaf in _leaves(hit.provision_id)))
-    chosen = ids[:MAX_ANNEX_CANDIDATES]
-    missing = [point for point in chosen if point not in hits]
-    fetched = {p.provision_id: p for p in _fetched(library, missing, lookup)}
-    found: dict[str, Passage] = {**fetched, **hits}
-    return tuple(found[point] for point in chosen if point in found)
+def annex_iii_points(library: HighRiskLibrary, lookup: Lookup) -> tuple[Provision, ...]:
+    """Every Annex III leaf of the law version read, one lookup each, in annex order."""
+    return _fetched(library, ANNEX_III_POINTS, lookup)
 
 
 def retrieve(state: EngineState, library: HighRiskLibrary) -> Retrieved:
-    """The Annex III candidates, the guidance and the Annex I list for the description."""
+    """Both annexes' points, and the guidance for the description."""
     lookup = lookup_for(state)
-    description = state["description"]
 
-    def run(doc_type: str, language: Language, limit: int) -> tuple[SearchHit, ...]:
+    def guidance_in(language: Language) -> tuple[SearchHit, ...]:
         return library.search(
-            description, lookup, language=language, doc_type=doc_type, limit=limit
+            state["description"],
+            lookup,
+            language=language,
+            doc_type="guideline",
+            limit=GUIDANCE_SEARCH_LIMIT,
         )
 
-    law = run("law", lookup.language, LAW_SEARCH_LIMIT)
-    guidance = run("guideline", lookup.language, GUIDANCE_SEARCH_LIMIT)
+    guidance = guidance_in(lookup.language)
     if not guidance and lookup.language is not Language.EN:
-        guidance = run("guideline", Language.EN, GUIDANCE_SEARCH_LIMIT)
+        guidance = guidance_in(Language.EN)
     return Retrieved(
         annex_i=annex_i_points(library, lookup),
-        annex_iii=annex_iii_candidates(law, library, lookup),
+        annex_iii=annex_iii_points(library, lookup),
         guidance=guidance,
     )

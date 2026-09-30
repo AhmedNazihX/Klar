@@ -9,7 +9,7 @@ neither the database nor the network.
 """
 
 import json
-from collections.abc import Callable, Collection, Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import asdict, dataclass
 from datetime import date
 from pathlib import Path
@@ -148,20 +148,14 @@ def hit(pid: str, language: Language = Language.EN, text: str | None = None) -> 
 
 
 EXAMPLE = "guide:guide-high-risk-annex-iii:ex:042"
-LAW_HITS = (hit("art:26:1"), hit("annex:III:4:a"), hit("annex:III:4:b"), hit("art:6:3"))
 GUIDE_HITS = (hit(EXAMPLE), hit("guide:guide-high-risk-annex-iii:para:010"))
 
 
 class FakeSearch:
-    """Records every call; returns `law` for the law and `guidance[language]` for guidelines."""
+    """Records every call; returns `guidance[language]` for the guidelines searched."""
 
-    def __init__(
-        self,
-        law: Sequence[SearchHit] = LAW_HITS,
-        guidance: dict[Language, Sequence[SearchHit]] | None = None,
-    ) -> None:
+    def __init__(self, guidance: dict[Language, Sequence[SearchHit]] | None = None) -> None:
         self.calls: list[dict[str, object]] = []
-        self._law = tuple(law)
         self._guidance = guidance if guidance is not None else {Language.EN: GUIDE_HITS}
 
     def __call__(
@@ -175,9 +169,8 @@ class FakeSearch:
         self.calls.append(
             {"query": query, "language": language, "law_version": law_version, **kwargs}
         )
-        doc_types = kwargs["doc_types"]
-        assert isinstance(doc_types, Collection)
-        hits = self._law if "law" in doc_types else tuple(self._guidance.get(language, ()))
+        assert kwargs["doc_types"] == {"guideline"}  # the law is looked up, never searched
+        hits = tuple(self._guidance.get(language, ()))
         return SearchResults(
             query=query,
             language=language,
@@ -635,7 +628,7 @@ def test_every_search_passes_the_exclude_filter_through() -> None:
     library = FakeLibrary(search)
     check = HighRiskCheck(_settings(), chat=_fake_chat(answer(RANKS_APPLICANTS)), library=library)
     check(state(language=Language.DE, exclude=EXCLUDED))
-    assert len(search.calls) == 3  # law, guidance in German, guidance in English
+    assert len(search.calls) == 2  # guidance in German, then in English
     for call in search.calls:
         assert call["exclude_source_example_ids"] == EXCLUDED
 
@@ -665,7 +658,7 @@ def test_the_corpus_hands_the_filter_to_search_ai_act_over_one_connection(
     connection, embedder = cast(psycopg.Connection, object()), FakeEmbedder()
     library = HighRiskCorpus(connection, embedder)
     retrieve(state(language=Language.DE, exclude=EXCLUDED), _only_search(library))
-    assert len(seen) == 3
+    assert len(seen) == 2
     for kwargs in seen:
         assert kwargs["exclude_source_example_ids"] == EXCLUDED
         assert kwargs["max_distance"] is None
@@ -775,7 +768,7 @@ def test_a_check_without_a_library_builds_one_embedder_and_holds_no_connection_o
 def test_german_guidance_falls_back_to_english_and_is_marked_english_only() -> None:
     search = FakeSearch(guidance={Language.EN: GUIDE_HITS})
     found = retrieve(state(language=Language.DE), FakeLibrary(search))
-    assert [call["language"] for call in search.calls] == [Language.DE, Language.DE, Language.EN]
+    assert [call["language"] for call in search.calls] == [Language.DE, Language.EN]
     assert found.guidance == GUIDE_HITS
     result = to_outcome(
         answer(annex_iii("annex:III:4:a", YES, examples=(EXAMPLE,))),
@@ -793,46 +786,45 @@ def test_german_guidance_found_in_german_is_not_searched_again() -> None:
     german = (hit("guide:guide-definition:para:001", Language.DE),)
     search = FakeSearch(guidance={Language.DE: german})
     assert retrieve(state(language=Language.DE), FakeLibrary(search)).guidance == german
-    assert len(search.calls) == 2
+    assert len(search.calls) == 1
 
 
-def test_only_annex_iii_rows_are_candidates() -> None:
-    found = retrieved()
-    assert [h.provision_id for h in found.annex_iii] == ["annex:III:4:a", "annex:III:4:b"]
-    assert [p.provision_id for p in found.annex_i] == list(ANNEX_I_TEXT)
+def _prompt_block(human: object, heading: str) -> list[str]:
+    assert isinstance(human, str)
+    return human.split(f"{heading}:\n", 1)[1].split("\n\n", 1)[0].splitlines()
 
 
-def test_an_area_row_stands_for_its_leaves_and_the_annex_row_is_dropped() -> None:
-    """Search can return the annex's row and an area row; the answer must name a leaf, so the
-    area's leaves are shown (a leaf found itself keeps its hit) and the annex row isn't."""
-    law = (hit("annex:III"), hit("annex:III:4"), hit("annex:III:4:b", text="Hit text."))
-    found = retrieve(state(), FakeLibrary(FakeSearch(law=law)))
-    assert [p.provision_id for p in found.annex_iii] == ["annex:III:4:a", "annex:III:4:b"]
-    assert [p.text for p in found.annex_iii] == ["Text of annex:III:4:a.", "Hit text."]
+def _prompt_annex_iii_ids(language: Language) -> list[str]:
+    human = node.high_risk_messages(state(language=language), retrieved(language))[1].content
+    return [line.split("]", 1)[0].removeprefix("[") for line in _prompt_block(human, "Annex III")]
 
 
-def test_the_candidates_are_capped_after_expanding_areas() -> None:
-    law = (hit("annex:III:6"), hit("annex:III:7"))
-    found = retrieve(state(), FakeLibrary(FakeSearch(law=law)))
-    assert len(found.annex_iii) == retrieval.MAX_ANNEX_CANDIDATES
-    assert found.annex_iii[0].provision_id == "annex:III:6:a"
+@pytest.mark.parametrize("language", [Language.EN, Language.DE])
+def test_the_prompt_lists_every_annex_iii_leaf_once_with_its_text(language: Language) -> None:
+    """All 25 leaves, looked up in the case's language, whatever the description; one line
+    each with its id and its text on that line (user, 2026-09-30)."""
+    human = node.high_risk_messages(state(language=language), retrieved(language))[1].content
+    lines = _prompt_block(human, "Annex III")
+    assert lines == [f"[{point}] Text of {point}." for point in ANNEX_III_POINTS]
+    assert len(ANNEX_III_POINTS) == 25
+    assert all(p.language is language for p in retrieved(language).annex_iii)
 
 
-def test_an_area_row_cannot_break_the_step() -> None:
-    """The model sees only leaves and the schema allows only leaves, so an area id can't come
-    back as the answer."""
-    content = answer(annex_iii("annex:III:6:d", YES, public_authority=YES)).model_dump_json()
-    chat = RecordingChat(messages=iter([AIMessage(content=content)]))
-    library = FakeLibrary(FakeSearch(law=(hit("annex:III:6"),)))
-    result = HighRiskCheck(_settings(), chat=chat, library=library)(state())
-    assert result.annex_point == "annex:III:6:d"
-    [sent] = chat.formats
-    enum = _point_schema(sent, "AnnexIIIAnswer")
-    assert enum == {
-        "anyOf": [{"type": "string", "enum": list(ANNEX_III_POINTS)}, {"type": "null"}],
-        "title": "Point",
-    }
-    assert "annex:III:6" not in ANNEX_III_POINTS
+def test_a_leaf_text_spread_over_lines_is_shown_on_one() -> None:
+    lookup_text = "(a) AI systems intended\n  to be used for recruitment;"
+    found = Retrieved(annex_i=(), annex_iii=(provision("annex:III:4:a", lookup_text),), guidance=())
+    human = node.high_risk_messages(state(), found)[1].content
+    assert _prompt_block(human, "Annex III") == [
+        "[annex:III:4:a] (a) AI systems intended to be used for recruitment;"
+    ]
+
+
+@pytest.mark.parametrize("language", [Language.EN, Language.DE])
+def test_the_annex_iii_point_enum_is_the_prompts_ids(language: Language) -> None:
+    sent = node.high_risk_response_format(_prompt_annex_i_ids(language))
+    point = _point_schema(sent, "AnnexIIIAnswer")
+    leaves = {"type": "string", "enum": _prompt_annex_iii_ids(language)}
+    assert point == {"anyOf": [leaves, {"type": "null"}], "title": "Point"}
 
 
 def test_annex_i_is_shown_one_line_per_existing_point_with_its_id() -> None:
@@ -880,7 +872,7 @@ def test_the_prompt_puts_instructions_first_retrieval_next_and_the_description_l
     assert messages[0].content == node.HIGH_RISK_INSTRUCTIONS
     human = messages[1].content
     assert isinstance(human, str)
-    assert human.index("Annex I:") < human.index("Annex III points found:")
+    assert human.index("Annex I:") < human.index("Annex III:")
     assert human.index("Text of annex:III:4:a.") < human.index("Description:")
     assert human.endswith(WORKED_EXAMPLE)
     assert "art:26:1" not in human

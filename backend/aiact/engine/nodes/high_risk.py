@@ -1,9 +1,9 @@
 """The high-risk node: Annex III matching with the Art. 6(3) filter, and the Annex I product route
 (E5; INIT > How it works, Annex I).
 
-Retrieval comes first and involves no model (`high_risk_retrieval`): the Annex III candidates
-by search, the guideline examples for analogy (with the caller's exclusions), and every Annex I
-point by lookup.
+Retrieval comes first and involves no model (`high_risk_retrieval`): every Annex III and Annex I
+point by lookup, and the guideline examples for analogy by search (with the caller's
+exclusions).
 
 The engine model then answers fixed key facts (the prompt in `prompts/high_risk.md` comes first,
 the retrieved provisions next, the description last, so the prefix is cached: decision 005), and
@@ -658,7 +658,9 @@ def high_risk_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMes
     """The fixed instructions first; the retrieved provisions next; the per-case context and the
     description last (005)."""
     annex_i = "\n".join(f"[{p.provision_id}] {law_title(p)}" for p in retrieved.annex_i) or "-"
-    annex_iii = "\n\n".join(_passage(h.provision_id, h.text) for h in retrieved.annex_iii) or "-"
+    annex_iii = "\n".join(
+        f"[{p.provision_id}] {' '.join(p.text.split())}" for p in retrieved.annex_iii
+    )
     guidance = (
         "\n\n".join(_passage(h.provision_id, h.text, h.heading) for h in retrieved.guidance) or "-"
     )
@@ -667,7 +669,7 @@ def high_risk_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMes
         SystemMessage(HIGH_RISK_INSTRUCTIONS),
         HumanMessage(
             f"Annex I:\n{annex_i}\n\n"
-            f"Annex III points found:\n{annex_iii}\n\n"
+            f"Annex III:\n{annex_iii or '-'}\n\n"
             f"Guideline passages and examples found:\n{guidance}\n\n"
             f"Language for facts and questions: {state['language'].value}\n\n"
             f"Earlier checks:\n{steps}\n\n"
