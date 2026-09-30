@@ -1155,26 +1155,29 @@ def _tag(case: BenchmarkCase, name: str) -> list[str]:
 @dataclass(frozen=True)
 class KnownGap:
     reason: str
-    reads: Callable[[CheckOutcome, Language], bool]
+    reads: Callable[[CheckOutcome], bool]
     """The documented wrong reading; any other miss fails the replay."""
 
 
-def _no_third_party_decided(result: CheckOutcome, language: Language) -> bool:
-    """Decided not high-risk because no third-party assessment is needed (Art. 6(1)(b))."""
-    reason = node.TEXTS[language]["i_no_third_party"].split("({point})", 1)[1]
+def _asks_for_third_party_assessment(result: CheckOutcome) -> bool:
+    """High-risk assumed on the Annex I route, asking whether a third-party conformity assessment
+    is required (Art. 6(1)(b))."""
+    missing = result.step.missing_fact
     return (
-        result.step.status is Status.DECIDED
-        and result.high_risk_route is None
-        and reason in result.step.decision
+        result.step.status is Status.NEEDS_MORE_INFORMATION
+        and result.high_risk_route is HighRiskRoute.ANNEX_I
+        and missing is not None
+        and missing.id == "third_party_assessment"
+        and missing.about == "art:6:1:b"
     )
 
 
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-e-10-in-house-nodule-finder": KnownGap(
-        "the model takes reading A (the MDR in-house exemption means no third-party assessment) "
-        "as settled law instead of flagging it as open; the label stays legally_ambiguous and "
-        "the case is scored end to end in V8 (user, 2026-09-30)",
-        _no_third_party_decided,
+        "the model treats the MDR in-house exemption as a missing fact (it asks whether a "
+        "third-party assessment is required) instead of an open legal question; the label stays "
+        "legally_ambiguous and V8 scores it end to end (user, 2026-10-01)",
+        _asks_for_third_party_assessment,
     ),
 }
 """Recorded cases whose high-risk outcome differs from the label, with the reason and the
@@ -1222,7 +1225,7 @@ def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -
     if gap is not None:
         if matches:
             pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        assert gap.reads(result, case.language), (
+        assert gap.reads(result), (
             result.high_risk_route,
             result.step.status,
             result.step.decision,
