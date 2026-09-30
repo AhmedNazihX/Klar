@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 
 from aiact.engine.graph import EngineNodes, build_graph
 from aiact.engine.nodes import high_risk as node
@@ -755,6 +755,63 @@ def test_each_route_answers_its_legal_openness_right_after_its_facts() -> None:
         assert fields[at + 1 : at + 4] == ["settled_in_law", "open_question", "evidence"]
 
 
+def _prompt_annex_i_ids(language: Language) -> list[str]:
+    human = node.high_risk_messages(state(language=language), retrieved(language))[1].content
+    assert isinstance(human, str)
+    lines = human.split("Annex I:\n", 1)[1].split("\n\n", 1)[0].splitlines()
+    return [line.split("]", 1)[0].removeprefix("[") for line in lines]
+
+
+def _annex_i_point_schema(response_format: dict[str, object]) -> object:
+    spec = response_format["json_schema"]
+    assert isinstance(spec, dict)
+    return spec["schema"]["$defs"]["AnnexIAnswer"]["properties"]["point"]
+
+
+class RecordingChat(GenericFakeChatModel):
+    """A fake chat that keeps the `response_format` of each call."""
+
+    formats: list[dict[str, object]] = Field(default_factory=list)
+
+    def invoke(self, input: object, config: object = None, **kwargs: object) -> AIMessage:  # type: ignore[override]
+        response_format = kwargs["response_format"]
+        assert isinstance(response_format, dict)
+        self.formats.append(response_format)
+        return super().invoke(input, config, **kwargs)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("language", [Language.EN, Language.DE])
+def test_the_annex_i_point_enum_is_the_prompts_ids(language: Language) -> None:
+    """The ids differ by text (the fake German one has only A.11), so the enum is built per call;
+    the shared format keeps its free string."""
+    ids = _prompt_annex_i_ids(language)
+    assert ids == list(DE_ANNEX_I_TEXT if language is Language.DE else ANNEX_I_TEXT)
+    limited = node.high_risk_response_format(ids)
+    assert _annex_i_point_schema(limited) == {
+        "anyOf": [{"type": "string", "enum": ids}, {"type": "null"}],
+        "title": "Point",
+    }
+    assert _annex_i_point_schema(node.HIGH_RISK_RESPONSE_FORMAT) == {
+        "anyOf": [{"type": "string"}, {"type": "null"}],
+        "title": "Point",
+    }
+
+
+def test_no_annex_i_text_leaves_only_null() -> None:
+    assert _annex_i_point_schema(node.high_risk_response_format([])) == {
+        "anyOf": [{"type": "null"}],
+        "title": "Point",
+    }
+
+
+def test_the_check_sends_the_limited_schema() -> None:
+    content = answer(RANKS_APPLICANTS).model_dump_json()
+    chat = RecordingChat(messages=iter([AIMessage(content=content)]))
+    HighRiskCheck(_settings(), chat=chat, search=FakeSearch(), lookup=fake_lookup)(state())
+    [sent] = chat.formats
+    assert sent == node.high_risk_response_format(_prompt_annex_i_ids(Language.EN))
+
+
 # --- Replays: INIT's worked example and the Annex I own cases ------------------------------------
 #
 # Record (live model and embedding calls, and the local corpus; see the story report for the
@@ -880,6 +937,44 @@ def _tag(case: BenchmarkCase, name: str) -> list[str]:
     return [tag.removeprefix(prefix) for tag in case.tags if tag.startswith(prefix)]
 
 
+KNOWN_GAPS: dict[str, str] = {
+    "own-e-10-in-house-nodule-finder": (
+        "the model takes reading A (the MDR in-house exemption means no third-party assessment) "
+        "as settled law instead of flagging it as open; the label stays legally_ambiguous and "
+        "the case is scored end to end in V8 (user, 2026-09-30)"
+    ),
+}
+"""Recorded cases whose high-risk outcome differs from the label, with the reason; each fails
+when it starts matching, so the entry is removed."""
+
+
+def _matches_label(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """The case's class, route, Annex point and step status, from its label and tags."""
+    label = case.label
+    assert isinstance(label, CaseLabel)
+    step = result.step
+    if label.risk_class is not RiskClass.HIGH_RISK:
+        return (
+            result.high_risk_route is None
+            and not result.annex_iii_exempt
+            and step.status is label.status
+        )
+    also_iii = "annex_iii" in _tag(case, "also_route")
+    expected = HighRiskRoute.ANNEX_III if also_iii else HighRiskRoute.ANNEX_I
+    points = {*_tag(case, "annex_i_point"), *([label.annex_point] if label.annex_point else [])}
+    missing = _tag(case, "missing_fact")
+    asked = step.missing_fact.id if step.missing_fact else None
+    section_b_decided = "b" in _tag(case, "annex_i_section") and label.status is Status.DECIDED
+    names_art_2_2 = "2(2)" in step.decision or "Art. 2 Abs. 2" in step.decision
+    return (
+        result.high_risk_route is expected
+        and result.annex_point in points
+        and step.status is label.status
+        and all(asked == fact for fact in missing)
+        and (names_art_2_2 or not section_b_decided)
+    )
+
+
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -887,23 +982,13 @@ def _tag(case: BenchmarkCase, name: str) -> list[str]:
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
 def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -> None:
-    """Each B5e case's class, route, Annex point and step status, from its label and tags."""
-    label = case.label
-    assert isinstance(label, CaseLabel)
+    """Each B5e case against its label and tags; a `KNOWN_GAPS` case is an expected failure."""
     result = replay_check(state(case.description, case.language))
-    if label.risk_class is not RiskClass.HIGH_RISK:
-        assert result.high_risk_route is None
-        assert not result.annex_iii_exempt
-        assert result.step.status is label.status
-        return
-    also_iii = "annex_iii" in _tag(case, "also_route")
-    expected = HighRiskRoute.ANNEX_III if also_iii else HighRiskRoute.ANNEX_I
-    assert result.high_risk_route is expected
-    points = {*_tag(case, "annex_i_point"), *([label.annex_point] if label.annex_point else [])}
-    assert result.annex_point in points
-    assert result.step.status is label.status
-    for missing in _tag(case, "missing_fact"):
-        assert result.step.missing_fact is not None
-        assert result.step.missing_fact.id == missing
-    if "b" in _tag(case, "annex_i_section") and label.status is Status.DECIDED:
-        assert "2(2)" in result.step.decision or "Art. 2 Abs. 2" in result.step.decision
+    matches = _matches_label(result, case)
+    gap = KNOWN_GAPS.get(case.id)
+    if gap is not None:
+        if matches:
+            pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
+        pytest.xfail(gap)
+    step = result.step
+    assert matches, (result.high_risk_route, result.annex_point, step.status, step.decision)

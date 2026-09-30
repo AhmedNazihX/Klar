@@ -83,8 +83,9 @@ from aiact.settings import Settings
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "high_risk.md"
 HIGH_RISK_INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
 
-MAX_OUTPUT_TOKENS = 3000
-"""Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005)."""
+MAX_OUTPUT_TOKENS = 6000
+"""Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005), and a
+case where both routes apply (own-e-14) used all of 3000 on reasoning before any answer."""
 
 LAW_SEARCH_LIMIT = 50
 """Hits asked of the law search; the Annex III rows among them are the candidates."""
@@ -769,6 +770,27 @@ def to_outcome(
 HIGH_RISK_RESPONSE_FORMAT = json_schema_format("high_risk_answer", HighRiskAnswer)
 
 
+def high_risk_response_format(annex_i_ids: Sequence[str]) -> dict[str, object]:
+    """`HIGH_RISK_RESPONSE_FORMAT` with `annex_i.point` limited to `annex_i_ids` (or null), the
+    ids shown in the prompt: they differ by law version, so the schema is built per call as a new
+    copy. `read_annex_i` and `_law` still reject an id without a text, as a backstop."""
+    spec = HIGH_RISK_RESPONSE_FORMAT["json_schema"]
+    assert isinstance(spec, dict)
+    schema = spec["schema"]
+    definitions = schema["$defs"]
+    annex_i = definitions["AnnexIAnswer"]
+    allowed = [{"type": "string", "enum": list(annex_i_ids)}] if annex_i_ids else []
+    point = {"anyOf": [*allowed, {"type": "null"}], "title": "Point"}
+    limited = {**annex_i, "properties": {**annex_i["properties"], "point": point}}
+    return {
+        **HIGH_RISK_RESPONSE_FORMAT,
+        "json_schema": {
+            **spec,
+            "schema": {**schema, "$defs": {**definitions, "AnnexIAnswer": limited}},
+        },
+    }
+
+
 def _passage(provision_id: str, text: str, heading: str | None = None) -> str:
     body = text if len(text) <= MAX_PASSAGE_CHARS else f"{text[:MAX_PASSAGE_CHARS]} […]"
     title = f" ({heading})" if heading else ""
@@ -822,8 +844,10 @@ class HighRiskCheck:
     def __call__(self, state: EngineState) -> CheckOutcome:
         """Raises `HighRiskOutputError` when the reply doesn't fit `HighRiskAnswer`."""
         retrieved = retrieve(state, self._search, self._lookup)
+        annex_i_ids = [p.provision_id for p in retrieved.annex_i]
         reply = self._model.invoke(
-            high_risk_messages(state, retrieved), response_format=HIGH_RISK_RESPONSE_FORMAT
+            high_risk_messages(state, retrieved),
+            response_format=high_risk_response_format(annex_i_ids),
         )
         try:
             answer = HighRiskAnswer.model_validate_json(reply.text)
