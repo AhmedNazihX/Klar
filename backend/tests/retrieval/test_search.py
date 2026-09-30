@@ -145,6 +145,33 @@ def test_the_vector_arm_keeps_the_held_out_and_exclude_filters() -> None:
     assert "not (p.source_example_id = any(%(exclude_source_example_ids)s::text[]))" in nearest
 
 
+def test_both_arms_keep_every_filter_when_doc_keys_is_set() -> None:
+    """The doc_keys filter sits inside the SQL of both arms, next to the held-out and exclude
+    filters, which it never replaces."""
+    params, statement = prepare_search(
+        "credit scoring", Language.EN, LawVersion.AMENDED, None, None, ("hr-ex-9",), False, 10,
+        RecordingEmbedder(), doc_keys={"guide-definition"},
+    )  # fmt: skip
+    text = statement.as_string()
+    nearest = text[text.index("vector_hits as materialized") : text.index("vector_ranked as")]
+    keyword = text[text.index("keyword_ranked as") : text.index("fused as")]
+    for arm in (nearest, keyword):
+        assert "d.doc_key = any(%(doc_keys)s::text[])" in arm
+        assert "(%(include_held_out)s or not p.is_held_out)" in arm
+        assert "not (p.source_example_id = any(%(exclude_source_example_ids)s::text[]))" in arm
+    assert params["doc_keys"] == ["guide-definition"]
+    assert params["include_held_out"] is False
+
+
+def test_doc_keys_defaults_to_every_document_and_rejects_an_empty_set() -> None:
+    params, _ = prepare_search(
+        "q", Language.EN, LawVersion.AMENDED, None, None, (), False, 10, RecordingEmbedder()
+    )
+    assert params["doc_keys"] is None
+    with pytest.raises(ValueError, match="doc_keys is empty"):
+        _search(doc_keys=set())
+
+
 def test_the_cut_off_is_in_the_vector_arm_after_the_nearest_rows() -> None:
     nearest, ranked = _vector_arm(0.3).split("vector_ranked as")
     assert "max_distance" not in nearest
