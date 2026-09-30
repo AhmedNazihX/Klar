@@ -39,45 +39,47 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 - **Benchmark isolation.** Corpus code (`aiact/corpus`, `aiact/retrieval`, stories B1 and C*) must never read `eval/`. The one exception is story C2, which reads the `pile_b` ID list in `eval/split.json`. Benchmark work must never write to `data/` or the corpus tables. No test description or label is ever ingested.
 - **The split comes first.** `eval/split.json` is committed before anything under `aiact/engine/` exists. Labels under `eval/cases/` are frozen at tag `labels-v1`; any later change is logged in `eval/LABEL_CHANGES.md`.
 - **No live model calls in CI.** Tests use recorded responses. Mark live tests `@pytest.mark.live`.
-- **Done means green.** A story is done only when ruff, pyright and pytest pass and the story's DoD is met.
+- **Done means green.** A story is done only when the `checks` in `.claude/foreman.json` pass and the story's DoD is met.
 - **Postgres.** Before touching Postgres or Supabase, load the `supabase-postgres-best-practices` skill, and the `supabase` skill too.
 - **Library APIs.** Check LangGraph, Docling, the MCP SDK, RAGAS, FastAPI and similar libraries through context7 before writing code against them.
 - **Every result carries** the law version it used and the "guidance, not legal advice" notice.
 - **Secrets.** Secrets live in `.env` (never committed); `.env.example` lists the keys.
 
-## Tooling (`.claude/`)
-- **Skills:**
-  - `/status`: what's done, ready or blocked, and what to launch next.
-  - `/story-start <IDs>`: checks deps and rules, then launches `story-worker` agents.
-  - `/story-finish <ID>`: verify, review, merge, tick.
-  - `/decision`: records in `docs/decisions/`.
-  - `/case`: benchmark cases and labels.
-  - `/eval`: runs a benchmark with a subset, cost cap and held-out/all mode; asks before a full or paid run; writes `eval/reports/run-<date>.md` from stored numbers.
-- **Agents:**
-  - `story-worker`: implements one story in its own worktree.
-  - `dod-verifier`: checks a story's DoD independently.
-  - `isolation-auditor`: benchmark-leak audit.
-  - The `foreman:diff-reviewer` agent (from the foreman plugin) reviews diffs.
-- **Hooks** (`.claude/settings.json`):
-  - `engine-gate.sh`: no `backend/aiact/engine/` before `eval/split.json` is committed.
-  - `isolation-guard.sh`: no `eval/` access on Corpus-lane branches.
-  - `ruff-format.sh`: formats edited `.py` files.
-  - The global git and secrets guards also apply.
-  - Checks on file tools (Read, Write, Edit, Grep, Glob) are exact. Checks on shell commands are best effort, because shell text can hide a path. The sparse checkout, `isolation-auditor` and `dod-verifier` are the backstops.
-  - After changing a hook, run `bash .claude/hooks/test-hooks.sh`.
+## Story workflow (parallel agents, `foreman` plugin)
+- **Design:** the INIT above (this project has no `docs/DESIGN.md`). **Backlog:** `docs/BACKLOG.md`. **Layout:** `docs/LAYOUT.md`; every new file fits it.
+  **Decisions:** `docs/decisions/`. Settings: `.claude/foreman.json`; its `checks` is the only list of the
+  lint, type and test commands ("the global checks"): change them there.
+- **Commands:** `/foreman:next` picks the right step. `/foreman:status` shows what's ready;
+  `/foreman:story-start <IDs>` launches one `foreman:story-worker` per story, each in its own worktree;
+  `/foreman:story-finish <ID>` has `foreman:dod-verifier` and the reviewers (`reviewers` in the config, plus
+  `foreman:test-auditor`) check the work, runs fix rounds, and merges only after the user confirms.
+  `/foreman:decision` writes decision records.
+- **Worktrees:** `.claude/worktrees/` (gitignored). They branch from the local HEAD (`worktree.baseRef: head`). Each
+  worker renames its branch to `story/<ID>-<slug>`.
+- **Starting a story:** only after all its deps are merged into the base branch. `Solo` stories (E8, E9, E10) run with
+  nothing else in flight. Stories sharing a `Resource:` (`db-schema`) never run at the same time.
+- **The orchestrator owns the backlog.** Only the main session ticks `docs/BACKLOG.md` and adds hand-over notes,
+  after a merge. Workers report their outcome in their final message.
+- **Shared files:** keep edits to lockfiles, settings and env examples minimal and additive. If a lockfile conflicts,
+  regenerate it rather than merging it by hand.
+- **Files the worktree doesn't have:** gitignored files like `.env` aren't in new worktrees. The worker symlinks the
+  files listed in `link_files` and exports `env` from the config.
+- **Guards** (plugin hooks, configured in `.claude/foreman.json`): `gates` (no writes under a path until a file
+  is committed), `lanes`/`stories` (a lane's `deny` folders are blocked on its story branches, and its worktree
+  leaves them out), `format` (edited files are formatted with the project's formatter). File-tool checks are exact;
+  shell-command checks are best effort. Project rules and their enforcement are listed under `guardrails`.
+
+## Project rules for parallel work
+- **Benchmark isolation in practice.** The Corpus lane (B1, C*) denies `eval/`; C2 may read `eval/split.json` only. The engine gate blocks `backend/aiact/engine/` until `eval/split.json` is committed. `isolation-auditor` reviews every story; the CI isolation job and `tests/test_isolation.py` are the backstops.
+- **Database is shared.** All worktrees use the same local Supabase instance. Create migrations only with `supabase migration new` (timestamped names), and never run `supabase db reset`: it wipes the corpus every worktree relies on. Only one running story at a time may change the schema (`Resource: db-schema`). Tests isolate themselves with a transaction per test or a per-story schema.
+- **Don't name things with the bare word `eval`** in shell commands (for example `supabase migration new eval`): the lane guard reads it as a path. Use names like `eval_records`.
+- **Lockfiles.** If `uv.lock` conflicts, regenerate it with `uv lock`, then run `uv run aiact deps generate` and commit `docs/DEPENDENCIES.md` and `docs/dependency-licences.json` with it. Case changes need `uv run aiact evaluate isolation-embed` and a committed `eval/isolation/embeddings.json`; on a merge conflict, regenerate it.
+- **Paid calls.** A worker may spend up to `cost_cap_usd` in the config without asking; anything more, and any full benchmark run, needs the user's go-ahead.
+
+## Project tooling (`.claude/`)
+- **Skills:** `/case` (benchmark cases and labels) and `/eval` (runs a benchmark with a subset, cost cap and held-out/all mode; asks before a full or paid run; writes `eval/reports/run-<date>.md` from stored numbers).
+- **Agent:** `isolation-auditor` (benchmark-leak audit), run by `story-finish` on every story.
 - **Scoped rules:** `.claude/rules/*.md` load only when Claude reads matching files. Subfolders are read too, so keep this folder small and specific to this project.
   - Areas: `eval`, `corpus`, `engine`, `supabase`.
   - Code: `python` (backend), `api` (FastAPI and MCP), `frontend`, `frontend-security`, `frontend-testing`.
   - Visual design comes from the user's design system (copy in `docs/design-system/`) and Design canvas (see `docs/BACKLOG.md` › Phase 5 › Design reference), and the `frontend-design` skill covers gaps. It doesn't come from a rule.
-- **Backlog helper:** `.claude/scripts/backlog.py` (`status`, `show`, `deps`, `info`, `tick`). The skills use it.
-
-## Parallel work (worktrees)
-- **One worktree per story.** Every agent running in parallel works in its own git worktree. `story-worker` has `isolation: worktree`; worktrees live in `.claude/worktrees/` (gitignored) and branch from the local HEAD (`worktree.baseRef: head`). The worker renames its branch to `story/<ID>-<slug>`, for example `story/C1-eurlex-parser`.
-- **Branch from a merged base.** A story's worktree is created only after all its Deps are merged into the base branch. Engine worktrees (E*) must branch from a commit that already contains `eval/split.json` (the B3 gate).
-- **Run alone.** F1 (every worktree needs its base) and the chain E8 → E9 → E10 run serially, without parallel agents.
-- **The orchestrator owns the backlog.** Only the main session ticks boxes in `docs/BACKLOG.md`, after a merge. Agents report their outcome in their final message instead.
-- **Merge flow.** When a story is done: the `foreman:diff-reviewer` agent checks the diff, then ruff, pyright and pytest run on the branch, then the branch is merged into the base. Dependent stories start only after that merge.
-- **Shared files.** Keep edits to `pyproject.toml`, `settings.py` and `.env.example` minimal and additive. If `uv.lock` conflicts, regenerate it with `uv lock` rather than merging it by hand. Then run `uv run aiact deps generate` and commit `docs/DEPENDENCIES.md` and `docs/dependency-licences.json` with it.
-- **Gitignored files.** `.env` and `data/raw/` are not in a new worktree. Copy or symlink `.env` into the worktree at the start. Point `AIACT_DATA_DIR` at the one shared absolute data path.
-- **Database is shared.** All worktrees use the same local Supabase instance. Create migrations only with `supabase migration new` (timestamped names). Only one running story at a time may change the schema. Tests isolate themselves with a transaction per test or a per-story schema.
-- **Enforced isolation.** Corpus-lane worktrees (B1, C*) use sparse checkout to leave out `eval/` entirely. C2 is the exception: it gets `eval/split.json` only. The worker sets the sparse checkout before renaming its branch, and `isolation-guard.sh` blocks any `eval/` access after that.
