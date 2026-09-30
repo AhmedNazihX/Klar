@@ -11,49 +11,37 @@ Commission's wording. For each such case this measures, against its own source e
   so the check makes no paid call. A rewrite keeps the facts that decide the verdict, so a high
   cosine is expected (B13: a Pile B text scores a median 0.918 against its own row); the cosine
   is reported and gates a case only when a limit is given. It is None when either vector is
-  missing (a Pile A source, or a case not yet embedded).
+  missing (a Pile A source, or a case not embedded since its last edit); under a limit, a case
+  without a cosine fails, since it wasn't measured.
 """
 
-import json
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from difflib import SequenceMatcher
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
-
-from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_cases
+from aiact.eval.cases import CASES_DIR, BenchmarkCase
 from aiact.eval.isolation import (
     EMBEDDINGS_FILE,
     EmbeddingCache,
+    ExampleText,
     decode_vector,
+    load_example_texts,
+    longest_shared_words,
     normalised_words,
+    parse_cache,
     text_key,
+    yaml_cases,
 )
 from aiact.eval.split import EXAMPLES_FILE
 
 RUN_LIMIT = 8
 """A word run this long or longer, shared with the source example, fails the case."""
+NO_COSINE = "no cosine: run `aiact evaluate isolation-embed`"
 
 
-class SimilarityFileError(ValueError):
-    """An input that can't be read as expected, or a case whose source example doesn't exist;
-    the message names the file or the case."""
-
-
-class SourceExample(BaseModel):
-    """The fields of a B2 example row the check compares with."""
-
-    model_config = ConfigDict(frozen=True, extra="ignore")
-
-    example_id: str = Field(pattern=r"^hr-ex-[0-9]{3}$")
-    text: str = Field(min_length=1)
-    lead_in: str | None = None
-
-    def parts(self) -> tuple[tuple[str, str], ...]:
-        """The Commission-written texts to compare with, named: `text`, then `lead_in`."""
-        return (("text", self.text),) + ((("lead_in", self.lead_in),) if self.lead_in else ())
+class SimilarityError(ValueError):
+    """Nothing to check, or a case whose source example doesn't exist; the message says which."""
 
 
 @dataclass(frozen=True)
@@ -85,61 +73,53 @@ class CaseSimilarity:
     cosine: float | None
 
     def failures(self, limits: Limits) -> tuple[str, ...]:
-        """Why the case is too close to its source; empty when it passes."""
+        """Why the case is too close to its source (or unmeasured); empty when it passes."""
         reasons: list[str] = []
         if self.run.length >= limits.run:
             reasons.append(f"shares a {self.run.length}-word run with the {self.run.part}")
-        if limits.cosine is not None and self.cosine is not None and self.cosine >= limits.cosine:
-            reasons.append(f"cosine {self.cosine:.3f} >= {limits.cosine}")
+        if limits.cosine is not None:
+            if self.cosine is None:
+                reasons.append(NO_COSINE)
+            elif self.cosine >= limits.cosine:
+                reasons.append(f"cosine {self.cosine:.3f} >= {limits.cosine}")
         return tuple(reasons)
 
 
 # --- Inputs ---------------------------------------------------------------------------------
 
 
-def load_sources(path: Path = EXAMPLES_FILE) -> dict[str, SourceExample]:
-    lines = path.read_text(encoding="utf-8").splitlines()
-    try:
-        rows = [SourceExample.model_validate(json.loads(line)) for line in lines if line.strip()]
-    except (json.JSONDecodeError, ValidationError) as error:
-        raise SimilarityFileError(f"{path}: not a valid example row: {error}") from error
-    return {row.example_id: row for row in rows}
-
-
 def read_cache(path: Path = EMBEDDINGS_FILE) -> EmbeddingCache | None:
     """The isolation vector cache, whatever its model (both vectors of a pair come from it), or
     None when there is none."""
-    if not path.is_file():
-        return None
-    try:
-        return EmbeddingCache.model_validate_json(path.read_text(encoding="utf-8"))
-    except ValidationError as error:
-        raise SimilarityFileError(f"{path}: not a valid vector cache: {error}") from error
+    return parse_cache(path) if path.is_file() else None
 
 
 def sourced_cases(cases_dir: Path = CASES_DIR) -> tuple[BenchmarkCase, ...]:
-    """Every case of the YAML sets that exist with a `source_example_id`."""
-    sets = (s for s in CaseSet if s is not CaseSet.APPLIEDAI and (cases_dir / s.value).is_dir())
-    cases = (case for case_set in sets for case in load_cases(case_set, cases_dir))
-    return tuple(case for case in cases if case.source_example_id is not None)
+    """Every YAML case under `cases_dir` with a `source_example_id`. A missing folder raises
+    FileNotFoundError and a folder without such a case SimilarityError: a mistyped path must not
+    pass as "nothing too close"."""
+    if not cases_dir.is_dir():
+        raise FileNotFoundError(f"no case folder: {cases_dir}")
+    cases = tuple(case for case in yaml_cases(cases_dir) if case.source_example_id is not None)
+    if not cases:
+        raise SimilarityError(f"no case with a source_example_id under {cases_dir}")
+    return cases
 
 
 # --- Measurements ---------------------------------------------------------------------------
 
 
-def longest_shared_words(first: Sequence[str], second: Sequence[str]) -> tuple[str, ...]:
-    """The longest run of words both sequences contain (the first one found on a tie)."""
-    matcher = SequenceMatcher(None, first, second, autojunk=False)
-    match = matcher.find_longest_match(0, len(first), 0, len(second))
-    return tuple(first[match.a : match.a + match.size])
+def source_parts(source: ExampleText) -> tuple[tuple[str, str], ...]:
+    """The Commission-written texts of an example, named: `text`, then `lead_in`."""
+    return (("text", source.text),) + ((("lead_in", source.lead_in),) if source.lead_in else ())
 
 
-def closest_run(description: str, source: SourceExample) -> SharedRun:
+def closest_run(description: str, source: ExampleText) -> SharedRun:
     """The longest run the description shares with any part of the source (`text` on a tie)."""
     words = normalised_words(description)
     runs = (
         SharedRun(name, longest_shared_words(words, normalised_words(part)))
-        for name, part in source.parts()
+        for name, part in source_parts(source)
     )
     return max(runs, key=lambda run: run.length)
 
@@ -163,11 +143,11 @@ def cached_cosine(cache: EmbeddingCache | None, first: str, second: str) -> floa
 
 def measure(
     cases: Iterable[BenchmarkCase],
-    sources: Mapping[str, SourceExample],
+    sources: Mapping[str, ExampleText],
     cache: EmbeddingCache | None,
 ) -> tuple[CaseSimilarity, ...]:
-    """Every case's closeness to its source example, longest run first. A case whose source
-    example isn't among `sources` raises SimilarityFileError."""
+    """Every sourced case's closeness to its source example, longest run first. A case whose
+    source example isn't among `sources` raises SimilarityError."""
     results: list[CaseSimilarity] = []
     for case in cases:
         source_id = case.source_example_id
@@ -175,7 +155,7 @@ def measure(
             continue
         source = sources.get(source_id)
         if source is None:
-            raise SimilarityFileError(f"case {case.id}: unknown source example {source_id}")
+            raise SimilarityError(f"case {case.id}: unknown source example {source_id}")
         run = closest_run(case.description, source)
         closeness = cached_cosine(cache, case.description, source.text)
         results.append(CaseSimilarity(case.id, source_id, run, closeness))
@@ -188,6 +168,5 @@ def check_similarity(
     embeddings_file: Path = EMBEDDINGS_FILE,
 ) -> tuple[CaseSimilarity, ...]:
     """Measure every sourced case of `cases_dir` against the examples in `examples_file`."""
-    return measure(
-        sourced_cases(cases_dir), load_sources(examples_file), read_cache(embeddings_file)
-    )
+    sources = {example.example_id: example for example in load_example_texts(examples_file)}
+    return measure(sourced_cases(cases_dir), sources, read_cache(embeddings_file))

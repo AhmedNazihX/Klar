@@ -471,7 +471,12 @@ def eval_similarity(
     case reaches a limit."""
     try:
         results = similarity.check_similarity(cases_dir, examples, embeddings)
-    except (CaseFileError, similarity.SimilarityFileError, FileNotFoundError) as error:
+    except (
+        CaseFileError,
+        similarity.SimilarityError,
+        isolation.IsolationFileError,
+        FileNotFoundError,
+    ) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
     limits = similarity.Limits(run=max_run, cosine=max_cosine)

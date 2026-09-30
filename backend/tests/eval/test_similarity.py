@@ -13,9 +13,9 @@ from aiact.eval import similarity
 from aiact.eval.cases import BenchmarkCase
 from aiact.eval.isolation import (
     EmbeddingCache,
+    ExampleText,
     encode_vector,
-    longest_shared_run,
-    normalised_words,
+    longest_shared_words,
     text_key,
 )
 
@@ -40,6 +40,14 @@ LEAD_IN_COPY = (
     "Our city lists, among systems used by public bodies to allocate essential benefits, a "
     "scoring tool for flat applicants."
 )
+EIGHT_WORD_COPY = (
+    "Our product reads scanned tenancy applications, extracts the declared household figures "
+    "for a city office."
+)
+SEVEN_WORD_COPY = (
+    "Our product reads scanned tenancy applications, extracts the declared figures for a city "
+    "office."
+)
 CLEAN_RUN_CEILING = 3
 """The clean rewrite shares only short phrases ("each applicant"-length) with the source."""
 
@@ -58,7 +66,7 @@ def make_case(case_id: str, description: str, source_id: str | None = SOURCE_ID)
     )
 
 
-SOURCE = similarity.SourceExample(example_id=SOURCE_ID, text=SOURCE_TEXT, lead_in=LEAD_IN)
+SOURCE = ExampleText(example_id=SOURCE_ID, source="guide-test", text=SOURCE_TEXT, lead_in=LEAD_IN)
 SOURCES = {SOURCE_ID: SOURCE}
 
 
@@ -93,6 +101,15 @@ def test_a_clean_rewrite_passes() -> None:
     assert result.failures(similarity.Limits(cosine=0.95)) == ()
 
 
+def test_the_default_limit_fails_an_eight_word_run_and_passes_a_seven_word_run() -> None:
+    eight, seven = similarity.measure(
+        [make_case("b-8", EIGHT_WORD_COPY), make_case("b-7", SEVEN_WORD_COPY)], SOURCES, None
+    )
+    assert (eight.run.length, seven.run.length) == (8, 7)
+    assert eight.failures(similarity.Limits()) == ("shares a 8-word run with the text",)
+    assert seven.failures(similarity.Limits()) == ()
+
+
 def test_the_run_limit_is_inclusive() -> None:
     (result,) = similarity.measure([make_case("b-near", NEAR_COPY)], SOURCES, None)
     assert result.failures(similarity.Limits(run=result.run.length))
@@ -120,21 +137,32 @@ def test_the_cosine_comes_from_the_cache_and_gates_only_with_a_limit() -> None:
 
 
 def test_a_text_missing_from_the_cache_has_no_cosine() -> None:
-    (result,) = similarity.measure([make_case("b-lead", LEAD_IN_COPY)], SOURCES, CACHE)
+    (result,) = similarity.measure([make_case("b-clean", SEVEN_WORD_COPY)], SOURCES, CACHE)
     assert result.cosine is None
     assert similarity.cached_cosine(None, SOURCE_TEXT, NEAR_COPY) is None
 
 
+def test_without_a_cosine_limit_a_missing_cosine_is_informational() -> None:
+    (result,) = similarity.measure([make_case("b-7", SEVEN_WORD_COPY)], SOURCES, None)
+    assert result.failures(similarity.Limits()) == ()
+
+
+def test_under_a_cosine_limit_a_missing_cosine_fails() -> None:
+    for cache in (None, CACHE):
+        (result,) = similarity.measure([make_case("b-7", SEVEN_WORD_COPY)], SOURCES, cache)
+        assert result.failures(similarity.Limits(cosine=0.95)) == (similarity.NO_COSINE,)
+
+
 def test_cases_without_a_source_are_skipped_and_an_unknown_source_is_an_error() -> None:
     assert similarity.measure([make_case("b-own", CLEAN_REWRITE, None)], SOURCES, None) == ()
-    with pytest.raises(similarity.SimilarityFileError, match="hr-ex-998"):
+    with pytest.raises(similarity.SimilarityError, match="hr-ex-998"):
         similarity.measure([make_case("b-x", CLEAN_REWRITE, "hr-ex-998")], SOURCES, None)
 
 
-def test_the_longest_run_matches_the_isolation_measure() -> None:
-    first, second = normalised_words(NEAR_COPY), normalised_words(SOURCE_TEXT)
-    shared = similarity.longest_shared_words(first, second)
-    assert len(shared) == longest_shared_run(first, second)
+def test_the_longest_shared_words_are_the_first_longest_run() -> None:
+    first = ("x", "a", "b", "c", "y", "d", "e", "f")
+    assert longest_shared_words(first, ("a", "b", "c", "q", "d", "e", "f")) == ("a", "b", "c")
+    assert longest_shared_words(first, ()) == ()
 
 
 def test_a_zero_vector_has_no_cosine() -> None:
@@ -150,7 +178,8 @@ def write_inputs(tmp_path: Path, descriptions: dict[str, str]) -> list[str]:
     folder = tmp_path / "cases" / "commission_b"
     folder.mkdir(parents=True)
     records = [make_case(i, d).model_dump(mode="json") for i, d in descriptions.items()]
-    (folder / "cases.yaml").write_text(yaml.safe_dump(records), encoding="utf-8")
+    if records:
+        (folder / "cases.yaml").write_text(yaml.safe_dump(records), encoding="utf-8")
     examples = tmp_path / "examples.jsonl"
     examples.write_text(json.dumps(SOURCE.model_dump()) + "\n", encoding="utf-8")
     cache = tmp_path / "embeddings.json"
@@ -163,6 +192,34 @@ def write_inputs(tmp_path: Path, descriptions: dict[str, str]) -> list[str]:
         "--embeddings",
         str(cache),
     ]
+
+
+def test_the_command_defaults_to_the_eight_word_limit(tmp_path: Path) -> None:
+    options = write_inputs(tmp_path, {"b-8": EIGHT_WORD_COPY, "b-7": SEVEN_WORD_COPY})
+    result = CliRunner().invoke(app, ["evaluate", "similarity", *options])
+    assert result.exit_code == 1, result.output
+    assert "FAIL b-8 <- hr-ex-999  run 8 (text)" in result.stdout
+    assert "ok   b-7 <- hr-ex-999  run 7 (text)" in result.stdout
+
+
+def test_the_command_fails_an_unmeasured_case_under_a_cosine_limit(tmp_path: Path) -> None:
+    options = write_inputs(tmp_path, {"b-7": SEVEN_WORD_COPY})
+    result = CliRunner().invoke(app, ["evaluate", "similarity", *options, "--max-cosine", "0.95"])
+    assert result.exit_code == 1, result.output
+    assert "no cosine: run `aiact evaluate isolation-embed`" in result.stdout
+    without_limit = CliRunner().invoke(app, ["evaluate", "similarity", *options])
+    assert without_limit.exit_code == 0, without_limit.output
+
+
+def test_the_command_fails_when_there_is_nothing_to_check(tmp_path: Path) -> None:
+    options = write_inputs(tmp_path, {})
+    result = CliRunner().invoke(app, ["evaluate", "similarity", *options])
+    assert result.exit_code == 2
+    assert "no case with a source_example_id under" in result.stderr
+    missing = [*options[:1], str(tmp_path / "absent"), *options[2:]]
+    result = CliRunner().invoke(app, ["evaluate", "similarity", *missing])
+    assert result.exit_code == 2
+    assert "no case folder" in result.stderr
 
 
 def test_the_command_fails_on_a_near_copy(tmp_path: Path) -> None:

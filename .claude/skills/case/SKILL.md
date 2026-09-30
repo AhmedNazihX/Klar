@@ -57,7 +57,9 @@ Write the way a company describes its own tool, not the way the law does:
 ## 3. Similarity check (Pile B rewrites, and anything drawn from a source)
 
 For each case, compare it with its source text: find the longest shared run of words (lowercased, punctuation removed).
-If the story has a script for this (B4 creates one), use it. Otherwise, run a quick Python check in the scratchpad.
+For cases with a `source_example_id`, run `uv run aiact evaluate similarity` from `backend/` (B4a): it prints each case's
+longest shared run with its source example's text and lead-in, and its cosine (after `aiact evaluate isolation-embed`).
+For anything else drawn from a source, run a quick Python check in the scratchpad.
 Report the maximum run per case, and rewrite any case at 8 words or more.
 
 ## 4. Approval loop
