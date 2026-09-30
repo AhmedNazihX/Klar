@@ -183,17 +183,28 @@ OPEN_QUESTION: Mapping[Language, str] = {
 }
 READINGS: Mapping[Language, tuple[str, str]] = {
     Language.EN: (
-        "It is an AI system: the Act applies, and the remaining checks decide its class (the "
-        "stricter reading, assumed here).",
+        "It is an AI system under Art. 3(1) and recital 12: the Act applies, and the remaining "
+        "checks decide its class (the stricter reading, assumed here).",
         "It is not an AI system: the Act does not apply (out of scope).",
     ),
     Language.DE: (
-        "Es ist ein KI-System: Die Verordnung gilt, und die weiteren Prüfungen bestimmen seine "
-        "Klasse (die strengere Lesart, hier angenommen).",
+        "Es ist ein KI-System im Sinne von Art. 3 Nr. 1 und Erwägungsgrund 12: Die Verordnung "
+        "gilt, und die weiteren Prüfungen bestimmen seine Klasse (die strengere Lesart, hier "
+        "angenommen).",
         "Es ist kein KI-System: Die Verordnung gilt nicht (nicht anwendbar).",
     ),
 }
 """The two readings of an open Art. 3(1) question, stricter first."""
+GUIDED_LENIENT_READING: Mapping[Language, str] = {
+    Language.EN: "It is not an AI system, because the Commission's definition guidelines "
+    "({passages}) place its technique outside the definition: the Act does not apply (out of "
+    "scope).",
+    Language.DE: "Es ist kein KI-System, weil die Leitlinien der Kommission zur Definition "
+    "({passages}) seine Technik außerhalb der Definition einordnen: Die Verordnung gilt nicht "
+    "(nicht anwendbar).",
+}
+"""The lenient reading when named guideline passages place the technique outside the
+definition."""
 
 TEXTS: Mapping[Language, Mapping[str, str]] = {
     Language.EN: {

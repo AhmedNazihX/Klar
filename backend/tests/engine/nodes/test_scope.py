@@ -23,6 +23,7 @@ from aiact.engine.nodes.scope import (
     CorpusLibrary,
     Definition,
     DefinitionFact,
+    GuidanceFact,
     Lookup,
     ScopeAnswer,
     ScopeCheck,
@@ -73,11 +74,22 @@ def definition(
     )
 
 
+def excludes_technique(value: Answer = Answer.YES, passages: tuple[int, ...] = ()) -> GuidanceFact:
+    return GuidanceFact(
+        answer=value,
+        evidence=EvidenceTag.INFERRED,
+        fact=f"Guidance excludes the technique: {value.value}",
+        fact_numbers=(),
+        guidance_numbers=passages,
+    )
+
+
 def scope_answer(ai_system: DefinitionFact | None = None, **key_facts: KeyFact) -> ScopeAnswer:
     """An answer: an AI system with a (assumed) link to the Union and no exclusion, unless
     overridden."""
     values: dict[str, object] = {
         "ai_system": ai_system or definition(),
+        "guidance_excludes_technique": excludes_technique(Answer.NO),
         "eu_link": key_fact(Answer.YES),
         "military_only": key_fact(),
         "research_only": key_fact(),
@@ -306,6 +318,59 @@ def test_a_contested_definition_is_legally_ambiguous_with_in_scope_assumed() -> 
     assert cited(outcome) == ["art:3:1", "recital:12", "art:2:1", "guide:guide-definition:para:40"]
     assert step.missing_fact is None
     assert "Working assumption: it is" in step.decision
+
+
+@pytest.mark.parametrize("ai_system", [Definition.YES, Definition.CONTESTED])
+def test_a_guideline_passage_placing_the_technique_outside_makes_the_definition_contested(
+    ai_system: Definition,
+) -> None:
+    """User rule 2026-09-30: the model never picks a reading against a named passage."""
+    answer = scope_answer(
+        definition(ai_system), guidance_excludes_technique=excludes_technique(passages=(2,))
+    )
+    outcome = outcome_of(answer)
+    step = outcome.step
+    assert outcome.matched is False
+    assert step.status is Status.LEGALLY_AMBIGUOUS
+    assert step.open_question is not None
+    stricter, lenient = step.open_question.readings
+    assert "Art. 3(1) and recital 12" in stricter
+    assert "(guide:guide-definition:para:41)" in lenient
+    assert cited(outcome) == ["art:3:1", "recital:12", "art:2:1", "guide:guide-definition:para:41"]
+    guidance = step.citations[-1]
+    assert (guidance.law_version, guidance.document_status) == (None, DocumentStatus.FINAL)
+    assert "Guidance excludes the technique: yes" in [f.text for f in step.facts_used]
+
+
+@pytest.mark.parametrize(
+    "named",
+    [
+        excludes_technique(Answer.NO),  # a passage that only mentions the technique
+        excludes_technique(Answer.YES, passages=()),  # no passage named
+        excludes_technique(Answer.YES, passages=(7,)),  # not a passage the model was given
+        excludes_technique(Answer.UNKNOWN),
+    ],
+)
+def test_without_a_named_passage_placing_it_outside_the_definition_stays_decided(
+    named: GuidanceFact,
+) -> None:
+    outcome = outcome_of(scope_answer(guidance_excludes_technique=named))
+    assert outcome.step.status is Status.DECIDED
+    assert outcome.matched is False
+    assert outcome.follow_up_questions == ()
+    assert not any(c.provision_id.startswith("guide:") for c in outcome.step.citations)
+
+
+def test_not_an_ai_system_with_a_named_passage_stays_out_of_scope() -> None:
+    answer = scope_answer(
+        definition(Definition.NO, guidance=(1,)),
+        guidance_excludes_technique=excludes_technique(passages=(1,)),
+    )
+    outcome = outcome_of(answer)
+    assert outcome.matched is True
+    assert outcome.step.status is Status.DECIDED
+    assert outcome.step.open_question is None
+    assert cited(outcome) == ["art:3:1", "recital:12", "guide:guide-definition:para:40"]
 
 
 def test_a_contested_definition_still_asks_the_open_facts() -> None:
@@ -543,7 +608,13 @@ class CorpusReplay:
 
 B5B_CASES = _scope_cases()
 
-KNOWN_GAPS: dict[str, str] = {}
+KNOWN_GAPS: dict[str, str] = {
+    "own-b-05-regression-loan-scorecard": (
+        "the model resolves guide-definition para 42 to the label's reading A (para 42 concerns "
+        "optimisation, not scoring) instead of flagging the definition as contested; class "
+        "correct, status decided instead of legally_ambiguous (user, 2026-09-30)"
+    ),
+}
 """Recorded cases whose scope outcome differs from the label, with the reason; each fails when
 it starts matching, so the entry is removed."""
 

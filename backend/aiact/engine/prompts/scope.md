@@ -26,9 +26,21 @@ Answer with JSON matching the schema:
     definition.
   - "contested": the description settles how the system works, but Art. 3(1) and the guideline
     passages point different ways for that technique, so the law leaves the answer open.
+    General rule: when the facts are stated but the law doesn't settle the point, it is an open
+    question of law, not a missing fact. For example, when an official guideline passage you
+    rely on names the system's own technique among those outside the definition, while Art. 3(1)
+    or recital 12 would still cover it, answer "contested" rather than choosing one reading, and
+    don't answer "unknown" to ask for a fact the description already gives.
   - "unknown": the answer depends on how the system works, and the description doesn't say.
   - guidance_numbers: the numbers of the guideline passages your answer rests on; empty when
     none apply.
+- guidance_excludes_technique: does a guideline passage you were given name this system's
+  technique among those outside the AI system definition? Answer "yes" only when a passage
+  places that kind of technique outside the definition, whatever you concluded for ai_system; a
+  passage that merely mentions or describes the technique is "no". "unknown" when the
+  description doesn't say which technique the system uses.
+  - guidance_numbers: the numbers of the passages that place the technique outside the
+    definition; empty unless the answer is "yes".
 - eu_link (Art. 2(1)): the system has a link to the Union: it is placed on the market or put
   into service in the Union, its provider or deployer is established or located in the Union, or
   its output is used in the Union. When the description is silent and nothing points outside the
@@ -49,9 +61,11 @@ Answer with JSON matching the schema:
   lets anyone access, use, modify and redistribute it, and it is not monetised.
 - open_source_exception (Art. 2(12)): the system is placed on the market or put into service as
   a high-risk AI system (for an Annex III use, or as a safety component of a product under
-  Annex I), or it falls under Art. 5 or Art. 50 (for example it interacts directly with people,
-  generates synthetic content, or recognises emotions). Answer this even when open_source is
-  "no".
+  Annex I), or it falls under Art. 5 or Art. 50. Art. 50 covers systems intended to interact
+  directly with people (such as conversational systems), systems that generate synthetic audio,
+  image, video or text, emotion recognition or biometric categorisation, and deep fakes; a system
+  that only returns its result to its own user doesn't fall under it. Answer this even when
+  open_source is "no".
 
 For every key fact:
 - answer: "yes", "no" or "unknown" ("contested" is allowed only for ai_system).

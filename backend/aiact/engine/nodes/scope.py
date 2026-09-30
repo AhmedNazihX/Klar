@@ -46,6 +46,7 @@ from aiact.engine.nodes.scope_texts import (
     AI_SYSTEM,
     EU_LINK,
     EXCLUSIONS,
+    GUIDED_LENIENT_READING,
     OPEN_QUESTION,
     OPEN_SOURCE,
     OPEN_SOURCE_EXCEPTION,
@@ -117,11 +118,19 @@ class DefinitionFact(ContractModel):
         return self.answer is not Definition.UNKNOWN
 
 
+class GuidanceFact(KeyFact):
+    """Whether a guideline passage the model read names the system's technique among those
+    outside the AI system definition, and which passages do."""
+
+    guidance_numbers: tuple[int, ...]
+
+
 class ScopeAnswer(ContractModel):
     """The model's whole answer; also the JSON schema it must fill. Each Art. 2 field is named
     after its `ScopeQuestion.id`."""
 
     ai_system: DefinitionFact
+    guidance_excludes_technique: GuidanceFact
     eu_link: KeyFact
     military_only: KeyFact
     research_only: KeyFact
@@ -269,6 +278,9 @@ class ScopeSettlement:
     notes: tuple[ScopeQuestion, ...] = ()
     """Rules named in the result that never decide it: Art. 2(8) for a system still in
     development, which is classified as it will be placed on the market or put into service."""
+    against: tuple[str, ...] = ()
+    """The guideline passages that place the technique outside the definition, when the model
+    reads Art. 3(1) as covering it (so the definition is contested)."""
 
     @property
     def is_out_of_scope(self) -> bool:
@@ -294,13 +306,36 @@ class ScopeSettlement:
         return tuple(dict.fromkeys(cited))
 
 
-def settle_scope(answer: ScopeAnswer) -> ScopeSettlement:
-    """Apply Art. 3(1) and the Art. 2 exclusions to the model's answers."""
+def _passages(numbers: Sequence[int], guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
+    """The passages `numbers` name, in range and each once."""
+    in_range = dict.fromkeys(n for n in numbers if 0 < n <= len(guidance))
+    return tuple(guidance[n - 1] for n in in_range)
+
+
+def excluding_passages(answer: ScopeAnswer, guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
+    """The passages that, by the model's answer, name the system's technique among those outside
+    the definition; none unless it answered yes and cited at least one passage it was given."""
+    named = answer.guidance_excludes_technique
+    return _passages(named.guidance_numbers, guidance) if named.answer is Answer.YES else ()
+
+
+def settle_scope(answer: ScopeAnswer, guidance: Sequence[SearchHit] = ()) -> ScopeSettlement:
+    """Apply Art. 3(1) and the Art. 2 exclusions to the model's answers.
+
+    A guideline passage that places the system's technique outside the definition, while the
+    model reads Art. 3(1) as covering it, makes the definition contested: an open question of
+    law, never a reading the model picks (user, 2026-09-30). A "no" to Art. 3(1) stays a decided
+    out-of-scope finding."""
     definition = answer.ai_system
     excluded: list[ScopeQuestion] = [AI_SYSTEM] if definition.answer is Definition.NO else []
     missing: list[ScopeQuestion] = [AI_SYSTEM] if definition.answer is Definition.UNKNOWN else []
     raised: list[ScopeQuestion] = []
     used: list[CitedFact] = [definition]
+    against = excluding_passages(answer, guidance)
+    is_covered = definition.answer in (Definition.YES, Definition.CONTESTED)
+    is_contested = definition.answer is Definition.CONTESTED or (is_covered and bool(against))
+    if is_covered and against:
+        used.append(answer.guidance_excludes_technique)
     for rule in EXCLUSIONS:
         verdict = _verdict(rule, answer)
         if verdict.excludes is Answer.YES:
@@ -319,9 +354,10 @@ def settle_scope(answer: ScopeAnswer) -> ScopeSettlement:
         excluded_by=tuple(excluded),
         raised=tuple(raised),
         missing=tuple(missing),
-        is_contested=definition.answer is Definition.CONTESTED,
+        is_contested=is_contested,
         used=(*used, *((in_development,) if is_noted else ())),
         notes=(PRE_MARKET_DEVELOPMENT,) if is_noted else (),
+        against=tuple(hit.provision_id for hit in against) if is_covered else (),
     )
 
 
@@ -353,9 +389,14 @@ def _question(rule: ScopeQuestion, language: Language) -> FollowUpQuestion:
 
 
 def _open_question(settled: ScopeSettlement, language: Language) -> OpenQuestion | None:
+    """Both readings, stricter first; the lenient one names the guideline passages behind it."""
     if settled.status is not Status.LEGALLY_AMBIGUOUS:
         return None
-    return OpenQuestion(question=OPEN_QUESTION[language], readings=READINGS[language])
+    stricter, lenient = READINGS[language]
+    if settled.against:
+        passages = ", ".join(settled.against)
+        lenient = GUIDED_LENIENT_READING[language].format(passages=passages)
+    return OpenQuestion(question=OPEN_QUESTION[language], readings=(stricter, lenient))
 
 
 def provision_citation(provision: Provision) -> Citation:
@@ -383,9 +424,11 @@ def guidance_citation(hit: SearchHit, language: Language) -> Citation:
 
 
 def _guidance_used(answer: ScopeAnswer, guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
-    """The passages the definition answer names, in range and each once."""
-    numbers = dict.fromkeys(n for n in answer.ai_system.guidance_numbers if 0 < n <= len(guidance))
-    return tuple(guidance[n - 1] for n in numbers)
+    """The passages the definition answer rests on, then those that place the technique outside
+    the definition, each once."""
+    named = (*_passages(answer.ai_system.guidance_numbers, guidance),
+             *excluding_passages(answer, guidance))  # fmt: skip
+    return tuple(dict.fromkeys(named))
 
 
 def to_outcome(
@@ -397,7 +440,7 @@ def to_outcome(
     """The scope step and whether it ends the run, from the model's answer and the passages it
     read. The cited provisions are fetched from `library`."""
     language, lookup = state["language"], lookup_for(state)
-    settled = settle_scope(answer)
+    settled = settle_scope(answer, guidance)
     laws = tuple(library.provision(pid, lookup) for pid in settled.cited_articles())
     cited = (
         *(provision_citation(provision) for provision in laws),
