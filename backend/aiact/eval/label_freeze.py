@@ -4,24 +4,29 @@ How the check decides, in order:
 
 - **Comparison base.** The caller names a git ref (`--base`, required). The check takes the merge
   base of that ref and `HEAD`, so a story branch is compared with the point it left main, not with
-  whatever main has gained since. CI passes the pull request's target branch, the commit before a
-  push to main, or `origin/main` for a push to any other branch (`.github/workflows/ci.yml`).
+  whatever main has gained since. CI passes `origin/main` for pull requests and branch pushes, and
+  the previous tip for a push to main (`.github/workflows/label-freeze.yml`).
 - **Approved.** A case is approved when a `*.yaml` file under `eval/cases/` at the base holds it:
   decision 017 approves a category once its files are on main. The spot-check overrides in
   `eval/cases/academic_overrides.yaml` are approved the same way, keyed by the case id they
   override. A case id first seen after the base is new and needs no entry, whichever file holds it.
 - **Changed.** Records are compared per id, as parsed YAML: an approved case whose record differs
   in any field (label, citation, description, notes, tags), or which is gone, has changed.
-  Comments, formatting, key order and moves between files don't count.
+  Comments, formatting, key order and moves between files don't count. A change to the label
+  itself (a case's `label` or `label_citation`; an override's `status`, `risk_class` or
+  `label_citation`) or a removal is a *label change*.
 - **A matching entry.** A row added to the table in `eval/LABEL_CHANGES.md` since the base. Its
   "Case id" cell names the case in one of two ways:
   - by id: full ids, where a bare number after an id reuses that id's prefix, so
     `academic-0160, 0253` names `academic-0160` and `academic-0253`;
-  - by rule: a cell starting "<N> <prefix> cases" (`95 academic cases (by rule: …)`) covers up to
-    N changed cases whose id starts with `<prefix>-` that no id names. More changes than the rows
-    declare for that prefix leave all of them unlogged, so a bulk row can't absorb extra edits.
-- **The log is append-only.** A row present at the base must still be there unchanged; editing an
-  old row would otherwise read as a new entry.
+  - by rule: a cell starting "<N> <prefix> cases" (`95 academic cases (by rule: …)`) covers the
+    changed cases whose id starts with `<prefix>-` that no id names, but only when N (summed over
+    every such row for the prefix) equals their number exactly, and never a label change: those
+    always need an id row. A count that doesn't match fails the check and leaves them unlogged,
+    so a bulk row can't absorb edits it doesn't declare.
+- **The log is append-only.** A row present at the base must still be there, compared cell by
+  cell after trimming (re-aligning the columns is fine); editing an old row would otherwise read
+  as a new entry. A mistake in an old row is fixed with a new, corrective row.
 
 The current side is the working tree, so uncommitted edits are checked too; in CI it equals `HEAD`.
 """
@@ -43,6 +48,8 @@ CASES_PATH = PurePosixPath("eval/cases")
 OVERRIDES_PATH = CASES_PATH / "academic_overrides.yaml"
 LOG_PATH = PurePosixPath("eval/LABEL_CHANGES.md")
 
+CASE_LABEL_FIELDS = frozenset({"label", "label_citation"})
+OVERRIDE_LABEL_FIELDS = frozenset({"status", "risk_class", "label_citation"})
 CASE_ID_CELL = 1
 """The log table's columns: Date | Case id | Old → new | Reason | Approved by."""
 BULK_ROW = re.compile(r"^\s*(\d+)\s+([a-z0-9][a-z0-9_-]*)\s+cases?\b")
@@ -72,6 +79,8 @@ class ChangedCase:
     path: str
     """The file that held the case at the base."""
     is_removed: bool
+    is_label_change: bool
+    """The label itself changed, or the case is gone: only an id row covers it."""
 
     def describe(self) -> str:
         what = "removed" if self.is_removed else "changed"
@@ -85,10 +94,11 @@ class FreezeReport:
     changed: tuple[ChangedCase, ...]
     unlogged: tuple[ChangedCase, ...]
     edited_log_rows: tuple[str, ...]
+    bulk_mismatches: tuple[str, ...]
 
     @property
     def is_ok(self) -> bool:
-        return not self.unlogged and not self.edited_log_rows
+        return not self.unlogged and not self.edited_log_rows and not self.bulk_mismatches
 
 
 @dataclass(frozen=True)
@@ -97,6 +107,10 @@ class LogCoverage:
 
     case_ids: frozenset[str]
     bulk_counts: Mapping[str, int]
+
+
+LogRow = tuple[str, ...]
+"""A table row as its trimmed cells."""
 
 
 def check_label_freeze(base_ref: str, repo_dir: Path | None = None) -> FreezeReport:
@@ -113,8 +127,9 @@ def check_label_freeze(base_ref: str, repo_dir: Path | None = None) -> FreezeRep
     current_rows = _log_rows(_read_text(repo_dir / LOG_PATH))
     edited = tuple((Counter(base_rows) - Counter(current_rows)).elements())
     added = tuple((Counter(current_rows) - Counter(base_rows)).elements())
-    unlogged = _unlogged(changed, _coverage(added))
-    return FreezeReport(base_sha, changed, unlogged, edited)
+    unlogged, mismatches = _unlogged(changed, _coverage(added))
+    edited_text = tuple(f"| {' | '.join(row)} |" for row in edited)
+    return FreezeReport(base_sha, changed, unlogged, edited_text, mismatches)
 
 
 # --- reading the two sides ------------------------------------------------------------------------
@@ -199,32 +214,39 @@ def _changed_cases(
     changed: list[ChangedCase] = []
     for key, (path, record) in sorted(base.items(), key=lambda item: item[1][0]):
         if key not in current:
-            changed.append(ChangedCase(key, path, is_removed=True))
+            changed.append(ChangedCase(key, path, is_removed=True, is_label_change=True))
         elif current[key][1] != record:
-            changed.append(ChangedCase(key, path, is_removed=False))
+            is_label_change = _is_label_change(key.kind, record, current[key][1])
+            changed.append(ChangedCase(key, path, False, is_label_change))
     return tuple(changed)
 
 
-def _log_rows(text: str) -> tuple[str, ...]:
-    """The table's data rows, stripped; the header and the separator row are left out."""
-    rows = (line.strip() for line in text.splitlines() if line.lstrip().startswith("|"))
-    return tuple(row for row in rows if not _is_header_or_separator(_cells(row)))
+def _is_label_change(kind: RecordKind, old: object, new: object) -> bool:
+    fields = OVERRIDE_LABEL_FIELDS if kind is RecordKind.OVERRIDE else CASE_LABEL_FIELDS
+    old_fields = old if isinstance(old, dict) else {}
+    new_fields = new if isinstance(new, dict) else {}
+    return any(old_fields.get(field) != new_fields.get(field) for field in fields)
 
 
-def _cells(row: str) -> list[str]:
-    return [cell.strip() for cell in row.strip().strip("|").split("|")]
+def _log_rows(text: str) -> tuple[LogRow, ...]:
+    """The table's data rows as trimmed cells; the header and the separator row are left out."""
+    rows = (_cells(line) for line in text.splitlines() if line.lstrip().startswith("|"))
+    return tuple(row for row in rows if not _is_header_or_separator(row))
 
 
-def _is_header_or_separator(cells: list[str]) -> bool:
+def _cells(line: str) -> LogRow:
+    return tuple(cell.strip() for cell in line.strip().strip("|").split("|"))
+
+
+def _is_header_or_separator(cells: LogRow) -> bool:
     is_separator = all(SEPARATOR_CELL.match(cell) for cell in cells if cell)
-    return is_separator or cells[:2] == ["Date", "Case id"]
+    return is_separator or cells[:2] == ("Date", "Case id")
 
 
-def _coverage(rows: Iterable[str]) -> LogCoverage:
+def _coverage(rows: Iterable[LogRow]) -> LogCoverage:
     case_ids: set[str] = set()
     bulk: Counter[str] = Counter()
-    for row in rows:
-        cells = _cells(row)
+    for cells in rows:
         cell = cells[CASE_ID_CELL] if len(cells) > CASE_ID_CELL else ""
         bulk_match = BULK_ROW.match(cell)
         if bulk_match:
@@ -247,11 +269,25 @@ def _named_ids(cell: str) -> tuple[str, ...]:
     return tuple(names)
 
 
-def _unlogged(changed: tuple[ChangedCase, ...], coverage: LogCoverage) -> tuple[ChangedCase, ...]:
+def _unlogged(
+    changed: tuple[ChangedCase, ...], coverage: LogCoverage
+) -> tuple[tuple[ChangedCase, ...], tuple[str, ...]]:
+    """The changes no row covers, and the bulk counts that don't match exactly."""
     unnamed = [case for case in changed if case.key.case_id not in coverage.case_ids]
     covered: set[str] = set()
-    for prefix, count in coverage.bulk_counts.items():
-        ids = {case.key.case_id for case in unnamed if case.key.case_id.startswith(f"{prefix}-")}
-        if len(ids) <= count:
+    mismatches: list[str] = []
+    for prefix, count in sorted(coverage.bulk_counts.items()):
+        ids = {
+            case.key.case_id
+            for case in unnamed
+            if case.key.case_id.startswith(f"{prefix}-") and not case.is_label_change
+        }
+        if len(ids) == count:
             covered |= ids
-    return tuple(case for case in unnamed if case.key.case_id not in covered)
+        else:
+            mismatches.append(
+                f"bulk rows declare {count} {prefix} cases, but {len(ids)} changed {prefix} "
+                "cases (label changes aside) match no id row"
+            )
+    unlogged = tuple(case for case in unnamed if case.key.case_id not in covered)
+    return unlogged, tuple(mismatches)

@@ -11,9 +11,14 @@ rules are in `backend/aiact/eval/label_freeze.py`):
   or which is removed, needs a row added in the same branch. Overrides in
   `eval/cases/academic_overrides.yaml` count the same way, under the case id they override.
 - The "Case id" cell names cases by id (`academic-0160, 0253` reuses the prefix for bare
-  numbers), or by rule as "<N> <prefix> cases (by rule: …)", which covers up to N changed cases
-  with that id prefix that no other row names.
-- Rows are only ever added: editing or deleting an existing row fails the check.
+  numbers), or by rule as "<N> <prefix> cases (by rule: …)".
+- A rule row covers the changed cases with that id prefix that no id row names, and only when N
+  equals their number exactly; several rule rows for one prefix are summed first. It never covers
+  a label change (a case's `label` or `label_citation`, an override's `status`, `risk_class` or
+  `label_citation`) or a removal: those always need an id row. So N counts the rule's cases
+  minus any an id row already names.
+- Rows are only ever added: editing or deleting an existing row fails the check (re-aligning the
+  columns doesn't). A mistake in an old row is fixed with a new, corrective row.
 
 For the academic set, the changes are applied by `aiact evaluate academic-import` from
 `eval/cases/academic_overrides.yaml`; the source labels are the authors' (see

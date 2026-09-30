@@ -13,7 +13,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── AI Act Classification Assistant — Capstone Init Document.md   the design (INIT)
 ├── AE.CAP_afa.md                    course brief
 ├── .gitignore
-├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check, label-freeze check (F2, B10a, B13)
+├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check (F2, B13)
+├── .github/workflows/label-freeze.yml  label-freeze check, never cancelled (B10a)
 ├── .githooks/                       pre-commit and pre-merge-commit regenerate DEPENDENCIES.md, pre-push checks it (F8)
 │
 ├── backend/                         the only Python project (uv)

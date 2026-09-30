@@ -62,57 +62,6 @@ jobs:
       - name: Pytest
         run: uv run pytest -q
 
-  label-freeze:
-    # Story B10a (decision 017): an approved case, one under eval/cases/ at the comparison base,
-    # that changes needs a new row in eval/LABEL_CHANGES.md; new cases need none. The check uses
-    # the merge base of the ref below and HEAD: a pull request's target branch; the commit before
-    # a push to main; origin/main for a push to any other branch (the whole story, not one push).
-    name: Label freeze check
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # The merge base needs the history and origin/main.
-          fetch-depth: 0
-
-      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
-        with:
-          working-directory: backend
-          enable-cache: true
-          # Resolved relative to working-directory (backend/).
-          cache-dependency-glob: uv.lock
-
-      - name: Install dependencies
-        run: uv sync --locked
-
-      - name: Pick the comparison base
-        id: base
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BASE_REF: ${{ github.base_ref }}
-          BEFORE: ${{ github.event.before }}
-          REF: ${{ github.ref }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            base="origin/$BASE_REF"
-          elif [ "$REF" = "refs/heads/main" ] && [ -n "$BEFORE" ] \
-              && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
-            base="$BEFORE"
-          else
-            base="origin/main"
-          fi
-          echo "Comparing with $base"
-          echo "ref=$base" >> "$GITHUB_OUTPUT"
-
-      - name: Label freeze check
-        env:
-          FREEZE_BASE: ${{ steps.base.outputs.ref }}
-        run: uv run aiact evaluate label-freeze --base "$FREEZE_BASE"
-
   isolation:
     # Story B13: the benchmark isolation check against the corpus loaded from the committed
     # data/parsed/. AIACT_REQUIRE_CORPUS turns a missing corpus or eval/ into a failure. The

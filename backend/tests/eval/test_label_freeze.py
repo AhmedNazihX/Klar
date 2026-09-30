@@ -112,6 +112,17 @@ def relabel_academic(repo: Path, numbers: range) -> None:
     write(repo, "eval/cases/academic/minimal_risk.yaml", text)
 
 
+def tag_academic(repo: Path, numbers: range) -> None:
+    """Add a tag to these academic cases: a change, but not a label change."""
+    text = ACADEMIC
+    for number in numbers:
+        text = text.replace(
+            f"academic-{number:04d}\n  label:",
+            f"academic-{number:04d}\n  tags: [scoring:x]\n  label:",
+        )
+    write(repo, "eval/cases/academic/minimal_risk.yaml", text)
+
+
 def test_an_unchanged_branch_passes(repo: Path) -> None:
     report = check_label_freeze("main", repo)
     assert report.is_ok
@@ -200,28 +211,108 @@ def test_bare_numbers_reuse_the_prefix_of_the_id_before_them(repo: Path) -> None
     assert check_label_freeze("main", repo).is_ok
 
 
-def test_a_bulk_row_covers_up_to_its_count(repo: Path) -> None:
-    relabel_academic(repo, range(1, 4))
+def test_a_bulk_row_covers_exactly_its_count(repo: Path) -> None:
+    tag_academic(repo, range(1, 4))
     append_log(repo, log_row("3 academic cases (by rule: source label minimal)"))
+    report = check_label_freeze("main", repo)
+    assert report.is_ok
+    assert len(report.changed) == 3
+
+
+@pytest.mark.parametrize("declared", [2, 4, 100])
+def test_a_bulk_count_that_isnt_exact_fails(repo: Path, declared: int) -> None:
+    tag_academic(repo, range(1, 4))
+    append_log(repo, log_row(f"{declared} academic cases (by rule: source label minimal)"))
+    report = check_label_freeze("main", repo)
+    assert not report.is_ok
+    assert [case.key.case_id for case in report.unlogged] == [
+        f"academic-{number:04d}" for number in range(1, 4)
+    ]
+    assert report.bulk_mismatches == (
+        f"bulk rows declare {declared} academic cases, but 3 changed academic cases "
+        "(label changes aside) match no id row",
+    )
+
+
+def test_bulk_rows_for_one_prefix_are_summed(repo: Path) -> None:
+    tag_academic(repo, range(1, 5))
+    append_log(repo, log_row("1 academic cases (rule a)"), log_row("3 academic cases (rule b)"))
     assert check_label_freeze("main", repo).is_ok
 
 
-def test_a_bulk_row_leaves_all_unlogged_when_more_changed_than_it_declares(repo: Path) -> None:
-    relabel_academic(repo, range(1, 5))
-    append_log(repo, log_row("3 academic cases (by rule: source label minimal)"))
-    assert unlogged_ids(repo) == [f"academic-{number:04d}" for number in range(1, 5)]
+def test_summed_bulk_rows_must_still_match_exactly(repo: Path) -> None:
+    tag_academic(repo, range(1, 5))
+    append_log(repo, log_row("1 academic cases (rule a)"), log_row("2 academic cases (rule b)"))
+    report = check_label_freeze("main", repo)
+    assert len(report.unlogged) == 4
+    assert len(report.bulk_mismatches) == 1
 
 
 def test_a_bulk_row_counts_only_cases_no_id_row_names(repo: Path) -> None:
-    relabel_academic(repo, range(1, 5))
+    tag_academic(repo, range(1, 5))
     append_log(repo, log_row("academic-0004"), log_row("3 academic cases (by rule)"))
     assert check_label_freeze("main", repo).is_ok
 
 
-def test_a_bulk_row_covers_only_its_prefix(repo: Path) -> None:
-    write(repo, "eval/cases/own/b/02-second.yaml", CASE_B02.replace("high_risk", "prohibited"))
-    append_log(repo, log_row("5 academic cases (by rule)"))
+def test_a_bulk_row_never_covers_a_label_change(repo: Path) -> None:
+    """academic-0001's risk class flips among tag-only changes: only an id row covers it."""
+    tag_academic(repo, range(2, 4))
+    text = (repo / "eval/cases/academic/minimal_risk.yaml").read_text(encoding="utf-8")
+    write(
+        repo,
+        "eval/cases/academic/minimal_risk.yaml",
+        text.replace(
+            "academic-0001\n  label:\n    risk_class: minimal_risk",
+            "academic-0001\n  label:\n    risk_class: high_risk",
+        ),
+    )
+    append_log(repo, log_row("2 academic cases (by rule)"))
+    report = check_label_freeze("main", repo)
+    assert [case.key.case_id for case in report.unlogged] == ["academic-0001"]
+    assert report.bulk_mismatches == ()
+    append_log(repo, log_row("academic-0001"))
+    assert check_label_freeze("main", repo).is_ok
+
+
+def test_a_bulk_row_never_covers_an_override_status_change(repo: Path) -> None:
+    write(
+        repo,
+        "eval/cases/academic_overrides.yaml",
+        OVERRIDES.replace("legally_ambiguous", "decided"),
+    )
+    append_log(repo, log_row("1 academic cases (by rule)"))
+    report = check_label_freeze("main", repo)
+    assert [(case.key.kind, case.key.case_id) for case in report.unlogged] == [
+        (RecordKind.OVERRIDE, "academic-0001")
+    ]
+
+
+def test_a_bulk_row_never_covers_a_removed_case(repo: Path) -> None:
+    (repo / "eval/cases/own/b/02-second.yaml").unlink()
+    append_log(repo, log_row("1 own cases (by rule)"))
     assert unlogged_ids(repo) == ["own-b-02-second"]
+
+
+def test_a_bulk_row_covers_only_its_prefix(repo: Path) -> None:
+    write(repo, "eval/cases/own/b/02-second.yaml", CASE_B02 + "tags: [scoring:x]\n")
+    append_log(repo, log_row("1 academic cases (by rule)"))
+    report = check_label_freeze("main", repo)
+    assert [case.key.case_id for case in report.unlogged] == ["own-b-02-second"]
+    assert len(report.bulk_mismatches) == 1
+
+
+def test_a_bulk_prefix_can_name_a_category(repo: Path) -> None:
+    write(repo, "eval/cases/own/b/02-second.yaml", CASE_B02 + "tags: [scoring:x]\n")
+    append_log(repo, log_row("1 own-b cases (by rule)"))
+    assert check_label_freeze("main", repo).is_ok
+
+
+def test_realigned_log_columns_are_not_edits(repo: Path) -> None:
+    old = "| 2026-09-28 | own-b-01-old | minimal → limited | an older change | the user |"
+    realigned = "|  2026-09-28  |own-b-01-old|   minimal → limited | an older change |the user|"
+    path = repo / "eval/LABEL_CHANGES.md"
+    path.write_text(LOG_HEADER.replace(old, realigned), encoding="utf-8")
+    assert check_label_freeze("main", repo).is_ok
 
 
 def test_an_edited_old_log_row_fails(repo: Path) -> None:

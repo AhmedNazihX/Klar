@@ -314,6 +314,8 @@ def eval_label_freeze(
         raise typer.Exit(code=2) from error
     for row in result.edited_log_rows:
         typer.echo(f"LOG ROW REMOVED OR EDITED (the log is append-only): {row}", err=True)
+    for mismatch in result.bulk_mismatches:
+        typer.echo(f"BULK COUNT MISMATCH: {mismatch}", err=True)
     for case in result.unlogged:
         typer.echo(f"UNLOGGED: {case.describe()}", err=True)
     summary = (
