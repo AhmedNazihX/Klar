@@ -7,7 +7,7 @@ description: >-
   die auf Vorhofflimmern hindeuten können. Findet es welche, erscheint der Hinweis, das ärztlich
   abklären zu lassen. Ob wir die App als Medizinprodukt zertifizieren lassen oder als
   Fitness-Funktion ohne medizinische Zweckbestimmung anbieten, ist intern noch nicht entschieden;
-  davon hängen Marketingtexte und Zulassungsweg ab. Der Marktstart ist für Anfang 2027 geplant,
+  davon hängen Marketingtexte und Zulassungsweg ab. Der Marktstart ist für Herbst 2028 geplant,
   zunächst in Deutschland. Außerdem arbeiten wir gerade an einer Funktion für Schlaftracking.
 label:
   risk_class: high_risk
@@ -21,9 +21,10 @@ notes: >-
   so Art. 6(1) would be met: high_risk. If it is marketed as a fitness feature with no medical
   purpose, the MDR doesn't cover it and it would be minimal_risk. The intended purpose is the
   provider's to set (Art. 3(12)) and the description says it is undecided. Working assumption:
-  high_risk (stricter reading), with provider duties on the Annex I route. Doubt: whether "not yet
-  decided" should be needs_more_information (a fact the company can supply) rather than
-  legally_ambiguous is read here as the former.
+  high_risk (stricter reading), with provider duties on the Annex I route; the launch is planned
+  for autumn 2028, after the Annex I date (2 August 2028), so Art. 111(2) does not arise. Doubt:
+  whether "not yet decided" should be needs_more_information (a fact the company can supply)
+  rather than legally_ambiguous is read here as the former.
 tags:
   - "category:e"
   - "annex_i_section:a"

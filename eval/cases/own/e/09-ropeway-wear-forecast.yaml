@@ -5,12 +5,11 @@ description: >-
   We are a 30-person software firm in Innsbruck working for ski resorts. Our product analyses
   vibration, rope-tension and weather data from chairlifts and gondolas and predicts wear on
   rollers, grips and bearings. We sell it for maintenance planning, and that explicitly includes
-  deciding when a scheduled component inspection can safely be moved back; the pilot resorts
-  already push inspections back by weeks when the tool rates a part as healthy. The tool has no
-  connection to the lifts' controls or brakes. The lifts and their safety components were
-  certified by notified bodies under the cableway rules; our software was not part of that
-  assessment. It has run as a pilot at three resorts since the 2025/26 season, the full launch is
-  planned for the 2028/29 season, and we have just added French and Italian.
+  deciding when a scheduled component inspection can safely be moved back; the first resorts that
+  have signed up plan to use it exactly that way. The tool has no connection to the lifts'
+  controls or brakes. The lifts and their safety components were certified by notified bodies
+  under the cableway rules; our software was not part of that assessment. The launch is planned
+  for the 2028/29 season, and we have just added French and Italian.
 label:
   risk_class: high_risk
   status: legally_ambiguous
@@ -26,8 +25,9 @@ notes: >-
   separately? Art. 6(1) applies "irrespective of whether" it is placed on the market
   independently, but whether the cableway regulation requires a notified body for such software is
   not settled by the facts or the AI Act. Readings: minimal_risk, or high_risk. Working
-  assumption: high_risk, with provider duties on the Annex I route; the full launch in the 2028/29
-  season falls after the Annex I date (2 August 2028).
+  assumption: high_risk, with provider duties on the Annex I route. Launch is planned for the
+  2028/29 season and nothing is put into service before 2 August 2028 (the Annex I date), so Art.
+  111(2) does not arise.
 tags:
   - "category:e"
   - "annex_i_section:a"
