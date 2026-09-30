@@ -32,7 +32,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
 │   │   │                            build.py + load.py (C3), embed.py (C4)
-│   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6)
+│   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6; relevance score and cut-off C8)
 │   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)

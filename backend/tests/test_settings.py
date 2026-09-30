@@ -39,10 +39,12 @@ def test_env_example_leaves_model_ids_unset(monkeypatch: pytest.MonkeyPatch) -> 
     for field in MODEL_ID_FIELDS:
         monkeypatch.delenv(field.upper(), raising=False)
     monkeypatch.delenv("EMBEDDING_DIMENSIONS", raising=False)
+    monkeypatch.delenv("SEARCH_MAX_DISTANCE", raising=False)
     settings = Settings(_env_file=BACKEND_DIR / ".env.example")  # pyright: ignore[reportCallIssue]
     for field in MODEL_ID_FIELDS:
         assert getattr(settings, field) is None, field
     assert settings.embedding_dimensions == 1536
+    assert settings.search_max_distance is None  # no cut-off until X1 calibrates one
 
 
 def test_relative_data_dir_resolves_against_backend(monkeypatch: pytest.MonkeyPatch) -> None:

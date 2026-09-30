@@ -30,12 +30,24 @@ No model is involved apart from the query embedding.
   - `doc_types` (`law`, `guideline`, `code`);
   - held-out (Pile B) examples are excluded by default (decision 012); only the gap run (V8) may
     set `include_held_out`. `exclude_source_example_ids` removes further examples by id.
+- **Relevance (C8).** RRF is rank-based and says nothing absolute, so each hit also carries its
+  meaning-arm `similarity` (1 - cosine distance) and its keyword-arm `keyword_idf` (the summed
+  IDF above). `max_distance` cuts the meaning arm inside its SQL, after the nearest candidates are
+  materialized, as pgvector advises for distance filters (a filter on the index scan itself
+  would make an iterative scan walk the whole index for an off-topic query). It defaults to the
+  `SEARCH_MAX_DISTANCE` setting; None is no cut-off. `SearchResults.found` tells "nothing
+  relevant" from a match: a hit within the cut-off, or a keyword hit on rare enough words
+  (`MIN_KEYWORD_IDF`), so a match on the law's own rare terms counts. The engine searches
+  without a cut-off (a signal, not a filter: a softly worded description must still reach its
+  Annex point); Q&A and MCP use it. X1 calibrates the value: Qwen3 cosines are compressed.
 - **Parents.** A parent row includes all its descendants' text (C1), so a row that is an
   ancestor or a descendant of a better-ranked hit is skipped (`distinct_units`).
 """
 
 from collections.abc import Collection, Sequence
 from datetime import date
+from enum import Enum
+from math import isfinite
 from typing import Any, LiteralString, Protocol
 
 import psycopg
@@ -47,6 +59,7 @@ from aiact.db import connect
 from aiact.llm.embeddings import OpenRouterEmbeddings
 from aiact.schemas import DISCLAIMER, DocumentStatus, Language, LawVersion
 from aiact.schemas.base import ContractModel
+from aiact.settings import get_settings
 
 CANDIDATES = 50
 """Rows each arm hands to the fusion; also the largest `limit` a caller may ask for."""
@@ -65,6 +78,26 @@ keyword arm: it says little and would flood the arm (soft descriptions are full 
 MIN_COMMON_ROWS = 50
 """A word is only too common when it is also in more than this many rows, so a small corpus
 (tests, a partial load) doesn't lose all its words to the share rule."""
+
+MIN_KEYWORD_IDF = 9.0
+"""The summed IDF from which a keyword hit counts as a strong match for `found`. It is above the
+most one word can score (a word in one unit: ln of the about 2,900 English units = 8.0), so it
+takes two rare words in one row. Measured in C8 on the loaded corpus: off-topic queries' best
+keyword hits score up to 8.0 on one stray word ("tell me a joke", "football results": 6.6-8.0),
+while "emotion recognition in the workplace" scores 10.7. Exact references rarely get here:
+English "Article 50" has no keyword hit at all ('50' is in 7.6% of the units, over
+`MAX_TERM_SHARE`), so the meaning arm has to find them. X1 calibrates this with the cut-off."""
+
+MAX_COSINE_DISTANCE = 2.0
+"""The largest cosine distance there is (opposite vectors)."""
+
+
+class _FromSettings(Enum):
+    TOKEN = "from settings"
+
+
+FROM_SETTINGS = _FromSettings.TOKEN
+"""The default of `max_distance`: take the `SEARCH_MAX_DISTANCE` setting."""
 
 DOC_TYPES = frozenset({"law", "guideline", "code"})
 FTS_CONFIGS = {Language.EN: "english", Language.DE: "german"}
@@ -119,8 +152,11 @@ HYBRID_SEARCH: LiteralString = """
       order by distance
       limit %(candidates)s
     ),
+    -- The cut-off sits outside the materialized nearest rows, as pgvector advises.
     vector_ranked as (
-      select id, row_number() over (order by distance + 0, id) as rank from vector_hits
+      select id, distance, row_number() over (order by distance + 0, id) as rank
+      from vector_hits
+      where %(max_distance)s::float8 is null or distance <= %(max_distance)s::float8
     ),
     query_terms as materialized (
       select format(case when %(prefix_terms)s then '%%L:*' else '%%L' end, lexeme)::tsquery
@@ -149,7 +185,7 @@ HYBRID_SEARCH: LiteralString = """
       where f.frequency <= greatest(n.total * %(max_term_share)s, %(min_common_rows)s)
     ),
     keyword_ranked as (
-      select p.id, row_number() over (order by sum(w.idf) desc, p.id) as rank
+      select p.id, sum(w.idf) as idf, row_number() over (order by sum(w.idf) desc, p.id) as rank
       from provisions p
       join documents d on d.id = p.document_id and d.language = p.language
       join term_weights w on p.fts @@ w.term
@@ -162,11 +198,14 @@ HYBRID_SEARCH: LiteralString = """
       select id,
              sum(weight / (%(rrf_k)s + rank)) as score,
              min(rank) filter (where arm = 'vector') as vector_rank,
-             min(rank) filter (where arm = 'keyword') as keyword_rank
+             min(rank) filter (where arm = 'keyword') as keyword_rank,
+             min(measure) filter (where arm = 'vector') as distance,
+             min(measure) filter (where arm = 'keyword') as keyword_idf
       from (
-        select id, rank, 'vector' as arm, 1.0 as weight from vector_ranked
+        select id, rank, 'vector' as arm, 1.0 as weight, distance as measure from vector_ranked
         union all
-        select id, rank, 'keyword' as arm, %(keyword_weight)s as weight from keyword_ranked
+        select id, rank, 'keyword' as arm, %(keyword_weight)s as weight, idf as measure
+        from keyword_ranked
       ) ranked
       group by id
     ),
@@ -179,7 +218,8 @@ HYBRID_SEARCH: LiteralString = """
       from lineage l join provisions p on p.id = l.ancestor
       where p.parent_id is not null
     )
-    select f.id, f.score, f.vector_rank, f.keyword_rank, p.provision_id,
+    select f.id, f.score, f.vector_rank, f.keyword_rank, f.distance, f.keyword_idf,
+           p.provision_id,
            array(select l.ancestor from lineage l where l.id = f.id) as ancestors,
            d.doc_key, d.title, d.doc_type, d.status, d.law_version, p.language,
            p.heading, p.text, p.valid_from, p.valid_to
@@ -221,6 +261,11 @@ class SearchHit(ContractModel):
     """The rank in the meaning arm (1 is best); None when only the keywords found it."""
     keyword_rank: int | None
     """The rank in the keyword arm; None when only the meaning arm found it."""
+    similarity: float | None
+    """1 - the cosine distance to the query in the meaning arm; None when only the keywords found
+    it (or the meaning arm's cut-off dropped it)."""
+    keyword_idf: float | None
+    """The summed IDF of the query words the row has; None when only the meaning arm found it."""
 
 
 class SearchResults(ContractModel):
@@ -232,6 +277,11 @@ class SearchResults(ContractModel):
     as_of: date | None
     """The date searched; None for the original text, which has one slice per unit."""
     hits: tuple[SearchHit, ...]
+    max_distance: float | None
+    """The meaning arm's cut-off applied; None for none."""
+    found: bool
+    """True when a hit is within the cut-off (any meaning-arm hit, without one) or matches rare
+    enough words (`MIN_KEYWORD_IDF`); False means nothing relevant was found."""
     disclaimer: str
 
 
@@ -244,6 +294,7 @@ def search_ai_act(
     doc_types: Collection[str] | None = None,
     exclude_source_example_ids: Sequence[str] = (),
     include_held_out: bool = False,
+    max_distance: float | _FromSettings | None = FROM_SETTINGS,
     limit: int = DEFAULT_LIMIT,
     embedder: QueryEmbedder | None = None,
     connection: psycopg.Connection | None = None,
@@ -252,9 +303,12 @@ def search_ai_act(
 
     `law_version` defaults to `amended` and `as_of` to today. Held-out (Pile B) examples are never
     returned unless `include_held_out` is set, which only the gap run may do (decision 012).
+    `max_distance` is the meaning arm's cosine-distance cut-off; it defaults to the
+    `SEARCH_MAX_DISTANCE` setting, and None searches without one (as the engine does).
     Raises ValueError for an empty query, an unknown doc type, a `limit` outside
-    1..CANDIDATES, or `original` together with `as_of`. Without an `embedder`, one is built from
-    the settings; without a `connection`, one is opened from DATABASE_URL.
+    1..CANDIDATES, a `max_distance` outside 0..2, or `original` together with `as_of`. Without
+    an `embedder`, one is built from the settings; without a `connection`, one is opened from
+    DATABASE_URL.
     """
     params, statement = prepare_search(
         query,
@@ -266,6 +320,9 @@ def search_ai_act(
         include_held_out,
         limit,
         embedder,
+        max_distance=get_settings().search_max_distance
+        if max_distance is FROM_SETTINGS
+        else max_distance,
     )
     if connection is None:
         with connect() as own_connection:
@@ -273,14 +330,22 @@ def search_ai_act(
     else:
         rows = _run(connection, statement, params)
     version = LawVersion(params["law_version"])
+    hits = tuple(_hit(row) for row in distinct_units(rows, limit))
     return SearchResults(
         query=query,
         language=params["language"],
         law_version=version,
         as_of=None if version is LawVersion.ORIGINAL else params["on"],
-        hits=tuple(_hit(row) for row in distinct_units(rows, limit)),
+        hits=hits,
+        max_distance=params["max_distance"],
+        found=any(_is_relevant(hit) for hit in hits),
         disclaimer=DISCLAIMER[Language(params["language"])],
     )
+
+
+def _is_relevant(hit: SearchHit) -> bool:
+    """The meaning arm kept it (so it is within any cut-off), or it matches rare enough words."""
+    return hit.similarity is not None or (hit.keyword_idf or 0.0) >= MIN_KEYWORD_IDF
 
 
 def prepare_search(
@@ -293,9 +358,11 @@ def prepare_search(
     include_held_out: bool,
     limit: int,
     embedder: QueryEmbedder | None,
+    *,
+    max_distance: float | None = None,
 ) -> tuple[dict[str, Any], sql.Composed]:
     """Check the arguments, embed the query, and build the statement and its parameters (public so
-    tests can EXPLAIN the statement)."""
+    tests can EXPLAIN the statement). `max_distance` is taken as given: None is no cut-off."""
     if not query.strip():
         raise ValueError("the search query is empty")
     if not 1 <= limit <= CANDIDATES:
@@ -304,6 +371,12 @@ def prepare_search(
         raise ValueError(f"unknown doc types {sorted(set(doc_types) - DOC_TYPES)}")
     if version is LawVersion.ORIGINAL and as_of is not None:
         raise ValueError("as_of resolves only against the amended text; drop it for 'original'")
+    if max_distance is not None and not (
+        isfinite(max_distance) and 0.0 <= max_distance <= MAX_COSINE_DISTANCE
+    ):
+        raise ValueError(
+            f"max_distance must be between 0 and {MAX_COSINE_DISTANCE}, got {max_distance}"
+        )
     embedder = embedder or OpenRouterEmbeddings()
     vector = embedder.embed_query(query)
     params: dict[str, Any] = {
@@ -316,6 +389,7 @@ def prepare_search(
         "on": as_of or date.today(),
         "doc_types": sorted(doc_types) if doc_types is not None else None,
         "include_held_out": include_held_out,
+        "max_distance": max_distance,
         "exclude_source_example_ids": list(exclude_source_example_ids),
         "candidates": CANDIDATES,
         "rrf_k": RRF_K,
@@ -403,4 +477,6 @@ def _hit(row: dict[str, Any]) -> SearchHit:
         score=float(row["score"]),
         vector_rank=row["vector_rank"],
         keyword_rank=row["keyword_rank"],
+        similarity=None if row["distance"] is None else 1.0 - float(row["distance"]),
+        keyword_idf=None if row["keyword_idf"] is None else float(row["keyword_idf"]),
     )

@@ -18,7 +18,13 @@ from aiact.corpus.build import AI_ACT_IN_FORCE, DocumentLoad, DocumentRow, Provi
 from aiact.corpus.embed import ARMS, vector_literal
 from aiact.corpus.load import load_all
 from aiact.llm.embeddings import OpenRouterEmbeddings
-from aiact.retrieval.search import CANDIDATES, SearchResults, prepare_search, search_ai_act
+from aiact.retrieval.search import (
+    CANDIDATES,
+    MIN_KEYWORD_IDF,
+    SearchResults,
+    prepare_search,
+    search_ai_act,
+)
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, Language, LawVersion
 from aiact.settings import Settings
 
@@ -147,6 +153,10 @@ LOADS = (
     DocumentLoad(CODE, (
         ProvisionRow("guide:test-c6-code:para:1", None, None, None, "A code on zorblax.",
                      GUIDE_PUBLISHED),
+        # Four words no other row has and no vector: a strong keyword-only match (C8), also in
+        # an empty database (4 x ln(about 20 units) is above MIN_KEYWORD_IDF).
+        ProvisionRow("guide:test-c6-code:para:2", None, None, None,
+                     "Quorvex klimbat drossel wuffling.", GUIDE_PUBLISHED),
     )),
 )  # fmt: skip
 
@@ -405,6 +415,68 @@ def test_a_stale_vector_is_never_ranked(corpus: psycopg.Connection):
 
 def test_the_limit_caps_the_hits(corpus: psycopg.Connection):
     assert len(_search(corpus, as_of=AFTER_OMNIBUS, limit=2).hits) == 2
+
+
+# --- Relevance: similarity, keyword IDF, the cut-off and `found` (C8) -------------------------
+
+OFF_TOPIC = [0.0, 0.0, -1.0]
+"""Points away from every visible row: the nearest (art:3) is at cosine distance 0.89."""
+CUT_OFF = 0.5
+
+
+def test_hits_carry_the_similarity_and_the_keyword_idf(corpus: psycopg.Connection):
+    hits = _search(corpus, "new zorblax duty", as_of=AFTER_OMNIBUS).hits
+    first = hits[0]
+    assert first.similarity == pytest.approx(1.0)
+    assert first.keyword_idf is not None and first.keyword_idf > 0
+    code = next(h for h in hits if h.doc_key == "test-c6-code")
+    assert (code.similarity, code.keyword_idf is not None) == (None, True)
+    meaning_only = _search(corpus, NO_WORDS, [0.0, 0.0, 1.0], as_of=AFTER_OMNIBUS).hits
+    assert meaning_only[0].similarity == pytest.approx(1.0)
+    assert all(h.keyword_idf is None for h in meaning_only)
+
+
+def test_the_cut_off_leaves_an_off_topic_query_with_nothing(corpus: psycopg.Connection):
+    uncut = _search(corpus, NO_WORDS, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=None)
+    assert uncut.hits and uncut.found  # without a cut-off every query gets hits
+    cut = _search(corpus, NO_WORDS, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=CUT_OFF)
+    assert [h for h in cut.hits if h.similarity is not None] == []
+    assert (cut.found, cut.max_distance) == (False, CUT_OFF)
+
+
+def test_a_matching_query_stays_found_under_the_cut_off(corpus: psycopg.Connection):
+    results = _search(corpus, as_of=AFTER_OMNIBUS, max_distance=CUT_OFF)
+    assert results.found
+    assert results.hits[0].provision_id == "art:1"
+    similarities = [h.similarity for h in results.hits if h.similarity is not None]
+    assert similarities and min(similarities) >= 1 - CUT_OFF
+    # The recital is at distance 1: the meaning arm drops it, the keywords still find it.
+    recital = next(h for h in results.hits if h.provision_id == "recital:1")
+    assert (recital.similarity, recital.vector_rank, recital.keyword_rank is not None) == (
+        None,
+        None,
+        True,
+    )
+
+
+def test_a_strong_keyword_only_match_stays_found(corpus: psycopg.Connection):
+    results = _search(corpus, "quorvex klimbat drossel wuffling", OFF_TOPIC, as_of=AFTER_OMNIBUS,
+                      max_distance=CUT_OFF)  # fmt: skip
+    assert [h.provision_id for h in results.hits] == ["guide:test-c6-code:para:2"]
+    idf = results.hits[0].keyword_idf
+    assert idf is not None and idf >= MIN_KEYWORD_IDF
+    assert results.found
+
+
+def test_the_cut_off_filters_inside_the_vector_arm_s_sql(db: psycopg.Connection):
+    """The plan filters the materialized nearest rows by distance; no row reaches Python first."""
+    params, statement = prepare_search(
+        NO_WORDS, Language.EN, LawVersion.AMENDED, None, None, (), False, TOP,
+        FixedEmbedder(OFF_TOPIC), max_distance=CUT_OFF,
+    )  # fmt: skip
+    plan = [row[0] for row in db.execute(sql.SQL("explain ") + statement, params)]
+    scan = next(i for i, line in enumerate(plan) if "CTE Scan on vector_hits" in line)
+    assert "distance <=" in plan[scan + 1], plan[scan : scan + 2]
 
 
 QWEN3 = ARMS["qwen3"]
