@@ -25,4 +25,5 @@ notes: >-
 tags:
   - "category:b"
   - "scope:not_ai_system"
+  - "trap:annex_iii_context"
   - "obligations:none"

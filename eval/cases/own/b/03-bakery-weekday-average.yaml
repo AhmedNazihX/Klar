@@ -21,4 +21,5 @@ notes: >-
 tags:
   - "category:b"
   - "scope:not_ai_system"
+  - "trap:ai_marketing_name"
   - "obligations:none"

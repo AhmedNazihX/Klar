@@ -23,6 +23,9 @@ notes: >-
   expert-encoded rules among the logic- and knowledge-based techniques that can make a system an
   AI system; on that reading the opponent would be minimal_risk (a game opponent is not a chat
   assistant under Art. 50(1)). The label follows para 48, whose example is the closer match.
+  Unlike own-b-05, this stays decided: para 48's own worked example (a minimax chess program with a
+  heuristic evaluation) matches this system almost exactly, whereas para 42's wording and examples
+  don't fit a scoring model, so b-05's conflict is genuinely open and this one isn't.
 tags:
   - "category:b"
   - "scope:not_ai_system"
