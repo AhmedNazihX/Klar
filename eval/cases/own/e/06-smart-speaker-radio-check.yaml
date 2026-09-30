@@ -1,0 +1,35 @@
+id: own-e-06-smart-speaker-radio-check
+set_name: own
+language: de
+description: >-
+  Wir sind ein Audio-Start-up aus Berlin mit 35 Leuten. Unser smarter Lautsprecher „Kiez“ hat
+  einen eigenen Sprachassistenten: Man fragt ihn nach Wetter, Abfahrtszeiten oder Rezepten, und er
+  antwortet in ganzen Sätzen mit synthetischer Stimme. Das Sprachmodell haben wir auf Basis eines
+  offenen Modells selbst feinabgestimmt. Beim Funkteil haben wir die harmonisierten Normen zur
+  Frequenznutzung nicht vollständig angewendet, deshalb hat eine benannte Stelle den Lautsprecher
+  nach der Funkanlagenrichtlinie geprüft – aber nur die Nutzung des Funkspektrums. Elektrische
+  Sicherheit und Gesundheitsschutz haben wir selbst nach Normen erklärt. Sicherheitsfunktionen hat
+  das Gerät keine. Seit September 2026 verkaufen wir ihn in Deutschland und Österreich, in
+  Mattschwarz und Sandfarben.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:6:1a", "art:6:1c", "annex:I:A:6", "art:50:1", "art:50:2", "art:3:3"]
+notes: >-
+  Approved by user 2026-09-30. Class: the speaker is radio equipment (Annex I Section A point 6),
+  and a notified body was involved, but only for radio spectrum use, so under Art. 6(1c) the
+  product does not meet Art. 6(1)(b); the assistant is also a convenience feature, not a safety
+  component (Art. 6(1a)). Not high-risk. It talks directly with users (Art. 50(1)) and generates
+  synthetic speech (Art. 50(2)); placed on the market in September 2026, after 2 August 2026, so
+  no grace period. Role: provider under its own name (Art. 3(3)); built on an open general-purpose
+  model it fine-tuned (tag gpai_based; whether the fine-tuning makes it a model provider is only
+  flagged). Doubt: whether it is "obvious" that a speaker's voice is an AI system (Art. 50(1)
+  exception) is read here as no, as in own-d-06.
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:6"
+  - "gpai_based"
+  - "obligation:art:4:1"
+  - "obligation:art:50:1"
+  - "obligation:art:50:2"

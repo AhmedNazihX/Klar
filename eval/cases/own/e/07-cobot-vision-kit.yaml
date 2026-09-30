@@ -1,0 +1,30 @@
+id: own-e-07-cobot-vision-kit
+set_name: own
+language: en
+description: >-
+  We're a 40-person robotics start-up in Eindhoven. We sell a vision kit that machine builders
+  mount on collaborative robot arms: a camera and a small neural network watch the workspace and
+  slow the arm down, or stop it, when a person comes within reach. The machine builders integrate
+  the kit into their robot cells and sell those to factories. We train the model in-house and are
+  still deciding how updates will reach customers. We haven't talked to a notified body yet and
+  haven't worked out which conformity route the kit will take. First pilot deliveries are planned
+  for spring 2027. Our founders met at a drone-racing hackathon.
+label:
+  risk_class: high_risk
+  status: needs_more_information
+  role: provider
+label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:B:21", "art:2:2"]
+notes: >-
+  Approved by user 2026-09-30. Missing fact: whether the kit must undergo a third-party conformity
+  assessment under the Machinery Regulation (Annex I Section B point 21). That depends on facts
+  the description leaves open, such as whether the model keeps learning in the field and whether
+  harmonised standards cover it. The kit is clearly a safety component (it slows or stops the arm
+  to protect people, Art. 3(14)), so Art. 6(1)(a) is met and only (b) is open. Working assumption:
+  high_risk (stricter reading). Section B, so Art. 2(2) limits the AI Act to Art. 6(1), 60a and
+  102 to 112, and no obligation is tagged. The engine should name the Machinery Regulation and ask
+  whether the model keeps learning after delivery and whether harmonised standards cover it.
+tags:
+  - "category:e"
+  - "annex_i_section:b"
+  - "annex_i_point:annex:I:B:21"
+  - "missing_fact:third_party_assessment"

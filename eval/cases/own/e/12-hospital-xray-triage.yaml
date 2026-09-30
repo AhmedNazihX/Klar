@@ -1,0 +1,39 @@
+id: own-e-12-hospital-xray-triage
+set_name: own
+language: de
+description: >-
+  Wir betreiben drei Krankenhäuser in Niedersachsen mit zusammen 2.500 Beschäftigten, in privater
+  Trägerschaft. Ab Herbst 2028 will unsere Radiologie eine KI-Software eines Münchner Herstellers
+  einsetzen, die Röntgenbilder der Lunge vorab auswertet, Auffälligkeiten markiert und dringliche
+  Fälle in der Arbeitsliste nach oben schiebt. Die Software ist als Medizinprodukt der Klasse IIa
+  CE-gekennzeichnet, der Hersteller hat sie über eine benannte Stelle zertifizieren lassen. Wir
+  führen sie so ein, wie sie geliefert wird, und verändern nichts daran; die Befundung bleibt bei
+  den Ärztinnen und Ärzten. Die Bilder kommen aus unseren eigenen Röntgengeräten. Parallel stellen
+  wir gerade auf ein neues Dienstplansystem um.
+label:
+  risk_class: high_risk
+  role: deployer
+label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:3:4", "art:26:1"]
+notes: >-
+  Approved by user 2026-09-30. Class: CE-marked class IIa medical device software certified
+  through a notified body (Annex I Section A point 11), so Art. 6(1) is met: high_risk. Role: the
+  hospital group uses it under its authority (Art. 3(4)), unchanged and under the maker's name, so
+  no Art. 25 trigger: deployer. Deployer duties on the Annex I route; use starts in autumn 2028,
+  after the Annex I date (2 August 2028). Included: Art. 26(4) (the images come from its own
+  machines, so it controls the input data). Kept because the condition is not settled by the
+  facts: Art. 26(9) (DPIA). Left out because the facts or the route rule them out: Art. 26(7) (no
+  workers are subject to the system), 26(8) (private operator), and 26(11), 27 and 86 (Annex III
+  systems only). "Emergency healthcare patient triage" (Annex III 5(d)) is not read to cover
+  reordering a radiology worklist.
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:11"
+  - "obligation:art:4:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:9"
+  - "obligation:art:26:12"

@@ -1,0 +1,28 @@
+id: own-e-13-wheelchair-obstacle-stop
+set_name: own
+language: en
+description: >-
+  We are a family-owned maker of powered wheelchairs near Graz, about 110 people. Our new model
+  has a camera-based assistant: a neural network spots kerbs, steps and obstacles and brakes the
+  chair before it drives into them, which our users with limited hand control find reassuring. The
+  wheelchair is a class I medical device, so, as the Medical Device Regulation allows for class I,
+  we carried out the conformity assessment ourselves and issued our own declaration; no notified
+  body was involved, and none is required for this model. It went on sale in Austria and Germany
+  in May 2026. We also sponsor a local wheelchair basketball team.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:A:11", "art:3:3"]
+notes: >-
+  Approved by user 2026-09-30. Class: the braking assistant is a safety component (Art. 3(14)) of
+  a medical device (Annex I Section A point 11), so Art. 6(1)(a) is met, but a class I device
+  needs no third-party conformity assessment and the facts say none is required, so Art. 6(1)(b)
+  is not met. No Annex III use, and the assistant does not interact with people in the Art. 50(1)
+  sense: minimal_risk. Role: provider under its own name (Art. 3(3)). Only Art. 4 applies. Doubt:
+  whether a powered wheelchair with active braking stays class I under the MDR's classification
+  rules is taken from the facts as stated.
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:11"
+  - "obligation:art:4:1"

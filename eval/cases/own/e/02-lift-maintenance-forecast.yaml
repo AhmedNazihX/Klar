@@ -1,0 +1,31 @@
+id: own-e-02-lift-maintenance-forecast
+set_name: own
+language: de
+description: >-
+  Wir sind ein mittelständischer Aufzughersteller aus Stuttgart mit etwa 700 Beschäftigten. Für
+  unsere Wartungsverträge haben wir selbst ein KI-Modul entwickelt, das die Betriebsdaten der
+  Anlagen auswertet – Fahrten, Türzyklen, Motorströme – und vorhersagt, wann ein Verschleißteil
+  voraussichtlich getauscht werden muss. Daraus plant es die Touren unserer Techniker und bestellt
+  Ersatzteile vor. Auf die Steuerung und die Sicherheitseinrichtungen der Aufzüge hat das Modul
+  keinen Zugriff, es liest nur Daten aus. Die vorgeschriebenen Prüfungen durch die
+  Prüforganisation laufen unabhängig davon im gewohnten Rhythmus weiter, und fällt das Modul aus,
+  planen wir die Touren wie früher von Hand. Das Tool läuft seit Anfang 2026; im selben Zug haben
+  wir unser Kundenportal neu gestaltet.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:1a", "art:6:1b", "art:3:14", "annex:I:A:4", "art:3:3"]
+notes: >-
+  Approved by user 2026-09-30. Class: lifts are Annex I Section A point 4, but the module is used
+  solely for service efficiency (planning technician tours, ordering parts), so under Art. 6(1a)
+  it is not a safety component; Art. 6(1b) does not pull it back in, because the statutory
+  inspections run independently and a failure only means manual planning, so it does not endanger
+  health and safety. No Annex III use, no Art. 50 duty: minimal_risk. Role: it developed the
+  module and puts it into service under its own name (Art. 3(3)); it also uses it itself (tag
+  also_role:deployer). Only Art. 4 (AI literacy) applies.
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:4"
+  - "also_role:deployer"
+  - "obligation:art:4:1"

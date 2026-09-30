@@ -1,0 +1,45 @@
+id: own-e-11-boiler-flame-module
+set_name: own
+language: en
+description: >-
+  We manufacture wall-hung gas condensing boilers in northern Italy, with about 900 employees.
+  From autumn 2028 every boiler will ship with a flame-monitoring module we buy from a Danish
+  electronics supplier: a small neural network reads the ionisation signal and a flame camera and
+  closes the gas valve if the flame becomes unstable or goes out. The module is sold only as part
+  of our boilers, under our brand; the supplier's name appears nowhere. Under the gas appliances
+  regulation a notified body has to type-examine each boiler model, and the flame-monitoring
+  module is included in that examination. We are also redesigning our installer app, which is
+  unrelated.
+label:
+  risk_class: high_risk
+  role: provider
+label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "art:25:3:a", "annex:I:A:10"]
+notes: >-
+  Approved by user 2026-09-30. Class: flame supervision that closes the gas valve is a safety
+  function (Art. 3(14)) of an appliance burning gaseous fuels (Annex I Section A point 10); a
+  notified body type-examines the boiler including the module, so Art. 6(1) is met: high_risk.
+  Role: the module is placed on the market together with the boiler under the boiler maker's name,
+  so the product manufacturer is the provider of the high-risk AI system (Art. 25(3)(a)); the
+  Danish supplier is not the provider towards the market. Placed on the market from autumn 2028,
+  after the Annex I date (2 August 2028), so Art. 111(2) does not arise. Provider duties on the
+  Annex I route.
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:10"
+  - "role_switch:art25_3_a"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"

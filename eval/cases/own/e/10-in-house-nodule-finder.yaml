@@ -1,0 +1,57 @@
+id: own-e-10-in-house-nodule-finder
+set_name: own
+language: de
+description: >-
+  Wir sind ein Universitätsklinikum in Süddeutschland mit rund 8.000 Beschäftigten. Unsere
+  Radiologie hat zusammen mit der hauseigenen IT eine Software entwickelt, die in Thorax-CTs
+  Lungenrundherde markiert und vermisst; die Radiologinnen und Radiologen sehen die Markierungen
+  beim Befunden und entscheiden selbst. Die Software wird nur bei uns im Haus eingesetzt, nicht
+  verkauft und an keine andere Klinik weitergegeben. Deshalb haben wir sie als Eigenherstellung
+  nach der Medizinprodukteverordnung behandelt, ohne CE-Kennzeichnung und ohne benannte Stelle;
+  ein vergleichbares Produkt auf dem Markt wäre mindestens Klasse IIa. Die Bilddaten stammen aus
+  unseren eigenen Geräten. Derzeit validieren wir die Software intern; im klinischen Betrieb soll
+  sie ab Herbst 2028 laufen, gleichzeitig mit dem Umzug der Radiologie in den Neubau.
+label:
+  risk_class: high_risk
+  status: legally_ambiguous
+  role: provider
+label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:3:3", "art:3:11"]
+notes: >-
+  Approved by user 2026-09-30. Open question: does Art. 6(1)(b) look at the product as actually
+  handled, or at the device class? Reading A: the MDR's in-house exemption means this software is
+  not required to undergo any third-party conformity assessment, so Art. 6(1)(b) is not met and it
+  is not high-risk via Annex I (minimal_risk). Reading B: a device of this kind is class IIa and
+  would need a notified body, and the in-house exemption only relieves the hospital of MDR
+  procedures, not of the AI Act's classification, so it is high_risk. Working assumption:
+  high_risk. Role: the hospital develops the software and puts it into service under its own name
+  for its own use (Art. 3(3), 3(11)), so it is the provider, and it is also the deployer (tag
+  also_role:deployer). Deployer duties are tagged too; Art. 26(9) (DPIA) is kept because its
+  condition is not settled by the facts. Put into service from autumn 2028, after the Annex I date
+  (2 August 2028).
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:11"
+  - "also_role:deployer"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:9"
+  - "obligation:art:26:12"

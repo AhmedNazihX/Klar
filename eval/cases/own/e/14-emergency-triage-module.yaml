@@ -1,0 +1,47 @@
+id: own-e-14-emergency-triage-module
+set_name: own
+language: de
+description: >-
+  Wir sind ein Softwarehaus aus Leipzig mit 120 Beschäftigten und entwickeln Klinik-IT. Unser
+  Modul für Notaufnahmen wertet bei der Ankunft Vitalwerte, Symptome und Vorerkrankungen aus und
+  schlägt eine Dringlichkeitsstufe vor; die Pflegekraft an der Ersteinschätzung übernimmt oder
+  ändert den Vorschlag, und danach richtet sich, wer zuerst behandelt wird. Das Modul soll als
+  Medizinprodukt der Klasse IIa zertifiziert werden, das Audit der benannten Stelle ist für
+  Frühjahr 2028 geplant. Ab Herbst 2028 verkaufen wir es an Krankenhäuser in Deutschland und der
+  Schweiz. Nebenbei haben wir gerade unser Logo überarbeitet.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:5:d"
+label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:6:2", "annex:III:5:d", "art:6:3", "art:43:3"]
+notes: >-
+  Approved by user 2026-09-30. Class: high_risk on two routes. Annex I: class IIa medical device
+  software that needs a notified body before launch (Section A point 11), so Art. 6(1) is met.
+  Annex III: emergency healthcare patient triage is point 5(d); the module evaluates each
+  patient's health data to set priority, which is profiling, so no Art. 6(3) exemption. The
+  conformity assessment follows the MDR procedure (Art. 43(3), last subparagraph). annex_point is
+  set to the Annex III point, because the schema cannot hold the Annex I id and the Annex III
+  point is also correct. Role: provider under its own name. Provider duties including Art. 16(i)
+  (registration, Annex III). Sales start in autumn 2028, after both 2 December 2027 (Annex III)
+  and 2 August 2028 (Annex I), so both routes apply by launch and Art. 111(2) does not arise.
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:11"
+  - "also_route:annex_iii"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:i"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"

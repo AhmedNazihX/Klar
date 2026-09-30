@@ -1,0 +1,49 @@
+id: own-e-09-ropeway-wear-forecast
+set_name: own
+language: en
+description: >-
+  We are a 30-person software firm in Innsbruck working for ski resorts. Our product analyses
+  vibration, rope-tension and weather data from chairlifts and gondolas and predicts wear on
+  rollers, grips and bearings. We sell it for maintenance planning, and that explicitly includes
+  deciding when a scheduled component inspection can safely be moved back; the first resorts that
+  have signed up plan to use it exactly that way. The tool has no connection to the lifts'
+  controls or brakes. The lifts and their safety components were certified by notified bodies
+  under the cableway rules; our software was not part of that assessment. The launch is planned
+  for the 2028/29 season, and we have just added French and Italian.
+label:
+  risk_class: high_risk
+  status: legally_ambiguous
+  role: provider
+label_citation: ["art:6:1a", "art:6:1b", "art:6:1:b", "art:3:14", "annex:I:A:8"]
+notes: >-
+  Approved by user 2026-09-30. Open question 1: is the tool a safety component? Reading A: it is a
+  maintenance planning aid for service efficiency, so Art. 6(1a) excludes it. Reading B: its
+  intended purpose includes deciding when safety inspections may be postponed, so a wrong
+  "healthy" rating would endanger health and safety, and Art. 6(1b) makes it a safety component.
+  Open question 2 (if B): must it undergo a third-party conformity assessment under the cableway
+  regulation (Annex I Section A point 8), given it was never part of the certification and is sold
+  separately? Art. 6(1) applies "irrespective of whether" it is placed on the market
+  independently, but whether the cableway regulation requires a notified body for such software is
+  not settled by the facts or the AI Act. Readings: minimal_risk, or high_risk. Working
+  assumption: high_risk, with provider duties on the Annex I route. Launch is planned for the
+  2028/29 season and nothing is put into service before 2 August 2028 (the Annex I date), so Art.
+  111(2) does not arise.
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:8"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"
