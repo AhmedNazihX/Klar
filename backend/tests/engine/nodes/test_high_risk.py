@@ -376,6 +376,7 @@ def test_unknown_profiling_under_a_condition_assumes_high_risk_and_asks() -> Non
     assert result.step.missing_fact.id == "profiling"
     assert question_ids(result)[0] == "profiling"
     assert "Assumed high-risk on the Annex III route" in result.step.decision
+    assert {"art:6:3:b", "art:6:4"} <= set(cited(result))  # the exemption may still apply
 
 
 def test_a_benefits_scheme_of_unknown_owner_asks_whether_it_is_public() -> None:
@@ -484,6 +485,14 @@ def test_a_service_efficiency_tool_is_not_a_safety_component() -> None:
     result = outcome(answer(one=annex_i("annex:I:A:11", YES, Answer.NO, YES)))
     assert result.high_risk_route is None
     assert "not a safety component" in result.step.decision
+
+
+def test_a_malformed_annex_i_point_is_named_by_field_only() -> None:
+    with pytest.raises(
+        HighRiskOutputError, match=r"annex_i\.point is not an Annex I point"
+    ) as raised:
+        outcome(answer(one=annex_i("annex:I:C:99", YES, YES, YES)))
+    assert "annex:I:C:99" not in str(raised.value)
 
 
 def test_an_annex_i_point_without_a_text_is_a_broken_output() -> None:
@@ -677,6 +686,92 @@ def _only_search(library: HighRiskCorpus) -> HighRiskLibrary:
     return Searching()
 
 
+def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[object] = []
+
+    def spy(provision_id: str, *args: object, connection: object) -> Provision:
+        seen.append(connection)
+        return provision(provision_id)
+
+    monkeypatch.setattr(retrieval, "get_provision", spy)
+    connection = cast(psycopg.Connection, object())
+    library = HighRiskCorpus(connection, FakeEmbedder())
+    library.provision("art:6:1", Lookup(Language.EN, LawVersion.AMENDED, AS_OF, ()))
+    assert seen == [connection]
+
+
+class FakeConnection:
+    """Open from `connect()` until its `with` block ends."""
+
+    def __init__(self) -> None:
+        self.is_open = True
+
+    def __enter__(self) -> "FakeConnection":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.is_open = False
+
+
+class ProbeChat(GenericFakeChatModel):
+    """A fake chat that runs `probe` when the model is called."""
+
+    probe: Callable[[], None]
+
+    def invoke(self, input: object, config: object = None, **kwargs: object) -> AIMessage:  # type: ignore[override]
+        self.probe()
+        return super().invoke(input, config, **kwargs)  # type: ignore[arg-type]
+
+
+def test_a_check_without_a_library_builds_one_embedder_and_holds_no_connection_over_the_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The production path: the embedder is built once from the check's own settings and used
+    by every search; each step reads over a short connection before the model call and another
+    for its citations after it, and none is open while the model answers."""
+    connections: list[FakeConnection] = []
+    embedders: list[tuple[object, Settings | None]] = []
+    searched_with: list[object] = []
+
+    def fake_connect() -> FakeConnection:
+        connections.append(FakeConnection())
+        return connections[-1]
+
+    class Embeddings(FakeEmbedder):
+        def __init__(self, settings: Settings | None = None) -> None:
+            embedders.append((self, settings))
+
+    def search(
+        query: str, language: Language, law_version: LawVersion, as_of: date, **kwargs: object
+    ) -> SearchResults:
+        connection = kwargs.pop("connection")
+        assert isinstance(connection, FakeConnection) and connection.is_open
+        searched_with.append(kwargs.pop("embedder"))
+        return FakeSearch()(query, language, law_version, as_of, **kwargs)
+
+    def lookup(provision_id: str, *args: object, connection: FakeConnection) -> Provision:
+        assert connection.is_open
+        return fake_lookup(provision_id, *args)  # type: ignore[arg-type]
+
+    def no_connection_open() -> None:
+        assert not any(c.is_open for c in connections)
+
+    monkeypatch.setattr(node, "connect", fake_connect)
+    monkeypatch.setattr(node, "OpenRouterEmbeddings", Embeddings)
+    monkeypatch.setattr(retrieval, "search_ai_act", search)
+    monkeypatch.setattr(retrieval, "get_provision", lookup)
+    replies = iter([AIMessage(content=answer(RANKS_APPLICANTS).model_dump_json())] * 2)
+    settings = _settings()
+    check = HighRiskCheck(settings, chat=ProbeChat(messages=replies, probe=no_connection_open))
+    check(state())
+    check(state())
+    [(embedder, built_from)] = embedders
+    assert built_from is settings
+    assert searched_with and all(used is embedder for used in searched_with)
+    assert len(connections) == 4  # two per step: retrieval, then citations
+    no_connection_open()
+
+
 def test_german_guidance_falls_back_to_english_and_is_marked_english_only() -> None:
     search = FakeSearch(guidance={Language.EN: GUIDE_HITS})
     found = retrieve(state(language=Language.DE), FakeLibrary(search))
@@ -818,9 +913,11 @@ def test_the_check_runs_in_the_graph_and_sets_its_findings() -> None:
 
 
 def test_a_reply_that_does_not_fit_the_schema_is_a_broken_output() -> None:
-    check = HighRiskCheck(_settings(), chat=_fake_chat('{"annex_iii": {}}'), library=FakeLibrary())
-    with pytest.raises(HighRiskOutputError, match="doesn't fit the schema"):
+    reply = '{"annex_iii": {"point": "SECRET-VALUE-7731"}}'
+    check = HighRiskCheck(_settings(), chat=_fake_chat(reply), library=FakeLibrary())
+    with pytest.raises(HighRiskOutputError, match="doesn't fit the schema") as raised:
         check(state())
+    assert "SECRET-VALUE-7731" not in str(raised.value)
 
 
 def test_the_output_cap_leaves_room_for_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:

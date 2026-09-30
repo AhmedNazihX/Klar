@@ -23,7 +23,7 @@ Every citation is fetched through `get_provision`, or is a retrieved guideline p
 """
 
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from enum import StrEnum
 from pathlib import Path
@@ -690,21 +690,26 @@ class HighRiskCheck:
         """`chat` replaces the OpenRouter model and `library` the corpus (tests). Raises
         `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the
         model is always pinned to its EU endpoint with fallbacks off (decision 005). Without a
-        `library`, each step reads the corpus over one connection with one embedder."""
+        `library`, the query embedder is built here from the same settings, so
+        `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER` must be set too (`EMBEDDING_DIMENSIONS` has
+        a default); each step then reads the corpus with it over a short connection before the
+        model call, and another for the citations after it."""
         self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
         self._library = library
         self._embedder = None if library else OpenRouterEmbeddings(settings=settings)
 
-    def __call__(self, state: EngineState) -> CheckOutcome:
-        """Raises `HighRiskOutputError` when the reply doesn't fit `HighRiskAnswer`."""
+    def _reading[T](self, use: Callable[[HighRiskLibrary], T]) -> T:
+        """`use` applied to the corpus: the given library, or one over a fresh connection that
+        is closed before this returns (none stays open during the model call)."""
         if self._library is not None:
-            return self._classify(state, self._library)
+            return use(self._library)
         assert self._embedder is not None  # built whenever no library is given
         with connect() as connection:
-            return self._classify(state, HighRiskCorpus(connection, self._embedder))
+            return use(HighRiskCorpus(connection, self._embedder))
 
-    def _classify(self, state: EngineState, library: HighRiskLibrary) -> CheckOutcome:
-        retrieved = retrieve(state, library)
+    def __call__(self, state: EngineState) -> CheckOutcome:
+        """Raises `HighRiskOutputError` when the reply doesn't fit `HighRiskAnswer`."""
+        retrieved = self._reading(lambda library: retrieve(state, library))
         annex_i_ids = [p.provision_id for p in retrieved.annex_i]
         reply = self._model.invoke(
             high_risk_messages(state, retrieved),
@@ -715,4 +720,4 @@ class HighRiskCheck:
         except ValidationError as exc:
             message = f"high-risk answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise HighRiskOutputError(message) from exc
-        return to_outcome(answer, state, retrieved, library)
+        return self._reading(lambda library: to_outcome(answer, state, retrieved, library))
