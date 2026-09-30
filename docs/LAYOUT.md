@@ -62,7 +62,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   └── experiments/         embeddings.py (X1), smoke.py (X2), free_agent.py (S1)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8, P9)
-│   │   ├── mcp/                     server.py: the 4 MCP tools (P2a, P2b)
+│   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app, SSE (P1)
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)

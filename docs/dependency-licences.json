@@ -23,6 +23,10 @@
     "licence": "MPL-2.0",
     "summary": "Python package for providing Mozilla's CA Bundle."
   },
+  "cffi==2.1.1": {
+    "licence": "MIT-0",
+    "summary": "Foreign Function Interface for Python calling C code."
+  },
   "charset-normalizer==3.5.1": {
     "licence": "MIT",
     "summary": "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
@@ -34,6 +38,10 @@
   "colorama==0.4.6": {
     "licence": "BSD License",
     "summary": "Cross-platform colored terminal text."
+  },
+  "cryptography==50.0.2": {
+    "licence": "Apache-2.0 OR BSD-3-Clause",
+    "summary": "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
   },
   "cuda-bindings==13.4.3": {
     "licence": "Apache-2.0",
@@ -210,6 +218,14 @@
   "markupsafe==3.0.3": {
     "licence": "BSD-3-Clause",
     "summary": "Safely add untrusted strings to HTML/XML markup."
+  },
+  "mcp-types==2.2.0": {
+    "licence": "MIT",
+    "summary": "Model Context Protocol wire types"
+  },
+  "mcp==2.2.0": {
+    "licence": "MIT",
+    "summary": "Model Context Protocol SDK"
   },
   "mdurl==0.1.2": {
     "licence": "MIT License",
@@ -3223,6 +3239,10 @@
     "licence": "Apache-2.0",
     "summary": "Official Python Client SDK for OpenRouter."
   },
+  "opentelemetry-api==1.45.0": {
+    "licence": "Apache-2.0",
+    "summary": "OpenTelemetry Python API"
+  },
   "orjson==3.12.0": {
     "licence": "MPL-2.0 AND (Apache-2.0 OR MIT)",
     "summary": "Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy"
@@ -3259,6 +3279,10 @@
     "licence": "LGPL-3.0-only",
     "summary": "PostgreSQL database adapter for Python"
   },
+  "pycparser==3.0": {
+    "licence": "BSD-3-Clause",
+    "summary": "C parser in Python"
+  },
   "pydantic-core==2.41.5": {
     "licence": "MIT",
     "summary": "Core functionality for Pydantic validation and serialization"
@@ -3274,6 +3298,10 @@
   "pygments==2.21.0": {
     "licence": "BSD-2-Clause",
     "summary": "Pygments is a syntax highlighting package written in Python."
+  },
+  "pyjwt==2.15.1": {
+    "licence": "MIT",
+    "summary": "JSON Web Token implementation in Python"
   },
   "pypdfium2==5.13.0": {
     "licence": "BSD-3-Clause, Apache-2.0, dependency licenses",
@@ -3298,6 +3326,10 @@
   "python-dotenv==1.2.3": {
     "licence": "BSD-3-Clause",
     "summary": "Read key-value pairs from a .env file and set them as environment variables"
+  },
+  "python-multipart==0.0.32": {
+    "licence": "Apache-2.0",
+    "summary": "A streaming multipart parser for Python"
   },
   "pywin32==312": {
     "licence": "PSF",
@@ -3363,6 +3395,14 @@
     "licence": "MIT OR Apache-2.0",
     "summary": "Sniff out which async library your code is running under"
   },
+  "sse-starlette==3.5.0": {
+    "licence": "BSD-3-Clause",
+    "summary": "SSE plugin for Starlette"
+  },
+  "starlette==1.7.0": {
+    "licence": "BSD-3-Clause",
+    "summary": "The little ASGI library that shines."
+  },
   "sympy==1.14.0": {
     "licence": "BSD",
     "summary": "Computer algebra system (CAS) in Python"
@@ -3426,6 +3466,10 @@
   "uuid-utils==0.17.1": {
     "licence": "BSD-3-Clause",
     "summary": "Fast, drop-in replacement for Python's uuid module, powered by Rust."
+  },
+  "uvicorn==0.54.0": {
+    "licence": "BSD-3-Clause",
+    "summary": "The lightning-fast ASGI server."
   },
   "vcrpy==8.3.0": {
     "licence": "MIT",

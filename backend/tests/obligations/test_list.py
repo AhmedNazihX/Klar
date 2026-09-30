@@ -18,7 +18,16 @@ from aiact.obligations.list import (
     list_obligations,
     load_table,
 )
-from aiact.schemas import HighRiskRoute, LawVersion, Obligation, RiskClass, Role
+from aiact.schemas import (
+    DISCLAIMER_DE,
+    DISCLAIMER_EN,
+    HighRiskRoute,
+    Language,
+    LawVersion,
+    Obligation,
+    RiskClass,
+    Role,
+)
 from aiact.settings import DEFAULT_DATA_DIR
 
 ANNEX_III_FROM = date(2027, 12, 2)
@@ -348,6 +357,21 @@ def test_the_default_law_version_is_amended_and_travels_with_the_result() -> Non
     assert result.law_version is LawVersion.AMENDED
     assert "art:26:1" in _articles(result.obligations)
     assert default_table().law_version is LawVersion.AMENDED
+
+
+@pytest.mark.parametrize(
+    ("language", "notice"),
+    [(None, DISCLAIMER_EN), (Language.DE, DISCLAIMER_DE), ("en", DISCLAIMER_EN)],
+)
+def test_the_result_carries_the_notice_in_the_language_asked(
+    language: Language | str | None, notice: str
+) -> None:
+    result = (
+        list_obligations(Role.PROVIDER, RiskClass.LIMITED_RISK)
+        if language is None
+        else list_obligations(Role.PROVIDER, RiskClass.LIMITED_RISK, language=language)
+    )
+    assert result.disclaimer == notice
 
 
 @pytest.mark.parametrize("law_version", [LawVersion.ORIGINAL, "original"])

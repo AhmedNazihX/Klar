@@ -30,11 +30,13 @@ corpus_app = typer.Typer(no_args_is_help=True)
 eval_app = typer.Typer(no_args_is_help=True)
 deps_app = typer.Typer(no_args_is_help=True)
 obligations_app = typer.Typer(no_args_is_help=True)
+mcp_app = typer.Typer(no_args_is_help=True)
 
 app.add_typer(corpus_app, name="corpus")
 app.add_typer(eval_app, name="evaluate")
 app.add_typer(deps_app, name="deps")
 app.add_typer(obligations_app, name="obligations")
+app.add_typer(mcp_app, name="mcp")
 
 
 @app.callback()
@@ -436,6 +438,20 @@ def eval_isolation_embed(
         f"{len(texts)} texts: {outcome.embedded} embedded, {outcome.removed} removed; "
         f"{outcome.tokens} tokens, ${outcome.cost_usd:.6f}. Written: {output}"
     )
+
+
+@mcp_app.callback()
+def mcp() -> None:
+    """The MCP server for outside agents."""
+
+
+@mcp_app.command("serve")
+def mcp_serve() -> None:
+    """Run the MCP server over stdio (for an MCP client or the MCP inspector)."""
+    # Imported here: only this command needs the MCP SDK.
+    from aiact.mcp.server import serve
+
+    serve()
 
 
 @obligations_app.callback()
