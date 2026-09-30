@@ -4,7 +4,8 @@
     "cd backend && uv run ruff check . && uv run ruff format --check .",
     "cd backend && uv run pyright",
     "cd backend && uv run pytest -q",
-    "cd backend && uv run aiact deps check"
+    "cd backend && uv run aiact deps check",
+    "cd frontend && corepack pnpm lint && corepack pnpm build && corepack pnpm test"
   ],
   "link_files": [
     "backend/.env"
@@ -20,6 +21,11 @@
   "lanes": {
     "Corpus": {
       "deny": ["eval"],
+      "allow": [],
+      "reviewers": []
+    },
+    "Engine": {
+      "deny": ["eval/commission_examples", "eval/cases/commission_b", "eval/split.json"],
       "allow": [],
       "reviewers": []
     }
@@ -44,8 +50,11 @@
   },
   "decisions": {
     "reserved": {
+      "002": "B11 appliedAI licence",
       "003": "X1 embedding model choice",
-      "006": "V4 judge"
+      "004": "X2 engine model",
+      "006": "V4 judge",
+      "007": "W0 freshness"
     }
   },
   "format": {
@@ -75,7 +84,7 @@
     {
       "rule": "Labels under eval/cases/ are frozen at labels-v1; later changes are logged in eval/LABEL_CHANGES.md",
       "source": "CLAUDE.md › Global rules",
-      "enforced_by": ["isolation-auditor", ".claude/rules/eval.md"]
+      "enforced_by": ["isolation-auditor", ".claude/rules/eval.md", ".github/workflows/label-freeze.yml", "aiact evaluate label-freeze"]
     },
     {
       "rule": "Secrets live only in .env, never committed",
@@ -86,6 +95,11 @@
       "rule": "Dependency manifest matches the lockfiles",
       "source": "CLAUDE.md › Commands",
       "enforced_by": ["checks (aiact deps check)", ".githooks pre-commit/pre-push", "CI"]
+    },
+    {
+      "rule": "Engine stories never see the Commission examples, the Pile B cases or the split; own cases stay readable for replay tests",
+      "source": "backlog review 2026-09-30 (T3); decision 015",
+      "enforced_by": ["lanes.Engine", "isolation-auditor"]
     }
   ],
   "cost_cap_usd": 0.1,

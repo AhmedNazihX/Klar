@@ -26,7 +26,7 @@ frontend/           Vite + React + TypeScript
 docs/               BACKLOG.md, LAYOUT.md, decisions/
 ```
 
-## Commands (run from `backend/`)
+## Commands (run from `backend/`; frontend: `cd frontend && corepack pnpm lint && corepack pnpm build && corepack pnpm test`)
 - `uv sync`: install
 - `uv run pytest`: tests (live model tests are skipped unless `-m live`)
 - `uv run ruff check . && uv run ruff format --check .`: lint and format
@@ -48,7 +48,8 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 ## Story workflow (parallel agents, `foreman` plugin)
 - **Design:** the INIT above (this project has no `docs/DESIGN.md`). **Backlog:** `docs/BACKLOG.md`. **Layout:** `docs/LAYOUT.md`; every new file fits it.
   **Decisions:** `docs/decisions/`. Settings: `.claude/foreman.json`; its `checks` is the only list of the
-  lint, type and test commands ("the global checks"): change them there.
+  lint, type and test commands ("the global checks", backend and frontend): change them there. Decision numbers
+  kept for a story are under `decisions.reserved`.
 - **Commands:** `/foreman:next` picks the right step. `/foreman:status` shows what's ready;
   `/foreman:story-start <IDs>` launches one `foreman:story-worker` per story, each in its own worktree;
   `/foreman:story-finish <ID>` has `foreman:dod-verifier` and the reviewers (`reviewers` in the config, plus
@@ -70,7 +71,7 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
   shell-command checks are best effort. Project rules and their enforcement are listed under `guardrails`.
 
 ## Project rules for parallel work
-- **Benchmark isolation in practice.** The Corpus lane (B1, C*) denies `eval/`; C2 may read `eval/split.json` only. The engine gate blocks `backend/aiact/engine/` until `eval/split.json` is committed. `isolation-auditor` reviews every story; the CI isolation job and `tests/test_isolation.py` are the backstops.
+- **Benchmark isolation in practice.** The Corpus lane (B1, C*) denies `eval/`; C2 may read `eval/split.json` only. The Engine lane (E4, E6, E8–E11) denies `eval/commission_examples`, `eval/cases/commission_b` and `eval/split.json`; own cases stay readable for replay tests. The engine gate blocks `backend/aiact/engine/` until `eval/split.json` is committed. `isolation-auditor` reviews every story; the CI isolation job and `tests/test_isolation.py` are the backstops.
 - **Database is shared.** All worktrees use the same local Supabase instance. Create migrations only with `supabase migration new` (timestamped names), and never run `supabase db reset`: it wipes the corpus every worktree relies on. Only one running story at a time may change the schema (`Resource: db-schema`). Tests isolate themselves with a transaction per test or a per-story schema.
 - **Don't name things with the bare word `eval`** in shell commands (for example `supabase migration new eval`): the lane guard reads it as a path. Use names like `eval_records`.
 - **Lockfiles.** If `uv.lock` conflicts, regenerate it with `uv lock`, then run `uv run aiact deps generate` and commit `docs/DEPENDENCIES.md` and `docs/dependency-licences.json` with it. Case changes need `uv run aiact evaluate isolation-embed` and a committed `eval/isolation/embeddings.json`; on a merge conflict, regenerate it.
