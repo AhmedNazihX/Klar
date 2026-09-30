@@ -13,7 +13,7 @@ label:
   risk_class: out_of_scope
 label_citation: ["art:3:1", "guide:guide-definition:para:49", "guide:guide-definition:para:51"]
 notes: >-
-  Draft, pending user approval. Class: the suggestion is a plain historical average per product
+  Approved by user 2026-09-30. Class: the suggestion is a plain historical average per product
   and weekday plus a manual uplift. guide-definition para 49 and 51 place systems whose
   performance comes from a basic statistical rule, such as a shop's demand forecast that predicts
   the mean, outside the AI system definition, so it is not an AI system under Art. 3(1). Role:

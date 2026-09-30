@@ -17,7 +17,7 @@ label:
   annex_point: "annex:III:5:b"
 label_citation: ["art:3:1", "guide:guide-definition:para:42", "annex:III:5:b", "art:6:3"]
 notes: >-
-  Draft, pending user approval. Open question: is a logistic-regression scorecard fitted on the
+  Approved by user 2026-09-30. Open question: is a logistic-regression scorecard fitted on the
   bank's data an AI system under Art. 3(1)? Reading A (AI system; the stricter reading and the
   label): the model is learned from data and infers a default probability that decides
   applications, which is the capability to infer of recital 12; guide-definition para 42 is about

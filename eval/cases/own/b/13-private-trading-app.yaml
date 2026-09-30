@@ -13,15 +13,14 @@ label:
   risk_class: out_of_scope
 label_citation: ["art:2:10", "art:3:4"]
 notes: >-
-  Draft, pending user approval. Class: the app is an AI system (it learns from price data and
+  Approved by user 2026-09-30. Class: the app is an AI system (it learns from price data and
   decides trades), but the person asking uses it in a purely personal, non-professional activity,
   so he is not a deployer (Art. 3(4)) and Art. 2(10) excludes the deployer obligations; nothing in
-  the Act applies to him. Role: none. Doubt: user rule (2) of 2026-09-29 says the class describes
-  the system, whoever bears the duties; on that rule the label would be minimal_risk (investment
-  management is not in Annex III, and the app has no Art. 50 function) with no role. The draft
-  follows INIT > Risk classes ("an exclusion applies" is out_of_scope), because the one asking is
-  the private user and the provider is not the one describing the system. The user decides which
-  convention holds.
+  the Act applies to him. Role: none. Decision (user, 2026-09-30): a purely personal,
+  non-professional use under Art. 2(10) is labelled out_of_scope, following INIT > Risk classes
+  ("an exclusion applies"). This is an exception to rule (2) of 2026-09-29 (the class describes the
+  system, whoever bears the duties), which would otherwise give minimal_risk (investment management
+  is not in Annex III, and the app has no Art. 50 function).
 tags:
   - "category:b"
   - "scope:art2_10"

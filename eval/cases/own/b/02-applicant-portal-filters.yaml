@@ -16,7 +16,7 @@ label:
   risk_class: out_of_scope
 label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
 notes: >-
-  Draft, pending user approval. Class: the system filters applications on criteria the recruiter
+  Approved by user 2026-09-30. Class: the system filters applications on criteria the recruiter
   sets herself and sorts them by date; the description rules out a trained model, scores and
   ranking. That is basic data processing (guide-definition para 46: database systems that sort
   or filter data on specific criteria) and rules defined solely by people (recital 12), so it is not

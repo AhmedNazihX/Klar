@@ -15,7 +15,7 @@ label:
   risk_class: out_of_scope
 label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
 notes: >-
-  Draft, pending user approval. Class: the software executes pay rules written and maintained
+  Approved by user 2026-09-30. Class: the software executes pay rules written and maintained
   solely by people; it derives nothing from data, so it lacks the capability to infer and is not an
   AI system under Art. 3(1) (recital 12: systems based on rules defined solely by natural persons
   to automatically execute operations; guide-definition para 46: basic data processing that

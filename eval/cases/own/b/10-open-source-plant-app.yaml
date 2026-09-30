@@ -13,7 +13,7 @@ label:
   risk_class: out_of_scope
 label_citation: ["art:2:12", "recital:102", "recital:103"]
 notes: >-
-  Draft, pending user approval. Class: an AI system released under a free and open-source licence
+  Approved by user 2026-09-30. Class: an AI system released under a free and open-source licence
   (weights and code public, free to use, modify and redistribute: recital 102), with no
   monetisation of any kind (recital 103). It is not high-risk (plant disease is not in Annex III or
   Annex I), not an Art. 5 practice and has no Art. 50 function (it labels photos, it doesn't chat
