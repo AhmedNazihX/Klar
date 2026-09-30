@@ -169,6 +169,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Notes from merged stories: B2 (001): carry `accepted_bases`, `label_status` and `flip_variants` from examples.jsonl into the cases; hr-ex-307 becomes a `legally_ambiguous` case. Write each description WITHOUT the row's flip-variant feature, and expect the engine to ask about or flag it (user product rule); a flip-variant row may also yield a variant case with the variant's verdict. hr-ex-283: describe all three steps. Annex I high rows carry the Art. 6(1) third-party-assessment note. F7 follow-up lands here: extend `BenchmarkCase` for any-of basis/citation matching (bare `art_6_3_filter` matches any lettered entry; a lettered answer matches the same letter or the bare form) and a `label_status` field.
   **From V2 (merged):** add `accepted_bases` and the flip-variant provisions to the case model so `metrics.basis_matches` and `flags_flip_variant` can be wired into `case_scores`/`summarize` (tested helpers, not yet reached).
   **From C6's isolation audit:** hr-ex-290 shares 22 of its 58 words with visible `guide:guide-high-risk-annex-iii:para:419`; both quote Recital 61, so it is statutory wording, not a leak. The rewrite of hr-ex-290 must not reuse Recital 61's phrasing ("purely ancillary administrative activities…", "anonymisation or pseudonymisation of judicial decisions…").
+  **Decision 016:** the cases rewritten from hr-ex-269 and hr-ex-031 are contaminated (the corpus retells them in annex-iii para:102 and para:152). Write them as usual and keep their `source_example_id`, so the eval code can flag them.
 
 - [ ] **B5a–e · Own cases, one sub-story per category** · Deps: F7 · Parallel: with each other and with B2–B4 · Type: mixed
   Context: INIT › Test sets (Own cases), Label rules, Omnibus details. Categories: **a** Art. 50 transparency (including the 50(2) grace period), **b** out-of-scope software (not an AI system under Art. 3(1), exclusions), **c** the December 2026 prohibitions plus the classic Art. 5 practices, **d** Art. 25 role switches, GPAI-based systems, importer and distributor, **e** Annex I flags. At least 25% of each category in German. Output: `eval/cases/own/<category>/*.yaml`.
@@ -398,6 +399,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   DoD: the numbers are stored; the failure cases are listed, grouped by step, to guide the engine fixes.
   **From V1:** before the first real run, consider a migration adding `eval_runs.status`/`finished_at` and per-case `cost_usd`/`tokens`/`error` columns (today in `config.outcome` and reserved scores); the one-schema-story rule applies. The CLI needs `DATABASE_URL` set (no fallback to the local Supabase URL).
   **From V2:** the downgrade rate "with and without key-fact questions" (INIT › Metrics) comes from two runs, not one metric; plan both. Consider a /decision record for V2's denominator rules (module docstring of metrics.py).
+  **Decision 016:** report the headline accuracy twice: over all held-out cases, and without the contaminated ones (cases from hr-ex-269 and hr-ex-031, list in `eval/isolation/contaminated.json`); name both cases and the decision in the report.
 
   **Decision 012:** the gap run is `--exclude-mode all`, which turns C6's default Pile B exclusion off; the reported number keeps it on.
   **From T1:** run through `/eval`. `aiact evaluate report` prints neither the run's status and exclude mode nor `git_dirty`, so a dirty run's block shows a commit it may not match: print all three (or name a dirty run in the purpose line). In the skill's step 3, check `git status` before a run and let the user choose between committing and running dirty. Consider a stored-run command for the held-out vs all gap so reports can quote it. `backend/.env` has no `DATABASE_URL` yet.
@@ -484,6 +486,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **W1 · Final evaluation (2 full runs)** · Deps: V5–V10, P7 · Type: agent
   Output: `eval/reports/final.md` with every INIT metric, per benchmark, per language and per business function, the gap number, and head-to-head.
   DoD: every metric in INIT › Metrics has a number with its run_id; both full runs are stored in `eval_runs`; the total cost is recorded and is within the budget.
+  **Decision 016:** the final numbers are given with and without the two contaminated cases (hr-ex-269, hr-ex-031).
 
 - [ ] **S2 · Premium comparison** · Deps: V8 · Type: agent
   Output: Claude Sonnet 5 on 25 cases, added to the report.
