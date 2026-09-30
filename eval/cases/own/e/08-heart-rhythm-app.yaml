@@ -15,7 +15,7 @@ label:
   role: provider
 label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:3:12"]
 notes: >-
-  Draft, pending user approval. Missing fact: the intended purpose. If the company gives the app a
+  Approved by user 2026-09-30. Missing fact: the intended purpose. If the company gives the app a
   medical purpose (detecting signs of atrial fibrillation), it is a medical device under the MDR
   (Annex I Section A point 11) and, as software informing diagnosis, would need a notified body,
   so Art. 6(1) would be met: high_risk. If it is marketed as a fitness feature with no medical

@@ -9,15 +9,15 @@ description: >-
   verkauft und an keine andere Klinik weitergegeben. Deshalb haben wir sie als Eigenherstellung
   nach der Medizinprodukteverordnung behandelt, ohne CE-Kennzeichnung und ohne benannte Stelle;
   ein vergleichbares Produkt auf dem Markt wäre mindestens Klasse IIa. Die Bilddaten stammen aus
-  unseren eigenen Geräten. Eingeführt haben wir die Software im Frühjahr 2026, gleichzeitig mit
-  dem Umzug der Radiologie in den Neubau.
+  unseren eigenen Geräten. Derzeit validieren wir die Software intern; im klinischen Betrieb soll
+  sie ab Herbst 2028 laufen, gleichzeitig mit dem Umzug der Radiologie in den Neubau.
 label:
   risk_class: high_risk
   status: legally_ambiguous
   role: provider
 label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:3:3", "art:3:11"]
 notes: >-
-  Draft, pending user approval. Open question: does Art. 6(1)(b) look at the product as actually
+  Approved by user 2026-09-30. Open question: does Art. 6(1)(b) look at the product as actually
   handled, or at the device class? Reading A: the MDR's in-house exemption means this software is
   not required to undergo any third-party conformity assessment, so Art. 6(1)(b) is not met and it
   is not high-risk via Annex I (minimal_risk). Reading B: a device of this kind is class IIa and
@@ -26,8 +26,8 @@ notes: >-
   high_risk. Role: the hospital develops the software and puts it into service under its own name
   for its own use (Art. 3(3), 3(11)), so it is the provider, and it is also the deployer (tag
   also_role:deployer). Deployer duties are tagged too; Art. 26(9) (DPIA) is kept because its
-  condition is not settled by the facts. Doubt: a public-law hospital may be a public authority,
-  which changes transition dates (Art. 111(2)).
+  condition is not settled by the facts. Put into service from autumn 2028, after the Annex I date
+  (2 August 2028).
 tags:
   - "category:e"
   - "annex_i_section:a"

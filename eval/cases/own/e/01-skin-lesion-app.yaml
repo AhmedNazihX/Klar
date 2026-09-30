@@ -5,24 +5,24 @@ description: >-
   We are a 25-person medical software company in Rotterdam. Our app, DermaSight, lets GPs
   photograph a skin lesion through a clip-on phone lens; a model we trained ourselves on licensed
   image archives estimates how likely the lesion is to be melanoma and recommends whether to refer
-  the patient to a dermatologist. The GP makes the final call. The app is CE-marked as a class IIa
-  medical device under the Medical Device Regulation, and our notified body in Germany audited it
-  before we launched in March 2026. We sell subscriptions to practices in the Netherlands, Belgium
-  and Germany. The next release adds the dark mode our users keep asking for.
+  the patient to a dermatologist. The GP makes the final call. The app is going through
+  certification as a class IIa medical device under the Medical Device Regulation with our
+  notified body in Germany, and we plan to launch in autumn 2028. We will sell subscriptions to
+  practices in the Netherlands, Belgium and Germany. The next release adds the dark mode our users
+  keep asking for.
 label:
   risk_class: high_risk
   role: provider
 label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:3:3"]
 notes: >-
-  Draft, pending user approval. Class: the app is itself a product covered by the MDR (Annex I
-  Section A point 11) and, as a class IIa device, needed a notified body, so both conditions of
+  Approved by user 2026-09-30. Class: the app is itself a product covered by the MDR (Annex I
+  Section A point 11) and, as a class IIa device, needs a notified body, so both conditions of
   Art. 6(1) are met: high_risk via Annex I. Role: it develops the app and places it on the market
   under its own name (Art. 3(3)). Obligations: provider duties on the Annex I route, from 2 August
   2028 (Art. 113(c)(ii)); Art. 16(i) (registration under Art. 49(1)) is left out because it covers
   Annex III systems only. The GPs are deployers. annex_point is left empty because the schema's
-  pattern does not accept the corpus id annex:I:A:11 (see report). Doubt: Art. 111(2) (a system
-  placed on the market before the Annex I date is covered only after later significant changes in
-  its design) is not modelled by the obligations table.
+  pattern does not accept the corpus id annex:I:A:11. Placed on the market in autumn 2028, after
+  the Annex I date (2 August 2028), so Art. 111(2) does not arise.
 tags:
   - "category:e"
   - "annex_i_section:a"

@@ -15,14 +15,14 @@ label:
   role: provider
 label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:B:21", "art:2:2"]
 notes: >-
-  Draft, pending user approval. Missing fact: whether the kit must undergo a third-party
-  conformity assessment under the Machinery Regulation (Annex I Section B point 21). That depends
-  on facts the description leaves open, such as whether the model keeps learning in the field and
-  whether harmonised standards cover it. The kit is clearly a safety component (it slows or stops
-  the arm to protect people, Art. 3(14)), so Art. 6(1)(a) is met and only (b) is open. Working
-  assumption: high_risk (stricter reading). Section B, so Art. 2(2) limits the AI Act to Art.
-  6(1), 60a and 102 to 112, and no obligation is tagged. The engine should name the Machinery
-  Regulation and ask about the conformity route.
+  Approved by user 2026-09-30. Missing fact: whether the kit must undergo a third-party conformity
+  assessment under the Machinery Regulation (Annex I Section B point 21). That depends on facts
+  the description leaves open, such as whether the model keeps learning in the field and whether
+  harmonised standards cover it. The kit is clearly a safety component (it slows or stops the arm
+  to protect people, Art. 3(14)), so Art. 6(1)(a) is met and only (b) is open. Working assumption:
+  high_risk (stricter reading). Section B, so Art. 2(2) limits the AI Act to Art. 6(1), 60a and
+  102 to 112, and no obligation is tagged. The engine should name the Machinery Regulation and ask
+  whether the model keeps learning after delivery and whether harmonised standards cover it.
 tags:
   - "category:e"
   - "annex_i_section:b"
