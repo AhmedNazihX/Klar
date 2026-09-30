@@ -1,0 +1,33 @@
+id: own-b-07-satellite-dual-use
+set_name: own
+language: de
+description: >-
+  Wir sind ein Geodaten-Unternehmen aus Bremen mit 70 Mitarbeitenden. Unsere Software wertet
+  Satellitenbilder aus: Ein neuronales Netz, das wir mit zehntausenden markierten Aufnahmen
+  trainiert haben, erkennt Fahrzeuge, frisch angelegte Wege und Veränderungen an der Vegetation.
+  Ursprünglich haben wir sie für die Bundeswehr entwickelt, die damit Truppenbewegungen verfolgt.
+  Seit diesem Sommer verkaufen wir dieselbe Software auch an Landesforstverwaltungen und
+  Naturschutzverbände in mehreren EU-Ländern, die damit illegale Rodungen und unerlaubte
+  Waldwege aufspüren. Beide Kundengruppen bekommen dasselbe Programm unter unserem Namen, nur mit
+  anderen Kartenvorlagen. Personen erkennt die Software nicht, dafür ist die Auflösung viel zu
+  grob. Nächstes Jahr ziehen wir in ein größeres Büro in der Überseestadt.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:2:3", "recital:24", "art:3:1", "art:3:3"]
+notes: >-
+  Approved by user 2026-09-30. Scope: an AI system (trained network that infers detections) whose
+  provider places it on the market for a military purpose and also for civilian purposes;
+  recital 24 says such a system falls within the Regulation and its provider must comply, so the
+  Art. 2(3) exclusion does not cover it (it only covers use "exclusively" for military, defence or
+  national security). Class: detecting vehicles, tracks and forest change is not in Annex III or
+  Annex I and has no Art. 50 function (no interaction with people, no synthetic content), so
+  minimal_risk. Role: it develops the system and places it on the market under its own name,
+  so it is the provider (Art. 3(3)). Obligations: AI literacy only. Compare own-b-06
+  (military only: out of scope). Doubt: the Bundeswehr's own use stays excluded; the label
+  describes the system as placed on the civilian market.
+tags:
+  - "category:b"
+  - "scope:art2_3"
+  - "trap:exclusion_not_met"
+  - "obligation:art:4:1"

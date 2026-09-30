@@ -1,0 +1,27 @@
+id: own-b-10-open-source-plant-app
+set_name: own
+language: en
+description: >-
+  We're a volunteer association of gardeners and hobby programmers in Ghent, about 40 active
+  members and no employees. We trained an image model that looks at a photo of a tomato, pepper or
+  cucumber leaf and says which of twelve common diseases it probably has, if any. The model
+  weights, the training code and a simple phone app are on GitHub under the Apache 2.0 licence;
+  anyone can download, change and redistribute them. We don't charge for anything, offer no paid
+  support, show no ads and don't collect the photos people take. Last year about 8,000 people
+  installed the app. Our members also run seed-swap afternoons in the city library.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:2:12", "recital:102", "recital:103"]
+notes: >-
+  Approved by user 2026-09-30. Class: an AI system released under a free and open-source licence
+  (weights and code public, free to use, modify and redistribute: recital 102), with no
+  monetisation of any kind (recital 103). It is not high-risk (plant disease is not in Annex III or
+  Annex I), not an Art. 5 practice and has no Art. 50 function (it labels photos, it doesn't chat
+  or generate content), so the Art. 2(12) exclusion applies. Role: none. Compare own-b-11, where an
+  open-source model is put into service as a high-risk system. Doubt: whether a phone app
+  distributed to 8,000 users is still only "released" under the licence; Art. 2(12) makes no
+  distinction by reach.
+tags:
+  - "category:b"
+  - "scope:art2_12"
+  - "obligations:none"

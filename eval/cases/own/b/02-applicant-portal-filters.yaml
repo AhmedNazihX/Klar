@@ -1,0 +1,30 @@
+id: own-b-02-applicant-portal-filters
+set_name: own
+language: de
+description: >-
+  Wir sind eine Spedition aus Bielefeld mit rund 400 Beschäftigten und suchen ständig
+  Berufskraftfahrer. Bewerbungen laufen über ein Bewerbermanagement-System, das wir als
+  Cloud-Abo nutzen. Unsere Personalreferentin legt pro Stelle feste Pflichtkriterien an, zum
+  Beispiel Führerscheinklasse CE, Fahrerkarte vorhanden, Deutschkenntnisse mindestens B1 und
+  Wohnort im Umkreis von 80 Kilometern. Das System blendet alle Bewerbungen aus, bei denen im
+  Formular eines dieser Häkchen fehlt, und sortiert den Rest nach Eingangsdatum. Laut
+  Produktbeschreibung des Anbieters steckt dahinter kein trainiertes Modell, es gibt keine
+  Punktwerte und keine Rangfolge; es werden nur genau die Filter angewendet, die wir eintragen. Die
+  ausgeblendeten Bewerbungen schaut sich die Referentin trotzdem einmal pro Woche an. Nebenbei
+  verschickt das Tool auch die Terminbestätigungen für Vorstellungsgespräche.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
+notes: >-
+  Approved by user 2026-09-30. Class: the system filters applications on criteria the recruiter
+  sets herself and sorts them by date; the description rules out a trained model, scores and
+  ranking. That is basic data processing (guide-definition para 46: database systems that sort
+  or filter data on specific criteria) and rules defined solely by people (recital 12), so it is not
+  an AI system under Art. 3(1) and Annex III 4(a) is never reached. Role: none. Trap: the
+  recruitment context and the word "filter" suggest a high-risk hiring tool. Doubt: none on the
+  law; the facts state the absence of a model explicitly (user rule 4, 2026-09-29).
+tags:
+  - "category:b"
+  - "scope:not_ai_system"
+  - "trap:annex_iii_context"
+  - "obligations:none"

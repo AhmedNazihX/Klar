@@ -1,0 +1,32 @@
+id: own-b-04-card-game-opponent
+set_name: own
+language: de
+description: >-
+  Wir sind ein Spielestudio aus Leipzig mit acht Leuten und verkaufen eine Skat-App für Android
+  und iOS, die vor allem ältere Spielerinnen und Spieler nutzen. Wer allein spielt, bekommt zwei
+  Computergegner. Deren Spielstärke haben unsere Entwickler selbst programmiert: Eine
+  Bewertungsfunktion mit festen Regeln schätzt ein, wie gut eine Hand und eine Spielsituation sind,
+  und der Gegner rechnet die nächsten Stiche durch und wählt die Karte mit dem besten Ergebnis.
+  Trainiert wurde nichts, weder mit gespielten Partien noch mit Daten unserer Nutzer, und die
+  Gegner verändern sich auch nicht durch das Spielen. Die drei Schwierigkeitsstufen unterscheiden
+  sich nur darin, wie weit vorausgerechnet wird. Die App kostet einmalig 4,99 Euro; im Herbst
+  kommt eine Doppelkopf-Version dazu.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:3:1", "guide:guide-definition:para:48"]
+notes: >-
+  Approved by user 2026-09-30. Class: the computer opponent is a look-ahead search with a
+  hand-written evaluation function and no learning from data. guide-definition para 48 names this
+  kind of program (classical heuristics; its example is a chess program with minimax and heuristic
+  evaluation) as outside the definition, so it is not an AI system under Art. 3(1). Role: none.
+  Counter-reading: guide-definition para 39 lists "search and optimisation methods" and
+  expert-encoded rules among the logic- and knowledge-based techniques that can make a system an
+  AI system; on that reading the opponent would be minimal_risk (a game opponent is not a chat
+  assistant under Art. 50(1)). The label follows para 48, whose example is the closer match.
+  Unlike own-b-05, this stays decided: para 48's own worked example (a minimax chess program with a
+  heuristic evaluation) matches this system almost exactly, whereas para 42's wording and examples
+  don't fit a scoring model, so b-05's conflict is genuinely open and this one isn't.
+tags:
+  - "category:b"
+  - "scope:not_ai_system"
+  - "obligations:none"

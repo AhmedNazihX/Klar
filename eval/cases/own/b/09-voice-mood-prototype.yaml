@@ -1,0 +1,28 @@
+id: own-b-09-voice-mood-prototype
+set_name: own
+language: de
+description: >-
+  Wir sind ein Start-up aus München mit elf Leuten und entwickeln gerade eine Software für
+  Callcenter: Sie soll an der Stimme erkennen, ob ein anrufender Kunde verärgert, unsicher oder
+  zufrieden ist, und das dem Mitarbeiter am Bildschirm anzeigen. Im Moment gibt es nur einen
+  Prototyp. Trainiert und getestet wird er bei uns im Büro, mit gekauften Sprachaufnahmen von
+  Schauspielern und mit künstlich erzeugten Stimmen. Echte Anrufe hat er noch nie gehört, wir
+  haben noch keinen Pilotkunden, und verkauft oder irgendwo in Betrieb genommen ist er auch nicht.
+  Den Marktstart planen wir frühestens Ende 2027, vorher suchen wir noch eine Finanzierungsrunde.
+  Unser Büro teilen wir uns übrigens mit einer Agentur für Hörbücher.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:2:8", "recital:25", "art:3:57"]
+notes: >-
+  Approved by user 2026-09-30. Class: development and testing of an AI system before it is
+  placed on the market or put into service, in the office with bought and synthetic recordings,
+  so Art. 2(8) excludes the activity (recital 25: product-oriented research, testing and
+  development). The exception for testing in real-world conditions does not bite: nothing is tested
+  outside the lab (Art. 3(57)). Role: none. Trap: once sold, detecting callers' emotions from their
+  voice would be emotion recognition, Annex III 1(c) (high-risk); the label is the situation today.
+  Doubt: whether the engine should also flag the future class; that is not scored.
+tags:
+  - "category:b"
+  - "scope:art2_8"
+  - "trap:future_high_risk"
+  - "obligations:none"

@@ -1,0 +1,29 @@
+id: own-b-01-overtime-payroll-rules
+set_name: own
+language: en
+description: >-
+  We're a contract cleaning company in Rotterdam with around 900 cleaners working in offices,
+  hospitals and schools. Our payroll runs on a package we bought from a Dutch software firm in
+  2019. Each month it takes the hours from the time clocks and works out every employee's pay:
+  the collective agreement's night and Sunday supplements, overtime above 38 hours a week, travel
+  allowances and holiday pay. Our payroll team typed all of these rules into the system when we
+  set it up and changes them by hand when the agreement is renegotiated. The software doesn't learn
+  anything from past payslips; it applies the rules exactly as entered, and our payroll officer
+  checks every run before payment. We're also moving our holiday requests into the same package
+  next year.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
+notes: >-
+  Approved by user 2026-09-30. Class: the software executes pay rules written and maintained
+  solely by people; it derives nothing from data, so it lacks the capability to infer and is not an
+  AI system under Art. 3(1) (recital 12: systems based on rules defined solely by natural persons
+  to automatically execute operations; guide-definition para 46: basic data processing that
+  follows predefined, explicit instructions). Role: none, because the Act does not apply, so the
+  engine sets no role. Checks that affecting workers' pay alone does not pull a rule engine into
+  Annex III 4(b).
+tags:
+  - "category:b"
+  - "scope:not_ai_system"
+  - "trap:annex_iii_context"
+  - "obligations:none"

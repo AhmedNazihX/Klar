@@ -1,0 +1,25 @@
+id: own-b-06-recon-vehicle-detection
+set_name: own
+language: en
+description: >-
+  We're a defence electronics firm in Toulouse with about 1,300 employees. One of our product lines
+  is software that goes through footage from reconnaissance drones and marks armoured vehicles,
+  artillery and field positions for the analysts in a command post. It was trained on years of
+  annotated military imagery. We sell it only to the armed forces of EU and NATO member states
+  under defence procurement contracts; it's export-controlled, and there is no civilian or police
+  version, nor any plan for one. The analysts confirm every marking before anything is passed on.
+  Our company also makes radar components for civil aviation, which have nothing to do with this
+  software.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:2:3", "recital:24"]
+notes: >-
+  Approved by user 2026-09-30. Class: an AI system (learned from annotated imagery, infers
+  detections), but placed on the market exclusively for military and defence purposes, so the
+  second subparagraph of Art. 2(3) excludes it, whoever sells it (recital 24: regardless of the
+  type of entity). The description rules out any civilian or law-enforcement use; compare
+  own-b-07, where a second, civilian market brings the system back into scope. Role: none.
+tags:
+  - "category:b"
+  - "scope:art2_3"
+  - "obligations:none"
