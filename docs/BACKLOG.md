@@ -52,7 +52,7 @@ flowchart LR
 | Infra | F0, F1, F8, F2, F4, F5, F6, X3 | F1 first; the rest fan out right after (F2 waits for F8) |
 | Contract & eval | F3, F7, V1, V2, V3, V4 | Pure code; can run well ahead of the engine using dummy classifiers |
 | Corpus | B1, C1, C2, C3, C4, C5, C6, C8 | The critical path (C8 is off it). Never reads `eval/` |
-| Benchmark | B2–B12, V10 | Human-heavy. Agents draft, the user approves |
+| Benchmark | B2–B12, V10a | Human-heavy. Agents draft, the user approves |
 | Obligations | C7 | Independent after F3 and F4 |
 | Engine | E1–E10 | E3, E4, E5, E6 and E7 are fully parallel once E1, C5, C6 (and C7 for E7) are done |
 | Product | P1–P13 | After E10, except P2a, P3 and P4, which can start earlier |
@@ -65,7 +65,7 @@ flowchart LR
 | 1 | F8, F3, F4, F6, B1, B11 (human, long) | F8 done → F2; F3 done → F7; F4 done → F5, C7; B1 done → B2, C1 |
 | 2 | F2, F5, F7, B2, C1, X3, C7, B12 | B2 → B3 |
 | 3 | B3, C2, C3, V1, V2, B5a–e, B7 | B3 committed; C3 done |
-| 4 | C4, C5, B4, B6, B8, E1, V4, V10 | C4 → C6 |
+| 4 | C4, C5, B4, B6, B8, E1, V4, V10a | C4 → C6 |
 | 5 | C6, B9, X0, P2a, P3 | C6 done |
 | 6 | V6 then X1; X2, E2, E3, E4, E5, E6, E7, B13, V3 | X2 decision; B10 frozen |
 | 7 | E8 → E9 → E10 (serial), P4 scaffold | E10 done |
@@ -426,9 +426,14 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Output: `eval/reports/appliedai_review.md` (a verdict per disagreement: engine error, outdated label, or ambiguous; Annex I reported separately; accuracy before and after excluding outdated labels).
   DoD: every disagreement has a verdict written by the user; accuracy before and after excluding outdated labels is reported with its run_id; Annex I cases are listed separately.
 
-- [ ] **V10 · Head-to-head with an existing checker** · Deps: B10 · Parallel: everything after the freeze · Type: human
-  Output: `eval/reports/head_to_head.md` (20–30 headline cases run by hand through the FLI or Commission checker, with the raw answers). The engine column is filled in after V8.
-  DoD: 20–30 cases are saved with the checker's raw answers and the date run; after V8, the engine column is filled from a stored run_id; both scores are reported, whichever way they fall.
+- [ ] **V10a · Head-to-head: run the existing checker** · Deps: B10 · Parallel: everything after the freeze · Type: human
+  Output: `eval/reports/head_to_head.md` (20–30 headline cases run by hand through the FLI or Commission checker, with the raw answers and an empty engine column).
+  DoD: 20–30 cases are saved with the checker's raw answers and the date run.
+  **Split from V10 (user, 2026-09-30):** the engine column needs V8's stored run, so it moved to V10b; this half can start as soon as the labels are frozen.
+
+- [ ] **V10b · Head-to-head: engine column and scores** · Deps: V8, V10a · Type: agent
+  Input: `eval/reports/head_to_head.md` (V10a) and V8's stored headline run. Output: the same file with the engine column filled from a stored run_id and both scores.
+  DoD: every case has the engine's answer from a named run_id; both scores are reported, whichever way they fall.
 
 ## Phase 5 — Product surfaces
 
@@ -503,8 +508,9 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Output: `docs/decisions/007-freshness.md`: are the high-risk guidelines final? Has the simplified tech-doc form been published? Confirm the Bitkom 69% figure. If the guidelines changed: re-run B2–B4 as a logged label change and re-ingest.
   DoD: each of the three questions is answered with a source link and the date checked; if the guidelines changed, the follow-up label changes are logged in `eval/LABEL_CHANGES.md` and the re-ingestion is added to the backlog as a new story.
   Notes from merged stories: B2 (001): if the Commission has adopted final high-risk guidelines, the examples and their hr-ex numbering may change; 001 covers the 2026-05-19 draft only.
+  **From the backlog check (user, 2026-09-30):** if B10 isn't merged yet when W0 runs, don't create `eval/LABEL_CHANGES.md` here: record the label changes as an input to B10 instead (B10 creates the log).
 
-- [ ] **W1 · Final evaluation (2 full runs)** · Deps: V5–V10, P7 · Type: agent
+- [ ] **W1 · Final evaluation (2 full runs)** · Deps: V5–V9, V10b, P7 · Type: agent
   Output: `eval/reports/final.md` with every INIT metric, per benchmark, per language and per business function, the gap number, and head-to-head.
   DoD: every metric in INIT › Metrics has a number with its run_id; both full runs are stored in `eval_runs`; the total cost is recorded and is within the budget.
   **Decision 016:** the final numbers are given with and without the two contaminated cases (hr-ex-269, hr-ex-031).
