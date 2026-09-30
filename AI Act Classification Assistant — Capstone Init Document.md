@@ -49,7 +49,7 @@ Follow-up questions live outside the engine. The interface asks them, adds the a
 - **Obligations checklist:** duties with article references and dates for the role and risk class
 - **AI inventory:** classify a company's whole list of AI tools, with an overview table and a company-level summary
 - **Documentation drafting:** short deployer documents, plus skeletons of provider documents completed through a guided interview (see Documentation drafting)
-- **Original vs. amended toggle:** classify under the original Act or under the Act as amended by the Omnibus, to show how the July 2026 changes alter outcomes
+- **Original vs. amended toggle:** classify under the original Act or under the Act as amended by the Omnibus, to show how the July 2026 changes alter outcomes (the class and route; obligations are modelled for the amended text only, decision 020)
 - **Q&A about results:** questions about a result, or general AI Act questions within the corpus, answered with citations
 - **Languages:** English and German, including the interface, notices, questions, skeletons and citations from the official text in each language
 - **MCP server** with four tools, used by the engine internally as well

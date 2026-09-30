@@ -37,7 +37,7 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 
 ## Global rules
 - **Benchmark isolation.** Corpus code (`aiact/corpus`, `aiact/retrieval`, stories B1 and C*) must never read `eval/`. The one exception is story C2, which reads the `pile_b` ID list in `eval/split.json`. Benchmark work must never write to `data/` or the corpus tables. No test description or label is ever ingested.
-- **The split comes first.** `eval/split.json` is committed before anything under `aiact/engine/` exists. Labels under `eval/cases/` are frozen at tag `labels-v1`; any later change is logged in `eval/LABEL_CHANGES.md`.
+- **The split comes first.** `eval/split.json` is committed before anything under `aiact/engine/` exists. Each own category's labels are frozen before the engine node that replays it (decision 017, checked in CI by B10a) and the whole set is tagged `labels-v1` (B10b); any later change is logged in `eval/LABEL_CHANGES.md`.
 - **No live model calls in CI.** Tests use recorded responses. Mark live tests `@pytest.mark.live`.
 - **Done means green.** A story is done only when the `checks` in `.claude/foreman.json` pass and the story's DoD is met.
 - **Postgres.** Before touching Postgres or Supabase, load the `supabase-postgres-best-practices` skill, and the `supabase` skill too.

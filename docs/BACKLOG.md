@@ -1,10 +1,11 @@
 # Plan: AI Act Classification Assistant — Build Backlog
+Reviewed: 2026-09-30 (foreman:backlog-reviewer, whole backlog; decisions 017–024)
 
 ## Context
 The repo is greenfield: `AE.CAP_afa.md` (course brief), `AI Act Classification Assistant — Capstone Init Document.md` (the full design, called **INIT** below) and an empty `README.md`. The design is settled; this plan turns it into atomic stories with dependencies, a critical path and parallel lanes, so that any story can be picked up with a fresh context (or handed to a subagent) with no loss of quality. The timeline is 10+ weeks, so the full MVP plus stretch goals is in scope.
 
 INIT sets hard ordering rules that this backlog enforces:
-- **Benchmark isolation:** the Commission example split must be **committed before any engine code exists**, and own-case labels are **frozen before the build** (INIT › Benchmark isolation, Label rules).
+- **Benchmark isolation:** the Commission example split must be **committed before any engine code exists**, and own-case labels are **frozen before the build** (INIT › Benchmark isolation, Label rules). Since the engine was started before every own category was written, each category is frozen before the node that replays it (decision 017; B10a enforces it in CI).
 - **Engine and evaluation first.** Product features are views on the same result and come later (INIT › Risks: scope creep).
 - **Week-one checks:** Luna smoke test, embedding comparison, token cost (INIT › Tech stack, Engine safety net).
 
@@ -23,12 +24,14 @@ INIT sets hard ordering rules that this backlog enforces:
 
 **Global rules for every story**
 - **Isolation:** any story in the Corpus lane (B1, C*) must **never read `eval/`**. Any benchmark story must never write to `data/` or the corpus tables. This is how INIT's leak rule is kept even when agents run in parallel.
-- Python: `uv run ruff check`, `uv run pyright` and `uv run pytest` pass before a story is done. Tests that call models use recorded responses (F6), never live calls in CI.
+- The checks in `.claude/foreman.json` › `checks` (the only list) pass before a story is done. Tests that call models use recorded responses (F6), never live calls in CI.
 - Any story touching Postgres loads the `supabase-postgres-best-practices` skill first; Supabase work loads the `supabase` skill.
 - Library APIs (LangGraph, Docling, MCP SDK, RAGAS, FastAPI, TanStack) are checked through context7 before writing code.
 - A story that makes a decision writes a short record to `docs/decisions/NNN-title.md` (what, options measured, numbers, choice).
 - **Parallel agents use worktrees.** Run with the `foreman` plugin; see `CLAUDE.md` › Story workflow and › Project rules for parallel work. In short: one worktree and one `story/<ID>-<slug>` branch per story; a worktree is created only after all its Deps are merged; the orchestrator alone ticks this backlog; every story is reviewed by the `reviewers` in `.claude/foreman.json` and passes its `checks` before it is merged; migrations are created with `supabase migration new`, and only one story at a time may change the schema; Corpus-lane worktrees leave out `eval/` with sparse checkout.
 - **Migration names.** Names like `001_corpus.sql` in the stories below are logical names. The real files get the timestamp prefix from `supabase migration new` (for example `20261001120000_corpus.sql`).
+- **Generated API client and locale files.** Product stories that change the API regenerate `frontend/openapi.json` and `frontend/src/api/` and add strings to `frontend/src/i18n/locales/{en,de}.json`. On a merge conflict, regenerate the client (`pnpm gen:api`) and merge the locale keys; never merge generated files by hand.
+- **Paid budget.** The €50 total (INIT › Budget rules) is shared by every paid story (B9, X1a, X2, V4, V5, V6, V8, V9, S2, W1): each records its spend in its Outcome note, and the orchestrator raises the remaining key balance with the user before V8.
 
 ---
 
@@ -38,11 +41,11 @@ Computed from the Deps by the foreman plugin's `backlog.py plan`, with sizes wei
 
 ```mermaid
 flowchart LR
-  F1 --> B1 --> B2 --> B3 --> C2 --> C3 --> C4 --> C6 --> E5 --> E8 --> E9 --> E10 --> V8 --> V9 --> W1 --> W2 --> W3
+  F1 --> B1 --> B2 --> B3 --> C2 --> C3 --> C4 --> C6 --> E5 --> X2 --> E8 --> E9 --> E10 --> P1 --> P5 --> P5b --> P11 --> W1 --> W2 --> W3
 ```
 
-**Critical path (longest chain):** F1 → B1 → B2 → B3 → C2 → C3 → C4 → C6 → E5 (high-risk node, the hardest step) → E8 → E9 → E10 → V8 (first headline run) → V9 → W1 → W2 → W3. The split (B2, B3) is on the path, because C2 needs the Pile B list before the corpus can be loaded. V9 is `human`, so your time is on the path there.
-**Second chain that must converge on V8 in time:** F3 → F7 → B5/B4 → B9 → B10 (label freeze). It is human-heavy, so it should start in week 1.
+**Critical path (longest chain, after the 2026-09-30 review):** F1 → B1 → B2 → B3 → C2 → C3 → C4 → C6 (done) → E5 (high-risk node, the hardest step) → X2 (engine model smoke test) → E8 → E9 → E10 → P1 → P5 → P5b → P11 → W1 (build freeze, decision 024) → W2 → W3. The product stories are on the path now because W1 waits for them; V8 and V9 run beside it.
+**Second chain that must converge on V8 in time:** F3 → F7 → F7b → B4 → B9 → B10b (label tag). It is human-heavy (B4 is `Size: L`).
 **Hard gate:** B3 (split committed) must land before E1 opens.
 
 ## Parallel lanes (for agents)
@@ -52,26 +55,14 @@ flowchart LR
 | Infra | F0, F1, F8, F2, F4, F5, F6, X3 | F1 first; the rest fan out right after (F2 waits for F8) |
 | Contract & eval | F3, F7, V1, V2, V3, V4 | Pure code; can run well ahead of the engine using dummy classifiers |
 | Corpus | B1, C1, C2, C3, C4, C5, C6, C8 | The critical path (C8 is off it). Never reads `eval/` |
-| Benchmark | B2–B12, V10a | Human-heavy. Agents draft, the user approves |
+| Benchmark | F7b, B2–B12, V10a | Human-heavy. Agents draft, the user approves |
 | Obligations | C7 | Independent after F3 and F4 |
-| Engine | E1–E10 | E3, E4, E5, E6 and E7 are fully parallel once E1, C5, C6 (and C7 for E7) are done |
+| Engine | E1–E11 | E3, E4, E5, E6 and E7 are fully parallel once E1, C5, C6 (and C7 for E7) are done |
 | Product | P1–P13 | After E10, except P2a, P3 and P4, which can start earlier |
 
 ## Waves (what to launch together)
 
-| Wave | Launch in parallel | Gate to next wave |
-| --- | --- | --- |
-| 0 | F0, F1 | F1 done |
-| 1 | F8, F3, F4, F6, B1, B11 (human, long) | F8 done → F2; F3 done → F7; F4 done → F5, C7; B1 done → B2, C1 |
-| 2 | F2, F5, F7, B2, C1, X3, C7, B12 | B2 → B3 |
-| 3 | B3, C2, C3, V1, V2, B5a–e, B7 | B3 committed; C3 done |
-| 4 | C4, C5, B4, B6, B8, E1, V4, V10a | C4 → C6 |
-| 5 | C6, B9, X0, P2a, P3 | C6 done |
-| 6 | V6 then X1; X2, E2, E3, E4, E5, E6, E7, B13, V3 | X2 decision; B10 frozen |
-| 7 | E8 → E9 → E10 (serial), P4 scaffold | E10 done |
-| 8 | V5, V7, V8, P1, P2b, P8 | V8 first numbers |
-| 9 | P5, P7, V9, S2, then P6, P9, P10, P11, P12 | MVP feature-complete |
-| 10 | P13, W0, W1, S1, S3, then W2, W3 | Submission |
+Run `python3 <foreman>/scripts/backlog.py plan` for the current waves; a hand-written table went stale (backlog review, 2026-09-30).
 
 ---
 
@@ -88,6 +79,11 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   Output: an allowlist in `.claude/settings.json` built with the `fewer-permission-prompts` skill from real session history (for example `uv run`, `supabase`, `git worktree` and read-only git commands). Never allow `git push`, force operations or anything that reads secrets.
   DoD: the user has reviewed the allowlist; parallel workers run a story without read-only permission prompts.
   **Outcome:** 19-entry read-only allowlist in .claude/settings.json (exact check commands, backlog reads, local supabase migration list and advisors, context7); no push, force, install, db reset, pytest/pyright wildcards or secret-printing commands; reviewed by the user. Parallel-run observation pending on the next wave.
+
+- [ ] **T3 · Workflow config from the backlog review** · Deps: E5 · Type: mixed
+  Why: the backlog review (2026-09-30) found config gaps; no tooling changes while E5's worker is in flight. Output: in `.claude/foreman.json`: (1) `decisions.reserved` adds 002 (B11), 004 (X2), 007 (W0); (2) a `lanes.Engine` entry with the deny list below, and `Lane: Engine` on E4, E6, E8, E9, E10, E11; (3) a frontend check in `checks` (`cd frontend && corepack pnpm lint && corepack pnpm build && corepack pnpm test`), matched by the P5 CI job. Update the CLAUDE.md lines that describe them.
+  DoD: the user has seen the settings diff; the lane guard blocks a read of the Commission cases on an Engine story branch; the checks pass on main.
+  **Engine deny list:** `eval/commission_examples`, `eval/cases/commission_b` and `eval/split.json`; own cases stay readable for replay tests (decision 015's leak came from an Engine worker).
 
 ## Phase 0 — Foundations
 
@@ -139,6 +135,10 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   Notes from merged stories: Result contract rules to respect: decision 010 + addendum (early ends only when the stopping step is settled; status derived from steps; `FollowUpQuestion` slug ids). `Obligation` in `aiact/schemas/obligations.py` is a placeholder for C7.
   **Outcome:** aiact/eval/cases.py: BenchmarkCase + CaseLabel (label_citation is a list; cite-or-ambiguous enforced for commission_b/own/soft_pairs/consistency), YAML/JSONL loaders checking set_name and duplicate ids, score_appliedai (raw appliedAI labels mapped at scoring; out_of_scope-for-low flagged for review); eval/cases/* folders; eval/private stays untracked. Q&A and annex_match shapes left to B7/X0.
 
+- [ ] **F7b · Case schema extensions** · Deps: F7 · Type: agent
+  Why: B4, B5a/c, B6, B7 and X0 each planned a change to `backend/aiact/eval/cases.py` in the same waves (backlog review, 2026-09-30); one story makes them all. Output: in `aiact/eval/cases.py` and its tests, `accepted_bases`, `label_status` and any-of basis/citation matching (the rule under B4); `flip_variants` on the case; `pair_id` (B6); `key_fact_answers` (question id or topic → answer; decision 019); a `business_function` field (W1 reports per business function); `CaseSet.annex_match` and several points in `CaseLabel.annex_point`, with `ANNEX_POINT_PATTERN` accepting Annex I ids (`annex:I:A:11`, `annex:I:B:21`) and the fixture `tests/fixtures/cases/own/ambiguous.yaml` moved off the pre-Omnibus `annex:I:1` (X0's schema note); a Q&A item model (question, required provision_ids, reference answer, `answerable`) with a loader entry (B7's note); a `source_example_id` rule for cases derived from a Pile A example (B6). Wire `metrics.basis_matches` and `flags_flip_variant` into `case_scores` and `summarize` (V2's note on B4).
+  DoD: the loader validates every committed case file unchanged; each new field has a valid and an invalid fixture; the two metrics are reached in `summarize` (a test on fixtures); Annex I ids pass the pattern.
+
 - [x] **F8 · Dependency manifest** · Deps: F1 · Parallel: F3–F7 · Type: agent
   Context: INIT › Tech stack (Dev tooling), Risks (licence). Input: `backend/pyproject.toml`, `backend/uv.lock`. Output: `backend/aiact/deps.py` with a CLI group `aiact deps generate|check`; `docs/DEPENDENCIES.md`, generated and never edited by hand (a header saying so and naming the command; a table of direct deps with group runtime/dev, version constraint, locked version, licence and one-line summary; a table of every transitive package with locked version, licence and the direct deps that pull it in); `.githooks/pre-commit` (runs `generate` and stages the file when `pyproject.toml` or `uv.lock` is staged) and `.githooks/pre-push` (runs `check`), enabled with `git config core.hooksPath .githooks`, documented in `CLAUDE.md` › Commands. Versions and the dependency graph come from `uv.lock` (`tomllib`); licence and summary come from installed package metadata (`importlib.metadata`), `unknown` when missing. The output is deterministic (sorted, no timestamps) and leaves room for P4 to add a frontend section from the pnpm lockfile.
   DoD: `check` exits 0 on a fresh file and non-zero with a clear message after a dependency is added without regenerating (tested on a fixture lockfile); running `generate` twice gives no diff; `uv add <pkg>` then a commit updates the file through the pre-commit hook; a push with a stale file is refused by the pre-push hook.
@@ -163,9 +163,13 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   Notes from merged stories: B2 (decision 001, accepted): mode `split`, 307 examples (hr-ex-001…307), stratify by `area` × `verdict` (18 strata, each ≥ 4). OPEN QUESTION to settle with the user first: Pile B size (a half split means ~150 examples for B4 to rewrite and the user to approve). Once split.json is committed the IDs are frozen.
   **Outcome:** eval/split.json committed alone (2692490) before any engine file: half split, seed 20260928, Pile A 154 / Pile B 153 of 307, every area x verdict stratum in both piles; aiact evaluate split refuses to change it; test pins the frozen IDs, not a fresh run (decision 011).
 
-- [ ] **B4 · Rewrite the Pile B examples as company descriptions** · Deps: B3, F7 · Type: mixed
+- [ ] **B4a · Similarity check tool** · Deps: B3, F7 · Type: agent
+  Output: `backend/aiact/eval/similarity.py` (`aiact evaluate similarity`): the maximum similarity between each case and its source example (embedding cosine plus longest shared n-gram), with an agreed threshold (for example an 8-word run). DoD: tests on a planted near-copy and a clean rewrite.
+
+- [ ] **B4 · Rewrite the Pile B examples as company descriptions** · Deps: B3, F7b, B4a · Size: L · Type: mixed
   Context: INIT › Benchmark isolation 3. Output: `eval/cases/commission_b/*.yaml` (description written in a company's voice: size, bought or built, business context, some irrelevant detail; label, label_citation, source_example_id). In LOO mode this covers all examples.
-  DoD: every Pile B example has a case; `backend/aiact/eval/similarity.py` (`aiact evaluate similarity`) reports the maximum similarity between each case and its source example (embedding cosine plus longest shared n-gram), and no case shares more than an agreed threshold, for example an 8-word run; the user has approved every label.
+  DoD: every Pile B example has a case; `aiact evaluate similarity` (B4a) passes for every case; the user has approved every label; the loader validates every file; `AIACT_REQUIRE_CORPUS=1 uv run pytest tests/test_isolation.py` passes with `eval/isolation/embeddings.json` regenerated.
+  **Backlog review (2026-09-30)):** 153 rewrites, each label approved by the user: work in batches by Annex area (Annex I, then Annex III 1–8), one commit per batch, so the story can be paused and reviewed. The case-model changes below now land in F7b.
   Notes from merged stories: B2 (001): carry `accepted_bases`, `label_status` and `flip_variants` from examples.jsonl into the cases; hr-ex-307 becomes a `legally_ambiguous` case. Write each description WITHOUT the row's flip-variant feature, and expect the engine to ask about or flag it (user product rule); a flip-variant row may also yield a variant case with the variant's verdict. hr-ex-283: describe all three steps. Annex I high rows carry the Art. 6(1) third-party-assessment note. F7 follow-up lands here: extend `BenchmarkCase` for any-of basis/citation matching (bare `art_6_3_filter` matches any lettered entry; a lettered answer matches the same letter or the bare form) and a `label_status` field.
   **From V2 (merged):** add `accepted_bases` and the flip-variant provisions to the case model so `metrics.basis_matches` and `flags_flip_variant` can be wired into `case_scores`/`summarize` (tested helpers, not yet reached).
   **From C6's isolation audit:** hr-ex-290 shares 22 of its 58 words with visible `guide:guide-high-risk-annex-iii:para:419`; both quote Recital 61, so it is statutory wording, not a leak. The rewrite of hr-ex-290 must not reuse Recital 61's phrasing ("purely ancillary administrative activities…", "anonymisation or pseudonymisation of judicial decisions…").
@@ -173,9 +177,9 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From B13 (merged):** after adding or changing cases, run `uv run aiact evaluate isolation-embed` (a fraction of a cent) and commit `eval/isolation/embeddings.json`; the local isolation test fails when a case text has no vector (CI doesn't check this). Run `AIACT_REQUIRE_CORPUS=1 uv run pytest -q tests/test_isolation.py` before finishing: no case may repeat a retrievable row (6-gram coverage 0.5, a 30+ word run, cosine 0.9).
   **B13's margin:** the closest benchmark text today scores cosine 0.894 against a retrievable row (limit 0.9). A rewrite of a Pile B system can cross 0.9 on topic alone: if it does, check the pair by hand before changing the text or the limit.
 
-- [ ] **B5a–e · Own cases, one sub-story per category** · Deps: F7 · Parallel: with each other and with B2–B4 · Type: mixed
+- [ ] **B5a–e · Own cases, one sub-story per category** · Deps: F7, F7b · Parallel: with each other and with B2–B4 · Type: mixed
   Context: INIT › Test sets (Own cases), Label rules, Omnibus details. Categories: **a** Art. 50 transparency (including the 50(2) grace period), **b** out-of-scope software (not an AI system under Art. 3(1), exclusions), **c** the December 2026 prohibitions plus the classic Art. 5 practices, **d** Art. 25 role switches, GPAI-based systems, importer and distributor, **e** Annex I flags. At least 25% of each category in German. Output: `eval/cases/own/<category>/*.yaml`.
-  DoD: every label cites the provision or example that settles it, or is `legally_ambiguous`; the user has approved each file.
+  DoD: every label cites the provision or example that settles it, or is `legally_ambiguous`; the user has approved each file; at least 25% of the category is German (counted); the loader validates every file; `eval/isolation/embeddings.json` is regenerated and `AIACT_REQUIRE_CORPUS=1 uv run pytest tests/test_isolation.py` passes.
   Notes from merged stories: F7: cases are `BenchmarkCase` in `aiact/eval/cases.py`; `label_citation` is a list; a label that isn't `legally_ambiguous` needs a citation, an ambiguous one needs `notes` (the open question and both readings: checked in review, not by the schema).
   **Outcome (B5d):** 13 own cases in eval/cases/own/d/ (7 EN, 6 DE; 2 legally_ambiguous) covering Art. 25(1)(a)/(b)/(c), GPAI-based systems, importer and distributor; expected obligations tagged obligation:<article> (unsettled conditions kept, user rule 2026-09-29), plus gpai_based, also_role:deployer and role_switch tags; each file approved by the user 2026-09-29.
   **Rules from B5d's review (user, 2026-09-29), for B5a/b/c/e:** (1) a conditional duty whose condition the facts don't settle is kept as an `obligation:` tag and named in `notes`; one the facts rule out is left out (E7's node does the same). (2) The class describes the system, whoever bears its Art. 50 duties: a deployer of a system with Art. 50 duties is `limited_risk` (own-d-07). (3) Folder names: B5d used `own/d/`; the F7 fixture uses descriptive names (`own/transparency/`), so the remaining sub-stories should pick one convention and B10 should align them. (4) Keep facts unambiguous where a label depends on them (own-d-01 now states who runs the system).
@@ -184,41 +188,52 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **Rules from B5b/B5e's review (user, 2026-09-30), for B5a/B5c:** (5) timing: a case whose high-risk duties are tagged (working readings included) must place the system on the market or into service after its Chapter III date (2 Dec 2027 Annex III, 2 Aug 2028 Annex I), otherwise Art. 111(2) limits the duties; a pilot in which deployers already act on the output counts as putting into service. State the date so the Art. 50 grace period (Art. 111(4), before 2 Aug 2026) is unambiguous too. (6) An Art. 2(10) purely personal, non-professional use is labelled `out_of_scope` (an exception to rule 2; own-b-13). (7) `out_of_scope` cases carry `role: null` (skipped by role accuracy). (8) Name a trap in notes and tag it `trap:<name>`.
   **Outcome (B5e):** B5e: 14 own cases in eval/cases/own/e/ (7 EN, 7 DE; 2 needs_more_information, 2 legally_ambiguous) covering Annex I Section A and B (Art. 2(2): no AI Act obligations for Section B), Art. 6(1a)/(1b)/(1c), self-assessed vs notified-body routes, Art. 25(3), an Annex I deployer and an Annex I + III overlap; every high-risk launch is after its route's date, so Art. 111(2) never arises; annex_point is empty for Annex I cases until X0 fixes the pattern; each file approved by the user 2026-09-30.
   **From E3 (merged):** For B5a/B5c: Art. 2(8) never takes a system out of scope: a system being built for a planned launch is labelled as the planned system (user, 2026-09-30; own-b-09 relabelled and logged). Every relabel goes in eval/LABEL_CHANGES.md, even before labels-v1.
+  **Backlog review (2026-09-30), decisions 017 and 018):** once a category is approved it is frozen (B10a's check); B5a must be approved before E6 starts and B5c before E4. Own cases are development cases (the nodes replay them), reported as such.
 
-- [ ] **B6 · Soft-wording pairs** · Deps: F7, B5 · Type: mixed
-  Output: `eval/cases/soft_pairs/` with 10–20 pairs (plain and softened wording of the same known high-risk system, linked by pair_id). DoD: approved by the user.
+- [ ] **B6 · Soft-wording pairs** · Deps: F7b, B5 · Type: mixed
+  Output: `eval/cases/soft_pairs/` with 10–20 pairs (plain and softened wording of the same known high-risk system, linked by pair_id), each softened case with `key_fact_answers` for its likely key-fact questions (decision 019). Build pairs only from Pile B examples or original systems.
+  DoD: approved by the user; 10–20 pairs, each softened case tagged `wording:soft` and carrying `key_fact_answers`; no case derives from a Pile A example (a test over `source_example_id` against `eval/split.json`); the isolation test passes.
+  **Backlog review (2026-09-30)):** of the 15 `flip_variants` rows suggested below, 9 are Pile A and therefore retrievable (hr-ex-029, 107, 122, 193, 194, 244, 245, 291, 294): don't use them; the other 6 (Pile B) are fine.
   Notes from merged stories: F7: `BenchmarkCase` has no `pair_id` and rejects unknown fields; link pairs with a `pair:<id>` tag (as the fixtures do) or add the field in `cases.py`. B2 (001): the 15 rows with `flip_variants` in eval/commission_examples/examples.jsonl are ready-made base/variant pairs (e.g. place-based vs person-based crime prediction, 6(a)/6(d); onboarding chatbot vs performance-review feed, 4(a)/4(b); 283 step-(i)-only → Art. 6(3)(d); 244/245 → prohibited under Art. 5). Cite the Commission's own "however" sentence for the variant.
   **From V2 (merged):** tag the softened description of each pair `wording:soft`; the downgrade-rate metric finds pairs only by that tag and reports 0/0 otherwise.
   **From B13 (merged):** after adding or changing cases, run `uv run aiact evaluate isolation-embed` (a fraction of a cent) and commit `eval/isolation/embeddings.json`; the local isolation test fails when a case text has no vector (CI doesn't check this). Run `AIACT_REQUIRE_CORPUS=1 uv run pytest -q tests/test_isolation.py` before finishing: no case may repeat a retrievable row (6-gram coverage 0.5, a 30+ word run, cosine 0.9).
 
-- [ ] **B7 · Q&A set** · Deps: F7 · Parallel: B5 · Type: mixed
-  Output: `eval/cases/qa/` with 20–30 questions (EN and DE), each with the required provision_ids and a reference answer. DoD: approved by the user.
+- [ ] **B7 · Q&A set** · Deps: F7b · Parallel: B5 · Type: mixed
+  Output: `eval/cases/qa/` with 20–30 questions (EN and DE), each with the required provision_ids and a reference answer. DoD: approved by the user; 20–30 answerable plus 8–10 unanswerable questions (counted), in EN and DE; the loader validates every item; the isolation test passes.
   Notes from merged stories: F7: `CaseSet` has no `qa` member and Q&A items don't fit `BenchmarkCase`; add a Q&A item model (question, required provision_ids, reference answer) and a loader entry in `aiact/eval/cases.py`. The `eval/cases/qa/` folder exists.
   **Relevance cut-off (C8, X1):** also write about 8–10 unanswerable questions (EN and DE): off-topic ones and ones about other laws the corpus doesn't hold (GDPR, the Data Act, national law), each marked `answerable: false` with no required provisions. X1 calibrates the search cut-off on them and P7's DoD tests them.
   **From B13 (merged):** after adding or changing cases, run `uv run aiact evaluate isolation-embed` (a fraction of a cent) and commit `eval/isolation/embeddings.json`; the local isolation test fails when a case text has no vector (CI doesn't check this). Run `AIACT_REQUIRE_CORPUS=1 uv run pytest -q tests/test_isolation.py` before finishing: no case may repeat a retrievable row (6-gram coverage 0.5, a 30+ word run, cosine 0.9).
 
 - [ ] **B8 · Consistency triples** · Deps: B5 · Type: mixed
-  Output: `eval/cases/consistency/`: 3 paraphrases per system, LLM-generated and then checked by hand. DoD: approved by the user.
+  Output: `eval/cases/consistency/`: 3 paraphrases per system, LLM-generated and then checked by hand. DoD: approved by the user; every paraphrase is tagged `triple:<id>` and every triple has exactly 3 cases (a test); the isolation test passes.
   **From V2 (merged):** tag every paraphrase of a triple `triple:<id>`; the consistency metric groups only by that tag and reports 0/0 otherwise.
   **From B13 (merged):** after adding or changing cases, run `uv run aiact evaluate isolation-embed` (a fraction of a cent) and commit `eval/isolation/embeddings.json`; the local isolation test fails when a case text has no vector (CI doesn't check this). Run `AIACT_REQUIRE_CORPUS=1 uv run pytest -q tests/test_isolation.py` before finishing: no case may repeat a retrievable row (6-gram coverage 0.5, a 30+ word run, cosine 0.9).
 
-- [ ] **B9 · Second-model label filter** · Deps: B4, B5, F6 · Type: agent, then human
+- [ ] **B9 · Second-model label filter** · Deps: B4, B5, B6, B8, F6 · Type: mixed
   Context: INIT › Label rules (Second-model filter). Output: `backend/aiact/eval/label_filter.py` (`aiact evaluate label-filter`: Claude Haiku 4.5 via OpenRouter labels every case blind) and `eval/reports/label_disagreements.md`. The user resolves each disagreement.
   DoD: every disagreement has a written resolution (label kept or changed, with a reason).
   Notes from merged stories: X3 (005): pin Haiku 4.5 to `google-vertex/europe` (or `amazon-bedrock/eu-west-1`) with `allow_fallbacks=False`. Vertex Haiku rejects `response_format: json_object`: use a JSON schema (structured outputs). Haiku caches only with a top-level `cache_control`; check `langchain-openrouter` passes it through. About $0.02 per cold call (~10x Luna).
 
-- [ ] **B10 · Label freeze** · Deps: B9, B6, B7, B8 · Type: agent
-  Output: git tag `labels-v1`, `eval/LABEL_CHANGES.md` (a log for later changes, with a review note per change), and a CI test that fails if a file under `eval/cases/` changes without a matching entry in `LABEL_CHANGES.md`.
-  DoD: tag pushed; the test is in CI.
+- [ ] **B10a · Label freeze check in CI** · Deps: F2 · Type: agent
+  Context: INIT › Label rules; decision 017. Output: a CI test (a job in `.github/workflows/ci.yml`) that fails when an approved case file under `eval/cases/` changes without a matching entry in `eval/LABEL_CHANGES.md` (which B12 created; extend it). A category counts as approved once its files are on main (own/b, own/d, own/e, academic today).
+  DoD: the test is in CI; a changed approved case without a log entry fails it, and one with an entry passes; adding a new case file doesn't need an entry.
   Notes from merged stories: F2: add the label-freeze check as a new job in `.github/workflows/ci.yml`.
   **From B12 (merged):** the freeze covers `eval/cases/academic_overrides.yaml` and the generated `eval/cases/academic/*.yaml`; `eval/LABEL_CHANGES.md` already exists (started by B12) — extend it rather than creating it. The academic importer refuses any source but the pinned sha256, so a re-import can't change labels silently.
+
+- [ ] **B10c · Align the own cases** · Deps: B5, X0, F7b, B10a · Type: mixed
+  Output: the own/a–e case files aligned (every change logged in `eval/LABEL_CHANGES.md` and approved by the user), with a `business_function` on every headline case (W1 reports per business function). DoD: the user has approved each change; the loader validates every file; the freeze check passes.
   **From B5b (merged):** align across own/a–e: (1) the tag vocabulary (`scope:*`, `trap:*` — annex_iii_context, exclusion_not_met, future_high_risk, ai_marketing_name — and B5e's `annex_i_section`, `annex_i_point`, `missing_fact`); (2) `obligation:art:4:1` on minimal-risk providers (B5b tags it; B5d's importer own-d-11 has no obligation tags); (3) the conventions `role: null` for out_of_scope and Art. 2(10) personal use = out_of_scope (own-b-13); (4) folder names (own/b, own/d, own/e vs the F7 fixture's descriptive names).
   **From E3 (merged):** Corrections after E3: `trap:future_high_risk` no longer exists (own-b-09 was relabelled high_risk, tags now `trap:prohibition_not_met`, `scope:art2_8_noted`); no own case is an Art. 2(8) exclusion any more (the user's planned-system rule, 2026-09-30, logged in LABEL_CHANGES.md). own-b-05 is a replay known gap (decided on reading A); its label stays legally_ambiguous.
+  **From X0:** backfill `annex_point` on the B5e Annex I cases (their point is in the `annex_i_point:` tag) once F7b accepts Annex I ids.
+
+- [ ] **B10b · Tag `labels-v1`** · Deps: B9, B6, B7, B8, X0, B10a, B10c · Type: mixed
+  Output: git tag `labels-v1` on the commit that holds every benchmark case. DoD: the user has pushed the tag; the freeze check is green on that commit.
 
 - [ ] **B11 · appliedAI dataset** · Deps: F7 · Parallel: everything · Type: human (agent helps with the format)
   Context: INIT › Test sets, Risks (licence). Output: `eval/private/appliedai.jsonl` (gitignored) and `docs/decisions/002-appliedai-licence.md` (fields, languages, licence statement found or not found).
   DoD: all ~106 cases extracted; only case IDs will ever be published.
   Notes from merged stories: F7: keep the experts' raw label (`high`/`prohibited`/`low`/`unclear`) with set_name `appliedai` in `eval/private/appliedai.jsonl`; `load_jsonl` and `score_appliedai` map it at scoring time. Add a helper that reads Annex II references as Annex I, and agree a tag for Annex I cases (INIT reports them separately). `eval/private/` is gitignored and untracked: create it locally.
+  **Backlog review (2026-09-30)):** B11 feeds V9 on the critical path: start it now.
 
 - [x] **B12 · Academic benchmark import** · Deps: F7 · Type: agent, plus a human spot-check
   Output: `eval/cases/academic/` converted from the davidath repo (CC BY 4.0, with attribution) and `eval/reports/academic_spotcheck.md` (about 20 cases checked).
@@ -294,27 +309,34 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From B13 (merged):** CI has no corpus vectors, so its `search_ai_act` isolation probe exercises only the keyword arm's held-out filter. Since C8 edits the vector arm's SQL, add a statement-level test (no vectors needed) that the vector arm still carries the held-out and exclude filters. Register nothing new in `aiact.retrieval` without adding it to `ENTRY_POINTS` (or `NOT_ENTRY_POINTS` with a reason) in `backend/tests/test_isolation.py`.
   **Outcome:** C8: hits carry similarity (1 − cosine distance) and keyword_idf; max_distance (keyword-only, default SEARCH_MAX_DISTANCE, unset = no cut-off) cuts the meaning arm in SQL after the materialized nearest rows; found = a hit within the cut-off or keyword_idf ≥ MIN_KEYWORD_IDF (9.0); the C6 tests and the isolation probe pass max_distance=None; X1 calibrates both values.
 
+- [ ] **C7b · Art. 111(2) legacy high-risk systems** · Deps: C7, E7 · Type: mixed · Resource: db-schema
+  Context: decision 022; INIT › Scope (Obligations checklist). Output: a key-fact question ("was it on the market or in use before <the route's Chapter III date>? has its design changed significantly since?") in the role and obligations node, and in `list_obligations` a legacy marking: a high-risk system placed on the market or put into service before 2 Dec 2027 (Annex III) or 2 Aug 2028 (Annex I) with no significant design change gets its duties marked "applies only after a significant design change" (Art. 111(2)); one used by a public authority keeps them with the date 2 Aug 2030. The class stays high-risk.
+  DoD: one hand-checked test per branch (legacy unchanged, legacy changed, public authority, launched after the date); the user has reviewed the wording and dates; the obligations seed regenerates cleanly.
+
 ## Phase 3 — Week-one experiments
 
-- [ ] **X0 · Annex-matching set** · Deps: F7 · Type: mixed
-  Output: `eval/cases/annex_match/`: 30–50 informal descriptions → expected Annex III/I points, **written from scratch** (never from Commission examples). DoD: approved by the user.
+- [ ] **X0 · Annex-matching set** · Deps: F7b · Type: mixed
+  Output: `eval/cases/annex_match/`: 30–50 informal descriptions → expected Annex III/I points, **written from scratch** (never from Commission examples). DoD: approved by the user; 30–50 items (counted); the loader validates every file; the isolation test passes.
   Notes from merged stories: F7: add `annex_match` to `CaseSet` in `aiact/eval/cases.py` and create `eval/cases/annex_match/`; `CaseLabel.annex_point` holds one point, so allow several if needed.
   **From B13 (merged):** after adding or changing cases, run `uv run aiact evaluate isolation-embed` (a fraction of a cent) and commit `eval/isolation/embeddings.json`; the local isolation test fails when a case text has no vector (CI doesn't check this). Run `AIACT_REQUIRE_CORPUS=1 uv run pytest -q tests/test_isolation.py` before finishing: no case may repeat a retrievable row (6-gram coverage 0.5, a 30+ word run, cosine 0.9).
-  **Schema fix (user, 2026-09-30):** `ANNEX_POINT_PATTERN` in `aiact/eval/cases.py` accepts only lowercase segments, so it rejects the corpus's Annex I ids (`annex:I:A:11`, `annex:I:B:21`). Fix it here together with allowing several points in `CaseLabel.annex_point`; also fix the fixture `tests/fixtures/cases/own/ambiguous.yaml`, which uses the pre-Omnibus `annex:I:1` (machinery is now Section B point 21). B10 then backfills `annex_point` on the B5e Annex I cases (their point is in the `annex_i_point:` tag).
+  **Schema fix (user, 2026-09-30; moved to F7b by the backlog review):** `ANNEX_POINT_PATTERN` in `aiact/eval/cases.py` accepts only lowercase segments, so it rejects the corpus's Annex I ids (`annex:I:A:11`, `annex:I:B:21`). Fix it here together with allowing several points in `CaseLabel.annex_point`; also fix the fixture `tests/fixtures/cases/own/ambiguous.yaml`, which uses the pre-Omnibus `annex:I:1` (machinery is now Section B point 21). B10 then backfills `annex_point` on the B5e Annex I cases (their point is in the `annex_i_point:` tag).
 
-- [ ] **X1 · Embedding comparison** · Deps: C6, C8, X0, B7, V6 · Type: agent · Resource: db-schema
+- [ ] **X1a · Embedding comparison** · Deps: C6, C8, X0, B7, V6 · Type: agent · Resource: db-schema
   Output: `backend/aiact/eval/experiments/embeddings.py` and `docs/decisions/003-embeddings.md`: RAGAS context recall and precision for Qwen3 at 1536-d, Qwen3 at 1024-d and OpenAI 3-large, on the Annex-matching and Q&A sets, with results stored in `eval_runs`.
-  DoD: a decision is recorded with the numbers; the default in settings is updated if it changes.
+  DoD: a decision is recorded with the numbers; the default in settings is updated if it changes; if the arm or the query instruction changes, the corpus is re-embedded, `tests/recordings/db/test_search_ai_act/` re-recorded and `eval/isolation/embeddings.json` regenerated (B13's cosine limit 0.9 is Qwen3-specific: re-check it).
   Notes from merged stories: Make the embedding query instruction a setting (e.g. `EMBEDDING_QUERY_INSTRUCTION`); the current default in `aiact/llm/embeddings.py` is a placeholder. Model/provider settings are still empty in the env example.
+  **From C4 (merged):** only the `qwen/qwen3-embedding-8b`/1536 arm has a partial HNSW index; each other (model, dims) arm X1a embeds needs its own partial-index migration (`supabase migration new`), so X1a is schema-changing: run it with no other schema story.
+
+- [ ] **X1b · Search tuning and relevance cut-off** · Deps: X1a, B7, X0 · Type: agent
+  Output: tuned search constants and the calibrated `SEARCH_MAX_DISTANCE` and `MIN_KEYWORD_IDF` defaults in settings, the exact-reference rule, recorded in decision 003 (or a record of its own). DoD: both distributions (answerable vs unanswerable) and the chosen values are recorded; the C6 and C8 tests still pass.
   **From C6 (merged):** `KEYWORD_WEIGHT` (0.5), `MAX_TERM_SHARE` (0.05), `MIN_COMMON_ROWS` (50), `RRF_K` (60) and `CANDIDATES` in `aiact/retrieval/search.py` are hand-set: tune them on the Annex-matching and Q&A sets. The DoD margin is thin (Annex III 5(b) 3rd in EN, 5th in DE). The recordings in `tests/recordings/db/test_search_ai_act/` embed today's `DEFAULT_QUERY_INSTRUCTION`: if X1 changes it, re-record with `uv run pytest tests/db/test_search_ai_act.py -k iii_5b --record-mode=once`. Long descriptions cost about 1–2 ms per query word in the keyword statistics (EN ~57 ms, DE ~77 ms end to end).
   **Relevance cut-off (C8):** calibrate `SEARCH_MAX_DISTANCE` for the chosen arm: compare the best-hit similarity of answerable Q&A and Annex-matching queries with B7's unanswerable questions (and random off-topic strings); pick the value that keeps answerable recall and rejects most unanswerable ones, record both distributions and the choice in decision 003 (or a record of its own), and set the default in settings.
-  **From C4 (merged):** only the `qwen/qwen3-embedding-8b`/1536 arm has a partial HNSW index; each other (model, dims) arm X1 embeds needs its own partial-index migration (`supabase migration new`), so X1 is schema-changing: run it with no other schema story.
   **From C8 (merged):** calibrate `MIN_KEYWORD_IDF` (now 9.0) as well as `SEARCH_MAX_DISTANCE`. C8's measurements on the loaded corpus (~2,930 units): English "Article 50" gets no keyword hit ('50' in 222 units = 7.6% > MAX_TERM_SHARE; 'articl', 'annex', 'iii' dropped too); German "Artikel 50" 3.74; off-topic single stray words score up to ln(units) ≈ 8.0 ("tell me a joke" 7.98, "best holiday destinations in Spain" 7.29, "football results" 6.6); real queries "emotion recognition in the workplace" 10.67, "deepfake" 6.88. One IDF threshold can't separate these, so decide whether exact references get their own rule (match provision ids, route to `get_provision`). The value is German-untested.
   **From P2a (merged):** A live MCP search for "AI system that screens tenants for rental flats" ranked guide-prohibited paras 178/149 and guide-high-risk-annex-iii para 384 top (similarity 0.643–0.647), with no Annex III point in the top 3: a ranking case for the calibration.
 
-- [ ] **X2 · Engine model smoke test** · Deps: F3, F6, C5, C6, B4 · Type: agent
-  Context: INIT › Engine safety net. Output: `backend/aiact/eval/experiments/smoke.py`, a single-prompt classifier with tool calls to `get_provision` and `search_ai_act` and structured output as `ClassificationResult`, run with GPT-6 Luna and with Gemini 3.1 Flash-Lite on 20 headline cases; `docs/decisions/004-engine-model.md`.
-  DoD: the rate of broken outputs or tool calls and the accuracy are recorded for both models; the INIT rule is applied (Luna is dropped if more than 10% broken or clearly worse); the engine model is set in settings.
+- [ ] **X2 · Engine model smoke test** · Deps: F3, F6, C5, C6, E2, E3, E5, E7 · Type: mixed
+  Context: INIT › Engine safety net; decision 023. Output: `backend/aiact/eval/experiments/smoke.py`, which replays the merged staged nodes (E2, E3, E5, E7) with GPT-6 Luna and with Gemini 3.1 Flash-Lite on their approved own cases (B5b, B5d, B5e, about 50); `docs/decisions/004-engine-model.md`.
+  DoD: the rate of broken outputs or tool calls and the accuracy are recorded for both models with stored run_ids; the fixed rule is applied (Luna is dropped if more than 10% of its outputs are broken, or its accuracy is 10 or more percentage points below Gemini's on the same cases); the engine model is set in settings; the user approved the paid run.
   Notes from merged stories: Structured output: cross-field validators aren't in the JSON Schema, so contract failures count as broken outputs (decision 010 addendum). Gemini 3.1 Flash-Lite was allowed in the user's OpenRouter guardrail on 2026-09-28. Slugs checked by F6: `openai/gpt-6-luna` (pinned `openai/gpt-6-luna-20260922`), `google/gemini-3.1-flash-lite`. X3 (005): add a provider-order setting per role (e.g. `ENGINE_PROVIDER=azure/eu`) passed through `provider_preferences(order, allow_fallbacks=False)`; EU endpoints are used only when pinned by full slug. Luna: ~6k in + ~1.7k out per classification, $0.0018 cold / $0.0009 cached. The key has $9.95 left (the user handles the cap).
 
 - [x] **X3 · OpenRouter feature and cost check** · Deps: F6 · Type: agent
@@ -345,7 +367,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From B5b (merged):** own/b's conventions the scope node must produce: Art. 2(10) purely personal use → `out_of_scope` (own-b-13, not minimal_risk); out_of_scope → no role; Art. 2(12) doesn't cover high-risk systems (own-b-11); a dual-use military/civilian system is in scope (recital 24, own-b-07). own-b-05 (logistic-regression scorecard) is legally_ambiguous on definition-guidelines para 42 vs Art. 3(1).
   **Outcome:** E3: ScopeCheck (nodes/scope.py, scope_texts.py, prompts/scope.md) fetches Art. 3(1) and Art. 2 and searches guide-definition via the new search_ai_act(doc_keys=…), applies Art. 3(1) and Art. 2(1)/(3)/(6)/(10)/(12) in code, with Art. 2(8) as a note (the planned system is classified) and Art. 50's own list for the 2(12) exception; a named guideline passage against Art. 3(1) makes the step contested; adds engine_chat_model and nodes/key_facts.py; own-b-09 relabelled high_risk (logged); B5b replay 12/13, own-b-05 a known gap (decided on reading A); recordings scrubbed of reasoning blobs, about $0.054.
 
-- [ ] **E4 · Prohibited node (Art. 5)** · Deps: E1, C5, C6, B5c · Parallel: E3, E5–E7 · Type: agent
+- [ ] **E4 · Prohibited node (Art. 5)** · Deps: E1, C5, C6, B5c, B10a · Parallel: E3, E5–E7 · Type: mixed
   Output: `aiact/engine/nodes/prohibited.py`, which always fetches Art. 5 and applies date logic to the December 2026 prohibitions against `as_of`. DoD: replay tests on the B5c cases pass, including one case dated before 2 December 2026 and one after.
   **Follow-up from C7's date review (user, 2026-09-28):** law-enforcement users are in scope. Cover the Art. 5(2)–(7) conditions for real-time remote biometric identification (the Art. 5(1)(h) exceptions: authorisation, necessity, notification) rather than treating every 5(1)(h) case as a plain ban.
   **From B12's spot-check (user, 2026-09-28):** for workplace or education monitoring (webcams, voice, keystrokes), ask whether the system infers emotions: a yes makes it prohibited under Art. 5(1)(f) (academic-0096). For Art. 5(1)(a)/(b), treat the significant-harm condition as a deciding fact: flag it as needing information or legally ambiguous when the description can't settle it (academic-0005).
@@ -353,7 +375,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From C6 (merged):** `aiact.retrieval.search.search_ai_act(query, language, law_version, as_of, *, doc_types, exclude_source_example_ids, include_held_out=False, limit)` returns hits with `law_version`, `as_of` and the disclaimer; never pass `include_held_out` (only V8's gap run may). The language filter is exact, so a German search skips English-only guidance (most guidance): add a German-then-English fallback like `get_provision`'s if the step needs guidance in DE.
   **From C8 (merged):** pass `max_distance=None` explicitly to `search_ai_act` (the default comes from `SEARCH_MAX_DISTANCE`, meant for Q&A and MCP only).
   **From E3 (merged):** Search your own guideline with `search_ai_act(..., doc_keys={"guide-prohibited"}, max_distance=None)` (a keyword-only filter inside both SQL arms). Build the model with `aiact.llm.engine_chat_model` and reuse `engine/nodes/key_facts.py` (Answer, KeyFact, facts_used). Pattern that works: the model answers fixed key facts, legal rules are applied in code; a prompt line alone didn't stop the model settling an open legal question (own-b-05), so make "settled in law?" a required answer, as E5 does. The recorder (`_scrub_response`) now strips reasoning blobs from cassettes.
-  **Handover (2026-09-30):** E3's test_scope.py (CorpusReplay) and E5's test_high_risk.py (CorpusRecording) each have their own .corpus.json record/replay helper; share one when E4 adds a third. Workers can't run live recording commands (denied): give the user the exact command.
+  **Handover (2026-09-30):** E3's test_scope.py (CorpusReplay) and E5's test_high_risk.py (CorpusRecording) each have their own .corpus.json record/replay helper; share one when E4 adds a third, after E5 has merged (or leave it to E8). Workers can't run live recording commands (denied): give the user the exact command.
 
 - [ ] **E5 · High-risk node (Art. 6, Annex III, Annex I flag)** · Deps: E1, C5, C6, B5e · Size: L · Parallel: E3, E4, E6, E7 · Type: agent · **critical**
   Output: `aiact/engine/nodes/high_risk.py`: Annex III matching through search, analogy against Pile A examples (in LOO mode the exclude filter comes from the case), the Art. 6(3) filter with the profiling rule, and an Annex I flag that names the product law and asks the decisive question.
@@ -367,8 +389,9 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From E3 (merged):** E3 added `aiact.llm.engine_chat_model` and `engine/nodes/key_facts.py` on main: merge main into the E5 branch and keep one helper. The recorder `_scrub_response` in tests/conftest.py now strips reasoning_details/encrypted_content/reasoning from response bodies; E5's cassettes must be scrubbed the same way before merging.
   **Handover (2026-09-30), state:** branch story/E5-high-risk-node-art at d2596d7 (main merged in, one engine_chat_model, key_facts reused), worktree .claude/worktrees/agent-a114157546f3e8de8, clean; replays not recorded yet (15 skip). The old worker is gone: continue with a foreman:story-worker or an agent told to work in that existing worktree. Next: the user runs the recording (workers are denied it), about $0.015–0.02: `cd <worktree>/backend && AIACT_DATA_DIR=<main>/data uv run pytest tests/engine/nodes/test_high_risk.py -k replay --record-mode=once`; then replay without recording and check all 15 against their labels. The earlier 11/15 run was invalid (it ran on a half-merged worktree). Spent so far about $0.033 (the user approved up to $0.30 for recordings).
   **User decisions (2026-09-30):** legal openness is a required per-route answer (settled_in_law + open_question on Annex III, Art. 6(3) and Annex I), read by code: open → legally_ambiguous with high-risk assumed; Annex I shown to the model as one line per point id; an undecided conformity route → third_party_assessment unknown; own-e-14: when both routes apply, report Annex III; the public-authority assumption applies to Annex III points 6 and 7 (stated, with a confirm question). If a case still misses after recording, bring it to the user (don't tune further); then run /foreman:story-finish E5 (DoD, diff, security, isolation-auditor, test-auditor).
+  **Backlog review (2026-09-30), decision 017):** own/e is frozen: don't change its labels, and merge E5 only after B10a is on main.
 
-- [ ] **E6 · Transparency node (Art. 50)** · Deps: E1, C5, C6, B5a · Parallel · Type: agent
+- [ ] **E6 · Transparency node (Art. 50)** · Deps: E1, C5, C6, B5a, B10a · Parallel · Type: mixed
   Output: `aiact/engine/nodes/transparency.py`: a list of duties that stack on top of any class, and the 50(2) grace period for systems placed on the market before 2 August 2026. DoD: replay tests on the B5a cases pass.
   **From E2 (decision 015):** no prompt line may paraphrase a Pile B example's deciding feature or share a 5-word run with any Pile B field (text, lead_in, use_case, flip_variants); run decision 015's leak-check command on every new prompt. Pin the engine model with `require_setting(settings.engine_provider, "ENGINE_PROVIDER")` and no fallbacks, and reuse `aiact.llm.structured` (a third copy of the pinning code should become an `engine_chat_model` helper).
   **From E7:** `transparency_duties` must list every Art. 50 provision that applies, including assumed or uncertain ones; the role step lists an Art. 50 duty only when it is in this list.
@@ -381,8 +404,9 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **Follow-up from C7's date review (user, 2026-09-28):** filter conditional duties by `applies_if` from the facts. Law-enforcement coverage still missing from the table: Art. 49(4) (registration in the non-public section of the EU database); add it with a hand-checked test. C7 already has Art. 26(10) and Art. 86 as conditional rows.
   **Outcome:** RoleObligationsCheck: the model answers fixed key facts, code applies GPAI and Art. 25(1)(a)–(c) for high-risk systems (keeping a deployer's own duties), own name below high risk (limited or minimal) is legally_ambiguous with provider assumed, unknowns give provider as the labelled working assumption; list_obligations filtered by applies_if; every step cites its basis; Art. 49(4) and GPAI-flag rows added (dates user-reviewed); B5d replay: all 13 roles match (own-d-12 status gap logged on E8/V5), recorded for $0.0087.
 
-- [ ] **E8 · Finalize and aggregate** · Deps: E2–E7 · Type: agent · Solo · **critical**
-  Output: `aiact/engine/nodes/finalize.py`: the overall status, the stricter reading as the labelled working assumption when uncertain, deciding facts, law version, as_of date, disclaimer, and follow-up questions collected from all steps. DoD: tests on constructed ambiguous and needs-info states.
+- [ ] **E8 · Finalize and aggregate** · Deps: E2–E7, X2 · Type: mixed · Solo · **critical**
+  Output: `aiact/engine/nodes/finalize.py`: the overall status, the stricter reading as the labelled working assumption when uncertain, deciding facts, law version, as_of date, disclaimer, a recommendation of legal review on high-risk and ambiguous results (INIT › Ethical considerations), and follow-up questions collected from all steps. DoD: tests on constructed ambiguous and needs-info states, and one test each for: an `annex:I:B:*` result with no AI Act obligations (Art. 2(2)); both routes → Annex III reported; `annex_point` copied into the result; follow-up questions de-duplicated by stable id; the legal-review recommendation on high-risk and ambiguous results.
+  **Backlog review (2026-09-30)):** before the worker starts, bring the user the open calls below one at a time (own-d-12 legal question or missing fact; own-d-13 report every fired switch or the first; how `also_role` is shown).
   **From E2:** question ids come from the model and vary between runs; E8 needs stable ids to score flip variants (consider a fixed id vocabulary for common facts). hr-ex-226's enrichment/profiling feature is no longer asked about in the facts prompt (decision 015), so its variant depends on the high-risk check alone.
   **From E7's B5d replay (user, 2026-09-29: E7 checks role only; score these end to end):** own-d-10: label provider via Art. 3(3) with no switch, but the node reaches provider via Art. 25(1)(a) (basis and citation differ). own-d-12: label legally_ambiguous, but the node returns needs_more_information asking about substantial_modification; decide whether "not foreseen" is a legal question or a missing fact. own-d-13: label switch 25(1)(c), but the node reports 25(1)(b) because the model answered both and (b) comes first in the Act; decide whether all fired switches are reported.
   **From E7:** read `state["role"]` (a RoleFinding, including `also_role`, e.g. provider and also deployer) and `state["follow_up_questions"]` (an appending channel; a check's questions may include its own missing_fact, so de-duplicate by id). `ClassificationResult` has one `role` field: decide how `also_role` is shown. The role step can be legally_ambiguous (own name on a limited- or minimal-risk system, open Art. 3(3) question) with provider assumed. Its citations quote data/parsed as a stopgap until C5; the Art. 50 guideline reference behind the own-name question isn't cited yet (C5/E9).
@@ -392,15 +416,19 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **User decision (2026-09-30), from E5:** when a system is high-risk on both routes, the reported route is Annex III (earlier date, Art. 16(i)); the Annex I route stays in the deciding facts. Copy CheckOutcome.annex_point into ClassificationResult. For an annex:I:B:* result, list no AI Act obligations (Art. 2(2)).
 
 - [ ] **E9 · Citation existence validator** · Deps: E8, C5 · Type: agent · Solo · Resource: db-schema · **critical**
-  Output: `aiact/engine/citations.py`: every citation must resolve through `get_provision`; an unknown citation triggers one repair retry of that step, and if it still fails the step becomes `needs_more_information` with an error flag. DoD: tests show 100% of citations exist in replay runs; an injected fake citation is caught.
+  Output: `aiact/engine/citations.py`: every citation must resolve through `get_provision`; an unknown citation triggers one repair retry of that step, and if it still fails the step becomes `needs_more_information` with an error flag. A `changed_by_omnibus` marker on each citation of a provision the Omnibus changed, from C1's 72 amendment records, and an explicit lookup for citations of the Omnibus itself (INIT › Corpus rules: "Where the Omnibus changed a provision, the answer says so"). DoD: tests show 100% of citations exist in replay runs; an injected fake citation is caught; a citation of Art. 5(1)(ba) carries the marker and one of Art. 4 original doesn't.
   **From V2 (merged):** emit the manifest `doc_key` as `Citation.document_id`; the eval citation check (aiact/eval/citation_index.py) counts anything else as missing. Consider reusing its exact rule.
   **From C5 (merged):** `get_provision` never returns the Omnibus's own provisions (decision 009 excludes `is_amending`), so a citation of the Omnibus itself (e.g. "changed by the Omnibus") would fail validation: add an explicit lookup for it if a node needs one. The parsed `kind` and a guideline's `page` are still not stored; add the columns (a migration) if citations need them. `Citation.document_id` doesn't say it holds the manifest doc_key: document it, and replace the made-up keys in `tests/schemas/test_evidence.py` (`guidelines-high-risk-2026-05-19`, `guide:hr:ex:17`) with real ones. E7's citations still quote data/parsed as a stopgap: switch them to `get_provision`. Held-out examples are hidden unless `include_held_out=True` (user, 2026-09-29), so a citation of a Pile B example never resolves by default.
 
-- [ ] **E10 · `classify_system` public API** · Deps: E8, E9 · Type: agent · Solo · **critical**
-  Output: `aiact/engine/__init__.py`: `classify_system(description, language, law_version="amended", as_of=today, answers={}, exclude_source_example_ids=[]) -> ClassificationResult`, with LangSmith tracing (metadata only in production mode) and streaming of step events.
-  DoD: live run on INIT's worked example gives the expected result; the replay test is in CI; cost per case is logged.
+- [ ] **E10 · `classify_system` public API** · Deps: E8, E9, C7b · Type: mixed · Solo · **critical**
+  Output: `aiact/engine/__init__.py`: `classify_system(description, language, law_version="amended", as_of=today, answers={}, exclude_source_example_ids=[], *, include_held_out=False) -> ClassificationResult`, with LangSmith tracing (metadata only in production mode) and streaming of step events. Answers are appended to the description before the facts node (decision 019). `include_held_out` is eval-only: carried through `EngineInput` to every node's `search_ai_act` and `get_provision` call, used only by V8's gap run, never exposed by P1 or P2b, and registered with the isolation test.
+  DoD: live run on INIT's worked example gives the expected result; the replay test is in CI; cost per case is logged; a test shows an answer turning a fact into `stated` with a span in the extended text; a test shows `include_held_out=True` reaching every node's retrieval call and the default reaching none.
   **From V1:** replace the `engine` stub in `runner.CLASSIFIERS` with an adapter over `classify_system` that reports cost, tokens and trace_id, and raises `ClassifierFailedError(cost_usd, tokens, cause)` when a paid run fails late.
   **From E2:** `EngineInput.answers` is not used yet: answers aren't fed back to the facts node, and a fact resting on an answer can't be `stated` (SourceSpan points only into the description); decide how answers enter. `FactsOutcome` carries no cost or tokens; the V1 runner needs per-node cost aggregation.
+
+- [ ] **E11 · Original-version support** · Deps: E10, C7 · Type: agent
+  Context: INIT › Scope (Original vs. amended toggle); decision 020. Output: the nodes branch on `law_version`: rules only the Omnibus introduced (Art. 6(1a)–(1c), machinery in Annex I Section B, the December 2026 bans in Art. 5(1)(ba)/(bb)) don't apply under `original`; obligations under `original` return an explicit "not modelled for the original text" result instead of raising.
+  DoD: replay tests under both versions for one Omnibus-changed case per rule (for example machinery: Annex I A under `original`, B under `amended`; Art. 5(1)(ba) before and after); the obligations result under `original` says "not modelled".
 
 ## Phase 4b — Evaluation harness (the early parts run in parallel with the engine)
 
@@ -427,8 +455,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   Notes from merged stories: Jev's OpenRouter slug is unclear: the model list shows only `typesafe/jev-router`, the ZDR list has `typesafe/jev-1.13-20260917`. Judge backup: `anthropic/claude-haiku-4.5`. X3 (005): `typesafe/jev-router` forwarded a request to Luna, which breaks the different-company rule; `jev-1.13` works only through `/api/alpha/decisions`. Rethink Jev or fall back to Claude Haiku 4.5 (Vertex: JSON schema, not `json_object`; top-level `cache_control`).
 
 - [ ] **V5 · Judged metrics** · Deps: V4, E10 · Type: agent
-  Output: citation support, evidence-tag accuracy and a Q&A support scorer, plugged into V1. DoD: scores appear in the run report.
-  **From E7's B5d replay (user, 2026-09-29: E7 checks role only; score these end to end):** own-d-10: label provider via Art. 3(3) with no switch, but the node reaches provider via Art. 25(1)(a) (basis and citation differ). own-d-12: label legally_ambiguous, but the node returns needs_more_information asking about substantial_modification; decide whether "not foreseen" is a legal question or a missing fact. own-d-13: label switch 25(1)(c), but the node reports 25(1)(b) because the model answered both and (b) comes first in the Act; decide whether all fired switches are reported.
+  Output: `backend/aiact/eval/judged.py`: citation support, evidence-tag accuracy, a Q&A support scorer and a no-invented-content scorer for drafted documents (INIT › Judge; run on P8's output in W1), plugged into V1. DoD: scores appear in the run report.
 
 - [ ] **V6 · RAGAS retrieval metrics** · Deps: C6, B7 · Type: agent
   Output: `aiact/eval/ragas_metrics.py`: context precision and recall, and faithfulness, via Gemini 3.1 Flash-Lite. DoD: runs on the Q&A set; the numbers are stored.
@@ -436,24 +463,24 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
 - [ ] **V7 · Tool-call correctness** · Deps: E10 · Type: agent
   Output: `aiact/eval/tool_calls.py`, a checker over LangSmith traces (for example, the prohibited step fetched Art. 5). DoD: the rate is reported per step.
 
-- [ ] **V8 · First headline run + gap run** · Deps: E10, V1, V2, B10 · Type: agent · Resource: db-schema · **critical**
-  Context: INIT › Benchmark isolation 4, Budget rules. Output: `eval/reports/run-<date>.md` with the headline sets run with held-out examples excluded and with all examples retrievable, the baselines, and the per-metric table.
-  DoD: the numbers are stored; the failure cases are listed, grouped by step, to guide the engine fixes.
+- [ ] **V8 · First headline run + gap run** · Deps: E10, V1, V2, B10b, X1a · Type: mixed · Resource: db-schema · **critical**
+  Context: INIT › Benchmark isolation 4, Budget rules. Output: `eval/reports/run-<date>.md` with the headline sets run with held-out examples excluded and with all examples retrievable, the baselines, the downgrade rate without and with fixed key-fact answers (decision 019), and the per-metric table; own-case accuracy is labelled "development cases" (decision 018).
+  DoD: the numbers are stored; the failure cases are listed, grouped by step, to guide the engine fixes; the `all` run's stored traces show at least one Pile B row retrieved and the `heldout` run's none; two stored run_ids for the downgrade rate; the user approved the paid run.
   **From V1:** before the first real run, consider a migration adding `eval_runs.status`/`finished_at` and per-case `cost_usd`/`tokens`/`error` columns (today in `config.outcome` and reserved scores); the one-schema-story rule applies. The CLI needs `DATABASE_URL` set (no fallback to the local Supabase URL).
   **From V2:** the downgrade rate "with and without key-fact questions" (INIT › Metrics) comes from two runs, not one metric; plan both. Consider a /decision record for V2's denominator rules (module docstring of metrics.py).
   **Decision 016:** report the headline accuracy twice: over all held-out cases, and without the contaminated ones (cases from hr-ex-269 and hr-ex-031, list in `eval/isolation/contaminated.json`); name both cases and the decision in the report.
   **From B13 (merged):** Pile A example rows are judged by 6-gram coverage only (0.8), because sibling examples share long reasoning sentences; a Pile B example quoted inside a Pile A example row at lower coverage wouldn't be caught. Mention it among the isolation limits in the report.
-  **From B5e's isolation audit:** `aiact/eval/runner.py` `--exclude-mode all` passes no exclusion ids, but nothing sets `include_held_out=True`, so `search_ai_act` still hides Pile B: the gap run doesn't yet make Pile B retrievable. V8 must pass `include_held_out=True` for the gap run explicitly (and only there).
+  **From B5e's isolation audit:** `aiact/eval/runner.py` `--exclude-mode all` passes no exclusion ids, but nothing sets `include_held_out=True`, so `search_ai_act` still hides Pile B: the gap run doesn't yet make Pile B retrievable. V8 must pass `include_held_out=True` for the gap run explicitly (and only there): E10 adds the parameter (backlog review, 2026-09-30).
 
   **Decision 012:** the gap run is `--exclude-mode all`, which turns C6's default Pile B exclusion off; the reported number keeps it on.
   **From T1:** run through `/eval`. `aiact evaluate report` prints neither the run's status and exclude mode nor `git_dirty`, so a dirty run's block shows a commit it may not match: print all three (or name a dirty run in the purpose line). In the skill's step 3, check `git status` before a run and let the user choose between committing and running dirty. Consider a stored-run command for the held-out vs all gap so reports can quote it. `backend/.env` has no `DATABASE_URL` yet.
   **From C4's isolation audit:** some Pile A Commission examples (e.g. hr-ex-024, -067, -124, -187) are near-twins of Pile B ones (50–58% shared 8-word runs). They are legitimately retrievable but make the gap between the reported number and `--exclude-mode all` understate the engine's reliance on memorised examples: say so in the report.
   **From T1 (user, 2026-09-29):** the dry-run report `eval/reports/run-2026-09-28.md` is kept; `/eval` is listed in CLAUDE.md. The backend env file now sets `DATABASE_URL` (local Supabase), `ENGINE_MODEL` and `ENGINE_PROVIDER` (user, 2026-09-29), so the CLI no longer needs them on the command line; X2 still formally decides the engine model.
-- [ ] **V9 · appliedAI run + disagreement review** · Deps: V8, B11 · Type: human (an agent runs the benchmark and drafts the table)
+- [ ] **V9 · appliedAI run + disagreement review** · Deps: V8, B11 · Type: mixed (an agent runs the benchmark and drafts the table; the user writes the verdicts)
   Output: `eval/reports/appliedai_review.md` (a verdict per disagreement: engine error, outdated label, or ambiguous; Annex I reported separately; accuracy before and after excluding outdated labels).
-  DoD: every disagreement has a verdict written by the user; accuracy before and after excluding outdated labels is reported with its run_id; Annex I cases are listed separately.
+  DoD: every disagreement has a verdict written by the user; accuracy before and after excluding outdated labels is reported with its run_id; Annex I cases are listed separately; no appliedAI description text appears in tracked files (an n-gram check against `eval/private/appliedai.jsonl`; INIT › Risks: publish only case IDs and results).
 
-- [ ] **V10a · Head-to-head: run the existing checker** · Deps: B10 · Parallel: everything after the freeze · Type: human
+- [ ] **V10a · Head-to-head: run the existing checker** · Deps: B10b · Parallel: everything after the freeze · Type: human
   Output: `eval/reports/head_to_head.md` (20–30 headline cases run by hand through the FLI or Commission checker, with the raw answers and an empty engine column).
   DoD: 20–30 cases are saved with the checker's raw answers and the date run.
   **Split from V10 (user, 2026-09-30):** the engine column needs V8's stored run, so it moved to V10b; this half can start as soon as the labels are frozen.
@@ -473,7 +500,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
 - **Gaps P4 left against the system (P5 closes them):** P4's radii are 28/40 px, the system's are `radius-card` 28, `radius-panel` 32, `radius-feature` 36 (plus tag 7, field 12, item 14, card-small 16, tile 24); P4 has no mesh lights, spacing scale, type scale, shadows (`shadow-glass`, `shadow-button` …) or the liquid primary Button; the `StatusPill` kinds `decided` and `draft`, `EvidenceTag`, `Icon` and the step/fact/obligation components are new. The system's `RiskClass` keys (`high`, `out`) differ from the engine's (`high_risk`, `out_of_scope`): map from the generated `@/api` types. White text on the button gradient's top stop (`lens-blue-top`) is 3.9:1: keep the label over the `lens-blue` middle or darken the top stop.
 
 - [ ] **P1 · FastAPI** · Deps: E10 · Type: agent
-  Output: `aiact/api/` with `POST /classify` (SSE step events and the final result), `GET /provisions/{id}`, `GET /obligations`, `POST /qa`, the OpenAPI schema exported to `frontend/openapi.json`, and rate limiting. DoD: httpx tests with the engine in replay mode.
+  Output: `aiact/api/` with `POST /classify` (SSE step events and the final result), `GET /provisions/{id}`, `GET /obligations`, the OpenAPI schema exported to `frontend/openapi.json`, and rate limiting (`POST /qa` comes with P7). DoD: httpx tests with the engine in replay mode; the SSE step events are tested; a rate-limit test gets 429; `frontend/openapi.json` is committed and matches the app (a test).
   **From P4 (merged):** `frontend/` has `pnpm gen:api` (hey-api, `frontend/openapi-ts.config.ts`): it reads `frontend/openapi.json` (or `OPENAPI_INPUT=http://localhost:8000/openapi.json`) and writes `frontend/src/api/`, which is a placeholder (`export {}`) until then. After exporting the schema, run `pnpm gen:api` and commit `src/api/`. `GET /provisions/{id}` wraps `get_provision` (C5): keep held-out rows hidden (no `include_held_out` in the public API).
 
 - [x] **P2a · MCP server with the lookup tools** · Deps: C5, C6, C7, C8 · Parallel: the engine · Type: agent
@@ -484,7 +511,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From C8 (merged):** `search_ai_act` without `max_distance` uses `SEARCH_MAX_DISTANCE` (unset until X1 calibrates it); the MCP `search_ai_act` tool should rely on that default and expose `SearchResults.found` and each hit's `similarity`, so a calling agent can tell "nothing relevant" from a match. The keyword arm drops very common terms: English "Article 50" never reaches it ('50' is in 7.6% of units), so exact provision references are better routed to `get_provision`.
   **Outcome:** P2a: `aiact mcp serve` runs an MCPServer (MCP SDK 2.2, stdio) with read-only search_ai_act, get_provision and list_obligations, each returning the existing Pydantic result with law_version and disclaimer (ObligationList gained `disclaimer`, list_obligations a keyword-only `language`); arguments bounded in the schema, list_obligations takes amended only, only caller-fixable errors come back with their message; include_held_out, the exclude filter and max_distance are never exposed; tested in-process and with the MCP inspector CLI.
 
-- [ ] **P2b · MCP `classify_system`** · Deps: P2a, E10 · Type: agent
+- [ ] **P2b · MCP `classify_system`** · Deps: P2a, E10 · Type: mixed
   Output: the fourth tool, with a bring-your-own OpenRouter key. DoD: a demo from one MCP client (the user picks it; INIT open question) is recorded in the README.
   **From P2a (merged):** `aiact.mcp.server.build_server(*, connect, embedder)` registers the tools with `_tool_errors(*fixable)`: add `classify_system` the same way (read-only, bounded arguments, only caller-fixable errors with their message, never expose include_held_out/exclude/max_distance). Extra undefined arguments are silently dropped by the SDK today; rejecting them needs a custom argument model. A German-then-English fallback for guidance in the MCP search is still open.
 
@@ -497,72 +524,85 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   Context: Design reference (above), `Brand` artboard. Output: `frontend/` (Vite, React, TS, Tailwind, shadcn/ui, TanStack Router and Query, react-i18next with EN and DE, React Hook Form with Zod, a generated API client, Supabase anonymous auth, ESLint, Prettier, Vitest), with the Brand board's colours, fonts, glass panel and risk-class pills set up as Tailwind theme tokens and shared components. DoD: `pnpm build && pnpm test` pass; the language switch works; the tokens match the Brand board; `docs/DEPENDENCIES.md` (F8) also lists the frontend packages from the pnpm lockfile, and `aiact deps check` covers them.
   **Outcome:** frontend/ scaffolded (Vite 8, React 19, TS 6, Tailwind 4 + shadcn, TanStack Router and Query, i18next EN/DE, React Hook Form + Zod, Supabase anonymous session with a notice when sign-in fails, ESLint, Prettier, Vitest + MSW + axe); Brand board tokens in src/index.css with GlassPanel, RiskPill, KlarLogo, LanguageSwitch and a /brand sheet; German wording user-approved (out_of_scope: 'Außerhalb des Anwendungsbereichs'); pnpm gen:api (hey-api) set up, src/api/ a placeholder until P1; aiact deps covers frontend/pnpm-lock.yaml by default (731 npm packages).
 
-- [ ] **P5 · Classification UI** · Deps: P4, P1 · Type: agent
-  Context: Design reference (above), artboards `Main`, `Classify`, `Result`, `Reviewer`. Output: the landing page; a description form; live step progress; a follow-up question loop (answers are added and the engine re-runs); a summary view (plain language and to-do list, with steps collapsed) and a reviewer view (every step expanded with its fact, evidence tag and quoted provision); the disclaimer and AI disclosure (Art. 50(1)). DoD: Vitest component tests pass; a manual run of the worked example looks right and matches the artboards. Load the `frontend-design` skill for anything the artboards don't cover.
+- [ ] **P5 · Classification UI** · Deps: P4, P1 · Type: mixed
+  Context: Design reference (above), artboards `Main`, `Classify`, `Result`, `Reviewer`. Output: the landing page; a description form; live step progress; a summary view (plain language and to-do list, with steps collapsed) and a reviewer view (every step expanded with its fact, evidence tag and quoted provision); the disclaimer and AI disclosure (Art. 50(1)); a frontend CI job (`pnpm install --frozen-lockfile`, lint, build, test) and the frontend commands in CLAUDE.md › Commands. DoD: Vitest component tests show the steps collapsed in the summary view and expanded in the reviewer view, and the disclaimer and the Art. 50(1) disclosure rendered; one axe pass per view; the frontend CI job is green; the user has checked a run of the worked example against the artboards. Load the `frontend-design` skill for anything the artboards don't cover.
   **From P4 (merged):** take `RiskClass`/`Status`/`ClassificationResult` from the generated `@/api` (P1 runs `pnpm gen:api`), not hand-written types. Reuse `AppShell`, `GlassPanel`, `RiskPill` (`pill-kinds.ts`), `LanguageSwitch`, `ErrorView` and `src/test/test-utils.tsx` (`renderWithProviders`, `renderRoute`; MSW fails unhandled requests). The Brand board's gradient pill button isn't built (the shadcn `Button` keeps its standard look), and there is no dark theme. The main bundle is about 676 kB (mostly supabase-js): split it. Open follow-ups: a frontend CI job (`pnpm install --frozen-lockfile`, lint, build, test) and the frontend commands in CLAUDE.md › Commands. Run pnpm via `corepack pnpm` or `corepack enable`.
+
+- [ ] **P5b · Follow-up question loop** · Deps: P5, E10 · Type: agent
+  Context: Design reference (`Result` artboard); decision 019. Output: the follow-up question loop: the user answers the key-fact questions, the answers are appended to the description, and the engine re-runs. DoD: a component test answers a question and sees the re-run result; an API test shows the answer reaching the description.
 
 - [ ] **P6 · AI inventory** · Deps: P5, P3 · Type: agent · Resource: db-schema
   Context: Design reference (above), `Inventory` artboard. Output: add and classify many systems, an overview table, a company-level summary (the stricter reading flagged). DoD: component and API tests.
-  **From P3's review:** export and import go through `public.export_my_data()` / `public.import_my_data(jsonb)`. Two schema follow-ups, each a new migration (the one-schema-story rule applies): (1) `private.stamp_timestamps()` caps `created_at` at `now()` but sets no lower limit, so a client can store `-infinity` or year 0001, which breaks sorting, the export and date decoding (psycopg fails on it); add a lower limit, e.g. no earlier than the owner's `auth.users.created_at`. (2) The 5 MB import cap can reject a genuine export (results may be up to 256 kB each, so about 170 typical or 20 maximum-size classifications exceed it); raise the cap to match the largest export, and add a round-trip test at that size.
+  **From P3's review:** export and import go through `public.export_my_data()` / `public.import_my_data(jsonb)`; the two schema follow-ups moved to P3b.
+  **From P3 (security audit):** the browser writes `classifications` rows itself, so a user can forge their own result: don't show them as authoritative in the company summary.
 
-- [ ] **P7 · Q&A with citations** · Deps: C6, C8, X1, P1 · Type: agent
-  Output: `aiact/qa/` (a retrieval-grounded answer that cites provisions, steers away from "are we compliant?", and stays within the corpus) and the UI panel. DoD: V6 faithfulness on the Q&A set is recorded.
+- [ ] **P3b · User-data schema fixes** · Deps: P3 · Type: agent · Resource: db-schema
+  Output: two migrations (the one-schema-story rule applies): (1) `private.stamp_timestamps()` caps `created_at` at `now()` but sets no lower limit, so a client can store `-infinity` or year 0001, which breaks sorting, the export and date decoding (psycopg fails on it); add a lower limit, e.g. no earlier than the owner's `auth.users.created_at`. (2) The 5 MB import cap can reject a genuine export (results may be up to 256 kB each, so about 170 typical or 20 maximum-size classifications exceed it); raise the cap to match the largest export, and add a round-trip test at that size.
+  DoD: a timestamp before the owner's `auth.users.created_at` is rejected (test); a round trip at the largest export size passes.
+
+- [ ] **P7 · Q&A with citations** · Deps: C6, C8, X1b, P1, V6 · Type: agent
+  Output: `aiact/qa/` (a retrieval-grounded answer that cites provisions, steers away from "are we compliant?", and stays within the corpus; general AI Act questions and questions about a result, INIT › Scope), `POST /qa` in `aiact/api/`, and the UI panel. DoD: V6 faithfulness on the Q&A set is recorded; a question about a stored result is answered with that result's citations.
   **From C6 (merged):** `aiact.retrieval.search.search_ai_act(query, language, law_version, as_of, *, doc_types, exclude_source_example_ids, include_held_out=False, limit)` returns hits with `law_version`, `as_of` and the disclaimer; never pass `include_held_out` (only V8's gap run may). The language filter is exact, so a German search skips English-only guidance (most guidance): add a German-then-English fallback like `get_provision`'s if the step needs guidance in DE.
   **Relevance cut-off (C8, X1):** search with the calibrated `max_distance`; when `SearchResults.found` is False, answer that the AI Act corpus doesn't cover the question, without calling the model. DoD addition: B7's unanswerable questions get that answer, and the answerable ones are unaffected.
   **From B13 (merged):** any new public callable in `aiact.retrieval` must be added to `ENTRY_POINTS` (with a probe) or `NOT_ENTRY_POINTS` (with a reason) in `backend/tests/test_isolation.py`. The discovery can't see a `functools.partial`, a factory-built callable or an instance of an outside class: wrap retrieval in a plain function in `aiact/retrieval/` rather than binding a partial of `search_ai_act`.
   **From C8 (merged):** rely on the `SEARCH_MAX_DISTANCE` default and read `SearchResults.found`: when it is False, answer that the question is outside the corpus instead of citing weak hits (B7's unanswerable questions test this). Exact references like "Article 50" don't reach the keyword arm; detect provision references and use `get_provision`.
   **From P2a (merged):** The MCP `search_ai_act` tool relies on the SEARCH_MAX_DISTANCE default and returns `found` and each hit's `similarity`; mirror that in Q&A. `list_obligations(..., language=)` now returns a `disclaimer` in the requested language.
 
-- [ ] **P8 · Document drafting backend** · Deps: E10 · Type: agent
-  Context: INIT › Documentation drafting. Output: `aiact/drafting/`: short deployer documents generated from facts; skeleton templates (Annex IV, Art. 17, Art. 9, Art. 27) listing every required section with its quoted requirement; the three automatic checks (all sections present, no content the user did not supply, pre-filled facts match the result); a DRAFT label and the disclaimer. DoD: all three checks are tested, including a failing case for each.
+- [ ] **P8a · Deployer documents** · Deps: E10 · Type: agent
+  Context: INIT › Documentation drafting. Output: `aiact/drafting/`: short deployer documents generated from facts, with the three automatic checks (all sections present, no content the user did not supply, pre-filled facts match the result); a DRAFT label and the disclaimer. The automatic checks are deterministic; the judged "no invented content" metric is V5's. DoD: all three checks are tested, including a failing case for each.
 
-- [ ] **P9 · Guided interview + Word/PDF export** · Deps: P8, P3, P5 · Type: agent
+- [ ] **P8b · Provider document skeletons** · Deps: P8a · Type: agent
+  Context: INIT › Documentation drafting, Omnibus details. Output: skeleton templates (Annex IV, Art. 17, Art. 9, Art. 27) in `aiact/drafting/` listing every required section with its quoted requirement, and for small and small mid-cap companies a note that a simplified technical documentation form is expected (INIT). DoD: every required section of each skeleton is present (a test against the quoted provisions); the simplified-form note appears for an SME result and not for a large company.
+
+- [ ] **P9 · Guided interview + Word/PDF export** · Deps: P8b, P3, P5 · Type: agent
   Context: Design reference (above), `Documents` artboard. Output: interview endpoints and UI; answers written up as prose; `.docx` and PDF export from Python. DoD: an end-to-end test fills one skeleton, and the automatic checks pass.
+  **From P3 (security audit):** browser-written `classifications` rows can be forged by their owner: pre-fill facts from a backend-validated result, not from a row the browser wrote.
 
-- [ ] **P10 · Original vs amended toggle** · Deps: E10, P5 · Type: agent
-  Output: a UI toggle, plus a diff view that shows which steps changed and why (citing the Omnibus). DoD: a test case whose outcome differs between the two versions shows the difference.
+- [ ] **P10 · Original vs amended toggle** · Deps: E11, P5 · Type: agent
+  Output: a UI toggle, plus a diff view that shows which steps changed and why (citing the Omnibus), and the "not modelled for the original text" obligations notice (decision 020). DoD: a test case whose outcome differs between the two versions shows the difference.
+  **From C5 (merged, via E9):** `get_provision` never returns the Omnibus's own provisions; cite the Omnibus through E9's explicit lookup and `changed_by_omnibus` marker.
 
-- [ ] **P11 · German completeness** · Deps: P5–P10 · Type: mixed
+- [ ] **P11 · German completeness** · Deps: P5, P5b, P6, P7, P8a, P8b, P9, P10 · Type: mixed
   Output: every UI string, question, notice and skeleton in DE; citations quote the DE official text, and English-only guidance is labelled. DoD: an i18n key-coverage test passes; the user has reviewed the DE copy.
   **From the design system:** follow `docs/design-system/localisation.md` (German about 30% longer, button rows never shrink, citation column widths, the Act's official German terms, German citation and date style, the two German notices).
 
 - [ ] **P12 · Privacy surface** · Deps: P5 · Type: agent
-  Output: a warning when a description contains personal data, a privacy notice naming OpenRouter, the model providers and the Nebius host, and a delete-my-data button. DoD: component tests.
+  Output: a warning when a description contains personal data, a privacy notice naming OpenRouter, the model providers and the Nebius host, a delete-my-data button, and export and import buttons over P3's RPCs (INIT › Scope, Storage). DoD: component tests, including an export–import round trip.
   Notes from merged stories: X3 (005): OpenRouter's own processing is global on this plan (`eu.openrouter.ai` needs Business). Name the EU providers: Azure EU (Luna), Google Vertex EU (Flash-Lite, Haiku, Sonnet), Nebius (embeddings; EU per INIT, no region tag).
   **From P3 (security audit):** state the 30-day deletion of inactive anonymous data (decision 013). Anonymous visitors share the `authenticated` role with real accounts: any table or bucket that should need a real account adds a restrictive policy on `(auth.jwt()->>'is_anonymous')::boolean is false`. The browser writes `classifications` rows itself, so a user can forge their own result. If those rows are ever shown as authoritative (exports, reports), write them from the backend and grant the browser SELECT and DELETE only.
 
-- [ ] **P13 · Playwright e2e** · Deps: P5, P6, P9 · Type: agent
+- [ ] **P13 · Playwright e2e** · Deps: P5, P6, P9, P12 · Type: agent
   Output: e2e tests for classifying the worked example, the inventory, one document, and delete-my-data (backend in replay mode). DoD: runs in CI.
 
 ## Phase 6 — Wrap-up and stretch
 
-- [ ] **W0 · Freshness check before the build freezes** · Deps: – (run in week 9) · Type: agent
-  Output: `docs/decisions/007-freshness.md`: are the high-risk guidelines final? Has the simplified tech-doc form been published? Confirm the Bitkom 69% figure. If the guidelines changed: re-run B2–B4 as a logged label change and re-ingest.
-  DoD: each of the three questions is answered with a source link and the date checked; if the guidelines changed, the follow-up label changes are logged in `eval/LABEL_CHANGES.md` and the re-ingestion is added to the backlog as a new story.
+- [ ] **W0 · Freshness check before the build freezes** · Deps: – (run now, and again right before the final evaluation) · Type: agent
+  Output: `docs/decisions/007-freshness.md`: are the high-risk guidelines final? Has the simplified tech-doc form been published? Confirm the Bitkom 69% figure. If the guidelines are final, follow decision 021: the draft benchmark stays frozen; the final prose is ingested only after each final example is mapped to its draft id and Pile B is tagged (a new story).
+  DoD: each of the three questions is answered with a source link and the date checked, on both runs; if the guidelines are final, the mapping-and-reload story is added to the backlog and the README limitation is noted on the README story.
   Notes from merged stories: B2 (001): if the Commission has adopted final high-risk guidelines, the examples and their hr-ex numbering may change; 001 covers the 2026-05-19 draft only.
-  **From the backlog check (user, 2026-09-30):** if B10 isn't merged yet when W0 runs, don't create `eval/LABEL_CHANGES.md` here: record the label changes as an input to B10 instead (B10 creates the log).
 
-- [ ] **W1 · Final evaluation (2 full runs)** · Deps: V5–V9, V10b, P7 · Type: agent
-  Output: `eval/reports/final.md` with every INIT metric, per benchmark, per language and per business function, the gap number, and head-to-head.
-  DoD: every metric in INIT › Metrics has a number with its run_id; both full runs are stored in `eval_runs`; the total cost is recorded and is within the budget.
+- [ ] **W1 · Final evaluation (2 full runs)** · Deps: V5–V9, V10b, P7, W0, C7b, E11, P8a, P8b, P10, P11 · Type: mixed
+  Output: `eval/reports/final.md` with every INIT metric, per benchmark, per language and per business function, the gap number, and head-to-head; own-case accuracy labelled "development cases" (decision 018).
+  DoD: every metric in INIT › Metrics has a number with its run_id; both full runs are stored in `eval_runs`; the total cost is recorded and is within the budget; the user approved the full runs.
+  **Build freeze (decision 024):** W1 starting is the freeze; after it only the report and the deck change, and a fix means a logged re-run. S2 stays outside it.
   **Decision 016:** the final numbers are given with and without the two contaminated cases (hr-ex-269, hr-ex-031).
 
-- [ ] **S2 · Premium comparison** · Deps: V8 · Type: agent
+- [ ] **S2 · Premium comparison** · Deps: V8 · Type: mixed
   Output: Claude Sonnet 5 on 25 cases, added to the report.
   DoD: 25 cases run with Claude Sonnet 5; a comparison table (accuracy, cost) is added to the report with its run_id.
 
-- [ ] **S1 · Stretch: fixed order vs free agent** · Deps: V8, P2a · Type: agent
+- [ ] **S1 · Stretch: fixed order vs free agent** · Deps: W1, P2a · Type: agent
   Output: `aiact/eval/experiments/free_agent.py`, a free agent with only the lookup tools, run on the headline set; accuracy, skipped checks (Art. 5) and cost compared.
   DoD: both arms ran on the same headline set, with stored run_ids; the report compares accuracy, skipped checks (especially Art. 5), and cost and tool calls per case.
 
-- [ ] **S3 · Stretch: deployment** · Deps: MVP done · Type: mixed
+- [ ] **S3 · Stretch: deployment** · Deps: W1, P11, P12, P13 · Type: mixed
   Output: EU hosting, real accounts (upgrade from anonymous sessions), MCP over HTTP, a GDPR data policy.
   DoD: the app is reachable at a public URL hosted in an EU region; anonymous sessions upgrade to real accounts in a tested flow; the GDPR data policy is published and the user has reviewed it.
   **From P3 (security audit):** anonymous sign-in is on with no captcha (`[auth.captcha]` commented out; only `anonymous_users = 30`/h per IP), and there is no per-user row cap: enable Turnstile or hCaptcha, and consider a row quota. Email sign-up needs no confirmation (`enable_confirmations = false`, 6-char passwords), so anyone can escape the 30-day purge (decision 013) with a permanent account: require confirmation and set a retention for permanent users, or turn email sign-up off until real accounts exist. `config.toml` covers only local; apply the same auth settings on the hosted project, and after the first hosted purge check `cron.job_run_details` (`postgres` must be able to delete from `auth.users`).
 
 - [ ] **W2 · README + showcase** · Deps: W1 · Type: mixed
-  Output: the README paragraph from INIT, architecture, setup, measured accuracy tables, limitations, and the showcase link near the top.
-  DoD: the README contains INIT's paragraph, the showcase link near the top, and setup steps that work from a clean clone (checked); its accuracy tables match `eval/reports/final.md`; the user has reviewed it.
+  Output: the README paragraph from INIT, architecture, setup, measured accuracy tables, ethical considerations and privacy (from INIT › Ethical considerations; course brief criterion 3), limitations (including the per-category label freeze, decision 017; own cases as development cases, 018; the original toggle covering the class only, 020), the P2b MCP demo, and the showcase link near the top.
+  DoD: the README contains INIT's paragraph, the showcase link near the top, an ethics section, and setup steps that work from a clean clone (checked); its accuracy tables match `eval/reports/final.md`; the user has reviewed it.
 
 - [ ] **W3 · Presentation** · Deps: W2 · Type: mixed
   Output: a 10-minute deck on the six points from `AE.CAP_afa.md`, with an SCR framing.
@@ -573,4 +613,4 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
 ## Verification
 - Per story: its DoD, plus ruff, pyright and pytest passing, plus CI green.
 - Milestone checks: after C6, the retrieval tests and X1 numbers are in `docs/decisions/`; after E10, the live worked example matches INIT; after V8, the headline report exists with both the held-out and the all-retrievable numbers; at W1, every metric in INIT › Metrics has a number in `eval/reports/final.md`.
-- The isolation test (B13) and the label-freeze test (B10) stay green in CI from the moment they land.
+- The isolation test (B13) and the label-freeze test (B10a) stay green in CI from the moment they land.

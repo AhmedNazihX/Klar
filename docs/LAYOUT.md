@@ -13,7 +13,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── AI Act Classification Assistant — Capstone Init Document.md   the design (INIT)
 ├── AE.CAP_afa.md                    course brief
 ├── .gitignore
-├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check, label-freeze check (F2, B10, B13)
+├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check, label-freeze check (F2, B10a, B13)
 ├── .githooks/                       pre-commit and pre-merge-commit regenerate DEPENDENCIES.md, pre-push checks it (F8)
 │
 ├── backend/                         the only Python project (uv)
@@ -48,7 +48,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── cases.py             BenchmarkCase schema + loader + appliedAI mapping (F7)
 │   │   │   ├── academic.py          davidath scenarios → cases + overrides; `aiact evaluate academic-import|academic-sample` (B12)
 │   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact evaluate split` (B3)
-│   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact evaluate similarity` (B4)
+│   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact evaluate similarity` (B4a)
 │   │   │   ├── isolation.py         isolation measurements: Pile B tags, n-gram and embedding closeness to the
 │   │   │   │                        retrievable corpus; `aiact evaluate isolation-embed` (B13)
 │   │   │   ├── label_filter.py      second-model label filter; `aiact evaluate label-filter` (B9)
@@ -59,11 +59,12 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── citation_index.py    citation existence against the corpus (doc_key, provision, language, version) (V2)
 │   │   │   ├── baselines.py         `baseline_luna` (engine model, one prompt, no retrieval) and `baseline_jev` (V3)
 │   │   │   ├── judge.py             (V4)
+│   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support, invented content (V5)
 │   │   │   ├── ragas_metrics.py     (V6)
 │   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)
-│   │   │   └── experiments/         embeddings.py (X1), smoke.py (X2), free_agent.py (S1)
+│   │   │   └── experiments/         embeddings.py (X1a), smoke.py (X2), free_agent.py (S1)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
-│   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8, P9)
+│   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app, SSE (P1)
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
@@ -84,7 +85,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── eval/                            benchmark data and reports only — no code; the Corpus lane never reads it
 │   ├── split.json                   Pile A / Pile B, committed once and never changed (B3; C2 may read it)
 │   ├── commission_examples/         examples.jsonl extracted from the draft guidelines (B2)
-│   ├── cases/                       labelled cases, frozen at tag labels-v1 (B10); folders created by F7,
+│   ├── cases/                       labelled cases, frozen per category (B10a, decision 017) and tagged labels-v1 (B10b); folders created by F7,
 │   │                                <set>/**/*.yaml, one case or a list per file, BenchmarkCase schema
 │   │                                in aiact/eval/cases.py (except qa/, whose item shape comes with B7)
 │   │   ├── commission_b/            (B4)
@@ -101,7 +102,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                measured overlap (decision 016; `isolation.load_contaminated`)
 │   ├── judge_validation/            hand-labelled judge cases (V4)
 │   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1)
-│   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10)
+│   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10a)
 │   └── private/                     appliedai.jsonl (B11; gitignored, never tracked; may be absent)
 │
 ├── supabase/                        Supabase CLI project
