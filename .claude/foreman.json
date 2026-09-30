@@ -1,0 +1,93 @@
+{
+  "base_branch": "main",
+  "checks": [
+    "cd backend && uv run ruff check . && uv run ruff format --check .",
+    "cd backend && uv run pyright",
+    "cd backend && uv run pytest -q",
+    "cd backend && uv run aiact deps check"
+  ],
+  "link_files": [
+    "backend/.env"
+  ],
+  "env": {
+    "AIACT_DATA_DIR": "{MAIN}/data"
+  },
+  "reviewers": [
+    "foreman:diff-reviewer",
+    "foreman:security-reviewer",
+    "isolation-auditor"
+  ],
+  "lanes": {
+    "Corpus": {
+      "deny": ["eval"],
+      "allow": [],
+      "reviewers": []
+    }
+  },
+  "stories": {
+    "C2": {
+      "deny": ["eval"],
+      "allow": ["eval/split.json"]
+    }
+  },
+  "gates": [
+    {
+      "path": "backend/aiact/engine",
+      "requires": "eval/split.json",
+      "reason": "the benchmark split must be committed before any engine code that is scored on it exists (CLAUDE.md › Global rules)"
+    }
+  ],
+  "isolation": {
+    "test": "cd backend && AIACT_REQUIRE_CORPUS=1 uv run pytest -q tests/test_isolation.py",
+    "design_section": "AI Act Classification Assistant — Capstone Init Document.md › Benchmark isolation; CLAUDE.md › Global rules",
+    "private": ["eval/private", "data/raw"]
+  },
+  "decisions": {
+    "reserved": {
+      "003": "X1 embedding model choice",
+      "006": "V4 judge"
+    }
+  },
+  "format": {
+    "backend/": "uv run ruff format {file}"
+  },
+  "guardrails": [
+    {
+      "rule": "Corpus code never reads eval/ (benchmark isolation); only C2 reads eval/split.json",
+      "source": "CLAUDE.md › Global rules; INIT › Benchmark isolation",
+      "enforced_by": ["lanes.Corpus", "stories.C2", "isolation-auditor", "backend/tests/test_isolation.py", "CI isolation job"]
+    },
+    {
+      "rule": "eval/split.json is committed before anything under backend/aiact/engine/",
+      "source": "CLAUDE.md › Global rules",
+      "enforced_by": ["gates[0]", "isolation-auditor"]
+    },
+    {
+      "rule": "Held-out Pile B rows are never retrievable by default; only V8's gap run passes include_held_out",
+      "source": "decision 012; CLAUDE.md › Global rules",
+      "enforced_by": ["backend/tests/test_isolation.py", "isolation-auditor", "foreman:security-reviewer"]
+    },
+    {
+      "rule": "No live model calls in CI; live tests are marked @pytest.mark.live",
+      "source": "CLAUDE.md › Global rules",
+      "enforced_by": [".claude/rules/python.md", "checks (pytest deselects live)", "cost_cap_usd"]
+    },
+    {
+      "rule": "Labels under eval/cases/ are frozen at labels-v1; later changes are logged in eval/LABEL_CHANGES.md",
+      "source": "CLAUDE.md › Global rules",
+      "enforced_by": ["isolation-auditor", ".claude/rules/eval.md"]
+    },
+    {
+      "rule": "Secrets live only in .env, never committed",
+      "source": "CLAUDE.md › Global rules",
+      "enforced_by": [".gitignore", "git-guardrails block-secrets.sh"]
+    },
+    {
+      "rule": "Dependency manifest matches the lockfiles",
+      "source": "CLAUDE.md › Commands",
+      "enforced_by": ["checks (aiact deps check)", ".githooks pre-commit/pre-push", "CI"]
+    }
+  ],
+  "cost_cap_usd": 0.1,
+  "max_review_stories": 2
+}

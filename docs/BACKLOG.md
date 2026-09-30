@@ -27,14 +27,14 @@ INIT sets hard ordering rules that this backlog enforces:
 - Any story touching Postgres loads the `supabase-postgres-best-practices` skill first; Supabase work loads the `supabase` skill.
 - Library APIs (LangGraph, Docling, MCP SDK, RAGAS, FastAPI, TanStack) are checked through context7 before writing code.
 - A story that makes a decision writes a short record to `docs/decisions/NNN-title.md` (what, options measured, numbers, choice).
-- **Parallel agents use worktrees.** See `CLAUDE.md` › Parallel work for the full rules. In short: one worktree and one `story/<ID>-<slug>` branch per story; a worktree is created only after all its Deps are merged; the orchestrator alone ticks this backlog; every story is reviewed by `diff-reviewer` and passes the checks before it is merged; migrations are created with `supabase migration new`, and only one story at a time may change the schema; Corpus-lane worktrees leave out `eval/` with sparse checkout.
+- **Parallel agents use worktrees.** Run with the `foreman` plugin; see `CLAUDE.md` › Story workflow and › Project rules for parallel work. In short: one worktree and one `story/<ID>-<slug>` branch per story; a worktree is created only after all its Deps are merged; the orchestrator alone ticks this backlog; every story is reviewed by the `reviewers` in `.claude/foreman.json` and passes its `checks` before it is merged; migrations are created with `supabase migration new`, and only one story at a time may change the schema; Corpus-lane worktrees leave out `eval/` with sparse checkout.
 - **Migration names.** Names like `001_corpus.sql` in the stories below are logical names. The real files get the timestamp prefix from `supabase migration new` (for example `20261001120000_corpus.sql`).
 
 ---
 
 ## Critical path
 
-Computed from the Deps by `python3 ~/.claude/skills/work-breakdown/scripts/backlog.py graph` (the `work-breakdown` skill's helper), with sizes weighted and E5 tagged `Size: L`. Re-run it after any change to the Deps; don't edit this by hand.
+Computed from the Deps by the foreman plugin's `backlog.py plan`, with sizes weighted and E5 tagged `Size: L`. Re-run it after any change to the Deps; don't edit this by hand.
 
 ```mermaid
 flowchart LR
@@ -77,7 +77,7 @@ flowchart LR
 
 ## Tooling — Claude Code setup
 
-The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` › Tooling). Two items wait for later stories:
+The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`); the project's own skills, agent and scoped rules are in `.claude/` (see `CLAUDE.md` › Project tooling). Two items wait for later stories:
 
 - [x] **T1 · `/eval` skill** · Deps: V1 · Type: agent
   Context: INIT › Evaluation (Metrics, Budget rules), Benchmark isolation 4. Input: the `aiact evaluate run` CLI from V1, and `eval_runs`. Output: `.claude/skills/eval/SKILL.md`. The skill runs a benchmark with a subset size, a cost cap and a held-out/all mode, refuses a full run without the user's go-ahead, and writes `eval/reports/run-<date>.md` quoting only stored numbers (with run_ids).
@@ -300,7 +300,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   **From B13 (merged):** after adding or changing cases, run `uv run aiact evaluate isolation-embed` (a fraction of a cent) and commit `eval/isolation/embeddings.json`; the local isolation test fails when a case text has no vector (CI doesn't check this). Run `AIACT_REQUIRE_CORPUS=1 uv run pytest -q tests/test_isolation.py` before finishing: no case may repeat a retrievable row (6-gram coverage 0.5, a 30+ word run, cosine 0.9).
   **Schema fix (user, 2026-09-30):** `ANNEX_POINT_PATTERN` in `aiact/eval/cases.py` accepts only lowercase segments, so it rejects the corpus's Annex I ids (`annex:I:A:11`, `annex:I:B:21`). Fix it here together with allowing several points in `CaseLabel.annex_point`; also fix the fixture `tests/fixtures/cases/own/ambiguous.yaml`, which uses the pre-Omnibus `annex:I:1` (machinery is now Section B point 21). B10 then backfills `annex_point` on the B5e Annex I cases (their point is in the `annex_i_point:` tag).
 
-- [ ] **X1 · Embedding comparison** · Deps: C6, C8, X0, B7, V6 · Type: agent
+- [ ] **X1 · Embedding comparison** · Deps: C6, C8, X0, B7, V6 · Type: agent · Resource: db-schema
   Output: `backend/aiact/eval/experiments/embeddings.py` and `docs/decisions/003-embeddings.md`: RAGAS context recall and precision for Qwen3 at 1536-d, Qwen3 at 1024-d and OpenAI 3-large, on the Annex-matching and Q&A sets, with results stored in `eval_runs`.
   DoD: a decision is recorded with the numbers; the default in settings is updated if it changes.
   Notes from merged stories: Make the embedding query instruction a setting (e.g. `EMBEDDING_QUERY_INSTRUCTION`); the current default in `aiact/llm/embeddings.py` is a placeholder. Model/provider settings are still empty in the env example.
@@ -371,7 +371,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   **Follow-up from C7's date review (user, 2026-09-28):** filter conditional duties by `applies_if` from the facts. Law-enforcement coverage still missing from the table: Art. 49(4) (registration in the non-public section of the EU database); add it with a hand-checked test. C7 already has Art. 26(10) and Art. 86 as conditional rows.
   **Outcome:** RoleObligationsCheck: the model answers fixed key facts, code applies GPAI and Art. 25(1)(a)–(c) for high-risk systems (keeping a deployer's own duties), own name below high risk (limited or minimal) is legally_ambiguous with provider assumed, unknowns give provider as the labelled working assumption; list_obligations filtered by applies_if; every step cites its basis; Art. 49(4) and GPAI-flag rows added (dates user-reviewed); B5d replay: all 13 roles match (own-d-12 status gap logged on E8/V5), recorded for $0.0087.
 
-- [ ] **E8 · Finalize and aggregate** · Deps: E2–E7 · Type: agent · **critical**
+- [ ] **E8 · Finalize and aggregate** · Deps: E2–E7 · Type: agent · Solo · **critical**
   Output: `aiact/engine/nodes/finalize.py`: the overall status, the stricter reading as the labelled working assumption when uncertain, deciding facts, law version, as_of date, disclaimer, and follow-up questions collected from all steps. DoD: tests on constructed ambiguous and needs-info states.
   **From E2:** question ids come from the model and vary between runs; E8 needs stable ids to score flip variants (consider a fixed id vocabulary for common facts). hr-ex-226's enrichment/profiling feature is no longer asked about in the facts prompt (decision 015), so its variant depends on the high-risk check alone.
   **From E7's B5d replay (user, 2026-09-29: E7 checks role only; score these end to end):** own-d-10: label provider via Art. 3(3) with no switch, but the node reaches provider via Art. 25(1)(a) (basis and citation differ). own-d-12: label legally_ambiguous, but the node returns needs_more_information asking about substantial_modification; decide whether "not foreseen" is a legal question or a missing fact. own-d-13: label switch 25(1)(c), but the node reports 25(1)(b) because the model answered both and (b) comes first in the Act; decide whether all fired switches are reported.
@@ -379,12 +379,12 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   **Open follow-up from the 2026-09-29 reviews:** the obligations table doesn't model Art. 111(2) (high-risk systems placed on the market before the Chapter III date are covered only after significant design changes), which affects every legacy high-risk case. The two INIT inconsistencies (the worked example's Art. 26(7) and the ethics table's "minimal-risk") were fixed with the user on 2026-09-29.
   **From B5e (merged):** C7's obligations table and E7's node (both done) miss two rules the own/e labels rely on, and no open story owns them yet: (1) Art. 2(2): a Section B Annex I product gets no AI Act obligations; (2) Art. 111(2): a high-risk system placed on the market or put into service before its Chapter III date (2 Dec 2027 Annex III, 2 Aug 2028 Annex I) is covered only after significant design changes (public authorities by 2 Aug 2030). The own cases avoid (2) by dating every high-risk launch after its route's date, so the benchmark doesn't need it yet; (1) is scored by own-e-04/05/07. Fix (1) here or in a small follow-up story before V8.
 
-- [ ] **E9 · Citation existence validator** · Deps: E8, C5 · Type: agent · **critical**
+- [ ] **E9 · Citation existence validator** · Deps: E8, C5 · Type: agent · Solo · Resource: db-schema · **critical**
   Output: `aiact/engine/citations.py`: every citation must resolve through `get_provision`; an unknown citation triggers one repair retry of that step, and if it still fails the step becomes `needs_more_information` with an error flag. DoD: tests show 100% of citations exist in replay runs; an injected fake citation is caught.
   **From V2 (merged):** emit the manifest `doc_key` as `Citation.document_id`; the eval citation check (aiact/eval/citation_index.py) counts anything else as missing. Consider reusing its exact rule.
   **From C5 (merged):** `get_provision` never returns the Omnibus's own provisions (decision 009 excludes `is_amending`), so a citation of the Omnibus itself (e.g. "changed by the Omnibus") would fail validation: add an explicit lookup for it if a node needs one. The parsed `kind` and a guideline's `page` are still not stored; add the columns (a migration) if citations need them. `Citation.document_id` doesn't say it holds the manifest doc_key: document it, and replace the made-up keys in `tests/schemas/test_evidence.py` (`guidelines-high-risk-2026-05-19`, `guide:hr:ex:17`) with real ones. E7's citations still quote data/parsed as a stopgap: switch them to `get_provision`. Held-out examples are hidden unless `include_held_out=True` (user, 2026-09-29), so a citation of a Pile B example never resolves by default.
 
-- [ ] **E10 · `classify_system` public API** · Deps: E8, E9 · Type: agent · **critical**
+- [ ] **E10 · `classify_system` public API** · Deps: E8, E9 · Type: agent · Solo · **critical**
   Output: `aiact/engine/__init__.py`: `classify_system(description, language, law_version="amended", as_of=today, answers={}, exclude_source_example_ids=[]) -> ClassificationResult`, with LangSmith tracing (metadata only in production mode) and streaming of step events.
   DoD: live run on INIT's worked example gives the expected result; the replay test is in CI; cost per case is logged.
   **From V1:** replace the `engine` stub in `runner.CLASSIFIERS` with an adapter over `classify_system` that reports cost, tokens and trace_id, and raises `ClassifierFailedError(cost_usd, tokens, cause)` when a paid run fails late.
@@ -424,7 +424,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
 - [ ] **V7 · Tool-call correctness** · Deps: E10 · Type: agent
   Output: `aiact/eval/tool_calls.py`, a checker over LangSmith traces (for example, the prohibited step fetched Art. 5). DoD: the rate is reported per step.
 
-- [ ] **V8 · First headline run + gap run** · Deps: E10, V1, V2, B10 · Type: agent · **critical**
+- [ ] **V8 · First headline run + gap run** · Deps: E10, V1, V2, B10 · Type: agent · Resource: db-schema · **critical**
   Context: INIT › Benchmark isolation 4, Budget rules. Output: `eval/reports/run-<date>.md` with the headline sets run with held-out examples excluded and with all examples retrievable, the baselines, and the per-metric table.
   DoD: the numbers are stored; the failure cases are listed, grouped by step, to guide the engine fixes.
   **From V1:** before the first real run, consider a migration adding `eval_runs.status`/`finished_at` and per-case `cost_usd`/`tokens`/`error` columns (today in `config.outcome` and reserved scores); the one-schema-story rule applies. The CLI needs `DATABASE_URL` set (no fallback to the local Supabase URL).
@@ -487,7 +487,7 @@ The hooks, skills, agents and scoped rules are in `.claude/` (see `CLAUDE.md` �
   Context: Design reference (above), artboards `Main`, `Classify`, `Result`, `Reviewer`. Output: the landing page; a description form; live step progress; a follow-up question loop (answers are added and the engine re-runs); a summary view (plain language and to-do list, with steps collapsed) and a reviewer view (every step expanded with its fact, evidence tag and quoted provision); the disclaimer and AI disclosure (Art. 50(1)). DoD: Vitest component tests pass; a manual run of the worked example looks right and matches the artboards. Load the `frontend-design` skill for anything the artboards don't cover.
   **From P4 (merged):** take `RiskClass`/`Status`/`ClassificationResult` from the generated `@/api` (P1 runs `pnpm gen:api`), not hand-written types. Reuse `AppShell`, `GlassPanel`, `RiskPill` (`pill-kinds.ts`), `LanguageSwitch`, `ErrorView` and `src/test/test-utils.tsx` (`renderWithProviders`, `renderRoute`; MSW fails unhandled requests). The Brand board's gradient pill button isn't built (the shadcn `Button` keeps its standard look), and there is no dark theme. The main bundle is about 676 kB (mostly supabase-js): split it. Open follow-ups: a frontend CI job (`pnpm install --frozen-lockfile`, lint, build, test) and the frontend commands in CLAUDE.md › Commands. Run pnpm via `corepack pnpm` or `corepack enable`.
 
-- [ ] **P6 · AI inventory** · Deps: P5, P3 · Type: agent
+- [ ] **P6 · AI inventory** · Deps: P5, P3 · Type: agent · Resource: db-schema
   Context: Design reference (above), `Inventory` artboard. Output: add and classify many systems, an overview table, a company-level summary (the stricter reading flagged). DoD: component and API tests.
   **From P3's review:** export and import go through `public.export_my_data()` / `public.import_my_data(jsonb)`. Two schema follow-ups, each a new migration (the one-schema-story rule applies): (1) `private.stamp_timestamps()` caps `created_at` at `now()` but sets no lower limit, so a client can store `-infinity` or year 0001, which breaks sorting, the export and date decoding (psycopg fails on it); add a lower limit, e.g. no earlier than the owner's `auth.users.created_at`. (2) The 5 MB import cap can reject a genuine export (results may be up to 256 kB each, so about 170 typical or 20 maximum-size classifications exceed it); raise the cap to match the largest export, and add a round-trip test at that size.
 

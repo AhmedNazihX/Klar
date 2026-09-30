@@ -141,8 +141,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── design-system/               copy of the user's Klar design system (README brand book, localisation, components, components.d.ts, tokens.json); the claude.ai artifact is the source
 │   └── decisions/NNN-<slug>.md      decision records (/decision skill)
 │
-└── .claude/                         Claude Code tooling (see CLAUDE.md › Tooling)
-    ├── settings.json, rules/, skills/, agents/, hooks/, scripts/
+└── .claude/                         Claude Code tooling (see CLAUDE.md › Project tooling)
+    ├── foreman.json, settings.json, rules/, skills/ (case, eval), agents/ (isolation-auditor)
     └── worktrees/                   agent worktrees (gitignored)
 ```
 
