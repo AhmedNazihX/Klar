@@ -17,8 +17,15 @@ class ScopeQuestion:
     """The follow-up question's id, and the field of the model's answer."""
     article: str
     recitals: tuple[str, ...]
-    question: Mapping[Language, str]
+    question: Mapping[Language, str] | None = None
+    """None for a note (Art. 2(8)), which is never asked."""
     reason: Mapping[Language, str] | None = None
+
+    def asked(self, language: Language) -> str:
+        """The follow-up question; only a fact that can be missing has one."""
+        if self.question is None:
+            raise ValueError(f"{self.id} is a note and is never asked")
+        return self.question[language]
 
 
 AI_SYSTEM = ScopeQuestion(
@@ -98,13 +105,6 @@ PRE_MARKET_DEVELOPMENT = ScopeQuestion(
     id="pre_market_development",
     article="art:2:8",
     recitals=("recital:25",),
-    question={
-        Language.EN: "Is the system still only being researched, developed or tested, before it "
-        "is placed on the market or put into service, with no testing in real-world conditions?",
-        Language.DE: "Wird das System noch ausschließlich erforscht, entwickelt oder getestet, "
-        "bevor es in Verkehr gebracht oder in Betrieb genommen wird, ohne Tests unter "
-        "Realbedingungen?",
-    },
     reason={
         Language.EN: "Art. 2(8): the research, testing and development going on before the "
         "system is placed on the market or put into service is exempt; the classification is "

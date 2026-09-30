@@ -14,6 +14,7 @@ Recordings keep only the `content-type` header on both sides, so the API key, at
 headers and provider cookies never land on disk.
 """
 
+import json
 from pathlib import Path
 
 import pytest
@@ -46,6 +47,34 @@ def _scrub_request(request: Request) -> Request:
     return request
 
 
+REASONING_KEYS = frozenset({"reasoning_details", "encrypted_content", "reasoning"})
+"""Response fields that carry the model's (often encrypted) reasoning: not needed to replay, and
+long base64 runs can look like keys to a secret scanner."""
+
+
+def strip_reasoning(value: object) -> object:
+    """`value` with every `REASONING_KEYS` field removed, at any depth of a JSON value."""
+    if isinstance(value, dict):
+        return {k: strip_reasoning(v) for k, v in value.items() if k not in REASONING_KEYS}
+    if isinstance(value, list):
+        return [strip_reasoning(item) for item in value]
+    return value
+
+
+def _scrub_body(body: object) -> object:
+    """A JSON response body without its reasoning fields, as the same type (vcrpy keeps bytes
+    and the HTTP client expects them back); any other body as it is."""
+    raw = body.get("string") if isinstance(body, dict) else None
+    if not isinstance(body, dict) or not isinstance(raw, str | bytes):
+        return body
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return body
+    scrubbed = json.dumps(strip_reasoning(data), ensure_ascii=False)
+    return {**body, "string": scrubbed.encode() if isinstance(raw, bytes) else scrubbed}
+
+
 def _scrub_response(response: dict[str, object]) -> dict[str, object]:
     headers = response.get("headers")
     kept = (
@@ -53,7 +82,7 @@ def _scrub_response(response: dict[str, object]) -> dict[str, object]:
         if isinstance(headers, dict)
         else {}
     )
-    return {**response, "headers": kept}
+    return {**response, "headers": kept, "body": _scrub_body(response.get("body"))}
 
 
 @pytest.fixture(scope="module")

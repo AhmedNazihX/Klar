@@ -541,6 +541,21 @@ def test_the_prompt_puts_instructions_and_law_first_and_the_description_last() -
     assert human.endswith(TOOL)
 
 
+def test_the_open_source_exception_names_art_50_and_its_categories() -> None:
+    """own-b-10 (user, 2026-09-30): Art. 50's own list, not any app that shows its result."""
+    bullet = node.SCOPE_INSTRUCTIONS.split("- open_source_exception")[1].split("\n- ")[0]
+    flat = " ".join(bullet.split())
+    assert "Art. 50" in flat
+    for category in (
+        "interact directly with people",
+        "synthetic audio, image, video or text",
+        "emotion recognition or biometric categorisation",
+        "deep fakes",
+        "only returns its result to its own user doesn't fall under it",
+    ):
+        assert category in flat
+
+
 def test_the_node_is_pinned_to_the_engine_provider() -> None:
     check = ScopeCheck(_settings(), library=FakeLibrary())
     assert check._model.openrouter_provider == {  # pyright: ignore[reportAttributeAccessIssue]

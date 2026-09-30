@@ -375,7 +375,7 @@ def _finding(settled: ScopeSettlement, answer: ScopeAnswer, language: Language) 
     if settled.is_out_of_scope:
         reasons = (rule.reason[language] for rule in settled.excluded_by if rule.reason)
         return " ".join((texts["out_of_scope"], *reasons))
-    questions = [rule.question[language] for rule in settled.missing]
+    questions = [rule.asked(language) for rule in settled.missing]
     if settled.is_contested:
         asked = (texts["still_asked"].format(question=q) for q in questions)
         return " ".join((texts["ambiguous"], answer.ai_system.fact, *asked))
@@ -385,7 +385,7 @@ def _finding(settled: ScopeSettlement, answer: ScopeAnswer, language: Language) 
 
 
 def _question(rule: ScopeQuestion, language: Language) -> FollowUpQuestion:
-    return FollowUpQuestion(id=rule.id, text=rule.question[language], about=rule.article)
+    return FollowUpQuestion(id=rule.id, text=rule.asked(language), about=rule.article)
 
 
 def _open_question(settled: ScopeSettlement, language: Language) -> OpenQuestion | None:
