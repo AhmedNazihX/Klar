@@ -21,12 +21,11 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
 from aiact.engine.state import EngineState, FactsOutcome
-from aiact.llm import chat_model
-from aiact.llm.routing import require_setting
+from aiact.llm import engine_chat_model
 from aiact.llm.structured import describe_validation_error, json_schema_format
 from aiact.schemas import EvidenceTag, Fact, FollowUpQuestion, Language, SourceSpan
 from aiact.schemas.base import ContractModel
-from aiact.settings import Settings, get_settings
+from aiact.settings import Settings
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "facts.md"
 FACTS_INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
@@ -193,16 +192,7 @@ class FactExtractor:
         """`chat` replaces the OpenRouter model (tests). Raises `LLMConfigError` when
         `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the model is always pinned
         to its EU endpoint with fallbacks off (decision 005), so descriptions stay in the EU."""
-        settings = settings or get_settings()
-        model_id = require_setting(settings.engine_model, "ENGINE_MODEL")
-        provider = require_setting(settings.engine_provider, "ENGINE_PROVIDER")
-        self._model = chat or chat_model(
-            model=model_id,
-            provider_order=[provider],
-            allow_fallbacks=False,
-            max_tokens=MAX_OUTPUT_TOKENS,
-            settings=settings,
-        )
+        self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
 
     def __call__(self, state: EngineState) -> FactsOutcome:
         """Raises `FactsOutputError` when the reply doesn't fit `FactsAnswer`."""

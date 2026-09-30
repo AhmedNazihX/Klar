@@ -35,6 +35,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
+from aiact.engine.nodes.key_facts import Answer, KeyFact, facts_used
 from aiact.engine.nodes.role_texts import (
     BUILDS_ON_GPAI,
     OPERATOR_ROLE,
@@ -48,8 +49,7 @@ from aiact.engine.nodes.role_texts import (
     KeyQuestion,
 )
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
-from aiact.llm import chat_model
-from aiact.llm.routing import require_setting
+from aiact.llm import engine_chat_model
 from aiact.llm.structured import describe_validation_error, json_schema_format
 from aiact.obligations.list import (
     ObligationTable,
@@ -60,7 +60,6 @@ from aiact.obligations.list import (
 from aiact.schemas import (
     Citation,
     EvidenceTag,
-    Fact,
     FollowUpQuestion,
     HighRiskRoute,
     Language,
@@ -99,22 +98,6 @@ ACT_DOCUMENTS: Mapping[LawVersion, str] = {
 """The manifest key of each AI Act text, as a citation's `document_id`."""
 
 
-class Answer(StrEnum):
-    YES = "yes"
-    NO = "no"
-    UNKNOWN = "unknown"
-
-
-class KeyFact(ContractModel):
-    """One key-fact answer. Enum fields carry no description: strict structured output rejects
-    keywords next to a `$ref`; the prompt explains every field instead."""
-
-    answer: Answer
-    evidence: EvidenceTag
-    fact: str = Field(min_length=1)
-    fact_numbers: tuple[int, ...]
-
-
 class RoleFact(ContractModel):
     """The company's own role before any switch; None when the description doesn't say."""
 
@@ -122,6 +105,11 @@ class RoleFact(ContractModel):
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+    @property
+    def is_known(self) -> bool:
+        """Always shown: an unknown role is itself a fact the step rests on."""
+        return True
 
 
 class ConditionAnswer(ContractModel):
@@ -421,23 +409,6 @@ def citations(
 # --- The step -----------------------------------------------------------------------------------
 
 
-def _facts_used(used: Sequence[KeyFact | RoleFact], facts: Sequence[Fact]) -> tuple[Fact, ...]:
-    """The extracted facts an answer cites, or the answer itself as an inferred or assumed fact
-    (a stated fact must point into the description, and only the facts node sets spans)."""
-    result: dict[str, Fact] = {}
-    for key_fact in used:
-        if isinstance(key_fact, KeyFact) and key_fact.answer is Answer.UNKNOWN:
-            continue
-        cited = [facts[n - 1] for n in key_fact.fact_numbers if 0 < n <= len(facts)]
-        if cited and key_fact.evidence is not EvidenceTag.ASSUMED:
-            result.update((fact.text, fact) for fact in cited)
-            continue
-        is_assumed = key_fact.evidence is EvidenceTag.ASSUMED
-        evidence = EvidenceTag.ASSUMED if is_assumed else EvidenceTag.INFERRED
-        result.setdefault(key_fact.fact, Fact(text=key_fact.fact, evidence=evidence))
-    return tuple(result.values())
-
-
 def _question(key: KeyQuestion, language: Language) -> FollowUpQuestion:
     return FollowUpQuestion(id=key.id, text=key.question[language], about=key.article)
 
@@ -494,7 +465,7 @@ def to_outcome(
     step = StepResult(
         step=StepName.ROLE_OBLIGATIONS,
         decision=_decision(settled, language, summary),
-        facts_used=_facts_used(settled.used, state.get("facts", ())),
+        facts_used=facts_used(settled.used, state.get("facts", ())),
         citations=citations(settled.cited_articles(), state["law_version"], language, source),
         status=_status(settled),
         missing_fact=_question(missing, language) if missing else None,
@@ -584,15 +555,7 @@ class RoleObligationsCheck:
         Raises `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set:
         the model is always pinned to its EU endpoint with fallbacks off (decision 005)."""
         settings = settings or get_settings()
-        model_id = require_setting(settings.engine_model, "ENGINE_MODEL")
-        provider = require_setting(settings.engine_provider, "ENGINE_PROVIDER")
-        self._model = chat or chat_model(
-            model=model_id,
-            provider_order=[provider],
-            allow_fallbacks=False,
-            max_tokens=MAX_OUTPUT_TOKENS,
-            settings=settings,
-        )
+        self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
         self._table = table
         self._data_dir = settings.aiact_data_dir
 

@@ -2,7 +2,7 @@ import pytest
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
 
-from aiact.llm import LLMConfigError, chat_model
+from aiact.llm import LLMConfigError, chat_model, engine_chat_model
 from aiact.settings import Settings, get_settings
 
 # The planned engine model: cheap, with zero-data-retention endpoints (Azure).
@@ -42,6 +42,32 @@ def test_privacy_routing_is_sent_with_every_model() -> None:
         "allow_fallbacks": False,
     }
     assert model.temperature == 0.0
+
+
+def test_the_engine_model_is_pinned_to_its_provider_without_fallbacks() -> None:
+    settings = _settings(engine_model=CHEAP_MODEL, engine_provider="azure/eu")
+    model = engine_chat_model(max_tokens=100, settings=settings)
+    assert model.model_name == CHEAP_MODEL
+    assert model.max_tokens == 100
+    assert model.openrouter_provider == {
+        "data_collection": "deny",
+        "zdr": True,
+        "order": ["azure/eu"],
+        "allow_fallbacks": False,
+    }
+
+
+@pytest.mark.parametrize(
+    ("values", "missing"),
+    [({"engine_provider": "azure/eu"}, "ENGINE_MODEL"), ({"engine_model": "m"}, "ENGINE_PROVIDER")],
+)
+def test_the_engine_model_needs_a_model_and_a_provider(
+    values: dict[str, str], missing: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("ENGINE_MODEL", raising=False)
+    monkeypatch.delenv("ENGINE_PROVIDER", raising=False)
+    with pytest.raises(LLMConfigError, match=f"{missing} is not set"):
+        engine_chat_model(max_tokens=100, settings=_settings(**values))
 
 
 def _assert_chat_roundtrip(settings: Settings) -> None:
