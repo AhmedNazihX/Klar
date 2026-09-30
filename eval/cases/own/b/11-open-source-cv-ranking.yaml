@@ -1,0 +1,59 @@
+id: own-b-11-open-source-cv-ranking
+set_name: own
+language: de
+description: >-
+  Wir sind ein Logistikdienstleister aus Duisburg mit etwa 1.100 Beschäftigten und stellen jedes
+  Jahr mehrere hundert Lagerkräfte und Disponenten ein. Unsere IT hat ein frei verfügbares
+  Open-Source-Modell heruntergeladen, das Lebensläufe mit Stellenanzeigen vergleicht, und es in
+  unser Karriereportal eingebaut. Jede Bewerbung bekommt so eine Passungsquote, und die
+  Personalabteilung sieht pro Stelle nur die 20 Bewerbungen mit der höchsten Quote. Alle anderen
+  erhalten automatisch eine Absage. Das Tool läuft nur bei uns, unter unserem Namen, und wir
+  verkaufen es nicht weiter. Weil das Modell Open Source ist, ging unsere IT davon aus, dass die
+  KI-Verordnung dafür nicht gilt. Nebenbei nutzen wir das Portal auch für unser Azubi-Marketing.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:4:a"
+label_citation: ["art:2:12", "annex:III:4:a", "art:6:3", "art:3:3", "art:3:11"]
+notes: >-
+  Draft, pending user approval. Scope: the Art. 2(12) open-source exclusion does not apply to a
+  system put into service as a high-risk AI system, so the open-source licence of the model
+  changes nothing. Class: scoring applications against job ads and showing only the top 20 is
+  analysing and filtering applications, Annex III 4(a); scoring applicants is profiling, so no
+  Art. 6(3) exemption. Role: the company builds the system from the model and puts it into service
+  for its own use under its own name, so it is the provider (Art. 3(3), 3(11)) and also the
+  deployer. Conditional duties included: Art. 26(4) (it controls the input), 26(11) and 86(1)
+  (automatic rejections). Kept as conditional because the facts don't settle it (user rule
+  2026-09-29): Art. 26(9) (DPIA). Left out because the facts rule them out: 27(1) (private
+  employer, not a public service), 26(7) (applicants are not workers), 26(8) (not a public
+  authority). Compare own-d-03 (the same duties for a repurposed assistant).
+tags:
+  - "category:b"
+  - "scope:art2_12"
+  - "trap:exclusion_not_met"
+  - "also_role:deployer"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:i"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:9"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:86:1"

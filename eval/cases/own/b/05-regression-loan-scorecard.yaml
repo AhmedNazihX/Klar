@@ -1,0 +1,67 @@
+id: own-b-05-regression-loan-scorecard
+set_name: own
+language: en
+description: >-
+  We're a regional savings bank in Upper Austria with 34 branches. Our risk team is rebuilding the
+  scorecard we use for consumer loans and car finance, to go live in spring 2028. Like the old
+  one, it's a logistic regression, a method banks have used for decades: the team fits it on
+  fifteen years of our own loan files, and it turns an applicant's income, existing debts, account
+  history and job tenure into a probability of default. Applications below a cut-off score are
+  declined automatically; the rest go to a loan officer. The model is refitted once a year and
+  otherwise stays fixed. No outside vendor is involved. The same project also moves our branch
+  appointment booking online.
+label:
+  risk_class: high_risk
+  status: legally_ambiguous
+  role: provider
+  annex_point: "annex:III:5:b"
+label_citation: ["art:3:1", "guide:guide-definition:para:42", "annex:III:5:b", "art:6:3"]
+notes: >-
+  Draft, pending user approval. Open question: is a logistic-regression scorecard fitted on the
+  bank's data an AI system under Art. 3(1)? Reading A (AI system; the stricter reading and the
+  label): the model is learned from data and infers a default probability that decides
+  applications, which is the capability to infer of recital 12; guide-definition para 42 is about
+  systems that improve or accelerate mathematical optimisation, not about models that score
+  people. Then it is Annex III 5(b) (creditworthiness of natural persons), scoring applicants is
+  profiling so Art. 6(3) cannot exempt it, and the bank builds it and puts it into service for its
+  own use, so it is the provider (Art. 3(3), 3(11)) and also the deployer. Reading B (out of
+  scope): guide-definition para 42 names "linear or logistic regression methods" among
+  well-established methods that do not transcend basic data processing, with long consolidated use
+  as an indication; on that reading the scorecard is not an AI system and nothing applies. Go-live
+  in 2028, after Chapter III applies, keeps the grandfathering of para 42's footnote 6
+  (Art. 111(2)) out of the question.
+  Obligations follow reading A. Conditional duties included: Art. 26(4) (the bank controls the
+  input), 26(11) and 86(1) (decisions about applicants, automatic declines), 27(1) (deployer of an
+  Annex III 5(b) system: FRIA). Kept as conditional because the facts don't settle it (user rule
+  2026-09-29): Art. 26(9) (DPIA). Left out because the facts rule them out: 26(7) (applicants are
+  not workers), 26(8) (not a public authority).
+tags:
+  - "category:b"
+  - "scope:definition_borderline"
+  - "also_role:deployer"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:i"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:9"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:27:1"
+  - "obligation:art:86:1"

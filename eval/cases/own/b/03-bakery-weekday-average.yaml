@@ -1,0 +1,24 @@
+id: own-b-03-bakery-weekday-average
+set_name: own
+language: en
+description: >-
+  We're a family bakery with 12 shops around Graz and about 110 staff. Every afternoon the shop
+  managers get an order suggestion for the next morning's bake from our till system. The
+  calculation is simple: for each product it takes the number sold on the same weekday over the
+  last four weeks and uses the average. Before public holidays the manager can add a fixed
+  percentage by hand. The till vendor calls it "smart ordering", but that's all it does, and the
+  managers can overwrite any number before the order goes to the bakehouse. It has cut our
+  leftover bread by about a fifth. Next spring we're adding a gluten-free line to three shops.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:3:1", "guide:guide-definition:para:49", "guide:guide-definition:para:51"]
+notes: >-
+  Draft, pending user approval. Class: the suggestion is a plain historical average per product
+  and weekday plus a manual uplift. guide-definition para 49 and 51 place systems whose
+  performance comes from a basic statistical rule, such as a shop's demand forecast that predicts
+  the mean, outside the AI system definition, so it is not an AI system under Art. 3(1). Role:
+  none. Trap: the vendor's "smart" marketing name.
+tags:
+  - "category:b"
+  - "scope:not_ai_system"
+  - "obligations:none"

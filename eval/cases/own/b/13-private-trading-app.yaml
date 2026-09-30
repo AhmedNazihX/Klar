@@ -1,0 +1,28 @@
+id: own-b-13-private-trading-app
+set_name: own
+language: de
+description: >-
+  Ich bin Realschullehrer in Kassel und lege seit ein paar Jahren privat Geld für meine Rente an.
+  Dafür nutze ich eine App, für die ich monatlich 9 Euro zahle: Sie lernt aus Kursverläufen und
+  Nachrichten und schichtet mein Depot mit ETFs und ein paar Einzelaktien selbstständig um, meist
+  zwei- bis dreimal im Monat. Ich lege nur fest, wie viel Risiko ich eingehen will und wie viel
+  ich monatlich einzahle. Es geht ausschließlich um mein eigenes Geld; beruflich habe ich mit
+  Finanzen nichts zu tun und ich berate auch niemanden. Die App kommt von einem Anbieter aus
+  Amsterdam. Meine Frau nutzt dieselbe App für ihr eigenes Depot.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:2:10", "art:3:4"]
+notes: >-
+  Draft, pending user approval. Class: the app is an AI system (it learns from price data and
+  decides trades), but the person asking uses it in a purely personal, non-professional activity,
+  so he is not a deployer (Art. 3(4)) and Art. 2(10) excludes the deployer obligations; nothing in
+  the Act applies to him. Role: none. Doubt: user rule (2) of 2026-09-29 says the class describes
+  the system, whoever bears the duties; on that rule the label would be minimal_risk (investment
+  management is not in Annex III, and the app has no Art. 50 function) with no role. The draft
+  follows INIT > Risk classes ("an exclusion applies" is out_of_scope), because the one asking is
+  the private user and the provider is not the one describing the system. The user decides which
+  convention holds.
+tags:
+  - "category:b"
+  - "scope:art2_10"
+  - "obligations:none"

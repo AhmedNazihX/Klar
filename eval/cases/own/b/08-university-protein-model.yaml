@@ -1,0 +1,23 @@
+id: own-b-08-university-protein-model
+set_name: own
+language: en
+description: >-
+  We're a structural biology group of about 25 people at a university in Leuven. Over the past two
+  years our PhD students trained a deep-learning model that predicts how strongly candidate
+  molecules bind to a family of bacterial enzymes. We built it only for our own research: the
+  predictions tell us which molecules are worth making in the wet lab, and the results go into
+  our papers. The model runs on the university's computing cluster, only our group has access,
+  and we don't license it, sell it or offer it to hospitals, companies or anyone else. The work is
+  funded by a public research grant that ends in 2028. We also host a summer school every July.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:2:6", "recital:25"]
+notes: >-
+  Draft, pending user approval. Class: an AI system (a trained model that infers binding
+  predictions), but specifically developed and put into service for the sole purpose of
+  scientific research and development, so Art. 2(6) excludes it together with its output
+  (recital 25). The description rules out any other use or offer. Role: none.
+tags:
+  - "category:b"
+  - "scope:art2_6"
+  - "obligations:none"

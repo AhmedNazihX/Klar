@@ -1,0 +1,25 @@
+id: own-b-12-texas-booking-chat
+set_name: own
+language: en
+description: >-
+  We're a plumbing and air-conditioning company in San Antonio, Texas, with about 60 technicians.
+  Last year we added an AI chat assistant to our website, bought as a subscription from a
+  Californian startup. Customers type what's wrong, the assistant asks follow-up questions, gives a
+  price range and books a technician. We only serve homes and businesses in the San Antonio area,
+  the site is English and Spanish only, we don't ship anything abroad, and nothing the assistant
+  produces is sent to or used by anyone outside the United States. Neither we nor the startup have
+  any office or customers in Europe. Our vans got a new paint job in the spring.
+label:
+  risk_class: out_of_scope
+label_citation: ["art:2:1"]
+notes: >-
+  Draft, pending user approval. Class: a chat assistant is an AI system and would carry an
+  Art. 50(1) duty in the Union, but none of the Art. 2(1) triggers is met: nothing is placed on the
+  market or put into service in the Union (a), the deployer is not established in the Union (b),
+  the output is not used in the Union (c), and there are no importers, distributors or affected
+  persons in the Union (d, g). Role: none. Doubt: an EU visitor could in theory use the site; the
+  description rules out any use of the output in the Union.
+tags:
+  - "category:b"
+  - "scope:art2_1"
+  - "obligations:none"
