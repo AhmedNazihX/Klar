@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from aiact.eval.cases import (
     CASES_DIR,
@@ -11,8 +12,14 @@ from aiact.eval.cases import (
     CaseFileError,
     CaseLabel,
     CaseSet,
+    CommissionVerdict,
+    FlipVariant,
+    QAItem,
+    SourceLabelStatus,
+    derived_from_pile_a,
     load_cases,
     load_jsonl,
+    load_qa_items,
     load_yaml_file,
     score_appliedai,
 )
@@ -58,7 +65,7 @@ def test_loads_every_yaml_file_in_a_set_including_subfolders() -> None:
 def test_a_yaml_file_can_hold_a_list_of_cases() -> None:
     cases = load_cases(CaseSet.SOFT_PAIRS, FIXTURES)
     assert [case.id for case in cases] == ["fixture-soft-001a", "fixture-soft-001b"]
-    assert {case.tags for case in cases} == {("pair:fixture-001",)}
+    assert all("pair:fixture-001" in case.tags for case in cases)
 
 
 def test_loads_appliedai_jsonl_skipping_blank_lines() -> None:
@@ -243,3 +250,231 @@ def test_unclear_with_needs_more_information_is_counted_separately() -> None:
     )
     assert not score.is_match
     assert score.is_counted_separately
+
+
+# --- F7b extensions: Commission rows, pairs, answers, business function ------------------------
+
+COMMISSION_CASE: dict[str, object] = {
+    **VALID_CASE,
+    "set_name": "commission_b",
+    "source_example_id": "hr-ex-901",
+    "accepted_bases": ["art_6_3_filter:d", "outside_use_case"],
+    "label_status": "settled",
+}
+FLIP_VARIANT: dict[str, object] = {
+    "feature": "it also infers deception",
+    "resulting_verdict": "high",
+    "provision_ids": ["annex:III:7:a"],
+}
+
+
+def test_commission_rewrites_carry_their_row_fields() -> None:
+    settled, ambiguous = load_cases(CaseSet.COMMISSION_B, FIXTURES)
+    assert settled.accepted_bases == ("art_6_3_filter:d", "outside_use_case")
+    assert settled.label_status is SourceLabelStatus.SETTLED
+    assert settled.flip_variants == (
+        FlipVariant(
+            feature="the tool also infers whether an applicant is telling the truth",
+            resulting_verdict=CommissionVerdict.HIGH,
+            provision_ids=("annex:III:7:a",),
+        ),
+    )
+    assert settled.flip_variant_provisions == ("annex:III:7:a",)
+    assert settled.business_function == "legal"
+    assert ambiguous.label_status is SourceLabelStatus.LEGALLY_AMBIGUOUS
+
+
+def test_soft_pair_fixture_carries_pair_id_and_key_fact_answers() -> None:
+    plain, soft = load_cases(CaseSet.SOFT_PAIRS, FIXTURES)
+    assert plain.pair_id == soft.pair_id == "fixture-001"
+    assert plain.key_fact_answers == {}
+    assert soft.key_fact_answers == {
+        "ranks_people": "Yes, it orders the applications by a score.",
+        "annex:III:4:a": "HR uses the order to decide whom to invite.",
+    }
+    assert soft.business_function == "hr"
+
+
+def test_flip_variant_provisions_are_listed_once_in_order() -> None:
+    other = {**FLIP_VARIANT, "provision_ids": ["annex:III:1:b", "annex:III:7:a"]}
+    case = BenchmarkCase.model_validate(with_changes(flip_variants=[FLIP_VARIANT, other]))
+    assert case.flip_variant_provisions == ("annex:III:7:a", "annex:III:1:b")
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"accepted_bases": ["art_6_3_filter:b"], "label": {"risk_class": "high_risk"}},
+        {"accepted_bases": ["within_use_case"]},
+        {"accepted_bases": ["art_6_3_filter:e"]},
+        {"accepted_bases": ["outside"]},
+        {"source_example_id": None},
+        {"label_status": "open"},
+        {"label_status": "legally_ambiguous"},
+        {"source_example_id": "ex-1"},
+        {"flip_variants": [{**FLIP_VARIANT, "provision_ids": []}]},
+        {"flip_variants": [{**FLIP_VARIANT, "resulting_verdict": "high_risk"}]},
+        {"flip_variants": [{**FLIP_VARIANT, "provision_ids": ["Annex III 7(a)"]}]},
+        {"pair_id": "Pair 1"},
+        {"key_fact_answers": {"Ranks People?": "yes"}},
+        {"key_fact_answers": {"ranks_people": ""}},
+        {"business_function": "Human Resources"},
+    ],
+    ids=[
+        "high-label-with-a-not-high-basis",
+        "not-high-label-with-a-high-basis",
+        "art-6-3-letter-out-of-range",
+        "unknown-basis",
+        "bases-without-a-source-example",
+        "unknown-label-status",
+        "ambiguous-row-with-a-decided-label",
+        "bad-source-example-id",
+        "flip-variant-without-provisions",
+        "flip-variant-engine-verdict",
+        "flip-variant-free-text-provision",
+        "bad-pair-id",
+        "bad-key-fact-key",
+        "empty-key-fact-answer",
+        "business-function-not-a-slug",
+    ],
+)
+def test_invalid_extension_fields_are_rejected(tmp_path: Path, changes: dict[str, object]) -> None:
+    path = write_yaml(tmp_path, "case.yaml", {**COMMISSION_CASE, **changes})
+    with pytest.raises(CaseFileError):
+        load_yaml_file(path)
+
+
+def test_valid_commission_case_and_ambiguous_row() -> None:
+    assert BenchmarkCase.model_validate(COMMISSION_CASE).accepted_bases[0] == "art_6_3_filter:d"
+    ambiguous = BenchmarkCase.model_validate(
+        {
+            **COMMISSION_CASE,
+            "label": {"risk_class": "high_risk", "status": "legally_ambiguous"},
+            "label_status": "legally_ambiguous",
+            "notes": "Open question and both readings.",
+        }
+    )
+    assert ambiguous.label_status is SourceLabelStatus.LEGALLY_AMBIGUOUS
+
+
+def test_a_pair_id_links_exactly_two_cases(tmp_path: Path) -> None:
+    folder = tmp_path / "soft_pairs"
+    pair = with_changes(set_name="soft_pairs", pair_id="p-1")
+    write_yaml(folder, "a.yaml", [pair, {**pair, "id": "tmp-002"}])
+    assert len(load_cases(CaseSet.SOFT_PAIRS, tmp_path)) == 2
+    write_yaml(folder, "b.yaml", {**pair, "id": "tmp-003"})
+    with pytest.raises(CaseFileError, match="pair_id p-1 must link exactly two cases"):
+        load_cases(CaseSet.SOFT_PAIRS, tmp_path)
+
+
+def test_derived_from_pile_a_names_the_offending_cases() -> None:
+    cases = [
+        BenchmarkCase.model_validate(with_changes(id=f"tmp-{n}", source_example_id=source))
+        for n, source in enumerate(["hr-ex-001", "hr-ex-002", None])
+    ]
+    assert derived_from_pile_a(cases, {"hr-ex-001", "hr-ex-003"}) == ("tmp-0",)
+    assert derived_from_pile_a(cases, set()) == ()
+
+
+# --- Annex points ------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "point", ["annex:I:A:11", "annex:I:B:21", "annex:III:4:a", "annex:III:2", "annex:III:5:d"]
+)
+def test_annex_i_and_iii_points_pass_the_pattern(point: str) -> None:
+    label = CaseLabel.model_validate({"risk_class": "high_risk", "annex_point": point})
+    assert label.annex_point == (point,)
+
+
+@pytest.mark.parametrize(
+    "point",
+    ["annex:I:1", "annex:I:a:11", "annex:I:C:1", "annex:III:4:A", "annex:II:1", "annex:III"],
+)
+def test_other_annex_ids_fail_the_pattern(point: str) -> None:
+    with pytest.raises(ValidationError):
+        CaseLabel.model_validate({"risk_class": "high_risk", "annex_point": point})
+
+
+def test_a_label_can_name_several_annex_points() -> None:
+    (case,) = load_cases(CaseSet.ANNEX_MATCH, FIXTURES)
+    assert isinstance(case.label, CaseLabel)
+    assert case.label.annex_point == ("annex:I:A:11", "annex:III:5:d")
+    assert CaseLabel(risk_class=RiskClass.MINIMAL_RISK).annex_point == ()
+    null_point = CaseLabel.model_validate({"risk_class": "minimal_risk", "annex_point": None})
+    assert null_point.annex_point == ()
+
+
+def test_annex_match_labels_need_a_citation(tmp_path: Path) -> None:
+    item = with_changes(set_name="annex_match", label_citation=[])
+    with pytest.raises(CaseFileError, match="label_citation"):
+        load_yaml_file(write_yaml(tmp_path, "item.yaml", item))
+
+
+def test_the_moved_fixture_uses_a_section_b_point() -> None:
+    ambiguous = load_cases(CaseSet.OWN, FIXTURES)[0]
+    assert isinstance(ambiguous.label, CaseLabel)
+    assert ambiguous.label.annex_point == ("annex:I:B:21",)
+
+
+# --- Q&A items ---------------------------------------------------------------------------------
+
+VALID_QA: dict[str, object] = {
+    "id": "qa-001",
+    "language": "en",
+    "question": "What does Art. 4 require?",
+    "required_provision_ids": ["art:4"],
+    "reference_answer": "AI literacy measures.",
+}
+
+
+def test_loads_answerable_and_unanswerable_qa_items() -> None:
+    answerable, unanswerable = load_qa_items(FIXTURES)
+    assert answerable.required_provision_ids == ("art:50:2", "art:113")
+    assert answerable.answerable
+    assert not unanswerable.answerable
+    assert unanswerable.required_provision_ids == ()
+    assert unanswerable.language is Language.DE
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"required_provision_ids": []},
+        {"reference_answer": None},
+        {"answerable": False},
+        {"required_provision_ids": ["Art. 4"]},
+        {"question": ""},
+        {"set_name": "qa"},
+    ],
+    ids=[
+        "answerable-without-provisions",
+        "answerable-without-answer",
+        "unanswerable-with-provisions",
+        "free-text-provision",
+        "empty-question",
+        "unknown-field",
+    ],
+)
+def test_invalid_qa_items_are_rejected(tmp_path: Path, changes: dict[str, object]) -> None:
+    write_yaml(tmp_path / "qa", "items.yaml", [{**VALID_QA, **changes}])
+    with pytest.raises(CaseFileError):
+        load_qa_items(tmp_path)
+
+
+def test_qa_loader_rejects_duplicates_and_a_missing_folder(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="Q&A"):
+        load_qa_items(tmp_path)
+    write_yaml(tmp_path / "qa", "a.yaml", [VALID_QA, VALID_QA])
+    with pytest.raises(CaseFileError, match="duplicate case id qa-001"):
+        load_qa_items(tmp_path)
+
+
+# --- the committed case files ------------------------------------------------------------------
+
+
+def test_every_committed_case_file_validates() -> None:
+    yaml_sets = sorted(set(CaseSet) - {CaseSet.APPLIEDAI})
+    loaded = {case_set: load_cases(case_set) for case_set in yaml_sets}
+    assert loaded[CaseSet.OWN]
+    assert all(isinstance(item, QAItem) for item in load_qa_items())

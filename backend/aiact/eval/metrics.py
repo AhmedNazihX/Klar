@@ -18,8 +18,15 @@ Scoring rules decided here:
   and recall of an uncertain status, whatever the label. So a failed appliedAI `unclear` case is an
   accuracy miss and an ambiguous recall miss; a failed own ambiguous case is an ambiguous recall
   miss only. Metrics defined on an answer (false-low-risk, Annex point, downgrade, citation
-  existence) leave failed cases out.
+  existence, basis accuracy, flip-variant flagging) leave failed cases out.
 - Citation existence is per case: a case hits when every citation in its result resolves.
+- Basis accuracy (decision 001) scores a case with `accepted_bases` whose label isn't ambiguous,
+  on a result that reached the high-risk step: a high-risk result's basis is `safety_component`
+  for an Annex I point and `within_use_case` otherwise; a lower one that cites an Art. 6(3) point
+  is `art_6_3_filter:<letter>`, and any other lower one is "not listed", which matches
+  `outside_use_case` or `not_safety_component` (the engine doesn't tell them apart).
+- Flip-variant flagging scores a case with `flip_variants`: did the result ask about or flag one
+  of the variants' provisions (`flags_flip_variant`)?
 - Academic set (B12 spot-check, user decision 2026-09-28): its `limited`/`minimal` labels don't
   track Art. 50, so `limited_risk` and `minimal_risk` count as one low bucket there. A low case
   tagged `scoring:low-or-out-of-scope` (a rule- or template-based system that may not be an AI
@@ -29,16 +36,29 @@ Scoring rules decided here:
   classes already rank below them, so the two count as the same (lower) rank there.
 """
 
+import re
 from collections import defaultdict
 from collections.abc import Callable, Collection, Iterable, Sequence
 
 from pydantic import Field
 
-from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet, score_appliedai
+from aiact.eval.cases import (
+    ART_6_3_FILTER,
+    NOT_SAFETY_COMPONENT,
+    OUTSIDE_USE_CASE,
+    SAFETY_COMPONENT,
+    WITHIN_USE_CASE,
+    AppliedAILabel,
+    BenchmarkCase,
+    CaseLabel,
+    CaseSet,
+    score_appliedai,
+)
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import RiskClass, Status
 from aiact.schemas.evidence import Citation
 from aiact.schemas.result import ClassificationResult
+from aiact.schemas.steps import StepName
 
 RISK_RANK: dict[RiskClass, int] = {
     RiskClass.OUT_OF_SCOPE: 0,
@@ -65,8 +85,11 @@ LOW_OR_OUT_OF_SCOPE_TAG = "scoring:low-or-out-of-scope"
 CONSISTENCY_GROUP_PREFIX = "triple:"
 """Tag prefix linking the paraphrases of one system in the consistency set (B8)."""
 
-ART_6_3_FILTER = "art_6_3_filter"
-"""The Art. 6(3) basis; a lettered form such as `art_6_3_filter:d` names the exemption point."""
+ANNEX_I_PREFIX = "annex:I:"
+ART_6_3_POINT = re.compile(r"^art:6:3:([a-d])$")
+"""An Art. 6(3) condition the high-risk step cites when it exempts a listed use (E5)."""
+NOT_LISTED_BASES = (OUTSIDE_USE_CASE, NOT_SAFETY_COMPONENT)
+"""A lower result that names no exemption: outside every point, or not a safety component."""
 
 CitationExists = Callable[[Citation], bool]
 Scorer = Callable[["Outcome"], bool | None]
@@ -172,15 +195,15 @@ def false_low_risk(outcome: Outcome) -> bool | None:
 
 
 def annex_point_match(outcome: Outcome) -> bool | None:
-    """For a high-risk result on a case labelled high-risk with an Annex point: is it the same?"""
+    """For a high-risk result on a case labelled high-risk with Annex points: is it one of them?"""
     label, result = outcome.case.label, outcome.result
     if not isinstance(label, CaseLabel) or label.status is Status.LEGALLY_AMBIGUOUS:
         return None
-    if label.risk_class is not RiskClass.HIGH_RISK or label.annex_point is None:
+    if label.risk_class is not RiskClass.HIGH_RISK or not label.annex_point:
         return None
     if result is None or result.risk_class is not RiskClass.HIGH_RISK:
         return None
-    return result.annex_point == label.annex_point
+    return result.annex_point in label.annex_point
 
 
 def role_match(outcome: Outcome) -> bool | None:
@@ -202,6 +225,25 @@ def citations_exist(outcome: Outcome, exists: CitationExists) -> bool | None:
     """Whether every citation in the result resolves; None when there is nothing to check."""
     citations = _citations(outcome.result)
     return all(exists(citation) for citation in citations) if citations else None
+
+
+def basis_match(outcome: Outcome) -> bool | None:
+    """Basis accuracy: is the result's basis one of the case's `accepted_bases` (decision 001)?"""
+    case, result = outcome.case, outcome.result
+    if not case.accepted_bases or _is_ambiguous(case) or result is None:
+        return None
+    bases = result_bases(result)
+    if not bases:
+        return None
+    return any(basis_matches(basis, case.accepted_bases) for basis in bases)
+
+
+def flip_variant_flagged(outcome: Outcome) -> bool | None:
+    """Whether the result asked about or flagged one of the case's flip variants."""
+    provisions, result = outcome.case.flip_variant_provisions, outcome.result
+    if not provisions or result is None:
+        return None
+    return flags_flip_variant(result, provisions)
 
 
 CITATION_EXISTENCE_KEY = "citation_existence"
@@ -233,6 +275,8 @@ SCORERS: dict[str, Scorer] = {
     "annex_point_accuracy": annex_point_match,
     "role_accuracy": role_match,
     "downgrade": downgraded,
+    "basis_accuracy": basis_match,
+    "flip_variant_flagged": flip_variant_flagged,
 }
 
 
@@ -365,6 +409,22 @@ def flags_flip_variant(result: ClassificationResult, provisions: Collection[str]
     )
 
 
+def result_bases(result: ClassificationResult) -> tuple[str, ...]:
+    """The bases a result's high-risk answer amounts to, in decision 001's vocabulary; none when
+    the run ended before the high-risk step."""
+    step = next((step for step in result.steps if step.step is StepName.HIGH_RISK), None)
+    if step is None:
+        return ()
+    if result.risk_class is RiskClass.HIGH_RISK:
+        is_annex_i = (result.annex_point or "").startswith(ANNEX_I_PREFIX)
+        return (SAFETY_COMPONENT,) if is_annex_i else (WITHIN_USE_CASE,)
+    matches = (ART_6_3_POINT.fullmatch(citation.provision_id) for citation in step.citations)
+    letters = dict.fromkeys(match.group(1) for match in matches if match)
+    if letters:
+        return tuple(f"{ART_6_3_FILTER}:{letter}" for letter in letters)
+    return NOT_LISTED_BASES
+
+
 def _same_branch(left: str, right: str) -> bool:
     shorter, longer = sorted((left, right), key=len)
     return longer == shorter or longer.startswith(f"{shorter}:")
@@ -386,6 +446,8 @@ class RunMetrics(ContractModel):
     needs_more_information: PrecisionRecall
     needs_info_on_ambiguous: int
     downgrade: Rate
+    basis_accuracy: Rate
+    flip_variant_flagged: Rate
     consistency: Rate
     citation_existence: Rate
     appliedai_disagreement_review: int
@@ -405,6 +467,8 @@ def summarize(outcomes: Sequence[Outcome], exists: CitationExists | None) -> Run
         needs_more_information=uncertain_outcomes(outcomes, Status.NEEDS_MORE_INFORMATION),
         needs_info_on_ambiguous=needs_info_on_ambiguous(outcomes),
         downgrade=rate(outcomes, downgraded),
+        basis_accuracy=rate(outcomes, basis_match),
+        flip_variant_flagged=rate(outcomes, flip_variant_flagged),
         consistency=consistency(outcomes),
         citation_existence=citation_existence(outcomes, exists),
         appliedai_disagreement_review=appliedai_review_count(outcomes),
