@@ -46,6 +46,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        checks (E3); common.py: the run's lookup, citations and prompt
 │   │   │   │                        blocks shared by the checks (E5)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
+│   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
 │   │   │   ├── citations.py         citation existence validator (E9)
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data

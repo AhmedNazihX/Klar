@@ -17,7 +17,9 @@ from aiact.engine.nodes import role_obligations as node
 from aiact.engine.nodes.role_obligations import (
     Answer,
     ConditionAnswer,
+    HighRiskRoleAnswer,
     KeyFact,
+    LegacyAnswer,
     ProvisionTextError,
     RoleAnswer,
     RoleFact,
@@ -41,6 +43,8 @@ from aiact.schemas import (
     HighRiskRoute,
     Language,
     LawVersion,
+    LegacyStatus,
+    Obligation,
     RiskClass,
     Role,
     SourceSpan,
@@ -69,15 +73,30 @@ def key_fact(value: Answer = Answer.NO, evidence: EvidenceTag = EvidenceTag.ASSU
     return KeyFact(answer=value, evidence=evidence, fact=f"Answer {value.value}", fact_numbers=())
 
 
+def legacy_answer(
+    placed_before: Answer = Answer.NO,
+    changed: Answer = Answer.NO,
+    public_authority: Answer = Answer.NO,
+) -> LegacyAnswer:
+    """The Art. 111(2) facts; the default is a system launched after its route's date."""
+    return LegacyAnswer(
+        placed_before=key_fact(placed_before, EvidenceTag.STATED),
+        significant_design_change=key_fact(changed),
+        for_public_authority=key_fact(public_authority),
+    )
+
+
 def role_answer(
     role: Role | None = Role.DEPLOYER,
     conditions: dict[str, Answer] | None = None,
     risk_class: RiskClass = RiskClass.HIGH_RISK,
     route: HighRiskRoute | None = HighRiskRoute.ANNEX_III,
+    legacy: LegacyAnswer | None = None,
     **key_facts: KeyFact,
 ) -> RoleAnswer:
     """An answer: the given role, every key fact "no (assumed)" unless overridden, and the
-    conditions by their text, turned into the ids the prompt would list."""
+    conditions by their text, turned into the ids the prompt would list. With `legacy`, the
+    high-risk answer that carries the Art. 111(2) facts."""
     ids = condition_ids(conditions_to_ask(risk_class, route, LawVersion.AMENDED))
     given = tuple(
         ConditionAnswer(id=ids[text], answer=value) for text, value in (conditions or {}).items()
@@ -95,6 +114,8 @@ def role_answer(
         "changed_purpose": key_fact(),
         "conditions": given,
     }
+    if legacy is not None:
+        return HighRiskRoleAnswer.model_validate({**values, "legacy": legacy, **key_facts})
     return RoleAnswer.model_validate({**values, **key_facts})
 
 
@@ -646,7 +667,7 @@ def test_an_unknown_role_cites_both_definitions_it_assumes() -> None:
 
 
 def test_the_node_quotes_from_its_own_settings_data_dir(tmp_path: Path) -> None:
-    content = role_answer().model_dump_json()
+    content = role_answer(legacy=legacy_answer()).model_dump_json()
     chat = GenericFakeChatModel(messages=iter([AIMessage(content=content)]))
     settings = _settings().model_copy(update={"aiact_data_dir": tmp_path})
     with pytest.raises(ProvisionTextError, match="cannot read"):
@@ -765,7 +786,8 @@ def _fake_check(content: str) -> tuple[RoleObligationsCheck, GenericFakeChatMode
 
 
 def test_the_node_reads_the_earlier_findings_through_the_graph() -> None:
-    check, _ = _fake_check(role_answer(conditions={EMPLOYER: Answer.YES}).model_dump_json())
+    answer = role_answer(conditions={EMPLOYER: Answer.YES}, legacy=legacy_answer())
+    check, _ = _fake_check(answer.model_dump_json())
     high_risk = CheckOutcome(
         step=StepResult(step=StepName.HIGH_RISK, decision="Annex III point 4(a)"),
         high_risk_route=HighRiskRoute.ANNEX_III,
@@ -791,6 +813,131 @@ def test_the_node_reads_the_earlier_findings_through_the_graph() -> None:
     assert final["steps"][-1].step is StepName.ROLE_OBLIGATIONS
 
 
+# --- Art. 111(2): high-risk systems already on the market (C7b) ------------------------------
+# Hand-checked against Art. 111(2): a system on the market or in use before its route's Chapter
+# III date is covered only after a significant design change; for public authorities, providers
+# and deployers comply by 2 Aug 2030. The class stays high-risk either way.
+
+LEGACY_ARTICLE = "art:111:2"
+DEPLOYER_DUTIES = ("art:26:1", "art:26:2", "art:26:6")
+
+
+def legacy_outcome(
+    legacy: LegacyAnswer,
+    role: Role = Role.DEPLOYER,
+    route: HighRiskRoute = HighRiskRoute.ANNEX_III,
+    language: Language = Language.EN,
+) -> CheckOutcome:
+    answer = role_answer(role, route=route, legacy=legacy)
+    return to_outcome(answer, state(route=route, language=language))
+
+
+def by_article(outcome: CheckOutcome) -> dict[str, Obligation]:
+    return {o.article: o for o in finding(outcome).obligations}
+
+
+def cited(outcome: CheckOutcome) -> list[str]:
+    return [c.provision_id for c in outcome.step.citations]
+
+
+def test_a_legacy_system_without_a_design_change_marks_its_duties() -> None:
+    outcome = legacy_outcome(legacy_answer(placed_before=Answer.YES))
+    duties = by_article(outcome)
+    for article in DEPLOYER_DUTIES:
+        assert duties[article].legacy is LegacyStatus.UNCHANGED
+        assert duties[article].applies_from == date(2027, 12, 2)
+    assert duties["art:4:1"].legacy is None  # AI literacy has its own date
+    assert "apply only after a significant design change" in outcome.step.decision
+    assert "before 2 December 2027" in outcome.step.decision
+    assert "the class stays high-risk" in outcome.step.decision
+    assert LEGACY_ARTICLE in cited(outcome)
+    assert outcome.step.status is Status.DECIDED
+    assert outcome.follow_up_questions == ()
+
+
+def test_a_legacy_system_whose_design_changes_keeps_its_duties() -> None:
+    outcome = legacy_outcome(legacy_answer(placed_before=Answer.YES, changed=Answer.YES))
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert set(DEPLOYER_DUTIES) <= set(articles(outcome))
+    assert "Art. 111(2)" not in outcome.step.decision
+    assert LEGACY_ARTICLE not in cited(outcome)
+
+
+@pytest.mark.parametrize(
+    ("route", "since"),
+    [(HighRiskRoute.ANNEX_III, "2 December 2027"), (HighRiskRoute.ANNEX_I, "2 August 2028")],
+)
+def test_a_legacy_public_authority_system_applies_from_2_aug_2030(
+    route: HighRiskRoute, since: str
+) -> None:
+    legacy = legacy_answer(placed_before=Answer.YES, public_authority=Answer.YES)
+    outcome = legacy_outcome(legacy, Role.PROVIDER, route)
+    art_16_a = by_article(outcome)["art:16:a"]
+    assert (art_16_a.applies_from, art_16_a.legacy) == (
+        date(2030, 8, 2),
+        LegacyStatus.PUBLIC_AUTHORITY,
+    )
+    assert f"before {since}" in outcome.step.decision
+    assert "apply from 2 August 2030" in outcome.step.decision
+    assert LEGACY_ARTICLE in cited(outcome)
+
+
+def test_a_system_launched_after_the_date_keeps_its_duties() -> None:
+    launched_after = legacy_outcome(legacy_answer(placed_before=Answer.NO))
+    no_legacy_facts = to_outcome(role_answer(), state())
+    assert finding(launched_after).obligations == finding(no_legacy_facts).obligations
+    assert {o.legacy for o in finding(launched_after).obligations} == {None}
+    assert launched_after.step.decision == no_legacy_facts.step.decision
+
+
+def test_an_unknown_launch_date_keeps_the_duties_and_asks_with_the_routes_date() -> None:
+    outcome = legacy_outcome(
+        legacy_answer(placed_before=Answer.UNKNOWN), route=HighRiskRoute.ANNEX_I
+    )
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    [question] = outcome.follow_up_questions
+    assert question.id == "placed_before_chapter_iii"
+    assert question.about == LEGACY_ARTICLE
+    assert "before 2 August 2028" in question.text
+    assert outcome.step.status is Status.DECIDED  # the role is settled; only dates are open
+
+
+def test_an_unknown_design_change_keeps_the_duties_and_asks() -> None:
+    legacy = legacy_answer(placed_before=Answer.YES, changed=Answer.UNKNOWN)
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert [q.id for q in outcome.follow_up_questions] == ["significant_design_change"]
+
+
+def test_an_unknown_public_authority_answer_takes_the_earlier_2030_date_and_asks() -> None:
+    legacy = legacy_answer(placed_before=Answer.YES, public_authority=Answer.UNKNOWN)
+    outcome = legacy_outcome(legacy)
+    assert by_article(outcome)["art:26:1"].legacy is LegacyStatus.PUBLIC_AUTHORITY
+    assert [q.id for q in outcome.follow_up_questions] == ["for_public_authority"]
+
+
+def test_the_legacy_facts_are_shown_as_facts_used() -> None:
+    outcome = legacy_outcome(legacy_answer(placed_before=Answer.YES))
+    shown = [(f.text, f.evidence) for f in outcome.step.facts_used]
+    assert ("Answer yes", EvidenceTag.INFERRED) in shown  # placed before: stated, no fact cited
+
+
+def test_the_legacy_texts_read_in_german() -> None:
+    legacy = legacy_answer(placed_before=Answer.YES, public_authority=Answer.YES)
+    outcome = legacy_outcome(legacy, language=Language.DE)
+    assert "Art. 111 Abs. 2" in outcome.step.decision
+    assert "vor dem 2. Dezember 2027" in outcome.step.decision
+    assert "ab dem 2. August 2030" in outcome.step.decision
+    unknown = legacy_outcome(legacy_answer(Answer.UNKNOWN), language=Language.DE)
+    assert "vor dem 2. Dezember 2027" in unknown.follow_up_questions[0].text
+
+
+def test_a_prohibited_or_limited_answer_carries_no_legacy_facts() -> None:
+    for risk_class in (RiskClass.PROHIBITED, RiskClass.LIMITED_RISK):
+        assert node.answer_model(state(risk_class, None)) is RoleAnswer
+    assert node.answer_model(state()) is HighRiskRoleAnswer
+
+
 # --- The model call -----------------------------------------------------------------------------
 
 
@@ -802,6 +949,30 @@ def test_the_prompt_puts_the_instructions_first_and_the_description_last() -> No
     assert human.endswith(CV_TOOL)
     assert "Risk class so far: high_risk (annex_iii route)" in human
     assert f"c1: {conditions[0]}" in human
+    assert "Launch and design:" in human
+    assert "rules apply from 2 December 2027" in human
+
+
+def test_only_a_high_risk_request_asks_the_legacy_facts() -> None:
+    # Other classes send the request E7 recorded, unchanged.
+    for risk_class in (RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK, RiskClass.PROHIBITED):
+        messages = node.role_messages(state(risk_class, None), ())
+        assert "Launch and design" not in str(messages[-1].content)
+
+
+def test_the_node_reads_the_legacy_facts_from_the_model() -> None:
+    answer = role_answer(legacy=legacy_answer(placed_before=Answer.YES))
+    check, _ = _fake_check(answer.model_dump_json())
+    outcome = check(state())
+    assert {o.legacy for o in finding(outcome).obligations if o.high_risk_route} == {
+        LegacyStatus.UNCHANGED
+    }
+
+
+def test_a_high_risk_answer_without_the_legacy_facts_is_a_broken_output() -> None:
+    check, _ = _fake_check(role_answer().model_dump_json())
+    with pytest.raises(RoleOutputError, match="legacy"):
+        check(state())
 
 
 def test_the_node_is_pinned_to_the_engine_provider() -> None:

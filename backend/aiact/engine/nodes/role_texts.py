@@ -4,6 +4,7 @@ English and German."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import date
 
 from aiact.schemas import Language, Role
 
@@ -146,6 +147,76 @@ OWN_NAME_READINGS: Mapping[Language, tuple[str, str]] = {
 }
 """The two readings, the stricter (provider) first; `{base}` is the base role's name."""
 
+MONTHS: Mapping[Language, tuple[str, ...]] = {
+    Language.EN: (
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
+    ),
+    Language.DE: (
+        "Januar", "Februar", "März", "April", "Mai", "Juni",
+        "Juli", "August", "September", "Oktober", "November", "Dezember",
+    ),
+}  # fmt: skip
+
+
+def long_date(day: date, language: Language) -> str:
+    """`day` as the Act writes it: "2 December 2027", "2. Dezember 2027"."""
+    month = MONTHS[language][day.month - 1]
+    separator = ". " if language is Language.DE else " "
+    return f"{day.day}{separator}{month} {day.year}"
+
+
+@dataclass(frozen=True)
+class LegacyQuestions:
+    """The Art. 111(2) key facts for one route, their questions naming its Chapter III date."""
+
+    placed_before: KeyQuestion
+    design_change: KeyQuestion
+    public_authority: KeyQuestion
+
+
+LEGACY_QUESTION_TEXTS: Mapping[str, Mapping[Language, str]] = {
+    "placed_before_chapter_iii": {
+        Language.EN: "Was the system placed on the market or put into service before {date}, "
+        "when its high-risk rules start to apply? A system already on the market or in use "
+        "today counts.",
+        Language.DE: "Wurde das System vor dem {date}, ab dem seine Hochrisiko-Vorschriften "
+        "gelten, in Verkehr gebracht oder in Betrieb genommen? Ein System, das heute schon auf "
+        "dem Markt oder in Betrieb ist, zählt dazu.",
+    },
+    "significant_design_change": {
+        Language.EN: "Has the system's design changed significantly since {date}, or will it "
+        "(for example a new version that decides differently or serves another purpose)?",
+        Language.DE: "Wurde oder wird das System seit dem {date} in seiner Konzeption erheblich "
+        "verändert (zum Beispiel eine neue Version, die anders entscheidet oder einem anderen "
+        "Zweck dient)?",
+    },
+    "for_public_authority": {
+        Language.EN: "Is the system intended to be used by public authorities?",
+        Language.DE: "Soll das System bestimmungsgemäß von Behörden verwendet werden?",
+    },
+}
+"""The Art. 111(2) questions, by follow-up id; `{date}` is the route's Chapter III date."""
+
+
+def legacy_questions(chapter_iii_from: date, article: str) -> LegacyQuestions:
+    """The Art. 111(2) questions for a route whose high-risk rules apply from `chapter_iii_from`."""
+
+    def key(question_id: str) -> KeyQuestion:
+        texts = LEGACY_QUESTION_TEXTS[question_id]
+        question = {
+            language: text.format(date=long_date(chapter_iii_from, language))
+            for language, text in texts.items()
+        }
+        return KeyQuestion(id=question_id, article=article, question=question)
+
+    return LegacyQuestions(
+        placed_before=key("placed_before_chapter_iii"),
+        design_change=key("significant_design_change"),
+        public_authority=key("for_public_authority"),
+    )
+
+
 ROLE_NAMES: Mapping[Language, Mapping[Role, str]] = {
     Language.EN: {role: role.value for role in Role},
     Language.DE: {
@@ -177,6 +248,12 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "depend on.",
         "no_table": "No duties listed: the obligations table covers only the {version} text, "
         "not the {asked} text.",
+        "legacy_unchanged": "Art. 111(2): the system was on the market or in use before {date} "
+        "and its design hasn't changed significantly since, so {count} high-risk duties apply "
+        "only after a significant design change; the class stays high-risk.",
+        "legacy_public_authority": "Art. 111(2): the system was on the market or in use before "
+        "{date} and is intended to be used by public authorities, so {count} high-risk duties "
+        "apply from {deadline}; the class stays high-risk.",
     },
     Language.DE: {
         "role": "Rolle: {role}.",
@@ -201,5 +278,12 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "hat, von dem sie abhängen.",
         "no_table": "Keine Pflichten aufgeführt: Die Pflichtentabelle deckt nur die "
         "{version} Fassung ab, nicht die {asked} Fassung.",
+        "legacy_unchanged": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr oder in "
+        "Betrieb und wurde seitdem nicht erheblich in seiner Konzeption verändert; daher gelten "
+        "{count} Hochrisiko-Pflichten erst nach einer erheblichen Veränderung der Konzeption. Die "
+        "Klasse bleibt hochriskant.",
+        "legacy_public_authority": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr "
+        "oder in Betrieb und soll bestimmungsgemäß von Behörden verwendet werden; daher gelten "
+        "{count} Hochrisiko-Pflichten ab dem {deadline}. Die Klasse bleibt hochriskant.",
     },
 }

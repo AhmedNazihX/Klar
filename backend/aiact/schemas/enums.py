@@ -45,6 +45,16 @@ class HighRiskRoute(StrEnum):
     ANNEX_I = "annex_i"
 
 
+class LegacyStatus(StrEnum):
+    """How Art. 111(2) treats a high-risk system placed on the market or put into service before
+    its route's Chapter III date, with no significant design change from that date."""
+
+    UNCHANGED = "legacy_unchanged"
+    """Its high-risk duties apply only after a significant design change."""
+    PUBLIC_AUTHORITY = "legacy_public_authority"
+    """Intended to be used by public authorities: providers and deployers comply by 2 Aug 2030."""
+
+
 class LawVersion(StrEnum):
     """The AI Act text a result relies on: as published in 2024, or as amended by the Omnibus."""
 

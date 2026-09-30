@@ -5,7 +5,7 @@ from datetime import date
 from pydantic import Field
 
 from aiact.schemas.base import ContractModel
-from aiact.schemas.enums import HighRiskRoute
+from aiact.schemas.enums import HighRiskRoute, LegacyStatus
 
 
 class Obligation(ContractModel):
@@ -30,6 +30,13 @@ class Obligation(ContractModel):
         default=False,
         description="True when the row informs (e.g. a distributor of a prohibited system) rather "
         "than stating a formal duty the Act puts on this role.",
+    )
+    legacy: LegacyStatus | None = Field(
+        default=None,
+        description="Art. 111(2) for a system on the market or in use before its route's date: "
+        "`legacy_unchanged` means the duty applies only after a significant design change; "
+        "`legacy_public_authority` means it applies from 2 Aug 2030 (`applies_from`). None when "
+        "the system is not such a legacy system or the duty is not a high-risk one.",
     )
     relief_note: str | None = Field(
         default=None, description="Relief for SMEs, start-ups and small mid-caps (SMCs), if any."

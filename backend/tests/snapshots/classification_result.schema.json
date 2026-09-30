@@ -177,6 +177,15 @@
       "title": "LawVersion",
       "type": "string"
     },
+    "LegacyStatus": {
+      "description": "How Art. 111(2) treats a high-risk system placed on the market or put into service before\nits route's Chapter III date, with no significant design change from that date.",
+      "enum": [
+        "legacy_unchanged",
+        "legacy_public_authority"
+      ],
+      "title": "LegacyStatus",
+      "type": "string"
+    },
     "Obligation": {
       "additionalProperties": false,
       "description": "One duty with its article reference and the date it applies from.",
@@ -228,6 +237,18 @@
           "description": "True when the row informs (e.g. a distributor of a prohibited system) rather than stating a formal duty the Act puts on this role.",
           "title": "Is Informational",
           "type": "boolean"
+        },
+        "legacy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LegacyStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Art. 111(2) for a system on the market or in use before its route's date: `legacy_unchanged` means the duty applies only after a significant design change; `legacy_public_authority` means it applies from 2 Aug 2030 (`applies_from`). None when the system is not such a legacy system or the duty is not a high-risk one."
         },
         "relief_note": {
           "anyOf": [
