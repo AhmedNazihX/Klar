@@ -8,21 +8,43 @@ description: >-
   Prototyp. Trainiert und getestet wird er bei uns im Büro, mit gekauften Sprachaufnahmen von
   Schauspielern und mit künstlich erzeugten Stimmen. Echte Anrufe hat er noch nie gehört, wir
   haben noch keinen Pilotkunden, und verkauft oder irgendwo in Betrieb genommen ist er auch nicht.
-  Den Marktstart planen wir frühestens Ende 2027, vorher suchen wir noch eine Finanzierungsrunde.
+  Den Marktstart planen wir frühestens Anfang 2028, vorher suchen wir noch eine Finanzierungsrunde.
   Unser Büro teilen wir uns übrigens mit einer Agentur für Hörbücher.
 label:
-  risk_class: out_of_scope
-label_citation: ["art:2:8", "recital:25", "art:3:57"]
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:1:c"
+label_citation: ["art:3:39", "art:3:34", "annex:III:1:c", "art:6:2", "art:2:8"]
 notes: >-
-  Approved by user 2026-09-30. Class: development and testing of an AI system before it is
-  placed on the market or put into service, in the office with bought and synthetic recordings,
-  so Art. 2(8) excludes the activity (recital 25: product-oriented research, testing and
-  development). The exception for testing in real-world conditions does not bite: nothing is tested
-  outside the lab (Art. 3(57)). Role: none. Trap: once sold, detecting callers' emotions from their
-  voice would be emotion recognition, Annex III 1(c) (high-risk); the label is the situation today.
-  Doubt: whether the engine should also flag the future class; that is not scored.
+  Approved by user 2026-09-30 (relabelled from out_of_scope under the planned-system rule).
+  Class: the software identifies callers' emotions from their voice, which is an emotion
+  recognition system (Art. 3(39)); voice is behavioural biometric data (Art. 3(34)). That is
+  Annex III 1(c), so the system is high-risk under Art. 6(2). Trap: it is not prohibited under
+  Art. 5(1)(f), because the emotions recognised are the callers', not the employees' (the
+  prohibition covers the workplace and education institutions). Doubt: Art. 6(3) is read as not
+  applying, since recognising emotion is the system's purpose and shapes how agents treat callers.
+  Role: the start-up develops the system and will sell it under its own name, so it is the
+  provider (Art. 3(3)). The Art. 50(3) duty to inform the people exposed falls on the deploying
+  call centres, not on the provider. Date: the launch in early 2028 is after 2 December 2027, so
+  Art. 111(2) does not arise. Today's research, testing and development in the office is exempt
+  under Art. 2(8); the label classifies the system as it will be placed on the market.
 tags:
   - "category:b"
-  - "scope:art2_8"
-  - "trap:future_high_risk"
-  - "obligations:none"
+  - "trap:prohibition_not_met"
+  - "scope:art2_8_noted"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:i"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"

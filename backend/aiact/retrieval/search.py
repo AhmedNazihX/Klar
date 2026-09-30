@@ -27,7 +27,8 @@ No model is involved apart from the query embedding.
   - `as_of` (default today) against the amended text and the guidance slices; the original text
     is one open slice per unit, so `original` with `as_of` is an error, as in `get_provision`;
   - language (`fts` is built per row language, so the query is parsed in the same language);
-  - `doc_types` (`law`, `guideline`, `code`);
+  - `doc_types` (`law`, `guideline`, `code`), and `doc_keys` (manifest keys, for example
+    `guide-definition`, so a step can search one guideline without the others crowding it out);
   - held-out (Pile B) examples are excluded by default (decision 012); only the gap run (V8) may
     set `include_held_out`. `exclude_source_example_ids` removes further examples by id.
 - **Relevance (C8).** RRF is rank-based and says nothing absolute, so each hit also carries its
@@ -118,6 +119,7 @@ SCOPE: LiteralString = """
       or (d.law_version = 'original' and p.provision_id like 'recital:%%')
     )
     and (%(doc_types)s::text[] is null or d.doc_type = any(%(doc_types)s::text[]))
+    and (%(doc_keys)s::text[] is null or d.doc_key = any(%(doc_keys)s::text[]))
     and (%(include_held_out)s or not p.is_held_out)
     and (p.source_example_id is null
          or not (p.source_example_id = any(%(exclude_source_example_ids)s::text[])))
@@ -292,6 +294,7 @@ def search_ai_act(
     as_of: date | None = None,
     *,
     doc_types: Collection[str] | None = None,
+    doc_keys: Collection[str] | None = None,
     exclude_source_example_ids: Sequence[str] = (),
     include_held_out: bool = False,
     max_distance: float | _FromSettings | None = FROM_SETTINGS,
@@ -305,7 +308,8 @@ def search_ai_act(
     returned unless `include_held_out` is set, which only the gap run may do (decision 012).
     `max_distance` is the meaning arm's cosine-distance cut-off; it defaults to the
     `SEARCH_MAX_DISTANCE` setting, and None searches without one (as the engine does).
-    Raises ValueError for an empty query, an unknown doc type, a `limit` outside
+    `doc_keys` limits the search to those documents (manifest keys) inside both arms' SQL.
+    Raises ValueError for an empty query, an unknown doc type, empty `doc_keys`, a `limit` outside
     1..CANDIDATES, a `max_distance` outside 0..2, or `original` together with `as_of`. Without
     an `embedder`, one is built from the settings; without a `connection`, one is opened from
     DATABASE_URL.
@@ -323,6 +327,7 @@ def search_ai_act(
         max_distance=get_settings().search_max_distance
         if max_distance is FROM_SETTINGS
         else max_distance,
+        doc_keys=doc_keys,
     )
     if connection is None:
         with connect() as own_connection:
@@ -360,15 +365,20 @@ def prepare_search(
     embedder: QueryEmbedder | None,
     *,
     max_distance: float | None = None,
+    doc_keys: Collection[str] | None = None,
 ) -> tuple[dict[str, Any], sql.Composed]:
     """Check the arguments, embed the query, and build the statement and its parameters (public so
-    tests can EXPLAIN the statement). `max_distance` is taken as given: None is no cut-off."""
+    tests can EXPLAIN the statement). `max_distance` is taken as given: None is no cut-off.
+    `doc_keys` None searches every document; an empty collection is rejected (it would find
+    nothing)."""
     if not query.strip():
         raise ValueError("the search query is empty")
     if not 1 <= limit <= CANDIDATES:
         raise ValueError(f"limit must be between 1 and {CANDIDATES}, got {limit}")
     if doc_types is not None and not set(doc_types) <= DOC_TYPES:
         raise ValueError(f"unknown doc types {sorted(set(doc_types) - DOC_TYPES)}")
+    if doc_keys is not None and not doc_keys:
+        raise ValueError("doc_keys is empty; pass None to search every document")
     if version is LawVersion.ORIGINAL and as_of is not None:
         raise ValueError("as_of resolves only against the amended text; drop it for 'original'")
     if max_distance is not None and not (
@@ -388,6 +398,7 @@ def prepare_search(
         "law_version": version.value,
         "on": as_of or date.today(),
         "doc_types": sorted(doc_types) if doc_types is not None else None,
+        "doc_keys": sorted(doc_keys) if doc_keys is not None else None,
         "include_held_out": include_held_out,
         "max_distance": max_distance,
         "exclude_source_example_ids": list(exclude_source_example_ids),

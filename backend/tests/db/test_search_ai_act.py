@@ -316,6 +316,30 @@ def test_doc_types_filter(corpus: psycopg.Connection):
     assert found == [("test-c6-code", "guide:test-c6-code:para:1")]
 
 
+def test_doc_keys_limits_both_arms_to_those_documents(corpus: psycopg.Connection):
+    # Every row of the guideline, from either arm (para:1 by meaning and keyword, para:3 by
+    # keyword only), and nothing of the Act or the code that the unfiltered search finds.
+    everything = _found(_search(corpus, as_of=AFTER_OMNIBUS))
+    assert {key for key, _ in everything} > {GUIDE.doc_key}
+    found = _found(_search(corpus, as_of=AFTER_OMNIBUS, doc_keys={GUIDE.doc_key}))
+    assert found
+    assert {key for key, _ in found} == {GUIDE.doc_key}
+    assert ("test-c6-guide", "guide:test-c6-guide:ex:001") not in found  # still held out
+
+
+def test_doc_keys_keeps_the_held_out_opt_in_and_the_exclude_filter(corpus: psycopg.Connection):
+    results = _search(
+        corpus,
+        as_of=AFTER_OMNIBUS,
+        doc_keys={GUIDE.doc_key},
+        include_held_out=True,
+        exclude_source_example_ids=["hr-ex-002"],
+    )
+    found = _found(results)
+    assert ("test-c6-guide", "guide:test-c6-guide:ex:001") in found
+    assert ("test-c6-guide", "guide:test-c6-guide:ex:002") not in found
+
+
 def test_a_german_query_matches_through_prefixes(corpus: psycopg.Connection):
     """German stems 'Quuxsystem' to quuxsyst but 'Quuxsysteme' to quuxsystem: the prefix query
     still matches. The vector points away from the row, so only the keywords can find it."""

@@ -44,3 +44,21 @@ def chat_model(
         openrouter_provider=provider_preferences(provider_order, allow_fallbacks=allow_fallbacks),
         app_title=APP_TITLE,
     )
+
+
+def engine_chat_model(*, max_tokens: int, settings: Settings | None = None) -> ChatOpenRouter:
+    """The engine model, pinned to its `ENGINE_PROVIDER` endpoint with fallbacks off (decision
+    005), so descriptions stay in the EU. Every engine node builds its model here.
+
+    Raises `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set.
+    """
+    settings = settings or get_settings()
+    model_id = require_setting(settings.engine_model, "ENGINE_MODEL")
+    provider = require_setting(settings.engine_provider, "ENGINE_PROVIDER")
+    return chat_model(
+        model=model_id,
+        provider_order=[provider],
+        allow_fallbacks=False,
+        max_tokens=max_tokens,
+        settings=settings,
+    )
