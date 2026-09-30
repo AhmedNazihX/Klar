@@ -9,9 +9,13 @@ fixed key-fact questions; the Act's rules are applied here, in code:
 
 - Not an AI system (Art. 3(1)), or an Art. 2 exclusion applies: out of scope, decided, and the
   run ends. The exclusions are no link to the Union (2(1)), exclusively military, defence or
-  national security (2(3)), scientific research only (2(6)), research and testing before the
-  market (2(8)), purely personal use by a natural person (2(10)), and a free and open-source
-  release that isn't put on the market as high-risk or under Art. 5 or 50 (2(12)).
+  national security (2(3)), scientific research only (2(6)), purely personal use by a natural
+  person (2(10)), and a free and open-source release that isn't put on the market as high-risk
+  or under Art. 5 or 50 (2(12)).
+- Art. 2(8) is a note, never an exclusion (user, 2026-09-30): it exempts today's research,
+  testing and development, and a system being built for a planned launch is classified as the
+  system it will be once placed on the market or put into service. The note is named in the
+  decision and cited.
 - The definition question is contested (the facts are known, but Art. 3(1) and the guidelines
   point different ways): legally ambiguous, with in scope as the stricter working assumption.
 - A deciding fact the description hints at but doesn't settle: needs more information, again
@@ -45,6 +49,7 @@ from aiact.engine.nodes.scope_texts import (
     OPEN_QUESTION,
     OPEN_SOURCE,
     OPEN_SOURCE_EXCEPTION,
+    PRE_MARKET_DEVELOPMENT,
     READINGS,
     TEXTS,
     ScopeQuestion,
@@ -53,7 +58,7 @@ from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import engine_chat_model
 from aiact.llm.structured import describe_validation_error, json_schema_format
 from aiact.retrieval.provisions import Provision, get_provision
-from aiact.retrieval.search import CANDIDATES, QueryEmbedder, SearchHit, search_ai_act
+from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
 from aiact.schemas import (
     Citation,
     EvidenceTag,
@@ -79,14 +84,13 @@ SCOPE_ARTICLE = "art:2"
 LAW_IN_PROMPT = (DEFINITION_ARTICLE, SCOPE_ARTICLE)
 """The provisions the model always reads: the definition and the whole of Art. 2."""
 
-DEFINITION_GUIDELINES = "guide-definition"
-"""The `doc_key` of the Commission's guidelines on the AI system definition."""
-GUIDANCE_DOC_TYPES = frozenset({"guideline"})
+GUIDANCE_DOC_KEYS = frozenset({"guide-definition"})
+"""The manifest key of the Commission's guidelines on the AI system definition; the search is
+limited to it inside the SQL, so the other guidelines never crowd it out."""
 GUIDANCE_PASSAGES = 5
 """How many definition-guideline passages the model reads."""
 GUIDANCE_QUERY = "Is this an AI system under the AI system definition? {description}"
-"""The search query: the description, framed as the definition question, so the meaning arm
-leans towards the definition guidelines rather than the other guidelines."""
+"""The search query: the description, framed as the definition question."""
 
 
 class Definition(StrEnum):
@@ -196,16 +200,15 @@ class CorpusLibrary:
                 language,
                 lookup.law_version,
                 lookup.as_of,
-                doc_types=GUIDANCE_DOC_TYPES,
+                doc_keys=GUIDANCE_DOC_KEYS,
                 exclude_source_example_ids=lookup.exclude_source_example_ids,
                 max_distance=None,
-                limit=CANDIDATES,
+                limit=GUIDANCE_PASSAGES,
                 embedder=self._embedder,
                 connection=self._connection,
             )
-            hits = [hit for hit in results.hits if hit.doc_key == DEFINITION_GUIDELINES]
-            if hits:
-                return tuple(hits[:GUIDANCE_PASSAGES])
+            if results.hits:
+                return results.hits
         return ()
 
 
@@ -263,6 +266,9 @@ class ScopeSettlement:
     missing: tuple[ScopeQuestion, ...]
     is_contested: bool
     used: tuple[CitedFact, ...]
+    notes: tuple[ScopeQuestion, ...] = ()
+    """Rules named in the result that never decide it: Art. 2(8) for a system still in
+    development, which is classified as it will be placed on the market or put into service."""
 
     @property
     def is_out_of_scope(self) -> bool:
@@ -278,11 +284,12 @@ class ScopeSettlement:
 
     def cited_articles(self) -> tuple[str, ...]:
         """Art. 3(1) always (recital 12 when the definition decided or is open); then the rules
-        that take the system out, or, in scope, Art. 2(1) and every rule raised or asked."""
+        that take the system out, or, in scope, Art. 2(1) and every rule raised or asked; and
+        the notes."""
         definition = (DEFINITION_ARTICLE,)
         if AI_SYSTEM in (*self.excluded_by, *self.missing) or self.is_contested:
             definition = (DEFINITION_ARTICLE, *AI_SYSTEM.recitals)
-        rules = self.excluded_by or (EU_LINK, *self.raised, *self.missing)
+        rules = (*(self.excluded_by or (EU_LINK, *self.raised, *self.missing)), *self.notes)
         cited = (*definition, *(pid for rule in rules for pid in (rule.article, *rule.recitals)))
         return tuple(dict.fromkeys(cited))
 
@@ -306,12 +313,15 @@ def settle_scope(answer: ScopeAnswer) -> ScopeSettlement:
         elif _is_raised(verdict):
             raised.append(rule)
             used.extend(verdict.used)
+    in_development = answer.pre_market_development
+    is_noted = in_development.answer is Answer.YES
     return ScopeSettlement(
         excluded_by=tuple(excluded),
         raised=tuple(raised),
         missing=tuple(missing),
         is_contested=definition.answer is Definition.CONTESTED,
-        used=tuple(used),
+        used=(*used, *((in_development,) if is_noted else ())),
+        notes=(PRE_MARKET_DEVELOPMENT,) if is_noted else (),
     )
 
 
@@ -319,6 +329,12 @@ def settle_scope(answer: ScopeAnswer) -> ScopeSettlement:
 
 
 def _decision(settled: ScopeSettlement, answer: ScopeAnswer, language: Language) -> str:
+    """The finding, then the notes (Art. 2(8)), which never change it."""
+    notes = tuple(rule.reason[language] for rule in settled.notes if rule.reason)
+    return " ".join((_finding(settled, answer, language), *notes))
+
+
+def _finding(settled: ScopeSettlement, answer: ScopeAnswer, language: Language) -> str:
     texts = TEXTS[language]
     if settled.is_out_of_scope:
         reasons = (rule.reason[language] for rule in settled.excluded_by if rule.reason)

@@ -208,7 +208,6 @@ def test_a_system_that_is_not_an_ai_system_is_out_of_scope() -> None:
         ("eu_link", Answer.NO, ["art:3:1", "art:2:1"]),
         ("military_only", Answer.YES, ["art:3:1", "art:2:3", "recital:24"]),
         ("research_only", Answer.YES, ["art:3:1", "art:2:6", "recital:25"]),
-        ("pre_market_development", Answer.YES, ["art:3:1", "art:2:8", "recital:25"]),
         ("personal_use", Answer.YES, ["art:3:1", "art:2:10"]),
         ("open_source", Answer.YES, ["art:3:1", "art:2:12", "recital:102", "recital:103"]),
     ],
@@ -223,6 +222,34 @@ def test_each_art_2_exclusion_takes_an_ai_system_out_of_scope(
     assert cited(outcome) == expected
     assert outcome.step.decision.startswith("Out of scope: the AI Act does not apply.")
     assert "Answer" in " ".join(f.text for f in outcome.step.facts_used)
+
+
+def test_a_system_in_development_is_classified_as_planned_with_art_2_8_noted() -> None:
+    """User rule 2026-09-30: Art. 2(8) exempts today's development, never the planned system."""
+    in_development = key_fact(Answer.YES, EvidenceTag.STATED)
+    outcome = outcome_of(scope_answer(pre_market_development=in_development))
+    assert outcome.matched is False
+    assert outcome.step.status is Status.DECIDED
+    assert cited(outcome) == ["art:3:1", "art:2:1", "art:2:8", "recital:25"]
+    assert outcome.step.decision.startswith("In scope:")
+    assert outcome.step.decision.endswith("the classification is for the system as it will be "
+                                          "once it is.")  # fmt: skip
+    assert "Answer yes" in [f.text for f in outcome.step.facts_used]
+
+
+def test_the_art_2_8_note_also_accompanies_an_out_of_scope_finding() -> None:
+    answer = scope_answer(
+        definition(Definition.NO), pre_market_development=key_fact(Answer.YES, EvidenceTag.STATED)
+    )
+    outcome = outcome_of(answer)
+    assert outcome.matched is True
+    assert cited(outcome) == ["art:3:1", "recital:12", "art:2:8", "recital:25"]
+
+
+def test_an_unknown_development_stage_asks_nothing() -> None:
+    outcome = outcome_of(scope_answer(pre_market_development=key_fact(Answer.UNKNOWN)))
+    assert outcome.step.status is Status.DECIDED
+    assert outcome.follow_up_questions == ()
 
 
 def test_open_source_put_into_service_as_high_risk_stays_in_scope() -> None:
@@ -401,17 +428,14 @@ def _results(language: Language, *hits: SearchHit) -> SearchResults:
     )
 
 
-def test_guidance_search_keeps_definition_passages_and_falls_back_to_english(
+def test_guidance_search_is_limited_to_the_definition_guidelines_and_falls_back_to_english(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: list[dict[str, Any]] = []
-    other = hit("guide:guide-prohibited:para:1", Language.DE)
 
     def fake_search(query: str, language: Language, *args: object, **kwargs: Any) -> SearchResults:
         calls.append({"language": language, **kwargs})
-        if language is Language.DE:
-            return _results(language, other)
-        return _results(language, other, *PASSAGES)
+        return _results(language) if language is Language.DE else _results(language, *PASSAGES)
 
     monkeypatch.setattr(node, "search_ai_act", fake_search)
     lookup = Lookup(Language.DE, LawVersion.AMENDED, AS_OF, ("hr-ex-001",))
@@ -422,7 +446,8 @@ def test_guidance_search_keeps_definition_passages_and_falls_back_to_english(
         assert call["max_distance"] is None  # a signal for the engine, never a filter
         assert "include_held_out" not in call
         assert call["exclude_source_example_ids"] == ("hr-ex-001",)
-        assert call["doc_types"] == frozenset({"guideline"})
+        assert call["doc_keys"] == frozenset({"guide-definition"})  # filtered in the SQL
+        assert call["limit"] == node.GUIDANCE_PASSAGES
 
 
 def test_english_guidance_is_searched_once(monkeypatch: pytest.MonkeyPatch) -> None:

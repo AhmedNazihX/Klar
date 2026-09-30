@@ -106,13 +106,16 @@ PRE_MARKET_DEVELOPMENT = ScopeQuestion(
         "Realbedingungen?",
     },
     reason={
-        Language.EN: "Art. 2(8): it is only being researched, developed or tested before it is "
-        "placed on the market or put into service, and not tested in real-world conditions.",
-        Language.DE: "Art. 2 Abs. 8: Es wird nur erforscht, entwickelt oder getestet, bevor es "
-        "in Verkehr gebracht oder in Betrieb genommen wird, und nicht unter Realbedingungen "
-        "getestet.",
+        Language.EN: "Art. 2(8): the research, testing and development going on before the "
+        "system is placed on the market or put into service is exempt; the classification is "
+        "for the system as it will be once it is.",
+        Language.DE: "Art. 2 Abs. 8: Die Forschung, Erprobung und Entwicklung vor dem "
+        "Inverkehrbringen oder der Inbetriebnahme ist ausgenommen; eingestuft wird das System, "
+        "wie es danach sein wird.",
     },
 )
+"""A note, never an exclusion: Art. 2(8) exempts today's development activity, and the planned
+system is classified as it will be placed on the market or put into service (user, 2026-09-30)."""
 PERSONAL_USE = ScopeQuestion(
     id="personal_use",
     article="art:2:10",
@@ -169,7 +172,6 @@ EXCLUSIONS: tuple[ScopeQuestion, ...] = (
     EU_LINK,
     MILITARY_ONLY,
     RESEARCH_ONLY,
-    PRE_MARKET_DEVELOPMENT,
     PERSONAL_USE,
     OPEN_SOURCE,
 )

@@ -40,7 +40,9 @@ Answer with JSON matching the schema:
   scientific research and development, and for nothing else.
 - pre_market_development (Art. 2(8)): the system is still only being researched, developed or
   tested before it is placed on the market or put into service. Testing in real-world
-  conditions is "no".
+  conditions is "no". Art. 2(8) exempts only that activity today: a system being built for a
+  planned launch is still classified as the system it will be once placed on the market or put
+  into service, so this answer never takes it out of scope.
 - personal_use (Art. 2(10)): the person describing the system is a natural person who uses it in
   a purely personal, non-professional activity. A company, or any professional use, is "no".
 - open_source (Art. 2(12)): the system is released under a free and open-source licence that
