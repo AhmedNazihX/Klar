@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     embedding_provider: str | None = None
     embedding_dimensions: int = 1536
 
+    # Search: the meaning arm's cosine-distance cut-off for Q&A and MCP (C8); None = no cut-off.
+    # Left unset until X1 calibrates it.
+    search_max_distance: float | None = Field(default=None, ge=0.0, le=2.0)
+
     @field_validator("aiact_data_dir")
     @classmethod
     def _resolve_data_dir(cls, value: Path) -> Path:

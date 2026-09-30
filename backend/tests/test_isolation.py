@@ -30,6 +30,7 @@ from dataclasses import dataclass, replace
 from datetime import date
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import psycopg
 import pytest
@@ -41,10 +42,11 @@ from aiact.corpus.load import load_all
 from aiact.eval import isolation
 from aiact.eval.isolation import BenchmarkText, ContaminatedList, EmbeddingCache, ExampleText
 from aiact.eval.split import SPLIT_FILE, Split, SplitMode
+from aiact.retrieval import search as search_module
 from aiact.retrieval.provisions import ProvisionNotFoundError, get_provision
 from aiact.retrieval.search import CANDIDATES as SEARCH_CANDIDATES
 from aiact.retrieval.search import search_ai_act
-from aiact.settings import BACKEND_DIR, get_settings
+from aiact.settings import BACKEND_DIR, Settings, get_settings
 from tests.db.conftest import db, db_connection  # noqa: F401  (fixtures)
 
 pytestmark = pytest.mark.db
@@ -192,6 +194,7 @@ def _probe_search_ai_act(
         as_of=AFTER_THE_GUIDELINES,
         include_held_out=include_held_out,
         limit=SEARCH_CANDIDATES,
+        max_distance=None,  # a cut-off (C8) would hide a meaning-arm leak
         embedder=StoredVectorEmbedder(connection, row.provision_id),
         connection=connection,
     )
@@ -300,6 +303,26 @@ def _held_out_rows(connection: psycopg.Connection) -> tuple[HeldOutRow, ...]:
         "select provision_id, source_example_id, text from provisions where is_held_out"
     ).fetchall()
     return tuple(HeldOutRow(*row) for row in rows)
+
+
+def test_the_search_probe_ignores_a_set_cut_off(
+    db: psycopg.Connection,  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """With SEARCH_MAX_DISTANCE set, the probe still searches the meaning arm without a cut-off,
+    so a held-out row near the query can't hide behind it. Needs no corpus or eval/."""
+    tight = Settings(_env_file=None, search_max_distance=0.0)  # pyright: ignore[reportCallIssue]
+    monkeypatch.setattr(search_module, "get_settings", lambda: tight)
+    cut_offs: list[object] = []
+    real_run = search_module._run  # pyright: ignore[reportPrivateUsage]
+
+    def recording_run(connection: psycopg.Connection, statement: Any, params: dict[str, Any]):
+        cut_offs.append(params["max_distance"])
+        return real_run(connection, statement, params)
+
+    monkeypatch.setattr(search_module, "_run", recording_run)
+    _probe_search_ai_act(db, HeldOutRow("art:1", "hr-ex-000", "credit scoring"), False)
+    assert cut_offs == [None]
 
 
 @pytest.mark.parametrize("name", sorted(ENTRY_POINTS))

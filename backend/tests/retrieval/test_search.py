@@ -1,12 +1,22 @@
-"""`search_ai_act` checks that need no database: argument errors, the query-side instruction and the
-parent/child rule (the searches themselves are in tests/db/test_search_ai_act.py)."""
+"""`search_ai_act` checks that need no database: argument errors, the query-side instruction, the
+parent/child rule, the statement's vector arm and the relevance signals (the searches themselves
+are in tests/db/test_search_ai_act.py)."""
 
 from datetime import date
 from typing import Any
 
 import pytest
 
-from aiact.retrieval.search import CANDIDATES, distinct_units, search_ai_act
+from aiact.retrieval import search
+from aiact.retrieval.search import (
+    CANDIDATES,
+    MIN_KEYWORD_IDF,
+    distinct_units,
+    prepare_search,
+    search_ai_act,
+)
+from aiact.schemas import Language, LawVersion
+from aiact.settings import Settings
 
 
 class RecordingEmbedder:
@@ -110,3 +120,103 @@ def test_a_child_below_the_limit_doesnt_remove_its_parent() -> None:
 def test_the_limit_counts_distinct_units() -> None:
     rows = [_row(1), _row(2, 1), _row(3, 1), _row(4), _row(5)]
     assert _ids(distinct_units(rows, 3)) == [1, 4, 5]
+
+
+@pytest.mark.parametrize("max_distance", [-0.1, 2.1, float("nan"), float("inf")])
+def test_a_max_distance_outside_0_to_2_is_rejected(max_distance: float) -> None:
+    with pytest.raises(ValueError, match="max_distance must be between 0 and 2"):
+        _search(max_distance=max_distance)
+
+
+def _vector_arm(max_distance: float | None) -> str:
+    """The statement's meaning arm: the nearest rows and their ranking, up to the keyword arm."""
+    _, statement = prepare_search(
+        "credit scoring", Language.EN, LawVersion.AMENDED, None, None, ("hr-ex-9",), False, 10,
+        RecordingEmbedder(), max_distance=max_distance,
+    )  # fmt: skip
+    text = statement.as_string()
+    return text[text.index("vector_hits as materialized") : text.index("query_terms as")]
+
+
+def test_the_vector_arm_keeps_the_held_out_and_exclude_filters() -> None:
+    """B13: CI has no corpus vectors, so this pins the meaning arm's filters on the statement."""
+    nearest = _vector_arm(0.3).split("vector_ranked as")[0]
+    assert "(%(include_held_out)s or not p.is_held_out)" in nearest
+    assert "not (p.source_example_id = any(%(exclude_source_example_ids)s::text[]))" in nearest
+
+
+def test_the_cut_off_is_in_the_vector_arm_after_the_nearest_rows() -> None:
+    nearest, ranked = _vector_arm(0.3).split("vector_ranked as")
+    assert "max_distance" not in nearest
+    assert "distance <= %(max_distance)s::float8" in ranked
+
+
+class CapturedRun:
+    """Stands in for `search._run`: keeps the parameters and returns the given rows."""
+
+    def __init__(self, rows: list[dict[str, Any]]) -> None:
+        self.rows = rows
+        self.params: dict[str, Any] = {}
+
+    def __call__(self, connection: object, statement: object, params: dict[str, Any]):
+        self.params = params
+        return self.rows
+
+
+def _fused_row(row_id: int, distance: float | None, keyword_idf: float | None) -> dict[str, Any]:
+    return {
+        "id": row_id, "ancestors": [], "score": 0.01, "vector_rank": None if distance is None
+        else row_id, "keyword_rank": None if keyword_idf is None else row_id,
+        "distance": distance, "keyword_idf": keyword_idf, "provision_id": f"art:{row_id}",
+        "doc_key": "ai-act-consolidated", "title": "AI Act", "doc_type": "law",
+        "law_version": "amended", "status": "consolidated", "language": "en", "heading": None,
+        "text": "…", "valid_from": date(2024, 8, 1), "valid_to": None,
+    }  # fmt: skip
+
+
+def _captured_search(
+    monkeypatch: pytest.MonkeyPatch,
+    rows: list[dict[str, Any]],
+    setting: float | None = None,
+    **kwargs: Any,
+) -> tuple[search.SearchResults, dict[str, Any]]:
+    run = CapturedRun(rows)
+    monkeypatch.setattr(search, "_run", run)
+    settings = Settings(_env_file=None, search_max_distance=setting)  # pyright: ignore[reportCallIssue]
+    monkeypatch.setattr(search, "get_settings", lambda: settings)
+    results = search_ai_act("credit", embedder=RecordingEmbedder(), connection=NoConnection(),  # pyright: ignore[reportArgumentType]
+                            **kwargs)  # fmt: skip
+    return results, run.params
+
+
+def test_max_distance_defaults_to_the_setting_and_none_turns_it_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    by_default, params = _captured_search(monkeypatch, [], setting=0.3)
+    assert (by_default.max_distance, params["max_distance"]) == (0.3, 0.3)
+    explicit, params = _captured_search(monkeypatch, [], setting=0.3, max_distance=None)
+    assert (explicit.max_distance, params["max_distance"]) == (None, None)
+    unset, params = _captured_search(monkeypatch, [])
+    assert (unset.max_distance, params["max_distance"]) == (None, None)
+
+
+def test_hits_carry_the_similarity_and_the_keyword_idf(monkeypatch: pytest.MonkeyPatch) -> None:
+    rows = [_fused_row(1, 0.25, 3.5), _fused_row(2, None, 1.0), _fused_row(3, 0.5, None)]
+    hits = _captured_search(monkeypatch, rows)[0].hits
+    assert [(h.similarity, h.keyword_idf) for h in hits] == [(0.75, 3.5), (None, 1.0), (0.5, None)]
+
+
+@pytest.mark.parametrize(
+    ("rows", "found"),
+    [
+        ([], False),
+        ([_fused_row(1, 0.4, None)], True),
+        ([_fused_row(1, None, MIN_KEYWORD_IDF)], True),
+        ([_fused_row(1, None, MIN_KEYWORD_IDF - 0.01), _fused_row(2, None, 1.0)], False),
+    ],
+    ids=["no hits", "a meaning-arm hit", "a strong keyword match", "only weak keyword matches"],
+)
+def test_found_needs_a_meaning_arm_hit_or_a_strong_keyword_match(
+    monkeypatch: pytest.MonkeyPatch, rows: list[dict[str, Any]], found: bool
+) -> None:
+    assert _captured_search(monkeypatch, rows, setting=0.3)[0].found is found

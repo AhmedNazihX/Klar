@@ -18,7 +18,14 @@ from aiact.corpus.build import AI_ACT_IN_FORCE, DocumentLoad, DocumentRow, Provi
 from aiact.corpus.embed import ARMS, vector_literal
 from aiact.corpus.load import load_all
 from aiact.llm.embeddings import OpenRouterEmbeddings
-from aiact.retrieval.search import CANDIDATES, SearchResults, prepare_search, search_ai_act
+from aiact.retrieval import search as search_module
+from aiact.retrieval.search import (
+    CANDIDATES,
+    MIN_KEYWORD_IDF,
+    SearchResults,
+    prepare_search,
+    search_ai_act,
+)
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, Language, LawVersion
 from aiact.settings import Settings
 
@@ -147,6 +154,10 @@ LOADS = (
     DocumentLoad(CODE, (
         ProvisionRow("guide:test-c6-code:para:1", None, None, None, "A code on zorblax.",
                      GUIDE_PUBLISHED),
+        # Four words no other row has and no vector: a strong keyword-only match (C8), also in
+        # an empty database (4 x ln(about 20 units) is above MIN_KEYWORD_IDF).
+        ProvisionRow("guide:test-c6-code:para:2", None, None, None,
+                     "Quorvex klimbat drossel wuffling.", GUIDE_PUBLISHED),
     )),
 )  # fmt: skip
 
@@ -194,11 +205,12 @@ def _search(
     vector: list[float] = ZORBLAX_NEW,
     **kwargs: object,
 ) -> SearchResults:
+    """No cut-off unless a test asks for one, whatever SEARCH_MAX_DISTANCE is set to."""
     return search_ai_act(
         query,
         embedder=FixedEmbedder(vector),
         connection=connection,
-        **{"limit": CANDIDATES, **kwargs},  # pyright: ignore[reportArgumentType]
+        **{"limit": CANDIDATES, "max_distance": None, **kwargs},  # pyright: ignore[reportArgumentType]
     )
 
 
@@ -383,7 +395,8 @@ def test_the_iterative_scan_setting_does_not_leak(db: psycopg.Connection):
     """Inside a caller's transaction the search runs in a savepoint; its setting must not
     outlive it."""
     db.execute("set local hnsw.iterative_scan = strict_order")
-    search_ai_act(NO_WORDS, embedder=FixedEmbedder([1.0, 0.0, 0.0]), connection=db)
+    search_ai_act(NO_WORDS, embedder=FixedEmbedder([1.0, 0.0, 0.0]), connection=db,
+                  max_distance=None)  # fmt: skip
     row = db.execute("select current_setting('hnsw.iterative_scan')").fetchone()
     assert row == ("strict_order",)
 
@@ -405,6 +418,83 @@ def test_a_stale_vector_is_never_ranked(corpus: psycopg.Connection):
 
 def test_the_limit_caps_the_hits(corpus: psycopg.Connection):
     assert len(_search(corpus, as_of=AFTER_OMNIBUS, limit=2).hits) == 2
+
+
+# --- Relevance: similarity, keyword IDF, the cut-off and `found` (C8) -------------------------
+
+OFF_TOPIC = [0.0, 0.0, -1.0]
+"""Points away from every visible row: the nearest (art:3) is at cosine distance 0.89."""
+CUT_OFF = 0.5
+
+
+def test_hits_carry_the_similarity_and_the_keyword_idf(corpus: psycopg.Connection):
+    hits = _search(corpus, "new zorblax duty", as_of=AFTER_OMNIBUS).hits
+    first = hits[0]
+    assert first.similarity == pytest.approx(1.0)
+    assert first.keyword_idf is not None and first.keyword_idf > 0
+    code = next(h for h in hits if h.doc_key == "test-c6-code")
+    assert (code.similarity, code.keyword_idf is not None) == (None, True)
+    meaning_only = _search(corpus, NO_WORDS, [0.0, 0.0, 1.0], as_of=AFTER_OMNIBUS).hits
+    assert meaning_only[0].similarity == pytest.approx(1.0)
+    assert all(h.keyword_idf is None for h in meaning_only)
+
+
+def test_the_cut_off_leaves_an_off_topic_query_with_nothing(corpus: psycopg.Connection):
+    uncut = _search(corpus, NO_WORDS, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=None)
+    assert uncut.hits and uncut.found  # without a cut-off every query gets hits
+    cut = _search(corpus, NO_WORDS, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=CUT_OFF)
+    assert [h for h in cut.hits if h.similarity is not None] == []
+    assert (cut.found, cut.max_distance) == (False, CUT_OFF)
+
+
+def test_a_matching_query_stays_found_under_the_cut_off(corpus: psycopg.Connection):
+    results = _search(corpus, as_of=AFTER_OMNIBUS, max_distance=CUT_OFF)
+    assert results.found
+    assert results.hits[0].provision_id == "art:1"
+    similarities = [h.similarity for h in results.hits if h.similarity is not None]
+    assert similarities and min(similarities) >= 1 - CUT_OFF
+    # The recital is at distance 1: the meaning arm drops it, the keywords still find it.
+    recital = next(h for h in results.hits if h.provision_id == "recital:1")
+    assert (recital.similarity, recital.vector_rank, recital.keyword_rank is not None) == (
+        None,
+        None,
+        True,
+    )
+
+
+def test_a_strong_keyword_only_match_stays_found(corpus: psycopg.Connection):
+    results = _search(corpus, "quorvex klimbat drossel wuffling", OFF_TOPIC, as_of=AFTER_OMNIBUS,
+                      max_distance=CUT_OFF)  # fmt: skip
+    assert [h.provision_id for h in results.hits] == ["guide:test-c6-code:para:2"]
+    idf = results.hits[0].keyword_idf
+    assert idf is not None and idf >= MIN_KEYWORD_IDF
+    assert results.found
+
+
+def test_the_c6_searches_ignore_a_set_cut_off(
+    corpus: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
+):
+    """The C6 tests pass `max_distance=None`, so a SEARCH_MAX_DISTANCE in .env can't change
+    them; an omitted `max_distance` still takes the setting."""
+    tight = Settings(_env_file=None, search_max_distance=0.0)  # pyright: ignore[reportCallIssue]
+    monkeypatch.setattr(search_module, "get_settings", lambda: tight)
+    uncut = _search(corpus, NO_WORDS, OFF_TOPIC, as_of=AFTER_OMNIBUS)
+    assert uncut.max_distance is None
+    assert [h for h in uncut.hits if h.similarity is not None]
+    omitted = search_ai_act(NO_WORDS, as_of=AFTER_OMNIBUS, embedder=FixedEmbedder(OFF_TOPIC),
+                            connection=corpus)  # fmt: skip
+    assert (omitted.max_distance, omitted.found) == (0.0, False)
+
+
+def test_the_cut_off_filters_inside_the_vector_arm_s_sql(db: psycopg.Connection):
+    """The plan filters the materialized nearest rows by distance; no row reaches Python first."""
+    params, statement = prepare_search(
+        NO_WORDS, Language.EN, LawVersion.AMENDED, None, None, (), False, TOP,
+        FixedEmbedder(OFF_TOPIC), max_distance=CUT_OFF,
+    )  # fmt: skip
+    plan = [row[0] for row in db.execute(sql.SQL("explain ") + statement, params)]
+    scan = next(i for i, line in enumerate(plan) if "CTE Scan on vector_hits" in line)
+    assert "distance <=" in plan[scan + 1], plan[scan : scan + 2]
 
 
 QWEN3 = ARMS["qwen3"]
@@ -457,7 +547,8 @@ def test_a_softly_worded_tenant_query_finds_annex_iii_5b(
         "We run a small letting agency. Our app looks at a flat applicant's bank statements and "
         "payslips and tells the landlord how likely they are to keep paying the rent."
     )
-    results = search_ai_act(query, as_of=AFTER_OMNIBUS, limit=TOP, embedder=qwen3, connection=db)
+    results = search_ai_act(query, as_of=AFTER_OMNIBUS, limit=TOP, embedder=qwen3, connection=db,
+                            max_distance=None)  # fmt: skip
     assert "ai-act-consolidated annex:III:5:b" in _top(results), _top(results)
 
 
@@ -470,7 +561,8 @@ def test_a_german_query_finds_annex_iii_5b(db: psycopg.Connection, qwen3: OpenRo
         "Unsere Software prüft anhand von Kontoauszügen, ob Mietinteressenten die Miete "
         "zuverlässig zahlen können, und gibt dem Vermieter eine Einschätzung."
     )
-    results = search_ai_act(query, "de", as_of=AFTER_OMNIBUS, embedder=qwen3, connection=db)
+    results = search_ai_act(query, "de", as_of=AFTER_OMNIBUS, embedder=qwen3, connection=db,
+                            max_distance=None)  # fmt: skip
     assert "ai-act-consolidated annex:III:5:b" in _top(results), _top(results)
     assert {h.language for h in results.hits} == {Language.DE}
     assert results.disclaimer == DISCLAIMER_DE
@@ -494,9 +586,11 @@ def test_a_default_search_never_returns_a_loaded_pile_b_row(db: psycopg.Connecti
     }
     for provision_id, text, embedding in examples:
         embedder = FixedEmbedder([float(x) for x in embedding.strip("[]").split(",")], QWEN3.model)
-        default = search_ai_act(text, embedder=embedder, connection=db, limit=50)
+        default = search_ai_act(text, embedder=embedder, connection=db, limit=50,
+                                max_distance=None)  # fmt: skip
         assert not held_out & {h.provision_id for h in default.hits}, provision_id
     provision_id, text, embedding = examples[0]
     embedder = FixedEmbedder([float(x) for x in embedding.strip("[]").split(",")], QWEN3.model)
-    opted_in = search_ai_act(text, embedder=embedder, connection=db, include_held_out=True)
+    opted_in = search_ai_act(text, embedder=embedder, connection=db, include_held_out=True,
+                             max_distance=None)  # fmt: skip
     assert provision_id in [h.provision_id for h in opted_in.hits[:3]]
