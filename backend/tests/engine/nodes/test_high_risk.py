@@ -10,17 +10,23 @@ neither the database nor the network.
 
 import json
 from collections.abc import Callable, Collection, Iterator, Sequence
+from dataclasses import asdict, dataclass
 from datetime import date
-from functools import partial
 from pathlib import Path
+from typing import cast
 
+import psycopg
 import pytest
+from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import Field, SecretStr
 
+from aiact.db import connect
 from aiact.engine.graph import EngineNodes, build_graph
 from aiact.engine.nodes import high_risk as node
+from aiact.engine.nodes import high_risk_retrieval as retrieval
+from aiact.engine.nodes.common import Lookup
 from aiact.engine.nodes.high_risk import (
     AnnexIAnswer,
     AnnexIIIAnswer,
@@ -29,19 +35,22 @@ from aiact.engine.nodes.high_risk import (
     HighRiskAnswer,
     HighRiskCheck,
     HighRiskOutputError,
-    Lookup,
-    Retrieved,
-    Searcher,
     Settled,
     law_title,
-    retrieve,
     to_outcome,
+)
+from aiact.engine.nodes.high_risk_retrieval import (
+    ANNEX_III_POINTS,
+    HighRiskCorpus,
+    HighRiskLibrary,
+    Retrieved,
+    retrieve,
 )
 from aiact.engine.nodes.key_facts import Answer
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
-from aiact.llm import LLMConfigError
+from aiact.llm import LLMConfigError, OpenRouterEmbeddings
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit, SearchResults
 from aiact.schemas import (
@@ -181,6 +190,31 @@ class FakeSearch:
         )
 
 
+class FakeLibrary:
+    """A `HighRiskLibrary` over `FakeSearch` and `fake_lookup`: each search reaches `searches`
+    with the run's lookup spelled out, as `HighRiskCorpus` hands it to `search_ai_act`."""
+
+    def __init__(self, searches: FakeSearch | None = None) -> None:
+        self.searches = searches or FakeSearch()
+
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
+        return fake_lookup(provision_id, lookup.language, lookup.law_version, lookup.as_of)
+
+    def search(
+        self, query: str, lookup: Lookup, *, language: Language, doc_type: str, limit: int
+    ) -> tuple[SearchHit, ...]:
+        found = self.searches(
+            query,
+            language,
+            lookup.law_version,
+            lookup.as_of,
+            doc_types={doc_type},
+            exclude_source_example_ids=lookup.exclude_source_example_ids,
+            limit=limit,
+        )
+        return found.hits
+
+
 def state(
     description: str = WORKED_EXAMPLE,
     language: Language = Language.EN,
@@ -200,7 +234,7 @@ def state(
 
 
 def retrieved(language: Language = Language.EN) -> Retrieved:
-    return retrieve(state(language=language), FakeSearch(), fake_lookup)
+    return retrieve(state(language=language), FakeLibrary())
 
 
 # --- Answers -------------------------------------------------------------------------------------
@@ -291,7 +325,7 @@ MEDICAL_DEVICE = annex_i("annex:I:A:11", YES, YES, YES)
 
 
 def outcome(given: HighRiskAnswer, language: Language = Language.EN) -> CheckOutcome:
-    return to_outcome(given, state(language=language), retrieved(language), fake_lookup)
+    return to_outcome(given, state(language=language), retrieved(language), FakeLibrary())
 
 
 def cited(result: CheckOutcome) -> list[str]:
@@ -314,6 +348,7 @@ def test_profiling_keeps_an_annex_iii_use_high_risk() -> None:
     assert "profiles natural persons" in result.step.decision
     assert "Annex III point 4(a)" in result.step.decision
     assert {"annex:III:4:a", "art:6:2", "art:6:3"} <= set(cited(result))
+    assert not {"art:6:3:d", "art:6:4"} & set(cited(result))  # profiling blocks the exemption
 
 
 def test_no_art_6_3_condition_means_high_risk() -> None:
@@ -326,10 +361,11 @@ def test_a_condition_without_profiling_exempts_under_art_6_3() -> None:
     result = outcome(answer(RANKS_APPLICANTS, art_6_3(Art63Condition.A, profiling=Answer.NO)))
     assert result.high_risk_route is None
     assert result.annex_iii_exempt
-    assert result.annex_point == "annex:III:4:a"
+    assert result.annex_point is None  # set only for a high-risk finding
     assert result.step.status is Status.DECIDED
     assert {"art:6:3:a", "art:6:4"} <= set(cited(result))
     assert "Art. 6(3)(a)" in result.step.decision
+    assert "Annex III point 4(a)" in result.step.decision
 
 
 def test_unknown_profiling_under_a_condition_assumes_high_risk_and_asks() -> None:
@@ -366,6 +402,14 @@ def test_a_border_use_states_the_authority_as_an_assumed_fact() -> None:
     assumed = [f for f in result.step.facts_used if f.evidence is EvidenceTag.ASSUMED]
     assert [f.text for f in assumed] == [node.AUTHORITY_ASSUMED[Language.EN]]
     assert "public_authority_user" in question_ids(result)
+    [confirm] = [q for q in result.follow_up_questions if q.id == "public_authority_user"]
+    assert confirm.about == "annex:III:7"
+
+
+def test_a_law_enforcement_use_asks_its_confirmation_about_point_6() -> None:
+    result = outcome(answer(annex_iii("annex:III:6:d", YES, public_authority=Answer.UNKNOWN)))
+    [confirm] = [q for q in result.follow_up_questions if q.id == "public_authority_user"]
+    assert confirm.about == "annex:III:6"
 
 
 def test_an_open_scholarship_decision_asks_whether_it_decides_admission() -> None:
@@ -383,8 +427,9 @@ def test_the_models_own_question_replaces_the_generic_one() -> None:
 
 
 def test_an_unlisted_point_is_a_broken_output() -> None:
-    with pytest.raises(HighRiskOutputError, match="Annex III point"):
+    with pytest.raises(HighRiskOutputError, match=r"annex_iii\.point") as raised:
         outcome(answer(annex_iii("annex:III:9", YES)))
+    assert "annex:III:9" not in str(raised.value)  # the field is named, not the model's value
 
 
 # --- Annex I -------------------------------------------------------------------------------------
@@ -442,8 +487,9 @@ def test_a_service_efficiency_tool_is_not_a_safety_component() -> None:
 
 
 def test_an_annex_i_point_without_a_text_is_a_broken_output() -> None:
-    with pytest.raises(HighRiskOutputError, match="Annex I point"):
+    with pytest.raises(HighRiskOutputError, match=r"annex_i\.point") as raised:
         outcome(answer(one=annex_i("annex:I:A:1", YES, YES, YES)))
+    assert "annex:I:A:1" not in str(raised.value)
 
 
 def test_both_routes_prefer_annex_iii_and_explain_both() -> None:
@@ -577,50 +623,70 @@ def test_the_law_title_is_shortened_to_number_and_subject() -> None:
 def test_every_search_passes_the_exclude_filter_through() -> None:
     """The DoD's pass-through test: in LOO mode the case's exclusions reach every search."""
     search = FakeSearch(guidance={Language.EN: GUIDE_HITS})
-    check = HighRiskCheck(_settings(), chat=_fake_chat(answer(RANKS_APPLICANTS)), search=search)
+    library = FakeLibrary(search)
+    check = HighRiskCheck(_settings(), chat=_fake_chat(answer(RANKS_APPLICANTS)), library=library)
     check(state(language=Language.DE, exclude=EXCLUDED))
     assert len(search.calls) == 3  # law, guidance in German, guidance in English
     for call in search.calls:
         assert call["exclude_source_example_ids"] == EXCLUDED
-        assert call["max_distance"] is None
-        assert "include_held_out" not in call
 
 
-def test_the_default_searcher_hands_the_filter_to_search_ai_act(
+class FakeEmbedder:
+    model = "fake"
+    dimensions = 3
+
+    def embed_query(self, text: str) -> list[float]:
+        return [0.0, 0.0, 1.0]
+
+
+def test_the_corpus_hands_the_filter_to_search_ai_act_over_one_connection(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    seen: dict[str, object] = {}
+    """Every search carries the exclusions and no cut-off, over the step's one connection and
+    embedder, and never asks for held-out examples."""
+    seen: list[dict[str, object]] = []
 
-    def spy(query: str, *args: object, **kwargs: object) -> SearchResults:
-        seen.update(kwargs)
-        return FakeSearch()(query, Language.EN, LawVersion.AMENDED, AS_OF, **kwargs)
+    def spy(
+        query: str, language: Language, law_version: LawVersion, as_of: date, **kwargs: object
+    ) -> SearchResults:
+        seen.append(kwargs)
+        return FakeSearch()(query, language, law_version, as_of, **kwargs)
 
-    monkeypatch.setattr(node, "search_ai_act", spy)
-    node.search_corpus(
-        "query",
-        Language.EN,
-        LawVersion.AMENDED,
-        AS_OF,
-        doc_types={"law"},
-        exclude_source_example_ids=EXCLUDED,
-        max_distance=None,
-        limit=5,
-    )
-    assert seen["exclude_source_example_ids"] == EXCLUDED
-    assert seen["max_distance"] is None
-    assert "include_held_out" not in seen
+    monkeypatch.setattr(retrieval, "search_ai_act", spy)
+    connection, embedder = cast(psycopg.Connection, object()), FakeEmbedder()
+    library = HighRiskCorpus(connection, embedder)
+    retrieve(state(language=Language.DE, exclude=EXCLUDED), _only_search(library))
+    assert len(seen) == 3
+    for kwargs in seen:
+        assert kwargs["exclude_source_example_ids"] == EXCLUDED
+        assert kwargs["max_distance"] is None
+        assert kwargs["connection"] is connection
+        assert kwargs["embedder"] is embedder
+        assert "include_held_out" not in kwargs
+
+
+def _only_search(library: HighRiskCorpus) -> HighRiskLibrary:
+    """`library`'s searches with `fake_lookup`'s texts, so no database is needed."""
+
+    class Searching(FakeLibrary):
+        def search(
+            self, query: str, lookup: Lookup, *, language: Language, doc_type: str, limit: int
+        ) -> tuple[SearchHit, ...]:
+            return library.search(query, lookup, language=language, doc_type=doc_type, limit=limit)
+
+    return Searching()
 
 
 def test_german_guidance_falls_back_to_english_and_is_marked_english_only() -> None:
     search = FakeSearch(guidance={Language.EN: GUIDE_HITS})
-    found = retrieve(state(language=Language.DE), search, fake_lookup)
+    found = retrieve(state(language=Language.DE), FakeLibrary(search))
     assert [call["language"] for call in search.calls] == [Language.DE, Language.DE, Language.EN]
     assert found.guidance == GUIDE_HITS
     result = to_outcome(
         answer(annex_iii("annex:III:4:a", YES, examples=(EXAMPLE,))),
         state(language=Language.DE),
         found,
-        fake_lookup,
+        FakeLibrary(),
     )
     guidance = [c for c in result.step.citations if c.provision_id == EXAMPLE]
     assert len(guidance) == 1
@@ -631,7 +697,7 @@ def test_german_guidance_falls_back_to_english_and_is_marked_english_only() -> N
 def test_german_guidance_found_in_german_is_not_searched_again() -> None:
     german = (hit("guide:guide-definition:para:001", Language.DE),)
     search = FakeSearch(guidance={Language.DE: german})
-    assert retrieve(state(language=Language.DE), search, fake_lookup).guidance == german
+    assert retrieve(state(language=Language.DE), FakeLibrary(search)).guidance == german
     assert len(search.calls) == 2
 
 
@@ -639,6 +705,39 @@ def test_only_annex_iii_rows_are_candidates() -> None:
     found = retrieved()
     assert [h.provision_id for h in found.annex_iii] == ["annex:III:4:a", "annex:III:4:b"]
     assert [p.provision_id for p in found.annex_i] == list(ANNEX_I_TEXT)
+
+
+def test_an_area_row_stands_for_its_leaves_and_the_annex_row_is_dropped() -> None:
+    """Search can return the annex's row and an area row; the answer must name a leaf, so the
+    area's leaves are shown (a leaf found itself keeps its hit) and the annex row isn't."""
+    law = (hit("annex:III"), hit("annex:III:4"), hit("annex:III:4:b", text="Hit text."))
+    found = retrieve(state(), FakeLibrary(FakeSearch(law=law)))
+    assert [p.provision_id for p in found.annex_iii] == ["annex:III:4:a", "annex:III:4:b"]
+    assert [p.text for p in found.annex_iii] == ["Text of annex:III:4:a.", "Hit text."]
+
+
+def test_the_candidates_are_capped_after_expanding_areas() -> None:
+    law = (hit("annex:III:6"), hit("annex:III:7"))
+    found = retrieve(state(), FakeLibrary(FakeSearch(law=law)))
+    assert len(found.annex_iii) == retrieval.MAX_ANNEX_CANDIDATES
+    assert found.annex_iii[0].provision_id == "annex:III:6:a"
+
+
+def test_an_area_row_cannot_break_the_step() -> None:
+    """The model sees only leaves and the schema allows only leaves, so an area id can't come
+    back as the answer."""
+    content = answer(annex_iii("annex:III:6:d", YES, public_authority=YES)).model_dump_json()
+    chat = RecordingChat(messages=iter([AIMessage(content=content)]))
+    library = FakeLibrary(FakeSearch(law=(hit("annex:III:6"),)))
+    result = HighRiskCheck(_settings(), chat=chat, library=library)(state())
+    assert result.annex_point == "annex:III:6:d"
+    [sent] = chat.formats
+    enum = _point_schema(sent, "AnnexIIIAnswer")
+    assert enum == {
+        "anyOf": [{"type": "string", "enum": list(ANNEX_III_POINTS)}, {"type": "null"}],
+        "title": "Point",
+    }
+    assert "annex:III:6" not in ANNEX_III_POINTS
 
 
 def test_annex_i_is_shown_one_line_per_existing_point_with_its_id() -> None:
@@ -656,7 +755,7 @@ def test_annex_i_is_shown_one_line_per_existing_point_with_its_id() -> None:
 
 def test_the_original_text_is_searched_without_a_date() -> None:
     search = FakeSearch()
-    retrieve(state(law_version=LawVersion.ORIGINAL), search, fake_lookup)
+    retrieve(state(law_version=LawVersion.ORIGINAL), FakeLibrary(search))
     assert all(call["law_version"] is LawVersion.ORIGINAL for call in search.calls)
 
 
@@ -696,8 +795,7 @@ def test_the_check_runs_in_the_graph_and_sets_its_findings() -> None:
     check = HighRiskCheck(
         _settings(),
         chat=_fake_chat(answer(one=MEDICAL_DEVICE)),
-        search=FakeSearch(),
-        lookup=fake_lookup,
+        library=FakeLibrary(),
     )
     scripted = scripted_nodes(Script(risk_class=RiskClass.HIGH_RISK))
     checks = {**scripted.checks, StepName.HIGH_RISK: check}
@@ -720,11 +818,22 @@ def test_the_check_runs_in_the_graph_and_sets_its_findings() -> None:
 
 
 def test_a_reply_that_does_not_fit_the_schema_is_a_broken_output() -> None:
-    check = HighRiskCheck(
-        _settings(), chat=_fake_chat('{"annex_iii": {}}'), search=FakeSearch(), lookup=fake_lookup
-    )
+    check = HighRiskCheck(_settings(), chat=_fake_chat('{"annex_iii": {}}'), library=FakeLibrary())
     with pytest.raises(HighRiskOutputError, match="doesn't fit the schema"):
         check(state())
+
+
+def test_the_output_cap_leaves_room_for_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
+    """own-e-14 (both routes apply) spent all of 3000 output tokens on reasoning; 6000 fits."""
+    asked: dict[str, object] = {}
+
+    def spy(**kwargs: object) -> BaseChatModel:
+        asked.update(kwargs)
+        return _fake_chat(answer())
+
+    monkeypatch.setattr(node, "engine_chat_model", spy)
+    HighRiskCheck(_settings(), library=FakeLibrary())
+    assert asked["max_tokens"] == 6000
 
 
 def test_the_engine_model_must_be_pinned() -> None:
@@ -762,10 +871,14 @@ def _prompt_annex_i_ids(language: Language) -> list[str]:
     return [line.split("]", 1)[0].removeprefix("[") for line in lines]
 
 
-def _annex_i_point_schema(response_format: dict[str, object]) -> object:
+def _point_schema(response_format: dict[str, object], definition: str) -> object:
     spec = response_format["json_schema"]
     assert isinstance(spec, dict)
-    return spec["schema"]["$defs"]["AnnexIAnswer"]["properties"]["point"]
+    return spec["schema"]["$defs"][definition]["properties"]["point"]
+
+
+def _annex_i_point_schema(response_format: dict[str, object]) -> object:
+    return _point_schema(response_format, "AnnexIAnswer")
 
 
 class RecordingChat(GenericFakeChatModel):
@@ -791,10 +904,17 @@ def test_the_annex_i_point_enum_is_the_prompts_ids(language: Language) -> None:
         "anyOf": [{"type": "string", "enum": ids}, {"type": "null"}],
         "title": "Point",
     }
-    assert _annex_i_point_schema(node.HIGH_RISK_RESPONSE_FORMAT) == {
-        "anyOf": [{"type": "string"}, {"type": "null"}],
-        "title": "Point",
-    }
+    free = {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Point"}
+    assert _annex_i_point_schema(node.HIGH_RISK_RESPONSE_FORMAT) == free
+    assert _point_schema(node.HIGH_RISK_RESPONSE_FORMAT, "AnnexIIIAnswer") == free
+
+
+def test_the_enum_leaves_out_an_annex_i_id_the_prompt_does_not_show() -> None:
+    """own-e-07's first recording named `annex:I:A:21`, which no text has."""
+    ids = _prompt_annex_i_ids(Language.EN)
+    point = _annex_i_point_schema(node.high_risk_response_format(ids))
+    assert isinstance(point, dict)
+    assert "annex:I:A:21" not in point["anyOf"][0]["enum"]
 
 
 def test_no_annex_i_text_leaves_only_null() -> None:
@@ -807,7 +927,7 @@ def test_no_annex_i_text_leaves_only_null() -> None:
 def test_the_check_sends_the_limited_schema() -> None:
     content = answer(RANKS_APPLICANTS).model_dump_json()
     chat = RecordingChat(messages=iter([AIMessage(content=content)]))
-    HighRiskCheck(_settings(), chat=chat, search=FakeSearch(), lookup=fake_lookup)(state())
+    HighRiskCheck(_settings(), chat=chat, library=FakeLibrary())(state())
     [sent] = chat.formats
     assert sent == node.high_risk_response_format(_prompt_annex_i_ids(Language.EN))
 
@@ -833,27 +953,26 @@ NOT_FOUND = "not_found"
 
 
 class CorpusRecording:
-    """The corpus answers of one replay: recorded from the real search and lookup while
-    recording, served from `<cassette>.corpus.json` while replaying. A call the recording never
-    saw (a changed query, filter or exclusion) fails the replay."""
+    """A `HighRiskLibrary` for one replay: while recording it asks the real corpus (`live`) and
+    keeps each answer; while replaying it serves them from `<cassette>.corpus.json`. A call the
+    recording never saw (a changed query, filter or exclusion) fails the replay."""
 
-    def __init__(self, path: Path, is_recording: bool) -> None:
+    def __init__(self, path: Path, live: HighRiskCorpus | None) -> None:
         self._path = path
-        self._is_recording = is_recording
+        self._live = live
         self._entries: dict[str, object] = (
-            {} if is_recording else json.loads(path.read_text(encoding="utf-8"))
+            {} if live else json.loads(path.read_text(encoding="utf-8"))
         )
 
-    def _answer(self, call: dict[str, object], live: Callable[[], object]) -> object:
+    def _answer(self, call: dict[str, object], ask: Callable[[HighRiskCorpus], object]) -> object:
         key = json.dumps(call, sort_keys=True, default=str)
-        if self._is_recording:
+        if self._live is not None:
             try:
-                result = live()
+                result = ask(self._live)
             except ProvisionNotFoundError:
                 self._entries[key] = {NOT_FOUND: True}
                 raise
-            assert isinstance(result, SearchResults | Provision)
-            self._entries[key] = result.model_dump(mode="json")
+            self._entries[key] = _dumped(result)
             return result
         if key not in self._entries:
             pytest.fail(f"no recorded corpus answer for {key}; record the replay again")
@@ -862,38 +981,40 @@ class CorpusRecording:
             raise ProvisionNotFoundError(f"recorded as not found: {key}")
         return entry
 
-    def search(self) -> Searcher:
-        def run(
-            query: str,
-            language: Language,
-            law_version: LawVersion,
-            as_of: date | None,
-            **options: object,
-        ) -> SearchResults:
-            shown = {k: sorted(v) if isinstance(v, set) else v for k, v in options.items()}
-            call = {"search": query, "language": language, "law_version": law_version, **shown}
-            call["as_of"] = as_of
-            live = partial(node.search_corpus, query, language, law_version, as_of, **options)
-            return SearchResults.model_validate(self._answer(call, live))
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
+        call = {"lookup": provision_id, **_shown(lookup)}
+        found = self._answer(call, lambda live: live.provision(provision_id, lookup))
+        return Provision.model_validate(found)
 
-        return run
+    def search(
+        self, query: str, lookup: Lookup, *, language: Language, doc_type: str, limit: int
+    ) -> tuple[SearchHit, ...]:
+        call = {"search": query, **_shown(lookup), "language": language, "doc_type": doc_type}
+        call["limit"] = limit
 
-    def lookup(self) -> Lookup:
-        def run(
-            provision_id: str, language: Language, law_version: LawVersion, as_of: date | None
-        ) -> Provision:
-            call = {"lookup": provision_id, "language": language, "law_version": law_version}
-            call["as_of"] = as_of
-            live = partial(node.lookup_provision, provision_id, language, law_version, as_of)
-            return Provision.model_validate(self._answer(call, live))
+        def ask(live: HighRiskCorpus) -> object:
+            return live.search(query, lookup, language=language, doc_type=doc_type, limit=limit)
 
-        return run
+        found = self._answer(call, ask)
+        assert isinstance(found, tuple | list)
+        return tuple(SearchHit.model_validate(hit) for hit in found)
 
     def save(self) -> None:
-        if self._is_recording:
+        if self._live is not None:
             text = json.dumps(self._entries, indent=1, sort_keys=True, ensure_ascii=False)
             self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.write_text(text + "\n", encoding="utf-8")
+
+
+def _shown(lookup: Lookup) -> dict[str, object]:
+    return {**asdict(lookup), "exclude_source_example_ids": list(lookup.exclude_source_example_ids)}
+
+
+def _dumped(result: object) -> object:
+    if isinstance(result, tuple):
+        return [_dumped(item) for item in result]
+    assert isinstance(result, SearchHit | Provision)
+    return result.model_dump(mode="json")
 
 
 @pytest.fixture
@@ -916,9 +1037,14 @@ def replay_check(
             f"{default_cassette_name} has no recording yet; record it with `uv run pytest "
             "tests/engine/nodes/test_high_risk.py -k replay --record-mode=once`"
         )
-    recording = CorpusRecording(corpus, is_recording)
-    yield HighRiskCheck(luna_settings, search=recording.search(), lookup=recording.lookup())
-    recording.save()
+    if not is_recording:
+        yield HighRiskCheck(luna_settings, library=CorpusRecording(corpus, None))
+        return
+    with connect() as connection:
+        live = HighRiskCorpus(connection, OpenRouterEmbeddings(settings=luna_settings))
+        recording = CorpusRecording(corpus, live)
+        yield HighRiskCheck(luna_settings, library=recording)
+        recording.save()
 
 
 @pytest.mark.vcr
@@ -937,15 +1063,33 @@ def _tag(case: BenchmarkCase, name: str) -> list[str]:
     return [tag.removeprefix(prefix) for tag in case.tags if tag.startswith(prefix)]
 
 
-KNOWN_GAPS: dict[str, str] = {
-    "own-e-10-in-house-nodule-finder": (
+@dataclass(frozen=True)
+class KnownGap:
+    reason: str
+    reads: Callable[[CheckOutcome, Language], bool]
+    """The documented wrong reading; any other miss fails the replay."""
+
+
+def _no_third_party_decided(result: CheckOutcome, language: Language) -> bool:
+    """Decided not high-risk because no third-party assessment is needed (Art. 6(1)(b))."""
+    reason = node.TEXTS[language]["i_no_third_party"].split("({point})", 1)[1]
+    return (
+        result.step.status is Status.DECIDED
+        and result.high_risk_route is None
+        and reason in result.step.decision
+    )
+
+
+KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-e-10-in-house-nodule-finder": KnownGap(
         "the model takes reading A (the MDR in-house exemption means no third-party assessment) "
         "as settled law instead of flagging it as open; the label stays legally_ambiguous and "
-        "the case is scored end to end in V8 (user, 2026-09-30)"
+        "the case is scored end to end in V8 (user, 2026-09-30)",
+        _no_third_party_decided,
     ),
 }
-"""Recorded cases whose high-risk outcome differs from the label, with the reason; each fails
-when it starts matching, so the entry is removed."""
+"""Recorded cases whose high-risk outcome differs from the label, with the reason and the
+reading they give instead; each fails when it starts matching, so the entry is removed."""
 
 
 def _matches_label(result: CheckOutcome, case: BenchmarkCase) -> bool:
@@ -989,6 +1133,11 @@ def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -
     if gap is not None:
         if matches:
             pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        pytest.xfail(gap)
+        assert gap.reads(result, case.language), (
+            result.high_risk_route,
+            result.step.status,
+            result.step.decision,
+        )
+        pytest.xfail(gap.reason)
     step = result.step
     assert matches, (result.high_risk_route, result.annex_point, step.status, step.decision)

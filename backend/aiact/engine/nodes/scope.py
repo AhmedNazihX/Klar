@@ -31,7 +31,6 @@ English when no German passage of the definition guidelines is found.
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date
 from enum import StrEnum
 from pathlib import Path
 from typing import Protocol
@@ -41,6 +40,14 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
+from aiact.engine.nodes.common import (
+    Lookup,
+    answers_section,
+    facts_section,
+    guidance_citation,
+    lookup_for,
+    provision_citation,
+)
 from aiact.engine.nodes.key_facts import Answer, CitedFact, KeyFact, facts_used
 from aiact.engine.nodes.scope_texts import (
     AI_SYSTEM,
@@ -61,11 +68,9 @@ from aiact.llm.structured import describe_validation_error, json_schema_format
 from aiact.retrieval.provisions import Provision, get_provision
 from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
 from aiact.schemas import (
-    Citation,
     EvidenceTag,
     FollowUpQuestion,
     Language,
-    LawVersion,
     OpenQuestion,
     Status,
     StepName,
@@ -148,28 +153,6 @@ class ScopeOutputError(ValueError):
 
 
 # --- Retrieval ----------------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class Lookup:
-    """What every fetch and search of one run shares: the language, the law version and date,
-    and the examples the caller excludes."""
-
-    language: Language
-    law_version: LawVersion
-    as_of: date | None
-    """None for the original text, which has one slice per unit (`get_provision`)."""
-    exclude_source_example_ids: tuple[str, ...]
-
-
-def lookup_for(state: EngineState) -> Lookup:
-    law_version = state["law_version"]
-    return Lookup(
-        language=state["language"],
-        law_version=law_version,
-        as_of=None if law_version is LawVersion.ORIGINAL else state["as_of"],
-        exclude_source_example_ids=tuple(state["exclude_source_example_ids"]),
-    )
 
 
 class ScopeLibrary(Protocol):
@@ -399,30 +382,6 @@ def _open_question(settled: ScopeSettlement, language: Language) -> OpenQuestion
     return OpenQuestion(question=OPEN_QUESTION[language], readings=(stricter, lenient))
 
 
-def provision_citation(provision: Provision) -> Citation:
-    return Citation(
-        provision_id=provision.provision_id,
-        document_id=provision.doc_key,
-        law_version=provision.law_version,
-        document_status=provision.status,
-        language=provision.language,
-        quote=provision.text,
-        english_only=provision.english_only,
-    )
-
-
-def guidance_citation(hit: SearchHit, language: Language) -> Citation:
-    return Citation(
-        provision_id=hit.provision_id,
-        document_id=hit.doc_key,
-        law_version=hit.law_version,
-        document_status=hit.status,
-        language=hit.language,
-        quote=hit.text,
-        english_only=hit.language is not language,
-    )
-
-
 def _guidance_used(answer: ScopeAnswer, guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
     """The passages the definition answer rests on, then those that place the technique outside
     the definition, each once."""
@@ -480,17 +439,14 @@ def scope_messages(
     """The fixed instructions and the law first; the guideline passages, the per-case context and
     the description last, so the shared prefix is cached (005)."""
     version = state["law_version"].value
-    given = "\n".join(f"- {qid}: {text}" for qid, text in state["answers"].items()) or "-"
-    facts = state.get("facts", ())
-    numbered = "\n".join(f"{n}. [{f.evidence.value}] {f.text}" for n, f in enumerate(facts, 1))
     return [
         SystemMessage(SCOPE_INSTRUCTIONS),
         HumanMessage(
             f"The AI Act ({version} text):\n\n{_law_section(law)}\n\n"
             f"Definition guidelines passages:\n\n{_guidance_section(guidance)}\n\n"
             f"Language for facts: {state['language'].value}\n\n"
-            f"Answers to earlier questions:\n{given}\n\n"
-            f"Facts:\n{numbered or '-'}\n\n"
+            f"Answers to earlier questions:\n{answers_section(state)}\n\n"
+            f"Facts:\n{facts_section(state)}\n\n"
             f"Description:\n{state['description']}"
         ),
     ]

@@ -61,10 +61,11 @@ class CheckOutcome(ContractModel):
     - `high_risk_route` (high_risk): the system is, or is assumed, high-risk on this route.
     - `annex_iii_exempt` (high_risk): the system is listed in Annex III but, or is assumed to be,
       exempted under Art. 6(3); the provider then has the Art. 6(4) duty.
-    - `annex_point` (high_risk): the Annex point the finding rests on, e.g. `annex:III:4:a`, or
-      the Annex I legislation, e.g. `annex:I:A:11`. An `annex:I:B:` point is Section B: Art. 2(2)
-      then leaves only Art. 6(1), 60a and 102-112 of the Act, so the duties come from the
-      sector law.
+    - `annex_point` (high_risk): the Annex point a high-risk finding (or assumption) rests on,
+      e.g. `annex:III:4:a`, or the Annex I legislation, e.g. `annex:I:A:11`; None when the
+      system is not high-risk, exempt ones included (their decision still names the point). An
+      `annex:I:B:` point is Section B: Art. 2(2) then leaves only Art. 6(1), 60a and 102-112 of
+      the Act, so the duties come from the sector law.
     - `transparency_duties` (transparency): every Art. 50 provision that applies, e.g.
       `art:50:1`, including duties that are only assumed or uncertain. The role step lists an
       Art. 50 duty only when it is here, so a duty left out is a duty the result drops.

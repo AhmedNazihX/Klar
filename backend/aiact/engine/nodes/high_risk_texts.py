@@ -102,6 +102,7 @@ PUBLIC_AUTHORITY_USER = KeyQuestion(
         "Auftrag eingesetzt.",
     },
 )
+"""Asked for Annex III 6 and 7; the node sets `article` to the area matched."""
 ANNEX_III_USE = KeyQuestion(
     id="annex_iii_use",
     article="art:6:2",

@@ -35,6 +35,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
+from aiact.engine.nodes.common import answers_section, facts_section
 from aiact.engine.nodes.key_facts import Answer, KeyFact, facts_used
 from aiact.engine.nodes.role_texts import (
     BUILDS_ON_GPAI,
@@ -525,9 +526,6 @@ def role_messages(state: EngineState, conditions: Sequence[str]) -> list[BaseMes
     shown_class = risk_class.value + (f" ({route.value} route)" if route else "")
     steps = "\n".join(f"- {s.step.value}: {s.decision}" for s in state.get("steps", ())) or "-"
     listed = "\n".join(f"{cid}: {text}" for text, cid in condition_ids(conditions).items()) or "-"
-    given = "\n".join(f"- {qid}: {text}" for qid, text in state["answers"].items()) or "-"
-    facts = state.get("facts", ())
-    numbered = "\n".join(f"{n}. [{f.evidence.value}] {f.text}" for n, f in enumerate(facts, 1))
     return [
         SystemMessage(ROLE_INSTRUCTIONS),
         HumanMessage(
@@ -535,8 +533,8 @@ def role_messages(state: EngineState, conditions: Sequence[str]) -> list[BaseMes
             f"Risk class so far: {shown_class}\n\n"
             f"Earlier checks:\n{steps}\n\n"
             f"Conditions:\n{listed}\n\n"
-            f"Answers to earlier questions:\n{given}\n\n"
-            f"Facts:\n{numbered or '-'}\n\n"
+            f"Answers to earlier questions:\n{answers_section(state)}\n\n"
+            f"Facts:\n{facts_section(state)}\n\n"
             f"Description:\n{state['description']}"
         ),
     ]
