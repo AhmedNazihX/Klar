@@ -67,7 +67,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support, invented content (V5)
 │   │   │   ├── ragas_metrics.py     (V6)
 │   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)
-│   │   │   └── experiments/         embeddings.py (X1a), smoke.py (X2), free_agent.py (S1)
+│   │   │   └── experiments/         embeddings.py (X1a), smoke.py (X2; `aiact evaluate smoke`, `smoke-compare`), free_agent.py (S1)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
