@@ -79,6 +79,12 @@ class Story:
         return "-".join([w for w in words if w not in stop][:4]) or self.id.lower()
 
     @property
+    def may_change_schema(self) -> bool:
+        """The entry mentions a migration outside its outcome notes: the one-schema-story rule may apply."""
+        text = [self.header, *(line for line in self.body if "**Outcome" not in line)]
+        return any(re.search(r"\bmigrations?\b", line, re.IGNORECASE) for line in text)
+
+    @property
     def lane(self) -> str:
         if self.id == "C2":
             return "c2"
@@ -179,7 +185,8 @@ def cmd_status(stories: list[Story]) -> None:
             rows["Blocked"].append(f"{label}  ← waiting on {', '.join(missing)}")
         else:
             extra = f"  (check: {'; '.join(notes)})" if notes else ""
-            rows["Ready"].append(f"{label}  [{s.type}, lane {s.lane}]{extra}")
+            schema = ", migration?" if s.may_change_schema else ""
+            rows["Ready"].append(f"{label}  [{s.type}, lane {s.lane}{schema}]{extra}")
     done = sum(s.done for s in stories)
     print(f"Backlog: {done}/{len(stories)} stories done\n")
     for name, items in rows.items():
@@ -195,6 +202,10 @@ def cmd_status(stories: list[Story]) -> None:
     path = " → ".join(f"{i}✓" if by_id.get(i) and by_id[i].done else i for i in CRITICAL_PATH)
     nxt = next((i for i in CRITICAL_PATH if i in by_id and not by_id[i].done), None)
     print(f"## Critical path\n  {path}\n  next on the path: {nxt or 'complete'}")
+    if nxt:
+        waiting, _ = unmet(by_id[nxt], by_id)
+        if waiting:
+            print(f"  {nxt} is waiting on {', '.join(waiting)}: start those first")
 
 
 def cmd_tick(lines: list[str], story: Story, sid: str, note: str) -> None:
@@ -243,7 +254,7 @@ def main(argv: list[str]) -> None:
         # branch_id is what goes into the branch name: the requested ID (B5c), never the group ID (B5a–e).
         info = {"id": s.id, "branch_id": args[0], "title": s.title, "slug": s.slug, "lane": s.lane,
                 "type": s.type, "deps": ids, "dep_notes": notes, "done": s.is_done(args[0]),
-                "sub_stories": s.sub_ids}
+                "sub_stories": s.sub_ids, "may_change_schema": s.may_change_schema}
         print(json.dumps(info, ensure_ascii=False))
     elif cmd == "tick":
         cmd_tick(lines, find(stories, args[0]), args[0], " ".join(args[1:]) or "done")

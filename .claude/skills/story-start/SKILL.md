@@ -36,7 +36,7 @@ Refuse a story, and say why, if any of these hold:
 - It has a "check by hand" condition (for example "run in week 9" or "MVP done"). Ask the user to confirm the condition holds.
 - It's **F1**, or one of **E8, E9, E10**, and anything else is requested or in flight. These run alone.
 - It's an **E\*** story and `git cat-file -e HEAD:eval/split.json` fails (the B3 gate).
-- It **changes the schema** (it creates a migration: F4, F5, C7, P3, or its Output names a migration) and another schema-changing story is in the set or in flight.
+- It **changes the schema** (it creates a migration: F4, F5, C7, P3, or `info` shows `"may_change_schema": true` and the story's text confirms it) and another schema-changing story is in the set or in flight.
 
 Launch whatever passes, and report what was refused.
 
