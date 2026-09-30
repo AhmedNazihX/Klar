@@ -1,8 +1,19 @@
 # Label changes
 
 Every change to a label under `eval/cases/` is logged here: date, case id, old label → new label,
-reason, and who approved it. After tag `labels-v1` (B10) a CI check requires an entry for every
-changed case file.
+reason, and who approved it.
+
+Since B10a (decision 017) CI enforces it with `aiact evaluate label-freeze --base <ref>` (the
+rules are in `backend/aiact/eval/label_freeze.py`):
+
+- A case is approved once a case file on main holds it; new cases need no row.
+- An approved case whose record changes in any field (label, citation, description, notes, tags),
+  or which is removed, needs a row added in the same branch. Overrides in
+  `eval/cases/academic_overrides.yaml` count the same way, under the case id they override.
+- The "Case id" cell names cases by id (`academic-0160, 0253` reuses the prefix for bare
+  numbers), or by rule as "<N> <prefix> cases (by rule: …)", which covers up to N changed cases
+  with that id prefix that no other row names.
+- Rows are only ever added: editing or deleting an existing row fails the check.
 
 For the academic set, the changes are applied by `aiact evaluate academic-import` from
 `eval/cases/academic_overrides.yaml`; the source labels are the authors' (see

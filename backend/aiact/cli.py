@@ -17,7 +17,16 @@ from aiact import db, deps
 from aiact.corpus import embed as corpus_embed_module
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
-from aiact.eval import academic, citation_index, isolation, metrics, records, report, runner
+from aiact.eval import (
+    academic,
+    citation_index,
+    isolation,
+    label_freeze,
+    metrics,
+    records,
+    report,
+    runner,
+)
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CaseFileError, CaseSet, load_cases
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
@@ -287,6 +296,33 @@ def eval_academic_sample() -> None:
     """Print the seeded spot-check sample (5 cases per risk class) of the imported cases."""
     for case in academic.spotcheck_sample(load_cases(CaseSet.ACADEMIC)):
         typer.echo(case.id)
+
+
+@eval_app.command("label-freeze")
+def eval_label_freeze(
+    base: Annotated[
+        str,
+        typer.Option(help="The ref to compare with; its merge base with HEAD is used (e.g. main)"),
+    ],
+) -> None:
+    """Fail when an approved case (one under eval/cases/ at the base) changed without a new row in
+    eval/LABEL_CHANGES.md (decision 017). New cases need no row."""
+    try:
+        result = label_freeze.check_label_freeze(base)
+    except label_freeze.FreezeCheckError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    for row in result.edited_log_rows:
+        typer.echo(f"LOG ROW REMOVED OR EDITED (the log is append-only): {row}", err=True)
+    for case in result.unlogged:
+        typer.echo(f"UNLOGGED: {case.describe()}", err=True)
+    summary = (
+        f"{len(result.changed)} approved cases changed since {result.base_sha[:12]}, "
+        f"{len(result.unlogged)} without a new row in {label_freeze.LOG_PATH}"
+    )
+    typer.echo(summary, err=not result.is_ok)
+    if not result.is_ok:
+        raise typer.Exit(code=1)
 
 
 @eval_app.command("run")
