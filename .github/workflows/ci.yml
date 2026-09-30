@@ -63,9 +63,10 @@ jobs:
         run: uv run pytest -q
 
   isolation:
-    # Placeholder: story B13 adds backend/tests/test_isolation.py and removes the `if: false`.
+    # Story B13: the benchmark isolation check against the corpus loaded from the committed
+    # data/parsed/. AIACT_REQUIRE_CORPUS turns a missing corpus or eval/ into a failure. The
+    # embedding check skips here (no corpus vectors without a live call); it runs locally.
     name: Benchmark isolation check
-    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -84,5 +85,22 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.117.0
+
+      - name: Start the local Supabase database
+        working-directory: .
+        run: >-
+          supabase start
+          -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: Load the corpus from data/parsed
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: uv run aiact corpus load --stats "$RUNNER_TEMP/corpus_stats.md"
+
       - name: Isolation check
+        env:
+          AIACT_REQUIRE_CORPUS: "1"
         run: uv run pytest -q tests/test_isolation.py

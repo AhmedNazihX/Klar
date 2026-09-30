@@ -17,7 +17,7 @@ from aiact import db, deps
 from aiact.corpus import embed as corpus_embed_module
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
-from aiact.eval import academic, citation_index, metrics, records, report, runner
+from aiact.eval import academic, citation_index, isolation, metrics, records, report, runner
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CaseFileError, CaseSet, load_cases
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
@@ -404,6 +404,38 @@ def eval_split_command(
         raise typer.Exit(code=1) from error
     typer.echo(f"Pile A: {len(split.pile_a)}, Pile B: {len(split.pile_b)} (seed {split.seed})")
     typer.echo(f"{'Written' if is_written else 'Unchanged'}: {output}")
+
+
+@eval_app.command("isolation-embed")
+def eval_isolation_embed(
+    output: Annotated[
+        Path, typer.Option(help="The benchmark-vector cache.")
+    ] = isolation.EMBEDDINGS_FILE,
+) -> None:
+    """Embed the benchmark texts the isolation check compares with the corpus (Pile B examples
+    and case descriptions, not the appliedAI extraction) with the corpus arm, and write their
+    vectors to eval/. Only texts missing from the cache are sent: a small paid call."""
+    arm = corpus_embed_module.ARMS["qwen3"]
+    dims = get_settings().embedding_dimensions
+    try:
+        texts = isolation.embedded_texts()
+        cache = isolation.load_cache(output, arm.model, dims)
+        embedder = OpenRouterEmbeddings(model=arm.model, provider=arm.provider, dimensions=dims)
+        outcome = isolation.refresh_cache(cache, texts, embedder)
+    except (
+        LLMConfigError,
+        EmbeddingError,
+        CaseFileError,
+        isolation.IsolationFileError,
+        FileNotFoundError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    isolation.write_cache(outcome.cache, output)
+    typer.echo(
+        f"{len(texts)} texts: {outcome.embedded} embedded, {outcome.removed} removed; "
+        f"{outcome.tokens} tokens, ${outcome.cost_usd:.6f}. Written: {output}"
+    )
 
 
 @obligations_app.callback()
