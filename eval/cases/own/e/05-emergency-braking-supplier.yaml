@@ -1,0 +1,31 @@
+id: own-e-05-emergency-braking-supplier
+set_name: own
+language: en
+description: >-
+  We are a Tier-1 automotive supplier headquartered in Lyon, with about 3,000 staff. We develop an
+  automatic emergency braking function for passenger cars: a neural network fuses camera and radar
+  data, detects pedestrians and cyclists, and brakes the car if the driver doesn't react in time.
+  We deliver it as a software and sensor package to two carmakers, who build it into new models.
+  The braking function is part of each model's EU vehicle type-approval, and the approval
+  authority's technical service tests it before the approval is granted. Series production starts
+  in 2027. We also run a separate project on in-cabin air-quality sensors, which has nothing to do
+  with this.
+label:
+  risk_class: high_risk
+  role: provider
+label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:B:18", "annex:I:B:19", "art:2:2"]
+notes: >-
+  Draft, pending user approval. Class: emergency braking is a safety function (Art. 3(14)) of a
+  motor vehicle covered by the type-approval regulations in Annex I Section B (points 18 and 19);
+  the function is tested by the technical service as part of type-approval, which is read as a
+  third-party conformity assessment, so Art. 6(1) is met: high_risk. Section B, so Art. 2(2)
+  applies: only Art. 6(1), Art. 60a and Arts. 102 to 112 of the AI Act apply, and no obligation is
+  tagged. Role: the supplier develops the system; with Art. 25 and the provider duties switched
+  off by Art. 2(2), the role is recorded as provider but carries no AI Act duties. Doubts: (1)
+  whether EU type-approval by an approval authority counts as "third-party conformity assessment"
+  under Art. 6(1)(b) is read here as yes; (2) whether the supplier or the carmaker should be
+  labelled provider matters little under Section B, but role accuracy will score it.
+tags:
+  - "category:e"
+  - "annex_i_section:b"
+  - "annex_i_point:annex:I:B:19"

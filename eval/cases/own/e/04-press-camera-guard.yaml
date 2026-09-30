@@ -1,0 +1,31 @@
+id: own-e-04-press-camera-guard
+set_name: own
+language: de
+description: >-
+  Wir bauen in Ostwestfalen mit rund 250 Leuten hydraulische Pressen für die Blechbearbeitung. Für
+  die neue Baureihe ersetzen wir das klassische Lichtgitter durch eine Kameraüberwachung des
+  Werkzeugraums: Ein neuronales Netz erkennt Hände und Arme im Gefahrenbereich und löst den
+  Not-Halt aus, bevor der Stößel schließt. Das Modell lernt im Betrieb nicht weiter, es wird nur
+  über geprüfte Updates von uns ausgetauscht. Weil keine harmonisierte Norm eine solche
+  kamerabasierte Personenerkennung abdeckt, muss nach der Maschinenverordnung eine benannte Stelle
+  die Konformität bewerten; der Termin beim Prüfer steht schon. Ausgeliefert wird die Baureihe ab
+  Februar 2027, übrigens mit einem neuen, deutlich größeren Bedienpanel.
+label:
+  risk_class: high_risk
+  role: provider
+label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:B:21", "art:2:2"]
+notes: >-
+  Draft, pending user approval. Class: the camera guard stops the press when a person is in the
+  danger zone, a safety function (Art. 3(14)), of machinery covered by the Machinery Regulation,
+  which the Omnibus moved to Annex I Section B (point 21); the facts state that a notified body
+  must assess it, so Art. 6(1) is met: high_risk. Because the product is under Section B, Art.
+  2(2) applies: of the AI Act only Art. 6(1), Art. 60a and Arts. 102 to 112 apply, and the
+  high-risk requirements reach the product through the machinery law instead. So no AI Act
+  obligation is tagged, not even Art. 4. Role: the press maker builds the guard and places the
+  press on the market under its own name. Doubts: (1) whether Art. 4 (AI literacy) is really
+  excluded by the "only" in Art. 2(2) is read here as yes; (2) the engine should say that the
+  obligations come from the machinery law, which INIT keeps out of scope.
+tags:
+  - "category:e"
+  - "annex_i_section:b"
+  - "annex_i_point:annex:I:B:21"

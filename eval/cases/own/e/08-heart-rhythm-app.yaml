@@ -1,0 +1,46 @@
+id: own-e-08-heart-rhythm-app
+set_name: own
+language: de
+description: >-
+  Wir sind ein Digital-Health-Unternehmen aus Hamburg mit 45 Beschäftigten. Unsere App liest die
+  Pulsdaten gängiger Smartwatches aus, und ein selbst trainiertes Modell sucht darin nach Mustern,
+  die auf Vorhofflimmern hindeuten können. Findet es welche, erscheint der Hinweis, das ärztlich
+  abklären zu lassen. Ob wir die App als Medizinprodukt zertifizieren lassen oder als
+  Fitness-Funktion ohne medizinische Zweckbestimmung anbieten, ist intern noch nicht entschieden;
+  davon hängen Marketingtexte und Zulassungsweg ab. Der Marktstart ist für Anfang 2027 geplant,
+  zunächst in Deutschland. Außerdem arbeiten wir gerade an einer Funktion für Schlaftracking.
+label:
+  risk_class: high_risk
+  status: needs_more_information
+  role: provider
+label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:3:12"]
+notes: >-
+  Draft, pending user approval. Missing fact: the intended purpose. If the company gives the app a
+  medical purpose (detecting signs of atrial fibrillation), it is a medical device under the MDR
+  (Annex I Section A point 11) and, as software informing diagnosis, would need a notified body,
+  so Art. 6(1) would be met: high_risk. If it is marketed as a fitness feature with no medical
+  purpose, the MDR doesn't cover it and it would be minimal_risk. The intended purpose is the
+  provider's to set (Art. 3(12)) and the description says it is undecided. Working assumption:
+  high_risk (stricter reading), with provider duties on the Annex I route. Doubt: whether "not yet
+  decided" should be needs_more_information (a fact the company can supply) rather than
+  legally_ambiguous is read here as the former.
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:11"
+  - "missing_fact:intended_purpose"
+  - "obligation:art:4:1"
+  - "obligation:art:16:a"
+  - "obligation:art:16:b"
+  - "obligation:art:16:c"
+  - "obligation:art:11:1"
+  - "obligation:art:16:d"
+  - "obligation:art:16:e"
+  - "obligation:art:16:f"
+  - "obligation:art:16:g"
+  - "obligation:art:16:h"
+  - "obligation:art:16:j"
+  - "obligation:art:16:k"
+  - "obligation:art:16:l"
+  - "obligation:art:72:1"
+  - "obligation:art:73:1"

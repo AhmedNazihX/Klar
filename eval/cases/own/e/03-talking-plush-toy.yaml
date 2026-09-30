@@ -1,0 +1,36 @@
+id: own-e-03-talking-plush-toy
+set_name: own
+language: en
+description: >-
+  We're a 60-person toy company in Barcelona. Our new plush fox, Pip, has a microphone and a
+  speaker and chats with children aged six and up: it answers questions, tells stories and plays
+  word games. The conversation runs on a large language model we license from a US provider, with
+  our own content filters and a fixed persona, and Pip connects to it over Wi-Fi. Pip doesn't move
+  and has no parts that heat up. For the CE marking we applied the harmonised standards for toy
+  safety and for the radio part and did the conformity assessment ourselves; no notified body was
+  involved. Pip goes on sale in Spain and France for Christmas 2026, and a unicorn version is
+  already planned.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:6:1:b", "annex:I:A:2", "annex:I:A:6", "art:50:1", "art:50:2", "art:3:3"]
+notes: >-
+  Draft, pending user approval. Class: the toy is covered by Annex I Section A (toys, point 2;
+  radio equipment, point 6), but the company self-assessed conformity under harmonised standards
+  with no notified body, so Art. 6(1)(b) is not met and the Annex I route does not make it
+  high-risk (whether the chat is a safety component doesn't need deciding). It chats directly with
+  children (Art. 50(1)) and generates text and speech (Art. 50(2)); placed on the market after 2
+  August 2026, so no Art. 50(2) grace period. Role: provider under its own name, building on a
+  licensed general-purpose model (tag gpai_based; the model provider's duties are only flagged).
+  Doubts: (1) whether it is "obvious" to a child that a talking toy is an AI system (Art. 50(1)
+  exception) is read here as no; (2) Annex I still lists Directive 2009/48/EC; if a successor toy
+  regulation applies by the case date, the reading is the same as long as self-assessment stays
+  available.
+tags:
+  - "category:e"
+  - "annex_i_section:a"
+  - "annex_i_point:annex:I:A:2"
+  - "gpai_based"
+  - "obligation:art:4:1"
+  - "obligation:art:50:1"
+  - "obligation:art:50:2"
