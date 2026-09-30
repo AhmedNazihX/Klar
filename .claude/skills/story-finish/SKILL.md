@@ -28,7 +28,7 @@ unless the files conflict.
 - **`dod-verifier`**: "Verify story `<ID>` at worktree `<path>` (branch `story/<ID>-<slug>`). The user's
   approvals so far: <list any the user has given in this conversation, or 'none'>."
   If the worktree is gone, give it the branch instead and ask it to check against the branch with `git show` and `git diff`.
-- **`diff-reviewer`**: "Review the diff `main...story/<ID>-<slug>`." Run it in the worktree, if one exists.
+- **`foreman:diff-reviewer`**: "Review the diff `main...story/<ID>-<slug>`." Run it in the worktree, if one exists.
 - **`isolation-auditor`**: only when the lane is `corpus` or `c2`, the ID starts with `E` or `B`, or the diff touches
   `eval/`, `data/`, `backend/aiact/corpus/` or `backend/aiact/retrieval/`.
   Prompt: "Audit branch `story/<ID>-<slug>`."

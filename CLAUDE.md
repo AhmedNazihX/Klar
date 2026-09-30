@@ -57,7 +57,7 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
   - `story-worker`: implements one story in its own worktree.
   - `dod-verifier`: checks a story's DoD independently.
   - `isolation-auditor`: benchmark-leak audit.
-  - The global `diff-reviewer` reviews diffs.
+  - The `foreman:diff-reviewer` agent (from the foreman plugin) reviews diffs.
 - **Hooks** (`.claude/settings.json`):
   - `engine-gate.sh`: no `backend/aiact/engine/` before `eval/split.json` is committed.
   - `isolation-guard.sh`: no `eval/` access on Corpus-lane branches.
@@ -76,7 +76,7 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 - **Branch from a merged base.** A story's worktree is created only after all its Deps are merged into the base branch. Engine worktrees (E*) must branch from a commit that already contains `eval/split.json` (the B3 gate).
 - **Run alone.** F1 (every worktree needs its base) and the chain E8 → E9 → E10 run serially, without parallel agents.
 - **The orchestrator owns the backlog.** Only the main session ticks boxes in `docs/BACKLOG.md`, after a merge. Agents report their outcome in their final message instead.
-- **Merge flow.** When a story is done: the `diff-reviewer` agent checks the diff, then ruff, pyright and pytest run on the branch, then the branch is merged into the base. Dependent stories start only after that merge.
+- **Merge flow.** When a story is done: the `foreman:diff-reviewer` agent checks the diff, then ruff, pyright and pytest run on the branch, then the branch is merged into the base. Dependent stories start only after that merge.
 - **Shared files.** Keep edits to `pyproject.toml`, `settings.py` and `.env.example` minimal and additive. If `uv.lock` conflicts, regenerate it with `uv lock` rather than merging it by hand. Then run `uv run aiact deps generate` and commit `docs/DEPENDENCIES.md` and `docs/dependency-licences.json` with it.
 - **Gitignored files.** `.env` and `data/raw/` are not in a new worktree. Copy or symlink `.env` into the worktree at the start. Point `AIACT_DATA_DIR` at the one shared absolute data path.
 - **Database is shared.** All worktrees use the same local Supabase instance. Create migrations only with `supabase migration new` (timestamped names). Only one running story at a time may change the schema. Tests isolate themselves with a transaction per test or a per-story schema.
