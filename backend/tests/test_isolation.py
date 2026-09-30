@@ -9,7 +9,9 @@ Pile B examples are stored in `provisions`, tagged and held out, so this checks 
    a reason, or `test_every_retrieval_callable_is_registered_or_explained` fails.
 3. No benchmark text (Pile B example or case description) is repeated in a retrievable row:
    by word 6-grams everywhere, and by embedding cosine where the corpus vectors exist. The two
-   retellings decision 016 keeps (`eval/isolation/contaminated.json`) are recorded, not failed on.
+   retellings decision 016 keeps sit below every limit, so the checks pass with them, not by
+   exempting them. Their overlap is recorded in `eval/isolation/contaminated.json` and pinned by
+   `test_the_contaminated_overlaps_are_as_recorded` (and the local cosine re-check).
 The injection tests show each check fails on a planted leak, inside a rolled-back transaction.
 
 The corpus checks read the loaded corpus. CI's isolation job loads it from the committed
@@ -325,20 +327,11 @@ def contaminated(split: Split) -> ContaminatedList:
     return isolation.load_contaminated()
 
 
-def _known(contaminated: ContaminatedList) -> frozenset[tuple[str, str]]:
-    """The (example, passage) pairs decision 016 keeps: recorded, not failed on."""
-    return frozenset((e.example_id, e.passage) for e in contaminated.examples)
-
-
 def test_no_benchmark_text_repeats_a_retrievable_row(
-    corpus: psycopg.Connection,
-    benchmark_texts: tuple[BenchmarkText, ...],
-    contaminated: ContaminatedList,
+    corpus: psycopg.Connection, benchmark_texts: tuple[BenchmarkText, ...]
 ) -> None:
     matches = isolation.closest_by_ngram(benchmark_texts, isolation.retrievable_rows(corpus))
-    known = _known(contaminated)
-    repeats = [m for m in matches if m.is_near_duplicate and (m.key, m.provision_id) not in known]
-    assert repeats == [], matches[:5]
+    assert [m for m in matches if m.is_near_duplicate] == [], matches[:5]
 
 
 def test_the_contaminated_examples_are_pile_b(contaminated: ContaminatedList, split: Split) -> None:
@@ -387,9 +380,7 @@ def test_no_benchmark_text_is_a_close_paraphrase_of_a_retrievable_row(
     missing = [t.key for t in texts if isolation.text_key(t.text) not in cache.vectors]
     assert missing == [], "run `aiact evaluate isolation-embed` for the new or changed texts"
     matches = isolation.nearest_by_embedding(corpus, texts, cache)
-    known = _known(contaminated)
-    close = [m for m in matches if m.is_near_duplicate and (m.key, m.provision_id) not in known]
-    assert close == [], matches[:5]
+    assert [m for m in matches if m.is_near_duplicate] == [], matches[:5]
     cosines = {(m.key, m.provision_id): m.cosine for m in matches}
     for example in contaminated.examples:
         pair = (example.example_id, example.passage)

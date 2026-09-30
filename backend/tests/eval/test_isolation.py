@@ -118,10 +118,26 @@ def test_a_corrupt_cache_is_a_clear_error(tmp_path: Path) -> None:
         isolation.load_cache(path, "m", 2)
 
 
-def test_a_long_verbatim_run_in_prose_is_a_repeat_at_low_coverage() -> None:
-    def words(prefix: str, count: int) -> str:
-        return " ".join(f"{prefix}{chr(97 + i % 26)}{chr(97 + i // 26)}" for i in range(count))
+def words(prefix: str, count: int) -> str:
+    """`count` distinct letter-only words (digits would be dropped by the normalisation)."""
+    return " ".join(f"{prefix}{chr(97 + i % 26)}{chr(97 + i // 26)}" for i in range(count))
 
+
+def test_a_long_run_is_found_in_a_row_that_is_not_the_highest_coverage_one() -> None:
+    """Row A shares more 6-word runs, but only in 10-word pieces; row B shares fewer, as one
+    30-word run. The text is a repeat through row B."""
+    quote, rest = words("q", isolation.PROSE_RUN_LIMIT), words("z", 60).split()
+    pieces = [" ".join(rest[i : i + 10]) for i in range(0, len(rest), 10)]
+    row_a = " filler break ".join(pieces)
+    text = BenchmarkText("hr-ex-900", f"{quote} {' '.join(rest)}")
+    (match,) = isolation.closest_by_ngram((text,), _rows((row_a, None), (quote, None)))
+    grams = len(isolation.ngrams(isolation.normalised_words(text.text)))
+    assert (match.provision_id, match.longest_run) == ("guide:test:para:2", 30)
+    assert match.coverage == 25 / grams < 30 / grams  # row A has the higher coverage
+    assert match.is_near_duplicate
+
+
+def test_a_long_verbatim_run_in_prose_is_a_repeat_at_low_coverage() -> None:
     quote = words("q", isolation.PROSE_RUN_LIMIT)  # statutory-length quote, then 60 new words
     text = BenchmarkText("hr-ex-900", f"{quote} {words('z', 60)}")
     (match,) = isolation.closest_by_ngram((text,), _rows((quote, None)))
