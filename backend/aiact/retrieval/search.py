@@ -1,0 +1,406 @@
+"""`search_ai_act`: hybrid search over the corpus, meaning and keywords fused with RRF (story C6;
+INIT > MCP tools, Tech stack).
+
+No model is involved apart from the query embedding.
+- **Two arms.** The meaning arm ranks provisions by cosine distance between their stored vector
+  and the query vector (`embed_query`, so the task instruction goes on the query only). The
+  keyword arm matches the `fts` column against each of the query's lexemes, as a prefix in German
+  (`PREFIX_LANGUAGES`), whose stemmer is uneven: `syst:*` matches System and Systeme. A row
+  scores the summed IDF (`ln(rows / rows with the word)`) of the words it has; words in more than
+  `MAX_TERM_SHARE` (and `MIN_COMMON_ROWS`) of the rows are dropped, since a soft description is
+  mostly such words and they would flood the arm with noise. The counts cover each unit of the
+  searched language and law version once, never held-out rows or the Omnibus
+  (`STATISTICS_SCOPE`); a word they don't contain gets the highest weight.
+- **Fusion.** Each arm keeps its best `CANDIDATES` rows; weighted Reciprocal Rank Fusion adds
+  `weight / (RRF_K + rank)` per arm. The keyword arm weighs `KEYWORD_WEIGHT`: soft descriptions
+  rarely share the law's wording, so its top ranks shouldn't displace the meaning arm's.
+- **Vector index.** The meaning arm keeps the partial HNSW index's model and dims predicate and
+  cast (decision 009), sets `hnsw.iterative_scan = relaxed_order` so filtered queries aren't
+  short, and re-sorts a materialized CTE by distance, as pgvector advises. At about 9,000 rows the
+  planner prefers an exact scan (about 15 ms), which is also exact; the index takes over when
+  that gets dearer. A vector only counts while its `content_sha256` matches the provision's, so
+  a stale vector is never ranked.
+- **Filters.** Every filter sits inside the SQL of both arms, never in Python afterwards:
+  - law version (default `amended`) by the decision-009 rule, so guidance (null version) stays
+    searchable and the Omnibus never shows; recitals always come from the original text, the only
+    one that has them (decision 014);
+  - `as_of` (default today) against the amended text and the guidance slices; the original text
+    is one open slice per unit, so `original` with `as_of` is an error, as in `get_provision`;
+  - language (`fts` is built per row language, so the query is parsed in the same language);
+  - `doc_types` (`law`, `guideline`, `code`);
+  - held-out (Pile B) examples are excluded by default (decision 012); only the gap run (V8) may
+    set `include_held_out`. `exclude_source_example_ids` removes further examples by id.
+- **Parents.** A parent row includes all its descendants' text (C1), so a row that is an
+  ancestor or a descendant of a better-ranked hit is skipped (`distinct_units`).
+"""
+
+from collections.abc import Collection, Sequence
+from datetime import date
+from typing import Any, LiteralString, Protocol
+
+import psycopg
+from psycopg import sql
+from psycopg.rows import dict_row
+
+from aiact.corpus.embed import vector_literal
+from aiact.db import connect
+from aiact.llm.embeddings import OpenRouterEmbeddings
+from aiact.schemas import DISCLAIMER, DocumentStatus, Language, LawVersion
+from aiact.schemas.base import ContractModel
+
+CANDIDATES = 50
+"""Rows each arm hands to the fusion; also the largest `limit` a caller may ask for."""
+
+DEFAULT_LIMIT = 10
+RRF_K = 60
+"""The usual RRF constant: damps the gap between the first few ranks of each arm."""
+
+KEYWORD_WEIGHT = 0.5
+"""The keyword arm's RRF weight (the meaning arm's is 1)."""
+
+MAX_TERM_SHARE = 0.05
+"""A query word found in more than this share of the rows in its language is left out of the
+keyword arm: it says little and would flood the arm (soft descriptions are full of such words)."""
+
+MIN_COMMON_ROWS = 50
+"""A word is only too common when it is also in more than this many rows, so a small corpus
+(tests, a partial load) doesn't lose all its words to the share rule."""
+
+DOC_TYPES = frozenset({"law", "guideline", "code"})
+FTS_CONFIGS = {Language.EN: "english", Language.DE: "german"}
+"""The text search configuration per language, as the `provisions.fts` column uses it."""
+
+PREFIX_LANGUAGES = frozenset({Language.DE})
+"""Languages whose query words match as prefixes. The German stemmer is uneven (System -> syst,
+Systeme -> system); the English one isn't, and there a prefix only adds noise (`app:*` matches
+every `applic…`)."""
+
+SCOPE: LiteralString = """
+    not d.is_amending
+    and p.language = %(language)s
+    and (
+      (d.law_version is null and daterange(p.valid_from, p.valid_to) @> %(on)s::date)
+      or (d.law_version = %(law_version)s
+          and (%(law_version)s = 'original' or daterange(p.valid_from, p.valid_to) @> %(on)s::date))
+      or (d.law_version = 'original' and p.provision_id like 'recital:%%')
+    )
+    and (%(doc_types)s::text[] is null or d.doc_type = any(%(doc_types)s::text[]))
+    and (%(include_held_out)s or not p.is_held_out)
+    and (p.source_example_id is null
+         or not (p.source_example_id = any(%(exclude_source_example_ids)s::text[])))
+"""
+"""The filters both arms apply; `p` is the provision, `d` its document in the same language."""
+
+STATISTICS_SCOPE: LiteralString = """
+    not d.is_amending
+    and not p.is_held_out
+    and p.language = %(language)s
+    and (d.law_version is null
+         or d.law_version = %(law_version)s
+         or (d.law_version = 'original' and p.provision_id like 'recital:%%'))
+"""
+"""The rows the keyword arm's word statistics count: the searched language and law version,
+without held-out examples or the Omnibus, so neither can sway a ranking (decision 012), also not
+when `include_held_out` is set. Each unit (document, provision id) counts once, however many
+time slices it has; no date filter, since the statistics describe the text, not one day of it.
+A word no counted unit has (for instance one only held-out examples use) gets the highest
+weight, as if it were in one unit: it can only match a held-out row, and only when those are
+opted in, so the gap run (V8) can still find an example by its own words."""
+
+HYBRID_SEARCH: LiteralString = """
+    with recursive vector_hits as materialized (
+      select p.id,
+             e.embedding::extensions.vector({dims})
+               <=> %(query_vector)s::extensions.vector({dims}) as distance
+      from provision_embeddings e
+      join provisions p on p.id = e.provision_row_id and p.content_sha256 = e.content_sha256
+      join documents d on d.id = p.document_id and d.language = p.language
+      where e.model = {model} and e.dims = {dims} and {scope}
+      order by distance
+      limit %(candidates)s
+    ),
+    vector_ranked as (
+      select id, row_number() over (order by distance + 0, id) as rank from vector_hits
+    ),
+    query_terms as materialized (
+      select format(case when %(prefix_terms)s then '%%L:*' else '%%L' end, lexeme)::tsquery
+             as term
+      from unnest(to_tsvector(%(fts_config)s::regconfig, %(query)s))
+      where position(E'\\\\' in lexeme) = 0
+    ),
+    statistics_total as materialized (
+      select greatest(count(distinct (p.document_id, p.provision_id)), 1) as total
+      from provisions p
+      join documents d on d.id = p.document_id and d.language = p.language
+      where {statistics_scope}
+    ),
+    -- One count per query word, straight on provisions so provisions_fts_idx serves it. The
+    -- distinct count costs about 1-2 ms a word (about 60 ms for a 40-word description).
+    term_weights as materialized (
+      select t.term, ln(n.total::float8 / greatest(f.frequency, 1)) as idf
+      from query_terms t
+      cross join statistics_total n
+      cross join lateral (
+        select count(distinct (p.document_id, p.provision_id)) as frequency
+        from provisions p
+        join documents d on d.id = p.document_id and d.language = p.language
+        where p.fts @@ t.term and {statistics_scope}
+      ) f
+      where f.frequency <= greatest(n.total * %(max_term_share)s, %(min_common_rows)s)
+    ),
+    keyword_ranked as (
+      select p.id, row_number() over (order by sum(w.idf) desc, p.id) as rank
+      from provisions p
+      join documents d on d.id = p.document_id and d.language = p.language
+      join term_weights w on p.fts @@ w.term
+      where {scope}
+      group by p.id
+      order by rank
+      limit %(candidates)s
+    ),
+    fused as (
+      select id,
+             sum(weight / (%(rrf_k)s + rank)) as score,
+             min(rank) filter (where arm = 'vector') as vector_rank,
+             min(rank) filter (where arm = 'keyword') as keyword_rank
+      from (
+        select id, rank, 'vector' as arm, 1.0 as weight from vector_ranked
+        union all
+        select id, rank, 'keyword' as arm, %(keyword_weight)s as weight from keyword_ranked
+      ) ranked
+      group by id
+    ),
+    lineage as (
+      select f.id, p.parent_id as ancestor
+      from fused f join provisions p on p.id = f.id
+      where p.parent_id is not null
+      union all
+      select l.id, p.parent_id
+      from lineage l join provisions p on p.id = l.ancestor
+      where p.parent_id is not null
+    )
+    select f.id, f.score, f.vector_rank, f.keyword_rank, p.provision_id,
+           array(select l.ancestor from lineage l where l.id = f.id) as ancestors,
+           d.doc_key, d.title, d.doc_type, d.status, d.law_version, p.language,
+           p.heading, p.text, p.valid_from, p.valid_to
+    from fused f
+    join provisions p on p.id = f.id
+    join documents d on d.id = p.document_id and d.language = p.language
+    order by f.score desc, f.id
+"""
+
+
+class QueryEmbedder(Protocol):
+    """What search needs from an embeddings client (`aiact.llm.OpenRouterEmbeddings`): the arm
+    it embeds with, and query embedding with the task instruction applied."""
+
+    model: str
+    dimensions: int
+
+    def embed_query(self, text: str) -> list[float]: ...
+
+
+class SearchHit(ContractModel):
+    """One provision found, with where it comes from and how it ranked."""
+
+    provision_id: str
+    doc_key: str
+    document_title: str
+    doc_type: str
+    law_version: LawVersion | None
+    """The AI Act text the row belongs to; None for guidance."""
+    status: DocumentStatus
+    language: Language
+    heading: str | None
+    text: str
+    valid_from: date
+    valid_to: date | None
+    score: float
+    """The weighted RRF score: the sum of `weight / (RRF_K + rank)` over the arms that found it."""
+    vector_rank: int | None
+    """The rank in the meaning arm (1 is best); None when only the keywords found it."""
+    keyword_rank: int | None
+    """The rank in the keyword arm; None when only the meaning arm found it."""
+
+
+class SearchResults(ContractModel):
+    """The hits for one query, best first, with the version and date searched and the notice."""
+
+    query: str
+    language: Language
+    law_version: LawVersion
+    as_of: date | None
+    """The date searched; None for the original text, which has one slice per unit."""
+    hits: tuple[SearchHit, ...]
+    disclaimer: str
+
+
+def search_ai_act(
+    query: str,
+    language: Language | str = Language.EN,
+    law_version: LawVersion | str | None = None,
+    as_of: date | None = None,
+    *,
+    doc_types: Collection[str] | None = None,
+    exclude_source_example_ids: Sequence[str] = (),
+    include_held_out: bool = False,
+    limit: int = DEFAULT_LIMIT,
+    embedder: QueryEmbedder | None = None,
+    connection: psycopg.Connection | None = None,
+) -> SearchResults:
+    """The provisions in `language` that best match `query`, from the law version and date asked.
+
+    `law_version` defaults to `amended` and `as_of` to today. Held-out (Pile B) examples are never
+    returned unless `include_held_out` is set, which only the gap run may do (decision 012).
+    Raises ValueError for an empty query, an unknown doc type, a `limit` outside
+    1..CANDIDATES, or `original` together with `as_of`. Without an `embedder`, one is built from
+    the settings; without a `connection`, one is opened from DATABASE_URL.
+    """
+    params, statement = prepare_search(
+        query,
+        Language(language),
+        LawVersion(law_version) if law_version is not None else LawVersion.AMENDED,
+        as_of,
+        doc_types,
+        exclude_source_example_ids,
+        include_held_out,
+        limit,
+        embedder,
+    )
+    if connection is None:
+        with connect() as own_connection:
+            rows = _run(own_connection, statement, params)
+    else:
+        rows = _run(connection, statement, params)
+    version = LawVersion(params["law_version"])
+    return SearchResults(
+        query=query,
+        language=params["language"],
+        law_version=version,
+        as_of=None if version is LawVersion.ORIGINAL else params["on"],
+        hits=tuple(_hit(row) for row in distinct_units(rows, limit)),
+        disclaimer=DISCLAIMER[Language(params["language"])],
+    )
+
+
+def prepare_search(
+    query: str,
+    language: Language,
+    version: LawVersion,
+    as_of: date | None,
+    doc_types: Collection[str] | None,
+    exclude_source_example_ids: Sequence[str],
+    include_held_out: bool,
+    limit: int,
+    embedder: QueryEmbedder | None,
+) -> tuple[dict[str, Any], sql.Composed]:
+    """Check the arguments, embed the query, and build the statement and its parameters (public so
+    tests can EXPLAIN the statement)."""
+    if not query.strip():
+        raise ValueError("the search query is empty")
+    if not 1 <= limit <= CANDIDATES:
+        raise ValueError(f"limit must be between 1 and {CANDIDATES}, got {limit}")
+    if doc_types is not None and not set(doc_types) <= DOC_TYPES:
+        raise ValueError(f"unknown doc types {sorted(set(doc_types) - DOC_TYPES)}")
+    if version is LawVersion.ORIGINAL and as_of is not None:
+        raise ValueError("as_of resolves only against the amended text; drop it for 'original'")
+    embedder = embedder or OpenRouterEmbeddings()
+    vector = embedder.embed_query(query)
+    params: dict[str, Any] = {
+        "query": query,
+        "query_vector": vector_literal(vector),
+        "fts_config": FTS_CONFIGS[language],
+        "prefix_terms": language in PREFIX_LANGUAGES,
+        "language": language.value,
+        "law_version": version.value,
+        "on": as_of or date.today(),
+        "doc_types": sorted(doc_types) if doc_types is not None else None,
+        "include_held_out": include_held_out,
+        "exclude_source_example_ids": list(exclude_source_example_ids),
+        "candidates": CANDIDATES,
+        "rrf_k": RRF_K,
+        "max_term_share": MAX_TERM_SHARE,
+        "min_common_rows": MIN_COMMON_ROWS,
+        "keyword_weight": KEYWORD_WEIGHT,
+    }
+    return params, _statement(embedder.model, embedder.dimensions)
+
+
+def _statement(model: str, dims: int) -> sql.Composed:
+    """The hybrid query with the arm's model and dims inlined as literals, so the planner can
+    match the partial HNSW index's predicate and cast."""
+    if isinstance(dims, bool) or not isinstance(dims, int) or dims <= 0:
+        raise ValueError(f"embedding dimensions must be a positive integer, got {dims!r}")
+    return sql.SQL(HYBRID_SEARCH).format(
+        dims=sql.Literal(dims),
+        model=sql.Literal(model),
+        scope=sql.SQL(SCOPE),
+        statistics_scope=sql.SQL(STATISTICS_SCOPE),
+    )
+
+
+ITERATIVE_SCAN = "hnsw.iterative_scan"
+SET_ITERATIVE_SCAN = "select set_config(%s, %s, true)"
+PREVIOUS_ITERATIVE_SCAN = "select coalesce(current_setting(%s, true), '')"
+
+
+def _run(
+    connection: psycopg.Connection, statement: sql.Composed, params: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Run the search with `hnsw.iterative_scan = relaxed_order`, then put the setting back.
+
+    Inside a caller's open transaction, `transaction()` is a savepoint and a local setting would
+    outlive it, so the previous value is restored after the query. If the query fails, rolling
+    back the savepoint (or transaction) undoes the setting anyway.
+    """
+    with connection.transaction(), connection.cursor(row_factory=dict_row) as cursor:
+        previous = cursor.execute(PREVIOUS_ITERATIVE_SCAN, (ITERATIVE_SCAN,)).fetchone()
+        cursor.execute(SET_ITERATIVE_SCAN, (ITERATIVE_SCAN, "relaxed_order"))
+        rows = cursor.execute(statement, params).fetchall()
+        restore = next(iter(previous.values())) if previous else ""
+        cursor.execute(SET_ITERATIVE_SCAN, (ITERATIVE_SCAN, restore or "off"))
+        return rows
+
+
+def distinct_units(rows: Sequence[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
+    """The first `limit` rows, in fused order, that don't overlap a row already taken.
+
+    A parent's text includes all its descendants' (C1), so a row overlaps a taken row when one
+    is an ancestor of the other (`ancestors` holds a row's full chain of parent ids). The
+    better-ranked of the two wins, whether that is the parent or the child: only rows that
+    compete for the returned slots are compared, so a parent is never dropped for a child
+    ranked far below it.
+    """
+    taken: list[dict[str, Any]] = []
+    taken_ids: set[int] = set()
+    covered: set[int] = set()
+    """The taken rows' ids and all their ancestors' ids."""
+    for row in rows:
+        if len(taken) == limit:
+            break
+        ancestors = set(row["ancestors"])
+        if row["id"] in covered or ancestors & taken_ids:
+            continue
+        taken.append(row)
+        taken_ids.add(row["id"])
+        covered |= ancestors | {row["id"]}
+    return taken
+
+
+def _hit(row: dict[str, Any]) -> SearchHit:
+    return SearchHit(
+        provision_id=row["provision_id"],
+        doc_key=row["doc_key"],
+        document_title=row["title"],
+        doc_type=row["doc_type"],
+        law_version=row["law_version"],
+        status=row["status"],
+        language=row["language"],
+        heading=row["heading"],
+        text=row["text"],
+        valid_from=row["valid_from"],
+        valid_to=row["valid_to"],
+        score=float(row["score"]),
+        vector_rank=row["vector_rank"],
+        keyword_rank=row["keyword_rank"],
+    )
