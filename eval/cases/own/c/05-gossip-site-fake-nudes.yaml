@@ -1,0 +1,31 @@
+id: own-c-05-gossip-site-fake-nudes
+set_name: own
+language: en
+description: >-
+  We run a celebrity gossip website from Dublin with 25 staff. Our editors use a well-known
+  commercial image generator on a team subscription for article graphics. Since January 2027 they
+  have also been using it, with a prompt trick that gets around its filters, to make fake
+  "leaked" nude photos of actresses and singers, which we publish as teasers behind a paywall;
+  traffic has doubled. None of the women depicted has been asked, let alone agreed. We haven't
+  changed the generator itself, we only type prompts into it, and we don't sell it to anyone.
+  Last month we also redesigned our newsletter. It is now February 2027.
+label:
+  risk_class: prohibited
+  role: deployer
+label_citation: ["art:5:1:ba", "art:5:1a:b", "art:113:a", "art:3:4"]
+as_of: 2027-02-15
+notes: >-
+  Approved by user 2026-10-01. Class: the website uses an AI system to generate realistic
+  images of identifiable people's intimate parts without their consent; for use by a deployer,
+  Art. 5(1a)(b) requires that the deployer uses the system for the purpose of generating such
+  material, which it does. Prohibited under Art. 5(1)(ba). Date: February 2027, after 2 December
+  2026 (Art. 113(a); as_of). Role: the website uses the generator under its own authority and
+  does not offer it to others (Art. 3(4)): deployer. Whether the generator's provider breaches
+  Art. 5(1a)(a)(ii) (filters that can be got around) is the provider's question, not labelled
+  here. Trap: a general-purpose tool, but the deployer's own use is what is prohibited.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:ba"
+  - "december_2026_prohibition"
+  - "trap:deployer_use_of_general_tool"
+  - "obligations:none"

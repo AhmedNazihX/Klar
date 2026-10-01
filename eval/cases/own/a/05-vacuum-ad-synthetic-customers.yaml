@@ -13,8 +13,9 @@ label:
   risk_class: limited_risk
   role: deployer
 label_citation: ["art:50:4", "art:3:60", "art:3:4", "guide:guide-art50:para:113", "guide:guide-art50:para:124"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Class: the video is AI-generated content resembling persons and
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the video is AI-generated content resembling persons and
   places that could plausibly exist and would falsely appear authentic, so it is a deep fake
   (Art. 3(60); guide para 113: simulated persons that "can plausibly exist" are enough). A
   realistic ad showing simulated consumers using a product to persuade viewers is listed as not

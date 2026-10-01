@@ -3,7 +3,7 @@ set_name: own
 language: de
 description: >-
   Wir sind ein Audio-Tech-Unternehmen aus Köln mit 40 Leuten. Am 1. September 2026 haben wir
-  „Vorleser“ gestartet: Verlage laden ein Manuskript hoch, wählen eine von 30 Stimmen, die wir mit
+  unseren Hörbuch-Dienst gestartet: Verlage laden ein Manuskript hoch, wählen eine von 30 Stimmen, die wir mit
   bezahlten Sprecherinnen und Sprechern aufgenommen und lizenziert haben, und bekommen nach ein
   paar Stunden das fertige Hörbuch als Audiodatei. Die Stimme erzeugt dabei vollständig unser
   eigenes Sprachsynthese-Modell, live eingelesen wird nichts mehr. Gechattet wird nicht, die
@@ -13,8 +13,9 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:50:2", "art:111:4", "art:113", "art:3:3", "guide:guide-art50:para:60"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Class: the system generates synthetic audio (speech; guide para
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the system generates synthetic audio (speech; guide para
   60), so its provider must mark the outputs under Art. 50(2); not high-risk, so limited_risk.
   Trap: placed on the market on 1 September 2026, after 2 August 2026, so the Art. 111(4) grace
   period does not apply and marking is due now (Art. 113). No Art. 50(1) duty: publishers only

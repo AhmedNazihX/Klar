@@ -3,7 +3,7 @@ set_name: own
 language: de
 description: >-
   Wir sind ein Maschinenbauer aus Stuttgart mit 4.000 Beschäftigten. Seit März 2026 nutzt unsere
-  Belegschaft im Intranet „Frag Otto“, einen Assistenten, den unsere eigene IT auf Basis eines
+  Belegschaft im Intranet einen Assistenten, den unsere eigene IT auf Basis eines
   offenen Sprachmodells gebaut hat. Er beantwortet Fragen zu IT-Problemen, Einkaufsrichtlinien und
   Reisekosten und formuliert auf Wunsch Entwürfe, zum Beispiel für eine Bestellanforderung.
   Verkauft oder an andere Firmen weitergegeben wird er nicht, er läuft nur bei uns. Wer ihn nutzen
@@ -13,8 +13,9 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:50:2", "art:3:3", "art:111:4", "guide:guide-art50:para:11", "guide:guide-art50:para:45", "guide:guide-art50:para:153"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Class: it writes drafts, which is synthetic text, so Art. 50(2)
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: it writes drafts, which is synthetic text, so Art. 50(2)
   marking applies; not high-risk (it decides nothing about staff, so no Annex III 4(b)). Trap: no
   Art. 50(1) duty, because an internal assistant for trained, AI-literate staff is the guide's
   example of an obvious interaction (guide para 45). Role: built in-house on an open model and put

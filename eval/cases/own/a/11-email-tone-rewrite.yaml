@@ -2,7 +2,7 @@ id: own-a-11-email-tone-rewrite
 set_name: own
 language: en
 description: >-
-  We're a 30-person software company in Tallinn making "Inkwell", an email app for small
+  We're a 30-person software company in Tallinn making an email app for small
   businesses. In September 2026 we added a "Polish" button: you write a draft, pick "more formal",
   "friendlier" or "shorter", and the app rewrites your email in that tone using a language model
   we fine-tuned ourselves. It keeps your facts, names and dates but may reorder sentences and swap
@@ -14,8 +14,9 @@ label:
   status: legally_ambiguous
   role: provider
 label_citation: ["art:50:2", "guide:guide-art50:para:90", "guide:guide-art50:para:91", "guide:guide-art50:para:92"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Open question: is a tone rewrite that keeps the facts but
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Open question: is a tone rewrite that keeps the facts but
   replaces most of the wording "standard editing" or a substantial alteration under Art. 50(2)?
   Reading A (limited_risk, the stricter reading and the label): it is "paraphrasing or rewriting
   text that changes style, structure" beyond minor stylistic polishing (guide para 92, semantic

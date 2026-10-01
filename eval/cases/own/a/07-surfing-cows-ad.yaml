@@ -12,8 +12,9 @@ label:
   risk_class: limited_risk
   role: deployer
 label_citation: ["art:3:60", "art:50:4", "art:50:2", "art:3:4", "guide:guide-art50:para:113", "guide:guide-art50:para:116"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Trap: AI-generated video in an ad, but not a deep fake: cows that
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Trap: AI-generated video in an ad, but not a deep fake: cows that
   surf and talk defy nature and have no potential to mislead, so the content doesn't resemble
   existing subjects that would falsely appear authentic (Art. 3(60); guide para 113, "existing";
   para 116 lists talking mice in a cheese ad as no deep fake). The dairy has no Art. 50(4) duty

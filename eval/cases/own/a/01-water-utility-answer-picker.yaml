@@ -13,8 +13,9 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:50:1", "art:3:3", "guide:guide-art50:para:11", "guide:guide-art50:para:30", "guide:guide-art50:para:65"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Class: the chat is an AI system (a trained model infers the
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the chat is an AI system (a trained model infers the
   customer's intent) intended to interact directly with natural persons, so Art. 50(1) applies
   (guide para 30). The general public uses it, so the "obvious" exception can't be relied on (guide
   para 45, helpdesk chatbots). Trap: no Art. 50(2) duty, because the system only selects

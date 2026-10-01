@@ -1,0 +1,37 @@
+id: own-c-03-image-tool-with-safeguards
+set_name: own
+language: en
+description: >-
+  We make presentation software in Utrecht, about 180 staff. Since October 2026 our product has
+  an image generator that creates illustrations and photo-style pictures from a text prompt; it
+  runs on a general-purpose image model we license from a US company, with our own filters on top.
+  Prompts that ask for nudity or sexual content are refused, every output passes a nudity
+  classifier before it is shown, and uploaded photos of people can only be used for background or
+  lighting changes. An outside red team spent three weeks trying and could not get intimate images
+  of real people out of it without rebuilding the model. Users can report bad outputs, and we fix
+  reported gaps within days. It is now January 2027.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:5:1a:a:ii", "art:5:1:ba", "art:50:2", "art:3:3", "art:3:68"]
+as_of: 2027-01-15
+notes: >-
+  Approved by user 2026-10-01. Class: the tool can generate photo-style images of people,
+  but generating intimate images is not its intended purpose, and Art. 5(1a)(a)(ii) prohibits
+  placing it on the market only where that outcome is reasonably foreseeable and reproducible
+  without significant technical modification and the system lacks reasonable and adequate
+  safeguards to reliably prevent it. The facts state both safeguards and a failed red-team test,
+  so Art. 5(1)(ba) is not met. It generates synthetic images (Art. 50(2)); placed on the market in
+  October 2026, after 2 August 2026, so no grace period: limited_risk. Date: January 2027, after
+  2 December 2026 (as_of). Trap: an image generator that could in theory produce such images
+  is not prohibited by that alone. Role: own product under its own name, built on a licensed
+  general-purpose model (Art. 3(3), 3(68)); the model provider's duties are only flagged. Doubt:
+  whether the safeguards "reliably" prevent the outcome is a factual judgement; the description is
+  written to settle it.
+tags:
+  - "category:c"
+  - "december_2026_prohibition"
+  - "trap:prohibition_not_met"
+  - "gpai_based"
+  - "obligation:art:4:1"
+  - "obligation:art:50:2"

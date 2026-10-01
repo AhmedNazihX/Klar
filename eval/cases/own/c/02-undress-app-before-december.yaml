@@ -1,0 +1,32 @@
+id: own-c-02-undress-app-before-december
+set_name: own
+language: de
+description: >-
+  Wir sind zu dritt und haben in Leipzig eine App entwickelt, die seit dem 1.
+  September 2026 in den App-Stores in Deutschland und Österreich zu haben ist. Man lädt ein Foto
+  einer beliebigen Person hoch, und die App erzeugt daraus ein täuschend echtes Bild, auf dem
+  dieselbe Person nackt zu sehen ist. Ob die abgebildete Person einverstanden ist, fragen wir
+  nicht ab. Das Bildmodell haben wir selbst trainiert; die Bilder bekommen keinen Hinweis und keine
+  Kennzeichnung, dass sie künstlich erzeugt sind. Bezahlt wird über ein Monatsabo. Heute ist der
+  16. November 2026. Nebenbei bieten wir noch eine App für Passfotos an.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:113:a", "art:5:1:ba", "art:50:2", "art:111:4", "art:3:3"]
+as_of: 2026-11-16
+notes: >-
+  Approved by user 2026-10-01. Class: on the case's date, 16 November 2026 (as_of),
+  Art. 5(1)(ba) does not yet apply: points (ba), (bb) and Art. 5(1a)/(1b) apply only from 2
+  December 2026 (Art. 113(a)), so the app is not yet prohibited. It generates synthetic images, so
+  the provider must mark them under Art. 50(2); it was placed on the market on 1 September 2026,
+  after 2 August 2026, so the Art. 111(4) grace period does not help and the duty applies now:
+  limited_risk. The engine should still say the prohibition starts on 2 December 2026. Trap: the
+  practice matches (ba) word for word, but the date rules it out. Paired with own-c-01 (after the
+  date). Role: built and sold under its own name (Art. 3(3)): provider. Not labelled: the users'
+  own Art. 50(4) deep-fake duty (theirs, not the provider's).
+tags:
+  - "category:c"
+  - "december_2026_prohibition"
+  - "trap:prohibition_not_yet_applicable"
+  - "obligation:art:4:1"
+  - "obligation:art:50:2"

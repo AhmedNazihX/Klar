@@ -14,8 +14,9 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:50:1", "art:50:2", "art:111:4", "art:3:3", "guide:guide-art50:para:31", "guide:guide-art50:para:45"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Class: the agent talks directly with patients, and an AI agent
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the agent talks directly with patients, and an AI agent
   must disclose both that it is an AI and on whose behalf it acts (Art. 50(1); guide para 31); a
   human-sounding voice makes the "obvious" exception unavailable (guide para 45). It generates
   synthetic speech, so outputs must be marked (Art. 50(2)). Trap: placed on the market on 17 August

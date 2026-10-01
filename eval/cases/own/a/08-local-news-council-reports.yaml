@@ -13,8 +13,9 @@ label:
   risk_class: limited_risk
   role: deployer
 label_citation: ["art:50:4", "art:3:4", "guide:guide-art50:para:131", "guide:guide-art50:para:133", "guide:guide-art50:para:135"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Class: AI-generated text, published, meant to inform the public
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: AI-generated text, published, meant to inform the public
   on local politics, a matter of public interest (guide para 131, which lists an AI summary of a
   town council decision as an example), so the deployer must disclose it under Art. 50(4) second
   subparagraph. Trap: the editorial exception needs both human review and editorial

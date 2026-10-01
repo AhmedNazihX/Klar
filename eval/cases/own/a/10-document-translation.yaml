@@ -3,7 +3,7 @@ set_name: own
 language: de
 description: >-
   Wir sind ein Sprachtechnologie-Unternehmen aus Nürnberg mit 60 Beschäftigten. Unser Produkt
-  „Brückenschlag“ übersetzt Geschäftsdokumente wie Verträge, Handbücher und Präsentationen zwischen
+  übersetzt Geschäftsdokumente wie Verträge, Handbücher und Präsentationen zwischen
   18 Sprachen. Kunden laden die Datei hoch und bekommen sie übersetzt im selben Layout zurück;
   Inhalt und Aussage bleiben gleich, eigene Texte oder Zusammenfassungen schreibt das System nicht.
   Einen Chat gibt es nicht. Das neuronale Übersetzungsmodell haben wir selbst trainiert, auf dem
@@ -13,8 +13,9 @@ label:
   risk_class: minimal_risk
   role: provider
 label_citation: ["art:50:2", "art:50:1", "guide:guide-art50:para:92", "guide:guide-art50:para:31"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Trap: the system produces new text, but Art. 50(2) does not apply
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Trap: the system produces new text, but Art. 50(2) does not apply
   to the extent a system does not substantially alter the input or its semantics, and the
   Commission lists "AI-generated translations of text" among the minor alterations that benefit
   from the exception (guide para 92). Automated translation tools are listed as not interacting

@@ -108,6 +108,8 @@ class ClassifierInput:
     description: str
     language: Language
     exclude_source_example_ids: tuple[str, ...]
+    as_of: date | None = None
+    """The case's own date (`BenchmarkCase.as_of`); None means the run's date."""
 
 
 @dataclass(frozen=True)
@@ -363,7 +365,12 @@ def run_benchmark(
     planned = [
         _Planned(
             case,
-            ClassifierInput(case.description, case.language, exclusions_for(case, active_split)),
+            ClassifierInput(
+                case.description,
+                case.language,
+                exclusions_for(case, active_split),
+                case.as_of,
+            ),
         )
         for case in select_subset(cases, options.subset, options.seed)
     ]

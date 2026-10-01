@@ -2,7 +2,7 @@ id: own-a-16-applicant-screening-chatbot
 set_name: own
 language: de
 description: >-
-  Wir sind ein HR-Tech-Start-up aus Hamburg mit 18 Leuten und entwickeln „Erstgespräch“, einen
+  Wir sind ein HR-Tech-Start-up aus Hamburg mit 18 Leuten und entwickeln einen
   Chatbot für die Personalabteilungen von Handelsketten. Bewerberinnen und Bewerber chatten auf der
   Karriereseite des Kunden mit ihm: Er fragt nach Erfahrung, Verfügbarkeit und Gehaltswunsch,
   formuliert Rückfragen selbst, bewertet die Antworten mit Punkten und sortiert alle Bewerbungen in
@@ -15,8 +15,9 @@ label:
   role: provider
   annex_point: "annex:III:4:a"
 label_citation: ["annex:III:4:a", "art:6:2", "art:6:3", "art:50:1", "art:50:2", "art:3:3"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Class: the chatbot evaluates applicants and ranks them for
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the chatbot evaluates applicants and ranks them for
   shortlisting, which is Annex III 4(a), so high-risk under Art. 6(2); scoring and ranking people
   is profiling, so the Art. 6(3) exemption is unavailable. Trap: Art. 50 duties stack on top of
   high-risk (INIT > Risk classes): applicants chat with it directly (Art. 50(1)), and it writes its

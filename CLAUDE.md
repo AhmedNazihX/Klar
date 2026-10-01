@@ -11,22 +11,9 @@ This assistant classifies AI systems under the EU AI Act. Each result shows its 
 Read this file, then the story in `docs/BACKLOG.md`, then the INIT sections named in its *Context* line, then the files in its *Input*. That should be all the context a story needs.
 
 ## Repo layout
-The full layout lives in **`docs/LAYOUT.md`**: the tree down to key files, which story creates each path, and the placement rules. Every new file must fit it, and a story that adds a new folder updates it. Summary:
-```
-backend/            the only Python project (uv); all Python lives in package `aiact/`
-  aiact/cli.py      `aiact` command root: scripts are subcommands (`aiact corpus …`, `aiact evaluate …`)
-  aiact/schemas/ llm/ corpus/ retrieval/ obligations/ qa/ drafting/ mcp/ api/
-  aiact/engine/     staged LangGraph engine: DO NOT create before story B3 is committed
-  aiact/eval/       evaluation *code*: cases, split, runner, metrics, judge, experiments/
-  tests/            mirrors the package; tests/recordings/ holds recorded model responses
-data/               legal texts only: manifest.yaml, raw/ (gitignored), parsed/
-eval/               benchmark *data* and reports only, no code (eval/private/ is gitignored)
-supabase/           config, migrations/, seed/
-frontend/           Vite + React + TypeScript
-docs/               BACKLOG.md, LAYOUT.md, decisions/
-```
+The full layout lives in **`docs/LAYOUT.md`**: the tree down to key files, which story creates each path, and the placement rules. Every new file must fit it, and a story that adds a new folder updates it. Placement rules the code alone won't teach: all Python lives in package `backend/aiact/`, and scripts are `aiact` subcommands (`aiact corpus …`, `aiact evaluate …`); `data/` holds legal texts only; `eval/` holds benchmark *data* and reports, never code (that lives in `aiact/eval/`); `tests/recordings/` holds the recorded model responses.
 
-## Commands (run from `backend/`; frontend: `cd frontend && corepack pnpm lint && corepack pnpm build && corepack pnpm test`)
+## Commands (run from `backend/`; frontend: `cd frontend && corepack pnpm lint && corepack pnpm build && corepack pnpm test`; `pnpm test` includes a Chromium browser project, so a fresh clone or worktree first needs `corepack pnpm exec playwright install chromium`, see `frontend/README.md`)
 - `uv sync`: install
 - `uv run pytest`: tests (live model tests are skipped unless `-m live`)
 - `uv run ruff check . && uv run ruff format --check .`: lint and format
@@ -79,9 +66,5 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 - **Paid calls.** A worker may spend up to `cost_cap_usd` in the config without asking; anything more, and any full benchmark run, needs the user's go-ahead.
 
 ## Project tooling (`.claude/`)
-- **Skills:** `/case` (benchmark cases and labels) and `/eval` (runs a benchmark with a subset, cost cap and held-out/all mode; asks before a full or paid run; writes `eval/reports/run-<date>.md` from stored numbers).
-- **Agent:** `isolation-auditor` (benchmark-leak audit), run by `story-finish` on every story.
 - **Scoped rules:** `.claude/rules/*.md` load only when Claude reads matching files. Subfolders are read too, so keep this folder small and specific to this project.
-  - Areas: `eval`, `corpus`, `engine`, `supabase`.
-  - Code: `python` (backend), `api` (FastAPI and MCP), `frontend`, `frontend-security`, `frontend-testing`.
   - Visual design comes from the user's design system (copy in `docs/design-system/`) and Design canvas (see `docs/BACKLOG.md` › Phase 5 › Design reference), and the `frontend-design` skill covers gaps. It doesn't come from a rule.

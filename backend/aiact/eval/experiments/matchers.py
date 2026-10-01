@@ -57,12 +57,13 @@ def cited(outcome: CheckOutcome) -> list[str]:
 
 def replay_state(case: BenchmarkCase, as_of: date) -> EngineState:
     """The state a check is replayed with: the case's description and language, the amended
-    text, and no facts, answers, exclusions or earlier steps."""
+    text, and no facts, answers, exclusions or earlier steps. A dated case (`case.as_of`) is
+    replayed at its own date; `as_of` is the run's date for every other case."""
     return {
         "description": case.description,
         "language": case.language,
         "law_version": LawVersion.AMENDED,
-        "as_of": as_of,
+        "as_of": case.as_of or as_of,
         "answers": {},
         "exclude_source_example_ids": (),
         "facts": (),

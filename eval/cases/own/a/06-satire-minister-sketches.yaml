@@ -3,7 +3,7 @@ set_name: own
 language: de
 description: >-
   Wir sind eine kleine Produktionsfirma aus Mainz mit acht Leuten und machen für unseren
-  YouTube-Kanal „Wochenschau rückwärts“ (rund 400.000 Abonnenten) jede Woche Comedy-Sketche über
+  YouTube-Kanal (rund 400.000 Abonnenten) jede Woche Comedy-Sketche über
   die Bundespolitik. Für die neue Staffel ab Oktober 2026 lassen wir mit einem gekauften KI-Videotool
   echte Minister in absurden Szenen auftreten: Der Finanzminister singt zum Beispiel ein Schlaflied
   über die Schuldenbremse, mit seinem Gesicht und einer täuschend echten Stimme. Am Tool ändern wir
@@ -13,8 +13,9 @@ label:
   risk_class: limited_risk
   role: deployer
 label_citation: ["art:50:4", "art:3:60", "art:3:4", "guide:guide-art50:para:119", "guide:guide-art50:para:123", "guide:guide-art50:para:124"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Class: realistic face and voice of a real politician, AI-generated,
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: realistic face and voice of a real politician, AI-generated,
   so a deep fake (Art. 3(60)). The sketches are evidently satirical (a comedy channel, absurd
   scenes; guide para 122), so the lighter regime of Art. 50(4) first subparagraph applies (guide
   para 119; para 124 lists a satirical image of a politician as an example). Trap: the lighter

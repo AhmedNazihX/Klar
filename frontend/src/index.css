@@ -1,61 +1,238 @@
 /*
- * Theme tokens from the Brand board (Design canvas "AI Act Classification Assistant — UI/UX",
- * project/Brand.dc.html). The board wins over this file: when it changes, update the values here
- * and the note in docs/BACKLOG.md › Phase 5 › Design reference. Light theme only; the board has
- * no dark theme yet.
+ * Theme tokens from the Klar design system (docs/design-system/tokens.json, version 1790858064-dcaa).
+ * The design system wins over this file: when it changes, re-copy docs/design-system/ and update the
+ * values here; src/theme.test.ts fails until the two agree. Light theme only.
+ *
+ * Names follow the system's: a colour token `lens-blue` is `--color-lens-blue` (Tailwind's colour
+ * namespace, so `bg-lens-blue` and `text-lens-blue` exist), and radii, shadows, blur, spacing and
+ * motion keep their names as they are (`--radius-card`, `--shadow-glass`, `--ease-settle` …).
+ * Type styles are `--text-<name>` (`text-verdict`, `text-micro` …).
  */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+/* Fonts are self-hosted through fontsource (decision 026, C2): nothing loads from Google. */
 @import '@fontsource-variable/geist';
-/* Newsreader with its optical-size axis, roman and italic, as the board loads it. */
+/* Newsreader with its optical-size axis, roman and italic, as the system loads it. */
 @import '@fontsource-variable/newsreader/opsz.css';
 @import '@fontsource-variable/newsreader/opsz-italic.css';
+/* Lexend, the verdict and the wordmark: the two weights the system uses. */
+@import '@fontsource/lexend/500.css';
+@import '@fontsource/lexend/600.css';
 
 @custom-variant dark (&:is(.dark *));
 
-/* Brand palette, type and the risk-class pill colours. Each becomes a Tailwind utility
-   (bg-mist, text-ink, text-risk-high, font-serif, rounded-panel …). */
-@theme {
+/* `static`: every token is emitted, so components can read them as CSS variables too. */
+@theme static {
+  /* Colour (tokens.json › color) */
   --color-mist: #e6ecf3;
+  --color-mesh-blue: rgba(118, 146, 255, 0.55);
+  --color-mesh-peach: rgba(255, 184, 140, 0.48);
+  --color-mesh-teal: rgba(110, 212, 198, 0.45);
+  --color-mesh-lilac: rgba(196, 160, 255, 0.4);
   --color-ink: #0f1b2d;
-  --color-ink-soft: #1b2a44;
+  --color-ink-2: #1b2a44;
   --color-slate: #4a5670;
-  --color-lens: #2d4be0;
-
-  --font-sans: 'Geist Variable', 'Helvetica Neue', system-ui, sans-serif;
-  --font-serif: 'Newsreader Variable', Georgia, 'Times New Roman', serif;
-
-  --radius-panel: 28px;
-  --radius-panel-lg: 40px;
-
-  /* Risk classes and statuses: text, fill, 1 px inner ring and dot. Always shown with a word. */
+  --color-paper: #f4f7fc;
+  --color-white: #ffffff;
+  --color-lens-blue: #2d4be0;
+  --color-lens-blue-hover: #1e36b8;
+  --color-lens-blue-top: #5a76f6;
+  --color-lens-blue-bottom: #2641c9;
+  --color-lens-blue-light: #4a66f0;
+  --color-lens-blue-soft: rgba(45, 75, 224, 0.07);
+  --color-glass-top: rgba(255, 255, 255, 0.68);
+  --color-glass-bottom: rgba(255, 255, 255, 0.3);
+  --color-glass-rim: rgba(255, 255, 255, 0.8);
+  --color-glass-thin: rgba(255, 255, 255, 0.42);
+  --color-glass-thin-rim: rgba(255, 255, 255, 0.62);
+  --color-glass-dark-top: rgba(24, 38, 66, 0.94);
+  --color-glass-dark-bottom: rgba(15, 27, 45, 0.88);
+  --color-hairline: rgba(15, 27, 45, 0.07);
+  --color-border-subtle: rgba(15, 27, 45, 0.14);
   --color-risk-prohibited: #9b1c1c;
-  --color-risk-prohibited-fill: rgb(217 58 58 / 0.14);
-  --color-risk-prohibited-ring: rgb(217 58 58 / 0.25);
   --color-risk-prohibited-dot: #d93a3a;
+  --color-risk-prohibited-tint: rgba(217, 58, 58, 0.14);
   --color-risk-high: #873a00;
-  --color-risk-high-fill: rgb(232 122 30 / 0.17);
-  --color-risk-high-ring: rgb(232 122 30 / 0.3);
   --color-risk-high-dot: #e57a1e;
+  --color-risk-high-tint: rgba(232, 122, 30, 0.17);
   --color-risk-limited: #16498a;
-  --color-risk-limited-fill: rgb(59 130 214 / 0.15);
-  --color-risk-limited-ring: rgb(59 130 214 / 0.28);
   --color-risk-limited-dot: #3b82d6;
+  --color-risk-limited-tint: rgba(59, 130, 214, 0.15);
   --color-risk-minimal: #1d5a39;
-  --color-risk-minimal-fill: rgb(58 154 100 / 0.15);
-  --color-risk-minimal-ring: rgb(58 154 100 / 0.28);
   --color-risk-minimal-dot: #3a9a64;
+  --color-risk-minimal-tint: rgba(58, 154, 100, 0.15);
   --color-risk-out: #465066;
-  --color-risk-out-fill: rgb(138 147 166 / 0.18);
-  --color-risk-out-ring: rgb(138 147 166 / 0.3);
   --color-risk-out-dot: #8a93a6;
+  --color-risk-out-tint: rgba(138, 147, 166, 0.18);
   --color-status-ambiguous: #55289a;
-  --color-status-ambiguous-fill: rgb(139 92 246 / 0.14);
+  --color-status-ambiguous-tint: rgba(139, 92, 246, 0.14);
+  --color-logo-pale: #c9d6ff;
+
+  /* The pills' 1 px inner rings and the dashed needs-info outline: exact values from the system's
+     own stylesheet (docs/design-system/source/bundle.css), which has no token for them. */
+  --color-risk-prohibited-ring: rgb(217 58 58 / 0.25);
+  --color-risk-high-ring: rgb(232 122 30 / 0.3);
+  --color-risk-limited-ring: rgb(59 130 214 / 0.28);
+  --color-risk-minimal-ring: rgb(58 154 100 / 0.28);
+  --color-risk-out-ring: rgb(138 147 166 / 0.3);
   --color-status-ambiguous-ring: rgb(139 92 246 / 0.3);
   --color-status-info: #0f1b2d;
   --color-status-info-fill: rgb(255 255 255 / 0.5);
   --color-status-info-ring: rgb(15 27 45 / 0.45);
+
+  /* Type families (tokens.json › type.families), with fontsource's family names. */
+  --font-sans: 'Geist Variable', 'Helvetica Neue', system-ui, sans-serif;
+  --font-brand: 'Lexend', 'Geist Variable', 'Helvetica Neue', system-ui, sans-serif;
+  --font-serif: 'Newsreader Variable', Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale (tokens.json › type.groups): text-<name> sets size, line height, weight, tracking. */
+  --text-display-hero: 72px;
+  --text-display-hero--line-height: 1.02;
+  --text-display-hero--font-weight: 600;
+  --text-display-hero--letter-spacing: -0.045em;
+  --text-display-section: 52px;
+  --text-display-section--line-height: 1.05;
+  --text-display-section--font-weight: 600;
+  --text-display-section--letter-spacing: -0.04em;
+  --text-heading-page: 40px;
+  --text-heading-page--line-height: 1.1;
+  --text-heading-page--font-weight: 600;
+  --text-heading-page--letter-spacing: -0.035em;
+  --text-heading-panel: 20px;
+  --text-heading-panel--line-height: 1.3;
+  --text-heading-panel--font-weight: 600;
+  --text-heading-panel--letter-spacing: -0.01em;
+  --text-heading-small: 18px;
+  --text-heading-small--line-height: 1.35;
+  --text-heading-small--font-weight: 600;
+  --text-body-large: 20px;
+  --text-body-large--line-height: 1.55;
+  --text-body-large--font-weight: 400;
+  --text-body: 16px;
+  --text-body--line-height: 1.55;
+  --text-body--font-weight: 400;
+  --text-body-small: 15px;
+  --text-body-small--line-height: 1.55;
+  --text-body-small--font-weight: 400;
+  --text-label: 14px;
+  --text-label--line-height: 1.4;
+  --text-label--font-weight: 500;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.45;
+  --text-caption--font-weight: 500;
+  --text-micro: 12px;
+  --text-micro--line-height: 1.5;
+  --text-micro--font-weight: 400;
+  --text-verdict: 64px;
+  --text-verdict--line-height: 1.05;
+  --text-verdict--font-weight: 600;
+  --text-verdict--letter-spacing: -0.03em;
+  --text-verdict-small: 34px;
+  --text-verdict-small--line-height: 1.05;
+  --text-verdict-small--font-weight: 600;
+  --text-verdict-small--letter-spacing: -0.025em;
+  --text-document-title: 30px;
+  --text-document-title--line-height: 1.2;
+  --text-document-title--font-weight: 500;
+  --text-quote: 17px;
+  --text-quote--line-height: 1.5;
+  --text-quote--font-weight: 400;
+  --text-quote-small: 16px;
+  --text-quote-small--line-height: 1.5;
+  --text-quote-small--font-weight: 400;
+  --text-code: 14px;
+  --text-code--line-height: 1.75;
+  --text-code--font-weight: 400;
+
+  /* Spacing (tokens.json › spacing). Tailwind's own 4 px scale gives the same steps (p-6 = space-6). */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius (tokens.json › radius): rounded-card, rounded-panel, rounded-pill … */
+  --radius-tag: 7px;
+  --radius-field: 12px;
+  --radius-item: 14px;
+  --radius-card-small: 16px;
+  --radius-tile: 24px;
+  --radius-card: 28px;
+  --radius-panel: 32px;
+  --radius-feature: 36px;
+  --radius-pill: 999px;
+
+  /* Shadow (tokens.json › shadow): shadow-glass, shadow-button … */
+  --shadow-glass:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 0 28px rgba(255, 255, 255, 0.16), 0 1px 2px rgba(15, 27, 45, 0.05),
+    0 22px 50px -20px rgba(28, 44, 86, 0.3);
+  --shadow-glass-thin: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --shadow-glass-dark:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 24px 60px -24px rgba(10, 18, 40, 0.6);
+  --shadow-button:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -3px 8px rgba(10, 20, 90, 0.28),
+    0 12px 26px -10px rgba(45, 75, 224, 0.65);
+  --shadow-button-ghost:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 18px -10px rgba(28, 44, 86, 0.3);
+  --shadow-item-active: inset 0 1px 0 #ffffff, 0 4px 14px -6px rgba(28, 44, 86, 0.28);
+  --shadow-segment: 0 1px 3px rgba(15, 27, 45, 0.16);
+  --shadow-highlight-high:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 2px rgba(229, 122, 30, 0.32),
+    0 22px 50px -20px rgba(160, 80, 20, 0.3);
+  /* Hover states from the system's stylesheet (no token): the primary button and a lifted card. */
+  --shadow-button-hover:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -3px 8px rgba(10, 20, 90, 0.28),
+    0 18px 34px -12px rgba(45, 75, 224, 0.75);
+  --shadow-glass-lift:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 0 28px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(15, 27, 45, 0.06),
+    0 30px 60px -22px rgba(28, 44, 86, 0.38);
+  /* The segmented control's sliding pill. */
+  --shadow-segment-thumb:
+    0 1px 3px rgba(15, 27, 45, 0.16), 0 6px 14px -8px rgba(28, 44, 86, 0.35), inset 0 1px 0 #ffffff;
+
+  /* Backdrop (tokens.json › backdrop): backdrop-blur-glass, backdrop-blur-thin. */
+  --blur-glass: 26px;
+  --blur-thin: 16px;
+  --saturate-glass: 175%;
+  --saturate-thin: 160%;
+
+  /* Motion (tokens.json › motion). ease-settle and ease-out are also Tailwind easing utilities. */
+  --ease-settle: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-hover: 350ms;
+  --duration-press: 200ms;
+  --duration-reveal: 900ms;
+  --duration-exit: 500ms;
+  --stagger: 110ms;
+  --liquid-stretch: 160ms;
+  --liquid-settle: 260ms;
+  --type-char: 11ms;
+  --focus-blur: 10px;
+  --glint: rgba(255, 255, 255, 0.2);
+
+  --animate-sheen: sheen 0.9s var(--ease-settle) forwards;
+  @keyframes sheen {
+    0% {
+      left: -60%;
+      opacity: 0;
+    }
+    25% {
+      opacity: 1;
+    }
+    100% {
+      left: 125%;
+      opacity: 0;
+    }
+  }
 }
 
 /* shadcn/ui variables, mapped onto the brand palette. */
@@ -91,70 +268,129 @@
 :root {
   --background: var(--color-mist);
   --foreground: var(--color-ink);
-  --card: rgb(255 255 255 / 0.68);
+  --card: var(--color-glass-top);
   --card-foreground: var(--color-ink);
-  --popover: #ffffff;
+  --popover: var(--color-white);
   --popover-foreground: var(--color-ink);
-  --primary: var(--color-lens);
-  --primary-foreground: #ffffff;
+  --primary: var(--color-lens-blue);
+  --primary-foreground: var(--color-white);
   --secondary: rgb(255 255 255 / 0.45);
   --secondary-foreground: var(--color-ink);
-  --muted: rgb(255 255 255 / 0.42);
+  --muted: var(--color-glass-thin);
   --muted-foreground: var(--color-slate);
-  --accent: rgb(255 255 255 / 0.62);
+  --accent: var(--color-glass-thin-rim);
   --accent-foreground: var(--color-ink);
   --destructive: var(--color-risk-prohibited);
   --border: rgb(15 27 45 / 0.1);
-  --input: rgb(15 27 45 / 0.14);
-  --ring: var(--color-lens);
+  --input: var(--color-border-subtle);
+  --ring: var(--color-lens-blue);
   --radius: 0.875rem;
 }
 
-/* Frosted glass. Recipe from the Brand board: fill white 68% to 30% at 150°, blur 26 px,
-   saturation 175%, rim 1 px white 80%, inner top highlight 1 px, shadow 0 22 50 −20 ink at 30%. */
+/* Glass: fill glass-top to glass-bottom at 150°, 1 px rim, blur-glass with saturate-glass. */
 @utility glass {
-  background: linear-gradient(150deg, rgb(255 255 255 / 0.68), rgb(255 255 255 / 0.3));
-  backdrop-filter: blur(26px) saturate(175%);
-  border: 1px solid rgb(255 255 255 / 0.8);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.95),
-    inset 0 -1px 1px rgb(255 255 255 / 0.4),
-    inset 0 0 28px rgb(255 255 255 / 0.16),
-    0 1px 2px rgb(15 27 45 / 0.05),
-    0 22px 50px -20px rgb(28 44 86 / 0.3);
+  background: linear-gradient(150deg, var(--color-glass-top), var(--color-glass-bottom));
+  backdrop-filter: blur(var(--blur-glass)) saturate(var(--saturate-glass));
+  border: 1px solid var(--color-glass-rim);
+  box-shadow: var(--shadow-glass);
 }
 
-@utility glass-dark {
-  background: linear-gradient(150deg, rgb(24 38 66 / 0.92), rgb(15 27 45 / 0.82));
-  backdrop-filter: blur(26px) saturate(150%);
-  border: 1px solid rgb(255 255 255 / 0.14);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.18),
-    0 24px 60px -24px rgb(10 18 40 / 0.6);
-  color: #eef2f8;
-}
-
-/* Thinner glass for controls (the language switch, secondary buttons). */
+/* Glass-thin: chips, cards inside a panel, segmented tracks. */
 @utility glass-thin {
-  background: rgb(255 255 255 / 0.42);
-  backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid rgb(255 255 255 / 0.62);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85);
+  background: var(--color-glass-thin);
+  backdrop-filter: blur(var(--blur-thin)) saturate(var(--saturate-thin));
+  border: 1px solid var(--color-glass-thin-rim);
+  box-shadow: var(--shadow-glass-thin);
 }
 
-/* The Mist ground with the board's four soft colour fields; glass needs something to blur. */
+/* Glass-dark: code and dark showcase tiles only, with paper text. */
+@utility glass-dark {
+  background: linear-gradient(150deg, var(--color-glass-dark-top), var(--color-glass-dark-bottom));
+  backdrop-filter: blur(var(--blur-glass)) saturate(150%);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  box-shadow: var(--shadow-glass-dark);
+  color: var(--color-paper);
+}
+
+/* A soft light (the glint token) follows the cursor; GlassPanel sets --mx and --my. */
+@utility glint {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s var(--ease-settle);
+    background: radial-gradient(
+      circle 220px at var(--mx, 50%) var(--my, 50%),
+      var(--glint),
+      rgb(255 255 255 / 0) 70%
+    );
+  }
+  &:hover::after {
+    opacity: 1;
+  }
+}
+
+/* A card that opens something lifts 3 px on hover with a deeper shadow (2 px in the app). */
+@utility lift {
+  transition:
+    transform var(--duration-hover) var(--ease-settle),
+    box-shadow var(--duration-hover) var(--ease-settle);
+  &:hover {
+    transform: translateY(calc(var(--lift-distance, 3px) * -1));
+    box-shadow: var(--shadow-glass-lift);
+  }
+}
+
+/* The primary button's liquid Lens blue: the label sits over the lens-blue band (the gradient's
+   top stop alone is only 3.9:1 with white; Button.test.tsx checks the band). A sheen runs across
+   it once on hover. */
+@utility liquid-primary {
+  background: linear-gradient(
+    180deg,
+    var(--color-lens-blue-top) 0%,
+    var(--color-lens-blue) 55%,
+    var(--color-lens-blue-bottom) 100%
+  );
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -60%;
+    width: 46%;
+    background: linear-gradient(
+      100deg,
+      rgb(255 255 255 / 0),
+      rgb(255 255 255 / 0.38),
+      rgb(255 255 255 / 0)
+    );
+    transform: skewX(-18deg);
+    pointer-events: none;
+    opacity: 0;
+  }
+  &:hover::after {
+    animation: var(--animate-sheen);
+  }
+}
+
+/* The mist ground with the four mesh lights (blue top left, peach top right, teal bottom, lilac a
+   corner), each fading out at 62%: glass needs something to blur. */
 @utility bg-ground {
   background-color: var(--color-mist);
   background-image:
-    radial-gradient(760px 560px at 6% 12%, rgb(118 146 255 / 0.55), transparent 62%),
-    radial-gradient(620px 480px at 44% 96%, rgb(110 212 198 / 0.45), transparent 62%),
-    radial-gradient(640px 520px at 96% 8%, rgb(255 184 140 / 0.48), transparent 62%),
-    radial-gradient(520px 420px at 80% 80%, rgb(196 160 255 / 0.38), transparent 62%);
+    radial-gradient(760px 560px at 6% 12%, var(--color-mesh-blue), transparent 62%),
+    radial-gradient(640px 520px at 96% 8%, var(--color-mesh-peach), transparent 62%),
+    radial-gradient(620px 480px at 44% 96%, var(--color-mesh-teal), transparent 62%),
+    radial-gradient(520px 420px at 80% 80%, var(--color-mesh-lilac), transparent 62%);
   background-attachment: fixed;
 }
 
 /* Where backdrop blur is missing or transparency is reduced, glass turns near-opaque so text keeps
-   its contrast ("text never sits on glass thinner than 40%"). */
+   its contrast ("body text never sits on anything thinner than glass-thin"). */
 @supports not (backdrop-filter: blur(1px)) {
   .glass,
   .glass-thin {
@@ -169,6 +405,107 @@
   }
 }
 
+/* The app is calmer than the public pages (README › Motion › Hover): the glint is white at 18%,
+   not 20%, and cards lift 2 px, not 3. AppFrame carries the class. */
+.app-frame {
+  --glint: rgb(255 255 255 / 0.18);
+  --lift-distance: 2px;
+}
+
+/* app-load:start
+   On load, an app screen's panels settle in reading order, 55 ms apart: the top bar first, then
+   the screen's own panels, the closing Notice last (capped at the tenth step). The frame's own
+   parts move only when the app opens (.app-intro on the frame); a navigation moves only the new
+   screen's panels (.app-screen-intro). Each class stays 3.5 s (use-load-motion.ts), so the motion
+   never fights hover; the reduced-motion block below turns it off. */
+.app-frame {
+  --app-stagger: 55ms;
+}
+@keyframes app-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.app-intro .app-column > :not(.app-screen),
+.app-screen-intro > * {
+  animation: app-rise 0.6s var(--ease-out) both;
+  animation-delay: calc(var(--enter-step, 0) * var(--app-stagger));
+}
+.app-screen > :nth-child(1) {
+  --enter-step: 1;
+}
+.app-screen > :nth-child(2) {
+  --enter-step: 2;
+}
+.app-screen > :nth-child(3) {
+  --enter-step: 3;
+}
+.app-screen > :nth-child(4) {
+  --enter-step: 4;
+}
+.app-screen > :nth-child(5) {
+  --enter-step: 5;
+}
+.app-screen > :nth-child(6) {
+  --enter-step: 6;
+}
+.app-screen > :nth-child(7) {
+  --enter-step: 7;
+}
+.app-screen > :nth-child(8) {
+  --enter-step: 8;
+}
+.app-screen > :nth-child(n + 9),
+.app-column > .app-closing {
+  --enter-step: 9;
+}
+/* app-load:end */
+
+/* law-version:start
+   Dates the Digital Omnibus moved follow the law version switch (LawSwitch toggles .law-original on
+   its scope). Unlayered, so no utility can override the swap. LawSwitch.test.tsx loads this block. */
+.law-original-only,
+.law-notice {
+  display: none;
+}
+.law-original .law-amended-only {
+  display: none;
+}
+.law-original .law-original-only {
+  display: inline;
+}
+.law-original .law-notice {
+  display: flex;
+}
+/* law-version:end */
+
+/* reduced-motion:start
+   prefers-reduced-motion turns every animation and transition off; hover lifts and the glint stay
+   still. Unlayered and !important, so no component can opt back in. theme.test.ts checks it.
+   Tailwind's translate and scale utilities are separate properties that this block can't reach:
+   components put them behind motion-safe: instead (Button; build.test.ts checks the output). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .lift:hover {
+    transform: none !important;
+  }
+  .glint::after {
+    display: none;
+  }
+}
+/* reduced-motion:end */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -180,17 +517,7 @@
     @apply min-h-dvh bg-ground text-foreground;
   }
   :focus-visible {
-    outline: 2px solid var(--color-lens);
+    outline: 2px solid var(--color-lens-blue);
     outline-offset: 2px;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    ::before,
-    ::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
   }
 }

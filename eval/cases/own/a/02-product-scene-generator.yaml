@@ -3,7 +3,7 @@ set_name: own
 language: de
 description: >-
   Wir sind ein Software-Haus aus Leipzig mit 25 Mitarbeitenden. Seit Februar 2025 verkaufen wir
-  Onlinehändlern ein Abo-Tool namens „Szenario“: Der Händler lädt ein Freisteller-Foto seines
+  Onlinehändlern ein Abo-Tool: Der Händler lädt ein Freisteller-Foto seines
   Produkts hoch, etwa eines Sessels, wählt einen Stil wie „skandinavisches Wohnzimmer“, und unser
   Bildmodell erzeugt daraus komplett neue, fotorealistische Raumszenen mit dem Produkt darin. Die
   Bilder landen direkt im Shop-Backend der Kunden; einen Chat oder Assistenten gibt es nicht. Das
@@ -13,8 +13,9 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:50:2", "art:111:4", "art:3:3", "guide:guide-art50:para:58", "guide:guide-art50:para:153"]
+as_of: 2026-10-01
 notes: >-
-  Draft, pending user approval. Class: the tool generates new synthetic images (guide para 58);
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the tool generates new synthetic images (guide para 58);
   building a whole new scene around the product goes beyond standard editing (guide para 92, the
   insertion of objects and composite images need marking), so the provider must mark the outputs
   under Art. 50(2). Grace period: placed on the market in February 2025, before 2 August 2026, so
