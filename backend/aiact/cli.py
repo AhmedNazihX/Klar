@@ -26,9 +26,10 @@ from aiact.eval import (
     records,
     report,
     runner,
+    similarity,
 )
 from aiact.eval import split as eval_split
-from aiact.eval.cases import CaseFileError, CaseSet, load_cases
+from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
@@ -444,6 +445,61 @@ def eval_split_command(
         raise typer.Exit(code=1) from error
     typer.echo(f"Pile A: {len(split.pile_a)}, Pile B: {len(split.pile_b)} (seed {split.seed})")
     typer.echo(f"{'Written' if is_written else 'Unchanged'}: {output}")
+
+
+@eval_app.command("similarity")
+def eval_similarity(
+    cases_dir: Annotated[Path, typer.Option(help="The case sets to check.")] = CASES_DIR,
+    examples: Annotated[
+        Path, typer.Option(help="The Commission example rows.")
+    ] = eval_split.EXAMPLES_FILE,
+    embeddings: Annotated[
+        Path, typer.Option(help="The isolation vector cache the cosines come from.")
+    ] = isolation.EMBEDDINGS_FILE,
+    max_run: Annotated[
+        int, typer.Option(min=1, help="A shared word run this long or longer fails a case.")
+    ] = similarity.RUN_LIMIT,
+    max_cosine: Annotated[
+        float | None,
+        typer.Option(
+            min=-1, max=1, help="A cosine this high or higher fails a case [default: off]"
+        ),
+    ] = None,
+) -> None:
+    """Measure each case rewritten from a Commission example against its source: the longest
+    shared word run and the embedding cosine (from the cached vectors; no paid call). Fails when a
+    case reaches a limit."""
+    try:
+        results = similarity.check_similarity(cases_dir, examples, embeddings)
+    except (
+        CaseFileError,
+        similarity.SimilarityError,
+        isolation.IsolationFileError,
+        FileNotFoundError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    limits = similarity.Limits(run=max_run, cosine=max_cosine)
+    failed = 0
+    for result in results:
+        reasons = result.failures(limits)
+        failed += bool(reasons)
+        closeness = f"{result.cosine:.3f}" if result.cosine is not None else "-"
+        if result.missing:
+            closeness += f" ({'; '.join(result.missing)})"
+        typer.echo(
+            f"{'FAIL' if reasons else 'ok  '} {result.case_id} <- {result.source_example_id}  "
+            f"run {result.run.length} ({result.run.part}), cosine {closeness}"
+        )
+        if reasons:
+            typer.echo(f'     {"; ".join(reasons)}: "{" ".join(result.run.words)}"')
+    missing = sum(result.cosine is None for result in results)
+    summary = f"{len(results)} cases with a source example, {failed} too close"
+    if missing:
+        summary += f"; {missing} without a cosine"
+    typer.echo(summary, err=bool(failed))
+    if failed:
+        raise typer.Exit(code=1)
 
 
 @eval_app.command("isolation-embed")
