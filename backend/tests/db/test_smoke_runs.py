@@ -16,7 +16,14 @@ from aiact.cli import _smoke_comparison  # pyright: ignore[reportPrivateUsage]
 from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome, RoleFinding
 from aiact.eval.cases import BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.experiments import smoke, smoke_verdict
-from aiact.eval.experiments.smoke import GEMINI, LUNA, NodeName, Probe, UsageTracker
+from aiact.eval.experiments.smoke import (
+    GEMINI,
+    LUNA,
+    CallRecord,
+    NodeName,
+    Probe,
+    UsageTracker,
+)
 from aiact.eval.experiments.smoke_verdict import SmokeRunError, Verdict
 from aiact.eval.records import PostgresRunStore
 from aiact.schemas import Language, RiskClass, Role, StepName, StepResult
@@ -52,8 +59,7 @@ def nodes(role: Role) -> smoke.NodeFactory:
 
     def build(node: NodeName, settings: Settings, tracker: UsageTracker) -> smoke.NodeRunner:
         def run(state: EngineState) -> FactsOutcome | CheckOutcome:
-            tracker.add(0.001, 10)
-            tracker.generation_ids.append(f"gen-{uuid4().hex}")
+            tracker.record(CallRecord(0.001, 10, f"gen-{uuid4().hex}", "stop"))
             step = StepResult(step=StepName.ROLE_OBLIGATIONS, decision="A role.")
             return CheckOutcome(step=step, role=RoleFinding(role=role))
 

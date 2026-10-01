@@ -122,6 +122,20 @@ def test_a_label_point_in_annex_iii_expects_annex_iii() -> None:
     assert matchers.expected_route(case("e-9")) is HighRiskRoute.ANNEX_I
 
 
+@pytest.mark.parametrize(
+    "points", [("annex:I:A:11", "annex:III:5:d"), ("annex:III:5:d", "annex:I:A:11")]
+)
+def test_a_label_on_both_annexes_sets_both_routes_whatever_the_order(
+    points: tuple[str, ...],
+) -> None:
+    """The role check is told Annex I (the earlier check's route for an Annex I point), and the
+    high-risk check is expected to prefer Annex III."""
+    labelled = case("e-16", annex_point=points)
+    state = matchers.role_check_state(labelled, AS_OF)
+    assert state.get("high_risk_route") is HighRiskRoute.ANNEX_I
+    assert matchers.expected_route(labelled) is HighRiskRoute.ANNEX_III
+
+
 def test_any_of_several_label_points_matches() -> None:
     labelled = case("e-15", annex_point=("annex:III:5:a", "annex:III:5:d"))
     assert matchers.expected_route(labelled) is HighRiskRoute.ANNEX_III

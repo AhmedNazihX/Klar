@@ -27,7 +27,15 @@ from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
 from aiact.eval import records, runner
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseSet
 from aiact.eval.experiments import matchers, smoke
-from aiact.eval.experiments.smoke import GEMINI, LUNA, ModelArm, NodeName, Probe, UsageTracker
+from aiact.eval.experiments.smoke import (
+    GEMINI,
+    LUNA,
+    CallRecord,
+    ModelArm,
+    NodeName,
+    Probe,
+    UsageTracker,
+)
 from aiact.eval.runner import CaseRecord
 from aiact.llm import EmbeddingError, LLMConfigError
 from aiact.llm.generations import GenerationLookupError
@@ -188,10 +196,9 @@ class FakeNodes:
             try:
                 if self.before_call is not None:
                     raise self.before_call
-                tracker.add(self.cost, self.tokens)
-                tracker.finish_reasons.append(self.finish_reason)
-                if self.has_generation_id:
-                    tracker.generation_ids.append(f"gen-{uuid4().hex}")
+                generation_id = f"gen-{uuid4().hex}" if self.has_generation_id else None
+                call = CallRecord(self.cost, self.tokens, generation_id, self.finish_reason)
+                tracker.record(call)
                 if isinstance(self.result, BaseException):
                     raise self.result
                 assert isinstance(self.result, FactsOutcome | CheckOutcome)
@@ -241,6 +248,10 @@ def test_a_fitting_answer_is_scored_with_its_cost_and_provider() -> None:
     assert isinstance(role, dict) and role["role"] == "deployer"
     assert info(record)["served_by"] == ["Azure"]
     assert info(record)["cost_is_estimated"] is False
+    [call] = info(record)["calls"]  # pyright: ignore[reportGeneralTypeIssues]
+    assert isinstance(call, dict)
+    assert (call["cost_usd"], call["tokens"], call["finish_reason"]) == (0.002, 50, "stop")
+    assert info(record)["lookup_skipped"] is None
     assert record.label["id"] == "d-1"
     assert nodes.seen == [(NodeName.ROLE, LUNA.model, LUNA.provider)]
 
@@ -445,21 +456,59 @@ def test_a_reply_without_a_cost_is_priced_from_its_tokens() -> None:
 )
 def test_a_reply_the_provider_broke_off_failed_and_is_not_broken(result: object) -> None:
     """Gemini, 2026-10-01: `finish_reason: "error"`, a cut JSON, $0 billed."""
-    record = probe_on(FakeNodes(result, 0.0, 0, finish_reason="error"), GEMINI)
+    looked_up: list[str] = []
+
+    def lookup(generation_id: str) -> str:
+        looked_up.append(generation_id)
+        return GEMINI.served_by
+
+    nodes = FakeNodes(result, 0.0, 0, finish_reason="error")
+    record = probe_on(nodes, GEMINI, served_by=lookup)
     assert record.scores["failed"] is True
     assert record.scores["broken"] is False
     assert record.scores["correct"] is None
-    assert record.scores["served_as_pinned"] is True
+    assert record.scores["served_as_pinned"] is None
     assert str(record.predicted["provider_error"]).startswith("a call ended with finish_reason")
+    assert "not_pinned" not in record.predicted
+    assert looked_up == []  # no ~18 s wait for a record of an unbilled generation
+    assert info(record)["lookup_skipped"] == smoke.LOOKUP_SKIPPED
+    [call] = info(record)["calls"]  # pyright: ignore[reportGeneralTypeIssues]
+    assert isinstance(call, dict) and call["finish_reason"] == "error"
+    assert call["cost_usd"] == 0.0
+
+
+def test_a_provider_error_without_a_generation_id_is_not_looked_up_either() -> None:
+    nodes = FakeNodes(role_outcome(Role.DEPLOYER), finish_reason="error", has_generation_id=False)
+    record = probe_on(nodes, GEMINI, served_by=served("Google"))
+    assert record.scores["failed"] is True
+    assert "not_pinned" not in record.predicted
+    assert info(record)["lookup_skipped"] == smoke.LOOKUP_SKIPPED
+
+
+def test_a_reply_cut_off_by_the_output_cap_stays_broken() -> None:
+    """Decision 023 addendum part 7: `finish_reason: "length"` is the model's, so it's broken."""
+    error = role_obligations.RoleOutputError("role answer doesn't fit the schema: Invalid JSON")
+    record = probe_on(FakeNodes(error, finish_reason="length"))
+    assert record.scores["broken"] is True
+    assert record.scores["failed"] is False
+    assert record.scores["correct"] is False
+    assert record.scores["served_as_pinned"] is True
+    [call] = info(record)["calls"]  # pyright: ignore[reportGeneralTypeIssues]
+    assert isinstance(call, dict) and call["finish_reason"] == "length"
 
 
 def test_the_tracker_keeps_each_calls_finish_reason() -> None:
     tracker = UsageTracker(GEMINI, NodeName.ROLE)
-    generation = ChatGeneration(
-        message=AIMessage(content="{"), generation_info={"finish_reason": "error"}
+    message = AIMessage(
+        content="{",
+        response_metadata={"cost": 0.0, "native_finish_reason": "MALFORMED_RESPONSE"},
+        usage_metadata={"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
     )
+    generation = ChatGeneration(message=message, generation_info={"finish_reason": "error"})
     tracker.on_llm_end(LLMResult(generations=[[generation]], llm_output={"id": "gen-1"}))
-    assert tracker.finish_reasons == ["error"]
+    assert tracker.records == [
+        CallRecord(0.0, 0, "gen-1", "error", "MALFORMED_RESPONSE"),
+    ]
     assert tracker.has_provider_error
 
 
@@ -628,8 +677,12 @@ def test_the_worst_case_is_one_call_at_the_full_output_cap() -> None:
 
 
 def test_the_estimate_prices_typical_tokens_cold() -> None:
-    probes = (Probe(NodeName.FACTS, case("e-1")), Probe(NodeName.HIGH_RISK, case("e-1")))
-    expected = (1582 + 7972) * 0.11 / 1e6 + (1800 + 1017) * 0.55 / 1e6
+    probes = (
+        Probe(NodeName.FACTS, case("e-1")),
+        Probe(NodeName.HIGH_RISK, case("e-1")),
+        Probe(NodeName.ROLE, case("d-1")),
+    )
+    expected = (1582 + 7972 + 1958) * 0.11 / 1e6 + (1800 + 1017 + 1452) * 0.55 / 1e6
     assert smoke.estimate_cost(probes, LUNA) == pytest.approx(expected)
 
 

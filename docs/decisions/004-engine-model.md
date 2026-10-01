@@ -41,14 +41,21 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
   record names the provider, not the region: the EU region rests on the pinned endpoint with fallbacks off.
 - **Broken** means the model answered but the answer didn't fit the node's JSON schema or the result contract
   (cross-field rules aren't in the schema, so contract failures count: decision 010 addendum). A reply cut off
-  by the output cap is broken too. The nodes make no tool
-  calls: retrieval is code, so structured output is the models' only interface. **Failed** means no usable
-  answer: a transport, provider or database error, a reply not shown to come from the pinned provider, or a
-  reply the provider broke off (`finish_reason: "error"`: in within-cap checks on 2026-10-01, two of five
-  Gemini role probes on own-d-01 came back as a cut JSON at $0 cost; the other three were fine). Failed probes count as neither broken nor wrong. Any other error stops the run, including a provision the
-  corpus lacks: neither check lets the model name a provision, so that is a corpus gap, never the model's
-  fault. **Accuracy** is over the labelled probes both models replied to, with a broken answer counted wrong; the
+  by the output cap (`finish_reason: "length"`) is broken too (decision 023 addendum, part 7). The nodes make no
+  tool calls: retrieval is code, so structured output is the models' only interface.
+- **Failed** means no usable answer: a transport, provider or database error, a reply not shown to come from
+  the pinned provider, or a reply the provider broke off (`finish_reason: "error"`, which counts as no answer
+  under decision 023 addendum, part 7). In within-cap checks on 2026-10-01, two of five Gemini role probes on
+  own-d-01 broke off with a cut JSON at $0 cost; the other three were fine. A broken-off call is not looked up in
+  OpenRouter's generation records (`predicted.smoke.lookup_skipped`), since an unbilled generation may have
+  none and the wait would hold a slot for ~18 s. Failed probes count as neither broken nor wrong. Any other error
+  stops the run, including a provision the corpus lacks: neither check lets the model name a provision, so that
+  is a corpus gap, never the model's fault.
+- **Accuracy** is over the labelled probes both models replied to, with a broken answer counted wrong; the
   broken share is over each model's replies.
+- **Per-call evidence** (part 7): every probe stores each call's billed cost, tokens, generation id, OpenRouter's
+  `finish_reason` and the provider's own `native_finish_reason` in `predicted.smoke.calls`, so each failed or
+  broken probe can be checked from its row.
 - **Inconclusive** (decision 023 addendum, parts 4-6, accepted by the user on 2026-10-01): if more than 10% of
   either model's probes got no usable answer, or no probe was scored for both, neither rule is applied and the
   run is repeated; it is not a verdict.

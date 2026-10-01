@@ -17,15 +17,17 @@ one the probe counts.
 A probe's outcome is one of three:
 - **broken**: the model answered, but the answer doesn't fit the node's schema or the result
   contract (the node's `*OutputError`, or a `ValidationError` from the contract: cross-field rules
-  aren't in the JSON Schema, decision 010 addendum). A reply cut off by the output cap is broken
-  too (E5: Luna's reasoning ran out at 3000 tokens). The nodes make no tool calls: retrieval is
-  code, and structured output is the model's only interface.
+  aren't in the JSON Schema, decision 010 addendum). A reply cut off by the output cap
+  (`finish_reason: "length"`) is broken too (E5: Luna's reasoning ran out at 3000 tokens). The
+  nodes make no tool calls: retrieval is code, and structured output is the model's only
+  interface.
 - **failed**: no usable answer came back: a transport, provider or database error, or a reply
   that isn't shown to come from the pinned provider (OpenRouter's generation record, `generations`:
   another provider, no generation id, or a record that can't be read), or a call that ended with
   `finish_reason: "error"` (the provider broke off mid-reply: seen on Gemini on 2026-10-01, a cut
-  JSON at $0 cost). Not counted as broken or wrong, but too many of them make the comparison
-  inconclusive (decision 023 addendum).
+  JSON at $0 cost; decision 023 addendum, part 7), and isn't looked up in the generation records.
+  Not counted as broken or wrong, but too many of them make the comparison inconclusive (parts
+  4-6). Every probe stores each call's cost, finish reason and native finish reason.
 - **answered**: scored against the label (facts: not scored).
 
 Any other error (a missing setting, a bug, a provision the corpus lacks) stops the run. Neither
@@ -51,7 +53,7 @@ import httpx
 import psycopg
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.messages import AIMessage
-from langchain_core.outputs import LLMResult
+from langchain_core.outputs import Generation, LLMResult
 from openrouter.errors import NoResponseError, OpenRouterError
 from pydantic import JsonValue, ValidationError
 
@@ -237,43 +239,93 @@ def is_correct(probe: Probe, outcome: FactsOutcome | CheckOutcome) -> bool | Non
 # --- Running one probe --------------------------------------------------------------------------
 
 
+@dataclass(frozen=True)
+class CallRecord:
+    """One model call of a probe: what it was billed, its tokens, its generation id, OpenRouter's
+    finish reason and the provider's own (`native_finish_reason`), stored with the probe so a
+    failed or broken call can be checked from the row (decision 023 addendum, part 7)."""
+
+    cost_usd: float
+    tokens: int
+    generation_id: str | None = None
+    finish_reason: str | None = None
+    native_finish_reason: str | None = None
+
+    @property
+    def is_provider_error(self) -> bool:
+        return self.finish_reason == PROVIDER_ERROR_FINISH
+
+    def as_json(self) -> dict[str, JsonValue]:
+        return {
+            "cost_usd": self.cost_usd,
+            "tokens": self.tokens,
+            "generation_id": self.generation_id,
+            "finish_reason": self.finish_reason,
+            "native_finish_reason": self.native_finish_reason,
+        }
+
+
 class UsageTracker(BaseCallbackHandler):
-    """The calls of one probe: their cost (OpenRouter's `usage.cost`; the arm's token prices when
-    it's missing; the node's worst case when the usage is missing too), tokens and generation
-    ids."""
+    """The calls of one probe. Cost is OpenRouter's `usage.cost`; the arm's token prices when it's
+    missing; the node's worst case when the usage is missing too, or the reply isn't a chat
+    message."""
 
     def __init__(self, arm: ModelArm, node: NodeName) -> None:
         self.arm = arm
         self.node = node
-        self.calls = 0
-        self.cost_usd = 0.0
-        self.tokens = 0
+        self.records: list[CallRecord] = []
         self.is_cost_estimated = False
-        self.generation_ids: list[str] = []
-        self.finish_reasons: list[str] = []
 
-    def add(self, cost_usd: float, tokens: int) -> None:
-        self.calls += 1
-        self.cost_usd += cost_usd
-        self.tokens += tokens
+    def record(self, call: CallRecord) -> None:
+        self.records.append(call)
 
-    def on_llm_end(self, response: LLMResult, **kwargs: object) -> None:
-        generation_id = (response.llm_output or {}).get("id")
-        if isinstance(generation_id, str):
-            self.generation_ids.append(generation_id)
-        for generations in response.generations:
-            for generation in generations:
-                finish_reason = (generation.generation_info or {}).get("finish_reason")
-                if isinstance(finish_reason, str):
-                    self.finish_reasons.append(finish_reason)
-                message = getattr(generation, "message", None)
-                if isinstance(message, AIMessage):
-                    self.add(*self._usage(message))
+    @property
+    def calls(self) -> int:
+        return len(self.records)
+
+    @property
+    def cost_usd(self) -> float:
+        return sum(call.cost_usd for call in self.records)
+
+    @property
+    def tokens(self) -> int:
+        return sum(call.tokens for call in self.records)
+
+    @property
+    def generation_ids(self) -> list[str]:
+        return [call.generation_id for call in self.records if call.generation_id is not None]
 
     @property
     def has_provider_error(self) -> bool:
         """A call the provider ended with an error instead of a finished reply."""
-        return PROVIDER_ERROR_FINISH in self.finish_reasons
+        return any(call.is_provider_error for call in self.records)
+
+    def on_llm_end(self, response: LLMResult, **kwargs: object) -> None:
+        response_id = (response.llm_output or {}).get("id")
+        generation_id = response_id if isinstance(response_id, str) else None
+        for generations in response.generations:
+            for generation in generations:
+                self.record(self._call(generation, generation_id))
+                generation_id = None  # one completion per call: the id belongs to the first
+
+    def _call(self, generation: Generation, generation_id: str | None) -> CallRecord:
+        info = generation.generation_info or {}
+        message = getattr(generation, "message", None)
+        metadata = message.response_metadata if isinstance(message, AIMessage) else {}
+        native = metadata.get("native_finish_reason", info.get("native_finish_reason"))
+        finish = info.get("finish_reason", metadata.get("finish_reason"))
+        cost, tokens = self._usage(message) if isinstance(message, AIMessage) else self._worst()
+        return CallRecord(
+            cost_usd=cost,
+            tokens=tokens,
+            generation_id=generation_id,
+            finish_reason=finish if isinstance(finish, str) else None,
+            native_finish_reason=native if isinstance(native, str) else None,
+        )
+
+    def _worst(self) -> tuple[float, int]:
+        self.is_cost_estimated = True
+        return worst_case_cost(self.node, self.arm), 0
 
     def _usage(self, message: AIMessage) -> tuple[float, int]:
         usage = message.usage_metadata
@@ -281,9 +333,9 @@ class UsageTracker(BaseCallbackHandler):
         cost = message.response_metadata.get("cost")
         if isinstance(cost, int | float):
             return float(cost), prompt + completion
-        self.is_cost_estimated = True
         if usage is None:
-            return worst_case_cost(self.node, self.arm), 0
+            return self._worst()
+        self.is_cost_estimated = True
         return self.arm.price(prompt, completion), prompt + completion
 
 
@@ -386,20 +438,37 @@ class _Served:
     providers: tuple[str, ...] = ()
     as_pinned: bool | None = None
     not_counted: str | None = None
+    lookup_skipped: str | None = None
+
+
+NO_GENERATION_ID = "the reply carries no generation id"
+LOOKUP_SKIPPED = (
+    "not looked up: the provider broke off the reply (finish_reason error), and OpenRouter may "
+    "keep no record of an unbilled generation"
+)
 
 
 def _served(tracker: UsageTracker, has_reply: bool, served_by: ServedBy) -> _Served:
-    if not tracker.generation_ids:
-        return _Served(not_counted="the reply carries no generation id") if has_reply else _Served()
+    """Who served the calls. A call the provider broke off is not looked up: the probe already
+    got no answer, and waiting for a record that may never come would hold a slot for ~18 s."""
+    if not tracker.records:
+        return _Served(not_counted=NO_GENERATION_ID) if has_reply else _Served()
+    checked = [call for call in tracker.records if not call.is_provider_error]
+    skipped = LOOKUP_SKIPPED if len(checked) < tracker.calls else None
+    if not checked:
+        return _Served(lookup_skipped=skipped)
+    ids = [call.generation_id for call in checked]
+    if any(generation_id is None for generation_id in ids):
+        return _Served(not_counted=NO_GENERATION_ID, lookup_skipped=skipped)
     try:
-        names = tuple(served_by(generation_id) for generation_id in tracker.generation_ids)
+        names = tuple(served_by(generation_id) for generation_id in ids if generation_id)
     except GenerationLookupError as exc:
-        return _Served(not_counted=str(exc))
+        return _Served(not_counted=str(exc), lookup_skipped=skipped)
     others = sorted({name for name in names if name != tracker.arm.served_by})
     if others:
         reason = f"served by {', '.join(others)}, not {tracker.arm.served_by}"
-        return _Served(names, as_pinned=False, not_counted=reason)
-    return _Served(names, as_pinned=True)
+        return _Served(names, as_pinned=False, not_counted=reason, lookup_skipped=skipped)
+    return _Served(names, as_pinned=True, lookup_skipped=skipped)
 
 
 def run_probe(
@@ -415,15 +484,18 @@ def run_probe(
     tracker = UsageTracker(arm, probe.node)
     node = factory(probe.node, arm_settings(settings, arm), tracker)
     ran = _run_node(probe, node, state)
-    if tracker.has_provider_error and ran.kind is not ProbeKind.FAILED:
+    has_reply = ran.kind is not ProbeKind.FAILED
+    if tracker.has_provider_error and has_reply:
         error = "a call ended with finish_reason error: the provider broke off the reply"
         ran = _Ran(ProbeKind.FAILED, {**ran.predicted, "provider_error": error}, None)
-    served = _served(tracker, ran.kind is not ProbeKind.FAILED or tracker.calls > 0, served_by)
+    served = _served(tracker, has_reply, served_by)
     if served.not_counted is not None:
         ran = _Ran(ProbeKind.FAILED, {**ran.predicted, "not_pinned": served.not_counted}, None)
     smoke_info: dict[str, JsonValue] = {
         "served_by": list(served.providers),
         "generation_ids": list(tracker.generation_ids),
+        "calls": [call.as_json() for call in tracker.records],
+        "lookup_skipped": served.lookup_skipped,
         "cost_is_estimated": tracker.is_cost_estimated,
     }
     scores: dict[str, Score] = {
