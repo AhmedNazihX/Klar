@@ -938,12 +938,12 @@ def test_the_design_change_question_asks_about_changes_from_the_date(language: L
 
 CHECK_AT_LAUNCH = {
     Language.EN: "If the system is placed on the market or put into service before "
-    "2 December 2027 and its design doesn't change significantly afterwards, Art. 111(2) may "
-    "limit these duties; check again at launch.",
+    "2 December 2027 and its design or intended purpose doesn't change significantly "
+    "afterwards, Art. 111(2) may limit these duties; check again at launch.",
     Language.DE: "Wird das System vor dem 2. Dezember 2027 in Verkehr gebracht oder in Betrieb "
-    "genommen und danach in seiner Konzeption nicht erheblich verändert, kann Art. 111 Abs. 2 "
-    "diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen oder bei der "
-    "Inbetriebnahme erneut.",
+    "genommen und danach in seiner Konzeption oder Zweckbestimmung nicht erheblich verändert, "
+    "kann Art. 111 Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen "
+    "oder bei der Inbetriebnahme erneut.",
 }
 
 

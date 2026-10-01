@@ -238,8 +238,8 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "legacy_per_product": "This covers the system as supplied before {date}; copies "
         "supplied to new customers on or after that date may be fully covered.",
         "legacy_check_at_launch": "If the system is placed on the market or put into service "
-        "before {date} and its design doesn't change significantly afterwards, Art. 111(2) may "
-        "limit these duties; check again at launch.",
+        "before {date} and its design or intended purpose doesn't change significantly "
+        "afterwards, Art. 111(2) may limit these duties; check again at launch.",
     },
     Language.DE: {
         "role": "Rolle: {role}.",
@@ -276,8 +276,8 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "Exemplare, die ab diesem Datum an neue Kunden geliefert werden, können vollständig "
         "erfasst sein.",
         "legacy_check_at_launch": "Wird das System vor dem {date} in Verkehr gebracht oder in "
-        "Betrieb genommen und danach in seiner Konzeption nicht erheblich verändert, kann Art. 111 "
-        "Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen oder bei der "
-        "Inbetriebnahme erneut.",
+        "Betrieb genommen und danach in seiner Konzeption oder Zweckbestimmung nicht erheblich "
+        "verändert, kann Art. 111 Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim "
+        "Inverkehrbringen oder bei der Inbetriebnahme erneut.",
     },
 }

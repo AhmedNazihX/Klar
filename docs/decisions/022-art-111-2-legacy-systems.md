@@ -72,9 +72,9 @@ text, the only one the obligations table holds, has no recitals. The check-again
 
 Consequences:
 - A planned launch, even one planned before the date, is "no": the full duties are listed, and the step adds,
-  citing `art:111:2`: "If the system is placed on the market or put into service before {date} and its design
-  doesn't change significantly afterwards, Art. 111(2) may limit these duties; check again at launch." (German:
-  "Wird das System vor dem {date} in Verkehr gebracht oder in Betrieb genommen und danach in seiner Konzeption nicht
+  citing `art:111:2`: "If the system is placed on the market or put into service before {date} and its design or
+  intended purpose doesn't change significantly afterwards, Art. 111(2) may limit these duties; check again at launch." (German:
+  "Wird das System vor dem {date} in Verkehr gebracht oder in Betrieb genommen und danach in seiner Konzeption oder Zweckbestimmung nicht
   erheblich verändert, kann Art. 111 Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen
   oder bei der Inbetriebnahme erneut.") The engine model can't tell a planned launch from a new system, so the sentence is added whenever the
   answer is "no" for a high-risk system.
