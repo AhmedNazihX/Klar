@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-01
 - **Story:** X2 (docs/BACKLOG.md); protocol in decision 023
-- **Status:** proposed (results filled in from the stored runs on 2026-10-01; waiting for the user to accept)
+- **Status:** accepted (the user, 2026-10-01: keep GPT-6 Luna)
 
 ## Question
 INIT › Engine safety net: GPT-6 Luna was released on 22 September 2026 and has no track record. Does it produce
