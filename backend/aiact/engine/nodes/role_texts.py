@@ -160,19 +160,19 @@ class LegacyQuestions:
 
 LEGACY_QUESTION_TEXTS: Mapping[str, Mapping[Language, str]] = {
     "placed_before_chapter_iii": {
-        Language.EN: "Was the system placed on the market or put into service before {date}, "
-        "when its high-risk rules start to apply? A system already on the market or in use "
-        "today counts.",
-        Language.DE: "Wurde das System vor dem {date}, ab dem seine Hochrisiko-Vorschriften "
-        "gelten, in Verkehr gebracht oder in Betrieb genommen? Ein System, das heute schon auf "
-        "dem Markt oder in Betrieb ist, zählt dazu.",
+        Language.EN: "Is the system already on the market or in use today? Its high-risk rules "
+        "apply from {date}.",
+        Language.DE: "Ist das System heute bereits auf dem Markt oder in Betrieb? Seine "
+        "Hochrisiko-Vorschriften gelten ab dem {date}.",
     },
     "significant_design_change": {
-        Language.EN: "Has the system's design changed significantly since {date}, or will it "
-        "(for example a new version that decides differently or serves another purpose)?",
-        Language.DE: "Wurde oder wird das System seit dem {date} in seiner Konzeption erheblich "
-        "verändert (zum Beispiel eine neue Version, die anders entscheidet oder einem anderen "
-        "Zweck dient)?",
+        Language.EN: "Has the system's design changed significantly since it was placed on the "
+        "market or put into service, or is a significant change planned for after {date} (for "
+        "example a new version that decides differently or serves another purpose)?",
+        Language.DE: "Wurde die Konzeption des Systems seit dem Inverkehrbringen oder der "
+        "Inbetriebnahme erheblich verändert, oder ist nach dem {date} eine erhebliche "
+        "Veränderung geplant (zum Beispiel eine neue Version, die anders entscheidet oder einem "
+        "anderen Zweck dient)?",
     },
     "for_public_authority": {
         Language.EN: "Will public authorities use the system, as it is meant to be used?",
@@ -237,6 +237,9 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "legacy_public_authority": "Art. 111(2): the system was on the market or in use before "
         "{date} and is meant for public authorities, so {count} high-risk duties "
         "apply from {deadline}; the class stays high-risk.",
+        "legacy_check_at_launch": "If the system is placed on the market or put into service "
+        "before {date} and its design doesn't change significantly afterwards, Art. 111(2) may "
+        "limit these duties; check again at launch.",
     },
     Language.DE: {
         "role": "Rolle: {role}.",
@@ -268,5 +271,8 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "legacy_public_authority": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr "
         "oder in Betrieb und soll bestimmungsgemäß von Behörden verwendet werden; daher gelten "
         "{count} Hochrisiko-Pflichten ab dem {deadline}. Die Klasse bleibt hochriskant.",
+        "legacy_check_at_launch": "Wird das System vor dem {date} in Verkehr gebracht oder in "
+        "Betrieb genommen und danach in seiner Konzeption nicht erheblich verändert, kann Art. 111 "
+        "Abs. 2 diese Pflichten einschränken; prüfen Sie es beim Markteintritt erneut.",
     },
 }

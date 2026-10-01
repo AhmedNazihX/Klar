@@ -511,6 +511,20 @@ def test_a_system_launched_on_or_after_the_date_keeps_its_duties_as_usual(
     assert duties == _list(Role.DEPLOYER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
 
 
+@pytest.mark.parametrize("status", list(LegacyStatus))
+@pytest.mark.parametrize("role", [Role.PROVIDER, Role.DEPLOYER])
+def test_art_4_and_art_50_rows_are_never_marked_on_a_legacy_system(
+    status: LegacyStatus, role: Role
+) -> None:
+    # User decision 2026-10-01 (decision 022 addendum, reading A): only the Chapter III rows.
+    duties = _legacy_list(role, HighRiskRoute.ANNEX_III, status)
+    own_dates = [d for d in duties if d.article.startswith(("art:4:", "art:50:"))]
+    assert {d.article.split(":")[1] for d in own_dates} == {"4", "50"}
+    assert {(d.legacy, d.high_risk_route) for d in own_dates} == {(None, None)}
+    plain = _by_article(_list(role, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III))
+    assert all(d.applies_from == plain[d.article].applies_from for d in own_dates)
+
+
 def test_the_legacy_marking_leaves_other_classes_alone() -> None:
     limited = list_obligations(
         Role.PROVIDER, RiskClass.LIMITED_RISK, legacy="legacy_unchanged"

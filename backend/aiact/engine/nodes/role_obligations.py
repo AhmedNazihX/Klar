@@ -314,18 +314,28 @@ def settle_role(answer: RoleAnswer, risk_class: RiskClass) -> RoleSettlement:
 
 @dataclass(frozen=True)
 class LegacySettlement:
-    """What Art. 111(2) gives: the marking for the duties (None: they apply as usual), the answers
-    it rests on, and the unknown ones to ask."""
+    """What Art. 111(2) gives: the marking for the duties (None: they apply as usual), whether
+    to check again at launch (not yet on the market or in use), the answers it rests on, and the
+    unknown ones to ask."""
 
     status: LegacyStatus | None = None
     route: HighRiskRoute | None = None
     used: tuple[KeyFact, ...] = ()
     questions: tuple[KeyQuestion, ...] = ()
+    check_at_launch: bool = False
+
+    @property
+    def cites_rule(self) -> bool:
+        """The step relies on Art. 111(2): a marking, or the check-again sentence."""
+        return self.status is not None or self.check_at_launch
 
 
 def settle_legacy(answer: RoleAnswer, route: HighRiskRoute | None) -> LegacySettlement:
-    """Apply Art. 111(2) to the answers. A system launched on or after the date, or one whose
-    design changes, keeps its duties as usual, and the later facts aren't relied on. An unknown
+    """Apply Art. 111(2) to the answers, as of the assessment date (user decision, 2026-10-01):
+    only a system already on the market or in use counts as placed before the route's date. One
+    that isn't yet keeps its duties as usual, with a note to check again at launch (the model
+    can't tell a planned launch from a new system, so every "no" gets it). One whose design
+    changes keeps its duties too, and the later facts aren't relied on. An unknown
     fact counts the stricter way (not placed before the date, changed, for public authorities:
     the earlier deadline) and is asked as a follow-up question."""
     if not isinstance(answer, HighRiskRoleAnswer) or route is None:
@@ -350,17 +360,21 @@ def settle_legacy(answer: RoleAnswer, route: HighRiskRoute | None) -> LegacySett
         route=route,
         used=tuple(key_fact for key_fact, _ in chain),
         questions=tuple(question for key_fact, question in chain if not key_fact.is_known),
+        check_at_launch=legacy.placed_before.answer is Answer.NO,
     )
 
 
 def _legacy_summary(
     kept: Sequence[Obligation], legacy: LegacySettlement, language: Language
 ) -> tuple[str, ...]:
-    """One sentence per Art. 111(2) marking the kept duties carry."""
-    if legacy.status is None or legacy.route is None:
+    """One sentence per Art. 111(2) marking the kept duties carry, or the check-again sentence
+    for a system not yet on the market or in use."""
+    if not legacy.cites_rule or legacy.route is None:
         return ()
     texts = TEXTS[language]
     since = long_date(CHAPTER_III_DATES[legacy.route], language)
+    if legacy.check_at_launch:
+        return (texts["legacy_check_at_launch"].format(date=since),)
     deadline = long_date(PUBLIC_AUTHORITY_DEADLINE, language)
     counts = {status: sum(o.legacy is status for o in kept) for status in LegacyStatus}
     return tuple(
@@ -559,7 +573,7 @@ def to_outcome(
     missing = settled.missing[0] if settled.missing else None
     obligations, summary = select_obligations(answer, state, settled, table, legacy)
     source = data_dir or get_settings().aiact_data_dir
-    cited = (*settled.cited_articles(), *((LEGACY_ARTICLE,) if legacy.status is not None else ()))
+    cited = (*settled.cited_articles(), *((LEGACY_ARTICLE,) if legacy.cites_rule else ()))
     step = StepResult(
         step=StepName.ROLE_OBLIGATIONS,
         decision=_decision(settled, language, summary),

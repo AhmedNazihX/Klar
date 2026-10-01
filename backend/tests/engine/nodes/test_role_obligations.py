@@ -882,12 +882,35 @@ def test_a_legacy_public_authority_system_applies_from_2_aug_2030(
     assert LEGACY_ARTICLE in cited(outcome)
 
 
-def test_a_system_launched_after_the_date_keeps_its_duties() -> None:
-    launched_after = legacy_outcome(legacy_answer(placed_before=Answer.NO))
-    no_legacy_facts = to_outcome(role_answer(), state())
-    assert finding(launched_after).obligations == finding(no_legacy_facts).obligations
-    assert {o.legacy for o in finding(launched_after).obligations} == {None}
-    assert launched_after.step.decision == no_legacy_facts.step.decision
+CHECK_AT_LAUNCH = {
+    Language.EN: "If the system is placed on the market or put into service before "
+    "2 December 2027 and its design doesn't change significantly afterwards, Art. 111(2) may "
+    "limit these duties; check again at launch.",
+    Language.DE: "Wird das System vor dem 2. Dezember 2027 in Verkehr gebracht oder in Betrieb "
+    "genommen und danach in seiner Konzeption nicht erheblich verändert, kann Art. 111 Abs. 2 "
+    "diese Pflichten einschränken; prüfen Sie es beim Markteintritt erneut.",
+}
+
+
+@pytest.mark.parametrize("language", list(Language))
+def test_a_planned_launch_keeps_the_full_duties_and_says_to_check_again(
+    language: Language,
+) -> None:
+    # User decision 2026-10-01 (decision 022 addendum): "placed before" is read as of today, so
+    # a launch that is only planned, even before the date, is "no" and lists the full duties.
+    planned = legacy_outcome(legacy_answer(placed_before=Answer.NO), language=language)
+    no_legacy_facts = to_outcome(role_answer(), state(language=language))
+    assert finding(planned).obligations == finding(no_legacy_facts).obligations
+    assert {o.legacy for o in finding(planned).obligations} == {None}
+    assert planned.step.decision == f"{no_legacy_facts.step.decision} {CHECK_AT_LAUNCH[language]}"
+    assert LEGACY_ARTICLE in cited(planned)
+    assert planned.follow_up_questions == ()
+
+
+def test_a_system_in_use_today_counts_as_placed_before_and_gets_no_check_again() -> None:
+    in_use = legacy_outcome(legacy_answer(placed_before=Answer.YES))
+    assert by_article(in_use)["art:26:1"].legacy is LegacyStatus.UNCHANGED
+    assert "check again at launch" not in in_use.step.decision
 
 
 def test_an_unknown_launch_date_keeps_the_duties_and_asks_with_the_routes_date() -> None:
@@ -898,7 +921,8 @@ def test_an_unknown_launch_date_keeps_the_duties_and_asks_with_the_routes_date()
     [question] = outcome.follow_up_questions
     assert question.id == "placed_before_chapter_iii"
     assert question.about == LEGACY_ARTICLE
-    assert "before 2 August 2028" in question.text
+    assert question.text.startswith("Is the system already on the market or in use today?")
+    assert "apply from 2 August 2028" in question.text
     assert outcome.step.status is Status.DECIDED  # the role is settled; only dates are open
 
 
@@ -963,7 +987,7 @@ def test_the_legacy_texts_read_in_german() -> None:
     assert "vor dem 2. Dezember 2027" in outcome.step.decision
     assert "ab dem 2. August 2030" in outcome.step.decision
     unknown = legacy_outcome(legacy_answer(Answer.UNKNOWN), language=Language.DE)
-    assert "vor dem 2. Dezember 2027" in unknown.follow_up_questions[0].text
+    assert "ab dem 2. Dezember 2027" in unknown.follow_up_questions[0].text
 
 
 def test_a_prohibited_or_limited_answer_carries_no_legacy_facts() -> None:
@@ -986,6 +1010,10 @@ def test_the_prompt_puts_the_instructions_first_and_the_description_last() -> No
     assert "Launch and design:" in human
     assert "rules apply from 2 December 2027" in human
     assert 'answer it "unknown": never assume it away' in human
+    # Placed before is read as of today: in use now is "yes", a planned launch is "no".
+    assert "already on the market or in use today" in human
+    assert 'only planned, is "no", even if the launch is planned before' in human
+    assert "or will be" not in human
 
 
 def test_only_a_high_risk_request_asks_the_legacy_facts() -> None:
