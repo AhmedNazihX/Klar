@@ -590,6 +590,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
 
 - [ ] **P8b · Provider document skeletons** · Deps: P8a · Type: agent
   Context: INIT › Documentation drafting, Omnibus details. Output: skeleton templates (Annex IV, Art. 17, Art. 9, Art. 27) in `aiact/drafting/` listing every required section with its quoted requirement, and for small and small mid-cap companies a note that a simplified technical documentation form is expected (INIT). DoD: every required section of each skeleton is present (a test against the quoted provisions); the simplified-form note appears for an SME result and not for a large company.
+  **From W0 (merged):** Run 1 (decision 007): the simplified tech-doc form for SMEs and SMCs is still unpublished; keep INIT's behaviour (the full Annex IV skeleton, with the 'simplified form expected' note).
 
 - [ ] **P9 · Guided interview + Word/PDF export** · Deps: P8b, P3, P5 · Type: agent
   Context: Design reference (above), `Documents` artboard. Output: interview endpoints and UI; answers written up as prose; `.docx` and PDF export from Python. DoD: an end-to-end test fills one skeleton, and the automatic checks pass.
@@ -617,6 +618,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   Output: `docs/decisions/007-freshness.md`: are the high-risk guidelines final? Has the simplified tech-doc form been published? Confirm the Bitkom 69% figure. If the guidelines are final, follow decision 021: the draft benchmark stays frozen; the final prose is ingested only after each final example is mapped to its draft id and Pile B is tagged (a new story).
   DoD: each of the three questions is answered with a source link and the date checked, on both runs; if the guidelines are final, the mapping-and-reload story is added to the backlog and the README limitation is noted on the README story.
   Notes from merged stories: B2 (001): if the Commission has adopted final high-risk guidelines, the examples and their hr-ex numbering may change; 001 covers the 2026-05-19 draft only.
+  **Run 1 merged (2026-10-01):** guidelines still a draft (adoption expected by end of 2026), so decision 021 is not triggered; simplified tech-doc form not published; Bitkom's 69% is from the 2024 survey (n=602, 9 Sep 2024), and INIT was corrected with the user's sign-off. Decision 007 holds the Run 2 table and instructions. Leave W0 unticked until Run 2, immediately before W1 starts.
 
 - [ ] **W1 · Final evaluation (2 full runs)** · Deps: V5–V9, V10b, P7, W0, C7b, E11, P8a, P8b, P10, P11 · Type: mixed
   Output: `eval/reports/final.md` with every INIT metric, per benchmark, per language and per business function, the gap number, and head-to-head; own-case accuracy labelled "development cases" (decision 018).

@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-01 (Run 1); Run 2 is due immediately before W1 starts
 - **Story:** W0 (docs/BACKLOG.md); also affects W1, W2, W3, P8b, C2, C3
-- **Status:** proposed (Run 1 done 2026-10-01; awaiting the user's sign-off on the Bitkom correction; Run 2 pending before W1)
+- **Status:** accepted for Run 1 (the user signed off the Bitkom correction on 2026-10-01; INIT corrected the same day); Run 2 pending before W1
 
 ## Question
 INIT › Legal corpus and Open questions list three facts to check before the build freezes (decision 024: the freeze
@@ -25,7 +25,7 @@ only in a new story that first maps each final example to its draft id and tags 
 | 3 | Bitkom 69% figure | **The figure is real, but INIT gives the wrong source.** The 69% comes from the **2024** Bitkom Research survey, not the February 2026 report. Its wording: "Eine breite Mehrheit von 69 Prozent der Unternehmen braucht nach eigenem Dafürhalten Hilfe bei der Auseinandersetzung mit dem AI Act." Method: 602 companies with 20 or more employees in Germany, telephone survey, calendar weeks 23–30 of 2024, representative of the whole economy (press release of 9 September 2024). Bitkom repeated the figure on 30 October 2024 ("Mehr als zwei Drittel (69 Prozent) benötigen nach eigenem Bekunden Unterstützung …"). The February 2026 report "Künstliche Intelligenz in Deutschland" (DOI 10.64022/2026-kuenstliche-intelligenz; 604 companies with 20 or more employees, weeks 27–32 of 2025) has no such figure. Its only 69% is the share of the population that prefers AI from Germany (p. 3). On the AI Act it reports that 93% of affected companies (n=138) expect high or very high implementation effort, and that 56% of all companies (n=604) see more disadvantages than advantages (pp. 44–45). | [Bitkom Research, 9 Sep 2024](https://bitkom-research.de/news/jedes-vierte-unternehmen-beschaeftigt-sich-mit-dem-ai-act); [Bitkom press release, 9 Sep 2024](https://www.bitkom.org/Presse/Presseinformation/Jedes-vierte-Unternehmen-beschaeftigt-mit-AI-Act); [Bitkom press release, 30 Oct 2024](https://www.bitkom.org/Presse/Presseinformation/Praxishilfe-Mit-wenigen-Klicks-durch-die-KI-Verordnung-navigieren); [Bitkom report, Feb 2026 (PDF)](https://www.bitkom.org/sites/main/files/2026-02/bitkom-studienbericht-ki.pdf) |
 
 ## Decision
-Run 1 outcome (proposed; the Bitkom re-attribution awaits the user's sign-off):
+Run 1 outcome (accepted by the user on 2026-10-01):
 - **Guidelines:** still a draft, so decision 021 is not triggered. Nothing to reload, and there is no new story. The
   corpus, the benchmark and the hr-ex numbering from decision 001 stay as they are.
 - **Simplified form:** not published. P8b keeps INIT's behaviour: SMEs and SMCs get the full Annex IV skeleton, with
@@ -53,6 +53,6 @@ it._
 
 ## Consequences
 - No change to the corpus, the benchmark or decision 001 after Run 1.
-- The Bitkom citation in INIT › Problem needs correcting before it reaches the README (W2) or the deck (W3). The
-  orchestrator makes that change, because INIT is the source of truth and W0 doesn't edit it.
+- The Bitkom citation in INIT › Problem was corrected on 2026-10-01 (69% credited to the 2024 survey of 602
+  companies; the open question marked answered), so the README (W2) and the deck (W3) quote the right source.
 - W1 still depends on W0's Run 2.
