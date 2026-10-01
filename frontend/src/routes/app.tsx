@@ -1,5 +1,12 @@
-import { createFileRoute, Outlet, retainSearchParams } from '@tanstack/react-router'
-import type { JSX, ReactNode } from 'react'
+import {
+  CatchBoundary,
+  createFileRoute,
+  Outlet,
+  retainSearchParams,
+  useRouterState,
+  type ErrorComponentProps,
+} from '@tanstack/react-router'
+import { useEffect, useState, type JSX } from 'react'
 
 import { AppFrame } from '@/components/AppFrame'
 import { ErrorView } from '@/components/ErrorView'
@@ -23,28 +30,34 @@ export const Route = createFileRoute('/app')({
   validateSearch: validateAppSearch,
   search: { middlewares: [retainSearchParams(['law'])] },
   component: AppLayout,
-  // A screen that fails keeps the sidebar and the law switch around the error.
-  errorComponent: AppError,
 })
 
+// The screen boundary resets itself from ScreenError, not from a changing key.
+const SCREEN_BOUNDARY_KEY = 'app-screen'
+
+/**
+ * A screen that fails shows the error in the screen area only. Going anywhere else clears it:
+ * the boundary is reset once another screen has loaded.
+ */
+function ScreenError({ reset }: ErrorComponentProps): JSX.Element {
+  // The screen on show: it changes only once the next screen is loaded and about to render,
+  // so resetting then never re-renders the screen that failed.
+  const screenId = useRouterState({ select: (state) => state.matches.at(-1)?.id })
+  const [failedOn] = useState(screenId)
+  useEffect(() => {
+    if (screenId !== failedOn) reset()
+  }, [screenId, failedOn, reset])
+  return <ErrorView />
+}
+
+/**
+ * One AppFrame for every screen, with its law version switch bound to the `law` search param.
+ * The error boundary sits inside the frame, around the screen: a failing screen, and the way out
+ * of it (ScreenError resets the boundary on the next navigation), never remount the frame, so
+ * its state, its focus and its settled load motion survive. An error in the frame itself goes up
+ * to the root, which shows it on the site frame.
+ */
 function AppLayout(): JSX.Element {
-  return (
-    <BoundAppFrame>
-      <Outlet />
-    </BoundAppFrame>
-  )
-}
-
-function AppError(): JSX.Element {
-  return (
-    <BoundAppFrame>
-      <ErrorView />
-    </BoundAppFrame>
-  )
-}
-
-/** AppFrame with its law version switch bound to the `law` search param. */
-function BoundAppFrame({ children }: { children: ReactNode }): JSX.Element {
   const { law } = Route.useSearch()
   const navigate = Route.useNavigate()
   return (
@@ -63,7 +76,9 @@ function BoundAppFrame({ children }: { children: ReactNode }): JSX.Element {
         },
       }}
     >
-      {children}
+      <CatchBoundary getResetKey={() => SCREEN_BOUNDARY_KEY} errorComponent={ScreenError}>
+        <Outlet />
+      </CatchBoundary>
     </AppFrame>
   )
 }

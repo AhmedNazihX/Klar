@@ -1,12 +1,15 @@
 // The shells' layout in a real browser (Chromium, with index.css and the self-hosted fonts):
-// nothing scrolls sideways on a 390 px phone, and the German sidebar labels fit 220 px.
-import { screen, within } from '@testing-library/react'
+// nothing scrolls sideways on a 390 px phone, the German sidebar labels fit 220 px, and the load
+// motion's selectors (index.css › app-load) reach the right panels.
+import { act, screen, within } from '@testing-library/react'
 import i18n from 'i18next'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { page } from 'vitest/browser'
 
 import { APP_ROUTES, SITE_ROUTES } from '@/test/shell-routes'
 import { renderRoute } from '@/test/test-utils'
+
+import { LOAD_MOTION_MS } from '@/hooks/use-load-motion'
 
 import { SIDEBAR_ITEM_WIDTH_PX } from './app-nav'
 
@@ -74,5 +77,41 @@ describe('on a desktop', () => {
       expect(link.scrollWidth, link.textContent).toBeLessThanOrEqual(link.clientWidth)
       expect(getComputedStyle(link).fontSize).toBe('15px')
     }
+  })
+})
+
+describe('the load motion', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // The frame's top bar, and the first of the screen's own panels.
+  function animationOf(selector: string): string {
+    const element = document.querySelector(selector)
+    if (!element) throw new Error(`${selector} is not on the page`)
+    return getComputedStyle(element).animationName
+  }
+  const TOP_BAR = '.app-column > :first-child'
+  const FIRST_PANEL = '.app-screen > :first-child'
+
+  it('moves the frame and the screen on load, then only the new screen on a navigation', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await page.viewport(DESKTOP.width, DESKTOP.height)
+    await i18n.changeLanguage('en')
+    const { router } = renderRoute('/app/inventory')
+    await screen.findByRole('heading', { level: 1 })
+    expect(animationOf(TOP_BAR)).toBe('app-rise')
+    expect(animationOf(FIRST_PANEL)).toBe('app-rise')
+
+    act(() => {
+      vi.advanceTimersByTime(LOAD_MOTION_MS)
+    })
+    expect(animationOf(TOP_BAR)).toBe('none')
+    expect(animationOf(FIRST_PANEL)).toBe('none')
+
+    await act(() => router.navigate({ to: '/app/obligations' }))
+    await screen.findByRole('heading', { name: 'Obligations', level: 1 })
+    expect(animationOf(FIRST_PANEL)).toBe('app-rise')
+    expect(animationOf(TOP_BAR)).toBe('none')
   })
 })
