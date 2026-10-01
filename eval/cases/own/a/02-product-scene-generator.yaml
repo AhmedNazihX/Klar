@@ -2,13 +2,13 @@ id: own-a-02-product-scene-generator
 set_name: own
 language: de
 description: >-
-  Wir sind ein Software-Haus aus Leipzig mit 25 Mitarbeitenden. Seit Februar 2025 verkaufen wir
+  Wir sind ein kleines Software-Haus aus Ostdeutschland. Seit Februar 2025 verkaufen wir
   Onlinehändlern ein Abo-Tool: Der Händler lädt ein Freisteller-Foto seines
   Produkts hoch, etwa eines Sessels, wählt einen Stil wie „skandinavisches Wohnzimmer“, und unser
   Bildmodell erzeugt daraus komplett neue, fotorealistische Raumszenen mit dem Produkt darin. Die
   Bilder landen direkt im Shop-Backend der Kunden; einen Chat oder Assistenten gibt es nicht. Das
   Modell haben wir selbst trainiert. Unsere rund 1.200 Kunden sitzen vor allem in Deutschland und
-  den Niederlanden. Nächstes Jahr ziehen wir in ein größeres Büro am Hauptbahnhof.
+  den Niederlanden. Nächstes Jahr ziehen wir in ein größeres Büro.
 label:
   risk_class: limited_risk
   role: provider

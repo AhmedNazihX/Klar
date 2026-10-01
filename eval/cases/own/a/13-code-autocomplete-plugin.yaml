@@ -2,7 +2,7 @@ id: own-a-13-code-autocomplete-plugin
 set_name: own
 language: en
 description: >-
-  We're a developer-tools start-up in Amsterdam with 22 people. Our product is a
+  We're a small developer-tools start-up in the Netherlands. Our product is a
   plug-in for the common code editors that suggests the next lines of code as a programmer types;
   they press Tab to accept or keep typing to ignore it. It only produces code and the short
   comments that belong in it, never explanations, chat replies or other prose. The model is our

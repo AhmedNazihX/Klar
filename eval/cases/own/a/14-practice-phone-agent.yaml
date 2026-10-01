@@ -2,14 +2,14 @@ id: own-a-14-practice-phone-agent
 set_name: own
 language: de
 description: >-
-  Wir sind ein Anbieter von Praxissoftware aus Regensburg mit 90 Mitarbeitenden. Seit dem 17.
+  Wir sind ein mittelgroßer Anbieter von Praxissoftware aus Bayern. Seit dem 17.
   August 2026 bieten wir Arztpraxen ein Zusatzmodul an: Muss eine Praxis Termine verschieben, ruft
   ein KI-Telefonagent die betroffenen Patientinnen und Patienten an, spricht mit ihnen in
   natürlicher Sprache, schlägt neue Termine vor und trägt die Zusage direkt in den Kalender ein.
   Die Stimme wird synthetisch erzeugt und klingt sehr menschlich. Medizinische Fragen beantwortet
   der Agent nicht, die gibt er an das Praxisteam weiter. Das Sprachmodell darunter lizenzieren wir
-  von einem großen KI-Anbieter, das Modul läuft unter unserem Namen. Bisher nutzen es 140 Praxen
-  in Bayern.
+  von einem großen KI-Anbieter, das Modul läuft unter unserem Namen. Bisher nutzen es über hundert Praxen
+  in Süddeutschland.
 label:
   risk_class: limited_risk
   role: provider
@@ -28,6 +28,7 @@ tags:
   - "category:a"
   - "gpai_based"
   - "trap:no_grace_period"
+  - "timing:art111_4_no_grace"
   - "obligation:art:4:1"
   - "obligation:art:50:1"
   - "obligation:art:50:2"

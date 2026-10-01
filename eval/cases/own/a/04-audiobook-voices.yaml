@@ -2,7 +2,7 @@ id: own-a-04-audiobook-voices
 set_name: own
 language: de
 description: >-
-  Wir sind ein Audio-Tech-Unternehmen aus Köln mit 40 Leuten. Am 1. September 2026 haben wir
+  Wir sind ein Audio-Tech-Unternehmen aus dem Rheinland mit einigen Dutzend Leuten. Am 1. September 2026 haben wir
   unseren Hörbuch-Dienst gestartet: Verlage laden ein Manuskript hoch, wählen eine von 30 Stimmen, die wir mit
   bezahlten Sprecherinnen und Sprechern aufgenommen und lizenziert haben, und bekommen nach ein
   paar Stunden das fertige Hörbuch als Audiodatei. Die Stimme erzeugt dabei vollständig unser
@@ -26,5 +26,6 @@ notes: >-
 tags:
   - "category:a"
   - "trap:no_grace_period"
+  - "timing:art111_4_no_grace"
   - "obligation:art:4:1"
   - "obligation:art:50:2"

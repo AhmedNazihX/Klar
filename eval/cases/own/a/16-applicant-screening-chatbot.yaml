@@ -2,14 +2,14 @@ id: own-a-16-applicant-screening-chatbot
 set_name: own
 language: de
 description: >-
-  Wir sind ein HR-Tech-Start-up aus Hamburg mit 18 Leuten und entwickeln einen
+  Wir sind ein kleines HR-Tech-Start-up aus Norddeutschland und entwickeln einen
   Chatbot für die Personalabteilungen von Handelsketten. Bewerberinnen und Bewerber chatten auf der
   Karriereseite des Kunden mit ihm: Er fragt nach Erfahrung, Verfügbarkeit und Gehaltswunsch,
   formuliert Rückfragen selbst, bewertet die Antworten mit Punkten und sortiert alle Bewerbungen in
   eine Rangliste, nach der die Personaler entscheiden, wen sie einladen. Gebaut ist er auf einem
   lizenzierten großen Sprachmodell. Im Moment testen wir nur intern mit erfundenen Bewerbungen;
   verkaufen wollen wir ihn unter unserem Namen ab Februar 2028. Unser erster Messeauftritt ist im
-  Herbst in Köln.
+  Herbst.
 label:
   risk_class: high_risk
   role: provider

@@ -2,12 +2,12 @@ id: own-a-09-newsroom-reviewed-drafts
 set_name: own
 language: en
 description: >-
-  We publish a regional daily newspaper in Tampere, Finland, in print and online, with a newsroom
-  of 60 journalists. Since spring 2026 reporters use a licensed AI writing tool to turn their notes
+  We publish a regional daily newspaper in a mid-sized Finnish city, in print and online, with
+  a newsroom of a few dozen journalists. Since spring 2026 reporters use a licensed AI writing tool to turn their notes
   and press releases into first drafts of short news items, for example on municipal budgets or
   road closures. Every draft is then fact-checked and reworked where needed by the reporter and
-  approved by the duty editor before it goes online, and the tool touches nothing after that. Our
-  editor-in-chief is legally responsible for everything we publish, and her name and contact
+  approved by the duty editor before it goes online, and the tool touches nothing after that. A named
+  editor-in-chief is legally responsible for everything we publish, and the name and contact
   details are in our imprint. We also run a crossword app.
 label:
   risk_class: limited_risk

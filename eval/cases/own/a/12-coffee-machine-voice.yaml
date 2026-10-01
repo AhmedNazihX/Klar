@@ -2,7 +2,7 @@ id: own-a-12-coffee-machine-voice
 set_name: own
 language: de
 description: >-
-  Wir sind ein Hersteller von Kaffeevollautomaten aus dem Schwarzwald mit 300 Mitarbeitenden.
+  Wir sind ein mittelständischer Hersteller von Kaffeevollautomaten.
   Unser neues Modell, seit Juni 2026 im Handel, lässt sich per Sprache bedienen: Man
   sagt etwa „zwei Cappuccino, extra stark“, und die Maschine legt los. Die Spracherkennung läuft
   mit einem kleinen neuronalen Netz direkt auf dem Gerät, ohne Internet. Die Maschine antwortet nur

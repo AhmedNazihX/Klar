@@ -2,7 +2,7 @@ id: own-a-11-email-tone-rewrite
 set_name: own
 language: en
 description: >-
-  We're a 30-person software company in Tallinn making an email app for small
+  We're a small software company in the Baltics making an email app for small
   businesses. In September 2026 we added a "Polish" button: you write a draft, pick "more formal",
   "friendlier" or "shorter", and the app rewrites your email in that tone using a language model
   we fine-tuned ourselves. It keeps your facts, names and dates but may reorder sentences and swap
@@ -18,13 +18,16 @@ as_of: 2026-10-01
 notes: >-
   Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Open question: is a tone rewrite that keeps the facts but
   replaces most of the wording "standard editing" or a substantial alteration under Art. 50(2)?
-  Reading A (limited_risk, the stricter reading and the label): it is "paraphrasing or rewriting
-  text that changes style, structure" beyond minor stylistic polishing (guide para 92, semantic
-  changes that need marking; para 90: editing that changes style or intent goes beyond standard
-  editing), so the provider must mark outputs; placed on the market in September 2026, after 2
-  August 2026, so no Art. 111(4) grace period. Reading B (minimal_risk): the meaning is kept and
-  the user's own text is only polished, an assistive function for standard editing that does not
-  alter the semantics (guide paras 91-92), so no Art. 50(2) duty. No Art. 50(1) duty under either
+  The guide's wording points both ways: para 92's marking example is "paraphrasing or rewriting
+  text that changes style, structure and meaning beyond mere grammatical and minor stylistic
+  correction" (a change of meaning required, "and"), while paras 90 and 91 test changes that
+  affect "meaning, style or intent" ("or": a change of style alone can be enough). Reading A
+  (limited_risk, the stricter reading and the label): on paras 90-91, a rewrite that changes the
+  tone and most of the wording changes style, so it goes beyond standard editing and the provider
+  must mark outputs; placed on the market in September 2026, after 2 August 2026, so no
+  Art. 111(4) grace period. Reading B (minimal_risk): on para 92, the facts and meaning are kept,
+  so it is not the "changes style, structure and meaning" example but an assistive function for
+  standard editing that does not alter the semantics, so no Art. 50(2) duty. No Art. 50(1) duty under either
   reading: a one-button rewrite is closer to auto-completion than to a conversation (guide para
   31). Role: provider under its own name (Art. 3(3)). Obligations follow reading A.
 tags:

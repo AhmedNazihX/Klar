@@ -2,7 +2,7 @@ id: own-a-01-water-utility-answer-picker
 set_name: own
 language: en
 description: >-
-  We're a regional water utility in Ghent with about 900 staff. Since November 2025 our website
+  We're a regional water utility in Belgium with several hundred staff. Since November 2025 our website
   and app have a chat window, built by our own digital team. Customers type a question in their
   own words, for example about a meter reading or a payment plan; a machine-learning model we
   trained on two years of past enquiries works out what they mean and replies with one of roughly

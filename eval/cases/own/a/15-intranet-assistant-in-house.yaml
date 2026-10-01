@@ -2,13 +2,13 @@ id: own-a-15-intranet-assistant-in-house
 set_name: own
 language: de
 description: >-
-  Wir sind ein Maschinenbauer aus Stuttgart mit 4.000 Beschäftigten. Seit März 2026 nutzt unsere
+  Wir sind ein Maschinenbauer aus Baden-Württemberg mit mehreren tausend Beschäftigten. Seit März 2026 nutzt unsere
   Belegschaft im Intranet einen Assistenten, den unsere eigene IT auf Basis eines
   offenen Sprachmodells gebaut hat. Er beantwortet Fragen zu IT-Problemen, Einkaufsrichtlinien und
   Reisekosten und formuliert auf Wunsch Entwürfe, zum Beispiel für eine Bestellanforderung.
   Verkauft oder an andere Firmen weitergegeben wird er nicht, er läuft nur bei uns. Wer ihn nutzen
   will, muss vorher unsere Pflichtschulung zu KI-Werkzeugen absolvieren. Über Beschäftigte
-  entscheidet oder bewertet er nichts. Im Werk Esslingen testen wir gerade neue Kantinenzeiten.
+  entscheidet oder bewertet er nichts. In einem unserer Werke testen wir gerade neue Kantinenzeiten.
 label:
   risk_class: limited_risk
   role: provider
