@@ -38,7 +38,11 @@ from aiact.eval.experiments.smoke import (
 )
 from aiact.eval.runner import CaseRecord
 from aiact.llm import EmbeddingError, LLMConfigError
-from aiact.llm.generations import GenerationLookupError
+from aiact.llm.generations import (
+    GenerationLookupError,
+    GenerationNotFoundError,
+    GenerationTransientError,
+)
 from aiact.retrieval.provisions import ProvisionNotFoundError
 from aiact.schemas import Language, RiskClass, Role, Status, StepName, StepResult
 from aiact.settings import Settings
@@ -239,6 +243,7 @@ def test_a_fitting_answer_is_scored_with_its_cost_and_provider() -> None:
         "failed": False,
         "correct": True,
         "served_as_pinned": True,
+        "pending_verification": False,
         "is_error": False,
         "cost_usd": 0.002,
         "tokens": 50,
@@ -275,11 +280,57 @@ def test_an_answer_from_another_provider_than_the_pinned_one_does_not_count() ->
 
 def test_an_unreadable_generation_record_does_not_count() -> None:
     def lookup(generation_id: str) -> str:
-        raise GenerationLookupError(f"generation {generation_id} not found after 12 attempts")
+        raise GenerationLookupError("generation lookup failed: OpenRouterError (HTTP 401)")
 
     record = probe_on(FakeNodes(role_outcome(Role.DEPLOYER)), served_by=lookup)
     assert record.scores["failed"] is True
     assert record.scores["served_as_pinned"] is None  # unknown, not a confirmed other provider
+    assert record.scores["pending_verification"] is False
+    assert record.predicted["not_pinned"] == "generation lookup failed: OpenRouterError (HTTP 401)"
+
+
+def not_found(generation_id: str) -> str:
+    raise GenerationNotFoundError(f"generation {generation_id} not found after 12 attempts")
+
+
+@pytest.mark.parametrize(
+    ("result", "probe", "kind", "correct"),
+    [
+        (role_outcome(Role.DEPLOYER), None, "answered", True),
+        (role_outcome(Role.PROVIDER), None, "answered", False),
+        (role_obligations.RoleOutputError("x"), None, "broken", False),
+        (facts.FactsOutputError("x"), Probe(NodeName.FACTS, case("e-1")), "broken", None),
+    ],
+)
+def test_a_record_not_found_in_time_leaves_the_probe_pending_with_its_score(
+    result: object, probe: Probe | None, kind: str, correct: bool | None
+) -> None:
+    """X2's paid run: records showed up after the ~18 s window, so the check waits for the end."""
+    record = probe_on(FakeNodes(result), probe=probe, served_by=not_found)
+    assert record.scores["pending_verification"] is True
+    assert record.scores["failed"] is False
+    assert record.scores["broken"] is (kind == "broken")
+    assert record.scores["correct"] is correct
+    assert record.scores["served_as_pinned"] is None
+    assert "not_pinned" not in record.predicted
+    assert info(record)["pending_generation_ids"] == info(record)["generation_ids"]
+
+
+def test_a_transient_lookup_failure_leaves_the_probe_pending_too() -> None:
+    def flaky(generation_id: str) -> str:
+        raise GenerationTransientError("generation lookup failed: ReadTimeout")
+
+    record = probe_on(FakeNodes(role_outcome(Role.DEPLOYER)), served_by=flaky)
+    assert record.scores["pending_verification"] is True
+    assert (record.scores["failed"], record.scores["correct"]) == (False, True)
+
+
+def test_a_probe_that_already_got_no_answer_is_never_left_pending() -> None:
+    """A provider error in the body after a billed call: no answer, so nothing to wait for."""
+    error = ValueError("OpenRouter API returned an error: upstream timeout (code: 504)")
+    record = probe_on(FakeNodes(error), served_by=not_found)
+    assert record.scores["failed"] is True
+    assert record.scores["pending_verification"] is False
     assert str(record.predicted["not_pinned"]).endswith("not found after 12 attempts")
 
 
@@ -301,6 +352,7 @@ def test_an_answer_that_misses_the_schema_is_broken_and_wrong() -> None:
         "failed": False,
         "correct": False,
         "served_as_pinned": True,
+        "pending_verification": False,
         "is_error": True,
         "cost_usd": 0.003,
         "tokens": 100,
@@ -563,6 +615,7 @@ class FakeStore:
         self.finished: list[Mapping[str, JsonValue]] = []
         self.run_id = uuid4()
         self.fail_on_add = fail_on_add
+        self.events: list[str] = []
 
     def start_run(self, git_sha: str, benchmark: str, config: Mapping[str, JsonValue]) -> UUID:
         self.started.append((git_sha, benchmark, config))
@@ -572,9 +625,16 @@ class FakeStore:
         if self.fail_on_add:
             raise RuntimeError("database gone")
         self.rows.append(record)
+        self.events.append(f"add {record.case_id}")
+
+    def update_case(self, run_id: UUID, record: CaseRecord) -> None:
+        [index] = [n for n, row in enumerate(self.rows) if row.case_id == record.case_id]
+        self.rows[index] = record
+        self.events.append(f"update {record.case_id}")
 
     def finish_run(self, run_id: UUID, outcome: Mapping[str, JsonValue]) -> None:
         self.finished.append(outcome)
+        self.events.append("finish")
 
 
 PROBES = tuple(Probe(NodeName.ROLE, case(f"d-{n}", role=Role.DEPLOYER)) for n in range(5))
@@ -663,6 +723,120 @@ def test_a_probe_error_stops_the_run_and_records_the_probes_in_flight() -> None:
     store = FakeStore()
     with pytest.raises(RuntimeError, match="a bug"):
         run_arm(FakeNodes(None, before_call=RuntimeError("a bug")), store, concurrency=1)
+    assert store.finished[0]["status"] == "interrupted"
+
+
+class Verifier:
+    """A stand-in for `GenerationLookup.served_by_all`: every id gets `answer`."""
+
+    def __init__(self, answer: str | GenerationLookupError) -> None:
+        self.answer = answer
+        self.asked: list[list[str]] = []
+
+    def __call__(self, generation_ids: Sequence[str]) -> dict[str, str | GenerationLookupError]:
+        self.asked.append(list(generation_ids))
+        return {generation_id: self.answer for generation_id in generation_ids}
+
+
+def run_pending(
+    store: FakeStore, verify: smoke.VerifyAll, result: object = None, arm: ModelArm = LUNA
+) -> smoke.ArmRun:
+    """A run whose every probe's record isn't found in time, so all are checked at the end."""
+    return smoke.run_arm(
+        arm,
+        PROBES,
+        store,
+        settings(),
+        GIT_STATE,
+        factory=FakeNodes(result or role_outcome(Role.DEPLOYER)),
+        served_by=not_found,
+        verify=verify,
+        concurrency=1,
+    )
+
+
+def test_pending_probes_are_checked_once_at_the_end_before_the_run_is_finished() -> None:
+    store, verify = FakeStore(), Verifier("Azure")
+    run = run_pending(store, verify)
+    [asked] = verify.asked
+    assert len(asked) == len(PROBES)
+    assert store.events[-1] == "finish"
+    assert store.events[-6:-1] == [f"update {p.probe_id}" for p in PROBES]
+    assert (run.checked_late, run.confirmed_late) == (5, 5)
+    outcome = store.finished[0]
+    assert (outcome["status"], outcome["probes_checked_late"]) == ("completed", 5)
+    assert outcome["probes_confirmed_late"] == 5
+
+
+def test_a_pending_probe_confirmed_on_the_pinned_provider_keeps_its_score() -> None:
+    store = FakeStore()
+    run_pending(store, Verifier("Azure"), role_outcome(Role.PROVIDER))
+    row = store.rows[0]
+    assert row.scores["failed"] is False
+    assert row.scores["correct"] is False  # the wrong answer it gave, still scored
+    assert row.scores["served_as_pinned"] is True
+    assert row.scores["pending_verification"] is False
+    assert info(row)["served_by"] == ["Azure"]
+    assert info(row)["pending_generation_ids"] == []
+    deferred = info(row)["deferred_check"]
+    assert isinstance(deferred, dict) and deferred["result"] == "confirmed"
+    assert "not_pinned" not in row.predicted
+
+
+def test_a_pending_probe_served_by_another_provider_fails() -> None:
+    store = FakeStore()
+    run = run_pending(store, Verifier("Google AI Studio"), arm=GEMINI)
+    row = store.rows[0]
+    assert (row.scores["failed"], row.scores["broken"], row.scores["correct"]) == (
+        True,
+        False,
+        None,
+    )
+    assert row.scores["served_as_pinned"] is False
+    assert row.scores["pending_verification"] is False
+    assert row.predicted["not_pinned"] == "served by Google AI Studio, not Google"
+    assert run.confirmed_late == 0
+
+
+def test_a_pending_probe_whose_record_never_shows_up_fails() -> None:
+    store = FakeStore()
+    late = GenerationNotFoundError("generation gen-1 not found within 300 s")
+    run_pending(store, Verifier(late), scope.ScopeOutputError("x"))
+    row = store.rows[0]
+    assert (row.scores["failed"], row.scores["broken"], row.scores["correct"]) == (
+        True,
+        False,
+        None,
+    )
+    assert row.scores["served_as_pinned"] is None
+    assert row.predicted["not_pinned"] == "generation gen-1 not found within 300 s"
+    assert (row.cost_usd, row.scores["cost_usd"]) == (0.001, 0.001)  # billed all the same
+
+
+def test_no_check_is_made_when_nothing_is_pending() -> None:
+    verify = Verifier("Azure")
+    store = FakeStore()
+    smoke.run_arm(
+        LUNA,
+        PROBES,
+        store,
+        settings(),
+        GIT_STATE,
+        factory=FakeNodes(role_outcome(Role.DEPLOYER)),
+        served_by=served("Azure"),
+        verify=verify,
+    )
+    assert verify.asked == []
+    assert not any(event.startswith("update") for event in store.events)
+
+
+def test_a_check_that_breaks_marks_the_run_interrupted() -> None:
+    def broken_verify(generation_ids: Sequence[str]) -> dict[str, str | GenerationLookupError]:
+        raise KeyboardInterrupt
+
+    store = FakeStore()
+    with pytest.raises(KeyboardInterrupt):
+        run_pending(store, broken_verify)
     assert store.finished[0]["status"] == "interrupted"
 
 

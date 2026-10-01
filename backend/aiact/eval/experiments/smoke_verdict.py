@@ -13,7 +13,7 @@ Only completed runs are compared, and both must have planned the same probes.
 """
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 from uuid import UUID
 
@@ -45,14 +45,16 @@ class ProbeScore:
 
 
 def probe_score(probe_id: str, scores: Mapping[str, JsonValue]) -> ProbeScore:
-    """Read a stored row's scores; a row that isn't a smoke probe raises `ValueError`."""
+    """Read a stored row's scores; a row that isn't a smoke probe raises `ValueError`. A row still
+    pending its provider check (a run stopped before the check) counts as failed."""
     NodeName(probe_id.split(":", 1)[0])
     broken, failed, correct = scores.get("broken"), scores.get("failed"), scores.get("correct")
     if not isinstance(broken, bool) or not isinstance(failed, bool):
         raise ValueError(f"row {probe_id} has no broken/failed flags; not a smoke probe")
     if correct is not None and not isinstance(correct, bool):
         raise ValueError(f"row {probe_id} has a non-boolean correct score")
-    kind = ProbeKind.FAILED if failed else ProbeKind.BROKEN if broken else ProbeKind.ANSWERED
+    is_failed = failed or scores.get("pending_verification") is True
+    kind = ProbeKind.FAILED if is_failed else ProbeKind.BROKEN if broken else ProbeKind.ANSWERED
     return ProbeScore(probe_id, kind, correct)
 
 
@@ -108,6 +110,8 @@ class Comparison:
     gemini_correct: int
     verdict: Verdict
     reasons: tuple[str, ...]
+    notes: tuple[str, ...] = ()
+    """Lines printed under the table, e.g. that a run's rows were rescored by a recheck."""
 
     @property
     def luna_accuracy(self) -> float | None:
@@ -185,18 +189,51 @@ class StoredRun:
     arm: str
     probes_planned: int
     scores: tuple[ProbeScore, ...]
+    rechecks: tuple[Mapping[str, JsonValue], ...] = ()
+    """The run's `config.rechecks` entries, oldest first (`smoke_recheck`)."""
+
+
+def recheck_notes(run: StoredRun) -> tuple[str, ...]:
+    """One line per recheck that confirmed at least one probe, with the probes it found served
+    by another provider when there were any; a recheck that confirmed none is left out."""
+    return tuple(
+        _recheck_note(run.arm, entry) for entry in run.rechecks if _count(entry, "confirmed")
+    )
+
+
+def _count(entry: Mapping[str, JsonValue], key: str) -> int:
+    value = entry.get(key)
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
+def _recheck_note(arm: str, entry: Mapping[str, JsonValue]) -> str:
+    other = _count(entry, "other_provider")
+    elsewhere = f", {other} found served by another provider" if other else ""
+    return (
+        f"{arm}: rechecked on {str(entry.get('at', ''))[:10]}: {_count(entry, 'confirmed')} "
+        f"probes confirmed late{elsewhere} ({entry.get('by')})"
+    )
+
+
+def _rechecks(value: JsonValue) -> tuple[Mapping[str, JsonValue], ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, list) or not all(isinstance(entry, dict) for entry in value):
+        raise SmokeRunError("config.rechecks is not a list of entries")
+    return tuple(entry for entry in value if isinstance(entry, dict))
 
 
 def load_run(connection: psycopg.Connection, run_id: UUID) -> StoredRun:
-    """A completed smoke run's arm, planned probe count and probe scores."""
+    """A completed smoke run's arm, planned probe count, probe scores and rechecks."""
     row = connection.execute(
         "select config->>'experiment', config->>'arm', config->'outcome'->>'status',"
-        " (config->'outcome'->>'probes_planned')::int from eval_runs where id = %s",
+        " (config->'outcome'->>'probes_planned')::int, config->'rechecks'"
+        " from eval_runs where id = %s",
         (run_id,),
     ).fetchone()
     if row is None:
         raise SmokeRunError(f"no run {run_id} in eval_runs")
-    experiment, arm, status, planned = row
+    experiment, arm, status, planned, rechecks = row
     if experiment != EXPERIMENT or arm not in ARMS:
         raise SmokeRunError(f"run {run_id} is not an {EXPERIMENT} run")
     if status != SmokeRunStatus.COMPLETED.value or planned is None:
@@ -207,7 +244,8 @@ def load_run(connection: psycopg.Connection, run_id: UUID) -> StoredRun:
     ).fetchall()
     if len(rows) != planned:
         raise SmokeRunError(f"run {run_id} planned {planned} probes but stored {len(rows)}")
-    return StoredRun(arm, planned, tuple(probe_score(case_id, scores) for case_id, scores in rows))
+    scores = tuple(probe_score(case_id, scores) for case_id, scores in rows)
+    return StoredRun(arm, planned, scores, _rechecks(rechecks))
 
 
 def compare_runs(connection: psycopg.Connection, run_ids: Mapping[str, UUID]) -> Comparison:
@@ -225,7 +263,8 @@ def compare_runs(connection: psycopg.Connection, run_ids: Mapping[str, UUID]) ->
         s.probe_id for s in gemini.scores
     }:
         raise SmokeRunError("the two runs did not plan the same probes; run both from one commit")
-    return compare(luna.scores, gemini.scores)
+    notes = (*recheck_notes(luna), *recheck_notes(gemini))
+    return replace(compare(luna.scores, gemini.scores), notes=notes)
 
 
 # --- The printed report -------------------------------------------------------------------------
@@ -252,6 +291,7 @@ def format_comparison(comparison: Comparison, run_ids: Mapping[str, UUID]) -> st
             f"| {ARMS[arm.name].model} | {run_ids.get(arm.name, '-')} | {broken} | "
             f"{_share(arm.failed, arm.planned)} | {_share(correct, comparison.scored)} |"
         )
+    rows += ["", *comparison.notes] if comparison.notes else []
     rows += ["", f"Verdict: {comparison.verdict.value}"]
     rows += [f"- {reason}" for reason in comparison.reasons]
     return "\n".join(rows)

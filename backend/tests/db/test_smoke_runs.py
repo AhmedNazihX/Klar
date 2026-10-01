@@ -5,6 +5,7 @@ stub; no model is called.
 Everything runs inside the test's rolled-back transaction: the store's writes become savepoints.
 """
 
+from collections.abc import Sequence
 from uuid import UUID, uuid4
 
 import psycopg
@@ -26,6 +27,8 @@ from aiact.eval.experiments.smoke import (
 )
 from aiact.eval.experiments.smoke_verdict import SmokeRunError, Verdict
 from aiact.eval.records import PostgresRunStore
+from aiact.eval.runner import CaseRecord
+from aiact.llm.generations import GenerationLookupError, GenerationNotFoundError
 from aiact.schemas import Language, RiskClass, Role, StepName, StepResult
 from aiact.settings import Settings
 
@@ -178,3 +181,50 @@ def test_a_run_that_is_not_a_smoke_run_is_refused(
 def test_a_missing_run_is_refused(db: psycopg.Connection) -> None:
     with pytest.raises(SmokeRunError, match="no run"):
         smoke_verdict.load_run(db, uuid4())
+
+
+def test_probes_left_pending_are_settled_in_their_rows_before_the_run_is_finished(
+    db: psycopg.Connection,
+) -> None:
+    def not_found(generation_id: str) -> str:
+        raise GenerationNotFoundError(f"generation {generation_id} not found after 12 attempts")
+
+    def verify(ids: Sequence[str]) -> dict[str, str | GenerationLookupError]:
+        late = GenerationNotFoundError("generation late not found within 300 s")
+        return {gid: LUNA.served_by if n else late for n, gid in enumerate(ids)}
+
+    run = smoke.run_arm(
+        LUNA,
+        probes(),
+        PostgresRunStore(db),
+        SETTINGS,
+        GIT_STATE,
+        factory=nodes(Role.DEPLOYER),
+        served_by=not_found,
+        verify=verify,
+        concurrency=1,
+    )
+    assert (run.checked_late, run.confirmed_late) == (4, 3)
+    stored = smoke_verdict.load_run(db, run.run_id)
+    assert sorted(score.kind.value for score in stored.scores) == ["answered"] * 3 + ["failed"]
+    pending = db.execute(
+        "select count(*) from eval_case_results where run_id = %s"
+        " and (scores ->> 'pending_verification')::boolean",
+        (run.run_id,),
+    ).fetchone()
+    assert pending == (0,)
+
+
+def test_updating_a_case_the_run_does_not_have_is_an_error(db: psycopg.Connection) -> None:
+    run = smoke.run_arm(
+        LUNA,
+        probes(1),
+        PostgresRunStore(db),
+        SETTINGS,
+        GIT_STATE,
+        factory=nodes(Role.DEPLOYER),
+        served_by=lambda generation_id: LUNA.served_by,
+    )
+    missing = CaseRecord("role_obligations:nowhere", {}, {}, {}, None, 0.0, 0)
+    with pytest.raises(LookupError, match="no stored case"):
+        PostgresRunStore(db).update_case(run.run_id, missing)

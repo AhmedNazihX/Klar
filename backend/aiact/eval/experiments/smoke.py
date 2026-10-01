@@ -30,6 +30,16 @@ A probe's outcome is one of three:
   4-6). Every probe stores each call's cost, finish reason and native finish reason.
 - **answered**: scored against the label (facts: not scored).
 
+A generation record that doesn't show up within the lookup's ~18 s window (or whose lookup fails
+in transport or with a 5xx) doesn't fail the probe during the run: OpenRouter writes records
+later under a real run's load. The probe is stored "pending verification"
+(`scores.pending_verification`), with its kind and correctness kept, and once every probe has
+run, the pending records are looked up again with a much longer window
+(`generations.DEFERRED_BUDGET_SECONDS` for the whole run) before the run is marked finished.
+Confirmed on the pinned provider, the probe keeps its score; another provider, or still no
+record, and it fails as above (`predicted.smoke.deferred_check` says which). `smoke_recheck` does
+the same for runs stored before this check existed.
+
 Any other error (a missing setting, a bug, a provision the corpus lacks) stops the run. Neither
 check lets the model name a provision (scope cites fixed rules, high_risk picks from the retrieved
 points), so a missing provision is a corpus gap, never the model's fault.
@@ -47,6 +57,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from enum import StrEnum
 from pathlib import Path
+from typing import Protocol
 from uuid import UUID
 
 import httpx
@@ -69,9 +80,18 @@ from aiact.eval.experiments.matchers import (
     runs_role_check,
     scope_matches,
 )
+from aiact.eval.experiments.smoke_served import (
+    Served,
+    ServedBy,
+    VerifyAll,
+    judge,
+    pending_ids,
+    settle,
+    settle_pending,
+)
 from aiact.eval.runner import CaseRecord, RunStore, Score, label_record
 from aiact.llm import EmbeddingError, engine_chat_model
-from aiact.llm.generations import GenerationLookup, GenerationLookupError
+from aiact.llm.generations import GenerationLookup, GenerationLookupError, GenerationPendingError
 from aiact.llm.structured import describe_validation_error
 from aiact.settings import Settings
 
@@ -236,6 +256,11 @@ def is_correct(probe: Probe, outcome: FactsOutcome | CheckOutcome) -> bool | Non
     return MATCHERS[probe.node](outcome, probe.case)
 
 
+def broken_correct(node: NodeName) -> bool | None:
+    """A broken answer is wrong; facts, which have no label, stay unscored."""
+    return None if node is NodeName.FACTS else False
+
+
 # --- Running one probe --------------------------------------------------------------------------
 
 
@@ -341,8 +366,6 @@ class UsageTracker(BaseCallbackHandler):
 
 NodeRunner = Callable[[EngineState], FactsOutcome | CheckOutcome]
 NodeFactory = Callable[[NodeName, Settings, UsageTracker], NodeRunner]
-ServedBy = Callable[[str], str]
-"""Generation id to the name of the provider that served it."""
 
 
 def arm_settings(settings: Settings, arm: ModelArm) -> Settings:
@@ -374,6 +397,8 @@ BROKEN_OUTPUT_ERRORS: tuple[type[Exception], ...] = (
     ValidationError,
 )
 """An answer that doesn't fit the node's schema, or a result the contract rejects."""
+BROKEN_ERROR_TYPES = frozenset(error.__name__ for error in BROKEN_OUTPUT_ERRORS)
+"""Their names, as a broken probe stores them in `predicted.error.type`."""
 
 NO_ANSWER_ERRORS: tuple[type[Exception], ...] = (
     OpenRouterError,
@@ -420,25 +445,12 @@ def _run_node(probe: Probe, node: NodeRunner, state: EngineState) -> _Ran:
         outcome = node(state)
     except Exception as exc:
         if isinstance(exc, BROKEN_OUTPUT_ERRORS):
-            correct = None if probe.node is NodeName.FACTS else False
-            return _Ran(ProbeKind.BROKEN, {"error": _error(exc)}, correct)
+            return _Ran(ProbeKind.BROKEN, {"error": _error(exc)}, broken_correct(probe.node))
         if not is_no_answer(exc):
             raise
         logger.warning("probe %s got no answer: %s", probe.probe_id, type(exc).__name__)
         return _Ran(ProbeKind.FAILED, {"error": _error(exc)}, None)
     return _Ran(ProbeKind.ANSWERED, outcome.model_dump(mode="json"), is_correct(probe, outcome))
-
-
-@dataclass(frozen=True)
-class _Served:
-    """Who served the probe's calls. `as_pinned` is True when every call is shown to come from
-    the pinned provider, False when one is shown to come from another, and None when unknown;
-    `not_counted` says why a reply can't count."""
-
-    providers: tuple[str, ...] = ()
-    as_pinned: bool | None = None
-    not_counted: str | None = None
-    lookup_skipped: str | None = None
 
 
 NO_GENERATION_ID = "the reply carries no generation id"
@@ -448,27 +460,30 @@ LOOKUP_SKIPPED = (
 )
 
 
-def _served(tracker: UsageTracker, has_reply: bool, served_by: ServedBy) -> _Served:
+def _served(tracker: UsageTracker, has_reply: bool, can_defer: bool, served_by: ServedBy) -> Served:
     """Who served the calls. A call the provider broke off is not looked up: the probe already
-    got no answer, and waiting for a record that may never come would hold a slot for ~18 s."""
+    got no answer, and waiting for a record that may never come would hold a slot for ~18 s.
+    With `can_defer` (the model replied), a record that doesn't show up in time, or a lookup
+    that fails in transport or with a 5xx, leaves the probe pending, to be checked again at the
+    end of the run."""
     if not tracker.records:
-        return _Served(not_counted=NO_GENERATION_ID) if has_reply else _Served()
+        return Served(not_counted=NO_GENERATION_ID) if has_reply else Served()
     checked = [call for call in tracker.records if not call.is_provider_error]
     skipped = LOOKUP_SKIPPED if len(checked) < tracker.calls else None
     if not checked:
-        return _Served(lookup_skipped=skipped)
-    ids = [call.generation_id for call in checked]
-    if any(generation_id is None for generation_id in ids):
-        return _Served(not_counted=NO_GENERATION_ID, lookup_skipped=skipped)
+        return Served(lookup_skipped=skipped)
+    ids = [call.generation_id for call in checked if call.generation_id is not None]
+    if len(ids) < len(checked):
+        return Served(not_counted=NO_GENERATION_ID, lookup_skipped=skipped)
     try:
-        names = tuple(served_by(generation_id) for generation_id in ids if generation_id)
+        names = [served_by(generation_id) for generation_id in ids]
+    except GenerationPendingError as exc:
+        if can_defer:
+            return Served(lookup_skipped=skipped, pending=tuple(ids))
+        return Served(not_counted=str(exc), lookup_skipped=skipped)
     except GenerationLookupError as exc:
-        return _Served(not_counted=str(exc), lookup_skipped=skipped)
-    others = sorted({name for name in names if name != tracker.arm.served_by})
-    if others:
-        reason = f"served by {', '.join(others)}, not {tracker.arm.served_by}"
-        return _Served(names, as_pinned=False, not_counted=reason, lookup_skipped=skipped)
-    return _Served(names, as_pinned=True, lookup_skipped=skipped)
+        return Served(not_counted=str(exc), lookup_skipped=skipped)
+    return judge(names, tracker.arm.served_by, skipped)
 
 
 def run_probe(
@@ -488,12 +503,14 @@ def run_probe(
     if tracker.has_provider_error and has_reply:
         error = "a call ended with finish_reason error: the provider broke off the reply"
         ran = _Ran(ProbeKind.FAILED, {**ran.predicted, "provider_error": error}, None)
-    served = _served(tracker, has_reply, served_by)
+    can_defer = ran.kind is not ProbeKind.FAILED
+    served = _served(tracker, has_reply, can_defer, served_by)
     if served.not_counted is not None:
         ran = _Ran(ProbeKind.FAILED, {**ran.predicted, "not_pinned": served.not_counted}, None)
     smoke_info: dict[str, JsonValue] = {
         "served_by": list(served.providers),
         "generation_ids": list(tracker.generation_ids),
+        "pending_generation_ids": list(served.pending),
         "calls": [call.as_json() for call in tracker.records],
         "lookup_skipped": served.lookup_skipped,
         "cost_is_estimated": tracker.is_cost_estimated,
@@ -503,6 +520,7 @@ def run_probe(
         "failed": ran.kind is ProbeKind.FAILED,
         "correct": ran.correct,
         "served_as_pinned": served.as_pinned,
+        "pending_verification": bool(served.pending),
         "is_error": ran.kind is not ProbeKind.ANSWERED,
         "cost_usd": tracker.cost_usd,
         "tokens": tracker.tokens,
@@ -538,6 +556,16 @@ class ArmRun:
     probes_recorded: int
     cost_usd: float
     tokens: int
+    checked_late: int = 0
+    """Probes left pending during the run and checked again at its end."""
+    confirmed_late: int = 0
+    """Of those, the ones confirmed on the pinned provider."""
+
+
+class SmokeStore(RunStore, Protocol):
+    """A `RunStore` that can also replace a stored probe's prediction and scores."""
+
+    def update_case(self, run_id: UUID, record: CaseRecord) -> None: ...
 
 
 def run_config(
@@ -569,24 +597,28 @@ def run_config(
 class _Tally:
     """Spend and rows of one run, kept by the thread that records them."""
 
-    def __init__(self, store: RunStore, run_id: UUID) -> None:
+    def __init__(self, store: SmokeStore, run_id: UUID) -> None:
         self.store = store
         self.run_id = run_id
         self.recorded = 0
         self.cost_usd = 0.0
         self.tokens = 0
+        self.pending: list[CaseRecord] = []
+        self.confirmed_late = 0
 
     def record(self, record: CaseRecord) -> None:
         self.store.add_case(self.run_id, record)
         self.recorded += 1
         self.cost_usd += record.cost_usd
         self.tokens += record.tokens
+        if record.scores.get("pending_verification") is True:
+            self.pending.append(record)
 
 
 def run_arm(
     arm: ModelArm,
     probes: Sequence[Probe],
-    store: RunStore,
+    store: SmokeStore,
     settings: Settings,
     git_state: tuple[str, bool],
     *,
@@ -594,24 +626,52 @@ def run_arm(
     concurrency: int = DEFAULT_CONCURRENCY,
     factory: NodeFactory = engine_node,
     served_by: ServedBy | None = None,
+    verify: VerifyAll | None = None,
 ) -> ArmRun:
     """Run every probe on `arm` and store one row each, `concurrency` at a time. A probe starts
     only while what is spent, plus the worst case of every probe in flight and of this one, stays
-    within `max_cost_usd`. `served_by` defaults to OpenRouter's generation records."""
+    within `max_cost_usd`. Then the probes left pending are checked again (`verify`), before the
+    run is marked finished. `served_by` and `verify` default to OpenRouter's generation records."""
     git_sha, is_git_dirty = git_state
     lookup = served_by or GenerationLookup(settings).served_by
     config = run_config(arm, settings, probes, max_cost_usd, is_git_dirty)
     tally = _Tally(store, store.start_run(git_sha, BENCHMARK, config))
     try:
         started = _run_all(probes, arm, settings, lookup, factory, tally, max_cost_usd, concurrency)
+        _check_pending(
+            tally, arm, verify or (lambda ids: GenerationLookup(settings).served_by_all(ids))
+        )
     except BaseException:
         store.finish_run(tally.run_id, _outcome(RunStatus.INTERRUPTED, len(probes), tally))
         raise
     status = RunStatus.COMPLETED if started == len(probes) else RunStatus.COST_CAP_REACHED
     store.finish_run(tally.run_id, _outcome(status, len(probes), tally))
     return ArmRun(
-        arm, tally.run_id, status, len(probes), tally.recorded, tally.cost_usd, tally.tokens
+        arm,
+        tally.run_id,
+        status,
+        len(probes),
+        tally.recorded,
+        tally.cost_usd,
+        tally.tokens,
+        len(tally.pending),
+        tally.confirmed_late,
     )
+
+
+def _check_pending(tally: _Tally, arm: ModelArm, verify: VerifyAll) -> None:
+    """Look up the pending probes' records again, all in one long window, and store each one's
+    final row: its own score when every call is confirmed on the pinned provider, else failed."""
+    if not tally.pending:
+        return
+    ids = [generation_id for record in tally.pending for generation_id in pending_ids(record)]
+    logger.info("checking %d pending probes (%d generations) again", len(tally.pending), len(ids))
+    found = verify(ids)
+    checked_at = datetime.now(UTC)
+    for record in tally.pending:
+        served = settle(pending_ids(record), found, arm.served_by)
+        tally.store.update_case(tally.run_id, settle_pending(record, served, checked_at))
+        tally.confirmed_late += served.as_pinned is True
 
 
 def _run_all(
@@ -664,6 +724,8 @@ def _outcome(status: RunStatus, planned: int, tally: _Tally) -> dict[str, JsonVa
         "finished_at": datetime.now(UTC).isoformat(),
         "probes_planned": planned,
         "probes_recorded": tally.recorded,
+        "probes_checked_late": len(tally.pending),
+        "probes_confirmed_late": tally.confirmed_late,
     }
 
 

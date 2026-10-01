@@ -7,10 +7,16 @@ from pydantic import SecretStr
 
 from aiact.llm import LLMConfigError
 from aiact.llm.generations import (
+    DEFERRED_BUDGET_SECONDS,
+    DEFERRED_FIRST_WAIT_SECONDS,
+    DEFERRED_MAX_WAIT_SECONDS,
     LOOKUP_TIMEOUT_MS,
     LOOKUP_WAIT_SECONDS,
     GenerationLookup,
     GenerationLookupError,
+    GenerationNotFoundError,
+    GenerationTransientError,
+    may_come_later,
 )
 from aiact.llm.routing import NO_RETRIES
 from aiact.settings import Settings
@@ -102,6 +108,188 @@ def test_a_record_without_a_provider_is_an_error() -> None:
     reader, _ = lookup(FakeGenerations(None))
     with pytest.raises(GenerationLookupError, match="names no provider"):
         reader.served_by("gen-1")
+
+
+def test_a_record_not_found_in_time_is_its_own_error_and_reads_back_as_one() -> None:
+    reader, _ = lookup(FakeGenerations(*[_http_error(404)] * 3))
+    with pytest.raises(GenerationNotFoundError) as caught:
+        reader.served_by("gen-1")
+    assert may_come_later(str(caught.value))
+    assert may_come_later("generation gen-1 not found within 300 s")
+
+
+@pytest.mark.parametrize(
+    "error",
+    [_http_error(500), _http_error(503), NoResponseError("none"), httpx.ReadTimeout("slow")],
+)
+def test_a_transport_error_or_5xx_is_transient_and_reads_back_as_one(error: Exception) -> None:
+    reader, slept = lookup(FakeGenerations(error, "Azure"))
+    with pytest.raises(GenerationTransientError) as caught:
+        reader.served_by("gen-1")
+    assert slept == []  # the run's lookup leaves it to the late check
+    assert may_come_later(str(caught.value))
+
+
+@pytest.mark.parametrize(
+    "reason",
+    [
+        "generation lookup failed: OpenRouterError (HTTP 401)",
+        "generation lookup failed: OpenRouterError (HTTP 404) extra",
+        "generation gen-1 names no provider",
+        "served by Google AI Studio, not Google",
+        "the reply carries no generation id",
+    ],
+)
+def test_a_final_lookup_failure_does_not_read_back_as_one_that_may_come_later(
+    reason: str,
+) -> None:
+    assert not may_come_later(reason)
+
+
+class FakeClock:
+    """Time that moves only when the lookup sleeps."""
+
+    def __init__(self) -> None:
+        self.now = 0.0
+        self.slept: list[float] = []
+
+    def __call__(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.slept.append(seconds)
+        self.now += seconds
+
+
+class RoundGenerations:
+    """`records[id]` lists the replies to that id, one per request; the last one repeats. Each
+    request takes `request_seconds` on `clock`, once one is attached."""
+
+    def __init__(
+        self, records: dict[str, list[Exception | str | None]], request_seconds: float = 0.0
+    ) -> None:
+        self.records = records
+        self.asked: list[str] = []
+        self.request_seconds = request_seconds
+        self.clock: FakeClock | None = None
+
+    def get_generation(self, *, id: str) -> _Response:
+        self.asked.append(id)
+        if self.clock is not None:
+            self.clock.now += self.request_seconds
+        replies = self.records[id]
+        reply = replies.pop(0) if len(replies) > 1 else replies[0]
+        if isinstance(reply, Exception):
+            raise reply
+        return _Response(reply)
+
+
+def long_lookup(generations: RoundGenerations) -> tuple[GenerationLookup, FakeClock]:
+    clock = FakeClock()
+    generations.clock = clock
+    client = FakeClient(generations)  # pyright: ignore[reportArgumentType]
+    reader = GenerationLookup(client=client, sleep=clock.sleep, clock=clock)  # pyright: ignore[reportArgumentType]
+    return reader, clock
+
+
+def test_the_long_wait_asks_each_missing_record_once_a_round_until_it_shows_up() -> None:
+    late = _http_error(404)
+    generations = RoundGenerations(
+        {"gen-1": ["Azure"], "gen-2": [late, late, "Azure"], "gen-3": [late, "Google"]}
+    )
+    reader, clock = long_lookup(generations)
+    found = reader.served_by_all(["gen-1", "gen-2", "gen-3", "gen-1"])
+    assert found == {"gen-1": "Azure", "gen-2": "Azure", "gen-3": "Google"}
+    assert generations.asked == ["gen-1", "gen-2", "gen-3", "gen-2", "gen-3", "gen-2"]
+    assert clock.slept == [DEFERRED_FIRST_WAIT_SECONDS, DEFERRED_FIRST_WAIT_SECONDS * 2]
+
+
+def test_the_long_wait_stops_at_its_budget_with_growing_waits() -> None:
+    generations = RoundGenerations({"gen-1": [_http_error(404)]})
+    reader, clock = long_lookup(generations)
+    [result] = reader.served_by_all(["gen-1"]).values()
+    assert isinstance(result, GenerationNotFoundError)
+    assert str(result) == "generation gen-1 not found within 300 s"
+    assert may_come_later(str(result))
+    assert clock.now == DEFERRED_BUDGET_SECONDS
+    assert clock.slept[:5] == [5.0, 10.0, 20.0, 40.0, DEFERRED_MAX_WAIT_SECONDS]
+    assert max(clock.slept) == DEFERRED_MAX_WAIT_SECONDS
+
+
+@pytest.mark.parametrize(
+    "error", [_http_error(502), NoResponseError("none"), httpx.ReadTimeout("slow")]
+)
+def test_the_long_wait_tries_a_transient_failure_again_in_a_later_round(error: Exception) -> None:
+    generations = RoundGenerations({"gen-1": [error, error, "Azure"]})
+    reader, clock = long_lookup(generations)
+    assert reader.served_by_all(["gen-1"]) == {"gen-1": "Azure"}
+    assert clock.slept == [5.0, 10.0]
+
+
+def test_a_transient_failure_left_at_the_budget_is_reported_as_transient() -> None:
+    generations = RoundGenerations({"gen-1": [_http_error(503)]})
+    reader, _ = long_lookup(generations)
+    [result] = reader.served_by_all(["gen-1"]).values()
+    assert isinstance(result, GenerationTransientError)
+    assert str(result) == "generation lookup failed: OpenRouterError (HTTP 503)"
+    assert may_come_later(str(result))
+
+
+def test_no_request_starts_after_the_budget_even_inside_a_round() -> None:
+    """Slow requests: with 100 ids at 5 s each, one round alone would take 500 s."""
+    ids = [f"gen-{n}" for n in range(100)]
+    generations = RoundGenerations({key: [_http_error(404)] for key in ids}, request_seconds=5.0)
+    reader, clock = long_lookup(generations)
+    found = reader.served_by_all(ids)
+    assert clock.now <= DEFERRED_BUDGET_SECONDS + 5.0  # the budget plus one request at most
+    assert len(generations.asked) == DEFERRED_BUDGET_SECONDS / 5.0
+    assert set(found) == set(ids)
+    asked, never = ids[:60], ids[60:]
+    assert all(isinstance(found[key], GenerationNotFoundError) for key in asked)
+    for key in never:
+        assert not isinstance(found[key], GenerationNotFoundError)
+        assert str(found[key]) == f"generation {key} not looked up within 300 s (budget spent)"
+        assert may_come_later(str(found[key]))
+
+
+def test_a_rate_limit_ends_the_round_and_the_rest_go_first_in_the_next() -> None:
+    generations = RoundGenerations(
+        {"gen-1": [_http_error(429), "Azure"], "gen-2": ["Azure"], "gen-3": ["Azure"]}
+    )
+    reader, clock = long_lookup(generations)
+    found = reader.served_by_all(["gen-1", "gen-2", "gen-3"])
+    assert found == {"gen-1": "Azure", "gen-2": "Azure", "gen-3": "Azure"}
+    assert generations.asked == ["gen-1", "gen-2", "gen-3", "gen-1"]
+    assert clock.slept == [DEFERRED_FIRST_WAIT_SECONDS]
+
+
+def test_the_tail_is_asked_even_when_a_429_ends_every_round() -> None:
+    """Each round's first request is rate-limited; the ids not asked yet still get their turn."""
+    ids = ["gen-1", "gen-2", "gen-3", "gen-4"]
+    generations = RoundGenerations({key: [_http_error(429)] for key in ids})
+    reader, _ = long_lookup(generations)
+    found = reader.served_by_all(ids)
+    assert generations.asked[:4] == ids  # one per round, never-asked first
+    assert set(generations.asked) == set(ids)
+    assert all(isinstance(result, GenerationTransientError) for result in found.values())
+    assert all(may_come_later(str(result)) for result in found.values())
+
+
+def test_the_long_wait_settles_an_unreadable_record_at_once() -> None:
+    generations = RoundGenerations({"gen-1": [_http_error(401)], "gen-2": [None]})
+    reader, clock = long_lookup(generations)
+    found = reader.served_by_all(["gen-1", "gen-2"])
+    assert str(found["gen-1"]) == "generation lookup failed: OpenRouterError (HTTP 401)"
+    assert str(found["gen-2"]) == "generation gen-2 names no provider"
+    assert clock.slept == []
+    assert generations.asked == ["gen-1", "gen-2"]
+
+
+def test_the_long_wait_with_nothing_to_find_makes_no_request() -> None:
+    generations = RoundGenerations({})
+    reader, clock = long_lookup(generations)
+    assert reader.served_by_all([]) == {}
+    assert (generations.asked, clock.slept) == ([], [])
 
 
 def test_the_real_client_needs_the_api_key() -> None:

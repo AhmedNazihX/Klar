@@ -72,7 +72,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)
 │   │   │   └── experiments/         embeddings.py (X1a), free_agent.py (S1); X2: smoke.py (`aiact evaluate smoke`),
 │   │   │                            smoke_verdict.py (decision 023's rule over stored runs, `smoke-compare`),
-│   │   │                            matchers.py (replay states and label matchers, shared with the E3/E5/E7 replays)
+│   │   │                            matchers.py (replay states and label matchers, shared with the E3/E5/E7 replays),
+│   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
