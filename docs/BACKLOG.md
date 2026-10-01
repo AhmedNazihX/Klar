@@ -1,5 +1,5 @@
 # Plan: AI Act Classification Assistant — Build Backlog
-Reviewed: 2026-09-30 (foreman:backlog-reviewer, whole backlog; decisions 017–024)
+Reviewed: 2026-09-30 (foreman:backlog-reviewer, whole backlog; decisions 017–024); 2026-10-01 (the decision 026 changes: E12, E13, C9, P14–P28 and their notes and deps)
 
 ## Context
 The repo is greenfield: `AE.CAP_afa.md` (course brief), `AI Act Classification Assistant — Capstone Init Document.md` (the full design, called **INIT** below) and an empty `README.md`. The design is settled; this plan turns it into atomic stories with dependencies, a critical path and parallel lanes, so that any story can be picked up with a fresh context (or handed to a subagent) with no loss of quality. The timeline is 10+ weeks, so the full MVP plus stretch goals is in scope.
