@@ -2,6 +2,11 @@
 
 Dates: Art. 113(c)(i) 2 Dec 2027 (Annex III), 113(c)(ii) 2 Aug 2028 (Annex I), 113(a) 2 Feb 2025
 (Chapters I, II) and 2 Dec 2026 (Art. 5(1)(ba), (bb)), 113 second paragraph 2 Aug 2026 (Art. 50).
+Art. 111(2) (C7b): a high-risk system placed on the market or put into service before its route's
+Chapter III date is covered only after a significant change to its design or intended purpose
+from that date; providers and deployers of one meant for public authorities comply by
+2 Aug 2030 (the article's words; the user set aside the English recital's "operators" on
+2026-10-01).
 """
 
 import json
@@ -11,10 +16,12 @@ from pathlib import Path
 import pytest
 
 from aiact.obligations.list import (
+    CHAPTER_III_DATES,
     ObligationsError,
     ObligationTable,
     UnknownLawVersionError,
     default_table,
+    legacy_status,
     list_obligations,
     load_table,
 )
@@ -24,6 +31,7 @@ from aiact.schemas import (
     HighRiskRoute,
     Language,
     LawVersion,
+    LegacyStatus,
     Obligation,
     RiskClass,
     Role,
@@ -35,6 +43,9 @@ ANNEX_I_FROM = date(2028, 8, 2)
 ART_50_FROM = date(2026, 8, 2)
 CHAPTER_I_II_FROM = date(2025, 2, 2)
 NEW_PROHIBITIONS_FROM = date(2026, 12, 2)
+PUBLIC_AUTHORITY_FROM = date(2030, 8, 2)
+NOT_CHAPTER_III = ("art:4:", "art:50:", "art:53:")
+"""Duties with their own dates that Art. 111(2)'s marking leaves alone."""
 CONSOLIDATED_EN = DEFAULT_DATA_DIR / "parsed" / "ai-act-consolidated.en.jsonl"
 
 
@@ -406,3 +417,120 @@ def test_load_table_reports_a_missing_or_invalid_file(tmp_path: Path) -> None:
     bad.write_text("law_version: amended\n", encoding="utf-8")
     with pytest.raises(ObligationsError, match="invalid obligations file"):
         load_table(bad)
+
+
+# --- Art. 111(2): high-risk systems already on the market (C7b) ------------------------------
+
+
+def _legacy_list(
+    role: Role, route: HighRiskRoute, legacy: LegacyStatus | None
+) -> tuple[Obligation, ...]:
+    return list_obligations(role, RiskClass.HIGH_RISK, route, legacy=legacy).obligations
+
+
+def _chapter_iii(duties: tuple[Obligation, ...]) -> list[Obligation]:
+    return [d for d in duties if not d.article.startswith(NOT_CHAPTER_III)]
+
+
+def test_the_chapter_iii_dates_are_the_tables_route_dates() -> None:
+    assert CHAPTER_III_DATES == {
+        HighRiskRoute.ANNEX_III: ANNEX_III_FROM,
+        HighRiskRoute.ANNEX_I: ANNEX_I_FROM,
+    }
+    dated = {d.applies_from for d in _list(Role.PROVIDER, RiskClass.HIGH_RISK) if d.high_risk_route}
+    assert dated == {ANNEX_III_FROM, ANNEX_I_FROM}
+
+
+def test_a_legacy_system_without_a_design_change_has_its_duties_marked() -> None:
+    # Hand-checked against Art. 111(2), first sentence: a deployer's Annex III system in use
+    # before 2 Dec 2027 and not significantly changed from then on.
+    status = legacy_status(
+        placed_before=True, significantly_changed=False, for_public_authority=False
+    )
+    assert status is LegacyStatus.UNCHANGED
+    duties = _legacy_list(Role.DEPLOYER, HighRiskRoute.ANNEX_III, status)
+    marked = _chapter_iii(duties)
+    assert {"art:26:1", "art:26:2", "art:27:1", "art:86:1", "art:49:4"} <= {
+        d.article for d in marked
+    }
+    assert {d.legacy for d in marked} == {LegacyStatus.UNCHANGED}
+    assert {d.applies_from for d in marked} == {
+        ANNEX_III_FROM
+    }  # the date stays; it only applies later
+    others = [d for d in duties if d.article.startswith(NOT_CHAPTER_III)]
+    assert others
+    assert {d.legacy for d in others} == {None}
+    plain = _list(Role.DEPLOYER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
+    assert _articles(duties) == _articles(plain)  # no duty is dropped
+
+
+def test_a_legacy_system_whose_design_changes_keeps_its_duties_as_usual() -> None:
+    status = legacy_status(
+        placed_before=True, significantly_changed=True, for_public_authority=True
+    )
+    assert status is None
+    duties = _legacy_list(Role.PROVIDER, HighRiskRoute.ANNEX_I, status)
+    assert duties == _list(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_I)
+    assert {d.legacy for d in duties} == {None}
+
+
+def test_a_legacy_public_authority_system_applies_from_2_aug_2030_for_providers_and_deployers() -> (
+    None
+):
+    # Art. 111(2), second sentence: providers and deployers of high-risk systems meant for public
+    # authorities comply by 2 Aug 2030, on either route.
+    status = legacy_status(
+        placed_before=True, significantly_changed=False, for_public_authority=True
+    )
+    assert status is LegacyStatus.PUBLIC_AUTHORITY
+    for role in (Role.PROVIDER, Role.DEPLOYER):
+        for route in HighRiskRoute:
+            marked = _chapter_iii(_legacy_list(role, route, status))
+            assert marked
+            assert {d.applies_from for d in marked} == {PUBLIC_AUTHORITY_FROM}
+            assert {d.legacy for d in marked} == {LegacyStatus.PUBLIC_AUTHORITY}
+    literacy = _by_article(_legacy_list(Role.PROVIDER, HighRiskRoute.ANNEX_III, status))["art:4:1"]
+    assert (literacy.applies_from, literacy.legacy) == (CHAPTER_I_II_FROM, None)
+
+
+@pytest.mark.parametrize("role", [Role.IMPORTER, Role.DISTRIBUTOR])
+def test_the_2030_date_does_not_name_importers_or_distributors(role: Role) -> None:
+    # The article names providers and deployers only (German recital 177: "Betreiber"); an
+    # importer or distributor falls under the first sentence: covered after a significant change.
+    duties = _legacy_list(role, HighRiskRoute.ANNEX_III, LegacyStatus.PUBLIC_AUTHORITY)
+    assert _chapter_iii(duties)
+    assert {d.legacy for d in _chapter_iii(duties)} == {LegacyStatus.UNCHANGED}
+    assert {d.applies_from for d in _chapter_iii(duties)} == {ANNEX_III_FROM}
+
+
+@pytest.mark.parametrize("for_public_authority", [False, True])
+def test_a_system_launched_on_or_after_the_date_keeps_its_duties_as_usual(
+    for_public_authority: bool,
+) -> None:
+    status = legacy_status(
+        placed_before=False, significantly_changed=False, for_public_authority=for_public_authority
+    )
+    assert status is None
+    duties = _legacy_list(Role.DEPLOYER, HighRiskRoute.ANNEX_III, status)
+    assert duties == _list(Role.DEPLOYER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
+
+
+@pytest.mark.parametrize("status", list(LegacyStatus))
+@pytest.mark.parametrize("role", [Role.PROVIDER, Role.DEPLOYER])
+def test_art_4_and_art_50_rows_are_never_marked_on_a_legacy_system(
+    status: LegacyStatus, role: Role
+) -> None:
+    # User decision 2026-10-01 (decision 022 addendum, reading A): only the Chapter III rows.
+    duties = _legacy_list(role, HighRiskRoute.ANNEX_III, status)
+    own_dates = [d for d in duties if d.article.startswith(("art:4:", "art:50:"))]
+    assert {d.article.split(":")[1] for d in own_dates} == {"4", "50"}
+    assert {(d.legacy, d.high_risk_route) for d in own_dates} == {(None, None)}
+    plain = _by_article(_list(role, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III))
+    assert all(d.applies_from == plain[d.article].applies_from for d in own_dates)
+
+
+def test_the_legacy_marking_leaves_other_classes_alone() -> None:
+    limited = list_obligations(
+        Role.PROVIDER, RiskClass.LIMITED_RISK, legacy="legacy_unchanged"
+    ).obligations
+    assert limited == _list(Role.PROVIDER, RiskClass.LIMITED_RISK)

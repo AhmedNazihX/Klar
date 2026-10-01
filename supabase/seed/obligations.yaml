@@ -9,6 +9,8 @@
 #   annex_iii: 2027-12-02   Art. 113(c)(i): high-risk under Art. 6(2) and Annex III
 #   annex_i:   2028-08-02   Art. 113(c)(ii): high-risk under Art. 6(1) and Annex I
 # A map with one route means the duty exists only on that route.
+# Art. 111(2) is applied at lookup time, not stored here: for a high-risk system already on the market
+# or in use before its route's date, `list_obligations(legacy=...)` marks the rows dated per route (C7b).
 # Other dates: 2025-02-02 for Chapters I and II (Art. 113(a)), 2026-12-02 for Art. 5(1)(ba) and (bb)
 # (Art. 113(a)), 2026-08-02 for everything else (Art. 113, second paragraph).
 #

@@ -20,6 +20,13 @@ Art. 6(4) by the high-risk step's Art. 6(3) exemption, the GPAI flag by the GPAI
 other condition goes to the model. A duty whose condition is "no" is dropped; "yes" and
 "unknown" keep it, with its condition shown.
 
+A high-risk system also gets the Art. 111(2) key facts (C7b, decision 022): placed on the market
+or put into service before its route's Chapter III date, a significant change to its design or
+intended purpose from then on (a substantial modification, Art. 3(23)), and use by public
+authorities. A legacy system keeps its class; `list_obligations` marks its high-risk duties. An
+unknown answer keeps the duties as they are and becomes a follow-up question. The facts are
+asked only for a high-risk system, so the request for any other class is unchanged.
+
 Each step cites the provisions its role rests on (Art. 3 definitions, the Art. 25(1) switch,
 Art. 53(1)(b)), quoted from the parsed AI Act until `get_provision` (C5) serves them.
 """
@@ -35,6 +42,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
+from aiact.dates import long_date
 from aiact.engine.nodes.common import answers_section, facts_section
 from aiact.engine.nodes.key_facts import Answer, KeyFact, facts_used
 from aiact.engine.nodes.role_texts import (
@@ -48,14 +56,20 @@ from aiact.engine.nodes.role_texts import (
     SWITCHES,
     TEXTS,
     KeyQuestion,
+    legacy_questions,
 )
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.llm import engine_chat_model
 from aiact.llm.structured import describe_validation_error, json_schema_format
 from aiact.obligations.list import (
+    CHAPTER_III_DATES,
+    LEGACY_ARTICLE,
+    PUBLIC_AUTHORITY_DEADLINE,
+    SUBSTANTIAL_MODIFICATION_ARTICLE,
     ObligationTable,
     UnknownLawVersionError,
     default_table,
+    legacy_status,
     list_obligations,
 )
 from aiact.schemas import (
@@ -65,6 +79,7 @@ from aiact.schemas import (
     HighRiskRoute,
     Language,
     LawVersion,
+    LegacyStatus,
     Obligation,
     OpenQuestion,
     RiskClass,
@@ -78,6 +93,10 @@ from aiact.settings import Settings, get_settings
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "role_obligations.md"
 ROLE_INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
+LEGACY_PROMPT_PATH = PROMPT_PATH.with_name("role_obligations_legacy.md")
+LEGACY_INSTRUCTIONS = LEGACY_PROMPT_PATH.read_text(encoding="utf-8")
+"""The Art. 111(2) section of the per-case message, for a high-risk system; `{date}` is its
+route's Chapter III date."""
 
 MAX_OUTPUT_TOKENS = 3000
 """Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005)."""
@@ -127,6 +146,20 @@ class RoleAnswer(ContractModel):
     substantial_modification: KeyFact
     changed_purpose: KeyFact
     conditions: tuple[ConditionAnswer, ...]
+
+
+class LegacyAnswer(ContractModel):
+    """The Art. 111(2) key facts of a high-risk system."""
+
+    placed_before: KeyFact
+    significant_design_change: KeyFact
+    for_public_authority: KeyFact
+
+
+class HighRiskRoleAnswer(RoleAnswer):
+    """The answer for a high-risk system: the role facts and the Art. 111(2) facts."""
+
+    legacy: LegacyAnswer
 
 
 class RoleOutputError(ValueError):
@@ -275,6 +308,114 @@ def settle_role(answer: RoleAnswer, risk_class: RiskClass) -> RoleSettlement:
     if missing:
         return _settlement(answer, Role.PROVIDER, used, missing=missing)
     return _settlement(answer, base, used)
+
+
+# --- Art. 111(2): high-risk systems already on the market -------------------------------------
+
+
+@dataclass(frozen=True)
+class LegacySettlement:
+    """What Art. 111(2) gives: the marking for the duties (None: they apply as usual), whether
+    to check again at launch (not yet on the market or in use), the answers it rests on, and the
+    unknown ones to ask."""
+
+    status: LegacyStatus | None = None
+    route: HighRiskRoute | None = None
+    used: tuple[KeyFact, ...] = ()
+    questions: tuple[KeyQuestion, ...] = ()
+    check_at_launch: bool = False
+    is_public_authority_assumed: bool = False
+    """The 2030 date rests on an unsettled (unknown or assumed) public-authority answer."""
+
+    @property
+    def articles(self) -> tuple[str, ...]:
+        """What the step cites for Art. 111(2): the article for the check-again sentence, and
+        with a marking also Art. 3(23), the substantial modification a significant change is
+        read as (recital 177, which the consolidated text doesn't carry)."""
+        if self.status is not None:
+            return (LEGACY_ARTICLE, SUBSTANTIAL_MODIFICATION_ARTICLE)
+        return (LEGACY_ARTICLE,) if self.check_at_launch else ()
+
+
+def _settled_answer(key_fact: KeyFact) -> Answer:
+    """An assumed answer settles nothing under Art. 111(2): it counts as unknown and is asked."""
+    return Answer.UNKNOWN if key_fact.evidence is EvidenceTag.ASSUMED else key_fact.answer
+
+
+def settle_legacy(answer: RoleAnswer, route: HighRiskRoute | None) -> LegacySettlement:
+    """Apply Art. 111(2) to the answers, as of the assessment date (user decision, 2026-10-01):
+    only a system already on the market or in use counts as placed before the route's date. One
+    that isn't yet keeps its duties as usual, with a note to check again at launch (the model
+    can't tell a planned launch from a new system, so every "no" gets it, assumed or not). One
+    whose design changes keeps its duties too, and the launch and public-use facts aren't relied
+    on or asked. Otherwise an assumed answer counts as unknown, so only stated or inferred facts
+    can mark duties, and an unknown fact counts the stricter way (not placed before the date,
+    changed, for public authorities: the earlier deadline) and is asked as a follow-up question."""
+    if not isinstance(answer, HighRiskRoleAnswer) or route is None:
+        return LegacySettlement()
+    legacy, keys = answer.legacy, legacy_questions(CHAPTER_III_DATES[route], LEGACY_ARTICLE)
+    if legacy.placed_before.answer is Answer.NO:
+        return LegacySettlement(route=route, used=(legacy.placed_before,), check_at_launch=True)
+    placed = _settled_answer(legacy.placed_before)
+    changed = _settled_answer(legacy.significant_design_change)
+    public = _settled_answer(legacy.for_public_authority)
+    chain = (
+        (legacy.placed_before, placed, keys.placed_before),
+        (legacy.significant_design_change, changed, keys.design_change),
+        (legacy.for_public_authority, public, keys.public_authority),
+    )
+    if changed is Answer.YES:
+        # The duties apply as usual whatever the launch or public use: ask neither.
+        chain = tuple(link for link in chain[:2] if link[1] is not Answer.UNKNOWN)
+    status = legacy_status(
+        placed_before=placed is Answer.YES,
+        significantly_changed=changed is not Answer.NO,
+        for_public_authority=public is not Answer.NO,
+    )
+    return LegacySettlement(
+        status=status,
+        route=route,
+        used=tuple(fact for fact, settled, _ in chain if settled is not Answer.UNKNOWN),
+        questions=tuple(question for _, settled, question in chain if settled is Answer.UNKNOWN),
+        is_public_authority_assumed=public is Answer.UNKNOWN,
+    )
+
+
+PER_PRODUCT_ROLES = frozenset({Role.PROVIDER, Role.IMPORTER, Role.DISTRIBUTOR})
+"""The roles that supply the system: placing on the market counts per product supplied (the New
+Legislative Framework reading), so new copies may be fully covered. A deployer uses its copy."""
+
+
+def _sentence_key(status: LegacyStatus, legacy: LegacySettlement) -> str:
+    """The decision sentence for a marking: the 2030 date on an unsettled public-authority
+    answer is worded as an assumption, not as a fact."""
+    if status is LegacyStatus.PUBLIC_AUTHORITY and legacy.is_public_authority_assumed:
+        return "legacy_public_authority_assumed"
+    return status.value
+
+
+def _legacy_summary(
+    kept: Sequence[Obligation], legacy: LegacySettlement, language: Language, roles: Sequence[Role]
+) -> tuple[str, ...]:
+    """One sentence per Art. 111(2) marking the kept duties carry, then the per-product caveat
+    for a role that supplies the system; or the check-again sentence for a system not yet on the
+    market or in use."""
+    if not legacy.articles or legacy.route is None:
+        return ()
+    texts = TEXTS[language]
+    since = long_date(CHAPTER_III_DATES[legacy.route], language)
+    if legacy.check_at_launch:
+        return (texts["legacy_check_at_launch"].format(date=since),)
+    deadline = long_date(PUBLIC_AUTHORITY_DEADLINE, language)
+    counts = {status: sum(o.legacy is status for o in kept) for status in LegacyStatus}
+    marked = tuple(
+        texts[_sentence_key(status, legacy)].format(count=count, date=since, deadline=deadline)
+        for status, count in counts.items()
+        if count
+    )
+    supplies = any(role in PER_PRODUCT_ROLES for role in roles)
+    caveat = (texts["legacy_per_product"].format(date=since),) if marked and supplies else ()
+    return (*marked, *caveat)
 
 
 # --- Conditional duties -------------------------------------------------------------------------
@@ -458,16 +599,21 @@ def to_outcome(
     """The role_obligations step and its finding, from the model's answer and the state.
     `data_dir` holds the parsed AI Act the citations quote (default: the settings')."""
     language = state["language"]
-    risk_class, _ = working_class(state)
+    risk_class, route = working_class(state)
     settled = settle_role(answer, risk_class)
+    source_table = table or default_table()
+    # Decided once: without duties for this law version, Art. 111(2) says nothing either.
+    holds_version = source_table.law_version is state["law_version"]
+    legacy = settle_legacy(answer, route) if holds_version else LegacySettlement()
     missing = settled.missing[0] if settled.missing else None
-    obligations, summary = select_obligations(answer, state, settled, table)
+    obligations, summary = select_obligations(answer, state, settled, source_table, legacy)
     source = data_dir or get_settings().aiact_data_dir
+    cited = (*settled.cited_articles(), *legacy.articles)
     step = StepResult(
         step=StepName.ROLE_OBLIGATIONS,
         decision=_decision(settled, language, summary),
-        facts_used=facts_used(settled.used, state.get("facts", ())),
-        citations=citations(settled.cited_articles(), state["law_version"], language, source),
+        facts_used=facts_used((*settled.used, *legacy.used), state.get("facts", ())),
+        citations=citations(cited, state["law_version"], language, source),
         status=_status(settled),
         missing_fact=_question(missing, language) if missing else None,
         open_question=settled.open_question(language),
@@ -478,7 +624,8 @@ def to_outcome(
         role_switch_reason=settled.switch_reason(language),
         obligations=obligations,
     )
-    questions = tuple(_question(key, language) for key in settled.questions())
+    asked = (*settled.questions(), *legacy.questions)
+    questions = tuple(_question(key, language) for key in asked)
     return CheckOutcome(step=step, role=finding, follow_up_questions=questions)
 
 
@@ -486,19 +633,24 @@ def select_obligations(
     answer: RoleAnswer,
     state: EngineState,
     settled: RoleSettlement,
-    table: ObligationTable | None = None,
+    table: ObligationTable,
+    legacy: LegacySettlement | None = None,
 ) -> tuple[tuple[Obligation, ...], tuple[str, ...]]:
     """The duties of the settled role and the role it keeps, less those whose condition doesn't
-    apply, and the sentences that summarise them for the step's decision."""
+    apply, marked as Art. 111(2) leaves them, and the sentences that summarise them for the
+    step's decision. None when `table` doesn't hold the state's law version."""
     language, law_version = state["language"], state["law_version"]
     risk_class, route = working_class(state)
     texts = TEXTS[language]
     roles = (settled.role, *((settled.also_role,) if settled.also_role else ()))
-    try:
-        lists = [list_obligations(role, risk_class, route, law_version, table) for role in roles]
-    except UnknownLawVersionError:
-        held = (table or default_table()).law_version.value
+    legacy = legacy or LegacySettlement()
+    if table.law_version is not law_version:
+        held = table.law_version.value
         return (), (texts["no_table"].format(version=held, asked=law_version.value),)
+    lists = [
+        list_obligations(role, risk_class, route, law_version, table, legacy=legacy.status)
+        for role in roles
+    ]
     listed = tuple(dict.fromkeys(o for duties in lists for o in duties.obligations))
     ids = condition_ids(conditions_to_ask(risk_class, route, law_version, table))
     by_id = {given.id: given.answer for given in answer.conditions}
@@ -510,6 +662,7 @@ def select_obligations(
     summary = (
         texts["duties"].format(count=len(kept), risk_class=risk_class.value, version=version),
         *(texts[verdict.value].format(count=count) for verdict, count in counts.items() if count),
+        *_legacy_summary(kept, legacy, language, roles),
     )
     return kept, summary
 
@@ -518,6 +671,23 @@ def select_obligations(
 
 
 ROLE_RESPONSE_FORMAT = json_schema_format("role_answer", RoleAnswer)
+HIGH_RISK_RESPONSE_FORMAT = json_schema_format("role_answer", HighRiskRoleAnswer)
+
+
+def answer_model(state: EngineState) -> type[RoleAnswer]:
+    """The answer the model gives: with the Art. 111(2) facts for a high-risk system."""
+    risk_class, _ = working_class(state)
+    return HighRiskRoleAnswer if risk_class is RiskClass.HIGH_RISK else RoleAnswer
+
+
+def _legacy_section(state: EngineState) -> str:
+    """The Art. 111(2) instructions for a high-risk system, or nothing (other classes' requests
+    stay as they were). `working_class` gives a route only for a high-risk system."""
+    _, route = working_class(state)
+    if route is None:
+        return ""
+    since = long_date(CHAPTER_III_DATES[route], Language.EN)
+    return f"Launch and design:\n{LEGACY_INSTRUCTIONS.format(date=since)}\n"
 
 
 def role_messages(state: EngineState, conditions: Sequence[str]) -> list[BaseMessage]:
@@ -533,6 +703,7 @@ def role_messages(state: EngineState, conditions: Sequence[str]) -> list[BaseMes
             f"Risk class so far: {shown_class}\n\n"
             f"Earlier checks:\n{steps}\n\n"
             f"Conditions:\n{listed}\n\n"
+            f"{_legacy_section(state)}"
             f"Answers to earlier questions:\n{answers_section(state)}\n\n"
             f"Facts:\n{facts_section(state)}\n\n"
             f"Description:\n{state['description']}"
@@ -561,11 +732,15 @@ class RoleObligationsCheck:
         """Raises `RoleOutputError` when the reply doesn't fit `RoleAnswer`."""
         risk_class, route = working_class(state)
         conditions = conditions_to_ask(risk_class, route, state["law_version"], self._table)
+        model = answer_model(state)
+        response_format = (
+            HIGH_RISK_RESPONSE_FORMAT if model is HighRiskRoleAnswer else ROLE_RESPONSE_FORMAT
+        )
         reply = self._model.invoke(
-            role_messages(state, conditions), response_format=ROLE_RESPONSE_FORMAT
+            role_messages(state, conditions), response_format=response_format
         )
         try:
-            answer = RoleAnswer.model_validate_json(reply.text)
+            answer = model.model_validate_json(reply.text)
         except ValidationError as exc:
             message = f"role answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise RoleOutputError(message) from exc

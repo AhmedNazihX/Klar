@@ -2,6 +2,12 @@
 
 The table lives in `supabase/seed/obligations.yaml`, which is also the source of the database seed
 (`aiact.obligations.seed`). No model is involved: this is a plain lookup.
+
+Art. 111(2) (C7b, decision 022) is applied on top of the table: a high-risk system placed on the
+market or put into service before its route's Chapter III date keeps its class, but its high-risk
+duties (the rows dated per route) apply only after a significant change to its design or
+intended purpose on or after that date, or, for a system meant for public authorities, from
+2 Aug 2030 for its providers and deployers (the article's own words).
 """
 
 from collections.abc import Mapping
@@ -18,6 +24,7 @@ from aiact.schemas import (
     HighRiskRoute,
     Language,
     LawVersion,
+    LegacyStatus,
     Obligation,
     RiskClass,
     Role,
@@ -29,6 +36,25 @@ OBLIGATIONS_FILE = BACKEND_DIR.parent / "supabase" / "seed" / "obligations.yaml"
 """The committed obligations table."""
 
 KEY_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
+
+CHAPTER_III_DATES: Mapping[HighRiskRoute, date] = {
+    HighRiskRoute.ANNEX_III: date(2027, 12, 2),
+    HighRiskRoute.ANNEX_I: date(2028, 8, 2),
+}
+"""The date Chapter III applies from on each route (Art. 113(c)(i) and (ii)); the table's route
+dates are these, and Art. 111(2) counts a legacy system from them."""
+
+PUBLIC_AUTHORITY_DEADLINE = date(2030, 8, 2)
+"""Art. 111(2), second sentence: providers and deployers of legacy high-risk systems meant for
+public authorities comply by this date; importers and distributors keep the first sentence's
+rule."""
+
+LEGACY_ARTICLE = "art:111:2"
+PUBLIC_AUTHORITY_ROLES = frozenset({Role.PROVIDER, Role.DEPLOYER})
+"""The roles the 2030 date names. The German recital 177 agrees ("Betreiber"); only the English
+recital's "operators" is wider, an outlier the user set aside on 2026-10-01."""
+SUBSTANTIAL_MODIFICATION_ARTICLE = "art:3:23"
+"""What a significant change means under Art. 111(2) (recital 177: equivalent in substance)."""
 
 
 class ObligationsError(ValueError):
@@ -142,6 +168,29 @@ def default_table() -> ObligationTable:
     return load_table()
 
 
+def legacy_status(
+    *, placed_before: bool, significantly_changed: bool, for_public_authority: bool
+) -> LegacyStatus | None:
+    """Art. 111(2) for a high-risk system: None when it was placed on the market or put into
+    service on or after its route's Chapter III date (`placed_before` False), or its design
+    changes significantly from that date; then its duties apply as usual."""
+    if not placed_before or significantly_changed:
+        return None
+    return LegacyStatus.PUBLIC_AUTHORITY if for_public_authority else LegacyStatus.UNCHANGED
+
+
+def _with_legacy(obligation: Obligation, role: Role, legacy: LegacyStatus | None) -> Obligation:
+    """The duty as Art. 111(2) leaves it: only the high-risk rows, the ones dated per route, are
+    marked; the public-authority date replaces `applies_from` for providers and deployers, and an
+    importer or distributor of such a system gets the ordinary marking."""
+    if legacy is None or obligation.high_risk_route is None:
+        return obligation
+    if legacy is LegacyStatus.PUBLIC_AUTHORITY and role in PUBLIC_AUTHORITY_ROLES:
+        update = {"legacy": legacy, "applies_from": PUBLIC_AUTHORITY_DEADLINE}
+        return obligation.model_copy(update=update)
+    return obligation.model_copy(update={"legacy": LegacyStatus.UNCHANGED})
+
+
 class ObligationList(ContractModel):
     """The duties `list_obligations` found, with the law version they come from and the notice."""
 
@@ -158,6 +207,7 @@ def list_obligations(
     table: ObligationTable | None = None,
     *,
     language: Language | str = Language.EN,
+    legacy: LegacyStatus | str | None = None,
 ) -> ObligationList:
     """The duties of `role` for a system of `risk_class`, in table order.
 
@@ -166,9 +216,11 @@ def list_obligations(
     Duties that exist on one route only are left out for the other. Plain strings are accepted
     for the enums; an unknown value raises ValueError, and a law version the table doesn't hold
     raises UnknownLawVersionError. `language` picks the notice's language (the duties are in
-    English).
+    English). `legacy` (see `legacy_status`) marks the high-risk duties of a system Art. 111(2)
+    covers; the class and the other duties stay as they are.
     """
     role, risk_class, version = Role(role), RiskClass(risk_class), LawVersion(law_version)
+    status = LegacyStatus(legacy) if legacy is not None else None
     notice = DISCLAIMER[Language(language)]
     wanted_route = HighRiskRoute(route) if route is not None else None
     source = table or default_table()
@@ -177,7 +229,7 @@ def list_obligations(
             f"the obligations table holds the {source.law_version.value} text, not {version.value}"
         )
     obligations = tuple(
-        row.obligation
+        _with_legacy(row.obligation, role, status)
         for row in source.rows()
         if row.role == role
         and row.risk_class == risk_class

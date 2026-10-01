@@ -4,7 +4,9 @@ English and German."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import date
 
+from aiact.dates import long_date
 from aiact.schemas import Language, Role
 
 
@@ -146,6 +148,55 @@ OWN_NAME_READINGS: Mapping[Language, tuple[str, str]] = {
 }
 """The two readings, the stricter (provider) first; `{base}` is the base role's name."""
 
+
+@dataclass(frozen=True)
+class LegacyQuestions:
+    """The Art. 111(2) key facts for one route, their questions naming its Chapter III date."""
+
+    placed_before: KeyQuestion
+    design_change: KeyQuestion
+    public_authority: KeyQuestion
+
+
+LEGACY_QUESTION_TEXTS: Mapping[str, Mapping[Language, str]] = {
+    "placed_before_chapter_iii": {
+        Language.EN: "Is the system already on the market or in use today? Its high-risk rules "
+        "apply from {date}.",
+        Language.DE: "Ist das System heute bereits auf dem Markt oder in Betrieb? Seine "
+        "Hochrisiko-Vorschriften gelten ab dem {date}.",
+    },
+    "significant_design_change": {
+        Language.EN: "Is a significant change to the system's design or intended purpose "
+        "planned or foreseen for on or after {date}?",
+        Language.DE: "Ist ab dem {date} eine erhebliche Veränderung der Konzeption oder der "
+        "Zweckbestimmung des Systems geplant oder vorgesehen?",
+    },
+    "for_public_authority": {
+        Language.EN: "Is the system meant for use by public authorities?",
+        Language.DE: "Soll das System bestimmungsgemäß von Behörden verwendet werden?",
+    },
+}
+"""The Art. 111(2) questions, by follow-up id; `{date}` is the route's Chapter III date."""
+
+
+def legacy_questions(chapter_iii_from: date, article: str) -> LegacyQuestions:
+    """The Art. 111(2) questions for a route whose high-risk rules apply from `chapter_iii_from`."""
+
+    def key(question_id: str) -> KeyQuestion:
+        texts = LEGACY_QUESTION_TEXTS[question_id]
+        question = {
+            language: text.format(date=long_date(chapter_iii_from, language))
+            for language, text in texts.items()
+        }
+        return KeyQuestion(id=question_id, article=article, question=question)
+
+    return LegacyQuestions(
+        placed_before=key("placed_before_chapter_iii"),
+        design_change=key("significant_design_change"),
+        public_authority=key("for_public_authority"),
+    )
+
+
 ROLE_NAMES: Mapping[Language, Mapping[Role, str]] = {
     Language.EN: {role: role.value for role in Role},
     Language.DE: {
@@ -177,6 +228,22 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "depend on.",
         "no_table": "No duties listed: the obligations table covers only the {version} text, "
         "not the {asked} text.",
+        "legacy_unchanged": "Art. 111(2): the system was on the market or in use before {date}, "
+        "so {count} high-risk duties apply only if its design or intended purpose changes "
+        "significantly on or after that date (a substantial modification); the class stays "
+        "high-risk.",
+        "legacy_public_authority": "Art. 111(2): the system was on the market or in use before "
+        "{date} and is meant for public authorities, so {count} high-risk duties "
+        "apply from {deadline}; the class stays high-risk.",
+        "legacy_public_authority_assumed": "Art. 111(2): the system was on the market or in use "
+        "before {date}; until it is confirmed whether public authorities are meant to use it, the "
+        "earlier date is assumed, so {count} high-risk duties apply from {deadline}; the class "
+        "stays high-risk.",
+        "legacy_per_product": "This covers copies placed on the market or put into service before "
+        "{date}; copies supplied on or after that date may be fully covered.",
+        "legacy_check_at_launch": "If the system is placed on the market or put into service "
+        "before {date} and its design or intended purpose doesn't change significantly "
+        "afterwards, Art. 111(2) may limit these duties; check again at launch.",
     },
     Language.DE: {
         "role": "Rolle: {role}.",
@@ -201,5 +268,24 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "hat, von dem sie abhängen.",
         "no_table": "Keine Pflichten aufgeführt: Die Pflichtentabelle deckt nur die "
         "{version} Fassung ab, nicht die {asked} Fassung.",
+        "legacy_unchanged": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr oder in "
+        "Betrieb; daher gelten {count} Hochrisiko-Pflichten nur, wenn seine Konzeption oder "
+        "Zweckbestimmung ab diesem Datum erheblich verändert wird (eine wesentliche Veränderung). "
+        "Das System bleibt als Hochrisiko-System eingestuft.",
+        "legacy_public_authority": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr "
+        "oder in Betrieb und soll bestimmungsgemäß von Behörden verwendet werden; daher gelten "
+        "{count} Hochrisiko-Pflichten ab dem {deadline}. Das System bleibt als Hochrisiko-System "
+        "eingestuft.",
+        "legacy_public_authority_assumed": "Art. 111 Abs. 2: Das System war vor dem {date} in "
+        "Verkehr oder in Betrieb; solange nicht geklärt ist, ob Behörden es verwenden sollen, wird "
+        "das frühere Datum angenommen; daher gelten {count} Hochrisiko-Pflichten ab dem "
+        "{deadline}. Das System bleibt als Hochrisiko-System eingestuft.",
+        "legacy_per_product": "Dies gilt für Exemplare, die vor dem {date} in Verkehr gebracht "
+        "oder in Betrieb genommen wurden; ab diesem Datum bereitgestellte Exemplare können "
+        "vollständig erfasst sein.",
+        "legacy_check_at_launch": "Wird das System vor dem {date} in Verkehr gebracht oder in "
+        "Betrieb genommen und danach in seiner Konzeption oder Zweckbestimmung nicht erheblich "
+        "verändert, kann Art. 111 Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim "
+        "Inverkehrbringen oder bei der Inbetriebnahme erneut.",
     },
 }

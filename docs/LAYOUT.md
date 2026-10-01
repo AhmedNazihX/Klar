@@ -27,6 +27,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── settings.py              pydantic-settings, read from .env (F1)
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
 │   │   ├── db.py                    direct Postgres connection (DATABASE_URL) for server-only tables (C3)
+│   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
 │   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3)
@@ -46,6 +47,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        checks (E3); common.py: the run's lookup, citations and prompt
 │   │   │   │                        blocks shared by the checks (E5)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
+│   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
 │   │   │   ├── citations.py         citation existence validator (E9)
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data
