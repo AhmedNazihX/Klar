@@ -484,7 +484,9 @@ def eval_similarity(
     for result in results:
         reasons = result.failures(limits)
         failed += bool(reasons)
-        closeness = "-" if result.cosine is None else f"{result.cosine:.3f}"
+        closeness = f"{result.cosine:.3f}" if result.cosine is not None else "-"
+        if result.missing:
+            closeness += f" ({'; '.join(result.missing)})"
         typer.echo(
             f"{'FAIL' if reasons else 'ok  '} {result.case_id} <- {result.source_example_id}  "
             f"run {result.run.length} ({result.run.part}), cosine {closeness}"
@@ -494,7 +496,7 @@ def eval_similarity(
     missing = sum(result.cosine is None for result in results)
     summary = f"{len(results)} cases with a source example, {failed} too close"
     if missing:
-        summary += f"; {missing} without a cosine (run `aiact evaluate isolation-embed`)"
+        summary += f"; {missing} without a cosine"
     typer.echo(summary, err=bool(failed))
     if failed:
         raise typer.Exit(code=1)

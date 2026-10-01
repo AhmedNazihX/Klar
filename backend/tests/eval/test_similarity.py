@@ -136,10 +136,23 @@ def test_the_cosine_comes_from_the_cache_and_gates_only_with_a_limit() -> None:
     assert clean.failures(similarity.Limits(run=99, cosine=0.95)) == ()
 
 
-def test_a_text_missing_from_the_cache_has_no_cosine() -> None:
-    (result,) = similarity.measure([make_case("b-clean", SEVEN_WORD_COPY)], SOURCES, CACHE)
-    assert result.cosine is None
-    assert similarity.cached_cosine(None, SOURCE_TEXT, NEAR_COPY) is None
+MissingVector = similarity.MissingVector
+
+
+def test_a_missing_vector_says_which_side_is_missing() -> None:
+    (result,) = similarity.measure([make_case("b-7", SEVEN_WORD_COPY)], SOURCES, CACHE)
+    assert (result.cosine, result.missing) == (None, (MissingVector.CASE,))
+    (result,) = similarity.measure([make_case("b-near", NEAR_COPY)], SOURCES, None)
+    assert (result.cosine, result.missing) == (None, (MissingVector.CACHE,))
+
+
+def test_a_pile_a_source_is_reported_as_a_missing_source_vector() -> None:
+    pile_a = ExampleText(example_id="hr-ex-998", source="guide-test", text="Some other example.")
+    case = make_case("b-a", NEAR_COPY, "hr-ex-998")
+    (result,) = similarity.measure([case], {"hr-ex-998": pile_a}, CACHE)
+    assert (result.cosine, result.missing) == (None, (MissingVector.SOURCE,))
+    assert "isolation-embed" not in MissingVector.SOURCE
+    assert result.failures(similarity.Limits(cosine=0.95)) == (MissingVector.SOURCE,)
 
 
 def test_without_a_cosine_limit_a_missing_cosine_is_informational() -> None:
@@ -150,7 +163,8 @@ def test_without_a_cosine_limit_a_missing_cosine_is_informational() -> None:
 def test_under_a_cosine_limit_a_missing_cosine_fails() -> None:
     for cache in (None, CACHE):
         (result,) = similarity.measure([make_case("b-7", SEVEN_WORD_COPY)], SOURCES, cache)
-        assert result.failures(similarity.Limits(cosine=0.95)) == (similarity.NO_COSINE,)
+        assert result.failures(similarity.Limits(cosine=0.95)) == result.missing
+        assert result.missing
 
 
 def test_cases_without_a_source_are_skipped_and_an_unknown_source_is_an_error() -> None:
@@ -206,7 +220,9 @@ def test_the_command_fails_an_unmeasured_case_under_a_cosine_limit(tmp_path: Pat
     options = write_inputs(tmp_path, {"b-7": SEVEN_WORD_COPY})
     result = CliRunner().invoke(app, ["evaluate", "similarity", *options, "--max-cosine", "0.95"])
     assert result.exit_code == 1, result.output
-    assert "no cosine: run `aiact evaluate isolation-embed`" in result.stdout
+    assert "no vector for the case description: run `aiact evaluate isolation-embed`" in (
+        result.stdout
+    )
     without_limit = CliRunner().invoke(app, ["evaluate", "similarity", *options])
     assert without_limit.exit_code == 0, without_limit.output
 
@@ -245,3 +261,11 @@ def test_the_command_reports_a_bad_example_file(tmp_path: Path) -> None:
     result = CliRunner().invoke(app, ["evaluate", "similarity", *options])
     assert result.exit_code == 2
     assert "not a valid example row" in result.stderr
+
+
+def test_the_command_reports_a_corrupt_vector_cache(tmp_path: Path) -> None:
+    options = write_inputs(tmp_path, {"b-clean": CLEAN_REWRITE})
+    (tmp_path / "embeddings.json").write_text("{}", encoding="utf-8")
+    result = CliRunner().invoke(app, ["evaluate", "similarity", *options])
+    assert result.exit_code == 2
+    assert "not a valid vector cache" in result.stderr

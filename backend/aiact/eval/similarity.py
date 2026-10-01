@@ -10,14 +10,17 @@ Commission's wording. For each such case this measures, against its own source e
   isolation vector cache (`isolation.EMBEDDINGS_FILE`, filled by `aiact evaluate isolation-embed`),
   so the check makes no paid call. A rewrite keeps the facts that decide the verdict, so a high
   cosine is expected (B13: a Pile B text scores a median 0.918 against its own row); the cosine
-  is reported and gates a case only when a limit is given. It is None when either vector is
-  missing (a Pile A source, or a case not embedded since its last edit); under a limit, a case
-  without a cosine fails, since it wasn't measured.
+  is reported and gates a case only when a limit is given. It is None when a vector is missing,
+  and `MissingVector` says which: no cache at all, the case description (not embedded since its
+  last edit: run `aiact evaluate isolation-embed`), or the source example (the cache holds only
+  Pile B example texts, so a Pile A source never has one). Under a limit, a case without a
+  cosine fails with that reason, since it wasn't measured.
 """
 
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 from aiact.eval.cases import CASES_DIR, BenchmarkCase
@@ -37,7 +40,14 @@ from aiact.eval.split import EXAMPLES_FILE
 
 RUN_LIMIT = 8
 """A word run this long or longer, shared with the source example, fails the case."""
-NO_COSINE = "no cosine: run `aiact evaluate isolation-embed`"
+
+
+class MissingVector(StrEnum):
+    """Why a case has no cosine."""
+
+    CACHE = "no vector cache: run `aiact evaluate isolation-embed`"
+    CASE = "no vector for the case description: run `aiact evaluate isolation-embed`"
+    SOURCE = "the source example has no cached vector (not a Pile B example)"
 
 
 class SimilarityError(ValueError):
@@ -71,6 +81,8 @@ class CaseSimilarity:
     source_example_id: str
     run: SharedRun
     cosine: float | None
+    missing: tuple[MissingVector, ...] = ()
+    """Why `cosine` is None; empty when it was measured."""
 
     def failures(self, limits: Limits) -> tuple[str, ...]:
         """Why the case is too close to its source (or unmeasured); empty when it passes."""
@@ -79,7 +91,7 @@ class CaseSimilarity:
             reasons.append(f"shares a {self.run.length}-word run with the {self.run.part}")
         if limits.cosine is not None:
             if self.cosine is None:
-                reasons.append(NO_COSINE)
+                reasons.extend(self.missing)
             elif self.cosine >= limits.cosine:
                 reasons.append(f"cosine {self.cosine:.3f} >= {limits.cosine}")
         return tuple(reasons)
@@ -131,14 +143,20 @@ def cosine(first: Sequence[float], second: Sequence[float]) -> float:
     return math.fsum(a * b for a, b in zip(first, second, strict=True)) / norms
 
 
-def cached_cosine(cache: EmbeddingCache | None, first: str, second: str) -> float | None:
-    """The cosine of two texts' cached vectors, or None when either is missing."""
+def cached_cosine(
+    cache: EmbeddingCache | None, description: str, source_text: str
+) -> tuple[float | None, tuple[MissingVector, ...]]:
+    """The cosine of the two texts' cached vectors, or None with the vectors that are missing."""
     if cache is None:
-        return None
-    vectors = [cache.vectors.get(text_key(text)) for text in (first, second)]
-    if vectors[0] is None or vectors[1] is None:
-        return None
-    return cosine(decode_vector(vectors[0]), decode_vector(vectors[1]))
+        return None, (MissingVector.CACHE,)
+    case_vector = cache.vectors.get(text_key(description))
+    source_vector = cache.vectors.get(text_key(source_text))
+    missing = ((MissingVector.CASE,) if case_vector is None else ()) + (
+        (MissingVector.SOURCE,) if source_vector is None else ()
+    )
+    if case_vector is None or source_vector is None:
+        return None, missing
+    return cosine(decode_vector(case_vector), decode_vector(source_vector)), ()
 
 
 def measure(
@@ -157,8 +175,8 @@ def measure(
         if source is None:
             raise SimilarityError(f"case {case.id}: unknown source example {source_id}")
         run = closest_run(case.description, source)
-        closeness = cached_cosine(cache, case.description, source.text)
-        results.append(CaseSimilarity(case.id, source_id, run, closeness))
+        closeness, missing = cached_cosine(cache, case.description, source.text)
+        results.append(CaseSimilarity(case.id, source_id, run, closeness, missing))
     return tuple(sorted(results, key=lambda r: (-r.run.length, -(r.cosine or 0.0), r.case_id)))
 
 
