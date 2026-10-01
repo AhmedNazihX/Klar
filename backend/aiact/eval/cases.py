@@ -14,7 +14,7 @@ A rewritten Commission example (B4) carries its row's `accepted_bases`, `label_s
 
 import json
 from collections import Counter
-from collections.abc import Collection, Iterable
+from collections.abc import Collection, Hashable, Iterable
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Self
@@ -27,6 +27,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from yaml.constructor import ConstructorError
 
 from aiact.retrieval.provisions import PROVISION_ID_RE
 from aiact.schemas.base import ContractModel
@@ -38,6 +39,8 @@ EVAL_DIR = BACKEND_DIR.parent / "eval"
 CASES_DIR = EVAL_DIR / "cases"
 APPLIEDAI_FILE = EVAL_DIR / "private" / "appliedai.jsonl"
 QA_DIR_NAME = "qa"
+CASE_FILE_SUFFIX = ".yaml"
+NOTE_SUFFIXES = (".md",)
 """The Q&A items' folder under `eval/cases/` (B7); not a `CaseSet`, as items aren't cases."""
 
 CASE_ID_PATTERN = r"^[a-z0-9][a-z0-9_.:-]{0,127}$"
@@ -277,7 +280,7 @@ def load_cases(case_set: CaseSet, cases_dir: Path = CASES_DIR) -> tuple[Benchmar
     set_dir = cases_dir / case_set.value
     if not set_dir.is_dir():
         raise FileNotFoundError(f"no case folder for set {case_set.value}: {set_dir}")
-    cases = tuple(case for path in sorted(set_dir.rglob("*.yaml")) for case in load_yaml_file(path))
+    cases = tuple(case for path in _case_files(set_dir) for case in load_yaml_file(path))
     return _pairs_complete(_unique(_in_set(cases, case_set, set_dir), set_dir), set_dir)
 
 
@@ -291,9 +294,7 @@ def load_qa_items(cases_dir: Path = CASES_DIR) -> tuple[QAItem, ...]:
     qa_dir = cases_dir / QA_DIR_NAME
     if not qa_dir.is_dir():
         raise FileNotFoundError(f"no Q&A folder: {qa_dir}")
-    items = tuple(
-        item for path in sorted(qa_dir.rglob("*.yaml")) for item in _load_yaml(path, QAItem)
-    )
+    items = tuple(item for path in _case_files(qa_dir) for item in _load_yaml(path, QAItem))
     return _unique(items, qa_dir)
 
 
@@ -321,9 +322,41 @@ def derived_from_pile_a(cases: Iterable[BenchmarkCase], pile_a: Collection[str])
     return tuple(case.id for case in cases if case.source_example_id in pile_a)
 
 
+def _case_files(folder: Path) -> list[Path]:
+    """The `*.yaml` files under `folder`, sorted. Any other file is an error, so a `.yml` or a
+    JSON case can't be skipped silently; hidden files (`.gitkeep`) and notes (`*.md`, such as
+    the academic set's SOURCE.md) are allowed and never loaded."""
+    files = sorted(path for path in folder.rglob("*") if path.is_file())
+    stray = [
+        path
+        for path in files
+        if path.suffix not in (CASE_FILE_SUFFIX, *NOTE_SUFFIXES) and not path.name.startswith(".")
+    ]
+    if stray:
+        raise CaseFileError(f"not a {CASE_FILE_SUFFIX} case file: {', '.join(map(str, stray))}")
+    return [path for path in files if path.suffix == CASE_FILE_SUFFIX]
+
+
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """A safe loader that rejects a key repeated in one mapping (PyYAML keeps the last)."""
+
+    def construct_mapping(
+        self, node: yaml.MappingNode, deep: bool = False
+    ) -> dict[Hashable, object]:
+        seen: set[Hashable] = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if not isinstance(key, Hashable):
+                continue  # the base class reports an unhashable key
+            if key in seen:
+                raise ConstructorError(None, None, f"duplicate key {key!r}", key_node.start_mark)
+            seen.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
 def _load_yaml[Item: (BenchmarkCase, QAItem)](path: Path, model: type[Item]) -> tuple[Item, ...]:
     try:
-        document: object = yaml.safe_load(path.read_text(encoding="utf-8"))
+        document: object = yaml.load(path.read_text(encoding="utf-8"), Loader=_UniqueKeyLoader)
     except yaml.YAMLError as exc:
         raise CaseFileError(f"{path}: not valid YAML: {exc}") from exc
     records = [document] if isinstance(document, dict) else document

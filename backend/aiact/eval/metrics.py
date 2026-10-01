@@ -18,13 +18,16 @@ Scoring rules decided here:
   and recall of an uncertain status, whatever the label. So a failed appliedAI `unclear` case is an
   accuracy miss and an ambiguous recall miss; a failed own ambiguous case is an ambiguous recall
   miss only. Metrics defined on an answer (false-low-risk, Annex point, downgrade, citation
-  existence, basis accuracy, flip-variant flagging) leave failed cases out.
+  existence, basis accuracy, label-citation accuracy, flip-variant flagging) leave failed cases
+  out.
 - Citation existence is per case: a case hits when every citation in its result resolves.
 - Basis accuracy (decision 001) scores a case with `accepted_bases` whose label isn't ambiguous,
-  on a result that reached the high-risk step: a high-risk result's basis is `safety_component`
-  for an Annex I point and `within_use_case` otherwise; a lower one that cites an Art. 6(3) point
-  is `art_6_3_filter:<letter>`, and any other lower one is "not listed", which matches
-  `outside_use_case` or `not_safety_component` (the engine doesn't tell them apart).
+  on the high-risk step's own finding (`result_bases`): a high-risk finding's basis is
+  `safety_component` for an Annex I point and `within_use_case` otherwise; a lower one that cites
+  an Art. 6(3) point is `art_6_3_filter:<letter>`, and any other lower one is "not listed", which
+  matches `outside_use_case` or `not_safety_component` (the engine doesn't tell them apart).
+- Label-citation accuracy scores a case with a `label_citation`: does the result cite any entry,
+  with the bare/lettered Art. 6(3) rule (`citation_matches`)?
 - Flip-variant flagging scores a case with `flip_variants`: did the result ask about or flag one
   of the variants' provisions (`flags_flip_variant`)?
 - Academic set (B12 spot-check, user decision 2026-09-28): its `limited`/`minimal` labels don't
@@ -86,6 +89,8 @@ CONSISTENCY_GROUP_PREFIX = "triple:"
 """Tag prefix linking the paraphrases of one system in the consistency set (B8)."""
 
 ANNEX_I_PREFIX = "annex:I:"
+ART_6_3 = "art:6:3"
+"""The bare Art. 6(3) provision_id; `art:6:3:<x>` names one of its conditions."""
 ART_6_3_POINT = re.compile(r"^art:6:3:([a-d])$")
 """An Art. 6(3) condition the high-risk step cites when it exempts a listed use (E5)."""
 NOT_LISTED_BASES = (OUTSIDE_USE_CASE, NOT_SAFETY_COMPONENT)
@@ -238,6 +243,16 @@ def basis_match(outcome: Outcome) -> bool | None:
     return any(basis_matches(basis, case.accepted_bases) for basis in bases)
 
 
+def citation_match(outcome: Outcome) -> bool | None:
+    """Label-citation accuracy: does the result cite any of the case's `label_citation` entries
+    (`citation_matches`)? Cases without a label citation are left out."""
+    label_citation, result = outcome.case.label_citation, outcome.result
+    if not label_citation or result is None:
+        return None
+    cited = (citation.provision_id for citation in _citations(result))
+    return any(citation_matches(provision_id, label_citation) for provision_id in cited)
+
+
 def flip_variant_flagged(outcome: Outcome) -> bool | None:
     """Whether the result asked about or flagged one of the case's flip variants."""
     provisions, result = outcome.case.flip_variant_provisions, outcome.result
@@ -277,6 +292,7 @@ SCORERS: dict[str, Scorer] = {
     "downgrade": downgraded,
     "basis_accuracy": basis_match,
     "flip_variant_flagged": flip_variant_flagged,
+    "citation_accuracy": citation_match,
 }
 
 
@@ -381,12 +397,24 @@ def basis_matches(answer: str, accepted_bases: Collection[str]) -> bool:
     A bare `art_6_3_filter` matches any lettered entry; a lettered `art_6_3_filter:<x>` matches
     the same letter or a bare entry; any other basis must match exactly.
     """
-    if answer in accepted_bases:
+    return _matches_any(answer, accepted_bases, ART_6_3_FILTER)
+
+
+def citation_matches(provision_id: str, label_citation: Collection[str]) -> bool:
+    """Whether a cited provision is one of a label's citations, under the same any-of rule
+    (decision 001): a bare `art:6:3` matches any `art:6:3:<x>` entry, and `art:6:3:<x>` matches
+    the same letter or a bare `art:6:3` entry; anything else must match exactly."""
+    return _matches_any(provision_id, label_citation, ART_6_3)
+
+
+def _matches_any(answer: str, accepted: Collection[str], bare: str) -> bool:
+    """Exact membership, with `bare` and its lettered forms `<bare>:<x>` matching each other."""
+    if answer in accepted:
         return True
-    if answer == ART_6_3_FILTER:
-        return any(entry.startswith(f"{ART_6_3_FILTER}:") for entry in accepted_bases)
-    if answer.startswith(f"{ART_6_3_FILTER}:"):
-        return ART_6_3_FILTER in accepted_bases
+    if answer == bare:
+        return any(entry.startswith(f"{bare}:") for entry in accepted)
+    if answer.startswith(f"{bare}:"):
+        return bare in accepted
     return False
 
 
@@ -410,14 +438,21 @@ def flags_flip_variant(result: ClassificationResult, provisions: Collection[str]
 
 
 def result_bases(result: ClassificationResult) -> tuple[str, ...]:
-    """The bases a result's high-risk answer amounts to, in decision 001's vocabulary; none when
-    the run ended before the high-risk step."""
+    """The bases the high-risk step's own finding amounts to, in decision 001's vocabulary.
+
+    The finding is read from the step, not the final class (an uncertain prohibited step can
+    leave the class `prohibited` above a high-risk finding): the engine sets `annex_point`
+    exactly for a high-risk finding (`engine.state`), so its prefix gives the basis. A high-risk
+    class with no point, or a run that ended before the step, gives none (left unscored).
+    """
     step = next((step for step in result.steps if step.step is StepName.HIGH_RISK), None)
     if step is None:
         return ()
-    if result.risk_class is RiskClass.HIGH_RISK:
-        is_annex_i = (result.annex_point or "").startswith(ANNEX_I_PREFIX)
+    if result.annex_point is not None:
+        is_annex_i = result.annex_point.startswith(ANNEX_I_PREFIX)
         return (SAFETY_COMPONENT,) if is_annex_i else (WITHIN_USE_CASE,)
+    if result.risk_class is RiskClass.HIGH_RISK:
+        return ()
     matches = (ART_6_3_POINT.fullmatch(citation.provision_id) for citation in step.citations)
     letters = dict.fromkeys(match.group(1) for match in matches if match)
     if letters:
@@ -448,6 +483,7 @@ class RunMetrics(ContractModel):
     downgrade: Rate
     basis_accuracy: Rate
     flip_variant_flagged: Rate
+    citation_accuracy: Rate
     consistency: Rate
     citation_existence: Rate
     appliedai_disagreement_review: int
@@ -469,6 +505,7 @@ def summarize(outcomes: Sequence[Outcome], exists: CitationExists | None) -> Run
         downgrade=rate(outcomes, downgraded),
         basis_accuracy=rate(outcomes, basis_match),
         flip_variant_flagged=rate(outcomes, flip_variant_flagged),
+        citation_accuracy=rate(outcomes, citation_match),
         consistency=consistency(outcomes),
         citation_existence=citation_existence(outcomes, exists),
         appliedai_disagreement_review=appliedai_review_count(outcomes),

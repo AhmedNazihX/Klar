@@ -170,6 +170,7 @@ def _rows(metrics: RunMetrics) -> list[tuple[str, Rate | int]]:
         ("Downgrade rate (soft wording)", metrics.downgrade),
         ("Basis accuracy (Commission cases)", metrics.basis_accuracy),
         ("Flip variant asked or flagged", metrics.flip_variant_flagged),
+        ("Label citation cited (any of)", metrics.citation_accuracy),
         ("Consistency", metrics.consistency),
         ("Citation existence (at run time)", metrics.citation_existence),
         ("appliedAI disagreement review", metrics.appliedai_disagreement_review),

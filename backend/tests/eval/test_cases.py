@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from aiact.eval.cases import (
     CASES_DIR,
+    QA_DIR_NAME,
     AppliedAILabel,
     BenchmarkCase,
     CaseFileError,
@@ -23,6 +24,7 @@ from aiact.eval.cases import (
     load_yaml_file,
     score_appliedai,
 )
+from aiact.eval.split import SPLIT_FILE, Split
 from aiact.schemas import Language, RiskClass, Role, Status
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "cases"
@@ -473,8 +475,90 @@ def test_qa_loader_rejects_duplicates_and_a_missing_folder(tmp_path: Path) -> No
 # --- the committed case files ------------------------------------------------------------------
 
 
+YAML_SETS = sorted(set(CaseSet) - {CaseSet.APPLIEDAI})
+
+
 def test_every_committed_case_file_validates() -> None:
-    yaml_sets = sorted(set(CaseSet) - {CaseSet.APPLIEDAI})
-    loaded = {case_set: load_cases(case_set) for case_set in yaml_sets}
+    loaded = {case_set: load_cases(case_set) for case_set in YAML_SETS}
     assert loaded[CaseSet.OWN]
     assert all(isinstance(item, QAItem) for item in load_qa_items())
+
+
+def test_no_committed_case_derives_from_a_pile_a_example() -> None:
+    """B6's rule over every committed case: Pile A stays retrievable, so no case may come from it.
+    Worktrees without the split (the Engine lane's sparse checkout) skip, as test_isolation does."""
+    if not SPLIT_FILE.is_file():
+        pytest.skip(f"{SPLIT_FILE} is missing (this worktree leaves the split out)")
+    split = Split.model_validate_json(SPLIT_FILE.read_text(encoding="utf-8"))
+    cases = [case for case_set in YAML_SETS for case in load_cases(case_set)]
+    assert derived_from_pile_a(cases, split.pile_a) == ()
+
+
+# --- file-level rules --------------------------------------------------------------------------
+
+DUPLICATE_TOP_LEVEL = """\
+id: tmp-001
+set_name: own
+language: en
+language: de
+description: A made-up system.
+label: {risk_class: minimal_risk}
+label_citation: ["art:6:3"]
+"""
+DUPLICATE_ANSWER = """\
+id: tmp-001
+set_name: own
+language: en
+description: A made-up system.
+label: {risk_class: minimal_risk}
+label_citation: ["art:6:3"]
+key_fact_answers:
+  ranks_people: "yes"
+  ranks_people: "no"
+"""
+
+
+@pytest.mark.parametrize(
+    ("text", "key"),
+    [(DUPLICATE_TOP_LEVEL, "language"), (DUPLICATE_ANSWER, "ranks_people")],
+    ids=["top-level-field", "key-fact-answer"],
+)
+def test_a_repeated_key_is_rejected(tmp_path: Path, text: str, key: str) -> None:
+    path = tmp_path / "case.yaml"
+    path.write_text(text, encoding="utf-8")
+    with pytest.raises(CaseFileError, match=f"duplicate key '{key}'"):
+        load_yaml_file(path)
+
+
+def test_a_repeated_key_in_a_qa_item_is_rejected(tmp_path: Path) -> None:
+    folder = tmp_path / "qa"
+    folder.mkdir()
+    (folder / "items.yaml").write_text(
+        yaml.safe_dump(VALID_QA) + "question: Again?\n", encoding="utf-8"
+    )
+    with pytest.raises(CaseFileError, match="duplicate key 'question'"):
+        load_qa_items(tmp_path)
+
+
+def test_the_same_key_in_different_mappings_is_fine(tmp_path: Path) -> None:
+    path = write_yaml(tmp_path, "cases.yaml", [VALID_CASE, with_changes(id="tmp-002")])
+    assert len(load_yaml_file(path)) == 2
+
+
+@pytest.mark.parametrize("name", ["case.yml", "cases.json", "sub/case.yaml.bak"])
+def test_a_stray_file_in_a_case_or_qa_folder_is_rejected(tmp_path: Path, name: str) -> None:
+    for folder in (tmp_path / "own", tmp_path / QA_DIR_NAME):
+        stray = folder / name
+        stray.parent.mkdir(parents=True, exist_ok=True)
+        stray.write_text("id: tmp-001\n", encoding="utf-8")
+    with pytest.raises(CaseFileError, match=r"not a \.yaml case file"):
+        load_cases(CaseSet.OWN, tmp_path)
+    with pytest.raises(CaseFileError, match=r"not a \.yaml case file"):
+        load_qa_items(tmp_path)
+
+
+def test_hidden_files_and_notes_are_allowed_but_not_loaded(tmp_path: Path) -> None:
+    write_yaml(tmp_path / "own", "a.yaml", VALID_CASE)
+    (tmp_path / "own" / ".gitkeep").write_text("", encoding="utf-8")
+    (tmp_path / "own" / "SOURCE.md").write_text("# Source\n", encoding="utf-8")
+    assert [case.id for case in load_cases(CaseSet.OWN, tmp_path)] == ["tmp-001"]
