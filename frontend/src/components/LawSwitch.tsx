@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type JSX, type RefObject } from 'react'
+import { useEffect, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SegmentedControl } from './SegmentedControl'
@@ -17,8 +17,9 @@ export type LawSwitchProps = {
   defaultValue?: LawVersion
   onChange?: (value: LawVersion) => void
   label?: string
-  amendedLabel?: string
-  originalLabel?: string
+  /** The options' labels; a node, so a screen can show a compact label on a phone. */
+  amendedLabel?: ReactNode
+  originalLabel?: ReactNode
   className?: string
 }
 

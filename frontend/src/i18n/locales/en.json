@@ -90,5 +90,59 @@
     "amended": "As amended, 27 Jul 2026",
     "original": "Original, 2024",
     "notice": "You're viewing the original 2024 text. The Digital Omnibus moved the Annex III high-risk date to 2 December 2027; Klar uses the amended text by default."
+  },
+  "nav": {
+    "label": "App",
+    "inventory": "Inventory",
+    "classify": "Classify a tool",
+    "obligations": "Obligations",
+    "documents": "Documents",
+    "ask": "Ask about the Act"
+  },
+  "sidebar": {
+    "companyName": "Your company",
+    "companyEmpty": "No company profile yet",
+    "exportData": "Export data",
+    "deleteData": "Delete my data",
+    "menu": "Menu"
+  },
+  "screen": {
+    "placeholder": "This screen is still being built.",
+    "welcome": "About your company",
+    "inventory": "Your AI tools",
+    "classify": "Describe a tool",
+    "result": "Result",
+    "obligations": "Obligations",
+    "documents": "Draft documents",
+    "document": "Draft document",
+    "ask": "Ask about the Act",
+    "yourData": "Your data"
+  },
+  "site": {
+    "navLabel": "Main",
+    "how": "How it works",
+    "accuracy": "Accuracy",
+    "agents": "For AI agents",
+    "yourData": "Your data",
+    "classify": "Classify a tool",
+    "footer": {
+      "guidance": "Guidance, not legal advice.",
+      "data": "Klar is itself an AI system, and tells you so on every screen. Your descriptions stay in your own anonymous session and are deleted after 30 days without activity. Models are reached through OpenRouter; embeddings run on an EU host. Full list of providers in the privacy notice.",
+      "linksLabel": "Site",
+      "method": "How it’s measured",
+      "privacy": "Privacy",
+      "impressum": "Impressum",
+      "contact": "Contact"
+    },
+    "page": {
+      "method": "How Klar is measured",
+      "privacy": "Privacy notice",
+      "impressum": "Impressum",
+      "contact": "Contact"
+    }
+  },
+  "lawShort": {
+    "amended": "As amended, 2026",
+    "original": "Original, 2024"
   }
 }

@@ -334,13 +334,13 @@
   }
 }
 
-/* A card that opens something lifts 3 px on hover with a deeper shadow. */
+/* A card that opens something lifts 3 px on hover with a deeper shadow (2 px in the app). */
 @utility lift {
   transition:
     transform var(--duration-hover) var(--ease-settle),
     box-shadow var(--duration-hover) var(--ease-settle);
   &:hover {
-    transform: translateY(-3px);
+    transform: translateY(calc(var(--lift-distance, 3px) * -1));
     box-shadow: var(--shadow-glass-lift);
   }
 }
@@ -404,6 +404,66 @@
     backdrop-filter: none;
   }
 }
+
+/* The app is calmer than the public pages (README › Motion › Hover): the glint is white at 18%,
+   not 20%, and cards lift 2 px, not 3. AppFrame carries the class. */
+.app-frame {
+  --glint: rgb(255 255 255 / 0.18);
+  --lift-distance: 2px;
+}
+
+/* app-load:start
+   On load, an app screen's panels settle in reading order, 55 ms apart: the top bar first, then
+   the screen's own panels, the closing Notice last (capped at the tenth step). AppFrame sets
+   .app-intro for 3.5 s (use-load-motion.ts), so the motion never fights hover; the reduced-motion
+   block below turns it off. */
+.app-frame {
+  --app-stagger: 55ms;
+}
+@keyframes app-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.app-intro .app-column > :not(.app-screen),
+.app-intro .app-screen > * {
+  animation: app-rise 0.6s var(--ease-out) both;
+  animation-delay: calc(var(--enter-step, 0) * var(--app-stagger));
+}
+.app-screen > :nth-child(1) {
+  --enter-step: 1;
+}
+.app-screen > :nth-child(2) {
+  --enter-step: 2;
+}
+.app-screen > :nth-child(3) {
+  --enter-step: 3;
+}
+.app-screen > :nth-child(4) {
+  --enter-step: 4;
+}
+.app-screen > :nth-child(5) {
+  --enter-step: 5;
+}
+.app-screen > :nth-child(6) {
+  --enter-step: 6;
+}
+.app-screen > :nth-child(7) {
+  --enter-step: 7;
+}
+.app-screen > :nth-child(8) {
+  --enter-step: 8;
+}
+.app-screen > :nth-child(n + 9),
+.app-column > .app-closing {
+  --enter-step: 9;
+}
+/* app-load:end */
 
 /* law-version:start
    Dates the Digital Omnibus moved follow the law version switch (LawSwitch toggles .law-original on

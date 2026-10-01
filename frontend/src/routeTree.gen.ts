@@ -9,68 +9,441 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as BrandRouteImport } from './routes/brand'
+import { Route as SiteRouteImport } from './routes/_site'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as SiteIndexRouteImport } from './routes/_site/index'
+import { Route as SiteBrandRouteImport } from './routes/_site/brand'
+import { Route as SiteContactRouteImport } from './routes/_site/contact'
+import { Route as SiteDeRouteImport } from './routes/_site/de'
+import { Route as SiteImpressumRouteImport } from './routes/_site/impressum'
+import { Route as SiteMethodRouteImport } from './routes/_site/method'
+import { Route as SitePrivacyRouteImport } from './routes/_site/privacy'
+import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AppAskRouteImport } from './routes/app/ask'
+import { Route as AppClassifyRouteImport } from './routes/app/classify'
+import { Route as AppObligationsRouteImport } from './routes/app/obligations'
+import { Route as AppWelcomeRouteImport } from './routes/app/welcome'
+import { Route as AppYourDataRouteImport } from './routes/app/your-data'
+import { Route as AppDocumentsIndexRouteImport } from './routes/app/documents/index'
+import { Route as AppDocumentsDocumentIdRouteImport } from './routes/app/documents/$documentId'
+import { Route as AppInventoryIndexRouteImport } from './routes/app/inventory/index'
+import { Route as AppInventoryToolIdRouteImport } from './routes/app/inventory/$toolId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SiteRoute = SiteRouteImport.update({
+  id: '/_site',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BrandRoute = BrandRouteImport.update({
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SiteIndexRoute = SiteIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteBrandRoute = SiteBrandRouteImport.update({
   id: '/brand',
   path: '/brand',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteContactRoute = SiteContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteDeRoute = SiteDeRouteImport.update({
+  id: '/de',
+  path: '/de',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteImpressumRoute = SiteImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteMethodRoute = SiteMethodRouteImport.update({
+  id: '/method',
+  path: '/method',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SitePrivacyRoute = SitePrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => SiteRoute,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAskRoute = AppAskRouteImport.update({
+  id: '/ask',
+  path: '/ask',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClassifyRoute = AppClassifyRouteImport.update({
+  id: '/classify',
+  path: '/classify',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppObligationsRoute = AppObligationsRouteImport.update({
+  id: '/obligations',
+  path: '/obligations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWelcomeRoute = AppWelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppYourDataRoute = AppYourDataRouteImport.update({
+  id: '/your-data',
+  path: '/your-data',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDocumentsIndexRoute = AppDocumentsIndexRouteImport.update({
+  id: '/documents/',
+  path: '/documents/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
+  id: '/documents/$documentId',
+  path: '/documents/$documentId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInventoryIndexRoute = AppInventoryIndexRouteImport.update({
+  id: '/inventory/',
+  path: '/inventory/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInventoryToolIdRoute = AppInventoryToolIdRouteImport.update({
+  id: '/inventory/$toolId',
+  path: '/inventory/$toolId',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/brand': typeof BrandRoute
+  '/': typeof SiteIndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/brand': typeof SiteBrandRoute
+  '/contact': typeof SiteContactRoute
+  '/de': typeof SiteDeRoute
+  '/impressum': typeof SiteImpressumRoute
+  '/method': typeof SiteMethodRoute
+  '/privacy': typeof SitePrivacyRoute
+  '/app/ask': typeof AppAskRoute
+  '/app/classify': typeof AppClassifyRoute
+  '/app/obligations': typeof AppObligationsRoute
+  '/app/welcome': typeof AppWelcomeRoute
+  '/app/your-data': typeof AppYourDataRoute
+  '/app/': typeof AppIndexRoute
+  '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
+  '/app/inventory/$toolId': typeof AppInventoryToolIdRoute
+  '/app/documents/': typeof AppDocumentsIndexRoute
+  '/app/inventory/': typeof AppInventoryIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/brand': typeof BrandRoute
+  '/brand': typeof SiteBrandRoute
+  '/contact': typeof SiteContactRoute
+  '/de': typeof SiteDeRoute
+  '/impressum': typeof SiteImpressumRoute
+  '/method': typeof SiteMethodRoute
+  '/privacy': typeof SitePrivacyRoute
+  '/app/ask': typeof AppAskRoute
+  '/app/classify': typeof AppClassifyRoute
+  '/app/obligations': typeof AppObligationsRoute
+  '/app/welcome': typeof AppWelcomeRoute
+  '/app/your-data': typeof AppYourDataRoute
+  '/': typeof SiteIndexRoute
+  '/app': typeof AppIndexRoute
+  '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
+  '/app/inventory/$toolId': typeof AppInventoryToolIdRoute
+  '/app/documents': typeof AppDocumentsIndexRoute
+  '/app/inventory': typeof AppInventoryIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/brand': typeof BrandRoute
+  '/_site': typeof SiteRouteWithChildren
+  '/app': typeof AppRouteWithChildren
+  '/_site/brand': typeof SiteBrandRoute
+  '/_site/contact': typeof SiteContactRoute
+  '/_site/de': typeof SiteDeRoute
+  '/_site/impressum': typeof SiteImpressumRoute
+  '/_site/method': typeof SiteMethodRoute
+  '/_site/privacy': typeof SitePrivacyRoute
+  '/app/ask': typeof AppAskRoute
+  '/app/classify': typeof AppClassifyRoute
+  '/app/obligations': typeof AppObligationsRoute
+  '/app/welcome': typeof AppWelcomeRoute
+  '/app/your-data': typeof AppYourDataRoute
+  '/_site/': typeof SiteIndexRoute
+  '/app/': typeof AppIndexRoute
+  '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
+  '/app/inventory/$toolId': typeof AppInventoryToolIdRoute
+  '/app/documents/': typeof AppDocumentsIndexRoute
+  '/app/inventory/': typeof AppInventoryIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/brand'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/brand'
+    | '/contact'
+    | '/de'
+    | '/impressum'
+    | '/method'
+    | '/privacy'
+    | '/app/ask'
+    | '/app/classify'
+    | '/app/obligations'
+    | '/app/welcome'
+    | '/app/your-data'
+    | '/app/'
+    | '/app/documents/$documentId'
+    | '/app/inventory/$toolId'
+    | '/app/documents/'
+    | '/app/inventory/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/brand'
-  id: '__root__' | '/' | '/brand'
+  to:
+    | '/brand'
+    | '/contact'
+    | '/de'
+    | '/impressum'
+    | '/method'
+    | '/privacy'
+    | '/app/ask'
+    | '/app/classify'
+    | '/app/obligations'
+    | '/app/welcome'
+    | '/app/your-data'
+    | '/'
+    | '/app'
+    | '/app/documents/$documentId'
+    | '/app/inventory/$toolId'
+    | '/app/documents'
+    | '/app/inventory'
+  id:
+    | '__root__'
+    | '/_site'
+    | '/app'
+    | '/_site/brand'
+    | '/_site/contact'
+    | '/_site/de'
+    | '/_site/impressum'
+    | '/_site/method'
+    | '/_site/privacy'
+    | '/app/ask'
+    | '/app/classify'
+    | '/app/obligations'
+    | '/app/welcome'
+    | '/app/your-data'
+    | '/_site/'
+    | '/app/'
+    | '/app/documents/$documentId'
+    | '/app/inventory/$toolId'
+    | '/app/documents/'
+    | '/app/inventory/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  BrandRoute: typeof BrandRoute
+  SiteRoute: typeof SiteRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_site': {
+      id: '/_site'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof SiteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/brand': {
-      id: '/brand'
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_site/': {
+      id: '/_site/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof SiteIndexRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/brand': {
+      id: '/_site/brand'
       path: '/brand'
       fullPath: '/brand'
-      preLoaderRoute: typeof BrandRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof SiteBrandRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/contact': {
+      id: '/_site/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof SiteContactRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/de': {
+      id: '/_site/de'
+      path: '/de'
+      fullPath: '/de'
+      preLoaderRoute: typeof SiteDeRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/impressum': {
+      id: '/_site/impressum'
+      path: '/impressum'
+      fullPath: '/impressum'
+      preLoaderRoute: typeof SiteImpressumRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/method': {
+      id: '/_site/method'
+      path: '/method'
+      fullPath: '/method'
+      preLoaderRoute: typeof SiteMethodRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/privacy': {
+      id: '/_site/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof SitePrivacyRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/ask': {
+      id: '/app/ask'
+      path: '/ask'
+      fullPath: '/app/ask'
+      preLoaderRoute: typeof AppAskRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/classify': {
+      id: '/app/classify'
+      path: '/classify'
+      fullPath: '/app/classify'
+      preLoaderRoute: typeof AppClassifyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/obligations': {
+      id: '/app/obligations'
+      path: '/obligations'
+      fullPath: '/app/obligations'
+      preLoaderRoute: typeof AppObligationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/welcome': {
+      id: '/app/welcome'
+      path: '/welcome'
+      fullPath: '/app/welcome'
+      preLoaderRoute: typeof AppWelcomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/your-data': {
+      id: '/app/your-data'
+      path: '/your-data'
+      fullPath: '/app/your-data'
+      preLoaderRoute: typeof AppYourDataRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/documents/': {
+      id: '/app/documents/'
+      path: '/documents'
+      fullPath: '/app/documents/'
+      preLoaderRoute: typeof AppDocumentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/documents/$documentId': {
+      id: '/app/documents/$documentId'
+      path: '/documents/$documentId'
+      fullPath: '/app/documents/$documentId'
+      preLoaderRoute: typeof AppDocumentsDocumentIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/inventory/': {
+      id: '/app/inventory/'
+      path: '/inventory'
+      fullPath: '/app/inventory/'
+      preLoaderRoute: typeof AppInventoryIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/inventory/$toolId': {
+      id: '/app/inventory/$toolId'
+      path: '/inventory/$toolId'
+      fullPath: '/app/inventory/$toolId'
+      preLoaderRoute: typeof AppInventoryToolIdRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
 
+interface SiteRouteChildren {
+  SiteBrandRoute: typeof SiteBrandRoute
+  SiteContactRoute: typeof SiteContactRoute
+  SiteDeRoute: typeof SiteDeRoute
+  SiteImpressumRoute: typeof SiteImpressumRoute
+  SiteMethodRoute: typeof SiteMethodRoute
+  SitePrivacyRoute: typeof SitePrivacyRoute
+  SiteIndexRoute: typeof SiteIndexRoute
+}
+
+const SiteRouteChildren: SiteRouteChildren = {
+  SiteBrandRoute: SiteBrandRoute,
+  SiteContactRoute: SiteContactRoute,
+  SiteDeRoute: SiteDeRoute,
+  SiteImpressumRoute: SiteImpressumRoute,
+  SiteMethodRoute: SiteMethodRoute,
+  SitePrivacyRoute: SitePrivacyRoute,
+  SiteIndexRoute: SiteIndexRoute,
+}
+
+const SiteRouteWithChildren = SiteRoute._addFileChildren(SiteRouteChildren)
+
+interface AppRouteChildren {
+  AppAskRoute: typeof AppAskRoute
+  AppClassifyRoute: typeof AppClassifyRoute
+  AppObligationsRoute: typeof AppObligationsRoute
+  AppWelcomeRoute: typeof AppWelcomeRoute
+  AppYourDataRoute: typeof AppYourDataRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
+  AppInventoryToolIdRoute: typeof AppInventoryToolIdRoute
+  AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
+  AppInventoryIndexRoute: typeof AppInventoryIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAskRoute: AppAskRoute,
+  AppClassifyRoute: AppClassifyRoute,
+  AppObligationsRoute: AppObligationsRoute,
+  AppWelcomeRoute: AppWelcomeRoute,
+  AppYourDataRoute: AppYourDataRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
+  AppInventoryToolIdRoute: AppInventoryToolIdRoute,
+  AppDocumentsIndexRoute: AppDocumentsIndexRoute,
+  AppInventoryIndexRoute: AppInventoryIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  BrandRoute: BrandRoute,
+  SiteRoute: SiteRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
