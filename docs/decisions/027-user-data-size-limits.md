@@ -101,6 +101,7 @@ a real export is older than the new owner, and the import must keep its dates an
   - `supabase/migrations/20261001190510_user_data_size_limits.sql`: the cap, the budget, the trigger and the backfill.
   - `supabase/migrations/20261001194931_storage_lock_order.sql` and `20261001200031_purge_lock_order.sql`: the
     lock order for session writes and for the cleanup.
+    `20261001200834_purge_uses_anonymous_index.sql` keeps the cleanup's target select on `users_is_anonymous_idx`.
   - `supabase/migrations/20261001182534_created_at_floor.sql`: the date floor.
   - `20261001181716_import_size_cap.sql` (which dropped the cap) is superseded.
   - The tests are in `backend/tests/db/test_user_data_schema.py`:
