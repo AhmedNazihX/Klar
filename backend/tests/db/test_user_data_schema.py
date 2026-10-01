@@ -468,8 +468,12 @@ def _fill(db: psycopg.Connection, user_id: UUID, system: UUID, leave: int) -> No
     acting as `user_id`)."""
     largest, base = _classification_bytes(db, MAX_RESULT_TEXT), _classification_bytes(db, 0)
     free = STORAGE_BUDGET - _usage(db, user_id) - leave
+    lengths = _filler_lengths(free, base, largest)
+    # Fail fast if export_bytes stops growing with the text: the fill would never end.
+    assert largest - base == MAX_RESULT_TEXT
+    assert len(lengths) <= STORAGE_BUDGET // MAX_RESULT_TEXT + 2
     with as_user(db, user_id):
-        for offset, length in enumerate(_filler_lengths(free, base, largest)):
+        for offset, length in enumerate(lengths):
             _add_classification(db, system, length, age=offset + 1)
     assert _usage(db, user_id) == STORAGE_BUDGET - leave
 
@@ -540,6 +544,66 @@ def test_deleting_frees_space(db: psycopg.Connection) -> None:
     assert _usage(db, user) == 0
 
 
+SECOND_ROWS: dict[str, LiteralString] = {
+    "inventories": "insert into inventories (name, created_at) values ('Zweite \"Liste\"', %(at)s)"
+    " returning to_jsonb(inventories)",
+    "systems": "insert into systems (inventory_id, name, description, created_at)"
+    " values (%(inventory)s, 'Bewerber-Ranking', 'Sortiert Bewerbungen für Ärzte.', %(at)s)"
+    " returning to_jsonb(systems)",
+    "classifications": "insert into classifications"
+    " (system_id, risk_class, status, law_version, result, created_at)"
+    " values (%(system)s, 'minimal_risk', 'decided', 'original', '{\"a\": \"é\", \"b\": [1]}',"
+    " %(at)s) returning to_jsonb(classifications)",
+    "interview_answers": "insert into interview_answers (system_id, template, question_key, answer)"
+    " values (%(system)s, 'art_27', 'q2', 'Line one\nline \"two\".')"
+    " returning to_jsonb(interview_answers)",
+}
+"""A second row per table (so each export array already has a first child), with quotes, accents
+and a newline that the export's text escapes."""
+
+FULL_PRECISION_TIME = "2026-09-30T12:34:56.123456+00:00"
+"""A created_at that renders at its widest (32 characters) in UTC."""
+
+
+def _export_size(db: psycopg.Connection) -> int:
+    return _one(db, "select octet_length(export_my_data()::text)")
+
+
+@pytest.mark.parametrize("table", USER_TABLES)
+def test_a_rows_stored_size_is_what_it_adds_to_the_export(
+    db: psycopg.Connection, table: str
+) -> None:
+    user, rows = _user_with_system(db)
+    db.execute("set local timezone = 'UTC'")
+    params = {
+        "at": FULL_PRECISION_TIME,
+        "inventory": rows["inventories"],
+        "system": rows["systems"],
+    }
+    with as_user(db, user):
+        before = _export_size(db)
+        row = _one(db, SECOND_ROWS[table], params)
+        growth = _export_size(db) - before
+    assert _one(db, "select private.export_bytes(%s, %s)", (table, Jsonb(row))) == growth
+
+
+def test_a_write_that_does_not_grow_the_data_passes_over_the_budget(
+    db: psycopg.Connection,
+) -> None:
+    user, rows = _user_with_system(db)
+    db.execute(
+        "update private.storage_usage set bytes = %s where user_id = %s",
+        (STORAGE_BUDGET + 1000, user),
+    )
+    with as_user(db, user):
+        db.execute("update interview_answers set answer = ''")
+        db.execute("update inventories set name = name")
+        with _raises_sqlstate(db, STORAGE_FULL):
+            db.execute("update inventories set name = name || 'x'")
+        with _raises_sqlstate(db, STORAGE_FULL):
+            _add_classification(db, rows["systems"], 0)
+
+
 def test_an_import_past_the_budget_adds_nothing(db: psycopg.Connection) -> None:
     (user_a, _), (user_b, rows_b) = _user_with_system(db), _user_with_system(db)
     with as_user(db, user_a):
@@ -552,53 +616,93 @@ def test_an_import_past_the_budget_adds_nothing(db: psycopg.Connection) -> None:
     assert _usage(db, user_b) == STORAGE_BUDGET - 100
 
 
-def _waits_for_a_lock(db: psycopg.Connection, pid: int) -> bool:
-    return (
-        _one(db, "select wait_event_type = 'Lock' from pg_stat_activity where pid = %s", (pid,))
-        is True
-    )
+def _wait_until_blocked(admin: psycopg.Connection, pid: int) -> None:
+    """Return once backend `pid` waits for a lock; fail after LOCK_WAIT_SECONDS."""
+    deadline = time.monotonic() + LOCK_WAIT_SECONDS
+    query = "select wait_event_type = 'Lock' from pg_stat_activity where pid = %s"
+    while _one(admin, query, (pid,)) is not True:
+        assert time.monotonic() < deadline, f"backend {pid} never waited for a lock"
+        admin.rollback()  # pg_stat_activity is a snapshot per transaction
+    admin.rollback()
 
 
-def test_concurrent_writes_cannot_both_pass_the_budget(db_connection: psycopg.Connection) -> None:
-    """Two sessions of one user, room for one more row: the second waits for the first, then fails.
-    The race needs a real commit, so this test commits a throwaway user and deletes it at the end.
-    """
-    admin = db_connection
+@contextmanager
+def _committed_user(admin: psycopg.Connection) -> Iterator[tuple[UUID, dict[str, UUID]]]:
+    """A user with one row per table, committed so that other sessions see it (the lock tests
+    need two real sessions), and deleted with all their data afterwards."""
     admin.rollback()
     user, rows = _user_with_system(admin)
-    _fill(admin, user, rows["systems"], leave=_classification_bytes(admin, 0))
     admin.commit()
-    system = rows["systems"]
     try:
-        with (
-            psycopg.connect(_database_url()) as first,
-            psycopg.connect(_database_url()) as second,
-            ThreadPoolExecutor(max_workers=1) as pool,
-        ):
-            with as_user(first, user):
-                _add_classification(first, system, 0)
-                second_pid = _one(second, "select pg_backend_pid()")
-                second.rollback()
-
-                def write_second() -> None:
-                    with as_user(second, user), second.transaction():
-                        _add_classification(second, system, 0)
-
-                pending = pool.submit(write_second)
-                deadline = time.monotonic() + LOCK_WAIT_SECONDS
-                while not _waits_for_a_lock(admin, second_pid):
-                    assert time.monotonic() < deadline, "the second write never waited"
-                    admin.rollback()
-                admin.rollback()
-            first.commit()
-            with pytest.raises(psycopg.Error) as caught:
-                pending.result(timeout=LOCK_WAIT_SECONDS)
-            assert caught.value.sqlstate == STORAGE_FULL
+        yield user, rows
     finally:
         admin.rollback()
         admin.execute("delete from auth.users where id = %s", (user,))
         admin.commit()
+
+
+def _pid(connection: psycopg.Connection) -> int:
+    pid = _one(connection, "select pg_backend_pid()")
+    connection.rollback()
+    return pid
+
+
+def test_concurrent_writes_cannot_both_pass_the_budget(db_connection: psycopg.Connection) -> None:
+    """Two sessions of one user, room for one more row: the second waits for the first, then
+    fails."""
+    admin = db_connection
+    with (
+        _committed_user(admin) as (user, rows),
+        psycopg.connect(_database_url()) as first,
+        psycopg.connect(_database_url()) as second,
+        ThreadPoolExecutor(max_workers=1) as pool,
+    ):
+        system = rows["systems"]
+        _fill(admin, user, system, leave=_classification_bytes(admin, 0))
+        admin.commit()
+        second_pid = _pid(second)
+
+        def write_second() -> None:
+            with as_user(second, user), second.transaction():
+                _add_classification(second, system, 0)
+
+        with as_user(first, user):
+            _add_classification(first, system, 0)
+            pending = pool.submit(write_second)
+            _wait_until_blocked(admin, second_pid)
+        first.commit()
+        with pytest.raises(psycopg.Error) as caught:
+            pending.result(timeout=LOCK_WAIT_SECONDS)
+        assert caught.value.sqlstate == STORAGE_FULL
     assert _usage(admin, user) == 0
+
+
+def test_a_delete_racing_an_insert_does_not_deadlock(db_connection: psycopg.Connection) -> None:
+    """delete_my_data's order (answers, then systems) against an insert under one of the systems.
+    Every writer locks the user's storage total before any row, so the insert waits without holding
+    its system's KEY SHARE lock, and the delete of the systems never waits for it."""
+    admin = db_connection
+    with (
+        _committed_user(admin) as (user, rows),
+        psycopg.connect(_database_url()) as deleting,
+        psycopg.connect(_database_url()) as inserting,
+        ThreadPoolExecutor(max_workers=1) as pool,
+    ):
+        inserting_pid = _pid(inserting)
+
+        def insert() -> None:
+            with as_user(inserting, user), inserting.transaction():
+                _add_classification(inserting, rows["systems"], 0)
+
+        with as_user(deleting, user):
+            deleting.execute("delete from interview_answers")
+            pending = pool.submit(insert)
+            _wait_until_blocked(admin, inserting_pid)
+            deleting.execute("set local lock_timeout = '3s'")
+            deleting.execute("delete from systems")
+        deleting.rollback()
+        pending.result(timeout=LOCK_WAIT_SECONDS)  # the insert goes ahead, no 40P01
+        inserting.rollback()
 
 
 @pytest.mark.parametrize(

@@ -68,9 +68,15 @@ half the memory goes to shared buffers, the OS and the other connections, which 
 - **How it's kept:** a running total per user in `private.storage_usage`, updated by an `after` row trigger
   (`private.track_storage()`) on the four tables. A sum over the user's rows on every write would read up to 4 MB
   per insert, and an import of n rows would read it n times.
-- **Concurrency:** the trigger's upsert locks the user's `storage_usage` row until the transaction ends. A second
+- **Concurrency:** the user's `storage_usage` row is the per-user lock, held until the transaction ends. A second
   writer for the same user waits, then re-reads the committed total and is checked against it. That row lock does
   the job of a per-user `pg_advisory_xact_lock`, so none is taken.
+- **Lock order:** a statement-level `before` trigger (`private.lock_storage()`) locks the caller's
+  `storage_usage` row before any row is written, so every writer takes its locks in the same order: the total
+  first, then the rows and the KEY SHARE locks of their foreign keys. With the total locked only in the `after`
+  row trigger, `delete_my_data` (which locks the total on the answers, then deletes the systems) and a concurrent
+  classification insert (which holds KEY SHARE on its system, then waits for the total) deadlocked (40P01). A
+  two-connection test reproduced that before the fix and passes after it.
 - **Resulting quota:** about **130 typical** (30 kB) or **15 maximum-size** (256 kB) classifications per user,
   with their systems and answers.
 
@@ -84,20 +90,33 @@ a real export is older than the new owner, and the import must keep its dates an
 ## Consequences
 - **Where it lives:**
   - `supabase/migrations/20261001190510_user_data_size_limits.sql`: the cap, the budget, the trigger and the backfill.
+  - `supabase/migrations/20261001194931_storage_lock_order.sql`: the lock order.
   - `supabase/migrations/20261001182534_created_at_floor.sql`: the date floor.
   - `20261001181716_import_size_cap.sql` (which dropped the cap) is superseded.
   - The tests are in `backend/tests/db/test_user_data_schema.py`:
     - `IMPORT_MAX_BYTES` and `STORAGE_BUDGET`, with a boundary test at and over the cap.
     - A full-budget round trip, the budget and delete tests, and an import past the budget.
-    - A two-connection race.
+    - A per-table test that a row's stored size equals what it adds to the export, and one that a write which
+      doesn't grow the data passes over the budget.
+    - Two-connection tests: the budget race, and the delete-versus-insert deadlock.
 - **Changing the cap** means editing `max_bytes` in `import_my_data`, `budget` in `private.track_storage()` and the
   two test constants together; the round-trip test fails if the budget no longer fits the cap.
 - **Keep the measure in step:** `private.export_bytes()` mirrors the objects `export_my_data()` builds. If the
-  export gains a field, `export_bytes` must gain it too, or the full-budget round-trip test can export over the cap.
+  export gains a field, `export_bytes` must gain it too; `test_a_rows_stored_size_is_what_it_adds_to_the_export`
+  fails when the two differ.
 - **P18/P19 (frontend):** show "storage full" (PT507, with its hint to delete old classifications) and "file too
   large" (PT413) as distinct messages, and tell them apart from "not an export" (22023).
-- **Open limitation, left to S3:** nothing in front of PostgREST limits a request body. The local Kong config has (as found in the P3b review)
-  `client_max_body_size 0`, and the hosted gateway's limit is unknown. The 4 MB check runs only after the whole
-  body has been received and parsed, so S3 should set a body limit of a few MB at the gateway.
+- **Open limitations; S3 is gated on both** (the user, 2026-10-01, on the P3b security review). No public URL
+  until both are closed:
+  - **(HIGH) No request-body limit in front of PostgREST.** The local Kong config has `client_max_body_size 0` (as
+    found in the P3b review), and the hosted gateway's limit is unknown. PostgREST parses the whole body into jsonb
+    before `import_my_data`'s 4 MB check runs, at about 11 times the body's size: an 8.4 MB body that is then
+    rejected still costs about 145 MiB, and a 33.6 MB body about 480 MiB (security review measurements). A direct
+    bulk insert into the tables costs about the same. Only a body limit at the gateway stops an oversized
+    request. **S3 gate:** a gateway body limit of a few MB, with a test that an oversized body gets HTTP 413
+    before it reaches PostgREST.
+  - **(MEDIUM) Nothing enforces "4 imports at once".** PostgREST's default `db-pool` is 10 connections, so 10
+    imports of about 80–100 MiB each come to about 1 GB. **S3 gate:** size the concurrency to the real instance:
+    a smaller pool, or N import slots, so that pool × per-import memory fits.
 - **Revisit** if the hosting target turns out larger than 1 GB, or if option D (a set-based import) is measured:
   either would allow a larger cap.
