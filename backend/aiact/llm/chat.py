@@ -8,9 +8,17 @@ the privacy routing flags from `aiact.llm.routing`.
 from collections.abc import Sequence
 from typing import Literal
 
+import httpx
+import openrouter
 from langchain_openrouter import ChatOpenRouter
 
-from aiact.llm.routing import APP_TITLE, provider_preferences, require_api_key, require_setting
+from aiact.llm.routing import (
+    APP_TITLE,
+    NO_RETRIES,
+    provider_preferences,
+    require_api_key,
+    require_setting,
+)
 from aiact.settings import Settings, get_settings
 
 ModelRole = Literal["engine", "judge", "judge_backup", "label_filter", "ragas"]
@@ -19,7 +27,21 @@ ModelRole = Literal["engine", "judge", "judge_backup", "label_filter", "ragas"]
 DEFAULT_TEMPERATURE = 0.0
 """Classification and judging want repeatable answers."""
 DEFAULT_MAX_RETRIES = 2
-"""ChatOpenRouter's own default; 0 makes every billed attempt one the caller's callbacks see."""
+"""ChatOpenRouter's own default. With 0, the model gets a client that makes exactly one attempt
+(`client_without_retries`), so every billed attempt is one the caller's callbacks see:
+ChatOpenRouter's own `max_retries=0` only leaves the SDK on its default retries."""
+
+
+def client_without_retries(
+    settings: Settings, http: httpx.Client | None = None
+) -> openrouter.OpenRouter:
+    """An OpenRouter SDK client that never retries; `http` replaces the transport (tests)."""
+    return openrouter.OpenRouter(
+        api_key=require_api_key(settings).get_secret_value(),
+        x_open_router_title=APP_TITLE,
+        retry_config=NO_RETRIES,
+        client=http,
+    )
 
 
 def chat_model(
@@ -33,7 +55,8 @@ def chat_model(
     max_retries: int = DEFAULT_MAX_RETRIES,
     settings: Settings | None = None,
 ) -> ChatOpenRouter:
-    """Build a chat model for `role`, or for an explicit OpenRouter `model` slug.
+    """Build a chat model for `role`, or for an explicit OpenRouter `model` slug. With
+    `max_retries=0` it makes exactly one attempt per call.
 
     Raises `LLMConfigError` when the model id for the role or the API key is not set.
     """
@@ -45,6 +68,7 @@ def chat_model(
         temperature=temperature,
         max_tokens=max_tokens,
         max_retries=max_retries,
+        client=client_without_retries(settings) if max_retries == 0 else None,
         openrouter_provider=provider_preferences(provider_order, allow_fallbacks=allow_fallbacks),
         app_title=APP_TITLE,
     )

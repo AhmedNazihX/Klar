@@ -27,12 +27,12 @@ pytestmark = pytest.mark.db
 GIT_STATE = ("0123456789abcdef0123456789abcdef01234567", False)
 
 
-def probes(count: int = 4) -> tuple[Probe, ...]:
+def probes(count: int = 4, prefix: str = "fixture-smoke") -> tuple[Probe, ...]:
     return tuple(
         Probe(
             NodeName.ROLE,
             BenchmarkCase(
-                id=f"fixture-smoke-{number}",
+                id=f"{prefix}-{number}",
                 set_name=CaseSet.OWN,
                 language=Language.EN,
                 description=f"Made-up description {number}",
@@ -68,10 +68,11 @@ def run(
     role: Role,
     count: int = 4,
     max_cost_usd: float = smoke.DEFAULT_MAX_COST_USD,
+    prefix: str = "fixture-smoke",
 ) -> smoke.ArmRun:
     return smoke.run_arm(
         arm,
-        probes(count),
+        probes(count, prefix),
         PostgresRunStore(db),
         SETTINGS,
         GIT_STATE,
@@ -115,6 +116,13 @@ def test_runs_given_as_the_wrong_model_are_refused(db: psycopg.Connection) -> No
 
 def test_runs_that_planned_different_probes_are_refused(db: psycopg.Connection) -> None:
     luna, gemini = run(db, LUNA, Role.DEPLOYER, count=4), run(db, GEMINI, Role.DEPLOYER, count=3)
+    with pytest.raises(SmokeRunError, match="did not plan the same probes"):
+        smoke_verdict.compare_runs(db, {"luna": luna.run_id, "gemini": gemini.run_id})
+
+
+def test_runs_of_the_same_size_on_other_cases_are_refused(db: psycopg.Connection) -> None:
+    luna = run(db, LUNA, Role.DEPLOYER, count=4)
+    gemini = run(db, GEMINI, Role.DEPLOYER, count=4, prefix="fixture-other")
     with pytest.raises(SmokeRunError, match="did not plan the same probes"):
         smoke_verdict.compare_runs(db, {"luna": luna.run_id, "gemini": gemini.run_id})
 

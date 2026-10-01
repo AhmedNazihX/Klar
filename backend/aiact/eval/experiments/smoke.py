@@ -17,19 +17,22 @@ one the probe counts.
 A probe's outcome is one of three:
 - **broken**: the model answered, but the answer doesn't fit the node's schema or the result
   contract (the node's `*OutputError`, or a `ValidationError` from the contract: cross-field rules
-  aren't in the JSON Schema, decision 010 addendum), or it names a provision the corpus doesn't
-  have. A reply cut off by the output cap is broken too (E5: Luna's reasoning ran out at 3000
-  tokens). The nodes make no tool calls: retrieval is code, and structured output is the model's
-  only interface.
+  aren't in the JSON Schema, decision 010 addendum). A reply cut off by the output cap is broken
+  too (E5: Luna's reasoning ran out at 3000 tokens). The nodes make no tool calls: retrieval is
+  code, and structured output is the model's only interface.
 - **failed**: no usable answer came back: a transport, provider or database error, or a reply
-  served by another provider than the pinned one (OpenRouter's generation record, `generations`).
+  that isn't shown to come from the pinned provider (OpenRouter's generation record, `generations`:
+  another provider, no generation id, or a record that can't be read).
   Not counted as broken or wrong, but too many of them make the comparison inconclusive.
 - **answered**: scored against the label (facts: not scored).
 
-Any other error (a missing setting, a bug, a corpus without the fixed provisions) stops the run.
+Any other error (a missing setting, a bug, a provision the corpus lacks) stops the run. Neither
+check lets the model name a provision (scope cites fixed rules, high_risk picks from the retrieved
+points), so a missing provision is a corpus gap, never the model's fault.
 Each model's run is one `eval_runs` row (`config.experiment` = `x2_engine_smoke`) with one
 `eval_case_results` row per probe (`case_id` = `<node>:<case id>`). Cost is OpenRouter's
-`usage.cost` per call, or the token-price estimate when it's missing; embedding calls for
+`usage.cost` per call, or the token-price estimate when it's missing, or the probe's worst case
+when the usage is missing too; embedding calls for
 retrieval are not counted (a few hundred tokens per search at $0.01/M, the same for both models).
 """
 
@@ -66,7 +69,6 @@ from aiact.eval.runner import CaseRecord, RunStore, Score, label_record
 from aiact.llm import EmbeddingError, engine_chat_model
 from aiact.llm.generations import GenerationLookup, GenerationLookupError
 from aiact.llm.structured import describe_validation_error
-from aiact.retrieval.provisions import ProvisionNotFoundError
 from aiact.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -232,11 +234,13 @@ def is_correct(probe: Probe, outcome: FactsOutcome | CheckOutcome) -> bool | Non
 
 
 class UsageTracker(BaseCallbackHandler):
-    """The calls of one probe: their cost (OpenRouter's `usage.cost`, or the arm's token prices
-    when it's missing), tokens and generation ids."""
+    """The calls of one probe: their cost (OpenRouter's `usage.cost`; the arm's token prices when
+    it's missing; the node's worst case when the usage is missing too), tokens and generation
+    ids."""
 
-    def __init__(self, arm: ModelArm) -> None:
+    def __init__(self, arm: ModelArm, node: NodeName) -> None:
         self.arm = arm
+        self.node = node
         self.calls = 0
         self.cost_usd = 0.0
         self.tokens = 0
@@ -262,10 +266,12 @@ class UsageTracker(BaseCallbackHandler):
         usage = message.usage_metadata
         prompt, completion = (usage["input_tokens"], usage["output_tokens"]) if usage else (0, 0)
         cost = message.response_metadata.get("cost")
-        if not isinstance(cost, int | float):
-            self.is_cost_estimated = True
-            cost = self.arm.price(prompt, completion)
-        return float(cost), prompt + completion
+        if isinstance(cost, int | float):
+            return float(cost), prompt + completion
+        self.is_cost_estimated = True
+        if usage is None:
+            return worst_case_cost(self.node, self.arm), 0
+        return self.arm.price(prompt, completion), prompt + completion
 
 
 NodeRunner = Callable[[EngineState], FactsOutcome | CheckOutcome]
@@ -322,14 +328,6 @@ def is_no_answer(exc: Exception) -> bool:
     return isinstance(exc, ValueError) and str(exc).startswith(PROVIDER_ERROR_PREFIXES)
 
 
-def is_broken(exc: Exception, tracker: UsageTracker) -> bool:
-    """A broken answer; an unknown provision counts only once the model has answered (scope
-    cites the provisions its answer names), since before that it's the corpus that lacks it."""
-    if isinstance(exc, BROKEN_OUTPUT_ERRORS):
-        return True
-    return isinstance(exc, ProvisionNotFoundError) and tracker.calls > 0
-
-
 class ProbeKind(StrEnum):
     ANSWERED = "answered"
     BROKEN = "broken"
@@ -349,11 +347,11 @@ class _Ran:
     correct: bool | None
 
 
-def _run_node(probe: Probe, node: NodeRunner, state: EngineState, tracker: UsageTracker) -> _Ran:
+def _run_node(probe: Probe, node: NodeRunner, state: EngineState) -> _Ran:
     try:
         outcome = node(state)
     except Exception as exc:
-        if is_broken(exc, tracker):
+        if isinstance(exc, BROKEN_OUTPUT_ERRORS):
             correct = None if probe.node is NodeName.FACTS else False
             return _Ran(ProbeKind.BROKEN, {"error": _error(exc)}, correct)
         if not is_no_answer(exc):
@@ -363,16 +361,29 @@ def _run_node(probe: Probe, node: NodeRunner, state: EngineState, tracker: Usage
     return _Ran(ProbeKind.ANSWERED, outcome.model_dump(mode="json"), is_correct(probe, outcome))
 
 
-def _served(tracker: UsageTracker, served_by: ServedBy) -> tuple[list[str], str | None]:
-    """The provider of each call, and why the probe can't count if one isn't the pinned one."""
+@dataclass(frozen=True)
+class _Served:
+    """Who served the probe's calls. `as_pinned` is True when every call is shown to come from
+    the pinned provider, False when one is shown to come from another, and None when unknown;
+    `not_counted` says why a reply can't count."""
+
+    providers: tuple[str, ...] = ()
+    as_pinned: bool | None = None
+    not_counted: str | None = None
+
+
+def _served(tracker: UsageTracker, has_reply: bool, served_by: ServedBy) -> _Served:
+    if not tracker.generation_ids:
+        return _Served(not_counted="the reply carries no generation id") if has_reply else _Served()
     try:
-        names = [served_by(generation_id) for generation_id in tracker.generation_ids]
+        names = tuple(served_by(generation_id) for generation_id in tracker.generation_ids)
     except GenerationLookupError as exc:
-        return [], str(exc)
+        return _Served(not_counted=str(exc))
     others = sorted({name for name in names if name != tracker.arm.served_by})
     if others:
-        return names, f"served by {', '.join(others)}, not {tracker.arm.served_by}"
-    return names, None
+        reason = f"served by {', '.join(others)}, not {tracker.arm.served_by}"
+        return _Served(names, as_pinned=False, not_counted=reason)
+    return _Served(names, as_pinned=True)
 
 
 def run_probe(
@@ -385,14 +396,14 @@ def run_probe(
     """Run one probe on `arm` and turn its outcome into a row. Errors outside the three outcomes
     (a missing setting, a bug) are raised, since every other probe would hit them too."""
     state = probe_state(probe)
-    tracker = UsageTracker(arm)
+    tracker = UsageTracker(arm, probe.node)
     node = factory(probe.node, arm_settings(settings, arm), tracker)
-    ran = _run_node(probe, node, state, tracker)
-    providers, not_pinned = _served(tracker, served_by)
-    if not_pinned is not None:
-        ran = _Ran(ProbeKind.FAILED, {**ran.predicted, "not_pinned": not_pinned}, None)
+    ran = _run_node(probe, node, state)
+    served = _served(tracker, ran.kind is not ProbeKind.FAILED, served_by)
+    if served.not_counted is not None:
+        ran = _Ran(ProbeKind.FAILED, {**ran.predicted, "not_pinned": served.not_counted}, None)
     smoke_info: dict[str, JsonValue] = {
-        "served_by": list(providers),
+        "served_by": list(served.providers),
         "generation_ids": list(tracker.generation_ids),
         "cost_is_estimated": tracker.is_cost_estimated,
     }
@@ -400,7 +411,7 @@ def run_probe(
         "broken": ran.kind is ProbeKind.BROKEN,
         "failed": ran.kind is ProbeKind.FAILED,
         "correct": ran.correct,
-        "served_as_pinned": not_pinned is None if tracker.generation_ids else None,
+        "served_as_pinned": served.as_pinned,
         "is_error": ran.kind is not ProbeKind.ANSWERED,
         "cost_usd": tracker.cost_usd,
         "tokens": tracker.tokens,

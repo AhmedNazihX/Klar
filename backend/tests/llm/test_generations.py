@@ -6,7 +6,13 @@ from openrouter.errors import NoResponseError, OpenRouterError
 from pydantic import SecretStr
 
 from aiact.llm import LLMConfigError
-from aiact.llm.generations import LOOKUP_WAIT_SECONDS, GenerationLookup, GenerationLookupError
+from aiact.llm.generations import (
+    LOOKUP_TIMEOUT_MS,
+    LOOKUP_WAIT_SECONDS,
+    GenerationLookup,
+    GenerationLookupError,
+)
+from aiact.llm.routing import NO_RETRIES
 from aiact.settings import Settings
 
 
@@ -57,6 +63,22 @@ def test_the_provider_name_is_read_once_the_record_exists() -> None:
     assert reader.served_by("gen-1") == "Azure"
     assert generations.asked == ["gen-1"] * 3
     assert slept == [LOOKUP_WAIT_SECONDS] * 2
+
+
+def test_a_rate_limited_lookup_is_tried_again() -> None:
+    generations = FakeGenerations(_http_error(429), "Google")
+    reader, slept = lookup(generations)
+    assert reader.served_by("gen-1") == "Google"
+    assert slept == [LOOKUP_WAIT_SECONDS]
+
+
+def test_the_real_client_never_retries_and_times_out() -> None:
+    """The loop above is the only retry: the SDK's default would retry for up to an hour."""
+    reader = GenerationLookup(Settings(_env_file=None, openrouter_api_key=SecretStr("k")))  # pyright: ignore[reportCallIssue]
+    config = reader._client.sdk_configuration  # pyright: ignore[reportPrivateUsage, reportAttributeAccessIssue]
+    assert config.retry_config is NO_RETRIES
+    assert NO_RETRIES.strategy == "none"
+    assert config.timeout_ms == LOOKUP_TIMEOUT_MS
 
 
 def test_a_record_that_never_appears_is_an_error() -> None:

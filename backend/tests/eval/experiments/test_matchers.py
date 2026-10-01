@@ -105,6 +105,10 @@ def test_the_worked_example_must_cite_art_6_3() -> None:
     """As its E5 replay requires: ranking is profiling, so Art. 6(3) is cited and rejected."""
     cited = high_risk_outcome(HighRiskRoute.ANNEX_III, "annex:III:4:a", cited=("art:6:3",))
     assert matchers.high_risk_matches(cited, WORKED_EXAMPLE)
+    second = high_risk_outcome(
+        HighRiskRoute.ANNEX_III, "annex:III:4:a", cited=("annex:III:4:a", "art:6:3")
+    )
+    assert matchers.high_risk_matches(second, WORKED_EXAMPLE)  # not only the first citation
     uncited = high_risk_outcome(HighRiskRoute.ANNEX_III, "annex:III:4:a", cited=("art:6:2",))
     assert not matchers.high_risk_matches(uncited, WORKED_EXAMPLE)
     wrong_route = high_risk_outcome(HighRiskRoute.ANNEX_I, "annex:III:4:a", cited=("art:6:3",))
@@ -168,6 +172,9 @@ def test_role_matches_the_role_and_an_ambiguous_status() -> None:
     ambiguous = case("d-2", status=Status.LEGALLY_AMBIGUOUS)
     assert matchers.role_matches(role_outcome(Role.PROVIDER, Status.LEGALLY_AMBIGUOUS), ambiguous)
     assert not matchers.role_matches(role_outcome(Role.PROVIDER), ambiguous)
+    decided = case("d-3", role=Role.PROVIDER)
+    asking = role_outcome(Role.PROVIDER, Status.NEEDS_MORE_INFORMATION)
+    assert matchers.role_matches(asking, decided)  # the status counts only for an ambiguous label
 
 
 def test_a_role_outcome_without_a_role_does_not_match() -> None:

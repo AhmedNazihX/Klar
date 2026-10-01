@@ -158,8 +158,10 @@ class FakeNodes:
         tokens: int = 100,
         before_call: Exception | None = None,
         wait_for_company: float | None = None,
+        has_generation_id: bool = True,
     ) -> None:
         self.result = result
+        self.has_generation_id = has_generation_id
         self.wait_for_company = wait_for_company
         self.company = threading.Event()
         self.cost = cost
@@ -185,7 +187,8 @@ class FakeNodes:
                 if self.before_call is not None:
                     raise self.before_call
                 tracker.add(self.cost, self.tokens)
-                tracker.generation_ids.append(f"gen-{uuid4().hex}")
+                if self.has_generation_id:
+                    tracker.generation_ids.append(f"gen-{uuid4().hex}")
                 if isinstance(self.result, BaseException):
                     raise self.result
                 assert isinstance(self.result, FactsOutcome | CheckOutcome)
@@ -262,7 +265,17 @@ def test_an_unreadable_generation_record_does_not_count() -> None:
 
     record = probe_on(FakeNodes(role_outcome(Role.DEPLOYER)), served_by=lookup)
     assert record.scores["failed"] is True
-    assert record.scores["served_as_pinned"] is False
+    assert record.scores["served_as_pinned"] is None  # unknown, not a confirmed other provider
+    assert str(record.predicted["not_pinned"]).endswith("not found after 12 attempts")
+
+
+@pytest.mark.parametrize("result", [role_outcome(Role.DEPLOYER), scope.ScopeOutputError("x")])
+def test_a_reply_without_a_generation_id_does_not_count(result: object) -> None:
+    record = probe_on(FakeNodes(result, has_generation_id=False))
+    assert record.scores["failed"] is True
+    assert record.scores["broken"] is False
+    assert record.scores["served_as_pinned"] is None
+    assert record.predicted["not_pinned"] == "the reply carries no generation id"
 
 
 def test_an_answer_that_misses_the_schema_is_broken_and_wrong() -> None:
@@ -288,7 +301,6 @@ def test_an_answer_that_misses_the_schema_is_broken_and_wrong() -> None:
         high_risk.HighRiskOutputError("x"),
         role_obligations.RoleOutputError("x"),
         scope.ScopeOutputError("x"),
-        ProvisionNotFoundError("no text of art:2:99"),
     ],
 )
 def test_every_nodes_output_error_is_broken(error: Exception) -> None:
@@ -296,8 +308,11 @@ def test_every_nodes_output_error_is_broken(error: Exception) -> None:
     assert record.scores["broken"] is True
 
 
-def test_an_unknown_provision_before_any_reply_is_the_corpus_and_stops_the_run() -> None:
-    nodes = FakeNodes(None, before_call=ProvisionNotFoundError("no text of art:3:1"))
+@pytest.mark.parametrize("after_reply", [False, True])
+def test_an_unknown_provision_is_a_corpus_gap_and_stops_the_run(after_reply: bool) -> None:
+    """Neither check lets the model name a provision, so it is never the model's fault."""
+    error = ProvisionNotFoundError("no text of art:3:1")
+    nodes = FakeNodes(error) if after_reply else FakeNodes(None, before_call=error)
     with pytest.raises(ProvisionNotFoundError):
         probe_on(nodes, probe=Probe(NodeName.SCOPE, case("b-1")))
 
@@ -394,7 +409,7 @@ def _result(message: AIMessage, generation_id: str = "gen-1") -> LLMResult:
 
 
 def test_the_tracker_adds_up_openrouter_cost_tokens_and_generation_ids() -> None:
-    tracker = UsageTracker(LUNA)
+    tracker = UsageTracker(LUNA, NodeName.ROLE)
     message = AIMessage(
         content="{}",
         response_metadata={"cost": 0.0012},
@@ -408,7 +423,7 @@ def test_the_tracker_adds_up_openrouter_cost_tokens_and_generation_ids() -> None
 
 
 def test_a_reply_without_a_cost_is_priced_from_its_tokens() -> None:
-    tracker = UsageTracker(GEMINI)
+    tracker = UsageTracker(GEMINI, NodeName.ROLE)
     message = AIMessage(
         content="{}",
         usage_metadata={"input_tokens": 1000, "output_tokens": 200, "total_tokens": 1200},
@@ -416,6 +431,14 @@ def test_a_reply_without_a_cost_is_priced_from_its_tokens() -> None:
     tracker.on_llm_end(_result(message))
     assert tracker.cost_usd == pytest.approx((1000 * 0.275 + 200 * 1.65) / 1e6)
     assert tracker.is_cost_estimated is True
+
+
+def test_a_reply_without_cost_or_usage_is_charged_its_worst_case() -> None:
+    tracker = UsageTracker(GEMINI, NodeName.HIGH_RISK)
+    tracker.on_llm_end(_result(AIMessage(content="{}")))
+    assert tracker.cost_usd == smoke.worst_case_cost(NodeName.HIGH_RISK, GEMINI)
+    assert tracker.cost_usd > 0
+    assert (tracker.calls, tracker.tokens, tracker.is_cost_estimated) == (1, 0, True)
 
 
 @pytest.mark.parametrize(
@@ -430,7 +453,7 @@ def test_a_reply_without_a_cost_is_priced_from_its_tokens() -> None:
 def test_each_node_is_the_engines_own_on_the_arms_pinned_model_without_retries(
     node: NodeName, node_class: type
 ) -> None:
-    tracker = UsageTracker(GEMINI)
+    tracker = UsageTracker(GEMINI, node)
     built = smoke.engine_node(node, smoke.arm_settings(settings(), GEMINI), tracker)
     assert isinstance(built, node_class)
     chat = built._model  # pyright: ignore[reportAttributeAccessIssue, reportFunctionMemberAccess]

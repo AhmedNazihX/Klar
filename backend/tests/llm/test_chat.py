@@ -1,5 +1,7 @@
+import httpx
 import pytest
 from langchain_core.messages import AIMessage
+from openrouter.errors import OpenRouterError
 from pydantic import SecretStr
 
 from aiact.llm import LLMConfigError, chat_model, engine_chat_model
@@ -87,3 +89,55 @@ def test_chat_roundtrip(openrouter_settings: Settings) -> None:
 @pytest.mark.live
 def test_chat_roundtrip_live() -> None:
     _assert_chat_roundtrip(get_settings())
+
+
+# --- Retries: max_retries=0 makes exactly one HTTP attempt (X2) ---------------------------------
+
+COMPLETION = {
+    "id": "gen-1",
+    "object": "chat.completion",
+    "created": 1,
+    "model": CHEAP_MODEL,
+    "system_fingerprint": None,
+    "choices": [
+        {"index": 0, "message": {"role": "assistant", "content": "pong"}, "finish_reason": "stop"}
+    ],
+    "usage": {"prompt_tokens": 3, "completion_tokens": 1, "total_tokens": 4},
+}
+
+
+@pytest.fixture
+def attempts(monkeypatch: pytest.MonkeyPatch) -> list[int]:
+    """Every HTTP client the SDK or ChatOpenRouter builds goes through a mock transport that
+    answers 503 twice, then a completion; the SDK's backoff sleeps are skipped. Returns the
+    statuses sent, one per attempt."""
+    sent: list[int] = []
+    real_client = httpx.Client
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        status = 503 if len(sent) < 2 else 200
+        sent.append(status)
+        if status == 503:
+            return httpx.Response(503, json={"error": {"message": "overloaded", "code": 503}})
+        return httpx.Response(200, json=COMPLETION)
+
+    def client(*args: object, **kwargs: object) -> httpx.Client:
+        transport = httpx.MockTransport(answer)
+        return real_client(*args, transport=transport, **kwargs)  # pyright: ignore[reportArgumentType]
+
+    monkeypatch.setattr(httpx, "Client", client)
+    monkeypatch.setattr("openrouter.utils.retries.time.sleep", lambda seconds: None)
+    return sent
+
+
+def test_no_retries_means_one_attempt_on_a_503(attempts: list[int]) -> None:
+    model = chat_model(model=CHEAP_MODEL, max_retries=0, settings=_settings())
+    with pytest.raises(OpenRouterError):
+        model.invoke("Reply with the single word: pong")
+    assert attempts == [503]
+
+
+def test_the_default_still_retries_a_503(attempts: list[int]) -> None:
+    model = chat_model(model=CHEAP_MODEL, settings=_settings())
+    assert model.invoke("Reply with the single word: pong").text == "pong"
+    assert attempts == [503, 503, 200]
