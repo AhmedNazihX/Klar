@@ -1,6 +1,7 @@
-"""The user-data migration (supabase/migrations/*_user_data.sql) against the local Supabase
-Postgres: RLS between two anonymous users, delete my data, export/import and the
-inactivity cleanup.
+"""The user-data migrations (supabase/migrations/*_user_data*.sql and their follow-ups) against the
+local Supabase Postgres: RLS between two anonymous users, the company profile, run numbers, duty
+progress, delete my data, export/import, the storage budget, Your data's counts and the inactivity
+cleanup.
 
 Each test runs as postgres inside the rolled-back `db` transaction; `as_user` switches to the
 `authenticated` role with a JWT `sub`, the way PostgREST runs a request from an anonymous session.
@@ -25,14 +26,19 @@ from tests.db.conftest import _database_url
 
 pytestmark = pytest.mark.db
 
-USER_TABLES = ("inventories", "systems", "classifications", "interview_answers")
+USER_TABLES = ("inventories", "systems", "classifications", "interview_answers", "duty_progress")
 CRON_JOB = "purge-inactive-anonymous-users"
 RETENTION = "30 days"
 RESULT = {"risk_class": "high_risk", "law_version": "amended", "disclaimer": "Guidance only."}
 RESULT_MAX_BYTES = 262144
 FUTURE = "2999-01-01T00:00:00+00:00"
 EMPTY_EXPORT = {"format": "aiact-user-data", "version": 1, "inventories": []}
-RPC_CALLS = ("select delete_my_data()", "select export_my_data()", "select import_my_data(%s)")
+RPC_CALLS = (
+    "select delete_my_data()",
+    "select export_my_data()",
+    "select import_my_data(%s)",
+    "select my_data_counts()",
+)
 
 
 def _create_user(db: psycopg.Connection, *, is_anonymous: bool = True, age: str = "0 days") -> UUID:
@@ -70,7 +76,8 @@ def _one(db: psycopg.Connection, query: QueryNoTemplate, params: Params | None =
 
 
 def _add_system(db: psycopg.Connection, name: str = "CV screener") -> dict[str, UUID]:
-    """As the current user: an inventory with one system, a classification and an answer."""
+    """As the current user: an inventory with one system, a classification, an answer and a ticked
+    duty."""
     inventory = _one(db, "insert into inventories (name) values ('Acme') returning id")
     system = _one(
         db,
@@ -93,11 +100,18 @@ def _add_system(db: psycopg.Connection, name: str = "CV screener") -> dict[str, 
         """,
         (system,),
     )
+    duty = _one(
+        db,
+        "insert into duty_progress (system_id, obligation_key) values (%s, 'ai-literacy')"
+        " returning id",
+        (system,),
+    )
     return {
         "inventories": inventory,
         "systems": system,
         "classifications": classification,
         "interview_answers": answer,
+        "duty_progress": duty,
     }
 
 
@@ -176,6 +190,12 @@ def test_user_b_cannot_write_rows_owned_by_or_under_user_a(
                 "insert into systems (inventory_id, name, description) values (%s, 'X', 'Y')",
                 (rows["inventories"],),
             )
+        with pytest.raises(psycopg.errors.ForeignKeyViolation), db.transaction():
+            db.execute(
+                "insert into duty_progress (system_id, obligation_key)"
+                " values (%s, 'risk-management')",
+                (rows["systems"],),
+            )
         own = _one(db, "insert into inventories (name) values ('Mine') returning id")
         with pytest.raises(psycopg.errors.InsufficientPrivilege), db.transaction():
             db.execute("update inventories set user_id = %s where id = %s", (user_a, own))
@@ -219,10 +239,13 @@ FORGED_INSERT = """
       insert into classifications
         (system_id, risk_class, status, law_version, result, created_at, updated_at)
       select id, 'minimal_risk', 'decided', 'amended', '{}', %(future)s, 'infinity' from system
+    ), answer as (
+      insert into interview_answers
+        (system_id, template, question_key, answer, created_at, updated_at)
+      select id, 'art_27', 'q', 'a', %(future)s, 'infinity' from system
     )
-    insert into interview_answers
-      (system_id, template, question_key, answer, created_at, updated_at)
-    select id, 'art_27', 'q', 'a', %(future)s, 'infinity' from system
+    insert into duty_progress (system_id, obligation_key, created_at, updated_at)
+    select id, 'ai-literacy', %(future)s, 'infinity' from system
 """
 
 
@@ -326,12 +349,7 @@ def test_delete_my_data_removes_only_the_callers_rows(
     with as_user(db, user_b):
         _add_system(db)
         _add_system(db, "Chatbot")
-        assert _one(db, "select delete_my_data()") == {
-            "inventories": 2,
-            "systems": 2,
-            "classifications": 2,
-            "interview_answers": 2,
-        }
+        assert _one(db, "select delete_my_data()") == dict.fromkeys(USER_TABLES, 2)
     assert _counts(db, user_b) == dict.fromkeys(USER_TABLES, 0)
     assert _counts(db, user_a) == dict.fromkeys(USER_TABLES, 1)
 
@@ -378,10 +396,9 @@ def test_export_then_import_keeps_content_dates_and_order(db: psycopg.Connection
     with as_user(db, user_b):
         added = _one(db, "select import_my_data(%s)", (Jsonb(exported),))
         assert added == {
-            "inventories": 2,
-            "systems": 2,
-            "classifications": 2,
+            **dict.fromkeys(USER_TABLES, 2),
             "interview_answers": 0,
+            "duty_progress": 0,
         }
         reexported = _one(db, "select export_my_data()")
     assert reexported["inventories"] == inventories
@@ -397,7 +414,11 @@ def test_export_then_import_keeps_content_dates_and_order(db: psycopg.Connection
         *((False, name, age) for name, age in zip(("First", "Second"), ages, strict=True)),
         *((True, name, age) for name, age in zip(("First", "Second"), ages, strict=True)),
     ]
-    assert _counts(db, user_a) == {**dict.fromkeys(USER_TABLES, 2), "interview_answers": 0}
+    assert _counts(db, user_a) == {
+        **dict.fromkeys(USER_TABLES, 2),
+        "interview_answers": 0,
+        "duty_progress": 0,
+    }
 
 
 IMPORT_MAX_BYTES = 4 * 1024 * 1024
@@ -413,17 +434,20 @@ STORAGE_FULL = "PT507"
 IMPORT_TOO_LARGE = "PT413"
 LOCK_WAIT_SECONDS = 10
 
+FILL_SLACK = 1024
+"""Bytes a filler row leaves over when the rest won't fit in one row: room for the next row's
+fields, whose run_no may be a digit longer."""
+
 ADD_CLASSIFICATION = """
-    insert into classifications (system_id, risk_class, status, law_version, result, created_at)
+    insert into classifications (system_id, risk_class, status, law_version, result)
     values (%(system)s, 'high_risk', 'decided', 'amended',
-            jsonb_build_object('text', repeat('x', %(length)s::integer)),
-            now() - make_interval(secs => %(age)s::integer))
+            jsonb_build_object('text', repeat('x', %(length)s::integer)))
 """
 
 
-def _add_classification(db: psycopg.Connection, system: UUID, length: int, age: int = 0) -> None:
-    """As the current user: a classification whose result text is `length` long, `age` s old."""
-    db.execute(ADD_CLASSIFICATION, {"system": system, "length": length, "age": age})
+def _add_classification(db: psycopg.Connection, system: UUID, length: int) -> None:
+    """As the current user: a classification whose result text is `length` long."""
+    db.execute(ADD_CLASSIFICATION, {"system": system, "length": length})
 
 
 @contextmanager
@@ -442,40 +466,49 @@ def _usage(db: psycopg.Connection, user_id: UUID) -> int:
     return row[0] if row else 0
 
 
-def _classification_bytes(db: psycopg.Connection, length: int) -> int:
-    """The stored size of an ADD_CLASSIFICATION row whose text is `length` long (as postgres)."""
+def _classification_bytes(db: psycopg.Connection, length: int, run_no: int) -> int:
+    """The stored size of an ADD_CLASSIFICATION row whose text is `length` long, as run `run_no`
+    (as postgres)."""
     row = {
+        "run_no": run_no,
         "risk_class": "high_risk",
         "status": "decided",
         "law_version": "amended",
         "result": {"text": "x" * length},
+        "inputs": None,
     }
     return _one(db, "select private.export_bytes('classifications', %s)", (Jsonb(row),))
 
 
-def _filler_lengths(free: int, base: int, largest: int) -> list[int]:
-    """Result text lengths whose rows take exactly `free` bytes (at least one row)."""
-    count = (free - base) // largest
-    rest = free - count * largest  # base <= rest < largest + base
-    if rest - base <= MAX_RESULT_TEXT:
-        return [MAX_RESULT_TEXT] * count + [rest - base]
-    # Too much for one row: a row of `largest - base` bytes, and the rest (over `base`) in another.
-    return [MAX_RESULT_TEXT] * count + [MAX_RESULT_TEXT - base, rest - largest]
+def _next_run(db: psycopg.Connection, system: UUID) -> int:
+    """The run_no the system's next classification gets (as postgres)."""
+    query = "select coalesce(max(run_no), 0) + 1 from classifications where system_id = %s"
+    return _one(db, query, (system,))
 
 
-def _fill(db: psycopg.Connection, user_id: UUID, system: UUID, leave: int) -> None:
-    """Classifications of `system` until exactly `leave` bytes of the budget are free (as postgres,
-    acting as `user_id`)."""
-    largest, base = _classification_bytes(db, MAX_RESULT_TEXT), _classification_bytes(db, 0)
-    free = STORAGE_BUDGET - _usage(db, user_id) - leave
-    lengths = _filler_lengths(free, base, largest)
-    # Fail fast if export_bytes stops growing with the text: the fill would never end.
-    assert largest - base == MAX_RESULT_TEXT
-    assert len(lengths) <= STORAGE_BUDGET // MAX_RESULT_TEXT + 2
-    with as_user(db, user_id):
-        for offset, length in enumerate(lengths):
-            _add_classification(db, system, length, age=offset + 1)
-    assert _usage(db, user_id) == STORAGE_BUDGET - leave
+def _fill(
+    db: psycopg.Connection,
+    user_id: UUID,
+    system: UUID,
+    *,
+    leave: int = 0,
+    room_for: int | None = None,
+) -> None:
+    """Classifications of `system` until exactly `leave` bytes of the budget are free, plus room
+    for one more classification whose text is `room_for` long, if given (as postgres, acting as
+    `user_id`). A row's size depends on its run_no's digits, so each row is sized on its own."""
+    for _ in range(STORAGE_BUDGET // MAX_RESULT_TEXT + 3):
+        run_no = _next_run(db, system)
+        room = leave + (0 if room_for is None else _classification_bytes(db, room_for, run_no + 1))
+        rest = STORAGE_BUDGET - _usage(db, user_id) - room - _classification_bytes(db, 0, run_no)
+        assert rest >= 0, "the budget is already fuller than the fill should leave it"
+        length = rest if rest <= MAX_RESULT_TEXT else min(MAX_RESULT_TEXT, rest - FILL_SLACK)
+        with as_user(db, user_id):
+            _add_classification(db, system, length)
+        if length == rest:
+            assert _usage(db, user_id) == STORAGE_BUDGET - room
+            return
+    pytest.fail("the fill never reached the budget: export_bytes may not grow with the text")
 
 
 def _user_with_system(db: psycopg.Connection) -> tuple[UUID, dict[str, UUID]]:
@@ -520,7 +553,7 @@ def test_an_import_is_capped_at_four_megabytes(db: psycopg.Connection) -> None:
 
 def test_the_budget_rejects_a_write_that_would_exceed_it(db: psycopg.Connection) -> None:
     user, rows = _user_with_system(db)
-    _fill(db, user, rows["systems"], leave=_classification_bytes(db, 10))
+    _fill(db, user, rows["systems"], room_for=10)
     with as_user(db, user):
         with _raises_sqlstate(db, STORAGE_FULL):
             _add_classification(db, rows["systems"], 11)
@@ -545,18 +578,22 @@ def test_deleting_frees_space(db: psycopg.Connection) -> None:
 
 
 SECOND_ROWS: dict[str, LiteralString] = {
-    "inventories": "insert into inventories (name, created_at) values ('Zweite \"Liste\"', %(at)s)"
-    " returning to_jsonb(inventories)",
+    "inventories": "insert into inventories (name, company_name, staff_band, turnover_band,"
+    " established_in, used_in, created_at) values ('Zweite \"Liste\"', 'Müller \"&\" Söhne',"
+    " '250-749', 'up_to_150m', 'DE', 'eu_and_outside', %(at)s) returning to_jsonb(inventories)",
     "systems": "insert into systems (inventory_id, name, description, created_at)"
     " values (%(inventory)s, 'Bewerber-Ranking', 'Sortiert Bewerbungen für Ärzte.', %(at)s)"
     " returning to_jsonb(systems)",
     "classifications": "insert into classifications"
-    " (system_id, risk_class, status, law_version, result, created_at)"
+    " (system_id, risk_class, status, law_version, result, inputs, created_at)"
     " values (%(system)s, 'minimal_risk', 'decided', 'original', '{\"a\": \"é\", \"b\": [1]}',"
+    ' \'{"description": "Für \\"Ärzte\\".", "answers": {"q": "ja"}}\','
     " %(at)s) returning to_jsonb(classifications)",
     "interview_answers": "insert into interview_answers (system_id, template, question_key, answer)"
     " values (%(system)s, 'art_27', 'q2', 'Line one\nline \"two\".')"
     " returning to_jsonb(interview_answers)",
+    "duty_progress": "insert into duty_progress (system_id, obligation_key, created_at)"
+    " values (%(system)s, 'risk-management', %(at)s) returning to_jsonb(duty_progress)",
 }
 """A second row per table (so each export array already has a first child), with quotes, accents
 and a newline that the export's text escapes."""
@@ -658,7 +695,7 @@ def test_concurrent_writes_cannot_both_pass_the_budget(db_connection: psycopg.Co
         ThreadPoolExecutor(max_workers=1) as pool,
     ):
         system = rows["systems"]
-        _fill(admin, user, system, leave=_classification_bytes(admin, 0))
+        _fill(admin, user, system, room_for=0)
         admin.commit()
         second_pid = _pid(second)
 
