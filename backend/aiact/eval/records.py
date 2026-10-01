@@ -59,6 +59,18 @@ class PostgresRunStore:
                 (Decimal(str(record.cost_usd)), record.tokens, run_id),
             )
 
+    def update_case(self, run_id: UUID, record: CaseRecord) -> None:
+        """Replace a stored case's prediction and scores (its cost was added when it was
+        inserted, so the run's totals stay as they are)."""
+        with self._connection.transaction():
+            cursor = self._connection.execute(
+                "update eval_case_results set predicted = %s, scores = %s"
+                " where run_id = %s and case_id = %s",
+                (Jsonb(record.predicted), Jsonb(record.scores), run_id, record.case_id),
+            )
+            if cursor.rowcount != 1:
+                raise LookupError(f"run {run_id} has no stored case {record.case_id}")
+
     def finish_run(self, run_id: UUID, outcome: Mapping[str, JsonValue]) -> None:
         """Merge the final status into `config.outcome` (no status column exists yet)."""
         with self._connection.transaction():

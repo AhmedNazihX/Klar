@@ -5,6 +5,7 @@ Help texts come from the callback docstrings.
 """
 
 from collections.abc import Callable
+from contextlib import nullcontext
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Annotated
@@ -30,8 +31,10 @@ from aiact.eval import (
 )
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases
-from aiact.eval.experiments import smoke, smoke_verdict
+from aiact.eval.experiments import smoke, smoke_recheck, smoke_verdict
+from aiact.eval.experiments.smoke_served import VerifyAll
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
+from aiact.llm.generations import GenerationLookup
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
 from aiact.settings import get_settings
@@ -585,7 +588,8 @@ def eval_smoke(
                 run_ids[arm.name] = run.run_id
                 typer.echo(
                     f"{arm.name}: run {run.run_id}, {run.status.value}, {run.probes_recorded}/"
-                    f"{run.probes_planned} probes, ${run.cost_usd:.4f}, {run.tokens} tokens"
+                    f"{run.probes_planned} probes, ${run.cost_usd:.4f}, {run.tokens} tokens; "
+                    f"{run.checked_late} checked late, {run.confirmed_late} confirmed"
                 )
             if len(run_ids) == len(smoke.ARMS):
                 typer.echo(_smoke_comparison(connection, run_ids))
@@ -622,6 +626,54 @@ def eval_smoke_compare(
         typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
         raise typer.Exit(code=2) from error
     typer.echo(text)
+
+
+@eval_app.command("smoke-recheck")
+def eval_smoke_recheck(
+    run_ids: Annotated[list[UUID], typer.Argument(help="Stored smoke runs' eval_runs ids")],
+    dry_run: Annotated[
+        bool, typer.Option(help="Look the records up and print what would change; write nothing")
+    ] = False,
+) -> None:
+    """Look up again the generation records of stored smoke probes that failed only because the
+    record wasn't found in time, rescore the confirmed ones from their stored replies, and print
+    the comparison (X2, decision 023 addendum). Makes no model call."""
+    try:
+        verify = GenerationLookup(get_settings()).served_by_all
+        with (
+            records.connect() as connection,
+            connection.transaction(force_rollback=True) if dry_run else nullcontext(),
+        ):
+            text = _recheck_and_compare(connection, list(dict.fromkeys(run_ids)), verify)
+    except (
+        LLMConfigError,
+        records.DatabaseNotConfiguredError,
+        smoke_verdict.SmokeRunError,
+        smoke_recheck.RecheckError,
+        CaseFileError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(text)
+    if dry_run:
+        typer.echo("Dry run: nothing was written; the comparison shows the rows as they would be.")
+
+
+def _recheck_and_compare(
+    connection: psycopg.Connection, run_ids: list[UUID], verify: VerifyAll
+) -> str:
+    rechecks = [smoke_recheck.recheck_run(connection, run_id, verify) for run_id in run_ids]
+    parts = [smoke_recheck.format_recheck(recheck) for recheck in rechecks]
+    pair = smoke_recheck.comparison_pair(rechecks)
+    if pair is None:
+        parts.append("No comparison: give one luna and one gemini run.")
+    else:
+        parts.append(_smoke_comparison(connection, pair))
+    return "\n\n".join(parts)
 
 
 def _smoke_comparison(connection: psycopg.Connection, run_ids: dict[str, UUID]) -> str:

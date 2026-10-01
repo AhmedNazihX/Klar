@@ -131,6 +131,17 @@ def test_a_stored_row_is_read_back_by_its_flags() -> None:
     assert smoke_verdict.probe_score("facts:e-1", failed).kind is ProbeKind.FAILED
 
 
+def test_a_row_still_pending_its_provider_check_counts_as_failed() -> None:
+    """Only a run stopped before its end-of-run check leaves one; it never counts as answered."""
+    row: Mapping[str, JsonValue] = {
+        "broken": False,
+        "failed": False,
+        "correct": True,
+        "pending_verification": True,
+    }
+    assert smoke_verdict.probe_score("role_obligations:d-1", row).kind is ProbeKind.FAILED
+
+
 @pytest.mark.parametrize(
     ("probe_id", "row"),
     [

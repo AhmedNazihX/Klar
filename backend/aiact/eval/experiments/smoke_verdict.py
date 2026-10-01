@@ -45,14 +45,16 @@ class ProbeScore:
 
 
 def probe_score(probe_id: str, scores: Mapping[str, JsonValue]) -> ProbeScore:
-    """Read a stored row's scores; a row that isn't a smoke probe raises `ValueError`."""
+    """Read a stored row's scores; a row that isn't a smoke probe raises `ValueError`. A row still
+    pending its provider check (a run stopped before the check) counts as failed."""
     NodeName(probe_id.split(":", 1)[0])
     broken, failed, correct = scores.get("broken"), scores.get("failed"), scores.get("correct")
     if not isinstance(broken, bool) or not isinstance(failed, bool):
         raise ValueError(f"row {probe_id} has no broken/failed flags; not a smoke probe")
     if correct is not None and not isinstance(correct, bool):
         raise ValueError(f"row {probe_id} has a non-boolean correct score")
-    kind = ProbeKind.FAILED if failed else ProbeKind.BROKEN if broken else ProbeKind.ANSWERED
+    is_failed = failed or scores.get("pending_verification") is True
+    kind = ProbeKind.FAILED if is_failed else ProbeKind.BROKEN if broken else ProbeKind.ANSWERED
     return ProbeScore(probe_id, kind, correct)
 
 
