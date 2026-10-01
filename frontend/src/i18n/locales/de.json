@@ -19,13 +19,13 @@
   },
   "brand": {
     "title": "Marken-Tokens",
-    "intro": "Farben, Schrift, Glas und Pillen vom Brand-Board, so wie die App sie darstellt.",
+    "intro": "Farben, Schrift, Glas und Komponenten des Klar-Designsystems, so wie die App sie darstellt.",
     "colour": "Farbe",
     "pills": "Risikoklassen und Status: immer ein Wort, nie nur eine Farbe",
-    "voices": "Zwei Stimmen",
-    "voicesFonts": "Geist und Newsreader",
+    "voices": "Drei Stimmen",
+    "voicesFonts": "Geist, Newsreader und Lexend",
     "productVoice": "Das Produkt spricht in Geist.",
-    "actVoice": "Die Verordnung spricht in Newsreader: jede zitierte Vorschrift und die Klasse selbst.",
+    "actVoice": "Die Verordnung spricht in Newsreader: jede zitierte Vorschrift und jedes entworfene Dokument.",
     "glass": "Glas-Rezept",
     "glassRecipe": "Füllung Weiß 68 % bis 30 % bei 150°. Unschärfe 26 px, Sättigung 175 %. Rand 1 px Weiß 80 %. Innere Lichtkante oben 1 px. Schatten 0 22 50 −20 Ink bei 30 %. Text steht nie auf Glas unter 40 %.",
     "onLight": "Auf hell",
@@ -35,7 +35,20 @@
       "ink": "Ink",
       "slate": "Slate",
       "lens": "Lens blue"
-    }
+    },
+    "verdictVoice": "Das Ergebnis von Klar spricht in Lexend:",
+    "verdictSample": "Hochrisiko",
+    "components": "Komponenten",
+    "primaryAction": "Werkzeug einstufen",
+    "secondaryAction": "Beschreibung bearbeiten",
+    "addAction": "Werkzeug hinzufügen",
+    "viewLabel": "Ansicht",
+    "summary": "Zusammenfassung",
+    "reviewer": "Prüfansicht",
+    "statuses": "Status und Herkunft",
+    "icons": "Symbole",
+    "law": "Gesetzesfassung",
+    "lawDateSample": "Die Hochrisiko-Pflichten für Anhang III gelten ab dem <date/>."
   },
   "pill": {
     "prohibited": "Verboten",
@@ -51,5 +64,31 @@
     "body": "Diese Seite konnte nicht angezeigt werden. Laden Sie sie neu oder kehren Sie zum Anfang zurück.",
     "home": "Zurück zum Anfang",
     "notFound": "Diese Seite gibt es nicht."
+  },
+  "status": {
+    "decided": "Entschieden",
+    "ambiguous": "Rechtlich unklar",
+    "needs-info": "Weitere Angaben nötig",
+    "draft": "ENTWURF"
+  },
+  "evidence": {
+    "stated": "Angegeben",
+    "inferred": "Abgeleitet",
+    "assumed": "Angenommen"
+  },
+  "citation": {
+    "englishOnly": {
+      "tag": "Amtlicher Text nur auf Englisch verfügbar",
+      "explanation": "Für diesen Text gibt es keine amtliche deutsche Fassung; Klar übersetzt Rechtstexte nicht selbst."
+    }
+  },
+  "notice": {
+    "default": "Orientierungshilfe, keine Rechtsberatung. Klar ist ein KI-System."
+  },
+  "law": {
+    "label": "Gesetzesfassung",
+    "amended": "Geänderte Fassung, 27.07.2026",
+    "original": "Ursprüngliche Fassung, 2024",
+    "notice": "Sie sehen die ursprüngliche Fassung von 2024. Der digitale Omnibus hat den Hochrisiko-Termin für Anhang III auf den 2. Dezember 2027 verschoben; Klar nutzt standardmäßig die geänderte Fassung."
   }
 }

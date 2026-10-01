@@ -14,3 +14,11 @@ export const PILL_KINDS = [
   'needs_more_information',
 ] as const
 export type PillKind = (typeof PILL_KINDS)[number]
+
+/** How settled a result is (StatusPill): the system's four statuses. */
+export const STATUSES = ['decided', 'ambiguous', 'needs-info', 'draft'] as const
+export type Status = (typeof STATUSES)[number]
+
+/** Where a fact came from (EvidenceTag). */
+export const EVIDENCE_KINDS = ['stated', 'inferred', 'assumed'] as const
+export type Evidence = (typeof EVIDENCE_KINDS)[number]

@@ -11,7 +11,10 @@ export function ErrorView({ isNotFound = false }: { isNotFound?: boolean }): JSX
     <GlassPanel role="alert" className="mx-auto mt-12 flex max-w-xl flex-col gap-3 p-8">
       <h1 className="text-xl font-semibold">{t('error.title')}</h1>
       <p className="text-muted-foreground">{isNotFound ? t('error.notFound') : t('error.body')}</p>
-      <Link to="/" className="font-medium text-lens underline-offset-4 hover:underline">
+      <Link
+        to="/"
+        className="font-medium text-lens-blue underline-offset-4 hover:text-lens-blue-hover hover:underline"
+      >
         {t('error.home')}
       </Link>
     </GlassPanel>

@@ -10,7 +10,7 @@ export const Route = createFileRoute('/')({ component: HomePage })
 function HomePage(): JSX.Element {
   const { t } = useTranslation()
   return (
-    <GlassPanel className="mt-8 flex max-w-3xl flex-col gap-4 rounded-panel-lg p-8 sm:p-12">
+    <GlassPanel radius="feature" className="mt-8 flex max-w-3xl flex-col gap-4 p-8 sm:p-12">
       <p className="text-sm font-medium text-muted-foreground">{t('app.tagline')}</p>
       <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
         {t('home.title')}
