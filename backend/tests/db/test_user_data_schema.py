@@ -351,6 +351,66 @@ def test_export_then_import_keeps_content_dates_and_order(db: psycopg.Connection
     assert _counts(db, user_a) == {**dict.fromkeys(USER_TABLES, 2), "interview_answers": 0}
 
 
+JSONB_MAX_BYTES = 268435455
+"""Postgres's limit on one jsonb value, and so on the export_my_data() document."""
+
+LARGEST_EXPORT_CLASSIFICATIONS = 1023
+"""Maximum-size classifications that fit in one export; one more exceeds JSONB_MAX_BYTES."""
+
+ADD_MAXIMUM_CLASSIFICATIONS = """
+    insert into classifications (system_id, risk_class, status, law_version, result, created_at)
+    select %(system)s, 'high_risk', 'decided', 'amended',
+           -- '{"text": ""}' is 12 bytes; the 4-digit index keeps the rows distinguishable.
+           jsonb_build_object(
+             'text', lpad(i::text, 4, '0') || repeat('x', %(max)s::integer - 12 - 4)
+           ),
+           now() - make_interval(secs => i)
+    from generate_series(%(start)s::integer, %(stop)s::integer) as i
+"""
+
+
+def _add_maximum_classifications(
+    db: psycopg.Connection, system: UUID, start: int, stop: int
+) -> None:
+    """As the current user: classifications `start`..`stop` of `system`, each result at the cap."""
+    db.execute(
+        ADD_MAXIMUM_CLASSIFICATIONS,
+        {"system": system, "max": RESULT_MAX_BYTES, "start": start, "stop": stop},
+    )
+
+
+def test_the_largest_possible_export_round_trips(db: psycopg.Connection) -> None:
+    user_a, user_b = _create_user(db, age="1 day"), _create_user(db, age="1 day")
+    # The document stays on the server: a temporary table carries it from A's session to B's.
+    db.execute("create temporary table exported (document jsonb) on commit drop")
+    db.execute("grant select, insert on exported to authenticated")
+    with as_user(db, user_a):
+        system = _add_system(db)["systems"]
+        db.execute("delete from classifications")
+        _add_maximum_classifications(db, system, 1, LARGEST_EXPORT_CLASSIFICATIONS)
+        db.execute("insert into exported select export_my_data()")
+        assert (
+            _one(db, "select octet_length(document::text) from exported") > 0.99 * JSONB_MAX_BYTES
+        )
+        # One more maximum-size classification and no export is possible: this one is the largest.
+        with pytest.raises(psycopg.errors.ProgramLimitExceeded), db.transaction():
+            _add_maximum_classifications(db, system, 0, 0)
+            db.execute("select export_my_data() is null")
+
+    with as_user(db, user_b):
+        added = _one(db, "select import_my_data(document) from exported")
+        assert added == {
+            "inventories": 1,
+            "systems": 1,
+            "classifications": LARGEST_EXPORT_CLASSIFICATIONS,
+            "interview_answers": 1,
+        }
+        assert _one(
+            db,
+            "select export_my_data() -> 'inventories' = document -> 'inventories' from exported",
+        )
+
+
 @pytest.mark.parametrize(
     "document",
     [
