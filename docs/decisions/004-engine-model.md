@@ -1,9 +1,8 @@
 # 004 · Engine model: GPT-6 Luna or Gemini 3.1 Flash-Lite
 
-- **Date:** 2026-10-01 (draft; the numbers come from the paid run)
+- **Date:** 2026-10-01
 - **Story:** X2 (docs/BACKLOG.md); protocol in decision 023
-- **Status:** DRAFT: the two-model run has not been made. Fill in the `TBD` cells from the output of
-  `aiact evaluate smoke` (or `aiact evaluate smoke-compare <luna run> <gemini run>`), then ask the user to accept.
+- **Status:** proposed (results filled in from the stored runs on 2026-10-01; waiting for the user to accept)
 
 ## Question
 INIT › Engine safety net: GPT-6 Luna was released on 22 September 2026 and has no track record. Does it produce
@@ -123,17 +122,39 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
 ## Results
 | Model | Run id | Broken answers | No answer | Accuracy (same probes) |
 | --- | --- | --- | --- | --- |
-| `openai/gpt-6-luna-20260922` | TBD | TBD | TBD | TBD |
-| `google/gemini-3.1-flash-lite` | TBD | TBD | TBD | TBD |
+| `openai/gpt-6-luna-20260922` | `d33c31fa-6183-45f1-bee0-0e86606e2ef8` | 2/82 (2.4%): facts 2 | 0/82 (0.0%) | 38/41 (92.7%) |
+| `google/gemini-3.1-flash-lite` | `62fb71eb-b738-4ba6-a81e-3c50a8f0325b` | 0/82 (0.0%) | 0/82 (0.0%) | 35/41 (85.4%) |
 
-Per node (broken / accuracy): TBD. Spend: TBD (Luna), TBD (Gemini).
+Source: `uv run aiact evaluate smoke-recheck d33c31fa-6183-45f1-bee0-0e86606e2ef8 62fb71eb-b738-4ba6-a81e-3c50a8f0325b`
+(2026-10-01), which prints the comparison from the stored rows. Both runs were made at commit 409bd4e. As first
+stored, 16 Luna and 9 Gemini probes counted as "no answer" (19.5% and 11.0%, so the verdict was `inconclusive`). In
+every one the model had replied in full, and only the served-provider record arrived after the lookup window. The
+recheck confirmed all 25 on the pinned provider (16 Azure, 9 Google) and rescored the stored replies; each row keeps
+the audit trail in `predicted.smoke.recheck`, and each run lists the recheck in `config.rechecks`.
+
+Per node (broken / correct of scored):
+
+| Node | Luna | Gemini |
+| --- | --- | --- |
+| facts (41) | 2 broken (one cut off by the output cap, `finish_reason: length`) / not scored | 0 broken / not scored |
+| scope (13) | 0 / 12 of 13 | 0 / 12 of 13 |
+| high_risk (15) | 0 / 14 of 15 | 0 / 11 of 15 |
+| role_obligations (13) | 0 / 12 of 13 | 0 / 12 of 13 |
+
+Spend (stored `eval_runs.cost_usd`, chat calls only; embeddings excluded, as above): $0.1128 (Luna), $0.1726
+(Gemini), $0.2854 in total, against the dry run's cold-price estimate of $0.38. The recheck itself cost nothing.
 
 ## Decision
-TBD: `keep_luna` or `drop_luna`, as the rule gives it.
+`keep_luna`. Under decision 023's rule: Luna's broken share is 2 of 82 answers (2.4%), under the 10% limit, and
+its accuracy on the 41 probes both models answered is 92.7% against Gemini's 85.4%, 7.3 points **above** Gemini, so
+the accuracy rule (10 or more points below) doesn't apply. No probe got no answer, so the run is conclusive (023
+part 4). The engine model stays GPT-6 Luna, `openai/gpt-6-luna-20260922` on `azure/eu`.
 
 ## Consequences
-- The engine model is set in `backend/.env` (`ENGINE_MODEL`, `ENGINE_PROVIDER`) and named in
-  `backend/.env.example`: Luna `openai/gpt-6-luna-20260922` on `azure/eu`, or Gemini
-  `google/gemini-3.1-flash-lite` on `google-vertex/eu`.
-- If Gemini: the E2, E3, E5 and E7 replays are recorded again under Gemini before E8 records its nodes.
+- The engine model is GPT-6 Luna: `ENGINE_MODEL=openai/gpt-6-luna-20260922`, `ENGINE_PROVIDER=azure/eu` in
+  `backend/.env` (unchanged, it was already Luna) and named in `backend/.env.example`.
+- The E2, E3, E5 and E7 recordings were made with Luna, so none needs recording again; E8 records its nodes with
+  Luna.
+- Two broken facts answers: one hit the facts node's output cap (`finish_reason: length`). E8 should check the facts
+  node's `MAX_OUTPUT_TOKENS` (4000) against Luna's reasoning, as E5 had to for the high-risk node.
 - Own cases are development cases (decision 018): this settles the model, not the reported accuracy.
