@@ -68,15 +68,17 @@ interactions:
       a system the description shows already on the market or in use is \"yes\". A
       system still\n  being built, or one whose launch is only planned, is \"no\",
       even if the launch is planned before\n  that date. When the description doesn''t
-      say, answer \"unknown\".\n- significant_design_change: the system''s design
-      has changed significantly since it was placed\n  on the market or put into service,
-      or a significant change is planned for after 2 December 2027, for\n  example
-      a new version that decides differently or serves another purpose; routine updates
-      and\n  bug fixes are not.\n- for_public_authority: public authorities are meant
-      to use the system, whether the company is\n  one or supplies them.\n\nWhen placed_before
-      is \"no\", answer the other two \"no\" with evidence \"assumed\". Otherwise,
-      when\nthe description doesn''t settle one of them, answer it \"unknown\": never
-      assume it away.\n\nAnswers to earlier questions:\n-\n\nFacts:\n-\n\nDescription:\nWir
+      say, answer \"unknown\".\n- significant_design_change: a significant change
+      to the system''s design or intended purpose is\n  planned or foreseen for on
+      or after 2 December 2027. Significant means a change the provider''s initial\n  conformity
+      assessment didn''t foresee or plan that affects whether the system meets the\n  high-risk
+      requirements, or that changes what the system is for. Routine updates, bug fixes
+      and\n  changes the provider''s own plan foresaw are not significant. A change
+      made before that date\n  doesn''t count.\n- for_public_authority: public authorities
+      are meant to use the system, whether the company is\n  one or supplies them.\n\nWhen
+      placed_before is \"no\", answer the other two \"no\" with evidence \"assumed\".
+      Otherwise, when\nthe description doesn''t settle one of them, answer it \"unknown\":
+      never assume it away.\n\nAnswers to earlier questions:\n-\n\nFacts:\n-\n\nDescription:\nWir
       sind das Sozialamt einer Kreisstadt in Niedersachsen mit 25 Sachbearbeiterinnen
       und Sachbearbeitern. F\u00fcr die Poststelle haben wir eine KI-Software gekauft,
       die eingescannte Briefe liest und dem zust\u00e4ndigen Team zuordnet; der Hersteller
@@ -103,56 +105,57 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "{\"id\": \"gen-1790848057-FdUzjR63Dy5Y1oOJAZEC\", \"object\": \"chat.completion\",
-        \"created\": 1790848057, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+      string: "{\"id\": \"gen-1790852523-y9OCAetjYg3k8IKBsIwN\", \"object\": \"chat.completion\",
+        \"created\": 1790852523, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
         \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
         [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
         \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
         \ \\\"role\\\": {\\n    \\\"role\\\": \\\"deployer\\\",\\n    \\\"evidence\\\":
-        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Das Sozialamt hat die Software gekauft
-        und nutzt sie unter eigener Verantwortung.\\\",\\n    \\\"fact_numbers\\\":
+        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Das Sozialamt nutzt die vom Hersteller
+        bereitgestellte Software; vor der Erweiterung war es Betreiber.\\\",\\n    \\\"fact_numbers\\\":
         []\\n  },\\n  \\\"builds_on_gpai\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n
-        \   \\\"evidence\\\": \\\"assumed\\\",\\n    \\\"fact\\\": \\\"Es ist nicht
-        beschrieben, dass das Sozialamt ein eigenes KI-System auf einem GPAI-Modell
-        eines anderen Anbieters aufbaut.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
-        \ \\\"own_brand\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\":
-        \\\"assumed\\\",\\n    \\\"fact\\\": \\\"Es ist nicht beschrieben, dass das
-        Sozialamt der bereits bereitgestellten Software seinen eigenen Namen oder
-        seine Marke gibt.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"substantial_modification\\\":
-        {\\n    \\\"answer\\\": \\\"yes\\\",\\n    \\\"evidence\\\": \\\"stated\\\",\\n
-        \   \\\"fact\\\": \\\"Die IT hat die Software um das Auslesen von Einkommensnachweisen
-        und eine Einsch\xE4tzung zur Wohngeldberechtigung erweitert.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  },\\n  \\\"changed_purpose\\\": {\\n    \\\"answer\\\": \\\"yes\\\",\\n
-        \   \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Die Software
-        wird entgegen der ausdr\xFCcklich beschr\xE4nkten Zweckbestimmung des Herstellers
-        auch zur Einsch\xE4tzung von Wohngeldantr\xE4gen eingesetzt.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  },\\n  \\\"conditions\\\": [\\n    {\\n      \\\"id\\\": \\\"c1\\\",\\n
-        \     \\\"answer\\\": \\\"unknown\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c2\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c3\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c4\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c5\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c6\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c7\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c8\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c9\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c10\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    }\\n  ],\\n  \\\"legacy\\\":
-        {\\n    \\\"placed_before\\\": {\\n      \\\"answer\\\": \\\"yes\\\",\\n      \\\"evidence\\\":
-        \\\"inferred\\\",\\n      \\\"fact\\\": \\\"Die Software ist bereits gekauft,
-        im Einsatz und von der IT erweitert worden.\\\",\\n      \\\"fact_numbers\\\":
-        []\\n    },\\n    \\\"significant_design_change\\\": {\\n      \\\"answer\\\":
+        \   \\\"evidence\\\": \\\"assumed\\\",\\n    \\\"fact\\\": \\\"Es gibt keinen
+        Hinweis darauf, dass das Sozialamt ein eigenes KI-System auf einem GPAI-Modell
+        aufbaut.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"own_brand\\\":
+        {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\": \\\"assumed\\\",\\n
+        \   \\\"fact\\\": \\\"Es gibt keinen Hinweis darauf, dass das Sozialamt die
+        Software unter eigenem Namen oder eigener Marke anbietet.\\\",\\n    \\\"fact_numbers\\\":
+        []\\n  },\\n  \\\"substantial_modification\\\": {\\n    \\\"answer\\\": \\\"yes\\\",\\n
+        \   \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Die IT hat
+        die Software \xFCber den vorgesehenen Zweck der Briefzuordnung hinaus f\xFCr
+        das Auslesen von Einkommensnachweisen und die Bewertung von Wohngeldantr\xE4gen
+        erweitert.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"changed_purpose\\\":
+        {\\n    \\\"answer\\\": \\\"yes\\\",\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
+        \   \\\"fact\\\": \\\"Die Software wird entgegen dem vom Hersteller vorgesehenen
+        Zweck zur Bewertung von Wohngeldantr\xE4gen eingesetzt; dieser Einsatz macht
+        sie hochriskant.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"conditions\\\":
+        [\\n    {\\n      \\\"id\\\": \\\"c1\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c2\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c3\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c4\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c5\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c6\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c7\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c8\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c9\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c10\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   }\\n  ],\\n  \\\"legacy\\\": {\\n    \\\"placed_before\\\": {\\n      \\\"answer\\\":
         \\\"yes\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"fact\\\":
-        \\\"Die IT hat die Software um eine neue Funktion zur Einsch\xE4tzung von
-        Wohngeldantr\xE4gen erweitert.\\\",\\n      \\\"fact_numbers\\\": []\\n    },\\n
-        \   \\\"for_public_authority\\\": {\\n      \\\"answer\\\": \\\"yes\\\",\\n
-        \     \\\"evidence\\\": \\\"stated\\\",\\n      \\\"fact\\\": \\\"Das Sozialamt
-        einer Kreisstadt nutzt die Software f\xFCr seine Aufgaben.\\\",\\n      \\\"fact_numbers\\\":
-        []\\n    }\\n  }\\n}\", \"refusal\": null}}], \"usage\": {\"prompt_tokens\":
-        2134, \"completion_tokens\": 1545, \"total_tokens\": 3679, \"cost\": 0.0009664985,
-        \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\": 1396, \"cache_write_tokens\":
-        735, \"audio_tokens\": 0, \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\":
-        0.0009664985, \"upstream_inference_prompt_cost\": 0.0001167485, \"upstream_inference_completions_cost\":
-        0.00084975}, \"completion_tokens_details\": {\"reasoning_tokens\": 869, \"image_tokens\":
+        \\\"Die Software wurde gekauft und bereits erweitert, ist also schon in Gebrauch.\\\",\\n
+        \     \\\"fact_numbers\\\": []\\n    },\\n    \\\"significant_design_change\\\":
+        {\\n      \\\"answer\\\": \\\"unknown\\\",\\n      \\\"evidence\\\": \\\"inferred\\\",\\n
+        \     \\\"fact\\\": \\\"Die Beschreibung enth\xE4lt keine Angaben zu einer
+        geplanten oder vorgesehenen wesentlichen \xC4nderung ab dem 2. Dezember 2027.\\\",\\n
+        \     \\\"fact_numbers\\\": []\\n    },\\n    \\\"for_public_authority\\\":
+        {\\n      \\\"answer\\\": \\\"yes\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n
+        \     \\\"fact\\\": \\\"Das Sozialamt einer Kreisstadt nutzt das System als
+        \xF6ffentliche Stelle.\\\",\\n      \\\"fact_numbers\\\": []\\n    }\\n  }\\n}\",
+        \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 2171, \"completion_tokens\":
+        1835, \"total_tokens\": 4006, \"cost\": 0.001131086, \"is_byok\": false, \"prompt_tokens_details\":
+        {\"cached_tokens\": 1396, \"cache_write_tokens\": 772, \"audio_tokens\": 0,
+        \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\": 0.001131086,
+        \"upstream_inference_prompt_cost\": 0.000121836, \"upstream_inference_completions_cost\":
+        0.00100925}, \"completion_tokens_details\": {\"reasoning_tokens\": 1145, \"image_tokens\":
         0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
