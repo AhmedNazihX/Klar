@@ -60,7 +60,23 @@ interactions:
       or for risk assessment and pricing in life and health insurance (Annex III points
       5(b) and (c)).\nc10: Decisions taken on the basis of the system''s output produce
       legal effects on people or similarly significantly affect them (not for Annex
-      III point 2, critical infrastructure).\n\nAnswers to earlier questions:\n-\n\nFacts:\n-\n\nDescription:\nWir
+      III point 2, critical infrastructure).\n\nLaunch and design:\nThe system is
+      high-risk, and its high-risk rules apply from 2 December 2027. Also answer,
+      under\n\"legacy\", three key facts for Art. 111(2) (systems already on the market
+      or in use before that\ndate), in the same form as the others:\n\n- placed_before:
+      the system is already on the market or in use today. That date is still ahead,\n  so
+      a system the description shows already on the market or in use is \"yes\". A
+      system still\n  being built, or one whose launch is only planned, is \"no\",
+      even if the launch is planned before\n  that date. When the description doesn''t
+      say, answer \"unknown\".\n- significant_design_change: the system''s design
+      has changed significantly since it was placed\n  on the market or put into service,
+      or a significant change is planned for after 2 December 2027, for\n  example
+      a new version that decides differently or serves another purpose; routine updates
+      and\n  bug fixes are not.\n- for_public_authority: public authorities are meant
+      to use the system, whether the company is\n  one or supplies them.\n\nWhen placed_before
+      is \"no\", answer the other two \"no\" with evidence \"assumed\". Otherwise,
+      when\nthe description doesn''t settle one of them, answer it \"unknown\": never
+      assume it away.\n\nAnswers to earlier questions:\n-\n\nFacts:\n-\n\nDescription:\nWir
       betreiben ein Versandlager bei Kassel mit etwa 400 Besch\u00e4ftigten und einem
       Betriebsrat. Seit diesem Sommer verteilt ein Lagersteuerungssystem eines gro\u00dfen
       Softwareherstellers die Kommissionierauftr\u00e4ge f\u00fcr jede Schicht. Es
@@ -74,11 +90,12 @@ interactions:
       a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"KeyFact":{"additionalProperties":false,"description":"One
       key-fact answer. Enum fields carry no description: strict structured output
       rejects\nkeywords next to a `$ref`; the prompt explains every field instead.","properties":{"answer":{"$ref":"#/$defs/Answer"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
-      Numbers","type":"array"}},"required":["answer","evidence","fact","fact_numbers"],"title":"KeyFact","type":"object"},"Role":{"description":"The
+      Numbers","type":"array"}},"required":["answer","evidence","fact","fact_numbers"],"title":"KeyFact","type":"object"},"LegacyAnswer":{"additionalProperties":false,"description":"The
+      Art. 111(2) key facts of a high-risk system.","properties":{"placed_before":{"$ref":"#/$defs/KeyFact"},"significant_design_change":{"$ref":"#/$defs/KeyFact"},"for_public_authority":{"$ref":"#/$defs/KeyFact"}},"required":["placed_before","significant_design_change","for_public_authority"],"title":"LegacyAnswer","type":"object"},"Role":{"description":"The
       operator role the obligations follow from (Art. 3, 16, 23-26).","enum":["provider","deployer","importer","distributor"],"title":"Role","type":"string"},"RoleFact":{"additionalProperties":false,"description":"The
       company''s own role before any switch; None when the description doesn''t say.","properties":{"role":{"anyOf":[{"$ref":"#/$defs/Role"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
       Numbers","type":"array"}},"required":["role","evidence","fact","fact_numbers"],"title":"RoleFact","type":"object"}},"additionalProperties":false,"description":"The
-      model''s whole answer; also the JSON schema it must fill.","properties":{"role":{"$ref":"#/$defs/RoleFact"},"builds_on_gpai":{"$ref":"#/$defs/KeyFact"},"own_brand":{"$ref":"#/$defs/KeyFact"},"substantial_modification":{"$ref":"#/$defs/KeyFact"},"changed_purpose":{"$ref":"#/$defs/KeyFact"},"conditions":{"items":{"$ref":"#/$defs/ConditionAnswer"},"title":"Conditions","type":"array"}},"required":["role","builds_on_gpai","own_brand","substantial_modification","changed_purpose","conditions"],"title":"RoleAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+      answer for a high-risk system: the role facts and the Art. 111(2) facts.","properties":{"role":{"$ref":"#/$defs/RoleFact"},"builds_on_gpai":{"$ref":"#/$defs/KeyFact"},"own_brand":{"$ref":"#/$defs/KeyFact"},"substantial_modification":{"$ref":"#/$defs/KeyFact"},"changed_purpose":{"$ref":"#/$defs/KeyFact"},"conditions":{"items":{"$ref":"#/$defs/ConditionAnswer"},"title":"Conditions","type":"array"},"legacy":{"$ref":"#/$defs/LegacyAnswer"}},"required":["role","builds_on_gpai","own_brand","substantial_modification","changed_purpose","conditions","legacy"],"title":"HighRiskRoleAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
     headers:
       content-type:
       - application/json
@@ -86,34 +103,56 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "\n         \n\n         \n\n         \n{\"id\":\"gen-1790714779-5syV3ai9yllj3dPPFq28\",\"object\":\"chat.completion\",\"created\":1790714779,\"model\":\"openai/gpt-6-luna\",\"provider\":\"Azure\",\"system_fingerprint\":null,\"service_tier\":\"default\",\"choices\":[{\"index\":0,\"logprobs\":null,\"finish_reason\":\"stop\",\"native_finish_reason\":\"completed\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\n
+      string: "{\"id\": \"gen-1790848000-B2OS21d4xzpn8NtT5FJb\", \"object\": \"chat.completion\",
+        \"created\": 1790848000, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+        \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
+        [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
+        \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
         \ \\\"role\\\": {\\n    \\\"role\\\": \\\"deployer\\\",\\n    \\\"evidence\\\":
-        \\\"stated\\\",\\n    \\\"fact\\\": \\\"Das Unternehmen nutzt das vom Softwarehersteller
-        angebotene Lagersteuerungssystem unter eigener Autorit\xE4t.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  },\\n  \\\"builds_on_gpai\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n
-        \   \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Das Unternehmen
-        nutzt das angebotene Lagersteuerungssystem und baut kein eigenes KI-System
-        auf einem GPAI-Modell auf.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"own_brand\\\":
-        {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\": \\\"stated\\\",\\n
-        \   \\\"fact\\\": \\\"Name, Logo und Oberfl\xE4che stammen vom Hersteller.\\\",\\n
-        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"substantial_modification\\\":
+        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Das Unternehmen nutzt das vom Hersteller
+        bereitgestellte Lagersteuerungssystem unter eigener Verantwortung.\\\",\\n
+        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"builds_on_gpai\\\": {\\n    \\\"answer\\\":
+        \\\"no\\\",\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\":
+        \\\"Das Unternehmen nutzt das fertige System des Herstellers und baut kein
+        eigenes KI-System auf einem GPAI-Modell auf.\\\",\\n    \\\"fact_numbers\\\":
+        []\\n  },\\n  \\\"own_brand\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\":
+        \\\"stated\\\",\\n    \\\"fact\\\": \\\"Name, Logo und Oberfl\xE4che stammen
+        vom Hersteller.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"substantial_modification\\\":
         {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\": \\\"stated\\\",\\n
         \   \\\"fact\\\": \\\"Das Unternehmen hat nur Lagerpl\xE4tze und Schichtzeiten
         eingepflegt und den Code nicht ver\xE4ndert.\\\",\\n    \\\"fact_numbers\\\":
         []\\n  },\\n  \\\"changed_purpose\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n
         \   \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Das System
-        wird f\xFCr die Lagersteuerung eingesetzt, wie es der Hersteller anbietet.\\\",\\n
-        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"conditions\\\": [\\n    {\\n      \\\"id\\\":
-        \\\"c1\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c2\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c3\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c4\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c5\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c6\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c7\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c8\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c9\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c10\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n    }\\n  ]\\n}\",\"refusal\":null,\"reasoning\":null,\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqvCOgEA2lhGdUG6oQ4HVMaoniytn3QUKYxILFKV8hK7ncjKvQmk4JOdvivFHY4EOBP_-FOyMo7n6LZdhMGtwhtrbX9cuX9GXudQMftyBnevOiLTBFSOS-3NrJuENyHiSVNIUdJaBbOrG3bCmPINQFJsjQmX-PeHm7Ii__Pzifuu3O4Dpg3E2rOdZ2zhD8ViAwStDNu_w0_Eq3erUf68RBGfI0VmOj4ShDHVxc191nxIAPh6Aqavd9yMgESmqdRmJ0A04wGHatjL27Sti6k99VfvcmQn-Lsni_-ssHIRD0LomGmFPHOalgac61U3MiG7ypQ2ScwImAwGRwRJzEOQgVTYTbvv-BgckyGbK3S2p-Tuysar27L_xFny-0k7D-79TUF0MOXW7RblXkzPLwJTSCI5c6sACUNZ3UXGPjjLrBXq1T5i3c2eQNI-B_wIEPkVTfWZyrmUn0qIlJF8Sbfi2thhlMDZIHq1p7O30dQpSC0iLtwqN1is0ryAB7kGKSM7kahUyXZFvwKbt7i82EhRjiyW1aweNiShA1g3Qrvmp7Z2A8wi_nHXB_p0QaJWdFgJuncf--S-n23BpnNRwEZUTnB7A8tj11wIMBsuY-TLeQePRW8FNdQ48ufd-vLigkU48O2S9hAHpJnO9IclABxnNOuLwCsSUlf8IZv_XPwnBRIE8NzevJ1bIRVr4pcpWXH2KEMgpIs_vNCuTsO914LefXC6LDoBktO80Y4oh9yyFPstJC4BS4CmFoS3O8m-j5F-I4O8ybxAM5jy_wi7jJldJWxzzOEaQPJnL3294IF0B0gG9ixiAHb99ZMQaLOV7o2h_Cxb8bNPIbXH6BMtX3q41EQMQdM8PHRjapBo5L0RzXzuF18ANP1lot91xJTqrWMqQmZcRWg-aj4UKRRmZAOez6Ke24Oreeveio2ruAffx8nXDDodIiwb7lJ7hHCYKm-VX2DD1T2pOBXLe5jiLTazy3Sz9i5S-KYbHErCZIKTeDdvbm8Fjbmnfn5YnGJ7EVVxl1OcVCwullGrd5tcfqhMQ0DBiMuQqi8f3_HCkq16iv68EoqzHRJ6Zcmk3YB2HQGYnvaCtjWFTs18pzGvUsNifSVtYt9OR6KDy4snyIr_JRYchHxn-I73NpGjVhEyukLjqtK-qGmULXHKfsctSoo8J2OLBr5XEXHa8NyRUGbmBkjsASq_lW6APKv9ABW1ktBxmqpR1wrWLk-DhH0_-dSjRPznxo5DeaCAQV6_0knK_iAG733bhSLig11MJRT9MrIUYo_OdhTRyqHl_0Vm9QwHYfAaBzD5BLLlyfuPyXGs4wg1uM-OihEnqtHcmcKE1Xr_U8kz-Vs-CypUfwAugZFxKUXdLPHu2o_NTetCyevb1y1bMSbpWXahOO1GBKduIoDMnSyEOX4QD_zwSv93OU7W1d2ZFxJFUdOs4-drNMbfx-VxjIfyUYppu6h67fdzP-erMrVscWbIuMzBE9vR4v_-makggEqKPY2XZi8HpPh-62yyeXasY_aclAUtzH5iR_sjMycfiXBT9NQg4KEHr_Hugy6lKn-3wCS6IV5TpUVb6roRe76Y-HTpi71ybkzcsV69E9-a9_pbc5cpHDM-S9BGKMpii5O_BI5tW0Z3eO3A0Xim8Wez-ZwC_XOjR5r893lR5aVtuq4hpqkF_b9Q5eZ2X9rmNDSokoFIV-Hko16VlnrGbqlFfh1i8A7CZP6EWjLy6r0_ycUNAna3VvFbhBieV-cYkszPxH9nF9N61nc-1gLcJ-Ff3-K8GM-wSgQeLw-qQ48GzD_DV10oOE60fxej7USx41KZj0BCHT87S5Hvhm3ReQeCC3Tmtw8zpOLo708985g9JUw0zrOe8mJLDgaGV5WFgGNCcj2nIhxQ89dIaRaAUvs4xXC_ldxyC8_FgiaqO41A9A3AmEPSjFbc_trMiSgnXgJiBabpFtkHP6qd0Ge_0xQV6lsuEymI7vDKiEDBcTa44WD8aC_QtV21Pmoy2aK4riiHYKldHjhXC0kTOlNIS4PYt4GWVot0TsAy-wBXuZzGMAUqtekwX0CSVt4dOv3gKaqvKRXvyQR4UHslSE_zdgGNrhMnyhMN_c4YpIJsjvotM9XuusiU0PMeD835i9Ae4pblm6Gr9_HFjamKG429POtiAIGPyn751zs4WLhTeE571SMBQUkhno0hZP9UJTLpbUfH3NWniM2hTVTaiSPTVphFzzOIuFWjDHWvshONwYIm_hJhlIqn86zQ7PA6rNDMhIDxGHZrdEpkz_NtaolK9G52A8TT0p1TGYB4IcjgBj6K6FdXhLQJE3XEdOqtOr7tgX1mPltOzU1lHUTT3aQ6JobyyaqvopC4ICb92016juqgvy5GvKJ_ZNCRhgB4U1CZh5lH0cG5_PC6K2DVlzBlmvS_wAdXVfXVipYjNj5QBpji89ZwlrkFxEaDggqANqRbqxYooPAnp0B4xwDugrhp1AZ-9BfJvHNLjw_DK-L70pVd_00HJbJlZFlQlMdCDvBAys25S0WS9y58RbmIIaie0iPhw3uV9eaKMjv9hDCagZMPFL5kTMnOytPERowpL9BuR3Jao2RLkulSJ0iiUVy7CaZ5JY-ewfgLqi_5ASMummt_AyateWNqxwvVIo2_yiws8K0LAaG2s8EE_HvzXeD6qfLcI8Lht2DY6x1NTeoBEePmJOCybXvcr499SkE4eM9Yy37JJTaqQqOS4WzP94QhKPQnn6nM2IsyeSb9wj1H7nXJtCm0Nnsn7qiaTIqicT2wSRXBeaLaAcRIzf7iIAAhTF6F36NViq14awq_JK1cninabG5mSr5C0BMAJ7b3DKrD7QYflsDTZz83i3ousmy4NQgnhsjCTelzjbEKa648HgdqVVHMekUesUHSl1uKcjdrDjdc7GL7LxX_dboM9h6OY-2Du86Cod8XxPQzdlujUOmQNA3PLXLPb_XMEzpqH01vu2ZhOUAvma__jna6vATj3os-te77LHtauOpxmjuYg8fr1SWgQcGRpZQYGihlcvMo3nfXCK3BcEV4a9Roj06eXHE0imrPsUMZjGIvlx5ZLOreKUyFVV96USVLPSC9fYtAsG002dqTPa6YNw5PHPkx9weaLJxSyXQsxdJrQykulo07wGsPUl3Vkjc7PQ3KqM9orE40HZpuL7tBnz0aEmrHmFiuPdUBOHOp-H95KI_HEmZ6xnPVJGB2PTVvIFZrXL1Akyaz11GmK20STz3kFSnphECmdEqiuPeCA5O9p7c4TTrPwCGYc9Q0_PLuvHsOurh8w4ysZ4kQzHwnqle9yPFFRVdqs2c4T0vX5UgcAckPUqdMUe2nz8UtawAM5DSJH5perAIy1u0YmKa6QATvh__C0Lw0zPMsO5FoHdNblSrviaI1NZv0YDqVKxQ9pQewsHMAHKMolsZt5osrn_LXdFUL1bROMsOTLBFEH1-njz5M3mTVuMpxtua2Yc_ZpNUrQ3EyMYD_NtrR6hOH2UMECb9TGkrqv1l5Rp_ZqZm9i8e5UQfQTN5fuQ3MGOQiG9-NV1KBC0qjmUniboAyqSepINq1bzsjP3ejfheueQDFO3Ohn42G3VRNJ1EWdf6QeBoextyX7LpMf-Om7H5jSRiaxsxU1kbnxIvWIDVzU5Mk7RBJ94-wD0jLrKAIO_2U-JEuo2sfzjf3_WqtK_wOXE3JqgUxDrbf9hiBK5Fng9o4qCu4d-8FM4m_bnwg-ziTw8sAEk9Z0XBGvkAeD--7dAyE_8ey78SYrLCH0NgnTDR5Q_Lfz7gQU70TVVpgL0rhmU2rYCGZzX9Hs30NfYE93aFP6KOc2EbsKWvdGg6ANjer0i4uvEAr-S43IVALXOmmgt8J8M2ApF3nIoUVQF2loQAemYY4OFdKS2yiteuf7kluQBcA-Pibi5s5hCrngkY7sXaBFulJIqdVAv1s7horyrmVCWnQAgy5yZxZIYY1WslST2JB7Wabjy7RJa3CiPcq9jGfFZo8ua_wnMbUqzKhVnM1aFnx5hEeA2kIGkz9mCtNGFL7lJ3Jl4odfrPgzWA88-zwXMkF_YJM52yjeQ-SKm-DHjK95vLqVeO1K6qm0FpGW1q0bGWZlPp9YsnkTjolioX2oqoEkPQg_vNU43l7-kxZBwDMxRliQ91LHbzwvt6U4BOr28n0RlvcH2HLBw6vfO_z9uz0bxr1WD6PAzekQCOBYOZ729B1RVFiYweOA7zEq6tnCgMBCcd5b53gOUbyqwERFwnVKbJcb1Xc2P44uIBvMq69xw2OeeZU7bzedLlEHxWMTEYwxAswFrl3a30ZInGbkAVFhTBLuuSDzr-WuldCgizImIF2vHH51v1SsuR0MTHLjcsnWEwij8_GWav6ryQa4QyrO0LdZ_AaELJgnPDMHfsvrKRXzjD7W_bGRus4_QhyQ8u_2HIeXon8U6PaEyVt-No4Rg_OkhCW0V5RBII5HoVXxlV8WYT6ZVHKeKuZtwwkwZ8dxc-wd2PLxt41C5SFhFzBGgleKi2ZKB1BHbZF3fjh9vzC6oOjqEgCCMlwhCwsUW8wHi0b9lSn0piM8FMaSmPG4yy3W0Fj1L3Ufq_48DjHw5WHHomAztH-VdKLTeFOXt6MXFrXd8F3mLIycJpn_W9kJbetZVlYEBUumIm2gWtEE58S6CtjpBgzfmDgZCTMzfVufPLe44lJtAbLlFoCDPf2k8dA==.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_0a023668d3c3daef016abc239cb1f88194a870eff555f89b6b\",\"index\":0},{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqvCOjvNg7YijFIeFP772_8blm6tIvtjzDxXu424p8woJArvtwpR6m2wPineGi3rpkEMwx9h2acOtib8ySbbDNGAW8YCJ-6ZjGvgLbtTGC-zYA80Mh00mxV9fUCcFbumHiEloSFtEFsJ1eJgSGk3a3bLd5Qs-jnEpvk_znkgCpKcX9xMkU0zQCIYb7ZnGCUn_s3k6-_BHVkDwAy33fdOP9QDsOhxhGEFCm5MpO16bLnzeXfbmNP7EBDzWLNyqHQgpD4iqw105Ql-DY8B2KZ7QTQqEcnisByqjKEJ5eJl95HFLZ6ua_18gdLwz9n5yneRdoTHYlgl721pZgYm6I2TYaRERIvo4pO9X-zR4LjAVpL0Lc_GDgnlyNqQlRaaefhv2PnYoXWbv1lzMsM-0iO9uYUQPGHwUb530VdQydPKv7EtVPCdjQvf9EQuhb5c2XvcvhIPtpltvnMVZPEHasDWc0NWePnII8_hZKNj-XK4uSWOzMtrcOwbi4von6Gwe0K1Xmbv-oVBnhY0aaYSP7vNqCdJabx9r2i36bM2VffqlJ7UzuFumzDE7QXgUR89KKsjHHiVwbQl52rUjo8IHlbay5qLzHcnfvN2Zo361Q19LSnbd93xCL0aBifV9DygAOyG4oY0MuURRtCd7BuNwUsOt-OR5H0X5eEeFxYhlfgnFa-h0KjG2LmCo7vKFljQmz4q6Zl5A0q3KuJbd8MdUMkss2vv5Si5Hwr7dUmsPk8WcxPeE_BpEKdAwHSRaGLwDXi4BRJDAmdwRb5xluCxAoyw9PaLcf4-WHqcuIXciiiaws0n9ru4ETZL9YYgS8m-PbsCa9tco23dORy1fL8ayEIA5gN26pHfDT51uKhaC4T3j7yQBr7v0U24GAtDmxApESQ9kXpSH0OMOrGMPFUb4Je0geO__AfS4oMUzmLYk8eleXO0uAGs5sPeHsQxm8tyLk9vdPKXbUf3HXUjz_xPr8wS9pMyZbscrQedkl8k8KkSOHfCnJtOt6rSzIIKGny6JUtBFH7rUhWloaRNA_Gm9JqCQ-8ctUi9RHOWv1q1FoFN7lBLZrUXhH-daDdEaV2D4Pn7lIRq2LttE9FOBUqo6euIEIbt31qY52S-WWW842aV36X__ADN7KztGpoIACN4WgGtsxL9Pt7HAV_VUxkL89CXsLTGIIlHkR7398Ms6LtFE6Q6pCNMRpRcYjenBYLaS9yrphSCL7DSg_d7dM_SXs0h7XIom4MvZKO9dO6xp-JZP7mMT61zdjIJa0XdfHKKLP0eLIZ__QtlsOqXlXa4Y2bQGcdu0QGnX6e3qci1W-Obh11igpV6wPNbyBZQz1T7CU-CvZJ0g3-5bKz-H4mGUvDzIXw3noe3uR-RMBQXafKs-1EuUWol9xEJ5PlLWyd-jcgnb4uZd9AZfVOESWMJ7eZ8tUGtsWu4kl-7WRxxk5PEH4GHYFTuPIsihgJfYMlFn4juf2K4JPKR2MAZyvJX9rDsJZY3T80ObStqilSuTnF_MymX7Z0m3sgILO9vmxYrKjMeABGz5Mt9XXDbqVAPY3yzcsPKjpj3kGjBBH0TltLHXXfU9_M4fxbdPpb1dfqE7GnbxO5YndPoczerIMJWTTqqTkYolwPZkpHF18VB1I5W-Y-2aDsMr6ljQrDwAqRWCTChl5ONa7JbpWovgDp3M73tk-zhXNLtkcA8rcZczfbw_PnUQsx6ZNPC6Nm54Q_AEaV8JtENqdvujD05YGKZotEyFOs5se2rw8H212-zr_BouwG1RRg_1xDr-JYhlpcXEXLsNwoL_xtyqKsO0WKcXXZGboMPWZCqH3ybkarEVZJmlNexsXMu-wgQtd6zGq_AyiMat_mh8I8Y2XGy44A-G2nzNYq7PzbELFxskOVpS390Oz2tJwHCemYRtLckCd4BLtaPWelYv3bjrTqeYr7rF2xZDOkeDYRShVf40w9KXJsF2xuR3mAqBMLl4jORukY0rXpRzKE4-wnDMP91P10trs1V-zHdfI9GLKTrIp6HyAfDZLCAbssM5g-y4r84VL9XUtzhK5fnIiyPdIw_kg1kVGDUNRIbTTbWnIplKbq6d7RoUouCTYmFqco25xSOD4gkLlAzjTsBT1B5F2Kh2meZGiEhEP-caYEXz7vLSPT-yXJqsWg6Msin1I1tVS_lDVdpymJVOAfw0ynS3m-r-kU4a-Mus5IS5lilGxMFyV5XtxxCaETEgTKxHWgHHEEfXH8ToUeRd6ISfERnddJ1JGN7PT54cK1AmtnwFvLa61Kps1ktwz6ldPC-V4-sofoWsDOuGWJJ8mfs69DIGY5u4htK6SsjdlX9_YZH6f7LMpH_35TX7MDSQsXDdAA6DuEPQC0fVwkudyr01GHMVPRIyH5ju9NqFeHAix_KCohpQZaM5f86-ynfK45wTkk7_EcXq0C4PZwxvKmrkhnrW3j3W9JsswnpyTICIT-uPSDL5UxHxkEKeHncULkJOy5ykFaghnhJtkx47DzmEHaDq2WjOzEDqOGRGBRSD_F1VVZt7quWeepp30tocM3XNzFwHrl32LrlUKbprYO4tkLgtVqxzOiCCNLCFI7Mi68Q_5CtjLWF1txOcwPoIXZ8Dqh2eSVTray5Mzn-qinTfVI7dEEZbxQ9V2e4ksC1NItB1P6Abdw2DPKvq3x9UPItMRMHAkaxW44csGlAmbDRkgLVc6RvzgJa3OJryctI5N4ZXr5qLDyldrSDkiDrCjFBtzGvE6eLD1rh0ybmivQx4Wyo3zhyjXVapTwsW7uljxGao15vMWB5mPwNqjFSKVsQKxW_jlADXe3WpwBlBQWkz55a_6bBY3KrNTulwM50od3h5uL_6o3JoCTCDluX5e6KXabNB1aIvubP6aJzMnDp7Vh_BX7Msd3PXAS5K075cdIgOEgBYq3VPmu5aKEzPeP3f1V0ytO-CYdEleneHwA2GtLKkZWbgO1DVh2GLv8-N7cjc4OHIgzl6X1c7Nwur633R3ErZakEZOAS2mA0BXKXTb0f3NEslOLj8-LmaFKRFpb7H_4cXyuHZoWPXkNEtY4ev7yvUqmTBgXfRjKF9kFpFTI68AKr4GnhGNbgQ_qYONxx1-ybgxUR7_POAFXZpkZvTejgucXBGmzpj4eDX19CYIsyYtxkmqYWdb4B5yb4t3-gLduP7c87xahqrSHWPIpEHcArygk0HFw1DBt6_IN_UX6ktoKdorrmen9lTuSi44MCbudOeNLT6WC5nlX7Kul-s9gWjTV8tsfRNg04yc52Dk_1DqWMHSFdCnkLz-Q_zE6CM4AD2Hpt85ko1aKME1NPPcrPfI3xNsvsF4CWJd3N3xwnOoh0gP_hj6KyuDGgpON_X10Rq9SpQ8Dffn2P4guoWAxEHW4BL6s5i-i8klVJmjfwX-aoh2q1wSMFWFk0ruMKaCObsPB-RFKzVFXuh8lq3kDhvGO_zEz7UWa3SfqUQljH19pxn9E42SuBvuKhImwfcjnwUga3jvS4tqsCcPg_ZGN1FQAzBhpBHzLdP-BdbhcyiYcQb1rZbt0GCvfRQxyMTwbLbGEB6cNtK4Sv9zxu9yMyGBq2NeKBJBqcjl3x2fb9JVib1hEXuPMeDM7NcbgHjhxwZdp40jQWInMB5nB6Lpfu8cBxtHanW8LYJrsdYRbaoW55NxMjcnr4h7Yn5B1_ok0eqg50tCavI0q46-nQ3nIIiEMJ6E_ZY_FxJyXPZcP-N6fgITS3j8IHfslW5GxrBqsUD6ORJxEg8e-qIQ_d3GaEceH4DRe3Zruuybb_DvuKtmrcDOpC4BhhGIwsdlFkb09-EDTQ44xDPaqY2VVwM88xZaUKIOZlH4yi9xZnH1TO0G2uJ0_qg4LB7WqXSFWSDHeBb5sl0koAMMQzhIZNO4xq8p57vef6iTQacO4yveduBoJrR1rTd4szNxPf6UhyVqUQDMLosC4UUE04QgJQKqprtPqpOA2imkTk6WgAC0_S44VNo9ovm_byPUYNa5UgTBziXCZegumt13KiO17VdsAmPZEfnGP1sspHu3F-w2ZT0LpWa2LsOigLcgLimiTIJg8ItZGz7ciyXi7gjd2eTM6Nnq073dtCAa3DjkTg7OxxELX88-68GmIVGOOmq9K6TBi7moK6DaFDSVcRGMqG83lSnZzKNJ1Mk5_Nme9KBdtzagHBL8bWCAup0HEWu-Rif1KZKk9fwZ-aPotJttr2LcHDTWIR0qBdGy3v1WchcApND1JKX7Lkzzf8KJVre1mHCTCbqN8h5R79FEhno4P7MeIpy2MJ7rD3ADqQe0K2qluBgPnLzUG7BFdbc1PuqJF1O1I8GvFYAhJML1JBct98EOdOin2tgwrZcYABrqfQCF8IYDtrxKrJNzF7M7cl2UO0-Td8Y2K7WLyAvGFDZ4UUCnZFmHXDBfW4JFkLZxgN7nZNZWdmqCxsDjMTN4hCJ6wG7ffphSd70KCGzC4z7ajWqigUrlen8Tr0z7a6DZxRB8LipUL8WUtOfX9M2pxMVLzw==.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_0a023668d3c3daef016abc23a09624819498a1cf5059ff985d\",\"index\":1}]}}],\"usage\":{\"prompt_tokens\":1750,\"completion_tokens\":1449,\"total_tokens\":3199,\"cost\":0.0008738015,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":1294,\"cache_write_tokens\":453,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0008738015,\"upstream_inference_prompt_cost\":0.0000768515,\"upstream_inference_completions_cost\":0.00079695},\"completion_tokens_details\":{\"reasoning_tokens\":970,\"image_tokens\":0,\"audio_tokens\":0}}}"
+        wird wie vom Hersteller angeboten zur Steuerung von Kommissionierauftr\xE4gen
+        eingesetzt.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"conditions\\\":
+        [\\n    {\\n      \\\"id\\\": \\\"c1\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c2\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c3\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c4\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c5\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c6\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c7\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c8\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c9\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c10\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n
+        \   }\\n  ],\\n  \\\"legacy\\\": {\\n    \\\"placed_before\\\": {\\n      \\\"answer\\\":
+        \\\"yes\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"fact\\\":
+        \\\"Das Lagersteuerungssystem ist seit diesem Sommer in Betrieb.\\\",\\n      \\\"fact_numbers\\\":
+        []\\n    },\\n    \\\"significant_design_change\\\": {\\n      \\\"answer\\\":
+        \\\"unknown\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"fact\\\":
+        \\\"Die Beschreibung sagt nicht, ob sich das Design seit der Inbetriebnahme
+        wesentlich ge\xE4ndert hat oder eine wesentliche \xC4nderung nach dem 2. Dezember
+        2027 geplant ist.\\\",\\n      \\\"fact_numbers\\\": []\\n    },\\n    \\\"for_public_authority\\\":
+        {\\n      \\\"answer\\\": \\\"unknown\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n
+        \     \\\"fact\\\": \\\"Die Beschreibung sagt nicht, ob Beh\xF6rden das System
+        verwenden sollen.\\\",\\n      \\\"fact_numbers\\\": []\\n    }\\n  }\\n}\",
+        \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 2133, \"completion_tokens\":
+        1718, \"total_tokens\": 3851, \"cost\": 0.001061511, \"is_byok\": false, \"prompt_tokens_details\":
+        {\"cached_tokens\": 1396, \"cache_write_tokens\": 734, \"audio_tokens\": 0,
+        \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\": 0.001061511,
+        \"upstream_inference_prompt_cost\": 0.000116611, \"upstream_inference_completions_cost\":
+        0.0009449}, \"completion_tokens_details\": {\"reasoning_tokens\": 1065, \"image_tokens\":
+        0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
       - application/json
