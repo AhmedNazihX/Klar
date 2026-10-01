@@ -195,6 +195,12 @@ def test_an_invalid_case_date_fails_the_loader(tmp_path: Path) -> None:
         load_yaml_file(write_case_with_as_of(tmp_path, "2026-1215"))
 
 
+@pytest.mark.parametrize("impossible", ["2026-13-45", "2026-02-30"])
+def test_an_impossible_case_date_names_the_file_and_field(tmp_path: Path, impossible: str) -> None:
+    with pytest.raises(CaseFileError, match=r"(?s)dated\.yaml.*as_of"):
+        load_yaml_file(write_case_with_as_of(tmp_path, impossible))
+
+
 def test_a_case_without_a_date_takes_the_run_date() -> None:
     assert BenchmarkCase.model_validate(VALID_CASE).as_of is None
 

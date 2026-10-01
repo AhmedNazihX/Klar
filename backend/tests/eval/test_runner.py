@@ -5,6 +5,7 @@ import json
 import threading
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -162,6 +163,17 @@ def test_the_classifier_never_sees_the_label_or_case_id() -> None:
     assert classifier.requests == [
         ClassifierInput("Made-up description 1", Language.DE, ("hr-ex-002", "hr-ex-003"))
     ]
+
+
+def test_the_classifier_gets_the_case_date_or_none() -> None:
+    dated = CASES[0].model_copy(update={"as_of": date(2026, 12, 15)})
+    classifier = PricedClassifier()
+    run_benchmark([dated, CASES[1]], classifier, MemoryStore(), options(concurrency=1), SPLIT)
+    by_description = {request.description: request.as_of for request in classifier.requests}
+    assert by_description == {
+        "Made-up description 1": date(2026, 12, 15),
+        "Made-up description 2": None,
+    }
 
 
 def test_cost_cap_stops_starting_new_cases() -> None:

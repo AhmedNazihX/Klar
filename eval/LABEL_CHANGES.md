@@ -14,8 +14,8 @@ rules are in `backend/aiact/eval/label_freeze.py`):
   numbers), or by rule as "<N> <prefix> cases (by rule: …)".
 - A rule row covers the changed cases with that id prefix that no id row names, and only when N
   equals their number exactly; several rule rows for one prefix are summed first. It never covers
-  a label change (a case's `label` or `label_citation`, an override's `status`, `risk_class` or
-  `label_citation`) or a removal: those always need an id row. So N counts the rule's cases
+  a label change (a case's `label`, `label_citation` or `as_of`, an override's `status`,
+  `risk_class` or `label_citation`) or a removal: those always need an id row. So N counts the rule's cases
   minus any an id row already names.
 - Rows are only ever added: editing or deleting an existing row fails the check (re-aligning the
   columns doesn't). A mistake in an old row is fixed with a new, corrective row.

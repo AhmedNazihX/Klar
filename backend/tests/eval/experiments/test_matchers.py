@@ -47,6 +47,13 @@ def test_the_replay_state_has_no_facts_answers_exclusions_or_steps() -> None:
     }
 
 
+def test_a_dated_case_replays_at_its_own_date() -> None:
+    dated = case("c-1", RiskClass.PROHIBITED).model_copy(update={"as_of": date(2026, 12, 15)})
+    assert matchers.replay_state(dated, AS_OF)["as_of"] == date(2026, 12, 15)
+    assert matchers.role_check_state(dated, AS_OF)["as_of"] == date(2026, 12, 15)
+    assert matchers.replay_state(case("c-2"), AS_OF)["as_of"] == AS_OF
+
+
 @pytest.mark.parametrize(
     ("risk_class", "annex_point", "expected"),
     [
