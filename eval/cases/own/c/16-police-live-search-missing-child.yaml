@@ -1,0 +1,55 @@
+id: own-c-16-police-live-search-missing-child
+set_name: own
+language: en
+description: >-
+  We're a national police force in an EU country whose police act allows live facial recognition
+  in public places for only two purposes, finding abducted or missing persons and stopping an
+  imminent terrorist attack, and requires an investigating judge to approve each use in advance.
+  We've bought a system from a French vendor and will use it from 2028, unchanged. In a case such
+  as a missing child, cameras at named stations compare passers-by against that child's photo for
+  at most 48 hours, and officers check every match before acting. We've completed the fundamental
+  rights impact assessment, registered the system in the EU database, and notify the data
+  protection authority of each use. Our fleet is also moving to electric cars.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:1:a"
+label_citation:
+  - "art:5:1:h:i"
+  - "art:5:2"
+  - "art:5:3"
+  - "art:5:5"
+  - "annex:III:1:a"
+  - "art:6:2"
+  - "art:3:42"
+notes: >-
+  Draft for the user's review (B5c). Class: real-time remote biometric identification (Art. 3(42))
+  in publicly accessible spaces for law enforcement is prohibited under Art. 5(1)(h) unless one of
+  the listed objectives applies; the search for missing persons is point (h)(i), national law
+  allows it (Art. 5(5)), each use is approved in advance by a judge (Art. 5(3)), limited in time
+  and place to confirm one targeted person (Art. 5(2)), and the FRIA and registration that
+  Art. 5(2) requires are done. So not prohibited; remote biometric identification is high-risk
+  under Annex III 1(a) and Art. 6(2). Date: use from 2028, after 2 December 2027 (Art. 111(2) does
+  not arise). Role: uses a bought system unchanged under its authority: deployer. Included:
+  Art. 5(4) (notify each use), 26(8) and 49(3) (public authority registration; for law enforcement
+  in the secure section, Art. 49(4)), 27 (FRIA, public body). Kept because the facts don't settle
+  the condition: 26(4) (input data control), 26(9) (DPIA, under Directive 2016/680) and 86(1).
+  Left out: 26(7) (police officers are not subject to it), 26(10) (post-remote identification
+  only), 26(11) (Art. 13 of Directive 2016/680 applies instead). Trap: a 5(1)(h) case that the
+  exception and its conditions take out of the ban (E4's follow-up from C7).
+tags:
+  - "category:c"
+  - "trap:prohibition_exception"
+  - "obligation:art:4:1"
+  - "obligation:art:5:4"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:8"
+  - "obligation:art:26:9"
+  - "obligation:art:26:12"
+  - "obligation:art:27:1"
+  - "obligation:art:49:3"
+  - "obligation:art:86:1"

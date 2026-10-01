@@ -1,0 +1,27 @@
+id: own-c-13-store-camera-lifestyle-segments
+set_name: own
+language: de
+description: >-
+  Wir sind ein Wiener Anbieter für Handelsanalysen mit 70 Beschäftigten. Unser Produkt
+  „ShelfSense“ besteht aus Kameras über den Werbebildschirmen in Modegeschäften und einer
+  Software, die wir selbst entwickelt haben. Sie wertet das Gesicht jeder Person aus, die vor dem
+  Bildschirm stehen bleibt, und ordnet sie einem Segment zu, darunter „LGBTQ-affin“ und
+  „religiös-konservativ“; danach wählt der Bildschirm die passende Werbung aus. Gespeichert werden
+  nur die Segmente, nicht die Bilder. Drei Modeketten in Österreich und Tschechien setzen es seit
+  Anfang 2026 ein, verkauft wird es unter unserem Namen. Unsere Weihnachtsfeier findet dieses Jahr
+  im Prater statt.
+label:
+  risk_class: prohibited
+  role: provider
+label_citation: ["art:5:1:g", "art:3:40", "guide:guide-prohibited:para:273", "art:3:3"]
+notes: >-
+  Draft for the user's review (B5c). Class: the system assigns individual shoppers to categories
+  based on their facial (biometric) data, so it is a biometric categorisation system (Art. 3(40));
+  the categories infer sexual orientation and religious beliefs, so placing it on the market is
+  prohibited under Art. 5(1)(g) (since 2 February 2025), whether or not the images are stored.
+  Not ancillary to another service (its purpose is the categorisation). Role: develops it and sells
+  it under its own name (Art. 3(3)): provider. The fashion chains are deployers whose use is also
+  prohibited; not labelled here.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:g"

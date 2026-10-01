@@ -1,0 +1,25 @@
+id: own-c-11-police-burglary-risk-list
+set_name: own
+language: en
+description: >-
+  We're the analysis unit of a regional police force in Flanders. Since spring 2026 we have used a
+  tool from a Belgian software firm that gives every adult in our records a score for how likely
+  they are to commit a burglary in the next six months. The score is worked out from age, family
+  background, home neighbourhood, schooling, employment history and the answers to a personality
+  questionnaire some of them filled in during earlier contacts with us. Officers visit the
+  highest-scoring people at home and stop them more often, even when nothing links them to an
+  actual burglary. We use the tool as delivered. Our unit also moved to a new building this year.
+label:
+  risk_class: prohibited
+  role: deployer
+label_citation: ["art:5:1:d", "art:3:4"]
+notes: >-
+  Draft for the user's review (B5c). Class: the tool assesses the risk of individuals committing a
+  criminal offence based solely on profiling and personality traits (demographics, neighbourhood,
+  a personality questionnaire), with no objective, verifiable facts linking them to a crime, so the
+  exception in the second half of Art. 5(1)(d) (supporting a human assessment already based on such
+  facts) does not apply. Prohibited since 2 February 2025. Role: the police force uses the bought
+  tool unchanged under its authority (Art. 3(4)): deployer.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:d"

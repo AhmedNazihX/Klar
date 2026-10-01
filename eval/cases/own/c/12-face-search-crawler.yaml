@@ -1,0 +1,24 @@
+id: own-c-12-face-search-crawler
+set_name: own
+language: de
+description: >-
+  Wir sind ein Berliner Start-up mit 15 Leuten und bauen die Personensuche „Gesichtsfinder“. Unser
+  Crawler sammelt rund um die Uhr alle öffentlich sichtbaren Fotos aus sozialen Netzwerken,
+  Nachrichtenseiten und Vereinswebsites ein, ohne Auswahl, wer darauf zu sehen ist; ein Modell
+  erkennt die Gesichter und legt für jedes ein Suchprofil in unserer Datenbank an. Kunden laden
+  ein Foto hoch und bekommen alle Seiten angezeigt, auf denen dieselbe Person vorkommt. Die
+  Datenbank umfasst inzwischen gut 200 Millionen Gesichter und wächst täglich. Verkauft wird der
+  Dienst seit 2025 im Abo, unter unserem Namen. Unser Logo hat eine Agentur aus Leipzig entworfen.
+label:
+  risk_class: prohibited
+  role: provider
+label_citation: ["art:5:1:e", "guide:guide-prohibited:para:224", "art:3:3"]
+notes: >-
+  Draft for the user's review (B5c). Class: an AI system that creates and expands a facial
+  recognition database by untargeted scraping of facial images from the internet; all four
+  conditions the guidelines list (para. 224, p. 79) are met, so it is prohibited under Art. 5(1)(e)
+  (since 2 February 2025). Role: the start-up develops it and offers it under its own name
+  (Art. 3(3)): provider.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:e"
