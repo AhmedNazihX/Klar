@@ -1,124 +1,57 @@
-"""The engine model smoke test (X2): the probes it plans, the states they get, the scoring against
-labels, how a probe's outcome becomes a row, a model's run with a fake node and store, decision
-023's rule, and the dry run. No model is called: nodes are fakes or built without a call.
+"""The engine model smoke test (X2): the probes it plans, how a probe's outcome becomes a row, a
+model's run with a fake node and store, and the dry run. No model is called: nodes are fakes or
+built without a call, and the serving provider comes from a stub.
 
 The cases here are made up, not benchmark cases.
 """
 
-from collections.abc import Mapping, Sequence
+import threading
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from uuid import UUID, uuid4
 
+import httpx
+import psycopg
 import pytest
 import yaml
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
+from openrouter.errors import NoResponseError, OpenRouterError
 from pydantic import JsonValue, SecretStr, ValidationError
 from typer.testing import CliRunner
 
-from aiact.cli import app
+from aiact import cli
 from aiact.engine.nodes import facts, high_risk, role_obligations, scope
-from aiact.engine.nodes.scope import ScopeOutputError
-from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome, RoleFinding
-from aiact.eval.cases import BenchmarkCase, CaseLabel, CaseSet
-from aiact.eval.experiments import smoke
-from aiact.eval.experiments.smoke import (
-    GEMINI,
-    LUNA,
-    WORKED_EXAMPLE,
-    NodeName,
-    Probe,
-    ProbeKind,
-    ProbeScore,
-    UsageTracker,
-    Verdict,
-)
+from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
+from aiact.eval import records, runner
+from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseSet
+from aiact.eval.experiments import matchers, smoke
+from aiact.eval.experiments.smoke import GEMINI, LUNA, ModelArm, NodeName, Probe, UsageTracker
 from aiact.eval.runner import CaseRecord
-from aiact.llm import LLMConfigError
-from aiact.schemas import (
-    Citation,
-    FollowUpQuestion,
-    HighRiskRoute,
-    Language,
-    OpenQuestion,
-    RiskClass,
-    Role,
-    Status,
-    StepName,
-    StepResult,
-)
+from aiact.llm import EmbeddingError, LLMConfigError
+from aiact.llm.generations import GenerationLookupError
+from aiact.retrieval.provisions import ProvisionNotFoundError
+from aiact.schemas import Language, RiskClass, Role, Status, StepName, StepResult
 from aiact.settings import Settings
+from tests.eval.experiments.builders import case, role_outcome
 
 GIT_STATE = ("0123456789abcdef0123456789abcdef01234567", False)
-OPEN = OpenQuestion(question="Does the law settle it?", readings=("Stricter.", "Lenient."))
-ASK = FollowUpQuestion(id="third_party_assessment", text="Is a notified body involved?")
 
 
-def case(
-    case_id: str,
-    risk_class: RiskClass = RiskClass.HIGH_RISK,
-    *,
-    status: Status = Status.DECIDED,
-    role: Role | None = Role.PROVIDER,
-    annex_point: str | None = None,
-    citation: tuple[str, ...] = ("art:6:1:a",),
-    tags: tuple[str, ...] = (),
-) -> BenchmarkCase:
-    return BenchmarkCase(
-        id=case_id,
-        set_name=CaseSet.OWN,
-        language=Language.EN,
-        description=f"A made-up system ({case_id}).",
-        label=CaseLabel(risk_class=risk_class, status=status, role=role, annex_point=annex_point),
-        label_citation=citation,
-        notes="Open question and readings." if status is Status.LEGALLY_AMBIGUOUS else None,
-        tags=tags,
+def test_the_models_are_pinned_to_their_eu_zdr_endpoints() -> None:
+    """Decision 005 and F6's checked slugs; a typo here would compare the wrong endpoint."""
+    assert (LUNA.model, LUNA.provider, LUNA.served_by) == (
+        "openai/gpt-6-luna-20260922",
+        "azure/eu",
+        "Azure",
     )
-
-
-def step(
-    name: StepName,
-    status: Status = Status.DECIDED,
-    cited: Sequence[str] = (),
-    decision: str = "A decision.",
-    missing: FollowUpQuestion | None = None,
-) -> StepResult:
-    citations = tuple(
-        Citation(provision_id=pid, document_id="ai-act", language=Language.EN, quote="Text.")
-        for pid in cited
+    assert (GEMINI.model, GEMINI.provider, GEMINI.served_by) == (
+        "google/gemini-3.1-flash-lite",
+        "google-vertex/eu",
+        "Google",
     )
-    return StepResult(
-        step=name,
-        decision=decision,
-        citations=citations,
-        status=status,
-        missing_fact=(missing or ASK) if status is Status.NEEDS_MORE_INFORMATION else None,
-        open_question=OPEN if status is Status.LEGALLY_AMBIGUOUS else None,
-    )
-
-
-def scope_outcome(
-    matched: bool, status: Status = Status.DECIDED, cited: Sequence[str] = ()
-) -> CheckOutcome:
-    return CheckOutcome(step=step(StepName.SCOPE, status, cited), matched=matched)
-
-
-def high_risk_outcome(
-    route: HighRiskRoute | None,
-    point: str | None,
-    status: Status = Status.DECIDED,
-    decision: str = "A decision.",
-    missing: FollowUpQuestion | None = None,
-) -> CheckOutcome:
-    return CheckOutcome(
-        step=step(StepName.HIGH_RISK, status, decision=decision, missing=missing),
-        high_risk_route=route,
-        annex_point=point,
-    )
-
-
-def role_outcome(role: Role, status: Status = Status.DECIDED) -> CheckOutcome:
-    return CheckOutcome(step=step(StepName.ROLE_OBLIGATIONS, status), role=RoleFinding(role=role))
+    assert dict(smoke.ARMS) == {"luna": LUNA, "gemini": GEMINI}
 
 
 # --- Planning -----------------------------------------------------------------------------------
@@ -180,132 +113,15 @@ def test_the_default_plan_covers_every_approved_own_case() -> None:
     assert checks >= 40  # B5b 13 + B5e 14 and the worked example + B5d 13 (decision 023: ~50)
 
 
-# --- States -------------------------------------------------------------------------------------
-
-
-def test_a_check_other_than_role_sees_the_replay_state() -> None:
-    state = smoke.probe_state(Probe(NodeName.HIGH_RISK, case("e-1")))
-    assert state == {
-        "description": "A made-up system (e-1).",
-        "language": Language.EN,
-        "law_version": smoke.LawVersion.AMENDED,
-        "as_of": smoke.AS_OF,
-        "answers": {},
-        "exclude_source_example_ids": (),
-        "facts": (),
-        "steps": (),
-    }
-
-
-@pytest.mark.parametrize(
-    ("risk_class", "annex_point", "expected"),
-    [
-        (RiskClass.HIGH_RISK, "annex:III:4:a", {"high_risk_route": HighRiskRoute.ANNEX_III}),
-        (RiskClass.HIGH_RISK, "annex:I:11", {"high_risk_route": HighRiskRoute.ANNEX_I}),
-        (RiskClass.HIGH_RISK, None, {"high_risk_route": HighRiskRoute.ANNEX_III}),
-        (RiskClass.LIMITED_RISK, None, {"transparency_duties": ("art:50:1",)}),
-        (RiskClass.PROHIBITED, None, {}),
-        (RiskClass.MINIMAL_RISK, None, {}),
-    ],
-)
-def test_the_role_check_gets_the_class_the_label_settles(
-    risk_class: RiskClass, annex_point: str | None, expected: dict[str, object]
-) -> None:
-    labelled = case("d-1", risk_class, annex_point=annex_point)
-    state = smoke.probe_state(Probe(NodeName.ROLE, labelled))
-    plain = smoke.probe_state(Probe(NodeName.SCOPE, labelled))
-    matches = (StepName.PROHIBITED,) if risk_class is RiskClass.PROHIBITED else ()
-    assert state == {**plain, "matches": matches, **expected}
-
-
-# --- Scoring ------------------------------------------------------------------------------------
-
-
-def test_scope_matches_out_of_scope_with_the_label_citation_first() -> None:
-    labelled = case("b-1", RiskClass.OUT_OF_SCOPE, citation=("art:2:3", "art:3:1"))
-    assert smoke.scope_matches(scope_outcome(True, cited=("art:3:1", "art:2:3")), labelled)
-    assert not smoke.scope_matches(scope_outcome(True, cited=("art:3:1",)), labelled)
-    assert not smoke.scope_matches(scope_outcome(False, cited=("art:2:3",)), labelled)
-
-
-def test_scope_matches_in_scope_on_the_status() -> None:
-    labelled = case("b-2", RiskClass.MINIMAL_RISK, status=Status.LEGALLY_AMBIGUOUS)
-    assert smoke.scope_matches(scope_outcome(False, Status.LEGALLY_AMBIGUOUS), labelled)
-    assert not smoke.scope_matches(scope_outcome(False), labelled)
-
-
-def test_high_risk_matches_the_annex_i_point_from_the_tags() -> None:
-    labelled = case("e-1", tags=("annex_i_point:annex:I:A:11",))
-    assert smoke.high_risk_matches(
-        high_risk_outcome(HighRiskRoute.ANNEX_I, "annex:I:A:11"), labelled
+def test_each_probe_gets_its_replay_state() -> None:
+    labelled = case("d-1", RiskClass.LIMITED_RISK)
+    assert smoke.probe_state(Probe(NodeName.ROLE, labelled)) == matchers.role_check_state(
+        labelled, smoke.AS_OF
     )
-    assert not smoke.high_risk_matches(
-        high_risk_outcome(HighRiskRoute.ANNEX_III, "annex:I:A:11"), labelled
-    )
-    assert not smoke.high_risk_matches(
-        high_risk_outcome(HighRiskRoute.ANNEX_I, "annex:I:A:12"), labelled
-    )
-
-
-def test_high_risk_matches_the_worked_example_on_annex_iii() -> None:
-    right = high_risk_outcome(HighRiskRoute.ANNEX_III, "annex:III:4:a")
-    assert smoke.high_risk_matches(right, WORKED_EXAMPLE)
-    wrong = high_risk_outcome(HighRiskRoute.ANNEX_I, "annex:III:4:a")
-    assert not smoke.high_risk_matches(wrong, WORKED_EXAMPLE)
-
-
-def test_high_risk_on_both_routes_expects_annex_iii() -> None:
-    labelled = case("e-14", tags=("annex_i_point:annex:I:A:11", "also_route:annex_iii"))
-    outcome = high_risk_outcome(HighRiskRoute.ANNEX_III, "annex:I:A:11")
-    assert smoke.high_risk_matches(outcome, labelled)
-
-
-def test_high_risk_asks_the_tagged_missing_fact() -> None:
-    labelled = case(
-        "e-7",
-        status=Status.NEEDS_MORE_INFORMATION,
-        tags=("annex_i_point:annex:I:B:21", "missing_fact:third_party_assessment"),
-    )
-    asked = high_risk_outcome(HighRiskRoute.ANNEX_I, "annex:I:B:21", Status.NEEDS_MORE_INFORMATION)
-    assert smoke.high_risk_matches(asked, labelled)
-    other = FollowUpQuestion(id="intended_purpose", text="What is it for?")
-    wrong = high_risk_outcome(
-        HighRiskRoute.ANNEX_I, "annex:I:B:21", Status.NEEDS_MORE_INFORMATION, missing=other
-    )
-    assert not smoke.high_risk_matches(wrong, labelled)
-
-
-def test_a_decided_section_b_case_names_art_2_2() -> None:
-    labelled = case("e-5", tags=("annex_i_point:annex:I:B:18", "annex_i_section:b"))
-    named = "High-risk. Under Art. 2(2) only Art. 6(1) applies."
-    assert smoke.high_risk_matches(
-        high_risk_outcome(HighRiskRoute.ANNEX_I, "annex:I:B:18", decision=named), labelled
-    )
-    assert not smoke.high_risk_matches(
-        high_risk_outcome(HighRiskRoute.ANNEX_I, "annex:I:B:18"), labelled
-    )
-
-
-def test_a_not_high_risk_label_expects_no_route_and_its_status() -> None:
-    labelled = case("e-2", RiskClass.MINIMAL_RISK)
-    assert smoke.high_risk_matches(high_risk_outcome(None, None), labelled)
-    assert not smoke.high_risk_matches(
-        high_risk_outcome(HighRiskRoute.ANNEX_I, "annex:I:A:4"), labelled
-    )
-    exempt = CheckOutcome(step=step(StepName.HIGH_RISK), annex_iii_exempt=True)
-    assert not smoke.high_risk_matches(exempt, labelled)
-
-
-def test_role_matches_the_role_and_an_ambiguous_status() -> None:
-    assert smoke.role_matches(role_outcome(Role.DEPLOYER), case("d-1", role=Role.DEPLOYER))
-    assert not smoke.role_matches(role_outcome(Role.PROVIDER), case("d-1", role=Role.DEPLOYER))
-    ambiguous = case("d-2", status=Status.LEGALLY_AMBIGUOUS)
-    assert smoke.role_matches(role_outcome(Role.PROVIDER, Status.LEGALLY_AMBIGUOUS), ambiguous)
-    assert not smoke.role_matches(role_outcome(Role.PROVIDER), ambiguous)
-
-
-def test_a_role_outcome_without_a_role_does_not_match() -> None:
-    assert not smoke.role_matches(CheckOutcome(step=step(StepName.ROLE_OBLIGATIONS)), case("d-1"))
+    for node in (NodeName.FACTS, NodeName.SCOPE, NodeName.HIGH_RISK):
+        assert smoke.probe_state(Probe(node, labelled)) == matchers.replay_state(
+            labelled, smoke.AS_OF
+        )
 
 
 def test_facts_are_not_scored() -> None:
@@ -330,73 +146,139 @@ def settings() -> Settings:
 
 
 class FakeNodes:
-    """A node factory: every node returns `result` (or raises it), after `cost` is spent."""
+    """A node factory: every node makes one tracked "call" (cost, tokens, a generation id), then
+    returns `result` or raises it; `before_call` raises before any call is made. With
+    `wait_for_company`, a node waits that long for a second one to start, so a run that would
+    allow two at once shows it in `most_in_flight` however fast the threads are."""
 
-    def __init__(self, result: object, cost: float = 0.001, tokens: int = 100) -> None:
+    def __init__(
+        self,
+        result: object,
+        cost: float = 0.001,
+        tokens: int = 100,
+        before_call: Exception | None = None,
+        wait_for_company: float | None = None,
+    ) -> None:
         self.result = result
+        self.wait_for_company = wait_for_company
+        self.company = threading.Event()
         self.cost = cost
         self.tokens = tokens
+        self.before_call = before_call
         self.seen: list[tuple[NodeName, str | None, str | None]] = []
+        self.lock = threading.Lock()
+        self.in_flight = 0
+        self.most_in_flight = 0
 
     def __call__(self, node: NodeName, given: Settings, tracker: UsageTracker) -> smoke.NodeRunner:
         self.seen.append((node, given.engine_model, given.engine_provider))
 
         def run(state: EngineState) -> FactsOutcome | CheckOutcome:
-            tracker.add(self.cost, self.tokens)
-            if isinstance(self.result, BaseException):
-                raise self.result
-            assert isinstance(self.result, FactsOutcome | CheckOutcome)
-            return self.result
+            with self.lock:
+                self.in_flight += 1
+                self.most_in_flight = max(self.most_in_flight, self.in_flight)
+                if self.in_flight > 1:
+                    self.company.set()
+            if self.wait_for_company is not None:
+                self.company.wait(self.wait_for_company)
+            try:
+                if self.before_call is not None:
+                    raise self.before_call
+                tracker.add(self.cost, self.tokens)
+                tracker.generation_ids.append(f"gen-{uuid4().hex}")
+                if isinstance(self.result, BaseException):
+                    raise self.result
+                assert isinstance(self.result, FactsOutcome | CheckOutcome)
+                return self.result
+            finally:
+                with self.lock:
+                    self.in_flight -= 1
 
         return run
 
 
-def scores_of(record: CaseRecord) -> Mapping[str, object]:
-    return record.scores
+def served(name: str) -> smoke.ServedBy:
+    return lambda generation_id: name
 
 
-def test_a_fitting_answer_is_scored_and_its_cost_kept() -> None:
-    probe = Probe(NodeName.ROLE, case("d-1", role=Role.DEPLOYER))
-    record = smoke.run_probe(probe, settings(), FakeNodes(role_outcome(Role.DEPLOYER), 0.002, 50))
+def probe_on(
+    nodes: FakeNodes,
+    arm: ModelArm = LUNA,
+    probe: Probe | None = None,
+    served_by: smoke.ServedBy | None = None,
+) -> CaseRecord:
+    probe = probe or Probe(NodeName.ROLE, case("d-1", role=Role.DEPLOYER))
+    return smoke.run_probe(probe, arm, settings(), served_by or served(arm.served_by), nodes)
+
+
+def info(record: CaseRecord) -> Mapping[str, JsonValue]:
+    smoke_info = record.predicted["smoke"]
+    assert isinstance(smoke_info, dict)
+    return smoke_info
+
+
+def test_a_fitting_answer_is_scored_with_its_cost_and_provider() -> None:
+    nodes = FakeNodes(role_outcome(Role.DEPLOYER), 0.002, 50)
+    record = probe_on(nodes)
     assert record.case_id == "role_obligations:d-1"
-    assert scores_of(record) == {
+    assert record.scores == {
         "broken": False,
         "failed": False,
         "correct": True,
+        "served_as_pinned": True,
         "is_error": False,
         "cost_usd": 0.002,
         "tokens": 50,
     }
     assert (record.cost_usd, record.tokens) == (0.002, 50)
-    assert record.predicted["role"] == {
-        "role": "deployer",
-        "also_role": None,
-        "role_switch_reason": None,
-        "obligations": [],
-    }
+    role = record.predicted["role"]
+    assert isinstance(role, dict) and role["role"] == "deployer"
+    assert info(record)["served_by"] == ["Azure"]
+    assert info(record)["cost_is_estimated"] is False
     assert record.label["id"] == "d-1"
+    assert nodes.seen == [(NodeName.ROLE, LUNA.model, LUNA.provider)]
 
 
 def test_a_wrong_answer_is_answered_but_not_correct() -> None:
-    probe = Probe(NodeName.ROLE, case("d-1", role=Role.DEPLOYER))
-    record = smoke.run_probe(probe, settings(), FakeNodes(role_outcome(Role.PROVIDER)))
-    assert scores_of(record)["correct"] is False
-    assert scores_of(record)["is_error"] is False
+    record = probe_on(FakeNodes(role_outcome(Role.PROVIDER)))
+    assert record.scores["correct"] is False
+    assert record.scores["is_error"] is False
+
+
+def test_an_answer_from_another_provider_than_the_pinned_one_does_not_count() -> None:
+    record = probe_on(
+        FakeNodes(role_outcome(Role.DEPLOYER)), GEMINI, served_by=served("Google AI Studio")
+    )
+    assert record.scores["failed"] is True
+    assert record.scores["correct"] is None
+    assert record.scores["served_as_pinned"] is False
+    assert record.predicted["not_pinned"] == "served by Google AI Studio, not Google"
+    assert info(record)["served_by"] == ["Google AI Studio"]
+
+
+def test_an_unreadable_generation_record_does_not_count() -> None:
+    def lookup(generation_id: str) -> str:
+        raise GenerationLookupError(f"generation {generation_id} not found after 12 attempts")
+
+    record = probe_on(FakeNodes(role_outcome(Role.DEPLOYER)), served_by=lookup)
+    assert record.scores["failed"] is True
+    assert record.scores["served_as_pinned"] is False
 
 
 def test_an_answer_that_misses_the_schema_is_broken_and_wrong() -> None:
+    error = scope.ScopeOutputError("scope answer doesn't fit the schema: ai_system: Field required")
     probe = Probe(NodeName.SCOPE, case("b-1", RiskClass.OUT_OF_SCOPE))
-    error = ScopeOutputError("scope answer doesn't fit the schema: ai_system: Field required")
-    record = smoke.run_probe(probe, settings(), FakeNodes(error, 0.003))
-    assert scores_of(record) == {
+    record = probe_on(FakeNodes(error, 0.003), probe=probe)
+    assert record.scores == {
         "broken": True,
         "failed": False,
         "correct": False,
+        "served_as_pinned": True,
         "is_error": True,
         "cost_usd": 0.003,
         "tokens": 100,
     }
-    assert record.predicted == {"error": {"type": "ScopeOutputError", "message": str(error)}}
+    assert record.predicted["error"] == {"type": "ScopeOutputError", "message": str(error)}
 
 
 @pytest.mark.parametrize(
@@ -406,11 +288,18 @@ def test_an_answer_that_misses_the_schema_is_broken_and_wrong() -> None:
         high_risk.HighRiskOutputError("x"),
         role_obligations.RoleOutputError("x"),
         scope.ScopeOutputError("x"),
+        ProvisionNotFoundError("no text of art:2:99"),
     ],
 )
 def test_every_nodes_output_error_is_broken(error: Exception) -> None:
-    record = smoke.run_probe(Probe(NodeName.HIGH_RISK, case("e-1")), settings(), FakeNodes(error))
-    assert scores_of(record)["broken"] is True
+    record = probe_on(FakeNodes(error), probe=Probe(NodeName.SCOPE, case("b-1")))
+    assert record.scores["broken"] is True
+
+
+def test_an_unknown_provision_before_any_reply_is_the_corpus_and_stops_the_run() -> None:
+    nodes = FakeNodes(None, before_call=ProvisionNotFoundError("no text of art:3:1"))
+    with pytest.raises(ProvisionNotFoundError):
+        probe_on(nodes, probe=Probe(NodeName.SCOPE, case("b-1")))
 
 
 def test_a_contract_failure_is_broken_and_its_message_quotes_no_input() -> None:
@@ -419,59 +308,114 @@ def test_a_contract_failure_is_broken_and_its_message_quotes_no_input() -> None:
         StepResult(
             step=StepName.SCOPE, decision="SECRET-DESCRIPTION", status=Status.LEGALLY_AMBIGUOUS
         )
-    record = smoke.run_probe(
-        Probe(NodeName.SCOPE, case("b-1")), settings(), FakeNodes(caught.value)
-    )
-    assert scores_of(record)["broken"] is True
+    record = probe_on(FakeNodes(caught.value), probe=Probe(NodeName.SCOPE, case("b-1")))
+    assert record.scores["broken"] is True
     assert "SECRET-DESCRIPTION" not in str(record.predicted)
 
 
 def test_a_broken_facts_answer_has_no_correctness() -> None:
     error = facts.FactsOutputError("facts answer doesn't fit the schema")
-    record = smoke.run_probe(Probe(NodeName.FACTS, case("e-1")), settings(), FakeNodes(error))
-    assert scores_of(record)["broken"] is True
-    assert scores_of(record)["correct"] is None
+    record = probe_on(FakeNodes(error), probe=Probe(NodeName.FACTS, case("e-1")))
+    assert record.scores["broken"] is True
+    assert record.scores["correct"] is None
 
 
-def test_a_call_that_returns_nothing_failed_and_is_not_scored() -> None:
-    error = ValueError("OpenRouter API returned an error: upstream timeout (code: 504)")
-    record = smoke.run_probe(Probe(NodeName.SCOPE, case("b-1")), settings(), FakeNodes(error))
-    assert scores_of(record)["failed"] is True
-    assert scores_of(record)["broken"] is False
-    assert scores_of(record)["correct"] is None
-    assert record.predicted == {"error": {"type": "ValueError", "message": str(error)}}
+def _http_error(status: int) -> OpenRouterError:
+    request = httpx.Request("POST", "https://openrouter.ai/api/v1/chat/completions")
+    return OpenRouterError("upstream error", httpx.Response(status, request=request))
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        _http_error(502),
+        NoResponseError("no response"),
+        httpx.ConnectError("connection refused"),
+        psycopg.OperationalError("server closed the connection"),
+        EmbeddingError("embeddings request failed: NoResponseError"),
+        ValueError("OpenRouter API returned an error: upstream timeout (code: 504)"),
+    ],
+)
+def test_a_transport_provider_or_database_error_failed(error: Exception) -> None:
+    record = probe_on(FakeNodes(None, before_call=error))
+    assert record.scores["failed"] is True
+    assert record.scores["broken"] is False
+    assert record.scores["correct"] is None
+    assert record.scores["served_as_pinned"] is None
+    assert record.predicted["error"] == {"type": type(error).__name__, "message": str(error)}
+
+
+@pytest.mark.parametrize(
+    "error", [RuntimeError("a bug"), KeyError("high_risk_route"), ValueError("bad value")]
+)
+def test_any_other_error_stops_the_run(error: Exception) -> None:
+    with pytest.raises(type(error)):
+        probe_on(FakeNodes(None, before_call=error))
+
+
+def test_a_missing_setting_stops_the_run() -> None:
+    def unset(node: NodeName, given: Settings, tracker: UsageTracker) -> smoke.NodeRunner:
+        raise LLMConfigError("ENGINE_PROVIDER is not set")
+
+    with pytest.raises(LLMConfigError):
+        smoke.run_probe(
+            Probe(NodeName.SCOPE, case("b-1")), LUNA, settings(), served("Azure"), unset
+        )
+
+
+def test_a_state_that_cannot_be_built_stops_the_run_before_any_call() -> None:
+    appliedai = BenchmarkCase(
+        id="ai-1",
+        set_name=CaseSet.APPLIEDAI,
+        language=Language.EN,
+        description="A made-up system.",
+        label=AppliedAILabel.HIGH,
+    )
+    nodes = FakeNodes(role_outcome(Role.DEPLOYER))
+    with pytest.raises(ValueError, match="no engine-vocabulary label"):
+        probe_on(nodes, probe=Probe(NodeName.ROLE, appliedai))
+    assert nodes.seen == []
 
 
 def test_a_long_error_message_is_cut() -> None:
-    record = smoke.run_probe(
-        Probe(NodeName.SCOPE, case("b-1")), settings(), FakeNodes(RuntimeError("x" * 1000))
-    )
+    record = probe_on(FakeNodes(None, before_call=httpx.ConnectError("x" * 1000)))
     error = record.predicted["error"]
     assert isinstance(error, dict)
     assert error["message"] == "x" * smoke.ERROR_MESSAGE_LIMIT
 
 
-def test_a_missing_setting_stops_the_run() -> None:
-    with pytest.raises(LLMConfigError):
-        smoke.run_probe(
-            Probe(NodeName.SCOPE, case("b-1")), settings(), FakeNodes(LLMConfigError("unset"))
-        )
+# --- Usage --------------------------------------------------------------------------------------
 
 
-def test_the_tracker_adds_up_openrouter_cost_and_tokens() -> None:
-    tracker = UsageTracker()
+def _result(message: AIMessage, generation_id: str = "gen-1") -> LLMResult:
+    return LLMResult(
+        generations=[[ChatGeneration(message=message)]], llm_output={"id": generation_id}
+    )
+
+
+def test_the_tracker_adds_up_openrouter_cost_tokens_and_generation_ids() -> None:
+    tracker = UsageTracker(LUNA)
     message = AIMessage(
         content="{}",
         response_metadata={"cost": 0.0012},
         usage_metadata={"input_tokens": 100, "output_tokens": 20, "total_tokens": 120},
     )
-    no_cost = AIMessage(content="{}")
-    result = LLMResult(
-        generations=[[ChatGeneration(message=message)], [ChatGeneration(message=no_cost)]]
+    tracker.on_llm_end(_result(message, "gen-1"))
+    tracker.on_llm_end(_result(message, "gen-2"))
+    assert (tracker.calls, tracker.cost_usd, tracker.tokens) == (2, 0.0024, 240)
+    assert tracker.generation_ids == ["gen-1", "gen-2"]
+    assert tracker.is_cost_estimated is False
+
+
+def test_a_reply_without_a_cost_is_priced_from_its_tokens() -> None:
+    tracker = UsageTracker(GEMINI)
+    message = AIMessage(
+        content="{}",
+        usage_metadata={"input_tokens": 1000, "output_tokens": 200, "total_tokens": 1200},
     )
-    tracker.on_llm_end(result)
-    tracker.on_llm_end(result)
-    assert (tracker.cost_usd, tracker.tokens) == (0.0024, 240)
+    tracker.on_llm_end(_result(message))
+    assert tracker.cost_usd == pytest.approx((1000 * 0.275 + 200 * 1.65) / 1e6)
+    assert tracker.is_cost_estimated is True
 
 
 @pytest.mark.parametrize(
@@ -483,21 +427,22 @@ def test_the_tracker_adds_up_openrouter_cost_and_tokens() -> None:
         (NodeName.ROLE, role_obligations.RoleObligationsCheck),
     ],
 )
-def test_each_node_is_the_engines_own_on_the_arms_pinned_model(
+def test_each_node_is_the_engines_own_on_the_arms_pinned_model_without_retries(
     node: NodeName, node_class: type
 ) -> None:
-    tracker = UsageTracker()
+    tracker = UsageTracker(GEMINI)
     built = smoke.engine_node(node, smoke.arm_settings(settings(), GEMINI), tracker)
     assert isinstance(built, node_class)
     chat = built._model  # pyright: ignore[reportAttributeAccessIssue, reportFunctionMemberAccess]
-    assert chat.model_name == GEMINI.model
+    assert chat.model_name == "google/gemini-3.1-flash-lite"
     assert chat.openrouter_provider == {
         "data_collection": "deny",
         "zdr": True,
-        "order": [GEMINI.provider],
+        "order": ["google-vertex/eu"],
         "allow_fallbacks": False,
     }
     assert chat.max_tokens == smoke.MAX_OUTPUT_TOKENS[node]
+    assert chat.max_retries == 0
     assert chat.callbacks == [tracker]
 
 
@@ -531,11 +476,27 @@ class FakeStore:
 
 
 PROBES = tuple(Probe(NodeName.ROLE, case(f"d-{n}", role=Role.DEPLOYER)) for n in range(5))
+ROLE_WORST = smoke.worst_case_cost(NodeName.ROLE, LUNA)
+
+
+def run_arm(
+    nodes: FakeNodes, store: FakeStore, arm: ModelArm = LUNA, **options: float | int
+) -> smoke.ArmRun:
+    return smoke.run_arm(
+        arm,
+        PROBES,
+        store,
+        settings(),
+        GIT_STATE,
+        factory=nodes,
+        served_by=served(arm.served_by),
+        **options,  # pyright: ignore[reportArgumentType]
+    )
 
 
 def test_a_run_stores_one_row_per_probe_on_the_arms_model() -> None:
     store, nodes = FakeStore(), FakeNodes(role_outcome(Role.DEPLOYER), 0.01, 10)
-    run = smoke.run_arm(LUNA, PROBES, store, settings(), GIT_STATE, concurrency=2, factory=nodes)
+    run = run_arm(nodes, store, concurrency=2)
     assert run.status is smoke.RunStatus.COMPLETED
     assert (run.probes_planned, run.probes_recorded, run.tokens) == (5, 5, 50)
     assert run.cost_usd == pytest.approx(0.05)
@@ -549,153 +510,68 @@ def test_a_run_stores_one_row_per_probe_on_the_arms_model() -> None:
         LUNA.model,
         LUNA.provider,
     )
+    assert (config["served_by"], config["max_retries"]) == ("Azure", 0)
     assert config["nodes"] == ["role_obligations"]
     assert {"model", "embedding", "retrieval"} <= config.keys()
     [outcome] = store.finished
-    assert (outcome["status"], outcome["probes_recorded"]) == ("completed", 5)
+    assert (outcome["status"], outcome["probes_planned"], outcome["probes_recorded"]) == (
+        "completed",
+        5,
+        5,
+    )
 
 
-def test_no_batch_starts_once_the_cap_is_spent() -> None:
+def test_no_probe_starts_once_the_spend_reaches_the_cap() -> None:
     store = FakeStore()
     nodes = FakeNodes(role_outcome(Role.DEPLOYER), 0.3, 10)
-    run = smoke.run_arm(
-        GEMINI, PROBES, store, settings(), GIT_STATE, max_cost_usd=0.5, concurrency=2, factory=nodes
-    )
+    run = run_arm(nodes, store, GEMINI, max_cost_usd=0.5, concurrency=1)  # 0.3, 0.6: stop
     assert run.status is smoke.RunStatus.COST_CAP_REACHED
     assert run.probes_recorded == 2
     assert store.finished[0]["status"] == "cost_cap_reached"
 
 
+def test_the_cap_reserves_each_probe_in_flight_so_concurrency_cannot_widen_the_overshoot() -> None:
+    nodes = FakeNodes(role_outcome(Role.DEPLOYER), 0.0, 10, wait_for_company=0.05)
+    run = run_arm(nodes, FakeStore(), max_cost_usd=ROLE_WORST * 1.5, concurrency=4)
+    assert run.status is smoke.RunStatus.COMPLETED
+    assert nodes.most_in_flight == 1
+    roomy = FakeNodes(role_outcome(Role.DEPLOYER), 0.0, 10, wait_for_company=5.0)
+    run_arm(roomy, FakeStore(), max_cost_usd=ROLE_WORST * 2.5, concurrency=4)
+    assert roomy.most_in_flight == 2
+
+
+def test_a_cap_below_one_probe_starts_none() -> None:
+    store = FakeStore()
+    run = run_arm(FakeNodes(role_outcome(Role.DEPLOYER)), store, max_cost_usd=ROLE_WORST / 2)
+    assert (run.status, run.probes_recorded, store.rows) == (
+        smoke.RunStatus.COST_CAP_REACHED,
+        0,
+        [],
+    )
+
+
 def test_a_run_that_stops_on_an_error_is_marked_interrupted() -> None:
     store = FakeStore(fail_on_add=True)
     with pytest.raises(RuntimeError):
-        smoke.run_arm(
-            LUNA,
-            PROBES,
-            store,
-            settings(),
-            GIT_STATE,
-            factory=FakeNodes(role_outcome(Role.DEPLOYER)),
-        )
+        run_arm(FakeNodes(role_outcome(Role.DEPLOYER)), store)
     assert store.finished[0]["status"] == "interrupted"
 
 
-# --- Decision 023's rule ------------------------------------------------------------------------
+def test_a_probe_error_stops_the_run_and_records_the_probes_in_flight() -> None:
+    store = FakeStore()
+    with pytest.raises(RuntimeError, match="a bug"):
+        run_arm(FakeNodes(None, before_call=RuntimeError("a bug")), store, concurrency=1)
+    assert store.finished[0]["status"] == "interrupted"
 
 
-def scores(
-    answered_right: int,
-    answered_wrong: int = 0,
-    broken: int = 0,
-    failed: int = 0,
-    facts_ok: int = 0,
-) -> list[ProbeScore]:
-    """Scope probes numbered in this order: right, wrong, broken, failed; then facts probes."""
-    kinds = (
-        [(ProbeKind.ANSWERED, True)] * answered_right
-        + [(ProbeKind.ANSWERED, False)] * answered_wrong
-        + [(ProbeKind.BROKEN, False)] * broken
-        + [(ProbeKind.FAILED, None)] * failed
+def test_the_worst_case_is_one_call_at_the_full_output_cap() -> None:
+    prompt = round(1774 * smoke.PROMPT_MARGIN)
+    assert smoke.worst_case_cost(NodeName.ROLE, LUNA) == pytest.approx(
+        (prompt * 0.11 + 3000 * 0.55) / 1e6
     )
-    checks = [ProbeScore(f"scope:c-{n:03}", kind, ok) for n, (kind, ok) in enumerate(kinds)]
-    facts_rows = [ProbeScore(f"facts:c-{n:03}", ProbeKind.ANSWERED, None) for n in range(facts_ok)]
-    return checks + facts_rows
 
 
-def test_equal_models_keep_luna() -> None:
-    result = smoke.compare(scores(18, 2), scores(18, 2))
-    assert result.verdict is Verdict.KEEP_LUNA
-    assert (result.scored, result.luna_accuracy, result.gemini_accuracy) == (20, 0.9, 0.9)
-    assert result.reasons == ()
-
-
-def test_exactly_10_percent_broken_keeps_luna_and_one_more_drops_it() -> None:
-    kept = smoke.compare(scores(18, broken=2), scores(18, 2))  # 2 of 20 broken: not more than 10%
-    assert kept.verdict is Verdict.KEEP_LUNA
-    dropped = smoke.compare(scores(17, 1, broken=3), scores(17, 3))  # 3 of 21 answers broken
-    assert dropped.verdict is Verdict.DROP_LUNA
-    assert dropped.reasons == ("luna: 3 of 21 answers broken, more than 10%",)
-
-
-def test_broken_facts_count_towards_the_share() -> None:
-    extra = ("facts:x-1", "facts:x-2", "facts:x-3")
-    luna = [*scores(10, facts_ok=8), *(ProbeScore(pid, ProbeKind.BROKEN, None) for pid in extra)]
-    gemini = [
-        *scores(10, facts_ok=8),
-        *(ProbeScore(pid, ProbeKind.ANSWERED, None) for pid in extra),
-    ]
-    result = smoke.compare(luna, gemini)
-    assert result.luna.broken == 3
-    assert result.luna.broken_by_node == {"facts": 3}
-    assert result.verdict is Verdict.DROP_LUNA  # 3 of 21 replies
-
-
-def test_ten_points_below_drops_luna_and_less_keeps_it() -> None:
-    at_limit = smoke.compare(scores(8, 2), scores(9, 1))  # 80% against 90%
-    assert at_limit.verdict is Verdict.DROP_LUNA
-    assert at_limit.reasons == ("luna: 8/10 correct, 10 or more points below gemini's 9/10",)
-    below_limit = smoke.compare(scores(9, 12), scores(11, 10))  # 42.9% against 52.4%: 9.5 points
-    assert below_limit.verdict is Verdict.KEEP_LUNA
-
-
-def test_a_broken_answer_counts_as_wrong_in_the_accuracy() -> None:
-    result = smoke.compare(scores(9, broken=1), scores(10))
-    assert (result.luna_correct, result.gemini_correct, result.scored) == (9, 10, 10)
-    assert result.verdict is Verdict.DROP_LUNA
-
-
-def test_accuracy_uses_only_probes_both_models_replied_to() -> None:
-    luna = scores(8, 1, failed=1)  # c-009 failed for luna
-    gemini = scores(9, 1)  # c-009 is wrong for gemini
-    result = smoke.compare(luna, gemini)
-    assert result.scored == 9
-    assert (result.luna_correct, result.gemini_correct) == (8, 9)
-
-
-def test_many_unanswered_probes_make_it_inconclusive() -> None:
-    result = smoke.compare(scores(15, failed=5), scores(20))
-    assert result.verdict is Verdict.INCONCLUSIVE
-    assert result.reasons == ("luna: 5 of 20 probes got no answer",)
-
-
-def test_a_probe_one_run_lacks_counts_as_unanswered() -> None:
-    result = smoke.compare(scores(8), scores(10))  # luna's run stopped after 8 probes
-    assert (result.luna.failed, result.luna.planned) == (2, 10)
-    assert result.verdict is Verdict.INCONCLUSIVE
-
-
-def test_no_probe_scored_for_both_is_inconclusive() -> None:
-    result = smoke.compare(scores(0, facts_ok=3), scores(0, facts_ok=3))
-    assert result.verdict is Verdict.INCONCLUSIVE
-    assert result.reasons == ("no probe scored for both",)
-
-
-def test_a_stored_row_is_read_back_by_its_flags() -> None:
-    row = {"broken": True, "failed": False, "correct": False, "is_error": True, "cost_usd": 0.1}
-    assert smoke.probe_score("high_risk:e-1", row) == ProbeScore(
-        "high_risk:e-1", ProbeKind.BROKEN, False
-    )
-    assert smoke.probe_score(
-        "facts:e-1", {"broken": False, "failed": True, "correct": None}
-    ).kind is (ProbeKind.FAILED)
-
-
-@pytest.mark.parametrize(
-    ("probe_id", "row"),
-    [
-        ("scope:b-1", {"cost_usd": 0.1, "is_error": False}),
-        ("scope:b-1", {"broken": False, "failed": False, "correct": 1}),
-        ("baseline:b-1", {"broken": False, "failed": False, "correct": True}),
-    ],
-)
-def test_a_row_that_is_not_a_smoke_probe_is_refused(
-    probe_id: str, row: Mapping[str, JsonValue]
-) -> None:
-    with pytest.raises(ValueError):
-        smoke.probe_score(probe_id, row)
-
-
-# --- Dry run and report -------------------------------------------------------------------------
+# --- Dry run ------------------------------------------------------------------------------------
 
 
 def test_the_estimate_prices_typical_tokens_cold() -> None:
@@ -712,34 +588,52 @@ def test_the_plan_names_counts_and_both_estimates() -> None:
     assert "gemini (" in text and "total: ~$" in text
 
 
-def test_the_comparison_table_names_the_run_ids_and_the_verdict() -> None:
-    luna_id, gemini_id = uuid4(), uuid4()
-    comparison = smoke.compare(scores(8, 1, broken=1), scores(9, 1))
-    text = smoke.format_comparison(comparison, {"luna": luna_id, "gemini": gemini_id})
-    assert (
-        f"| {LUNA.model} | {luna_id} | 1/10 (10.0%): scope 1 | 0/10 (0.0%) | 8/10 (80.0%) |" in text
-    )
-    assert f"| {GEMINI.model} | {gemini_id} | 0/10 (0.0%) | 0/10 (0.0%) | 9/10 (90.0%) |" in text
-    assert "Verdict: drop_luna" in text
-
-
-cli = CliRunner()
+cli_runner = CliRunner()
 
 
 def test_the_dry_run_makes_no_call_and_prints_the_plan() -> None:
-    result = cli.invoke(app, ["evaluate", "smoke", "--dry-run"])
+    result = cli_runner.invoke(cli.app, ["evaluate", "smoke", "--dry-run"])
     assert result.exit_code == 0, result.output
     assert "(no model call made)" in result.stdout
     assert "luna (" in result.stdout and "gemini (" in result.stdout
 
 
 def test_the_dry_run_for_one_model_prices_only_it() -> None:
-    result = cli.invoke(app, ["evaluate", "smoke", "--dry-run", "--model", "gemini"])
+    result = cli_runner.invoke(cli.app, ["evaluate", "smoke", "--dry-run", "--model", "gemini"])
     assert result.exit_code == 0, result.output
     assert "gemini (" in result.stdout and "luna (" not in result.stdout
 
 
 def test_an_unknown_model_is_refused() -> None:
-    result = cli.invoke(app, ["evaluate", "smoke", "--dry-run", "--model", "claude"])
+    result = cli_runner.invoke(cli.app, ["evaluate", "smoke", "--dry-run", "--model", "claude"])
     assert result.exit_code == 2
     assert "unknown model claude" in result.stderr
+
+
+def test_the_cost_cap_and_concurrency_reach_each_models_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, Mapping[str, object]]] = []
+
+    def fake_run_arm(
+        arm: ModelArm, probes: Sequence[Probe], *args: object, **kwargs: object
+    ) -> smoke.ArmRun:
+        calls.append((arm.name, kwargs))
+        return smoke.ArmRun(
+            arm, uuid4(), smoke.RunStatus.COMPLETED, len(probes), len(probes), 0.1, 10
+        )
+
+    @contextmanager
+    def fake_connect() -> Iterator[object]:
+        yield object()
+
+    monkeypatch.setattr(smoke, "run_arm", fake_run_arm)
+    monkeypatch.setattr(records, "connect", fake_connect)
+    monkeypatch.setattr(runner, "current_git_state", lambda: GIT_STATE)
+    monkeypatch.setattr(cli, "_smoke_comparison", lambda connection, run_ids: "Verdict: keep_luna")
+    arguments = ["evaluate", "smoke", "--max-cost-usd", "0.07", "--concurrency", "3"]
+    result = cli_runner.invoke(cli.app, arguments)
+    assert result.exit_code == 0, result.output
+    assert [name for name, _ in calls] == ["luna", "gemini"]
+    assert all(kw == {"max_cost_usd": 0.07, "concurrency": 3} for _, kw in calls)
+    assert "Verdict: keep_luna" in result.stdout

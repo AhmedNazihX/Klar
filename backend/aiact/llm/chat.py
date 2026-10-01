@@ -18,6 +18,8 @@ ModelRole = Literal["engine", "judge", "judge_backup", "label_filter", "ragas"]
 
 DEFAULT_TEMPERATURE = 0.0
 """Classification and judging want repeatable answers."""
+DEFAULT_MAX_RETRIES = 2
+"""ChatOpenRouter's own default; 0 makes every billed attempt one the caller's callbacks see."""
 
 
 def chat_model(
@@ -28,6 +30,7 @@ def chat_model(
     allow_fallbacks: bool = True,
     temperature: float = DEFAULT_TEMPERATURE,
     max_tokens: int | None = None,
+    max_retries: int = DEFAULT_MAX_RETRIES,
     settings: Settings | None = None,
 ) -> ChatOpenRouter:
     """Build a chat model for `role`, or for an explicit OpenRouter `model` slug.
@@ -41,12 +44,15 @@ def chat_model(
         api_key=require_api_key(settings),
         temperature=temperature,
         max_tokens=max_tokens,
+        max_retries=max_retries,
         openrouter_provider=provider_preferences(provider_order, allow_fallbacks=allow_fallbacks),
         app_title=APP_TITLE,
     )
 
 
-def engine_chat_model(*, max_tokens: int, settings: Settings | None = None) -> ChatOpenRouter:
+def engine_chat_model(
+    *, max_tokens: int, max_retries: int = DEFAULT_MAX_RETRIES, settings: Settings | None = None
+) -> ChatOpenRouter:
     """The engine model, pinned to its `ENGINE_PROVIDER` endpoint with fallbacks off (decision
     005), so descriptions stay in the EU. Every engine node builds its model here.
 
@@ -60,5 +66,6 @@ def engine_chat_model(*, max_tokens: int, settings: Settings | None = None) -> C
         provider_order=[provider],
         allow_fallbacks=False,
         max_tokens=max_tokens,
+        max_retries=max_retries,
         settings=settings,
     )

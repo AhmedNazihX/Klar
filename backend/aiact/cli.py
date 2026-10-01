@@ -29,7 +29,7 @@ from aiact.eval import (
 )
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CaseFileError, CaseSet, load_cases
-from aiact.eval.experiments import smoke
+from aiact.eval.experiments import smoke, smoke_verdict
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
@@ -533,7 +533,12 @@ def eval_smoke(
                 )
             if len(run_ids) == len(smoke.ARMS):
                 typer.echo(_smoke_comparison(connection, run_ids))
-    except (LLMConfigError, records.DatabaseNotConfiguredError, CalledProcessError) as error:
+    except (
+        LLMConfigError,
+        records.DatabaseNotConfiguredError,
+        CalledProcessError,
+        smoke_verdict.SmokeRunError,
+    ) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
     except psycopg.Error as error:
@@ -553,7 +558,7 @@ def eval_smoke_compare(
     try:
         with records.connect() as connection:
             text = _smoke_comparison(connection, {"luna": luna_run, "gemini": gemini_run})
-    except (records.DatabaseNotConfiguredError, smoke.SmokeRunError, ValueError) as error:
+    except (records.DatabaseNotConfiguredError, smoke_verdict.SmokeRunError, ValueError) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
     except psycopg.Error as error:
@@ -564,15 +569,8 @@ def eval_smoke_compare(
 
 
 def _smoke_comparison(connection: psycopg.Connection, run_ids: dict[str, UUID]) -> str:
-    """The verdict over the two runs' stored rows; each run must be the model it is given as."""
-    scores: dict[str, tuple[smoke.ProbeScore, ...]] = {}
-    for expected, run_id in run_ids.items():
-        arm, rows = smoke.load_run(connection, run_id)
-        if arm != expected:
-            raise smoke.SmokeRunError(f"run {run_id} is the {arm} run, not the {expected} run")
-        scores[arm] = rows
-    comparison = smoke.compare(scores[smoke.LUNA.name], scores[smoke.GEMINI.name])
-    return smoke.format_comparison(comparison, run_ids)
+    comparison = smoke_verdict.compare_runs(connection, run_ids)
+    return smoke_verdict.format_comparison(comparison, run_ids)
 
 
 @mcp_app.callback()
