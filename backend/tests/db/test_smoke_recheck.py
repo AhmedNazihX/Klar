@@ -160,6 +160,7 @@ def test_confirmed_probes_are_rescored_from_their_stored_replies(
             "by": "smoke-recheck",
             "probes_rechecked": 3,
             "confirmed": 3,
+            "other_provider": 0,
             "still_failing": 0,
         }
     ]
@@ -183,6 +184,7 @@ def test_another_provider_stays_failed_and_says_so(db: psycopg.Connection, cases
     assert predicted["smoke"]["recheck"]["served_by"] == ["Google AI Studio"]
     rechecks = run_state(db, run_id)[0]
     assert isinstance(rechecks, list) and rechecks[0]["still_failing"] == 3
+    assert rechecks[0]["other_provider"] == 3
 
 
 def test_a_record_still_missing_leaves_the_row_as_it_was(
@@ -223,8 +225,8 @@ def test_each_recheck_adds_its_own_entry_in_order(db: psycopg.Connection, cases_
         (second_at.isoformat(), 3),
     ]
     stored = smoke_verdict.load_run(db, run_id)
-    assert smoke_verdict.recheck_notes(stored) == (
-        "luna: rechecked on 2026-10-02: 0 probes confirmed late (smoke-recheck)",
+    assert [entry["other_provider"] for entry in rechecks] == [0, 0]
+    assert smoke_verdict.recheck_notes(stored) == (  # the recheck that confirmed none is left out
         "luna: rechecked on 2026-10-02: 3 probes confirmed late (smoke-recheck)",
     )
 

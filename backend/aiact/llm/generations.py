@@ -51,6 +51,7 @@ DEFERRED_MAX_WAIT_SECONDS = 60.0
 
 _MAY_COME_LATER = re.compile(
     r"^(generation \S+ not found (after \d+ attempts|within \d+ s)"
+    r"|generation \S+ not looked up within \d+ s \(budget spent\)"
     r"|generation lookup failed: \w+( \(HTTP (5\d\d|429)\))?)$"
 )
 """The stored messages of the errors below that a later lookup may still settle."""
@@ -78,8 +79,19 @@ class GenerationRateLimitedError(GenerationTransientError):
 
 def may_come_later(reason: str) -> bool:
     """Whether a stored lookup error is a `GenerationPendingError`'s message: a record not found
-    in time, a transport error, a 5xx or a 429."""
+    in time or never looked up, a transport error, a 5xx or a 429."""
     return _MAY_COME_LATER.match(reason) is not None
+
+
+def _late(generation_id: str, was_asked: bool, budget_seconds: float) -> GenerationPendingError:
+    """The error of a record still missing when the budget is spent, without a transient error."""
+    if was_asked:
+        return GenerationNotFoundError(
+            f"generation {generation_id} not found within {budget_seconds:.0f} s"
+        )
+    return GenerationPendingError(
+        f"generation {generation_id} not looked up within {budget_seconds:.0f} s (budget spent)"
+    )
 
 
 class _Generations(Protocol):
@@ -139,42 +151,49 @@ class GenerationLookup:
     ) -> dict[str, str | GenerationLookupError]:
         """Each id's provider name, or the error that settles it. No request starts once
         `budget_seconds` have passed, so the whole wait is at most the budget plus one request's
-        `LOOKUP_TIMEOUT_MS`. A record still missing then is a `GenerationNotFoundError`, or the
-        transient error its last request got."""
+        `LOOKUP_TIMEOUT_MS`. Each round asks first for the records not asked yet, so a round cut
+        short by a 429 or the deadline never starves the rest. A record still missing then is a
+        `GenerationNotFoundError` (asked, never there), the transient error its last request got,
+        or, if it was never asked, a `GenerationPendingError` that says so."""
         deadline = self._clock() + budget_seconds
         settled: dict[str, str | GenerationLookupError] = {}
         waiting: dict[str, GenerationPendingError | None] = dict.fromkeys(generation_ids)
+        asked: set[str] = set()
         wait = DEFERRED_FIRST_WAIT_SECONDS
         while True:
-            done, waiting = self._round(waiting, deadline)
+            fresh_first = sorted(waiting, key=lambda key: key in asked)  # stable: keeps order
+            done, waiting, asked_now = self._round({k: waiting[k] for k in fresh_first}, deadline)
             settled |= done
+            asked |= asked_now
             remaining = deadline - self._clock()
             if not waiting or remaining <= 0:
                 break
             self._sleep(min(wait, remaining))
             wait = min(wait * DEFERRED_WAIT_GROWTH, DEFERRED_MAX_WAIT_SECONDS)
-        late = {
-            key: error
-            or GenerationNotFoundError(f"generation {key} not found within {budget_seconds:.0f} s")
-            for key, error in waiting.items()
+        return settled | {
+            key: error or _late(key, key in asked, budget_seconds) for key, error in waiting.items()
         }
-        return settled | late
 
     def _round(
         self, waiting: Mapping[str, GenerationPendingError | None], deadline: float
-    ) -> tuple[dict[str, str | GenerationLookupError], dict[str, GenerationPendingError | None]]:
-        """One request per waiting record, until the deadline or a 429. Returns what is settled,
-        and what still waits with the transient error of its last request (None: not there)."""
+    ) -> tuple[
+        dict[str, str | GenerationLookupError], dict[str, GenerationPendingError | None], set[str]
+    ]:
+        """One request per waiting record, in order, until the deadline or a 429. Returns what is
+        settled, what still waits with the transient error of its last request (None: not
+        there), and the ids asked in this round."""
         done: dict[str, str | GenerationLookupError] = {}
         still: dict[str, GenerationPendingError | None] = {}
         keys = list(waiting)
         for index, key in enumerate(keys):
             if self._clock() >= deadline:
-                return done, still | {later: waiting[later] for later in keys[index:]}
+                rest = {later: waiting[later] for later in keys[index:]}
+                return done, still | rest, set(keys[:index])
             try:
                 name = self._ask(key)
             except GenerationRateLimitedError as error:
-                return done, still | {key: error} | {k: waiting[k] for k in keys[index + 1 :]}
+                rest = {later: waiting[later] for later in keys[index + 1 :]}
+                return done, still | {key: error} | rest, set(keys[: index + 1])
             except GenerationPendingError as error:
                 still[key] = error
                 continue
@@ -185,7 +204,7 @@ class GenerationLookup:
                 still[key] = None
             else:
                 done[key] = name
-        return done, still
+        return done, still, set(keys)
 
     def _ask(self, generation_id: str) -> str | None:
         """One request: the provider name, or None while the record isn't there yet. A 429 raises

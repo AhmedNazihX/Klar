@@ -111,6 +111,7 @@ def test_a_probe_failed_for_another_reason_does_not_qualify(reason: str) -> None
         "generation lookup failed: OpenRouterError (HTTP 503)",
         "generation lookup failed: OpenRouterError (HTTP 429)",
         "generation gen-1 not found within 300 s",
+        "generation gen-1 not looked up within 300 s (budget spent)",
     ],
 )
 def test_a_probe_failed_by_a_transient_lookup_qualifies(reason: str) -> None:

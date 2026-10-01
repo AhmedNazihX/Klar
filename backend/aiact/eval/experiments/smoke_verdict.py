@@ -194,11 +194,24 @@ class StoredRun:
 
 
 def recheck_notes(run: StoredRun) -> tuple[str, ...]:
-    """One line per recheck that rescored the run's rows."""
+    """One line per recheck that confirmed at least one probe, with the probes it found served
+    by another provider when there were any; a recheck that confirmed none is left out."""
     return tuple(
-        f"{run.arm}: rechecked on {str(entry.get('at', ''))[:10]}: {entry.get('confirmed')} "
-        f"probes confirmed late ({entry.get('by')})"
-        for entry in run.rechecks
+        _recheck_note(run.arm, entry) for entry in run.rechecks if _count(entry, "confirmed")
+    )
+
+
+def _count(entry: Mapping[str, JsonValue], key: str) -> int:
+    value = entry.get(key)
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
+def _recheck_note(arm: str, entry: Mapping[str, JsonValue]) -> str:
+    other = _count(entry, "other_provider")
+    elsewhere = f", {other} found served by another provider" if other else ""
+    return (
+        f"{arm}: rechecked on {str(entry.get('at', ''))[:10]}: {_count(entry, 'confirmed')} "
+        f"probes confirmed late{elsewhere} ({entry.get('by')})"
     )
 
 

@@ -131,6 +131,36 @@ def test_a_stored_row_is_read_back_by_its_flags() -> None:
     assert smoke_verdict.probe_score("facts:e-1", failed).kind is ProbeKind.FAILED
 
 
+def test_only_rechecks_that_confirmed_a_probe_are_noted_with_any_other_provider() -> None:
+    entries: tuple[Mapping[str, JsonValue], ...] = (
+        {"at": "2026-10-02T09:00:00+00:00", "by": "smoke-recheck", "confirmed": 0},
+        {
+            "at": "2026-10-02T10:00:00+00:00",
+            "by": "smoke-recheck",
+            "confirmed": 0,
+            "other_provider": 1,
+        },
+        {
+            "at": "2026-10-03T09:00:00+00:00",
+            "by": "smoke-recheck",
+            "confirmed": 3,
+            "other_provider": 2,
+        },
+        {
+            "at": "2026-10-04T09:00:00+00:00",
+            "by": "smoke-recheck",
+            "confirmed": 1,
+            "other_provider": 0,
+        },
+    )
+    run = smoke_verdict.StoredRun("gemini", 4, (), entries)
+    assert smoke_verdict.recheck_notes(run) == (
+        "gemini: rechecked on 2026-10-03: 3 probes confirmed late, 2 found served by another "
+        "provider (smoke-recheck)",
+        "gemini: rechecked on 2026-10-04: 1 probes confirmed late (smoke-recheck)",
+    )
+
+
 def test_a_row_still_pending_its_provider_check_counts_as_failed() -> None:
     """Only a run stopped before its end-of-run check leaves one; it never counts as answered."""
     row: Mapping[str, JsonValue] = {

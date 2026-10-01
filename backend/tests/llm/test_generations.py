@@ -243,19 +243,36 @@ def test_no_request_starts_after_the_budget_even_inside_a_round() -> None:
     found = reader.served_by_all(ids)
     assert clock.now <= DEFERRED_BUDGET_SECONDS + 5.0  # the budget plus one request at most
     assert len(generations.asked) == DEFERRED_BUDGET_SECONDS / 5.0
-    assert all(isinstance(result, GenerationNotFoundError) for result in found.values())
     assert set(found) == set(ids)
+    asked, never = ids[:60], ids[60:]
+    assert all(isinstance(found[key], GenerationNotFoundError) for key in asked)
+    for key in never:
+        assert not isinstance(found[key], GenerationNotFoundError)
+        assert str(found[key]) == f"generation {key} not looked up within 300 s (budget spent)"
+        assert may_come_later(str(found[key]))
 
 
-def test_a_rate_limit_ends_the_round_and_the_rest_wait_for_the_next() -> None:
+def test_a_rate_limit_ends_the_round_and_the_rest_go_first_in_the_next() -> None:
     generations = RoundGenerations(
         {"gen-1": [_http_error(429), "Azure"], "gen-2": ["Azure"], "gen-3": ["Azure"]}
     )
     reader, clock = long_lookup(generations)
     found = reader.served_by_all(["gen-1", "gen-2", "gen-3"])
     assert found == {"gen-1": "Azure", "gen-2": "Azure", "gen-3": "Azure"}
-    assert generations.asked == ["gen-1", "gen-1", "gen-2", "gen-3"]
+    assert generations.asked == ["gen-1", "gen-2", "gen-3", "gen-1"]
     assert clock.slept == [DEFERRED_FIRST_WAIT_SECONDS]
+
+
+def test_the_tail_is_asked_even_when_a_429_ends_every_round() -> None:
+    """Each round's first request is rate-limited; the ids not asked yet still get their turn."""
+    ids = ["gen-1", "gen-2", "gen-3", "gen-4"]
+    generations = RoundGenerations({key: [_http_error(429)] for key in ids})
+    reader, _ = long_lookup(generations)
+    found = reader.served_by_all(ids)
+    assert generations.asked[:4] == ids  # one per round, never-asked first
+    assert set(generations.asked) == set(ids)
+    assert all(isinstance(result, GenerationTransientError) for result in found.values())
+    assert all(may_come_later(str(result)) for result in found.values())
 
 
 def test_the_long_wait_settles_an_unreadable_record_at_once() -> None:

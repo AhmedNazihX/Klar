@@ -112,6 +112,10 @@ class RunRecheck:
         return sum(probe.result is RecheckResult.CONFIRMED for probe in self.probes)
 
     @property
+    def other_provider(self) -> int:
+        return sum(probe.result is RecheckResult.OTHER_PROVIDER for probe in self.probes)
+
+    @property
     def still_failing(self) -> int:
         return len(self.probes) - self.confirmed
 
@@ -318,6 +322,7 @@ def _store(
         "by": RECHECK_BY,
         "probes_rechecked": len(summary.probes),
         "confirmed": summary.confirmed,
+        "other_provider": summary.other_provider,
         "still_failing": summary.still_failing,
     }
     store = PostgresRunStore(connection)

@@ -49,7 +49,9 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
   correctness kept. Once every probe of a model has run, and before its run is marked finished, the pending
   records are looked up again, all together, with a much longer window: one request per missing record per
   round, with waits of 5, 10, 20, 40 and then 60 s between rounds. A record not there yet, a transport error, a
-  5xx or a rate limit (429) is tried again in a later round; a 429 also ends the round early. No request starts
+  5xx or a rate limit (429) is tried again in a later round; a 429 also ends the round early. Each round asks
+  first for the records not asked yet, so a round cut short never starves the rest; a record that never got
+  asked before the time ran out says so ("not looked up within 300 s (budget spent)"). No request starts
   after 5 minutes (`DEFERRED_BUDGET_SECONDS`), and each request still times out after 5 s, so the check takes at
   most 5 minutes and 5 seconds per run. Any other failure (another 4xx, a record that names no provider) is
   final at once. If every call of the
@@ -62,8 +64,8 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
   `--dry-run` prints what would change without writing anything. It takes only completed runs, and it reads and
   checks every run it is given before it looks anything up or writes anything, so one bad run id stops the
   command with nothing written; each run's summary is printed as soon as that run is stored. It looks again only
-  at failed probes whose one fault was a lookup a later try may settle (a record not found in time, a transport
-  error, a 5xx or a 429): no `provider_error`, and a reply the run kept. It reads the reply from the
+  at failed probes whose one fault was a lookup a later try may settle (a record not found in time or never
+  looked up, a transport error, a 5xx or a 429): no `provider_error`, and a reply the run kept. It reads the reply from the
   stored row the way the run classed it. A stored `error` from the node's schema or the result contract is a
   broken answer; a reply cut off by the output cap raised one of those, so it stays broken. A transport,
   provider or database error was never an answer, and such a probe is never rescored. With no `error`, the
@@ -73,11 +75,13 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
   the row gets that score (`failed: false`, `served_as_pinned: true`), and `predicted.smoke.recheck` keeps the
   audit trail: when, the original `not_pinned`, the provider found, and `by: smoke-recheck`. If another provider
   served it, the row stays failed and names that provider. If the record still isn't there, the row is left as
-  it is. The run's `config.rechecks` records each recheck (date, probes rechecked, confirmed, still failing),
+  it is. The run's `config.rechecks` records each recheck (date, probes rechecked, confirmed, found served by
+  another provider, still failing),
   and the run's status is never touched. Running it again changes nothing that is already settled. It then
   prints each run's summary and the comparison below, still computed only from the stored rows. Under the
-  comparison's table, a line per recheck says that the run's rows were rescored ("luna: rechecked on <date>: N
-  probes confirmed late (smoke-recheck)").
+  comparison's table, a line for each recheck that confirmed at least one probe says that the run's rows were
+  rescored ("luna: rechecked on <date>: N probes confirmed late (smoke-recheck)", with ", M found served by
+  another provider" added when it found any); a recheck that confirmed none gets no line.
 - **Broken** means the model answered but the answer didn't fit the node's JSON schema or the result contract
   (cross-field rules aren't in the schema, so contract failures count: decision 010 addendum). A reply cut off
   by the output cap (`finish_reason: "length"`) is broken too (decision 023 addendum, part 7). The nodes make no
