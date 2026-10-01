@@ -1,0 +1,30 @@
+id: own-a-08-local-news-council-reports
+set_name: own
+language: de
+description: >-
+  Wir betreiben mit sechs Leuten ein werbefinanziertes Nachrichtenportal für einen ländlichen Landkreis in Mitteldeutschland.
+  Seit August 2026 nutzen wir ein gekauftes KI-Textwerkzeug: Es liest die Protokolle der
+  Gemeinderats- und Kreistagssitzungen, sobald sie online stehen, und schreibt daraus automatisch
+  kurze Artikel, etwa über neue Baugebiete oder die Grundsteuer. Die Artikel gehen sofort und ohne
+  Gegenlesen online, weil wir für rund zwanzig Gemeinden schlicht nicht genug Redaktion haben, rund 150 Texte
+  im Monat. Ein Impressum mit unserem Chefredakteur gibt es natürlich, und eine schriftliche
+  Redaktionsrichtlinie auch. Am meisten gelesen werden trotzdem die Vereinsnachrichten.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["art:50:4", "art:3:4", "guide:guide-art50:para:131", "guide:guide-art50:para:133", "guide:guide-art50:para:135"]
+as_of: 2026-10-01
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: AI-generated text, published, meant to inform the public
+  on local politics, a matter of public interest (guide para 131, which lists an AI summary of a
+  town council decision as an example), so the deployer must disclose it under Art. 50(4) second
+  subparagraph. Trap: the editorial exception needs both human review and editorial
+  responsibility (guide para 133); a named editor-in-chief and a written editorial policy are not
+  enough when nobody reviews the text (guide para 135), so the exception fails. Role: deployer of
+  a bought tool (Art. 3(4)); the tool's provider carries Art. 50(2). Since August 2026 the duty
+  applies to every text published (guide para 154).
+tags:
+  - "category:a"
+  - "trap:editorial_exception_not_met"
+  - "obligation:art:4:1"
+  - "obligation:art:50:4"

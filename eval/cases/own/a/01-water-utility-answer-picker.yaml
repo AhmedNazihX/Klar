@@ -1,0 +1,33 @@
+id: own-a-01-water-utility-answer-picker
+set_name: own
+language: en
+description: >-
+  We're a regional water utility in Belgium with several hundred staff. Since November 2025 our website
+  and app have a chat window, built by our own digital team. Customers type a question in their
+  own words, for example about a meter reading or a payment plan; a machine-learning model we
+  trained on two years of past enquiries works out what they mean and replies with one of roughly
+  400 answers that our customer service team wrote and approved. It never writes sentences of its
+  own, and anything it can't match is handed to a human agent. The chat is open to anyone visiting
+  the site. The same team rebuilt our outage map last year.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:50:1", "art:3:3", "guide:guide-art50:para:11", "guide:guide-art50:para:30", "guide:guide-art50:para:65"]
+as_of: 2026-10-01
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the chat is an AI system (a trained model infers the
+  customer's intent) intended to interact directly with natural persons, so Art. 50(1) applies
+  (guide para 30). The general public uses it, so the "obvious" exception can't be relied on (guide
+  para 45, helpdesk chatbots). Trap: no Art. 50(2) duty, because the system only selects
+  pre-written human answers and doesn't generate content (guide para 65: output that reproduces
+  or arranges existing content is not covered). Role: the utility developed it in-house and puts
+  it into service under its own name for its own use, so it is the provider (Art. 3(3); guide
+  para 11, second example) and also the deployer; no Art. 50(3)/(4) deployer duty arises. Timing:
+  put into service in November 2025; Art. 50(1) applies from 2 August 2026 whatever the launch
+  date (Art. 113; guide para 153).
+tags:
+  - "category:a"
+  - "trap:selection_not_generation"
+  - "also_role:deployer"
+  - "obligation:art:4:1"
+  - "obligation:art:50:1"

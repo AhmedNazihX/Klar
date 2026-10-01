@@ -1,0 +1,30 @@
+id: own-a-12-coffee-machine-voice
+set_name: own
+language: de
+description: >-
+  Wir sind ein mittelständischer Hersteller von Kaffeevollautomaten.
+  Unser neues Modell, seit Juni 2026 im Handel, lässt sich per Sprache bedienen: Man
+  sagt etwa „zwei Cappuccino, extra stark“, und die Maschine legt los. Die Spracherkennung läuft
+  mit einem kleinen neuronalen Netz direkt auf dem Gerät, ohne Internet. Die Maschine antwortet nur
+  mit ein paar fest aufgenommenen Sätzen wie „Bitte Milchbehälter auffüllen“ und versteht nichts
+  außer Befehlen rund um Kaffee, Reinigung und Einstellungen. Eine App gibt es nicht. Das Mahlwerk
+  ist aus Keramik, darauf achten unsere Kunden besonders.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:50:1", "art:50:2", "guide:guide-art50:para:45", "guide:guide-art50:para:65"]
+as_of: 2026-10-01
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Trap: a voice-controlled device that talks back, but Art. 50(1)'s
+  "obvious" exception applies: the Commission lists "ambient-AI embedded in home appliances with
+  functionalities constrained to the home appliance assistance and operation" as an example where
+  the duty does not apply (guide para 45). No Art. 50(2) duty: the replies are fixed human
+  recordings that are only played back, not generated (guide para 65). The voice control has no
+  safety function, so Art. 6(1) doesn't arise; no Annex III use; minimal_risk. Role: provider under
+  its own name (Art. 3(3)); AI literacy (Art. 4) only. Doubt: the exception is read restrictively
+  (guide para 45); a household with young children is still within "home appliance" use as the
+  example describes it.
+tags:
+  - "category:a"
+  - "trap:obvious_interaction"
+  - "obligation:art:4:1"

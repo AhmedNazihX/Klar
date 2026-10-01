@@ -1,0 +1,27 @@
+id: own-a-13-code-autocomplete-plugin
+set_name: own
+language: en
+description: >-
+  We're a small developer-tools start-up in the Netherlands. Our product is a
+  plug-in for the common code editors that suggests the next lines of code as a programmer types;
+  they press Tab to accept or keep typing to ignore it. It only produces code and the short
+  comments that belong in it, never explanations, chat replies or other prose. The model is our
+  own, trained on permissively licensed open-source code, and since March 2025 we have sold team
+  licences to about 600 software companies. Our customers' developers are the only users. We
+  sponsor a local hackathon every autumn.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:50:1", "art:50:2", "guide:guide-art50:para:31", "guide:guide-art50:para:68"]
+as_of: 2026-10-01
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Trap: a generative model, but no Art. 50 duty. Art. 50(2): source
+  code, including comments that form an integral part of it, is outside "synthetic text content"
+  (guide para 68). Art. 50(1): text and code auto-completion is listed as not interacting directly
+  with natural persons (guide para 31); even if it were, code assistance used only by professional
+  developers is the guide's first example of an obvious interaction (para 45). No Annex III use,
+  so minimal_risk. Role: provider under its own name (Art. 3(3)); AI literacy (Art. 4) only.
+tags:
+  - "category:a"
+  - "trap:code_not_synthetic_content"
+  - "obligation:art:4:1"

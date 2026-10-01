@@ -1,0 +1,31 @@
+id: own-a-06-satire-minister-sketches
+set_name: own
+language: de
+description: >-
+  Wir sind eine kleine Produktionsfirma aus Südwestdeutschland und machen für unseren
+  YouTube-Kanal (mehrere hunderttausend Abonnenten) jede Woche Comedy-Sketche über
+  die Bundespolitik. Für die neue Staffel ab Oktober 2026 lassen wir mit einem gekauften KI-Videotool
+  echte Minister in absurden Szenen auftreten: Eine Ministerin singt zum Beispiel ein Schlaflied
+  über die Schuldenbremse, mit ihrem Gesicht und einer täuschend echten Stimme. Am Tool ändern wir
+  nichts, wir schreiben nur die Drehbücher und geben die Szenen vor. Jedes Video beginnt mit unserem
+  Kanal-Jingle. Gedreht wird sonst in einem alten Weinkeller.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["art:50:4", "art:3:60", "art:3:4", "guide:guide-art50:para:119", "guide:guide-art50:para:123", "guide:guide-art50:para:124"]
+as_of: 2026-10-01
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: realistic face and voice of a real politician, AI-generated,
+  so a deep fake (Art. 3(60)). The sketches are evidently satirical (a comedy channel, absurd
+  scenes; guide para 122), so the lighter regime of Art. 50(4) first subparagraph applies (guide
+  para 119; para 124 lists a satirical image of a politician as an example). Trap: the lighter
+  regime still requires disclosing that the content is AI-generated, in a way that doesn't hamper
+  the work (guide para 123); satire is not an exemption. Role: deployer of a bought tool
+  (Art. 3(4)); limited_risk because the system and this deployer carry Art. 50 duties. Doubt:
+  clips reshared out of context may lose their evident satirical character; the guide (para 115)
+  doesn't expect deployers to plan for dissemination beyond the foreseeable audience.
+tags:
+  - "category:a"
+  - "trap:satire_still_disclosed"
+  - "obligation:art:4:1"
+  - "obligation:art:50:4"
