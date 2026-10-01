@@ -24,12 +24,13 @@ function useScreenTitle(): string {
  * The frame of every app screen (README › Building the screens): 24 px from the window, the 248 px
  * glass sidebar, then the main column with the top bar and its law version switch, the LawNotice
  * under it, the screen, and the closing Notice. Below 768 px the sidebar folds behind a phone top
- * bar's Menu button. Panels settle in reading order on load (index.css › app-load).
+ * bar's Menu button. Panels settle in reading order on load, and a new screen's panels again on
+ * each navigation (index.css › app-load).
  */
 export function AppFrame({ law, children }: { law: LawBinding; children: ReactNode }): JSX.Element {
   const { pathname } = useLocation()
   const title = useScreenTitle()
-  const isLoading = useLoadMotion(pathname)
+  const motion = useLoadMotion(pathname)
   const menuId = useId()
   // The phone menu belongs to the screen it was opened on, so going anywhere closes it.
   const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null)
@@ -45,7 +46,7 @@ export function AppFrame({ law, children }: { law: LawBinding; children: ReactNo
       className={cn(
         LAW_SCOPE_CLASS,
         'app-frame min-h-dvh px-4 pt-3 pb-6 md:p-6',
-        isLoading && 'app-intro',
+        motion.isFrameEntering && 'app-intro',
       )}
     >
       <aside
@@ -70,7 +71,14 @@ export function AppFrame({ law, children }: { law: LawBinding; children: ReactNo
           <AppTopBar title={title} law={law} />
           <LawNotice />
           <SessionNotice />
-          <div className="app-screen flex min-w-0 flex-col gap-5">{children}</div>
+          <div
+            className={cn(
+              'app-screen flex min-w-0 flex-col gap-5',
+              motion.isScreenEntering && 'app-screen-intro',
+            )}
+          >
+            {children}
+          </div>
           <Notice className="app-closing" />
         </main>
       </div>

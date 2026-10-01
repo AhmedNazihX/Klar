@@ -6,19 +6,12 @@ import { KlarLogo } from './KlarLogo'
 import { LanguageSwitch } from './LanguageSwitch'
 import { SidebarNav } from './SidebarNav'
 
-export type CompanyLine = {
-  /** The company's name from its profile. */
-  name: string
-  /** One line under it, e.g. "40 staff, counts as an SME". */
-  detail: string
-}
-
 /**
  * What the glass sidebar holds, top to bottom: the logo, the five places, the company line, then
  * at the foot the language switch, the AI and guidance notice and the two data links.
- * Without a company profile (P18 fills it), the company line says there is none yet.
+ * Until P18 fills it from the company profile, the company line says there is none yet.
  */
-export function AppSidebar({ company }: { company?: CompanyLine }): JSX.Element {
+export function AppSidebar(): JSX.Element {
   const { t } = useTranslation()
   return (
     <>
@@ -31,12 +24,8 @@ export function AppSidebar({ company }: { company?: CompanyLine }): JSX.Element 
       </Link>
       <SidebarNav />
       <div className="flex flex-col gap-1 rounded-[18px] px-4 py-3.5 glass-thin">
-        <p className="text-label font-semibold text-ink">
-          {company?.name ?? t('sidebar.companyName')}
-        </p>
-        <p className="text-caption font-normal text-slate">
-          {company?.detail ?? t('sidebar.companyEmpty')}
-        </p>
+        <p className="text-label font-semibold text-ink">{t('sidebar.companyName')}</p>
+        <p className="text-caption font-normal text-slate">{t('sidebar.companyEmpty')}</p>
       </div>
       <div className="mt-auto flex flex-col gap-3.5 px-2">
         <LanguageSwitch className="self-start" />

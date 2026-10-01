@@ -124,6 +124,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │
 ├── frontend/                        Vite + React + TypeScript SPA, pnpm (P4); run `pnpm …` from here
 │   ├── package.json, pnpm-lock.yaml scripts: dev, build, test, lint, format, gen:api; lockfile committed (P4)
+│   ├── README.md                    set-up (install, Playwright's Chromium for the browser tests) and commands (P15)
 │   ├── pnpm-workspace.yaml          pnpm settings (which install scripts may run) (P4)
 │   ├── vite.config.ts               Vite, Tailwind, TanStack Router plugin, Vitest config (P4); Vitest projects
 │   │                                `unit` (jsdom) and `browser` (headless Chromium via Playwright, `*.browser.test.tsx`) (P15)

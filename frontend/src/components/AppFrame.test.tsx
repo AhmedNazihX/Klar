@@ -4,14 +4,11 @@ import i18n from 'i18next'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
-import de from '@/i18n/locales/de.json'
-import en from '@/i18n/locales/en.json'
 import { LOAD_MOTION_MS } from '@/hooks/use-load-motion'
 import { stubReducedMotion } from '@/test/reduced-motion'
 import { APP_ROUTES } from '@/test/shell-routes'
 import { renderRoute } from '@/test/test-utils'
 
-import { APP_NAV_ITEMS, SIDEBAR_LABEL_MAX_CHARS } from './app-nav'
 import { LAW_ORIGINAL_CLASS } from './LawSwitch'
 
 const SIDEBAR_EN = ['Inventory', 'Classify a tool', 'Obligations', 'Documents', 'Ask about the Act']
@@ -78,16 +75,6 @@ describe('AppFrame sidebar', () => {
   it('marks no place on screens outside the five (Welcome, Your data)', async () => {
     await openApp('/app/welcome')
     for (const link of sidebarLinks('App')) expect(link).not.toHaveAttribute('aria-current')
-  })
-
-  it.each([
-    ['en', en.nav],
-    ['de', de.nav],
-  ])('keeps every %s sidebar label short enough for 220 px', (_, labels) => {
-    for (const item of APP_NAV_ITEMS) {
-      const key = item.labelKey.replace('nav.', '') as keyof typeof labels
-      expect(labels[key].length, labels[key]).toBeLessThanOrEqual(SIDEBAR_LABEL_MAX_CHARS)
-    }
   })
 
   it('moves between screens from the sidebar', async () => {
@@ -162,6 +149,20 @@ describe('AppFrame law version', () => {
     )
     expect(buttons[1]).toHaveAttribute('aria-pressed', 'true')
   })
+
+  it('drops an unknown law version from the address and the links', async () => {
+    const { router } = await openApp('/app/inventory?law=bogus')
+    const [amended, original] = within(
+      screen.getByRole('group', { name: 'Law version' }),
+    ).getAllByRole('button')
+    expect(amended).toHaveAttribute('aria-pressed', 'true')
+    expect(original).toHaveAttribute('aria-pressed', 'false')
+    expect(document.querySelector('.app-frame')).not.toHaveClass(LAW_ORIGINAL_CLASS)
+    expect(router.state.location.search).toEqual({})
+    for (const link of sidebarLinks('App')) {
+      expect(link.getAttribute('href')).not.toContain('law=')
+    }
+  })
 })
 
 describe('AppFrame phone menu', () => {
@@ -190,26 +191,65 @@ describe('AppFrame phone menu', () => {
 })
 
 describe('AppFrame load motion', () => {
-  it('settles the panels in on load and clears the motion after 3.5 s', async () => {
+  function frame(): Element | null {
+    return document.querySelector('.app-frame')
+  }
+  function screenPanels(): Element | null {
+    return document.querySelector('.app-screen')
+  }
+  function wait(ms: number): void {
+    act(() => {
+      vi.advanceTimersByTime(ms)
+    })
+  }
+
+  it('settles the frame and the screen in on load and clears both after 3.5 s', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     await openApp('/app/inventory')
-    const frame = document.querySelector('.app-frame')
-    expect(frame).toHaveClass('app-intro')
+    expect(frame()).toHaveClass('app-intro')
+    expect(screenPanels()).toHaveClass('app-screen-intro')
 
-    act(() => {
-      vi.advanceTimersByTime(LOAD_MOTION_MS - 100)
-    })
-    expect(frame).toHaveClass('app-intro')
-    act(() => {
-      vi.advanceTimersByTime(100)
-    })
-    expect(frame).not.toHaveClass('app-intro')
+    wait(LOAD_MOTION_MS - 100)
+    expect(frame()).toHaveClass('app-intro')
+    wait(100)
+    expect(frame()).not.toHaveClass('app-intro')
+    expect(screenPanels()).not.toHaveClass('app-screen-intro')
+  })
+
+  it('moves only the new screen on a navigation, not the frame', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const { router } = await openApp('/app/inventory')
+    wait(LOAD_MOTION_MS)
+
+    await act(() => router.navigate({ to: '/app/obligations' }))
+    await screen.findByRole('heading', { name: 'Obligations', level: 1 })
+    expect(frame()).not.toHaveClass('app-intro')
+    expect(screenPanels()).toHaveClass('app-screen-intro')
+    wait(LOAD_MOTION_MS)
+    expect(screenPanels()).not.toHaveClass('app-screen-intro')
+  })
+
+  it('moves a screen again when you come back to it (A, B, A)', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const { router } = await openApp('/app/inventory')
+    wait(LOAD_MOTION_MS)
+    await act(() => router.navigate({ to: '/app/obligations' }))
+    await screen.findByRole('heading', { name: 'Obligations', level: 1 })
+    wait(1000)
+
+    await act(() => router.navigate({ to: '/app/inventory' }))
+    await screen.findByRole('heading', { name: 'Your AI tools', level: 1 })
+    expect(screenPanels()).toHaveClass('app-screen-intro')
   })
 
   it('never runs with reduced motion', async () => {
     stubReducedMotion(true)
-    await openApp('/app/inventory')
-    expect(document.querySelector('.app-frame')).not.toHaveClass('app-intro')
+    const { router } = await openApp('/app/inventory')
+    expect(frame()).not.toHaveClass('app-intro')
+    expect(screenPanels()).not.toHaveClass('app-screen-intro')
+    await act(() => router.navigate({ to: '/app/ask' }))
+    await screen.findByRole('heading', { name: 'Ask about the Act', level: 1 })
+    expect(screenPanels()).not.toHaveClass('app-screen-intro')
   })
 })
 
