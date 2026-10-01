@@ -77,13 +77,18 @@ def first_run_rows(probes: Mapping[str, Probe], arm: ModelArm, role: Role) -> li
     ]
 
 
-def store_run(db: psycopg.Connection, arm: ModelArm, rows: Sequence[CaseRecord]) -> UUID:
+def store_run(
+    db: psycopg.Connection,
+    arm: ModelArm,
+    rows: Sequence[CaseRecord],
+    status: RunStatus = RunStatus.COMPLETED,
+) -> UUID:
     store = PostgresRunStore(db)
     run_id = store.start_run(GIT_SHA, "own", smoke.run_config(arm, SETTINGS, [], 0.5, False))
     for row in rows:
         store.add_case(run_id, row)
     outcome: dict[str, JsonValue] = {
-        "status": RunStatus.COMPLETED.value,
+        "status": status.value,
         "probes_planned": len(rows),
         "probes_recorded": len(rows),
     }
@@ -204,6 +209,38 @@ def test_running_the_recheck_again_changes_nothing(db: psycopg.Connection, cases
     assert (rows_of(db, run_id), run_state(db, run_id)) == after_first
 
 
+def test_each_recheck_adds_its_own_entry_in_order(db: psycopg.Connection, cases_dir: Path) -> None:
+    """A later recheck appends to `config.rechecks`; it never overwrites the earlier entry."""
+    run_id = store_run(db, LUNA, first_run_rows(planned(cases_dir), LUNA, Role.DEPLOYER))
+    late = GenerationNotFoundError("generation g not found within 300 s")
+    first_at, second_at = AT, AT.replace(hour=10)
+    smoke_recheck.recheck_run(db, run_id, Verifier(late), cases_dir, first_at)
+    smoke_recheck.recheck_run(db, run_id, Verifier("Azure"), cases_dir, second_at)
+    rechecks = run_state(db, run_id)[0]
+    assert isinstance(rechecks, list)
+    assert [(entry["at"], entry["confirmed"]) for entry in rechecks] == [
+        (first_at.isoformat(), 0),
+        (second_at.isoformat(), 3),
+    ]
+    stored = smoke_verdict.load_run(db, run_id)
+    assert smoke_verdict.recheck_notes(stored) == (
+        "luna: rechecked on 2026-10-02: 0 probes confirmed late (smoke-recheck)",
+        "luna: rechecked on 2026-10-02: 3 probes confirmed late (smoke-recheck)",
+    )
+
+
+@pytest.mark.parametrize("status", [RunStatus.COST_CAP_REACHED, RunStatus.INTERRUPTED])
+def test_a_run_that_did_not_complete_is_refused(
+    db: psycopg.Connection, cases_dir: Path, status: RunStatus
+) -> None:
+    rows = first_run_rows(planned(cases_dir), LUNA, Role.DEPLOYER)
+    run_id = store_run(db, LUNA, rows, status)
+    verify = Verifier("Azure")
+    with pytest.raises(smoke_verdict.SmokeRunError, match="did not complete"):
+        smoke_recheck.recheck_run(db, run_id, verify, cases_dir, AT)
+    assert verify.asked == []
+
+
 def test_a_case_whose_label_changed_since_the_run_is_refused(
     db: psycopg.Connection, cases_dir: Path
 ) -> None:
@@ -273,10 +310,38 @@ def test_the_command_rechecks_both_runs_and_prints_the_verdict(
     assert done.exit_code == 0, done.output
     assert "gemini: run" in done.stdout and "3 confirmed on Google" in done.stdout
     assert "| Model | Run id |" in done.stdout and "Verdict: " in done.stdout
+    assert "luna: rechecked on " in done.stdout
+    assert "gemini: rechecked on " in done.stdout
+    assert ": 3 probes confirmed late (smoke-recheck)" in done.stdout
+    assert done.stdout.index("confirmed late") < done.stdout.index("Verdict: ")
     assert (rows_of(db, luna), rows_of(db, gemini)) != before
     comparison = smoke_verdict.compare_runs(db, {"luna": luna, "gemini": gemini})
     assert comparison.luna.failed == comparison.gemini.failed == 1  # the transport errors
     assert comparison.verdict is Verdict.INCONCLUSIVE  # 1 of 4 is more than 10%
+    assert len(comparison.notes) == 2
+
+
+def test_the_command_refuses_every_run_before_writing_when_one_cannot_be_rechecked(
+    db: psycopg.Connection, cases_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    probes = planned(cases_dir)
+    good = store_run(db, LUNA, first_run_rows(probes, LUNA, Role.DEPLOYER))
+    capped = store_run(
+        db, GEMINI, first_run_rows(probes, GEMINI, Role.DEPLOYER), RunStatus.COST_CAP_REACHED
+    )
+
+    @contextmanager
+    def connect() -> Iterator[psycopg.Connection]:
+        yield db
+
+    monkeypatch.setattr(records, "connect", connect)
+    monkeypatch.setattr(cli, "GenerationLookup", FakeLookup)
+    monkeypatch.setattr(smoke_recheck, "CASES_DIR", cases_dir)
+    before = (rows_of(db, good), run_state(db, good))
+    result = CliRunner().invoke(cli.app, ["evaluate", "smoke-recheck", str(good), str(capped)])
+    assert result.exit_code == 2
+    assert "did not complete (status cost_cap_reached)" in result.stderr
+    assert (rows_of(db, good), run_state(db, good)) == before
 
 
 def _rename_generation(row: CaseRecord, arm: str) -> CaseRecord:

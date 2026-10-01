@@ -38,7 +38,11 @@ from aiact.eval.experiments.smoke import (
 )
 from aiact.eval.runner import CaseRecord
 from aiact.llm import EmbeddingError, LLMConfigError
-from aiact.llm.generations import GenerationLookupError, GenerationNotFoundError
+from aiact.llm.generations import (
+    GenerationLookupError,
+    GenerationNotFoundError,
+    GenerationTransientError,
+)
 from aiact.retrieval.provisions import ProvisionNotFoundError
 from aiact.schemas import Language, RiskClass, Role, Status, StepName, StepResult
 from aiact.settings import Settings
@@ -310,6 +314,15 @@ def test_a_record_not_found_in_time_leaves_the_probe_pending_with_its_score(
     assert record.scores["served_as_pinned"] is None
     assert "not_pinned" not in record.predicted
     assert info(record)["pending_generation_ids"] == info(record)["generation_ids"]
+
+
+def test_a_transient_lookup_failure_leaves_the_probe_pending_too() -> None:
+    def flaky(generation_id: str) -> str:
+        raise GenerationTransientError("generation lookup failed: ReadTimeout")
+
+    record = probe_on(FakeNodes(role_outcome(Role.DEPLOYER)), served_by=flaky)
+    assert record.scores["pending_verification"] is True
+    assert (record.scores["failed"], record.scores["correct"]) == (False, True)
 
 
 def test_a_probe_that_already_got_no_answer_is_never_left_pending() -> None:

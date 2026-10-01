@@ -91,30 +91,45 @@ def pending_ids(record: CaseRecord) -> tuple[str, ...]:
     return stored_ids(stored_smoke_info(record.predicted), "pending_generation_ids")
 
 
-def settle_pending(record: CaseRecord, served: Served, checked_at: datetime) -> CaseRecord:
-    """A pending probe's final row: its own score when `served` confirms the pinned provider,
-    else failed with the reason in `not_pinned`. `predicted.smoke.deferred_check` says when and
-    what was found."""
-    info = {
+def checked_row(
+    record: CaseRecord,
+    served: Served,
+    audit_key: str,
+    audit: Mapping[str, JsonValue],
+    confirmed_scores: Mapping[str, Score] | None = None,
+) -> CaseRecord:
+    """A probe's row once its provider check is settled, for the run's own late check and the
+    recheck alike. Confirmed on the pinned provider (`served.not_counted` is None): no
+    `not_pinned`, and the scores updated with `confirmed_scores`. Otherwise failed, with the
+    reason in `not_pinned`. `predicted.smoke[audit_key]` keeps `audit`."""
+    info: dict[str, JsonValue] = {
         **stored_smoke_info(record.predicted),
         "served_by": list(served.providers),
         "pending_generation_ids": [],
-        "deferred_check": {
-            "at": checked_at.isoformat(),
-            "served_by": list(served.providers),
-            "result": "confirmed" if served.not_counted is None else served.not_counted,
-        },
+        audit_key: dict(audit),
     }
-    predicted: dict[str, JsonValue] = {**record.predicted, "smoke": info}
+    kept = {key: value for key, value in record.predicted.items() if key != "not_pinned"}
+    predicted: dict[str, JsonValue] = {**kept, "smoke": info}
     scores: dict[str, Score] = {
         **record.scores,
         "served_as_pinned": served.as_pinned,
         "pending_verification": False,
     }
     if served.not_counted is None:
-        return replace(record, predicted=predicted, scores=scores)
+        return replace(record, predicted=predicted, scores={**scores, **(confirmed_scores or {})})
     return replace(
         record,
         predicted={**predicted, "not_pinned": served.not_counted},
         scores={**scores, **FAILED_SCORES},
     )
+
+
+def settle_pending(record: CaseRecord, served: Served, checked_at: datetime) -> CaseRecord:
+    """A pending probe's final row: its own score when `served` confirms the pinned provider,
+    else failed. `predicted.smoke.deferred_check` says when and what was found."""
+    audit: dict[str, JsonValue] = {
+        "at": checked_at.isoformat(),
+        "served_by": list(served.providers),
+        "result": "confirmed" if served.not_counted is None else served.not_counted,
+    }
+    return checked_row(record, served, "deferred_check", audit)

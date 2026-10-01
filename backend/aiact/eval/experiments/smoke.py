@@ -30,10 +30,11 @@ A probe's outcome is one of three:
   4-6). Every probe stores each call's cost, finish reason and native finish reason.
 - **answered**: scored against the label (facts: not scored).
 
-A generation record that doesn't show up within the lookup's ~18 s window doesn't fail the probe
-during the run: OpenRouter writes records later under a real run's load. The probe is stored
-"pending verification" (`scores.pending_verification`), with its kind and correctness kept, and
-once every probe has run, the pending records are looked up again with a much longer window
+A generation record that doesn't show up within the lookup's ~18 s window (or whose lookup fails
+in transport or with a 5xx) doesn't fail the probe during the run: OpenRouter writes records
+later under a real run's load. The probe is stored "pending verification"
+(`scores.pending_verification`), with its kind and correctness kept, and once every probe has
+run, the pending records are looked up again with a much longer window
 (`generations.DEFERRED_BUDGET_SECONDS` for the whole run) before the run is marked finished.
 Confirmed on the pinned provider, the probe keeps its score; another provider, or still no
 record, and it fails as above (`predicted.smoke.deferred_check` says which). `smoke_recheck` does
@@ -90,7 +91,7 @@ from aiact.eval.experiments.smoke_served import (
 )
 from aiact.eval.runner import CaseRecord, RunStore, Score, label_record
 from aiact.llm import EmbeddingError, engine_chat_model
-from aiact.llm.generations import GenerationLookup, GenerationLookupError, GenerationNotFoundError
+from aiact.llm.generations import GenerationLookup, GenerationLookupError, GenerationPendingError
 from aiact.llm.structured import describe_validation_error
 from aiact.settings import Settings
 
@@ -462,8 +463,9 @@ LOOKUP_SKIPPED = (
 def _served(tracker: UsageTracker, has_reply: bool, can_defer: bool, served_by: ServedBy) -> Served:
     """Who served the calls. A call the provider broke off is not looked up: the probe already
     got no answer, and waiting for a record that may never come would hold a slot for ~18 s.
-    With `can_defer` (the model replied), a record that doesn't show up in time leaves the probe
-    pending, to be checked again at the end of the run."""
+    With `can_defer` (the model replied), a record that doesn't show up in time, or a lookup
+    that fails in transport or with a 5xx, leaves the probe pending, to be checked again at the
+    end of the run."""
     if not tracker.records:
         return Served(not_counted=NO_GENERATION_ID) if has_reply else Served()
     checked = [call for call in tracker.records if not call.is_provider_error]
@@ -475,7 +477,7 @@ def _served(tracker: UsageTracker, has_reply: bool, can_defer: bool, served_by: 
         return Served(not_counted=NO_GENERATION_ID, lookup_skipped=skipped)
     try:
         names = [served_by(generation_id) for generation_id in ids]
-    except GenerationNotFoundError as exc:
+    except GenerationPendingError as exc:
         if can_defer:
             return Served(lookup_skipped=skipped, pending=tuple(ids))
         return Served(not_counted=str(exc), lookup_skipped=skipped)

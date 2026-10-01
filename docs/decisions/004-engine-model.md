@@ -43,20 +43,27 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
   2026-10-01 (Luna run `d33c31fa-6183-45f1-bee0-0e86606e2ef8`, Gemini run `62fb71eb-b738-4ba6-a81e-3c50a8f0325b`),
   16 Luna and 9 Gemini probes were stored as failed although the model had replied in full: their generation
   record didn't show up within the ~18 s lookup (`not_pinned` = "generation … not found after 12 attempts").
-  Under a real run's load, OpenRouter writes the records later than that. So a record that isn't found in time no
-  longer fails the probe during the run. The probe is stored as *pending* (`scores.pending_verification`), with
-  its kind (answered or broken) and its correctness kept. Once every probe of a model has run, and before its run
-  is marked finished, the pending records are looked up again, all together, with a much longer window: one
-  request per missing record per round, with waits of 5, 10, 20, 40 and then 60 s between rounds, for at most
-  5 minutes per run (`DEFERRED_BUDGET_SECONDS`); each request still times out after 5 s. If every call of the
+  Under a real run's load, OpenRouter writes the records later than that. So a record that isn't found in time,
+  or a lookup that fails in transport or with a server error (5xx), no longer fails the probe during the run. The
+  probe is stored as *pending* (`scores.pending_verification`), with its kind (answered or broken) and its
+  correctness kept. Once every probe of a model has run, and before its run is marked finished, the pending
+  records are looked up again, all together, with a much longer window: one request per missing record per
+  round, with waits of 5, 10, 20, 40 and then 60 s between rounds. A record not there yet, a transport error, a
+  5xx or a rate limit (429) is tried again in a later round; a 429 also ends the round early. No request starts
+  after 5 minutes (`DEFERRED_BUDGET_SECONDS`), and each request still times out after 5 s, so the check takes at
+  most 5 minutes and 5 seconds per run. Any other failure (another 4xx, a record that names no provider) is
+  final at once. If every call of the
   probe is shown to come from the pinned provider, the probe keeps its score. If one came from another provider,
   or a record still isn't there, the probe becomes failed (no answer), as before. Each settled row says what was
   found in `predicted.smoke.deferred_check`. A row still pending (only a run that stopped before the check
   leaves one) counts as failed, and such a run isn't compared anyway.
 - **Recheck of stored runs (`aiact evaluate smoke-recheck <run id> …`).** The same longer lookup, for runs stored
   before the deferred check existed. It makes no model call, only the free generation-record lookups, and
-  `--dry-run` prints what would change without writing anything. It looks again only at failed probes whose one
-  fault was a record not found in time: no `provider_error`, and a reply the run kept. It reads the reply from the
+  `--dry-run` prints what would change without writing anything. It takes only completed runs, and it reads and
+  checks every run it is given before it looks anything up or writes anything, so one bad run id stops the
+  command with nothing written; each run's summary is printed as soon as that run is stored. It looks again only
+  at failed probes whose one fault was a lookup a later try may settle (a record not found in time, a transport
+  error, a 5xx or a 429): no `provider_error`, and a reply the run kept. It reads the reply from the
   stored row the way the run classed it. A stored `error` from the node's schema or the result contract is a
   broken answer; a reply cut off by the output cap raised one of those, so it stays broken. A transport,
   provider or database error was never an answer, and such a probe is never rescored. With no `error`, the
@@ -68,7 +75,9 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
   served it, the row stays failed and names that provider. If the record still isn't there, the row is left as
   it is. The run's `config.rechecks` records each recheck (date, probes rechecked, confirmed, still failing),
   and the run's status is never touched. Running it again changes nothing that is already settled. It then
-  prints each run's summary and the comparison below, still computed only from the stored rows.
+  prints each run's summary and the comparison below, still computed only from the stored rows. Under the
+  comparison's table, a line per recheck says that the run's rows were rescored ("luna: rechecked on <date>: N
+  probes confirmed late (smoke-recheck)").
 - **Broken** means the model answered but the answer didn't fit the node's JSON schema or the result contract
   (cross-field rules aren't in the schema, so contract failures count: decision 010 addendum). A reply cut off
   by the output cap (`finish_reason: "length"`) is broken too (decision 023 addendum, part 7). The nodes make no

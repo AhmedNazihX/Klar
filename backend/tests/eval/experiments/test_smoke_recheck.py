@@ -103,8 +103,40 @@ def test_a_probe_failed_for_another_reason_does_not_qualify(reason: str) -> None
     assert not smoke_recheck.qualifies(other)
 
 
+@pytest.mark.parametrize(
+    "reason",
+    [
+        "generation lookup failed: ReadTimeout",
+        "generation lookup failed: NoResponseError",
+        "generation lookup failed: OpenRouterError (HTTP 503)",
+        "generation lookup failed: OpenRouterError (HTTP 429)",
+        "generation gen-1 not found within 300 s",
+    ],
+)
+def test_a_probe_failed_by_a_transient_lookup_qualifies(reason: str) -> None:
+    row = first_run(ROLE, role_outcome(Role.DEPLOYER))
+    flaky = StoredRow(row.case_id, {**row.predicted, "not_pinned": reason}, row.label, row.scores)
+    assert smoke_recheck.qualifies(flaky)
+
+
 def test_a_probe_that_did_not_fail_does_not_qualify() -> None:
     assert not smoke_recheck.qualifies(stored(probe_row(ROLE, role_outcome(Role.DEPLOYER))))
+
+
+def test_only_a_failed_probe_qualifies_even_with_a_late_lookup_reason() -> None:
+    """Pins the `failed is True` guard: everything else about the row qualifies."""
+    row = first_run(ROLE, role_outcome(Role.DEPLOYER))
+    assert smoke_recheck.qualifies(row)
+    scored = StoredRow(row.case_id, row.predicted, row.label, {**row.scores, "failed": False})
+    assert not smoke_recheck.qualifies(scored)
+
+
+def test_a_provider_error_alone_keeps_a_probe_from_qualifying() -> None:
+    """Pins the `provider_error` guard: its calls ended normally, so only the flag stops it."""
+    row = first_run(ROLE, role_outcome(Role.DEPLOYER))
+    flagged = {**row.predicted, "provider_error": "a call ended with finish_reason error"}
+    assert smoke_recheck.reply_kind(flagged) is None
+    assert not smoke_recheck.qualifies(StoredRow(row.case_id, flagged, row.label, row.scores))
 
 
 def test_a_stored_answer_that_does_not_read_back_is_an_error() -> None:

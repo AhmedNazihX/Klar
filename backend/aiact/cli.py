@@ -644,7 +644,7 @@ def eval_smoke_recheck(
             records.connect() as connection,
             connection.transaction(force_rollback=True) if dry_run else nullcontext(),
         ):
-            text = _recheck_and_compare(connection, list(dict.fromkeys(run_ids)), verify)
+            _recheck_and_compare(connection, list(dict.fromkeys(run_ids)), verify)
     except (
         LLMConfigError,
         records.DatabaseNotConfiguredError,
@@ -658,22 +658,26 @@ def eval_smoke_recheck(
         # A connection error's text can name the server; only the type is printed.
         typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
         raise typer.Exit(code=2) from error
-    typer.echo(text)
     if dry_run:
         typer.echo("Dry run: nothing was written; the comparison shows the rows as they would be.")
 
 
 def _recheck_and_compare(
     connection: psycopg.Connection, run_ids: list[UUID], verify: VerifyAll
-) -> str:
-    rechecks = [smoke_recheck.recheck_run(connection, run_id, verify) for run_id in run_ids]
-    parts = [smoke_recheck.format_recheck(recheck) for recheck in rechecks]
+) -> None:
+    """Every run is read and checked first, so a run that can't be rechecked stops the command
+    before anything is written; then each run's summary is printed as soon as it is stored."""
+    prepared = [smoke_recheck.prepare_run(connection, run_id) for run_id in run_ids]
+    rechecks: list[smoke_recheck.RunRecheck] = []
+    for run in prepared:
+        recheck = smoke_recheck.apply_recheck(connection, run, verify)
+        rechecks.append(recheck)
+        typer.echo(smoke_recheck.format_recheck(recheck) + "\n")
     pair = smoke_recheck.comparison_pair(rechecks)
     if pair is None:
-        parts.append("No comparison: give one luna and one gemini run.")
+        typer.echo("No comparison: give one luna and one gemini run.")
     else:
-        parts.append(_smoke_comparison(connection, pair))
-    return "\n\n".join(parts)
+        typer.echo(_smoke_comparison(connection, pair))
 
 
 def _smoke_comparison(connection: psycopg.Connection, run_ids: dict[str, UUID]) -> str:
