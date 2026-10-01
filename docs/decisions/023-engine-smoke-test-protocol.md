@@ -27,6 +27,11 @@ answer as broken).
 5. A broken answer still counts against the model (part 2). Only a missing answer leads to inconclusive.
 6. If repeated runs stay inconclusive because one model's endpoint keeps failing, that is a separate reason to
    drop it, and the user decides it then.
+7. (user, 2026-10-01, option A of two) A call the provider breaks off, reported as `finish_reason: "error"`,
+   counts as **no answer** (a provider error under part 4), not as a broken answer. A reply cut off by the model's
+   output cap (`finish_reason: "length"`) stays **broken** (part 5). Each probe stores the provider's own finish
+   reason and the call's cost, so the classification can be checked from the stored rows. The case that raised
+   it: in X2's within-cap check, 2 of 5 Gemini role probes broke off with a cut JSON at a cost of $0.
 
 Why: without it, an outage would produce a keep or drop verdict from part of the cases. The 10% broken rule
 doesn't see missing answers, and the accuracy would be taken over whatever came back. Implemented as
