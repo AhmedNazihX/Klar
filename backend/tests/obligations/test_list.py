@@ -3,8 +3,9 @@
 Dates: Art. 113(c)(i) 2 Dec 2027 (Annex III), 113(c)(ii) 2 Aug 2028 (Annex I), 113(a) 2 Feb 2025
 (Chapters I, II) and 2 Dec 2026 (Art. 5(1)(ba), (bb)), 113 second paragraph 2 Aug 2026 (Art. 50).
 Art. 111(2) (C7b): a high-risk system placed on the market or put into service before its route's
-Chapter III date is covered only after a significant design change; providers and deployers of
-one meant for public authorities comply by 2 Aug 2030.
+Chapter III date is covered only after a significant change to its design or intended purpose
+from that date; every operator of one meant for public authorities complies by 2 Aug 2030
+(recital 177's "operators", the wider reading the user chose on 2026-10-01).
 """
 
 import json
@@ -491,12 +492,13 @@ def test_a_legacy_public_authority_system_applies_from_2_aug_2030_for_providers_
     assert (literacy.applies_from, literacy.legacy) == (CHAPTER_I_II_FROM, None)
 
 
-@pytest.mark.parametrize("role", [Role.IMPORTER, Role.DISTRIBUTOR])
-def test_the_2030_date_does_not_name_importers_or_distributors(role: Role) -> None:
-    # They fall under the first sentence only: covered after a significant design change.
+@pytest.mark.parametrize("role", list(Role))
+def test_the_2030_date_applies_to_every_operator(role: Role) -> None:
+    # Recital 177 says "operators", wider than the article's "providers and deployers".
     duties = _legacy_list(role, HighRiskRoute.ANNEX_III, LegacyStatus.PUBLIC_AUTHORITY)
-    assert {d.legacy for d in _chapter_iii(duties)} == {LegacyStatus.UNCHANGED}
-    assert {d.applies_from for d in _chapter_iii(duties)} == {ANNEX_III_FROM}
+    assert _chapter_iii(duties)
+    assert {d.legacy for d in _chapter_iii(duties)} == {LegacyStatus.PUBLIC_AUTHORITY}
+    assert {d.applies_from for d in _chapter_iii(duties)} == {PUBLIC_AUTHORITY_FROM}
 
 
 @pytest.mark.parametrize("for_public_authority", [False, True])

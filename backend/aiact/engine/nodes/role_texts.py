@@ -166,13 +166,10 @@ LEGACY_QUESTION_TEXTS: Mapping[str, Mapping[Language, str]] = {
         "Hochrisiko-Vorschriften gelten ab dem {date}.",
     },
     "significant_design_change": {
-        Language.EN: "Has the system's design changed significantly since it was placed on the "
-        "market or put into service, or is a significant change planned for after {date} (for "
-        "example a new version that decides differently or serves another purpose)?",
-        Language.DE: "Wurde die Konzeption des Systems seit dem Inverkehrbringen oder der "
-        "Inbetriebnahme erheblich verändert, oder ist nach dem {date} eine erhebliche "
-        "Veränderung geplant (zum Beispiel eine neue Version, die anders entscheidet oder einem "
-        "anderen Zweck dient)?",
+        Language.EN: "Is a significant change to the system's design or intended purpose "
+        "planned for on or after {date}?",
+        Language.DE: "Ist ab dem {date} eine erhebliche Veränderung der Konzeption oder der "
+        "Zweckbestimmung des Systems geplant?",
     },
     "for_public_authority": {
         Language.EN: "Is the system meant for use by public authorities?",
@@ -231,12 +228,15 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "depend on.",
         "no_table": "No duties listed: the obligations table covers only the {version} text, "
         "not the {asked} text.",
-        "legacy_unchanged": "Art. 111(2): the system was on the market or in use before {date} "
-        "and its design hasn't changed significantly since, so {count} high-risk duties apply "
-        "only after a significant design change; the class stays high-risk.",
+        "legacy_unchanged": "Art. 111(2): the system was on the market or in use before {date}, "
+        "so {count} high-risk duties apply only if its design or intended purpose changes "
+        "significantly on or after that date (a substantial modification); the class stays "
+        "high-risk.",
         "legacy_public_authority": "Art. 111(2): the system was on the market or in use before "
         "{date} and is meant for public authorities, so {count} high-risk duties "
         "apply from {deadline}; the class stays high-risk.",
+        "legacy_per_product": "This covers the system as supplied before {date}; copies "
+        "supplied to new customers on or after that date may be fully covered.",
         "legacy_check_at_launch": "If the system is placed on the market or put into service "
         "before {date} and its design doesn't change significantly afterwards, Art. 111(2) may "
         "limit these duties; check again at launch.",
@@ -265,13 +265,16 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "no_table": "Keine Pflichten aufgeführt: Die Pflichtentabelle deckt nur die "
         "{version} Fassung ab, nicht die {asked} Fassung.",
         "legacy_unchanged": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr oder in "
-        "Betrieb und wurde seitdem nicht erheblich in seiner Konzeption verändert; daher gelten "
-        "{count} Hochrisiko-Pflichten erst nach einer erheblichen Veränderung der Konzeption. Das "
-        "System bleibt als Hochrisiko-System eingestuft.",
+        "Betrieb; daher gelten {count} Hochrisiko-Pflichten nur, wenn seine Konzeption oder "
+        "Zweckbestimmung ab diesem Datum erheblich verändert wird (eine wesentliche Veränderung). "
+        "Das System bleibt als Hochrisiko-System eingestuft.",
         "legacy_public_authority": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr "
         "oder in Betrieb und soll bestimmungsgemäß von Behörden verwendet werden; daher gelten "
         "{count} Hochrisiko-Pflichten ab dem {deadline}. Das System bleibt als Hochrisiko-System "
         "eingestuft.",
+        "legacy_per_product": "Dies gilt für das System, wie es vor dem {date} geliefert wurde; "
+        "Exemplare, die ab diesem Datum an neue Kunden geliefert werden, können vollständig "
+        "erfasst sein.",
         "legacy_check_at_launch": "Wird das System vor dem {date} in Verkehr gebracht oder in "
         "Betrieb genommen und danach in seiner Konzeption nicht erheblich verändert, kann Art. 111 "
         "Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen oder bei der "

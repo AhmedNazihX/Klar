@@ -34,7 +34,8 @@ class Obligation(ContractModel):
     legacy: LegacyStatus | None = Field(
         default=None,
         description="Art. 111(2) for a system on the market or in use before its route's date: "
-        "`legacy_unchanged` means the duty applies only after a significant design change; "
+        "`legacy_unchanged` means the duty applies only after a significant change to the "
+        "system's design or purpose; "
         "`legacy_public_authority` means it applies from 2 Aug 2030 (`applies_from`). None when "
         "the system is not such a legacy system or the duty is not a high-risk one.",
     )

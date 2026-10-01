@@ -6,10 +6,12 @@ date), in the same form as the others:
   so a system the description shows already on the market or in use is "yes". A system still
   being built, or one whose launch is only planned, is "no", even if the launch is planned before
   that date. When the description doesn't say, answer "unknown".
-- significant_design_change: the system's design has changed significantly since it was placed
-  on the market or put into service, or a significant change is planned for after {date}, for
-  example a new version that decides differently or serves another purpose; routine updates and
-  bug fixes are not.
+- significant_design_change: a significant change to the system's design or intended purpose is
+  planned or foreseen for on or after {date}. Significant means a change the provider's initial
+  conformity assessment didn't foresee or plan that affects whether the system meets the
+  high-risk requirements, or that changes what the system is for. Routine updates, bug fixes and
+  changes the provider's own plan foresaw are not significant. A change made before that date
+  doesn't count.
 - for_public_authority: public authorities are meant to use the system, whether the company is
   one or supplies them.
 

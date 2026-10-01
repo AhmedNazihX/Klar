@@ -46,7 +46,29 @@ The text both rest on (`data/parsed/ai-act-consolidated.en.jsonl`):
 | --- | --- | --- |
 | What counts as "placed on the market or put into service before" the route's Chapter III date (2 Dec 2027 Annex III, 2 Aug 2028 Annex I), while that date is still ahead | (A) already on the market or in use, or launched before the date; (B) as of today: only a system already on the market or in use on the assessment date | **B** |
 | Which duties the legacy marking covers | (A) only the route-dated high-risk (Chapter III) rows; Art. 4, Art. 50 and the Art. 53 flag keep their own dates (Art. 111(4) treats legacy Art. 50(2) separately, so Art. 111(2) isn't read as covering Art. 50); (B) every duty of the system ("this Regulation shall apply … only if") | **A** |
-| Whether a significant design change made before the date counts | (A) only changes "as from that date", as Art. 111(2) says; (B) a significant design change before the date also counts as changed (stricter than the text; full duties stay) | **B** (seen and approved in the wording review, 2026-10-01) |
+| ~~Whether a significant design change made before the date counts~~ | (A) only changes "as from that date", as Art. 111(2) says; (B) a significant design change before the date also counts as changed (stricter than the text; full duties stay) | ~~**B** (seen and approved in the wording review, 2026-10-01)~~ **Replaced** by the first row of the table below |
+
+### Revision, 2026-10-01: after reviewing recital 177 and Art. 3(23)
+
+Sources: `recital:177` (`data/parsed/ai-act.en.jsonl`; the consolidated text carries no recitals): "…only if,
+from that date, those systems are subject to significant changes in their design or intended purpose. … the
+concept of significant change should be understood as equivalent in substance to the notion of substantial
+modification … operators of high-risk AI systems that are intended to be used by public authorities should …
+comply … by 2 August 2030." `art:3:23`: "'substantial modification' means a change to an AI system after its
+placing on the market or putting into service which is not foreseen or planned in the initial conformity
+assessment carried out by the provider and as a result of which the compliance of the AI system with the
+requirements set out in Chapter III, Section 2 is affected or results in a modification to the intended purpose
+for which the AI system has been assessed;"
+
+| Question | Choice | Source | Decided |
+| --- | --- | --- | --- |
+| Which design changes count (replaces "before the date also counts") | Only a significant change to the design or intended purpose planned or foreseen for on or after the route's date; a change made before it doesn't end the grandfathering. Unknown stays strict: full duties, and the question is asked | `art:111:2` ("as from that date"), `recital:177` | user, 2026-10-01, after reviewing recital 177 and Art. 3(23) |
+| Who gets the 2 Aug 2030 date for a legacy public-authority system | Every operator: providers, deployers, importers and distributors (recital 177 says "operators", wider than the article's "providers and deployers"; the stricter reading) | `recital:177`, `art:111:2` | user, 2026-10-01, after reviewing recital 177 and Art. 3(23) |
+| What "significant" means | A substantial modification: a change not foreseen or planned in the initial conformity assessment that affects compliance with the Chapter III Section 2 requirements, or that changes the intended purpose; routine updates, bug fixes and changes the provider's plan foresaw are not | `art:3:23`, `recital:177` ("equivalent in substance") | user, 2026-10-01, after reviewing recital 177 and Art. 3(23) |
+| Per-product caveat | For providers, importers and distributors (not deployers), every marked result adds: "This covers the system as supplied before {date}; copies supplied to new customers on or after that date may be fully covered." (German: "Dies gilt für das System, wie es vor dem {date} geliefert wurde; Exemplare, die ab diesem Datum an neue Kunden geliefert werden, können vollständig erfasst sein.") | The New Legislative Framework reading that placing on the market is per individual product (the Commission's Blue Guide, named in the Act's recitals but not in our corpus, so not quoted) | user, 2026-10-01, after reviewing recital 177 and Art. 3(23) |
+
+A marked result cites `art:111:2` and `art:3:23`; `recital:177` isn't cited because the consolidated (amended)
+text, the only one the obligations table holds, has no recitals. The check-again sentence cites `art:111:2` only.
 
 Consequences:
 - A planned launch, even one planned before the date, is "no": the full duties are listed, and the step adds,

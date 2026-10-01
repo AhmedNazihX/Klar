@@ -5,8 +5,9 @@ The table lives in `supabase/seed/obligations.yaml`, which is also the source of
 
 Art. 111(2) (C7b, decision 022) is applied on top of the table: a high-risk system placed on the
 market or put into service before its route's Chapter III date keeps its class, but its high-risk
-duties (the rows dated per route) apply only after a significant design change, or, for a system
-meant for public authorities, from 2 Aug 2030 for its providers and deployers.
+duties (the rows dated per route) apply only after a significant change to its design or
+intended purpose on or after that date, or, for a system meant for public authorities, from
+2 Aug 2030 for every operator (recital 177's wider reading).
 """
 
 from collections.abc import Mapping
@@ -48,9 +49,8 @@ PUBLIC_AUTHORITY_DEADLINE = date(2030, 8, 2)
 public authorities comply by this date."""
 
 LEGACY_ARTICLE = "art:111:2"
-PUBLIC_AUTHORITY_ROLES = frozenset({Role.PROVIDER, Role.DEPLOYER})
-"""The roles the 2 Aug 2030 deadline names; an importer or distributor of such a system keeps
-the first sentence's rule."""
+SUBSTANTIAL_MODIFICATION_ARTICLE = "art:3:23"
+"""What a significant change means under Art. 111(2) (recital 177: equivalent in substance)."""
 
 
 class ObligationsError(ValueError):
@@ -175,12 +175,14 @@ def legacy_status(
     return LegacyStatus.PUBLIC_AUTHORITY if for_public_authority else LegacyStatus.UNCHANGED
 
 
-def _with_legacy(obligation: Obligation, role: Role, legacy: LegacyStatus | None) -> Obligation:
+def _with_legacy(obligation: Obligation, legacy: LegacyStatus | None) -> Obligation:
     """The duty as Art. 111(2) leaves it: only the high-risk rows, the ones dated per route, are
-    marked; the public-authority date replaces `applies_from` for providers and deployers."""
+    marked; the public-authority date replaces `applies_from` for every role. The article names
+    providers and deployers, recital 177 "operators": the stricter, wider reading (user,
+    2026-10-01)."""
     if legacy is None or obligation.high_risk_route is None:
         return obligation
-    if legacy is LegacyStatus.PUBLIC_AUTHORITY and role in PUBLIC_AUTHORITY_ROLES:
+    if legacy is LegacyStatus.PUBLIC_AUTHORITY:
         update = {"legacy": legacy, "applies_from": PUBLIC_AUTHORITY_DEADLINE}
         return obligation.model_copy(update=update)
     return obligation.model_copy(update={"legacy": LegacyStatus.UNCHANGED})
@@ -224,7 +226,7 @@ def list_obligations(
             f"the obligations table holds the {source.law_version.value} text, not {version.value}"
         )
     obligations = tuple(
-        _with_legacy(row.obligation, role, status)
+        _with_legacy(row.obligation, status)
         for row in source.rows()
         if row.role == role
         and row.risk_class == risk_class

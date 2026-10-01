@@ -47,12 +47,12 @@ class HighRiskRoute(StrEnum):
 
 class LegacyStatus(StrEnum):
     """How Art. 111(2) treats a high-risk system placed on the market or put into service before
-    its route's Chapter III date, with no significant design change from that date."""
+    its route's Chapter III date, with no significant change planned from that date."""
 
     UNCHANGED = "legacy_unchanged"
-    """Its high-risk duties apply only after a significant design change."""
+    """Its high-risk duties apply only after a significant change to its design or purpose."""
     PUBLIC_AUTHORITY = "legacy_public_authority"
-    """Meant for public authorities: providers and deployers comply by 2 Aug 2030."""
+    """Meant for public authorities: every operator complies by 2 Aug 2030."""
 
 
 class LawVersion(StrEnum):

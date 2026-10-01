@@ -21,11 +21,11 @@ other condition goes to the model. A duty whose condition is "no" is dropped; "y
 "unknown" keep it, with its condition shown.
 
 A high-risk system also gets the Art. 111(2) key facts (C7b, decision 022): placed on the market
-or put into service before its route's Chapter III date, a significant design change from then
-on, and use by public authorities. A legacy system keeps its class; `list_obligations` marks its
-high-risk duties. An unknown answer keeps the duties as they are and becomes a follow-up
-question. The facts are asked only for a high-risk system, so the request for any other class is
-unchanged.
+or put into service before its route's Chapter III date, a significant change to its design or
+intended purpose from then on (a substantial modification, Art. 3(23)), and use by public
+authorities. A legacy system keeps its class; `list_obligations` marks its high-risk duties. An
+unknown answer keeps the duties as they are and becomes a follow-up question. The facts are
+asked only for a high-risk system, so the request for any other class is unchanged.
 
 Each step cites the provisions its role rests on (Art. 3 definitions, the Art. 25(1) switch,
 Art. 53(1)(b)), quoted from the parsed AI Act until `get_provision` (C5) serves them.
@@ -65,6 +65,7 @@ from aiact.obligations.list import (
     CHAPTER_III_DATES,
     LEGACY_ARTICLE,
     PUBLIC_AUTHORITY_DEADLINE,
+    SUBSTANTIAL_MODIFICATION_ARTICLE,
     ObligationTable,
     UnknownLawVersionError,
     default_table,
@@ -325,9 +326,13 @@ class LegacySettlement:
     check_at_launch: bool = False
 
     @property
-    def cites_rule(self) -> bool:
-        """The step relies on Art. 111(2): a marking, or the check-again sentence."""
-        return self.status is not None or self.check_at_launch
+    def articles(self) -> tuple[str, ...]:
+        """What the step cites for Art. 111(2): the article for the check-again sentence, and
+        with a marking also Art. 3(23), the substantial modification a significant change is
+        read as (recital 177, which the consolidated text doesn't carry)."""
+        if self.status is not None:
+            return (LEGACY_ARTICLE, SUBSTANTIAL_MODIFICATION_ARTICLE)
+        return (LEGACY_ARTICLE,) if self.check_at_launch else ()
 
 
 def _settled_answer(key_fact: KeyFact) -> Answer:
@@ -373,12 +378,18 @@ def settle_legacy(answer: RoleAnswer, route: HighRiskRoute | None) -> LegacySett
     )
 
 
+PER_PRODUCT_ROLES = frozenset({Role.PROVIDER, Role.IMPORTER, Role.DISTRIBUTOR})
+"""The roles that supply the system: placing on the market counts per product supplied (the New
+Legislative Framework reading), so new copies may be fully covered. A deployer uses its copy."""
+
+
 def _legacy_summary(
-    kept: Sequence[Obligation], legacy: LegacySettlement, language: Language
+    kept: Sequence[Obligation], legacy: LegacySettlement, language: Language, roles: Sequence[Role]
 ) -> tuple[str, ...]:
-    """One sentence per Art. 111(2) marking the kept duties carry, or the check-again sentence
-    for a system not yet on the market or in use."""
-    if not legacy.cites_rule or legacy.route is None:
+    """One sentence per Art. 111(2) marking the kept duties carry, then the per-product caveat
+    for a role that supplies the system; or the check-again sentence for a system not yet on the
+    market or in use."""
+    if not legacy.articles or legacy.route is None:
         return ()
     texts = TEXTS[language]
     since = long_date(CHAPTER_III_DATES[legacy.route], language)
@@ -386,11 +397,14 @@ def _legacy_summary(
         return (texts["legacy_check_at_launch"].format(date=since),)
     deadline = long_date(PUBLIC_AUTHORITY_DEADLINE, language)
     counts = {status: sum(o.legacy is status for o in kept) for status in LegacyStatus}
-    return tuple(
+    marked = tuple(
         texts[status.value].format(count=count, date=since, deadline=deadline)
         for status, count in counts.items()
         if count
     )
+    supplies = any(role in PER_PRODUCT_ROLES for role in roles)
+    caveat = (texts["legacy_per_product"].format(date=since),) if marked and supplies else ()
+    return (*marked, *caveat)
 
 
 # --- Conditional duties -------------------------------------------------------------------------
@@ -583,7 +597,7 @@ def to_outcome(
     missing = settled.missing[0] if settled.missing else None
     obligations, summary = select_obligations(answer, state, settled, source_table, legacy)
     source = data_dir or get_settings().aiact_data_dir
-    cited = (*settled.cited_articles(), *((LEGACY_ARTICLE,) if legacy.cites_rule else ()))
+    cited = (*settled.cited_articles(), *legacy.articles)
     step = StepResult(
         step=StepName.ROLE_OBLIGATIONS,
         decision=_decision(settled, language, summary),
@@ -637,7 +651,7 @@ def select_obligations(
     summary = (
         texts["duties"].format(count=len(kept), risk_class=risk_class.value, version=version),
         *(texts[verdict.value].format(count=count) for verdict, count in counts.items() if count),
-        *_legacy_summary(kept, legacy, language),
+        *_legacy_summary(kept, legacy, language, roles),
     )
     return kept, summary
 

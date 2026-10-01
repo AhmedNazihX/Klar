@@ -815,10 +815,19 @@ def test_the_node_reads_the_earlier_findings_through_the_graph() -> None:
 
 # --- Art. 111(2): high-risk systems already on the market (C7b) ------------------------------
 # Hand-checked against Art. 111(2): a system on the market or in use before its route's Chapter
-# III date is covered only after a significant design change; for public authorities, providers
-# and deployers comply by 2 Aug 2030. The class stays high-risk either way.
+# III date is covered only after a significant change to its design or intended purpose from that
+# date (a substantial modification, Art. 3(23), per recital 177); for public authorities, every
+# operator complies by 2 Aug 2030. The class stays high-risk either way.
 
 LEGACY_ARTICLE = "art:111:2"
+SUBSTANTIAL_MODIFICATION = "art:3:23"
+PER_PRODUCT = {
+    Language.EN: "This covers the system as supplied before 2 December 2027; copies supplied to "
+    "new customers on or after that date may be fully covered.",
+    Language.DE: "Dies gilt für das System, wie es vor dem 2. Dezember 2027 geliefert wurde; "
+    "Exemplare, die ab diesem Datum an neue Kunden geliefert werden, können vollständig erfasst "
+    "sein.",
+}
 DEPLOYER_DUTIES = ("art:26:1", "art:26:2", "art:26:6")
 
 
@@ -847,10 +856,16 @@ def test_a_legacy_system_without_a_design_change_marks_its_duties() -> None:
         assert duties[article].legacy is LegacyStatus.UNCHANGED
         assert duties[article].applies_from == date(2027, 12, 2)
     assert duties["art:4:1"].legacy is None  # AI literacy has its own date
-    assert "apply only after a significant design change" in outcome.step.decision
-    assert "before 2 December 2027" in outcome.step.decision
-    assert "the class stays high-risk" in outcome.step.decision
-    assert LEGACY_ARTICLE in cited(outcome)
+    marked = sum(o.legacy is LegacyStatus.UNCHANGED for o in finding(outcome).obligations)
+    assert outcome.step.decision.endswith(
+        "Art. 111(2): the system was on the market or in use before 2 December 2027, so "
+        f"{marked} high-risk duties apply only if its design "
+        "or intended purpose changes significantly on or after that date (a substantial "
+        "modification); the class stays high-risk."
+    )
+    assert "hasn't changed significantly since" not in outcome.step.decision
+    assert PER_PRODUCT[Language.EN] not in outcome.step.decision  # a deployer uses its copy
+    assert cited(outcome)[-2:] == [LEGACY_ARTICLE, SUBSTANTIAL_MODIFICATION]
     assert outcome.step.status is Status.DECIDED
     assert outcome.follow_up_questions == ()
 
@@ -880,6 +895,45 @@ def test_a_legacy_public_authority_system_applies_from_2_aug_2030(
     assert f"before {since}" in outcome.step.decision
     assert "apply from 2 August 2030" in outcome.step.decision
     assert LEGACY_ARTICLE in cited(outcome)
+
+
+@pytest.mark.parametrize("language", list(Language))
+@pytest.mark.parametrize("public_authority", [Answer.NO, Answer.YES])
+@pytest.mark.parametrize("role", [Role.PROVIDER, Role.IMPORTER, Role.DISTRIBUTOR])
+def test_a_supplier_of_a_legacy_system_gets_the_per_product_caveat(
+    role: Role, public_authority: Answer, language: Language
+) -> None:
+    legacy = legacy_answer(Answer.YES, public_authority=public_authority)
+    outcome = legacy_outcome(legacy, role, language=language)
+    assert {o.legacy for o in finding(outcome).obligations} - {None}
+    assert outcome.step.decision.endswith(PER_PRODUCT[language])
+
+
+def test_no_caveat_without_a_marking_or_for_a_deployer() -> None:
+    changed = legacy_outcome(legacy_answer(Answer.YES, Answer.YES), Role.PROVIDER)
+    assert PER_PRODUCT[Language.EN] not in changed.step.decision
+    deployer = legacy_outcome(legacy_answer(Answer.YES, public_authority=Answer.YES))
+    assert PER_PRODUCT[Language.EN] not in deployer.step.decision
+
+
+def test_the_check_again_sentence_cites_only_the_article() -> None:
+    planned = legacy_outcome(legacy_answer(Answer.NO), Role.PROVIDER)
+    assert LEGACY_ARTICLE in cited(planned)
+    assert SUBSTANTIAL_MODIFICATION not in cited(planned)
+    assert PER_PRODUCT[Language.EN] not in planned.step.decision
+
+
+@pytest.mark.parametrize("language", list(Language))
+def test_the_design_change_question_asks_about_changes_from_the_date(language: Language) -> None:
+    outcome = legacy_outcome(legacy_answer(Answer.YES, Answer.UNKNOWN), language=language)
+    [question] = outcome.follow_up_questions
+    expected = {
+        Language.EN: "Is a significant change to the system's design or intended purpose "
+        "planned for on or after 2 December 2027?",
+        Language.DE: "Ist ab dem 2. Dezember 2027 eine erhebliche Veränderung der Konzeption "
+        "oder der Zweckbestimmung des Systems geplant?",
+    }
+    assert question.text == expected[language]
 
 
 CHECK_AT_LAUNCH = {
@@ -1052,6 +1106,11 @@ def test_the_legacy_texts_read_in_german() -> None:
     outcome = legacy_outcome(legacy, language=Language.DE)
     assert "Art. 111 Abs. 2" in outcome.step.decision
     assert "vor dem 2. Dezember 2027" in outcome.step.decision
+    unchanged = legacy_outcome(legacy_answer(Answer.YES), language=Language.DE).step.decision
+    assert unchanged.endswith(
+        "nur, wenn seine Konzeption oder Zweckbestimmung ab diesem Datum erheblich verändert "
+        "wird (eine wesentliche Veränderung). Das System bleibt als Hochrisiko-System eingestuft."
+    )
     assert "ab dem 2. August 2030" in outcome.step.decision
     assert outcome.step.decision.endswith("Das System bleibt als Hochrisiko-System eingestuft.")
     unknown = legacy_outcome(legacy_answer(Answer.UNKNOWN), language=Language.DE)
@@ -1082,6 +1141,9 @@ def test_the_prompt_puts_the_instructions_first_and_the_description_last() -> No
     assert "already on the market or in use today" in human
     assert 'only planned, is "no", even if the launch is planned before' in human
     assert "or will be" not in human
+    # Art. 3(23) via recital 177: only a change from the date, not foreseen in the assessment.
+    assert "A change made before that date" in human
+    assert "didn't foresee or plan" in human
 
 
 def test_only_a_high_risk_request_asks_the_legacy_facts() -> None:
