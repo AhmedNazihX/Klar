@@ -44,6 +44,7 @@ docs/               BACKLOG.md, LAYOUT.md, decisions/
 - **Library APIs.** Check LangGraph, Docling, the MCP SDK, RAGAS, FastAPI and similar libraries through context7 before writing code against them.
 - **Every result carries** the law version it used and the "guidance, not legal advice" notice.
 - **Secrets.** Secrets live in `.env` (never committed); `.env.example` lists the keys.
+- **Long documents.** A `.md` file over 20 KB (the backlog, the INIT, decision 001, DEPENDENCIES.md) is never read whole: use `backlog.py show/status/plan`, ask the `foreman:doc-reader` agent (main session), or search with `rg` and Read a range. foreman's doc guard blocks whole reads (`.claude/foreman.json` › `docs`).
 
 ## Story workflow (parallel agents, `foreman` plugin)
 - **Design:** the INIT above (this project has no `docs/DESIGN.md`). **Backlog:** `docs/BACKLOG.md`. **Layout:** `docs/LAYOUT.md`; every new file fits it.
