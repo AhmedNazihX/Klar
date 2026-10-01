@@ -55,7 +55,7 @@ half the memory goes to shared buffers, the OS and the other connections, which 
 ## Decision
 - **Import cap: 4 MB** (`4 * 1024 * 1024` bytes of the document's text). `import_my_data` rejects a larger file
   with SQLSTATE **PT413**, which PostgREST answers with HTTP 413.
-- **Storage budget: the cap less 1 kB** (4193280 bytes) per user, across inventories, systems, classifications
+- **Storage budget: the cap less 1 kB** (4193280 bytes) per user, across inventories, systems, classifications,
   interview answers and duty progress (the fifth table, added by P19). The 1 kB covers the export's envelope (format, version, exported_at; about 100 bytes).
   A write that would push the total past the budget fails with SQLSTATE **PT507** (HTTP 507, "storage full"),
   and the whole statement rolls back, so an import that doesn't fit adds nothing. A write that doesn't grow the
