@@ -916,6 +916,40 @@ def test_an_unknown_public_authority_answer_takes_the_earlier_2030_date_and_asks
     assert [q.id for q in outcome.follow_up_questions] == ["for_public_authority"]
 
 
+def test_a_system_in_use_with_a_silent_description_keeps_its_duties_and_asks_both() -> None:
+    # The prompt has the model answer "unknown" for the design change and public use when the
+    # description is silent about them: nothing is marked, and both are asked.
+    legacy = legacy_answer(Answer.YES, Answer.UNKNOWN, Answer.UNKNOWN)
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert [q.id for q in outcome.follow_up_questions] == [
+        "significant_design_change",
+        "for_public_authority",
+    ]
+    assert LEGACY_ARTICLE not in cited(outcome)
+
+
+def test_an_all_unknown_launch_keeps_the_duties_and_asks_all_three() -> None:
+    outcome = legacy_outcome(legacy_answer(Answer.UNKNOWN, Answer.UNKNOWN, Answer.UNKNOWN))
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert len(outcome.follow_up_questions) == 3
+
+
+def test_a_design_change_settles_it_without_asking_about_public_use() -> None:
+    outcome = legacy_outcome(legacy_answer(Answer.YES, Answer.YES, Answer.UNKNOWN))
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert outcome.follow_up_questions == ()
+
+
+def test_a_law_version_without_duties_drops_the_legacy_facts() -> None:
+    answer = role_answer(legacy=legacy_answer(Answer.UNKNOWN, Answer.UNKNOWN, Answer.UNKNOWN))
+    outcome = to_outcome(answer, state(law_version=LawVersion.ORIGINAL))
+    assert finding(outcome).obligations == ()
+    assert LEGACY_ARTICLE not in cited(outcome)
+    assert outcome.follow_up_questions == ()
+    assert "Art. 111(2)" not in outcome.step.decision
+
+
 def test_the_legacy_facts_are_shown_as_facts_used() -> None:
     outcome = legacy_outcome(legacy_answer(placed_before=Answer.YES))
     shown = [(f.text, f.evidence) for f in outcome.step.facts_used]
@@ -951,6 +985,7 @@ def test_the_prompt_puts_the_instructions_first_and_the_description_last() -> No
     assert f"c1: {conditions[0]}" in human
     assert "Launch and design:" in human
     assert "rules apply from 2 December 2027" in human
+    assert 'answer it "unknown": never assume it away' in human
 
 
 def test_only_a_high_risk_request_asks_the_legacy_facts() -> None:

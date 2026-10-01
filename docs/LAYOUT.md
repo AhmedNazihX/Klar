@@ -27,6 +27,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── settings.py              pydantic-settings, read from .env (F1)
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
 │   │   ├── db.py                    direct Postgres connection (DATABASE_URL) for server-only tables (C3)
+│   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
 │   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3)

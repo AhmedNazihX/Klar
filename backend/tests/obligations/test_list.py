@@ -4,7 +4,7 @@ Dates: Art. 113(c)(i) 2 Dec 2027 (Annex III), 113(c)(ii) 2 Aug 2028 (Annex I), 1
 (Chapters I, II) and 2 Dec 2026 (Art. 5(1)(ba), (bb)), 113 second paragraph 2 Aug 2026 (Art. 50).
 Art. 111(2) (C7b): a high-risk system placed on the market or put into service before its route's
 Chapter III date is covered only after a significant design change; providers and deployers of
-one intended to be used by public authorities comply by 2 Aug 2030.
+one meant for public authorities comply by 2 Aug 2030.
 """
 
 import json
@@ -475,8 +475,8 @@ def test_a_legacy_system_whose_design_changes_keeps_its_duties_as_usual() -> Non
 def test_a_legacy_public_authority_system_applies_from_2_aug_2030_for_providers_and_deployers() -> (
     None
 ):
-    # Art. 111(2), second sentence: "the providers and deployers of high-risk AI systems intended
-    # to be used by public authorities" comply by 2 Aug 2030, on either route.
+    # Art. 111(2), second sentence: providers and deployers of high-risk systems meant for public
+    # authorities comply by 2 Aug 2030, on either route.
     status = legacy_status(
         placed_before=True, significantly_changed=False, for_public_authority=True
     )

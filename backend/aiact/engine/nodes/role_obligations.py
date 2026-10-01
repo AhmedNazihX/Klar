@@ -42,6 +42,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
+from aiact.dates import long_date
 from aiact.engine.nodes.common import answers_section, facts_section
 from aiact.engine.nodes.key_facts import Answer, KeyFact, facts_used
 from aiact.engine.nodes.role_texts import (
@@ -56,7 +57,6 @@ from aiact.engine.nodes.role_texts import (
     TEXTS,
     KeyQuestion,
     legacy_questions,
-    long_date,
 )
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.llm import engine_chat_model
@@ -324,31 +324,33 @@ class LegacySettlement:
 
 
 def settle_legacy(answer: RoleAnswer, route: HighRiskRoute | None) -> LegacySettlement:
-    """Apply Art. 111(2) to the answers. Each fact is read only when the one before leaves the
-    rule open, and an unknown one counts the stricter way: not placed before the date, changed,
-    or for public authorities (the earlier deadline)."""
+    """Apply Art. 111(2) to the answers. A system launched on or after the date, or one whose
+    design changes, keeps its duties as usual, and the later facts aren't relied on. An unknown
+    fact counts the stricter way (not placed before the date, changed, for public authorities:
+    the earlier deadline) and is asked as a follow-up question."""
     if not isinstance(answer, HighRiskRoleAnswer) or route is None:
         return LegacySettlement()
     legacy, keys = answer.legacy, legacy_questions(CHAPTER_III_DATES[route], LEGACY_ARTICLE)
     chain = (
-        (legacy.placed_before, keys.placed_before, Answer.YES),
-        (legacy.significant_design_change, keys.design_change, Answer.NO),
-        (legacy.for_public_authority, keys.public_authority, None),
+        (legacy.placed_before, keys.placed_before),
+        (legacy.significant_design_change, keys.design_change),
+        (legacy.for_public_authority, keys.public_authority),
     )
-    used: tuple[KeyFact, ...] = ()
-    questions: tuple[KeyQuestion, ...] = ()
-    for key_fact, question, continues_on in chain:
-        used = (*used, key_fact)
-        if key_fact.answer is Answer.UNKNOWN:
-            questions = (*questions, question)
-        if continues_on is not None and key_fact.answer is not continues_on:
-            return LegacySettlement(route=route, used=used, questions=questions)
+    if legacy.placed_before.answer is Answer.NO:
+        chain = chain[:1]
+    elif legacy.significant_design_change.answer is Answer.YES:
+        chain = chain[:2]
     status = legacy_status(
-        placed_before=True,
-        significantly_changed=False,
+        placed_before=legacy.placed_before.answer is Answer.YES,
+        significantly_changed=legacy.significant_design_change.answer is not Answer.NO,
         for_public_authority=legacy.for_public_authority.answer is not Answer.NO,
     )
-    return LegacySettlement(status=status, route=route, used=used, questions=questions)
+    return LegacySettlement(
+        status=status,
+        route=route,
+        used=tuple(key_fact for key_fact, _ in chain),
+        questions=tuple(question for key_fact, question in chain if not key_fact.is_known),
+    )
 
 
 def _legacy_summary(
@@ -551,7 +553,9 @@ def to_outcome(
     language = state["language"]
     risk_class, route = working_class(state)
     settled = settle_role(answer, risk_class)
-    legacy = settle_legacy(answer, route)
+    holds_version = (table or default_table()).law_version is state["law_version"]
+    # Art. 111(2) only qualifies duties the table served; without them it says nothing.
+    legacy = settle_legacy(answer, route) if holds_version else LegacySettlement()
     missing = settled.missing[0] if settled.missing else None
     obligations, summary = select_obligations(answer, state, settled, table, legacy)
     source = data_dir or get_settings().aiact_data_dir
@@ -624,16 +628,15 @@ HIGH_RISK_RESPONSE_FORMAT = json_schema_format("role_answer", HighRiskRoleAnswer
 
 def answer_model(state: EngineState) -> type[RoleAnswer]:
     """The answer the model gives: with the Art. 111(2) facts for a high-risk system."""
-    risk_class, route = working_class(state)
-    is_high_risk = risk_class is RiskClass.HIGH_RISK and route is not None
-    return HighRiskRoleAnswer if is_high_risk else RoleAnswer
+    risk_class, _ = working_class(state)
+    return HighRiskRoleAnswer if risk_class is RiskClass.HIGH_RISK else RoleAnswer
 
 
 def _legacy_section(state: EngineState) -> str:
     """The Art. 111(2) instructions for a high-risk system, or nothing (other classes' requests
-    stay as they were)."""
+    stay as they were). `working_class` gives a route only for a high-risk system."""
     _, route = working_class(state)
-    if answer_model(state) is not HighRiskRoleAnswer or route is None:
+    if route is None:
         return ""
     since = long_date(CHAPTER_III_DATES[route], Language.EN)
     return f"Launch and design:\n{LEGACY_INSTRUCTIONS.format(date=since)}\n"

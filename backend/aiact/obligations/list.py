@@ -6,7 +6,7 @@ The table lives in `supabase/seed/obligations.yaml`, which is also the source of
 Art. 111(2) (C7b, decision 022) is applied on top of the table: a high-risk system placed on the
 market or put into service before its route's Chapter III date keeps its class, but its high-risk
 duties (the rows dated per route) apply only after a significant design change, or, for a system
-intended to be used by public authorities, from 2 Aug 2030 for its providers and deployers.
+meant for public authorities, from 2 Aug 2030 for its providers and deployers.
 """
 
 from collections.abc import Mapping
@@ -44,8 +44,8 @@ CHAPTER_III_DATES: Mapping[HighRiskRoute, date] = {
 dates are these, and Art. 111(2) counts a legacy system from them."""
 
 PUBLIC_AUTHORITY_DEADLINE = date(2030, 8, 2)
-"""Art. 111(2), second sentence: providers and deployers of legacy high-risk systems intended to
-be used by public authorities comply by this date."""
+"""Art. 111(2), second sentence: providers and deployers of legacy high-risk systems meant for
+public authorities comply by this date."""
 
 LEGACY_ARTICLE = "art:111:2"
 PUBLIC_AUTHORITY_ROLES = frozenset({Role.PROVIDER, Role.DEPLOYER})

@@ -52,7 +52,7 @@ class LegacyStatus(StrEnum):
     UNCHANGED = "legacy_unchanged"
     """Its high-risk duties apply only after a significant design change."""
     PUBLIC_AUTHORITY = "legacy_public_authority"
-    """Intended to be used by public authorities: providers and deployers comply by 2 Aug 2030."""
+    """Meant for public authorities: providers and deployers comply by 2 Aug 2030."""
 
 
 class LawVersion(StrEnum):

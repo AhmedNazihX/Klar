@@ -39,6 +39,7 @@ from aiact.corpus.eurlex_html import (
     render,
 )
 from aiact.corpus.sources import Language
+from aiact.dates import DE_MONTHS, EN_MONTHS
 
 logger = logging.getLogger(__name__)
 
@@ -84,11 +85,6 @@ class _Patterns:
     publication_days: re.Pattern[str]
     ordinals: dict[str, int]
 
-
-EN_MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August")
-EN_MONTHS += ("September", "October", "November", "December")
-DE_MONTHS = ("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August")
-DE_MONTHS += ("September", "Oktober", "November", "Dezember")
 
 PATTERNS: dict[Language, _Patterns] = {
     "en": _Patterns(

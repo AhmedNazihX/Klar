@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 
+from aiact.dates import long_date
 from aiact.schemas import Language, Role
 
 
@@ -147,24 +148,6 @@ OWN_NAME_READINGS: Mapping[Language, tuple[str, str]] = {
 }
 """The two readings, the stricter (provider) first; `{base}` is the base role's name."""
 
-MONTHS: Mapping[Language, tuple[str, ...]] = {
-    Language.EN: (
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December",
-    ),
-    Language.DE: (
-        "Januar", "Februar", "März", "April", "Mai", "Juni",
-        "Juli", "August", "September", "Oktober", "November", "Dezember",
-    ),
-}  # fmt: skip
-
-
-def long_date(day: date, language: Language) -> str:
-    """`day` as the Act writes it: "2 December 2027", "2. Dezember 2027"."""
-    month = MONTHS[language][day.month - 1]
-    separator = ". " if language is Language.DE else " "
-    return f"{day.day}{separator}{month} {day.year}"
-
 
 @dataclass(frozen=True)
 class LegacyQuestions:
@@ -192,7 +175,7 @@ LEGACY_QUESTION_TEXTS: Mapping[str, Mapping[Language, str]] = {
         "Zweck dient)?",
     },
     "for_public_authority": {
-        Language.EN: "Is the system intended to be used by public authorities?",
+        Language.EN: "Will public authorities use the system, as it is meant to be used?",
         Language.DE: "Soll das System bestimmungsgemäß von Behörden verwendet werden?",
     },
 }
@@ -252,7 +235,7 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "and its design hasn't changed significantly since, so {count} high-risk duties apply "
         "only after a significant design change; the class stays high-risk.",
         "legacy_public_authority": "Art. 111(2): the system was on the market or in use before "
-        "{date} and is intended to be used by public authorities, so {count} high-risk duties "
+        "{date} and is meant for public authorities, so {count} high-risk duties "
         "apply from {deadline}; the class stays high-risk.",
     },
     Language.DE: {
