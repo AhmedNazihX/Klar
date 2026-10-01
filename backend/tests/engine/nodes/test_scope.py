@@ -34,6 +34,7 @@ from aiact.engine.nodes.scope import (
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
+from aiact.eval.experiments.matchers import replay_state, scope_matches
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit, SearchResults
 from aiact.schemas import (
@@ -641,15 +642,6 @@ def luna_settings(openrouter_settings: Settings) -> Settings:
     )
 
 
-def _matches_label(outcome: CheckOutcome, label: CaseLabel, case: BenchmarkCase) -> bool:
-    """Out of scope exactly when the label is, with the label's status; an out-of-scope finding
-    cites the provision the label rests on first."""
-    is_out = label.risk_class is RiskClass.OUT_OF_SCOPE
-    if outcome.matched is not is_out or outcome.step.status is not label.status:
-        return False
-    return not is_out or case.label_citation[0] in cited(outcome)
-
-
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -675,11 +667,11 @@ def test_b5b_case_replay(
     if is_replay and not (cassette.exists() and corpus.exists()):
         pytest.skip(f"B5b case {case.id} has no recording yet; record it with `{RECORD_COMMAND}`")
     library = CorpusReplay(corpus, None if is_replay else CorpusLibrary())
-    given = state(case.language, description=case.description)
+    given = replay_state(case, AS_OF)
     outcome = ScopeCheck(luna_settings, library=library)(given)
     if not is_replay:
         library.save()
-    matches = _matches_label(outcome, label, case)
+    matches = scope_matches(outcome, case)
     gap = KNOWN_GAPS.get(case.id)
     if gap is not None:
         if matches:

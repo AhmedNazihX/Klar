@@ -32,6 +32,7 @@ from aiact.engine.nodes.role_obligations import (
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
+from aiact.eval.experiments.matchers import role_check_state, role_matches, runs_role_check
 from aiact.schemas import (
     DISCLAIMER,
     STEP_ORDER,
@@ -53,6 +54,7 @@ from aiact.settings import Settings
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
+ROLE_AS_OF = date(2026, 9, 29)
 CV_TOOL = (
     "We are a 40-person logistics company. We use a tool that reads incoming job applications, "
     "scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it."
@@ -113,7 +115,7 @@ def state(
         "description": description,
         "language": language,
         "law_version": law_version,
-        "as_of": date(2026, 9, 29),
+        "as_of": ROLE_AS_OF,
         "answers": {},
         "exclude_source_example_ids": (),
         "facts": facts,
@@ -854,21 +856,6 @@ def _role_cases() -> list[BenchmarkCase]:
     return [case for path in paths for case in load_yaml_file(path)]
 
 
-def _case_state(label: CaseLabel, case: BenchmarkCase) -> EngineState:
-    route = None
-    if label.risk_class is RiskClass.HIGH_RISK:
-        is_annex_i = (label.annex_point or "").startswith("annex:I:")
-        route = HighRiskRoute.ANNEX_I if is_annex_i else HighRiskRoute.ANNEX_III
-    duties = ("art:50:1",) if label.risk_class is RiskClass.LIMITED_RISK else ()
-    return state(
-        label.risk_class,
-        route,
-        language=case.language,
-        transparency_duties=duties,
-        description=case.description,
-    )
-
-
 B5D_CASES = _role_cases()
 
 KNOWN_STATUS_GAPS: dict[str, tuple[Status, str]] = {
@@ -900,7 +887,7 @@ def test_b5d_case_replay(
     `uv run pytest tests/engine/nodes/test_role_obligations.py -k b5d --record-mode=once`."""
     label = case.label
     assert isinstance(label, CaseLabel)
-    if label.risk_class is RiskClass.OUT_OF_SCOPE or label.role is None:
+    if not runs_role_check(case):
         pytest.skip("the role check doesn't run for this case, or its label names no role")
     cassette = Path(vcr_cassette_dir) / f"{default_cassette_name}.yaml"
     if record_mode == "none" and not cassette.exists():
@@ -908,7 +895,7 @@ def test_b5d_case_replay(
             f"B5d case {case.id} has no recording yet; record it with "
             "`uv run pytest tests/engine/nodes/test_role_obligations.py -k b5d --record-mode=once`"
         )
-    outcome = RoleObligationsCheck(luna_settings)(_case_state(label, case))
+    outcome = RoleObligationsCheck(luna_settings)(role_check_state(case, ROLE_AS_OF))
     assert finding(outcome).role is label.role
     gap = KNOWN_STATUS_GAPS.get(case.id)
     if gap is not None:
@@ -916,5 +903,4 @@ def test_b5d_case_replay(
         if outcome.step.status is not gap_status:
             pytest.fail(f"{case.id} no longer shows its recorded status gap; update the list")
         pytest.xfail(reason)
-    if label.status is Status.LEGALLY_AMBIGUOUS:
-        assert outcome.step.status is label.status
+    assert role_matches(outcome, case), (finding(outcome).role, outcome.step.status)
