@@ -1,5 +1,6 @@
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from pathlib import Path
 from uuid import UUID, uuid4
 
 import psycopg
@@ -9,7 +10,7 @@ from typer.testing import CliRunner
 
 from aiact.cli import app
 from aiact.eval import records, report
-from aiact.eval.cases import BenchmarkCase, CaseSet
+from aiact.eval.cases import BenchmarkCase, CaseSet, load_cases
 from aiact.eval.metrics import metric_scorer, summarize
 from aiact.eval.report import (
     RunInfo,
@@ -30,9 +31,10 @@ from aiact.eval.runner import (
     RunOptions,
     run_benchmark,
 )
-from aiact.schemas import Citation, ClassificationResult, RiskClass, Role
+from aiact.schemas import Citation, ClassificationResult, FollowUpQuestion, RiskClass, Role
 from tests.eval.outcomes import HIGH_ANNEX_POINT, case, outcome, result
 
+CASE_FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "cases"
 INFO = RunInfo(
     id=UUID("00000000-0000-4000-8000-000000000001"),
     benchmark="own",
@@ -69,6 +71,22 @@ def test_report_is_a_markdown_table_of_every_metric() -> None:
     assert "| Flip variant asked or flagged | n/a | 0/0 |" in lines
     assert "| Label citation cited (any of) | 0.0% | 0/2 |" in lines
     assert len(table) == 19  # header, separator and 17 metric rows
+
+
+def test_report_rows_show_each_commission_metric_under_its_own_name() -> None:
+    settled, _ = load_cases(CaseSet.COMMISSION_B, CASE_FIXTURES)
+    base = result()
+    variant = FollowUpQuestion(id="variant", text="Does it do more?", about="annex:III:7:a")
+    asked = result(follow_up_questions=(*base.follow_up_questions, variant))
+    outcomes = [
+        outcome(settled, result(RiskClass.MINIMAL_RISK)),  # basis hit, flip miss
+        outcome(settled, result(RiskClass.MINIMAL_RISK)),  # basis hit, flip miss
+        outcome(settled, asked),  # basis miss (high-risk), flip hit
+    ]
+    lines = render_markdown(INFO, summarize(outcomes, always)).splitlines()
+    assert "| Basis accuracy (Commission cases) | 66.7% | 2/3 |" in lines
+    assert "| Flip variant asked or flagged | 33.3% | 1/3 |" in lines
+    assert "| Label citation cited (any of) | 100.0% | 3/3 |" in lines
 
 
 def test_report_names_no_description() -> None:

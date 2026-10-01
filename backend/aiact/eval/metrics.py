@@ -95,6 +95,9 @@ ART_6_3_POINT = re.compile(r"^art:6:3:([a-d])$")
 """An Art. 6(3) condition the high-risk step cites when it exempts a listed use (E5)."""
 NOT_LISTED_BASES = (OUTSIDE_USE_CASE, NOT_SAFETY_COMPONENT)
 """A lower result that names no exemption: outside every point, or not a safety component."""
+LISTED_BASES = (WITHIN_USE_CASE, SAFETY_COMPONENT)
+"""A high-risk finding without a point (a baseline's answer can lack one): listed, but the
+point can't tell which route, so either listed basis is accepted."""
 
 CitationExists = Callable[[Citation], bool]
 Scorer = Callable[["Outcome"], bool | None]
@@ -443,7 +446,9 @@ def result_bases(result: ClassificationResult) -> tuple[str, ...]:
     The finding is read from the step, not the final class (an uncertain prohibited step can
     leave the class `prohibited` above a high-risk finding): the engine sets `annex_point`
     exactly for a high-risk finding (`engine.state`), so its prefix gives the basis. A high-risk
-    class with no point, or a run that ended before the step, gives none (left unscored).
+    class with no point (a baseline can answer so) is still a listed basis: it misses against
+    the not-listed and Art. 6(3) bases and accepts either listed one (`LISTED_BASES`). A run
+    that ended before the step gives none (left unscored).
     """
     step = next((step for step in result.steps if step.step is StepName.HIGH_RISK), None)
     if step is None:
@@ -452,7 +457,7 @@ def result_bases(result: ClassificationResult) -> tuple[str, ...]:
         is_annex_i = result.annex_point.startswith(ANNEX_I_PREFIX)
         return (SAFETY_COMPONENT,) if is_annex_i else (WITHIN_USE_CASE,)
     if result.risk_class is RiskClass.HIGH_RISK:
-        return ()
+        return LISTED_BASES
     matches = (ART_6_3_POINT.fullmatch(citation.provision_id) for citation in step.citations)
     letters = dict.fromkeys(match.group(1) for match in matches if match)
     if letters:

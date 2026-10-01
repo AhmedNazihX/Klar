@@ -557,8 +557,51 @@ def test_a_stray_file_in_a_case_or_qa_folder_is_rejected(tmp_path: Path, name: s
         load_qa_items(tmp_path)
 
 
-def test_hidden_files_and_notes_are_allowed_but_not_loaded(tmp_path: Path) -> None:
+def test_placeholders_and_notes_are_allowed_but_not_loaded(tmp_path: Path) -> None:
     write_yaml(tmp_path / "own", "a.yaml", VALID_CASE)
-    (tmp_path / "own" / ".gitkeep").write_text("", encoding="utf-8")
-    (tmp_path / "own" / "SOURCE.md").write_text("# Source\n", encoding="utf-8")
+    for name in (".gitkeep", ".DS_Store", "SOURCE.md"):
+        (tmp_path / "own" / name).write_text("not a case\n", encoding="utf-8")
     assert [case.id for case in load_cases(CaseSet.OWN, tmp_path)] == ["tmp-001"]
+
+
+def test_hidden_yaml_files_load_like_any_other(tmp_path: Path) -> None:
+    write_yaml(tmp_path / "own", ".hidden.yaml", VALID_CASE)
+    write_yaml(tmp_path / "own" / ".drafts", "c.yaml", with_changes(id="tmp-002"))
+    assert [case.id for case in load_cases(CaseSet.OWN, tmp_path)] == ["tmp-002", "tmp-001"]
+
+
+@pytest.mark.parametrize("name", [".hidden.yml", ".drafts/c.json", ".notes"])
+def test_other_hidden_files_are_rejected(tmp_path: Path, name: str) -> None:
+    stray = tmp_path / "own" / name
+    stray.parent.mkdir(parents=True)
+    stray.write_text("id: tmp-001\n", encoding="utf-8")
+    with pytest.raises(CaseFileError, match=r"not a \.yaml case file"):
+        load_cases(CaseSet.OWN, tmp_path)
+
+
+MERGED_CASES = """\
+- &base
+  id: tmp-001
+  set_name: own
+  language: en
+  description: A made-up system.
+  label: {risk_class: minimal_risk}
+  label_citation: ["art:6:3"]
+- <<: *base
+  id: tmp-002
+"""
+
+
+def test_a_merge_key_loads_as_with_safe_load(tmp_path: Path) -> None:
+    path = tmp_path / "cases.yaml"
+    path.write_text(MERGED_CASES, encoding="utf-8")
+    first, second = load_yaml_file(path)
+    assert (first.id, second.id) == ("tmp-001", "tmp-002")
+    assert second.description == first.description
+
+
+def test_a_real_duplicate_next_to_a_merge_key_still_fails(tmp_path: Path) -> None:
+    path = tmp_path / "cases.yaml"
+    path.write_text(MERGED_CASES + "  id: tmp-003\n", encoding="utf-8")
+    with pytest.raises(CaseFileError, match="duplicate key 'id'"):
+        load_yaml_file(path)

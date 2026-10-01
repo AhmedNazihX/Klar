@@ -39,9 +39,13 @@ EVAL_DIR = BACKEND_DIR.parent / "eval"
 CASES_DIR = EVAL_DIR / "cases"
 APPLIEDAI_FILE = EVAL_DIR / "private" / "appliedai.jsonl"
 QA_DIR_NAME = "qa"
+"""The Q&A items' folder under `eval/cases/` (B7); not a `CaseSet`, as items aren't cases."""
 CASE_FILE_SUFFIX = ".yaml"
 NOTE_SUFFIXES = (".md",)
-"""The Q&A items' folder under `eval/cases/` (B7); not a `CaseSet`, as items aren't cases."""
+"""Notes kept next to cases (the academic set's SOURCE.md); allowed and never loaded."""
+IGNORED_FILE_NAMES = frozenset({".gitkeep", ".DS_Store"})
+"""Folder placeholders and OS litter; allowed and never loaded."""
+YAML_MERGE_TAG = "tag:yaml.org,2002:merge"
 
 CASE_ID_PATTERN = r"^[a-z0-9][a-z0-9_.:-]{0,127}$"
 ANNEX_POINT_PATTERN = r"^annex:(I:[AB]:[0-9]+|III:[0-9]+(:[a-z])?)$"
@@ -323,14 +327,15 @@ def derived_from_pile_a(cases: Iterable[BenchmarkCase], pile_a: Collection[str])
 
 
 def _case_files(folder: Path) -> list[Path]:
-    """The `*.yaml` files under `folder`, sorted. Any other file is an error, so a `.yml` or a
-    JSON case can't be skipped silently; hidden files (`.gitkeep`) and notes (`*.md`, such as
-    the academic set's SOURCE.md) are allowed and never loaded."""
+    """The `*.yaml` files under `folder`, sorted, hidden ones included. Any other file is an
+    error, so a `.yml` or a JSON case can't be skipped silently; only `IGNORED_FILE_NAMES` and
+    `*.md` notes are allowed, and neither is loaded."""
     files = sorted(path for path in folder.rglob("*") if path.is_file())
     stray = [
         path
         for path in files
-        if path.suffix not in (CASE_FILE_SUFFIX, *NOTE_SUFFIXES) and not path.name.startswith(".")
+        if path.suffix not in (CASE_FILE_SUFFIX, *NOTE_SUFFIXES)
+        and path.name not in IGNORED_FILE_NAMES
     ]
     if stray:
         raise CaseFileError(f"not a {CASE_FILE_SUFFIX} case file: {', '.join(map(str, stray))}")
@@ -338,13 +343,16 @@ def _case_files(folder: Path) -> list[Path]:
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
-    """A safe loader that rejects a key repeated in one mapping (PyYAML keeps the last)."""
+    """A safe loader that rejects a key repeated in one mapping (PyYAML keeps the last). Merge
+    keys (`<<: *anchor`) are left to the base class, so they load as with `yaml.safe_load`."""
 
     def construct_mapping(
         self, node: yaml.MappingNode, deep: bool = False
     ) -> dict[Hashable, object]:
         seen: set[Hashable] = set()
         for key_node, _ in node.value:
+            if key_node.tag == YAML_MERGE_TAG:
+                continue
             key = self.construct_object(key_node, deep=deep)
             if not isinstance(key, Hashable):
                 continue  # the base class reports an unhashable key

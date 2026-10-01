@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from aiact.eval.baselines import BaselineAnswer, to_result
 from aiact.eval.cases import (
     AppliedAILabel,
     BenchmarkCase,
@@ -42,6 +43,7 @@ from aiact.schemas import (
     Citation,
     ClassificationResult,
     FollowUpQuestion,
+    Language,
     RiskClass,
     Role,
     Status,
@@ -459,9 +461,11 @@ def asked_about(provision_id: str) -> ClassificationResult:
     return result(follow_up_questions=(*base.follow_up_questions, question))
 
 
-def commission_case(*bases: str, status: Status = Status.DECIDED) -> BenchmarkCase:
+def commission_case(
+    *bases: str, status: Status = Status.DECIDED, risk_class: RiskClass = R.MINIMAL_RISK
+) -> BenchmarkCase:
     """A rewritten Commission case, validated (model_copy alone would skip the rules)."""
-    base = case("c", R.MINIMAL_RISK, status=status)
+    base = case("c", risk_class, status=status)
     changes = {"source_example_id": "hr-ex-901", "accepted_bases": bases}
     return BenchmarkCase.model_validate({**base.model_dump(), **changes})
 
@@ -489,10 +493,31 @@ def test_result_bases_read_the_high_risk_step_not_the_final_class() -> None:
     assert result_bases(prohibited_above_high) == ("within_use_case",)
 
 
-def test_a_high_risk_finding_without_a_point_has_no_basis() -> None:
-    assert result_bases(result(annex_point=None)) == ()
-    unscored = outcome(commission_case("outside_use_case"), result(annex_point=None))
-    assert basis_match(unscored) is None
+def baseline_high_risk_without_a_point() -> ClassificationResult:
+    """What `baselines.to_result` gives for a high_risk answer whose Annex point is null."""
+    answer = BaselineAnswer(
+        risk_class=R.HIGH_RISK,
+        status=Status.DECIDED,
+        role=Role.DEPLOYER,
+        annex_point=None,
+        transparency_duties=(),
+        reason="Ranks job applicants.",
+        missing_fact=None,
+        open_question=None,
+    )
+    return to_result(answer, Language.EN, "baseline")
+
+
+def test_a_high_risk_answer_without_a_point_is_a_listed_basis() -> None:
+    no_point = baseline_high_risk_without_a_point()
+    assert (no_point.risk_class, no_point.annex_point) == (R.HIGH_RISK, None)
+    assert result_bases(no_point) == ("within_use_case", "safety_component")
+    for not_listed in ("outside_use_case", "not_safety_component", "art_6_3_filter:d"):
+        assert basis_match(outcome(commission_case(not_listed), no_point)) is False
+    high = commission_case("within_use_case", risk_class=R.HIGH_RISK)
+    annex_i = commission_case("safety_component", risk_class=R.HIGH_RISK)
+    assert basis_match(outcome(high, no_point)) is True
+    assert basis_match(outcome(annex_i, no_point)) is True
 
 
 @pytest.mark.parametrize(
