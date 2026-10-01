@@ -9,7 +9,7 @@ Each test runs as postgres inside the rolled-back `db` transaction; `as_user` sw
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, LiteralString
 from uuid import UUID, uuid4
 
@@ -253,6 +253,51 @@ def test_timestamps_are_set_by_the_server_on_update(db: psycopg.Connection) -> N
                 (FUTURE, "infinity"),
             )
             assert _all_stamped_now(db, table)
+
+
+CREATED_AT_FLOOR = datetime(2026, 9, 28, tzinfo=UTC)
+"""The earliest created_at a row may have: the day the user-data schema went in."""
+
+
+@pytest.mark.parametrize(
+    "created_at", ["-infinity", "0001-01-01T00:00:00+00:00", "2026-09-27T23:59:59.999999+00:00"]
+)
+def test_a_created_at_before_the_floor_is_rejected(db: psycopg.Connection, created_at: str) -> None:
+    user = _create_user(db)
+    with as_user(db, user):
+        with pytest.raises(psycopg.errors.DatetimeFieldOverflow), db.transaction():
+            db.execute("insert into inventories (name, created_at) values ('X', %s)", (created_at,))
+        system = {"name": "X", "description": "Y", "created_at": created_at}
+        document = {**EMPTY_EXPORT, "inventories": [{"name": "Z", "systems": [system]}]}
+        with pytest.raises(psycopg.errors.DatetimeFieldOverflow), db.transaction():
+            db.execute("select import_my_data(%s)", (Jsonb(document),))
+        floor = _one(
+            db,
+            "insert into inventories (name, created_at) values ('X', %s) returning created_at",
+            (CREATED_AT_FLOOR,),
+        )
+    assert floor == CREATED_AT_FLOOR
+    assert _counts(db, user) == {**dict.fromkeys(USER_TABLES, 0), "inventories": 1}
+
+
+def test_an_import_older_than_its_new_owner_keeps_its_dates_and_order(
+    db: psycopg.Connection,
+) -> None:
+    user = _create_user(db)  # signed up now, after every date in the file
+    earlier, later = CREATED_AT_FLOOR + timedelta(hours=1), CREATED_AT_FLOOR + timedelta(hours=2)
+    document = {
+        **EMPTY_EXPORT,
+        "inventories": [
+            {"name": "Later", "created_at": later.isoformat()},
+            {"name": "Earlier", "created_at": earlier.isoformat()},
+        ],
+    }
+    with as_user(db, user):
+        db.execute("select import_my_data(%s)", (Jsonb(document),))
+        rows = db.execute("select name, created_at from inventories order by created_at").fetchall()
+        exported = _one(db, "select export_my_data()")
+    assert rows == [("Earlier", earlier), ("Later", later)]
+    assert [inventory["name"] for inventory in exported["inventories"]] == ["Earlier", "Later"]
 
 
 def test_a_classification_result_has_a_size_limit(
