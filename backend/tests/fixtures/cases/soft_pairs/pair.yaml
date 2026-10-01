@@ -9,6 +9,8 @@
     annex_point: "annex:III:4:a"
   label_citation: ["annex:III:4:a", "art:6:3"]
   tags: ["pair:fixture-001"]
+  pair_id: fixture-001
+  business_function: hr
 - id: fixture-soft-001b
   set_name: soft_pairs
   language: en
@@ -18,4 +20,9 @@
     role: deployer
     annex_point: "annex:III:4:a"
   label_citation: ["annex:III:4:a", "art:6:3"]
-  tags: ["pair:fixture-001"]
+  tags: ["pair:fixture-001", "wording:soft"]
+  pair_id: fixture-001
+  business_function: hr
+  key_fact_answers:
+    ranks_people: Yes, it orders the applications by a score.
+    "annex:III:4:a": HR uses the order to decide whom to invite.

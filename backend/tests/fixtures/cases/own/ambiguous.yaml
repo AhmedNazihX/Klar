@@ -9,7 +9,7 @@ label:
   risk_class: high_risk
   status: legally_ambiguous
   role: provider
-  annex_point: "annex:I:1"
+  annex_point: "annex:I:B:21"
 notes: >-
   Open question: does the product need a third-party conformity assessment? Readings: yes
   (high_risk) or no (minimal_risk).

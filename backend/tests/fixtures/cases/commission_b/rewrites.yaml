@@ -1,0 +1,36 @@
+# Loader fixtures only: made-up rewrites with made-up example ids (the real ones end at hr-ex-307),
+# not benchmark cases and never labelled for scoring.
+- id: fixture-commission-001
+  set_name: commission_b
+  language: en
+  description: >-
+    A 40-person relocation agency uses a tool that sorts incoming residence-permit paperwork into
+    folders before its staff check it.
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  label_citation: ["art:6:3:d", "annex:III:7"]
+  source_example_id: hr-ex-901
+  accepted_bases: ["art_6_3_filter:d", "outside_use_case"]
+  label_status: settled
+  flip_variants:
+    - feature: the tool also infers whether an applicant is telling the truth
+      resulting_verdict: high
+      provision_ids: ["annex:III:7:a"]
+  business_function: legal
+- id: fixture-commission-002
+  set_name: commission_b
+  language: de
+  description: >-
+    Eine Partei nutzt ein Werkzeug, das Wahlkampfbotschaften für verschiedene Zielgruppen entwirft.
+  label:
+    risk_class: high_risk
+    status: legally_ambiguous
+    role: deployer
+    annex_point: "annex:III:8:b"
+  source_example_id: hr-ex-902
+  accepted_bases: ["art_6_3_filter:b"]
+  label_status: legally_ambiguous
+  notes: >-
+    Open question: does the Art. 6(3)(b) exemption hold? Readings: exempt (not high-risk) or
+    within Annex III 8(b) (high-risk).
