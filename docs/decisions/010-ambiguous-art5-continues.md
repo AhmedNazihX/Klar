@@ -54,3 +54,11 @@ assumption).
   match the schema and still fail validation, so X2 and V3 count a contract failure as a broken output.
   `OpenQuestion.readings` is an array with exactly two items (minItems/maxItems, not prefixItems), which structured
   output modes support more widely.
+
+## Addendum (2026-10-01, decision 026 item 10)
+A third early end: when the facts step finds the description too thin to start (what the tool decides or who it
+affects is missing), the engine stops before the four checks with a "needs a description" outcome. It is a case of
+`needs_more_information` and carries the three prompts (what it decides, who it affects, bought or built) as
+follow-up questions; no class is predicted. The contract rule above ("any other result must list all five steps")
+gains this exception. E13 sets the exact contract shape (which fields are empty, how the class is represented) and
+how the metrics score the outcome, in its own decision record.

@@ -47,13 +47,13 @@ Follow-up questions live outside the engine. The interface asks them, adds the a
 - **Roles:** provider, deployer, the Article 25 switch from deployer to provider, systems built on a general-purpose AI model, importer and distributor
 - **Result:** risk class, role, Annex point, deciding facts, a citation for every step, and an evidence tag per step. Two uncertain outcomes are allowed (see How it works)
 - **Obligations checklist:** duties with article references and dates for the role and risk class
-- **AI inventory:** classify a company's whole list of AI tools, with an overview table and a company-level summary
+- **AI inventory:** classify a company's AI tools one by one, with an overview table and a company-level summary
 - **Documentation drafting:** short deployer documents, plus skeletons of provider documents completed through a guided interview (see Documentation drafting)
-- **Original vs. amended toggle:** classify under the original Act or under the Act as amended by the Omnibus, to show how the July 2026 changes alter outcomes (the class and route; obligations are modelled for the amended text only, decision 020)
+- **Original vs. amended toggle:** classify under the original Act or under the Act as amended by the Omnibus, to show how the July 2026 changes alter outcomes (the class and route, plus the Art. 113 route dates; the duty list is modelled for the amended text only, decision 020 and its addendum)
 - **Q&A about results:** questions about a result, or general AI Act questions within the corpus, answered with citations
 - **Languages:** English and German, including the interface, notices, questions, skeletons and citations from the official text in each language
 - **MCP server** with four tools, used by the engine internally as well
-- **Storage:** each visitor gets an anonymous session; their inventories, classifications and interview answers are stored in the project database, visible only to them, with a "delete my data" function, automatic deletion after a period of inactivity, and export/import files
+- **Storage:** each visitor gets an anonymous session; their inventories, classifications, interview answers, a company profile and checklist progress are stored in the project database, visible only to them, with a "delete my data" function, automatic deletion after a period of inactivity, and export/import files
 - **Evaluation** against labelled cases, with results in the README
 
 **MCP tools (MVP)**
@@ -78,7 +78,7 @@ Every tool result carries the law version it used and the "guidance, not legal a
 
 - Obligations of general-purpose AI model providers (Chapter V), beyond flagging that they exist
 - EU product laws behind Annex I (for example machinery or medical devices): the tool names the law and asks the decisive question, but does not assess it
-- National implementation laws and penalties
+- National penalty rules
 - Documents written from invented content: the tool never fills a section the user hasn't supplied information for
 - Anything presented as legal advice
 
@@ -154,6 +154,7 @@ Documents are drafted only from information the engine already has or the user s
 | Group | Documents | How they are made |
 | --- | --- | --- |
 | Short deployer documents | Record of who is assigned to human oversight (Art. 26(2)), notice to workers' representatives (Art. 26(7)), notice to affected people (Art. 26(11)), disclosure texts (Art. 50) | Generated from the extracted facts |
+| Short vendor letters | A message to the vendor about a prohibited result, and a request for the vendor's assessment on an ambiguous result | Built only from the result's facts |
 | Skeletons of heavy documents | Technical documentation (Art. 11, Annex IV), quality management system (Art. 17), risk management system (Art. 9), fundamental rights impact assessment (Art. 27) | Every required section appears. Sections the engine knows are pre-filled. The others show the quoted requirement and a "to fill in" marker, and a guided interview asks for the missing information; the answers are written up as prose |
 
 Every document is labelled DRAFT and carries the "not legal advice" notice. Automatic checks confirm that:
@@ -161,7 +162,7 @@ Every document is labelled DRAFT and carries the "not legal advice" notice. Auto
 - no section contains content the user didn't supply
 - pre-filled facts match the classification result
 
-The Omnibus extends the simplified technical documentation form to small mid-caps (fewer than 750 staff, turnover up to €150m), but as of 24 September 2026 the Commission doesn't appear to have published the form. Until it does, small companies get the full Annex IV skeleton, with a note that a simplified form is expected. Check again before the build freezes.
+The Omnibus extends the simplified technical documentation form to small mid-caps (fewer than 750 staff, turnover up to €150m), but as of 24 September 2026 the Commission doesn't appear to have published the form. Until it does, SMEs and small mid-caps get the full Annex IV skeleton, with a note that a simplified form is expected. Check again before the build freezes.
 
 ## Legal corpus
 
@@ -313,7 +314,7 @@ The main ethical risk is a wrong classification that a company trusts. Calling a
 
 | Risk | Safeguard |
 | --- | --- |
-| Output mistaken for legal advice | Notice on every result and document; recommend legal review for high-risk and ambiguous outcomes; Q&A steers away from "are we compliant?" |
+| Output mistaken for legal advice | Notice on every result and document; recommend legal review for high-risk, prohibited and ambiguous outcomes; Q&A steers away from "are we compliant?" |
 | False "low-risk" results | Uncertain outcomes instead of confident guesses; the stricter reading as working assumption when ambiguous; false-low-risk rate reported separately |
 | Misleading descriptions, deliberate or not | Key-fact questions decide the outcome; downgrade rate measured; deciding facts shown on every result |
 | Hallucinated or wrong citations | Automatic existence check; citation support measured |

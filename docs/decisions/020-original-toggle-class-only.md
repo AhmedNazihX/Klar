@@ -22,3 +22,11 @@ and a second dated obligations table is a lot of legal review for a comparison v
 ## Consequences
 - New story E11 (Deps E10, C7); P10 depends on it.
 - W2's README and an INIT note state the limitation.
+
+## Addendum (2026-10-01, decision 026 item 11)
+The user chose (A) for the final UI design: under the original text the screens swap only the Art. 113 route
+dates, 2 August 2026 for Annex III and 2 August 2027 for Annex I, on Result, Inventory, Obligations, the ambiguous
+result and the timeline. The duty list stays the amended list, with the notice "Dates follow the original Art. 113.
+The duties shown are the amended text's." Class and route still come from E11's original-version run. The
+obligations table stays amended-only, and the "not modelled" result from E11 still holds for the duties
+themselves. P10 owns the swap and the notice.

@@ -21,3 +21,9 @@ its own budget, and X2 already covers INIT's Luna mitigation.
 
 ## Consequences
 - W1's Deps grow as above.
+
+## Addendum (2026-10-01, decision 026 item 14)
+A data-only exception: after the freeze, P27 may write `frontend/src/content/accuracy.json` (the accuracy figures
+on the landing and Method pages) from W1's stored runs. Nothing else changes. Each figure names its run_id, and a
+test checks every figure against `eval/reports/final.md`. Any other change after W1 starts still means a logged
+re-run.

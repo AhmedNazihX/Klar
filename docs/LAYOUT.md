@@ -146,6 +146,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
+│       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4)
 │
 ├── docs/
