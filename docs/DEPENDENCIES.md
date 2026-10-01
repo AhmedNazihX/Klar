@@ -198,6 +198,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | globals | dev | ^17.12.0 | 17.12.0 | MIT | Global identifiers from different JavaScript environments |
 | jsdom | dev | ^30.1.1 | 30.1.1 | MIT | A JavaScript implementation of many web standards |
 | msw | dev | ^2.15.0 | 2.15.0 | MIT | Seamless REST/GraphQL API mocking library for browser and Node.js. |
+| postcss | dev | ^8.5.28 | 8.5.28 | MIT | Tool for transforming styles with JS plugins |
 | prettier | dev | ^3.9.9 | 3.9.9 | MIT | Prettier is an opinionated code formatter |
 | prettier-plugin-tailwindcss | dev | ^0.8.1 | 0.8.1 | MIT | A Prettier plugin for sorting Tailwind CSS classes. |
 | shadcn | dev | ^4.21.0 | 4.21.0 | MIT | Add components to your apps. |
@@ -708,7 +709,6 @@ Source: `frontend/pnpm-lock.yaml`.
 | pkce-challenge | 5.0.1 | MIT | shadcn |
 | pkg-types | 2.3.3 | MIT | @hey-api/openapi-ts |
 | pkg-up | 3.1.0 | MIT | shadcn |
-| postcss | 8.5.28 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitejs/… |
 | postcss-selector-parser | 7.1.6 | MIT | shadcn |
 | powershell-utils | 0.1.0 | MIT | @hey-api/openapi-ts, shadcn |
 | prelude-ls | 1.2.1 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |

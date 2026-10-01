@@ -20,7 +20,44 @@ function thumb(): HTMLElement {
   return pill
 }
 
+/**
+ * jsdom has no layout or ResizeObserver: a button is `charWidth` px wide per character (10 unless a
+ * test changes it), and the returned `resize` reports every observed button to its observer.
+ */
+let charWidth = 10
+function stubLayout(): () => void {
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return this.textContent.length * charWidth
+  })
+  const observers: { callback: ResizeObserverCallback; targets: Element[] }[] = []
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      private readonly entry: { callback: ResizeObserverCallback; targets: Element[] }
+      constructor(callback: ResizeObserverCallback) {
+        this.entry = { callback, targets: [] }
+        observers.push(this.entry)
+      }
+      observe(target: Element): void {
+        this.entry.targets.push(target)
+      }
+      unobserve(): void {}
+      disconnect(): void {
+        this.entry.targets = []
+      }
+    },
+  )
+  return () => {
+    for (const { callback, targets } of observers) {
+      if (targets.length > 0) callback([], {} as ResizeObserver)
+    }
+  }
+}
+
 afterEach(() => {
+  charWidth = 10
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
@@ -75,36 +112,7 @@ describe('SegmentedControl', () => {
   })
 
   it('re-measures the pill when the labels change width while the choice stays', async () => {
-    // jsdom has no layout or ResizeObserver: a button is 10 px per character, and the observer
-    // reports every observed button when `resize` is called.
-    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (
-      this: HTMLElement,
-    ) {
-      return this.textContent.length * 10
-    })
-    const observers: { callback: ResizeObserverCallback; targets: Element[] }[] = []
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        private readonly entry: { callback: ResizeObserverCallback; targets: Element[] }
-        constructor(callback: ResizeObserverCallback) {
-          this.entry = { callback, targets: [] }
-          observers.push(this.entry)
-        }
-        observe(target: Element): void {
-          this.entry.targets.push(target)
-        }
-        unobserve(): void {}
-        disconnect(): void {
-          this.entry.targets = []
-        }
-      },
-    )
-    function resize(): void {
-      for (const { callback, targets } of observers) {
-        if (targets.length > 0) callback([], {} as ResizeObserver)
-      }
-    }
+    const resize = stubLayout()
     function Labels(): JSX.Element {
       const [isLong, setIsLong] = useState(false)
       return (
@@ -136,6 +144,30 @@ describe('SegmentedControl', () => {
 
     expect(thumb().style.width).toBe('150px')
     expect(thumb().style.transition).toBe('none')
+  })
+
+  it('lets a resize during the flow wait for the settle, which lands on the new box', async () => {
+    stubReducedMotion(false)
+    const resize = stubLayout()
+    const user = userEvent.setup()
+    renderWithProviders(<SegmentedControl label="View" options={OPTIONS} />)
+    await screen.findByRole('button', { name: 'Summary' })
+
+    await user.click(screen.getByRole('button', { name: 'Reviewer' }))
+    expect(thumb().style.transition).toContain('var(--liquid-stretch)')
+    // "Summary" (70 px) and "Reviewer" (80 px) sit side by side in jsdom, both at left 0.
+    expect(thumb().style.width).toBe('80px')
+
+    // The labels grow mid-flow (a web font arrives): 12 px per character from now on.
+    charWidth = 12
+    resize()
+
+    expect(thumb().style.transition).toContain('var(--liquid-stretch)')
+    await waitFor(() => {
+      expect(thumb().style.transition).toContain('var(--liquid-settle) var(--ease-out)')
+    })
+    expect(thumb().style.width).toBe('96px')
+    expect(thumb().style.left).toBe('0px')
   })
 
   it('moves the pill instantly for reduced motion', async () => {

@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { extname, join, resolve } from 'node:path'
 
 import { render, screen } from '@testing-library/react'
+import postcss, { type AtRule, type Container, type Document, type Rule } from 'postcss'
 import { createElement } from 'react'
 import { build } from 'vite'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -59,40 +60,37 @@ describe('the built app', () => {
       .filter((name) => /translate|scale/.test(name) && !name.startsWith('transition'))
     expect(motion.length).toBeGreaterThan(0)
 
-    const css = files
-      .filter((file) => file.endsWith('.css'))
-      .map((file) => readFileSync(join(outDir, file), 'utf-8'))
-      .join('\n')
+    const root = postcss.parse(
+      files
+        .filter((file) => file.endsWith('.css'))
+        .map((file) => readFileSync(join(outDir, file), 'utf-8'))
+        .join('\n'),
+    )
     for (const name of motion) {
       expect(name, name).toMatch(/^motion-safe:/)
       const selector = `.${name.replace(/[^a-zA-Z0-9_-]/g, (c) => `\\${c}`)}`
-      let at = css.indexOf(selector)
-      expect(at, `${name} is in the built CSS`).toBeGreaterThanOrEqual(0)
-      while (at >= 0) {
-        expect(enclosingAtRules(css, at), name).toContain(
+      const rules: Rule[] = []
+      root.walkRules((rule) => {
+        if (rule.selectors.some((part) => part.includes(selector))) rules.push(rule)
+      })
+      expect(rules.length, `${name} is in the built CSS`).toBeGreaterThan(0)
+      for (const rule of rules) {
+        expect(enclosingAtRules(rule), name).toContain(
           '@media (prefers-reduced-motion:no-preference)',
         )
-        at = css.indexOf(selector, at + selector.length)
       }
     }
   })
 })
 
-/** The at-rule preludes (`@media …`) of the blocks that enclose position `at` in minified CSS. */
-function enclosingAtRules(css: string, at: number): string[] {
-  const stack: string[] = []
-  let start = 0
-  for (let i = 0; i < at; i += 1) {
-    const c = css[i]
-    if (c === '{') {
-      stack.push(css.slice(start, i).trim())
-      start = i + 1
-    } else if (c === '}') {
-      stack.pop()
-      start = i + 1
-    } else if (c === ';') {
-      start = i + 1
+/** The at-rules (`@media …`) that enclose a rule, innermost first, as postcss parsed them. */
+function enclosingAtRules(rule: Rule): string[] {
+  const atRules: string[] = []
+  for (let node: Container | Document | undefined = rule.parent; node; node = node.parent) {
+    if (node.type === 'atrule') {
+      const atRule = node as AtRule
+      atRules.push(`@${atRule.name} ${atRule.params}`)
     }
   }
-  return stack.filter((prelude) => prelude.startsWith('@'))
+  return atRules
 }

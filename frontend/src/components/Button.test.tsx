@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '@/test/test-utils'
+import { TYPE_SCALE } from '@/lib/utils'
 
 import { Button } from './Button'
 
@@ -62,6 +63,24 @@ function colourAt(stops: Stop[], at: number): Rgb {
   return low.colour.map((c, i) => c + ((high.colour[i] ?? c) - c) * t) as unknown as Rgb
 }
 
+// `text-*` utilities that set something other than colour: sizes, alignment, wrapping, overflow.
+const TEXT_NOT_COLOUR = new Set([
+  ...TYPE_SCALE,
+  ...['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl', '8xl', '9xl'],
+  ...['left', 'center', 'right', 'justify', 'start', 'end'],
+  ...['wrap', 'nowrap', 'balance', 'pretty', 'ellipsis', 'clip'],
+])
+
+/** True for a class that sets the text colour, whatever variants prefix it. */
+function isTextColour(name: string): boolean {
+  const utility = name.split(':').at(-1) ?? ''
+  if (!utility.startsWith('text-')) return false
+  const value = utility.slice('text-'.length)
+  // An arbitrary length (text-[15px]) is a size; an arbitrary colour (text-[#fff]) is not.
+  if (/^\[\d/.test(value) || /^\[length:/.test(value)) return false
+  return !TEXT_NOT_COLOUR.has(value)
+}
+
 // The label's glyphs sit in the middle half of the button's height at every size.
 const LABEL_BAND: { from: number; to: number } = { from: 25, to: 75 }
 const WHITE: Rgb = [255, 255, 255]
@@ -108,9 +127,8 @@ describe('Button', () => {
     renderWithProviders(<Button>Classify a tool</Button>)
     const button = await screen.findByRole('button', { name: 'Classify a tool' })
     expect(button).toHaveClass('text-white')
-    expect(button.className.split(' ').filter((name) => /^text-(?!\[)/.test(name))).toEqual([
-      'text-white',
-    ])
+    // No other text colour under any prefix (hover:, aria-pressed:, data-* …) either.
+    expect(button.className.split(' ').filter(isTextColour)).toEqual(['text-white'])
 
     const stops = primaryStops()
     expect(stops.map((stop) => stop.at)).toEqual([0, 55, 100])

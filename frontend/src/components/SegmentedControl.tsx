@@ -70,6 +70,7 @@ export function SegmentedControl<T extends string>({
     )
     groupRef.current?.setAttribute('data-live', 'true')
     window.clearTimeout(timerRef.current)
+    timerRef.current = undefined
     if (!from || !to || previousRef.current === current || isReducedMotion) {
       place(thumbRef.current, to)
     } else {
@@ -77,7 +78,9 @@ export function SegmentedControl<T extends string>({
       const right = Math.max(from.left + from.width, to.left + to.width)
       place(thumbRef.current, { left, width: right - left }, STRETCH)
       timerRef.current = window.setTimeout(() => {
-        place(thumbRef.current, to, SETTLE)
+        timerRef.current = undefined
+        // Measured now, not at the click, in case a button resized during the stretch.
+        place(thumbRef.current, boxOf(buttons.get(current ?? '')), SETTLE)
       }, SETTLE_DELAY_MS)
     }
     previousRef.current = current
@@ -90,6 +93,8 @@ export function SegmentedControl<T extends string>({
   useEffect(() => {
     if (typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(() => {
+      // While the pill flows to a new choice, let the settle step place it.
+      if (timerRef.current !== undefined) return
       const selected = previousRef.current
       if (selected !== undefined) place(thumbRef.current, boxOf(buttonsRef.current.get(selected)))
     })
