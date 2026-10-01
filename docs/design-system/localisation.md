@@ -1,4 +1,4 @@
-<!-- Copied from the Klar design system, https://claude.ai/artifact/D3qnmjeUHcxJGb59eFJhz4 (version 1790766074-7ac5, 2026-09-30). The artifact is the source: when it changes, re-copy this file. -->
+<!-- Copied from the Klar design system, https://claude.ai/artifact/D3qnmjeUHcxJGb59eFJhz4 (version 1790858064-dcaa, 2026-10-01). The artifact is the source: when it changes, re-copy this file. -->
 
 # Localisation
 
