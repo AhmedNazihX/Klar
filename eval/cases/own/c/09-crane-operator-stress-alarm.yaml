@@ -19,9 +19,10 @@ label_citation:
   - "art:3:39"
   - "annex:III:1:c"
   - "art:6:2"
+  - "art:6:3"
   - "art:3:4"
 notes: >-
-  Draft for the user's review (B5c). Class: the system infers an emotion (acute stress, panic) of
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the system infers an emotion (acute stress, panic) of
   workers from biometric data (Art. 3(39)) at the workplace, but Art. 5(1)(f) excepts use for
   safety reasons; the guidelines read that narrowly and give elevated stress while operating
   dangerous machines as within it, provided the data is not used for anything else (para. 263,
@@ -36,7 +37,7 @@ notes: >-
   legal or similar effects). Trap: workplace emotion recognition that the safety exception takes
   out of Art. 5. Doubt: whether Art. 6(3) could apply is read as no, as the output directly acts on
   the operator's machine; whether it is a safety component of the cranes under Annex I is not
-  pursued, as the system is bought separately by the deployer.
+  pursued, as the system is bought separately by the deployer. None of Art. 6(3)(a)–(d) fits a system that slows the crane by itself, so the Art. 6(3) derogation does not apply.
 tags:
   - "category:c"
   - "trap:prohibition_exception"

@@ -11,19 +11,34 @@ description: >-
   der 10. Januar 2027. Im Frühjahr kommt außerdem ein neues App-Design.
 label:
   risk_class: minimal_risk
+  status: legally_ambiguous
   role: provider
-label_citation: ["art:5:1b", "art:5:1:ba", "art:50:2", "art:3:3"]
+label_citation:
+  - "art:5:1b"
+  - "art:5:1:ba"
+  - "art:50:2"
+  - "guide:guide-art50:para:90"
+  - "guide:guide-art50:para:91"
+  - "guide:guide-art50:para:92"
+  - "art:3:3"
 as_of: 2027-01-10
 notes: >-
-  Draft for the user's review (B5c). Class: the feature manipulates images of intimate parts, but
-  only by blurring them; Art. 5(1b) says a manipulation that does not increase the exposure of any
-  depicted intimate parts is not "manipulation" for Art. 5(1)(ba), so it is not prohibited. It
-  generates no synthetic content, and blurring is read as an assistive editing function that does
-  not substantially alter the input (Art. 50(2) last sentence), so no marking duty; no other
-  Art. 50 duty and no Annex III use: minimal_risk. Date: January 2027, after 2 December 2026
-  (as_of). Role: own feature in its own app (Art. 3(3)): provider. Trap: a nudity-related image
-  manipulation that Art. 5(1b) takes out of (ba). Doubt: whether a blur overlay "substantially
-  alters" the image for Art. 50(2) is read here as no; the other reading gives limited_risk.
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts
+  checked against their sources). Settled: Art. 5. The feature manipulates images of intimate
+  parts only by blurring them; Art. 5(1b) says a manipulation that does not increase
+  the exposure of any depicted intimate parts is not "manipulation" for Art. 5(1)(ba), so it is
+  not prohibited. Open question: does the Art. 50(2) marking duty apply, or does its exception for
+  an assistive function for standard editing, or for not substantially altering the input, cover
+  the blur? Reading A: the blur hides detail without substantially altering the image's meaning,
+  and the recipient can still reveal the original, so no marking duty; with no other Art. 50 duty
+  and no Annex III use, minimal_risk (the Art. 50 guidelines list "pixelation or blurring of
+  faces" among the exempt minor alterations, para. 92, p. 29). Reading B: the image shown is
+  changed in a material way that affects its meaning (para. 90, p. 29), and the exempt examples
+  in para. 92 name blurring of faces, not of intimate parts, so marking applies: limited_risk.
+  Para. 91 (p. 29) says whether an alteration is substantial "requires a case-specific
+  assessment". Working class: minimal_risk. Date: January 2027, after 2 December 2026 (as_of).
+  Role: own feature in its own app (Art. 3(3)): provider. Trap: a nudity-related image
+  manipulation that Art. 5(1b) takes out of (ba).
 tags:
   - "category:c"
   - "december_2026_prohibition"
