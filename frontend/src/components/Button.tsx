@@ -7,9 +7,11 @@ import { Icon } from './Icon'
 import type { IconName } from './icon-files'
 
 // Hover lifts 1 px, press settles to 98%, both in duration-press with ease-settle. Buttons never
-// shrink in a row: the text beside them wraps instead. Reduced motion stops the lift (index.css).
+// shrink in a row: the text beside them wraps instead. Tailwind writes the lift and press as the
+// standalone `translate` and `scale` properties, so they are motion-safe only: with reduced motion
+// the button keeps still (index.css stops the transitions and the sheen).
 const buttonVariants = cva(
-  'relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-pill whitespace-nowrap no-underline transition-[transform,box-shadow,filter] duration-(--duration-press) ease-settle hover:-translate-y-px active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
+  'relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-pill whitespace-nowrap no-underline transition-[translate,scale,box-shadow,filter] duration-(--duration-press) ease-settle disabled:pointer-events-none disabled:opacity-50 motion-safe:hover:-translate-y-px motion-safe:active:translate-y-0 motion-safe:active:scale-[0.98]',
   {
     variants: {
       variant: {

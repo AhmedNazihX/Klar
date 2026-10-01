@@ -1,5 +1,6 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState, type JSX } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { stubReducedMotion } from '@/test/reduced-motion'
@@ -21,6 +22,7 @@ function thumb(): HTMLElement {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('SegmentedControl', () => {
@@ -70,6 +72,70 @@ describe('SegmentedControl', () => {
     await waitFor(() => {
       expect(thumb().style.transition).toContain('var(--liquid-settle) var(--ease-out)')
     })
+  })
+
+  it('re-measures the pill when the labels change width while the choice stays', async () => {
+    // jsdom has no layout or ResizeObserver: a button is 10 px per character, and the observer
+    // reports every observed button when `resize` is called.
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.textContent.length * 10
+    })
+    const observers: { callback: ResizeObserverCallback; targets: Element[] }[] = []
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        private readonly entry: { callback: ResizeObserverCallback; targets: Element[] }
+        constructor(callback: ResizeObserverCallback) {
+          this.entry = { callback, targets: [] }
+          observers.push(this.entry)
+        }
+        observe(target: Element): void {
+          this.entry.targets.push(target)
+        }
+        unobserve(): void {}
+        disconnect(): void {
+          this.entry.targets = []
+        }
+      },
+    )
+    function resize(): void {
+      for (const { callback, targets } of observers) {
+        if (targets.length > 0) callback([], {} as ResizeObserver)
+      }
+    }
+    function Labels(): JSX.Element {
+      const [isLong, setIsLong] = useState(false)
+      return (
+        <>
+          <button type="button" onClick={() => setIsLong(true)}>
+            Longer labels
+          </button>
+          <SegmentedControl
+            label="View"
+            options={[
+              { value: 'summary', label: isLong ? 'Zusammenfassung' : 'Summary' },
+              { value: 'reviewer', label: 'Reviewer' },
+            ]}
+          />
+        </>
+      )
+    }
+    const user = userEvent.setup()
+    renderWithProviders(<Labels />)
+    await screen.findByRole('button', { name: 'Summary' })
+    expect(thumb().style.width).toBe('70px')
+
+    await user.click(screen.getByRole('button', { name: 'Longer labels' }))
+    expect(screen.getByRole('button', { name: 'Zusammenfassung' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    resize()
+
+    expect(thumb().style.width).toBe('150px')
+    expect(thumb().style.transition).toBe('none')
   })
 
   it('moves the pill instantly for reduced motion', async () => {

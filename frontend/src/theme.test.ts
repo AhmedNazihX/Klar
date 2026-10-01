@@ -138,9 +138,10 @@ describe('theme', () => {
     expect(block).toMatch(
       /\*,\s*::before,\s*::after\s*\{[^}]*animation: none !important;[^}]*transition: none !important;/,
     )
-    expect(block).toMatch(
-      /\.lift:hover,[\s\S]*\[data-slot='klar-button'\]:hover[\s\S]*transform: none !important;/,
-    )
+    // .lift moves with `transform`, which this block can reset; the button's translate and scale
+    // are motion-safe only (build.test.ts checks the compiled CSS).
+    expect(block).toMatch(/\.lift:hover\s*\{\s*transform: none !important;/)
+    expect(block).not.toContain('klar-button')
     expect(block).toMatch(/\.glint::after\s*\{\s*display: none;/)
   })
 })

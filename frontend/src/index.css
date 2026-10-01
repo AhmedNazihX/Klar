@@ -425,7 +425,9 @@
 
 /* reduced-motion:start
    prefers-reduced-motion turns every animation and transition off; hover lifts and the glint stay
-   still. Unlayered and !important, so no component can opt back in. theme.test.ts checks it. */
+   still. Unlayered and !important, so no component can opt back in. theme.test.ts checks it.
+   Tailwind's translate and scale utilities are separate properties that this block can't reach:
+   components put them behind motion-safe: instead (Button; build.test.ts checks the output). */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -434,9 +436,7 @@
     transition: none !important;
     scroll-behavior: auto !important;
   }
-  .lift:hover,
-  [data-slot='klar-button']:hover,
-  [data-slot='klar-button']:active {
+  .lift:hover {
     transform: none !important;
   }
   .glint::after {

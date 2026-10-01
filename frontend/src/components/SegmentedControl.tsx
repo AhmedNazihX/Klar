@@ -83,23 +83,28 @@ export function SegmentedControl<T extends string>({
     previousRef.current = current
   }, [current, isReducedMotion])
 
-  // Web fonts change the labels' widths: measure again once they have loaded.
+  // A label that changes width (another language, a web font arriving) moves the buttons while the
+  // choice stays the same: measure the pill again whenever any button resizes. Re-observed only
+  // when the set of options changes, so a re-render never interrupts the liquid motion.
+  const optionKey = options.map((option) => option.value).join('\u0000')
   useEffect(() => {
-    let isMounted = true
-    // jsdom and some older browsers have no FontFaceSet.
-    if ('fonts' in document) {
-      void document.fonts.ready.then(() => {
-        const selected = previousRef.current
-        if (isMounted && selected !== undefined) {
-          place(thumbRef.current, boxOf(buttonsRef.current.get(selected)))
-        }
-      })
-    }
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => {
+      const selected = previousRef.current
+      if (selected !== undefined) place(thumbRef.current, boxOf(buttonsRef.current.get(selected)))
+    })
+    for (const button of buttonsRef.current.values()) observer.observe(button)
     return () => {
-      isMounted = false
-      window.clearTimeout(timerRef.current)
+      observer.disconnect()
     }
-  }, [])
+  }, [optionKey])
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(timerRef.current)
+    },
+    [],
+  )
 
   function choose(next: T): void {
     if (next === current) return

@@ -1,8 +1,8 @@
 import { createCn } from 'cn/config'
 
 // The design system's type scale (index.css › --text-*). Without it, class merging would read
-// `text-micro` as a colour and drop it next to `text-slate`.
-const TYPE_SCALE = [
+// `text-micro` as a colour and drop it next to `text-slate`. utils.test.ts checks it against tokens.json.
+export const TYPE_SCALE = [
   'display-hero',
   'display-section',
   'heading-page',

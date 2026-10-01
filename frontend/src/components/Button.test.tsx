@@ -103,7 +103,15 @@ describe('Button', () => {
     expect(onClick).not.toHaveBeenCalled()
   })
 
-  it('keeps white label text at 4.5:1 or more over the gradient behind it', () => {
+  it('keeps white label text at 4.5:1 or more over the gradient behind it', async () => {
+    // The check below assumes white: tie it to the label colour the primary button really uses.
+    renderWithProviders(<Button>Classify a tool</Button>)
+    const button = await screen.findByRole('button', { name: 'Classify a tool' })
+    expect(button).toHaveClass('text-white')
+    expect(button.className.split(' ').filter((name) => /^text-(?!\[)/.test(name))).toEqual([
+      'text-white',
+    ])
+
     const stops = primaryStops()
     expect(stops.map((stop) => stop.at)).toEqual([0, 55, 100])
     // White on lens-blue itself, the colour the label sits over.
