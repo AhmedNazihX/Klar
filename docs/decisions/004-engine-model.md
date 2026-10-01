@@ -43,26 +43,32 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
   (cross-field rules aren't in the schema, so contract failures count: decision 010 addendum). A reply cut off
   by the output cap is broken too. The nodes make no tool
   calls: retrieval is code, so structured output is the models' only interface. **Failed** means no usable
-  answer: a transport, provider or database error, or a reply not shown to come from the pinned provider.
-  Failed probes count as neither broken nor wrong. Any other error stops the run, including a provision the
-  corpus lacks: neither check lets the model name a provision, so that is a corpus gap, never the model's fault. **Accuracy** is over the labelled probes
-  both models replied to, with a broken answer counted wrong; the broken share is over each model's replies.
-- **Inconclusive** (not part of decision 023; the user is asked to confirm it): if more than 10% of either model's
-  probes got no usable answer, or no probe was scored for both, the rule isn't applied and the runs are repeated.
+  answer: a transport, provider or database error, a reply not shown to come from the pinned provider, or a
+  reply the provider broke off (`finish_reason: "error"`: in within-cap checks on 2026-10-01, two of five
+  Gemini role probes on own-d-01 came back as a cut JSON at $0 cost; the other three were fine). Failed probes count as neither broken nor wrong. Any other error stops the run, including a provision the
+  corpus lacks: neither check lets the model name a provision, so that is a corpus gap, never the model's
+  fault. **Accuracy** is over the labelled probes both models replied to, with a broken answer counted wrong; the
+  broken share is over each model's replies.
+- **Inconclusive** (decision 023 addendum, parts 4-6, accepted by the user on 2026-10-01): if more than 10% of
+  either model's probes got no usable answer, or no probe was scored for both, neither rule is applied and the
+  run is repeated; it is not a verdict.
 - **Stored runs.** One `eval_runs` row per model (`config.experiment = x2_engine_smoke`), one `eval_case_results`
   row per probe (`case_id = <node>:<case id>`). The verdict is recomputed from those rows by run id, and only from
   two completed runs that planned the same probes.
 - **Cost.** Per call, OpenRouter's `usage.cost`; the token-price estimate when it's missing; the probe's worst
-  case when the usage is missing too (`predicted.smoke.cost_is_estimated`). The cap is checked before each probe: a probe starts only while the spend
-  plus the worst case of every probe in flight and of this one (the largest recorded prompt × 1.5 and the full
-  output cap) stays within `--max-cost-usd`. The spend excludes the embedding calls retrieval makes (a few hundred
+  case when the usage is missing too (`predicted.smoke.cost_is_estimated`). The cap is checked before each probe:
+  a probe starts only while the spend plus the worst case of every probe in flight and of this one (the largest
+  recorded prompt × 1.5 and the full output cap) stays within `--max-cost-usd`. The spend excludes the embedding calls retrieval makes (a few hundred
   tokens per search at $0.01/M, the same for both models).
 - **Cost estimate** (`aiact evaluate smoke --dry-run`, cold prices, from the mean tokens of the 47 committed Luna
-  node recordings): Luna ~$0.096, Gemini ~$0.275, total ~$0.37.
+  node recordings, the role ones re-recorded by C7b with the Art. 111(2) section): Luna ~$0.099, Gemini ~$0.283,
+  total ~$0.38.
 - **Within-cap checks on 2026-10-01** (nothing stored): three single probes (Gemini role and high_risk on the
   worked example, Luna role) all fitted and matched the label, $0.0058, so Gemini accepts the engine's JSON schemas
   on `google-vertex/eu`. Two one-line calls and one role probe per model through the full probe path confirmed the
-  generation records name `Azure` (Luna) and `Google` (Gemini), $0.0025.
+  generation records name `Azure` (Luna) and `Google` (Gemini), $0.0025. After C7b's role change, the high-risk
+  role probe on own-d-01 ran once on Luna (fitted, matched) and five times on Gemini (three fitted and matched,
+  two broken off with `finish_reason: "error"`), $0.0052; the no-retry client ran in all of them.
 
 ## Results
 | Model | Run id | Broken answers | No answer | Accuracy (same probes) |

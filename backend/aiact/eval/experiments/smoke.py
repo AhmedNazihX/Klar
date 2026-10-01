@@ -22,8 +22,10 @@ A probe's outcome is one of three:
   code, and structured output is the model's only interface.
 - **failed**: no usable answer came back: a transport, provider or database error, or a reply
   that isn't shown to come from the pinned provider (OpenRouter's generation record, `generations`:
-  another provider, no generation id, or a record that can't be read).
-  Not counted as broken or wrong, but too many of them make the comparison inconclusive.
+  another provider, no generation id, or a record that can't be read), or a call that ended with
+  `finish_reason: "error"` (the provider broke off mid-reply: seen on Gemini on 2026-10-01, a cut
+  JSON at $0 cost). Not counted as broken or wrong, but too many of them make the comparison
+  inconclusive (decision 023 addendum).
 - **answered**: scored against the label (facts: not scored).
 
 Any other error (a missing setting, a bug, a provision the corpus lacks) stops the run. Neither
@@ -78,7 +80,7 @@ EXPERIMENT = "x2_engine_smoke"
 BENCHMARK = CaseSet.OWN.value
 
 DEFAULT_MAX_COST_USD = 0.5
-"""The spending cap per model; the dry-run estimate for both models together is about $0.37."""
+"""The spending cap per model; the dry-run estimate for both models together is about $0.38."""
 DEFAULT_CONCURRENCY = 4
 ERROR_MESSAGE_LIMIT = 300
 AS_OF = date(2026, 9, 30)
@@ -149,11 +151,13 @@ TYPICAL_TOKENS: Mapping[NodeName, NodeTokens] = {
     NodeName.FACTS: NodeTokens(prompt=1582, completion=1800, max_prompt=1587),
     NodeName.SCOPE: NodeTokens(prompt=4096, completion=1523, max_prompt=4433),
     NodeName.HIGH_RISK: NodeTokens(prompt=7972, completion=1017, max_prompt=8744),
-    NodeName.ROLE: NodeTokens(prompt=1658, completion=1107, max_prompt=1774),
+    NodeName.ROLE: NodeTokens(prompt=1958, completion=1452, max_prompt=2194),
 }
 """Mean (and largest) tokens of one call, from the committed Luna recordings of each node's
-replay tests (47 calls, $0.049 in total). Completion tokens include Luna's reasoning, so for
-Gemini, which doesn't reason, the estimate is an upper bound."""
+replay tests (47 calls, $0.052 in total). Completion tokens include Luna's reasoning, so for
+Gemini, which doesn't reason, the estimate is an upper bound. The role figures are C7b's
+recordings: its high-risk requests carry the Art. 111(2) section, at about 2,170 prompt and up to
+2,206 completion tokens of the node's 3,000 cap."""
 
 PROMPT_MARGIN = 1.5
 """The worst-case prompt is the largest recorded one times this (longer descriptions)."""
@@ -246,6 +250,7 @@ class UsageTracker(BaseCallbackHandler):
         self.tokens = 0
         self.is_cost_estimated = False
         self.generation_ids: list[str] = []
+        self.finish_reasons: list[str] = []
 
     def add(self, cost_usd: float, tokens: int) -> None:
         self.calls += 1
@@ -258,9 +263,17 @@ class UsageTracker(BaseCallbackHandler):
             self.generation_ids.append(generation_id)
         for generations in response.generations:
             for generation in generations:
+                finish_reason = (generation.generation_info or {}).get("finish_reason")
+                if isinstance(finish_reason, str):
+                    self.finish_reasons.append(finish_reason)
                 message = getattr(generation, "message", None)
                 if isinstance(message, AIMessage):
                     self.add(*self._usage(message))
+
+    @property
+    def has_provider_error(self) -> bool:
+        """A call the provider ended with an error instead of a finished reply."""
+        return PROVIDER_ERROR_FINISH in self.finish_reasons
 
     def _usage(self, message: AIMessage) -> tuple[float, int]:
         usage = message.usage_metadata
@@ -318,6 +331,9 @@ NO_ANSWER_ERRORS: tuple[type[Exception], ...] = (
     EmbeddingError,
 )
 """Transport, provider and database errors: the call never produced an answer."""
+PROVIDER_ERROR_FINISH = "error"
+"""OpenRouter's `finish_reason` for a reply the provider broke off; its text is cut, not the
+model's answer."""
 PROVIDER_ERROR_PREFIXES = ("OpenRouter API returned",)
 """ChatOpenRouter raises a plain `ValueError` with this text for an error in the response body."""
 
@@ -399,7 +415,10 @@ def run_probe(
     tracker = UsageTracker(arm, probe.node)
     node = factory(probe.node, arm_settings(settings, arm), tracker)
     ran = _run_node(probe, node, state)
-    served = _served(tracker, ran.kind is not ProbeKind.FAILED, served_by)
+    if tracker.has_provider_error and ran.kind is not ProbeKind.FAILED:
+        error = "a call ended with finish_reason error: the provider broke off the reply"
+        ran = _Ran(ProbeKind.FAILED, {**ran.predicted, "provider_error": error}, None)
+    served = _served(tracker, ran.kind is not ProbeKind.FAILED or tracker.calls > 0, served_by)
     if served.not_counted is not None:
         ran = _Ran(ProbeKind.FAILED, {**ran.predicted, "not_pinned": served.not_counted}, None)
     smoke_info: dict[str, JsonValue] = {

@@ -8,7 +8,6 @@ the privacy routing flags from `aiact.llm.routing`.
 from collections.abc import Sequence
 from typing import Literal
 
-import httpx
 import openrouter
 from langchain_openrouter import ChatOpenRouter
 
@@ -32,15 +31,12 @@ DEFAULT_MAX_RETRIES = 2
 ChatOpenRouter's own `max_retries=0` only leaves the SDK on its default retries."""
 
 
-def client_without_retries(
-    settings: Settings, http: httpx.Client | None = None
-) -> openrouter.OpenRouter:
-    """An OpenRouter SDK client that never retries; `http` replaces the transport (tests)."""
+def client_without_retries(settings: Settings) -> openrouter.OpenRouter:
+    """An OpenRouter SDK client that never retries."""
     return openrouter.OpenRouter(
         api_key=require_api_key(settings).get_secret_value(),
         x_open_router_title=APP_TITLE,
         retry_config=NO_RETRIES,
-        client=http,
     )
 
 

@@ -27,7 +27,7 @@ WORKED_EXAMPLE = BenchmarkCase(
         "change it."
     ),
     label=CaseLabel(
-        risk_class=RiskClass.HIGH_RISK, role=Role.DEPLOYER, annex_point="annex:III:4:a"
+        risk_class=RiskClass.HIGH_RISK, role=Role.DEPLOYER, annex_point=("annex:III:4:a",)
     ),
     label_citation=("annex:III:4:a", "art:6:3"),
     notes="INIT > Worked example (not a benchmark case): ranking is profiling, so no Art. 6(3).",
@@ -73,7 +73,7 @@ def replay_state(case: BenchmarkCase, as_of: date) -> EngineState:
 
 def role_check_state(case: BenchmarkCase, as_of: date) -> EngineState:
     """The replay state plus the class the label settles, as the earlier checks would leave it:
-    the Art. 5 match, the high-risk route (Annex I when the label's point is in Annex I, else
+    the Art. 5 match, the high-risk route (Annex I when a label point is in Annex I, else
     Annex III), or an Art. 50(1) duty for limited_risk."""
     label = case_label(case)
     is_prohibited = label.risk_class is RiskClass.PROHIBITED
@@ -82,7 +82,7 @@ def role_check_state(case: BenchmarkCase, as_of: date) -> EngineState:
         "matches": (StepName.PROHIBITED,) if is_prohibited else (),
     }
     if label.risk_class is RiskClass.HIGH_RISK:
-        is_annex_i = (label.annex_point or "").startswith("annex:I:")
+        is_annex_i = any(point.startswith("annex:I:") for point in label.annex_point)
         route = HighRiskRoute.ANNEX_I if is_annex_i else HighRiskRoute.ANNEX_III
         return {**state, "high_risk_route": route}
     if label.risk_class is RiskClass.LIMITED_RISK:
@@ -108,10 +108,10 @@ def scope_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
 
 
 def expected_route(case: BenchmarkCase) -> HighRiskRoute:
-    """Annex III when the label's point is in Annex III or a tag puts the case on both routes
+    """Annex III when a label point is in Annex III or a tag puts the case on both routes
     (Annex III is preferred), else Annex I."""
     label = case_label(case)
-    is_annex_iii = (label.annex_point or "").startswith("annex:III:")
+    is_annex_iii = any(point.startswith("annex:III:") for point in label.annex_point)
     also_iii = "annex_iii" in tag(case, "also_route")
     return HighRiskRoute.ANNEX_III if is_annex_iii or also_iii else HighRiskRoute.ANNEX_I
 
@@ -126,7 +126,7 @@ def high_risk_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
             and outcome.annex_point is None
             and step.status is label.status
         )
-    points = {*tag(case, "annex_i_point"), *([label.annex_point] if label.annex_point else [])}
+    points = {*tag(case, "annex_i_point"), *label.annex_point}
     asked = step.missing_fact.id if step.missing_fact else None
     section_b_decided = "b" in tag(case, "annex_i_section") and label.status is Status.DECIDED
     names_art_2_2 = "2(2)" in step.decision or "Art. 2 Abs. 2" in step.decision

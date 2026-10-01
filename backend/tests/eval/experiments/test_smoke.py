@@ -159,9 +159,11 @@ class FakeNodes:
         before_call: Exception | None = None,
         wait_for_company: float | None = None,
         has_generation_id: bool = True,
+        finish_reason: str = "stop",
     ) -> None:
         self.result = result
         self.has_generation_id = has_generation_id
+        self.finish_reason = finish_reason
         self.wait_for_company = wait_for_company
         self.company = threading.Event()
         self.cost = cost
@@ -187,6 +189,7 @@ class FakeNodes:
                 if self.before_call is not None:
                     raise self.before_call
                 tracker.add(self.cost, self.tokens)
+                tracker.finish_reasons.append(self.finish_reason)
                 if self.has_generation_id:
                     tracker.generation_ids.append(f"gen-{uuid4().hex}")
                 if isinstance(self.result, BaseException):
@@ -433,6 +436,33 @@ def test_a_reply_without_a_cost_is_priced_from_its_tokens() -> None:
     assert tracker.is_cost_estimated is True
 
 
+@pytest.mark.parametrize(
+    "result",
+    [
+        role_obligations.RoleOutputError("role answer doesn't fit the schema: Invalid JSON: EOF"),
+        role_outcome(Role.DEPLOYER),
+    ],
+)
+def test_a_reply_the_provider_broke_off_failed_and_is_not_broken(result: object) -> None:
+    """Gemini, 2026-10-01: `finish_reason: "error"`, a cut JSON, $0 billed."""
+    record = probe_on(FakeNodes(result, 0.0, 0, finish_reason="error"), GEMINI)
+    assert record.scores["failed"] is True
+    assert record.scores["broken"] is False
+    assert record.scores["correct"] is None
+    assert record.scores["served_as_pinned"] is True
+    assert str(record.predicted["provider_error"]).startswith("a call ended with finish_reason")
+
+
+def test_the_tracker_keeps_each_calls_finish_reason() -> None:
+    tracker = UsageTracker(GEMINI, NodeName.ROLE)
+    generation = ChatGeneration(
+        message=AIMessage(content="{"), generation_info={"finish_reason": "error"}
+    )
+    tracker.on_llm_end(LLMResult(generations=[[generation]], llm_output={"id": "gen-1"}))
+    assert tracker.finish_reasons == ["error"]
+    assert tracker.has_provider_error
+
+
 def test_a_reply_without_cost_or_usage_is_charged_its_worst_case() -> None:
     tracker = UsageTracker(GEMINI, NodeName.HIGH_RISK)
     tracker.on_llm_end(_result(AIMessage(content="{}")))
@@ -588,7 +618,7 @@ def test_a_probe_error_stops_the_run_and_records_the_probes_in_flight() -> None:
 
 
 def test_the_worst_case_is_one_call_at_the_full_output_cap() -> None:
-    prompt = round(1774 * smoke.PROMPT_MARGIN)
+    prompt = round(2194 * smoke.PROMPT_MARGIN)
     assert smoke.worst_case_cost(NodeName.ROLE, LUNA) == pytest.approx(
         (prompt * 0.11 + 3000 * 0.55) / 1e6
     )

@@ -27,7 +27,7 @@ def case(
     *,
     status: Status = Status.DECIDED,
     role: Role | None = Role.PROVIDER,
-    annex_point: str | None = None,
+    annex_point: tuple[str, ...] = (),
     citation: tuple[str, ...] = ("art:6:1:a",),
     tags: tuple[str, ...] = (),
 ) -> BenchmarkCase:

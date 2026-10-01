@@ -7,7 +7,7 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
 - The broken share is over the model's replies (answered or broken), facts included.
 - Accuracy is over the labelled probes both models replied to; a broken answer counts as wrong.
 - More than 10% of probes without a usable answer, for either model, makes the verdict
-  `inconclusive` (an outcome decision 023 doesn't name; the user is asked to confirm it).
+  `inconclusive` (decision 023 addendum, parts 4-6, accepted by the user on 2026-10-01).
 
 Only completed runs are compared, and both must have planned the same probes.
 """

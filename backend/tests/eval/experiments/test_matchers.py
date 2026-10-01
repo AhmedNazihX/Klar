@@ -50,16 +50,16 @@ def test_the_replay_state_has_no_facts_answers_exclusions_or_steps() -> None:
 @pytest.mark.parametrize(
     ("risk_class", "annex_point", "expected"),
     [
-        (RiskClass.HIGH_RISK, "annex:III:4:a", {"high_risk_route": HighRiskRoute.ANNEX_III}),
-        (RiskClass.HIGH_RISK, "annex:I:11", {"high_risk_route": HighRiskRoute.ANNEX_I}),
-        (RiskClass.HIGH_RISK, None, {"high_risk_route": HighRiskRoute.ANNEX_III}),
-        (RiskClass.LIMITED_RISK, None, {"transparency_duties": ("art:50:1",)}),
-        (RiskClass.PROHIBITED, None, {"matches": (StepName.PROHIBITED,)}),
-        (RiskClass.MINIMAL_RISK, None, {}),
+        (RiskClass.HIGH_RISK, ("annex:III:4:a",), {"high_risk_route": HighRiskRoute.ANNEX_III}),
+        (RiskClass.HIGH_RISK, ("annex:I:A:11",), {"high_risk_route": HighRiskRoute.ANNEX_I}),
+        (RiskClass.HIGH_RISK, (), {"high_risk_route": HighRiskRoute.ANNEX_III}),
+        (RiskClass.LIMITED_RISK, (), {"transparency_duties": ("art:50:1",)}),
+        (RiskClass.PROHIBITED, (), {"matches": (StepName.PROHIBITED,)}),
+        (RiskClass.MINIMAL_RISK, (), {}),
     ],
 )
 def test_the_role_check_gets_the_class_the_label_settles(
-    risk_class: RiskClass, annex_point: str | None, expected: dict[str, object]
+    risk_class: RiskClass, annex_point: tuple[str, ...], expected: dict[str, object]
 ) -> None:
     labelled = case("d-1", risk_class, annex_point=annex_point)
     state = matchers.role_check_state(labelled, AS_OF)
@@ -116,10 +116,20 @@ def test_the_worked_example_must_cite_art_6_3() -> None:
 
 
 def test_a_label_point_in_annex_iii_expects_annex_iii() -> None:
-    assert matchers.expected_route(case("e-9", annex_point="annex:III:5:d")) is (
+    assert matchers.expected_route(case("e-9", annex_point=("annex:III:5:d",))) is (
         HighRiskRoute.ANNEX_III
     )
     assert matchers.expected_route(case("e-9")) is HighRiskRoute.ANNEX_I
+
+
+def test_any_of_several_label_points_matches() -> None:
+    labelled = case("e-15", annex_point=("annex:III:5:a", "annex:III:5:d"))
+    assert matchers.expected_route(labelled) is HighRiskRoute.ANNEX_III
+    for point in ("annex:III:5:a", "annex:III:5:d"):
+        outcome = high_risk_outcome(HighRiskRoute.ANNEX_III, point)
+        assert matchers.high_risk_matches(outcome, labelled)
+    other = high_risk_outcome(HighRiskRoute.ANNEX_III, "annex:III:5:b")
+    assert not matchers.high_risk_matches(other, labelled)
 
 
 def test_high_risk_on_both_routes_expects_annex_iii() -> None:
