@@ -175,7 +175,7 @@ LEGACY_QUESTION_TEXTS: Mapping[str, Mapping[Language, str]] = {
         "anderen Zweck dient)?",
     },
     "for_public_authority": {
-        Language.EN: "Will public authorities use the system, as it is meant to be used?",
+        Language.EN: "Is the system meant for use by public authorities?",
         Language.DE: "Soll das System bestimmungsgemäß von Behörden verwendet werden?",
     },
 }
@@ -266,13 +266,15 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "{version} Fassung ab, nicht die {asked} Fassung.",
         "legacy_unchanged": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr oder in "
         "Betrieb und wurde seitdem nicht erheblich in seiner Konzeption verändert; daher gelten "
-        "{count} Hochrisiko-Pflichten erst nach einer erheblichen Veränderung der Konzeption. Die "
-        "Klasse bleibt hochriskant.",
+        "{count} Hochrisiko-Pflichten erst nach einer erheblichen Veränderung der Konzeption. Das "
+        "System bleibt als Hochrisiko-System eingestuft.",
         "legacy_public_authority": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr "
         "oder in Betrieb und soll bestimmungsgemäß von Behörden verwendet werden; daher gelten "
-        "{count} Hochrisiko-Pflichten ab dem {deadline}. Die Klasse bleibt hochriskant.",
+        "{count} Hochrisiko-Pflichten ab dem {deadline}. Das System bleibt als Hochrisiko-System "
+        "eingestuft.",
         "legacy_check_at_launch": "Wird das System vor dem {date} in Verkehr gebracht oder in "
         "Betrieb genommen und danach in seiner Konzeption nicht erheblich verändert, kann Art. 111 "
-        "Abs. 2 diese Pflichten einschränken; prüfen Sie es beim Markteintritt erneut.",
+        "Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen oder bei der "
+        "Inbetriebnahme erneut.",
     },
 }

@@ -26,6 +26,11 @@ Option (a): a small, self-contained change that stops the inventory giving compa
 
 ## Addendum, 2026-10-01: two readings (user decisions during C7b review)
 
+Wording and dates approved by the user on 2026-10-01, with three edits: the English public-authority question
+("Is the system meant for use by public authorities?"), "Das System bleibt als Hochrisiko-System eingestuft." in
+both German decision sentences, and "prüfen Sie dies beim Inverkehrbringen oder bei der Inbetriebnahme erneut." in
+the German check-again sentence.
+
 The text both rest on (`data/parsed/ai-act-consolidated.en.jsonl`):
 - `art:111:2`: "this Regulation shall apply to operators of high-risk AI systems, other than the systems referred
   to in paragraph 1 of this Article, that have been placed on the market or put into service before the date of
@@ -47,8 +52,8 @@ Consequences:
   citing `art:111:2`: "If the system is placed on the market or put into service before {date} and its design
   doesn't change significantly afterwards, Art. 111(2) may limit these duties; check again at launch." (German:
   "Wird das System vor dem {date} in Verkehr gebracht oder in Betrieb genommen und danach in seiner Konzeption nicht
-  erheblich verändert, kann Art. 111 Abs. 2 diese Pflichten einschränken; prüfen Sie es beim Markteintritt
-  erneut.") The engine model can't tell a planned launch from a new system, so the sentence is added whenever the
+  erheblich verändert, kann Art. 111 Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen
+  oder bei der Inbetriebnahme erneut.") The engine model can't tell a planned launch from a new system, so the sentence is added whenever the
   answer is "no" for a high-risk system.
 - A silent description gives "unknown" for each fact: the duties stay unmarked (an unknown public-authority answer
   takes the 2 Aug 2030 date) and the facts are asked as follow-up questions.

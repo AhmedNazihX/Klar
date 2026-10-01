@@ -888,7 +888,8 @@ CHECK_AT_LAUNCH = {
     "limit these duties; check again at launch.",
     Language.DE: "Wird das System vor dem 2. Dezember 2027 in Verkehr gebracht oder in Betrieb "
     "genommen und danach in seiner Konzeption nicht erheblich verändert, kann Art. 111 Abs. 2 "
-    "diese Pflichten einschränken; prüfen Sie es beim Markteintritt erneut.",
+    "diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen oder bei der "
+    "Inbetriebnahme erneut.",
 }
 
 
@@ -986,6 +987,7 @@ def test_the_legacy_texts_read_in_german() -> None:
     assert "Art. 111 Abs. 2" in outcome.step.decision
     assert "vor dem 2. Dezember 2027" in outcome.step.decision
     assert "ab dem 2. August 2030" in outcome.step.decision
+    assert outcome.step.decision.endswith("Das System bleibt als Hochrisiko-System eingestuft.")
     unknown = legacy_outcome(legacy_answer(Answer.UNKNOWN), language=Language.DE)
     assert "ab dem 2. Dezember 2027" in unknown.follow_up_questions[0].text
 
