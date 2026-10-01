@@ -1,0 +1,12 @@
+# Loader fixture only: a made-up annex-matching item, not a benchmark case.
+id: fixture-annex-001
+set_name: annex_match
+language: en
+description: >-
+  A software module, certified as a medical device, sorts incoming emergency calls by urgency for
+  a regional ambulance service.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:A:11", "annex:III:5:d"]
+label_citation: ["annex:I:A:11", "annex:III:5:d"]

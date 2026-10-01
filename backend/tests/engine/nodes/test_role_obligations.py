@@ -17,7 +17,9 @@ from aiact.engine.nodes import role_obligations as node
 from aiact.engine.nodes.role_obligations import (
     Answer,
     ConditionAnswer,
+    HighRiskRoleAnswer,
     KeyFact,
+    LegacyAnswer,
     ProvisionTextError,
     RoleAnswer,
     RoleFact,
@@ -42,6 +44,8 @@ from aiact.schemas import (
     HighRiskRoute,
     Language,
     LawVersion,
+    LegacyStatus,
+    Obligation,
     RiskClass,
     Role,
     SourceSpan,
@@ -71,15 +75,30 @@ def key_fact(value: Answer = Answer.NO, evidence: EvidenceTag = EvidenceTag.ASSU
     return KeyFact(answer=value, evidence=evidence, fact=f"Answer {value.value}", fact_numbers=())
 
 
+def legacy_answer(
+    placed_before: Answer = Answer.NO,
+    changed: Answer = Answer.NO,
+    public_authority: Answer = Answer.NO,
+) -> LegacyAnswer:
+    """The Art. 111(2) facts, all stated; the default is a system not yet on the market."""
+    return LegacyAnswer(
+        placed_before=key_fact(placed_before, EvidenceTag.STATED),
+        significant_design_change=key_fact(changed, EvidenceTag.STATED),
+        for_public_authority=key_fact(public_authority, EvidenceTag.STATED),
+    )
+
+
 def role_answer(
     role: Role | None = Role.DEPLOYER,
     conditions: dict[str, Answer] | None = None,
     risk_class: RiskClass = RiskClass.HIGH_RISK,
     route: HighRiskRoute | None = HighRiskRoute.ANNEX_III,
+    legacy: LegacyAnswer | None = None,
     **key_facts: KeyFact,
 ) -> RoleAnswer:
     """An answer: the given role, every key fact "no (assumed)" unless overridden, and the
-    conditions by their text, turned into the ids the prompt would list."""
+    conditions by their text, turned into the ids the prompt would list. With `legacy`, the
+    high-risk answer that carries the Art. 111(2) facts."""
     ids = condition_ids(conditions_to_ask(risk_class, route, LawVersion.AMENDED))
     given = tuple(
         ConditionAnswer(id=ids[text], answer=value) for text, value in (conditions or {}).items()
@@ -97,6 +116,8 @@ def role_answer(
         "changed_purpose": key_fact(),
         "conditions": given,
     }
+    if legacy is not None:
+        return HighRiskRoleAnswer.model_validate({**values, "legacy": legacy, **key_facts})
     return RoleAnswer.model_validate({**values, **key_facts})
 
 
@@ -648,7 +669,7 @@ def test_an_unknown_role_cites_both_definitions_it_assumes() -> None:
 
 
 def test_the_node_quotes_from_its_own_settings_data_dir(tmp_path: Path) -> None:
-    content = role_answer().model_dump_json()
+    content = role_answer(legacy=legacy_answer()).model_dump_json()
     chat = GenericFakeChatModel(messages=iter([AIMessage(content=content)]))
     settings = _settings().model_copy(update={"aiact_data_dir": tmp_path})
     with pytest.raises(ProvisionTextError, match="cannot read"):
@@ -767,7 +788,8 @@ def _fake_check(content: str) -> tuple[RoleObligationsCheck, GenericFakeChatMode
 
 
 def test_the_node_reads_the_earlier_findings_through_the_graph() -> None:
-    check, _ = _fake_check(role_answer(conditions={EMPLOYER: Answer.YES}).model_dump_json())
+    answer = role_answer(conditions={EMPLOYER: Answer.YES}, legacy=legacy_answer())
+    check, _ = _fake_check(answer.model_dump_json())
     high_risk = CheckOutcome(
         step=StepResult(step=StepName.HIGH_RISK, decision="Annex III point 4(a)"),
         high_risk_route=HighRiskRoute.ANNEX_III,
@@ -793,6 +815,370 @@ def test_the_node_reads_the_earlier_findings_through_the_graph() -> None:
     assert final["steps"][-1].step is StepName.ROLE_OBLIGATIONS
 
 
+# --- Art. 111(2): high-risk systems already on the market (C7b) ------------------------------
+# Hand-checked against Art. 111(2): a system on the market or in use before its route's Chapter
+# III date is covered only after a significant change to its design or intended purpose from that
+# date (a substantial modification, Art. 3(23), per recital 177); for public authorities,
+# providers and deployers comply by 2 Aug 2030. The class stays high-risk either way.
+
+LEGACY_ARTICLE = "art:111:2"
+SUBSTANTIAL_MODIFICATION = "art:3:23"
+PER_PRODUCT = {
+    Language.EN: "This covers copies placed on the market or put into service before "
+    "2 December 2027; copies supplied on or after that date may be fully covered.",
+    Language.DE: "Dies gilt für Exemplare, die vor dem 2. Dezember 2027 in Verkehr gebracht oder "
+    "in Betrieb genommen wurden; ab diesem Datum bereitgestellte Exemplare können vollständig "
+    "erfasst sein.",
+}
+PUBLIC_AUTHORITY_ASSUMED = {
+    Language.EN: "Art. 111(2): the system was on the market or in use before 2 December 2027; "
+    "until it is confirmed whether public authorities are meant to use it, the earlier date is "
+    "assumed, so {count} high-risk duties apply from 2 August 2030; the class stays high-risk.",
+    Language.DE: "Art. 111 Abs. 2: Das System war vor dem 2. Dezember 2027 in Verkehr oder in "
+    "Betrieb; solange nicht geklärt ist, ob Behörden es verwenden sollen, wird das frühere Datum "
+    "angenommen; daher gelten {count} Hochrisiko-Pflichten ab dem 2. August 2030. Das System "
+    "bleibt als Hochrisiko-System eingestuft.",
+}
+DEPLOYER_DUTIES = ("art:26:1", "art:26:2", "art:26:6")
+
+
+def legacy_outcome(
+    legacy: LegacyAnswer,
+    role: Role = Role.DEPLOYER,
+    route: HighRiskRoute = HighRiskRoute.ANNEX_III,
+    language: Language = Language.EN,
+) -> CheckOutcome:
+    answer = role_answer(role, route=route, legacy=legacy)
+    return to_outcome(answer, state(route=route, language=language))
+
+
+def by_article(outcome: CheckOutcome) -> dict[str, Obligation]:
+    return {o.article: o for o in finding(outcome).obligations}
+
+
+def cited(outcome: CheckOutcome) -> list[str]:
+    return [c.provision_id for c in outcome.step.citations]
+
+
+def test_a_legacy_system_without_a_design_change_marks_its_duties() -> None:
+    outcome = legacy_outcome(legacy_answer(placed_before=Answer.YES))
+    duties = by_article(outcome)
+    for article in DEPLOYER_DUTIES:
+        assert duties[article].legacy is LegacyStatus.UNCHANGED
+        assert duties[article].applies_from == date(2027, 12, 2)
+    assert duties["art:4:1"].legacy is None  # AI literacy has its own date
+    marked = sum(o.legacy is LegacyStatus.UNCHANGED for o in finding(outcome).obligations)
+    assert outcome.step.decision.endswith(
+        "Art. 111(2): the system was on the market or in use before 2 December 2027, so "
+        f"{marked} high-risk duties apply only if its design "
+        "or intended purpose changes significantly on or after that date (a substantial "
+        "modification); the class stays high-risk."
+    )
+    assert "hasn't changed significantly since" not in outcome.step.decision
+    assert PER_PRODUCT[Language.EN] not in outcome.step.decision  # a deployer uses its copy
+    assert cited(outcome)[-2:] == [LEGACY_ARTICLE, SUBSTANTIAL_MODIFICATION]
+    assert outcome.step.status is Status.DECIDED
+    assert outcome.follow_up_questions == ()
+
+
+def test_a_legacy_system_whose_design_changes_keeps_its_duties() -> None:
+    outcome = legacy_outcome(legacy_answer(placed_before=Answer.YES, changed=Answer.YES))
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert set(DEPLOYER_DUTIES) <= set(articles(outcome))
+    assert "Art. 111(2)" not in outcome.step.decision
+    assert LEGACY_ARTICLE not in cited(outcome)
+
+
+@pytest.mark.parametrize(
+    ("route", "since"),
+    [(HighRiskRoute.ANNEX_III, "2 December 2027"), (HighRiskRoute.ANNEX_I, "2 August 2028")],
+)
+def test_a_legacy_public_authority_system_applies_from_2_aug_2030(
+    route: HighRiskRoute, since: str
+) -> None:
+    legacy = legacy_answer(placed_before=Answer.YES, public_authority=Answer.YES)
+    outcome = legacy_outcome(legacy, Role.PROVIDER, route)
+    art_16_a = by_article(outcome)["art:16:a"]
+    assert (art_16_a.applies_from, art_16_a.legacy) == (
+        date(2030, 8, 2),
+        LegacyStatus.PUBLIC_AUTHORITY,
+    )
+    assert f"before {since}" in outcome.step.decision
+    assert "apply from 2 August 2030" in outcome.step.decision
+    assert LEGACY_ARTICLE in cited(outcome)
+
+
+@pytest.mark.parametrize("language", list(Language))
+@pytest.mark.parametrize("public_authority", [Answer.NO, Answer.YES])
+@pytest.mark.parametrize("role", [Role.PROVIDER, Role.IMPORTER, Role.DISTRIBUTOR])
+def test_a_supplier_of_a_legacy_system_gets_the_per_product_caveat(
+    role: Role, public_authority: Answer, language: Language
+) -> None:
+    legacy = legacy_answer(Answer.YES, public_authority=public_authority)
+    outcome = legacy_outcome(legacy, role, language=language)
+    assert {o.legacy for o in finding(outcome).obligations} - {None}
+    assert outcome.step.decision.endswith(PER_PRODUCT[language])
+
+
+@pytest.mark.parametrize("language", list(Language))
+@pytest.mark.parametrize("unsettled", [Answer.UNKNOWN, "assumed yes", "assumed no"])
+def test_an_unsettled_public_authority_answer_words_the_2030_date_as_an_assumption(
+    unsettled: Answer | str, language: Language
+) -> None:
+    given = {
+        Answer.UNKNOWN: key_fact(Answer.UNKNOWN),
+        "assumed yes": key_fact(Answer.YES),
+        "assumed no": key_fact(Answer.NO),
+    }[unsettled]
+    legacy = legacy_answer(Answer.YES).model_copy(update={"for_public_authority": given})
+    outcome = legacy_outcome(legacy, language=language)
+    count = sum(o.legacy is LegacyStatus.PUBLIC_AUTHORITY for o in finding(outcome).obligations)
+    assert count
+    assert outcome.step.decision.endswith(PUBLIC_AUTHORITY_ASSUMED[language].format(count=count))
+    assert "is meant for public authorities" not in outcome.step.decision
+    assert [q.id for q in outcome.follow_up_questions] == ["for_public_authority"]
+
+
+@pytest.mark.parametrize("language", list(Language))
+def test_a_settled_public_authority_answer_states_it(language: Language) -> None:
+    outcome = legacy_outcome(
+        legacy_answer(Answer.YES, public_authority=Answer.YES), language=language
+    )
+    expected = {
+        Language.EN: "and is meant for public authorities, so",
+        Language.DE: "und soll bestimmungsgemäß von Behörden verwendet werden; daher",
+    }[language]
+    assert expected in outcome.step.decision
+    assert "angenommen" not in outcome.step.decision
+    assert "is assumed" not in outcome.step.decision
+
+
+@pytest.mark.parametrize("role", [Role.IMPORTER, Role.DISTRIBUTOR])
+def test_a_supplier_of_a_legacy_public_authority_system_keeps_the_ordinary_marking(
+    role: Role,
+) -> None:
+    legacy = legacy_answer(Answer.YES, public_authority=Answer.YES)
+    outcome = legacy_outcome(legacy, role)
+    marks = {o.legacy for o in finding(outcome).obligations} - {None}
+    assert marks == {LegacyStatus.UNCHANGED}
+    assert "2 August 2030" not in outcome.step.decision
+    assert outcome.step.decision.endswith(PER_PRODUCT[Language.EN])
+
+
+def test_no_caveat_without_a_marking_or_for_a_deployer() -> None:
+    changed = legacy_outcome(legacy_answer(Answer.YES, Answer.YES), Role.PROVIDER)
+    assert PER_PRODUCT[Language.EN] not in changed.step.decision
+    deployer = legacy_outcome(legacy_answer(Answer.YES, public_authority=Answer.YES))
+    assert PER_PRODUCT[Language.EN] not in deployer.step.decision
+
+
+def test_the_check_again_sentence_cites_only_the_article() -> None:
+    planned = legacy_outcome(legacy_answer(Answer.NO), Role.PROVIDER)
+    assert LEGACY_ARTICLE in cited(planned)
+    assert SUBSTANTIAL_MODIFICATION not in cited(planned)
+    assert PER_PRODUCT[Language.EN] not in planned.step.decision
+
+
+@pytest.mark.parametrize("language", list(Language))
+def test_the_design_change_question_asks_about_changes_from_the_date(language: Language) -> None:
+    outcome = legacy_outcome(legacy_answer(Answer.YES, Answer.UNKNOWN), language=language)
+    [question] = outcome.follow_up_questions
+    expected = {
+        Language.EN: "Is a significant change to the system's design or intended purpose "
+        "planned or foreseen for on or after 2 December 2027?",
+        Language.DE: "Ist ab dem 2. Dezember 2027 eine erhebliche Veränderung der Konzeption "
+        "oder der Zweckbestimmung des Systems geplant oder vorgesehen?",
+    }
+    assert question.text == expected[language]
+
+
+CHECK_AT_LAUNCH = {
+    Language.EN: "If the system is placed on the market or put into service before "
+    "2 December 2027 and its design or intended purpose doesn't change significantly "
+    "afterwards, Art. 111(2) may limit these duties; check again at launch.",
+    Language.DE: "Wird das System vor dem 2. Dezember 2027 in Verkehr gebracht oder in Betrieb "
+    "genommen und danach in seiner Konzeption oder Zweckbestimmung nicht erheblich verändert, "
+    "kann Art. 111 Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen "
+    "oder bei der Inbetriebnahme erneut.",
+}
+
+
+@pytest.mark.parametrize("language", list(Language))
+def test_a_planned_launch_keeps_the_full_duties_and_says_to_check_again(
+    language: Language,
+) -> None:
+    # User decision 2026-10-01 (decision 022 addendum): "placed before" is read as of today, so
+    # a launch that is only planned, even before the date, is "no" and lists the full duties.
+    planned = legacy_outcome(legacy_answer(placed_before=Answer.NO), language=language)
+    no_legacy_facts = to_outcome(role_answer(), state(language=language))
+    assert finding(planned).obligations == finding(no_legacy_facts).obligations
+    assert {o.legacy for o in finding(planned).obligations} == {None}
+    assert planned.step.decision == f"{no_legacy_facts.step.decision} {CHECK_AT_LAUNCH[language]}"
+    assert LEGACY_ARTICLE in cited(planned)
+    assert planned.follow_up_questions == ()
+
+
+def test_a_system_in_use_today_counts_as_placed_before_and_gets_no_check_again() -> None:
+    in_use = legacy_outcome(legacy_answer(placed_before=Answer.YES))
+    assert by_article(in_use)["art:26:1"].legacy is LegacyStatus.UNCHANGED
+    assert "check again at launch" not in in_use.step.decision
+
+
+def test_an_unknown_launch_date_keeps_the_duties_and_asks_with_the_routes_date() -> None:
+    outcome = legacy_outcome(
+        legacy_answer(placed_before=Answer.UNKNOWN), route=HighRiskRoute.ANNEX_I
+    )
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    [question] = outcome.follow_up_questions
+    assert question.id == "placed_before_chapter_iii"
+    assert question.about == LEGACY_ARTICLE
+    assert question.text.startswith("Is the system already on the market or in use today?")
+    assert "apply from 2 August 2028" in question.text
+    assert outcome.step.status is Status.DECIDED  # the role is settled; only dates are open
+
+
+def test_an_unknown_design_change_keeps_the_duties_and_asks() -> None:
+    legacy = legacy_answer(placed_before=Answer.YES, changed=Answer.UNKNOWN)
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert [q.id for q in outcome.follow_up_questions] == ["significant_design_change"]
+
+
+def test_an_unknown_public_authority_answer_takes_the_earlier_2030_date_and_asks() -> None:
+    legacy = legacy_answer(placed_before=Answer.YES, public_authority=Answer.UNKNOWN)
+    outcome = legacy_outcome(legacy)
+    assert by_article(outcome)["art:26:1"].legacy is LegacyStatus.PUBLIC_AUTHORITY
+    assert [q.id for q in outcome.follow_up_questions] == ["for_public_authority"]
+
+
+def test_a_system_in_use_with_a_silent_description_keeps_its_duties_and_asks_both() -> None:
+    # The prompt has the model answer "unknown" for the design change and public use when the
+    # description is silent about them: nothing is marked, and both are asked.
+    legacy = legacy_answer(Answer.YES, Answer.UNKNOWN, Answer.UNKNOWN)
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert [q.id for q in outcome.follow_up_questions] == [
+        "significant_design_change",
+        "for_public_authority",
+    ]
+    assert LEGACY_ARTICLE not in cited(outcome)
+
+
+def test_an_all_unknown_launch_keeps_the_duties_and_asks_all_three() -> None:
+    outcome = legacy_outcome(legacy_answer(Answer.UNKNOWN, Answer.UNKNOWN, Answer.UNKNOWN))
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert len(outcome.follow_up_questions) == 3
+
+
+def test_a_design_change_settles_it_without_asking_about_public_use() -> None:
+    outcome = legacy_outcome(legacy_answer(Answer.YES, Answer.YES, Answer.UNKNOWN))
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert outcome.follow_up_questions == ()
+
+
+def test_a_law_version_without_duties_drops_the_legacy_facts() -> None:
+    answer = role_answer(legacy=legacy_answer(Answer.UNKNOWN, Answer.UNKNOWN, Answer.UNKNOWN))
+    outcome = to_outcome(answer, state(law_version=LawVersion.ORIGINAL))
+    assert finding(outcome).obligations == ()
+    assert LEGACY_ARTICLE not in cited(outcome)
+    assert outcome.follow_up_questions == ()
+    assert "Art. 111(2)" not in outcome.step.decision
+
+
+def test_assumed_answers_never_mark_duties_and_are_asked() -> None:
+    # The base prompt primes "no (assumed)" for silent switches: under Art. 111(2) an assumed
+    # "no" design change or public use settles nothing.
+    legacy = legacy_answer(Answer.YES).model_copy(
+        update={
+            "significant_design_change": key_fact(Answer.NO),
+            "for_public_authority": key_fact(Answer.NO),
+        }
+    )
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert [q.id for q in outcome.follow_up_questions] == [
+        "significant_design_change",
+        "for_public_authority",
+    ]
+    assert "Art. 111(2)" not in outcome.step.decision
+
+
+def test_an_assumed_launch_before_the_date_is_asked() -> None:
+    legacy = legacy_answer(changed=Answer.NO).model_copy(
+        update={"placed_before": key_fact(Answer.YES)}
+    )
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert [q.id for q in outcome.follow_up_questions] == ["placed_before_chapter_iii"]
+
+
+def test_an_assumed_no_launch_keeps_the_full_duties_and_the_check_again_sentence() -> None:
+    legacy = legacy_answer().model_copy(update={"placed_before": key_fact(Answer.NO)})
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert outcome.step.decision.endswith(CHECK_AT_LAUNCH[Language.EN])
+    assert outcome.follow_up_questions == ()
+
+
+def test_a_design_change_skips_the_launch_question() -> None:
+    outcome = legacy_outcome(legacy_answer(Answer.UNKNOWN, Answer.YES, Answer.UNKNOWN))
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert outcome.follow_up_questions == ()
+
+
+EVIDENCE_ANSWERS = [(answer, evidence) for answer in Answer for evidence in EvidenceTag]
+
+
+@pytest.mark.parametrize("placed", EVIDENCE_ANSWERS)
+@pytest.mark.parametrize("changed", EVIDENCE_ANSWERS)
+@pytest.mark.parametrize("public", EVIDENCE_ANSWERS)
+def test_only_settled_facts_can_mark_duties(
+    placed: tuple[Answer, EvidenceTag],
+    changed: tuple[Answer, EvidenceTag],
+    public: tuple[Answer, EvidenceTag],
+) -> None:
+    legacy = LegacyAnswer(
+        placed_before=key_fact(*placed),
+        significant_design_change=key_fact(*changed),
+        for_public_authority=key_fact(*public),
+    )
+    marks = {o.legacy for o in finding(legacy_outcome(legacy)).obligations} - {None}
+    if not marks:
+        return
+    assert placed[0] is Answer.YES and placed[1] is not EvidenceTag.ASSUMED
+    assert changed[0] is Answer.NO and changed[1] is not EvidenceTag.ASSUMED
+    if marks == {LegacyStatus.UNCHANGED}:
+        assert public[0] is Answer.NO and public[1] is not EvidenceTag.ASSUMED
+
+
+def test_the_legacy_facts_are_shown_as_facts_used() -> None:
+    outcome = legacy_outcome(legacy_answer(placed_before=Answer.YES))
+    shown = [(f.text, f.evidence) for f in outcome.step.facts_used]
+    assert ("Answer yes", EvidenceTag.INFERRED) in shown  # placed before: stated, no fact cited
+
+
+def test_the_legacy_texts_read_in_german() -> None:
+    legacy = legacy_answer(placed_before=Answer.YES, public_authority=Answer.YES)
+    outcome = legacy_outcome(legacy, language=Language.DE)
+    assert "Art. 111 Abs. 2" in outcome.step.decision
+    assert "vor dem 2. Dezember 2027" in outcome.step.decision
+    unchanged = legacy_outcome(legacy_answer(Answer.YES), language=Language.DE).step.decision
+    assert unchanged.endswith(
+        "nur, wenn seine Konzeption oder Zweckbestimmung ab diesem Datum erheblich verändert "
+        "wird (eine wesentliche Veränderung). Das System bleibt als Hochrisiko-System eingestuft."
+    )
+    assert "ab dem 2. August 2030" in outcome.step.decision
+    assert outcome.step.decision.endswith("Das System bleibt als Hochrisiko-System eingestuft.")
+    unknown = legacy_outcome(legacy_answer(Answer.UNKNOWN), language=Language.DE)
+    assert "ab dem 2. Dezember 2027" in unknown.follow_up_questions[0].text
+
+
+def test_a_prohibited_or_limited_answer_carries_no_legacy_facts() -> None:
+    for risk_class in (RiskClass.PROHIBITED, RiskClass.LIMITED_RISK):
+        assert node.answer_model(state(risk_class, None)) is RoleAnswer
+    assert node.answer_model(state()) is HighRiskRoleAnswer
+
+
 # --- The model call -----------------------------------------------------------------------------
 
 
@@ -804,6 +1190,38 @@ def test_the_prompt_puts_the_instructions_first_and_the_description_last() -> No
     assert human.endswith(CV_TOOL)
     assert "Risk class so far: high_risk (annex_iii route)" in human
     assert f"c1: {conditions[0]}" in human
+    assert "Launch and design:" in human
+    assert "rules apply from 2 December 2027" in human
+    assert 'answer it "unknown": never assume it away' in human
+    # Placed before is read as of today: in use now is "yes", a planned launch is "no".
+    assert "already on the market or in use today" in human
+    assert 'only planned, is "no", even if the launch is planned before' in human
+    assert "or will be" not in human
+    # Art. 3(23) via recital 177: only a change from the date, not foreseen in the assessment.
+    assert "A change made before that date" in human
+    assert "didn't foresee or plan" in human
+
+
+def test_only_a_high_risk_request_asks_the_legacy_facts() -> None:
+    # Other classes send the request E7 recorded, unchanged.
+    for risk_class in (RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK, RiskClass.PROHIBITED):
+        messages = node.role_messages(state(risk_class, None), ())
+        assert "Launch and design" not in str(messages[-1].content)
+
+
+def test_the_node_reads_the_legacy_facts_from_the_model() -> None:
+    answer = role_answer(legacy=legacy_answer(placed_before=Answer.YES))
+    check, _ = _fake_check(answer.model_dump_json())
+    outcome = check(state())
+    assert {o.legacy for o in finding(outcome).obligations if o.high_risk_route} == {
+        LegacyStatus.UNCHANGED
+    }
+
+
+def test_a_high_risk_answer_without_the_legacy_facts_is_a_broken_output() -> None:
+    check, _ = _fake_check(role_answer().model_dump_json())
+    with pytest.raises(RoleOutputError, match="legacy"):
+        check(state())
 
 
 def test_the_node_is_pinned_to_the_engine_provider() -> None:

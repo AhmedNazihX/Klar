@@ -1,0 +1,11 @@
+# Loader fixtures only: made-up Q&A items, not benchmark items.
+- id: fixture-qa-001
+  language: en
+  question: From when must a provider mark AI-generated audio as artificially generated?
+  required_provision_ids: ["art:50:2", "art:113"]
+  reference_answer: Art. 50(2) applies from 2 August 2026 (Art. 113).
+- id: fixture-qa-002
+  language: de
+  question: Wie lange darf ich Bewerberdaten nach der DSGVO speichern?
+  answerable: false
+  notes: About the GDPR, which the corpus doesn't hold.

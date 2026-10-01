@@ -18,7 +18,7 @@ A link to the project on [showcase.turingcollege.com](https://showcase.turingcol
 
 **Complication.** Classification is hard, and the rules just moved.
 - The Digital Omnibus, Regulation (EU) 2026/1744, entered into force on 27 July 2026. It changed deadlines, extended SME relief to small mid-caps, added two new prohibitions from 2 December 2026, and softened some duties. Many online sources are now outdated.
-- Companies are not prepared. In a representative Bitkom survey of 602 German companies (2024), only 24% had dealt with the AI Act at all, just 3% intensively, and 24% had never heard of it. In Deloitte's 2024 survey of about 500 managers in Germany, 48.6% had not prepared intensively. Bitkom's February 2026 AI report is quoted as finding that 69% need help implementing the Act (to confirm from the report itself). The DIHK's 2026 digitalisation survey (about 5,000 firms) names legal uncertainty as a top barrier for 55% of companies.
+- Companies are not prepared. In a representative Bitkom survey of 602 German companies (2024), only 24% had dealt with the AI Act at all, just 3% intensively, and 24% had never heard of it; 69% said they need help dealing with the Act (published 9 September 2024; decision 007). In Deloitte's 2024 survey of about 500 managers in Germany, 48.6% had not prepared intensively. The DIHK's 2026 digitalisation survey (about 5,000 firms) names legal uncertainty as a top barrier for 55% of companies.
 - Classification itself is hard. In appliedAI's 2023 study of 106 enterprise systems, 40% could not be classified with certainty. That study used the Commission's 2021 proposal, so the figure is a signal, not a current measurement.
 - The existing free tools are questionnaires: the Commission's Compliance Checker (labelled beta and "indicative only"), the FLI Compliance Checker and the Holistic AI Risk Calculator. None of them shows its legal reasoning or publishes its accuracy. Legal advice is expensive for small firms.
 
@@ -355,7 +355,7 @@ The main ethical risk is a wrong classification that a company trusts. Calling a
 - appliedAI: open the PDF and confirm the fields per entry, the languages, and any licence statement. It's described as a "free, open dataset"; no machine-readable version or named licence was found.
 - German texts: confirm that German versions of the Article 50 guidelines, the Code of Practice and the consolidated text exist. Until then they're quoted in English and labelled. The draft high-risk guidelines appear to be English-only.
 - Check again before the build freezes: whether the high-risk guidelines have been finalised (not yet as of 24 Sep 2026) and whether the simplified technical documentation form has been published (not yet found).
-- Confirm the "69% need help" figure and sample size in Bitkom's February 2026 AI report.
+- ~~Confirm the "69% need help" figure and sample size in Bitkom's February 2026 AI report.~~ Answered (decision 007, 2026-10-01): the figure comes from Bitkom's 2024 survey of 602 companies, not the February 2026 report.
 - Count the worked examples in the draft high-risk guidelines, per Annex III area and verdict. This decides between a split and leave-one-out (see Benchmark isolation).
 
 **Implementation decisions still open**

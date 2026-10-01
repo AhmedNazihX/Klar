@@ -60,7 +60,25 @@ interactions:
       or for risk assessment and pricing in life and health insurance (Annex III points
       5(b) and (c)).\nc10: Decisions taken on the basis of the system''s output produce
       legal effects on people or similarly significantly affect them (not for Annex
-      III point 2, critical infrastructure).\n\nAnswers to earlier questions:\n-\n\nFacts:\n-\n\nDescription:\nWe''re
+      III point 2, critical infrastructure).\n\nLaunch and design:\nThe system is
+      high-risk, and its high-risk rules apply from 2 December 2027. Also answer,
+      under\n\"legacy\", three key facts for Art. 111(2) (systems already on the market
+      or in use before that\ndate), in the same form as the others:\n\n- placed_before:
+      the system is already on the market or in use today. That date is still ahead,\n  so
+      a system the description shows already on the market or in use is \"yes\". A
+      system still\n  being built, or one whose launch is only planned, is \"no\",
+      even if the launch is planned before\n  that date. When the description doesn''t
+      say, answer \"unknown\".\n- significant_design_change: a significant change
+      to the system''s design or intended purpose is\n  planned or foreseen for on
+      or after 2 December 2027. Significant means a change the provider''s initial\n  conformity
+      assessment didn''t foresee or plan that affects whether the system meets the\n  high-risk
+      requirements, or that changes what the system is for. Routine updates, bug fixes
+      and\n  changes the provider''s own plan foresaw are not significant. A change
+      made before that date\n  doesn''t count.\n- for_public_authority: public authorities
+      are meant to use the system, whether the company is\n  one or supplies them.\n\nWhen
+      placed_before is \"no\", answer the other two \"no\" with evidence \"assumed\".
+      Otherwise, when\nthe description doesn''t settle one of them, answer it \"unknown\":
+      never assume it away.\n\nAnswers to earlier questions:\n-\n\nFacts:\n-\n\nDescription:\nWe''re
       an online lender in Lisbon with about 200 staff, offering personal loans. Our
       credit-decisioning software comes from a specialist vendor, and its manual lets
       customers recalibrate the model on their own repayment history with the vendor''s
@@ -73,11 +91,12 @@ interactions:
       a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"KeyFact":{"additionalProperties":false,"description":"One
       key-fact answer. Enum fields carry no description: strict structured output
       rejects\nkeywords next to a `$ref`; the prompt explains every field instead.","properties":{"answer":{"$ref":"#/$defs/Answer"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
-      Numbers","type":"array"}},"required":["answer","evidence","fact","fact_numbers"],"title":"KeyFact","type":"object"},"Role":{"description":"The
+      Numbers","type":"array"}},"required":["answer","evidence","fact","fact_numbers"],"title":"KeyFact","type":"object"},"LegacyAnswer":{"additionalProperties":false,"description":"The
+      Art. 111(2) key facts of a high-risk system.","properties":{"placed_before":{"$ref":"#/$defs/KeyFact"},"significant_design_change":{"$ref":"#/$defs/KeyFact"},"for_public_authority":{"$ref":"#/$defs/KeyFact"}},"required":["placed_before","significant_design_change","for_public_authority"],"title":"LegacyAnswer","type":"object"},"Role":{"description":"The
       operator role the obligations follow from (Art. 3, 16, 23-26).","enum":["provider","deployer","importer","distributor"],"title":"Role","type":"string"},"RoleFact":{"additionalProperties":false,"description":"The
       company''s own role before any switch; None when the description doesn''t say.","properties":{"role":{"anyOf":[{"$ref":"#/$defs/Role"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
       Numbers","type":"array"}},"required":["role","evidence","fact","fact_numbers"],"title":"RoleFact","type":"object"}},"additionalProperties":false,"description":"The
-      model''s whole answer; also the JSON schema it must fill.","properties":{"role":{"$ref":"#/$defs/RoleFact"},"builds_on_gpai":{"$ref":"#/$defs/KeyFact"},"own_brand":{"$ref":"#/$defs/KeyFact"},"substantial_modification":{"$ref":"#/$defs/KeyFact"},"changed_purpose":{"$ref":"#/$defs/KeyFact"},"conditions":{"items":{"$ref":"#/$defs/ConditionAnswer"},"title":"Conditions","type":"array"}},"required":["role","builds_on_gpai","own_brand","substantial_modification","changed_purpose","conditions"],"title":"RoleAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+      answer for a high-risk system: the role facts and the Art. 111(2) facts.","properties":{"role":{"$ref":"#/$defs/RoleFact"},"builds_on_gpai":{"$ref":"#/$defs/KeyFact"},"own_brand":{"$ref":"#/$defs/KeyFact"},"substantial_modification":{"$ref":"#/$defs/KeyFact"},"changed_purpose":{"$ref":"#/$defs/KeyFact"},"conditions":{"items":{"$ref":"#/$defs/ConditionAnswer"},"title":"Conditions","type":"array"},"legacy":{"$ref":"#/$defs/LegacyAnswer"}},"required":["role","builds_on_gpai","own_brand","substantial_modification","changed_purpose","conditions","legacy"],"title":"HighRiskRoleAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
     headers:
       content-type:
       - application/json
@@ -85,33 +104,56 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "\n         \n\n         \n\n         \n{\"id\":\"gen-1790714832-wtNLpCtDzvoA2p6CZVdP\",\"object\":\"chat.completion\",\"created\":1790714832,\"model\":\"openai/gpt-6-luna\",\"provider\":\"Azure\",\"system_fingerprint\":null,\"service_tier\":\"default\",\"choices\":[{\"index\":0,\"logprobs\":null,\"finish_reason\":\"stop\",\"native_finish_reason\":\"completed\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\n
+      string: "{\"id\": \"gen-1790852509-bZf5bpJD4sWmovFfAVVU\", \"object\": \"chat.completion\",
+        \"created\": 1790852509, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+        \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
+        [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
+        \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
         \ \\\"role\\\": {\\n    \\\"role\\\": \\\"deployer\\\",\\n    \\\"evidence\\\":
-        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"The company uses the vendor's credit-decisioning
-        system.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"builds_on_gpai\\\":
-        {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\": \\\"assumed\\\",\\n
-        \   \\\"fact\\\": \\\"The description does not indicate that the company builds
-        its own system on a general-purpose AI model.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  },\\n  \\\"own_brand\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\":
-        \\\"stated\\\",\\n    \\\"fact\\\": \\\"The system runs under the vendor's
-        name, not the company's.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"substantial_modification\\\":
+        \\\"stated\\\",\\n    \\\"fact\\\": \\\"The company uses credit-decisioning
+        software supplied by a specialist vendor.\\\",\\n    \\\"fact_numbers\\\":
+        []\\n  },\\n  \\\"builds_on_gpai\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n
+        \   \\\"evidence\\\": \\\"assumed\\\",\\n    \\\"fact\\\": \\\"The description
+        does not indicate that the company builds its own system on a GPAI model.\\\",\\n
+        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"own_brand\\\": {\\n    \\\"answer\\\":
+        \\\"no\\\",\\n    \\\"evidence\\\": \\\"stated\\\",\\n    \\\"fact\\\": \\\"The
+        system still runs under the vendor's name; the company calls it \u201Cthe
+        engine.\u201D\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"substantial_modification\\\":
         {\\n    \\\"answer\\\": \\\"unknown\\\",\\n    \\\"evidence\\\": \\\"stated\\\",\\n
-        \   \\\"fact\\\": \\\"The company added an input not listed by the vendor,
-        but the description does not establish whether that change is substantial.\\\",\\n
+        \   \\\"fact\\\": \\\"The company added an input the vendor never listed,
+        but the description does not establish whether this is a substantial modification.\\\",\\n
         \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"changed_purpose\\\": {\\n    \\\"answer\\\":
         \\\"no\\\",\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\":
-        \\\"The system is used for credit decisions, which is its described purpose.\\\",\\n
-        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"conditions\\\": [\\n    {\\n      \\\"id\\\":
-        \\\"c1\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c2\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c3\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c4\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c5\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c6\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c7\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c8\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c9\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"c10\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n    }\\n  ]\\n}\",\"refusal\":null,\"reasoning\":null,\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqvCPUAjxnrtufzqsHKGBIhHYvG01tqrJpNzrpK_Qya0TWDoZtyLOzZz8xHVL5XJSIxp_jKULjRC4ACedVHV5oxBt3Qo56iqiWYdYp2n2sf58ivt4WCOpzblp1Gs0i3J7LaA9lfsquc7-IyFMcjl4HmVER1RJLhPnxMpjwv3IXk-uJAmw8ItpKrRKqUVn4lWkVU3l9eBRsfssuds9jXzWWkn7T6vivRLmqKGeIBWOw__THgyt_vubyC_HU9Ukg_d-WcNajolmjrMA1ZaRgSN2G2BsgyX2CM3_BR-_agDbKAMt2xCX-Iudu1HGEs5oEa9cBNWARMYfMN1HWcdNOh6qpfgtXtBuNKC76pMTJHfcHjBCt5Wsz_u66PfC2xAheJbVoq1zwGpZdD7KREBHChuZkp5BjYGocPce2ocSw0xvM4WhiXZw98_Az8GNwVGKGJanLT0QtxIzQwH6btppc5kAPm8lGfjC1BaZeiV9WNbo6vglc3kHxafp67eC-n53r0V85hHCtR3ttpzDSwW3FHbWXo1Fzm-_7xPB9Xg_G4oPH2I8VYrcb-MnztI-I7CIur_thrJGUCWIKv7yCcLG6Kdsbw6kNjRrG0kFzGJnNsDcSXswa_43snPaRJ4v3Bii9oIse1n0SSEadRaFd0-KL4ORgZzT70cNnY4eGoPDh2IVJC4ET50y0iN8zNTPRiOJOTnvIG5TeaL-4ZLNc7AWLOdYR4gtZ6kZyFYv-XDHiLkNbjx6AQCgxsROS19ke8wgSg8YakhY8T1K80O1_pYtlkuolcTwI3UI1v2K26ojDtx7lbFt3m_RzjqbblxjeozHYB53xoAen9PZIMt5sHk2F3CBkYG_XlekjdvbB-eu4qURU0fIN5QcUFFWtdWLPKuETCIFBFwdWsmAA3sUtJW6JzybKVKMZGRQIivUP43YPtDpRujHMP0NaRdvzkMSYYESheolF0ssoknLuHZqo2j7I3y8Lc5ylz6ftcN6LdT-FvVmhh9FL3bAzyt7lW2umGfZYOs_OqhJTzbLNjlSP2Oh5Ktgrex9aNfKnD0JEWK08wu3ma3sVY0rKr3xHBf6g2Xrz3uMzeWXCt4rl9lz6PbOr55i02ezJjvyBqoRAEZ1Yr1OD7CSL5bqJOOQACBZ1MuU4KCPyzBcL26_BGTqejxJJb9-wV30wZLbM9GXPu5jbEOBltIw174wVUU2Q8J9Fi5fz_lSGjf2LyCYGxOJdxmb15mgfhoru5Yp8lHN7Y6T7V8k9Soh-rgANLJalEe0yxpoqKWl4cclIh7D43JAugYgSZUb-cTML-IZsMt6TSKCX95nblS0zOJ4PSnaLNVFDQ_QlYBm9BSsMOSCRco46nsFNp0ubd_YRqC-7L5Qu1VKoZ9ZjgswevEJJPiBNE_h_CIPL6R5wlv2j_vWmGMOvDplo7mPLyK6tbzGbuEjBnaiuKkL03Eg77XMRV-FiUID229rwDgdpSLAFVNfggUn6bJig7h3Ys7UeGHsy7lPcW7qPv43eQiahIEyjIQB6tbT1xotqLO3TaL8p3_stXCrpC1LCC9raRVsQdaHLrwck5V6JklcLm-NaYtAHN07zN4uihiM37tDVaYt-V7omx15SZaaLdLCZiR0xmBKNOJEctSVgdVZN-sbhj5_wHsFdnTzXyN3BcZ9ctOSaxZ12Kip_3NioSwFIGyTrT46_0BCjBvlknJV3lNNkwMjm13it7_e0lbPiIZqb6_iYzmROfops-YAhelRSr4VYr51zfnKLAnNxRHgG7dgF24KGOa2I8QSFsEq7GZOlRSj2EXZ2NIRHLfs3prD7FkJ1Byien661VYuZl-PwUFkjpLwZTiQLrDNcKyoozI4WHDkF3FKGSrZKf_fx0rHfUbUkyYBkl9o8nKVC0ThRALuG6e2YqMXYsSN7K-sxZoYi0pySUQTK7ay2dCTfE7gtEFdgkrlRZ_ZuQsHJ0QwAQwiWdzWG_yiy8RfZrnzXsM0pR-BnaYSGGTzrFCp7PrInMNHadgsmlnhv9_B66daNEuShziY9asOr_JFDxYSo6x3Ao6Z3gBiu4ym9RytkVENUZeiZxWGN6CYlPGLwmhCmClUBTy1LMs3l-ESvRShFGJMXhk-R6BjA_y7Ih1BL8oXi8fVnZzix0vMLg8kPBywwRH_Wft6YZdRMl9AwhooTveonOuho2hB_tZMFdQespC43NpdzJ4-3uHbrJbbkdBX1WgyAn_B1EfztoMzCVgBd9oJnr1YboZUtE2VNqvr14haLazs_D3B2fJQtS_LZjZd9K1CY-f8NCVE4OYM3cTRtZLPcpmzYWtTIb2ECwYZtqzrf-RkPWoK6P7l0Mc2p3OMcr45kKLtoXM_ecAaLtfy97gtYkJux_cSRqdc764wrkED97adzqMMDYL0vImE4TNPqoFJgB56AYp7Gu54-Zif22ELWyUwIYsDOy52sEa8lA8lzAX2AbR3O0_upKZKSH0zbbR-_x9-XA0jgkm7CNMbAEmTsp8A40qxmuulx0hEFTHLT8vz-9JQrTS4X_5cfgUyCfc9JWqhoWazjFl25APNTtUJPO30EGoRQu94wW407i7MzdcT8xShPSEcFW0mUxCOUDVAo_rYU5mBPYOTUrAo5j-dsVYsv7CsIXUhCRtbFNXEp4uvYrsF8jRBnrenlcIb3BsfYF2C4ao_g68zm3pSZvqOuMipAOdKqcE8TcxHquxrrbJ-E01LHW6mi8kzb9TwfDMTRvknHtYD54W3Hw5ftTPPmBlRepWVCOJ0Gy2JIVETga3jA35oR1HLjtxtcb3Xzp1qptPLMpU89HjjvuHaa0j4OgsJ27NWgi-zmJ3Dc_frID2EUw7od9x06-32loZi-0kN9zlu_dShMWZLwIfbjZ-r_-WOvSfze_KR_cTXBHv8_NLAtQ8IEiKpuZvhM6mg59kgEphlDh1xl5QeVhxh98kI37bM87efxA6hKVnElYc5gu9eHmLU9zYxIV5lujaj_4VcQ1ZAIq5w7cD-VCKChDXnkS3WakaKUJXvfjyrpvkT9qaJNW7p4sxypNKTp-F-RKa5deQPIXGvNF3OZ9yqBwdkCzRBHst6J1HpFQH0pW3U53UTpe_2_WLIzgfEgStIMueyR9foIzNCQ7P-vguzYdPSoOB2kOJOC4px-_5b6sNnGQt9Gm-Ti4OH5QLHWG3GnkWqQ1GrSalEQB2sfRmDXJsUWLE61RRUFaKBIPwcU6QaEsKTPpfbYV5ioMp0LYSN8yLrie4gqCYGbzdRGTSN5USaIJeBvAdcIGaoDn2u0liFEAK54gQfDTY4PQnRI7kL9BMRWsMl9A5JQlO-1zFB-cad-YlTK_8Wpxwp-OYyhiYMZ0LqjJfrf2vbELJGTLxcpo5gL0gKlk_eAhKSCeE7p5C-fWgj_6nJXiL_okOQLEldnJuAKlBZuhtP5IOLGkMvJi-MzwhuzZN5gtXzAWoozc2hq204tISrDKysxUW1TDD-rYbBmLaeIqUDbhLbm8S2oHl7hOv6Sccvv8iP4_GSOwZkbU6rqFSvLjlWVPLrRWEtIkdBVkx15LqtaPGc46gHVynafSxZ8fOf6B0YClLXSOBrbE3bzRRWOd4KFKG59eKwNC396-fbrOFuG18jFdHxgXsp8k5FnGuB_LVNK8YMNo7bRoG32vqp73zGCHCuh-ZJDqRfopwJaLpMAYtb5i-miuS_FMsvc4gTkybJKVDP1CPgF_j4PKg93HCi-vJRMjnSAW6a5zEwvOR54mm-Q127VfrnhoPOetaW5cGM-X1U0SX8PochyVaoQnw46SAjjaTneP5k59SRiM27dOPtfe3I6HRsVqhziz8Guaq4I-TpD76-8PJ2h4YWDHeijIlob-0roril9iYFQyoj3rN-xQaOn81SBiy4gZIfuaIvTzVlj1BPXhJ7oRb2sYJYT-NX6dJQvpO_JmFCx4PImmKuvbZYU780_1a-XPMfUenyGq4KoJShgDmIDz1jCdRt7nhlx8V95ruO74RL0cWqbWIE4nlLofCUd7q0E0ATTcJRmB5b-h4h9oHjjSnMCvl7CCzQU5A0TcOtQVMJ1PDNfvtJmkn-5iefR2ltiY-B41AEb0Rd_Ik2loQGYwUFs0BJ3TJKATbD0Ut-Kc9rNpPfL7_5d2hzTIzKyXSBBrV2KNTwCyJM6UVqjTkfYMHdkgHz2prGWO5FvwaU5WUV6pIBWHG65jolPhA3MP17E7_MZauxOeGwtYU5JDX_OOmNBOeqVbSyNpMDBn3KWq1uHaapigum1IrBe_1xVT3FtJ6yaEvDjNbIN-qCtukkgzDdPFNNKaXk5FJZtWujDqGxk3vhJnLg_AajPKErfb5w4mY5BcfdmY2g3sSn8DSc_UyXev57V2aXOgoxFjYHkpGxlfUS0KWToINLc9U-WIHPil6itlYd1CrFM6-JXWzBxVsU6rwD5pbYD5apUQ4-gc6O-KTXwnE1EA3oE7EGgbpt5bmCdybNpdO_d4B49UsjsvO5tg6XqTn7ChSRxNHj5hEJQZekhAdxVUm3eetoyX_ioDSqWw8rUGo569Rd5JW_iKzxrmpy1u3C-4QyKUXYnDg==.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_069b99318aebef3e016abc23d199ac819082a2bbc69732b9c1\",\"index\":0},{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqvCPWeBEAj3UHaO6bjk2L_O_NpEx9s3ufI-VJ5BakokJRHdneV0sBdWjUE7Q1C7AvxWXzSEaerEQtKcj9x_2RrOkQS7ttu4ph8SkhhIiD1LUV7WjfgREDaAuVwhYgIAGA9nqvv4A2N1_ibkwOCFi-L6zMX-eoToQTEE1zfG0AlsbUefgjov8bbYw3RTzheem9W0ipUNfIlXRyMskC9zR0zZoKhk66Pa3SnfVLabKF63US6kppHeokh8iFDtgPBTOj_58qJ2DeszrER1ZyruM54N5_c_uK66WGlA1-1fm_Hm3nafT9axPhSyF2Cg-fvzQswUnYlzZIQOt417Zv9fzGTMNTGck4saARLPwNJEzAuwShUGpe1cgqtmNRnsFu0xPQCBdEz-14E3YYF74ZgbPqZz75O_jfWTM6BvG_lFMWjgy1lRvaAEEoD1dFAK22jknYr4VgT3umtsXK7fzO_7d-DMUcaCfoVaejx5s1CZIo3AQXh5spYI9J2yq9e-8VJ_oJl-3mrcbCNGuAcORBTgFOHZtRZvnXpQXFKHqVagsHq2zQYRFhH7KEyybRFjtWDf8YXe0gMxxMRokJzWHeYmbgiubLD7l1x7wvePgum938Off8ZAGMdv-o6IbQcCIeJcI78Ftf-5bgbYGsSJXeWBG4OSgx9aITYWdrG9QZ0c_z3Utd2yNC_1B7EElIJdSXJVhfCp3s_P4lK5n1VgziDfs-JQsHU9uqAOJBaTa8ifr8Q0ML_F77nb37zUdKgX0CBX0lGL6jGQM6WsY09L8PO4FJJTf_1QXtqK6ZsRdmlkpML_fxsag9TZ1lXaWs_Hff7ZyZGv1bdWPk_zh8HItjXuaD4EvwFY5X1sVGp0A5tVt7jFkzQAspz7QyVrhzolM6CPdsn1ZeLE6LwgeGrf0-3CPGnHstP9_wprOuHROps-cgZjqr1xjiodmS85FwhSChOupcMb0xKcV1yRMbyX1T36HzSalVWNclAJep-NgyHDr-_eHiw6LEhkCqV7tV6GlfbW8ayCJBGaJa1NTt59XjyFsuSJs4LOmqMkjl9vKnsbF5yetJege6zT1cAXZ6wtqXk0kxuoVLxa5fvw12rmWTlhtgfmMuk57EaovvjH-Vx0baSy1nx-xQQfMI8e175dxWoT_IPN4JNpamOwjCMcgk-JgMAsT25LaN9IXKmNtchi8EqTRcOfv_dCvl_0quPO2q8nJ-Sqhffmb0txXHXkMVH3E1ZeXEouAEj7s441R67Fvdg5vH70etAk6pT4fr3_pG7JeBvq1-8XLpoYvDTQG1yrOJhPkDpGqZjSwnhgVXwr_BqZ3wHF3bHiH2C6WRRpwhzmteOq0lcLZFKl6T8IBHY_IyRtQ4ctSFTyNIAq4iVyqsWlOnKS_5fLfvWSHu91e3sSTqaxvHTJwHQzxiotaN1s5aQLE2DYk7I6ZIgJUaMg_wm_Eua7NTVpnl6xzingenuIu6MZUsNQrDO0n4DY4hxZ9Q17svPpfM44CMQy2mN5n7Eo8j9ai38jyY3KxiODHOjoD4sEcePva0jpHpomdmwr7lXGgaeVIr6SdeG1B9PHAckEX-tEa-LOFf2_LeYk9higmAvtlzAzSw5jn0NePoiXp13z2Cp8qHX4hCEsLkMluplYs9GOws4D06vGrW0Tae_nyfj6iQRh7PVJgw0lgx3LNiNrxs2QlZEaNjjIk8xsNvhQwuOsaa5QdjrLanzJuq1nySmTsPXdMQCljGRhPoTz4GZ7d0_xU9JuSQ3F_QuLxrgh86CJ463isfQ9Jank0ROWRrrPapgfEHgth59TqCcP1eOluZOdzwK5H9VhZuEvuHJ8SCN6EooAR23KyHI3qdTjUxAramyV5IniZQn0aGtauXL2pi2c9GZ_EGfPBnsrY0k3z_D117EtDq2g1oD5Xn5cyClprzA9XqYEGByZY_38XMpzfIRfgOPURQhQazxiUUP_sAtrk=.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_069b99318aebef3e016abc23d4d31c8190b1567e675324338a\",\"index\":1}]}}],\"usage\":{\"prompt_tokens\":1737,\"completion_tokens\":1124,\"total_tokens\":2861,\"cost\":0.000693264,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":1294,\"cache_write_tokens\":440,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.000693264,\"upstream_inference_prompt_cost\":0.000075064,\"upstream_inference_completions_cost\":0.0006182},\"completion_tokens_details\":{\"reasoning_tokens\":653,\"image_tokens\":0,\"audio_tokens\":0}}}"
+        \\\"The system is used to make credit decisions, and no different purpose
+        is described.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"conditions\\\":
+        [\\n    {\\n      \\\"id\\\": \\\"c1\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c2\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c3\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c4\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c5\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c6\\\",\\n      \\\"answer\\\": \\\"unknown\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c7\\\",\\n      \\\"answer\\\": \\\"no\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c8\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c9\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"c10\\\",\\n      \\\"answer\\\": \\\"yes\\\"\\n
+        \   }\\n  ],\\n  \\\"legacy\\\": {\\n    \\\"placed_before\\\": {\\n      \\\"answer\\\":
+        \\\"yes\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"fact\\\":
+        \\\"The company has already recalibrated and is running the system.\\\",\\n
+        \     \\\"fact_numbers\\\": []\\n    },\\n    \\\"significant_design_change\\\":
+        {\\n      \\\"answer\\\": \\\"unknown\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n
+        \     \\\"fact\\\": \\\"The description does not say whether a significant
+        design or purpose change is planned or foreseen for on or after 2 December
+        2027.\\\",\\n      \\\"fact_numbers\\\": []\\n    },\\n    \\\"for_public_authority\\\":
+        {\\n      \\\"answer\\\": \\\"unknown\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n
+        \     \\\"fact\\\": \\\"The description does not say whether public authorities
+        are meant to use the system.\\\",\\n      \\\"fact_numbers\\\": []\\n    }\\n
+        \ }\\n}\", \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 2157, \"completion_tokens\":
+        2159, \"total_tokens\": 4316, \"cost\": 0.001307361, \"is_byok\": false, \"prompt_tokens_details\":
+        {\"cached_tokens\": 1396, \"cache_write_tokens\": 758, \"audio_tokens\": 0,
+        \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\": 0.001307361,
+        \"upstream_inference_prompt_cost\": 0.000119911, \"upstream_inference_completions_cost\":
+        0.00118745}, \"completion_tokens_details\": {\"reasoning_tokens\": 1507, \"image_tokens\":
+        0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
       - application/json
