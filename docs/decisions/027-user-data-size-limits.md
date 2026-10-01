@@ -71,12 +71,21 @@ half the memory goes to shared buffers, the OS and the other connections, which 
 - **Concurrency:** the user's `storage_usage` row is the per-user lock, held until the transaction ends. A second
   writer for the same user waits, then re-reads the committed total and is checked against it. That row lock does
   the job of a per-user `pg_advisory_xact_lock`, so none is taken.
-- **Lock order:** a statement-level `before` trigger (`private.lock_storage()`) locks the caller's
-  `storage_usage` row before any row is written, so every writer takes its locks in the same order: the total
-  first, then the rows and the KEY SHARE locks of their foreign keys. With the total locked only in the `after`
-  row trigger, `delete_my_data` (which locks the total on the answers, then deletes the systems) and a concurrent
-  classification insert (which holds KEY SHARE on its system, then waits for the total) deadlocked (40P01). A
-  two-connection test reproduced that before the fix and passes after it.
+- **Lock order:** every writer of a user's data locks that user's `storage_usage` row first, then the rows and the
+  KEY SHARE locks of their foreign keys (on the parents and on `auth.users`).
+  - **Session writes** (the Data API, the RPCs): a statement-level `before` trigger (`private.lock_storage()`)
+    locks the caller's total (`auth.uid()`) before any row is touched. With the total locked only in the `after`
+    row trigger, `delete_my_data` (which locks the total on the answers, then deletes the systems) and a concurrent
+    classification insert (which holds KEY SHARE on its system, then waits for the total) deadlocked (40P01).
+  - **The inactivity cleanup** (`private.purge_inactive_anonymous_users`, the only delete from `auth.users`)
+    locks its targets' totals (`for update`, in user_id order) before it deletes them. Otherwise it held the
+    `auth.users` row and reached the total only through the cascade, so a write racing the cleanup of the same user
+    deadlocked, and if the cleanup was the one aborted, that day's purge rolled back. While it holds the totals the
+    targets cannot write, and the delete re-checks the inactivity rule with a fresh snapshot.
+  - **Not covered:** writes as postgres on another user's behalf (no `auth.uid()`; the after-row trigger still
+    keeps the total correct). Also a user's very first write racing their own cleanup: their total doesn't exist
+    yet, so there is nothing to lock, but a user who has never written is purged only after 30 days of no activity.
+  - Two-connection tests reproduced both deadlocks before the fixes and pass after them.
 - **Resulting quota:** about **130 typical** (30 kB) or **15 maximum-size** (256 kB) classifications per user,
   with their systems and answers.
 
@@ -90,7 +99,8 @@ a real export is older than the new owner, and the import must keep its dates an
 ## Consequences
 - **Where it lives:**
   - `supabase/migrations/20261001190510_user_data_size_limits.sql`: the cap, the budget, the trigger and the backfill.
-  - `supabase/migrations/20261001194931_storage_lock_order.sql`: the lock order.
+  - `supabase/migrations/20261001194931_storage_lock_order.sql` and `20261001200031_purge_lock_order.sql`: the
+    lock order for session writes and for the cleanup.
   - `supabase/migrations/20261001182534_created_at_floor.sql`: the date floor.
   - `20261001181716_import_size_cap.sql` (which dropped the cap) is superseded.
   - The tests are in `backend/tests/db/test_user_data_schema.py`:
@@ -98,7 +108,8 @@ a real export is older than the new owner, and the import must keep its dates an
     - A full-budget round trip, the budget and delete tests, and an import past the budget.
     - A per-table test that a row's stored size equals what it adds to the export, and one that a write which
       doesn't grow the data passes over the budget.
-    - Two-connection tests: the budget race, and the delete-versus-insert deadlock.
+    - Two-connection tests: the budget race, the delete-versus-insert deadlock, and the cleanup-versus-write
+      deadlock.
 - **Changing the cap** means editing `max_bytes` in `import_my_data`, `budget` in `private.track_storage()` and the
   two test constants together; the round-trip test fails if the budget no longer fits the cap.
 - **Keep the measure in step:** `private.export_bytes()` mirrors the objects `export_my_data()` builds. If the

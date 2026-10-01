@@ -838,6 +838,38 @@ def test_a_future_timestamp_in_an_import_does_not_block_the_cleanup(
     assert not _user_exists(db, user)
 
 
+def test_the_cleanup_racing_a_write_does_not_deadlock(db_connection: psycopg.Connection) -> None:
+    """The cleanup locks its targets' storage totals before it deletes them, like a user's write,
+    so a write racing the cleanup of the same user waits instead of deadlocking. A blocker holds
+    one of the user's rows to stop the cleanup half-way through its cascade. The cleanup is rolled
+    back (it would delete every anonymous user inactive by then, and the shared database holds
+    no others it may delete)."""
+    admin = db_connection
+    with (
+        _committed_user(admin) as (user, rows),
+        psycopg.connect(_database_url()) as blocker,
+        psycopg.connect(_database_url()) as purger,
+        psycopg.connect(_database_url()) as writer,
+        ThreadPoolExecutor(max_workers=2) as pool,
+    ):
+        purger_pid, writer_pid = _pid(purger), _pid(writer)
+
+        def write() -> None:
+            with as_user(writer, user), writer.transaction():
+                _add_classification(writer, rows["systems"], 0)
+
+        blocker.execute("select from classifications where user_id = %s for update", (user,))
+        purging = pool.submit(_purge, purger, RETENTION, "31 days")
+        _wait_until_blocked(admin, purger_pid)
+        writing = pool.submit(write)
+        _wait_until_blocked(admin, writer_pid)
+        blocker.rollback()
+        assert purging.result(timeout=LOCK_WAIT_SECONDS) >= 1
+        purger.rollback()
+        writing.result(timeout=LOCK_WAIT_SECONDS)  # the write goes ahead, no 40P01
+        writer.rollback()
+
+
 def test_cleanup_refuses_a_retention_under_one_day(db: psycopg.Connection) -> None:
     with pytest.raises(psycopg.errors.InvalidParameterValue), db.transaction():
         _purge(db, "1 hour")
