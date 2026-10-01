@@ -162,6 +162,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | --- | --- | --- | --- | --- | --- |
 | @fontsource-variable/geist | runtime | ^5.3.0 | 5.3.0 | OFL-1.1 | Self-host the Geist font in a neatly bundled NPM package. |
 | @fontsource-variable/newsreader | runtime | ^5.3.0 | 5.3.0 | OFL-1.1 | Self-host the Newsreader font in a neatly bundled NPM package. |
+| @fontsource/lexend | runtime | ^5.3.0 | 5.3.0 | OFL-1.1 | Self-host the Lexend font in a neatly bundled NPM package. |
 | @hookform/resolvers | runtime | ^5.9.1 | 5.9.1 | MIT | React Hook Form validation resolvers: Yup, Joi, Superstruct, Zod, Vest, Class V… |
 | @supabase/supabase-js | runtime | ^2.117.2 | 2.117.2 | MIT | Isomorphic Javascript SDK for Supabase |
 | @tanstack/react-query | runtime | ^5.104.0 | 5.104.0 | MIT | Hooks for managing, caching and syncing asynchronous and remote data in React |

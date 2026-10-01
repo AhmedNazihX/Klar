@@ -475,6 +475,10 @@
     "licence": "OFL-1.1",
     "summary": "Self-host the Newsreader font in a neatly bundled NPM package."
   },
+  "npm:@fontsource/lexend==5.3.0": {
+    "licence": "OFL-1.1",
+    "summary": "Self-host the Lexend font in a neatly bundled NPM package."
+  },
   "npm:@hey-api/codegen-core==0.9.1": {
     "licence": "MIT",
     "summary": "🧱 TypeScript framework for generating files."

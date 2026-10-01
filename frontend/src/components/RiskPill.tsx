@@ -14,18 +14,18 @@ const pillVariants = cva(
     variants: {
       kind: {
         prohibited:
-          'bg-risk-prohibited-fill text-risk-prohibited shadow-[inset_0_0_0_1px_var(--color-risk-prohibited-ring)]',
+          'bg-risk-prohibited-tint text-risk-prohibited shadow-[inset_0_0_0_1px_var(--color-risk-prohibited-ring)]',
         high_risk:
-          'bg-risk-high-fill text-risk-high shadow-[inset_0_0_0_1px_var(--color-risk-high-ring)]',
+          'bg-risk-high-tint text-risk-high shadow-[inset_0_0_0_1px_var(--color-risk-high-ring)]',
         limited_risk:
-          'bg-risk-limited-fill text-risk-limited shadow-[inset_0_0_0_1px_var(--color-risk-limited-ring)]',
+          'bg-risk-limited-tint text-risk-limited shadow-[inset_0_0_0_1px_var(--color-risk-limited-ring)]',
         minimal_risk:
-          'bg-risk-minimal-fill text-risk-minimal shadow-[inset_0_0_0_1px_var(--color-risk-minimal-ring)]',
+          'bg-risk-minimal-tint text-risk-minimal shadow-[inset_0_0_0_1px_var(--color-risk-minimal-ring)]',
         out_of_scope:
-          'bg-risk-out-fill text-risk-out shadow-[inset_0_0_0_1px_var(--color-risk-out-ring)]',
+          'bg-risk-out-tint text-risk-out shadow-[inset_0_0_0_1px_var(--color-risk-out-ring)]',
         // The uncertain statuses never look like a decided class: no dot, their own outline.
         legally_ambiguous:
-          'bg-status-ambiguous-fill text-status-ambiguous shadow-[inset_0_0_0_1px_var(--color-status-ambiguous-ring)]',
+          'bg-status-ambiguous-tint text-status-ambiguous shadow-[inset_0_0_0_1px_var(--color-status-ambiguous-ring)]',
         needs_more_information:
           'border-[1.5px] border-dashed border-status-info-ring bg-status-info-fill text-status-info',
       },

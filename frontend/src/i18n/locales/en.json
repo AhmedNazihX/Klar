@@ -19,13 +19,13 @@
   },
   "brand": {
     "title": "Brand tokens",
-    "intro": "The colours, type, glass and pills from the Brand board, as the app renders them.",
+    "intro": "The colours, type, glass and components of the Klar design system, as the app renders them.",
     "colour": "Colour",
     "pills": "Risk classes and statuses: always a word, never colour alone",
-    "voices": "Two voices",
-    "voicesFonts": "Geist and Newsreader",
+    "voices": "Three voices",
+    "voicesFonts": "Geist, Newsreader and Lexend",
     "productVoice": "The product speaks in Geist.",
-    "actVoice": "The Act speaks in Newsreader: every quoted provision, and the class itself.",
+    "actVoice": "The Act speaks in Newsreader: every quoted provision and drafted document.",
     "glass": "Glass recipe",
     "glassRecipe": "Fill white 68% to 30% at 150°. Blur 26 px, saturation 175%. Rim 1 px white 80%. Inner top highlight 1 px. Shadow 0 22 50 −20 ink at 30%. Text never sits on glass thinner than 40%.",
     "onLight": "On light",
@@ -35,7 +35,20 @@
       "ink": "Ink",
       "slate": "Slate",
       "lens": "Lens blue"
-    }
+    },
+    "verdictVoice": "Klar's verdict speaks in Lexend:",
+    "verdictSample": "High-risk",
+    "components": "Components",
+    "primaryAction": "Classify a tool",
+    "secondaryAction": "Edit description",
+    "addAction": "Add a tool",
+    "viewLabel": "View",
+    "summary": "Summary",
+    "reviewer": "Reviewer",
+    "statuses": "Statuses and evidence",
+    "icons": "Icons",
+    "law": "Law version",
+    "lawDateSample": "The high-risk duties for Annex III apply from <date/>."
   },
   "pill": {
     "prohibited": "Prohibited",
@@ -51,5 +64,31 @@
     "body": "This page could not be shown. Reload it, or go back to the start.",
     "home": "Back to the start",
     "notFound": "This page does not exist."
+  },
+  "status": {
+    "decided": "Decided",
+    "ambiguous": "Legally ambiguous",
+    "needs-info": "Needs more information",
+    "draft": "DRAFT"
+  },
+  "evidence": {
+    "stated": "Stated",
+    "inferred": "Inferred",
+    "assumed": "Assumed"
+  },
+  "citation": {
+    "englishOnly": {
+      "tag": "Official text available in English only",
+      "explanation": "There is no official German version of this text, so it is quoted in English."
+    }
+  },
+  "notice": {
+    "default": "Guidance, not legal advice. Klar is an AI system."
+  },
+  "law": {
+    "label": "Law version",
+    "amended": "As amended, 27 Jul 2026",
+    "original": "Original, 2024",
+    "notice": "You're viewing the original 2024 text. The Digital Omnibus moved the Annex III high-risk date to 2 December 2027; Klar uses the amended text by default."
   }
 }
