@@ -7,7 +7,9 @@ Each test runs as postgres inside the rolled-back `db` transaction; `as_user` sw
 """
 
 import json
+import time
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Any, LiteralString
@@ -18,6 +20,8 @@ import pytest
 from psycopg import sql
 from psycopg.abc import Params, QueryNoTemplate
 from psycopg.types.json import Jsonb
+
+from tests.db.conftest import _database_url
 
 pytestmark = pytest.mark.db
 
@@ -396,64 +400,205 @@ def test_export_then_import_keeps_content_dates_and_order(db: psycopg.Connection
     assert _counts(db, user_a) == {**dict.fromkeys(USER_TABLES, 2), "interview_answers": 0}
 
 
-JSONB_MAX_BYTES = 268435455
-"""Postgres's limit on one jsonb value, and so on the export_my_data() document."""
+IMPORT_MAX_BYTES = 4 * 1024 * 1024
+"""import_my_data's cap: one import needs about 20 times this in memory (decision 027)."""
 
-LARGEST_EXPORT_CLASSIFICATIONS = 1023
-"""Maximum-size classifications that fit in one export; one more exceeds JSONB_MAX_BYTES."""
+STORAGE_BUDGET = IMPORT_MAX_BYTES - 1024
+"""Bytes a user's rows may add to their export; 1 kB is left for the export's envelope."""
 
-ADD_MAXIMUM_CLASSIFICATIONS = """
+MAX_RESULT_TEXT = RESULT_MAX_BYTES - len('{"text": ""}')
+"""The longest `text` a {"text": ...} result can hold under the 256 kB result cap."""
+
+STORAGE_FULL = "PT507"
+IMPORT_TOO_LARGE = "PT413"
+LOCK_WAIT_SECONDS = 10
+
+ADD_CLASSIFICATION = """
     insert into classifications (system_id, risk_class, status, law_version, result, created_at)
-    select %(system)s, 'high_risk', 'decided', 'amended',
-           -- '{"text": ""}' is 12 bytes; the 4-digit index keeps the rows distinguishable.
-           jsonb_build_object(
-             'text', lpad(i::text, 4, '0') || repeat('x', %(max)s::integer - 12 - 4)
-           ),
-           now() - make_interval(secs => i)
-    from generate_series(%(start)s::integer, %(stop)s::integer) as i
+    values (%(system)s, 'high_risk', 'decided', 'amended',
+            jsonb_build_object('text', repeat('x', %(length)s::integer)),
+            now() - make_interval(secs => %(age)s::integer))
 """
 
 
-def _add_maximum_classifications(
-    db: psycopg.Connection, system: UUID, start: int, stop: int
-) -> None:
-    """As the current user: classifications `start`..`stop` of `system`, each result at the cap."""
-    db.execute(
-        ADD_MAXIMUM_CLASSIFICATIONS,
-        {"system": system, "max": RESULT_MAX_BYTES, "start": start, "stop": stop},
+def _add_classification(db: psycopg.Connection, system: UUID, length: int, age: int = 0) -> None:
+    """As the current user: a classification whose result text is `length` long, `age` s old."""
+    db.execute(ADD_CLASSIFICATION, {"system": system, "length": length, "age": age})
+
+
+@contextmanager
+def _raises_sqlstate(db: psycopg.Connection, sqlstate: str) -> Iterator[None]:
+    """The block fails with this SQLSTATE (inside a savepoint, so the test can go on)."""
+    with pytest.raises(psycopg.Error) as caught, db.transaction():
+        yield
+    assert caught.value.sqlstate == sqlstate
+
+
+def _usage(db: psycopg.Connection, user_id: UUID) -> int:
+    """The user's running storage total (as postgres)."""
+    row = db.execute(
+        "select bytes from private.storage_usage where user_id = %s", (user_id,)
+    ).fetchone()
+    return row[0] if row else 0
+
+
+def _classification_bytes(db: psycopg.Connection, length: int) -> int:
+    """The stored size of an ADD_CLASSIFICATION row whose text is `length` long (as postgres)."""
+    row = {
+        "risk_class": "high_risk",
+        "status": "decided",
+        "law_version": "amended",
+        "result": {"text": "x" * length},
+    }
+    return _one(db, "select private.export_bytes('classifications', %s)", (Jsonb(row),))
+
+
+def _filler_lengths(free: int, base: int, largest: int) -> list[int]:
+    """Result text lengths whose rows take exactly `free` bytes (at least one row)."""
+    count = (free - base) // largest
+    rest = free - count * largest  # base <= rest < largest + base
+    if rest - base <= MAX_RESULT_TEXT:
+        return [MAX_RESULT_TEXT] * count + [rest - base]
+    # Too much for one row: a row of `largest - base` bytes, and the rest (over `base`) in another.
+    return [MAX_RESULT_TEXT] * count + [MAX_RESULT_TEXT - base, rest - largest]
+
+
+def _fill(db: psycopg.Connection, user_id: UUID, system: UUID, leave: int) -> None:
+    """Classifications of `system` until exactly `leave` bytes of the budget are free (as postgres,
+    acting as `user_id`)."""
+    largest, base = _classification_bytes(db, MAX_RESULT_TEXT), _classification_bytes(db, 0)
+    free = STORAGE_BUDGET - _usage(db, user_id) - leave
+    with as_user(db, user_id):
+        for offset, length in enumerate(_filler_lengths(free, base, largest)):
+            _add_classification(db, system, length, age=offset + 1)
+    assert _usage(db, user_id) == STORAGE_BUDGET - leave
+
+
+def _user_with_system(db: psycopg.Connection) -> tuple[UUID, dict[str, UUID]]:
+    user = _create_user(db)
+    with as_user(db, user):
+        return user, _add_system(db)
+
+
+def test_an_export_at_the_full_budget_imports_and_round_trips(db: psycopg.Connection) -> None:
+    (user_a, rows), user_b = _user_with_system(db), _create_user(db)
+    _fill(db, user_a, rows["systems"], leave=0)
+    with as_user(db, user_a):
+        exported = _one(db, "select export_my_data()")
+    size = _one(db, "select octet_length(%s::jsonb::text)", (Jsonb(exported),))
+    assert IMPORT_MAX_BYTES - 2048 < size <= IMPORT_MAX_BYTES
+
+    with as_user(db, user_b):
+        db.execute("select import_my_data(%s)", (Jsonb(exported),))
+        reexported = _one(db, "select export_my_data()")
+    assert reexported["inventories"] == exported["inventories"]
+    assert _usage(db, user_b) == _usage(db, user_a) == STORAGE_BUDGET
+
+
+def _padded_document(db: psycopg.Connection, size: int) -> dict[str, Any]:
+    """An empty export whose text is exactly `size` bytes (import ignores the extra key)."""
+    base = _one(db, "select octet_length(%s::jsonb::text)", (Jsonb({**EMPTY_EXPORT, "pad": ""}),))
+    return {**EMPTY_EXPORT, "pad": "x" * (size - base)}
+
+
+def test_an_import_is_capped_at_four_megabytes(db: psycopg.Connection) -> None:
+    user = _create_user(db)
+    at_cap, over_cap = (
+        _padded_document(db, IMPORT_MAX_BYTES),
+        _padded_document(db, IMPORT_MAX_BYTES + 1),
+    )
+    with as_user(db, user):
+        added = _one(db, "select import_my_data(%s)", (Jsonb(at_cap),))
+        assert added == dict.fromkeys(USER_TABLES, 0)
+        with _raises_sqlstate(db, IMPORT_TOO_LARGE):
+            db.execute("select import_my_data(%s)", (Jsonb(over_cap),))
+
+
+def test_the_budget_rejects_a_write_that_would_exceed_it(db: psycopg.Connection) -> None:
+    user, rows = _user_with_system(db)
+    _fill(db, user, rows["systems"], leave=_classification_bytes(db, 10))
+    with as_user(db, user):
+        with _raises_sqlstate(db, STORAGE_FULL):
+            _add_classification(db, rows["systems"], 11)
+        with _raises_sqlstate(db, STORAGE_FULL):
+            db.execute("update interview_answers set answer = answer || repeat('y', 1000)")
+        _add_classification(db, rows["systems"], 10)
+    assert _usage(db, user) == STORAGE_BUDGET
+
+
+def test_deleting_frees_space(db: psycopg.Connection) -> None:
+    user, rows = _user_with_system(db)
+    _fill(db, user, rows["systems"], leave=0)
+    with as_user(db, user):
+        with _raises_sqlstate(db, STORAGE_FULL):
+            _add_classification(db, rows["systems"], 0)
+        db.execute("delete from classifications where id = %s", (rows["classifications"],))
+        _add_classification(db, rows["systems"], 0)
+        # Shrinking always passes, and deleting everything brings the total back to zero.
+        db.execute("update interview_answers set answer = ''")
+        db.execute("select delete_my_data()")
+    assert _usage(db, user) == 0
+
+
+def test_an_import_past_the_budget_adds_nothing(db: psycopg.Connection) -> None:
+    (user_a, _), (user_b, rows_b) = _user_with_system(db), _user_with_system(db)
+    with as_user(db, user_a):
+        exported = _one(db, "select export_my_data()")
+    _fill(db, user_b, rows_b["systems"], leave=100)
+    before = _counts(db, user_b)
+    with as_user(db, user_b), _raises_sqlstate(db, STORAGE_FULL):
+        db.execute("select import_my_data(%s)", (Jsonb(exported),))
+    assert _counts(db, user_b) == before
+    assert _usage(db, user_b) == STORAGE_BUDGET - 100
+
+
+def _waits_for_a_lock(db: psycopg.Connection, pid: int) -> bool:
+    return (
+        _one(db, "select wait_event_type = 'Lock' from pg_stat_activity where pid = %s", (pid,))
+        is True
     )
 
 
-def test_the_largest_possible_export_round_trips(db: psycopg.Connection) -> None:
-    user_a, user_b = _create_user(db, age="1 day"), _create_user(db, age="1 day")
-    # The document stays on the server: a temporary table carries it from A's session to B's.
-    db.execute("create temporary table exported (document jsonb) on commit drop")
-    db.execute("grant select, insert on exported to authenticated")
-    with as_user(db, user_a):
-        system = _add_system(db)["systems"]
-        db.execute("delete from classifications")
-        _add_maximum_classifications(db, system, 1, LARGEST_EXPORT_CLASSIFICATIONS)
-        db.execute("insert into exported select export_my_data()")
-        assert (
-            _one(db, "select octet_length(document::text) from exported") > 0.99 * JSONB_MAX_BYTES
-        )
-        # One more maximum-size classification and no export is possible: this one is the largest.
-        with pytest.raises(psycopg.errors.ProgramLimitExceeded), db.transaction():
-            _add_maximum_classifications(db, system, 0, 0)
-            db.execute("select export_my_data() is null")
+def test_concurrent_writes_cannot_both_pass_the_budget(db_connection: psycopg.Connection) -> None:
+    """Two sessions of one user, room for one more row: the second waits for the first, then fails.
+    The race needs a real commit, so this test commits a throwaway user and deletes it at the end.
+    """
+    admin = db_connection
+    admin.rollback()
+    user, rows = _user_with_system(admin)
+    _fill(admin, user, rows["systems"], leave=_classification_bytes(admin, 0))
+    admin.commit()
+    system = rows["systems"]
+    try:
+        with (
+            psycopg.connect(_database_url()) as first,
+            psycopg.connect(_database_url()) as second,
+            ThreadPoolExecutor(max_workers=1) as pool,
+        ):
+            with as_user(first, user):
+                _add_classification(first, system, 0)
+                second_pid = _one(second, "select pg_backend_pid()")
+                second.rollback()
 
-    with as_user(db, user_b):
-        added = _one(db, "select import_my_data(document) from exported")
-        assert added == {
-            "inventories": 1,
-            "systems": 1,
-            "classifications": LARGEST_EXPORT_CLASSIFICATIONS,
-            "interview_answers": 1,
-        }
-        assert _one(
-            db,
-            "select export_my_data() -> 'inventories' = document -> 'inventories' from exported",
-        )
+                def write_second() -> None:
+                    with as_user(second, user), second.transaction():
+                        _add_classification(second, system, 0)
+
+                pending = pool.submit(write_second)
+                deadline = time.monotonic() + LOCK_WAIT_SECONDS
+                while not _waits_for_a_lock(admin, second_pid):
+                    assert time.monotonic() < deadline, "the second write never waited"
+                    admin.rollback()
+                admin.rollback()
+            first.commit()
+            with pytest.raises(psycopg.Error) as caught:
+                pending.result(timeout=LOCK_WAIT_SECONDS)
+            assert caught.value.sqlstate == STORAGE_FULL
+    finally:
+        admin.rollback()
+        admin.execute("delete from auth.users where id = %s", (user,))
+        admin.commit()
+    assert _usage(admin, user) == 0
 
 
 @pytest.mark.parametrize(

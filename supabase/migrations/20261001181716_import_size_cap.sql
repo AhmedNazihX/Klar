@@ -1,12 +1,11 @@
--- import_my_data accepts every file export_my_data can produce (story P3b).
+-- import_my_data without the 5 MB cap (story P3b).
+-- Superseded by 20261001190510_user_data_size_limits.sql.
 --
--- The 5 MB cap from the user-data migration rejected genuine exports: a classification result may
--- be up to 256 kB, so about 20 maximum-size (or 170 typical) classifications already exceeded it.
--- The largest export is set by Postgres itself: export_my_data returns one jsonb value, and a jsonb
--- value holds at most 268435455 bytes (255 MiB; a larger one fails with "total size of jsonb ...
--- exceeds the maximum"). import_my_data's argument is a jsonb value too, so it has the same bound,
--- and a separate byte cap could only ever reject an export. The cap is therefore dropped; the format
--- and version checks still reject a file that isn't an export.
+-- The 5 MB cap could reject a genuine export (a classification result may be up to 256 kB), so this
+-- migration dropped it, relying on Postgres's 255 MiB limit on one jsonb value. That was wrong: one
+-- import needs about 20 times the document's size in backend memory, so a few large imports at once
+-- run the database out of memory (decision 027). The next migration restores a 4 MB cap and adds a
+-- per-user storage budget, so every export stays importable.
 --
 -- `create or replace` keeps the function's owner, grants and revokes; only the body changes.
 create or replace function public.import_my_data(data jsonb)
