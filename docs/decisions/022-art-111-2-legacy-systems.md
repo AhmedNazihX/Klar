@@ -46,6 +46,7 @@ The text both rest on (`data/parsed/ai-act-consolidated.en.jsonl`):
 | --- | --- | --- |
 | What counts as "placed on the market or put into service before" the route's Chapter III date (2 Dec 2027 Annex III, 2 Aug 2028 Annex I), while that date is still ahead | (A) already on the market or in use, or launched before the date; (B) as of today: only a system already on the market or in use on the assessment date | **B** |
 | Which duties the legacy marking covers | (A) only the route-dated high-risk (Chapter III) rows; Art. 4, Art. 50 and the Art. 53 flag keep their own dates (Art. 111(4) treats legacy Art. 50(2) separately, so Art. 111(2) isn't read as covering Art. 50); (B) every duty of the system ("this Regulation shall apply … only if") | **A** |
+| Whether a significant design change made before the date counts | (A) only changes "as from that date", as Art. 111(2) says; (B) a significant design change before the date also counts as changed (stricter than the text; full duties stay) | **B** (seen and approved in the wording review, 2026-10-01) |
 
 Consequences:
 - A planned launch, even one planned before the date, is "no": the full duties are listed, and the step adds,
@@ -55,5 +56,6 @@ Consequences:
   erheblich verändert, kann Art. 111 Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim Inverkehrbringen
   oder bei der Inbetriebnahme erneut.") The engine model can't tell a planned launch from a new system, so the sentence is added whenever the
   answer is "no" for a high-risk system.
-- A silent description gives "unknown" for each fact: the duties stay unmarked (an unknown public-authority answer
+- Only stated or inferred facts can mark duties: an assumed answer counts as "unknown", except a "no" on
+  placed before, which already keeps the full duties. A silent description gives "unknown" for each fact: the duties stay unmarked (an unknown public-authority answer
   takes the 2 Aug 2030 date) and the facts are asked as follow-up questions.

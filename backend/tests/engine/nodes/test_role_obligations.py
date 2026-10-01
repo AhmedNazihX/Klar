@@ -78,11 +78,11 @@ def legacy_answer(
     changed: Answer = Answer.NO,
     public_authority: Answer = Answer.NO,
 ) -> LegacyAnswer:
-    """The Art. 111(2) facts; the default is a system launched after its route's date."""
+    """The Art. 111(2) facts, all stated; the default is a system not yet on the market."""
     return LegacyAnswer(
         placed_before=key_fact(placed_before, EvidenceTag.STATED),
-        significant_design_change=key_fact(changed),
-        for_public_authority=key_fact(public_authority),
+        significant_design_change=key_fact(changed, EvidenceTag.STATED),
+        for_public_authority=key_fact(public_authority, EvidenceTag.STATED),
     )
 
 
@@ -973,6 +973,72 @@ def test_a_law_version_without_duties_drops_the_legacy_facts() -> None:
     assert LEGACY_ARTICLE not in cited(outcome)
     assert outcome.follow_up_questions == ()
     assert "Art. 111(2)" not in outcome.step.decision
+
+
+def test_assumed_answers_never_mark_duties_and_are_asked() -> None:
+    # The base prompt primes "no (assumed)" for silent switches: under Art. 111(2) an assumed
+    # "no" design change or public use settles nothing.
+    legacy = legacy_answer(Answer.YES).model_copy(
+        update={
+            "significant_design_change": key_fact(Answer.NO),
+            "for_public_authority": key_fact(Answer.NO),
+        }
+    )
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert [q.id for q in outcome.follow_up_questions] == [
+        "significant_design_change",
+        "for_public_authority",
+    ]
+    assert "Art. 111(2)" not in outcome.step.decision
+
+
+def test_an_assumed_launch_before_the_date_is_asked() -> None:
+    legacy = legacy_answer(changed=Answer.NO).model_copy(
+        update={"placed_before": key_fact(Answer.YES)}
+    )
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert [q.id for q in outcome.follow_up_questions] == ["placed_before_chapter_iii"]
+
+
+def test_an_assumed_no_launch_keeps_the_full_duties_and_the_check_again_sentence() -> None:
+    legacy = legacy_answer().model_copy(update={"placed_before": key_fact(Answer.NO)})
+    outcome = legacy_outcome(legacy)
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert outcome.step.decision.endswith(CHECK_AT_LAUNCH[Language.EN])
+    assert outcome.follow_up_questions == ()
+
+
+def test_a_design_change_skips_the_launch_question() -> None:
+    outcome = legacy_outcome(legacy_answer(Answer.UNKNOWN, Answer.YES, Answer.UNKNOWN))
+    assert {o.legacy for o in finding(outcome).obligations} == {None}
+    assert outcome.follow_up_questions == ()
+
+
+EVIDENCE_ANSWERS = [(answer, evidence) for answer in Answer for evidence in EvidenceTag]
+
+
+@pytest.mark.parametrize("placed", EVIDENCE_ANSWERS)
+@pytest.mark.parametrize("changed", EVIDENCE_ANSWERS)
+@pytest.mark.parametrize("public", EVIDENCE_ANSWERS)
+def test_only_settled_facts_can_mark_duties(
+    placed: tuple[Answer, EvidenceTag],
+    changed: tuple[Answer, EvidenceTag],
+    public: tuple[Answer, EvidenceTag],
+) -> None:
+    legacy = LegacyAnswer(
+        placed_before=key_fact(*placed),
+        significant_design_change=key_fact(*changed),
+        for_public_authority=key_fact(*public),
+    )
+    marks = {o.legacy for o in finding(legacy_outcome(legacy)).obligations} - {None}
+    if not marks:
+        return
+    assert placed[0] is Answer.YES and placed[1] is not EvidenceTag.ASSUMED
+    assert changed[0] is Answer.NO and changed[1] is not EvidenceTag.ASSUMED
+    if marks == {LegacyStatus.UNCHANGED}:
+        assert public[0] is Answer.NO and public[1] is not EvidenceTag.ASSUMED
 
 
 def test_the_legacy_facts_are_shown_as_facts_used() -> None:

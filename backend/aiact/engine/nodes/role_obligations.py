@@ -330,37 +330,46 @@ class LegacySettlement:
         return self.status is not None or self.check_at_launch
 
 
+def _settled_answer(key_fact: KeyFact) -> Answer:
+    """An assumed answer settles nothing under Art. 111(2): it counts as unknown and is asked."""
+    return Answer.UNKNOWN if key_fact.evidence is EvidenceTag.ASSUMED else key_fact.answer
+
+
 def settle_legacy(answer: RoleAnswer, route: HighRiskRoute | None) -> LegacySettlement:
     """Apply Art. 111(2) to the answers, as of the assessment date (user decision, 2026-10-01):
     only a system already on the market or in use counts as placed before the route's date. One
     that isn't yet keeps its duties as usual, with a note to check again at launch (the model
-    can't tell a planned launch from a new system, so every "no" gets it). One whose design
-    changes keeps its duties too, and the later facts aren't relied on. An unknown
-    fact counts the stricter way (not placed before the date, changed, for public authorities:
-    the earlier deadline) and is asked as a follow-up question."""
+    can't tell a planned launch from a new system, so every "no" gets it, assumed or not). One
+    whose design changes keeps its duties too, and the launch and public-use facts aren't relied
+    on or asked. Otherwise an assumed answer counts as unknown, so only stated or inferred facts
+    can mark duties, and an unknown fact counts the stricter way (not placed before the date,
+    changed, for public authorities: the earlier deadline) and is asked as a follow-up question."""
     if not isinstance(answer, HighRiskRoleAnswer) or route is None:
         return LegacySettlement()
     legacy, keys = answer.legacy, legacy_questions(CHAPTER_III_DATES[route], LEGACY_ARTICLE)
-    chain = (
-        (legacy.placed_before, keys.placed_before),
-        (legacy.significant_design_change, keys.design_change),
-        (legacy.for_public_authority, keys.public_authority),
-    )
     if legacy.placed_before.answer is Answer.NO:
-        chain = chain[:1]
-    elif legacy.significant_design_change.answer is Answer.YES:
-        chain = chain[:2]
+        return LegacySettlement(route=route, used=(legacy.placed_before,), check_at_launch=True)
+    placed = _settled_answer(legacy.placed_before)
+    changed = _settled_answer(legacy.significant_design_change)
+    public = _settled_answer(legacy.for_public_authority)
+    chain = (
+        (legacy.placed_before, placed, keys.placed_before),
+        (legacy.significant_design_change, changed, keys.design_change),
+        (legacy.for_public_authority, public, keys.public_authority),
+    )
+    if changed is Answer.YES:
+        # The duties apply as usual whatever the launch or public use: ask neither.
+        chain = tuple(link for link in chain[:2] if link[1] is not Answer.UNKNOWN)
     status = legacy_status(
-        placed_before=legacy.placed_before.answer is Answer.YES,
-        significantly_changed=legacy.significant_design_change.answer is not Answer.NO,
-        for_public_authority=legacy.for_public_authority.answer is not Answer.NO,
+        placed_before=placed is Answer.YES,
+        significantly_changed=changed is not Answer.NO,
+        for_public_authority=public is not Answer.NO,
     )
     return LegacySettlement(
         status=status,
         route=route,
-        used=tuple(key_fact for key_fact, _ in chain),
-        questions=tuple(question for key_fact, question in chain if not key_fact.is_known),
-        check_at_launch=legacy.placed_before.answer is Answer.NO,
+        used=tuple(fact for fact, settled, _ in chain if settled is not Answer.UNKNOWN),
+        questions=tuple(question for _, settled, question in chain if settled is Answer.UNKNOWN),
     )
 
 
@@ -567,11 +576,12 @@ def to_outcome(
     language = state["language"]
     risk_class, route = working_class(state)
     settled = settle_role(answer, risk_class)
-    holds_version = (table or default_table()).law_version is state["law_version"]
-    # Art. 111(2) only qualifies duties the table served; without them it says nothing.
+    source_table = table or default_table()
+    # Decided once: without duties for this law version, Art. 111(2) says nothing either.
+    holds_version = source_table.law_version is state["law_version"]
     legacy = settle_legacy(answer, route) if holds_version else LegacySettlement()
     missing = settled.missing[0] if settled.missing else None
-    obligations, summary = select_obligations(answer, state, settled, table, legacy)
+    obligations, summary = select_obligations(answer, state, settled, source_table, legacy)
     source = data_dir or get_settings().aiact_data_dir
     cited = (*settled.cited_articles(), *((LEGACY_ARTICLE,) if legacy.cites_rule else ()))
     step = StepResult(
@@ -598,25 +608,24 @@ def select_obligations(
     answer: RoleAnswer,
     state: EngineState,
     settled: RoleSettlement,
-    table: ObligationTable | None = None,
+    table: ObligationTable,
     legacy: LegacySettlement | None = None,
 ) -> tuple[tuple[Obligation, ...], tuple[str, ...]]:
     """The duties of the settled role and the role it keeps, less those whose condition doesn't
     apply, marked as Art. 111(2) leaves them, and the sentences that summarise them for the
-    step's decision."""
+    step's decision. None when `table` doesn't hold the state's law version."""
     language, law_version = state["language"], state["law_version"]
     risk_class, route = working_class(state)
     texts = TEXTS[language]
     roles = (settled.role, *((settled.also_role,) if settled.also_role else ()))
     legacy = legacy or LegacySettlement()
-    try:
-        lists = [
-            list_obligations(role, risk_class, route, law_version, table, legacy=legacy.status)
-            for role in roles
-        ]
-    except UnknownLawVersionError:
-        held = (table or default_table()).law_version.value
+    if table.law_version is not law_version:
+        held = table.law_version.value
         return (), (texts["no_table"].format(version=held, asked=law_version.value),)
+    lists = [
+        list_obligations(role, risk_class, route, law_version, table, legacy=legacy.status)
+        for role in roles
+    ]
     listed = tuple(dict.fromkeys(o for duties in lists for o in duties.obligations))
     ids = condition_ids(conditions_to_ask(risk_class, route, law_version, table))
     by_id = {given.id: given.answer for given in answer.conditions}
