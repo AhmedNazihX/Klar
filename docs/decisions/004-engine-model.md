@@ -39,6 +39,36 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
   generation id or an unreadable record (`served_as_pinned: null`). The pinned names are `Azure` for Luna and
   `Google` for Gemini on Vertex, where Google AI Studio, which isn't ZDR, would show as `Google AI Studio`. The
   record names the provider, not the region: the EU region rests on the pinned endpoint with fallbacks off.
+- **Late generation records (deferred check, added after the first paid run).** In the first paid run on
+  2026-10-01 (Luna run `d33c31fa-6183-45f1-bee0-0e86606e2ef8`, Gemini run `62fb71eb-b738-4ba6-a81e-3c50a8f0325b`),
+  16 Luna and 9 Gemini probes were stored as failed although the model had replied in full: their generation
+  record didn't show up within the ~18 s lookup (`not_pinned` = "generation … not found after 12 attempts").
+  Under a real run's load, OpenRouter writes the records later than that. So a record that isn't found in time no
+  longer fails the probe during the run. The probe is stored as *pending* (`scores.pending_verification`), with
+  its kind (answered or broken) and its correctness kept. Once every probe of a model has run, and before its run
+  is marked finished, the pending records are looked up again, all together, with a much longer window: one
+  request per missing record per round, with waits of 5, 10, 20, 40 and then 60 s between rounds, for at most
+  5 minutes per run (`DEFERRED_BUDGET_SECONDS`); each request still times out after 5 s. If every call of the
+  probe is shown to come from the pinned provider, the probe keeps its score. If one came from another provider,
+  or a record still isn't there, the probe becomes failed (no answer), as before. Each settled row says what was
+  found in `predicted.smoke.deferred_check`. A row still pending (only a run that stopped before the check
+  leaves one) counts as failed, and such a run isn't compared anyway.
+- **Recheck of stored runs (`aiact evaluate smoke-recheck <run id> …`).** The same longer lookup, for runs stored
+  before the deferred check existed. It makes no model call, only the free generation-record lookups, and
+  `--dry-run` prints what would change without writing anything. It looks again only at failed probes whose one
+  fault was a record not found in time: no `provider_error`, and a reply the run kept. It reads the reply from the
+  stored row the way the run classed it. A stored `error` from the node's schema or the result contract is a
+  broken answer; a reply cut off by the output cap raised one of those, so it stays broken. A transport,
+  provider or database error was never an answer, and such a probe is never rescored. With no `error`, the
+  stored outcome is the answer: it is read back and scored with the same matchers against the case's label, the
+  case loaded from `eval/cases/own` by its id. The recheck refuses a case that changed since the run. If every
+  call is confirmed on the pinned provider (the same exact name check: `Azure` for Luna, `Google` for Gemini),
+  the row gets that score (`failed: false`, `served_as_pinned: true`), and `predicted.smoke.recheck` keeps the
+  audit trail: when, the original `not_pinned`, the provider found, and `by: smoke-recheck`. If another provider
+  served it, the row stays failed and names that provider. If the record still isn't there, the row is left as
+  it is. The run's `config.rechecks` records each recheck (date, probes rechecked, confirmed, still failing),
+  and the run's status is never touched. Running it again changes nothing that is already settled. It then
+  prints each run's summary and the comparison below, still computed only from the stored rows.
 - **Broken** means the model answered but the answer didn't fit the node's JSON schema or the result contract
   (cross-field rules aren't in the schema, so contract failures count: decision 010 addendum). A reply cut off
   by the output cap (`finish_reason: "length"`) is broken too (decision 023 addendum, part 7). The nodes make no
