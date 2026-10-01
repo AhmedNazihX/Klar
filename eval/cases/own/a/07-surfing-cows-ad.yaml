@@ -1,0 +1,27 @@
+id: own-a-07-surfing-cows-ad
+set_name: own
+language: en
+description: >-
+  We're a family-owned dairy in Cork with 85 employees. Our autumn campaign is a series of short
+  video ads made with a generative video service we pay for monthly: a herd of cows in sunglasses
+  surfs huge waves and argues, in strong Cork accents, about whose milk makes the best butter. Our
+  two-person marketing team writes the prompts and approves every clip, and nothing in the videos
+  shows our real farm, staff or customers. The clips run on Instagram and TikTok from October 2026.
+  We picked the service partly because its interface is available in Irish.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["art:3:60", "art:50:4", "art:50:2", "art:3:4", "guide:guide-art50:para:113", "guide:guide-art50:para:116"]
+notes: >-
+  Draft, pending user approval. Trap: AI-generated video in an ad, but not a deep fake: cows that
+  surf and talk defy nature and have no potential to mislead, so the content doesn't resemble
+  existing subjects that would falsely appear authentic (Art. 3(60); guide para 113, "existing";
+  para 116 lists talking mice in a cheese ad as no deep fake). The dairy has no Art. 50(4) duty
+  and, as deployer (Art. 3(4)), only AI literacy (Art. 4). Class limited_risk, as in own-d-07: the
+  class describes the system, and the video service carries Art. 50(2) marking for its provider
+  (rule 2). Doubt: the sea and waves are realistic, but the content is assessed as a whole (guide
+  para 114).
+tags:
+  - "category:a"
+  - "trap:not_deep_fake"
+  - "obligation:art:4:1"

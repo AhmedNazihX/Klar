@@ -1,0 +1,27 @@
+id: own-a-09-newsroom-reviewed-drafts
+set_name: own
+language: en
+description: >-
+  We publish a regional daily newspaper in Tampere, Finland, in print and online, with a newsroom
+  of 60 journalists. Since spring 2026 reporters use a licensed AI writing tool to turn their notes
+  and press releases into first drafts of short news items, for example on municipal budgets or
+  road closures. Every draft is then fact-checked and reworked where needed by the reporter and
+  approved by the duty editor before it goes online, and the tool touches nothing after that. Our
+  editor-in-chief is legally responsible for everything we publish, and her name and contact
+  details are in our imprint. We also run a crossword app.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["art:50:4", "art:3:4", "guide:guide-art50:para:133", "guide:guide-art50:para:134", "guide:guide-art50:para:138"]
+notes: >-
+  Draft, pending user approval. Trap: the news items are AI-generated text on matters of public
+  interest, but the Art. 50(4) second-subparagraph exception applies: each draft has substantive
+  human review with fact-checking (guide para 134), no AI change follows sign-off (para 136), and
+  a named person holds editorial responsibility, published in the imprint (para 138, which gives
+  a newspaper under its editor-in-chief as an example). So the paper has no disclosure duty; as
+  deployer (Art. 3(4)) it has AI literacy only (Art. 4). Class limited_risk, as in own-d-07: the
+  writing tool carries Art. 50(2) marking for its provider (rule 2).
+tags:
+  - "category:a"
+  - "trap:editorial_exception"
+  - "obligation:art:4:1"

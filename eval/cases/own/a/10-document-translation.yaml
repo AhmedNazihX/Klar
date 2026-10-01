@@ -1,0 +1,28 @@
+id: own-a-10-document-translation
+set_name: own
+language: de
+description: >-
+  Wir sind ein Sprachtechnologie-Unternehmen aus Nürnberg mit 60 Beschäftigten. Unser Produkt
+  „Brückenschlag“ übersetzt Geschäftsdokumente wie Verträge, Handbücher und Präsentationen zwischen
+  18 Sprachen. Kunden laden die Datei hoch und bekommen sie übersetzt im selben Layout zurück;
+  Inhalt und Aussage bleiben gleich, eigene Texte oder Zusammenfassungen schreibt das System nicht.
+  Einen Chat gibt es nicht. Das neuronale Übersetzungsmodell haben wir selbst trainiert, auf dem
+  Markt sind wir seit 2023 und haben inzwischen rund 2.000 Firmenkunden in der EU. Im Frühjahr
+  haben wir unser Logo erneuert.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:50:2", "art:50:1", "guide:guide-art50:para:92", "guide:guide-art50:para:31"]
+notes: >-
+  Draft, pending user approval. Trap: the system produces new text, but Art. 50(2) does not apply
+  to the extent a system does not substantially alter the input or its semantics, and the
+  Commission lists "AI-generated translations of text" among the minor alterations that benefit
+  from the exception (guide para 92). Automated translation tools are listed as not interacting
+  directly with natural persons (guide para 31), so no Art. 50(1) duty either. No Annex III use, so
+  minimal_risk. Role: provider under its own name (Art. 3(3)); AI literacy (Art. 4) only. Doubt:
+  a freer translation that rewrites style or summarises would fall outside the exception; the
+  description rules that out.
+tags:
+  - "category:a"
+  - "trap:standard_editing_exception"
+  - "obligation:art:4:1"

@@ -1,0 +1,28 @@
+id: own-a-05-vacuum-ad-synthetic-customers
+set_name: own
+language: en
+description: >-
+  We're a home-appliance retailer with 120 stores across Poland and an online shop. For our new
+  cordless vacuum we made a 30-second video ad with a video-generation tool we subscribe to:
+  realistic-looking "customers" in a realistic flat show how easily it picks up crumbs and pet
+  hair, and say how happy they are with it. None of these people exist and nothing was filmed. The
+  ad runs on our website, on YouTube and on regional TV from October 2026. We didn't change the
+  tool in any way; our marketing team writes the prompts and picks the takes. The vacuum also comes
+  in a pink edition.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["art:50:4", "art:3:60", "art:3:4", "guide:guide-art50:para:113", "guide:guide-art50:para:124"]
+notes: >-
+  Draft, pending user approval. Class: the video is AI-generated content resembling persons and
+  places that could plausibly exist and would falsely appear authentic, so it is a deep fake
+  (Art. 3(60); guide para 113: simulated persons that "can plausibly exist" are enough). A
+  realistic ad showing simulated consumers using a product to persuade viewers is listed as not
+  evidently artistic or fictional (guide para 124, teleshopping example), so the full Art. 50(4)
+  disclosure applies, not the lighter one. Role: the retailer uses the tool under its authority
+  for its own ad, so it is the deployer (Art. 3(4)); the tool's provider carries Art. 50(2). Class
+  limited_risk: the system carries Art. 50 duties and this deployer has its own (rule 2).
+tags:
+  - "category:a"
+  - "obligation:art:4:1"
+  - "obligation:art:50:4"

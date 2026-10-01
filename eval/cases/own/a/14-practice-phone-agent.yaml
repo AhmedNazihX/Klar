@@ -1,0 +1,32 @@
+id: own-a-14-practice-phone-agent
+set_name: own
+language: de
+description: >-
+  Wir sind ein Anbieter von Praxissoftware aus Regensburg mit 90 Mitarbeitenden. Seit dem 17.
+  August 2026 bieten wir Arztpraxen ein Zusatzmodul an: Muss eine Praxis Termine verschieben, ruft
+  ein KI-Telefonagent die betroffenen Patientinnen und Patienten an, spricht mit ihnen in
+  natürlicher Sprache, schlägt neue Termine vor und trägt die Zusage direkt in den Kalender ein.
+  Die Stimme wird synthetisch erzeugt und klingt sehr menschlich. Medizinische Fragen beantwortet
+  der Agent nicht, die gibt er an das Praxisteam weiter. Das Sprachmodell darunter lizenzieren wir
+  von einem großen KI-Anbieter, das Modul läuft unter unserem Namen. Bisher nutzen es 140 Praxen
+  in Bayern.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:50:1", "art:50:2", "art:111:4", "art:3:3", "guide:guide-art50:para:31", "guide:guide-art50:para:45"]
+notes: >-
+  Draft, pending user approval. Class: the agent talks directly with patients, and an AI agent
+  must disclose both that it is an AI and on whose behalf it acts (Art. 50(1); guide para 31); a
+  human-sounding voice makes the "obvious" exception unavailable (guide para 45). It generates
+  synthetic speech, so outputs must be marked (Art. 50(2)). Trap: placed on the market on 17 August
+  2026, just after 2 August 2026, so no Art. 111(4) grace period for marking. Scheduling has no
+  medical purpose and no Annex III use, so not high-risk. Role: provider under its own name
+  (Art. 3(3)) building on a licensed general-purpose model (gpai_based; the model provider's
+  duties are only flagged); the practices are deployers.
+tags:
+  - "category:a"
+  - "gpai_based"
+  - "trap:no_grace_period"
+  - "obligation:art:4:1"
+  - "obligation:art:50:1"
+  - "obligation:art:50:2"

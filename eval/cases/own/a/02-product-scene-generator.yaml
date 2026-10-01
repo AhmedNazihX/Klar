@@ -1,0 +1,31 @@
+id: own-a-02-product-scene-generator
+set_name: own
+language: de
+description: >-
+  Wir sind ein Software-Haus aus Leipzig mit 25 Mitarbeitenden. Seit Februar 2025 verkaufen wir
+  Onlinehändlern ein Abo-Tool namens „Szenario“: Der Händler lädt ein Freisteller-Foto seines
+  Produkts hoch, etwa eines Sessels, wählt einen Stil wie „skandinavisches Wohnzimmer“, und unser
+  Bildmodell erzeugt daraus komplett neue, fotorealistische Raumszenen mit dem Produkt darin. Die
+  Bilder landen direkt im Shop-Backend der Kunden; einen Chat oder Assistenten gibt es nicht. Das
+  Modell haben wir selbst trainiert. Unsere rund 1.200 Kunden sitzen vor allem in Deutschland und
+  den Niederlanden. Nächstes Jahr ziehen wir in ein größeres Büro am Hauptbahnhof.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:50:2", "art:111:4", "art:3:3", "guide:guide-art50:para:58", "guide:guide-art50:para:153"]
+notes: >-
+  Draft, pending user approval. Class: the tool generates new synthetic images (guide para 58);
+  building a whole new scene around the product goes beyond standard editing (guide para 92, the
+  insertion of objects and composite images need marking), so the provider must mark the outputs
+  under Art. 50(2). Grace period: placed on the market in February 2025, before 2 August 2026, so
+  under Art. 111(4) the marking must be in place by 2 December 2026 (guide para 153); the duty is
+  listed, with that date. No Art. 50(1) duty: AI-assisted product visualisation such as room
+  staging and product rendering is listed as not interacting directly with natural persons (guide
+  para 31). Not high-risk. Role: provider under its own name (Art. 3(3)). Whether a shop's image
+  is a deep fake that misleads about the product (Art. 50(4); guide para 116) is the retailers'
+  question as deployers, not the provider's.
+tags:
+  - "category:a"
+  - "timing:art111_4_grace"
+  - "obligation:art:4:1"
+  - "obligation:art:50:2"

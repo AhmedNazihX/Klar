@@ -1,0 +1,32 @@
+id: own-a-11-email-tone-rewrite
+set_name: own
+language: en
+description: >-
+  We're a 30-person software company in Tallinn making "Inkwell", an email app for small
+  businesses. In September 2026 we added a "Polish" button: you write a draft, pick "more formal",
+  "friendlier" or "shorter", and the app rewrites your email in that tone using a language model
+  we fine-tuned ourselves. It keeps your facts, names and dates but may reorder sentences and swap
+  most of the wording; you see the new version and send it yourself. There is no chat, and it
+  never writes an email from scratch. Most of our 15,000 paying users are in the Baltics and
+  Finland.
+label:
+  risk_class: limited_risk
+  status: legally_ambiguous
+  role: provider
+label_citation: ["art:50:2", "guide:guide-art50:para:90", "guide:guide-art50:para:91", "guide:guide-art50:para:92"]
+notes: >-
+  Draft, pending user approval. Open question: is a tone rewrite that keeps the facts but
+  replaces most of the wording "standard editing" or a substantial alteration under Art. 50(2)?
+  Reading A (limited_risk, the stricter reading and the label): it is "paraphrasing or rewriting
+  text that changes style, structure" beyond minor stylistic polishing (guide para 92, semantic
+  changes that need marking; para 90: editing that changes style or intent goes beyond standard
+  editing), so the provider must mark outputs; placed on the market in September 2026, after 2
+  August 2026, so no Art. 111(4) grace period. Reading B (minimal_risk): the meaning is kept and
+  the user's own text is only polished, an assistive function for standard editing that does not
+  alter the semantics (guide paras 91-92), so no Art. 50(2) duty. No Art. 50(1) duty under either
+  reading: a one-button rewrite is closer to auto-completion than to a conversation (guide para
+  31). Role: provider under its own name (Art. 3(3)). Obligations follow reading A.
+tags:
+  - "category:a"
+  - "obligation:art:4:1"
+  - "obligation:art:50:2"

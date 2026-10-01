@@ -1,0 +1,31 @@
+id: own-a-03-trip-planning-chat
+set_name: own
+language: en
+description: >-
+  We're a 70-person online travel company in Milan. In May 2026 we launched "Wayfinder", a
+  trip-planning assistant on our booking site and app. Travellers chat with it in plain language
+  ("four days in Lisbon with two kids, not too much walking"), it asks follow-up questions and
+  then writes a day-by-day itinerary with restaurant tips, which they can book through us. It runs
+  on a large language model we license from a US provider, wrapped in our own prompts, booking
+  connections and safety filters, and it carries our brand. About 30,000 people used it over the
+  summer. The team behind it also looks after our loyalty programme.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:50:1", "art:50:2", "art:111:4", "art:113", "art:3:3", "guide:guide-art50:para:153"]
+notes: >-
+  Draft, pending user approval. Class: consumers chat with it directly (Art. 50(1)) and it writes
+  itineraries, which is synthetic text (Art. 50(2)); not high-risk, so limited_risk. Timing (the
+  point of this case): placed on the market in May 2026, before 2 August 2026. The Art. 111(4)
+  grace period covers only the Art. 50(2) marking duty, due by 2 December 2026; the Art. 50(1)
+  disclosure has applied since 2 August 2026 (Art. 113; guide para 153: partly interactive, partly
+  generative systems get the transition only for marking). Role: the company builds its own system
+  on a licensed general-purpose model and offers it under its own brand, so it is the provider
+  (Art. 3(3)) and a downstream provider; the model provider's Art. 53 duties are only flagged.
+tags:
+  - "category:a"
+  - "gpai_based"
+  - "timing:art111_4_grace"
+  - "obligation:art:4:1"
+  - "obligation:art:50:1"
+  - "obligation:art:50:2"

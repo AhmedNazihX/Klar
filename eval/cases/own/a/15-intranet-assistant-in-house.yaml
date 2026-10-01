@@ -1,0 +1,34 @@
+id: own-a-15-intranet-assistant-in-house
+set_name: own
+language: de
+description: >-
+  Wir sind ein Maschinenbauer aus Stuttgart mit 4.000 Beschäftigten. Seit März 2026 nutzt unsere
+  Belegschaft im Intranet „Frag Otto“, einen Assistenten, den unsere eigene IT auf Basis eines
+  offenen Sprachmodells gebaut hat. Er beantwortet Fragen zu IT-Problemen, Einkaufsrichtlinien und
+  Reisekosten und formuliert auf Wunsch Entwürfe, zum Beispiel für eine Bestellanforderung.
+  Verkauft oder an andere Firmen weitergegeben wird er nicht, er läuft nur bei uns. Wer ihn nutzen
+  will, muss vorher unsere Pflichtschulung zu KI-Werkzeugen absolvieren. Über Beschäftigte
+  entscheidet oder bewertet er nichts. Im Werk Esslingen testen wir gerade neue Kantinenzeiten.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:50:2", "art:3:3", "art:111:4", "guide:guide-art50:para:11", "guide:guide-art50:para:45", "guide:guide-art50:para:153"]
+notes: >-
+  Draft, pending user approval. Class: it writes drafts, which is synthetic text, so Art. 50(2)
+  marking applies; not high-risk (it decides nothing about staff, so no Annex III 4(b)). Trap: no
+  Art. 50(1) duty, because an internal assistant for trained, AI-literate staff is the guide's
+  example of an obvious interaction (guide para 45). Role: built in-house on an open model and put
+  into service for its own use, so the company is the provider (Art. 3(3); guide para 11, second
+  example) and also the deployer. Doubt on timing (not on the label): the system was put into
+  service, never placed on the market, before 2 August 2026. Art. 111(4) grants the grace period
+  to systems "placed on the market" before that date; the guide (para 153) says "placed on the
+  market or put into service". On the Act's wording marking has applied since 2 August 2026; on
+  the guide's, by 2 December 2026.
+tags:
+  - "category:a"
+  - "gpai_based"
+  - "also_role:deployer"
+  - "trap:obvious_interaction"
+  - "timing:art111_4_put_into_service"
+  - "obligation:art:4:1"
+  - "obligation:art:50:2"
