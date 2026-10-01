@@ -13,6 +13,7 @@ label:
   risk_class: prohibited
   role: provider
 label_citation: ["art:5:1:bb", "art:5:1a:a:ii", "art:113:a", "art:3:3"]
+as_of: 2026-12-28
 notes: >-
   Draft for the user's review (B5c). Class: Art. 5(1)(bb) prohibits AI systems that generate child
   sexual abuse material within Directive 2011/93/EU, Art. 2(c) and (e) (which include realistic
@@ -21,11 +22,10 @@ notes: >-
   training make that outcome reasonably foreseeable and reproducible without significant technical
   modification and it lacks reasonable safeguards: the tests show plain prompts produce it, and no
   safeguards or misuse handling exist. Date: late December 2026, after 2 December 2026
-  (Art. 113(a); tag as_of). Role: built and offered under its own name (Art. 3(3)): provider.
+  (Art. 113(a); as_of). Role: built and offered under its own name (Art. 3(3)): provider.
   Trap: the intended purpose is lawful adult content, so only the 1a(a)(ii) route settles it.
 tags:
   - "category:c"
-  - "as_of:2026-12-28"
   - "prohibition:art:5:1:bb"
   - "december_2026_prohibition"
   - "trap:foreseeable_outcome"

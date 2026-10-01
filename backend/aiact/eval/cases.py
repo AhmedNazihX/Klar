@@ -15,6 +15,7 @@ A rewritten Commission example (B4) carries its row's `accepted_bases`, `label_s
 import json
 from collections import Counter
 from collections.abc import Collection, Hashable, Iterable
+from datetime import date
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Self
@@ -195,6 +196,11 @@ class BenchmarkCase(ContractModel):
     )
     business_function: str | None = Field(
         default=None, pattern=SLUG_PATTERN, description="For example `hr`; W1 reports by it."
+    )
+    as_of: date | None = Field(
+        default=None,
+        description="The date the case is judged on, for a label that depends on it (the "
+        "December 2026 prohibitions); None means the run's date.",
     )
     notes: str | None = None
     tags: tuple[str, ...] = ()

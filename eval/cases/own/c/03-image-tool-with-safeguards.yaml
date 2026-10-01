@@ -14,6 +14,7 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:5:1a:a:ii", "art:5:1:ba", "art:50:2", "art:3:3", "art:3:68"]
+as_of: 2027-01-15
 notes: >-
   Draft for the user's review (B5c). Class: the tool can generate photo-style images of people,
   but generating intimate images is not its intended purpose, and Art. 5(1a)(a)(ii) prohibits
@@ -22,14 +23,13 @@ notes: >-
   safeguards to reliably prevent it. The facts state both safeguards and a failed red-team test,
   so Art. 5(1)(ba) is not met. It generates synthetic images (Art. 50(2)); placed on the market in
   October 2026, after 2 August 2026, so no grace period: limited_risk. Date: January 2027, after
-  2 December 2026 (tag as_of). Trap: an image generator that could in theory produce such images
+  2 December 2026 (as_of). Trap: an image generator that could in theory produce such images
   is not prohibited by that alone. Role: own product under its own name, built on a licensed
   general-purpose model (Art. 3(3), 3(68)); the model provider's duties are only flagged. Doubt:
   whether the safeguards "reliably" prevent the outcome is a factual judgement; the description is
   written to settle it.
 tags:
   - "category:c"
-  - "as_of:2027-01-15"
   - "december_2026_prohibition"
   - "trap:prohibition_not_met"
   - "gpai_based"

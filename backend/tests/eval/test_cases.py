@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -175,6 +176,27 @@ def test_ambiguous_label_with_notes_needs_no_citation() -> None:
         )
     )
     assert case.label_citation == ()
+
+
+def write_case_with_as_of(folder: Path, as_of: str) -> Path:
+    """A case file with an unquoted `as_of` line, as a hand-written case file has it."""
+    path = write_yaml(folder, "dated.yaml", VALID_CASE)
+    path.write_text(path.read_text(encoding="utf-8") + f"as_of: {as_of}\n", encoding="utf-8")
+    return path
+
+
+def test_a_case_date_loads_as_a_date(tmp_path: Path) -> None:
+    (case,) = load_yaml_file(write_case_with_as_of(tmp_path, "2026-12-15"))
+    assert case.as_of == date(2026, 12, 15)
+
+
+def test_an_invalid_case_date_fails_the_loader(tmp_path: Path) -> None:
+    with pytest.raises(CaseFileError, match=r"(?s)dated\.yaml\[0\].*as_of"):
+        load_yaml_file(write_case_with_as_of(tmp_path, "2026-1215"))
+
+
+def test_a_case_without_a_date_takes_the_run_date() -> None:
+    assert BenchmarkCase.model_validate(VALID_CASE).as_of is None
 
 
 @pytest.mark.parametrize("case_set", [CaseSet.ACADEMIC, CaseSet.APPLIEDAI])

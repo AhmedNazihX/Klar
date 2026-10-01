@@ -14,6 +14,7 @@ label:
   risk_class: limited_risk
   role: deployer
 label_citation: ["art:5:1:ba", "art:5:1a:b", "art:50:4", "art:3:60", "art:3:4"]
+as_of: 2027-03-01
 notes: >-
   Draft for the user's review (B5c). Class: the studio uses the software for the purpose of
   generating sexually explicit material of identifiable people (Art. 5(1a)(b)), but Art. 5(1)(ba)
@@ -22,14 +23,13 @@ notes: >-
   penalty for refusing, so (ba) is not met. The scenes are realistic AI-generated video of existing
   persons, i.e. deep fakes (Art. 3(60)), so the deployer must disclose them under Art. 50(4) (in a
   fictional work, in a way that doesn't hamper it): limited_risk (user rule 2: the class describes
-  the system, whoever bears its Art. 50 duties). Date: March 2027, after 2 December 2026 (tag
-  as_of). Role: uses a bought tool under its own authority, unchanged (Art. 3(4)): deployer. Trap:
+  the system, whoever bears its Art. 50 duties). Date: March 2027, after 2 December 2026
+  (as_of). Role: uses a bought tool under its own authority, unchanged (Art. 3(4)): deployer. Trap:
   the practice looks like (ba), but the consent exception settles it. Doubt: whether consent in a
   working relationship can be "freely given" is written to be settled by the facts (refusal has no
   effect on bookings).
 tags:
   - "category:c"
-  - "as_of:2027-03-01"
   - "december_2026_prohibition"
   - "trap:consent_given"
   - "obligation:art:4:1"
