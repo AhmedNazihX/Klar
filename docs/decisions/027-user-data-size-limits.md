@@ -56,7 +56,7 @@ half the memory goes to shared buffers, the OS and the other connections, which 
 - **Import cap: 4 MB** (`4 * 1024 * 1024` bytes of the document's text). `import_my_data` rejects a larger file
   with SQLSTATE **PT413**, which PostgREST answers with HTTP 413.
 - **Storage budget: the cap less 1 kB** (4193280 bytes) per user, across inventories, systems, classifications
-  and interview answers. The 1 kB covers the export's envelope (format, version, exported_at; about 100 bytes).
+  interview answers and duty progress (the fifth table, added by P19). The 1 kB covers the export's envelope (format, version, exported_at; about 100 bytes).
   A write that would push the total past the budget fails with SQLSTATE **PT507** (HTTP 507, "storage full"),
   and the whole statement rolls back, so an import that doesn't fit adds nothing. A write that doesn't grow the
   data always passes, so an account over the budget can still shrink.
@@ -66,7 +66,7 @@ half the memory goes to shared buffers, the OS and the other connections, which 
   an account within the budget always exports at or under the cap. Counting `created_at` at its widest keeps the
   size independent of the time and the session's time zone, so a row always subtracts what it added.
 - **How it's kept:** a running total per user in `private.storage_usage`, updated by an `after` row trigger
-  (`private.track_storage()`) on the four tables. A sum over the user's rows on every write would read up to 4 MB
+  (`private.track_storage()`) on the five tables. A sum over the user's rows on every write would read up to 4 MB
   per insert, and an import of n rows would read it n times.
 - **Concurrency:** the user's `storage_usage` row is the per-user lock, held until the transaction ends. A second
   writer for the same user waits, then re-reads the committed total and is checked against it. That row lock does
@@ -85,6 +85,10 @@ half the memory goes to shared buffers, the OS and the other connections, which 
   - **Not covered:** writes as postgres on another user's behalf (no `auth.uid()`; the after-row trigger still
     keeps the total correct). Also a user's very first write racing their own cleanup: their total doesn't exist
     yet, so there is nothing to lock, but a user who has never written is purged only after 30 days of no activity.
+  - **Run numbers** (P19): `private.number_run()` gives a classification the system's highest `run_no` plus one.
+    It is serialised by the same lock, so only for session writes: two server-side writers (no `auth.uid()`) for
+    one system could read the same maximum, and the unique key `(system_id, user_id, run_no)` would reject the
+    second. No server-side writer of classifications exists today.
   - Two-connection tests reproduced both deadlocks before the fixes and pass after them.
 - **Resulting quota:** about **130 typical** (30 kB) or **15 maximum-size** (256 kB) classifications per user,
   with their systems and answers.
@@ -111,8 +115,10 @@ a real export is older than the new owner, and the import must keep its dates an
       doesn't grow the data passes over the budget.
     - Two-connection tests: the budget race, the delete-versus-insert deadlock, and the cleanup-versus-write
       deadlock.
-- **Changing the cap** means editing `max_bytes` in `import_my_data`, `budget` in `private.track_storage()` and the
-  two test constants together; the round-trip test fails if the budget no longer fits the cap.
+- **Changing the cap** means editing `max_bytes` in `import_my_data`, `private.storage_budget()` (read by
+  `private.track_storage()` and `my_data_counts()`) and the two test constants together; the round-trip test fails
+  if the budget no longer fits the cap. `import_my_data` keeps its own constant because it runs as the caller, who
+  has no access to schema `private` (P19's `20261001204546_unique_keys_per_owner.sql`).
 - **Keep the measure in step:** `private.export_bytes()` mirrors the objects `export_my_data()` builds. If the
   export gains a field, `export_bytes` must gain it too; `test_a_rows_stored_size_is_what_it_adds_to_the_export`
   fails when the two differ. P19 (`20261001203029_user_data_screens.sql`) extended it to the company profile,

@@ -7,7 +7,7 @@ tests (RLS, timestamps, delete my data, the storage measure and the cleanup's ca
 """
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
+from typing import Any, LiteralString
 from uuid import UUID
 
 import psycopg
@@ -155,13 +155,42 @@ def test_user_b_cannot_read_or_change_user_a_profile_runs_or_ticks(db: psycopg.C
     with as_user(db, user_b):
         assert db.execute("select company_name, size_class from inventories").fetchall() == []
         assert db.execute("select run_no, inputs from classifications").fetchall() == []
-        assert db.execute("select obligation_key, done_at from duty_progress").fetchall() == []
+        assert db.execute("select obligation_key, created_at from duty_progress").fetchall() == []
         assert db.execute("update inventories set staff_band = '750+'").rowcount == 0
         assert db.execute("delete from duty_progress").rowcount == 0
     with as_user(db, user_a):
         assert _one(db, "select size_class from inventories") == "sme"
         assert _one(db, "select inputs from classifications where run_no = 2") == INPUTS
         assert _one(db, "select count(*) from duty_progress") == 1
+
+
+UNDER_A_SYSTEM = {
+    "matching": (
+        "insert into classifications (system_id, risk_class, status, law_version, result)"
+        " values (%s, 'high_risk', 'decided', 'amended', '{}')",  # B's run 1, like A's
+        "insert into duty_progress (system_id, obligation_key) values (%s, 'ai-literacy')",
+        "insert into interview_answers (system_id, template, question_key, answer)"
+        " values (%s, 'annex_iv', 'intended_purpose', 'x')",
+    ),
+    "not matching": (
+        "insert into duty_progress (system_id, obligation_key) values (%s, 'risk-management')",
+        "insert into interview_answers (system_id, template, question_key, answer)"
+        " values (%s, 'art_27', 'other', 'x')",
+    ),
+}
+"""B's rows under A's system, each matching one of A's rows on the old unique keys, or not."""
+
+
+@pytest.mark.parametrize("insert", [*UNDER_A_SYSTEM["matching"], *UNDER_A_SYSTEM["not matching"]])
+def test_a_row_under_another_users_system_always_fails_its_foreign_key(
+    db: psycopg.Connection, insert: LiteralString
+) -> None:
+    """Whether A has a matching row or not, B gets 23503: the error never tells B what A stored."""
+    user_a, user_b = _create_user(db), _create_user(db)
+    with as_user(db, user_a):
+        system = _add_system(db)["systems"]  # run 1, an annex_iv answer, the ai-literacy tick
+    with as_user(db, user_b), pytest.raises(psycopg.errors.ForeignKeyViolation), db.transaction():
+        db.execute(insert, (system,))
 
 
 def test_run_no_increases_per_system(db: psycopg.Connection) -> None:
@@ -240,7 +269,9 @@ def test_a_duty_is_ticked_once_with_a_valid_key(db: psycopg.Connection) -> None:
     user = _create_user(db)
     with as_user(db, user):
         system = _add_system(db)["systems"]  # ticks ai-literacy
-        tick = "insert into duty_progress (system_id, obligation_key, done_at) values (%s, %s, %s)"
+        tick = (
+            "insert into duty_progress (system_id, obligation_key, created_at) values (%s, %s, %s)"
+        )
         with pytest.raises(psycopg.errors.UniqueViolation), db.transaction():
             db.execute(tick, (system, "ai-literacy", None))
         with pytest.raises(psycopg.errors.CheckViolation), db.transaction():

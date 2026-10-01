@@ -244,19 +244,15 @@ FORGED_INSERT = """
         (system_id, template, question_key, answer, created_at, updated_at)
       select id, 'art_27', 'q', 'a', %(future)s, 'infinity' from system
     )
-    insert into duty_progress (system_id, obligation_key, done_at, updated_at)
+    insert into duty_progress (system_id, obligation_key, created_at, updated_at)
     select id, 'ai-literacy', %(future)s, 'infinity' from system
 """
 
-CREATED_COLUMNS = {**dict.fromkeys(USER_TABLES, "created_at"), "duty_progress": "done_at"}
-"""The column that holds when each table's row was made (a duty's tick time is its done_at)."""
-
 
 def _all_stamped_now(db: psycopg.Connection, table: str) -> bool:
-    query = sql.SQL("select bool_and({} <= now() and updated_at = now()) from {}").format(
-        sql.Identifier(CREATED_COLUMNS[table]), sql.Identifier(table)
+    return _one(
+        db, _on("select bool_and(created_at <= now() and updated_at = now()) from {}", table)
     )
-    return _one(db, query)
 
 
 def test_timestamps_are_set_by_the_server_on_insert(db: psycopg.Connection) -> None:
@@ -596,7 +592,7 @@ SECOND_ROWS: dict[str, LiteralString] = {
     "interview_answers": "insert into interview_answers (system_id, template, question_key, answer)"
     " values (%(system)s, 'art_27', 'q2', 'Line one\nline \"two\".')"
     " returning to_jsonb(interview_answers)",
-    "duty_progress": "insert into duty_progress (system_id, obligation_key, done_at)"
+    "duty_progress": "insert into duty_progress (system_id, obligation_key, created_at)"
     " values (%(system)s, 'risk-management', %(at)s) returning to_jsonb(duty_progress)",
 }
 """A second row per table (so each export array already has a first child), with quotes, accents
