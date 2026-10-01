@@ -1,0 +1,27 @@
+id: own-c-08-agent-voice-mood-scores
+set_name: own
+language: de
+description: >-
+  Wir sind ein regionaler Energieversorger aus Dortmund; in unserem Kundenservice arbeiten rund 300
+  Beschäftigte am Telefon. Seit Mai 2026 nutzen wir eine zugekaufte Software, die während der
+  Gespräche die Stimme unserer Mitarbeitenden auswertet und erkennt, ob sie gereizt, gestresst
+  oder genervt sind. Die Teamleitungen bekommen jede Woche für jede Person einen
+  „Stimmungswert“, und der fließt in die Jahresgespräche und in die Bonusberechnung ein. Die
+  Software läuft so, wie der Anbieter sie liefert, unter dessen Namen. Die Anrufer selbst werden
+  nicht ausgewertet. Gleichzeitig haben wir die Telefonanlage erneuert.
+label:
+  risk_class: prohibited
+  role: deployer
+label_citation: ["art:5:1:f", "art:3:39", "guide:guide-prohibited:para:254", "art:3:4"]
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the system infers employees' emotions (irritation,
+  stress, annoyance) from their voice, which is biometric data, so it is an emotion recognition
+  system (Art. 3(39)); used at the workplace and not for medical or safety reasons, so its use is
+  prohibited under Art. 5(1)(f), which applies since 2 February 2025. The prohibited practices
+  guidelines give a call centre tracking its employees' emotions as a prohibited example (para.
+  254, p. 86). Role: the company uses the bought system under its authority (Art. 3(4)): deployer.
+  Contrast: own-b-09 recognises callers' emotions, which is not prohibited.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:f"
+  - "obligations:none"

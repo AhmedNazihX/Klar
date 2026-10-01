@@ -1,0 +1,36 @@
+id: own-c-15-debt-collection-chat-pressure
+set_name: own
+language: de
+description: >-
+  Wir sind ein Inkassounternehmen aus Nürnberg mit 90 Beschäftigten. Seit Juni 2026 schreibt ein
+  zugekaufter Chat-Assistent eines Münchner Anbieters die Zahlungserinnerungen an Schuldner per
+  SMS und Chat und beantwortet ihre Rückfragen. Er passt Ton und Zeitpunkt der Nachrichten daran
+  an, wie die Person bisher reagiert hat, und arbeitet mit Fristen wie „nur noch heute“ oder
+  „letzte Warnung vor dem Gericht“, auch wenn an diesem Tag gar nichts passieren würde. Die
+  Zahlungsquote ist um ein Fünftel gestiegen. Ob die Leute dafür an anderer Stelle sparen oder
+  Kredite aufnehmen, wissen wir nicht. Die Forderungen selbst sind berechtigt. Wir nutzen den
+  Assistenten so, wie er geliefert wird. Unsere Zentrale zieht nächstes Jahr um.
+label:
+  risk_class: prohibited
+  status: legally_ambiguous
+  role: deployer
+label_citation: ["art:5:1:a", "art:5:1:b", "guide:guide-prohibited:para:91", "art:50:1", "art:3:4"]
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Open question: is Art. 5(1)(a) met, i.e. does the assistant's
+  deceptive pressure (invented "last chance" deadlines, tailored to each debtor) cause or
+  reasonably risk significant harm? Reading 1: the false deadlines are purposefully deceptive and
+  materially distort debtors' decisions, and pushing people in debt to pay at once can cause
+  significant financial harm (guidelines para. 91, p. 33: significant adverse impacts on financial
+  interests); debtors may also be in a specific economic situation (Art. 5(1)(b)): prohibited.
+  Reading 2: the debts are owed, paying them is not itself a harm, and the description doesn't
+  show any significant harm, so Art. 5 is not met; it is then a chatbot that talks to people
+  (Art. 50(1), the provider's duty): limited_risk. Working assumption: the stricter reading,
+  prohibited (INIT > Risk classes), as E4 treats an unsettled significant-harm condition.
+  Role: the agency uses the bought assistant unchanged under its authority (Art. 3(4)): deployer.
+  Trap: E4's rule that significant harm is a deciding fact; the description leaves it open on
+  purpose.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:a"
+  - "trap:significant_harm_unsettled"
+  - "obligations:none"

@@ -1,0 +1,29 @@
+id: own-c-01-undress-photo-app
+set_name: own
+language: en
+description: >-
+  We're a four-person app studio in Lisbon. Our photo app launched in the EU app stores in
+  September 2026 and its headline feature is the one our ads lead with: upload any photo of a
+  person and the app produces a realistic version of the same person without clothes. It works on
+  photos of anyone, friends, colleagues or celebrities; we don't ask whether the person in the
+  picture agreed, and there is no check on who they are. The model is our own, trained on images we
+  bought from adult websites. Users pay per image with in-app credits. We also offer a background
+  remover, which hardly anyone uses. It is now mid-December 2026.
+label:
+  risk_class: prohibited
+  role: provider
+label_citation: ["art:5:1:ba", "art:5:1a:a:i", "art:113:a", "art:3:3"]
+as_of: 2026-12-15
+notes: >-
+  Approved by user 2026-10-01. Class: the app's intended purpose is to generate realistic
+  images of an identifiable person's intimate parts without that person's consent, so placing it
+  on the market is prohibited under Art. 5(1)(ba); Art. 5(1a)(a)(i) is met because that generation
+  is the intended purpose. Date: points (ba) and (bb) and Art. 5(1a) apply from 2 December 2026
+  (Art. 113(a)); the case is dated 15 December 2026 (as_of), after that date. Paired with
+  own-c-02, the same kind of app before the date. Role: the studio built the app and sells it under
+  its own name (Art. 3(3)): provider.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:ba"
+  - "december_2026_prohibition"
+  - "obligations:none"

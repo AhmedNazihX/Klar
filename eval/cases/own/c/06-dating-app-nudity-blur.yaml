@@ -1,0 +1,42 @@
+id: own-c-06-dating-app-nudity-blur
+set_name: own
+language: de
+description: >-
+  Wir betreiben eine Dating-App aus Hamburg mit rund 60 Mitarbeitenden. Seit Januar 2027 läuft in
+  den Chats eine Funktion, die wir selbst entwickelt haben: Ein Bildmodell erkennt, wenn jemand ein
+  Nacktfoto schickt, und legt über die intimen Stellen eine starke Unschärfe, bevor das Bild beim
+  Empfänger ankommt. Der Empfänger sieht einen Hinweis und kann selbst entscheiden, ob er das
+  Original aufdeckt; sonst bleibt es verschwommen. Neue Inhalte erzeugt die Funktion nicht, sie
+  verdeckt nur. Über die Nutzer entscheidet sie nichts, gesperrt wird niemand deswegen. Heute ist
+  der 10. Januar 2027. Im Frühjahr kommt außerdem ein neues App-Design.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation:
+  - "art:5:1b"
+  - "art:5:1:ba"
+  - "art:50:2"
+  - "guide:guide-art50:para:90"
+  - "guide:guide-art50:para:91"
+  - "guide:guide-art50:para:92"
+  - "art:3:3"
+as_of: 2027-01-10
+notes: >-
+  Approved by user 2026-10-01. Class: Art. 5 is settled. The feature manipulates images of
+  intimate parts only by blurring them; Art. 5(1b) says a manipulation that does not increase the
+  exposure of any depicted intimate parts is not "manipulation" for Art. 5(1)(ba), so it is not
+  prohibited. No Art. 50(2) marking: a privacy blur that hides part of the image without changing
+  what it shows is the same operation the Art. 50 guidelines exempt for faces and backgrounds
+  ("deleting and obscuring backgrounds that are visible in the original file, pixelation or
+  blurring of faces", para. 92, p. 29), and nothing on para. 92's list of changes that require
+  marking (removing or inserting persons, altering body shape and the like) resembles it. Para. 91
+  (p. 29) adds that whether an alteration is substantial "requires a case-specific assessment"; the
+  facts here (an overlay the recipient can remove, no new content) settle it. With no other
+  Art. 50 duty and no Annex III use: minimal_risk. Date: January 2027, after 2 December 2026 (as_of).
+  Role: own feature in its own app (Art. 3(3)): provider. Trap: a nudity-related image
+  manipulation that Art. 5(1b) takes out of (ba).
+tags:
+  - "category:c"
+  - "december_2026_prohibition"
+  - "trap:prohibition_not_met"
+  - "obligation:art:4:1"

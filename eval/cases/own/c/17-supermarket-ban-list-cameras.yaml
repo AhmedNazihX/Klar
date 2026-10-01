@@ -1,0 +1,45 @@
+id: own-c-17-supermarket-ban-list-cameras
+set_name: own
+language: de
+description: >-
+  Wir sind eine Supermarktkette aus Bayern mit 120 Filialen. Ab April 2028 wollen wir an den
+  Eingängen eine Gesichtserkennung eines israelischen Herstellers einsetzen: Die Kameras gleichen
+  jedes Gesicht, das hereinkommt, sofort mit den Fotos von Personen ab, gegen die wir wegen
+  Ladendiebstahls ein Hausverbot ausgesprochen haben, und schicken bei einem Treffer eine Meldung
+  aufs Diensthandy der Marktleitung, die die Person dann anspricht und hinausbittet. Die Liste
+  führen wir selbst, die Polizei ist daran nicht beteiligt. Das System übernehmen wir so, wie der
+  Hersteller es anbietet. Parallel stellen wir alle Filialen auf Selbstbedienungskassen um.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:1:a"
+label_citation: ["art:5:1:h", "guide:guide-prohibited:para:426", "annex:III:1:a", "art:3:41", "art:6:2", "art:3:4"]
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: live facial recognition against a ban list is real-time
+  remote biometric identification (Art. 3(41), 3(42)), but Art. 5(1)(h) covers only use for law
+  enforcement; the guidelines name a supermarket using live facial recognition to identify known
+  shoplifters as outside the prohibition (para. 426, p. 130). Remote biometric identification is
+  high-risk under Annex III 1(a) and Art. 6(2); identification against a list, not verification.
+  Date: use from April 2028, after 2 December 2027 (Art. 111(2) does not arise). Role: uses the
+  bought system unchanged under its authority (Art. 3(4)): deployer. Included: 26(4) (its own
+  cameras and its own ban list), 26(11) (it helps decide whom to turn away). Kept because the facts
+  don't settle the condition: 26(7) (whether staff passing the entrance are "subject to" it), 26(9)
+  (DPIA) and 86(1) (whether being turned away is a similarly significant effect). Left out: 27
+  (private retailer), 26(8) (not a public authority), 26(10) (post-remote identification only).
+  Trap: looks like a ban under 5(1)(h), but a private operator isn't law enforcement. Note: the
+  guidelines (para. 428) report such use failing under data protection law; that doesn't change
+  the AI Act class.
+tags:
+  - "category:c"
+  - "trap:prohibition_not_met"
+  - "obligation:art:4:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:7"
+  - "obligation:art:26:9"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:86:1"

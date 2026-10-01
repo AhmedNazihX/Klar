@@ -1,0 +1,28 @@
+id: own-c-10-town-resident-points
+set_name: own
+language: de
+description: >-
+  Wir sind die Stadtverwaltung einer Kleinstadt in Baden-Württemberg mit gut 40.000 Einwohnern.
+  Seit Anfang 2026 nutzen wir ein Punkteprogramm eines kommunalen Softwareanbieters. Es
+  vergibt jedem Haushalt einen Punktestand, der laufend aus verschiedenen Quellen berechnet wird:
+  pünktlich bezahlte Gebühren, Fehlwürfe in der Mülltrennung laut Tonnensensoren, Strafzettel,
+  ehrenamtliches Engagement. Wer wenig Punkte hat, rutscht auf der Warteliste für städtische
+  Kitaplätze nach hinten und bekommt Hallenzeiten im Sportzentrum erst als Letzter. Das Programm
+  haben wir unverändert übernommen. Daneben läuft gerade die Digitalisierung unseres Bauamts.
+label:
+  risk_class: prohibited
+  role: deployer
+label_citation: ["art:5:1:c", "art:5:1:c:i", "art:5:1:c:ii", "guide:guide-prohibited:para:157", "art:3:4"]
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the system evaluates households over time based on
+  their social behaviour (fees, waste sorting, fines, volunteering; the guidelines name payment of
+  debts, obeying traffic rules and volunteering as social behaviour, para. 157, p. 56), and the
+  score leads to unfavourable treatment in unrelated contexts (daycare places, sports-hall
+  bookings), so Art. 5(1)(c)(i) is met; (ii) is likely met too (a lost daycare place is out of
+  proportion to a missorted bin). Prohibited since 2 February 2025. Role: the town uses a bought
+  program unchanged under its authority (Art. 3(4)): deployer. Applies to public and private
+  bodies alike.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:c"
+  - "obligations:none"

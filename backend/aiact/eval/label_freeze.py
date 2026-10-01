@@ -13,7 +13,7 @@ How the check decides, in order:
 - **Changed.** Records are compared per id, as parsed YAML: an approved case whose record differs
   in any field (label, citation, description, notes, tags), or which is gone, has changed.
   Comments, formatting, key order and moves between files don't count. A change to the label
-  itself (a case's `label` or `label_citation`; an override's `status`, `risk_class` or
+  itself (a case's `label`, `label_citation` or `as_of`; an override's `status`, `risk_class` or
   `label_citation`) or a removal is a *label change*.
 - **A matching entry.** A row added to the table in `eval/LABEL_CHANGES.md` since the base. Its
   "Case id" cell names the case in one of two ways:
@@ -48,7 +48,8 @@ CASES_PATH = PurePosixPath("eval/cases")
 OVERRIDES_PATH = CASES_PATH / "academic_overrides.yaml"
 LOG_PATH = PurePosixPath("eval/LABEL_CHANGES.md")
 
-CASE_LABEL_FIELDS = frozenset({"label", "label_citation"})
+CASE_LABEL_FIELDS = frozenset({"label", "label_citation", "as_of"})
+"""A case's `as_of` decides a date-dependent label, so editing it is a label change."""
 OVERRIDE_LABEL_FIELDS = frozenset({"status", "risk_class", "label_citation"})
 CASE_ID_CELL = 1
 """The log table's columns: Date | Case id | Old → new | Reason | Approved by."""

@@ -1,0 +1,32 @@
+id: own-c-07-unfiltered-image-generator
+set_name: own
+language: en
+description: >-
+  We're a nine-person start-up in Tallinn. Our web app is an image generator for adult
+  users that we market with the line "no filters, no limits". We built it on an open-weights image
+  model that we fine-tuned on adult material. In internal tests before the EU launch in November
+  2026, plain prompts without any tricks produced sexual images of what look like real children.
+  We decided not to add age filters or output checks, because our terms of service say users are
+  responsible for what they create, and we don't review reports from users. We pay for the servers
+  with a monthly subscription model. It is now late December 2026.
+label:
+  risk_class: prohibited
+  role: provider
+label_citation: ["art:5:1:bb", "art:5:1a:a:ii", "art:113:a", "art:3:3"]
+as_of: 2026-12-28
+notes: >-
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: Art. 5(1)(bb) prohibits AI systems that generate child
+  sexual abuse material within Directive 2011/93/EU, Art. 2(c) and (e) (which include realistic
+  images of a child in sexually explicit conduct). Generating it is not the intended purpose, but
+  under Art. 5(1a)(a)(ii) placing the system on the market is prohibited where its design and
+  training make that outcome reasonably foreseeable and reproducible without significant technical
+  modification and it lacks reasonable safeguards: the tests show plain prompts produce it, and no
+  safeguards or misuse handling exist. Date: late December 2026, after 2 December 2026
+  (Art. 113(a); as_of). Role: built and offered under its own name (Art. 3(3)): provider.
+  Trap: the intended purpose is lawful adult content, so only the 1a(a)(ii) route settles it.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:bb"
+  - "december_2026_prohibition"
+  - "trap:foreseeable_outcome"
+  - "obligations:none"

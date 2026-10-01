@@ -15,6 +15,7 @@ A rewritten Commission example (B4) carries its row's `accepted_bases`, `label_s
 import json
 from collections import Counter
 from collections.abc import Collection, Hashable, Iterable
+from datetime import date
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Self
@@ -46,6 +47,7 @@ NOTE_SUFFIXES = (".md",)
 IGNORED_FILE_NAMES = frozenset({".gitkeep", ".DS_Store"})
 """Folder placeholders and OS litter; allowed and never loaded."""
 YAML_MERGE_TAG = "tag:yaml.org,2002:merge"
+YAML_TIMESTAMP_TAG = "tag:yaml.org,2002:timestamp"
 
 CASE_ID_PATTERN = r"^[a-z0-9][a-z0-9_.:-]{0,127}$"
 ANNEX_POINT_PATTERN = r"^annex:(I:[AB]:[0-9]+|III:[0-9]+(:[a-z])?)$"
@@ -196,6 +198,11 @@ class BenchmarkCase(ContractModel):
     business_function: str | None = Field(
         default=None, pattern=SLUG_PATTERN, description="For example `hr`; W1 reports by it."
     )
+    as_of: date | None = Field(
+        default=None,
+        description="The date the case is judged on, for a label that depends on it (the "
+        "December 2026 prohibitions); None means the run's date.",
+    )
     notes: str | None = None
     tags: tuple[str, ...] = ()
 
@@ -343,14 +350,15 @@ def _case_files(folder: Path) -> list[Path]:
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
-    """A safe loader that rejects a key repeated in one mapping (PyYAML keeps the last). Merge
-    keys (`<<: *anchor`) are left to the base class, so they load as with `yaml.safe_load`."""
+    """A safe loader that rejects a key repeated in one mapping (PyYAML keeps the last), and a
+    date-shaped value that is no real date (`as_of: 2026-13-45`) with an error naming its key.
+    Merge keys (`<<: *anchor`) are left to the base class, so they load as with `yaml.safe_load`."""
 
     def construct_mapping(
         self, node: yaml.MappingNode, deep: bool = False
     ) -> dict[Hashable, object]:
         seen: set[Hashable] = set()
-        for key_node, _ in node.value:
+        for key_node, value_node in node.value:
             if key_node.tag == YAML_MERGE_TAG:
                 continue
             key = self.construct_object(key_node, deep=deep)
@@ -359,13 +367,23 @@ class _UniqueKeyLoader(yaml.SafeLoader):
             if key in seen:
                 raise ConstructorError(None, None, f"duplicate key {key!r}", key_node.start_mark)
             seen.add(key)
+            self._check_date(key, value_node)
         return super().construct_mapping(node, deep=deep)
+
+    def _check_date(self, key: Hashable, value_node: yaml.Node) -> None:
+        if value_node.tag != YAML_TIMESTAMP_TAG:
+            return
+        try:
+            self.construct_object(value_node)
+        except ValueError as exc:
+            message = f"{key!r}: {value_node.value!r} is not a valid date ({exc})"
+            raise ConstructorError(None, None, message, value_node.start_mark) from exc
 
 
 def _load_yaml[Item: (BenchmarkCase, QAItem)](path: Path, model: type[Item]) -> tuple[Item, ...]:
     try:
         document: object = yaml.load(path.read_text(encoding="utf-8"), Loader=_UniqueKeyLoader)
-    except yaml.YAMLError as exc:
+    except (yaml.YAMLError, ValueError) as exc:
         raise CaseFileError(f"{path}: not valid YAML: {exc}") from exc
     records = [document] if isinstance(document, dict) else document
     if not isinstance(records, list) or not records:
