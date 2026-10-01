@@ -3,7 +3,7 @@ set_name: own
 language: de
 description: >-
   Wir sind ein Wiener Anbieter für Handelsanalysen mit 70 Beschäftigten. Unser Produkt
-  „ShelfSense“ besteht aus Kameras über den Werbebildschirmen in Modegeschäften und einer
+  besteht aus Kameras über den Werbebildschirmen in Modegeschäften und einer
   Software, die wir selbst entwickelt haben. Sie wertet das Gesicht jeder Person aus, die vor dem
   Bildschirm stehen bleibt, und ordnet sie einem Segment zu, darunter „LGBTQ-affin“ und
   „religiös-konservativ“; danach wählt der Bildschirm die passende Werbung aus. Gespeichert werden
@@ -25,3 +25,4 @@ notes: >-
 tags:
   - "category:c"
   - "prohibition:art:5:1:g"
+  - "obligations:none"

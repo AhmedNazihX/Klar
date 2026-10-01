@@ -2,7 +2,7 @@ id: own-c-12-face-search-crawler
 set_name: own
 language: de
 description: >-
-  Wir sind ein Berliner Start-up mit 15 Leuten und bauen die Personensuche „Gesichtsfinder“. Unser
+  Wir sind ein Berliner Start-up mit 15 Leuten und bauen eine Personensuche. Unser
   Crawler sammelt rund um die Uhr alle öffentlich sichtbaren Fotos aus sozialen Netzwerken,
   Nachrichtenseiten und Vereinswebsites ein, ohne Auswahl, wer darauf zu sehen ist; ein Modell
   erkennt die Gesichter und legt für jedes ein Suchprofil in unserer Datenbank an. Kunden laden
@@ -22,3 +22,4 @@ notes: >-
 tags:
   - "category:c"
   - "prohibition:art:5:1:e"
+  - "obligations:none"

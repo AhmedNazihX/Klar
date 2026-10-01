@@ -2,7 +2,7 @@ id: own-c-07-unfiltered-image-generator
 set_name: own
 language: en
 description: >-
-  We're a nine-person start-up in Tallinn. Our web app, Unbound, is an image generator for adult
+  We're a nine-person start-up in Tallinn. Our web app is an image generator for adult
   users that we market with the line "no filters, no limits". We built it on an open-weights image
   model that we fine-tuned on adult material. In internal tests before the EU launch in November
   2026, plain prompts without any tricks produced sexual images of what look like real children.
@@ -29,3 +29,4 @@ tags:
   - "prohibition:art:5:1:bb"
   - "december_2026_prohibition"
   - "trap:foreseeable_outcome"
+  - "obligations:none"

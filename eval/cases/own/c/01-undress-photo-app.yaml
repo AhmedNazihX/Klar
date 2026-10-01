@@ -2,7 +2,7 @@ id: own-c-01-undress-photo-app
 set_name: own
 language: en
 description: >-
-  We're a four-person app studio in Lisbon. Our photo app, Peel, launched in the EU app stores in
+  We're a four-person app studio in Lisbon. Our photo app launched in the EU app stores in
   September 2026 and its headline feature is the one our ads lead with: upload any photo of a
   person and the app produces a realistic version of the same person without clothes. It works on
   photos of anyone, friends, colleagues or celebrities; we don't ask whether the person in the
@@ -26,3 +26,4 @@ tags:
   - "category:c"
   - "prohibition:art:5:1:ba"
   - "december_2026_prohibition"
+  - "obligations:none"

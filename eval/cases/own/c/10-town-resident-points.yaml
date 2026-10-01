@@ -3,7 +3,7 @@ set_name: own
 language: de
 description: >-
   Wir sind die Stadtverwaltung einer Kleinstadt in Baden-Württemberg mit gut 40.000 Einwohnern.
-  Seit Anfang 2026 nutzen wir das Programm „Bürgerkonto“ eines kommunalen Softwareanbieters. Es
+  Seit Anfang 2026 nutzen wir ein Punkteprogramm eines kommunalen Softwareanbieters. Es
   vergibt jedem Haushalt einen Punktestand, der laufend aus verschiedenen Quellen berechnet wird:
   pünktlich bezahlte Gebühren, Fehlwürfe in der Mülltrennung laut Tonnensensoren, Strafzettel,
   ehrenamtliches Engagement. Wer wenig Punkte hat, rutscht auf der Warteliste für städtische
@@ -25,3 +25,4 @@ notes: >-
 tags:
   - "category:c"
   - "prohibition:art:5:1:c"
+  - "obligations:none"

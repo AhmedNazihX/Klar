@@ -2,7 +2,7 @@ id: own-c-14-kids-game-sad-pet-offers
 set_name: own
 language: en
 description: >-
-  We're a 40-person games studio in Kraków. Our mobile game Pet Pals is made for children aged 7
+  We're a 40-person games studio in Kraków. Our mobile pet game is made for children aged 7
   to 12. Since its update in March 2026 a model of ours watches each child's play (taps, pauses,
   failed levels) to spot the moment a child is frustrated or about to quit, and right then shows a
   countdown offer for gems while the child's pet cries that it will be lonely without them.
@@ -12,15 +12,24 @@ description: >-
 label:
   risk_class: prohibited
   role: provider
-label_citation: ["art:5:1:b", "guide:guide-prohibited:para:104", "guide:guide-prohibited:para:116", "art:3:3"]
+label_citation:
+  - "art:5:1:b"
+  - "guide:guide-prohibited:para:104"
+  - "guide:guide-prohibited:para:105"
+  - "guide:guide-prohibited:para:115"
+  - "art:3:3"
 notes: >-
-  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the system exploits a vulnerability due to age
-  (children, guidelines para. 104, p. 38) by timing guilt-laden offers to moments of frustration,
-  which materially distorts their behaviour (spending they don't understand) and causes significant
-  financial harm (several hundred euros per family, repeated complaints; guidelines para. 116,
-  p. 42): prohibited under Art. 5(1)(b) (since 2 February 2025). The significant-harm condition is
-  a deciding fact (E4's rule); the description states it. Role: own game under its own name
-  (Art. 3(3)): provider.
+  Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts
+  checked against their sources). Class: the system exploits a vulnerability due to age
+  (children, guidelines para. 104, p. 38; para. 105 gives a children's game that analyses each
+  child's behaviour to push compulsive use as an example) by timing guilt-laden offers to moments
+  of frustration, which materially distorts their behaviour (spending they don't understand) and
+  causes significant financial harm (several hundred euros per family, repeated complaints; the
+  guidelines count financial and economic harm as significant harm, para. 115, p. 42): prohibited
+  under Art. 5(1)(b) (since 2 February 2025). The significant-harm condition is a deciding fact
+  (E4's rule); the description states it. Role: own game under its own name (Art. 3(3)):
+  provider.
 tags:
   - "category:c"
   - "prohibition:art:5:1:b"
+  - "obligations:none"
