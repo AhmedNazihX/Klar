@@ -35,7 +35,15 @@ import psycopg
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from aiact.corpus.embed import vector_literal
-from aiact.eval.cases import APPLIEDAI_FILE, CASES_DIR, EVAL_DIR, CaseSet, load_cases, load_jsonl
+from aiact.eval.cases import (
+    APPLIEDAI_FILE,
+    CASES_DIR,
+    EVAL_DIR,
+    BenchmarkCase,
+    CaseSet,
+    load_cases,
+    load_jsonl,
+)
 from aiact.eval.split import EXAMPLES_FILE, SPLIT_FILE, Split
 from aiact.llm.embeddings import EmbeddingBatch
 
@@ -87,18 +95,24 @@ def ngrams(words: Sequence[str], size: int = NGRAM_WORDS) -> frozenset[Ngram]:
     return frozenset(tuple(words[i : i + size]) for i in range(len(words) - size + 1))
 
 
-def longest_shared_run(first: Sequence[str], second: Sequence[str]) -> int:
-    """The length in words of the longest run that both word sequences contain."""
-    best = 0
+def longest_shared_words(first: Sequence[str], second: Sequence[str]) -> tuple[str, ...]:
+    """The longest run of words that both word sequences contain (the first found on a tie)."""
+    best, best_end = 0, 0
     previous = [0] * (len(second) + 1)
-    for word in first:
+    for i, word in enumerate(first, start=1):
         current = [0] * (len(second) + 1)
         for j, other in enumerate(second, start=1):
             if word == other:
                 current[j] = previous[j - 1] + 1
-                best = max(best, current[j])
+                if current[j] > best:
+                    best, best_end = current[j], i
         previous = current
-    return best
+    return tuple(first[best_end - best : best_end])
+
+
+def longest_shared_run(first: Sequence[str], second: Sequence[str]) -> int:
+    """The length in words of the longest run that both word sequences contain."""
+    return len(longest_shared_words(first, second))
 
 
 # --- The benchmark side ---------------------------------------------------------------------
@@ -121,6 +135,8 @@ class ExampleText(BaseModel):
     example_id: str = Field(pattern=r"^hr-ex-[0-9]{3}$")
     source: str
     text: str = Field(min_length=1)
+    lead_in: str | None = None
+    """The paragraph or bullet that introduces the example's list (Commission prose)."""
 
 
 def load_split(path: Path = SPLIT_FILE) -> Split:
@@ -153,21 +169,21 @@ def checked_description(case_set: CaseSet, description: str) -> str:
     return "\n".join(line for line in lines if not line.startswith(DOMAIN_LINE_PREFIX))
 
 
+def yaml_cases(cases_dir: Path = CASES_DIR) -> tuple[BenchmarkCase, ...]:
+    """Every case of the YAML sets that exist under `cases_dir` (the appliedAI set is JSONL)."""
+    sets = (s for s in CaseSet if s is not CaseSet.APPLIEDAI and (cases_dir / s.value).is_dir())
+    return tuple(case for case_set in sets for case in load_cases(case_set, cases_dir))
+
+
 def case_texts(
     cases_dir: Path = CASES_DIR, appliedai_file: Path | None = APPLIEDAI_FILE
 ) -> tuple[BenchmarkText, ...]:
     """Every case description of the YAML sets that exist, plus the appliedAI extraction when
     `appliedai_file` is given and present (it is gitignored and may be absent)."""
-    texts: list[BenchmarkText] = []
-    for case_set in CaseSet:
-        if case_set is CaseSet.APPLIEDAI:
-            continue
-        if not (cases_dir / case_set.value).is_dir():
-            continue
-        cases = load_cases(case_set, cases_dir)
-        texts.extend(
-            BenchmarkText(c.id, checked_description(case_set, c.description)) for c in cases
-        )
+    texts = [
+        BenchmarkText(case.id, checked_description(case.set_name, case.description))
+        for case in yaml_cases(cases_dir)
+    ]
     if appliedai_file is not None and appliedai_file.is_file():
         texts.extend(BenchmarkText(c.id, c.description) for c in load_jsonl(appliedai_file))
     return tuple(texts)
@@ -424,16 +440,21 @@ def decode_vector(encoded: str) -> tuple[float, ...]:
     return struct.unpack(f"<{len(raw) // 2}e", raw)
 
 
+def parse_cache(path: Path) -> EmbeddingCache:
+    """The cache at `path`, whatever its model; an invalid file raises IsolationFileError."""
+    try:
+        return EmbeddingCache.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValidationError as error:
+        raise IsolationFileError(f"{path}: not a valid vector cache: {error}") from error
+
+
 def load_cache(path: Path, model: str, dims: int) -> EmbeddingCache:
     """The cache at `path`, or an empty one when there is none. A cache for another model or size
     raises IsolationFileError: re-embedding every text should be a deliberate choice (delete the
     file), not a side effect of a changed setting."""
     if not path.is_file():
         return EmbeddingCache(model=model, dims=dims)
-    try:
-        cache = EmbeddingCache.model_validate_json(path.read_text(encoding="utf-8"))
-    except ValidationError as error:
-        raise IsolationFileError(f"{path}: not a valid vector cache: {error}") from error
+    cache = parse_cache(path)
     if (cache.model, cache.dims) != (model, dims):
         raise IsolationFileError(
             f"{path} holds {cache.model}/{cache.dims} vectors, but the corpus arm is "

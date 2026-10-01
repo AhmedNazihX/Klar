@@ -4,6 +4,7 @@ the real corpus and benchmark are in tests/test_isolation.py."""
 from pathlib import Path
 
 import pytest
+import yaml
 
 from aiact.eval import isolation
 from aiact.eval.cases import CaseSet
@@ -32,6 +33,41 @@ def test_the_academic_domain_line_is_left_out() -> None:
         "Role: Provider\nInput data: CVs"
     )
     assert isolation.checked_description(CaseSet.OWN, description) == description
+
+
+def _write_cases(folder: Path, name: str, records: list[dict[str, object]]) -> None:
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / name).write_text(yaml.safe_dump(records), encoding="utf-8")
+
+
+def _case(case_id: str, set_name: str, description: str) -> dict[str, object]:
+    return {
+        "id": case_id,
+        "set_name": set_name,
+        "language": "en",
+        "description": description,
+        "label": {"risk_class": "high_risk"},
+        "label_citation": ["annex:III:4:a"],
+    }
+
+
+def test_case_texts_hold_every_yaml_case_in_set_and_file_order(tmp_path: Path) -> None:
+    commission = tmp_path / "commission_b"
+    _write_cases(commission / "sub", "b.yaml", [_case("cb-3", "commission_b", "Third.")])
+    _write_cases(
+        commission,
+        "a.yaml",
+        [_case("cb-1", "commission_b", "First."), _case("cb-2", "commission_b", "Second.")],
+    )
+    academic = "Role: Provider\nDomain: Employment, workers management\nInput data: CVs"
+    _write_cases(tmp_path / "academic", "high_risk.yaml", [_case("ac-1", "academic", academic)])
+    texts = isolation.case_texts(tmp_path, None)
+    assert texts == (
+        BenchmarkText("cb-1", "First."),
+        BenchmarkText("cb-2", "Second."),
+        BenchmarkText("cb-3", "Third."),
+        BenchmarkText("ac-1", "Role: Provider\nInput data: CVs"),
+    )
 
 
 def _rows(*texts: tuple[str, str | None]) -> tuple[CorpusRow, ...]:

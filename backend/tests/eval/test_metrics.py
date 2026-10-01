@@ -1,6 +1,17 @@
+from pathlib import Path
+
 import pytest
 
-from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseSet
+from aiact.eval.baselines import BaselineAnswer, to_result
+from aiact.eval.cases import (
+    AppliedAILabel,
+    BenchmarkCase,
+    CaseLabel,
+    CaseSet,
+    CommissionVerdict,
+    FlipVariant,
+    load_cases,
+)
 from aiact.eval.metrics import (
     CONSISTENCY_GROUP_PREFIX,
     LOW_OR_OUT_OF_SCOPE_TAG,
@@ -8,22 +19,37 @@ from aiact.eval.metrics import (
     Rate,
     academic_review_count,
     annex_point_match,
+    basis_match,
     basis_matches,
     case_scores,
     citation_existence,
+    citation_match,
+    citation_matches,
     citations_exist,
     consistency,
     downgraded,
     false_low_risk,
     flags_flip_variant,
+    flip_variant_flagged,
     needs_info_on_ambiguous,
     rate,
+    result_bases,
     risk_class_match,
     role_match,
     summarize,
     uncertain_outcomes,
 )
-from aiact.schemas import Citation, FollowUpQuestion, RiskClass, Role, Status, StepName
+from aiact.schemas import (
+    Citation,
+    ClassificationResult,
+    FollowUpQuestion,
+    Language,
+    RiskClass,
+    Role,
+    Status,
+    StepName,
+    StepResult,
+)
 from tests.eval.outcomes import (
     HIGH_ANNEX_POINT,
     WORKED_EXAMPLE_PROVISIONS,
@@ -32,10 +58,11 @@ from tests.eval.outcomes import (
     outcome,
     result,
 )
-from tests.schemas.builders import ambiguous, steps_with
-from tests.schemas.worked_example import cite
+from tests.schemas.builders import ambiguous, rebuild, steps_with
+from tests.schemas.worked_example import cite, worked_example_result
 
 R = RiskClass
+CASE_FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "cases"
 LOWER_THAN_HIGH = [R.LIMITED_RISK, R.MINIMAL_RISK, R.OUT_OF_SCOPE]
 
 
@@ -366,8 +393,17 @@ def test_case_scores_hold_only_numbers_booleans_or_null() -> None:
         "annex_point_accuracy": True,
         "role_accuracy": True,
         "downgrade": None,
+        "basis_accuracy": None,
+        "flip_variant_flagged": None,
+        "citation_accuracy": False,
         "citation_existence": True,
     }
+
+
+def test_case_scores_key_each_new_score_by_its_own_scorer() -> None:
+    scores = case_scores(outcome(commission_case("outside_use_case"), result(R.MINIMAL_RISK)))
+    assert (scores["basis_accuracy"], scores["flip_variant_flagged"]) == (True, None)
+    assert scores["citation_accuracy"] is False
 
 
 # --- decision 001: accepted bases and flip variants --------------------------------------------
@@ -412,7 +448,169 @@ def test_flip_variant_flagged_by_a_citation_of_an_uncertain_step() -> None:
     assert not flags_flip_variant(result(), ["art:5:1:c"])
 
 
+def exempt_result(*letters: str) -> ClassificationResult:
+    """A minimal-risk result whose high-risk step exempts the use under Art. 6(3)."""
+    citations = tuple(cite(f"art:6:3:{letter}", "the condition") for letter in letters)
+    step = StepResult(step=StepName.HIGH_RISK, decision="Exempt", citations=citations)
+    return result(R.MINIMAL_RISK, steps=steps_with(step))
+
+
+def asked_about(provision_id: str) -> ClassificationResult:
+    question = FollowUpQuestion(id="variant", text="Does it do more?", about=provision_id)
+    base = result()
+    return result(follow_up_questions=(*base.follow_up_questions, question))
+
+
+def commission_case(
+    *bases: str, status: Status = Status.DECIDED, risk_class: RiskClass = R.MINIMAL_RISK
+) -> BenchmarkCase:
+    """A rewritten Commission case, validated (model_copy alone would skip the rules)."""
+    base = case("c", risk_class, status=status)
+    changes = {"source_example_id": "hr-ex-901", "accepted_bases": bases}
+    return BenchmarkCase.model_validate({**base.model_dump(), **changes})
+
+
+def test_result_bases_follow_the_high_risk_answer() -> None:
+    annex_i = result(annex_point="annex:I:A:11")
+    assert result_bases(result()) == ("within_use_case",)
+    assert result_bases(annex_i) == ("safety_component",)
+    assert result_bases(exempt_result("d")) == ("art_6_3_filter:d",)
+    assert result_bases(exempt_result("a", "d", "a")) == ("art_6_3_filter:a", "art_6_3_filter:d")
+    # The worked example's high-risk step cites the bare art:6:3, which names no exemption.
+    assert result_bases(result(R.MINIMAL_RISK)) == ("outside_use_case", "not_safety_component")
+    assert result_bases(result(R.PROHIBITED)) == ()
+
+
+def test_result_bases_read_the_high_risk_step_not_the_final_class() -> None:
+    # An open prohibited step keeps the class prohibited above a decided high-risk finding.
+    prohibited_above_high = rebuild(
+        worked_example_result(),
+        risk_class=R.PROHIBITED,
+        status=Status.LEGALLY_AMBIGUOUS,
+        steps=steps_with(ambiguous(StepName.PROHIBITED)),
+    )
+    assert prohibited_above_high.annex_point == HIGH_ANNEX_POINT
+    assert result_bases(prohibited_above_high) == ("within_use_case",)
+
+
+def baseline_high_risk_without_a_point() -> ClassificationResult:
+    """What `baselines.to_result` gives for a high_risk answer whose Annex point is null."""
+    answer = BaselineAnswer(
+        risk_class=R.HIGH_RISK,
+        status=Status.DECIDED,
+        role=Role.DEPLOYER,
+        annex_point=None,
+        transparency_duties=(),
+        reason="Ranks job applicants.",
+        missing_fact=None,
+        open_question=None,
+    )
+    return to_result(answer, Language.EN, "baseline")
+
+
+def test_a_high_risk_answer_without_a_point_is_a_listed_basis() -> None:
+    no_point = baseline_high_risk_without_a_point()
+    assert (no_point.risk_class, no_point.annex_point) == (R.HIGH_RISK, None)
+    assert result_bases(no_point) == ("within_use_case", "safety_component")
+    for not_listed in ("outside_use_case", "not_safety_component", "art_6_3_filter:d"):
+        assert basis_match(outcome(commission_case(not_listed), no_point)) is False
+    high = commission_case("within_use_case", risk_class=R.HIGH_RISK)
+    annex_i = commission_case("safety_component", risk_class=R.HIGH_RISK)
+    assert basis_match(outcome(high, no_point)) is True
+    assert basis_match(outcome(annex_i, no_point)) is True
+
+
+@pytest.mark.parametrize(
+    ("cited", "label_citation", "expected"),
+    [
+        ("art:6:3", ["art:6:3:d"], True),
+        ("art:6:3:d", ["art:6:3:d"], True),
+        ("art:6:3:d", ["art:6:3"], True),
+        ("art:6:3:a", ["art:6:3:d"], False),
+        ("annex:III:4:a", ["art:6:3", "annex:III:4:a"], True),
+        ("art:5:1", ["art:5:1:c"], False),
+        ("art:6:31", ["art:6:3"], False),
+    ],
+)
+def test_citation_matching_rule(cited: str, label_citation: list[str], expected: bool) -> None:
+    assert citation_matches(cited, label_citation) is expected
+
+
+def test_citation_accuracy_counts_any_label_citation() -> None:
+    def cited_as(*label_citation: str) -> BenchmarkCase:
+        return BenchmarkCase.model_validate(
+            {**case("a").model_dump(), "label_citation": label_citation}
+        )
+
+    # The worked example cites art:3:1, art:5:1, annex:III:4:a, art:6:3, art:50:1, art:26:1.
+    assert citation_match(outcome(cited_as("art:6:2", "annex:III:4:a"))) is True
+    assert citation_match(outcome(cited_as("art:6:3:b"))) is True
+    assert citation_match(outcome(cited_as("art:6:2", "art:5:1:c"))) is False
+    assert citation_match(outcome(cited_as("art:6:2"), failed=True)) is None
+    assert citation_match(outcome(appliedai_case("ai-1", AppliedAILabel.HIGH))) is None
+
+
+def test_basis_accuracy_uses_the_accepted_bases_rule() -> None:
+    either = commission_case("art_6_3_filter:d", "outside_use_case")
+    assert basis_match(outcome(either, exempt_result("d"))) is True
+    assert basis_match(outcome(either, result(R.MINIMAL_RISK))) is True
+    assert basis_match(outcome(either, exempt_result("a"))) is False
+    assert basis_match(outcome(either, result())) is False
+    bare = commission_case("art_6_3_filter")
+    assert basis_match(outcome(bare, exempt_result("b"))) is True
+    assert basis_match(outcome(bare, result(R.MINIMAL_RISK))) is False
+
+
+def test_basis_accuracy_applies_only_where_it_can_be_scored() -> None:
+    either = commission_case("art_6_3_filter:d", "outside_use_case")
+    ambiguous = commission_case("art_6_3_filter:b", status=Status.LEGALLY_AMBIGUOUS)
+    assert basis_match(outcome(case("a"), exempt_result("d"))) is None
+    assert basis_match(outcome(ambiguous, exempt_result("b"))) is None
+    assert basis_match(outcome(either, failed=True)) is None
+    assert basis_match(outcome(either, result(R.PROHIBITED))) is None
+
+
+def test_flip_variant_flagged_per_case() -> None:
+    variant = FlipVariant(
+        feature="infers deception",
+        resulting_verdict=CommissionVerdict.HIGH,
+        provision_ids=("annex:III:7:a",),
+    )
+    with_variant = case("v").model_copy(update={"flip_variants": (variant,)})
+    assert flip_variant_flagged(outcome(with_variant, asked_about("annex:III:7:a"))) is True
+    assert flip_variant_flagged(outcome(with_variant)) is False
+    assert flip_variant_flagged(outcome(with_variant, failed=True)) is None
+    assert flip_variant_flagged(outcome(case("a"), asked_about("annex:III:7:a"))) is None
+
+
+def test_annex_point_matches_any_labelled_point() -> None:
+    label = case("a").model_copy(
+        update={
+            "label": CaseLabel(
+                risk_class=R.HIGH_RISK, annex_point=("annex:I:A:11", "annex:III:4:a")
+            )
+        }
+    )
+    assert annex_point_match(outcome(label)) is True
+    assert annex_point_match(outcome(label, result(annex_point="annex:I:A:11"))) is True
+    assert annex_point_match(outcome(label, result(annex_point="annex:III:4:b"))) is False
+
+
 # --- summary -----------------------------------------------------------------------------------
+
+
+def test_summarize_reaches_basis_citation_and_flip_variant_metrics_on_fixtures() -> None:
+    settled, ambiguous = load_cases(CaseSet.COMMISSION_B, CASE_FIXTURES)
+    outcomes = [
+        outcome(settled, exempt_result("d")),  # basis hit, flip miss, citation hit
+        outcome(settled, asked_about("annex:III:7")),  # basis miss, flip hit, citation hit
+        outcome(settled, result(R.MINIMAL_RISK)),  # basis hit ("not listed"), flip miss
+        outcome(ambiguous, exempt_result("b")),  # ambiguous, no variants, no label citation
+    ]
+    metrics = summarize(outcomes, None)
+    assert metrics.basis_accuracy == Rate(hits=2, total=3)
+    assert metrics.flip_variant_flagged == Rate(hits=1, total=3)
+    assert metrics.citation_accuracy == Rate(hits=3, total=3)
 
 
 def test_summarize_collects_every_metric() -> None:

@@ -51,7 +51,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── citations.py         citation existence validator (E9)
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data
-│   │   │   ├── cases.py             BenchmarkCase schema + loader + appliedAI mapping (F7)
+│   │   │   ├── cases.py             BenchmarkCase schema + loader + appliedAI mapping (F7); Commission-row fields, QAItem (F7b)
 │   │   │   ├── academic.py          davidath scenarios → cases + overrides; `aiact evaluate academic-import|academic-sample` (B12)
 │   │   │   ├── split.py             seeded stratified split → eval/split.json; `aiact evaluate split` (B3)
 │   │   │   ├── similarity.py        rewrite-vs-source similarity check; `aiact evaluate similarity` (B4a)
@@ -95,7 +95,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── commission_examples/         examples.jsonl extracted from the draft guidelines (B2)
 │   ├── cases/                       labelled cases, frozen per category (B10a, decision 017) and tagged labels-v1 (B10b); folders created by F7,
 │   │                                <set>/**/*.yaml, one case or a list per file, BenchmarkCase schema
-│   │                                in aiact/eval/cases.py (except qa/, whose item shape comes with B7)
+│   │                                in aiact/eval/cases.py (qa/ holds QAItem items, loaded by load_qa_items; F7b)
 │   │   ├── commission_b/            (B4)
 │   │   ├── own/<category>/          (B5a–e)
 │   │   ├── soft_pairs/              (B6)

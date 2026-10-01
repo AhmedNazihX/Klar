@@ -29,11 +29,17 @@ def case(
         set_name=set_name,
         language=Language.EN,
         description="A made-up system.",
-        label=CaseLabel(risk_class=risk_class, status=status, role=role, annex_point=annex_point),
+        label=CaseLabel(
+            risk_class=risk_class, status=status, role=role, annex_point=_points(annex_point)
+        ),
         label_citation=("art:6:2",),
         notes="Open question and both readings." if status is Status.LEGALLY_AMBIGUOUS else None,
         tags=tags,
     )
+
+
+def _points(annex_point: str | None) -> tuple[str, ...]:
+    return (annex_point,) if annex_point else ()
 
 
 def appliedai_case(case_id: str, label: AppliedAILabel) -> BenchmarkCase:

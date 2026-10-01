@@ -1241,7 +1241,7 @@ def _matches_label(result: CheckOutcome, case: BenchmarkCase) -> bool:
         )
     also_iii = "annex_iii" in _tag(case, "also_route")
     expected = HighRiskRoute.ANNEX_III if also_iii else HighRiskRoute.ANNEX_I
-    points = {*_tag(case, "annex_i_point"), *([label.annex_point] if label.annex_point else [])}
+    points = {*_tag(case, "annex_i_point"), *label.annex_point}
     missing = _tag(case, "missing_fact")
     asked = step.missing_fact.id if step.missing_fact else None
     section_b_decided = "b" in _tag(case, "annex_i_section") and label.status is Status.DECIDED

@@ -1093,7 +1093,7 @@ def _role_cases() -> list[BenchmarkCase]:
 def _case_state(label: CaseLabel, case: BenchmarkCase) -> EngineState:
     route = None
     if label.risk_class is RiskClass.HIGH_RISK:
-        is_annex_i = (label.annex_point or "").startswith("annex:I:")
+        is_annex_i = any(point.startswith("annex:I:") for point in label.annex_point)
         route = HighRiskRoute.ANNEX_I if is_annex_i else HighRiskRoute.ANNEX_III
     duties = ("art:50:1",) if label.risk_class is RiskClass.LIMITED_RISK else ()
     return state(
