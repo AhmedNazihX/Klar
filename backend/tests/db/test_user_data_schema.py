@@ -7,9 +7,11 @@ Each test runs as postgres inside the rolled-back `db` transaction; `as_user` sw
 """
 
 import json
+import time
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, LiteralString
 from uuid import UUID, uuid4
 
@@ -18,6 +20,8 @@ import pytest
 from psycopg import sql
 from psycopg.abc import Params, QueryNoTemplate
 from psycopg.types.json import Jsonb
+
+from tests.db.conftest import _database_url
 
 pytestmark = pytest.mark.db
 
@@ -255,6 +259,51 @@ def test_timestamps_are_set_by_the_server_on_update(db: psycopg.Connection) -> N
             assert _all_stamped_now(db, table)
 
 
+CREATED_AT_FLOOR = datetime(2026, 9, 28, tzinfo=UTC)
+"""The earliest created_at a row may have: the day the user-data schema went in."""
+
+
+@pytest.mark.parametrize(
+    "created_at", ["-infinity", "0001-01-01T00:00:00+00:00", "2026-09-27T23:59:59.999999+00:00"]
+)
+def test_a_created_at_before_the_floor_is_rejected(db: psycopg.Connection, created_at: str) -> None:
+    user = _create_user(db)
+    with as_user(db, user):
+        with pytest.raises(psycopg.errors.DatetimeFieldOverflow), db.transaction():
+            db.execute("insert into inventories (name, created_at) values ('X', %s)", (created_at,))
+        system = {"name": "X", "description": "Y", "created_at": created_at}
+        document = {**EMPTY_EXPORT, "inventories": [{"name": "Z", "systems": [system]}]}
+        with pytest.raises(psycopg.errors.DatetimeFieldOverflow), db.transaction():
+            db.execute("select import_my_data(%s)", (Jsonb(document),))
+        floor = _one(
+            db,
+            "insert into inventories (name, created_at) values ('X', %s) returning created_at",
+            (CREATED_AT_FLOOR,),
+        )
+    assert floor == CREATED_AT_FLOOR
+    assert _counts(db, user) == {**dict.fromkeys(USER_TABLES, 0), "inventories": 1}
+
+
+def test_an_import_older_than_its_new_owner_keeps_its_dates_and_order(
+    db: psycopg.Connection,
+) -> None:
+    user = _create_user(db)  # signed up now, after every date in the file
+    earlier, later = CREATED_AT_FLOOR + timedelta(hours=1), CREATED_AT_FLOOR + timedelta(hours=2)
+    document = {
+        **EMPTY_EXPORT,
+        "inventories": [
+            {"name": "Later", "created_at": later.isoformat()},
+            {"name": "Earlier", "created_at": earlier.isoformat()},
+        ],
+    }
+    with as_user(db, user):
+        db.execute("select import_my_data(%s)", (Jsonb(document),))
+        rows = db.execute("select name, created_at from inventories order by created_at").fetchall()
+        exported = _one(db, "select export_my_data()")
+    assert rows == [("Earlier", earlier), ("Later", later)]
+    assert [inventory["name"] for inventory in exported["inventories"]] == ["Earlier", "Later"]
+
+
 def test_a_classification_result_has_a_size_limit(
     db: psycopg.Connection, two_users: tuple[UUID, UUID, dict[str, UUID]]
 ) -> None:
@@ -349,6 +398,311 @@ def test_export_then_import_keeps_content_dates_and_order(db: psycopg.Connection
         *((True, name, age) for name, age in zip(("First", "Second"), ages, strict=True)),
     ]
     assert _counts(db, user_a) == {**dict.fromkeys(USER_TABLES, 2), "interview_answers": 0}
+
+
+IMPORT_MAX_BYTES = 4 * 1024 * 1024
+"""import_my_data's cap: one import needs about 20 times this in memory (decision 027)."""
+
+STORAGE_BUDGET = IMPORT_MAX_BYTES - 1024
+"""Bytes a user's rows may add to their export; 1 kB is left for the export's envelope."""
+
+MAX_RESULT_TEXT = RESULT_MAX_BYTES - len('{"text": ""}')
+"""The longest `text` a {"text": ...} result can hold under the 256 kB result cap."""
+
+STORAGE_FULL = "PT507"
+IMPORT_TOO_LARGE = "PT413"
+LOCK_WAIT_SECONDS = 10
+
+ADD_CLASSIFICATION = """
+    insert into classifications (system_id, risk_class, status, law_version, result, created_at)
+    values (%(system)s, 'high_risk', 'decided', 'amended',
+            jsonb_build_object('text', repeat('x', %(length)s::integer)),
+            now() - make_interval(secs => %(age)s::integer))
+"""
+
+
+def _add_classification(db: psycopg.Connection, system: UUID, length: int, age: int = 0) -> None:
+    """As the current user: a classification whose result text is `length` long, `age` s old."""
+    db.execute(ADD_CLASSIFICATION, {"system": system, "length": length, "age": age})
+
+
+@contextmanager
+def _raises_sqlstate(db: psycopg.Connection, sqlstate: str) -> Iterator[None]:
+    """The block fails with this SQLSTATE (inside a savepoint, so the test can go on)."""
+    with pytest.raises(psycopg.Error) as caught, db.transaction():
+        yield
+    assert caught.value.sqlstate == sqlstate
+
+
+def _usage(db: psycopg.Connection, user_id: UUID) -> int:
+    """The user's running storage total (as postgres)."""
+    row = db.execute(
+        "select bytes from private.storage_usage where user_id = %s", (user_id,)
+    ).fetchone()
+    return row[0] if row else 0
+
+
+def _classification_bytes(db: psycopg.Connection, length: int) -> int:
+    """The stored size of an ADD_CLASSIFICATION row whose text is `length` long (as postgres)."""
+    row = {
+        "risk_class": "high_risk",
+        "status": "decided",
+        "law_version": "amended",
+        "result": {"text": "x" * length},
+    }
+    return _one(db, "select private.export_bytes('classifications', %s)", (Jsonb(row),))
+
+
+def _filler_lengths(free: int, base: int, largest: int) -> list[int]:
+    """Result text lengths whose rows take exactly `free` bytes (at least one row)."""
+    count = (free - base) // largest
+    rest = free - count * largest  # base <= rest < largest + base
+    if rest - base <= MAX_RESULT_TEXT:
+        return [MAX_RESULT_TEXT] * count + [rest - base]
+    # Too much for one row: a row of `largest - base` bytes, and the rest (over `base`) in another.
+    return [MAX_RESULT_TEXT] * count + [MAX_RESULT_TEXT - base, rest - largest]
+
+
+def _fill(db: psycopg.Connection, user_id: UUID, system: UUID, leave: int) -> None:
+    """Classifications of `system` until exactly `leave` bytes of the budget are free (as postgres,
+    acting as `user_id`)."""
+    largest, base = _classification_bytes(db, MAX_RESULT_TEXT), _classification_bytes(db, 0)
+    free = STORAGE_BUDGET - _usage(db, user_id) - leave
+    lengths = _filler_lengths(free, base, largest)
+    # Fail fast if export_bytes stops growing with the text: the fill would never end.
+    assert largest - base == MAX_RESULT_TEXT
+    assert len(lengths) <= STORAGE_BUDGET // MAX_RESULT_TEXT + 2
+    with as_user(db, user_id):
+        for offset, length in enumerate(lengths):
+            _add_classification(db, system, length, age=offset + 1)
+    assert _usage(db, user_id) == STORAGE_BUDGET - leave
+
+
+def _user_with_system(db: psycopg.Connection) -> tuple[UUID, dict[str, UUID]]:
+    user = _create_user(db)
+    with as_user(db, user):
+        return user, _add_system(db)
+
+
+def test_an_export_at_the_full_budget_imports_and_round_trips(db: psycopg.Connection) -> None:
+    (user_a, rows), user_b = _user_with_system(db), _create_user(db)
+    _fill(db, user_a, rows["systems"], leave=0)
+    with as_user(db, user_a):
+        exported = _one(db, "select export_my_data()")
+    size = _one(db, "select octet_length(%s::jsonb::text)", (Jsonb(exported),))
+    assert IMPORT_MAX_BYTES - 2048 < size <= IMPORT_MAX_BYTES
+
+    with as_user(db, user_b):
+        db.execute("select import_my_data(%s)", (Jsonb(exported),))
+        reexported = _one(db, "select export_my_data()")
+    assert reexported["inventories"] == exported["inventories"]
+    assert _usage(db, user_b) == _usage(db, user_a) == STORAGE_BUDGET
+
+
+def _padded_document(db: psycopg.Connection, size: int) -> dict[str, Any]:
+    """An empty export whose text is exactly `size` bytes (import ignores the extra key)."""
+    base = _one(db, "select octet_length(%s::jsonb::text)", (Jsonb({**EMPTY_EXPORT, "pad": ""}),))
+    return {**EMPTY_EXPORT, "pad": "x" * (size - base)}
+
+
+def test_an_import_is_capped_at_four_megabytes(db: psycopg.Connection) -> None:
+    user = _create_user(db)
+    at_cap, over_cap = (
+        _padded_document(db, IMPORT_MAX_BYTES),
+        _padded_document(db, IMPORT_MAX_BYTES + 1),
+    )
+    with as_user(db, user):
+        added = _one(db, "select import_my_data(%s)", (Jsonb(at_cap),))
+        assert added == dict.fromkeys(USER_TABLES, 0)
+        with _raises_sqlstate(db, IMPORT_TOO_LARGE):
+            db.execute("select import_my_data(%s)", (Jsonb(over_cap),))
+
+
+def test_the_budget_rejects_a_write_that_would_exceed_it(db: psycopg.Connection) -> None:
+    user, rows = _user_with_system(db)
+    _fill(db, user, rows["systems"], leave=_classification_bytes(db, 10))
+    with as_user(db, user):
+        with _raises_sqlstate(db, STORAGE_FULL):
+            _add_classification(db, rows["systems"], 11)
+        with _raises_sqlstate(db, STORAGE_FULL):
+            db.execute("update interview_answers set answer = answer || repeat('y', 1000)")
+        _add_classification(db, rows["systems"], 10)
+    assert _usage(db, user) == STORAGE_BUDGET
+
+
+def test_deleting_frees_space(db: psycopg.Connection) -> None:
+    user, rows = _user_with_system(db)
+    _fill(db, user, rows["systems"], leave=0)
+    with as_user(db, user):
+        with _raises_sqlstate(db, STORAGE_FULL):
+            _add_classification(db, rows["systems"], 0)
+        db.execute("delete from classifications where id = %s", (rows["classifications"],))
+        _add_classification(db, rows["systems"], 0)
+        # Shrinking always passes, and deleting everything brings the total back to zero.
+        db.execute("update interview_answers set answer = ''")
+        db.execute("select delete_my_data()")
+    assert _usage(db, user) == 0
+
+
+SECOND_ROWS: dict[str, LiteralString] = {
+    "inventories": "insert into inventories (name, created_at) values ('Zweite \"Liste\"', %(at)s)"
+    " returning to_jsonb(inventories)",
+    "systems": "insert into systems (inventory_id, name, description, created_at)"
+    " values (%(inventory)s, 'Bewerber-Ranking', 'Sortiert Bewerbungen für Ärzte.', %(at)s)"
+    " returning to_jsonb(systems)",
+    "classifications": "insert into classifications"
+    " (system_id, risk_class, status, law_version, result, created_at)"
+    " values (%(system)s, 'minimal_risk', 'decided', 'original', '{\"a\": \"é\", \"b\": [1]}',"
+    " %(at)s) returning to_jsonb(classifications)",
+    "interview_answers": "insert into interview_answers (system_id, template, question_key, answer)"
+    " values (%(system)s, 'art_27', 'q2', 'Line one\nline \"two\".')"
+    " returning to_jsonb(interview_answers)",
+}
+"""A second row per table (so each export array already has a first child), with quotes, accents
+and a newline that the export's text escapes."""
+
+FULL_PRECISION_TIME = "2026-09-30T12:34:56.123456+00:00"
+"""A created_at that renders at its widest (32 characters) in UTC."""
+
+
+def _export_size(db: psycopg.Connection) -> int:
+    return _one(db, "select octet_length(export_my_data()::text)")
+
+
+@pytest.mark.parametrize("table", USER_TABLES)
+def test_a_rows_stored_size_is_what_it_adds_to_the_export(
+    db: psycopg.Connection, table: str
+) -> None:
+    user, rows = _user_with_system(db)
+    db.execute("set local timezone = 'UTC'")
+    params = {
+        "at": FULL_PRECISION_TIME,
+        "inventory": rows["inventories"],
+        "system": rows["systems"],
+    }
+    with as_user(db, user):
+        before = _export_size(db)
+        row = _one(db, SECOND_ROWS[table], params)
+        growth = _export_size(db) - before
+    assert _one(db, "select private.export_bytes(%s, %s)", (table, Jsonb(row))) == growth
+
+
+def test_a_write_that_does_not_grow_the_data_passes_over_the_budget(
+    db: psycopg.Connection,
+) -> None:
+    user, rows = _user_with_system(db)
+    db.execute(
+        "update private.storage_usage set bytes = %s where user_id = %s",
+        (STORAGE_BUDGET + 1000, user),
+    )
+    with as_user(db, user):
+        db.execute("update interview_answers set answer = ''")
+        db.execute("update inventories set name = name")
+        with _raises_sqlstate(db, STORAGE_FULL):
+            db.execute("update inventories set name = name || 'x'")
+        with _raises_sqlstate(db, STORAGE_FULL):
+            _add_classification(db, rows["systems"], 0)
+
+
+def test_an_import_past_the_budget_adds_nothing(db: psycopg.Connection) -> None:
+    (user_a, _), (user_b, rows_b) = _user_with_system(db), _user_with_system(db)
+    with as_user(db, user_a):
+        exported = _one(db, "select export_my_data()")
+    _fill(db, user_b, rows_b["systems"], leave=100)
+    before = _counts(db, user_b)
+    with as_user(db, user_b), _raises_sqlstate(db, STORAGE_FULL):
+        db.execute("select import_my_data(%s)", (Jsonb(exported),))
+    assert _counts(db, user_b) == before
+    assert _usage(db, user_b) == STORAGE_BUDGET - 100
+
+
+def _wait_until_blocked(admin: psycopg.Connection, pid: int) -> None:
+    """Return once backend `pid` waits for a lock; fail after LOCK_WAIT_SECONDS."""
+    deadline = time.monotonic() + LOCK_WAIT_SECONDS
+    query = "select wait_event_type = 'Lock' from pg_stat_activity where pid = %s"
+    while _one(admin, query, (pid,)) is not True:
+        assert time.monotonic() < deadline, f"backend {pid} never waited for a lock"
+        admin.rollback()  # pg_stat_activity is a snapshot per transaction
+    admin.rollback()
+
+
+@contextmanager
+def _committed_user(admin: psycopg.Connection) -> Iterator[tuple[UUID, dict[str, UUID]]]:
+    """A user with one row per table, committed so that other sessions see it (the lock tests
+    need two real sessions), and deleted with all their data afterwards."""
+    admin.rollback()
+    user, rows = _user_with_system(admin)
+    admin.commit()
+    try:
+        yield user, rows
+    finally:
+        admin.rollback()
+        admin.execute("delete from auth.users where id = %s", (user,))
+        admin.commit()
+
+
+def _pid(connection: psycopg.Connection) -> int:
+    pid = _one(connection, "select pg_backend_pid()")
+    connection.rollback()
+    return pid
+
+
+def test_concurrent_writes_cannot_both_pass_the_budget(db_connection: psycopg.Connection) -> None:
+    """Two sessions of one user, room for one more row: the second waits for the first, then
+    fails."""
+    admin = db_connection
+    with (
+        _committed_user(admin) as (user, rows),
+        psycopg.connect(_database_url()) as first,
+        psycopg.connect(_database_url()) as second,
+        ThreadPoolExecutor(max_workers=1) as pool,
+    ):
+        system = rows["systems"]
+        _fill(admin, user, system, leave=_classification_bytes(admin, 0))
+        admin.commit()
+        second_pid = _pid(second)
+
+        def write_second() -> None:
+            with as_user(second, user), second.transaction():
+                _add_classification(second, system, 0)
+
+        with as_user(first, user):
+            _add_classification(first, system, 0)
+            pending = pool.submit(write_second)
+            _wait_until_blocked(admin, second_pid)
+        first.commit()
+        with pytest.raises(psycopg.Error) as caught:
+            pending.result(timeout=LOCK_WAIT_SECONDS)
+        assert caught.value.sqlstate == STORAGE_FULL
+    assert _usage(admin, user) == 0
+
+
+def test_a_delete_racing_an_insert_does_not_deadlock(db_connection: psycopg.Connection) -> None:
+    """delete_my_data's order (answers, then systems) against an insert under one of the systems.
+    Every writer locks the user's storage total before any row, so the insert waits without holding
+    its system's KEY SHARE lock, and the delete of the systems never waits for it."""
+    admin = db_connection
+    with (
+        _committed_user(admin) as (user, rows),
+        psycopg.connect(_database_url()) as deleting,
+        psycopg.connect(_database_url()) as inserting,
+        ThreadPoolExecutor(max_workers=1) as pool,
+    ):
+        inserting_pid = _pid(inserting)
+
+        def insert() -> None:
+            with as_user(inserting, user), inserting.transaction():
+                _add_classification(inserting, rows["systems"], 0)
+
+        with as_user(deleting, user):
+            deleting.execute("delete from interview_answers")
+            pending = pool.submit(insert)
+            _wait_until_blocked(admin, inserting_pid)
+            deleting.execute("set local lock_timeout = '3s'")
+            deleting.execute("delete from systems")
+        deleting.rollback()
+        pending.result(timeout=LOCK_WAIT_SECONDS)  # the insert goes ahead, no 40P01
+        inserting.rollback()
 
 
 @pytest.mark.parametrize(
@@ -482,6 +836,38 @@ def test_a_future_timestamp_in_an_import_does_not_block_the_cleanup(
 
     _purge(db, later="31 days")
     assert not _user_exists(db, user)
+
+
+def test_the_cleanup_racing_a_write_does_not_deadlock(db_connection: psycopg.Connection) -> None:
+    """The cleanup locks its targets' storage totals before it deletes them, like a user's write,
+    so a write racing the cleanup of the same user waits instead of deadlocking. A blocker holds
+    one of the user's rows to stop the cleanup half-way through its cascade. The cleanup is rolled
+    back (it would delete every anonymous user inactive by then, and the shared database holds
+    no others it may delete)."""
+    admin = db_connection
+    with (
+        _committed_user(admin) as (user, rows),
+        psycopg.connect(_database_url()) as blocker,
+        psycopg.connect(_database_url()) as purger,
+        psycopg.connect(_database_url()) as writer,
+        ThreadPoolExecutor(max_workers=2) as pool,
+    ):
+        purger_pid, writer_pid = _pid(purger), _pid(writer)
+
+        def write() -> None:
+            with as_user(writer, user), writer.transaction():
+                _add_classification(writer, rows["systems"], 0)
+
+        blocker.execute("select from classifications where user_id = %s for update", (user,))
+        purging = pool.submit(_purge, purger, RETENTION, "31 days")
+        _wait_until_blocked(admin, purger_pid)
+        writing = pool.submit(write)
+        _wait_until_blocked(admin, writer_pid)
+        blocker.rollback()
+        assert purging.result(timeout=LOCK_WAIT_SECONDS) >= 1
+        purger.rollback()
+        writing.result(timeout=LOCK_WAIT_SECONDS)  # the write goes ahead, no 40P01
+        writer.rollback()
 
 
 def test_cleanup_refuses_a_retention_under_one_day(db: psycopg.Connection) -> None:
