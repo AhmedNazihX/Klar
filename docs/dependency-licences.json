@@ -371,6 +371,10 @@
     "licence": "MIT",
     "summary": "Babel Types is a Lodash-esque utility library for AST nodes"
   },
+  "npm:@blazediff/core==1.10.0": {
+    "licence": "MIT",
+    "summary": "Blazing-fast pixel-by-pixel image comparison with block-based optimization. 1.5x times faster than pixelmatch"
+  },
   "npm:@bramus/specificity==2.4.2": {
     "licence": "MIT",
     "summary": "Calculate specificity of a CSS Selector"
@@ -474,6 +478,10 @@
   "npm:@fontsource-variable/newsreader==5.3.0": {
     "licence": "OFL-1.1",
     "summary": "Self-host the Newsreader font in a neatly bundled NPM package."
+  },
+  "npm:@fontsource/lexend==5.3.0": {
+    "licence": "OFL-1.1",
+    "summary": "Self-host the Lexend font in a neatly bundled NPM package."
   },
   "npm:@hey-api/codegen-core==0.9.1": {
     "licence": "MIT",
@@ -622,6 +630,10 @@
   "npm:@oxc-project/types==0.151.0": {
     "licence": "MIT",
     "summary": "Types for Oxc AST nodes"
+  },
+  "npm:@polka/url==1.0.0-next.29": {
+    "licence": "MIT",
+    "summary": "Super fast, memoized `req.url` parser"
   },
   "npm:@radix-ui/number==1.1.3": {
     "licence": "MIT",
@@ -1183,13 +1195,33 @@
     "licence": "MIT",
     "summary": "The default Vite plugin for React projects"
   },
+  "npm:@vitest/browser-playwright==5.0.2": {
+    "licence": "MIT",
+    "summary": "Browser running for Vitest using playwright"
+  },
+  "npm:@vitest/browser==5.0.2": {
+    "licence": "MIT",
+    "summary": "Browser running for Vitest"
+  },
   "npm:@vitest/mocker==5.0.2": {
     "licence": "MIT",
     "summary": "Vitest module mocker implementation"
   },
+  "npm:@vitest/pretty-format==5.0.2": {
+    "licence": "MIT",
+    "summary": "Fork of pretty-format with support for ESM"
+  },
   "npm:@vitest/spy==5.0.2": {
     "licence": "MIT",
     "summary": "Lightweight Jest compatible spy implementation"
+  },
+  "npm:@vitest/ui==5.0.2": {
+    "licence": "MIT",
+    "summary": "UI for Vitest"
+  },
+  "npm:@vitest/utils==5.0.2": {
+    "licence": "MIT",
+    "summary": "Shared Vitest utility functions"
   },
   "npm:accepts==2.0.0": {
     "licence": "MIT",
@@ -1774,6 +1806,10 @@
   "npm:fdir==6.5.0": {
     "licence": "MIT",
     "summary": "The fastest directory crawler & globbing alternative to glob, fast-glob, & tiny-glob. Crawls 1m files in < 1s"
+  },
+  "npm:fflate==0.8.3": {
+    "licence": "MIT",
+    "summary": "High performance (de)compression in an 8kB package"
   },
   "npm:figures==6.1.0": {
     "licence": "MIT",
@@ -2379,6 +2415,10 @@
     "licence": "MIT",
     "summary": "parse argument options"
   },
+  "npm:mrmime==2.0.1": {
+    "licence": "MIT",
+    "summary": "A tiny (2.8kB) and fast utility for getting a MIME type from an extension or filename"
+  },
   "npm:ms==2.1.3": {
     "licence": "MIT",
     "summary": "Tiny millisecond conversion utility"
@@ -2570,6 +2610,18 @@
   "npm:pkg-up==3.1.0": {
     "licence": "MIT",
     "summary": "Find the closest package.json file"
+  },
+  "npm:playwright-core==1.63.0": {
+    "licence": "Apache-2.0",
+    "summary": "A high-level API to automate web browsers"
+  },
+  "npm:playwright==1.63.0": {
+    "licence": "Apache-2.0",
+    "summary": "A high-level API to automate web browsers"
+  },
+  "npm:pngjs==7.0.0": {
+    "licence": "MIT",
+    "summary": "PNG encoder/decoder in pure JS, supporting any bit size & interlace, async & sync with full test suite."
   },
   "npm:postcss-selector-parser==7.1.6": {
     "licence": "MIT",
@@ -2819,6 +2871,10 @@
     "licence": "ISC",
     "summary": "when you want to fire an event no matter how a process exits."
   },
+  "npm:sirv==3.0.2": {
+    "licence": "MIT",
+    "summary": "The optimized & lightweight middleware for serving requests to static assets"
+  },
   "npm:sisteransi==1.0.5": {
     "licence": "MIT",
     "summary": "ANSI escape codes for some terminal swag"
@@ -2923,6 +2979,10 @@
     "licence": "MIT",
     "summary": "A fast and minimal alternative to globby and fast-glob"
   },
+  "npm:tinyrainbow==3.2.0": {
+    "licence": "MIT",
+    "summary": "A small library to print colourful messages."
+  },
   "npm:tldts-core==7.4.16": {
     "licence": "MIT",
     "summary": "tldts core primitives (internal module)"
@@ -2938,6 +2998,10 @@
   "npm:toidentifier==1.0.1": {
     "licence": "MIT",
     "summary": "Convert a string of words to a JavaScript identifier"
+  },
+  "npm:totalist==3.0.1": {
+    "licence": "MIT",
+    "summary": "A tiny (195B to 220B) utility to recursively list all (total) files in a directory"
   },
   "npm:tough-cookie==6.0.2": {
     "licence": "BSD-3-Clause",
@@ -3110,6 +3174,10 @@
   "npm:wrappy==1.0.2": {
     "licence": "ISC",
     "summary": "Callback wrapping utility"
+  },
+  "npm:ws==8.22.0": {
+    "licence": "MIT",
+    "summary": "Simple to use, blazing fast and thoroughly tested websocket client and server for Node.js"
   },
   "npm:wsl-utils==0.3.1": {
     "licence": "MIT",
