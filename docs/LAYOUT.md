@@ -32,6 +32,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
 │   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3)
 │   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
+│   │   │                            generations.py: the provider that served a generation (X2)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
 │   │   │                            build.py + load.py (C3), embed.py (C4)
@@ -69,7 +70,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support, invented content (V5)
 │   │   │   ├── ragas_metrics.py     (V6)
 │   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)
-│   │   │   └── experiments/         embeddings.py (X1a), smoke.py (X2), free_agent.py (S1)
+│   │   │   └── experiments/         embeddings.py (X1a), free_agent.py (S1); X2: smoke.py (`aiact evaluate smoke`),
+│   │   │                            smoke_verdict.py (decision 023's rule over stored runs, `smoke-compare`),
+│   │   │                            matchers.py (replay states and label matchers, shared with the E3/E5/E7 replays)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)

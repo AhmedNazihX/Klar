@@ -30,6 +30,7 @@ from aiact.eval import (
 )
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases
+from aiact.eval.experiments import smoke, smoke_verdict
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
@@ -532,6 +533,100 @@ def eval_isolation_embed(
         f"{len(texts)} texts: {outcome.embedded} embedded, {outcome.removed} removed; "
         f"{outcome.tokens} tokens, ${outcome.cost_usd:.6f}. Written: {output}"
     )
+
+
+@eval_app.command("smoke")
+def eval_smoke(
+    model: Annotated[
+        list[str] | None,
+        typer.Option(help=f"One of: {', '.join(smoke.ARMS)}; repeat for both [default: both]"),
+    ] = None,
+    dry_run: Annotated[
+        bool, typer.Option(help="Print the probes and the cost estimate; make no call")
+    ] = False,
+    max_cost_usd: Annotated[
+        float, typer.Option(min=0.000001, help="Per model: start no new batch once this is spent")
+    ] = smoke.DEFAULT_MAX_COST_USD,
+    concurrency: Annotated[
+        int, typer.Option(min=1, max=runner.MAX_CONCURRENCY, help="Probes in flight at once")
+    ] = smoke.DEFAULT_CONCURRENCY,
+) -> None:
+    """The engine model smoke test (X2, decision 023): each model on the staged nodes and the
+    approved own cases, stored in eval_runs, then decision 023's rule applied to the stored rows."""
+    unknown = sorted(set(model or ()) - set(smoke.ARMS))
+    if unknown:
+        known = ", ".join(smoke.ARMS)
+        typer.echo(f"Error: unknown model {', '.join(unknown)}; one of: {known}", err=True)
+        raise typer.Exit(code=2)
+    arms = [smoke.ARMS[name] for name in dict.fromkeys(model or smoke.ARMS)]
+    try:
+        probes = smoke.plan_probes()
+    except CaseFileError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(smoke.format_plan(probes, arms))
+    if dry_run:
+        return
+    try:
+        git_state = runner.current_git_state()
+        with records.connect() as connection:
+            store = records.PostgresRunStore(connection)
+            run_ids: dict[str, UUID] = {}
+            for arm in arms:
+                run = smoke.run_arm(
+                    arm,
+                    probes,
+                    store,
+                    get_settings(),
+                    git_state,
+                    max_cost_usd=max_cost_usd,
+                    concurrency=concurrency,
+                )
+                run_ids[arm.name] = run.run_id
+                typer.echo(
+                    f"{arm.name}: run {run.run_id}, {run.status.value}, {run.probes_recorded}/"
+                    f"{run.probes_planned} probes, ${run.cost_usd:.4f}, {run.tokens} tokens"
+                )
+            if len(run_ids) == len(smoke.ARMS):
+                typer.echo(_smoke_comparison(connection, run_ids))
+    except (
+        LLMConfigError,
+        records.DatabaseNotConfiguredError,
+        CalledProcessError,
+        smoke_verdict.SmokeRunError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    if git_state[1]:
+        typer.echo("Warning: uncommitted changes; the recorded git_sha may not reproduce", err=True)
+
+
+@eval_app.command("smoke-compare")
+def eval_smoke_compare(
+    luna_run: Annotated[UUID, typer.Argument(help="The Luna smoke run's eval_runs id")],
+    gemini_run: Annotated[UUID, typer.Argument(help="The Gemini smoke run's eval_runs id")],
+) -> None:
+    """Apply decision 023's rule to two stored smoke runs and print the table (read-only)."""
+    try:
+        with records.connect() as connection:
+            text = _smoke_comparison(connection, {"luna": luna_run, "gemini": gemini_run})
+    except (records.DatabaseNotConfiguredError, smoke_verdict.SmokeRunError, ValueError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(text)
+
+
+def _smoke_comparison(connection: psycopg.Connection, run_ids: dict[str, UUID]) -> str:
+    comparison = smoke_verdict.compare_runs(connection, run_ids)
+    return smoke_verdict.format_comparison(comparison, run_ids)
 
 
 @mcp_app.callback()

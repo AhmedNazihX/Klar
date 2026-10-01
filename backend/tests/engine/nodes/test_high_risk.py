@@ -49,7 +49,9 @@ from aiact.engine.nodes.high_risk_retrieval import (
 from aiact.engine.nodes.key_facts import Answer
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
-from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
+from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
+from aiact.eval.experiments.matchers import WORKED_EXAMPLE as WORKED_EXAMPLE_CASE
+from aiact.eval.experiments.matchers import high_risk_matches, replay_state, tag
 from aiact.llm import LLMConfigError, OpenRouterEmbeddings
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit, SearchResults
@@ -71,11 +73,7 @@ from aiact.settings import Settings
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
 AS_OF = date(2026, 9, 30)
-WORKED_EXAMPLE = (
-    "We're a 40-person logistics company. We use a tool that reads incoming job applications, "
-    "scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't "
-    "change it."
-)
+WORKED_EXAMPLE = WORKED_EXAMPLE_CASE.description
 PUMP_TOOL = "We make an app that plans pump maintenance for a water utility."
 EXCLUDED = ("hr-ex-900", "hr-ex-901")
 
@@ -1181,17 +1179,13 @@ def replay_check(
 @pytest.mark.vcr
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
-    result = replay_check(state())
+    result = replay_check(replay_state(WORKED_EXAMPLE_CASE, AS_OF))
     assert result.high_risk_route is HighRiskRoute.ANNEX_III
     assert result.annex_point == "annex:III:4:a"
     assert not result.annex_iii_exempt
     assert result.step.status is Status.DECIDED
     assert "art:6:3" in cited(result)
-
-
-def _tag(case: BenchmarkCase, name: str) -> list[str]:
-    prefix = f"{name}:"
-    return [tag.removeprefix(prefix) for tag in case.tags if tag.startswith(prefix)]
+    assert high_risk_matches(result, WORKED_EXAMPLE_CASE)
 
 
 @dataclass(frozen=True)
@@ -1208,7 +1202,7 @@ def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) 
     return (
         result.step.status is Status.NEEDS_MORE_INFORMATION
         and result.high_risk_route is HighRiskRoute.ANNEX_I
-        and result.annex_point in _tag(case, "annex_i_point")
+        and result.annex_point in tag(case, "annex_i_point")
         and missing is not None
         and missing.id == "third_party_assessment"
         and missing.about == "art:6:1:b"
@@ -1227,35 +1221,6 @@ KNOWN_GAPS: dict[str, KnownGap] = {
 reading they give instead; each fails when it starts matching, so the entry is removed."""
 
 
-def _matches_label(result: CheckOutcome, case: BenchmarkCase) -> bool:
-    """The case's class, route, Annex point and step status, from its label and tags."""
-    label = case.label
-    assert isinstance(label, CaseLabel)
-    step = result.step
-    if label.risk_class is not RiskClass.HIGH_RISK:
-        return (
-            result.high_risk_route is None
-            and not result.annex_iii_exempt
-            and result.annex_point is None
-            and step.status is label.status
-        )
-    also_iii = "annex_iii" in _tag(case, "also_route")
-    expected = HighRiskRoute.ANNEX_III if also_iii else HighRiskRoute.ANNEX_I
-    points = {*_tag(case, "annex_i_point"), *label.annex_point}
-    missing = _tag(case, "missing_fact")
-    asked = step.missing_fact.id if step.missing_fact else None
-    section_b_decided = "b" in _tag(case, "annex_i_section") and label.status is Status.DECIDED
-    names_art_2_2 = "2(2)" in step.decision or "Art. 2 Abs. 2" in step.decision
-    return (
-        result.high_risk_route is expected
-        and not result.annex_iii_exempt
-        and result.annex_point in points
-        and step.status is label.status
-        and all(asked == fact for fact in missing)
-        and (names_art_2_2 or not section_b_decided)
-    )
-
-
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1264,8 +1229,8 @@ def _matches_label(result: CheckOutcome, case: BenchmarkCase) -> bool:
 )
 def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -> None:
     """Each B5e case against its label and tags; a `KNOWN_GAPS` case is an expected failure."""
-    result = replay_check(state(case.description, case.language))
-    matches = _matches_label(result, case)
+    result = replay_check(replay_state(case, AS_OF))
+    matches = high_risk_matches(result, case)
     gap = KNOWN_GAPS.get(case.id)
     if gap is not None:
         if matches:

@@ -8,12 +8,22 @@ See https://openrouter.ai/docs/guides/routing/provider-selection.
 
 from collections.abc import Sequence
 
+from openrouter.utils import BackoffStrategy, RetryConfig
 from pydantic import SecretStr
 
 from aiact.settings import Settings
 
 APP_TITLE = "AI Act Classification Assistant"
 """Sent as the attribution title, so usage shows under this app in the OpenRouter dashboard."""
+
+
+NO_RETRIES = RetryConfig(
+    strategy="none",
+    backoff=BackoffStrategy(initial_interval=0, max_interval=0, exponent=1.0, max_elapsed_time=0),
+    retry_connection_errors=False,
+)
+"""An SDK retry config that makes exactly one attempt. Leaving `retry_config` unset is not the
+same: the SDK then retries 5XX and network errors with backoff for up to an hour."""
 
 
 class LLMConfigError(RuntimeError):
