@@ -90,5 +90,59 @@
     "amended": "Geänderte Fassung, 27.07.2026",
     "original": "Ursprüngliche Fassung, 2024",
     "notice": "Sie sehen die ursprüngliche Fassung von 2024. Der digitale Omnibus hat den Hochrisiko-Termin für Anhang III auf den 2. Dezember 2027 verschoben; Klar nutzt standardmäßig die geänderte Fassung."
+  },
+  "nav": {
+    "label": "App-Navigation",
+    "inventory": "KI-Inventar",
+    "classify": "Tool einstufen",
+    "obligations": "Pflichten",
+    "documents": "Dokumente",
+    "ask": "Fragen stellen"
+  },
+  "sidebar": {
+    "companyName": "Ihr Unternehmen",
+    "companyEmpty": "Noch kein Unternehmensprofil",
+    "exportData": "Daten exportieren",
+    "deleteData": "Meine Daten löschen",
+    "menu": "Menü"
+  },
+  "screen": {
+    "placeholder": "Dieser Bildschirm ist noch im Aufbau.",
+    "welcome": "Über Ihr Unternehmen",
+    "inventory": "Ihre KI-Tools",
+    "classify": "Tool beschreiben",
+    "result": "Ergebnis",
+    "obligations": "Pflichten",
+    "documents": "Dokumententwürfe",
+    "document": "Dokumententwurf",
+    "ask": "Fragen zur KI-Verordnung",
+    "yourData": "Ihre Daten"
+  },
+  "site": {
+    "navLabel": "Hauptnavigation",
+    "how": "So funktioniert es",
+    "accuracy": "Genauigkeit",
+    "agents": "Für KI-Agenten",
+    "yourData": "Ihre Daten",
+    "classify": "Tool einstufen",
+    "footer": {
+      "guidance": "Orientierungshilfe, keine Rechtsberatung.",
+      "data": "Klar ist selbst ein KI-System und sagt das auf jedem Bildschirm. Ihre Beschreibungen bleiben in Ihrer anonymen Sitzung und werden nach 30 Tagen ohne Aktivität gelöscht. Die Modelle werden über OpenRouter angesprochen; Embeddings laufen bei einem Anbieter in der EU. Alle Anbieter stehen in der Datenschutzerklärung.",
+      "linksLabel": "Website",
+      "method": "So wird gemessen",
+      "privacy": "Datenschutz",
+      "impressum": "Impressum",
+      "contact": "Kontakt"
+    },
+    "page": {
+      "method": "So wird Klar gemessen",
+      "privacy": "Datenschutzerklärung",
+      "impressum": "Impressum",
+      "contact": "Kontakt"
+    }
+  },
+  "lawShort": {
+    "amended": "Geändert, 2026",
+    "original": "Ursprünglich, 2024"
   }
 }

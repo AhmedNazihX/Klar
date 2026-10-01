@@ -12,6 +12,7 @@ import { LawDate } from '@/components/LawDate'
 import { LawNotice } from '@/components/LawNotice'
 import { LAW_SCOPE_CLASS, LawSwitch } from '@/components/LawSwitch'
 import { Notice } from '@/components/Notice'
+import { PhoneLabel } from '@/components/PhoneLabel'
 import { EVIDENCE_KINDS, PILL_KINDS, STATUSES } from '@/components/pill-kinds'
 import { RiskPill } from '@/components/RiskPill'
 import { SegmentedControl } from '@/components/SegmentedControl'
@@ -19,7 +20,7 @@ import { StatusPill } from '@/components/StatusPill'
 import type { Language } from '@/i18n'
 import { cn } from '@/lib/utils'
 
-export const Route = createFileRoute('/brand')({ component: BrandPage })
+export const Route = createFileRoute('/_site/brand')({ component: BrandPage })
 
 // The system's core swatches, rendered from the theme tokens, so the two can be compared.
 const SWATCHES = [
@@ -136,7 +137,11 @@ function LawPanel(): JSX.Element {
   const format = new Intl.DateTimeFormat(DATE_LOCALE[language], { dateStyle: 'long' })
   return (
     <Section title={t('brand.law')} className={LAW_SCOPE_CLASS}>
-      <LawSwitch className="self-start" />
+      <LawSwitch
+        className="self-start"
+        amendedLabel={<PhoneLabel phone={t('lawShort.amended')} wide={t('law.amended')} />}
+        originalLabel={<PhoneLabel phone={t('lawShort.original')} wide={t('law.original')} />}
+      />
       <p className="text-body-small">
         <Trans
           i18nKey="brand.lawDateSample"
@@ -165,7 +170,7 @@ function BrandPage(): JSX.Element {
         <p className="max-w-prose text-slate">{t('brand.intro')}</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <GlassPanel className="flex h-48 flex-col justify-between">
           <p className="text-caption text-slate">{t('brand.onLight')}</p>
           <KlarLogo className="h-11 w-auto self-start" />
@@ -176,7 +181,7 @@ function BrandPage(): JSX.Element {
         </GlassPanel>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Section title={t('brand.colour')}>
           <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {SWATCHES.map((swatch) => (
@@ -206,7 +211,7 @@ function BrandPage(): JSX.Element {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <ComponentsPanel />
         <StatusesPanel />
         <LawPanel />

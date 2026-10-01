@@ -1,21 +1,23 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 
-import { AppShell } from '@/components/AppShell'
 import { ErrorView } from '@/components/ErrorView'
+import { SiteFrame } from '@/components/SiteFrame'
 
 export type RouterContext = { queryClient: QueryClient }
 
+// Each frame is a layout route: _site (the public pages) and app (the app screens). An error or
+// an unknown address shows on the site frame.
 export const Route = createRootRouteWithContext<RouterContext>()({
-  component: () => (
-    <AppShell>
-      <Outlet />
-    </AppShell>
-  ),
+  component: Outlet,
   errorComponent: () => (
-    <AppShell>
+    <SiteFrame>
       <ErrorView />
-    </AppShell>
+    </SiteFrame>
   ),
-  notFoundComponent: () => <ErrorView isNotFound />,
+  notFoundComponent: () => (
+    <SiteFrame>
+      <ErrorView isNotFound />
+    </SiteFrame>
+  ),
 })

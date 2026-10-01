@@ -39,13 +39,16 @@ export function renderWithProviders(ui: ReactElement): RenderResult {
   )
 }
 
-/** Render the whole app at `path`, with its real routes. */
-export function renderRoute(path: string): RenderResult {
+/** Render the whole app at `path`, with its real routes; `router` tells where it went. */
+export function renderRoute(
+  path: string,
+): RenderResult & { router: ReturnType<typeof createAppRouter> } {
   const client = createTestQueryClient()
   const router = createAppRouter(client, createMemoryHistory({ initialEntries: [path] }))
-  return render(
+  const result = render(
     <Providers client={client}>
       <RouterProvider router={router} />
     </Providers>,
   )
+  return { ...result, router }
 }

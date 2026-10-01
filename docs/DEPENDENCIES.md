@@ -191,6 +191,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | @types/react | dev | ^19.2.18 | 19.3.0 | MIT | TypeScript definitions for react |
 | @types/react-dom | dev | ^19.2.7 | 19.3.0 | MIT | TypeScript definitions for react-dom |
 | @vitejs/plugin-react | dev | ^6.1.1 | 6.1.1 | MIT | The default Vite plugin for React projects |
+| @vitest/browser-playwright | dev | 5.0.2 | 5.0.2 | MIT | Browser running for Vitest using playwright |
 | eslint | dev | ^10.11.0 | 10.11.0 | MIT | An AST-based pattern checker for JavaScript. |
 | eslint-config-prettier | dev | ^10.1.8 | 10.1.8 | MIT | Turns off all rules that are unnecessary or might conflict with Prettier. |
 | eslint-plugin-react-hooks | dev | ^7.1.1 | 7.1.1 | MIT | ESLint rules for React Hooks |
@@ -198,6 +199,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | globals | dev | ^17.12.0 | 17.12.0 | MIT | Global identifiers from different JavaScript environments |
 | jsdom | dev | ^30.1.1 | 30.1.1 | MIT | A JavaScript implementation of many web standards |
 | msw | dev | ^2.15.0 | 2.15.0 | MIT | Seamless REST/GraphQL API mocking library for browser and Node.js. |
+| playwright | dev | 1.63.0 | 1.63.0 | Apache-2.0 | A high-level API to automate web browsers |
 | postcss | dev | ^8.5.28 | 8.5.28 | MIT | Tool for transforming styles with JS plugins |
 | prettier | dev | ^3.9.9 | 3.9.9 | MIT | Prettier is an opinionated code formatter |
 | prettier-plugin-tailwindcss | dev | ^0.8.1 | 0.8.1 | MIT | A Prettier plugin for sorting Tailwind CSS classes. |
@@ -214,8 +216,8 @@ Source: `frontend/pnpm-lock.yaml`.
 | Package | Locked | Licence | Pulled in by |
 | --- | --- | --- | --- |
 | @adobe/css-tools | 4.5.0 | MIT | @testing-library/jest-dom |
-| @asamuzakjp/css-color | 7.1.2 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| @asamuzakjp/dom-selector | 9.2.2 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| @asamuzakjp/css-color | 7.1.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| @asamuzakjp/dom-selector | 9.2.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | @babel/code-frame | 7.29.7 | MIT | @tanstack/router-plugin, @testing-library/jest-dom, @testing-library/react, @te… |
 | @babel/compat-data | 7.29.7 | MIT | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
 | @babel/core | 7.29.7 | MIT | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
@@ -245,15 +247,16 @@ Source: `frontend/pnpm-lock.yaml`.
 | @babel/template | 7.29.7 | MIT | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
 | @babel/traverse | 7.29.8 | MIT | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
 | @babel/types | 7.29.8 | MIT | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
-| @bramus/specificity | 2.4.2 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| @blazediff/core | 1.10.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| @bramus/specificity | 2.4.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | @cacheable/memory | 2.2.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | @cacheable/utils | 2.5.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| @csstools/color-helpers | 6.1.2 | MIT-0 | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| @csstools/css-calc | 3.4.1 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| @csstools/css-color-parser | 4.2.4 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| @csstools/css-parser-algorithms | 4.0.1 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| @csstools/css-syntax-patches-for-csstree | 1.1.14 | MIT-0 | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| @csstools/css-tokenizer | 4.0.2 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| @csstools/color-helpers | 6.1.2 | MIT-0 | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| @csstools/css-calc | 3.4.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| @csstools/css-color-parser | 4.2.4 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| @csstools/css-parser-algorithms | 4.0.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| @csstools/css-syntax-patches-for-csstree | 1.1.14 | MIT-0 | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| @csstools/css-tokenizer | 4.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | @dotenvx/dotenvx | 1.75.1 | BSD-3-Clause | shadcn |
 | @dotenvx/primitives | 0.8.0 | BSD-3-Clause | shadcn |
 | @eslint-community/eslint-utils | 4.10.1 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
@@ -263,7 +266,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | @eslint/core | 1.2.1 | Apache-2.0 | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | @eslint/object-schema | 3.0.5 | Apache-2.0 | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | @eslint/plugin-kit | 0.7.3 | Apache-2.0 | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| @exodus/bytes | 1.16.0 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| @exodus/bytes | 1.16.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | @floating-ui/core | 1.8.0 | MIT | radix-ui |
 | @floating-ui/dom | 1.8.0 | MIT | radix-ui |
 | @floating-ui/react-dom | 2.1.9 | MIT | radix-ui |
@@ -279,29 +282,30 @@ Source: `frontend/pnpm-lock.yaml`.
 | @humanfs/types | 0.15.0 | Apache-2.0 | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | @humanwhocodes/module-importer | 1.0.1 | Apache-2.0 | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | @humanwhocodes/retry | 0.4.3 | Apache-2.0 | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| @inquirer/ansi | 2.0.8 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| @inquirer/confirm | 6.3.2 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| @inquirer/core | 12.0.3 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| @inquirer/figures | 2.0.9 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| @inquirer/type | 4.1.1 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| @inquirer/ansi | 2.0.8 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| @inquirer/confirm | 6.3.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| @inquirer/core | 12.0.3 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| @inquirer/figures | 2.0.9 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| @inquirer/type | 4.1.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | @jridgewell/gen-mapping | 0.3.13 | MIT | @tailwindcss/vite, @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
 | @jridgewell/remapping | 2.3.5 | MIT | @tailwindcss/vite, @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
-| @jridgewell/resolve-uri | 3.1.2 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, eslint-p… |
-| @jridgewell/sourcemap-codec | 1.6.0 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, eslint-p… |
-| @jridgewell/trace-mapping | 0.3.31 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, eslint-p… |
+| @jridgewell/resolve-uri | 3.1.2 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitest/… |
+| @jridgewell/sourcemap-codec | 1.6.0 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitest/… |
+| @jridgewell/trace-mapping | 0.3.31 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitest/… |
 | @jsdevtools/ono | 7.1.3 | MIT | @hey-api/openapi-ts |
 | @keyv/bigmap | 1.3.1 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | @keyv/serialize | 1.1.1 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | @lukeed/ms | 2.0.2 | MIT | @hey-api/openapi-ts |
 | @modelcontextprotocol/sdk | 1.31.0 | MIT | shadcn |
-| @mswjs/interceptors | 0.41.9 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| @mswjs/interceptors | 0.41.9 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | @nodelib/fs.scandir | 2.1.5 | MIT | shadcn |
 | @nodelib/fs.stat | 2.0.5 | MIT | shadcn |
 | @nodelib/fs.walk | 1.2.8 | MIT | shadcn |
-| @open-draft/deferred-promise | 2.2.0, 3.0.0 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| @open-draft/logger | 0.3.0 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| @open-draft/until | 2.1.0 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| @open-draft/deferred-promise | 2.2.0, 3.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| @open-draft/logger | 0.3.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| @open-draft/until | 2.1.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | @oxc-project/types | 0.151.0 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitejs/… |
+| @polka/url | 1.0.0-next.29 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | @radix-ui/number | 1.1.3 | MIT | radix-ui |
 | @radix-ui/primitive | 1.1.7 | MIT | radix-ui |
 | @radix-ui/react-accessible-icon | 1.1.15 | MIT | radix-ui |
@@ -412,13 +416,13 @@ Source: `frontend/pnpm-lock.yaml`.
 | @testing-library/dom | 10.4.2 | MIT | @testing-library/jest-dom, @testing-library/react, @testing-library/user-event |
 | @ts-morph/common | 0.27.0 | MIT | shadcn |
 | @types/aria-query | 5.0.4 | MIT | @testing-library/jest-dom, @testing-library/react, @testing-library/user-event |
-| @types/chai | 5.2.3 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
-| @types/deep-eql | 4.0.2 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| @types/chai | 5.2.3 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| @types/deep-eql | 4.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | @types/esrecurse | 4.3.1 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| @types/estree | 1.0.9 | MIT | @eslint/js, @testing-library/jest-dom, eslint, eslint-config-prettier, eslint-p… |
+| @types/estree | 1.0.9 | MIT | @eslint/js, @testing-library/jest-dom, @vitest/browser-playwright, eslint, esli… |
 | @types/json-schema | 7.0.15 | MIT | @eslint/js, @hey-api/openapi-ts, eslint, eslint-config-prettier, eslint-plugin-… |
-| @types/set-cookie-parser | 2.4.10 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| @types/statuses | 2.0.6 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| @types/set-cookie-parser | 2.4.10 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| @types/statuses | 2.0.6 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | @types/validate-npm-package-name | 4.0.2 | MIT | shadcn |
 | @typescript-eslint/eslint-plugin | 8.71.0 | MIT | typescript-eslint |
 | @typescript-eslint/parser | 8.71.0 | MIT | typescript-eslint |
@@ -430,8 +434,12 @@ Source: `frontend/pnpm-lock.yaml`.
 | @typescript-eslint/typescript-estree | 8.71.0 | MIT | typescript-eslint |
 | @typescript-eslint/utils | 8.71.0 | MIT | typescript-eslint |
 | @typescript-eslint/visitor-keys | 8.71.0 | MIT | typescript-eslint |
-| @vitest/mocker | 5.0.2 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
-| @vitest/spy | 5.0.2 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| @vitest/browser | 5.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| @vitest/mocker | 5.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| @vitest/pretty-format | 5.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| @vitest/spy | 5.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| @vitest/ui | 5.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| @vitest/utils | 5.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | accepts | 2.0.0 | MIT | shadcn |
 | acorn | 8.18.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | acorn-jsx | 5.3.2 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
@@ -444,14 +452,14 @@ Source: `frontend/pnpm-lock.yaml`.
 | argparse | 2.0.1 | Python-2.0 | @hey-api/openapi-ts, shadcn |
 | aria-hidden | 1.2.6 | MIT | radix-ui |
 | aria-query | 5.3.0, 5.3.2 | Apache-2.0 | @testing-library/jest-dom, @testing-library/react, @testing-library/user-event,… |
-| assertion-error | 2.0.1 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| assertion-error | 2.0.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | ast-types | 0.16.3 | MIT | shadcn |
 | atomically | 1.7.0 | MIT | shadcn |
 | axe-core | 4.13.0 | MPL-2.0 | vitest-axe |
 | babel-dead-code-elimination | 1.0.12 | MIT | @tanstack/router-plugin |
 | balanced-match | 4.0.4 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | baseline-browser-mapping | 2.11.26 | Apache-2.0 | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
-| bidi-js | 1.1.0 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| bidi-js | 1.1.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | body-parser | 2.3.0 | MIT | shadcn |
 | brace-expansion | 5.0.12 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | braces | 3.0.3 | MIT | shadcn |
@@ -464,13 +472,13 @@ Source: `frontend/pnpm-lock.yaml`.
 | call-bound | 1.0.4 | MIT | shadcn |
 | callsites | 3.1.0 | MIT | shadcn |
 | caniuse-lite | 1.0.30001813 | CC-BY-4.0 | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
-| chai | 6.2.2 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| chai | 6.2.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | chalk | 5.6.2 | MIT | shadcn, vitest-axe |
 | chokidar | 5.0.0 | MIT | @hey-api/openapi-ts, @tanstack/router-plugin |
 | cli-cursor | 5.0.0 | MIT | shadcn |
 | cli-spinners | 2.9.2 | MIT | shadcn |
-| cli-width | 4.1.0 | ISC | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| cliui | 8.0.1 | ISC | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| cli-width | 4.1.0 | ISC | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| cliui | 8.0.1 | ISC | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | clsx | 2.1.1 | MIT | class-variance-authority |
 | code-block-writer | 13.0.3 | MIT | shadcn |
 | color-convert | 2.0.1 | MIT | @testing-library/jest-dom, @testing-library/react, @testing-library/user-event,… |
@@ -481,21 +489,21 @@ Source: `frontend/pnpm-lock.yaml`.
 | confbox | 0.2.4, 0.3.1 | MIT | @hey-api/openapi-ts |
 | content-disposition | 1.1.0 | MIT | shadcn |
 | content-type | 1.0.5, 2.1.0 | MIT | shadcn |
-| convert-source-map | 2.0.0 | MIT | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
-| cookie | 0.7.2, 1.1.1 | MIT | @testing-library/jest-dom, msw, shadcn, vitest, vitest-axe |
+| convert-source-map | 2.0.0 | MIT | @tanstack/router-plugin, @testing-library/jest-dom, @vitest/browser-playwright,… |
+| cookie | 0.7.2, 1.1.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, shadcn, vitest, vit… |
 | cookie-es | 3.1.1 | MIT | @tanstack/react-router, @tanstack/router-plugin |
 | cookie-signature | 1.2.2 | MIT | shadcn |
 | cors | 2.8.6 | MIT | shadcn |
 | cosmiconfig | 9.0.2 | MIT | shadcn |
 | cross-spawn | 7.0.6 | MIT | @eslint/js, @hey-api/openapi-ts, eslint, eslint-config-prettier, eslint-plugin-… |
-| css-tree | 3.2.1 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| css-tree | 3.2.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | css.escape | 1.5.1 | MIT | @testing-library/jest-dom |
 | cssesc | 3.0.0 | MIT | shadcn |
 | csstype | 3.2.3 | MIT | @hookform/resolvers, @testing-library/react, @types/react, @types/react-dom, ra… |
-| data-urls | 7.0.0 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| data-urls | 7.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | debounce-fn | 4.0.0 | MIT | shadcn |
 | debug | 4.4.3 | MIT | @eslint/js, @tanstack/router-plugin, eslint, eslint-config-prettier, eslint-plu… |
-| decimal.js | 10.6.0 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| decimal.js | 10.6.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | dedent | 1.7.2 | MIT | shadcn |
 | deep-is | 0.1.4 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | deepmerge | 4.3.1 | MIT | shadcn |
@@ -515,18 +523,18 @@ Source: `frontend/pnpm-lock.yaml`.
 | dunder-proto | 1.0.1 | MIT | shadcn |
 | ee-first | 1.1.1 | MIT | shadcn |
 | electron-to-chromium | 1.5.439 | ISC | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
-| emoji-regex | 10.6.0, 8.0.0 | MIT | @testing-library/jest-dom, msw, shadcn, vitest, vitest-axe |
+| emoji-regex | 10.6.0, 8.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, shadcn, vitest, vit… |
 | encodeurl | 2.0.0 | MIT | shadcn |
 | enhanced-resolve | 5.25.1 | MIT | @tailwindcss/vite |
 | enquirer | 2.4.1 | MIT | shadcn |
-| entities | 8.1.0 | BSD-2-Clause | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| entities | 8.1.0 | BSD-2-Clause | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | env-paths | 2.2.1 | MIT | shadcn |
 | error-ex | 1.3.4 | MIT | shadcn |
 | es-define-property | 1.0.1 | MIT | shadcn |
 | es-errors | 1.3.0 | MIT | shadcn |
-| es-module-lexer | 2.3.2 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| es-module-lexer | 2.3.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | es-object-atoms | 1.1.2 | MIT | shadcn |
-| escalade | 3.2.0 | MIT | @tanstack/router-plugin, @testing-library/jest-dom, eslint-plugin-react-hooks,… |
+| escalade | 3.2.0 | MIT | @tanstack/router-plugin, @testing-library/jest-dom, @vitest/browser-playwright,… |
 | escape-html | 1.0.3 | MIT | shadcn |
 | escape-string-regexp | 4.0.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | eslint-scope | 9.1.2 | BSD-2-Clause | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
@@ -536,13 +544,13 @@ Source: `frontend/pnpm-lock.yaml`.
 | esquery | 1.7.0 | BSD-3-Clause | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | esrecurse | 4.3.0 | BSD-2-Clause | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | estraverse | 5.3.0 | BSD-2-Clause | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| estree-walker | 3.0.3 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| estree-walker | 3.0.3 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | esutils | 2.0.3 | BSD-2-Clause | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | etag | 1.8.1 | MIT | shadcn |
 | eventsource | 3.0.7 | MIT | shadcn |
 | eventsource-parser | 3.1.1 | MIT | shadcn |
 | execa | 5.1.1, 9.6.1 | MIT | shadcn |
-| expect-type | 1.4.0 | Apache-2.0 | @testing-library/jest-dom, vitest, vitest-axe |
+| expect-type | 1.4.0 | Apache-2.0 | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | express | 5.2.1 | MIT | shadcn |
 | express-rate-limit | 8.7.0 | MIT | shadcn |
 | exsolve | 1.1.1 | MIT | @hey-api/openapi-ts |
@@ -550,19 +558,20 @@ Source: `frontend/pnpm-lock.yaml`.
 | fast-glob | 3.3.3 | MIT | shadcn |
 | fast-json-stable-stringify | 2.1.0 | MIT | @eslint/js, @hookform/resolvers, eslint, eslint-config-prettier, eslint-plugin-… |
 | fast-levenshtein | 2.0.6 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| fast-string-truncated-width | 3.0.3 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| fast-string-width | 3.0.2 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| fast-string-truncated-width | 3.0.3 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| fast-string-width | 3.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | fast-uri | 3.1.8 | BSD-3-Clause | @eslint/js, @hookform/resolvers, eslint, eslint-config-prettier, eslint-plugin-… |
-| fast-wrap-ansi | 0.2.2 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| fast-wrap-ansi | 0.2.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | fastq | 1.20.3 | ISC | shadcn |
 | fdir | 6.5.0 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitejs/… |
+| fflate | 0.8.3 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | figures | 6.1.0 | MIT | shadcn |
 | file-entry-cache | 11.1.5 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | fill-range | 7.1.1 | MIT | shadcn |
 | finalhandler | 2.1.1 | MIT | shadcn |
 | find-up | 3.0.0, 5.0.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | flat-cache | 6.1.23 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| flatted | 3.4.4 | ISC | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
+| flatted | 3.4.4 | ISC | @eslint/js, @testing-library/jest-dom, @vitest/browser-playwright, eslint, esli… |
 | forwarded | 0.2.0 | MIT | shadcn |
 | fresh | 2.0.0 | MIT | shadcn |
 | fs-extra | 11.4.1 | MIT | shadcn |
@@ -570,8 +579,8 @@ Source: `frontend/pnpm-lock.yaml`.
 | function-bind | 1.1.2 | MIT | shadcn |
 | fuzzysort | 3.1.0 | MIT | shadcn |
 | gensync | 1.0.0-beta.2 | MIT | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
-| get-caller-file | 2.0.5 | ISC | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| get-east-asian-width | 1.7.0 | MIT | @testing-library/jest-dom, msw, shadcn, vitest, vitest-axe |
+| get-caller-file | 2.0.5 | ISC | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| get-east-asian-width | 1.7.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, shadcn, vitest, vit… |
 | get-intrinsic | 1.3.0 | MIT | shadcn |
 | get-nonce | 1.0.1 | MIT | radix-ui |
 | get-own-enumerable-keys | 1.0.0 | MIT | shadcn |
@@ -582,16 +591,16 @@ Source: `frontend/pnpm-lock.yaml`.
 | glob-parent | 5.1.2, 6.0.2 | ISC | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | gopd | 1.2.0 | MIT | shadcn |
 | graceful-fs | 4.2.11 | ISC | @tailwindcss/vite, shadcn |
-| graphql | 16.14.2 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| graphql | 16.14.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | has-symbols | 1.1.0 | MIT | shadcn |
 | hashery | 1.5.1 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | hasown | 2.0.4 | MIT | shadcn |
-| headers-polyfill | 5.0.1 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| headers-polyfill | 5.0.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | hermes-estree | 0.25.1 | MIT | eslint-plugin-react-hooks |
 | hermes-parser | 0.25.1 | MIT | eslint-plugin-react-hooks |
 | hono | 4.13.10 | MIT | shadcn |
 | hookified | 1.15.1, 2.2.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| html-encoding-sniffer | 7.0.0 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| html-encoding-sniffer | 7.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | html-parse-stringify | 4.0.1 | MIT | react-i18next |
 | http-errors | 2.0.1 | MIT | shadcn |
 | human-signals | 2.1.0, 8.0.1 | Apache-2.0 | shadcn |
@@ -607,16 +616,16 @@ Source: `frontend/pnpm-lock.yaml`.
 | is-arrayish | 0.2.1 | MIT | shadcn |
 | is-docker | 2.2.1, 3.0.0 | MIT | @hey-api/openapi-ts, shadcn |
 | is-extglob | 2.1.1 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| is-fullwidth-code-point | 3.0.0 | MIT | @testing-library/jest-dom, msw, shadcn, vitest, vitest-axe |
+| is-fullwidth-code-point | 3.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, shadcn, vitest, vit… |
 | is-glob | 4.0.3 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | is-in-ssh | 1.0.0 | MIT | @hey-api/openapi-ts, shadcn |
 | is-inside-container | 1.0.0 | MIT | @hey-api/openapi-ts, shadcn |
 | is-interactive | 2.0.0 | MIT | shadcn |
-| is-node-process | 1.2.0 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| is-node-process | 1.2.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | is-number | 7.0.0 | MIT | shadcn |
 | is-obj | 2.0.0, 3.0.0 | MIT | shadcn |
 | is-plain-obj | 4.1.0 | MIT | shadcn |
-| is-potential-custom-element-name | 1.0.1 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| is-potential-custom-element-name | 1.0.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | is-promise | 4.0.0 | MIT | shadcn |
 | is-regexp | 3.1.0 | MIT | shadcn |
 | is-stream | 2.0.1, 4.0.1 | MIT | shadcn |
@@ -654,11 +663,11 @@ Source: `frontend/pnpm-lock.yaml`.
 | locate-path | 3.0.0, 6.0.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | lodash-es | 4.18.1 | MIT | vitest-axe |
 | log-symbols | 6.0.0 | MIT | shadcn |
-| lru-cache | 11.5.3, 5.1.1 | BlueOak-1.0.0 / ISC | @tanstack/router-plugin, @testing-library/jest-dom, eslint-plugin-react-hooks,… |
+| lru-cache | 11.5.3, 5.1.1 | BlueOak-1.0.0 / ISC | @tanstack/router-plugin, @testing-library/jest-dom, @vitest/browser-playwright,… |
 | lz-string | 1.5.0 | MIT | @testing-library/jest-dom, @testing-library/react, @testing-library/user-event |
-| magic-string | 0.30.21, 1.4.2 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, vitest,… |
+| magic-string | 0.30.21, 1.4.2 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitest/… |
 | math-intrinsics | 1.1.0 | MIT | shadcn |
-| mdn-data | 2.27.1 | CC0-1.0 | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| mdn-data | 2.27.1 | CC0-1.0 | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | media-typer | 1.1.1 | MIT | shadcn |
 | merge-descriptors | 2.0.0 | MIT | shadcn |
 | merge-stream | 2.0.0 | MIT | shadcn |
@@ -671,8 +680,9 @@ Source: `frontend/pnpm-lock.yaml`.
 | min-indent | 1.0.1 | MIT | @testing-library/jest-dom, vitest-axe |
 | minimatch | 10.2.6 | BlueOak-1.0.0 | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | minimist | 1.2.8 | MIT | shadcn |
+| mrmime | 2.0.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | ms | 2.1.3 | MIT | @eslint/js, @tanstack/router-plugin, eslint, eslint-config-prettier, eslint-plu… |
-| mute-stream | 3.0.0 | ISC | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| mute-stream | 3.0.0 | ISC | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | nanoid | 3.3.19 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitejs/… |
 | natural-compare | 1.4.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | negotiator | 1.1.0 | MIT | shadcn |
@@ -681,7 +691,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | object-assign | 4.1.1 | MIT | shadcn |
 | object-inspect | 1.13.4 | MIT | shadcn |
 | object-treeify | 1.1.33 | MIT | shadcn |
-| obug | 2.2.1 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| obug | 2.2.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | ohash | 2.0.12 | MIT | @hey-api/openapi-ts |
 | on-finished | 2.4.1 | MIT | shadcn |
 | once | 1.4.0 | ISC | shadcn |
@@ -689,26 +699,28 @@ Source: `frontend/pnpm-lock.yaml`.
 | open | 11.0.0, 8.4.2 | MIT | @hey-api/openapi-ts, shadcn |
 | optionator | 0.9.4 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | ora | 8.2.0 | MIT | shadcn |
-| outvariant | 1.4.3 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| outvariant | 1.4.3 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | p-limit | 2.3.0, 3.1.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | p-locate | 3.0.0, 5.0.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | p-try | 2.2.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | parent-module | 1.0.1 | MIT | shadcn |
 | parse-json | 5.2.0 | MIT | shadcn |
 | parse-ms | 4.0.0 | MIT | shadcn |
-| parse5 | 8.0.1 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| parse5 | 8.0.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | parseurl | 1.3.3 | MIT | shadcn |
 | path-browserify | 1.0.1 | MIT | shadcn |
 | path-exists | 3.0.0, 4.0.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | path-key | 3.1.1, 4.0.0 | MIT | @eslint/js, @hey-api/openapi-ts, eslint, eslint-config-prettier, eslint-plugin-… |
-| path-to-regexp | 6.3.0, 8.4.2 | MIT | @testing-library/jest-dom, msw, shadcn, vitest, vitest-axe |
-| pathe | 2.0.3 | MIT | @hey-api/openapi-ts, @tanstack/router-plugin |
+| path-to-regexp | 6.3.0, 8.4.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, shadcn, vitest, vit… |
+| pathe | 2.0.3 | MIT | @hey-api/openapi-ts, @tanstack/router-plugin, @testing-library/jest-dom, @vites… |
 | perfect-debounce | 2.1.0 | MIT | @hey-api/openapi-ts |
 | picocolors | 1.1.1 | ISC | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @testing… |
 | picomatch | 2.3.2, 4.0.7 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitejs/… |
 | pkce-challenge | 5.0.1 | MIT | shadcn |
 | pkg-types | 2.3.3 | MIT | @hey-api/openapi-ts |
 | pkg-up | 3.1.0 | MIT | shadcn |
+| playwright-core | 1.63.0 | Apache-2.0 | @testing-library/jest-dom, @vitest/browser-playwright, playwright, vitest, vite… |
+| pngjs | 7.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | postcss-selector-parser | 7.1.6 | MIT | shadcn |
 | powershell-utils | 0.1.0 | MIT | @hey-api/openapi-ts, shadcn |
 | prelude-ls | 1.2.1 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
@@ -716,7 +728,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | pretty-ms | 9.3.1 | MIT | shadcn |
 | prompts | 2.4.2 | MIT | shadcn |
 | proxy-addr | 2.0.8 | MIT | shadcn |
-| punycode | 2.3.1 | MIT | @eslint/js, @hookform/resolvers, @testing-library/jest-dom, eslint, eslint-conf… |
+| punycode | 2.3.1 | MIT | @eslint/js, @hookform/resolvers, @testing-library/jest-dom, @vitest/browser-pla… |
 | qified | 0.10.1 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | qs | 6.16.0 | BSD-3-Clause | shadcn |
 | queue-microtask | 1.2.3 | MIT | shadcn |
@@ -730,26 +742,26 @@ Source: `frontend/pnpm-lock.yaml`.
 | readdirp | 5.1.1 | MIT | @hey-api/openapi-ts, @tanstack/router-plugin |
 | recast | 0.23.21 | MIT | shadcn |
 | redent | 3.0.0 | MIT | @testing-library/jest-dom, vitest-axe |
-| require-directory | 2.1.1 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| require-from-string | 2.0.2 | MIT | @eslint/js, @hookform/resolvers, @testing-library/jest-dom, eslint, eslint-conf… |
+| require-directory | 2.1.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| require-from-string | 2.0.2 | MIT | @eslint/js, @hookform/resolvers, @testing-library/jest-dom, @vitest/browser-pla… |
 | resolve-from | 4.0.0 | MIT | shadcn |
 | resolve-pkg-maps | 1.0.0 | MIT | @hey-api/openapi-ts |
 | restore-cursor | 5.1.0 | MIT | shadcn |
-| rettime | 0.11.12 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| rettime | 0.11.12 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | reusify | 1.1.0 | MIT | shadcn |
 | rolldown | 1.2.11 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitejs/… |
 | router | 2.2.0 | MIT | shadcn |
 | run-applescript | 7.1.0 | MIT | @hey-api/openapi-ts, shadcn |
 | run-parallel | 1.2.0 | MIT | shadcn |
 | safer-buffer | 2.1.2 | MIT | shadcn |
-| saxes | 6.0.0 | ISC | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| saxes | 6.0.0 | ISC | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | scheduler | 0.28.0 | MIT | @tanstack/react-router, @tanstack/router-plugin, @testing-library/react, radix-… |
 | semver | 6.3.1, 7.8.4, 7.8.5 | ISC | @hey-api/openapi-ts, @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn… |
 | send | 1.2.1 | MIT | shadcn |
 | seroval | 1.6.7 | MIT | @tanstack/react-router, @tanstack/router-plugin |
 | seroval-plugins | 1.6.7 | MIT | @tanstack/react-router, @tanstack/router-plugin |
 | serve-static | 2.2.1 | MIT | shadcn |
-| set-cookie-parser | 3.1.2 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| set-cookie-parser | 3.1.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | setprototypeof | 1.2.0 | ISC | shadcn |
 | shebang-command | 2.0.0 | MIT | @eslint/js, @hey-api/openapi-ts, eslint, eslint-config-prettier, eslint-plugin-… |
 | shebang-regex | 3.0.0 | MIT | @eslint/js, @hey-api/openapi-ts, eslint, eslint-config-prettier, eslint-plugin-… |
@@ -757,49 +769,52 @@ Source: `frontend/pnpm-lock.yaml`.
 | side-channel-list | 1.0.1 | MIT | shadcn |
 | side-channel-map | 1.0.1 | MIT | shadcn |
 | side-channel-weakmap | 1.0.2 | MIT | shadcn |
-| signal-exit | 3.0.7, 4.1.0 | ISC | @testing-library/jest-dom, msw, shadcn, vitest, vitest-axe |
+| signal-exit | 3.0.7, 4.1.0 | ISC | @testing-library/jest-dom, @vitest/browser-playwright, msw, shadcn, vitest, vit… |
+| sirv | 3.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | sisteransi | 1.0.5 | MIT | shadcn |
 | smart-buffer | 4.2.0 | MIT | shadcn |
 | socks | 2.8.10 | MIT | shadcn |
 | source-map | 0.6.1 | BSD-3-Clause | shadcn |
 | source-map-js | 1.2.1 | BSD-3-Clause | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitejs/… |
-| statuses | 2.0.2 | MIT | @testing-library/jest-dom, msw, shadcn, vitest, vitest-axe |
-| std-env | 4.2.0 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| statuses | 2.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, shadcn, vitest, vit… |
+| std-env | 4.2.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | stdin-discarder | 0.2.2 | MIT | shadcn |
-| strict-event-emitter | 0.5.1 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| string-width | 4.2.3, 7.2.0 | MIT | @testing-library/jest-dom, msw, shadcn, vitest, vitest-axe |
+| strict-event-emitter | 0.5.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| string-width | 4.2.3, 7.2.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, shadcn, vitest, vit… |
 | stringify-object | 5.0.0 | BSD-2-Clause | shadcn |
-| strip-ansi | 6.0.1, 7.2.0 | MIT | @testing-library/jest-dom, msw, shadcn, vitest, vitest-axe |
+| strip-ansi | 6.0.1, 7.2.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, shadcn, vitest, vit… |
 | strip-bom | 3.0.0 | MIT | shadcn |
 | strip-final-newline | 2.0.0, 4.0.0 | MIT | shadcn |
 | strip-indent | 3.0.0 | MIT | @testing-library/jest-dom, vitest-axe |
 | systeminformation | 5.33.14 | MIT | shadcn |
-| tagged-tag | 1.0.0 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| tagged-tag | 1.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | tapable | 2.3.3 | MIT | @tailwindcss/vite |
 | tiny-invariant | 1.3.3 | MIT | shadcn |
-| tinybench | 6.2.0 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
-| tinyexec | 1.3.1 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| tinybench | 6.2.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| tinyexec | 1.3.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | tinyglobby | 0.2.17 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @vitejs/… |
-| tldts | 7.4.16 | MIT | @testing-library/jest-dom, jsdom, msw, vitest, vitest-axe |
-| tldts-core | 7.4.16 | MIT | @testing-library/jest-dom, jsdom, msw, vitest, vitest-axe |
+| tinyrainbow | 3.2.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| tldts | 7.4.16 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, msw, vitest, vite… |
+| tldts-core | 7.4.16 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, msw, vitest, vite… |
 | to-regex-range | 5.0.1 | MIT | shadcn |
 | toidentifier | 1.0.1 | MIT | shadcn |
-| tough-cookie | 6.0.2 | BSD-3-Clause | @testing-library/jest-dom, jsdom, msw, vitest, vitest-axe |
-| tr46 | 6.0.0 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| totalist | 3.0.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
+| tough-cookie | 6.0.2 | BSD-3-Clause | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, msw, vitest, vite… |
+| tr46 | 6.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | ts-api-utils | 2.5.0 | MIT | typescript-eslint |
 | ts-morph | 26.0.0 | MIT | shadcn |
 | tsconfig-paths | 4.2.0 | MIT | shadcn |
 | tslib | 2.8.1 | 0BSD | @supabase/supabase-js, radix-ui, shadcn |
 | type-check | 0.4.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| type-fest | 5.10.0 | (MIT OR CC0-1.0) | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| type-fest | 5.10.0 | (MIT OR CC0-1.0) | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | type-is | 2.1.0 | MIT | shadcn |
-| undici | 7.30.0, 8.11.2 | MIT | @testing-library/jest-dom, jsdom, shadcn, vitest, vitest-axe |
+| undici | 7.30.0, 8.11.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, shadcn, vitest, v… |
 | undici-types | 7.24.6 | MIT | @tailwindcss/vite, @tanstack/router-plugin, @testing-library/jest-dom, @types/n… |
 | unicorn-magic | 0.3.0 | MIT | shadcn |
 | universalify | 2.0.1 | MIT | shadcn |
 | unpipe | 1.0.0 | MIT | shadcn |
 | unplugin | 3.4.0 | MIT | @tanstack/router-plugin |
-| until-async | 3.0.2 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| until-async | 3.0.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | update-browserslist-db | 1.3.3 | MIT | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
 | uri-js | 4.4.1 | BSD-2-Clause | @eslint/js, @hookform/resolvers, eslint, eslint-config-prettier, eslint-plugin-… |
 | use-callback-ref | 1.3.3 | MIT | radix-ui |
@@ -808,23 +823,24 @@ Source: `frontend/pnpm-lock.yaml`.
 | util-deprecate | 1.0.2 | MIT | shadcn |
 | validate-npm-package-name | 7.0.2 | ISC | shadcn |
 | vary | 1.1.2 | MIT | shadcn |
-| w3c-xmlserializer | 6.0.0 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| webidl-conversions | 8.0.1 | BSD-2-Clause | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| w3c-xmlserializer | 6.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| webidl-conversions | 8.0.1 | BSD-2-Clause | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | webpack-virtual-modules | 0.6.2 | MIT | @tanstack/router-plugin |
-| whatwg-mimetype | 5.0.0 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| whatwg-url | 16.0.1, 17.1.2 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
+| whatwg-mimetype | 5.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| whatwg-url | 16.0.1, 17.1.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
 | which | 2.0.2, 4.0.0 | ISC | @eslint/js, @hey-api/openapi-ts, eslint, eslint-config-prettier, eslint-plugin-… |
-| why-is-node-running | 3.2.2 | MIT | @testing-library/jest-dom, vitest, vitest-axe |
+| why-is-node-running | 3.2.2 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | word-wrap | 1.2.5 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
-| wrap-ansi | 7.0.0 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| wrap-ansi | 7.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | wrappy | 1.0.2 | ISC | shadcn |
+| ws | 8.22.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | wsl-utils | 0.3.1 | MIT | @hey-api/openapi-ts, shadcn |
-| xml-name-validator | 5.0.0 | Apache-2.0 | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| xmlchars | 2.2.0 | MIT | @testing-library/jest-dom, jsdom, vitest, vitest-axe |
-| y18n | 5.0.8 | ISC | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| yallist | 3.1.1 | ISC | @tanstack/router-plugin, @testing-library/jest-dom, eslint-plugin-react-hooks,… |
-| yargs | 17.7.3 | MIT | @testing-library/jest-dom, msw, vitest, vitest-axe |
-| yargs-parser | 21.1.1 | ISC | @testing-library/jest-dom, msw, vitest, vitest-axe |
+| xml-name-validator | 5.0.0 | Apache-2.0 | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| xmlchars | 2.2.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, jsdom, vitest, vitest-axe |
+| y18n | 5.0.8 | ISC | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| yallist | 3.1.1 | ISC | @tanstack/router-plugin, @testing-library/jest-dom, @vitest/browser-playwright,… |
+| yargs | 17.7.3 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
+| yargs-parser | 21.1.1 | ISC | @testing-library/jest-dom, @vitest/browser-playwright, msw, vitest, vitest-axe |
 | yocto-queue | 0.1.0 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | yocto-spinner | 1.2.2 | MIT | shadcn |
 | yoctocolors | 2.2.0 | MIT | shadcn |
