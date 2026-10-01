@@ -324,6 +324,8 @@ class LegacySettlement:
     used: tuple[KeyFact, ...] = ()
     questions: tuple[KeyQuestion, ...] = ()
     check_at_launch: bool = False
+    is_public_authority_assumed: bool = False
+    """The 2030 date rests on an unsettled (unknown or assumed) public-authority answer."""
 
     @property
     def articles(self) -> tuple[str, ...]:
@@ -375,12 +377,21 @@ def settle_legacy(answer: RoleAnswer, route: HighRiskRoute | None) -> LegacySett
         route=route,
         used=tuple(fact for fact, settled, _ in chain if settled is not Answer.UNKNOWN),
         questions=tuple(question for _, settled, question in chain if settled is Answer.UNKNOWN),
+        is_public_authority_assumed=public is Answer.UNKNOWN,
     )
 
 
 PER_PRODUCT_ROLES = frozenset({Role.PROVIDER, Role.IMPORTER, Role.DISTRIBUTOR})
 """The roles that supply the system: placing on the market counts per product supplied (the New
 Legislative Framework reading), so new copies may be fully covered. A deployer uses its copy."""
+
+
+def _sentence_key(status: LegacyStatus, legacy: LegacySettlement) -> str:
+    """The decision sentence for a marking: the 2030 date on an unsettled public-authority
+    answer is worded as an assumption, not as a fact."""
+    if status is LegacyStatus.PUBLIC_AUTHORITY and legacy.is_public_authority_assumed:
+        return "legacy_public_authority_assumed"
+    return status.value
 
 
 def _legacy_summary(
@@ -398,7 +409,7 @@ def _legacy_summary(
     deadline = long_date(PUBLIC_AUTHORITY_DEADLINE, language)
     counts = {status: sum(o.legacy is status for o in kept) for status in LegacyStatus}
     marked = tuple(
-        texts[status.value].format(count=count, date=since, deadline=deadline)
+        texts[_sentence_key(status, legacy)].format(count=count, date=since, deadline=deadline)
         for status, count in counts.items()
         if count
     )

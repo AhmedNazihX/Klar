@@ -167,9 +167,9 @@ LEGACY_QUESTION_TEXTS: Mapping[str, Mapping[Language, str]] = {
     },
     "significant_design_change": {
         Language.EN: "Is a significant change to the system's design or intended purpose "
-        "planned for on or after {date}?",
+        "planned or foreseen for on or after {date}?",
         Language.DE: "Ist ab dem {date} eine erhebliche Veränderung der Konzeption oder der "
-        "Zweckbestimmung des Systems geplant?",
+        "Zweckbestimmung des Systems geplant oder vorgesehen?",
     },
     "for_public_authority": {
         Language.EN: "Is the system meant for use by public authorities?",
@@ -235,8 +235,12 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "legacy_public_authority": "Art. 111(2): the system was on the market or in use before "
         "{date} and is meant for public authorities, so {count} high-risk duties "
         "apply from {deadline}; the class stays high-risk.",
-        "legacy_per_product": "This covers the system as supplied before {date}; copies "
-        "supplied to new customers on or after that date may be fully covered.",
+        "legacy_public_authority_assumed": "Art. 111(2): the system was on the market or in use "
+        "before {date}; until it is confirmed whether public authorities are meant to use it, the "
+        "earlier date is assumed, so {count} high-risk duties apply from {deadline}; the class "
+        "stays high-risk.",
+        "legacy_per_product": "This covers copies placed on the market or put into service before "
+        "{date}; copies supplied on or after that date may be fully covered.",
         "legacy_check_at_launch": "If the system is placed on the market or put into service "
         "before {date} and its design or intended purpose doesn't change significantly "
         "afterwards, Art. 111(2) may limit these duties; check again at launch.",
@@ -272,9 +276,13 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "oder in Betrieb und soll bestimmungsgemäß von Behörden verwendet werden; daher gelten "
         "{count} Hochrisiko-Pflichten ab dem {deadline}. Das System bleibt als Hochrisiko-System "
         "eingestuft.",
-        "legacy_per_product": "Dies gilt für das System, wie es vor dem {date} geliefert wurde; "
-        "Exemplare, die ab diesem Datum an neue Kunden geliefert werden, können vollständig "
-        "erfasst sein.",
+        "legacy_public_authority_assumed": "Art. 111 Abs. 2: Das System war vor dem {date} in "
+        "Verkehr oder in Betrieb; solange nicht geklärt ist, ob Behörden es verwenden sollen, wird "
+        "das frühere Datum angenommen; daher gelten {count} Hochrisiko-Pflichten ab dem "
+        "{deadline}. Das System bleibt als Hochrisiko-System eingestuft.",
+        "legacy_per_product": "Dies gilt für Exemplare, die vor dem {date} in Verkehr gebracht "
+        "oder in Betrieb genommen wurden; ab diesem Datum bereitgestellte Exemplare können "
+        "vollständig erfasst sein.",
         "legacy_check_at_launch": "Wird das System vor dem {date} in Verkehr gebracht oder in "
         "Betrieb genommen und danach in seiner Konzeption oder Zweckbestimmung nicht erheblich "
         "verändert, kann Art. 111 Abs. 2 diese Pflichten einschränken; prüfen Sie dies beim "

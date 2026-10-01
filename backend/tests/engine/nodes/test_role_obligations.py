@@ -816,17 +816,26 @@ def test_the_node_reads_the_earlier_findings_through_the_graph() -> None:
 # --- Art. 111(2): high-risk systems already on the market (C7b) ------------------------------
 # Hand-checked against Art. 111(2): a system on the market or in use before its route's Chapter
 # III date is covered only after a significant change to its design or intended purpose from that
-# date (a substantial modification, Art. 3(23), per recital 177); for public authorities, every
-# operator complies by 2 Aug 2030. The class stays high-risk either way.
+# date (a substantial modification, Art. 3(23), per recital 177); for public authorities,
+# providers and deployers comply by 2 Aug 2030. The class stays high-risk either way.
 
 LEGACY_ARTICLE = "art:111:2"
 SUBSTANTIAL_MODIFICATION = "art:3:23"
 PER_PRODUCT = {
-    Language.EN: "This covers the system as supplied before 2 December 2027; copies supplied to "
-    "new customers on or after that date may be fully covered.",
-    Language.DE: "Dies gilt für das System, wie es vor dem 2. Dezember 2027 geliefert wurde; "
-    "Exemplare, die ab diesem Datum an neue Kunden geliefert werden, können vollständig erfasst "
-    "sein.",
+    Language.EN: "This covers copies placed on the market or put into service before "
+    "2 December 2027; copies supplied on or after that date may be fully covered.",
+    Language.DE: "Dies gilt für Exemplare, die vor dem 2. Dezember 2027 in Verkehr gebracht oder "
+    "in Betrieb genommen wurden; ab diesem Datum bereitgestellte Exemplare können vollständig "
+    "erfasst sein.",
+}
+PUBLIC_AUTHORITY_ASSUMED = {
+    Language.EN: "Art. 111(2): the system was on the market or in use before 2 December 2027; "
+    "until it is confirmed whether public authorities are meant to use it, the earlier date is "
+    "assumed, so {count} high-risk duties apply from 2 August 2030; the class stays high-risk.",
+    Language.DE: "Art. 111 Abs. 2: Das System war vor dem 2. Dezember 2027 in Verkehr oder in "
+    "Betrieb; solange nicht geklärt ist, ob Behörden es verwenden sollen, wird das frühere Datum "
+    "angenommen; daher gelten {count} Hochrisiko-Pflichten ab dem 2. August 2030. Das System "
+    "bleibt als Hochrisiko-System eingestuft.",
 }
 DEPLOYER_DUTIES = ("art:26:1", "art:26:2", "art:26:6")
 
@@ -909,6 +918,51 @@ def test_a_supplier_of_a_legacy_system_gets_the_per_product_caveat(
     assert outcome.step.decision.endswith(PER_PRODUCT[language])
 
 
+@pytest.mark.parametrize("language", list(Language))
+@pytest.mark.parametrize("unsettled", [Answer.UNKNOWN, "assumed yes", "assumed no"])
+def test_an_unsettled_public_authority_answer_words_the_2030_date_as_an_assumption(
+    unsettled: Answer | str, language: Language
+) -> None:
+    given = {
+        Answer.UNKNOWN: key_fact(Answer.UNKNOWN),
+        "assumed yes": key_fact(Answer.YES),
+        "assumed no": key_fact(Answer.NO),
+    }[unsettled]
+    legacy = legacy_answer(Answer.YES).model_copy(update={"for_public_authority": given})
+    outcome = legacy_outcome(legacy, language=language)
+    count = sum(o.legacy is LegacyStatus.PUBLIC_AUTHORITY for o in finding(outcome).obligations)
+    assert count
+    assert outcome.step.decision.endswith(PUBLIC_AUTHORITY_ASSUMED[language].format(count=count))
+    assert "is meant for public authorities" not in outcome.step.decision
+    assert [q.id for q in outcome.follow_up_questions] == ["for_public_authority"]
+
+
+@pytest.mark.parametrize("language", list(Language))
+def test_a_settled_public_authority_answer_states_it(language: Language) -> None:
+    outcome = legacy_outcome(
+        legacy_answer(Answer.YES, public_authority=Answer.YES), language=language
+    )
+    expected = {
+        Language.EN: "and is meant for public authorities, so",
+        Language.DE: "und soll bestimmungsgemäß von Behörden verwendet werden; daher",
+    }[language]
+    assert expected in outcome.step.decision
+    assert "angenommen" not in outcome.step.decision
+    assert "is assumed" not in outcome.step.decision
+
+
+@pytest.mark.parametrize("role", [Role.IMPORTER, Role.DISTRIBUTOR])
+def test_a_supplier_of_a_legacy_public_authority_system_keeps_the_ordinary_marking(
+    role: Role,
+) -> None:
+    legacy = legacy_answer(Answer.YES, public_authority=Answer.YES)
+    outcome = legacy_outcome(legacy, role)
+    marks = {o.legacy for o in finding(outcome).obligations} - {None}
+    assert marks == {LegacyStatus.UNCHANGED}
+    assert "2 August 2030" not in outcome.step.decision
+    assert outcome.step.decision.endswith(PER_PRODUCT[Language.EN])
+
+
 def test_no_caveat_without_a_marking_or_for_a_deployer() -> None:
     changed = legacy_outcome(legacy_answer(Answer.YES, Answer.YES), Role.PROVIDER)
     assert PER_PRODUCT[Language.EN] not in changed.step.decision
@@ -929,9 +983,9 @@ def test_the_design_change_question_asks_about_changes_from_the_date(language: L
     [question] = outcome.follow_up_questions
     expected = {
         Language.EN: "Is a significant change to the system's design or intended purpose "
-        "planned for on or after 2 December 2027?",
+        "planned or foreseen for on or after 2 December 2027?",
         Language.DE: "Ist ab dem 2. Dezember 2027 eine erhebliche Veränderung der Konzeption "
-        "oder der Zweckbestimmung des Systems geplant?",
+        "oder der Zweckbestimmung des Systems geplant oder vorgesehen?",
     }
     assert question.text == expected[language]
 
