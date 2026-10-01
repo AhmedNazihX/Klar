@@ -115,7 +115,9 @@ a real export is older than the new owner, and the import must keep its dates an
   two test constants together; the round-trip test fails if the budget no longer fits the cap.
 - **Keep the measure in step:** `private.export_bytes()` mirrors the objects `export_my_data()` builds. If the
   export gains a field, `export_bytes` must gain it too; `test_a_rows_stored_size_is_what_it_adds_to_the_export`
-  fails when the two differ.
+  fails when the two differ. P19 (`20261001203029_user_data_screens.sql`) extended it to the company profile,
+  `run_no`, `inputs` and the `duty_progress` table, and recomputed every total; `my_data_counts()` returns the
+  caller's total and the budget for the Your data view.
 - **P18/P19 (frontend):** show "storage full" (PT507, with its hint to delete old classifications) and "file too
   large" (PT413) as distinct messages, and tell them apart from "not an export" (22023).
 - **Open limitations; S3 is gated on both** (the user, 2026-10-01, on the P3b security review). No public URL
