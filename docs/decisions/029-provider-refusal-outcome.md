@@ -13,11 +13,12 @@ check meant to flag it. What should a node do when the provider refuses?
 
 | Case | Response | Source |
 | --- | --- | --- |
-| own-c-01, 02, 03, 04, 05, 07 (undressing apps, fake nudes, abuse material) | `finish_reason: content_filter`, content "I'm sorry, but I cannot assist with that request.", `prompt_tokens: 0`, `cost: 0` | `backend/tests/recordings/engine/nodes/test_prohibited/test_b5c_case_replay[own-c-0{1,2,3,4,5,7}-*].yaml` |
-| own-c-16 (police live search) | `finish_reason: content_filter` but a usable answer; the replay passes | same folder, `own-c-16-*` |
-| The other 10 cases | `finish_reason: stop` | same folder |
+| own-c-01, 02, 03, 04, 05, 07 (undressing apps, fake nudes, abuse material) | `finish_reason: content_filter`, content "I'm sorry, but I cannot assist with that request.", `prompt_tokens: 0`, `cost: 0` | First B5c recording run, 2026-10-02 (cassettes not kept: the prompt and schema changed afterwards) |
+| own-c-16 (police live search) | `finish_reason: content_filter` but a usable answer; the replay passed | same run |
+| The other 10 cases | `finish_reason: stop` | same run |
 
-The whole recording cost $0.022531981 (the sum of the `usage.cost` fields in the 17 cassettes).
+The whole first run cost $0.022531981 (the sum of the `usage.cost` fields in its 17 cassettes). For the shape of
+a refusal, see the re-recorded cassettes in `backend/tests/recordings/engine/nodes/test_prohibited/`.
 
 ## Options
 | Option | What it means | Result | Source |

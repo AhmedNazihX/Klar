@@ -346,19 +346,33 @@ def test_an_unsettled_flag_on_a_practice_not_raised_changes_nothing() -> None:
     assert outcome(answer(quiet)).step.status is Status.DECIDED
 
 
-def test_social_scoring_met_on_one_alternative_is_not_held_open_by_the_other() -> None:
-    """Art. 5(1)(c) needs (i) or (ii): with (i) met, an open (ii) decides nothing (own-c-10)."""
-    scoring = part(
-        SocialScoringAnswer,
-        social_scoring=Answer.YES,
-        unrelated_context_treatment=Answer.YES,
-        disproportionate_treatment=Answer.YES,
-    )
-    on_ii = unsettled(scoring).model_copy(update={"open_on": OpenCondition.DISPROPORTIONATE})
-    result = outcome(answer(on_ii))
+@pytest.mark.parametrize(
+    ("met", "open_on", "points"),
+    [
+        ("unrelated_context_treatment", OpenCondition.DISPROPORTIONATE, ["art:5:1:c:i"]),
+        ("disproportionate_treatment", OpenCondition.UNRELATED_CONTEXT, ["art:5:1:c:ii"]),
+    ],
+)
+def test_social_scoring_met_on_one_alternative_is_not_held_open_by_the_other(
+    met: str, open_on: OpenCondition, points: list[str]
+) -> None:
+    """Art. 5(1)(c) needs (i) or (ii): with one met, an open other decides nothing (own-c-10)."""
+    scoring = part(SocialScoringAnswer, social_scoring=Answer.YES, **{met: Answer.YES})
+    result = outcome(answer(unsettled(scoring).model_copy(update={"open_on": open_on})))
     assert result.matched
     assert result.step.status is Status.DECIDED
-    assert cited(result) == ["art:5:1:c", "art:5:1:c:i", "art:5:1:c:ii"]
+    assert result.step.open_question is None
+    assert cited(result) == ["art:5:1:c", *points]
+
+
+def test_an_open_alternative_does_not_settle_an_unknown_social_scoring() -> None:
+    scoring = part(
+        SocialScoringAnswer,
+        social_scoring=Answer.UNKNOWN,
+        disproportionate_treatment=Answer.YES,
+    )
+    on_i = unsettled(scoring).model_copy(update={"open_on": OpenCondition.UNRELATED_CONTEXT})
+    assert outcome(answer(on_i)).step.status is Status.LEGALLY_AMBIGUOUS
 
 
 def test_an_open_alternative_with_the_other_not_met_stays_open() -> None:
@@ -867,7 +881,7 @@ def _filtered(content: str) -> GenericFakeChatModel:
 def test_a_provider_refusal_is_a_step_for_a_person_to_review() -> None:
     """Decision 029: not a broken output; prohibited assumed, Art. 5 cited, review asked."""
     check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
-    result = check(state())
+    result = check(state(as_of=AFTER_DECEMBER))
     assert result.matched
     step = result.step
     assert step.status is Status.NEEDS_MORE_INFORMATION
@@ -880,10 +894,33 @@ def test_a_provider_refusal_is_a_step_for_a_person_to_review() -> None:
     assert "Art. 5(1)(ba) or (bb) may apply" in step.decision
 
 
-def test_a_refusal_is_reported_in_german() -> None:
+def test_a_refusal_before_2_december_2026_says_ba_and_bb_do_not_apply_yet() -> None:
+    """Any other Art. 5 point may still apply, so prohibited stays assumed; Art. 113(a) cited."""
     check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
-    result = check(state(language=Language.DE))
+    result = check(state(as_of=BEFORE_DECEMBER))
+    assert result.matched
+    step = result.step
+    assert step.status is Status.NEEDS_MORE_INFORMATION
+    assert step.error == "provider_refusal"
+    assert cited(result) == ["art:5", "art:113:a"]
+    assert "Art. 5(1)(ba) and (bb) apply only from 2 December 2026" in step.decision
+    assert "on 16 November 2026" in step.decision
+    assert "the other prohibitions of Art. 5 can't be ruled out" in step.decision
+    assert "may apply" not in step.decision
+
+
+@pytest.mark.parametrize(
+    ("as_of", "expected"),
+    [
+        (BEFORE_DECEMBER, "Art. 5 Abs. 1 Buchst. ba und bb gelten erst ab dem 2. Dezember 2026"),
+        (AFTER_DECEMBER, "Art. 5 Abs. 1 Buchst. ba oder bb kann greifen"),
+    ],
+)
+def test_a_refusal_is_reported_in_german(as_of: date, expected: str) -> None:
+    check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
+    result = check(state(as_of=as_of, language=Language.DE))
     assert result.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
+    assert expected in result.step.decision
     assert result.step.missing_fact is not None
     assert result.step.missing_fact.text.startswith("Bitte lassen Sie")
 

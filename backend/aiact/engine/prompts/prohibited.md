@@ -45,7 +45,7 @@ not ask for a fact the description already gives.
   adverse effects on people's financial or economic interests as significant harm, next to
   physical and psychological harm. So when the description states a concrete harm of that kind
   that people actually suffer (for example a stated loss of money that matters to those
-  affected), the threshold is met: answer "yes", and this point is settled in law. "unknown"
+  affected), the significant-harm condition is met: answer `significant_harm` "yes". "unknown"
   when the description doesn't say what follows for the people affected, or says it doesn't
   know. When it states the effects but whether they reach the threshold of significant harm is
   not settled by the Act or the guidelines, answer the facts as stated and `settled_in_law`

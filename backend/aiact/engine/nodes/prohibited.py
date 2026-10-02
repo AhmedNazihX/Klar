@@ -52,6 +52,7 @@ from aiact.engine.nodes.common import (
 from aiact.engine.nodes.key_facts import Answer, facts_used
 from aiact.engine.nodes.prohibited_practices import (
     APPLICATION_DATES,
+    DECEMBER_PROHIBITIONS_APPLY_FROM,
     Practice,
     ProhibitedAnswer,
     practices,
@@ -267,16 +268,28 @@ def to_outcome(
     return CheckOutcome(step=step, matched=settled.matched, follow_up_questions=questions)
 
 
-def refusal_outcome(state: EngineState, retrieved: Retrieved) -> CheckOutcome:
+def refusal_outcome(
+    state: EngineState, retrieved: Retrieved, library: ProhibitedLibrary
+) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    prohibited assumed until a person reviews it, citing Art. 5 as fetched. The run goes on: the
-    review question is a missing fact, so the step can't end it."""
-    language = state["language"]
+    prohibited assumed until a person reviews it (any Art. 5 point may apply), citing Art. 5 as
+    fetched. Before 2 December 2026 it says points (ba) and (bb) don't apply yet and cites Art.
+    113(a), fetched from `library`. The run goes on: the review question is a missing fact, so
+    the step can't end it."""
+    language, as_of = state["language"], state["as_of"]
     review = key_question(texts.PERSON_REVIEW, language)
+    cited = (retrieved.article,)
+    decision = texts.REFUSAL[language]
+    if as_of < DECEMBER_PROHIBITIONS_APPLY_FROM:
+        cited = (*cited, library.provision(APPLICATION_DATES, lookup_for(state)))
+        decision = texts.REFUSAL_BEFORE_DECEMBER[language].format(
+            start=long_date(DECEMBER_PROHIBITIONS_APPLY_FROM, language.value),
+            as_of=long_date(as_of, language.value),
+        )
     step = StepResult(
         step=StepName.PROHIBITED,
-        decision=texts.REFUSAL[language],
-        citations=(provision_citation(retrieved.article),),
+        decision=decision,
+        citations=tuple(provision_citation(p) for p in cited),
         status=Status.NEEDS_MORE_INFORMATION,
         missing_fact=review,
         error=texts.REFUSAL_ERROR,
@@ -353,7 +366,7 @@ class ProhibitedCheck:
         try:
             answer = parse_reply(reply, ProhibitedAnswer)
         except ProviderRefusalError:
-            return refusal_outcome(state, retrieved)
+            return self._reading(lambda library: refusal_outcome(state, retrieved, library))
         except ValidationError as exc:
             message = f"prohibited answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise ProhibitedOutputError(message) from exc

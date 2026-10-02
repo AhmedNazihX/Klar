@@ -255,15 +255,10 @@ class Practice:
     applies_from: date = PROHIBITIONS_APPLY_FROM
     is_permitted_use: bool = False
     """An Art. 5(1)(h) use the exception allows: the Art. 5(4) notification applies."""
-    is_settled_by_other_alternative: bool = False
-    """The question the law leaves open is about one alternative of the practice, and the other
-    alternative is met (Art. 5(1)(c)(i) or (ii)), so it decides nothing."""
 
     @property
     def is_open(self) -> bool:
         """The law leaves open whether the practice applies (only asked of a raised one)."""
-        if self.is_settled_by_other_alternative:
-            return False
         return self.is_raised and self.summary.settled_in_law is Settled.NO
 
 
@@ -353,6 +348,14 @@ def _other_alternative_met(answer: SocialScoringAnswer) -> bool:
     return other.get(answer.open_on) is Answer.YES
 
 
+def _settled_if_moot(answer: SocialScoringAnswer) -> SocialScoringAnswer:
+    """The answer, read as settled in law when its open question is moot (the other
+    alternative is met), as a new copy; otherwise unchanged."""
+    if not _other_alternative_met(answer):
+        return answer
+    return answer.model_copy(update={"settled_in_law": Settled.YES, "open_question": None})
+
+
 def _profiling_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
     """(c) social scoring and (d) crime prediction from profiling alone."""
     c, d = answer.social_scoring, answer.crime_risk
@@ -371,9 +374,8 @@ def _profiling_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
                 ),
             ),
             is_raised=c.social_scoring is not Answer.NO,
-            summary=c,
+            summary=_settled_if_moot(c),
             cited=("art:5:1:c", *_yes_points(treatments)),
-            is_settled_by_other_alternative=_other_alternative_met(c),
         ),
         Practice(
             point="art:5:1:d",
