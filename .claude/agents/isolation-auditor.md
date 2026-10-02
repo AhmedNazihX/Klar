@@ -62,6 +62,13 @@ For each check, report **PASS**, **FAIL** or **N/A** (the files it needs don't e
    `git diff --name-only labels-v1 -- eval/cases/`
 7. **Private data stays private.** `eval/private/` must be gitignored, and no file from it may be
    tracked: `git ls-files eval/private`.
+8. **Engine prompts don't leak Pile B** (decisions 015 and 028). For every changed file under
+   `backend/aiact/engine/prompts/` and every changed `backend/aiact/engine/nodes/*_texts.py`, run decision
+   028's leak-check command from the main checkout on the branch's version of the file
+   (`git show <branch>:<file> > <scratch file>`). A shared 5-word run it prints is a FAIL. Runs that are the
+   Act's own wording are already left out by the command; guidance wording is never exempt. Then read the
+   changed lines yourself: a line that paraphrases a Pile B example's deciding feature is a FAIL even when
+   the command prints nothing. N/A when the diff changes no such file.
 
 ## Standard of evidence
 

@@ -41,7 +41,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)
 │   │   │   ├── scripted.py          stub nodes that return scripted outcomes, for tests (E1)
-│   │   │   ├── nodes/               facts.py (E2), scope.py + scope_texts.py (E3), prohibited.py (E4),
+│   │   │   ├── nodes/               facts.py (E2), scope.py + scope_texts.py (E3), prohibited.py +
+│   │   │   │                        prohibited_practices.py + prohibited_retrieval.py + prohibited_texts.py (E4),
 │   │   │   │                        high_risk.py + high_risk_retrieval.py + high_risk_texts.py (E5),
 │   │   │   │                        transparency.py (E6), role_obligations.py + role_texts.py (E7),
 │   │   │   │                        finalize.py (E8); key_facts.py: the key-fact answer shared by the
@@ -72,7 +73,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)
 │   │   │   └── experiments/         embeddings.py (X1a), free_agent.py (S1); X2: smoke.py (`aiact evaluate smoke`),
 │   │   │                            smoke_verdict.py (decision 023's rule over stored runs, `smoke-compare`),
-│   │   │                            matchers.py (replay states and label matchers, shared with the E3/E5/E7 replays),
+│   │   │                            matchers.py (replay states and label matchers, shared with the E3/E4/E5/E7 replays),
 │   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
@@ -84,7 +85,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6)
 │       ├── recordings/              recorded model responses, <module path under tests/>/<test>.yaml, e.g. llm/test_chat/ (F6);
 │       │                            <test>.corpus.json next to one: the corpus rows a replayed engine node read,
-│       │                            so the replay needs no database (E3, E5)
+│       │                            so the replay needs no database (E3, E4, E5); recorded and replayed by
+│       │                            tests/engine/nodes/corpus_recording.py (E4)
 │       ├── snapshots/               committed JSON snapshots, e.g. the result's JSON Schema (F3)
 │       ├── test_network_guard.py    proves unmarked tests can't reach the network (F6)
 │       └── test_isolation.py        benchmark isolation check (B13)

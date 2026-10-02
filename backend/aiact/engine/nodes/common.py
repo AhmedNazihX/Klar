@@ -1,13 +1,19 @@
-"""What the checks share (E3, E5, E7): the corpus lookup of one run, the citations built from what
-the corpus returns, and the per-case blocks of their prompts."""
+"""What the checks share (E3, E4, E5, E7): the corpus lookup of one run, the citations built from
+what the corpus returns, the follow-up question of a key fact, and the per-case blocks of their
+prompts."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 
+from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import EngineState
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit
-from aiact.schemas import Citation, Language, LawVersion
+from aiact.schemas import Citation, FollowUpQuestion, Language, LawVersion
+
+MAX_PASSAGE_CHARS = 4000
+"""Bounds one retrieved text in the prompt (a parent row holds all its children's text)."""
 
 
 @dataclass(frozen=True)
@@ -65,3 +71,20 @@ def facts_section(state: EngineState) -> str:
     """The extracted facts, numbered from 1 with their evidence tag, or "-"."""
     facts = state.get("facts", ())
     return "\n".join(f"{n}. [{f.evidence.value}] {f.text}" for n, f in enumerate(facts, 1)) or "-"
+
+
+def clipped(text: str) -> str:
+    """`text` cut to `MAX_PASSAGE_CHARS`, marked " […]" when cut."""
+    return text if len(text) <= MAX_PASSAGE_CHARS else f"{text[:MAX_PASSAGE_CHARS]} […]"
+
+
+def named_passages(numbers: Sequence[int], guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
+    """The passages `numbers` name (numbered from 1 as the prompt shows them), in range and each
+    once."""
+    in_range = dict.fromkeys(n for n in numbers if 0 < n <= len(guidance))
+    return tuple(guidance[n - 1] for n in in_range)
+
+
+def key_question(key: KeyQuestion, language: Language) -> FollowUpQuestion:
+    """The follow-up question that settles a key fact, about the provision it rests on."""
+    return FollowUpQuestion(id=key.id, text=key.question[language], about=key.article)

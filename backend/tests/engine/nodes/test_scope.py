@@ -5,10 +5,9 @@ The descriptions and answers here are invented, not benchmark cases. The replay 
 cases only to compare the node's outcome with their labels.
 """
 
-import json
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from datetime import date
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -49,6 +48,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
+from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -577,7 +577,6 @@ def test_a_broken_answer_raises_without_quoting_the_description(content: str) ->
 # --- B5b replay: the own out-of-scope cases, once their recordings exist ------------------------
 
 SCOPE_CASES_DIR = CASES_DIR / CaseSet.OWN.value / "b"
-CORPUS_SUFFIX = ".corpus.json"
 RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_scope.py -k b5b --record-mode=once"
 
 
@@ -587,39 +586,20 @@ def _scope_cases() -> list[BenchmarkCase]:
     return [case for path in paths for case in load_yaml_file(path)]
 
 
-class CorpusReplay:
-    """What the corpus returned for one case: captured from `source` while recording, replayed
-    from a JSON file otherwise, so the replay needs neither the database nor the embeddings."""
+class RecordedScopeLibrary:
+    """A `ScopeLibrary` over the replay's `CorpusRecording`."""
 
-    def __init__(self, path: Path, source: ScopeLibrary | None) -> None:
-        self._path = path
-        self._source = source
-        data: dict[str, Any] = (
-            json.loads(path.read_text(encoding="utf-8"))
-            if source is None
-            else {"provisions": {}, "guidance": []}
-        )
-        self._provisions = {
-            pid: Provision.model_validate(p) for pid, p in data["provisions"].items()
-        }
-        self._guidance = tuple(SearchHit.model_validate(h) for h in data["guidance"])
+    def __init__(self, recording: CorpusRecording[ScopeLibrary]) -> None:
+        self._recording = recording
 
     def provision(self, provision_id: str, lookup: Lookup) -> Provision:
-        if self._source is not None:
-            self._provisions[provision_id] = self._source.provision(provision_id, lookup)
-        return self._provisions[provision_id]
+        return self._recording.provision(
+            provision_id, lookup, lambda live: live.provision(provision_id, lookup)
+        )
 
     def definition_guidance(self, query: str, lookup: Lookup) -> tuple[SearchHit, ...]:
-        if self._source is not None:
-            self._guidance = self._source.definition_guidance(query, lookup)
-        return self._guidance
-
-    def save(self) -> None:
-        data = {
-            "provisions": {pid: p.model_dump(mode="json") for pid, p in self._provisions.items()},
-            "guidance": [h.model_dump(mode="json") for h in self._guidance],
-        }
-        self._path.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", "utf-8")
+        call = {"definition_guidance": query, **lookup_call(lookup)}
+        return self._recording.hits(call, lambda live: live.definition_guidance(query, lookup))
 
 
 B5B_CASES = _scope_cases()
@@ -661,16 +641,15 @@ def test_b5b_case_replay(
     and a real key)."""
     label = case.label
     assert isinstance(label, CaseLabel)
-    cassette = Path(vcr_cassette_dir) / f"{default_cassette_name}.yaml"
-    corpus = cassette.with_name(f"{default_cassette_name}{CORPUS_SUFFIX}")
-    is_replay = record_mode == "none"
-    if is_replay and not (cassette.exists() and corpus.exists()):
-        pytest.skip(f"B5b case {case.id} has no recording yet; record it with `{RECORD_COMMAND}`")
-    library = CorpusReplay(corpus, None if is_replay else CorpusLibrary())
-    given = replay_state(case, AS_OF)
-    outcome = ScopeCheck(luna_settings, library=library)(given)
-    if not is_replay:
-        library.save()
+    with corpus_recording(
+        vcr_cassette_dir,
+        default_cassette_name,
+        record_mode,
+        RECORD_COMMAND,
+        lambda: nullcontext(CorpusLibrary()),
+    ) as recording:
+        library = RecordedScopeLibrary(recording)
+        outcome = ScopeCheck(luna_settings, library=library)(replay_state(case, AS_OF))
     matches = scope_matches(outcome, case)
     gap = KNOWN_GAPS.get(case.id)
     if gap is not None:
