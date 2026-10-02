@@ -1118,6 +1118,10 @@ KNOWN_GAPS: dict[str, str] = {
     "own-c-04-studio-digital-doubles-consent": REFUSED,
     "own-c-05-gossip-site-fake-nudes": REFUSED,
     "own-c-07-unfiltered-image-generator": REFUSED,
+    "own-c-16-police-live-search-missing-child": (
+        "the model reads the police act's two permitted purposes as an unknown objective, so the "
+        "node asks for it with prohibited assumed (cautious; user, 2026-10-02)"
+    ),
 }
 """Recorded cases whose Art. 5 outcome differs from the label, with the reason; each fails when
 it starts matching, so the entry is removed."""
