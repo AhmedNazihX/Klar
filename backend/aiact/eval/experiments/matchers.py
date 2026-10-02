@@ -1,9 +1,12 @@
 """How a check's outcome is scored against an own case's label, and the state a check is replayed
-with. One copy, shared by the E3, E5 and E7 replay tests and the X2 smoke test, so the two can't
-drift apart.
+with. One copy, shared by the E3, E4, E5 and E7 replay tests and the X2 smoke test, so the two
+can't drift apart.
 
 - scope (B5b): out of scope exactly when the label is, with its status; an out-of-scope finding
   cites the provision the label rests on first.
+- prohibited (B5c): matched exactly when the label is prohibited, with the label's status (a
+  label of another class needs a decided Art. 5 step), citing every `prohibition:` tag; a case
+  whose prohibition doesn't apply yet on its date cites Art. 113(a).
 - high_risk (B5e, INIT's worked example): the label's class, route, Annex point and status, the
   tagged missing fact, the Art. 2(2) note for a decided Section B case, and every `cites:` tag.
 - role_obligations (B5d): the label's role, and its status when the label is legally ambiguous.
@@ -106,6 +109,22 @@ def scope_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
     if outcome.matched is not is_out or outcome.step.status is not label.status:
         return False
     return not is_out or case.label_citation[0] in cited(outcome)
+
+
+NOT_YET_APPLICABLE = "trap:prohibition_not_yet_applicable"
+APPLICATION_DATES = "art:113:a"
+
+
+def prohibited_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
+    label = case_label(case)
+    is_prohibited = label.risk_class is RiskClass.PROHIBITED
+    status = label.status if is_prohibited else Status.DECIDED
+    if outcome.matched is not is_prohibited or outcome.step.status is not status:
+        return False
+    needed = {*tag(case, "prohibition")}
+    if NOT_YET_APPLICABLE in case.tags:
+        needed.add(APPLICATION_DATES)
+    return needed <= set(cited(outcome))
 
 
 def expected_route(case: BenchmarkCase) -> HighRiskRoute:
