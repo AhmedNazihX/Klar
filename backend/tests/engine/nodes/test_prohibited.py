@@ -34,6 +34,7 @@ from aiact.engine.nodes.prohibited_practices import (
     EmotionAnswer,
     FaceScrapingAnswer,
     ManipulationAnswer,
+    OpenCondition,
     PracticeSummary,
     ProhibitedAnswer,
     RbiObjective,
@@ -177,10 +178,11 @@ def state(
 
 def part[P: PracticeSummary](model: type[P], **facts: object) -> P:
     """A practice's answer, settled in law: every key fact "no" unless given."""
+    enums = {Answer: Answer.NO, RbiObjective: RbiObjective.NONE, OpenCondition: OpenCondition.NONE}
     defaults = {
-        name: RbiObjective.NONE if field.annotation is RbiObjective else Answer.NO
+        name: enums[field.annotation]
         for name, field in model.model_fields.items()
-        if field.annotation in (Answer, RbiObjective)
+        if field.annotation in enums
     }
     return model.model_validate(
         {
@@ -342,6 +344,51 @@ def test_an_unsettled_practice_without_its_question_gets_the_fixed_one() -> None
 def test_an_unsettled_flag_on_a_practice_not_raised_changes_nothing() -> None:
     quiet = part(ManipulationAnswer).model_copy(update={"settled_in_law": Settled.NO})
     assert outcome(answer(quiet)).step.status is Status.DECIDED
+
+
+def test_social_scoring_met_on_one_alternative_is_not_held_open_by_the_other() -> None:
+    """Art. 5(1)(c) needs (i) or (ii): with (i) met, an open (ii) decides nothing (own-c-10)."""
+    scoring = part(
+        SocialScoringAnswer,
+        social_scoring=Answer.YES,
+        unrelated_context_treatment=Answer.YES,
+        disproportionate_treatment=Answer.YES,
+    )
+    on_ii = unsettled(scoring).model_copy(update={"open_on": OpenCondition.DISPROPORTIONATE})
+    result = outcome(answer(on_ii))
+    assert result.matched
+    assert result.step.status is Status.DECIDED
+    assert cited(result) == ["art:5:1:c", "art:5:1:c:i", "art:5:1:c:ii"]
+
+
+def test_an_open_alternative_with_the_other_not_met_stays_open() -> None:
+    """own-c-11's reading: (ii) answered yes but open in law, (i) unknown: still open."""
+    scoring = part(
+        SocialScoringAnswer,
+        social_scoring=Answer.YES,
+        unrelated_context_treatment=Answer.UNKNOWN,
+        disproportionate_treatment=Answer.YES,
+    )
+    on_ii = unsettled(scoring).model_copy(update={"open_on": OpenCondition.DISPROPORTIONATE})
+    result = outcome(answer(on_ii))
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+
+
+def test_an_open_question_on_social_scoring_itself_stays_open() -> None:
+    scoring = part(
+        SocialScoringAnswer,
+        social_scoring=Answer.YES,
+        unrelated_context_treatment=Answer.YES,
+    )
+    on_scoring = unsettled(scoring).model_copy(update={"open_on": OpenCondition.SOCIAL_SCORING})
+    assert outcome(answer(on_scoring)).step.status is Status.LEGALLY_AMBIGUOUS
+
+
+def test_social_scoring_with_neither_alternative_met_stays_open() -> None:
+    scoring = part(SocialScoringAnswer, social_scoring=Answer.YES)
+    result = outcome(answer(unsettled(scoring)))
+    assert result.matched
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
 
 
 def test_a_met_practice_beats_an_open_one() -> None:
@@ -808,6 +855,58 @@ def test_an_ambiguous_match_runs_every_check_with_prohibited_assumed() -> None:
     assert result.status is Status.LEGALLY_AMBIGUOUS
 
 
+REFUSAL_TEXT = "I'm sorry, but I cannot assist with that request."
+
+
+def _filtered(content: str) -> GenericFakeChatModel:
+    """A reply the provider's content filter stopped, as the recorded own-c-01 reply came back."""
+    reply = AIMessage(content=content, response_metadata={"finish_reason": "content_filter"})
+    return GenericFakeChatModel(messages=iter([reply]))
+
+
+def test_a_provider_refusal_is_a_step_for_a_person_to_review() -> None:
+    """Decision 029: not a broken output; prohibited assumed, Art. 5 cited, review asked."""
+    check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
+    result = check(state())
+    assert result.matched
+    step = result.step
+    assert step.status is Status.NEEDS_MORE_INFORMATION
+    assert step.error == "provider_refusal"
+    assert step.missing_fact is not None
+    assert step.missing_fact.id == "person_review"
+    assert result.follow_up_questions == (step.missing_fact,)
+    assert cited(result) == ["art:5"]
+    assert step.decision.startswith("The model provider's content filter blocked")
+    assert "Art. 5(1)(ba) or (bb) may apply" in step.decision
+
+
+def test_a_refusal_is_reported_in_german() -> None:
+    check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
+    result = check(state(language=Language.DE))
+    assert result.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
+    assert result.step.missing_fact is not None
+    assert result.step.missing_fact.text.startswith("Bitte lassen Sie")
+
+
+def test_a_refusal_keeps_the_run_going_with_prohibited_assumed() -> None:
+    check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
+    final = _run(check)
+    assert tuple(s.step for s in final.get("steps", ())) == STEP_ORDER
+    result = final.get("result")
+    assert result is not None
+    assert result.risk_class is RiskClass.PROHIBITED
+
+
+def test_a_filtered_reply_with_a_usable_answer_is_used() -> None:
+    """own-c-16 came back as content_filter with a full answer: it is read as normal."""
+    usable = answer(WORKPLACE_EMOTIONS).model_dump_json()
+    check = ProhibitedCheck(_settings(), chat=_filtered(usable), library=FakeLibrary())
+    result = check(state())
+    assert result.step.status is Status.DECIDED
+    assert result.step.error is None
+    assert cited(result) == ["art:5:1:f"]
+
+
 def test_a_reply_that_does_not_fit_the_schema_is_a_broken_output() -> None:
     reply = '{"manipulation": {"fact": "SECRET-VALUE-7731"}}'
     check = ProhibitedCheck(_settings(), chat=_fake_chat(reply), library=FakeLibrary())
@@ -859,13 +958,9 @@ def test_each_practice_answers_its_legal_openness_right_after_its_facts() -> Non
     for name in practices:
         fields = cast(list[str], _definitions()[name]["required"])
         at = fields.index("settled_in_law")
-        assert fields[at:] == [
-            "settled_in_law",
-            "open_question",
-            "evidence",
-            "fact",
-            "fact_numbers",
-        ]
+        assert fields[at : at + 2] == ["settled_in_law", "open_question"]
+        assert fields[-3:] == ["evidence", "fact", "fact_numbers"]
+        assert set(fields[at + 2 : -3]) <= {"open_on"}
         assert at >= 1
 
 
@@ -910,6 +1005,36 @@ def test_the_matcher_needs_the_date_cited_for_a_prohibition_not_yet_applicable()
     assert not prohibited_matches(outcome(answer()), case)
 
 
+NOTES = "Open question: is the harm significant? Reading 1: prohibited. Reading 2: not."
+
+
+def test_the_matcher_accepts_either_uncertain_status_for_unsettled_harm() -> None:
+    """B12's rule: an unsettled significant harm may be flagged ambiguous or missing a fact."""
+    case = _case(
+        label={"risk_class": "prohibited", "status": "legally_ambiguous", "role": "deployer"},
+        tags=["prohibition:art:5:1:a", "trap:significant_harm_unsettled"],
+        notes=NOTES,
+    )
+    open_harm = part(
+        ManipulationAnswer,
+        manipulative_technique=Answer.YES,
+        distorts_behaviour=Answer.YES,
+        significant_harm=Answer.UNKNOWN,
+    )
+    asked = outcome(answer(open_harm))
+    assert asked.step.status is Status.NEEDS_MORE_INFORMATION
+    assert prohibited_matches(asked, case)
+    assert prohibited_matches(outcome(answer(unsettled(open_harm))), case)
+    decided = outcome(answer(open_harm.model_copy(update={"significant_harm": Answer.YES})))
+    assert not prohibited_matches(decided, case)
+    untagged = _case(
+        label={"risk_class": "prohibited", "status": "legally_ambiguous", "role": "deployer"},
+        tags=["prohibition:art:5:1:a"],
+        notes=NOTES,
+    )
+    assert not prohibited_matches(asked, untagged)
+
+
 # --- B5c replays: the own category-c cases, once their recordings exist -----------------------
 #
 # Record (live model and embedding calls, and the local corpus) with `RECORD_COMMAND`.
@@ -925,7 +1050,15 @@ def _b5c_cases() -> list[BenchmarkCase]:
 
 B5C_CASES = _b5c_cases()
 
-KNOWN_GAPS: dict[str, str] = {}
+REFUSED = "provider content filter (decision 029)"
+KNOWN_GAPS: dict[str, str] = {
+    "own-c-01-undress-photo-app": REFUSED,
+    "own-c-02-undress-app-before-december": REFUSED,
+    "own-c-03-image-tool-with-safeguards": REFUSED,
+    "own-c-04-studio-digital-doubles-consent": REFUSED,
+    "own-c-05-gossip-site-fake-nudes": REFUSED,
+    "own-c-07-unfiltered-image-generator": REFUSED,
+}
 """Recorded cases whose Art. 5 outcome differs from the label, with the reason; each fails when
 it starts matching, so the entry is removed."""
 

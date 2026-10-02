@@ -278,6 +278,29 @@ IMPACT_ASSESSMENT_REGISTRATION = _question(
     "EU-Datenbank registriert (Art. 49)?",
 )
 
+# --- A provider refusal (decision 029) -----------------------------------------------------------
+
+PERSON_REVIEW = _question(
+    "person_review",
+    "art:5:1:ba",
+    "Please have a person review the description: does the system generate or alter intimate or "
+    "sexual images, video or audio of real people, or sexual material involving children "
+    "(Art. 5(1)(ba), (bb))?",
+    "Bitte lassen Sie die Beschreibung von einem Menschen prüfen: Erzeugt oder verändert das "
+    "System intime oder sexuelle Bilder, Videos oder Tonaufnahmen realer Personen oder sexuelles "
+    "Material, in dem Kinder vorkommen (Art. 5 Abs. 1 Buchst. ba, bb)?",
+)
+REFUSAL: Mapping[Language, str] = {
+    EN: "The model provider's content filter blocked this description, so it could not be "
+    "assessed automatically. Art. 5(1)(ba) or (bb) may apply: prohibited is assumed until a "
+    "person has reviewed it.",
+    DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher konnte sie "
+    "nicht automatisch geprüft werden. Art. 5 Abs. 1 Buchst. ba oder bb kann greifen: Bis ein "
+    "Mensch sie geprüft hat, wird ein Verbot angenommen.",
+}
+REFUSAL_ERROR = "provider_refusal"
+"""The step's error code for a refusal."""
+
 # --- Naming and decision sentences --------------------------------------------------------------
 
 

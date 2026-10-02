@@ -113,11 +113,22 @@ def _case_ids(category: str) -> set[str]:
     [
         ("test_scope", "test_b5b_case_replay", "b", set()),
         ("test_high_risk", "test_replay_annex_i_case", "e", {"test_replay_worked_example"}),
+        pytest.param(
+            "test_prohibited",
+            "test_b5c_case_replay",
+            "c",
+            set(),
+            marks=pytest.mark.xfail(
+                strict=True,
+                reason="E4 round 3 changed the prompt and schema: B5c is to be re-recorded; "
+                "remove this mark with the recording",
+            ),
+        ),
     ],
 )
 def test_every_recorded_replay_case_has_its_recording(
     module: str, test: str, category: str, extra: set[str]
 ) -> None:
-    """Scope and high-risk are recorded: none of their cases may skip for a missing file."""
+    """Every case of a recorded replay has its cassette: none may skip for a missing file."""
     expected = {f"{test}[{case_id}]" for case_id in _case_ids(category)} | extra
     assert expected <= _stems(NODE_RECORDINGS / module, ".yaml")

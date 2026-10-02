@@ -65,7 +65,12 @@ from aiact.engine.nodes.prohibited_retrieval import (
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model
-from aiact.llm.structured import describe_validation_error, json_schema_format
+from aiact.llm.structured import (
+    ProviderRefusalError,
+    describe_validation_error,
+    json_schema_format,
+    parse_reply,
+)
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
@@ -262,6 +267,23 @@ def to_outcome(
     return CheckOutcome(step=step, matched=settled.matched, follow_up_questions=questions)
 
 
+def refusal_outcome(state: EngineState, retrieved: Retrieved) -> CheckOutcome:
+    """The step for a reply the provider's content filter refused (decision 029): not assessed,
+    prohibited assumed until a person reviews it, citing Art. 5 as fetched. The run goes on: the
+    review question is a missing fact, so the step can't end it."""
+    language = state["language"]
+    review = key_question(texts.PERSON_REVIEW, language)
+    step = StepResult(
+        step=StepName.PROHIBITED,
+        decision=texts.REFUSAL[language],
+        citations=(provision_citation(retrieved.article),),
+        status=Status.NEEDS_MORE_INFORMATION,
+        missing_fact=review,
+        error=texts.REFUSAL_ERROR,
+    )
+    return CheckOutcome(step=step, matched=True, follow_up_questions=(review,))
+
+
 # --- The model call -----------------------------------------------------------------------------
 
 
@@ -321,14 +343,17 @@ class ProhibitedCheck:
             return use(ProhibitedCorpus(connection, self._embedder))
 
     def __call__(self, state: EngineState) -> CheckOutcome:
-        """Raises `ProhibitedOutputError` when the reply doesn't fit `ProhibitedAnswer`, and
+        """A reply the provider's content filter refused gives `refusal_outcome`. Raises
+        `ProhibitedOutputError` when any other reply doesn't fit `ProhibitedAnswer`, and
         `ProvisionNotFoundError` when the corpus lacks a provision the step reads or cites."""
         retrieved = self._reading(lambda library: retrieve(state, library))
         reply = self._model.invoke(
             prohibited_messages(state, retrieved), response_format=PROHIBITED_RESPONSE_FORMAT
         )
         try:
-            answer = ProhibitedAnswer.model_validate_json(reply.text)
+            answer = parse_reply(reply, ProhibitedAnswer)
+        except ProviderRefusalError:
+            return refusal_outcome(state, retrieved)
         except ValidationError as exc:
             message = f"prohibited answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise ProhibitedOutputError(message) from exc

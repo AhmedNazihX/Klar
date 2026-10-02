@@ -2,10 +2,21 @@
 
 The model fills a JSON Schema built from a Pydantic model, and the reply is validated against
 the same model. Validation errors are described by location and message only, so a user's
-description quoted back in an error never reaches a log or an exception.
+description quoted back in an error never reaches a log or an exception. A reply the provider's
+content filter stopped is told apart from a broken one (`parse_reply`, decision 029).
 """
 
+from langchain_core.messages import BaseMessage
 from pydantic import BaseModel, JsonValue, ValidationError
+
+CONTENT_FILTER = "content_filter"
+"""The `finish_reason` a provider sends when its content filter blocked the request or the
+answer (OpenRouter passes it on; LangChain puts it in `response_metadata`)."""
+
+
+class ProviderRefusalError(RuntimeError):
+    """The provider's content filter stopped the call and no usable answer came back (decision
+    029). Never a broken output: the caller reports that the input needs a person's review."""
 
 
 def all_required(schema: JsonValue) -> JsonValue:
@@ -37,3 +48,16 @@ def describe_validation_error(exc: ValidationError) -> str:
         f"{'.'.join(str(part) for part in error['loc']) or 'answer'}: {error['msg']}"
         for error in exc.errors()
     )
+
+
+def parse_reply[M: BaseModel](reply: BaseMessage, model: type[M]) -> M:
+    """The reply as `model`. An answer that parses is used whatever the finish reason (a
+    `content_filter` reply can still carry one). Raises `ProviderRefusalError` when the content
+    filter stopped the call and nothing parses, and `ValidationError` for any other reply that
+    doesn't fit."""
+    try:
+        return model.model_validate_json(reply.text)
+    except ValidationError:
+        if reply.response_metadata.get("finish_reason") == CONTENT_FILTER:
+            raise ProviderRefusalError("the provider's content filter refused the call") from None
+        raise

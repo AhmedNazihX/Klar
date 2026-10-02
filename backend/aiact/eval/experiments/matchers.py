@@ -6,7 +6,9 @@ can't drift apart.
   cites the provision the label rests on first.
 - prohibited (B5c): matched exactly when the label is prohibited, with the label's status (a
   label of another class needs a decided Art. 5 step), citing every `prohibition:` tag; a case
-  whose prohibition doesn't apply yet on its date cites Art. 113(a).
+  whose prohibition doesn't apply yet on its date cites Art. 113(a); one whose significant harm
+  the description leaves open (`trap:significant_harm_unsettled`) may be ambiguous or missing a
+  fact (B12's rule).
 - high_risk (B5e, INIT's worked example): the label's class, route, Annex point and status, the
   tagged missing fact, the Art. 2(2) note for a decided Section B case, and every `cites:` tag.
 - role_obligations (B5d): the label's role, and its status when the label is legally ambiguous.
@@ -113,13 +115,18 @@ def scope_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
 
 
 NOT_YET_APPLICABLE = "trap:prohibition_not_yet_applicable"
+HARM_UNSETTLED = "trap:significant_harm_unsettled"
+UNSETTLED_HARM_STATUSES = frozenset({Status.LEGALLY_AMBIGUOUS, Status.NEEDS_MORE_INFORMATION})
+"""B12's rule: a description that can't settle significant harm is flagged as either."""
 
 
 def prohibited_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
     label = case_label(case)
     is_prohibited = label.risk_class is RiskClass.PROHIBITED
-    status = label.status if is_prohibited else Status.DECIDED
-    if outcome.matched is not is_prohibited or outcome.step.status is not status:
+    statuses = {label.status if is_prohibited else Status.DECIDED}
+    if HARM_UNSETTLED in case.tags:
+        statuses |= UNSETTLED_HARM_STATUSES
+    if outcome.matched is not is_prohibited or outcome.step.status not in statuses:
         return False
     needed = {*tag(case, "prohibition")}
     if NOT_YET_APPLICABLE in case.tags:

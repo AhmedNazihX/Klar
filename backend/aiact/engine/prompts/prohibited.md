@@ -41,10 +41,15 @@ not ask for a fact the description already gives.
   basis, so they decide in a way they otherwise would not.
 - `significant_harm`: the decisions cause, or are reasonably likely to cause, significant harm to
   the person or to others (physical, psychological, financial or economic harm of real weight).
-  Significant harm is a deciding condition, never to be presumed. "unknown" when the
-  description doesn't say what follows for the people affected. When it states the effects but
-  whether they reach the threshold of significant harm is not settled by the Act or the
-  guidelines, answer the facts as stated and `settled_in_law` "no".
+  Significant harm is a deciding condition, never to be presumed. The guidelines count serious
+  adverse effects on people's financial or economic interests as significant harm, next to
+  physical and psychological harm. So when the description states a concrete harm of that kind
+  that people actually suffer (for example a stated loss of money that matters to those
+  affected), the threshold is met: answer "yes", and this point is settled in law. "unknown"
+  when the description doesn't say what follows for the people affected, or says it doesn't
+  know. When it states the effects but whether they reach the threshold of significant harm is
+  not settled by the Act or the guidelines, answer the facts as stated and `settled_in_law`
+  "no".
 
 ## vulnerability: point (b)
 
@@ -86,6 +91,10 @@ not ask for a fact the description already gives.
   settings unrelated to the one where the data was generated or collected.
 - `disproportionate_treatment`: the score leads to worse treatment that is unjustified or out of
   proportion to the behaviour or its gravity.
+- `open_on`: when `settled_in_law` is "no", the condition the open question is about:
+  "social_scoring", "i" (`unrelated_context_treatment`) or "ii" (`disproportionate_treatment`);
+  "none" when the point is settled. Point (c) is met when (i) or (ii) is, so answer each of them
+  on its own.
 
 ## crime_risk: point (d)
 

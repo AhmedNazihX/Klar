@@ -87,12 +87,25 @@ class SexualMaterialAnswer(PracticeSummary):
     fact_numbers: tuple[int, ...]
 
 
+class OpenCondition(StrEnum):
+    """Which condition of Art. 5(1)(c) a question the law leaves open is about."""
+
+    NONE = "none"
+    SOCIAL_SCORING = "social_scoring"
+    UNRELATED_CONTEXT = "i"
+    DISPROPORTIONATE = "ii"
+
+
 class SocialScoringAnswer(PracticeSummary):
+    """`open_on` names the condition the open question concerns: point (c) is met by (i) or (ii),
+    so a question open on one of them decides nothing once the other is met."""
+
     social_scoring: Answer
     unrelated_context_treatment: Answer
     disproportionate_treatment: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
+    open_on: OpenCondition
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
@@ -242,10 +255,15 @@ class Practice:
     applies_from: date = PROHIBITIONS_APPLY_FROM
     is_permitted_use: bool = False
     """An Art. 5(1)(h) use the exception allows: the Art. 5(4) notification applies."""
+    is_settled_by_other_alternative: bool = False
+    """The question the law leaves open is about one alternative of the practice, and the other
+    alternative is met (Art. 5(1)(c)(i) or (ii)), so it decides nothing."""
 
     @property
     def is_open(self) -> bool:
         """The law leaves open whether the practice applies (only asked of a raised one)."""
+        if self.is_settled_by_other_alternative:
+            return False
         return self.is_raised and self.summary.settled_in_law is Settled.NO
 
 
@@ -324,6 +342,17 @@ def _sexual_material_practices(answer: SexualMaterialAnswer) -> tuple[Practice, 
     )
 
 
+def _other_alternative_met(answer: SocialScoringAnswer) -> bool:
+    """Point (c) is met by (i) or (ii): an open question on one, with the other met, is moot."""
+    if answer.social_scoring is not Answer.YES:
+        return False
+    other = {
+        OpenCondition.UNRELATED_CONTEXT: answer.disproportionate_treatment,
+        OpenCondition.DISPROPORTIONATE: answer.unrelated_context_treatment,
+    }
+    return other.get(answer.open_on) is Answer.YES
+
+
 def _profiling_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
     """(c) social scoring and (d) crime prediction from profiling alone."""
     c, d = answer.social_scoring, answer.crime_risk
@@ -344,6 +373,7 @@ def _profiling_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
             is_raised=c.social_scoring is not Answer.NO,
             summary=c,
             cited=("art:5:1:c", *_yes_points(treatments)),
+            is_settled_by_other_alternative=_other_alternative_met(c),
         ),
         Practice(
             point="art:5:1:d",
