@@ -310,6 +310,15 @@ REFUSAL_BEFORE_DECEMBER: Mapping[Language, str] = {
     "Beschreibung geprüft hat, wird ein Verbot angenommen.",
 }
 """The refusal step's decision before the December 2026 prohibitions apply."""
+REFUSAL_ORIGINAL: Mapping[Language, str] = {
+    EN: "The model provider's content filter blocked this description, so it could not be "
+    "assessed automatically. None of the Art. 5 prohibitions can be ruled out: prohibited is "
+    "assumed until a person has reviewed it.",
+    DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher konnte sie "
+    "nicht automatisch geprüft werden. Keines der Verbote des Art. 5 lässt sich ausschließen: Bis "
+    "ein Mensch die Beschreibung geprüft hat, wird ein Verbot angenommen.",
+}
+"""The refusal step's decision under the original text, which has no points (ba) or (bb)."""
 REFUSAL_ERROR = "provider_refusal"
 """The step's error code for a refusal."""
 

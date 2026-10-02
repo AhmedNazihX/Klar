@@ -909,6 +909,29 @@ def test_a_refusal_before_2_december_2026_says_ba_and_bb_do_not_apply_yet() -> N
     assert "may apply" not in step.decision
 
 
+@pytest.mark.parametrize("as_of", [BEFORE_DECEMBER, AFTER_DECEMBER])
+@pytest.mark.parametrize(
+    ("language", "expected"),
+    [
+        (Language.EN, "None of the Art. 5 prohibitions can be ruled out"),
+        (Language.DE, "Keines der Verbote des Art. 5 lässt sich ausschließen"),
+    ],
+)
+def test_a_refusal_under_the_original_text_names_no_point_ba_or_bb(
+    as_of: date, language: Language, expected: str
+) -> None:
+    """The original text has no (ba) or (bb), and its Art. 113(a) doesn't name them."""
+    check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
+    result = check(state(as_of=as_of, language=language, law_version=LawVersion.ORIGINAL))
+    assert result.matched
+    step = result.step
+    assert step.status is Status.NEEDS_MORE_INFORMATION
+    assert cited(result) == ["art:5"]
+    assert expected in step.decision
+    assert "ba" not in step.decision
+    assert "113" not in step.decision
+
+
 @pytest.mark.parametrize(
     ("as_of", "expected"),
     [

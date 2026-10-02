@@ -274,13 +274,15 @@ def refusal_outcome(
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
     prohibited assumed until a person reviews it (any Art. 5 point may apply), citing Art. 5 as
     fetched. Before 2 December 2026 it says points (ba) and (bb) don't apply yet and cites Art.
-    113(a), fetched from `library`. The run goes on: the review question is a missing fact, so
-    the step can't end it."""
+    113(a), fetched from `library`; the original text has neither point, so it names no point.
+    The run goes on: the review question is a missing fact, so the step can't end it."""
     language, as_of = state["language"], state["as_of"]
     review = key_question(texts.PERSON_REVIEW, language)
     cited = (retrieved.article,)
     decision = texts.REFUSAL[language]
-    if as_of < DECEMBER_PROHIBITIONS_APPLY_FROM:
+    if state["law_version"] is LawVersion.ORIGINAL:
+        decision = texts.REFUSAL_ORIGINAL[language]
+    elif as_of < DECEMBER_PROHIBITIONS_APPLY_FROM:
         cited = (*cited, library.provision(APPLICATION_DATES, lookup_for(state)))
         decision = texts.REFUSAL_BEFORE_DECEMBER[language].format(
             start=long_date(DECEMBER_PROHIBITIONS_APPLY_FROM, language.value),
