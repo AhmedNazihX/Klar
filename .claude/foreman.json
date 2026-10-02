@@ -105,6 +105,12 @@
       "rule": "A long Markdown document (over 20 KB) is never read whole into an agent's context: use backlog.py, the foreman:doc-reader agent, or a search and a range read",
       "source": "foreman 0.5.0; user request 2026-10-01",
       "enforced_by": ["docs (doc-guard.sh, Read tool only)", "foreman:doc-reader", "CLAUDE.md"]
+    },
+    {
+      "rule": "Engine prompt and question texts share no 5-word run with a Pile B row (runs that are the Act's own wording excepted) and never paraphrase a Pile B deciding feature",
+      "source": "decisions 015 and 028",
+      "enforced_by": ["isolation-auditor (check 8)"],
+      "note": "The check reads denied files, so it runs in the audit, not in Engine-lane worktrees or CI."
     }
   ],
   "docs": {"max_bytes": 20000, "exclude": []},

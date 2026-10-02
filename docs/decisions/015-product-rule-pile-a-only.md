@@ -2,7 +2,7 @@
 
 - **Date:** 2026-09-29
 - **Story:** E2 (docs/BACKLOG.md)
-- **Status:** accepted (user, 2026-09-29, option A)
+- **Status:** accepted (user, 2026-09-29, option A); leak check amended by 028 (runs that are the Act's own wording are exempt)
 
 ## Question
 Decision 001's product rule says the engine must ask about a "however / if" feature that would flip a guideline
