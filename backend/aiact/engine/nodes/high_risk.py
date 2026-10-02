@@ -35,6 +35,7 @@ from pydantic import Field, ValidationError
 from aiact.db import connect
 from aiact.engine.nodes.common import (
     answers_section,
+    clipped,
     facts_section,
     guidance_citation,
     lookup_for,
@@ -88,9 +89,6 @@ HIGH_RISK_INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
 MAX_OUTPUT_TOKENS = 6000
 """Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005), and a
 case where both routes apply (own-e-14) used all of 3000 on reasoning before any answer."""
-
-MAX_PASSAGE_CHARS = 4000
-"""Bounds one retrieved text in the prompt (a parent row holds all its children's text)."""
 
 EXAMPLE_MARK = ":ex:"
 """Guideline worked examples have ids like `guide:guide-high-risk-annex-iii:ex:042`."""
@@ -644,7 +642,7 @@ def high_risk_response_format(
 
 
 def _passage(provision_id: str, text: str, heading: str | None = None) -> str:
-    body = text if len(text) <= MAX_PASSAGE_CHARS else f"{text[:MAX_PASSAGE_CHARS]} […]"
+    body = clipped(text)
     title = f" ({heading})" if heading else ""
     return f"[{provision_id}]{title}\n{body}"
 

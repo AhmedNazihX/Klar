@@ -41,9 +41,12 @@ from aiact.db import connect
 from aiact.engine.nodes import prohibited_texts as texts
 from aiact.engine.nodes.common import (
     answers_section,
+    clipped,
     facts_section,
     guidance_citation,
+    key_question,
     lookup_for,
+    named_passages,
     provision_citation,
 )
 from aiact.engine.nodes.key_facts import Answer, facts_used
@@ -67,7 +70,6 @@ from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
     Fact,
-    FollowUpQuestion,
     Language,
     LawVersion,
     OpenQuestion,
@@ -83,9 +85,6 @@ PROHIBITED_INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
 MAX_OUTPUT_TOKENS = 6000
 """Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005), and
 the answer covers every Art. 5 practice."""
-
-MAX_PASSAGE_CHARS = 4000
-"""Bounds one retrieved passage in the prompt (a parent row holds all its children's text)."""
 
 NO_MATCH_CITATION = "art:5:1"
 """What a step that found no practice raised cites: the list of prohibited practices."""
@@ -164,10 +163,6 @@ def _open_question(practice: Practice, language: Language) -> OpenQuestion:
     return OpenQuestion(question=question, readings=(stricter, lenient))
 
 
-def _question(key: KeyQuestion, language: Language) -> FollowUpQuestion:
-    return FollowUpQuestion(id=key.id, text=key.question[language], about=key.article)
-
-
 def _not_yet_sentence(practice: Practice, language: Language, as_of: date) -> str:
     verb = "not_yet_verb_met" if practice.reading.answer is Answer.YES else "not_yet_verb_open"
     return texts.TEXTS[language]["not_yet"].format(
@@ -229,12 +224,6 @@ def _provisions(
     return tuple(found)
 
 
-def _passages(numbers: Sequence[int], guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
-    """The passages `numbers` name, in range and each once."""
-    in_range = dict.fromkeys(n for n in numbers if 0 < n <= len(guidance))
-    return tuple(guidance[n - 1] for n in in_range)
-
-
 def _facts_used(settled: Settlement, facts: Sequence[Fact]) -> tuple[Fact, ...]:
     """The facts the answer parts of the practices shown rest on, each part once."""
     shown = (*settled.deciding, *settled.considered, *settled.not_yet)
@@ -251,7 +240,7 @@ def to_outcome(
     settled = settle(answer, state["law_version"], as_of)
     is_ambiguous = settled.status is Status.LEGALLY_AMBIGUOUS
     open_question = _open_question(settled.deciding[0], language) if is_ambiguous else None
-    questions = tuple(_question(key, language) for key in settled.missing)
+    questions = tuple(key_question(key, language) for key in settled.missing)
     is_missing = settled.status is Status.NEEDS_MORE_INFORMATION
     missing_fact = questions[0] if is_missing else None
     asked = open_question.question if open_question else missing_fact.text if missing_fact else ""
@@ -263,7 +252,7 @@ def to_outcome(
             *(provision_citation(p) for p in _provisions(settled, state, library)),
             *(
                 guidance_citation(hit, language)
-                for hit in _passages(answer.guidance_numbers, retrieved.guidance)
+                for hit in named_passages(answer.guidance_numbers, retrieved.guidance)
             ),
         ),
         status=settled.status,
@@ -280,10 +269,7 @@ PROHIBITED_RESPONSE_FORMAT = json_schema_format("prohibited_answer", ProhibitedA
 
 
 def _guidance_section(guidance: Sequence[SearchHit]) -> str:
-    def body(text: str) -> str:
-        return text if len(text) <= MAX_PASSAGE_CHARS else f"{text[:MAX_PASSAGE_CHARS]} […]"
-
-    listed = (f"{n}. [{hit.provision_id}] {body(hit.text)}" for n, hit in enumerate(guidance, 1))
+    listed = (f"{n}. [{hit.provision_id}] {clipped(hit.text)}" for n, hit in enumerate(guidance, 1))
     return "\n\n".join(listed) or "-"
 
 

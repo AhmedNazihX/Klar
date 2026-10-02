@@ -46,6 +46,7 @@ from aiact.engine.nodes.common import (
     facts_section,
     guidance_citation,
     lookup_for,
+    named_passages,
     provision_citation,
 )
 from aiact.engine.nodes.key_facts import Answer, CitedFact, KeyFact, facts_used
@@ -289,17 +290,11 @@ class ScopeSettlement:
         return tuple(dict.fromkeys(cited))
 
 
-def _passages(numbers: Sequence[int], guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
-    """The passages `numbers` name, in range and each once."""
-    in_range = dict.fromkeys(n for n in numbers if 0 < n <= len(guidance))
-    return tuple(guidance[n - 1] for n in in_range)
-
-
 def excluding_passages(answer: ScopeAnswer, guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
     """The passages that, by the model's answer, name the system's technique among those outside
     the definition; none unless it answered yes and cited at least one passage it was given."""
     named = answer.guidance_excludes_technique
-    return _passages(named.guidance_numbers, guidance) if named.answer is Answer.YES else ()
+    return named_passages(named.guidance_numbers, guidance) if named.answer is Answer.YES else ()
 
 
 def settle_scope(answer: ScopeAnswer, guidance: Sequence[SearchHit] = ()) -> ScopeSettlement:
@@ -385,7 +380,7 @@ def _open_question(settled: ScopeSettlement, language: Language) -> OpenQuestion
 def _guidance_used(answer: ScopeAnswer, guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
     """The passages the definition answer rests on, then those that place the technique outside
     the definition, each once."""
-    named = (*_passages(answer.ai_system.guidance_numbers, guidance),
+    named = (*named_passages(answer.ai_system.guidance_numbers, guidance),
              *excluding_passages(answer, guidance))  # fmt: skip
     return tuple(dict.fromkeys(named))
 

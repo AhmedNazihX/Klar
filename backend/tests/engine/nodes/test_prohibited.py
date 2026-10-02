@@ -23,6 +23,7 @@ from aiact.db import connect
 from aiact.engine.graph import EngineNodes, build_graph
 from aiact.engine.nodes import prohibited as node
 from aiact.engine.nodes import prohibited_retrieval as retrieval
+from aiact.engine.nodes import prohibited_texts as texts
 from aiact.engine.nodes.common import Lookup
 from aiact.engine.nodes.key_facts import Answer, Settled
 from aiact.engine.nodes.prohibited import ProhibitedCheck, ProhibitedOutputError, to_outcome
@@ -447,8 +448,10 @@ def test_the_same_app_before_2_december_2026_is_not_yet_prohibited() -> None:
 
 
 def test_the_day_the_december_prohibitions_start_counts() -> None:
-    result = outcome(answer(UNDRESSING_APP), state(as_of=DECEMBER_PROHIBITIONS_APPLY_FROM))
+    result = outcome(answer(UNDRESSING_APP), state(as_of=date(2026, 12, 2)))
     assert result.matched
+    day_before = outcome(answer(UNDRESSING_APP), state(as_of=date(2026, 12, 1)))
+    assert not day_before.matched
 
 
 def test_the_start_date_is_written_in_german() -> None:
@@ -524,6 +527,19 @@ def test_child_abuse_material_foreseeable_without_safeguards_is_prohibited_under
     assert cited(result) == ["art:5:1:bb", "art:5:1a:a:ii", "art:113:a"]
 
 
+def test_child_abuse_material_before_2_december_2026_is_not_yet_prohibited() -> None:
+    unfiltered = part(
+        SexualMaterialAnswer,
+        child_abuse_material=Answer.YES,
+        foreseeable_without_safeguards=Answer.YES,
+    )
+    result = outcome(answer(unfiltered), state(as_of=BEFORE_DECEMBER))
+    assert not result.matched
+    assert result.step.status is Status.DECIDED
+    assert "Art. 5(1)(bb) applies only from 2 December 2026" in result.step.decision
+    assert "art:113:a" in cited(result)
+
+
 def test_an_open_1a_route_is_asked() -> None:
     unsure = part(
         SexualMaterialAnswer, intimate_imagery=Answer.YES, generation_purpose=Answer.UNKNOWN
@@ -589,6 +605,15 @@ def test_an_open_authorisation_is_asked_with_prohibited_assumed() -> None:
     assert result.step.missing_fact.about == "art:5:3"
 
 
+def test_an_unknown_objective_is_asked_with_prohibited_assumed() -> None:
+    unsure = {**POLICE_LIVE_SEARCH, "objective": RbiObjective.UNKNOWN}
+    result = outcome(answer(part(RemoteIdentificationAnswer, **unsure)))
+    assert result.matched
+    assert result.step.status is Status.NEEDS_MORE_INFORMATION
+    assert result.step.missing_fact is not None
+    assert result.step.missing_fact.id == texts.RBI_OBJECTIVE.id
+
+
 def test_a_private_operators_live_identification_is_not_law_enforcement() -> None:
     """own-c-17: Art. 5(1)(h) covers only law enforcement."""
     shop = part(RemoteIdentificationAnswer, real_time_identification=Answer.YES)
@@ -638,7 +663,7 @@ def test_art_5_is_always_fetched_and_the_exclusions_reach_every_search() -> None
     library = FakeLibrary()
     found = retrieve(state(language=Language.DE, exclude=EXCLUDED), library)
     assert found.article.provision_id == "art:5"
-    assert [pid for pid, _ in library.lookups] == ["art:5"]
+    assert library.lookups == [("art:5", Lookup(Language.DE, LawVersion.AMENDED, AS_OF, EXCLUDED))]
     assert [language for *_, language in library.searches] == [Language.DE, Language.EN]
     for _, lookup, _ in library.searches:
         assert lookup.exclude_source_example_ids == EXCLUDED
@@ -697,17 +722,17 @@ def test_the_corpus_limits_the_search_to_its_guideline_without_a_cut_off(
 
 
 def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPatch) -> None:
-    seen: list[object] = []
+    seen: list[tuple[object, ...]] = []
 
     def spy(provision_id: str, *args: object, connection: object) -> Provision:
-        seen.append(connection)
+        seen.append((provision_id, *args, connection))
         return provision(provision_id)
 
     monkeypatch.setattr(retrieval, "get_provision", spy)
     connection = cast(psycopg.Connection, object())
     library = ProhibitedCorpus(connection, FakeEmbedder())
-    library.provision("art:5", Lookup(Language.EN, LawVersion.AMENDED, AS_OF, ()))
-    assert seen == [connection]
+    library.provision("art:5", Lookup(Language.DE, LawVersion.AMENDED, AS_OF, ()))
+    assert seen == [("art:5", Language.DE, LawVersion.AMENDED, AS_OF, connection)]
 
 
 # --- The model call -----------------------------------------------------------------------------
@@ -846,7 +871,6 @@ def test_each_practice_answers_its_legal_openness_right_after_its_facts() -> Non
 
 def test_follow_up_ids_do_not_collide_with_other_checks() -> None:
     """Finalize merges every check's questions by id, so an Art. 5 id must be its own."""
-    from aiact.engine.nodes import prohibited_texts as texts
     from aiact.engine.nodes.high_risk_texts import ANNEX_I_QUESTIONS, PROFILING
 
     ours = [value.id for value in vars(texts).values() if hasattr(value, "question")]

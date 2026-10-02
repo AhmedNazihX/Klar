@@ -43,7 +43,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
 from aiact.dates import long_date
-from aiact.engine.nodes.common import answers_section, facts_section
+from aiact.engine.nodes.common import answers_section, facts_section, key_question
 from aiact.engine.nodes.key_facts import Answer, KeyFact, facts_used
 from aiact.engine.nodes.role_texts import (
     BUILDS_ON_GPAI,
@@ -75,7 +75,6 @@ from aiact.obligations.list import (
 from aiact.schemas import (
     Citation,
     EvidenceTag,
-    FollowUpQuestion,
     HighRiskRoute,
     Language,
     LawVersion,
@@ -551,10 +550,6 @@ def citations(
 # --- The step -----------------------------------------------------------------------------------
 
 
-def _question(key: KeyQuestion, language: Language) -> FollowUpQuestion:
-    return FollowUpQuestion(id=key.id, text=key.question[language], about=key.article)
-
-
 def _status(settled: RoleSettlement) -> Status:
     if settled.is_ambiguous:
         return Status.LEGALLY_AMBIGUOUS
@@ -615,7 +610,7 @@ def to_outcome(
         facts_used=facts_used((*settled.used, *legacy.used), state.get("facts", ())),
         citations=citations(cited, state["law_version"], language, source),
         status=_status(settled),
-        missing_fact=_question(missing, language) if missing else None,
+        missing_fact=key_question(missing, language) if missing else None,
         open_question=settled.open_question(language),
     )
     finding = RoleFinding(
@@ -625,7 +620,7 @@ def to_outcome(
         obligations=obligations,
     )
     asked = (*settled.questions(), *legacy.questions)
-    questions = tuple(_question(key, language) for key in asked)
+    questions = tuple(key_question(key, language) for key in asked)
     return CheckOutcome(step=step, role=finding, follow_up_questions=questions)
 
 

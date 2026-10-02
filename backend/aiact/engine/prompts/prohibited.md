@@ -127,8 +127,8 @@ not ask for a fact the description already gives.
 ## remote_identification: point (h), with paragraphs 2, 3 and 5
 
 - `real_time_identification`: the system identifies people at a distance, live or with no
-  significant delay, by comparing their biometric data with a reference database, in a place
-  open to the public. Only checking that a person is who they claim to be is "no".
+  significant delay, through the comparison of a person's biometric data with the biometric
+  data contained in a reference database, in a place open to the public. Only checking that a person is who they claim to be is "no".
 - `law_enforcement_use`: it is used by a law enforcement authority, or on its behalf, to
   prevent, investigate, detect or prosecute criminal offences or execute penalties. Use by
   anyone else, for their own purposes, is "no".

@@ -16,6 +16,7 @@ can't drift apart.
 
 from datetime import date
 
+from aiact.engine.nodes.prohibited_practices import APPLICATION_DATES
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import BenchmarkCase, CaseLabel, CaseSet
 from aiact.schemas import HighRiskRoute, Language, LawVersion, RiskClass, Role, Status, StepName
@@ -112,7 +113,6 @@ def scope_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
 
 
 NOT_YET_APPLICABLE = "trap:prohibition_not_yet_applicable"
-APPLICATION_DATES = "art:113:a"
 
 
 def prohibited_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
