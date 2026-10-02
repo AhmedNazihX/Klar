@@ -61,7 +61,7 @@ from aiact.engine.nodes.high_risk_texts import (
     TEXTS,
     point_name,
 )
-from aiact.engine.nodes.key_facts import Answer, facts_used
+from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model
@@ -151,13 +151,6 @@ class RouteSummary(ContractModel):
     @property
     def is_known(self) -> bool:
         return True
-
-
-class Settled(StrEnum):
-    """Whether the Act and guidance settle a route's reading of the facts."""
-
-    YES = "yes"
-    NO = "no"
 
 
 class AnnexIIIAnswer(RouteSummary):

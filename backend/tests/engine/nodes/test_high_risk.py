@@ -8,11 +8,10 @@ recording run saw are stored next to each cassette (`<cassette>.corpus.json`), s
 neither the database nor the network.
 """
 
-import json
 from collections.abc import Callable, Iterator, Sequence
-from dataclasses import asdict, dataclass
+from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import date
-from pathlib import Path
 from typing import cast
 
 import psycopg
@@ -69,6 +68,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
+from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -1064,7 +1064,7 @@ def test_the_check_sends_the_limited_schema() -> None:
 # --- Replays: INIT's worked example and the Annex I own cases ------------------------------------
 #
 # Record (live model and embedding calls, and the local corpus; see the story report for the
-# cost) with `uv run pytest tests/engine/nodes/test_high_risk.py -k replay --record-mode=once`.
+# cost) with `RECORD_COMMAND`.
 
 ANNEX_I_CASES_DIR = CASES_DIR / CaseSet.OWN.value / "e"
 
@@ -1077,73 +1077,30 @@ def _annex_i_cases() -> list[BenchmarkCase]:
 ANNEX_I_CASES = _annex_i_cases()
 
 
-NOT_FOUND = "not_found"
-"""The entry of a lookup the corpus had no text for; the replay raises it again."""
+RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_high_risk.py -k replay --record-mode=once"
 
 
-class CorpusRecording:
-    """A `HighRiskLibrary` for one replay: while recording it asks the real corpus (`live`) and
-    keeps each answer; while replaying it serves them from `<cassette>.corpus.json`. A call the
-    recording never saw (a changed query, filter or exclusion) fails the replay."""
+class RecordedHighRiskLibrary:
+    """A `HighRiskLibrary` over the replay's `CorpusRecording`."""
 
-    def __init__(self, path: Path, live: HighRiskCorpus | None) -> None:
-        self._path = path
-        self._live = live
-        self._entries: dict[str, object] = (
-            {} if live else json.loads(path.read_text(encoding="utf-8"))
-        )
-
-    def _answer(self, call: dict[str, object], ask: Callable[[HighRiskCorpus], object]) -> object:
-        key = json.dumps(call, sort_keys=True, default=str)
-        if self._live is not None:
-            try:
-                result = ask(self._live)
-            except ProvisionNotFoundError:
-                self._entries[key] = {NOT_FOUND: True}
-                raise
-            self._entries[key] = _dumped(result)
-            return result
-        if key not in self._entries:
-            pytest.fail(f"no recorded corpus answer for {key}; record the replay again")
-        entry = self._entries[key]
-        if isinstance(entry, dict) and entry.get(NOT_FOUND):
-            raise ProvisionNotFoundError(f"recorded as not found: {key}")
-        return entry
+    def __init__(self, recording: CorpusRecording[HighRiskCorpus]) -> None:
+        self._recording = recording
 
     def provision(self, provision_id: str, lookup: Lookup) -> Provision:
-        call = {"lookup": provision_id, **_shown(lookup)}
-        found = self._answer(call, lambda live: live.provision(provision_id, lookup))
-        return Provision.model_validate(found)
+        return self._recording.provision(
+            provision_id, lookup, lambda live: live.provision(provision_id, lookup)
+        )
 
     def search(
         self, query: str, lookup: Lookup, *, language: Language, doc_type: str, limit: int
     ) -> tuple[SearchHit, ...]:
-        call = {"search": query, **_shown(lookup), "language": language, "doc_type": doc_type}
-        call["limit"] = limit
+        call = {"search": query, **lookup_call(lookup), "language": language}
+        call |= {"doc_type": doc_type, "limit": limit}
 
-        def ask(live: HighRiskCorpus) -> object:
+        def ask(live: HighRiskCorpus) -> tuple[SearchHit, ...]:
             return live.search(query, lookup, language=language, doc_type=doc_type, limit=limit)
 
-        found = self._answer(call, ask)
-        assert isinstance(found, tuple | list)
-        return tuple(SearchHit.model_validate(hit) for hit in found)
-
-    def save(self) -> None:
-        if self._live is not None:
-            text = json.dumps(self._entries, indent=1, sort_keys=True, ensure_ascii=False)
-            self._path.parent.mkdir(parents=True, exist_ok=True)
-            self._path.write_text(text + "\n", encoding="utf-8")
-
-
-def _shown(lookup: Lookup) -> dict[str, object]:
-    return {**asdict(lookup), "exclude_source_example_ids": list(lookup.exclude_source_example_ids)}
-
-
-def _dumped(result: object) -> object:
-    if isinstance(result, tuple):
-        return [_dumped(item) for item in result]
-    assert isinstance(result, SearchHit | Provision)
-    return result.model_dump(mode="json")
+        return self._recording.hits(call, ask)
 
 
 @pytest.fixture
@@ -1153,27 +1110,25 @@ def luna_settings(openrouter_settings: Settings) -> Settings:
     )
 
 
+@contextmanager
+def _live_corpus(settings: Settings) -> Iterator[HighRiskCorpus]:
+    with connect() as connection:
+        yield HighRiskCorpus(connection, OpenRouterEmbeddings(settings=settings))
+
+
 @pytest.fixture
 def replay_check(
     luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
 ) -> Iterator[HighRiskCheck]:
     """A `HighRiskCheck` over the recorded model and corpus; skips while nothing is recorded."""
-    cassette = Path(vcr_cassette_dir) / f"{default_cassette_name}.yaml"
-    corpus = cassette.with_suffix(".corpus.json")
-    is_recording = record_mode != "none"
-    if not is_recording and not (cassette.exists() and corpus.exists()):
-        pytest.skip(
-            f"{default_cassette_name} has no recording yet; record it with `uv run pytest "
-            "tests/engine/nodes/test_high_risk.py -k replay --record-mode=once`"
-        )
-    if not is_recording:
-        yield HighRiskCheck(luna_settings, library=CorpusRecording(corpus, None))
-        return
-    with connect() as connection:
-        live = HighRiskCorpus(connection, OpenRouterEmbeddings(settings=luna_settings))
-        recording = CorpusRecording(corpus, live)
-        yield HighRiskCheck(luna_settings, library=recording)
-        recording.save()
+    with corpus_recording(
+        vcr_cassette_dir,
+        default_cassette_name,
+        record_mode,
+        RECORD_COMMAND,
+        lambda: _live_corpus(luna_settings),
+    ) as recording:
+        yield HighRiskCheck(luna_settings, library=RecordedHighRiskLibrary(recording))
 
 
 @pytest.mark.vcr

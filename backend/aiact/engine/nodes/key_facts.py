@@ -1,4 +1,4 @@
-"""Key-fact answers the engine model gives a check, and the facts a step shows for them (E3, E7).
+"""Key-fact answers the engine model gives a check, and the facts a step shows for them (E3-E7).
 
 A check asks the model fixed key-fact questions and applies the Act's rules to the answers in
 code. Each answer carries its evidence tag, the answer as one short fact, and the numbers of the
@@ -19,6 +19,16 @@ class Answer(StrEnum):
     YES = "yes"
     NO = "no"
     UNKNOWN = "unknown"
+
+
+class Settled(StrEnum):
+    """Whether the Act and guidance settle a route's reading of the facts."""
+
+    # Shared by the high-risk routes (E5) and the Art. 5 practices (E4). The docstring is part
+    # of every response format that uses it, so changing it changes the recorded requests.
+
+    YES = "yes"
+    NO = "no"
 
 
 class KeyFact(ContractModel):
