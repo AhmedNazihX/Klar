@@ -18,7 +18,7 @@ source_example_id: hr-ex-081
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: allocating applicants to apprenticeship programmes on
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: allocating applicants to apprenticeship programmes on
   the basis of their education records and test scores determines access to vocational training:
   Annex III point 3(a), high-risk under Art. 6(2). Assessing each applicant's records is profiling,
   so the Art. 6(3) exemption is unavailable. Role: deployer of an unmodified bought tool.

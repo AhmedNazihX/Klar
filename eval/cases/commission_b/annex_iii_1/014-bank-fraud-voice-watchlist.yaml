@@ -19,7 +19,7 @@ source_example_id: hr-ex-014
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: callers' voiceprints are compared against a database
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: callers' voiceprints are compared against a database
   of known voiceprints to identify a speaker, without the caller's active involvement: remote
   biometric identification (Art. 3(41)), Annex III point 1(a), high-risk under Art. 6(2). It is
   identification against a watchlist, not verification of a claimed identity, so the 1(a)

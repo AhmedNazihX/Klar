@@ -17,7 +17,7 @@ source_example_id: hr-ex-075
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: the module only adds a precautionary warning to the
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the module only adds a precautionary warning to the
   control room's options; it does not act on the grid, is not essential for safe operation and a
   wrong warning causes no outage, so it lacks a direct safety function (Art. 3(14)): not a safety
   component under Annex III point 2. Contrast hr-ex-071. No Art. 50 duty: minimal_risk. Role: it

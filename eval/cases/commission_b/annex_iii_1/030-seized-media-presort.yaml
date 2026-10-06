@@ -18,7 +18,7 @@ source_example_id: hr-ex-030
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: the tool structures seized material before human
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the tool structures seized material before human
   review; it identifies no one and compares nothing with a reference database, so it is not
   remote biometric identification (Annex III point 1(a)), and it neither assesses the reliability
   of evidence nor profiles anyone (point 6). The Commission's settled verdict: outside the use

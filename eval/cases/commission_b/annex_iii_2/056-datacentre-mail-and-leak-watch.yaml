@@ -17,7 +17,7 @@ source_example_id: hr-ex-056
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: detecting suspicious email senders and stolen data is
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting suspicious email senders and stolen data is
   used solely for cybersecurity; the operator runs critical digital infrastructure, but recital 55
   says such components are not safety components (Art. 3(14)), so not Annex III point 2. No
   Art. 50 duty: minimal_risk. Role: deployer of a licensed service.

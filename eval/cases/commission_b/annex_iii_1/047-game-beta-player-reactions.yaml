@@ -19,7 +19,7 @@ source_example_id: hr-ex-047
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: inferring excitement, frustration, anger or amusement
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: inferring excitement, frustration, anger or amusement
   from facial expressions and posture (biometric data) is emotion recognition (Art. 3(39)), Annex
   III point 1(c), high-risk under Art. 6(2). The testers are volunteer consumers, not workers or
   students, so Art. 5(1)(f) does not arise. Art. 50(3) duty stacks: the studio, as deployer, must

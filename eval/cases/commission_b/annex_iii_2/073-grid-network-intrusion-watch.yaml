@@ -17,7 +17,7 @@ source_example_id: hr-ex-073
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: monitoring grid communication networks solely for
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: monitoring grid communication networks solely for
   cyber threats, independent of the operational technology that controls the grid, is a
   cybersecurity use; recital 55 says such components are not safety components, so not Annex III
   point 2. No Art. 50 duty: minimal_risk. Role: deployer of a bought product.

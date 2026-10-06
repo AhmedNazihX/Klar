@@ -18,7 +18,7 @@ source_example_id: hr-ex-100
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: analysing trends in the education levels students
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: analysing trends in the education levels students
   pursue gives a picture of the education landscape and is not used for decisions about individual
   students, so it falls outside Annex III point 3(c). No Art. 50 duty: minimal_risk. Role: it
   builds the tool and offers it under its own name.

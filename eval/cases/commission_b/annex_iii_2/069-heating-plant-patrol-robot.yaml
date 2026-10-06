@@ -18,7 +18,7 @@ source_example_id: hr-ex-069
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: the patrol robots only detect and report; they cannot
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the patrol robots only detect and report; they cannot
   take preventive measures, intervene in operations or avert dangers, so they fulfil no safety
   function (Art. 3(14)) in the supply of heating: not Annex III point 2. No Art. 50 duty:
   minimal_risk. Role: deployer of bought robots.

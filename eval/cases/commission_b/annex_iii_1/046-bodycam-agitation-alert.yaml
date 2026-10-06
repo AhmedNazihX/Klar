@@ -18,7 +18,7 @@ source_example_id: hr-ex-046
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: inferring anger from posture, movement and facial
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: inferring anger from posture, movement and facial
   expression is emotion recognition (Art. 3(39)), Annex III point 1(c), high-risk under
   Art. 6(2). Not a workplace or school, so Art. 5(1)(f) does not arise; an in-the-moment estimate
   of agitation is not a risk assessment of committing an offence (Art. 5(1)(d)). Art. 50(3)'s

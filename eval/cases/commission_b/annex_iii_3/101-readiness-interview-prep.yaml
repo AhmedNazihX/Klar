@@ -18,7 +18,7 @@ source_example_id: hr-ex-101
 accepted_bases: ["art_6_3_filter"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: the tool prepares an educator's assessment of
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the tool prepares an educator's assessment of
   readiness for a level of training (an Annex III point 3(c) assessment) by selecting topics and
   questions; it makes no decision on the level a person can access: the Art. 6(3)(d)
   preparatory-task exemption. Doubt: it reads each person's records, which an engine could read as

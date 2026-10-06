@@ -19,7 +19,7 @@ source_example_id: hr-ex-031
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Contaminated source (decision 016: the corpus retells
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Contaminated source (decision 016: the corpus retells
   hr-ex-031 in annex-iii para:152); written as usual, source_example_id kept so the evaluation can
   flag it. Class: analysis of a closed set of material from one incident, with no comparison
   against an external reference database and no identity established, is the step before

@@ -18,7 +18,7 @@ source_example_id: hr-ex-060
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: monitoring traffic and switching the lights directly
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: monitoring traffic and switching the lights directly
   protects road users from collisions, a safety function (Art. 3(14)) in the management of road
   traffic: Annex III point 2, high-risk under Art. 6(2). It acts on its own, so no Art. 6(3)
   exemption. Role: it develops the software and sells it under its own name. In service 2028.

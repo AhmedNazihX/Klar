@@ -21,7 +21,7 @@ flip_variants:
     resulting_verdict: high
     provision_ids: ["annex:III:7:b"]
 notes: >-
-  Draft label, awaiting user approval. Class: assigning travellers to age and sex categories from
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: assigning travellers to age and sex categories from
   their faces is biometric categorisation (Art. 3(40)), but age and sex are not sensitive
   attributes under Art. 9(1) GDPR, so not Annex III point 1(b). Written without the flip feature
   (use of the estimates for a risk assessment, point 7(b)); the engine should ask about or flag

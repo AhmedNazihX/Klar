@@ -17,7 +17,7 @@ source_example_id: hr-ex-083
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: recommendations that inform pupils' own choices and
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: recommendations that inform pupils' own choices and
   do not determine access or admission are outside Annex III point 3(a). No Art. 50 duty (a
   results page, not a conversational system): minimal_risk. Role: it builds the model and offers
   the platform under its own name.

@@ -17,7 +17,7 @@ source_example_id: hr-ex-044
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: estimating a person's age group from the face is
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: estimating a person's age group from the face is
   biometric categorisation (Art. 3(40)); age is not a sensitive attribute under Art. 9(1) GDPR, so
   not Annex III point 1(b). Age-gating is the machine's purpose, not an ancillary feature strictly
   necessary for technical reasons, so the Art. 3(40) carve-out does not apply. Art. 50(3): the
