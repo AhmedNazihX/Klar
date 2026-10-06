@@ -45,7 +45,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        prohibited_practices.py + prohibited_texts.py (E4),
 │   │   │   │                        high_risk.py + high_risk_retrieval.py + high_risk_texts.py (E5),
 │   │   │   │                        transparency.py + transparency_duties.py + transparency_texts.py (E6),
-│   │   │   │                        role_obligations.py + role_texts.py (E7), finalize.py (E8);
+│   │   │   │                        role_obligations.py + role_texts.py (E7), role_legacy.py: the
+│   │   │   │                        Art. 111(2) part of the role check (C7b, moved out by E8),
+│   │   │   │                        finalize.py: the steps aggregated into the result (E8);
 │   │   │   │                        key_facts.py: the key-fact answer and its three-valued reading,
 │   │   │   │                        shared by the checks (E3, E6); common.py: the run's lookup,
 │   │   │   │                        citations and prompt blocks shared by the checks (E5);
