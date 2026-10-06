@@ -1,0 +1,24 @@
+id: annex-match-46-notbremsassistent-fussgaenger
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein Automobilzulieferer aus Niederbayern mit 1.500 Beschäftigten. Für mehrere
+  Pkw-Hersteller liefern wir eine Frontkamera mit Radar für den Notbremsassistenten: Ein neuronales
+  Netz erkennt Fußgänger und Radfahrer vor dem Fahrzeug, schätzt ihren Weg ab und löst eine
+  Vollbremsung aus, wenn die Person am Steuer nicht reagiert. Das System wird im Rahmen der
+  Typgenehmigung nach der EU-Verordnung über die allgemeine Fahrzeugsicherheit von der
+  Genehmigungsbehörde geprüft. Hardware und Modell entwickeln wir selbst. Unser Werk bekommt
+  nächstes Jahr eine Photovoltaikanlage.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:B:19", "annex:I:B:18"]
+label_citation: ["annex:I:B:19", "annex:I:B:18", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
+notes: >-
+  Label approved 2026-10-07 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Points: advanced emergency braking for pedestrians and cyclists is a safety system
+  type-approved under the General Safety Regulation (Annex I Section B point 19) within the vehicle
+  type-approval framework (point 18). Either point counts. Role: develops and supplies it.
+tags:
+  - "annex_i_section:b"
+  - "multi_point"

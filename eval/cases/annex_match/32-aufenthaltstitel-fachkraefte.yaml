@@ -1,0 +1,25 @@
+id: annex-match-32-aufenthaltstitel-fachkraefte
+set_name: annex_match
+language: de
+description: >-
+  Wir sind die zentrale Ausländerbehörde einer Großstadt und bearbeiten jedes Jahr rund 15.000
+  Anträge auf Aufenthaltstitel zur Beschäftigung, etwa für Pflegekräfte und IT-Fachleute aus
+  Drittstaaten. Seit diesem Jahr prüft eine KI-Anwendung, die ein Softwarehaus aus Nürnberg für uns
+  betreibt, jeden Antrag vor: Sie liest Arbeitsvertrag, Gehaltsangaben, Nachweise zur Anerkennung
+  des Berufsabschlusses und Unterlagen des Arbeitgebers aus, prüft, ob Gehaltsschwelle und übrige
+  Voraussetzungen erfüllt sind, und empfiehlt Erteilung oder Ablehnung. Die Sachbearbeitung zeichnet
+  ab, folgt der Empfehlung aber meist. Wir nutzen die Anwendung mit den Standardregeln. Unsere
+  Online-Terminbuchung wurde gerade erneuert.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:7:c"]
+label_citation: ["annex:III:7:c", "art:6:2", "art:3:4"]
+notes: >-
+  Label approved 2026-10-07 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: assists the competent authority in examining applications for residence
+  permits with regard to the applicant's eligibility, 7(c). It assesses an individual's eligibility
+  and materially shapes the decision, so no Art. 6(3) exemption. Role: the authority uses the
+  service under its authority.
+tags:
+  - "annex_iii_area:7"

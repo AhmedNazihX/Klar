@@ -1,0 +1,22 @@
+id: annex-match-14-job-ad-audience-targeting
+set_name: annex_match
+language: en
+description: >-
+  We're an ad-tech company in Dublin with about 120 staff. Our JobReach product lets employers
+  upload a vacancy, and our models decide which users across our partner websites and apps see the
+  job advert, based on each person's browsing history, inferred skills, location and likelihood to
+  apply. Employers pay per qualified click and never pick the audience themselves; our system does.
+  We built the targeting models in-house and run the service for staffing agencies and large
+  employers across the EU. Last month we moved our offices to a new building by the docks.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:4:a"]
+label_citation: ["annex:III:4:a", "art:6:2", "art:3:3"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: placing targeted job advertisements is named in 4(a). It evaluates
+  individual people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: builds the
+  models and offers the service under its own name.
+tags:
+  - "annex_iii_area:4"

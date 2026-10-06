@@ -1,0 +1,24 @@
+id: annex-match-28-parole-reoffending-score
+set_name: annex_match
+language: en
+description: >-
+  We're the probation and prison service of a small EU member state. When a prisoner becomes
+  eligible for early release, our caseworkers run a machine-learning tool we licensed from a
+  Canadian company: it combines the person's criminal record, offence type, behaviour in prison and
+  completed programmes, plus an interview, into an estimate of the risk of re-offending within two
+  years. The parole board receives the score with the caseworker's report and weighs it in its
+  decision. We only translated the interview forms. We are also replacing the prison kitchens'
+  equipment this year.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:6:d"]
+label_citation: ["annex:III:6:d", "art:6:2", "art:3:4"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: a law-enforcement authority (it executes criminal penalties, Art. 3(45))
+  assesses the risk of re-offending from past criminal behaviour, 6(d). Not prohibited under Art.
+  5(1)(d): it supports a human assessment based on objective facts linked to criminal activity.
+  Role: uses the licensed tool; translating forms is not a substantial modification.
+tags:
+  - "annex_iii_area:6"

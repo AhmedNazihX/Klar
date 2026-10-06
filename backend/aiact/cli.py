@@ -24,13 +24,14 @@ from aiact.eval import (
     isolation,
     label_freeze,
     metrics,
+    ragas_metrics,
     records,
     report,
     runner,
     similarity,
 )
 from aiact.eval import split as eval_split
-from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases
+from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases, load_qa_items
 from aiact.eval.experiments import smoke, smoke_recheck, smoke_verdict
 from aiact.eval.experiments.smoke_served import VerifyAll
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
@@ -405,6 +406,52 @@ def eval_run(
     )
     if is_dirty:
         typer.echo("Warning: uncommitted changes; the recorded git_sha may not reproduce", err=True)
+
+
+@eval_app.command("ragas")
+def eval_ragas(
+    subset: Annotated[int | None, typer.Option(min=1, help="A seeded sample of N items")] = None,
+    top_k: Annotated[
+        int, typer.Option(min=1, max=ragas_metrics.MAX_TOP_K, help="Search hits per question")
+    ] = ragas_metrics.DEFAULT_TOP_K,
+    max_cost_usd: Annotated[
+        float, typer.Option(min=0.000001, help="Start no new item once this much is spent")
+    ] = ragas_metrics.DEFAULT_MAX_COST_USD,
+    seed: Annotated[int, typer.Option(help="Seed for the --subset sample")] = 0,
+) -> None:
+    """Score retrieval and answers on the Q&A set with RAGAS and record the run (V6)."""
+    try:
+        items = load_qa_items()
+        git_sha, is_dirty = runner.current_git_state()
+        parts = ragas_metrics.build_parts(top_k)
+        options = ragas_metrics.RagasOptions(git_sha, is_dirty, subset, seed, max_cost_usd)
+        with records.connect() as connection:
+            summary = ragas_metrics.run_ragas(
+                items, parts, records.PostgresRunStore(connection), options
+            )
+    except (
+        CaseFileError,
+        FileNotFoundError,
+        CalledProcessError,
+        LLMConfigError,
+        ragas_metrics.RagasNotInstalledError,
+        records.DatabaseNotConfiguredError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    means = ", ".join(
+        f"{name} {'n/a' if value is None else f'{value:.3f}'}"
+        for name, value in summary.means.items()
+    )
+    typer.echo(
+        f"run {summary.run_id}: {summary.status.value}, {summary.cases_scored}/"
+        f"{summary.cases_planned} items ({summary.cases_failed} failed), "
+        f"${summary.cost_usd:.4f}, {summary.tokens} tokens; {means}"
+    )
 
 
 @eval_app.command("report")

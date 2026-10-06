@@ -28,12 +28,17 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
 │   │   ├── db.py                    direct Postgres connection (DATABASE_URL) for server-only tables (C3)
 │   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b)
+│   │   ├── provision_names.py       how a result names an article provision or Annex point (EN, DE), shared by
+│   │   │                            the engine's texts and drafting (P8a, moved out of E4–E6's texts)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
 │   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3);
 │   │   │                            reply_usage, a reply's cost and tokens (E10)
 │   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
 │   │   │                            generations.py: the provider that served a generation (X2)
+│   │   │                            ragas_llm.py: the RAGAS route (RAGAS_MODEL on RAGAS_PROVIDER): the metrics' LLM
+│   │   │                            over the OpenAI SDK, usage metered per reply, telemetry off; the same route
+│   │   │                            as a chat model for answers; needs the `eval` dependency group (V6)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
 │   │   │                            build.py + load.py (C3), embed.py (C4)
@@ -82,7 +87,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── baselines.py         `baseline_luna` (engine model, one prompt, no retrieval) and `baseline_jev` (V3)
 │   │   │   ├── judge.py             (V4)
 │   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support, invented content (V5)
-│   │   │   ├── ragas_metrics.py     (V6)
+│   │   │   ├── ragas_metrics.py     context precision/recall, faithfulness, provision recall on the Q&A set;
+│   │   │   │                        `aiact evaluate ragas`, stored in eval_runs (V6)
 │   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)
 │   │   │   └── experiments/         embeddings.py (X1a), free_agent.py (S1); X2: smoke.py (`aiact evaluate smoke`),
 │   │   │                            smoke_verdict.py (decision 023's rule over stored runs, `smoke-compare`),
@@ -90,6 +96,12 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
+│   │   │                            P8a: models.py (DraftDocument, sections with their provenance, status),
+│   │   │                            templates.py (the deployer documents, EN and DE), prefill.py (sections
+│   │   │                            from the result), deployer.py (draft_deployer_documents), checks.py
+│   │   │                            (the three automatic checks, reused by P28's vendor letters),
+│   │   │                            facts_check.py (the facts check, read from the result alone); never
+│   │   │                            imports aiact.engine (tests/drafting/test_imports.py)
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;

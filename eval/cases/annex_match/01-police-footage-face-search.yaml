@@ -1,0 +1,25 @@
+id: annex-match-01-police-footage-face-search
+set_name: annex_match
+language: en
+description: >-
+  Our regional police force bought a video analytics package from a Dutch vendor last spring. After
+  a serious crime, investigators upload hours of recordings from station and street cameras, and the
+  machine-learning software compares every face it finds against our database of custody
+  photographs, returning a ranked list of possible matches with confidence scores. Searches only run
+  on recorded footage, never live, and each one needs sign-off from a senior officer and a judge's
+  authorisation under national law. Analysts then check the hits by hand before anyone is
+  approached. The same package also blurs bystanders when footage is released to the press, and it
+  runs on servers in our own data centre.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:1:a"]
+label_citation: ["annex:III:1:a", "art:6:2", "art:3:41", "art:3:43", "art:3:4"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: identifying people at a distance by comparing their faces with a reference
+  database, without their involvement, is remote biometric identification (Art. 3(41)); recorded
+  footage makes it post-remote (Art. 3(43)), not the real-time use Art. 5(1)(h) restricts. Not mere
+  verification. Role: the police use it under their authority.
+tags:
+  - "annex_iii_area:1"

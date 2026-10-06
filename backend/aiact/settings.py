@@ -52,7 +52,10 @@ class Settings(BaseSettings):
     judge_model: str | None = None
     judge_backup_model: str | None = None
     label_filter_model: str | None = None
-    ragas_model: str | None = None
+    # RAGAS (V6): Gemini 3.1 Flash-Lite on its EU zero-retention endpoint (decision 005), the
+    # only model ids with a default; override both together, since the provider is pinned.
+    ragas_model: str = "google/gemini-3.1-flash-lite"
+    ragas_provider: str = "google-vertex/eu"
     embedding_model: str | None = None
     embedding_provider: str | None = None
     embedding_dimensions: int = 1536

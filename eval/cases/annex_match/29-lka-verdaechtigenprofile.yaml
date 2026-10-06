@@ -1,0 +1,22 @@
+id: annex-match-29-lka-verdaechtigenprofile
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein Landeskriminalamt und haben im vergangenen Jahr eine KI-gestützte Analyseplattform
+  eines US-Anbieters eingeführt. In laufenden Ermittlungen, etwa gegen Drogenhändler, führt sie
+  Daten aus Funkzellenabfragen, beschlagnahmten Handys, Kontobewegungen und unseren Vorgangssystemen
+  zusammen, erstellt für jede beteiligte Person ein Profil mit Kontakten, Bewegungsmustern und Rolle
+  in der Gruppe und schlägt vor, wer als Hauptverdächtiger gelten sollte. Die Ermittler arbeiten mit
+  diesen Vorschlägen weiter. Wir haben nur unsere Datenquellen angebunden. Nebenbei läuft gerade die
+  Umstellung auf ein neues Funknetz.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:6:e"]
+label_citation: ["annex:III:6:e", "art:6:2", "art:3:4"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: profiling of individuals by law enforcement in the course of investigating
+  crimes. Role: connecting data sources is use, not modification.
+tags:
+  - "annex_iii_area:6"

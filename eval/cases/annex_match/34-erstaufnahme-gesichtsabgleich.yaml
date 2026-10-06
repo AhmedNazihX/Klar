@@ -1,0 +1,26 @@
+id: annex-match-34-erstaufnahme-gesichtsabgleich
+set_name: annex_match
+language: de
+description: >-
+  Wir sind die Migrationsbehörde eines EU-Mitgliedstaats und betreiben eine große
+  Erstaufnahmeeinrichtung. Die Kameras an den Eingängen und in den Gemeinschaftsbereichen sind an
+  eine Gesichtserkennungssoftware eines französischen Anbieters angeschlossen, die die Gesichter
+  aller Personen erfasst und mit der Datenbank der registrierten Bewohnerinnen und Bewohner
+  abgleicht. So sehen wir, wer sich gerade in der Einrichtung aufhält und ob jemand Unbekanntes
+  hereinkommt, ohne dass die Menschen dafür aktiv etwas tun müssen. Die Software läuft unverändert.
+  Daneben organisieren wir Sprachkurse für die Bewohner.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:1:a", "annex:III:7:d"]
+label_citation: ["annex:III:1:a", "annex:III:7:d", "art:6:2", "art:3:41", "art:3:4"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Points: identifying people at a distance against a database without their
+  involvement is remote biometric identification (1(a), Art. 3(41)); done by a migration authority,
+  it is also identifying people in migration management (7(d)). Either point counts. Not law
+  enforcement, so Art. 5(1)(h) does not arise. Role: uses the software unchanged.
+tags:
+  - "annex_iii_area:1"
+  - "annex_iii_area:7"
+  - "multi_point"

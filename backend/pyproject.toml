@@ -35,6 +35,10 @@ ingest = [
     "docling-slim[convert-core,format-pdf,models-local]>=2.130.0",
     "opencv-python-headless>=5.0.0.93",
 ]
+eval = [
+    "openai>=2.54.0",
+    "ragas>=0.4.3",
+]
 
 [build-system]
 requires = ["uv_build>=0.11.33,<0.12"]
@@ -46,6 +50,13 @@ build-backend = "uv_build"
 # `aiact corpus guidelines`; install with `uv sync --group ingest`) pulls in torch, which has
 # no Intel-mac wheels, so the lock skips that platform. Plain `uv sync` and CI leave it out.
 override-dependencies = ["typer>=0.27.2"]
+# The `eval` group (RAGAS and the OpenAI SDK it drives, for `aiact evaluate ragas`) is installed by
+# plain `uv sync` and CI, but stays out of a runtime install (`uv sync --no-default-groups`).
+default-groups = ["dev", "eval"]
+# ragas 0.4.3 imports langchain_community.chat_models.vertexai at import time, which
+# langchain-community 0.4.2 removed; 0.4.1 still has it. openai 3 moved to httpx2, which the
+# test recordings (vcrpy) can't replay, so the RAGAS model's client stays on openai 2 (V6).
+constraint-dependencies = ["langchain-community<0.4.2", "openai<3"]
 environments = ["sys_platform != 'darwin' or platform_machine != 'x86_64'"]
 
 [tool.uv.build-backend]
