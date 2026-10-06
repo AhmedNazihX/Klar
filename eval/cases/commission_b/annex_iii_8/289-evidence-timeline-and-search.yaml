@@ -1,0 +1,28 @@
+id: cb-289-evidence-timeline-and-search
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Landgericht in Hessen mit rund 70 Richterinnen und Richtern. In großen
+  Wirtschaftsstrafsachen umfassen die Beweismittel oft Zehntausende Seiten, E-Mails und
+  Tabellen. Ab 2028 nutzen unsere Kammern ein gekauftes Programm, das daraus eine Chronologie
+  erstellt: Es sucht die in den Beweismitteln festgehaltenen Ereignisse heraus, ordnet sie zeitlich
+  und verweist jeweils auf die Fundstelle. Außerdem kann man im gesamten Material suchen und
+  bekommt die passenden Stellen angezeigt. Was die Beweise bedeuten oder was daraus folgt, bewertet
+  das Programm nicht; das tun allein die Richter. Unser Gerichtsgebäude wird gerade energetisch
+  saniert.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:8:a"]
+source_example_id: hr-ex-289
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: reconstructing a timeline from the evidence and
+  searching it, with references, organises access to factual material without analysing,
+  evaluating or drawing conclusions from it, so it does not assist in researching and interpreting
+  facts and law or applying the law: outside Annex III point 8(a). No Art. 50 duty: minimal_risk.
+  Role: deployer of a bought program.
+tags:
+  - "area:annex_iii_8"
+  - "verdict:not_high"

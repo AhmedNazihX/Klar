@@ -1,0 +1,26 @@
+id: cb-288-court-case-assignment
+set_name: commission_b
+language: en
+description: >-
+  We're the administration of a large regional court in Portugal, with 60 judges and about 300
+  staff. From 2028 a scheduling tool from a court-software supplier will distribute incoming cases
+  among the judges. It considers each judge's area of specialisation, their current caseload and
+  their holiday and training dates, and assigns the case to a judge. That's all it does: everything
+  about the case itself is for the assigned judge. We use the supplier's tool as delivered. We're
+  also redesigning the court's public website.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:8:a", "recital:61"]
+source_example_id: hr-ex-288
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: assigning cases to judges by specialisation, workload
+  and absences is an administrative activity that does not affect the administration of justice in
+  individual cases (recital 61), so outside Annex III point 8(a). (It would be different if the
+  tool also assessed procedural questions of a case, such as jurisdiction; the description leaves
+  that out.) No Art. 50 duty: minimal_risk. Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_8"
+  - "verdict:not_high"

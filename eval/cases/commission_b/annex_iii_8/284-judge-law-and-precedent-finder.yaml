@@ -1,0 +1,29 @@
+id: cb-284-judge-law-and-precedent-finder
+set_name: commission_b
+language: en
+description: >-
+  We're the IT department of a national courts administration in the Baltics, about 90 people. From
+  2028 judges will get a research assistant we've licensed from a legal-tech vendor. The judge gives
+  it the facts of a case as presented by the parties, or a summary of them; the assistant analyses
+  those facts, picks out the statutes and earlier judgments that are relevant to them and explains
+  how they could apply to this particular case. It is not a keyword search: it works from the
+  facts of the case in front of the judge. Judges remain free to disagree. We use the vendor's
+  product without changes. We're also replacing the courts' video-hearing equipment.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:8:a"
+label_citation: ["annex:III:8:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-284
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: analysing the facts of a case to select the relevant
+  law and precedents and suggest how they apply assists the judge in interpreting and applying the
+  law to a concrete set of facts: Annex III point 8(a), high-risk under Art. 6(2); it influences the
+  decision, so no Art. 6(3) exemption. A plain search engine by area of law or keyword would be
+  outside 8(a). Role: deployer of a licensed product (the courts administration acts for the
+  judiciary).
+tags:
+  - "area:annex_iii_8"
+  - "verdict:high"

@@ -1,0 +1,35 @@
+id: cb-283-mass-claims-judge-assistant
+set_name: commission_b
+language: en
+description: >-
+  We're a 70-person legal-tech company in Amsterdam. Our product helps judges who face hundreds of
+  near-identical claims, such as flight-delay or diesel-emissions suits, and it does three things in
+  one workflow. First, it pulls the relevant facts out of each claim and groups the claims by
+  recurring sets of facts. Second, it searches a database of earlier rulings for similar cases and
+  shows the lines of legal reasoning they followed. Third, based on how those earlier cases ended,
+  it proposes an outcome for the new case together with ready-made text blocks for the judgment.
+  The judge reviews everything and signs. Several district courts will use it from 2028. We also
+  run a legal-design blog.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:8:a"
+label_citation: ["annex:III:8:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-283
+accepted_bases: ["within_use_case"]
+label_status: settled
+flip_variants:
+  - feature: the system performs only the first step, extracting the relevant facts and grouping claims by them
+    resulting_verdict: not_high
+    provision_ids: ["art:6:3:d"]
+notes: >-
+  Draft label, awaiting user approval. All three steps described, as B2 asks. Class: the system is
+  assessed in its combined configuration: fact extraction and clustering, research of similar
+  rulings and their reasoning, and proposed outcomes with text modules together assist judges in
+  researching and interpreting facts and law and applying it to the case, so Annex III point 8(a),
+  high-risk under Art. 6(2); the joint outputs materially influence the decision, so no Art. 6(3)
+  exemption. Flip variant: a system doing only the first step would be a preparatory task
+  (Art. 6(3)(d)). Role: it develops and sells the product under its own name.
+tags:
+  - "area:annex_iii_8"
+  - "verdict:high"

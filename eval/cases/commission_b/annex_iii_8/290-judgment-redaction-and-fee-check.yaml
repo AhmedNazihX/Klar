@@ -1,0 +1,27 @@
+id: cb-290-judgment-redaction-and-fee-check
+set_name: commission_b
+language: en
+description: >-
+  We run the back office of a Spanish appeals court, with about 80 clerks and administrators. From
+  2028 two routine jobs move to a tool we've bought from a legal-software firm. Before a judgment
+  goes into the public online collection, the tool strips out names, addresses and other details
+  that could identify the people involved. And when a new appeal comes in, it checks that the
+  court fee has been paid and that the lawyer's written authority to act is in order, and flags
+  anything missing to a clerk. It plays no part in how any appeal is decided. We use the tool as
+  supplied. The court is also getting a new reception desk.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:8:a", "recital:61"]
+source_example_id: hr-ex-290
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: removing identifying details from judgments before
+  publication, and checking fee payments and lawyers' authorisations, are administrative tasks that
+  do not affect the adjudication of individual cases (recital 61), so outside Annex III point 8(a).
+  Written without recital 61's phrasing, as C6's isolation audit requires. No Art. 50 duty:
+  minimal_risk. Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_8"
+  - "verdict:not_high"

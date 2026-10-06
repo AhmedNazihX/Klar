@@ -1,0 +1,28 @@
+id: cb-303-polling-institute-dashboards
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein sozialwissenschaftliches Meinungsforschungsinstitut aus Mannheim mit 50
+  Beschäftigten. Für die Landtagswahlen 2028 haben wir ein eigenes Analysewerkzeug gebaut: Es führt
+  unsere Umfragedaten mit amtlichen Statistiken zusammen, gewichtet sie und stellt die Ergebnisse
+  als Tabellen und Grafiken dar, mit offengelegter Methode und Fehlerspanne. Damit informieren wir
+  Medien, Verbände und die Öffentlichkeit darüber, wie die Stimmung im Land ist. Wir arbeiten
+  nicht für Parteien und machen keine Wahlwerbung; das Werkzeug soll niemanden in seiner
+  Wahlentscheidung beeinflussen. Im Herbst feiern wir unser dreißigjähriges Bestehen.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:8:b"]
+source_example_id: hr-ex-303
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: a polling institute's tool that collects, analyses and
+  presents information objectively and transparently, solely to inform the public and
+  stakeholders, is not intended to influence elections or voting behaviour, so outside Annex III
+  point 8(b). It outputs tables and charts, not generated text, so no Art. 50 duty: minimal_risk.
+  Role: it builds the tool and uses it itself (provider, also deployer).
+tags:
+  - "area:annex_iii_8"
+  - "verdict:not_high"
+  - "also_role:deployer"
