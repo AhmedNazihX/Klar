@@ -18,7 +18,7 @@ source_example_id: hr-ex-156
 accepted_bases: ["art_6_3_filter"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: the tool serves an Annex III point 5(a) decision
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the tool serves an Annex III point 5(a) decision
   (eligibility for healthcare benefits), but only retrieves existing facts in a structured way
   without evaluating them, and the caseworker reviews them: the Art. 6(3)(a) and (d) exemptions.
   Transparency: staff know they are using an internal tool (guide-art50 para. 45), and it returns

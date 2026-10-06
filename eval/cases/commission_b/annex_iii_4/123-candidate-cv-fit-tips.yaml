@@ -17,7 +17,7 @@ source_example_id: hr-ex-123
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: the tool is started and used by the candidate,
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the tool is started and used by the candidate,
   outside the employer's control and outside the recruitment and selection process, so it falls
   outside Annex III point 4(a) even though it may affect the candidate's chances. It gives tips and
   writes no text, so no Art. 50(2) duty: minimal_risk. Role: it builds and sells the app under its

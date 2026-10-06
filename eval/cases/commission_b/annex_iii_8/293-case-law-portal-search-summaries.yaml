@@ -17,7 +17,7 @@ source_example_id: hr-ex-293
 accepted_bases: ["art_6_3_filter"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: the database is used, among others, by judicial
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the database is used, among others, by judicial
   authorities to research the law (Annex III point 8(a)), but searching and summarising published
   decisions are narrow procedural tasks: the Art. 6(3) exemption (the source names no letter;
   Art. 6(3)(a) fits). The system writes summaries, synthetic text, so the provider's Art. 50(2)

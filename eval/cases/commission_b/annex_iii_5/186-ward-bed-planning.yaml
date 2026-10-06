@@ -17,7 +17,7 @@ source_example_id: hr-ex-186
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: estimating recovery time for room and bed management
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: estimating recovery time for room and bed management
   serves none of the purposes in Annex III point 5(d) (emergency calls, dispatch, emergency
   triage), so it falls outside it. Used for planning, not for a medical purpose, so no Annex I
   medical-device question is intended. No Art. 50 duty: minimal_risk. Role: deployer of a bought

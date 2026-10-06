@@ -26,8 +26,8 @@ source_example_id: hr-ex-041
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval (label fixed by the orchestrator 2026-10-07; this rewritten
-  text is not yet checked). Class: sorting travellers into groups by an ethnic origin inferred
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's
+  standing delegation for clear labels). Class: sorting travellers into groups by an ethnic origin inferred
   from face and gait templates is biometric categorisation (Art. 3(40)) according to a sensitive
   attribute (Art. 9(1) GDPR), Annex III point 1(b), high-risk under Art. 6(2), as the Commission's
   example says. Not prohibited: Art. 5(1)(g) covers only race, political opinions, trade union

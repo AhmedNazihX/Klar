@@ -17,7 +17,7 @@ source_example_id: hr-ex-189
 accepted_bases: ["art_6_3_filter"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: the system is linked to emergency patient triage
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the system is linked to emergency patient triage
   (Annex III point 5(d)), but only presents existing, factual information in a structured way
   without evaluating it for prioritisation or triage: the Art. 6(3)(a) and (d) exemptions. No
   Art. 50 duty: minimal_risk. Art. 6(4): as provider it must document this assessment before

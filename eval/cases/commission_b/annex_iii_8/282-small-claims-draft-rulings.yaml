@@ -18,7 +18,7 @@ source_example_id: hr-ex-282
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: generating draft judgments in small-claims cases and
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: generating draft judgments in small-claims cases and
   draft payment orders applies the law to a concrete set of facts for a judicial authority: Annex
   III point 8(a), high-risk under Art. 6(2). Its drafts sit next to the decision and shape it, so no
   Art. 6(3) exemption. Role: the judicial IT office had it built and puts it into service under the

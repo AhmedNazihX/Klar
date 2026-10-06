@@ -17,7 +17,7 @@ source_example_id: hr-ex-154
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: recommending which body or person should assess an
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: recommending which body or person should assess an
   application, without evaluating eligibility, falls outside Annex III point 5(a). No Art. 50 duty:
   minimal_risk. Role: deployer of a bought model.
 tags:

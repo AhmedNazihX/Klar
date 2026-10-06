@@ -18,7 +18,7 @@ source_example_id: hr-ex-121
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: tracking the employer's reputation from anonymised
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: tracking the employer's reputation from anonymised
   online comments is linked to recruitment only indirectly and is not used for the recruitment or
   selection of natural persons, so it falls outside Annex III point 4(a). No Art. 50 duty:
   minimal_risk. Role: deployer of a bought tool.

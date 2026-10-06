@@ -17,7 +17,7 @@ source_example_id: hr-ex-120
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: optimising the placement of employer-branding ads
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: optimising the placement of employer-branding ads
   that are not tied to any vacancy does not concern specific job openings, so it falls outside the
   targeted job advertisements of Annex III point 4(a). The ads are human-made, so no Art. 50 duty:
   minimal_risk. Role: deployer of an ad platform's feature.

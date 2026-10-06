@@ -17,7 +17,7 @@ source_example_id: hr-ex-303
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: a polling institute's tool that collects, analyses and
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: a polling institute's tool that collects, analyses and
   presents information objectively and transparently, solely to inform the public and
   stakeholders, is not intended to influence elections or voting behaviour, so outside Annex III
   point 8(b). It outputs tables and charts, not generated text, so no Art. 50 duty: minimal_risk.

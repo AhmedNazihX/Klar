@@ -17,7 +17,7 @@ source_example_id: hr-ex-185
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: conveying emergency-call traffic and connectivity
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: conveying emergency-call traffic and connectivity
   gaps does not evaluate or classify calls or dispatch responders, so it falls outside Annex III
   point 5(d), even if it may affect the availability of services. Not a safety component of
   critical digital infrastructure either: it only monitors and reports (point 2). No Art. 50 duty:

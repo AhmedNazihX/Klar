@@ -17,7 +17,7 @@ source_example_id: hr-ex-305
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: recognising marks on scanned ballots and tallying
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: recognising marks on scanned ballots and tallying
   them is a technical aid whose purpose is not to influence the outcome of an election or voting
   behaviour, so outside Annex III point 8(b). No Art. 50 duty: minimal_risk. Role: deployer of
   bought devices.

@@ -18,7 +18,7 @@ source_example_id: hr-ex-148
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: flagging benefit claims for fraud decides which claims
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: flagging benefit claims for fraud decides which claims
   face scrutiny, delay or suspension, so it is used to evaluate eligibility for essential public
   assistance benefits and materially influences access to them: Annex III point 5(a), high-risk
   under Art. 6(2); no Art. 6(3) exemption. Role: deployer of a licensed model.

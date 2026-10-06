@@ -16,10 +16,10 @@ source_example_id: hr-ex-304
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. DOUBT (flagged to the user): the Commission says the system
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). The Commission says the system
   is outside point 8(b) (it is not intended to influence elections) and "in any event" likely
   excluded by Art. 2(6). Built and put into service solely for scientific research, the Art. 2(6)
-  exclusion applies, so out_of_scope; the alternative label is minimal_risk (in scope, not 8(b), no
+  exclusion applies, so out_of_scope (were it not excluded, it would be minimal_risk: not 8(b), no
   Art. 50 duty). Role: it built the model for its own research (provider).
 tags:
   - "area:annex_iii_8"

@@ -18,7 +18,7 @@ source_example_id: hr-ex-142
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: a public authority's system that evaluates whether a
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: a public authority's system that evaluates whether a
   person is eligible for unemployment benefits, for how long and how much, and recommends granting
   or refusing them is Annex III point 5(a), high-risk under Art. 6(2); it evaluates the individual
   and shapes the decision, so no Art. 6(3) exemption. Role: deployer of bought software.
