@@ -14,8 +14,8 @@ from the chat or from your own arithmetic (INIT › Evaluation; `.claude/rules/e
 
 | Setting | CLI option | Default | Allowed |
 | --- | --- | --- | --- |
-| Case set | `--set` | none: ask | `commission_b`, `own`, `soft_pairs`, `consistency`, `academic`, `appliedai` |
-| Classifier | `--classifier` | `dummy` | whatever `uv run aiact evaluate run --help` lists (`dummy` is free and offline; `engine` after E10; `baseline_*` after V3) |
+| Case set | `--set` | none: ask | `commission_b`, `own`, `soft_pairs`, `consistency`, `academic`, `appliedai`, `annex_match` |
+| Classifier | `--classifier` | `dummy` | whatever `uv run aiact evaluate run --help` lists (`dummy` is free and offline; every other classifier calls a model, and one that isn't wired in yet says so when the run starts) |
 | Subset size | `--subset N` | 3 with `dummy`, otherwise ask | 1–30 without a go-ahead (see step 2) |
 | Exclude mode | `--exclude-mode` | `heldout` | `heldout` (the reported number) or `all` (the gap run, INIT › Benchmark isolation 4) |
 | Cost cap | `--max-cost-usd` | `1.0` | any positive amount; always pass it explicitly |
