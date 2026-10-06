@@ -1,0 +1,26 @@
+id: cb-230-number-plate-readers
+set_name: commission_b
+language: en
+description: >-
+  We are a regional police force in Belgium with about 900 officers. From 2028 our patrol cars and
+  several motorway gantries will carry number-plate cameras bought from a traffic-technology
+  supplier. A recognition model reads the plates of passing vehicles and checks them against lists
+  of stolen vehicles, uninsured cars and vehicles wanted in investigations; on a hit, the officers
+  get an alert. It reads plates, not faces or people. Reads that don't match a list are deleted
+  after a short period. We use the system as delivered. We're also upgrading our control room.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6", "annex:III:1"]
+source_example_id: hr-ex-230
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: number-plate readers identify vehicles, not persons:
+  not biometrics under Annex III point 1 and not profiling under point 6. The Commission's softer
+  note: how the data is used and stored could later enable surveillance (reconstructing travel
+  patterns); the description keeps a short retention for non-matches. No Art. 50 duty:
+  minimal_risk. Role: deployer of a bought system.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

@@ -1,0 +1,26 @@
+id: cb-219-burglary-hotspot-forecast
+set_name: commission_b
+language: en
+description: >-
+  We are a city police force in the Netherlands with about 1,800 officers. From 2028 our patrol
+  planners will use a forecasting tool bought from a police-software company. It looks at past
+  reported burglaries, the time of year, daylight hours and events in the city, and predicts which
+  neighbourhoods and time slots carry the highest burglary risk over the coming week, so patrols
+  can be sent there. The forecasts are about places and times only; they don't point to any
+  person, suspect or household. We use the tool as delivered. We're also opening two new
+  neighbourhood police posts.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6:d", "art:5:1:d"]
+source_example_id: hr-ex-219
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: predicting where and when burglaries are likely,
+  without linking the prediction to identifiable people, is geospatial forecasting, not a risk
+  assessment of natural persons, so outside Annex III point 6(d) and outside Art. 5(1)(d). No
+  Art. 50 duty: minimal_risk. Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

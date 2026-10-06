@@ -1,0 +1,29 @@
+id: cb-191-partner-violence-risk-court
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Strafjustiz eines österreichischen Bundeslandes; die Fachabteilung für
+  Justiz-IT hat rund 40 Beschäftigte. Ab 2028 erhalten die Strafgerichte ein Werkzeug, das wir bei
+  einem Anbieter für Risikoanalysen lizenziert haben. Wenn ein Gericht über ein Kontakt- und
+  Annäherungsverbot entscheidet oder es verlängert, wertet das Werkzeug die Angaben zum Verfahren
+  aus, etwa frühere Vorfälle, Drohungen, Trennungssituation und Waffenbesitz, und schätzt, wie
+  wahrscheinlich es ist, dass die betroffene Person erneut oder schwer Gewalt durch ihren Partner
+  oder Ex-Partner erleidet. Die Richterin sieht den Wert in der Akte. Nebenbei richten wir in allen
+  Gerichten Zeugenschutzzimmer ein.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:6:a"
+label_citation: ["annex:III:6:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-191
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: estimating the risk that a person becomes the victim
+  of (repeated or severe) intimate partner violence, for decisions on restraining orders in
+  criminal proceedings, is Annex III point 6(a), high-risk under Art. 6(2), as the Commission says;
+  the assessment profiles the people involved, so no Art. 6(3) exemption. Role: deployer of a
+  licensed tool.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:high"

@@ -1,0 +1,26 @@
+id: cb-232-customs-object-detection
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Hersteller von Röntgenprüfanlagen aus Hamburg mit rund 250 Beschäftigten. Unsere
+  neue Software für Polizei und Zoll erkennt auf Röntgen- und Kamerabildern von Gepäck, Paketen und
+  Containern bestimmte Gegenstände: Waffen, verdächtige Pakete, gefährliche Stoffe und gestohlene
+  Kulturgüter oder Kunstwerke aus den Fahndungslisten. Treffer markiert sie für das Prüfpersonal.
+  Personen erkennt oder bewertet sie nicht, es geht nur um Gegenstände. Das Modell haben wir selbst
+  trainiert, die Software kommt 2028 unter unserem Namen auf den Markt. Daneben bauen wir einen
+  Wartungsdienst in Skandinavien auf.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:6", "annex:III:1"]
+source_example_id: hr-ex-232
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: detecting objects (weapons, suspicious parcels,
+  dangerous goods, stolen cultural objects) is outside the law-enforcement uses in Annex III point
+  6 and is not biometrics under point 1. No Art. 50 duty: minimal_risk. Role: it trains the model
+  and sells the software under its own name.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

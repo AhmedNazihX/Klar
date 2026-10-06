@@ -1,0 +1,28 @@
+id: cb-217-prison-reoffending-forecast
+set_name: commission_b
+language: de
+description: >-
+  Wir sind der Justizvollzug eines Bundeslandes mit zwölf Anstalten und rund 4.000 Gefangenen. Ab
+  2028 nutzen unsere Fachdienste ein Prognoseprogramm, das wir bei einem Softwareanbieter
+  lizenziert haben. Für jeden Gefangenen schätzt es, wie wahrscheinlich ein Rückfall nach der
+  Entlassung ist. Grundlage sind das Vorstrafenregister, Gewaltvorfälle während der Haft und
+  soziale Daten wie Wohnsituation, Ausbildung und Beschäftigung. Die Einschätzung fließt in die
+  Vollzugsplanung und in Stellungnahmen zu Lockerungen ein. Wir nutzen das Programm unverändert.
+  Außerdem eröffnen wir eine neue Werkstatt für Holzverarbeitung.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:6:d"
+label_citation: ["annex:III:6:d", "art:6:2", "art:6:3", "art:5:1:d"]
+source_example_id: hr-ex-217
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: predicting an offender's risk of re-offending from
+  criminal record, violence in custody and social data is Annex III point 6(d), high-risk under
+  Art. 6(2); it profiles the person, so no Art. 6(3) exemption. Not Art. 5(1)(d): the assessment
+  rests on verifiable facts linking the person to criminal activity (a conviction), not on
+  profiling alone. Role: deployer of a licensed program.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:high"

@@ -1,0 +1,27 @@
+id: cb-206-device-data-recovery
+set_name: commission_b
+language: en
+description: >-
+  We are the digital-forensics laboratory of a national police force in the Nordics, with 45
+  examiners. From 2028 we're adding a recovery tool bought from a forensics vendor. Its models
+  piece together deleted or partly overwritten files, rebuild damaged phone databases and pull
+  chat histories and photos out of broken devices, so our examiners have the data in readable
+  form. The tool doesn't say whether anything it recovers is genuine, important or reliable; the
+  examiners and investigators judge that. We use it unchanged. Our lab is also seeking
+  accreditation for a new quality standard.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6:c"]
+source_example_id: hr-ex-206
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: recovering and extracting data from devices assists
+  human experts but does not evaluate the reliability of evidence, so outside Annex III point
+  6(c). The source's image enhancement is left out to avoid an Art. 50(2) side question; recovered
+  data is the device's own, not generated. No Art. 50 duty: minimal_risk. Role: deployer of a
+  bought tool.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

@@ -1,0 +1,32 @@
+id: cb-210-abuse-material-triage-sorting
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Zentralstelle zur Bekämpfung von Kinderpornografie bei einem Landeskriminalamt, mit
+  rund 60 Ermittlerinnen und Ermittlern. Täglich erreichen uns Tausende Hinweise und Dateien aus dem
+  Internet. Ab 2028 sortiert ein gekauftes Programm dieses Material vor: Es erkennt, ob eine Datei
+  bereits in unserer Datenbank erfasst ist, ob es sich um neues Material handelt oder um ein
+  künstlich erzeugtes Bild, und ordnet die Dateien in diese drei Gruppen, damit wir neues Material
+  zuerst sichten. Ob eine Datei als Beweis taugt, bewertet es nicht. Wir nutzen das Programm wie
+  geliefert. Unsere Ermittler bekommen außerdem mehr psychologische Betreuung.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6:c", "annex:III:6:a"]
+source_example_id: hr-ex-210
+accepted_bases: ["outside_use_case"]
+label_status: settled
+flip_variants:
+  - feature: the system also serves another Annex III use, for example assessing the risk that a person becomes the victim of a criminal offence
+    resulting_verdict: high
+    provision_ids: ["annex:III:6:a"]
+notes: >-
+  Draft label, awaiting user approval. Class: screening abuse material and sorting it into new,
+  already registered and AI-generated files supports investigative workflows by pre-selecting
+  material; it does not evaluate the reliability of evidence, so outside Annex III point 6(c).
+  Written without the flip feature (another Annex III use such as victim-risk assessment under
+  point 6(a)); the engine should ask about or flag it. No Art. 50 duty: minimal_risk. Role:
+  deployer of a bought program.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

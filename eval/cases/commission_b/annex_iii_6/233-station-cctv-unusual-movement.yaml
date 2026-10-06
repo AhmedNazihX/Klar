@@ -1,0 +1,27 @@
+id: cb-233-station-cctv-unusual-movement
+set_name: commission_b
+language: en
+description: >-
+  We're the railway police of a European country, about 1,100 officers. From 2028 the cameras in
+  our biggest stations will feed video analytics from a security vendor. The software watches the
+  live feeds and recordings for movements that may mean trouble, such as someone sprinting through
+  a crowd, raised arms, a fighting stance or a posture that suggests a person is holding a weapon,
+  and alerts the control room. It doesn't recognise or identify anyone; it only looks at what is
+  happening. Control-room staff decide whether to send officers. We use it as supplied. We're also
+  adding body cameras for officers.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6", "annex:III:1"]
+source_example_id: hr-ex-233
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: detecting unusual behaviour or movements in video,
+  without identifying anyone, assesses whether a situation is potentially unlawful, not persons:
+  outside the uses in Annex III point 6 and not biometric identification, categorisation or
+  emotion recognition under point 1. No Art. 50 duty: minimal_risk. Role: deployer of bought
+  analytics.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

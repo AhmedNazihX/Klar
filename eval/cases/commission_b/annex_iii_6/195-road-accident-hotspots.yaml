@@ -1,0 +1,26 @@
+id: cb-195-road-accident-hotspots
+set_name: commission_b
+language: en
+description: >-
+  We are the traffic police of a Polish region, with about 600 officers. From 2028 our planning
+  team will use an analytics tool from a road-safety software company. It combines accident
+  records, traffic counts, weather and road conditions to predict which stretches of road and
+  which times of day are most likely to see crashes, so we can place speed checks and patrols
+  there. It looks at places and times only, not at particular drivers or other people, and it is
+  about accidents, not crime. We use the tool as supplied. We're also running a winter-tyre
+  awareness campaign.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6:a"]
+source_example_id: hr-ex-195
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: predicting where and when road accidents are likely
+  is about accidents, not the risk of becoming a victim of criminal offences, and is
+  location-focused rather than about concrete persons, so outside Annex III point 6(a). No
+  Art. 50 duty: minimal_risk. Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

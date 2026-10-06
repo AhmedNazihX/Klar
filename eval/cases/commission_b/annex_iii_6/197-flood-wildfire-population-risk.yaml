@@ -1,0 +1,26 @@
+id: cb-197-flood-wildfire-population-risk
+set_name: commission_b
+language: en
+description: >-
+  We are the civil-protection directorate of a Greek region, with about 120 staff. From 2028 we're
+  using flood and wildfire models from a university spin-off. They combine terrain, rainfall,
+  river levels, wind and vegetation data with census figures to show which villages, care homes
+  and campsites are most exposed if a flood or fire breaks out, so we can plan evacuations and
+  warn the right communities in advance. The models deal with natural disasters, not crime, and
+  don't decide when or where crews are sent. We use them as delivered. We're also restoring an old
+  fire lookout tower as a visitor centre.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6:a", "annex:III:5:d"]
+source_example_id: hr-ex-197
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: identifying populations at risk of becoming victims
+  of floods or wildfires concerns natural catastrophes, not criminal offences, so outside Annex III
+  point 6(a); it does not dispatch or prioritise emergency services either (point 5(d)). No
+  Art. 50 duty: minimal_risk. Role: deployer of bought models.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

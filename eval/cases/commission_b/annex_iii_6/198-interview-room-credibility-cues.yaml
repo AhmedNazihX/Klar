@@ -1,0 +1,29 @@
+id: cb-198-interview-room-credibility-cues
+set_name: commission_b
+language: en
+description: >-
+  We're a 40-person company in Tallinn making equipment for police interview rooms. Our new system
+  films the suspect's face during questioning and tracks their eye movements and pupil size with a
+  dedicated camera. Our model analyses the tiny facial movements and the eye responses as the
+  suspect answers and tells the investigators, answer by answer, how credible the response
+  appears. Investigators use this to decide which statements to probe further. We developed the
+  model in-house and sell the system under our brand to police forces from 2028. We also make
+  sound-proofed recording booths.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:6:b", "annex:III:1:c"]
+label_citation: ["annex:III:6:b", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-198
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: assessing the credibility of a suspect's answers from
+  facial micro-expressions and eye responses is a polygraph-like tool for law enforcement, Annex
+  III point 6(b), high-risk under Art. 6(2); its role in decisions and profiling rule out Art. 6(3).
+  Inferring intentions from biometric data is also emotion recognition (point 1(c)), so a result
+  naming either point matches. Not a workplace or school, so not Art. 5(1)(f). Role: it develops
+  and sells the system under its own name.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:high"

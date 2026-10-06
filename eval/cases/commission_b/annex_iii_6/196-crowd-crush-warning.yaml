@@ -1,0 +1,27 @@
+id: cb-196-crowd-crush-warning
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Polizei einer Großstadt in Nordrhein-Westfalen und betreuen jedes Jahr
+  Großveranstaltungen wie Karneval, Stadtfeste und Fußballspiele. Ab 2028 nutzen wir eine
+  Videoanalyse, die wir bei einem Hersteller für Sicherheitstechnik gekauft haben. Sie wertet die
+  Bilder der Einsatzkameras aus und sagt voraus, wo es zu gefährlichem Gedränge, einer Massenpanik
+  oder einer Überlastung von Tribünen und Absperrungen kommen könnte, damit wir rechtzeitig Zugänge
+  sperren oder umleiten. Einzelne Personen erkennt oder verfolgt sie nicht; sie betrachtet nur
+  Dichte und Bewegung der Menge. Außerdem stellen wir dieses Jahr zwanzig neue Kommissaranwärter
+  ein.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6:a"]
+source_example_id: hr-ex-196
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: predicting overcrowding, crushes or structural
+  hazards at large gatherings concerns accidents, not the risk of persons becoming victims of
+  criminal offences, so outside Annex III point 6(a); it identifies no one (not point 1). No
+  Art. 50 duty: minimal_risk. Role: deployer of bought video analytics.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"
