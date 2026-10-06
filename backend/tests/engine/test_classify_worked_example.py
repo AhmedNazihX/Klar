@@ -121,6 +121,14 @@ def assert_in_scope(result: ClassificationResult) -> None:
 
 
 def assert_the_expected_result(run: ClassificationRun) -> None:
+    """`assert_the_expected_classification`, and the run's cost counted for every node."""
+    assert_the_expected_classification(run.result)
+    assert run.usage.cost_usd > 0
+    assert run.usage.tokens > 0
+    assert set(run.usage.by_node) >= {"facts", *(name.value for name in StepName)}
+
+
+def assert_the_expected_classification(result: ClassificationResult) -> None:
     """INIT > Worked example, row by row: in scope, with the scope step either (a) asking
     whether the tool infers (Art. 3(1)), in scope as the working assumption, so the result needs
     more information, or (b) deciding in scope with the AI-system point marked assumed, so the
@@ -129,7 +137,6 @@ def assert_the_expected_result(run: ClassificationRun) -> None:
     duty; the company stays a deployer, with the Art. 26 duties INIT lists from 2 December 2027;
     each step citing its Basis (`INIT_BASIS`).
     Every citation resolves."""
-    result = run.result
     steps = {step.step: step for step in result.steps}
     assert list(steps) == list(StepName)  # in scope (assumed), not prohibited: every check ran
     assert_in_scope(result)
@@ -164,9 +171,6 @@ def assert_the_expected_result(run: ClassificationRun) -> None:
     }
     for step in result.steps:
         assert not unresolved_citations(step, state), step.step  # pyright: ignore[reportArgumentType]
-    assert run.usage.cost_usd > 0
-    assert run.usage.tokens > 0
-    assert set(run.usage.by_node) >= {"facts", *(name.value for name in StepName)}
 
 
 def stub_result(scope: StepResult) -> ClassificationResult:

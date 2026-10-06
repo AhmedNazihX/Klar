@@ -1,0 +1,1445 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Act Classification Assistant API",
+    "description": "Classifies AI systems under the EU AI Act, step by step with citations, and looks up the texts and duties it relies on. Every result is guidance, not legal advice.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/classify": {
+      "post": {
+        "summary": "Classify",
+        "description": "Classify one AI system under the AI Act, streaming each step as it runs and then the\nresult (or an `error` event, and no class, when a check fails). Guidance, not legal\nadvice.",
+        "operationId": "classify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The run's events, one JSON object per SSE `data:` line, named by its `event` field: `facts`, then `step_started` and `step` for each check, then `result` or `error`.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/FactsEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/StepStartedEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/StepEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErrorEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ResultEvent"
+                    }
+                  ],
+                  "title": "Response 200 Classify",
+                  "discriminator": {
+                    "propertyName": "event",
+                    "mapping": {
+                      "facts": "#/components/schemas/FactsEvent",
+                      "step_started": "#/components/schemas/StepStartedEvent",
+                      "step": "#/components/schemas/StepEvent",
+                      "error": "#/components/schemas/ErrorEvent",
+                      "result": "#/components/schemas/ResultEvent"
+                    }
+                  }
+                },
+                "itemSchema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "contentMediaType": "application/json",
+                      "contentSchema": {
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/FactsEvent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/StepStartedEvent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/StepEvent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/ErrorEvent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/ResultEvent"
+                          }
+                        ],
+                        "discriminator": {
+                          "propertyName": "event",
+                          "mapping": {
+                            "facts": "#/components/schemas/FactsEvent",
+                            "step_started": "#/components/schemas/StepStartedEvent",
+                            "step": "#/components/schemas/StepEvent",
+                            "error": "#/components/schemas/ErrorEvent",
+                            "result": "#/components/schemas/ResultEvent"
+                          }
+                        },
+                        "title": "Streamitem Classify"
+                      }
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "retry": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many classifications"
+          },
+          "503": {
+            "description": "Every slot is taken (with Retry-After), or the engine is not configured"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/provisions/{provision_id}": {
+      "get": {
+        "summary": "Get Provision",
+        "description": "The exact text of one article, paragraph, annex point, recital or guideline passage, in\nthe language asked for; the English text, with `english_only` set, when there is no German\none.",
+        "operationId": "get_provision",
+        "parameters": [
+          {
+            "name": "provision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "pattern": "^[a-z]+(:[A-Za-z0-9_.-]+)+$",
+              "description": "art:<n>[:<paragraph>[:<point>]], annex:<roman>[:<point>…], recital:<n> or guide:<doc_key>:…; e.g. art:26:1, annex:III:5:b.",
+              "title": "Provision Id"
+            },
+            "description": "art:<n>[:<paragraph>[:<point>]], annex:<roman>[:<point>…], recital:<n> or guide:<doc_key>:…; e.g. art:26:1, annex:III:5:b."
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Language",
+              "description": "The language of the text and the notice (en or de).",
+              "default": "en"
+            },
+            "description": "The language of the text and the notice (en or de)."
+          },
+          {
+            "name": "law_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LawVersion",
+              "default": "amended"
+            }
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The date whose text applies (default today); only for 'amended'.",
+              "title": "As Of"
+            },
+            "description": "The date whose text applies (default today); only for 'amended'."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provision"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid lookup"
+          },
+          "404": {
+            "description": "No text for that version, date and language"
+          },
+          "503": {
+            "description": "The corpus is unreachable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/obligations": {
+      "get": {
+        "summary": "List Obligations",
+        "description": "The duties, article references and dates for a role and risk class (the duties are in\nEnglish).",
+        "operationId": "list_obligations",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Role"
+            }
+          },
+          {
+            "name": "risk_class",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/RiskClass"
+            }
+          },
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/HighRiskRoute"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "For a high-risk system: the route, which sets the dates.",
+              "title": "Route"
+            },
+            "description": "For a high-risk system: the route, which sets the dates."
+          },
+          {
+            "name": "law_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": "amended",
+              "type": "string",
+              "default": "amended",
+              "title": "Law Version"
+            }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Language",
+              "description": "The language of the text and the notice (en or de).",
+              "default": "en"
+            },
+            "description": "The language of the text and the notice (en or de)."
+          },
+          {
+            "name": "legacy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LegacyStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Art. 111(2): a high-risk system placed on the market before its date.",
+              "title": "Legacy"
+            },
+            "description": "Art. 111(2): a high-risk system placed on the market before its date."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObligationList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents": {
+      "get": {
+        "summary": "List Documents",
+        "description": "The texts the answers draw on: title, status, law version and dates.",
+        "operationId": "list_documents",
+        "parameters": [
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Language",
+              "description": "The language of the text and the notice (en or de).",
+              "default": "en"
+            },
+            "description": "The language of the text and the notice (en or de)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentList"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The corpus is unreachable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Citation": {
+        "properties": {
+          "provision_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Provision Id",
+            "description": "For example `art:6:3` or `annex:III:4:a`."
+          },
+          "document_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Document Id",
+            "description": "The cited document's manifest `doc_key` (`data/manifest.yaml`), for example `ai-act-consolidated` or `guide-prohibited`; the citation checks resolve it against the corpus `documents.doc_key`."
+          },
+          "law_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LawVersion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The AI Act text quoted; None for guidance, which belongs to neither text."
+          },
+          "document_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lets draft guidance be labelled as a draft."
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of `quote`."
+          },
+          "quote": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Quote"
+          },
+          "english_only": {
+            "type": "boolean",
+            "title": "English Only",
+            "default": false
+          },
+          "changed_by_omnibus": {
+            "type": "boolean",
+            "title": "Changed By Omnibus",
+            "description": "The quoted amended text is one the Digital Omnibus changed: the provision, a part of it or the provision it belongs to was replaced, inserted, deleted or amended (INIT > Corpus rules). Never set on the original text.",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "provision_id",
+          "document_id",
+          "language",
+          "quote"
+        ],
+        "title": "Citation",
+        "description": "One quoted provision. `english_only` marks guidance that has no official text in `de`."
+      },
+      "ClassificationResult": {
+        "properties": {
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "type": "array",
+            "title": "Facts",
+            "description": "Facts extracted from the description."
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/StepResult"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Steps",
+            "description": "In the Act's check order."
+          },
+          "risk_class": {
+            "$ref": "#/components/schemas/RiskClass"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status",
+            "description": "Derived from the steps; see `derived_status`."
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set exactly when the role_obligations step ran."
+          },
+          "also_role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A role the company keeps next to `role`, whose duties are listed too: a deployer that becomes the provider still uses the system (shown as \"You also use it\")."
+          },
+          "role_switch_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Switch Reason",
+            "description": "Why the Art. 25 switch to provider applies, when it does."
+          },
+          "annex_point": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annex Point",
+            "description": "For example `annex:III:4:a`."
+          },
+          "transparency_duties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Transparency Duties",
+            "description": "Art. 50 provisions that apply, for example `art:50:1`.",
+            "default": []
+          },
+          "deciding_facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "type": "array",
+            "title": "Deciding Facts",
+            "default": []
+          },
+          "obligations": {
+            "items": {
+              "$ref": "#/components/schemas/Obligation"
+            },
+            "type": "array",
+            "title": "Obligations",
+            "default": []
+          },
+          "law_version": {
+            "$ref": "#/components/schemas/LawVersion"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "disclaimer": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Disclaimer"
+          },
+          "legal_review": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Review",
+            "description": "The recommendation to have the result reviewed by a lawyer, in the result's language: set for high-risk, prohibited and legally ambiguous results (INIT > Ethical considerations)."
+          },
+          "not_assessed": {
+            "items": {
+              "$ref": "#/components/schemas/StepName"
+            },
+            "type": "array",
+            "title": "Not Assessed",
+            "description": "The checks the model provider refused to assess (decision 029), in check order; each needs a person's review, and its stricter reading is assumed.",
+            "default": []
+          },
+          "follow_up_questions": {
+            "items": {
+              "$ref": "#/components/schemas/FollowUpQuestion"
+            },
+            "type": "array",
+            "title": "Follow Up Questions",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "facts",
+          "steps",
+          "risk_class",
+          "status",
+          "law_version",
+          "as_of",
+          "disclaimer"
+        ],
+        "title": "ClassificationResult",
+        "description": "The engine's answer. When `status` is uncertain, `risk_class` is the stricter reading,\nkept as the labelled working assumption."
+      },
+      "ClassifyRequest": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Description"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "law_version": {
+            "$ref": "#/components/schemas/LawVersion",
+            "default": "amended"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "answers": {
+            "patternProperties": {
+              "^[a-z][a-z0-9_]{0,63}$": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "type": "object",
+            "maxProperties": 40,
+            "title": "Answers"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "description",
+          "language"
+        ],
+        "title": "ClassifyRequest",
+        "description": "One classification, as a caller asks for it (the body the API and the MCP tool reuse).\n`as_of` defaults to the run's date. The text is bounded before any paid call: the\ndescription as the database stores it (`systems.description`), and the answers in number\nand length. What retrieval leaves out is not part of it (see `run_classification`)."
+      },
+      "DocumentInfo": {
+        "properties": {
+          "doc_key": {
+            "type": "string",
+            "title": "Doc Key"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "celex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Celex"
+          },
+          "doc_type": {
+            "type": "string",
+            "enum": [
+              "law",
+              "guideline",
+              "code"
+            ],
+            "title": "Doc Type"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "law_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LawVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_amending": {
+            "type": "boolean",
+            "title": "Is Amending"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "english_only": {
+            "type": "boolean",
+            "title": "English Only"
+          },
+          "published_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published On"
+          },
+          "in_force_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "In Force From"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "doc_key",
+          "title",
+          "celex",
+          "doc_type",
+          "status",
+          "law_version",
+          "is_amending",
+          "language",
+          "english_only",
+          "published_on",
+          "in_force_from"
+        ],
+        "title": "DocumentInfo",
+        "description": "One text of the corpus, as the interface lists it."
+      },
+      "DocumentList": {
+        "properties": {
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentInfo"
+            },
+            "type": "array",
+            "title": "Documents"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "documents",
+          "disclaimer"
+        ],
+        "title": "DocumentList",
+        "description": "Every text the answers can draw on, in `doc_key` order, with the notice."
+      },
+      "DocumentStatus": {
+        "type": "string",
+        "enum": [
+          "final",
+          "draft",
+          "consolidated"
+        ],
+        "title": "DocumentStatus",
+        "description": "The status of a corpus document (matches F4's `documents.status`)."
+      },
+      "ErrorEvent": {
+        "properties": {
+          "event": {
+            "type": "string",
+            "const": "error",
+            "title": "Event",
+            "default": "error"
+          },
+          "step": {
+            "type": "string",
+            "title": "Step"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "step",
+          "message"
+        ],
+        "title": "ErrorEvent",
+        "description": "A node failed, so the run stopped without a result."
+      },
+      "EvidenceTag": {
+        "type": "string",
+        "enum": [
+          "stated",
+          "inferred",
+          "assumed"
+        ],
+        "title": "EvidenceTag",
+        "description": "Where a fact came from; used instead of a numeric confidence score."
+      },
+      "Fact": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/EvidenceTag"
+          },
+          "source_span": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceSpan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text",
+          "evidence"
+        ],
+        "title": "Fact",
+        "description": "A fact about the system and where it came from. Only stated facts point into the text."
+      },
+      "FactsEvent": {
+        "properties": {
+          "event": {
+            "type": "string",
+            "const": "facts",
+            "title": "Event",
+            "default": "facts"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "type": "array",
+            "title": "Facts"
+          },
+          "follow_up_questions": {
+            "items": {
+              "$ref": "#/components/schemas/FollowUpQuestion"
+            },
+            "type": "array",
+            "title": "Follow Up Questions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "facts",
+          "follow_up_questions"
+        ],
+        "title": "FactsEvent",
+        "description": "The facts the description states, implies or leaves assumed, and the questions they\nraise; the interface shows these while the checks run."
+      },
+      "FollowUpQuestion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "title": "Id",
+            "description": "Stable slug, for example `human_review`."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "about": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "About",
+            "description": "What the answer settles, for example a step or provision_id."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "text"
+        ],
+        "title": "FollowUpQuestion",
+        "description": "A key-fact question. Its `id` keys the user's answer when the engine runs again."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HighRiskRoute": {
+        "type": "string",
+        "enum": [
+          "annex_iii",
+          "annex_i"
+        ],
+        "title": "HighRiskRoute",
+        "description": "How a system became high-risk; the two routes have different dates (Art. 113(c))."
+      },
+      "Language": {
+        "type": "string",
+        "enum": [
+          "en",
+          "de"
+        ],
+        "title": "Language",
+        "description": "The languages the assistant answers and quotes in."
+      },
+      "LawVersion": {
+        "type": "string",
+        "enum": [
+          "original",
+          "amended"
+        ],
+        "title": "LawVersion",
+        "description": "The AI Act text a result relies on: as published in 2024, or as amended by the Omnibus."
+      },
+      "LegacyStatus": {
+        "type": "string",
+        "enum": [
+          "legacy_unchanged",
+          "legacy_public_authority"
+        ],
+        "title": "LegacyStatus",
+        "description": "How Art. 111(2) treats a high-risk system placed on the market or put into service before\nits route's Chapter III date, with no significant change planned from that date."
+      },
+      "Obligation": {
+        "properties": {
+          "duty": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Duty"
+          },
+          "article": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^art:[0-9]+[a-z]?(:[A-Za-z0-9]+)*$",
+            "title": "Article",
+            "description": "E.g. `art:26:1`."
+          },
+          "applies_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Applies From"
+          },
+          "high_risk_route": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HighRiskRoute"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The high-risk route `applies_from` belongs to; None when the date is the same for every route (or the class is not high-risk)."
+          },
+          "applies_if": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applies If",
+            "description": "The condition under which the duty applies; None when it applies to every system of this role and class."
+          },
+          "is_informational": {
+            "type": "boolean",
+            "title": "Is Informational",
+            "description": "True when the row informs (e.g. a distributor of a prohibited system) rather than stating a formal duty the Act puts on this role.",
+            "default": false
+          },
+          "legacy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegacyStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Art. 111(2) for a system on the market or in use before its route's date: `legacy_unchanged` means the duty applies only after a significant change to the system's design or purpose; `legacy_public_authority` means it applies from 2 Aug 2030 (`applies_from`). None when the system is not such a legacy system or the duty is not a high-risk one."
+          },
+          "relief_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relief Note",
+            "description": "Relief for SMEs, start-ups and small mid-caps (SMCs), if any."
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "duty",
+          "article",
+          "applies_from"
+        ],
+        "title": "Obligation",
+        "description": "One duty with its article reference and the date it applies from."
+      },
+      "ObligationList": {
+        "properties": {
+          "law_version": {
+            "$ref": "#/components/schemas/LawVersion"
+          },
+          "obligations": {
+            "items": {
+              "$ref": "#/components/schemas/Obligation"
+            },
+            "type": "array",
+            "title": "Obligations"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "law_version",
+          "obligations",
+          "disclaimer"
+        ],
+        "title": "ObligationList",
+        "description": "The duties `list_obligations` found, with the law version they come from and the notice."
+      },
+      "OpenQuestion": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Question"
+          },
+          "readings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Readings",
+            "description": "The two possible readings, stricter first."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "question",
+          "readings"
+        ],
+        "title": "OpenQuestion",
+        "description": "A question the law and guidance don't settle, with both possible readings."
+      },
+      "Provision": {
+        "properties": {
+          "provision_id": {
+            "type": "string",
+            "title": "Provision Id"
+          },
+          "doc_key": {
+            "type": "string",
+            "title": "Doc Key"
+          },
+          "document_title": {
+            "type": "string",
+            "title": "Document Title"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "law_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LawVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "english_only": {
+            "type": "boolean",
+            "title": "English Only"
+          },
+          "heading": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heading"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "provision_id",
+          "doc_key",
+          "document_title",
+          "doc_type",
+          "law_version",
+          "status",
+          "language",
+          "english_only",
+          "heading",
+          "text",
+          "valid_from",
+          "valid_to",
+          "disclaimer"
+        ],
+        "title": "Provision",
+        "description": "One provision's text, with the version, language and status it comes from and the notice."
+      },
+      "ResultEvent": {
+        "properties": {
+          "event": {
+            "type": "string",
+            "const": "result",
+            "title": "Event",
+            "default": "result"
+          },
+          "result": {
+            "$ref": "#/components/schemas/ClassificationResult"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "ResultEvent"
+      },
+      "RiskClass": {
+        "type": "string",
+        "enum": [
+          "out_of_scope",
+          "prohibited",
+          "high_risk",
+          "limited_risk",
+          "minimal_risk"
+        ],
+        "title": "RiskClass",
+        "description": "The headline class. Every result carries exactly one."
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "provider",
+          "deployer",
+          "importer",
+          "distributor"
+        ],
+        "title": "Role",
+        "description": "The operator role the obligations follow from (Art. 3, 16, 23-26)."
+      },
+      "SourceSpan": {
+        "properties": {
+          "start": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Start"
+          },
+          "end": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "End"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "SourceSpan",
+        "description": "Character offsets `[start, end)` of a fact in the user's description."
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "decided",
+          "needs_more_information",
+          "legally_ambiguous"
+        ],
+        "title": "Status",
+        "description": "Whether a step or result is settled. The two uncertain values are not risk classes."
+      },
+      "StepEvent": {
+        "properties": {
+          "event": {
+            "type": "string",
+            "const": "step",
+            "title": "Event",
+            "default": "step"
+          },
+          "step": {
+            "$ref": "#/components/schemas/StepResult"
+          },
+          "matches": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Matches",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "step"
+        ],
+        "title": "StepEvent",
+        "description": "A check finished, with its step as the result will show it."
+      },
+      "StepName": {
+        "type": "string",
+        "enum": [
+          "scope",
+          "prohibited",
+          "high_risk",
+          "transparency",
+          "role_obligations"
+        ],
+        "title": "StepName",
+        "description": "The checks in the Act's fixed order (INIT > How it works)."
+      },
+      "StepResult": {
+        "properties": {
+          "step": {
+            "$ref": "#/components/schemas/StepName"
+          },
+          "decision": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Decision"
+          },
+          "facts_used": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "type": "array",
+            "title": "Facts Used",
+            "default": []
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "title": "Citations",
+            "default": []
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status",
+            "default": "decided"
+          },
+          "missing_fact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FollowUpQuestion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The question that would supply the missing fact."
+          },
+          "open_question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenQuestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{0,63}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "A machine-readable failure code, for example `citation_unverified`."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "step",
+          "decision"
+        ],
+        "title": "StepResult",
+        "description": "The outcome of one check. An uncertain status names what is missing or open."
+      },
+      "StepStartedEvent": {
+        "properties": {
+          "event": {
+            "type": "string",
+            "const": "step_started",
+            "title": "Event",
+            "default": "step_started"
+          },
+          "step": {
+            "$ref": "#/components/schemas/StepName"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "step"
+        ],
+        "title": "StepStartedEvent",
+        "description": "A check started: the interface marks it running."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

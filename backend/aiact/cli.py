@@ -24,13 +24,14 @@ from aiact.eval import (
     isolation,
     label_freeze,
     metrics,
+    ragas_metrics,
     records,
     report,
     runner,
     similarity,
 )
 from aiact.eval import split as eval_split
-from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases
+from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases, load_qa_items
 from aiact.eval.experiments import smoke, smoke_recheck, smoke_verdict
 from aiact.eval.experiments.smoke_served import VerifyAll
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
@@ -45,12 +46,14 @@ eval_app = typer.Typer(no_args_is_help=True)
 deps_app = typer.Typer(no_args_is_help=True)
 obligations_app = typer.Typer(no_args_is_help=True)
 mcp_app = typer.Typer(no_args_is_help=True)
+api_app = typer.Typer(no_args_is_help=True)
 
 app.add_typer(corpus_app, name="corpus")
 app.add_typer(eval_app, name="evaluate")
 app.add_typer(deps_app, name="deps")
 app.add_typer(obligations_app, name="obligations")
 app.add_typer(mcp_app, name="mcp")
+app.add_typer(api_app, name="api")
 
 
 @app.callback()
@@ -405,6 +408,52 @@ def eval_run(
         typer.echo("Warning: uncommitted changes; the recorded git_sha may not reproduce", err=True)
 
 
+@eval_app.command("ragas")
+def eval_ragas(
+    subset: Annotated[int | None, typer.Option(min=1, help="A seeded sample of N items")] = None,
+    top_k: Annotated[
+        int, typer.Option(min=1, max=ragas_metrics.MAX_TOP_K, help="Search hits per question")
+    ] = ragas_metrics.DEFAULT_TOP_K,
+    max_cost_usd: Annotated[
+        float, typer.Option(min=0.000001, help="Start no new item once this much is spent")
+    ] = ragas_metrics.DEFAULT_MAX_COST_USD,
+    seed: Annotated[int, typer.Option(help="Seed for the --subset sample")] = 0,
+) -> None:
+    """Score retrieval and answers on the Q&A set with RAGAS and record the run (V6)."""
+    try:
+        items = load_qa_items()
+        git_sha, is_dirty = runner.current_git_state()
+        parts = ragas_metrics.build_parts(top_k)
+        options = ragas_metrics.RagasOptions(git_sha, is_dirty, subset, seed, max_cost_usd)
+        with records.connect() as connection:
+            summary = ragas_metrics.run_ragas(
+                items, parts, records.PostgresRunStore(connection), options
+            )
+    except (
+        CaseFileError,
+        FileNotFoundError,
+        CalledProcessError,
+        LLMConfigError,
+        ragas_metrics.RagasNotInstalledError,
+        records.DatabaseNotConfiguredError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    means = ", ".join(
+        f"{name} {'n/a' if value is None else f'{value:.3f}'}"
+        for name, value in summary.means.items()
+    )
+    typer.echo(
+        f"run {summary.run_id}: {summary.status.value}, {summary.cases_scored}/"
+        f"{summary.cases_planned} items ({summary.cases_failed} failed), "
+        f"${summary.cost_usd:.4f}, {summary.tokens} tokens; {means}"
+    )
+
+
 @eval_app.command("report")
 def eval_report(
     run_id: Annotated[UUID, typer.Argument(help="The eval_runs id to report on")],
@@ -700,6 +749,52 @@ def mcp_serve() -> None:
     from aiact.mcp.server import serve
 
     serve()
+
+
+@api_app.callback()
+def api() -> None:
+    """The HTTP API the web app calls."""
+
+
+@api_app.command("serve")
+def api_serve() -> None:
+    """Run the API on API_HOST:API_PORT (CORS for CORS_ORIGINS)."""
+    # Imported here: only these commands need FastAPI and uvicorn.
+    import uvicorn
+
+    from aiact.api import create_app
+
+    settings = get_settings()
+    # Both proxy settings are passed, never uvicorn's defaults (which trust X-Forwarded-For
+    # from 127.0.0.1 and would let a local peer pick the rate limit's key).
+    uvicorn.run(
+        create_app(settings),
+        host=settings.api_host,
+        port=settings.api_port,
+        proxy_headers=settings.api_proxy_headers,
+        forwarded_allow_ips=list(settings.api_forwarded_allow_ips),
+    )
+
+
+@api_app.command("openapi")
+def api_openapi(
+    check: Annotated[
+        bool, typer.Option(help="Only check that the committed schema matches the app.")
+    ] = False,
+) -> None:
+    """Export the API's OpenAPI schema to frontend/openapi.json (then run `pnpm gen:api`)."""
+    from aiact.api import openapi
+
+    if check:
+        if not openapi.is_openapi_current():
+            typer.echo(
+                f"{openapi.OPENAPI_FILE} is stale: run `uv run aiact api openapi`.", err=True
+            )
+            raise typer.Exit(code=1)
+        typer.echo(f"{openapi.OPENAPI_FILE} matches the app.")
+        return
+    changed = openapi.write_openapi()
+    typer.echo(f"{'written' if changed else 'unchanged'}: {openapi.OPENAPI_FILE}")
 
 
 @obligations_app.callback()

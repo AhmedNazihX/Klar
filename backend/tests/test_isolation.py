@@ -31,7 +31,7 @@ from dataclasses import dataclass, fields, replace
 from datetime import date
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, get_type_hints
 
 import psycopg
 import pytest
@@ -39,6 +39,7 @@ import yaml
 from pydantic import BaseModel
 
 import aiact.retrieval
+from aiact.api import classify as api_classify
 from aiact.corpus.build import DocumentLoad, DocumentRow, ProvisionRow
 from aiact.corpus.embed import ARMS, vector_literal
 from aiact.corpus.load import load_all
@@ -240,6 +241,10 @@ NOT_ENTRY_POINTS: dict[str, str] = {
     "aiact.retrieval.search.SearchResults": "the result type of search_ai_act",
     "aiact.retrieval.search.prepare_search": "builds search_ai_act's statement; runs no query",
     "aiact.retrieval.search.distinct_units": "dedupes rows search_ai_act already fetched",
+    "aiact.retrieval.documents.list_documents": "reads only the documents table (titles and "
+    "dates), never a provision row",
+    "aiact.retrieval.documents.DocumentInfo": "a result type of list_documents",
+    "aiact.retrieval.documents.DocumentList": "the result type of list_documents",
 }
 """Public callables of `aiact.retrieval` that return no corpus rows by themselves, or no
 guideline rows (so never a held-out example), and why."""
@@ -341,9 +346,11 @@ OPT_IN_FIELDS: dict[str, type] = {
 runner's per-case input (set only by `--exclude-mode all`, the gap run)."""
 REQUEST_MODELS: dict[str, type[BaseModel]] = {
     "aiact.engine.ClassifyRequest": ClassifyRequest,
+    "aiact.api POST /classify body": get_type_hints(api_classify.started_run)["body"],
 }
 """Every public request model (the bodies P1 and P2b accept): none may carry the opt-in. Add
-the API's and the MCP tool's request models here when they exist."""
+the MCP tool's request model here when it exists. The API's query parameters are checked in
+tests/api/test_app.py (no parameter or schema property in its OpenAPI document is an opt-in)."""
 
 
 @pytest.mark.parametrize("name", sorted(ENGINE_OPT_INS))
