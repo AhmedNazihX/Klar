@@ -27,13 +27,14 @@ Source: `backend/uv.lock`.
 | psycopg[binary] | runtime | >=3.3.6 | 3.3.6 | LGPL-3.0-only | PostgreSQL database adapter for Python |
 | pydantic-settings | runtime | >=2.15.0 | 2.15.0 | MIT | Settings management using Pydantic |
 | pyyaml | runtime | >=6.0.3 | 6.0.3 | MIT | YAML parser and emitter for Python |
-| ragas | runtime | >=0.4.3 | 0.4.3 | Apache License Version 2.0, January 2004 http://www.apache.org/licenses/ TERMS… | Evaluation framework for RAG and LLM applications |
 | typer | runtime | >=0.27.2 | 0.27.2 | MIT | Typer, build great CLIs. Easy to code. Based on Python type hints. |
 | lxml-stubs | dev | >=0.5.1 | 0.5.1 | Apache Software License | Type annotations for the lxml package |
 | pyright | dev | >=1.1.414 | 1.1.414 | MIT | Command line wrapper for pyright |
 | pytest | dev | >=9.1.1 | 9.1.1 | MIT | pytest: simple powerful testing with Python |
 | pytest-recording | dev | >=0.13.4 | 0.13.4 | MIT | A pytest plugin powered by VCR.py to record and replay HTTP traffic |
 | ruff | dev | >=0.16.9 | 0.16.9 | MIT | An extremely fast Python linter and code formatter, written in Rust. |
+| openai | eval | >=2.54.0 | 2.54.0 | Apache-2.0 | The official Python library for the openai API |
+| ragas | eval | >=0.4.3 | 0.4.3 | Apache License Version 2.0, January 2004 http://www.apache.org/licenses/ TERMS… | Evaluation framework for RAG and LLM applications |
 | docling-slim[convert-core,format-pdf,models-local] | ingest | >=2.130.0 | 2.131.0 | MIT | Modular version of the Docling package: SDK and CLI for parsing PDF, DOCX, HTML… |
 | opencv-python-headless | ingest | >=5.0.0.93 | 5.0.0.93 | Apache 2.0 | Wrapper package for OpenCV python bindings. |
 
@@ -47,13 +48,13 @@ Source: `backend/uv.lock`.
 | aiosignal | 1.4.0 | Apache 2.0 | ragas |
 | annotated-doc | 0.0.5 | MIT | docling-core, docling-slim, ragas, typer |
 | annotated-types | 0.8.0 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, mcp, op… |
-| anyio | 4.15.1 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, langsmith, mcp, openroute… |
+| anyio | 4.15.1 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, langsmith, mcp, openai, o… |
 | appdirs | 1.4.4 | MIT | ragas |
 | attrs | 26.1.0 | MIT | docling-core, docling-slim, mcp, ragas |
 | certifi | 2026.7.22 | MPL-2.0 | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, langsmith,… |
 | charset-normalizer | 3.5.1 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, ragas |
 | click | 8.5.0 | BSD-3-Clause | docling-slim, mcp, ragas |
-| colorama | 0.4.6 | BSD License | docling-core, docling-slim, pytest, pytest-recording, ragas, typer |
+| colorama | 0.4.6 | BSD License | docling-core, docling-slim, openai, pytest, pytest-recording, ragas, typer |
 | cuda-bindings | 13.4.3 | Apache-2.0 | docling-slim |
 | cuda-pathfinder | 1.8.2 | Apache-2.0 | docling-slim |
 | cuda-toolkit | 13.0.3.0 | unknown | docling-slim |
@@ -62,7 +63,7 @@ Source: `backend/uv.lock`.
 | defusedxml | 0.7.1 | PSFL | docling-core, docling-slim |
 | dill | 0.4.1 | BSD-3-Clause | ragas |
 | diskcache | 5.6.3 | Apache 2.0 | ragas |
-| distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter, langgraph, langsmith, ragas |
+| distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter, langgraph, langsmith, openai, ragas |
 | doclang | 0.7.3 | Apache-2.0 | docling-core, docling-slim |
 | docling-ibm-models | 4.0.3 | MIT | docling-slim |
 | docling-parse | 7.22.1 | MIT | docling-slim |
@@ -71,9 +72,9 @@ Source: `backend/uv.lock`.
 | filetype | 1.2.0 | MIT | docling-slim |
 | frozenlist | 1.8.0 | Apache-2.0 | ragas |
 | fsspec | 2026.7.0 | BSD-3-Clause | docling-slim, ragas |
-| h11 | 0.16.0 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, langsmith, mcp, openroute… |
+| h11 | 0.16.0 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, langsmith, mcp, openai, o… |
 | hf-xet | 1.6.0 | Apache-2.0 | docling-slim, ragas |
-| httpcore | 1.0.9 | BSD-3-Clause | docling-slim, httpx, langchain-openrouter, langgraph, openrouter, ragas |
+| httpcore | 1.0.9 | BSD-3-Clause | docling-slim, httpx, langchain-openrouter, langgraph, openai, openrouter, ragas |
 | httpcore2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith, mcp, ragas |
 | httpx-sse | 0.4.3 | MIT | ragas |
 | httpx2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith, mcp, ragas |
@@ -83,7 +84,7 @@ Source: `backend/uv.lock`.
 | iniconfig | 2.3.0 | MIT | pytest, pytest-recording |
 | instructor | 1.17.0 | MIT | ragas |
 | jinja2 | 3.1.6 | BSD License | docling-slim, ragas |
-| jiter | 0.14.0 | MIT | ragas |
+| jiter | 0.14.0 | MIT | openai, ragas |
 | jsonpatch | 1.33 | Modified BSD License | langchain-openrouter, langgraph, ragas |
 | jsonpath-python | 1.1.6 | MIT License | langchain-openrouter, openrouter |
 | jsonpointer | 3.1.1 | Modified BSD License | langchain-openrouter, langgraph, ragas |
@@ -121,7 +122,6 @@ Source: `backend/uv.lock`.
 | nvidia-cusparselt-cu13 | 0.8.1 | NVIDIA Proprietary Software | docling-slim |
 | nvidia-nccl-cu13 | 2.30.7 | unknown | docling-slim |
 | nvidia-nvshmem-cu13 | 3.4.5 | unknown | docling-slim |
-| openai | 2.54.0 | Apache-2.0 | ragas |
 | opentelemetry-api | 1.45.0 | Apache-2.0 | mcp |
 | orjson | 3.12.0 | MPL-2.0 AND (Apache-2.0 OR MIT) | langchain-openrouter, langgraph, langsmith, ragas |
 | ormsgpack | 1.12.2 | Apache-2.0 OR MIT | langgraph, ragas |
@@ -155,7 +155,7 @@ Source: `backend/uv.lock`.
 | setuptools | 84.0.0 | MIT | docling-slim |
 | shellingham | 1.5.4 | ISC License | docling-core, docling-slim, ragas, typer |
 | six | 1.17.0 | MIT | docling-core, docling-slim, ragas |
-| sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter, langgraph, langsmith, ragas |
+| sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter, langgraph, langsmith, openai, ragas |
 | sqlalchemy | 2.1.3 | MIT | ragas |
 | sse-starlette | 3.5.0 | BSD-3-Clause | mcp |
 | starlette | 1.7.0 | BSD-3-Clause | mcp |
@@ -166,7 +166,7 @@ Source: `backend/uv.lock`.
 | tokenizers | 0.23.2 | Apache Software License | docling-slim |
 | torch | 2.14.0 | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause… | docling-slim |
 | torchvision | 0.29.0 | BSD | docling-slim |
-| tqdm | 4.70.1 | MPL-2.0 AND MIT | docling-slim, ragas |
+| tqdm | 4.70.1 | MPL-2.0 AND MIT | docling-slim, openai, ragas |
 | transformers | 5.17.0 | Apache 2.0 License | docling-slim |
 | triton | 3.8.0 | MIT | docling-slim |
 | truststore | 0.10.4 | MIT | langchain-openrouter, langgraph, langsmith, mcp, ragas |

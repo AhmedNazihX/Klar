@@ -51,7 +51,6 @@ dependencies = [
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
-    { name = "ragas" },
     { name = "typer" },
 ]
 
@@ -62,6 +61,10 @@ dev = [
     { name = "pytest" },
     { name = "pytest-recording" },
     { name = "ruff" },
+]
+eval = [
+    { name = "openai" },
+    { name = "ragas" },
 ]
 ingest = [
     { name = "docling-slim", extra = ["convert-core", "format-pdf", "models-local"] },
@@ -81,7 +84,6 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.6" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "ragas", specifier = ">=0.4.3" },
     { name = "typer", specifier = ">=0.27.2" },
 ]
 
@@ -92,6 +94,10 @@ dev = [
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-recording", specifier = ">=0.13.4" },
     { name = "ruff", specifier = ">=0.16.9" },
+]
+eval = [
+    { name = "openai", specifier = ">=2.54.0" },
+    { name = "ragas", specifier = ">=0.4.3" },
 ]
 ingest = [
     { name = "docling-slim", extras = ["convert-core", "format-pdf", "models-local"], specifier = ">=2.130.0" },
