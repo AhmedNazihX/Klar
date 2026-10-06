@@ -54,6 +54,7 @@ from tests.engine.nodes.corpus_recording import (
     corpus_recording,
     lookup_call,
 )
+from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -648,11 +649,18 @@ class RecordedScopeLibrary:
 
 B5B_CASES = _scope_cases()
 
-KNOWN_GAPS: dict[str, str] = {
-    "own-b-05-regression-loan-scorecard": (
+
+def _decides_in_scope(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
+    """In scope, decided: no contested definition flagged."""
+    return not outcome.matched and outcome.step.status is Status.DECIDED
+
+
+KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-b-05-regression-loan-scorecard": KnownGap(
         "the model resolves guide-definition para 42 to the label's reading A (para 42 concerns "
         "optimisation, not scoring) instead of flagging the definition as contested; class "
-        "correct, status decided instead of legally_ambiguous (user, 2026-09-30)"
+        "correct, status decided instead of legally_ambiguous (user, 2026-09-30)",
+        _decides_in_scope,
     ),
 }
 """Recorded cases whose scope outcome differs from the label, with the reason; each fails when
@@ -697,9 +705,6 @@ def test_b5b_case_replay(
         outcome = ScopeCheck(luna_settings, library=library)(run_state)
     assert not unresolved_citations(outcome.step, run_state)
     matches = scope_matches(outcome, case)
-    gap = KNOWN_GAPS.get(case.id)
-    if gap is not None:
-        if matches:
-            pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        pytest.xfail(gap)
-    assert matches, (outcome.matched, outcome.step.status, cited(outcome), outcome.step.decision)
+    shown = (outcome.matched, outcome.step.status, cited(outcome), outcome.step.decision)
+    expect_known_gap(KNOWN_GAPS, outcome, case, matches=matches, shown=shown)
+    assert matches, shown

@@ -143,7 +143,7 @@ Input: *"We're a 40-person logistics company. We use a tool that reads incoming 
 | Prohibited | No match | Inferred | Art. 5 |
 | High-risk | Yes: recruitment use; ranking candidates counts as profiling, so the Article 6(3) exemption does not apply | Stated (scores and ranks) | Annex III point 4(a), Art. 6(3) |
 | Transparency | No separate duty identified from the description | Inferred | Art. 50 |
-| Result | High-risk, deployer. Duties include following the provider's instructions, assigning human oversight, keeping logs and informing the applicants who are subject to it (Art. 26(11)), from 2 December 2027 | — | Art. 26 |
+| Result | Needs more information, pending the inference question (Art. 3(1)); under that working assumption, high-risk, deployer. Duties include following the provider's instructions, assigning human oversight, keeping logs and informing the applicants who are subject to it (Art. 26(11)), from 2 December 2027 | — | Art. 26 |
 
 Deciding facts: the tool scores and ranks applicants; it was not modified or rebranded. The expected answers in this example are the design intent, to be checked against the legal text during the build.
 

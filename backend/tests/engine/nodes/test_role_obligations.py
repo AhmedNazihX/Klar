@@ -60,6 +60,7 @@ from aiact.schemas import (
 from aiact.schemas.result import derived_status
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
+from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -1586,10 +1587,22 @@ def _role_cases() -> list[BenchmarkCase]:
 B5D_CASES = _role_cases()
 
 
-KNOWN_GAPS: dict[str, str] = {
-    "own-d-03-assistant-repurposed-hiring": (
+def _provider_through_gpai(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
+    """Provider by building on a GPAI model, not by the Art. 25(1)(c) switch; no other role."""
+    found, cites = finding(outcome), set(cited(outcome))
+    return (
+        found.role is Role.PROVIDER
+        and {"art:3:3", "art:3:68"} <= cites
+        and "art:25:1:c" not in cites
+        and found.also_role is None
+    )
+
+
+KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-d-03-assistant-repurposed-hiring": KnownGap(
         "reaches provider through the GPAI build route (Art. 3(3), 3(68)) instead of the Art. "
-        "25(1)(c) switch, and keeps no deployer role (E10 re-record, user 2026-10-06)"
+        "25(1)(c) switch, and keeps no deployer role (E10 re-record, user 2026-10-06)",
+        _provider_through_gpai,
     ),
 }
 """Recorded cases whose role outcome differs from the label, with the reason; each fails when it
@@ -1632,16 +1645,9 @@ def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     run_state = role_check_state(case, ROLE_AS_OF)
     outcome = RoleObligationsCheck(luna_settings)(run_state)
     assert not unresolved_citations(outcome.step, run_state)
-    gap = KNOWN_GAPS.get(case.id)
-    if gap is not None:
-        if b5d_matches(outcome, case):
-            pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        pytest.xfail(gap)
-    assert finding(outcome).role is label.role
-    switches = {f"art:25:1:{s[-1]}" for s in tag(case, "role_switch") if s != "none"}
-    if switches:
-        cited_switches = {c.provision_id for c in outcome.step.citations}
-        assert {c for c in cited_switches if c.startswith("art:25:1:")} == switches
-    for also in tag(case, "also_role"):
-        assert finding(outcome).also_role is Role(also)
-    assert role_matches(outcome, case), (finding(outcome).role, outcome.step.status)
+    found = finding(outcome)
+    switches = sorted(c for c in cited(outcome) if c.startswith("art:25:1:"))
+    shown = (found.role, found.also_role, switches, outcome.step.status, outcome.step.decision)
+    matches = b5d_matches(outcome, case)
+    expect_known_gap(KNOWN_GAPS, outcome, case, matches=matches, shown=shown)
+    assert matches, shown

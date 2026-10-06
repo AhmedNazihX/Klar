@@ -95,16 +95,19 @@ not ask for a fact the description already gives.
   "social_scoring", "i" (`unrelated_context_treatment`) or "ii" (`disproportionate_treatment`);
   "none" when the point is settled. Point (c) is met when (i) or (ii) is, so answer each of them
   on its own.
-- When to raise point (c): it is about scores that follow people beyond the purpose and setting
-  their data comes from, or whose consequences outweigh what they rest on (guidelines, paragraphs
-  163-164 and 175-177). An evaluation made for one specific purpose, from data that belongs to
-  that purpose, whose result is used only for that purpose, is not by itself social scoring: the
-  guidelines keep such purpose-bound evaluations outside point (c), and where they matter the
-  high-risk check deals with them. So answer `social_scoring`, `unrelated_context_treatment` and
-  `disproportionate_treatment` "no" (evidence "inferred") unless the description gives some sign
-  of a score used, or having effects, outside the purpose and setting its data comes from, or of
-  treatment out of proportion to the behaviour it rests on. Answer one of them "unknown" only
-  when the description gives such a sign but leaves open what follows from it.
+- Conditions (i) and (ii) (guidelines, paragraphs 163-167 and 175-177): an evaluation made
+  lawfully, in line with Union and national law, for one specific purpose, from data that belongs
+  to that purpose and used only for that purpose, stays outside the prohibition as long as any
+  resulting treatment is justified and proportionate; where it matters, the high-risk check deals
+  with it. Answer `social_scoring` on its own definition above, whatever the purpose. Answer
+  `unrelated_context_treatment` and `disproportionate_treatment` "no" (evidence "inferred", with
+  `settled_in_law` "yes") only when nothing in the description points to either of them. A score
+  used, or having effects, outside the purpose and setting its data comes from points to (i).
+  Treatment that is unjustified (no legitimate aim, for example based on characteristics
+  unrelated to the purpose) or out of proportion to the behaviour it rests on points to (ii).
+  When the description points to one of them but leaves the fact open, answer it "unknown"; when
+  the facts are stated and only the law leaves the condition open, follow the `settled_in_law`
+  rule above.
 
 ## crime_risk: point (d)
 

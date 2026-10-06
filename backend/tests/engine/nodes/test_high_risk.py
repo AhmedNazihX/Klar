@@ -10,7 +10,6 @@ neither the database nor the network.
 
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass
 from datetime import date
 from typing import cast
 
@@ -74,6 +73,7 @@ from tests.engine.nodes.corpus_recording import (
     corpus_recording,
     lookup_call,
 )
+from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -1192,13 +1192,6 @@ def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     assert high_risk_matches(result, WORKED_EXAMPLE_CASE)
 
 
-@dataclass(frozen=True)
-class KnownGap:
-    reason: str
-    reads: Callable[[CheckOutcome, BenchmarkCase], bool]
-    """The documented wrong reading; any other miss fails the replay."""
-
-
 def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) -> bool:
     """High-risk assumed on the case's Annex I point, asking whether a third-party conformity
     assessment is required (Art. 6(1)(b))."""
@@ -1248,15 +1241,7 @@ def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -
     result = replay_check(run_state)
     assert not unresolved_citations(result.step, run_state)
     matches = high_risk_matches(result, case)
-    gap = KNOWN_GAPS.get(case.id)
-    if gap is not None:
-        if matches:
-            pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        assert gap.reads(result, case), (
-            result.high_risk_route,
-            result.step.status,
-            result.step.decision,
-        )
-        pytest.xfail(gap.reason)
     step = result.step
-    assert matches, (result.high_risk_route, result.annex_point, step.status, step.decision)
+    shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
+    expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
+    assert matches, shown

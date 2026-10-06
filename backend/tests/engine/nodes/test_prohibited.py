@@ -77,6 +77,7 @@ from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
     corpus_recording,
 )
+from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap, refused
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -833,22 +834,16 @@ def test_the_prompt_puts_instructions_and_art_5_first_and_the_description_last()
     assert human.endswith(f"Description:\n{TOOL}")
 
 
-def test_the_prompt_raises_social_scoring_only_on_a_sign_of_it() -> None:
-    """Point (c) needs a score with effects beyond the purpose and setting of its data, or
-    treatment out of proportion (guidelines, paragraphs 163-164, 175-177): a purpose-bound
-    evaluation alone is answered "no" and left to the high-risk check (E10, user 2026-10-06)."""
+def test_the_prompt_defaults_only_the_two_treatment_conditions() -> None:
+    """Point (c)'s guidance (guidelines, paragraphs 163-167 and 175-177) defaults conditions (i)
+    and (ii) to "no" when nothing points to them, never the base fact `social_scoring`, which
+    keeps its own definition (E10, user 2026-10-06)."""
     section = node.PROHIBITED_INSTRUCTIONS.split("## social_scoring")[1].split("\n## ")[0]
     flat = " ".join(section.split())
-    for phrase in (
-        "paragraphs 163-164 and 175-177",
-        "is not by itself social scoring",
-        "the high-risk check deals with them",
-        '"no" (evidence "inferred") unless the description gives some sign',
-        "outside the purpose and setting its data comes from",
-        "treatment out of proportion to the behaviour it rests on",
-        '"unknown" only when the description gives such a sign',
-    ):
-        assert phrase in flat, phrase
+    assert "paragraphs 163-167 and 175-177" in flat
+    defaulted = flat.split('"no" (evidence "inferred"')[0].rsplit(". ", 1)[1].strip()
+    assert defaulted == "Answer `unrelated_context_treatment` and `disproportionate_treatment`"
+    assert "Answer `social_scoring` on its own definition" in flat
 
 
 def test_the_prompt_leaves_dates_to_the_application() -> None:
@@ -1137,16 +1132,28 @@ def _b5c_cases() -> list[BenchmarkCase]:
 
 B5C_CASES = _b5c_cases()
 
-REFUSED = "provider content filter (decision 029)"
-KNOWN_GAPS: dict[str, str] = {
+REFUSED = KnownGap("provider content filter (decision 029)", refused)
+
+
+def _social_scoring_left_open(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """Art. 5(1)(c) matched, but legally ambiguous rather than decided."""
+    return (
+        result.matched
+        and result.step.status is Status.LEGALLY_AMBIGUOUS
+        and "art:5:1:c" in cited(result)
+    )
+
+
+KNOWN_GAPS: dict[str, KnownGap] = {
     "own-c-01-undress-photo-app": REFUSED,
     "own-c-02-undress-app-before-december": REFUSED,
     "own-c-04-studio-digital-doubles-consent": REFUSED,
     "own-c-05-gossip-site-fake-nudes": REFUSED,
     "own-c-07-unfiltered-image-generator": REFUSED,
-    "own-c-10-town-resident-points": (
+    "own-c-10-town-resident-points": KnownGap(
         "matches Art. 5(1)(c) social scoring but marks it legally_ambiguous instead of decided "
-        "(E10 re-record, user 2026-10-06)"
+        "(E10 re-record, user 2026-10-06)",
+        _social_scoring_left_open,
     ),
 }
 """Recorded cases whose Art. 5 outcome differs from the label, with the reason; each fails when
@@ -1205,10 +1212,7 @@ def test_b5c_case_replay(
         result = check(run_state)
     assert not unresolved_citations(result.step, run_state)
     matches = prohibited_matches(result, case)
-    gap = KNOWN_GAPS.get(case.id)
-    if gap is not None:
-        if matches:
-            pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        pytest.xfail(gap)
     step = result.step
-    assert matches, (result.matched, step.status, cited(result), step.decision)
+    shown = (result.matched, step.status, cited(result), step.decision)
+    expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
+    assert matches, shown
