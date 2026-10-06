@@ -1,0 +1,135 @@
+"""The RAGAS model (V6): `RAGAS_MODEL` on its pinned `RAGAS_PROVIDER` endpoint, by default
+Gemini 3.1 Flash-Lite on `google-vertex/eu` (decision 005).
+
+Two clients share that route:
+- `ragas_model` is what RAGAS's metrics want: RAGAS 0.4 takes an instructor-based LLM built from
+  an OpenAI SDK client, so this is the one place the app reaches OpenRouter through the OpenAI SDK
+  rather than LangChain. Every request carries the privacy routing flags and the pinned endpoint
+  in its body, and every reply's cost and tokens (OpenRouter's `usage`) go to the caller's
+  `on_usage` from an HTTP response hook, so retries and every metric's calls are counted.
+- `ragas_chat_model` is the same route as a LangChain chat model (`chat_model("ragas")`), for the
+  answers RAGAS judges.
+
+This module needs the `eval` dependency group (`uv sync` installs it; a runtime install with
+`--no-default-groups` doesn't). RAGAS sends usage telemetry to its vendor by default;
+`ragas_model` switches it off before RAGAS can send anything.
+"""
+
+import json
+import os
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+
+import httpx
+from langchain_openrouter import ChatOpenRouter
+from openai import AsyncOpenAI
+from ragas.llms import InstructorBaseRagasLLM, llm_factory
+
+from aiact.llm.chat import chat_model
+from aiact.llm.routing import APP_TITLE, provider_preferences, require_api_key
+from aiact.settings import Settings, get_settings
+
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+MAX_OUTPUT_TOKENS = 2048
+"""Room for RAGAS's statement lists and verdicts; Flash-Lite doesn't reason, so no more."""
+MAX_RETRIES = 2
+"""The OpenAI SDK's own default. Every attempt that gets a reply is counted by the usage hook."""
+TIMEOUT_SECONDS = 120.0
+RAGAS_TELEMETRY_OFF = ("RAGAS_DO_NOT_TRACK", "true")
+"""The environment switch RAGAS reads (once, on its first telemetry event) to send nothing."""
+
+UsageCallback = Callable[[float | None, int], None]
+"""Called with one reply's cost (None when OpenRouter sent none) and its total tokens."""
+
+
+@dataclass(frozen=True)
+class RagasModel:
+    """The RAGAS metrics' LLM, and the client it wraps (close it with `aclose` when done)."""
+
+    llm: InstructorBaseRagasLLM
+    client: AsyncOpenAI
+    model: str
+    provider: str
+
+    async def aclose(self) -> None:
+        await self.client.close()
+
+
+def routing_body(provider: str) -> dict[str, object]:
+    """The OpenRouter body fields: privacy flags plus the one endpoint allowed."""
+    return {"provider": provider_preferences([provider], allow_fallbacks=False)}
+
+
+def ragas_model(on_usage: UsageCallback, *, settings: Settings | None = None) -> RagasModel:
+    """The RAGAS metrics' LLM on the pinned route, with every reply's usage sent to `on_usage`.
+
+    Raises `LLMConfigError` when the OpenRouter API key is not set.
+    """
+    settings = settings or get_settings()
+    # An exception to "settings only, never os.environ": this writes, it doesn't read config.
+    # RAGAS has no other off switch, and the switch must be set before its first event, which
+    # `llm_factory` sends. Set unconditionally, so no environment can turn telemetry back on.
+    os.environ[RAGAS_TELEMETRY_OFF[0]] = RAGAS_TELEMETRY_OFF[1]
+    client = AsyncOpenAI(
+        api_key=require_api_key(settings).get_secret_value(),
+        base_url=OPENROUTER_BASE_URL,
+        default_headers={"X-Title": APP_TITLE},
+        max_retries=MAX_RETRIES,
+        timeout=TIMEOUT_SECONDS,
+        http_client=httpx.AsyncClient(
+            timeout=TIMEOUT_SECONDS, event_hooks={"response": [usage_hook(on_usage)]}
+        ),
+    )
+    llm = llm_factory(
+        settings.ragas_model,
+        client=client,
+        max_tokens=MAX_OUTPUT_TOKENS,
+        extra_body=routing_body(settings.ragas_provider),
+    )
+    return RagasModel(
+        llm=llm, client=client, model=settings.ragas_model, provider=settings.ragas_provider
+    )
+
+
+def ragas_chat_model(*, max_tokens: int, settings: Settings | None = None) -> ChatOpenRouter:
+    """`chat_model("ragas")` pinned to `RAGAS_PROVIDER` with fallbacks off.
+
+    Raises `LLMConfigError` when the OpenRouter API key is not set.
+    """
+    settings = settings or get_settings()
+    return chat_model(
+        "ragas",
+        provider_order=[settings.ragas_provider],
+        allow_fallbacks=False,
+        max_tokens=max_tokens,
+        settings=settings,
+    )
+
+
+def usage_hook(on_usage: UsageCallback) -> Callable[[httpx.Response], Awaitable[None]]:
+    """An httpx response hook that reports each successful reply's `usage` to `on_usage`."""
+
+    async def report(response: httpx.Response) -> None:
+        if response.is_error:
+            return
+        await response.aread()
+        on_usage(*reply_usage(response.content))
+
+    return report
+
+
+def reply_usage(body: bytes) -> tuple[float | None, int]:
+    """A chat completion body's cost (None when absent) and total tokens (0 when absent)."""
+    try:
+        data = json.loads(body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None, 0
+    usage = data.get("usage") if isinstance(data, dict) else None
+    if not isinstance(usage, dict):
+        return None, 0
+    cost = usage.get("cost")
+    tokens = usage.get("total_tokens")
+    return (
+        float(cost) if isinstance(cost, int | float) else None,
+        tokens if isinstance(tokens, int) else 0,
+    )
