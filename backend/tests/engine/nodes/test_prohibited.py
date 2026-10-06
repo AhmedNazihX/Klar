@@ -73,6 +73,7 @@ from aiact.schemas import (
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
 from tests.engine.nodes.corpus_recording import (
+    PENDING_RERECORD,
     RecordedGuidelineLibrary,
     corpus_recording,
 )
@@ -832,6 +833,24 @@ def test_the_prompt_puts_instructions_and_art_5_first_and_the_description_last()
     assert human.endswith(f"Description:\n{TOOL}")
 
 
+def test_the_prompt_raises_social_scoring_only_on_a_sign_of_it() -> None:
+    """Point (c) needs a score with effects beyond the purpose and setting of its data, or
+    treatment out of proportion (guidelines, paragraphs 163-164, 175-177): a purpose-bound
+    evaluation alone is answered "no" and left to the high-risk check (E10, user 2026-10-06)."""
+    section = node.PROHIBITED_INSTRUCTIONS.split("## social_scoring")[1].split("\n## ")[0]
+    flat = " ".join(section.split())
+    for phrase in (
+        "paragraphs 163-164 and 175-177",
+        "is not by itself social scoring",
+        "the high-risk check deals with them",
+        '"no" (evidence "inferred") unless the description gives some sign',
+        "outside the purpose and setting its data comes from",
+        "treatment out of proportion to the behaviour it rests on",
+        '"unknown" only when the description gives such a sign',
+    ):
+        assert phrase in flat, phrase
+
+
 def test_the_prompt_leaves_dates_to_the_application() -> None:
     """The model never sees `as_of`, so the prefix stays the same for every date."""
     early = node.prohibited_messages(state(as_of=BEFORE_DECEMBER), _retrieved())
@@ -1165,6 +1184,7 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
     B5C_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="no B5c cases"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
+@PENDING_RERECORD
 def test_b5c_case_replay(
     case: BenchmarkCase,
     luna_settings: Settings,

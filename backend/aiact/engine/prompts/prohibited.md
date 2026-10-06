@@ -95,6 +95,16 @@ not ask for a fact the description already gives.
   "social_scoring", "i" (`unrelated_context_treatment`) or "ii" (`disproportionate_treatment`);
   "none" when the point is settled. Point (c) is met when (i) or (ii) is, so answer each of them
   on its own.
+- When to raise point (c): it is about scores that follow people beyond the purpose and setting
+  their data comes from, or whose consequences outweigh what they rest on (guidelines, paragraphs
+  163-164 and 175-177). An evaluation made for one specific purpose, from data that belongs to
+  that purpose, whose result is used only for that purpose, is not by itself social scoring: the
+  guidelines keep such purpose-bound evaluations outside point (c), and where they matter the
+  high-risk check deals with them. So answer `social_scoring`, `unrelated_context_treatment` and
+  `disproportionate_treatment` "no" (evidence "inferred") unless the description gives some sign
+  of a score used, or having effects, outside the purpose and setting its data comes from, or of
+  treatment out of proportion to the behaviour it rests on. Answer one of them "unknown" only
+  when the description gives such a sign but leaves open what follows from it.
 
 ## crime_risk: point (d)
 
