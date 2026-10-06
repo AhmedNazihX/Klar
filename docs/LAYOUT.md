@@ -89,6 +89,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
+│   │   │                            P8a: models.py (DraftDocument, sections with their provenance, status),
+│   │   │                            templates.py (the deployer documents, EN and DE), prefill.py (sections
+│   │   │                            from the result), deployer.py (draft_deployer_documents), checks.py
+│   │   │                            (the three automatic checks, reused by P28's vendor letters)
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app, SSE (P1)
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
