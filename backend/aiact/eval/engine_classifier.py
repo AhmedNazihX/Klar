@@ -1,0 +1,68 @@
+"""The staged engine as the benchmark runner's `engine` classifier (E10, over V1's `Classifier`).
+
+Each case runs `run_classification` on the case's own date (`ClassifierInput.as_of`, B5c), or the
+run's date when it has none, on the amended text, with the case's exclusions. It reports the
+run's cost, tokens and LangSmith trace id. A run that fails after spending raises
+`ClassifierFailedError(cost_usd, tokens, cause)`, so the runner's cost cap and totals count it.
+Held-out examples stay hidden: the gap run's opt-in is V8's to pass through.
+"""
+
+from datetime import date
+
+from aiact.engine import ClassificationFailedError, ClassifyRequest, run_classification
+from aiact.engine.classify import NodeBuilder, engine_nodes
+from aiact.eval.runner import (
+    Classification,
+    ClassifierFailedError,
+    ClassifierInfo,
+    ClassifierInput,
+)
+from aiact.llm.routing import require_setting
+from aiact.schemas import LawVersion
+from aiact.settings import Settings, get_settings
+
+
+class EngineClassifier:
+    """`classify_system`'s pipeline for `aiact evaluate run --classifier engine`. Thread-safe:
+    every case builds its own nodes and meter."""
+
+    def __init__(
+        self, settings: Settings | None = None, build_nodes: NodeBuilder = engine_nodes
+    ) -> None:
+        """`build_nodes` replaces the engine's nodes (tests). Raises `LLMConfigError` when
+        `ENGINE_MODEL`, `ENGINE_PROVIDER`, `EMBEDDING_MODEL` or `EMBEDDING_PROVIDER` is not set."""
+        self._settings = settings or get_settings()
+        self._build_nodes = build_nodes
+        s = self._settings
+        self.info = ClassifierInfo(
+            model=require_setting(s.engine_model, "ENGINE_MODEL"),
+            provider=require_setting(s.engine_provider, "ENGINE_PROVIDER"),
+            embedding={
+                "model": require_setting(s.embedding_model, "EMBEDDING_MODEL"),
+                "provider": require_setting(s.embedding_provider, "EMBEDDING_PROVIDER"),
+                "dimensions": s.embedding_dimensions,
+            },
+            retrieval={"search": "hybrid_rrf", "max_distance": None},
+        )
+
+    def classify(self, request: ClassifierInput) -> Classification:
+        engine_request = ClassifyRequest(
+            description=request.description,
+            language=request.language,
+            law_version=LawVersion.AMENDED,
+            as_of=request.as_of or date.today(),
+            exclude_source_example_ids=request.exclude_source_example_ids,
+        )
+        try:
+            run = run_classification(
+                engine_request, settings=self._settings, build_nodes=self._build_nodes
+            )
+        except ClassificationFailedError as exc:
+            usage = exc.usage
+            if usage.cost_usd > 0 or usage.tokens > 0:
+                raise ClassifierFailedError(usage.cost_usd, usage.tokens, exc) from exc
+            raise
+        usage = run.usage
+        return Classification(
+            result=run.result, cost_usd=usage.cost_usd, tokens=usage.tokens, trace_id=run.trace_id
+        )

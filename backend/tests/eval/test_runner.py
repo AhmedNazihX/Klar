@@ -15,7 +15,7 @@ from pydantic import JsonValue
 from typer.testing import CliRunner, Result
 
 from aiact.cli import app
-from aiact.eval import citation_index, records, runner
+from aiact.eval import citation_index, engine_classifier, records, runner
 from aiact.eval import split as split_module
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.runner import (
@@ -35,6 +35,7 @@ from aiact.eval.runner import (
 )
 from aiact.eval.split import Split, SplitError, SplitMode
 from aiact.schemas import ClassificationResult, Language, RiskClass
+from aiact.settings import Settings
 
 GIT_SHA = "0" * 40
 
@@ -317,8 +318,12 @@ def test_options_reject_bad_values(changes: dict[str, object]) -> None:
 cli = CliRunner()
 
 
-def test_cli_rejects_an_unknown_or_unbuilt_classifier() -> None:
-    for name, message in (("nope", "unknown classifier"), ("engine", "E10")):
+def test_cli_rejects_an_unknown_or_unconfigured_classifier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    unconfigured = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+    monkeypatch.setattr(engine_classifier, "get_settings", lambda: unconfigured)
+    for name, message in (("nope", "unknown classifier"), ("engine", "ENGINE_MODEL")):
         result = cli.invoke(app, ["evaluate", "run", "--set", "own", "--classifier", name])
         assert result.exit_code == 2, name
         assert message in result.stderr

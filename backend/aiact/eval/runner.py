@@ -166,10 +166,6 @@ class DummyClassifier:
         return Classification(result=result)
 
 
-def _engine_classifier() -> Classifier:
-    raise ClassifierUnavailableError("the engine classifier is wired in once E10 is merged")
-
-
 def _configured(build: Callable[[], Classifier]) -> Classifier:
     """Build a model-backed classifier; a missing setting makes it unavailable."""
     from aiact.llm import LLMConfigError
@@ -180,7 +176,13 @@ def _configured(build: Callable[[], Classifier]) -> Classifier:
         raise ClassifierUnavailableError(str(exc)) from exc
 
 
-# The baselines are imported on first use: `aiact.eval.baselines` imports this module.
+# The engine and the baselines are imported on first use: their modules import this one.
+def _engine_classifier() -> Classifier:
+    from aiact.eval.engine_classifier import EngineClassifier
+
+    return _configured(EngineClassifier)
+
+
 def _baseline_luna() -> Classifier:
     from aiact.eval.baselines import LunaBaseline
 
