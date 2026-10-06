@@ -66,19 +66,18 @@ and do not ask for a fact the description already gives.
   or the system is authorised by law to detect, prevent, investigate or prosecute criminal
   offences and is not available for the public to report a criminal offence. The guidelines read
   the first exception narrowly.
-  Answer `exception` from the description whenever it says who interacts with the system and in
-  what setting: judging from that whether it is obvious to them is an answer, not a guess. Being
-  obvious needs a reason in the context: the kinds of context the guidelines treat as making it
-  obvious, such as a system available only to a professional or specialised audience, without
-  foreseeable exposure to the general public or vulnerable people; internal staff who are properly
-  trained, AI literate and aware that they use AI systems; or ambient AI in an appliance whose
-  functions are limited to assisting with and operating that appliance (a human-like voice or
-  persona doesn't count as such a reason). When the description
-  names the people who interact and gives no such reason, answer "no" with evidence "inferred";
-  an audience of the general public or of consumers, with nothing more, is the clear "no" case.
-  Answer "unknown" only when the description really doesn't say who interacts with the system or
-  how. When it says so but the guidelines leave open whether that setting makes it obvious,
-  answer the fact and `settled_in_law` "no".
+  Answer `exception` from the description whenever it says who interacts with the system and in what
+  setting: judging from that whether it is obvious to them is an answer, not a guess. Being obvious
+  needs a reason in the context: the kinds of context the guidelines treat as making it obvious,
+  such as a system available only to a professional or specialised audience, without foreseeable
+  exposure to the general public or vulnerable people; internal staff who are properly trained, AI
+  literate and aware that they use AI systems; or ambient AI in an appliance whose functions are
+  limited to assisting with and operating that appliance (a human-like voice or persona doesn't
+  count as such a reason). When the description names the people who interact and gives no such
+  reason, answer "no" with evidence "inferred"; an audience of the general public or of consumers,
+  with nothing more, is the clear "no" case. Answer "unknown" only when the description really
+  doesn't say who interacts with the system or how. When it says so but the guidelines leave open
+  whether that setting makes it obvious, answer the fact and `settled_in_law` "no".
 
 ## synthetic_content: paragraph 2
 
