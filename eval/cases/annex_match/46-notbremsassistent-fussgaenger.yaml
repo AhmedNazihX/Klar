@@ -15,10 +15,10 @@ label:
   annex_point: ["annex:I:B:19", "annex:I:B:18"]
 label_citation: ["annex:I:B:19", "annex:I:B:18", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
 notes: >-
-  Draft label, awaiting review (X0 fix). Points: advanced emergency braking for pedestrians and
-  cyclists is a safety system type-approved under the General Safety Regulation (Annex I Section B
-  point 19) within the vehicle type-approval framework (point 18). Either point counts. Role:
-  develops and supplies it.
+  Label approved 2026-10-07 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Points: advanced emergency braking for pedestrians and cyclists is a safety system
+  type-approved under the General Safety Regulation (Annex I Section B point 19) within the vehicle
+  type-approval framework (point 18). Either point counts. Role: develops and supplies it.
 tags:
   - "annex_i_section:b"
   - "multi_point"

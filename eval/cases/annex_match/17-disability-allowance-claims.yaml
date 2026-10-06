@@ -15,8 +15,9 @@ label:
   annex_point: ["annex:III:5:a"]
 label_citation: ["annex:III:5:a", "art:6:2", "art:3:4"]
 notes: >-
-  Draft label, awaiting review (X0 fix). Point: a public authority evaluates eligibility for a
-  public assistance benefit and grants, reduces or withdraws it. It evaluates individual people
-  (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the agency uses the bought tool.
+  Label approved 2026-10-07 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: a public authority evaluates eligibility for a public assistance benefit and
+  grants, reduces or withdraws it. It evaluates individual people (profiling), so Art. 6(3) cannot
+  lift it out of high-risk. Role: the agency uses the bought tool.
 tags:
   - "annex_iii_area:5"

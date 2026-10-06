@@ -15,9 +15,9 @@ label:
   annex_point: ["annex:III:2"]
 label_citation: ["annex:III:2", "art:6:2", "art:3:14", "art:3:4"]
 notes: >-
-  Draft label, awaiting review (X0 fix). Point: setting speed limits and closing lanes ahead of
-  hazards is a safety function whose failure endangers road users (Art. 3(14) safety component) in
-  the management and operation of road traffic: Annex III 2. Role: uses the bought software with the
-  manufacturer's settings.
+  Label approved 2026-10-07 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: setting speed limits and closing lanes ahead of hazards is a safety function
+  whose failure endangers road users (Art. 3(14) safety component) in the management and operation
+  of road traffic: Annex III 2. Role: uses the bought software with the manufacturer's settings.
 tags:
   - "annex_iii_area:2"

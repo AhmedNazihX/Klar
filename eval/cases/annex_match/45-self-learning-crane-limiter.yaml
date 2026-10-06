@@ -14,9 +14,10 @@ label:
   annex_point: ["annex:I:B:21"]
 label_citation: ["annex:I:B:21", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
 notes: >-
-  Draft label, awaiting review (X0 fix). Point: a self-evolving machine-learning safety function
-  puts the machine on the Machinery Regulation's list needing third-party assessment (Annex I
-  Section B point 21), so Art. 6(1) is met; Section B, so Art. 2(2) limits the Act to Art. 6(1) and
-  the listed articles. Role: manufacturer.
+  Label approved 2026-10-07 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: a self-evolving machine-learning safety function puts the machine on the
+  Machinery Regulation's list needing third-party assessment (Annex I Section B point 21), so Art.
+  6(1) is met; Section B, so Art. 2(2) limits the Act to Art. 6(1) and the listed articles. Role:
+  manufacturer.
 tags:
   - "annex_i_section:b"

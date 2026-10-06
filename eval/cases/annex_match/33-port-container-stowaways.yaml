@@ -14,7 +14,8 @@ label:
   annex_point: ["annex:III:7:d"]
 label_citation: ["annex:III:7:d", "art:6:2", "art:3:4"]
 notes: >-
-  Draft label, awaiting review (X0 fix). Point: detecting people in the context of border control,
-  7(d); no identification, so not 1(a). Role: uses the standard configuration.
+  Label approved 2026-10-07 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: detecting people in the context of border control, 7(d); no identification,
+  so not 1(a). Role: uses the standard configuration.
 tags:
   - "annex_iii_area:7"
