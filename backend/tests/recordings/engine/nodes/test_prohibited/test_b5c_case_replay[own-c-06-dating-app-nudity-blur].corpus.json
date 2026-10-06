@@ -10,13 +10,13 @@
    "language": "de",
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:71",
-   "score": 0.0195422535211268,
-   "similarity": 0.54835608889795,
+   "score": 0.019700481369228,
+   "similarity": 0.548332501798794,
    "status": "final",
    "text": "(71) In diesem Zusammenhang sollte das Zusammenspiel zwischen dem Verbot nach Artikel 5 Absatz 1 Buchstabe a der KI-Verordnung und den Pflichten des Betreibers nach Artikel 50 Absatz 4 der KI-Verordnung, Deepfakes und bestimmte KI-generierte Textveröffentlichungen zu Angelegenheiten öffentlichen Interesses zu kennzeichnen 60 , sowie der Pflicht des Anbieters zur Sicherstellung, dass mit Menschen interagierende KI-Systeme so konzipiert sind, dass sie Menschen darüber informieren, dass sie mit KI, und nicht mit einem Menschen 61 , interagieren, geklärt werden. Eine solche sichtbare Offenlegung stellt eine Risikominderungsmaßnahme dar, die auch durch Gestaltungsmerkmale ermöglicht werden sollte, die in das vom Anbieter bereitgestellte KI-System eingebettet sind; hierzu zählen auch technische Maßnahmen, die die Erkennung KI-generierter und manipulierter Inhalte ermöglichen 62 . Die sichtbare Kennzeichnung von \"Deepfakes\" und Chatbots verringert das Risiko der Täuschung, das entstehen kann, sobald die KI-generierten Inhalte in der Öffentlichkeit verbreitet werden; ferner verringert sie das Risiko schädlicher Verzerrungseffekte auf die Meinungs- und Überzeugungsbildung sowie das Verhalten des Einzelnen.",
    "valid_from": "2025-02-04",
    "valid_to": null,
-   "vector_rank": 20
+   "vector_rank": 19
   },
   {
    "doc_key": "guide-prohibited",
@@ -29,7 +29,7 @@
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:7",
    "score": 0.0192391462175113,
-   "similarity": 0.560685873031616,
+   "similarity": 0.560345189581668,
    "status": "final",
    "text": "(7) Die Anwendung von Artikel 5 der KI-Verordnung erfordert eine Einzelfallprüfung, bei der die konkrete Situation in jedem einzelnen Fall gebührend berücksichtigt wird. Daher haben die in diesen Leitlinien aufgeführten Beispiele lediglich Hinweischarakter und lassen die Notwendigkeit einer solchen Einzelfallprüfung unberührt.",
    "valid_from": "2025-02-04",
@@ -47,7 +47,7 @@
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:16",
    "score": 0.0182457862870234,
-   "similarity": 0.537901140076134,
+   "similarity": 0.537361435935803,
    "status": "final",
    "text": "(16) Nach Artikel 3 Nummer 3 der KI-Verordnung sind Anbieter natürliche oder juristische Personen, Behörden, Einrichtungen oder sonstige Stellen, die ein KI-System entwickeln oder entwickeln lassen und unter ihrem eigenen Namen oder ihrer Handelsmarke in der Union in Verkehr bringen bzw. unter ihrem eigenen Namen oder ihrer Handelsmarke in Betrieb nehmen 11 (siehe Abschnitt 2.3). Anbieter, die außerhalb der Union niedergelassen oder ansässig sind, unterliegen den Bestimmungen der KI-Verordnung, wenn sie solche Systeme in der Union in Verkehr bringen oder in Betrieb nehmen 12 oder wenn die vom KI-System hervorgebrachte Ausgabe in der Union verwendet wird 13 . Die Anbieter müssen sicherstellen, dass ihre KI-Systeme alle einschlägigen Anforderungen erfüllen, bevor sie sie in Verkehr bringen oder in Betrieb nehmen.\n\n8 Siehe Artikel 3 Nummern 12 und 13 der KI-Verordnung.\n\n9 Zu den Definitionen dieser Begriffe siehe auch die Bekanntmachung der Kommission - Leitfaden für die Umsetzung der Produktvorschriften der EU 2022 (\"Blue Guide\"), 2022/C 247/01, Abschnitt 2.8.\n\n10 Erwägungsgrund 28 der KI-Verordnung.\n\n11 Artikel 3 Nummern 3, 9 und 11 der KI-Verordnung. In Bezug auf KI-Systeme mit hohem Risiko sieht Artikel 25 der KI-Verordnung Folgendes vor: 1. In den folgenden Fällen gelten Händler, Einführer, Betreiber oder sonstige Dritte als Anbieter eines HochrisikoKI-Systems für die Zwecke dieser Verordnung und unterliegen den Anbieterpflichten gemäß Artikel 16: a) wenn sie ein bereits in Verkehr gebrachtes oder in Betrieb genommenes Hochrisiko-KI-System mit ihrem Namen oder ihrer Handelsmarke versehen, unbeschadet vertraglicher Vereinbarungen, die eine andere Aufteilung der Pflichten vorsehen; b) wenn sie eine wesentliche Veränderung eines Hochrisiko-KI-Systems, das bereits in Verkehr gebracht oder in Betrieb genommen wurde, so vornehmen, dass es weiterhin ein Hochrisiko-KI-System gemäß Artikel 6 bleibt; c) wenn sie die Zweckbestimmung eines KI-Systems, einschließlich eines KI-Systems mit allgemeinem Verwendungszweck, das nicht als hochriskant eingestuft wurde und bereits in Verkehr gebracht oder in Betrieb genommen wurde, so verändern, dass das betreffende KI-System zu einem Hochrisiko-KI-System im Sinne von Artikel 6 wird.\n\n12 Artikel 2 Absatz 1 Buchstabe a der KI-Verordnung.\n\nZum Beispiel ist ein Anbieter eines RBI-Systems der Hersteller des Systems, der das System in der Union unter seiner Marke vermarktet. Der Anbieter eines solchen Systems könnte auch eine Behörde sein, die das System intern entwickelt und für ihren eigenen Gebrauch in Betrieb nimmt.",
    "valid_from": "2025-02-04",
@@ -64,13 +64,13 @@
    "language": "de",
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:73",
-   "score": 0.0172388280556378,
-   "similarity": 0.531421482563019,
+   "score": 0.0171554252199413,
+   "similarity": 0.531127766702407,
    "status": "final",
    "text": "(73) Wie bei absichtlich manipulativen Techniken kann sich das Verbot täuschender Techniken auch auf KI-Systeme erstrecken, die Einzelpersonen täuschen, ohne dass ein Mensch dies beabsichtigt (siehe Abschnitt 3.2.1 Buchstabe b)). So können KI-Systeme unabhängig davon, ob ihre Anbieter ein solches Ergebnis beabsichtigen, einfach deshalb täuschende Techniken erlernen, weil dies ihre Leistung für die Aufgabe, für die sie entwickelt wurden, z. B. durch verstärktes Lernen, steigert 64 .\n\n60 Artikel 50 Absatz 4 der KI-Verordnung.\n\n61 Artikel 50 Absatz 1 der KI-Verordnung.\n\n62 Artikel 50 Absatz 2 der KI-Verordnung.\n\n63 Die Transparenzpflichten nach Artikel 50 der KI-Verordnung zielen zwar grundsätzlich darauf ab, die manipulativen Auswirkungen von Deepfakes und Chatbots zu minimieren, doch kann es Fälle und Kontexte geben, in denen diese täuschenden Techniken trotz der Hinweise immer noch erhebliche Auswirkungen auf Einzelpersonen haben und ihr Verhalten so beeinflussen können, dass die individuelle Autonomie und die sachkundige Entscheidungsfindung untergraben werden; daher sollten sie nicht für Desinformationsund Manipulationszwecke missbraucht werden und könnten in einigen Fällen weiterhin unter das Verbot nach Artikel 5 Absatz 1 Buchstabe a fallen, wenn alle anderen Bedingungen des Verbots (einschließlich der Bedingung erheblicher Schäden) erfüllt sind.\n\n64 F. Ward, F. Toni, F. Belardinelli, T. Everitt, Honesty Is the Best Policy: Defining and Mitigating AI Deception (neurips.cc); Advances in Neural Information Processing Systems 36 (NeurIPS 2023); P. Park. et al. AI deception: A survey of examples, risks, and potential solutions [2406.10162] Patterns, Band 5, Ausgabe 5, 100988.\n\nEin Beispiel für täuschende Techniken, die von KI eingesetzt werden können, ist ein KI-Chatbot, der sich mittels synthetischer Stimme als ein Freund einer Person oder ein Verwandter ausgibt und versucht vorzutäuschen, dass er diese Person ist, und dabei Online-Betrug und erhebliche Schäden verursacht.\n\nEin weiteres Beispiel ist ein KI-System, das zu erkennen lernt, wann es bewertet wird, und unerwünschtes Verhalten vorübergehend einstellt, um dieses Verhalten wieder aufzunehmen, sobald der Bewertungszeitraum vorbei ist 65 . Ein solches täuschendes Verhalten ist besonders gefährlich, da es sich jeder externen menschlichen Aufsicht über das System entzieht; es kann verboten werden, wenn die Wahrscheinlichkeit besteht, dass es erhebliche Schäden verursacht.\n\nDemgegenüber kann bei einem generativen KI-System, das zufällig falsche oder irreführende Informationen präsentiert und \"halluziniert\" 66 , in Anbetracht der Einschränkungen und des Stands der Technik generativer KI nicht davon ausgegangen werden, dass sie täuschende Techniken im Sinne von Artikel 5 Absatz 1 Buchstabe a der KI-Verordnung einsetzt. Dies kann insbesondere dann der Fall sein, wenn der Anbieter des Systems die Nutzer ordnungsgemäß über die Beschränkungen des Systems informiert und geeignete Schutzmechanismen in das System integriert hat, um Ergebnisse dieser Art auf ein Minimum zu beschränken, und sofern das System weder für sensible Kontexte bestimmt ist noch eingesetzt wird (z. B. Gesundheit, Bildung, Wahlen), in denen mit schwerwiegenden schädlichen Folgen zu rechnen ist (siehe auch die Erwägungen in Abschnitt 3.2.3 Buchstabe c).",
    "valid_from": "2025-02-04",
    "valid_to": null,
-   "vector_rank": 49
+   "vector_rank": 50
   },
   {
    "doc_key": "guide-prohibited",
@@ -83,7 +83,7 @@
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:72",
    "score": 0.0169191919191919,
-   "similarity": 0.5428490800514549,
+   "similarity": 0.542865964345095,
    "status": "final",
    "text": "(72) Demgegenüber hat das Verbot in Artikel 5 Absatz 1 Buchstabe a der KI-Verordnung einen viel engeren Anwendungsbereich. Es kann sich beispielsweise auf Fälle erstrecken, in denen ein Chatbot oder ein täuschender KI-generierter Inhalt falsche oder irreführende Informationen mit dem Ziel oder der Wirkung präsentiert, Einzelpersonen zu täuschen und ihr Verhalten in einer Weise zu verändern, die nicht eingetreten wäre, wenn die Personen nicht der Interaktion mit dem KI-System oder dem täuschenden KIgenerierten Inhalt ausgesetzt gewesen wären, insbesondere dann, wenn dies nicht sichtbar offengelegt wurde 63 .",
    "valid_from": "2025-02-04",
@@ -100,13 +100,13 @@
    "language": "de",
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:82",
-   "score": 0.0165906788247214,
-   "similarity": 0.5414603240603519,
+   "score": 0.016705069124424,
+   "similarity": 0.54118341698449,
    "status": "final",
    "text": "(82) Artikel 5 Absatz 1 Buchstabe a der KI-Verordnung gilt für KI-Systeme, die die oben genannten Techniken einsetzen und als erstes Szenario das Ziel haben, \"das Verhalten einer Person oder einer Gruppe von Personen wesentlich zu verändern\". Ein solches Ziel kann vom Anbieter oder Betreiber des KI-Systems oder vom System selbst im Rahmen der impliziten Ziele, die es verfolgen kann, verfolgt werden 73 . Dieses Ziel sollte von der \"Zweckbestimmung\" des KI-Systems unterschieden werden (Artikel 3 Nummer 12 der KI-Verordnung). Selbst wenn dies vom Anbieter beabsichtigt ist, ist das manipulative Ziel in den meisten Fällen nicht der Verwendungszweck, für den das System angeboten wird, und es ist häufig weder transparent noch wird es als solches in den vom Anbieter bereitgestellten Informationen (z. B. in der Betriebsanleitung, in Werbe- oder Verkaufsmaterialien und Erklärungen sowie in der technischen Dokumentation) angegeben.\n\nBeispielsweise ist ein Chatbot, der in verschiedenen Kontexten verwendet werden kann, so konzipiert, dass unterschwellige Messaging-Techniken wie das Aufblitzen kurzer visueller Hinweise und die Einbettung nicht hörbarer akustischer Signale eingesetzt oder emotionale Abhängigkeiten oder besondere Vulnerabilitäten von Nutzern in der Werbung ausgenutzt werden. Da sie objektiv ein Gestaltungsmerkmal sind, das darauf abzielt, die Kaufentscheidungen der Verbraucher ohne ihre bewusste Wahrnehmung zu beeinflussen, um die Menschen zu in erheblichem Umfang schädlichen finanziellen Entscheidungen zu bewegen, werden diese Techniken \"mit dem Ziel\" eingesetzt, das Verhalten der Nutzer wesentlich zu verändern.\n\nDer Einsatz von KI-Systemen zu dem Zweck, eine andere Person zu personifizieren, könnte auch als Einsatz eines KI-Systems \"mit dem Ziel\" betrachtet werden, Personen zu täuschen und ihr Verhalten wesentlich zu verändern, wenn die Person effektiv getäuscht wird und dadurch ihre Fähigkeit, fundierte Entscheidungen über die Identität der Person zu treffen, erheblich beeinträchtigt wird.\n\n73 Siehe Artikel 3 Nummer 1 der KI-Verordnung, wonach das KI-System bei der Wahrnehmung seiner Funktionen implizite oder explizite Ziele verfolgen kann, zu denen auch implizite manipulative oder täuschende Ziele gehören können, auch wenn das System nicht ausdrücklich auf diese Weise programmiert wurde.\n\nWerden in beiden Beispielen die anderen Bedingungen in Artikel 5 Absatz 1 Buchstabe a der KI-Verordnung, insbesondere in Bezug auf den erheblichen Schaden, erfüllt, fallen die betreffenden Systeme wahrscheinlich in den Anwendungsbereich des Verbots, wobei dies jedoch eine Einzelfallprüfung erfordert.",
    "valid_from": "2025-02-04",
    "valid_to": null,
-   "vector_rank": 34
+   "vector_rank": 33
   }
  ],
  "{\"as_of\": \"2027-01-10\", \"exclude_source_example_ids\": [], \"language\": \"de\", \"law_version\": \"amended\", \"lookup\": \"art:113:a\"}": {

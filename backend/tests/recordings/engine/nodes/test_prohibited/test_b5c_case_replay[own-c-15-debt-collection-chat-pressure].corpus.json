@@ -138,35 +138,5 @@
   "text": "das Inverkehrbringen, die Inbetriebnahme oder die Verwendung eines KI-Systems, das Techniken der unterschwelligen Beeinflussung außerhalb des Bewusstseins einer Person oder absichtlich manipulative oder täuschende Techniken mit dem Ziel oder der Wirkung einsetzt, das Verhalten einer Person oder einer Gruppe von Personen wesentlich zu verändern, indem ihre Fähigkeit, eine fundierte Entscheidung zu treffen, deutlich beeinträchtigt wird, wodurch sie veranlasst wird, eine Entscheidung zu treffen, die sie andernfalls nicht getroffen hätte, und zwar in einer Weise, die dieser Person, einer anderen Person oder einer Gruppe von Personen erheblichen Schaden zufügt oder mit hinreichender Wahrscheinlichkeit zufügen wird.",
   "valid_from": "2026-07-27",
   "valid_to": null
- },
- "{\"as_of\": \"2026-09-30\", \"exclude_source_example_ids\": [], \"language\": \"de\", \"law_version\": \"amended\", \"lookup\": \"art:5:1:c\"}": {
-  "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
-  "doc_key": "ai-act-consolidated",
-  "doc_type": "law",
-  "document_title": "AI Act, consolidated text as of 27 July 2026",
-  "english_only": false,
-  "heading": "Artikel 5 — Verbotene Praktiken im KI-Bereich",
-  "language": "de",
-  "law_version": "amended",
-  "provision_id": "art:5:1:c",
-  "status": "consolidated",
-  "text": "das Inverkehrbringen, die Inbetriebnahme oder die Verwendung von KI-Systemen zur Bewertung oder Einstufung von natürlichen Personen oder Gruppen von Personen über einen bestimmten Zeitraum auf der Grundlage ihres sozialen Verhaltens oder bekannter, abgeleiteter oder vorhergesagter persönlicher Eigenschaften oder Persönlichkeitsmerkmale, wobei die soziale Bewertung zu einem oder beiden der folgenden Ergebnisse führt:\ni) Schlechterstellung oder Benachteiligung bestimmter natürlicher Personen oder Gruppen von Personen in sozialen Zusammenhängen, die in keinem Zusammenhang zu den Umständen stehen, unter denen die Daten ursprünglich erzeugt oder erhoben wurden;\nii) Schlechterstellung oder Benachteiligung bestimmter natürlicher Personen oder Gruppen von Personen in einer Weise, die im Hinblick auf ihr soziales Verhalten oder dessen Tragweite ungerechtfertigt oder unverhältnismäßig ist;",
-  "valid_from": "2026-07-27",
-  "valid_to": null
- },
- "{\"as_of\": \"2026-09-30\", \"exclude_source_example_ids\": [], \"language\": \"de\", \"law_version\": \"amended\", \"lookup\": \"art:5:1:c:ii\"}": {
-  "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
-  "doc_key": "ai-act-consolidated",
-  "doc_type": "law",
-  "document_title": "AI Act, consolidated text as of 27 July 2026",
-  "english_only": false,
-  "heading": "Artikel 5 — Verbotene Praktiken im KI-Bereich",
-  "language": "de",
-  "law_version": "amended",
-  "provision_id": "art:5:1:c:ii",
-  "status": "consolidated",
-  "text": "Schlechterstellung oder Benachteiligung bestimmter natürlicher Personen oder Gruppen von Personen in einer Weise, die im Hinblick auf ihr soziales Verhalten oder dessen Tragweite ungerechtfertigt oder unverhältnismäßig ist;",
-  "valid_from": "2026-07-27",
-  "valid_to": null
  }
 }
