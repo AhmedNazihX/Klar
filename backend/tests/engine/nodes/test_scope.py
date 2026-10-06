@@ -474,6 +474,47 @@ def test_the_node_reads_art_3_1_and_art_2_and_passes_the_exclusions_through() ->
     assert {lookup.as_of for lookup in library.lookups} == {AS_OF}
 
 
+REFUSAL_TEXT = "I'm sorry, but I cannot assist with that request."
+
+
+def _filtered_check(content: str = REFUSAL_TEXT) -> ScopeCheck:
+    """The node over a reply the provider's content filter stopped (decision 029)."""
+    reply = AIMessage(content=content, response_metadata={"finish_reason": "content_filter"})
+    chat = GenericFakeChatModel(messages=iter([reply]))
+    return ScopeCheck(_settings(), chat=chat, library=FakeLibrary())
+
+
+def test_a_provider_refusal_assumes_in_scope_for_a_person_to_review() -> None:
+    outcome = _filtered_check()(state())
+    step = outcome.step
+    assert outcome.matched is False  # in scope, the stricter reading: the run goes on
+    assert step.status is Status.NEEDS_MORE_INFORMATION
+    assert step.error == "provider_refusal"
+    assert step.missing_fact is not None
+    assert step.missing_fact.id == "scope_person_review"
+    assert outcome.follow_up_questions == (step.missing_fact,)
+    assert [c.provision_id for c in step.citations] == ["art:3:1", "art:2"]
+    assert step.decision.startswith("The model provider's content filter blocked")
+
+
+def test_a_refused_scope_step_keeps_the_run_going() -> None:
+    final = _run(_filtered_check()(state()))
+    assert tuple(s.step for s in final["steps"]) == STEP_ORDER
+    assert final["result"].not_assessed == (StepName.SCOPE,)
+
+
+def test_a_scope_refusal_is_reported_in_german() -> None:
+    outcome = _filtered_check()(state(language=Language.DE))
+    assert outcome.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
+    assert outcome.step.missing_fact is not None
+    assert outcome.step.missing_fact.text.startswith("Bitte lassen Sie")
+
+
+def test_a_filtered_scope_reply_with_a_usable_answer_is_used() -> None:
+    outcome = _filtered_check(scope_answer().model_dump_json())(state())
+    assert (outcome.step.status, outcome.step.error) == (Status.DECIDED, None)
+
+
 def test_the_original_text_is_read_without_a_date() -> None:
     library = FakeLibrary()
     _fake_check(scope_answer().model_dump_json(), library)(state(law_version=LawVersion.ORIGINAL))

@@ -18,6 +18,8 @@ the Act's rules are applied here, in code:
 - **Uncertain facts:** a deciding fact left open makes the step `needs_more_information`, a
   question the law leaves open makes it `legally_ambiguous`; either way the stricter reading
   (high-risk) is the labelled working assumption, and the step asks the deciding question.
+- **A provider refusal** (decision 029): not assessed; high-risk on the Annex III route, whose
+  duties apply first, is assumed until a person reviews the description.
 
 Every citation is fetched through `get_provision`, or is a retrieved guideline passage.
 """
@@ -55,9 +57,12 @@ from aiact.engine.nodes.high_risk_texts import (
     DECIDES_ADMISSION,
     JUDICIAL_USE,
     OPEN_FALLBACK,
+    PERSON_REVIEW,
     PROFILING,
     PUBLIC_AUTHORITY_USER,
     PUBLIC_SCHEME,
+    REFUSAL,
+    REFUSAL_CITATIONS,
     ROUTE_NAMES,
     TEXTS,
     point_name,
@@ -66,10 +71,16 @@ from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model
-from aiact.llm.structured import describe_validation_error, json_schema_format
+from aiact.llm.structured import (
+    ProviderRefusalError,
+    describe_validation_error,
+    json_schema_format,
+    parse_reply,
+)
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
+    PROVIDER_REFUSAL,
     EvidenceTag,
     Fact,
     FollowUpQuestion,
@@ -605,6 +616,28 @@ def to_outcome(
     )
 
 
+def refusal_outcome(state: EngineState, library: HighRiskLibrary) -> CheckOutcome:
+    """The step for a reply the provider's content filter refused (decision 029): not assessed,
+    high-risk on the Annex III route (its duties apply first) assumed until a person reviews it,
+    with no Annex point, citing Art. 6(1) and 6(2) as fetched from `library`. The review
+    question is a missing fact."""
+    language, lookup = state["language"], lookup_for(state)
+    review = _question(PERSON_REVIEW, language, "")
+    step = StepResult(
+        step=StepName.HIGH_RISK,
+        decision=REFUSAL[language],
+        citations=tuple(
+            provision_citation(library.provision(pid, lookup)) for pid in REFUSAL_CITATIONS
+        ),
+        status=Status.NEEDS_MORE_INFORMATION,
+        missing_fact=review,
+        error=PROVIDER_REFUSAL,
+    )
+    return CheckOutcome(
+        step=step, high_risk_route=HighRiskRoute.ANNEX_III, follow_up_questions=(review,)
+    )
+
+
 # --- The model call -----------------------------------------------------------------------------
 
 
@@ -703,7 +736,8 @@ class HighRiskCheck:
             return use(HighRiskCorpus(connection, self._embedder))
 
     def __call__(self, state: EngineState) -> CheckOutcome:
-        """Raises `HighRiskOutputError` when the reply doesn't fit `HighRiskAnswer`."""
+        """A reply the provider's content filter refused gives `refusal_outcome`. Raises
+        `HighRiskOutputError` when any other reply doesn't fit `HighRiskAnswer`."""
         retrieved = self._reading(lambda library: retrieve(state, library))
         annex_iii_ids = [p.provision_id for p in retrieved.annex_iii]
         annex_i_ids = [p.provision_id for p in retrieved.annex_i]
@@ -712,7 +746,9 @@ class HighRiskCheck:
             response_format=high_risk_response_format(annex_iii_ids, annex_i_ids),
         )
         try:
-            answer = HighRiskAnswer.model_validate_json(reply.text)
+            answer = parse_reply(reply, HighRiskAnswer)
+        except ProviderRefusalError:
+            return self._reading(lambda library: refusal_outcome(state, library))
         except ValidationError as exc:
             message = f"high-risk answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise HighRiskOutputError(message) from exc

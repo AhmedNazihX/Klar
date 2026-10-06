@@ -10,6 +10,9 @@ trusted: it becomes an inferred fact, so every stated fact points into the descr
 Every inferred or assumed fact gets a "please confirm" question (INIT > Evidence tags), and
 the model adds the questions whose answer could change a check, including the features that
 flip an outcome when present (decision 001, product rule).
+
+A reply the provider's content filter refused (decision 029) gives no facts and one question
+asking for a person's review; the checks then read the description themselves.
 """
 
 import re
@@ -22,7 +25,12 @@ from pydantic import Field, ValidationError
 
 from aiact.engine.state import EngineState, FactsOutcome
 from aiact.llm import engine_chat_model
-from aiact.llm.structured import describe_validation_error, json_schema_format
+from aiact.llm.structured import (
+    ProviderRefusalError,
+    describe_validation_error,
+    json_schema_format,
+    parse_reply,
+)
 from aiact.schemas import EvidenceTag, Fact, FollowUpQuestion, Language, SourceSpan
 from aiact.schemas.base import ContractModel
 from aiact.settings import Settings
@@ -41,6 +49,17 @@ CONFIRM_TEXT: dict[Language, str] = {
     Language.DE: "Bitte bestätigen Sie: {fact}",
 }
 """The confirm question for an inferred or assumed fact that came without one."""
+
+PERSON_REVIEW_ID = "facts_person_review"
+PERSON_REVIEW_TEXT: dict[Language, str] = {
+    Language.EN: "The model provider's content filter blocked this description, so its facts "
+    "could not be extracted automatically. Please have a person review it: what does the system "
+    "do, who uses it, and whom does it affect?",
+    Language.DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher "
+    "konnten ihre Fakten nicht automatisch erfasst werden. Bitte lassen Sie sie von einem "
+    "Menschen prüfen: Was tut das System, wer nutzt es und wen betrifft es?",
+}
+"""The question a refused reply asks instead of facts (decision 029)."""
 
 WORD_CHAR = re.compile(r"\w")
 
@@ -157,6 +176,12 @@ def _confirm_question(
         return None
     if extracted.question is not None:
         return extracted.question
+    return confirm_question(fact, language, taken)
+
+
+def confirm_question(fact: Fact, language: Language, taken: set[str]) -> FollowUpQuestion:
+    """ "Please confirm: <fact>", with an id from the fact's text (`fact_slug`) that no question
+    in `taken` has yet. Also used by finalize for the checks' assumed deciding facts (E8)."""
     text = CONFIRM_TEXT[language].format(fact=fact.text)
     return FollowUpQuestion(id=_unique(fact_slug(fact.text), taken), text=text)
 
@@ -173,6 +198,12 @@ def to_outcome(answer: FactsAnswer, description: str, language: Language) -> Fac
         if question is not None:
             by_id.setdefault(question.id, question)
     return FactsOutcome(facts=facts, follow_up_questions=tuple(by_id.values()))
+
+
+def refusal_outcome(language: Language) -> FactsOutcome:
+    """No facts, and the question that asks a person to review the description (decision 029)."""
+    review = FollowUpQuestion(id=PERSON_REVIEW_ID, text=PERSON_REVIEW_TEXT[language])
+    return FactsOutcome(follow_up_questions=(review,))
 
 
 def facts_messages(description: str, language: Language) -> list[BaseMessage]:
@@ -195,13 +226,16 @@ class FactExtractor:
         self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
 
     def __call__(self, state: EngineState) -> FactsOutcome:
-        """Raises `FactsOutputError` when the reply doesn't fit `FactsAnswer`."""
+        """A reply the provider's content filter refused gives `refusal_outcome`. Raises
+        `FactsOutputError` when any other reply doesn't fit `FactsAnswer`."""
         description, language = state["description"], state["language"]
         reply = self._model.invoke(
             facts_messages(description, language), response_format=FACTS_RESPONSE_FORMAT
         )
         try:
-            answer = FactsAnswer.model_validate_json(reply.text)
+            answer = parse_reply(reply, FactsAnswer)
+        except ProviderRefusalError:
+            return refusal_outcome(language)
         except ValidationError as exc:
             message = f"facts answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise FactsOutputError(message) from exc

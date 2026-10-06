@@ -5,7 +5,7 @@ decision sentences, in English and German."""
 from collections.abc import Mapping
 
 from aiact.engine.nodes.role_texts import KeyQuestion
-from aiact.schemas import Language
+from aiact.schemas import PROVIDER_REFUSAL, Language
 
 EN, DE = Language.EN, Language.DE
 
@@ -319,7 +319,7 @@ REFUSAL_ORIGINAL: Mapping[Language, str] = {
     "ein Mensch die Beschreibung geprüft hat, wird ein Verbot angenommen.",
 }
 """The refusal step's decision under the original text, which has no points (ba) or (bb)."""
-REFUSAL_ERROR = "provider_refusal"
+REFUSAL_ERROR = PROVIDER_REFUSAL
 """The step's error code for a refusal."""
 
 # --- Naming and decision sentences --------------------------------------------------------------

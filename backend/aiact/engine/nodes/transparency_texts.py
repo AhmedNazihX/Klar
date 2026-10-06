@@ -5,7 +5,7 @@ decision sentences, in English and German."""
 from collections.abc import Mapping
 
 from aiact.engine.nodes.role_texts import KeyQuestion
-from aiact.schemas import Language
+from aiact.schemas import PROVIDER_REFUSAL, Language
 
 EN, DE = Language.EN, Language.DE
 
@@ -130,7 +130,7 @@ REFUSAL: Mapping[Language, str] = {
     "nicht automatisch geprüft werden. Bis ein Mensch sie geprüft hat, werden alle "
     "Transparenzpflichten nach Art. 50 Abs. 1 bis 4 angenommen.",
 }
-REFUSAL_ERROR = "provider_refusal"
+REFUSAL_ERROR = PROVIDER_REFUSAL
 """The step's error code for a refusal."""
 
 # --- Naming and decision sentences --------------------------------------------------------------

@@ -227,3 +227,27 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "still_asked": "Noch zu bestätigen: {question}",
     },
 }
+
+# --- A provider refusal (decision 029) -----------------------------------------------------------
+
+PERSON_REVIEW = ScopeQuestion(
+    id="scope_person_review",
+    article="art:2",
+    recitals=(),
+    question={
+        Language.EN: "Please have a person review the description: is the system an AI system "
+        "(Art. 3(1)), and does an exclusion of Art. 2 take it out of the Act's scope?",
+        Language.DE: "Bitte lassen Sie die Beschreibung von einem Menschen prüfen: Ist das System "
+        "ein KI-System (Art. 3 Nr. 1), und nimmt eine Ausnahme nach Art. 2 es vom "
+        "Anwendungsbereich der Verordnung aus?",
+    },
+)
+REFUSAL: Mapping[Language, str] = {
+    Language.EN: "The model provider's content filter blocked this description, so it could not "
+    "be assessed automatically. The system is assumed to be an AI system within the Act's scope "
+    "until a person has reviewed it.",
+    Language.DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher "
+    "konnte sie nicht automatisch geprüft werden. Bis ein Mensch sie geprüft hat, wird "
+    "angenommen, dass es sich um ein KI-System im Anwendungsbereich der Verordnung handelt.",
+}
+"""The refusal step's decision: in scope, the stricter reading, is the working assumption."""
