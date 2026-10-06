@@ -22,6 +22,9 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },
+  // The API's default CORS_ORIGINS (backend/aiact/settings.py) allow this origin; a busy port
+  // fails instead of moving to one the API would refuse.
+  server: { port: 5173, strictPort: true },
   build: {
     // No public source maps in production (frontend-security rule).
     sourcemap: false,

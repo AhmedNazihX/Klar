@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 // The only settings the frontend reads. Every VITE_* value ships in the public bundle, so none of
 // them may be a secret (the anon key is public by design; RLS protects the data).
+// The API's default API_PORT (backend/aiact/settings.py); keep the two in step.
 const DEFAULT_API_URL = 'http://localhost:8000'
 
 // An unset or blank variable counts as missing.
