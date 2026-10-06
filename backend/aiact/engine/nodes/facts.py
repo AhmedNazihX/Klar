@@ -25,15 +25,16 @@ from pydantic import Field, ValidationError
 
 from aiact.engine.nodes.common import BLOCKED
 from aiact.engine.nodes.key_facts import ShortTexts
+from aiact.engine.nodes.questions import from_reply
 from aiact.engine.state import EngineState, FactsOutcome
-from aiact.llm import engine_chat_model
+from aiact.llm import engine_chat_model, replies
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
     json_schema_format,
     parse_reply,
 )
-from aiact.schemas import EvidenceTag, Fact, FollowUpQuestion, Language, SourceSpan
+from aiact.schemas import YES_NO, EvidenceTag, Fact, FollowUpQuestion, Language, SourceSpan
 from aiact.schemas.base import ContractModel
 from aiact.settings import Settings
 
@@ -79,7 +80,7 @@ class ExtractedFact(ShortTexts):
     text: str = Field(min_length=1)
     evidence: EvidenceTag
     quote: str | None = Field(description="For a stated fact: the passage, copied verbatim.")
-    question: FollowUpQuestion | None = Field(
+    question: replies.FollowUpQuestion | None = Field(
         description="For an inferred or assumed fact: the question that confirms it."
     )
 
@@ -93,7 +94,7 @@ class FactsAnswer(ContractModel):
     """The model's whole answer; also the JSON schema it must fill."""
 
     facts: tuple[ExtractedFact, ...]
-    questions: tuple[FollowUpQuestion, ...] = Field(
+    questions: tuple[replies.FollowUpQuestion, ...] = Field(
         description="Key-fact questions the description leaves open, most decisive first."
     )
 
@@ -181,15 +182,16 @@ def _confirm_question(
     if fact.evidence is EvidenceTag.STATED:
         return None
     if extracted.question is not None:
-        return extracted.question
+        return from_reply(extracted.question)
     return confirm_question(fact, language, taken)
 
 
 def confirm_question(fact: Fact, language: Language, taken: set[str]) -> FollowUpQuestion:
-    """ "Please confirm: <fact>", with an id from the fact's text (`fact_slug`) that no question
-    in `taken` has yet. Also used by finalize for the checks' assumed deciding facts (E8)."""
+    """ "Please confirm: <fact>", answered yes or no, with an id from the fact's text
+    (`fact_slug`) that no question in `taken` has yet. Also used by finalize for the checks'
+    assumed deciding facts (E8)."""
     text = CONFIRM_TEXT[language].format(fact=fact.text)
-    return FollowUpQuestion(id=_unique(fact_slug(fact.text), taken), text=text)
+    return FollowUpQuestion(id=_unique(fact_slug(fact.text), taken), text=text, options=YES_NO)
 
 
 def to_outcome(answer: FactsAnswer, description: str, language: Language) -> FactsOutcome:
@@ -198,7 +200,7 @@ def to_outcome(answer: FactsAnswer, description: str, language: Language) -> Fac
     facts = tuple(_fact(extracted, description) for extracted in answer.facts)
     by_id: dict[str, FollowUpQuestion] = {}
     for question in answer.questions:
-        by_id.setdefault(question.id, question)
+        by_id.setdefault(question.id, from_reply(question))
     for extracted, fact in zip(answer.facts, facts, strict=True):
         question = _confirm_question(extracted, fact, language, set(by_id))
         if question is not None:

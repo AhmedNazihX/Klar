@@ -6,7 +6,6 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 
-from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit
@@ -99,11 +98,6 @@ def named_passages(numbers: Sequence[int], guidance: Sequence[SearchHit]) -> tup
     once."""
     in_range = dict.fromkeys(n for n in numbers if 0 < n <= len(guidance))
     return tuple(guidance[n - 1] for n in in_range)
-
-
-def key_question(key: KeyQuestion, language: Language) -> FollowUpQuestion:
-    """The follow-up question that settles a key fact, about the provision it rests on."""
-    return FollowUpQuestion(id=key.id, text=key.question[language], about=key.article)
 
 
 # --- A provider refusal (decision 029) -----------------------------------------------------------

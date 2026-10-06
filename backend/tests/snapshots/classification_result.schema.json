@@ -1,5 +1,67 @@
 {
   "$defs": {
+    "AnswerOption": {
+      "description": "An answer the interface offers to a yes/no follow-up question (E12).",
+      "enum": [
+        "yes",
+        "no",
+        "not_sure"
+      ],
+      "title": "AnswerOption",
+      "type": "string"
+    },
+    "AnswerOutcome": {
+      "additionalProperties": false,
+      "description": "What a \"yes\" settles, where the step asking knows it: the class and, for high-risk, the\nroute, the provision and the date the duties apply from (decision 026 items 13 and 18). A\n\"no\" has no such outcome: no class is predicted before the remaining checks run, so the\ninterface shows the fixed sentence of decision 026 item 13 instead.",
+      "properties": {
+        "risk_class": {
+          "$ref": "#/$defs/RiskClass"
+        },
+        "high_risk_route": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HighRiskRoute"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "provision_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The provision a yes rests on, for example `annex:I:A:11`.",
+          "title": "Provision Id"
+        },
+        "duties_from": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The date the route's high-risk duties apply from under the amended Art. 113 (the interface shows the original text's dates under it, decision 026 item 11); None when the AI Act itself sets no duties (an Annex I Section B product, Art. 2(2)).",
+          "title": "Duties From"
+        }
+      },
+      "required": [
+        "risk_class"
+      ],
+      "title": "AnswerOutcome",
+      "type": "object"
+    },
     "Citation": {
       "additionalProperties": false,
       "description": "One quoted provision. `english_only` marks guidance that has no official text in `de`.",
@@ -148,6 +210,49 @@
           "default": null,
           "description": "What the answer settles, for example a step or provision_id.",
           "title": "About"
+        },
+        "hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Why the answer matters, naming the provision it decides, in the result's language.",
+          "title": "Hint"
+        },
+        "options": {
+          "default": [],
+          "description": "The answers offered: yes, no and not sure for a yes/no question; empty for a question answered in words.",
+          "items": {
+            "$ref": "#/$defs/AnswerOption"
+          },
+          "title": "Options",
+          "type": "array"
+        },
+        "if_yes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnswerOutcome"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What a yes settles, when the step knows it."
+        },
+        "citations": {
+          "default": [],
+          "description": "The provisions the question rests on, quoted; on a step's missing fact, each is one of the step's own (checked) citations.",
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "title": "Citations",
+          "type": "array"
         }
       },
       "required": [
@@ -174,6 +279,37 @@
       ],
       "title": "Language",
       "type": "string"
+    },
+    "LawText": {
+      "additionalProperties": false,
+      "description": "The AI Act text a result was checked against, as the screens label it (\"the consolidated\nAI Act of 27 July 2026\", CELEX 02024R1689-20260727).",
+      "properties": {
+        "document_id": {
+          "description": "The text's manifest `doc_key`, for example `ai-act`.",
+          "minLength": 1,
+          "title": "Document Id",
+          "type": "string"
+        },
+        "celex": {
+          "description": "Its CELEX number on EUR-Lex.",
+          "minLength": 1,
+          "title": "Celex",
+          "type": "string"
+        },
+        "version_date": {
+          "description": "The original's publication date in the Official Journal, or the consolidation's cut-off date.",
+          "format": "date",
+          "title": "Version Date",
+          "type": "string"
+        }
+      },
+      "required": [
+        "document_id",
+        "celex",
+        "version_date"
+      ],
+      "title": "LawText",
+      "type": "object"
     },
     "LawVersion": {
       "description": "The AI Act text a result relies on: as published in 2024, or as amended by the Omnibus.",
@@ -301,13 +437,22 @@
           "type": "string"
         },
         "readings": {
-          "description": "The two possible readings, stricter first.",
+          "description": "The two possible readings, stricter first; the stricter one is applied.",
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/Reading"
           },
           "maxItems": 2,
           "minItems": 2,
           "title": "Readings",
+          "type": "array"
+        },
+        "settled_by": {
+          "default": [],
+          "description": "What would settle the question, when the step knows it.",
+          "items": {
+            "$ref": "#/$defs/SettledBy"
+          },
+          "title": "Settled By",
           "type": "array"
         }
       },
@@ -316,6 +461,71 @@
         "readings"
       ],
       "title": "OpenQuestion",
+      "type": "object"
+    },
+    "Reading": {
+      "additionalProperties": false,
+      "description": "One possible reading of an open question of law (E12): what it is called, the class it\ngives, why, the provision it rests on, and what follows if it holds.",
+      "properties": {
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "risk_class": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskClass"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The class this reading gives on its own check, for example `high_risk` for the stricter reading of a high-risk question. None when it gives no class by itself: the remaining checks decide (shown as, for example, not high-risk on this point), or the question is about a duty or the role, not the class."
+        },
+        "explanation": {
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "citation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Citation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The provision the reading rests on: one of its step's citations."
+        },
+        "consequence": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What follows if the reading holds.",
+          "title": "Consequence"
+        },
+        "is_applied": {
+          "default": false,
+          "description": "The working assumption: the stricter reading, applied until a lawyer or the user's answer settles the question.",
+          "title": "Is Applied",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "title",
+        "explanation"
+      ],
+      "title": "Reading",
       "type": "object"
     },
     "RiskClass": {
@@ -339,6 +549,35 @@
         "distributor"
       ],
       "title": "Role",
+      "type": "string"
+    },
+    "SettledBy": {
+      "additionalProperties": false,
+      "description": "Something that would settle an open question. Guidance is named as it stands (for example\na draft); naming it never promises that the result is checked again (decision 026 item 4).",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/SettledByKind"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "text"
+      ],
+      "title": "SettledBy",
+      "type": "object"
+    },
+    "SettledByKind": {
+      "description": "What could settle an open question of law (E12, decision 026 item 4).",
+      "enum": [
+        "guidance",
+        "provider"
+      ],
+      "title": "SettledByKind",
       "type": "string"
     },
     "SourceSpan": {
@@ -567,6 +806,10 @@
     },
     "law_version": {
       "$ref": "#/$defs/LawVersion"
+    },
+    "law_text": {
+      "$ref": "#/$defs/LawText",
+      "description": "The label of the text `law_version` names (CELEX number and date); it always matches `law_version`, which sets it when it is left out."
     },
     "as_of": {
       "format": "date",

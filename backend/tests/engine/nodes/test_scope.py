@@ -319,7 +319,7 @@ def test_a_contested_definition_is_legally_ambiguous_with_in_scope_assumed() -> 
     assert outcome.matched is False  # the stricter reading, in scope, keeps the run going
     assert step.status is Status.LEGALLY_AMBIGUOUS
     assert step.open_question is not None
-    assert step.open_question.readings[0].startswith("It is an AI system")
+    assert step.open_question.readings[0].explanation.startswith("It is an AI system")
     # Passage 1 once; the out-of-range 9 is dropped.
     assert cited(outcome) == ["art:3:1", "recital:12", "art:2:1", "guide:guide-definition:para:40"]
     assert step.missing_fact is None
@@ -340,8 +340,13 @@ def test_a_guideline_passage_placing_the_technique_outside_makes_the_definition_
     assert step.status is Status.LEGALLY_AMBIGUOUS
     assert step.open_question is not None
     stricter, lenient = step.open_question.readings
-    assert "Art. 3(1) and recital 12" in stricter
-    assert "(guide:guide-definition:para:41)" in lenient
+    assert "Art. 3(1) and recital 12" in stricter.explanation
+    assert "(guide:guide-definition:para:41)" in lenient.explanation
+    assert (stricter.title, stricter.risk_class) == ("An AI system", None)
+    assert (lenient.title, lenient.risk_class) == ("Not an AI system", RiskClass.OUT_OF_SCOPE)
+    assert stricter.citation is not None and lenient.citation is not None
+    assert stricter.citation.provision_id == "art:3:1"
+    assert lenient.citation.provision_id == "guide:guide-definition:para:41"  # the passage named
     assert cited(outcome) == ["art:3:1", "recital:12", "art:2:1", "guide:guide-definition:para:41"]
     guidance = step.citations[-1]
     assert (guidance.law_version, guidance.document_status) == (None, DocumentStatus.FINAL)

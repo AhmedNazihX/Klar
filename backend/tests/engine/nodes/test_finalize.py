@@ -26,6 +26,7 @@ from aiact.obligations.list import CHAPTER_III_DATES
 from aiact.schemas import (
     DISCLAIMER,
     STEP_ORDER,
+    YES_NO,
     ClassificationResult,
     EvidenceTag,
     Fact,
@@ -34,7 +35,6 @@ from aiact.schemas import (
     Language,
     LawVersion,
     Obligation,
-    OpenQuestion,
     RiskClass,
     Role,
     SourceSpan,
@@ -49,6 +49,7 @@ from tests.engine.nodes.test_high_risk import answer as high_risk_answer
 from tests.engine.nodes.test_high_risk import outcome as high_risk_outcome
 from tests.engine.nodes.test_prohibited import FakeLibrary as ProhibitedLibrary
 from tests.engine.nodes.test_role_obligations import legacy_answer, role_answer
+from tests.schemas.builders import open_question
 
 AS_OF = date(2026, 10, 6)
 DESCRIPTION = "We use a tool that reads job applications and ranks the applicants for HR."
@@ -59,7 +60,7 @@ ENGINE_INPUT: EngineInput = {
     "as_of": AS_OF,
     "exclude_source_example_ids": (),
 }
-OPEN = OpenQuestion(question="Does the law settle this?", readings=("Stricter.", "Lenient."))
+OPEN = open_question("Does the law settle this?", "Stricter.", "Lenient.")
 LITERACY = Obligation(duty="Ensure AI literacy", article="art:4:1", applies_from=date(2025, 2, 2))
 
 RANKS = Fact(text="The tool ranks applicants", evidence=EvidenceTag.STATED,
@@ -503,6 +504,7 @@ def test_an_assumed_fact_a_check_relied_on_gets_a_stable_confirm_question() -> N
     confirm = FollowUpQuestion(
         id="confirm_the_system_is_used_in_the_eu",
         text="Please confirm: The system is used in the EU",
+        options=YES_NO,
     )
     assert first.follow_up_questions == (confirm,)
     assert again.follow_up_questions == first.follow_up_questions

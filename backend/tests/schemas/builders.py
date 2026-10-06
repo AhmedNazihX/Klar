@@ -3,6 +3,7 @@
 from aiact.schemas import (
     ClassificationResult,
     OpenQuestion,
+    Reading,
     RiskClass,
     Status,
     StepName,
@@ -10,9 +11,21 @@ from aiact.schemas import (
 )
 from tests.schemas.worked_example import EU_USE_QUESTION, worked_example_result
 
-OPEN_QUESTION = OpenQuestion(
-    question="Does the law settle this point?",
-    readings=("Yes, the stricter reading applies", "No, the lenient reading applies"),
+
+def open_question(question: str, stricter: str, lenient: str) -> OpenQuestion:
+    """A contract open question whose two readings carry only a title and their text, the
+    stricter one applied."""
+    readings = (
+        Reading(title="Stricter reading", explanation=stricter, is_applied=True),
+        Reading(title="Lenient reading", explanation=lenient),
+    )
+    return OpenQuestion(question=question, readings=readings)
+
+
+OPEN_QUESTION = open_question(
+    "Does the law settle this point?",
+    "Yes, the stricter reading applies",
+    "No, the lenient reading applies",
 )
 
 StepDump = dict[str, object]

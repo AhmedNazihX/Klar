@@ -5,7 +5,14 @@ from typing import Self
 from pydantic import Field, model_validator
 
 from aiact.schemas.base import ContractModel
-from aiact.schemas.enums import DocumentStatus, EvidenceTag, Language, LawVersion
+from aiact.schemas.enums import (
+    DocumentStatus,
+    EvidenceTag,
+    Language,
+    LawVersion,
+    RiskClass,
+    SettledByKind,
+)
 
 
 class Citation(ContractModel):
@@ -66,11 +73,54 @@ class Fact(ContractModel):
         return self
 
 
+class Reading(ContractModel):
+    """One possible reading of an open question of law (E12): what it is called, the class it
+    gives, why, the provision it rests on, and what follows if it holds."""
+
+    title: str = Field(min_length=1)
+    risk_class: RiskClass | None = Field(
+        default=None,
+        description="The class this reading gives on its own check, for example `high_risk` for "
+        "the stricter reading of a high-risk question. None when it gives no class by itself: "
+        "the remaining checks decide (shown as, for example, not high-risk on this point), or "
+        "the question is about a duty or the role, not the class.",
+    )
+    explanation: str = Field(min_length=1)
+    citation: Citation | None = Field(
+        default=None, description="The provision the reading rests on: one of its step's citations."
+    )
+    consequence: str | None = Field(default=None, description="What follows if the reading holds.")
+    is_applied: bool = Field(
+        default=False,
+        description="The working assumption: the stricter reading, applied until a lawyer or "
+        "the user's answer settles the question.",
+    )
+
+
+class SettledBy(ContractModel):
+    """Something that would settle an open question. Guidance is named as it stands (for example
+    a draft); naming it never promises that the result is checked again (decision 026 item 4)."""
+
+    kind: SettledByKind
+    text: str = Field(min_length=1)
+
+
 class OpenQuestion(ContractModel):
     """A question the law and guidance don't settle, with both possible readings."""
 
     question: str = Field(min_length=1)
     # A variable-length tuple, so the JSON Schema uses minItems/maxItems rather than prefixItems.
-    readings: tuple[str, ...] = Field(
-        min_length=2, max_length=2, description="The two possible readings, stricter first."
+    readings: tuple[Reading, ...] = Field(
+        min_length=2,
+        max_length=2,
+        description="The two possible readings, stricter first; the stricter one is applied.",
     )
+    settled_by: tuple[SettledBy, ...] = Field(
+        default=(), description="What would settle the question, when the step knows it."
+    )
+
+    @model_validator(mode="after")
+    def _stricter_reading_applied(self) -> Self:
+        if [reading.is_applied for reading in self.readings] != [True, False]:
+            raise ValueError("the first (stricter) reading is applied, and only it")
+        return self

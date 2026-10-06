@@ -58,3 +58,18 @@ class StepResult(ContractModel):
         ):
             raise ValueError("a decided step has no missing_fact, open_question or error")
         return self
+
+    @model_validator(mode="after")
+    def _questions_quote_the_steps_citations(self) -> Self:
+        """A reading or the missing fact quotes only what the step cites, so the step's citation
+        check (E9) covers every quote the step shows."""
+        readings = self.open_question.readings if self.open_question else ()
+        quoted = (
+            *(reading.citation for reading in readings if reading.citation),
+            *(self.missing_fact.citations if self.missing_fact else ()),
+        )
+        if any(citation not in self.citations for citation in quoted):
+            raise ValueError(
+                "a reading or the missing fact quotes a citation the step doesn't list"
+            )
+        return self

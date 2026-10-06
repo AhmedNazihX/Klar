@@ -2,9 +2,11 @@
 ids and the provisions they rest on, how Annex points are named, and the decision sentences, in
 English and German. `{law}` is the Annex I legislation's short title, from the corpus."""
 
+import re
 from collections.abc import Mapping
 
 from aiact.engine.nodes.role_texts import KeyQuestion
+from aiact.retrieval.provisions import Provision
 from aiact.schemas import Language
 
 EN, DE = Language.EN, Language.DE
@@ -64,6 +66,7 @@ PROFILING = KeyQuestion(
 PUBLIC_SCHEME = KeyQuestion(
     id="public_scheme",
     article="annex:III:5:a",
+    is_yes_no=False,
     question={
         EN: "Is the benefits or services scheme run by a public authority or on its behalf, or "
         "is it a private scheme?",
@@ -74,6 +77,7 @@ PUBLIC_SCHEME = KeyQuestion(
 DECIDES_ADMISSION = KeyQuestion(
     id="decides_admission",
     article="annex:III:3:a",
+    is_yes_no=False,
     question={
         EN: "Does the decision determine whether a person is admitted to, or assigned to, an "
         "education or training institution, or does it only fund people who are already "
@@ -106,6 +110,7 @@ PUBLIC_AUTHORITY_USER = KeyQuestion(
 ANNEX_III_USE = KeyQuestion(
     id="annex_iii_use",
     article="art:6:2",
+    is_yes_no=False,
     question={
         EN: "What exactly is the system's output used for, and who relies on it?",
         DE: "Wofür genau wird das Ergebnis des Systems verwendet, und wer stützt sich darauf?",
@@ -124,6 +129,7 @@ AUTHORITY_ASSUMED: Mapping[Language, str] = {
 PERSON_REVIEW = KeyQuestion(
     id="high_risk_person_review",
     article="art:6",
+    is_yes_no=False,
     question={
         EN: "Please have a person review the description: is the system used for a purpose "
         "listed in Annex III, or is it a product, or a safety component of a product, covered by "
@@ -250,6 +256,61 @@ ROUTE_NAMES: Mapping[Language, Mapping[str, str]] = {
     DE: {"annex_iii": "Anhang III", "annex_i": "Anhang I"},
 }
 
+# --- The readings of an open question (E12) ----------------------------------------------------
+
+READINGS: Mapping[Language, Mapping[str, str]] = {
+    EN: {
+        "high_iii": "High-risk under {point}",
+        "high_i": "High-risk under Art. 6(1)",
+        "not_iii": "Not covered by {point}",
+        "not_i": "Art. 6(1) not met",
+        "exempt": "Exempt under Art. 6(3)",
+        "high_consequence": "If this holds, the high-risk duties apply from {date}.",
+        "section_b_consequence": "If this holds, the high-risk requirements reach the product "
+        "through {law}; the AI Act itself adds no duties (Art. 2(2)).",
+        "not_high_consequence": "If this holds, the system is not high-risk on this point. The "
+        "transparency check then decides whether any duties apply.",
+        "exempt_consequence": "If this holds, the provider must document why the system is not "
+        "high-risk before placing it on the market, and register it (Art. 6(4), 49(2)).",
+    },
+    DE: {
+        "high_iii": "Hochrisiko nach {point}",
+        "high_i": "Hochrisiko nach Art. 6 Abs. 1",
+        "not_iii": "Nicht von {point} erfasst",
+        "not_i": "Art. 6 Abs. 1 nicht erfüllt",
+        "exempt": "Ausnahme nach Art. 6 Abs. 3",
+        "high_consequence": "Gilt diese Lesart, gelten die Hochrisiko-Pflichten ab dem {date}.",
+        "section_b_consequence": "Gilt diese Lesart, erreichen die Hochrisiko-Anforderungen das "
+        "Produkt über {law}; die KI-Verordnung selbst legt keine Pflichten auf (Art. 2 Abs. 2).",
+        "not_high_consequence": "Gilt diese Lesart, ist das System in diesem Punkt nicht "
+        "hochriskant. Die Transparenzprüfung entscheidet dann, ob Pflichten gelten.",
+        "exempt_consequence": "Gilt diese Lesart, muss der Anbieter vor dem Inverkehrbringen "
+        "dokumentieren, warum das System nicht hochriskant ist, und es registrieren (Art. 6 "
+        "Abs. 4, Art. 49 Abs. 2).",
+    },
+}
+"""Each reading's title and consequence; the stricter reading is high-risk on the route, the
+lenient one is outside the point (or Art. 6(1)), or exempt when the open question is Art. 6(3).
+The lenient consequence is decision 026 item 13's sentence: no class before the later checks."""
+
+SETTLED_BY: Mapping[Language, Mapping[str, str]] = {
+    EN: {
+        "guidelines": "Final Commission guidelines on high-risk classification (still a draft, "
+        "{date})",
+        "provider": "The provider's own Art. 6(3) assessment, documented under Art. 6(4), if it "
+        "made one",
+    },
+    DE: {
+        "guidelines": "Endgültige Leitlinien der Kommission zur Einstufung als Hochrisiko "
+        "(noch ein Entwurf, {date})",
+        "provider": "Die eigene Bewertung des Anbieters nach Art. 6 Abs. 3, dokumentiert nach "
+        "Art. 6 Abs. 4, falls er eine vorgenommen hat",
+    },
+}
+"""What would settle an open high-risk question: the final guidelines, named as the draft they
+still are and never with a promise to check again (decision 026 item 4), and for an open
+Art. 6(3) question the provider's own documented assessment."""
+
 
 def point_name(point: str, language: Language) -> str:
     """How a result names an Annex point: `annex:III:4:a` is "Annex III point 4(a)" in English
@@ -265,3 +326,33 @@ def point_name(point: str, language: Language) -> str:
     if language is DE:
         return f"Anhang III Nummer {number}" + (f" Buchstabe {letter}" if letter else "")
     return f"Annex III point {number}" + (f"({letter})" if letter else "")
+
+
+# --- The Annex I legislation's short title -------------------------------------------------------
+
+ACT_SHORT_TITLE = re.compile(
+    r" (of the European Parliament and of the Council|des Europäischen Parlaments und des Rates)"
+    r"( of| vom) \d{1,2}\.? \w+ \d{4}"
+)
+HARMONISATION_WORDS = re.compile(
+    r"on the harmonisation of the laws of the Member States relating to "
+    r"(the making available on the market of )?"
+    r"|(zur Angleichung|zur Harmonisierung|über die Harmonisierung) der Rechtsvorschriften der "
+    r"Mitgliedstaaten (über|für) (die Bereitstellung von )?"
+)
+GERMAN_ACCUSATIVE: Mapping[str, str] = {"Druckgeräten": "Druckgeräte"}
+"""A noun left in the dative once "über die Bereitstellung von" is dropped from a title."""
+TITLE_END = re.compile(
+    r",| and repealing| und zur Aufhebung| zur Aufhebung| sowie| auf dem Markt| \(OJ| \(ABl"
+)
+
+
+def law_title(provision: Provision) -> str:
+    """The Annex I legislation's short title: `Regulation (EU) 2017/745 on medical devices`."""
+    text = re.sub(r"^\d+\.\s*", "", provision.text.strip())
+    short = ACT_SHORT_TITLE.sub("", text, count=1)
+    short = HARMONISATION_WORDS.sub(lambda m: "über " if m.group(2) else "on ", short, count=1)
+    title = TITLE_END.split(short, maxsplit=1)[0].strip()
+    for dative, accusative in GERMAN_ACCUSATIVE.items():
+        title = title.replace(f"über {dative}", f"über {accusative}")
+    return title

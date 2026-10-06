@@ -45,9 +45,10 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
 from aiact.dates import long_date
-from aiact.engine.nodes.common import facts_section, key_question, refused_check
+from aiact.engine.nodes.common import facts_section, refused_check
 from aiact.engine.nodes.high_risk import SECTION_B_PREFIX
 from aiact.engine.nodes.key_facts import Answer, KeyFact, ShortTexts, facts_used
+from aiact.engine.nodes.questions import ReadingSide, ask, open_question
 from aiact.engine.nodes.role_legacy import (
     LegacyAnswer,
     LegacySettlement,
@@ -67,9 +68,11 @@ from aiact.engine.nodes.role_texts import (
     TEXTS,
     KeyQuestion,
     OpenInLaw,
+    open_in_law_parts,
 )
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.llm import engine_chat_model
+from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
@@ -261,14 +264,14 @@ class RoleSettlement:
         cited = (*(ROLE_ARTICLES[r] for r in bases), *opened, *made, *waiting)
         return tuple(dict.fromkeys(cited))
 
-    def open_question(self, language: Language) -> OpenQuestion | None:
-        """The question the law leaves open, with both readings, the stricter first."""
+    def open_question(self, language: Language, cited: Sequence[Citation]) -> OpenQuestion | None:
+        """The question the law leaves open, both readings quoting the step's `cited`."""
         if self.open_in_law is None or self.base is None:
             return None
-        base = ROLE_NAMES[language][self.base]
-        stricter, lenient = self.open_in_law.readings[language]
-        readings = (stricter, lenient.format(base=base[:1].upper() + base[1:]))
-        return OpenQuestion(question=self.open_in_law.question[language], readings=readings)
+        question, readings, sides = open_in_law_parts(self.open_in_law, self.base, language)
+        provider, kept = (ReadingSide(*side) for side in sides)
+        plain = ReplyOpenQuestion(question=question, readings=readings)
+        return open_question(plain, provider, kept, cited)
 
 
 def _kept_role(base: Role | None, *, is_assumed: bool) -> Role | None:
@@ -589,14 +592,15 @@ def to_outcome(
     )
     source = data_dir or get_settings().aiact_data_dir
     cited = (*settled.cited_articles(), *legacy.articles, *_section_b_articles(state))
+    quotes = citations(cited, state["law_version"], language, source)
     step = StepResult(
         step=StepName.ROLE_OBLIGATIONS,
         decision=_decision(settled, language, summary),
         facts_used=facts_used((*settled.used, *legacy.used), state.get("facts", ())),
-        citations=citations(cited, state["law_version"], language, source),
+        citations=quotes,
         status=_status(settled),
-        missing_fact=key_question(missing, language) if missing else None,
-        open_question=settled.open_question(language),
+        missing_fact=ask(missing, language, StepName.ROLE_OBLIGATIONS) if missing else None,
+        open_question=settled.open_question(language, quotes),
     )
     finding = RoleFinding(
         role=settled.role,
@@ -605,7 +609,7 @@ def to_outcome(
         obligations=obligations,
     )
     asked = (*settled.questions(), *legacy.questions)
-    questions = tuple(key_question(key, language) for key in asked)
+    questions = tuple(ask(key, language, StepName.ROLE_OBLIGATIONS) for key in asked)
     return CheckOutcome(step=step, role=finding, follow_up_questions=questions)
 
 
@@ -628,7 +632,7 @@ def refusal_outcome(
         language,
         " ".join((TEXTS[language]["refusal"], *summary)),
         citations(cited, state["law_version"], language, source),
-        key_question(PERSON_REVIEW, language),
+        ask(PERSON_REVIEW, language, StepName.ROLE_OBLIGATIONS),
         role=RoleFinding(role=settled.role, also_role=settled.also_role, obligations=obligations),
     )
 

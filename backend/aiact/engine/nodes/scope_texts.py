@@ -20,6 +20,8 @@ class ScopeQuestion:
     question: Mapping[Language, str] | None = None
     """None for a note (Art. 2(8)), which is never asked."""
     reason: Mapping[Language, str] | None = None
+    is_yes_no: bool = True
+    """Answered yes or no; False for a question answered in words (E12: no answer options)."""
 
     def asked(self, language: Language) -> str:
         """The follow-up question; only a fact that can be missing has one."""
@@ -32,6 +34,7 @@ AI_SYSTEM = ScopeQuestion(
     id="ai_system",
     article="art:3:1",
     recitals=("recital:12",),
+    is_yes_no=False,
     question={
         Language.EN: "How does the system produce its outputs: is it trained on data or does it "
         "otherwise infer them, or does it only apply rules or calculations that people defined?",
@@ -195,6 +198,24 @@ READINGS: Mapping[Language, tuple[str, str]] = {
     ),
 }
 """The two readings of an open Art. 3(1) question, stricter first."""
+READING_SIDES: Mapping[Language, Mapping[str, str]] = {
+    Language.EN: {
+        "ai_system": "An AI system",
+        "not_ai_system": "Not an AI system",
+        "ai_system_consequence": "If this holds, the AI Act applies, and the remaining checks "
+        "decide the class.",
+        "not_ai_system_consequence": "If this holds, the AI Act doesn't apply to the system.",
+    },
+    Language.DE: {
+        "ai_system": "Ein KI-System",
+        "not_ai_system": "Kein KI-System",
+        "ai_system_consequence": "Gilt diese Lesart, gilt die KI-Verordnung, und die weiteren "
+        "Prüfungen bestimmen die Klasse.",
+        "not_ai_system_consequence": "Gilt diese Lesart, gilt die KI-Verordnung für das System "
+        "nicht.",
+    },
+}
+"""Each reading's title and consequence (E12)."""
 GUIDED_LENIENT_READING: Mapping[Language, str] = {
     Language.EN: "It is not an AI system, because the Commission's definition guidelines "
     "({passages}) place its technique outside the definition: the Act does not apply (out of "
@@ -234,6 +255,7 @@ PERSON_REVIEW = ScopeQuestion(
     id="scope_person_review",
     article="art:2",
     recitals=(),
+    is_yes_no=False,
     question={
         Language.EN: "Please have a person review the description: is the system an AI system "
         "(Art. 3(1)), and does an exclusion of Art. 2 take it out of the Act's scope?",

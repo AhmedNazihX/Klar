@@ -16,7 +16,8 @@ from aiact.engine.nodes import transparency_texts as texts
 from aiact.engine.nodes.key_facts import MAX_TEXT_CHARS as MAX_TEXT_CHARS  # re-exported (E6)
 from aiact.engine.nodes.key_facts import Answer, Reading, Settled, ShortTexts, every, need
 from aiact.engine.nodes.role_texts import KeyQuestion
-from aiact.schemas import EvidenceTag, OpenQuestion
+from aiact.llm.replies import OpenQuestion
+from aiact.schemas import EvidenceTag
 from aiact.schemas.base import ContractModel
 
 # --- The model's answer -------------------------------------------------------------------------

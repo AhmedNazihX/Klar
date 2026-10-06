@@ -54,6 +54,7 @@ from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
 from aiact.eval.experiments.matchers import prohibited_matches, replay_state
 from aiact.llm import LLMConfigError, OpenRouterEmbeddings
+from aiact.llm.replies import OpenQuestion
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit, SearchResults
 from aiact.schemas import (
@@ -64,7 +65,6 @@ from aiact.schemas import (
     Fact,
     Language,
     LawVersion,
-    OpenQuestion,
     RiskClass,
     SourceSpan,
     Status,
@@ -329,7 +329,25 @@ def test_significant_harm_the_law_leaves_open_is_ambiguous_with_prohibited_assum
     result = outcome(answer(pressure))
     assert result.matched
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
-    assert result.step.open_question == OPEN_HARM
+    question = result.step.open_question
+    assert question is not None
+    assert question.question == OPEN_HARM.question
+    stricter, lenient = question.readings
+    assert (stricter.explanation, lenient.explanation) == OPEN_HARM.readings
+    assert (stricter.title, stricter.risk_class, stricter.is_applied) == (
+        "Prohibited under Art. 5(1)(a)",
+        RiskClass.PROHIBITED,
+        True,
+    )
+    assert (lenient.title, lenient.risk_class, lenient.is_applied) == (
+        "Not prohibited under Art. 5(1)(a)",
+        None,
+        False,
+    )
+    assert stricter.citation == lenient.citation == result.step.citations[0]
+    assert stricter.consequence is not None
+    assert "may not be placed on the market" in stricter.consequence
+    assert question.settled_by == ()
     assert "pending legal review: Is the harm significant?" in result.step.decision
     assert cited(result) == ["art:5:1:a"]
 
@@ -341,7 +359,7 @@ def test_an_unsettled_practice_without_its_question_gets_the_fixed_one() -> None
     open_question = result.step.open_question
     assert open_question is not None
     assert "Art. 5(1)(a)" in open_question.question
-    assert open_question.readings[0].startswith("Prohibited")
+    assert open_question.readings[0].explanation.startswith("Prohibited")
 
 
 def test_an_unsettled_flag_on_a_practice_not_raised_changes_nothing() -> None:

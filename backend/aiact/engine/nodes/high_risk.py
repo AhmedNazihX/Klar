@@ -43,6 +43,13 @@ from aiact.engine.nodes.common import (
     provision_citation,
     refused_check,
 )
+from aiact.engine.nodes.high_risk_questions import (
+    SECTION_B_PREFIX,
+    high_risk_outcome,
+    question_citations,
+    reading_sides,
+    settled_by,
+)
 from aiact.engine.nodes.high_risk_retrieval import (
     ANNEX_III_POINTS,
     HighRiskCorpus,
@@ -65,21 +72,26 @@ from aiact.engine.nodes.high_risk_texts import (
     REFUSAL_CITATIONS,
     ROUTE_NAMES,
     TEXTS,
+    law_title,
     point_name,
 )
 from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
+from aiact.engine.nodes.questions import ask, from_reply, hint, open_question
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model
+from aiact.llm.replies import FollowUpQuestion as ReplyQuestion
+from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
     json_schema_format,
     parse_reply,
 )
-from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import QueryEmbedder, SearchHit
 from aiact.schemas import (
+    AnswerOutcome,
+    Citation,
     EvidenceTag,
     Fact,
     FollowUpQuestion,
@@ -104,7 +116,6 @@ EXAMPLE_MARK = ":ex:"
 """Guideline worked examples have ids like `guide:guide-high-risk-annex-iii:ex:042`."""
 
 ANNEX_I_POINT = re.compile(r"^annex:I:(A|B):\d{1,2}$")
-SECTION_B_PREFIX = "annex:I:B:"
 
 ADMISSION_POINTS = frozenset({"annex:III:3:a", "annex:III:3:c"})
 
@@ -124,22 +135,6 @@ AUTHORITY_RULES: Mapping[str, AuthorityRule] = {
     "annex:III:8:a": AuthorityRule(JUDICIAL_USE),
 }
 """Keyed by the point or its area (`annex:III:6` covers 6(a)-(e))."""
-
-ACT_SHORT_TITLE = re.compile(
-    r" (of the European Parliament and of the Council|des Europäischen Parlaments und des Rates)"
-    r"( of| vom) \d{1,2}\.? \w+ \d{4}"
-)
-HARMONISATION_WORDS = re.compile(
-    r"on the harmonisation of the laws of the Member States relating to "
-    r"(the making available on the market of )?"
-    r"|(zur Angleichung|zur Harmonisierung|über die Harmonisierung) der Rechtsvorschriften der "
-    r"Mitgliedstaaten (über|für) (die Bereitstellung von )?"
-)
-GERMAN_ACCUSATIVE: Mapping[str, str] = {"Druckgeräten": "Druckgeräte"}
-"""A noun left in the dative once "über die Bereitstellung von" is dropped from a title."""
-TITLE_END = re.compile(
-    r",| and repealing| und zur Aufhebung| zur Aufhebung| sowie| auf dem Markt| \(OJ| \(ABl"
-)
 
 
 class Art63Condition(StrEnum):
@@ -171,7 +166,7 @@ class AnnexIIIAnswer(RouteSummary):
     uses: Answer
     public_authority: Answer
     settled_in_law: Settled
-    open_question: OpenQuestion | None
+    open_question: ReplyOpenQuestion | None
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
@@ -182,7 +177,7 @@ class Art63Answer(RouteSummary):
     condition: Art63Condition
     profiling: Answer
     settled_in_law: Settled
-    open_question: OpenQuestion | None
+    open_question: ReplyOpenQuestion | None
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
@@ -194,7 +189,7 @@ class AnnexIAnswer(RouteSummary):
     safety_component_or_product: Answer
     third_party_assessment: Answer
     settled_in_law: Settled
-    open_question: OpenQuestion | None
+    open_question: ReplyOpenQuestion | None
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
@@ -209,7 +204,7 @@ class HighRiskAnswer(ContractModel):
     annex_iii: AnnexIIIAnswer
     art_6_3: Art63Answer
     annex_i: AnnexIAnswer
-    question: FollowUpQuestion | None
+    question: ReplyQuestion | None
 
 
 class HighRiskOutputError(ValueError):
@@ -320,7 +315,9 @@ class Settlement:
     status: Status
     point: str | None
     missing: KeyQuestion | None = None
-    open_question: OpenQuestion | None = None
+    open_question: ReplyOpenQuestion | None = None
+    is_open_on_exemption: bool = False
+    """The open question of law is whether Art. 6(3) exempts a listed use."""
     sentences: tuple[str, ...] = ()
     cited: tuple[str, ...] = ()
     questions: tuple[KeyQuestion, ...] = ()
@@ -378,7 +375,8 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
         is_on_6_3 = answer.annex_iii.settled_in_law is Settled.YES
         part: RouteAnswer = answer.art_6_3 if is_on_6_3 else answer.annex_iii
         cited = iii_cited or (point, "art:6:2", "art:6:3")
-        return _ambiguous(base, HighRiskRoute.ANNEX_III, point, part, cited, language)
+        ambiguous = _ambiguous(base, HighRiskRoute.ANNEX_III, point, part, cited, language)
+        return replace(ambiguous, is_open_on_exemption=is_on_6_3)
     if i_open:
         point = answer.annex_i.point
         assert point is not None  # _open_on_annex_i checked it
@@ -418,7 +416,7 @@ def _ambiguous(
         status=Status.LEGALLY_AMBIGUOUS,
         point=point,
         open_question=part.open_question
-        or OpenQuestion(question=fallback[0], readings=(fallback[1], fallback[2])),
+        or ReplyOpenQuestion(question=fallback[0], readings=(fallback[1], fallback[2])),
         sentences=("ambiguous",),
         cited=cited,
     )
@@ -488,17 +486,6 @@ def _open_or_settled(
 # --- The step -----------------------------------------------------------------------------------
 
 
-def law_title(provision: Provision) -> str:
-    """The Annex I legislation's short title: `Regulation (EU) 2017/745 on medical devices`."""
-    text = re.sub(r"^\d+\.\s*", "", provision.text.strip())
-    short = ACT_SHORT_TITLE.sub("", text, count=1)
-    short = HARMONISATION_WORDS.sub(lambda m: "über " if m.group(2) else "on ", short, count=1)
-    title = TITLE_END.split(short, maxsplit=1)[0].strip()
-    for dative, accusative in GERMAN_ACCUSATIVE.items():
-        title = title.replace(f"über {dative}", f"über {accusative}")
-    return title
-
-
 def _law(point: str | None, retrieved: Retrieved) -> str:
     """The short title of the Annex I legislation at `point`, or "" without one."""
     if point is None:
@@ -509,22 +496,81 @@ def _law(point: str | None, retrieved: Retrieved) -> str:
     raise HighRiskOutputError("the answer's annex_i.point has no text in this law version")
 
 
-def _question(key: KeyQuestion, language: Language, law: str) -> FollowUpQuestion:
-    return FollowUpQuestion(
-        id=key.id, text=key.question[language].format(law=law), about=key.article
-    )
+def _if_yes(key: KeyQuestion, answer: HighRiskAnswer, language: Language) -> AnswerOutcome | None:
+    """What a yes to `key` settles: high-risk on its route, when every other fact the route needs
+    is a yes and the law leaves none of it open; otherwise None (the step doesn't know)."""
+    annex_i = answer.annex_i
+    if key in ANNEX_I_QUESTIONS:
+        facts = (
+            annex_i.covered,
+            annex_i.safety_component_or_product,
+            annex_i.third_party_assessment,
+        )
+        others = (f for asked, f in zip(ANNEX_I_QUESTIONS, facts, strict=True) if asked != key)
+        if annex_i.settled_in_law is Settled.YES and all(f is Answer.YES for f in others):
+            return high_risk_outcome(HighRiskRoute.ANNEX_I, annex_i.point)
+        return None
+    if answer.annex_iii.point not in ANNEX_III_POINTS or _open_on_annex_iii(answer):
+        return None
+    iii = read_annex_iii(answer, language)
+    is_profiling = key == PROFILING and iii.listed.answer is Answer.YES
+    is_listing = key is iii.listed.missing and iii.exempt is Answer.NO
+    if is_profiling or is_listing:
+        return high_risk_outcome(HighRiskRoute.ANNEX_III, answer.annex_iii.point)
+    return None
+
+
+def _question(
+    key: KeyQuestion,
+    answer: HighRiskAnswer | None,
+    language: Language,
+    law: str,
+    citations: Sequence[Citation] = (),
+) -> FollowUpQuestion:
+    """The question for `key`, naming the Annex I `law`, with what a yes settles (`_if_yes`)."""
+    if_yes = _if_yes(key, answer, language) if answer else None
+    text = key.question[language].format(law=law)
+    return ask(key, language, StepName.HIGH_RISK, text=text, if_yes=if_yes, citations=citations)
 
 
 def _missing_question(
-    settled: Settlement, answer: HighRiskAnswer, language: Language, law: str
+    settled: Settlement,
+    answer: HighRiskAnswer,
+    language: Language,
+    law: str,
+    citations: Sequence[Citation],
 ) -> FollowUpQuestion | None:
-    """The step's missing fact: the fixed question, except that the model's own question
-    replaces the generic Annex III one."""
+    """The step's missing fact, quoting what its route rests on (`question_citations`): the
+    fixed question, except that the model's own question replaces the generic Annex III one."""
     if settled.missing is None:
         return None
+    quotes = question_citations(settled.route, settled.point, citations)
     if settled.missing is ANNEX_III_USE and answer.question is not None:
-        return answer.question
-    return _question(settled.missing, language, law)
+        why = hint(StepName.HIGH_RISK, ANNEX_III_USE.article, language)
+        return from_reply(answer.question).model_copy(update={"hint": why, "citations": quotes})
+    return _question(settled.missing, answer, language, law, quotes)
+
+
+def _open_question(
+    settled: Settlement,
+    answer: HighRiskAnswer,
+    language: Language,
+    law: str,
+    citations: Sequence[Citation],
+) -> OpenQuestion | None:
+    """The open question of law with its two readings, quoting the step's `citations`, and what
+    would settle it."""
+    plain = settled.open_question
+    if plain is None:
+        return None
+    assert settled.route is not None and settled.point is not None  # set by `_ambiguous`
+    exemption = None
+    if settled.is_open_on_exemption:
+        condition = f"art:6:3:{answer.art_6_3.condition.value}"
+        exemption = condition if condition in settled.cited else "art:6:3"
+    stricter, lenient = reading_sides(settled.route, settled.point, law, language, exemption)
+    settles = settled_by(language, is_open_on_exemption=settled.is_open_on_exemption)
+    return open_question(plain, stricter, lenient, citations, settles)
 
 
 def _facts_used(
@@ -584,28 +630,29 @@ def to_outcome(
     language, lookup = state["language"], lookup_for(state)
     settled = settle(answer, language)
     law = _law(answer.annex_i.point, retrieved)
-    missing = _missing_question(settled, answer, language, law)
     examples = _examples(answer, retrieved.guidance)
     known = {p.provision_id: p for p in (*retrieved.annex_i, *retrieved.annex_iii)}
     provisions = [
         known.get(pid) or library.provision(pid, lookup) for pid in dict.fromkeys(settled.cited)
     ]
+    citations = (
+        *(provision_citation(p) for p in provisions),
+        *(guidance_citation(hit, language) for hit in examples),
+    )
+    missing = _missing_question(settled, answer, language, law, citations)
     step = StepResult(
         step=StepName.HIGH_RISK,
         decision=_decision(settled, answer, language, law, examples, missing),
         facts_used=_facts_used(answer, settled, state.get("facts", ())),
-        citations=(
-            *(provision_citation(p) for p in provisions),
-            *(guidance_citation(hit, language) for hit in examples),
-        ),
+        citations=citations,
         status=settled.status,
         missing_fact=missing,
-        open_question=settled.open_question,
+        open_question=_open_question(settled, answer, language, law, citations),
     )
     questions: dict[str, FollowUpQuestion] = {missing.id: missing} if missing else {}
     for key in settled.questions:
         if key is not settled.missing:
-            questions.setdefault(key.id, _question(key, language, law))
+            questions.setdefault(key.id, _question(key, answer, language, law))
     return CheckOutcome(
         step=step,
         high_risk_route=settled.route,
@@ -627,7 +674,7 @@ def refusal_outcome(state: EngineState, library: HighRiskLibrary) -> CheckOutcom
         language,
         REFUSAL[language],
         tuple(provision_citation(library.provision(pid, lookup)) for pid in REFUSAL_CITATIONS),
-        _question(PERSON_REVIEW, language, ""),
+        _question(PERSON_REVIEW, None, language, ""),
         high_risk_route=HighRiskRoute.ANNEX_III,
     )
 

@@ -53,6 +53,7 @@ from aiact.engine.nodes.common import (
     refused_check,
 )
 from aiact.engine.nodes.key_facts import Answer, CitedFact, KeyFact, facts_used
+from aiact.engine.nodes.questions import ReadingSide, hint, open_question
 from aiact.engine.nodes.scope_texts import (
     AI_SYSTEM,
     EU_LINK,
@@ -63,6 +64,7 @@ from aiact.engine.nodes.scope_texts import (
     OPEN_SOURCE_EXCEPTION,
     PERSON_REVIEW,
     PRE_MARKET_DEVELOPMENT,
+    READING_SIDES,
     READINGS,
     REFUSAL,
     TEXTS,
@@ -70,6 +72,7 @@ from aiact.engine.nodes.scope_texts import (
 )
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import engine_chat_model
+from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
@@ -79,10 +82,13 @@ from aiact.llm.structured import (
 from aiact.retrieval.provisions import Provision, get_provision
 from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
 from aiact.schemas import (
+    YES_NO,
+    Citation,
     EvidenceTag,
     FollowUpQuestion,
     Language,
     OpenQuestion,
+    RiskClass,
     Status,
     StepName,
     StepResult,
@@ -375,18 +381,38 @@ def _finding(settled: ScopeSettlement, answer: ScopeAnswer, language: Language) 
 
 
 def _question(rule: ScopeQuestion, language: Language) -> FollowUpQuestion:
-    return FollowUpQuestion(id=rule.id, text=rule.asked(language), about=rule.article)
+    return FollowUpQuestion(
+        id=rule.id,
+        text=rule.asked(language),
+        about=rule.article,
+        hint=hint(StepName.SCOPE, rule.article, language),
+        options=YES_NO if rule.is_yes_no else (),
+    )
 
 
-def _open_question(settled: ScopeSettlement, language: Language) -> OpenQuestion | None:
-    """Both readings, stricter first; the lenient one names the guideline passages behind it."""
+def _open_question(
+    settled: ScopeSettlement, language: Language, citations: Sequence[Citation]
+) -> OpenQuestion | None:
+    """Both readings, stricter first, quoting Art. 3(1) from the step's `citations`; the lenient
+    one names, and quotes, the guideline passages behind it."""
     if settled.status is not Status.LEGALLY_AMBIGUOUS:
         return None
     stricter, lenient = READINGS[language]
     if settled.against:
         passages = ", ".join(settled.against)
         lenient = GUIDED_LENIENT_READING[language].format(passages=passages)
-    return OpenQuestion(question=OPEN_QUESTION[language], readings=(stricter, lenient))
+    plain = ReplyOpenQuestion(question=OPEN_QUESTION[language], readings=(stricter, lenient))
+    words = READING_SIDES[language]
+    is_ai = ReadingSide(
+        words["ai_system"], words["ai_system_consequence"], None, DEFINITION_ARTICLE
+    )
+    not_ai = ReadingSide(
+        words["not_ai_system"],
+        words["not_ai_system_consequence"],
+        RiskClass.OUT_OF_SCOPE,
+        settled.against[0] if settled.against else DEFINITION_ARTICLE,
+    )
+    return open_question(plain, is_ai, not_ai, citations)
 
 
 def _guidance_used(answer: ScopeAnswer, guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
@@ -420,7 +446,7 @@ def to_outcome(
         citations=cited,
         status=settled.status,
         missing_fact=_question(missing[0], language) if missing else None,
-        open_question=_open_question(settled, language),
+        open_question=_open_question(settled, language, cited),
     )
     questions = tuple(_question(rule, language) for rule in missing)
     return CheckOutcome(step=step, matched=settled.is_out_of_scope, follow_up_questions=questions)

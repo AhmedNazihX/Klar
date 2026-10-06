@@ -18,6 +18,8 @@ class KeyQuestion:
     article: str
     question: Mapping[Language, str]
     reason: Mapping[Language, str] | None = None
+    is_yes_no: bool = True
+    """Answered yes or no; False for a question answered in words (E12: no answer options)."""
 
 
 ROLE_ARTICLES: Mapping[Role, str] = {
@@ -32,6 +34,7 @@ ROLE_ARTICLES: Mapping[Role, str] = {
 OPERATOR_ROLE = KeyQuestion(
     id="operator_role",
     article="art:3:3",
+    is_yes_no=False,
     question={
         Language.EN: "Does your company develop the system, use a system someone else provides, "
         "import it into the EU, or distribute it?",
@@ -74,6 +77,7 @@ SWITCHES: Mapping[str, KeyQuestion] = {
     "substantial_modification": KeyQuestion(
         id="substantial_modification",
         article="art:25:1:b",
+        is_yes_no=False,
         question={
             Language.EN: "Have you changed the system beyond what its provider's documentation "
             "foresees, for example by retraining it for new tasks, adding inputs or changing how "
@@ -223,6 +227,7 @@ provider's documentation foresees, where Art. 3(23) doesn't settle whether it is
 PERSON_REVIEW = KeyQuestion(
     id="role_person_review",
     article="art:3:3",
+    is_yes_no=False,
     question={
         Language.EN: "Please have a person review the description: does your company develop the "
         "system, use a system someone else provides, import it or distribute it, and has it put "
@@ -293,6 +298,46 @@ ROLE_NAMES: Mapping[Language, Mapping[Role, str]] = {
         Role.DISTRIBUTOR: "Händler",
     },
 }
+READING_SIDES: Mapping[Language, Mapping[str, str]] = {
+    Language.EN: {
+        "provider": "Provider",
+        "provider_consequence": "If this holds, the company has the provider's duties.",
+        "base_consequence": "If this holds, the company keeps the {base} role and its duties.",
+    },
+    Language.DE: {
+        "provider": "Anbieter",
+        "provider_consequence": "Gilt diese Lesart, treffen das Unternehmen die Pflichten des "
+        "Anbieters.",
+        "base_consequence": "Gilt diese Lesart, behält das Unternehmen die Rolle {base} und "
+        "deren Pflichten.",
+    },
+}
+"""Each reading's title and consequence (E12): the stricter reading is provider, the lenient
+one the base role; neither changes the class."""
+
+
+ReadingParts = tuple[str, str, None, str]
+"""A reading's title, consequence, class (none: a role reading changes no class) and the
+provision it quotes."""
+
+
+def open_in_law_parts(
+    open_in_law: OpenInLaw, base: Role, language: Language
+) -> tuple[str, tuple[str, str], tuple[ReadingParts, ReadingParts]]:
+    """The question, its two readings (stricter first, the lenient one naming the `base` role)
+    and their parts: the stricter (provider) one quotes the first of the question's articles
+    (the switch), the lenient one the last (the definition it turns on)."""
+    words, name = READING_SIDES[language], ROLE_NAMES[language][base]
+    title = name[:1].upper() + name[1:]
+    stricter, lenient = open_in_law.readings[language]
+    articles = open_in_law.articles
+    parts = (
+        (words["provider"], words["provider_consequence"], None, articles[0]),
+        (title, words["base_consequence"].format(base=name), None, articles[-1]),
+    )
+    return open_in_law.question[language], (stricter, lenient.format(base=title)), parts
+
+
 TEXTS: Mapping[Language, Mapping[str, str]] = {
     Language.EN: {
         "role": "Role: {role}.",

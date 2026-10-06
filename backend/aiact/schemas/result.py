@@ -12,6 +12,7 @@ from pydantic import Field, model_validator
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import LawVersion, RiskClass, Role, Status
 from aiact.schemas.evidence import Fact
+from aiact.schemas.law_text import LAW_TEXTS, LawText
 from aiact.schemas.obligations import Obligation
 from aiact.schemas.questions import FollowUpQuestion
 from aiact.schemas.steps import PROVIDER_REFUSAL, STEP_ORDER, StepName, StepResult
@@ -41,6 +42,14 @@ def derived_status(steps: Iterable[StepResult]) -> Status:
         if status in statuses:
             return status
     return Status.DECIDED
+
+
+def law_text_for(law_version: object) -> LawText:
+    """The label of `law_version`'s text; the amended text's for anything else (a result missing
+    its law version fails validation anyway)."""
+    if isinstance(law_version, LawVersion):
+        return LAW_TEXTS[law_version]
+    return LAW_TEXTS[LawVersion.AMENDED]
 
 
 def refused_steps(steps: Iterable[StepResult]) -> tuple[StepName, ...]:
@@ -74,6 +83,11 @@ class ClassificationResult(ContractModel):
     deciding_facts: tuple[Fact, ...] = ()
     obligations: tuple[Obligation, ...] = ()
     law_version: LawVersion
+    law_text: LawText = Field(
+        default_factory=lambda data: law_text_for(data.get("law_version")),
+        description="The label of the text `law_version` names (CELEX number and date); it "
+        "always matches `law_version`, which sets it when it is left out.",
+    )
     as_of: date
     disclaimer: str = Field(min_length=1)
     legal_review: str | None = Field(
@@ -132,6 +146,12 @@ class ClassificationResult(ContractModel):
             raise ValueError("role_switch_reason and also_role need a role")
         if self.also_role is not None and self.also_role is self.role:
             raise ValueError("also_role must differ from role")
+        return self
+
+    @model_validator(mode="after")
+    def _law_text_matches_version(self) -> Self:
+        if self.law_text != LAW_TEXTS[self.law_version]:
+            raise ValueError(f"law_text must label the {self.law_version.value} text")
         return self
 
     @model_validator(mode="after")

@@ -28,13 +28,13 @@ from aiact.schemas import (
     FollowUpQuestion,
     Language,
     LawVersion,
-    OpenQuestion,
     RiskClass,
     Role,
     Status,
     StepName,
     StepResult,
 )
+from tests.schemas.builders import open_question
 
 ENGINE_INPUT: EngineInput = {
     "description": "We sell a chatbot that answers customer questions.",
@@ -44,9 +44,7 @@ ENGINE_INPUT: EngineInput = {
     "exclude_source_example_ids": ("commission-example-7",),
 }
 MISSING = FollowUpQuestion(id="eu_use", text="Is the system used in the EU?")
-OPEN = OpenQuestion(
-    question="Does the law settle this?", readings=("Stricter reading", "Lenient reading")
-)
+OPEN = open_question("Does the law settle this?", "Stricter reading", "Lenient reading")
 
 ENDING_VARIANTS = ("match", "match_unverified")
 """Stopping-check outcomes that end the run (decision 010); the rest let it go on."""

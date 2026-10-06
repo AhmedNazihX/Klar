@@ -16,6 +16,7 @@ apply to them. Both are asked about the AI Act as amended, as the engine is; wit
 the Luna baseline answers from what the model remembers.
 """
 
+from collections.abc import Mapping
 from datetime import date
 
 from langchain_core.language_models import BaseChatModel
@@ -28,7 +29,7 @@ from aiact.eval.runner import (
     ClassifierInfo,
     ClassifierInput,
 )
-from aiact.llm import ChoiceQuestion, DecisionsClient, DecisionsError, chat_model
+from aiact.llm import ChoiceQuestion, DecisionsClient, DecisionsError, chat_model, replies
 from aiact.llm.chat import reply_usage
 from aiact.llm.routing import require_setting
 from aiact.llm.structured import describe_validation_error, json_schema_format
@@ -40,6 +41,7 @@ from aiact.schemas import (
     Language,
     LawVersion,
     OpenQuestion,
+    Reading,
     RiskClass,
     Role,
     Status,
@@ -83,10 +85,10 @@ class BaselineAnswer(ContractModel):
         description="The Art. 50 paragraphs that apply, for example art:50:1."
     )
     reason: str = Field(min_length=1, description="One or two sentences.")
-    missing_fact: FollowUpQuestion | None = Field(
+    missing_fact: replies.FollowUpQuestion | None = Field(
         description="Required when status is needs_more_information: the question to ask."
     )
-    open_question: OpenQuestion | None = Field(
+    open_question: replies.OpenQuestion | None = Field(
         description="Required when status is legally_ambiguous: the question and both readings."
     )
 
@@ -109,7 +111,9 @@ def to_result(answer: BaselineAnswer, language: Language, label: str) -> Classif
     names = _step_names(answer)
     deciding = DECIDING_STEP[answer.risk_class]
     try:
-        steps = tuple(_step(name, answer, label, is_deciding=name is deciding) for name in names)
+        steps = tuple(
+            _step(name, answer, label, language, is_deciding=name is deciding) for name in names
+        )
         has_role = StepName.ROLE_OBLIGATIONS in names
         return ClassificationResult(
             facts=(),
@@ -138,7 +142,42 @@ def _step_names(answer: BaselineAnswer) -> tuple[StepName, ...]:
     return STEP_ORDER
 
 
-def _step(name: StepName, answer: BaselineAnswer, label: str, *, is_deciding: bool) -> StepResult:
+READING_TITLES: Mapping[Language, tuple[str, str]] = {
+    Language.EN: ("Working assumption", "Other reading"),
+    Language.DE: ("Arbeitsannahme", "Andere Lesart"),
+}
+"""A baseline's readings carry no titles of their own (E12): these generic ones stand in."""
+
+
+def _missing_fact(answer: BaselineAnswer) -> FollowUpQuestion | None:
+    """The baseline's question as the contract carries it, answered in words."""
+    question = answer.missing_fact
+    return FollowUpQuestion.model_validate(question.model_dump()) if question else None
+
+
+def _open_question(answer: BaselineAnswer, language: Language) -> OpenQuestion | None:
+    """The baseline's open question with its two readings as the contract structures them: a
+    generic title, the stricter reading applied with the answer's class, no citation."""
+    plain = answer.open_question
+    if plain is None:
+        return None
+    readings = tuple(
+        Reading(
+            title=title,
+            risk_class=answer.risk_class if number == 0 else None,
+            explanation=text,
+            is_applied=number == 0,
+        )
+        for number, (title, text) in enumerate(
+            zip(READING_TITLES[language], plain.readings, strict=True)
+        )
+    )
+    return OpenQuestion(question=plain.question, readings=readings)
+
+
+def _step(
+    name: StepName, answer: BaselineAnswer, label: str, language: Language, *, is_deciding: bool
+) -> StepResult:
     if name is StepName.ROLE_OBLIGATIONS:
         return StepResult(step=name, decision=f"{label}: role {answer.role.value}")
     if not is_deciding:
@@ -148,8 +187,10 @@ def _step(name: StepName, answer: BaselineAnswer, label: str, *, is_deciding: bo
         step=name,
         decision=f"{label}: {answer.risk_class.value}. {answer.reason}",
         status=status,
-        missing_fact=answer.missing_fact if status is Status.NEEDS_MORE_INFORMATION else None,
-        open_question=answer.open_question if status is Status.LEGALLY_AMBIGUOUS else None,
+        missing_fact=_missing_fact(answer) if status is Status.NEEDS_MORE_INFORMATION else None,
+        open_question=(
+            _open_question(answer, language) if status is Status.LEGALLY_AMBIGUOUS else None
+        ),
     )
 
 

@@ -51,6 +51,7 @@ from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
 from aiact.eval.experiments.matchers import replay_state, transparency_matches
 from aiact.llm import LLMConfigError, OpenRouterEmbeddings
+from aiact.llm.replies import OpenQuestion
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit, SearchResults
 from aiact.schemas import (
@@ -61,7 +62,6 @@ from aiact.schemas import (
     HighRiskRoute,
     Language,
     LawVersion,
-    OpenQuestion,
     RiskClass,
     SourceSpan,
     Status,
@@ -352,7 +352,20 @@ def test_a_duty_the_law_leaves_open_is_ambiguous_with_the_duty_listed() -> None:
     assert result.transparency_duties == ("art:50:2",)
     step = result.step
     assert step.status is Status.LEGALLY_AMBIGUOUS
-    assert step.open_question == OPEN_EDITING
+    question = step.open_question
+    assert question is not None
+    assert question.question == OPEN_EDITING.question
+    applies, does_not = question.readings
+    assert (applies.explanation, does_not.explanation) == OPEN_EDITING.readings
+    assert (applies.title, applies.risk_class, applies.is_applied) == (
+        "Art. 50(2) applies",
+        RiskClass.LIMITED_RISK,  # no earlier check holds a higher class
+        True,
+    )
+    assert (does_not.title, does_not.risk_class) == ("Art. 50(2) does not apply", None)
+    assert applies.citation is not None
+    assert applies.citation.provision_id == "art:50:2"
+    assert applies.citation in step.citations
     assert step.missing_fact is None
     assert "Art. 50(2) is assumed pending legal review: Is a change of tone standard editing?" in (
         step.decision
@@ -361,10 +374,15 @@ def test_a_duty_the_law_leaves_open_is_ambiguous_with_the_duty_listed() -> None:
 
 def test_an_open_duty_without_its_question_gets_the_fixed_one() -> None:
     result = outcome(answer(synthetic_content=unsettled(APPLIES, question=None)))
-    assert result.step.open_question == OpenQuestion(
-        question="Do the Act and guidance settle whether Art. 50(2) applies to this system?",
-        readings=("Art. 50(2) applies.", "Art. 50(2) does not apply."),
+    question = result.step.open_question
+    assert question is not None
+    assert question.question == (
+        "Do the Act and guidance settle whether Art. 50(2) applies to this system?"
     )
+    assert [reading.explanation for reading in question.readings] == [
+        "Art. 50(2) applies.",
+        "Art. 50(2) does not apply.",
+    ]
 
 
 def test_an_open_flag_on_a_duty_not_raised_changes_nothing() -> None:

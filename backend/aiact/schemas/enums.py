@@ -75,3 +75,20 @@ class Language(StrEnum):
 
     EN = "en"
     DE = "de"
+
+
+class AnswerOption(StrEnum):
+    """An answer the interface offers to a yes/no follow-up question (E12)."""
+
+    YES = "yes"
+    NO = "no"
+    NOT_SURE = "not_sure"
+
+
+class SettledByKind(StrEnum):
+    """What could settle an open question of law (E12, decision 026 item 4)."""
+
+    GUIDANCE = "guidance"
+    """Guidance not yet final; naming it never promises that the result is checked again."""
+    PROVIDER = "provider"
+    """The provider's own documented assessment, which the company can ask for."""
