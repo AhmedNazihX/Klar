@@ -1,12 +1,18 @@
-"""The RAGAS model (V6): Gemini 3.1 Flash-Lite on its EU endpoint, as RAGAS's metrics want it.
+"""The RAGAS model (V6): `RAGAS_MODEL` on its pinned `RAGAS_PROVIDER` endpoint, by default
+Gemini 3.1 Flash-Lite on `google-vertex/eu` (decision 005).
 
-RAGAS 0.4's metrics take an instructor-based LLM built from an OpenAI SDK client, so this is the
-one place the app reaches OpenRouter through the OpenAI SDK rather than LangChain. Every request
-carries the privacy routing flags and the pinned EU endpoint (decision 005) in its body, and every
-reply's cost and tokens (OpenRouter's `usage`) go to the caller's `on_usage` from an HTTP response
-hook, so retries and every metric's calls are counted whichever library made them.
+Two clients share that route:
+- `ragas_model` is what RAGAS's metrics want: RAGAS 0.4 takes an instructor-based LLM built from
+  an OpenAI SDK client, so this is the one place the app reaches OpenRouter through the OpenAI SDK
+  rather than LangChain. Every request carries the privacy routing flags and the pinned endpoint
+  in its body, and every reply's cost and tokens (OpenRouter's `usage`) go to the caller's
+  `on_usage` from an HTTP response hook, so retries and every metric's calls are counted.
+- `ragas_chat_model` is the same route as a LangChain chat model (`chat_model("ragas")`), for the
+  answers RAGAS judges.
 
-RAGAS sends usage telemetry to its vendor by default; importing this module switches it off.
+This module needs the `eval` dependency group (`uv sync` installs it; a runtime install with
+`--no-default-groups` doesn't). RAGAS sends usage telemetry to its vendor by default;
+`ragas_model` switches it off before RAGAS can send anything.
 """
 
 import json
@@ -15,25 +21,22 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 import httpx
+from langchain_openrouter import ChatOpenRouter
 from openai import AsyncOpenAI
 from ragas.llms import InstructorBaseRagasLLM, llm_factory
 
+from aiact.llm.chat import chat_model
 from aiact.llm.routing import APP_TITLE, provider_preferences, require_api_key
 from aiact.settings import Settings, get_settings
 
-# RAGAS reads this on its first telemetry event; nothing here has sent one yet.
-os.environ["RAGAS_DO_NOT_TRACK"] = "true"
-
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_RAGAS_MODEL = "google/gemini-3.1-flash-lite"
-"""INIT > Tech stack (RAGAS: Gemini 3.1 Flash-Lite); `RAGAS_MODEL` overrides it."""
-RAGAS_PROVIDER = "google-vertex/eu"
-"""Flash-Lite's EU zero-data-retention endpoint, pinned with fallbacks off (decision 005)."""
 MAX_OUTPUT_TOKENS = 2048
 """Room for RAGAS's statement lists and verdicts; Flash-Lite doesn't reason, so no more."""
 MAX_RETRIES = 2
 """The OpenAI SDK's own default. Every attempt that gets a reply is counted by the usage hook."""
 TIMEOUT_SECONDS = 120.0
+RAGAS_TELEMETRY_OFF = ("RAGAS_DO_NOT_TRACK", "true")
+"""The environment switch RAGAS reads (once, on its first telemetry event) to send nothing."""
 
 UsageCallback = Callable[[float | None, int], None]
 """Called with one reply's cost (None when OpenRouter sent none) and its total tokens."""
@@ -41,12 +44,15 @@ UsageCallback = Callable[[float | None, int], None]
 
 @dataclass(frozen=True)
 class RagasModel:
-    """The RAGAS metrics' LLM and the raw client it wraps (for other calls on the same route)."""
+    """The RAGAS metrics' LLM, and the client it wraps (close it with `aclose` when done)."""
 
     llm: InstructorBaseRagasLLM
     client: AsyncOpenAI
     model: str
     provider: str
+
+    async def aclose(self) -> None:
+        await self.client.close()
 
 
 def routing_body(provider: str) -> dict[str, object]:
@@ -55,12 +61,15 @@ def routing_body(provider: str) -> dict[str, object]:
 
 
 def ragas_model(on_usage: UsageCallback, *, settings: Settings | None = None) -> RagasModel:
-    """The RAGAS model on its pinned EU endpoint, with every reply's usage sent to `on_usage`.
+    """The RAGAS metrics' LLM on the pinned route, with every reply's usage sent to `on_usage`.
 
     Raises `LLMConfigError` when the OpenRouter API key is not set.
     """
     settings = settings or get_settings()
-    model = settings.ragas_model or DEFAULT_RAGAS_MODEL
+    # An exception to "settings only, never os.environ": this writes, it doesn't read config.
+    # RAGAS has no other off switch, and the switch must be set before its first event, which
+    # `llm_factory` sends. Set unconditionally, so no environment can turn telemetry back on.
+    os.environ[RAGAS_TELEMETRY_OFF[0]] = RAGAS_TELEMETRY_OFF[1]
     client = AsyncOpenAI(
         api_key=require_api_key(settings).get_secret_value(),
         base_url=OPENROUTER_BASE_URL,
@@ -72,12 +81,29 @@ def ragas_model(on_usage: UsageCallback, *, settings: Settings | None = None) ->
         ),
     )
     llm = llm_factory(
-        model,
+        settings.ragas_model,
         client=client,
         max_tokens=MAX_OUTPUT_TOKENS,
-        extra_body=routing_body(RAGAS_PROVIDER),
+        extra_body=routing_body(settings.ragas_provider),
     )
-    return RagasModel(llm=llm, client=client, model=model, provider=RAGAS_PROVIDER)
+    return RagasModel(
+        llm=llm, client=client, model=settings.ragas_model, provider=settings.ragas_provider
+    )
+
+
+def ragas_chat_model(*, max_tokens: int, settings: Settings | None = None) -> ChatOpenRouter:
+    """`chat_model("ragas")` pinned to `RAGAS_PROVIDER` with fallbacks off.
+
+    Raises `LLMConfigError` when the OpenRouter API key is not set.
+    """
+    settings = settings or get_settings()
+    return chat_model(
+        "ragas",
+        provider_order=[settings.ragas_provider],
+        allow_fallbacks=False,
+        max_tokens=max_tokens,
+        settings=settings,
+    )
 
 
 def usage_hook(on_usage: UsageCallback) -> Callable[[httpx.Response], Awaitable[None]]:

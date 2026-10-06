@@ -24,6 +24,7 @@ from aiact.eval import (
     isolation,
     label_freeze,
     metrics,
+    ragas_metrics,
     records,
     report,
     runner,
@@ -408,16 +409,15 @@ def eval_run(
 @eval_app.command("ragas")
 def eval_ragas(
     subset: Annotated[int | None, typer.Option(min=1, help="A seeded sample of N items")] = None,
-    top_k: Annotated[int, typer.Option(min=1, max=20, help="Search hits per question")] = 5,
+    top_k: Annotated[
+        int, typer.Option(min=1, max=ragas_metrics.MAX_TOP_K, help="Search hits per question")
+    ] = ragas_metrics.DEFAULT_TOP_K,
     max_cost_usd: Annotated[
         float, typer.Option(min=0.000001, help="Start no new item once this much is spent")
-    ] = 0.5,
+    ] = ragas_metrics.DEFAULT_MAX_COST_USD,
     seed: Annotated[int, typer.Option(help="Seed for the --subset sample")] = 0,
 ) -> None:
     """Score retrieval and answers on the Q&A set with RAGAS and record the run (V6)."""
-    # Imported here: RAGAS loads slowly, and no other command needs it.
-    from aiact.eval import ragas_metrics
-
     try:
         items = load_qa_items()
         git_sha, is_dirty = runner.current_git_state()
@@ -432,6 +432,7 @@ def eval_ragas(
         FileNotFoundError,
         CalledProcessError,
         LLMConfigError,
+        ragas_metrics.RagasNotInstalledError,
         records.DatabaseNotConfiguredError,
     ) as error:
         typer.echo(f"Error: {error}", err=True)
@@ -445,8 +446,8 @@ def eval_ragas(
         for name, value in summary.means.items()
     )
     typer.echo(
-        f"run {summary.run_id}: {summary.status.value}, {summary.items_scored}/"
-        f"{summary.items_planned} items ({summary.items_failed} failed), "
+        f"run {summary.run_id}: {summary.status.value}, {summary.cases_scored}/"
+        f"{summary.cases_planned} items ({summary.cases_failed} failed), "
         f"${summary.cost_usd:.4f}, {summary.tokens} tokens; {means}"
     )
 

@@ -9,8 +9,7 @@ from ragas.llms.base import InstructorLLM
 
 from aiact.llm import LLMConfigError
 from aiact.llm.ragas_llm import (
-    DEFAULT_RAGAS_MODEL,
-    RAGAS_PROVIDER,
+    ragas_chat_model,
     ragas_model,
     reply_usage,
     routing_body,
@@ -18,42 +17,70 @@ from aiact.llm.ragas_llm import (
 )
 from aiact.settings import Settings
 
+EU_ROUTE = {
+    "provider": {
+        "data_collection": "deny",
+        "zdr": True,
+        "order": ["google-vertex/eu"],
+        "allow_fallbacks": False,
+    }
+}
+
 
 def _settings(**values: object) -> Settings:
     return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **values)  # pyright: ignore[reportCallIssue]
 
 
-def test_ragas_telemetry_is_off_once_the_module_is_imported() -> None:
+def _no_usage(cost: float | None, tokens: int) -> None:
+    return None
+
+
+def test_building_the_model_switches_ragas_telemetry_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RAGAS_DO_NOT_TRACK", "false")
+    do_not_track.cache_clear()
+    ragas_model(_no_usage, settings=_settings())
     assert do_not_track() is True
 
 
 def test_the_route_is_pinned_to_the_eu_endpoint_without_fallbacks() -> None:
-    assert routing_body("google-vertex/eu") == {
-        "provider": {
-            "data_collection": "deny",
-            "zdr": True,
-            "order": ["google-vertex/eu"],
-            "allow_fallbacks": False,
-        }
-    }
+    assert routing_body("google-vertex/eu") == EU_ROUTE
 
 
 def test_the_model_defaults_to_flash_lite_on_its_eu_endpoint() -> None:
-    model = ragas_model(lambda cost, tokens: None, settings=_settings())
-    assert (model.model, model.provider) == (DEFAULT_RAGAS_MODEL, RAGAS_PROVIDER)
+    model = ragas_model(_no_usage, settings=_settings())
+    assert (model.model, model.provider) == ("google/gemini-3.1-flash-lite", "google-vertex/eu")
     assert isinstance(model.llm, InstructorLLM)
-    assert model.llm.model_args["extra_body"] == routing_body(RAGAS_PROVIDER)
+    assert model.llm.model_args["extra_body"] == EU_ROUTE
 
 
-def test_the_ragas_model_setting_overrides_the_default() -> None:
-    model = ragas_model(lambda cost, tokens: None, settings=_settings(ragas_model="vendor/m"))
-    assert model.model == "vendor/m"
+def test_the_answer_model_takes_the_same_route() -> None:
+    chat = ragas_chat_model(max_tokens=300, settings=_settings())
+    assert chat.model_name == "google/gemini-3.1-flash-lite"
+    assert chat.openrouter_provider == EU_ROUTE["provider"]
+    assert chat.max_tokens == 300
+
+
+def test_the_settings_override_model_and_provider_together() -> None:
+    settings = _settings(ragas_model="vendor/m", ragas_provider="vendor/eu")
+    model = ragas_model(_no_usage, settings=settings)
+    assert (model.model, model.provider) == ("vendor/m", "vendor/eu")
+    assert isinstance(model.llm, InstructorLLM)
+    assert model.llm.model_args["extra_body"] == routing_body("vendor/eu")
+    chat = ragas_chat_model(max_tokens=300, settings=settings)
+    assert chat.model_name == "vendor/m"
+    assert chat.openrouter_provider == routing_body("vendor/eu")["provider"]
 
 
 def test_a_missing_api_key_is_a_config_error() -> None:
     settings = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
     with pytest.raises(LLMConfigError, match="OPENROUTER_API_KEY"):
-        ragas_model(lambda cost, tokens: None, settings=settings)
+        ragas_model(_no_usage, settings=settings)
+
+
+def test_closing_the_model_closes_its_http_client() -> None:
+    model = ragas_model(_no_usage, settings=_settings())
+    asyncio.run(model.aclose())
+    assert model.client.is_closed()
 
 
 @pytest.mark.parametrize(

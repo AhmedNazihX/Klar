@@ -250,9 +250,14 @@ def load_benchmark(case_set: CaseSet, cases_dir: Path = CASES_DIR) -> tuple[Benc
     return load_cases(case_set, cases_dir)
 
 
-def select_subset(
-    cases: Sequence[BenchmarkCase], size: int | None, seed: int
-) -> tuple[BenchmarkCase, ...]:
+class HasId(Protocol):
+    """Anything with a case id: a `BenchmarkCase`, a Q&A item."""
+
+    @property
+    def id(self) -> str: ...
+
+
+def select_subset[T: HasId](cases: Sequence[T], size: int | None, seed: int) -> tuple[T, ...]:
     """A seeded random sample of `size` cases in id order, or every case when `size` is None."""
     ordered = sorted(cases, key=lambda case: case.id)
     if size is None or size >= len(ordered):
@@ -393,7 +398,7 @@ def run_benchmark(
     try:
         _classify_all(planned, classifier, scorer, options, tally, record)
     except BaseException:
-        _finish_after_failure(store, run_id, tally.outcome(RunStatus.INTERRUPTED, len(planned)))
+        finish_after_failure(store, run_id, tally.outcome(RunStatus.INTERRUPTED, len(planned)))
         raise
     status = RunStatus.COST_CAP_REACHED if tally.recorded < len(planned) else RunStatus.COMPLETED
     store.finish_run(run_id, tally.outcome(status, len(planned)))
@@ -434,7 +439,7 @@ class _Tally:
         }
 
 
-def _finish_after_failure(store: RunStore, run_id: UUID, outcome: Mapping[str, JsonValue]) -> None:
+def finish_after_failure(store: RunStore, run_id: UUID, outcome: Mapping[str, JsonValue]) -> None:
     """Mark a failed run; if that fails too, log it and let the original error propagate."""
     try:
         store.finish_run(run_id, outcome)

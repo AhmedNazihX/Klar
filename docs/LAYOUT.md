@@ -34,8 +34,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            reply_usage, a reply's cost and tokens (E10)
 │   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
 │   │   │                            generations.py: the provider that served a generation (X2)
-│   │   │                            ragas_llm.py: the RAGAS model (Flash-Lite, EU endpoint) over the OpenAI SDK,
-│   │   │                            usage metered per reply, RAGAS telemetry off (V6)
+│   │   │                            ragas_llm.py: the RAGAS route (RAGAS_MODEL on RAGAS_PROVIDER): the metrics' LLM
+│   │   │                            over the OpenAI SDK, usage metered per reply, telemetry off; the same route
+│   │   │                            as a chat model for answers; needs the `eval` dependency group (V6)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
 │   │   │                            build.py + load.py (C3), embed.py (C4)

@@ -13,40 +13,52 @@ from those hits alone, and scored:
   AI Act hits. A hit covers its own provision and every provision under it, since a parent row's
   text includes its children's (C1).
 
-The three RAGAS metrics run on Gemini 3.1 Flash-Lite (`aiact.llm.ragas_llm`). Until P7's Q&A
-exists, the answer comes from `PlainAnswerer`, one retrieval-grounded prompt on the same model;
-P7 passes its own `Answerer` to record faithfulness on its answers, and X1a passes another
-embedder to compare embedding arms. Unanswerable items have no reference answer, so they are
-left out (C8 and X1 calibrate the relevance cut-off on them).
+The three RAGAS metrics run on the RAGAS model (`aiact.llm.ragas_llm`; Gemini 3.1 Flash-Lite by
+default). Until P7's Q&A exists, the answer comes from `PlainAnswerer`, one retrieval-grounded
+prompt on the same route; P7 passes its own `Answerer` to record faithfulness on its answers,
+and X1a passes another embedder to compare embedding arms. Unanswerable items have no reference
+answer, so they are left out (C8 and X1 calibrate the relevance cut-off on them).
 
 A run writes one `eval_runs` row (benchmark `qa`) and one `eval_case_results` row per item:
-`label` is the item, `predicted` the answer and the provisions retrieved (or `{"error": …}`),
-`scores` the four metrics plus the runner's `cost_usd`, `tokens` and `is_error`. The run's mean
-per metric goes into `config.outcome.means`. A cost cap is checked before each item.
+`label` is the item, `predicted` the answer and the provisions retrieved (or `{"error": …}`,
+with the retrieved provisions when only a model call failed), `scores` the four metrics plus the
+runner's `cost_usd`, `tokens` and `is_error`. The run's outcome holds each metric's mean over the
+items scored without error, and what the run spent in all. A cost cap is checked before each item.
+
+Importing this module is cheap: RAGAS and the OpenAI SDK (the `eval` dependency group) load only
+when a real run is built (`build_parts`, `RagasScorer.from_llm`).
 """
 
 import asyncio
 import logging
 import math
-import random
-from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Awaitable, Callable, Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Protocol
+from importlib.util import find_spec
+from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
-from openai import AsyncOpenAI
+from langchain_core.language_models import BaseChatModel
 from pydantic import JsonValue
-from ragas.llms import InstructorBaseRagasLLM
-from ragas.metrics.collections import ContextPrecisionWithReference, ContextRecall, Faithfulness
 
 from aiact.engine.usage import UsageMeter
 from aiact.eval.cases import QAItem
-from aiact.eval.runner import ERROR_MESSAGE_LIMIT, CaseRecord, RunStatus, RunStore
+from aiact.eval.runner import (
+    ERROR_MESSAGE_LIMIT,
+    CaseRecord,
+    RunStatus,
+    RunStore,
+    finish_after_failure,
+    select_subset,
+)
 from aiact.llm.embeddings import OpenRouterEmbeddings
-from aiact.llm.ragas_llm import ragas_model, routing_body
 from aiact.retrieval.search import QueryEmbedder, SearchHit, SearchResults, search_ai_act
 from aiact.settings import Settings, get_settings
+
+if TYPE_CHECKING:
+    from ragas.llms import InstructorBaseRagasLLM
+    from ragas.metrics.result import MetricResult
 
 logger = logging.getLogger(__name__)
 
@@ -60,12 +72,17 @@ METRICS = (CONTEXT_PRECISION, CONTEXT_RECALL, FAITHFULNESS, PROVISION_RECALL)
 DEFAULT_TOP_K = 5
 """Hits per question: what a Q&A answer would be grounded on."""
 MAX_TOP_K = 20
+"""The most hits per question `aiact evaluate ragas` accepts (each one is a judged context)."""
 DEFAULT_MAX_COST_USD = 0.5
-"""About the cost of one full run of the 29 answerable items (estimate, not a measurement)."""
+"""About twice a full run of the 29 answerable items (a 2-item check cost $0.007 per item)."""
 ANSWER_MAX_TOKENS = 1024
 MODEL_NODE = "ragas_model"
-"""The usage-meter node for every call on the RAGAS model (answers and metrics)."""
+"""The usage-meter node for every call on the RAGAS route (answers and metrics)."""
 SEARCH_NODE = "search"
+EVAL_GROUP_HINT = (
+    "RAGAS is not installed; install the eval dependency group with `uv sync` "
+    "(from backend/; a runtime install with --no-default-groups leaves it out)"
+)
 
 ANSWER_PROMPT = """\
 Answer the question about the EU AI Act using only the provisions below. Name the provision ids \
@@ -79,6 +96,16 @@ Question: {question}"""
 LANGUAGE_NAMES = {"en": "English", "de": "German"}
 
 Score = float | bool | None
+
+
+class RagasNotInstalledError(RuntimeError):
+    """The `eval` dependency group (RAGAS, the OpenAI SDK) is not installed."""
+
+
+def require_ragas() -> None:
+    """Raise `RagasNotInstalledError` unless RAGAS and the OpenAI SDK can be imported."""
+    if find_spec("ragas") is None or find_spec("openai") is None:
+        raise RagasNotInstalledError(EVAL_GROUP_HINT)
 
 
 class Retriever(Protocol):
@@ -132,11 +159,11 @@ class SearchRetriever:
 
 @dataclass(frozen=True)
 class PlainAnswerer:
-    """One retrieval-grounded prompt on the RAGAS model: a stand-in for P7's Q&A."""
+    """One retrieval-grounded prompt on the RAGAS route: a stand-in for P7's Q&A. Every reply's
+    cost is counted on `meter`."""
 
-    client: AsyncOpenAI
-    model: str
-    provider: str
+    chat: BaseChatModel
+    meter: UsageMeter
     name: str = "plain_rag"
 
     async def answer(self, item: QAItem, contexts: Sequence[str]) -> str:
@@ -145,26 +172,52 @@ class PlainAnswerer:
             contexts="\n\n".join(contexts),
             question=item.question,
         )
-        reply = await self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.0,
-            max_tokens=ANSWER_MAX_TOKENS,
-            extra_body=routing_body(self.provider),
+        reply = await self.chat.ainvoke(
+            prompt, config={"callbacks": [self.meter.chat_callback(MODEL_NODE)]}
         )
-        text = reply.choices[0].message.content if reply.choices else None
-        if not text or not text.strip():
+        text = reply.text.strip()
+        if not text:
             raise ValueError("the answer model returned no text")
-        return text.strip()
+        return text
 
 
+class PrecisionMetric(Protocol):
+    async def ascore(
+        self, user_input: str, reference: str, retrieved_contexts: list[str]
+    ) -> "MetricResult": ...
+
+
+class RecallMetric(Protocol):
+    async def ascore(
+        self, user_input: str, retrieved_contexts: list[str], reference: str
+    ) -> "MetricResult": ...
+
+
+class FaithfulnessMetric(Protocol):
+    async def ascore(
+        self, user_input: str, response: str, retrieved_contexts: list[str]
+    ) -> "MetricResult": ...
+
+
+@dataclass(frozen=True)
 class RagasScorer:
     """Context precision (with reference), context recall and faithfulness, run together."""
 
-    def __init__(self, llm: InstructorBaseRagasLLM) -> None:
-        self._precision = ContextPrecisionWithReference(llm=llm)
-        self._recall = ContextRecall(llm=llm)
-        self._faithfulness = Faithfulness(llm=llm)
+    precision: PrecisionMetric
+    recall: RecallMetric
+    faithfulness: FaithfulnessMetric
+
+    @classmethod
+    def from_llm(cls, llm: "InstructorBaseRagasLLM") -> "RagasScorer":
+        from ragas.metrics.collections import (
+            ContextPrecisionWithReference,
+            ContextRecall,
+            Faithfulness,
+        )
+
+        return cls(
+            ContextPrecisionWithReference(llm=llm), ContextRecall(llm=llm), Faithfulness(llm=llm)
+        )
 
     async def score(
         self, item: QAItem, contexts: Sequence[str], answer: str
@@ -172,13 +225,13 @@ class RagasScorer:
         reference = reference_answer(item)
         retrieved = list(contexts)
         precision, recall, faithfulness = await asyncio.gather(
-            self._precision.ascore(
+            self.precision.ascore(
                 user_input=item.question, reference=reference, retrieved_contexts=retrieved
             ),
-            self._recall.ascore(
+            self.recall.ascore(
                 user_input=item.question, retrieved_contexts=retrieved, reference=reference
             ),
-            self._faithfulness.ascore(
+            self.faithfulness.ascore(
                 user_input=item.question, response=answer, retrieved_contexts=retrieved
             ),
         )
@@ -189,9 +242,14 @@ class RagasScorer:
         }
 
 
+async def _nothing_to_close() -> None:
+    return None
+
+
 @dataclass(frozen=True)
 class RagasParts:
-    """Everything a run calls, and the model it is judged by (for `eval_runs.config`)."""
+    """Everything a run calls, the model it is judged by (for `eval_runs.config`), and what
+    to close when the run ends."""
 
     retriever: Retriever
     answerer: Answerer
@@ -200,20 +258,30 @@ class RagasParts:
     model: str
     provider: str
     embedding: JsonValue = None
+    aclose: Callable[[], Awaitable[None]] = field(default=_nothing_to_close)
 
 
 def build_parts(top_k: int = DEFAULT_TOP_K, settings: Settings | None = None) -> RagasParts:
-    """The real run: Flash-Lite on its EU endpoint, the configured embedding arm, one meter.
+    """The real run: the RAGAS route, the configured embedding arm, one meter. Build new parts
+    for each run: the run closes the model's client when it ends.
 
-    Raises `LLMConfigError` when the API key or an `EMBEDDING_*` setting is not set.
+    Raises `RagasNotInstalledError` without the `eval` group, and `LLMConfigError` when the API
+    key or an `EMBEDDING_*` setting is not set.
     """
+    require_ragas()
+    # Imported here: it loads RAGAS and the OpenAI SDK, which only the `eval` group installs.
+    from aiact.llm.ragas_llm import ragas_chat_model, ragas_model
+
+    settings = settings or get_settings()
     meter = UsageMeter()
     model = ragas_model(lambda cost, tokens: meter.add(MODEL_NODE, cost, tokens), settings=settings)
     embeddings = OpenRouterEmbeddings(settings=settings)
     return RagasParts(
         retriever=SearchRetriever(top_k, meter.embedder(SEARCH_NODE, embeddings)),
-        answerer=PlainAnswerer(model.client, model.model, model.provider),
-        scorer=RagasScorer(model.llm),
+        answerer=PlainAnswerer(
+            ragas_chat_model(max_tokens=ANSWER_MAX_TOKENS, settings=settings), meter
+        ),
+        scorer=RagasScorer.from_llm(model.llm),
         meter=meter,
         model=model.model,
         provider=model.provider,
@@ -222,6 +290,7 @@ def build_parts(top_k: int = DEFAULT_TOP_K, settings: Settings | None = None) ->
             "provider": embeddings.provider,
             "dimensions": embeddings.dimensions,
         },
+        aclose=model.aclose,
     )
 
 
@@ -244,9 +313,9 @@ class RagasOptions:
 class RagasSummary:
     run_id: UUID
     status: RunStatus
-    items_planned: int
-    items_scored: int
-    items_failed: int
+    cases_planned: int
+    cases_scored: int
+    cases_failed: int
     cost_usd: float
     tokens: int
     means: Mapping[str, float | None]
@@ -286,19 +355,25 @@ def provision_recall(required: Sequence[str], hits: Sequence[SearchHit]) -> floa
 
 def select_items(items: Sequence[QAItem], size: int | None, seed: int) -> tuple[QAItem, ...]:
     """The answerable items in id order, or a seeded random sample of `size` of them."""
-    answerable = sorted((item for item in items if item.answerable), key=lambda item: item.id)
-    if size is None or size >= len(answerable):
-        return tuple(answerable)
-    return tuple(sorted(random.Random(seed).sample(answerable, size), key=lambda item: item.id))
+    return select_subset([item for item in items if item.answerable], size, seed)
 
 
 def run_ragas(
     items: Sequence[QAItem], parts: RagasParts, store: RunStore, options: RagasOptions
 ) -> RagasSummary:
-    """Score the answerable items one by one and record the run (see the module docstring)."""
-    return asyncio.run(
-        _run(select_items(items, options.subset, options.seed), parts, store, options)
-    )
+    """Score the answerable items one by one and record the run (see the module docstring).
+    The parts' clients are closed when it ends."""
+    planned = select_items(items, options.subset, options.seed)
+    return asyncio.run(_run_and_close(planned, parts, store, options))
+
+
+async def _run_and_close(
+    planned: Sequence[QAItem], parts: RagasParts, store: RunStore, options: RagasOptions
+) -> RagasSummary:
+    try:
+        return await _run(planned, parts, store, options)
+    finally:
+        await parts.aclose()
 
 
 async def _run(
@@ -316,17 +391,18 @@ async def _run(
             store.add_case(run_id, record)
             records.append(record)
     except BaseException:
-        store.finish_run(run_id, run_outcome(RunStatus.INTERRUPTED, planned, records, parts))
+        outcome = run_outcome(RunStatus.INTERRUPTED, planned, records, parts.meter)
+        finish_after_failure(store, run_id, outcome)
         raise
-    outcome = run_outcome(status, planned, records, parts)
-    store.finish_run(run_id, outcome)
+    store.finish_run(run_id, run_outcome(status, planned, records, parts.meter))
     usage = parts.meter.usage()
+    scored = _scored(records)
     return RagasSummary(
         run_id=run_id,
         status=status,
-        items_planned=len(planned),
-        items_scored=sum(1 for record in records if record.scores["is_error"] is False),
-        items_failed=sum(1 for record in records if record.scores["is_error"] is True),
+        cases_planned=len(planned),
+        cases_scored=len(scored),
+        cases_failed=len(records) - len(scored),
         cost_usd=usage.cost_usd,
         tokens=usage.tokens,
         means=metric_means(records),
@@ -354,17 +430,7 @@ async def score_item(item: QAItem, parts: RagasParts) -> CaseRecord:
     """Retrieve, answer and score one item. A failure becomes an `is_error` row with what the
     item spent, and the run goes on."""
     before = parts.meter.usage()
-    predicted: dict[str, JsonValue]
-    scores: dict[str, Score]
-    try:
-        predicted, scores = await _retrieve_answer_score(item, parts)
-        is_error = False
-    except Exception as exc:
-        logger.warning("Q&A item %s failed: %s", item.id, type(exc).__name__)
-        predicted = {
-            "error": {"type": type(exc).__name__, "message": str(exc)[:ERROR_MESSAGE_LIMIT]}
-        }
-        scores, is_error = {}, True
+    predicted, scores, is_error = await _retrieve_answer_score(item, parts)
     after = parts.meter.usage()
     cost_usd = after.cost_usd - before.cost_usd
     tokens = after.tokens - before.tokens
@@ -382,34 +448,49 @@ async def score_item(item: QAItem, parts: RagasParts) -> CaseRecord:
 
 async def _retrieve_answer_score(
     item: QAItem, parts: RagasParts
-) -> tuple[dict[str, JsonValue], dict[str, Score]]:
-    hits = tuple(await asyncio.to_thread(parts.retriever, item))
+) -> tuple[dict[str, JsonValue], dict[str, Score], bool]:
+    """The row's prediction, metric scores and error flag. Once retrieval worked, its provisions
+    and `provision_recall` are kept even when a later model call fails."""
+    try:
+        hits = tuple(await asyncio.to_thread(parts.retriever, item))
+    except Exception as exc:
+        return {"error": _error(item, exc)}, {}, True
     retrieved: list[JsonValue] = [
         {"doc_key": hit.doc_key, "provision_id": hit.provision_id} for hit in hits
     ]
-    recall = provision_recall(item.required_provision_ids, hits)
+    recall: dict[str, Score] = {
+        PROVISION_RECALL: provision_recall(item.required_provision_ids, hits)
+    }
     if not hits:
         # Nothing to answer from or judge: no hit is useful and no claim is supported by one.
-        empty: dict[str, Score] = {
-            CONTEXT_PRECISION: 0.0,
-            CONTEXT_RECALL: 0.0,
-            FAITHFULNESS: None,
-            PROVISION_RECALL: recall,
-        }
-        return {"answer": None, "retrieved": retrieved}, empty
+        empty: dict[str, Score] = {CONTEXT_PRECISION: 0.0, CONTEXT_RECALL: 0.0, FAITHFULNESS: None}
+        return {"answer": None, "retrieved": retrieved}, {**empty, **recall}, False
     contexts = [context_text(hit) for hit in hits]
-    answer = await parts.answerer.answer(item, contexts)
-    judged = await parts.scorer.score(item, contexts, answer)
-    return {"answer": answer, "retrieved": retrieved}, {**judged, PROVISION_RECALL: recall}
+    try:
+        answer = await parts.answerer.answer(item, contexts)
+        judged = await parts.scorer.score(item, contexts, answer)
+    except Exception as exc:
+        return {"error": _error(item, exc), "retrieved": retrieved}, recall, True
+    return {"answer": answer, "retrieved": retrieved}, {**judged, **recall}, False
+
+
+def _error(item: QAItem, exc: Exception) -> JsonValue:
+    logger.warning("Q&A item %s failed: %s", item.id, type(exc).__name__)
+    return {"type": type(exc).__name__, "message": str(exc)[:ERROR_MESSAGE_LIMIT]}
+
+
+def _scored(records: Sequence[CaseRecord]) -> list[CaseRecord]:
+    return [record for record in records if record.scores["is_error"] is False]
 
 
 def metric_means(records: Sequence[CaseRecord]) -> dict[str, float | None]:
-    """Each metric's mean over the items that have a value for it; None when none has."""
+    """Each metric's mean over the items scored without error that have a value for it; None
+    when none has."""
     means: dict[str, float | None] = {}
     for metric in METRICS:
         values = [
             float(value)
-            for record in records
+            for record in _scored(records)
             if isinstance(value := record.scores.get(metric), int | float)
             and not isinstance(value, bool)
         ]
@@ -418,16 +499,21 @@ def metric_means(records: Sequence[CaseRecord]) -> dict[str, float | None]:
 
 
 def run_outcome(
-    status: RunStatus, planned: Sequence[QAItem], records: Sequence[CaseRecord], parts: RagasParts
+    status: RunStatus, planned: Sequence[QAItem], records: Sequence[CaseRecord], meter: UsageMeter
 ) -> dict[str, JsonValue]:
-    """`eval_runs.config.outcome`: the status, the item counts and each metric's mean."""
+    """`eval_runs.config.outcome`: the status, the case counts, each metric's mean, and what the
+    run spent in all (more than the stored rows' sum when an item in flight was interrupted)."""
+    usage = meter.usage()
+    scored = _scored(records)
     means: dict[str, JsonValue] = dict(metric_means(records))
     return {
         "status": status.value,
         "finished_at": datetime.now(UTC).isoformat(),
-        "items_planned": len(planned),
-        "items_scored": sum(1 for record in records if record.scores["is_error"] is False),
-        "items_failed": sum(1 for record in records if record.scores["is_error"] is True),
-        "is_cost_complete": parts.meter.usage().is_cost_complete,
+        "cases_planned": len(planned),
+        "cases_scored": len(scored),
+        "cases_failed": len(records) - len(scored),
+        "cost_usd": usage.cost_usd,
+        "tokens": usage.tokens,
+        "is_cost_complete": usage.is_cost_complete,
         "means": means,
     }
