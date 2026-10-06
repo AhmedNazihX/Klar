@@ -7,7 +7,7 @@ No model is involved: this is a plain lookup over the corpus tables (decisions 0
   `recital:` id is always read from the original text, the only one that has recitals. A
   `guide:<doc_key>:…` id names its guideline or code. The decision-009 rule is applied on top:
   `(d.law_version = $v or d.law_version is null) and not d.is_amending`, so the Omnibus itself is
-  never returned.
+  never returned; a citation of the Omnibus reads it through `get_omnibus_provision` (E9).
 - **Which date.** `as_of` resolves only against the amended text and defaults to today; the
   original text is an explicit view (one open slice per unit), never a fallback, so asking for an
   article or annex point in `original` together with `as_of` is an error. A recital ignores
@@ -23,7 +23,7 @@ import re
 from collections.abc import Mapping
 from datetime import date
 from types import MappingProxyType
-from typing import Any
+from typing import Any, LiteralString
 
 import psycopg
 from psycopg.rows import dict_row
@@ -44,7 +44,10 @@ AI_ACT_DOC_KEYS: Mapping[LawVersion, str] = MappingProxyType(
 )
 """The manifest `doc_key` of each AI Act text (decision 009)."""
 
-SELECT_PROVISION = """
+OMNIBUS_DOC_KEY = "omnibus"
+"""The manifest `doc_key` of the Digital Omnibus, the one amending act in the corpus."""
+
+_SELECT_UNIT: LiteralString = """
     select d.doc_key, d.title, d.doc_type, d.status, d.law_version, p.language,
            p.heading, p.text, p.valid_from, p.valid_to
     from provisions p
@@ -52,11 +55,25 @@ SELECT_PROVISION = """
     where p.provision_id = %(provision_id)s
       and p.language = any(%(languages)s)
       and d.doc_key = %(doc_key)s
+      and (%(as_of)s::date is null or daterange(p.valid_from, p.valid_to) @> %(as_of)s::date)
+"""
+SELECT_PROVISION: LiteralString = (
+    _SELECT_UNIT
+    + """
       and (d.law_version = %(law_version)s or d.law_version is null)
       and not d.is_amending
-      and (%(as_of)s::date is null or daterange(p.valid_from, p.valid_to) @> %(as_of)s::date)
       and (%(include_held_out)s or not p.is_held_out)
 """
+)
+SELECT_AMENDING_PROVISION: LiteralString = (
+    _SELECT_UNIT
+    + """
+      and d.is_amending
+      and not p.is_held_out
+"""
+)
+"""One unit of an amending act: only an explicit Omnibus lookup reads it (decision 009). An
+amending act holds no worked example; the held-out filter keeps it that way (decision 012)."""
 
 
 class ProvisionNotFoundError(LookupError):
@@ -103,7 +120,7 @@ def get_provision(
     """
     wanted_language = Language(language)
     version = LawVersion(law_version) if law_version is not None else LawVersion.AMENDED
-    doc_key, version, slice_date = _document_for(provision_id, version, as_of, ai_act_doc_keys)
+    doc_key, version, slice_date = document_for(provision_id, version, as_of, ai_act_doc_keys)
     params = {
         "provision_id": provision_id,
         "languages": sorted({wanted_language.value, Language.EN.value}),
@@ -112,15 +129,39 @@ def get_provision(
         "as_of": slice_date,
         "include_held_out": include_held_out,
     }
-    if connection is None:
-        with connect() as own_connection:
-            rows = _select(own_connection, params)
-    else:
-        rows = _select(connection, params)
+    rows = _rows(SELECT_PROVISION, params, connection)
     return _pick(provision_id, rows, wanted_language)
 
 
-def _document_for(
+def get_omnibus_provision(
+    provision_id: str,
+    language: Language | str = Language.EN,
+    as_of: date | None = None,
+    *,
+    connection: psycopg.Connection | None = None,
+    doc_key: str = OMNIBUS_DOC_KEY,
+) -> Provision:
+    """The text of one unit of the Digital Omnibus itself (an amending instruction or a recital),
+    for a citation of the Omnibus (E9): `get_provision` never returns an amending act.
+
+    The Omnibus has one slice per unit from its entry into force; with `as_of`, the slice must
+    cover it. The language falls back to English as in `get_provision`. Raises ValueError for a
+    malformed id and ProvisionNotFoundError when no row matches.
+    """
+    if not PROVISION_ID_RE.fullmatch(provision_id):
+        raise ValueError(f"malformed provision id {provision_id!r}")
+    wanted_language = Language(language)
+    params = {
+        "provision_id": provision_id,
+        "languages": sorted({wanted_language.value, Language.EN.value}),
+        "doc_key": doc_key,
+        "as_of": as_of,
+    }
+    rows = _rows(SELECT_AMENDING_PROVISION, params, connection)
+    return _pick(provision_id, rows, wanted_language)
+
+
+def document_for(
     provision_id: str,
     version: LawVersion,
     as_of: date | None,
@@ -146,9 +187,21 @@ def _document_for(
     raise ValueError(f"unknown provision id prefix {prefix!r} in {provision_id!r}")
 
 
-def _select(connection: psycopg.Connection, params: dict[str, Any]) -> list[dict[str, Any]]:
+def _rows(
+    query: LiteralString, params: dict[str, Any], connection: psycopg.Connection | None
+) -> list[dict[str, Any]]:
+    """`query`'s rows over `connection`, or over a short one opened from DATABASE_URL."""
+    if connection is None:
+        with connect() as own_connection:
+            return _select(own_connection, query, params)
+    return _select(connection, query, params)
+
+
+def _select(
+    connection: psycopg.Connection, query: LiteralString, params: dict[str, Any]
+) -> list[dict[str, Any]]:
     with connection.cursor(row_factory=dict_row) as cursor:
-        return cursor.execute(SELECT_PROVISION, params).fetchall()
+        return cursor.execute(query, params).fetchall()
 
 
 def _pick(provision_id: str, rows: list[dict[str, Any]], wanted: Language) -> Provision:

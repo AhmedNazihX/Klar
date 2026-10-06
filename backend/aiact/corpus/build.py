@@ -225,7 +225,7 @@ def omnibus_in_force(rows: tuple[ParsedProvision, ...]) -> tuple[date, frozenset
     return in_force, frozenset(t for a in amendments for t in a.targets)
 
 
-def _is_touched(provision_id: str, targets: frozenset[str]) -> bool:
+def touches_target(provision_id: str, targets: frozenset[str]) -> bool:
     """True if a target is this provision, one of its ancestors or one of its descendants."""
     return any(
         t == provision_id or provision_id.startswith(t + ":") or t.startswith(provision_id + ":")
@@ -337,7 +337,7 @@ def corrected_original(
     def is_touched(pid: str) -> bool:
         """A target is the unit, an ancestor or a descendant, or the unit or an ancestor is a
         target's neighbour (the "; or" lands on a neighbour's last sub-point)."""
-        if _is_touched(pid, targets):
+        if touches_target(pid, targets):
             return True
         ancestor: str | None = pid
         while ancestor is not None:
