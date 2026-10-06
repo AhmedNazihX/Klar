@@ -1,0 +1,31 @@
+id: cb-269-asylum-decision-quality-review
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Qualitätssicherung einer Asylbehörde mit rund 25 Mitarbeitenden. Einmal im Quartal
+  lassen wir ab 2028 ein gekauftes Auswertungsprogramm über die abgeschlossenen Verfahren laufen. Es
+  vergleicht, wie in ähnlichen Konstellationen entschieden wurde, und zeigt auf, wo einzelne
+  Außenstellen oder Entscheider auffällig vom üblichen Muster abweichen. Daraus schreiben wir einen
+  Bericht für die Leitung und passen Schulungen und Leitfäden an. In laufende Verfahren greift das
+  Programm nicht ein und schlägt für keinen Antrag ein Ergebnis vor. Wir nutzen es wie geliefert.
+  Nebenbei organisieren wir eine Fachtagung zu Herkunftsländern.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:c", "annex:III:7:c", "art:6:4"]
+source_example_id: hr-ex-269
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Contaminated source (decision 016: the corpus retells
+  hr-ex-269 in annex-iii para:102); written as usual, source_example_id kept so the evaluation can
+  flag it. Class: analysing completed eligibility files to detect decision-making patterns and
+  deviations for quality-assurance reports, without proposing outcomes in live cases, is the
+  Art. 6(3)(c) exemption from Annex III point 7(c). No Art. 50 duty: minimal_risk. Art. 6(4): the
+  provider must document this assessment before placing it on the market (and register it under
+  Art. 49(2)). Role: deployer of a bought program.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:not_high"
+  - "art_6_4_documentation"
+  - "contaminated"

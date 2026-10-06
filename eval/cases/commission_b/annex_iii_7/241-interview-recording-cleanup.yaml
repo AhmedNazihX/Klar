@@ -1,0 +1,33 @@
+id: cb-241-interview-recording-cleanup
+set_name: commission_b
+language: en
+description: >-
+  We're a 25-person audio-video software company in Utrecht. Migration and asylum authorities use
+  our tool to make interview recordings easier to review: it removes background noise, evens out
+  bad lighting and marks reference points on the face (eyes, mouth, chin) so the image stays
+  steady and readable when caseworkers zoom in. The cleaned recording goes into the file next to
+  the original, and caseworkers watch it as before. We developed the tool ourselves and sell it
+  under our name from 2028. We also make subtitling software for broadcasters.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:3:d", "annex:III:7:a", "art:6:4"]
+source_example_id: hr-ex-241
+accepted_bases: ["art_6_3_filter:d", "outside_use_case"]
+label_status: settled
+flip_variants:
+  - feature: the output produces or implies inferences about truthfulness or deception, for example the facial landmarks feed a credibility assessment
+    resulting_verdict: high
+    provision_ids: ["annex:III:7:a"]
+notes: >-
+  Draft label, awaiting user approval. Class: normalising audio and video and extracting facial
+  landmarks, with no deception inference, is either outside Annex III point 7(a) or a preparatory
+  task under Art. 6(3)(d); both bases are accepted. Written without the flip feature (landmarks
+  feeding a credibility assessment); the engine should ask about or flag it. Denoising and lighting
+  correction do not substantially alter the recording, so no Art. 50(2) duty: minimal_risk.
+  Art. 6(4): on the 6(3)(d) reading, the provider documents this assessment before placing the
+  tool on the market (and registers it under Art. 49(2)).
+tags:
+  - "area:annex_iii_7"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

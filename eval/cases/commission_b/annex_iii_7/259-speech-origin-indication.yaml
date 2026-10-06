@@ -1,0 +1,29 @@
+id: cb-259-speech-origin-indication
+set_name: commission_b
+language: en
+description: >-
+  We are the asylum agency of a Nordic country, with about 600 staff. From 2028 we'll use a language
+  analysis service licensed from a linguistics-technology company. It analyses a recording of the
+  applicant speaking, looking at vocabulary, pronunciation and dialect features, and indicates the
+  country or region the person most likely comes from. Caseworkers use that indication when they
+  weigh the applicant's stated origin, decide whether it counts as established, disputed or needs
+  more investigation, and choose which country information to consult. We use the service
+  unchanged. We're also opening a regional office in the north.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:7:c"
+label_citation: ["annex:III:7:c", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-259
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: indicating a likely country or region of origin from
+  recorded speech, used in the eligibility reasoning in a specific applicant's file, assists the
+  examination of the application: Annex III point 7(c), high-risk under Art. 6(2); no Art. 6(3)
+  exemption. Doubt: an engine could also read origin-from-voice as biometric categorisation (point
+  1(b), Art. 50(3)); the description stresses language and dialect features, and the Commission
+  files it under 7(c). Role: deployer of a licensed service.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:high"

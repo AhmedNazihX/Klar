@@ -1,0 +1,28 @@
+id: cb-255-asylum-credibility-signals
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Asylbehörde eines EU-Mitgliedstaats mit rund 2.000 Beschäftigten. Ab 2028 nutzen
+  unsere Entscheiderinnen und Entscheider ein Prüfprogramm, das wir bei einem Anbieter für
+  Behördensoftware gekauft haben. Es prüft, ob vorgelegte Dokumente echt sind und zueinander passen,
+  und ob die Schilderung der Person in sich stimmig und plausibel ist, und gibt dazu
+  Glaubwürdigkeitshinweise aus. Darauf stützen sich die Entscheider, wenn sie über Asylanträge oder
+  die Einreise entscheiden. Wir nutzen das Programm unverändert. Außerdem eröffnen wir eine neue
+  Außenstelle in Grenznähe.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:7:c"
+label_citation: ["annex:III:7:c", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-255
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: assessing the authenticity and consistency of
+  documents and the plausibility of personal accounts, and giving credibility signals the examiner
+  relies on, assists the examination of asylum and entry applications and the reliability of the
+  related evidence: Annex III point 7(c), high-risk under Art. 6(2); no Art. 6(3) exemption. Role:
+  deployer of a bought program.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:high"

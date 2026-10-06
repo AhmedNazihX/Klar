@@ -1,0 +1,29 @@
+id: cb-264-visa-fee-routing
+set_name: commission_b
+language: en
+description: >-
+  We're a 70-person company in Lisbon that runs online visa-application portals for several EU
+  consulates. In 2028 we're adding a pre-check: a model reads the applicant's uploaded passport,
+  extracts the nationality and passport type, and then applies the fixed rules of the relevant visa
+  facilitation agreements, so applicants from countries with a set reduced fee are sent straight
+  to pay that fee. It doesn't look at anything else in the application or affect how it's examined.
+  We built the pre-check ourselves and run it under our own name. We're also translating our help
+  pages into twelve languages.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:3:a", "annex:III:7:c", "art:6:4"]
+source_example_id: hr-ex-264
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: routing an applicant to a fixed fee under strict,
+  objective rules is a narrow procedural task within the visa process (Annex III point 7(c)): the
+  Art. 6(3)(a) exemption. Doubt: the fee rule itself is plain logic; the model reading the passport
+  keeps it an AI system, otherwise it could be out of scope as non-AI software. No Art. 50 duty:
+  minimal_risk. Art. 6(4): as provider it must document this assessment before putting the
+  pre-check into service (and register it under Art. 49(2)).
+tags:
+  - "area:annex_iii_7"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

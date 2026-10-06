@@ -1,0 +1,28 @@
+id: cb-247-route-duration-traveller-alert
+set_name: commission_b
+language: en
+description: >-
+  We're a 60-person border-analytics company in Warsaw. Our system takes number-plate camera reads
+  along motorway corridors towards the external border and works out how long each vehicle took
+  between two points. When a journey takes abnormally long, it links the vehicle to the named
+  traveller it is registered to, or who is crossing with it, and issues an alert that this person
+  carries a raised risk of irregular migration, so border guards send them to secondary screening.
+  Another system or an officer makes the final assessment. We built the system ourselves; the first
+  border authority uses it from 2028. We also sponsor a local ice-hockey club.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:7:b"
+label_citation: ["annex:III:7:b", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-247
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: although the signal starts from a vehicle and a route,
+  the output is a person-specific irregular-migration risk alert used to refer that person to
+  second-line checks: Annex III point 7(b), high-risk under Art. 6(2). A person-level risk
+  indicator used for triage materially influences the assessment, so no Art. 6(3) exemption, even
+  if a human or another system decides. Role: it develops and sells the system under its own name.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:high"

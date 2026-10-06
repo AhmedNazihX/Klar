@@ -1,0 +1,29 @@
+id: cb-262-visa-file-completeness-sorting
+set_name: commission_b
+language: de
+description: >-
+  Wir sind das Visazentrum eines EU-Staates in einer Hauptstadt außerhalb Europas, mit rund 60
+  Beschäftigten. Ab 2028 prüft ein gekauftes Programm jeden eingehenden Visumantrag rein technisch:
+  ob alle Pflichtfelder ausgefüllt sind, ob die Formate stimmen und die vorgeschriebenen Unterlagen
+  hochgeladen wurden. Danach verteilt es die Akten nach öffentlichen, objektiven Kriterien wie
+  Visumart und Antragsdatum auf die Sachbearbeiter. Den Inhalt der Anträge bewertet es nicht, und es
+  legt auch nicht fest, welches Verfahren gilt oder wie geprüft wird. Wir nutzen es wie geliefert.
+  Außerdem erweitern wir unseren Wartebereich.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:a", "annex:III:7:c", "art:6:4"]
+source_example_id: hr-ex-262
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: checking completeness and format of visa applications
+  and assigning files for handling by public, objective criteria, with only technical and
+  non-interpretative operations, is a narrow procedural task in an Annex III point 7(c) setting:
+  the Art. 6(3)(a) exemption. No Art. 50 duty: minimal_risk. Art. 6(4): the provider must document
+  this assessment before placing it on the market (and register it under Art. 49(2)). Role:
+  deployer of a bought program.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

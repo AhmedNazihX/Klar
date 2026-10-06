@@ -1,0 +1,29 @@
+id: cb-257-permit-document-fraud-check
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Hersteller von Dokumentenprüfgeräten aus Berlin mit 140 Beschäftigten. Unser neues
+  Gerät wird in Ausländerbehörden und Asylbehörden eingesetzt, wenn Anträge auf ein Visum, einen
+  Aufenthaltstitel oder internationalen Schutz geprüft werden. Ein von uns trainiertes Modell
+  erkennt, ob ein Passbild durch Verschmelzen zweier Gesichter manipuliert wurde, ob Tinten nicht
+  dem Original entsprechen, ob Unterschriften kopiert sind, und prüft den Chip und dessen
+  digitale Zertifikate. Das Ergebnis geht als Prüfschritt in das Verfahren ein. Das Gerät kommt
+  2028 unter unserer Marke auf den Markt. Wir sponsern außerdem einen Ruderverein.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:7:c"
+label_citation: ["annex:III:7:c", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-257
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: detecting morphing, non-conforming inks, copied
+  signatures and chip or certificate problems as a step in examining visa, residence-permit or
+  protection applications assists that examination and the reliability of the evidence: Annex III
+  point 7(c), high-risk under Art. 6(2); no Art. 6(3) exemption. (Point 7(d)'s carve-out for
+  verifying travel documents concerns detection of persons, not this examination step.) Role: it
+  trains the model and sells the device under its own brand.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:high"

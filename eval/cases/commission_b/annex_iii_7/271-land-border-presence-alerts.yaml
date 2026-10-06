@@ -1,0 +1,26 @@
+id: cb-271-land-border-presence-alerts
+set_name: commission_b
+language: en
+description: >-
+  We're a 120-person surveillance-technology company in Riga. Our border system combines satellite
+  imagery, camera and radar towers along the land border, and drones. Our models scan these feeds
+  for people approaching or crossing the border away from the official crossing points and raise
+  an alert in the border guard's operations centre, which then sends a patrol to intercept them or
+  brings them in for checks. We develop the models ourselves and sell the system under our brand;
+  the first national deployment starts in 2028. We also supply forest-fire detection cameras.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:7:d"
+label_citation: ["annex:III:7:d", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-271
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: detecting people approaching a land border and
+  alerting border guards so they dispatch patrols, apprehend or check them is detecting natural
+  persons in the context of border control management, Annex III point 7(d), high-risk under
+  Art. 6(2); no Art. 6(3) exemption. Role: it develops and sells the system under its own name.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:high"
