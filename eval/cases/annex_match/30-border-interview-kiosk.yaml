@@ -1,0 +1,22 @@
+id: annex-match-30-border-interview-kiosk
+set_name: annex_match
+language: en
+description: >-
+  We're a 25-person security-tech start-up in Riga, piloting a self-service interview kiosk with the
+  border guard of one EU member state at a land crossing. A virtual officer on screen asks
+  travellers from outside the EU short questions about their trip, while cameras and a microphone
+  feed our model, which analyses tiny movements of the face and changes in the voice to estimate
+  whether each answer is deceptive. Travellers flagged as possibly lying are sent to a second, human
+  check. We built the software and supply it under our name. We also make access-control gates for
+  office buildings.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:7:a"]
+label_citation: ["annex:III:7:a", "art:6:2", "art:3:3"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: a lie detector used for border authorities is a polygraph or similar tool,
+  7(a). Role: develops it and supplies it under its own name.
+tags:
+  - "annex_iii_area:7"

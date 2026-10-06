@@ -1,0 +1,22 @@
+id: annex-match-21-online-health-premium
+set_name: annex_match
+language: en
+description: >-
+  We're a digital health insurer in Belgium with 140 employees, selling supplementary health cover
+  online. Our pricing engine, a model built by our own data team, takes the applicant's answers to a
+  health questionnaire, optional step-count and sleep data from their phone, age and postcode, and
+  estimates their expected claims; from that it sets the monthly premium and, for some applicants,
+  excludes certain pre-existing conditions from cover. An underwriter only checks the most expensive
+  cases. We sell under our own brand. We also sponsor a local running club.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:5:c"]
+label_citation: ["annex:III:5:c", "art:6:2", "art:3:3"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: risk assessment and pricing of individuals for health insurance. It
+  evaluates individual people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role:
+  develops it and puts it into service itself (Art. 3(3)); also the deployer.
+tags:
+  - "annex_iii_area:5"

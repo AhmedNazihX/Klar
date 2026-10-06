@@ -2,6 +2,7 @@
 
 import contextlib
 import json
+import random
 import threading
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -244,6 +245,15 @@ def test_subset_is_seeded_and_in_id_order() -> None:
     assert [case.id for case in first] == sorted(case.id for case in first)
     assert select_subset(CASES, None, seed=7) == CASES
     assert select_subset(CASES, 99, seed=7) == CASES
+
+
+def test_the_subset_depends_on_the_seed() -> None:
+    cases = tuple(make_case(n) for n in range(12, 0, -1))
+    samples = {tuple(c.id for c in select_subset(cases, 4, seed=seed)) for seed in range(4)}
+    assert len(samples) >= 2
+    ordered = sorted(cases, key=lambda case: case.id)
+    expected = sorted(random.Random(7).sample(ordered, 4), key=lambda case: case.id)
+    assert select_subset(cases, 4, seed=7) == tuple(expected)
 
 
 def test_exclusions_per_mode() -> None:

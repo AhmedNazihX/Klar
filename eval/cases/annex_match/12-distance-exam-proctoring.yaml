@@ -1,0 +1,22 @@
+id: annex-match-12-distance-exam-proctoring
+set_name: annex_match
+language: en
+description: >-
+  We are a distance-learning university in Germany with 25,000 students, mostly studying part-time.
+  For online exams we licensed a proctoring service from a British supplier. During the exam its AI
+  watches the student through webcam and microphone, tracks eye movements, other voices and open
+  browser tabs, and flags sessions where it thinks the student is cheating; flagged sessions are
+  reviewed by our exam office, which can fail the exam. The supplier configures everything; we only
+  upload exam dates. About 60,000 exams a year run this way. Our library is also moving to a new
+  catalogue system.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:3:d"]
+label_citation: ["annex:III:3:d", "art:6:2", "art:3:4"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: monitoring and detecting prohibited behaviour of students during tests. It
+  infers no emotions, so Art. 5(1)(f) does not arise. Role: uses the licensed service.
+tags:
+  - "annex_iii_area:3"
