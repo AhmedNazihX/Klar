@@ -78,6 +78,13 @@ def clipped(text: str) -> str:
     return text if len(text) <= MAX_PASSAGE_CHARS else f"{text[:MAX_PASSAGE_CHARS]} […]"
 
 
+def guidance_section(guidance: Sequence[SearchHit]) -> str:
+    """The guideline passages as the prompt lists them: numbered from 1, each with its id and
+    its text cut to `MAX_PASSAGE_CHARS`, or "-"."""
+    listed = (f"{n}. [{hit.provision_id}] {clipped(hit.text)}" for n, hit in enumerate(guidance, 1))
+    return "\n\n".join(listed) or "-"
+
+
 def named_passages(numbers: Sequence[int], guidance: Sequence[SearchHit]) -> tuple[SearchHit, ...]:
     """The passages `numbers` name (numbered from 1 as the prompt shows them), in range and each
     once."""

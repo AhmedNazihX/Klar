@@ -42,13 +42,15 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)
 │   │   │   ├── scripted.py          stub nodes that return scripted outcomes, for tests (E1)
 │   │   │   ├── nodes/               facts.py (E2), scope.py + scope_texts.py (E3), prohibited.py +
-│   │   │   │                        prohibited_practices.py + prohibited_retrieval.py + prohibited_texts.py (E4),
+│   │   │   │                        prohibited_practices.py + prohibited_texts.py (E4),
 │   │   │   │                        high_risk.py + high_risk_retrieval.py + high_risk_texts.py (E5),
-│   │   │   │                        transparency.py + transparency_duties.py + transparency_retrieval.py +
-│   │   │   │                        transparency_texts.py (E6), role_obligations.py + role_texts.py (E7),
-│   │   │   │                        finalize.py (E8); key_facts.py: the key-fact answer shared by the
-│   │   │   │                        checks (E3); common.py: the run's lookup, citations and prompt
-│   │   │   │                        blocks shared by the checks (E5)
+│   │   │   │                        transparency.py + transparency_duties.py + transparency_texts.py (E6),
+│   │   │   │                        role_obligations.py + role_texts.py (E7), finalize.py (E8);
+│   │   │   │                        key_facts.py: the key-fact answer and its three-valued reading,
+│   │   │   │                        shared by the checks (E3, E6); common.py: the run's lookup,
+│   │   │   │                        citations and prompt blocks shared by the checks (E5);
+│   │   │   │                        guideline_retrieval.py: one article by lookup and its guidelines
+│   │   │   │                        by search, for the prohibited and transparency checks (E6)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
 │   │   │   ├── citations.py         citation existence validator (E9)

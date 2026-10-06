@@ -13,8 +13,7 @@ from enum import StrEnum
 from pydantic import Field
 
 from aiact.engine.nodes import transparency_texts as texts
-from aiact.engine.nodes.key_facts import Answer, Settled
-from aiact.engine.nodes.prohibited_practices import Reading, every, need
+from aiact.engine.nodes.key_facts import Answer, Reading, Settled, every, need
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.schemas import EvidenceTag, OpenQuestion
 from aiact.schemas.base import ContractModel

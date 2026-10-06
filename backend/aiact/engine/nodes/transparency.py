@@ -1,7 +1,7 @@
 """The transparency node: which Art. 50 duties the system carries (E6; INIT > How it works, Risk
 classes).
 
-Retrieval comes first and involves no model (`transparency_retrieval`): the whole of Art. 50 by
+Retrieval comes first and involves no model (`guideline_retrieval`): the whole of Art. 50 by
 lookup, always, and the Commission's Art. 50 guidelines by search. The engine model then answers
 fixed key facts for every duty (the prompt in `prompts/transparency.md` first, then Art. 50 and
 the passages, the description last, so the prefix is cached: decision 005), and the Act's rules
@@ -26,7 +26,7 @@ are applied here, in code:
 Every citation is fetched through `get_provision`, or is a retrieved guideline passage.
 """
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -40,13 +40,20 @@ from aiact.db import connect
 from aiact.engine.nodes import transparency_texts as texts
 from aiact.engine.nodes.common import (
     answers_section,
-    clipped,
     facts_section,
     guidance_citation,
+    guidance_section,
     key_question,
     lookup_for,
     named_passages,
     provision_citation,
+)
+from aiact.engine.nodes.guideline_retrieval import (
+    GuidelineCorpus,
+    GuidelineLibrary,
+    GuidelineSource,
+    Retrieved,
+    retrieve,
 )
 from aiact.engine.nodes.key_facts import Answer, facts_used
 from aiact.engine.nodes.role_texts import KeyQuestion
@@ -55,12 +62,6 @@ from aiact.engine.nodes.transparency_duties import (
     MarketTiming,
     TransparencyAnswer,
     duties,
-)
-from aiact.engine.nodes.transparency_retrieval import (
-    Retrieved,
-    TransparencyCorpus,
-    TransparencyLibrary,
-    retrieve,
 )
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model
@@ -71,7 +72,6 @@ from aiact.llm.structured import (
     parse_reply,
 )
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
-from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
     FollowUpQuestion,
     Language,
@@ -85,6 +85,10 @@ from aiact.settings import Settings
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "transparency.md"
 TRANSPARENCY_INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
+
+SOURCE = GuidelineSource(article="art:50", doc_keys=frozenset({"guide-art50"}), passages=8)
+"""Art. 50, read whole, and the Commission's guidelines on the Art. 50 transparency obligations
+(8 passages: Art. 50 has four duties, each with exceptions)."""
 
 MAX_OUTPUT_TOKENS = 4000
 """Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005)."""
@@ -214,7 +218,7 @@ def _grace(
     settled: Settlement,
     answer: TransparencyAnswer,
     state: EngineState,
-    library: TransparencyLibrary,
+    library: GuidelineLibrary,
 ) -> Grace | None:
     """The grace period as it bears on this run; None when it doesn't, or when the text read has
     no Art. 111(4)."""
@@ -236,7 +240,7 @@ def _grace(
 
 
 def _cited(
-    settled: Settlement, state: EngineState, retrieved: Retrieved, library: TransparencyLibrary
+    settled: Settlement, state: EngineState, retrieved: Retrieved, library: GuidelineLibrary
 ) -> tuple[Provision, ...]:
     """The paragraphs of every duty shown, fetched in the order of Art. 50; Art. 50 as a whole
     when none is raised."""
@@ -251,7 +255,7 @@ def to_outcome(
     answer: TransparencyAnswer,
     state: EngineState,
     retrieved: Retrieved,
-    library: TransparencyLibrary,
+    library: GuidelineLibrary,
 ) -> CheckOutcome:
     """The transparency step and the duties it lists, from the model's answer and the passages
     retrieved. The cited provisions are fetched from `library`."""
@@ -312,11 +316,6 @@ def refusal_outcome(state: EngineState, retrieved: Retrieved) -> CheckOutcome:
 TRANSPARENCY_RESPONSE_FORMAT = json_schema_format("transparency_answer", TransparencyAnswer)
 
 
-def _guidance_section(guidance: Sequence[SearchHit]) -> str:
-    listed = (f"{n}. [{hit.provision_id}] {clipped(hit.text)}" for n, hit in enumerate(guidance, 1))
-    return "\n\n".join(listed) or "-"
-
-
 def transparency_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMessage]:
     """The fixed instructions and Art. 50 first; the passages, the per-case context and the
     description last, so the shared prefix is cached (005)."""
@@ -326,7 +325,7 @@ def transparency_messages(state: EngineState, retrieved: Retrieved) -> list[Base
         HumanMessage(
             f"The AI Act, Article 50 ({version} text):\n\n{retrieved.article.text}\n\n"
             f"Guidelines on the transparency obligations under Article 50, passages:\n\n"
-            f"{_guidance_section(retrieved.guidance)}\n\n"
+            f"{guidance_section(retrieved.guidance)}\n\n"
             f"Language for facts and questions: {state['language'].value}\n\n"
             f"Answers to earlier questions:\n{answers_section(state)}\n\n"
             f"Facts:\n{facts_section(state)}\n\n"
@@ -343,7 +342,7 @@ class TransparencyCheck:
         self,
         settings: Settings | None = None,
         chat: BaseChatModel | None = None,
-        library: TransparencyLibrary | None = None,
+        library: GuidelineLibrary | None = None,
     ) -> None:
         """`chat` replaces the OpenRouter model and `library` the corpus (tests). Raises
         `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the
@@ -356,20 +355,20 @@ class TransparencyCheck:
         self._library = library
         self._embedder = None if library else OpenRouterEmbeddings(settings=settings)
 
-    def _reading[T](self, use: Callable[[TransparencyLibrary], T]) -> T:
+    def _reading[T](self, use: Callable[[GuidelineLibrary], T]) -> T:
         """`use` applied to the corpus: the given library, or one over a fresh connection that
         is closed before this returns (none stays open during the model call)."""
         if self._library is not None:
             return use(self._library)
         assert self._embedder is not None  # built whenever no library is given
         with connect() as connection:
-            return use(TransparencyCorpus(connection, self._embedder))
+            return use(GuidelineCorpus(connection, self._embedder, SOURCE))
 
     def __call__(self, state: EngineState) -> CheckOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises
         `TransparencyOutputError` when any other reply doesn't fit `TransparencyAnswer`, and
         `ProvisionNotFoundError` when the corpus lacks a provision the step reads or cites."""
-        retrieved = self._reading(lambda library: retrieve(state, library))
+        retrieved = self._reading(lambda library: retrieve(state, library, SOURCE.article))
         reply = self._model.invoke(
             transparency_messages(state, retrieved),
             response_format=TRANSPARENCY_RESPONSE_FORMAT,

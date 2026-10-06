@@ -2,15 +2,18 @@
 
 A check asks the model fixed key-fact questions and applies the Act's rules to the answers in
 code. Each answer carries its evidence tag, the answer as one short fact, and the numbers of the
-extracted facts it rests on.
+extracted facts it rests on. A condition built from the answers is read in three values (met,
+not met, open on a fact) with `need`, `every`, `either` and `negated` (E4, E6).
 """
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol
 
 from pydantic import Field
 
+from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.schemas import EvidenceTag, Fact
 from aiact.schemas.base import ContractModel
 
@@ -74,3 +77,43 @@ def facts_used(used: Sequence[CitedFact], facts: Sequence[Fact]) -> tuple[Fact, 
         evidence = EvidenceTag.ASSUMED if is_assumed else EvidenceTag.INFERRED
         result.setdefault(answer.fact, Fact(text=answer.fact, evidence=evidence))
     return tuple(result.values())
+
+
+# --- Reading the key facts (three-valued: met, not met, open on a fact) -------------------------
+
+
+@dataclass(frozen=True)
+class Reading:
+    """Whether a condition holds, and the question that settles it when a fact is open."""
+
+    answer: Answer
+    missing: KeyQuestion | None = None
+
+
+MET, NOT_MET = Reading(Answer.YES), Reading(Answer.NO)
+
+
+def need(answer: Answer, question: KeyQuestion, wanted: Answer = Answer.YES) -> Reading:
+    """The condition "the key fact is `wanted`"; an exception is a condition wanted "no"."""
+    if answer is Answer.UNKNOWN:
+        return Reading(Answer.UNKNOWN, question)
+    return MET if answer is wanted else NOT_MET
+
+
+def every(*parts: Reading) -> Reading:
+    """All conditions hold: one that fails settles it, else the first open one is asked."""
+    if any(part.answer is Answer.NO for part in parts):
+        return NOT_MET
+    return next((part for part in parts if part.answer is Answer.UNKNOWN), MET)
+
+
+def either(*parts: Reading) -> Reading:
+    """One of the alternatives holds: one that holds settles it, else the first open one."""
+    if any(part.answer is Answer.YES for part in parts):
+        return MET
+    return next((part for part in parts if part.answer is Answer.UNKNOWN), NOT_MET)
+
+
+def negated(reading: Reading) -> Reading:
+    flipped = {Answer.YES: Answer.NO, Answer.NO: Answer.YES, Answer.UNKNOWN: Answer.UNKNOWN}
+    return Reading(flipped[reading.answer], reading.missing)

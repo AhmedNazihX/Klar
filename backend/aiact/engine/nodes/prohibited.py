@@ -1,7 +1,7 @@
 """The prohibited node: does the system match a practice Art. 5 prohibits (E4; INIT > How it works,
 Risk classes)?
 
-Retrieval comes first and involves no model (`prohibited_retrieval`): the whole of Art. 5 by
+Retrieval comes first and involves no model (`guideline_retrieval`): the whole of Art. 5 by
 lookup, always, and the guidelines on prohibited practices by search. The engine model then
 answers fixed key facts for every practice (the prompt in `prompts/prohibited.md` first, then
 Art. 5 and the passages, the description last, so the prefix is cached: decision 005), and the
@@ -41,13 +41,20 @@ from aiact.db import connect
 from aiact.engine.nodes import prohibited_texts as texts
 from aiact.engine.nodes.common import (
     answers_section,
-    clipped,
     facts_section,
     guidance_citation,
+    guidance_section,
     key_question,
     lookup_for,
     named_passages,
     provision_citation,
+)
+from aiact.engine.nodes.guideline_retrieval import (
+    GuidelineCorpus,
+    GuidelineLibrary,
+    GuidelineSource,
+    Retrieved,
+    retrieve,
 )
 from aiact.engine.nodes.key_facts import Answer, facts_used
 from aiact.engine.nodes.prohibited_practices import (
@@ -56,12 +63,6 @@ from aiact.engine.nodes.prohibited_practices import (
     Practice,
     ProhibitedAnswer,
     practices,
-)
-from aiact.engine.nodes.prohibited_retrieval import (
-    ProhibitedCorpus,
-    ProhibitedLibrary,
-    Retrieved,
-    retrieve,
 )
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
@@ -73,7 +74,6 @@ from aiact.llm.structured import (
     parse_reply,
 )
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
-from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
     Fact,
     Language,
@@ -87,6 +87,9 @@ from aiact.settings import Settings
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "prohibited.md"
 PROHIBITED_INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
+
+SOURCE = GuidelineSource(article="art:5", doc_keys=frozenset({"guide-prohibited"}), passages=6)
+"""Art. 5, read whole, and the Commission's guidelines on prohibited AI practices (6 passages)."""
 
 MAX_OUTPUT_TOKENS = 6000
 """Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005), and
@@ -216,7 +219,7 @@ def _cited_ids(settled: Settlement) -> tuple[tuple[str, bool], ...]:
 
 
 def _provisions(
-    settled: Settlement, state: EngineState, library: ProhibitedLibrary
+    settled: Settlement, state: EngineState, library: GuidelineLibrary
 ) -> tuple[Provision, ...]:
     """The cited provisions, fetched; a later point the text read lacks is left out."""
     lookup = lookup_for(state)
@@ -238,7 +241,7 @@ def _facts_used(settled: Settlement, facts: Sequence[Fact]) -> tuple[Fact, ...]:
 
 
 def to_outcome(
-    answer: ProhibitedAnswer, state: EngineState, retrieved: Retrieved, library: ProhibitedLibrary
+    answer: ProhibitedAnswer, state: EngineState, retrieved: Retrieved, library: GuidelineLibrary
 ) -> CheckOutcome:
     """The prohibited step and whether it matched, from the model's answer and the passages
     retrieved. The cited provisions are fetched from `library`."""
@@ -269,7 +272,7 @@ def to_outcome(
 
 
 def refusal_outcome(
-    state: EngineState, retrieved: Retrieved, library: ProhibitedLibrary
+    state: EngineState, retrieved: Retrieved, library: GuidelineLibrary
 ) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
     prohibited assumed until a person reviews it (any Art. 5 point may apply), citing Art. 5 as
@@ -305,11 +308,6 @@ def refusal_outcome(
 PROHIBITED_RESPONSE_FORMAT = json_schema_format("prohibited_answer", ProhibitedAnswer)
 
 
-def _guidance_section(guidance: Sequence[SearchHit]) -> str:
-    listed = (f"{n}. [{hit.provision_id}] {clipped(hit.text)}" for n, hit in enumerate(guidance, 1))
-    return "\n\n".join(listed) or "-"
-
-
 def prohibited_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMessage]:
     """The fixed instructions and Art. 5 first; the passages, the per-case context and the
     description last, so the shared prefix is cached (005)."""
@@ -319,7 +317,7 @@ def prohibited_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMe
         HumanMessage(
             f"The AI Act, Article 5 ({version} text):\n\n{retrieved.article.text}\n\n"
             f"Guidelines on prohibited practices, passages:\n\n"
-            f"{_guidance_section(retrieved.guidance)}\n\n"
+            f"{guidance_section(retrieved.guidance)}\n\n"
             f"Language for facts and questions: {state['language'].value}\n\n"
             f"Answers to earlier questions:\n{answers_section(state)}\n\n"
             f"Facts:\n{facts_section(state)}\n\n"
@@ -335,7 +333,7 @@ class ProhibitedCheck:
         self,
         settings: Settings | None = None,
         chat: BaseChatModel | None = None,
-        library: ProhibitedLibrary | None = None,
+        library: GuidelineLibrary | None = None,
     ) -> None:
         """`chat` replaces the OpenRouter model and `library` the corpus (tests). Raises
         `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the
@@ -348,20 +346,20 @@ class ProhibitedCheck:
         self._library = library
         self._embedder = None if library else OpenRouterEmbeddings(settings=settings)
 
-    def _reading[T](self, use: Callable[[ProhibitedLibrary], T]) -> T:
+    def _reading[T](self, use: Callable[[GuidelineLibrary], T]) -> T:
         """`use` applied to the corpus: the given library, or one over a fresh connection that
         is closed before this returns (none stays open during the model call)."""
         if self._library is not None:
             return use(self._library)
         assert self._embedder is not None  # built whenever no library is given
         with connect() as connection:
-            return use(ProhibitedCorpus(connection, self._embedder))
+            return use(GuidelineCorpus(connection, self._embedder, SOURCE))
 
     def __call__(self, state: EngineState) -> CheckOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises
         `ProhibitedOutputError` when any other reply doesn't fit `ProhibitedAnswer`, and
         `ProvisionNotFoundError` when the corpus lacks a provision the step reads or cites."""
-        retrieved = self._reading(lambda library: retrieve(state, library))
+        retrieved = self._reading(lambda library: retrieve(state, library, SOURCE.article))
         reply = self._model.invoke(
             prohibited_messages(state, retrieved), response_format=PROHIBITED_RESPONSE_FORMAT
         )

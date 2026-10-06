@@ -21,11 +21,17 @@ from pydantic import SecretStr
 
 from aiact.db import connect
 from aiact.engine.graph import EngineNodes, build_graph
+from aiact.engine.nodes import guideline_retrieval as retrieval
 from aiact.engine.nodes import prohibited_texts
 from aiact.engine.nodes import transparency as node
-from aiact.engine.nodes import transparency_retrieval as retrieval
 from aiact.engine.nodes import transparency_texts as texts
 from aiact.engine.nodes.common import Lookup
+from aiact.engine.nodes.guideline_retrieval import (
+    GuidelineCorpus,
+    GuidelineLibrary,
+    Retrieved,
+    retrieve,
+)
 from aiact.engine.nodes.high_risk_texts import ANNEX_I_QUESTIONS, PROFILING
 from aiact.engine.nodes.key_facts import Answer, Settled
 from aiact.engine.nodes.transparency import (
@@ -34,13 +40,6 @@ from aiact.engine.nodes.transparency import (
     to_outcome,
 )
 from aiact.engine.nodes.transparency_duties import DutyAnswer, MarketTiming, TransparencyAnswer
-from aiact.engine.nodes.transparency_retrieval import (
-    GUIDANCE_DOC_KEYS,
-    Retrieved,
-    TransparencyCorpus,
-    TransparencyLibrary,
-    retrieve,
-)
 from aiact.engine.scripted import Script, no_match, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
@@ -63,7 +62,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
-from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
+from tests.engine.nodes.corpus_recording import RecordedGuidelineLibrary, corpus_recording
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -121,7 +120,7 @@ def hit(pid: str, language: Language = Language.EN) -> SearchHit:
 
 
 class FakeLibrary:
-    """A `TransparencyLibrary` that records every call: any provision has a text except those in
+    """A `GuidelineLibrary` that records every call: any provision has a text except those in
     `missing`, and the guidance found in a language is `guidance[language]`."""
 
     def __init__(
@@ -213,11 +212,11 @@ def answer(
 def outcome(
     given: TransparencyAnswer,
     at: EngineState | None = None,
-    library: TransparencyLibrary | None = None,
+    library: GuidelineLibrary | None = None,
 ) -> CheckOutcome:
     run = at or state()
     library = library or FakeLibrary()
-    return to_outcome(given, run, retrieve(run, library), library)
+    return to_outcome(given, run, retrieve(run, library, node.SOURCE.article), library)
 
 
 def cited(result: CheckOutcome) -> list[str]:
@@ -475,7 +474,7 @@ def test_german_questions_are_asked_in_german() -> None:
 
 def test_art_50_is_always_fetched_and_the_exclusions_reach_every_search() -> None:
     library = FakeLibrary()
-    found = retrieve(state(language=Language.DE, exclude=EXCLUDED), library)
+    found = retrieve(state(language=Language.DE, exclude=EXCLUDED), library, node.SOURCE.article)
     assert found.article.provision_id == "art:50"
     assert library.lookups == [("art:50", Lookup(Language.DE, LawVersion.AMENDED, AS_OF, EXCLUDED))]
     assert [language for *_, language in library.searches] == [Language.DE, Language.EN]
@@ -487,7 +486,7 @@ def test_art_50_is_always_fetched_and_the_exclusions_reach_every_search() -> Non
 
 def test_german_guidance_found_in_german_is_not_searched_again() -> None:
     library = FakeLibrary(guidance={Language.DE: GUIDE_HITS[:1]})
-    found = retrieve(state(language=Language.DE), library)
+    found = retrieve(state(language=Language.DE), library, node.SOURCE.article)
     assert len(library.searches) == 1
     assert found.guidance[0].language is Language.DE
 
@@ -523,14 +522,15 @@ def test_the_corpus_limits_the_search_to_the_art_50_guidelines_without_a_cut_off
     monkeypatch.setattr(retrieval, "search_ai_act", spy)
     connection, embedder = cast(psycopg.Connection, object()), FakeEmbedder()
     lookup = Lookup(Language.EN, LawVersion.AMENDED, AS_OF, EXCLUDED)
-    TransparencyCorpus(connection, embedder).guidance("query", lookup, language=Language.EN)
-    assert frozenset({"guide-art50"}) == GUIDANCE_DOC_KEYS
+    corpus = GuidelineCorpus(connection, embedder, node.SOURCE)
+    corpus.guidance("query", lookup, language=Language.EN)
+    assert frozenset({"guide-art50"}) == node.SOURCE.doc_keys
     assert seen == [
         {
-            "doc_keys": GUIDANCE_DOC_KEYS,
+            "doc_keys": node.SOURCE.doc_keys,
             "exclude_source_example_ids": EXCLUDED,
             "max_distance": None,
-            "limit": retrieval.GUIDANCE_PASSAGES,
+            "limit": node.SOURCE.passages,
             "embedder": embedder,
             "connection": connection,
         }
@@ -546,7 +546,7 @@ def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPa
 
     monkeypatch.setattr(retrieval, "get_provision", spy)
     connection = cast(psycopg.Connection, object())
-    library = TransparencyCorpus(connection, FakeEmbedder())
+    library = GuidelineCorpus(connection, FakeEmbedder(), node.SOURCE)
     library.provision("art:50", Lookup(Language.DE, LawVersion.AMENDED, AS_OF, ()))
     assert seen == [("art:50", Language.DE, LawVersion.AMENDED, AS_OF, connection)]
 
@@ -565,7 +565,7 @@ def _fake_chat(given: TransparencyAnswer | str) -> GenericFakeChatModel:
 
 
 def _retrieved() -> Retrieved:
-    return retrieve(state(), FakeLibrary())
+    return retrieve(state(), FakeLibrary(), node.SOURCE.article)
 
 
 def test_the_prompt_puts_instructions_and_art_50_first_and_the_description_last() -> None:
@@ -822,24 +822,6 @@ def test_the_replays_include_cases_on_each_side_of_the_grace_period() -> None:
     assert replay_state(B5A_CASES[0], AS_OF)["as_of"] == B5A_CASES[0].as_of
 
 
-class RecordedTransparencyLibrary:
-    """A `TransparencyLibrary` over the replay's `CorpusRecording`."""
-
-    def __init__(self, recording: CorpusRecording[TransparencyCorpus]) -> None:
-        self._recording = recording
-
-    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
-        return self._recording.provision(
-            provision_id, lookup, lambda live: live.provision(provision_id, lookup)
-        )
-
-    def guidance(self, query: str, lookup: Lookup, *, language: Language) -> tuple[SearchHit, ...]:
-        call = {"guidance": query, **lookup_call(lookup), "language": language}
-        return self._recording.hits(
-            call, lambda live: live.guidance(query, lookup, language=language)
-        )
-
-
 @pytest.fixture
 def luna_settings(openrouter_settings: Settings) -> Settings:
     return openrouter_settings.model_copy(
@@ -848,9 +830,9 @@ def luna_settings(openrouter_settings: Settings) -> Settings:
 
 
 @contextmanager
-def _live_corpus(settings: Settings) -> Iterator[TransparencyCorpus]:
+def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
     with connect() as connection:
-        yield TransparencyCorpus(connection, OpenRouterEmbeddings(settings=settings))
+        yield GuidelineCorpus(connection, OpenRouterEmbeddings(settings=settings), node.SOURCE)
 
 
 @pytest.mark.vcr
@@ -874,7 +856,7 @@ def test_b5a_case_replay(
         RECORD_COMMAND,
         lambda: _live_corpus(luna_settings),
     ) as recording:
-        check = TransparencyCheck(luna_settings, library=RecordedTransparencyLibrary(recording))
+        check = TransparencyCheck(luna_settings, library=RecordedGuidelineLibrary(recording))
         result = check(replay_state(case, AS_OF))
     matches = transparency_matches(result, case)
     gap = KNOWN_GAPS.get(case.id)
