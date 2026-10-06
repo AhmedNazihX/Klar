@@ -10,6 +10,7 @@
     No. Using an AI system to infer the emotions of people at the workplace is a prohibited
     practice under Art. 5(1)(f). The only exception is a system put in place for medical or safety
     reasons; tracking stress or engagement for HR purposes is neither.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:prohibited"]
 - id: qa-en-02-citizen-scoring
   language: en
@@ -22,6 +23,7 @@
     their social behaviour or personal characteristics where the resulting score leads to
     detrimental treatment in contexts unrelated to where the data was collected, or treatment
     that is unjustified or disproportionate.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:prohibited"]
 - id: qa-en-03-police-live-face-matching
   language: en
@@ -35,6 +37,7 @@
     exploitation and for missing persons; preventing a specific, substantial and imminent threat to
     life or a terrorist attack; or locating or identifying suspects of serious crimes listed in
     Annex II punishable by at least four years' custody.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:prohibited"]
 - id: qa-en-04-nudify-ban-date
   language: en
@@ -49,6 +52,7 @@
     purpose, as it is for these apps (or a foreseeable outcome the system doesn't adequately
     prevent). Under Art. 113(a) this prohibition applies from 2 December 2026, later than the
     other prohibitions.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:prohibited", "topic:dates"]
 - id: qa-en-05-annex-iii-exemption
   language: en
@@ -63,6 +67,7 @@
     result of a previously completed human activity, detects decision patterns or deviations
     without replacing or influencing the human assessment without proper review, or performs a
     preparatory task to an assessment. A system that profiles natural persons is always high-risk.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:high_risk"]
 - id: qa-en-06-profiling-blocks-exemption
   language: en
@@ -73,6 +78,7 @@
   reference_answer: >-
     No. The last subparagraph of Art. 6(3) says an Annex III system that performs profiling of
     natural persons is always considered high-risk, whatever the other conditions.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:high_risk"]
 - id: qa-en-07-not-high-risk-paperwork
   language: en
@@ -84,6 +90,7 @@
     the market or putting it into service, and hand the documentation to national authorities on
     request. It must also register itself and the system in the EU database before placing it on
     the market (Art. 49(2)).
+  notes: Approved by user 2026-10-06.
   tags: ["topic:high_risk", "topic:obligations"]
 - id: qa-en-08-cv-screening
   language: en
@@ -95,6 +102,7 @@
     expressly including analysing and filtering applications and evaluating candidates, and
     Art. 6(2) makes Annex III systems high-risk. Only the Art. 6(3) exemption could change this,
     and it cannot apply if the system profiles applicants.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:high_risk"]
 - id: qa-en-09-credit-scoring
   language: en
@@ -107,6 +115,7 @@
     creditworthiness of natural persons or establish their credit score, and Art. 6(2) makes them
     high-risk. The same point expressly excludes systems used to detect financial fraud, so the
     fraud model is not high-risk under this point.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:high_risk"]
 - id: qa-en-10-chatbot-disclosure
   language: en
@@ -118,6 +127,7 @@
     Yes, as the provider. Art. 50(1) requires systems that interact directly with people to be
     designed so that people are informed they are interacting with an AI system, unless that is
     obvious to a reasonably well-informed, observant and circumspect person in the context.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:transparency"]
 - id: qa-en-11-marking-grace-period
   language: en
@@ -130,6 +140,7 @@
     mark the outputs in a machine-readable format so they are detectable as artificially generated.
     For systems placed on the market before 2 August 2026, Art. 111(4) gives until 2 December 2026
     to comply.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:transparency", "topic:dates"]
 - id: qa-en-12-deepfake-ad
   language: en
@@ -143,6 +154,7 @@
     generated or manipulated (Art. 50(4)). For an evidently artistic, satirical or fictional work
     the duty is limited to disclosing the existence of the generated content in a way that does
     not hamper the display or enjoyment of the work.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:transparency"]
 - id: qa-en-13-high-risk-start-dates
   language: en
@@ -153,6 +165,7 @@
     After the Digital Omnibus, Art. 113(c): from 2 December 2027 for systems that are high-risk
     under Art. 6(2) and Annex III, and from 2 August 2028 for systems that are high-risk under
     Art. 6(1) and Annex I.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:dates"]
 - id: qa-en-14-fine-for-prohibited
   language: en
@@ -162,6 +175,7 @@
   reference_answer: >-
     Up to EUR 35 million or, for an undertaking, up to 7 % of its total worldwide annual turnover
     for the preceding financial year, whichever is higher (Art. 99(3)).
+  notes: Approved by user 2026-10-06.
   tags: ["topic:penalties"]
 - id: qa-en-15-white-label
   language: en
@@ -173,6 +187,7 @@
     You do. Under Art. 25(1)(a), anyone who puts their name or trademark on a high-risk AI system
     already on the market is considered its provider and takes on the provider obligations of
     Art. 16, unless contracts allocate the obligations otherwise.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:roles"]
 - id: qa-en-16-fria-who
   language: en
@@ -185,6 +200,7 @@
     infrastructure area, Annex III point 2), and deployers of systems for creditworthiness and
     credit scoring or for life and health insurance pricing and risk assessment (Annex III
     points 5(b) and (c)).
+  notes: Approved by user 2026-10-06.
   tags: ["topic:obligations"]
 - id: qa-en-17-defence-exclusion
   language: en
@@ -195,6 +211,7 @@
     No. Under Art. 2(3), the Regulation does not apply to AI systems placed on the market, put into
     service or used exclusively for military, defence or national security purposes, whoever
     carries out those activities.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:scope"]
 - id: qa-en-18-ai-literacy
   language: en
@@ -206,6 +223,7 @@
     to support the development of AI literacy of their staff and others operating AI systems on
     their behalf, taking into account their knowledge, experience and the context of use. They are
     not required to guarantee any particular level of AI literacy for any individual.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:obligations"]
 - id: qa-en-19-incident-reporting
   language: en
@@ -214,9 +232,10 @@
     patient being seriously harmed in Spain. Do we have to tell anyone?
   required_provision_ids: ["art:73:1", "art:3:49"]
   reference_answer: >-
-    Yes. Serious harm to a person's health is a serious incident (Art. 3(49)), and as the provider you must
-    report it to the market surveillance authorities of the Member State where it occurred, here
-    Spain (Art. 73(1)).
+    Yes. Serious harm to a person's health is a serious incident (Art. 3(49)), and as the provider
+    you must report it to the market surveillance authorities of the Member State where it
+    occurred, here Spain (Art. 73(1)).
+  notes: Approved by user 2026-10-06.
   tags: ["topic:obligations"]
 - id: qa-en-20-research-only
   language: en
@@ -226,4 +245,5 @@
   reference_answer: >-
     No. Art. 2(6) excludes AI systems and models, including their output, that are specifically
     developed and put into service for the sole purpose of scientific research and development.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:scope"]

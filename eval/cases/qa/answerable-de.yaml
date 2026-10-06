@@ -11,6 +11,7 @@
     Nein. Art. 5 Abs. 1 Buchst. f verbietet KI-Systeme, die Emotionen natürlicher Personen in
     Bildungseinrichtungen (und am Arbeitsplatz) ableiten. Ausgenommen sind nur Systeme, die aus
     medizinischen oder Sicherheitsgründen eingesetzt werden; das trifft hier nicht zu.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:prohibited"]
 - id: qa-de-02-werbevideo-deepfake
   language: de
@@ -23,6 +24,7 @@
     erzeugt, muss offenlegen, dass die Inhalte künstlich erzeugt oder manipuliert wurden
     (Art. 50 Abs. 4). Nur bei offensichtlich künstlerischen, satirischen oder fiktionalen Werken
     genügt ein Hinweis, der die Darstellung nicht beeinträchtigt.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:transparency"]
 - id: qa-de-03-chatbot-hinweis
   language: de
@@ -33,6 +35,7 @@
     Ja. Nach Art. 50 Abs. 1 muss der Anbieter das System so gestalten, dass Nutzer erfahren, dass
     sie mit einem KI-System interagieren, es sei denn, das ist für eine angemessen informierte,
     aufmerksame und verständige Person nach den Umständen offensichtlich.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:transparency"]
 - id: qa-de-04-bewerbervorauswahl
   language: de
@@ -45,6 +48,7 @@
     von Personen, ausdrücklich auch das Sichten und Filtern von Bewerbungen und das Bewerten von
     Bewerbern; nach Art. 6 Abs. 2 gelten diese als hochriskant. Die Ausnahme des Art. 6 Abs. 3
     greift nicht, wenn das System Profile der Bewerber erstellt.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:high_risk"]
 - id: qa-de-05-kreditabsage-erklaerung
   language: de
@@ -60,6 +64,7 @@
     klare und aussagekräftige Erläuterung zur Rolle des KI-Systems und zu den wichtigsten
     Elementen der Entscheidung verlangen. Nach Art. 86 Abs. 3 gilt dieses Recht aber nur, soweit
     es nicht bereits anderweitig im Unionsrecht vorgesehen ist, etwa in der DSGVO.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:rights"]
 - id: qa-de-06-fristen-hochrisiko
   language: de
@@ -69,6 +74,7 @@
   reference_answer: >-
     Nach dem Digital-Omnibus ab dem 2. Dezember 2027 (Art. 113 Buchst. c Ziff. i). Für
     Hochrisiko-Systeme nach Art. 6 Abs. 1 und Anhang I gilt der 2. August 2028.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:dates"]
 - id: qa-de-07-aufsicht-betreiber
   language: de
@@ -79,6 +85,7 @@
     Nach Art. 26 Abs. 2 müssen Betreiber die Aufsicht natürlichen Personen übertragen, die über
     die nötige Kompetenz, Ausbildung und Befugnis verfügen, und ihnen die erforderliche
     Unterstützung geben.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:obligations"]
 - id: qa-de-08-private-nutzung
   language: de
@@ -90,6 +97,7 @@
     Nein. Nach Art. 2 Abs. 10 gilt die Verordnung nicht für die Pflichten von Betreibern, die
     natürliche Personen sind und KI-Systeme im Rahmen einer rein persönlichen, nicht beruflichen
     Tätigkeit verwenden.
+  notes: Approved by user 2026-10-06.
   tags: ["topic:scope"]
 - id: qa-de-09-zweckaenderung-anbieter
   language: de
@@ -98,10 +106,11 @@
     Bewerbern ein. Werden wir dadurch zum Anbieter?
   required_provision_ids: ["art:25:1:c", "annex:III:4:a", "art:6:2"]
   reference_answer: >-
-    In der Regel ja. Wer die Zweckbestimmung eines nicht als hochriskant eingestuften KI-Systems, auch eines
-    KI-Systems mit allgemeinem Verwendungszweck, so ändert, dass es zu einem Hochrisiko-System
-    wird, gilt nach Art. 25 Abs. 1 Buchst. c als Anbieter und unterliegt den Pflichten des
-    Art. 16. Die Bewerberauswahl fällt unter Anhang III Nr. 4 Buchst. a und ist damit nach Art. 6
-    Abs. 2 hochriskant, sofern nicht ausnahmsweise Art. 6 Abs. 3 greift (nie bei Profiling der
-    Bewerber).
+    In der Regel ja. Wer die Zweckbestimmung eines nicht als hochriskant eingestuften KI-Systems,
+    auch eines KI-Systems mit allgemeinem Verwendungszweck, so ändert, dass es zu einem
+    Hochrisiko-System wird, gilt nach Art. 25 Abs. 1 Buchst. c als Anbieter und unterliegt den
+    Pflichten des Art. 16. Die Bewerberauswahl fällt unter Anhang III Nr. 4 Buchst. a und ist damit
+    nach Art. 6 Abs. 2 hochriskant, sofern nicht ausnahmsweise Art. 6 Abs. 3 greift (nie bei
+    Profiling der Bewerber).
+  notes: Approved by user 2026-10-06.
   tags: ["topic:roles"]
