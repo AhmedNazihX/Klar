@@ -111,6 +111,11 @@
       "source": "decisions 015 and 028",
       "enforced_by": ["isolation-auditor (check 8)"],
       "note": "The check reads denied files, so it runs in the audit, not in Engine-lane worktrees or CI."
+    },
+    {
+      "rule": "Frontend data paths: engine work (classification, Q&A, documents) goes through the Python API; the user's own data goes straight to Supabase via supabase-js under the anonymous session and RLS; the browser never holds a service-role key",
+      "source": "INIT › Architecture (UI → FastAPI, UI → DB) and Tech stack › User data; user decision 2026-10-06",
+      "enforced_by": [".claude/rules/frontend.md", "foreman:security-reviewer"]
     }
   ],
   "docs": {"max_bytes": 20000, "exclude": []},
