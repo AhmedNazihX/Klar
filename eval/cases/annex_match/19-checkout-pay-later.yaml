@@ -1,0 +1,23 @@
+id: annex-match-19-checkout-pay-later
+set_name: annex_match
+language: en
+description: >-
+  Our fintech in Amsterdam, 80 people, offers pay-later at the checkout of about 1,500 online shops.
+  When a shopper chooses to pay in three instalments, our model, trained on our own repayment data,
+  estimates within a second how likely that person is to repay and decides whether to offer the
+  instalment plan and up to what limit. Declined shoppers see the shop's other payment options. A
+  separate model of ours spots stolen cards at the same checkout. The checkout widget now comes in a
+  dark theme.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:5:b"]
+label_citation: ["annex:III:5:b", "art:6:2", "art:3:3"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: it evaluates the creditworthiness of individuals. The stolen-card model is
+  fraud detection, which 5(b) excludes, but the repayment model is not. It evaluates individual
+  people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: builds and runs it under
+  its own name.
+tags:
+  - "annex_iii_area:5"

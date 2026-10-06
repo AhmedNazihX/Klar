@@ -1,0 +1,24 @@
+id: annex-match-24-emergency-room-triage
+set_name: annex_match
+language: en
+description: >-
+  We're a 35-person health-tech company in Copenhagen. TriageNow runs at the front desk of hospital
+  emergency departments: patients or nurses enter symptoms and vital signs, and our model, trained
+  on anonymised hospital records, assigns each patient an urgency level from 1 to 5, which sets
+  their place in the waiting queue. Nurses can change the level but rarely do on busy nights. The
+  software is certified as a class IIa medical device, with a notified body involved. We sell it to
+  hospitals in Denmark and Sweden. Our office dog is called Bolt.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:5:d", "annex:I:A:11"]
+label_citation: ["annex:III:5:d", "annex:I:A:11", "art:6:2", "art:6:1:a", "art:6:1:b", "art:3:3"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Points: emergency healthcare patient triage is named in Annex III 5(d); the
+  software is also a class IIa medical device that needed a notified body, so Art. 6(1) via Annex I
+  Section A point 11 applies too. Either point counts. Role: develops and sells it.
+tags:
+  - "annex_iii_area:5"
+  - "multi_point"
+  - "annex_i_section:a"
