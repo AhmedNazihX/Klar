@@ -73,7 +73,6 @@ from aiact.schemas import (
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
 from tests.engine.nodes.corpus_recording import (
-    PENDING_RERECORD,
     RecordedGuidelineLibrary,
     corpus_recording,
 )
@@ -1133,28 +1132,17 @@ def _b5c_cases() -> list[BenchmarkCase]:
 B5C_CASES = _b5c_cases()
 
 REFUSED = KnownGap("provider content filter (decision 029)", refused)
-
-
-def _social_scoring_left_open(result: CheckOutcome, case: BenchmarkCase) -> bool:
-    """Art. 5(1)(c) matched, but legally ambiguous rather than decided."""
-    return (
-        result.matched
-        and result.step.status is Status.LEGALLY_AMBIGUOUS
-        and "art:5:1:c" in cited(result)
-    )
-
+REFUSED_IN_E10 = KnownGap("provider content filter (decision 029), E10 re-record", refused)
 
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-c-01-undress-photo-app": REFUSED,
     "own-c-02-undress-app-before-december": REFUSED,
     "own-c-04-studio-digital-doubles-consent": REFUSED,
     "own-c-05-gossip-site-fake-nudes": REFUSED,
+    "own-c-06-dating-app-nudity-blur": REFUSED_IN_E10,
     "own-c-07-unfiltered-image-generator": REFUSED,
-    "own-c-10-town-resident-points": KnownGap(
-        "matches Art. 5(1)(c) social scoring but marks it legally_ambiguous instead of decided "
-        "(E10 re-record, user 2026-10-06)",
-        _social_scoring_left_open,
-    ),
+    "own-c-14-kids-game-sad-pet-offers": REFUSED_IN_E10,
+    "own-c-16-police-live-search-missing-child": REFUSED_IN_E10,
 }
 """Recorded cases whose Art. 5 outcome differs from the label, with the reason; each fails when
 it starts matching, so the entry is removed."""
@@ -1191,7 +1179,6 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
     B5C_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="no B5c cases"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
-@PENDING_RERECORD
 def test_b5c_case_replay(
     case: BenchmarkCase,
     luna_settings: Settings,

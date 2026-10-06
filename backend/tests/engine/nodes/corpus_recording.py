@@ -29,12 +29,6 @@ from aiact.retrieval.search import SearchHit
 from aiact.schemas import Language
 
 CORPUS_SUFFIX = ".corpus.json"
-PENDING_RERECORD = pytest.mark.xfail(
-    strict=True, reason="pending re-record: E10 prohibited Art. 5(1)(c) fix"
-)
-"""Marks a replay whose recorded request no longer matches what the node sends (E10 changed
-the prohibited prompt's point (c) guidance). Strict, so the replay fails as XPASS once it is
-recorded again, and the mark is dropped then."""
 NOT_FOUND = "not_found"
 """The entry of a lookup the corpus had no text for; the replay raises it again."""
 

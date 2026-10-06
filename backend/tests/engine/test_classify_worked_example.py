@@ -69,16 +69,18 @@ ANNEX_III_FROM = date(2027, 12, 2)
 """INIT: the duties apply "from 2 December 2027" (the Annex III route's Chapter III date)."""
 INIT_BASIS: dict[StepName, set[str]] = {
     StepName.SCOPE: {"art:3:1", "art:2:1"},
-    StepName.PROHIBITED: {"art:5:1"},
     StepName.HIGH_RISK: {"annex:III:4:a", "art:6:3"},
     StepName.TRANSPARENCY: {"art:50"},
     StepName.ROLE_OBLIGATIONS: {"art:3:4"},
 }
 """The Basis column of INIT's table, as the ids each step cites: Art. 2-3 (the AI system
-definition and the territorial scope), Art. 5(1) (no point matched, so the list), Annex III
-4(a) and Art. 6(3), Art. 50 (no duty raised, so the whole article), and for the role the
-deployer definition (INIT names Art. 25, whose switches a deployer that keeps its role doesn't
-trigger, so the step cites none of them)."""
+definition and the territorial scope), Annex III 4(a) and Art. 6(3), Art. 50 (no duty raised,
+so the whole article), and for the role the deployer definition (INIT names Art. 25, whose
+switches a deployer that keeps its role doesn't trigger, so the step cites none of them).
+Art. 5 is checked apart (`ART_5`): a step that matches no practice cites either the Art. 5(1)
+list or the points it considered and set aside."""
+ART_5 = "art:5"
+"""The prohibited step's Basis: every id it cites is a provision of Art. 5."""
 
 
 SCOPE_QUESTION = "ai_system"
@@ -116,6 +118,11 @@ def assert_the_expected_result(run: ClassificationRun) -> None:
     for name, basis in INIT_BASIS.items():
         cited = {c.provision_id for c in steps[name].citations}
         assert basis <= cited, (name, sorted(cited))
+    prohibited_cites = [c.provision_id for c in steps[StepName.PROHIBITED].citations]
+    assert prohibited_cites, "the prohibited step cites nothing"
+    assert all(pid == ART_5 or pid.startswith(f"{ART_5}:") for pid in prohibited_cites), (
+        prohibited_cites
+    )
     assert result.transparency_duties == ()
     assert result.role is Role.DEPLOYER
     duties = {o.article: o for o in result.obligations}
