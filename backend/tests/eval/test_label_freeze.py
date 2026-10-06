@@ -287,6 +287,26 @@ def test_an_as_of_edit_is_a_label_change(repo: Path) -> None:
     assert check_label_freeze("main", repo).is_ok
 
 
+@pytest.mark.parametrize(
+    "edit",
+    [
+        "accepted_bases: [outside_use_case]\n",
+        "label_status: legally_ambiguous\n",
+        "flip_variants:\n  - feature: also ranks people\n    resulting_verdict: high\n",
+    ],
+)
+def test_a_commission_row_field_edit_is_a_label_change(repo: Path, edit: str) -> None:
+    """A rewrite's bases, row status and flip variants are scored (B4), so only an id row covers
+    an edit to them: the bulk row covers own-b-01's tag change but not own-b-02's edit."""
+    write(repo, "eval/cases/own/b/01-old.yaml", CASE_B01 + "tags: [scoring:x]\n")
+    write(repo, "eval/cases/own/b/02-second.yaml", CASE_B02 + edit)
+    append_log(repo, log_row("1 own-b cases (by rule)"))
+    report = check_label_freeze("main", repo)
+    assert [case.key.case_id for case in report.unlogged] == ["own-b-02-second"]
+    append_log(repo, log_row("own-b-02-second"))
+    assert check_label_freeze("main", repo).is_ok
+
+
 def test_a_bulk_row_never_covers_an_override_status_change(repo: Path) -> None:
     write(
         repo,
