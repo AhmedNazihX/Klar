@@ -10,7 +10,12 @@ paths:
 **Stack** (INIT › Tech stack): Vite, React and TypeScript, Tailwind CSS and shadcn/ui, TanStack Router and Query,
 React Hook Form with Zod, and react-i18next.
 - It's a **client-only single-page app**. There's no Next.js, no server components, no `"use client"`, and no server actions.
-- It talks only to the Python API.
+- Two data paths (INIT › Architecture: `UI → FastAPI` and `UI → DB`; user decision 2026-10-06):
+  - Classification, Q&A, documents and anything that needs the engine go through the Python API (the generated client).
+  - The user's own data (company profile, inventories, systems, import/export) goes straight to Supabase with
+    `supabase-js`, under the anonymous session and row-level security. Don't wrap it in FastAPI endpoints.
+  - The browser holds only the public anon key. Never a service-role key, and no access check that relies on the
+    client: RLS policies and database constraints enforce ownership and validity.
 
 **Files** (P4 sets these up and records them in `docs/LAYOUT.md`)
 - shadcn primitives: `src/components/ui/<name>.tsx`, lower-case, added with the shadcn CLI. Change them sparingly.
@@ -19,7 +24,7 @@ React Hook Form with Zod, and react-i18next.
 - API client: `src/api/`. It's **generated** from `frontend/openapi.json`, so never edit it by hand. Regenerate it after the API changes.
 
 **Data**
-- Server data comes only through TanStack Query hooks that wrap the generated client. Never `fetch` inside `useEffect`,
+- Server data comes only through TanStack Query hooks that wrap the generated client or `supabase-js`. Never `fetch` inside `useEffect`,
   and never copy server data into client state.
 - Shareable view state (filters, the selected system, the active tab, the law version) lives in the router's search params.
 - Use the generated types for everything the API returns (`RiskClass`, `Status`, `ClassificationResult`). Never re-declare them.
