@@ -1,0 +1,34 @@
+id: cb-041-airport-walkway-passenger-categories
+set_name: commission_b
+language: en
+description: >-
+  We operate a regional airport with two terminals and about 900 staff. From spring 2028 the
+  cameras along the walkways between the terminals will feed a system we are buying from a
+  Spanish supplier. It reads each traveller's gait and facial features, infers from them whether
+  the person probably has a disability or a health condition that affects how they move, and puts
+  them into categories such as "likely reduced mobility", alongside groupings like solo traveller
+  or family. From these categories it builds aggregated passenger profiles for each wave of
+  flights, and our operations team uses them to decide where to send assistance staff and
+  wheelchairs. Nobody is identified by name. We are also extending the short-stay car park.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:1:b"
+label_citation: ["annex:III:1:b", "art:3:40", "art:6:2", "art:50:3", "art:5:1:g"]
+source_example_id: hr-ex-041
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. HARD CASE (flagged to the user): the source row's sensitive
+  attribute is ethnic origin, which Art. 5(1)(g) may catch as "race" (the prohibited-practices
+  guidelines list ethnicity estimation as individual categorisation), so a faithful rewrite risks
+  a prohibited answer against the Commission's high-risk verdict. This draft swaps in health
+  (disability), a sensitive attribute under Art. 9(1) GDPR that Art. 5(1)(g) does not list,
+  keeping the deciding fact: categorisation by an inferred sensitive attribute. Class: assigning
+  people to categories from their biometric data (Art. 3(40)) by an inferred sensitive attribute,
+  Annex III point 1(b), high-risk under Art. 6(2). Art. 50(3) duty stacks (deployer informs those
+  exposed). Role: deployer of a bought system.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:high"
+  - "trap:high_risk_and_transparency"

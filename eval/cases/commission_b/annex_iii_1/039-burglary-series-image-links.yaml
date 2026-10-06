@@ -1,0 +1,28 @@
+id: cb-039-burglary-series-image-links
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Fallanalyse einer Landespolizei. Für Serien von Wohnungseinbrüchen und
+  Tankbetrügereien setzen wir ab Januar 2028 eine zugekaufte Analysesoftware ein. Sie vergleicht
+  die Fotos und Videostandbilder aus Hunderten Ermittlungsakten miteinander, auch Aufnahmen, auf
+  denen Gesichter zu sehen sind, und zeigt uns, welche Taten zusammenhängen könnten: ähnliche
+  Bilder, dieselbe Jacke, dasselbe Auto, dasselbe Werkzeug, ähnliche Tatorte. Biometrische
+  Gesichtsmerkmale erzeugt sie dabei nicht, und sie versucht nicht, Tatverdächtige zu erkennen oder
+  zu identifizieren. Ob Verfahren zusammengeführt werden, entscheiden unsere Analystinnen und
+  Analysten. Parallel digitalisieren wir unser Archiv mit Altakten.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:1:a", "art:3:34", "art:3:41"]
+source_example_id: hr-ex-039
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the software links case files by comparing images,
+  including facial imagery, but uses no biometric data (Art. 3(34)) and does not identify the
+  common suspects, so it is not remote biometric identification under Annex III point 1(a). It
+  does not profile persons or assess offending risk (point 6). No Art. 50 duty: minimal_risk.
+  Role: deployer of bought software.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

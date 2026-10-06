@@ -1,0 +1,28 @@
+id: cb-030-seized-media-presort
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die IT-Forensik eines Landeskriminalamts mit gut 50 Beschäftigten. Bei Durchsuchungen
+  stellen wir Festplatten und Handys sicher, auf denen oft Hunderttausende Bilder und Videos
+  liegen. Ab 2028 nutzen wir in allen Verfahren ein gekauftes Programm, das diese Dateien
+  vorsortiert, bevor unsere Auswerterinnen und Auswerter sie sichten: Es markiert zum Beispiel,
+  auf welchen Bildern ein Kind zu sehen ist, sortiert Dubletten aus und gruppiert ähnliche Motive.
+  Wer auf den Bildern zu sehen ist, ermittelt es nicht, und es gleicht nichts mit Datenbanken ab.
+  Was davon als Beweismittel taugt, entscheiden ausschließlich unsere Leute. Unsere Abteilung zieht
+  im selben Jahr in ein neues Gebäude.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:1:a", "annex:III:6"]
+source_example_id: hr-ex-030
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the tool structures seized material before human
+  review; it identifies no one and compares nothing with a reference database, so it is not
+  remote biometric identification (Annex III point 1(a)), and it neither assesses the reliability
+  of evidence nor profiles anyone (point 6). The Commission's settled verdict: outside the use
+  case. No Art. 50 duty: minimal_risk. Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

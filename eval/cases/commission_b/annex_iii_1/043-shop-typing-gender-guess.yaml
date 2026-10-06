@@ -1,0 +1,28 @@
+id: cb-043-shop-typing-gender-guess
+set_name: commission_b
+language: en
+description: >-
+  We're an online fashion retailer in Milan with 180 employees. In 2028 we're adding a plug-in
+  from a marketing-tech vendor to our web shop. It analyses how visitors type, meaning the rhythm,
+  the pauses between keys and, on phones, how hard they press, and from that it estimates whether
+  the visitor is a man or a woman. The homepage, product suggestions and banners are then tailored
+  to that guess. It doesn't ask visitors anything and looks only at how they type, not at what
+  they type. We use the vendor's plug-in with its standard settings. Separately, we're redesigning
+  our returns process this year.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["annex:III:1:b", "art:3:40", "art:50:3"]
+source_example_id: hr-ex-043
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: keystroke dynamics are behavioural biometric data,
+  and assigning visitors a gender from them is biometric categorisation (Art. 3(40)), as the
+  Commission's row says; gender is not a sensitive attribute under Art. 9(1) GDPR, so not Annex
+  III point 1(b). Art. 50(3): the deployer must inform the people exposed: limited_risk. Doubt:
+  an engine that doesn't read typing rhythm as biometric data would answer minimal_risk. Role:
+  deployer of a bought plug-in.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

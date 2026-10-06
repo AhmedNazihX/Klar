@@ -1,0 +1,27 @@
+id: cb-023-online-exam-identity-check
+set_name: commission_b
+language: en
+description: >-
+  We're a language-testing company in Dublin with about 90 staff, offering English certificates
+  that candidates sit online from home. To be sure the person taking the test is the person who
+  booked it, we bought an identity-check service from a vendor. At the start of the exam, and
+  again a few times during it, the service compares the face on the candidate's webcam with the
+  passport photo they uploaded at booking and confirms whether it's the same person. That's all it
+  does. Our human invigilators watch the live video for anything irregular, and our examiners
+  mark the essays and speaking recordings. The service goes live for the March 2028 sittings. We
+  are also adding Portuguese courses to our catalogue.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:1:a", "art:3:36"]
+source_example_id: hr-ex-023
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: a one-to-one check that the candidate is the person
+  whose passport photo was uploaded is biometric verification (Art. 3(36)), which Annex III point
+  1(a) excludes. Monitoring for cheating (point 3(d)) and marking (point 3(b)) are done by people,
+  not by the system. No Art. 50 duty: minimal_risk. Role: deployer of a bought service.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

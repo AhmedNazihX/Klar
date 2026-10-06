@@ -1,0 +1,30 @@
+id: cb-017-abuse-material-offender-matching
+set_name: commission_b
+language: en
+description: >-
+  We're a 60-person forensic software company in Tallinn and we sell only to police forces. Our
+  newest module is for investigators working on online child abuse cases. When officers come
+  across abuse images or videos on the web, the module extracts the faces and any visible tattoos
+  of the adults shown and searches the force's collection of photos of known and suspected
+  offenders for likely matches, returning a ranked list of candidates for officers to check. The
+  people in the material are of course not involved in any way. We trained the matching models
+  ourselves, and each force runs the module on its own servers. Our first contract starts in
+  March 2028. We also run a training academy for digital forensics.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:1:a"
+label_citation: ["annex:III:1:a", "art:3:41", "art:6:2"]
+source_example_id: hr-ex-017
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: faces and tattoos from material found online are
+  compared with a reference database of offenders to identify a person without their
+  involvement: remote biometric identification (Art. 3(41)), Annex III point 1(a), high-risk under
+  Art. 6(2). Retrospective use on recorded material, so the real-time ban in Art. 5(1)(h) does not
+  arise (the deployers' Art. 26(10) conditions for post-remote identification do). Role: it
+  develops the module and sells it under its own name (provider). From March 2028.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:high"

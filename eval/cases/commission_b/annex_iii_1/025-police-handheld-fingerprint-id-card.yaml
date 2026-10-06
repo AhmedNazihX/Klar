@@ -1,0 +1,28 @@
+id: cb-025-police-handheld-fingerprint-id-card
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Hersteller robuster Handgeräte aus Görlitz mit rund 70 Mitarbeitenden und beliefern
+  Polizeibehörden in mehreren EU-Ländern. Für Verkehrskontrollen haben wir eine neue Funktion
+  entwickelt: Der Beamte liest den Chip im Personalausweis der kontrollierten Person aus, die
+  Person legt einen Finger auf den Sensor des Geräts, und ein von uns trainiertes Modell prüft, ob
+  der Abdruck zu dem im Ausweis gespeicherten passt. Verglichen wird ausschließlich mit diesem
+  einen Ausweis, nicht mit einer Datenbank, und als Ergebnis zeigt das Gerät nur „passt“ oder
+  „passt nicht“. Die Funktion kommt im Frühjahr 2028 per Update auf die Geräte. Mit demselben
+  Update verlängern wir auch die Akkulaufzeit.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:1:a", "art:3:36"]
+source_example_id: hr-ex-025
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the live fingerprint is compared only with the one
+  stored on the person's own ID card to confirm a claimed identity: biometric verification
+  (Art. 3(36)), excluded from Annex III point 1(a). No other Annex III point covers an identity
+  check at a roadside stop (point 6 lists other law-enforcement uses). No Art. 50 duty:
+  minimal_risk. Role: it develops the function and sells the devices under its own name.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

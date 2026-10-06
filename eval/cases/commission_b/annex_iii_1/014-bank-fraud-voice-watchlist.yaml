@@ -1,0 +1,30 @@
+id: cb-014-bank-fraud-voice-watchlist
+set_name: commission_b
+language: en
+description: >-
+  I lead the fraud team at an online bank in Lisbon with about 1,100 employees. In early 2028 we
+  are rolling out a voice add-on for our phone support, licensed from a US vendor. While a caller
+  is talking to an agent, the add-on turns their voice into a voiceprint and checks it against
+  our list of several thousand voiceprints taken from calls we confirmed as fraud. If the voice
+  matches one on the list, the agent sees a warning and the call goes to a specialist. Callers
+  don't enrol, don't say a passphrase and aren't told the check is running; it works in the
+  background on every call. We haven't modified the vendor's product. Most of our support staff
+  work from home three days a week.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:1:a"
+label_citation: ["annex:III:1:a", "art:3:41", "art:6:2"]
+source_example_id: hr-ex-014
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: callers' voiceprints are compared against a database
+  of known voiceprints to identify a speaker, without the caller's active involvement: remote
+  biometric identification (Art. 3(41)), Annex III point 1(a), high-risk under Art. 6(2). It is
+  identification against a watchlist, not verification of a claimed identity, so the 1(a)
+  carve-out for verification does not apply. Not law enforcement, so Art. 5(1)(h) does not
+  arise. Role: deployer of an unmodified licensed product. Rolled out 2028.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:high"

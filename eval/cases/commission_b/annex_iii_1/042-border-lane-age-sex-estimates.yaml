@@ -1,0 +1,33 @@
+id: cb-042-border-lane-age-sex-estimates
+set_name: commission_b
+language: en
+description: >-
+  We are a national border guard service with about 4,000 officers. In 2028 we are installing
+  cameras at the passport-control lanes of three land crossings on our eastern border. Software
+  from a domestic supplier looks at the face of each non-EU traveller while they queue and
+  estimates their age bracket and whether they are male or female. Shift planners use the
+  resulting figures to see which groups cross at which times and to plan staffing and interpreters.
+  The estimates are not linked to names or passport data. We bought the system as it is and have
+  not changed it. The same programme is also renovating the waiting areas at the crossings.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["annex:III:1:b", "art:3:40", "art:50:3"]
+source_example_id: hr-ex-042
+accepted_bases: ["outside_use_case"]
+label_status: settled
+flip_variants:
+  - feature: the age and gender estimates are used to assess the risk each traveller poses on entry to the EU
+    resulting_verdict: high
+    provision_ids: ["annex:III:7:b"]
+notes: >-
+  Draft label, awaiting user approval. Class: assigning travellers to age and sex categories from
+  their faces is biometric categorisation (Art. 3(40)), but age and sex are not sensitive
+  attributes under Art. 9(1) GDPR, so not Annex III point 1(b). Written without the flip feature
+  (use of the estimates for a risk assessment, point 7(b)); the engine should ask about or flag
+  it. Art. 50(3): the deployer of a biometric categorisation system must inform the people
+  exposed; border management is not the criminal-offence exception: limited_risk. Role: deployer
+  of an unmodified bought system.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"
