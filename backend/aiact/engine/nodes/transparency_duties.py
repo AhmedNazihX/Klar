@@ -42,8 +42,8 @@ class DutyAnswer(ContractModel):
     whether the law settles that reading. Its `fact` sums up the reading, so it always counts as
     settled (an open fact is asked through its own question). Enum fields carry no description:
     strict structured output rejects keywords next to a `$ref`; the prompt explains every field
-    instead. The texts are bounded by `MAX_TEXT_CHARS` in validation only, so the response format
-    (and every recorded request) stays the same."""
+    instead. The texts are bounded by `MAX_TEXT_CHARS` when the reply is checked, not in the
+    schema, so the model's response format stays unchanged."""
 
     covered: Answer
     exception: Answer

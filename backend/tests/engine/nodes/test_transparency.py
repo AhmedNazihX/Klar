@@ -540,7 +540,9 @@ def test_the_corpus_limits_the_search_to_the_art_50_guidelines_without_a_cut_off
     lookup = Lookup(Language.EN, LawVersion.AMENDED, AS_OF, EXCLUDED)
     corpus = GuidelineCorpus(connection, embedder, node.SOURCE)
     corpus.guidance("query", lookup, language=Language.EN)
+    assert node.SOURCE.article == "art:50"
     assert frozenset({"guide-art50"}) == node.SOURCE.doc_keys
+    assert node.SOURCE.passages == 8
     assert seen == [
         {
             "doc_keys": node.SOURCE.doc_keys,
