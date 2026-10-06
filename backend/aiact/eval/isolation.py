@@ -15,9 +15,10 @@ check is about behaviour, not absence. This module holds the measurements; the a
 
 The benchmark texts are the Pile B examples' own `text` (the `lead_in` is left out: it is the
 paragraph or bullet that introduces the list, prose that stays retrievable, or is shared with
-the Pile A examples of the same bullet) and every case description. The academic cases' `Domain:`
-line is left out: it quotes an Annex III heading verbatim (B12's audit), statutory wording that is
-in the corpus by design.
+the Pile A examples of the same bullet), every case description and every Q&A question (B7; the
+reference answers paraphrase the law by design, so they are left out). The academic cases'
+`Domain:` line is left out: it quotes an Annex III heading verbatim (B12's audit), statutory
+wording that is in the corpus by design.
 """
 
 import base64
@@ -39,10 +40,12 @@ from aiact.eval.cases import (
     APPLIEDAI_FILE,
     CASES_DIR,
     EVAL_DIR,
+    QA_DIR_NAME,
     BenchmarkCase,
     CaseSet,
     load_cases,
     load_jsonl,
+    load_qa_items,
 )
 from aiact.eval.split import EXAMPLES_FILE, SPLIT_FILE, Split
 from aiact.llm.embeddings import EmbeddingBatch
@@ -175,15 +178,24 @@ def yaml_cases(cases_dir: Path = CASES_DIR) -> tuple[BenchmarkCase, ...]:
     return tuple(case for case_set in sets for case in load_cases(case_set, cases_dir))
 
 
+def qa_texts(cases_dir: Path = CASES_DIR) -> tuple[BenchmarkText, ...]:
+    """Every Q&A question (B7), when the Q&A folder exists under `cases_dir`."""
+    if not (cases_dir / QA_DIR_NAME).is_dir():
+        return ()
+    return tuple(BenchmarkText(item.id, item.question) for item in load_qa_items(cases_dir))
+
+
 def case_texts(
     cases_dir: Path = CASES_DIR, appliedai_file: Path | None = APPLIEDAI_FILE
 ) -> tuple[BenchmarkText, ...]:
-    """Every case description of the YAML sets that exist, plus the appliedAI extraction when
-    `appliedai_file` is given and present (it is gitignored and may be absent)."""
+    """Every case description of the YAML sets that exist and every Q&A question, plus the
+    appliedAI extraction when `appliedai_file` is given and present (it is gitignored and may be
+    absent)."""
     texts = [
         BenchmarkText(case.id, checked_description(case.set_name, case.description))
         for case in yaml_cases(cases_dir)
     ]
+    texts.extend(qa_texts(cases_dir))
     if appliedai_file is not None and appliedai_file.is_file():
         texts.extend(BenchmarkText(c.id, c.description) for c in load_jsonl(appliedai_file))
     return tuple(texts)
@@ -192,7 +204,8 @@ def case_texts(
 def embedded_texts(
     split_file: Path = SPLIT_FILE, examples_file: Path = EXAMPLES_FILE, cases_dir: Path = CASES_DIR
 ) -> tuple[BenchmarkText, ...]:
-    """The texts whose vectors `EMBEDDINGS_FILE` holds: Pile B and the committed case sets. The
+    """The texts whose vectors `EMBEDDINGS_FILE` holds: Pile B, the committed case sets and the
+    Q&A questions. The
     appliedAI extraction is left out (its licence is unclear, so nothing derived is committed)."""
     pile_b = load_split(split_file).pile_b
     examples = pile_b_texts(load_example_texts(examples_file), pile_b)

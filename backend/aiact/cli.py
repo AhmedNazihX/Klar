@@ -512,9 +512,9 @@ def eval_isolation_embed(
         Path, typer.Option(help="The benchmark-vector cache.")
     ] = isolation.EMBEDDINGS_FILE,
 ) -> None:
-    """Embed the benchmark texts the isolation check compares with the corpus (Pile B examples
-    and case descriptions, not the appliedAI extraction) with the corpus arm, and write their
-    vectors to eval/. Only texts missing from the cache are sent: a small paid call."""
+    """Embed the benchmark texts the isolation check compares with the corpus (Pile B examples,
+    case descriptions and Q&A questions, not the appliedAI extraction) with the corpus arm, and
+    write their vectors to eval/. Only texts missing from the cache are sent: a small paid call."""
     arm = corpus_embed_module.ARMS["qwen3"]
     dims = get_settings().embedding_dimensions
     try:

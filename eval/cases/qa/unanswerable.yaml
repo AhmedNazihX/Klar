@@ -1,0 +1,81 @@
+# B7 Q&A set: questions the corpus can't answer (off-topic, or about laws it doesn't hold:
+# GDPR, Data Act, DSA, Product Liability Directive, German national law). C8/X1 calibrate the
+# search relevance cut-off on them; P7 checks that the assistant declines instead of answering.
+- id: qa-none-en-01-gdpr-breach-deadline
+  language: en
+  question: >-
+    How many hours do we have to notify the supervisory authority of a personal data breach under
+    the GDPR?
+  answerable: false
+  notes: Approved by user 2026-10-06. About the GDPR (Art. 33), which the corpus doesn't hold.
+  tags: ["unanswerable:other_law"]
+- id: qa-none-en-02-cloud-switching-fees
+  language: en
+  question: >-
+    Under the Data Act, can our cloud provider still charge us fees when we switch to another
+    provider?
+  answerable: false
+  notes: >-
+    Approved by user 2026-10-06. About the Data Act's switching rules, which the corpus doesn't
+    hold.
+  tags: ["unanswerable:other_law"]
+- id: qa-none-en-03-laptop-password
+  language: en
+  question: >-
+    How do I reset the password on my company laptop?
+  answerable: false
+  notes: Approved by user 2026-10-06. Off-topic.
+  tags: ["unanswerable:off_topic"]
+- id: qa-none-en-04-platform-risk-assessment
+  language: en
+  question: >-
+    How often does a very large online platform have to carry out its systemic risk assessment
+    under the Digital Services Act?
+  answerable: false
+  notes: Approved by user 2026-10-06. About the Digital Services Act, which the corpus doesn't hold.
+  tags: ["unanswerable:other_law"]
+- id: qa-none-en-05-defective-software-damages
+  language: en
+  question: >-
+    Can a consumer claim compensation from a software maker for damage caused by a defective app
+    under the new Product Liability Directive?
+  answerable: false
+  notes: >-
+    Approved by user 2026-10-06.
+    About the Product Liability Directive, which the corpus doesn't hold. A hard negative: it is
+    close in topic to AI, so it tests the cut-off rather than plain off-topic filtering.
+  tags: ["unanswerable:other_law"]
+- id: qa-none-de-01-betriebsrat-zustimmung
+  language: de
+  question: >-
+    Muss der Betriebsrat zustimmen, bevor wir ein KI-Tool zur Leistungsauswertung einführen?
+  answerable: false
+  notes: >-
+    Approved by user 2026-10-06.
+    About German works-council co-determination (BetrVG § 87), national law the corpus doesn't
+    hold. A hard negative: the AI Act deals with workplace AI, but not with this question.
+  tags: ["unanswerable:national_law"]
+- id: qa-none-de-02-dsgvo-auskunftsfrist
+  language: de
+  question: >-
+    Innerhalb welcher Frist muss ein Unternehmen eine Auskunftsanfrage nach der DSGVO beantworten?
+  answerable: false
+  notes: >-
+    Approved by user 2026-10-06. About the GDPR (Art. 12(3) and 15), which the corpus doesn't hold.
+  tags: ["unanswerable:other_law"]
+- id: qa-none-de-03-mindestlohn
+  language: de
+  question: >-
+    Wie hoch ist der gesetzliche Mindestlohn in Deutschland im Jahr 2026?
+  answerable: false
+  notes: Approved by user 2026-10-06. Off-topic (German national law).
+  tags: ["unanswerable:off_topic"]
+- id: qa-none-de-04-data-act-geraetedaten
+  language: de
+  question: >-
+    Welche Daten muss der Hersteller eines vernetzten Geräts den Nutzern nach dem Data Act
+    bereitstellen?
+  answerable: false
+  notes: >-
+    Approved by user 2026-10-06. About the Data Act's access rights, which the corpus doesn't hold.
+  tags: ["unanswerable:other_law"]

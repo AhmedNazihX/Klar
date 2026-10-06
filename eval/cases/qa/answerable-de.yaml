@@ -1,0 +1,116 @@
+# B7 Q&A set: beantwortbare Fragen auf Deutsch. Jede nennt die Vorschriften, die eine richtige
+# Antwort zitieren muss (konsolidierte KI-Verordnung, Stand 27. Juli 2026), und eine kurze
+# Referenzantwort.
+- id: qa-de-01-klassenzimmer-stimmung
+  language: de
+  question: >-
+    Eine Schule möchte per Kamera erkennen, ob Schüler im Unterricht gelangweilt oder
+    frustriert sind. Ist das erlaubt?
+  required_provision_ids: ["art:5:1:f"]
+  reference_answer: >-
+    Nein. Art. 5 Abs. 1 Buchst. f verbietet KI-Systeme, die Emotionen natürlicher Personen in
+    Bildungseinrichtungen (und am Arbeitsplatz) ableiten. Ausgenommen sind nur Systeme, die aus
+    medizinischen oder Sicherheitsgründen eingesetzt werden; das trifft hier nicht zu.
+  notes: Approved by user 2026-10-06.
+  tags: ["topic:prohibited"]
+- id: qa-de-02-werbevideo-deepfake
+  language: de
+  question: >-
+    Wir lassen für eine Kampagne ein Video erzeugen, in dem unsere Geschäftsführerin Sätze sagt,
+    die sie nie gesagt hat. Müssen wir das kennzeichnen?
+  required_provision_ids: ["art:50:4"]
+  reference_answer: >-
+    Ja. Ein solches Video ist ein Deepfake; wer als Betreiber ein KI-System nutzt, das Deepfakes
+    erzeugt, muss offenlegen, dass die Inhalte künstlich erzeugt oder manipuliert wurden
+    (Art. 50 Abs. 4). Nur bei offensichtlich künstlerischen, satirischen oder fiktionalen Werken
+    genügt ein Hinweis, der die Darstellung nicht beeinträchtigt.
+  notes: Approved by user 2026-10-06.
+  tags: ["topic:transparency"]
+- id: qa-de-03-chatbot-hinweis
+  language: de
+  question: >-
+    Muss unser Kundenservice-Chatbot sagen, dass er keine echte Person ist?
+  required_provision_ids: ["art:50:1"]
+  reference_answer: >-
+    Ja. Nach Art. 50 Abs. 1 muss der Anbieter das System so gestalten, dass Nutzer erfahren, dass
+    sie mit einem KI-System interagieren, es sei denn, das ist für eine angemessen informierte,
+    aufmerksame und verständige Person nach den Umständen offensichtlich.
+  notes: Approved by user 2026-10-06.
+  tags: ["topic:transparency"]
+- id: qa-de-04-bewerbervorauswahl
+  language: de
+  question: >-
+    Wir setzen eine Software ein, die Bewerbungen automatisch vorsortiert und Kandidaten bewertet.
+    Ist das ein Hochrisiko-System?
+  required_provision_ids: ["annex:III:4:a", "art:6:2"]
+  reference_answer: >-
+    In der Regel ja. Anhang III Nr. 4 Buchst. a nennt KI-Systeme für die Einstellung oder Auswahl
+    von Personen, ausdrücklich auch das Sichten und Filtern von Bewerbungen und das Bewerten von
+    Bewerbern; nach Art. 6 Abs. 2 gelten diese als hochriskant. Die Ausnahme des Art. 6 Abs. 3
+    greift nicht, wenn das System Profile der Bewerber erstellt.
+  notes: Approved by user 2026-10-06.
+  tags: ["topic:high_risk"]
+- id: qa-de-05-kreditabsage-erklaerung
+  language: de
+  question: >-
+    Meine Bank hat meinen Kreditantrag mithilfe eines KI-Scorings abgelehnt. Kann ich eine
+    Erklärung verlangen?
+  required_provision_ids: ["art:86:1", "art:86:3", "annex:III:5:b"]
+  reference_answer: >-
+    Grundsätzlich ja. Kreditwürdigkeitsprüfung und Kreditscoring fallen unter Anhang III Nr. 5
+    Buchst. b. Wer von einer Entscheidung betroffen ist, die der Betreiber auf Grundlage der
+    Ausgabe eines solchen Hochrisiko-Systems getroffen hat und die rechtliche Wirkungen hat oder
+    ihn in ähnlicher Weise erheblich beeinträchtigt, kann nach Art. 86 Abs. 1 vom Betreiber eine
+    klare und aussagekräftige Erläuterung zur Rolle des KI-Systems und zu den wichtigsten
+    Elementen der Entscheidung verlangen. Nach Art. 86 Abs. 3 gilt dieses Recht aber nur, soweit
+    es nicht bereits anderweitig im Unionsrecht vorgesehen ist, etwa in der DSGVO.
+  notes: Approved by user 2026-10-06.
+  tags: ["topic:rights"]
+- id: qa-de-06-fristen-hochrisiko
+  language: de
+  question: >-
+    Ab wann müssen Hochrisiko-Systeme nach Anhang III die Anforderungen der Verordnung erfüllen?
+  required_provision_ids: ["art:113:c"]
+  reference_answer: >-
+    Nach dem Digital-Omnibus ab dem 2. Dezember 2027 (Art. 113 Buchst. c Ziff. i). Für
+    Hochrisiko-Systeme nach Art. 6 Abs. 1 und Anhang I gilt der 2. August 2028.
+  notes: Approved by user 2026-10-06.
+  tags: ["topic:dates"]
+- id: qa-de-07-aufsicht-betreiber
+  language: de
+  question: >-
+    Wer darf bei uns als Betreiber eines Hochrisiko-Systems die menschliche Aufsicht übernehmen?
+  required_provision_ids: ["art:26:2"]
+  reference_answer: >-
+    Nach Art. 26 Abs. 2 müssen Betreiber die Aufsicht natürlichen Personen übertragen, die über
+    die nötige Kompetenz, Ausbildung und Befugnis verfügen, und ihnen die erforderliche
+    Unterstützung geben.
+  notes: Approved by user 2026-10-06.
+  tags: ["topic:obligations"]
+- id: qa-de-08-private-nutzung
+  language: de
+  question: >-
+    Ich nutze privat eine KI-App zur Bildbearbeitung. Habe ich als Nutzer Pflichten nach der
+    KI-Verordnung?
+  required_provision_ids: ["art:2:10"]
+  reference_answer: >-
+    Nein. Nach Art. 2 Abs. 10 gilt die Verordnung nicht für die Pflichten von Betreibern, die
+    natürliche Personen sind und KI-Systeme im Rahmen einer rein persönlichen, nicht beruflichen
+    Tätigkeit verwenden.
+  notes: Approved by user 2026-10-06.
+  tags: ["topic:scope"]
+- id: qa-de-09-zweckaenderung-anbieter
+  language: de
+  question: >-
+    Wir nehmen einen allgemeinen KI-Assistenten und setzen ihn gezielt zur Auswahl von
+    Bewerbern ein. Werden wir dadurch zum Anbieter?
+  required_provision_ids: ["art:25:1:c", "annex:III:4:a", "art:6:2"]
+  reference_answer: >-
+    In der Regel ja. Wer die Zweckbestimmung eines nicht als hochriskant eingestuften KI-Systems,
+    auch eines KI-Systems mit allgemeinem Verwendungszweck, so ändert, dass es zu einem
+    Hochrisiko-System wird, gilt nach Art. 25 Abs. 1 Buchst. c als Anbieter und unterliegt den
+    Pflichten des Art. 16. Die Bewerberauswahl fällt unter Anhang III Nr. 4 Buchst. a und ist damit
+    nach Art. 6 Abs. 2 hochriskant, sofern nicht ausnahmsweise Art. 6 Abs. 3 greift (nie bei
+    Profiling der Bewerber).
+  notes: Approved by user 2026-10-06.
+  tags: ["topic:roles"]

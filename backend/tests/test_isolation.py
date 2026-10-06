@@ -41,7 +41,7 @@ from aiact.corpus.build import DocumentLoad, DocumentRow, ProvisionRow
 from aiact.corpus.embed import ARMS, vector_literal
 from aiact.corpus.load import load_all
 from aiact.eval import isolation
-from aiact.eval.cases import CASES_DIR, CaseSet
+from aiact.eval.cases import CASES_DIR, QA_DIR_NAME, CaseSet
 from aiact.eval.isolation import BenchmarkText, ContaminatedList, EmbeddingCache, ExampleText
 from aiact.eval.split import SPLIT_FILE, Split, SplitMode
 from aiact.retrieval import search as search_module
@@ -116,12 +116,8 @@ def test_the_split_holds_pile_b_out(split: Split) -> None:
 
 def test_the_case_texts_hold_every_yaml_case(split: Split) -> None:
     """Counted apart from the loader: a loader that dropped cases would thin every check below."""
-    files = (
-        path
-        for case_set in CaseSet
-        if case_set is not CaseSet.APPLIEDAI
-        for path in (CASES_DIR / case_set.value).rglob("*.yaml")
-    )
+    folders = [s.value for s in CaseSet if s is not CaseSet.APPLIEDAI] + [QA_DIR_NAME]
+    files = (path for folder in folders for path in (CASES_DIR / folder).rglob("*.yaml"))
     documents = [yaml.safe_load(path.read_text(encoding="utf-8")) for path in files]
     count = sum(len(d) if isinstance(d, list) else 1 for d in documents)
     assert len(isolation.case_texts(appliedai_file=None)) == count > 0
