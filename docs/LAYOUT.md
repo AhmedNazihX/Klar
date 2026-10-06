@@ -44,7 +44,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── nodes/               facts.py (E2), scope.py + scope_texts.py (E3), prohibited.py +
 │   │   │   │                        prohibited_practices.py + prohibited_retrieval.py + prohibited_texts.py (E4),
 │   │   │   │                        high_risk.py + high_risk_retrieval.py + high_risk_texts.py (E5),
-│   │   │   │                        transparency.py (E6), role_obligations.py + role_texts.py (E7),
+│   │   │   │                        transparency.py + transparency_duties.py + transparency_retrieval.py +
+│   │   │   │                        transparency_texts.py (E6), role_obligations.py + role_texts.py (E7),
 │   │   │   │                        finalize.py (E8); key_facts.py: the key-fact answer shared by the
 │   │   │   │                        checks (E3); common.py: the run's lookup, citations and prompt
 │   │   │   │                        blocks shared by the checks (E5)
@@ -73,7 +74,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)
 │   │   │   └── experiments/         embeddings.py (X1a), free_agent.py (S1); X2: smoke.py (`aiact evaluate smoke`),
 │   │   │                            smoke_verdict.py (decision 023's rule over stored runs, `smoke-compare`),
-│   │   │                            matchers.py (replay states and label matchers, shared with the E3/E4/E5/E7 replays),
+│   │   │                            matchers.py (replay states and label matchers, shared with the E3–E7 replays),
 │   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
