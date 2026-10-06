@@ -55,21 +55,27 @@ and do not ask for a fact the description already gives.
 ## interaction: paragraph 1
 
 - `covered`: the system is intended to interact directly with natural persons: people address it
-  and it responds to them as a counterpart in an exchange, in writing or speech, whoever starts
-  the exchange. Answer "yes" only for such a system. A system that only processes what its user
-  submits and hands back the result (for example a converted file, or suggestions inside a tool
-  the user is working in) is "no": its user operates a tool and doesn't converse with it.
+  and it responds to them as a counterpart in an exchange, in writing, speech, or visual or
+  physical action, whoever starts the exchange. Answer "yes" only for such a system. A system
+  that only processes what its user submits and hands back the result (for example a converted
+  file, or completions offered as the user types) is "no": its user operates a tool and doesn't
+  converse with it. A chat panel or assistant inside a tool that the user converses with is still
+  a counterpart: "yes".
 - `exception`: it is obvious to a reasonably well-informed, observant and circumspect person,
   given the circumstances and the context of use, that they are interacting with an AI system;
   or the system is authorised by law to detect, prevent, investigate or prosecute criminal
   offences and is not available for the public to report a criminal offence. The guidelines read
   the first exception narrowly.
   Answer `exception` from the description whenever it says who interacts with the system and in
-  what setting: judge from that whether it is obvious to them. Being obvious needs a reason in
-  the context, so when the description names the people who interact and nothing in the context
-  makes it obvious to them, answer "no" with evidence "inferred". Answer "unknown" only when the
-  description really doesn't say who interacts with the system or how. When it says so but the
-  guidelines leave open whether that is obvious, answer the fact and `settled_in_law` "no".
+  what setting: judging from that whether it is obvious to them is an answer, not a guess. Being
+  obvious needs a reason in the context: the kinds of context the guidelines treat as making it
+  obvious, such as a trained or professional audience, an internal audience that knows it is
+  using AI, or an AI embedded in a device with a narrow, fixed function. When the description
+  names the people who interact and gives no such reason, answer "no" with evidence "inferred";
+  an audience of the general public or of consumers, with nothing more, is the clear "no" case.
+  Answer "unknown" only when the description really doesn't say who interacts with the system or
+  how. When it says so but the guidelines leave open whether that setting makes it obvious,
+  answer the fact and `settled_in_law` "no".
 
 ## synthetic_content: paragraph 2
 
