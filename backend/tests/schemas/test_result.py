@@ -2,12 +2,14 @@ import pytest
 from pydantic import ValidationError
 
 from aiact.schemas import (
+    PROVIDER_REFUSAL,
     ClassificationResult,
     FollowUpQuestion,
     RiskClass,
     Role,
     Status,
     StepName,
+    StepResult,
 )
 from tests.schemas.builders import (
     ambiguous,
@@ -17,7 +19,7 @@ from tests.schemas.builders import (
     rebuild,
     steps_with,
 )
-from tests.schemas.worked_example import OBLIGATIONS, worked_example_result
+from tests.schemas.worked_example import EU_USE_QUESTION, OBLIGATIONS, worked_example_result
 
 
 def test_worked_example_is_a_valid_high_risk_deployer_result() -> None:
@@ -92,8 +94,55 @@ def test_role_without_role_step_is_rejected() -> None:
 
 def test_role_switch_reason_without_role_is_rejected() -> None:
     result = ends_early(RiskClass.OUT_OF_SCOPE, dumped_steps(1), Status.DECIDED)
-    with pytest.raises(ValidationError, match="role_switch_reason needs a role"):
+    with pytest.raises(ValidationError, match="role_switch_reason and also_role need a role"):
         rebuild(result, role_switch_reason="Rebranded the system")
+
+
+def test_also_role_without_role_is_rejected() -> None:
+    result = ends_early(RiskClass.OUT_OF_SCOPE, dumped_steps(1), Status.DECIDED)
+    with pytest.raises(ValidationError, match="role_switch_reason and also_role need a role"):
+        rebuild(result, also_role=Role.DEPLOYER)
+
+
+def test_also_role_is_kept_next_to_a_different_role() -> None:
+    result = rebuild(worked_example_result(), role=Role.PROVIDER, also_role=Role.DEPLOYER)
+    assert (result.role, result.also_role) == (Role.PROVIDER, Role.DEPLOYER)
+    with pytest.raises(ValidationError, match="also_role must differ from role"):
+        rebuild(worked_example_result(), also_role=Role.DEPLOYER)
+
+
+def test_legal_review_is_an_optional_line() -> None:
+    assert worked_example_result().legal_review is None
+    line = "Have this result reviewed by a lawyer."
+    assert rebuild(worked_example_result(), legal_review=line).legal_review == line
+
+
+# steps the provider refused (decision 029)
+
+
+def _refused(name: StepName) -> StepResult:
+    return StepResult(
+        step=name,
+        decision="The provider's content filter blocked this description.",
+        status=Status.NEEDS_MORE_INFORMATION,
+        missing_fact=EU_USE_QUESTION,
+        error=PROVIDER_REFUSAL,
+    )
+
+
+def test_not_assessed_names_exactly_the_refused_steps() -> None:
+    steps = steps_with(_refused(StepName.HIGH_RISK))
+    result = rebuild(
+        worked_example_result(),
+        steps=steps,
+        status=Status.NEEDS_MORE_INFORMATION,
+        not_assessed=(StepName.HIGH_RISK,),
+    )
+    assert result.not_assessed == (StepName.HIGH_RISK,)
+    with pytest.raises(ValidationError, match="not_assessed must name exactly"):
+        rebuild(result, not_assessed=())
+    with pytest.raises(ValidationError, match="not_assessed must name exactly"):
+        rebuild(worked_example_result(), not_assessed=(StepName.SCOPE,))
 
 
 # status derived from the steps

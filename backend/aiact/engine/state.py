@@ -103,6 +103,8 @@ class CheckOutcome(ContractModel):
                 raise ValueError(f"only the {owner.value} check sets {name}")
         if self.annex_iii_exempt and self.high_risk_route is not None:
             raise ValueError("an Art. 6(3)-exempt system is not high-risk")
+        if self.annex_point is not None and self.high_risk_route is None:
+            raise ValueError("annex_point is set only with the high_risk_route it rests on")
         return self
 
 
