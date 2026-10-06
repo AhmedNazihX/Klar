@@ -469,7 +469,6 @@ RECORDED_ITEM = QAItem(
 )
 
 
-@pytest.mark.xfail(strict=True, reason="re-record pending (V6 fix 1)")
 @pytest.mark.vcr
 def test_flash_lite_answers_and_judges_one_item(openrouter_settings: Settings) -> None:
     meter = UsageMeter()

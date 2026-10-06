@@ -1,9 +1,9 @@
 interactions:
 - request:
-    body: '{"messages":[{"role":"user","content":"Answer the question about the EU
-      AI Act using only the provisions below. Name the provision ids you rely on,
-      such as art:5:1:f. If the provisions don''t answer the question, say so instead
-      of answering from memory. Answer in English, in at most 150 words.\n\nProvisions:\n[art:5:1:f]
+    body: '{"messages":[{"content":"Answer the question about the EU AI Act using
+      only the provisions below. Name the provision ids you rely on, such as art:5:1:f.
+      If the provisions don''t answer the question, say so instead of answering from
+      memory. Answer in English, in at most 150 words.\n\nProvisions:\n[art:5:1:f]
       AI Act\nThe following AI practices shall be prohibited: (f) the placing on the
       market, the putting into service for this specific purpose, or the use of AI
       systems to infer emotions of a natural person in the areas of workplace and
@@ -12,7 +12,7 @@ interactions:
       AI Act\nProviders shall ensure that AI systems intended to interact directly
       with natural persons are designed and developed in such a way that the natural
       persons concerned are informed that they are interacting with an AI system.\n\nQuestion:
-      May an employer use AI to read how stressed staff are from their faces at work?"}],"model":"google/gemini-3.1-flash-lite","max_tokens":1024,"temperature":0.0,"provider":{"data_collection":"deny","zdr":true,"order":["google-vertex/eu"],"allow_fallbacks":false}}'
+      May an employer use AI to read how stressed staff are from their faces at work?","role":"user"}],"max_tokens":1024,"model":"google/gemini-3.1-flash-lite","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["google-vertex/eu"],"zdr":true},"stream":false,"temperature":0.0}'
     headers:
       content-type:
       - application/json
@@ -20,8 +20,8 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791323057-aVEWyIZqQzr6ZGFnBge4", "object": "chat.completion",
-        "created": 1791323057, "model": "google/gemini-3.1-flash-lite", "provider":
+      string: '{"id": "gen-1791326243-GLSxSifu6YMXg5MsfnuX", "object": "chat.completion",
+        "created": 1791326243, "model": "google/gemini-3.1-flash-lite", "provider":
         "Google", "system_fingerprint": null, "service_tier": "default", "choices":
         [{"index": 0, "logprobs": null, "finish_reason": "stop", "native_finish_reason":
         "STOP", "message": {"role": "assistant", "content": "No, an employer may not
@@ -124,8 +124,8 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791323058-IUVA042Y7yJtohy9VdSC", "object": "chat.completion",
-        "created": 1791323058, "model": "google/gemini-3.1-flash-lite", "provider":
+      string: '{"id": "gen-1791326244-CfWnOUN2lvBAqjh8G3KH", "object": "chat.completion",
+        "created": 1791326244, "model": "google/gemini-3.1-flash-lite", "provider":
         "Google", "system_fingerprint": null, "service_tier": "default", "choices":
         [{"index": 0, "logprobs": null, "finish_reason": "stop", "native_finish_reason":
         "STOP", "message": {"role": "assistant", "content": "{\n  \"reason\": \"The
@@ -188,8 +188,8 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791323058-oV7XftjKVn0iZA0oJyiD", "object": "chat.completion",
-        "created": 1791323058, "model": "google/gemini-3.1-flash-lite", "provider":
+      string: '{"id": "gen-1791326244-yUAApCVhPTcmaa5VsATp", "object": "chat.completion",
+        "created": 1791326244, "model": "google/gemini-3.1-flash-lite", "provider":
         "Google", "system_fingerprint": null, "service_tier": "default", "choices":
         [{"index": 0, "logprobs": null, "finish_reason": "stop", "native_finish_reason":
         "STOP", "message": {"role": "assistant", "content": "{\n  \"statements\":
@@ -322,8 +322,8 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791323058-C9hP205Og3UxsmcnrIiB", "object": "chat.completion",
-        "created": 1791323058, "model": "google/gemini-3.1-flash-lite", "provider":
+      string: '{"id": "gen-1791326244-SNrwPXjAtukpd4tgT1t8", "object": "chat.completion",
+        "created": 1791326244, "model": "google/gemini-3.1-flash-lite", "provider":
         "Google", "system_fingerprint": null, "service_tier": "default", "choices":
         [{"index": 0, "logprobs": null, "finish_reason": "stop", "native_finish_reason":
         "STOP", "message": {"role": "assistant", "content": "{\n  \"classifications\":
@@ -427,8 +427,8 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791323058-FmSw4jSqkBQKr01O6SdX", "object": "chat.completion",
-        "created": 1791323058, "model": "google/gemini-3.1-flash-lite", "provider":
+      string: '{"id": "gen-1791326245-uRrm9PGKmlmRoxboZ2Gd", "object": "chat.completion",
+        "created": 1791326245, "model": "google/gemini-3.1-flash-lite", "provider":
         "Google", "system_fingerprint": null, "service_tier": "default", "choices":
         [{"index": 0, "logprobs": null, "finish_reason": "stop", "native_finish_reason":
         "STOP", "message": {"role": "assistant", "content": "{\n  \"reason\": \"The
@@ -528,8 +528,8 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791323059-AfnqZPfyqgBQxy8mNe7A", "object": "chat.completion",
-        "created": 1791323059, "model": "google/gemini-3.1-flash-lite", "provider":
+      string: '{"id": "gen-1791326245-kS70Ht60IDQzJ1wBscfc", "object": "chat.completion",
+        "created": 1791326245, "model": "google/gemini-3.1-flash-lite", "provider":
         "Google", "system_fingerprint": null, "service_tier": "default", "choices":
         [{"index": 0, "logprobs": null, "finish_reason": "stop", "native_finish_reason":
         "STOP", "message": {"role": "assistant", "content": "{\n  \"statements\":
