@@ -5,6 +5,7 @@ English and German. `{law}` is the Annex I legislation's short title, from the c
 from collections.abc import Mapping
 
 from aiact.engine.nodes.role_texts import KeyQuestion
+from aiact.provision_names import annex_point_name
 from aiact.schemas import Language
 
 EN, DE = Language.EN, Language.DE
@@ -250,18 +251,5 @@ ROUTE_NAMES: Mapping[Language, Mapping[str, str]] = {
     DE: {"annex_iii": "Anhang III", "annex_i": "Anhang I"},
 }
 
-
-def point_name(point: str, language: Language) -> str:
-    """How a result names an Annex point: `annex:III:4:a` is "Annex III point 4(a)" in English
-    and "Anhang III Nummer 4 Buchstabe a" in German; `annex:I:A:11` is "Annex I Section A point
-    11" or "Anhang I Abschnitt A Nummer 11"."""
-    parts = point.split(":")[1:]
-    if parts[0] == "I" and len(parts) == 3:
-        _, section, number = parts
-        if language is DE:
-            return f"Anhang I Abschnitt {section} Nummer {number}"
-        return f"Annex I Section {section} point {number}"
-    number, letter = parts[1], parts[2] if len(parts) > 2 else None
-    if language is DE:
-        return f"Anhang III Nummer {number}" + (f" Buchstabe {letter}" if letter else "")
-    return f"Annex III point {number}" + (f"({letter})" if letter else "")
+point_name = annex_point_name
+"""How a result names the provisions it cites (`aiact.provision_names`)."""

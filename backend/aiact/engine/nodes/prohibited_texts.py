@@ -5,6 +5,7 @@ decision sentences, in English and German."""
 from collections.abc import Mapping
 
 from aiact.engine.nodes.role_texts import KeyQuestion
+from aiact.provision_names import article_provision_name
 from aiact.schemas import Language
 
 EN, DE = Language.EN, Language.DE
@@ -317,17 +318,8 @@ REFUSAL_ORIGINAL: Mapping[Language, str] = {
 
 # --- Naming and decision sentences --------------------------------------------------------------
 
-
-def point_name(provision_id: str, language: Language) -> str:
-    """How a result names an Art. 5 provision: `art:5:1:ba` is "Art. 5(1)(ba)" in English and
-    "Art. 5 Abs. 1 Buchst. ba" in German; `art:5:1:c:i` is "Art. 5(1)(c)(i)" or "Art. 5 Abs. 1
-    Buchst. c Ziff. i"."""
-    _, article, paragraph, *points = provision_id.split(":")
-    if language is DE:
-        letters = ("Buchst.", "Ziff.")
-        tail = "".join(f" {letters[min(n, 1)]} {p}" for n, p in enumerate(points))
-        return f"Art. {article} Abs. {paragraph}{tail}"
-    return f"Art. {article}({paragraph})" + "".join(f"({p})" for p in points)
+point_name = article_provision_name
+"""How a result names the provisions it cites (`aiact.provision_names`)."""
 
 
 TEXTS: Mapping[Language, Mapping[str, str]] = {
