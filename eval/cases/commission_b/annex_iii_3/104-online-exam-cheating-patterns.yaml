@@ -1,0 +1,27 @@
+id: cb-104-online-exam-cheating-patterns
+set_name: commission_b
+language: de
+description: >-
+  Wir sind eine private Fernhochschule mit rund 8.000 Studierenden und 300 Beschäftigten. Unsere
+  Klausuren schreiben die Studierenden online von zu Hause. Ab dem Wintersemester 2028 setzen wir
+  dabei eine Software ein, die wir bei einem Anbieter lizenziert haben: Sie analysiert während der
+  Klausur laufend das Verhalten der Studierenden, also Mausbewegungen, Tippmuster, Fensterwechsel
+  und Kamerabild, und erkennt mit Hilfe maschinellen Lernens Muster, die auf Täuschung hindeuten.
+  Auffällige Klausuren meldet sie dem Prüfungsamt. Wir nutzen die Software in der
+  Standardeinstellung des Anbieters. Nebenbei bauen wir gerade unseren Studienstandort in Leipzig
+  aus.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:3:d"
+label_citation: ["annex:III:3:d", "art:6:2"]
+source_example_id: hr-ex-104
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: real-time analysis of students' behaviour to detect
+  cheating in exams at an educational institution is Annex III point 3(d), high-risk under
+  Art. 6(2); no Art. 6(3) exemption. Role: deployer of a licensed system.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:high"

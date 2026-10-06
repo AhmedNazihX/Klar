@@ -1,0 +1,28 @@
+id: cb-097-technical-college-level-placement
+set_name: commission_b
+language: en
+description: >-
+  We are a technical vocational college in Tampere with about 3,500 learners and 280 staff. From
+  autumn 2028 new learners on our engineering-technician programmes will take an online placement
+  test and a set of practical skill tasks. A placement system we've licensed scores the results in
+  maths, physics and basic engineering and decides which level of the programme each learner can
+  join: the foundation year, the standard track or direct entry to the second year. Learners get
+  the result by email. We use the system as the vendor supplies it. We're also building a new
+  welding workshop.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:3:c", "annex:III:3:b"]
+label_citation: ["annex:III:3:c", "art:6:2"]
+source_example_id: hr-ex-097
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: a vocational institution's system that assesses which
+  level of education a learner may access, on the basis of placement tests and skill tasks, is
+  Annex III point 3(c), high-risk under Art. 6(2). Scoring the tests also evaluates learning
+  outcomes (point 3(b)), so a result naming either point matches. It decides the level itself, so
+  no Art. 6(3) exemption. Role: deployer of a licensed system.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:high"

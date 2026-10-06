@@ -1,0 +1,27 @@
+id: cb-099-next-year-course-suggestions
+set_name: commission_b
+language: en
+description: >-
+  We're a 12-person company in Tallinn behind a free mobile app for students. Users tell the app
+  what they're interested in and what kind of job they'd like one day, and it suggests courses,
+  programmes and certificates they might want to apply for next academic year, at the level that
+  seems to suit them. Only what users enter themselves goes into the suggestions. We sell the app
+  to individuals, not to schools or universities, and no institution sees the results; it's there
+  to help students make up their own minds. We trained the recommendation model ourselves, and a
+  redesigned app comes out in 2028. We earn money from optional premium features like CV
+  templates.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:3:c"]
+source_example_id: hr-ex-099
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: point 3(c) covers systems used to assess the
+  appropriate level of education; this app is not used by an educational institution and only
+  helps students decide for themselves on the basis of their own input, so outside Annex III point
+  3(c). No Art. 50 duty: minimal_risk. Role: it builds and offers the app under its own name.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:not_high"

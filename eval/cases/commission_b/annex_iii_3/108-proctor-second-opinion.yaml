@@ -1,0 +1,31 @@
+id: cb-108-proctor-second-opinion
+set_name: commission_b
+language: en
+description: >-
+  We're a 25-person company in Ghent selling tools for online exams. Our newest feature is a
+  second opinion for human proctors. While supervising an online test, a proctor sometimes notices
+  something odd, for example a student who keeps glancing away from the screen or types as if
+  copying from somewhere. The proctor can then ask our model, trained on examples of known cheating
+  behaviour, to check that student's session data. It gives the proctor a short report on whether
+  the behaviour looks consistent with cheating and which patterns, such as unusual typing rhythm or
+  mouse movement, stand out. The proctor decides whether to look further or inform the instructor.
+  The feature launches in 2028.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:3:b", "annex:III:3:d", "art:6:4"]
+source_example_id: hr-ex-108
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the model is used only after a human proctor has
+  already observed suspicious behaviour, to confirm or refute that observation; the Commission
+  reads this as improving the result of a previously completed human activity, the Art. 6(3)(b)
+  exemption from Annex III point 3(d). Doubt: analysing one student's typing and mouse behaviour
+  could be read as profiling, which would rule the exemption out; the Commission's verdict is
+  settled. No Art. 50 duty: minimal_risk. Art. 6(4): as provider it must document this assessment
+  before placing the feature on the market (and register it under Art. 49(2)).
+tags:
+  - "area:annex_iii_3"
+  - "verdict:not_high"
+  - "art_6_4_documentation"
