@@ -1,0 +1,30 @@
+id: cb-126-cv-parsing-search-index
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein kleines Softwarehaus aus Dresden mit 20 Leuten. Unser Produkt nimmt die Lebensläufe
+  entgegen, die auf eine ausgeschriebene Stelle eingehen, egal ob als PDF, Word-Datei oder Foto,
+  erkennt darin Angaben wie Ausbildung, Stationen, Sprachen und Kontaktdaten und legt sie geordnet
+  in einer internen Datenbank ab, die die Recruiter nach Stichworten durchsuchen können. Es
+  bewertet, sortiert oder filtert keine Bewerber; was die Recruiter suchen und wen sie auswählen,
+  entscheiden sie selbst. Das Modell haben wir selbst trainiert, die neue Version mit besserer
+  Handschrifterkennung kommt 2028. Nebenbei betreuen wir noch die Website eines Sportvereins.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:3:a", "annex:III:4:a", "art:6:4"]
+source_example_id: hr-ex-126
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: extracting CV information into a searchable database
+  is used in recruitment (Annex III point 4(a)) but is a clearly defined, limited function with no
+  material impact on selection: a narrow procedural task, Art. 6(3)(a). (The source sentence names
+  Art. 6(3)(d) while describing the narrow-procedural-task exception; the row's basis is the bare
+  Art. 6(3) filter, so either letter matches.) No Art. 50 duty: minimal_risk. Art. 6(4): as
+  provider it must document this assessment before placing the product on the market (and register
+  it under Art. 49(2)).
+tags:
+  - "area:annex_iii_4"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

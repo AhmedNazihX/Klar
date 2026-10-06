@@ -1,0 +1,26 @@
+id: cb-119-job-ad-wording-check
+set_name: commission_b
+language: en
+description: >-
+  We're a 15-person software company in Bologna. Our tool checks job advertisements before
+  employers publish them, and that is all it is used for. It reads the ad text and highlights
+  words and phrases that could put people off or discriminate, such as gendered job titles or
+  "young, dynamic team", based on lists of patterns that our diversity experts write and review.
+  The HR team decides what to change. It never sees applications or anything about candidates. We
+  sell it to HR departments as a browser plug-in; the 2028 version adds Spanish and French. We
+  also offer workshops on inclusive hiring.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:4:a"]
+source_example_id: hr-ex-119
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: screening job-ad wording for non-inclusive terms is in
+  the employment domain but is not used for the recruitment or selection of natural persons, so it
+  falls outside Annex III point 4(a). It only flags phrases, so no Art. 50 duty: minimal_risk.
+  Role: it develops and sells the plug-in under its own name.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:not_high"

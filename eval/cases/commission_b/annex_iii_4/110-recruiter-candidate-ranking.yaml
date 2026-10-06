@@ -1,0 +1,28 @@
+id: cb-110-recruiter-candidate-ranking
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein HR-Software-Anbieter aus Berlin mit 85 Mitarbeitenden. Unser Hauptprodukt hilft
+  Recruiterinnen in Unternehmen und Personalagenturen bei der Vorauswahl: Es liest Lebensläufe,
+  Abschlüsse, frühere Stationen und die Ergebnisse von Online-Tests zu Denkvermögen und
+  Teamfähigkeit ein, gleicht sie mit der Stellenbeschreibung und mit früheren Einstellungen ab und
+  gibt jeder Person eine Punktzahl, eine Platzierung und eine Einstufung wie „passt gut“ oder
+  „passt kaum“. Die Recruiter können die Liste ändern oder ergänzen, in der Praxis laden sie aber
+  meist die ersten fünf ein. Wir entwickeln das Modell selbst und verkaufen die Software unter
+  unserer Marke; Version 4 erscheint 2028. Unser Büro ist gerade nach Kreuzberg umgezogen.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:4:a"
+label_citation: ["annex:III:4:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-110
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: scoring, ranking and categorising applicants to
+  shortlist them is recruitment and selection, Annex III point 4(a), high-risk under Art. 6(2).
+  The outputs are the main input for the decision and rank people (profiling), so the Art. 6(3)
+  exemption is unavailable. Role: it develops and sells the software under its own brand.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:high"

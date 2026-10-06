@@ -1,0 +1,29 @@
+id: cb-116-social-job-ad-audiences
+set_name: commission_b
+language: en
+description: >-
+  We run a professional social network based in Warsaw with around 400 employees and several
+  million members in Central Europe. Our job-ads product lets employers promote a vacancy to
+  members. The employer sets some targeting, such as age range, education, profession or industry,
+  and then our own model goes much further: it studies how members browse and what their profiles
+  say, decides who is most likely to be a good audience for that particular vacancy, and shows the
+  ad mainly to them. Members outside that audience usually never see the ad. A redesigned version
+  launches in 2028. Members can also follow company pages and join discussion groups.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:4:a"
+label_citation: ["annex:III:4:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-116
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: placing targeted job advertisements is named in
+  Annex III point 4(a); the model selects and prioritises audiences from browsing patterns and
+  member characteristics, beyond simple requirement matching, so it determines who learns of a
+  vacancy: high-risk under Art. 6(2), and no Art. 6(3) exemption (profiling, material influence).
+  Role: it builds the model and runs the product under its own name (provider, also deployer).
+tags:
+  - "area:annex_iii_4"
+  - "verdict:high"
+  - "also_role:deployer"

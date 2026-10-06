@@ -1,0 +1,28 @@
+id: cb-115-apprentice-application-screening
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Elektrogroßhändler aus Westfalen mit rund 1.100 Beschäftigten und stellen jedes Jahr
+  etwa 60 Auszubildende ein, als Kaufleute, Fachkräfte für Lagerlogistik und
+  IT-Spezialisten. Auf jede Ausbildungsstelle kommen Hunderte Bewerbungen. Ab dem Jahrgang 2028
+  verwaltet ein gekauftes Bewerbermanagement-System diese Bewerbungen: Es liest die Lebensläufe aus,
+  ordnet die Bewerber den passenden Ausbildungsberufen zu und erstellt nach Kriterien wie
+  Schulabschluss, Noten und Alter eine Vorauswahl, die unsere Ausbilder dann zu Gesprächen
+  einladen. Den Ausbildungsvertrag schließen wir ganz normal als Arbeitgeber ab. Unser neues
+  Logistikzentrum geht im selben Jahr in Betrieb.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:4:a"
+label_citation: ["annex:III:4:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-115
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: screening CVs, matching applicants to apprenticeships
+  and shortlisting them by qualifications and age is recruitment for an employment relationship,
+  so Annex III point 4(a) (not point 3), high-risk under Art. 6(2); filtering and shortlisting
+  materially influence the outcome, so no Art. 6(3) exemption. Role: deployer of bought software.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:high"

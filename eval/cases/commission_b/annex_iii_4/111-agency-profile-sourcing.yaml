@@ -1,0 +1,27 @@
+id: cb-111-agency-profile-sourcing
+set_name: commission_b
+language: en
+description: >-
+  We're an IT recruitment agency in Dublin with 60 consultants, placing developers and freelance
+  contractors with tech firms. From 2028 our consultants will use a sourcing tool we subscribe to.
+  They enter what a client needs, for example five years of Java, cloud certifications or a
+  computer-science degree, and the tool trawls professional networks, social media, job boards and
+  our own CV database, works out which people fit and hands back a shortlist of names to approach.
+  Most of our placements now start from those shortlists. We use the tool as the vendor provides
+  it. We also host a monthly meetup for women in tech.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:4:a"
+label_citation: ["annex:III:4:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-111
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: searching online sources and CV databases for people
+  who match the criteria and producing a shortlist filters and identifies candidates, which is
+  recruitment and selection, Annex III point 4(a), high-risk under Art. 6(2). It materially
+  influences who is approached, so no Art. 6(3) exemption. Role: deployer of a subscribed tool.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:high"

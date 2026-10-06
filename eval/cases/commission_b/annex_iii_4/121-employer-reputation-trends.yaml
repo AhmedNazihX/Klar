@@ -1,0 +1,27 @@
+id: cb-121-employer-reputation-trends
+set_name: commission_b
+language: de
+description: >-
+  Wir sind eine Versicherungsgruppe aus München mit rund 6.000 Beschäftigten. Unser Team für
+  Arbeitgebermarke nutzt ab 2028 ein gekauftes Analysewerkzeug, das Bewertungsportale, soziale
+  Netzwerke und Foren nach Kommentaren über uns als Arbeitgeber durchsucht. Die Namen der
+  Verfasser werden schon beim Einsammeln entfernt, und wir schauen uns keine einzelnen Kommentare
+  oder Personen an. Wir sehen nur Trends: wie sich unser Ruf als Arbeitgeber entwickelt und welche
+  Themen, etwa Gehalt, Homeoffice oder Führung, bei möglichen Bewerbern gut oder schlecht
+  ankommen. Mit Bewerbungen oder Auswahlentscheidungen hat das Werkzeug nichts zu tun. Nebenbei
+  sponsern wir den örtlichen Basketballverein.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:4:a"]
+source_example_id: hr-ex-121
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: tracking the employer's reputation from anonymised
+  online comments is linked to recruitment only indirectly and is not used for the recruitment or
+  selection of natural persons, so it falls outside Annex III point 4(a). No Art. 50 duty:
+  minimal_risk. Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:not_high"

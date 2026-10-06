@@ -1,0 +1,28 @@
+id: cb-139-courier-busy-zone-hints
+set_name: commission_b
+language: en
+description: >-
+  We're a food-delivery platform in Portugal with 300 employees and around 8,000 self-employed
+  couriers. Our data team built a model that forecasts where orders will pick up over the next
+  hour, using the weather, past orders and live traffic, and sends couriers tips such as "busy
+  period expected near Saldanha from 7 to 8 pm". Couriers can ignore them: nothing happens if they
+  do, we don't record who followed a tip and who didn't, and it has no effect on the orders they
+  are offered later. The feature goes live in all cities in 2028. We're also adding grocery
+  delivery in Porto.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:4:b"]
+source_example_id: hr-ex-139
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: optional, non-binding demand tips, with no penalties,
+  no record of who follows them and no effect on future work, are not task allocation based on
+  individual behaviour, and do not monitor or evaluate couriers, so they fall outside Annex III
+  point 4(b). No Art. 50 duty: minimal_risk. Role: it builds the model and runs it on its own
+  platform (provider, also deployer).
+tags:
+  - "area:annex_iii_4"
+  - "verdict:not_high"
+  - "also_role:deployer"

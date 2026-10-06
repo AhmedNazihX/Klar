@@ -1,0 +1,28 @@
+id: cb-117-staffing-vacancy-matching
+set_name: commission_b
+language: en
+description: >-
+  We are a staffing agency in Antwerp with 220 employees and branches across Flanders. Every week
+  thousands of jobseekers and hundreds of employer vacancies pass through our system. From 2028 a
+  matching tool from a software vendor will read the jobseekers' CVs (skills, schooling, previous
+  jobs) and the employers' requirements, job classifications and local labour-market data, then
+  rank candidates for each vacancy and suggest suitable vacancies to each jobseeker. With this
+  volume our consultants mostly follow its rankings when deciding whom to put forward to
+  employers. We haven't changed the vendor's tool. We're also introducing a four-day week for our
+  office staff.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:4:a"
+label_citation: ["annex:III:4:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-117
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: ranking candidates for vacancies and suggesting
+  vacancies to jobseekers evaluates candidates in recruitment and access to employment, Annex III
+  point 4(a), high-risk under Art. 6(2); its rankings largely decide who is referred to
+  employers, so no Art. 6(3) exemption. Role: deployer of an unmodified bought tool.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:high"
