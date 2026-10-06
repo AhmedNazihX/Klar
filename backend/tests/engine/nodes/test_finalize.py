@@ -57,7 +57,6 @@ ENGINE_INPUT: EngineInput = {
     "language": Language.EN,
     "law_version": LawVersion.AMENDED,
     "as_of": AS_OF,
-    "answers": {},
     "exclude_source_example_ids": (),
 }
 OPEN = OpenQuestion(question="Does the law settle this?", readings=("Stricter.", "Lenient."))

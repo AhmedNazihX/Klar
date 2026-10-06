@@ -58,18 +58,37 @@ def worked_example_request() -> ClassifyRequest:
     )
 
 
+INIT_DUTIES = {
+    "art:26:1": "follow the provider's instructions for use",
+    "art:26:2": "assign human oversight",
+    "art:26:6": "keep the logs",
+    "art:26:11": "inform the applicants subject to it",
+}
+"""The Art. 26 duties INIT's worked example lists, by the obligation table's article ids."""
+ANNEX_III_FROM = date(2027, 12, 2)
+"""INIT: the duties apply "from 2 December 2027" (the Annex III route's Chapter III date)."""
+
+
 def assert_the_expected_result(run: ClassificationRun) -> None:
-    """INIT > Worked example: high-risk under Annex III 4(a) (ranking applicants is profiling,
-    so Art. 6(3) can't exempt it), the company stays a deployer, and its Art. 26 duties include
-    informing the applicants (Art. 26(11)); every citation resolves."""
+    """INIT > Worked example, row by row: in scope; no prohibited practice; high-risk under
+    Annex III 4(a) (ranking applicants is profiling, so Art. 6(3) can't exempt it); no separate
+    Art. 50 duty; the company stays a deployer, with the Art. 26 duties INIT lists from 2
+    December 2027; a decided result. Every citation resolves."""
     result = run.result
+    steps = {step.step: step for step in result.steps}
+    assert list(steps) == list(StepName)  # in scope, not prohibited: every check ran
+    for name, step in steps.items():
+        assert step.status is Status.DECIDED, (name, step.status, step.decision)
+    assert result.status is Status.DECIDED
     assert result.risk_class is RiskClass.HIGH_RISK, result.risk_class
     assert result.annex_point == "annex:III:4:a"
+    assert "art:6:3" in {c.provision_id for c in steps[StepName.HIGH_RISK].citations}
+    assert result.transparency_duties == ()
     assert result.role is Role.DEPLOYER
-    assert {o.article for o in result.obligations} >= {"art:26:11"}
-    high_risk = next(step for step in result.steps if step.step is StepName.HIGH_RISK)
-    assert high_risk.status is Status.DECIDED, high_risk.decision
-    assert "art:6:3" in {c.provision_id for c in high_risk.citations}
+    duties = {o.article: o for o in result.obligations}
+    assert set(INIT_DUTIES) <= set(duties), sorted(duties)
+    for article in INIT_DUTIES:
+        assert duties[article].applies_from == ANNEX_III_FROM, article
     assert result.law_version is LawVersion.AMENDED
     assert result.as_of == AS_OF
     assert result.disclaimer == DISCLAIMER[Language.EN]
@@ -78,7 +97,6 @@ def assert_the_expected_result(run: ClassificationRun) -> None:
         "language": Language.EN,
         "law_version": LawVersion.AMENDED,
         "as_of": AS_OF,
-        "answers": {},
         "exclude_source_example_ids": (),
     }
     for step in result.steps:
@@ -190,8 +208,10 @@ def _live_corpus(settings: Settings) -> Iterator[LiveCorpus]:
 
 @pytest.fixture
 def luna_settings(openrouter_settings: Settings) -> Settings:
+    """The engine on Luna, and no LangSmith key: a recording run sends no trace (the run then
+    switches tracing off, so none reaches the cassette)."""
     return openrouter_settings.model_copy(
-        update={"engine_model": LUNA, "engine_provider": LUNA_PROVIDER}
+        update={"engine_model": LUNA, "engine_provider": LUNA_PROVIDER, "langsmith_api_key": None}
     )
 
 

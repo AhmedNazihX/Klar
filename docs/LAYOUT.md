@@ -30,7 +30,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
-│   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3)
+│   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3);
+│   │   │                            reply_usage, a reply's cost and tokens (E10)
 │   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
 │   │   │                            generations.py: the provider that served a generation (X2)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),

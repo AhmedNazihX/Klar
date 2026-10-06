@@ -164,6 +164,7 @@ def test_the_classifier_never_sees_the_label_or_case_id() -> None:
     assert classifier.requests == [
         ClassifierInput("Made-up description 1", Language.DE, ("hr-ex-002", "hr-ex-003"))
     ]
+    assert classifier.requests[0].include_held_out is False
 
 
 def test_the_classifier_gets_the_case_date_or_none() -> None:
@@ -255,13 +256,16 @@ def test_exclusions_per_mode() -> None:
         exclusions_for(make_case(3, "hr-ex-001"), SPLIT)
 
 
-def test_exclude_mode_all_passes_no_exclusions_and_needs_no_split() -> None:
+def test_exclude_mode_all_is_the_gap_run_and_needs_no_split() -> None:
+    """No exclusions, and the held-out examples retrievable: the only mode that sets the
+    opt-in (decision 012). The heldout run's requests above leave it False."""
     classifier = PricedClassifier()
     store = MemoryStore()
     summary = run_benchmark(
         CASES[:2], classifier, store, options(exclude_mode=ExcludeMode.ALL), None
     )
     assert all(request.exclude_source_example_ids == () for request in classifier.requests)
+    assert all(request.include_held_out for request in classifier.requests)
     config = store.runs[summary.run_id]["config"]
     assert isinstance(config, dict)
     assert config["split_mode"] is None

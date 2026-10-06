@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 from openrouter.errors import NoResponseError, OpenRouterError
+from openrouter.operations import CreateEmbeddingsResponseBody
 from pydantic import SecretStr
 
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
@@ -126,6 +127,28 @@ def test_embed_batch_reports_tokens_and_cost(openrouter_settings: Settings) -> N
     batch = _client(openrouter_settings).embed_batch(TEXTS)
     assert len(batch.vectors) == len(TEXTS)
     assert (batch.tokens, batch.cost_usd) == (40, pytest.approx(4e-7))
+    assert batch.is_cost_known
+
+
+UNIT = [1.0] + [0.0] * (DIMENSIONS - 1)
+
+
+@pytest.mark.parametrize("usage", [None, {"prompt_tokens": 7, "total_tokens": 7}])
+def test_a_batch_without_its_cost_says_so(
+    monkeypatch: pytest.MonkeyPatch, usage: dict[str, int] | None
+) -> None:
+    client = _client(_settings())
+    body = {
+        "data": [{"embedding": UNIT, "index": 0, "object": "embedding"}],
+        "model": "m",
+        "object": "list",
+        "usage": usage,
+    }
+    response = CreateEmbeddingsResponseBody.model_validate(body)
+    fake_sdk = SimpleNamespace(embeddings=SimpleNamespace(generate=lambda **_: response))
+    monkeypatch.setattr(client, "_client", fake_sdk)
+    batch = client.embed_batch(TEXTS[:1])
+    assert (batch.cost_usd, batch.is_cost_known) == (0.0, False)
 
 
 def _http_error() -> Exception:

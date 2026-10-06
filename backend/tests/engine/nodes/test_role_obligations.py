@@ -60,6 +60,7 @@ from aiact.schemas import (
 from aiact.schemas.result import derived_status
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
+from tests.engine.nodes.corpus_recording import PENDING_RERECORD
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -160,7 +161,6 @@ def state(
         "language": language,
         "law_version": law_version,
         "as_of": ROLE_AS_OF,
-        "answers": {},
         "exclude_source_example_ids": (),
         "facts": facts,
         "steps": (),
@@ -1060,7 +1060,6 @@ def test_the_node_reads_the_earlier_findings_through_the_graph() -> None:
             "language": Language.EN,
             "law_version": LawVersion.AMENDED,
             "as_of": date(2026, 9, 29),
-            "answers": {},
             "exclude_source_example_ids": (),
         }
     )
@@ -1565,6 +1564,7 @@ RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_role_obligations.py --re
 
 
 @pytest.mark.vcr
+@PENDING_RERECORD
 def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> None:
     run_state = state(description=REBRANDER)
     outcome = RoleObligationsCheck(luna_settings)(run_state)
@@ -1594,6 +1594,7 @@ B5D_CASES = _role_cases()
     B5D_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="B5d cases not merged yet"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
+@PENDING_RERECORD
 def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     """Each B5d case's expected role, from the class its label gives, and its status when the
     label is legally ambiguous (own-d-12, closed by E8's contested answer); a case tagged with

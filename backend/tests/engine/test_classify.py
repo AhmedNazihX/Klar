@@ -157,7 +157,7 @@ def test_an_answer_turns_a_fact_into_stated_with_a_span_in_the_extended_text() -
 
     for state in captured.states.values():  # every check reads the same text, and no second path
         assert state["description"] == extended
-        assert state["answers"] == {}
+        assert "answers" not in state
 
 
 def test_without_the_answer_the_same_quote_is_not_stated() -> None:
@@ -215,8 +215,11 @@ def test_classify_system_builds_the_request_with_today_and_no_held_out_examples(
     seen: list[ClassifyRequest] = []
     stub = run_classification(request(), settings=SETTINGS, build_nodes=given(stub_nodes()))
 
-    def fake_run(req: ClassifyRequest) -> object:
+    options: list[dict[str, object]] = []
+
+    def fake_run(req: ClassifyRequest, **kwargs: object) -> object:
         seen.append(req)
+        options.append(kwargs)
         return stub
 
     monkeypatch.setattr(classify_module, "run_classification", fake_run)
@@ -227,7 +230,52 @@ def test_classify_system_builds_the_request_with_today_and_no_held_out_examples(
     assert req.language is Language.DE
     assert req.law_version is LawVersion.AMENDED
     assert dict(req.answers) == {"eu_use": "Ja."}
-    assert (req.exclude_source_example_ids, req.include_held_out) == ((), False)
+    assert options == [{"exclude_source_example_ids": (), "include_held_out": False}]
+
+
+def test_the_request_body_has_no_retrieval_options() -> None:
+    """What retrieval leaves out is never part of the body P1 and P2b accept (decision 012)."""
+    assert {"include_held_out", "exclude_source_example_ids"}.isdisjoint(
+        ClassifyRequest.model_fields
+    )
+    with pytest.raises(ValidationError):
+        request(include_held_out=True)
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"description": "x" * (ClassifyRequest.MAX_DESCRIPTION_CHARS + 1)},
+        {"answers": {"eu_use": "y" * (ClassifyRequest.MAX_ANSWER_CHARS + 1)}},
+        {"answers": {f"q_{n}": "yes" for n in range(ClassifyRequest.MAX_ANSWERS + 1)}},
+    ],
+    ids=["description", "answer", "answer_count"],
+)
+def test_oversize_input_is_rejected_before_any_model_call(
+    changes: dict[str, object], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def no_run(*args: object, **kwargs: object) -> object:
+        raise AssertionError("the run started")
+
+    monkeypatch.setattr(classify_module, "run_classification", no_run)
+    values = {"description": DESCRIPTION, "answers": None, **changes}
+    with pytest.raises(ValidationError):
+        classify_system(
+            str(values["description"]),
+            Language.EN,
+            answers=values["answers"],  # pyright: ignore[reportArgumentType]
+        )
+
+
+def test_input_at_the_limits_is_accepted() -> None:
+    limits = request(
+        description="x" * ClassifyRequest.MAX_DESCRIPTION_CHARS,
+        answers={
+            f"q_{n}": "y" * ClassifyRequest.MAX_ANSWER_CHARS
+            for n in range(ClassifyRequest.MAX_ANSWERS)
+        },
+    )
+    assert len(limits.answers) == ClassifyRequest.MAX_ANSWERS
 
 
 # --- The gap run's opt-in (decision 012) ----------------------------------------------------------
@@ -274,7 +322,7 @@ class HeldOutProbe:
         raise ProvisionNotFoundError(provision_id)
 
 
-def held_out_run(**changes: object) -> HeldOutProbe:
+def held_out_run(*, include_held_out: bool = False) -> HeldOutProbe:
     probe = HeldOutProbe()
     validator = CitationValidator(
         source=probe, omnibus=OmnibusChanges(in_force_from=AS_OF, targets=frozenset())
@@ -283,7 +331,9 @@ def held_out_run(**changes: object) -> HeldOutProbe:
     nodes = EngineNodes(
         facts=stub.facts, checks=validator.checks(probe.checks()), finalize=stub.finalize
     )
-    run_classification(request(**changes), settings=SETTINGS, build_nodes=given(nodes))
+    run_classification(
+        request(), settings=SETTINGS, build_nodes=given(nodes), include_held_out=include_held_out
+    )
     return probe
 
 
@@ -467,7 +517,6 @@ def stub_state() -> EngineState:
         "language": Language.EN,
         "law_version": LawVersion.AMENDED,
         "as_of": AS_OF,
-        "answers": {},
         "exclude_source_example_ids": (),
     }
 
@@ -476,3 +525,11 @@ def stub_state() -> EngineState:
 def test_the_engine_nodes_need_their_model_settings(missing: str) -> None:
     with pytest.raises(LLMConfigError):
         engine_nodes(engine_settings(**{missing: None}), UsageMeter())
+
+
+def test_a_setup_error_raises_when_the_stream_is_asked_for_not_as_an_event() -> None:
+    def unconfigured(_settings: Settings, _meter: UsageMeter) -> EngineNodes:
+        raise LLMConfigError("ENGINE_MODEL is not set")
+
+    with pytest.raises(LLMConfigError):
+        stream_classification(request(), settings=SETTINGS, build_nodes=unconfigured)

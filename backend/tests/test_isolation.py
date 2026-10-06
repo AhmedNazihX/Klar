@@ -20,14 +20,14 @@ as in a Corpus-lane worktree) into a failure instead of a skip. CI has no corpus
 calls), so the embedding check runs only locally, after `aiact corpus embed`.
 """
 
+import ast
 import importlib
 import inspect
 import json
 import os
 import pkgutil
-import re
 from collections.abc import Callable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, fields, replace
 from datetime import date
 from pathlib import Path
 from types import ModuleType
@@ -36,15 +36,23 @@ from typing import Any
 import psycopg
 import pytest
 import yaml
+from pydantic import BaseModel
 
 import aiact.retrieval
 from aiact.corpus.build import DocumentLoad, DocumentRow, ProvisionRow
 from aiact.corpus.embed import ARMS, vector_literal
 from aiact.corpus.load import load_all
-from aiact.engine import classify_system
+from aiact.engine import (
+    ClassifyRequest,
+    classify_system,
+    run_classification,
+    stream_classification,
+)
+from aiact.engine.nodes.common import Lookup
 from aiact.eval import isolation
 from aiact.eval.cases import CASES_DIR, QA_DIR_NAME, CaseSet
 from aiact.eval.isolation import BenchmarkText, ContaminatedList, EmbeddingCache, ExampleText
+from aiact.eval.runner import ClassifierInput
 from aiact.eval.split import SPLIT_FILE, Split, SplitMode
 from aiact.retrieval import search as search_module
 from aiact.retrieval.provisions import ProvisionNotFoundError, get_provision
@@ -317,11 +325,23 @@ def test_the_held_out_opt_in_is_off_by_default(name: str) -> None:
 
 ENGINE_OPT_INS: dict[str, Callable[..., object]] = {
     "aiact.engine.classify_system": classify_system,
+    "aiact.engine.run_classification": run_classification,
+    "aiact.engine.stream_classification": stream_classification,
 }
 """The engine's entry points that carry the gap run's opt-in (E10) to every retrieval call of a
-run (`tests/engine/test_held_out.py`). Only V8's gap run sets it; the API (P1) and the MCP tools
-(P2b) never expose it."""
-OPT_IN_ON = re.compile(rf"\b{OPT_IN_PARAMETER}\s*=\s*True\b")
+run (`tests/engine/test_held_out.py`, `tests/engine/test_engine_nodes.py`). Only V8's gap run
+sets it; the API (P1) and the MCP tools (P2b) never expose it."""
+OPT_IN_FIELDS: dict[str, type] = {
+    "aiact.engine.nodes.common.Lookup": Lookup,
+    "aiact.eval.runner.ClassifierInput": ClassifierInput,
+}
+"""The dataclasses that carry the opt-in inside a run: the run's lookup, and the runner's
+per-case input (set only by `--exclude-mode all`, the gap run)."""
+REQUEST_MODELS: dict[str, type[BaseModel]] = {
+    "aiact.engine.ClassifyRequest": ClassifyRequest,
+}
+"""Every public request model (the bodies P1 and P2b accept): none may carry the opt-in. Add
+the API's and the MCP tool's request models here when they exist."""
 
 
 @pytest.mark.parametrize("name", sorted(ENGINE_OPT_INS))
@@ -332,15 +352,51 @@ def test_the_engines_held_out_opt_in_is_off_by_default(name: str) -> None:
     assert parameter.default is False
 
 
+@pytest.mark.parametrize("name", sorted(OPT_IN_FIELDS))
+def test_the_opt_in_fields_are_keyword_only_and_off_by_default(name: str) -> None:
+    [found] = [f for f in fields(OPT_IN_FIELDS[name]) if f.name == OPT_IN_PARAMETER]
+    assert found.kw_only is True
+    assert found.default is False
+
+
+@pytest.mark.parametrize("name", sorted(REQUEST_MODELS))
+def test_no_public_request_model_has_the_opt_in(name: str) -> None:
+    assert OPT_IN_PARAMETER not in REQUEST_MODELS[name].model_fields
+
+
+def opt_in_set_true(source: str) -> list[int]:
+    """The lines where `source` sets the opt-in to a literal True: as a keyword argument
+    (`include_held_out=True`) or a dict entry (`"include_held_out": True`)."""
+    values: list[ast.expr] = []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.keyword) and node.arg == OPT_IN_PARAMETER:
+            values.append(node.value)
+        elif isinstance(node, ast.Dict):
+            values.extend(
+                value
+                for key, value in zip(node.keys, node.values, strict=True)
+                if isinstance(key, ast.Constant) and key.value == OPT_IN_PARAMETER
+            )
+    return [v.lineno for v in values if isinstance(v, ast.Constant) and v.value is True]
+
+
+def test_the_literal_true_finder_catches_both_forms() -> None:
+    source = (
+        f"f({OPT_IN_PARAMETER}=True)\n"
+        f"g({{'{OPT_IN_PARAMETER}': True}})\n"
+        f"h({OPT_IN_PARAMETER}=flag, other=True)\n"
+    )
+    assert opt_in_set_true(source) == [1, 2]
+
+
 def test_no_package_code_turns_the_opt_in_on() -> None:
     """Held-out rows stay hidden in the app: no module sets the opt-in to a literal True (V8's
-    gap run passes it from its own option)."""
+    gap run passes it from the runner's exclude mode)."""
     package = BACKEND_DIR / "aiact"
     found = [
-        f"{path.relative_to(BACKEND_DIR)}:{number}"
+        f"{path.relative_to(BACKEND_DIR)}:{line}"
         for path in sorted(package.rglob("*.py"))
-        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
-        if OPT_IN_ON.search(line)
+        for line in opt_in_set_true(path.read_text(encoding="utf-8"))
     ]
     assert found == []
 

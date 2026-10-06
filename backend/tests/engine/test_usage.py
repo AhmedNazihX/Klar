@@ -52,7 +52,7 @@ def test_a_reply_without_its_cost_is_counted_and_flagged() -> None:
 class FakeEmbeddings(OpenRouterEmbeddings):
     """Answers `embed_batch` with a fixed vector and cost, without a network call."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, is_cost_known: bool = True) -> None:
         settings = Settings(
             _env_file=None,  # pyright: ignore[reportCallIssue]
             openrouter_api_key=SecretStr("k"),
@@ -61,10 +61,13 @@ class FakeEmbeddings(OpenRouterEmbeddings):
         )
         super().__init__(settings=settings)
         self.batches: list[list[str]] = []
+        self.is_cost_known = is_cost_known
 
     def embed_batch(self, texts: list[str]) -> EmbeddingBatch:
         self.batches.append(texts)
-        return EmbeddingBatch(vectors=[[1.0, 0.0]], tokens=7, cost_usd=0.0001)
+        cost = 0.0001 if self.is_cost_known else 0.0
+        known = self.is_cost_known
+        return EmbeddingBatch([[1.0, 0.0]], tokens=7, cost_usd=cost, is_cost_known=known)
 
 
 def test_a_query_embedding_is_embedded_as_embed_query_does_and_counted() -> None:
@@ -77,3 +80,12 @@ def test_a_query_embedding_is_embedded_as_embed_query_does_and_counted() -> None
     usage = meter.usage()
     assert usage.by_node["high_risk"].cost_usd == 0.0001
     assert usage.tokens == 7
+    assert usage.is_cost_complete
+
+
+def test_an_embedding_without_its_cost_is_counted_and_flagged() -> None:
+    meter = UsageMeter()
+    meter.embedder(StepName.SCOPE, FakeEmbeddings(is_cost_known=False)).embed_query("q")
+    usage = meter.usage()
+    assert (usage.cost_usd, usage.tokens, usage.by_node["scope"].calls) == (0.0, 7, 1)
+    assert not usage.is_cost_complete

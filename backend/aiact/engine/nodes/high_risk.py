@@ -36,7 +36,6 @@ from pydantic import Field, ValidationError
 
 from aiact.db import connect
 from aiact.engine.nodes.common import (
-    answers_section,
     clipped,
     facts_section,
     guidance_citation,
@@ -694,7 +693,6 @@ def high_risk_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMes
             f"Guideline passages and examples found:\n{guidance}\n\n"
             f"Language for facts and questions: {state['language'].value}\n\n"
             f"Earlier checks:\n{steps}\n\n"
-            f"Answers to earlier questions:\n{answers_section(state)}\n\n"
             f"Facts:\n{facts_section(state)}\n\n"
             f"Description:\n{state['description']}"
         ),
@@ -748,5 +746,5 @@ class HighRiskCheck:
             return self._reading(lambda library: refusal_outcome(state, library))
         except ValidationError as exc:
             message = f"high-risk answer doesn't fit the schema: {describe_validation_error(exc)}"
-            raise HighRiskOutputError(message) from exc
+            raise HighRiskOutputError(message) from None
         return self._reading(lambda library: to_outcome(answer, state, retrieved, library))

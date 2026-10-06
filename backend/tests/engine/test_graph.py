@@ -41,7 +41,6 @@ ENGINE_INPUT: EngineInput = {
     "language": Language.EN,
     "law_version": LawVersion.AMENDED,
     "as_of": date(2026, 9, 28),
-    "answers": {},
     "exclude_source_example_ids": ("commission-example-7",),
 }
 MISSING = FollowUpQuestion(id="eu_use", text="Is the system used in the EU?")

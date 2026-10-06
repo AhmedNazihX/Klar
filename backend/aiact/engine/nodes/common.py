@@ -3,7 +3,7 @@ from what the corpus returns, the follow-up question of a key fact, the per-case
 prompts, and the step for a reply the provider refused (decision 029)."""
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 
 from aiact.engine.nodes.role_texts import KeyQuestion
@@ -36,7 +36,7 @@ class Lookup:
     as_of: date | None
     """None for the original text, which has one slice per unit (`get_provision`)."""
     exclude_source_example_ids: tuple[str, ...]
-    include_held_out: bool = False
+    include_held_out: bool = field(default=False, kw_only=True)
     """The gap run's opt-in (V8, decision 012), passed to every `get_provision` and
     `search_ai_act` call; False hides the held-out examples."""
 
@@ -74,11 +74,6 @@ def guidance_citation(hit: SearchHit, language: Language) -> Citation:
         quote=hit.text,
         english_only=hit.language is not language,
     )
-
-
-def answers_section(state: EngineState) -> str:
-    """The answers to earlier follow-up questions, one line each, or "-"."""
-    return "\n".join(f"- {qid}: {text}" for qid, text in state["answers"].items()) or "-"
 
 
 def facts_section(state: EngineState) -> str:

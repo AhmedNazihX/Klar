@@ -49,7 +49,12 @@ from aiact.schemas import (
 )
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
-from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
+from tests.engine.nodes.corpus_recording import (
+    PENDING_RERECORD,
+    CorpusRecording,
+    corpus_recording,
+    lookup_call,
+)
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -114,7 +119,6 @@ def state(
         "language": language,
         "law_version": law_version,
         "as_of": AS_OF,
-        "answers": {},
         "exclude_source_example_ids": exclude,
         "facts": (),
         "steps": (),
@@ -434,7 +438,6 @@ def _run(check: CheckOutcome) -> dict[str, Any]:
             "language": Language.EN,
             "law_version": LawVersion.AMENDED,
             "as_of": AS_OF,
-            "answers": {},
             "exclude_source_example_ids": (),
         }
     )
@@ -670,6 +673,7 @@ def luna_settings(openrouter_settings: Settings) -> Settings:
     B5B_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="B5b cases not merged yet"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
+@PENDING_RERECORD
 def test_b5b_case_replay(
     case: BenchmarkCase,
     luna_settings: Settings,

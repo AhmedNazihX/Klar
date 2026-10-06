@@ -69,7 +69,12 @@ from aiact.schemas import (
 )
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
-from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
+from tests.engine.nodes.corpus_recording import (
+    PENDING_RERECORD,
+    CorpusRecording,
+    corpus_recording,
+    lookup_call,
+)
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -218,7 +223,6 @@ def state(
         "language": language,
         "law_version": law_version,
         "as_of": AS_OF,
-        "answers": {},
         "exclude_source_example_ids": exclude,
         "facts": (),
         "steps": (),
@@ -943,7 +947,6 @@ def test_the_check_runs_in_the_graph_and_sets_its_findings() -> None:
             "language": Language.EN,
             "law_version": LawVersion.AMENDED,
             "as_of": AS_OF,
-            "answers": {},
             "exclude_source_example_ids": (),
         }
     )
@@ -1177,6 +1180,7 @@ def replay_check(
 
 
 @pytest.mark.vcr
+@PENDING_RERECORD
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
     run_state = replay_state(WORKED_EXAMPLE_CASE, AS_OF)
@@ -1229,6 +1233,7 @@ reading they give instead; each fails when it starts matching, so the entry is r
     ANNEX_I_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="no Annex I cases"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
+@PENDING_RERECORD
 def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -> None:
     """Each B5e case against its label and tags; a `KNOWN_GAPS` case is an expected failure."""
     run_state = replay_state(case, AS_OF)

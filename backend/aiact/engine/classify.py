@@ -2,25 +2,26 @@
 
 - **Answers** to follow-up questions are appended to the description, one line each under a
   heading, before the facts node reads it (decision 019), so a fact an answer gives is `stated`
-  with a span in the extended text (`extended_description`). The nodes' own answers block stays
-  empty: there is no second path for answers.
+  with a span in the extended text (`extended_description`). There is no second path for
+  answers. A request's text is bounded (`ClassifyRequest`) before any paid call.
 - **The nodes** are the engine's own, on the engine model pinned to its EU endpoint (decision
   005); every check is wrapped by the citation validator (E9), and finalize builds the result
   (E8). A node that raises stops the run: no class is returned after a failed check
   (`ClassificationFailedError`, or the `error` event when streamed).
 - **Held-out examples** stay hidden unless `include_held_out` is set, which only V8's gap run
   does (decision 012); it reaches every lookup, search and citation check through the run's
-  `Lookup`. The API (P1) and the MCP tool (P2b) never expose it.
+  `Lookup`. It and `exclude_source_example_ids` are keyword arguments of the run functions,
+  never fields of `ClassifyRequest`, the body the API (P1) and the MCP tool (P2b) accept.
 - **Cost** is counted per node (`UsageMeter`), the validator's re-runs included, and logged
   once per run with the trace id. **Tracing** goes to LangSmith when a key is set, metadata only
-  outside development (`aiact.engine.tracing`).
+  outside development, and is switched off otherwise (`aiact.engine.tracing`).
 """
 
 import logging
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 from uuid import UUID, uuid4
 
 from langchain_core.language_models import BaseChatModel
@@ -54,7 +55,7 @@ from aiact.engine.nodes.scope import ScopeCheck, ScopeLibrary
 from aiact.engine.nodes.transparency import MAX_OUTPUT_TOKENS as TRANSPARENCY_TOKENS
 from aiact.engine.nodes.transparency import TransparencyCheck
 from aiact.engine.state import EngineInput
-from aiact.engine.tracing import langsmith_tracer
+from aiact.engine.tracing import langsmith_tracer, tracing_switch
 from aiact.engine.usage import MeteredEmbedder, RunUsage, UsageMeter
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model
 from aiact.schemas import (
@@ -86,16 +87,24 @@ AnswerId = Annotated[str, StringConstraints(pattern=SLUG_PATTERN)]
 
 
 class ClassifyRequest(ContractModel):
-    """One classification, as a caller asks for it. `as_of` defaults to the run's date."""
+    """One classification, as a caller asks for it (the body the API and the MCP tool reuse).
+    `as_of` defaults to the run's date. The text is bounded before any paid call: the
+    description as the database stores it (`systems.description`), and the answers in number
+    and length. What retrieval leaves out is not part of it (see `run_classification`)."""
 
-    description: str = Field(min_length=1)
+    MAX_DESCRIPTION_CHARS: ClassVar[int] = 20_000
+    """The `systems.description` check (migration 20260928210100_user_data.sql)."""
+    MAX_ANSWERS: ClassVar[int] = 40
+    """Well above the follow-up questions one run asks."""
+    MAX_ANSWER_CHARS: ClassVar[int] = 1_000
+
+    description: str = Field(min_length=1, max_length=MAX_DESCRIPTION_CHARS)
     language: Language
     law_version: LawVersion = LawVersion.AMENDED
     as_of: date = Field(default_factory=date.today)
-    answers: Mapping[AnswerId, str] = {}
-    exclude_source_example_ids: tuple[str, ...] = ()
-    include_held_out: bool = False
-    """V8's gap run only (decision 012)."""
+    answers: Mapping[AnswerId, Annotated[str, StringConstraints(max_length=MAX_ANSWER_CHARS)]] = (
+        Field(default_factory=dict, max_length=MAX_ANSWERS)
+    )
 
     @model_validator(mode="after")
     def _has_text(self) -> Self:
@@ -143,16 +152,24 @@ def extended_description(description: str, answers: Mapping[str, str], language:
     return "\n".join((f"{description}\n", ANSWERS_HEADING[language], *lines))
 
 
-def engine_input(request: ClassifyRequest) -> EngineInput:
-    """The graph's input: the extended description, and no separate answers (decision 019)."""
+@dataclass(frozen=True)
+class Retrieval:
+    """What a run's retrieval leaves out: the examples the caller excludes, and whether the
+    held-out ones are included (V8's gap run only, decision 012)."""
+
+    exclude_source_example_ids: tuple[str, ...] = ()
+    include_held_out: bool = False
+
+
+def engine_input(request: ClassifyRequest, retrieval: Retrieval) -> EngineInput:
+    """The graph's input: the extended description (decision 019) and the run's retrieval."""
     return {
         "description": extended_description(request.description, request.answers, request.language),
         "language": request.language,
         "law_version": request.law_version,
         "as_of": request.as_of,
-        "answers": {},
-        "exclude_source_example_ids": request.exclude_source_example_ids,
-        "include_held_out": request.include_held_out,
+        "exclude_source_example_ids": retrieval.exclude_source_example_ids,
+        "include_held_out": retrieval.include_held_out,
     }
 
 
@@ -235,10 +252,18 @@ STEP_NAMES = frozenset(name.value for name in StepName)
 
 
 class _Run:
-    """One classification: its graph, meter, trace id and events."""
+    """One classification: its graph, meter, trace id and events. Building it builds the nodes,
+    so a setup error (a missing model setting, unreadable amendment records) raises here."""
 
-    def __init__(self, request: ClassifyRequest, settings: Settings, build_nodes: NodeBuilder):
+    def __init__(
+        self,
+        request: ClassifyRequest,
+        retrieval: Retrieval,
+        settings: Settings,
+        build_nodes: NodeBuilder,
+    ) -> None:
         self.request = request
+        self._retrieval = retrieval
         self.meter = UsageMeter()
         self._tracer = langsmith_tracer(settings)
         self._run_id: UUID = uuid4()
@@ -250,7 +275,7 @@ class _Run:
 
     def _config(self) -> RunnableConfig:
         """The run's id, name and tracer, with metadata only: never the description."""
-        request = self.request
+        request, retrieval = self.request, self._retrieval
         return {
             "run_id": self._run_id,
             "run_name": RUN_NAME,
@@ -261,8 +286,8 @@ class _Run:
                 "language": request.language.value,
                 "as_of": request.as_of.isoformat(),
                 "answers": len(request.answers),
-                "excluded_examples": len(request.exclude_source_example_ids),
-                "include_held_out": request.include_held_out,
+                "excluded_examples": len(retrieval.exclude_source_example_ids),
+                "include_held_out": retrieval.include_held_out,
             },
         }
 
@@ -270,18 +295,20 @@ class _Run:
         """The run's events up to `result`. Raises `ClassificationFailedError` (from the node's
         error) when a node fails. Logs the run's cost either way."""
         running = FACTS
+        graph_input = engine_input(self.request, self._retrieval)
         try:
-            for mode, chunk in self._graph.stream(
-                engine_input(self.request), self._config(), stream_mode=["tasks", "updates"]
-            ):
-                if mode == "tasks":
-                    started = _started(chunk)
-                    if started is not None:
-                        running = started
-                        if started in STEP_NAMES:
-                            yield StepStartedEvent(step=StepName(started))
-                    continue
-                yield from _update_events(chunk)
+            with tracing_switch(self._tracer):
+                for mode, chunk in self._graph.stream(
+                    graph_input, self._config(), stream_mode=["tasks", "updates"]
+                ):
+                    if mode == "tasks":
+                        started = _started(chunk)
+                        if started is not None:
+                            running = started
+                            if started in STEP_NAMES:
+                                yield StepStartedEvent(step=StepName(started))
+                        continue
+                    yield from _update_events(chunk)
         except Exception as exc:
             logger.warning("classification stopped in %s: %s", running, type(exc).__name__)
             raise ClassificationFailedError(running, self.meter.usage(), self.trace_id) from exc
@@ -346,10 +373,15 @@ def run_classification(
     *,
     settings: Settings | None = None,
     build_nodes: NodeBuilder = engine_nodes,
+    exclude_source_example_ids: Sequence[str] = (),
+    include_held_out: bool = False,
 ) -> ClassificationRun:
-    """Classify `request`, with what it cost and its trace id. Raises `ClassificationFailedError`
-    when a node fails, and `LLMConfigError` when a model setting is missing."""
-    run = _Run(request, settings or get_settings(), build_nodes)
+    """Classify `request`, with what it cost and its trace id. `exclude_source_example_ids`
+    keeps those guideline examples out of retrieval; `include_held_out` is V8's gap run only
+    (decision 012). Raises `ClassificationFailedError` when a node fails, and `LLMConfigError`
+    when a model setting is missing."""
+    retrieval = Retrieval(tuple(exclude_source_example_ids), include_held_out)
+    run = _Run(request, retrieval, settings or get_settings(), build_nodes)
     results = [event.result for event in run.events() if isinstance(event, ResultEvent)]
     if len(results) != 1:
         raise RuntimeError(f"the graph returned {len(results)} results instead of one")
@@ -361,15 +393,25 @@ def stream_classification(
     *,
     settings: Settings | None = None,
     build_nodes: NodeBuilder = engine_nodes,
+    exclude_source_example_ids: Sequence[str] = (),
+    include_held_out: bool = False,
 ) -> Iterator[ClassifyEvent]:
     """Classify `request` as a stream of events (`aiact.engine.events`): the facts, each check as
     it starts and ends, then the result, or an `error` event naming the failed node, after which
-    nothing more comes."""
-    run = _Run(request, settings or get_settings(), build_nodes)
+    nothing more comes. The run is set up here, at the call: a setup error (`LLMConfigError` for
+    a missing model setting, OSError when the amendment records can't be read) raises before
+    any event, and only a failed node becomes the `error` event. The keyword arguments are as in
+    `run_classification`."""
+    retrieval = Retrieval(tuple(exclude_source_example_ids), include_held_out)
+    run = _Run(request, retrieval, settings or get_settings(), build_nodes)
+    return _events_or_error(run, request.language)
+
+
+def _events_or_error(run: _Run, language: Language) -> Iterator[ClassifyEvent]:
     try:
         yield from run.events()
     except ClassificationFailedError as exc:
-        yield error_event(exc.step, request.language)
+        yield error_event(exc.step, language)
 
 
 def classify_system(
@@ -391,9 +433,11 @@ def classify_system(
     `exclude_source_example_ids` keeps those guideline examples out of retrieval.
     `include_held_out` is for V8's gap run only (decision 012).
 
-    Raises pydantic's ValidationError for a blank description or answer, an unknown language or
-    law version, or an answer id that isn't a question id; `ClassificationFailedError` when a
-    check fails (no class is given then); `LLMConfigError` when a model setting is missing.
+    Raises pydantic's ValidationError, before any paid call, for a blank or oversized
+    description or answer, too many answers, an unknown language or law version, or an answer
+    id that isn't in question-id form (snake_case; whether a question with that id was asked is
+    not checked); `ClassificationFailedError` when a check fails (no class is given then);
+    `LLMConfigError` when a model setting is missing.
     """
     request = ClassifyRequest.model_validate(
         {
@@ -401,9 +445,11 @@ def classify_system(
             "language": language,
             "law_version": law_version,
             "answers": dict(answers or {}),
-            "exclude_source_example_ids": tuple(exclude_source_example_ids),
-            "include_held_out": include_held_out,
             **({"as_of": as_of} if as_of is not None else {}),
         }
     )
-    return run_classification(request).result
+    return run_classification(
+        request,
+        exclude_source_example_ids=exclude_source_example_ids,
+        include_held_out=include_held_out,
+    ).result

@@ -1,12 +1,14 @@
 """The staged engine as the benchmark runner's `engine` classifier (E10, over V1's `Classifier`).
 
 Each case runs `run_classification` on the case's own date (`ClassifierInput.as_of`, B5c), or the
-run's date when it has none, on the amended text, with the case's exclusions. It reports the
+run's date when it has none, on the amended text, with the case's exclusions and, in the gap
+run only, the held-out examples (`ClassifierInput.include_held_out`). It reports the
 run's cost, tokens and LangSmith trace id. A run that fails after spending raises
 `ClassifierFailedError(cost_usd, tokens, cause)`, so the runner's cost cap and totals count it.
-Held-out examples stay hidden: the gap run's opt-in is V8's to pass through.
+A reply without its cost is logged, since the stored cost then undercounts.
 """
 
+import logging
 from datetime import date
 
 from aiact.engine import ClassificationFailedError, ClassifyRequest, run_classification
@@ -20,6 +22,8 @@ from aiact.eval.runner import (
 from aiact.llm.routing import require_setting
 from aiact.schemas import LawVersion
 from aiact.settings import Settings, get_settings
+
+logger = logging.getLogger(__name__)
 
 
 class EngineClassifier:
@@ -51,11 +55,14 @@ class EngineClassifier:
             language=request.language,
             law_version=LawVersion.AMENDED,
             as_of=request.as_of or date.today(),
-            exclude_source_example_ids=request.exclude_source_example_ids,
         )
         try:
             run = run_classification(
-                engine_request, settings=self._settings, build_nodes=self._build_nodes
+                engine_request,
+                settings=self._settings,
+                build_nodes=self._build_nodes,
+                exclude_source_example_ids=request.exclude_source_example_ids,
+                include_held_out=request.include_held_out,
             )
         except ClassificationFailedError as exc:
             usage = exc.usage
@@ -63,6 +70,12 @@ class EngineClassifier:
                 raise ClassifierFailedError(usage.cost_usd, usage.tokens, exc) from exc
             raise
         usage = run.usage
+        if not usage.is_cost_complete:
+            logger.warning(
+                "a reply of trace %s came without its cost; the stored $%.6f undercounts",
+                run.trace_id or "-",
+                usage.cost_usd,
+            )
         return Classification(
             result=run.result, cost_usd=usage.cost_usd, tokens=usage.tokens, trace_id=run.trace_id
         )

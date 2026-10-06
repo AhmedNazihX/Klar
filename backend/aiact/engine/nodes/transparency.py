@@ -39,7 +39,6 @@ from aiact.dates import long_date
 from aiact.db import connect
 from aiact.engine.nodes import transparency_texts as texts
 from aiact.engine.nodes.common import (
-    answers_section,
     facts_section,
     guidance_citation,
     guidance_section,
@@ -339,7 +338,6 @@ def transparency_messages(state: EngineState, retrieved: Retrieved) -> list[Base
             f"Guidelines on the transparency obligations under Article 50, passages:\n\n"
             f"{guidance_section(retrieved.guidance)}\n\n"
             f"Language for facts and questions: {state['language'].value}\n\n"
-            f"Answers to earlier questions:\n{answers_section(state)}\n\n"
             f"Facts:\n{facts_section(state)}\n\n"
             f"Description:\n{state['description']}"
         ),
@@ -395,5 +393,5 @@ class TransparencyCheck:
             message = (
                 f"transparency answer doesn't fit the schema: {describe_validation_error(exc)}"
             )
-            raise TransparencyOutputError(message) from exc
+            raise TransparencyOutputError(message) from None
         return self._reading(lambda library: to_outcome(answer, state, retrieved, library))

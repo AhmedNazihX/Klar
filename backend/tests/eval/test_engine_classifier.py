@@ -70,12 +70,13 @@ class Builder:
         return EngineNodes(facts=facts, checks=stub.checks, finalize=stub.finalize)
 
 
-def request(as_of: date | None = CASE_DATE) -> ClassifierInput:
+def request(as_of: date | None = CASE_DATE, *, include_held_out: bool = False) -> ClassifierInput:
     return ClassifierInput(
         description="A tool that ranks job applicants.",
         language=Language.EN,
         exclude_source_example_ids=("hr-ex-002",),
         as_of=as_of,
+        include_held_out=include_held_out,
     )
 
 
@@ -90,6 +91,14 @@ def test_a_case_reports_its_cost_and_tokens_and_runs_on_its_own_date() -> None:
     assert answer.result.as_of == CASE_DATE
     assert state["exclude_source_example_ids"] == ("hr-ex-002",)
     assert state.get("include_held_out", False) is False
+
+
+def test_the_gap_runs_opt_in_reaches_the_engine() -> None:
+    builder = Builder()
+    EngineClassifier(settings(), build_nodes=builder).classify(request(include_held_out=True))
+    [state] = builder.states
+    assert state.get("include_held_out") is True
+    assert state["exclude_source_example_ids"] == ("hr-ex-002",)
 
 
 def test_a_case_without_a_date_runs_on_the_run_date() -> None:

@@ -40,7 +40,6 @@ from aiact.dates import long_date
 from aiact.db import connect
 from aiact.engine.nodes import prohibited_texts as texts
 from aiact.engine.nodes.common import (
-    answers_section,
     facts_section,
     guidance_citation,
     guidance_section,
@@ -319,7 +318,6 @@ def prohibited_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMe
             f"Guidelines on prohibited practices, passages:\n\n"
             f"{guidance_section(retrieved.guidance)}\n\n"
             f"Language for facts and questions: {state['language'].value}\n\n"
-            f"Answers to earlier questions:\n{answers_section(state)}\n\n"
             f"Facts:\n{facts_section(state)}\n\n"
             f"Description:\n{state['description']}"
         ),
@@ -371,5 +369,5 @@ class ProhibitedCheck:
             return self._reading(lambda library: refusal_outcome(state, retrieved, library))
         except ValidationError as exc:
             message = f"prohibited answer doesn't fit the schema: {describe_validation_error(exc)}"
-            raise ProhibitedOutputError(message) from exc
+            raise ProhibitedOutputError(message) from None
         return self._reading(lambda library: to_outcome(answer, state, retrieved, library))

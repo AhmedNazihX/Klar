@@ -3,8 +3,8 @@
 Every engine node's chat model gets a callback from the run's `UsageMeter`, and every search
 embeds through a `MeteredEmbedder`, so each paid call is counted under the node that made it.
 A step the citation validator runs twice (E9) counts both runs. Cost is OpenRouter's
-`usage.cost` for each reply; a reply without it counts its tokens at no cost, and the run's
-`is_cost_complete` says so.
+`usage.cost` for each reply and each embedding request; a call without it counts its tokens
+at no cost, and the run's `is_cost_complete` says so.
 """
 
 import threading
@@ -14,6 +14,7 @@ from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import LLMResult
 
+from aiact.llm.chat import reply_usage
 from aiact.llm.embeddings import OpenRouterEmbeddings, format_query
 from aiact.schemas.base import ContractModel
 
@@ -34,13 +35,6 @@ class RunUsage(ContractModel):
     by_node: Mapping[str, NodeUsage] = {}
     is_cost_complete: bool = True
     """False when a reply came without its cost, so `cost_usd` is too low."""
-
-
-def reply_usage(message: AIMessage) -> tuple[float | None, int]:
-    """A chat reply's cost (OpenRouter's `usage.cost`, None when missing) and its tokens."""
-    cost = message.response_metadata.get("cost")
-    tokens = message.usage_metadata["total_tokens"] if message.usage_metadata else 0
-    return (float(cost) if isinstance(cost, int | float) else None), tokens
 
 
 class UsageMeter:
@@ -114,5 +108,6 @@ class MeteredEmbedder:
     def embed_query(self, text: str) -> list[float]:
         """The query's vector, as `OpenRouterEmbeddings.embed_query` makes it."""
         batch = self._inner.embed_batch([format_query(text, self._inner.query_instruction)])
-        self._meter.add(self._node, batch.cost_usd, batch.tokens)
+        cost = batch.cost_usd if batch.is_cost_known else None
+        self._meter.add(self._node, cost, batch.tokens)
         return batch.vectors[0]

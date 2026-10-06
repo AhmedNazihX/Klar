@@ -20,6 +20,7 @@ Source: `backend/uv.lock`.
 | httpx | runtime | >=0.28.1 | 0.28.1 | BSD-3-Clause | The next generation HTTP client. |
 | langchain-openrouter | runtime | >=0.2.9 | 0.2.9 | MIT | An integration package connecting OpenRouter and LangChain |
 | langgraph | runtime | >=1.2.12 | 1.2.12 | MIT | Building stateful, multi-actor applications with LLMs |
+| langsmith | runtime | >=0.14.1 | 0.14.1 | MIT | Client library to connect to the LangSmith Observability and Evaluation Platfor… |
 | lxml | runtime | >=6.1.3 | 6.1.3 | BSD-3-Clause | Powerful and Pythonic XML processing library combining libxml2/libxslt with the… |
 | mcp | runtime | >=2.2.0 | 2.2.0 | MIT | Model Context Protocol SDK |
 | openrouter | runtime | >=0.11.46 | 0.11.46 | Apache-2.0 | Official Python Client SDK for OpenRouter. |
@@ -41,32 +42,32 @@ Source: `backend/uv.lock`.
 | --- | --- | --- | --- |
 | accelerate | 1.15.0 | Apache | docling-slim |
 | annotated-doc | 0.0.5 | MIT | docling-core, docling-slim, typer |
-| annotated-types | 0.8.0 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, mcp, openrouter, p… |
-| anyio | 4.15.1 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, mcp, openrouter |
+| annotated-types | 0.8.0 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, mcp, op… |
+| anyio | 4.15.1 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, langsmith, mcp, openrouter |
 | attrs | 26.1.0 | MIT | docling-core, docling-slim, mcp |
-| certifi | 2026.7.22 | MPL-2.0 | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, openrouter |
-| charset-normalizer | 3.5.1 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph |
+| certifi | 2026.7.22 | MPL-2.0 | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, langsmith,… |
+| charset-normalizer | 3.5.1 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith |
 | click | 8.5.0 | BSD-3-Clause | docling-slim, mcp |
 | colorama | 0.4.6 | BSD License | docling-core, docling-slim, pytest, pytest-recording, typer |
 | cuda-bindings | 13.4.3 | Apache-2.0 | docling-slim |
 | cuda-pathfinder | 1.8.2 | Apache-2.0 | docling-slim |
 | cuda-toolkit | 13.0.3.0 | unknown | docling-slim |
 | defusedxml | 0.7.1 | PSFL | docling-core, docling-slim |
-| distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter, langgraph |
+| distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter, langgraph, langsmith |
 | doclang | 0.7.3 | Apache-2.0 | docling-core, docling-slim |
 | docling-ibm-models | 4.0.3 | MIT | docling-slim |
 | docling-parse | 7.22.1 | MIT | docling-slim |
 | filelock | 4.0.6 | MIT | docling-slim |
 | filetype | 1.2.0 | MIT | docling-slim |
 | fsspec | 2026.9.0 | BSD-3-Clause | docling-slim |
-| h11 | 0.16.0 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, mcp, openrouter |
+| h11 | 0.16.0 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, langsmith, mcp, openrouter |
 | hf-xet | 1.6.0 | Apache-2.0 | docling-slim |
 | httpcore | 1.0.9 | BSD-3-Clause | docling-slim, httpx, langchain-openrouter, langgraph, openrouter |
-| httpcore2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph, mcp |
-| httpx2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph, mcp |
-| httpx2-jsfetch | 1.0 | BSD-3-Clause | langchain-openrouter, langgraph, mcp |
+| httpcore2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith, mcp |
+| httpx2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith, mcp |
+| httpx2-jsfetch | 1.0 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith, mcp |
 | huggingface-hub | 1.33.0 | Apache-2.0 | docling-slim |
-| idna | 3.20 | BSD-3-Clause | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, mcp, openro… |
+| idna | 3.20 | BSD-3-Clause | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, langsmith,… |
 | iniconfig | 2.3.0 | MIT | pytest, pytest-recording |
 | jinja2 | 3.1.6 | BSD License | docling-slim |
 | jsonpatch | 1.33 | Modified BSD License | langchain-openrouter, langgraph |
@@ -81,7 +82,6 @@ Source: `backend/uv.lock`.
 | langgraph-checkpoint | 4.2.0 | MIT | langgraph |
 | langgraph-prebuilt | 1.1.0 | MIT | langgraph |
 | langgraph-sdk | 0.4.5 | MIT | langgraph |
-| langsmith | 0.14.1 | MIT | langchain-openrouter, langgraph |
 | latex2mathml | 3.81.1 | MIT | docling-core, docling-slim |
 | markdown-it-py | 4.2.0 | MIT License | docling-core, docling-slim, typer |
 | markupsafe | 3.0.3 | BSD-3-Clause | docling-slim |
@@ -98,16 +98,16 @@ Source: `backend/uv.lock`.
 | nvidia-nccl-cu13 | 2.30.7 | unknown | docling-slim |
 | nvidia-nvshmem-cu13 | 3.4.5 | unknown | docling-slim |
 | opentelemetry-api | 1.45.0 | Apache-2.0 | mcp |
-| orjson | 3.12.0 | MPL-2.0 AND (Apache-2.0 OR MIT) | langchain-openrouter, langgraph |
+| orjson | 3.12.0 | MPL-2.0 AND (Apache-2.0 OR MIT) | langchain-openrouter, langgraph, langsmith |
 | ormsgpack | 1.12.2 | Apache-2.0 OR MIT | langgraph |
-| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | docling-slim, langchain-openrouter, langgraph, pytest, pytest-recording |
+| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | docling-slim, langchain-openrouter, langgraph, langsmith, pytest, pytest-record… |
 | pandas | 3.0.6 | BSD License | docling-core, docling-slim |
 | pillow | 12.3.0 | MIT-CMU | docling-core, docling-slim |
 | pluggy | 1.6.0 | MIT | docling-slim, pytest, pytest-recording |
 | psutil | 7.2.2 | BSD-3-Clause | docling-slim |
 | psycopg-binary | 3.3.6 | LGPL-3.0-only | psycopg |
-| pydantic | 2.12.5 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, mcp, openrouter, p… |
-| pydantic-core | 2.41.5 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, mcp, openrouter, p… |
+| pydantic | 2.12.5 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, mcp, op… |
+| pydantic-core | 2.41.5 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, mcp, op… |
 | pygments | 2.21.0 | BSD-2-Clause | docling-core, docling-slim, pytest, pytest-recording, typer |
 | pyjwt | 2.15.1 | MIT | mcp |
 | pypdfium2 | 5.13.0 | BSD-3-Clause, Apache-2.0, dependency licenses | docling-slim |
@@ -117,8 +117,8 @@ Source: `backend/uv.lock`.
 | pywin32 | 312 | PSF | docling-slim, mcp |
 | referencing | 0.37.0 | MIT | docling-core, docling-slim, mcp |
 | regex | 2026.9.29 | Apache-2.0 AND CNRI-Python | docling-slim |
-| requests | 2.34.2 | Apache-2.0 | docling-core, docling-slim, langchain-openrouter, langgraph |
-| requests-toolbelt | 1.0.0 | Apache 2.0 | langchain-openrouter, langgraph |
+| requests | 2.34.2 | Apache-2.0 | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith |
+| requests-toolbelt | 1.0.0 | Apache 2.0 | langchain-openrouter, langgraph, langsmith |
 | rich | 15.0.0 | MIT | docling-core, docling-slim, typer |
 | rpds-py | 2026.6.3 | MIT | docling-core, docling-slim, mcp |
 | rtree | 1.4.1 | MIT | docling-slim |
@@ -127,7 +127,7 @@ Source: `backend/uv.lock`.
 | setuptools | 84.0.0 | MIT | docling-slim |
 | shellingham | 1.5.4 | ISC License | docling-core, docling-slim, typer |
 | six | 1.17.0 | MIT | docling-core, docling-slim |
-| sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter, langgraph |
+| sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter, langgraph, langsmith |
 | sse-starlette | 3.5.0 | BSD-3-Clause | mcp |
 | starlette | 1.7.0 | BSD-3-Clause | mcp |
 | sympy | 1.14.0 | BSD | docling-slim |
@@ -139,18 +139,18 @@ Source: `backend/uv.lock`.
 | tqdm | 4.70.1 | MPL-2.0 AND MIT | docling-slim |
 | transformers | 5.17.0 | Apache 2.0 License | docling-slim |
 | triton | 3.8.0 | MIT | docling-slim |
-| truststore | 0.10.4 | MIT | langchain-openrouter, langgraph, mcp |
-| typing-extensions | 4.16.0 | PSF-2.0 | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, mcp, openro… |
-| typing-inspection | 0.4.4 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, mcp, openrouter, p… |
+| truststore | 0.10.4 | MIT | langchain-openrouter, langgraph, langsmith, mcp |
+| typing-extensions | 4.16.0 | PSF-2.0 | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, langsmith,… |
+| typing-inspection | 0.4.4 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, mcp, op… |
 | tzdata | 2026.4 | Apache-2.0 | docling-core, docling-slim, psycopg |
-| urllib3 | 2.8.0 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph |
-| uuid-utils | 0.17.1 | BSD-3-Clause | langchain-openrouter, langgraph |
+| urllib3 | 2.8.0 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith |
+| uuid-utils | 0.17.1 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith |
 | uvicorn | 0.54.0 | BSD-3-Clause | mcp |
 | vcrpy | 8.3.0 | MIT | pytest-recording |
-| websockets | 16.1.1 | BSD-3-Clause | langchain-openrouter, langgraph |
+| websockets | 16.1.1 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith |
 | wrapt | 2.5.0 | BSD-2-Clause | pytest-recording |
-| xxhash | 4.0.1 | BSD-2-Clause | langchain-openrouter, langgraph |
-| zstandard | 0.25.0 | BSD-3-Clause | langchain-openrouter, langgraph |
+| xxhash | 4.0.1 | BSD-2-Clause | langchain-openrouter, langgraph, langsmith |
+| zstandard | 0.25.0 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith |
 
 ## Frontend (JavaScript)
 

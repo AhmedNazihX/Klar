@@ -69,7 +69,11 @@ from aiact.schemas import (
 )
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
-from tests.engine.nodes.corpus_recording import RecordedGuidelineLibrary, corpus_recording
+from tests.engine.nodes.corpus_recording import (
+    PENDING_RERECORD,
+    RecordedGuidelineLibrary,
+    corpus_recording,
+)
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -163,7 +167,6 @@ def state(
         "language": language,
         "law_version": law_version,
         "as_of": as_of,
-        "answers": {},
         "exclude_source_example_ids": exclude,
         "facts": facts,
         "steps": (),
@@ -618,7 +621,6 @@ def _run(check: TransparencyCheck, script: Script | None = None) -> EngineState:
         "language": Language.EN,
         "law_version": LawVersion.AMENDED,
         "as_of": AS_OF,
-        "answers": {},
         "exclude_source_example_ids": (),
     }
     return cast(EngineState, graph.invoke(given))
@@ -932,6 +934,7 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
     B5A_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="no B5a cases"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
+@PENDING_RERECORD
 def test_b5a_case_replay(
     case: BenchmarkCase,
     luna_settings: Settings,

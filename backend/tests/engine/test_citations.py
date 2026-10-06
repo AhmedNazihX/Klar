@@ -54,7 +54,6 @@ ENGINE_INPUT: EngineInput = {
     "language": Language.EN,
     "law_version": LawVersion.AMENDED,
     "as_of": AS_OF,
-    "answers": {},
     "exclude_source_example_ids": (),
 }
 STATE: EngineState = {**ENGINE_INPUT}

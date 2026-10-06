@@ -45,7 +45,6 @@ from pydantic import Field, ValidationError
 
 from aiact.engine.nodes.common import (
     Lookup,
-    answers_section,
     facts_section,
     guidance_citation,
     lookup_for,
@@ -467,7 +466,6 @@ def scope_messages(
             f"The AI Act ({version} text):\n\n{_law_section(law)}\n\n"
             f"Definition guidelines passages:\n\n{_guidance_section(guidance)}\n\n"
             f"Language for facts: {state['language'].value}\n\n"
-            f"Answers to earlier questions:\n{answers_section(state)}\n\n"
             f"Facts:\n{facts_section(state)}\n\n"
             f"Description:\n{state['description']}"
         ),
@@ -509,5 +507,5 @@ class ScopeCheck:
             return refusal_outcome(state, law)
         except ValidationError as exc:
             message = f"scope answer doesn't fit the schema: {describe_validation_error(exc)}"
-            raise ScopeOutputError(message) from exc
+            raise ScopeOutputError(message) from None
         return to_outcome(answer, state, guidance, self._library)
