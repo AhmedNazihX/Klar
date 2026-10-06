@@ -6,10 +6,10 @@ Secrets are `SecretStr`, so they never show up in logs or reprs.
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, SecretStr, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 """The `backend/` project directory, independent of the current working directory."""
@@ -60,6 +60,30 @@ class Settings(BaseSettings):
     # Search: the meaning arm's cosine-distance cut-off for Q&A and MCP (C8); None = no cut-off.
     # Left unset until X1 calibrates it.
     search_max_distance: float | None = Field(default=None, ge=0.0, le=2.0)
+
+    # API (P1): where `aiact api serve` listens, and the browser origins allowed to call it
+    # (comma-separated in the environment). The defaults are the Vite dev server's origin
+    # (frontend/vite.config.ts) and the port the frontend's VITE_API_URL fallback names.
+    api_host: str = "127.0.0.1"
+    api_port: int = Field(default=8000, ge=1, le=65535)
+    cors_origins: Annotated[tuple[str, ...], NoDecode] = (
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    )
+    # Requests per client address per minute: classifications cost model calls, lookups don't.
+    rate_limit_classify: int = Field(default=5, ge=1)
+    rate_limit_lookups: int = Field(default=120, ge=1)
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, value: object) -> object:
+        """`CORS_ORIGINS=http://a,http://b` as a tuple of origins; a wildcard is refused, so
+        no deployment can open the API to every site by accident."""
+        if isinstance(value, str):
+            value = tuple(origin.strip() for origin in value.split(",") if origin.strip())
+        if isinstance(value, tuple | list) and "*" in value:
+            raise ValueError("CORS_ORIGINS lists origins; a wildcard is not allowed")
+        return value
 
     @field_validator("aiact_data_dir")
     @classmethod

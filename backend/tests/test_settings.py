@@ -52,3 +52,23 @@ def test_relative_data_dir_resolves_against_backend(monkeypatch: pytest.MonkeyPa
     monkeypatch.chdir(BACKEND_DIR / "tests")
     settings = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
     assert settings.aiact_data_dir == BACKEND_DIR.parent / "data"
+
+
+def test_api_defaults_are_the_local_dev_setup(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ("API_HOST", "API_PORT", "CORS_ORIGINS"):
+        monkeypatch.delenv(name, raising=False)
+    settings = Settings(_env_file=BACKEND_DIR / ".env.example")  # pyright: ignore[reportCallIssue]
+    assert (settings.api_host, settings.api_port) == ("127.0.0.1", 8000)
+    assert settings.cors_origins == ("http://localhost:5173", "http://127.0.0.1:5173")
+
+
+def test_cors_origins_are_read_comma_separated(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CORS_ORIGINS", "https://klar.example, https://www.klar.example,")
+    settings = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+    assert settings.cors_origins == ("https://klar.example", "https://www.klar.example")
+
+
+def test_a_wildcard_cors_origin_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CORS_ORIGINS", "*")
+    with pytest.raises(ValueError, match="wildcard"):
+        Settings(_env_file=None)  # pyright: ignore[reportCallIssue]

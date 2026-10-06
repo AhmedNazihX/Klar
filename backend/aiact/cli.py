@@ -45,12 +45,14 @@ eval_app = typer.Typer(no_args_is_help=True)
 deps_app = typer.Typer(no_args_is_help=True)
 obligations_app = typer.Typer(no_args_is_help=True)
 mcp_app = typer.Typer(no_args_is_help=True)
+api_app = typer.Typer(no_args_is_help=True)
 
 app.add_typer(corpus_app, name="corpus")
 app.add_typer(eval_app, name="evaluate")
 app.add_typer(deps_app, name="deps")
 app.add_typer(obligations_app, name="obligations")
 app.add_typer(mcp_app, name="mcp")
+app.add_typer(api_app, name="api")
 
 
 @app.callback()
@@ -700,6 +702,44 @@ def mcp_serve() -> None:
     from aiact.mcp.server import serve
 
     serve()
+
+
+@api_app.callback()
+def api() -> None:
+    """The HTTP API the web app calls."""
+
+
+@api_app.command("serve")
+def api_serve() -> None:
+    """Run the API on API_HOST:API_PORT (CORS for CORS_ORIGINS)."""
+    # Imported here: only these commands need FastAPI and uvicorn.
+    import uvicorn
+
+    from aiact.api import create_app
+
+    settings = get_settings()
+    uvicorn.run(create_app(settings), host=settings.api_host, port=settings.api_port)
+
+
+@api_app.command("openapi")
+def api_openapi(
+    check: Annotated[
+        bool, typer.Option(help="Only check that the committed schema matches the app.")
+    ] = False,
+) -> None:
+    """Export the API's OpenAPI schema to frontend/openapi.json (then run `pnpm gen:api`)."""
+    from aiact.api import openapi
+
+    if check:
+        if not openapi.is_openapi_current():
+            typer.echo(
+                f"{openapi.OPENAPI_FILE} is stale: run `uv run aiact api openapi`.", err=True
+            )
+            raise typer.Exit(code=1)
+        typer.echo(f"{openapi.OPENAPI_FILE} matches the app.")
+        return
+    changed = openapi.write_openapi()
+    typer.echo(f"{'written' if changed else 'unchanged'}: {openapi.OPENAPI_FILE}")
 
 
 @obligations_app.callback()

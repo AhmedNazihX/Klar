@@ -5,6 +5,7 @@ description = "AI Act Classification Assistant: classifies AI systems under the 
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "docling-core>=2.96.0",
+    "fastapi>=0.142.2",
     "httpx>=0.28.1",
     "langchain-openrouter>=0.2.9",
     "langgraph>=1.2.12",
@@ -16,6 +17,7 @@ dependencies = [
     "pydantic-settings>=2.15.0",
     "pyyaml>=6.0.3",
     "typer>=0.27.2",
+    "uvicorn>=0.54.0",
 ]
 
 [project.scripts]

@@ -83,6 +83,10 @@
     "licence": "MIT",
     "summary": "Modular version of the Docling package: SDK and CLI for parsing PDF, DOCX, HTML, and more, to a unified document representation for powering downstream workflows such as gen AI applications."
   },
+  "fastapi==0.142.2": {
+    "licence": "MIT",
+    "summary": "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
+  },
   "filelock==4.0.6": {
     "licence": "MIT",
     "summary": "A platform independent file lock."

@@ -35,6 +35,9 @@ from aiact.schemas.base import ContractModel
 
 PROVISION_ID_RE = re.compile(r"^[a-z]+(:[A-Za-z0-9_.-]+)+$")
 """The same pattern as the `provisions.provision_id` check (F4)."""
+MAX_PROVISION_ID_CHARS = 200
+"""The longest provision id the API and the MCP tools accept; real ids are well under 100
+characters."""
 
 LAW_PREFIXES = frozenset({"art", "annex"})
 RECITAL_PREFIX = "recital"
