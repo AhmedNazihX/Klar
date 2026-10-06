@@ -32,9 +32,9 @@ afterAll(async () => {
   await supabase?.auth.stopAutoRefresh()
 })
 
-async function openWelcome() {
+async function openWelcome(path = '/app/welcome') {
   const user = userEvent.setup()
-  renderRoute('/app/welcome')
+  renderRoute(path)
   await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
   return user
 }
@@ -73,11 +73,54 @@ describe('Welcome, the derived size line', () => {
     expect(screen.queryByText(/may still count as an SME/)).not.toBeInTheDocument()
   })
 
-  it('names neither above the small mid-cap bands', async () => {
+  it.each(['en', 'de'] as const)(
+    'cites Art. 99(6a), not Art. 99(6), for a small mid-cap (%s)',
+    async (language) => {
+      const user = await openWelcome()
+      await act(() => i18n.changeLanguage(language))
+      await user.click(screen.getByRole('button', { name: '250–749' }))
+      await user.click(
+        screen.getByRole('button', { name: i18n.t('welcome.turnoverBand.up_to_50m') }),
+      )
+      expect(screen.getByText(i18n.t('welcome.size.label.smc'))).toBeInTheDocument()
+      expect(screen.getByText(i18n.t('welcome.size.body.smc'))).toHaveTextContent(/99.*6a/)
+      expect(citationBySource('art99_6a')).toHaveTextContent(i18n.t('welcome.law.art99_6a.quote'))
+      expect(screen.queryByText(i18n.t('welcome.law.art99_6.source'))).not.toBeInTheDocument()
+    },
+  )
+
+  it('names neither above the small mid-cap bands, with a balance-sheet caveat', async () => {
     const user = await openWelcome()
     await user.click(screen.getByRole('button', { name: '1–9' }))
     await user.click(screen.getByRole('button', { name: 'More' }))
     expect(screen.getByText('Neither an SME nor a small mid-cap')).toBeInTheDocument()
+    expect(screen.getByText(/may still count as an SME/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '250–749' }))
+    expect(screen.getByText(/may still count as a small mid-cap/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '750+' }))
+    expect(screen.queryByText(/may still count/)).not.toBeInTheDocument()
+  })
+})
+
+describe('Welcome, the size line under the original 2024 text', () => {
+  it('shows no small mid-cap and no Art. 99(6a)', async () => {
+    const user = await openWelcome('/app/welcome?law=original')
+    await user.click(screen.getByRole('button', { name: '250–749' }))
+    await user.click(screen.getByRole('button', { name: 'Up to €50 m' }))
+    expect(screen.getByText('Not an SME')).toBeInTheDocument()
+    expect(screen.queryByText('Counts as a small mid-cap')).not.toBeInTheDocument()
+    expect(screen.getByText(/no small mid-cap rules/)).toBeInTheDocument()
+    expect(screen.queryByText(/simplified documentation/)).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t('welcome.law.art99_6a.source'))).not.toBeInTheDocument()
+    expect(citationBySource('art99_6')).toHaveTextContent('In the case of SMEs')
+  })
+
+  it('keeps the SME line, which reads the same in both texts', async () => {
+    const user = await openWelcome('/app/welcome?law=original')
+    await user.click(screen.getByRole('button', { name: '10–49' }))
+    await user.click(screen.getByRole('button', { name: 'Up to €10 m' }))
+    expect(screen.getByText('Counts as an SME')).toBeInTheDocument()
+    expect(citationBySource('art99_6')).toBeInTheDocument()
   })
 })
 
@@ -94,6 +137,23 @@ describe('Welcome, where you are established', () => {
 
     await user.selectOptions(field, 'FR')
     expect(screen.queryByText(i18n.t('welcome.law.art2_1_c.source'))).not.toBeInTheDocument()
+  })
+
+  it('gives the hint and both quotes in German', async () => {
+    const user = await openWelcome()
+    await act(() => i18n.changeLanguage('de'))
+    const field = screen.getByLabelText('Wo Sie niedergelassen sind')
+    expect(field).toHaveAccessibleDescription(/Art\. 2 Abs\. 1 Buchst\. c.*Art\. 22/)
+
+    await user.selectOptions(field, 'CH')
+    expect(
+      screen.getByText('Art. 2 Abs. 1 Buchst. c, Verordnung (EU) 2024/1689, Deutsch'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Art. 22 Abs. 1, Verordnung (EU) 2024/1689, Deutsch'),
+    ).toBeInTheDocument()
+    expect(citationBySource('art2_1_c')).toHaveTextContent('Drittland')
+    expect(citationBySource('art22_1')).toHaveTextContent('Bevollmächtigten')
   })
 
   it('no longer says the field decides the supervising authority', async () => {

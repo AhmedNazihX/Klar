@@ -39,8 +39,8 @@ afterAll(async () => {
   await supabase?.auth.stopAutoRefresh()
 })
 
-async function start(): Promise<string> {
-  const { router } = renderRoute('/app')
+async function start(path = '/app'): Promise<string> {
+  const { router } = renderRoute(path)
   await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
   return router.state.location.pathname
 }
@@ -83,6 +83,23 @@ describe('the sidebar company line', () => {
     const line = await screen.findByRole('link', { name: /Nordwerk Logistik GmbH/ })
     expect(line).toHaveTextContent('10–49 staff, counts as an SME')
     expect(line).toHaveAttribute('href', '/app/welcome')
+  })
+
+  it('names no small mid-cap under the original 2024 text', async () => {
+    const profile = { company_name: 'Acme', staff_band: '250-749', turnover_band: 'up_to_50m' }
+    rows = [inventoryRow({ ...profile, size_class: 'smc' })]
+    await start('/app?law=original')
+    const line = await screen.findByRole('link', { name: /Acme/ })
+    expect(line).toHaveTextContent('250–749 staff')
+    expect(line).not.toHaveTextContent('small mid-cap')
+  })
+
+  it('names the small mid-cap under the amended text', async () => {
+    const profile = { company_name: 'Acme', staff_band: '250-749', turnover_band: 'up_to_50m' }
+    rows = [inventoryRow({ ...profile, size_class: 'smc' })]
+    await start()
+    const line = await screen.findByRole('link', { name: /Acme/ })
+    expect(line).toHaveTextContent('250–749 staff, counts as a small mid-cap')
   })
 
   it('says there is no profile yet without one', async () => {

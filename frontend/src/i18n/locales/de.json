@@ -192,14 +192,17 @@
       "label": {
         "sme": "Gilt als KMU",
         "smc": "Gilt als kleines Midcap-Unternehmen",
-        "none": "Weder KMU noch kleines Midcap-Unternehmen"
+        "none": "Weder KMU noch kleines Midcap-Unternehmen",
+        "noneOriginal": "Kein KMU"
       },
       "body": {
         "sme": "KMU haben leichtere Dokumentationspflichten, und für sie gilt der niedrigere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 6), nicht der höhere nach Art. 99 Abs. 3.",
-        "smc": "Kleine Midcap-Unternehmen können ebenfalls die vereinfachte Dokumentation nutzen (Art. 11 Abs. 1). Der niedrigere Höchstbetrag nach Art. 99 Abs. 6 gilt nur für KMU, daher gilt der höhere (Art. 99 Abs. 3).",
-        "none": "Es gilt der höhere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 3); der niedrigere gilt nur für KMU (Art. 99 Abs. 6)."
+        "smc": "Für kleine Midcap-Unternehmen gilt der niedrigere der beiden Höchstbeträge bei Geldbußen nach Art. 99 Abs. 4 und 5 (Art. 99 Abs. 6a), nicht aber bei Verstößen gegen die Verbote nach Art. 5 (Art. 99 Abs. 3). Kleine Midcap-Unternehmen können ebenfalls die vereinfachte Dokumentation nutzen (Art. 11 Abs. 1).",
+        "none": "Weder die Erleichterung für KMU (Art. 99 Abs. 6) noch die für kleine Midcap-Unternehmen (Art. 99 Abs. 6a) greift, daher gilt der höhere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 3).",
+        "noneOriginal": "Die Erleichterung für KMU (Art. 99 Abs. 6) greift nicht, daher gilt der höhere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 3). Die ursprüngliche Fassung von 2024 kennt keine Regeln für kleine Midcap-Unternehmen."
       },
-      "maybeSme": "Klar berücksichtigt nur den Umsatz. Mit einer Bilanzsumme von höchstens 43 Mio. € können Sie dennoch als KMU gelten."
+      "maybeSme": "Klar berücksichtigt nur den Umsatz. Mit einer Bilanzsumme von höchstens 43 Mio. € können Sie dennoch als KMU gelten.",
+      "maybeSmc": "Klar berücksichtigt nur den Umsatz. Mit einer Bilanzsumme von höchstens 129 Mio. € können Sie dennoch als kleines Midcap-Unternehmen gelten."
     },
     "law": {
       "art99_3": {
@@ -217,6 +220,10 @@
       "art22_1": {
         "quote": "Anbieter, die in Drittländern niedergelassen sind, benennen vor der Bereitstellung ihrer Hochrisiko-KI-Systeme auf dem Unionsmarkt schriftlich einen in der Union niedergelassenen Bevollmächtigten.",
         "source": "Art. 22 Abs. 1, Verordnung (EU) 2024/1689, Deutsch"
+      },
+      "art99_6a": {
+        "quote": "Im Falle von kleinen Midcap-Unternehmen gilt für jede in den Absätzen 4 und 5 genannte Geldbuße der jeweils niedrigere Betrag aus den darin genannten Prozentsätzen oder Summen.",
+        "source": "Art. 99 Abs. 6a, Verordnung (EU) 2024/1689 in der geänderten Fassung, Deutsch"
       }
     },
     "tools": {

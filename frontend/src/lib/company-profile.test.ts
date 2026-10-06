@@ -39,16 +39,34 @@ describe('deriveSizeClass', () => {
   })
 })
 
+function postgrestError(code: string) {
+  return { code, message: `server text for ${code}`, details: null, hint: null }
+}
+
 describe('classifyWriteFailure', () => {
   it.each([
-    [{ code: 'PT507', message: 'storage full', details: null, hint: 'Delete' }, 'storage-full'],
-    [{ code: 'PT413', message: 'too large', details: null, hint: null }, 'too-large'],
-    [{ code: '22023', message: 'not an export', details: null, hint: null }, 'bad-file'],
-    [{ code: '42501', message: 'denied', details: null, hint: null }, 'failed'],
+    [postgrestError('PT507'), 'storage-full'],
+    [postgrestError('PT413'), 'too-large'],
+    [postgrestError('22023'), 'bad-file'],
+    [postgrestError('22P02'), 'bad-file'],
+    [postgrestError('23514'), 'bad-file'],
+    [postgrestError('42501'), 'failed'],
     [new ImportFileError('not-json'), 'bad-file'],
     [new ImportFileError('too-large'), 'too-large'],
     [new Error('network'), 'failed'],
-  ])('sorts %o as %s', (error, expected) => {
-    expect(classifyWriteFailure(error)).toBe(expected)
+  ])('sorts an import failure %o as %s', (error, expected) => {
+    expect(classifyWriteFailure(error, 'import')).toBe(expected)
+  })
+
+  it.each([
+    [postgrestError('PT507'), 'storage-full'],
+    [postgrestError('22023'), 'failed'],
+    [postgrestError('22P02'), 'failed'],
+    [postgrestError('22007'), 'failed'],
+    [postgrestError('23502'), 'failed'],
+    [postgrestError('23514'), 'failed'],
+    [postgrestError('PT413'), 'failed'],
+  ])('never calls a failed save a bad file: %o is %s', (error, expected) => {
+    expect(classifyWriteFailure(error, 'save')).toBe(expected)
   })
 })

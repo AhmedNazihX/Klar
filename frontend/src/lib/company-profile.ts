@@ -194,26 +194,24 @@ function isPostgrestError(error: unknown): error is PostgrestError {
   return typeof error === 'object' && error !== null && 'code' in error && 'message' in error
 }
 
+/** Which write failed: a profile save or a file import. */
+export type WriteKind = 'save' | 'import'
+
+// Errors from rows the file holds: not an export (22023), a bad value, date, missing or
+// out-of-range field. On a save they mean nothing about a file, so they stay generic there.
+const BAD_FILE_CODES: ReadonlySet<string> = new Set(['22023', '22P02', '22007', '23502', '23514'])
+
 /**
- * Sorts a failed write. PT507 is the storage budget (decision 027) and PT413 the import cap; 22023
- * is a file that isn't an export. Other errors stay generic: their text may carry server details.
+ * Sorts a failed write. PT507 is the storage budget (decision 027) for either kind; PT413 (the
+ * import cap) and the bad-file codes apply to imports only. Other errors stay generic: their text
+ * may carry server details.
  */
-export function classifyWriteFailure(error: unknown): WriteFailure {
+export function classifyWriteFailure(error: unknown, kind: WriteKind): WriteFailure {
   if (error instanceof ImportFileError)
     return error.reason === 'too-large' ? 'too-large' : 'bad-file'
   if (!isPostgrestError(error)) return 'failed'
-  switch (error.code) {
-    case 'PT507':
-      return 'storage-full'
-    case 'PT413':
-      return 'too-large'
-    case '22023':
-    case '22P02':
-    case '22007':
-    case '23502':
-    case '23514':
-      return 'bad-file'
-    default:
-      return 'failed'
-  }
+  if (error.code === 'PT507') return 'storage-full'
+  if (kind === 'save') return 'failed'
+  if (error.code === 'PT413') return 'too-large'
+  return BAD_FILE_CODES.has(error.code) ? 'bad-file' : 'failed'
 }

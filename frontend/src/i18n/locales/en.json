@@ -192,14 +192,17 @@
       "label": {
         "sme": "Counts as an SME",
         "smc": "Counts as a small mid-cap",
-        "none": "Neither an SME nor a small mid-cap"
+        "none": "Neither an SME nor a small mid-cap",
+        "noneOriginal": "Not an SME"
       },
       "body": {
         "sme": "SMEs get lighter documentation duties, and the lower of the two maximum fines applies to them (Art. 99(6)), not the higher one of Art. 99(3).",
-        "smc": "Small mid-caps may use the simplified documentation too (Art. 11(1)). The lower maximum fine of Art. 99(6) is for SMEs only, so the higher one applies (Art. 99(3)).",
-        "none": "The higher of the two maximum fines applies (Art. 99(3)); the lower one is for SMEs only (Art. 99(6))."
+        "smc": "For a small mid-cap, the lower of the two maximum fines applies to fines under Art. 99(4) and (5) (Art. 99(6a)), but not to breaches of the Art. 5 bans (Art. 99(3)). Small mid-caps may use the simplified documentation too (Art. 11(1)).",
+        "none": "Neither the relief for SMEs (Art. 99(6)) nor the one for small mid-caps (Art. 99(6a)) applies, so the higher of the two maximum fines applies (Art. 99(3)).",
+        "noneOriginal": "The relief for SMEs (Art. 99(6)) doesn't apply, so the higher of the two maximum fines applies (Art. 99(3)). The original 2024 text has no small mid-cap rules."
       },
-      "maybeSme": "Klar looks at turnover only. With a balance sheet total of up to €43 m you may still count as an SME."
+      "maybeSme": "Klar looks at turnover only. With a balance sheet total of up to €43 m you may still count as an SME.",
+      "maybeSmc": "Klar looks at turnover only. With a balance sheet total of up to €129 m you may still count as a small mid-cap."
     },
     "law": {
       "art99_3": {
@@ -217,6 +220,10 @@
       "art22_1": {
         "quote": "Prior to making their high-risk AI systems available on the Union market, providers established in third countries shall, by written mandate, appoint an authorised representative which is established in the Union.",
         "source": "Art. 22(1), Regulation (EU) 2024/1689, English"
+      },
+      "art99_6a": {
+        "quote": "In the case of SMCs, each fine referred to in paragraphs 4 and 5 shall be up to the percentages or amount referred therein, whichever is lower.",
+        "source": "Art. 99(6a), Regulation (EU) 2024/1689 as amended, English"
       }
     },
     "tools": {

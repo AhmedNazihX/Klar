@@ -2,16 +2,20 @@ import { Link } from '@tanstack/react-router'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useLawVersion } from '@/hooks/use-law-version'
 import type { CompanyProfile } from '@/lib/company-profile'
 
 /** The sidebar's second line: staff band and size class when known, otherwise what there is. */
 function useDetailLine(company: CompanyProfile | null): string {
   const { t } = useTranslation()
+  const law = useLawVersion()
   if (!company) return t('sidebar.companyEmpty')
   if (company.staffBand === null) return t('sidebar.companySaved')
   const band = t(`welcome.staffBand.${company.staffBand}`)
-  if (company.sizeClass === 'sme' || company.sizeClass === 'smc') {
-    return t(`sidebar.companyLine.${company.sizeClass}`, { band })
+  if (company.sizeClass === 'sme') return t('sidebar.companyLine.sme', { band })
+  // Small mid-caps exist only in the amended text.
+  if (company.sizeClass === 'smc' && law === 'amended') {
+    return t('sidebar.companyLine.smc', { band })
   }
   return t('sidebar.companyStaff', { band })
 }

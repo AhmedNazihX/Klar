@@ -8,6 +8,7 @@ import { Button } from '@/components/Button'
 import { GlassPanel } from '@/components/GlassPanel'
 import { useSaveCompanyProfile } from '@/hooks/use-save-company-profile'
 import { useUserDataOverview } from '@/hooks/use-user-data-overview'
+import { supabase } from '@/lib/supabase'
 
 import { ProfileFields } from './ProfileFields'
 import {
@@ -38,7 +39,8 @@ export function CompanyProfileForm(): JSX.Element {
     resetOptions: { keepDirtyValues: true },
   })
   // Without the overview, Save can't tell whether an inventory exists, and could add a second one.
-  const canSave = !overview.isLoading && !overview.isError && !save.isPending
+  // Without Supabase nothing can be saved at all.
+  const canSave = supabase !== null && !overview.isLoading && !overview.isError && !save.isPending
 
   const submit = form.handleSubmit((submitted) => {
     save.mutate(
@@ -65,8 +67,8 @@ export function CompanyProfileForm(): JSX.Element {
           <p className="m-0 text-caption text-slate">{t('welcome.profile.subtitle')}</p>
         </div>
         <ProfileFields control={form.control} register={form.register} />
-        {save.isError && <WriteFailureMessage error={save.error} />}
-        {overview.isError && <WriteFailureMessage error={overview.error} />}
+        {save.isError && <WriteFailureMessage error={save.error} kind="save" />}
+        {overview.isError && <WriteFailureMessage error={overview.error} kind="save" />}
         <div className="flex flex-wrap justify-end gap-2.5">
           <Button variant="ghost" onClick={() => void navigate({ to: '/app/classify' })}>
             {t('welcome.profile.skip')}

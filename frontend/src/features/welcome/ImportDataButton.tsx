@@ -2,6 +2,7 @@ import type { ChangeEvent, JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useImportUserData } from '@/hooks/use-import-user-data'
+import { supabase } from '@/lib/supabase'
 
 import { WriteFailureMessage } from './WriteFailureMessage'
 
@@ -27,7 +28,7 @@ export function ImportDataButton(): JSX.Element {
           type="file"
           accept=".json,application/json"
           className="sr-only"
-          disabled={importData.isPending}
+          disabled={importData.isPending || supabase === null}
           onChange={chooseFile}
         />
         {importData.isPending ? t('welcome.tools.importing') : t('welcome.tools.import')}
@@ -38,7 +39,7 @@ export function ImportDataButton(): JSX.Element {
           {t('welcome.tools.imported', { count: importData.data.systems })}
         </p>
       )}
-      {importData.isError && <WriteFailureMessage error={importData.error} />}
+      {importData.isError && <WriteFailureMessage error={importData.error} kind="import" />}
     </div>
   )
 }

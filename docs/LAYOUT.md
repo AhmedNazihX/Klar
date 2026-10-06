@@ -158,7 +158,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6)
 │       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15),
-│       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts (P18)
+│       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
