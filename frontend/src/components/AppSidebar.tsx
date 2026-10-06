@@ -2,6 +2,9 @@ import { Link } from '@tanstack/react-router'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { CompanyProfile } from '@/lib/company-profile'
+
+import { CompanyLine } from './CompanyLine'
 import { KlarLogo } from './KlarLogo'
 import { LanguageSwitch } from './LanguageSwitch'
 import { SidebarNav } from './SidebarNav'
@@ -9,9 +12,9 @@ import { SidebarNav } from './SidebarNav'
 /**
  * What the glass sidebar holds, top to bottom: the logo, the five places, the company line, then
  * at the foot the language switch, the AI and guidance notice and the two data links.
- * Until P18 fills it from the company profile, the company line says there is none yet.
+ * The company line is filled from the company profile, and says when there is none yet.
  */
-export function AppSidebar(): JSX.Element {
+export function AppSidebar({ company }: { company: CompanyProfile | null }): JSX.Element {
   const { t } = useTranslation()
   return (
     <>
@@ -23,10 +26,7 @@ export function AppSidebar(): JSX.Element {
         <KlarLogo className="h-[34px] w-auto" />
       </Link>
       <SidebarNav />
-      <div className="flex flex-col gap-1 rounded-[18px] px-4 py-3.5 glass-thin">
-        <p className="text-label font-semibold text-ink">{t('sidebar.companyName')}</p>
-        <p className="text-caption font-normal text-slate">{t('sidebar.companyEmpty')}</p>
-      </div>
+      <CompanyLine company={company} />
       <div className="mt-auto flex flex-col gap-3.5 px-2">
         <LanguageSwitch className="self-start" />
         <p className="text-micro text-slate">{t('app.notice')}</p>

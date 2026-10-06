@@ -106,9 +106,9 @@ describe('AppFrame on every screen', () => {
     expect(within(main).getAllByText('Obligations')).toHaveLength(2) // the top bar and the h1
   })
 
-  it('opens the app start on the inventory', async () => {
+  it('opens the app start on Welcome when nothing can be saved (no Supabase)', async () => {
     const { router } = await openApp('/app')
-    expect(router.state.location.pathname).toBe('/app/inventory')
+    expect(router.state.location.pathname).toBe('/app/welcome')
   })
 })
 

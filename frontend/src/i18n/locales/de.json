@@ -104,7 +104,14 @@
     "companyEmpty": "Noch kein Unternehmensprofil",
     "exportData": "Daten exportieren",
     "deleteData": "Meine Daten löschen",
-    "menu": "Menü"
+    "menu": "Menü",
+    "companyEdit": "Unternehmensprofil bearbeiten",
+    "companyLine": {
+      "sme": "{{band}} Beschäftigte, gilt als KMU",
+      "smc": "{{band}} Beschäftigte, gilt als kleines Midcap-Unternehmen"
+    },
+    "companyStaff": "{{band}} Beschäftigte",
+    "companySaved": "Unternehmensprofil gespeichert"
   },
   "screen": {
     "placeholder": "Dieser Bildschirm ist noch im Aufbau.",
@@ -144,5 +151,102 @@
   "lawShort": {
     "amended": "Geändert, 2026",
     "original": "Ursprünglich, 2024"
+  },
+  "welcome": {
+    "title": "Sehen wir uns an, wo Ihre KI-Tools stehen.",
+    "intro": "Fügen Sie die Tools Ihres Unternehmens einzeln hinzu. Klar prüft jedes in der Reihenfolge der KI-Verordnung, belegt jeden Schritt und erstellt Ihre Aufgabenliste mit Fristen.",
+    "inventoryName": "KI-Inventar",
+    "profile": {
+      "heading": "Über Ihr Unternehmen",
+      "subtitle": "Dauert eine Minute. Sie können es später ändern. Es ändert nichts an der Einstufung Ihrer Tools.",
+      "companyName": "Name des Unternehmens",
+      "staff": "Beschäftigte",
+      "turnover": "Jahresumsatz",
+      "establishedIn": "Wo Sie niedergelassen sind",
+      "establishedNone": "Land wählen",
+      "establishedHint": "Außerhalb der EU niedergelassen? Die Verordnung gilt trotzdem, wenn die Ausgabe Ihrer Tools in der Union verwendet wird (Art. 2 Abs. 1 Buchst. c), und Anbieter von Hochrisiko-KI-Systemen benennen einen Bevollmächtigten in der Union (Art. 22).",
+      "usedIn": "Wo die Tools genutzt werden",
+      "usedInHint": "Die Verordnung gilt für KI, die in der EU genutzt wird, egal wo der Anbieter sitzt (Art. 2).",
+      "skip": "Vorerst überspringen",
+      "save": "Speichern und Tool hinzufügen",
+      "saving": "Wird gespeichert …"
+    },
+    "staffBand": {
+      "1-9": "1–9",
+      "10-49": "10–49",
+      "50-249": "50–249",
+      "250-749": "250–749",
+      "750+": "750+"
+    },
+    "turnoverBand": {
+      "up_to_10m": "Bis 10 Mio. €",
+      "up_to_50m": "Bis 50 Mio. €",
+      "up_to_150m": "Bis 150 Mio. €",
+      "over_150m": "Mehr"
+    },
+    "usedInOption": {
+      "eu": "In der EU",
+      "eu_and_outside": "Auch außerhalb"
+    },
+    "size": {
+      "label": {
+        "sme": "Gilt als KMU",
+        "smc": "Gilt als kleines Midcap-Unternehmen",
+        "none": "Weder KMU noch kleines Midcap-Unternehmen"
+      },
+      "body": {
+        "sme": "KMU haben leichtere Dokumentationspflichten, und für sie gilt der niedrigere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 6), nicht der höhere nach Art. 99 Abs. 3.",
+        "smc": "Kleine Midcap-Unternehmen können ebenfalls die vereinfachte Dokumentation nutzen (Art. 11 Abs. 1). Der niedrigere Höchstbetrag nach Art. 99 Abs. 6 gilt nur für KMU, daher gilt der höhere (Art. 99 Abs. 3).",
+        "none": "Es gilt der höhere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 3); der niedrigere gilt nur für KMU (Art. 99 Abs. 6)."
+      },
+      "maybeSme": "Klar berücksichtigt nur den Umsatz. Mit einer Bilanzsumme von höchstens 43 Mio. € können Sie dennoch als KMU gelten."
+    },
+    "law": {
+      "art99_3": {
+        "quote": "Bei Missachtung des Verbots der in Artikel 5 genannten KI-Praktiken werden Geldbußen von bis zu 35 000 000 EUR oder — im Falle von Unternehmen — von bis zu 7 % des gesamten weltweiten Jahresumsatzes des vorangegangenen Geschäftsjahres verhängt, je nachdem, welcher Betrag höher ist.",
+        "source": "Art. 99 Abs. 3, Verordnung (EU) 2024/1689, Deutsch"
+      },
+      "art99_6": {
+        "quote": "Im Falle von KMU, einschließlich Start-up-Unternehmen, gilt für jede in diesem Artikel genannte Geldbuße der jeweils niedrigere Betrag aus den in den Absätzen 3, 4 und 5 genannten Prozentsätzen oder Summen.",
+        "source": "Art. 99 Abs. 6, Verordnung (EU) 2024/1689, Deutsch"
+      },
+      "art2_1_c": {
+        "quote": "Anbieter und Betreiber von KI-Systemen, die ihren Sitz in einem Drittland haben oder sich in einem Drittland befinden, wenn die vom KI-System hervorgebrachte Ausgabe in der Union verwendet wird;",
+        "source": "Art. 2 Abs. 1 Buchst. c, Verordnung (EU) 2024/1689, Deutsch"
+      },
+      "art22_1": {
+        "quote": "Anbieter, die in Drittländern niedergelassen sind, benennen vor der Bereitstellung ihrer Hochrisiko-KI-Systeme auf dem Unionsmarkt schriftlich einen in der Union niedergelassenen Bevollmächtigten.",
+        "source": "Art. 22 Abs. 1, Verordnung (EU) 2024/1689, Deutsch"
+      }
+    },
+    "tools": {
+      "heading": "Ihre KI-Tools",
+      "emptyTitle": "Noch keine Tools",
+      "emptyBody": "Beginnen Sie mit dem Tool, bei dem Sie am unsichersten sind. Ein paar Sätze genügen.",
+      "classifyFirst": "Erstes Tool einstufen",
+      "import": "Ihre Daten importieren",
+      "importHint": "Stellt eine Datei wieder her, die Sie unter „Ihre Daten“ exportiert haben. Es wird nichts neu eingestuft.",
+      "importing": "Wird importiert …",
+      "imported_one": "{{count}} Tool aus Ihrer Datei wiederhergestellt.",
+      "imported_other": "{{count}} Tools aus Ihrer Datei wiederhergestellt.",
+      "count_one": "Ihr Inventar enthält {{count}} Tool.",
+      "count_other": "Ihr Inventar enthält {{count}} Tools.",
+      "open": "Inventar öffnen"
+    },
+    "how": {
+      "heading": "So funktioniert es",
+      "describe": "Beschreiben Sie ein Tool in eigenen Worten.",
+      "answer": "Beantworten Sie Klars Fragen; Klar fragt nur, was das Ergebnis entscheidet.",
+      "result": "Sie erhalten die Einstufung, Ihre Pflichten mit Fristen und Dokumententwürfe."
+    },
+    "retention": "Kein Konto nötig. Ihre Sitzung ist anonym und wird nach 30 Tagen ohne Aktivität gelöscht.",
+    "failure": {
+      "storageFull": "Ihr Speicher ist voll, es kann nichts mehr gespeichert werden.",
+      "storageFullHint": "Löschen Sie alte Daten, die Sie nicht mehr brauchen, und versuchen Sie es erneut.",
+      "storageFullLink": "Zu Ihren Daten",
+      "tooLarge": "Diese Datei ist größer als 4 MB und kann nicht importiert werden.",
+      "badFile": "Diese Datei ist kein Klar-Export. Wählen Sie eine Datei, die Sie unter „Ihre Daten“ exportiert haben.",
+      "failed": "Das hat nicht geklappt. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+    }
   }
 }

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { useQuery, type UseQueryResult } from '@tanstack/react-query'
+import { queryOptions, useQuery, type UseQueryResult } from '@tanstack/react-query'
 
 import { ensureAnonymousSession } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
@@ -7,13 +7,11 @@ import { supabase } from '@/lib/supabase'
 const anonymousSessionKey = ['auth', 'anonymous-session'] as const
 
 /**
- * The visitor's user id, signing in anonymously on first use. Disabled (no data) when Supabase is
- * not configured. supabase-js refreshes the tokens itself, so the id never goes stale.
+ * The anonymous session as a query. Everything that needs the session goes through this one key,
+ * so two screens starting at once never sign in twice (which would make two anonymous users).
  */
-export function useAnonymousSession(
-  client: SupabaseClient | null = supabase,
-): UseQueryResult<string> {
-  return useQuery({
+export function anonymousSessionOptions(client: SupabaseClient | null) {
+  return queryOptions({
     queryKey: anonymousSessionKey,
     queryFn: () => {
       if (!client) throw new Error('Supabase is not configured.')
@@ -23,4 +21,14 @@ export function useAnonymousSession(
     staleTime: Infinity,
     gcTime: Infinity,
   })
+}
+
+/**
+ * The visitor's user id, signing in anonymously on first use. Disabled (no data) when Supabase is
+ * not configured. supabase-js refreshes the tokens itself, so the id never goes stale.
+ */
+export function useAnonymousSession(
+  client: SupabaseClient | null = supabase,
+): UseQueryResult<string> {
+  return useQuery(anonymousSessionOptions(client))
 }
