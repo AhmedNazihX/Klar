@@ -11,7 +11,6 @@ import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr, ValidationError
-from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.engine.graph import EngineNodes, build_graph
 from aiact.engine.nodes import role_obligations as node
@@ -667,6 +666,36 @@ def test_an_unknown_role_asks_for_it() -> None:
     assert outcome.step.missing_fact.id == "operator_role"
     assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
     assert {"art:16:a", "art:26:1"} <= set(articles(outcome))
+
+
+def test_a_repurposed_gpai_system_reports_its_switch_next_to_the_gpai_rule() -> None:
+    """own-d-03's recorded answer: GPAI "yes" and (c) "yes". The switch that applies is reported
+    with its citation (user, 2026-10-06: every switch), and the model provider is still flagged."""
+    answer = role_answer(
+        builds_on_gpai=key_fact(Answer.YES, EvidenceTag.INFERRED),
+        changed_purpose=key_fact(Answer.YES, EvidenceTag.STATED),
+    )
+    outcome = to_outcome(answer, state())
+    assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
+    assert "Art. 25(1)(c)" in (finding(outcome).role_switch_reason or "")
+    assert switch_citations(outcome) == ["art:25:1:c"]
+    assert {"art:3:3", "art:3:68"} <= {c.provision_id for c in outcome.step.citations}
+    assert "art:53:1:b" in articles(outcome)
+    assert outcome.step.status is Status.DECIDED
+
+
+@pytest.mark.parametrize("risk_class", [RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK])
+def test_a_gpai_system_below_high_risk_reports_no_switch(risk_class: RiskClass) -> None:
+    answer = role_answer(
+        risk_class=risk_class,
+        route=None,
+        builds_on_gpai=key_fact(Answer.YES, EvidenceTag.STATED),
+        changed_purpose=key_fact(Answer.YES, EvidenceTag.STATED),
+    )
+    duties = ("art:50:1",) if risk_class is RiskClass.LIMITED_RISK else ()
+    outcome = to_outcome(answer, state(risk_class, None, transparency_duties=duties))
+    assert finding(outcome).role_switch_reason is None
+    assert switch_citations(outcome) == []
 
 
 @pytest.mark.parametrize("base", [Role.DEPLOYER, Role.PROVIDER])
@@ -1531,19 +1560,9 @@ REBRANDER = (
 
 
 RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_role_obligations.py --record-mode=once"
-RECORDING_PENDING = pytest.mark.xfail(
-    strict=True,
-    raises=CannotOverwriteExistingCassetteException,
-    reason="E8 changed the role prompt and answer schema, and its recordings were removed; "
-    f"record them once with `{RECORD_COMMAND}`, then remove RECORDING_PENDING",
-)
-"""Marks the role replays while their recordings are missing (decision: the orchestrator records
-once, after the reviews). A missing cassette is never a green skip: the replay runs and fails on
-it, which this strict mark expects; any other failure stays red, and a replay that passes once
-recorded fails as XPASS until the mark is removed (also from `test_corpus_recording`)."""
+"""Records the role replays; a missing recording fails its replay, never a skip."""
 
 
-@RECORDING_PENDING
 @pytest.mark.vcr
 def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> None:
     outcome = RoleObligationsCheck(luna_settings)(state(description=REBRANDER))
@@ -1566,7 +1585,6 @@ def _role_cases() -> list[BenchmarkCase]:
 B5D_CASES = _role_cases()
 
 
-@RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",

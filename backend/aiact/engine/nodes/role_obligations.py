@@ -8,10 +8,9 @@ applied here, in code:
 - A company that builds its own system on a general-purpose AI model is that system's provider,
   and the model provider's own duties are flagged (the informational Art. 53(1)(b) row).
 - A deployer, importer or distributor of a high-risk system becomes its provider under Art. 25(1)
-  when it rebrands it (a), substantially modifies it (b) or repurposes it into high-risk (c).
-  Every switch that applies is reported, each with its citation; (b) and (c) exclude each other
-  by the original system's class, (a) joins either (user, 2026-10-06, own-d-13). Art. 25 adds
-  the provider's duties; a deployer still uses the system and keeps its own.
+  when it rebrands (a), substantially modifies (b) or repurposes it into high-risk (c). Every
+  switch that applies is reported with its citation, next to the GPAI rule too; (b) and (c)
+  exclude each other by the original system's class, (a) joins either (user, 2026-10-06).
 - A deciding fact the model can't settle makes the step `needs_more_information`. The labelled
   working assumption is provider plus the base role (deployer when the role itself is unknown),
   so no duty that may apply is dropped. Every unknown fact becomes a follow-up question.
@@ -29,12 +28,9 @@ Art. 6(4) by the high-risk step's Art. 6(3) exemption, the GPAI flag by the GPAI
 other condition goes to the model. A duty whose condition is "no" is dropped; "yes" and
 "unknown" keep it, with its condition shown.
 
-A high-risk system also gets the Art. 111(2) key facts (C7b, decision 022; `role_legacy`). A
-legacy system keeps its class; `list_obligations` marks its high-risk duties. The facts are
-asked only for a high-risk system, so the request for any other class is unchanged.
-
-Each step cites the provisions its role rests on (Art. 3 definitions, the Art. 25(1) switch,
-Art. 53(1)(b)), quoted from the parsed AI Act until `get_provision` (C5) serves them.
+A high-risk system also gets the Art. 111(2) key facts (C7b, decision 022; `role_legacy`), asked
+only for a high-risk system. Each step cites the provisions its role rests on (Art. 3, the Art.
+25(1) switches, Art. 53(1)(b)), quoted from the parsed AI Act until `get_provision` (C5).
 """
 
 import json
@@ -257,10 +253,9 @@ class RoleSettlement:
         (each Art. 25(1) point that applies, or for a system built on a GPAI model the provider
         and downstream-provider definitions), and the facts an assumption waits on."""
         bases = (self.base,) if self.base else (Role.PROVIDER, Role.DEPLOYER)
-        if BUILDS_ON_GPAI in self.made_by:
-            made: tuple[str, ...] = (ROLE_ARTICLES[Role.PROVIDER], DOWNSTREAM_PROVIDER_ARTICLE)
-        else:
-            made = tuple(q.article for q in self.made_by)
+        gpai = (ROLE_ARTICLES[Role.PROVIDER], DOWNSTREAM_PROVIDER_ARTICLE)
+        made = tuple(q.article for q in self.made_by if q is not BUILDS_ON_GPAI)
+        made = (*made, *(gpai if BUILDS_ON_GPAI in self.made_by else ()))
         waiting = tuple(q.article for q in self.missing if q is not OPERATOR_ROLE)
         opened = self.open_in_law.articles if self.open_in_law else ()
         cited = (*(ROLE_ARTICLES[r] for r in bases), *opened, *made, *waiting)
@@ -317,10 +312,15 @@ def settle_role(answer: RoleAnswer, risk_class: RiskClass) -> RoleSettlement:
     gpai_open = (BUILDS_ON_GPAI,) if gpai is Answer.UNKNOWN else ()
     if gpai is Answer.YES:
         # The provider role is settled; with an unknown base, whether it also deploys is not.
+        # A high-risk system's Art. 25(1) switches are reported too (own-d-03: a repurposed GPAI
+        # system is a provider under (c), and the model provider's duties are flagged).
         unsettled = (OPERATOR_ROLE,) if base is None else ()
-        return _settlement(
-            answer, Role.PROVIDER, used, made_by=(BUILDS_ON_GPAI,), missing=unsettled
-        )
+        switched = base not in (None, Role.PROVIDER) and risk_class is RiskClass.HIGH_RISK
+        facts = _switch_facts(answer) if switched else {}
+        fired = {f: fact for f, fact in facts.items() if _as_switch(fact) is Answer.YES}
+        made_by = (*(SWITCHES[f] for f in fired), BUILDS_ON_GPAI)
+        shown = (*used, *fired.values())
+        return _settlement(answer, Role.PROVIDER, shown, made_by=made_by, missing=unsettled)
     if base is None:
         return _settlement(answer, Role.PROVIDER, used, missing=(OPERATOR_ROLE, *gpai_open))
     if base is Role.PROVIDER:

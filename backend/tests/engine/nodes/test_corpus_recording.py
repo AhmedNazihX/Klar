@@ -115,16 +115,11 @@ def _case_ids(category: str) -> set[str]:
         ("test_high_risk", "test_replay_annex_i_case", "e", {"test_replay_worked_example"}),
         ("test_prohibited", "test_b5c_case_replay", "c", set()),
         ("test_transparency", "test_b5a_case_replay", "a", set()),
-        pytest.param(
+        (
             "test_role_obligations",
             "test_b5d_case_replay",
             "d",
             {"test_recorded_rebrander_becomes_the_provider"},
-            marks=pytest.mark.xfail(
-                strict=True,
-                raises=AssertionError,
-                reason="E8 removed the role recordings; remove this mark once they are recorded",
-            ),
         ),
     ],
 )
