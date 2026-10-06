@@ -114,17 +114,7 @@ def _case_ids(category: str) -> set[str]:
         ("test_scope", "test_b5b_case_replay", "b", set()),
         ("test_high_risk", "test_replay_annex_i_case", "e", {"test_replay_worked_example"}),
         ("test_prohibited", "test_b5c_case_replay", "c", set()),
-        pytest.param(
-            "test_transparency",
-            "test_b5a_case_replay",
-            "a",
-            set(),
-            marks=pytest.mark.xfail(
-                strict=True,
-                reason="E6's B5a replays are recorded once after its reviews; remove this mark "
-                "with the recording",
-            ),
-        ),
+        ("test_transparency", "test_b5a_case_replay", "a", set()),
     ],
 )
 def test_every_recorded_replay_case_has_its_recording(
