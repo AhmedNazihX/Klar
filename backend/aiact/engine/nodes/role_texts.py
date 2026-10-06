@@ -75,10 +75,14 @@ SWITCHES: Mapping[str, KeyQuestion] = {
         id="substantial_modification",
         article="art:25:1:b",
         question={
-            Language.EN: "Have you changed the system beyond the provider's configuration "
-            "options, for example by retraining it or changing how it decides?",
-            Language.DE: "Haben Sie das System über die Einstellmöglichkeiten des Anbieters "
-            "hinaus verändert, zum Beispiel neu trainiert oder seine Entscheidungslogik geändert?",
+            Language.EN: "Have you changed the system beyond what its provider's documentation "
+            "foresees, for example by retraining it for new tasks, adding inputs or changing how "
+            "it decides? If so, what did you change, and what does the documentation say about "
+            "such changes?",
+            Language.DE: "Haben Sie das System über das hinaus verändert, was die Unterlagen "
+            "seines Anbieters vorsehen, zum Beispiel für neue Aufgaben neu trainiert, Eingaben "
+            "ergänzt oder seine Entscheidungslogik geändert? Wenn ja: Was haben Sie geändert, "
+            "und was sagen die Unterlagen zu solchen Änderungen?",
         },
         reason={
             Language.EN: "Art. 25(1)(b): it substantially modifies the high-risk system, so it "
@@ -148,6 +152,87 @@ OWN_NAME_READINGS: Mapping[Language, tuple[str, str]] = {
 }
 """The two readings, the stricter (provider) first; `{base}` is the base role's name."""
 
+SUBSTANTIAL_MODIFICATION_QUESTION: Mapping[Language, str] = {
+    Language.EN: "Is the change a substantial modification under Art. 3(23), which makes you the "
+    'provider under Art. 25(1)(b)? Art. 3(23) defines it as "a change to an AI system after its '
+    "placing on the market or putting into service which is not foreseen or planned in the "
+    "initial conformity assessment carried out by the provider and as a result of which the "
+    "compliance of the AI system with the requirements set out in Chapter III, Section 2 is "
+    "affected or results in a modification to the intended purpose for which the AI system has "
+    'been assessed".',
+    Language.DE: "Ist die Änderung eine wesentliche Veränderung nach Art. 3 Nr. 23, durch die Sie "
+    "nach Art. 25 Abs. 1 Buchst. b Anbieter werden? Art. 3 Nr. 23 versteht darunter eine "
+    "Veränderung, die in der ursprünglichen Konformitätsbewertung des Anbieters nicht vorgesehen "
+    "oder geplant ist und durch die die Erfüllung der Anforderungen von Kapitel III Abschnitt 2 "
+    "beeinträchtigt wird oder die zu einer Änderung der Zweckbestimmung führt.",
+}
+SUBSTANTIAL_MODIFICATION_READINGS: Mapping[Language, tuple[str, str]] = {
+    Language.EN: (
+        "Provider: the change wasn't foreseen in the provider's conformity assessment and may "
+        "affect how the system meets the high-risk requirements, so it is a substantial "
+        "modification and Art. 25(1)(b) makes the company its provider.",
+        "{base}: without evidence that the change affects compliance with the high-risk "
+        "requirements or the intended purpose, it is no substantial modification, so the vendor "
+        "stays the provider.",
+    ),
+    Language.DE: (
+        "Anbieter: Die Änderung war in der Konformitätsbewertung des Anbieters nicht vorgesehen "
+        "und kann die Erfüllung der Hochrisiko-Anforderungen berühren; sie ist daher eine "
+        "wesentliche Veränderung, und nach Art. 25 Abs. 1 Buchst. b wird das Unternehmen "
+        "Anbieter.",
+        "{base}: Solange nicht feststeht, dass die Änderung die Erfüllung der "
+        "Hochrisiko-Anforderungen oder die Zweckbestimmung berührt, ist sie keine wesentliche "
+        "Veränderung; Anbieter bleibt der Hersteller.",
+    ),
+}
+"""The two readings of an open Art. 3(23) question, the stricter (provider) first; `{base}` is
+the base role's name (user decision on own-d-12, 2026-10-06)."""
+
+
+@dataclass(frozen=True)
+class OpenInLaw:
+    """A role question the law leaves open, with the facts known: the question, both readings
+    (stricter first, `{base}` in the lenient one), the decision sentence (a `TEXTS` key) and
+    the provisions it rests on."""
+
+    question: Mapping[Language, str]
+    readings: Mapping[Language, tuple[str, str]]
+    sentence: str
+    articles: tuple[str, ...]
+
+
+OWN_NAME_OPEN = OpenInLaw(
+    question=OWN_NAME_QUESTION,
+    readings=OWN_NAME_READINGS,
+    sentence="ambiguous",
+    articles=("art:3:3",),
+)
+"""Own name on a system that isn't high-risk: Art. 3(3) doesn't settle the role (own-d-05)."""
+SUBSTANTIAL_MODIFICATION_OPEN = OpenInLaw(
+    question=SUBSTANTIAL_MODIFICATION_QUESTION,
+    readings=SUBSTANTIAL_MODIFICATION_READINGS,
+    sentence="ambiguous_modification",
+    articles=("art:25:1:b", "art:3:23"),
+)
+"""A change to a high-risk system whose description says what was changed and what the
+provider's documentation foresees, where Art. 3(23) doesn't settle whether it is substantial
+(user decision on own-d-12, 2026-10-06)."""
+
+PERSON_REVIEW = KeyQuestion(
+    id="role_person_review",
+    article="art:3:3",
+    question={
+        Language.EN: "Please have a person review the description: does your company develop the "
+        "system, use a system someone else provides, import it or distribute it, and has it put "
+        "its own name on it, changed it or used it for a new purpose (Art. 3, 25)?",
+        Language.DE: "Bitte lassen Sie die Beschreibung von einem Menschen prüfen: Entwickelt Ihr "
+        "Unternehmen das System, nutzt es ein System eines anderen Anbieters, führt es das System "
+        "ein oder vertreibt es es, und hat es das System unter eigenem Namen angeboten, verändert "
+        "oder für einen neuen Zweck eingesetzt (Art. 3, 25)?",
+    },
+)
+"""The question a refused reply asks (decision 029)."""
+
 
 @dataclass(frozen=True)
 class LegacyQuestions:
@@ -214,6 +299,17 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "the role, and it is open whether placing a system you didn't develop under your own name "
         "makes you its provider under Art. 3(3); the Commission's Art. 50 guidelines point to "
         "provider. Working assumption: provider, keeping the {base} duties.",
+        "ambiguous_modification": "Legally ambiguous: the description says what was changed and "
+        "what the provider's documentation foresees, but the law doesn't settle whether the "
+        "change is a substantial modification (Art. 3(23)) that makes the company the provider "
+        "under Art. 25(1)(b). Working assumption: provider, keeping the {base} duties.",
+        "section_b": "No AI Act duties listed: the system is high-risk as a product, or a safety "
+        "component of one, under Annex I Section B, so Art. 2(2) applies only a few provisions of "
+        "the AI Act to it, none of them a duty of this role; its requirements come from the "
+        "sector law.",
+        "refusal": "The model provider's content filter blocked this description, so the role "
+        "could not be assessed automatically. Working assumption until a person has reviewed it: "
+        "provider, keeping the deployer duties.",
         "assumption_also": "Working assumption: also {also}, pending an answer to: {question}",
         "assumption": "Working assumption: provider, keeping the other role's duties, pending an "
         "answer to: {question}",
@@ -253,6 +349,17 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "selbst entwickelten Systems unter eigenem Namen dessen Anbieter nach Art. 3 Nr. 3 wird; "
         "die Art.-50-Leitlinien der Kommission sprechen für Anbieter. Arbeitsannahme: Anbieter, "
         "mit den Pflichten als {base}.",
+        "ambiguous_modification": "Rechtlich offen: Die Beschreibung nennt die Änderung und was "
+        "die Unterlagen des Anbieters vorsehen, aber das Recht klärt nicht, ob die Änderung eine "
+        "wesentliche Veränderung (Art. 3 Nr. 23) ist, durch die das Unternehmen nach Art. 25 "
+        "Abs. 1 Buchst. b Anbieter wird. Arbeitsannahme: Anbieter, mit den Pflichten als {base}.",
+        "section_b": "Keine Pflichten aus der KI-Verordnung aufgeführt: Das System ist als Produkt "
+        "oder Sicherheitsbauteil eines Produkts nach Anhang I Abschnitt B hochriskant, daher "
+        "gelten nach Art. 2 Abs. 2 nur wenige Vorschriften der KI-Verordnung, keine davon eine "
+        "Pflicht dieser Rolle; seine Anforderungen ergeben sich aus dem Sektorrecht.",
+        "refusal": "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher "
+        "konnte die Rolle nicht automatisch geprüft werden. Arbeitsannahme, bis ein Mensch sie "
+        "geprüft hat: Anbieter, mit den Pflichten als Betreiber.",
         "assumption_also": "Arbeitsannahme: zugleich {also}, bis diese Frage beantwortet ist: "
         "{question}",
         "assumption": "Arbeitsannahme: Anbieter, mit den Pflichten der anderen Rolle, bis diese "
