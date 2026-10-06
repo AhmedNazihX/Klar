@@ -1,0 +1,24 @@
+id: annex-match-15-restructuring-redundancy-list
+set_name: annex_match
+language: en
+description: >-
+  We are a mid-sized insurer in Austria with about 2,400 employees, and we are closing two regional
+  offices as part of a restructuring. To decide who leaves, our analytics team built a model that
+  scores every employee in the affected departments from the last three years of performance
+  reviews, sales or case-handling figures and absence records. It produces a ranked list of the
+  people proposed for redundancy, and HR has so far followed that list for nearly all of the 180
+  planned job cuts, after consulting the works council. We built the model in-house and use it only
+  on our own staff. The head office is also getting a new rooftop terrace.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:4:b"]
+label_citation: ["annex:III:4:b", "art:6:2", "art:3:3"]
+notes: >-
+  Label approved 2026-10-07 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: it is used to make decisions on the termination of work-related contractual
+  relationships, by evaluating each employee's performance and behaviour. It evaluates individual
+  people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: develops it and puts it
+  into service under its own name (Art. 3(3)); it is also the deployer.
+tags:
+  - "annex_iii_area:4"

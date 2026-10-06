@@ -16,9 +16,10 @@ label:
   annex_point: ["annex:III:7:c"]
 label_citation: ["annex:III:7:c", "art:6:2", "art:3:4"]
 notes: >-
-  Draft label, awaiting review (X0 fix). Point: assists the competent authority in examining
-  applications for residence permits with regard to the applicant's eligibility, 7(c). It assesses
-  an individual's eligibility and materially shapes the decision, so no Art. 6(3) exemption. Role:
-  the authority uses the service under its authority.
+  Label approved 2026-10-07 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: assists the competent authority in examining applications for residence
+  permits with regard to the applicant's eligibility, 7(c). It assesses an individual's eligibility
+  and materially shapes the decision, so no Art. 6(3) exemption. Role: the authority uses the
+  service under its authority.
 tags:
   - "annex_iii_area:7"
