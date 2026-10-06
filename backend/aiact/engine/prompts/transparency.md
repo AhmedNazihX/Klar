@@ -21,9 +21,11 @@ deep fake depends on their use, answer `deep_fake` "no" and say so in its `fact`
 
 Art. 50 covers systems intended to interact directly with people (such as conversational
 systems), systems that generate synthetic audio, image, video or text, emotion recognition or
-biometric categorisation, and deep fakes. A system that only returns a result, such as a score, a
-label, a ranking or a prediction, to its own user doesn't fall under it. Content a system writes
-or composes itself is generated content, whoever receives it.
+biometric categorisation, and deep fakes.
+A system that only returns an analysis of its input (a score, a label, a ranking or a prediction)
+to its own user doesn't fall under Art. 50(1) or 50(2). Emotion recognition and biometric
+categorisation stay under Art. 50(3) whatever they return. Text, images, audio or video a system
+generates is synthetic content under Art. 50(2), whoever receives it.
 
 Each duty has the same fields, in this order:
 - `covered`: the system is of the kind the paragraph names.
