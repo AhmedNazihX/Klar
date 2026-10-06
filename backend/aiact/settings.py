@@ -70,19 +70,31 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     )
+    # The Host headers the API answers (against DNS rebinding), comma-separated.
+    api_allowed_hosts: Annotated[tuple[str, ...], NoDecode] = ("localhost", "127.0.0.1")
+    # Client addresses come from X-Forwarded-For only behind a proxy the deployment names (S3).
+    api_proxy_headers: bool = False
+    api_forwarded_allow_ips: str = ""
+    # The interactive docs (/docs, /redoc, /openapi.json); S3 turns them off when deployed.
+    api_docs: bool = True
+    # The largest request body read: the biggest classification (20,000 characters and 40
+    # answers of 1,000) in two-byte UTF-8, with room for its JSON.
+    api_max_body_bytes: int = Field(default=131_072, ge=1_024)
     # Requests per client address per minute: classifications cost model calls, lookups don't.
     rate_limit_classify: int = Field(default=5, ge=1)
     rate_limit_lookups: int = Field(default=120, ge=1)
+    # Classifications running at once in this process; one more is refused at once (503).
+    classify_max_concurrent: int = Field(default=4, ge=1)
 
-    @field_validator("cors_origins", mode="before")
+    @field_validator("cors_origins", "api_allowed_hosts", mode="before")
     @classmethod
-    def _split_origins(cls, value: object) -> object:
-        """`CORS_ORIGINS=http://a,http://b` as a tuple of origins; a wildcard is refused, so
-        no deployment can open the API to every site by accident."""
+    def _split_list(cls, value: object) -> object:
+        """`A,B` from the environment as a tuple; a wildcard is refused, so no deployment can
+        open the API to every site or host by accident."""
         if isinstance(value, str):
-            value = tuple(origin.strip() for origin in value.split(",") if origin.strip())
+            value = tuple(item.strip() for item in value.split(",") if item.strip())
         if isinstance(value, tuple | list) and "*" in value:
-            raise ValueError("CORS_ORIGINS lists origins; a wildcard is not allowed")
+            raise ValueError("list the origins or hosts; a wildcard is not allowed")
         return value
 
     @field_validator("aiact_data_dir")

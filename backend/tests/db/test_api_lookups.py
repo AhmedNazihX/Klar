@@ -4,13 +4,13 @@ guideline in English and German, and a code in English only. The app gets the te
 through the `database` dependency."""
 
 from collections.abc import AsyncIterator, Iterator
+from contextlib import nullcontext
 from datetime import date
 
 import httpx
 import psycopg
 import pytest
 from fastapi import FastAPI
-from pydantic import SecretStr
 
 from aiact.api import create_app
 from aiact.api.dependencies import database
@@ -19,7 +19,7 @@ from aiact.corpus.load import load_all
 from aiact.retrieval.documents import DocumentInfo, DocumentList
 from aiact.retrieval.provisions import Provision
 from aiact.schemas import DISCLAIMER_DE, DocumentStatus, Language
-from aiact.settings import Settings
+from tests.api.conftest import api_settings
 
 pytestmark = pytest.mark.db
 
@@ -66,8 +66,8 @@ LOADS = (
 @pytest.fixture
 def app(db: psycopg.Connection) -> Iterator[FastAPI]:
     load_all(db, LOADS)
-    built = create_app(Settings(_env_file=None, openrouter_api_key=SecretStr("k")))  # pyright: ignore[reportCallIssue]
-    built.dependency_overrides[database] = lambda: db
+    built = create_app(api_settings())
+    built.dependency_overrides[database] = lambda: lambda: nullcontext(db)
     yield built
     built.dependency_overrides.clear()
 

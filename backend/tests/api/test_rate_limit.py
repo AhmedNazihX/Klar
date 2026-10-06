@@ -1,15 +1,18 @@
-"""The rate limit (aiact/api/rate_limit.py): the fixed window on a fake clock, and through the API,
-a 429 with `Retry-After` once a client's classifications or lookups are used up."""
+"""The rate limit (aiact/api/rate_limit.py): the window on a fake clock, and through the API, a
+429 with `Retry-After` once a client's classifications or lookups are used up, keyed by the
+connection's peer whatever X-Forwarded-For says."""
 
 import httpx
 import pytest
+import uvicorn
 from fastapi import FastAPI
-from pydantic import SecretStr
+from typer.testing import CliRunner
 
-from aiact.api.rate_limit import WINDOW_SECONDS, RateLimiter
+from aiact import cli
+from aiact.api.rate_limit import WINDOW_SECONDS, ConcurrencyLimit, RateLimiter
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.settings import Settings
-from tests.api.conftest import use_nodes
+from tests.api.conftest import api_settings, use_nodes
 
 BODY = {"description": "A chatbot that answers customer questions.", "language": "en"}
 OBLIGATIONS = "/obligations?role=deployer&risk_class=high_risk"
@@ -58,16 +61,20 @@ def test_ended_windows_are_swept() -> None:
 def test_a_limit_below_one_is_refused() -> None:
     with pytest.raises(ValueError, match="at least one"):
         RateLimiter(0)
+    with pytest.raises(ValueError, match="at least one"):
+        ConcurrencyLimit(0)
+
+
+def test_the_concurrency_limit_never_waits_and_frees_a_slot_on_release() -> None:
+    slots = ConcurrencyLimit(2)
+    assert [slots.try_acquire() for _ in range(3)] == [True, True, False]
+    slots.release()
+    assert slots.try_acquire()
 
 
 @pytest.fixture
 def settings() -> Settings:
-    return Settings(
-        _env_file=None,  # pyright: ignore[reportCallIssue]
-        openrouter_api_key=SecretStr("k"),
-        rate_limit_classify=2,
-        rate_limit_lookups=3,
-    )
+    return api_settings(rate_limit_classify=2, rate_limit_lookups=3)
 
 
 @pytest.mark.anyio
@@ -98,3 +105,32 @@ async def test_another_client_keeps_its_own_budget(app: FastAPI, client: httpx.A
     other = httpx.ASGITransport(app=app, client=("192.0.2.7", 1234))
     async with httpx.AsyncClient(transport=other, base_url="http://testserver") as second:
         assert (await second.get(OBLIGATIONS)).status_code == 200
+
+
+@pytest.mark.anyio
+async def test_a_spoofed_forwarded_for_header_does_not_change_the_key(
+    client: httpx.AsyncClient,
+) -> None:
+    statuses = [
+        (await client.get(OBLIGATIONS, headers={"x-forwarded-for": f"198.51.100.{i}"})).status_code
+        for i in range(4)
+    ]
+    assert statuses == [200, 200, 200, 429]
+
+
+def test_serve_passes_the_proxy_settings_to_uvicorn(monkeypatch: pytest.MonkeyPatch) -> None:
+    """uvicorn's own defaults trust X-Forwarded-For from 127.0.0.1; `aiact api serve` passes
+    the settings (off, no proxy trusted) instead."""
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(uvicorn, "run", lambda _app, **kwargs: calls.append(kwargs))
+    monkeypatch.setattr(cli, "get_settings", lambda: api_settings())
+    result = CliRunner().invoke(cli.app, ["api", "serve"])
+    assert result.exit_code == 0, result.output
+    assert calls == [
+        {
+            "host": "127.0.0.1",
+            "port": 8000,
+            "proxy_headers": False,
+            "forwarded_allow_ips": "",
+        }
+    ]

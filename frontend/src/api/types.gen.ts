@@ -657,7 +657,7 @@ export type ClassifyErrors = {
      */
     429: unknown;
     /**
-     * The engine is not configured
+     * Every slot is taken (with Retry-After), or the engine is not configured
      */
     503: unknown;
 };

@@ -115,7 +115,7 @@
             "description": "Too many classifications"
           },
           "503": {
-            "description": "The engine is not configured"
+            "description": "Every slot is taken (with Retry-After), or the engine is not configured"
           },
           "422": {
             "description": "Validation Error",

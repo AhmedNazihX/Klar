@@ -68,7 +68,28 @@ def test_cors_origins_are_read_comma_separated(monkeypatch: pytest.MonkeyPatch) 
     assert settings.cors_origins == ("https://klar.example", "https://www.klar.example")
 
 
-def test_a_wildcard_cors_origin_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CORS_ORIGINS", "*")
+@pytest.mark.parametrize("name", ["CORS_ORIGINS", "API_ALLOWED_HOSTS"])
+def test_a_wildcard_origin_or_host_is_refused(monkeypatch: pytest.MonkeyPatch, name: str) -> None:
+    monkeypatch.setenv(name, "localhost,*")
     with pytest.raises(ValueError, match="wildcard"):
         Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+
+
+def test_the_api_hardening_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    names = (
+        "API_ALLOWED_HOSTS",
+        "API_PROXY_HEADERS",
+        "API_FORWARDED_ALLOW_IPS",
+        "API_DOCS",
+        "API_MAX_BODY_BYTES",
+        "CLASSIFY_MAX_CONCURRENT",
+    )
+    for name in names:
+        monkeypatch.delenv(name, raising=False)
+    settings = Settings(_env_file=BACKEND_DIR / ".env.example")  # pyright: ignore[reportCallIssue]
+    assert settings.api_allowed_hosts == ("localhost", "127.0.0.1")
+    assert settings.api_proxy_headers is False
+    assert settings.api_forwarded_allow_ips == ""
+    assert settings.api_docs is True
+    assert settings.api_max_body_bytes == 131_072
+    assert settings.classify_max_concurrent == 4

@@ -15,7 +15,7 @@ from fastapi import FastAPI
 from aiact.engine import FactsEvent, ResultEvent, StepEvent
 from aiact.engine.classify import NodeBuilder, engine_nodes
 from aiact.settings import Settings
-from tests.api.conftest import BASE_URL, FULL_RUN, outline, sse_events, use_builder
+from tests.api.conftest import BASE_URL, FULL_RUN, TEST_HOST, outline, sse_events, use_builder
 from tests.conftest import RECORDINGS_DIR
 from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import corpus_recording
@@ -57,7 +57,12 @@ def settings(openrouter_settings: Settings, record_mode: str) -> Settings:
     if record_mode != "none":
         pytest.skip(f"replay only: record the engine's replay instead, `{RECORD_COMMAND}`")
     return openrouter_settings.model_copy(
-        update={"engine_model": LUNA, "engine_provider": LUNA_PROVIDER, "langsmith_api_key": None}
+        update={
+            "engine_model": LUNA,
+            "engine_provider": LUNA_PROVIDER,
+            "langsmith_api_key": None,
+            "api_allowed_hosts": (TEST_HOST,),
+        }
     )
 
 

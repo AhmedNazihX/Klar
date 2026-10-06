@@ -2,7 +2,8 @@
 the held-out opt-in), their error codes, and `GET /obligations` on the committed table. The
 same routes against the local Supabase are in tests/db/test_api_lookups.py."""
 
-from collections.abc import Iterator
+import logging
+from contextlib import AbstractContextManager, nullcontext
 from datetime import date
 
 import httpx
@@ -18,6 +19,8 @@ from aiact.retrieval.documents import DocumentList
 from aiact.retrieval.provisions import MAX_PROVISION_ID_CHARS, Provision, ProvisionNotFoundError
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, DocumentStatus, Language, LawVersion
 
+DB_HOST = "db.internal.example"
+"""A server name that must not reach the response or the logs."""
 CONNECTION = object()
 """Stands in for the request's connection; the faked lookups only check they got it."""
 
@@ -38,9 +41,22 @@ PROVISION = Provision(
 )
 
 
+class Opened:
+    """A connection factory that hands out `CONNECTION` and counts the connections opened."""
+
+    def __init__(self) -> None:
+        self.count = 0
+
+    def __call__(self) -> AbstractContextManager[object]:
+        self.count += 1
+        return nullcontext(CONNECTION)
+
+
 @pytest.fixture(autouse=True)
-def no_database(app: FastAPI) -> None:
-    app.dependency_overrides[database] = lambda: CONNECTION
+def opened(app: FastAPI) -> Opened:
+    factory = Opened()
+    app.dependency_overrides[database] = lambda: factory
+    return factory
 
 
 class Calls:
@@ -97,10 +113,15 @@ async def test_the_held_out_opt_in_is_not_taken_from_the_query(
     ids=["malformed", "too_long", "language", "before_the_act"],
 )
 async def test_a_bad_lookup_is_a_422_before_the_database(
-    client: httpx.AsyncClient, provision_calls: Calls, path: str, params: dict[str, str]
+    client: httpx.AsyncClient,
+    provision_calls: Calls,
+    opened: Opened,
+    path: str,
+    params: dict[str, str],
 ) -> None:
     assert (await client.get(path, params=params)).status_code == 422
     assert provision_calls.calls == []
+    assert opened.count == 0  # no connection was opened
 
 
 @pytest.mark.anyio
@@ -126,20 +147,28 @@ async def test_lookup_errors_the_caller_can_fix_keep_their_message(
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     "error",
-    [DatabaseNotConfiguredError("DATABASE_URL is not set"), psycopg.OperationalError("host x")],
+    [
+        DatabaseNotConfiguredError("DATABASE_URL is not set"),
+        psycopg.OperationalError(f'connection to server at "{DB_HOST}", port 6543 failed'),
+    ],
 )
 async def test_an_unreachable_database_is_a_503_without_its_text(
-    app: FastAPI, client: httpx.AsyncClient, error: Exception
+    app: FastAPI, client: httpx.AsyncClient, caplog: pytest.LogCaptureFixture, error: Exception
 ) -> None:
-    def unreachable() -> Iterator[object]:
+    def unreachable() -> AbstractContextManager[object]:
         raise error
-        yield  # a generator dependency, like `database`
 
-    app.dependency_overrides[database] = unreachable
+    app.dependency_overrides[database] = lambda: unreachable
     for path in ("/provisions/art:5", "/documents"):
-        response = await client.get(path)
+        with caplog.at_level(logging.DEBUG):
+            response = await client.get(path)
         assert response.status_code == 503
         assert response.json() == {"detail": CORPUS_UNAVAILABLE}
+    assert f"corpus lookup failed: {type(error).__name__}" in caplog.text
+    for text in (response.text, caplog.text):
+        assert str(error) not in text
+        assert DB_HOST not in text
+        assert "Traceback" not in text
 
 
 @pytest.mark.anyio

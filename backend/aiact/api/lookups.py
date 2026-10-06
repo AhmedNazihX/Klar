@@ -5,18 +5,19 @@ function the MCP tools wrap too, and returns its result, which carries the law v
 
 Held-out examples stay hidden: no route takes `include_held_out` (decision 012). The routes are
 plain `def`: retrieval reads Postgres through psycopg's sync driver, so FastAPI runs them in
-its threadpool and the event loop never waits on the database.
+its threadpool and the event loop never waits on the database. A route opens its connection
+only once FastAPI has validated the path and query, so a bad lookup is a 422 even while the
+database is down.
 """
 
 from datetime import date
 from typing import Annotated, Any, Literal
 
-import psycopg
 from annotated_types import Ge
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import ValidationError
 
-from aiact.api.dependencies import Bucket, database, rate_limited
+from aiact.api.dependencies import ConnectionFactory, database, limit_lookups
 from aiact.corpus.build import AI_ACT_IN_FORCE
 from aiact.obligations.list import ObligationList, list_obligations
 from aiact.retrieval.documents import DocumentList, list_documents
@@ -29,9 +30,9 @@ from aiact.retrieval.provisions import (
 )
 from aiact.schemas import HighRiskRoute, Language, LawVersion, LegacyStatus, RiskClass, Role
 
-router = APIRouter(dependencies=[Depends(rate_limited(Bucket.LOOKUPS))])
+router = APIRouter(dependencies=[Depends(limit_lookups)])
 
-Connection = Annotated[psycopg.Connection, Depends(database)]
+Connect = Annotated[ConnectionFactory, Depends(database)]
 LanguageQuery = Annotated[
     Language, Query(description="The language of the text and the notice (en or de).")
 ]
@@ -61,7 +62,7 @@ def provision(
             "recital:<n> or guide:<doc_key>:…; e.g. art:26:1, annex:III:5:b.",
         ),
     ],
-    connection: Connection,
+    connect: Connect,
     language: LanguageQuery = Language.EN,
     law_version: LawVersion = LawVersion.AMENDED,
     as_of: Annotated[
@@ -74,7 +75,8 @@ def provision(
     the language asked for; the English text, with `english_only` set, when there is no German
     one."""
     try:
-        return get_provision(provision_id, language, law_version, as_of, connection=connection)
+        with connect() as connection:
+            return get_provision(provision_id, language, law_version, as_of, connection=connection)
     except ValidationError:
         raise  # our own result failed its contract: a bug, not the caller's error
     except ProvisionNotFoundError as error:
@@ -106,6 +108,7 @@ def obligations(
 @router.get(
     "/documents", name="list_documents", response_model=DocumentList, responses=DATABASE_DOWN
 )
-def documents(connection: Connection, language: LanguageQuery = Language.EN) -> DocumentList:
+def documents(connect: Connect, language: LanguageQuery = Language.EN) -> DocumentList:
     """The texts the answers draw on: title, status, law version and dates."""
-    return list_documents(language, connection=connection)
+    with connect() as connection:
+        return list_documents(language, connection=connection)

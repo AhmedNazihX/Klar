@@ -26,8 +26,21 @@ from aiact.schemas import STEP_ORDER
 from aiact.settings import Settings
 
 BASE_URL = "http://testserver"
-TEST_SETTINGS = Settings(_env_file=None, openrouter_api_key=SecretStr("k"))  # pyright: ignore[reportCallIssue]
-"""No LangSmith key (nothing is traced) and the default limits and origins."""
+TEST_HOST = "testserver"
+
+
+def api_settings(**changes: object) -> Settings:
+    """No `.env` and no LangSmith key (nothing is traced), the test client's host allowed, the
+    default limits and origins unless `changes` say otherwise."""
+    values: dict[str, object] = {
+        "openrouter_api_key": SecretStr("k"),
+        "api_allowed_hosts": (TEST_HOST,),
+        **changes,
+    }
+    return Settings(_env_file=None, **values)  # pyright: ignore[reportCallIssue]
+
+
+TEST_SETTINGS = api_settings()
 
 EVENTS = TypeAdapter[ClassifyEvent](ClassifyEvent)
 

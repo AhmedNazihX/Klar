@@ -7,13 +7,15 @@ run. INIT's worked example through the API, on the recorded engine, is in
 import json
 import logging
 import threading
+from collections.abc import Iterator
 
 import anyio
 import httpx
 import pytest
 from fastapi import FastAPI
 
-from aiact.api.classify import UNAVAILABLE
+from aiact.api import create_app
+from aiact.api.classify import BUSY, BUSY_RETRY_SECONDS, UNAVAILABLE
 from aiact.engine import (
     ErrorEvent,
     ResultEvent,
@@ -36,7 +38,15 @@ from aiact.schemas import (
     StepResult,
 )
 from aiact.settings import Settings
-from tests.api.conftest import FULL_RUN, outline, sse_events, use_builder, use_nodes
+from tests.api.conftest import (
+    BASE_URL,
+    FULL_RUN,
+    api_settings,
+    outline,
+    sse_events,
+    use_builder,
+    use_nodes,
+)
 
 DESCRIPTION = (
     "We use a tool that reads incoming job applications, scores them, and shows HR a ranked "
@@ -178,16 +188,24 @@ async def test_the_error_message_is_in_the_runs_language(
     "error", [LLMConfigError("ENGINE_MODEL is not set"), OSError("records unreadable")]
 )
 async def test_a_setup_error_is_a_503_before_any_event(
-    app: FastAPI, client: httpx.AsyncClient, error: Exception
+    app: FastAPI,
+    client: httpx.AsyncClient,
+    caplog: pytest.LogCaptureFixture,
+    error: Exception,
 ) -> None:
     def unconfigured(_settings: Settings, _meter: object) -> EngineNodes:
         raise error
 
     use_builder(app, unconfigured)
-    response = await post(client)
+    with caplog.at_level(logging.DEBUG):
+        response = await post(client)
     assert response.status_code == 503
     assert response.json() == {"detail": UNAVAILABLE}
-    assert str(error) not in response.text
+    assert f"classification setup failed: {type(error).__name__}" in caplog.text
+    for text in (response.text, caplog.text):
+        assert str(error) not in text
+        assert DESCRIPTION not in text
+        assert "Traceback" not in text
 
 
 def never_built(_settings: Settings, _meter: object) -> EngineNodes:
@@ -278,16 +296,25 @@ def http_scope() -> dict[str, object]:
     }
 
 
+COST_LINE = "classification cost"
+"""The line the engine logs once per run, when its event stream is closed or finished."""
+
+
 @pytest.mark.anyio
-async def test_a_client_that_leaves_stops_the_run(app: FastAPI) -> None:
+async def test_a_client_that_leaves_stops_and_closes_the_run(
+    app: FastAPI, caplog: pytest.LogCaptureFixture
+) -> None:
     """The client disconnects while scope runs: scope finishes (a thread can't be interrupted),
-    and no later check starts. Scope is released only once every task is blocked, so the
-    disconnect has been handled by then."""
+    no later check starts, and the run is closed (its cost logged once) before the app
+    returns. Scope is released only once every task is blocked, so the disconnect has been
+    handled by then."""
     gate = ScopeGate()
     stub = scripted_nodes(Script())
     use_nodes(app, EngineNodes(stub.facts, gate.checks(), stub.finalize))
     sent: list[dict[str, object]] = []
     calls = 0
+    closed_when_the_app_returned = -1
+    ran_when_the_app_returned: list[StepName] = []
 
     async def release_when_idle() -> None:
         await anyio.wait_all_tasks_blocked()
@@ -296,22 +323,88 @@ async def test_a_client_that_leaves_stops_the_run(app: FastAPI) -> None:
     async def send(message: dict[str, object]) -> None:
         sent.append(message)
 
-    async with anyio.create_task_group() as tasks:
+    with caplog.at_level(logging.INFO):
+        async with anyio.create_task_group() as tasks:
 
-        async def receive() -> dict[str, object]:
-            nonlocal calls
-            calls += 1
-            if calls == 1:
-                return {"type": "http.request", "body": json.dumps(BODY).encode()}
-            await anyio.to_thread.run_sync(gate.started.wait)
-            tasks.start_soon(release_when_idle)
-            return {"type": "http.disconnect"}
+            async def receive() -> dict[str, object]:
+                nonlocal calls
+                calls += 1
+                if calls == 1:
+                    return {"type": "http.request", "body": json.dumps(BODY).encode()}
+                await anyio.to_thread.run_sync(gate.started.wait)
+                tasks.start_soon(release_when_idle)
+                return {"type": "http.disconnect"}
 
-        with anyio.fail_after(10):
-            await app(http_scope(), receive, send)  # pyright: ignore[reportArgumentType]
+            with anyio.fail_after(10):
+                await app(http_scope(), receive, send)  # pyright: ignore[reportArgumentType]
+            closed_when_the_app_returned = caplog.text.count(COST_LINE)
+            ran_when_the_app_returned = list(gate.ran)
     gate.release.set()
-    assert gate.ran == [StepName.SCOPE]
+    assert ran_when_the_app_returned == [StepName.SCOPE]
+    assert closed_when_the_app_returned == 1
     assert sent[0]["status"] == 200
     bodies = b"".join(body for m in sent if isinstance(body := m.get("body"), bytes))
     assert b'"event":"result"' not in bodies
     assert b'"event":"step","step":{"step":"scope"' not in bodies
+
+
+# --- Classifications at once --------------------------------------------------------------------
+
+
+@pytest.fixture
+def one_slot_app() -> Iterator[FastAPI]:
+    built = create_app(api_settings(classify_max_concurrent=1))
+    yield built
+    built.dependency_overrides.clear()
+
+
+@pytest.mark.anyio
+async def test_a_classification_over_the_concurrency_cap_is_refused_at_once(
+    one_slot_app: FastAPI,
+) -> None:
+    """With the one slot taken by a run that waits in scope, a second request gets a 503 with
+    `Retry-After` and sets up nothing; once the run ends, the slot is free again."""
+    gate = ScopeGate()
+    stub = scripted_nodes(Script())
+    nodes = EngineNodes(stub.facts, gate.checks(), stub.finalize)
+    built: list[int] = []
+
+    def counting(_settings: Settings, _meter: object) -> EngineNodes:
+        built.append(1)
+        return nodes
+
+    use_builder(one_slot_app, counting)
+    transport = httpx.ASGITransport(app=one_slot_app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        first: list[httpx.Response] = []
+        refused: httpx.Response | None = None
+
+        async def run_first() -> None:
+            first.append(await post(client))
+
+        async with anyio.create_task_group() as tasks:
+            tasks.start_soon(run_first)
+            with anyio.fail_after(10):
+                await anyio.to_thread.run_sync(gate.started.wait)
+            refused = await post(client)
+            gate.release.set()
+        assert refused is not None
+        assert refused.status_code == 503
+        assert refused.json() == {"detail": BUSY}
+        assert refused.headers["retry-after"] == str(BUSY_RETRY_SECONDS)
+        assert built == [1]  # the refused request set nothing up
+        assert outline(sse_events(first[0].text)) == FULL_RUN
+        assert (await post(client)).status_code == 200  # the slot was given back
+
+
+@pytest.mark.anyio
+async def test_a_failed_setup_gives_its_slot_back(one_slot_app: FastAPI) -> None:
+    def unconfigured(_settings: Settings, _meter: object) -> EngineNodes:
+        raise LLMConfigError("ENGINE_MODEL is not set")
+
+    transport = httpx.ASGITransport(app=one_slot_app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        use_builder(one_slot_app, unconfigured)
+        assert (await post(client)).status_code == 503
+        use_nodes(one_slot_app, scripted_nodes(Script()))
+        assert (await post(client)).status_code == 200

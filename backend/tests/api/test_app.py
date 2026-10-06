@@ -7,10 +7,12 @@ import json
 import httpx
 import pytest
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from aiact.api import create_app
 from aiact.api.openapi import OPENAPI_FILE, is_openapi_current, openapi_json
 from aiact.settings import Settings
+from tests.api.conftest import BASE_URL, api_settings
 
 ALLOWED = "http://localhost:5173"
 OTHER = "https://evil.example"
@@ -31,6 +33,46 @@ async def test_cors_allows_the_configured_origins_only(client: httpx.AsyncClient
         "/obligations?role=deployer&risk_class=minimal_risk", headers={"origin": OTHER}
     )
     assert "access-control-allow-origin" not in simple.headers
+
+
+@pytest.mark.anyio
+async def test_a_browser_can_read_retry_after(client: httpx.AsyncClient) -> None:
+    """A 429 or a busy 503 says when to try again; CORS must expose the header to the page."""
+    path = "/obligations?role=deployer&risk_class=minimal_risk"
+    responses = [await client.get(path, headers={"origin": ALLOWED}) for _ in range(121)]
+    refused = responses[-1]
+    assert refused.status_code == 429
+    assert refused.headers["access-control-allow-origin"] == ALLOWED
+    assert "retry-after" in refused.headers["access-control-expose-headers"].lower()
+
+
+@pytest.mark.anyio
+async def test_a_foreign_host_header_is_a_400(client: httpx.AsyncClient) -> None:
+    """Against DNS rebinding: only API_ALLOWED_HOSTS are answered."""
+    path = "/obligations?role=deployer&risk_class=minimal_risk"
+    assert (await client.get(path)).status_code == 200
+    assert (await client.get(path, headers={"host": "attacker.example"})).status_code == 400
+
+
+def test_the_default_allowed_hosts_are_local() -> None:
+    app = create_app(Settings(_env_file=None))  # pyright: ignore[reportCallIssue]
+    [hosts] = [m for m in app.user_middleware if m.cls is TrustedHostMiddleware]
+    assert hosts.kwargs["allowed_hosts"] == ["localhost", "127.0.0.1"]
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(("docs", "status"), [(True, 200), (False, 404)])
+async def test_the_docs_follow_the_setting(docs: bool, status: int) -> None:
+    app = create_app(api_settings(api_docs=docs))
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        for path in ("/docs", "/redoc", "/openapi.json"):
+            assert (await client.get(path)).status_code == status, path
+
+
+def test_the_export_is_the_same_with_the_docs_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("API_DOCS", "false")
+    assert is_openapi_current()
 
 
 def test_the_cors_origins_come_from_the_settings() -> None:

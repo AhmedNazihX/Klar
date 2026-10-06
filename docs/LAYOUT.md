@@ -91,9 +91,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
-│   │   └── api/                     FastAPI app (P1): app.py create_app (CORS, error handlers); classify.py `POST /classify`
-│   │                                over SSE; lookups.py provisions, obligations, documents; dependencies.py settings,
-│   │                                node builder, database, rate limits (rate_limit.py); openapi.py the schema export,
+│   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
+│   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;
+│   │                                dependencies.py settings, node builder, database, limits; rate_limit.py the rate and
+│   │                                concurrency limits; body_limit.py the 413 body cap; openapi.py the schema export,
 │   │                                `aiact api openapi`; `aiact api serve` runs it
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)

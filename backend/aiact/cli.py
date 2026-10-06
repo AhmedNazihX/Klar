@@ -718,7 +718,15 @@ def api_serve() -> None:
     from aiact.api import create_app
 
     settings = get_settings()
-    uvicorn.run(create_app(settings), host=settings.api_host, port=settings.api_port)
+    # Both proxy settings are passed, never uvicorn's defaults (which trust X-Forwarded-For
+    # from 127.0.0.1 and would let a local peer pick the rate limit's key).
+    uvicorn.run(
+        create_app(settings),
+        host=settings.api_host,
+        port=settings.api_port,
+        proxy_headers=settings.api_proxy_headers,
+        forwarded_allow_ips=settings.api_forwarded_allow_ips,
+    )
 
 
 @api_app.command("openapi")
