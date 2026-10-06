@@ -50,6 +50,10 @@ class ClassificationSection:
     empty: Texts | None = None
     provenance: Provenance = Provenance.CLASSIFICATION
 
+    def __post_init__(self) -> None:
+        if self.fill is Fill.SYSTEM_FACTS and self.empty is None:
+            raise ValueError(f"section {self.key!r} needs its line for when no facts were stated")
+
 
 SectionSpec = TemplateSection | InterviewSection | ClassificationSection
 

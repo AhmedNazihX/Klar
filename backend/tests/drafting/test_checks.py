@@ -308,3 +308,36 @@ def test_a_sentence_added_to_a_prefilled_section_fails_the_invented_content_chec
     )
     outcome = check_nothing_invented(document, worked_example_result(), WORKERS_ANSWERS)
     _failed(outcome, "'duty' holds content the result doesn't give")
+
+
+def test_a_duty_sentence_naming_another_duty_fails_the_facts_check() -> None:
+    document = edit_section(
+        _notice(),
+        "duty",
+        lambda s: changed(
+            s, paragraphs=(s.paragraphs[0], s.paragraphs[1].replace("Art. 26(7)", "Art. 26(8)"))
+        ),
+    )
+    outcome = check_facts_match(document, worked_example_result())
+    _failed(outcome, "doesn't name the duty art:26:7")
+
+
+@pytest.mark.parametrize(
+    ("template", "language", "named", "longer"),
+    [
+        ("art_26_7_workers", Language.EN, "Art. 26(7)", "Art. 26(7)(b)"),
+        ("art_26_2_oversight", Language.DE, "Art. 26 Abs. 2", "Art. 26 Abs. 21"),
+    ],
+)
+def test_a_longer_provision_does_not_name_the_duty(
+    template: str, language: Language, named: str, longer: str
+) -> None:
+    result = worked_example_result()
+    document = draft_document(TEMPLATES[template], result, {}, language)
+    document = edit_section(
+        document,
+        "duty",
+        lambda s: changed(s, paragraphs=(s.paragraphs[0], s.paragraphs[1].replace(named, longer))),
+    )
+    article = TEMPLATES[template].article
+    _failed(check_facts_match(document, result), f"doesn't name the duty {article}")

@@ -20,7 +20,13 @@ from aiact.drafting import (
     draft_document,
 )
 from aiact.drafting.models import TEMPLATE_PATTERN
-from aiact.drafting.templates import NO_STATED_FACTS, InterviewSection, TemplateSection
+from aiact.drafting.prefill import Fill
+from aiact.drafting.templates import (
+    NO_STATED_FACTS,
+    ClassificationSection,
+    InterviewSection,
+    TemplateSection,
+)
 from aiact.schemas import (
     DISCLAIMER,
     Language,
@@ -261,3 +267,8 @@ def test_every_template_is_complete_in_both_languages(template: DocumentTemplate
                 assert spec.text[language]
             if isinstance(spec, InterviewSection):
                 assert spec.question[language]
+
+
+def test_a_system_facts_section_needs_its_no_facts_line() -> None:
+    with pytest.raises(ValueError, match="no facts were stated"):
+        ClassificationSection("system", {Language.EN: "The system"}, Fill.SYSTEM_FACTS)

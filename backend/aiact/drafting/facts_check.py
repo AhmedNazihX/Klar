@@ -53,8 +53,10 @@ def _system_problems(
     key = spec.key
     stated = [fact.text for fact in result.facts if fact.evidence is EvidenceTag.STATED]
     if not stated:
-        empty = (spec.empty[language],) if spec.empty else ()
-        is_said = section.provenance is Provenance.TEMPLATE and section.paragraphs == empty
+        assert spec.empty is not None, "ClassificationSection requires it for SYSTEM_FACTS"
+        is_said = section.provenance is Provenance.TEMPLATE and section.paragraphs == (
+            spec.empty[language],
+        )
         return [] if is_said else [f"section {key!r} must say that no facts were stated"]
     if section.provenance is not Provenance.CLASSIFICATION:
         return [f"section {key!r} must hold the stated facts"]
