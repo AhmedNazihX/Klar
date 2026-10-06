@@ -347,12 +347,13 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
 
 ## Phase 3 — Week-one experiments
 
-- [ ] **X0 · Annex-matching set** · Deps: F7b · Type: mixed
+- [x] **X0 · Annex-matching set** · Deps: F7b · Type: mixed
   Output: `eval/cases/annex_match/`: 30–50 informal descriptions → expected Annex III/I points, **written from scratch** (never from Commission examples). DoD: approved by the user; 30–50 items (counted); the loader validates every file; the isolation test passes.
   Notes from merged stories: F7: add `annex_match` to `CaseSet` in `aiact/eval/cases.py` and create `eval/cases/annex_match/`; `CaseLabel.annex_point` holds one point, so allow several if needed.
   **From B13 (merged):** after adding or changing cases, run `uv run aiact evaluate isolation-embed` (a fraction of a cent) and commit `eval/isolation/embeddings.json`; the local isolation test fails when a case text has no vector (CI doesn't check this). Run `AIACT_REQUIRE_CORPUS=1 uv run pytest -q tests/test_isolation.py` before finishing: no case may repeat a retrievable row (6-gram coverage 0.5, a 30+ word run, cosine 0.9).
   **Schema fix (user, 2026-09-30; moved to F7b by the backlog review):** `ANNEX_POINT_PATTERN` in `aiact/eval/cases.py` accepts only lowercase segments, so it rejects the corpus's Annex I ids (`annex:I:A:11`, `annex:I:B:21`). Fix it here together with allowing several points in `CaseLabel.annex_point`; also fix the fixture `tests/fixtures/cases/own/ambiguous.yaml`, which uses the pre-Omnibus `annex:I:1` (machinery is now Section B point 21). B10 then backfills `annex_point` on the B5e Annex I cases (their point is in the `annex_i_point:` tag).
   **From B10a (merged):** before finishing, run `uv run aiact evaluate label-freeze --base main` (CI runs it too): any change to an approved case needs a new row in eval/LABEL_CHANGES.md naming its id; new cases need none. A bulk row ("<N> <prefix> cases …") must match its count exactly and never covers a label change.
+  **Outcome:** 48 from-scratch Annex-matching items in eval/cases/annex_match/ (27 EN / 21 DE, 24 provider / 24 deployer, all high_risk) covering all 25 Annex III points (asserted by a test) and 9 Annex I points, 8 multi-point (any one counts); labels approved 2026-10-06/07 by the orchestrator under the user's delegation; 10 items rewritten away from held-out (Pile B) scenarios, highest Pile B cosine 0.726; isolation test passes
 
 - [ ] **X1a · Embedding comparison** · Deps: C6, C8, X0, B7, V6 · Type: agent · Resource: db-schema
   Output: `backend/aiact/eval/experiments/embeddings.py` and `docs/decisions/003-embeddings.md`: RAGAS context recall and precision for Qwen3 at 1536-d, Qwen3 at 1024-d and OpenAI 3-large, on the Annex-matching and Q&A sets, with results stored in `eval_runs`.
@@ -360,6 +361,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   Notes from merged stories: Make the embedding query instruction a setting (e.g. `EMBEDDING_QUERY_INSTRUCTION`); the current default in `aiact/llm/embeddings.py` is a placeholder. Model/provider settings are still empty in the env example.
   **From C4 (merged):** only the `qwen/qwen3-embedding-8b`/1536 arm has a partial HNSW index; each other (model, dims) arm X1a embeds needs its own partial-index migration (`supabase migration new`), so X1a is schema-changing: run it with no other schema story.
   **From B7 (merged):** Q&A items load with aiact.eval.cases.load_qa_items (eval/cases/qa/*.yaml). The 9 unanswerable items are tagged unanswerable:other_law, unanswerable:national_law or unanswerable:off_topic, so the relevance cut-off can be reported per kind. qa-none-en-05 (Product Liability Directive) is a deliberate near-topic hard negative.
+  **From X0 (merged):** Tune and compare on eval/cases/annex_match (48 items, load_cases(CaseSet.ANNEX_MATCH)). annex_point is a tuple; 8 items accept several points (tag multi_point) and naming any one counts. Points 1(b), 6(a)–(e), 7(a)–(c) and 8(b) have one item each, so per-point recall on them rests on a single case. Every item is high_risk (no negatives): the set measures point matching only. The items were checked against held-out scenarios; don't add items derived from Commission examples.
 
 - [ ] **X1b · Search tuning and relevance cut-off** · Deps: X1a, B7, X0 · Type: agent
   Output: tuned search constants and the calibrated `SEARCH_MAX_DISTANCE` and `MIN_KEYWORD_IDF` defaults in settings, the exact-reference rule, recorded in decision 003 (or a record of its own). DoD: both distributions (answerable vs unanswerable) and the chosen values are recorded; the C6 and C8 tests still pass.
@@ -369,6 +371,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From P2a (merged):** A live MCP search for "AI system that screens tenants for rental flats" ranked guide-prohibited paras 178/149 and guide-high-risk-annex-iii para 384 top (similarity 0.643–0.647), with no Annex III point in the top 3: a ranking case for the calibration.
   **From E5 (merged):** own-e-14 (German, soft wording, emergency triage) got no Annex III row in a top-50 law search: a calibration case for German retrieval.
   **From B7 (merged):** Calibrate the cut-off on the 9 answerable:false items (tags unanswerable:other_law / national_law / off_topic, report per kind); qa-none-en-05 (Product Liability Directive) is the near-topic hard negative. Every answerable item's required_provision_ids exist in both consolidated files.
+  **From X0 (merged):** Same set as X1a (eval/cases/annex_match, 48 items, multi_point items accept any listed point); single-item points: 1(b), 6(a)–(e), 7(a)–(c), 8(b).
 
 - [x] **X2 · Engine model smoke test** · Deps: F3, F6, C5, C6, E2, E3, E5, E7 · Type: mixed
   Context: INIT › Engine safety net; decision 023. Output: `backend/aiact/eval/experiments/smoke.py`, which replays the merged staged nodes (E2, E3, E5, E7) with GPT-6 Luna and with Gemini 3.1 Flash-Lite on their approved own cases (B5b, B5d, B5e, about 50); `docs/decisions/004-engine-model.md`.
