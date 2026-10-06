@@ -1,0 +1,376 @@
+"""The short deployer documents (INIT > Documentation drafting), in English and German.
+
+Each template lists its required sections in order. A section is pre-filled from the result
+(`prefill.py`), filled with the user's interview answer word for word, or the template's own
+fixed wording, which states only the duty the document answers. Nothing else enters a draft.
+"""
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+from types import MappingProxyType
+
+from aiact.drafting.models import Provenance
+from aiact.drafting.prefill import Prefill, classification_and_duty, system_facts
+from aiact.schemas import Language
+
+EN, DE = Language.EN, Language.DE
+
+Texts = Mapping[Language, str]
+
+
+@dataclass(frozen=True)
+class TemplateSection:
+    """Fixed wording, the same in every draft of the template."""
+
+    key: str
+    heading: Texts
+    text: Texts
+    provenance: Provenance = Provenance.TEMPLATE
+
+
+@dataclass(frozen=True)
+class InterviewSection:
+    """Filled with the answer to `question`, exactly as given; "To fill in" until answered."""
+
+    key: str
+    heading: Texts
+    question_key: str
+    question: Texts
+    provenance: Provenance = Provenance.INTERVIEW
+
+
+@dataclass(frozen=True)
+class ClassificationSection:
+    """Pre-filled from the classification result by `prefill`."""
+
+    key: str
+    heading: Texts
+    prefill: Prefill
+    provenance: Provenance = Provenance.CLASSIFICATION
+
+
+SectionSpec = TemplateSection | InterviewSection | ClassificationSection
+
+
+@dataclass(frozen=True)
+class DocumentTemplate:
+    """A short document answering one duty (`article`), with its required sections in order."""
+
+    id: str
+    article: str
+    title: Texts
+    sections: tuple[SectionSpec, ...]
+
+    @property
+    def questions(self) -> tuple[InterviewSection, ...]:
+        """The interview questions, in the order the sections ask them."""
+        return tuple(spec for spec in self.sections if isinstance(spec, InterviewSection))
+
+
+# --- Shared sections ------------------------------------------------------------------------------
+
+
+def _system(heading: Texts) -> ClassificationSection:
+    return ClassificationSection("system", heading, system_facts)
+
+
+DUTY = ClassificationSection(
+    "duty", {EN: "Its classification", DE: "Seine Einstufung"}, classification_and_duty
+)
+TOOL = InterviewSection(
+    "tool",
+    {EN: "The tool and its supplier", DE: "Das Tool und sein Anbieter"},
+    "tool_and_supplier",
+    {
+        EN: "What is the tool called, and who supplies it?",
+        DE: "Wie heißt das Tool, und wer liefert es?",
+    },
+)
+WHY_TELLING = {EN: "Why we're telling you", DE: "Warum wir Sie informieren"}
+NOTICE = {EN: "The notice", DE: "Der Hinweis"}
+WHY_SHOWN = {EN: "Why it is shown", DE: "Warum er angezeigt wird"}
+PLACEMENT = InterviewSection(
+    "placement",
+    {EN: "Where it is shown", DE: "Wo er angezeigt wird"},
+    "placement",
+    {
+        EN: "Where and when will people see this notice?",
+        DE: "Wo und wann sehen Personen diesen Hinweis?",
+    },
+)
+
+# --- Art. 26(2): human oversight record ----------------------------------------------------------
+
+OVERSIGHT_RECORD = DocumentTemplate(
+    id="art_26_2_oversight",
+    article="art:26:2",
+    title={EN: "Human oversight record", DE: "Nachweis der menschlichen Aufsicht"},
+    sections=(
+        _system({EN: "The system", DE: "Das System"}),
+        DUTY,
+        TemplateSection(
+            "why",
+            {EN: "Why we keep this record", DE: "Warum wir diesen Nachweis führen"},
+            {
+                EN: "Under Article 26(2) of the EU AI Act, a deployer of a high-risk AI system "
+                "must assign human oversight to people who have the necessary competence, "
+                "training and authority, and give them the support they need.",
+                DE: "Nach Artikel 26 Absatz 2 der KI-Verordnung muss ein Betreiber eines "
+                "Hochrisiko-KI-Systems die menschliche Aufsicht natürlichen Personen übertragen, "
+                "die über die erforderliche Kompetenz, Ausbildung und Befugnis verfügen, und "
+                "ihnen die nötige Unterstützung geben.",
+            },
+        ),
+        InterviewSection(
+            "overseers",
+            {EN: "Who oversees the system", DE: "Wer das System beaufsichtigt"},
+            "overseers",
+            {
+                EN: "Who is assigned to oversee the system? Give names or roles.",
+                DE: "Wem ist die Aufsicht über das System übertragen? Nennen Sie Namen oder "
+                "Funktionen.",
+            },
+        ),
+        InterviewSection(
+            "competence",
+            {EN: "Their competence and training", DE: "Kompetenz und Ausbildung"},
+            "competence",
+            {
+                EN: "What competence and training do they have for this task?",
+                DE: "Welche Kompetenz und Ausbildung haben sie für diese Aufgabe?",
+            },
+        ),
+        InterviewSection(
+            "authority",
+            {EN: "Their authority and support", DE: "Befugnisse und Unterstützung"},
+            "authority",
+            {
+                EN: "What authority and support do they have, for example to stop the system or "
+                "override its output?",
+                DE: "Welche Befugnisse und welche Unterstützung haben sie, zum Beispiel um das "
+                "System anzuhalten oder seine Ergebnisse zu übergehen?",
+            },
+        ),
+    ),
+)
+
+# --- Art. 26(7): notice to workers' representatives ----------------------------------------------
+
+WORKERS_NOTICE = DocumentTemplate(
+    id="art_26_7_workers",
+    article="art:26:7",
+    title={EN: "Notice to workers' representatives", DE: "Information der Arbeitnehmervertreter"},
+    sections=(
+        _system({EN: "What we plan to use", DE: "Was wir einsetzen wollen"}),
+        DUTY,
+        TemplateSection(
+            "why",
+            WHY_TELLING,
+            {
+                EN: "Under Article 26(7) of the EU AI Act, an employer must inform workers' "
+                "representatives and the workers affected before it puts a high-risk AI system "
+                "into service or uses it at the workplace.",
+                DE: "Nach Artikel 26 Absatz 7 der KI-Verordnung muss ein Arbeitgeber die "
+                "Arbeitnehmervertreter und die betroffenen Arbeitnehmer informieren, bevor er ein "
+                "Hochrisiko-KI-System am Arbeitsplatz in Betrieb nimmt oder verwendet.",
+            },
+        ),
+        InterviewSection(
+            "recipients",
+            {EN: "Who this notice is for", DE: "An wen sich diese Information richtet"},
+            "recipients",
+            {
+                EN: "Is there a works council? Who receives this notice?",
+                DE: "Gibt es einen Betriebsrat? Wer erhält diese Information?",
+            },
+        ),
+        TOOL,
+        InterviewSection(
+            "start",
+            {EN: "When we start", DE: "Wann wir beginnen"},
+            "start_date",
+            {EN: "When do you plan to start?", DE: "Wann wollen Sie beginnen?"},
+        ),
+        InterviewSection(
+            "reviewer",
+            {EN: "Who reviews the tool's output", DE: "Wer die Ergebnisse des Tools prüft"},
+            "reviewer",
+            {EN: "Who reviews the tool's output?", DE: "Wer prüft die Ergebnisse des Tools?"},
+        ),
+    ),
+)
+
+# --- Art. 26(11): notice to the people affected --------------------------------------------------
+
+AFFECTED_NOTICE = DocumentTemplate(
+    id="art_26_11_affected",
+    article="art:26:11",
+    title={EN: "Notice to the people affected", DE: "Information der betroffenen Personen"},
+    sections=(
+        _system({EN: "What we use", DE: "Was wir einsetzen"}),
+        DUTY,
+        TemplateSection(
+            "why",
+            WHY_TELLING,
+            {
+                EN: "Under Article 26(11) of the EU AI Act, a deployer of a high-risk AI system "
+                "listed in Annex III that makes decisions, or helps make decisions, about people "
+                "must inform those people that the system is used.",
+                DE: "Nach Artikel 26 Absatz 11 der KI-Verordnung muss ein Betreiber eines in "
+                "Anhang III genannten Hochrisiko-KI-Systems, das Entscheidungen über natürliche "
+                "Personen trifft oder dabei unterstützt, diese Personen darüber informieren, dass "
+                "das System bei ihnen verwendet wird.",
+            },
+        ),
+        TOOL,
+        InterviewSection(
+            "decisions",
+            {EN: "What it is used for", DE: "Wofür es verwendet wird"},
+            "decisions",
+            {
+                EN: "Which decisions about people does the tool make or help make?",
+                DE: "Welche Entscheidungen über Personen trifft das Tool oder bereitet es vor?",
+            },
+        ),
+        InterviewSection(
+            "contact",
+            {EN: "Who to contact", DE: "An wen Sie sich wenden können"},
+            "contact",
+            {
+                EN: "Who can people contact with questions about the tool?",
+                DE: "An wen können sich Personen mit Fragen zum Tool wenden?",
+            },
+        ),
+    ),
+)
+
+# --- Art. 50: disclosure texts -------------------------------------------------------------------
+
+INTERACTION_DISCLOSURE = DocumentTemplate(
+    id="art_50_1_disclosure",
+    article="art:50:1",
+    title={
+        EN: "Disclosure: interacting with an AI system",
+        DE: "Hinweis: Interaktion mit einem KI-System",
+    },
+    sections=(
+        DUTY,
+        TemplateSection(
+            "notice",
+            NOTICE,
+            {
+                EN: "You are interacting with an AI system.",
+                DE: "Sie interagieren mit einem KI-System.",
+            },
+        ),
+        TemplateSection(
+            "why",
+            WHY_SHOWN,
+            {
+                EN: "Article 50(1) of the EU AI Act requires that people are informed when they "
+                "interact directly with an AI system, unless this is obvious from the "
+                "circumstances.",
+                DE: "Nach Artikel 50 Absatz 1 der KI-Verordnung müssen Personen informiert "
+                "werden, wenn sie direkt mit einem KI-System interagieren, es sei denn, dies ist "
+                "aus den Umständen offensichtlich.",
+            },
+        ),
+        PLACEMENT,
+    ),
+)
+
+EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
+    id="art_50_3_disclosure",
+    article="art:50:3",
+    title={
+        EN: "Disclosure: emotion recognition or biometric categorisation",
+        DE: "Hinweis: Emotionserkennung oder biometrische Kategorisierung",
+    },
+    sections=(
+        DUTY,
+        TemplateSection(
+            "notice",
+            NOTICE,
+            {
+                EN: "An AI system for emotion recognition or biometric categorisation is in "
+                "operation here.",
+                DE: "Hier ist ein KI-System zur Emotionserkennung oder biometrischen "
+                "Kategorisierung in Betrieb.",
+            },
+        ),
+        TemplateSection(
+            "why",
+            WHY_SHOWN,
+            {
+                EN: "Under Article 50(3) of the EU AI Act, a deployer of an emotion recognition "
+                "or biometric categorisation system must inform the people exposed to it that it "
+                "is operating, and process their personal data in line with the GDPR.",
+                DE: "Nach Artikel 50 Absatz 3 der KI-Verordnung muss ein Betreiber eines "
+                "Emotionserkennungssystems oder eines Systems zur biometrischen Kategorisierung "
+                "die betroffenen Personen über den Betrieb des Systems informieren und ihre "
+                "personenbezogenen Daten im Einklang mit der DSGVO verarbeiten.",
+            },
+        ),
+        PLACEMENT,
+        InterviewSection(
+            "contact",
+            {EN: "Who to contact about your data", DE: "Ansprechpartner für Ihre Daten"},
+            "contact",
+            {
+                EN: "Who can people contact about how their personal data is processed?",
+                DE: "An wen können sich Personen zur Verarbeitung ihrer personenbezogenen Daten "
+                "wenden?",
+            },
+        ),
+    ),
+)
+
+GENERATED_CONTENT_DISCLOSURE = DocumentTemplate(
+    id="art_50_4_disclosure",
+    article="art:50:4",
+    title={
+        EN: "Disclosure: AI-generated or manipulated content",
+        DE: "Hinweis: KI-erzeugte oder manipulierte Inhalte",
+    },
+    sections=(
+        DUTY,
+        TemplateSection(
+            "notice",
+            NOTICE,
+            {
+                EN: "This content has been artificially generated or manipulated.",
+                DE: "Dieser Inhalt wurde künstlich erzeugt oder manipuliert.",
+            },
+        ),
+        TemplateSection(
+            "why",
+            WHY_SHOWN,
+            {
+                EN: "Under Article 50(4) of the EU AI Act, a deployer must disclose that "
+                "deep-fake image, audio or video content, or text published to inform the public "
+                "on matters of public interest, has been artificially generated or manipulated.",
+                DE: "Nach Artikel 50 Absatz 4 der KI-Verordnung muss ein Betreiber offenlegen, "
+                "dass Deepfake-Bild-, Ton- oder Videoinhalte oder Texte, die veröffentlicht "
+                "werden, um die Öffentlichkeit über Angelegenheiten von öffentlichem Interesse zu "
+                "informieren, künstlich erzeugt oder manipuliert wurden.",
+            },
+        ),
+        PLACEMENT,
+    ),
+)
+
+DEPLOYER_TEMPLATES: tuple[DocumentTemplate, ...] = (
+    OVERSIGHT_RECORD,
+    WORKERS_NOTICE,
+    AFFECTED_NOTICE,
+    INTERACTION_DISCLOSURE,
+    EMOTION_BIOMETRIC_DISCLOSURE,
+    GENERATED_CONTENT_DISCLOSURE,
+)
+"""Every short deployer document, in the order the documents list shows them. Art. 50(2)
+(machine-readable marking) is a provider's technical duty with no text to show, so it has none."""
+
+TEMPLATES: Mapping[str, DocumentTemplate] = MappingProxyType(
+    {template.id: template for template in DEPLOYER_TEMPLATES}
+)
+"""The templates by id, as a draft's `template` names them."""
