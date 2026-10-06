@@ -15,7 +15,7 @@ label:
   role: provider
 label_citation: ["art:6:3:b", "annex:III:3:b", "art:6:4"]
 source_example_id: hr-ex-093
-accepted_bases: ["art_6_3_filter:b"]
+accepted_bases: ["art_6_3_filter"]
 label_status: settled
 notes: >-
   Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: proofreading an exam the teacher has already written,

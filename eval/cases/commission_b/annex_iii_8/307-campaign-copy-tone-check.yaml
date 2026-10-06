@@ -29,7 +29,9 @@ notes: >-
   (the Commission's leaning): it only improves the result of a previously completed human activity,
   so it could be exempted under Art. 6(3)(b): not high-risk. Reading 2: it is intended to influence
   the outcome of an election by affecting voters' choices, so it falls within point 8(b) and the
-  exemption does not hold: high-risk. Working assumption: high_risk (the stricter reading). Written
+  exemption does not hold: high-risk. Working assumption: high_risk (the stricter reading). The
+  `verdict:not_high` tag and the flip variant follow the Commission's not-high leaning, carried
+  from the source row; the label applies the stricter reading. Written
   without the flip feature (generating new content or targeting voters). Role: deployer of a bought
   add-on.
 tags:
