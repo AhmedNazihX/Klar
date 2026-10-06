@@ -51,13 +51,15 @@
   question: >-
     Meine Bank hat meinen Kreditantrag mithilfe eines KI-Scorings abgelehnt. Kann ich eine
     Erklärung verlangen?
-  required_provision_ids: ["art:86:1", "annex:III:5:b"]
+  required_provision_ids: ["art:86:1", "art:86:3", "annex:III:5:b"]
   reference_answer: >-
-    Ja. Kreditwürdigkeitsprüfung und Kreditscoring fallen unter Anhang III Nr. 5 Buchst. b. Wer
-    von einer Entscheidung betroffen ist, die auf der Ausgabe eines solchen Hochrisiko-Systems
-    beruht und ihn erheblich beeinträchtigt, hat nach Art. 86 Abs. 1 das Recht, vom Betreiber eine
+    Grundsätzlich ja. Kreditwürdigkeitsprüfung und Kreditscoring fallen unter Anhang III Nr. 5
+    Buchst. b. Wer von einer Entscheidung betroffen ist, die der Betreiber auf Grundlage der
+    Ausgabe eines solchen Hochrisiko-Systems getroffen hat und die rechtliche Wirkungen hat oder
+    ihn in ähnlicher Weise erheblich beeinträchtigt, kann nach Art. 86 Abs. 1 vom Betreiber eine
     klare und aussagekräftige Erläuterung zur Rolle des KI-Systems und zu den wichtigsten
-    Elementen der Entscheidung zu erhalten.
+    Elementen der Entscheidung verlangen. Nach Art. 86 Abs. 3 gilt dieses Recht aber nur, soweit
+    es nicht bereits anderweitig im Unionsrecht vorgesehen ist, etwa in der DSGVO.
   tags: ["topic:rights"]
 - id: qa-de-06-fristen-hochrisiko
   language: de
@@ -94,10 +96,12 @@
   question: >-
     Wir nehmen einen allgemeinen KI-Assistenten und setzen ihn gezielt zur Auswahl von
     Bewerbern ein. Werden wir dadurch zum Anbieter?
-  required_provision_ids: ["art:25:1:c"]
+  required_provision_ids: ["art:25:1:c", "annex:III:4:a", "art:6:2"]
   reference_answer: >-
-    Ja. Wer die Zweckbestimmung eines nicht als hochriskant eingestuften KI-Systems, auch eines
+    In der Regel ja. Wer die Zweckbestimmung eines nicht als hochriskant eingestuften KI-Systems, auch eines
     KI-Systems mit allgemeinem Verwendungszweck, so ändert, dass es zu einem Hochrisiko-System
     wird, gilt nach Art. 25 Abs. 1 Buchst. c als Anbieter und unterliegt den Pflichten des
-    Art. 16. Die Bewerberauswahl fällt unter Anhang III Nr. 4 Buchst. a.
+    Art. 16. Die Bewerberauswahl fällt unter Anhang III Nr. 4 Buchst. a und ist damit nach Art. 6
+    Abs. 2 hochriskant, sofern nicht ausnahmsweise Art. 6 Abs. 3 greift (nie bei Profiling der
+    Bewerber).
   tags: ["topic:roles"]

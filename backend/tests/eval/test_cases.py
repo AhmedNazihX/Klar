@@ -512,6 +512,21 @@ def test_every_committed_case_file_validates() -> None:
     assert all(isinstance(item, QAItem) for item in load_qa_items())
 
 
+QA_ANSWERABLE_RANGE = range(20, 31)
+QA_UNANSWERABLE_RANGE = range(8, 11)
+
+
+def test_the_committed_qa_set_has_its_counts_in_both_languages() -> None:
+    """B7's DoD: 20-30 answerable and 8-10 unanswerable questions, each kind in EN and DE."""
+    items = load_qa_items()
+    answerable = [item for item in items if item.answerable]
+    unanswerable = [item for item in items if not item.answerable]
+    assert len(answerable) in QA_ANSWERABLE_RANGE
+    assert len(unanswerable) in QA_UNANSWERABLE_RANGE
+    for kind in (answerable, unanswerable):
+        assert {item.language for item in kind} == {Language.EN, Language.DE}
+
+
 def test_no_committed_case_derives_from_a_pile_a_example() -> None:
     """B6's rule over every committed case: Pile A stays retrievable, so no case may come from it.
     Worktrees without the split (the Engine lane's sparse checkout) skip, as test_isolation does."""

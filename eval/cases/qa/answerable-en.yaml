@@ -40,12 +40,15 @@
   language: en
   question: >-
     Are apps that create fake nude images of real people banned under the AI Act, and from when?
-  required_provision_ids: ["art:5:1:ba", "art:113:a"]
+  required_provision_ids: ["art:5:1:ba", "art:5:1a:a", "art:113:a"]
   reference_answer: >-
     Yes. Art. 5(1)(ba), added by the Digital Omnibus, prohibits AI systems that generate or
     manipulate realistic images, video or audio showing an identifiable person's intimate parts or
-    that person in sexually explicit activity without their explicit consent. Under Art. 113(a)
-    this prohibition applies from 2 December 2026, later than the other prohibitions.
+    that person in sexually explicit activity without their explicit consent. Under Art. 5(1a)(a),
+    placing such a system on the market is prohibited where that generation is its intended
+    purpose, as it is for these apps (or a foreseeable outcome the system doesn't adequately
+    prevent). Under Art. 113(a) this prohibition applies from 2 December 2026, later than the
+    other prohibitions.
   tags: ["topic:prohibited", "topic:dates"]
 - id: qa-en-05-annex-iii-exemption
   language: en
@@ -108,7 +111,8 @@
 - id: qa-en-10-chatbot-disclosure
   language: en
   question: >-
-    Do we have to tell website visitors that our support chat is a bot?
+    We built a support chatbot for our website. Do we have to tell visitors that they are
+    talking to a bot?
   required_provision_ids: ["art:50:1"]
   reference_answer: >-
     Yes, as the provider. Art. 50(1) requires systems that interact directly with people to be
@@ -206,11 +210,13 @@
 - id: qa-en-19-incident-reporting
   language: en
   question: >-
-    Our high-risk system caused a serious incident. Who has to report it, and to whom?
-  required_provision_ids: ["art:73:1"]
+    We develop and sell a hospital triage tool that is classed as high-risk. Its advice led to a
+    patient being seriously harmed in Spain. Do we have to tell anyone?
+  required_provision_ids: ["art:73:1", "art:3:49"]
   reference_answer: >-
-    The provider must report the serious incident to the market surveillance authorities of the
-    Member States where it occurred (Art. 73(1)).
+    Yes. Serious harm to a person's health is a serious incident (Art. 3(49)), and as the provider you must
+    report it to the market surveillance authorities of the Member State where it occurred, here
+    Spain (Art. 73(1)).
   tags: ["topic:obligations"]
 - id: qa-en-20-research-only
   language: en
