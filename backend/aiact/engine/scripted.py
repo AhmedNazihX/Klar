@@ -20,7 +20,7 @@ from aiact.schemas import (
     StepName,
     StepResult,
 )
-from aiact.schemas.result import derived_status
+from aiact.schemas.result import derived_status, refused_steps
 
 STOP_CLASS: Mapping[StepName, RiskClass] = {
     StepName.SCOPE: RiskClass.OUT_OF_SCOPE,
@@ -76,6 +76,7 @@ def _finalize(state: EngineState, script: Script) -> ClassificationResult:
         steps=steps,
         risk_class=risk_class,
         status=derived_status(steps),
+        not_assessed=refused_steps(steps),
         role=script.role if has_role_step else None,
         transparency_duties=()
         if risk_class is RiskClass.OUT_OF_SCOPE

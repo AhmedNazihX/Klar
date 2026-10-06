@@ -319,6 +319,33 @@ def test_a_broken_reply_is_an_error_that_does_not_quote_the_description(content:
     assert WORKED_EXAMPLE not in str(caught.value)
 
 
+def _filtered_extractor(content: str) -> FactExtractor:
+    """The node over a reply the provider's content filter stopped (decision 029)."""
+    reply = AIMessage(content=content, response_metadata={"finish_reason": "content_filter"})
+    chat = GenericFakeChatModel(messages=iter([reply]))
+    return FactExtractor(_settings(engine_model=LUNA, engine_provider=LUNA_PROVIDER), chat=chat)
+
+
+@pytest.mark.parametrize(
+    ("language", "start"),
+    [(Language.EN, "The model provider's content filter"), (Language.DE, "Der Inhaltsfilter")],
+)
+def test_a_provider_refusal_gives_no_facts_and_asks_for_a_person_to_review(
+    language: Language, start: str
+) -> None:
+    refusal = "I'm sorry, but I cannot assist with that request."
+    outcome = _filtered_extractor(refusal)(engine_input(WORKED_EXAMPLE, language))
+    assert outcome.facts == ()
+    assert [q.id for q in outcome.follow_up_questions] == ["facts_person_review"]
+    assert outcome.follow_up_questions[0].text.startswith(start)
+
+
+def test_a_filtered_reply_with_usable_facts_is_used() -> None:
+    usable = FactsAnswer(facts=(stated("Scores applications", "scores them"),), questions=())
+    outcome = _filtered_extractor(usable.model_dump_json())(engine_input(WORKED_EXAMPLE))
+    assert [fact.text for fact in outcome.facts] == ["Scores applications"]
+
+
 def test_the_extractor_is_pinned_to_the_engine_provider() -> None:
     extractor = FactExtractor(_settings(engine_model=LUNA, engine_provider=LUNA_PROVIDER))
     assert extractor._model.openrouter_provider == {  # pyright: ignore[reportAttributeAccessIssue]

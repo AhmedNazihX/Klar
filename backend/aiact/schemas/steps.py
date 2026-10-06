@@ -24,6 +24,10 @@ class StepName(StrEnum):
 STEP_ORDER: tuple[StepName, ...] = tuple(StepName)
 """The engine's check order; a result lists its steps in this order."""
 
+PROVIDER_REFUSAL = "provider_refusal"
+"""The `error` of a step the model provider's content filter refused (decision 029): the check
+was not assessed, and a person must review it."""
+
 
 class StepResult(ContractModel):
     """The outcome of one check. An uncertain status names what is missing or open."""

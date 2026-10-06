@@ -9,20 +9,15 @@ parts that both name `art:50:4`.
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Self
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from aiact.engine.nodes import transparency_texts as texts
-from aiact.engine.nodes.key_facts import Answer, Reading, Settled, every, need
+from aiact.engine.nodes.key_facts import MAX_TEXT_CHARS as MAX_TEXT_CHARS  # re-exported (E6)
+from aiact.engine.nodes.key_facts import Answer, Reading, Settled, ShortTexts, every, need
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.schemas import EvidenceTag, OpenQuestion
 from aiact.schemas.base import ContractModel
-
-MAX_TEXT_CHARS = 600
-"""Bounds every text the model writes into the step (a `fact`, an open question and its
-readings): a sentence or two is all the prompt asks for, so a longer one is a broken output, and
-prose a description smuggles in can't fill the decision."""
 
 # --- The model's answer -------------------------------------------------------------------------
 
@@ -36,7 +31,7 @@ class MarketTiming(StrEnum):
     UNKNOWN = "unknown"
 
 
-class DutyAnswer(ContractModel):
+class DutyAnswer(ShortTexts):
     """One duty's answer, as `key_facts.facts_used` reads it: `covered` (the system is the kind
     the paragraph names) and `exception` (one of the paragraph's exceptions takes it out), then
     whether the law settles that reading. Its `fact` sums up the reading, so it always counts as
@@ -57,16 +52,9 @@ class DutyAnswer(ContractModel):
     def is_known(self) -> bool:
         return True
 
-    @model_validator(mode="after")
-    def _texts_are_short(self) -> Self:
+    def written(self) -> tuple[str | None, ...]:
         question = self.open_question
-        texts_written = (
-            self.fact,
-            *((question.question, *question.readings) if question else ()),
-        )
-        if any(len(text) > MAX_TEXT_CHARS for text in texts_written):
-            raise ValueError(f"a fact, question or reading is longer than {MAX_TEXT_CHARS} chars")
-        return self
+        return (self.fact, *((question.question, *question.readings) if question else ()))
 
 
 class TransparencyAnswer(ContractModel):

@@ -14,7 +14,7 @@ from aiact.schemas.enums import LawVersion, RiskClass, Role, Status
 from aiact.schemas.evidence import Fact
 from aiact.schemas.obligations import Obligation
 from aiact.schemas.questions import FollowUpQuestion
-from aiact.schemas.steps import STEP_ORDER, StepName, StepResult
+from aiact.schemas.steps import PROVIDER_REFUSAL, STEP_ORDER, StepName, StepResult
 
 SCOPE_ONLY = STEP_ORDER[: STEP_ORDER.index(StepName.SCOPE) + 1]
 UP_TO_ART_5 = STEP_ORDER[: STEP_ORDER.index(StepName.PROHIBITED) + 1]
@@ -43,6 +43,11 @@ def derived_status(steps: Iterable[StepResult]) -> Status:
     return Status.DECIDED
 
 
+def refused_steps(steps: Iterable[StepResult]) -> tuple[StepName, ...]:
+    """The checks the model provider refused to assess (decision 029), in the steps' order."""
+    return tuple(step.step for step in steps if step.error == PROVIDER_REFUSAL)
+
+
 class ClassificationResult(ContractModel):
     """The engine's answer. When `status` is uncertain, `risk_class` is the stricter reading,
     kept as the labelled working assumption."""
@@ -53,6 +58,11 @@ class ClassificationResult(ContractModel):
     status: Status = Field(description="Derived from the steps; see `derived_status`.")
     role: Role | None = Field(
         default=None, description="Set exactly when the role_obligations step ran."
+    )
+    also_role: Role | None = Field(
+        default=None,
+        description="A role the company keeps next to `role`, whose duties are listed too: a "
+        'deployer that becomes the provider still uses the system (shown as "You also use it").',
     )
     role_switch_reason: str | None = Field(
         default=None, description="Why the Art. 25 switch to provider applies, when it does."
@@ -66,6 +76,17 @@ class ClassificationResult(ContractModel):
     law_version: LawVersion
     as_of: date
     disclaimer: str = Field(min_length=1)
+    legal_review: str | None = Field(
+        default=None,
+        description="The recommendation to have the result reviewed by a lawyer, in the result's "
+        "language: set for high-risk, prohibited and legally ambiguous results (INIT > Ethical "
+        "considerations).",
+    )
+    not_assessed: tuple[StepName, ...] = Field(
+        default=(),
+        description="The checks the model provider refused to assess (decision 029), in check "
+        "order; each needs a person's review, and its stricter reading is assumed.",
+    )
     follow_up_questions: tuple[FollowUpQuestion, ...] = ()
 
     def _step(self, name: StepName) -> StepResult | None:
@@ -107,8 +128,19 @@ class ClassificationResult(ContractModel):
         has_role_step = self._step(StepName.ROLE_OBLIGATIONS) is not None
         if has_role_step != (self.role is not None):
             raise ValueError("role is set exactly when the role_obligations step is present")
-        if self.role is None and self.role_switch_reason is not None:
-            raise ValueError("role_switch_reason needs a role")
+        if self.role is None and (self.role_switch_reason or self.also_role):
+            raise ValueError("role_switch_reason and also_role need a role")
+        if self.also_role is not None and self.also_role is self.role:
+            raise ValueError("also_role must differ from role")
+        return self
+
+    @model_validator(mode="after")
+    def _not_assessed_names_the_refused_steps(self) -> Self:
+        refused = refused_steps(self.steps)
+        if self.not_assessed != refused:
+            raise ValueError(
+                f"not_assessed must name exactly the refused steps: {[s.value for s in refused]}"
+            )
         return self
 
     @model_validator(mode="after")

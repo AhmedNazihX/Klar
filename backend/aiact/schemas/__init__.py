@@ -16,12 +16,13 @@ from aiact.schemas.evidence import Citation, Fact, OpenQuestion, SourceSpan
 from aiact.schemas.obligations import Obligation
 from aiact.schemas.questions import FollowUpQuestion
 from aiact.schemas.result import ClassificationResult
-from aiact.schemas.steps import STEP_ORDER, StepName, StepResult
+from aiact.schemas.steps import PROVIDER_REFUSAL, STEP_ORDER, StepName, StepResult
 
 __all__ = [
     "DISCLAIMER",
     "DISCLAIMER_DE",
     "DISCLAIMER_EN",
+    "PROVIDER_REFUSAL",
     "STEP_ORDER",
     "Citation",
     "ClassificationResult",

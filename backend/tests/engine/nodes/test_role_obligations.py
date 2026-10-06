@@ -20,6 +20,8 @@ from aiact.engine.nodes.role_obligations import (
     HighRiskRoleAnswer,
     KeyFact,
     LegacyAnswer,
+    Modification,
+    ModificationFact,
     ProvisionTextError,
     RoleAnswer,
     RoleFact,
@@ -34,18 +36,20 @@ from aiact.engine.nodes.role_obligations import (
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
-from aiact.eval.experiments.matchers import role_check_state, role_matches, runs_role_check
+from aiact.eval.experiments.matchers import role_check_state, role_matches, runs_role_check, tag
 from aiact.schemas import (
     DISCLAIMER,
     STEP_ORDER,
     ClassificationResult,
     EvidenceTag,
     Fact,
+    FollowUpQuestion,
     HighRiskRoute,
     Language,
     LawVersion,
     LegacyStatus,
     Obligation,
+    OpenQuestion,
     RiskClass,
     Role,
     SourceSpan,
@@ -94,7 +98,7 @@ def role_answer(
     risk_class: RiskClass = RiskClass.HIGH_RISK,
     route: HighRiskRoute | None = HighRiskRoute.ANNEX_III,
     legacy: LegacyAnswer | None = None,
-    **key_facts: KeyFact,
+    **key_facts: KeyFact | ModificationFact,
 ) -> RoleAnswer:
     """An answer: the given role, every key fact "no (assumed)" unless overridden, and the
     conditions by their text, turned into the ids the prompt would list. With `legacy`, the
@@ -112,13 +116,31 @@ def role_answer(
         ),
         "builds_on_gpai": key_fact(),
         "own_brand": key_fact(),
-        "substantial_modification": key_fact(),
         "changed_purpose": key_fact(),
         "conditions": given,
+        **key_facts,
+        "substantial_modification": modification_fact(key_facts.get("substantial_modification")),
     }
     if legacy is not None:
-        return HighRiskRoleAnswer.model_validate({**values, "legacy": legacy, **key_facts})
-    return RoleAnswer.model_validate({**values, **key_facts})
+        return HighRiskRoleAnswer.model_validate({**values, "legacy": legacy})
+    return RoleAnswer.model_validate(values)
+
+
+def modification_fact(given: KeyFact | ModificationFact | None = None) -> ModificationFact:
+    """The Art. 25(1)(b) answer: "no (assumed)" by default; a plain key fact keeps its values."""
+    if isinstance(given, ModificationFact):
+        return given
+    return ModificationFact.model_validate((given or key_fact()).model_dump())
+
+
+def contested(evidence: EvidenceTag = EvidenceTag.STATED) -> ModificationFact:
+    """A known change whose substantial-modification reading the law leaves open (own-d-12)."""
+    return ModificationFact(
+        answer=Modification.CONTESTED,
+        evidence=evidence,
+        fact="The company added an input the vendor's documentation neither allows nor forbids",
+        fact_numbers=(),
+    )
 
 
 def state(
@@ -439,12 +461,241 @@ def test_a_yes_switch_wins_over_an_unsettled_one() -> None:
     assert "25(1)(c)" in (finding(outcome).role_switch_reason or "")
 
 
+# --- Every Art. 25(1) switch that applies (user, 2026-10-06, own-d-13) --------------------------
+
+
+def switch_citations(outcome: CheckOutcome) -> list[str]:
+    return [c.provision_id for c in outcome.step.citations if c.provision_id.startswith("art:25:")]
+
+
+def test_every_switch_that_applies_is_reported_with_its_citation() -> None:
+    answer = role_answer(
+        own_brand=key_fact(Answer.YES, EvidenceTag.STATED),
+        substantial_modification=key_fact(Answer.YES, EvidenceTag.STATED),
+    )
+    outcome = to_outcome(answer, state())
+    reason = finding(outcome).role_switch_reason or ""
+    assert "Art. 25(1)(a)" in reason
+    assert "Art. 25(1)(b)" in reason
+    assert switch_citations(outcome) == ["art:25:1:a", "art:25:1:b"]
+    assert outcome.step.status is Status.DECIDED
+    assert reason in outcome.step.decision
+
+
+def test_a_changed_purpose_rules_out_a_substantial_modification() -> None:
+    """(c) says the new purpose made the system high-risk, so the original wasn't, and (b)
+    needs a system that already was: the model's answer to both reports (c) alone."""
+    answer = role_answer(
+        substantial_modification=key_fact(Answer.YES, EvidenceTag.INFERRED),
+        changed_purpose=key_fact(Answer.YES, EvidenceTag.INFERRED),
+    )
+    outcome = to_outcome(answer, state())
+    assert switch_citations(outcome) == ["art:25:1:c"]
+    assert "25(1)(b)" not in (finding(outcome).role_switch_reason or "")
+    assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
+    assert "Answer yes" in [f.text for f in outcome.step.facts_used]  # (c)'s fact is shown
+
+
+def test_own_brand_joins_a_changed_purpose() -> None:
+    answer = role_answer(
+        own_brand=key_fact(Answer.YES, EvidenceTag.STATED),
+        changed_purpose=key_fact(Answer.YES, EvidenceTag.STATED),
+    )
+    assert switch_citations(to_outcome(answer, state())) == ["art:25:1:a", "art:25:1:c"]
+
+
+def test_a_ruled_out_modification_is_neither_relied_on_nor_asked() -> None:
+    answer = role_answer(
+        substantial_modification=key_fact(Answer.UNKNOWN), changed_purpose=key_fact(Answer.YES)
+    )
+    outcome = to_outcome(answer, state())
+    assert outcome.step.status is Status.DECIDED
+    assert "substantial_modification" not in [q.id for q in outcome.follow_up_questions]
+
+
+# --- A contested substantial modification (user, 2026-10-06, own-d-12) --------------------------
+
+
+def test_a_contested_modification_is_ambiguous_with_provider_assumed() -> None:
+    """The description says what changed and what the documentation foresees: whether that is a
+    substantial modification is a question of law, not a missing fact."""
+    outcome = to_outcome(role_answer(substantial_modification=contested()), state())
+    step = outcome.step
+    assert step.status is Status.LEGALLY_AMBIGUOUS
+    assert step.missing_fact is None
+    assert outcome.follow_up_questions == ()  # nothing a user could answer
+    assert step.open_question is not None
+    assert "Art. 3(23)" in step.open_question.question
+    assert step.open_question.readings[0].startswith("Provider")  # the stricter reading first
+    assert step.open_question.readings[1].startswith("Deployer")
+    assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
+    assert finding(outcome).role_switch_reason is None  # assumed, not a settled switch
+    assert [c.provision_id for c in step.citations] == ["art:3:4", "art:25:1:b", "art:3:23"]
+    assert "Working assumption: provider, keeping the deployer duties" in step.decision
+    assert {"art:16:a", "art:26:1"} <= set(articles(outcome))
+
+
+def test_a_contested_modification_with_an_open_switch_still_asks_it() -> None:
+    answer = role_answer(substantial_modification=contested(), own_brand=key_fact(Answer.UNKNOWN))
+    outcome = to_outcome(answer, state())
+    assert outcome.step.status is Status.LEGALLY_AMBIGUOUS
+    assert [q.id for q in outcome.follow_up_questions] == ["own_brand"]
+    assert "Still to confirm: Do you put your own name" in outcome.step.decision
+
+
+@pytest.mark.parametrize(("other", "point"), [("own_brand", "a"), ("changed_purpose", "c")])
+def test_a_switch_that_applies_settles_a_contested_modification(other: str, point: str) -> None:
+    answer = role_answer(substantial_modification=contested()).model_copy(
+        update={other: key_fact(Answer.YES, EvidenceTag.STATED)}
+    )
+    outcome = to_outcome(answer, state())
+    assert outcome.step.status is Status.DECIDED
+    assert switch_citations(outcome) == [f"art:25:1:{point}"]
+
+
+def test_a_contested_modification_below_high_risk_changes_nothing() -> None:
+    answer = role_answer(
+        risk_class=RiskClass.MINIMAL_RISK, route=None, substantial_modification=contested()
+    )
+    outcome = to_outcome(answer, state(RiskClass.MINIMAL_RISK, None))
+    assert (finding(outcome).role, outcome.step.status) == (Role.DEPLOYER, Status.DECIDED)
+
+
+def test_the_contested_modification_reads_in_german() -> None:
+    outcome = to_outcome(
+        role_answer(substantial_modification=contested()), state(language=Language.DE)
+    )
+    question = outcome.step.open_question
+    assert question is not None
+    assert "Art. 3 Nr. 23" in question.question
+    assert question.readings[1].startswith("Betreiber")
+    assert "Arbeitsannahme: Anbieter, mit den Pflichten als Betreiber" in outcome.step.decision
+
+
+def test_only_the_modification_answer_can_be_contested() -> None:
+    schema = node.ROLE_RESPONSE_FORMAT["json_schema"]
+    assert isinstance(schema, dict)
+    definitions = schema["schema"]["$defs"]
+    assert "contested" in definitions["Modification"]["enum"]
+    assert "contested" not in definitions["Answer"]["enum"]
+    properties = schema["schema"]["properties"]
+    assert properties["substantial_modification"]["$ref"].endswith("/ModificationFact")
+    assert properties["own_brand"]["$ref"].endswith("/KeyFact")
+
+
+# --- Art. 2(2): an Annex I Section B product (user, 2026-09-30) ----------------------------------
+
+
+def section_b_state(status: Status = Status.DECIDED, point: str = "annex:I:B:21") -> EngineState:
+    """High-risk on an Annex I point after a high-risk step of `status` (an uncertain one names
+    its gap)."""
+    is_missing = status is Status.NEEDS_MORE_INFORMATION
+    high_risk = StepResult(
+        step=StepName.HIGH_RISK,
+        decision="High-risk under Art. 6(1).",
+        status=status,
+        missing_fact=FollowUpQuestion(id="third_party_assessment", text="A notified body?")
+        if is_missing
+        else None,
+        open_question=OpenQuestion(question="Open?", readings=("Yes.", "No."))
+        if status is Status.LEGALLY_AMBIGUOUS
+        else None,
+    )
+    built = state(route=HighRiskRoute.ANNEX_I)
+    return {**built, "annex_point": point, "steps": (high_risk,)}
+
+
+def test_a_decided_section_b_product_lists_no_duties_and_cites_art_2_2() -> None:
+    answer = role_answer(Role.PROVIDER, legacy=legacy_answer(placed_before=Answer.YES))
+    outcome = to_outcome(answer, section_b_state())
+    assert finding(outcome).obligations == ()
+    cited = [c.provision_id for c in outcome.step.citations]
+    assert "art:2:2" in cited
+    assert "art:111:2" not in cited  # no duties, so nothing for Art. 111(2) to mark
+    assert "No AI Act duties listed" in outcome.step.decision
+    assert outcome.follow_up_questions == ()
+
+
+@pytest.mark.parametrize("status", [Status.NEEDS_MORE_INFORMATION, Status.LEGALLY_AMBIGUOUS])
+def test_an_assumed_section_b_product_keeps_its_duties_and_names_art_2_2_as_possible(
+    status: Status,
+) -> None:
+    """Orchestrator's ruling (E8 review round 1): the cut is applied only to a decided
+    high-risk step; an assumed one keeps every duty that may apply, the stricter reading."""
+    answer = role_answer(Role.PROVIDER, legacy=legacy_answer())
+    outcome = to_outcome(answer, section_b_state(status))
+    assert {"art:4:1", "art:16:a"} <= set(articles(outcome))
+    assert "If the system is high-risk as a product" in outcome.step.decision
+    assert "No AI Act duties listed" not in outcome.step.decision
+    assert "art:2:2" in [c.provision_id for c in outcome.step.citations]
+
+
+def test_a_section_a_product_keeps_its_duties() -> None:
+    outcome = to_outcome(
+        role_answer(Role.PROVIDER, legacy=legacy_answer()), section_b_state(point="annex:I:A:11")
+    )
+    assert "art:16:a" in articles(outcome)
+    assert "art:2:2" not in [c.provision_id for c in outcome.step.citations]
+    assert "Section B" not in outcome.step.decision
+
+
+def test_a_decided_section_b_request_asks_no_conditions_or_launch_facts() -> None:
+    """The answers would be discarded, so they aren't asked: no conditions, no Art. 111(2)
+    section, the plain answer schema."""
+    decided, assumed = section_b_state(), section_b_state(Status.NEEDS_MORE_INFORMATION)
+    assert node.asked_conditions(decided) == ()
+    assert node.answer_model(decided) is RoleAnswer
+    human = str(node.role_messages(decided, ())[-1].content)
+    assert "Conditions:\n-" in human
+    assert "Launch and design" not in human
+    assert node.asked_conditions(assumed)
+    assert node.answer_model(assumed) is HighRiskRoleAnswer
+    assert "Launch and design" in str(node.role_messages(assumed, ())[-1].content)
+
+
+def test_the_node_reads_a_plain_answer_for_a_decided_section_b_product() -> None:
+    """Any other high-risk answer without the Art. 111(2) facts is a broken output."""
+    check, _ = _fake_check(role_answer(Role.PROVIDER).model_dump_json())
+    outcome = check(section_b_state())
+    assert (finding(outcome).role, finding(outcome).obligations) == (Role.PROVIDER, ())
+
+
 def test_an_unknown_role_asks_for_it() -> None:
     outcome = to_outcome(role_answer(None), state())
     assert outcome.step.missing_fact is not None
     assert outcome.step.missing_fact.id == "operator_role"
     assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
     assert {"art:16:a", "art:26:1"} <= set(articles(outcome))
+
+
+def test_a_repurposed_gpai_system_reports_its_switch_next_to_the_gpai_rule() -> None:
+    """own-d-03's recorded answer: GPAI "yes" and (c) "yes". The switch that applies is reported
+    with its citation (user, 2026-10-06: every switch), and the model provider is still flagged."""
+    answer = role_answer(
+        builds_on_gpai=key_fact(Answer.YES, EvidenceTag.INFERRED),
+        changed_purpose=key_fact(Answer.YES, EvidenceTag.STATED),
+    )
+    outcome = to_outcome(answer, state())
+    assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
+    assert "Art. 25(1)(c)" in (finding(outcome).role_switch_reason or "")
+    assert switch_citations(outcome) == ["art:25:1:c"]
+    assert {"art:3:3", "art:3:68"} <= {c.provision_id for c in outcome.step.citations}
+    assert "art:53:1:b" in articles(outcome)
+    assert outcome.step.status is Status.DECIDED
+
+
+@pytest.mark.parametrize("risk_class", [RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK])
+def test_a_gpai_system_below_high_risk_reports_no_switch(risk_class: RiskClass) -> None:
+    answer = role_answer(
+        risk_class=risk_class,
+        route=None,
+        builds_on_gpai=key_fact(Answer.YES, EvidenceTag.STATED),
+        changed_purpose=key_fact(Answer.YES, EvidenceTag.STATED),
+    )
+    duties = ("art:50:1",) if risk_class is RiskClass.LIMITED_RISK else ()
+    outcome = to_outcome(answer, state(risk_class, None, transparency_duties=duties))
+    assert finding(outcome).role_switch_reason is None
+    assert switch_citations(outcome) == []
 
 
 @pytest.mark.parametrize("base", [Role.DEPLOYER, Role.PROVIDER])
@@ -775,6 +1026,9 @@ def test_findings_are_only_accepted_from_their_own_check() -> None:
     high_risk = StepResult(step=StepName.HIGH_RISK, decision="Exempt under Art. 6(3)")
     with pytest.raises(ValidationError, match="not high-risk"):
         CheckOutcome(step=high_risk, high_risk_route=HighRiskRoute.ANNEX_III, annex_iii_exempt=True)
+    # E5's open minor (E8): an Annex point needs the route it rests on.
+    with pytest.raises(ValidationError, match="annex_point is set only with"):
+        CheckOutcome(step=high_risk, annex_iii_exempt=True, annex_point="annex:III:4:a")
 
 
 def _settings() -> Settings:
@@ -1242,6 +1496,56 @@ def test_a_broken_answer_raises_without_quoting_the_description(content: str) ->
     assert CV_TOOL not in str(caught.value)
 
 
+def test_the_output_cap_leaves_room_for_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
+    """E7's recordings used up to 2206 of 3000 output tokens; the contested answer adds more."""
+    asked: dict[str, object] = {}
+
+    def spy(**kwargs: object) -> GenericFakeChatModel:
+        asked.update(kwargs)
+        return GenericFakeChatModel(messages=iter([]))
+
+    monkeypatch.setattr(node, "engine_chat_model", spy)
+    RoleObligationsCheck(_settings())
+    assert asked["max_tokens"] == 4000
+
+
+REFUSAL_TEXT = "I'm sorry, but I cannot assist with that request."
+
+
+def _filtered_check(content: str = REFUSAL_TEXT) -> RoleObligationsCheck:
+    """The node over a reply the provider's content filter stopped (decision 029)."""
+    reply = AIMessage(content=content, response_metadata={"finish_reason": "content_filter"})
+    return RoleObligationsCheck(_settings(), chat=GenericFakeChatModel(messages=iter([reply])))
+
+
+def test_a_provider_refusal_assumes_provider_and_deployer_for_a_person_to_review() -> None:
+    outcome = _filtered_check()(state())
+    step = outcome.step
+    assert step.status is Status.NEEDS_MORE_INFORMATION
+    assert step.error == "provider_refusal"
+    assert step.missing_fact is not None
+    assert step.missing_fact.id == "role_person_review"
+    assert outcome.follow_up_questions == (step.missing_fact,)
+    assert step.decision.startswith("The model provider's content filter blocked")
+    assert [c.provision_id for c in step.citations] == ["art:3:3", "art:3:4"]
+    assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
+    assert {"art:16:a", "art:26:1", "art:26:7"} <= set(articles(outcome))  # open conditions kept
+
+
+def test_a_role_refusal_is_reported_in_german() -> None:
+    outcome = _filtered_check()(state(language=Language.DE))
+    assert outcome.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
+    assert outcome.step.missing_fact is not None
+    assert outcome.step.missing_fact.text.startswith("Bitte lassen Sie")
+
+
+def test_a_filtered_role_reply_with_a_usable_answer_is_used() -> None:
+    usable = role_answer(legacy=legacy_answer()).model_dump_json()
+    outcome = _filtered_check(usable)(state())
+    assert (outcome.step.status, outcome.step.error) == (Status.DECIDED, None)
+    assert finding(outcome).role is Role.DEPLOYER
+
+
 @pytest.fixture
 def luna_settings(openrouter_settings: Settings) -> Settings:
     return openrouter_settings.model_copy(
@@ -1255,6 +1559,10 @@ REBRANDER = (
 )
 
 
+RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_role_obligations.py --record-mode=once"
+"""Records the role replays; a missing recording fails its replay, never a skip."""
+
+
 @pytest.mark.vcr
 def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> None:
     outcome = RoleObligationsCheck(luna_settings)(state(description=REBRANDER))
@@ -1263,7 +1571,7 @@ def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> Non
     assert "art:16:a" in articles(outcome)
 
 
-# --- B5d replay: the own role cases, once they and their recordings exist ----------------------
+# --- B5d replay: the own role cases -------------------------------------------------------------
 
 ROLE_CASES_DIR = CASES_DIR / CaseSet.OWN.value / "d"
 
@@ -1276,16 +1584,6 @@ def _role_cases() -> list[BenchmarkCase]:
 
 B5D_CASES = _role_cases()
 
-KNOWN_STATUS_GAPS: dict[str, tuple[Status, str]] = {
-    "own-d-12-lender-extra-input": (
-        Status.NEEDS_MORE_INFORMATION,
-        "node asks about the substantial modification where the label is legally_ambiguous; "
-        "the user chose a role-only replay on 2026-09-29, and the status gap is logged on E8/V5",
-    ),
-}
-"""Recorded status gaps: the exact status the node returns instead of the label's. A listed
-case that returns anything else, including the label's status, fails so the entry is removed."""
-
 
 @pytest.mark.vcr
 @pytest.mark.parametrize(
@@ -1293,32 +1591,23 @@ case that returns anything else, including the label's status, fails so the entr
     B5D_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="B5d cases not merged yet"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
-def test_b5d_case_replay(
-    case: BenchmarkCase,
-    luna_settings: Settings,
-    record_mode: str,
-    vcr_cassette_dir: str,
-    default_cassette_name: str,
-) -> None:
-    """Each B5d case's expected role, from the class its label gives. Replays the recording
-    `recordings/engine/nodes/test_role_obligations/test_b5d_case_replay[<id>].yaml`; record with
-    `uv run pytest tests/engine/nodes/test_role_obligations.py -k b5d --record-mode=once`."""
+def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
+    """Each B5d case's expected role, from the class its label gives, and its status when the
+    label is legally ambiguous (own-d-12, closed by E8's contested answer); a case tagged with
+    Art. 25(1) switches cites exactly those points (every switch that applies is reported, user,
+    2026-10-06), and one tagged `also_role:` keeps that role. Replays the recording
+    `recordings/engine/nodes/test_role_obligations/test_b5d_case_replay[<id>].yaml`; a missing
+    one fails. Record with `RECORD_COMMAND`."""
     label = case.label
     assert isinstance(label, CaseLabel)
     if not runs_role_check(case):
         pytest.skip("the role check doesn't run for this case, or its label names no role")
-    cassette = Path(vcr_cassette_dir) / f"{default_cassette_name}.yaml"
-    if record_mode == "none" and not cassette.exists():
-        pytest.skip(
-            f"B5d case {case.id} has no recording yet; record it with "
-            "`uv run pytest tests/engine/nodes/test_role_obligations.py -k b5d --record-mode=once`"
-        )
     outcome = RoleObligationsCheck(luna_settings)(role_check_state(case, ROLE_AS_OF))
     assert finding(outcome).role is label.role
-    gap = KNOWN_STATUS_GAPS.get(case.id)
-    if gap is not None:
-        gap_status, reason = gap
-        if outcome.step.status is not gap_status:
-            pytest.fail(f"{case.id} no longer shows its recorded status gap; update the list")
-        pytest.xfail(reason)
+    switches = {f"art:25:1:{s[-1]}" for s in tag(case, "role_switch") if s != "none"}
+    if switches:
+        cited_switches = {c.provision_id for c in outcome.step.citations}
+        assert {c for c in cited_switches if c.startswith("art:25:1:")} == switches
+    for also in tag(case, "also_role"):
+        assert finding(outcome).also_role is Role(also)
     assert role_matches(outcome, case), (finding(outcome).role, outcome.step.status)

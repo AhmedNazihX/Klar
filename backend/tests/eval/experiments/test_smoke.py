@@ -843,7 +843,7 @@ def test_a_check_that_breaks_marks_the_run_interrupted() -> None:
 def test_the_worst_case_is_one_call_at_the_full_output_cap() -> None:
     prompt = round(2194 * smoke.PROMPT_MARGIN)
     assert smoke.worst_case_cost(NodeName.ROLE, LUNA) == pytest.approx(
-        (prompt * 0.11 + 3000 * 0.55) / 1e6
+        (prompt * 0.11 + 4000 * 0.55) / 1e6
     )
 
 

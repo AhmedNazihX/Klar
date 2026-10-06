@@ -25,27 +25,37 @@ interactions:
       assistant) as it is, is\n  \"no\".\n- own_brand (Art. 25(1)(a)): the company
       puts its own name or trademark on a system that someone\n  else already placed
       on the market or put into service.\n- substantial_modification (Art. 25(1)(b)):
-      the company makes a substantial modification to a\n  system already on the market
-      or in service (changes beyond what the provider foresaw, for\n  example retraining
-      it for new tasks or changing how it decides), not mere configuration.\n- changed_purpose
-      (Art. 25(1)(c)): the company uses a system, including a general-purpose AI\n  system,
-      for a purpose its provider did not intend, and that new purpose is what makes
-      it\n  high-risk (for example using a general chat assistant to rank job applicants).\n-
+      the company makes a substantial modification to a\n  system that was already
+      high-risk for the purpose its provider intended and is already on the\n  market
+      or in service: a change the provider''s initial conformity assessment didn''t
+      foresee or\n  plan, that affects whether the system meets the high-risk requirements
+      or changes its intended\n  purpose (Art. 3(23)), for example retraining it for
+      new tasks or changing how it decides. Mere\n  configuration, and changes the
+      provider''s documentation foresees, are \"no\". Answer \"contested\"\n  when
+      the description says what the company changed and what the provider''s documentation
+      says\n  about such a change, but the Act and its definition don''t settle whether
+      that change is\n  substantial: that is a question of law, not a missing fact.
+      Answer \"unknown\" only when the\n  description hints at a change but doesn''t
+      say what was changed or what the provider''s\n  documentation says about it.\n-
+      changed_purpose (Art. 25(1)(c)): the company uses a system, including a general-purpose
+      AI\n  system, that was not high-risk for the purpose its provider intended,
+      for a purpose the provider\n  did not intend, and that new purpose is what makes
+      it high-risk (for example using a general\n  chat assistant to rank job applicants).\n-
       conditions: one answer per listed condition, by its id: does the condition hold
       for this system\n  and this company?\n\nFor every key fact:\n- answer: \"yes\",
-      \"no\" or \"unknown\".\n- evidence: \"stated\" when the description says it,
-      \"inferred\" when it follows from what the\n  description says, \"assumed\"
-      when the description is silent and you take the usual default.\n- fact: the
-      answer as one short fact, in the language asked for (for example \"The company
-      bought\n  the tool and did not change it\").\n- fact_numbers: the numbers of
-      the listed facts the answer rests on; empty when none do.\n\nWhen the description
-      is silent about a switch and nothing hints at it, answer \"no\" with evidence\n\"assumed\":
-      a company that buys a tool is normally a deployer that did not rebrand, modify
-      or\nrepurpose it. Answer \"unknown\" only when the description hints at the
-      fact but doesn''t settle it\n(for example \"we adapted the vendor''s model\"
-      without saying how). For a condition, answer\n\"unknown\" when the description
-      doesn''t settle it.\n","role":"system"},{"content":"Language for facts: en\n\nRisk
-      class so far: high_risk (annex_iii route)\n\nEarlier checks:\n-\n\nConditions:\nc1:
+      \"no\" or \"unknown\" (substantial_modification may also be \"contested\").\n-
+      evidence: \"stated\" when the description says it, \"inferred\" when it follows
+      from what the\n  description says, \"assumed\" when the description is silent
+      and you take the usual default.\n- fact: the answer as one short fact, in the
+      language asked for (for example \"The company bought\n  the tool and did not
+      change it\").\n- fact_numbers: the numbers of the listed facts the answer rests
+      on; empty when none do.\n\nWhen the description is silent about a switch and
+      nothing hints at it, answer \"no\" with evidence\n\"assumed\": a company that
+      buys a tool is normally a deployer that did not rebrand, modify or\nrepurpose
+      it. Answer \"unknown\" only when the description hints at the fact but doesn''t
+      settle it\n(for example \"we adapted the vendor''s model\" without saying how).
+      For a condition, answer\n\"unknown\" when the description doesn''t settle it.\n","role":"system"},{"content":"Language
+      for facts: en\n\nRisk class so far: high_risk (annex_iii route)\n\nEarlier checks:\n-\n\nConditions:\nc1:
       The provider is established outside the Union.\nc2: The system is listed in
       Annex III point 1, 6 or 7 and is used in law enforcement, migration, asylum
       or border control management.\nc3: You control the input data.\nc4: You are
@@ -87,16 +97,21 @@ interactions:
       report unless the teacher overrides it. The product keeps the Californian company''s
       name and logo, and we translate the manuals and handle invoicing and support.
       The Californian company has no office in Europe. We also publish printed school
-      atlases.","role":"user"}],"max_tokens":3000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"role_answer","schema":{"$defs":{"Answer":{"enum":["yes","no","unknown"],"title":"Answer","type":"string"},"ConditionAnswer":{"additionalProperties":false,"properties":{"id":{"title":"Id","type":"string"},"answer":{"$ref":"#/$defs/Answer"}},"required":["id","answer"],"title":"ConditionAnswer","type":"object"},"EvidenceTag":{"description":"Where
+      atlases.","role":"user"}],"max_tokens":4000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"role_answer","schema":{"$defs":{"Answer":{"enum":["yes","no","unknown"],"title":"Answer","type":"string"},"ConditionAnswer":{"additionalProperties":false,"properties":{"id":{"title":"Id","type":"string"},"answer":{"$ref":"#/$defs/Answer"}},"required":["id","answer"],"title":"ConditionAnswer","type":"object"},"EvidenceTag":{"description":"Where
       a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"KeyFact":{"additionalProperties":false,"description":"One
       key-fact answer. Enum fields carry no description: strict structured output
       rejects\nkeywords next to a `$ref`; the prompt explains every field instead.","properties":{"answer":{"$ref":"#/$defs/Answer"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
       Numbers","type":"array"}},"required":["answer","evidence","fact","fact_numbers"],"title":"KeyFact","type":"object"},"LegacyAnswer":{"additionalProperties":false,"description":"The
-      Art. 111(2) key facts of a high-risk system.","properties":{"placed_before":{"$ref":"#/$defs/KeyFact"},"significant_design_change":{"$ref":"#/$defs/KeyFact"},"for_public_authority":{"$ref":"#/$defs/KeyFact"}},"required":["placed_before","significant_design_change","for_public_authority"],"title":"LegacyAnswer","type":"object"},"Role":{"description":"The
+      Art. 111(2) key facts of a high-risk system.","properties":{"placed_before":{"$ref":"#/$defs/KeyFact"},"significant_design_change":{"$ref":"#/$defs/KeyFact"},"for_public_authority":{"$ref":"#/$defs/KeyFact"}},"required":["placed_before","significant_design_change","for_public_authority"],"title":"LegacyAnswer","type":"object"},"Modification":{"description":"The
+      Art. 25(1)(b) answer; `contested` means the facts are known but the law leaves
+      open\nwhether the change is a substantial modification.","enum":["yes","no","unknown","contested"],"title":"Modification","type":"string"},"ModificationFact":{"additionalProperties":false,"description":"The
+      Art. 25(1)(b) key fact. Enum fields carry no description: strict structured
+      output\nrejects keywords next to a `$ref`; the prompt explains every field instead.","properties":{"answer":{"$ref":"#/$defs/Modification"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
+      Numbers","type":"array"}},"required":["answer","evidence","fact","fact_numbers"],"title":"ModificationFact","type":"object"},"Role":{"description":"The
       operator role the obligations follow from (Art. 3, 16, 23-26).","enum":["provider","deployer","importer","distributor"],"title":"Role","type":"string"},"RoleFact":{"additionalProperties":false,"description":"The
       company''s own role before any switch; None when the description doesn''t say.","properties":{"role":{"anyOf":[{"$ref":"#/$defs/Role"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
       Numbers","type":"array"}},"required":["role","evidence","fact","fact_numbers"],"title":"RoleFact","type":"object"}},"additionalProperties":false,"description":"The
-      answer for a high-risk system: the role facts and the Art. 111(2) facts.","properties":{"role":{"$ref":"#/$defs/RoleFact"},"builds_on_gpai":{"$ref":"#/$defs/KeyFact"},"own_brand":{"$ref":"#/$defs/KeyFact"},"substantial_modification":{"$ref":"#/$defs/KeyFact"},"changed_purpose":{"$ref":"#/$defs/KeyFact"},"conditions":{"items":{"$ref":"#/$defs/ConditionAnswer"},"title":"Conditions","type":"array"},"legacy":{"$ref":"#/$defs/LegacyAnswer"}},"required":["role","builds_on_gpai","own_brand","substantial_modification","changed_purpose","conditions","legacy"],"title":"HighRiskRoleAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+      answer for a high-risk system: the role facts and the Art. 111(2) facts.","properties":{"role":{"$ref":"#/$defs/RoleFact"},"builds_on_gpai":{"$ref":"#/$defs/KeyFact"},"own_brand":{"$ref":"#/$defs/KeyFact"},"substantial_modification":{"$ref":"#/$defs/ModificationFact"},"changed_purpose":{"$ref":"#/$defs/KeyFact"},"conditions":{"items":{"$ref":"#/$defs/ConditionAnswer"},"title":"Conditions","type":"array"},"legacy":{"$ref":"#/$defs/LegacyAnswer"}},"required":["role","builds_on_gpai","own_brand","substantial_modification","changed_purpose","conditions","legacy"],"title":"HighRiskRoleAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
     headers:
       content-type:
       - application/json
@@ -104,47 +119,49 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1790852472-z30T1C8VqEbiMtprXUTG", "object": "chat.completion",
-        "created": 1790852472, "model": "openai/gpt-6-luna", "provider": "Azure",
+      string: '{"id": "gen-1791292624-uPu2WOqKcHAWBo5M2KS2", "object": "chat.completion",
+        "created": 1791292624, "model": "openai/gpt-6-luna", "provider": "Azure",
         "system_fingerprint": null, "service_tier": "default", "choices": [{"index":
         0, "logprobs": null, "finish_reason": "stop", "native_finish_reason": "completed",
         "message": {"role": "assistant", "content": "{\n  \"role\": {\n    \"role\":
         \"importer\",\n    \"evidence\": \"inferred\",\n    \"fact\": \"The Vienna
-        publisher brings the Californian company''s branded software to the EU market.\",\n    \"fact_numbers\":
+        company brings a system from a provider established outside the EU onto the
+        EU market under the Californian company''s name.\",\n    \"fact_numbers\":
         []\n  },\n  \"builds_on_gpai\": {\n    \"answer\": \"no\",\n    \"evidence\":
-        \"assumed\",\n    \"fact\": \"There is no indication that the publisher builds
-        its own AI system on top of a general-purpose AI model.\",\n    \"fact_numbers\":
+        \"assumed\",\n    \"fact\": \"The description does not indicate that the company
+        builds its own AI system on top of a general-purpose AI model.\",\n    \"fact_numbers\":
         []\n  },\n  \"own_brand\": {\n    \"answer\": \"no\",\n    \"evidence\": \"stated\",\n    \"fact\":
         \"The software keeps the Californian company''s name and logo.\",\n    \"fact_numbers\":
         []\n  },\n  \"substantial_modification\": {\n    \"answer\": \"no\",\n    \"evidence\":
-        \"inferred\",\n    \"fact\": \"The publisher translates manuals and handles
-        invoicing and support, with no indication it changes the software.\",\n    \"fact_numbers\":
-        []\n  },\n  \"changed_purpose\": {\n    \"answer\": \"no\",\n    \"evidence\":
-        \"inferred\",\n    \"fact\": \"The software is used to mark student essays,
-        its stated purpose.\",\n    \"fact_numbers\": []\n  },\n  \"conditions\":
+        \"assumed\",\n    \"fact\": \"The description does not indicate that the company
+        modifies the software.\",\n    \"fact_numbers\": []\n  },\n  \"changed_purpose\":
+        {\n    \"answer\": \"no\",\n    \"evidence\": \"assumed\",\n    \"fact\":
+        \"The description does not indicate that the company uses the system for a
+        purpose its provider did not intend.\",\n    \"fact_numbers\": []\n  },\n  \"conditions\":
         [\n    {\n      \"id\": \"c1\",\n      \"answer\": \"yes\"\n    },\n    {\n      \"id\":
         \"c2\",\n      \"answer\": \"no\"\n    },\n    {\n      \"id\": \"c3\",\n      \"answer\":
-        \"no\"\n    },\n    {\n      \"id\": \"c4\",\n      \"answer\": \"no\"\n    },\n    {\n      \"id\":
+        \"unknown\"\n    },\n    {\n      \"id\": \"c4\",\n      \"answer\": \"no\"\n    },\n    {\n      \"id\":
         \"c5\",\n      \"answer\": \"no\"\n    },\n    {\n      \"id\": \"c6\",\n      \"answer\":
         \"unknown\"\n    },\n    {\n      \"id\": \"c7\",\n      \"answer\": \"no\"\n    },\n    {\n      \"id\":
         \"c8\",\n      \"answer\": \"yes\"\n    },\n    {\n      \"id\": \"c9\",\n      \"answer\":
         \"no\"\n    },\n    {\n      \"id\": \"c10\",\n      \"answer\": \"yes\"\n    }\n  ],\n  \"legacy\":
         {\n    \"placed_before\": {\n      \"answer\": \"unknown\",\n      \"evidence\":
-        \"stated\",\n      \"fact\": \"The publisher has signed a deal to bring the
-        software to EU schools, but whether the system is already on the market or
-        in use is not stated.\",\n      \"fact_numbers\": []\n    },\n    \"significant_design_change\":
+        \"stated\",\n      \"fact\": \"The description says the company has signed
+        a deal to bring the software to schools, but does not establish whether it
+        is already on the market or in use.\",\n      \"fact_numbers\": []\n    },\n    \"significant_design_change\":
         {\n      \"answer\": \"unknown\",\n      \"evidence\": \"stated\",\n      \"fact\":
-        \"No significant design or intended-purpose changes on or after 2 December
-        2027 are described.\",\n      \"fact_numbers\": []\n    },\n    \"for_public_authority\":
-        {\n      \"answer\": \"unknown\",\n      \"evidence\": \"stated\",\n      \"fact\":
-        \"The software is intended for secondary schools, but the description does
-        not say whether public authorities are meant to use it.\",\n      \"fact_numbers\":
-        []\n    }\n  }\n}", "refusal": null}}], "usage": {"prompt_tokens": 2141, "completion_tokens":
-        2206, "total_tokens": 4347, "cost": 0.001331011, "is_byok": false, "prompt_tokens_details":
-        {"cached_tokens": 1396, "cache_write_tokens": 742, "audio_tokens": 0, "video_tokens":
-        0}, "cost_details": {"upstream_inference_cost": 0.001331011, "upstream_inference_prompt_cost":
-        0.000117711, "upstream_inference_completions_cost": 0.0012133}, "completion_tokens_details":
-        {"reasoning_tokens": 1549, "image_tokens": 0, "audio_tokens": 0}}}'
+        \"The description does not say whether a significant design or intended-purpose
+        change is planned or foreseen for on or after 2 December 2027.\",\n      \"fact_numbers\":
+        []\n    },\n    \"for_public_authority\": {\n      \"answer\": \"unknown\",\n      \"evidence\":
+        \"stated\",\n      \"fact\": \"The software is intended for secondary schools,
+        but the description does not say whether public authorities are meant to use
+        it.\",\n      \"fact_numbers\": []\n    }\n  }\n}", "refusal": null}}], "usage":
+        {"prompt_tokens": 2488, "completion_tokens": 1712, "total_tokens": 4200, "cost":
+        0.001063128, "is_byok": false, "prompt_tokens_details": {"cached_tokens":
+        1743, "cache_write_tokens": 742, "audio_tokens": 0, "video_tokens": 0}, "cost_details":
+        {"upstream_inference_cost": 0.001063128, "upstream_inference_prompt_cost":
+        0.000121528, "upstream_inference_completions_cost": 0.0009416}, "completion_tokens_details":
+        {"reasoning_tokens": 1034, "image_tokens": 0, "audio_tokens": 0}}}'
     headers:
       content-type:
       - application/json

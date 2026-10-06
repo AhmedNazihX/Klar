@@ -72,6 +72,9 @@ class CheckOutcome(ContractModel):
     - `role` (role_obligations).
     `follow_up_questions` may come from any check: every question it wants asked, which may
     include its step's `missing_fact`; finalize collects them and de-duplicates by id.
+    `asked_facts` names the assumed facts of the step's `facts_used` that one of those questions
+    already asks the user to confirm (e.g. high-risk's assumed public-authority user for Annex
+    III 6 and 7), so finalize adds no second confirm question for them.
     """
 
     step: StepResult
@@ -82,6 +85,14 @@ class CheckOutcome(ContractModel):
     transparency_duties: tuple[str, ...] = ()
     role: RoleFinding | None = None
     follow_up_questions: tuple[FollowUpQuestion, ...] = ()
+    asked_facts: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _asked_facts_are_the_steps(self) -> Self:
+        used = {fact.text for fact in self.step.facts_used}
+        if not set(self.asked_facts) <= used:
+            raise ValueError("asked_facts must name facts of the step's facts_used")
+        return self
 
     @model_validator(mode="after")
     def _only_stopping_steps_match(self) -> Self:
@@ -103,6 +114,8 @@ class CheckOutcome(ContractModel):
                 raise ValueError(f"only the {owner.value} check sets {name}")
         if self.annex_iii_exempt and self.high_risk_route is not None:
             raise ValueError("an Art. 6(3)-exempt system is not high-risk")
+        if self.annex_point is not None and self.high_risk_route is None:
+            raise ValueError("annex_point is set only with the high_risk_route it rests on")
         return self
 
 
@@ -123,6 +136,7 @@ class EngineState(EngineInput, total=False):
 
     facts: tuple[Fact, ...]
     follow_up_questions: Annotated[tuple[FollowUpQuestion, ...], operator.add]
+    asked_facts: Annotated[tuple[str, ...], operator.add]
     steps: Annotated[tuple[StepResult, ...], operator.add]
     matches: Annotated[tuple[StepName, ...], operator.add]
     high_risk_route: HighRiskRoute

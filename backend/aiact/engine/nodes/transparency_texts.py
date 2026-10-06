@@ -123,15 +123,11 @@ PERSON_REVIEW = _question(
     "Menschen biometrisch Kategorien zu oder erzeugt es Deepfakes (Art. 50)?",
 )
 REFUSAL: Mapping[Language, str] = {
-    EN: "The model provider's content filter blocked this description, so it could not be "
-    "assessed automatically. Every transparency duty of Art. 50(1) to (4) is assumed until a "
-    "person has reviewed it.",
-    DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher konnte sie "
-    "nicht automatisch geprüft werden. Bis ein Mensch sie geprüft hat, werden alle "
-    "Transparenzpflichten nach Art. 50 Abs. 1 bis 4 angenommen.",
+    EN: "Every transparency duty of Art. 50(1) to (4) is assumed until a person has reviewed it.",
+    DE: "Bis ein Mensch sie geprüft hat, werden alle Transparenzpflichten nach Art. 50 Abs. 1 bis "
+    "4 angenommen.",
 }
-REFUSAL_ERROR = "provider_refusal"
-"""The step's error code for a refusal."""
+"""The refusal step's assumption, after the shared first sentence (`common.BLOCKED`)."""
 
 # --- Naming and decision sentences --------------------------------------------------------------
 

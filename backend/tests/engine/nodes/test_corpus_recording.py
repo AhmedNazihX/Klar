@@ -115,6 +115,12 @@ def _case_ids(category: str) -> set[str]:
         ("test_high_risk", "test_replay_annex_i_case", "e", {"test_replay_worked_example"}),
         ("test_prohibited", "test_b5c_case_replay", "c", set()),
         ("test_transparency", "test_b5a_case_replay", "a", set()),
+        (
+            "test_role_obligations",
+            "test_b5d_case_replay",
+            "d",
+            {"test_recorded_rebrander_becomes_the_provider"},
+        ),
     ],
 )
 def test_every_recorded_replay_case_has_its_recording(

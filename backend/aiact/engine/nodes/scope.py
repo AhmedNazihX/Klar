@@ -22,7 +22,9 @@ fixed key-fact questions; the Act's rules are applied here, in code:
   with in scope as the working assumption. Every unknown fact becomes a follow-up question.
 
 `matched` is True only for a decided out-of-scope finding: an uncertain scope question keeps the
-run going (decision 010), and its working assumption is in scope, the stricter reading.
+run going (decision 010), and its working assumption is in scope, the stricter reading. A reply
+the provider's content filter refused (decision 029) is not assessed: in scope is assumed until
+a person reviews the description, and the step cites the law the model was given.
 
 Guideline searches pass `max_distance=None` (a signal, not a filter), never `include_held_out`,
 and pass the caller's `exclude_source_example_ids` through. A German search falls back to
@@ -48,6 +50,7 @@ from aiact.engine.nodes.common import (
     lookup_for,
     named_passages,
     provision_citation,
+    refused_check,
 )
 from aiact.engine.nodes.key_facts import Answer, CitedFact, KeyFact, facts_used
 from aiact.engine.nodes.scope_texts import (
@@ -58,14 +61,21 @@ from aiact.engine.nodes.scope_texts import (
     OPEN_QUESTION,
     OPEN_SOURCE,
     OPEN_SOURCE_EXCEPTION,
+    PERSON_REVIEW,
     PRE_MARKET_DEVELOPMENT,
     READINGS,
+    REFUSAL,
     TEXTS,
     ScopeQuestion,
 )
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import engine_chat_model
-from aiact.llm.structured import describe_validation_error, json_schema_format
+from aiact.llm.structured import (
+    ProviderRefusalError,
+    describe_validation_error,
+    json_schema_format,
+    parse_reply,
+)
 from aiact.retrieval.provisions import Provision, get_provision
 from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
 from aiact.schemas import (
@@ -414,6 +424,20 @@ def to_outcome(
     return CheckOutcome(step=step, matched=settled.is_out_of_scope, follow_up_questions=questions)
 
 
+def refusal_outcome(state: EngineState, law: Sequence[Provision]) -> CheckOutcome:
+    """The step for a reply the provider's content filter refused (decision 029): not assessed,
+    in scope assumed until a person reviews it, citing the law the model was given. The review
+    question is a missing fact, so the run goes on."""
+    language = state["language"]
+    return refused_check(
+        StepName.SCOPE,
+        language,
+        REFUSAL[language],
+        tuple(provision_citation(provision) for provision in law),
+        _question(PERSON_REVIEW, language),
+    )
+
+
 # --- The model call -----------------------------------------------------------------------------
 
 
@@ -463,7 +487,8 @@ class ScopeCheck:
         self._library = library or CorpusLibrary()
 
     def __call__(self, state: EngineState) -> CheckOutcome:
-        """Raises `ScopeOutputError` when the reply doesn't fit `ScopeAnswer`, and
+        """A reply the provider's content filter refused gives `refusal_outcome`. Raises
+        `ScopeOutputError` when any other reply doesn't fit `ScopeAnswer`, and
         `ProvisionNotFoundError` when the corpus lacks a provision the step reads or cites."""
         lookup = lookup_for(state)
         law = tuple(self._library.provision(pid, lookup) for pid in LAW_IN_PROMPT)
@@ -473,7 +498,9 @@ class ScopeCheck:
             scope_messages(state, law, guidance), response_format=SCOPE_RESPONSE_FORMAT
         )
         try:
-            answer = ScopeAnswer.model_validate_json(reply.text)
+            answer = parse_reply(reply, ScopeAnswer)
+        except ProviderRefusalError:
+            return refusal_outcome(state, law)
         except ValidationError as exc:
             message = f"scope answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise ScopeOutputError(message) from exc

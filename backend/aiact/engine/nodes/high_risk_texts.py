@@ -119,6 +119,32 @@ AUTHORITY_ASSUMED: Mapping[Language, str] = {
 }
 """The fact assumed for an Annex III 6 or 7 use when the description doesn't name the user."""
 
+# --- A provider refusal (decision 029) -----------------------------------------------------------
+
+PERSON_REVIEW = KeyQuestion(
+    id="high_risk_person_review",
+    article="art:6",
+    question={
+        EN: "Please have a person review the description: is the system used for a purpose "
+        "listed in Annex III, or is it a product, or a safety component of a product, covered by "
+        "the EU law listed in Annex I (Art. 6)?",
+        DE: "Bitte lassen Sie die Beschreibung von einem Menschen prüfen: Wird das System für "
+        "einen in Anhang III genannten Zweck eingesetzt, oder ist es ein Produkt oder ein "
+        "Sicherheitsbauteil eines Produkts, das unter die in Anhang I genannten "
+        "EU-Rechtsvorschriften fällt (Art. 6)?",
+    },
+)
+REFUSAL: Mapping[Language, str] = {
+    EN: "Until a person has reviewed it, the system is assumed to be high-risk, and the Annex III "
+    "requirements are assumed.",
+    DE: "Bis ein Mensch sie geprüft hat, wird angenommen, dass das System hochriskant ist, und es "
+    "werden die Anforderungen nach Anhang III angenommen.",
+}
+"""The refusal step's assumption, after the shared first sentence (`common.BLOCKED`): high-risk
+on the Annex III route, whose dates come first."""
+REFUSAL_CITATIONS = ("art:6:1", "art:6:2")
+"""What the refusal step cites: the two routes to high-risk."""
+
 # --- Decision sentences -------------------------------------------------------------------------
 
 TEXTS: Mapping[Language, Mapping[str, str]] = {

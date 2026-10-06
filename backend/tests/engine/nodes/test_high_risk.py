@@ -951,6 +951,42 @@ def test_a_reply_that_does_not_fit_the_schema_is_a_broken_output() -> None:
     assert "SECRET-VALUE-7731" not in str(raised.value)
 
 
+REFUSAL_TEXT = "I'm sorry, but I cannot assist with that request."
+
+
+def _filtered_check(content: str = REFUSAL_TEXT) -> HighRiskCheck:
+    """The node over a reply the provider's content filter stopped (decision 029)."""
+    reply = AIMessage(content=content, response_metadata={"finish_reason": "content_filter"})
+    chat = GenericFakeChatModel(messages=iter([reply]))
+    return HighRiskCheck(_settings(), chat=chat, library=FakeLibrary())
+
+
+def test_a_provider_refusal_assumes_high_risk_on_annex_iii_for_a_person_to_review() -> None:
+    result = _filtered_check()(state())
+    step = result.step
+    assert result.high_risk_route is HighRiskRoute.ANNEX_III  # its duties apply first
+    assert (result.annex_point, result.annex_iii_exempt) == (None, False)
+    assert step.status is Status.NEEDS_MORE_INFORMATION
+    assert step.error == "provider_refusal"
+    assert step.missing_fact is not None
+    assert step.missing_fact.id == "high_risk_person_review"
+    assert result.follow_up_questions == (step.missing_fact,)
+    assert cited(result) == ["art:6:1", "art:6:2"]
+    assert step.decision.startswith("The model provider's content filter blocked")
+
+
+def test_a_high_risk_refusal_is_reported_in_german() -> None:
+    result = _filtered_check()(state(language=Language.DE))
+    assert result.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
+    assert result.step.missing_fact is not None
+    assert result.step.missing_fact.text.startswith("Bitte lassen Sie")
+
+
+def test_a_filtered_high_risk_reply_with_a_usable_answer_is_used() -> None:
+    result = _filtered_check(answer(RANKS_APPLICANTS).model_dump_json())(state())
+    assert (result.step.error, result.annex_point) == (None, "annex:III:4:a")
+
+
 def test_the_output_cap_leaves_room_for_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
     """own-e-14 (both routes apply) spent all of 3000 output tokens on reasoning; 6000 fits."""
     asked: dict[str, object] = {}

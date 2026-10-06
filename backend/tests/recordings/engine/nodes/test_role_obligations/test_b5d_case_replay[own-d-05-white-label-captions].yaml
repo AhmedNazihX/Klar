@@ -25,27 +25,37 @@ interactions:
       assistant) as it is, is\n  \"no\".\n- own_brand (Art. 25(1)(a)): the company
       puts its own name or trademark on a system that someone\n  else already placed
       on the market or put into service.\n- substantial_modification (Art. 25(1)(b)):
-      the company makes a substantial modification to a\n  system already on the market
-      or in service (changes beyond what the provider foresaw, for\n  example retraining
-      it for new tasks or changing how it decides), not mere configuration.\n- changed_purpose
-      (Art. 25(1)(c)): the company uses a system, including a general-purpose AI\n  system,
-      for a purpose its provider did not intend, and that new purpose is what makes
-      it\n  high-risk (for example using a general chat assistant to rank job applicants).\n-
+      the company makes a substantial modification to a\n  system that was already
+      high-risk for the purpose its provider intended and is already on the\n  market
+      or in service: a change the provider''s initial conformity assessment didn''t
+      foresee or\n  plan, that affects whether the system meets the high-risk requirements
+      or changes its intended\n  purpose (Art. 3(23)), for example retraining it for
+      new tasks or changing how it decides. Mere\n  configuration, and changes the
+      provider''s documentation foresees, are \"no\". Answer \"contested\"\n  when
+      the description says what the company changed and what the provider''s documentation
+      says\n  about such a change, but the Act and its definition don''t settle whether
+      that change is\n  substantial: that is a question of law, not a missing fact.
+      Answer \"unknown\" only when the\n  description hints at a change but doesn''t
+      say what was changed or what the provider''s\n  documentation says about it.\n-
+      changed_purpose (Art. 25(1)(c)): the company uses a system, including a general-purpose
+      AI\n  system, that was not high-risk for the purpose its provider intended,
+      for a purpose the provider\n  did not intend, and that new purpose is what makes
+      it high-risk (for example using a general\n  chat assistant to rank job applicants).\n-
       conditions: one answer per listed condition, by its id: does the condition hold
       for this system\n  and this company?\n\nFor every key fact:\n- answer: \"yes\",
-      \"no\" or \"unknown\".\n- evidence: \"stated\" when the description says it,
-      \"inferred\" when it follows from what the\n  description says, \"assumed\"
-      when the description is silent and you take the usual default.\n- fact: the
-      answer as one short fact, in the language asked for (for example \"The company
-      bought\n  the tool and did not change it\").\n- fact_numbers: the numbers of
-      the listed facts the answer rests on; empty when none do.\n\nWhen the description
-      is silent about a switch and nothing hints at it, answer \"no\" with evidence\n\"assumed\":
-      a company that buys a tool is normally a deployer that did not rebrand, modify
-      or\nrepurpose it. Answer \"unknown\" only when the description hints at the
-      fact but doesn''t settle it\n(for example \"we adapted the vendor''s model\"
-      without saying how). For a condition, answer\n\"unknown\" when the description
-      doesn''t settle it.\n","role":"system"},{"content":"Language for facts: en\n\nRisk
-      class so far: limited_risk\n\nEarlier checks:\n-\n\nConditions:\n-\n\nAnswers
+      \"no\" or \"unknown\" (substantial_modification may also be \"contested\").\n-
+      evidence: \"stated\" when the description says it, \"inferred\" when it follows
+      from what the\n  description says, \"assumed\" when the description is silent
+      and you take the usual default.\n- fact: the answer as one short fact, in the
+      language asked for (for example \"The company bought\n  the tool and did not
+      change it\").\n- fact_numbers: the numbers of the listed facts the answer rests
+      on; empty when none do.\n\nWhen the description is silent about a switch and
+      nothing hints at it, answer \"no\" with evidence\n\"assumed\": a company that
+      buys a tool is normally a deployer that did not rebrand, modify or\nrepurpose
+      it. Answer \"unknown\" only when the description hints at the fact but doesn''t
+      settle it\n(for example \"we adapted the vendor''s model\" without saying how).
+      For a condition, answer\n\"unknown\" when the description doesn''t settle it.\n","role":"system"},{"content":"Language
+      for facts: en\n\nRisk class so far: limited_risk\n\nEarlier checks:\n-\n\nConditions:\n-\n\nAnswers
       to earlier questions:\n-\n\nFacts:\n-\n\nDescription:\nWe''re a six-person social
       media agency in Rotterdam. We pay a US start-up for a caption-writing tool:
       you upload a product photo and it writes three post texts in the brand''s tone
@@ -54,15 +64,20 @@ interactions:
       posts themselves. We don''t change how it works and we never built any part
       of it. The start-up launched the tool in 2024; we started reselling it in September
       2026. Clients publish the texts on Instagram and in their newsletters. Most
-      of our clients sell garden furniture.","role":"user"}],"max_tokens":3000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"role_answer","schema":{"$defs":{"Answer":{"enum":["yes","no","unknown"],"title":"Answer","type":"string"},"ConditionAnswer":{"additionalProperties":false,"properties":{"id":{"title":"Id","type":"string"},"answer":{"$ref":"#/$defs/Answer"}},"required":["id","answer"],"title":"ConditionAnswer","type":"object"},"EvidenceTag":{"description":"Where
+      of our clients sell garden furniture.","role":"user"}],"max_tokens":4000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"role_answer","schema":{"$defs":{"Answer":{"enum":["yes","no","unknown"],"title":"Answer","type":"string"},"ConditionAnswer":{"additionalProperties":false,"properties":{"id":{"title":"Id","type":"string"},"answer":{"$ref":"#/$defs/Answer"}},"required":["id","answer"],"title":"ConditionAnswer","type":"object"},"EvidenceTag":{"description":"Where
       a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"KeyFact":{"additionalProperties":false,"description":"One
       key-fact answer. Enum fields carry no description: strict structured output
       rejects\nkeywords next to a `$ref`; the prompt explains every field instead.","properties":{"answer":{"$ref":"#/$defs/Answer"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
-      Numbers","type":"array"}},"required":["answer","evidence","fact","fact_numbers"],"title":"KeyFact","type":"object"},"Role":{"description":"The
+      Numbers","type":"array"}},"required":["answer","evidence","fact","fact_numbers"],"title":"KeyFact","type":"object"},"Modification":{"description":"The
+      Art. 25(1)(b) answer; `contested` means the facts are known but the law leaves
+      open\nwhether the change is a substantial modification.","enum":["yes","no","unknown","contested"],"title":"Modification","type":"string"},"ModificationFact":{"additionalProperties":false,"description":"The
+      Art. 25(1)(b) key fact. Enum fields carry no description: strict structured
+      output\nrejects keywords next to a `$ref`; the prompt explains every field instead.","properties":{"answer":{"$ref":"#/$defs/Modification"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
+      Numbers","type":"array"}},"required":["answer","evidence","fact","fact_numbers"],"title":"ModificationFact","type":"object"},"Role":{"description":"The
       operator role the obligations follow from (Art. 3, 16, 23-26).","enum":["provider","deployer","importer","distributor"],"title":"Role","type":"string"},"RoleFact":{"additionalProperties":false,"description":"The
       company''s own role before any switch; None when the description doesn''t say.","properties":{"role":{"anyOf":[{"$ref":"#/$defs/Role"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
       Numbers","type":"array"}},"required":["role","evidence","fact","fact_numbers"],"title":"RoleFact","type":"object"}},"additionalProperties":false,"description":"The
-      model''s whole answer; also the JSON schema it must fill.","properties":{"role":{"$ref":"#/$defs/RoleFact"},"builds_on_gpai":{"$ref":"#/$defs/KeyFact"},"own_brand":{"$ref":"#/$defs/KeyFact"},"substantial_modification":{"$ref":"#/$defs/KeyFact"},"changed_purpose":{"$ref":"#/$defs/KeyFact"},"conditions":{"items":{"$ref":"#/$defs/ConditionAnswer"},"title":"Conditions","type":"array"}},"required":["role","builds_on_gpai","own_brand","substantial_modification","changed_purpose","conditions"],"title":"RoleAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+      model''s whole answer; also the JSON schema it must fill.","properties":{"role":{"$ref":"#/$defs/RoleFact"},"builds_on_gpai":{"$ref":"#/$defs/KeyFact"},"own_brand":{"$ref":"#/$defs/KeyFact"},"substantial_modification":{"$ref":"#/$defs/ModificationFact"},"changed_purpose":{"$ref":"#/$defs/KeyFact"},"conditions":{"items":{"$ref":"#/$defs/ConditionAnswer"},"title":"Conditions","type":"array"}},"required":["role","builds_on_gpai","own_brand","substantial_modification","changed_purpose","conditions"],"title":"RoleAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
     headers:
       content-type:
       - application/json
@@ -70,25 +85,25 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "\n         \n\n         \n{\"id\":\"gen-1790714789-pKQGaBtMn5lSFlFSBJQa\",\"object\":\"chat.completion\",\"created\":1790714789,\"model\":\"openai/gpt-6-luna\",\"provider\":\"Azure\",\"system_fingerprint\":null,\"service_tier\":\"default\",\"choices\":[{\"index\":0,\"logprobs\":null,\"finish_reason\":\"stop\",\"native_finish_reason\":\"completed\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\n
-        \ \\\"role\\\": {\\n    \\\"role\\\": \\\"distributor\\\",\\n    \\\"evidence\\\":
-        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"The company resells the startup's
-        tool to clients without developing or changing it.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  },\\n  \\\"builds_on_gpai\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n
-        \   \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"The company
-        offers the startup's ready-made tool rather than building its own AI system
-        on a general-purpose AI model.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
-        \ \\\"own_brand\\\": {\\n    \\\"answer\\\": \\\"yes\\\",\\n    \\\"evidence\\\":
-        \\\"stated\\\",\\n    \\\"fact\\\": \\\"The company offers the tool to clients
-        under its own name, PostPilot.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
-        \ \\\"substantial_modification\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n
-        \   \\\"evidence\\\": \\\"stated\\\",\\n    \\\"fact\\\": \\\"The company
-        does not change how the tool works.\\\",\\n    \\\"fact_numbers\\\": []\\n
-        \ },\\n  \\\"changed_purpose\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\":
-        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"The tool is used to generate social
-        media and newsletter captions, consistent with its described caption-writing
-        purpose.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"conditions\\\":
-        []\\n}\",\"refusal\":null,\"reasoning\":null,\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqvCOon8RdGwcxfuE5gov2cbDwhS1mjjx4ySA7-zg8aU-ts55n_d7BfEm17OwbzkERxlHHPIgn9tUbKeCQGMKiNeib9vVfNSjw5gAR0UVseGiP_WkfLlt7fZLOy_JwLJ2tkVB-o0CRDyhkA6pkW922xDyvj39mzOCd1emDZ_cI230CRIxbxDsLT493kBwTeCU_jJIfN3QZ4KBmSdXuv0SokAwb_2ffQsfUP_4gj-ATmqBiDiCGL28lKccGwhXFRUAsfji0xgIDqA4T9sQA_8m_eBHiu5-R5fyWhK55YQ6RV54ORLmww1EAM4DMuNaujNBUVf-lcwrgG0n3tAx5LM7Rekr4YGfcXKeGkelCt2mRcVgddrbqSVwPRI6Au4qXT1x1GAeNZ7SPh-fkomwjgKyb_VW8V7TOZfl_U8xwUmE6l4TXozZm-UUhkCpGdbDPg2eZ4COctM2c2nXdn17JKKp8RLdp9byvka5hDqMxBSXtRCbfGRVwRc_ujH-OZ5pNQEQWkXSKCguaWvqGFft-657eZNFIM4WqkeHWyt7AJOuoxbak0VQt-r3I_2VVdFDM82NktKG1H5k7816ClWtxuxfp9EIYF6WBEhzfyo-tEK9163STWe1mX4Scid05dNRTG8AORuNBH5fFmRiCR6Uwmcp7lIyLBU98v-Q6ZfAkajvBPGT3ikCVNWnfctpiUzH50GbYsqGSUmVOXlc9JOxWwjh0N0Tg9fVFf-dfqk66QhpWjknClEEy226_hIc9gzk4gvtZo_2YbTEEX_aesEPkXuYMfmVFReP5gTG0kRpqcGqtwOKaxq85wS4b0P9TpaM3oxGZPRCebmZeRkMr5xXCv1warZTEQ5LruK9q57sSW6UlNEIY_cy7FdK9rJ_rwosyChEe71ZsYX4UW11ndTWOvPw0pACiZTfEwVVZ4UJrEtOipqMJe74kjnC7q0sMuAY-hrDw7zk4CaRBTmhLr1OPKWIzDEaChxr7NlgIWx-nFNcTKp3zDu98jA3BVwa6OzukKWfYXr72WB0oIzrrebmueQUV5-aleb34q5VefFxpF0kzc1hgeslsyeLpbMn7esrLsiU6W4YZQ85tauM4nnihbjKOXQTlB1ujB0TL67ThhOh7W6dNUhWVu9kAzZoLiGn7aboC1n83TzghhTUqdRjlmfTqDdlLYIx8vITnBKToOcpG5ilFVjNvkhhFwYq73T2vjv0545-xFdKYXdwAG9JDzR_kigcf2XUqprKmvkfSvbudX7Z5uZBRmHQek-GuAyw5rgFOugEbv6cywrg23Zln1xcVKxUTa-Mo1OiXbawVO558Bnr4mub1Kbz8tkdkWEExIHsmV3l52ZyFtoveZUbhESytFSPAzq1e6cum6gbPS3KTUlFJ8-IOFTs4VlSUCdItTzjaankSLHkbnAW0cBp46YkrbZGJTGKZ2AwUM45vxzIDHdjPLe3y2CkHndwaqF86UbW399Piu-sZRZpQEsbX8YtD4mOVCi5rQZctfmYjdzqLMe4D0OJTn9EdjKNiYp2ttEMiiroiKJE4vqKZ3w2ZuQvBbv-xGIkzeBHvhU2quYUnYqgvq_I2lUFWWokSNu5pmbVgg_Pb2WC8zhUjR7j688VqGY1O9YwlYXIkC-W8GYOJ4gGf5gPKbdX61qnyAypWlAyee5_XMkYIv052sUtRurUEH7bSUidQ6BAoNjOv5wH2_9uB4GA3cuVWZdsspaBEivulWWdx_3_KXtSxAhCwXmQ4B_b1uosm0wv_Tm1bQJj0QFNN9u7NjfbI-xaU5ok4DXozAY6aK8XFgioaXwVnr6-r_DQ_p3m1MGf9wXM0B2h1lLjrFNQIb8NVLH4l_8Z2Egg3_5pgbweUJa0Exjvd9mC8SFs5Cpk3_HqNH-mqUs9tPhGbN1rqkrQLo_XabyXGB3t-5tuf6lCmCb5xFekCKnokYBBcZJPyPG_gj7In_SCtWT6FQwA6eQt1YkbwFp_UJt8C1E87XQ4t4g0_JNMNZUNaXNyfn0rv1-J8Ztti_vtFhRlijtgOVw6noDa0R5go9tnHg6YzokiaaMFqa6Bzpt6UAP51A4eCAWREjcag7Fro3tsGbURsRLv10tNANsrVW72Uu5MWy0iHzdxvwtHj7_2gsqR4nK_ccKb3tzNRT_Isnvb77Rv4rTpprWg3uTfhG-Yrlykmm9EKTXoli9CfX77QYQRbSpFrXKD0wjAgAOAjq-Cr0nK8LErL7DzzWghfxOnfOnO3nTDiCFiS-_HK2e_le1XOZygKXFc34dJPNhnn9Du3oxtJX3smOf2cVIog7tyl4PjT2cIpIgRs54MqiDe5BEmNixH5BuqPDSkxkIvkzIdIPVXK3Meey-9saLWLq6MLnSPZQ2gYW1yIk3LwTYCGbSEpvaDPTYJIH0wvghJbeNAwnDsHZp0_DXM6C9FoUZj0L9x4LrGoJTD3XQfwAg0NVVBbjEh9rY5jaL4RGKkwnj7bfBXc5tUZqf64lDT-8E37wmqqqP2Pxacix_uPGbSv8VYwdJK-NxF05QW-SJzoYlMDZECKl_ekpk5kUdPv5GWN0aUyfNdUEauD8HSR9ntASRjEBjQN75bHQadS_43pZTDTnMh71nIH5w8v5t6qDVb0tlaKm7dmHlXV1D8lXk5rcxsERR3vhxw0XwpUIHgrY1G57sPIqgx8W57wEvss87OWbXfU-J-5cRNSgGGRsnzvPE3_cMoaaGwOOxTblNdkQmj5eSdQNenUyV2nyNzH-bwB9arqz_fCwcmtANDnUBWZdBujYhj6sOjSZdmtZu6HR7FYW5qpdz8Fgjv7ySZRKM0aUWEHhQ5yZDUAAA-fFatUCfBzX3yxTriT4lqKlRAuX2ufFFzwidCj8zNmEdtlGUIdpS7QWQcCXhfsltU2aD15V8BKOgJV15WnkSop252v-PVGwnZU-D7B9xlPPL5774iR1HzKn14ln3WThjAe-763Xlq4cYja50n65VNK0kV3pvHkjnDNBNOHGQoMexQuSWM2l4jbokmYN84vxoffD0X4jsc02qpqZEwa3NNecyZGS7tEtLKmo1KLlWLdpKErFnU6FPLv4XpTmw459XDsjx88ZxQkPg-56QfL-teSUpP1ZEUYHeuF7hFTOkqxYqrTN9lECcnTyjW6hA3bKrak4qhVqlGSrpK45sWI4zv1_yht1R84qCiWy0fNtKwCMcI0DsDN1wcWcMw21L_YIWwhlLc-yzYW25PvDrQ9KshPEAIr4u7O7DZpwUQdmDHJA7IrG3e0GSCbHssOJ6YZoO1h-h-rSwW2V6y9shwtrP_JWBB-1irGKJ7CPVqNtd1_TBolPY0P4eSfeTJZ3KhKn4KqKiBt9R1WN25x2g_yv_QthnpzDp2caJCeDcPeYoCoYnByml_-yhWJ8uR8-KKKzuUCUP-PELLEOCjRThCrgHFF91rQGssCxdE=.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_0c5a39bde208da3f016abc23a63a548190a30c457b1fd2821a\",\"index\":0}]}}],\"usage\":{\"prompt_tokens\":1466,\"completion_tokens\":631,\"total_tokens\":2097,\"cost\":0.0003848515,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":1294,\"cache_write_tokens\":169,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0003848515,\"upstream_inference_prompt_cost\":0.0000378015,\"upstream_inference_completions_cost\":0.00034705},\"completion_tokens_details\":{\"reasoning_tokens\":349,\"image_tokens\":0,\"audio_tokens\":0}}}"
+      string: "{\"id\": \"gen-1791292610-THdZAwJ8bKRNznd5TvGQ\", \"object\": \"chat.completion\",
+        \"created\": 1791292610, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+        \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
+        [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
+        \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\\"role\\\":{\\\"role\\\":\\\"distributor\\\",\\\"evidence\\\":\\\"inferred\\\",\\\"fact\\\":\\\"The
+        company resells the US start-up\u2019s tool to clients; before the own-brand
+        switch, it is a distributor.\\\",\\\"fact_numbers\\\":[]},\\\"builds_on_gpai\\\":{\\\"answer\\\":\\\"no\\\",\\\"evidence\\\":\\\"stated\\\",\\\"fact\\\":\\\"The
+        company says it never built any part of the tool.\\\",\\\"fact_numbers\\\":[]},\\\"own_brand\\\":{\\\"answer\\\":\\\"yes\\\",\\\"evidence\\\":\\\"stated\\\",\\\"fact\\\":\\\"The
+        company offers the tool under its own name, PostPilot, on its own domain.\\\",\\\"fact_numbers\\\":[]},\\\"substantial_modification\\\":{\\\"answer\\\":\\\"no\\\",\\\"evidence\\\":\\\"stated\\\",\\\"fact\\\":\\\"The
+        company says it does not change how the tool works.\\\",\\\"fact_numbers\\\":[]},\\\"changed_purpose\\\":{\\\"answer\\\":\\\"no\\\",\\\"evidence\\\":\\\"inferred\\\",\\\"fact\\\":\\\"The
+        tool writes product captions, and clients use the texts for social media posts
+        and newsletters.\\\",\\\"fact_numbers\\\":[]},\\\"conditions\\\":[]}\", \"refusal\":
+        null}}], \"usage\": {\"prompt_tokens\": 1813, \"completion_tokens\": 641,
+        \"total_tokens\": 2454, \"cost\": 0.000601755, \"is_byok\": false, \"prompt_tokens_details\":
+        {\"cached_tokens\": 0, \"cache_write_tokens\": 1810, \"audio_tokens\": 0,
+        \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\": 0.000601755,
+        \"upstream_inference_prompt_cost\": 0.000249205, \"upstream_inference_completions_cost\":
+        0.00035255}, \"completion_tokens_details\": {\"reasoning_tokens\": 437, \"image_tokens\":
+        0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
       - application/json

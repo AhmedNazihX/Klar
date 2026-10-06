@@ -495,6 +495,18 @@
       "default": null,
       "description": "Set exactly when the role_obligations step ran."
     },
+    "also_role": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Role"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "A role the company keeps next to `role`, whose duties are listed too: a deployer that becomes the provider still uses the system (shown as \"You also use it\")."
+    },
     "role_switch_reason": {
       "anyOf": [
         {
@@ -558,6 +570,28 @@
       "minLength": 1,
       "title": "Disclaimer",
       "type": "string"
+    },
+    "legal_review": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The recommendation to have the result reviewed by a lawyer, in the result's language: set for high-risk, prohibited and legally ambiguous results (INIT > Ethical considerations).",
+      "title": "Legal Review"
+    },
+    "not_assessed": {
+      "default": [],
+      "description": "The checks the model provider refused to assess (decision 029), in check order; each needs a person's review, and its stricter reading is assumed.",
+      "items": {
+        "$ref": "#/$defs/StepName"
+      },
+      "title": "Not Assessed",
+      "type": "array"
     },
     "follow_up_questions": {
       "default": [],

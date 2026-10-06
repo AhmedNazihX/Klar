@@ -9,9 +9,9 @@ not met, open on a fact) with `need`, `every`, `either` and `negated` (E4, E6).
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Protocol
+from typing import Protocol, Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.schemas import EvidenceTag, Fact
@@ -34,7 +34,30 @@ class Settled(StrEnum):
     NO = "no"
 
 
-class KeyFact(ContractModel):
+MAX_TEXT_CHARS = 600
+"""Bounds every text the model writes into a step (a `fact`, an open question and its readings,
+a quote): a sentence or two is all a prompt asks for, so a longer one is a broken output, and
+prose a description smuggles in can't fill the decision (E6, shared by E8)."""
+
+
+class ShortTexts(ContractModel):
+    """A model answer whose written texts (`written`) are bounded by `MAX_TEXT_CHARS` when the
+    reply is checked, not in the JSON schema, so the response format sent to the model is
+    unchanged. A subclass keeps its own docstring, which is what the schema shows."""
+
+    def written(self) -> tuple[str | None, ...]:
+        """The texts the model wrote; by default the answer's `fact`."""
+        fact = getattr(self, "fact", None)
+        return (fact,) if isinstance(fact, str) else ()
+
+    @model_validator(mode="after")
+    def _texts_are_short(self) -> Self:
+        if any(text is not None and len(text) > MAX_TEXT_CHARS for text in self.written()):
+            raise ValueError(f"a fact, question or reading is longer than {MAX_TEXT_CHARS} chars")
+        return self
+
+
+class KeyFact(ShortTexts):
     """One key-fact answer. Enum fields carry no description: strict structured output rejects
     keywords next to a `$ref`; the prompt explains every field instead."""
 

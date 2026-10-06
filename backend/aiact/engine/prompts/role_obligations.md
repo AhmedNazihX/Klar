@@ -27,16 +27,25 @@ Answer each key fact with JSON matching the schema:
 - own_brand (Art. 25(1)(a)): the company puts its own name or trademark on a system that someone
   else already placed on the market or put into service.
 - substantial_modification (Art. 25(1)(b)): the company makes a substantial modification to a
-  system already on the market or in service (changes beyond what the provider foresaw, for
-  example retraining it for new tasks or changing how it decides), not mere configuration.
+  system that was already high-risk for the purpose its provider intended and is already on the
+  market or in service: a change the provider's initial conformity assessment didn't foresee or
+  plan, that affects whether the system meets the high-risk requirements or changes its intended
+  purpose (Art. 3(23)), for example retraining it for new tasks or changing how it decides. Mere
+  configuration, and changes the provider's documentation foresees, are "no". Answer "contested"
+  when the description says what the company changed and what the provider's documentation says
+  about such a change, but the Act and its definition don't settle whether that change is
+  substantial: that is a question of law, not a missing fact. Answer "unknown" only when the
+  description hints at a change but doesn't say what was changed or what the provider's
+  documentation says about it.
 - changed_purpose (Art. 25(1)(c)): the company uses a system, including a general-purpose AI
-  system, for a purpose its provider did not intend, and that new purpose is what makes it
-  high-risk (for example using a general chat assistant to rank job applicants).
+  system, that was not high-risk for the purpose its provider intended, for a purpose the provider
+  did not intend, and that new purpose is what makes it high-risk (for example using a general
+  chat assistant to rank job applicants).
 - conditions: one answer per listed condition, by its id: does the condition hold for this system
   and this company?
 
 For every key fact:
-- answer: "yes", "no" or "unknown".
+- answer: "yes", "no" or "unknown" (substantial_modification may also be "contested").
 - evidence: "stated" when the description says it, "inferred" when it follows from what the
   description says, "assumed" when the description is silent and you take the usual default.
 - fact: the answer as one short fact, in the language asked for (for example "The company bought

@@ -47,6 +47,7 @@ from aiact.engine.nodes.common import (
     lookup_for,
     named_passages,
     provision_citation,
+    refused_check,
 )
 from aiact.engine.nodes.guideline_retrieval import (
     GuidelineCorpus,
@@ -309,16 +310,15 @@ def refusal_outcome(state: EngineState, retrieved: Retrieved) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
     every Art. 50 duty assumed until a person reviews it (the stricter reading), citing Art. 50
     as fetched. The review question is a missing fact."""
-    review = key_question(texts.PERSON_REVIEW, state["language"])
-    step = StepResult(
-        step=StepName.TRANSPARENCY,
-        decision=texts.REFUSAL[state["language"]],
-        citations=(provision_citation(retrieved.article),),
-        status=Status.NEEDS_MORE_INFORMATION,
-        missing_fact=review,
-        error=texts.REFUSAL_ERROR,
+    language = state["language"]
+    return refused_check(
+        StepName.TRANSPARENCY,
+        language,
+        texts.REFUSAL[language],
+        (provision_citation(retrieved.article),),
+        key_question(texts.PERSON_REVIEW, language),
+        transparency_duties=ALL_DUTIES,
     )
-    return CheckOutcome(step=step, transparency_duties=ALL_DUTIES, follow_up_questions=(review,))
 
 
 # --- The model call -----------------------------------------------------------------------------
