@@ -1,0 +1,24 @@
+id: annex-match-02-station-mobility-groups
+set_name: annex_match
+language: en
+description: >-
+  We are a 60-person mobility-tech company in Lyon. Our product StationAssist plugs into the CCTV of
+  large railway stations and looks at how travellers walk, stand and move: from posture, gait and
+  walking aids, a model we trained ourselves sorts people into groups such as likely wheelchair
+  user, likely visually impaired or reduced mobility, and sends staff to offer help on the platform.
+  It does not try to find out who anyone is. We sell it to station operators across the EU under a
+  yearly licence. The next release adds a heat map of crowded entrances.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:1:b"]
+label_citation: ["annex:III:1:b", "art:6:2", "art:3:40", "art:3:34", "art:3:3"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: assigning people to categories from behavioural and physical (biometric,
+  Art. 3(34)) data is biometric categorisation (Art. 3(40)), and disability is a sensitive and
+  protected attribute (health data; Charter Art. 21), so 1(b). Categorising individuals by an
+  inferred disability is profiling, so Art. 6(3) cannot lift it out of high-risk; disability is not
+  an Art. 5(1)(g) category. Role: builds and sells it.
+tags:
+  - "annex_iii_area:1"

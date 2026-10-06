@@ -1,0 +1,23 @@
+id: annex-match-03-caller-mood-routing
+set_name: annex_match
+language: en
+description: >-
+  We run customer service for a mobile network operator in Ireland, with about 300 agents across two
+  sites. Since January our phone platform includes an AI module from our telephony vendor that
+  listens to the caller's voice, including pitch, pace and volume, and labels each customer in real
+  time as calm, frustrated, angry or distressed. Angry or distressed callers are moved up the queue
+  and routed to a senior agent, and the label is stored with the call record. It only analyses the
+  customer side of the line, never our agents. We switched it on with the vendor's standard
+  settings. The same release gave us a new holiday-rota planner.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:1:c"]
+label_citation: ["annex:III:1:c", "art:6:2", "art:3:39", "art:3:4"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: inferring emotions from voice (biometric data) is emotion recognition (Art.
+  3(39)). Only customers are analysed, so the workplace prohibition in Art. 5(1)(f) does not apply.
+  Role: the operator uses the vendor's module as delivered.
+tags:
+  - "annex_iii_area:1"

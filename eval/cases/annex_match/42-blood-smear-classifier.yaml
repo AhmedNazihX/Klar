@@ -1,0 +1,21 @@
+id: annex-match-42-blood-smear-classifier
+set_name: annex_match
+language: en
+description: >-
+  We're a 45-person diagnostics company in Milan. Our software runs on digital microscopes in
+  hospital laboratories: it scans stained blood smears, a neural network classifies every white
+  blood cell, and samples that suggest acute leukaemia are flagged so the lab can prioritise them
+  for a haematologist. It is CE-marked as an in vitro diagnostic medical device, class C, and its
+  conformity assessment involved a notified body. We sell it to hospital labs in Italy, Spain and
+  France. Last year we also opened a small office in Lyon.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:A:12"]
+label_citation: ["annex:I:A:12", "art:6:1:a", "art:6:1:b", "art:3:3"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: in vitro diagnostic software (IVDR, Annex I Section A point 12), class C
+  with a notified body, so Art. 6(1) is met. Role: develops and sells it.
+tags:
+  - "annex_i_section:a"

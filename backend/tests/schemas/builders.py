@@ -32,8 +32,10 @@ StepDump = dict[str, object]
 
 
 def rebuild(result: ClassificationResult, **changes: object) -> ClassificationResult:
-    """Validate a changed copy (model_copy would skip the validators)."""
-    return ClassificationResult.model_validate({**result.model_dump(), **changes})
+    """Validate a changed copy (model_copy would skip the validators). A new law version gets
+    its own law-text label, unless `changes` gives one."""
+    dropped = {"law_text"} if "law_version" in changes else set()
+    return ClassificationResult.model_validate({**result.model_dump(exclude=dropped), **changes})
 
 
 def dumped_steps(count: int | None = None) -> list[StepDump]:

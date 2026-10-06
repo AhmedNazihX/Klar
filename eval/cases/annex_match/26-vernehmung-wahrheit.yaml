@@ -1,0 +1,23 @@
+id: annex-match-26-vernehmung-wahrheit
+set_name: annex_match
+language: de
+description: >-
+  Wir sind die Ermittlungsabteilung einer Landespolizei und testen seit Juni eine KI-Software eines
+  israelischen Anbieters bei Beschuldigtenvernehmungen. Sie zeichnet Video und Ton der Vernehmung
+  auf, analysiert Stimme, Sprechpausen und Augenbewegungen und zeigt den Ermittlern für jede Antwort
+  an, ob die Person wahrscheinlich die Wahrheit sagt oder lügt. Die Ergebnisse werden in der
+  Ermittlungsakte vermerkt und helfen bei der Entscheidung, welchen Spuren wir weiter nachgehen. Wir
+  nutzen die Software unverändert. Daneben stellen wir gerade unsere Dienstwagen auf Elektroantrieb
+  um.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:6:b"]
+label_citation: ["annex:III:6:b", "art:6:2", "art:3:4"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: a lie detector used by law enforcement is a polygraph or similar tool, 6(b).
+  It infers truthfulness rather than emotions, so 1(c) is not added. Role: the police use it
+  unchanged.
+tags:
+  - "annex_iii_area:6"

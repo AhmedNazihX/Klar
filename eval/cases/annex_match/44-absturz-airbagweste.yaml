@@ -1,0 +1,23 @@
+id: annex-match-44-absturz-airbagweste
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein Hersteller von Arbeitsschutzausrüstung aus dem Sauerland mit 120 Mitarbeitenden.
+  Unsere neue Airbag-Weste ist für Dachdecker und Gerüstbauer gedacht: Ein kleines neuronales Netz
+  auf dem eingebauten Chip wertet laufend die Bewegungssensoren aus, erkennt einen Absturz und löst
+  innerhalb von Millisekunden den Airbag aus, der Kopf, Nacken und Rücken schützt. Die Weste ist als
+  persönliche Schutzausrüstung der Kategorie III eingestuft; die Baumusterprüfung macht eine
+  Benannte Stelle. Wir verkaufen sie über den Fachhandel in der EU. Unsere Westen gibt es jetzt auch
+  in Signalgelb.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:A:9"]
+label_citation: ["annex:I:A:9", "art:6:1:a", "art:6:1:b", "art:3:3"]
+notes: >-
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: the AI is the safety component of category III personal protective equipment
+  (PPE Regulation, Annex I Section A point 9), which needs a notified body, so Art. 6(1) is met.
+  Role: manufacturer selling under its own name.
+tags:
+  - "annex_i_section:a"

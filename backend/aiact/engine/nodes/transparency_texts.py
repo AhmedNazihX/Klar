@@ -5,6 +5,7 @@ decision sentences, in English and German."""
 from collections.abc import Mapping
 
 from aiact.engine.nodes.role_texts import KeyQuestion
+from aiact.provision_names import article_provision_name
 from aiact.schemas import Language
 
 EN, DE = Language.EN, Language.DE
@@ -136,12 +137,8 @@ REFUSAL: Mapping[Language, str] = {
 
 # --- Naming and decision sentences --------------------------------------------------------------
 
-
-def provision_name(provision_id: str, language: Language) -> str:
-    """How a result names an Art. 50 or Art. 111 paragraph: `art:50:1` is "Art. 50(1)" in
-    English and "Art. 50 Abs. 1" in German."""
-    _, article, paragraph = provision_id.split(":")
-    return f"Art. {article} Abs. {paragraph}" if language is DE else f"Art. {article}({paragraph})"
+provision_name = article_provision_name
+"""How a result names the provisions it cites (`aiact.provision_names`)."""
 
 
 TEXTS: Mapping[Language, Mapping[str, str]] = {
