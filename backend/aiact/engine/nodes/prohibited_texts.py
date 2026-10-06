@@ -5,7 +5,7 @@ decision sentences, in English and German."""
 from collections.abc import Mapping
 
 from aiact.engine.nodes.role_texts import KeyQuestion
-from aiact.schemas import PROVIDER_REFUSAL, Language
+from aiact.schemas import Language
 
 EN, DE = Language.EN, Language.DE
 
@@ -291,36 +291,29 @@ PERSON_REVIEW = _question(
     "Material, in dem Kinder vorkommen (Art. 5 Abs. 1 Buchst. ba, bb)?",
 )
 REFUSAL: Mapping[Language, str] = {
-    EN: "The model provider's content filter blocked this description, so it could not be "
-    "assessed automatically. Art. 5(1)(ba) or (bb) may apply: prohibited is assumed until a "
-    "person has reviewed it.",
-    DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher konnte sie "
-    "nicht automatisch geprüft werden. Art. 5 Abs. 1 Buchst. ba oder bb kann greifen: Bis ein "
-    "Mensch sie geprüft hat, wird ein Verbot angenommen.",
+    EN: "Art. 5(1)(ba) or (bb) may apply: prohibited is assumed until a person has reviewed it.",
+    DE: "Art. 5 Abs. 1 Buchst. ba oder bb kann greifen: Bis ein Mensch sie geprüft hat, wird ein "
+    "Verbot angenommen.",
 }
+"""The refusal step's assumption, after the shared first sentence (`common.BLOCKED`)."""
 REFUSAL_BEFORE_DECEMBER: Mapping[Language, str] = {
-    EN: "The model provider's content filter blocked this description, so it could not be "
-    "assessed automatically. Art. 5(1)(ba) and (bb) apply only from {start} (Art. 113(a)), so on "
-    "{as_of} they do not yet prohibit it, but the other prohibitions of Art. 5 can't be ruled "
-    "out: prohibited is assumed until a person has reviewed it.",
-    DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher konnte sie "
-    "nicht automatisch geprüft werden. Art. 5 Abs. 1 Buchst. ba und bb gelten erst ab dem "
-    "{start} (Art. 113 Buchst. a), daher verbieten sie das System am {as_of} noch nicht, die "
-    "anderen Verbote des Art. 5 lassen sich aber nicht ausschließen: Bis ein Mensch die "
-    "Beschreibung geprüft hat, wird ein Verbot angenommen.",
-}
-"""The refusal step's decision before the December 2026 prohibitions apply."""
-REFUSAL_ORIGINAL: Mapping[Language, str] = {
-    EN: "The model provider's content filter blocked this description, so it could not be "
-    "assessed automatically. None of the Art. 5 prohibitions can be ruled out: prohibited is "
+    EN: "Art. 5(1)(ba) and (bb) apply only from {start} (Art. 113(a)), so on {as_of} they do not "
+    "yet prohibit it, but the other prohibitions of Art. 5 can't be ruled out: prohibited is "
     "assumed until a person has reviewed it.",
-    DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher konnte sie "
-    "nicht automatisch geprüft werden. Keines der Verbote des Art. 5 lässt sich ausschließen: Bis "
-    "ein Mensch die Beschreibung geprüft hat, wird ein Verbot angenommen.",
+    DE: "Art. 5 Abs. 1 Buchst. ba und bb gelten erst ab dem {start} (Art. 113 Buchst. a), daher "
+    "verbieten sie das System am {as_of} noch nicht, die anderen Verbote des Art. 5 lassen sich "
+    "aber nicht ausschließen: Bis ein Mensch die Beschreibung geprüft hat, wird ein Verbot "
+    "angenommen.",
 }
-"""The refusal step's decision under the original text, which has no points (ba) or (bb)."""
-REFUSAL_ERROR = PROVIDER_REFUSAL
-"""The step's error code for a refusal."""
+"""The refusal step's assumption before the December 2026 prohibitions apply."""
+REFUSAL_ORIGINAL: Mapping[Language, str] = {
+    EN: "None of the Art. 5 prohibitions can be ruled out: prohibited is assumed until a person "
+    "has reviewed it.",
+    DE: "Keines der Verbote des Art. 5 lässt sich ausschließen: Bis ein Mensch die Beschreibung "
+    "geprüft hat, wird ein Verbot angenommen.",
+}
+"""The refusal step's assumption under the original text, which has no points (ba) or (bb)."""
+
 
 # --- Naming and decision sentences --------------------------------------------------------------
 

@@ -16,8 +16,9 @@ from pydantic import SecretStr
 
 from aiact.engine.graph import CheckNode, EngineNodes, build_graph
 from aiact.engine.nodes import role_obligations
-from aiact.engine.nodes.finalize import LEGAL_REVIEW, finalize
+from aiact.engine.nodes.finalize import LEGAL_REVIEW, FinalizeOutputError, finalize
 from aiact.engine.nodes.high_risk import HighRiskCheck
+from aiact.engine.nodes.key_facts import Answer
 from aiact.engine.nodes.prohibited import ProhibitedCheck
 from aiact.engine.scripted import no_match
 from aiact.engine.state import CheckOutcome, EngineInput, EngineState, FactsOutcome, RoleFinding
@@ -238,15 +239,17 @@ def test_an_ambiguous_high_risk_step_keeps_high_risk_as_the_labelled_assumption(
     result = run({StepName.HIGH_RISK: high_risk(status=Status.LEGALLY_AMBIGUOUS)})
     assert result.risk_class is RiskClass.HIGH_RISK
     assert result.status is Status.LEGALLY_AMBIGUOUS
-    assert result.legal_review is not None
-    assert "stricter reading" in result.legal_review
-    assert "(class: high-risk)" in result.legal_review
+    texts_en = LEGAL_REVIEW[Language.EN]
+    assert result.legal_review == " ".join(
+        (texts_en[RiskClass.HIGH_RISK], texts_en["class_open"].format(risk_class="high-risk"))
+    )
     assert RANKS.text in texts(result.deciding_facts)
 
 
 def test_an_ambiguous_prohibited_step_keeps_prohibited_and_the_annex_point() -> None:
     """Decision 010 and F7b: the run goes on, the class stays prohibited, and the Annex point the
-    high-risk check found is copied whatever the final class (the metrics read the basis)."""
+    high-risk check found is copied whatever the final class (the metrics read the basis). The
+    legal review keeps the Art. 5 warning and adds what the open question leaves assumed."""
     result = run(
         {
             StepName.PROHIBITED: prohibited_match(Status.LEGALLY_AMBIGUOUS),
@@ -259,7 +262,8 @@ def test_an_ambiguous_prohibited_step_keeps_prohibited_and_the_annex_point() -> 
     assert result.annex_point == "annex:III:4:a"
     assert result.role is Role.DEPLOYER  # the lenient reading's role and duties stay shown
     assert result.legal_review is not None
-    assert "(class: prohibited)" in result.legal_review
+    assert result.legal_review.startswith(LEGAL_REVIEW[Language.EN][RiskClass.PROHIBITED])
+    assert "the stricter reading (prohibited) is assumed" in result.legal_review
 
 
 def test_a_needs_information_state_asks_the_missing_fact_first() -> None:
@@ -275,13 +279,44 @@ def test_a_needs_information_state_asks_the_missing_fact_first() -> None:
     assert result.legal_review is None
 
 
-def test_an_ambiguous_role_on_a_minimal_risk_system_recommends_legal_review() -> None:
+def test_an_ambiguous_step_outranks_a_needs_information_step() -> None:
+    scope = CheckOutcome(
+        step=step(StepName.SCOPE, status=Status.NEEDS_MORE_INFORMATION, missing=EU_LINK),
+        follow_up_questions=(EU_LINK,),
+    )
+    unsure = CheckOutcome(
+        step=step(StepName.TRANSPARENCY, NO_CHAT, status=Status.LEGALLY_AMBIGUOUS),
+        transparency_duties=("art:50:1",),
+    )
+    result = run({StepName.SCOPE: scope, StepName.TRANSPARENCY: unsure})
+    assert result.status is Status.LEGALLY_AMBIGUOUS
+    assert result.risk_class is RiskClass.LIMITED_RISK
+    assert question_ids(result)[0] == "eu_link"  # the missing fact is still asked
+    assert result.legal_review == " ".join(
+        (
+            LEGAL_REVIEW[Language.EN]["lead"],
+            LEGAL_REVIEW[Language.EN]["class_open"].format(risk_class="limited risk"),
+        )
+    )
+
+
+def test_an_ambiguous_role_names_the_role_assumed_not_the_class() -> None:
     owned = role_outcome(Role.PROVIDER, Role.DISTRIBUTOR, status=Status.LEGALLY_AMBIGUOUS)
     result = run({StepName.ROLE_OBLIGATIONS: owned})
     assert (result.risk_class, result.status) == (RiskClass.MINIMAL_RISK, Status.LEGALLY_AMBIGUOUS)
-    assert result.legal_review == LEGAL_REVIEW[Language.EN]["ambiguous"].format(
-        risk_class="minimal risk"
+    assert result.legal_review == (
+        "Have this result reviewed by a lawyer. The law doesn't settle the company's role, so the "
+        "provider role is assumed until a lawyer has reviewed it."
     )
+
+
+def test_an_ambiguous_scope_says_the_act_is_assumed_to_apply() -> None:
+    scope = CheckOutcome(step=step(StepName.SCOPE, EU_USE, status=Status.LEGALLY_AMBIGUOUS))
+    result = run({StepName.SCOPE: scope, StepName.HIGH_RISK: high_risk()})
+    assert result.legal_review == " ".join(
+        (LEGAL_REVIEW[Language.EN][RiskClass.HIGH_RISK], LEGAL_REVIEW[Language.EN]["scope_open"])
+    )
+    assert "stricter reading" not in (result.legal_review or "")
 
 
 # --- The legal-review recommendation (INIT > Ethical considerations, decision 026 item 12) -------
@@ -355,7 +390,34 @@ def test_a_minimal_risk_result_rests_on_the_checks_it_fell_through() -> None:
     assert texts(result.deciding_facts) == [RANKS.text, NO_CHAT.text, BOUGHT.text]
 
 
+def test_a_limited_risk_result_rests_on_the_high_risk_and_transparency_checks() -> None:
+    result = run(
+        {
+            StepName.HIGH_RISK: CheckOutcome(step=step(StepName.HIGH_RISK, RANKS)),
+            StepName.TRANSPARENCY: CheckOutcome(
+                step=step(StepName.TRANSPARENCY, NO_CHAT), transparency_duties=("art:50:1",)
+            ),
+        }
+    )
+    assert result.risk_class is RiskClass.LIMITED_RISK
+    assert texts(result.deciding_facts) == [RANKS.text, NO_CHAT.text, BOUGHT.text]
+
+
+def test_the_facts_node_facts_are_the_results_facts() -> None:
+    result = run(facts=FactsOutcome(facts=(RANKS, BOUGHT)))
+    assert result.facts == (RANKS, BOUGHT)
+
+
 # --- Follow-up questions ------------------------------------------------------------------------
+
+
+def test_of_two_questions_with_one_id_the_first_asked_is_kept() -> None:
+    """Neither is a missing fact: the facts node's question, asked first, wins over a check's."""
+    first = FollowUpQuestion(id="ranks_people", text="Does the tool rank people?")
+    later = FollowUpQuestion(id="ranks_people", text="Does it sort the applicants?")
+    hr = high_risk().model_copy(update={"follow_up_questions": (later,)})
+    result = run({StepName.HIGH_RISK: hr}, FactsOutcome(follow_up_questions=(first,)))
+    assert result.follow_up_questions == (first,)
 
 
 def test_follow_up_questions_are_deduplicated_by_stable_id() -> None:
@@ -400,6 +462,17 @@ def test_a_confirm_question_never_takes_an_id_already_asked() -> None:
     assert question_ids(result) == [taken.id, f"{taken.id}_2"]
 
 
+@pytest.mark.parametrize("point", ["annex:III:6:a", "annex:III:7:b"])
+def test_an_assumed_public_authority_user_is_asked_once(point: str) -> None:
+    """Annex III 6 and 7: the high-risk check assumes a public-authority user and asks
+    `public_authority_user` itself, so finalize adds no confirm question for that fact."""
+    assumed = annex_iii(point, YES, public_authority=Answer.UNKNOWN)
+    hr = high_risk_outcome(high_risk_answer(assumed))
+    result = run({StepName.HIGH_RISK: hr})
+    assert any(f.evidence is EvidenceTag.ASSUMED for f in result.steps[2].facts_used)
+    assert question_ids(result) == ["public_authority_user"]
+
+
 # --- High-risk findings: the Annex point, both routes, Section B ----------------------------------
 
 
@@ -438,17 +511,18 @@ def test_both_routes_report_annex_iii_and_keep_annex_i_in_the_deciding_facts() -
     )
 
 
+CHATTY = CheckOutcome(step=step(StepName.TRANSPARENCY, NO_CHAT), transparency_duties=("art:50:1",))
+
+
 @pytest.mark.parametrize("language", [Language.EN, Language.DE])
-def test_a_section_b_result_lists_no_ai_act_obligations(language: Language) -> None:
-    """Art. 2(2) (user, 2026-09-30): an Annex I Section B product is high-risk, but of the AI
-    Act only Art. 6(1), 60a and 102 to 112 apply, so neither duties nor Art. 50 duties are
-    listed; the role step says why and cites Art. 2(2)."""
+def test_a_decided_section_b_result_lists_no_ai_act_obligations(language: Language) -> None:
+    """Art. 2(2) (user, 2026-09-30): a product the high-risk check decided is high-risk under
+    Annex I Section B gets only Art. 6(1), 60a and 102 to 112 of the AI Act, so neither duties
+    nor Art. 50 duties are listed; the role step says why and cites Art. 2(2)."""
     machinery = high_risk_outcome(high_risk_answer(one=annex_i("annex:I:B:21", YES, YES, YES)))
-    chatty = CheckOutcome(
-        step=step(StepName.TRANSPARENCY, NO_CHAT), transparency_duties=("art:50:1",)
-    )
+    assert machinery.step.status is Status.DECIDED
     role = real_role(role_answer(Role.PROVIDER, legacy=legacy_answer(placed_before=YES)))
-    checks = {StepName.HIGH_RISK: machinery, StepName.TRANSPARENCY: chatty,
+    checks = {StepName.HIGH_RISK: machinery, StepName.TRANSPARENCY: CHATTY,
               StepName.ROLE_OBLIGATIONS: role}  # fmt: skip
     result = run(checks, language=language)
     assert (result.risk_class, result.annex_point) == (RiskClass.HIGH_RISK, "annex:I:B:21")
@@ -457,6 +531,24 @@ def test_a_section_b_result_lists_no_ai_act_obligations(language: Language) -> N
     assert "art:2:2" in [c.provision_id for c in role_step.citations]
     assert ("Section B" if language is Language.EN else "Abschnitt B") in role_step.decision
     assert not any(q.id == "significant_design_change" for q in result.follow_up_questions)
+
+
+def test_an_assumed_section_b_result_keeps_every_duty_and_names_art_2_2_as_possible() -> None:
+    """Orchestrator's ruling (E8 review round 1): the stricter reading keeps the duties while the
+    high-risk step is uncertain; the role step states the Art. 2(2) outcome as a possibility."""
+    open_assessment = annex_i("annex:I:B:21", YES, YES, Answer.UNKNOWN)
+    machinery = high_risk_outcome(high_risk_answer(one=open_assessment))
+    assert machinery.step.status is Status.NEEDS_MORE_INFORMATION
+    role = real_role(role_answer(Role.PROVIDER, legacy=legacy_answer()))
+    checks = {StepName.HIGH_RISK: machinery, StepName.TRANSPARENCY: CHATTY,
+              StepName.ROLE_OBLIGATIONS: role}  # fmt: skip
+    result = run(checks)
+    assert (result.risk_class, result.annex_point) == (RiskClass.HIGH_RISK, "annex:I:B:21")
+    assert {"art:4:1", "art:16:a", "art:50:1"} <= {o.article for o in result.obligations}
+    assert result.transparency_duties == ("art:50:1",)
+    decision = result.steps[-1].decision
+    assert "If the system is high-risk as a product" in decision
+    assert "No AI Act duties listed" not in decision
 
 
 def test_a_prohibited_assumption_over_a_section_b_product_keeps_its_duties() -> None:
@@ -477,6 +569,20 @@ def test_a_section_a_product_keeps_its_duties() -> None:
     result = run({StepName.HIGH_RISK: device, StepName.ROLE_OBLIGATIONS: role})
     assert result.annex_point == "annex:I:A:11"
     assert "art:16:a" in [o.article for o in result.obligations]
+
+
+# --- A broken contract ---------------------------------------------------------------------------
+
+
+def test_a_result_that_breaks_the_contract_raises_without_user_text() -> None:
+    """A role step without its finding can't make a result; the error names the rule, never the
+    description or the facts."""
+    no_finding = CheckOutcome(step=step(StepName.ROLE_OBLIGATIONS, BOUGHT))
+    with pytest.raises(FinalizeOutputError, match="role is set exactly") as raised:
+        run({StepName.ROLE_OBLIGATIONS: no_finding}, FactsOutcome(facts=(RANKS,)))
+    assert DESCRIPTION not in str(raised.value)
+    assert RANKS.text not in str(raised.value)
+    assert raised.value.__cause__ is None
 
 
 # --- A provider refusal (decision 029; X2b's DoD addition) ---------------------------------------

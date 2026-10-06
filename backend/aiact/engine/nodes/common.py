@@ -1,16 +1,26 @@
-"""What the checks share (E3, E4, E5, E7): the corpus lookup of one run, the citations built from
-what the corpus returns, the follow-up question of a key fact, and the per-case blocks of their
-prompts."""
+"""What the checks share (E3, E4, E5, E7, E8): the corpus lookup of one run, the citations built
+from what the corpus returns, the follow-up question of a key fact, the per-case blocks of their
+prompts, and the step for a reply the provider refused (decision 029)."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 
 from aiact.engine.nodes.role_texts import KeyQuestion
-from aiact.engine.state import EngineState
+from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit
-from aiact.schemas import Citation, FollowUpQuestion, Language, LawVersion
+from aiact.schemas import (
+    PROVIDER_REFUSAL,
+    Citation,
+    FollowUpQuestion,
+    HighRiskRoute,
+    Language,
+    LawVersion,
+    Status,
+    StepName,
+    StepResult,
+)
 
 MAX_PASSAGE_CHARS = 4000
 """Bounds one retrieved text in the prompt (a parent row holds all its children's text)."""
@@ -95,3 +105,48 @@ def named_passages(numbers: Sequence[int], guidance: Sequence[SearchHit]) -> tup
 def key_question(key: KeyQuestion, language: Language) -> FollowUpQuestion:
     """The follow-up question that settles a key fact, about the provision it rests on."""
     return FollowUpQuestion(id=key.id, text=key.question[language], about=key.article)
+
+
+# --- A provider refusal (decision 029) -----------------------------------------------------------
+
+BLOCKED: Mapping[Language, str] = {
+    Language.EN: "The model provider's content filter blocked this description, so it could not "
+    "be assessed automatically.",
+    Language.DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher "
+    "konnte sie nicht automatisch geprüft werden.",
+}
+"""The first sentence of every refused step's decision."""
+
+
+def refused_check(
+    name: StepName,
+    language: Language,
+    assumption: str,
+    citations: Sequence[Citation],
+    review: FollowUpQuestion,
+    *,
+    matched: bool = False,
+    high_risk_route: HighRiskRoute | None = None,
+    transparency_duties: tuple[str, ...] = (),
+    role: RoleFinding | None = None,
+) -> CheckOutcome:
+    """The step of a check whose reply the provider's content filter refused (decision 029):
+    not assessed (`BLOCKED`, then the stricter reading the check assumes), `needs_more_information`
+    with the person-review question as its missing fact, so the run goes on, and the check's
+    assumed findings."""
+    step = StepResult(
+        step=name,
+        decision=f"{BLOCKED[language]} {assumption}",
+        citations=tuple(citations),
+        status=Status.NEEDS_MORE_INFORMATION,
+        missing_fact=review,
+        error=PROVIDER_REFUSAL,
+    )
+    return CheckOutcome(
+        step=step,
+        matched=matched,
+        high_risk_route=high_risk_route,
+        transparency_duties=transparency_duties,
+        role=role,
+        follow_up_questions=(review,),
+    )

@@ -11,6 +11,7 @@ import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr, ValidationError
+from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.engine.graph import EngineNodes, build_graph
 from aiact.engine.nodes import role_obligations as node
@@ -43,11 +44,13 @@ from aiact.schemas import (
     ClassificationResult,
     EvidenceTag,
     Fact,
+    FollowUpQuestion,
     HighRiskRoute,
     Language,
     LawVersion,
     LegacyStatus,
     Obligation,
+    OpenQuestion,
     RiskClass,
     Role,
     SourceSpan,
@@ -584,23 +587,78 @@ def test_only_the_modification_answer_can_be_contested() -> None:
 # --- Art. 2(2): an Annex I Section B product (user, 2026-09-30) ----------------------------------
 
 
-def test_a_section_b_product_lists_no_duties_and_cites_art_2_2() -> None:
-    given: EngineState = {**state(route=HighRiskRoute.ANNEX_I), "annex_point": "annex:I:B:21"}
+def section_b_state(status: Status = Status.DECIDED, point: str = "annex:I:B:21") -> EngineState:
+    """High-risk on an Annex I point after a high-risk step of `status` (an uncertain one names
+    its gap)."""
+    is_missing = status is Status.NEEDS_MORE_INFORMATION
+    high_risk = StepResult(
+        step=StepName.HIGH_RISK,
+        decision="High-risk under Art. 6(1).",
+        status=status,
+        missing_fact=FollowUpQuestion(id="third_party_assessment", text="A notified body?")
+        if is_missing
+        else None,
+        open_question=OpenQuestion(question="Open?", readings=("Yes.", "No."))
+        if status is Status.LEGALLY_AMBIGUOUS
+        else None,
+    )
+    built = state(route=HighRiskRoute.ANNEX_I)
+    return {**built, "annex_point": point, "steps": (high_risk,)}
+
+
+def test_a_decided_section_b_product_lists_no_duties_and_cites_art_2_2() -> None:
     answer = role_answer(Role.PROVIDER, legacy=legacy_answer(placed_before=Answer.YES))
-    outcome = to_outcome(answer, given)
+    outcome = to_outcome(answer, section_b_state())
     assert finding(outcome).obligations == ()
     cited = [c.provision_id for c in outcome.step.citations]
     assert "art:2:2" in cited
     assert "art:111:2" not in cited  # no duties, so nothing for Art. 111(2) to mark
-    assert "Annex I Section B" in outcome.step.decision
+    assert "No AI Act duties listed" in outcome.step.decision
     assert outcome.follow_up_questions == ()
 
 
+@pytest.mark.parametrize("status", [Status.NEEDS_MORE_INFORMATION, Status.LEGALLY_AMBIGUOUS])
+def test_an_assumed_section_b_product_keeps_its_duties_and_names_art_2_2_as_possible(
+    status: Status,
+) -> None:
+    """Orchestrator's ruling (E8 review round 1): the cut is applied only to a decided
+    high-risk step; an assumed one keeps every duty that may apply, the stricter reading."""
+    answer = role_answer(Role.PROVIDER, legacy=legacy_answer())
+    outcome = to_outcome(answer, section_b_state(status))
+    assert {"art:4:1", "art:16:a"} <= set(articles(outcome))
+    assert "If the system is high-risk as a product" in outcome.step.decision
+    assert "No AI Act duties listed" not in outcome.step.decision
+    assert "art:2:2" in [c.provision_id for c in outcome.step.citations]
+
+
 def test_a_section_a_product_keeps_its_duties() -> None:
-    given: EngineState = {**state(route=HighRiskRoute.ANNEX_I), "annex_point": "annex:I:A:11"}
-    outcome = to_outcome(role_answer(Role.PROVIDER, legacy=legacy_answer()), given)
+    outcome = to_outcome(
+        role_answer(Role.PROVIDER, legacy=legacy_answer()), section_b_state(point="annex:I:A:11")
+    )
     assert "art:16:a" in articles(outcome)
     assert "art:2:2" not in [c.provision_id for c in outcome.step.citations]
+    assert "Section B" not in outcome.step.decision
+
+
+def test_a_decided_section_b_request_asks_no_conditions_or_launch_facts() -> None:
+    """The answers would be discarded, so they aren't asked: no conditions, no Art. 111(2)
+    section, the plain answer schema."""
+    decided, assumed = section_b_state(), section_b_state(Status.NEEDS_MORE_INFORMATION)
+    assert node.asked_conditions(decided) == ()
+    assert node.answer_model(decided) is RoleAnswer
+    human = str(node.role_messages(decided, ())[-1].content)
+    assert "Conditions:\n-" in human
+    assert "Launch and design" not in human
+    assert node.asked_conditions(assumed)
+    assert node.answer_model(assumed) is HighRiskRoleAnswer
+    assert "Launch and design" in str(node.role_messages(assumed, ())[-1].content)
+
+
+def test_the_node_reads_a_plain_answer_for_a_decided_section_b_product() -> None:
+    """Any other high-risk answer without the Art. 111(2) facts is a broken output."""
+    check, _ = _fake_check(role_answer(Role.PROVIDER).model_dump_json())
+    outcome = check(section_b_state())
+    assert (finding(outcome).role, finding(outcome).obligations) == (Role.PROVIDER, ())
 
 
 def test_an_unknown_role_asks_for_it() -> None:
@@ -1473,27 +1531,28 @@ REBRANDER = (
 
 
 RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_role_obligations.py --record-mode=once"
+RECORDING_PENDING = pytest.mark.xfail(
+    strict=True,
+    raises=CannotOverwriteExistingCassetteException,
+    reason="E8 changed the role prompt and answer schema, and its recordings were removed; "
+    f"record them once with `{RECORD_COMMAND}`, then remove RECORDING_PENDING",
+)
+"""Marks the role replays while their recordings are missing (decision: the orchestrator records
+once, after the reviews). A missing cassette is never a green skip: the replay runs and fails on
+it, which this strict mark expects; any other failure stays red, and a replay that passes once
+recorded fails as XPASS until the mark is removed (also from `test_corpus_recording`)."""
 
 
-def skip_unrecorded(record_mode: str, cassette_dir: str, cassette_name: str) -> None:
-    """Skip a replay whose recording doesn't exist yet: E8 changed the prompt and the answer
-    schema, so the E7 recordings were removed until they are re-recorded once."""
-    if record_mode == "none" and not (Path(cassette_dir) / f"{cassette_name}.yaml").exists():
-        pytest.skip(f"no recording yet; record it with `{RECORD_COMMAND}`")
-
-
+@RECORDING_PENDING
 @pytest.mark.vcr
-def test_recorded_rebrander_becomes_the_provider(
-    luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
-) -> None:
-    skip_unrecorded(record_mode, vcr_cassette_dir, default_cassette_name)
+def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> None:
     outcome = RoleObligationsCheck(luna_settings)(state(description=REBRANDER))
     assert finding(outcome).role is Role.PROVIDER
     assert "25(1)(a)" in (finding(outcome).role_switch_reason or "")
     assert "art:16:a" in articles(outcome)
 
 
-# --- B5d replay: the own role cases, once they and their recordings exist ----------------------
+# --- B5d replay: the own role cases -------------------------------------------------------------
 
 ROLE_CASES_DIR = CASES_DIR / CaseSet.OWN.value / "d"
 
@@ -1506,36 +1565,25 @@ def _role_cases() -> list[BenchmarkCase]:
 
 B5D_CASES = _role_cases()
 
-KNOWN_STATUS_GAPS: dict[str, tuple[Status, str]] = {}
-"""Recorded status gaps: the exact status the node returns instead of the label's. A listed
-case that returns anything else, including the label's status, fails so the entry is removed.
-own-d-12's gap (needs_more_information where the label is legally_ambiguous) was closed by E8's
-contested answer for Art. 25(1)(b) (user, 2026-10-06)."""
 
-
+@RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
     B5D_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="B5d cases not merged yet"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
-def test_b5d_case_replay(
-    case: BenchmarkCase,
-    luna_settings: Settings,
-    record_mode: str,
-    vcr_cassette_dir: str,
-    default_cassette_name: str,
-) -> None:
-    """Each B5d case's expected role, from the class its label gives; a case tagged with Art.
-    25(1) switches cites exactly those points (every switch that applies is reported, user,
+def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
+    """Each B5d case's expected role, from the class its label gives, and its status when the
+    label is legally ambiguous (own-d-12, closed by E8's contested answer); a case tagged with
+    Art. 25(1) switches cites exactly those points (every switch that applies is reported, user,
     2026-10-06), and one tagged `also_role:` keeps that role. Replays the recording
-    `recordings/engine/nodes/test_role_obligations/test_b5d_case_replay[<id>].yaml`; record with
-    `uv run pytest tests/engine/nodes/test_role_obligations.py -k b5d --record-mode=once`."""
+    `recordings/engine/nodes/test_role_obligations/test_b5d_case_replay[<id>].yaml`; a missing
+    one fails. Record with `RECORD_COMMAND`."""
     label = case.label
     assert isinstance(label, CaseLabel)
     if not runs_role_check(case):
         pytest.skip("the role check doesn't run for this case, or its label names no role")
-    skip_unrecorded(record_mode, vcr_cassette_dir, default_cassette_name)
     outcome = RoleObligationsCheck(luna_settings)(role_check_state(case, ROLE_AS_OF))
     assert finding(outcome).role is label.role
     switches = {f"art:25:1:{s[-1]}" for s in tag(case, "role_switch") if s != "none"}
@@ -1544,10 +1592,4 @@ def test_b5d_case_replay(
         assert {c for c in cited_switches if c.startswith("art:25:1:")} == switches
     for also in tag(case, "also_role"):
         assert finding(outcome).also_role is Role(also)
-    gap = KNOWN_STATUS_GAPS.get(case.id)
-    if gap is not None:
-        gap_status, reason = gap
-        if outcome.step.status is not gap_status:
-            pytest.fail(f"{case.id} no longer shows its recorded status gap; update the list")
-        pytest.xfail(reason)
     assert role_matches(outcome, case), (finding(outcome).role, outcome.step.status)

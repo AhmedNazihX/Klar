@@ -23,6 +23,8 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
+from aiact.engine.nodes.common import BLOCKED
+from aiact.engine.nodes.key_facts import ShortTexts
 from aiact.engine.state import EngineState, FactsOutcome
 from aiact.llm import engine_chat_model
 from aiact.llm.structured import (
@@ -52,14 +54,13 @@ CONFIRM_TEXT: dict[Language, str] = {
 
 PERSON_REVIEW_ID = "facts_person_review"
 PERSON_REVIEW_TEXT: dict[Language, str] = {
-    Language.EN: "The model provider's content filter blocked this description, so its facts "
-    "could not be extracted automatically. Please have a person review it: what does the system "
-    "do, who uses it, and whom does it affect?",
-    Language.DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher "
-    "konnten ihre Fakten nicht automatisch erfasst werden. Bitte lassen Sie sie von einem "
-    "Menschen prüfen: Was tut das System, wer nutzt es und wen betrifft es?",
+    Language.EN: "Please have a person review it: what does the system do, who uses it, and whom "
+    "does it affect?",
+    Language.DE: "Bitte lassen Sie sie von einem Menschen prüfen: Was tut das System, wer nutzt es "
+    "und wen betrifft es?",
 }
-"""The question a refused reply asks instead of facts (decision 029)."""
+"""The question a refused reply asks instead of facts (decision 029), after the shared first
+sentence (`common.BLOCKED`)."""
 
 WORD_CHAR = re.compile(r"\w")
 
@@ -71,7 +72,7 @@ MAX_SLUG_LENGTH = 64
 """The longest id `FollowUpQuestion` accepts (`SLUG_PATTERN`)."""
 
 
-class ExtractedFact(ContractModel):
+class ExtractedFact(ShortTexts):
     """One fact as the model returns it. Enum fields carry no description: strict structured
     output rejects keywords next to a `$ref`; the prompt explains every field instead."""
 
@@ -81,6 +82,11 @@ class ExtractedFact(ContractModel):
     question: FollowUpQuestion | None = Field(
         description="For an inferred or assumed fact: the question that confirms it."
     )
+
+    def written(self) -> tuple[str | None, ...]:
+        """The fact and its question. The quote isn't bounded: it must be found verbatim in the
+        description (`find_span`), so it adds no prose of its own."""
+        return (self.text, self.question.text if self.question else None)
 
 
 class FactsAnswer(ContractModel):
@@ -202,7 +208,8 @@ def to_outcome(answer: FactsAnswer, description: str, language: Language) -> Fac
 
 def refusal_outcome(language: Language) -> FactsOutcome:
     """No facts, and the question that asks a person to review the description (decision 029)."""
-    review = FollowUpQuestion(id=PERSON_REVIEW_ID, text=PERSON_REVIEW_TEXT[language])
+    text = f"{BLOCKED[language]} {PERSON_REVIEW_TEXT[language]}"
+    review = FollowUpQuestion(id=PERSON_REVIEW_ID, text=text)
     return FactsOutcome(follow_up_questions=(review,))
 
 

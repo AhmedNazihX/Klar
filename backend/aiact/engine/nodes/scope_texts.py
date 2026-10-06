@@ -243,11 +243,10 @@ PERSON_REVIEW = ScopeQuestion(
     },
 )
 REFUSAL: Mapping[Language, str] = {
-    Language.EN: "The model provider's content filter blocked this description, so it could not "
-    "be assessed automatically. The system is assumed to be an AI system within the Act's scope "
-    "until a person has reviewed it.",
-    Language.DE: "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher "
-    "konnte sie nicht automatisch geprüft werden. Bis ein Mensch sie geprüft hat, wird "
-    "angenommen, dass es sich um ein KI-System im Anwendungsbereich der Verordnung handelt.",
+    Language.EN: "The system is assumed to be an AI system within the Act's scope until a person "
+    "has reviewed it.",
+    Language.DE: "Bis ein Mensch sie geprüft hat, wird angenommen, dass es sich um ein KI-System "
+    "im Anwendungsbereich der Verordnung handelt.",
 }
-"""The refusal step's decision: in scope, the stricter reading, is the working assumption."""
+"""The refusal step's assumption, after the shared first sentence (`common.BLOCKED`): in scope,
+the stricter reading."""

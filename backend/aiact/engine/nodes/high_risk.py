@@ -42,6 +42,7 @@ from aiact.engine.nodes.common import (
     guidance_citation,
     lookup_for,
     provision_citation,
+    refused_check,
 )
 from aiact.engine.nodes.high_risk_retrieval import (
     ANNEX_III_POINTS,
@@ -80,7 +81,6 @@ from aiact.llm.structured import (
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
-    PROVIDER_REFUSAL,
     EvidenceTag,
     Fact,
     FollowUpQuestion,
@@ -613,6 +613,7 @@ def to_outcome(
         annex_iii_exempt=settled.is_exempt,
         annex_point=settled.point if settled.route else None,
         follow_up_questions=tuple(questions.values()),
+        asked_facts=tuple(fact.text for fact in settled.assumed),  # each has its confirm question
     )
 
 
@@ -622,19 +623,13 @@ def refusal_outcome(state: EngineState, library: HighRiskLibrary) -> CheckOutcom
     with no Annex point, citing Art. 6(1) and 6(2) as fetched from `library`. The review
     question is a missing fact."""
     language, lookup = state["language"], lookup_for(state)
-    review = _question(PERSON_REVIEW, language, "")
-    step = StepResult(
-        step=StepName.HIGH_RISK,
-        decision=REFUSAL[language],
-        citations=tuple(
-            provision_citation(library.provision(pid, lookup)) for pid in REFUSAL_CITATIONS
-        ),
-        status=Status.NEEDS_MORE_INFORMATION,
-        missing_fact=review,
-        error=PROVIDER_REFUSAL,
-    )
-    return CheckOutcome(
-        step=step, high_risk_route=HighRiskRoute.ANNEX_III, follow_up_questions=(review,)
+    return refused_check(
+        StepName.HIGH_RISK,
+        language,
+        REFUSAL[language],
+        tuple(provision_citation(library.provision(pid, lookup)) for pid in REFUSAL_CITATIONS),
+        _question(PERSON_REVIEW, language, ""),
+        high_risk_route=HighRiskRoute.ANNEX_III,
     )
 
 

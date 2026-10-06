@@ -49,9 +49,9 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
 from aiact.dates import long_date
-from aiact.engine.nodes.common import answers_section, facts_section, key_question
+from aiact.engine.nodes.common import answers_section, facts_section, key_question, refused_check
 from aiact.engine.nodes.high_risk import SECTION_B_PREFIX
-from aiact.engine.nodes.key_facts import Answer, KeyFact, facts_used
+from aiact.engine.nodes.key_facts import Answer, KeyFact, ShortTexts, facts_used
 from aiact.engine.nodes.role_legacy import (
     LegacyAnswer,
     LegacySettlement,
@@ -88,7 +88,6 @@ from aiact.obligations.list import (
     list_obligations,
 )
 from aiact.schemas import (
-    PROVIDER_REFUSAL,
     Citation,
     EvidenceTag,
     HighRiskRoute,
@@ -139,7 +138,7 @@ ACT_DOCUMENTS: Mapping[LawVersion, str] = {
 """The manifest key of each AI Act text, as a citation's `document_id`."""
 
 
-class RoleFact(ContractModel):
+class RoleFact(ShortTexts):
     """The company's own role before any switch; None when the description doesn't say."""
 
     role: Role | None
@@ -163,7 +162,7 @@ class Modification(StrEnum):
     CONTESTED = "contested"
 
 
-class ModificationFact(ContractModel):
+class ModificationFact(ShortTexts):
     """The Art. 25(1)(b) key fact. Enum fields carry no description: strict structured output
     rejects keywords next to a `$ref`; the prompt explains every field instead."""
 
@@ -620,33 +619,47 @@ def refusal_outcome(
     settled = RoleSettlement(
         base=None, role=Role.PROVIDER, also_role=Role.DEPLOYER, gpai=Answer.UNKNOWN, used=()
     )
-    source_table = table or default_table()
-    obligations, summary = select_obligations((), state, settled, source_table)
+    obligations, summary = select_obligations((), state, settled, table or default_table())
     source = data_dir or get_settings().aiact_data_dir
     cited = (*settled.cited_articles(), *_section_b_articles(state))
-    review = key_question(PERSON_REVIEW, language)
-    step = StepResult(
-        step=StepName.ROLE_OBLIGATIONS,
-        decision=" ".join((TEXTS[language]["refusal"], *summary)),
-        citations=citations(cited, state["law_version"], language, source),
-        status=Status.NEEDS_MORE_INFORMATION,
-        missing_fact=review,
-        error=PROVIDER_REFUSAL,
+    return refused_check(
+        StepName.ROLE_OBLIGATIONS,
+        language,
+        " ".join((TEXTS[language]["refusal"], *summary)),
+        citations(cited, state["law_version"], language, source),
+        key_question(PERSON_REVIEW, language),
+        role=RoleFinding(role=settled.role, also_role=settled.also_role, obligations=obligations),
     )
-    finding = RoleFinding(role=settled.role, also_role=settled.also_role, obligations=obligations)
-    return CheckOutcome(step=step, role=finding, follow_up_questions=(review,))
 
 
-def is_section_b(state: EngineState) -> bool:
-    """High-risk as an Annex I Section B product: Art. 2(2) leaves it no AI Act duties. An
-    Art. 5 match that keeps prohibited as the class keeps its prohibition rows."""
+def _is_section_b_point(state: EngineState) -> bool:
+    """High-risk, decided or assumed, on an Annex I Section B point. An Art. 5 match that keeps
+    prohibited as the class keeps its prohibition rows."""
     risk_class, _ = working_class(state)
     is_high_risk = risk_class is RiskClass.HIGH_RISK
     return is_high_risk and state.get("annex_point", "").startswith(SECTION_B_PREFIX)
 
 
+def _is_high_risk_decided(state: EngineState) -> bool:
+    steps = state.get("steps", ())
+    return any(s.step is StepName.HIGH_RISK and s.status is Status.DECIDED for s in steps)
+
+
+def is_section_b(state: EngineState) -> bool:
+    """Decided high-risk as an Annex I Section B product: Art. 2(2) leaves it no AI Act duties.
+    An uncertain high-risk step only makes it possible (`may_be_section_b`): the duties stay,
+    the stricter reading (orchestrator's ruling, E8 review round 1)."""
+    return _is_section_b_point(state) and _is_high_risk_decided(state)
+
+
+def may_be_section_b(state: EngineState) -> bool:
+    """Assumed, not decided, high-risk on an Annex I Section B point: Art. 2(2) is a possibility
+    the step names, and every duty that may apply stays listed."""
+    return _is_section_b_point(state) and not _is_high_risk_decided(state)
+
+
 def _section_b_articles(state: EngineState) -> tuple[str, ...]:
-    return (SECTION_B_ARTICLE,) if is_section_b(state) else ()
+    return (SECTION_B_ARTICLE,) if _is_section_b_point(state) else ()
 
 
 def select_obligations(
@@ -659,7 +672,8 @@ def select_obligations(
     """The duties of the settled role and the role it keeps, less those whose condition the
     model's `conditions` answers rule out, marked as Art. 111(2) leaves them, and the sentences
     that summarise them for the step's decision. None when `table` doesn't hold the state's law
-    version, or for an Annex I Section B product (Art. 2(2), user, 2026-09-30)."""
+    version, or for a decided Annex I Section B product (Art. 2(2), user, 2026-09-30); an
+    assumed one keeps them, and the summary names Art. 2(2) as a possibility."""
     language, law_version = state["language"], state["law_version"]
     risk_class, route = working_class(state)
     texts = TEXTS[language]
@@ -686,6 +700,7 @@ def select_obligations(
         texts["duties"].format(count=len(kept), risk_class=risk_class.value, version=version),
         *(texts[verdict.value].format(count=count) for verdict, count in counts.items() if count),
         *legacy_summary(kept, legacy, language, roles),
+        *((texts["section_b_possible"],) if may_be_section_b(state) else ()),
     )
     return kept, summary
 
@@ -698,16 +713,28 @@ HIGH_RISK_RESPONSE_FORMAT = json_schema_format("role_answer", HighRiskRoleAnswer
 
 
 def answer_model(state: EngineState) -> type[RoleAnswer]:
-    """The answer the model gives: with the Art. 111(2) facts for a high-risk system."""
+    """The answer the model gives: with the Art. 111(2) facts for a high-risk system, except a
+    decided Section B product, which has no duties for them to mark."""
     risk_class, _ = working_class(state)
-    return HighRiskRoleAnswer if risk_class is RiskClass.HIGH_RISK else RoleAnswer
+    if risk_class is RiskClass.HIGH_RISK and not is_section_b(state):
+        return HighRiskRoleAnswer
+    return RoleAnswer
+
+
+def asked_conditions(state: EngineState, table: ObligationTable | None = None) -> tuple[str, ...]:
+    """The conditions the model is asked: none for a decided Section B product (no duties)."""
+    if is_section_b(state):
+        return ()
+    risk_class, route = working_class(state)
+    return conditions_to_ask(risk_class, route, state["law_version"], table)
 
 
 def _legacy_section(state: EngineState) -> str:
     """The Art. 111(2) instructions for a high-risk system, or nothing (other classes' requests
-    stay as they were). `working_class` gives a route only for a high-risk system."""
+    stay as they were, and a decided Section B product has no duties to mark). `working_class`
+    gives a route only for a high-risk system."""
     _, route = working_class(state)
-    if route is None:
+    if route is None or is_section_b(state):
         return ""
     since = long_date(CHAPTER_III_DATES[route], Language.EN)
     return f"Launch and design:\n{LEGACY_INSTRUCTIONS.format(date=since)}\n"
@@ -754,8 +781,7 @@ class RoleObligationsCheck:
     def __call__(self, state: EngineState) -> CheckOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises
         `RoleOutputError` when any other reply doesn't fit `RoleAnswer`."""
-        risk_class, route = working_class(state)
-        conditions = conditions_to_ask(risk_class, route, state["law_version"], self._table)
+        conditions = asked_conditions(state, self._table)
         model = answer_model(state)
         response_format = (
             HIGH_RISK_RESPONSE_FORMAT if model is HighRiskRoleAnswer else ROLE_RESPONSE_FORMAT

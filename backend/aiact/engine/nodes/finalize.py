@@ -11,26 +11,33 @@ works, Ethical considerations). No model is called.
   `needs_more_information`, and `not_assessed` names it.
 - **Findings** are copied as the checks set them: the Annex point whatever the final class
   (F7b: the metrics read the basis from it), the Art. 50 duties, the role, the role kept next
-  to it (`also_role`, shown as "You also use it", decision 026) and its duties. An Annex I
-  Section B product keeps no Art. 50 duty either: Art. 2(2) applies only Art. 6(1), 60a and 102
-  to 112 to it (the role check already lists no duties).
+  to it (`also_role`, shown as "You also use it", decision 026) and its duties. A product the
+  high-risk check decided is high-risk under Annex I Section B keeps no Art. 50 duty either:
+  Art. 2(2) applies only Art. 6(1), 60a and 102 to 112 to it (the role check lists no duties).
+  Only assumed so, it keeps every duty that may apply (the stricter reading).
 - **Deciding facts** are the facts of the steps the outcome rests on: the step that set the
-  class (for minimal risk, the high-risk and transparency checks it fell through), every
-  uncertain step, and the role step; each fact once.
+  class (for limited and minimal risk, the high-risk and transparency checks), every uncertain
+  step, and the role step; each fact once.
 - **Follow-up questions**: every step's missing fact first (in check order), then the facts
   node's and the checks' questions, then a "please confirm" question for every assumed fact a
-  step relied on that the facts node didn't extract (INIT > Evidence tags; decision 026); each
-  id once, the first one kept, so a missing fact is listed with its own text.
+  step relied on that neither the facts node extracted nor a check already asks about (INIT >
+  Evidence tags; decision 026); each id once, the first one kept, so a missing fact is listed
+  with its own text.
 - **Legal review** is recommended for high-risk, prohibited and legally ambiguous results (INIT
-  > Ethical considerations, decision 026 item 12), in the result's language.
+  > Ethical considerations, decision 026 item 12), in the result's language: the class's own
+  sentence, then what each open question of law leaves assumed.
 """
 
 from collections.abc import Iterable, Mapping, Sequence
 
+from pydantic import ValidationError
+
 from aiact.engine.graph import run_ends_after
 from aiact.engine.nodes.facts import confirm_question
 from aiact.engine.nodes.role_obligations import is_section_b, working_class
+from aiact.engine.nodes.role_texts import ROLE_NAMES
 from aiact.engine.state import EngineState
+from aiact.llm.structured import describe_validation_error
 from aiact.schemas import (
     DISCLAIMER,
     ClassificationResult,
@@ -39,6 +46,7 @@ from aiact.schemas import (
     FollowUpQuestion,
     Language,
     RiskClass,
+    Role,
     Status,
     StepName,
     StepResult,
@@ -49,11 +57,14 @@ CLASS_STEPS: Mapping[RiskClass, tuple[StepName, ...]] = {
     RiskClass.OUT_OF_SCOPE: (StepName.SCOPE,),
     RiskClass.PROHIBITED: (StepName.PROHIBITED,),
     RiskClass.HIGH_RISK: (StepName.HIGH_RISK,),
-    RiskClass.LIMITED_RISK: (StepName.TRANSPARENCY,),
+    RiskClass.LIMITED_RISK: (StepName.HIGH_RISK, StepName.TRANSPARENCY),
     RiskClass.MINIMAL_RISK: (StepName.HIGH_RISK, StepName.TRANSPARENCY),
 }
-"""The steps whose facts set each class; minimal risk falls through the high-risk and
-transparency checks."""
+"""The steps whose facts set each class; limited and minimal risk fall through the high-risk
+check, and the transparency check settles which of the two."""
+
+CLASS_CHECKS = frozenset({StepName.PROHIBITED, StepName.HIGH_RISK, StepName.TRANSPARENCY})
+"""The checks whose open question of law leaves the class itself as the stricter reading."""
 
 LEGAL_REVIEW_CLASSES = frozenset({RiskClass.HIGH_RISK, RiskClass.PROHIBITED})
 """The classes whose results recommend legal review whatever their status (decision 026)."""
@@ -76,27 +87,39 @@ CLASS_NAMES: Mapping[Language, Mapping[RiskClass, str]] = {
 }
 LEGAL_REVIEW: Mapping[Language, Mapping[str, str]] = {
     Language.EN: {
-        "ambiguous": "Have this result reviewed by a lawyer: the law and guidance don't settle "
-        "part of it, so it rests on the stricter reading until a lawyer has reviewed it (class: "
-        "{risk_class}).",
+        "lead": "Have this result reviewed by a lawyer.",
         RiskClass.PROHIBITED: "Have this result reviewed by a lawyer before you use or supply "
         "the system: it is, or is assumed to be, a practice Art. 5 prohibits.",
         RiskClass.HIGH_RISK: "Have this result reviewed by a lawyer: a high-risk system carries "
         "duties with legal consequences.",
+        "scope_open": "The law and guidance don't settle whether the AI Act applies, so it is "
+        "assumed to apply until a lawyer has reviewed it.",
+        "class_open": "The law and guidance don't settle part of the classification, so the "
+        "stricter reading ({risk_class}) is assumed until a lawyer has reviewed it.",
+        "role_open": "The law doesn't settle the company's role, so the {role} role is assumed "
+        "until a lawyer has reviewed it.",
     },
     Language.DE: {
-        "ambiguous": "Lassen Sie dieses Ergebnis anwaltlich prüfen: Recht und Leitlinien klären "
-        "einen Teil davon nicht, daher beruht es bis zur anwaltlichen Prüfung auf der strengeren "
-        "Lesart (Klasse: {risk_class}).",
+        "lead": "Lassen Sie dieses Ergebnis anwaltlich prüfen.",
         RiskClass.PROHIBITED: "Lassen Sie dieses Ergebnis anwaltlich prüfen, bevor Sie das "
         "System nutzen oder bereitstellen: Es ist eine nach Art. 5 verbotene Praktik, oder dies "
         "wird angenommen.",
         RiskClass.HIGH_RISK: "Lassen Sie dieses Ergebnis anwaltlich prüfen: Ein "
         "Hochrisiko-System bringt Pflichten mit rechtlicher Tragweite mit sich.",
+        "scope_open": "Recht und Leitlinien klären nicht, ob die KI-Verordnung gilt, daher wird "
+        "bis zur anwaltlichen Prüfung angenommen, dass sie gilt.",
+        "class_open": "Recht und Leitlinien klären einen Teil der Einstufung nicht, daher wird "
+        "bis zur anwaltlichen Prüfung die strengere Lesart ({risk_class}) angenommen.",
+        "role_open": "Das Recht klärt die Rolle des Unternehmens nicht, daher wird bis zur "
+        "anwaltlichen Prüfung die Rolle {role} angenommen.",
     },
 }
-"""The legal-review line: for an ambiguous result it names the class assumed; otherwise why the
-class needs review."""
+"""The legal-review line: the class's own sentence for a prohibited or high-risk result (or the
+plain lead), then one sentence per open question of law naming what is assumed."""
+
+
+class FinalizeOutputError(ValueError):
+    """The steps and findings don't make a contract-valid result (a node broke its contract)."""
 
 
 def final_class(state: EngineState) -> RiskClass:
@@ -127,17 +150,18 @@ def _unique_by_id(questions: Iterable[FollowUpQuestion]) -> dict[str, FollowUpQu
 
 def follow_up_questions(state: EngineState) -> tuple[FollowUpQuestion, ...]:
     """Every step's missing fact, then the questions the facts node and the checks asked, then
-    a confirm question for each assumed fact a step relied on that the facts node didn't
-    extract; each id once (the first kept), each confirm question once per fact."""
+    a confirm question for each assumed fact a step relied on that neither the facts node
+    extracted nor a check already asks about (`asked_facts`); each id once (the first kept),
+    each confirm question once per fact."""
     steps = state.get("steps", ())
     missing = (step.missing_fact for step in steps if step.missing_fact)
     by_id = _unique_by_id((*missing, *state.get("follow_up_questions", ())))
-    extracted = {fact.text for fact in state.get("facts", ())}
+    asked = {fact.text for fact in state.get("facts", ())} | set(state.get("asked_facts", ()))
     assumed = {
         fact.text: fact
         for step in steps
         for fact in step.facts_used
-        if fact.evidence is EvidenceTag.ASSUMED and fact.text not in extracted
+        if fact.evidence is EvidenceTag.ASSUMED and fact.text not in asked
     }
     for fact in assumed.values():
         question = confirm_question(fact, state["language"], set(by_id))
@@ -145,41 +169,62 @@ def follow_up_questions(state: EngineState) -> tuple[FollowUpQuestion, ...]:
     return tuple(by_id.values())
 
 
-def legal_review(risk_class: RiskClass, status: Status, language: Language) -> str | None:
-    """The recommendation of legal review for a high-risk, prohibited or ambiguous result."""
+def legal_review(
+    steps: Sequence[StepResult], risk_class: RiskClass, role: Role | None, language: Language
+) -> str | None:
+    """The recommendation of legal review for a high-risk, prohibited or legally ambiguous
+    result: the class's sentence, then what each open question of law leaves assumed (in check
+    order: that the Act applies, the stricter class, the role)."""
     texts = LEGAL_REVIEW[language]
-    if status is Status.LEGALLY_AMBIGUOUS:
-        return texts["ambiguous"].format(risk_class=CLASS_NAMES[language][risk_class])
-    return texts[risk_class] if risk_class in LEGAL_REVIEW_CLASSES else None
+    opened = {step.step for step in steps if step.status is Status.LEGALLY_AMBIGUOUS}
+    clauses = (
+        *((texts["scope_open"],) if StepName.SCOPE in opened else ()),
+        *(
+            (texts["class_open"].format(risk_class=CLASS_NAMES[language][risk_class]),)
+            if opened & CLASS_CHECKS
+            else ()
+        ),
+        *(
+            (texts["role_open"].format(role=ROLE_NAMES[language][role]),)
+            if StepName.ROLE_OBLIGATIONS in opened and role is not None
+            else ()
+        ),
+    )
+    if risk_class in LEGAL_REVIEW_CLASSES:
+        return " ".join((texts[risk_class], *clauses))
+    return " ".join((texts["lead"], *clauses)) if clauses else None
 
 
 def finalize(state: EngineState) -> ClassificationResult:
     """The result of one run: the finalize node for the graph (`EngineNodes(finalize=finalize,
-    …)`). Raises `pydantic.ValidationError` when the steps and findings break the result
-    contract (a check skipped, a missing fact not asked)."""
+    …)`). Raises `FinalizeOutputError` when the steps and findings break the result contract (a
+    check skipped, a missing fact not asked); its message names the fields, never their values."""
     steps: tuple[StepResult, ...] = state.get("steps", ())
     language = state["language"]
     risk_class = final_class(state)
-    status = derived_status(steps)
     role = state.get("role")
     is_out = risk_class is RiskClass.OUT_OF_SCOPE
     duties = () if is_out or is_section_b(state) else state.get("transparency_duties", ())
-    return ClassificationResult(
-        facts=state.get("facts", ()),
-        steps=steps,
-        risk_class=risk_class,
-        status=status,
-        role=role.role if role else None,
-        also_role=role.also_role if role else None,
-        role_switch_reason=role.role_switch_reason if role else None,
-        annex_point=state.get("annex_point"),
-        transparency_duties=duties,
-        deciding_facts=deciding_facts(steps, risk_class),
-        obligations=role.obligations if role else (),
-        law_version=state["law_version"],
-        as_of=state["as_of"],
-        disclaimer=DISCLAIMER[language],
-        legal_review=legal_review(risk_class, status, language),
-        not_assessed=refused_steps(steps),
-        follow_up_questions=follow_up_questions(state),
-    )
+    try:
+        return ClassificationResult(
+            facts=state.get("facts", ()),
+            steps=steps,
+            risk_class=risk_class,
+            status=derived_status(steps),
+            role=role.role if role else None,
+            also_role=role.also_role if role else None,
+            role_switch_reason=role.role_switch_reason if role else None,
+            annex_point=state.get("annex_point"),
+            transparency_duties=duties,
+            deciding_facts=deciding_facts(steps, risk_class),
+            obligations=role.obligations if role else (),
+            law_version=state["law_version"],
+            as_of=state["as_of"],
+            disclaimer=DISCLAIMER[language],
+            legal_review=legal_review(steps, risk_class, role.role if role else None, language),
+            not_assessed=refused_steps(steps),
+            follow_up_questions=follow_up_questions(state),
+        )
+    except ValidationError as exc:
+        message = f"the result breaks its contract: {describe_validation_error(exc)}"
+        raise FinalizeOutputError(message) from None

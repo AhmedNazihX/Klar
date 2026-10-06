@@ -48,6 +48,7 @@ from aiact.engine.nodes.common import (
     lookup_for,
     named_passages,
     provision_citation,
+    refused_check,
 )
 from aiact.engine.nodes.guideline_retrieval import (
     GuidelineCorpus,
@@ -280,26 +281,24 @@ def refusal_outcome(
     113(a), fetched from `library`; the original text has neither point, so it names no point.
     The run goes on: the review question is a missing fact, so the step can't end it."""
     language, as_of = state["language"], state["as_of"]
-    review = key_question(texts.PERSON_REVIEW, language)
     cited = (retrieved.article,)
-    decision = texts.REFUSAL[language]
+    assumption = texts.REFUSAL[language]
     if state["law_version"] is LawVersion.ORIGINAL:
-        decision = texts.REFUSAL_ORIGINAL[language]
+        assumption = texts.REFUSAL_ORIGINAL[language]
     elif as_of < DECEMBER_PROHIBITIONS_APPLY_FROM:
         cited = (*cited, library.provision(APPLICATION_DATES, lookup_for(state)))
-        decision = texts.REFUSAL_BEFORE_DECEMBER[language].format(
+        assumption = texts.REFUSAL_BEFORE_DECEMBER[language].format(
             start=long_date(DECEMBER_PROHIBITIONS_APPLY_FROM, language.value),
             as_of=long_date(as_of, language.value),
         )
-    step = StepResult(
-        step=StepName.PROHIBITED,
-        decision=decision,
-        citations=tuple(provision_citation(p) for p in cited),
-        status=Status.NEEDS_MORE_INFORMATION,
-        missing_fact=review,
-        error=texts.REFUSAL_ERROR,
+    return refused_check(
+        StepName.PROHIBITED,
+        language,
+        assumption,
+        tuple(provision_citation(p) for p in cited),
+        key_question(texts.PERSON_REVIEW, language),
+        matched=True,
     )
-    return CheckOutcome(step=step, matched=True, follow_up_questions=(review,))
 
 
 # --- The model call -----------------------------------------------------------------------------

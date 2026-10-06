@@ -50,6 +50,7 @@ from aiact.engine.nodes.common import (
     lookup_for,
     named_passages,
     provision_citation,
+    refused_check,
 )
 from aiact.engine.nodes.key_facts import Answer, CitedFact, KeyFact, facts_used
 from aiact.engine.nodes.scope_texts import (
@@ -78,7 +79,6 @@ from aiact.llm.structured import (
 from aiact.retrieval.provisions import Provision, get_provision
 from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
 from aiact.schemas import (
-    PROVIDER_REFUSAL,
     EvidenceTag,
     FollowUpQuestion,
     Language,
@@ -429,16 +429,13 @@ def refusal_outcome(state: EngineState, law: Sequence[Provision]) -> CheckOutcom
     in scope assumed until a person reviews it, citing the law the model was given. The review
     question is a missing fact, so the run goes on."""
     language = state["language"]
-    review = _question(PERSON_REVIEW, language)
-    step = StepResult(
-        step=StepName.SCOPE,
-        decision=REFUSAL[language],
-        citations=tuple(provision_citation(provision) for provision in law),
-        status=Status.NEEDS_MORE_INFORMATION,
-        missing_fact=review,
-        error=PROVIDER_REFUSAL,
+    return refused_check(
+        StepName.SCOPE,
+        language,
+        REFUSAL[language],
+        tuple(provision_citation(provision) for provision in law),
+        _question(PERSON_REVIEW, language),
     )
-    return CheckOutcome(step=step, follow_up_questions=(review,))
 
 
 # --- The model call -----------------------------------------------------------------------------

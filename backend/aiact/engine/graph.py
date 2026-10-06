@@ -109,6 +109,8 @@ def _findings(outcome: CheckOutcome) -> StateUpdate:
         findings["role"] = outcome.role
     if outcome.follow_up_questions:
         findings["follow_up_questions"] = outcome.follow_up_questions
+    if outcome.asked_facts:
+        findings["asked_facts"] = outcome.asked_facts
     return findings
 
 

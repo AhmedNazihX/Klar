@@ -161,10 +161,12 @@ SUBSTANTIAL_MODIFICATION_QUESTION: Mapping[Language, str] = {
     "affected or results in a modification to the intended purpose for which the AI system has "
     'been assessed".',
     Language.DE: "Ist die Änderung eine wesentliche Veränderung nach Art. 3 Nr. 23, durch die Sie "
-    "nach Art. 25 Abs. 1 Buchst. b Anbieter werden? Art. 3 Nr. 23 versteht darunter eine "
-    "Veränderung, die in der ursprünglichen Konformitätsbewertung des Anbieters nicht vorgesehen "
-    "oder geplant ist und durch die die Erfüllung der Anforderungen von Kapitel III Abschnitt 2 "
-    "beeinträchtigt wird oder die zu einer Änderung der Zweckbestimmung führt.",
+    "nach Art. 25 Abs. 1 Buchst. b Anbieter werden? Art. 3 Nr. 23 definiert sie als „eine "
+    "Veränderung eines KI-Systems nach dessen Inverkehrbringen oder Inbetriebnahme, die in der vom "
+    "Anbieter durchgeführten ursprünglichen Konformitätsbewertung nicht vorgesehen oder geplant "
+    "war und durch die die Konformität des KI-Systems mit den Anforderungen in Kapitel III "
+    "Abschnitt 2 beeinträchtigt wird oder die zu einer Änderung der Zweckbestimmung führt, für die "
+    "das KI-System bewertet wurde“.",
 }
 SUBSTANTIAL_MODIFICATION_READINGS: Mapping[Language, tuple[str, str]] = {
     Language.EN: (
@@ -227,8 +229,8 @@ PERSON_REVIEW = KeyQuestion(
         "its own name on it, changed it or used it for a new purpose (Art. 3, 25)?",
         Language.DE: "Bitte lassen Sie die Beschreibung von einem Menschen prüfen: Entwickelt Ihr "
         "Unternehmen das System, nutzt es ein System eines anderen Anbieters, führt es das System "
-        "ein oder vertreibt es es, und hat es das System unter eigenem Namen angeboten, verändert "
-        "oder für einen neuen Zweck eingesetzt (Art. 3, 25)?",
+        "in die EU ein oder ist es Händler des Systems? Hat es das System unter eigenem Namen "
+        "angeboten, verändert oder für einen neuen Zweck eingesetzt (Art. 3, 25)?",
     },
 )
 """The question a refused reply asks (decision 029)."""
@@ -307,9 +309,12 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "component of one, under Annex I Section B, so Art. 2(2) applies only a few provisions of "
         "the AI Act to it, none of them a duty of this role; its requirements come from the "
         "sector law.",
-        "refusal": "The model provider's content filter blocked this description, so the role "
-        "could not be assessed automatically. Working assumption until a person has reviewed it: "
-        "provider, keeping the deployer duties.",
+        "section_b_possible": "If the system is high-risk as a product, or a safety component of "
+        "one, under Annex I Section B, Art. 2(2) applies only a few provisions of the AI Act to "
+        "it, none of them a duty of this role, and its requirements come from the sector law; "
+        "until the high-risk check is settled, the duties stay listed.",
+        "refusal": "Working assumption until a person has reviewed it: provider, keeping the "
+        "deployer duties.",
         "assumption_also": "Working assumption: also {also}, pending an answer to: {question}",
         "assumption": "Working assumption: provider, keeping the other role's duties, pending an "
         "answer to: {question}",
@@ -357,9 +362,13 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "oder Sicherheitsbauteil eines Produkts nach Anhang I Abschnitt B hochriskant, daher "
         "gelten nach Art. 2 Abs. 2 nur wenige Vorschriften der KI-Verordnung, keine davon eine "
         "Pflicht dieser Rolle; seine Anforderungen ergeben sich aus dem Sektorrecht.",
-        "refusal": "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher "
-        "konnte die Rolle nicht automatisch geprüft werden. Arbeitsannahme, bis ein Mensch sie "
-        "geprüft hat: Anbieter, mit den Pflichten als Betreiber.",
+        "section_b_possible": "Ist das System als Produkt oder Sicherheitsbauteil eines Produkts "
+        "nach Anhang I Abschnitt B hochriskant, gelten nach Art. 2 Abs. 2 nur wenige Vorschriften "
+        "der KI-Verordnung, keine davon eine Pflicht dieser Rolle, und seine Anforderungen "
+        "ergeben sich aus dem Sektorrecht; solange die Hochrisiko-Prüfung offen ist, bleiben die "
+        "Pflichten aufgeführt.",
+        "refusal": "Arbeitsannahme, bis ein Mensch sie geprüft hat: Anbieter, mit den Pflichten "
+        "als Betreiber.",
         "assumption_also": "Arbeitsannahme: zugleich {also}, bis diese Frage beantwortet ist: "
         "{question}",
         "assumption": "Arbeitsannahme: Anbieter, mit den Pflichten der anderen Rolle, bis diese "
