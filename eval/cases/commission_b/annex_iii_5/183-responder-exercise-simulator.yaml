@@ -1,0 +1,29 @@
+id: cb-183-responder-exercise-simulator
+set_name: commission_b
+language: en
+description: >-
+  We're a 28-person company in Tampere building training software for fire brigades, rescue
+  services and civil-protection agencies. Trainers pick a scenario from our library, such as a
+  river flood, a forest fire or a cyberattack on a hospital, and teams practise their response on a
+  shared digital map while our model makes the incident unfold realistically: fire fronts move,
+  water levels rise, systems fail. Afterwards the platform produces a debrief with a timeline,
+  measured response times and the playbook steps the team missed, and points to the relevant
+  playbook sections. It is only used for exercises, never with real calls or real dispatch.
+  Version 3 comes out in 2028.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:5:d"]
+source_example_id: hr-ex-183
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: a simulation platform for training first responders
+  does not evaluate or classify real emergency calls, nor dispatch or prioritise responders, so it
+  falls outside Annex III point 5(d). It does not evaluate trainees for an education institution's
+  purposes either. Debriefs are measured data and playbook references, not generated text, so no
+  Art. 50 duty: minimal_risk. Doubt: if an engine reads the animated scenarios as synthetic
+  content, it would add Art. 50(2). Role: it builds and sells the platform under its own name.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"

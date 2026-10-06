@@ -1,0 +1,26 @@
+id: cb-164-loan-form-help-chat
+set_name: commission_b
+language: en
+description: >-
+  We're an online consumer-lending company in Riga with about 140 employees. From 2028 our loan
+  application page will have a chat assistant, bought from a conversational-AI vendor, that helps
+  people fill in the form. Applicants can ask it what terms like "debt-to-income ratio" mean, and
+  it gives feedback as they go, for example that leaving a field blank or listing a short job
+  history tends to lower the chance of approval. The assistant plays no part in our actual credit
+  check, which a separate system and our underwriters do; it only helps applicants prepare. We use
+  the vendor's assistant with our own FAQ content. We're also launching a savings account.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["annex:III:5:b", "art:50:1"]
+source_example_id: hr-ex-164
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: a support assistant that helps applicants understand
+  and complete the credit form, without taking part in the creditworthiness assessment or scoring,
+  falls outside Annex III point 5(b). It is a chat assistant talking directly to applicants, so the
+  Art. 50(1) duty applies (to its provider): limited_risk. Role: deployer of a bought assistant.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"

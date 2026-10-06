@@ -1,0 +1,30 @@
+id: cb-158-benefit-application-translation
+set_name: commission_b
+language: en
+description: >-
+  We are the social-assistance office of a large Swedish municipality with about 450 staff. Many
+  people apply for financial assistance or housing support in languages other than Swedish, and
+  from 2028 every such application and its attachments will be run through a translation service
+  we license from a language-technology company. The caseworker then reads the Swedish translation,
+  alongside the original, and assesses the application exactly as before. The service only
+  translates; it doesn't summarise, score or comment on the application. We use it as supplied.
+  We're also training staff in plain-language writing.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:a", "art:6:3:d", "annex:III:5:a", "art:6:4"]
+source_example_id: hr-ex-158
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: translating applications is used in the evaluation of
+  applications for public assistance (Annex III point 5(a)) but is a necessary step that does not
+  decide eligibility: the Art. 6(3)(a) and (d) exemptions. Translation is a minor alteration under
+  the Art. 50(2) exception and translation tools do not interact directly with people (as
+  own-a-10), so no Art. 50 duty: minimal_risk. Art. 6(4): the provider must document this
+  assessment before placing it on the market (and register it under Art. 49(2)). Role: deployer of
+  a licensed service.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

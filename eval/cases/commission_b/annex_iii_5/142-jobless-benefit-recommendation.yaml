@@ -1,0 +1,27 @@
+id: cb-142-jobless-benefit-recommendation
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Arbeitslosenversicherung eines österreichischen Bundeslandes mit rund 900
+  Beschäftigten. Ab 2028 prüft ein Programm, das wir bei einem IT-Dienstleister gekauft haben, jeden
+  neuen Antrag auf Arbeitslosengeld: Es wertet die Versicherungszeiten, das letzte Einkommen und
+  die Angaben im Antrag aus, stellt fest, ob die Person anspruchsberechtigt ist, für wie lange und in
+  welcher Höhe, und schlägt der Sachbearbeiterin eine Bewilligung oder Ablehnung vor. Die
+  Sachbearbeiterin unterschreibt den Bescheid. Im selben Jahr stellen wir unsere Telefonanlage auf
+  ein neues System um.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:5:a"
+label_citation: ["annex:III:5:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-142
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: a public authority's system that evaluates whether a
+  person is eligible for unemployment benefits, for how long and how much, and recommends granting
+  or refusing them is Annex III point 5(a), high-risk under Art. 6(2); it evaluates the individual
+  and shapes the decision, so no Art. 6(3) exemption. Role: deployer of bought software.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"

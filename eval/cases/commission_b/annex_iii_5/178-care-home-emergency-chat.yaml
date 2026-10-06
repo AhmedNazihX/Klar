@@ -1,0 +1,28 @@
+id: cb-178-care-home-emergency-chat
+set_name: commission_b
+language: en
+description: >-
+  We run eight nursing homes in the Netherlands with about 1,100 staff. From 2028 every resident's
+  room gets a tablet with a chat assistant from a health-tech vendor. Residents can type or speak
+  to it at any time; if what they say points to an emergency, such as a fall, chest pain or
+  trouble breathing, the assistant immediately calls out our on-site emergency team and, where
+  needed, the ambulance service. It doesn't examine or diagnose anyone, and it gives no medical
+  advice; it only recognises that help is needed and raises the alarm. We use it with the vendor's
+  standard settings. The tablets also offer video calls with family.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:5:d"
+label_citation: ["annex:III:5:d", "art:6:2", "art:50:1"]
+source_example_id: hr-ex-178
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: a chatbot that triggers emergency medical services in
+  a care institution, without clinical assessment or diagnosis, is used to dispatch emergency first
+  response services: Annex III point 5(d), high-risk under Art. 6(2). It talks directly with
+  residents, so the Art. 50(1) duty stacks (on its provider). Role: deployer of a bought assistant.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"
+  - "trap:high_risk_and_transparency"

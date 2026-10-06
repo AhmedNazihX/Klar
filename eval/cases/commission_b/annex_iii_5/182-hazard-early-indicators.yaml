@@ -1,0 +1,26 @@
+id: cb-182-hazard-early-indicators
+set_name: commission_b
+language: en
+description: >-
+  We are a 35-person climate-risk analytics company in Athens. Our platform combines weather
+  forecasts, river gauges, seismic sensors, vegetation maps and trending topics on social media to
+  give early signs of possible disasters: it maps flood-prone areas and suggests mitigation
+  measures, models how a wildfire could spread with the wind, temperature and vegetation, and
+  notices when people online suddenly start posting about smoke or flooding. Regional governments
+  and insurers subscribe to it. It isn't connected to any emergency-call or dispatch system and
+  doesn't decide when or where responders go. The 2028 release adds coastal storm surges. We also
+  publish a free heat-wave map.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:5:d"]
+source_example_id: hr-ex-182
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: general forecasting of potential disasters, with no
+  link to dispatching emergency first response services, falls outside Annex III point 5(d). No
+  Art. 50 duty: minimal_risk. Role: it builds and offers the platform under its own name.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"

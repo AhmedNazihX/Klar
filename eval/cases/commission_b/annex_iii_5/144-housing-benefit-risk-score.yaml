@@ -1,0 +1,30 @@
+id: cb-144-housing-benefit-risk-score
+set_name: commission_b
+language: en
+description: >-
+  We are the housing and welfare department of a Dutch municipality of about 180,000 residents. In
+  2028 we start using a scoring model from a public-sector software supplier when people apply for
+  social housing or for our supplementary unemployment allowance. Using the applicant's household
+  details, their history with our department and their declared income and savings, it estimates
+  how likely the application is to be fraudulent and how likely the person is to depend on support
+  for a long time, and gives each applicant a score. Our caseworkers see the score next to the file
+  and lean on it heavily when they decide. The data comes only from the application and our own
+  benefit records. We're also moving to a new building in the city centre.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:5:a"
+label_citation: ["annex:III:5:a", "art:6:2", "art:6:3", "art:5:1:c"]
+source_example_id: hr-ex-144
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: a public authority scoring applicants for social
+  housing or benefits by predicted fraud and long-term dependency evaluates eligibility and
+  materially influences the decision: Annex III point 5(a), high-risk under Art. 6(2); it profiles
+  applicants, so no Art. 6(3) exemption. Not Art. 5(1)(c) social scoring, as the Commission's row
+  assumes: the score uses data from the benefit context only and serves the decision it was made
+  for. Role: deployer of a bought model.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"

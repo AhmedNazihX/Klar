@@ -1,0 +1,29 @@
+id: cb-161-bureau-score-for-landlords
+set_name: commission_b
+language: de
+description: >-
+  Wir sind eine Auskunftei aus Hamburg mit etwa 300 Mitarbeitenden. Unser neues Bonitätsmodell
+  berechnet für Privatpersonen einen Score aus Zahlungsverhalten, offenen Forderungen und
+  Vertragsdaten. Wir selbst entscheiden über nichts: Den Score fragen Banken, Vermieter,
+  Krankenversicherer und Mobilfunkanbieter bei uns ab und entscheiden danach, ob jemand einen
+  Kredit, eine Wohnung, einen Versicherungsvertrag oder einen Handyvertrag bekommt. Das Modell
+  haben wir selbst entwickelt, es geht 2028 in Betrieb. Außerdem bieten wir Verbrauchern jetzt
+  eine kostenlose Selbstauskunft per App an.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:5:b"
+label_citation: ["annex:III:5:b", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-161
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: establishing a credit score for natural persons is
+  Annex III point 5(b), high-risk under Art. 6(2), even though third parties (lenders, landlords,
+  insurers, telecoms) make the decisions; the deployer need not be the party deciding. It profiles
+  people, so no Art. 6(3) exemption. Role: it develops the model and runs it for its clients
+  (provider, also deployer).
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"
+  - "also_role:deployer"

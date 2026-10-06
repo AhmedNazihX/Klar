@@ -1,0 +1,28 @@
+id: cb-189-incident-site-casualty-map
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Hersteller von Einsatztechnik aus Ulm mit 90 Beschäftigten. Unser neues Tablet für
+  Einsatzleiter am Schadensort führt alle verfügbaren Daten zu einem Lagebild zusammen: Meldungen
+  der Rettungskräfte, Bilder von Drohnen und Rettungsrobotern sowie Messwerte von Sensoren, etwa zu
+  Strahlung oder Giftstoffen. Ein von uns trainiertes Modell erkennt darin Verletzte, markiert auf
+  der Karte, wo sie liegen, und zeigt Messwerte wie ihre Körpertemperatur an. Wer zuerst versorgt
+  wird, bewertet es nicht; die Sichtung machen die Notärzte. Das Tablet kommt 2028 unter unserem
+  Namen auf den Markt. Wir bauen außerdem Beleuchtungsmasten für Einsatzstellen.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:3:a", "art:6:3:d", "annex:III:5:d", "art:6:4"]
+source_example_id: hr-ex-189
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the system is linked to emergency patient triage
+  (Annex III point 5(d)), but only presents existing, factual information in a structured way
+  without evaluating it for prioritisation or triage: the Art. 6(3)(a) and (d) exemptions. No
+  Art. 50 duty: minimal_risk. Art. 6(4): as provider it must document this assessment before
+  placing the tablet on the market (and register it under Art. 49(2)).
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

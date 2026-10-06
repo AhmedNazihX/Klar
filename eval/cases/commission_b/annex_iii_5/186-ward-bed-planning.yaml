@@ -1,0 +1,27 @@
+id: cb-186-ward-bed-planning
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein kommunales Krankenhaus in Sachsen-Anhalt mit 600 Betten und rund 1.800 Beschäftigten.
+  Für das Belegungsmanagement nutzen wir ab 2028 ein Planungswerkzeug eines Softwarehauses. Es
+  schätzt für jede aufgenommene Patientin und jeden Patienten anhand von Diagnose, Eingriff und
+  Verlauf, wie lange die Genesung voraussichtlich dauert, und plant daraus, wann welche Zimmer und
+  Betten frei werden. Mit Notaufnahme oder Rettungsdienst ist es nicht verbunden, und über
+  Behandlungen entscheidet es nicht; die Ärztinnen und Ärzte legen die Entlassung fest. Außerdem
+  sanieren wir gerade die Cafeteria.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:5:d"]
+source_example_id: hr-ex-186
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: estimating recovery time for room and bed management
+  serves none of the purposes in Annex III point 5(d) (emergency calls, dispatch, emergency
+  triage), so it falls outside it. Used for planning, not for a medical purpose, so no Annex I
+  medical-device question is intended. No Art. 50 duty: minimal_risk. Role: deployer of a bought
+  tool.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"
