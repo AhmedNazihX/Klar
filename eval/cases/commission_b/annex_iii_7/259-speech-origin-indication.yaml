@@ -18,7 +18,7 @@ source_example_id: hr-ex-259
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: indicating a likely country or region of origin from
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: indicating a likely country or region of origin from
   recorded speech, used in the eligibility reasoning in a specific applicant's file, assists the
   examination of the application: Annex III point 7(c), high-risk under Art. 6(2); no Art. 6(3)
   exemption. Doubt: an engine could also read origin-from-voice as biometric categorisation (point

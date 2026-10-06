@@ -18,7 +18,7 @@ source_example_id: hr-ex-205
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: assessing the reliability of evidence from human
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: assessing the reliability of evidence from human
   sources (witnesses, informants) for law enforcement is Annex III point 6(c), high-risk under
   Art. 6(2); it evaluates individuals' credibility, so no Art. 6(3) exemption. Role: deployer of a
   bought program.

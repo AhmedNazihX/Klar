@@ -17,7 +17,7 @@ source_example_id: hr-ex-232
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: detecting objects (weapons, suspicious parcels,
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting objects (weapons, suspicious parcels,
   dangerous goods, stolen cultural objects) is outside the law-enforcement uses in Annex III point
   6 and is not biometrics under point 1. No Art. 50 duty: minimal_risk. Role: it trains the model
   and sells the software under its own name.

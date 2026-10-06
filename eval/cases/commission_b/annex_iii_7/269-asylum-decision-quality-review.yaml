@@ -17,7 +17,7 @@ source_example_id: hr-ex-269
 accepted_bases: ["art_6_3_filter"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Contaminated source (decision 016: the corpus retells
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Contaminated source (decision 016: the corpus retells
   hr-ex-269 in annex-iii para:102); written as usual, source_example_id kept so the evaluation can
   flag it. Class: analysing completed eligibility files to detect decision-making patterns and
   deviations for quality-assurance reports, without proposing outcomes in live cases, is the

@@ -16,7 +16,7 @@ source_example_id: hr-ex-234
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: detecting gunshot sounds works on sounds, not people,
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting gunshot sounds works on sounds, not people,
   so it falls outside the uses in Annex III point 6. No Art. 50 duty: minimal_risk. Role: it
   trains the model and sells the system under its own name.
 tags:

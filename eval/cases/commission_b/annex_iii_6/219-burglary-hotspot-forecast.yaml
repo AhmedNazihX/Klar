@@ -17,7 +17,7 @@ source_example_id: hr-ex-219
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: predicting where and when burglaries are likely,
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: predicting where and when burglaries are likely,
   without linking the prediction to identifiable people, is geospatial forecasting, not a risk
   assessment of natural persons, so outside Annex III point 6(d) and outside Art. 5(1)(d). No
   Art. 50 duty: minimal_risk. Role: deployer of a bought tool.

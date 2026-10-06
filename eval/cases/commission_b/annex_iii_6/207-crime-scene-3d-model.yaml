@@ -17,7 +17,7 @@ source_example_id: hr-ex-207
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: mapping and reconstructing a crime scene from
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: mapping and reconstructing a crime scene from
   collected data helps investigators understand spatial relations and sequence without assessing
   evidence reliability, so outside Annex III point 6(c). The 3D model is built from measured data,
   read as a visualisation rather than synthetic content, so no Art. 50 duty: minimal_risk. Role: it

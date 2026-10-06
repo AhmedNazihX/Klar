@@ -17,9 +17,9 @@ source_example_id: hr-ex-275
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: detecting people in distress at sea exclusively to
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting people in distress at sea exclusively to
   coordinate search and rescue, with no link to migration or border control, is outside Annex III
-  point 7(d): the intended purpose is lifesaving. DOUBT (flagged to the user): point 5(d) covers
+  point 7(d): the intended purpose is lifesaving. Also outside point 5(d) (settled by the orchestrator 2026-10-07): point 5(d) covers
   systems used to dispatch, or establish priority in dispatching, emergency first response
   services; this system reports positions to the rescue coordination centre, which decides, so
   read as not dispatching (contrast cb-176, which classifies emergency calls). No Art. 50 duty:

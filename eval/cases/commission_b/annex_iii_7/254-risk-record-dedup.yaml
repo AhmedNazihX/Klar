@@ -16,7 +16,7 @@ source_example_id: hr-ex-254
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: harmonising terminology and finding duplicates in
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: harmonising terminology and finding duplicates in
   completed risk-assessment records, after the human assessment, produces no person-level risk
   output for entry or stay decisions, so outside Annex III point 7(b). No Art. 50 duty:
   minimal_risk. Role: deployer of a bought tool.

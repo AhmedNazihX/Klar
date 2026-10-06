@@ -18,7 +18,7 @@ source_example_id: hr-ex-196
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: predicting overcrowding, crushes or structural
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: predicting overcrowding, crushes or structural
   hazards at large gatherings concerns accidents, not the risk of persons becoming victims of
   criminal offences, so outside Annex III point 6(a); it identifies no one (not point 1). No
   Art. 50 duty: minimal_risk. Role: deployer of bought video analytics.

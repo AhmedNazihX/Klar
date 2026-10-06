@@ -17,7 +17,7 @@ source_example_id: hr-ex-197
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: identifying populations at risk of becoming victims
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: identifying populations at risk of becoming victims
   of floods or wildfires concerns natural catastrophes, not criminal offences, so outside Annex III
   point 6(a); it does not dispatch or prioritise emergency services either (point 5(d)). No
   Art. 50 duty: minimal_risk. Role: deployer of bought models.

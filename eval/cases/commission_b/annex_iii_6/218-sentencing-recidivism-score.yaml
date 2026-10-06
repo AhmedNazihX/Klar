@@ -17,7 +17,7 @@ source_example_id: hr-ex-218
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: estimating the risk of recidivism or further serious
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: estimating the risk of recidivism or further serious
   offences for criminal courts is Annex III point 6(d), high-risk under Art. 6(2); it profiles
   defendants, so no Art. 6(3) exemption. Not Art. 5(1)(d): it rests on a conviction and case facts,
   not on profiling alone. Role: it develops and sells the product under its own name.

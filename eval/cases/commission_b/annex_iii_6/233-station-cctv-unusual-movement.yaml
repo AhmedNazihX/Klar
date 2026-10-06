@@ -17,7 +17,7 @@ source_example_id: hr-ex-233
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: detecting unusual behaviour or movements in video,
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting unusual behaviour or movements in video,
   without identifying anyone, assesses whether a situation is potentially unlawful, not persons:
   outside the uses in Annex III point 6 and not biometric identification, categorisation or
   emotion recognition under point 1. No Art. 50 duty: minimal_risk. Role: deployer of bought

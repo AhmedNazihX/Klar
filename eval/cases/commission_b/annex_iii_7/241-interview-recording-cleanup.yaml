@@ -20,7 +20,7 @@ flip_variants:
     resulting_verdict: high
     provision_ids: ["annex:III:7:a"]
 notes: >-
-  Draft label, awaiting user approval. Class: normalising audio and video and extracting facial
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: normalising audio and video and extracting facial
   landmarks, with no deception inference, is either outside Annex III point 7(a) or a preparatory
   task under Art. 6(3)(d); both bases are accepted. Written without the flip feature (landmarks
   feeding a credibility assessment); the engine should ask about or flag it. Denoising and lighting

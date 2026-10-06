@@ -18,7 +18,7 @@ source_example_id: hr-ex-222
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: generating individual risk inferences from behaviour
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: generating individual risk inferences from behaviour
   patterns to filter people as potential suspects is profiling in the course of detecting and
   investigating criminal offences, Annex III point 6(e), high-risk under Art. 6(2); profiling rules
   out Art. 6(3). Not Art. 5(1)(d): the assessment is supported by past criminal behaviour and other

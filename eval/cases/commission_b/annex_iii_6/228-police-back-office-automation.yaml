@@ -17,7 +17,7 @@ source_example_id: hr-ex-228
 accepted_bases: ["outside_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: automating administration, accounting, case-file
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: automating administration, accounting, case-file
   handling, equipment management and patrol scheduling are administrative activities that fall
   outside the law-enforcement uses in Annex III point 6. Rosters are built from staffing rules,
   leave and training, not from individual behaviour or performance, so not point 4(b) either. No

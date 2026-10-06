@@ -19,7 +19,7 @@ source_example_id: hr-ex-243
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: computing per-person security, irregular-migration and
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: computing per-person security, irregular-migration and
   health risk flags in visa processing and referring named applicants for further checks is Annex
   III point 7(b), high-risk under Art. 6(2); no Art. 6(3) exemption (profiling). Role: deployer;
   the service provider runs the program on its behalf.

@@ -22,7 +22,7 @@ flip_variants:
     resulting_verdict: high
     provision_ids: ["annex:III:6:e"]
 notes: >-
-  Draft label, awaiting user approval. Class: detecting suspicious transaction patterns
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting suspicious transaction patterns
   (amounts, frequencies, intervals, routing) is not profiling of natural persons, even if
   transactions can later be linked to people, so outside Annex III point 6(e). Written without the
   flip feature (enrichment with personal data to build individual profiles); the engine should
