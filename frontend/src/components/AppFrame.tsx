@@ -3,6 +3,7 @@ import { useId, useState, type JSX, type KeyboardEvent, type ReactNode } from 'r
 import { useTranslation } from 'react-i18next'
 
 import { useLoadMotion } from '@/hooks/use-load-motion'
+import { useUserDataOverview } from '@/hooks/use-user-data-overview'
 import { cn } from '@/lib/utils'
 
 import { AppSidebar } from './AppSidebar'
@@ -32,6 +33,7 @@ export function AppFrame({ law, children }: { law: LawBinding; children: ReactNo
   const title = useScreenTitle()
   const motion = useLoadMotion(pathname)
   const menuId = useId()
+  const overview = useUserDataOverview()
   // The phone menu belongs to the screen it was opened on, so going anywhere closes it.
   const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null)
   const isMenuOpen = menuOpenOn === pathname
@@ -57,7 +59,7 @@ export function AppFrame({ law, children }: { law: LawBinding; children: ReactNo
           isMenuOpen ? 'flex' : 'hidden',
         )}
       >
-        <AppSidebar />
+        <AppSidebar company={overview.data?.profile ?? null} />
       </aside>
       <div className="flex min-w-0 flex-col gap-4 md:ml-[272px]">
         <PhoneTopBar

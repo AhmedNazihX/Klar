@@ -152,17 +152,20 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            system's base set: Button, SegmentedControl, StatusPill, EvidenceTag,
 │       │                            Icon, Citation, Notice, LawSwitch, LawDate, LawNotice (P14); the frames:
 │       │                            AppFrame, AppSidebar, SidebarNav, AppTopBar, SiteFrame, SiteNav,
-│       │                            SiteFooter, MistGround, ScreenPlaceholder, PhoneLabel (P15)
+│       │                            SiteFooter, MistGround, ScreenPlaceholder, PhoneLabel (P15); the
+│       │                            sidebar's CompanyLine (P18)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
-│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), classify/ (P5), inventory/ (P6)
-│       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15)
+│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6)
+│       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15),
+│       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
-│       │                            api-client-config, utils (P4)
+│       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
 │       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4), reduced-motion.ts (matchMedia stub, P14),
-│                                    browser-setup.ts (the browser project), shell-routes.ts (every screen route, by frame) (P15)
+│                                    browser-setup.ts (the browser project), shell-routes.ts (every screen route, by frame) (P15),
+│                                    user-data-handlers.ts (MSW handlers for the user's Supabase data, P18)
 │
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves

@@ -104,7 +104,14 @@
     "companyEmpty": "No company profile yet",
     "exportData": "Export data",
     "deleteData": "Delete my data",
-    "menu": "Menu"
+    "menu": "Menu",
+    "companyEdit": "Edit company profile",
+    "companyLine": {
+      "sme": "{{band}} staff, counts as an SME",
+      "smc": "{{band}} staff, counts as a small mid-cap"
+    },
+    "companyStaff": "{{band}} staff",
+    "companySaved": "Company profile saved"
   },
   "screen": {
     "placeholder": "This screen is still being built.",
@@ -144,5 +151,109 @@
   "lawShort": {
     "amended": "As amended, 2026",
     "original": "Original, 2024"
+  },
+  "welcome": {
+    "title": "Let's see where your AI tools stand.",
+    "intro": "Add the tools your company uses, one at a time. Klar checks each one in the AI Act's order, cites every step, and builds your to-do list with dates.",
+    "inventoryName": "AI inventory",
+    "profile": {
+      "heading": "About your company",
+      "subtitle": "Takes a minute. You can change it later. It doesn't change how your tools are classified.",
+      "companyName": "Company name",
+      "staff": "Staff",
+      "turnover": "Annual turnover",
+      "establishedIn": "Where you are established",
+      "establishedNone": "Choose a country",
+      "establishedHint": "Established outside the EU? The Act still applies when your tools' output is used in the EU (Art. 2(1)(c)), and a provider of high-risk systems appoints a representative in the EU (Art. 22).",
+      "usedIn": "Where the tools are used",
+      "usedInHint": "The Act applies to AI used in the EU, wherever the provider sits (Art. 2).",
+      "skip": "Skip for now",
+      "save": "Save and add a tool",
+      "saving": "Saving…"
+    },
+    "staffBand": {
+      "1-9": "1–9",
+      "10-49": "10–49",
+      "50-249": "50–249",
+      "250-749": "250–749",
+      "750+": "750+"
+    },
+    "turnoverBand": {
+      "up_to_10m": "Up to €10 m",
+      "up_to_50m": "Up to €50 m",
+      "up_to_150m": "Up to €150 m",
+      "over_150m": "More"
+    },
+    "usedInOption": {
+      "eu": "In the EU",
+      "eu_and_outside": "Also outside"
+    },
+    "size": {
+      "label": {
+        "sme": "Counts as an SME",
+        "smc": "Counts as a small mid-cap",
+        "none": "Neither an SME nor a small mid-cap",
+        "noneOriginal": "Not an SME"
+      },
+      "body": {
+        "sme": "SMEs get lighter documentation duties, and the lower of the two maximum fines applies to them (Art. 99(6)), not the higher one of Art. 99(3).",
+        "smc": "For a small mid-cap, the lower of the two maximum fines applies to fines under Art. 99(4) and (5) (Art. 99(6a)), but not to breaches of the Art. 5 bans (Art. 99(3)). Small mid-caps may use the simplified documentation too (Art. 11(1)).",
+        "none": "Neither the relief for SMEs (Art. 99(6)) nor the one for small mid-caps (Art. 99(6a)) applies, so the higher of the two maximum fines applies (Art. 99(3) to (5)).",
+        "noneOriginal": "The relief for SMEs (Art. 99(6)) doesn't apply, so the higher of the two maximum fines applies (Art. 99(3) to (5)). The original 2024 text has no small mid-cap rules."
+      },
+      "maybeSme": "Klar looks at turnover only. With a balance sheet total of up to €43 m you may still count as an SME.",
+      "maybeSmc": "Klar looks at turnover only. With a balance sheet total of up to €129 m you may still count as a small mid-cap."
+    },
+    "law": {
+      "art99_3": {
+        "quote": "Non-compliance with the prohibition of the AI practices referred to in Article 5 shall be subject to administrative fines of up to EUR 35 000 000 or, if the offender is an undertaking, up to 7 % of its total worldwide annual turnover for the preceding financial year, whichever is higher.",
+        "source": "Art. 99(3), Regulation (EU) 2024/1689, English"
+      },
+      "art99_6": {
+        "quote": "In the case of SMEs, including start-ups, each fine referred to in this Article shall be up to the percentages or amount referred to in paragraphs 3, 4 and 5, whichever thereof is lower.",
+        "source": "Art. 99(6), Regulation (EU) 2024/1689, English"
+      },
+      "art2_1_c": {
+        "quote": "providers and deployers of AI systems that have their place of establishment or are located in a third country, where the output produced by the AI system is used in the Union;",
+        "source": "Art. 2(1)(c), Regulation (EU) 2024/1689, English"
+      },
+      "art22_1": {
+        "quote": "Prior to making their high-risk AI systems available on the Union market, providers established in third countries shall, by written mandate, appoint an authorised representative which is established in the Union.",
+        "source": "Art. 22(1), Regulation (EU) 2024/1689, English"
+      },
+      "art99_6a": {
+        "quote": "In the case of SMCs, each fine referred to in paragraphs 4 and 5 shall be up to the percentages or amount referred therein, whichever is lower.",
+        "source": "Art. 99(6a), Regulation (EU) 2024/1689 as amended, English"
+      }
+    },
+    "tools": {
+      "heading": "Your AI tools",
+      "emptyTitle": "No tools yet",
+      "emptyBody": "Start with the one you're least sure about. A few sentences are enough.",
+      "classifyFirst": "Classify your first tool",
+      "import": "Import your data",
+      "importHint": "Restores a file you exported from Your data. Nothing is classified again.",
+      "importing": "Importing…",
+      "imported_one": "Restored {{count}} tool from your file.",
+      "imported_other": "Restored {{count}} tools from your file.",
+      "count_one": "Your inventory holds {{count}} tool.",
+      "count_other": "Your inventory holds {{count}} tools.",
+      "open": "Open your inventory"
+    },
+    "how": {
+      "heading": "How it works",
+      "describe": "Describe a tool in your own words.",
+      "answer": "Answer what Klar asks; it only asks what decides the outcome.",
+      "result": "Get the class, your duties with dates, and draft documents."
+    },
+    "retention": "No account needed. Your session is anonymous and deleted after 30 days without activity.",
+    "failure": {
+      "storageFull": "Your saved data is full, so nothing more can be stored.",
+      "storageFullHint": "Delete old data you no longer need, then try again.",
+      "storageFullLink": "Go to Your data",
+      "tooLarge": "This file is larger than 4 MB, so it can't be imported.",
+      "badFile": "This file isn't a Klar export. Choose a file you exported from Your data.",
+      "failed": "That didn't work. Check your connection and try again."
+    }
   }
 }
