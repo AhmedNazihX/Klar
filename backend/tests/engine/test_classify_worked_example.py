@@ -24,18 +24,25 @@ from aiact.engine.nodes.common import Lookup
 from aiact.engine.nodes.guideline_retrieval import GuidelineCorpus
 from aiact.engine.nodes.high_risk_retrieval import HighRiskCorpus
 from aiact.engine.nodes.scope import CorpusLibrary
+from aiact.engine.scripted import Script, scripted_nodes
+from aiact.engine.state import CheckOutcome
 from aiact.eval.experiments.matchers import WORKED_EXAMPLE
 from aiact.llm import OpenRouterEmbeddings
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
     DISCLAIMER,
+    ClassificationResult,
+    EvidenceTag,
+    Fact,
+    FollowUpQuestion,
     Language,
     LawVersion,
     RiskClass,
     Role,
     Status,
     StepName,
+    StepResult,
 )
 from aiact.settings import Settings, get_settings
 from tests.engine.built_corpus import built_validator, unresolved_citations
@@ -84,8 +91,9 @@ ART_5 = "art:5"
 
 
 SCOPE_QUESTION = "ai_system"
-"""The scope step's missing fact: whether the tool infers its outputs (Art. 3(1)); the
-description doesn't say (user, 2026-10-06: the step asks rather than decides)."""
+"""The scope step's missing fact when it asks whether the tool infers its outputs (Art. 3(1)),
+which the description doesn't say. It may instead assume that the tool is an AI system and
+decide (user, 2026-10-06: either outcome is accepted, as long as the system is in scope)."""
 DECIDED_STEPS = (
     StepName.PROHIBITED,
     StepName.HIGH_RISK,
@@ -94,25 +102,40 @@ DECIDED_STEPS = (
 )
 
 
+def assert_in_scope(result: ClassificationResult) -> None:
+    """The scope step's two accepted outcomes: (a) it asks the Art. 3(1) inference question,
+    with in scope as the working assumption, and the result needs more information with that
+    question among its follow-ups; or (b) it decides in scope, with the fact that the tool is
+    an AI system marked assumed, and the result is decided."""
+    scope = next(step for step in result.steps if step.step is StepName.SCOPE)
+    if scope.status is Status.NEEDS_MORE_INFORMATION:
+        assert scope.missing_fact is not None and scope.missing_fact.id == SCOPE_QUESTION
+        assert scope.missing_fact.about == "art:3:1"
+        assert result.status is Status.NEEDS_MORE_INFORMATION
+        assert SCOPE_QUESTION in {question.id for question in result.follow_up_questions}
+        return
+    assert scope.status is Status.DECIDED, (scope.status, scope.decision)
+    assumed = [f.text for f in scope.facts_used if f.evidence is EvidenceTag.ASSUMED]
+    assert any("ai system" in text.lower() for text in assumed), assumed
+    assert result.status is Status.DECIDED
+
+
 def assert_the_expected_result(run: ClassificationRun) -> None:
-    """INIT > Worked example, row by row: in scope as a working assumption, the scope step
-    asking whether the tool infers (Art. 3(1)), so the result needs more information; no
-    prohibited practice; high-risk under Annex III 4(a) (ranking applicants is profiling, so
-    Art. 6(3) can't exempt it); no separate Art. 50 duty; the company stays a deployer, with the
-    Art. 26 duties INIT lists from 2 December 2027; each step citing its Basis (`INIT_BASIS`).
+    """INIT > Worked example, row by row: in scope, with the scope step either (a) asking
+    whether the tool infers (Art. 3(1)), in scope as the working assumption, so the result needs
+    more information, or (b) deciding in scope with the AI-system point marked assumed, so the
+    result is decided (`assert_in_scope`); no prohibited practice; high-risk under Annex III
+    4(a) (ranking applicants is profiling, so Art. 6(3) can't exempt it); no separate Art. 50
+    duty; the company stays a deployer, with the Art. 26 duties INIT lists from 2 December 2027;
+    each step citing its Basis (`INIT_BASIS`).
     Every citation resolves."""
     result = run.result
     steps = {step.step: step for step in result.steps}
     assert list(steps) == list(StepName)  # in scope (assumed), not prohibited: every check ran
-    scope = steps[StepName.SCOPE]
-    assert scope.status is Status.NEEDS_MORE_INFORMATION, (scope.status, scope.decision)
-    assert scope.missing_fact is not None and scope.missing_fact.id == SCOPE_QUESTION
-    assert scope.missing_fact.about == "art:3:1"
+    assert_in_scope(result)
     for name in DECIDED_STEPS:
         step = steps[name]
         assert step.status is Status.DECIDED, (name, step.status, step.decision)
-    assert result.status is Status.NEEDS_MORE_INFORMATION
-    assert SCOPE_QUESTION in {question.id for question in result.follow_up_questions}
     assert result.risk_class is RiskClass.HIGH_RISK, result.risk_class
     assert result.annex_point == "annex:III:4:a"
     for name, basis in INIT_BASIS.items():
@@ -144,6 +167,55 @@ def assert_the_expected_result(run: ClassificationRun) -> None:
     assert run.usage.cost_usd > 0
     assert run.usage.tokens > 0
     assert set(run.usage.by_node) >= {"facts", *(name.value for name in StepName)}
+
+
+def stub_result(scope: StepResult) -> ClassificationResult:
+    """A stub run whose scope check returns `scope` and whose other checks find nothing."""
+    nodes = scripted_nodes(Script(checks={StepName.SCOPE: CheckOutcome(step=scope)}))
+    run = run_classification(
+        worked_example_request(),
+        settings=Settings(_env_file=None),  # pyright: ignore[reportCallIssue]
+        build_nodes=lambda _settings, _meter: nodes,
+    )
+    return run.result
+
+
+ASKS = StepResult(
+    step=StepName.SCOPE,
+    decision="Working assumption: in scope.",
+    status=Status.NEEDS_MORE_INFORMATION,
+    missing_fact=FollowUpQuestion(
+        id=SCOPE_QUESTION, text="Is it trained on data, or does it apply rules?", about="art:3:1"
+    ),
+)
+
+
+def assumes(fact: str) -> StepResult:
+    return StepResult(
+        step=StepName.SCOPE,
+        decision="In scope.",
+        facts_used=(Fact(text=fact, evidence=EvidenceTag.ASSUMED),),
+    )
+
+
+@pytest.mark.parametrize(
+    "scope", [ASKS, assumes("The tool is assumed to be an AI system.")], ids=["asks", "assumes"]
+)
+def test_either_scope_outcome_is_accepted(scope: StepResult) -> None:
+    assert_in_scope(stub_result(scope))
+
+
+@pytest.mark.parametrize(
+    "scope",
+    [
+        assumes("The tool is assumed to be used in the EU."),  # the AI-system point not assumed
+        ASKS.model_copy(update={"missing_fact": FollowUpQuestion(id="eu_use", text="EU?")}),
+    ],
+    ids=["decided_without_the_assumption", "asks_another_question"],
+)
+def test_any_other_scope_outcome_fails(scope: StepResult) -> None:
+    with pytest.raises(AssertionError):
+        assert_in_scope(stub_result(scope))
 
 
 # --- Live ---------------------------------------------------------------------------------------
