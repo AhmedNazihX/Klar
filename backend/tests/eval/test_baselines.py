@@ -25,12 +25,11 @@ from aiact.eval.runner import (
     RunStatus,
     run_benchmark,
 )
-from aiact.llm import DecisionsClient, DecisionsError
+from aiact.llm import DecisionsClient, DecisionsError, replies
 from aiact.schemas import (
     DISCLAIMER,
     FollowUpQuestion,
     Language,
-    OpenQuestion,
     RiskClass,
     Role,
     Status,
@@ -71,7 +70,8 @@ def answer(**changes: object) -> BaselineAnswer:
 
 
 MISSING = FollowUpQuestion(id="human_review", text="Does a person review every ranking?")
-OPEN = OpenQuestion(question="Is ranking profiling?", readings=("yes", "no"))
+REPLY_MISSING = replies.FollowUpQuestion.model_validate(MISSING.model_dump(include={"id", "text"}))
+OPEN = replies.OpenQuestion(question="Is ranking profiling?", readings=("yes", "no"))
 
 
 # --- answer to result ----------------------------------------------------------------------------
@@ -131,19 +131,28 @@ def test_ambiguous_prohibited_runs_on_with_the_open_question() -> None:
     )
     assert len(result.steps) == len(StepName)
     assert result.status is Status.LEGALLY_AMBIGUOUS
-    assert result.steps[1].open_question == OPEN
+    question = result.steps[1].open_question
+    assert question is not None
+    assert question.question == OPEN.question
+    stricter, lenient = question.readings
+    assert (stricter.explanation, lenient.explanation) == OPEN.readings
+    assert (stricter.risk_class, stricter.is_applied) == (None, True)  # untitled, unclassed
+    assert (lenient.risk_class, lenient.is_applied) == (None, False)
+    assert (stricter.title, lenient.title) == (None, None)
 
 
 def test_missing_fact_becomes_the_follow_up_question() -> None:
     result = to_result(
-        answer(status=Status.NEEDS_MORE_INFORMATION, missing_fact=MISSING), Language.EN, "Test"
+        answer(status=Status.NEEDS_MORE_INFORMATION, missing_fact=REPLY_MISSING),
+        Language.EN,
+        "Test",
     )
     assert result.status is Status.NEEDS_MORE_INFORMATION
     assert result.follow_up_questions == (MISSING,)
 
 
 def test_gap_fields_are_ignored_on_a_decided_answer() -> None:
-    result = to_result(answer(missing_fact=MISSING, open_question=OPEN), Language.EN, "Test")
+    result = to_result(answer(missing_fact=REPLY_MISSING, open_question=OPEN), Language.EN, "Test")
     assert result.status is Status.DECIDED
     assert result.follow_up_questions == ()
 

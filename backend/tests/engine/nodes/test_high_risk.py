@@ -21,6 +21,7 @@ from langchain_core.messages import AIMessage
 from pydantic import Field, SecretStr
 
 from aiact.db import connect
+from aiact.engine.citations import with_checked_citations
 from aiact.engine.graph import EngineNodes, build_graph
 from aiact.engine.nodes import high_risk as node
 from aiact.engine.nodes import high_risk_retrieval as retrieval
@@ -51,23 +52,26 @@ from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
 from aiact.eval.experiments.matchers import WORKED_EXAMPLE as WORKED_EXAMPLE_CASE
 from aiact.eval.experiments.matchers import high_risk_matches, replay_state, tag
 from aiact.llm import LLMConfigError, OpenRouterEmbeddings
+from aiact.llm.replies import FollowUpQuestion as ReplyQuestion
+from aiact.llm.replies import OpenQuestion
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit, SearchResults
 from aiact.schemas import (
     DISCLAIMER,
+    YES_NO,
+    AnswerOutcome,
     DocumentStatus,
     EvidenceTag,
-    FollowUpQuestion,
     HighRiskRoute,
     Language,
     LawVersion,
-    OpenQuestion,
     RiskClass,
+    SettledByKind,
     Status,
     StepName,
 )
 from aiact.settings import Settings
-from tests.engine.built_corpus import unresolved_citations
+from tests.engine.built_corpus import built_validator, unresolved_citations
 from tests.engine.nodes.corpus_recording import (
     CorpusRecording,
     corpus_recording,
@@ -304,7 +308,7 @@ def answer(
     iii: AnnexIIIAnswer | None = None,
     art63: Art63Answer | None = None,
     one: AnnexIAnswer | None = None,
-    question: FollowUpQuestion | None = None,
+    question: ReplyQuestion | None = None,
 ) -> HighRiskAnswer:
     return HighRiskAnswer(
         annex_iii=iii or annex_iii(),
@@ -415,9 +419,14 @@ def test_an_open_scholarship_decision_asks_whether_it_decides_admission() -> Non
 
 
 def test_the_models_own_question_replaces_the_generic_one() -> None:
-    own = FollowUpQuestion(id="output_use", text="Who reads the score?", about="high_risk")
+    own = ReplyQuestion(id="output_use", text="Who reads the score?", about="high_risk")
     result = outcome(answer(annex_iii("annex:III:4:b", Answer.UNKNOWN), question=own))
-    assert result.step.missing_fact == own
+    missing = result.step.missing_fact
+    assert missing is not None
+    assert (missing.id, missing.text, missing.about) == (own.id, own.text, own.about)
+    assert missing.options == ()  # the model's question is answered in words
+    assert missing.hint == "The answer decides whether the system is high-risk (Art. 6(2))."
+    assert [c.provision_id for c in missing.citations] == ["annex:III:4:b"]
     assert "annex_iii_use" not in question_ids(result)
     assert "Who reads the score?" in result.step.decision
 
@@ -516,7 +525,10 @@ OPEN = OpenQuestion(
 def assert_ambiguous(result: CheckOutcome, route: HighRiskRoute) -> None:
     assert result.high_risk_route is route
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
-    assert result.step.open_question == OPEN
+    question = result.step.open_question
+    assert question is not None
+    assert question.question == OPEN.question
+    assert tuple(reading.explanation for reading in question.readings) == OPEN.readings
     assert result.step.missing_fact is None
     assert "pending legal review" in result.step.decision
 
@@ -581,7 +593,7 @@ def test_an_unsettled_route_without_its_question_gets_the_fixed_one() -> None:
     open_question = result.step.open_question
     assert open_question is not None
     assert open_question.question == node.OPEN_FALLBACK[Language.DE]["annex_i"][0]
-    assert open_question.readings[0].startswith("Hochrisiko")
+    assert open_question.readings[0].explanation.startswith("Hochrisiko")
 
 
 def test_no_route_is_a_decided_not_high_risk() -> None:
@@ -1229,6 +1241,63 @@ KNOWN_GAPS: dict[str, KnownGap] = {
 reading they give instead; each fails when it starts matching, so the entry is removed."""
 
 
+MEDICAL_DEVICES = "(EU) 2017/745"
+"""The Medical Device Regulation, as both languages name it."""
+MDR_HIGH_RISK = AnswerOutcome(
+    risk_class=RiskClass.HIGH_RISK,
+    high_risk_route=HighRiskRoute.ANNEX_I,
+    provision_id="annex:I:A:11",
+    duties_from=date(2028, 8, 2),
+)
+PRODUCT_LAW_QUESTIONS: dict[str, tuple[str, AnswerOutcome | None]] = {
+    "own-e-08-heart-rhythm-app": ("intended_purpose", None),  # a second Annex I fact is open
+    "own-e-10-in-house-nodule-finder": ("third_party_assessment", MDR_HIGH_RISK),
+}
+"""Recorded cases whose step asks an Annex I question, and what a yes settles (E12 DoD)."""
+AMBIGUOUS_CASE = "own-e-09-ropeway-wear-forecast"
+"""The recorded case whose step leaves an Annex I question open in law (E12 DoD)."""
+
+
+def assert_the_screens_fields(
+    result: CheckOutcome, run_state: EngineState, case: BenchmarkCase
+) -> None:
+    """E12's DoD on the recorded cases, after E9's citation check over the built corpus: the
+    product-law question names the law, quotes Art. 6(1) and the Annex I entry, offers yes/no
+    and knows what a yes settles; the open question has two structured readings whose quotes
+    all pass the check."""
+    checked = built_validator().check(result.step, run_state)
+    assert not checked.unresolved
+    step = with_checked_citations(result, checked, run_state["language"]).step
+    if case.id in PRODUCT_LAW_QUESTIONS:
+        asked, if_yes = PRODUCT_LAW_QUESTIONS[case.id]
+        missing = step.missing_fact
+        assert missing is not None
+        assert missing.id == asked
+        assert MEDICAL_DEVICES in missing.text
+        assert [c.provision_id for c in missing.citations] == ["annex:I:A:11", "art:6:1"]
+        assert missing.options == YES_NO
+        assert missing.if_yes == if_yes
+    if case.id == AMBIGUOUS_CASE:
+        question = step.open_question
+        assert question is not None
+        stricter, lenient = question.readings
+        assert (stricter.title, stricter.risk_class, stricter.is_applied) == (
+            "High-risk under Art. 6(1)",
+            RiskClass.HIGH_RISK,
+            True,
+        )
+        assert (lenient.title, lenient.risk_class, lenient.is_applied) == (
+            "Art. 6(1) not met",
+            None,
+            False,
+        )
+        for reading in question.readings:
+            assert reading.citation is not None
+            assert reading.citation in checked.verified
+            assert reading.explanation and reading.consequence
+        assert [item.kind for item in question.settled_by] == [SettledByKind.GUIDANCE]
+
+
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1243,5 +1312,6 @@ def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -
     matches = high_risk_matches(result, case)
     step = result.step
     shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
+    assert_the_screens_fields(result, run_state, case)
     expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
     assert matches, shown

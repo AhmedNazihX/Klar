@@ -215,3 +215,23 @@ def test_missing_fact_with_different_follow_up_text_is_rejected() -> None:
 def test_follow_up_id_must_be_a_slug(bad_id: str) -> None:
     with pytest.raises(ValidationError, match="pattern"):
         FollowUpQuestion(id=bad_id, text="Does the tool rank people?")
+
+
+def test_a_result_stored_before_e12_still_loads() -> None:
+    """Stored benchmark predictions (eval_case_results) hold each reading as plain text and no
+    law-text label; `aiact evaluate report` validates them again."""
+    stored = worked_example_result().model_dump(mode="json", exclude={"law_text"})
+    high_risk = next(step for step in stored["steps"] if step["step"] == "high_risk")
+    high_risk.update(
+        status="legally_ambiguous",
+        open_question={"question": "Is ranking profiling?", "readings": ["Yes.", "No."]},
+    )
+    stored["status"] = "legally_ambiguous"
+    result = ClassificationResult.model_validate(stored)
+    question = result.steps[2].open_question
+    assert question is not None
+    stricter, lenient = question.readings
+    assert (stricter.title, stricter.explanation, stricter.is_applied) == (None, "Yes.", True)
+    assert (lenient.explanation, lenient.is_applied, lenient.risk_class) == ("No.", False, None)
+    assert (stricter.citation, stricter.consequence) == (None, None)
+    assert result.law_text.celex == "02024R1689-20260727"

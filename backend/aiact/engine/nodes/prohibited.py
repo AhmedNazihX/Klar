@@ -43,7 +43,6 @@ from aiact.engine.nodes.common import (
     facts_section,
     guidance_citation,
     guidance_section,
-    key_question,
     lookup_for,
     named_passages,
     provision_citation,
@@ -64,9 +63,12 @@ from aiact.engine.nodes.prohibited_practices import (
     ProhibitedAnswer,
     practices,
 )
+from aiact.engine.nodes.questions import ask, open_question
+from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model
+from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
@@ -76,10 +78,12 @@ from aiact.llm.structured import (
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import QueryEmbedder
 from aiact.schemas import (
+    Citation,
     Fact,
     Language,
     LawVersion,
     OpenQuestion,
+    RiskClass,
     Status,
     StepName,
     StepResult,
@@ -164,13 +168,24 @@ def settle(answer: ProhibitedAnswer, law_version: LawVersion, as_of: date) -> Se
 # --- The step -----------------------------------------------------------------------------------
 
 
-def _open_question(practice: Practice, language: Language) -> OpenQuestion:
-    """The model's open question for the practice, or a fixed one when it gave none."""
-    if practice.summary.open_question is not None:
-        return practice.summary.open_question
+def _open_question(
+    practice: Practice, language: Language, citations: Sequence[Citation]
+) -> OpenQuestion:
+    """The model's open question for the practice, or a fixed one when it gave none, with its
+    two readings quoting the practice's point from the step's `citations`."""
     point = texts.point_name(practice.point, language)
-    question, stricter, lenient = (t.format(point=point) for t in texts.OPEN_FALLBACK[language])
-    return OpenQuestion(question=question, readings=(stricter, lenient))
+    plain = practice.summary.open_question
+    if plain is None:
+        question, stricter, lenient = (t.format(point=point) for t in texts.OPEN_FALLBACK[language])
+        plain = ReplyOpenQuestion(question=question, readings=(stricter, lenient))
+    words = {key: text.format(point=point) for key, text in texts.READINGS[language].items()}
+    prohibited = ReadingSide(
+        words["prohibited"], words["prohibited_consequence"], RiskClass.PROHIBITED, practice.point
+    )
+    allowed = ReadingSide(
+        words["not_prohibited"], words["not_prohibited_consequence"], None, practice.point
+    )
+    return open_question(plain, prohibited, allowed, citations)
 
 
 def _not_yet_sentence(practice: Practice, language: Language, as_of: date) -> str:
@@ -248,9 +263,17 @@ def to_outcome(
     retrieved. The cited provisions are fetched from `library`."""
     language, as_of = state["language"], state["as_of"]
     settled = settle(answer, state["law_version"], as_of)
+    citations = (
+        *(provision_citation(p) for p in _provisions(settled, state, library)),
+        *(
+            guidance_citation(hit, language)
+            for hit in named_passages(answer.guidance_numbers, retrieved.guidance)
+        ),
+    )
     is_ambiguous = settled.status is Status.LEGALLY_AMBIGUOUS
-    open_question = _open_question(settled.deciding[0], language) if is_ambiguous else None
-    questions = tuple(key_question(key, language) for key in settled.missing)
+    deciding = settled.deciding[0] if is_ambiguous else None
+    open_question = _open_question(deciding, language, citations) if deciding else None
+    questions = tuple(ask(key, language, StepName.PROHIBITED) for key in settled.missing)
     is_missing = settled.status is Status.NEEDS_MORE_INFORMATION
     missing_fact = questions[0] if is_missing else None
     asked = open_question.question if open_question else missing_fact.text if missing_fact else ""
@@ -258,13 +281,7 @@ def to_outcome(
         step=StepName.PROHIBITED,
         decision=_decision(settled, language, as_of, asked),
         facts_used=_facts_used(settled, state.get("facts", ())),
-        citations=(
-            *(provision_citation(p) for p in _provisions(settled, state, library)),
-            *(
-                guidance_citation(hit, language)
-                for hit in named_passages(answer.guidance_numbers, retrieved.guidance)
-            ),
-        ),
+        citations=citations,
         status=settled.status,
         missing_fact=missing_fact,
         open_question=open_question,
@@ -296,7 +313,7 @@ def refusal_outcome(
         language,
         assumption,
         tuple(provision_citation(p) for p in cited),
-        key_question(texts.PERSON_REVIEW, language),
+        ask(texts.PERSON_REVIEW, language, StepName.PROHIBITED),
         matched=True,
     )
 

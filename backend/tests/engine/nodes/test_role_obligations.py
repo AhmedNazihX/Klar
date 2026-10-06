@@ -49,7 +49,6 @@ from aiact.schemas import (
     LawVersion,
     LegacyStatus,
     Obligation,
-    OpenQuestion,
     RiskClass,
     Role,
     SourceSpan,
@@ -61,6 +60,7 @@ from aiact.schemas.result import derived_status
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
 from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
+from tests.schemas.builders import open_question
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -299,8 +299,16 @@ def test_a_white_labeller_below_high_risk_is_ambiguous_with_provider_assumed(
     assert step.missing_fact is None
     assert step.open_question is not None
     assert "Art. 3(3)" in step.open_question.question
-    assert step.open_question.readings[0].startswith("Provider")  # the stricter reading first
-    assert step.open_question.readings[1].startswith("Distributor")
+    assert step.open_question.readings[0].explanation.startswith(
+        "Provider"
+    )  # the stricter reading first
+    assert step.open_question.readings[1].explanation.startswith("Distributor")
+    provider, distributor = step.open_question.readings
+    assert (provider.title, distributor.title) == ("Provider", "Distributor")
+    assert (provider.risk_class, distributor.risk_class) == (None, None)  # the class stays
+    assert provider.citation is not None and provider.citation in step.citations
+    assert provider.citation == distributor.citation  # both turn on Art. 3(3)
+    assert provider.citation.provision_id == "art:3:3"
     assert (finding(outcome).role, finding(outcome).also_role) == (
         Role.PROVIDER,
         Role.DISTRIBUTOR,
@@ -344,7 +352,7 @@ def test_the_ambiguity_reads_in_german() -> None:
     step = to_outcome(_white_labeller(RiskClass.MINIMAL_RISK), given).step
     assert step.open_question is not None
     assert "Art. 3 Nr. 3" in step.open_question.question
-    assert step.open_question.readings[1].startswith("Händler")
+    assert step.open_question.readings[1].explanation.startswith("Händler")
     assert "Rechtlich offen" in step.decision
 
 
@@ -527,8 +535,19 @@ def test_a_contested_modification_is_ambiguous_with_provider_assumed() -> None:
     assert outcome.follow_up_questions == ()  # nothing a user could answer
     assert step.open_question is not None
     assert "Art. 3(23)" in step.open_question.question
-    assert step.open_question.readings[0].startswith("Provider")  # the stricter reading first
-    assert step.open_question.readings[1].startswith("Deployer")
+    assert step.open_question.readings[0].explanation.startswith(
+        "Provider"
+    )  # the stricter reading first
+    assert step.open_question.readings[1].explanation.startswith("Deployer")
+    provider, deployer = step.open_question.readings
+    assert provider.citation is not None and deployer.citation is not None
+    assert (provider.citation.provision_id, deployer.citation.provision_id) == (
+        "art:25:1:b",
+        "art:3:23",
+    )
+    assert deployer.consequence == (
+        "If this holds, the company keeps the deployer role and its duties."
+    )
     assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
     assert finding(outcome).role_switch_reason is None  # assumed, not a settled switch
     assert [c.provision_id for c in step.citations] == ["art:3:4", "art:25:1:b", "art:3:23"]
@@ -569,7 +588,7 @@ def test_the_contested_modification_reads_in_german() -> None:
     question = outcome.step.open_question
     assert question is not None
     assert "Art. 3 Nr. 23" in question.question
-    assert question.readings[1].startswith("Betreiber")
+    assert question.readings[1].explanation.startswith("Betreiber")
     assert "Arbeitsannahme: Anbieter, mit den Pflichten als Betreiber" in outcome.step.decision
 
 
@@ -598,7 +617,7 @@ def section_b_state(status: Status = Status.DECIDED, point: str = "annex:I:B:21"
         missing_fact=FollowUpQuestion(id="third_party_assessment", text="A notified body?")
         if is_missing
         else None,
-        open_question=OpenQuestion(question="Open?", readings=("Yes.", "No."))
+        open_question=open_question("Open?", "Yes.", "No.")
         if status is Status.LEGALLY_AMBIGUOUS
         else None,
     )

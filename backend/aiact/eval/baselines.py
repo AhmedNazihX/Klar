@@ -28,7 +28,7 @@ from aiact.eval.runner import (
     ClassifierInfo,
     ClassifierInput,
 )
-from aiact.llm import ChoiceQuestion, DecisionsClient, DecisionsError, chat_model
+from aiact.llm import ChoiceQuestion, DecisionsClient, DecisionsError, chat_model, replies
 from aiact.llm.chat import reply_usage
 from aiact.llm.routing import require_setting
 from aiact.llm.structured import describe_validation_error, json_schema_format
@@ -83,10 +83,10 @@ class BaselineAnswer(ContractModel):
         description="The Art. 50 paragraphs that apply, for example art:50:1."
     )
     reason: str = Field(min_length=1, description="One or two sentences.")
-    missing_fact: FollowUpQuestion | None = Field(
+    missing_fact: replies.FollowUpQuestion | None = Field(
         description="Required when status is needs_more_information: the question to ask."
     )
-    open_question: OpenQuestion | None = Field(
+    open_question: replies.OpenQuestion | None = Field(
         description="Required when status is legally_ambiguous: the question and both readings."
     )
 
@@ -138,6 +138,18 @@ def _step_names(answer: BaselineAnswer) -> tuple[StepName, ...]:
     return STEP_ORDER
 
 
+def _missing_fact(answer: BaselineAnswer) -> FollowUpQuestion | None:
+    """The baseline's question as the contract carries it (`replies.as_contract`)."""
+    return replies.as_contract(answer.missing_fact) if answer.missing_fact else None
+
+
+def _open_question(answer: BaselineAnswer) -> OpenQuestion | None:
+    """The baseline's open question; its plain readings become untitled ones, the first
+    applied (`OpenQuestion` reads them so)."""
+    plain = answer.open_question
+    return OpenQuestion.model_validate(plain.model_dump()) if plain else None
+
+
 def _step(name: StepName, answer: BaselineAnswer, label: str, *, is_deciding: bool) -> StepResult:
     if name is StepName.ROLE_OBLIGATIONS:
         return StepResult(step=name, decision=f"{label}: role {answer.role.value}")
@@ -148,8 +160,8 @@ def _step(name: StepName, answer: BaselineAnswer, label: str, *, is_deciding: bo
         step=name,
         decision=f"{label}: {answer.risk_class.value}. {answer.reason}",
         status=status,
-        missing_fact=answer.missing_fact if status is Status.NEEDS_MORE_INFORMATION else None,
-        open_question=answer.open_question if status is Status.LEGALLY_AMBIGUOUS else None,
+        missing_fact=_missing_fact(answer) if status is Status.NEEDS_MORE_INFORMATION else None,
+        open_question=_open_question(answer) if status is Status.LEGALLY_AMBIGUOUS else None,
     )
 
 

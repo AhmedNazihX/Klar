@@ -22,6 +22,7 @@ from aiact.engine.nodes.facts import (
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import EngineState, FactsOutcome
 from aiact.llm import LLMConfigError
+from aiact.llm.replies import FollowUpQuestion as ReplyQuestion
 from aiact.schemas import EvidenceTag, FollowUpQuestion, Language, LawVersion
 from aiact.settings import Settings
 
@@ -34,10 +35,15 @@ WORKED_EXAMPLE = (
     "change it."
 )
 
-HUMAN_REVIEW = FollowUpQuestion(
+HUMAN_REVIEW = ReplyQuestion(
     id="human_review", text="Does a person review every shortlist?", about="high_risk"
 )
-EU_USE = FollowUpQuestion(id="eu_use", text="Is the tool used in the EU?", about="scope")
+EU_USE = ReplyQuestion(id="eu_use", text="Is the tool used in the EU?", about="scope")
+
+
+def asked(*questions: ReplyQuestion) -> tuple[FollowUpQuestion, ...]:
+    """The model's questions as the node passes them on: answered in words, no hint."""
+    return tuple(FollowUpQuestion.model_validate(q.model_dump()) for q in questions)
 
 
 def _settings(**values: object) -> Settings:
@@ -59,7 +65,7 @@ def stated(text: str, quote: str | None) -> ExtractedFact:
 
 
 def unstated(
-    text: str, evidence: EvidenceTag, question: FollowUpQuestion | None = None
+    text: str, evidence: EvidenceTag, question: ReplyQuestion | None = None
 ) -> ExtractedFact:
     return ExtractedFact(text=text, evidence=evidence, quote=None, question=question)
 
@@ -190,7 +196,7 @@ def test_a_confirm_question_id_comes_from_the_fact_not_its_position() -> None:
 
 
 def test_confirm_question_ids_are_unique_within_a_reply() -> None:
-    clash = FollowUpQuestion(id="confirm_used_in_the_eu", text="Is it used in the EU?")
+    clash = ReplyQuestion(id="confirm_used_in_the_eu", text="Is it used in the EU?")
     answer = FactsAnswer(
         facts=(
             unstated("Used in the EU", EvidenceTag.ASSUMED),
@@ -257,7 +263,7 @@ def test_an_unstated_fact_keeps_the_models_confirm_question(evidence: EvidenceTa
     answer = FactsAnswer(facts=(unstated("Used in the EU", evidence, EU_USE),), questions=())
     outcome = to_outcome(answer, WORKED_EXAMPLE, Language.EN)
     assert outcome.facts[0].evidence is evidence
-    assert outcome.follow_up_questions == (EU_USE,)
+    assert outcome.follow_up_questions == asked(EU_USE)
 
 
 def test_the_default_confirm_question_is_in_the_asked_language() -> None:
@@ -283,7 +289,7 @@ def test_key_fact_questions_come_first_and_each_id_is_asked_once() -> None:
         EvidenceTag.ASSUMED,
         EvidenceTag.INFERRED,
     ]
-    assert outcome.follow_up_questions == (HUMAN_REVIEW, EU_USE)
+    assert outcome.follow_up_questions == asked(HUMAN_REVIEW, EU_USE)
 
 
 def test_a_stated_fact_drops_a_confirm_question() -> None:
@@ -308,7 +314,7 @@ def test_the_node_turns_the_reply_into_facts_and_questions() -> None:
     )
     outcome = _fake_extractor(answer.model_dump_json())(engine_input(WORKED_EXAMPLE))
     assert outcome.facts[0].evidence is EvidenceTag.STATED
-    assert outcome.follow_up_questions == (HUMAN_REVIEW,)
+    assert outcome.follow_up_questions == asked(HUMAN_REVIEW)
 
 
 @pytest.mark.parametrize("content", ["not json", '{"facts": [{"text": "x"}], "questions": []}'])
@@ -381,7 +387,7 @@ def test_the_graph_runs_the_node_and_carries_its_facts_and_questions() -> None:
     state = build_graph(graph_nodes).invoke(engine_input(WORKED_EXAMPLE))
     result = state["result"]
     assert [fact.text for fact in result.facts] == ["Scores applications"]
-    assert result.follow_up_questions == (HUMAN_REVIEW,)
+    assert result.follow_up_questions == asked(HUMAN_REVIEW)
 
 
 # --- replays of recorded answers -----------------------------------------------------------------

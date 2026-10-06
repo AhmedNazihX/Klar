@@ -11,8 +11,8 @@ from aiact.schemas import Language
 EN, DE = Language.EN, Language.DE
 
 
-def _question(slug: str, article: str, en: str, de: str) -> KeyQuestion:
-    return KeyQuestion(id=slug, article=article, question={EN: en, DE: de})
+def _question(slug: str, article: str, en: str, de: str, *, is_yes_no: bool = True) -> KeyQuestion:
+    return KeyQuestion(id=slug, article=article, question={EN: en, DE: de}, is_yes_no=is_yes_no)
 
 
 # --- Art. 5(1)(a) and (b): manipulation and exploiting vulnerabilities --------------------------
@@ -49,6 +49,7 @@ SIGNIFICANT_HARM = _question(
     "Welcher Schaden entsteht den betroffenen Menschen durch diese Entscheidungen oder droht "
     "ihnen, etwa ein finanzieller Verlust, ein Gesundheitsschaden oder ein psychischer Schaden, "
     "und wie schwer wiegt er?",
+    is_yes_no=False,
 )
 
 # --- Art. 5(1)(ba) and (bb), with Art. 5(1a) and (1b) -------------------------------------------
@@ -290,6 +291,7 @@ PERSON_REVIEW = _question(
     "Bitte lassen Sie die Beschreibung von einem Menschen prüfen: Erzeugt oder verändert das "
     "System intime oder sexuelle Bilder, Videos oder Tonaufnahmen realer Personen oder sexuelles "
     "Material, in dem Kinder vorkommen (Art. 5 Abs. 1 Buchst. ba, bb)?",
+    is_yes_no=False,
 )
 REFUSAL: Mapping[Language, str] = {
     EN: "Art. 5(1)(ba) or (bb) may apply: prohibited is assumed until a person has reviewed it.",
@@ -367,3 +369,24 @@ OPEN_FALLBACK: Mapping[Language, tuple[str, str, str]] = {
 }
 """The open question and its two readings (stricter first) when the model marks a practice
 unsettled in law without stating the question: `(question, stricter, lenient)`."""
+
+
+READINGS: Mapping[Language, Mapping[str, str]] = {
+    EN: {
+        "prohibited": "Prohibited under {point}",
+        "not_prohibited": "Not prohibited under {point}",
+        "prohibited_consequence": "If this holds, the system may not be placed on the market, "
+        "put into service or used in the EU (Art. 5).",
+        "not_prohibited_consequence": "If this holds, {point} does not prohibit the system; the "
+        "remaining checks decide its class.",
+    },
+    DE: {
+        "prohibited": "Verboten nach {point}",
+        "not_prohibited": "Nicht verboten nach {point}",
+        "prohibited_consequence": "Gilt diese Lesart, darf das System in der EU weder in Verkehr "
+        "gebracht noch in Betrieb genommen oder verwendet werden (Art. 5).",
+        "not_prohibited_consequence": "Gilt diese Lesart, verbietet {point} das System nicht; die "
+        "weiteren Prüfungen bestimmen seine Klasse.",
+    },
+}
+"""Each reading's title and consequence (E12); both quote the practice's point."""

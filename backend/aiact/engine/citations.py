@@ -213,20 +213,50 @@ def check_citations(
     return CitationCheck(verified=verified, unresolved=unresolved)
 
 
+def _key(citation: Citation) -> tuple[str, str, Language, LawVersion | None]:
+    return (citation.document_id, citation.provision_id, citation.language, citation.law_version)
+
+
+def requoted(step: StepResult, verified: Sequence[Citation]) -> dict[str, object]:
+    """The step's fields that quote its citations, rebuilt on `verified` (E12): the citations
+    themselves, each reading's citation and the missing fact's, as verified (a quote that
+    didn't resolve is dropped)."""
+    found = {_key(citation): citation for citation in verified}
+    fields: dict[str, object] = {"citations": tuple(verified)}
+    question = step.open_question
+    if question is not None:
+        readings = tuple(
+            reading.model_copy(
+                update={"citation": found.get(_key(reading.citation)) if reading.citation else None}
+            )
+            for reading in question.readings
+        )
+        fields["open_question"] = question.model_copy(update={"readings": readings})
+    missing = step.missing_fact
+    if missing is not None:
+        quotes = (found.get(_key(citation)) for citation in missing.citations)
+        kept = tuple(citation for citation in quotes if citation is not None)
+        fields["missing_fact"] = missing.model_copy(update={"citations": kept})
+    return fields
+
+
 def with_checked_citations(
     outcome: CheckOutcome, checked: CitationCheck, language: Language
 ) -> CheckOutcome:
-    """`outcome` with its step citing only the verified citations; when any didn't resolve, the
-    step is flagged as the module docstring says."""
+    """`outcome` with its step citing only the verified citations, and its readings and missing
+    fact quoting them (`requoted`); when any didn't resolve, the step is flagged as the module
+    docstring says."""
     step = outcome.step
+    fields = requoted(step, checked.verified)
     if not checked.unresolved:
-        cited = step.model_copy(update={"citations": checked.verified})
-        return outcome.model_copy(update={"step": cited})
+        return outcome.model_copy(
+            update={"step": StepResult.model_validate({**dict(step), **fields})}
+        )
     is_decided = step.status is Status.DECIDED
     unverified = StepResult.model_validate(
         {
             **dict(step),
-            "citations": checked.verified,
+            **fields,
             "decision": f"{step.decision} {UNVERIFIED[language]}",
             "status": Status.NEEDS_MORE_INFORMATION if is_decided else step.status,
             "error": step.error or CITATION_UNVERIFIED,

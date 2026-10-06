@@ -22,7 +22,8 @@ from aiact.engine.nodes.key_facts import (
     need,
     negated,
 )
-from aiact.schemas import EvidenceTag, LawVersion, OpenQuestion
+from aiact.llm.replies import OpenQuestion
+from aiact.schemas import EvidenceTag, LawVersion
 from aiact.schemas.base import ContractModel
 
 PROHIBITIONS_APPLY_FROM = date(2025, 2, 2)

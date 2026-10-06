@@ -5,6 +5,38 @@ export type ClientOptions = {
 };
 
 /**
+ * AnswerOption
+ *
+ * An answer the interface offers to a yes/no follow-up question (E12).
+ */
+export type AnswerOption = 'yes' | 'no' | 'not_sure';
+
+/**
+ * AnswerOutcome
+ *
+ * What a "yes" settles, where the step asking knows it: the class and, for high-risk, the
+ * route, the provision and the date the duties apply from (decision 026 items 13 and 18). A
+ * "no" has no such outcome: no class is predicted before the remaining checks run, so the
+ * interface shows the fixed sentence of decision 026 item 13 instead.
+ */
+export type AnswerOutcome = {
+    risk_class: RiskClass;
+    high_risk_route?: HighRiskRoute | null;
+    /**
+     * Provision Id
+     *
+     * The provision a yes rests on, for example `annex:I:A:11`.
+     */
+    provision_id?: string | null;
+    /**
+     * Duties From
+     *
+     * The date the route's high-risk duties apply from under the amended Art. 113 (the interface shows the original text's dates under it, decision 026 item 11); None when the AI Act itself sets no duties (an Annex I Section B product, Art. 2(2)).
+     */
+    duties_from?: string | null;
+};
+
+/**
  * Citation
  *
  * One quoted provision. `english_only` marks guidance that has no official text in `de`.
@@ -109,6 +141,10 @@ export type ClassificationResult = {
      */
     obligations?: Array<Obligation>;
     law_version: LawVersion;
+    /**
+     * The label of the text `law_version` names (CELEX number and date); it always matches `law_version`, which sets it when it is left out.
+     */
+    law_text?: LawText;
     /**
      * As Of
      */
@@ -312,6 +348,28 @@ export type FollowUpQuestion = {
      * What the answer settles, for example a step or provision_id.
      */
     about?: string | null;
+    /**
+     * Hint
+     *
+     * Why the answer matters, naming the provision it decides, in the result's language.
+     */
+    hint?: string | null;
+    /**
+     * Options
+     *
+     * The answers offered: yes, no and not sure for a yes/no question; empty for a question answered in words.
+     */
+    options?: Array<AnswerOption>;
+    /**
+     * What a yes settles, when the step knows it.
+     */
+    if_yes?: AnswerOutcome | null;
+    /**
+     * Citations
+     *
+     * The provisions the question rests on, quoted; on a step's missing fact, each is one of the step's own (checked) citations.
+     */
+    citations?: Array<Citation>;
 };
 
 /**
@@ -337,6 +395,33 @@ export type HighRiskRoute = 'annex_iii' | 'annex_i';
  * The languages the assistant answers and quotes in.
  */
 export type Language = 'en' | 'de';
+
+/**
+ * LawText
+ *
+ * The AI Act text a result was checked against, as the screens label it ("the consolidated
+ * AI Act of 27 July 2026", CELEX 02024R1689-20260727).
+ */
+export type LawText = {
+    /**
+     * Document Id
+     *
+     * The text's manifest `doc_key`, for example `ai-act`.
+     */
+    document_id: string;
+    /**
+     * Celex
+     *
+     * Its CELEX number on EUR-Lex.
+     */
+    celex: string;
+    /**
+     * Version Date
+     *
+     * The original's publication date in the Official Journal, or the consolidation's cut-off date.
+     */
+    version_date: string;
+};
 
 /**
  * LawVersion
@@ -435,12 +520,18 @@ export type OpenQuestion = {
     /**
      * Readings
      *
-     * The two possible readings, stricter first.
+     * The two possible readings, stricter first; the stricter one is applied.
      */
     readings: [
-        string,
-        string
+        Reading,
+        Reading
     ];
+    /**
+     * Settled By
+     *
+     * What would settle the question, when the step knows it.
+     */
+    settled_by?: Array<SettledBy>;
 };
 
 /**
@@ -495,6 +586,45 @@ export type Provision = {
 };
 
 /**
+ * Reading
+ *
+ * One possible reading of an open question of law (E12): what it is called, the class it
+ * gives, why, the provision it rests on, and what follows if it holds.
+ */
+export type Reading = {
+    /**
+     * Title
+     *
+     * None for a reading without its own title: a baseline's, or one stored before E12.
+     */
+    title?: string | null;
+    /**
+     * The class this reading gives on its own check, for example `high_risk` for the stricter reading of a high-risk question. None when it gives no class by itself: the remaining checks decide (shown as, for example, not high-risk on this point), or the question is about a duty or the role, not the class.
+     */
+    risk_class?: RiskClass | null;
+    /**
+     * Explanation
+     */
+    explanation: string;
+    /**
+     * The provision the reading rests on: one of its step's citations.
+     */
+    citation?: Citation | null;
+    /**
+     * Consequence
+     *
+     * What follows if the reading holds.
+     */
+    consequence?: string | null;
+    /**
+     * Is Applied
+     *
+     * The working assumption: the stricter reading, applied until a lawyer or the user's answer settles the question.
+     */
+    is_applied?: boolean;
+};
+
+/**
  * ResultEvent
  */
 export type ResultEvent = {
@@ -518,6 +648,27 @@ export type RiskClass = 'out_of_scope' | 'prohibited' | 'high_risk' | 'limited_r
  * The operator role the obligations follow from (Art. 3, 16, 23-26).
  */
 export type Role = 'provider' | 'deployer' | 'importer' | 'distributor';
+
+/**
+ * SettledBy
+ *
+ * Something that would settle an open question. Guidance is named as it stands (for example
+ * a draft); naming it never promises that the result is checked again (decision 026 item 4).
+ */
+export type SettledBy = {
+    kind: SettledByKind;
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
+ * SettledByKind
+ *
+ * What could settle an open question of law (E12, decision 026 item 4).
+ */
+export type SettledByKind = 'guidance' | 'provider';
 
 /**
  * SourceSpan

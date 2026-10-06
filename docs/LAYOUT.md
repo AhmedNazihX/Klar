@@ -30,8 +30,11 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b)
 │   │   ├── provision_names.py       how a result names an article provision or Annex point (EN, DE), shared by
 │   │   │                            the engine's texts and drafting (P8a, moved out of E4–E6's texts)
-│   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
+│   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3);
+│   │   │                            the screens' question fields (hint, options, if_yes, structured
+│   │   │                            readings, settled_by) and law_text.py: the CELEX label (E12)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
+│   │   │                            replies.py: the question shapes a model writes, frozen with the recordings (E12)
 │   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3);
 │   │   │                            reply_usage, a reply's cost and tokens (E10)
 │   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
@@ -59,7 +62,11 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        shared by the checks (E3, E6); common.py: the run's lookup,
 │   │   │   │                        citations and prompt blocks shared by the checks (E5);
 │   │   │   │                        guideline_retrieval.py: one article by lookup and its guidelines
-│   │   │   │                        by search, for the prohibited and transparency checks (E6)
+│   │   │   │                        by search, for the prohibited and transparency checks (E6);
+│   │   │   │                        questions.py: hints, answer options and the structured readings
+│   │   │   │                        the checks show (E12); high_risk_questions.py: what a yes settles,
+│   │   │   │                        the Annex I question's quotes, the readings and settled_by (E12);
+│   │   │   │                        reading_side.py: what a texts module says about one reading (E12)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
 │   │   │   ├── citations.py         citation existence validator, one retry, the changed_by_omnibus marker (E9)

@@ -3,6 +3,7 @@
 from aiact.schemas import (
     ClassificationResult,
     OpenQuestion,
+    Reading,
     RiskClass,
     Status,
     StepName,
@@ -10,17 +11,31 @@ from aiact.schemas import (
 )
 from tests.schemas.worked_example import EU_USE_QUESTION, worked_example_result
 
-OPEN_QUESTION = OpenQuestion(
-    question="Does the law settle this point?",
-    readings=("Yes, the stricter reading applies", "No, the lenient reading applies"),
+
+def open_question(question: str, stricter: str, lenient: str) -> OpenQuestion:
+    """A contract open question whose two readings carry only a title and their text, the
+    stricter one applied."""
+    readings = (
+        Reading(title="Stricter reading", explanation=stricter, is_applied=True),
+        Reading(title="Lenient reading", explanation=lenient),
+    )
+    return OpenQuestion(question=question, readings=readings)
+
+
+OPEN_QUESTION = open_question(
+    "Does the law settle this point?",
+    "Yes, the stricter reading applies",
+    "No, the lenient reading applies",
 )
 
 StepDump = dict[str, object]
 
 
 def rebuild(result: ClassificationResult, **changes: object) -> ClassificationResult:
-    """Validate a changed copy (model_copy would skip the validators)."""
-    return ClassificationResult.model_validate({**result.model_dump(), **changes})
+    """Validate a changed copy (model_copy would skip the validators). A new law version gets
+    its own law-text label, unless `changes` gives one."""
+    dropped = {"law_text"} if "law_version" in changes else set()
+    return ClassificationResult.model_validate({**result.model_dump(exclude=dropped), **changes})
 
 
 def dumped_steps(count: int | None = None) -> list[StepDump]:

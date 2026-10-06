@@ -16,7 +16,7 @@ from aiact.engine.nodes.role_obligations import (
 from aiact.engine.nodes.role_obligations import ROLE_RESPONSE_FORMAT, ModificationFact, RoleFact
 from aiact.engine.nodes.scope import SCOPE_RESPONSE_FORMAT
 from aiact.engine.nodes.transparency import TRANSPARENCY_RESPONSE_FORMAT
-from aiact.schemas import FollowUpQuestion
+from aiact.llm.replies import FollowUpQuestion
 
 AT_CAP, OVER = "x" * MAX_TEXT_CHARS, "x" * (MAX_TEXT_CHARS + 1)
 

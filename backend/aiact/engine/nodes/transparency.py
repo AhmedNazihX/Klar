@@ -26,7 +26,7 @@ are applied here, in code:
 Every citation is fetched through `get_provision`, or is a retrieved guideline passage.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -42,7 +42,6 @@ from aiact.engine.nodes.common import (
     facts_section,
     guidance_citation,
     guidance_section,
-    key_question,
     lookup_for,
     named_passages,
     provision_citation,
@@ -56,6 +55,8 @@ from aiact.engine.nodes.guideline_retrieval import (
     retrieve,
 )
 from aiact.engine.nodes.key_facts import Answer, facts_used
+from aiact.engine.nodes.questions import ask, open_question
+from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.nodes.transparency_duties import (
     Duty,
@@ -65,6 +66,7 @@ from aiact.engine.nodes.transparency_duties import (
 )
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model
+from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
@@ -74,10 +76,12 @@ from aiact.llm.structured import (
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import QueryEmbedder
 from aiact.schemas import (
+    Citation,
     FollowUpQuestion,
     Language,
     LawVersion,
     OpenQuestion,
+    RiskClass,
     Status,
     StepName,
     StepResult,
@@ -185,13 +189,30 @@ def grace_sentence(key: str, language: Language) -> str:
 # --- The step -----------------------------------------------------------------------------------
 
 
-def _open_question(duty: Duty, language: Language) -> OpenQuestion:
-    """The model's open question for the duty, or a fixed one when it gave none."""
-    if duty.summary.open_question is not None:
-        return duty.summary.open_question
+def _stricter_class(state: EngineState) -> RiskClass | None:
+    """The class a duty's stricter reading gives: limited risk, unless an earlier check already
+    holds a higher class (a duty then changes no class)."""
+    is_higher = StepName.PROHIBITED in state.get("matches", ()) or "high_risk_route" in state
+    return None if is_higher else RiskClass.LIMITED_RISK
+
+
+def _open_question(duty: Duty, state: EngineState, citations: Sequence[Citation]) -> OpenQuestion:
+    """The model's open question for the duty, or a fixed one when it gave none, with its two
+    readings quoting the duty's paragraph from the step's `citations`."""
+    language = state["language"]
     point = texts.provision_name(duty.provision, language)
-    question, stricter, lenient = (t.format(point=point) for t in texts.OPEN_FALLBACK[language])
-    return OpenQuestion(question=question, readings=(stricter, lenient))
+    plain = duty.summary.open_question
+    if plain is None:
+        question, stricter, lenient = (t.format(point=point) for t in texts.OPEN_FALLBACK[language])
+        plain = ReplyOpenQuestion(question=question, readings=(stricter, lenient))
+    words = {key: text.format(point=point) for key, text in texts.READINGS[language].items()}
+    applies = ReadingSide(
+        words["applies"], words["applies_consequence"], _stricter_class(state), duty.provision
+    )
+    does_not = ReadingSide(
+        words["does_not_apply"], words["does_not_apply_consequence"], None, duty.provision
+    )
+    return open_question(plain, applies, does_not, citations)
 
 
 def _finding(settled: Settlement, language: Language, question: str) -> tuple[str, ...]:
@@ -247,7 +268,7 @@ def _grace(
     return Grace(
         sentence=grace_sentence(key, language),
         provision=provision,
-        questions=(key_question(texts.MARKET_DATE, language),) if is_unknown else (),
+        questions=(ask(texts.MARKET_DATE, language, StepName.TRANSPARENCY),) if is_unknown else (),
     )
 
 
@@ -273,13 +294,22 @@ def to_outcome(
     retrieved. The cited provisions are fetched from `library`."""
     language = state["language"]
     settled = settle(answer)
+    grace = _grace(settled, answer, state, library)
+    citations = (
+        *(provision_citation(p) for p in _cited(settled, state, retrieved, library)),
+        *((provision_citation(grace.provision),) if grace else ()),
+        *(
+            guidance_citation(hit, language)
+            for hit in named_passages(answer.guidance_numbers, retrieved.guidance)
+        ),
+    )
     is_ambiguous = settled.status is Status.LEGALLY_AMBIGUOUS
-    open_question = _open_question(settled.opened[0], language) if is_ambiguous else None
-    questions = tuple(key_question(key, language) for key in settled.missing)
+    opened = settled.opened[0] if is_ambiguous else None
+    open_question = _open_question(opened, state, citations) if opened else None
+    questions = tuple(ask(key, language, StepName.TRANSPARENCY) for key in settled.missing)
     is_missing = settled.status is Status.NEEDS_MORE_INFORMATION
     missing_fact = questions[0] if is_missing else None
     asked = open_question.question if open_question else missing_fact.text if missing_fact else ""
-    grace = _grace(settled, answer, state, library)
     shown = tuple(d.summary for d in (*settled.listed, *settled.considered))
     step = StepResult(
         step=StepName.TRANSPARENCY,
@@ -287,14 +317,7 @@ def to_outcome(
             (*_finding(settled, language, asked), *((grace.sentence,) if grace else ()))
         ),
         facts_used=facts_used(shown, state.get("facts", ())),
-        citations=(
-            *(provision_citation(p) for p in _cited(settled, state, retrieved, library)),
-            *((provision_citation(grace.provision),) if grace else ()),
-            *(
-                guidance_citation(hit, language)
-                for hit in named_passages(answer.guidance_numbers, retrieved.guidance)
-            ),
-        ),
+        citations=citations,
         status=settled.status,
         missing_fact=missing_fact,
         open_question=open_question,
@@ -316,7 +339,7 @@ def refusal_outcome(state: EngineState, retrieved: Retrieved) -> CheckOutcome:
         language,
         texts.REFUSAL[language],
         (provision_citation(retrieved.article),),
-        key_question(texts.PERSON_REVIEW, language),
+        ask(texts.PERSON_REVIEW, language, StepName.TRANSPARENCY),
         transparency_duties=ALL_DUTIES,
     )
 

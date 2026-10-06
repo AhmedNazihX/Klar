@@ -15,6 +15,7 @@ from aiact.engine.citations import (
     check_citations,
     load_omnibus_changes,
     resolve,
+    with_checked_citations,
 )
 from aiact.engine.graph import build_graph
 from aiact.engine.nodes.common import Lookup
@@ -29,7 +30,6 @@ from aiact.schemas import (
     FollowUpQuestion,
     Language,
     LawVersion,
-    OpenQuestion,
     RiskClass,
     Status,
     StepName,
@@ -42,6 +42,7 @@ from tests.engine.built_corpus import (
     built_validator,
     omnibus_changes,
 )
+from tests.schemas.builders import open_question
 
 AS_OF = date(2026, 12, 10)
 """After the Omnibus (27 July 2026) and its December prohibitions."""
@@ -303,7 +304,7 @@ def test_the_retry_that_cites_only_real_provisions_is_kept() -> None:
 
 
 MISSING = FollowUpQuestion(id="eu_use", text="Is the system used in the EU?")
-OPEN = OpenQuestion(question="Is it manipulation?", readings=("Yes", "No"))
+OPEN = open_question("Is it manipulation?", "Yes", "No")
 
 
 @pytest.mark.parametrize(
@@ -372,3 +373,53 @@ def test_a_step_without_citations_needs_no_corpus() -> None:
     validator = CitationValidator(source=None, omnibus=omnibus_changes())
     step = StepResult(step=StepName.SCOPE, decision="In scope.")
     assert validator.check(step, STATE) == CitationCheck(verified=(), unresolved=())
+
+
+# --- The quotes in a step's questions (E12) -------------------------------------------------------
+
+
+def quoting_step(stricter: Citation, lenient: Citation) -> CheckOutcome:
+    """An open Art. 5 step whose readings and missing fact quote `stricter` and `lenient`."""
+    question = open_question("Is it manipulation?", "Prohibited.", "Not prohibited.")
+    first, second = question.readings
+    readings = (
+        first.model_copy(update={"citation": stricter}),
+        second.model_copy(update={"citation": lenient}),
+    )
+    step = StepResult(
+        step=StepName.PROHIBITED,
+        decision="Open in law.",
+        status=Status.LEGALLY_AMBIGUOUS,
+        citations=tuple(dict.fromkeys((stricter, lenient))),
+        open_question=question.model_copy(update={"readings": readings}),
+        missing_fact=FollowUpQuestion(
+            id="harm", text="What harm?", citations=tuple(dict.fromkeys((stricter, lenient)))
+        ),
+    )
+    return CheckOutcome(step=step, matched=True)
+
+
+def test_the_readings_and_the_missing_fact_quote_the_checked_citations() -> None:
+    """A quote that resolves is rebuilt from the corpus, with the Omnibus marker, wherever the
+    step shows it."""
+    outcome = quoting_step(ART_5_1_BA, ART_5_1_BA)
+    step = with_checked_citations(outcome, checked(ART_5_1_BA), Language.EN).step
+    [verified] = step.citations
+    assert verified.quote != ART_5_1_BA.quote
+    assert verified.changed_by_omnibus
+    assert step.open_question is not None
+    assert [r.citation for r in step.open_question.readings] == [verified, verified]
+    assert step.missing_fact is not None
+    assert step.missing_fact.citations == (verified,)
+    assert step.error is None
+
+
+def test_a_quote_that_doesnt_resolve_is_dropped_from_the_readings_and_the_missing_fact() -> None:
+    outcome = quoting_step(ART_5_1_BA, FAKE)
+    step = with_checked_citations(outcome, checked(ART_5_1_BA, FAKE), Language.EN).step
+    [verified] = step.citations
+    assert step.open_question is not None
+    assert [r.citation for r in step.open_question.readings] == [verified, None]
+    assert step.missing_fact is not None
+    assert step.missing_fact.citations == (verified,)
+    assert step.error == CITATION_UNVERIFIED

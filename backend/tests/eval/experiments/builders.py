@@ -9,15 +9,15 @@ from aiact.schemas import (
     FollowUpQuestion,
     HighRiskRoute,
     Language,
-    OpenQuestion,
     RiskClass,
     Role,
     Status,
     StepName,
     StepResult,
 )
+from tests.schemas.builders import open_question
 
-OPEN = OpenQuestion(question="Does the law settle it?", readings=("Stricter.", "Lenient."))
+OPEN = open_question("Does the law settle it?", "Stricter.", "Lenient.")
 ASK = FollowUpQuestion(id="third_party_assessment", text="Is a notified body involved?")
 
 

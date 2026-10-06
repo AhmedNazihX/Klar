@@ -11,8 +11,8 @@ from aiact.schemas import Language
 EN, DE = Language.EN, Language.DE
 
 
-def _question(slug: str, article: str, en: str, de: str) -> KeyQuestion:
-    return KeyQuestion(id=slug, article=article, question={EN: en, DE: de})
+def _question(slug: str, article: str, en: str, de: str, *, is_yes_no: bool = True) -> KeyQuestion:
+    return KeyQuestion(id=slug, article=article, question={EN: en, DE: de}, is_yes_no=is_yes_no)
 
 
 # --- Art. 50(1): interaction with people --------------------------------------------------------
@@ -31,6 +31,7 @@ INTERACTION_OBVIOUS = _question(
     "an AI system?",
     "Wer nutzt das System, und ist ihnen aus dem Zusammenhang offensichtlich, dass sie es mit "
     "einem KI-System zu tun haben?",
+    is_yes_no=False,
 )
 
 # --- Art. 50(2): synthetic content ---------------------------------------------------------------
@@ -42,6 +43,7 @@ GENERATES_CONTENT = _question(
     "play back content that people made?",
     "Erzeugt das System selbst Audio, Bilder, Videos oder Texte, oder wählt es nur von Menschen "
     "erstellte Inhalte aus oder spielt sie ab?",
+    is_yes_no=False,
 )
 SUBSTANTIAL_ALTERATION = _question(
     "alters_substance",
@@ -50,6 +52,7 @@ SUBSTANTIAL_ALTERATION = _question(
     "or does it change its substance or meaning?",
     "Wie stark verändert das System die Inhalte, die es bekommt: Korrigiert oder glättet es sie "
     "nur, oder verändert es ihre Substanz oder Bedeutung?",
+    is_yes_no=False,
 )
 
 # --- Art. 50(3): emotion recognition and biometric categorisation -------------------------------
@@ -109,6 +112,7 @@ MARKET_DATE = _question(
     "August 2026, or later?",
     "Wann wurde das System in der EU erstmals in Verkehr gebracht oder in Betrieb genommen: vor "
     "dem 2. August 2026 oder später?",
+    is_yes_no=False,
 )
 
 # --- A provider refusal (decision 029) -----------------------------------------------------------
@@ -122,6 +126,7 @@ PERSON_REVIEW = _question(
     "Bitte lassen Sie die Beschreibung von einem Menschen prüfen: Interagiert das System direkt "
     "mit Menschen, erzeugt es Audio, Bilder, Videos oder Texte, erkennt es Emotionen, ordnet es "
     "Menschen biometrisch Kategorien zu oder erzeugt es Deepfakes (Art. 50)?",
+    is_yes_no=False,
 )
 REFUSAL: Mapping[Language, str] = {
     EN: "Every transparency duty of Art. 50(1) to (4) is assumed until a person has reviewed it.",
@@ -186,3 +191,23 @@ OPEN_FALLBACK: Mapping[Language, tuple[str, str, str]] = {
 }
 """The open question and its two readings (stricter first) when the model marks a duty unsettled
 in law without stating the question: `(question, stricter, lenient)`."""
+
+
+READINGS: Mapping[Language, Mapping[str, str]] = {
+    EN: {
+        "applies": "{point} applies",
+        "does_not_apply": "{point} does not apply",
+        "applies_consequence": "If this holds, the {point} transparency duty applies to the "
+        "system.",
+        "does_not_apply_consequence": "If this holds, {point} places no duty on the system.",
+    },
+    DE: {
+        "applies": "{point} gilt",
+        "does_not_apply": "{point} gilt nicht",
+        "applies_consequence": "Gilt diese Lesart, gilt für das System die Transparenzpflicht "
+        "nach {point}.",
+        "does_not_apply_consequence": "Gilt diese Lesart, ergibt sich aus {point} keine Pflicht "
+        "für das System.",
+    },
+}
+"""Each reading's title and consequence (E12); both quote the duty's paragraph."""
