@@ -63,8 +63,9 @@ CLASS_STEPS: Mapping[RiskClass, tuple[StepName, ...]] = {
 """The steps whose facts set each class; limited and minimal risk fall through the high-risk
 check, and the transparency check settles which of the two."""
 
-CLASS_CHECKS = frozenset({StepName.PROHIBITED, StepName.HIGH_RISK, StepName.TRANSPARENCY})
-"""The checks whose open question of law leaves the class itself as the stricter reading."""
+CLASS_CHECKS = frozenset({StepName.PROHIBITED, StepName.HIGH_RISK})
+"""The checks whose open question of law leaves the class itself as the stricter reading; the
+transparency check does so only for a limited-risk result."""
 
 LEGAL_REVIEW_CLASSES = frozenset({RiskClass.HIGH_RISK, RiskClass.PROHIBITED})
 """The classes whose results recommend legal review whatever their status (decision 026)."""
@@ -96,6 +97,8 @@ LEGAL_REVIEW: Mapping[Language, Mapping[str, str]] = {
         "assumed to apply until a lawyer has reviewed it.",
         "class_open": "The law and guidance don't settle part of the classification, so the "
         "stricter reading ({risk_class}) is assumed until a lawyer has reviewed it.",
+        "transparency_open": "The law and guidance don't settle whether an Art. 50 transparency "
+        "duty applies, so it is assumed until a lawyer has reviewed it.",
         "role_open": "The law doesn't settle the company's role, so the {role} role is assumed "
         "until a lawyer has reviewed it.",
     },
@@ -110,6 +113,8 @@ LEGAL_REVIEW: Mapping[Language, Mapping[str, str]] = {
         "bis zur anwaltlichen Prüfung angenommen, dass sie gilt.",
         "class_open": "Recht und Leitlinien klären einen Teil der Einstufung nicht, daher wird "
         "bis zur anwaltlichen Prüfung die strengere Lesart ({risk_class}) angenommen.",
+        "transparency_open": "Recht und Leitlinien klären nicht, ob eine Transparenzpflicht nach "
+        "Art. 50 gilt, daher wird sie bis zur anwaltlichen Prüfung angenommen.",
         "role_open": "Das Recht klärt die Rolle des Unternehmens nicht, daher wird bis zur "
         "anwaltlichen Prüfung die Rolle {role} angenommen.",
     },
@@ -174,16 +179,23 @@ def legal_review(
 ) -> str | None:
     """The recommendation of legal review for a high-risk, prohibited or legally ambiguous
     result: the class's sentence, then what each open question of law leaves assumed (in check
-    order: that the Act applies, the stricter class, the role)."""
+    order: that the Act applies, the stricter class, an Art. 50 duty, the role)."""
     texts = LEGAL_REVIEW[language]
     opened = {step.step for step in steps if step.status is Status.LEGALLY_AMBIGUOUS}
+    # An open Art. 50 question sets the class only for a limited-risk result; on a higher class
+    # it leaves a duty assumed, not the class.
+    sets_class = CLASS_CHECKS | (
+        {StepName.TRANSPARENCY} if risk_class is RiskClass.LIMITED_RISK else set()
+    )
+    duty_open = StepName.TRANSPARENCY in opened - sets_class
     clauses = (
         *((texts["scope_open"],) if StepName.SCOPE in opened else ()),
         *(
             (texts["class_open"].format(risk_class=CLASS_NAMES[language][risk_class]),)
-            if opened & CLASS_CHECKS
+            if opened & sets_class
             else ()
         ),
+        *((texts["transparency_open"],) if duty_open else ()),
         *(
             (texts["role_open"].format(role=ROLE_NAMES[language][role]),)
             if StepName.ROLE_OBLIGATIONS in opened and role is not None

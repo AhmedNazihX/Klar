@@ -7,8 +7,15 @@ import pytest
 from pydantic import BaseModel, ValidationError
 
 from aiact.engine.nodes.facts import FACTS_RESPONSE_FORMAT, ExtractedFact
+from aiact.engine.nodes.high_risk import HIGH_RISK_RESPONSE_FORMAT
 from aiact.engine.nodes.key_facts import MAX_TEXT_CHARS, KeyFact
+from aiact.engine.nodes.prohibited import PROHIBITED_RESPONSE_FORMAT
+from aiact.engine.nodes.role_obligations import (
+    HIGH_RISK_RESPONSE_FORMAT as ROLE_HIGH_RISK_RESPONSE_FORMAT,
+)
 from aiact.engine.nodes.role_obligations import ROLE_RESPONSE_FORMAT, ModificationFact, RoleFact
+from aiact.engine.nodes.scope import SCOPE_RESPONSE_FORMAT
+from aiact.engine.nodes.transparency import TRANSPARENCY_RESPONSE_FORMAT
 from aiact.schemas import FollowUpQuestion
 
 AT_CAP, OVER = "x" * MAX_TEXT_CHARS, "x" * (MAX_TEXT_CHARS + 1)
@@ -48,7 +55,19 @@ def test_an_extracted_quote_is_not_bounded() -> None:
     assert ExtractedFact.model_validate(given).quote == OVER
 
 
-@pytest.mark.parametrize("response_format", [FACTS_RESPONSE_FORMAT, ROLE_RESPONSE_FORMAT])
+@pytest.mark.parametrize(
+    "response_format",
+    [
+        FACTS_RESPONSE_FORMAT,
+        SCOPE_RESPONSE_FORMAT,
+        PROHIBITED_RESPONSE_FORMAT,
+        HIGH_RISK_RESPONSE_FORMAT,
+        TRANSPARENCY_RESPONSE_FORMAT,
+        ROLE_RESPONSE_FORMAT,
+        ROLE_HIGH_RISK_RESPONSE_FORMAT,
+    ],
+    ids=["facts", "scope", "prohibited", "high_risk", "transparency", "role", "role_hr"],
+)
 def test_the_bound_is_not_in_the_schema_sent_to_the_model(
     response_format: dict[str, object],
 ) -> None:

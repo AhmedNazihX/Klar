@@ -319,6 +319,60 @@ def test_an_ambiguous_scope_says_the_act_is_assumed_to_apply() -> None:
     assert "stricter reading" not in (result.legal_review or "")
 
 
+def _open_duty() -> CheckOutcome:
+    return CheckOutcome(
+        step=step(StepName.TRANSPARENCY, NO_CHAT, status=Status.LEGALLY_AMBIGUOUS),
+        transparency_duties=("art:50:1",),
+    )
+
+
+def test_an_open_art_50_duty_on_a_high_risk_result_names_the_duty_not_the_class() -> None:
+    result = run({StepName.HIGH_RISK: high_risk(), StepName.TRANSPARENCY: _open_duty()})
+    assert result.risk_class is RiskClass.HIGH_RISK
+    assert result.legal_review == (
+        "Have this result reviewed by a lawyer: a high-risk system carries duties with legal "
+        "consequences. The law and guidance don't settle whether an Art. 50 transparency duty "
+        "applies, so it is assumed until a lawyer has reviewed it."
+    )
+
+
+def test_an_open_art_50_duty_on_a_limited_risk_result_is_the_class() -> None:
+    result = run({StepName.TRANSPARENCY: _open_duty()})
+    assert result.risk_class is RiskClass.LIMITED_RISK
+    assert result.legal_review == (
+        "Have this result reviewed by a lawyer. The law and guidance don't settle part of the "
+        "classification, so the stricter reading (limited risk) is assumed until a lawyer has "
+        "reviewed it."
+    )
+
+
+def test_the_open_question_clauses_read_in_german() -> None:
+    owned = role_outcome(Role.PROVIDER, Role.DISTRIBUTOR, status=Status.LEGALLY_AMBIGUOUS)
+    role = run({StepName.ROLE_OBLIGATIONS: owned}, language=Language.DE)
+    assert role.legal_review == (
+        "Lassen Sie dieses Ergebnis anwaltlich prüfen. Das Recht klärt die Rolle des Unternehmens "
+        "nicht, daher wird bis zur anwaltlichen Prüfung die Rolle Anbieter angenommen."
+    )
+    ambiguous = high_risk(status=Status.LEGALLY_AMBIGUOUS)
+    classed = run({StepName.HIGH_RISK: ambiguous}, language=Language.DE)
+    assert classed.legal_review == (
+        "Lassen Sie dieses Ergebnis anwaltlich prüfen: Ein Hochrisiko-System bringt Pflichten mit "
+        "rechtlicher Tragweite mit sich. Recht und Leitlinien klären einen Teil der Einstufung "
+        "nicht, daher wird bis zur anwaltlichen Prüfung die strengere Lesart (Hochrisiko) "
+        "angenommen."
+    )
+    duty = run(
+        {StepName.HIGH_RISK: high_risk(), StepName.TRANSPARENCY: _open_duty()},
+        language=Language.DE,
+    )
+    assert duty.legal_review == (
+        "Lassen Sie dieses Ergebnis anwaltlich prüfen: Ein Hochrisiko-System bringt Pflichten mit "
+        "rechtlicher Tragweite mit sich. Recht und Leitlinien klären nicht, ob eine "
+        "Transparenzpflicht nach Art. 50 gilt, daher wird sie bis zur anwaltlichen Prüfung "
+        "angenommen."
+    )
+
+
 # --- The legal-review recommendation (INIT > Ethical considerations, decision 026 item 12) -------
 
 
@@ -580,8 +634,14 @@ def test_a_result_that_breaks_the_contract_raises_without_user_text() -> None:
     no_finding = CheckOutcome(step=step(StepName.ROLE_OBLIGATIONS, BOUGHT))
     with pytest.raises(FinalizeOutputError, match="role is set exactly") as raised:
         run({StepName.ROLE_OBLIGATIONS: no_finding}, FactsOutcome(facts=(RANKS,)))
-    assert DESCRIPTION not in str(raised.value)
-    assert RANKS.text not in str(raised.value)
+    message = str(raised.value)
+    assert message == (
+        "the result breaks its contract: answer: Value error, role is set exactly when the "
+        "role_obligations step is present"
+    )  # describe_validation_error's output: location and message, no input values
+    assert "input_value" not in message
+    assert DESCRIPTION not in message
+    assert RANKS.text not in message
     assert raised.value.__cause__ is None
 
 
