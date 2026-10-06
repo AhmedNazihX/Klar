@@ -245,5 +245,5 @@ class FactExtractor:
             return refusal_outcome(language)
         except ValidationError as exc:
             message = f"facts answer doesn't fit the schema: {describe_validation_error(exc)}"
-            raise FactsOutputError(message) from exc
+            raise FactsOutputError(message) from None
         return to_outcome(answer, description, language)

@@ -139,11 +139,11 @@ Input: *"We're a 40-person logistics company. We use a tool that reads incoming 
 | --- | --- | --- | --- |
 | Facts | Deployer; filters and ranks applicants; affects access to jobs | Stated | Description |
 | Role check | Stays a deployer: not modified, not rebranded, used for its intended purpose | Stated ("didn't change it"); brand and purpose assumed, to be confirmed | Art. 25 |
-| In scope | Yes: an AI system used in the EU | EU use assumed, to be confirmed | Art. 2–3 |
+| In scope | Yes. Whether the tool infers (Art. 3(1)) is not stated, so the engine may ask (in scope as the working assumption) or assume it is an AI system; either is accepted | Inference not stated: asked (needs more information) or assumed, to be confirmed; EU use assumed, to be confirmed | Art. 2–3 |
 | Prohibited | No match | Inferred | Art. 5 |
 | High-risk | Yes: recruitment use; ranking candidates counts as profiling, so the Article 6(3) exemption does not apply | Stated (scores and ranks) | Annex III point 4(a), Art. 6(3) |
 | Transparency | No separate duty identified from the description | Inferred | Art. 50 |
-| Result | High-risk, deployer. Duties include following the provider's instructions, assigning human oversight, keeping logs and informing the applicants who are subject to it (Art. 26(11)), from 2 December 2027 | — | Art. 26 |
+| Result | High-risk, deployer: decided when the engine assumes the tool is an AI system, or needs more information, pending the inference question (Art. 3(1)), when it asks; either is accepted. Duties include following the provider's instructions, assigning human oversight, keeping logs and informing the applicants who are subject to it (Art. 26(11)), from 2 December 2027 | — | Art. 26 |
 
 Deciding facts: the tool scores and ranks applicants; it was not modified or rebranded. The expected answers in this example are the design intent, to be checked against the legal text during the build.
 

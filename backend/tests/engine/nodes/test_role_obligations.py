@@ -60,6 +60,7 @@ from aiact.schemas import (
 from aiact.schemas.result import derived_status
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
+from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -160,7 +161,6 @@ def state(
         "language": language,
         "law_version": law_version,
         "as_of": ROLE_AS_OF,
-        "answers": {},
         "exclude_source_example_ids": (),
         "facts": facts,
         "steps": (),
@@ -1060,7 +1060,6 @@ def test_the_node_reads_the_earlier_findings_through_the_graph() -> None:
             "language": Language.EN,
             "law_version": LawVersion.AMENDED,
             "as_of": date(2026, 9, 29),
-            "answers": {},
             "exclude_source_example_ids": (),
         }
     )
@@ -1588,6 +1587,44 @@ def _role_cases() -> list[BenchmarkCase]:
 B5D_CASES = _role_cases()
 
 
+def _provider_through_gpai(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
+    """Provider by building on a GPAI model, not by the Art. 25(1)(c) switch; no other role."""
+    found, cites = finding(outcome), set(cited(outcome))
+    return (
+        found.role is Role.PROVIDER
+        and {"art:3:3", "art:3:68"} <= cites
+        and "art:25:1:c" not in cites
+        and found.also_role is None
+    )
+
+
+KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-d-03-assistant-repurposed-hiring": KnownGap(
+        "reaches provider through the GPAI build route (Art. 3(3), 3(68)) instead of the Art. "
+        "25(1)(c) switch, and keeps no deployer role (E10 re-record, user 2026-10-06)",
+        _provider_through_gpai,
+    ),
+}
+"""Recorded cases whose role outcome differs from the label, with the reason; each fails when it
+starts matching, so the entry is removed."""
+
+
+def b5d_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
+    """Everything `test_b5d_case_replay` asserts: the role, exactly the tagged Art. 25(1)
+    switches, any tagged `also_role`, and `role_matches`."""
+    label = case.label
+    assert isinstance(label, CaseLabel)
+    found = finding(outcome)
+    switches = {f"art:25:1:{s[-1]}" for s in tag(case, "role_switch") if s != "none"}
+    cited = {c.provision_id for c in outcome.step.citations}
+    return (
+        found.role is label.role
+        and (not switches or {c for c in cited if c.startswith("art:25:1:")} == switches)
+        and all(found.also_role is Role(also) for also in tag(case, "also_role"))
+        and role_matches(outcome, case)
+    )
+
+
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1601,18 +1638,14 @@ def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     2026-10-06), and one tagged `also_role:` keeps that role. Replays the recording
     `recordings/engine/nodes/test_role_obligations/test_b5d_case_replay[<id>].yaml`; a missing
     one fails. Record with `RECORD_COMMAND`."""
-    label = case.label
-    assert isinstance(label, CaseLabel)
     if not runs_role_check(case):
         pytest.skip("the role check doesn't run for this case, or its label names no role")
     run_state = role_check_state(case, ROLE_AS_OF)
     outcome = RoleObligationsCheck(luna_settings)(run_state)
     assert not unresolved_citations(outcome.step, run_state)
-    assert finding(outcome).role is label.role
-    switches = {f"art:25:1:{s[-1]}" for s in tag(case, "role_switch") if s != "none"}
-    if switches:
-        cited_switches = {c.provision_id for c in outcome.step.citations}
-        assert {c for c in cited_switches if c.startswith("art:25:1:")} == switches
-    for also in tag(case, "also_role"):
-        assert finding(outcome).also_role is Role(also)
-    assert role_matches(outcome, case), (finding(outcome).role, outcome.step.status)
+    found = finding(outcome)
+    switches = sorted(c for c in cited(outcome) if c.startswith("art:25:1:"))
+    shown = (found.role, found.also_role, switches, outcome.step.status, outcome.step.decision)
+    matches = b5d_matches(outcome, case)
+    expect_known_gap(KNOWN_GAPS, outcome, case, matches=matches, shown=shown)
+    assert matches, shown

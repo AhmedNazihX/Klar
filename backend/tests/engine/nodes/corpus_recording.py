@@ -34,8 +34,11 @@ NOT_FOUND = "not_found"
 
 
 def lookup_call(lookup: Lookup) -> dict[str, object]:
-    """The run's lookup as part of a call's key."""
-    return {**asdict(lookup), "exclude_source_example_ids": list(lookup.exclude_source_example_ids)}
+    """The run's lookup as part of a call's key. `include_held_out` joins the key only when set,
+    so the recordings made before it existed keep their keys, and a gap run's calls get their
+    own."""
+    fields = {k: v for k, v in asdict(lookup).items() if k != "include_held_out" or v}
+    return {**fields, "exclude_source_example_ids": list(lookup.exclude_source_example_ids)}
 
 
 def _key(call: Mapping[str, object]) -> str:

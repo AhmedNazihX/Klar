@@ -7,10 +7,11 @@ answers. No model is involved here.
   an id the text has, and a softly worded use can't miss its point because a search ranked it
   low (user, 2026-09-30).
 - **Analogy.** The guidelines are searched with the description (`search_ai_act`, no distance
-  cut-off: C8); their worked examples (Pile A only: held-out examples are never retrievable,
-  decision 012) are shown for reasoning by analogy. The caller's `exclude_source_example_ids` go
-  into every search, so a leave-one-out run drops the example a case was written from. Guidance
-  is mostly English only, so a German search that finds none is repeated in English.
+  cut-off: C8); their worked examples (Pile A only: held-out examples are hidden unless V8's gap
+  run sets `include_held_out`, decision 012) are shown for reasoning by analogy. The caller's
+  `exclude_source_example_ids` go into every search, and the run's `include_held_out` into every
+  call, so a leave-one-out run drops the example a case was written from. Guidance is mostly
+  English only, so a German search that finds none is repeated in English.
 """
 
 from collections.abc import Sequence
@@ -71,6 +72,7 @@ class HighRiskCorpus:
             lookup.language,
             lookup.law_version,
             lookup.as_of,
+            include_held_out=lookup.include_held_out,
             connection=self._connection,
         )
 
@@ -84,6 +86,7 @@ class HighRiskCorpus:
             lookup.as_of,
             doc_types={doc_type},
             exclude_source_example_ids=lookup.exclude_source_example_ids,
+            include_held_out=lookup.include_held_out,
             max_distance=None,
             limit=limit,
             embedder=self._embedder,

@@ -15,7 +15,7 @@ from pydantic import JsonValue
 from typer.testing import CliRunner, Result
 
 from aiact.cli import app
-from aiact.eval import citation_index, records, runner
+from aiact.eval import citation_index, engine_classifier, records, runner
 from aiact.eval import split as split_module
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.runner import (
@@ -35,6 +35,7 @@ from aiact.eval.runner import (
 )
 from aiact.eval.split import Split, SplitError, SplitMode
 from aiact.schemas import ClassificationResult, Language, RiskClass
+from aiact.settings import Settings
 
 GIT_SHA = "0" * 40
 
@@ -163,6 +164,7 @@ def test_the_classifier_never_sees_the_label_or_case_id() -> None:
     assert classifier.requests == [
         ClassifierInput("Made-up description 1", Language.DE, ("hr-ex-002", "hr-ex-003"))
     ]
+    assert classifier.requests[0].include_held_out is False
 
 
 def test_the_classifier_gets_the_case_date_or_none() -> None:
@@ -254,13 +256,16 @@ def test_exclusions_per_mode() -> None:
         exclusions_for(make_case(3, "hr-ex-001"), SPLIT)
 
 
-def test_exclude_mode_all_passes_no_exclusions_and_needs_no_split() -> None:
+def test_exclude_mode_all_is_the_gap_run_and_needs_no_split() -> None:
+    """No exclusions, and the held-out examples retrievable: the only mode that sets the
+    opt-in (decision 012). The heldout run's requests above leave it False."""
     classifier = PricedClassifier()
     store = MemoryStore()
     summary = run_benchmark(
         CASES[:2], classifier, store, options(exclude_mode=ExcludeMode.ALL), None
     )
     assert all(request.exclude_source_example_ids == () for request in classifier.requests)
+    assert all(request.include_held_out for request in classifier.requests)
     config = store.runs[summary.run_id]["config"]
     assert isinstance(config, dict)
     assert config["split_mode"] is None
@@ -317,8 +322,12 @@ def test_options_reject_bad_values(changes: dict[str, object]) -> None:
 cli = CliRunner()
 
 
-def test_cli_rejects_an_unknown_or_unbuilt_classifier() -> None:
-    for name, message in (("nope", "unknown classifier"), ("engine", "E10")):
+def test_cli_rejects_an_unknown_or_unconfigured_classifier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    unconfigured = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+    monkeypatch.setattr(engine_classifier, "get_settings", lambda: unconfigured)
+    for name, message in (("nope", "unknown classifier"), ("engine", "ENGINE_MODEL")):
         result = cli.invoke(app, ["evaluate", "run", "--set", "own", "--classifier", name])
         assert result.exit_code == 2, name
         assert message in result.stderr

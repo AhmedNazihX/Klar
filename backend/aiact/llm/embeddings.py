@@ -71,6 +71,8 @@ class EmbeddingBatch:
     vectors: list[list[float]]
     tokens: int
     cost_usd: float
+    is_cost_known: bool = True
+    """False when the response carried no cost, so `cost_usd` (0) undercounts."""
 
 
 class OpenRouterEmbeddings(Embeddings):
@@ -113,7 +115,8 @@ class OpenRouterEmbeddings(Embeddings):
         return self._embed([format_query(text, self.query_instruction)])[0]
 
     def embed_batch(self, texts: list[str]) -> EmbeddingBatch:
-        """Embed corpus texts in one request and report its tokens and cost (0 if not given)."""
+        """Embed corpus texts in one request and report its tokens and cost (0, and
+        `is_cost_known` False, when the response gives none)."""
         if not texts:
             return EmbeddingBatch([], 0, 0.0)
         try:
@@ -136,6 +139,7 @@ class OpenRouterEmbeddings(Embeddings):
             vectors=[l2_normalise(vector, self.dimensions) for vector in vectors],
             tokens=usage.prompt_tokens if usage is not None else 0,
             cost_usd=float(usage.cost or 0.0) if usage is not None else 0.0,
+            is_cost_known=usage is not None and usage.cost is not None,
         )
 
     def _embed(self, texts: list[str]) -> list[list[float]]:

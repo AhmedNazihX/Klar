@@ -45,7 +45,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
 from aiact.dates import long_date
-from aiact.engine.nodes.common import answers_section, facts_section, key_question, refused_check
+from aiact.engine.nodes.common import facts_section, key_question, refused_check
 from aiact.engine.nodes.high_risk import SECTION_B_PREFIX
 from aiact.engine.nodes.key_facts import Answer, KeyFact, ShortTexts, facts_used
 from aiact.engine.nodes.role_legacy import (
@@ -755,7 +755,6 @@ def role_messages(state: EngineState, conditions: Sequence[str]) -> list[BaseMes
             f"Earlier checks:\n{steps}\n\n"
             f"Conditions:\n{listed}\n\n"
             f"{_legacy_section(state)}"
-            f"Answers to earlier questions:\n{answers_section(state)}\n\n"
             f"Facts:\n{facts_section(state)}\n\n"
             f"Description:\n{state['description']}"
         ),
@@ -796,5 +795,5 @@ class RoleObligationsCheck:
             return refusal_outcome(state, self._table, self._data_dir)
         except ValidationError as exc:
             message = f"role answer doesn't fit the schema: {describe_validation_error(exc)}"
-            raise RoleOutputError(message) from exc
+            raise RoleOutputError(message) from None
         return to_outcome(answer, state, self._table, self._data_dir)

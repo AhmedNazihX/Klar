@@ -69,7 +69,11 @@ from aiact.schemas import (
 )
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
-from tests.engine.nodes.corpus_recording import RecordedGuidelineLibrary, corpus_recording
+from tests.engine.nodes.corpus_recording import (
+    RecordedGuidelineLibrary,
+    corpus_recording,
+)
+from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -163,7 +167,6 @@ def state(
         "language": language,
         "law_version": law_version,
         "as_of": as_of,
-        "answers": {},
         "exclude_source_example_ids": exclude,
         "facts": facts,
         "steps": (),
@@ -548,6 +551,7 @@ def test_the_corpus_limits_the_search_to_the_art_50_guidelines_without_a_cut_off
         {
             "doc_keys": node.SOURCE.doc_keys,
             "exclude_source_example_ids": EXCLUDED,
+            "include_held_out": False,
             "max_distance": None,
             "limit": node.SOURCE.passages,
             "embedder": embedder,
@@ -559,7 +563,9 @@ def test_the_corpus_limits_the_search_to_the_art_50_guidelines_without_a_cut_off
 def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[tuple[object, ...]] = []
 
-    def spy(provision_id: str, *args: object, connection: object) -> Provision:
+    def spy(
+        provision_id: str, *args: object, connection: object, include_held_out: bool
+    ) -> Provision:
         seen.append((provision_id, *args, connection))
         return provision(provision_id)
 
@@ -615,7 +621,6 @@ def _run(check: TransparencyCheck, script: Script | None = None) -> EngineState:
         "language": Language.EN,
         "law_version": LawVersion.AMENDED,
         "as_of": AS_OF,
-        "answers": {},
         "exclude_source_example_ids": (),
     }
     return cast(EngineState, graph.invoke(given))
@@ -896,7 +901,31 @@ def _b5a_cases() -> list[BenchmarkCase]:
 
 B5A_CASES = _b5a_cases()
 
-KNOWN_GAPS: dict[str, str] = {}
+
+def _decides_no_duty(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    return result.step.status is Status.DECIDED and result.transparency_duties == ()
+
+
+def _asks_about_deep_fakes(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    return (
+        result.step.status is Status.NEEDS_MORE_INFORMATION
+        and "art:50:4" in result.transparency_duties
+    )
+
+
+KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-a-04-audiobook-voices": KnownGap(
+        "decides no Art. 50 duty: reads turning the manuscript into an audiobook as not changing "
+        "its meaning, so the Art. 50(2) marking duty the label needs is left out (E10 "
+        "re-record, user 2026-10-06)",
+        _decides_no_duty,
+    ),
+    "own-a-14-practice-phone-agent": KnownGap(
+        "adds Art. 50(4) and asks whether the voices are deep fakes (needs_more_information), "
+        "where the label is decided with Art. 50(1) and (2) only (E10 re-record, user 2026-10-06)",
+        _asks_about_deep_fakes,
+    ),
+}
 """Recorded cases whose Art. 50 outcome differs from the label, with the reason; each fails when
 it starts matching, so the entry is removed."""
 
@@ -949,10 +978,7 @@ def test_b5a_case_replay(
         result = check(run_state)
     assert not unresolved_citations(result.step, run_state)
     matches = transparency_matches(result, case)
-    gap = KNOWN_GAPS.get(case.id)
-    if gap is not None:
-        if matches:
-            pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        pytest.xfail(gap)
     step = result.step
-    assert matches, (result.transparency_duties, step.status, cited(result), step.decision)
+    shown = (result.transparency_duties, step.status, cited(result), step.decision)
+    expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
+    assert matches, shown

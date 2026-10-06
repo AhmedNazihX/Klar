@@ -50,7 +50,6 @@ def engine_input(description: str, language: Language = Language.EN) -> EngineSt
         "language": language,
         "law_version": LawVersion.AMENDED,
         "as_of": date(2026, 9, 29),
-        "answers": {},
         "exclude_source_example_ids": (),
     }
 

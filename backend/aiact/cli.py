@@ -343,7 +343,10 @@ def eval_run(
     ] = None,
     exclude_mode: Annotated[
         runner.ExcludeMode,
-        typer.Option(help="heldout: keep held-out examples out of retrieval; all: exclude none"),
+        typer.Option(
+            help="heldout: keep held-out examples out of retrieval; "
+            "all: the gap run, retrieval sees every example, held-out ones included"
+        ),
     ] = runner.ExcludeMode.HELDOUT,
     concurrency: Annotated[
         int, typer.Option(min=1, max=runner.MAX_CONCURRENCY, help="Cases in flight at once")

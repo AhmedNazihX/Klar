@@ -10,7 +10,6 @@ neither the database nor the network.
 
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass
 from datetime import date
 from typing import cast
 
@@ -69,7 +68,12 @@ from aiact.schemas import (
 )
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
-from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
+from tests.engine.nodes.corpus_recording import (
+    CorpusRecording,
+    corpus_recording,
+    lookup_call,
+)
+from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -218,7 +222,6 @@ def state(
         "language": language,
         "law_version": law_version,
         "as_of": AS_OF,
-        "answers": {},
         "exclude_source_example_ids": exclude,
         "facts": (),
         "steps": (),
@@ -663,7 +666,7 @@ def test_the_corpus_hands_the_filter_to_search_ai_act_over_one_connection(
         assert kwargs["max_distance"] is None
         assert kwargs["connection"] is connection
         assert kwargs["embedder"] is embedder
-        assert "include_held_out" not in kwargs
+        assert kwargs["include_held_out"] is False  # held-out examples stay hidden
 
 
 def _only_search(library: HighRiskCorpus) -> HighRiskLibrary:
@@ -681,7 +684,9 @@ def _only_search(library: HighRiskCorpus) -> HighRiskLibrary:
 def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[object] = []
 
-    def spy(provision_id: str, *args: object, connection: object) -> Provision:
+    def spy(
+        provision_id: str, *args: object, connection: object, include_held_out: bool
+    ) -> Provision:
         seen.append(connection)
         return provision(provision_id)
 
@@ -741,7 +746,13 @@ def test_a_check_without_a_library_builds_one_embedder_and_holds_no_connection_o
         searched_with.append(kwargs.pop("embedder"))
         return FakeSearch()(query, language, law_version, as_of, **kwargs)
 
-    def lookup(provision_id: str, *args: object, connection: FakeConnection) -> Provision:
+    def lookup(
+        provision_id: str,
+        *args: object,
+        connection: FakeConnection,
+        include_held_out: bool,
+    ) -> Provision:
+        assert not include_held_out
         assert connection.is_open
         return fake_lookup(provision_id, *args)  # type: ignore[arg-type]
 
@@ -935,7 +946,6 @@ def test_the_check_runs_in_the_graph_and_sets_its_findings() -> None:
             "language": Language.EN,
             "law_version": LawVersion.AMENDED,
             "as_of": AS_OF,
-            "answers": {},
             "exclude_source_example_ids": (),
         }
     )
@@ -1182,13 +1192,6 @@ def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     assert high_risk_matches(result, WORKED_EXAMPLE_CASE)
 
 
-@dataclass(frozen=True)
-class KnownGap:
-    reason: str
-    reads: Callable[[CheckOutcome, BenchmarkCase], bool]
-    """The documented wrong reading; any other miss fails the replay."""
-
-
 def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) -> bool:
     """High-risk assumed on the case's Annex I point, asking whether a third-party conformity
     assessment is required (Art. 6(1)(b))."""
@@ -1203,7 +1206,18 @@ def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) 
     )
 
 
+def _decides_not_high_risk(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """Decided not high-risk on either route, with no question asked."""
+    return result.high_risk_route is None and result.step.status is Status.DECIDED
+
+
 KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-e-07-cobot-vision-kit": KnownGap(
+        "decides not high-risk (no Annex III use, not an Annex I safety component) instead of "
+        "asking whether the Machinery Regulation requires a third-party assessment (Annex I "
+        "B.21) (E10 re-record, user 2026-10-06)",
+        _decides_not_high_risk,
+    ),
     "own-e-10-in-house-nodule-finder": KnownGap(
         "the model treats the MDR in-house exemption as a missing fact (it asks whether a "
         "third-party assessment is required) instead of an open legal question; the label stays "
@@ -1227,15 +1241,7 @@ def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -
     result = replay_check(run_state)
     assert not unresolved_citations(result.step, run_state)
     matches = high_risk_matches(result, case)
-    gap = KNOWN_GAPS.get(case.id)
-    if gap is not None:
-        if matches:
-            pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        assert gap.reads(result, case), (
-            result.high_risk_route,
-            result.step.status,
-            result.step.decision,
-        )
-        pytest.xfail(gap.reason)
     step = result.step
-    assert matches, (result.high_risk_route, result.annex_point, step.status, step.decision)
+    shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
+    expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
+    assert matches, shown

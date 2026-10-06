@@ -39,7 +39,6 @@ def test_the_replay_state_has_no_facts_answers_exclusions_or_steps() -> None:
         "language": Language.EN,
         "law_version": LawVersion.AMENDED,
         "as_of": AS_OF,
-        "answers": {},
         "exclude_source_example_ids": (),
         "facts": (),
         "steps": (),

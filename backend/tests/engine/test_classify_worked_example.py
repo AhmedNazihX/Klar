@@ -1,0 +1,353 @@
+"""INIT's worked example end to end through `classify_system`'s pipeline (E10): live, and replayed
+in CI from one recording of the whole run.
+
+The replay runs the engine's own nodes (`engine_nodes`) on the recorded model replies and the
+recorded corpus answers of every check (`<test>.corpus.json`, keyed per node), and checks every
+citation against the corpus built from `data/parsed/` (E9), so it needs no database. It is
+skipped until it is recorded: record it (live model, embedding and local-corpus calls) with
+`RECORD_COMMAND`, after the story's reviews, as the orchestrator's paid step.
+"""
+
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
+from dataclasses import dataclass
+from datetime import date
+from functools import partial
+
+import pytest
+
+from aiact.db import connect
+from aiact.engine import ClassificationRun, ClassifyRequest, run_classification
+from aiact.engine.classify import CorpusLibraries, NodeBuilder, engine_nodes
+from aiact.engine.nodes import prohibited, transparency
+from aiact.engine.nodes.common import Lookup
+from aiact.engine.nodes.guideline_retrieval import GuidelineCorpus
+from aiact.engine.nodes.high_risk_retrieval import HighRiskCorpus
+from aiact.engine.nodes.scope import CorpusLibrary
+from aiact.engine.scripted import Script, scripted_nodes
+from aiact.engine.state import CheckOutcome
+from aiact.eval.experiments.matchers import WORKED_EXAMPLE
+from aiact.llm import OpenRouterEmbeddings
+from aiact.retrieval.provisions import Provision
+from aiact.retrieval.search import SearchHit
+from aiact.schemas import (
+    DISCLAIMER,
+    ClassificationResult,
+    EvidenceTag,
+    Fact,
+    FollowUpQuestion,
+    Language,
+    LawVersion,
+    RiskClass,
+    Role,
+    Status,
+    StepName,
+    StepResult,
+)
+from aiact.settings import Settings, get_settings
+from tests.engine.built_corpus import built_validator, unresolved_citations
+from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
+
+LUNA = "openai/gpt-6-luna-20260922"
+LUNA_PROVIDER = "azure/eu"
+AS_OF = date(2026, 10, 6)
+"""The replay's date, fixed so the recorded corpus slices stay the ones it reads."""
+
+RECORD_COMMAND = (
+    "uv run pytest tests/engine/test_classify_worked_example.py -k replay --record-mode=once"
+)
+LIVE_COMMAND = "uv run pytest tests/engine/test_classify_worked_example.py -m live"
+
+
+def worked_example_request() -> ClassifyRequest:
+    return ClassifyRequest(
+        description=WORKED_EXAMPLE.description, language=Language.EN, as_of=AS_OF
+    )
+
+
+INIT_DUTIES = {
+    "art:26:1": "follow the provider's instructions for use",
+    "art:26:2": "assign human oversight",
+    "art:26:6": "keep the logs",
+    "art:26:11": "inform the applicants subject to it",
+}
+"""The Art. 26 duties INIT's worked example lists, by the obligation table's article ids."""
+ANNEX_III_FROM = date(2027, 12, 2)
+"""INIT: the duties apply "from 2 December 2027" (the Annex III route's Chapter III date)."""
+INIT_BASIS: dict[StepName, set[str]] = {
+    StepName.SCOPE: {"art:3:1", "art:2:1"},
+    StepName.HIGH_RISK: {"annex:III:4:a", "art:6:3"},
+    StepName.TRANSPARENCY: {"art:50"},
+    StepName.ROLE_OBLIGATIONS: {"art:3:4"},
+}
+"""The Basis column of INIT's table, as the ids each step cites: Art. 2-3 (the AI system
+definition and the territorial scope), Annex III 4(a) and Art. 6(3), Art. 50 (no duty raised,
+so the whole article), and for the role the deployer definition (INIT names Art. 25, whose
+switches a deployer that keeps its role doesn't trigger, so the step cites none of them).
+Art. 5 is checked apart (`ART_5`): a step that matches no practice cites either the Art. 5(1)
+list or the points it considered and set aside."""
+ART_5 = "art:5"
+"""The prohibited step's Basis: every id it cites is a provision of Art. 5."""
+
+
+SCOPE_QUESTION = "ai_system"
+"""The scope step's missing fact when it asks whether the tool infers its outputs (Art. 3(1)),
+which the description doesn't say. It may instead assume that the tool is an AI system and
+decide (user, 2026-10-06: either outcome is accepted, as long as the system is in scope)."""
+DECIDED_STEPS = (
+    StepName.PROHIBITED,
+    StepName.HIGH_RISK,
+    StepName.TRANSPARENCY,
+    StepName.ROLE_OBLIGATIONS,
+)
+
+
+def assert_in_scope(result: ClassificationResult) -> None:
+    """The scope step's two accepted outcomes: (a) it asks the Art. 3(1) inference question,
+    with in scope as the working assumption, and the result needs more information with that
+    question among its follow-ups; or (b) it decides in scope, with the fact that the tool is
+    an AI system marked assumed, and the result is decided."""
+    scope = next(step for step in result.steps if step.step is StepName.SCOPE)
+    if scope.status is Status.NEEDS_MORE_INFORMATION:
+        assert scope.missing_fact is not None and scope.missing_fact.id == SCOPE_QUESTION
+        assert scope.missing_fact.about == "art:3:1"
+        assert result.status is Status.NEEDS_MORE_INFORMATION
+        assert SCOPE_QUESTION in {question.id for question in result.follow_up_questions}
+        return
+    assert scope.status is Status.DECIDED, (scope.status, scope.decision)
+    assumed = [f.text for f in scope.facts_used if f.evidence is EvidenceTag.ASSUMED]
+    assert any("ai system" in text.lower() for text in assumed), assumed
+    assert result.status is Status.DECIDED
+
+
+def assert_the_expected_result(run: ClassificationRun) -> None:
+    """INIT > Worked example, row by row: in scope, with the scope step either (a) asking
+    whether the tool infers (Art. 3(1)), in scope as the working assumption, so the result needs
+    more information, or (b) deciding in scope with the AI-system point marked assumed, so the
+    result is decided (`assert_in_scope`); no prohibited practice; high-risk under Annex III
+    4(a) (ranking applicants is profiling, so Art. 6(3) can't exempt it); no separate Art. 50
+    duty; the company stays a deployer, with the Art. 26 duties INIT lists from 2 December 2027;
+    each step citing its Basis (`INIT_BASIS`).
+    Every citation resolves."""
+    result = run.result
+    steps = {step.step: step for step in result.steps}
+    assert list(steps) == list(StepName)  # in scope (assumed), not prohibited: every check ran
+    assert_in_scope(result)
+    for name in DECIDED_STEPS:
+        step = steps[name]
+        assert step.status is Status.DECIDED, (name, step.status, step.decision)
+    assert result.risk_class is RiskClass.HIGH_RISK, result.risk_class
+    assert result.annex_point == "annex:III:4:a"
+    for name, basis in INIT_BASIS.items():
+        cited = {c.provision_id for c in steps[name].citations}
+        assert basis <= cited, (name, sorted(cited))
+    prohibited_cites = [c.provision_id for c in steps[StepName.PROHIBITED].citations]
+    assert prohibited_cites, "the prohibited step cites nothing"
+    assert all(pid == ART_5 or pid.startswith(f"{ART_5}:") for pid in prohibited_cites), (
+        prohibited_cites
+    )
+    assert result.transparency_duties == ()
+    assert result.role is Role.DEPLOYER
+    duties = {o.article: o for o in result.obligations}
+    assert set(INIT_DUTIES) <= set(duties), sorted(duties)
+    for article in INIT_DUTIES:
+        assert duties[article].applies_from == ANNEX_III_FROM, article
+    assert result.law_version is LawVersion.AMENDED
+    assert result.as_of == AS_OF
+    assert result.disclaimer == DISCLAIMER[Language.EN]
+    state = {
+        "description": WORKED_EXAMPLE.description,
+        "language": Language.EN,
+        "law_version": LawVersion.AMENDED,
+        "as_of": AS_OF,
+        "exclude_source_example_ids": (),
+    }
+    for step in result.steps:
+        assert not unresolved_citations(step, state), step.step  # pyright: ignore[reportArgumentType]
+    assert run.usage.cost_usd > 0
+    assert run.usage.tokens > 0
+    assert set(run.usage.by_node) >= {"facts", *(name.value for name in StepName)}
+
+
+def stub_result(scope: StepResult) -> ClassificationResult:
+    """A stub run whose scope check returns `scope` and whose other checks find nothing."""
+    nodes = scripted_nodes(Script(checks={StepName.SCOPE: CheckOutcome(step=scope)}))
+    run = run_classification(
+        worked_example_request(),
+        settings=Settings(_env_file=None),  # pyright: ignore[reportCallIssue]
+        build_nodes=lambda _settings, _meter: nodes,
+    )
+    return run.result
+
+
+ASKS = StepResult(
+    step=StepName.SCOPE,
+    decision="Working assumption: in scope.",
+    status=Status.NEEDS_MORE_INFORMATION,
+    missing_fact=FollowUpQuestion(
+        id=SCOPE_QUESTION, text="Is it trained on data, or does it apply rules?", about="art:3:1"
+    ),
+)
+
+
+def assumes(fact: str) -> StepResult:
+    return StepResult(
+        step=StepName.SCOPE,
+        decision="In scope.",
+        facts_used=(Fact(text=fact, evidence=EvidenceTag.ASSUMED),),
+    )
+
+
+@pytest.mark.parametrize(
+    "scope", [ASKS, assumes("The tool is assumed to be an AI system.")], ids=["asks", "assumes"]
+)
+def test_either_scope_outcome_is_accepted(scope: StepResult) -> None:
+    assert_in_scope(stub_result(scope))
+
+
+@pytest.mark.parametrize(
+    "scope",
+    [
+        assumes("The tool is assumed to be used in the EU."),  # the AI-system point not assumed
+        ASKS.model_copy(update={"missing_fact": FollowUpQuestion(id="eu_use", text="EU?")}),
+    ],
+    ids=["decided_without_the_assumption", "asks_another_question"],
+)
+def test_any_other_scope_outcome_fails(scope: StepResult) -> None:
+    with pytest.raises(AssertionError):
+        assert_in_scope(stub_result(scope))
+
+
+# --- Live ---------------------------------------------------------------------------------------
+
+
+@pytest.mark.live
+def test_live_worked_example() -> None:
+    """The real pipeline: the engine model, the query embeddings and the local corpus (needs
+    `backend/.env` and `supabase start`). The run logs its cost per node (run pytest with
+    `--log-cli-level=INFO` to see it)."""
+    run = run_classification(worked_example_request(), settings=get_settings())
+    assert_the_expected_result(run)
+
+
+# --- Replay -------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class LiveCorpus:
+    """The live corpus libraries of every check, over one connection (recording only)."""
+
+    scope: CorpusLibrary
+    prohibited: GuidelineCorpus
+    high_risk: HighRiskCorpus
+    transparency: GuidelineCorpus
+
+
+class Recorded:
+    """One check's corpus calls over the run's `CorpusRecording`. A lookup gives the same row
+    whichever check asks; a search is keyed by its check too."""
+
+    def __init__(self, recording: CorpusRecording[LiveCorpus], node: StepName) -> None:
+        self._recording = recording
+        self._node = node
+
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
+        return self._recording.provision(
+            provision_id, lookup, lambda live: live.scope.provision(provision_id, lookup)
+        )
+
+    def _hits(
+        self,
+        call: Mapping[str, object],
+        lookup: Lookup,
+        ask: Callable[[LiveCorpus], tuple[SearchHit, ...]],
+    ) -> tuple[SearchHit, ...]:
+        return self._recording.hits({"node": self._node.value, **call, **lookup_call(lookup)}, ask)
+
+
+class RecordedScope(Recorded):
+    def definition_guidance(self, query: str, lookup: Lookup) -> tuple[SearchHit, ...]:
+        return self._hits(
+            {"definition_guidance": query},
+            lookup,
+            lambda live: live.scope.definition_guidance(query, lookup),
+        )
+
+
+class RecordedGuidance(Recorded):
+    def guidance(self, query: str, lookup: Lookup, *, language: Language) -> tuple[SearchHit, ...]:
+        def ask(live: LiveCorpus) -> tuple[SearchHit, ...]:
+            library = live.prohibited if self._node is StepName.PROHIBITED else live.transparency
+            return library.guidance(query, lookup, language=language)
+
+        return self._hits({"guidance": query, "language": language}, lookup, ask)
+
+
+class RecordedHighRisk(Recorded):
+    def search(
+        self, query: str, lookup: Lookup, *, language: Language, doc_type: str, limit: int
+    ) -> tuple[SearchHit, ...]:
+        call = {"search": query, "language": language, "doc_type": doc_type, "limit": limit}
+
+        def ask(live: LiveCorpus) -> tuple[SearchHit, ...]:
+            return live.high_risk.search(
+                query, lookup, language=language, doc_type=doc_type, limit=limit
+            )
+
+        return self._hits(call, lookup, ask)
+
+
+def recorded_libraries(recording: CorpusRecording[LiveCorpus]) -> CorpusLibraries:
+    return CorpusLibraries(
+        scope=RecordedScope(recording, StepName.SCOPE),
+        prohibited=RecordedGuidance(recording, StepName.PROHIBITED),
+        high_risk=RecordedHighRisk(recording, StepName.HIGH_RISK),
+        transparency=RecordedGuidance(recording, StepName.TRANSPARENCY),
+    )
+
+
+@contextmanager
+def _live_corpus(settings: Settings) -> Iterator[LiveCorpus]:
+    embedder = OpenRouterEmbeddings(settings=settings)
+    with connect() as connection:
+        yield LiveCorpus(
+            scope=CorpusLibrary(connection, embedder),
+            prohibited=GuidelineCorpus(connection, embedder, prohibited.SOURCE),
+            high_risk=HighRiskCorpus(connection, embedder),
+            transparency=GuidelineCorpus(connection, embedder, transparency.SOURCE),
+        )
+
+
+@pytest.fixture
+def luna_settings(openrouter_settings: Settings) -> Settings:
+    """The engine on Luna, and no LangSmith key: a recording run sends no trace (the run then
+    switches tracing off, so none reaches the cassette)."""
+    return openrouter_settings.model_copy(
+        update={"engine_model": LUNA, "engine_provider": LUNA_PROVIDER, "langsmith_api_key": None}
+    )
+
+
+@pytest.fixture
+def replay_nodes(
+    luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
+) -> Iterator[NodeBuilder]:
+    """The engine's own nodes over the recorded model and corpus, citations checked against the
+    built corpus; skips while nothing is recorded."""
+    with corpus_recording(
+        vcr_cassette_dir,
+        default_cassette_name,
+        record_mode,
+        RECORD_COMMAND,
+        lambda: _live_corpus(luna_settings),
+    ) as recording:
+        yield partial(
+            engine_nodes, libraries=recorded_libraries(recording), validator=built_validator()
+        )
+
+
+@pytest.mark.vcr
+def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
+    run = run_classification(
+        worked_example_request(), settings=luna_settings, build_nodes=replay_nodes
+    )
+    assert_the_expected_result(run)

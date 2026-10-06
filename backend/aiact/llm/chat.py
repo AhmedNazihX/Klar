@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from typing import Literal
 
 import openrouter
+from langchain_core.messages import AIMessage
 from langchain_openrouter import ChatOpenRouter
 
 from aiact.llm.routing import (
@@ -29,6 +30,14 @@ DEFAULT_MAX_RETRIES = 2
 """ChatOpenRouter's own default. With 0, the model gets a client that makes exactly one attempt
 (`client_without_retries`), so every billed attempt is one the caller's callbacks see:
 ChatOpenRouter's own `max_retries=0` only leaves the SDK on its default retries."""
+
+
+def reply_usage(reply: AIMessage) -> tuple[float | None, int]:
+    """What a chat reply cost (OpenRouter's `usage.cost`; None when the reply has none)
+    and how many tokens it used."""
+    cost = reply.response_metadata.get("cost")
+    tokens = reply.usage_metadata["total_tokens"] if reply.usage_metadata else 0
+    return (float(cost) if isinstance(cost, int | float) else None), tokens
 
 
 def client_without_retries(settings: Settings) -> openrouter.OpenRouter:

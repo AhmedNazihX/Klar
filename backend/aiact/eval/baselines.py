@@ -19,7 +19,7 @@ the Luna baseline answers from what the model remembers.
 from datetime import date
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
 from aiact.eval.runner import (
@@ -29,6 +29,7 @@ from aiact.eval.runner import (
     ClassifierInput,
 )
 from aiact.llm import ChoiceQuestion, DecisionsClient, DecisionsError, chat_model
+from aiact.llm.chat import reply_usage
 from aiact.llm.routing import require_setting
 from aiact.llm.structured import describe_validation_error, json_schema_format
 from aiact.schemas import (
@@ -222,7 +223,8 @@ class LunaBaseline:
 
     def classify(self, request: ClassifierInput) -> Classification:
         reply = self._model.invoke(luna_messages(request), response_format=LUNA_RESPONSE_FORMAT)
-        cost_usd, tokens = _chat_usage(reply)
+        cost, tokens = reply_usage(reply)
+        cost_usd = cost or 0.0
         try:
             answer = BaselineAnswer.model_validate_json(reply.text)
         except ValidationError as exc:
@@ -233,13 +235,6 @@ class LunaBaseline:
         except BaselineOutputError as exc:
             raise ClassifierFailedError(cost_usd, tokens, exc) from exc
         return Classification(result=result, cost_usd=cost_usd, tokens=tokens)
-
-
-def _chat_usage(reply: AIMessage) -> tuple[float, int]:
-    """What a chat call cost (OpenRouter's `usage.cost`) and how many tokens it used."""
-    cost = reply.response_metadata.get("cost")
-    tokens = reply.usage_metadata["total_tokens"] if reply.usage_metadata else 0
-    return (float(cost) if isinstance(cost, int | float) else 0.0), tokens
 
 
 # --- Jev classifying directly -------------------------------------------------------------------

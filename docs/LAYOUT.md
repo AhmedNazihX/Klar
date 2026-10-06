@@ -30,7 +30,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3)
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
-│   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3)
+│   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3);
+│   │   │                            reply_usage, a reply's cost and tokens (E10)
 │   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
 │   │   │                            generations.py: the provider that served a generation (X2)
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
@@ -56,7 +57,12 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
 │   │   │   ├── citations.py         citation existence validator, one retry, the changed_by_omnibus marker (E9)
-│   │   │   └── __init__.py          classify_system (E10)
+│   │   │   ├── classify.py          classify_system, run_classification, stream_classification, the answers
+│   │   │   │                        appended to the description (decision 019), engine_nodes (E10)
+│   │   │   ├── events.py            the streamed events: facts, step_started, step, error, result (E10)
+│   │   │   ├── usage.py             UsageMeter: cost and tokens per node, for the run's log and the runner (E10)
+│   │   │   ├── tracing.py           the LangSmith tracer, metadata only outside development (E10)
+│   │   │   └── __init__.py          the public API: classify_system and the streamed form (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data
 │   │   │   ├── cases.py             BenchmarkCase schema + loader + appliedAI mapping (F7); Commission-row fields, QAItem (F7b)
 │   │   │   ├── academic.py          davidath scenarios → cases + overrides; `aiact evaluate academic-import|academic-sample` (B12)
@@ -67,6 +73,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        retrievable corpus; `aiact evaluate isolation-embed` (B13)
 │   │   │   ├── label_filter.py      second-model label filter; `aiact evaluate label-filter` (B9)
 │   │   │   ├── runner.py            `aiact evaluate run`: classifier registry, subset, exclusions, cost cap (V1)
+│   │   │   ├── engine_classifier.py the runner's `engine` classifier over run_classification (E10)
 │   │   │   ├── records.py           writes eval_runs / eval_case_results over a direct connection (V1)
 │   │   │   ├── metrics.py           deterministic metrics, per-case scores and run summary (V2)
 │   │   │   ├── report.py            markdown metrics table for a stored run_id; `aiact evaluate report` (V2)

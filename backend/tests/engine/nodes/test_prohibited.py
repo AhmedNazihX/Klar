@@ -72,7 +72,11 @@ from aiact.schemas import (
 )
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
-from tests.engine.nodes.corpus_recording import RecordedGuidelineLibrary, corpus_recording
+from tests.engine.nodes.corpus_recording import (
+    RecordedGuidelineLibrary,
+    corpus_recording,
+)
+from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap, refused
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -166,7 +170,6 @@ def state(
         "language": language,
         "law_version": law_version,
         "as_of": as_of,
-        "answers": {},
         "exclude_source_example_ids": exclude,
         "facts": facts,
         "steps": (),
@@ -778,6 +781,7 @@ def test_the_corpus_limits_the_search_to_its_guideline_without_a_cut_off(
         {
             "doc_keys": node.SOURCE.doc_keys,
             "exclude_source_example_ids": EXCLUDED,
+            "include_held_out": False,
             "max_distance": None,
             "limit": node.SOURCE.passages,
             "embedder": embedder,
@@ -789,7 +793,9 @@ def test_the_corpus_limits_the_search_to_its_guideline_without_a_cut_off(
 def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[tuple[object, ...]] = []
 
-    def spy(provision_id: str, *args: object, connection: object) -> Provision:
+    def spy(
+        provision_id: str, *args: object, connection: object, include_held_out: bool
+    ) -> Provision:
         seen.append((provision_id, *args, connection))
         return provision(provision_id)
 
@@ -827,6 +833,18 @@ def test_the_prompt_puts_instructions_and_art_5_first_and_the_description_last()
     assert human.endswith(f"Description:\n{TOOL}")
 
 
+def test_the_prompt_defaults_only_the_two_treatment_conditions() -> None:
+    """Point (c)'s guidance (guidelines, paragraphs 163-167 and 175-177) defaults conditions (i)
+    and (ii) to "no" when nothing points to them, never the base fact `social_scoring`, which
+    keeps its own definition (E10, user 2026-10-06)."""
+    section = node.PROHIBITED_INSTRUCTIONS.split("## social_scoring")[1].split("\n## ")[0]
+    flat = " ".join(section.split())
+    assert "paragraphs 163-167 and 175-177" in flat
+    defaulted = flat.split('"no" (evidence "inferred"')[0].rsplit(". ", 1)[1].strip()
+    assert defaulted == "Answer `unrelated_context_treatment` and `disproportionate_treatment`"
+    assert "Answer `social_scoring` on its own definition" in flat
+
+
 def test_the_prompt_leaves_dates_to_the_application() -> None:
     """The model never sees `as_of`, so the prefix stays the same for every date."""
     early = node.prohibited_messages(state(as_of=BEFORE_DECEMBER), _retrieved())
@@ -845,7 +863,6 @@ def _run(check: ProhibitedCheck) -> EngineState:
         "language": Language.EN,
         "law_version": LawVersion.AMENDED,
         "as_of": AS_OF,
-        "answers": {},
         "exclude_source_example_ids": (),
     }
     return cast(EngineState, graph.invoke(given))
@@ -1114,18 +1131,18 @@ def _b5c_cases() -> list[BenchmarkCase]:
 
 B5C_CASES = _b5c_cases()
 
-REFUSED = "provider content filter (decision 029)"
-KNOWN_GAPS: dict[str, str] = {
+REFUSED = KnownGap("provider content filter (decision 029)", refused)
+REFUSED_IN_E10 = KnownGap("provider content filter (decision 029), E10 re-record", refused)
+
+KNOWN_GAPS: dict[str, KnownGap] = {
     "own-c-01-undress-photo-app": REFUSED,
     "own-c-02-undress-app-before-december": REFUSED,
-    "own-c-03-image-tool-with-safeguards": REFUSED,
     "own-c-04-studio-digital-doubles-consent": REFUSED,
     "own-c-05-gossip-site-fake-nudes": REFUSED,
+    "own-c-06-dating-app-nudity-blur": REFUSED_IN_E10,
     "own-c-07-unfiltered-image-generator": REFUSED,
-    "own-c-16-police-live-search-missing-child": (
-        "the model reads the police act's two permitted purposes as an unknown objective, so the "
-        "node asks for it with prohibited assumed (cautious; user, 2026-10-02)"
-    ),
+    "own-c-14-kids-game-sad-pet-offers": REFUSED_IN_E10,
+    "own-c-16-police-live-search-missing-child": REFUSED_IN_E10,
 }
 """Recorded cases whose Art. 5 outcome differs from the label, with the reason; each fails when
 it starts matching, so the entry is removed."""
@@ -1182,10 +1199,7 @@ def test_b5c_case_replay(
         result = check(run_state)
     assert not unresolved_citations(result.step, run_state)
     matches = prohibited_matches(result, case)
-    gap = KNOWN_GAPS.get(case.id)
-    if gap is not None:
-        if matches:
-            pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
-        pytest.xfail(gap)
     step = result.step
-    assert matches, (result.matched, step.status, cited(result), step.decision)
+    shown = (result.matched, step.status, cited(result), step.decision)
+    expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
+    assert matches, shown

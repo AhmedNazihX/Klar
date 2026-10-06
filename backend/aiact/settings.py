@@ -6,6 +6,7 @@ Secrets are `SecretStr`, so they never show up in logs or reprs.
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,8 +40,11 @@ class Settings(BaseSettings):
     supabase_service_key: SecretStr | None = None
     database_url: SecretStr | None = None
 
-    # Tracing
+    # Tracing: LangSmith traces each classification when the key is set (E10). Outside
+    # development they carry metadata only: no description, prompt or answer (INIT > Tech stack).
+    aiact_env: Literal["development", "production"] = "production"
     langsmith_api_key: SecretStr | None = None
+    langsmith_project: str = "aiact"
 
     # Model ids (OpenRouter slugs; confirmed by stories X2 and X3)
     engine_model: str | None = None

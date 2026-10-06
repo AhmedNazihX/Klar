@@ -7,8 +7,9 @@ per case (`label` holds the whole case). Reports quote numbers only from these r
 The classifier sees the description, the language and the source example ids to keep out of
 retrieval; it never sees the label. `--exclude-mode heldout` (the reported number) reads the
 committed `eval/split.json`: in split mode every Pile B example is excluded, in leave-one-out mode
-the example the case was written from. `--exclude-mode all` excludes nothing, for the gap run
-(INIT > Benchmark isolation 4; decision 012).
+the example the case was written from. `--exclude-mode all` is the gap run (INIT > Benchmark
+isolation 4; decision 012): it excludes nothing, and only it sets `include_held_out`, so
+retrieval sees the held-out examples too.
 
 A cost cap is checked before each case starts, so a run can overshoot it by at most the cost of
 the cases already in flight. A classifier that fails after spending raises `ClassifierFailedError`
@@ -25,7 +26,7 @@ import random
 import subprocess
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -74,7 +75,8 @@ Scorer = Callable[[BenchmarkCase, ClassificationResult], Mapping[str, Score]]
 
 
 class ExcludeMode(StrEnum):
-    """What retrieval must leave out: the held-out examples (reported) or nothing (gap run)."""
+    """What retrieval must leave out: the held-out examples (reported), or nothing, with the
+    held-out examples retrievable too (the gap run)."""
 
     HELDOUT = "heldout"
     ALL = "all"
@@ -110,6 +112,8 @@ class ClassifierInput:
     exclude_source_example_ids: tuple[str, ...]
     as_of: date | None = None
     """The case's own date (`BenchmarkCase.as_of`); None means the run's date."""
+    include_held_out: bool = field(default=False, kw_only=True)
+    """The gap run's opt-in (decision 012): set only by `--exclude-mode all`."""
 
 
 @dataclass(frozen=True)
@@ -166,10 +170,6 @@ class DummyClassifier:
         return Classification(result=result)
 
 
-def _engine_classifier() -> Classifier:
-    raise ClassifierUnavailableError("the engine classifier is wired in once E10 is merged")
-
-
 def _configured(build: Callable[[], Classifier]) -> Classifier:
     """Build a model-backed classifier; a missing setting makes it unavailable."""
     from aiact.llm import LLMConfigError
@@ -180,7 +180,13 @@ def _configured(build: Callable[[], Classifier]) -> Classifier:
         raise ClassifierUnavailableError(str(exc)) from exc
 
 
-# The baselines are imported on first use: `aiact.eval.baselines` imports this module.
+# The engine and the baselines are imported on first use: their modules import this one.
+def _engine_classifier() -> Classifier:
+    from aiact.eval.engine_classifier import EngineClassifier
+
+    return _configured(EngineClassifier)
+
+
 def _baseline_luna() -> Classifier:
     from aiact.eval.baselines import LunaBaseline
 
@@ -218,7 +224,7 @@ def load_split(path: Path | None = None) -> Split:
     if not path.is_file():
         raise SplitError(
             f"{path} not found: --exclude-mode heldout needs the committed split (story B3); "
-            "use --exclude-mode all for a development run"
+            "--exclude-mode all is the gap run, which lets retrieval see the held-out examples"
         )
     try:
         return Split.model_validate_json(path.read_text(encoding="utf-8"))
@@ -370,6 +376,7 @@ def run_benchmark(
                 case.language,
                 exclusions_for(case, active_split),
                 case.as_of,
+                include_held_out=options.exclude_mode is ExcludeMode.ALL,
             ),
         )
         for case in select_subset(cases, options.subset, options.seed)
