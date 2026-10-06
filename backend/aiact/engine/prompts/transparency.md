@@ -54,12 +54,22 @@ and do not ask for a fact the description already gives.
 
 ## interaction: paragraph 1
 
-- `covered`: the system is intended to interact directly with natural persons.
+- `covered`: the system is intended to interact directly with natural persons: people address it
+  and it responds to them as a counterpart in an exchange, in writing or speech, whoever starts
+  the exchange. Answer "yes" only for such a system. A system that only processes what its user
+  submits and hands back the result (for example a converted file, or suggestions inside a tool
+  the user is working in) is "no": its user operates a tool and doesn't converse with it.
 - `exception`: it is obvious to a reasonably well-informed, observant and circumspect person,
   given the circumstances and the context of use, that they are interacting with an AI system;
   or the system is authorised by law to detect, prevent, investigate or prosecute criminal
   offences and is not available for the public to report a criminal offence. The guidelines read
   the first exception narrowly.
+  Answer `exception` from the description whenever it says who interacts with the system and in
+  what setting: judge from that whether it is obvious to them. Being obvious needs a reason in
+  the context, so when the description names the people who interact and nothing in the context
+  makes it obvious to them, answer "no" with evidence "inferred". Answer "unknown" only when the
+  description really doesn't say who interacts with the system or how. When it says so but the
+  guidelines leave open whether that is obvious, answer the fact and `settled_in_law` "no".
 
 ## synthetic_content: paragraph 2
 
@@ -78,16 +88,19 @@ and do not ask for a fact the description already gives.
 
 - `covered`: the system generates or manipulates image, audio or video content that is a deep
   fake: content that resembles existing persons, objects, places, entities or events and would
-  falsely appear to a person to be authentic or truthful. Content that forms part of an evidently
-  artistic, creative, satirical, fictional or analogous work is still covered: the duty is only
-  lighter for it.
+  falsely appear to a person to be authentic or truthful. Answer "yes" only when the content is a
+  deep fake in that sense; generating synthetic content is not enough on its own (that is
+  paragraph 2). Content that forms part of an evidently artistic, creative, satirical, fictional
+  or analogous work is still covered: the duty is only lighter for it.
 - `exception`: the use is authorised by law to detect, prevent, investigate or prosecute
   criminal offences.
 
 ## public_interest_text: paragraph 4, second subparagraph
 
 - `covered`: the system generates or manipulates text which is published with the purpose of
-  informing the public on matters of public interest.
+  informing the public on matters of public interest. Answer "yes" only when such text is
+  published to the public for that purpose; text handed back to the user who asked for it, or
+  used privately or within an organisation, is "no".
 - `exception`: the text has undergone a process of human review or editorial control and a
   natural or legal person holds editorial responsibility for its publication (both are needed);
   or the use is authorised by law to detect, prevent, investigate or prosecute criminal offences.
