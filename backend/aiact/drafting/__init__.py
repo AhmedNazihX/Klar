@@ -19,6 +19,7 @@ from aiact.drafting.deployer import (
     draft_document,
 )
 from aiact.drafting.models import DraftDocument, DraftSection, DraftStatus, Provenance
+from aiact.drafting.prefill import DutyDateError
 from aiact.drafting.templates import DEPLOYER_TEMPLATES, TEMPLATES, DocumentTemplate
 
 __all__ = [
@@ -32,6 +33,7 @@ __all__ = [
     "DraftDocument",
     "DraftSection",
     "DraftStatus",
+    "DutyDateError",
     "Provenance",
     "UnknownQuestionError",
     "check_facts_match",

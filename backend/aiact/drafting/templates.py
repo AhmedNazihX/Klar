@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from aiact.drafting.models import Provenance
-from aiact.drafting.prefill import Prefill, classification_and_duty, system_facts
+from aiact.drafting.prefill import Fill
 from aiact.schemas import Language
 
 EN, DE = Language.EN, Language.DE
@@ -41,11 +41,13 @@ class InterviewSection:
 
 @dataclass(frozen=True)
 class ClassificationSection:
-    """Pre-filled from the classification result by `prefill`."""
+    """Pre-filled from the classification result with what `fill` names. When the result has
+    nothing for it, the section holds the fixed `empty` line instead (a template section)."""
 
     key: str
     heading: Texts
-    prefill: Prefill
+    fill: Fill
+    empty: Texts | None = None
     provenance: Provenance = Provenance.CLASSIFICATION
 
 
@@ -70,12 +72,19 @@ class DocumentTemplate:
 # --- Shared sections ------------------------------------------------------------------------------
 
 
+NO_STATED_FACTS: Texts = {
+    EN: "The description of the system stated no facts about it.",
+    DE: "Die Beschreibung des Systems nennt keine Tatsachen über das System.",
+}
+"""The system section's line when the user stated no facts (Klar doesn't fill in its own)."""
+
+
 def _system(heading: Texts) -> ClassificationSection:
-    return ClassificationSection("system", heading, system_facts)
+    return ClassificationSection("system", heading, Fill.SYSTEM_FACTS, NO_STATED_FACTS)
 
 
 DUTY = ClassificationSection(
-    "duty", {EN: "Its classification", DE: "Seine Einstufung"}, classification_and_duty
+    "duty", {EN: "Its classification", DE: "Seine Einstufung"}, Fill.CLASSIFICATION_AND_DUTY
 )
 TOOL = InterviewSection(
     "tool",
@@ -246,39 +255,6 @@ AFFECTED_NOTICE = DocumentTemplate(
 
 # --- Art. 50: disclosure texts -------------------------------------------------------------------
 
-INTERACTION_DISCLOSURE = DocumentTemplate(
-    id="art_50_1_disclosure",
-    article="art:50:1",
-    title={
-        EN: "Disclosure: interacting with an AI system",
-        DE: "Hinweis: Interaktion mit einem KI-System",
-    },
-    sections=(
-        DUTY,
-        TemplateSection(
-            "notice",
-            NOTICE,
-            {
-                EN: "You are interacting with an AI system.",
-                DE: "Sie interagieren mit einem KI-System.",
-            },
-        ),
-        TemplateSection(
-            "why",
-            WHY_SHOWN,
-            {
-                EN: "Article 50(1) of the EU AI Act requires that people are informed when they "
-                "interact directly with an AI system, unless this is obvious from the "
-                "circumstances.",
-                DE: "Nach Artikel 50 Absatz 1 der KI-Verordnung müssen Personen informiert "
-                "werden, wenn sie direkt mit einem KI-System interagieren, es sei denn, dies ist "
-                "aus den Umständen offensichtlich.",
-            },
-        ),
-        PLACEMENT,
-    ),
-)
-
 EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
     id="art_50_3_disclosure",
     article="art:50:3",
@@ -363,12 +339,11 @@ DEPLOYER_TEMPLATES: tuple[DocumentTemplate, ...] = (
     OVERSIGHT_RECORD,
     WORKERS_NOTICE,
     AFFECTED_NOTICE,
-    INTERACTION_DISCLOSURE,
     EMOTION_BIOMETRIC_DISCLOSURE,
     GENERATED_CONTENT_DISCLOSURE,
 )
-"""Every short deployer document, in the order the documents list shows them. Art. 50(2)
-(machine-readable marking) is a provider's technical duty with no text to show, so it has none."""
+"""Every short deployer document, in the order the documents list shows them. Of the Art. 50
+duties only (3) and (4) are a deployer's; (1) and (2) are the provider's (P8b, P28)."""
 
 TEMPLATES: Mapping[str, DocumentTemplate] = MappingProxyType(
     {template.id: template for template in DEPLOYER_TEMPLATES}

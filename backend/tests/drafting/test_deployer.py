@@ -12,6 +12,7 @@ from aiact.drafting import (
     DocumentTemplate,
     DraftDocument,
     DraftStatus,
+    DutyDateError,
     Provenance,
     UnknownQuestionError,
     deployer_templates_for,
@@ -19,19 +20,19 @@ from aiact.drafting import (
     draft_document,
 )
 from aiact.drafting.models import TEMPLATE_PATTERN
-from aiact.drafting.templates import InterviewSection, TemplateSection
+from aiact.drafting.templates import NO_STATED_FACTS, InterviewSection, TemplateSection
 from aiact.schemas import (
     DISCLAIMER,
-    HighRiskRoute,
     Language,
     LegacyStatus,
     Obligation,
+    Role,
     Status,
     StepName,
 )
 from tests.drafting.builders import WORKERS, WORKERS_ANSWERS, limited_risk_result
 from tests.schemas.builders import missing_fact, rebuild, steps_with
-from tests.schemas.worked_example import worked_example_result
+from tests.schemas.worked_example import EU_USE, worked_example_result
 
 
 def _section(document: DraftDocument, key: str) -> tuple[str, ...]:
@@ -50,10 +51,27 @@ def test_high_risk_deployer_gets_the_three_art_26_documents() -> None:
     assert [template.article for template in templates] == ["art:26:2", "art:26:7", "art:26:11"]
 
 
-def test_art_50_duties_get_a_disclosure_text_except_marking() -> None:
+def test_a_deployer_gets_disclosure_texts_for_the_deployer_s_art_50_duties_only() -> None:
     result = limited_risk_result("art:50:1", "art:50:2", "art:50:3", "art:50:4")
     articles = [template.article for template in deployer_templates_for(result)]
-    assert articles == ["art:50:1", "art:50:3", "art:50:4"]
+    assert articles == ["art:50:3", "art:50:4"]
+
+
+def test_a_provider_gets_no_deployer_documents() -> None:
+    result = limited_risk_result("art:50:1", "art:50:2", "art:50:3", "art:50:4")
+    provider = rebuild(result, role=Role.PROVIDER)
+    assert deployer_templates_for(provider) == ()
+    high_risk_provider = rebuild(worked_example_result(), role=Role.PROVIDER)
+    assert deployer_templates_for(high_risk_provider) == ()
+
+
+def test_a_provider_that_also_uses_the_system_gets_the_deployer_documents() -> None:
+    result = rebuild(worked_example_result(), role=Role.PROVIDER, also_role=Role.DEPLOYER)
+    assert [template.article for template in deployer_templates_for(result)] == [
+        "art:26:2",
+        "art:26:7",
+        "art:26:11",
+    ]
 
 
 def test_a_result_without_deployer_duties_gets_no_documents() -> None:
@@ -78,7 +96,7 @@ def test_every_draft_is_labelled_draft_with_the_notice(language: Language) -> No
     result = limited_risk_result("art:50:1", "art:50:3", "art:50:4")
     documents = draft_deployer_documents(worked_example_result(), {}, language)
     documents += draft_deployer_documents(result, {}, language)
-    assert len(documents) == 6
+    assert len(documents) == 5
     for document in documents:
         assert document.label == "DRAFT"
         assert document.disclaimer == DISCLAIMER[language]
@@ -164,33 +182,41 @@ def test_a_legacy_duty_applies_only_after_a_significant_change() -> None:
     )
 
 
-def test_the_date_follows_the_result_s_route() -> None:
-    def oversight(route: HighRiskRoute, day: date) -> Obligation:
-        return Obligation(
-            duty="Assign human oversight",
-            article="art:26:2",
-            applies_from=day,
-            high_risk_route=route,
+def test_a_duty_listed_with_several_dates_is_refused() -> None:
+    result = worked_example_result()
+    later = Obligation(
+        duty="Assign human oversight", article="art:26:2", applies_from=date(2028, 8, 2)
+    )
+    with pytest.raises(DutyDateError, match="art:26:2"):
+        draft_document(
+            TEMPLATES["art_26_2_oversight"],
+            rebuild(result, obligations=(*result.obligations, later)),
+            {},
+            Language.EN,
         )
 
-    both_routes = (
-        oversight(HighRiskRoute.ANNEX_I, date(2028, 8, 2)),
-        oversight(HighRiskRoute.ANNEX_III, date(2027, 12, 2)),
-    )
-    result = rebuild(worked_example_result(), obligations=both_routes)
-    document = draft_document(TEMPLATES["art_26_2_oversight"], result, {}, Language.EN)
-    assert _section(document, "duty")[1].endswith("applies from 2 December 2027.")
+
+def test_without_stated_facts_the_system_section_says_so() -> None:
+    result = rebuild(worked_example_result(), facts=(EU_USE,), deciding_facts=())
+    for language in Language:
+        document = draft_document(TEMPLATES[WORKERS], result, WORKERS_ANSWERS, language)
+        section = next(section for section in document.sections if section.key == "system")
+        assert section.provenance is Provenance.TEMPLATE
+        assert section.paragraphs == (NO_STATED_FACTS[language],)
+        assert document.status is DraftStatus.READY_TO_REVIEW
 
 
 def test_a_disclosure_not_in_the_obligations_names_the_duty_without_a_date() -> None:
     document = draft_document(
-        TEMPLATES["art_50_1_disclosure"], limited_risk_result("art:50:1"), {}, Language.EN
+        TEMPLATES["art_50_3_disclosure"], limited_risk_result("art:50:3"), {}, Language.EN
     )
     assert _section(document, "duty") == (
         "Your classification: limited risk.",
-        "It lists the duty under Art. 50(1).",
+        "It lists the duty under Art. 50(3).",
     )
-    assert _section(document, "notice") == ("You are interacting with an AI system.",)
+    assert _section(document, "notice") == (
+        "An AI system for emotion recognition or biometric categorisation is in operation here.",
+    )
 
 
 # --- The draft's own rules -----------------------------------------------------------------------

@@ -4,9 +4,9 @@ from collections.abc import Callable
 
 from aiact.drafting import DraftDocument, DraftSection
 from aiact.drafting.models import status_for, unanswered_count
-from aiact.schemas import ClassificationResult, RiskClass
-from tests.schemas.builders import rebuild
-from tests.schemas.worked_example import worked_example_result
+from aiact.schemas import ClassificationResult, LegacyStatus, RiskClass, Role, Status, StepName
+from tests.schemas.builders import ambiguous, missing_fact, rebuild, steps_with
+from tests.schemas.worked_example import EU_USE, worked_example_result
 
 WORKERS = "art_26_7_workers"
 WORKERS_ANSWERS = {
@@ -54,3 +54,49 @@ def edit_section(
 def changed(section: DraftSection, **changes: object) -> DraftSection:
     """A validated copy of `section` with `changes`."""
     return DraftSection.model_validate({**section.model_dump(), **changes})
+
+
+def needs_information_result() -> ClassificationResult:
+    """The worked example paused at the high-risk check for a missing fact."""
+    step = missing_fact(StepName.HIGH_RISK)
+    return rebuild(
+        worked_example_result(), status=Status.NEEDS_MORE_INFORMATION, steps=steps_with(step)
+    )
+
+
+def ambiguous_result() -> ClassificationResult:
+    """The worked example with the high-risk check left open in law."""
+    step = ambiguous(StepName.HIGH_RISK)
+    return rebuild(worked_example_result(), status=Status.LEGALLY_AMBIGUOUS, steps=steps_with(step))
+
+
+def legacy_result() -> ClassificationResult:
+    """The worked example as an Art. 111(2) legacy system: its duties apply only after a
+    significant change."""
+    result = worked_example_result()
+    obligations = tuple(
+        item.model_copy(update={"legacy": LegacyStatus.UNCHANGED}) for item in result.obligations
+    )
+    return rebuild(result, obligations=obligations)
+
+
+def no_stated_facts_result() -> ClassificationResult:
+    """The worked example with only an assumed fact."""
+    return rebuild(worked_example_result(), facts=(EU_USE,), deciding_facts=())
+
+
+def provider_also_deployer_result() -> ClassificationResult:
+    return rebuild(worked_example_result(), role=Role.PROVIDER, also_role=Role.DEPLOYER)
+
+
+def fresh_results() -> tuple[ClassificationResult, ...]:
+    """Every kind of result the drafter handles, for checks that must pass on fresh drafts."""
+    return (
+        worked_example_result(),
+        limited_risk_result("art:50:1", "art:50:2", "art:50:3", "art:50:4"),
+        needs_information_result(),
+        ambiguous_result(),
+        legacy_result(),
+        no_stated_facts_result(),
+        provider_also_deployer_result(),
+    )
