@@ -1,0 +1,223 @@
+# B7 Q&A set: answerable questions in English. Each names the provisions a correct answer must
+# cite (consolidated AI Act as of 27 July 2026) and a short reference answer.
+- id: qa-en-01-staff-mood-on-calls
+  language: en
+  question: >-
+    Our HR team wants a tool that reads employees' facial expressions during video meetings to
+    track how stressed or engaged they are. Are we allowed to use that?
+  required_provision_ids: ["art:5:1:f"]
+  reference_answer: >-
+    No. Using an AI system to infer the emotions of people at the workplace is a prohibited
+    practice under Art. 5(1)(f). The only exception is a system put in place for medical or safety
+    reasons; tracking stress or engagement for HR purposes is neither.
+  tags: ["topic:prohibited"]
+- id: qa-en-02-citizen-scoring
+  language: en
+  question: >-
+    A city wants to rate residents on their behaviour over the years and give low scorers fewer
+    benefits in unrelated areas such as housing. Does the AI Act allow this?
+  required_provision_ids: ["art:5:1:c"]
+  reference_answer: >-
+    No. Art. 5(1)(c) prohibits AI systems that evaluate or classify people over time based on
+    their social behaviour or personal characteristics where the resulting score leads to
+    detrimental treatment in contexts unrelated to where the data was collected, or treatment
+    that is unjustified or disproportionate.
+  tags: ["topic:prohibited"]
+- id: qa-en-03-police-live-face-matching
+  language: en
+  question: >-
+    Can the police run live facial recognition on CCTV in a train station to find people?
+  required_provision_ids: ["art:5:1:h"]
+  reference_answer: >-
+    As a rule, no. Art. 5(1)(h) prohibits the use of real-time remote biometric identification in
+    publicly accessible spaces for law enforcement, unless strictly necessary for one of three
+    listed objectives: searching for specific victims of abduction, trafficking or sexual
+    exploitation and for missing persons; preventing a specific, substantial and imminent threat to
+    life or a terrorist attack; or locating or identifying suspects of serious crimes listed in
+    Annex II punishable by at least four years' custody.
+  tags: ["topic:prohibited"]
+- id: qa-en-04-nudify-ban-date
+  language: en
+  question: >-
+    Are apps that create fake nude images of real people banned under the AI Act, and from when?
+  required_provision_ids: ["art:5:1:ba", "art:113:a"]
+  reference_answer: >-
+    Yes. Art. 5(1)(ba), added by the Digital Omnibus, prohibits AI systems that generate or
+    manipulate realistic images, video or audio showing an identifiable person's intimate parts or
+    that person in sexually explicit activity without their explicit consent. Under Art. 113(a)
+    this prohibition applies from 2 December 2026, later than the other prohibitions.
+  tags: ["topic:prohibited", "topic:dates"]
+- id: qa-en-05-annex-iii-exemption
+  language: en
+  question: >-
+    Our tool falls under one of the Annex III areas. Under what conditions is it nevertheless not
+    high-risk?
+  required_provision_ids: ["art:6:3"]
+  reference_answer: >-
+    Under Art. 6(3), an Annex III system is not high-risk if it poses no significant risk of harm
+    to health, safety or fundamental rights, including by not materially influencing the outcome
+    of decisions. That is the case where it only performs a narrow procedural task, improves the
+    result of a previously completed human activity, detects decision patterns or deviations
+    without replacing or influencing the human assessment without proper review, or performs a
+    preparatory task to an assessment. A system that profiles natural persons is always high-risk.
+  tags: ["topic:high_risk"]
+- id: qa-en-06-profiling-blocks-exemption
+  language: en
+  question: >-
+    If our Annex III system only does a preparatory task but builds profiles of the people it
+    assesses, can we still rely on the Article 6(3) exemption?
+  required_provision_ids: ["art:6:3"]
+  reference_answer: >-
+    No. The last subparagraph of Art. 6(3) says an Annex III system that performs profiling of
+    natural persons is always considered high-risk, whatever the other conditions.
+  tags: ["topic:high_risk"]
+- id: qa-en-07-not-high-risk-paperwork
+  language: en
+  question: >-
+    We concluded that our Annex III system is not high-risk. Do we still have to do anything?
+  required_provision_ids: ["art:6:4", "art:49:2"]
+  reference_answer: >-
+    Yes. Under Art. 6(4) the provider must document its assessment before placing the system on
+    the market or putting it into service, and hand the documentation to national authorities on
+    request. It must also register itself and the system in the EU database before placing it on
+    the market (Art. 49(2)).
+  tags: ["topic:high_risk", "topic:obligations"]
+- id: qa-en-08-cv-screening
+  language: en
+  question: >-
+    Is software that sorts and ranks incoming job applications a high-risk AI system?
+  required_provision_ids: ["annex:III:4:a", "art:6:2"]
+  reference_answer: >-
+    As a rule, yes. Annex III point 4(a) lists AI systems intended for recruitment or selection,
+    expressly including analysing and filtering applications and evaluating candidates, and
+    Art. 6(2) makes Annex III systems high-risk. Only the Art. 6(3) exemption could change this,
+    and it cannot apply if the system profiles applicants.
+  tags: ["topic:high_risk"]
+- id: qa-en-09-credit-scoring
+  language: en
+  question: >-
+    We are a bank. Is our model that decides whether consumers get a loan high-risk, and what about
+    our fraud-detection model?
+  required_provision_ids: ["annex:III:5:b", "art:6:2"]
+  reference_answer: >-
+    The loan model is high-risk: Annex III point 5(b) covers AI systems that evaluate the
+    creditworthiness of natural persons or establish their credit score, and Art. 6(2) makes them
+    high-risk. The same point expressly excludes systems used to detect financial fraud, so the
+    fraud model is not high-risk under this point.
+  tags: ["topic:high_risk"]
+- id: qa-en-10-chatbot-disclosure
+  language: en
+  question: >-
+    Do we have to tell website visitors that our support chat is a bot?
+  required_provision_ids: ["art:50:1"]
+  reference_answer: >-
+    Yes, as the provider. Art. 50(1) requires systems that interact directly with people to be
+    designed so that people are informed they are interacting with an AI system, unless that is
+    obvious to a reasonably well-informed, observant and circumspect person in the context.
+  tags: ["topic:transparency"]
+- id: qa-en-11-marking-grace-period
+  language: en
+  question: >-
+    Our image generator has been on the market since 2025. By when must its outputs be marked as
+    AI-generated?
+  required_provision_ids: ["art:50:2", "art:111:4"]
+  reference_answer: >-
+    Art. 50(2) requires providers of systems generating synthetic audio, image, video or text to
+    mark the outputs in a machine-readable format so they are detectable as artificially generated.
+    For systems placed on the market before 2 August 2026, Art. 111(4) gives until 2 December 2026
+    to comply.
+  tags: ["topic:transparency", "topic:dates"]
+- id: qa-en-12-deepfake-ad
+  language: en
+  question: >-
+    We use AI to make a video ad in which a well-known actor seems to recommend our product. What
+    do we have to disclose, and is it different for a satirical sketch?
+  required_provision_ids: ["art:50:4", "art:3:60"]
+  reference_answer: >-
+    The video is a deep fake (Art. 3(60)): AI-generated content resembling a real person that
+    would falsely appear authentic. As the deployer you must disclose that it was artificially
+    generated or manipulated (Art. 50(4)). For an evidently artistic, satirical or fictional work
+    the duty is limited to disclosing the existence of the generated content in a way that does
+    not hamper the display or enjoyment of the work.
+  tags: ["topic:transparency"]
+- id: qa-en-13-high-risk-start-dates
+  language: en
+  question: >-
+    When do the requirements for high-risk AI systems start to apply?
+  required_provision_ids: ["art:113:c"]
+  reference_answer: >-
+    After the Digital Omnibus, Art. 113(c): from 2 December 2027 for systems that are high-risk
+    under Art. 6(2) and Annex III, and from 2 August 2028 for systems that are high-risk under
+    Art. 6(1) and Annex I.
+  tags: ["topic:dates"]
+- id: qa-en-14-fine-for-prohibited
+  language: en
+  question: >-
+    What is the maximum fine for using a banned AI practice?
+  required_provision_ids: ["art:99:3"]
+  reference_answer: >-
+    Up to EUR 35 million or, for an undertaking, up to 7 % of its total worldwide annual turnover
+    for the preceding financial year, whichever is higher (Art. 99(3)).
+  tags: ["topic:penalties"]
+- id: qa-en-15-white-label
+  language: en
+  question: >-
+    We buy a high-risk hiring tool from a vendor and sell it to our clients under our own brand.
+    Who counts as the provider?
+  required_provision_ids: ["art:25:1:a"]
+  reference_answer: >-
+    You do. Under Art. 25(1)(a), anyone who puts their name or trademark on a high-risk AI system
+    already on the market is considered its provider and takes on the provider obligations of
+    Art. 16, unless contracts allocate the obligations otherwise.
+  tags: ["topic:roles"]
+- id: qa-en-16-fria-who
+  language: en
+  question: >-
+    Which deployers have to carry out a fundamental rights impact assessment?
+  required_provision_ids: ["art:27:1"]
+  reference_answer: >-
+    Under Art. 27(1), before deploying a high-risk system under Art. 6(2): bodies governed by
+    public law and private entities providing public services (except for systems in the critical
+    infrastructure area, Annex III point 2), and deployers of systems for creditworthiness and
+    credit scoring or for life and health insurance pricing and risk assessment (Annex III
+    points 5(b) and (c)).
+  tags: ["topic:obligations"]
+- id: qa-en-17-defence-exclusion
+  language: en
+  question: >-
+    Does the AI Act cover AI systems built only for military use?
+  required_provision_ids: ["art:2:3"]
+  reference_answer: >-
+    No. Under Art. 2(3), the Regulation does not apply to AI systems placed on the market, put into
+    service or used exclusively for military, defence or national security purposes, whoever
+    carries out those activities.
+  tags: ["topic:scope"]
+- id: qa-en-18-ai-literacy
+  language: en
+  question: >-
+    What does the AI Act require from companies regarding AI training for their staff?
+  required_provision_ids: ["art:4:1"]
+  reference_answer: >-
+    Under Art. 4(1), as amended by the Digital Omnibus, providers and deployers must take measures
+    to support the development of AI literacy of their staff and others operating AI systems on
+    their behalf, taking into account their knowledge, experience and the context of use. They are
+    not required to guarantee any particular level of AI literacy for any individual.
+  tags: ["topic:obligations"]
+- id: qa-en-19-incident-reporting
+  language: en
+  question: >-
+    Our high-risk system caused a serious incident. Who has to report it, and to whom?
+  required_provision_ids: ["art:73:1"]
+  reference_answer: >-
+    The provider must report the serious incident to the market surveillance authorities of the
+    Member States where it occurred (Art. 73(1)).
+  tags: ["topic:obligations"]
+- id: qa-en-20-research-only
+  language: en
+  question: >-
+    Our university lab builds an AI model purely for scientific research. Does the AI Act apply?
+  required_provision_ids: ["art:2:6"]
+  reference_answer: >-
+    No. Art. 2(6) excludes AI systems and models, including their output, that are specifically
+    developed and put into service for the sole purpose of scientific research and development.
+  tags: ["topic:scope"]
