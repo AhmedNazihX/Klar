@@ -19,7 +19,7 @@ source_example_id: hr-ex-012
 accepted_bases: ["not_safety_component"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: radio equipment (Annex I Section A point 6), but the
+  Label approved 2026-10-06 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: radio equipment (Annex I Section A point 6), but the
   model serves comfort and energy saving, fulfils no safety function, and its failure means only
   discomfort or a higher bill, so it is no safety component (Art. 3(14); Art. 6(1a):
   convenience and performance optimisation). Not Art. 6(1); no Annex III use; no Art. 50 duty.

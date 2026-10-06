@@ -20,7 +20,7 @@ source_example_id: hr-ex-006
 accepted_bases: ["safety_component"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: enforcing speed limits and stopping the train
+  Label approved 2026-10-06 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: enforcing speed limits and stopping the train
   before a collision or derailment is a safety function (Art. 3(14)) of rail equipment covered by
   the rail interoperability directive (Annex I Section B point 17). The notified-body assessment
   is stated, so Art. 6(1)(b) is met rather than assumed (the source row's Art. 6(1) note).

@@ -20,7 +20,7 @@ source_example_id: hr-ex-001
 accepted_bases: ["safety_component"]
 label_status: settled
 notes: >-
-  Draft label, awaiting user approval. Class: the model's purpose is fuel efficiency (performance
+  Label approved 2026-10-06 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the model's purpose is fuel efficiency (performance
   optimisation, which Art. 6(1a) alone would exclude), but its malfunction could cause carbon
   monoxide or a gas build-up, so Art. 6(1b) makes it a safety component (Art. 3(14)) of an
   appliance burning gaseous fuels (Annex I Section A point 10). The notified-body type-examination
