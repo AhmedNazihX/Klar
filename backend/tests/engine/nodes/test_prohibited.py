@@ -778,6 +778,7 @@ def test_the_corpus_limits_the_search_to_its_guideline_without_a_cut_off(
         {
             "doc_keys": node.SOURCE.doc_keys,
             "exclude_source_example_ids": EXCLUDED,
+            "include_held_out": False,
             "max_distance": None,
             "limit": node.SOURCE.passages,
             "embedder": embedder,
@@ -789,7 +790,9 @@ def test_the_corpus_limits_the_search_to_its_guideline_without_a_cut_off(
 def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[tuple[object, ...]] = []
 
-    def spy(provision_id: str, *args: object, connection: object) -> Provision:
+    def spy(
+        provision_id: str, *args: object, connection: object, include_held_out: bool
+    ) -> Provision:
         seen.append((provision_id, *args, connection))
         return provision(provision_id)
 

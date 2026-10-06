@@ -73,6 +73,7 @@ from aiact.llm.structured import (
     parse_reply,
 )
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
+from aiact.retrieval.search import QueryEmbedder
 from aiact.schemas import (
     FollowUpQuestion,
     Language,
@@ -354,17 +355,19 @@ class TransparencyCheck:
         settings: Settings | None = None,
         chat: BaseChatModel | None = None,
         library: GuidelineLibrary | None = None,
+        embedder: QueryEmbedder | None = None,
     ) -> None:
         """`chat` replaces the OpenRouter model and `library` the corpus (tests). Raises
         `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the
         model is always pinned to its EU endpoint with fallbacks off (decision 005). Without a
-        `library`, the query embedder is built here from the same settings, so
+        `library`, the query embedder is `embedder` (shared by a run, E10) or is built here
+        from the same settings, so
         `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER` must be set too; each step then reads the
         corpus over a short connection before the model call, and another for the citations
         after it."""
         self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
         self._library = library
-        self._embedder = None if library else OpenRouterEmbeddings(settings=settings)
+        self._embedder = None if library else embedder or OpenRouterEmbeddings(settings=settings)
 
     def _reading[T](self, use: Callable[[GuidelineLibrary], T]) -> T:
         """`use` applied to the corpus: the given library, or one over a fresh connection that

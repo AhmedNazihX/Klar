@@ -552,7 +552,7 @@ def test_guidance_search_is_limited_to_the_definition_guidelines_and_falls_back_
     assert [call["language"] for call in calls] == [Language.DE, Language.EN]
     for call in calls:
         assert call["max_distance"] is None  # a signal for the engine, never a filter
-        assert "include_held_out" not in call
+        assert call["include_held_out"] is False  # held-out examples stay hidden
         assert call["exclude_source_example_ids"] == ("hr-ex-001",)
         assert call["doc_keys"] == frozenset({"guide-definition"})  # filtered in the SQL
         assert call["limit"] == node.GUIDANCE_PASSAGES

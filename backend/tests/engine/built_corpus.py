@@ -3,7 +3,8 @@
 
 CI's backend job has an empty database, so the replays check their citations against this
 instead: it follows `get_provision`'s rules (the document by `document_for`, decision 009's
-version filter, the slice covering `as_of`, held-out examples hidden, the English fallback) and
+version filter, the slice covering `as_of`, held-out examples hidden unless `include_held_out`,
+the English fallback) and
 `get_omnibus_provision`'s for the Omnibus, and builds the result with `get_provision`'s own row
 picker. `tests/db/test_citations_corpus.py` checks the two agree on the loaded corpus; CI's
 isolation job, which loads the corpus, runs it.
@@ -57,13 +58,16 @@ class BuiltCorpus:
         language: Language,
         law_version: LawVersion | None,
         as_of: date | None,
+        *,
+        include_held_out: bool = False,
     ) -> Provision:
         version = law_version or LawVersion.AMENDED
         doc_key, version, slice_date = document_for(provision_id, version, as_of, AI_ACT_DOC_KEYS)
 
         def accepts(doc: DocumentRow, row: ProvisionRow) -> bool:
             is_version = doc.law_version in (version.value, None)
-            return is_version and not doc.is_amending and not row.is_held_out
+            is_visible = include_held_out or not row.is_held_out
+            return is_version and not doc.is_amending and is_visible
 
         return self._pick(provision_id, doc_key, language, slice_date, accepts)
 

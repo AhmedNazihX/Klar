@@ -26,8 +26,9 @@ run going (decision 010), and its working assumption is in scope, the stricter r
 the provider's content filter refused (decision 029) is not assessed: in scope is assumed until
 a person reviews the description, and the step cites the law the model was given.
 
-Guideline searches pass `max_distance=None` (a signal, not a filter), never `include_held_out`,
-and pass the caller's `exclude_source_example_ids` through. A German search falls back to
+Guideline searches pass `max_distance=None` (a signal, not a filter), and pass the caller's
+`exclude_source_example_ids` and the run's `include_held_out` (False except in V8's gap run)
+through. A German search falls back to
 English when no German passage of the definition guidelines is found.
 """
 
@@ -191,6 +192,7 @@ class CorpusLibrary:
             lookup.language,
             lookup.law_version,
             lookup.as_of,
+            include_held_out=lookup.include_held_out,
             connection=self._connection,
         )
 
@@ -205,6 +207,7 @@ class CorpusLibrary:
                 lookup.as_of,
                 doc_keys=GUIDANCE_DOC_KEYS,
                 exclude_source_example_ids=lookup.exclude_source_example_ids,
+                include_held_out=lookup.include_held_out,
                 max_distance=None,
                 limit=GUIDANCE_PASSAGES,
                 embedder=self._embedder,
@@ -479,12 +482,15 @@ class ScopeCheck:
         settings: Settings | None = None,
         chat: BaseChatModel | None = None,
         library: ScopeLibrary | None = None,
+        embedder: QueryEmbedder | None = None,
     ) -> None:
         """`chat` replaces the OpenRouter model and `library` the corpus (tests). Raises
         `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the
-        model is always pinned to its EU endpoint with fallbacks off (decision 005)."""
+        model is always pinned to its EU endpoint with fallbacks off (decision 005). Without a
+        `library`, searches embed with `embedder` (shared by a run, E10), or with one built from
+        the settings."""
         self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
-        self._library = library or CorpusLibrary()
+        self._library = library or CorpusLibrary(embedder=embedder)
 
     def __call__(self, state: EngineState) -> CheckOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises

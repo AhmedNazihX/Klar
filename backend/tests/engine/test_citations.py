@@ -190,7 +190,13 @@ class CorruptCorpus:
     """A `CitationSource` whose rows don't fit `Provision`, as a corrupt database row would."""
 
     def provision(
-        self, provision_id: str, language: Language, law_version: LawVersion | None, as_of: object
+        self,
+        provision_id: str,
+        language: Language,
+        law_version: LawVersion | None,
+        as_of: object,
+        *,
+        include_held_out: bool = False,
     ) -> Provision:
         return Provision.model_validate({"provision_id": provision_id})
 

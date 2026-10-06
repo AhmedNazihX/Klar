@@ -5,7 +5,8 @@ Corpus rules: "Where the Omnibus changed a provision, the answer says so").
   quotes, under the law version it names, on the run's date (`as_of` for the amended text and
   guidance; none for the original text), and the row belongs to the document the citation names
   by its manifest `doc_key` (`Citation.document_id`, the rule of the eval citation check, V2),
-  with the same law version and language. A held-out example never resolves (decision 012). A
+  with the same law version and language. A held-out example resolves only in V8's gap run, whose
+  `include_held_out` the run's lookup carries (decision 012). A
   citation of the Omnibus itself (`document_id` `omnibus`) resolves through the explicit
   `get_omnibus_provision`: `get_provision` never returns an amending act (decision 009).
 - **Quoted from the corpus.** A citation that resolves is rebuilt from the row found, so its
@@ -83,6 +84,8 @@ class CitationSource(Protocol):
         language: Language,
         law_version: LawVersion | None,
         as_of: date | None,
+        *,
+        include_held_out: bool = False,
     ) -> Provision:
         """`get_provision`'s answer."""
         ...
@@ -104,9 +107,16 @@ class CorpusCitations:
         language: Language,
         law_version: LawVersion | None,
         as_of: date | None,
+        *,
+        include_held_out: bool = False,
     ) -> Provision:
         return get_provision(
-            provision_id, language, law_version, as_of, connection=self._connection
+            provision_id,
+            language,
+            law_version,
+            as_of,
+            include_held_out=include_held_out,
+            connection=self._connection,
         )
 
     def omnibus(self, provision_id: str, language: Language, as_of: date | None) -> Provision:
@@ -171,7 +181,13 @@ def _find(citation: Citation, lookup: Lookup, source: CitationSource) -> Provisi
         return source.omnibus(citation.provision_id, citation.language, lookup.as_of)
     # The original text has one slice per unit and takes no date (`get_provision`).
     as_of = None if citation.law_version is LawVersion.ORIGINAL else lookup.as_of
-    return source.provision(citation.provision_id, citation.language, citation.law_version, as_of)
+    return source.provision(
+        citation.provision_id,
+        citation.language,
+        citation.law_version,
+        as_of,
+        include_held_out=lookup.include_held_out,
+    )
 
 
 def check_citations(

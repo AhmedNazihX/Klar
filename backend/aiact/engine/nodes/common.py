@@ -29,13 +29,16 @@ MAX_PASSAGE_CHARS = 4000
 @dataclass(frozen=True)
 class Lookup:
     """What every fetch and search of one run shares: the language, the law version and date,
-    and the examples the caller excludes."""
+    the examples the caller excludes, and whether the held-out ones are included."""
 
     language: Language
     law_version: LawVersion
     as_of: date | None
     """None for the original text, which has one slice per unit (`get_provision`)."""
     exclude_source_example_ids: tuple[str, ...]
+    include_held_out: bool = False
+    """The gap run's opt-in (V8, decision 012), passed to every `get_provision` and
+    `search_ai_act` call; False hides the held-out examples."""
 
 
 def lookup_for(state: EngineState) -> Lookup:
@@ -45,6 +48,7 @@ def lookup_for(state: EngineState) -> Lookup:
         law_version=law_version,
         as_of=None if law_version is LawVersion.ORIGINAL else state["as_of"],
         exclude_source_example_ids=tuple(state["exclude_source_example_ids"]),
+        include_held_out=state.get("include_held_out", False),
     )
 
 

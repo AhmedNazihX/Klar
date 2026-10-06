@@ -7,7 +7,7 @@ Nodes never write the state directly. A node returns one of the outcome models b
 import operator
 from collections.abc import Mapping
 from datetime import date
-from typing import Annotated, Self, TypedDict
+from typing import Annotated, NotRequired, Self, TypedDict
 
 from pydantic import model_validator
 
@@ -120,7 +120,12 @@ class CheckOutcome(ContractModel):
 
 
 class EngineInput(TypedDict):
-    """What a caller passes in to start one classification."""
+    """What a caller passes in to start one classification.
+
+    `classify_system` (E10) appends the follow-up answers to `description` (decision 019) and
+    passes `answers` empty. `include_held_out` is the gap run's opt-in (V8, decision 012): every
+    corpus lookup, search and citation check of the run then sees the held-out examples too.
+    Absent means False, so held-out examples stay hidden by default."""
 
     description: str
     language: Language
@@ -128,6 +133,7 @@ class EngineInput(TypedDict):
     as_of: date
     answers: Mapping[str, str]
     exclude_source_example_ids: tuple[str, ...]
+    include_held_out: NotRequired[bool]
 
 
 class EngineState(EngineInput, total=False):

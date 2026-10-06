@@ -25,6 +25,7 @@ import inspect
 import json
 import os
 import pkgutil
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import date
@@ -40,6 +41,7 @@ import aiact.retrieval
 from aiact.corpus.build import DocumentLoad, DocumentRow, ProvisionRow
 from aiact.corpus.embed import ARMS, vector_literal
 from aiact.corpus.load import load_all
+from aiact.engine import classify_system
 from aiact.eval import isolation
 from aiact.eval.cases import CASES_DIR, QA_DIR_NAME, CaseSet
 from aiact.eval.isolation import BenchmarkText, ContaminatedList, EmbeddingCache, ExampleText
@@ -311,6 +313,36 @@ def test_the_held_out_opt_in_is_off_by_default(name: str) -> None:
     assert parameter is not None, f"{name} has no `{OPT_IN_PARAMETER}` opt-in"
     assert parameter.kind is inspect.Parameter.KEYWORD_ONLY
     assert parameter.default is False
+
+
+ENGINE_OPT_INS: dict[str, Callable[..., object]] = {
+    "aiact.engine.classify_system": classify_system,
+}
+"""The engine's entry points that carry the gap run's opt-in (E10) to every retrieval call of a
+run (`tests/engine/test_held_out.py`). Only V8's gap run sets it; the API (P1) and the MCP tools
+(P2b) never expose it."""
+OPT_IN_ON = re.compile(rf"\b{OPT_IN_PARAMETER}\s*=\s*True\b")
+
+
+@pytest.mark.parametrize("name", sorted(ENGINE_OPT_INS))
+def test_the_engines_held_out_opt_in_is_off_by_default(name: str) -> None:
+    parameter = inspect.signature(ENGINE_OPT_INS[name]).parameters.get(OPT_IN_PARAMETER)
+    assert parameter is not None, f"{name} has no `{OPT_IN_PARAMETER}` opt-in"
+    assert parameter.kind is inspect.Parameter.KEYWORD_ONLY
+    assert parameter.default is False
+
+
+def test_no_package_code_turns_the_opt_in_on() -> None:
+    """Held-out rows stay hidden in the app: no module sets the opt-in to a literal True (V8's
+    gap run passes it from its own option)."""
+    package = BACKEND_DIR / "aiact"
+    found = [
+        f"{path.relative_to(BACKEND_DIR)}:{number}"
+        for path in sorted(package.rglob("*.py"))
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+        if OPT_IN_ON.search(line)
+    ]
+    assert found == []
 
 
 def _held_out_rows(connection: psycopg.Connection) -> tuple[HeldOutRow, ...]:

@@ -1,0 +1,221 @@
+"""INIT's worked example end to end through `classify_system`'s pipeline (E10): live, and replayed
+in CI from one recording of the whole run.
+
+The replay runs the engine's own nodes (`engine_nodes`) on the recorded model replies and the
+recorded corpus answers of every check (`<test>.corpus.json`, keyed per node), and checks every
+citation against the corpus built from `data/parsed/` (E9), so it needs no database. It is
+skipped until it is recorded: record it (live model, embedding and local-corpus calls) with
+`RECORD_COMMAND`, after the story's reviews, as the orchestrator's paid step.
+"""
+
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
+from dataclasses import dataclass
+from datetime import date
+from functools import partial
+
+import pytest
+
+from aiact.db import connect
+from aiact.engine import ClassificationRun, ClassifyRequest, run_classification
+from aiact.engine.classify import CorpusLibraries, NodeBuilder, engine_nodes
+from aiact.engine.nodes import prohibited, transparency
+from aiact.engine.nodes.common import Lookup
+from aiact.engine.nodes.guideline_retrieval import GuidelineCorpus
+from aiact.engine.nodes.high_risk_retrieval import HighRiskCorpus
+from aiact.engine.nodes.scope import CorpusLibrary
+from aiact.eval.experiments.matchers import WORKED_EXAMPLE
+from aiact.llm import OpenRouterEmbeddings
+from aiact.retrieval.provisions import Provision
+from aiact.retrieval.search import SearchHit
+from aiact.schemas import (
+    DISCLAIMER,
+    Language,
+    LawVersion,
+    RiskClass,
+    Role,
+    Status,
+    StepName,
+)
+from aiact.settings import Settings, get_settings
+from tests.engine.built_corpus import built_validator, unresolved_citations
+from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
+
+LUNA = "openai/gpt-6-luna-20260922"
+LUNA_PROVIDER = "azure/eu"
+AS_OF = date(2026, 10, 6)
+"""The replay's date, fixed so the recorded corpus slices stay the ones it reads."""
+
+RECORD_COMMAND = (
+    "uv run pytest tests/engine/test_classify_worked_example.py -k replay --record-mode=once"
+)
+LIVE_COMMAND = "uv run pytest tests/engine/test_classify_worked_example.py -m live"
+
+
+def worked_example_request() -> ClassifyRequest:
+    return ClassifyRequest(
+        description=WORKED_EXAMPLE.description, language=Language.EN, as_of=AS_OF
+    )
+
+
+def assert_the_expected_result(run: ClassificationRun) -> None:
+    """INIT > Worked example: high-risk under Annex III 4(a) (ranking applicants is profiling,
+    so Art. 6(3) can't exempt it), the company stays a deployer, and its Art. 26 duties include
+    informing the applicants (Art. 26(11)); every citation resolves."""
+    result = run.result
+    assert result.risk_class is RiskClass.HIGH_RISK, result.risk_class
+    assert result.annex_point == "annex:III:4:a"
+    assert result.role is Role.DEPLOYER
+    assert {o.article for o in result.obligations} >= {"art:26:11"}
+    high_risk = next(step for step in result.steps if step.step is StepName.HIGH_RISK)
+    assert high_risk.status is Status.DECIDED, high_risk.decision
+    assert "art:6:3" in {c.provision_id for c in high_risk.citations}
+    assert result.law_version is LawVersion.AMENDED
+    assert result.as_of == AS_OF
+    assert result.disclaimer == DISCLAIMER[Language.EN]
+    state = {
+        "description": WORKED_EXAMPLE.description,
+        "language": Language.EN,
+        "law_version": LawVersion.AMENDED,
+        "as_of": AS_OF,
+        "answers": {},
+        "exclude_source_example_ids": (),
+    }
+    for step in result.steps:
+        assert not unresolved_citations(step, state), step.step  # pyright: ignore[reportArgumentType]
+    assert run.usage.cost_usd > 0
+    assert run.usage.tokens > 0
+    assert set(run.usage.by_node) >= {"facts", *(name.value for name in StepName)}
+
+
+# --- Live ---------------------------------------------------------------------------------------
+
+
+@pytest.mark.live
+def test_live_worked_example() -> None:
+    """The real pipeline: the engine model, the query embeddings and the local corpus (needs
+    `backend/.env` and `supabase start`). The run logs its cost per node (run pytest with
+    `--log-cli-level=INFO` to see it)."""
+    run = run_classification(worked_example_request(), settings=get_settings())
+    assert_the_expected_result(run)
+
+
+# --- Replay -------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class LiveCorpus:
+    """The live corpus libraries of every check, over one connection (recording only)."""
+
+    scope: CorpusLibrary
+    prohibited: GuidelineCorpus
+    high_risk: HighRiskCorpus
+    transparency: GuidelineCorpus
+
+
+class Recorded:
+    """One check's corpus calls over the run's `CorpusRecording`. A lookup gives the same row
+    whichever check asks; a search is keyed by its check too."""
+
+    def __init__(self, recording: CorpusRecording[LiveCorpus], node: StepName) -> None:
+        self._recording = recording
+        self._node = node
+
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
+        return self._recording.provision(
+            provision_id, lookup, lambda live: live.scope.provision(provision_id, lookup)
+        )
+
+    def _hits(
+        self,
+        call: Mapping[str, object],
+        lookup: Lookup,
+        ask: Callable[[LiveCorpus], tuple[SearchHit, ...]],
+    ) -> tuple[SearchHit, ...]:
+        return self._recording.hits({"node": self._node.value, **call, **lookup_call(lookup)}, ask)
+
+
+class RecordedScope(Recorded):
+    def definition_guidance(self, query: str, lookup: Lookup) -> tuple[SearchHit, ...]:
+        return self._hits(
+            {"definition_guidance": query},
+            lookup,
+            lambda live: live.scope.definition_guidance(query, lookup),
+        )
+
+
+class RecordedGuidance(Recorded):
+    def guidance(self, query: str, lookup: Lookup, *, language: Language) -> tuple[SearchHit, ...]:
+        def ask(live: LiveCorpus) -> tuple[SearchHit, ...]:
+            library = live.prohibited if self._node is StepName.PROHIBITED else live.transparency
+            return library.guidance(query, lookup, language=language)
+
+        return self._hits({"guidance": query, "language": language}, lookup, ask)
+
+
+class RecordedHighRisk(Recorded):
+    def search(
+        self, query: str, lookup: Lookup, *, language: Language, doc_type: str, limit: int
+    ) -> tuple[SearchHit, ...]:
+        call = {"search": query, "language": language, "doc_type": doc_type, "limit": limit}
+
+        def ask(live: LiveCorpus) -> tuple[SearchHit, ...]:
+            return live.high_risk.search(
+                query, lookup, language=language, doc_type=doc_type, limit=limit
+            )
+
+        return self._hits(call, lookup, ask)
+
+
+def recorded_libraries(recording: CorpusRecording[LiveCorpus]) -> CorpusLibraries:
+    return CorpusLibraries(
+        scope=RecordedScope(recording, StepName.SCOPE),
+        prohibited=RecordedGuidance(recording, StepName.PROHIBITED),
+        high_risk=RecordedHighRisk(recording, StepName.HIGH_RISK),
+        transparency=RecordedGuidance(recording, StepName.TRANSPARENCY),
+    )
+
+
+@contextmanager
+def _live_corpus(settings: Settings) -> Iterator[LiveCorpus]:
+    embedder = OpenRouterEmbeddings(settings=settings)
+    with connect() as connection:
+        yield LiveCorpus(
+            scope=CorpusLibrary(connection, embedder),
+            prohibited=GuidelineCorpus(connection, embedder, prohibited.SOURCE),
+            high_risk=HighRiskCorpus(connection, embedder),
+            transparency=GuidelineCorpus(connection, embedder, transparency.SOURCE),
+        )
+
+
+@pytest.fixture
+def luna_settings(openrouter_settings: Settings) -> Settings:
+    return openrouter_settings.model_copy(
+        update={"engine_model": LUNA, "engine_provider": LUNA_PROVIDER}
+    )
+
+
+@pytest.fixture
+def replay_nodes(
+    luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
+) -> Iterator[NodeBuilder]:
+    """The engine's own nodes over the recorded model and corpus, citations checked against the
+    built corpus; skips while nothing is recorded."""
+    with corpus_recording(
+        vcr_cassette_dir,
+        default_cassette_name,
+        record_mode,
+        RECORD_COMMAND,
+        lambda: _live_corpus(luna_settings),
+    ) as recording:
+        yield partial(
+            engine_nodes, libraries=recorded_libraries(recording), validator=built_validator()
+        )
+
+
+@pytest.mark.vcr
+def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
+    run = run_classification(
+        worked_example_request(), settings=luna_settings, build_nodes=replay_nodes
+    )
+    assert_the_expected_result(run)

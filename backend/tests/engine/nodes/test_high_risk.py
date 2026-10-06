@@ -663,7 +663,7 @@ def test_the_corpus_hands_the_filter_to_search_ai_act_over_one_connection(
         assert kwargs["max_distance"] is None
         assert kwargs["connection"] is connection
         assert kwargs["embedder"] is embedder
-        assert "include_held_out" not in kwargs
+        assert kwargs["include_held_out"] is False  # held-out examples stay hidden
 
 
 def _only_search(library: HighRiskCorpus) -> HighRiskLibrary:
@@ -681,7 +681,9 @@ def _only_search(library: HighRiskCorpus) -> HighRiskLibrary:
 def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[object] = []
 
-    def spy(provision_id: str, *args: object, connection: object) -> Provision:
+    def spy(
+        provision_id: str, *args: object, connection: object, include_held_out: bool
+    ) -> Provision:
         seen.append(connection)
         return provision(provision_id)
 
@@ -741,7 +743,13 @@ def test_a_check_without_a_library_builds_one_embedder_and_holds_no_connection_o
         searched_with.append(kwargs.pop("embedder"))
         return FakeSearch()(query, language, law_version, as_of, **kwargs)
 
-    def lookup(provision_id: str, *args: object, connection: FakeConnection) -> Provision:
+    def lookup(
+        provision_id: str,
+        *args: object,
+        connection: FakeConnection,
+        include_held_out: bool,
+    ) -> Provision:
+        assert not include_held_out
         assert connection.is_open
         return fake_lookup(provision_id, *args)  # type: ignore[arg-type]
 

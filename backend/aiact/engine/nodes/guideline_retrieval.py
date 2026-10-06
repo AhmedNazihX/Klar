@@ -7,8 +7,9 @@ looks up and searches before the model answers. No model is involved here.
   relies on a search ranking to find one.
 - **Guidance by search.** The check's Commission guidelines are searched with the description
   (`search_ai_act` limited to their manifest keys inside the SQL, no distance cut-off: C8), with
-  the caller's `exclude_source_example_ids`; held-out examples are never retrievable (decision
-  012). A German search that finds nothing is repeated in English.
+  the caller's `exclude_source_example_ids`; held-out examples are hidden unless V8's gap run
+  sets `include_held_out`, which every lookup and search passes through (decision 012). A German
+  search that finds nothing is repeated in English.
 """
 
 from dataclasses import dataclass
@@ -60,6 +61,7 @@ class GuidelineCorpus:
             lookup.language,
             lookup.law_version,
             lookup.as_of,
+            include_held_out=lookup.include_held_out,
             connection=self._connection,
         )
 
@@ -71,6 +73,7 @@ class GuidelineCorpus:
             lookup.as_of,
             doc_keys=self._source.doc_keys,
             exclude_source_example_ids=lookup.exclude_source_example_ids,
+            include_held_out=lookup.include_held_out,
             max_distance=None,
             limit=self._source.passages,
             embedder=self._embedder,
