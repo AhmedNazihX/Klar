@@ -240,9 +240,13 @@ def test_what_would_settle_it_is_exactly_the_approved_texts(language: Language) 
     )
 
 
-@pytest.mark.parametrize("text", [t for texts in SETTLED_BY_TEXTS.values() for t in texts])
-def test_nothing_promises_to_look_again(text: str) -> None:
-    assert NO_PROMISE.search(text) is None
+@pytest.mark.parametrize("language", [Language.EN, Language.DE])
+@pytest.mark.parametrize("is_open_on_exemption", [True, False])
+def test_nothing_promises_to_look_again(language: Language, is_open_on_exemption: bool) -> None:
+    items = settled_by(language, is_open_on_exemption=is_open_on_exemption)
+    assert items
+    for item in items:
+        assert NO_PROMISE.search(item.text) is None, item.text
 
 
 # --- No yes is promised while a fact or the law is still open (fix round 1) ----------------------

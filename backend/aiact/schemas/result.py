@@ -8,6 +8,7 @@ from datetime import date
 from typing import Self
 
 from pydantic import Field, ValidationInfo, field_validator, model_validator
+from pydantic.config import JsonDict
 
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import LawVersion, RiskClass, Role, Status
@@ -44,6 +45,12 @@ def derived_status(steps: Iterable[StepResult]) -> Status:
     return Status.DECIDED
 
 
+def _without_default(schema: JsonDict) -> None:
+    """Drops the `null` default from a field's JSON Schema: the field is never null, since a
+    validator fills it in when it is left out."""
+    schema.pop("default", None)
+
+
 def refused_steps(steps: Iterable[StepResult]) -> tuple[StepName, ...]:
     """The checks the model provider refused to assess (decision 029), in the steps' order."""
     return tuple(step.step for step in steps if step.error == PROVIDER_REFUSAL)
@@ -78,6 +85,7 @@ class ClassificationResult(ContractModel):
     law_text: LawText = Field(
         default=None,
         validate_default=True,
+        json_schema_extra=_without_default,
         description="The label of the text `law_version` names (CELEX number and date); it "
         "always matches `law_version`, which sets it when it is left out.",
     )

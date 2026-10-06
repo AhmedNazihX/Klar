@@ -53,3 +53,10 @@ def test_an_unknown_law_version_gets_no_label() -> None:
     dumped = worked_example_result().model_dump(exclude={"law_text"})
     with pytest.raises(ValidationError, match="law_text needs a valid law_version"):
         ClassificationResult.model_validate({**dumped, "law_version": "draft_2025"})
+
+
+def test_the_json_schema_promises_no_null_label() -> None:
+    """The label is never null: a validator fills it in, so the schema shows no default."""
+    for mode in ("validation", "serialization"):
+        schema = ClassificationResult.model_json_schema(mode=mode)
+        assert "default" not in schema["properties"]["law_text"], mode
