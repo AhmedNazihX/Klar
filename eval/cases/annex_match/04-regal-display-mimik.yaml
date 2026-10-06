@@ -1,0 +1,23 @@
+id: annex-match-04-regal-display-mimik
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein Retail-Tech-Unternehmen aus Düsseldorf mit rund 45 Mitarbeitenden. Unser Produkt
+  ShelfSense besteht aus kleinen Kameras, die Händler über Aktionsflächen und Regalenden montieren.
+  Ein von uns trainiertes Modell liest aus den Gesichtern der Kundinnen und Kunden, die vor dem
+  Display stehen bleiben, ob sie eher neugierig, begeistert, verwirrt oder genervt wirken, und fasst
+  das stündlich für die Filialleitung zusammen. Wer die Person ist, interessiert uns nicht, und
+  Bilder werden nicht gespeichert. Wir verkaufen ShelfSense an Drogerie- und Elektronikketten in
+  Deutschland und Polen. Nebenbei sponsern wir einen Handballverein.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:1:c"]
+label_citation: ["annex:III:1:c", "art:6:2", "art:3:39", "art:3:3"]
+notes: >-
+  Draft label, awaiting review (X0 fix). Point: inferring each shopper's emotions from facial
+  expressions (biometric data) is emotion recognition (Art. 3(39)); not identifying anyone and
+  keeping no images does not change that. Shoppers are neither workers nor students, so no Art.
+  5(1)(f). Role: develops it and sells it under its own name.
+tags:
+  - "annex_iii_area:1"

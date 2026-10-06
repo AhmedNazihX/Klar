@@ -1,0 +1,22 @@
+id: annex-match-32-asyl-vortrag-abgleich
+set_name: annex_match
+language: de
+description: >-
+  Wir sind die Asylbehörde eines EU-Mitgliedstaats. Seit dem Frühjahr arbeiten unsere
+  Entscheiderinnen und Entscheider mit einer KI-Anwendung, die ein IT-Dienstleister für uns
+  betreibt. Sie gleicht die Schilderungen im Anhörungsprotokoll, etwa zu Orten, Daten und
+  Ereignissen, mit unserer Herkunftsländer-Datenbank und aktuellen Lageberichten ab, markiert
+  Abweichungen und gibt für jeden Antrag eine Einschätzung, wie stimmig der Vortrag ist. Diese
+  Einschätzung fließt in den Bescheid ein. Wir haben die Anwendung nur an unsere Aktenverwaltung
+  angebunden. Im Sommer haben wir zudem unsere Warteräume neu gestaltet.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:7:c"]
+label_citation: ["annex:III:7:c", "art:6:2", "art:3:4"]
+notes: >-
+  Draft label, awaiting review (X0 fix). Point: assists the examination of asylum applications,
+  including assessing the reliability of the applicant's account as evidence, 7(c). Role: the
+  authority uses the service under its authority.
+tags:
+  - "annex_iii_area:7"

@@ -1,0 +1,20 @@
+id: annex-match-33-port-container-stowaways
+set_name: annex_match
+language: en
+description: >-
+  We are the border police unit at a large container port in an EU member state. Trucks and
+  containers leaving the Schengen area drive through a scanning portal that combines X-ray images
+  with vibration sensors, and AI software from the portal's manufacturer analyses both to detect
+  people hiding inside, flagging the container for officers to open. It does not try to find out who
+  the people are. We use the manufacturer's standard configuration. The same procurement also
+  replaced our radio handsets.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:7:d"]
+label_citation: ["annex:III:7:d", "art:6:2", "art:3:4"]
+notes: >-
+  Draft label, awaiting review (X0 fix). Point: detecting people in the context of border control,
+  7(d); no identification, so not 1(a). Role: uses the standard configuration.
+tags:
+  - "annex_iii_area:7"

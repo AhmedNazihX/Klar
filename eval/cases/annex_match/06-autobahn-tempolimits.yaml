@@ -1,0 +1,23 @@
+id: annex-match-06-autobahn-tempolimits
+set_name: annex_match
+language: de
+description: >-
+  Wir sind eine regionale Verkehrsleitzentrale und steuern die Anzeigen auf rund 300 Kilometern
+  Autobahn. Seit diesem Jahr entscheidet eine KI-Software, die wir von einem Dresdner Ingenieurbüro
+  gekauft haben, anhand von Radardaten, Wetterstationen und Unfallmeldungen selbstständig, welche
+  Tempolimits auf den Schilderbrücken erscheinen und wann ein Fahrstreifen vor einer Gefahrenstelle
+  gesperrt wird. Zeigt sie ein Limit oder eine Sperrung zu spät an, drohen Auffahrunfälle. Wir
+  betreiben die Software mit den Einstellungen des Herstellers. Unsere Leitwarte bekommt außerdem
+  neue Monitore.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:2"]
+label_citation: ["annex:III:2", "art:6:2", "art:3:14", "art:3:4"]
+notes: >-
+  Draft label, awaiting review (X0 fix). Point: setting speed limits and closing lanes ahead of
+  hazards is a safety function whose failure endangers road users (Art. 3(14) safety component) in
+  the management and operation of road traffic: Annex III 2. Role: uses the bought software with the
+  manufacturer's settings.
+tags:
+  - "annex_iii_area:2"

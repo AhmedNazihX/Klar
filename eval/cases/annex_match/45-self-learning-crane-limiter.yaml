@@ -1,0 +1,22 @@
+id: annex-match-45-self-learning-crane-limiter
+set_name: annex_match
+language: en
+description: >-
+  Our company in Turin, with 90 staff, builds tower cranes for construction sites. Their new control
+  unit uses a neural network that watches the load, wind speed and slewing motion, and limits or
+  stops movements before the crane could tip over or the load could swing into the building. The
+  model keeps learning on each site from the crane's own sensor data, and that learning changes when
+  the limits kick in. We sell the cranes under our own name in the EU and have the machinery
+  assessed by a notified body. Our cranes are painted orange so people notice them from afar.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:B:21"]
+label_citation: ["annex:I:B:21", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
+notes: >-
+  Draft label, awaiting review (X0 fix). Point: a self-evolving machine-learning safety function
+  puts the machine on the Machinery Regulation's list needing third-party assessment (Annex I
+  Section B point 21), so Art. 6(1) is met; Section B, so Art. 2(2) limits the Act to Art. 6(1) and
+  the listed articles. Role: manufacturer.
+tags:
+  - "annex_i_section:b"

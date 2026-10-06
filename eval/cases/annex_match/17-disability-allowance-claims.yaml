@@ -1,0 +1,22 @@
+id: annex-match-17-disability-allowance-claims
+set_name: annex_match
+language: en
+description: >-
+  We are the benefits agency of a mid-sized EU member state. Since last year, claims for the
+  disability allowance first pass through a machine-learning tool we bought from a domestic software
+  house. It reads the claim form, medical reports and the claimant's employment history, estimates
+  how far the person's ability to work is limited, and recommends whether to grant the allowance, at
+  which rate, or to withdraw it at the next review. Assessors sign each decision but rarely depart
+  from the recommendation. The tool runs in the vendor's cloud with our settings. We are also
+  opening two new regional offices.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:5:a"]
+label_citation: ["annex:III:5:a", "art:6:2", "art:3:4"]
+notes: >-
+  Draft label, awaiting review (X0 fix). Point: a public authority evaluates eligibility for a
+  public assistance benefit and grants, reduces or withdraws it. It evaluates individual people
+  (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the agency uses the bought tool.
+tags:
+  - "annex_iii_area:5"

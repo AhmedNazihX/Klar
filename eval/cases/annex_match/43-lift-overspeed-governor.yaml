@@ -1,0 +1,23 @@
+id: annex-match-43-lift-overspeed-governor
+set_name: annex_match
+language: en
+description: >-
+  We are a 300-person lift manufacturer in Finland. Our new passenger lifts replace the classic
+  mechanical overspeed governor with an electronic one: a neural network trained by our engineers
+  reads the motor, encoder and accelerometer signals, recognises when the car is going too fast or
+  creeping away from a floor with the doors open, and triggers the brake and the safety gear. Every
+  lift we install goes through conformity assessment with a notified body under the Lifts Directive.
+  We sell and install the lifts across the Nordic countries and the Baltics. The cabins now come
+  with a choice of five wood finishes.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:A:4"]
+label_citation: ["annex:I:A:4", "art:6:1:a", "art:6:1:b", "art:3:3"]
+notes: >-
+  Draft label, awaiting review (X0 fix). Point: protection against overspeed and uncontrolled car
+  movement is a safety component (Art. 3(14)) of a lift (Lifts Directive, Annex I Section A point
+  4), and the lift needs a notified body, so Art. 6(1) is met. Role: the manufacturer places the
+  lift with the AI on the market under its name.
+tags:
+  - "annex_i_section:a"
