@@ -70,6 +70,25 @@ def test_case_texts_hold_every_yaml_case_in_set_and_file_order(tmp_path: Path) -
     )
 
 
+def test_case_texts_hold_every_qa_question_but_no_reference_answer(tmp_path: Path) -> None:
+    """B7: a Q&A question is benchmark input, so the corpus must not repeat it either."""
+    _write_cases(tmp_path / "own", "a.yaml", [_case("own-1", "own", "A case.")])
+    answerable = {
+        "id": "qa-1",
+        "language": "en",
+        "question": "Is CV screening high-risk?",
+        "required_provision_ids": ["annex:III:4:a"],
+        "reference_answer": "Yes, under Annex III point 4(a).",
+    }
+    unanswerable = {"id": "qa-2", "language": "de", "question": "Wie hoch ist der Mindestlohn?"}
+    _write_cases(tmp_path / "qa", "items.yaml", [answerable, {**unanswerable, "answerable": False}])
+    assert isolation.case_texts(tmp_path, None) == (
+        BenchmarkText("own-1", "A case."),
+        BenchmarkText("qa-1", "Is CV screening high-risk?"),
+        BenchmarkText("qa-2", "Wie hoch ist der Mindestlohn?"),
+    )
+
+
 def _rows(*texts: tuple[str, str | None]) -> tuple[CorpusRow, ...]:
     return tuple(
         CorpusRow(f"guide:test:para:{n}", "en", example_id, text)
