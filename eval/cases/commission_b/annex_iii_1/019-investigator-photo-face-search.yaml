@@ -20,7 +20,7 @@ source_example_id: hr-ex-019
 accepted_bases: ["within_use_case"]
 label_status: settled
 notes: >-
-  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). DOUBT (flagged to the user): Art. 5(1)(e) prohibits AI that
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Targeted-collection reading settled by the orchestrator 2026-10-07: Art. 5(1)(e) prohibits AI that
   builds or expands face databases through untargeted scraping of the internet; the source row's
   reference database is "pictures taken from the Internet". The rewrite keeps the collection
   targeted (pages about people connected to each case) so the Commission's high-risk verdict
