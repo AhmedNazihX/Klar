@@ -17,7 +17,7 @@ interactions:
     uri: https://openrouter.ai/api/v1/embeddings
   response:
     body:
-      string: '{"id": "gen-emb-1791312159-p8mLxZxf5JZIWEKdChbY", "object": "list",
+      string: '{"id": "gen-emb-1791316234-ZaXnmKBw9ruQL3wWq9aZ", "object": "list",
         "data": [{"object": "embedding", "embedding": [0.04517834261059761, 0.015410409308969975,
         0.021344853565096855, 0.029289349913597107, 0.06049303710460663, -0.018664782866835594,
         0.014070373959839344, 0.007035186979919672, 0.02182343788444996, 0.025269243866205215,
@@ -496,26 +496,41 @@ interactions:
       to the behaviour or its gravity.\n- `open_on`: when `settled_in_law` is \"no\",
       the condition the open question is about:\n  \"social_scoring\", \"i\" (`unrelated_context_treatment`)
       or \"ii\" (`disproportionate_treatment`);\n  \"none\" when the point is settled.
-      Point (c) is met when (i) or (ii) is, so answer each of them\n  on its own.\n\n##
-      crime_risk: point (d)\n\n- `crime_risk_assessment`: the system assesses or predicts
-      the risk that an individual person\n  will commit a criminal offence.\n- `solely_profiling`:
-      that assessment rests only on profiling the person or on their\n  personality
-      traits and characteristics.\n- `fact_based_assessment`: the system only supports
-      a human assessment of someone''s involvement\n  in a criminal activity that
-      already rests on objective, verifiable facts directly linked to\n  that activity
-      (the exception in point (d)).\n\n## face_scraping: point (e)\n\n- `untargeted_face_scraping`:
-      the system creates or expands a facial recognition database by\n  collecting
-      facial images from the internet or from CCTV footage without targeting particular\n  people.\n\n##
-      emotion_recognition: point (f)\n\n- `infers_emotions`: the system infers people''s
-      emotions or intentions (stress, anger,\n  frustration, boredom and the like),
-      for example from face, voice, typing behaviour or other\n  bodily signals. For
-      any system that monitors workers or learners (webcams, voice, keystrokes,\n  sensors),
-      ask yourself this question explicitly; \"unknown\" when the description doesn''t
-      say\n  what the monitoring detects.\n- `workplace_or_education`: the people
-      whose emotions are inferred are at their workplace or in\n  an education institution.
-      Anyone outside those two settings is \"no\".\n- `medical_or_safety`: the system
-      is put in place only for medical or safety reasons, and the\n  results are used
-      for nothing else. The guidelines read this exception narrowly.\n\n## biometric_categorisation:
+      Point (c) is met when (i) or (ii) is, so answer each of them\n  on its own.\n-
+      Conditions (i) and (ii) (guidelines, paragraphs 163-167 and 175-177): an evaluation
+      made\n  lawfully, in line with Union and national law, for one specific purpose,
+      from data that belongs\n  to that purpose and used only for that purpose, stays
+      outside the prohibition as long as any\n  resulting treatment is justified and
+      proportionate; where it matters, the high-risk check deals\n  with it. Answer
+      `social_scoring` on its own definition above, whatever the purpose. Answer\n  `unrelated_context_treatment`
+      and `disproportionate_treatment` \"no\" (evidence \"inferred\", with\n  `settled_in_law`
+      \"yes\") only when nothing in the description points to either of them. A score\n  used,
+      or having effects, outside the purpose and setting its data comes from, or one
+      built on\n  data or characteristics unrelated to the purpose, points to (i).
+      Treatment that is unjustified\n  (no legitimate aim) or out of proportion to
+      the behaviour it rests on points to (ii).\n  When the description points to
+      one of them but leaves the fact open, answer it \"unknown\"; when\n  the facts
+      are stated and only the law leaves the condition open, follow the `settled_in_law`\n  rule
+      above.\n\n## crime_risk: point (d)\n\n- `crime_risk_assessment`: the system
+      assesses or predicts the risk that an individual person\n  will commit a criminal
+      offence.\n- `solely_profiling`: that assessment rests only on profiling the
+      person or on their\n  personality traits and characteristics.\n- `fact_based_assessment`:
+      the system only supports a human assessment of someone''s involvement\n  in
+      a criminal activity that already rests on objective, verifiable facts directly
+      linked to\n  that activity (the exception in point (d)).\n\n## face_scraping:
+      point (e)\n\n- `untargeted_face_scraping`: the system creates or expands a facial
+      recognition database by\n  collecting facial images from the internet or from
+      CCTV footage without targeting particular\n  people.\n\n## emotion_recognition:
+      point (f)\n\n- `infers_emotions`: the system infers people''s emotions or intentions
+      (stress, anger,\n  frustration, boredom and the like), for example from face,
+      voice, typing behaviour or other\n  bodily signals. For any system that monitors
+      workers or learners (webcams, voice, keystrokes,\n  sensors), ask yourself this
+      question explicitly; \"unknown\" when the description doesn''t say\n  what the
+      monitoring detects.\n- `workplace_or_education`: the people whose emotions are
+      inferred are at their workplace or in\n  an education institution. Anyone outside
+      those two settings is \"no\".\n- `medical_or_safety`: the system is put in place
+      only for medical or safety reasons, and the\n  results are used for nothing
+      else. The guidelines read this exception narrowly.\n\n## biometric_categorisation:
       point (g)\n\n- `biometric_categorisation`: the system sorts individual people
       into categories on the basis of\n  their biometric data (face, voice, body features).\n-
       `sensitive_traits`: the categories deduce or infer race, political opinions,
@@ -918,64 +933,55 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791312162-IgEaq4XnZt868smQRzYA", "object": "chat.completion",
-        "created": 1791312162, "model": "openai/gpt-6-luna", "provider": "Azure",
-        "system_fingerprint": null, "service_tier": "default", "choices": [{"index":
-        0, "logprobs": null, "finish_reason": "content_filter", "native_finish_reason":
-        "content_filter", "message": {"role": "assistant", "content": "{\n  \"manipulation\":
-        {\n    \"manipulative_technique\": \"yes\",\n    \"distorts_behaviour\": \"yes\",\n    \"significant_harm\":
-        \"yes\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
-        \"stated\",\n    \"fact\": \"The game targets children''s frustration with
-        a guilt-inducing timed offer; children spend substantial real money without
-        understanding it, causing significant financial harm.\",\n    \"fact_numbers\":
-        []\n  },\n  \"vulnerability\": {\n    \"exploits_vulnerability\": \"yes\",\n    \"distorts_behaviour\":
-        \"yes\",\n    \"significant_harm\": \"yes\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\":
-        null,\n    \"evidence\": \"stated\",\n    \"fact\": \"The game exploits the
-        age-related vulnerability of children by targeting frustration and emotional
-        attachment, leading to substantial spending they do not understand as real
-        money.\",\n    \"fact_numbers\": []\n  },\n  \"sexual_material\": {\n    \"intimate_imagery\":
-        \"no\",\n    \"child_abuse_material\": \"no\",\n    \"only_conceals\": \"no\",\n    \"consent\":
-        \"no\",\n    \"generation_purpose\": \"no\",\n    \"foreseeable_without_safeguards\":
-        \"no\",\n    \"deployer_generation_purpose\": \"no\",\n    \"settled_in_law\":
-        \"yes\",\n    \"open_question\": null,\n    \"evidence\": \"inferred\",\n    \"fact\":
-        \"The description gives no reason to consider generation or manipulation of
-        intimate imagery or child sexual abuse material.\",\n    \"fact_numbers\":
-        []\n  },\n  \"social_scoring\": {\n    \"social_scoring\": \"no\",\n    \"unrelated_context_treatment\":
-        \"no\",\n    \"disproportionate_treatment\": \"no\",\n    \"settled_in_law\":
-        \"yes\",\n    \"open_question\": null,\n    \"open_on\": \"none\",\n    \"evidence\":
-        \"inferred\",\n    \"fact\": \"The game monitors individual play to time offers,
-        not to evaluate people over time based on social behaviour or personal traits
-        for social scoring.\",\n    \"fact_numbers\": []\n  },\n  \"crime_risk\":
-        {\n    \"crime_risk_assessment\": \"no\",\n    \"solely_profiling\": \"no\",\n    \"fact_based_assessment\":
-        \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
-        \"inferred\",\n    \"fact\": \"The description gives no reason to consider
-        criminal-offence risk assessment.\",\n    \"fact_numbers\": []\n  },\n  \"face_scraping\":
-        {\n    \"untargeted_face_scraping\": \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\":
-        null,\n    \"evidence\": \"inferred\",\n    \"fact\": \"The description gives
-        no reason to consider untargeted collection of facial images or creation of
-        a facial recognition database.\",\n    \"fact_numbers\": []\n  },\n  \"emotion_recognition\":
-        {\n    \"infers_emotions\": \"yes\",\n    \"workplace_or_education\": \"no\",\n    \"medical_or_safety\":
-        \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
-        \"stated\",\n    \"fact\": \"The model detects when child players are frustrated,
-        but they are playing a game rather than being at work or in an educational
-        institution.\",\n    \"fact_numbers\": []\n  },\n  \"biometric_categorisation\":
-        {\n    \"biometric_categorisation\": \"no\",\n    \"sensitive_traits\": \"no\",\n    \"lawful_labelling\":
-        \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
-        \"inferred\",\n    \"fact\": \"The description gives no reason to consider
-        categorisation of people using biometric data.\",\n    \"fact_numbers\": []\n  },\n  \"remote_identification\":
-        {\n    \"real_time_identification\": \"no\",\n    \"law_enforcement_use\":
-        \"no\",\n    \"objective\": \"none\",\n    \"national_law_authorisation\":
-        \"no\",\n    \"prior_authorisation\": \"no\",\n    \"targeted_use\": \"no\",\n    \"impact_assessment_registration\":
-        \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
-        \"inferred\",\n    \"fact\": \"The description gives no reason to consider
-        real-time remote biometric identification for law enforcement.\",\n    \"fact_numbers\":
-        []\n  },\n  \"guidance_numbers\": [\n    1,\n    2,\n    3,\n    6\n  ]\n}",
-        "refusal": null}}], "usage": {"prompt_tokens": 9453, "completion_tokens":
-        1884, "total_tokens": 11337, "cost": 0.0017688055, "is_byok": false, "prompt_tokens_details":
-        {"cached_tokens": 4483, "cache_write_tokens": 4967, "audio_tokens": 0, "video_tokens":
-        0}, "cost_details": {"upstream_inference_cost": 0.0017688055, "upstream_inference_prompt_cost":
-        0.0007326055, "upstream_inference_completions_cost": 0.0010362}, "completion_tokens_details":
-        {"reasoning_tokens": 884, "image_tokens": 0, "audio_tokens": 0}}}'
+      string: "{\"id\": \"gen-1791316236-OFjWpustaNfrky6JU9n0\", \"object\": \"chat.completion\",
+        \"created\": 1791316236, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+        \"system_fingerprint\": null, \"service_tier\": \"auto\", \"choices\": [{\"index\":
+        0, \"logprobs\": null, \"finish_reason\": \"content_filter\", \"native_finish_reason\":
+        \"content_filter\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
+        \ \\\"manipulation\\\": {\\n    \\\"manipulative_technique\\\": \\\"yes\\\",\\n
+        \   \\\"distorts_behaviour\\\": \\\"yes\\\",\\n    \\\"significant_harm\\\":
+        \\\"yes\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
+        null,\\n    \\\"evidence\\\": \\\"stated\\\",\\n    \\\"fact\\\": \\\"The
+        game detects children\u2019s frustration and uses a timed offer and emotional
+        pressure from the pet to prompt spending, including spending children do not
+        understand is real money and that has caused losses of several hundred euros.\\\",\\n
+        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"vulnerability\\\": {\\n    \\\"exploits_vulnerability\\\":
+        \\\"yes\\\",\\n    \\\"distorts_behaviour\\\": \\\"yes\\\",\\n    \\\"significant_harm\\\":
+        \\\"yes\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
+        null,\\n    \\\"evidence\\\": \\\"stated\\\",\\n    \\\"fact\\\": \\\"The
+        game targets children aged 7 to 12 with pressure to spend, and some children
+        have run up several hundred euros without understanding it was real money.\\\",\\n
+        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"sexual_material\\\": {\\n    \\\"intimate_imagery\\\":
+        \\\"no\\\",\\n    \\\"child_abuse_material\\\": \\\"no\\\",\\n    \\\"only_conceals\\\":
+        \\\"no\\\",\\n    \\\"consent\\\": \\\"no\\\",\\n    \\\"generation_purpose\\\":
+        \\\"no\\\",\\n    \\\"foreseeable_without_safeguards\\\": \\\"no\\\",\\n    \\\"deployer_generation_purpose\\\":
+        \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
+        null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"The
+        description gives no reason to consider generation or manipulation of intimate
+        imagery or child sexual abuse material.\\\",\\n    \\\"fact_numbers\\\": []\\n
+        \ },\\n  \\\"social_scoring\\\": {\\n    \\\"social_scoring\\\": \\\"no\\\",\\n
+        \   \\\"unrelated_context_treatment\\\": \\\"no\\\",\\n    \\\"disproportionate_treatment\\\":
+        \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
+        null,\\n    \\\"open_on\\\": \\\"none\\\",\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
+        \   \\\"fact\\\": \\\"The game monitors play to time offers, but the description
+        does not indicate social scoring or treatment based on a social score.\\\",\\n
+        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"crime_risk\\\": {\\n    \\\"crime_risk_assessment\\\":
+        \\\"no\\\",\\n    \\\"solely_profiling\\\": \\\"no\\\",\\n    \\\"fact_based_assessment\\\":
+        \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
+        null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"The
+        description gives no reason to consider assessment of a person\u2019s risk
+        of committing a crime.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"face_scraping\\\":
+        {\\n    \\\"untargeted_face_scraping\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
+        \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
+        \   \\\"fact\\\": \\\"The description gives no reason to consider untargeted
+        collection of facial images to create or expand a recognition database.\\\",\\n
+        \   \\\"fact_numbers\\n\\nI'm sorry, but I cannot assist with that request.\",
+        \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 0, \"completion_tokens\":
+        0, \"total_tokens\": 0, \"cost\": 0, \"is_byok\": false, \"prompt_tokens_details\":
+        {\"cached_tokens\": 0, \"cache_write_tokens\": 0, \"audio_tokens\": 0, \"video_tokens\":
+        0}, \"cost_details\": {\"upstream_inference_cost\": 0, \"upstream_inference_prompt_cost\":
+        0, \"upstream_inference_completions_cost\": 0}, \"completion_tokens_details\":
+        {\"reasoning_tokens\": 0, \"image_tokens\": 0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
       - application/json

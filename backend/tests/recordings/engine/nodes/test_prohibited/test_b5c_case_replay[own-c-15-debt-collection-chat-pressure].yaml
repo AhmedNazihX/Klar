@@ -19,7 +19,7 @@ interactions:
     uri: https://openrouter.ai/api/v1/embeddings
   response:
     body:
-      string: '{"id": "gen-emb-1791312173-IlAPsY7MX5rHkx0cYwYP", "object": "list",
+      string: '{"id": "gen-emb-1791316245-Tr8jdaqm5zV9h2jceCAa", "object": "list",
         "data": [{"object": "embedding", "embedding": [0.0058043599128723145, -0.0038931681774556637,
         0.0322779044508934, 0.00641782907769084, 0.057382941246032715, 0.012080619111657143,
         0.017271509394049644, 0.02604883536696434, 0.022556781768798828, 0.0017578244442120194,
@@ -498,26 +498,41 @@ interactions:
       to the behaviour or its gravity.\n- `open_on`: when `settled_in_law` is \"no\",
       the condition the open question is about:\n  \"social_scoring\", \"i\" (`unrelated_context_treatment`)
       or \"ii\" (`disproportionate_treatment`);\n  \"none\" when the point is settled.
-      Point (c) is met when (i) or (ii) is, so answer each of them\n  on its own.\n\n##
-      crime_risk: point (d)\n\n- `crime_risk_assessment`: the system assesses or predicts
-      the risk that an individual person\n  will commit a criminal offence.\n- `solely_profiling`:
-      that assessment rests only on profiling the person or on their\n  personality
-      traits and characteristics.\n- `fact_based_assessment`: the system only supports
-      a human assessment of someone''s involvement\n  in a criminal activity that
-      already rests on objective, verifiable facts directly linked to\n  that activity
-      (the exception in point (d)).\n\n## face_scraping: point (e)\n\n- `untargeted_face_scraping`:
-      the system creates or expands a facial recognition database by\n  collecting
-      facial images from the internet or from CCTV footage without targeting particular\n  people.\n\n##
-      emotion_recognition: point (f)\n\n- `infers_emotions`: the system infers people''s
-      emotions or intentions (stress, anger,\n  frustration, boredom and the like),
-      for example from face, voice, typing behaviour or other\n  bodily signals. For
-      any system that monitors workers or learners (webcams, voice, keystrokes,\n  sensors),
-      ask yourself this question explicitly; \"unknown\" when the description doesn''t
-      say\n  what the monitoring detects.\n- `workplace_or_education`: the people
-      whose emotions are inferred are at their workplace or in\n  an education institution.
-      Anyone outside those two settings is \"no\".\n- `medical_or_safety`: the system
-      is put in place only for medical or safety reasons, and the\n  results are used
-      for nothing else. The guidelines read this exception narrowly.\n\n## biometric_categorisation:
+      Point (c) is met when (i) or (ii) is, so answer each of them\n  on its own.\n-
+      Conditions (i) and (ii) (guidelines, paragraphs 163-167 and 175-177): an evaluation
+      made\n  lawfully, in line with Union and national law, for one specific purpose,
+      from data that belongs\n  to that purpose and used only for that purpose, stays
+      outside the prohibition as long as any\n  resulting treatment is justified and
+      proportionate; where it matters, the high-risk check deals\n  with it. Answer
+      `social_scoring` on its own definition above, whatever the purpose. Answer\n  `unrelated_context_treatment`
+      and `disproportionate_treatment` \"no\" (evidence \"inferred\", with\n  `settled_in_law`
+      \"yes\") only when nothing in the description points to either of them. A score\n  used,
+      or having effects, outside the purpose and setting its data comes from, or one
+      built on\n  data or characteristics unrelated to the purpose, points to (i).
+      Treatment that is unjustified\n  (no legitimate aim) or out of proportion to
+      the behaviour it rests on points to (ii).\n  When the description points to
+      one of them but leaves the fact open, answer it \"unknown\"; when\n  the facts
+      are stated and only the law leaves the condition open, follow the `settled_in_law`\n  rule
+      above.\n\n## crime_risk: point (d)\n\n- `crime_risk_assessment`: the system
+      assesses or predicts the risk that an individual person\n  will commit a criminal
+      offence.\n- `solely_profiling`: that assessment rests only on profiling the
+      person or on their\n  personality traits and characteristics.\n- `fact_based_assessment`:
+      the system only supports a human assessment of someone''s involvement\n  in
+      a criminal activity that already rests on objective, verifiable facts directly
+      linked to\n  that activity (the exception in point (d)).\n\n## face_scraping:
+      point (e)\n\n- `untargeted_face_scraping`: the system creates or expands a facial
+      recognition database by\n  collecting facial images from the internet or from
+      CCTV footage without targeting particular\n  people.\n\n## emotion_recognition:
+      point (f)\n\n- `infers_emotions`: the system infers people''s emotions or intentions
+      (stress, anger,\n  frustration, boredom and the like), for example from face,
+      voice, typing behaviour or other\n  bodily signals. For any system that monitors
+      workers or learners (webcams, voice, keystrokes,\n  sensors), ask yourself this
+      question explicitly; \"unknown\" when the description doesn''t say\n  what the
+      monitoring detects.\n- `workplace_or_education`: the people whose emotions are
+      inferred are at their workplace or in\n  an education institution. Anyone outside
+      those two settings is \"no\".\n- `medical_or_safety`: the system is put in place
+      only for medical or safety reasons, and the\n  results are used for nothing
+      else. The guidelines read this exception narrowly.\n\n## biometric_categorisation:
       point (g)\n\n- `biometric_categorisation`: the system sorts individual people
       into categories on the basis of\n  their biometric data (face, voice, body features).\n-
       `sensitive_traits`: the categories deduce or infer race, political opinions,
@@ -1008,77 +1023,76 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "{\"id\": \"gen-1791312174-6kznXJaUa1ekMJ9ymvYn\", \"object\": \"chat.completion\",
-        \"created\": 1791312174, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+      string: "{\"id\": \"gen-1791316246-YZT5PPKoHGHUY8Cjf0l4\", \"object\": \"chat.completion\",
+        \"created\": 1791316246, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
         \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
         [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
         \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
         \ \\\"manipulation\\\": {\\n    \\\"manipulative_technique\\\": \\\"yes\\\",\\n
         \   \\\"distorts_behaviour\\\": \\\"yes\\\",\\n    \\\"significant_harm\\\":
         \\\"unknown\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
-        null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der
-        Assistent passt Nachrichten an fr\xFChere Reaktionen an und nutzt bewusst
-        falsche Fristen und Gerichtsandrohungen, um Zahlungen zu bewirken; welche
-        erheblichen Folgen dies f\xFCr die Schuldner hat, ist nicht bekannt.\\\",\\n
-        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"vulnerability\\\": {\\n    \\\"exploits_vulnerability\\\":
-        \\\"no\\\",\\n    \\\"distorts_behaviour\\\": \\\"yes\\\",\\n    \\\"significant_harm\\\":
-        \\\"unknown\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
+        null,\\n    \\\"evidence\\\": \\\"stated\\\",\\n    \\\"fact\\\": \\\"Der
+        Assistent passt Nachrichten an fr\xFChere Reaktionen an und verwendet wissentlich
+        falsche Dringlichkeits- und Gerichtswarnungen; ob daraus erheblicher Schaden
+        entsteht, ist nicht bekannt.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
+        \ \\\"vulnerability\\\": {\\n    \\\"exploits_vulnerability\\\": \\\"no\\\",\\n
+        \   \\\"distorts_behaviour\\\": \\\"no\\\",\\n    \\\"significant_harm\\\":
+        \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
         null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Die
-        Nachrichten nutzen t\xE4uschenden Zahlungsdruck, aber es ist keine besondere
-        Schw\xE4che aufgrund von Alter, Behinderung oder einer bestimmten sozialen
-        oder wirtschaftlichen Situation beschrieben; erhebliche Folgen sind nicht
-        bekannt.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"sexual_material\\\":
+        Beschreibung weist nicht darauf hin, dass der Assistent eine altersbedingte,
+        behinderungsbedingte oder bestimmte soziale oder wirtschaftliche Vulnerabilit\xE4t
+        ausnutzt.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"sexual_material\\\":
         {\\n    \\\"intimate_imagery\\\": \\\"no\\\",\\n    \\\"child_abuse_material\\\":
         \\\"no\\\",\\n    \\\"only_conceals\\\": \\\"no\\\",\\n    \\\"consent\\\":
         \\\"no\\\",\\n    \\\"generation_purpose\\\": \\\"no\\\",\\n    \\\"foreseeable_without_safeguards\\\":
         \\\"no\\\",\\n    \\\"deployer_generation_purpose\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
         \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Der beschriebene Chat-Assistent erzeugt oder manipuliert
-        keine intimen oder kinderpornografischen Inhalte.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  },\\n  \\\"social_scoring\\\": {\\n    \\\"social_scoring\\\": \\\"no\\\",\\n
-        \   \\\"unrelated_context_treatment\\\": \\\"no\\\",\\n    \\\"disproportionate_treatment\\\":
+        \   \\\"fact\\\": \\\"Die Beschreibung betrifft einen Chat-Assistenten f\xFCr
+        Zahlungserinnerungen und weist nicht auf die Erzeugung oder Manipulation sexuellen
+        Materials hin.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"social_scoring\\\":
+        {\\n    \\\"social_scoring\\\": \\\"no\\\",\\n    \\\"unrelated_context_treatment\\\":
+        \\\"no\\\",\\n    \\\"disproportionate_treatment\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
+        \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"open_on\\\": \\\"none\\\",\\n
+        \   \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Die Anpassung
+        von Ton und Zeitpunkt an fr\xFChere Reaktionen ist nicht als Bewertung oder
+        Einstufung von Personen \xFCber einen bestimmten Zeitraum beschrieben.\\\",\\n
+        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"crime_risk\\\": {\\n    \\\"crime_risk_assessment\\\":
+        \\\"no\\\",\\n    \\\"solely_profiling\\\": \\\"no\\\",\\n    \\\"fact_based_assessment\\\":
         \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
-        null,\\n    \\\"open_on\\\": \\\"none\\\",\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Der Assistent passt Zahlungsnachrichten anhand fr\xFCherer
-        Reaktionen an, bewertet oder klassifiziert Personen aber nicht im Sinne eines
-        Social-Scoring-Systems und behandelt sie nicht in anderen sozialen Zusammenh\xE4ngen
-        schlechter.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"crime_risk\\\":
-        {\\n    \\\"crime_risk_assessment\\\": \\\"no\\\",\\n    \\\"solely_profiling\\\":
-        \\\"no\\\",\\n    \\\"fact_based_assessment\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
+        null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der
+        Assistent bewertet oder prognostiziert nicht das Risiko, dass eine Person
+        eine Straftat begeht.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"face_scraping\\\":
+        {\\n    \\\"untargeted_face_scraping\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
         \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Der Assistent bewertet oder prognostiziert nicht, ob
-        eine Person eine Straftat begehen wird.\\\",\\n    \\\"fact_numbers\\\": []\\n
-        \ },\\n  \\\"face_scraping\\\": {\\n    \\\"untargeted_face_scraping\\\":
-        \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
-        null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der
-        Assistent erstellt oder erweitert keine Gesichtserkennungsdatenbank durch
-        ungezieltes Auslesen von Bildern.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
-        \ \\\"emotion_recognition\\\": {\\n    \\\"infers_emotions\\\": \\\"no\\\",\\n
-        \   \\\"workplace_or_education\\\": \\\"no\\\",\\n    \\\"medical_or_safety\\\":
-        \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
-        null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der
-        Assistent leitet keine Emotionen oder Absichten ab und wird nicht am Arbeitsplatz
-        oder in einer Bildungseinrichtung eingesetzt.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  },\\n  \\\"biometric_categorisation\\\": {\\n    \\\"biometric_categorisation\\\":
-        \\\"no\\\",\\n    \\\"sensitive_traits\\\": \\\"no\\\",\\n    \\\"lawful_labelling\\\":
-        \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
-        null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der
-        Assistent kategorisiert Personen nicht anhand biometrischer Daten.\\\",\\n
-        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"remote_identification\\\": {\\n
-        \   \\\"real_time_identification\\\": \\\"no\\\",\\n    \\\"law_enforcement_use\\\":
-        \\\"no\\\",\\n    \\\"objective\\\": \\\"none\\\",\\n    \\\"national_law_authorisation\\\":
-        \\\"no\\\",\\n    \\\"prior_authorisation\\\": \\\"no\\\",\\n    \\\"targeted_use\\\":
-        \\\"no\\\",\\n    \\\"impact_assessment_registration\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
+        \   \\\"fact\\\": \\\"Die Beschreibung weist nicht auf das Erstellen oder
+        Erweitern einer Gesichtserkennungsdatenbank durch ungezieltes Auslesen von
+        Gesichtsbildern hin.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"emotion_recognition\\\":
+        {\\n    \\\"infers_emotions\\\": \\\"no\\\",\\n    \\\"workplace_or_education\\\":
+        \\\"no\\\",\\n    \\\"medical_or_safety\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
         \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Der Assistent f\xFChrt keine biometrische Echtzeit-Fernidentifizierung
-        in \xF6ffentlich zug\xE4nglichen R\xE4umen zu Strafverfolgungszwecken durch.\\\",\\n
-        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"guidance_numbers\\\": [\\n    2,\\n
-        \   3\\n  ]\\n}\", \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 11352,
-        \"completion_tokens\": 3652, \"total_tokens\": 15004, \"cost\": 0.003002318,
-        \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\": 4483, \"cache_write_tokens\":
+        \   \\\"fact\\\": \\\"Die Anpassung von Nachrichten an fr\xFChere Reaktionen
+        der Schuldner ist nicht als Ableitung von Emotionen oder Absichten beschrieben.\\\",\\n
+        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"biometric_categorisation\\\":
+        {\\n    \\\"biometric_categorisation\\\": \\\"no\\\",\\n    \\\"sensitive_traits\\\":
+        \\\"no\\\",\\n    \\\"lawful_labelling\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
+        \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
+        \   \\\"fact\\\": \\\"Die Beschreibung weist nicht auf eine Kategorisierung
+        von Personen anhand biometrischer Daten hin.\\\",\\n    \\\"fact_numbers\\\":
+        []\\n  },\\n  \\\"remote_identification\\\": {\\n    \\\"real_time_identification\\\":
+        \\\"no\\\",\\n    \\\"law_enforcement_use\\\": \\\"no\\\",\\n    \\\"objective\\\":
+        \\\"none\\\",\\n    \\\"national_law_authorisation\\\": \\\"no\\\",\\n    \\\"prior_authorisation\\\":
+        \\\"no\\\",\\n    \\\"targeted_use\\\": \\\"no\\\",\\n    \\\"impact_assessment_registration\\\":
+        \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
+        null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der
+        Assistent wird von einem Inkassounternehmen f\xFCr Zahlungserinnerungen genutzt,
+        nicht zur biometrischen Echtzeit-Fernidentifizierung zu Strafverfolgungszwecken.\\\",\\n
+        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"guidance_numbers\\\": [\\n    84,\\n
+        \   134\\n  ]\\n}\", \"refusal\": null}}], \"usage\": {\"prompt_tokens\":
+        11630, \"completion_tokens\": 2075, \"total_tokens\": 13705, \"cost\": 0.002138026,
+        \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\": 4761, \"cache_write_tokens\":
         6866, \"audio_tokens\": 0, \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\":
-        0.003002318, \"upstream_inference_prompt_cost\": 0.000993718, \"upstream_inference_completions_cost\":
-        0.0020086}, \"completion_tokens_details\": {\"reasoning_tokens\": 2588, \"image_tokens\":
+        0.002138026, \"upstream_inference_prompt_cost\": 0.000996776, \"upstream_inference_completions_cost\":
+        0.00114125}, \"completion_tokens_details\": {\"reasoning_tokens\": 1007, \"image_tokens\":
         0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
