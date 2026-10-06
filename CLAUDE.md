@@ -20,7 +20,7 @@ The full layout lives in **`docs/LAYOUT.md`**: the tree down to key files, which
 - `uv run pyright`: type check
 - `uv run aiact deps generate` / `uv run aiact deps check`: regenerate or check `docs/DEPENDENCIES.md` (generated, never edit by hand)
 - `git config core.hooksPath .githooks` (once per clone): pre-commit and pre-merge-commit regenerate `DEPENDENCIES.md`, pre-push runs `deps check`
-- `supabase start` / `supabase db reset` (from the repo root): local database
+- `supabase start` (from the repo root): local database. Never `supabase db reset`; see *Database is shared* below.
 
 ## Global rules
 - **Benchmark isolation.** Corpus code (`aiact/corpus`, `aiact/retrieval`, stories B1 and C*) must never read `eval/`. The one exception is story C2, which reads the `pile_b` ID list in `eval/split.json`. Benchmark work must never write to `data/` or the corpus tables. No test description or label is ever ingested.
