@@ -198,8 +198,8 @@
       "body": {
         "sme": "SMEs get lighter documentation duties, and the lower of the two maximum fines applies to them (Art. 99(6)), not the higher one of Art. 99(3).",
         "smc": "For a small mid-cap, the lower of the two maximum fines applies to fines under Art. 99(4) and (5) (Art. 99(6a)), but not to breaches of the Art. 5 bans (Art. 99(3)). Small mid-caps may use the simplified documentation too (Art. 11(1)).",
-        "none": "Neither the relief for SMEs (Art. 99(6)) nor the one for small mid-caps (Art. 99(6a)) applies, so the higher of the two maximum fines applies (Art. 99(3)).",
-        "noneOriginal": "The relief for SMEs (Art. 99(6)) doesn't apply, so the higher of the two maximum fines applies (Art. 99(3)). The original 2024 text has no small mid-cap rules."
+        "none": "Neither the relief for SMEs (Art. 99(6)) nor the one for small mid-caps (Art. 99(6a)) applies, so the higher of the two maximum fines applies (Art. 99(3) to (5)).",
+        "noneOriginal": "The relief for SMEs (Art. 99(6)) doesn't apply, so the higher of the two maximum fines applies (Art. 99(3) to (5)). The original 2024 text has no small mid-cap rules."
       },
       "maybeSme": "Klar looks at turnover only. With a balance sheet total of up to €43 m you may still count as an SME.",
       "maybeSmc": "Klar looks at turnover only. With a balance sheet total of up to €129 m you may still count as a small mid-cap."

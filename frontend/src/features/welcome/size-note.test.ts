@@ -7,7 +7,7 @@ describe('describeSize under the amended text', () => {
     ['10-49', 'up_to_10m', 'sme', [], ['art99_3', 'art99_6']],
     ['50-249', 'up_to_150m', 'smc', ['maybeSme'], ['art99_3', 'art99_6a']],
     ['250-749', 'up_to_50m', 'smc', [], ['art99_3', 'art99_6a']],
-    ['1-9', 'over_150m', 'none', ['maybeSme'], ['art99_3', 'art99_6', 'art99_6a']],
+    ['1-9', 'over_150m', 'none', ['maybeSme', 'maybeSmc'], ['art99_3', 'art99_6', 'art99_6a']],
     ['250-749', 'over_150m', 'none', ['maybeSmc'], ['art99_3', 'art99_6', 'art99_6a']],
     ['750+', 'up_to_10m', 'none', [], ['art99_3', 'art99_6', 'art99_6a']],
   ] as const)('%s staff, %s: %s', (staff, turnover, line, caveats, quotes) => {

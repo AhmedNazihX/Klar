@@ -89,13 +89,16 @@ describe('Welcome, the derived size line', () => {
     },
   )
 
-  it('names neither above the small mid-cap bands, with a balance-sheet caveat', async () => {
+  it('names neither above the small mid-cap bands, with the balance-sheet caveats', async () => {
     const user = await openWelcome()
     await user.click(screen.getByRole('button', { name: '1–9' }))
     await user.click(screen.getByRole('button', { name: 'More' }))
     expect(screen.getByText('Neither an SME nor a small mid-cap')).toBeInTheDocument()
+    expect(screen.getByText(/Art\. 99\(3\) to \(5\)/)).toBeInTheDocument()
     expect(screen.getByText(/may still count as an SME/)).toBeInTheDocument()
+    expect(screen.getByText(/may still count as a small mid-cap/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '250–749' }))
+    expect(screen.queryByText(/may still count as an SME/)).not.toBeInTheDocument()
     expect(screen.getByText(/may still count as a small mid-cap/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '750+' }))
     expect(screen.queryByText(/may still count/)).not.toBeInTheDocument()

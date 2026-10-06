@@ -198,8 +198,8 @@
       "body": {
         "sme": "KMU haben leichtere Dokumentationspflichten, und für sie gilt der niedrigere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 6), nicht der höhere nach Art. 99 Abs. 3.",
         "smc": "Für kleine Midcap-Unternehmen gilt der niedrigere der beiden Höchstbeträge bei Geldbußen nach Art. 99 Abs. 4 und 5 (Art. 99 Abs. 6a), nicht aber bei Verstößen gegen die Verbote nach Art. 5 (Art. 99 Abs. 3). Kleine Midcap-Unternehmen können ebenfalls die vereinfachte Dokumentation nutzen (Art. 11 Abs. 1).",
-        "none": "Weder die Erleichterung für KMU (Art. 99 Abs. 6) noch die für kleine Midcap-Unternehmen (Art. 99 Abs. 6a) greift, daher gilt der höhere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 3).",
-        "noneOriginal": "Die Erleichterung für KMU (Art. 99 Abs. 6) greift nicht, daher gilt der höhere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 3). Die ursprüngliche Fassung von 2024 kennt keine Regeln für kleine Midcap-Unternehmen."
+        "none": "Weder die Erleichterung für KMU (Art. 99 Abs. 6) noch die für kleine Midcap-Unternehmen (Art. 99 Abs. 6a) greift, daher gilt der höhere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 3 bis 5).",
+        "noneOriginal": "Die Erleichterung für KMU (Art. 99 Abs. 6) greift nicht, daher gilt der höhere der beiden Höchstbeträge einer Geldbuße (Art. 99 Abs. 3 bis 5). Die ursprüngliche Fassung von 2024 kennt keine Regeln für kleine Midcap-Unternehmen."
       },
       "maybeSme": "Klar berücksichtigt nur den Umsatz. Mit einer Bilanzsumme von höchstens 43 Mio. € können Sie dennoch als KMU gelten.",
       "maybeSmc": "Klar berücksichtigt nur den Umsatz. Mit einer Bilanzsumme von höchstens 129 Mio. € können Sie dennoch als kleines Midcap-Unternehmen gelten."
