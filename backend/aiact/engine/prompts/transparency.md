@@ -69,8 +69,11 @@ and do not ask for a fact the description already gives.
   Answer `exception` from the description whenever it says who interacts with the system and in
   what setting: judging from that whether it is obvious to them is an answer, not a guess. Being
   obvious needs a reason in the context: the kinds of context the guidelines treat as making it
-  obvious, such as a trained or professional audience, an internal audience that knows it is
-  using AI, or an AI embedded in a device with a narrow, fixed function. When the description
+  obvious, such as a system available only to a professional or specialised audience, without
+  foreseeable exposure to the general public or vulnerable people; internal staff who are properly
+  trained, AI literate and aware that they use AI systems; or ambient AI in an appliance whose
+  functions are limited to assisting with and operating that appliance (a human-like voice or
+  persona doesn't count as such a reason). When the description
   names the people who interact and gives no such reason, answer "no" with evidence "inferred";
   an audience of the general public or of consumers, with nothing more, is the clear "no" case.
   Answer "unknown" only when the description really doesn't say who interacts with the system or
