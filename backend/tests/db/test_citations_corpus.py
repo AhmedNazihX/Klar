@@ -7,6 +7,7 @@ resolves citations exactly as the database does.
 """
 
 import os
+from collections.abc import Iterator
 from datetime import date
 
 import psycopg
@@ -20,6 +21,8 @@ from aiact.engine.citations import (
 )
 from aiact.engine.nodes.common import Lookup
 from aiact.schemas import Citation, Language, LawVersion, Status
+from aiact.settings import get_settings
+from tests.db.conftest import _database_url as database_url_for_tests
 from tests.engine.built_corpus import built_corpus, omnibus_changes
 from tests.engine.test_citations import ART_5_1_BA, FAKE, STATE, ScriptedNode, decided
 from tests.test_isolation import REQUIRE_CORPUS_ENV
@@ -119,6 +122,17 @@ def test_a_loaded_omnibus_instruction_resolves(corpus: psycopg.Connection) -> No
     assert "point (g) is replaced" in verified.quote
 
 
+@pytest.fixture
+def database_url(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """DATABASE_URL set to the database the `db` fixture uses (its local Supabase fallback when
+    unset), so `connect()` reaches it too; the settings are re-read before and after."""
+    monkeypatch.setenv("DATABASE_URL", database_url_for_tests())
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
+@pytest.mark.usefixtures("database_url")
 def test_the_default_validator_reads_the_database(corpus: psycopg.Connection) -> None:
     """No `source`: each check opens its own connection from DATABASE_URL (the production path)."""
     node = ScriptedNode(decided(ART_5_1_BA, FAKE))

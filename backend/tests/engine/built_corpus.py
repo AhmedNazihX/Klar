@@ -26,7 +26,6 @@ from aiact.engine.nodes.common import lookup_for
 from aiact.engine.state import EngineState
 from aiact.retrieval.provisions import (
     AI_ACT_DOC_KEYS,
-    PROVISION_ID_RE,
     Provision,
     document_for,
 )
@@ -69,9 +68,6 @@ class BuiltCorpus:
         return self._pick(provision_id, doc_key, language, slice_date, accepts)
 
     def omnibus(self, provision_id: str, language: Language, as_of: date | None) -> Provision:
-        if not PROVISION_ID_RE.fullmatch(provision_id):
-            raise ValueError(f"malformed provision id {provision_id!r}")
-
         def accepts(doc: DocumentRow, row: ProvisionRow) -> bool:
             return doc.is_amending and not row.is_held_out
 

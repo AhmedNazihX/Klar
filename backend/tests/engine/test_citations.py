@@ -6,6 +6,7 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
+from aiact.corpus.build import OMNIBUS_DOC, DocumentLoad, DocumentRow, ProvisionRow
 from aiact.engine.citations import (
     CITATION_UNVERIFIED,
     UNVERIFIED,
@@ -19,7 +20,7 @@ from aiact.engine.graph import build_graph
 from aiact.engine.nodes.common import Lookup
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineInput, EngineState
-from aiact.retrieval.provisions import Provision
+from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.schemas import (
     PROVIDER_REFUSAL,
     Citation,
@@ -35,7 +36,12 @@ from aiact.schemas import (
     StepResult,
 )
 from aiact.settings import get_settings
-from tests.engine.built_corpus import built_corpus, built_validator, omnibus_changes
+from tests.engine.built_corpus import (
+    BuiltCorpus,
+    built_corpus,
+    built_validator,
+    omnibus_changes,
+)
 
 AS_OF = date(2026, 12, 10)
 """After the Omnibus (27 July 2026) and its December prohibitions."""
@@ -221,6 +227,21 @@ def test_a_citation_of_the_omnibus_itself_resolves_through_its_own_lookup() -> N
     assert verified.document_id == "omnibus"
     assert "point (g) is replaced" in verified.quote
     assert not verified.changed_by_omnibus
+
+
+def test_the_built_omnibus_never_returns_a_held_out_row() -> None:
+    """The in-memory twin of `test_the_omnibus_lookup_never_returns_a_held_out_row` (db)."""
+    omnibus = DocumentRow(
+        doc_key=OMNIBUS_DOC, title="Test Omnibus", celex=None, doc_type="law", is_amending=True,
+        status="final", law_version=None, language="en", published_on=date(2026, 7, 24),
+        in_force_from=date(2026, 7, 27), source_url="https://eur-lex.europa.eu/", sha256="c" * 64,
+    )  # fmt: skip
+    planted = ProvisionRow(
+        "art:1:2", None, None, None, "A held-out example.", date(2026, 7, 27),
+        source_example_id="hr-ex-001", is_held_out=True,
+    )  # fmt: skip
+    with pytest.raises(ProvisionNotFoundError):
+        BuiltCorpus((DocumentLoad(omnibus, (planted,)),)).omnibus("art:1:2", Language.EN, None)
 
 
 def test_a_recital_resolves_from_the_original_text() -> None:
