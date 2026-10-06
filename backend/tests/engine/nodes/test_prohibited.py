@@ -21,10 +21,16 @@ from pydantic import SecretStr
 
 from aiact.db import connect
 from aiact.engine.graph import EngineNodes, build_graph
+from aiact.engine.nodes import guideline_retrieval as retrieval
 from aiact.engine.nodes import prohibited as node
-from aiact.engine.nodes import prohibited_retrieval as retrieval
 from aiact.engine.nodes import prohibited_texts as texts
 from aiact.engine.nodes.common import Lookup
+from aiact.engine.nodes.guideline_retrieval import (
+    GuidelineCorpus,
+    GuidelineLibrary,
+    Retrieved,
+    retrieve,
+)
 from aiact.engine.nodes.key_facts import Answer, Settled
 from aiact.engine.nodes.prohibited import ProhibitedCheck, ProhibitedOutputError, to_outcome
 from aiact.engine.nodes.prohibited_practices import (
@@ -42,13 +48,6 @@ from aiact.engine.nodes.prohibited_practices import (
     SexualMaterialAnswer,
     SocialScoringAnswer,
     VulnerabilityAnswer,
-)
-from aiact.engine.nodes.prohibited_retrieval import (
-    GUIDANCE_DOC_KEYS,
-    ProhibitedCorpus,
-    ProhibitedLibrary,
-    Retrieved,
-    retrieve,
 )
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
@@ -72,7 +71,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
-from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
+from tests.engine.nodes.corpus_recording import RecordedGuidelineLibrary, corpus_recording
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -130,7 +129,7 @@ def hit(pid: str, language: Language = Language.EN) -> SearchHit:
 
 
 class FakeLibrary:
-    """A `ProhibitedLibrary` that records every call: any provision has a text except those in
+    """A `GuidelineLibrary` that records every call: any provision has a text except those in
     `missing`, and the guidance found in a language is `guidance[language]`."""
 
     def __init__(
@@ -217,11 +216,11 @@ def answer(*parts: PracticeSummary, guidance: tuple[int, ...] = ()) -> Prohibite
 def outcome(
     given: ProhibitedAnswer,
     at: EngineState | None = None,
-    library: ProhibitedLibrary | None = None,
+    library: GuidelineLibrary | None = None,
 ) -> CheckOutcome:
     run = at or state()
     library = library or FakeLibrary()
-    return to_outcome(given, run, retrieve(run, library), library)
+    return to_outcome(given, run, retrieve(run, library, node.SOURCE.article), library)
 
 
 def cited(result: CheckOutcome) -> list[str]:
@@ -722,7 +721,7 @@ def test_german_questions_are_asked_in_german() -> None:
 
 def test_art_5_is_always_fetched_and_the_exclusions_reach_every_search() -> None:
     library = FakeLibrary()
-    found = retrieve(state(language=Language.DE, exclude=EXCLUDED), library)
+    found = retrieve(state(language=Language.DE, exclude=EXCLUDED), library, node.SOURCE.article)
     assert found.article.provision_id == "art:5"
     assert library.lookups == [("art:5", Lookup(Language.DE, LawVersion.AMENDED, AS_OF, EXCLUDED))]
     assert [language for *_, language in library.searches] == [Language.DE, Language.EN]
@@ -733,7 +732,7 @@ def test_art_5_is_always_fetched_and_the_exclusions_reach_every_search() -> None
 
 def test_german_guidance_found_in_german_is_not_searched_again() -> None:
     library = FakeLibrary(guidance={Language.DE: GUIDE_HITS[:1]})
-    found = retrieve(state(language=Language.DE), library)
+    found = retrieve(state(language=Language.DE), library, node.SOURCE.article)
     assert len(library.searches) == 1
     assert found.guidance[0].language is Language.DE
 
@@ -769,13 +768,17 @@ def test_the_corpus_limits_the_search_to_its_guideline_without_a_cut_off(
     monkeypatch.setattr(retrieval, "search_ai_act", spy)
     connection, embedder = cast(psycopg.Connection, object()), FakeEmbedder()
     lookup = Lookup(Language.EN, LawVersion.AMENDED, AS_OF, EXCLUDED)
-    ProhibitedCorpus(connection, embedder).guidance("query", lookup, language=Language.EN)
+    corpus = GuidelineCorpus(connection, embedder, node.SOURCE)
+    corpus.guidance("query", lookup, language=Language.EN)
+    assert node.SOURCE.article == "art:5"
+    assert frozenset({"guide-prohibited"}) == node.SOURCE.doc_keys
+    assert node.SOURCE.passages == 6
     assert seen == [
         {
-            "doc_keys": GUIDANCE_DOC_KEYS,
+            "doc_keys": node.SOURCE.doc_keys,
             "exclude_source_example_ids": EXCLUDED,
             "max_distance": None,
-            "limit": retrieval.GUIDANCE_PASSAGES,
+            "limit": node.SOURCE.passages,
             "embedder": embedder,
             "connection": connection,
         }
@@ -791,7 +794,7 @@ def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPa
 
     monkeypatch.setattr(retrieval, "get_provision", spy)
     connection = cast(psycopg.Connection, object())
-    library = ProhibitedCorpus(connection, FakeEmbedder())
+    library = GuidelineCorpus(connection, FakeEmbedder(), node.SOURCE)
     library.provision("art:5", Lookup(Language.DE, LawVersion.AMENDED, AS_OF, ()))
     assert seen == [("art:5", Language.DE, LawVersion.AMENDED, AS_OF, connection)]
 
@@ -810,7 +813,7 @@ def _fake_chat(given: ProhibitedAnswer | str) -> GenericFakeChatModel:
 
 
 def _retrieved() -> Retrieved:
-    return retrieve(state(), FakeLibrary())
+    return retrieve(state(), FakeLibrary(), node.SOURCE.article)
 
 
 def test_the_prompt_puts_instructions_and_art_5_first_and_the_description_last() -> None:
@@ -1139,24 +1142,6 @@ def test_the_replays_include_a_case_on_each_side_of_2_december_2026() -> None:
     assert replay_state(B5C_CASES[0], AS_OF)["as_of"] == B5C_CASES[0].as_of
 
 
-class RecordedProhibitedLibrary:
-    """A `ProhibitedLibrary` over the replay's `CorpusRecording`."""
-
-    def __init__(self, recording: CorpusRecording[ProhibitedCorpus]) -> None:
-        self._recording = recording
-
-    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
-        return self._recording.provision(
-            provision_id, lookup, lambda live: live.provision(provision_id, lookup)
-        )
-
-    def guidance(self, query: str, lookup: Lookup, *, language: Language) -> tuple[SearchHit, ...]:
-        call = {"guidance": query, **lookup_call(lookup), "language": language}
-        return self._recording.hits(
-            call, lambda live: live.guidance(query, lookup, language=language)
-        )
-
-
 @pytest.fixture
 def luna_settings(openrouter_settings: Settings) -> Settings:
     return openrouter_settings.model_copy(
@@ -1165,9 +1150,9 @@ def luna_settings(openrouter_settings: Settings) -> Settings:
 
 
 @contextmanager
-def _live_corpus(settings: Settings) -> Iterator[ProhibitedCorpus]:
+def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
     with connect() as connection:
-        yield ProhibitedCorpus(connection, OpenRouterEmbeddings(settings=settings))
+        yield GuidelineCorpus(connection, OpenRouterEmbeddings(settings=settings), node.SOURCE)
 
 
 @pytest.mark.vcr
@@ -1191,7 +1176,7 @@ def test_b5c_case_replay(
         RECORD_COMMAND,
         lambda: _live_corpus(luna_settings),
     ) as recording:
-        check = ProhibitedCheck(luna_settings, library=RecordedProhibitedLibrary(recording))
+        check = ProhibitedCheck(luna_settings, library=RecordedGuidelineLibrary(recording))
         result = check(replay_state(case, AS_OF))
     matches = prohibited_matches(result, case)
     gap = KNOWN_GAPS.get(case.id)

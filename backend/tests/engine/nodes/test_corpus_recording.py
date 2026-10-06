@@ -18,7 +18,7 @@ from tests.engine.nodes.corpus_recording import CORPUS_SUFFIX, CorpusRecording, 
 
 LOOKUP = Lookup(Language.EN, LawVersion.AMENDED, date(2026, 9, 30), ())
 NODE_RECORDINGS = RECORDINGS_DIR / "engine" / "nodes"
-CORPUS_REPLAYS = ("test_scope", "test_high_risk", "test_prohibited")
+CORPUS_REPLAYS = ("test_scope", "test_high_risk", "test_prohibited", "test_transparency")
 """The replay modules whose cassettes come with a `.corpus.json`."""
 
 
@@ -114,6 +114,7 @@ def _case_ids(category: str) -> set[str]:
         ("test_scope", "test_b5b_case_replay", "b", set()),
         ("test_high_risk", "test_replay_annex_i_case", "e", {"test_replay_worked_example"}),
         ("test_prohibited", "test_b5c_case_replay", "c", set()),
+        ("test_transparency", "test_b5a_case_replay", "a", set()),
     ],
 )
 def test_every_recorded_replay_case_has_its_recording(

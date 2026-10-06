@@ -9,8 +9,9 @@ arguments and the run's `Lookup`):
   query, filter or exclusion) fails the test, and recorded calls a replay doesn't make are
   ignored.
 
-Each node test wraps a `CorpusRecording` in a small library with the node's own protocol, and
-gets one from `corpus_recording`, which skips the test while nothing is recorded.
+Each node test wraps a `CorpusRecording` in a small library with the node's own protocol (the
+checks that read one article and its guidelines share `RecordedGuidelineLibrary`), and gets one
+from `corpus_recording`, which skips the test while nothing is recorded.
 """
 
 import json
@@ -22,8 +23,10 @@ from pathlib import Path
 import pytest
 
 from aiact.engine.nodes.common import Lookup
+from aiact.engine.nodes.guideline_retrieval import GuidelineCorpus
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit
+from aiact.schemas import Language
 
 CORPUS_SUFFIX = ".corpus.json"
 NOT_FOUND = "not_found"
@@ -96,6 +99,25 @@ class CorpusRecording[S]:
         text = json.dumps(self._entries, indent=1, sort_keys=True, ensure_ascii=False)
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._path.write_text(text + "\n", encoding="utf-8")
+
+
+class RecordedGuidelineLibrary:
+    """A `GuidelineLibrary` over a replay's `CorpusRecording` (the prohibited and transparency
+    checks)."""
+
+    def __init__(self, recording: CorpusRecording[GuidelineCorpus]) -> None:
+        self._recording = recording
+
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
+        return self._recording.provision(
+            provision_id, lookup, lambda live: live.provision(provision_id, lookup)
+        )
+
+    def guidance(self, query: str, lookup: Lookup, *, language: Language) -> tuple[SearchHit, ...]:
+        call = {"guidance": query, **lookup_call(lookup), "language": language}
+        return self._recording.hits(
+            call, lambda live: live.guidance(query, lookup, language=language)
+        )
 
 
 @contextmanager
