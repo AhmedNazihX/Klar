@@ -4,16 +4,18 @@
 CI's backend job has an empty database, so the replays check their citations against this
 instead: it follows `get_provision`'s rules (the document by `document_for`, decision 009's
 version filter, the slice covering `as_of`, held-out examples hidden, the English fallback) and
-`get_omnibus_provision`'s for the Omnibus. `tests/db/test_citations_corpus.py` checks the two
-agree on the loaded corpus.
+`get_omnibus_provision`'s for the Omnibus, and builds the result with `get_provision`'s own row
+picker. `tests/db/test_citations_corpus.py` checks the two agree on the loaded corpus; CI's
+isolation job, which loads the corpus, runs it.
 """
 
 from collections.abc import Callable, Sequence
 from datetime import date
 from functools import cache
 from pathlib import Path
+from typing import Any
 
-from aiact.corpus.build import DocumentLoad, DocumentRow, ProvisionRow, build_all
+from aiact.corpus.build import OMNIBUS_DOC, DocumentLoad, DocumentRow, ProvisionRow, build_all
 from aiact.engine.citations import (
     CitationValidator,
     OmnibusChanges,
@@ -24,12 +26,12 @@ from aiact.engine.nodes.common import lookup_for
 from aiact.engine.state import EngineState
 from aiact.retrieval.provisions import (
     AI_ACT_DOC_KEYS,
-    OMNIBUS_DOC_KEY,
+    PROVISION_ID_RE,
     Provision,
-    ProvisionNotFoundError,
     document_for,
 )
-from aiact.schemas import DISCLAIMER, Language, LawVersion, StepResult
+from aiact.retrieval.provisions import _pick as pick  # pyright: ignore[reportPrivateUsage]
+from aiact.schemas import Language, LawVersion, StepResult
 from aiact.settings import get_settings
 
 Unit = tuple[DocumentRow, ProvisionRow]
@@ -67,9 +69,13 @@ class BuiltCorpus:
         return self._pick(provision_id, doc_key, language, slice_date, accepts)
 
     def omnibus(self, provision_id: str, language: Language, as_of: date | None) -> Provision:
-        return self._pick(
-            provision_id, OMNIBUS_DOC_KEY, language, as_of, lambda doc, _: doc.is_amending
-        )
+        if not PROVISION_ID_RE.fullmatch(provision_id):
+            raise ValueError(f"malformed provision id {provision_id!r}")
+
+        def accepts(doc: DocumentRow, row: ProvisionRow) -> bool:
+            return doc.is_amending and not row.is_held_out
+
+        return self._pick(provision_id, OMNIBUS_DOC, language, as_of, accepts)
 
     def _pick(
         self,
@@ -79,11 +85,14 @@ class BuiltCorpus:
         as_of: date | None,
         accepts: Callable[[DocumentRow, ProvisionRow], bool],
     ) -> Provision:
-        for found_in in dict.fromkeys((language, Language.EN)):
-            for doc, row in self._units.get((doc_key, found_in.value, provision_id), ()):
-                if accepts(doc, row) and _covers(row, as_of):
-                    return _provision(doc, row, language)
-        raise ProvisionNotFoundError(f"no text of {provision_id!r} in {doc_key}")
+        """The rows the SQL would return, handed to `get_provision`'s own row picker."""
+        rows = [
+            _selected(doc, row)
+            for found_in in dict.fromkeys((language, Language.EN))
+            for doc, row in self._units.get((doc_key, found_in.value, provision_id), ())
+            if accepts(doc, row) and _covers(row, as_of)
+        ]
+        return pick(provision_id, rows, language)
 
 
 def _covers(row: ProvisionRow, as_of: date | None) -> bool:
@@ -92,24 +101,20 @@ def _covers(row: ProvisionRow, as_of: date | None) -> bool:
     return row.valid_from <= as_of and (row.valid_to is None or as_of < row.valid_to)
 
 
-def _provision(doc: DocumentRow, row: ProvisionRow, wanted: Language) -> Provision:
-    return Provision.model_validate(
-        {
-            "provision_id": row.provision_id,
-            "doc_key": doc.doc_key,
-            "document_title": doc.title,
-            "doc_type": doc.doc_type,
-            "law_version": doc.law_version,
-            "status": doc.status,
-            "language": doc.language,
-            "english_only": doc.language != wanted.value,
-            "heading": row.heading,
-            "text": row.text,
-            "valid_from": row.valid_from,
-            "valid_to": row.valid_to,
-            "disclaimer": DISCLAIMER[wanted],
-        }
-    )
+def _selected(doc: DocumentRow, row: ProvisionRow) -> dict[str, Any]:
+    """A unit as `SELECT_PROVISION`'s columns."""
+    return {
+        "doc_key": doc.doc_key,
+        "title": doc.title,
+        "doc_type": doc.doc_type,
+        "status": doc.status,
+        "law_version": doc.law_version,
+        "language": doc.language,
+        "heading": row.heading,
+        "text": row.text,
+        "valid_from": row.valid_from,
+        "valid_to": row.valid_to,
+    }
 
 
 @cache

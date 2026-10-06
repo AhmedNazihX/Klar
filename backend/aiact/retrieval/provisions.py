@@ -28,6 +28,7 @@ from typing import Any, LiteralString
 import psycopg
 from psycopg.rows import dict_row
 
+from aiact.corpus.build import OMNIBUS_DOC
 from aiact.db import connect
 from aiact.schemas import DISCLAIMER, DocumentStatus, Language, LawVersion
 from aiact.schemas.base import ContractModel
@@ -43,9 +44,6 @@ AI_ACT_DOC_KEYS: Mapping[LawVersion, str] = MappingProxyType(
     {LawVersion.ORIGINAL: "ai-act", LawVersion.AMENDED: "ai-act-consolidated"}
 )
 """The manifest `doc_key` of each AI Act text (decision 009)."""
-
-OMNIBUS_DOC_KEY = "omnibus"
-"""The manifest `doc_key` of the Digital Omnibus, the one amending act in the corpus."""
 
 _SELECT_UNIT: LiteralString = """
     select d.doc_key, d.title, d.doc_type, d.status, d.law_version, p.language,
@@ -139,7 +137,7 @@ def get_omnibus_provision(
     as_of: date | None = None,
     *,
     connection: psycopg.Connection | None = None,
-    doc_key: str = OMNIBUS_DOC_KEY,
+    doc_key: str = OMNIBUS_DOC,
 ) -> Provision:
     """The text of one unit of the Digital Omnibus itself (an amending instruction or a recital),
     for a citation of the Omnibus (E9): `get_provision` never returns an amending act.

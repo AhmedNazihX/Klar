@@ -15,11 +15,12 @@ Corpus rules: "Where the Omnibus changed a provision, the answer says so").
   the provision, a part of it or the provision it belongs to (`touches_target`, the rule the
   corpus build splits slices by). The original text and the Omnibus itself never carry it.
 - **One repair retry.** `CitationValidator.checked` wraps a check node. A step citing something
-  that doesn't resolve is run once more; if a citation still doesn't resolve, the step keeps
-  the citations that do, gets the error `citation_unverified` (a refused step keeps
-  `provider_refusal`) and says that a person must verify it. A decided step becomes
-  `needs_more_information`, which may still end the run (`can_end_run`); an uncertain step keeps
-  its status and its question, so the run goes on as it would have. Findings are kept.
+  that doesn't resolve is run once more (a refused step is not: decision 029); if a citation
+  still doesn't resolve, the step keeps the citations that do, gets the error
+  `citation_unverified` (a refused step keeps `provider_refusal`) and says that a person must
+  verify it. A decided step becomes `needs_more_information`, which may still end the run
+  (`can_end_run`); an uncertain step keeps its status and its question, so the run goes on as it
+  would have. Findings are kept.
 """
 
 import logging
@@ -31,21 +32,30 @@ from pathlib import Path
 from typing import Protocol
 
 import psycopg
+from pydantic import ValidationError
 
-from aiact.corpus.build import omnibus_in_force, touches_target
+from aiact.corpus.build import OMNIBUS_DOC, omnibus_in_force, touches_target
 from aiact.corpus.eurlex import load_jsonl as load_law_jsonl
 from aiact.db import connect
 from aiact.engine.graph import CheckNode
 from aiact.engine.nodes.common import Lookup, lookup_for, provision_citation
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.retrieval.provisions import (
-    OMNIBUS_DOC_KEY,
+    PROVISION_ID_RE,
     Provision,
     ProvisionNotFoundError,
     get_omnibus_provision,
     get_provision,
 )
-from aiact.schemas import Citation, Language, LawVersion, Status, StepName, StepResult
+from aiact.schemas import (
+    PROVIDER_REFUSAL,
+    Citation,
+    Language,
+    LawVersion,
+    Status,
+    StepName,
+    StepResult,
+)
 from aiact.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
@@ -125,7 +135,7 @@ def load_omnibus_changes(data_dir: Path) -> OmnibusChanges:
     """The amendment records of the parsed Omnibus (`<data_dir>/parsed/omnibus.en.jsonl`; the
     German records target the same ids). Raises OSError when the file can't be read, and the
     corpus build's `LoadError` when the records don't share one entry-into-force date."""
-    rows = load_law_jsonl(data_dir / "parsed" / f"{OMNIBUS_DOC_KEY}.en.jsonl")
+    rows = load_law_jsonl(data_dir / "parsed" / f"{OMNIBUS_DOC}.en.jsonl")
     in_force, targets = omnibus_in_force(rows)
     return OmnibusChanges(in_force_from=in_force, targets=targets)
 
@@ -141,9 +151,14 @@ class CitationCheck:
 
 def resolve(citation: Citation, lookup: Lookup, source: CitationSource) -> Provision | None:
     """The corpus row `citation` names, or None when it doesn't resolve (see the module
-    docstring). A database error is raised, never read as a missing citation."""
+    docstring): a malformed id or one of no known kind doesn't. A database error, or a row
+    that doesn't fit `Provision`, is raised, never read as a missing citation."""
+    if not PROVISION_ID_RE.fullmatch(citation.provision_id):
+        return None
     try:
         provision = _find(citation, lookup, source)
+    except ValidationError:
+        raise  # a ValueError too, but a corrupt corpus row, not a missing citation
     except (ProvisionNotFoundError, ValueError):
         return None
     found = (provision.doc_key, provision.law_version, provision.language)
@@ -152,7 +167,7 @@ def resolve(citation: Citation, lookup: Lookup, source: CitationSource) -> Provi
 
 
 def _find(citation: Citation, lookup: Lookup, source: CitationSource) -> Provision:
-    if citation.document_id == OMNIBUS_DOC_KEY:
+    if citation.document_id == OMNIBUS_DOC:
         return source.omnibus(citation.provision_id, citation.language, lookup.as_of)
     # The original text has one slice per unit and takes no date (`get_provision`).
     as_of = None if citation.law_version is LawVersion.ORIGINAL else lookup.as_of
@@ -234,17 +249,18 @@ class CitationValidator:
 
     def checked(self, node: CheckNode) -> CheckNode:
         """`node` with its step's citations verified, the step run once more when one doesn't
-        resolve, and flagged when one still doesn't."""
+        resolve, and flagged when one still doesn't. A refused step (decision 029) is flagged
+        without a retry: running it again would only be refused again."""
 
         def run(state: EngineState) -> CheckOutcome:
             outcome = node(state)
             checked = self.check(outcome.step, state)
-            if checked.unresolved:
+            if checked.unresolved and outcome.step.error != PROVIDER_REFUSAL:
                 _log_unresolved(outcome.step.step, checked, "retrying the step")
                 outcome = node(state)
                 checked = self.check(outcome.step, state)
-                if checked.unresolved:
-                    _log_unresolved(outcome.step.step, checked, "the step is flagged")
+            if checked.unresolved:
+                _log_unresolved(outcome.step.step, checked, "the step is flagged")
             return with_checked_citations(outcome, checked, state["language"])
 
         return run

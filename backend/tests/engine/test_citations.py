@@ -4,6 +4,7 @@ the committed `data/parsed/` (`tests/engine/built_corpus.py`), so no database is
 from datetime import date
 
 import pytest
+from pydantic import ValidationError
 
 from aiact.engine.citations import (
     CITATION_UNVERIFIED,
@@ -12,11 +13,13 @@ from aiact.engine.citations import (
     CitationValidator,
     check_citations,
     load_omnibus_changes,
+    resolve,
 )
 from aiact.engine.graph import build_graph
 from aiact.engine.nodes.common import Lookup
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineInput, EngineState
+from aiact.retrieval.provisions import Provision
 from aiact.schemas import (
     PROVIDER_REFUSAL,
     Citation,
@@ -156,6 +159,8 @@ def test_a_resolved_citation_quotes_the_corpus() -> None:
         pytest.param(cite("art:5:1:ba"), lookup(date(2026, 3, 1)), id="not-yet-inserted"),
         pytest.param(cite("art:4", law_version=None), lookup(), id="law-without-its-version"),
         pytest.param(cite("Art. 4"), lookup(), id="malformed-id"),
+        pytest.param(cite("point:4"), lookup(), id="no-known-kind-of-id"),
+        pytest.param(cite("Art. 1", "omnibus", None), lookup(), id="malformed-omnibus-id"),
         pytest.param(
             cite("guide:guide-high-risk-annex-iii:ex:013", "guide-high-risk-annex-iii", None),
             lookup(),
@@ -173,6 +178,23 @@ def test_a_citation_that_does_not_exist_is_caught(citation: Citation, at: Lookup
     result = checked(citation, at=at)
     assert result.unresolved == (citation,)
     assert result.verified == ()
+
+
+class CorruptCorpus:
+    """A `CitationSource` whose rows don't fit `Provision`, as a corrupt database row would."""
+
+    def provision(
+        self, provision_id: str, language: Language, law_version: LawVersion | None, as_of: object
+    ) -> Provision:
+        return Provision.model_validate({"provision_id": provision_id})
+
+    def omnibus(self, provision_id: str, language: Language, as_of: object) -> Provision:
+        return Provision.model_validate({"provision_id": provision_id})
+
+
+def test_a_corrupt_corpus_row_is_raised_not_read_as_a_missing_citation() -> None:
+    with pytest.raises(ValidationError):
+        resolve(ART_5_1_BA, lookup(), CorruptCorpus())
 
 
 def test_guidance_resolves_without_a_law_version_and_keeps_english_only() -> None:
@@ -283,7 +305,8 @@ def test_an_uncertain_step_keeps_its_status_and_question(
     assert (flagged.open_question, flagged.missing_fact) == (step.open_question, step.missing_fact)
 
 
-def test_a_refused_step_keeps_its_refusal_error() -> None:
+def test_a_refused_step_keeps_its_refusal_error_without_a_retry() -> None:
+    """Running a refused step again would only be refused again (decision 029)."""
     step = StepResult(
         step=StepName.PROHIBITED,
         decision="Blocked.",
@@ -294,6 +317,7 @@ def test_a_refused_step_keeps_its_refusal_error() -> None:
     )
     node = ScriptedNode(CheckOutcome(step=step, matched=True))
     flagged = built_validator().checked(node)(STATE).step
+    assert node.calls == 1
     assert (flagged.error, flagged.citations) == (PROVIDER_REFUSAL, ())
 
 

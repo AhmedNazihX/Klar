@@ -279,6 +279,18 @@ def test_the_omnibus_lookup_honours_as_of(omnibus: psycopg.Connection):
         _omnibus(omnibus, BEFORE_OMNIBUS)
 
 
+def test_the_omnibus_lookup_never_returns_a_held_out_row(corpus: psycopg.Connection):
+    """An amending act holds no worked example, but a held-out row in one still stays hidden
+    (decision 012). The row lives only in the test's rolled-back transaction."""
+    planted = ProvisionRow(
+        "art:1:2", None, None, None, "A held-out example.", OMNIBUS_IN_FORCE,
+        source_example_id="hr-ex-001", is_held_out=True,
+    )  # fmt: skip
+    load_all(corpus, (DocumentLoad(TEST_OMNIBUS, (planted,)),))
+    with pytest.raises(ProvisionNotFoundError):
+        get_omnibus_provision("art:1:2", connection=corpus, doc_key="test-c5-omnibus")
+
+
 def test_the_omnibus_lookup_never_reads_the_ai_act(corpus: psycopg.Connection):
     with pytest.raises(ProvisionNotFoundError):
         get_omnibus_provision("art:4", connection=corpus, doc_key=KEYS[LawVersion.AMENDED])

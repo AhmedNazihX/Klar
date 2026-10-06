@@ -1,19 +1,28 @@
 """The citation validator (aiact/engine/citations.py, E9) against the loaded corpus, through
-`get_provision` and `get_omnibus_provision`; skipped when `aiact corpus load` hasn't run.
+`get_provision` and `get_omnibus_provision`; skipped when `aiact corpus load` hasn't run, and
+failed instead in CI's isolation job, which loads the corpus and sets AIACT_REQUIRE_CORPUS.
 
 It also checks that the in-memory corpus the replays use (`tests/engine/built_corpus.py`)
 resolves citations exactly as the database does.
 """
 
+import os
 from datetime import date
 
 import psycopg
 import pytest
 
-from aiact.engine.citations import CorpusCitations, check_citations
+from aiact.engine.citations import (
+    CITATION_UNVERIFIED,
+    CitationValidator,
+    CorpusCitations,
+    check_citations,
+)
 from aiact.engine.nodes.common import Lookup
-from aiact.schemas import Citation, Language, LawVersion
+from aiact.schemas import Citation, Language, LawVersion, Status
 from tests.engine.built_corpus import built_corpus, omnibus_changes
+from tests.engine.test_citations import ART_5_1_BA, FAKE, STATE, ScriptedNode, decided
+from tests.test_isolation import REQUIRE_CORPUS_ENV
 
 pytestmark = pytest.mark.db
 
@@ -28,7 +37,10 @@ def corpus(db: psycopg.Connection) -> psycopg.Connection:
         "where doc_key in ('ai-act', 'ai-act-consolidated', 'omnibus')"
     ).fetchone()
     if loaded is None or loaded[0] < 3:
-        pytest.skip("the corpus isn't loaded; run `aiact corpus load`")
+        reason = "the corpus isn't loaded; run `aiact corpus load`"
+        if os.environ.get(REQUIRE_CORPUS_ENV):
+            pytest.fail(reason, pytrace=False)
+        pytest.skip(reason)
     return db
 
 
@@ -105,3 +117,13 @@ def test_a_loaded_omnibus_instruction_resolves(corpus: psycopg.Connection) -> No
     )
     (verified,) = checked.verified
     assert "point (g) is replaced" in verified.quote
+
+
+def test_the_default_validator_reads_the_database(corpus: psycopg.Connection) -> None:
+    """No `source`: each check opens its own connection from DATABASE_URL (the production path)."""
+    node = ScriptedNode(decided(ART_5_1_BA, FAKE))
+    step = CitationValidator(omnibus=omnibus_changes()).checked(node)(STATE).step
+    assert node.calls == 2
+    assert (step.status, step.error) == (Status.NEEDS_MORE_INFORMATION, CITATION_UNVERIFIED)
+    (kept,) = step.citations
+    assert (kept.provision_id, kept.changed_by_omnibus) == ("art:5:1:ba", True)
