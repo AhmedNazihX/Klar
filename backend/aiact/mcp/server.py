@@ -34,6 +34,7 @@ from aiact.corpus.build import AI_ACT_IN_FORCE
 from aiact.llm import EmbeddingError
 from aiact.obligations.list import ObligationList, UnknownLawVersionError, list_obligations
 from aiact.retrieval.provisions import (
+    MAX_PROVISION_ID_CHARS,
     PROVISION_ID_RE,
     Provision,
     ProvisionNotFoundError,
@@ -51,9 +52,6 @@ from aiact.schemas import HighRiskRoute, Language, LawVersion, RiskClass, Role
 SERVER_NAME = "aiact"
 MAX_QUERY_CHARS = 4000
 """The longest query accepted: room for a full system description, not for a document."""
-
-MAX_PROVISION_ID_CHARS = 200
-"""The longest provision id accepted; real ids are well under 100 characters."""
 
 INSTRUCTIONS = (
     "Lookup tools over the EU AI Act (as published in 2024, or as amended by the Digital "

@@ -56,3 +56,46 @@ def test_relative_data_dir_resolves_against_backend(monkeypatch: pytest.MonkeyPa
     monkeypatch.chdir(BACKEND_DIR / "tests")
     settings = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
     assert settings.aiact_data_dir == BACKEND_DIR.parent / "data"
+
+
+def test_api_defaults_are_the_local_dev_setup(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ("API_HOST", "API_PORT", "CORS_ORIGINS"):
+        monkeypatch.delenv(name, raising=False)
+    settings = Settings(_env_file=BACKEND_DIR / ".env.example")  # pyright: ignore[reportCallIssue]
+    assert (settings.api_host, settings.api_port) == ("127.0.0.1", 8000)
+    assert settings.cors_origins == ("http://localhost:5173", "http://127.0.0.1:5173")
+
+
+def test_cors_origins_are_read_comma_separated(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CORS_ORIGINS", "https://klar.example, https://www.klar.example,")
+    settings = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+    assert settings.cors_origins == ("https://klar.example", "https://www.klar.example")
+
+
+@pytest.mark.parametrize("name", ["CORS_ORIGINS", "API_ALLOWED_HOSTS", "API_FORWARDED_ALLOW_IPS"])
+def test_a_wildcard_origin_host_or_proxy_is_refused(
+    monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    monkeypatch.setenv(name, "localhost,*")
+    with pytest.raises(ValueError, match="wildcard"):
+        Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+
+
+def test_the_api_hardening_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    names = (
+        "API_ALLOWED_HOSTS",
+        "API_PROXY_HEADERS",
+        "API_FORWARDED_ALLOW_IPS",
+        "API_DOCS",
+        "API_MAX_BODY_BYTES",
+        "CLASSIFY_MAX_CONCURRENT",
+    )
+    for name in names:
+        monkeypatch.delenv(name, raising=False)
+    settings = Settings(_env_file=BACKEND_DIR / ".env.example")  # pyright: ignore[reportCallIssue]
+    assert settings.api_allowed_hosts == ("localhost", "127.0.0.1")
+    assert settings.api_proxy_headers is False
+    assert settings.api_forwarded_allow_ips == ()
+    assert settings.api_docs is True
+    assert settings.api_max_body_bytes == 262_144
+    assert settings.classify_max_concurrent == 4

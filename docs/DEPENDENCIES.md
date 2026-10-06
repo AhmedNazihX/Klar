@@ -17,6 +17,7 @@ Source: `backend/uv.lock`.
 | Package | Group | Constraint | Locked | Licence | Summary |
 | --- | --- | --- | --- | --- | --- |
 | docling-core | runtime | >=2.96.0 | 2.99.0 | MIT | A python library to define and validate data types in Docling. |
+| fastapi | runtime | >=0.142.2 | 0.142.2 | MIT | FastAPI framework, high performance, easy to learn, fast to code, ready for pro… |
 | httpx | runtime | >=0.28.1 | 0.28.1 | BSD-3-Clause | The next generation HTTP client. |
 | langchain-openrouter | runtime | >=0.2.9 | 0.2.9 | MIT | An integration package connecting OpenRouter and LangChain |
 | langgraph | runtime | >=1.2.12 | 1.2.12 | MIT | Building stateful, multi-actor applications with LLMs |
@@ -28,6 +29,7 @@ Source: `backend/uv.lock`.
 | pydantic-settings | runtime | >=2.15.0 | 2.15.0 | MIT | Settings management using Pydantic |
 | pyyaml | runtime | >=6.0.3 | 6.0.3 | MIT | YAML parser and emitter for Python |
 | typer | runtime | >=0.27.2 | 0.27.2 | MIT | Typer, build great CLIs. Easy to code. Based on Python type hints. |
+| uvicorn | runtime | >=0.54.0 | 0.54.0 | BSD-3-Clause | The lightning-fast ASGI server. |
 | lxml-stubs | dev | >=0.5.1 | 0.5.1 | Apache Software License | Type annotations for the lxml package |
 | pyright | dev | >=1.1.414 | 1.1.414 | MIT | Command line wrapper for pyright |
 | pytest | dev | >=9.1.1 | 9.1.1 | MIT | pytest: simple powerful testing with Python |
@@ -46,14 +48,14 @@ Source: `backend/uv.lock`.
 | aiohappyeyeballs | 2.7.1 | PSF-2.0 | ragas |
 | aiohttp | 3.14.4 | Apache-2.0 AND MIT | ragas |
 | aiosignal | 1.4.0 | Apache 2.0 | ragas |
-| annotated-doc | 0.0.5 | MIT | docling-core, docling-slim, ragas, typer |
-| annotated-types | 0.8.0 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, mcp, op… |
-| anyio | 4.15.1 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, langsmith, mcp, openai, o… |
+| annotated-doc | 0.0.5 | MIT | docling-core, docling-slim, fastapi, ragas, typer |
+| annotated-types | 0.8.0 | MIT | docling-core, docling-slim, fastapi, langchain-openrouter, langgraph, langsmith… |
+| anyio | 4.15.1 | MIT | docling-slim, fastapi, httpx, langchain-openrouter, langgraph, langsmith, mcp,… |
 | appdirs | 1.4.4 | MIT | ragas |
 | attrs | 26.1.0 | MIT | docling-core, docling-slim, mcp, ragas |
 | certifi | 2026.7.22 | MPL-2.0 | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, langsmith,… |
 | charset-normalizer | 3.5.1 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, ragas |
-| click | 8.5.0 | BSD-3-Clause | docling-slim, mcp, ragas |
+| click | 8.5.0 | BSD-3-Clause | docling-slim, mcp, ragas, uvicorn |
 | colorama | 0.4.6 | BSD License | docling-core, docling-slim, openai, pytest, pytest-recording, ragas, typer |
 | cuda-bindings | 13.4.3 | Apache-2.0 | docling-slim |
 | cuda-pathfinder | 1.8.2 | Apache-2.0 | docling-slim |
@@ -80,7 +82,7 @@ Source: `backend/uv.lock`.
 | httpx2 | 2.13.1 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith, mcp, ragas |
 | httpx2-jsfetch | 1.0 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith, mcp, ragas |
 | huggingface-hub | 1.33.0 | Apache-2.0 | docling-slim, ragas |
-| idna | 3.20 | BSD-3-Clause | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, langsmith,… |
+| idna | 3.20 | BSD-3-Clause | docling-core, docling-slim, fastapi, httpx, langchain-openrouter, langgraph, la… |
 | iniconfig | 2.3.0 | MIT | pytest, pytest-recording |
 | instructor | 1.17.0 | MIT | ragas |
 | jinja2 | 3.1.6 | BSD License | docling-slim, ragas |
@@ -122,7 +124,7 @@ Source: `backend/uv.lock`.
 | nvidia-cusparselt-cu13 | 0.8.1 | NVIDIA Proprietary Software | docling-slim |
 | nvidia-nccl-cu13 | 2.30.7 | unknown | docling-slim |
 | nvidia-nvshmem-cu13 | 3.4.5 | unknown | docling-slim |
-| opentelemetry-api | 1.45.0 | Apache-2.0 | mcp |
+| opentelemetry-api | 1.45.0 | Apache-2.0 | fastapi, mcp |
 | orjson | 3.12.0 | MPL-2.0 AND (Apache-2.0 OR MIT) | langchain-openrouter, langgraph, langsmith, ragas |
 | ormsgpack | 1.12.2 | Apache-2.0 OR MIT | langgraph, ragas |
 | packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | docling-slim, langchain-openrouter, langgraph, langsmith, pytest, pytest-record… |
@@ -133,8 +135,8 @@ Source: `backend/uv.lock`.
 | psutil | 7.2.2 | BSD-3-Clause | docling-slim |
 | psycopg-binary | 3.3.6 | LGPL-3.0-only | psycopg |
 | pyarrow | 25.0.1 | Apache-2.0 | ragas |
-| pydantic | 2.12.5 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, mcp, op… |
-| pydantic-core | 2.41.5 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, mcp, op… |
+| pydantic | 2.12.5 | MIT | docling-core, docling-slim, fastapi, langchain-openrouter, langgraph, langsmith… |
+| pydantic-core | 2.41.5 | MIT | docling-core, docling-slim, fastapi, langchain-openrouter, langgraph, langsmith… |
 | pygments | 2.21.0 | BSD-2-Clause | docling-core, docling-slim, pytest, pytest-recording, ragas, typer |
 | pyjwt | 2.15.1 | MIT | mcp |
 | pypdfium2 | 5.13.0 | BSD-3-Clause, Apache-2.0, dependency licenses | docling-slim |
@@ -158,7 +160,7 @@ Source: `backend/uv.lock`.
 | sniffio | 1.3.1 | MIT OR Apache-2.0 | langchain-openrouter, langgraph, langsmith, openai, ragas |
 | sqlalchemy | 2.1.3 | MIT | ragas |
 | sse-starlette | 3.5.0 | BSD-3-Clause | mcp |
-| starlette | 1.7.0 | BSD-3-Clause | mcp |
+| starlette | 1.7.0 | BSD-3-Clause | fastapi, mcp |
 | sympy | 1.14.0 | BSD | docling-slim |
 | tabulate | 0.10.0 | MIT | docling-core, docling-slim |
 | tenacity | 9.1.4 | Apache 2.0 | langchain-openrouter, langgraph, ragas |
@@ -170,13 +172,12 @@ Source: `backend/uv.lock`.
 | transformers | 5.17.0 | Apache 2.0 License | docling-slim |
 | triton | 3.8.0 | MIT | docling-slim |
 | truststore | 0.10.4 | MIT | langchain-openrouter, langgraph, langsmith, mcp, ragas |
-| typing-extensions | 4.16.0 | PSF-2.0 | docling-core, docling-slim, httpx, langchain-openrouter, langgraph, langsmith,… |
+| typing-extensions | 4.16.0 | PSF-2.0 | docling-core, docling-slim, fastapi, httpx, langchain-openrouter, langgraph, la… |
 | typing-inspect | 0.9.0 | MIT | ragas |
-| typing-inspection | 0.4.4 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, mcp, op… |
+| typing-inspection | 0.4.4 | MIT | docling-core, docling-slim, fastapi, langchain-openrouter, langgraph, langsmith… |
 | tzdata | 2026.4 | Apache-2.0 | docling-core, docling-slim, psycopg, ragas |
 | urllib3 | 2.8.0 | MIT | docling-core, docling-slim, langchain-openrouter, langgraph, langsmith, ragas |
 | uuid-utils | 0.17.1 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith, ragas |
-| uvicorn | 0.54.0 | BSD-3-Clause | mcp |
 | vcrpy | 8.3.0 | MIT | pytest-recording |
 | websockets | 16.1.1 | BSD-3-Clause | langchain-openrouter, langgraph, langsmith, ragas |
 | wrapt | 2.5.0 | BSD-2-Clause | pytest-recording |

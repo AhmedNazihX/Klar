@@ -18,8 +18,10 @@ functions, and return the result. No classification logic lives here.
 - After any API change, export the schema to `frontend/openapi.json`. The frontend's client is generated from that file.
 - MCP tools wrap the same functions as the API and return the same Pydantic outputs (INIT › MCP tools).
 
-**Async:** endpoints doing I/O are `async def`, and use async clients only. No `requests`, sync database drivers or
-blocking file I/O inside routes.
+**Async:** route handlers are `async def`, or plain `def` when they call the sync psycopg retrieval layer or the sync
+engine (FastAPI runs a `def` handler in its threadpool). Never call a sync driver, `requests` or blocking file I/O from an
+`async def`; wrap it in `run_in_threadpool` or make the handler `def`. The same holds for dependencies: a sync
+dependency is `def` (threadpool), an `async def` one does no blocking work.
 
 **Auth and data**
 - Users are Supabase (anonymous) sessions. Verify the JWT's signature, expiry, audience and issuer.
