@@ -507,8 +507,9 @@ def citations(
 ) -> tuple[Citation, ...]:
     """Citations quoting `articles` from the parsed AI Act text of `law_version`.
 
-    A stopgap until `get_provision` (C5) serves the same text from the corpus. The document id is
-    the manifest key, which the citation check expects (V2).
+    The citation validator (E9, `aiact.engine.citations`) then resolves each one through
+    `get_provision` and re-quotes it from the corpus slice of the run's date. The document id is
+    the manifest key, which the citation checks expect (V2, E9).
     """
     doc_key = ACT_DOCUMENTS[law_version]
     texts = _provision_texts(data_dir / "parsed" / f"{doc_key}.{language.value}.jsonl")

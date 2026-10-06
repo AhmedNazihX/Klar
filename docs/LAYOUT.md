@@ -36,7 +36,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── corpus/                  fetch.py + sources.py (B1), eurlex.py + eurlex_html.py + amendments.py + files.py (C1),
 │   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
 │   │   │                            build.py + load.py (C3), embed.py (C4)
-│   │   ├── retrieval/               provisions.py: get_provision (C5); search.py: search_ai_act (C6; relevance score and cut-off C8)
+│   │   ├── retrieval/               provisions.py: get_provision (C5), get_omnibus_provision (E9); search.py: search_ai_act (C6; relevance score and cut-off C8)
 │   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)
@@ -55,7 +55,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        by search, for the prohibited and transparency checks (E6)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
-│   │   │   ├── citations.py         citation existence validator (E9)
+│   │   │   ├── citations.py         citation existence validator, one retry, the changed_by_omnibus marker (E9)
 │   │   │   └── __init__.py          classify_system (E10)
 │   │   ├── eval/                    evaluation code, never benchmark data
 │   │   │   ├── cases.py             BenchmarkCase schema + loader + appliedAI mapping (F7); Commission-row fields, QAItem (F7b)
@@ -92,6 +92,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            <test>.corpus.json next to one: the corpus rows a replayed engine node read,
 │       │                            so the replay needs no database (E3, E4, E5); recorded and replayed by
 │       │                            tests/engine/nodes/corpus_recording.py (E4)
+│       ├── engine/built_corpus.py   the corpus built in memory from data/parsed/, which the replays check
+│       │                            their citations against (no database in CI) (E9)
 │       ├── snapshots/               committed JSON snapshots, e.g. the result's JSON Schema (F3)
 │       ├── test_network_guard.py    proves unmarked tests can't reach the network (F6)
 │       └── test_isolation.py        benchmark isolation check (B13)

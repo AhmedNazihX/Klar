@@ -14,7 +14,12 @@ import pytest
 
 from aiact.corpus.build import AI_ACT_IN_FORCE, DocumentLoad, DocumentRow, ProvisionRow
 from aiact.corpus.load import load_all
-from aiact.retrieval.provisions import Provision, ProvisionNotFoundError, get_provision
+from aiact.retrieval.provisions import (
+    Provision,
+    ProvisionNotFoundError,
+    get_omnibus_provision,
+    get_provision,
+)
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, DocumentStatus, Language, LawVersion
 
 pytestmark = pytest.mark.db
@@ -240,6 +245,60 @@ def test_an_amending_act_is_never_returned(corpus: psycopg.Connection):
     keys = {**KEYS, LawVersion.AMENDED: "test-c5-omnibus"}
     with pytest.raises(ProvisionNotFoundError):
         get_provision("art:4", as_of=AFTER_OMNIBUS, connection=corpus, ai_act_doc_keys=keys)
+
+
+# --- The Omnibus itself, by its explicit lookup (E9) -------------------------------------------
+
+TEST_OMNIBUS = replace(AMENDED, doc_key="test-c5-omnibus", law_version=None, is_amending=True)
+INSTRUCTION = "in Article 4, the text is replaced by the following: …"
+
+
+@pytest.fixture
+def omnibus(corpus: psycopg.Connection) -> psycopg.Connection:
+    row = ProvisionRow("art:1:1", None, None, None, INSTRUCTION, OMNIBUS_IN_FORCE)
+    load_all(corpus, (DocumentLoad(TEST_OMNIBUS, (row,)),))
+    return corpus
+
+
+def _omnibus(connection: psycopg.Connection, as_of: date | None = None) -> Provision:
+    return get_omnibus_provision(
+        "art:1:1", "de", as_of, connection=connection, doc_key="test-c5-omnibus"
+    )
+
+
+def test_the_omnibus_lookup_reads_the_amending_act(omnibus: psycopg.Connection):
+    provision = _omnibus(omnibus, AFTER_OMNIBUS)
+    assert (provision.doc_key, provision.text) == ("test-c5-omnibus", INSTRUCTION)
+    assert provision.law_version is None
+    assert (provision.language, provision.english_only) == (Language.EN, True)
+
+
+def test_the_omnibus_lookup_honours_as_of(omnibus: psycopg.Connection):
+    assert _omnibus(omnibus).text == INSTRUCTION
+    with pytest.raises(ProvisionNotFoundError):
+        _omnibus(omnibus, BEFORE_OMNIBUS)
+
+
+def test_the_omnibus_lookup_never_returns_a_held_out_row(corpus: psycopg.Connection):
+    """An amending act holds no worked example, but a held-out row in one still stays hidden
+    (decision 012). The row lives only in the test's rolled-back transaction."""
+    planted = ProvisionRow(
+        "art:1:2", None, None, None, "A held-out example.", OMNIBUS_IN_FORCE,
+        source_example_id="hr-ex-001", is_held_out=True,
+    )  # fmt: skip
+    load_all(corpus, (DocumentLoad(TEST_OMNIBUS, (planted,)),))
+    with pytest.raises(ProvisionNotFoundError):
+        get_omnibus_provision("art:1:2", connection=corpus, doc_key="test-c5-omnibus")
+
+
+def test_the_omnibus_lookup_never_reads_the_ai_act(corpus: psycopg.Connection):
+    with pytest.raises(ProvisionNotFoundError):
+        get_omnibus_provision("art:4", connection=corpus, doc_key=KEYS[LawVersion.AMENDED])
+
+
+def test_the_omnibus_lookup_rejects_a_malformed_id(corpus: psycopg.Connection):
+    with pytest.raises(ValueError, match="malformed provision id"):
+        get_omnibus_provision("Article 1", connection=corpus)
 
 
 # --- The loaded corpus (skipped when `aiact corpus load` hasn't run) --------------------------

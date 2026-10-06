@@ -220,6 +220,9 @@ ENTRY_POINTS: dict[str, Probe] = {
 NOT_ENTRY_POINTS: dict[str, str] = {
     "aiact.retrieval.provisions.Provision": "the result type of get_provision",
     "aiact.retrieval.provisions.ProvisionNotFoundError": "an error type",
+    "aiact.retrieval.provisions.document_for": "maps a provision id to its document; no query",
+    "aiact.retrieval.provisions.get_omnibus_provision": "reads only the amending act (the "
+    "Omnibus), which holds no guideline example; its query also drops held-out rows",
     "aiact.retrieval.search.QueryEmbedder": "the protocol a caller's embedder follows",
     "aiact.retrieval.search.QueryEmbedder.embed_query": "a protocol stub",
     "aiact.retrieval.search.SearchHit": "a result type of search_ai_act",
@@ -227,7 +230,8 @@ NOT_ENTRY_POINTS: dict[str, str] = {
     "aiact.retrieval.search.prepare_search": "builds search_ai_act's statement; runs no query",
     "aiact.retrieval.search.distinct_units": "dedupes rows search_ai_act already fetched",
 }
-"""Public callables of `aiact.retrieval` that return no corpus rows by themselves, and why."""
+"""Public callables of `aiact.retrieval` that return no corpus rows by themselves, or no
+guideline rows (so never a held-out example), and why."""
 OPT_IN_PARAMETER = "include_held_out"
 
 

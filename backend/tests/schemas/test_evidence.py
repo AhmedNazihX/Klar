@@ -42,8 +42,8 @@ def test_unstated_fact_with_span_is_rejected(evidence: EvidenceTag) -> None:
 
 def test_guidance_citation_has_no_law_version_and_can_be_a_draft() -> None:
     citation = Citation(
-        provision_id="guide:hr:ex:17",
-        document_id="guidelines-high-risk-2026-05-19",
+        provision_id="guide:guide-high-risk-annex-iii:ex:015",
+        document_id="guide-high-risk-annex-iii",
         document_status=DocumentStatus.DRAFT,
         language=Language.EN,
         quote="An example of a system that is not high-risk",

@@ -68,6 +68,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
+from tests.engine.built_corpus import unresolved_citations
 from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -1170,7 +1171,9 @@ def replay_check(
 @pytest.mark.vcr
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
-    result = replay_check(replay_state(WORKED_EXAMPLE_CASE, AS_OF))
+    run_state = replay_state(WORKED_EXAMPLE_CASE, AS_OF)
+    result = replay_check(run_state)
+    assert not unresolved_citations(result.step, run_state)
     assert result.high_risk_route is HighRiskRoute.ANNEX_III
     assert result.annex_point == "annex:III:4:a"
     assert not result.annex_iii_exempt
@@ -1220,7 +1223,9 @@ reading they give instead; each fails when it starts matching, so the entry is r
 )
 def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -> None:
     """Each B5e case against its label and tags; a `KNOWN_GAPS` case is an expected failure."""
-    result = replay_check(replay_state(case, AS_OF))
+    run_state = replay_state(case, AS_OF)
+    result = replay_check(run_state)
+    assert not unresolved_citations(result.step, run_state)
     matches = high_risk_matches(result, case)
     gap = KNOWN_GAPS.get(case.id)
     if gap is not None:

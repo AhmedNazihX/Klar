@@ -12,7 +12,12 @@ class Citation(ContractModel):
     """One quoted provision. `english_only` marks guidance that has no official text in `de`."""
 
     provision_id: str = Field(min_length=1, description="For example `art:6:3` or `annex:III:4:a`.")
-    document_id: str = Field(min_length=1)
+    document_id: str = Field(
+        min_length=1,
+        description="The cited document's manifest `doc_key` (`data/manifest.yaml`), for "
+        "example `ai-act-consolidated` or `guide-prohibited`; the citation checks resolve it "
+        "against the corpus `documents.doc_key`.",
+    )
     law_version: LawVersion | None = Field(
         default=None,
         description="The AI Act text quoted; None for guidance, which belongs to neither text.",
@@ -23,6 +28,12 @@ class Citation(ContractModel):
     language: Language = Field(description="The language of `quote`.")
     quote: str = Field(min_length=1)
     english_only: bool = False
+    changed_by_omnibus: bool = Field(
+        default=False,
+        description="The quoted amended text is one the Digital Omnibus changed: the provision, "
+        "a part of it or the provision it belongs to was replaced, inserted, deleted or amended "
+        "(INIT > Corpus rules). Never set on the original text.",
+    )
 
 
 class SourceSpan(ContractModel):

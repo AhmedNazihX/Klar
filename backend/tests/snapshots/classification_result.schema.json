@@ -11,6 +11,7 @@
           "type": "string"
         },
         "document_id": {
+          "description": "The cited document's manifest `doc_key` (`data/manifest.yaml`), for example `ai-act-consolidated` or `guide-prohibited`; the citation checks resolve it against the corpus `documents.doc_key`.",
           "minLength": 1,
           "title": "Document Id",
           "type": "string"
@@ -51,6 +52,12 @@
         "english_only": {
           "default": false,
           "title": "English Only",
+          "type": "boolean"
+        },
+        "changed_by_omnibus": {
+          "default": false,
+          "description": "The quoted amended text is one the Digital Omnibus changed: the provision, a part of it or the provision it belongs to was replaced, inserted, deleted or amended (INIT > Corpus rules). Never set on the original text.",
+          "title": "Changed By Omnibus",
           "type": "boolean"
         }
       },
