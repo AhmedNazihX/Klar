@@ -73,7 +73,6 @@ from aiact.schemas import (
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
 from tests.engine.nodes.corpus_recording import (
-    PENDING_RERECORD,
     RecordedGuidelineLibrary,
     corpus_recording,
 )
@@ -1123,13 +1122,12 @@ REFUSED = "provider content filter (decision 029)"
 KNOWN_GAPS: dict[str, str] = {
     "own-c-01-undress-photo-app": REFUSED,
     "own-c-02-undress-app-before-december": REFUSED,
-    "own-c-03-image-tool-with-safeguards": REFUSED,
     "own-c-04-studio-digital-doubles-consent": REFUSED,
     "own-c-05-gossip-site-fake-nudes": REFUSED,
     "own-c-07-unfiltered-image-generator": REFUSED,
-    "own-c-16-police-live-search-missing-child": (
-        "the model reads the police act's two permitted purposes as an unknown objective, so the "
-        "node asks for it with prohibited assumed (cautious; user, 2026-10-02)"
+    "own-c-10-town-resident-points": (
+        "matches Art. 5(1)(c) social scoring but marks it legally_ambiguous instead of decided "
+        "(E10 re-record, user 2026-10-06)"
     ),
 }
 """Recorded cases whose Art. 5 outcome differs from the label, with the reason; each fails when
@@ -1167,7 +1165,6 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
     B5C_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="no B5c cases"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
-@PENDING_RERECORD
 def test_b5c_case_replay(
     case: BenchmarkCase,
     luna_settings: Settings,

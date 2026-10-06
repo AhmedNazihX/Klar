@@ -50,7 +50,6 @@ from aiact.schemas import (
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
 from tests.engine.nodes.corpus_recording import (
-    PENDING_RERECORD,
     CorpusRecording,
     corpus_recording,
     lookup_call,
@@ -673,7 +672,6 @@ def luna_settings(openrouter_settings: Settings) -> Settings:
     B5B_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="B5b cases not merged yet"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
-@PENDING_RERECORD
 def test_b5b_case_replay(
     case: BenchmarkCase,
     luna_settings: Settings,

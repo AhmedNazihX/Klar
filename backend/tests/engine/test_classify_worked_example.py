@@ -81,18 +81,36 @@ deployer definition (INIT names Art. 25, whose switches a deployer that keeps it
 trigger, so the step cites none of them)."""
 
 
+SCOPE_QUESTION = "ai_system"
+"""The scope step's missing fact: whether the tool infers its outputs (Art. 3(1)); the
+description doesn't say (user, 2026-10-06: the step asks rather than decides)."""
+DECIDED_STEPS = (
+    StepName.PROHIBITED,
+    StepName.HIGH_RISK,
+    StepName.TRANSPARENCY,
+    StepName.ROLE_OBLIGATIONS,
+)
+
+
 def assert_the_expected_result(run: ClassificationRun) -> None:
-    """INIT > Worked example, row by row: in scope; no prohibited practice; high-risk under
-    Annex III 4(a) (ranking applicants is profiling, so Art. 6(3) can't exempt it); no separate
-    Art. 50 duty; the company stays a deployer, with the Art. 26 duties INIT lists from 2
-    December 2027; a decided result; each step citing its Basis (`INIT_BASIS`). Every citation
-    resolves."""
+    """INIT > Worked example, row by row: in scope as a working assumption, the scope step
+    asking whether the tool infers (Art. 3(1)), so the result needs more information; no
+    prohibited practice; high-risk under Annex III 4(a) (ranking applicants is profiling, so
+    Art. 6(3) can't exempt it); no separate Art. 50 duty; the company stays a deployer, with the
+    Art. 26 duties INIT lists from 2 December 2027; each step citing its Basis (`INIT_BASIS`).
+    Every citation resolves."""
     result = run.result
     steps = {step.step: step for step in result.steps}
-    assert list(steps) == list(StepName)  # in scope, not prohibited: every check ran
-    for name, step in steps.items():
+    assert list(steps) == list(StepName)  # in scope (assumed), not prohibited: every check ran
+    scope = steps[StepName.SCOPE]
+    assert scope.status is Status.NEEDS_MORE_INFORMATION, (scope.status, scope.decision)
+    assert scope.missing_fact is not None and scope.missing_fact.id == SCOPE_QUESTION
+    assert scope.missing_fact.about == "art:3:1"
+    for name in DECIDED_STEPS:
+        step = steps[name]
         assert step.status is Status.DECIDED, (name, step.status, step.decision)
-    assert result.status is Status.DECIDED
+    assert result.status is Status.NEEDS_MORE_INFORMATION
+    assert SCOPE_QUESTION in {question.id for question in result.follow_up_questions}
     assert result.risk_class is RiskClass.HIGH_RISK, result.risk_class
     assert result.annex_point == "annex:III:4:a"
     for name, basis in INIT_BASIS.items():

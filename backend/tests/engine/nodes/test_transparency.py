@@ -70,7 +70,6 @@ from aiact.schemas import (
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
 from tests.engine.nodes.corpus_recording import (
-    PENDING_RERECORD,
     RecordedGuidelineLibrary,
     corpus_recording,
 )
@@ -901,7 +900,17 @@ def _b5a_cases() -> list[BenchmarkCase]:
 
 B5A_CASES = _b5a_cases()
 
-KNOWN_GAPS: dict[str, str] = {}
+KNOWN_GAPS: dict[str, str] = {
+    "own-a-04-audiobook-voices": (
+        "decides no Art. 50 duty: reads turning the manuscript into an audiobook as not changing "
+        "its meaning, so the Art. 50(2) marking duty the label needs is left out (E10 "
+        "re-record, user 2026-10-06)"
+    ),
+    "own-a-14-practice-phone-agent": (
+        "adds Art. 50(4) and asks whether the voices are deep fakes (needs_more_information), "
+        "where the label is decided with Art. 50(1) and (2) only (E10 re-record, user 2026-10-06)"
+    ),
+}
 """Recorded cases whose Art. 50 outcome differs from the label, with the reason; each fails when
 it starts matching, so the entry is removed."""
 
@@ -934,7 +943,6 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
     B5A_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="no B5a cases"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
-@PENDING_RERECORD
 def test_b5a_case_replay(
     case: BenchmarkCase,
     luna_settings: Settings,

@@ -139,7 +139,7 @@ Input: *"We're a 40-person logistics company. We use a tool that reads incoming 
 | --- | --- | --- | --- |
 | Facts | Deployer; filters and ranks applicants; affects access to jobs | Stated | Description |
 | Role check | Stays a deployer: not modified, not rebranded, used for its intended purpose | Stated ("didn't change it"); brand and purpose assumed, to be confirmed | Art. 25 |
-| In scope | Yes: an AI system used in the EU | EU use assumed, to be confirmed | Art. 2–3 |
+| In scope | Yes as a working assumption; whether the tool infers (Art. 3(1)) is not stated, so the engine asks | Inference not stated, asked (needs more information); EU use assumed, to be confirmed | Art. 2–3 |
 | Prohibited | No match | Inferred | Art. 5 |
 | High-risk | Yes: recruitment use; ranking candidates counts as profiling, so the Article 6(3) exemption does not apply | Stated (scores and ranks) | Annex III point 4(a), Art. 6(3) |
 | Transparency | No separate duty identified from the description | Inferred | Art. 50 |

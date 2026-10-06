@@ -70,7 +70,6 @@ from aiact.schemas import (
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
 from tests.engine.nodes.corpus_recording import (
-    PENDING_RERECORD,
     CorpusRecording,
     corpus_recording,
     lookup_call,
@@ -1180,7 +1179,6 @@ def replay_check(
 
 
 @pytest.mark.vcr
-@PENDING_RERECORD
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
     run_state = replay_state(WORKED_EXAMPLE_CASE, AS_OF)
@@ -1215,7 +1213,18 @@ def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) 
     )
 
 
+def _decides_not_high_risk(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """Decided not high-risk on either route, with no question asked."""
+    return result.high_risk_route is None and result.step.status is Status.DECIDED
+
+
 KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-e-07-cobot-vision-kit": KnownGap(
+        "decides not high-risk (no Annex III use, not an Annex I safety component) instead of "
+        "asking whether the Machinery Regulation requires a third-party assessment (Annex I "
+        "B.21) (E10 re-record, user 2026-10-06)",
+        _decides_not_high_risk,
+    ),
     "own-e-10-in-house-nodule-finder": KnownGap(
         "the model treats the MDR in-house exemption as a missing fact (it asks whether a "
         "third-party assessment is required) instead of an open legal question; the label stays "
@@ -1233,7 +1242,6 @@ reading they give instead; each fails when it starts matching, so the entry is r
     ANNEX_I_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="no Annex I cases"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
-@PENDING_RERECORD
 def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -> None:
     """Each B5e case against its label and tags; a `KNOWN_GAPS` case is an expected failure."""
     run_state = replay_state(case, AS_OF)

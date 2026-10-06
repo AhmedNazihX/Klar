@@ -29,12 +29,6 @@ from aiact.retrieval.search import SearchHit
 from aiact.schemas import Language
 
 CORPUS_SUFFIX = ".corpus.json"
-PENDING_RERECORD = pytest.mark.xfail(
-    strict=True, reason="pending re-record: E10 removed the answers block"
-)
-"""Marks a replay whose recorded request no longer matches what the node sends (decision 019
-removed the answers block from every check's prompt). Strict, so the replay fails as XPASS
-once it is recorded again, and the mark is dropped then."""
 NOT_FOUND = "not_found"
 """The entry of a lookup the corpus had no text for; the replay raises it again."""
 

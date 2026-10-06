@@ -60,7 +60,6 @@ from aiact.schemas import (
 from aiact.schemas.result import derived_status
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations
-from tests.engine.nodes.corpus_recording import PENDING_RERECORD
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -1564,7 +1563,6 @@ RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_role_obligations.py --re
 
 
 @pytest.mark.vcr
-@PENDING_RERECORD
 def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> None:
     run_state = state(description=REBRANDER)
     outcome = RoleObligationsCheck(luna_settings)(run_state)
@@ -1588,13 +1586,38 @@ def _role_cases() -> list[BenchmarkCase]:
 B5D_CASES = _role_cases()
 
 
+KNOWN_GAPS: dict[str, str] = {
+    "own-d-03-assistant-repurposed-hiring": (
+        "reaches provider through the GPAI build route (Art. 3(3), 3(68)) instead of the Art. "
+        "25(1)(c) switch, and keeps no deployer role (E10 re-record, user 2026-10-06)"
+    ),
+}
+"""Recorded cases whose role outcome differs from the label, with the reason; each fails when it
+starts matching, so the entry is removed."""
+
+
+def b5d_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
+    """Everything `test_b5d_case_replay` asserts: the role, exactly the tagged Art. 25(1)
+    switches, any tagged `also_role`, and `role_matches`."""
+    label = case.label
+    assert isinstance(label, CaseLabel)
+    found = finding(outcome)
+    switches = {f"art:25:1:{s[-1]}" for s in tag(case, "role_switch") if s != "none"}
+    cited = {c.provision_id for c in outcome.step.citations}
+    return (
+        found.role is label.role
+        and (not switches or {c for c in cited if c.startswith("art:25:1:")} == switches)
+        and all(found.also_role is Role(also) for also in tag(case, "also_role"))
+        and role_matches(outcome, case)
+    )
+
+
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
     B5D_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="B5d cases not merged yet"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
-@PENDING_RERECORD
 def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     """Each B5d case's expected role, from the class its label gives, and its status when the
     label is legally ambiguous (own-d-12, closed by E8's contested answer); a case tagged with
@@ -1609,6 +1632,11 @@ def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     run_state = role_check_state(case, ROLE_AS_OF)
     outcome = RoleObligationsCheck(luna_settings)(run_state)
     assert not unresolved_citations(outcome.step, run_state)
+    gap = KNOWN_GAPS.get(case.id)
+    if gap is not None:
+        if b5d_matches(outcome, case):
+            pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
+        pytest.xfail(gap)
     assert finding(outcome).role is label.role
     switches = {f"art:25:1:{s[-1]}" for s in tag(case, "role_switch") if s != "none"}
     if switches:
