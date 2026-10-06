@@ -48,7 +48,7 @@ from aiact.dates import long_date
 from aiact.engine.nodes.common import facts_section, refused_check
 from aiact.engine.nodes.high_risk import SECTION_B_PREFIX
 from aiact.engine.nodes.key_facts import Answer, KeyFact, ShortTexts, facts_used
-from aiact.engine.nodes.questions import ReadingSide, ask, open_question
+from aiact.engine.nodes.questions import ask, open_question
 from aiact.engine.nodes.role_legacy import (
     LegacyAnswer,
     LegacySettlement,
@@ -72,7 +72,6 @@ from aiact.engine.nodes.role_texts import (
 )
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.llm import engine_chat_model
-from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
@@ -268,10 +267,7 @@ class RoleSettlement:
         """The question the law leaves open, both readings quoting the step's `cited`."""
         if self.open_in_law is None or self.base is None:
             return None
-        question, readings, sides = open_in_law_parts(self.open_in_law, self.base, language)
-        provider, kept = (ReadingSide(*side) for side in sides)
-        plain = ReplyOpenQuestion(question=question, readings=readings)
-        return open_question(plain, provider, kept, cited)
+        return open_question(*open_in_law_parts(self.open_in_law, self.base, language), cited)
 
 
 def _kept_role(base: Role | None, *, is_assumed: bool) -> Role | None:

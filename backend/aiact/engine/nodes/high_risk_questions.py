@@ -9,7 +9,8 @@ from datetime import date
 from aiact.corpus.sources import HIGH_RISK_DATE
 from aiact.dates import long_date
 from aiact.engine.nodes.high_risk_texts import READINGS, SETTLED_BY, point_name
-from aiact.engine.nodes.questions import ReadingSide, quoted
+from aiact.engine.nodes.questions import quoted
+from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.obligations.list import CHAPTER_III_DATES
 from aiact.schemas import (
     AnswerOutcome,

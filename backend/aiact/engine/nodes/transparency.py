@@ -55,7 +55,8 @@ from aiact.engine.nodes.guideline_retrieval import (
     retrieve,
 )
 from aiact.engine.nodes.key_facts import Answer, facts_used
-from aiact.engine.nodes.questions import ReadingSide, ask, open_question
+from aiact.engine.nodes.questions import ask, open_question
+from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.nodes.transparency_duties import (
     Duty,

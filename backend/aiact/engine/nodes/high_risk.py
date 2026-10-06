@@ -76,12 +76,13 @@ from aiact.engine.nodes.high_risk_texts import (
     point_name,
 )
 from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
-from aiact.engine.nodes.questions import ask, from_reply, hint, open_question
+from aiact.engine.nodes.questions import ask, hint, open_question
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model
 from aiact.llm.replies import FollowUpQuestion as ReplyQuestion
 from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
+from aiact.llm.replies import as_contract
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
@@ -514,7 +515,8 @@ def _if_yes(key: KeyQuestion, answer: HighRiskAnswer, language: Language) -> Ans
         return None
     iii = read_annex_iii(answer, language)
     is_profiling = key == PROFILING and iii.listed.answer is Answer.YES
-    is_listing = key is iii.listed.missing and iii.exempt is Answer.NO
+    is_use_known = answer.annex_iii.uses is Answer.YES  # only who uses it is open
+    is_listing = is_use_known and key is iii.listed.missing and iii.exempt is Answer.NO
     if is_profiling or is_listing:
         return high_risk_outcome(HighRiskRoute.ANNEX_III, answer.annex_iii.point)
     return None
@@ -547,7 +549,7 @@ def _missing_question(
     quotes = question_citations(settled.route, settled.point, citations)
     if settled.missing is ANNEX_III_USE and answer.question is not None:
         why = hint(StepName.HIGH_RISK, ANNEX_III_USE.article, language)
-        return from_reply(answer.question).model_copy(update={"hint": why, "citations": quotes})
+        return as_contract(answer.question).model_copy(update={"hint": why, "citations": quotes})
     return _question(settled.missing, answer, language, law, quotes)
 
 

@@ -16,7 +16,6 @@ apply to them. Both are asked about the AI Act as amended, as the engine is; wit
 the Luna baseline answers from what the model remembers.
 """
 
-from collections.abc import Mapping
 from datetime import date
 
 from langchain_core.language_models import BaseChatModel
@@ -41,7 +40,6 @@ from aiact.schemas import (
     Language,
     LawVersion,
     OpenQuestion,
-    Reading,
     RiskClass,
     Role,
     Status,
@@ -111,9 +109,7 @@ def to_result(answer: BaselineAnswer, language: Language, label: str) -> Classif
     names = _step_names(answer)
     deciding = DECIDING_STEP[answer.risk_class]
     try:
-        steps = tuple(
-            _step(name, answer, label, language, is_deciding=name is deciding) for name in names
-        )
+        steps = tuple(_step(name, answer, label, is_deciding=name is deciding) for name in names)
         has_role = StepName.ROLE_OBLIGATIONS in names
         return ClassificationResult(
             facts=(),
@@ -142,42 +138,19 @@ def _step_names(answer: BaselineAnswer) -> tuple[StepName, ...]:
     return STEP_ORDER
 
 
-READING_TITLES: Mapping[Language, tuple[str, str]] = {
-    Language.EN: ("Working assumption", "Other reading"),
-    Language.DE: ("Arbeitsannahme", "Andere Lesart"),
-}
-"""A baseline's readings carry no titles of their own (E12): these generic ones stand in."""
-
-
 def _missing_fact(answer: BaselineAnswer) -> FollowUpQuestion | None:
-    """The baseline's question as the contract carries it, answered in words."""
-    question = answer.missing_fact
-    return FollowUpQuestion.model_validate(question.model_dump()) if question else None
+    """The baseline's question as the contract carries it (`replies.as_contract`)."""
+    return replies.as_contract(answer.missing_fact) if answer.missing_fact else None
 
 
-def _open_question(answer: BaselineAnswer, language: Language) -> OpenQuestion | None:
-    """The baseline's open question with its two readings as the contract structures them: a
-    generic title, the stricter reading applied with the answer's class, no citation."""
+def _open_question(answer: BaselineAnswer) -> OpenQuestion | None:
+    """The baseline's open question; its plain readings become untitled ones, the first
+    applied (`OpenQuestion` reads them so)."""
     plain = answer.open_question
-    if plain is None:
-        return None
-    readings = tuple(
-        Reading(
-            title=title,
-            risk_class=answer.risk_class if number == 0 else None,
-            explanation=text,
-            is_applied=number == 0,
-        )
-        for number, (title, text) in enumerate(
-            zip(READING_TITLES[language], plain.readings, strict=True)
-        )
-    )
-    return OpenQuestion(question=plain.question, readings=readings)
+    return OpenQuestion.model_validate(plain.model_dump()) if plain else None
 
 
-def _step(
-    name: StepName, answer: BaselineAnswer, label: str, language: Language, *, is_deciding: bool
-) -> StepResult:
+def _step(name: StepName, answer: BaselineAnswer, label: str, *, is_deciding: bool) -> StepResult:
     if name is StepName.ROLE_OBLIGATIONS:
         return StepResult(step=name, decision=f"{label}: role {answer.role.value}")
     if not is_deciding:
@@ -188,9 +161,7 @@ def _step(
         decision=f"{label}: {answer.risk_class.value}. {answer.reason}",
         status=status,
         missing_fact=_missing_fact(answer) if status is Status.NEEDS_MORE_INFORMATION else None,
-        open_question=(
-            _open_question(answer, language) if status is Status.LEGALLY_AMBIGUOUS else None
-        ),
+        open_question=_open_question(answer) if status is Status.LEGALLY_AMBIGUOUS else None,
     )
 
 

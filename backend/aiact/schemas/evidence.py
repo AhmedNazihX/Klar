@@ -77,7 +77,12 @@ class Reading(ContractModel):
     """One possible reading of an open question of law (E12): what it is called, the class it
     gives, why, the provision it rests on, and what follows if it holds."""
 
-    title: str = Field(min_length=1)
+    title: str | None = Field(
+        default=None,
+        min_length=1,
+        description="None for a reading without its own title: a baseline's, or one stored "
+        "before E12.",
+    )
     risk_class: RiskClass | None = Field(
         default=None,
         description="The class this reading gives on its own check, for example `high_risk` for "
@@ -118,6 +123,19 @@ class OpenQuestion(ContractModel):
     settled_by: tuple[SettledBy, ...] = Field(
         default=(), description="What would settle the question, when the step knows it."
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _upgrade_plain_readings(cls, data: object) -> object:
+        """Readings given as plain texts (a result stored before E12, or a model's reply) become
+        untitled readings, the first applied, with no class, quote or consequence."""
+        if not isinstance(data, dict):
+            return data
+        readings = data.get("readings")
+        if not isinstance(readings, list | tuple) or not all(isinstance(r, str) for r in readings):
+            return data
+        upgraded = [{"explanation": text, "is_applied": n == 0} for n, text in enumerate(readings)]
+        return {**data, "readings": upgraded}
 
     @model_validator(mode="after")
     def _stricter_reading_applied(self) -> Self:

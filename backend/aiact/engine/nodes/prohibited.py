@@ -63,7 +63,8 @@ from aiact.engine.nodes.prohibited_practices import (
     ProhibitedAnswer,
     practices,
 )
-from aiact.engine.nodes.questions import ReadingSide, ask, open_question
+from aiact.engine.nodes.questions import ask, open_question
+from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import OpenRouterEmbeddings, engine_chat_model

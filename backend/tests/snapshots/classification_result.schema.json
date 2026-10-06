@@ -468,9 +468,18 @@
       "description": "One possible reading of an open question of law (E12): what it is called, the class it\ngives, why, the provision it rests on, and what follows if it holds.",
       "properties": {
         "title": {
-          "minLength": 1,
-          "title": "Title",
-          "type": "string"
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None for a reading without its own title: a baseline's, or one stored before E12.",
+          "title": "Title"
         },
         "risk_class": {
           "anyOf": [
@@ -522,7 +531,6 @@
         }
       },
       "required": [
-        "title",
         "explanation"
       ],
       "title": "Reading",
@@ -809,6 +817,7 @@
     },
     "law_text": {
       "$ref": "#/$defs/LawText",
+      "default": null,
       "description": "The label of the text `law_version` names (CELEX number and date); it always matches `law_version`, which sets it when it is left out."
     },
     "as_of": {

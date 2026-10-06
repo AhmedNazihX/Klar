@@ -1,6 +1,7 @@
 """What the high-risk step adds to its questions for the screens
 (aiact/engine/nodes/high_risk_questions.py, E12; decision 026 items 4, 13 and 18)."""
 
+import re
 from datetime import date
 
 import pytest
@@ -17,6 +18,7 @@ from aiact.schemas import (
     Language,
     OpenQuestion,
     RiskClass,
+    SettledBy,
     SettledByKind,
 )
 from tests.engine.nodes.test_high_risk import (
@@ -33,7 +35,7 @@ from tests.engine.nodes.test_high_risk import (
 UNKNOWN = Answer.UNKNOWN
 MDR = "annex:I:A:11"
 NOT_HIGH_RISK_SENTENCE = (
-    "If this holds, the system is not high-risk on this point. The transparency check then "
+    "If this holds, this point does not make the system high-risk. The transparency check then "
     "decides whether any duties apply."
 )
 """Decision 026 item 13: no class is predicted for a "no"."""
@@ -206,17 +208,67 @@ def test_the_readings_read_in_german() -> None:
 # --- What would settle it (decision 026 item 4) -------------------------------------------------
 
 
-def test_the_final_guidelines_are_named_as_the_draft_they_still_are() -> None:
-    [guidelines] = settled_by(Language.EN, is_open_on_exemption=False)
-    assert guidelines.text == (
-        "Final Commission guidelines on high-risk classification (still a draft, 19 May 2026)"
-    )
-    [german] = settled_by(Language.DE, is_open_on_exemption=False)
-    assert "noch ein Entwurf, 19. Mai 2026" in german.text
+SETTLED_BY_TEXTS = {
+    Language.EN: (
+        "Final Commission guidelines on high-risk classification (still a draft, 19 May 2026)",
+        "The provider's own Art. 6(3) assessment, documented under Art. 6(4), if it made one",
+    ),
+    Language.DE: (
+        "Endgültige Leitlinien der Kommission zur Einstufung als Hochrisiko (noch ein Entwurf, "
+        "19. Mai 2026)",
+        "Die eigene Bewertung des Anbieters nach Art. 6 Abs. 3, dokumentiert nach Art. 6 Abs. 4, "
+        "falls er eine vorgenommen hat",
+    ),
+}
+"""Every text that may name what would settle an open question, word for word."""
+NO_PROMISE = re.compile(
+    r"re-?check|again|review|update|notify|klar|erneut|wieder|\bneu|aktualis|benachrichtig",
+    re.IGNORECASE,
+)
+"""Words a promise to look at the result again would need (decision 026 item 4)."""
 
 
 @pytest.mark.parametrize("language", [Language.EN, Language.DE])
-def test_nothing_promises_a_re_check(language: Language) -> None:
-    for item in settled_by(language, is_open_on_exemption=True):
-        lowered = item.text.lower()
-        assert not any(word in lowered for word in ("re-check", "recheck", "erneut", "klar"))
+def test_what_would_settle_it_is_exactly_the_approved_texts(language: Language) -> None:
+    guidelines, provider = SETTLED_BY_TEXTS[language]
+    assert settled_by(language, is_open_on_exemption=True) == (
+        SettledBy(kind=SettledByKind.GUIDANCE, text=guidelines),
+        SettledBy(kind=SettledByKind.PROVIDER, text=provider),
+    )
+    assert settled_by(language, is_open_on_exemption=False) == (
+        SettledBy(kind=SettledByKind.GUIDANCE, text=guidelines),
+    )
+
+
+@pytest.mark.parametrize("text", [t for texts in SETTLED_BY_TEXTS.values() for t in texts])
+def test_nothing_promises_to_look_again(text: str) -> None:
+    assert NO_PROMISE.search(text) is None
+
+
+# --- No yes is promised while a fact or the law is still open (fix round 1) ----------------------
+
+
+def no_outcome_anywhere(result: CheckOutcome) -> bool:
+    return all(question.if_yes is None for question in result.follow_up_questions)
+
+
+def test_a_yes_on_who_uses_it_settles_nothing_while_the_use_itself_is_open() -> None:
+    """Point 8(a) with the use unknown: the authority question is asked, but a yes to it
+    doesn't make the use listed."""
+    result = outcome(answer(annex_iii("annex:III:8:a", UNKNOWN, public_authority=UNKNOWN)))
+    assert result.step.missing_fact is not None
+    assert no_outcome_anywhere(result)
+
+
+def test_no_annex_i_yes_is_promised_while_the_law_leaves_the_route_open() -> None:
+    result = outcome(answer(one=annex_i(MDR, YES, YES, UNKNOWN, open_question=OPEN)))
+    assert "third_party_assessment" in [q.id for q in result.follow_up_questions]
+    assert no_outcome_anywhere(result)
+
+
+def test_no_annex_iii_yes_is_promised_while_the_law_leaves_the_exemption_open() -> None:
+    result = outcome(
+        answer(RANKS_APPLICANTS, art_6_3(Art63Condition.A, UNKNOWN, open_question=OPEN))
+    )
+    assert "profiling" in [q.id for q in result.follow_up_questions]
+    assert no_outcome_anywhere(result)

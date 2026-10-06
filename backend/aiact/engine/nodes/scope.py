@@ -53,7 +53,8 @@ from aiact.engine.nodes.common import (
     refused_check,
 )
 from aiact.engine.nodes.key_facts import Answer, CitedFact, KeyFact, facts_used
-from aiact.engine.nodes.questions import ReadingSide, hint, open_question
+from aiact.engine.nodes.questions import follow_up, hint, open_question
+from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.engine.nodes.scope_texts import (
     AI_SYSTEM,
     EU_LINK,
@@ -82,7 +83,6 @@ from aiact.llm.structured import (
 from aiact.retrieval.provisions import Provision, get_provision
 from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
 from aiact.schemas import (
-    YES_NO,
     Citation,
     EvidenceTag,
     FollowUpQuestion,
@@ -381,13 +381,8 @@ def _finding(settled: ScopeSettlement, answer: ScopeAnswer, language: Language) 
 
 
 def _question(rule: ScopeQuestion, language: Language) -> FollowUpQuestion:
-    return FollowUpQuestion(
-        id=rule.id,
-        text=rule.asked(language),
-        about=rule.article,
-        hint=hint(StepName.SCOPE, rule.article, language),
-        options=YES_NO if rule.is_yes_no else (),
-    )
+    why = hint(StepName.SCOPE, rule.article, language)
+    return follow_up(rule.id, rule.asked(language), rule.article, why, is_yes_no=rule.is_yes_no)
 
 
 def _open_question(

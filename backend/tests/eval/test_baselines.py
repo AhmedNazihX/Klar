@@ -136,9 +136,9 @@ def test_ambiguous_prohibited_runs_on_with_the_open_question() -> None:
     assert question.question == OPEN.question
     stricter, lenient = question.readings
     assert (stricter.explanation, lenient.explanation) == OPEN.readings
-    assert (stricter.risk_class, stricter.is_applied) == (RiskClass.PROHIBITED, True)
+    assert (stricter.risk_class, stricter.is_applied) == (None, True)  # untitled, unclassed
     assert (lenient.risk_class, lenient.is_applied) == (None, False)
-    assert (stricter.title, lenient.title) == ("Working assumption", "Other reading")
+    assert (stricter.title, lenient.title) == (None, None)
 
 
 def test_missing_fact_becomes_the_follow_up_question() -> None:

@@ -272,10 +272,11 @@ READINGS: Mapping[Language, Mapping[str, str]] = {
         "high_consequence": "If this holds, the high-risk duties apply from {date}.",
         "section_b_consequence": "If this holds, the high-risk requirements reach the product "
         "through {law}; the AI Act itself adds no duties (Art. 2(2)).",
-        "not_high_consequence": "If this holds, the system is not high-risk on this point. The "
-        "transparency check then decides whether any duties apply.",
-        "exempt_consequence": "If this holds, the provider must document why the system is not "
-        "high-risk before placing it on the market, and register it (Art. 6(4), 49(2)).",
+        "not_high_consequence": "If this holds, this point does not make the system high-risk. "
+        "The transparency check then decides whether any duties apply.",
+        "exempt_consequence": "If this holds, the provider must document its assessment that the "
+        "exemption applies before placing it on the market, and register it (Art. 6(4), "
+        "49(2)).",
     },
     DE: {
         "high_iii": "Hochrisiko nach {point}",
@@ -286,10 +287,10 @@ READINGS: Mapping[Language, Mapping[str, str]] = {
         "high_consequence": "Gilt diese Lesart, gelten die Hochrisiko-Pflichten ab dem {date}.",
         "section_b_consequence": "Gilt diese Lesart, erreichen die Hochrisiko-Anforderungen das "
         "Produkt über {law}; die KI-Verordnung selbst legt keine Pflichten auf (Art. 2 Abs. 2).",
-        "not_high_consequence": "Gilt diese Lesart, ist das System in diesem Punkt nicht "
+        "not_high_consequence": "Gilt diese Lesart, macht dieser Punkt das System nicht "
         "hochriskant. Die Transparenzprüfung entscheidet dann, ob Pflichten gelten.",
         "exempt_consequence": "Gilt diese Lesart, muss der Anbieter vor dem Inverkehrbringen "
-        "dokumentieren, warum das System nicht hochriskant ist, und es registrieren (Art. 6 "
+        "seine Bewertung dokumentieren, dass die Ausnahme greift, und es registrieren (Art. 6 "
         "Abs. 4, Art. 49 Abs. 2).",
     },
 }

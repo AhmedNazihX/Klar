@@ -25,7 +25,6 @@ from pydantic import Field, ValidationError
 
 from aiact.engine.nodes.common import BLOCKED
 from aiact.engine.nodes.key_facts import ShortTexts
-from aiact.engine.nodes.questions import from_reply
 from aiact.engine.state import EngineState, FactsOutcome
 from aiact.llm import engine_chat_model, replies
 from aiact.llm.structured import (
@@ -182,7 +181,7 @@ def _confirm_question(
     if fact.evidence is EvidenceTag.STATED:
         return None
     if extracted.question is not None:
-        return from_reply(extracted.question)
+        return replies.as_contract(extracted.question)
     return confirm_question(fact, language, taken)
 
 
@@ -200,7 +199,7 @@ def to_outcome(answer: FactsAnswer, description: str, language: Language) -> Fac
     facts = tuple(_fact(extracted, description) for extracted in answer.facts)
     by_id: dict[str, FollowUpQuestion] = {}
     for question in answer.questions:
-        by_id.setdefault(question.id, from_reply(question))
+        by_id.setdefault(question.id, replies.as_contract(question))
     for extracted, fact in zip(answer.facts, facts, strict=True):
         question = _confirm_question(extracted, fact, language, set(by_id))
         if question is not None:

@@ -122,3 +122,16 @@ def test_disclaimer_exists_per_language() -> None:
     assert set(DISCLAIMER) == set(Language)
     assert "not legal advice" in DISCLAIMER_EN
     assert "keine Rechtsberatung" in DISCLAIMER_DE
+
+
+def test_plain_readings_become_untitled_ones_with_the_first_applied() -> None:
+    question = OpenQuestion.model_validate({"question": "Open?", "readings": ("Yes.", "No.")})
+    assert [(r.title, r.explanation, r.is_applied) for r in question.readings] == [
+        (None, "Yes.", True),
+        (None, "No.", False),
+    ]
+
+
+def test_three_plain_readings_are_still_rejected() -> None:
+    with pytest.raises(ValidationError, match="readings"):
+        OpenQuestion.model_validate({"question": "Open?", "readings": ["a", "b", "c"]})

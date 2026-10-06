@@ -3,11 +3,14 @@
 They are the result contract's first `OpenQuestion` and `FollowUpQuestion`, kept as they were:
 the JSON Schema a model call sends is built from them, and the recorded replies match on that
 request, so their names, docstrings and fields must not change. The engine builds the
-contract's richer shapes (structured readings, hints, answer options) from them.
+contract's richer shapes (structured readings, hints, answer options) from them; `as_contract`
+turns a reply's question into the contract's, and the contract's `OpenQuestion` reads a reply's
+plain readings as untitled ones.
 """
 
 from pydantic import Field
 
+from aiact.schemas import questions
 from aiact.schemas.base import ContractModel
 from aiact.schemas.questions import SLUG_PATTERN
 
@@ -30,3 +33,9 @@ class OpenQuestion(ContractModel):
     readings: tuple[str, ...] = Field(
         min_length=2, max_length=2, description="The two possible readings, stricter first."
     )
+
+
+def as_contract(question: FollowUpQuestion) -> questions.FollowUpQuestion:
+    """A question the model wrote, as the result carries it: answered in words (its form is the
+    model's), with no hint, outcome or quote."""
+    return questions.FollowUpQuestion(id=question.id, text=question.text, about=question.about)

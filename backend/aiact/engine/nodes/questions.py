@@ -7,11 +7,11 @@ The model's reply carries only the plain shapes (`aiact.llm.replies`); everythin
 built in code from the step's fixed texts, so no prompt changes."""
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
 
-from aiact.engine.nodes.high_risk_texts import point_name
+from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.llm import replies
+from aiact.provision_names import annex_point_name, article_provision_name
 from aiact.schemas import (
     YES_NO,
     AnswerOutcome,
@@ -20,7 +20,6 @@ from aiact.schemas import (
     Language,
     OpenQuestion,
     Reading,
-    RiskClass,
     SettledBy,
     StepName,
 )
@@ -51,37 +50,63 @@ HINTS: Mapping[Language, Mapping[StepName, str]] = {
         "seine Pflichten ({provision}).",
     },
 }
-"""Why a step's question matters, naming the provision it decides; a question with a `reason`
-(an Art. 25(1) switch) says why with that instead."""
+"""Why a step's question matters, naming the provision it decides."""
 
-DE_POINT_WORDS = ("Buchst.", "Ziff.")
-"""The German words before a point and a sub-point: "Buchst. a", "Ziff. i"."""
+PROVIDER_SWITCH_HINT: Mapping[Language, str] = {
+    EN: "A yes can make the company the provider of the system ({provision}).",
+    DE: "Ein Ja kann das Unternehmen zum Anbieter des Systems machen ({provision}).",
+}
+"""The hint of a question whose yes may switch the company to provider (Art. 3(3), 25(1)): it
+says what a yes may do, never that it is so."""
+
 DEFINITIONS_ARTICLE = "3"
 """Art. 3 numbers its definitions, which German calls "Nr.", not "Abs."."""
 
 
 def provision_label(provision_id: str, language: Language) -> str:
-    """How a question names a provision: `art:6:1:b` is "Art. 6(1)(b)" in English and "Art. 6
-    Abs. 1 Buchst. b" in German, `art:3:3` "Art. 3(3)" or "Art. 3 Nr. 3", and an Annex point as
-    the high-risk check names it (`point_name`). Any other id is returned as it is."""
+    """How a question names a provision, as `aiact.provision_names` does: `art:6:1:b` is "Art.
+    6(1)(b)" or "Art. 6 Abs. 1 Buchst. b", an Annex point "Annex III point 5(a)"; a whole
+    article is "Art. 50", and an Art. 3 definition "Art. 3(3)" or "Art. 3 Nr. 3". Any other id
+    is returned as it is."""
     kind, *parts = provision_id.split(":")
     if kind == "annex" and len(parts) >= 2:
-        return point_name(provision_id, language)
+        return annex_point_name(provision_id, language)
     if kind != "art" or not parts:
         return provision_id
-    article, *rest = parts
-    if language is EN:
-        return f"Art. {article}" + "".join(f"({part})" for part in rest)
-    if not rest:
-        return f"Art. {article}"
-    paragraph = "Nr." if article == DEFINITIONS_ARTICLE else "Abs."
-    points = "".join(f" {DE_POINT_WORDS[min(n, 1)]} {part}" for n, part in enumerate(rest[1:]))
-    return f"Art. {article} {paragraph} {rest[0]}{points}"
+    if len(parts) == 1:
+        return f"Art. {parts[0]}"
+    name = article_provision_name(provision_id, language)
+    if language is DE and parts[0] == DEFINITIONS_ARTICLE:
+        return name.replace(" Abs. ", " Nr. ", 1)
+    return name
 
 
 def hint(step: StepName, article: str, language: Language) -> str:
     """Why the answer to a `step` question about `article` matters."""
     return HINTS[language][step].format(provision=provision_label(article, language))
+
+
+def follow_up(
+    question_id: str,
+    text: str,
+    article: str,
+    why: str,
+    *,
+    is_yes_no: bool,
+    if_yes: AnswerOutcome | None = None,
+    citations: Sequence[Citation] = (),
+) -> FollowUpQuestion:
+    """A fixed follow-up question about `article`, with its hint (`why`), yes/no options for a
+    yes/no question, and what a yes settles (`if_yes`, only on a yes/no question) and quotes."""
+    return FollowUpQuestion(
+        id=question_id,
+        text=text,
+        about=article,
+        hint=why,
+        options=YES_NO if is_yes_no else (),
+        if_yes=if_yes if is_yes_no else None,
+        citations=tuple(citations),
+    )
 
 
 def ask(
@@ -93,40 +118,23 @@ def ask(
     if_yes: AnswerOutcome | None = None,
     citations: Sequence[Citation] = (),
 ) -> FollowUpQuestion:
-    """The follow-up question for a key fact, about the provision it rests on: its text (or
-    `text`, the question as the step words it), the hint, yes/no options for a yes/no question,
-    and what a yes settles (`if_yes`, only on a yes/no question) and quotes (`citations`)."""
-    why = key.reason[language] if key.reason else hint(step, key.article, language)
-    return FollowUpQuestion(
-        id=key.id,
-        text=text or key.question[language],
-        about=key.article,
-        hint=why,
-        options=YES_NO if key.is_yes_no else (),
-        if_yes=if_yes if key.is_yes_no else None,
-        citations=tuple(citations),
+    """The follow-up question for a key fact (`follow_up`): its text, or `text` as the step words
+    it; a provider switch's hint says what a yes may do."""
+    label = provision_label(key.article, language)
+    is_switch = key.is_provider_switch
+    why = PROVIDER_SWITCH_HINT[language].format(provision=label) if is_switch else None
+    return follow_up(
+        key.id,
+        text or key.question[language],
+        key.article,
+        why or hint(step, key.article, language),
+        is_yes_no=key.is_yes_no,
+        if_yes=if_yes,
+        citations=citations,
     )
 
 
-def from_reply(question: replies.FollowUpQuestion) -> FollowUpQuestion:
-    """A question the model wrote, as the contract carries it: answered in words, since its form
-    is the model's."""
-    return FollowUpQuestion(id=question.id, text=question.text, about=question.about)
-
-
 # --- Open questions of law ----------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class ReadingSide:
-    """What a step knows about one reading besides its explanation: its title, what follows if
-    it holds, the class it gives (None when it gives none by itself) and the provision it rests
-    on, quoted from the step's citations."""
-
-    title: str
-    consequence: str
-    risk_class: RiskClass | None = None
-    provision_id: str | None = None
 
 
 def quoted(provision_id: str | None, citations: Sequence[Citation]) -> Citation | None:

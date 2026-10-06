@@ -52,3 +52,19 @@ def test_the_open_question_a_model_writes_is_unchanged() -> None:
 
 def test_the_follow_up_question_a_model_writes_is_unchanged() -> None:
     assert replies.FollowUpQuestion.model_json_schema() == FOLLOW_UP_QUESTION_SCHEMA
+
+
+def test_a_models_question_reaches_the_result_answered_in_words() -> None:
+    reply = replies.FollowUpQuestion(id="output_use", text="Who reads it?", about="high_risk")
+    question = replies.as_contract(reply)
+    assert (question.id, question.text, question.about) == (
+        "output_use",
+        "Who reads it?",
+        "high_risk",
+    )
+    assert (question.hint, question.options, question.if_yes, question.citations) == (
+        None,
+        (),
+        None,
+        (),
+    )

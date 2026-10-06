@@ -47,3 +47,9 @@ def test_a_result_without_a_law_version_fails_on_it_not_on_the_label() -> None:
     dumped = worked_example_result().model_dump(exclude={"law_version", "law_text"})
     with pytest.raises(ValidationError, match="law_version"):
         ClassificationResult.model_validate(dumped)
+
+
+def test_an_unknown_law_version_gets_no_label() -> None:
+    dumped = worked_example_result().model_dump(exclude={"law_text"})
+    with pytest.raises(ValidationError, match="law_text needs a valid law_version"):
+        ClassificationResult.model_validate({**dumped, "law_version": "draft_2025"})

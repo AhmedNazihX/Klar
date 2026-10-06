@@ -9,7 +9,6 @@ from aiact.engine.nodes import high_risk_texts, prohibited_texts, role_texts, tr
 from aiact.engine.nodes.questions import (
     ReadingSide,
     ask,
-    from_reply,
     hint,
     open_question,
     provision_label,
@@ -103,11 +102,36 @@ def test_a_question_answered_in_words_offers_no_options_and_no_outcome(
     assert (question.options, question.if_yes) == ((), None)
 
 
-def test_a_role_switch_says_why_with_its_reason() -> None:
-    own_brand = role_texts.SWITCHES["own_brand"]
-    question = ask(own_brand, DE, StepName.ROLE_OBLIGATIONS)
-    assert own_brand.reason is not None
-    assert question.hint == own_brand.reason[DE]
+@pytest.mark.parametrize(
+    ("key", "english", "german"),
+    [
+        (role_texts.SWITCHES["own_brand"], "Art. 25(1)(a)", "Art. 25 Abs. 1 Buchst. a"),
+        (role_texts.SWITCHES["changed_purpose"], "Art. 25(1)(c)", "Art. 25 Abs. 1 Buchst. c"),
+        (
+            role_texts.SWITCHES["substantial_modification"],
+            "Art. 25(1)(b)",
+            "Art. 25 Abs. 1 Buchst. b",
+        ),
+        (role_texts.OWN_NAME, "Art. 3(3)", "Art. 3 Nr. 3"),
+        (role_texts.BUILDS_ON_GPAI, "Art. 3(68)", "Art. 3 Nr. 68"),
+    ],
+)
+def test_a_provider_switch_says_what_a_yes_may_do_not_that_it_is_so(
+    key: role_texts.KeyQuestion, english: str, german: str
+) -> None:
+    """The hint sits under the question that asks it, so it never states the finding."""
+    assert ask(key, EN, StepName.ROLE_OBLIGATIONS).hint == (
+        f"A yes can make the company the provider of the system ({english})."
+    )
+    assert ask(key, DE, StepName.ROLE_OBLIGATIONS).hint == (
+        f"Ein Ja kann das Unternehmen zum Anbieter des Systems machen ({german})."
+    )
+    assert key.reason is None or ask(key, EN, StepName.ROLE_OBLIGATIONS).hint != key.reason[EN]
+
+
+def test_a_role_question_that_switches_nothing_keeps_the_step_hint() -> None:
+    question = ask(role_texts.OPERATOR_ROLE, EN, StepName.ROLE_OBLIGATIONS)
+    assert question.hint == "The answer decides the company's role and its duties (Art. 3(3))."
 
 
 def test_ask_carries_the_steps_wording_outcome_and_quotes() -> None:
@@ -130,17 +154,6 @@ def test_ask_carries_the_steps_wording_outcome_and_quotes() -> None:
         outcome,
         (POINT_4_A,),
     )
-
-
-def test_a_models_question_is_answered_in_words() -> None:
-    reply = replies.FollowUpQuestion(id="output_use", text="Who reads it?", about="high_risk")
-    question = from_reply(reply)
-    assert (question.id, question.text, question.about) == (
-        "output_use",
-        "Who reads it?",
-        "high_risk",
-    )
-    assert (question.hint, question.options, question.if_yes) == (None, (), None)
 
 
 def test_the_readings_are_titled_classed_quoted_and_the_stricter_one_applied() -> None:

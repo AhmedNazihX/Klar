@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from datetime import date
 from typing import Self
 
-from pydantic import Field, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import LawVersion, RiskClass, Role, Status
@@ -44,14 +44,6 @@ def derived_status(steps: Iterable[StepResult]) -> Status:
     return Status.DECIDED
 
 
-def law_text_for(law_version: object) -> LawText:
-    """The label of `law_version`'s text; the amended text's for anything else (a result missing
-    its law version fails validation anyway)."""
-    if isinstance(law_version, LawVersion):
-        return LAW_TEXTS[law_version]
-    return LAW_TEXTS[LawVersion.AMENDED]
-
-
 def refused_steps(steps: Iterable[StepResult]) -> tuple[StepName, ...]:
     """The checks the model provider refused to assess (decision 029), in the steps' order."""
     return tuple(step.step for step in steps if step.error == PROVIDER_REFUSAL)
@@ -84,7 +76,8 @@ class ClassificationResult(ContractModel):
     obligations: tuple[Obligation, ...] = ()
     law_version: LawVersion
     law_text: LawText = Field(
-        default_factory=lambda data: law_text_for(data.get("law_version")),
+        default=None,
+        validate_default=True,
         description="The label of the text `law_version` names (CELEX number and date); it "
         "always matches `law_version`, which sets it when it is left out.",
     )
@@ -147,6 +140,18 @@ class ClassificationResult(ContractModel):
         if self.also_role is not None and self.also_role is self.role:
             raise ValueError("also_role must differ from role")
         return self
+
+    @field_validator("law_text", mode="before")
+    @classmethod
+    def _label_the_law_version(cls, law_text: object, info: ValidationInfo) -> object:
+        """A left-out label is the one of `law_version`'s text; without a valid law version
+        there is nothing to label, and the result is rejected."""
+        if law_text is not None:
+            return law_text
+        law_version = info.data.get("law_version")
+        if not isinstance(law_version, LawVersion):
+            raise ValueError("law_text needs a valid law_version to label")
+        return LAW_TEXTS[law_version]
 
     @model_validator(mode="after")
     def _law_text_matches_version(self) -> Self:
