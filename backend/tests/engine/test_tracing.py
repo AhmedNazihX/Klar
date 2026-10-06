@@ -2,7 +2,9 @@
 default tracer from the environment either, and metadata only outside development, errors
 included. Nothing reaches the network: posts go to a recording session."""
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from typing import Literal
 
 import pytest
@@ -15,7 +17,14 @@ from langchain_core.tracers.langchain import LangChainTracer
 from langsmith import utils as ls_utils
 from pydantic import SecretStr
 
-from aiact.engine import ClassificationFailedError, ClassifyRequest, run_classification, tracing
+from aiact.engine import (
+    ClassificationFailedError,
+    ClassifyRequest,
+    ResultEvent,
+    run_classification,
+    stream_classification,
+    tracing,
+)
 from aiact.engine import classify as classify_module
 from aiact.engine.graph import EngineNodes
 from aiact.engine.nodes.facts import FactExtractor
@@ -23,7 +32,7 @@ from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import EngineState, FactsOutcome
 from aiact.engine.tracing import build_client, langsmith_tracer, withheld_error
 from aiact.engine.usage import UsageMeter
-from aiact.schemas import Language
+from aiact.schemas import Language, StepName
 from aiact.settings import Settings
 
 RUN_INPUTS = {"description": "We screen job applicants.", "language": "en"}
@@ -205,3 +214,37 @@ def test_without_a_key_the_environment_adds_no_tracer_to_a_run(tracing_env: None
     request = ClassifyRequest(description=DESCRIPTION, language=Language.EN)
     run_classification(request, settings=_settings("production", None), build_nodes=build)
     assert seen == [[]]
+
+
+def test_a_stream_read_one_event_per_fresh_context_adds_no_tracer(tracing_env: None) -> None:
+    """As Starlette's StreamingResponse reads a sync iterator: each `next()` on a worker thread,
+    in a fresh copy of the reader's context. Every node, the last included, sees no tracer."""
+    seen: dict[str, list[str]] = {}
+    stub = scripted_nodes(Script())
+
+    def watched[T](name: str, node: Callable[[EngineState], T]) -> Callable[[EngineState], T]:
+        def run(state: EngineState) -> T:
+            seen[name] = _tracers()
+            return node(state)
+
+        return run
+
+    def build(_settings: Settings, _meter: UsageMeter) -> EngineNodes:
+        return EngineNodes(
+            facts=watched("facts", stub.facts),
+            checks={name: watched(name.value, check) for name, check in stub.checks.items()},
+            finalize=watched("finalize", stub.finalize),
+        )
+
+    request = ClassifyRequest(description=DESCRIPTION, language=Language.EN)
+    events = stream_classification(
+        request, settings=_settings("production", None), build_nodes=build
+    )
+    done = object()
+    read: list[object] = []
+    with ThreadPoolExecutor(max_workers=1) as worker:
+        while (event := worker.submit(copy_context().run, next, events, done).result()) is not done:
+            read.append(event)
+    assert isinstance(read[-1], ResultEvent)
+    assert list(seen) == ["facts", *(name.value for name in StepName), "finalize"]
+    assert all(found == [] for found in seen.values()), seen

@@ -2,8 +2,10 @@
 the model is a fake that answers with a paid reply cut off mid-answer, and the corpus functions
 (`get_provision`, `search_ai_act`) and connections are replaced by recorders. Shows that every
 node's model calls and query embeddings are counted under its own name, that every retrieval
-call of a real check carries the run's `include_held_out`, and that a node's broken-output error
-doesn't carry the reply's text. The citation validator's re-run is counted too."""
+call of a real check carries the run's `include_held_out` (before the reply, and after it on a
+parseable reply and on a refusal, the citation validator's lookups included), and that a node's
+broken-output error doesn't carry the reply's text. The citation validator's re-run is counted
+too."""
 
 import traceback
 from collections.abc import Callable, Iterator
@@ -12,14 +14,16 @@ from dataclasses import dataclass, field
 from datetime import date
 
 import pytest
+from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
 
+from aiact.engine import citations
 from aiact.engine import classify as classify_module
 from aiact.engine.citations import CitationValidator, OmnibusChanges
 from aiact.engine.classify import engine_nodes
-from aiact.engine.graph import EngineNodes
+from aiact.engine.graph import CheckNode, EngineNodes
 from aiact.engine.nodes import (
     guideline_retrieval,
     high_risk,
@@ -28,6 +32,9 @@ from aiact.engine.nodes import (
     scope,
     transparency,
 )
+from aiact.engine.nodes.high_risk_texts import REFUSAL_CITATIONS
+from aiact.engine.nodes.prohibited_practices import APPLICATION_DATES
+from aiact.engine.nodes.transparency_duties import MarketTiming
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.engine.usage import MeteredEmbedder, UsageMeter
 from aiact.llm.embeddings import EmbeddingBatch, OpenRouterEmbeddings
@@ -44,9 +51,12 @@ from aiact.schemas import (
     StepResult,
 )
 from aiact.settings import Settings
+from tests.engine.nodes import test_high_risk, test_prohibited, test_scope, test_transparency
 
 AS_OF = date(2026, 10, 6)
 SECRET = "the night shifts of our Leipzig depot"
+SHORT_SECRET = "Leipzig"
+"""Short enough that pydantic would quote it whole in an `input_value`."""
 CHAT_COST = 0.001
 EMBED_COST = 0.00001
 RETRIEVING = (StepName.SCOPE, StepName.PROHIBITED, StepName.HIGH_RISK, StepName.TRANSPARENCY)
@@ -118,18 +128,30 @@ class Corpus:
     noting each call's module and opt-in; a search embeds its query as the real one does."""
 
     calls: list[tuple[str, str, bool]] = field(default_factory=list)
+    targets: list[str] = field(default_factory=list)
+    """Each call's provision id, or `search`, in the order of `calls`."""
+    replied_at: int | None = None
+    """How many calls came before the model replied (set by `ReplyMarker`)."""
+
+    def after_reply(self) -> list[tuple[str, str, str, bool]]:
+        """The calls made after the model replied: (module, function, target, opt-in)."""
+        start = self.replied_at if self.replied_at is not None else len(self.calls)
+        rows = zip(self.calls[start:], self.targets[start:], strict=True)
+        return [(module, function, target, flag) for (module, function, flag), target in rows]
 
     def recorders(
         self, module: str
     ) -> tuple[Callable[..., Provision], Callable[..., SearchResults]]:
         def get_provision(provision_id: str, *args: object, **kwargs: object) -> Provision:
             self.calls.append((module, "get_provision", kwargs["include_held_out"] is True))
+            self.targets.append(provision_id)
             return fake_provision(provision_id)
 
         def search_ai_act(
             query: str, language: Language, law_version: LawVersion, as_of: date, **kwargs: object
         ) -> SearchResults:
             self.calls.append((module, "search_ai_act", kwargs["include_held_out"] is True))
+            self.targets.append("search")
             embedder = kwargs.get("embedder")
             if embedder is not None:
                 assert isinstance(embedder, MeteredEmbedder)  # the run's, counted
@@ -157,11 +179,12 @@ def no_connection() -> Iterator[None]:
 def offline(monkeypatch: pytest.MonkeyPatch) -> Corpus:
     """Fake model, costed embeddings, recorded corpus and no database for `engine_nodes`."""
     corpus = Corpus()
-    for module in (scope, guideline_retrieval, high_risk_retrieval):
+    for module in (scope, guideline_retrieval, high_risk_retrieval, citations):
         get, search = corpus.recorders(module.__name__.rsplit(".", 1)[-1])
         monkeypatch.setattr(module, "get_provision", get)
-        monkeypatch.setattr(module, "search_ai_act", search)
-    for module in (prohibited, high_risk, transparency):
+        if module is not citations:
+            monkeypatch.setattr(module, "search_ai_act", search)
+    for module in (prohibited, high_risk, transparency, citations):
         monkeypatch.setattr(module, "connect", no_connection)
 
     def fake_engine_model(*, max_tokens: int, settings: Settings) -> GenericFakeChatModel:
@@ -212,7 +235,9 @@ def test_a_broken_output_error_carries_no_reply_text(offline: Corpus) -> None:
     for name, error in errors.items():
         assert error.__cause__ is None, name
         assert error.__suppress_context__, name
-        assert SECRET not in "".join(traceback.format_exception(error)), name
+        written = "".join(traceback.format_exception(error))
+        assert "input_value" not in written, name
+        assert SHORT_SECRET not in written, name
 
 
 # --- The citation validator's re-run ------------------------------------------------------------
@@ -268,3 +293,81 @@ def test_the_validators_rerun_counts_both_paid_replies() -> None:
     assert usage.calls == 2
     assert usage.cost_usd == pytest.approx(0.005)
     assert usage.tokens == 300
+
+
+# --- After the reply: a parseable answer and a refusal ------------------------------------------
+
+
+class ReplyMarker(BaseCallbackHandler):
+    """Notes in the corpus recorder when the model is asked, so the calls after it are known."""
+
+    def __init__(self, corpus: Corpus) -> None:
+        self._corpus = corpus
+
+    def on_chat_model_start(self, *args: object, **kwargs: object) -> None:
+        self._corpus.replied_at = len(self._corpus.calls)
+
+
+REFUSAL = AIMessage(
+    content="I'm sorry, but I cannot assist with that request.",
+    response_metadata={"finish_reason": "content_filter"},
+)
+PARSEABLE: dict[StepName, Callable[[], str]] = {
+    StepName.SCOPE: lambda: test_scope.scope_answer().model_dump_json(),
+    StepName.PROHIBITED: lambda: test_prohibited.answer(
+        test_prohibited.WORKPLACE_EMOTIONS
+    ).model_dump_json(),
+    StepName.HIGH_RISK: lambda: test_high_risk.answer(
+        test_high_risk.RANKS_APPLICANTS
+    ).model_dump_json(),
+    StepName.TRANSPARENCY: lambda: (
+        test_transparency.answer(MarketTiming.PLACED_BEFORE, **test_transparency.MARKS)
+    ).model_dump_json(),
+}
+"""A reply each retrieving check reads and cites from: a system in scope, workplace emotion
+recognition, applicant ranking (Annex III 4(a)), and synthetic content placed on the market
+before 2 August 2026 (the Art. 111(4) grace period)."""
+NODE_LOOKUPS: dict[tuple[StepName, str], tuple[str, str]] = {
+    (StepName.SCOPE, "answer"): ("scope", "art:3:1"),
+    (StepName.PROHIBITED, "answer"): ("guideline_retrieval", "art:5:1:f"),
+    (StepName.PROHIBITED, "refusal"): ("guideline_retrieval", APPLICATION_DATES),
+    (StepName.HIGH_RISK, "answer"): ("high_risk_retrieval", "art:6:3"),
+    (StepName.HIGH_RISK, "refusal"): ("high_risk_retrieval", REFUSAL_CITATIONS[0]),
+    (StepName.TRANSPARENCY, "answer"): ("guideline_retrieval", "art:111:4"),
+}
+"""A lookup each check makes only after the reply (Art. 113(a) and Art. 6(1) on a refusal)."""
+
+
+def real_check(name: StepName, reply: AIMessage, corpus: Corpus) -> CheckNode:
+    """The check with no library (it reads through the recorded corpus functions), wrapped by
+    the citation validator as `engine_nodes` wraps it."""
+    run_settings = settings()
+    chat = GenericFakeChatModel(messages=iter([reply, reply]), callbacks=[ReplyMarker(corpus)])
+    embedder = UsageMeter().embedder(name, CostedEmbeddings(run_settings))
+    classes = {
+        StepName.SCOPE: scope.ScopeCheck,
+        StepName.PROHIBITED: prohibited.ProhibitedCheck,
+        StepName.HIGH_RISK: high_risk.HighRiskCheck,
+        StepName.TRANSPARENCY: transparency.TransparencyCheck,
+    }
+    check = classes[name](run_settings, chat=chat, embedder=embedder)
+    return CitationValidator(settings=run_settings).checked(check)
+
+
+@pytest.mark.parametrize("include_held_out", [True, False])
+@pytest.mark.parametrize("kind", ["answer", "refusal"])
+@pytest.mark.parametrize("name", RETRIEVING, ids=lambda name: name.value)
+def test_every_corpus_call_after_the_reply_passes_the_runs_opt_in(
+    offline: Corpus, name: StepName, kind: str, include_held_out: bool
+) -> None:
+    reply = AIMessage(content=PARSEABLE[name]()) if kind == "answer" else REFUSAL
+    outcome = real_check(name, reply, offline)(state(include_held_out=include_held_out))
+    assert outcome.step.step is name
+    after = offline.after_reply()
+    assert after, "no corpus call after the reply"
+    assert all(flag is include_held_out for _, _, _, flag in after), after
+    assert all(flag is include_held_out for _, _, flag in offline.calls)
+    assert any(module == "citations" for module, _, _, _ in after)  # the validator's lookups
+    expected = NODE_LOOKUPS.get((name, kind))
+    if expected is not None:
+        assert expected in {(module, target) for module, _, target, _ in after}, after

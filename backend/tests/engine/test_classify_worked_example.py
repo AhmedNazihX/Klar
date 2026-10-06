@@ -67,13 +67,26 @@ INIT_DUTIES = {
 """The Art. 26 duties INIT's worked example lists, by the obligation table's article ids."""
 ANNEX_III_FROM = date(2027, 12, 2)
 """INIT: the duties apply "from 2 December 2027" (the Annex III route's Chapter III date)."""
+INIT_BASIS: dict[StepName, set[str]] = {
+    StepName.SCOPE: {"art:3:1", "art:2:1"},
+    StepName.PROHIBITED: {"art:5:1"},
+    StepName.HIGH_RISK: {"annex:III:4:a", "art:6:3"},
+    StepName.TRANSPARENCY: {"art:50"},
+    StepName.ROLE_OBLIGATIONS: {"art:3:4"},
+}
+"""The Basis column of INIT's table, as the ids each step cites: Art. 2-3 (the AI system
+definition and the territorial scope), Art. 5(1) (no point matched, so the list), Annex III
+4(a) and Art. 6(3), Art. 50 (no duty raised, so the whole article), and for the role the
+deployer definition (INIT names Art. 25, whose switches a deployer that keeps its role doesn't
+trigger, so the step cites none of them)."""
 
 
 def assert_the_expected_result(run: ClassificationRun) -> None:
     """INIT > Worked example, row by row: in scope; no prohibited practice; high-risk under
     Annex III 4(a) (ranking applicants is profiling, so Art. 6(3) can't exempt it); no separate
     Art. 50 duty; the company stays a deployer, with the Art. 26 duties INIT lists from 2
-    December 2027; a decided result. Every citation resolves."""
+    December 2027; a decided result; each step citing its Basis (`INIT_BASIS`). Every citation
+    resolves."""
     result = run.result
     steps = {step.step: step for step in result.steps}
     assert list(steps) == list(StepName)  # in scope, not prohibited: every check ran
@@ -82,7 +95,9 @@ def assert_the_expected_result(run: ClassificationRun) -> None:
     assert result.status is Status.DECIDED
     assert result.risk_class is RiskClass.HIGH_RISK, result.risk_class
     assert result.annex_point == "annex:III:4:a"
-    assert "art:6:3" in {c.provision_id for c in steps[StepName.HIGH_RISK].citations}
+    for name, basis in INIT_BASIS.items():
+        cited = {c.provision_id for c in steps[name].citations}
+        assert basis <= cited, (name, sorted(cited))
     assert result.transparency_duties == ()
     assert result.role is Role.DEPLOYER
     duties = {o.article: o for o in result.obligations}

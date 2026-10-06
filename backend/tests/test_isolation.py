@@ -48,6 +48,7 @@ from aiact.engine import (
     run_classification,
     stream_classification,
 )
+from aiact.engine.classify import Retrieval
 from aiact.engine.nodes.common import Lookup
 from aiact.eval import isolation
 from aiact.eval.cases import CASES_DIR, QA_DIR_NAME, CaseSet
@@ -332,11 +333,12 @@ ENGINE_OPT_INS: dict[str, Callable[..., object]] = {
 run (`tests/engine/test_held_out.py`, `tests/engine/test_engine_nodes.py`). Only V8's gap run
 sets it; the API (P1) and the MCP tools (P2b) never expose it."""
 OPT_IN_FIELDS: dict[str, type] = {
+    "aiact.engine.classify.Retrieval": Retrieval,
     "aiact.engine.nodes.common.Lookup": Lookup,
     "aiact.eval.runner.ClassifierInput": ClassifierInput,
 }
-"""The dataclasses that carry the opt-in inside a run: the run's lookup, and the runner's
-per-case input (set only by `--exclude-mode all`, the gap run)."""
+"""The dataclasses that carry the opt-in: a run's retrieval options and its lookup, and the
+runner's per-case input (set only by `--exclude-mode all`, the gap run)."""
 REQUEST_MODELS: dict[str, type[BaseModel]] = {
     "aiact.engine.ClassifyRequest": ClassifyRequest,
 }

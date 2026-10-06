@@ -5,6 +5,7 @@ database or network is used. INIT's worked example end to end is in
 `test_classify_worked_example.py`."""
 
 import logging
+from collections.abc import Callable
 from datetime import date
 
 import pytest
@@ -351,6 +352,73 @@ def test_by_default_no_check_and_no_citation_check_sees_held_out_examples() -> N
     assert not any(flag for _, flag in probe.check_flags)
     assert probe.source_flags
     assert not any(probe.source_flags)
+
+
+def recording_nodes(states: list[tuple[str, EngineState]]) -> EngineNodes:
+    """Stub nodes that keep the state every node (facts, each check, finalize) was given."""
+    stub = scripted_nodes(Script())
+
+    def kept[T](name: str, node: Callable[[EngineState], T]) -> Callable[[EngineState], T]:
+        def run(state: EngineState) -> T:
+            states.append((name, state))
+            return node(state)
+
+        return run
+
+    return EngineNodes(
+        facts=kept("facts", stub.facts),
+        checks={name: kept(name.value, check) for name, check in stub.checks.items()},
+        finalize=kept("finalize", stub.finalize),
+    )
+
+
+@pytest.mark.parametrize("include_held_out", [None, True])
+def test_the_stream_gives_every_node_the_runs_opt_in(include_held_out: bool | None) -> None:
+    """Without the opt-in, every node's state says False; with it, True (decision 012)."""
+    states: list[tuple[str, EngineState]] = []
+    builder = given(recording_nodes(states))
+    events = (
+        stream_classification(request(), settings=SETTINGS, build_nodes=builder)
+        if include_held_out is None
+        else stream_classification(
+            request(), settings=SETTINGS, build_nodes=builder, include_held_out=include_held_out
+        )
+    )
+    assert isinstance(list(events)[-1], ResultEvent)
+    assert [name for name, _ in states] == ["facts", *STEP_ORDER, "finalize"]
+    expected = include_held_out is True
+    assert all(state.get("include_held_out") is expected for _, state in states)
+
+
+@pytest.mark.parametrize("run", ["run_classification", "stream_classification"])
+def test_a_single_string_of_example_ids_is_rejected(run: str) -> None:
+    """A bare string would be split into characters and exclude nothing."""
+    function = getattr(classify_module, run)
+    with pytest.raises(TypeError, match="not one string"):
+        function(
+            request(),
+            settings=SETTINGS,
+            build_nodes=given(stub_nodes()),
+            exclude_source_example_ids="hr-ex-001",
+        )
+
+
+def test_classify_system_rejects_a_single_string_of_example_ids() -> None:
+    with pytest.raises(TypeError, match="not one string"):
+        classify_system(DESCRIPTION, Language.EN, exclude_source_example_ids="hr-ex-001")
+
+
+def test_example_ids_reach_every_node_as_given() -> None:
+    states: list[tuple[str, EngineState]] = []
+    run_classification(
+        request(),
+        settings=SETTINGS,
+        build_nodes=given(recording_nodes(states)),
+        exclude_source_example_ids=["hr-ex-001", "hr-ex-002"],
+    )
+    assert {state["exclude_source_example_ids"] for _, state in states} == {
+        ("hr-ex-001", "hr-ex-002")
+    }
 
 
 # --- Streaming ------------------------------------------------------------------------------------

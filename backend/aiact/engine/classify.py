@@ -19,9 +19,9 @@
 
 import logging
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, cast
 from uuid import UUID, uuid4
 
 from langchain_core.language_models import BaseChatModel
@@ -158,7 +158,16 @@ class Retrieval:
     held-out ones are included (V8's gap run only, decision 012)."""
 
     exclude_source_example_ids: tuple[str, ...] = ()
-    include_held_out: bool = False
+    include_held_out: bool = field(default=False, kw_only=True)
+
+    @classmethod
+    def given(cls, exclude_source_example_ids: Sequence[str], *, include_held_out: bool) -> Self:
+        """The run functions' keyword arguments as a `Retrieval`. Raises TypeError for a bare
+        string of ids, which would otherwise be split into single characters and exclude
+        nothing."""
+        if isinstance(exclude_source_example_ids, str):
+            raise TypeError("exclude_source_example_ids takes a sequence of ids, not one string")
+        return cls(tuple(exclude_source_example_ids), include_held_out=include_held_out)
 
 
 def engine_input(request: ClassifyRequest, retrieval: Retrieval) -> EngineInput:
@@ -295,25 +304,42 @@ class _Run:
         """The run's events up to `result`. Raises `ClassificationFailedError` (from the node's
         error) when a node fails. Logs the run's cost either way."""
         running = FACTS
-        graph_input = engine_input(self.request, self._retrieval)
+        chunks = self._graph.stream(
+            engine_input(self.request, self._retrieval),
+            self._config(),
+            stream_mode=["tasks", "updates"],
+        )
         try:
-            with tracing_switch(self._tracer):
-                for mode, chunk in self._graph.stream(
-                    graph_input, self._config(), stream_mode=["tasks", "updates"]
-                ):
-                    if mode == "tasks":
-                        started = _started(chunk)
-                        if started is not None:
-                            running = started
-                            if started in STEP_NAMES:
-                                yield StepStartedEvent(step=StepName(started))
-                        continue
-                    yield from _update_events(chunk)
+            for mode, chunk in self._pulled(chunks):
+                if mode == "tasks":
+                    started = _started(chunk)
+                    if started is not None:
+                        running = started
+                        if started in STEP_NAMES:
+                            yield StepStartedEvent(step=StepName(started))
+                    continue
+                yield from _update_events(chunk)
         except Exception as exc:
             logger.warning("classification stopped in %s: %s", running, type(exc).__name__)
             raise ClassificationFailedError(running, self.meter.usage(), self.trace_id) from exc
         finally:
             _log_usage(self.meter.usage(), self.trace_id)
+
+    def _pulled(self, chunks: Iterator[object]) -> Iterator[tuple[object, object]]:
+        """`chunks`, each pulled inside the run's tracing switch. Every pull runs graph steps,
+        and a server may run each in a fresh copy of its own context (Starlette's
+        StreamingResponse over a sync iterator does), so the switch is set for each pull and
+        never left on the caller's context between events."""
+        while True:
+            with tracing_switch(self._tracer):
+                item = next(chunks, _DONE)
+            if item is _DONE:
+                return
+            yield cast(tuple[object, object], item)  # (mode, chunk): two stream modes
+
+
+_DONE = object()
+"""The end of a run's graph stream."""
 
 
 def _started(chunk: object) -> str | None:
@@ -378,9 +404,10 @@ def run_classification(
 ) -> ClassificationRun:
     """Classify `request`, with what it cost and its trace id. `exclude_source_example_ids`
     keeps those guideline examples out of retrieval; `include_held_out` is V8's gap run only
-    (decision 012). Raises `ClassificationFailedError` when a node fails, and `LLMConfigError`
-    when a model setting is missing."""
-    retrieval = Retrieval(tuple(exclude_source_example_ids), include_held_out)
+    (decision 012). Raises `ClassificationFailedError` when a node fails, `LLMConfigError`
+    when a model setting is missing, and TypeError when `exclude_source_example_ids` is a single
+    string."""
+    retrieval = Retrieval.given(exclude_source_example_ids, include_held_out=include_held_out)
     run = _Run(request, retrieval, settings or get_settings(), build_nodes)
     results = [event.result for event in run.events() if isinstance(event, ResultEvent)]
     if len(results) != 1:
@@ -402,7 +429,7 @@ def stream_classification(
     a missing model setting, OSError when the amendment records can't be read) raises before
     any event, and only a failed node becomes the `error` event. The keyword arguments are as in
     `run_classification`."""
-    retrieval = Retrieval(tuple(exclude_source_example_ids), include_held_out)
+    retrieval = Retrieval.given(exclude_source_example_ids, include_held_out=include_held_out)
     run = _Run(request, retrieval, settings or get_settings(), build_nodes)
     return _events_or_error(run, request.language)
 
