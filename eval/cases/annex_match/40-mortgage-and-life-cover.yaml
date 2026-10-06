@@ -1,0 +1,23 @@
+id: annex-match-40-mortgage-and-life-cover
+set_name: annex_match
+language: en
+description: >-
+  We're a mid-sized bank in Lisbon with an insurance subsidiary. For mortgages we use a
+  machine-learning scoring model from our core-banking vendor that rates each applicant's ability to
+  repay and sets the maximum loan. Borrowers must take out life cover with the mortgage, and the
+  same vendor's module prices that policy for our subsidiary from the borrower's age, health
+  declaration and smoking status, or refuses cover. Both run with the vendor's standard settings.
+  Our branches are also getting longer opening hours on Saturdays.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:5:b", "annex:III:5:c"]
+label_citation: ["annex:III:5:b", "annex:III:5:c", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Points: creditworthiness of individuals is 5(b); risk
+  assessment and pricing for life insurance is 5(c). Either point counts. It evaluates individual
+  people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the bank group uses the
+  vendor's modules as delivered.
+tags:
+  - "annex_iii_area:5"
+  - "multi_point"

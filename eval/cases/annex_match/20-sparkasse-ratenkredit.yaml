@@ -1,0 +1,22 @@
+id: annex-match-20-sparkasse-ratenkredit
+set_name: annex_match
+language: de
+description: >-
+  Wir sind eine Sparkasse in Westfalen mit rund 600 Beschäftigten. Für Ratenkredite an Privatkunden
+  nutzen wir seit diesem Jahr ein maschinell gelerntes Scoring-Modell, das unser
+  Verbandsdienstleister zentral entwickelt und betreibt. Es wertet Kontoumsätze, Einkommen,
+  bestehende Verpflichtungen und die Auskunft der Auskunftei aus und liefert eine
+  Ausfallwahrscheinlichkeit; unter einem bestimmten Wert lehnt das System den Antrag im
+  Online-Banking automatisch ab, darüber entscheidet ein Berater. Wir setzen das Modell unverändert
+  ein. Nebenbei haben wir zwei Filialen zu Beratungscentern umgebaut.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:5:b"]
+label_citation: ["annex:III:5:b", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: credit scoring of natural persons. It evaluates
+  individual people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: uses the
+  service provider's model unchanged.
+tags:
+  - "annex_iii_area:5"

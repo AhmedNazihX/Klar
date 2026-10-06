@@ -1,0 +1,22 @@
+id: annex-match-11-language-placement-test
+set_name: annex_match
+language: en
+description: >-
+  LinguaPath is our 20-person company in Valencia. We make a placement test that language schools
+  embed on their websites: a learner answers adaptive reading and listening questions and speaks for
+  two minutes, and our model decides which course level, from A1 to C1, the learner is allowed to
+  book. Someone placed at B1 cannot enrol in a B2 course unless the school overrides the result,
+  which rarely happens. We trained the model ourselves and sell it to about 70 language schools in
+  Spain, Portugal and Italy. We are also launching a podcast for teachers.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:3:c"]
+label_citation: ["annex:III:3:c", "art:6:2", "art:3:3"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: it decides which course level a person can access within
+  educational institutions, 3(c). It evaluates individual people (profiling), so Art. 6(3) cannot
+  lift it out of high-risk. DOUBT: whether private adult language schools are 'educational and
+  vocational training institutions'; read broadly ('at all levels'). Role: builds and sells it.
+tags:
+  - "annex_iii_area:3"

@@ -527,6 +527,22 @@ def test_the_committed_qa_set_has_its_counts_in_both_languages() -> None:
         assert {item.language for item in kind} == {Language.EN, Language.DE}
 
 
+ANNEX_MATCH_RANGE = range(30, 51)
+
+
+def test_the_committed_annex_match_set_has_its_counts_and_points() -> None:
+    """X0's DoD: 30-50 items in EN and DE, each naming and citing the Annex points it expects,
+    written from scratch (no Commission example as source)."""
+    items = load_cases(CaseSet.ANNEX_MATCH)
+    assert len(items) in ANNEX_MATCH_RANGE
+    assert {item.language for item in items} == {Language.EN, Language.DE}
+    for item in items:
+        assert isinstance(item.label, CaseLabel)
+        assert item.label.annex_point, item.id
+        assert set(item.label.annex_point) <= set(item.label_citation), item.id
+        assert item.source_example_id is None, item.id
+
+
 def test_no_committed_case_derives_from_a_pile_a_example() -> None:
     """B6's rule over every committed case: Pile A stays retrievable, so no case may come from it.
     Worktrees without the split (the Engine lane's sparse checkout) skip, as test_isolation does."""

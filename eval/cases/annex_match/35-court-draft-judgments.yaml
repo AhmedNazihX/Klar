@@ -1,0 +1,21 @@
+id: annex-match-35-court-draft-judgments
+set_name: annex_match
+language: en
+description: >-
+  We are the IT department of the administrative courts of an EU member state. Judges in asylum and
+  tax chambers now use a drafting assistant from a domestic legal-tech company, built on a large
+  language model: for each new file it searches our case law and legislation, summarises the facts
+  from the submissions, applies the relevant rules and produces a proposed judgment with reasons,
+  which the judge edits and signs. About 200 judges use it daily. We run it on our own servers. The
+  rollout also brought new screens for the courtrooms.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:8:a"]
+label_citation: ["annex:III:8:a", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: assists a judicial authority in researching and
+  interpreting facts and law and applying the law to the facts, 8(a). Not a preparatory task under
+  Art. 6(3)(d): it drafts the decision itself. Role: the courts use it under their authority.
+tags:
+  - "annex_iii_area:8"

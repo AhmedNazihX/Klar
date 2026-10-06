@@ -1,0 +1,22 @@
+id: annex-match-18-wohngeld-vorpruefung
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein IT-Dienstleister für Kommunen in Hessen mit 200 Beschäftigten. Im Auftrag mehrerer
+  Landkreise haben wir ein KI-System entwickelt, das Anträge auf Wohngeld vorprüft: Es liest
+  Einkommensnachweise und Mietverträge aus, schätzt den Anspruch und markiert Fälle, in denen
+  bereits gezahltes Wohngeld zurückgefordert werden sollte. Die Sachbearbeitung entscheidet am Ende,
+  übernimmt die Vorschläge aber meist. Das System läuft in unserem Rechenzentrum und wird unter
+  unserem Namen an die Kreise lizenziert. Daneben betreuen wir auch die Websites der Gemeinden.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:5:a"]
+label_citation: ["annex:III:5:a", "art:6:2", "art:3:3"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: used on behalf of public authorities to evaluate
+  eligibility for a public benefit (housing benefit) and to reclaim it. It evaluates individual
+  people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: develops it and licenses
+  it under its own name.
+tags:
+  - "annex_iii_area:5"

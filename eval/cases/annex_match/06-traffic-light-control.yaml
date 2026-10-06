@@ -1,0 +1,22 @@
+id: annex-match-06-traffic-light-control
+set_name: annex_match
+language: de
+description: >-
+  Wir sind die Stadtwerke einer mittelgroßen Stadt in Baden-Württemberg. Seit diesem Jahr betreiben
+  wir eine KI-gestützte Ampelsteuerung, die wir von einem Münchner Verkehrstechnik-Anbieter gekauft
+  haben. Kameras und Induktionsschleifen erfassen den Verkehr an 80 Kreuzungen, und das System legt
+  die Grünphasen für Autos, Busse, Radfahrer und Fußgänger selbstständig fest, einschließlich der
+  Räumzeiten, damit sich keine Ströme kreuzen. Fällt es aus oder entscheidet es falsch, kann es an
+  einer Kreuzung gefährlich werden. Wir nutzen es genau so, wie der Hersteller es ausliefert.
+  Parallel stellen wir übrigens die Straßenbeleuchtung auf LED um.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:2"]
+label_citation: ["annex:III:2", "art:6:2", "art:3:14", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: its failure endangers road users, so it is a safety
+  component (Art. 3(14)) in the management and operation of road traffic: Annex III 2. Role: uses
+  the bought system as delivered.
+tags:
+  - "annex_iii_area:2"

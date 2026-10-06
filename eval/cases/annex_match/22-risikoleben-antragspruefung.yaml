@@ -1,0 +1,22 @@
+id: annex-match-22-risikoleben-antragspruefung
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein mittelständischer Lebensversicherer aus Köln. Für Risikolebensversicherungen haben
+  wir die Antragsprüfung an eine Plattform eines Rückversicherers angebunden: Ein auf
+  Leistungsfällen trainiertes Modell wertet die Gesundheitsfragen sowie Angaben zu Beruf, Hobbys und
+  Rauchverhalten aus, ordnet jeden Antragsteller einer Risikoklasse zu und bestimmt damit Zuschläge
+  oder eine Ablehnung. Nur Grenzfälle landen bei unseren Underwritern. Die Plattform nutzen wir mit
+  den Regeln, die der Rückversicherer vorgibt. Seit Kurzem bieten wir unseren Kunden außerdem ein
+  neues Kundenportal mit Dokumentenablage an.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:5:c"]
+label_citation: ["annex:III:5:c", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: risk assessment and pricing of individuals for life
+  insurance. It evaluates individual people (profiling), so Art. 6(3) cannot lift it out of
+  high-risk. Role: uses the reinsurer's platform as provided.
+tags:
+  - "annex_iii_area:5"

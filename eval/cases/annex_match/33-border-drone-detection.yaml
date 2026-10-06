@@ -1,0 +1,19 @@
+id: annex-match-33-border-drone-detection
+set_name: annex_match
+language: en
+description: >-
+  We are the border guard of an EU member state with a long land border. Since spring we fly drones
+  fitted with thermal cameras along the border at night; AI software from the drone maker scans the
+  video, detects people walking through forests and fields, counts them and alerts the nearest
+  patrol with their position. It does not try to find out who they are. We use the drone maker's
+  standard software package. The same contract included two new off-road vehicles.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:7:d"]
+label_citation: ["annex:III:7:d", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: detecting people in the context of border control, 7(d);
+  no identification, so not 1(a). Role: uses the standard package.
+tags:
+  - "annex_iii_area:7"

@@ -1,0 +1,22 @@
+id: annex-match-09-berufsschule-lernpfad
+set_name: annex_match
+language: de
+description: >-
+  Wir sind eine berufsbildende Schule in Niedersachsen mit etwa 1.200 Auszubildenden in
+  kaufmännischen Berufen. Seit dem Schuljahr 2026/27 nutzen wir eine KI-gestützte Lernplattform
+  eines Bremer Anbieters. Sie wertet die Übungsaufgaben der Azubis in Rechnungswesen aus, bewertet,
+  welche Kompetenzen jemand schon beherrscht und welche nicht, und legt danach fest, welche Module
+  als Nächstes freigeschaltet werden und welche Übungen jemand bekommt. Die Lehrkräfte sehen die
+  Auswertungen, greifen aber selten ein. Die Plattform ist eine Standardlizenz; wir haben nur unsere
+  Klassen angelegt. Die Mensa bekommt dieses Jahr übrigens neue Öffnungszeiten.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:3:b"]
+label_citation: ["annex:III:3:b", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: it evaluates learning outcomes and uses them to steer
+  each learner's path, which 3(b) names expressly. It evaluates individual people (profiling), so
+  Art. 6(3) cannot lift it out of high-risk. Role: uses a standard licence.
+tags:
+  - "annex_iii_area:3"

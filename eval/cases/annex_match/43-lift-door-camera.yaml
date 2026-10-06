@@ -1,0 +1,21 @@
+id: annex-match-43-lift-door-camera
+set_name: annex_match
+language: en
+description: >-
+  We are a 300-person lift manufacturer in Finland. Our new passenger lifts include a camera above
+  the doors: a neural network trained by our engineers watches the doorway and stops the doors from
+  closing, or the car from moving, when it sees a person, a pram, a dog lead or a hand in the gap.
+  Every lift we install goes through conformity assessment with a notified body under the Lifts
+  Directive. We sell and install the lifts across the Nordic countries and the Baltics. The cabins
+  now come with a choice of five wood finishes.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:A:4"]
+label_citation: ["annex:I:A:4", "art:6:1:a", "art:6:1:b", "art:3:3"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: a safety component (Art. 3(14)) of a lift (Lifts
+  Directive, Annex I Section A point 4), and the lift needs a notified body, so Art. 6(1) is met.
+  Role: the manufacturer places the lift with the AI on the market under its name.
+tags:
+  - "annex_i_section:a"

@@ -1,0 +1,25 @@
+id: annex-match-10-grundschule-uebertritt
+set_name: annex_match
+language: de
+description: >-
+  Wir sind das Schulamt eines Bundeslandes und testen an 40 Grundschulen ein Programm, das wir bei
+  einem Softwarehaus aus Leipzig eingekauft haben. Am Ende der vierten Klasse wertet ein KI-Modell
+  Noten, Lernstandserhebungen und Beobachtungsbögen der Lehrkräfte aus und schlägt für jedes Kind
+  vor, ob es aufs Gymnasium, auf die Realschule oder die Mittelschule wechseln sollte. Die
+  Empfehlung geht als Teil des Übertrittszeugnisses an die Eltern, und in der Praxis übernehmen die
+  Klassenlehrkräfte sie fast immer. Wir betreiben die Software zentral für alle Pilotschulen. Ein
+  zweites Modul plant die Busrouten für den Schülerverkehr.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:3:c", "annex:III:3:a"]
+label_citation: ["annex:III:3:c", "annex:III:3:a", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: recommending the secondary-school track assesses the
+  level of education a child will access (3(c)); because the track decides which school the child
+  goes to, it also assigns people to institutions (3(a)). Either point counts. It evaluates
+  individual people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the school
+  authority uses the bought software.
+tags:
+  - "annex_iii_area:3"
+  - "multi_point"

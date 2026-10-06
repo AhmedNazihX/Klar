@@ -1,0 +1,22 @@
+id: annex-match-16-servicecenter-leistungswert
+set_name: annex_match
+language: de
+description: >-
+  Wir betreiben ein Servicecenter für Versicherungen in Leipzig mit etwa 350 Mitarbeitenden. Seit
+  dem Frühjahr läuft auf allen Arbeitsplätzen eine Software eines Berliner Anbieters, deren
+  lernendes Modell Gesprächsdauer, Pausen, Tastatur- und Mausaktivität sowie die Bewertung durch
+  Kunden auswertet und daraus für jede Person einen wöchentlichen Leistungswert berechnet. Die
+  Teamleitungen nutzen diesen Wert für Feedbackgespräche, und er fließt in die Entscheidung ein,
+  wessen befristeter Vertrag verlängert wird. Wir haben die Software so übernommen, wie der Anbieter
+  sie ausliefert. Unsere Kaffeeküche wurde gerade erweitert.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:4:b"]
+label_citation: ["annex:III:4:b", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: it monitors and evaluates workers' performance and feeds
+  contract-renewal decisions. It evaluates individual people (profiling), so Art. 6(3) cannot lift
+  it out of high-risk. Role: uses the vendor's software as delivered.
+tags:
+  - "annex_iii_area:4"

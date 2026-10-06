@@ -1,0 +1,21 @@
+id: annex-match-08-code-assignment-marks
+set_name: annex_match
+language: en
+description: >-
+  Our start-up in Tallinn has 15 people and builds CodeMark, a grading service for universities.
+  Students submit programming assignments, and our model, trained by us on past submissions, reads
+  the code, runs hidden tests, judges style and structure, and gives a mark out of 100 with written
+  feedback. Several universities in the Baltics use the mark directly as part of the course grade;
+  lecturers only look at appeals. We host the service ourselves and sell per-student licences. In
+  our spare time the team organises a monthly hackathon.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:3:b"]
+label_citation: ["annex:III:3:b", "art:6:2", "art:3:3"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: it evaluates learning outcomes and the mark counts
+  towards the grade. It evaluates individual people (profiling), so Art. 6(3) cannot lift it out of
+  high-risk. Role: develops and sells it.
+tags:
+  - "annex_iii_area:3"

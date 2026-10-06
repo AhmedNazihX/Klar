@@ -1,0 +1,22 @@
+id: annex-match-41-insulinpumpe-algorithmus
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein Medizintechnik-Start-up aus Jena mit 30 Mitarbeitenden. Unser Algorithmus läuft auf
+  einer Insulinpumpe, die wir gemeinsam mit einem Pumpenhersteller vertreiben: Ein lernendes Modell
+  liest alle fünf Minuten die Werte des Glukosesensors, erkennt die Tagesmuster der Patientinnen und
+  Patienten und passt die Insulinabgabe selbstständig an. Das System ist als Medizinprodukt der
+  Klasse IIb zertifiziert, das Konformitätsbewertungsverfahren lief über eine Benannte Stelle. Wir
+  sind als Hersteller der Software eingetragen und vertreiben das System in Deutschland und
+  Österreich. Seit Kurzem gibt es bei uns einen Bürohund.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:A:11"]
+label_citation: ["annex:I:A:11", "art:6:1:a", "art:6:1:b", "art:3:3"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: medical-device software (MDR, Annex I Section A point
+  11) of class IIb, assessed by a notified body, so both conditions of Art. 6(1) are met. Role:
+  registered manufacturer of the software, placing it on the market.
+tags:
+  - "annex_i_section:a"

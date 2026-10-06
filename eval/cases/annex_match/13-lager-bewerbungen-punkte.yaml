@@ -1,0 +1,22 @@
+id: annex-match-13-lager-bewerbungen-punkte
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein Logistikunternehmen aus dem Ruhrgebiet mit rund 2.000 Beschäftigten und stellen jedes
+  Jahr mehrere hundert Lagerkräfte und Disponenten ein. Seit März nutzen wir im Bewerbermanagement
+  ein KI-Zusatzmodul unseres HR-Softwareanbieters: Es liest die eingehenden Lebensläufe, vergleicht
+  sie mit der Stellenanzeige und vergibt jeder Bewerbung eine Punktzahl. Wer unter 40 Punkten liegt,
+  bekommt automatisch eine Absage, die übrigen sortiert das Modul für die Recruiter nach Rang. Wir
+  haben das Modul mit den Standardeinstellungen aktiviert. Außerdem haben wir in diesem Jahr unser
+  Logo modernisiert.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:4:a"]
+label_citation: ["annex:III:4:a", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: it analyses and filters job applications and evaluates
+  candidates. It evaluates individual people (profiling), so Art. 6(3) cannot lift it out of
+  high-risk. Role: uses the vendor's module as delivered.
+tags:
+  - "annex_iii_area:4"

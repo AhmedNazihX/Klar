@@ -1,0 +1,23 @@
+id: annex-match-07-business-school-admissions
+set_name: annex_match
+language: en
+description: >-
+  We are the admissions office of a private business school in Madrid with about 4,000 students. For
+  our bachelor programmes we use a platform bought from a US ed-tech company: applicants upload
+  transcripts, an essay and a recorded video answer, and the platform's model scores each file and
+  sorts applicants into admit, waitlist and reject. Our staff look at the waitlist by hand, but
+  admit and reject decisions go out largely as the system proposes. Around 9,000 people apply each
+  year. We set the weighting of grades versus essay ourselves within the vendor's settings. The
+  platform also handles our campus-tour bookings.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:3:a"]
+label_citation: ["annex:III:3:a", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: it determines admission to an educational institution.
+  It evaluates individual people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role:
+  choosing weights within the vendor's settings is configuration, not a substantial modification
+  (Art. 25(1)(b)), so it stays a deployer.
+tags:
+  - "annex_iii_area:3"

@@ -1,0 +1,22 @@
+id: annex-match-25-domestic-violence-risk
+set_name: annex_match
+language: en
+description: >-
+  We are a regional police service in Portugal. When officers attend a domestic-violence call, they
+  fill in a structured questionnaire on a tablet, and a machine-learning tool we bought from a
+  Spanish vendor combines the answers with previous call-outs at the address to estimate how likely
+  the victim is to be seriously harmed again in the next three months. The score decides the level
+  of protection: patrol visits, an emergency alarm or referral to a shelter. Officers can raise the
+  level but need approval to lower it. We use it as delivered. Our station also got new patrol bikes
+  this year.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:6:a"]
+label_citation: ["annex:III:6:a", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: law enforcement assesses the risk of a person becoming
+  the victim of a crime. It evaluates individual people (profiling), so Art. 6(3) cannot lift it out
+  of high-risk. Role: the police use the bought tool as delivered.
+tags:
+  - "annex_iii_area:6"

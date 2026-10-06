@@ -1,0 +1,22 @@
+id: annex-match-04-trailer-test-webcam-mimik
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein Marktforschungsinstitut in Hamburg mit rund 45 Mitarbeitenden. Für Filmverleiher und
+  Werbeagenturen testen wir Trailer und Spots: Die Testpersonen schauen sich die Clips zu Hause am
+  Laptop an, und unsere selbst entwickelte KI-Software wertet über die Webcam ihre Mimik aus.
+  Sekunde für Sekunde schätzt sie, ob jemand gerade Freude, Langeweile, Überraschung oder Ekel
+  empfindet, und erstellt daraus Kurven für jede Szene. Die Teilnehmenden willigen vorher ein und
+  bekommen einen Gutschein. Die Software lizenzieren wir inzwischen auch an zwei andere Institute in
+  Österreich. Nebenbei bauen wir gerade unser Panel in der Schweiz aus.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:1:c"]
+label_citation: ["annex:III:1:c", "art:6:2", "art:3:39", "art:3:3"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: inferring emotions from facial expressions is emotion
+  recognition (Art. 3(39)); consent does not take it out of 1(c), and test viewers are not workers
+  or students, so no Art. 5(1)(f). Role: develops the software and licenses it under its own name.
+tags:
+  - "annex_iii_area:1"

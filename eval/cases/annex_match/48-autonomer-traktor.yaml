@@ -1,0 +1,22 @@
+id: annex-match-48-autonomer-traktor
+set_name: annex_match
+language: de
+description: >-
+  Wir sind ein Landtechnikhersteller aus dem Emsland mit 600 Beschäftigten. Unser neuer Traktor kann
+  auf dem Feld ohne Fahrer arbeiten: Kameras und ein neuronales Netz erkennen Menschen, Rehe oder
+  Hindernisse im Weg und stoppen die Maschine. Für den Traktor beantragen wir die EU-Typgenehmigung
+  für land- und forstwirtschaftliche Fahrzeuge, bei der die Genehmigungsbehörde auch diese Funktion
+  prüft. Wir verkaufen über unser Händlernetz in Deutschland, den Niederlanden und Polen. Die Kabine
+  hat jetzt auch eine Kühlbox für die Brotzeit.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:B:15"]
+label_citation: ["annex:I:B:15", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: a safety component of an agricultural vehicle
+  type-approved under Regulation 167/2013 (Annex I Section B point 15). DOUBT (minor): whether the
+  driverless mode also brings in the Machinery Regulation (point 21); tractors are largely excluded
+  from it for risks the type-approval covers, so point 15 alone. Role: manufacturer.
+tags:
+  - "annex_i_section:b"

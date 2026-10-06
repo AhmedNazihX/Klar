@@ -1,0 +1,22 @@
+id: annex-match-17-home-care-hours
+set_name: annex_match
+language: en
+description: >-
+  We are the social services department of a county council in Sweden. Since last year, applications
+  for home-care support from elderly residents first go through an assessment tool we bought from a
+  Nordic public-sector software firm. Its machine-learning model reads the application, medical
+  certificates and previous case history, estimates how many hours of home care the person needs,
+  and recommends whether to grant, reduce or stop support. Caseworkers sign off each decision but
+  follow the recommendation in most cases. The tool runs in the vendor's cloud with our settings. We
+  are also renovating the council's main reception.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:5:a"]
+label_citation: ["annex:III:5:a", "art:6:2", "art:3:4"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: a public authority evaluates eligibility for public
+  assistance and care services and grants or reduces them. It evaluates individual people
+  (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the council uses the bought tool.
+tags:
+  - "annex_iii_area:5"

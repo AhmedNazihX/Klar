@@ -1,0 +1,21 @@
+id: annex-match-37-voter-message-targeting
+set_name: annex_match
+language: en
+description: >-
+  We're a 40-person political consultancy in Milan. For parties and candidates we run a platform
+  that sorts voters into segments from social-media activity and polling data, predicts which
+  arguments will move each segment, and generates thousands of tailored video and text ads that are
+  shown to undecided voters in the weeks before an election, with the aim of shifting how they vote.
+  We built the platform ourselves and offer it as a service in Italy and Austria. Our team also
+  writes a weekly politics newsletter.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:8:b"]
+label_citation: ["annex:III:8:b", "art:6:2", "art:3:3"]
+notes: >-
+  Awaiting user approval (X0 draft). Point: intended to influence voting behaviour, and voters see
+  its output directly, so the logistics exception in 8(b) does not apply. Role: builds it and offers
+  it as a service.
+tags:
+  - "annex_iii_area:8"
