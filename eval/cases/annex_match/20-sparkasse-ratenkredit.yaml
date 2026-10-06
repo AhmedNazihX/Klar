@@ -15,8 +15,9 @@ label:
   annex_point: ["annex:III:5:b"]
 label_citation: ["annex:III:5:b", "art:6:2", "art:3:4"]
 notes: >-
-  Awaiting user approval (X0 draft). Point: credit scoring of natural persons. It evaluates
-  individual people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: uses the
-  service provider's model unchanged.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: credit scoring of natural persons. It evaluates individual people
+  (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: uses the service provider's model
+  unchanged.
 tags:
   - "annex_iii_area:5"

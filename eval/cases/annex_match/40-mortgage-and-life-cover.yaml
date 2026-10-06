@@ -14,10 +14,10 @@ label:
   annex_point: ["annex:III:5:b", "annex:III:5:c"]
 label_citation: ["annex:III:5:b", "annex:III:5:c", "art:6:2", "art:3:4"]
 notes: >-
-  Awaiting user approval (X0 draft). Points: creditworthiness of individuals is 5(b); risk
-  assessment and pricing for life insurance is 5(c). Either point counts. It evaluates individual
-  people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the bank group uses the
-  vendor's modules as delivered.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Points: creditworthiness of individuals is 5(b); risk assessment and pricing for
+  life insurance is 5(c). Either point counts. It evaluates individual people (profiling), so Art.
+  6(3) cannot lift it out of high-risk. Role: the bank group uses the vendor's modules as delivered.
 tags:
   - "annex_iii_area:5"
   - "multi_point"

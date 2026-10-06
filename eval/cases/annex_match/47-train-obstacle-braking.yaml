@@ -15,8 +15,9 @@ label:
   annex_point: ["annex:I:B:17"]
 label_citation: ["annex:I:B:17", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
 notes: >-
-  Awaiting user approval (X0 draft). Point: a safety component of rolling stock under the Rail
-  Interoperability Directive (Annex I Section B point 17), assessed by a notified body. Role:
-  develops and supplies it.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: a safety component of rolling stock under the Rail Interoperability
+  Directive (Annex I Section B point 17), assessed by a notified body. Role: develops and supplies
+  it.
 tags:
   - "annex_i_section:b"

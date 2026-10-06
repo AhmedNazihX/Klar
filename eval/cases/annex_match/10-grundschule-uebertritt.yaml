@@ -15,11 +15,12 @@ label:
   annex_point: ["annex:III:3:c", "annex:III:3:a"]
 label_citation: ["annex:III:3:c", "annex:III:3:a", "art:6:2", "art:3:4"]
 notes: >-
-  Awaiting user approval (X0 draft). Point: recommending the secondary-school track assesses the
-  level of education a child will access (3(c)); because the track decides which school the child
-  goes to, it also assigns people to institutions (3(a)). Either point counts. It evaluates
-  individual people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the school
-  authority uses the bought software.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: recommending the secondary-school track assesses the level of education a
+  child will access (3(c)); because the track decides which school the child goes to, it also
+  assigns people to institutions (3(a)). Either point counts. It evaluates individual people
+  (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the school authority uses the
+  bought software.
 tags:
   - "annex_iii_area:3"
   - "multi_point"

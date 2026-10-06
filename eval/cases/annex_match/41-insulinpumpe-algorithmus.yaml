@@ -15,8 +15,9 @@ label:
   annex_point: ["annex:I:A:11"]
 label_citation: ["annex:I:A:11", "art:6:1:a", "art:6:1:b", "art:3:3"]
 notes: >-
-  Awaiting user approval (X0 draft). Point: medical-device software (MDR, Annex I Section A point
-  11) of class IIb, assessed by a notified body, so both conditions of Art. 6(1) are met. Role:
-  registered manufacturer of the software, placing it on the market.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: medical-device software (MDR, Annex I Section A point 11) of class IIb,
+  assessed by a notified body, so both conditions of Art. 6(1) are met. Role: registered
+  manufacturer of the software, placing it on the market.
 tags:
   - "annex_i_section:a"

@@ -14,11 +14,11 @@ label:
   annex_point: ["annex:III:1:b"]
 label_citation: ["annex:III:1:b", "art:6:2", "art:3:40", "art:3:34", "art:3:3"]
 notes: >-
-  Awaiting user approval (X0 draft). Point: assigning people to categories from behavioural and
-  physical (biometric, Art. 3(34)) data is biometric categorisation (Art. 3(40)), and disability is
-  a sensitive and protected attribute (health data; Charter Art. 21), so 1(b). Not an Art. 5(1)(g)
-  category. DOUBT: whether the help-dispatch purpose could fall under an Art. 6(3) exemption;
-  labelled high_risk because it categorises individuals by an inferred disability. Role: builds and
-  sells it.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: assigning people to categories from behavioural and physical (biometric,
+  Art. 3(34)) data is biometric categorisation (Art. 3(40)), and disability is a sensitive and
+  protected attribute (health data; Charter Art. 21), so 1(b). Categorising individuals by an
+  inferred disability is profiling, so Art. 6(3) cannot lift it out of high-risk; disability is not
+  an Art. 5(1)(g) category. Role: builds and sells it.
 tags:
   - "annex_iii_area:1"

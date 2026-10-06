@@ -15,8 +15,9 @@ label:
   annex_point: ["annex:I:A:9"]
 label_citation: ["annex:I:A:9", "art:6:1:a", "art:6:1:b", "art:3:3"]
 notes: >-
-  Awaiting user approval (X0 draft). Point: the AI is the safety component of category III personal
-  protective equipment (PPE Regulation, Annex I Section A point 9), which needs a notified body, so
-  Art. 6(1) is met. Role: manufacturer selling under its own name.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: the AI is the safety component of category III personal protective equipment
+  (PPE Regulation, Annex I Section A point 9), which needs a notified body, so Art. 6(1) is met.
+  Role: manufacturer selling under its own name.
 tags:
   - "annex_i_section:a"

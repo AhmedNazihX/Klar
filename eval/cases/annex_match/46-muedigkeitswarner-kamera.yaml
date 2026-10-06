@@ -15,10 +15,11 @@ label:
   annex_point: ["annex:I:B:19", "annex:I:B:18"]
 label_citation: ["annex:I:B:19", "annex:I:B:18", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
 notes: >-
-  Awaiting user approval (X0 draft). Points: a driver drowsiness and attention warning is a safety
-  system type-approved under the General Safety Regulation (Annex I Section B point 19) within the
-  vehicle type-approval framework (point 18). Either point counts. Fatigue is a physical state, not
-  an emotion, so 1(c) does not apply. Role: develops and supplies it.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Points: a driver drowsiness and attention warning is a safety system type-approved
+  under the General Safety Regulation (Annex I Section B point 19) within the vehicle type-approval
+  framework (point 18). Either point counts. Fatigue is a physical state, not an emotion, so 1(c)
+  does not apply. Role: develops and supplies it.
 tags:
   - "annex_i_section:b"
   - "multi_point"

@@ -14,8 +14,9 @@ label:
   annex_point: ["annex:I:A:4"]
 label_citation: ["annex:I:A:4", "art:6:1:a", "art:6:1:b", "art:3:3"]
 notes: >-
-  Awaiting user approval (X0 draft). Point: a safety component (Art. 3(14)) of a lift (Lifts
-  Directive, Annex I Section A point 4), and the lift needs a notified body, so Art. 6(1) is met.
-  Role: the manufacturer places the lift with the AI on the market under its name.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Point: a safety component (Art. 3(14)) of a lift (Lifts Directive, Annex I Section
+  A point 4), and the lift needs a notified body, so Art. 6(1) is met. Role: the manufacturer places
+  the lift with the AI on the market under its name.
 tags:
   - "annex_i_section:a"

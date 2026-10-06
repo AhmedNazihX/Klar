@@ -14,9 +14,10 @@ label:
   annex_point: ["annex:III:5:d", "annex:I:A:11"]
 label_citation: ["annex:III:5:d", "annex:I:A:11", "art:6:2", "art:6:1:a", "art:6:1:b", "art:3:3"]
 notes: >-
-  Awaiting user approval (X0 draft). Points: emergency healthcare patient triage is named in Annex
-  III 5(d); the software is also a class IIa medical device that needed a notified body, so Art.
-  6(1) via Annex I Section A point 11 applies too. Either point counts. Role: develops and sells it.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Points: emergency healthcare patient triage is named in Annex III 5(d); the
+  software is also a class IIa medical device that needed a notified body, so Art. 6(1) via Annex I
+  Section A point 11 applies too. Either point counts. Role: develops and sells it.
 tags:
   - "annex_iii_area:5"
   - "multi_point"

@@ -11,12 +11,15 @@ description: >-
 label:
   risk_class: high_risk
   role: provider
-  annex_point: ["annex:I:B:15"]
-label_citation: ["annex:I:B:15", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
+  annex_point: ["annex:I:B:15", "annex:I:B:21"]
+label_citation: ["annex:I:B:15", "annex:I:B:21", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
 notes: >-
-  Awaiting user approval (X0 draft). Point: a safety component of an agricultural vehicle
-  type-approved under Regulation 167/2013 (Annex I Section B point 15). DOUBT (minor): whether the
-  driverless mode also brings in the Machinery Regulation (point 21); tractors are largely excluded
-  from it for risks the type-approval covers, so point 15 alone. Role: manufacturer.
+  Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
+  clear labels). Points: a safety component of an agricultural vehicle type-approved under
+  Regulation 167/2013 (Annex I Section B point 15). The Machinery Regulation (point 21) excludes
+  tractors only 'as regards the risks covered by' Regulation 167/2013, and driverless operation is
+  arguably not such a risk, so point 21 is accepted too. Either point counts; the class (high_risk)
+  is unaffected. Role: manufacturer.
 tags:
   - "annex_i_section:b"
+  - "multi_point"
