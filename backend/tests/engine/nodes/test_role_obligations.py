@@ -1638,8 +1638,6 @@ def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     2026-10-06), and one tagged `also_role:` keeps that role. Replays the recording
     `recordings/engine/nodes/test_role_obligations/test_b5d_case_replay[<id>].yaml`; a missing
     one fails. Record with `RECORD_COMMAND`."""
-    label = case.label
-    assert isinstance(label, CaseLabel)
     if not runs_role_check(case):
         pytest.skip("the role check doesn't run for this case, or its label names no role")
     run_state = role_check_state(case, ROLE_AS_OF)

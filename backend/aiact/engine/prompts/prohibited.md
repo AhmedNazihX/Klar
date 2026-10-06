@@ -102,9 +102,9 @@ not ask for a fact the description already gives.
   with it. Answer `social_scoring` on its own definition above, whatever the purpose. Answer
   `unrelated_context_treatment` and `disproportionate_treatment` "no" (evidence "inferred", with
   `settled_in_law` "yes") only when nothing in the description points to either of them. A score
-  used, or having effects, outside the purpose and setting its data comes from points to (i).
-  Treatment that is unjustified (no legitimate aim, for example based on characteristics
-  unrelated to the purpose) or out of proportion to the behaviour it rests on points to (ii).
+  used, or having effects, outside the purpose and setting its data comes from, or one built on
+  data or characteristics unrelated to the purpose, points to (i). Treatment that is unjustified
+  (no legitimate aim) or out of proportion to the behaviour it rests on points to (ii).
   When the description points to one of them but leaves the fact open, answer it "unknown"; when
   the facts are stated and only the law leaves the condition open, follow the `settled_in_law`
   rule above.
