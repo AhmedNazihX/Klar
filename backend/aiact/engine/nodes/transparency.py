@@ -100,12 +100,14 @@ MARKING_DEADLINE = date(2026, 12, 2)
 ALL_DUTIES = ("art:50:1", "art:50:2", "art:50:3", "art:50:4")
 """Every duty Art. 50 places on a provider or a deployer."""
 
-GRACE_TEXTS = {
+GRACE_TEXTS: dict[MarketTiming, str] = {
     MarketTiming.PLACED_BEFORE: "grace",
     MarketTiming.IN_SERVICE_BEFORE: "grace_in_service",
     MarketTiming.UNKNOWN: "grace_unknown",
 }
 """The decision sentence for each launch date the grace period may concern."""
+PLACED_BEFORE_SENTENCE = GRACE_TEXTS[MarketTiming.PLACED_BEFORE]
+"""The only sentence that gives the grace period outright."""
 
 
 class TransparencyOutputError(ValueError):
@@ -118,7 +120,8 @@ class TransparencyOutputError(ValueError):
 @dataclass(frozen=True)
 class Settlement:
     """What Art. 50 gives: the step's status, the duties listed (applying, assumed or open), those
-    raised but ruled out, those open in law, those open on a fact, and the questions to ask."""
+    raised but ruled out (unless their paragraph is listed through its other part: Art. 50(4) has
+    two), those open in law, those open on a fact, and the questions to ask."""
 
     status: Status
     listed: tuple[Duty, ...]
@@ -146,10 +149,14 @@ def settle(answer: TransparencyAnswer) -> Settlement:
         status = Status.NEEDS_MORE_INFORMATION
     else:
         status = Status.DECIDED
+    listed = tuple(d for d in read if d.is_listed)
+    in_force = {d.provision for d in listed}
     return Settlement(
         status=status,
-        listed=tuple(d for d in read if d.is_listed),
-        considered=tuple(d for d in read if d.is_raised and not d.is_listed),
+        listed=listed,
+        considered=tuple(
+            d for d in read if d.is_raised and not d.is_listed and d.provision not in in_force
+        ),
         opened=opened,
         unknown=unknown,
         missing=tuple({key.id: key for key in asked}.values()),
@@ -167,6 +174,11 @@ def grace_text(
     if as_of >= MARKING_DEADLINE:
         return None
     return GRACE_TEXTS.get(timing)
+
+
+def grace_sentence(key: str, language: Language) -> str:
+    """The grace-period sentence `key` (one of `GRACE_TEXTS`' values), with the deadline."""
+    return texts.TEXTS[language][key].format(deadline=long_date(MARKING_DEADLINE, language.value))
 
 
 # --- The step -----------------------------------------------------------------------------------
@@ -230,10 +242,9 @@ def _grace(
         provision = library.provision(GRACE_PERIOD, lookup_for(state))
     except ProvisionNotFoundError:
         return None
-    deadline = long_date(MARKING_DEADLINE, language.value)
     is_unknown = timing is MarketTiming.UNKNOWN
     return Grace(
-        sentence=texts.TEXTS[language][key].format(deadline=deadline),
+        sentence=grace_sentence(key, language),
         provision=provision,
         questions=(key_question(texts.MARKET_DATE, language),) if is_unknown else (),
     )

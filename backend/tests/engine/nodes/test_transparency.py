@@ -7,6 +7,7 @@ own cases from `eval/cases/own/a/` and replay recorded model answers; the corpus
 recording run saw are stored next to each cassette (`<cassette>.corpus.json`).
 """
 
+import json
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import date
@@ -39,7 +40,12 @@ from aiact.engine.nodes.transparency import (
     TransparencyOutputError,
     to_outcome,
 )
-from aiact.engine.nodes.transparency_duties import DutyAnswer, MarketTiming, TransparencyAnswer
+from aiact.engine.nodes.transparency_duties import (
+    MAX_TEXT_CHARS,
+    DutyAnswer,
+    MarketTiming,
+    TransparencyAnswer,
+)
 from aiact.engine.scripted import Script, no_match, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
@@ -277,6 +283,16 @@ def test_an_exception_rules_a_duty_out_and_is_named() -> None:
         result.step.decision
     )
     assert cited(result) == ["art:50:1", "art:50:2"]
+
+
+def test_a_paragraph_listed_through_one_part_is_not_also_considered() -> None:
+    """Art. 50(4) has two parts: a deep fake listed and its text part ruled out name 50(4) once."""
+    reviewed = duty(Answer.YES, Answer.YES, fact="An editor reviews every text.")
+    result = outcome(answer(deep_fake=APPLIES, public_interest_text=reviewed))
+    assert result.transparency_duties == ("art:50:4",)
+    assert "Considered" not in result.step.decision
+    assert "An editor reviews every text." not in result.step.decision
+    assert cited(result) == ["art:50:4"]
 
 
 def test_every_duty_ruled_out_leaves_none_and_says_why() -> None:
@@ -665,6 +681,40 @@ def test_a_filtered_reply_with_a_usable_answer_is_used() -> None:
     assert result.transparency_duties == ("art:50:1",)
 
 
+LONG = "x" * (MAX_TEXT_CHARS + 1)
+
+
+@pytest.mark.parametrize(
+    "too_long",
+    [
+        {"fact": LONG},
+        {
+            "settled_in_law": Settled.NO,
+            "open_question": OpenQuestion(question=LONG, readings=("Applies.", "Not.")),
+        },
+        {
+            "settled_in_law": Settled.NO,
+            "open_question": OpenQuestion(question="Open?", readings=("Applies.", LONG)),
+        },
+    ],
+)
+def test_a_text_longer_than_the_cap_is_a_broken_output(too_long: dict[str, object]) -> None:
+    """Prose a description smuggles into a fact or an open question never reaches the step."""
+    long_part = APPLIES.model_construct(**{**dict(APPLIES), **too_long})
+    reply = json.dumps(
+        {**answer().model_dump(mode="json"), "interaction": long_part.model_dump(mode="json")}
+    )
+    check = TransparencyCheck(_settings(), chat=_fake_chat(reply), library=FakeLibrary())
+    with pytest.raises(TransparencyOutputError, match=f"longer than {MAX_TEXT_CHARS}") as raised:
+        check(state())
+    assert LONG not in str(raised.value)
+
+
+def test_a_text_at_the_cap_is_accepted() -> None:
+    at_cap = APPLIES.model_copy(update={"fact": "x" * MAX_TEXT_CHARS})
+    assert DutyAnswer.model_validate(at_cap.model_dump()).fact == at_cap.fact
+
+
 def test_a_reply_that_does_not_fit_the_schema_is_a_broken_output() -> None:
     reply = '{"interaction": {"fact": "SECRET-VALUE-7731"}}'
     check = TransparencyCheck(_settings(), chat=_fake_chat(reply), library=FakeLibrary())
@@ -779,6 +829,41 @@ def test_the_matcher_needs_the_labels_status() -> None:
     )
     assert transparency_matches(outcome(answer(synthetic_content=unsettled(APPLIES))), case)
     assert not transparency_matches(outcome(answer(synthetic_content=APPLIES)), case)
+
+
+def test_the_matcher_fails_a_minimal_deployer_case_listing_the_tools_marking() -> None:
+    case = _case(label={"risk_class": "minimal_risk", "role": "deployer"}, tags=[])
+    assert not transparency_matches(outcome(answer(synthetic_content=APPLIES)), case)
+
+
+def test_the_matcher_needs_every_tagged_duty_listed_even_another_roles() -> None:
+    case = _case(
+        label={"risk_class": "limited_risk", "role": "deployer"}, tags=["obligation:art:50:1"]
+    )
+    assert transparency_matches(outcome(answer(interaction=APPLIES)), case)
+    assert not transparency_matches(outcome(answer(synthetic_content=APPLIES)), case)
+
+
+def test_the_matcher_fails_an_ambiguous_step_against_a_decided_label() -> None:
+    case = _case(tags=["obligation:art:50:2"])
+    assert transparency_matches(outcome(answer(synthetic_content=APPLIES)), case)
+    assert not transparency_matches(outcome(answer(synthetic_content=unsettled(APPLIES))), case)
+
+
+@pytest.mark.parametrize("timing", [MarketTiming.UNKNOWN, MarketTiming.IN_SERVICE_BEFORE])
+def test_the_matcher_needs_the_grace_period_given_outright(timing: MarketTiming) -> None:
+    """An unread launch date or a system only put into service cites Art. 111(4) too, but
+    doesn't give the grace period."""
+    grace = _case(tags=["obligation:art:50:2", "timing:art111_4_grace"])
+    unsure = outcome(answer(timing, **MARKS))
+    assert "art:111:4" in cited(unsure)
+    assert not transparency_matches(unsure, grace)
+
+
+def test_the_matcher_reads_the_grace_period_in_german() -> None:
+    grace = _case(language="de", tags=["obligation:art:50:2", "timing:art111_4_grace"])
+    given = outcome(answer(MarketTiming.PLACED_BEFORE, **MARKS), state(language=Language.DE))
+    assert transparency_matches(given, grace)
 
 
 def test_the_matcher_checks_the_grace_period_both_ways() -> None:

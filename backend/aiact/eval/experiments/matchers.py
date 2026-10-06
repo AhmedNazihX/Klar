@@ -14,9 +14,11 @@ can't drift apart.
 - transparency (B5a): the label's status; no Art. 50 duty for a minimal_risk label and at least
   one for limited_risk (rule 2: the class describes the system); of the duties the labelled role
   bears itself (Art. 50(1)-(2) a provider, (3)-(4) a deployer), exactly the tagged
-  `obligation:art:50:` ones, so a trap duty listed fails; every tagged one listed; and Art.
-  111(4) cited when the case is tagged for the grace period (`timing:art111_4_grace`), and not
-  when it is tagged without it.
+  `obligation:art:50:` ones, so a trap duty listed fails; every tagged one listed. A case tagged
+  for the grace period (`timing:art111_4_grace`) needs it given outright: Art. 111(4) cited and
+  the placed-on-the-market sentence, not the one for an unknown date or one only put into
+  service. A case tagged without it (`timing:art111_4_no_grace`) must not cite Art. 111(4); one
+  only put into service (`timing:art111_4_put_into_service`) is a doubt and isn't scored.
 - role_obligations (B5d): the label's role, and its status when the label is legally ambiguous.
   The check is given the class the label settles (the role-only replay the user chose on
   2026-09-29).
@@ -25,6 +27,7 @@ can't drift apart.
 from datetime import date
 
 from aiact.engine.nodes.prohibited_practices import APPLICATION_DATES
+from aiact.engine.nodes.transparency import GRACE_PERIOD, PLACED_BEFORE_SENTENCE, grace_sentence
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import BenchmarkCase, CaseLabel, CaseSet
 from aiact.schemas import HighRiskRoute, Language, LawVersion, RiskClass, Role, Status, StepName
@@ -179,7 +182,6 @@ ROLE_DUTIES: dict[Role, frozenset[str]] = {
     Role.DEPLOYER: frozenset({"art:50:3", "art:50:4"}),
 }
 """The Art. 50 duties each role bears itself."""
-GRACE_PERIOD = "art:111:4"
 WITH_GRACE = "timing:art111_4_grace"
 WITHOUT_GRACE = "timing:art111_4_no_grace"
 
@@ -199,7 +201,8 @@ def transparency_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
         return False
     is_grace_cited = GRACE_PERIOD in cited(outcome)
     if WITH_GRACE in case.tags:
-        return is_grace_cited
+        given = grace_sentence(PLACED_BEFORE_SENTENCE, case.language)
+        return is_grace_cited and given in outcome.step.decision
     return not (WITHOUT_GRACE in case.tags and is_grace_cited)
 
 

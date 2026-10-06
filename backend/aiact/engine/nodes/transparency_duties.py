@@ -9,14 +9,20 @@ parts that both name `art:50:4`.
 
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from aiact.engine.nodes import transparency_texts as texts
 from aiact.engine.nodes.key_facts import Answer, Reading, Settled, every, need
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.schemas import EvidenceTag, OpenQuestion
 from aiact.schemas.base import ContractModel
+
+MAX_TEXT_CHARS = 600
+"""Bounds every text the model writes into the step (a `fact`, an open question and its
+readings): a sentence or two is all the prompt asks for, so a longer one is a broken output, and
+prose a description smuggles in can't fill the decision."""
 
 # --- The model's answer -------------------------------------------------------------------------
 
@@ -36,7 +42,8 @@ class DutyAnswer(ContractModel):
     whether the law settles that reading. Its `fact` sums up the reading, so it always counts as
     settled (an open fact is asked through its own question). Enum fields carry no description:
     strict structured output rejects keywords next to a `$ref`; the prompt explains every field
-    instead."""
+    instead. The texts are bounded by `MAX_TEXT_CHARS` in validation only, so the response format
+    (and every recorded request) stays the same."""
 
     covered: Answer
     exception: Answer
@@ -49,6 +56,17 @@ class DutyAnswer(ContractModel):
     @property
     def is_known(self) -> bool:
         return True
+
+    @model_validator(mode="after")
+    def _texts_are_short(self) -> Self:
+        question = self.open_question
+        texts_written = (
+            self.fact,
+            *((question.question, *question.readings) if question else ()),
+        )
+        if any(len(text) > MAX_TEXT_CHARS for text in texts_written):
+            raise ValueError(f"a fact, question or reading is longer than {MAX_TEXT_CHARS} chars")
+        return self
 
 
 class TransparencyAnswer(ContractModel):
