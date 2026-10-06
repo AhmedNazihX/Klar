@@ -1,0 +1,27 @@
+id: cb-075-outage-early-warning
+set_name: commission_b
+language: en
+description: >-
+  We're a 50-person grid-software company in Bilbao. Our early-warning module for distribution
+  network operators studies operating data, spots anomalies and predicts outages or incidents that
+  may be on the way. It then sends the grid control centre a warning, and the operators there can
+  decide to take precautions, such as shifting load. The module never switches anything itself;
+  it's one of many precautionary measures in the control room and the grid runs safely without it.
+  If it raises a false alarm, nothing breaks and no outage follows. Customers buy it under our
+  brand; version 2 is due in 2028. We're also sponsoring a university chair in power engineering.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:2", "art:3:14"]
+source_example_id: hr-ex-075
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the module only adds a precautionary warning to the
+  control room's options; it does not act on the grid, is not essential for safe operation and a
+  wrong warning causes no outage, so it lacks a direct safety function (Art. 3(14)): not a safety
+  component under Annex III point 2. Contrast hr-ex-071. No Art. 50 duty: minimal_risk. Role: it
+  develops and sells the module under its own name.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:not_high"

@@ -1,0 +1,28 @@
+id: cb-057-datacentre-fire-control
+set_name: commission_b
+language: de
+description: >-
+  Wir betreiben zwei Rechenzentren bei Frankfurt für Colocation und Cloud-Dienste und haben rund
+  220 Mitarbeitende. Ab 2028 übernimmt ein KI-System eines Brandschutzherstellers die Steuerung
+  unserer Brandmeldeanlage. Es wertet die Rauchansaugmelder, Temperaturfühler und Wärmebildkameras
+  in den Serverräumen aus, unterscheidet einen beginnenden Brand von harmlosen Auslösern wie Staub
+  bei Bauarbeiten und löst dann selbstständig den Alarm, die Abschaltung der betroffenen Racks und
+  die Gaslöschung aus. Wir haben das System gekauft und nicht verändert. Nebenbei stellen wir
+  gerade die Kühlung auf Abwärmenutzung für ein benachbartes Wohngebiet um.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:2"
+label_citation: ["annex:III:2", "art:3:14", "recital:55", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-057
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the system controls fire detection and suppression in
+  data centres that provide cloud services (critical digital infrastructure), a direct safety
+  function (Art. 3(14), recital 55): a safety component in its operation, Annex III point 2,
+  high-risk under Art. 6(2). No Art. 6(3) exemption: it acts on its own to prevent damage to the
+  infrastructure and harm to people. Role: deployer of a bought, unmodified system.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:high"

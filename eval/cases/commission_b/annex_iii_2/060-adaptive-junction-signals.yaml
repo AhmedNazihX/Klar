@@ -1,0 +1,27 @@
+id: cb-060-adaptive-junction-signals
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Verkehrstechnik-Unternehmen aus Graz mit etwa 120 Beschäftigten. Unser neues Produkt
+  ist eine Ampelsteuerung für Kreuzungen in Städten: Kameras und Induktionsschleifen erfassen den
+  Verkehr, ein von uns trainiertes Modell sagt voraus, wie sich Rückstaus und Fußgängerströme in
+  den nächsten Minuten entwickeln, und schaltet die Ampelphasen entsprechend um, ohne dass jemand
+  eingreifen muss. Verkaufen wollen wir die Software unter unserem Namen an Städte in Österreich
+  und Slowenien, die ersten Kreuzungen gehen 2028 in Betrieb. Außerdem planen wir für Kommunen
+  Parkleitsysteme.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:2"
+label_citation: ["annex:III:2", "art:3:14", "art:6:2"]
+source_example_id: hr-ex-060
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: monitoring traffic and switching the lights directly
+  protects road users from collisions, a safety function (Art. 3(14)) in the management of road
+  traffic: Annex III point 2, high-risk under Art. 6(2). It acts on its own, so no Art. 6(3)
+  exemption. Role: it develops the software and sells it under its own name. In service 2028.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:high"

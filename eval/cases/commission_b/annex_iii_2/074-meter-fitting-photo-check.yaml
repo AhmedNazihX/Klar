@@ -1,0 +1,28 @@
+id: cb-074-meter-fitting-photo-check
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Messstellenbetreiber aus Thüringen mit etwa 300 Mitarbeitenden und bauen jedes Jahr
+  Zehntausende Stromzähler ein. Nach jedem Einbau fotografiert der Monteur den Zählerplatz mit dem
+  Diensthandy. Unser eigenes Datenteam hat ein Modell entwickelt, das diese Fotos prüft und dem
+  Monteur noch vor Ort Hinweise gibt, zum Beispiel dass die Plombe fehlt, die Zählernummer nicht
+  lesbar ist oder ein Aufkleber fehlt. Was er daraufhin nachbessert, entscheidet der Monteur
+  selbst; in den Netzbetrieb greift das Modell nicht ein. Ab 2028 nutzen es alle Teams. Im Herbst
+  ziehen wir in ein neues Lager in Erfurt.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:2", "art:3:14"]
+source_example_id: hr-ex-074
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: checking photos of installed meters and giving the
+  fitter recommendations is quality assurance with no direct safety function (Art. 3(14)), so not
+  a safety component in the supply of electricity: not Annex III point 2. No Art. 50 duty:
+  minimal_risk. Role: it develops the model and puts it into service for its own teams
+  (provider, also deployer).
+tags:
+  - "area:annex_iii_2"
+  - "verdict:not_high"
+  - "also_role:deployer"

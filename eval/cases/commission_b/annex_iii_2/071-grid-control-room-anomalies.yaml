@@ -1,0 +1,31 @@
+id: cb-071-grid-control-room-anomalies
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein regionaler Stromnetzbetreiber in Niedersachsen mit rund 1.800 Beschäftigten. In
+  unserer Leitwarte führen wir 2028 ein KI-System eines Softwarehauses ein, das laufend die
+  Messdaten aus Umspannwerken und Leitungen auswertet und Auffälligkeiten erkennt, während wir das
+  Netz betreiben. Es wird zum zentralen Werkzeug, mit dem unsere Schaltingenieure den Netzzustand
+  überwachen, und seine Befunde sind die Grundlage ihrer Entscheidungen über die Verteilung der
+  Last, über Eingriffe zur Stabilisierung des Netzes und über Abschaltungen. Wir übernehmen das
+  System in der Standardkonfiguration des Herstellers. Gleichzeitig modernisieren wir unseren
+  Fuhrpark für den Störungsdienst.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:2"
+label_citation: ["annex:III:2", "art:3:14", "art:6:2"]
+source_example_id: hr-ex-071
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: anomaly detection in live grid operation that
+  monitors and supports decisions on critical functions (load distribution, grid stability,
+  shutdowns) is a safety component in the supply of electricity: Annex III point 2, high-risk
+  under Art. 6(2). Doubt: the line to hr-ex-075 and hr-ex-076 (anomaly detection that only adds a
+  precautionary warning, or feeds later improvements: not high) is thin; this rewrite makes the
+  system the main basis for those critical decisions. Role: deployer of an unmodified bought
+  system.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:high"

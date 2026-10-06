@@ -1,0 +1,26 @@
+id: cb-073-grid-network-intrusion-watch
+set_name: commission_b
+language: en
+description: >-
+  We're a transmission system operator with about 3,000 employees. Our security operations centre
+  is adding a network-detection product from a specialist vendor in 2028. It watches the traffic on
+  the communication networks that link our substations and offices around the clock, learns what
+  normal traffic looks like, and alerts our analysts to anything suspicious, such as a possible
+  intrusion or malware. It is used only for cybersecurity. It has no connection to, and no control
+  over, the operational systems that switch and steer the grid. We run it unchanged. This year we
+  also launched an apprenticeship programme for electricians.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:2", "art:3:14", "recital:55"]
+source_example_id: hr-ex-073
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: monitoring grid communication networks solely for
+  cyber threats, independent of the operational technology that controls the grid, is a
+  cybersecurity use; recital 55 says such components are not safety components, so not Annex III
+  point 2. No Art. 50 duty: minimal_risk. Role: deployer of a bought product.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:not_high"

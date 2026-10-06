@@ -1,0 +1,31 @@
+id: cb-059-bus-radio-live-translation
+set_name: commission_b
+language: en
+description: >-
+  We run the city bus network in Brussels-area suburbs, around 2,300 staff and 600 buses. Many of
+  our newer drivers came from abroad and are still learning French or Dutch. From 2028 every
+  driver's cab radio will include a speech translation tool we're buying from a software vendor:
+  when the control room calls about a diversion, an accident or a medical emergency on board, the
+  driver hears it in their own language in real time, and their reply reaches the controller
+  translated back. Drivers can also use it to understand passengers who come to the front with a
+  problem. We've not changed the vendor's product. We're also trialling double-decker electric
+  buses on two lines.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:2"
+label_citation: ["annex:III:2", "art:3:14", "art:6:2"]
+source_example_id: hr-ex-059
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the Commission treats a real-time translation tool
+  that lets transport staff communicate with the control centre and passengers as contributing to
+  the safety of public transport operations, so a safety component in road traffic, Annex III
+  point 2, high-risk under Art. 6(2). Doubt: a broad reading of "safety component", but the
+  Commission's verdict is settled. Translation is a minor alteration under the Art. 50(2)
+  exception and translation tools do not interact directly with people (as own-a-10), so no
+  Art. 50 duty. Role: deployer of an unmodified bought tool.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:high"
