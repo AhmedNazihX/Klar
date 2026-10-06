@@ -59,6 +59,7 @@ from aiact.schemas import (
 )
 from aiact.schemas.result import derived_status
 from aiact.settings import Settings
+from tests.engine.built_corpus import unresolved_citations
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -1565,7 +1566,9 @@ RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_role_obligations.py --re
 
 @pytest.mark.vcr
 def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> None:
-    outcome = RoleObligationsCheck(luna_settings)(state(description=REBRANDER))
+    run_state = state(description=REBRANDER)
+    outcome = RoleObligationsCheck(luna_settings)(run_state)
+    assert not unresolved_citations(outcome.step, run_state)
     assert finding(outcome).role is Role.PROVIDER
     assert "25(1)(a)" in (finding(outcome).role_switch_reason or "")
     assert "art:16:a" in articles(outcome)
@@ -1602,7 +1605,9 @@ def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     assert isinstance(label, CaseLabel)
     if not runs_role_check(case):
         pytest.skip("the role check doesn't run for this case, or its label names no role")
-    outcome = RoleObligationsCheck(luna_settings)(role_check_state(case, ROLE_AS_OF))
+    run_state = role_check_state(case, ROLE_AS_OF)
+    outcome = RoleObligationsCheck(luna_settings)(run_state)
+    assert not unresolved_citations(outcome.step, run_state)
     assert finding(outcome).role is label.role
     switches = {f"art:25:1:{s[-1]}" for s in tag(case, "role_switch") if s != "none"}
     if switches:

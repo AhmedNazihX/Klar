@@ -48,6 +48,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
+from tests.engine.built_corpus import unresolved_citations
 from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -690,7 +691,9 @@ def test_b5b_case_replay(
         lambda: nullcontext(CorpusLibrary()),
     ) as recording:
         library = RecordedScopeLibrary(recording)
-        outcome = ScopeCheck(luna_settings, library=library)(replay_state(case, AS_OF))
+        run_state = replay_state(case, AS_OF)
+        outcome = ScopeCheck(luna_settings, library=library)(run_state)
+    assert not unresolved_citations(outcome.step, run_state)
     matches = scope_matches(outcome, case)
     gap = KNOWN_GAPS.get(case.id)
     if gap is not None:
