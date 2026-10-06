@@ -63,11 +63,16 @@ async def limit_lookups(request: Request) -> None:
     _count(api_context(request).lookup_limit, request)
 
 
+def client_key(request: Request) -> str:
+    """The client's address, the rate limits' key: the connection's peer (X-Forwarded-For is
+    never read here; uvicorn applies it only for API_FORWARDED_ALLOW_IPS)."""
+    return request.client.host if request.client is not None else UNKNOWN_CLIENT
+
+
 def _count(limiter: RateLimiter, request: Request) -> None:
-    """Count the request for the client's address (the connection's peer: X-Forwarded-For is
-    never read here), and answer 429, with `Retry-After`, once its window is used up."""
-    client = request.client.host if request.client is not None else UNKNOWN_CLIENT
-    retry_after = limiter.acquire(client)
+    """Count the request for the client's address, and answer 429, with `Retry-After`, once
+    its window is used up."""
+    retry_after = limiter.acquire(client_key(request))
     if retry_after is not None:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,

@@ -8,6 +8,7 @@ import json
 import logging
 import threading
 from collections.abc import Iterator
+from dataclasses import dataclass
 
 import anyio
 import httpx
@@ -300,21 +301,30 @@ COST_LINE = "classification cost"
 """The line the engine logs once per run, when its event stream is closed or finished."""
 
 
-@pytest.mark.anyio
-async def test_a_client_that_leaves_stops_and_closes_the_run(
-    app: FastAPI, caplog: pytest.LogCaptureFixture
-) -> None:
-    """The client disconnects while scope runs: scope finishes (a thread can't be interrupted),
-    no later check starts, and the run is closed (its cost logged once) before the app
-    returns. Scope is released only once every task is blocked, so the disconnect has been
-    handled by then."""
-    gate = ScopeGate()
+@dataclass(frozen=True)
+class LeftRun:
+    """What a client that left mid-run saw, and the run's state when the app returned."""
+
+    sent: tuple[dict[str, object], ...]
+    ran: tuple[StepName, ...]
+    cost_lines: int
+
+    @property
+    def bodies(self) -> bytes:
+        return b"".join(body for m in self.sent if isinstance(body := m.get("body"), bytes))
+
+
+async def leave_while_scope_runs(
+    app: FastAPI, gate: ScopeGate, caplog: pytest.LogCaptureFixture
+) -> LeftRun:
+    """POST /classify over raw ASGI and disconnect once the scope check has started. Scope is
+    released only once every task is blocked, so the disconnect has been handled by then. The
+    run's state is read the moment the app returns."""
     stub = scripted_nodes(Script())
     use_nodes(app, EngineNodes(stub.facts, gate.checks(), stub.finalize))
     sent: list[dict[str, object]] = []
     calls = 0
-    closed_when_the_app_returned = -1
-    ran_when_the_app_returned: list[StepName] = []
+    left: LeftRun | None = None
 
     async def release_when_idle() -> None:
         await anyio.wait_all_tasks_blocked()
@@ -337,15 +347,24 @@ async def test_a_client_that_leaves_stops_and_closes_the_run(
 
             with anyio.fail_after(10):
                 await app(http_scope(), receive, send)  # pyright: ignore[reportArgumentType]
-            closed_when_the_app_returned = caplog.text.count(COST_LINE)
-            ran_when_the_app_returned = list(gate.ran)
+            left = LeftRun(tuple(sent), tuple(gate.ran), caplog.text.count(COST_LINE))
     gate.release.set()
-    assert ran_when_the_app_returned == [StepName.SCOPE]
-    assert closed_when_the_app_returned == 1
-    assert sent[0]["status"] == 200
-    bodies = b"".join(body for m in sent if isinstance(body := m.get("body"), bytes))
-    assert b'"event":"result"' not in bodies
-    assert b'"event":"step","step":{"step":"scope"' not in bodies
+    assert left is not None
+    return left
+
+
+@pytest.mark.anyio
+async def test_a_client_that_leaves_stops_and_closes_the_run(
+    app: FastAPI, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Scope finishes (a thread can't be interrupted), no later check starts, and the run is
+    closed (its cost logged once) before the app returns."""
+    left = await leave_while_scope_runs(app, ScopeGate(), caplog)
+    assert left.ran == (StepName.SCOPE,)
+    assert left.cost_lines == 1
+    assert left.sent[0]["status"] == 200
+    assert b'"event":"result"' not in left.bodies
+    assert b'"event":"step","step":{"step":"scope"' not in left.bodies
 
 
 # --- Classifications at once --------------------------------------------------------------------
@@ -408,3 +427,37 @@ async def test_a_failed_setup_gives_its_slot_back(one_slot_app: FastAPI) -> None
         assert (await post(client)).status_code == 503
         use_nodes(one_slot_app, scripted_nodes(Script()))
         assert (await post(client)).status_code == 200
+
+
+@pytest.mark.anyio
+async def test_a_client_that_leaves_gives_its_slot_back(
+    one_slot_app: FastAPI, caplog: pytest.LogCaptureFixture
+) -> None:
+    await leave_while_scope_runs(one_slot_app, ScopeGate(), caplog)
+    use_nodes(one_slot_app, scripted_nodes(Script()))
+    transport = httpx.ASGITransport(app=one_slot_app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        assert (await post(client)).status_code == 200
+
+
+@pytest.mark.anyio
+async def test_a_busy_refusal_does_not_spend_the_clients_rate_limit() -> None:
+    """With two classifications a minute, one running and one refused as busy, the client
+    still has its second classification once the slot is free."""
+    app = create_app(api_settings(classify_max_concurrent=1, rate_limit_classify=2))
+    gate = ScopeGate()
+    stub = scripted_nodes(Script())
+    use_nodes(app, EngineNodes(stub.facts, gate.checks(), stub.finalize))
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        refused: httpx.Response | None = None
+        async with anyio.create_task_group() as tasks:
+            tasks.start_soon(post, client)
+            with anyio.fail_after(10):
+                await anyio.to_thread.run_sync(gate.started.wait)
+            refused = await post(client)
+            gate.release.set()
+        assert refused is not None and refused.status_code == 503
+        use_nodes(app, scripted_nodes(Script()))
+        assert (await post(client)).status_code == 200
+        assert (await post(client)).status_code == 429  # the limit itself still holds

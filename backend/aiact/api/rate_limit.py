@@ -48,6 +48,16 @@ class RateLimiter:
             self._windows[key] = _Window(started=window.started, used=window.used + 1)
             return None
 
+    def refund(self, key: str) -> None:
+        """Give back one request `key` was counted for in its current window (a request the
+        API turned away for its own reasons, not the client's)."""
+        now = self._clock()
+        with self._lock:
+            window = self._windows.get(key)
+            if window is None or window.used == 0 or now - window.started >= WINDOW_SECONDS:
+                return
+            self._windows[key] = _Window(started=window.started, used=window.used - 1)
+
     def _sweep(self, now: float) -> None:
         """Drop the windows that have ended, once per window length."""
         if now - self._swept < WINDOW_SECONDS:

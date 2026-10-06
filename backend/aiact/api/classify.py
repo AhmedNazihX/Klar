@@ -26,11 +26,17 @@ import logging
 from collections.abc import AsyncIterator, Generator, Iterator
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.concurrency import iterate_in_threadpool
 from fastapi.sse import EventSourceResponse
 
-from aiact.api.dependencies import ApiContext, api_context, limit_classify, node_builder
+from aiact.api.dependencies import (
+    ApiContext,
+    api_context,
+    client_key,
+    limit_classify,
+    node_builder,
+)
 from aiact.engine import ClassifyEvent, ClassifyRequest, stream_classification
 from aiact.engine.classify import NodeBuilder
 from aiact.llm import LLMConfigError
@@ -55,15 +61,18 @@ router = APIRouter()
 
 
 def started_run(
+    request: Request,
     body: ClassifyRequest,
     context: Annotated[ApiContext, Depends(api_context)],
     build_nodes: Annotated[NodeBuilder, Depends(node_builder)],
 ) -> Generator[Iterator[ClassifyEvent], None, None]:
     """The run's events, with a slot taken and the run set up before the response starts (in
-    the threadpool). Raises a 503 when no slot is free or the setup fails. When the request
-    ends, however it ends, the run is closed and the slot freed."""
+    the threadpool). Raises a 503 when no slot is free (giving back the rate-limit count the
+    request took, since it never ran) or the setup fails. When the request ends, however it
+    ends, the run is closed and the slot freed."""
     slots = context.classify_slots
     if not slots.try_acquire():
+        context.classify_limit.refund(client_key(request))
         logger.warning("classification refused: every slot is taken")
         raise HTTPException(
             status.HTTP_503_SERVICE_UNAVAILABLE,

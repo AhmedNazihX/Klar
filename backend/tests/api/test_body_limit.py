@@ -86,9 +86,10 @@ async def test_a_streamed_body_under_the_cap_gets_through(small_app: FastAPI) ->
 
 
 def largest_classification() -> bytes:
-    """The biggest body ClassifyRequest accepts, all in two-byte UTF-8 characters, with answer
-    ids as long as real question ids get."""
-    char = "ä"
+    """The biggest body ClassifyRequest accepts, all in three-byte UTF-8 characters (the euro
+    sign), with answer ids as long as real question ids get."""
+    char = "€"
+    assert len(char.encode()) == 3
     answers = {
         f"answer_question_id_{i:02d}": char * ClassifyRequest.MAX_ANSWER_CHARS
         for i in range(ClassifyRequest.MAX_ANSWERS)

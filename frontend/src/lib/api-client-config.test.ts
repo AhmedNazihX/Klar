@@ -16,8 +16,9 @@ describe('createClientConfig', () => {
 
 describe('classify', () => {
   it('does not retry a failed run, which would start a second paid classification', async () => {
-    // A retry would reach the handler again: the second request aborts the stream, so a
-    // regression fails the count below instead of looping.
+    // A retry would reach the handler again without waiting (the no-op sleep), and the second
+    // request aborts the stream, so a regression fails the request count below at once instead
+    // of looping or timing out.
     const controller = new AbortController()
     let requests = 0
     server.use(
@@ -32,6 +33,8 @@ describe('classify', () => {
       body: { description: 'A chatbot that answers customer questions.', language: 'en' },
       onSseError,
       signal: controller.signal,
+      // Not in the generated options type, but passed through to the SSE client.
+      ...{ sseSleepFn: () => Promise.resolve() },
     })
     const events: unknown[] = []
     for await (const event of stream) events.push(event)

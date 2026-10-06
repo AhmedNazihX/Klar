@@ -725,7 +725,7 @@ def api_serve() -> None:
         host=settings.api_host,
         port=settings.api_port,
         proxy_headers=settings.api_proxy_headers,
-        forwarded_allow_ips=settings.api_forwarded_allow_ips,
+        forwarded_allow_ips=list(settings.api_forwarded_allow_ips),
     )
 
 

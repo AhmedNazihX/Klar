@@ -48,6 +48,17 @@ def test_retry_after_is_at_least_one_second() -> None:
     assert limiter.acquire("a") == 1
 
 
+def test_a_refund_gives_back_one_request_of_the_current_window() -> None:
+    clock = FakeClock()
+    limiter = RateLimiter(1, clock=clock)
+    limiter.refund("a")  # nothing counted yet: no credit is built up
+    assert limiter.acquire("a") is None
+    assert limiter.acquire("a") is not None
+    limiter.refund("a")
+    assert limiter.acquire("a") is None
+    assert limiter.acquire("a") is not None
+
+
 def test_ended_windows_are_swept() -> None:
     clock = FakeClock()
     limiter = RateLimiter(1, clock=clock)
@@ -131,6 +142,6 @@ def test_serve_passes_the_proxy_settings_to_uvicorn(monkeypatch: pytest.MonkeyPa
             "host": "127.0.0.1",
             "port": 8000,
             "proxy_headers": False,
-            "forwarded_allow_ips": "",
+            "forwarded_allow_ips": [],
         }
     ]
