@@ -1,0 +1,34 @@
+id: cb-001-boiler-air-gas-tuning
+set_name: commission_b
+language: en
+description: >-
+  We build wall-mounted gas boilers for homes in a factory near Valencia, roughly 300 people. Our
+  engineers trained a small machine-learning model that keeps adjusting the air-to-gas ratio of
+  the burner while it runs, so the boiler burns less fuel; that saving is the selling point. The
+  catch our safety team keeps raising: if the model gets the mix badly wrong, the burner can
+  start producing carbon monoxide, or the flame can become unstable and the room fill with
+  unburnt gas. Every boiler model we sell goes through EU type-examination by a notified body
+  under the gas appliances regulation, and the tuning software is part of the design they
+  examine. Boilers with the new controller ship from spring 2029. We are also opening a
+  showroom in Madrid.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:I:A:10"
+label_citation: ["art:6:1:a", "art:6:1:b", "art:6:1b", "art:3:14", "annex:I:A:10"]
+source_example_id: hr-ex-001
+accepted_bases: ["safety_component"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the model's purpose is fuel efficiency (performance
+  optimisation, which Art. 6(1a) alone would exclude), but its malfunction could cause carbon
+  monoxide or a gas build-up, so Art. 6(1b) makes it a safety component (Art. 3(14)) of an
+  appliance burning gaseous fuels (Annex I Section A point 10). The notified-body type-examination
+  covering the software meets Art. 6(1)(b), stated so the third-party assessment is not assumed
+  (the source row's Art. 6(1) note). high_risk. Role: it develops the model and places the
+  boilers on the market under its own name (Art. 3(3), Art. 25(3)). Ships after 2 August 2028,
+  so Art. 111(2) does not arise.
+tags:
+  - "area:annex_i"
+  - "annex_i_section:a"
+  - "verdict:high"

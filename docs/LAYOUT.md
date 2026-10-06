@@ -116,7 +116,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── cases/                       labelled cases, frozen per category (B10a, decision 017) and tagged labels-v1 (B10b); folders created by F7,
 │   │                                <set>/**/*.yaml, one case or a list per file, BenchmarkCase schema
 │   │                                in aiact/eval/cases.py (qa/ holds QAItem items, loaded by load_qa_items; F7b)
-│   │   ├── commission_b/            (B4)
+│   │   ├── commission_b/            <area>/<NNN>-<slug>.yaml: one rewrite per Pile B example, by Annex area
+│   │   │                            (annex_i, annex_iii_1 … annex_iii_8), NNN its hr-ex number (B4)
 │   │   ├── own/<category>/          (B5a–e)
 │   │   ├── soft_pairs/              (B6)
 │   │   ├── qa/                      (B7)

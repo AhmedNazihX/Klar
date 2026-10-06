@@ -1,0 +1,33 @@
+id: cb-007-lift-door-controller
+set_name: commission_b
+language: en
+description: >-
+  We design and install passenger lifts for office towers and hotels, about 250 staff, based in
+  Lyon. For our next lift model our software team built a door controller with a learned model
+  that reads the light curtain and the door motor current. It decides how long the doors stay
+  open at each floor and spots people, pushchairs or luggage in the doorway. We developed it to
+  cut waiting times in busy buildings, but we know that if it misjudges, closing doors could
+  strike or trap a passenger. Each lift we install is examined by a notified body before we hand
+  it over, as the lifts directive requires, and the controller is part of what they examine.
+  The first installations are planned for early 2029. Most of our revenue still comes from
+  maintenance contracts.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:I:A:4"
+label_citation: ["art:6:1:a", "art:6:1:b", "art:6:1b", "art:3:14", "annex:I:A:4"]
+source_example_id: hr-ex-007
+accepted_bases: ["safety_component"]
+label_status: settled
+notes: >-
+  Draft label, awaiting user approval. Class: the controller's purpose is efficient operation
+  (which Art. 6(1a) alone would exclude), but a malfunction could injure passengers, so Art. 6(1b)
+  makes it a safety component (Art. 3(14)) of a lift (Annex I Section A point 4). The
+  notified-body examination covering the controller meets Art. 6(1)(b), stated rather than
+  assumed (the source row's Art. 6(1) note). high_risk. Role: it develops the controller and
+  installs the lifts under its own name (Art. 3(3), Art. 25(3)). First installations after
+  2 August 2028.
+tags:
+  - "area:annex_i"
+  - "annex_i_section:a"
+  - "verdict:high"
