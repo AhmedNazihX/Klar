@@ -10,6 +10,9 @@ import en from './locales/en.json'
 export const SUPPORTED_LANGUAGES = ['en', 'de'] as const
 export type Language = (typeof SUPPORTED_LANGUAGES)[number]
 
+/** The locale `Intl` formats each language in (dates, lists): British English and German. */
+export const LANGUAGE_LOCALES: Readonly<Record<Language, string>> = { en: 'en-GB', de: 'de-DE' }
+
 export const LANGUAGE_STORAGE_KEY = 'klar.language'
 const resources = { en: { translation: en }, de: { translation: de } } as const
 

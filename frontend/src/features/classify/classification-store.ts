@@ -13,6 +13,9 @@ export type ClassificationRun = {
   result: ClassificationResult
 }
 
+/** Every run's query starts with this key, so a sign-out can forget them all. */
+export const classificationRunKey = ['classification-run'] as const
+
 /**
  * A run's result, held in the query cache for this session under its tool id. The Classify
  * screen puts it there when the stream ends; nothing loads it from anywhere else yet, so a tool
@@ -20,7 +23,7 @@ export type ClassificationRun = {
  */
 export function classificationRunOptions(toolId: string) {
   return queryOptions({
-    queryKey: ['classification-run', toolId] as const,
+    queryKey: [...classificationRunKey, toolId] as const,
     queryFn: (): ClassificationRun | null => null,
     staleTime: Infinity,
     gcTime: Infinity,

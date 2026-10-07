@@ -258,6 +258,71 @@
       "failed": "That didn't work. Check your connection and try again."
     }
   },
+  "yourData": {
+    "intro": "Everything lives in your anonymous session. Take it with you or delete it, whenever you like.",
+    "keep": {
+      "heading": "What Klar keeps",
+      "systems": "Tools and their descriptions",
+      "classifications": "Classification results",
+      "interviewAnswers": "Answers for your draft documents",
+      "dutyProgress": "Ticked duties on your checklists",
+      "companyProfiles": "Company profile",
+      "storage": "{{used}} of {{budget}} storage used",
+      "retention": "Deleted automatically after 30 days without activity. Never used to train models.",
+      "failed": "Klar couldn’t load what it keeps. Check your connection and reload the page."
+    },
+    "who": {
+      "heading": "Who processes it",
+      "models": "Language models, through OpenRouter",
+      "modelsRole": "Checks and answers",
+      "modelsDetail": "OpenRouter passes each request on; its own processing isn’t limited to the EU. The models run in EU regions on Microsoft Azure and Google Vertex AI.",
+      "search": "Search of the legal texts, on an EU host",
+      "searchRole": "Embeddings",
+      "searchDetail": "Nebius, in the EU, turns your description into a search of the Act.",
+      "storage": "Session storage",
+      "storageRole": "Supabase",
+      "storageDetail": "Your saved data, visible only to you.",
+      "noTraining": "Every request to a model is sent with zero data retention and no training.",
+      "privacyLink": "Read the privacy notice"
+    },
+    "download": {
+      "heading": "Download everything",
+      "body": "A copy of all your data in one file (JSON), for your records or other tools. Import it to restore it in a new session.",
+      "button": "Download data (JSON)",
+      "pending": "Preparing…",
+      "failed": "The download didn’t work. Check your connection and try again."
+    },
+    "delete": {
+      "heading": "Delete my data",
+      "body": "Deletes everything Klar keeps for this session: your tools, descriptions, results, document answers, checklist ticks and company profile, and ends the session. This can’t be undone, so download a copy first if you need one.",
+      "button": "Delete my data",
+      "dialogTitle": "Delete everything?",
+      "dialogBody": "Your tools with their descriptions and results, your document answers, checklist ticks and company profile will be deleted for good. This can’t be undone.",
+      "dialogBodyCounts": "Klar will delete {{items}} for good. This can’t be undone.",
+      "lost": {
+        "systems_one": "{{count}}\u00a0tool",
+        "systems_other": "{{count}}\u00a0tools",
+        "classifications_one": "{{count}}\u00a0result",
+        "classifications_other": "{{count}}\u00a0results",
+        "interviewAnswers_one": "{{count}}\u00a0document answer",
+        "interviewAnswers_other": "{{count}}\u00a0document answers",
+        "dutyProgress_one": "{{count}}\u00a0ticked duty",
+        "dutyProgress_other": "{{count}}\u00a0ticked duties",
+        "companyProfile": "your company profile"
+      },
+      "word": "DELETE",
+      "confirmLabel": "Type {{word}} to confirm",
+      "cancel": "Cancel",
+      "confirm": "Delete everything",
+      "pending": "Deleting…",
+      "failed": "Your data wasn’t deleted. Check your connection and try again."
+    },
+    "deleted": {
+      "title": "Your data is deleted.",
+      "body": "Your tools, descriptions, results, document answers, checklist ticks and company profile are gone, and this session has ended. Nothing is kept for training.",
+      "startAgain": "Start again"
+    }
+  },
   "classify": {
     "title": "Describe the tool",
     "subtitle": "A few sentences are enough. Klar asks for anything that decides the outcome.",
@@ -275,6 +340,16 @@
       "changes": "anything you changed"
     },
     "privacy": "Leave out names and other personal details of applicants or staff.",
+    "personalData": {
+      "title": "This description may contain personal data:",
+      "kinds": {
+        "email": "an email address",
+        "phone": "a phone number",
+        "iban": "a bank account number (IBAN)",
+        "name": "what looks like a person’s name"
+      },
+      "advice": "Klar doesn’t need it to classify the tool. Describe people by their role instead, such as “the applicant” or “a team lead”. This check runs in your browser and sends nothing."
+    },
     "language": "Klar answers in English. Citations quote the English text.",
     "run": "Run the checks",
     "running": "Checking…",

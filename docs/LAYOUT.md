@@ -208,17 +208,21 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
-│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6)
+│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12)
 │       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15),
 │       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18),
-│       │                            use-classify.ts (the streamed run), use-language.ts (P5)
+│       │                            use-classify.ts (the streamed run), use-language.ts (P5),
+│       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
-│       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18)
+│       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
+│       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
 │       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4), reduced-motion.ts (matchMedia stub, P14),
 │                                    browser-setup.ts (the browser project), shell-routes.ts (every screen route, by frame) (P15),
 │                                    user-data-handlers.ts (MSW handlers for the user's Supabase data, P18),
+│                                    your-data-store.ts (an in-memory user-data store behind the counts, export, import and delete, P12),
+│                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded
 │                                    worked example's SSE events and result variants, P5)
 │

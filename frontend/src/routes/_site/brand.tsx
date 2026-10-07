@@ -17,7 +17,7 @@ import { EVIDENCE_KINDS, PILL_KINDS, STATUSES } from '@/components/pill-kinds'
 import { RiskPill } from '@/components/RiskPill'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { StatusPill } from '@/components/StatusPill'
-import type { Language } from '@/i18n'
+import { LANGUAGE_LOCALES, type Language } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/_site/brand')({ component: BrandPage })
@@ -32,7 +32,6 @@ const SWATCHES = [
 
 // The Annex III high-risk date in the amended text and in the original 2024 text.
 const ANNEX_III_DATE = { amended: new Date(2027, 11, 2), original: new Date(2026, 7, 2) } as const
-const DATE_LOCALE: Record<Language, string> = { en: 'en-GB', de: 'de-DE' }
 
 type View = 'summary' | 'reviewer'
 
@@ -134,7 +133,7 @@ function StatusesPanel(): JSX.Element {
 function LawPanel(): JSX.Element {
   const { t, i18n } = useTranslation()
   const language: Language = i18n.resolvedLanguage === 'de' ? 'de' : 'en'
-  const format = new Intl.DateTimeFormat(DATE_LOCALE[language], { dateStyle: 'long' })
+  const format = new Intl.DateTimeFormat(LANGUAGE_LOCALES[language], { dateStyle: 'long' })
   return (
     <Section title={t('brand.law')} className={LAW_SCOPE_CLASS}>
       <LawSwitch
