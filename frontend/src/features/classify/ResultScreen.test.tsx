@@ -404,13 +404,31 @@ describe('Result variants (decision 026)', () => {
   })
 
   it.each([
-    ['en', 'Result', 'apply from 2 August 2030', 'This covers copies placed on the market'],
-    ['de', 'Ergebnis', 'ab dem 2. August 2030', 'Das gilt für Exemplare'],
+    [
+      'en',
+      'Result',
+      'apply from 2 August 2030',
+      'This covers copies placed on the market',
+      '2 August 2030',
+      '2 February 2025',
+    ],
+    [
+      'de',
+      'Ergebnis',
+      'ab dem 2. August 2030',
+      'Das gilt für Exemplare',
+      '2. August 2030',
+      '2. Februar 2025',
+    ],
   ] as const)(
     'words the Art. 111(2) note without a route date when every duty moved to 2030 (%s)',
-    async (language, region, deadline, perCopy) => {
+    async (language, region, deadline, perCopy, dutiesFrom, artFourDate) => {
       await openResult(legacyForPublicAuthorities(), { language })
-      const note = within(screen.getByRole('region', { name: region })).getByRole('note')
+      const summary = screen.getByRole('region', { name: region })
+      // The duties date agrees with the note: the moved route duties, not Art. 4's 2025 date.
+      expect(within(summary).getByText(dutiesFrom)).toBeInTheDocument()
+      expect(within(summary).queryByText(artFourDate)).toBeNull()
+      const note = within(summary).getByRole('note')
       expect(note).toHaveTextContent(deadline)
       expect(note).toHaveTextContent(perCopy)
       expect(note).not.toHaveTextContent(/\{\{|2027|2028/)

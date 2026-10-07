@@ -87,7 +87,7 @@ export function dutyLabel(obligation: Obligation, language: Language): string {
 
 /** The date duties apply from: the route's dates (moved by the Omnibus) on a High-risk result,
  *  otherwise the earliest date of a duty to do. */
-export type DutiesDate =
+type DutiesDate =
   { kind: 'route'; amended: string; original: string } | { kind: 'fixed'; date: string }
 
 /** The route's Chapter III date as the engine dated the route's duties (amended text); a duty
@@ -105,9 +105,17 @@ export function amendedRouteDate(
 
 export function dutiesDate(result: ClassificationResult): DutiesDate | null {
   const route = routeOfPoint(result.annex_point)
-  const amended =
-    route && result.risk_class === 'high_risk' ? amendedRouteDate(result, route) : null
-  if (route && amended) return { kind: 'route', amended, original: ORIGINAL_ROUTE_DATES[route] }
+  if (route && result.risk_class === 'high_risk') {
+    const amended = amendedRouteDate(result, route)
+    if (amended) return { kind: 'route', amended, original: ORIGINAL_ROUTE_DATES[route] }
+    // Art. 111(2) moved every route duty to 2 August 2030 (a system for public authorities):
+    // that is when the high-risk duties apply, under either text.
+    const moved = (result.obligations ?? []).find(
+      (obligation) =>
+        obligation.high_risk_route === route && obligation.legacy === 'legacy_public_authority',
+    )
+    if (moved) return { kind: 'fixed', date: moved.applies_from }
+  }
   const dates = (result.obligations ?? [])
     .filter((obligation) => !obligation.is_informational)
     .map((obligation) => obligation.applies_from)
