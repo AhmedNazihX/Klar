@@ -126,6 +126,16 @@ describe('Result summary', () => {
     )
   })
 
+  it('opens a step that decided nothing with its provisions named, not quoted', async () => {
+    const user = userEvent.setup()
+    await openResult(decidedHighRisk())
+    await user.click(screen.getByRole('button', { name: /^4 Transparency/ }))
+    const card = screen.getByRole('article')
+    expect(within(card).getByText('Checked: Art. 50')).toBeInTheDocument()
+    expect(within(card).queryByRole('blockquote')).toBeNull()
+    expect(within(card).getByRole('button', { name: 'Show the provision' })).toBeVisible()
+  })
+
   it('shows the duties as a to-do list and the facts the result rests on', async () => {
     await openResult(decidedHighRisk())
     const todo = screen.getByRole('region', { name: 'What you need to do' })
@@ -197,7 +207,8 @@ describe('Result summary', () => {
 })
 
 describe('Result reviewer view', () => {
-  it('expands every step with its decision, facts, evidence tags and quotes', async () => {
+  it('expands every step with its decision, facts, evidence tags and provisions', async () => {
+    const user = userEvent.setup()
     await openResult(decidedHighRisk(), { view: 'reviewer' })
     const cards = screen.getAllByRole('article')
     expect(
@@ -215,6 +226,8 @@ describe('Result reviewer view', () => {
     expect(within(scope).getByText('Decision')).toBeInTheDocument()
     expect(within(scope).getByText('Facts it rests on')).toBeInTheDocument()
     expect(within(scope).getAllByText('Assumed').length).toBeGreaterThan(0)
+    expect(within(scope).getByText(/^Checked: Art\. 3\(1\), /)).toBeInTheDocument()
+    await user.click(within(scope).getByRole('button', { name: 'Show the provisions' }))
     expect(within(scope).getByText(/‘AI system’ means a machine-based system/)).toBeVisible()
     expect(within(scope).getByText('Art. 3(1), English')).toBeVisible()
     // The step that decided the High-risk class is the highlighted one.
@@ -222,26 +235,51 @@ describe('Result reviewer view', () => {
   })
 
   it.each([
-    ['en', 'Show full text'],
-    ['de', 'Ganzen Text zeigen'],
+    ['en', 'Checked: Art. 50', 'Show the provision', 'Show full text'],
+    ['de', 'Geprüft: Art. 50', 'Vorschrift zeigen', 'Ganzen Text zeigen'],
   ] as const)(
-    'shortens a long quote with an ellipsis and a toggle (%s)',
-    async (language, show) => {
+    'names the provisions a step checked without quoting them until asked (%s)',
+    async (language, checked, showProvision, showFull) => {
       const user = userEvent.setup()
       await openResult(decidedHighRisk(), { view: 'reviewer', language })
       const transparency = screen.getAllByRole('article')[5] as HTMLElement
-      // The recorded Transparency step quotes all of Art. 50: its last words stay hidden.
-      expect(
-        within(transparency).queryByText(/examination procedure laid down in Article 98\(2\)/),
-      ).toBeNull()
-      expect(within(transparency).getByText(/ …”$/)).toBeInTheDocument()
-      const toggle = within(transparency).getByRole('button', { name: show, expanded: false })
+      expect(within(transparency).getByText(checked)).toBeInTheDocument()
+      expect(within(transparency).queryByRole('blockquote')).toBeNull()
+      const toggle = within(transparency).getByRole('button', {
+        name: showProvision,
+        expanded: false,
+      })
+
       await user.click(toggle)
       expect(toggle).toHaveAttribute('aria-expanded', 'true')
-      expect(within(transparency).queryByText(/ …”$/)).toBeNull()
-      // The short Art. 3(1) definition in the Scope card has no toggle.
-      const scope = screen.getAllByRole('article')[2] as HTMLElement
-      expect(within(scope).getByText(/‘AI system’ means a machine-based system/)).toBeVisible()
+      const quote = within(transparency).getByRole('blockquote')
+      const controlled = document.getElementById(toggle.getAttribute('aria-controls') ?? '')
+      expect(controlled).toContainElement(quote)
+      // The recorded Transparency step quotes all of Art. 50: it opens shortened (round 3).
+      expect(quote.textContent).toMatch(/ …”$/)
+      expect(within(transparency).getByRole('button', { name: showFull })).toBeInTheDocument()
+      expect(within(transparency).getByText(checked)).toBeInTheDocument()
+
+      await user.click(toggle)
+      expect(within(transparency).queryByRole('blockquote')).toBeNull()
+    },
+  )
+
+  it.each([
+    ['en', 'Show the provision', 'Show the provisions'],
+    ['de', 'Vorschrift zeigen', 'Vorschriften zeigen'],
+  ] as const)(
+    "keeps the deciding step's quotes open, and says provisions for several (%s)",
+    async (language, one, several) => {
+      await openResult(decidedHighRisk(), { view: 'reviewer', language })
+      const cards = screen.getAllByRole('article')
+      const highRisk = cards[4] as HTMLElement
+      expect(within(highRisk).getAllByRole('blockquote').length).toBeGreaterThan(1)
+      expect(within(highRisk).queryByRole('button', { name: one })).toBeNull()
+      expect(within(highRisk).queryByRole('button', { name: several })).toBeNull()
+      // Scope quotes four provisions; Prohibited one.
+      expect(within(cards[2] as HTMLElement).getByRole('button', { name: several })).toBeVisible()
+      expect(within(cards[3] as HTMLElement).getByRole('button', { name: one })).toBeVisible()
     },
   )
 

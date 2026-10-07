@@ -1,4 +1,4 @@
-import type { JSX, ReactNode } from 'react'
+import { useId, useState, type JSX, type ReactNode } from 'react'
 
 import type { Language } from '@/i18n'
 import { cn } from '@/lib/utils'
@@ -9,6 +9,15 @@ import type { Evidence } from './pill-kinds'
 
 export type StepCardFact = { id: string; text: ReactNode; evidence: Evidence }
 export type StepCardQuote = { id: string; text: string; language: Language; source: ReactNode }
+
+/** A step that didn't decide the class names its provisions instead of quoting them; the quotes
+ *  open on request. */
+export type StepCardQuotesClosed = {
+  /** e.g. "Checked: Art. 50". */
+  checked: ReactNode
+  /** e.g. "Show the provision" (or "provisions" for several). */
+  toggleLabel: string
+}
 
 export type StepCardProps = {
   /** e.g. "3 High-risk". */
@@ -23,6 +32,8 @@ export type StepCardProps = {
   factLabel: string
   facts?: readonly StepCardFact[]
   quotes?: readonly StepCardQuote[]
+  /** Set on a step that didn't decide the class: its quotes stay behind a toggle. */
+  quotesClosed?: StepCardQuotesClosed
   /** The one card that decided a High-risk result: an orange ring. */
   highlight?: boolean
   /** Anything else the step carries, under the quotes (an open question, a duty list). */
@@ -30,10 +41,60 @@ export type StepCardProps = {
   className?: string
 }
 
+function Quotes({ quotes, id }: { quotes: readonly StepCardQuote[]; id?: string }): JSX.Element {
+  return (
+    <div id={id} className={cn('grid gap-3', quotes.length === 2 && 'lg:grid-cols-2')}>
+      {quotes.map((quote) => (
+        <Citation
+          key={quote.id}
+          language={quote.language}
+          source={quote.source}
+          className="min-w-0"
+        >
+          {quote.text}
+        </Citation>
+      ))}
+    </div>
+  )
+}
+
+/** The provisions a step checked, named in one line, with a toggle that shows their quotes. */
+function ClosedQuotes({
+  quotes,
+  closed,
+}: {
+  quotes: readonly StepCardQuote[]
+  closed: StepCardQuotesClosed
+}): JSX.Element {
+  const quotesId = useId()
+  const [isOpen, setIsOpen] = useState(false)
+  return (
+    <>
+      <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-body-small text-slate">
+        <span>{closed.checked}</span>
+        <button
+          type="button"
+          aria-expanded={isOpen}
+          aria-controls={quotesId}
+          onClick={() => {
+            setIsOpen((previous) => !previous)
+          }}
+          className="cursor-pointer border-0 bg-transparent p-0 text-label text-lens-blue hover:underline"
+        >
+          {closed.toggleLabel}
+        </button>
+      </p>
+      {isOpen ? <Quotes quotes={quotes} id={quotesId} /> : <div id={quotesId} hidden />}
+    </>
+  )
+}
+
 /**
  * One step of the classification, expanded for a reviewer: the decision, the facts it rests on
- * with their evidence tags, and the quoted provisions (side by side when there are two). The
- * consumer provides every text; the card never writes legal content itself.
+ * with their evidence tags, and the quoted provisions (side by side when there are two). Only the
+ * step that decided the class shows its quotes open; another names them (`quotesClosed`) and
+ * quotes them on request. The consumer provides every text; the card never writes legal content
+ * itself.
  */
 export function StepCard({
   name,
@@ -45,6 +106,7 @@ export function StepCard({
   factLabel,
   facts = [],
   quotes = [],
+  quotesClosed,
   highlight = false,
   children,
   className,
@@ -87,20 +149,12 @@ export function StepCard({
           </>
         )}
       </dl>
-      {quotes.length > 0 && (
-        <div className={cn('grid gap-3', quotes.length === 2 && 'lg:grid-cols-2')}>
-          {quotes.map((quote) => (
-            <Citation
-              key={quote.id}
-              language={quote.language}
-              source={quote.source}
-              className="min-w-0"
-            >
-              {quote.text}
-            </Citation>
-          ))}
-        </div>
-      )}
+      {quotes.length > 0 &&
+        (quotesClosed ? (
+          <ClosedQuotes quotes={quotes} closed={quotesClosed} />
+        ) : (
+          <Quotes quotes={quotes} />
+        ))}
       {children}
     </article>
   )

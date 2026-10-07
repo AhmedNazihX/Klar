@@ -484,6 +484,9 @@
       "decision": "Entscheidung",
       "factsUsed": "Beruht auf",
       "openQuestion": "Offene Frage",
+      "checked": "Geprüft: {{provisions}}",
+      "showProvision_one": "Vorschrift zeigen",
+      "showProvision_other": "Vorschriften zeigen",
       "noFacts": "Keine einzelne Angabe; siehe die Entscheidung."
     },
     "reviewer": {

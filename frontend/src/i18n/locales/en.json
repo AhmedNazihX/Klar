@@ -484,6 +484,9 @@
       "decision": "Decision",
       "factsUsed": "Facts it rests on",
       "openQuestion": "Open question",
+      "checked": "Checked: {{provisions}}",
+      "showProvision_one": "Show the provision",
+      "showProvision_other": "Show the provisions",
       "noFacts": "No single fact; see the decision."
     },
     "reviewer": {

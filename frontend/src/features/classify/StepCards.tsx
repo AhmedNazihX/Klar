@@ -10,6 +10,7 @@ import { useLanguage } from '@/hooks/use-language'
 import { provisionName } from './provision-names'
 import {
   citationSource,
+  decidingStep,
   dutyLabel,
   rowReferences,
   statusPill,
@@ -72,6 +73,17 @@ export function EngineStepCard({
     source: citationSource(t, citation, language),
   }))
   const question = step.missing_fact?.text ?? step.open_question?.question
+  // Only the step that decided the class quotes its provisions open; the others name them.
+  const checked = [
+    ...new Set((step.citations ?? []).map((c) => provisionName(c.provision_id, language))),
+  ]
+  const quotesClosed =
+    decidingStep(result) === step.step
+      ? undefined
+      : {
+          checked: t('result.steps.checked', { provisions: checked.join(', ') }),
+          toggleLabel: t('result.steps.showProvision', { count: checked.length }),
+        }
   return (
     <StepCard
       name={name}
@@ -83,6 +95,7 @@ export function EngineStepCard({
       factLabel={t('result.steps.factsUsed')}
       facts={cardFacts(step.facts_used ?? [])}
       quotes={quotes}
+      quotesClosed={quotesClosed}
       highlight={highlight}
     >
       {question && (
