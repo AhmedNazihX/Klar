@@ -1,5 +1,6 @@
-"""Saving a classified tool (supabase/migrations/*_save_classified_tool.sql, story P6): the
-inventory if needed, the system and its first run in one transaction, as the caller; and the
+"""Saving a classified tool (supabase/migrations/*_save_classified_tool.sql and
+*_save_run_on_existing_tool.sql, story P6): the inventory if needed, the system and its first run
+in one transaction, as the caller, or the next run on a tool the caller already has; and the
 optional tool name every reader of systems takes.
 """
 
@@ -30,6 +31,14 @@ RESULT = {
     "disclaimer": "Guidance only.",
 }
 SAVE = "select save_classified_tool(%s, 'AI inventory', %s, %s, %s)"
+SAVE_ON = "select save_classified_tool(null, 'AI inventory', %s, %s, %s, %s)"
+RERUN_DESCRIPTION = "Ranks job applicants for our recruiters and drafts their rejection letters."
+RERUN_RESULT = {
+    "risk_class": "limited_risk",
+    "status": "needs_more_information",
+    "law_version": "original",
+    "disclaimer": "Guidance only.",
+}
 NO_SESSION = "42501"
 NOT_NULL = "23502"
 FOREIGN_KEY = "23503"
@@ -167,9 +176,15 @@ def test_only_a_session_may_call_it(db: psycopg.Connection) -> None:
     options = _one(
         db,
         "select prosecdef from pg_proc where oid = %s::regprocedure",
-        ("public.save_classified_tool(uuid, text, text, text, jsonb)",),
+        ("public.save_classified_tool(uuid, text, text, text, jsonb, uuid)",),
     )
     assert options is False
+    # The five-argument version was replaced, not overloaded: one function, so one set of grants.
+    signatures = db.execute(
+        "select p.oid::regprocedure::text from pg_proc p"
+        " where p.pronamespace = 'public'::regnamespace and p.proname = 'save_classified_tool'"
+    ).fetchall()
+    assert signatures == [("save_classified_tool(uuid,text,text,text,jsonb,uuid)",)]
 
 
 def test_an_unnamed_tool_exports_and_a_file_without_names_imports(db: psycopg.Connection) -> None:
@@ -190,3 +205,88 @@ def test_an_unnamed_tool_exports_and_a_file_without_names_imports(db: psycopg.Co
         db.execute("select import_my_data(%s)", (Jsonb(nameless),))
         names = db.execute("select name, description from systems order by created_at").fetchall()
     assert names == [(None, DESCRIPTION), (None, DESCRIPTION)]
+
+
+def _save_on(
+    db: psycopg.Connection,
+    tool: UUID,
+    name: str | None = "CV ranker",
+    result: dict[str, Any] | None = None,
+) -> UUID:
+    return _one(db, SAVE_ON, (name, RERUN_DESCRIPTION, Jsonb(result or RERUN_RESULT), tool))
+
+
+def _tool_and_runs(db: psycopg.Connection, tool: UUID) -> tuple[Any, ...]:
+    """A tool's name and description, and each run's number, class and inputs (as postgres)."""
+    row = db.execute(
+        "select s.name, s.description,"
+        " (select coalesce(jsonb_agg(jsonb_build_array(c.run_no, c.risk_class, c.inputs)"
+        "  order by c.run_no), '[]') from classifications c where c.system_id = s.id)"
+        " from systems s where s.id = %s",
+        (tool,),
+    ).fetchone()
+    assert row is not None
+    return tuple(row)
+
+
+def test_a_run_on_an_existing_tool_is_its_next_run(db: psycopg.Connection) -> None:
+    user = _create_user(db)
+    with as_user(db, user):
+        tool = _save(db, None)
+        assert _save_on(db, tool) == tool
+        latest = db.execute("select name, description, run_no, result from inventory_tools")
+        assert latest.fetchall() == [("CV ranker", RERUN_DESCRIPTION, 2, RERUN_RESULT)]
+    assert _tool_and_runs(db, tool) == (
+        "CV ranker",
+        RERUN_DESCRIPTION,
+        [
+            [1, "high_risk", {"description": DESCRIPTION, "answers": {}}],
+            [2, "limited_risk", {"description": RERUN_DESCRIPTION, "answers": {}}],
+        ],
+    )
+    assert _owned(db, user) == (1, 1, 2)
+
+
+def test_a_tool_restored_without_runs_gets_its_first(db: psycopg.Connection) -> None:
+    user = _create_user(db)
+    with as_user(db, user):
+        inventory = _one(db, "insert into inventories (name) values ('Acme') returning id")
+        tool = _one(
+            db,
+            "insert into systems (inventory_id, name, description) values (%s, %s, %s)"
+            " returning id",
+            (inventory, "CV screener", DESCRIPTION),
+        )
+        assert _save_on(db, tool, name="CV screener") == tool
+    assert _tool_and_runs(db, tool) == (
+        "CV screener",
+        RERUN_DESCRIPTION,
+        [[1, "limited_risk", {"description": RERUN_DESCRIPTION, "answers": {}}]],
+    )
+    assert _owned(db, user) == (1, 1, 1)
+
+
+def test_nobody_adds_a_run_to_another_users_tool(db: psycopg.Connection) -> None:
+    user_a, user_b = _create_user(db), _create_user(db)
+    with as_user(db, user_a):
+        tool = _save(db, None)
+    before = _tool_and_runs(db, tool)
+    with as_user(db, user_b), _raises_sqlstate(db, FOREIGN_KEY):
+        _save_on(db, tool)
+    # Neither a run nor the new name and description reached user A's tool.
+    assert _tool_and_runs(db, tool) == before
+    assert _owned(db, user_a) == (1, 1, 1)
+    assert _owned(db, user_b) == (0, 0, 0)
+
+
+def test_a_failed_run_on_an_existing_tool_changes_nothing(db: psycopg.Connection) -> None:
+    user = _create_user(db)
+    without_class = {key: value for key, value in RERUN_RESULT.items() if key != "risk_class"}
+    with as_user(db, user):
+        tool = _save(db, None)
+    before = _tool_and_runs(db, tool)
+    with as_user(db, user), _raises_sqlstate(db, NOT_NULL):
+        _save_on(db, tool, result=without_class)
+    # The new name and description are written before the run: its failure takes them back too.
+    assert _tool_and_runs(db, tool) == before
+    assert _owned(db, user) == (1, 1, 1)
