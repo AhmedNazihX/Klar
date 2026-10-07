@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { screen, within } from '@testing-library/react'
+import { getDefaultNormalizer, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18n from 'i18next'
 import { http, HttpResponse } from 'msw'
@@ -100,6 +100,23 @@ const ONE_OF_EACH: StoredInventory[] = [
   },
 ]
 
+// A company profile and nothing else: the dialog's list is only "your company profile".
+const PROFILE_ONLY: StoredInventory[] = [
+  {
+    name: 'AI inventory',
+    company_name: 'Nordwerk Logistik GmbH',
+    staff_band: null,
+    turnover_band: null,
+    established_in: null,
+    used_in: null,
+    created_at: '2026-09-30T09:00:00+00:00',
+    systems: [],
+  },
+]
+
+// The space the counts keep with their nouns, so a line never breaks between them.
+const NBSP = '\u00a0'
+
 let store: UserDataStore
 // What the browser was asked to save: the file and its name.
 let downloads: { blob: Blob; fileName: string }[] = []
@@ -161,6 +178,13 @@ function countOf(label: string): string | null {
 /** Opens the delete dialog from its panel (named the same as its button). */
 async function openDeleteDialog(user: ReturnType<typeof userEvent.setup>, name: string) {
   await user.click(within(panel(name)).getByRole('button', { name }))
+}
+
+/** The delete dialog's loss text, matched as written: its non-breaking spaces must be there. */
+function lossText(dialogName: string, text: string): HTMLElement {
+  return within(screen.getByRole('dialog', { name: dialogName })).getByText(text, {
+    normalizer: getDefaultNormalizer({ collapseWhitespace: false }),
+  })
 }
 
 async function deleteEverything(user: ReturnType<typeof userEvent.setup>, word = 'DELETE') {
@@ -362,10 +386,11 @@ describe('Your data, delete', () => {
     expect(store.calls.delete).toBe(1)
     expect(store.calls.logout).toBe(1)
     expect(store.inventories()).toEqual([])
-    // The old session is signed out; the app frame starts a fresh, empty one.
-    await vi.waitFor(() => expect(store.calls.signup).toBe(2))
+    // The old session is signed out and forgotten; a new one starts only when the visitor goes
+    // on and something needs it, so a deletion alone leaves no new anonymous user behind.
+    expect(await screen.findByText('No company profile yet')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'What Klar keeps' })).toBeNull()
-    expect(screen.getByText('No company profile yet')).toBeInTheDocument()
+    expect(store.calls.signup).toBe(1)
 
     await user.click(screen.getByRole('link', { name: 'Start again' }))
     expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument()
@@ -396,9 +421,10 @@ describe('Your data, delete', () => {
     await vi.waitFor(() => expect(countOf('Classification results')).toBe('3'))
     await openDeleteDialog(user, 'Delete my data')
     expect(
-      within(screen.getByRole('dialog', { name: 'Delete everything?' })).getByText(
-        '2 tools, 3 results, 2 document answers, 1 ticked duty, and your company profile will be ' +
-          'deleted for good. This can’t be undone.',
+      lossText(
+        'Delete everything?',
+        `Klar will delete 2${NBSP}tools, 3${NBSP}results, 2${NBSP}document answers, ` +
+          `1${NBSP}ticked duty and your company profile for good. This can’t be undone.`,
       ),
     ).toBeInTheDocument()
     unmount()
@@ -407,9 +433,11 @@ describe('Your data, delete', () => {
     await vi.waitFor(() => expect(countOf('Ergebnisse der Einstufung')).toBe('3'))
     await openDeleteDialog(german.user, 'Meine Daten löschen')
     expect(
-      within(screen.getByRole('dialog', { name: 'Alles löschen?' })).getByText(
-        'Klar löscht 2 Tools, 3 Ergebnisse, 2 Antworten für Dokumente, 1 abgehakte Pflicht und Ihr ' +
-          'Unternehmensprofil endgültig. Das lässt sich nicht rückgängig machen.',
+      lossText(
+        'Alles löschen?',
+        `Klar löscht 2${NBSP}Tools, 3${NBSP}Ergebnisse, 2${NBSP}Antworten für Dokumente, ` +
+          `1${NBSP}abgehakte Pflicht und Ihr Unternehmensprofil endgültig. Das lässt sich nicht ` +
+          'rückgängig machen.',
       ),
     ).toBeInTheDocument()
   })
@@ -420,9 +448,10 @@ describe('Your data, delete', () => {
     await vi.waitFor(() => expect(countOf('Classification results')).toBe('1'))
     await openDeleteDialog(user, 'Delete my data')
     expect(
-      within(screen.getByRole('dialog', { name: 'Delete everything?' })).getByText(
-        '1 tool, 1 result, 1 document answer, and 2 ticked duties will be deleted for good. This ' +
-          'can’t be undone.',
+      lossText(
+        'Delete everything?',
+        `Klar will delete 1${NBSP}tool, 1${NBSP}result, 1${NBSP}document answer and ` +
+          `2${NBSP}ticked duties for good. This can’t be undone.`,
       ),
     ).toBeInTheDocument()
     unmount()
@@ -431,9 +460,34 @@ describe('Your data, delete', () => {
     await vi.waitFor(() => expect(countOf('Ergebnisse der Einstufung')).toBe('1'))
     await openDeleteDialog(german.user, 'Meine Daten löschen')
     expect(
-      within(screen.getByRole('dialog', { name: 'Alles löschen?' })).getByText(
-        'Klar löscht 1 Tool, 1 Ergebnis, 1 Antwort für Dokumente und 2 abgehakte Pflichten ' +
-          'endgültig. Das lässt sich nicht rückgängig machen.',
+      lossText(
+        'Alles löschen?',
+        `Klar löscht 1${NBSP}Tool, 1${NBSP}Ergebnis, 1${NBSP}Antwort für Dokumente und ` +
+          `2${NBSP}abgehakte Pflichten endgültig. Das lässt sich nicht rückgängig machen.`,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('names a lone company profile within the sentence, in English and German', async () => {
+    server.use(...createUserDataStore(PROFILE_ONLY).handlers)
+    const { user, unmount } = await openYourData()
+    await vi.waitFor(() => expect(countOf('Company profile')).toBe('1'))
+    await openDeleteDialog(user, 'Delete my data')
+    expect(
+      lossText(
+        'Delete everything?',
+        'Klar will delete your company profile for good. This can’t be undone.',
+      ),
+    ).toBeInTheDocument()
+    unmount()
+
+    const german = await openYourData('de')
+    await vi.waitFor(() => expect(countOf('Unternehmensprofil')).toBe('1'))
+    await openDeleteDialog(german.user, 'Meine Daten löschen')
+    expect(
+      lossText(
+        'Alles löschen?',
+        'Klar löscht Ihr Unternehmensprofil endgültig. Das lässt sich nicht rückgängig machen.',
       ),
     ).toBeInTheDocument()
   })
@@ -446,7 +500,7 @@ describe('Your data, delete', () => {
     expect(
       within(screen.getByRole('dialog', { name: 'Delete everything?' })).getByText(
         'Your tools with their descriptions and results, your document answers, checklist ticks ' +
-          'and company profile will be deleted for good. Klar can’t bring them back.',
+          'and company profile will be deleted for good. This can’t be undone.',
       ),
     ).toBeInTheDocument()
     unmount()
@@ -457,8 +511,8 @@ describe('Your data, delete', () => {
     expect(
       within(screen.getByRole('dialog', { name: 'Alles löschen?' })).getByText(
         'Ihre Tools mit Beschreibungen und Ergebnissen, Ihre Antworten für Dokumente, abgehakten ' +
-          'Pflichten und Ihr Unternehmensprofil werden endgültig gelöscht. Klar kann sie nicht ' +
-          'wiederherstellen.',
+          'Pflichten und Ihr Unternehmensprofil werden endgültig gelöscht. Das lässt sich nicht ' +
+          'rückgängig machen.',
       ),
     ).toBeInTheDocument()
   })

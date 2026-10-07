@@ -25,9 +25,13 @@ const COUNTED_KINDS = [
   'dutyProgress',
 ] as const satisfies readonly (keyof MyDataCounts)[]
 
+// The list's locale per app language: British English, with no comma before "and", as the app's
+// other English lists. Any other language lists in its own locale.
+const LIST_LOCALES: Readonly<Partial<Record<string, string>>> = { en: 'en-GB' }
+
 /**
- * What the deletion takes, from the counts the screen has loaded: "2 tools, 3 results … will be
- * deleted for good", only the kinds the user has. Without counts (loading, failed, or nothing
+ * What the deletion takes, from the counts the screen has loaded: "Klar will delete 2 tools,
+ * 3 results … for good", only the kinds the user has. Without counts (loading, failed, or nothing
  * stored) it names the kinds instead.
  */
 function useLossText(): string {
@@ -40,7 +44,8 @@ function useLossText(): string {
   const items =
     counts.companyProfiles > 0 ? [...counted, t('yourData.delete.lost.companyProfile')] : counted
   if (items.length === 0) return t('yourData.delete.dialogBody')
-  const list = new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(items)
+  const listLocale = LIST_LOCALES[i18n.language] ?? i18n.language
+  const list = new Intl.ListFormat(listLocale, { type: 'conjunction' }).format(items)
   return t('yourData.delete.dialogBodyCounts', { items: list })
 }
 
