@@ -2,6 +2,25 @@
   "worktree": {
     "baseRef": "head"
   },
+  "skillOverrides": {
+    "higgsfield-brandkit": "user-invocable-only",
+    "higgsfield-generate": "user-invocable-only",
+    "higgsfield-marketplace-cards": "user-invocable-only",
+    "higgsfield-product-photoshoot": "user-invocable-only",
+    "higgsfield-soul-id": "user-invocable-only",
+    "higgsfield-video-explainer": "user-invocable-only",
+    "higgsfield-websites": "user-invocable-only",
+    "higgsfield-youtube-thumbnail": "user-invocable-only",
+    "brandkit": "user-invocable-only",
+    "gpt-taste": "user-invocable-only",
+    "gpt-tasteskill": "user-invocable-only",
+    "design-taste-frontend": "user-invocable-only",
+    "taste-skill": "user-invocable-only",
+    "image-to-code": "user-invocable-only",
+    "image-to-code-skill": "user-invocable-only",
+    "imagegen-frontend-web": "user-invocable-only",
+    "crud-feature": "user-invocable-only"
+  },
   "permissions": {
     "allow": [
       "Bash(uv run ruff check .)",

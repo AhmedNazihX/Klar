@@ -16,6 +16,7 @@ The full layout lives in **`docs/LAYOUT.md`**: the tree down to key files, which
 ## Commands (run from `backend/`; frontend: `cd frontend && corepack pnpm lint && corepack pnpm build && corepack pnpm test`; `pnpm test` includes a Chromium browser project, so a fresh clone or worktree first needs `corepack pnpm exec playwright install chromium`, see `frontend/README.md`)
 - `uv sync`: install
 - `uv run pytest`: tests (live model tests are skipped unless `-m live`)
+- `uv run pytest <tests> --record-mode=once -q`: record model responses (paid; the orchestrator runs it, after every review round, see foreman `story-finish` › Paid recordings last; delete a stale recording first, `once` never overwrites one). Don't read this run's totals: a strict "recording pending" xfail shows a working replay as FAILED and a real failure as xfailed. Drop the pending marks on the tests just recorded (a mark waiting for a later story stays, e.g. X2b's in `test_prohibited.py`), then run the same tests again without `--record-mode` (free): those totals are true, and known gaps stay xfailed by `expect_known_gap`. Never use `--runxfail`, which turns the known gaps into failures.
 - `uv run ruff check . && uv run ruff format --check .`: lint and format
 - `uv run pyright`: type check
 - `uv run aiact deps generate` / `uv run aiact deps check`: regenerate or check `docs/DEPENDENCIES.md` (generated, never edit by hand)
