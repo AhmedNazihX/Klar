@@ -1,0 +1,65 @@
+- id: soft-08-spedition-fahrstil-noten-plain
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind eine Spedition aus dem Raum Osnabrück mit 140 Lkw und rund 170 angestellten
+    Fahrerinnen und Fahrern. Seit Anfang 2026 nutzen wir FleetScore, eine Telematiklösung eines
+    Hamburger Anbieters; sie beruht auf einem Modell, das der Anbieter mit Fahrdaten vieler
+    Flotten trainiert hat. Sie wertet für jede Person am Steuer Bremsverhalten, Geschwindigkeit,
+    Leerlaufzeiten und Pausen aus und vergibt monatlich eine Fahrstil-Note. Die Disposition
+    übernimmt die Noten, ohne die Fahrten selbst zu prüfen, und richtet danach die Prämie aus; wer
+    im gleitenden Quartalsdurchschnitt unter dem Grenzwert liegt, wird zum Personalgespräch
+    geladen und abgemahnt, und befristete Verträge werden dann in der Regel nicht verlängert. Wir
+    nutzen die Software unverändert. Außerdem haben wir dieses Jahr eine neue Waschanlage für den
+    Fuhrpark gebaut.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:b"
+  label_citation: ["annex:III:4:b", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-08
+  business_function: hr
+  notes: >-
+    Approved by user 2026-10-08. Class: the system monitors and evaluates the behaviour of
+    employed drivers, and its grade decides bonuses, warnings and whether fixed-term contracts
+    are renewed (Annex III 4(b)); grading each driver's behaviour from their own driving data is
+    profiling, so Art. 6(3) third subparagraph keeps it high-risk. Role: the haulier uses the
+    bought software unchanged (Art. 3(4)): deployer.
+  tags: ["pair:soft-08", "wording:plain"]
+- id: soft-08-spedition-fahrstil-noten-soft
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind eine Spedition aus dem Raum Osnabrück mit 140 Lkw. Seit Anfang 2026 nutzen wir
+    FleetScore, eine Flottenmanagement-App eines Hamburger Anbieters. Sie hilft uns, Fahrten
+    auszuwerten, Spritkosten zu senken und den Verschleiß der Fahrzeuge im Blick zu behalten. Die
+    Ergebnisse fließen in unsere monatliche Teamrunde und in die Personalplanung ein. Wir nutzen
+    die Software unverändert. Außerdem haben wir dieses Jahr eine neue Waschanlage für den
+    Fuhrpark gebaut.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:b"
+  label_citation: ["annex:III:4:b", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-08
+  business_function: hr
+  key_fact_answers:
+    ai_system: >-
+      Sie beruht auf einem Modell, das der Anbieter mit Fahrdaten vieler Flotten trainiert hat.
+    annex_iii_use: >-
+      Die App vergibt jeder Fahrerin und jedem Fahrer monatlich eine Fahrstil-Note aus
+      Bremsverhalten, Geschwindigkeit, Leerlaufzeiten und Pausen. Die Disposition übernimmt die
+      Noten, ohne die Fahrten selbst zu prüfen: Danach richtet sich die Prämie, und wer im
+      gleitenden Quartalsdurchschnitt unter dem Grenzwert liegt, wird abgemahnt; befristete
+      Verträge werden dann meist nicht verlängert.
+    profiling: >-
+      Ja. Sie bewertet das Fahrverhalten jeder einzelnen Person anhand ihrer eigenen Fahrdaten.
+    operator_role: >-
+      Wir nutzen ein System eines anderen Anbieters: die Software eines Hamburger Anbieters,
+      unverändert.
+  notes: >-
+    Approved by user 2026-10-08. The same system as soft-08-spedition-fahrstil-noten-plain: the
+    "Ergebnisse" are the per-driver grades, and "Personalplanung" covers the warnings and
+    contract renewals. Label and reasoning as for the plain case (Annex III 4(b), profiling
+    under Art. 6(3), deployer under Art. 3(4)).
+  tags: ["pair:soft-08", "wording:soft"]

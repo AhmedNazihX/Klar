@@ -1,0 +1,65 @@
+- id: soft-02-cleaning-staff-scores-plain
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We are a contract cleaning company in Lyon with about 320 cleaners working in offices and
+    hospitals. Since 2026 every cleaner logs their rooms in ShineTrack, an app we bought from a
+    French start-up; its scores come from a model the start-up trained on cleaning data from many
+    companies. The app combines check-in times, rooms completed per hour, supervisor spot-check
+    results and client complaints into a monthly performance score for each cleaner and ranks
+    them by site. Managers pay the quarterly bonus by the ranking without reassessing anyone's
+    work, and cleaners on fixed-term contracts whose score, averaged over a rolling quarter, is in
+    the bottom fifth of their site are not offered a renewal. We have not changed the app. We also
+    switched to refillable detergent bottles this year.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:b"
+  label_citation: ["annex:III:4:b", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-02
+  business_function: hr
+  notes: >-
+    Approved by user 2026-10-08. Class: the app monitors and evaluates the performance and
+    behaviour of workers, and its ranking decides bonuses and whether fixed-term contracts are
+    renewed (Annex III 4(b)); scoring each cleaner's work performance is profiling, so Art. 6(3)
+    third subparagraph keeps it high-risk. Role: the company uses the bought app unchanged
+    (Art. 3(4)): deployer.
+  tags: ["pair:soft-02", "wording:plain"]
+- id: soft-02-cleaning-staff-scores-soft
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We are a contract cleaning company in Lyon with about 320 cleaners in offices and hospitals.
+    Since 2026 our teams use ShineTrack, an app from a French start-up, as a digital shift log:
+    cleaners check in at a site, tick off rooms as they go, and supervisors and clients can leave
+    quick feedback. Management gets a monthly dashboard per site that supports our quarterly
+    bonus round and our regular staffing reviews. We have not changed the app. We also switched
+    to refillable detergent bottles this year.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:b"
+  label_citation: ["annex:III:4:b", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-02
+  business_function: hr
+  key_fact_answers:
+    ai_system: >-
+      The start-up says the scores come from a model it trained on cleaning data from many
+      companies.
+    annex_iii_use: >-
+      The dashboard gives each cleaner a monthly performance score from their check-in times,
+      rooms completed per hour, spot checks and client complaints, and ranks the cleaners per
+      site. Managers pay the quarterly bonus by the ranking without reassessing anyone's work, and
+      cleaners on fixed-term contracts whose score, averaged over a rolling quarter, is in the
+      bottom fifth of their site are not offered a new contract.
+    profiling: >-
+      Yes. It evaluates each cleaner's work performance from their own logged data.
+    operator_role: >-
+      We use a system someone else provides: an app we bought from a French start-up, which we
+      have not changed.
+  notes: >-
+    Approved by user 2026-10-08. The same system as soft-02-cleaning-staff-scores-plain: the
+    "monthly dashboard" is the per-cleaner performance ranking, and the "staffing reviews" are the
+    contract renewals. Label and reasoning as for the plain case (Annex III 4(b), profiling under
+    Art. 6(3), deployer under Art. 3(4)).
+  tags: ["pair:soft-02", "wording:soft"]

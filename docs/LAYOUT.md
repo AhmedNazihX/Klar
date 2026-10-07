@@ -67,10 +67,13 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        questions.py: hints, answer options and the structured readings
 │   │   │   │                        the checks show (E12); high_risk_questions.py: what a yes settles,
 │   │   │   │                        the Annex I question's quotes, the readings and settled_by (E12);
-│   │   │   │                        reading_side.py: what a texts module says about one reading (E12)
+│   │   │   │                        reading_side.py: what a texts module says about one reading (E12);
+│   │   │   │                        corpus.py: the checks' one corpus reader (get_provision, search)
+│   │   │   │                        and the short connection each step reads it over (E15)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
 │   │   │   │                        high_risk_original.md: the original-text note, no Art. 6(1a)-(1c) (E11)
+│   │   │   ├── clients.py           the engine's chat models and query embedder, built once per process (E15)
 │   │   │   ├── citations.py         citation existence validator, one retry, the changed_by_omnibus marker (E9)
 │   │   │   ├── classify.py          classify_system, run_classification, stream_classification, the answers
 │   │   │   │                        appended to the description (decision 019), engine_nodes (E10)

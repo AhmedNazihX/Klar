@@ -23,15 +23,10 @@ from aiact.engine import citations
 from aiact.engine import classify as classify_module
 from aiact.engine.citations import CitationValidator, OmnibusChanges
 from aiact.engine.classify import engine_nodes
+from aiact.engine.clients import NODE_TOKENS
 from aiact.engine.graph import CheckNode, EngineNodes
-from aiact.engine.nodes import (
-    guideline_retrieval,
-    high_risk,
-    high_risk_retrieval,
-    prohibited,
-    scope,
-    transparency,
-)
+from aiact.engine.nodes import corpus as corpus_module
+from aiact.engine.nodes import high_risk, prohibited, scope, transparency
 from aiact.engine.nodes.high_risk_texts import REFUSAL_CITATIONS
 from aiact.engine.nodes.prohibited_practices import APPLICATION_DATES
 from aiact.engine.nodes.transparency_duties import MarketTiming
@@ -124,8 +119,9 @@ class CostedEmbeddings(OpenRouterEmbeddings):
 
 @dataclass
 class Corpus:
-    """Stands in for `get_provision` and `search_ai_act` in every node's retrieval module,
-    noting each call's module and opt-in; a search embeds its query as the real one does."""
+    """Stands in for `get_provision` and `search_ai_act` in the checks' corpus reader and the
+    citation validator, noting each call's module and opt-in; a search embeds its query as the
+    real one does."""
 
     calls: list[tuple[str, str, bool]] = field(default_factory=list)
     targets: list[str] = field(default_factory=list)
@@ -179,19 +175,21 @@ def no_connection() -> Iterator[None]:
 def offline(monkeypatch: pytest.MonkeyPatch) -> Corpus:
     """Fake model, costed embeddings, recorded corpus and no database for `engine_nodes`."""
     corpus = Corpus()
-    for module in (scope, guideline_retrieval, high_risk_retrieval, citations):
+    for module in (corpus_module, citations):
         get, search = corpus.recorders(module.__name__.rsplit(".", 1)[-1])
         monkeypatch.setattr(module, "get_provision", get)
         if module is not citations:
             monkeypatch.setattr(module, "search_ai_act", search)
-    for module in (prohibited, high_risk, transparency, citations):
         monkeypatch.setattr(module, "connect", no_connection)
 
-    def fake_engine_model(*, max_tokens: int, settings: Settings) -> GenericFakeChatModel:
-        return GenericFakeChatModel(messages=iter([paid_reply(), paid_reply()]))
+    def fake_engine_chats(settings: Settings) -> dict[str, GenericFakeChatModel]:
+        return {
+            node: GenericFakeChatModel(messages=iter([paid_reply(), paid_reply()]))
+            for node in NODE_TOKENS
+        }
 
-    monkeypatch.setattr(classify_module, "engine_chat_model", fake_engine_model)
-    monkeypatch.setattr(classify_module, "OpenRouterEmbeddings", CostedEmbeddings)
+    monkeypatch.setattr(classify_module, "engine_chats", fake_engine_chats)
+    monkeypatch.setattr(classify_module, "engine_embeddings", CostedEmbeddings)
     return corpus
 
 
@@ -225,7 +223,7 @@ def test_every_real_check_passes_the_runs_opt_in_to_every_retrieval_call(
 ) -> None:
     run_each_node(engine_nodes(settings(), UsageMeter()), include_held_out=include_held_out)
     modules = {module for module, _, _ in offline.calls}
-    assert modules == {"scope", "guideline_retrieval", "high_risk_retrieval"}
+    assert modules == {"corpus"}  # every check reads through the one corpus reader
     assert {function for _, function, _ in offline.calls} == {"get_provision", "search_ai_act"}
     assert all(flag is include_held_out for _, _, flag in offline.calls)
 
@@ -328,12 +326,12 @@ PARSEABLE: dict[StepName, Callable[[], str]] = {
 recognition, applicant ranking (Annex III 4(a)), and synthetic content placed on the market
 before 2 August 2026 (the Art. 111(4) grace period)."""
 NODE_LOOKUPS: dict[tuple[StepName, str], tuple[str, str]] = {
-    (StepName.SCOPE, "answer"): ("scope", "art:3:1"),
-    (StepName.PROHIBITED, "answer"): ("guideline_retrieval", "art:5:1:f"),
-    (StepName.PROHIBITED, "refusal"): ("guideline_retrieval", APPLICATION_DATES),
-    (StepName.HIGH_RISK, "answer"): ("high_risk_retrieval", "art:6:3"),
-    (StepName.HIGH_RISK, "refusal"): ("high_risk_retrieval", REFUSAL_CITATIONS[0]),
-    (StepName.TRANSPARENCY, "answer"): ("guideline_retrieval", "art:111:4"),
+    (StepName.SCOPE, "answer"): ("corpus", "art:3:1"),
+    (StepName.PROHIBITED, "answer"): ("corpus", "art:5:1:f"),
+    (StepName.PROHIBITED, "refusal"): ("corpus", APPLICATION_DATES),
+    (StepName.HIGH_RISK, "answer"): ("corpus", "art:6:3"),
+    (StepName.HIGH_RISK, "refusal"): ("corpus", REFUSAL_CITATIONS[0]),
+    (StepName.TRANSPARENCY, "answer"): ("corpus", "art:111:4"),
 }
 """A lookup each check makes only after the reply (Art. 113(a) and Art. 6(1) on a refusal)."""
 

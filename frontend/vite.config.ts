@@ -40,6 +40,9 @@ export default defineConfig({
     },
   },
   test: {
+    // Tests run without Supabase, as in CI, whatever a developer's .env.local holds: tests that need
+    // it stub it themselves, and "without Supabase" tests would otherwise see the local keys.
+    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_ANON_KEY: '' },
     projects: [
       {
         // Component tests in jsdom: fast, no layout.

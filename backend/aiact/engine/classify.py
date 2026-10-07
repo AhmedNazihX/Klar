@@ -29,6 +29,7 @@ from langchain_core.runnables import RunnableConfig
 from pydantic import Field, StringConstraints, model_validator
 
 from aiact.engine.citations import CitationValidator
+from aiact.engine.clients import engine_chats, engine_embeddings
 from aiact.engine.events import (
     ClassifyEvent,
     FactsEvent,
@@ -39,25 +40,18 @@ from aiact.engine.events import (
     matches,
 )
 from aiact.engine.graph import FACTS, FINALIZE, CheckNode, EngineNodes, build_graph
-from aiact.engine.nodes.facts import MAX_OUTPUT_TOKENS as FACTS_TOKENS
 from aiact.engine.nodes.facts import FactExtractor
 from aiact.engine.nodes.finalize import finalize
 from aiact.engine.nodes.guideline_retrieval import GuidelineLibrary
-from aiact.engine.nodes.high_risk import MAX_OUTPUT_TOKENS as HIGH_RISK_TOKENS
 from aiact.engine.nodes.high_risk import HighRiskCheck
 from aiact.engine.nodes.high_risk_retrieval import HighRiskLibrary
-from aiact.engine.nodes.prohibited import MAX_OUTPUT_TOKENS as PROHIBITED_TOKENS
 from aiact.engine.nodes.prohibited import ProhibitedCheck
-from aiact.engine.nodes.role_obligations import MAX_OUTPUT_TOKENS as ROLE_TOKENS
 from aiact.engine.nodes.role_obligations import RoleObligationsCheck
-from aiact.engine.nodes.scope import MAX_OUTPUT_TOKENS as SCOPE_TOKENS
 from aiact.engine.nodes.scope import ScopeCheck, ScopeLibrary
-from aiact.engine.nodes.transparency import MAX_OUTPUT_TOKENS as TRANSPARENCY_TOKENS
 from aiact.engine.nodes.transparency import TransparencyCheck
 from aiact.engine.state import EngineInput
 from aiact.engine.tracing import langsmith_tracer, tracing_switch
 from aiact.engine.usage import MeteredEmbedder, RunUsage, UsageMeter
-from aiact.llm import OpenRouterEmbeddings, engine_chat_model
 from aiact.schemas import (
     ClassificationResult,
     Fact,
@@ -203,16 +197,18 @@ def engine_nodes(
     validator: CitationValidator | None = None,
 ) -> EngineNodes:
     """The engine's own nodes, each check wrapped by the citation validator, every model call
-    and query embedding counted by `meter`. Without `libraries`, the checks read the corpus from
-    DATABASE_URL and embed their queries with the settings' embedding model; without
-    `validator`, citations are checked against the database too. Raises `LLMConfigError` when a
-    model setting or the API key is missing."""
+    and query embedding counted by `meter`. The models and the embedder are the process's
+    (`aiact.engine.clients`), so a run builds no HTTP client of its own. Without `libraries`,
+    the checks read the corpus from DATABASE_URL and embed their queries with the settings'
+    embedding model; without `validator`, citations are checked against the database too.
+    Raises `LLMConfigError` when a model setting or the API key is missing."""
+    models = engine_chats(settings)
 
-    def chat(node: str, max_tokens: int) -> BaseChatModel:
-        model = engine_chat_model(max_tokens=max_tokens, settings=settings)
-        return model.model_copy(update={"callbacks": [meter.chat_callback(node)]})
+    def chat(node: str) -> BaseChatModel:
+        """The node's shared model, with the run's usage callback (the copy shares its client)."""
+        return models[node].model_copy(update={"callbacks": [meter.chat_callback(node)]})
 
-    embeddings = OpenRouterEmbeddings(settings=settings) if libraries is None else None
+    embeddings = engine_embeddings(settings) if libraries is None else None
 
     def embedder(name: StepName) -> MeteredEmbedder | None:
         return meter.embedder(name, embeddings) if embeddings is not None else None
@@ -223,32 +219,32 @@ def engine_nodes(
     checks: dict[StepName, CheckNode] = {
         scope: ScopeCheck(
             settings,
-            chat=chat(scope, SCOPE_TOKENS),
+            chat=chat(scope),
             library=libraries.scope if libraries else None,
             embedder=embedder(scope),
         ),
         prohibited: ProhibitedCheck(
             settings,
-            chat=chat(prohibited, PROHIBITED_TOKENS),
+            chat=chat(prohibited),
             library=libraries.prohibited if libraries else None,
             embedder=embedder(prohibited),
         ),
         high_risk: HighRiskCheck(
             settings,
-            chat=chat(high_risk, HIGH_RISK_TOKENS),
+            chat=chat(high_risk),
             library=libraries.high_risk if libraries else None,
             embedder=embedder(high_risk),
         ),
         transparency: TransparencyCheck(
             settings,
-            chat=chat(transparency, TRANSPARENCY_TOKENS),
+            chat=chat(transparency),
             library=libraries.transparency if libraries else None,
             embedder=embedder(transparency),
         ),
-        role: RoleObligationsCheck(settings, chat=chat(role, ROLE_TOKENS)),
+        role: RoleObligationsCheck(settings, chat=chat(role)),
     }
     return EngineNodes(
-        facts=FactExtractor(settings, chat=chat(FACTS, FACTS_TOKENS)),
+        facts=FactExtractor(settings, chat=chat(FACTS)),
         checks=(validator or CitationValidator(settings=settings)).checks(checks),
         finalize=finalize,
     )

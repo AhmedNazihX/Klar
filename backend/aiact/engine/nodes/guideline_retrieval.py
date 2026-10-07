@@ -18,9 +18,10 @@ from typing import Protocol
 import psycopg
 
 from aiact.engine.nodes.common import Lookup, lookup_for
+from aiact.engine.nodes.corpus import CorpusReader
 from aiact.engine.state import EngineState
-from aiact.retrieval.provisions import Provision, get_provision
-from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
+from aiact.retrieval.provisions import Provision
+from aiact.retrieval.search import QueryEmbedder, SearchHit
 from aiact.schemas import Language
 
 
@@ -43,43 +44,21 @@ class GuidelineLibrary(Protocol):
         ...
 
 
-class GuidelineCorpus:
-    """The corpus through `get_provision` and `search_ai_act`, over one connection and one
-    embedder (the check opens a short connection per use)."""
+class GuidelineCorpus(CorpusReader):
+    """The corpus over one connection and one embedder, its searches limited to `source`'s
+    guidelines (the check opens a short connection per use)."""
 
     def __init__(
         self, connection: psycopg.Connection, embedder: QueryEmbedder, source: GuidelineSource
     ) -> None:
-        self._connection = connection
-        self._embedder = embedder
+        super().__init__(connection, embedder)
         self._source = source
 
-    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
-        """Raises `ProvisionNotFoundError` when the corpus has no text for it."""
-        return get_provision(
-            provision_id,
-            lookup.language,
-            lookup.law_version,
-            lookup.as_of,
-            include_held_out=lookup.include_held_out,
-            connection=self._connection,
-        )
-
     def guidance(self, query: str, lookup: Lookup, *, language: Language) -> tuple[SearchHit, ...]:
-        results = search_ai_act(
-            query,
-            language,
-            lookup.law_version,
-            lookup.as_of,
-            doc_keys=self._source.doc_keys,
-            exclude_source_example_ids=lookup.exclude_source_example_ids,
-            include_held_out=lookup.include_held_out,
-            max_distance=None,
-            limit=self._source.passages,
-            embedder=self._embedder,
-            connection=self._connection,
+        source = self._source
+        return self.passages(
+            query, lookup, language=language, doc_keys=source.doc_keys, limit=source.passages
         )
-        return results.hits
 
 
 @dataclass(frozen=True)
