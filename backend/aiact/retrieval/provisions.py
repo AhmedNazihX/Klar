@@ -17,6 +17,8 @@ No model is involved: this is a plain lookup over the corpus tables (decisions 0
   English text is returned with `english_only` set. The notice is in the language asked for.
 - **Held-out examples.** A Pile B worked example is stored but not retrievable by default
   (decision 012), so it is reported as not found unless `include_held_out` is set.
+- **Tracing (V7).** Inside a traced engine run, a lookup is a LangSmith run of its own, with the
+  provision id as metadata (`aiact.retrieval.tracing`).
 """
 
 import re
@@ -30,6 +32,7 @@ from psycopg.rows import dict_row
 
 from aiact.corpus.build import OMNIBUS_DOC
 from aiact.db import connect
+from aiact.retrieval.tracing import provision_metadata, traced_lookup
 from aiact.schemas import DISCLAIMER, DocumentStatus, Language, LawVersion
 from aiact.schemas.base import ContractModel
 
@@ -102,6 +105,7 @@ class Provision(ContractModel):
     disclaimer: str
 
 
+@traced_lookup(provision_metadata)
 def get_provision(
     provision_id: str,
     language: Language | str = Language.EN,
@@ -134,6 +138,7 @@ def get_provision(
     return _pick(provision_id, rows, wanted_language)
 
 
+@traced_lookup(provision_metadata)
 def get_omnibus_provision(
     provision_id: str,
     language: Language | str = Language.EN,
