@@ -15,10 +15,8 @@ def article_provision_name(provision_id: str, language: Language) -> str:
     "Art. 5(1)(c)(i)" or "Art. 5 Abs. 1 Buchst. c Ziff. i". An article with points and no
     paragraphs: `art:16:a` is "Art. 16(a)" or "Art. 16 Buchst. a"."""
     _, article, paragraph, *points = provision_id.split(":")
-    if not paragraph[0].isdigit():
-        if language is DE:
-            return f"Art. {article} Buchst. " + " Ziff. ".join((paragraph, *points))
-        return f"Art. {article}" + "".join(f"({p})" for p in (paragraph, *points))
+    if language is DE and paragraph and not paragraph[0].isdigit():
+        return f"Art. {article} Buchst. " + " Ziff. ".join((paragraph, *points))
     if language is DE:
         letters = ("Buchst.", "Ziff.")
         tail = "".join(f" {letters[min(n, 1)]} {p}" for n, p in enumerate(points))

@@ -8,7 +8,7 @@ section also quotes the requirement it answers (P8b).
 from collections.abc import Iterable
 from datetime import date
 from enum import StrEnum
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import Field, model_validator
 
@@ -18,6 +18,9 @@ from aiact.schemas.questions import SLUG_PATTERN
 
 TEMPLATE_PATTERN = r"^[a-z0-9]+(_[a-z0-9]+)*$"
 """A template id, as `interview_answers.template` stores it, for example `art_26_7_workers`."""
+
+QuestionKey = Annotated[str, Field(pattern=SLUG_PATTERN)]
+"""An interview question's key, as `interview_answers.question_key` stores it."""
 
 
 class Provenance(StrEnum):
@@ -69,12 +72,12 @@ class DraftSection(ContractModel):
     heading: str = Field(min_length=1)
     provenance: Provenance
     paragraphs: tuple[str, ...] = ()
-    question_keys: tuple[str, ...] = Field(
+    question_keys: tuple[QuestionKey, ...] = Field(
         default=(),
         description="The interview questions whose answers fill the section, in the order "
         "asked; interview sections only.",
     )
-    unanswered: tuple[str, ...] = Field(
+    unanswered: tuple[QuestionKey, ...] = Field(
         default=(), description="The questions of `question_keys` still to answer, in order."
     )
     status: SectionStatus
@@ -83,10 +86,6 @@ class DraftSection(ContractModel):
         description="The requirement the section answers, quoted word for word from the AI Act "
         '(skeletons only); shown above the "To fill in" marker.',
     )
-
-    @property
-    def is_filled(self) -> bool:
-        return bool(self.paragraphs)
 
     @model_validator(mode="after")
     def _well_formed(self) -> Self:

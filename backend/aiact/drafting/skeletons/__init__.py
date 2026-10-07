@@ -12,7 +12,7 @@ from collections.abc import Mapping
 
 from aiact.drafting.draft import Answers, draft_document
 from aiact.drafting.models import DraftDocument, SizeClass
-from aiact.drafting.skeletons.annex_iv import ANNEX_IV_SKELETON, SIMPLIFIED_FORM_NOTE
+from aiact.drafting.skeletons.annex_iv import ANNEX_IV_SKELETON
 from aiact.drafting.skeletons.art_9 import ART_9_SKELETON
 from aiact.drafting.skeletons.art_17 import ART_17_SKELETON
 from aiact.drafting.skeletons.art_27 import ART_27_SKELETON
@@ -59,7 +59,6 @@ __all__ = [
     "ART_9_SKELETON",
     "ART_17_SKELETON",
     "ART_27_SKELETON",
-    "SIMPLIFIED_FORM_NOTE",
     "SKELETON_TEMPLATES",
     "draft_skeletons",
     "skeleton_templates_for",

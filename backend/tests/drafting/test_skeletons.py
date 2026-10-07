@@ -280,6 +280,22 @@ def test_a_note_the_template_does_not_give_fails_the_invented_content_check() ->
     )
 
 
+@pytest.mark.parametrize("language", list(Language))
+def test_with_the_size_class_the_note_must_match_the_company(language: Language) -> None:
+    sme = draft_document(ANNEX_IV_SKELETON, provider_result(), {}, language, SizeClass.SME)
+    neither = draft_document(ANNEX_IV_SKELETON, provider_result(), {}, language, SizeClass.NONE)
+    note_problem = ("the note is not the template's",)
+    for size_class in (SizeClass.NONE, None):
+        outcome = check_nothing_invented(sme, provider_result(), {}, size_class)
+        assert outcome.problems == note_problem
+        assert all(o.passed for o in run_checks(neither, provider_result(), {}, size_class))
+    for size_class in (SizeClass.SME, SizeClass.SMC):
+        assert check_nothing_invented(sme, provider_result(), {}, size_class).passed
+        outcome = check_nothing_invented(neither, provider_result(), {}, size_class)
+        assert outcome.problems == note_problem
+    assert check_nothing_invented(sme, provider_result(), {}).passed, "size class not given"
+
+
 # --- The templates and the section rules ---------------------------------------------------------
 
 
@@ -321,6 +337,13 @@ def test_a_section_s_status_must_follow_its_unanswered_questions() -> None:
         changed(section, unanswered=("hardware",))
     with pytest.raises(ValidationError, match="exactly on interview sections"):
         changed(section, question_keys=(), unanswered=(), status=SectionStatus.DRAFTED)
+
+
+@pytest.mark.parametrize("field", ["question_keys", "unanswered"])
+def test_a_question_key_that_is_not_a_slug_is_rejected(field: str) -> None:
+    section = _section(_annex_iv(), "performance_metrics")
+    with pytest.raises(ValidationError, match="should match pattern"):
+        changed(section, **{field: ("Metrics Appropriateness",)})
 
 
 def test_a_provider_role_is_not_what_selects_a_skeleton() -> None:

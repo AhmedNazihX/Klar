@@ -13,14 +13,19 @@ the user's answers and the classification result. The judged "no invented conten
 """
 
 from collections.abc import Mapping
-from enum import StrEnum
+from enum import Enum, StrEnum
 from typing import Self
 
 from pydantic import model_validator
 
-from aiact.drafting.draft import Answers, prefilled_section, supplied_section
+from aiact.drafting.draft import (
+    Answers,
+    prefilled_section,
+    small_company_note,
+    supplied_section,
+)
 from aiact.drafting.facts_check import prefilled_problems
-from aiact.drafting.models import DraftDocument, DraftSection
+from aiact.drafting.models import DraftDocument, DraftSection, SizeClass
 from aiact.drafting.prefill import DutyDateError
 from aiact.drafting.registry import TEMPLATES
 from aiact.drafting.templates import ClassificationSection, DocumentTemplate, SectionSpec
@@ -42,6 +47,19 @@ CHECK_LABELS: Mapping[CheckName, str] = {
 """The checks as the Documents artboard names them (the interface translates them)."""
 
 
+class Unknown(Enum):
+    """A size class the caller didn't give (distinct from None, a company without a profile)."""
+
+    SIZE_CLASS = "unknown"
+
+
+SIZE_CLASS_UNKNOWN = Unknown.SIZE_CLASS
+
+CompanySize = SizeClass | None | Unknown
+"""The company profile's size class as a check gets it: a class, None for no profile, or
+`SIZE_CLASS_UNKNOWN` when the caller doesn't say."""
+
+
 class CheckResult(ContractModel):
     """One check's outcome. `problems` names each failure; it passes when there are none."""
 
@@ -61,12 +79,16 @@ def _outcome(check: CheckName, problems: list[str]) -> CheckResult:
 
 
 def run_checks(
-    document: DraftDocument, result: ClassificationResult, answers: Answers
+    document: DraftDocument,
+    result: ClassificationResult,
+    answers: Answers,
+    size_class: CompanySize = SIZE_CLASS_UNKNOWN,
 ) -> tuple[CheckResult, ...]:
-    """All three checks on `document`, against the result and the answers it was drafted from."""
+    """All three checks on `document`, against the result, the answers and the company size
+    class it was drafted from (see `check_nothing_invented` for the size class)."""
     return (
         check_sections_present(document),
-        check_nothing_invented(document, result, answers),
+        check_nothing_invented(document, result, answers, size_class),
         check_facts_match(document, result),
     )
 
@@ -90,18 +112,24 @@ def check_sections_present(document: DraftDocument) -> CheckResult:
 
 
 def check_nothing_invented(
-    document: DraftDocument, result: ClassificationResult, answers: Answers
+    document: DraftDocument,
+    result: ClassificationResult,
+    answers: Answers,
+    size_class: CompanySize = SIZE_CLASS_UNKNOWN,
 ) -> CheckResult:
     """Guarantees every word of the draft is the template's, the user's answer as given, or the
     drafter's wording of the result: no added section, sentence or paragraph, no answer moved to
-    another question, and no section passing as another kind to escape the comparison."""
+    another question, and no section passing as another kind to escape the comparison.
+
+    With the company's `size_class` (None for no profile), the note must be exactly the one the
+    template gives that company; without it, the template's note or none is accepted."""
     template = TEMPLATES.get(document.template)
     if template is None:
         return _outcome(CheckName.NOTHING_INVENTED, [f"unknown template {document.template!r}"])
     problems = []
     if document.title != template.title[document.language]:
         problems.append("the title is not the template's")
-    if document.note not in _notes(template, document.language):
+    if document.note not in _notes(template, document.language, size_class):
         problems.append("the note is not the template's")
     known = {spec.key for spec in template.sections}
     problems += [
@@ -143,9 +171,13 @@ def _pairs(
     return [(specs[section.key], section) for section in document.sections if section.key in specs]
 
 
-def _notes(template: DocumentTemplate, language: Language) -> set[str | None]:
-    """The notes a draft of `template` may carry: none, or its small-company note (the checks
-    don't know the company's size class)."""
+def _notes(
+    template: DocumentTemplate, language: Language, size_class: CompanySize
+) -> set[str | None]:
+    """The notes a draft of `template` may carry: the one for `size_class`, or, when it is
+    unknown, none or the template's small-company note."""
+    if not isinstance(size_class, Unknown):
+        return {small_company_note(template, size_class, language)}
     note = template.small_company_note
     return {None} if note is None else {None, note[language]}
 

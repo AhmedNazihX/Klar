@@ -1,8 +1,9 @@
 """The requirements the skeletons quote, word for word from the consolidated AI Act of 27 July
 2026 (CELEX 02024R1689-20260727): the English text and the official German one, by provision id,
-exactly as `get_provision` returns them. A test checks every quote against the corpus built from
-`data/parsed/`, so a changed corpus text fails the build rather than a quote drifting. Never
-edit a quote by hand to reword it.
+exactly as `get_provision` returns them. A test (`tests/drafting/test_skeleton_quotes.py`) pins
+every quote to the corpus built from `data/parsed/`, so a changed corpus text fails the build
+rather than a quote drifting. When it fails, regenerate the quote from the `text` of that
+provision's row in `data/parsed/ai-act-consolidated.<language>.jsonl`; never reword a quote.
 """
 
 from collections.abc import Mapping

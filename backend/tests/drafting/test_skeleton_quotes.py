@@ -116,7 +116,10 @@ def test_each_requirement_is_quoted_word_for_word_from_the_amended_text(
             update={"changed_by_omnibus": omnibus_changes().marks(provision)}
         )
         assert not provision.english_only, "the official German text exists"
-        assert spec.requirement.citation(language) == expected, template_id
+        assert spec.requirement.citation(language) == expected, (
+            f"{template_id}: regenerate QUOTES[{spec.requirement.provision_id!r}][{language}] "
+            "from data/parsed (see aiact/drafting/skeletons/quotes.py)"
+        )
 
 
 def test_every_quote_is_used_by_exactly_one_section() -> None:
