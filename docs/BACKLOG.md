@@ -787,6 +787,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From P5 (merged):** Same as P8a: Art. 50(1)/(2) have no disclosure template yet, so the limited-risk result promises no draft for them (decision 026 item 19 amended 2026-10-07).
   **Decision 031 (2026-10-08):** a document drafted from a posted result validates its shape only; every provision text it quotes comes from the corpus (provision id, law version, language), never from the posted result. The user's facts and answers are their own.
   **Orchestrator (2026-10-08):** dep P6 added: interview answers have a composite FK to public.systems, and only P6 writes systems rows (diff review of P9, critical). P9's fix round starts after P6 merges: merge main in and use P6's systems.id as the tool id.
+  **From P28 (merged):** Merged first. Contracts to build on: draft_document / run_checks / check_nothing_invented take quotes= (corpus Citations), DraftSection has a quotes field and requirement is skeleton-only again; one app-wide 422 body (aiact/api/errors.py, model Unprocessable) — give your routes responses=UNPROCESSABLE at router level; FastAPI's default 422 no longer exists. P9 also edits api/documents.py, app.py, drafting/draft.py and the generated client: merge main and regenerate the client (aiact api openapi; pnpm gen:api), never hand-merge it. Decision 031 applies to P9's quoted requirements too.
 
 - [ ] **P10 · Original vs amended toggle** · Deps: E11, P5, P6 · Type: agent
   Output: a UI toggle, plus a diff view that shows which steps changed and why (citing the Omnibus), and the "not modelled for the original text" obligations notice (decision 020). DoD: a test case whose outcome differs between the two versions shows the difference.
@@ -880,6 +881,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   DoD: a component test on a recorded prohibited result shows the three steps, the Art. 5 quote, the fine tile with both Art. 99 citations, "Not checked" for High-risk and Transparency, and no duty checklist; Draft a message opens P28's letter (MSW test); one axe pass; DE copy present.
   **Decision 030 (2026-10-07):** a refusal carries no risk class; never show the prohibited screen for a refused check — show the refusal explanation (provider blocked the automatic check; a person must review it).
   **Decision 031 (2026-10-08):** a document drafted from a posted result validates its shape only; every provision text it quotes comes from the corpus (provision id, law version, language), never from the posted result. The user's facts and answers are their own.
+  **From P28 (merged):** Draft a message: call POST /documents/vendor-letter (operation draft_vendor_letter) with the result from /classify and the language; show section.quotes (Art. 5(1) quotes from the corpus, carrying changed_by_omnibus) under the finding, the DRAFT label and notice; recipient/tool/sender are interview answers (to fill in).
 
 - [ ] **P22 · Ambiguous result** · Deps: P5, E12, P28, P10 · Type: agent
   Context: Design reference; decision 026 (items 3, 4, 11, 12); artboard `ResultAmbiguous`; INIT › How it works (Outcomes: both readings, stricter one as working assumption).
@@ -887,6 +889,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   DoD: a component test on a recorded ambiguous result shows both readings with their citations, the applied one marked, the settle-it items with no "re-checks" text, and the legal-review line; Draft a request opens P28's letter (MSW test); one axe pass.
   **From E12 (merged):** Readings come structured (title, risk_class — None when a reading sets no class, e.g. lenient high-risk → show 'Not high-risk' —, explanation, citation, consequence, is_applied; the first, stricter one is applied). settled_by lists 'Final Commission guidelines on high-risk classification (still a draft, 19 May 2026)' and, when the exemption is open, the provider's own Art. 6(3) assessment. The 'Answer' item under 'What would settle it' isn't a settled_by kind: take it from the result's follow-up questions. A reading's citation carries changed_by_omnibus.
   **Decision 031 (2026-10-08):** a document drafted from a posted result validates its shape only; every provision text it quotes comes from the corpus (provision id, law version, language), never from the posted result. The user's facts and answers are their own.
+  **From P28 (merged):** Draft a request: the same endpoint returns the request letter for a legally ambiguous result (open question, both readings with the applied one marked, what would settle it). document.article follows the step that holds the open question.
 
 - [ ] **P23 · Provider result** · Deps: P5, C9, P19 · Type: agent
   Context: Design reference; decision 026 (items 17, 22, 24); artboards `ResultProvider`, `DocSkeleton` (link target); INIT › Scope (Roles), Documentation drafting.
@@ -912,6 +915,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From design-026 (merged):** P25 also adds the PDF report button on Your data (P12's screen); P12 no longer depends on P25, to keep the critical path short.
   **Decision 031 (2026-10-08):** a document drafted from a posted result validates its shape only; every provision text it quotes comes from the corpus (provision id, law version, language), never from the posted result. The user's facts and answers are their own.
   **From P12 (merged):** Add the PDF report button to Your data's DownloadPanel (features/your-data/DownloadPanel.tsx), beside 'Download data (JSON)'.
+  **From P28 (merged):** Any provision text the PDF report quotes comes from the corpus (decision 031), like the vendor letters' CorpusQuotes in aiact/api/documents.py; never from the posted result.
 
 - [ ] **P26 · Result on a phone** · Deps: P5, P15, P7 · Type: agent
   Context: Design reference; artboard `ResultMobile`; README › Building the screens (On a phone).
@@ -924,13 +928,14 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   Output: `aiact evaluate site-metrics` writes `frontend/src/content/accuracy.json` (risk-class accuracy, false low-risk rate, citations that exist, head-to-head, N, last run date, run_ids, report link) from the stored W1 and V10b runs; the landing and Method pages show them. After the freeze this file is the only thing that changes.
   DoD: every figure on both pages equals `eval/reports/final.md` (a test reads both); each figure names its run_id in the JSON; the story's diff touches only `accuracy.json` outside `aiact/eval/` and its test (checked at review).
 
-- [ ] **P28 · Short vendor letters** · Deps: P8a, E12, P1 · Type: mixed
+- [x] **P28 · Short vendor letters** · Deps: P8a, E12, P1 · Type: mixed
   Context: INIT › Documentation drafting (Short vendor letters); decision 026 item 3; artboards `ResultProhibited` ("Draft a message"), `ResultAmbiguous` ("Draft a request"); P3's audit (browser-written rows).
   Output: a vendor-letter group in `aiact/drafting/`, built only from the result's facts: a message for a prohibited result (the tool, the Art. 5 point quoted, the deciding facts, the date checked; asks the vendor to confirm and to stop) and a request for an ambiguous result (the open question, the two readings, what would settle it, e.g. the vendor's Art. 6(3) assessment documented under Art. 6(4)); templates in EN and DE; the DRAFT label and the disclaimer; names and addresses as FillMarkers; P8a's three automatic checks, including nothing-invented; `POST /documents/vendor-letter` in `aiact/api/`, which drafts from a backend-validated result.
   DoD: each letter is tested in EN and DE on a recorded prohibited and a recorded ambiguous result; the nothing-invented check fails on an injected fact (test); an API test returns a DRAFT-labelled letter; the user has reviewed both templates.
   **From P8a (merged):** Reuse aiact/drafting checks: they look templates up in drafting.templates.TEMPLATES, so register the vendor-letter templates there or pass a template into the checks. The provider-side Art. 50(1) and 50(2) texts are not in P8a (deployer duties only). aiact.provision_names has article_provision_name for Art. 5 points (prohibited letter) and annex_point_name.
   **From P8b (merged):** Register vendor-letter templates in aiact/drafting/registry.py (TEMPLATES moved there from templates.py); draft_document moved to aiact/drafting/draft.py; DraftSection.question_key is now question_keys. Provider-side Art. 50(1)/(2) texts are still not built.
   **Decision 031 (2026-10-08):** a document drafted from a posted result validates its shape only; every provision text it quotes comes from the corpus (provision id, law version, language), never from the posted result. The user's facts and answers are their own.
+  **Outcome:** Vendor letters in aiact/drafting/vendor_letters (message for a decided prohibited result naming and quoting every deciding Art. 5(1) point — plural wording for 2+ — and request for a legally ambiguous one: open question, both readings, what would settle it; article from the open question), EN/DE, names to fill in, DRAFT + notice, P8a checks plus own facts check; POST /documents/vendor-letter. Decision 031: Act quotes come from the corpus at the result's version and the letter's language; one app-wide 422 body that never echoes input. Templates approved by the user 2026-10-08.
 
 ## Phase 6 — Wrap-up and stretch
 
