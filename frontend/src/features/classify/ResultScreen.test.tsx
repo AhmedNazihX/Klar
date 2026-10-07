@@ -121,13 +121,33 @@ describe('Result summary', () => {
     await openResult(decidedHighRisk())
     const todo = screen.getByRole('region', { name: 'What you need to do' })
     expect(
-      within(todo).getByRole('checkbox', { name: /Assign human oversight/ }),
+      within(todo).getByRole('checkbox', {
+        name: 'Put trained people in charge of reviewing its output',
+      }),
     ).toBeInTheDocument()
     expect(within(todo).getByText('Art. 26(11)')).toBeInTheDocument()
     expect(within(todo).getByText('Only if: You control the input data.')).toBeInTheDocument()
     const facts = screen.getByRole('complementary', { name: 'The result rests on' })
     expect(within(facts).getAllByRole('button', { name: 'Confirm' }).length).toBeGreaterThan(0)
   })
+
+  it.each([
+    ['en', 'Put trained people in charge of reviewing its output', 'Draft document'],
+    ['de', 'Geschulten Personen die menschliche Aufsicht übertragen', 'Dokument entwerfen'],
+  ] as const)(
+    "names each duty by C9's label and links its draft document (%s)",
+    async (language, label, link) => {
+      await openResult(decidedHighRisk(), { language })
+      const todo = todoList(language)
+      const oversight = within(todo).getByRole('checkbox', { name: label }).closest('li')
+      expect(within(oversight as HTMLElement).getByRole('link', { name: link })).toHaveAttribute(
+        'href',
+        '/app/documents/art_26_2_oversight',
+      )
+      // Oversight, the workers' notice and the notice to the people affected have templates.
+      expect(within(todo).getAllByRole('link', { name: link })).toHaveLength(3)
+    },
+  )
 
   it('confirms an assumed fact as stated', async () => {
     const user = userEvent.setup()
@@ -262,8 +282,8 @@ describe('Result variants (decision 026)', () => {
   )
 
   it.each([
-    ['en', 'Limited risk', 'Draft disclosure', 'Art. 50(1)'],
-    ['de', 'Begrenztes Risiko', 'Hinweis entwerfen', 'Art. 50 Abs. 1'],
+    ['en', 'Limited risk', 'Draft disclosure', 'Art. 50(4)'],
+    ['de', 'Begrenztes Risiko', 'Hinweis entwerfen', 'Art. 50 Abs. 4'],
   ] as const)(
     'shows the Art. 50 duty with its drafted disclosure (%s)',
     async (language, name, link, ref) => {
@@ -272,7 +292,10 @@ describe('Result variants (decision 026)', () => {
         name: language === 'en' ? 'Result' : 'Ergebnis',
       })
       expect(within(summary).getByText(name)).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: link })).toHaveAttribute('href', '/app/documents')
+      expect(screen.getByRole('link', { name: link })).toHaveAttribute(
+        'href',
+        '/app/documents/art_50_4_disclosure',
+      )
       expect(within(todoList(language)).getByText(ref)).toBeInTheDocument()
     },
   )

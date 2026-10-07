@@ -2,7 +2,8 @@
 //
 // WORKED_EXAMPLE_EVENTS is recorded: the SSE events `POST /classify` streamed for INIT's worked
 // example, replayed from E10's recorded engine run (backend/tests/api/test_classify_replay.py's
-// cassette, no model or network call) and dumped as JSON. Its result needs more information:
+// cassette, no model or network call) and dumped as JSON; dumped again after C9, whose duties
+// carry their short labels, German texts, group and document. Its result needs more information:
 // the scope check asked the Art. 3(1) inference question (E10: a valid result for the example).
 //
 // The variants below are hand-made from that recorded result, changing only the fields a layout
@@ -63,19 +64,60 @@ export function decidedHighRisk(): ClassificationResult {
   }
 }
 
+// The duties below carry the texts of C9's obligations table (supabase/seed/obligations.yaml).
+const IMPORTER_CHECK: Obligation = {
+  duty: 'Before placing the system on the market, verify that the provider carried out the conformity assessment, drew up the technical documentation, affixed the CE marking with the declaration of conformity and instructions, and appointed an authorised representative.',
+  duty_de:
+    'Vor dem Inverkehrbringen überprüfen, ob der Anbieter das Konformitätsbewertungsverfahren durchgeführt und die technische Dokumentation erstellt hat, ob das System mit der CE- Kennzeichnung versehen ist und ihm die EU-Konformitätserklärung und die Betriebsanleitung beigefügt sind und ob der Anbieter einen Bevollmächtigten benannt hat.',
+  label_en: 'Before you bring it to market, check the provider did its conformity work',
+  label_de:
+    'Vor dem Inverkehrbringen prüfen, ob der Anbieter seine Konformitätspflichten erfüllt hat',
+  article: 'art:23:1',
+  applies_from: '2027-12-02',
+  high_risk_route: 'annex_iii',
+}
+
+const DISTRIBUTOR_CHECK: Obligation = {
+  duty: 'Before making the system available, verify the CE marking, the declaration of conformity and instructions for use, and that the provider and importer put their names and contact details on it.',
+  duty_de:
+    'Vor der Bereitstellung auf dem Markt überprüfen, ob das System mit der CE-Kennzeichnung versehen ist, ob ihm die EU-Konformitätserklärung und die Betriebsanleitung beigefügt sind und ob Anbieter und Einführer ihren Namen und ihre Kontaktanschrift angegeben haben.',
+  label_en: 'Before you supply it, check its CE marking, declaration and instructions',
+  label_de: 'Vor der Bereitstellung CE-Kennzeichnung, Erklärung und Betriebsanleitung prüfen',
+  article: 'art:24:1',
+  applies_from: '2027-12-02',
+  high_risk_route: 'annex_iii',
+}
+
 /** Decision 026 item 17: an importer or a distributor gets the deployer-style result. */
 export function withRole(role: 'importer' | 'distributor'): ClassificationResult {
-  const article = role === 'importer' ? 'art:23:1' : 'art:24:1'
-  const duty: Obligation = {
-    duty:
-      role === 'importer'
-        ? 'Before placing the system on the market, verify that the provider carried out the conformity assessment and drew up the technical documentation.'
-        : 'Before making the system available, verify that it bears the CE marking and comes with the EU declaration of conformity and the instructions for use.',
-    article,
-    applies_from: '2027-12-02',
-    high_risk_route: 'annex_iii',
-  }
+  const duty = role === 'importer' ? IMPORTER_CHECK : DISTRIBUTOR_CHECK
   return { ...decidedHighRisk(), role, obligations: [duty] }
+}
+
+const RISK_MANAGEMENT: Obligation = {
+  duty: "Establish, implement, document and maintain a risk management system, run as a continuous process over the system's whole lifecycle.",
+  duty_de:
+    'Ein Risikomanagementsystem einrichten, anwenden, dokumentieren und aufrechterhalten, als kontinuierlichen Prozess über den gesamten Lebenszyklus des Systems.',
+  label_en: 'Run a risk management system for its whole life',
+  label_de: 'Ein Risikomanagementsystem über den gesamten Lebenszyklus betreiben',
+  group: 'build',
+  document: 'art_9_risk_management',
+  article: 'art:9',
+  applies_from: '2027-12-02',
+  high_risk_route: 'annex_iii',
+}
+
+const TECHNICAL_DOCUMENTATION: Obligation = {
+  duty: 'Draw up the technical documentation (Annex IV) before placing the system on the market, and keep it up to date.',
+  duty_de:
+    'Die technische Dokumentation (Anhang IV) erstellen, bevor das System in Verkehr gebracht oder in Betrieb genommen wird, und sie auf dem neuesten Stand halten.',
+  label_en: 'Write the technical documentation and keep it up to date',
+  label_de: 'Die technische Dokumentation erstellen und aktuell halten',
+  group: 'prove',
+  document: 'annex_iv_technical_documentation',
+  article: 'art:11:1',
+  applies_from: '2027-12-02',
+  high_risk_route: 'annex_iii',
 }
 
 /** Decision 026 item 24: duties marked under Art. 111(2) (on the market before the route date,
@@ -86,36 +128,53 @@ export function legacyMarked(): ClassificationResult {
     ...base,
     role: 'provider',
     obligations: [
-      {
-        duty: 'Set up a risk management system that runs through the whole lifecycle of the system.',
-        article: 'art:9:1',
-        applies_from: '2027-12-02',
-        high_risk_route: 'annex_iii',
-        legacy: 'legacy_unchanged',
-      },
-      {
-        duty: 'Draw up the technical documentation before the system is placed on the market.',
-        article: 'art:11:1',
-        applies_from: '2030-08-02',
-        high_risk_route: 'annex_iii',
-        legacy: 'legacy_public_authority',
-      },
+      { ...RISK_MANAGEMENT, legacy: 'legacy_unchanged' },
+      { ...TECHNICAL_DOCUMENTATION, applies_from: '2030-08-02', legacy: 'legacy_public_authority' },
     ],
   }
 }
 
-const ART_50_1: Citation = {
-  provision_id: 'art:50:1',
+/** Item 24 for a deployer: the same markings on its own duties, without the per-copy caveat
+ *  (Art. 111(2) counts per copy only for a role that supplies the system, decision 022). */
+export function legacyMarkedDeployer(): ClassificationResult {
+  const base = decidedHighRisk()
+  return {
+    ...base,
+    obligations: (base.obligations ?? []).map((obligation) =>
+      obligation.high_risk_route
+        ? { ...obligation, legacy: 'legacy_unchanged' as const }
+        : obligation,
+    ),
+  }
+}
+
+const ART_50_4: Citation = {
+  provision_id: 'art:50:4',
   document_id: 'ai-act-consolidated',
   language: 'en',
   quote:
-    'Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system',
+    'Deployers of an AI system that generates or manipulates image, audio or video content constituting a deep fake, shall disclose that the content has been artificially generated or manipulated',
 }
 
 const AI_LITERACY: Obligation = {
   duty: 'Take measures to support the AI literacy of staff and others who operate or use the system on your behalf.',
+  duty_de:
+    'Maßnahmen ergreifen, um die KI-Kompetenz Ihres Personals und anderer Personen zu unterstützen, die in Ihrem Auftrag mit dem Betrieb und der Nutzung des Systems befasst sind.',
+  label_en: 'Help the people who run or use it build their AI literacy',
+  label_de: 'Die KI-Kompetenz der Personen fördern, die es betreiben oder nutzen',
   article: 'art:4:1',
   applies_from: '2025-02-02',
+}
+
+const DEEP_FAKE_DISCLOSURE: Obligation = {
+  duty: 'Disclose that deep-fake image, audio or video content, or text published to inform the public on matters of public interest, has been artificially generated or manipulated.',
+  duty_de:
+    'Offenlegen, dass Deepfake-Bild-, Ton- oder Videoinhalte oder Texte, die veröffentlicht werden, um die Öffentlichkeit über Angelegenheiten von öffentlichem Interesse zu informieren, künstlich erzeugt oder manipuliert wurden.',
+  label_en: 'Disclose AI-made content that could pass as real',
+  label_de: 'Offenlegen, wenn Inhalte echt wirken, aber KI-erzeugt sind',
+  document: 'art_50_4_disclosure',
+  article: 'art:50:4',
+  applies_from: '2026-08-02',
 }
 
 function notHighRisk(result: ClassificationResult): StepResult[] {
@@ -126,7 +185,8 @@ function notHighRisk(result: ClassificationResult): StepResult[] {
   )
 }
 
-/** Decision 026 item 19: limited risk, with the Art. 50 duty and its drafted disclosure. */
+/** Decision 026 item 19: limited risk, with the Art. 50 duty and its drafted disclosure (a
+ *  deployer's Art. 50(4) duty: C9's table has a disclosure template for 50(3) and 50(4)). */
 export function limitedRisk(): ClassificationResult {
   const base = decidedHighRisk()
   const steps = notHighRisk(base).map((step) =>
@@ -134,27 +194,20 @@ export function limitedRisk(): ClassificationResult {
       ? {
           ...step,
           decision:
-            'Art. 50(1) applies: people talk to the chatbot directly, so they must be told it is an AI system.',
-          citations: [ART_50_1],
+            'Art. 50(4) applies: the tool makes product videos that look real, so the deployer must disclose they are AI-generated.',
+          citations: [ART_50_4],
         }
       : step,
   )
   return {
     ...base,
     risk_class: 'limited_risk',
-    role: 'provider',
+    role: 'deployer',
     annex_point: null,
     legal_review: null,
-    transparency_duties: ['art:50:1'],
+    transparency_duties: ['art:50:4'],
     steps,
-    obligations: [
-      AI_LITERACY,
-      {
-        duty: 'Design the system so that people are told they are interacting with an AI system.',
-        article: 'art:50:1',
-        applies_from: '2026-08-02',
-      },
-    ],
+    obligations: [AI_LITERACY, DEEP_FAKE_DISCLOSURE],
   }
 }
 

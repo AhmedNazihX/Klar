@@ -436,6 +436,7 @@
       "limited": "Tell people they're dealing with AI. Klar drafts the disclosure for you.",
       "none": "No duties are listed for this result.",
       "draftDisclosure": "Draft disclosure",
+      "draftDocument": "Draft document",
       "onlyIf": "Only if: {{condition}}",
       "forInformation": "For information"
     },

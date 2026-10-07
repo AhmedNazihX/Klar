@@ -139,7 +139,7 @@ export function DutiesStepCard({
               key={`${obligation.article}:${obligation.duty}`}
               className="flex justify-between gap-4 border-t border-hairline pt-2"
             >
-              <span>{dutyLabel(obligation)}</span>
+              <span>{dutyLabel(obligation, language)}</span>
               <span className="shrink-0 text-caption font-normal whitespace-nowrap text-slate">
                 {provisionName(obligation.article, language)}
               </span>

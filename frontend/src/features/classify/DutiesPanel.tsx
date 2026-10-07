@@ -39,8 +39,9 @@ function introFor(t: TFunction, result: ClassificationResult): string {
   return result.role ? t(`result.todo.intro.${result.role}`) : t('result.todo.none')
 }
 
-/** "What you need to do": each duty as an action with its article, its Art. 111(2) marking and,
- *  for the Art. 50 duties, a link to the drafted disclosure (decision 026 item 19). */
+/** "What you need to do": each duty as an action (C9's short label) with its article, its
+ *  Art. 111(2) marking and a link to its draft document where C9 names one (for the Art. 50
+ *  duties, the drafted disclosure: decision 026 item 19). */
 export function DutiesPanel({ result }: { result: ClassificationResult }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
@@ -63,15 +64,18 @@ export function DutiesPanel({ result }: { result: ClassificationResult }): JSX.E
           {obligations.map((obligation) => (
             <ObligationItem
               key={`${obligation.article}:${obligation.duty}`}
-              label={dutyLabel(obligation)}
+              label={dutyLabel(obligation, language)}
               reference={provisionName(obligation.article, language)}
               referenceWidth={REFERENCE_WIDTH[language]}
               note={dutyNote(t, obligation, language)}
               tag={obligation.legacy ? t('result.legacy.tag') : undefined}
               isInformational={obligation.is_informational ?? false}
-              {...(isTransparencyDuty(obligation)
-                ? { docLabel: t('result.todo.draftDisclosure'), docTo: '/app/documents' as const }
-                : {})}
+              docLabel={
+                isTransparencyDuty(obligation)
+                  ? t('result.todo.draftDisclosure')
+                  : t('result.todo.draftDocument')
+              }
+              documentId={obligation.document}
             />
           ))}
         </ul>

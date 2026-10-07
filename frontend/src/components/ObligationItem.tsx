@@ -1,4 +1,4 @@
-import { Link, type LinkProps } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import type { JSX, ReactNode } from 'react'
 
 export type ObligationItemProps = {
@@ -10,9 +10,9 @@ export type ObligationItemProps = {
   note?: ReactNode
   /** A tag beside the note, e.g. "Art. 111(2)". */
   tag?: ReactNode
-  /** The duty's draft document, if there is one. */
+  /** The duty's draft document, if there is one: the link's text and the document's id. */
   docLabel?: ReactNode
-  docTo?: LinkProps['to']
+  documentId?: string | null
   /** Informational lines get no checkbox: there is nothing to tick off. */
   isInformational?: boolean
   /** The article column: 86 px in English, at least 112 px in German (localisation.md). */
@@ -29,7 +29,7 @@ export function ObligationItem({
   note,
   tag,
   docLabel,
-  docTo,
+  documentId,
   isInformational = false,
   referenceWidth = DEFAULT_REFERENCE_WIDTH,
 }: ObligationItemProps): JSX.Element {
@@ -57,9 +57,10 @@ export function ObligationItem({
           </span>
         )}
       </span>
-      {docLabel && docTo && (
+      {docLabel && documentId && (
         <Link
-          to={docTo}
+          to="/app/documents/$documentId"
+          params={{ documentId }}
           className="shrink-0 text-label whitespace-nowrap text-lens-blue no-underline hover:underline"
         >
           {docLabel}
