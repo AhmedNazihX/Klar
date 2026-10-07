@@ -2,19 +2,17 @@ import type { TFunction } from 'i18next'
 
 import type { ClassifyFailure } from '@/hooks/use-classify'
 
-import { CHECK_IDS } from './classify-progress'
-
 const HTTP_TOO_MANY = 429
 const HTTP_UNAVAILABLE = 503
 const HTTP_INVALID: readonly number[] = [413, 422]
-const KNOWN_NODES: readonly string[] = [...CHECK_IDS, 'finalize']
 
-/** Why the run stopped, in words: the engine's node ids and the API's statuses are mapped here;
- *  the engine's own message is only a fallback for a node the app doesn't know. */
+/** Why the run stopped, in words. A check that couldn't finish gets one fixed sentence, whatever
+ *  the node: the row it stopped at says which check, and the engine's own message is never shown
+ *  (it is not written for users). The API's statuses are mapped here. */
 export function failureReason(t: TFunction, failure: ClassifyFailure): string {
   switch (failure.kind) {
     case 'check':
-      return KNOWN_NODES.includes(failure.node) ? t('progress.reason.check') : failure.message
+      return t('progress.reason.check')
     case 'network':
       return t('progress.reason.network')
     case 'incomplete':

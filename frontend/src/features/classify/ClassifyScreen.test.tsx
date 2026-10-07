@@ -183,6 +183,23 @@ describe('Classify, a run', () => {
     await expect.poll(() => requests).toBe(2)
   })
 
+  it("never shows the engine's own message, even for a node the app doesn't know", async () => {
+    const events: ClassifyResponse[] = [
+      ...eventsStoppingAtTransparency().slice(0, -1),
+      { event: 'error', step: 'some_new_node', message: 'KeyError: internal detail' },
+    ]
+    server.use(classifyHandler(events))
+    const { user } = await openClassify()
+    await describeAndRun(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("The checks couldn't finish")
+    // The unknown node falls on the first check not yet finished.
+    expect(within(checkList()).getAllByRole('listitem')[4]).toHaveTextContent(
+      "Stopped: this check couldn't finish.",
+    )
+    expect(screen.queryByText(/KeyError/)).toBeNull()
+  })
+
   it('tries again with the description as it is now, not as it was first sent', async () => {
     const bodies: unknown[] = []
     server.use(

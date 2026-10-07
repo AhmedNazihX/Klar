@@ -12,8 +12,8 @@ import { SSE_MAX_RETRY_ATTEMPTS } from '@/lib/api-client-config'
 
 /** Why a run ended without a result. Klar never shows a class after any of these. */
 export type ClassifyFailure =
-  /** The engine's error event: a check couldn't finish (`node` is the engine's node id). */
-  | { kind: 'check'; node: string; message: string }
+  /** The engine's error event: a check couldn't finish (the check list marks which one). */
+  | { kind: 'check' }
   /** The API refused the run before it started: 503 busy or not configured, 429, 422, 413… */
   | { kind: 'http'; status: number; retryAfterSeconds: number | null }
   /** No answer at all: offline, a refused connection, CORS. */
@@ -84,7 +84,7 @@ async function runClassification(
     if (signal.aborted) break
     dispatch({ type: 'event', event })
     if (event.event === 'error') {
-      throw new ClassifyRunError({ kind: 'check', node: event.step, message: event.message })
+      throw new ClassifyRunError({ kind: 'check' })
     }
     if (event.event === 'result') return event.result
   }
