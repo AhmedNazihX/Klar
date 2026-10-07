@@ -1,0 +1,29 @@
+id: cb-046-bodycam-agitation-alert
+set_name: commission_b
+language: en
+description: >-
+  We are a regional police force in Flanders with about 1,400 officers. From 2028 our patrol
+  officers' body cameras will run software supplied by the camera maker. During an encounter it
+  watches the person the officer is dealing with (posture, gait, movements and facial
+  expression) and estimates whether that person is getting angry and is likely to start a fight.
+  When the estimate crosses a threshold, the officer feels a vibration and the incident report
+  records the alert. Officers decide for themselves how to respond. We use the software with the
+  maker's default settings. The same budget is replacing our patrol cars with hybrids.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:1:c"
+label_citation: ["annex:III:1:c", "art:3:39", "art:6:2"]
+source_example_id: hr-ex-046
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: inferring anger from posture, movement and facial
+  expression is emotion recognition (Art. 3(39)), Annex III point 1(c), high-risk under
+  Art. 6(2). Not a workplace or school, so Art. 5(1)(f) does not arise; an in-the-moment estimate
+  of agitation is not a risk assessment of committing an offence (Art. 5(1)(d)). Art. 50(3)'s
+  exception for systems permitted by law to detect or investigate offences may lift the
+  information duty for police use. Role: deployer of the camera maker's software.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:high"

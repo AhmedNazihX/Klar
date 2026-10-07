@@ -1,0 +1,33 @@
+id: cb-003-palletising-cell-person-stop
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Sondermaschinenbauer aus dem Sauerland mit rund 120 Mitarbeitenden und bauen
+  Palettieranlagen für Brauereien und Mineralwasserabfüller. In jede Anlage kommt künftig ein
+  Kamerasystem, das wir selbst entwickelt haben: Ein neuronales Netz erkennt, sobald jemand den
+  Bereich betritt, in dem der Roboterarm arbeitet, und lässt den Arm langsamer fahren oder hält
+  ihn sicher an, damit sich niemand verletzt. Bisher haben wir dafür Schutzzäune und
+  Lichtschranken verbaut. Nach der Maschinenverordnung muss eine benannte Stelle das
+  Kamerasystem prüfen, bevor wir es ausliefern dürfen; die Prüfung bereiten wir gerade vor.
+  Die ersten Anlagen mit dem System gehen im Herbst 2028 raus. Für unsere Kunden betreiben wir
+  außerdem einen Onlineshop für Ersatzteile.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:I:B:21"
+label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:B:21", "art:2:2"]
+source_example_id: hr-ex-003
+accepted_bases: ["safety_component"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-06 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the camera system's intended purpose is to slow or
+  stop the robot arm to prevent injury, a safety function (Art. 3(14)) of machinery (Annex I
+  Section B point 21, the Machinery Regulation). The description states that a notified body
+  must assess it, so Art. 6(1)(b) is met rather than assumed (the source row's Art. 6(1) note).
+  high_risk. Section B, so Art. 2(2) limits the AI Act to Art. 6(1), 60a and 102 to 112. Role:
+  it develops the system and builds it into machines it sells under its own name (Art. 3(3),
+  Art. 25(3)). Ships after 2 August 2028.
+tags:
+  - "area:annex_i"
+  - "annex_i_section:b"
+  - "verdict:high"

@@ -1,0 +1,33 @@
+id: cb-012-radiator-thermostat-routines
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Start-up aus Leipzig mit 35 Leuten und verkaufen unter eigener Marke ein
+  WLAN-Heizkörperthermostat. Ein kleines KI-Modell auf dem Gerät lernt mit der Zeit, wann die
+  Bewohner zu Hause sind und wie warm sie es in welchem Raum mögen, und regelt die Temperatur
+  danach; ist niemand da, senkt es sie ab. Es geht uns um Komfort und um eine niedrigere
+  Heizkostenabrechnung. Liegt das Modell daneben oder fällt es aus, ist es schlimmstenfalls ein
+  bisschen zu kühl oder die Rechnung fällt höher aus. An die Heizungsanlage und ihre
+  Sicherheitsabschaltungen kommt das Thermostat nicht heran. Das Gerät trägt die CE-Kennzeichnung
+  nach der Funkanlagenrichtlinie, gefertigt wird es bei einem Partner in Rumänien. Gerade
+  arbeiten wir an einer Version für Fußbodenheizungen.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:3:14", "art:6:1:a", "art:6:1a", "annex:I:A:6"]
+source_example_id: hr-ex-012
+accepted_bases: ["not_safety_component"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-06 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: radio equipment (Annex I Section A point 6), but the
+  model serves comfort and energy saving, fulfils no safety function, and its failure means only
+  discomfort or a higher bill, so it is no safety component (Art. 3(14); Art. 6(1a):
+  convenience and performance optimisation). Not Art. 6(1); no Annex III use; no Art. 50 duty.
+  minimal_risk. Role: it sells the thermostat under its own brand (Art. 3(3)); manufacturing is
+  contracted out. The source row's own "on the contrary" clause (a thermostat with a safety
+  function would be one) is not a recorded flip variant; the description keeps the system clear
+  of it.
+tags:
+  - "area:annex_i"
+  - "annex_i_section:a"
+  - "verdict:not_high"

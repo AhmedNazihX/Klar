@@ -1,0 +1,27 @@
+id: cb-123-candidate-cv-fit-tips
+set_name: commission_b
+language: en
+description: >-
+  We're a 10-person start-up in Vilnius with a web app for jobseekers. A user uploads their CV and
+  pastes in the job posting they want to apply for. Our model compares the two and tells the user
+  which skills from the posting their CV doesn't mention or undersells, which sections to move up,
+  and which experience deserves more space, so they have a better chance of getting an interview.
+  The user does the rewriting. The tips are only shown to the user; employers never see the app or
+  its output. We trained the model ourselves and charge a small monthly fee. A mobile version comes
+  out in 2028.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:4:a"]
+source_example_id: hr-ex-123
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the tool is started and used by the candidate,
+  outside the employer's control and outside the recruitment and selection process, so it falls
+  outside Annex III point 4(a) even though it may affect the candidate's chances. It gives tips and
+  writes no text, so no Art. 50(2) duty: minimal_risk. Role: it builds and sells the app under its
+  own name.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:not_high"

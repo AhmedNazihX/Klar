@@ -1,0 +1,27 @@
+id: cb-160-bank-consumer-credit-score
+set_name: commission_b
+language: en
+description: >-
+  We're a retail bank in Slovakia with about 2,000 employees. Our risk team has built a scoring
+  model that turns each applicant's repayment history, account behaviour and income into a single
+  number expressing how likely they are to pay back. From 2028 our loan officers will use that
+  number in every decision on personal loans and mortgages for private customers: above a certain
+  score the loan is usually approved, below it usually declined. The model runs only inside the
+  bank. This year we're also closing a dozen rural branches and adding video advice.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:5:b"
+label_citation: ["annex:III:5:b", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-160
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: a numerical creditworthiness score for natural
+  persons, used to decide on consumer credit and mortgages (essential private services), is Annex
+  III point 5(b), high-risk under Art. 6(2); it profiles applicants, so no Art. 6(3) exemption.
+  Role: it builds the model and puts it into service for its own use (provider, also deployer).
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"
+  - "also_role:deployer"

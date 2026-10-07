@@ -1,0 +1,26 @@
+id: cb-083-degree-finder-for-pupils
+set_name: commission_b
+language: en
+description: >-
+  We're a 30-person edtech start-up in Madrid. Our website helps secondary-school pupils work out
+  what to study after school: they say which subjects interest them, what they enjoyed in earlier
+  courses and where they'd like to live, and our model suggests university and college programmes
+  and institutions that seem a good fit, with links to each programme's page. The results are just
+  suggestions for the pupils themselves; universities never see them, and they have no bearing on
+  whether anyone is admitted. Schools can buy a licence so whole classes can use it. We trained the
+  model ourselves and launch the new version in 2028. We also run a podcast about student life.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:3:a"]
+source_example_id: hr-ex-083
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: recommendations that inform pupils' own choices and
+  do not determine access or admission are outside Annex III point 3(a). No Art. 50 duty (a
+  results page, not a conversational system): minimal_risk. Role: it builds the model and offers
+  the platform under its own name.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:not_high"

@@ -1,0 +1,27 @@
+id: cb-044-cigarette-machine-age-camera
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Automatenaufsteller aus dem Ruhrgebiet mit rund 1.200 Zigarettenautomaten. Ab 2028
+  rüsten wir sie mit einer Kamera nach, die wir von einem Hersteller aus Bayern beziehen. Bevor
+  sich das Ausgabefach öffnet, schätzt die Software anhand des Gesichts, ob die Person
+  volljährig ist. Hält sie die Person für wahrscheinlich jünger, verlangt der Automat zusätzlich
+  den Ausweis am Lesegerät. Bilder werden nicht gespeichert, und niemand wird wiedererkannt oder
+  identifiziert. Wir nutzen die Software so, wie der Hersteller sie liefert. Außerdem stellen wir
+  unsere Automaten gerade auf Kartenzahlung um.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["annex:III:1:b", "art:3:40", "art:50:3"]
+source_example_id: hr-ex-044
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: estimating a person's age group from the face is
+  biometric categorisation (Art. 3(40)); age is not a sensitive attribute under Art. 9(1) GDPR, so
+  not Annex III point 1(b). Age-gating is the machine's purpose, not an ancillary feature strictly
+  necessary for technical reasons, so the Art. 3(40) carve-out does not apply. Art. 50(3): the
+  deployer must inform the people exposed: limited_risk. Role: deployer of bought software.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

@@ -1,0 +1,30 @@
+id: cb-093-teacher-exam-proofreader
+set_name: commission_b
+language: en
+description: >-
+  We're a small edtech company in Cork, 18 people, and we've built an add-on for the
+  document editor teachers already use. Once a teacher has written an exam paper, the add-on reads
+  it through and points out typos, grammar mistakes, questions that could be read two ways and
+  places where a question doesn't match the marking rubric, each with a suggested fix. The teacher
+  accepts or ignores each suggestion. It doesn't add or remove questions, change the topics or make
+  the paper easier or harder, and the teacher stays responsible for the final exam. We trained the
+  model ourselves; the add-on is sold to schools from 2028. Our founder still teaches maths two
+  days a week.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:3:b", "annex:III:3:b", "art:6:4"]
+source_example_id: hr-ex-093
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: proofreading an exam the teacher has already written,
+  without changing its content, difficulty or intent, improves the result of a previously
+  completed human activity: the Art. 6(3)(b) exemption from Annex III point 3(b). No profiling.
+  Suggested corrections are an assistive function for standard editing, so no Art. 50(2) marking
+  duty: minimal_risk. Art. 6(4): as provider, it must document this assessment before placing
+  the add-on on the market (and register it under Art. 49(2)).
+tags:
+  - "area:annex_iii_3"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

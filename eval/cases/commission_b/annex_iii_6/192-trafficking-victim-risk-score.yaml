@@ -1,0 +1,27 @@
+id: cb-192-trafficking-victim-risk-score
+set_name: commission_b
+language: en
+description: >-
+  We are the anti-trafficking unit of a national police force in south-east Europe, about 70
+  officers. From 2028 officers checking people at bus stations, border crossings and seasonal-work
+  sites will use a scoring app we bought from a public-safety software company. They enter what
+  they observe about a person, such as age, missing or invalid papers, travelling with an adult
+  who isn't a relative, signs that someone else is in control, and links to sectors where
+  exploitation is common, and the app returns a score for how likely that person is to become a
+  victim of trafficking. A high score prompts a protection interview. We use the app unchanged.
+  We're also training officers in trauma-informed questioning.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:6:a"
+label_citation: ["annex:III:6:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-192
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: a law enforcement tool that scores an individual's
+  risk of becoming a victim of human trafficking is Annex III point 6(a), high-risk under
+  Art. 6(2); it profiles individuals, so no Art. 6(3) exemption. Role: deployer of a bought app.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:high"

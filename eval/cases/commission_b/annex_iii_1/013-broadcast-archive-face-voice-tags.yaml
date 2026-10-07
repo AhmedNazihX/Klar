@@ -1,0 +1,31 @@
+id: cb-013-broadcast-archive-face-voice-tags
+set_name: commission_b
+language: de
+description: >-
+  Wir sind das Archiv eines öffentlich-rechtlichen Senders, in der Dokumentation arbeiten rund 40
+  Leute. Bei uns lagern Hunderttausende Stunden Fernsehmaterial aus sechs Jahrzehnten, das kaum
+  verschlagwortet ist. Ab Anfang 2028 setzen wir eine Software ein, die wir bei einem Münchner
+  Anbieter lizenziert haben: Sie gleicht Gesichter und Stimmen in den Aufnahmen mit einer
+  Referenzsammlung bekannter Personen ab, also Politikerinnen, Sportlern oder Musikern, und trägt
+  automatisch ein, wer in welcher Sendung zu sehen oder zu hören ist. Die Personen selbst erfahren
+  davon nichts und wirken nicht mit; die Software läuft nachts über das digitalisierte Material.
+  Unsere Redaktionen finden so Ausschnitte für Rückblicke deutlich schneller. Nebenbei bekommt
+  unser Bandlager gerade eine neue Klimaanlage.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:1:a"
+label_citation: ["annex:III:1:a", "art:3:41", "art:6:2"]
+source_example_id: hr-ex-013
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: faces and voices in recorded footage are compared
+  with a reference collection to establish who appears, without the people's involvement: remote
+  biometric identification (Art. 3(41)), Annex III point 1(a), high-risk under Art. 6(2). Not real
+  time and not law enforcement, so Art. 5(1)(h) does not arise; the use is assumed permitted by
+  law, as the Annex III 1 chapeau requires. Role: it licenses the software and uses it unchanged
+  (deployer). Starts 2028, after 2 December 2027.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:high"

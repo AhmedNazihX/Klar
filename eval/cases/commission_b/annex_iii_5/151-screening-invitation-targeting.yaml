@@ -1,0 +1,28 @@
+id: cb-151-screening-invitation-targeting
+set_name: commission_b
+language: en
+description: >-
+  We are the public-health agency of a Spanish region, with about 350 staff, and we run the
+  regional breast and bowel cancer screening programmes. From 2028 a model we've bought from a
+  health-analytics company will decide whom to invite and when. It splits the population into segments
+  using age, sex, health-record data and earlier screening results, works out who is eligible for
+  which screening, and generates a personal invitation schedule for each eligible resident. People
+  not selected by the model don't receive an invitation that round. Invitations still go out by
+  post and text message. We're also running a campaign on flu vaccination this winter.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:5:a"
+label_citation: ["annex:III:5:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-151
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: a public authority's system that evaluates who is
+  eligible for preventive screening (a healthcare service) and issues personalised invitations
+  evaluates eligibility for essential public services, even through proactive invitations: Annex
+  III point 5(a), high-risk under Art. 6(2); it segments individuals, so no Art. 6(3) exemption.
+  Role: deployer of a bought model.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"

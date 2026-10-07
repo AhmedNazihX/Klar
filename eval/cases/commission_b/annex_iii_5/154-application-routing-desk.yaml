@@ -1,0 +1,25 @@
+id: cb-154-application-routing-desk
+set_name: commission_b
+language: en
+description: >-
+  We are a regional social-services authority in Finland with about 700 staff. Applications for
+  income support, housing allowance and disability services all arrive through one portal, and
+  from 2028 a model we bought reads each incoming application and tells us which team, office or
+  specialist should handle it, for example the disability team in the applicant's district. That
+  is its only job: it doesn't look at whether the person qualifies or how much they should get;
+  the assigned caseworker does that from scratch. We use it as delivered. We're also opening a
+  walk-in office in Oulu.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:5:a"]
+source_example_id: hr-ex-154
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: recommending which body or person should assess an
+  application, without evaluating eligibility, falls outside Annex III point 5(a). No Art. 50 duty:
+  minimal_risk. Role: deployer of a bought model.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"

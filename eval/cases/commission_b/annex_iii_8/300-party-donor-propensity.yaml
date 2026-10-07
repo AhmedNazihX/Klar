@@ -1,0 +1,25 @@
+id: cb-300-party-donor-propensity
+set_name: commission_b
+language: en
+description: >-
+  We're the fundraising office of a national political party in Ireland, eight staff in Dublin.
+  For the 2029 general election campaign we've bought a fundraising analytics tool. It goes through
+  our records of past donors (how much they gave, when and in response to which appeal) and
+  predicts how likely each one is to donate again this time, so our volunteers know whom to phone
+  first. Donors never see the tool or anything it produces, and it isn't used to send messages to
+  voters. We use it as delivered. The party is also moving its headquarters.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:8:b"]
+source_example_id: hr-ex-300
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: predicting which past donors will give again is a
+  tool to organise and optimise a campaign administratively, whose output people are not directly
+  exposed to, so it is excluded by the second sentence of Annex III point 8(b). No Art. 50 duty:
+  minimal_risk. Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_8"
+  - "verdict:not_high"

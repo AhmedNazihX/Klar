@@ -1,0 +1,26 @@
+id: cb-173-emergency-call-urgency-routing
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Integrierte Leitstelle eines Landkreises in Baden-Württemberg; bei uns gehen alle
+  Notrufe über 112 ein, rund 180.000 im Jahr. Ab 2028 hört eine Software, die wir bei einem
+  Leitstellen-Hersteller gekauft haben, bei jedem Notruf mit, wertet aus, was der Anrufer sagt, und
+  ordnet den Notfall einer Dringlichkeitsstufe zu. Danach legt sie fest, welche Rettungsmittel
+  alarmiert werden, und schickt den Einsatz direkt an die passende Rettungswache. Die Disponenten
+  können eingreifen, tun es aber selten. Nebenbei bekommt unsere Leitstelle neue Bildschirmarbeitsplätze.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:5:d"
+label_citation: ["annex:III:5:d", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-173
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: evaluating and classifying emergency calls, setting
+  their priority and dispatching responders is Annex III point 5(d), high-risk under Art. 6(2); it
+  decides dispatch itself, so no Art. 6(3) exemption. It analyses what callers say, not their
+  emotions. Role: deployer of bought software.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"

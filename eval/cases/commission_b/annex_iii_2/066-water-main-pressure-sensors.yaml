@@ -1,0 +1,26 @@
+id: cb-066-water-main-pressure-sensors
+set_name: commission_b
+language: en
+description: >-
+  We are the drinking-water utility for a city of about 300,000 people in central Portugal, with
+  roughly 400 employees. From 2028 we're fitting the distribution network with smart pressure
+  sensors from a German manufacturer. A model inside each sensor tells real pressure surges and
+  sudden drops apart from harmless fluctuations; when it detects a dangerous one, the sensor raises
+  an alarm in our control room and signals the nearest automatic valves to close, protecting the
+  pipes and the supply to homes. We install and use them as delivered. Our customer service is
+  moving to a new billing platform the same year.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:2"
+label_citation: ["annex:III:2", "art:3:14", "recital:55", "art:6:2"]
+source_example_id: hr-ex-066
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: pressure monitoring in drinking-water distribution
+  fulfils the safety-component definition (Art. 3(14)) and the supply of water is covered by
+  Annex III point 2 (recital 55): high-risk under Art. 6(2). Role: deployer of bought sensors.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:high"

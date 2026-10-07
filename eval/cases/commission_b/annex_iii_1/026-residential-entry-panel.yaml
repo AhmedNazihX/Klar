@@ -1,0 +1,27 @@
+id: cb-026-residential-entry-panel
+set_name: commission_b
+language: en
+description: >-
+  We're a 45-person proptech company in Gothenburg making smart entry panels for apartment
+  buildings and gated residential estates. Residents who want to can register their face,
+  fingerprint or a short spoken phrase in our app. At the gate or front door they then step up to
+  the panel and present themselves, the panel checks them against the residents registered for
+  that building, and the door opens if there's a match. Anyone who doesn't register keeps using a
+  key fob. We train the matching models in-house and sell the panels under our own brand through
+  property managers. The new panel generation ships in 2028, together with a parcel-locker
+  add-on.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:1:a", "art:3:36", "art:3:41"]
+source_example_id: hr-ex-026
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: residents choose to register and consciously present
+  themselves at the entrance to get in, so the Commission reads this as biometric verification
+  (Art. 3(36)) that is not remote (Art. 3(41)): outside Annex III point 1(a). No Art. 50 duty:
+  minimal_risk. Role: it develops the panels and sells them under its own brand (provider).
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

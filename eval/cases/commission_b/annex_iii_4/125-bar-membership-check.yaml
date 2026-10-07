@@ -1,0 +1,29 @@
+id: cb-125-bar-membership-check
+set_name: commission_b
+language: en
+description: >-
+  We're a 30-person legal-tech company in Lyon. Law firms use our recruitment add-on to check one
+  thing: whether the bar membership a lawyer applicant claims is real. Our model reads the
+  membership number and name from the certificate the applicant uploads and looks them up in the
+  official registers kept by the bar associations. The answer is simply "confirmed" or "not
+  confirmed"; anything unclear, such as a name mismatch, goes to the firm's HR or legal staff to
+  follow up by hand. It doesn't score, rank or filter applicants in any other way. We developed it
+  ourselves and sell it under our brand from 2028. We also publish a newsletter on legal
+  technology.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:3:a", "annex:III:4:a", "art:6:4"]
+source_example_id: hr-ex-125
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the add-on is used in recruitment (Annex III point
+  4(a)) but only confirms a credential against an official register, a clearly defined, limited
+  task that does not materially shape selection: the Art. 6(3)(a) narrow-procedural-task
+  exemption. No profiling. No Art. 50 duty: minimal_risk. Art. 6(4): as provider it must document
+  this assessment before placing the add-on on the market (and register it under Art. 49(2)).
+tags:
+  - "area:annex_iii_4"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

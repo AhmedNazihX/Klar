@@ -1,0 +1,26 @@
+id: cb-056-datacentre-mail-and-leak-watch
+set_name: commission_b
+language: en
+description: >-
+  We operate three data centres in the Netherlands and rent out cloud servers, with about 260
+  staff. In 2028 our security team will start using a service we've licensed from an email
+  security vendor. It flags incoming messages whose sender addresses look forged or suspicious,
+  and it scans leaked data dumps for our customer lists and staff passwords so we know when our
+  data has been stolen. Alerts go to our security analysts, who decide what to do. The service
+  has no access to the systems that run the data centres or the customers' servers. We use it as
+  delivered. We're also opening a new office in Rotterdam.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:2", "art:3:14", "recital:55"]
+source_example_id: hr-ex-056
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting suspicious email senders and stolen data is
+  used solely for cybersecurity; the operator runs critical digital infrastructure, but recital 55
+  says such components are not safety components (Art. 3(14)), so not Annex III point 2. No
+  Art. 50 duty: minimal_risk. Role: deployer of a licensed service.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:not_high"

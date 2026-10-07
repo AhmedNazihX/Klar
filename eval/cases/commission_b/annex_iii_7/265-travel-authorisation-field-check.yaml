@@ -1,0 +1,29 @@
+id: cb-265-travel-authorisation-field-check
+set_name: commission_b
+language: en
+description: >-
+  We are the national unit that handles travel-authorisation and visa files for a Schengen state,
+  with about 110 staff. From 2028 a checking tool we've bought will go through every incoming file
+  and confirm that the required fields are filled in, the formats are right and the mandatory
+  documents are attached, sending incomplete files back to the applicant with a list of what's
+  missing. It produces no risk score or flag about anyone and does not sort applicants by priority;
+  it doesn't prepare or structure the content for the officers' examination either. We use it as
+  delivered. We're also hiring data-protection staff.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:a", "annex:III:7:c", "art:6:4"]
+source_example_id: hr-ex-265
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: checking the completeness and format of travel
+  authorisation or visa files, with no risk score, flag or triage of individuals, is a narrow
+  procedural task (not a preparatory one, as it does not structure content for the examination):
+  the Art. 6(3)(a) exemption from Annex III point 7(c). No Art. 50 duty: minimal_risk. Art. 6(4):
+  the provider must document this assessment before placing it on the market (and register it
+  under Art. 49(2)). Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

@@ -1,0 +1,29 @@
+id: cb-292-claim-party-role-extraction
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Geschäftsstelle eines großen Amtsgerichts in Niedersachsen mit gut 150
+  Justizangestellten. Ab 2028 nutzen wir ein Modul eines Justizsoftware-Anbieters, das jede
+  eingehende Klageschrift liest und daraus die Verfahrensbeteiligten herauszieht: Kläger, Beklagte,
+  Prozessbevollmächtigte, Zeugen und Sachverständige mit ihren Anschriften. Diese Angaben landen
+  als Stammdaten in der elektronischen Akte, damit die Geschäftsstelle Ladungen und Zustellungen
+  vorbereiten kann. Mit dem Inhalt der Klage oder ihrer rechtlichen Bewertung hat das Modul nichts
+  zu tun. Wir nutzen es so, wie der Anbieter es liefert. Unsere Kantine hat neue Öffnungszeiten.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:a", "annex:III:8:a", "art:6:4"]
+source_example_id: hr-ex-292
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: extracting procedural roles and contact details from a
+  claim to prepare summonses is clerical support that would not normally assist in researching or
+  interpreting facts and law; in any event it is a narrow procedural task, Art. 6(3)(a), so not
+  high-risk under Annex III point 8(a). No Art. 50 duty: minimal_risk. Art. 6(4): the provider must
+  document this assessment before placing it on the market (and register it under Art. 49(2)).
+  Role: deployer of a bought module.
+tags:
+  - "area:annex_iii_8"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

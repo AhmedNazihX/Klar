@@ -1,0 +1,33 @@
+id: cb-006-railcar-overspeed-guard
+set_name: commission_b
+language: en
+description: >-
+  We are a private regional rail operator in Upper Austria with about 600 employees and a fleet
+  of 38 diesel railcars. From 2029 we are fitting every railcar with an on-board assistance unit
+  bought from a supplier in Brno. Its machine-learning models combine the forward camera, GPS and
+  the route data to work out the permitted speed on each stretch; if the driver runs too fast,
+  the unit brakes on its own, and it also brings the train to a halt when it sees a train or an
+  obstruction ahead that it could otherwise hit or that could derail it. The supplier's unit was
+  assessed by a notified body under the EU rail interoperability rules. We install it exactly as
+  delivered and haven't changed anything. The same overhaul gives the railcars new seats and
+  passenger Wi-Fi.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:I:B:17"
+label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:B:17", "art:2:2", "art:3:4"]
+source_example_id: hr-ex-006
+accepted_bases: ["safety_component"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-06 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: enforcing speed limits and stopping the train
+  before a collision or derailment is a safety function (Art. 3(14)) of rail equipment covered by
+  the rail interoperability directive (Annex I Section B point 17). The notified-body assessment
+  is stated, so Art. 6(1)(b) is met rather than assumed (the source row's Art. 6(1) note).
+  high_risk. Section B, so Art. 2(2) leaves only Art. 6(1), 60a and 102 to 112: no deployer
+  duties follow. Role: it bought the unit and uses it unchanged under the supplier's name, so it
+  stays a deployer (Art. 3(4); no Art. 25 trigger). Fitted from 2029, after 2 August 2028.
+tags:
+  - "area:annex_i"
+  - "annex_i_section:b"
+  - "verdict:high"

@@ -1,0 +1,28 @@
+id: cb-103-certification-exam-proctoring
+set_name: commission_b
+language: en
+description: >-
+  We're a 90-person proctoring company in Kraków. Training institutes and professional bodies use
+  our service when candidates sit certification exams on their own computers. During the exam our
+  system watches the candidate through the webcam with face analysis, tracks how they type and
+  records their screen, and flags behaviour that breaks the rules: opening notes or other
+  websites, another person appearing, or talking to someone off-camera. Each flag goes into a
+  report for the institute. We developed the system in-house and sell it under our own name; a new
+  version launches in 2028. We also run a help desk in five languages.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:3:d"
+label_citation: ["annex:III:3:d", "art:6:2"]
+source_example_id: hr-ex-103
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: monitoring and detecting prohibited behaviour of
+  candidates during tests at educational and vocational training institutions is Annex III point
+  3(d), high-risk under Art. 6(2). It detects the behaviour itself, so no Art. 6(3) exemption. It
+  infers no emotions, so Art. 5(1)(f) does not arise. Role: it develops the system and sells it
+  under its own name.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:high"

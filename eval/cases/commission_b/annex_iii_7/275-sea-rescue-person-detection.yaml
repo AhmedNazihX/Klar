@@ -1,0 +1,29 @@
+id: cb-275-sea-rescue-person-detection
+set_name: commission_b
+language: de
+description: >-
+  Wir sind eine gemeinnützige Seenotrettungsgesellschaft mit 1.000 Freiwilligen und 180
+  Festangestellten an der Nord- und Ostsee. Ab 2028 tragen unsere Rettungskreuzer und eine Drohne
+  ein Kamerasystem eines Herstellers aus Kiel. Ein Modell erkennt darin Menschen im Wasser oder in
+  treibenden Booten, auch nachts per Wärmebild, und meldet ihre Position an die Seenotleitung, die
+  den Einsatz koordiniert. Die Daten gehen ausschließlich an die Seenotrettung, nie an Grenz- oder
+  Migrationsbehörden, und dienen nur dazu, Leben zu retten. Wir nutzen das System wie geliefert.
+  Außerdem feiern wir das Jubiläum unserer ältesten Station.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:7:d", "annex:III:5:d"]
+source_example_id: hr-ex-275
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting people in distress at sea exclusively to
+  coordinate search and rescue, with no link to migration or border control, is outside Annex III
+  point 7(d): the intended purpose is lifesaving. Also outside point 5(d) (settled by the orchestrator 2026-10-07): point 5(d) covers
+  systems used to dispatch, or establish priority in dispatching, emergency first response
+  services; this system reports positions to the rescue coordination centre, which decides, so
+  read as not dispatching (contrast cb-176, which classifies emergency calls). No Art. 50 duty:
+  minimal_risk. Role: deployer of a bought system.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:not_high"

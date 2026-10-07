@@ -1,0 +1,28 @@
+id: cb-114-assessment-answer-scoring
+set_name: commission_b
+language: en
+description: >-
+  We are a 50-person assessment company in Amsterdam. Employers send job applicants a link to our
+  online assessment, where they answer case questions in writing or by recorded voice. Our model
+  marks each answer on what it says and how clearly it's expressed (structure, relevance,
+  vocabulary), not on tone of voice or facial expression, gives every applicant a total score and
+  ranks them. Employers use the ranking to decide whom to invite to interview. We trained the
+  model ourselves and sell the platform under our own name; the new scoring engine launches in
+  2028. We're also opening a small office in Lisbon.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:4:a"
+label_citation: ["annex:III:4:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-114
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: scoring applicants' answers and ranking them to
+  decide interview invitations is evaluation in recruitment and selection, Annex III point 4(a),
+  high-risk under Art. 6(2); it materially influences the decision, so no Art. 6(3) exemption.
+  It assesses content and language, not emotions, so Art. 5(1)(f) does not arise. Role: it trains
+  the model and sells the platform under its own name.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:high"

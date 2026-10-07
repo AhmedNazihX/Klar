@@ -1,0 +1,27 @@
+id: cb-205-informant-reliability-score
+set_name: commission_b
+language: de
+description: >-
+  Wir sind das Landeskriminalamt eines Bundeslandes mit rund 1.300 Beschäftigten. Ab 2028 nutzen
+  unsere Ermittler ein Analyseprogramm, das wir bei einem Anbieter für Polizeisoftware gekauft
+  haben. Es bewertet, wie verlässlich Aussagen von Zeugen und Hinweise von Vertrauenspersonen
+  sind: Es prüft, ob eine Aussage in sich stimmig ist, ob sie zu den bereits gesicherten Fakten
+  passt und wie oft frühere Hinweise derselben Quelle zugetroffen haben, und gibt dazu eine
+  Einschätzung ab. Die Ermittler entscheiden, wie sie damit weiterarbeiten. Wir nutzen das Programm
+  in der Standardkonfiguration. Nebenbei bauen wir eine neue Schießanlage.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:6:c"
+label_citation: ["annex:III:6:c", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-205
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: assessing the reliability of evidence from human
+  sources (witnesses, informants) for law enforcement is Annex III point 6(c), high-risk under
+  Art. 6(2); it evaluates individuals' credibility, so no Art. 6(3) exemption. Role: deployer of a
+  bought program.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:high"

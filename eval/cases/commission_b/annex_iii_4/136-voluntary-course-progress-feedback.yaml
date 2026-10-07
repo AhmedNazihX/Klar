@@ -1,0 +1,28 @@
+id: cb-136-voluntary-course-progress-feedback
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Logistikkonzern aus Bremen mit rund 9.000 Beschäftigten. Auf unserer Lernplattform
+  können Mitarbeitende freiwillig Kurse belegen, etwa zu Excel, Englisch oder Gefahrgut-Grundlagen.
+  Ab 2028 wertet ein zugekauftes Modul die Quizergebnisse und den Kursfortschritt aus und gibt
+  jeder Person Rückmeldung, wo sie steht, und Empfehlungen, welche Lektion sie wiederholen oder
+  welchen Kurs sie als Nächstes machen könnte. Diese Rückmeldung sieht nur die Person selbst;
+  Führungskräfte und Personalabteilung bekommen sie nicht, und sie spielt für Beurteilungen oder
+  Beförderungen keine Rolle. Im gleichen Jahr eröffnen wir eine Kita am Hauptstandort.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:4:b", "annex:III:3:b"]
+source_example_id: hr-ex-136
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: measuring progress in voluntary training and giving
+  feedback only to the employee is not used to evaluate job performance or for decisions on
+  promotion, so outside Annex III point 4(b). An employer's internal learning platform is not an
+  educational or vocational training institution, so point 3(b) does not apply either (the
+  Commission files the example under 4(b) only). No Art. 50 duty: minimal_risk. Role: deployer of a
+  bought module.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:not_high"

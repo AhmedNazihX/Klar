@@ -1,0 +1,29 @@
+id: cb-282-small-claims-draft-rulings
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die IT-Stelle der Justiz eines Bundeslandes mit rund 120 Beschäftigten und betreuen die
+  Fachverfahren der Amtsgerichte. Ab 2028 setzen die Amtsgerichte ein System ein, das ein
+  Softwarehaus in unserem Auftrag gebaut hat und das wir unter dem Namen der Landesjustiz betreiben.
+  Bei Klagen mit geringem Streitwert und bei unstreitigen Zahlungsforderungen liest es die
+  strukturierten Verfahrensdaten aus und erstellt anhand unserer Textvorlagen einen fertigen
+  Entwurf des Urteils oder des Zahlungsbefehls. Die Richterin oder der Rechtspfleger prüft den
+  Entwurf und unterschreibt. Nebenbei stellen wir die Gerichte gerade auf die elektronische Akte um.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:8:a"
+label_citation: ["annex:III:8:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-282
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: generating draft judgments in small-claims cases and
+  draft payment orders applies the law to a concrete set of facts for a judicial authority: Annex
+  III point 8(a), high-risk under Art. 6(2). Its drafts sit next to the decision and shape it, so no
+  Art. 6(3) exemption. Role: the judicial IT office had it built and puts it into service under the
+  state judiciary's name (Art. 3(3), provider; the courts are deployers). Generated drafts may also
+  carry an Art. 50(2) marking duty, which does not change the class.
+tags:
+  - "area:annex_iii_8"
+  - "verdict:high"

@@ -1,0 +1,42 @@
+id: cb-041-airport-walkway-passenger-categories
+set_name: commission_b
+language: en
+description: >-
+  We run a mid-sized international airport in southern Europe with about 1,500 employees. In 2028
+  we're adding analytics from a Lyon-based vendor to the cameras in the corridors that connect our
+  terminals. As people walk through, the software builds templates of their faces and of the way
+  they walk, estimates each traveller's ethnic origin from these, and sorts people into groups on
+  that basis. For each part of the day our planners then receive combined profiles of the
+  passenger mix, for example people on their own versus groups of relatives, and the operations
+  teams use the groupings to decide where to put extra staff and which languages to use on signs
+  and announcements. Nobody is identified by name. We run the vendor's standard configuration. The
+  duty-free area is also being enlarged.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:1:b"
+label_citation:
+  - "annex:III:1:b"
+  - "art:3:40"
+  - "art:6:2"
+  - "art:50:3"
+  - "art:5:1:g"
+  - "guide:guide-prohibited:para:283"
+source_example_id: hr-ex-041
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's
+  standing delegation for clear labels). Class: sorting travellers into groups by an ethnic origin inferred
+  from face and gait templates is biometric categorisation (Art. 3(40)) according to a sensitive
+  attribute (Art. 9(1) GDPR), Annex III point 1(b), high-risk under Art. 6(2), as the Commission's
+  example says. Not prohibited: Art. 5(1)(g) covers only race, political opinions, trade union
+  membership, religious or philosophical beliefs, sex life or sexual orientation, and the
+  guidelines (guide-prohibited para. 283) say categorising by skin or eye colour, or analysing DNA
+  for origin, is not prohibited; EU law lists ethnic origin separately from race (Art. 9(1) GDPR,
+  Charter Art. 21). The description says ethnic origin, not race. Art. 50(3) duty stacks (deployer
+  informs those exposed). Role: deployer of an unmodified bought system.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:high"
+  - "trap:high_risk_and_transparency"

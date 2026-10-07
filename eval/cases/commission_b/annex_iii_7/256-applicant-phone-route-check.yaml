@@ -1,0 +1,27 @@
+id: cb-256-applicant-phone-route-check
+set_name: commission_b
+language: en
+description: >-
+  We are the immigration and asylum directorate of a Benelux country, around 1,500 staff. Where the
+  law allows us to read an applicant's phone, from 2028 we'll analyse the extracted data with a
+  tool bought from a forensic-software company. It checks the location history, message timestamps
+  and contacts against the route, timeline and contacts the applicant described, and produces
+  signals on where the story is supported or contradicted. Caseworkers use these signals when they
+  appraise the evidence and decide whether the person qualifies for protection. We use the tool
+  as delivered. We're also expanding our interpreter pool.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:7:c"
+label_citation: ["annex:III:7:c", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-256
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: analysing lawfully obtained phone data to validate an
+  applicant's route, timeline and contacts and producing signals for the eligibility appraisal
+  assists the examination of the application and the related evidence: Annex III point 7(c),
+  high-risk under Art. 6(2); no Art. 6(3) exemption. Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:high"

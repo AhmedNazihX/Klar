@@ -1,0 +1,29 @@
+id: cb-179-wildfire-crew-dispatch
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Softwareunternehmen aus Freiburg mit 45 Mitarbeitenden und entwickeln Lösungen für
+  den Katastrophenschutz. Unser neues System für Waldbrände sagt aus Wetter-, Vegetations- und
+  Satellitendaten voraus, wie wahrscheinlich ein Brand in einem Schutzwald ist und in welche
+  Richtung er sich ausbreiten wird. Brennt es, alarmiert es automatisch die zuständigen
+  Feuerwehreinheiten oder gibt der Einsatzleitung eine klare Empfehlung, wie viele Kräfte wohin
+  geschickt werden sollen. Die Einsatzleitung behält das letzte Wort. Wir verkaufen das System ab
+  2028 unter unserem Namen an Landkreise und Forstverwaltungen. Unser Team fährt übrigens jedes Jahr
+  gemeinsam zum Schwarzwaldmarathon.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:5:d"
+label_citation: ["annex:III:5:d", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-179
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: beyond forecasting fire spread, the system triggers
+  the dispatch of fire crews or clearly recommends where and how many to send, so it is used to
+  dispatch, or to establish priority in dispatching, emergency first response services: Annex III
+  point 5(d), high-risk under Art. 6(2). Its role in dispatch is decisive, so no Art. 6(3)
+  exemption. Role: it develops and sells the system under its own name.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"

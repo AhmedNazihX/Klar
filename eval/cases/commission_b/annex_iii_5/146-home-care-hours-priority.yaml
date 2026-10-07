@@ -1,0 +1,28 @@
+id: cb-146-home-care-hours-priority
+set_name: commission_b
+language: de
+description: >-
+  Wir sind das Sozialamt eines Landkreises in Brandenburg. Wir finanzieren häusliche Pflege für rund
+  2.300 ältere und pflegebedürftige Menschen, aber die Pflegestunden der ambulanten Dienste reichen
+  nicht für alle. Ab 2028 verteilt ein gekauftes Planungsprogramm die verfügbaren Stunden: Es legt
+  fest, wer wie viele Stunden pro Woche bekommt und wer zuerst versorgt wird, anhand von
+  Pflegegrad, Wohnsituation, Angehörigen und den Wartezeiten. Die Bescheide gehen dann von uns an
+  die Betroffenen. Wir nutzen das Programm in der Grundeinstellung des Herstellers. Daneben bauen
+  wir gerade eine Beratungsstelle für pflegende Angehörige auf.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:5:a"
+label_citation: ["annex:III:5:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-146
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: a local authority's system that decides how limited
+  home-care hours are distributed and prioritised among eligible people materially influences
+  access to essential public care services: Annex III point 5(a), high-risk under Art. 6(2); it
+  evaluates each person's circumstances, so no Art. 6(3) exemption. Role: deployer of bought
+  software.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"

@@ -1,0 +1,29 @@
+id: cb-020-stadium-gate-ban-list
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Fußball-Zweitligist und betreiben ein Stadion mit 25.000 Plätzen. Zur Saison
+  2028/29 ersetzen wir die Drehkreuze am Haupteingang durch Einlassschleusen mit Kamera: Jeder
+  Besucher bleibt kurz stehen und schaut in die Kamera, erst dann öffnet sich die Schleuse. Die
+  Software, die wir bei einem niederländischen Hersteller gekauft haben, vergleicht das Gesicht
+  mit der Liste der Personen, gegen die ein Stadionverbot besteht. Gibt es einen Treffer, bleibt
+  die Schleuse zu und ein Ordner kommt dazu; alle anderen gehen durch, und von ihnen wird nichts
+  gespeichert. Auf den Tribünen und im Umlauf gibt es keine solche Erkennung. Zur selben Saison
+  stellen wir im Stadion komplett auf bargeldloses Bezahlen um.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:1:a", "art:3:41", "recital:17"]
+source_example_id: hr-ex-020
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the face check runs only at a gate that each visitor
+  must actively step up to and look into, so the identification is not remote (Art. 3(41) and
+  recital 17 require identification without the person's active involvement); outside Annex III
+  point 1(a), following the Commission's settled verdict. No other Annex III use, not a
+  biometric categorisation or emotion recognition system, so no Art. 50 duty: minimal_risk. Not
+  law enforcement, so Art. 5(1)(h) does not arise. Role: deployer of a bought system.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

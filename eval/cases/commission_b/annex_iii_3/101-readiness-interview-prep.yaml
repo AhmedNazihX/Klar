@@ -1,0 +1,33 @@
+id: cb-101-readiness-interview-prep
+set_name: commission_b
+language: de
+description: >-
+  Wir sind eine Weiterbildungsakademie der Handwerkskammer in Sachsen mit rund 60 Beschäftigten.
+  Bevor jemand in einen Meisterkurs einsteigt, führen unsere Dozentinnen und Dozenten ein
+  Einstufungsgespräch, um zu klären, ob die Person für den Kurs bereit ist. Zur Vorbereitung
+  nutzen wir ab 2028 ein selbst entwickeltes Werkzeug: Es liest die bisherigen Abschlüsse und die
+  Berufserfahrung der Person ein und stellt aus unserem Fragenkatalog Themen und Fragen zusammen,
+  die der Dozent im Gespräch ansprechen kann. Wie er das Gespräch führt und wie er die Person
+  einstuft, entscheidet allein der Dozent. Unsere Akademie feiert nächstes Jahr ihr
+  fünfzigjähriges Bestehen.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:3:d", "annex:III:3:c", "art:6:4"]
+source_example_id: hr-ex-101
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the tool prepares an educator's assessment of
+  readiness for a level of training (an Annex III point 3(c) assessment) by selecting topics and
+  questions; it makes no decision on the level a person can access: the Art. 6(3)(d)
+  preparatory-task exemption. Doubt: it reads each person's records, which an engine could read as
+  profiling; the Commission does not. Questions are picked from an existing catalogue, not
+  generated, so no Art. 50(2) duty: minimal_risk. Art. 6(4): as provider it must document this
+  assessment before putting the tool into service (and register it under Art. 49(2)). Role: it
+  builds the tool and uses it itself (provider, also deployer).
+tags:
+  - "area:annex_iii_3"
+  - "verdict:not_high"
+  - "art_6_4_documentation"
+  - "also_role:deployer"

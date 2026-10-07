@@ -1,0 +1,31 @@
+id: cb-031-incident-footage-timeline
+set_name: commission_b
+language: en
+description: >-
+  We are a 35-person software house in Leuven building investigation tools for police forces. Our
+  incident-review product takes everything gathered about one incident, for instance nearby
+  shops' camera footage, phone videos handed in by bystanders and officers' own photos, and lays it
+  out on a timeline. It follows people and things across the clips, such as a red hatchback, a
+  number plate, a backpack or a knife, groups sightings that look like the same person, and shows
+  who and what was where at each moment. It never looks anyone up in an outside register, so
+  nobody gets a name; it only works with the material from that one incident. Putting names to
+  people is a later step that detectives do separately. Version 3 ships in 2028. We also sponsor
+  a local cycling team.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:1:a", "art:3:41"]
+source_example_id: hr-ex-031
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Contaminated source (decision 016: the corpus retells
+  hr-ex-031 in annex-iii para:152); written as usual, source_example_id kept so the evaluation can
+  flag it. Class: analysis of a closed set of material from one incident, with no comparison
+  against an external reference database and no identity established, is the step before
+  identification, so not remote biometric identification under Annex III point 1(a). No Art. 50
+  duty: minimal_risk. Role: it develops the product and sells it under its own name.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"
+  - "contaminated"

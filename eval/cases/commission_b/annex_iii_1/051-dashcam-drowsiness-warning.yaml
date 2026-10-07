@@ -1,0 +1,30 @@
+id: cb-051-dashcam-drowsiness-warning
+set_name: commission_b
+language: en
+description: >-
+  We're a 20-person start-up in Turin selling a clip-on dashboard camera to private car owners.
+  It's an accessory bought separately, not part of any car, and it has no connection to the car's
+  controls. Our model watches the driver's eyes, head position and posture and spots signs that
+  they're getting drowsy, nodding off or having a sudden health problem such as a fainting spell.
+  It then beeps and flashes, and if that doesn't help it suggests the nearest place to stop. It
+  doesn't try to read the driver's mood. We developed and trained the model ourselves, and sell
+  the camera under our own brand online. The second generation goes on sale in 2028.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:1:c", "art:3:39", "recital:18"]
+source_example_id: hr-ex-051
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Warning-only rewrite settled by the orchestrator 2026-10-07: the source system can also take
+  control of the vehicle and bring it to a stop; built into a car, that is a safety component of
+  a type-approved vehicle (Annex I Section B points 18/19), a high-risk route the Commission's
+  Annex III row does not assess. The rewrite makes it a warning-only aftermarket accessory to keep
+  the Annex III question clean. Class: fatigue, drowsiness and sudden illness are physical states,
+  not emotions or intentions (recital 18), so not emotion recognition (Art. 3(39)) and not Annex
+  III point 1(c). No Art. 50 duty: minimal_risk. Role: it develops the model and sells the camera
+  under its own brand.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

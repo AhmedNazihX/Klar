@@ -1,0 +1,26 @@
+id: cb-240-interview-neutral-summaries
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Ausländerbehörde einer Großstadt in Bayern mit rund 300 Beschäftigten. Ab 2028
+  erstellt ein Programm, das wir bei einem Softwarehaus gekauft haben, nach jeder Anhörung eine
+  kurze Zusammenfassung des Gesprächs für die Akte. Es gibt wieder, was gefragt und geantwortet
+  wurde, in der Reihenfolge des Gesprächs, ohne etwas zu gewichten, wegzulassen oder zu bewerten.
+  Es sagt nichts darüber, ob die Person glaubwürdig ist, und gibt keine Empfehlung ab. Die
+  Sachbearbeiterin liest die Zusammenfassung gegen und kann sie ändern. Außerdem bieten wir jetzt
+  Termine auch samstags an.
+label:
+  risk_class: limited_risk
+  role: deployer
+label_citation: ["annex:III:7:a", "art:50:2"]
+source_example_id: hr-ex-240
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: neutral, non-prioritised summaries of interviews, with
+  no credibility scoring or recommendation, do not assess deception, so outside Annex III point
+  7(a). Writing summaries is generating synthetic text, so the provider's Art. 50(2) marking duty
+  applies (as cb-293): limited_risk. Role: deployer of a bought program.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:not_high"

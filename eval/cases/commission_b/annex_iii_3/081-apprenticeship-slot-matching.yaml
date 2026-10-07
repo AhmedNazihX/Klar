@@ -1,0 +1,27 @@
+id: cb-081-apprenticeship-slot-matching
+set_name: commission_b
+language: en
+description: >-
+  We are a regional public employment agency in northern Italy with about 500 staff. Every year
+  several thousand young people apply to us for a place on a state-funded apprenticeship. From
+  2028 a matching tool we're buying from a software company will take each applicant's school
+  records, the certificates they've completed and their aptitude-test scores, check them against
+  each programme's minimum entry requirements and number of places, and allocate applicants to
+  programmes. Our advisers send out the offers it produces. We haven't modified the vendor's
+  product. Our offices are also getting new signage in four languages.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:3:a"
+label_citation: ["annex:III:3:a", "art:6:2", "art:6:3", "art:3:52"]
+source_example_id: hr-ex-081
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: allocating applicants to apprenticeship programmes on
+  the basis of their education records and test scores determines access to vocational training:
+  Annex III point 3(a), high-risk under Art. 6(2). Assessing each applicant's records is profiling,
+  so the Art. 6(3) exemption is unavailable. Role: deployer of an unmodified bought tool.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:high"

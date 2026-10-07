@@ -1,0 +1,28 @@
+id: cb-130-performance-based-shift-allocation
+set_name: commission_b
+language: en
+description: >-
+  We're a supermarket and warehouse chain in Ireland with about 5,000 staff. From 2028 a scheduling
+  system we've bought will draw up our rotas. It looks at each worker's punctuality, missed shifts,
+  how often they accept or turn down offered shifts and their ratings from customers and managers,
+  ranks the workers for every slot, and hands out shifts, breaks and on-call times automatically.
+  The best-ranked staff get the most important shifts; lower-ranked staff get fewer or less
+  important ones, less bonus pay and less predictable hours, and anyone who declines a priority
+  offer drops down the ranking. We use the vendor's settings. We also replaced the lighting in all
+  stores with LEDs this year.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:4:b"
+label_citation: ["annex:III:4:b", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-130
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: allocating tasks on the basis of individual behaviour
+  and evaluating workers' performance and behaviour is Annex III point 4(b), high-risk under
+  Art. 6(2); it ranks workers (profiling) and affects pay and access to shifts, so no Art. 6(3)
+  exemption. Role: deployer of a bought system.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:high"

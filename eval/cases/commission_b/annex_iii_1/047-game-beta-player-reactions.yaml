@@ -1,0 +1,31 @@
+id: cb-047-game-beta-player-reactions
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Spielestudio aus Hamburg mit 140 Leuten. Für unser nächstes Actionspiel haben wir
+  ein eigenes Testwerkzeug gebaut: Spielerinnen und Spieler aus unserem offenen Beta-Programm
+  spielen zu Hause, und mit ihrer Einwilligung filmt die Webcam dabei Gesicht und Oberkörper. Unser
+  Modell wertet Mimik, Haltung, Blickrichtung und Lidschluss aus und schätzt Moment für Moment, ob
+  jemand begeistert, frustriert, verärgert oder amüsiert ist. So sehen unsere Designer, welche
+  Stellen nerven oder langweilen, und bauen sie um. Die Tester sind keine Angestellten, sondern
+  Fans, die sich freiwillig melden. Das Beta-Programm startet im Januar 2028. Gerade hat unser
+  Studio einen Preis für Barrierefreiheit gewonnen.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:1:c"
+label_citation: ["annex:III:1:c", "art:3:39", "art:6:2", "art:50:3"]
+source_example_id: hr-ex-047
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: inferring excitement, frustration, anger or amusement
+  from facial expressions and posture (biometric data) is emotion recognition (Art. 3(39)), Annex
+  III point 1(c), high-risk under Art. 6(2). The testers are volunteer consumers, not workers or
+  students, so Art. 5(1)(f) does not arise. Art. 50(3) duty stacks: the studio, as deployer, must
+  inform the players. Role: it builds the tool and uses it itself (provider, also deployer).
+tags:
+  - "area:annex_iii_1"
+  - "verdict:high"
+  - "also_role:deployer"
+  - "trap:high_risk_and_transparency"

@@ -1,0 +1,26 @@
+id: cb-239-asylum-interview-transcripts
+set_name: commission_b
+language: en
+description: >-
+  We are the asylum office of a Nordic country, with about 700 caseworkers and interpreters. From
+  2028 the recordings of asylum interviews will run through a speech tool we've licensed from a
+  language-technology company. It turns the audio into a written transcript and, where needed,
+  translates the applicant's answers into Swedish or English for the case file. It does nothing
+  else with the recording: it doesn't judge whether the person is telling the truth or comment on
+  their story. Caseworkers check the transcript against the audio. We use the tool as delivered.
+  We're also renovating our interview rooms.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:7:a"]
+source_example_id: hr-ex-239
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: processing interview audio only to transcribe and
+  translate it, without inferring deception, is not a polygraph-like tool, so outside Annex III
+  point 7(a). Transcription and translation do not substantially alter the input (the Art. 50(2)
+  exception, as own-a-10), so no Art. 50 duty: minimal_risk. Role: deployer of a licensed tool.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:not_high"

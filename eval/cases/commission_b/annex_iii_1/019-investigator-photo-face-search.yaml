@@ -1,0 +1,34 @@
+id: cb-019-investigator-photo-face-search
+set_name: commission_b
+language: en
+description: >-
+  We are a 15-person investigations firm in Vienna working mostly for insurers and law firms.
+  Clients often give us a single picture of someone they can't name, such as a still from a shop's
+  security camera after a suspicious accident, or a photo posted on a forum. Our in-house tool
+  turns the face into a template and compares it with an index of portraits we keep: for each case
+  we gather the public web pages about the people connected to it (company sites, news reports,
+  public profiles) and add the pictures from those pages. The tool returns the closest matches
+  with their source links, and an investigator decides whether it really is the same person. The
+  person in the picture is never asked or involved. Version 2 goes live in January 2028, the same
+  month we move offices.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:1:a"
+label_citation: ["annex:III:1:a", "art:3:41", "art:6:2", "art:5:1:e"]
+source_example_id: hr-ex-019
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Targeted-collection reading settled by the orchestrator 2026-10-07: Art. 5(1)(e) prohibits AI that
+  builds or expands face databases through untargeted scraping of the internet; the source row's
+  reference database is "pictures taken from the Internet". The rewrite keeps the collection
+  targeted (pages about people connected to each case) so the Commission's high-risk verdict
+  holds; an untargeted crawl would make it prohibited. Class: a face in a picture is compared with
+  a reference database to identify the person without their involvement: remote biometric
+  identification (Art. 3(41)), Annex III point 1(a), high-risk under Art. 6(2). Role: it builds
+  the tool and puts it into service for its own business (provider, and also its deployer).
+tags:
+  - "area:annex_iii_1"
+  - "verdict:high"
+  - "also_role:deployer"

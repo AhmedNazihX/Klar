@@ -1,0 +1,29 @@
+id: cb-222-missing-child-suspect-filter
+set_name: commission_b
+language: en
+description: >-
+  We're a 50-person investigative-analytics company in Lyon selling only to police forces. When a
+  child is reported missing, our system helps investigators find possible suspects quickly. It
+  analyses the area where the child was last seen, the people living nearby who are on the
+  sex-offender register, what is known of their recent movements, and the profile of the children
+  each of them abused in the past, and ranks those individuals by how likely they are to be
+  involved, so officers know whom to check first. We developed it ourselves; the first contract
+  starts in 2028. We also fund a missing-children hotline.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:6:e"
+label_citation: ["annex:III:6:e", "art:6:2", "art:6:3", "art:5:1:d", "art:3:52"]
+source_example_id: hr-ex-222
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: generating individual risk inferences from behaviour
+  patterns to filter people as potential suspects is profiling in the course of detecting and
+  investigating criminal offences, Annex III point 6(e), high-risk under Art. 6(2); profiling rules
+  out Art. 6(3). Not Art. 5(1)(d): the assessment is supported by past criminal behaviour and other
+  verifiable facts, not by profiling alone. Role: it develops and sells the system under its own
+  name.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:high"

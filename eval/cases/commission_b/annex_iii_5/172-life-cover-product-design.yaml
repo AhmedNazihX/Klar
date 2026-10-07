@@ -1,0 +1,27 @@
+id: cb-172-life-cover-product-design
+set_name: commission_b
+language: en
+description: >-
+  We're a mid-sized life insurer in Milan with about 900 employees. Our product team is adopting an
+  analytics platform from a software partner to design new policies. It studies large sets of
+  anonymised demographic, behavioural and socio-economic data to spot groups whose needs aren't
+  covered well, suggests product features and pricing ranges for them, and simulates how a new
+  product might perform before launch. It is used before products exist; it never assesses an
+  individual customer or decides whether to offer, price or cancel anyone's policy, which is done
+  by our separate underwriting process. The platform goes live in 2028. We're also sponsoring a
+  financial-literacy programme in schools.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:5:c"]
+source_example_id: hr-ex-172
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: designing life-insurance products from aggregated
+  data, without risk assessment or pricing for individual persons, is a prior and separate stage
+  from point 5(c)'s individual risk assessment and pricing: outside Annex III point 5(c). No
+  Art. 50 duty: minimal_risk. Role: deployer of a partner's platform.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"

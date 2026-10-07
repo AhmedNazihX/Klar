@@ -1,0 +1,26 @@
+id: cb-076-grid-data-improvement-review
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Stadtwerke einer mittelgroßen Stadt in Hessen und betreiben das örtliche Stromnetz,
+  insgesamt arbeiten bei uns rund 600 Menschen. Unser Analyseteam nutzt ab 2028 eine gekaufte
+  Software, die im Nachhinein die Betriebsdaten des Netzes durchgeht und ungewöhnliche Muster
+  heraussucht. Diese Auffälligkeiten prüfen unsere Netzingenieure in Ruhe, und daraus planen wir
+  Verbesserungen, etwa wo wir Leitungen verstärken oder Schutzeinstellungen ändern. In den
+  laufenden Netzbetrieb greift die Software nicht ein, sie liefert nur Material für unsere
+  Planung. Außerdem eröffnen wir im Frühjahr ein neues Kundencenter am Bahnhof.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:2", "art:3:14"]
+source_example_id: hr-ex-076
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: anomaly detection whose output is checked by people
+  and serves future improvements enriches decisions but has no direct safety function
+  (Art. 3(14)): not a safety component under Annex III point 2. Contrast hr-ex-071. No Art. 50
+  duty: minimal_risk. Role: deployer of bought software.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:not_high"

@@ -1,0 +1,26 @@
+id: cb-218-sentencing-recidivism-score
+set_name: commission_b
+language: en
+description: >-
+  We're a 30-person risk-assessment software company in Madrid. Our product is used in criminal
+  courts: for each defendant who has been convicted, it combines their criminal history, the
+  current offence and other case data to estimate how likely they are to reoffend, to reoffend
+  violently, or to commit another serious crime. Judges and probation officers see the scores when
+  deciding on sentences and conditions. We built the model ourselves and sell it under our own
+  brand; two Spanish regions start using it in 2028. We also sponsor a prisoner-education charity.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:6:d"
+label_citation: ["annex:III:6:d", "art:6:2", "art:6:3", "art:5:1:d"]
+source_example_id: hr-ex-218
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: estimating the risk of recidivism or further serious
+  offences for criminal courts is Annex III point 6(d), high-risk under Art. 6(2); it profiles
+  defendants, so no Art. 6(3) exemption. Not Art. 5(1)(d): it rests on a conviction and case facts,
+  not on profiling alone. Role: it develops and sells the product under its own name.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:high"

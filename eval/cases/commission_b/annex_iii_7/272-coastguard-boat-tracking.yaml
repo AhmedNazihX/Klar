@@ -1,0 +1,27 @@
+id: cb-272-coastguard-boat-tracking
+set_name: commission_b
+language: en
+description: >-
+  We are the coast guard of a Mediterranean EU state, with about 4,000 personnel. From 2028 our
+  patrol aircraft, vessels and coastal radars will feed a maritime surveillance system bought from
+  a defence-electronics supplier. Its models detect and follow small boats and the people on them,
+  whether inside our territorial waters, in the contiguous zone or further out on the high seas,
+  and pass the tracks to our border-control operations room, which decides whether to send a unit
+  to intercept and board. We use the system as delivered. We're also commissioning two new patrol
+  boats.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:7:d"
+label_citation: ["annex:III:7:d", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-272
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting and tracking persons at sea for border
+  control, cueing interception or boarding, is Annex III point 7(d), high-risk under Art. 6(2),
+  wherever the platform operates: the intended purpose decides, not the location. No Art. 6(3)
+  exemption. Role: deployer of a bought system. Contrast hr-ex-275 (search and rescue only).
+tags:
+  - "area:annex_iii_7"
+  - "verdict:high"

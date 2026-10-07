@@ -1,0 +1,29 @@
+id: cb-199-officer-fatigue-wearables
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Bereitschaftspolizei eines Bundeslandes mit rund 2.500 Beamtinnen und Beamten. Für
+  den Arbeitsschutz bei langen Einsätzen, etwa bei Demonstrationen oder Hochwasser, testen wir ab
+  2028 Armbänder eines Herstellers von Sportelektronik. Ein Modell wertet Herzfrequenz, Hauttemperatur,
+  Bewegung und Schlafdaten aus und erkennt, wenn jemand übermüdet ist oder körperlich überlastet,
+  zum Beispiel durch Hitze. Dann bekommt die Person selbst und der Einsatzarzt einen Hinweis, damit
+  sie eine Pause einlegt. Für Beurteilungen oder Personalentscheidungen werden die Daten nicht
+  genutzt. Außerdem bekommen unsere Einsatzfahrzeuge eine neue Klimatisierung.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6:b", "annex:III:1:c", "recital:18", "art:5:1:f"]
+source_example_id: hr-ex-199
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: monitoring officers' fatigue and physical strain for
+  occupational health and safety is not a law enforcement tool aimed at suspects (point 6(b)), and
+  fatigue is a physical state, not an emotion (recital 18), so not point 1(c); used for medical and
+  safety reasons, it also falls outside Art. 5(1)(f). Doubt: the source says "fatigue or stress";
+  the rewrite keeps to fatigue and physical strain so the emotion-recognition question does not
+  arise. Not used to evaluate staff (point 4(b)). No Art. 50 duty: minimal_risk. Role: deployer of
+  bought wearables.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

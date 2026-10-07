@@ -1,0 +1,27 @@
+id: cb-148-sickness-claim-fraud-flags
+set_name: commission_b
+language: en
+description: >-
+  We're the national sickness-insurance agency of a small EU member state, with about 1,200 staff.
+  From 2028 every claim for sickness pay will pass through an analytics model we've licensed. It
+  looks for irregularities, inconsistencies and signs of fraud, such as dates that don't add up or
+  patterns seen in earlier fraud cases, and flags suspicious claims for investigation. A flagged
+  claim goes to an investigator, who decides whether it's fraudulent; until then, payment is put on
+  hold. Claims that aren't flagged are processed normally. We use the supplier's model unchanged.
+  Our call centre is also extending its opening hours.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:5:a"
+label_citation: ["annex:III:5:a", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-148
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: flagging benefit claims for fraud decides which claims
+  face scrutiny, delay or suspension, so it is used to evaluate eligibility for essential public
+  assistance benefits and materially influences access to them: Annex III point 5(a), high-risk
+  under Art. 6(2); no Art. 6(3) exemption. Role: deployer of a licensed model.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"

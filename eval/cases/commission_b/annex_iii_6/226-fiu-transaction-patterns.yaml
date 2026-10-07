@@ -1,0 +1,32 @@
+id: cb-226-fiu-transaction-patterns
+set_name: commission_b
+language: en
+description: >-
+  We are the financial intelligence unit of a central European country, part of the police, with
+  about 80 analysts. Banks send us millions of transaction records and suspicious-activity reports
+  each year. From 2028 a detection model from a financial-crime software vendor will scan the
+  transaction data for patterns that point to money laundering or terrorist financing: unusual
+  amounts, bursts of transfers, odd intervals, and routes through particular countries. It looks
+  at the structure of the transactions, and flags the suspicious chains to our analysts, who
+  investigate. We use the vendor's model unchanged. We're also hosting an international
+  conference on crypto-asset tracing.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6:e"]
+source_example_id: hr-ex-226
+accepted_bases: ["outside_use_case"]
+label_status: settled
+flip_variants:
+  - feature: the transaction analysis is combined with or enriched by personal data (names, account details), building individual profiles and assessing personal characteristics
+    resulting_verdict: high
+    provision_ids: ["annex:III:6:e"]
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting suspicious transaction patterns
+  (amounts, frequencies, intervals, routing) is not profiling of natural persons, even if
+  transactions can later be linked to people, so outside Annex III point 6(e). Written without the
+  flip feature (enrichment with personal data to build individual profiles); the engine should
+  ask about or flag it. No Art. 50 duty: minimal_risk. Role: deployer of a bought model.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

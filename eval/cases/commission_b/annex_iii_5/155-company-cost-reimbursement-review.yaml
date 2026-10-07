@@ -1,0 +1,25 @@
+id: cb-155-company-cost-reimbursement-review
+set_name: commission_b
+language: de
+description: >-
+  Wir sind eine Förderbank eines Bundeslandes mit rund 400 Beschäftigten. Unternehmen, die an
+  unseren Programmen teilnehmen, etwa zur Energieeffizienz oder Digitalisierung, reichen bei uns
+  Kostennachweise zur Erstattung ein. Antragsteller sind ausschließlich Firmen, also GmbHs,
+  Aktiengesellschaften und Genossenschaften, keine Privatpersonen oder Einzelunternehmer. Ab 2028
+  prüft ein gekauftes Modell diese Erstattungsanträge, gleicht Rechnungen mit den bewilligten
+  Posten ab und schlägt vor, welche Beträge erstattet werden. Unsere Sachbearbeiter geben die
+  Zahlungen frei. Außerdem führen wir gerade ein neues Förderprogramm für Wasserstoff ein.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:5:a"]
+source_example_id: hr-ex-155
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: point 5(a) covers natural persons' eligibility for
+  public assistance; this system assesses reimbursement claims from companies only, so it falls
+  outside Annex III point 5(a). No Art. 50 duty: minimal_risk. Role: deployer of a bought model.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"

@@ -1,0 +1,29 @@
+id: cb-080-city-school-place-allocation
+set_name: commission_b
+language: de
+description: >-
+  Wir sind das Schulamt einer Großstadt in Nordrhein-Westfalen und verteilen jedes Jahr rund 9.000
+  Kinder auf die städtischen Grund- und weiterführenden Schulen. Ab dem Anmeldejahr 2028 übernimmt
+  das eine Software, die wir bei einem Anbieter für Verwaltungssoftware gekauft haben. Sie bekommt
+  die Wohnadresse jedes Kindes, die Schulbezirke, die freien Plätze je Schule, ob schon ein
+  Geschwisterkind dort ist, sowie Angaben zur Familiensituation, etwa ob ein Elternteil
+  alleinerziehend ist. Daraus teilt sie jedem Kind automatisch einen Schulplatz zu, hält die
+  Bezirksregeln ein, verteilt die Kinder gleichmäßig und hält die Schulwege kurz. Die Eltern
+  bekommen den Bescheid per Post. Nebenbei digitalisieren wir gerade die Schülerakten.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:3:a"
+label_citation: ["annex:III:3:a", "art:6:2", "art:6:3", "art:3:52"]
+source_example_id: hr-ex-080
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: a public authority's system that assigns children to
+  schools on the basis of address, siblings and family circumstances determines access to
+  educational institutions: Annex III point 3(a), high-risk under Art. 6(2). Evaluating each
+  child's personal circumstances is profiling, so the Art. 6(3) exemption is unavailable. Role:
+  deployer of bought software.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:high"

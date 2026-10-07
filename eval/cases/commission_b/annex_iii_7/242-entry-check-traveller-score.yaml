@@ -1,0 +1,26 @@
+id: cb-242-entry-check-traveller-score
+set_name: commission_b
+language: en
+description: >-
+  We are the border guard of a Baltic state, about 3,000 officers, covering airports, ports and
+  land crossings. From 2028 our first-line officers will see a risk score for every arriving
+  traveller, produced by software we bought from a border-technology firm. The score is built from
+  the traveller's history with us, their travel patterns and any hits against watch lists, and
+  officers use it to decide who goes to the second-line check for a closer look. We use the
+  vendor's software without changes. We're also replacing the passport-control booths at the main
+  airport.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:7:b"
+label_citation: ["annex:III:7:b", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-242
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: scoring the risk posed by a traveller entering the
+  territory, to decide on referral to second-line checks, is Annex III point 7(b), high-risk under
+  Art. 6(2); it profiles individuals, so no Art. 6(3) exemption. Role: deployer of bought software.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:high"

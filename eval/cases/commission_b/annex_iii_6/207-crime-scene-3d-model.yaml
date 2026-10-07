@@ -1,0 +1,27 @@
+id: cb-207-crime-scene-3d-model
+set_name: commission_b
+language: en
+description: >-
+  We're a 22-person company in Ghent making scene-documentation software for police and forensic
+  institutes. Investigators photograph and laser-measure a crime scene, and our models turn those
+  photos and measurements into an accurate 3D model they can walk through on screen, with distances,
+  sight lines and the positions of objects, and lay out a possible sequence of movements for
+  discussion. It helps them understand how the scene fits together; it doesn't rate any piece of
+  evidence or say how trustworthy it is. We developed the models ourselves and release version 2
+  in 2028. We also offer training courses in scene photography.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:6:c"]
+source_example_id: hr-ex-207
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: mapping and reconstructing a crime scene from
+  collected data helps investigators understand spatial relations and sequence without assessing
+  evidence reliability, so outside Annex III point 6(c). The 3D model is built from measured data,
+  read as a visualisation rather than synthetic content, so no Art. 50 duty: minimal_risk. Role: it
+  develops and sells the software under its own name.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

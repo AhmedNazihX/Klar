@@ -1,0 +1,25 @@
+id: cb-225-district-crime-scores
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Polizeidirektion einer Großstadt in Sachsen mit rund 2.000 Beschäftigten. Ab 2028
+  nutzt unsere Einsatzplanung eine Software, die wir bei einem Anbieter für Lageanalysen gekauft
+  haben. Sie wertet die angezeigten Straftaten der letzten Jahre, Einwohnerdichte, Nachtleben und
+  Verkehrsknoten aus und gibt jedem Stadtteil einen Kriminalitätswert, der zeigt, wo in den
+  nächsten Wochen mit mehr Delikten zu rechnen ist. Danach verteilen wir Streifen und
+  Präventionsangebote. Über einzelne Personen sagt die Software nichts, sie bewertet nur Gebiete.
+  Außerdem bekommen unsere Reviere neue Funkgeräte.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:6:d", "annex:III:6:e"]
+source_example_id: hr-ex-225
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: scoring neighbourhoods for expected crime, without
+  profiling individuals, falls outside Annex III points 6(d) and 6(e) (and outside Art. 5(1)(d)).
+  No Art. 50 duty: minimal_risk. Role: deployer of bought software.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"

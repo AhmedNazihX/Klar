@@ -1,0 +1,32 @@
+id: cb-156-caseworker-fact-lookup
+set_name: commission_b
+language: en
+description: >-
+  We are a public health-insurance fund in Belgium with about 1,600 staff. Caseworkers decide on
+  members' applications for healthcare benefits such as home nursing or medical devices. From 2028
+  our case-management system, supplied by an IT vendor, adds a chat-style question box: a
+  caseworker types something like "how old is the applicant?" or "which treatments were reimbursed
+  last year?" and gets back the matching facts from the member's file, each shown with the record
+  it comes from. The box doesn't weigh the facts or say whether the person qualifies; the
+  caseworker must check the facts and decides. Only our trained staff use it. We're also
+  refurbishing our branch offices.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:a", "art:6:3:d", "annex:III:5:a", "art:6:4", "guide:guide-art50:para:45"]
+source_example_id: hr-ex-156
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the tool serves an Annex III point 5(a) decision
+  (eligibility for healthcare benefits), but only retrieves existing facts in a structured way
+  without evaluating them, and the caseworker reviews them: the Art. 6(3)(a) and (d) exemptions.
+  Transparency: staff know they are using an internal tool (guide-art50 para. 45), and it returns
+  file facts rather than generating new content, so no Art. 50 duty: minimal_risk. Doubt: if an
+  engine reads the replies as generated text, it would add Art. 50(2). Art. 6(4): the provider
+  must document this assessment before placing it on the market (and register it under Art. 49(2)).
+  Role: deployer of a vendor's feature.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

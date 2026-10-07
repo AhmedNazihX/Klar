@@ -1,0 +1,39 @@
+id: cb-307-campaign-copy-tone-check
+set_name: commission_b
+language: en
+description: >-
+  We're the communications team of a mid-sized political party in Austria, 14 people in Vienna.
+  For the 2029 election we've bought an editing add-on for our writing software. Once our staff
+  have written a leaflet, speech or social-media post, the add-on reads it and points out passages
+  that are unclear or could backfire, lines that contradict our manifesto or earlier party
+  material, and phrasings that could better reflect the values we campaign on, with a suggested
+  alternative wording for each. Our writers decide what to keep. We use the add-on as supplied.
+  We're also recruiting volunteers for door-to-door canvassing.
+label:
+  risk_class: high_risk
+  status: legally_ambiguous
+  role: deployer
+  annex_point: "annex:III:8:b"
+label_citation: ["annex:III:8:b", "art:6:3:b"]
+source_example_id: hr-ex-307
+accepted_bases: ["art_6_3_filter"]
+label_status: legally_ambiguous
+flip_variants:
+  - feature: the system generates new campaign content itself or targets voters
+    resulting_verdict: high
+    provision_ids: ["annex:III:8:b"]
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Legally ambiguous (decision 001: the source row is
+  legally_ambiguous). Open question: does a tool that refines campaign texts already written by
+  people fall under Annex III point 8(b), or does the Art. 6(3)(b) exemption take it out? Reading 1
+  (the Commission's leaning): it only improves the result of a previously completed human activity,
+  so it could be exempted under Art. 6(3)(b): not high-risk. Reading 2: it is intended to influence
+  the outcome of an election by affecting voters' choices, so it falls within point 8(b) and the
+  exemption does not hold: high-risk. Working assumption: high_risk (the stricter reading). The
+  `verdict:not_high` tag and the flip variant follow the Commission's not-high leaning, carried
+  from the source row; the label applies the stricter reading. Written
+  without the flip feature (generating new content or targeting voters). Role: deployer of a bought
+  add-on.
+tags:
+  - "area:annex_iii_8"
+  - "verdict:not_high"

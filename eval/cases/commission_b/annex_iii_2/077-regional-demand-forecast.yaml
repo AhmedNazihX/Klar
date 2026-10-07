@@ -1,0 +1,26 @@
+id: cb-077-regional-demand-forecast
+set_name: commission_b
+language: en
+description: >-
+  We're a regional electricity distribution operator in southern Sweden with around 700 staff. In
+  2028 our planners start using a forecasting assistant licensed from an analytics firm: it
+  predicts how much electricity will be used over the coming days, for the region as a whole and
+  for individual towns and substations, and suggests how we might prepare. The planners treat the
+  forecasts as advice and make the calls themselves; the assistant has no link to the systems that
+  operate the grid. We use the vendor's standard model without changes. We're also replacing the
+  roof of our head office.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:2", "art:3:14"]
+source_example_id: hr-ex-077
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: forecasting consumption and giving recommendations as
+  an assistant lacks a direct safety function (Art. 3(14)), so not a safety component in the
+  supply of electricity: not Annex III point 2. No Art. 50 duty: minimal_risk. Role: deployer of a
+  licensed tool.
+tags:
+  - "area:annex_iii_2"
+  - "verdict:not_high"

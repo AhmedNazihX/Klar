@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -556,6 +557,16 @@ def test_no_committed_case_derives_from_a_pile_a_example() -> None:
     split = Split.model_validate_json(SPLIT_FILE.read_text(encoding="utf-8"))
     cases = [case for case_set in YAML_SETS for case in load_cases(case_set)]
     assert derived_from_pile_a(cases, split.pile_a) == ()
+
+
+def test_every_pile_b_example_has_exactly_one_rewrite() -> None:
+    """B4's DoD: each Pile B example is rewritten once, and no rewrite comes from elsewhere (a case
+    without a source id counts as None and fails). Skips without the split, as above."""
+    if not SPLIT_FILE.is_file():
+        pytest.skip(f"{SPLIT_FILE} is missing (this worktree leaves the split out)")
+    split = Split.model_validate_json(SPLIT_FILE.read_text(encoding="utf-8"))
+    sources = Counter(case.source_example_id for case in load_cases(CaseSet.COMMISSION_B))
+    assert sources == Counter(split.pile_b)
 
 
 # --- file-level rules --------------------------------------------------------------------------

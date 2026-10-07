@@ -1,0 +1,29 @@
+id: cb-091-neurodivergent-learning-companion
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Lernsoftware-Anbieter aus Köln mit 45 Mitarbeitenden. Unsere App begleitet
+  Schülerinnen und Schüler mit Autismus, Legasthenie oder ADHS im Unterricht und bei den
+  Hausaufgaben. Ein Modell, das wir selbst trainiert haben, passt Lernpfad, Tempo und Darstellung
+  laufend an das Kind an: größere Schrift und andere Farben, Aufgaben mit Bildern und Bewegung,
+  zusätzliche Bearbeitungszeit, Pausen und kurze Entspannungsübungen, wenn das Kind unruhig wird.
+  Die Lehrkraft sieht, was dem Kind hilft, und plant danach ihren Unterricht. Noten vergibt die
+  App nicht, und sie bewertet auch nicht, was das Kind gelernt hat. Die neue Version kommt 2028
+  auf den Markt; außerdem gibt es bald eine Elternversion.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:3:b"]
+source_example_id: hr-ex-091
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the app personalises learning materials and
+  accommodations and informs the teacher, but is not used to evaluate learning outcomes or grade
+  students, so outside Annex III point 3(b). The source's text-to-speech feature is left out to
+  avoid an Art. 50(2) side question that does not bear on the verdict. Adaptations are shown in
+  the exercises, not through a conversational agent, so no Art. 50 duty: minimal_risk. Role: it
+  trains the model and sells the app under its own name.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:not_high"

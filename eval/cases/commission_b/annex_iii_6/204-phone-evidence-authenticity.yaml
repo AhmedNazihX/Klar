@@ -1,0 +1,27 @@
+id: cb-204-phone-evidence-authenticity
+set_name: commission_b
+language: en
+description: >-
+  We're a 55-person digital-forensics software company in Bratislava selling to police and
+  prosecutors. Our new module checks whether evidence pulled from seized phones, laptops and other
+  devices is genuine. It examines the digital traces around each item, such as location records,
+  when files were created and changed, and which apps touched them, judges whether the item looks
+  authentic or tampered with, and flags anything that needs a closer look by a human examiner. We
+  built the models ourselves and sell the module under our name from 2028. We also run an annual
+  capture-the-flag competition for students.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:6:c"
+label_citation: ["annex:III:6:c", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-204
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: evaluating the authenticity of digital evidence for
+  law enforcement is evaluating the reliability of evidence in investigating or prosecuting
+  offences, Annex III point 6(c), high-risk under Art. 6(2); it judges the evidence itself, so no
+  Art. 6(3) exemption. Role: it develops and sells the module under its own name.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:high"

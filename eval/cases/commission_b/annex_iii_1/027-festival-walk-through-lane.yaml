@@ -1,0 +1,29 @@
+id: cb-027-festival-walk-through-lane
+set_name: commission_b
+language: en
+description: >-
+  We run a 60,000-capacity open-air festival site near Antwerp with a permanent team of 30. From
+  the 2028 season, fans can opt in by uploading a selfie together with their ticket, and then use
+  a fast lane at the entrance: they walk through a short corridor without stopping, while cameras
+  on both sides capture their faces from several angles and the software, bought from a security
+  vendor, matches them against the fans who registered. If someone in the lane isn't recognised,
+  our stewards approach them and send them to the normal gates. The system is used for entry and
+  nothing else. Fans who don't register queue at the usual ticket scanners. This year we also
+  switched all food stalls to reusable cups.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:1:a", "art:3:41", "recital:17"]
+source_example_id: hr-ex-027
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the system is used solely to grant access, and the
+  fans it recognises registered and walk through the corridor to get in, so the Commission treats
+  them as actively participating: not remote biometric identification (Art. 3(41), recital 17),
+  outside Annex III point 1(a). Mild doubt: unregistered people in the lane are captured too; the
+  Commission's settled verdict covers the same set-up. No Art. 50 duty: minimal_risk. Not law
+  enforcement, so Art. 5(1)(h) does not arise. Role: deployer of a bought system.
+tags:
+  - "area:annex_iii_1"
+  - "verdict:not_high"

@@ -1,0 +1,29 @@
+id: cb-102-tutor-advice-method-review
+set_name: commission_b
+language: en
+description: >-
+  We are a vocational training centre in Linz for the metal and electrical trades, training about
+  1,200 apprentices with 90 staff. Each year our tutors recommend some apprentices for advanced
+  courses. From 2028 we'll use an analysis tool we bought to look back at those recommendations
+  alongside the apprentices' performance records and results, and to suggest how our tutors could
+  improve the way they recommend: factors they might take into account, or other options they
+  could offer. The recommendations themselves stay with the tutors, and the tool decides nothing
+  about any apprentice's placement. We use the vendor's standard set-up. This year we also opened a
+  second canteen.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:b", "annex:III:3:c", "art:6:4"]
+source_example_id: hr-ex-102
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: reviewing tutors' completed recommendations to improve
+  the recommendation method, without deciding any apprentice's placement, improves the result of a
+  previously completed human activity: the Art. 6(3)(b) exemption from Annex III point 3(c). No
+  Art. 50 duty: minimal_risk. Art. 6(4): the provider must document this assessment before placing
+  the tool on the market (and register it under Art. 49(2)). Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

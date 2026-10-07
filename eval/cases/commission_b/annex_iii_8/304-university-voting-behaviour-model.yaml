@@ -1,0 +1,26 @@
+id: cb-304-university-voting-behaviour-model
+set_name: commission_b
+language: en
+description: >-
+  We're a political-science research group of twelve people at a university in Leuven. For a
+  publicly funded research project we've built our own model of how voters behave, using survey
+  panels and past election results to study why people switch parties or stay home. The model is
+  used only within the project, for our papers and PhD theses; we don't sell it, share it with
+  parties or campaigns, or use it to reach voters. The project runs until 2029. Our group also
+  organises an annual summer school on survey methods.
+label:
+  risk_class: out_of_scope
+  role: provider
+label_citation: ["art:2:6", "annex:III:8:b"]
+source_example_id: hr-ex-304
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). The Commission says the system
+  is outside point 8(b) (it is not intended to influence elections) and "in any event" likely
+  excluded by Art. 2(6). Built and put into service solely for scientific research, the Art. 2(6)
+  exclusion applies, so out_of_scope (were it not excluded, it would be minimal_risk: not 8(b), no
+  Art. 50 duty). Role: it built the model for its own research (provider).
+tags:
+  - "area:annex_iii_8"
+  - "verdict:not_high"

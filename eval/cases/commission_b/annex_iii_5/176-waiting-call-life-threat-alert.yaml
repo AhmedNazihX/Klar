@@ -1,0 +1,27 @@
+id: cb-176-waiting-call-life-threat-alert
+set_name: commission_b
+language: en
+description: >-
+  We are the ambulance service's call centre for a region in southern Finland, handling about
+  250,000 emergency calls a year with 120 call-takers. At busy times callers wait in a queue. From
+  2028 a system from a public-safety software vendor will listen to waiting calls, for instance
+  the recorded message the caller is asked to leave, work out what kind of emergency it is and
+  how serious, and alert a call-taker when a waiting call sounds life-threatening so it can be
+  answered first. The call-taker decides whether to take the call out of turn and how to dispatch.
+  We use it unchanged. We're also recruiting 20 new call-takers.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:5:d"
+label_citation: ["annex:III:5:d", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-176
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the system evaluates and classifies queued emergency
+  calls as life-threatening or not, which is Annex III point 5(d), high-risk under Art. 6(2),
+  although the call-taker decides on prioritisation and dispatch; the Commission does not treat
+  this as an Art. 6(3) exemption. Role: deployer of an unmodified bought system.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:high"

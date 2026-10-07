@@ -1,0 +1,28 @@
+id: cb-214-financial-document-tagging
+set_name: commission_b
+language: en
+description: >-
+  We are the economic-crime unit of a public prosecutor's office in Italy, with 35 investigators
+  and analysts. In fraud cases we seize thousands of financial documents. From 2028 a tool we've
+  bought indexes them and tags each one with the accounts, amounts, dates, names and objects it
+  mentions, so analysts can line documents up against bank-account flows or find every mention of
+  a person or asset before they evaluate whether the evidence holds up. The tool doesn't judge any
+  document; that assessment is done by our staff. We use it as delivered. We're also moving to a
+  new case-management system.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:a", "art:6:3:d", "annex:III:6:c", "art:6:4"]
+source_example_id: hr-ex-214
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: indexing and tagging financial documents is used in
+  the course of evaluating evidence (Annex III point 6(c)) but is a narrow procedural and
+  preparatory task: the Art. 6(3)(a) and (d) exemptions. No Art. 50 duty: minimal_risk.
+  Art. 6(4): the provider must document this assessment before placing it on the market (and
+  register it under Art. 49(2)). Role: deployer of a bought tool.
+tags:
+  - "area:annex_iii_6"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

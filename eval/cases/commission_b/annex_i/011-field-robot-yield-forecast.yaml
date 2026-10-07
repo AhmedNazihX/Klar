@@ -1,0 +1,30 @@
+id: cb-011-field-robot-yield-forecast
+set_name: commission_b
+language: en
+description: >-
+  We're a 25-person agritech company near Wageningen. We make a small electric field robot for
+  vegetable growers that drives the rows on fixed GPS tracks, with ordinary bumpers and an
+  emergency stop button, none of it AI. What we sell it for is the model on board: it looks at
+  the plants with a multispectral camera, forecasts each plot's harvest and tells the grower when
+  and how much to water. The model has no control over how the robot moves. If it gets things
+  wrong, the grower ends up with a poorer forecast or a less efficient watering plan, nothing
+  more. We trained the model ourselves on three seasons of data from partner farms. Next spring
+  we are adding a strawberry variant.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:3:14", "art:6:1:a", "art:6:1a", "annex:I:B:21"]
+source_example_id: hr-ex-011
+accepted_bases: ["not_safety_component"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-06 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the robot is machinery (Annex I Section B point
+  21), but the on-board model only forecasts yield and plans irrigation; it fulfils no safety
+  function and its failure endangers no one's health, safety or property, so it is no safety
+  component (Art. 3(14); Art. 6(1a): performance optimisation). Not Art. 6(1); no Annex III use
+  (farm irrigation advice is not water supply under point 2); no Art. 50 duty. minimal_risk.
+  Role: it trains the model and sells the robot under its own name (Art. 3(3)).
+tags:
+  - "area:annex_i"
+  - "annex_i_section:b"
+  - "verdict:not_high"

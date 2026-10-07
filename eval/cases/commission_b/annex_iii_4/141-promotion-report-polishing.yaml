@@ -1,0 +1,30 @@
+id: cb-141-promotion-report-polishing
+set_name: commission_b
+language: de
+description: >-
+  Wir sind eine Unternehmensberatung aus Frankfurt mit rund 700 Beraterinnen und Beratern. Einmal im
+  Jahr schreiben die Führungskräfte Beförderungsberichte: Sie entscheiden selbst, wen sie für eine
+  Beförderung vorschlagen, vergeben die Bewertungen nach unseren Kriterien und schreiben die
+  Begründung. Erst danach geht der fertige Bericht ab 2028 durch einen gekauften Schreibassistenten.
+  Er glättet die Sprache, bringt den Text in unseren Hausstil und markiert Formulierungen, die
+  voreingenommen wirken könnten. Ergebnisse, Bewertungen und Inhalte ändert er nicht. Nach unserer
+  Richtlinie muss die Führungskraft den überarbeiteten Bericht noch einmal prüfen. Unser Büro
+  bekommt gerade eine Dachterrasse.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:b", "annex:III:4:b", "art:6:4"]
+source_example_id: hr-ex-141
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the assistant is used around promotion decisions
+  (Annex III point 4(b)) but only polishes reports after the managers' evaluations are complete,
+  without changing outcomes or scores: the Art. 6(3)(b) exemption (improving a previously completed
+  human activity). Language editing is an assistive function for standard editing, so no Art. 50(2)
+  duty: minimal_risk. Art. 6(4): the provider must document this assessment before placing it on
+  the market (and register it under Art. 49(2)). Role: deployer of a bought assistant.
+tags:
+  - "area:annex_iii_4"
+  - "verdict:not_high"
+  - "art_6_4_documentation"

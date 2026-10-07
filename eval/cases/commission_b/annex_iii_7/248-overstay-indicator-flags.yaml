@@ -1,0 +1,27 @@
+id: cb-248-overstay-indicator-flags
+set_name: commission_b
+language: de
+description: >-
+  Wir sind ein Softwarehaus aus Wien mit 80 Beschäftigten und entwickeln Lösungen für
+  Grenzbehörden. Unser neues Modul wertet historische Gesamtdaten aus, etwa wie viele Reisende auf
+  welcher Strecke und in welcher Jahreszeit ihren Aufenthalt überzogen haben, und leitet daraus
+  Risikoindikatoren für Gruppen ab. Diese Indikatoren wendet es dann auf die Daten einzelner,
+  namentlich bekannter Reisender an und erzeugt für jede Person einen Hinweis auf ein Risiko
+  irregulärer Migration, aufgrund dessen sie verstärkt kontrolliert wird. Wir verkaufen das Modul ab
+  2028 unter unserem Namen. Außerdem bilden wir jedes Jahr vier Lehrlinge aus.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: "annex:III:7:b"
+label_citation: ["annex:III:7:b", "art:6:2", "art:6:3"]
+source_example_id: hr-ex-248
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: deriving group-level indicators from aggregate data
+  and applying them to named travellers to produce individual irregular-migration risk flags for
+  enhanced checks is Annex III point 7(b), high-risk under Art. 6(2); it profiles individuals, so
+  no Art. 6(3) exemption. Role: it develops and sells the module under its own name.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:high"

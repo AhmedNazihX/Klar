@@ -1,0 +1,26 @@
+id: cb-250-migration-flow-trends
+set_name: commission_b
+language: en
+description: >-
+  We are the migration analysis centre of an EU interior ministry, with 45 analysts. From 2028 we're
+  using an analytics platform bought from a data-science firm. It processes large volumes of
+  aggregated data, including arrival statistics, route reports, seasonal patterns and economic
+  indicators, to spot trends, forecast migration flows and point to possible smuggling networks at
+  the level of routes and regions. Everything it works with and produces is aggregated; no
+  individual person can be identified from it. Our reports go to ministers and planning staff. We
+  use the platform unchanged. We're also publishing an open-data portal.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:7:b"]
+source_example_id: hr-ex-250
+accepted_bases: ["outside_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: detecting trends, forecasting flows and identifying
+  possible networks at an aggregate level, with no identified or identifiable natural persons in
+  the output, falls outside Annex III point 7(b). No Art. 50 duty: minimal_risk. Role: deployer of
+  a bought platform.
+tags:
+  - "area:annex_iii_7"
+  - "verdict:not_high"

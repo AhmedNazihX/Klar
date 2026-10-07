@@ -1,0 +1,29 @@
+id: cb-098-special-needs-placement-classifier
+set_name: commission_b
+language: de
+description: >-
+  Wir sind die Schulbehörde eines Landkreises in Bayern und entscheiden jedes Jahr über die
+  Förderung von rund 1.500 Kindern mit sonderpädagogischem Förderbedarf. Ab 2028 nutzen wir dafür
+  ein Programm, das wir bei einem Softwarehaus gekauft haben. Es wertet Testergebnisse aus, darunter
+  Intelligenz- und Leistungstests, die Einschätzungen der Lehrkräfte zu Verhalten, sozialen
+  Fähigkeiten und schulischen Leistungen, psychologische Gutachten sowie Diagnosen und
+  Vorerkrankungen aus der Krankengeschichte. Daraus ordnet es jedes Kind einem Förderprogramm zu und
+  empfiehlt, an welchem Förderort es am besten aufgehoben ist und wie viel Unterstützung es
+  braucht. Außerdem bauen wir gerade zwei Schulen barrierefrei um.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:3:c"
+label_citation: ["annex:III:3:c", "art:6:2", "art:6:3", "art:3:52"]
+source_example_id: hr-ex-098
+accepted_bases: ["within_use_case"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: classifying children with special educational needs
+  into programmes and recommending their placement and level of support assesses the appropriate
+  level of education they will receive: Annex III point 3(c), high-risk under Art. 6(2). It
+  evaluates each child's tests, behaviour and health data, which is profiling, so the Art. 6(3)
+  exemption is unavailable. Role: deployer of bought software.
+tags:
+  - "area:annex_iii_3"
+  - "verdict:high"

@@ -1,0 +1,31 @@
+id: cb-293-case-law-portal-search-summaries
+set_name: commission_b
+language: en
+description: >-
+  We're the publications office of a national judiciary in Central Europe, with 40 staff, and we
+  run the free online database of the country's court decisions. Lawyers, the public and court
+  staff use it. From 2028 the database adds features built by our contractor and run under our
+  name: besides the usual search by keywords, Boolean operators and legal provision, users can ask
+  in plain language, and the system writes short summaries of each published decision and of a set
+  of search results. It doesn't advise on any case or suggest how one should be decided. We're
+  also adding English translations of key judgments.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:6:3:a", "annex:III:8:a", "art:6:4", "art:50:2"]
+source_example_id: hr-ex-293
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the database is used, among others, by judicial
+  authorities to research the law (Annex III point 8(a)), but searching and summarising published
+  decisions are narrow procedural tasks: the Art. 6(3) exemption (the source names no letter;
+  Art. 6(3)(a) fits). The system writes summaries, synthetic text, so the provider's Art. 50(2)
+  marking duty applies: limited_risk. Art. 6(4): as provider it must document the Art. 6(3)
+  assessment before putting the features into service (and register under Art. 49(2)). Role: it
+  puts the system into service under its own name (Art. 3(3)), also deployer.
+tags:
+  - "area:annex_iii_8"
+  - "verdict:not_high"
+  - "art_6_4_documentation"
+  - "also_role:deployer"

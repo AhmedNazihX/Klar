@@ -1,0 +1,29 @@
+id: cb-188-flood-fire-prepositioning-brief
+set_name: commission_b
+language: en
+description: >-
+  We're the civil-protection agency of a French department, with 160 staff. From 2028 our planning
+  cell will use a model from a risk-intelligence vendor. Days before a likely emergency it reads
+  weather-risk data, such as wildfire danger or heavy-rain warnings, and produces a briefing on
+  where firefighting crews, pumps or flood barriers might best be placed in advance. Our analysts
+  check the briefing and the duty commander decides what, if anything, to pre-position. It is not
+  linked to emergency calls and dispatches nothing itself. We use the vendor's standard setup.
+  We're also upgrading our siren network.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["art:6:3:d", "annex:III:5:d", "art:6:4"]
+source_example_id: hr-ex-188
+accepted_bases: ["art_6_3_filter"]
+label_status: settled
+notes: >-
+  Label approved 2026-10-07 (checked against the source row by the orchestrator under the user's standing delegation for clear labels). Class: the briefing feeds the prioritisation of emergency
+  resources (Annex III point 5(d)), but it is preparatory intelligence that analysts and the
+  commander assess and confirm: the Art. 6(3)(d) preparatory-task exemption. It concerns places,
+  not persons, so no profiling. No Art. 50 duty: minimal_risk. Art. 6(4): the provider must
+  document this assessment before placing it on the market (and register it under Art. 49(2)).
+  Role: deployer of a bought model.
+tags:
+  - "area:annex_iii_5"
+  - "verdict:not_high"
+  - "art_6_4_documentation"
