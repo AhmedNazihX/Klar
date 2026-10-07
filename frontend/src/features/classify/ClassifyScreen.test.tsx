@@ -36,6 +36,17 @@ async function describeAndRun(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Run the checks' }))
 }
 
+const CLASS_LABELS = ['Prohibited', 'High-risk', 'Limited risk', 'Minimal risk', 'Out of scope']
+
+/** Klar never shows a class after a run stops: no class label starts any text on the screen
+ *  (the check names "2 Prohibited practices" and "3 High-risk" carry their number first). */
+function expectNoClassAnywhere(): void {
+  for (const label of CLASS_LABELS) {
+    expect(screen.queryByText(new RegExp(`^${label}\\b`))).toBeNull()
+  }
+  expect(screen.queryByRole('region', { name: 'Result' })).toBeNull()
+}
+
 function checkList(): HTMLElement {
   const panel = screen.getByRole('region', { name: "Checking in the Act's order" })
   return within(panel).getByRole('list')
@@ -162,7 +173,7 @@ describe('Classify, a run', () => {
     expect(rows[4]).toHaveAttribute('data-state', 'error')
     expect(rows[4]).toHaveTextContent("Stopped: this check couldn't finish.")
     expect(rows[5]).toHaveTextContent('Not run yet')
-    expect(screen.queryByRole('region', { name: 'Result' })).toBeNull()
+    expectNoClassAnywhere()
     expect(screen.getByLabelText('In your own words')).toHaveValue(WORKED_EXAMPLE_DESCRIPTION)
     expect(router.state.location.pathname).toBe('/app/classify')
     // Never sent again on its own: each run is paid.
@@ -202,13 +213,15 @@ describe('Classify, a run', () => {
     [503, null, "The checks aren't available right now. Try again later."],
     [422, null, "The description couldn't be sent. Keep it under 20,000 characters and try again."],
   ] as const)('says why the API refused a run (%i)', async (status, retryAfter, reason) => {
+    let requests = 0
     server.use(
-      http.post(CLASSIFY_URL, () =>
-        HttpResponse.json(
+      http.post(CLASSIFY_URL, () => {
+        requests += 1
+        return HttpResponse.json(
           { detail: 'refused' },
           { status, headers: retryAfter ? { 'Retry-After': retryAfter } : {} },
-        ),
-      ),
+        )
+      }),
     )
     const { user } = await openClassify()
     await describeAndRun(user)
@@ -216,6 +229,9 @@ describe('Classify, a run', () => {
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent(reason)
     expect(screen.getByText("The checks couldn't start")).toBeVisible()
+    // A refused run is never sent again on its own, and shows no class.
+    expect(requests).toBe(1)
+    expectNoClassAnywhere()
   })
 
   it('keeps the description for later, edits since the run included', async () => {
