@@ -1,0 +1,24 @@
+id: annex-match-31-hafenarzt-gesundheitsrisiko
+set_name: annex_match
+language: de
+description: >-
+  Wir sind der Hafenärztliche Dienst einer norddeutschen Hafenstadt und kontrollieren mit zwölf
+  Ärztinnen, Ärzten und Hygienekontrolleuren Schiffe aus aller Welt. Seit diesem Jahr nutzen wir
+  eine Software eines dänischen Anbieters: Ihr KI-Modell liest die Seegesundheitserklärungen und
+  Reisedaten ankommender Schiffe, also Route, angelaufene Häfen, gemeldete Krankheitsfälle an Bord
+  und die Liegezeit, und schätzt für Besatzung und Passagiere ein, wie hoch das Risiko einer
+  ansteckenden Krankheit ist. Danach entscheiden wir, wer vor dem Landgang ärztlich untersucht
+  wird. Die Software läuft mit den Einstellungen des Anbieters. Unser Dienstboot feiert dieses Jahr
+  seinen dreißigsten Geburtstag.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:7:b"]
+label_citation: ["annex:III:7:b", "art:6:2", "art:3:4"]
+notes: >-
+  Draft label, awaiting review (X0b round 2). Point: a competent public authority assesses the
+  health risk posed by natural persons who intend to enter the territory of a Member State, 7(b).
+  It scores crew and passengers, not only the ship, so it is not a mere vessel inspection. Role:
+  uses the provider's software with its settings.
+tags:
+  - "annex_iii_area:7"

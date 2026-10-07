@@ -1,0 +1,24 @@
+id: annex-match-05-treatment-plant-contamination-stop
+set_name: annex_match
+language: en
+description: >-
+  We're an 80-person process-automation company in Aarhus. Our control module is installed in
+  drinking-water treatment plants: probes in the raw-water intake and after each treatment stage
+  measure turbidity, conductivity, UV absorbance and bacterial counts, and a neural network we
+  trained on years of plant data spots signs of contamination, such as farm run-off after heavy
+  rain. It then raises or lowers the chlorine dose by itself and, if the treated water would not be
+  safe to drink, shuts the plant's outlet so nothing flows to consumers until staff clear it. We
+  sell it to water utilities in Denmark and northern Germany. Our coffee machine runs on solar
+  power.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:2"]
+label_citation: ["annex:III:2", "art:6:2", "art:3:14", "art:3:3"]
+notes: >-
+  Draft label, awaiting review (X0b round 2). Point: it performs a safety function in the supply
+  of drinking water, deciding the disinfection dose and stopping unsafe water from leaving the
+  plant (Art. 3(14) safety component), so Annex III 2. Role: develops it and sells it under its
+  own name.
+tags:
+  - "annex_iii_area:2"

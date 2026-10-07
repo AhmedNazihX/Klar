@@ -1,0 +1,23 @@
+id: annex-match-12-exam-hall-signal-detection
+set_name: annex_match
+language: en
+description: >-
+  We're a technical university in Austria with 18,000 students. Since the winter term our three
+  large exam halls have radio-frequency sensors under the floor, bought with a software package
+  from a Swiss supplier. During written exams its AI model listens for phones, smartwatches or
+  wireless earpieces that send or receive signals and works out which seat the signal comes from.
+  The invigilators get an alert on a tablet, go to that seat and check the student; a confirmed
+  device is reported to the examination board, which can void the exam. We use the system as
+  delivered. The halls were also repainted over the summer.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:3:d"]
+label_citation: ["annex:III:3:d", "art:6:2", "art:3:4"]
+notes: >-
+  Draft label, awaiting review (X0b round 2). Point: monitoring and detecting prohibited
+  behaviour of students during tests at an educational institution, Annex III 3(d). It infers no
+  emotions, so Art. 5(1)(f) does not arise. Role: the university uses the bought system as
+  delivered.
+tags:
+  - "annex_iii_area:3"
