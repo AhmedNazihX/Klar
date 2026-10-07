@@ -42,10 +42,11 @@ const PILL_CELL = 'w-px whitespace-nowrap'
 const TOOL_CELL = 'w-full min-w-40 max-w-0'
 const CELL = 'px-3 py-3.5 align-middle text-body-small text-ink'
 // The exceptions components.md allows: a class pill wider than its cap wraps inside the pill. In
-// English the cap is 200 px and no class pill reaches it. In German it is 160 px, and two pills
+// English the cap is 200 px and no class pill reaches it. In German it is 168 px, and two pills
 // wrap: "Außerhalb des Anwendungsbereichs" (261 px on one line) and "Hochrisiko, angenommen"
-// (190 px). 160 px is the narrowest two-line out-of-scope pill: "Anwendungsbereichs" alone needs it.
-const CLASS_PILL_FIT = 'w-max max-w-[12.5rem] whitespace-normal [&:lang(de)]:max-w-[10rem]'
+// (190 px). "Anwendungsbereichs" alone needs about 158 px on macOS and 162 px on Linux (CI), so the
+// cap leaves it room on every platform; the Tool column, above its 160 px minimum, gives the 8 px.
+const CLASS_PILL_FIT = 'w-max max-w-[12.5rem] whitespace-normal [&:lang(de)]:max-w-[10.5rem]'
 // A tool without a result says why in quiet text, not a pill: it wraps past 144 px ("Gespeichertes
 // Ergebnis nicht lesbar") so its column stays as narrow as the widest status pill.
 const QUIET_STATUS_FIT = 'inline-block w-max max-w-36 whitespace-normal text-slate'
