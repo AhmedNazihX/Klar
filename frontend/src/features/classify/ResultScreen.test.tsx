@@ -129,7 +129,7 @@ describe('Result summary', () => {
     expect(within(todo).getByText('Art. 26(11)')).toBeInTheDocument()
     expect(within(todo).getByText('Only if: You control the input data.')).toBeInTheDocument()
     const facts = screen.getByRole('complementary', { name: 'The result rests on' })
-    expect(within(facts).getAllByRole('button', { name: 'Confirm' }).length).toBeGreaterThan(0)
+    expect(within(facts).getAllByText('Assumed').length).toBeGreaterThan(0)
   })
 
   it.each([
@@ -150,13 +150,16 @@ describe('Result summary', () => {
     },
   )
 
-  it('confirms an assumed fact as stated', async () => {
+  it('offers Change on an assumed fact, which reopens the description (Confirm is P5b)', async () => {
     const user = userEvent.setup()
-    await openResult(decidedHighRisk())
+    const { router } = await openResult(decidedHighRisk())
     const facts = screen.getByRole('complementary', { name: 'The result rests on' })
-    const before = within(facts).getAllByText('Assumed').length
-    await user.click(within(facts).getAllByRole('button', { name: 'Confirm' })[0] as HTMLElement)
-    expect(within(facts).getAllByText('Assumed')).toHaveLength(before - 1)
+    expect(within(facts).queryByRole('button', { name: 'Confirm' })).toBeNull()
+    await user.click(within(facts).getAllByRole('button', { name: 'Change' })[0] as HTMLElement)
+    await expect.poll(() => router.state.location.pathname).toBe('/app/classify')
+    expect(await screen.findByLabelText('In your own words')).toHaveValue(
+      WORKED_EXAMPLE_DESCRIPTION,
+    )
   })
 
   it('carries the disclaimer and the AI disclosure (Art. 50(1))', async () => {

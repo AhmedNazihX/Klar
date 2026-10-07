@@ -1,14 +1,17 @@
-import { useId, useState, type JSX } from 'react'
+import { useId, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult } from '@/api'
 import { FactCard } from '@/components/FactCard'
 import { GlassPanel } from '@/components/GlassPanel'
 
+import { uniqueFacts } from './result-text'
+
 /**
- * "The result rests on": the deciding facts, each with its evidence tag. Confirming an assumed
- * fact marks it stated on this screen; Change reopens the description. Sending the answers back
- * to the engine is the follow-up loop's (P5b).
+ * "The result rests on": the deciding facts, each with its evidence tag. Change reopens the
+ * description. Confirm on an assumed fact comes with the follow-up loop (P5b), which sends the
+ * answer back to the engine: marking it here alone would leave the steps and the class as they
+ * were.
  */
 export function FactsPanel({
   result,
@@ -19,11 +22,8 @@ export function FactsPanel({
 }): JSX.Element {
   const { t } = useTranslation()
   const headingId = useId()
-  const [confirmed, setConfirmed] = useState<ReadonlySet<string>>(new Set())
   const deciding = result.deciding_facts ?? []
-  const facts = deciding.length > 0 ? deciding : result.facts
-  // A fact's text is its identity: the engine lists each fact once.
-  const unique = [...new Map(facts.map((fact) => [fact.text, fact])).values()]
+  const facts = uniqueFacts(deciding.length > 0 ? deciding : result.facts)
   return (
     <GlassPanel
       as="aside"
@@ -37,21 +37,9 @@ export function FactsPanel({
         <p className="m-0 text-label font-normal text-slate">{t('result.facts.intro')}</p>
       </div>
       <div className="flex flex-col gap-2.5">
-        {unique.map((fact) => {
-          const evidence =
-            fact.evidence === 'assumed' && confirmed.has(fact.text) ? 'stated' : fact.evidence
-          return (
-            <FactCard
-              key={fact.text}
-              fact={fact.text}
-              evidence={evidence}
-              onChange={onChange}
-              onConfirm={() => {
-                setConfirmed((previous) => new Set([...previous, fact.text]))
-              }}
-            />
-          )
-        })}
+        {facts.map((fact) => (
+          <FactCard key={fact.text} fact={fact.text} evidence={fact.evidence} onChange={onChange} />
+        ))}
       </div>
       <p className="m-0 mt-auto text-caption font-normal text-slate">
         {t('result.facts.accuracy')}
