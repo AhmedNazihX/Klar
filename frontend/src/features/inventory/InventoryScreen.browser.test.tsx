@@ -180,11 +180,9 @@ describe('the inventory table at 1280 px', () => {
     },
   )
 
-  // Known gap (found in P6 round 4): a limited-risk tool with a dated Art. 50 duty puts "Seit dem
-  // 2. Aug. 2026" (never broken) in Applies from, and the German table runs 37 px past the panel
-  // even with the Tool column at its 160 px minimum. Passes as a failure now; when the table is
-  // fixed it goes red, and `.fails` comes off.
-  it.fails('fits the German table with a dated limited-risk tool (known gap)', async () => {
+  // Found in P6 round 4: a limited-risk tool with a dated Art. 50 duty puts "Seit dem 2. Aug.
+  // 2026" in Applies from. The words before the date now wrap, so the German table fits.
+  it('fits the German table with a dated limited-risk tool', async () => {
     await page.viewport(DESKTOP.width, DESKTOP.height)
     await i18n.changeLanguage('de')
     const client = createTestQueryClient()
@@ -200,6 +198,19 @@ describe('the inventory table at 1280 px', () => {
     if (!panel) throw new Error('The table sits in its glass panel.')
     expect(table.scrollWidth).toBeLessThanOrEqual(panel.clientWidth)
   })
+
+  it.each(['en', 'de'] as const)(
+    'keeps every Applies-from date on one line, wrapping only between words (%s)',
+    async (language) => {
+      await page.viewport(DESKTOP.width, DESKTOP.height)
+      const table = await openInventory(language)
+      const dates = [...table.querySelectorAll('[data-date]')]
+      expect(dates.length).toBeGreaterThan(0)
+      for (const date of dates) {
+        expect(date.getClientRects().length, date.textContent).toBe(1)
+      }
+    },
+  )
 
   it.each(['en', 'de'] as const)(
     'keeps each Basis citation and Art. 111(2) tag whole (%s)',
