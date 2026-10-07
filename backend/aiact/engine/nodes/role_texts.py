@@ -378,8 +378,8 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "doesn't apply.",
         "not_found": "{count} duties left out because no earlier check reported the finding they "
         "depend on.",
-        "no_table": "No duties listed: the obligations table covers only the {version} text, "
-        "not the {asked} text.",
+        "not_modelled": "Duties not modelled for the {asked} text: the obligations table covers "
+        "only the {version} text, so no duties are listed.",
         "legacy_unchanged": "Art. 111(2): the system was on the market or in use before {date}, "
         "so {count} high-risk duties apply only if its design or intended purpose changes "
         "significantly on or after that date (a substantial modification); the class stays "
@@ -433,8 +433,9 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "erfüllt ist.",
         "not_found": "{count} Pflichten entfallen, weil keine frühere Prüfung den Befund gemeldet "
         "hat, von dem sie abhängen.",
-        "no_table": "Keine Pflichten aufgeführt: Die Pflichtentabelle deckt nur die "
-        "{version} Fassung ab, nicht die {asked} Fassung.",
+        "not_modelled": "Pflichten für die {asked} Fassung nicht modelliert: Die "
+        "Pflichtentabelle deckt nur die {version} Fassung ab, daher sind keine Pflichten "
+        "aufgeführt.",
         "legacy_unchanged": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr oder in "
         "Betrieb; daher gelten {count} Hochrisiko-Pflichten nur, wenn seine Konzeption oder "
         "Zweckbestimmung ab diesem Datum erheblich verändert wird (eine wesentliche Veränderung). "

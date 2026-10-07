@@ -1221,3 +1221,45 @@ def test_b5c_case_replay(
     shown = (result.matched, step.status, cited(result), step.decision)
     expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
     assert matches, shown
+
+
+# --- Replay under the original text (E11) --------------------------------------------------------
+
+ORIGINAL_RECORD_COMMAND = (
+    "uv run pytest tests/engine/nodes/test_prohibited.py -k replay_original --record-mode=once"
+)
+"""Records only the original-text replays (the whole `-k replay` run re-reads the corpus)."""
+DECEMBER_PROVISIONS = ("art:5:1:ba", "art:5:1:bb", "art:5:1a", "art:5:1b", "art:113:a")
+"""What only the December 2026 prohibitions cite: the points, the routes and their date."""
+
+
+@pytest.mark.xfail(strict=True, reason="recording pending (E11)")
+@pytest.mark.vcr
+def test_replay_original_text_reads_no_december_point(
+    luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
+) -> None:
+    """own-c-03's image tool under the original text, which has no Art. 5(1)(ba) or (bb), nor
+    Art. 5(1a) and (1b): not prohibited, and no December point is read or cited. Its amended
+    replay (`test_b5c_case_replay`) reads it against (ba) and its Art. 5(1a) routes. The other
+    (ba) cases are refused by the provider's content filter (decision 029), so they can't show
+    the difference."""
+    case = next((c for c in B5C_CASES if c.id == "own-c-03-image-tool-with-safeguards"), None)
+    if case is None:
+        pytest.skip(f"own-c-03 is not in {B5C_CASES_DIR}")
+    with corpus_recording(
+        vcr_cassette_dir,
+        default_cassette_name,
+        record_mode,
+        ORIGINAL_RECORD_COMMAND,
+        lambda: _live_corpus(luna_settings),
+    ) as recording:
+        check = ProhibitedCheck(luna_settings, library=RecordedGuidelineLibrary(recording))
+        run_state: EngineState = {**replay_state(case, AS_OF), "law_version": LawVersion.ORIGINAL}
+        result = check(run_state)
+    assert not unresolved_citations(result.step, run_state)
+    step = result.step
+    shown = (result.matched, step.status, cited(result), step.decision)
+    assert not result.matched, shown
+    assert step.status is Status.DECIDED, shown
+    assert not [pid for pid in cited(result) if pid.startswith(DECEMBER_PROVISIONS)], shown
+    assert "(ba)" not in step.decision and "(bb)" not in step.decision, shown

@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.provision_names import annex_point_name
 from aiact.retrieval.provisions import Provision
-from aiact.schemas import Language
+from aiact.schemas import Language, LawVersion
 
 EN, DE = Language.EN, Language.DE
 
@@ -220,6 +220,41 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "examples": "Verglichen mit den Beispielen aus den Leitlinien {ids}.",
     },
 }
+
+ORIGINAL_TEXTS: Mapping[Language, Mapping[str, str]] = {
+    EN: {
+        "i_section_b": "{law} is listed in Annex I Section B, so under Art. 2(2) only Art. 6(1), "
+        "Art. 102 to 109 and Art. 112 of the AI Act apply: the high-risk requirements reach the "
+        "product through {law}, and the AI Act itself imposes no further obligations.",
+        "i_not_safety": "The AI system is not a safety component of the product covered by {law} "
+        "({point}) (Art. 6(1)(a)), so Art. 6(1) does not apply.",
+        "i_no_third_party": "The product covered by {law} ({point}) does not need a third-party "
+        "conformity assessment (Art. 6(1)(b)), so Art. 6(1) does not apply.",
+    },
+    DE: {
+        "i_section_b": "{law} ist in Anhang I Abschnitt B aufgeführt, daher gelten nach "
+        "Art. 2 Abs. 2 von der KI-Verordnung nur Art. 6 Abs. 1, Art. 102 bis 109 und Art. 112: "
+        "Die Hochrisiko-Anforderungen erreichen das Produkt über {law}, die KI-Verordnung selbst "
+        "legt keine weiteren Pflichten auf.",
+        "i_not_safety": "Das KI-System ist kein Sicherheitsbauteil des Produkts, das unter {law} "
+        "fällt ({point}) (Art. 6 Abs. 1 Buchst. a), daher gilt Art. 6 Abs. 1 nicht.",
+        "i_no_third_party": "Das Produkt, das unter {law} fällt ({point}), muss keine "
+        "Konformitätsbewertung durch Dritte durchlaufen (Art. 6 Abs. 1 Buchst. b), daher gilt "
+        "Art. 6 Abs. 1 nicht.",
+    },
+}
+"""The sentences that differ under the original text (E11): it has no Art. 6(1a)-(1c), so a
+third-party assessment counts whatever risks it checks, and its Art. 2(2) keeps only Art. 6(1),
+102 to 109 and 112 for a Section B product (the amended one: Art. 6(1), 60a and 102 to 112)."""
+
+
+def decision_texts(language: Language, law_version: LawVersion) -> Mapping[str, str]:
+    """The decision sentences for the law version read: `TEXTS`, with `ORIGINAL_TEXTS` in place
+    for the original text."""
+    if law_version is LawVersion.ORIGINAL:
+        return {**TEXTS[language], **ORIGINAL_TEXTS[language]}
+    return TEXTS[language]
+
 
 OPEN_FALLBACK: Mapping[Language, Mapping[str, tuple[str, str, str]]] = {
     EN: {

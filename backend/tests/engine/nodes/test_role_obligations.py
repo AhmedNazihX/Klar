@@ -853,11 +853,31 @@ def test_art_6_4_follows_the_high_risk_steps_exemption(risk_class: RiskClass) ->
     assert "art:6:4" not in articles(plain)
 
 
-def test_the_original_text_lists_no_duties_and_says_why() -> None:
-    outcome = to_outcome(role_answer(), state(law_version=LawVersion.ORIGINAL))
+@pytest.mark.parametrize(
+    ("language", "says"),
+    [
+        (Language.EN, "Duties not modelled for the original text"),
+        (Language.DE, "Pflichten für die original Fassung nicht modelliert"),
+    ],
+)
+def test_the_original_text_lists_no_duties_and_says_they_are_not_modelled(
+    language: Language, says: str
+) -> None:
+    """E11's DoD: decision 020 keeps the duties to the amended text; under the original one the
+    obligations result is an explicit "not modelled", never an error."""
+    outcome = to_outcome(role_answer(), state(language=language, law_version=LawVersion.ORIGINAL))
     assert finding(outcome).obligations == ()
-    assert "covers only the amended text, not the original text" in outcome.step.decision
+    assert says in outcome.step.decision
     assert finding(outcome).role is Role.DEPLOYER
+
+
+def test_the_original_text_asks_neither_the_conditions_nor_the_art_111_2_facts() -> None:
+    original = state(law_version=LawVersion.ORIGINAL)
+    assert node.answer_model(original) is RoleAnswer
+    assert node.asked_conditions(original) == ()
+    human = str(node.role_messages(original, ())[-1].content)
+    assert "Launch and design" not in human
+    assert "Conditions:\n-\n" in human
 
 
 # --- Citations ----------------------------------------------------------------------------------

@@ -13,7 +13,8 @@ works, Ethical considerations). No model is called.
   (F7b: the metrics read the basis from it), the Art. 50 duties, the role, the role kept next
   to it (`also_role`, shown as "You also use it", decision 026) and its duties. A product the
   high-risk check decided is high-risk under Annex I Section B keeps no Art. 50 duty either:
-  Art. 2(2) applies only Art. 6(1), 60a and 102 to 112 to it (the role check lists no duties).
+  Art. 2(2) applies only Art. 6(1), 60a and 102 to 112 to it (the original text: Art. 6(1), 102
+  to 109 and 112), and the role check lists no duties.
   Only assumed so, it keeps every duty that may apply (the stricter reading).
 - **Deciding facts** are the facts of the steps the outcome rests on: the step that set the
   class (for limited and minimal risk, the high-risk and transparency checks), every uncertain

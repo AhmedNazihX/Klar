@@ -45,6 +45,7 @@ from aiact.engine.nodes.high_risk_retrieval import (
     Retrieved,
     retrieve,
 )
+from aiact.engine.nodes.high_risk_texts import decision_texts
 from aiact.engine.nodes.key_facts import Answer
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
@@ -95,6 +96,15 @@ ANNEX_I_TEXT = {
     "annex:I:B:21": "21. Regulation (EU) 2023/1230 of the European Parliament and of the Council "
     "of 14 June 2023 on machinery and repealing Directive 2006/42/EC (OJ L 165);",
 }
+ORIGINAL_ANNEX_I_TEXT = {
+    "annex:I:A:1": "1. Directive 2006/42/EC of the European Parliament and of the Council of 17 "
+    "May 2006 on machinery, and amending Directive 95/16/EC (OJ L 157, 9.6.2006, p. 24);",
+    "annex:I:A:11": ANNEX_I_TEXT["annex:I:A:11"],
+    "annex:I:B:19": "19. Regulation (EU) 2019/2144 of the European Parliament and of the Council "
+    "of 27 November 2019 on type-approval requirements for motor vehicles and their trailers "
+    "(OJ L 325);",
+}
+"""The original text: machinery is still in Section A (point 1), and Section B ends at 20."""
 DE_ANNEX_I_TEXT = {
     "annex:I:A:11": "11. Verordnung (EU) 2017/745 des Europäischen Parlaments und des Rates vom 5. "
     "April 2017 über Medizinprodukte, zur Änderung der Richtlinie 2001/83/EG (ABl. L 117);",
@@ -104,19 +114,25 @@ DE_ANNEX_I_TEXT = {
 # --- Fakes ---------------------------------------------------------------------------------------
 
 
-def provision(pid: str, text: str | None = None, language: Language = Language.EN) -> Provision:
+def provision(
+    pid: str,
+    text: str | None = None,
+    language: Language = Language.EN,
+    law_version: LawVersion = LawVersion.AMENDED,
+) -> Provision:
+    is_original = law_version is LawVersion.ORIGINAL
     return Provision(
         provision_id=pid,
-        doc_key="ai-act-consolidated",
-        document_title="AI Act (consolidated)",
+        doc_key="ai-act" if is_original else "ai-act-consolidated",
+        document_title="AI Act" if is_original else "AI Act (consolidated)",
         doc_type="law",
-        law_version=LawVersion.AMENDED,
-        status=DocumentStatus.CONSOLIDATED,
+        law_version=law_version,
+        status=DocumentStatus.FINAL if is_original else DocumentStatus.CONSOLIDATED,
         language=language,
         english_only=False,
         heading=None,
         text=text or f"Text of {pid}.",
-        valid_from=date(2026, 7, 27),
+        valid_from=date(2024, 8, 1) if is_original else date(2026, 7, 27),
         valid_to=None,
         disclaimer=DISCLAIMER[language],
     )
@@ -125,11 +141,18 @@ def provision(pid: str, text: str | None = None, language: Language = Language.E
 def fake_lookup(
     provision_id: str, language: Language, law_version: LawVersion, as_of: date | None
 ) -> Provision:
-    """Any art/annex id has a text; the Annex I points in the tables have their real titles."""
-    table = DE_ANNEX_I_TEXT if language is Language.DE else ANNEX_I_TEXT
+    """Any art/annex id has a text; the Annex I points in the tables have their real titles (the
+    original text's for `original`)."""
+    table = (
+        DE_ANNEX_I_TEXT
+        if language is Language.DE
+        else ORIGINAL_ANNEX_I_TEXT
+        if law_version is LawVersion.ORIGINAL
+        else ANNEX_I_TEXT
+    )
     if provision_id.startswith("annex:I:") and provision_id not in table:
         raise ProvisionNotFoundError(provision_id)
-    return provision(provision_id, table.get(provision_id), language)
+    return provision(provision_id, table.get(provision_id), language, law_version)
 
 
 def hit(pid: str, language: Language = Language.EN) -> SearchHit:
@@ -232,8 +255,10 @@ def state(
     }
 
 
-def retrieved(language: Language = Language.EN) -> Retrieved:
-    return retrieve(state(language=language), FakeLibrary())
+def retrieved(
+    language: Language = Language.EN, law_version: LawVersion = LawVersion.AMENDED
+) -> Retrieved:
+    return retrieve(state(language=language, law_version=law_version), FakeLibrary())
 
 
 # --- Answers -------------------------------------------------------------------------------------
@@ -323,8 +348,13 @@ RANKS_APPLICANTS = annex_iii("annex:III:4:a", YES)
 MEDICAL_DEVICE = annex_i("annex:I:A:11", YES, YES, YES)
 
 
-def outcome(given: HighRiskAnswer, language: Language = Language.EN) -> CheckOutcome:
-    return to_outcome(given, state(language=language), retrieved(language), FakeLibrary())
+def outcome(
+    given: HighRiskAnswer,
+    language: Language = Language.EN,
+    law_version: LawVersion = LawVersion.AMENDED,
+) -> CheckOutcome:
+    at = state(language=language, law_version=law_version)
+    return to_outcome(given, at, retrieved(language, law_version), FakeLibrary())
 
 
 def cited(result: CheckOutcome) -> list[str]:
@@ -631,6 +661,79 @@ def test_the_law_title_is_shortened_to_number_and_subject() -> None:
         Language.DE,
     )
     assert law_title(pressure) == "Richtlinie 2014/68/EU über Druckgeräte"
+
+
+# --- The original text (E11) --------------------------------------------------------------------
+
+ORIGINAL = LawVersion.ORIGINAL
+OMNIBUS_PARAGRAPHS = ("6(1a)", "6(1b)", "6(1c)", "Abs. 1a", "Abs. 1b", "Abs. 1c")
+"""How a decision would name Art. 6(1a)-(1c), which only the Omnibus added."""
+
+
+def test_machinery_is_annex_i_a_1_under_the_original_text_and_b_21_under_the_amended() -> None:
+    """The Omnibus moved machinery to Section B: under the original text a decided machinery
+    guard is an ordinary Section A product, so Art. 2(2) doesn't take its AI Act duties away."""
+    original_ids = [p.provision_id for p in retrieved(law_version=ORIGINAL).annex_i]
+    amended_ids = [p.provision_id for p in retrieved().annex_i]
+    assert ("annex:I:A:1" in original_ids, "annex:I:B:21" in original_ids) == (True, False)
+    assert ("annex:I:A:1" in amended_ids, "annex:I:B:21" in amended_ids) == (False, True)
+    result = outcome(answer(one=annex_i("annex:I:A:1", YES, YES, YES)), law_version=ORIGINAL)
+    assert result.high_risk_route is HighRiskRoute.ANNEX_I
+    assert result.annex_point == "annex:I:A:1"
+    assert result.step.status is Status.DECIDED
+    assert "Directive 2006/42/EC on machinery" in result.step.decision
+    assert "Art. 2(2)" not in result.step.decision
+    assert "art:2:2" not in cited(result)
+    assert {c.law_version for c in result.step.citations} == {ORIGINAL}
+
+
+def test_a_section_b_product_cites_the_original_art_2_2_under_the_original_text() -> None:
+    """E8's follow-up: the original Art. 2(2) keeps Art. 6(1), 102 to 109 and 112; Art. 60a
+    and Art. 110 and 111 come only with the Omnibus."""
+    result = outcome(answer(one=annex_i("annex:I:B:19", YES, YES, YES)), law_version=ORIGINAL)
+    decision = result.step.decision
+    assert "only Art. 6(1), Art. 102 to 109 and Art. 112 of the AI Act apply" in decision
+    assert "60a" not in decision
+    assert "art:2:2" in cited(result)
+    german = decision_texts(Language.DE, ORIGINAL)["i_section_b"]
+    assert "nur Art. 6 Abs. 1, Art. 102 bis 109 und Art. 112" in german
+    amended = outcome(answer(one=annex_i("annex:I:B:21", YES, YES, YES))).step.decision
+    assert "only Art. 6(1), Art. 60a and Art. 102 to 112 of the AI Act apply" in amended
+
+
+@pytest.mark.parametrize(
+    ("facts", "amended_names"),
+    [
+        pytest.param((YES, Answer.NO, YES), "6(1a)", id="not-a-safety-component"),
+        pytest.param((YES, YES, Answer.NO), "6(1c)", id="no-third-party-assessment"),
+    ],
+)
+def test_the_original_text_names_no_art_6_1a_to_1c(
+    facts: tuple[Answer, Answer, Answer], amended_names: str
+) -> None:
+    given = answer(one=annex_i("annex:I:A:11", *facts))
+    amended = outcome(given).step.decision
+    assert amended_names in amended
+    for language in Language:
+        original = outcome(given, language, ORIGINAL)
+        assert original.high_risk_route is None
+        assert not any(name in original.step.decision for name in OMNIBUS_PARAGRAPHS)
+    english = outcome(given, law_version=ORIGINAL).step.decision
+    assert "(Art. 6(1)(a))" in english or "(Art. 6(1)(b))" in english
+    assert "for health and safety" not in english
+
+
+def test_only_the_original_text_gets_the_note_that_art_6_1a_to_1c_do_not_exist() -> None:
+    """The amended request stays byte for byte as recorded; the original one opens with the
+    note, after the cached instructions."""
+    amended = node.high_risk_messages(state(), retrieved())
+    original = node.high_risk_messages(state(law_version=ORIGINAL), retrieved(law_version=ORIGINAL))
+    assert original[0].content == amended[0].content == node.HIGH_RISK_INSTRUCTIONS
+    assert str(amended[1].content).startswith("Annex I:\n")
+    assert str(original[1].content).startswith(
+        f"Law version:\n{node.ORIGINAL_INSTRUCTIONS}\nAnnex I:\n"
+    )
+    assert "It has no Art. 6(1a), (1b) or (1c)" in " ".join(node.ORIGINAL_INSTRUCTIONS.split())
 
 
 # --- Retrieval and analogy -----------------------------------------------------------------------
@@ -1315,3 +1418,57 @@ def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -
     assert_the_screens_fields(result, run_state, case)
     expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
     assert matches, shown
+
+
+# --- Replays under the original text (E11) -------------------------------------------------------
+#
+# One Omnibus-changed case per rule, replayed under the original text; the amended side of each
+# pair is the case's `test_replay_annex_i_case`. Recorded with `RECORD_COMMAND` like the others.
+
+ORIGINAL_RECORD_COMMAND = (
+    "uv run pytest tests/engine/nodes/test_high_risk.py -k replay_original --record-mode=once"
+)
+"""Records only the original-text replays (the whole `-k replay` run re-reads the corpus)."""
+RECORDING_PENDING = pytest.mark.xfail(strict=True, reason="recording pending (E11)")
+
+
+def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
+    """The case's high-risk step under the original text, its citations checked."""
+    case = next((c for c in ANNEX_I_CASES if c.id == case_id), None)
+    if case is None:
+        pytest.skip(f"{case_id} is not in {ANNEX_I_CASES_DIR}")
+    run_state: EngineState = {**replay_state(case, AS_OF), "law_version": LawVersion.ORIGINAL}
+    result = replay_check(run_state)
+    assert not unresolved_citations(result.step, run_state)
+    return result
+
+
+@RECORDING_PENDING
+@pytest.mark.vcr
+def test_replay_original_machinery_guard_is_annex_i_section_a(replay_check: HighRiskCheck) -> None:
+    """own-e-04's press guard is machinery: Annex I B.21 under the amended text, with Art. 2(2);
+    under the original text the machinery law is A.1, so it is high-risk with its AI Act duties
+    and no Art. 2(2)."""
+    result = _original_replay("own-e-04-press-camera-guard", replay_check)
+    step = result.step
+    shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
+    assert result.high_risk_route is HighRiskRoute.ANNEX_I, shown
+    assert result.annex_point == "annex:I:A:1", shown
+    assert step.status is Status.DECIDED, shown
+    assert "art:2:2" not in cited(result), shown
+
+
+@RECORDING_PENDING
+@pytest.mark.vcr
+def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(replay_check: HighRiskCheck) -> None:
+    """own-e-06's speaker: under the amended text Art. 6(1c) (a radio-only notified body) and
+    6(1a) (a convenience feature) keep it out of Annex I. The original text has neither: its
+    assistant is still no safety component (Art. 3(14)), so it stays not high-risk, but the
+    decision names no paragraph the Omnibus added."""
+    result = _original_replay("own-e-06-smart-speaker-radio-check", replay_check)
+    step = result.step
+    shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
+    assert result.high_risk_route is None, shown
+    assert not result.annex_iii_exempt, shown
+    assert step.status is Status.DECIDED, shown
+    assert not any(name in step.decision for name in OMNIBUS_PARAGRAPHS), shown

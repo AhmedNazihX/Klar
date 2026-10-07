@@ -226,7 +226,8 @@ def list_obligations(
     source = table or default_table()
     if source.law_version != version:
         raise UnknownLawVersionError(
-            f"the obligations table holds the {source.law_version.value} text, not {version.value}"
+            f"obligations not modelled for the {version.value} text: the table holds the "
+            f"{source.law_version.value} text only (decision 020)"
         )
     obligations = tuple(
         _with_legacy(row.obligation, role, status)

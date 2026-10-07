@@ -1,10 +1,12 @@
 """What the high-risk step adds to its questions for the screens (E12; decision 026 items 4, 13
 and 18): what a yes settles on a route, the quotes a route's question rests on (the Annex I
 question quotes Art. 6(1) and the Annex I entry naming the product law), the two readings of an
-open question, and what would settle it."""
+open question, and what would settle it. The dates a yes or a reading gives are the law version's
+(E11): the original Art. 113 dates differ from the amended ones."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import date
+from types import MappingProxyType
 
 from aiact.corpus.sources import HIGH_RISK_DATE
 from aiact.dates import long_date
@@ -17,6 +19,7 @@ from aiact.schemas import (
     Citation,
     HighRiskRoute,
     Language,
+    LawVersion,
     RiskClass,
     SettledBy,
     SettledByKind,
@@ -30,16 +33,31 @@ SECTION_B_PREFIX = "annex:I:B:"
 GUIDELINES_DRAFT_DATE = date.fromisoformat(HIGH_RISK_DATE)
 """The date of the Commission's draft high-risk guidelines, as fetched."""
 
+ORIGINAL_CHAPTER_III_DATES: Mapping[HighRiskRoute, date] = MappingProxyType(
+    {HighRiskRoute.ANNEX_III: date(2026, 8, 2), HighRiskRoute.ANNEX_I: date(2027, 8, 2)}
+)
+"""Art. 113 of the original text: Chapter III applies from 2 August 2026, Art. 6(1) and its
+obligations from 2 August 2027 (decision 020's addendum). The amended dates are the obligations
+table's (`CHAPTER_III_DATES`)."""
+
+
+def chapter_iii_date(route: HighRiskRoute, law_version: LawVersion) -> date:
+    """The date the high-risk duties on `route` apply from under the text of `law_version`."""
+    dates = ORIGINAL_CHAPTER_III_DATES if law_version is LawVersion.ORIGINAL else CHAPTER_III_DATES
+    return dates[route]
+
 
 def is_section_b(point: str | None) -> bool:
     return point is not None and point.startswith(SECTION_B_PREFIX)
 
 
-def high_risk_outcome(route: HighRiskRoute, point: str | None) -> AnswerOutcome:
+def high_risk_outcome(
+    route: HighRiskRoute, point: str | None, law_version: LawVersion
+) -> AnswerOutcome:
     """What a yes settles when it makes the system high-risk on `route` at `point`: the class,
-    the route, the point and the route's Chapter III date (none for Section B, whose duties come
-    from the sector law)."""
-    duties_from = None if is_section_b(point) else CHAPTER_III_DATES[route]
+    the route, the point and the route's Chapter III date under `law_version` (none for Section
+    B, whose duties come from the sector law)."""
+    duties_from = None if is_section_b(point) else chapter_iii_date(route, law_version)
     return AnswerOutcome(
         risk_class=RiskClass.HIGH_RISK,
         high_risk_route=route,
@@ -65,17 +83,18 @@ def reading_sides(
     point: str,
     law: str,
     language: Language,
+    law_version: LawVersion,
     exemption: str | None = None,
 ) -> tuple[ReadingSide, ReadingSide]:
-    """The stricter reading (high-risk on the route) and the lenient one: exempt under
-    `exemption` (the Art. 6(3) provision) when the open question is the exemption, otherwise
-    outside the Annex III point or Art. 6(1)."""
+    """The stricter reading (high-risk on the route, its duties dated under `law_version`) and
+    the lenient one: exempt under `exemption` (the Art. 6(3) provision) when the open question is
+    the exemption, otherwise outside the Annex III point or Art. 6(1)."""
     words = READINGS[language]
     if is_section_b(point):
         high = words["section_b_consequence"].format(law=law)
     else:
         high = words["high_consequence"].format(
-            date=long_date(CHAPTER_III_DATES[route], language.value)
+            date=long_date(chapter_iii_date(route, law_version), language.value)
         )
     if route is HighRiskRoute.ANNEX_I:
         stricter = ReadingSide(words["high_i"], high, RiskClass.HIGH_RISK, ANNEX_I_RULE)

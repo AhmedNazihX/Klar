@@ -6,6 +6,7 @@ from datetime import date
 
 import pytest
 
+from aiact.dates import long_date
 from aiact.engine.nodes.high_risk import Art63Condition
 from aiact.engine.nodes.high_risk_questions import settled_by
 from aiact.engine.nodes.key_facts import Answer
@@ -16,6 +17,7 @@ from aiact.schemas import (
     FollowUpQuestion,
     HighRiskRoute,
     Language,
+    LawVersion,
     OpenQuestion,
     RiskClass,
     SettledBy,
@@ -203,6 +205,40 @@ def test_the_readings_read_in_german() -> None:
         "Gilt diese Lesart, gelten die Hochrisiko-Pflichten ab dem 2. August 2028."
     )
     assert lenient.title == "Art. 6 Abs. 1 nicht erfüllt"
+
+
+# --- The dates under each law version (E12's follow-up, E11) ------------------------------------
+
+ART_113_DATES = [
+    pytest.param(LawVersion.AMENDED, date(2028, 8, 2), date(2027, 12, 2), id="amended"),
+    pytest.param(LawVersion.ORIGINAL, date(2027, 8, 2), date(2026, 8, 2), id="original"),
+]
+"""Each text's Art. 113 dates for the Annex I and the Annex III duties."""
+
+
+@pytest.mark.parametrize(("law_version", "annex_i_from", "annex_iii_from"), ART_113_DATES)
+def test_a_yes_dates_the_duties_by_the_law_versions_art_113(
+    law_version: LawVersion, annex_i_from: date, annex_iii_from: date
+) -> None:
+    product = missing(outcome(answer(one=annex_i(MDR, YES, YES, UNKNOWN)), law_version=law_version))
+    assert product.if_yes is not None
+    assert product.if_yes.duties_from == annex_i_from
+    profiling = answer(RANKS_APPLICANTS, art_6_3(Art63Condition.B, UNKNOWN))
+    listed = missing(outcome(profiling, law_version=law_version))
+    assert listed.if_yes is not None
+    assert listed.if_yes.duties_from == annex_iii_from
+
+
+@pytest.mark.parametrize(("law_version", "annex_i_from", "annex_iii_from"), ART_113_DATES)
+def test_a_readings_consequence_dates_the_duties_by_the_law_versions_art_113(
+    law_version: LawVersion, annex_i_from: date, annex_iii_from: date
+) -> None:
+    product = answer(one=annex_i(MDR, YES, YES, YES, open_question=OPEN))
+    listed = answer(annex_iii("annex:III:4:a", Answer.NO, open_question=OPEN))
+    for given, start in ((product, annex_i_from), (listed, annex_iii_from)):
+        stricter, _ = opened(outcome(given, law_version=law_version)).readings
+        expected = f"If this holds, the high-risk duties apply from {long_date(start, 'en')}."
+        assert stricter.consequence == expected
 
 
 # --- What would settle it (decision 026 item 4) -------------------------------------------------
