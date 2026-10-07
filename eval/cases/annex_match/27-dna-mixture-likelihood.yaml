@@ -1,0 +1,23 @@
+id: annex-match-27-dna-mixture-likelihood
+set_name: annex_match
+language: en
+description: >-
+  We're a 40-person bioinformatics company in Uppsala. Our software is used by police forensic
+  laboratories to interpret DNA traces from crime scenes that contain a mix of several people's
+  DNA, for example from a door handle or a weapon grip. A probabilistic model with machine-learned
+  components separates the contributors and calculates a likelihood ratio: how much more probable
+  the trace is if the suspect contributed to it than if they did not. The lab's report with this
+  number goes to prosecutors and is regularly presented in court. We develop the software ourselves
+  and sell annual licences in six EU countries. Our staff run a half-marathon team every spring.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:6:c"]
+label_citation: ["annex:III:6:c", "art:6:2", "art:3:3"]
+notes: >-
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Point: used by or in support of law enforcement to
+  evaluate the reliability of evidence in the investigation and prosecution of criminal offences,
+  Annex III 6(c). Role: develops and sells it under its own name.
+tags:
+  - "annex_iii_area:6"

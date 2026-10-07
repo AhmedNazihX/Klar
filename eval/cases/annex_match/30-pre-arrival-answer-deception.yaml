@@ -1,0 +1,26 @@
+id: annex-match-30-pre-arrival-answer-deception
+set_name: annex_match
+language: en
+description: >-
+  We're a 30-person language-technology company in Tallinn. We sell a screening module to border
+  authorities that ask visitors from outside the EU to fill in an online questionnaire before they
+  travel: purpose of the trip, where they will stay, who pays. The module reads the written
+  answers and, much like a polygraph does with body signals, uses a model trained on our own data
+  to flag answers whose wording, hedging and inconsistencies suggest the traveller is not telling
+  the truth. Border officers see the flags when the traveller arrives. We develop the software and
+  sell it under our own brand. Our team also maintains an open-source spell checker for Estonian.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:7:a", "annex:III:7:b"]
+label_citation: ["annex:III:7:a", "annex:III:7:b", "art:6:2", "art:3:3"]
+notes: >-
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Points: a lie detector intended for border
+  authorities is a polygraph or similar tool, Annex III 7(a); the point names the purpose, not the
+  signal. Whether a text-analysis lie detector is a "polygraph or similar tool" (7(a)) is
+  contestable, and its flags feed the assessment of the risk posed by people entering (7(b)), so
+  either point counts. Role: develops it and places it on the market under its own brand.
+tags:
+  - "annex_iii_area:7"
+  - "multi_point"

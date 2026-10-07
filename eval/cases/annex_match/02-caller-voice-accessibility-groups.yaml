@@ -1,0 +1,27 @@
+id: annex-match-02-caller-voice-accessibility-groups
+set_name: annex_match
+language: en
+description: >-
+  We're a 45-person contact-centre software company in Porto. Our add-on listens to the first few
+  seconds of every inbound call and, from the caller's voice alone, a model we trained ourselves
+  judges whether the person probably has a hearing impairment or a speech disorder such as a
+  stammer. It puts each caller into one of these groups or a default group, and the routing engine
+  then gives them special handling: a slower synthetic voice, live captions on the agent's screen
+  and a longer time slot. It never tries to work out who the caller is. Banks and utilities across
+  Southern Europe license it from us. We also host a yearly hackathon for accessibility apps.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:III:1:b"]
+label_citation: ["annex:III:1:b", "art:6:2", "art:3:40", "art:3:34", "art:3:3"]
+notes: >-
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Point: assigning callers to categories from their
+  voice (physiological and behavioural, so biometric data, Art. 3(34)) is biometric categorisation
+  (Art. 3(40)), and a hearing impairment or speech disorder is a sensitive and protected attribute
+  (health data; disability, Charter Art. 21), so 1(b). No identification is involved. Categorising
+  individuals by an inferred disability is profiling, so Art. 6(3) cannot lift it out of
+  high-risk; disability is not an Art. 5(1)(g) category. Role: builds it and licenses it under its
+  own name.
+tags:
+  - "annex_iii_area:1"

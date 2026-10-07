@@ -1,0 +1,25 @@
+id: annex-match-25-senior-fraud-prevention-visits
+set_name: annex_match
+language: en
+description: >-
+  We're the crime-prevention unit of a city police force in Ireland, about 40 officers. Scams
+  against older people, such as fake grandchildren phoning for money or bogus tradesmen at the
+  door, have doubled since 2024. Last year we bought a scoring tool from a Dutch software firm: it
+  combines each resident's age, whether they live alone, earlier reports of suspicious calls and
+  recent scam waves in their street into a number showing how exposed each resident is to being
+  targeted next.
+  Each week officers visit the highest-scoring residents with prevention advice. We use the tool as
+  the vendor set it up. Our unit also runs a stand at the county fair every summer.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:6:a"]
+label_citation: ["annex:III:6:a", "art:6:2", "art:3:4"]
+notes: >-
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Point: a law-enforcement authority assesses the
+  risk of a natural person becoming the victim of criminal offences, Annex III 6(a). It evaluates
+  individual people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the police use
+  the bought tool as the vendor set it up.
+tags:
+  - "annex_iii_area:6"

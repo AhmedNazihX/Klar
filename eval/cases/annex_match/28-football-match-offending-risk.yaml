@@ -1,0 +1,25 @@
+id: annex-match-28-football-match-offending-risk
+set_name: annex_match
+language: en
+description: >-
+  We're the football unit of a federal police force in Belgium, 25 officers who plan policing for
+  top-flight matches. Before each high-risk derby we run a tool licensed from a French analytics
+  company over our records on known supporters. It looks only at objective, verifiable facts about
+  past criminal behaviour, such as convictions for violence at matches, earlier stadium bans and
+  pending cases, and estimates how likely each person is to commit an offence around the upcoming
+  game. An officer reviews every case and decides who must report to a police station during the
+  match. We run it unchanged. We also lend officers to the summer music festivals.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:6:d"]
+label_citation: ["annex:III:6:d", "art:6:2", "art:3:4"]
+notes: >-
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Point: a law-enforcement authority assesses the
+  risk of natural persons offending from their past criminal behaviour, Annex III 6(d). Not
+  prohibited under Art. 5(1)(d): it does not rest solely on profiling or personality traits, but
+  supports an officer's assessment based on objective, verifiable facts directly linked to criminal
+  activity. Role: the police use the licensed tool unchanged.
+tags:
+  - "annex_iii_area:6"
