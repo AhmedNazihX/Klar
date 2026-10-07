@@ -92,3 +92,15 @@ class SettledByKind(StrEnum):
     """Guidance not yet final; naming it never promises that the result is checked again."""
     PROVIDER = "provider"
     """The provider's own documented assessment, which the company can ask for."""
+
+
+class ObligationGroup(StrEnum):
+    """Where a provider duty sits in the provider layout (C9, decision 026; artboard
+    `ResultProvider`)."""
+
+    BUILD = "build"
+    """Build it right: before the system is put into use."""
+    PROVE = "prove"
+    """Prove it: documents and checks."""
+    AFTER_LAUNCH = "after_launch"
+    """After launch: for as long as the system is in use."""

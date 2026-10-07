@@ -31,7 +31,6 @@ from aiact.schemas import (
     DISCLAIMER,
     Language,
     LegacyStatus,
-    Obligation,
     Role,
     Status,
     StepName,
@@ -137,7 +136,7 @@ def test_answers_are_written_in_word_for_word() -> None:
     document = _workers_notice({"reviewer": "  HR team lead, as named.\nAnd her deputy.  "})
     section = next(section for section in document.sections if section.key == "reviewer")
     assert section.paragraphs == ("HR team lead, as named.\nAnd her deputy.",)
-    assert (section.provenance, section.question_key) == (Provenance.INTERVIEW, "reviewer")
+    assert (section.provenance, section.question_keys) == (Provenance.INTERVIEW, ("reviewer",))
 
 
 def test_prefilled_facts_are_only_the_ones_the_user_stated() -> None:
@@ -190,9 +189,8 @@ def test_a_legacy_duty_applies_only_after_a_significant_change() -> None:
 
 def test_a_duty_listed_with_several_dates_is_refused() -> None:
     result = worked_example_result()
-    later = Obligation(
-        duty="Assign human oversight", article="art:26:2", applies_from=date(2028, 8, 2)
-    )
+    later = result.obligations[1].model_copy(update={"applies_from": date(2028, 8, 2)})
+    assert later.article == "art:26:2"
     with pytest.raises(DutyDateError, match="art:26:2"):
         draft_document(
             TEMPLATES["art_26_2_oversight"],
@@ -256,7 +254,7 @@ def test_every_template_is_complete_in_both_languages(template: DocumentTemplate
     assert TEMPLATES[template.id] is template
     assert re.fullmatch(TEMPLATE_PATTERN, template.id)
     keys = [spec.key for spec in template.sections]
-    question_keys = [question.question_key for question in template.questions]
+    question_keys = [question.key for question in template.questions]
     assert len(set(keys)) == len(keys)
     assert len(set(question_keys)) == len(question_keys)
     for language in Language:

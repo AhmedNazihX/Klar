@@ -21,6 +21,10 @@ QUOTED = ObligationTable.model_validate(
                 "roles": ["deployer"],
                 "risk_classes": ["limited_risk"],
                 "duty": "Tell people it's an AI system.",
+                "duty_de": "Personen informieren.",
+                "label_en": "Tell people it's AI",
+                "label_de": "Personen informieren",
+                "document": "art_50_3_disclosure",
                 "article": "art:50:1",
                 "applies_from": "2026-08-02",
             }
@@ -39,9 +43,18 @@ def test_seed_escapes_quotes_and_writes_nulls() -> None:
     assert "'Tell people it''s an AI system.'" in sql
     assert (
         "('quoted', 0, 'deployer', 'limited_risk', null, 'Tell people it''s an AI system.', "
-        "'art:50:1', '2026-08-02', null, false, null, null, 'amended')"
+        "'art:50:1', '2026-08-02', null, false, null, null, 'amended', 'Tell people it''s AI', "
+        "'Personen informieren', 'Personen informieren.', null, 'art_50_3_disclosure')"
     ) in sql
     assert "delete from public.obligations where law_version = 'amended';" in sql
+
+
+def test_the_delete_and_insert_run_in_one_transaction() -> None:
+    """A seed that fails half-way (e.g. loaded before the migration) keeps the old rows."""
+    sql = render_seed_sql(QUOTED)
+    steps = ("begin;", "delete from public.obligations", "insert into", "commit;")
+    assert [sql.index(step) for step in steps] == sorted(sql.index(step) for step in steps)
+    assert sql.rstrip().endswith("commit;")
 
 
 def test_write_seed_sql_is_idempotent(tmp_path: Path) -> None:

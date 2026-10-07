@@ -3,31 +3,32 @@ Documents artboard names them. They are deterministic and read the draft against
 the user's answers and the classification result. The judged "no invented content" score is V5's.
 
 - Every required section is present: the template's sections, each once, in order, none added.
-- No content you didn't supply: the title and headings are the template's; each fixed section
-  holds the template's wording; each interview section holds the user's answer word for word, or
-  nothing; each pre-filled section holds only the drafter's wording of the result.
+- No content you didn't supply: the title, note and headings are the template's; each fixed
+  section holds the template's wording; each interview section holds the user's answers word for
+  word, or nothing, and a skeleton's section quotes the template's requirement; each pre-filled
+  section holds only the drafter's wording of the result.
 - Facts match the classification: verified from the result alone, not by drafting again
   (`facts_check.py`): the stated facts, the class, Annex point and its certainty, the duty's
   date, the duty itself, and the result's law version and date.
 """
 
 from collections.abc import Mapping
-from enum import StrEnum
+from enum import Enum, StrEnum
 from typing import Self
 
 from pydantic import model_validator
 
-from aiact.drafting.deployer import Answers, prefilled_section, supplied_paragraphs
-from aiact.drafting.facts_check import prefilled_problems
-from aiact.drafting.models import DraftDocument, DraftSection
-from aiact.drafting.prefill import DutyDateError
-from aiact.drafting.templates import (
-    TEMPLATES,
-    ClassificationSection,
-    DocumentTemplate,
-    InterviewSection,
-    SectionSpec,
+from aiact.drafting.draft import (
+    Answers,
+    prefilled_section,
+    small_company_note,
+    supplied_section,
 )
+from aiact.drafting.facts_check import prefilled_problems
+from aiact.drafting.models import DraftDocument, DraftSection, SizeClass
+from aiact.drafting.prefill import DutyDateError
+from aiact.drafting.registry import TEMPLATES
+from aiact.drafting.templates import ClassificationSection, DocumentTemplate, SectionSpec
 from aiact.schemas import ClassificationResult, Language
 from aiact.schemas.base import ContractModel
 
@@ -44,6 +45,19 @@ CHECK_LABELS: Mapping[CheckName, str] = {
     CheckName.FACTS_MATCH: "Facts match the classification",
 }
 """The checks as the Documents artboard names them (the interface translates them)."""
+
+
+class Unknown(Enum):
+    """A size class the caller didn't give (distinct from None, a company without a profile)."""
+
+    SIZE_CLASS = "unknown"
+
+
+SIZE_CLASS_UNKNOWN = Unknown.SIZE_CLASS
+
+CompanySize = SizeClass | None | Unknown
+"""The company profile's size class as a check gets it: a class, None for no profile, or
+`SIZE_CLASS_UNKNOWN` when the caller doesn't say."""
 
 
 class CheckResult(ContractModel):
@@ -65,12 +79,16 @@ def _outcome(check: CheckName, problems: list[str]) -> CheckResult:
 
 
 def run_checks(
-    document: DraftDocument, result: ClassificationResult, answers: Answers
+    document: DraftDocument,
+    result: ClassificationResult,
+    answers: Answers,
+    size_class: CompanySize = SIZE_CLASS_UNKNOWN,
 ) -> tuple[CheckResult, ...]:
-    """All three checks on `document`, against the result and the answers it was drafted from."""
+    """All three checks on `document`, against the result, the answers and the company size
+    class it was drafted from (see `check_nothing_invented` for the size class)."""
     return (
         check_sections_present(document),
-        check_nothing_invented(document, result, answers),
+        check_nothing_invented(document, result, answers, size_class),
         check_facts_match(document, result),
     )
 
@@ -94,17 +112,25 @@ def check_sections_present(document: DraftDocument) -> CheckResult:
 
 
 def check_nothing_invented(
-    document: DraftDocument, result: ClassificationResult, answers: Answers
+    document: DraftDocument,
+    result: ClassificationResult,
+    answers: Answers,
+    size_class: CompanySize = SIZE_CLASS_UNKNOWN,
 ) -> CheckResult:
     """Guarantees every word of the draft is the template's, the user's answer as given, or the
     drafter's wording of the result: no added section, sentence or paragraph, no answer moved to
-    another question, and no section passing as another kind to escape the comparison."""
+    another question, and no section passing as another kind to escape the comparison.
+
+    With the company's `size_class` (None for no profile), the note must be exactly the one the
+    template gives that company; without it, the template's note or none is accepted."""
     template = TEMPLATES.get(document.template)
     if template is None:
         return _outcome(CheckName.NOTHING_INVENTED, [f"unknown template {document.template!r}"])
     problems = []
     if document.title != template.title[document.language]:
         problems.append("the title is not the template's")
+    if document.note not in _notes(template, document.language, size_class):
+        problems.append("the note is not the template's")
     known = {spec.key for spec in template.sections}
     problems += [
         f"section {section.key!r} is not the template's"
@@ -145,6 +171,17 @@ def _pairs(
     return [(specs[section.key], section) for section in document.sections if section.key in specs]
 
 
+def _notes(
+    template: DocumentTemplate, language: Language, size_class: CompanySize
+) -> set[str | None]:
+    """The notes a draft of `template` may carry: the one for `size_class`, or, when it is
+    unknown, none or the template's small-company note."""
+    if not isinstance(size_class, Unknown):
+        return {small_company_note(template, size_class, language)}
+    note = template.small_company_note
+    return {None} if note is None else {None, note[language]}
+
+
 def _repeated(keys: list[str]) -> list[str]:
     return sorted({key for key in keys if keys.count(key) > 1})
 
@@ -164,10 +201,15 @@ def _invented(
         return _prefill_invented(spec, section, template, result, language)
     if section.provenance is not spec.provenance:
         return [f"section {key!r} claims to come from {section.provenance.value}"]
-    if isinstance(spec, InterviewSection) and section.question_key != spec.question_key:
+    expected = supplied_section(spec, answers, language)
+    if section.question_keys != expected.question_keys:
         return [f"section {key!r} answers another question"]
-    if section.paragraphs != supplied_paragraphs(spec, answers, language):
+    if section.paragraphs != expected.paragraphs:
         return [f"section {key!r} holds content the user didn't supply"]
+    if section.requirement != expected.requirement:
+        return [f"section {key!r} quotes a requirement the template doesn't"]
+    if (section.unanswered, section.status) != (expected.unanswered, expected.status):
+        return [f"section {key!r} misstates what is left to answer"]
     return []
 
 
@@ -184,4 +226,6 @@ def _prefill_invented(
         return [f"section {spec.key!r}: the result lists its duty with several dates"]
     if (section.provenance, section.paragraphs) != (drafted.provenance, drafted.paragraphs):
         return [f"section {spec.key!r} holds content the result doesn't give"]
+    if section.requirement is not None:
+        return [f"section {spec.key!r} quotes a requirement the template doesn't"]
     return []

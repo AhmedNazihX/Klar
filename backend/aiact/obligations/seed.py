@@ -25,6 +25,11 @@ COLUMNS = (
     "relief_note",
     "note",
     "law_version",
+    "label_en",
+    "label_de",
+    "duty_de",
+    "duty_group",
+    "document",
 )
 
 
@@ -56,12 +61,19 @@ def _values(position: int, row: ObligationRow, table: ObligationTable) -> str:
         obligation.relief_note,
         obligation.note,
         table.law_version.value,
+        obligation.label_en,
+        obligation.label_de,
+        obligation.duty_de,
+        obligation.group.value if obligation.group else None,
+        obligation.document,
     )
     return "  (" + ", ".join(_literal(value) for value in values) + ")"
 
 
 def render_seed_sql(table: ObligationTable) -> str:
-    """The seed script: replaces this law version's rows, so running it twice changes nothing."""
+    """The seed script: replaces this law version's rows, so running it twice changes nothing.
+    The delete and the insert run in one transaction, so a seed that fails (e.g. loaded before
+    the migration that adds a column) leaves the old rows in place."""
     rows = table.rows()
     law_version = _literal(table.law_version.value)
     values = ",\n".join(_values(position, row, table) for position, row in enumerate(rows))
@@ -70,8 +82,10 @@ def render_seed_sql(table: ObligationTable) -> str:
         "do not edit by hand.\n"
         f"-- {len(rows)} rows, law version {table.law_version.value}, "
         f"checked on {table.checked_on.isoformat()}.\n\n"
+        "begin;\n\n"
         f"delete from public.obligations where law_version = {law_version};\n\n"
-        f"insert into public.obligations ({', '.join(COLUMNS)}) values\n{values};\n"
+        f"insert into public.obligations ({', '.join(COLUMNS)}) values\n{values};\n\n"
+        "commit;\n"
     )
 
 

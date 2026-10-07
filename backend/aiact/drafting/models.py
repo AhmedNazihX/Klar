@@ -1,22 +1,26 @@
 """A drafted document: its sections, where each section's content came from, and its status.
 
 Every document is labelled DRAFT and carries the "guidance, not legal advice" notice (INIT >
-Documentation drafting). A section with no paragraphs is shown as "To fill in".
+Documentation drafting). A section with no paragraphs is shown as "To fill in"; a skeleton's
+section also quotes the requirement it answers (P8b).
 """
 
 from collections.abc import Iterable
 from datetime import date
 from enum import StrEnum
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import Field, model_validator
 
-from aiact.schemas import DISCLAIMER, Language, LawVersion
+from aiact.schemas import DISCLAIMER, Citation, Language, LawVersion
 from aiact.schemas.base import ContractModel
 from aiact.schemas.questions import SLUG_PATTERN
 
 TEMPLATE_PATTERN = r"^[a-z0-9]+(_[a-z0-9]+)*$"
 """A template id, as `interview_answers.template` stores it, for example `art_26_7_workers`."""
+
+QuestionKey = Annotated[str, Field(pattern=SLUG_PATTERN)]
+"""An interview question's key, as `interview_answers.question_key` stores it."""
 
 
 class Provenance(StrEnum):
@@ -25,7 +29,7 @@ class Provenance(StrEnum):
     CLASSIFICATION = "classification"
     """Pre-filled from the classification result ("From your classification")."""
     INTERVIEW = "interview"
-    """The user's interview answer, word for word ("From your interview answers")."""
+    """The user's interview answers, word for word ("From your interview answers")."""
     TEMPLATE = "template"
     """The template's own fixed wording, such as the duty the document answers; no tag."""
 
@@ -37,6 +41,30 @@ class DraftStatus(StrEnum):
     READY_TO_REVIEW = "ready_to_review"
 
 
+class SectionStatus(StrEnum):
+    """A section's state, as the DocSkeleton artboard shows it beside the section."""
+
+    DRAFTED = "drafted"
+    """Nothing left to answer: pre-filled, fixed wording, or every question answered."""
+    QUESTIONS = "questions"
+    """"N questions": the interview still asks the section's `unanswered` questions."""
+    TO_FILL_IN = "to_fill_in"
+    """The provider's own description, such as its log of changes, is still to be given."""
+    NEEDS_EVIDENCE = "needs_evidence"
+    """It still waits for records the provider holds, such as test reports or standards."""
+    GENERATED_LAST = "generated_last"
+    """Drawn up once everything else is done: the EU declaration of conformity."""
+
+
+class SizeClass(StrEnum):
+    """The company profile's size class (P19's `inventories.size_class`), passed in by the
+    caller: derived from the profile's bands, never from the description."""
+
+    SME = "sme"
+    SMC = "smc"
+    NONE = "none"
+
+
 class DraftSection(ContractModel):
     """One section of a drafted document. No paragraphs means it is still "To fill in"."""
 
@@ -44,33 +72,38 @@ class DraftSection(ContractModel):
     heading: str = Field(min_length=1)
     provenance: Provenance
     paragraphs: tuple[str, ...] = ()
-    question_key: str | None = Field(
-        default=None,
-        pattern=SLUG_PATTERN,
-        description="The interview question whose answer fills the section; interview only.",
+    question_keys: tuple[QuestionKey, ...] = Field(
+        default=(),
+        description="The interview questions whose answers fill the section, in the order "
+        "asked; interview sections only.",
     )
-
-    @property
-    def is_filled(self) -> bool:
-        return bool(self.paragraphs)
+    unanswered: tuple[QuestionKey, ...] = Field(
+        default=(), description="The questions of `question_keys` still to answer, in order."
+    )
+    status: SectionStatus
+    requirement: Citation | None = Field(
+        default=None,
+        description="The requirement the section answers, quoted word for word from the AI Act "
+        '(skeletons only); shown above the "To fill in" marker.',
+    )
 
     @model_validator(mode="after")
     def _well_formed(self) -> Self:
         if any(not paragraph.strip() for paragraph in self.paragraphs):
             raise ValueError("a paragraph must not be blank")
         is_interview = self.provenance is Provenance.INTERVIEW
-        if is_interview != (self.question_key is not None):
-            raise ValueError("question_key is set exactly on interview sections")
+        if is_interview != bool(self.question_keys):
+            raise ValueError("question_keys are set exactly on interview sections")
+        if [key for key in self.question_keys if key in self.unanswered] != list(self.unanswered):
+            raise ValueError("unanswered lists some of the section's questions, in their order")
+        if (self.status is SectionStatus.DRAFTED) == bool(self.unanswered):
+            raise ValueError("a section is drafted exactly when no question is unanswered")
         return self
 
 
 def unanswered_count(sections: Iterable[DraftSection]) -> int:
-    """How many interview sections are still "To fill in"."""
-    return sum(
-        1
-        for section in sections
-        if section.provenance is Provenance.INTERVIEW and not section.is_filled
-    )
+    """How many interview questions are still unanswered."""
+    return sum(len(section.unanswered) for section in sections)
 
 
 def status_for(unanswered: int) -> DraftStatus:
@@ -78,15 +111,20 @@ def status_for(unanswered: int) -> DraftStatus:
 
 
 class DraftDocument(ContractModel):
-    """A short document drafted from a classification result and the user's answers."""
+    """A document drafted from a classification result and the user's answers."""
 
     template: str = Field(pattern=TEMPLATE_PATTERN)
     title: str = Field(min_length=1)
     article: str = Field(min_length=1, description="The duty it answers, e.g. `art:26:7`.")
     language: Language
     label: Literal["DRAFT"] = "DRAFT"
+    note: str | None = Field(
+        default=None,
+        description="A line under the title: for an SME or a small mid-cap, that a simplified "
+        "technical documentation form is expected (P8b).",
+    )
     sections: tuple[DraftSection, ...] = Field(min_length=1)
-    unanswered: int = Field(ge=0, description="Interview sections still to fill in.")
+    unanswered: int = Field(ge=0, description="Interview questions still to answer.")
     status: DraftStatus
     law_version: LawVersion = Field(description="The AI Act text of the result drafted from.")
     as_of: date = Field(description="The result's law date.")
@@ -99,9 +137,9 @@ class DraftDocument(ContractModel):
         unanswered = unanswered_count(self.sections)
         if self.unanswered != unanswered:
             raise ValueError(
-                f"{unanswered} interview sections are unanswered, not {self.unanswered}"
+                f"{unanswered} interview questions are unanswered, not {self.unanswered}"
             )
         expected = status_for(unanswered)
         if self.status is not expected:
-            raise ValueError(f"a draft with {unanswered} unanswered sections is {expected.value}")
+            raise ValueError(f"a draft with {unanswered} unanswered questions is {expected.value}")
         return self
