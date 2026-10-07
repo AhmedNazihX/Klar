@@ -25,4 +25,4 @@
   business_function: hr
   key_fact_answers:
     ranks_people: Yes, it orders the applications by a score.
-    "annex:III:4:a": HR uses the order to decide whom to invite.
+    annex_iii_use: HR uses the order to decide whom to invite.

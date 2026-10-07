@@ -1,0 +1,70 @@
+- id: soft-10-elterngeld-rueckforderung-plain
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Unsere Elterngeldstelle gehört zur Verwaltung einer kreisfreien Stadt in Nordrhein-Westfalen
+    und zahlt jedes Jahr rund 6.000 Familien Elterngeld. Seit 2026 setzen wir RückCheck ein, eine
+    Software unseres kommunalen IT-Dienstleisters; sie beruht auf einem Machine-Learning-Modell,
+    das mit früheren Fällen trainiert wurde. Sie gleicht bereits bewilligte Fälle mit neuen
+    Einkommensnachweisen, Meldungen der Arbeitgeber und Änderungen im Haushalt ab, erkennt, wo zu
+    viel Elterngeld gezahlt wurde, berechnet den überzahlten Betrag und entwirft den
+    Rückforderungsbescheid. Unsere Sachbearbeitung verschickt diese Bescheide in aller Regel
+    unverändert. Wir haben an der Software nichts verändert. Seit dem Frühjahr können Eltern ihre
+    Anträge außerdem online stellen.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:a"
+  label_citation: ["annex:III:5:a", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-10
+  business_function: public_services
+  notes: >-
+    Approved by user 2026-10-08. Class: a public authority uses the system to reclaim an essential
+    public assistance benefit (parental benefit, a social security benefit for maternity and
+    parenthood, recital 58): it finds overpayments, sizes them and drafts the repayment demand
+    that staff usually send unchanged (Annex III 5(a), "reclaim"); assessing each family's income
+    and household situation is profiling, so Art. 6(3) third subparagraph keeps it high-risk.
+    Role: the city's parental benefit office uses its IT provider's software unchanged
+    (Art. 3(4)): deployer.
+  tags: ["pair:soft-10", "wording:plain"]
+- id: soft-10-elterngeld-rueckforderung-soft
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Unsere Elterngeldstelle gehört zur Verwaltung einer kreisfreien Stadt in Nordrhein-Westfalen
+    und zahlt jedes Jahr rund 6.000 Familien Elterngeld. Seit 2026 hilft uns RückCheck, eine
+    Software unseres kommunalen IT-Dienstleisters, bei der Nachbearbeitung laufender Fälle: Sie
+    gleicht Daten ab und bereitet Schreiben vor, damit die Sachbearbeitung den Überblick behält.
+    Wir haben an der Software nichts verändert. Seit dem Frühjahr können Eltern ihre Anträge
+    außerdem online stellen.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:a"
+  label_citation: ["annex:III:5:a", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-10
+  business_function: public_services
+  key_fact_answers:
+    ai_system: >-
+      Sie beruht auf einem Machine-Learning-Modell, das mit früheren Fällen trainiert wurde; es
+      erkennt Überzahlungen selbst.
+    annex_iii_use: >-
+      RückCheck gleicht bewilligte Fälle mit neuen Einkommensnachweisen, Meldungen der
+      Arbeitgeber und Änderungen im Haushalt ab, erkennt, wo zu viel Elterngeld gezahlt wurde,
+      berechnet den überzahlten Betrag und entwirft den Rückforderungsbescheid. Die
+      Sachbearbeitung verschickt diese Bescheide in aller Regel unverändert, und die Familien
+      müssen den Betrag zurückzahlen.
+    public_scheme: >-
+      Das Elterngeld ist eine staatliche Leistung; wir zahlen es als Elterngeldstelle der
+      Stadtverwaltung aus, also als Behörde.
+    profiling: >-
+      Ja. Es bewertet die Einkommens- und Haushaltslage jeder Familie anhand ihrer eigenen Daten.
+    operator_role: >-
+      Wir nutzen ein System eines anderen Anbieters: die Software unseres kommunalen
+      IT-Dienstleisters, unverändert.
+  notes: >-
+    Approved by user 2026-10-08. The same system as soft-10-elterngeld-rueckforderung-plain:
+    "gleicht Daten ab" is finding the overpayments and "bereitet Schreiben vor" is drafting the
+    repayment demands that staff usually send unchanged. Label and reasoning as for the plain case
+    (Annex III 5(a), profiling under Art. 6(3), deployer under Art. 3(4)).
+  tags: ["pair:soft-10", "wording:soft"]

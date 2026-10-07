@@ -1,0 +1,65 @@
+- id: soft-11-klinikverbund-pflege-bewerbungen-plain
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind ein Klinikverbund mit fünf Krankenhäusern in Sachsen und stellen jedes Jahr rund 250
+    Pflegekräfte ein. Seit 2025 nutzen wir CareHire, eine Recruiting-Software eines Leipziger
+    Anbieters; sie beruht auf einem Modell, das der Anbieter mit früheren
+    Einstellungsentscheidungen trainiert hat. Sie liest Lebensläufe und Zeugnisse aus, bewertet,
+    wie gut jede Bewerberin und jeder Bewerber zur ausgeschriebenen Stelle passt, und erstellt
+    eine Rangliste. Wer unter einer festgelegten Punktzahl bleibt, bekommt automatisch eine
+    Absage, und diese Bewerbungen sieht sich niemand mehr an; die Personalabteilung lädt nur aus
+    dem oberen Teil der Liste zu Gesprächen ein. Wir nutzen die Software unverändert unter dem
+    Namen des Anbieters. Außerdem haben wir dieses Jahr eine Betriebskita eröffnet.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:a"
+  label_citation: ["annex:III:4:a", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-11
+  business_function: hr
+  notes: >-
+    Approved by user 2026-10-08. Class: scoring and ranking applicants and rejecting those below a
+    threshold is filtering applications and evaluating candidates (Annex III 4(a)); scoring each
+    applicant from their CV and certificates is profiling, so Art. 6(3) third subparagraph keeps
+    it high-risk. Role: the hospital group uses the software unchanged under the vendor's name
+    (Art. 3(4)): deployer.
+  tags: ["pair:soft-11", "wording:plain"]
+- id: soft-11-klinikverbund-pflege-bewerbungen-soft
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind ein Klinikverbund mit fünf Krankenhäusern in Sachsen und stellen jedes Jahr rund 250
+    Pflegekräfte ein. Damit unsere Personalabteilung bei dieser Menge den Überblick behält,
+    nutzen wir seit 2025 CareHire von einem Leipziger Anbieter. Das Programm sammelt die
+    Bewerbungsunterlagen an einem Ort, bringt Ordnung in den Eingang und verschickt
+    Standardantworten selbstständig. Wir nutzen die Software unverändert unter dem Namen des
+    Anbieters. Außerdem haben wir dieses Jahr eine Betriebskita eröffnet.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:a"
+  label_citation: ["annex:III:4:a", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-11
+  business_function: hr
+  key_fact_answers:
+    ai_system: >-
+      Die Software beruht auf einem Modell, das der Anbieter mit früheren
+      Einstellungsentscheidungen trainiert hat.
+    annex_iii_use: >-
+      CareHire bewertet jede Bewerbung aus Lebenslauf und Zeugnissen danach, wie gut sie zur
+      Stelle passt, und erstellt eine Rangliste. Wer unter einer festgelegten Punktzahl bleibt,
+      bekommt automatisch eine Absage, und diese Bewerbungen sieht sich niemand mehr an; die
+      Personalabteilung lädt nur aus dem oberen Teil der Liste zu Gesprächen ein.
+    profiling: >-
+      Ja. Die Software bewertet jede einzelne Person anhand ihres eigenen Lebenslaufs und ihrer
+      Zeugnisse.
+    operator_role: >-
+      Wir nutzen ein System eines anderen Anbieters: die Software eines Leipziger Anbieters,
+      unverändert und unter dessen Namen.
+  notes: >-
+    Approved by user 2026-10-08. The same system as soft-11-klinikverbund-pflege-bewerbungen-plain:
+    "bringt Ordnung in den Eingang" is the ranking and the "Standardantworten" include the
+    automatic rejections. Label and reasoning as for the plain case (Annex III 4(a), profiling
+    under Art. 6(3), deployer under Art. 3(4)).
+  tags: ["pair:soft-11", "wording:soft"]
