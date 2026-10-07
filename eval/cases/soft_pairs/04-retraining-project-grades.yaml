@@ -4,16 +4,17 @@
   description: >-
     We are a private IT training academy in Ghent offering state-recognised retraining courses
     for adults who switch careers into software development. Our in-house developers built
-    GradeBot, which marks the final project every learner submits at the end of the 18-month
-    course. It reads the code and the written report, applies our marking rubric and produces the
-    final grade. A pass grade is required for the certificate; trainers only look at a project
-    again if a learner appeals. We use GradeBot only in our own academy. We also run free coding
-    meetups on Thursday evenings.
+    GradeBot, a large language model they fine-tuned on final projects our trainers marked in past
+    years. It marks the final project every learner submits at the end of the 18-month course: it
+    reads the code and the written report, applies our marking rubric and produces the final
+    grade. A pass grade is required for the certificate; trainers do not re-mark the projects and
+    only look at one again if a learner appeals. We use GradeBot only in our own academy, under
+    our own name. We also run free coding meetups on Thursday evenings.
   label:
     risk_class: high_risk
     role: provider
     annex_point: "annex:III:3:b"
-  label_citation: ["annex:III:3:b", "art:6:2", "art:6:3", "art:3:3"]
+  label_citation: ["annex:III:3:b", "art:6:2", "art:6:3", "art:3:3", "art:3:11"]
   pair_id: soft-04
   business_function: education
   notes: >-
@@ -21,8 +22,9 @@
     training institution, and its grade decides whether the learner gets the certificate (Annex
     III 3(b)); it produces the grade itself, so none of the Art. 6(3) conditions (a) to (d)
     applies. Role: the academy developed the system and puts it into service for its own use
-    under its own name (Art. 3(3), 3(11)): provider (it is also the deployer).
-  tags: ["pair:soft-04", "wording:plain"]
+    under its own name (Art. 3(3), 3(11)), so it is the provider, and it is also the deployer
+    (tag also_role:deployer).
+  tags: ["pair:soft-04", "wording:plain", "also_role:deployer"]
 - id: soft-04-retraining-project-grades-soft
   set_name: soft_pairs
   language: en
@@ -37,25 +39,23 @@
     risk_class: high_risk
     role: provider
     annex_point: "annex:III:3:b"
-  label_citation: ["annex:III:3:b", "art:6:2", "art:6:3", "art:3:3"]
+  label_citation: ["annex:III:3:b", "art:6:2", "art:6:3", "art:3:3", "art:3:11"]
   pair_id: soft-04
   business_function: education
   key_fact_answers:
+    ai_system: >-
+      It is a large language model that our developers fine-tuned on final projects our trainers
+      marked in past years.
     annex_iii_use: >-
-      The summary includes the final grade for the project, and that grade goes into the course
-      records as the learner's result.
-    "annex:III:3:b": >-
-      Yes. The final project grade decides whether the learner passes the course and receives
-      the certificate.
-    "art:6:3": >-
-      Trainers do not re-mark the projects; they only look at one again if the learner appeals.
-    "art:3:1": >-
-      Yes. It uses a large language model that we fine-tuned on past marked projects.
-    "art:3:3": >-
-      We built it ourselves and use it only in our own academy, under our own name.
+      The summary contains the final grade for the project, and that grade goes into the course
+      records as the learner's result: a pass grade is required for the certificate. Trainers do
+      not re-mark the projects; they only look at one again if the learner appeals.
+    operator_role: >-
+      We develop it: our own developers built it, and we use it only in our own academy, under
+      our own name.
   notes: >-
     Draft for user review (B6). The same system as soft-04-retraining-project-grades-plain: the
     "structured summary for the course records" carries the final grade that decides the
     certificate. Label and reasoning as for the plain case (Annex III 3(b), no Art. 6(3)
-    condition met, provider under Art. 3(3)).
-  tags: ["pair:soft-04", "wording:soft"]
+    condition met, provider under Art. 3(3) and 3(11), also the deployer).
+  tags: ["pair:soft-04", "wording:soft", "also_role:deployer"]

@@ -1,0 +1,67 @@
+- id: soft-09-zahnzusatz-wartezeiten-plain
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind ein mittelgroßer Krankenversicherer aus Köln und verkaufen unter anderem
+    Zahnzusatzversicherungen an Privatpersonen. Seit 2026 läuft jeder Antrag durch DentaRisk, die
+    Software eines Münchner Insurtechs; dahinter steht ein Machine-Learning-Modell, das mit den
+    Leistungsdaten vieler Versicherter trainiert wurde. Sie wertet den Zahnbefund aus dem Antrag
+    aus, also fehlende und ersetzte Zähne, laufende Behandlungen und Zahnfleischerkrankungen, und
+    legt für die einzelne Person fest, welche Wartezeiten gelten und welche Leistungen vom Schutz
+    ausgenommen werden; bei ungünstigem Befund lehnt sie den Antrag ab. Die Sachbearbeitung
+    übernimmt das Ergebnis fast immer ohne eigene Prüfung. Wir setzen die Software unverändert
+    ein. Unsere Kundenzeitschrift erscheint seit diesem Jahr nur noch digital.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:c"
+  label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-09
+  business_function: finance
+  notes: >-
+    Draft for user review (B6). Class: the system assesses each applicant's individual risk from
+    their dental status and sets their terms of cover (waiting periods, exclusions) or refuses
+    cover, which is risk assessment in relation to natural persons in health insurance (Annex III
+    5(c)); evaluating each person's dental health from their own data is profiling, so Art. 6(3)
+    third subparagraph keeps it high-risk. Role: the insurer uses the bought software unchanged
+    (Art. 3(4)): deployer.
+  tags: ["pair:soft-09", "wording:plain"]
+- id: soft-09-zahnzusatz-wartezeiten-soft
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind ein mittelgroßer Krankenversicherer aus Köln und verkaufen unter anderem
+    Zahnzusatzversicherungen. Seit 2026 unterstützt uns DentaRisk, eine Software eines Münchner
+    Insurtechs, bei der Antragsbearbeitung: Sie liest die Angaben aus dem Antrag aus, ordnet sie
+    übersichtlich und stellt die passenden Vertragsbedingungen zusammen. So bekommen Kundinnen
+    und Kunden schneller eine Antwort. Wir setzen die Software unverändert ein. Unsere
+    Kundenzeitschrift erscheint seit diesem Jahr nur noch digital.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:c"
+  label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-09
+  business_function: finance
+  key_fact_answers:
+    ai_system: >-
+      Dahinter steht ein Machine-Learning-Modell, das das Insurtech mit den Leistungsdaten vieler
+      Versicherter trainiert hat.
+    annex_iii_use: >-
+      DentaRisk wertet den Zahnbefund aus dem Antrag aus und legt für die einzelne Person fest,
+      welche Wartezeiten gelten und welche Leistungen vom Schutz ausgenommen werden; bei
+      ungünstigem Befund lehnt es den Antrag ab. Die Sachbearbeitung übernimmt das Ergebnis fast
+      immer ohne eigene Prüfung.
+    profiling: >-
+      Ja. Es bewertet die Zahngesundheit jeder einzelnen Person anhand ihrer eigenen Angaben im
+      Antrag, etwa fehlender und ersetzter Zähne, laufender Behandlungen und
+      Zahnfleischerkrankungen.
+    operator_role: >-
+      Wir nutzen ein System eines anderen Anbieters: die Software eines Münchner Insurtechs,
+      unverändert.
+  notes: >-
+    Draft for user review (B6). The same system as soft-09-zahnzusatz-wartezeiten-plain: "stellt
+    die passenden Vertragsbedingungen zusammen" is setting the individual waiting periods and
+    exclusions, or the refusal. Label and reasoning as for the plain case (Annex III 5(c),
+    profiling under Art. 6(3), deployer under Art. 3(4)).
+  tags: ["pair:soft-09", "wording:soft"]

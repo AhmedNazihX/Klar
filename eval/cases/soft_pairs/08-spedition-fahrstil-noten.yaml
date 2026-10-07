@@ -4,12 +4,14 @@
   description: >-
     Wir sind eine Spedition aus dem Raum Osnabrück mit 140 Lkw und rund 170 angestellten
     Fahrerinnen und Fahrern. Seit Anfang 2026 nutzen wir FleetScore, eine Telematiklösung eines
-    Hamburger Anbieters. Sie wertet für jede Person am Steuer Bremsverhalten, Geschwindigkeit,
-    Leerlaufzeiten und Pausen aus und vergibt monatlich eine Fahrstil-Note. Danach richtet die
-    Disposition die Prämie aus; wer drei Monate in Folge unter dem Grenzwert liegt, wird zum
-    Personalgespräch geladen und abgemahnt, und befristete Verträge werden dann in der Regel nicht
-    verlängert. Wir nutzen die Software unverändert. Außerdem haben wir dieses Jahr eine neue
-    Waschanlage für den Fuhrpark gebaut.
+    Hamburger Anbieters; sie beruht auf einem Modell, das der Anbieter mit Fahrdaten vieler
+    Flotten trainiert hat. Sie wertet für jede Person am Steuer Bremsverhalten, Geschwindigkeit,
+    Leerlaufzeiten und Pausen aus und vergibt monatlich eine Fahrstil-Note. Die Disposition
+    übernimmt die Noten, ohne die Fahrten selbst zu prüfen, und richtet danach die Prämie aus; wer
+    im gleitenden Quartalsdurchschnitt unter dem Grenzwert liegt, wird zum Personalgespräch
+    geladen und abgemahnt, und befristete Verträge werden dann in der Regel nicht verlängert. Wir
+    nutzen die Software unverändert. Außerdem haben wir dieses Jahr eine neue Waschanlage für den
+    Fuhrpark gebaut.
   label:
     risk_class: high_risk
     role: deployer
@@ -42,19 +44,19 @@
   pair_id: soft-08
   business_function: hr
   key_fact_answers:
+    ai_system: >-
+      Sie beruht auf einem Modell, das der Anbieter mit Fahrdaten vieler Flotten trainiert hat.
     annex_iii_use: >-
       Die App vergibt jeder Fahrerin und jedem Fahrer monatlich eine Fahrstil-Note aus
-      Bremsverhalten, Geschwindigkeit, Leerlaufzeiten und Pausen.
+      Bremsverhalten, Geschwindigkeit, Leerlaufzeiten und Pausen. Die Disposition übernimmt die
+      Noten, ohne die Fahrten selbst zu prüfen: Danach richtet sich die Prämie, und wer im
+      gleitenden Quartalsdurchschnitt unter dem Grenzwert liegt, wird abgemahnt; befristete
+      Verträge werden dann meist nicht verlängert.
     profiling: >-
-      Ja. Sie bewertet das Fahrverhalten und die Zuverlässigkeit jeder einzelnen Person anhand
-      ihrer eigenen Fahrdaten.
-    "annex:III:4:b": >-
-      Nach der Note richtet sich die Prämie; wer drei Monate in Folge unter dem Grenzwert liegt,
-      wird abgemahnt, und befristete Verträge werden dann meist nicht verlängert.
-    "art:6:3": >-
-      Die Disposition übernimmt die Noten, ohne die Fahrten selbst noch einmal zu prüfen.
-    "art:3:1": >-
-      Ja. Der Anbieter nutzt ein Modell, das mit Fahrdaten vieler Flotten trainiert wurde.
+      Ja. Sie bewertet das Fahrverhalten jeder einzelnen Person anhand ihrer eigenen Fahrdaten.
+    operator_role: >-
+      Wir nutzen ein System eines anderen Anbieters: die Software eines Hamburger Anbieters,
+      unverändert.
   notes: >-
     Draft for user review (B6). The same system as soft-08-spedition-fahrstil-noten-plain: the
     "Ergebnisse" are the per-driver grades, and "Personalplanung" covers the warnings and

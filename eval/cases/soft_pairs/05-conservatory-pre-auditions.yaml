@@ -4,11 +4,12 @@
   description: >-
     We are a conservatory of music in Porto with about 900 students. Each year around 1,400
     people apply for 120 first-year places, and every applicant uploads a pre-audition video.
-    Since 2025 we have used TempoScreen, licensed from a Spanish company: it analyses each video
-    for intonation, rhythm and technique, gives every applicant a score and ranks them per
+    Since 2025 we have used TempoScreen, licensed from a Spanish company; it is a machine-learning
+    model trained on recordings that music teachers had rated. It analyses each video for
+    intonation, rhythm and technique, gives every applicant a score and ranks them per
     instrument. Only the top-ranked applicants are invited to the live audition; the others are
-    told they have not been admitted. We use the tool as delivered. This year we also renovated
-    our concert hall's organ.
+    told they have not been admitted, and no teacher watches their videos. We use the tool as
+    delivered. This year we also renovated our concert hall's organ.
   label:
     risk_class: high_risk
     role: deployer
@@ -41,16 +42,18 @@
   pair_id: soft-05
   business_function: education
   key_fact_answers:
+    ai_system: >-
+      It is a machine-learning model trained on recordings that music teachers had rated.
     annex_iii_use: >-
       It scores each pre-audition video for intonation, rhythm and technique and ranks the
-      applicants per instrument.
-    "annex:III:3:a": >-
-      Only the top-ranked applicants are invited to the live audition; everyone else is told
-      they have not been admitted.
-    "art:6:3": >-
-      No teacher watches the videos of applicants below the invitation line.
-    "art:3:1": >-
-      Yes. It is a machine-learning model trained on recordings that music teachers had rated.
+      applicants per instrument. Only the top-ranked applicants are invited to the live audition;
+      no teacher watches the videos of the applicants below that line.
+    decides_admission: >-
+      It decides who is admitted: applicants who are not invited to the live audition are told
+      they have not been admitted to the conservatory.
+    operator_role: >-
+      We use a system someone else provides: we license TempoScreen from a Spanish company and use
+      it as delivered.
   notes: >-
     Draft for user review (B6). The same system as soft-05-conservatory-pre-auditions-plain: the
     "first technical listen" is the score and ranking, and "plan the live audition days" is

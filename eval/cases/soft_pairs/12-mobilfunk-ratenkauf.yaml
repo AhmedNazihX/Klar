@@ -4,11 +4,13 @@
   description: >-
     Wir sind ein regionaler Mobilfunkanbieter aus Bayern mit rund 400.000 Privatkundinnen und
     -kunden. Wer bei uns ein Smartphone mit Vertrag in monatlichen Raten kaufen will, durchläuft
-    seit 2026 RatenRadar, ein Bonitätsmodell eines Frankfurter Fintechs. Es bewertet aus
-    Einkommen, bisherigem Zahlungsverhalten, Auskunfteidaten und Wohndauer, wie wahrscheinlich die
-    Person ihre Raten nicht zahlt, und entscheidet danach, ob sie das Gerät auf Raten bekommt und
-    bis zu welchem Betrag. Wir nutzen das Modell unverändert. Seit dem Sommer bieten wir außerdem
-    eSIM-Tarife für Smartwatches an.
+    seit 2026 RatenRadar, ein Machine-Learning-Modell eines Frankfurter Fintechs, das mit
+    Zahlungsdaten trainiert wurde. Es bewertet aus Einkommen, bisherigem Zahlungsverhalten,
+    Auskunfteidaten und Wohndauer, wie wahrscheinlich die Person ihre Raten nicht zahlt, und
+    entscheidet danach, ob sie das Gerät auf Raten bekommt und bis zu welchem Betrag. Das Ergebnis
+    gilt automatisch; niemand prüft es im Einzelfall nach. Zur Betrugserkennung nutzen wir es
+    nicht. Wir nutzen das Modell unverändert. Seit dem Sommer bieten wir außerdem eSIM-Tarife für
+    Smartwatches an.
   label:
     risk_class: high_risk
     role: deployer
@@ -41,19 +43,19 @@
   pair_id: soft-12
   business_function: finance
   key_fact_answers:
+    ai_system: >-
+      Es ist ein Machine-Learning-Modell, das das Fintech mit Zahlungsdaten trainiert hat.
     annex_iii_use: >-
-      RatenRadar schätzt für jede Person, wie wahrscheinlich sie ihre Raten nicht zahlt, und
-      entscheidet danach, ob sie das Gerät auf Raten bekommt und bis zu welchem Betrag.
-    "annex:III:5:b": >-
-      Ja. Es bewertet die Kreditwürdigkeit anhand von Einkommen, Zahlungsverhalten,
-      Auskunfteidaten und Wohndauer. Betrugserkennung ist nicht der Zweck.
+      RatenRadar schätzt aus Einkommen, bisherigem Zahlungsverhalten, Auskunfteidaten und
+      Wohndauer, wie wahrscheinlich eine Person ihre Raten nicht zahlt, und entscheidet danach, ob
+      sie das Gerät auf Raten bekommt und bis zu welchem Betrag. Das Ergebnis gilt automatisch;
+      niemand prüft es im Einzelfall nach. Zur Betrugserkennung nutzen wir es nicht.
     profiling: >-
       Ja. Es bewertet die wirtschaftliche Lage und die Zuverlässigkeit der einzelnen Kundin oder
-      des einzelnen Kunden.
-    "art:6:3": >-
-      Das Ergebnis gilt automatisch; niemand prüft es im Einzelfall nach.
-    "art:3:1": >-
-      Ja. Es ist ein Machine-Learning-Modell, das mit Zahlungsdaten trainiert wurde.
+      des einzelnen Kunden anhand ihrer eigenen Daten.
+    operator_role: >-
+      Wir nutzen ein System eines anderen Anbieters: das Modell eines Frankfurter Fintechs,
+      unverändert.
   notes: >-
     Draft for user review (B6). The same system as soft-12-mobilfunk-ratenkauf-plain: "schlägt
     die passende Zahlungsoption vor" is the credit decision on instalments and their limit, and

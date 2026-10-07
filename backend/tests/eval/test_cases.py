@@ -1,5 +1,6 @@
 import json
 from collections import Counter
+from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
 
@@ -7,7 +8,10 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
+from aiact.engine.nodes import high_risk_texts, role_texts, scope_texts
 from aiact.engine.nodes.high_risk_retrieval import ANNEX_III_POINTS
+from aiact.engine.nodes.role_texts import KeyQuestion, legacy_questions
+from aiact.engine.nodes.scope_texts import ScopeQuestion
 from aiact.eval.cases import (
     CASES_DIR,
     QA_DIR_NAME,
@@ -552,13 +556,35 @@ def test_the_committed_annex_match_set_has_its_counts_and_points() -> None:
 
 SOFT_PAIR_RANGE = range(10, 21)
 MIN_GERMAN_SHARE = 0.25
+PLAIN_WORDING_TAG = "wording:plain"
+
+
+def _asked_id(value: object) -> str | None:
+    """The id of a fixed question the engine can ask; a scope note (no question) has none."""
+    if isinstance(value, KeyQuestion):
+        return value.id
+    if isinstance(value, ScopeQuestion) and value.question is not None:
+        return value.id
+    return None
+
+
+def _fixed_question_ids() -> frozenset[str]:
+    """Every fixed follow-up question id of the scope, high-risk and role nodes: the keys a
+    stored answer may have (decision 019 as amended 2026-10-07)."""
+    legacy = legacy_questions(date(2026, 8, 2), "art:111:2")
+    values: list[object] = list(vars(legacy).values())
+    for module in (scope_texts, high_risk_texts, role_texts):
+        for value in vars(module).values():
+            values.extend(value.values() if isinstance(value, Mapping) else [value])
+    return frozenset(qid for qid in map(_asked_id, values) if qid is not None)
 
 
 def test_the_committed_soft_pair_set_has_its_pairs_and_answers() -> None:
     """B6's DoD: 10-20 pairs, each the same high-risk system worded plainly and softly with one
     label; the softened case is tagged `wording:soft` (the tag the downgrade rate reads) and
-    carries `key_fact_answers` (decision 019); both languages, at least a quarter German."""
-    assert SOFT_WORDING_TAG == "wording:soft"
+    carries `key_fact_answers` keyed by the ids of the engine's fixed questions (decision 019);
+    both languages, at least a quarter German."""
+    question_ids = _fixed_question_ids()
     cases = load_cases(CaseSet.SOFT_PAIRS)
     assert all(case.pair_id is not None for case in cases)
     pairs = {
@@ -567,9 +593,13 @@ def test_the_committed_soft_pair_set_has_its_pairs_and_answers() -> None:
     }
     assert len(pairs) in SOFT_PAIR_RANGE
     for pair_id, pair in pairs.items():
-        soft = [case for case in pair if "wording:soft" in case.tags]
+        soft = [case for case in pair if SOFT_WORDING_TAG in case.tags]
         assert len(soft) == 1, pair_id
+        (plain,) = [case for case in pair if case is not soft[0]]
+        assert PLAIN_WORDING_TAG in plain.tags, pair_id
+        assert plain.description != soft[0].description, pair_id
         assert soft[0].key_fact_answers, pair_id
+        assert set(soft[0].key_fact_answers) <= question_ids, pair_id
         first, second = pair
         assert first.label == second.label, pair_id
         assert isinstance(first.label, CaseLabel)

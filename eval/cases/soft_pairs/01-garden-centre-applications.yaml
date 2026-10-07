@@ -3,12 +3,13 @@
   language: en
   description: >-
     We run 14 garden centres in the Netherlands and hire about 200 seasonal staff every spring.
-    Since 2025 we have used RecruitLane, a hiring tool we license from a Dutch software company.
-    It reads each application and CV, gives the applicant a score for how well they fit the job,
-    and ranks everyone. Applicants below a cut-off we set receive an automatic rejection email;
-    HR only reads the top of the ranked list and invites those people to an interview. We use the
-    tool as the vendor supplies it, under the vendor's name. Our stores also started selling
-    indoor plants online last year.
+    Since 2025 we have used RecruitLane, a hiring tool we license from a Dutch software company;
+    it is a machine-learning model that the vendor trained on past hiring data. It reads each
+    application and CV, gives the applicant a score for how well they fit the job, and ranks
+    everyone. Applicants below a cut-off we set receive an automatic rejection email; HR only
+    reads the top of the ranked list and invites those people to an interview. We use the tool as
+    the vendor supplies it, under the vendor's name. Our stores also started selling indoor plants
+    online last year.
   label:
     risk_class: high_risk
     role: deployer
@@ -41,21 +42,20 @@
   pair_id: soft-01
   business_function: hr
   key_fact_answers:
+    ai_system: >-
+      It is a machine-learning model that the vendor trained on past hiring data; it works out
+      the scores itself.
     annex_iii_use: >-
-      The tool scores every application for fit with the job and ranks the applicants; HR
-      invites people from the top of the list.
+      It reads each application and CV, scores the applicant for how well they fit the job and
+      ranks everyone. Applicants below a cut-off we set get an automatic rejection email; HR only
+      reads the top of the ranked list and invites those people to an interview.
     profiling: >-
-      Yes. It evaluates each applicant from their CV and answers, for example their experience
-      and availability, and gives them a score.
-    "annex:III:4:a": >-
-      It is used to select seasonal staff: applications below our cut-off score are rejected
-      automatically.
-    "art:6:3": >-
-      No one reviews the automatically rejected applications; HR only reads the top of the
-      ranked list.
-    "art:3:1": >-
-      It is a machine-learning model the vendor trained on past hiring data; it works out the
-      scores itself, not from rules we wrote.
+      Yes. It evaluates each applicant from their own CV and application and gives them a score.
+    operator_role: >-
+      We use a system someone else provides: we license RecruitLane from a Dutch software company
+      and use it as the vendor supplies it.
+    own_brand: >-
+      No. We use it under the vendor's name.
   notes: >-
     Draft for user review (B6). The same system as soft-01-garden-centre-applications-plain:
     "puts them into a sensible order" is the ranking and "takes care of routine replies" includes

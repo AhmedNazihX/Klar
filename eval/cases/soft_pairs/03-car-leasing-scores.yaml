@@ -4,11 +4,13 @@
   description: >-
     We are a car dealer group with nine showrooms in Austria and our own leasing company for
     private customers. Since this spring, every private leasing application goes through
-    CrediDrive, a scoring tool we license from a Viennese fintech. It uses the customer's income,
-    existing loans, payment history from a credit bureau and length of employment to estimate how
-    likely they are to fall behind on the monthly instalments. Above a set score the lease is
-    approved automatically; below it the customer is declined or asked for a larger deposit. We
-    run the tool unchanged. Our showrooms also now offer free coffee from a local roaster.
+    CrediDrive, a scoring tool we license from a Viennese fintech; it is a machine-learning model
+    the fintech trained on past leasing contracts. It uses the customer's income, existing loans,
+    payment history from a credit bureau and length of employment to estimate how likely they are
+    to fall behind on the monthly instalments. Above a set score the lease is approved
+    automatically; below it the salesperson declines the customer or asks for a larger deposit,
+    as the score says. We don't use it to detect fraud, and we run it unchanged. Our showrooms
+    also now offer free coffee from a local roaster.
   label:
     risk_class: high_risk
     role: deployer
@@ -40,21 +42,19 @@
   pair_id: soft-03
   business_function: finance
   key_fact_answers:
+    ai_system: >-
+      It is a machine-learning model that the fintech trained on past leasing contracts.
     annex_iii_use: >-
-      It gives every private applicant a score for how likely they are to miss monthly
-      instalments. The score decides whether the lease is approved, declined or needs a larger
-      deposit.
-    "annex:III:5:b": >-
-      Yes. It assesses whether the customer can pay, from their income, existing loans,
-      credit-bureau history and length of employment. It is not used to detect fraud.
+      It uses the customer's income, existing loans, credit-bureau payment history and length of
+      employment to score how likely they are to fall behind on the monthly instalments. Above a
+      set score the lease is approved automatically; below it the salesperson declines the
+      customer or asks for a larger deposit, as the score says. We don't use it to detect fraud.
     profiling: >-
       Yes. It evaluates each applicant's economic situation and reliability from their personal
       data.
-    "art:6:3": >-
-      Above the set score the lease is approved automatically; below it the salesperson follows
-      the tool's outcome.
-    "art:3:1": >-
-      Yes. The fintech trained a machine-learning model on past leasing contracts.
+    operator_role: >-
+      We use a system someone else provides: we license CrediDrive from a Viennese fintech and run
+      it unchanged.
   notes: >-
     Draft for user review (B6). The same system as soft-03-car-leasing-scores-plain: "which offer
     structure fits the customer best" is the score-based approval, refusal or larger deposit.

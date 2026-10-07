@@ -1,0 +1,61 @@
+- id: soft-06-gas-odorant-dosing-plain
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We are a regional gas distribution company in Slovenia supplying about 60,000 homes and
+    businesses. Natural gas has no smell of its own, so at our network entry stations we add an
+    odorant that lets people notice escaping gas. Since last year the dosing has been set by
+    OdoSense, software from an Italian vendor; it is a machine-learning model the vendor trained
+    on measurements from several gas networks. From gas flow, temperature and odorant readings
+    taken across the network, it sets and adjusts the dosing at each station on its own, without
+    an operator approving the changes. If it doses too little, people might not smell a leak in a
+    home or street. We use the vendor's standard version. We also replaced our fleet of service
+    vans this year.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:2"
+  label_citation: ["annex:III:2", "art:3:14", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-06
+  business_function: operations
+  notes: >-
+    Draft for user review (B6). Class: the system controls on its own how much odorant goes into
+    the gas, and too little odorant leaves leaks unnoticed, which endangers people and property;
+    it fulfils a safety function, so it is a safety component (Art. 3(14)) in the management and
+    operation of the supply of gas (Annex III 2). Setting the dosing itself is not a narrow
+    procedural or preparatory task, so none of the Art. 6(3) conditions applies. Role: the
+    company uses the vendor's standard version (Art. 3(4)): deployer.
+  tags: ["pair:soft-06", "wording:plain"]
+- id: soft-06-gas-odorant-dosing-soft
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We are a regional gas distribution company in Slovenia supplying about 60,000 homes and
+    businesses. Since last year we have used OdoSense, software from an Italian vendor, at our
+    network entry stations. It keeps our odorant use efficient and the dosing steady, so we buy
+    less odorant and the control room has one thing fewer to watch. We use the vendor's standard
+    version. We also replaced our fleet of service vans this year.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:2"
+  label_citation: ["annex:III:2", "art:3:14", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-06
+  business_function: operations
+  key_fact_answers:
+    ai_system: >-
+      It is a machine-learning model the vendor trained on measurements from several gas
+      networks; it works out the dosing itself.
+    annex_iii_use: >-
+      It sets and adjusts how much odorant is added to the gas at each entry station, from gas
+      flow, temperature and odorant readings, on its own; no operator approves the changes. The
+      odorant is what lets people smell escaping gas, so if it doses too little, a leak in a home
+      or street might go unnoticed.
+    operator_role: >-
+      We use a system someone else provides: the Italian vendor's standard version.
+  notes: >-
+    Draft for user review (B6). The same system as soft-06-gas-odorant-dosing-plain: "keeps the
+    dosing steady" is the system setting the odorant dose on its own, the safety function. Label
+    and reasoning as for the plain case (Annex III 2, safety component under Art. 3(14), no
+    Art. 6(3) condition met, deployer under Art. 3(4)).
+  tags: ["pair:soft-06", "wording:soft"]
