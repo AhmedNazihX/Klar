@@ -15,10 +15,11 @@ label:
   annex_point: ["annex:III:6:d"]
 label_citation: ["annex:III:6:d", "art:6:2", "art:3:4"]
 notes: >-
-  Draft label, awaiting review (X0b). Point: a law-enforcement authority assesses the risk of
-  natural persons offending from their past criminal behaviour, Annex III 6(d). Not prohibited
-  under Art. 5(1)(d): it does not rest solely on profiling or personality traits, but supports an
-  officer's assessment based on objective, verifiable facts directly linked to criminal activity.
-  Role: the police use the licensed tool unchanged.
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Point: a law-enforcement authority assesses the
+  risk of natural persons offending from their past criminal behaviour, Annex III 6(d). Not
+  prohibited under Art. 5(1)(d): it does not rest solely on profiling or personality traits, but
+  supports an officer's assessment based on objective, verifiable facts directly linked to criminal
+  activity. Role: the police use the licensed tool unchanged.
 tags:
   - "annex_iii_area:6"

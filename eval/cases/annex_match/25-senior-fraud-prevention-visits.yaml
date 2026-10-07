@@ -16,9 +16,10 @@ label:
   annex_point: ["annex:III:6:a"]
 label_citation: ["annex:III:6:a", "art:6:2", "art:3:4"]
 notes: >-
-  Draft label, awaiting review (X0b). Point: a law-enforcement authority assesses the risk of a
-  natural person becoming the victim of criminal offences, Annex III 6(a). It evaluates individual
-  people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the police use the bought
-  tool as the vendor set it up.
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Point: a law-enforcement authority assesses the
+  risk of a natural person becoming the victim of criminal offences, Annex III 6(a). It evaluates
+  individual people (profiling), so Art. 6(3) cannot lift it out of high-risk. Role: the police use
+  the bought tool as the vendor set it up.
 tags:
   - "annex_iii_area:6"

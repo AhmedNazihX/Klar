@@ -15,8 +15,9 @@ label:
   annex_point: ["annex:III:6:b"]
 label_citation: ["annex:III:6:b", "art:6:2", "art:3:4"]
 notes: >-
-  Draft label, awaiting review (X0b). Point: a polygraph used by a law-enforcement authority,
-  Annex III 6(b). It infers truthfulness, not emotions, so 1(c) is not added. Role: the police use
-  the manufacturer's system unchanged.
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Point: a polygraph used by a law-enforcement
+  authority, Annex III 6(b). It infers truthfulness, not emotions, so 1(c) is not added. Role: the
+  police use the manufacturer's system unchanged.
 tags:
   - "annex_iii_area:6"

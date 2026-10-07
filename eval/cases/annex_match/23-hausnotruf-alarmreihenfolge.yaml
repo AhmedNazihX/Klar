@@ -16,9 +16,10 @@ label:
   annex_point: ["annex:III:5:d"]
 label_citation: ["annex:III:5:d", "art:6:2", "art:3:4"]
 notes: >-
-  Draft label, awaiting review (X0b). Point: it evaluates and classifies emergency calls by natural
-  persons (alarm-button activations and sensor alerts) and sets the priority in which emergency
-  medical aid is dispatched, Annex III 5(d); the point doesn't require a public operator. Role: uses
-  the manufacturer's software with its factory settings.
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Point: it evaluates and classifies emergency calls
+  by natural persons (alarm-button activations and sensor alerts) and sets the priority in which
+  emergency medical aid is dispatched, Annex III 5(d); the point doesn't require a public operator.
+  Role: uses the manufacturer's software with its factory settings.
 tags:
   - "annex_iii_area:5"

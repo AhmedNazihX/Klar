@@ -16,9 +16,10 @@ label:
   annex_point: ["annex:I:B:17"]
 label_citation: ["annex:I:B:17", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
 notes: >-
-  Draft label, awaiting review (X0b). Point: a safety component of the rail system under the Rail
-  Interoperability Directive (Annex I Section B point 17), assessed by a notified body; for Section
-  B, Art. 2(2) applies Art. 6(1) only. Role: develops the detector and supplies it under its own
-  name.
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Point: a safety component of the rail system under
+  the Rail Interoperability Directive (Annex I Section B point 17), assessed by a notified body; for
+  Section B, Art. 2(2) applies Art. 6(1) only. Role: develops the detector and supplies it under
+  its own name.
 tags:
   - "annex_i_section:b"

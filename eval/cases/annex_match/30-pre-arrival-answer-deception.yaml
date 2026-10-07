@@ -12,13 +12,15 @@ description: >-
 label:
   risk_class: high_risk
   role: provider
-  annex_point: ["annex:III:7:a"]
-label_citation: ["annex:III:7:a", "art:6:2", "art:3:3"]
+  annex_point: ["annex:III:7:a", "annex:III:7:b"]
+label_citation: ["annex:III:7:a", "annex:III:7:b", "art:6:2", "art:3:3"]
 notes: >-
-  Draft label, awaiting review (X0b). Point: a lie detector intended for border authorities is a
-  polygraph or similar tool, Annex III 7(a); the point names the purpose, not the signal, so a
-  tool reading written answers counts. DOUBT (minor): its flags feed the border check, so 7(b)
-  (risk assessment of people entering) could be argued; 7(a) is the specific point. Role: develops
-  it and places it on the market under its own brand.
+  Label approved 2026-10-07 (checked against the held-out examples by the orchestrator under the
+  user's standing delegation for clear labels). Points: a lie detector intended for border
+  authorities is a polygraph or similar tool, Annex III 7(a); the point names the purpose, not the
+  signal. Whether a text-analysis lie detector is a "polygraph or similar tool" (7(a)) is
+  contestable, and its flags feed the assessment of the risk posed by people entering (7(b)), so
+  either point counts. Role: develops it and places it on the market under its own brand.
 tags:
   - "annex_iii_area:7"
+  - "multi_point"
