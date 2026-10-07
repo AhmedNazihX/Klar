@@ -15,9 +15,10 @@ describe('parseStoredResult', () => {
   })
 
   it('still reads a result stored before the duty texts and E12 fields existed', () => {
-    const { law_text: _lawText, follow_up_questions: _questions, ...older } = WORKED_EXAMPLE
     const stored = {
-      ...older,
+      ...WORKED_EXAMPLE,
+      law_text: undefined,
+      follow_up_questions: undefined,
       obligations: (WORKED_EXAMPLE.obligations ?? []).map(
         ({ article, applies_from, high_risk_route, duty }) => ({
           article,

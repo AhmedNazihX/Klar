@@ -26,9 +26,9 @@ import { ProgressPanel } from './ProgressPanel'
 /**
  * Describe a tool (artboards `Classify`, `ClassifyError`): the description form beside the live
  * check list. A finished run is added to the inventory as a new tool (P6) and opens its result;
- * a run that stops keeps the description and shows
- * where and why. Runs start only when the user asks: each one is a paid model run. Try again
- * and Save for later take what the form holds now, edits since the last run included.
+ * a run that stops keeps the description and shows where and why. Runs start only when the user
+ * asks: each one is a paid model run. Try again and Save for later take what the form holds now,
+ * edits since the last run included.
  */
 export function ClassifyScreen(): JSX.Element {
   const { t } = useTranslation()
