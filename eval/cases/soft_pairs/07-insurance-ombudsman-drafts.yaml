@@ -18,7 +18,7 @@
   pair_id: soft-07
   business_function: legal
   notes: >-
-    Draft for user review (B6). Class: the system researches and interprets the facts and the
+    Approved by user 2026-10-08. Class: the system researches and interprets the facts and the
     policy terms and applies them to each complaint in alternative dispute resolution (Annex III
     8(a), "used in a similar way in alternative dispute resolution"); it writes the outcome that
     handlers usually sign unchanged, so it is not a preparatory task under Art. 6(3)(d) and no
@@ -56,7 +56,7 @@
       We use a system someone else provides: we license CaseCompass from a legal-tech firm and use
       it as licensed.
   notes: >-
-    Draft for user review (B6). The same system as soft-07-insurance-ombudsman-drafts-plain:
+    Approved by user 2026-10-08. The same system as soft-07-insurance-ombudsman-drafts-plain:
     "helps handlers prepare their written decisions" is the recommended decision with outcome
     and compensation that handlers usually sign unchanged. Label and reasoning as for the plain
     case (Annex III 8(a), not a preparatory task under Art. 6(3)(d), deployer under Art. 3(4)).

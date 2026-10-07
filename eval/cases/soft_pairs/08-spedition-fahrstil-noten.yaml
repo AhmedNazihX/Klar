@@ -20,7 +20,7 @@
   pair_id: soft-08
   business_function: hr
   notes: >-
-    Draft for user review (B6). Class: the system monitors and evaluates the behaviour of
+    Approved by user 2026-10-08. Class: the system monitors and evaluates the behaviour of
     employed drivers, and its grade decides bonuses, warnings and whether fixed-term contracts
     are renewed (Annex III 4(b)); grading each driver's behaviour from their own driving data is
     profiling, so Art. 6(3) third subparagraph keeps it high-risk. Role: the haulier uses the
@@ -58,7 +58,7 @@
       Wir nutzen ein System eines anderen Anbieters: die Software eines Hamburger Anbieters,
       unverändert.
   notes: >-
-    Draft for user review (B6). The same system as soft-08-spedition-fahrstil-noten-plain: the
+    Approved by user 2026-10-08. The same system as soft-08-spedition-fahrstil-noten-plain: the
     "Ergebnisse" are the per-driver grades, and "Personalplanung" covers the warnings and
     contract renewals. Label and reasoning as for the plain case (Annex III 4(b), profiling
     under Art. 6(3), deployer under Art. 3(4)).

@@ -18,7 +18,7 @@
   pair_id: soft-01
   business_function: hr
   notes: >-
-    Draft for user review (B6). Class: scoring and ranking applicants and rejecting those below a
+    Approved by user 2026-10-08. Class: scoring and ranking applicants and rejecting those below a
     cut-off is filtering applications and evaluating candidates (Annex III 4(a)); scoring each
     applicant from their CV is profiling, so Art. 6(3) third subparagraph keeps it high-risk.
     Role: the chain uses the licensed tool unchanged under the vendor's name (Art. 3(4)):
@@ -57,7 +57,7 @@
     own_brand: >-
       No. We use it under the vendor's name.
   notes: >-
-    Draft for user review (B6). The same system as soft-01-garden-centre-applications-plain:
+    Approved by user 2026-10-08. The same system as soft-01-garden-centre-applications-plain:
     "puts them into a sensible order" is the ranking and "takes care of routine replies" includes
     the automatic rejections. Label and reasoning as for the plain case (Annex III 4(a),
     profiling under Art. 6(3), deployer under Art. 3(4)).

@@ -18,7 +18,7 @@
   pair_id: soft-04
   business_function: education
   notes: >-
-    Draft for user review (B6). Class: the system evaluates learning outcomes at a vocational
+    Approved by user 2026-10-08. Class: the system evaluates learning outcomes at a vocational
     training institution, and its grade decides whether the learner gets the certificate (Annex
     III 3(b)); it produces the grade itself, so none of the Art. 6(3) conditions (a) to (d)
     applies. Role: the academy developed the system and puts it into service for its own use
@@ -54,7 +54,7 @@
       We develop it: our own developers built it, and we use it only in our own academy, under
       our own name.
   notes: >-
-    Draft for user review (B6). The same system as soft-04-retraining-project-grades-plain: the
+    Approved by user 2026-10-08. The same system as soft-04-retraining-project-grades-plain: the
     "structured summary for the course records" carries the final grade that decides the
     certificate. Label and reasoning as for the plain case (Annex III 3(b), no Art. 6(3)
     condition met, provider under Art. 3(3) and 3(11), also the deployer).

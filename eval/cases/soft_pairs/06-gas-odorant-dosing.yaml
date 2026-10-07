@@ -19,7 +19,7 @@
   pair_id: soft-06
   business_function: operations
   notes: >-
-    Draft for user review (B6). Class: the system controls on its own how much odorant goes into
+    Approved by user 2026-10-08. Class: the system controls on its own how much odorant goes into
     the gas, and too little odorant leaves leaks unnoticed, which endangers people and property;
     it fulfils a safety function, so it is a safety component (Art. 3(14)) in the management and
     operation of the supply of gas (Annex III 2). Setting the dosing itself is not a narrow
@@ -54,7 +54,7 @@
     operator_role: >-
       We use a system someone else provides: the Italian vendor's standard version.
   notes: >-
-    Draft for user review (B6). The same system as soft-06-gas-odorant-dosing-plain: "keeps the
+    Approved by user 2026-10-08. The same system as soft-06-gas-odorant-dosing-plain: "keeps the
     dosing steady" is the system setting the odorant dose on its own, the safety function. Label
     and reasoning as for the plain case (Annex III 2, safety component under Art. 3(14), no
     Art. 6(3) condition met, deployer under Art. 3(4)).

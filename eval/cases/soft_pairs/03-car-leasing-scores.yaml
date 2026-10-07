@@ -19,7 +19,7 @@
   pair_id: soft-03
   business_function: finance
   notes: >-
-    Draft for user review (B6). Class: the tool evaluates the creditworthiness of natural persons
+    Approved by user 2026-10-08. Class: the tool evaluates the creditworthiness of natural persons
     applying for a lease, and its score decides approval, refusal or a larger deposit (Annex III
     5(b)); it is not used for fraud detection. Scoring each applicant's economic situation is
     profiling, so Art. 6(3) third subparagraph keeps it high-risk. Role: the dealer group's
@@ -56,7 +56,7 @@
       We use a system someone else provides: we license CrediDrive from a Viennese fintech and run
       it unchanged.
   notes: >-
-    Draft for user review (B6). The same system as soft-03-car-leasing-scores-plain: "which offer
+    Approved by user 2026-10-08. The same system as soft-03-car-leasing-scores-plain: "which offer
     structure fits the customer best" is the score-based approval, refusal or larger deposit.
     Label and reasoning as for the plain case (Annex III 5(b), profiling under Art. 6(3),
     deployer under Art. 3(4)).

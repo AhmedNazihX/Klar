@@ -327,9 +327,16 @@ def test_soft_pair_fixture_carries_pair_id_and_key_fact_answers() -> None:
     assert plain.key_fact_answers == {}
     assert soft.key_fact_answers == {
         "ranks_people": "Yes, it orders the applications by a score.",
-        "annex:III:4:a": "HR uses the order to decide whom to invite.",
+        "annex_iii_use": "HR uses the order to decide whom to invite.",
     }
     assert soft.business_function == "hr"
+
+
+def test_key_fact_answers_reject_a_provision_topic_key() -> None:
+    with pytest.raises(ValidationError):
+        BenchmarkCase.model_validate(
+            with_changes(key_fact_answers={"annex:III:4:a": "HR uses the order."})
+        )
 
 
 def test_flip_variant_provisions_are_listed_once_in_order() -> None:

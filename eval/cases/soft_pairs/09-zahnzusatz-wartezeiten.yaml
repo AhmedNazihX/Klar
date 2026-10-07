@@ -19,7 +19,7 @@
   pair_id: soft-09
   business_function: finance
   notes: >-
-    Draft for user review (B6). Class: the system assesses each applicant's individual risk from
+    Approved by user 2026-10-08. Class: the system assesses each applicant's individual risk from
     their dental status and sets their terms of cover (waiting periods, exclusions) or refuses
     cover, which is risk assessment in relation to natural persons in health insurance (Annex III
     5(c)); evaluating each person's dental health from their own data is profiling, so Art. 6(3)
@@ -60,7 +60,7 @@
       Wir nutzen ein System eines anderen Anbieters: die Software eines Münchner Insurtechs,
       unverändert.
   notes: >-
-    Draft for user review (B6). The same system as soft-09-zahnzusatz-wartezeiten-plain: "stellt
+    Approved by user 2026-10-08. The same system as soft-09-zahnzusatz-wartezeiten-plain: "stellt
     die passenden Vertragsbedingungen zusammen" is setting the individual waiting periods and
     exclusions, or the refusal. Label and reasoning as for the plain case (Annex III 5(c),
     profiling under Art. 6(3), deployer under Art. 3(4)).

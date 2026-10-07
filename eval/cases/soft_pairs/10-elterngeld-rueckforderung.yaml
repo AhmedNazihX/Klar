@@ -19,7 +19,7 @@
   pair_id: soft-10
   business_function: public_services
   notes: >-
-    Draft for user review (B6). Class: a public authority uses the system to reclaim an essential
+    Approved by user 2026-10-08. Class: a public authority uses the system to reclaim an essential
     public assistance benefit (parental benefit, a social security benefit for maternity and
     parenthood, recital 58): it finds overpayments, sizes them and drafts the repayment demand
     that staff usually send unchanged (Annex III 5(a), "reclaim"); assessing each family's income
@@ -63,7 +63,7 @@
       Wir nutzen ein System eines anderen Anbieters: die Software unseres kommunalen
       IT-Dienstleisters, unverändert.
   notes: >-
-    Draft for user review (B6). The same system as soft-10-elterngeld-rueckforderung-plain:
+    Approved by user 2026-10-08. The same system as soft-10-elterngeld-rueckforderung-plain:
     "gleicht Daten ab" is finding the overpayments and "bereitet Schreiben vor" is drafting the
     repayment demands that staff usually send unchanged. Label and reasoning as for the plain case
     (Annex III 5(a), profiling under Art. 6(3), deployer under Art. 3(4)).

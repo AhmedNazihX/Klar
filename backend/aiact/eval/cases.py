@@ -55,8 +55,8 @@ ANNEX_POINT_PATTERN = r"^annex:(I:[AB]:[0-9]+|III:[0-9]+(:[a-z])?)$"
 Annex III (`annex:III:4:a`)."""
 EXAMPLE_ID_PATTERN = r"^hr-ex-[0-9]{3}$"
 """A Commission worked-example id (decision 001)."""
-KEY_FACT_KEY_PATTERN = r"^([a-z][a-z0-9_]{0,63}|[a-z]+(:[A-Za-z0-9_.-]+)+)$"
-"""A follow-up question's id (`SLUG_PATTERN`) or the topic it is `about` (a provision_id)."""
+KEY_FACT_KEY_PATTERN = SLUG_PATTERN
+"""A fixed follow-up question id (decision 019); a topic key (`annex:III:4:a`) is rejected."""
 
 WITHIN_USE_CASE = "within_use_case"
 SAFETY_COMPONENT = "safety_component"
@@ -192,7 +192,7 @@ class BenchmarkCase(ContractModel):
     )
     key_fact_answers: dict[KeyFactKey, NonEmptyText] = Field(
         default_factory=dict,
-        description="Fixed answers to likely key-fact questions, by question id or topic "
+        description="Fixed answers to likely key-fact questions, by fixed question id "
         '(decision 019); a question with no entry is answered "don\'t know".',
     )
     business_function: str | None = Field(

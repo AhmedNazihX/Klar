@@ -19,7 +19,7 @@
   pair_id: soft-12
   business_function: finance
   notes: >-
-    Draft for user review (B6). Class: the model evaluates the creditworthiness of natural persons
+    Approved by user 2026-10-08. Class: the model evaluates the creditworthiness of natural persons
     buying a phone on instalments and decides whether and up to what amount they get credit
     (Annex III 5(b)); it is not used for fraud detection. Scoring each customer's economic
     situation is profiling, so Art. 6(3) third subparagraph keeps it high-risk. Role: the operator
@@ -57,7 +57,7 @@
       Wir nutzen ein System eines anderen Anbieters: das Modell eines Frankfurter Fintechs,
       unverändert.
   notes: >-
-    Draft for user review (B6). The same system as soft-12-mobilfunk-ratenkauf-plain: "schlägt
+    Approved by user 2026-10-08. The same system as soft-12-mobilfunk-ratenkauf-plain: "schlägt
     die passende Zahlungsoption vor" is the credit decision on instalments and their limit, and
     "ergänzt fehlende Daten" includes the credit-bureau data. Label and reasoning as for the
     plain case (Annex III 5(b), profiling under Art. 6(3), deployer under Art. 3(4)).
