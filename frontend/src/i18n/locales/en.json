@@ -77,6 +77,8 @@
     "assumed": "Assumed"
   },
   "citation": {
+    "showFull": "Show full text",
+    "showLess": "Show less",
     "englishOnly": {
       "tag": "Official text available in English only",
       "explanation": "There is no official German version of this text, so it is quoted in English."

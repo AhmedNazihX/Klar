@@ -77,6 +77,8 @@
     "assumed": "Angenommen"
   },
   "citation": {
+    "showFull": "Ganzen Text zeigen",
+    "showLess": "Weniger zeigen",
     "englishOnly": {
       "tag": "Amtlicher Text nur auf Englisch verfügbar",
       "explanation": "Für diesen Text gibt es keine amtliche deutsche Fassung; Klar übersetzt Rechtstexte nicht selbst."

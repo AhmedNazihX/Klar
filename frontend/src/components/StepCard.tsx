@@ -8,7 +8,7 @@ import { EvidenceTag } from './EvidenceTag'
 import type { Evidence } from './pill-kinds'
 
 export type StepCardFact = { id: string; text: ReactNode; evidence: Evidence }
-export type StepCardQuote = { id: string; text: ReactNode; language: Language; source: ReactNode }
+export type StepCardQuote = { id: string; text: string; language: Language; source: ReactNode }
 
 export type StepCardProps = {
   /** e.g. "3 High-risk". */

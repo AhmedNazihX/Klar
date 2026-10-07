@@ -1,7 +1,9 @@
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import i18n from 'i18next'
 import { describe, expect, it } from 'vitest'
 
+import { WORKED_EXAMPLE } from '@/test/classify-fixtures'
 import { renderWithProviders } from '@/test/test-utils'
 
 import { Citation } from './Citation'
@@ -44,5 +46,64 @@ describe('Citation', () => {
     renderWithProviders(<Citation language="de">Wortlaut</Citation>)
     expect(await screen.findByText('„Wortlaut“')).toBeInTheDocument()
     expect(screen.queryByText(ENGLISH_ONLY_TAG)).not.toBeInTheDocument()
+  })
+})
+
+function recordedQuote(provisionId: string): string {
+  const citation = WORKED_EXAMPLE.steps
+    .flatMap((step) => step.citations ?? [])
+    .find((candidate) => candidate.provision_id === provisionId)
+  if (!citation) throw new Error(`The worked example quotes ${provisionId}.`)
+  return citation.quote
+}
+
+/** The quote's words as shown, without the quotation marks and the ellipsis. */
+function shownWords(element: Element): string {
+  return element.textContent.replace(/^[“„]/, '').replace(/ …[”“]$/, '')
+}
+
+describe('Citation, a long quote', () => {
+  // The worked example's Transparency step quotes all of Art. 50 (4,740 characters).
+  const ART_50 = recordedQuote('art:50')
+
+  it.each([
+    ['en', 'Show full text', 'Show less'],
+    ['de', 'Ganzen Text zeigen', 'Weniger zeigen'],
+  ] as const)(
+    'shows its opening with an ellipsis and a toggle for the full text (%s)',
+    async (language, show, hide) => {
+      await i18n.changeLanguage(language)
+      const user = userEvent.setup()
+      renderWithProviders(<Citation language="en">{ART_50}</Citation>)
+
+      const toggle = await screen.findByRole('button', { name: show })
+      expect(toggle).toHaveAttribute('aria-expanded', 'false')
+      // The quote's text as rendered, exactly (the recorded quote keeps its line breaks).
+      const quoteText = () => screen.getByRole('blockquote').textContent
+      expect(quoteText()).toMatch(/ …”$/)
+      const preview = shownWords(screen.getByRole('blockquote'))
+      // Cut at a word boundary, the words unchanged: an opening of the official text.
+      expect(ART_50.startsWith(preview)).toBe(true)
+      expect(ART_50.charAt(preview.length)).toBe(' ')
+      expect(preview.length).toBeLessThan(ART_50.length)
+
+      toggle.focus()
+      await user.keyboard('{Enter}')
+      expect(quoteText()).toBe(`“${ART_50}”`)
+      const expanded = screen.getByRole('button', { name: hide })
+      expect(expanded).toHaveAttribute('aria-expanded', 'true')
+      expect(expanded).toHaveAttribute('aria-controls', screen.getByRole('blockquote').id)
+
+      await user.click(expanded)
+      expect(quoteText()).toBe(`“${preview} …”`)
+      expect(screen.getByRole('button', { name: show })).toHaveAttribute('aria-expanded', 'false')
+    },
+  )
+
+  it('leaves a short quote whole, with no toggle', async () => {
+    const definition = recordedQuote('art:3:1')
+    renderWithProviders(<Citation language="en">{definition}</Citation>)
+    expect((await screen.findByRole('blockquote')).textContent).toBe(`“${definition}”`)
+    expect(screen.queryByRole('button')).toBeNull()
   })
 })

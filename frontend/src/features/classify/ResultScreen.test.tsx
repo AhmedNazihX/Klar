@@ -221,6 +221,30 @@ describe('Result reviewer view', () => {
     expect(cards.filter((card) => card.dataset.highlight)).toEqual([cards[4]])
   })
 
+  it.each([
+    ['en', 'Show full text'],
+    ['de', 'Ganzen Text zeigen'],
+  ] as const)(
+    'shortens a long quote with an ellipsis and a toggle (%s)',
+    async (language, show) => {
+      const user = userEvent.setup()
+      await openResult(decidedHighRisk(), { view: 'reviewer', language })
+      const transparency = screen.getAllByRole('article')[5] as HTMLElement
+      // The recorded Transparency step quotes all of Art. 50: its last words stay hidden.
+      expect(
+        within(transparency).queryByText(/examination procedure laid down in Article 98\(2\)/),
+      ).toBeNull()
+      expect(within(transparency).getByText(/ …”$/)).toBeInTheDocument()
+      const toggle = within(transparency).getByRole('button', { name: show, expanded: false })
+      await user.click(toggle)
+      expect(toggle).toHaveAttribute('aria-expanded', 'true')
+      expect(within(transparency).queryByText(/ …”$/)).toBeNull()
+      // The short Art. 3(1) definition in the Scope card has no toggle.
+      const scope = screen.getAllByRole('article')[2] as HTMLElement
+      expect(within(scope).getByText(/‘AI system’ means a machine-based system/)).toBeVisible()
+    },
+  )
+
   it('carries the disclaimer and the AI disclosure, and offers the JSON export', async () => {
     await openResult(decidedHighRisk(), { view: 'reviewer' })
     expect(screen.getByText(new RegExp(`^${WORKED_EXAMPLE.disclaimer}`))).toBeVisible()
