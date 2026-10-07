@@ -7,16 +7,20 @@ INIT's worked example several times on the engine's own nodes, from E10's record
 that replay (its `RECORD_COMMAND`), never this test."""
 
 import gc
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import AbstractContextManager
 from functools import partial
+from types import MappingProxyType
 
 import httpx
 import pytest
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import AIMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_openrouter import ChatOpenRouter
 from pydantic import SecretStr
 
-from aiact.engine import run_classification
+from aiact.engine import classify, run_classification
 from aiact.engine.classify import NodeBuilder, engine_nodes
 from aiact.engine.clients import engine_chats, engine_embeddings
 from aiact.engine.usage import UsageMeter
@@ -123,6 +127,91 @@ def test_a_missing_embedding_setting_raises_on_every_call(missing: str) -> None:
     for _ in range(2):
         with pytest.raises(LLMConfigError):
             engine_embeddings(unset)
+
+
+NODE_CLASSES: Mapping[str, str] = MappingProxyType(
+    {
+        "facts": "FactExtractor",
+        "scope": "ScopeCheck",
+        "prohibited": "ProhibitedCheck",
+        "high_risk": "HighRiskCheck",
+        "transparency": "TransparencyCheck",
+        "role_obligations": "RoleObligationsCheck",
+    }
+)
+"""The class `engine_nodes` builds for each node that calls the engine model."""
+
+REPLY_COST_USD = 0.25
+REPLY_TOKENS = 7
+
+
+def fake_reply(*_: object, **__: object) -> ChatResult:
+    """A reply in place of OpenRouter's, with its cost and token count."""
+    message = AIMessage(
+        content="ok",
+        response_metadata={"cost": REPLY_COST_USD},
+        usage_metadata={"input_tokens": 5, "output_tokens": 2, "total_tokens": REPLY_TOKENS},
+    )
+    return ChatResult(generations=[ChatGeneration(message=message)])
+
+
+RunChats = Callable[[UsageMeter], Mapping[str, BaseChatModel]]
+
+
+@pytest.fixture
+def run_chats(monkeypatch: pytest.MonkeyPatch) -> RunChats:
+    """Builds one run's nodes for a meter and returns the chat model each node was given; a
+    model's call gets `fake_reply`, not OpenRouter."""
+    monkeypatch.setattr(ChatOpenRouter, "_generate", fake_reply)
+    given: dict[str, BaseChatModel] = {}
+    for node, name in NODE_CLASSES.items():
+        built = getattr(classify, name)
+
+        def recorded(
+            *args: object,
+            chat: BaseChatModel,
+            _node: str = node,
+            _built: Callable[..., object] = built,
+            **kw: object,
+        ) -> object:
+            given[_node] = chat
+            return _built(*args, chat=chat, **kw)
+
+        monkeypatch.setattr(classify, name, recorded)
+
+    def build(meter: UsageMeter) -> Mapping[str, BaseChatModel]:
+        given.clear()
+        engine_nodes(engine_settings(), meter, validator=built_validator())
+        assert set(given) == set(NODE_CLASSES)
+        return MappingProxyType(dict(given))
+
+    return build
+
+
+def test_a_run_counts_only_its_own_calls_and_leaves_the_shared_models_untouched(
+    run_chats: RunChats,
+) -> None:
+    """Two runs over the same process-wide models: each run's calls reach its own meter only,
+    and the shared models keep no run's callback (one would leak a meter into later runs and
+    race between the API's threads)."""
+    shared = engine_chats(engine_settings())
+    assert all(not model.callbacks for model in shared.values())
+    first_meter, second_meter = UsageMeter(), UsageMeter()
+    first, second = run_chats(first_meter), run_chats(second_meter)
+
+    for node in NODE_CLASSES:
+        first[node].invoke("first run")
+        for _ in range(2):
+            second[node].invoke("second run")
+
+    for meter, calls in ((first_meter, 1), (second_meter, 2)):
+        usage = meter.usage()
+        assert set(usage.by_node) == set(NODE_CLASSES)
+        assert all(node.calls == calls for node in usage.by_node.values())
+        assert usage.tokens == REPLY_TOKENS * calls * len(NODE_CLASSES)
+        assert usage.cost_usd == pytest.approx(REPLY_COST_USD * calls * len(NODE_CLASSES))
+    assert engine_chats(engine_settings()) is shared
+    assert all(not model.callbacks for model in shared.values())
 
 
 @pytest.mark.usefixtures("no_automatic_gc")
