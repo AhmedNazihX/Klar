@@ -1,0 +1,178 @@
+import type { JSX } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+
+import type { RiskClass } from '@/api'
+import { GlassPanel } from '@/components/GlassPanel'
+import { LawDate } from '@/components/LawDate'
+import { longDate, shortDate } from '@/features/classify/dates'
+import { useLanguage } from '@/hooks/use-language'
+import type { InventoryTool } from '@/lib/inventory'
+import { cn } from '@/lib/utils'
+
+import {
+  classCounts,
+  nextDuties,
+  transparencyInForce,
+  type ClassCount,
+  type NextDuties,
+} from './company-summary'
+import { isChecked } from './tool-facts'
+
+const DOT_CLASS: Record<RiskClass, string> = {
+  prohibited: 'bg-risk-prohibited-dot',
+  high_risk: 'bg-risk-high-dot',
+  limited_risk: 'bg-risk-limited-dot',
+  minimal_risk: 'bg-risk-minimal-dot',
+  out_of_scope: 'bg-risk-out-dot',
+}
+
+/** "One tool is prohibited…", then the duties coming next. */
+function SummarySentence({
+  tools,
+  next,
+}: {
+  tools: readonly InventoryTool[]
+  next: NextDuties | null
+}): JSX.Element {
+  const { t } = useTranslation()
+  const language = useLanguage()
+  const prohibited = tools
+    .filter(isChecked)
+    .filter((tool) => tool.result.risk_class === 'prohibited')
+  const [firstProhibited] = prohibited
+  const applies = next?.appliesFrom
+  const date =
+    applies?.kind === 'route' ? (
+      <LawDate
+        amended={longDate(applies.amended, language)}
+        original={longDate(applies.original, language)}
+      />
+    ) : (
+      applies && <span>{longDate(applies.date, language)}</span>
+    )
+  return (
+    <p className="m-0 max-w-[620px] text-body-large text-ink">
+      {firstProhibited && (
+        <>
+          {t('inventory.summary.prohibited', {
+            count: prohibited.length,
+            name: firstProhibited.name,
+          })}{' '}
+        </>
+      )}
+      {next && (
+        // The name goes in as an element, never into the string Trans parses for tags.
+        <Trans
+          i18nKey={`inventory.summary.next.${next.tool.result.role ?? 'none'}`}
+          components={{ name: <span>{next.tool.name}</span>, date: date ?? <span /> }}
+        />
+      )}
+      {!firstProhibited && !next && t('inventory.summary.calm')}
+    </p>
+  )
+}
+
+/** The counts per class as a bar and a legend; assumed results are counted in their stricter
+ *  class and flagged. */
+function ClassCounts({ counts }: { counts: readonly ClassCount[] }): JSX.Element {
+  const { t } = useTranslation()
+  const shown = counts.filter((count) => count.total > 0)
+  return (
+    <div className="flex flex-col gap-3">
+      <div aria-hidden="true" className="flex h-2.5 overflow-hidden rounded-pill bg-white/50">
+        {shown.map((count) => (
+          <div
+            key={count.riskClass}
+            className={DOT_CLASS[count.riskClass]}
+            style={{ flexGrow: count.total }}
+          />
+        ))}
+      </div>
+      <ul
+        aria-label={t('inventory.summary.countsLabel')}
+        className="m-0 flex list-none flex-wrap gap-x-5 gap-y-2 p-0 text-body-small text-ink"
+      >
+        {shown.map((count) => (
+          <li key={count.riskClass} className="flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className={cn('size-2 shrink-0 rounded-full', DOT_CLASS[count.riskClass])}
+            />
+            <b>{count.total}</b> {t(`pill.${count.riskClass}`)}
+            {count.assumed > 0 && (
+              <span className="text-slate">
+                ({t('inventory.summary.assumedCount', { count: count.assumed })})
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/** "Already in force": the Art. 50 transparency duties that already apply. */
+function InForceBox({
+  tools,
+  today,
+}: {
+  tools: readonly InventoryTool[]
+  today: Date
+}): JSX.Element | null {
+  const { t } = useTranslation()
+  const language = useLanguage()
+  const transparency = transparencyInForce(tools, today)
+  if (!transparency) return null
+  return (
+    <div className="flex min-w-[200px] flex-col gap-1 rounded-card-small px-4 py-3 glass-thin">
+      <p className="m-0 text-caption text-slate">{t('inventory.summary.inForce')}</p>
+      <p className="m-0 text-body-small font-semibold text-ink">
+        {t('inventory.summary.transparency', { count: transparency.tools })}
+      </p>
+      <p className="m-0 text-caption text-slate">
+        {t('inventory.summary.transparencySince', {
+          date: shortDate(transparency.since, language),
+        })}
+      </p>
+    </div>
+  )
+}
+
+/**
+ * The company summary (artboard `Inventory`): a sentence on what comes first, the duties already
+ * in force, the tools per class. The results are what the browser stored (P3), so the panel says
+ * it sums them up and doesn't present them as a verified record.
+ */
+export function CompanySummary({
+  tools,
+  today,
+}: {
+  tools: readonly InventoryTool[]
+  today: Date
+}): JSX.Element {
+  const { t } = useTranslation()
+  const counts = classCounts(tools)
+  const assumed = counts.reduce((sum, count) => sum + count.assumed, 0)
+  return (
+    <GlassPanel
+      as="section"
+      aria-label={t('inventory.summary.heading')}
+      className="flex min-w-0 flex-1 flex-col gap-5 px-7 py-6.5"
+    >
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex min-w-0 flex-col gap-2">
+          <h2 className="m-0 text-caption text-slate">{t('inventory.summary.heading')}</h2>
+          <SummarySentence tools={tools} next={nextDuties(tools, today)} />
+        </div>
+        <InForceBox tools={tools} today={today} />
+      </div>
+      <ClassCounts counts={counts} />
+      {assumed > 0 && (
+        <p className="m-0 text-body-small text-ink-2">
+          {t('inventory.summary.assumedNote', { count: assumed })}
+        </p>
+      )}
+      <p className="m-0 text-caption text-slate">{t('inventory.summary.source')}</p>
+    </GlassPanel>
+  )
+}

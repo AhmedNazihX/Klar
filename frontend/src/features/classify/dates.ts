@@ -31,6 +31,16 @@ export function longDate(isoDate: string, language: Language): string {
   }).format(parseIsoDate(isoDate))
 }
 
+/** "2 Dec 2027" / "2. Dez. 2027", for table cells (the Inventory's "Applies from"). */
+export function shortDate(isoDate: string, language: Language): string {
+  return new Intl.DateTimeFormat(LOCALES[language], {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(parseIsoDate(isoDate))
+}
+
 /** Whole months from `today` to the date, rounded; 0 or less when it has already come. */
 export function monthsUntil(isoDate: string, today: Date): number {
   const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())

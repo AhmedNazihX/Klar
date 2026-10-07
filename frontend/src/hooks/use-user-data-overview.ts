@@ -12,7 +12,10 @@ import { supabase } from '@/lib/supabase'
 
 import { anonymousSessionOptions } from './use-anonymous-session'
 
-export const userDataOverviewKey = ['user-data', 'overview'] as const
+/** Every query on the user's own data sits under this key, so one invalidation re-reads them all
+ *  after a write (an import, a saved run). */
+export const userDataKey = ['user-data'] as const
+export const userDataOverviewKey = [...userDataKey, 'overview'] as const
 
 /**
  * The user's company profile and tool count, read once the anonymous session exists (through the

@@ -44,16 +44,20 @@ const DOT_CLASS: Record<PillKind, string | null> = {
   needs_more_information: null,
 }
 
-export type RiskPillProps = Omit<ComponentProps<'span'>, 'children'> & { kind: PillKind }
+export type RiskPillProps = Omit<ComponentProps<'span'>, 'children'> & {
+  kind: PillKind
+  /** Label override that keeps the class's word, e.g. "High-risk, assumed" (InventoryTable). */
+  label?: string
+}
 
 /** A risk class or status as a pill. It always shows the word; colour only supports it. */
-export function RiskPill({ kind, className, ...props }: RiskPillProps): JSX.Element {
+export function RiskPill({ kind, label, className, ...props }: RiskPillProps): JSX.Element {
   const { t } = useTranslation()
   const dot = DOT_CLASS[kind]
   return (
     <span data-kind={kind} className={cn(pillVariants({ kind }), className)} {...props}>
       {dot && <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', dot)} />}
-      {t(`pill.${kind}`)}
+      {label ?? t(`pill.${kind}`)}
     </span>
   )
 }

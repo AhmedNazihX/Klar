@@ -1,6 +1,9 @@
-import { queryOptions } from '@tanstack/react-query'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { queryOptions, type QueryClient } from '@tanstack/react-query'
 
 import type { ClassificationResult } from '@/api'
+import { anonymousSessionOptions } from '@/hooks/use-anonymous-session'
+import { fetchInventoryTool } from '@/lib/inventory'
 
 import type { DescriptionFormValues } from './description-form'
 
@@ -11,17 +14,38 @@ export type ClassificationRun = {
   name: string
   description: string
   result: ClassificationResult
+  /** Set on a fresh run that couldn't be saved to the inventory: it lives only in this tab. */
+  saveFailure?: 'storage-full' | 'failed'
+}
+
+export function classificationRunKey(toolId: string) {
+  return ['classification-run', toolId] as const
 }
 
 /**
- * A run's result, held in the query cache for this session under its tool id. The Classify
- * screen puts it there when the stream ends; nothing loads it from anywhere else yet, so a tool
- * unknown to this session reads as null. P6 stores runs in Supabase and loads them here.
+ * A tool's latest run. The Classify screen puts a fresh run in the cache under its tool id when
+ * the stream ends; any other tool loads from the user's inventory. Null when the user has no such
+ * tool, it has no readable result, or Supabase is not configured.
  */
-export function classificationRunOptions(toolId: string) {
+export function classificationRunOptions(
+  queryClient: QueryClient,
+  client: SupabaseClient | null,
+  toolId: string,
+) {
   return queryOptions({
-    queryKey: ['classification-run', toolId] as const,
-    queryFn: (): ClassificationRun | null => null,
+    queryKey: classificationRunKey(toolId),
+    queryFn: async (): Promise<ClassificationRun | null> => {
+      if (!client) return null
+      await queryClient.query(anonymousSessionOptions(client))
+      const tool = await fetchInventoryTool(client, toolId)
+      if (!tool?.result) return null
+      return {
+        toolId: tool.toolId,
+        name: tool.name,
+        description: tool.description,
+        result: tool.result,
+      }
+    },
     staleTime: Infinity,
     gcTime: Infinity,
   })
