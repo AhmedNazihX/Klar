@@ -62,6 +62,38 @@ jobs:
       - name: Pytest
         run: uv run pytest -q
 
+  frontend:
+    # Story P5: lint, type check and build, then every test, jsdom and the Chromium browser
+    # project (frontend/README.md). API calls in tests go to MSW fixtures; nothing is live.
+    name: Frontend (lint, build, test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Node 24 still ships corepack, which runs the pnpm that package.json pins.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Install Chromium for the browser tests
+        run: corepack pnpm exec playwright install --with-deps chromium
+
+      - name: Lint
+        run: corepack pnpm lint
+
+      - name: Build
+        run: corepack pnpm build
+
+      - name: Test
+        run: corepack pnpm test
+
   isolation:
     # Story B13: the benchmark isolation check against the corpus loaded from the committed
     # data/parsed/. AIACT_REQUIRE_CORPUS turns a missing corpus or eval/ into a failure. The
