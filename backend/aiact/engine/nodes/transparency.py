@@ -41,7 +41,6 @@ from aiact.dates import long_date
 from aiact.db import connect
 from aiact.engine.nodes import transparency_texts as texts
 from aiact.engine.nodes.common import (
-    Cite,
     cited_provisions,
     facts_section,
     guidance_citation,
@@ -49,7 +48,6 @@ from aiact.engine.nodes.common import (
     lookup_for,
     named_passages,
     provision_citation,
-    refusal_citations,
     refused_check,
 )
 from aiact.engine.nodes.guideline_retrieval import (
@@ -333,19 +331,17 @@ def to_outcome(
     )
 
 
-def refusal_outcome(state: EngineState, retrieved: Retrieved, cite: Cite) -> CheckOutcome:
+def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
     every Art. 50 duty assumed until a person reviews it (the stricter reading). It cites the
-    paragraph of each duty the reviewer checks (`texts.REFUSAL_CITATIONS`, E16) through `cite`,
-    or Art. 50 as read before the call when the corpus can't give them. The review question is a
-    missing fact."""
+    paragraph of each duty the reviewer checks (`PERSON_REVIEW` asks about every one, E16),
+    fetched from `library`. The review question is a missing fact."""
     language = state["language"]
-    read = (retrieved.article,)
     return refused_check(
         StepName.TRANSPARENCY,
         language,
         texts.REFUSAL[language],
-        refusal_citations(StepName.TRANSPARENCY, texts.REFUSAL_CITATIONS, cite, read),
+        cited_provisions(ALL_DUTIES, state, library),
         ask(texts.PERSON_REVIEW, language, StepName.TRANSPARENCY),
         transparency_duties=ALL_DUTIES,
     )
@@ -406,10 +402,6 @@ class TransparencyCheck:
         with connect() as connection:
             return use(GuidelineCorpus(connection, self._embedder, SOURCE))
 
-    def _citing(self, state: EngineState) -> Cite:
-        """`cited_provisions` over the corpus, as `_reading` opens it."""
-        return lambda ids: self._reading(lambda library: cited_provisions(ids, state, library))
-
     def __call__(self, state: EngineState) -> CheckOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises
         `TransparencyOutputError` when any other reply doesn't fit `TransparencyAnswer`, and
@@ -422,7 +414,7 @@ class TransparencyCheck:
         try:
             answer = parse_reply(reply, TransparencyAnswer)
         except ProviderRefusalError:
-            return refusal_outcome(state, retrieved, self._citing(state))
+            return self._reading(lambda library: refusal_outcome(state, library))
         except ValidationError as exc:
             message = (
                 f"transparency answer doesn't fit the schema: {describe_validation_error(exc)}"

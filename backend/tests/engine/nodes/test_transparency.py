@@ -722,40 +722,6 @@ def test_a_provider_refusal_assumes_every_duty_for_a_person_to_review() -> None:
     assert step.decision.startswith("The model provider's content filter blocked")
 
 
-class BrokenAfterReading(FakeLibrary):
-    """A corpus that fails once the read before the model call (Art. 50) is done."""
-
-    def __init__(self, error: Exception) -> None:
-        super().__init__()
-        self._error = error
-
-    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
-        if self.lookups:
-            raise self._error
-        return super().provision(provision_id, lookup)
-
-
-@pytest.mark.parametrize(
-    "error",
-    [ProvisionNotFoundError("art:50:1"), psycopg.OperationalError("connection lost")],
-    ids=["missing-row", "dropped-connection"],
-)
-def test_a_refusal_whose_citations_cannot_be_fetched_still_returns_its_step(
-    error: Exception, caplog: pytest.LogCaptureFixture
-) -> None:
-    """The refusal cites Art. 50 as read before the call instead of raising; the log names only
-    the error's type."""
-    library = BrokenAfterReading(error)
-    check = TransparencyCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=library)
-    with caplog.at_level("WARNING"):
-        result = check(state())
-    assert result.step.error == "provider_refusal"
-    assert result.step.missing_fact is not None
-    assert cited(result) == ["art:50"]
-    assert type(error).__name__ in caplog.text
-    assert TOOL not in caplog.text and "connection lost" not in caplog.text
-
-
 def test_a_refusal_is_reported_in_german() -> None:
     check = TransparencyCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
     result = check(state(language=Language.DE))

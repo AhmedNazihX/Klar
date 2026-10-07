@@ -316,14 +316,6 @@ REFUSAL_ORIGINAL: Mapping[Language, str] = {
     "geprüft hat, wird ein Verbot angenommen.",
 }
 """The refusal step's assumption under the original text, which has no points (ba) or (bb)."""
-REFUSAL_CITATIONS = ("art:5:1:ba", "art:5:1:bb")
-"""What the refusal step cites (E16): the points the person reviewing checks (`PERSON_REVIEW`
-asks about them)."""
-REFUSAL_CITATIONS_BEFORE_DECEMBER = ("art:5:1", "art:113:a")
-"""Before 2 December 2026 points (ba) and (bb) don't apply yet: the reviewer checks the rest of
-the Art. 5(1) list, and their start date, Art. 113(a)."""
-REFUSAL_CITATIONS_ORIGINAL = ("art:5:1",)
-"""Under the original text, which has neither point: the Art. 5(1) list the reviewer checks."""
 
 
 # --- Naming and decision sentences --------------------------------------------------------------

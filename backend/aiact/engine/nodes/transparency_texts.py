@@ -136,9 +136,6 @@ REFUSAL: Mapping[Language, str] = {
 """The refusal step's assumption, after the shared first sentence (`common.BLOCKED`)."""
 DUTY_PARAGRAPHS = ("art:50:1", "art:50:2", "art:50:3", "art:50:4")
 """Every paragraph of Art. 50 that places a duty on a provider or a deployer."""
-REFUSAL_CITATIONS = DUTY_PARAGRAPHS
-"""What the refusal step cites (E16): the paragraph of each duty the person reviewing checks
-(`PERSON_REVIEW` asks about every one), Art. 50(1) to (4)."""
 
 # --- Naming and decision sentences --------------------------------------------------------------
 

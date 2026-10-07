@@ -36,7 +36,6 @@ English when no German passage of the definition guidelines is found.
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from functools import partial
 from pathlib import Path
 from typing import Protocol
 
@@ -46,14 +45,12 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
 
 from aiact.engine.nodes.common import (
-    Cite,
     Lookup,
     cited_provisions,
     facts_section,
     guidance_citation,
     lookup_for,
     named_passages,
-    refusal_citations,
     refused_check,
 )
 from aiact.engine.nodes.key_facts import Answer, CitedFact, KeyFact, facts_used
@@ -451,17 +448,19 @@ def to_outcome(
     return CheckOutcome(step=step, matched=settled.is_out_of_scope, follow_up_questions=questions)
 
 
-def refusal_outcome(state: EngineState, law: Sequence[Provision], cite: Cite) -> CheckOutcome:
+def refusal_outcome(
+    state: EngineState, law: Sequence[Provision], library: ScopeLibrary
+) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
     in scope assumed until a person reviews it. It cites what the reviewer checks the description
-    against (`REFUSAL_CITATIONS`, E16) through `cite`, or the `law` the model read when the
-    corpus can't give them. The review question is a missing fact, so the run goes on."""
+    against (`REFUSAL_CITATIONS`, E16): Art. 3(1) as the model read it in `law`, and Art. 2(1),
+    fetched from `library`. The review question is a missing fact, so the run goes on."""
     language = state["language"]
     return refused_check(
         StepName.SCOPE,
         language,
         REFUSAL[language],
-        refusal_citations(StepName.SCOPE, REFUSAL_CITATIONS, cite, law),
+        cited_provisions(REFUSAL_CITATIONS, state, library, known=law),
         _question(PERSON_REVIEW, language),
     )
 
@@ -530,8 +529,7 @@ class ScopeCheck:
         try:
             answer = parse_reply(reply, ScopeAnswer)
         except ProviderRefusalError:
-            cite = partial(cited_provisions, state=state, library=self._library, known=law)
-            return refusal_outcome(state, law, cite)
+            return refusal_outcome(state, law, self._library)
         except ValidationError as exc:
             message = f"scope answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise ScopeOutputError(message) from None

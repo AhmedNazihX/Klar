@@ -1009,41 +1009,6 @@ def test_a_refusal_is_reported_in_german(as_of: date, expected: str) -> None:
     assert result.step.missing_fact.text.startswith("Bitte lassen Sie")
 
 
-class BrokenAfterReading(FakeLibrary):
-    """A corpus that fails once the read before the model call (Art. 5) is done."""
-
-    def __init__(self, error: Exception) -> None:
-        super().__init__()
-        self._error = error
-
-    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
-        if self.lookups:
-            raise self._error
-        return super().provision(provision_id, lookup)
-
-
-@pytest.mark.parametrize("as_of", [BEFORE_DECEMBER, AFTER_DECEMBER])
-@pytest.mark.parametrize(
-    "error",
-    [ProvisionNotFoundError("art:5:1:ba"), psycopg.OperationalError("connection lost")],
-    ids=["missing-row", "dropped-connection"],
-)
-def test_a_refusal_whose_citations_cannot_be_fetched_still_returns_its_step(
-    error: Exception, as_of: date, caplog: pytest.LogCaptureFixture
-) -> None:
-    """The refusal cites Art. 5 as read before the call instead of raising; the log names only
-    the error's type."""
-    library = BrokenAfterReading(error)
-    check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=library)
-    with caplog.at_level("WARNING"):
-        result = check(state(as_of=as_of))
-    assert result.step.error == "provider_refusal"
-    assert result.step.missing_fact is not None
-    assert cited(result) == ["art:5"]
-    assert type(error).__name__ in caplog.text
-    assert TOOL not in caplog.text and "connection lost" not in caplog.text
-
-
 def test_a_refusal_keeps_the_run_going_with_prohibited_assumed() -> None:
     check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
     final = _run(check)

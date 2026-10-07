@@ -2,16 +2,13 @@
 from what the corpus returns, the follow-up question of a key fact, the per-case blocks of their
 prompts, and the step for a reply the provider refused (decision 029)."""
 
-import logging
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Protocol
 
-import psycopg
-
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
-from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
+from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
     PROVIDER_REFUSAL,
@@ -24,8 +21,6 @@ from aiact.schemas import (
     StepName,
     StepResult,
 )
-
-logger = logging.getLogger(__name__)
 
 MAX_PASSAGE_CHARS = 4000
 """Bounds one retrieved text in the prompt (a parent row holds all its children's text)."""
@@ -135,28 +130,6 @@ BLOCKED: Mapping[Language, str] = {
     "konnte sie nicht automatisch geprüft werden.",
 }
 """The first sentence of every refused step's decision."""
-
-
-Cite = Callable[[Sequence[str]], tuple[Citation, ...]]
-"""Fetches the citations of the provision ids given (`cited_provisions` over a check's corpus);
-raises `ProvisionNotFoundError` or a database error when the corpus can't give them."""
-
-
-def refusal_citations(
-    name: StepName, ids: Sequence[str], cite: Cite, read: Sequence[Provision]
-) -> tuple[Citation, ...]:
-    """A refused step's citations: `ids` through `cite`, or, when the corpus can't give them (a
-    dropped connection, a missing row), the provisions `read` before the model call, so the
-    refusal still returns its review step. Logs only the error's type."""
-    try:
-        return cite(ids)
-    except (ProvisionNotFoundError, psycopg.Error) as error:
-        logger.warning(
-            "%s refusal: citations not fetched (%s); citing the law read before the call",
-            name.value,
-            type(error).__name__,
-        )
-        return tuple(provision_citation(provision) for provision in read)
 
 
 def refused_check(
