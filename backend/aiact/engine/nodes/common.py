@@ -2,12 +2,16 @@
 from what the corpus returns, the follow-up question of a key fact, the per-case blocks of their
 prompts, and the step for a reply the provider refused (decision 029)."""
 
-from collections.abc import Mapping, Sequence
+import logging
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
+from typing import Protocol
+
+import psycopg
 
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
-from aiact.retrieval.provisions import Provision
+from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
     PROVIDER_REFUSAL,
@@ -20,6 +24,8 @@ from aiact.schemas import (
     StepName,
     StepResult,
 )
+
+logger = logging.getLogger(__name__)
 
 MAX_PASSAGE_CHARS = 4000
 """Bounds one retrieved text in the prompt (a parent row holds all its children's text)."""
@@ -61,6 +67,26 @@ def provision_citation(provision: Provision) -> Citation:
         quote=provision.text,
         english_only=provision.english_only,
     )
+
+
+class ProvisionLibrary(Protocol):
+    """What every check's corpus library offers: one provision by its id."""
+
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision: ...
+
+
+def cited_provisions(
+    ids: Iterable[str],
+    state: EngineState,
+    library: ProvisionLibrary,
+    known: Sequence[Provision] = (),
+) -> tuple[Citation, ...]:
+    """Citations of `ids`, in order: each provision taken from `known` (what the node already
+    read) when it is there, else fetched from `library` on the run's lookup. Raises what the
+    library raises (`ProvisionNotFoundError`, a database error)."""
+    lookup = lookup_for(state)
+    read = {provision.provision_id: provision for provision in known}
+    return tuple(provision_citation(read.get(pid) or library.provision(pid, lookup)) for pid in ids)
 
 
 def guidance_citation(hit: SearchHit, language: Language) -> Citation:
@@ -109,6 +135,28 @@ BLOCKED: Mapping[Language, str] = {
     "konnte sie nicht automatisch geprüft werden.",
 }
 """The first sentence of every refused step's decision."""
+
+
+Cite = Callable[[Sequence[str]], tuple[Citation, ...]]
+"""Fetches the citations of the provision ids given (`cited_provisions` over a check's corpus);
+raises `ProvisionNotFoundError` or a database error when the corpus can't give them."""
+
+
+def refusal_citations(
+    name: StepName, ids: Sequence[str], cite: Cite, read: Sequence[Provision]
+) -> tuple[Citation, ...]:
+    """A refused step's citations: `ids` through `cite`, or, when the corpus can't give them (a
+    dropped connection, a missing row), the provisions `read` before the model call, so the
+    refusal still returns its review step. Logs only the error's type."""
+    try:
+        return cite(ids)
+    except (ProvisionNotFoundError, psycopg.Error) as error:
+        logger.warning(
+            "%s refusal: citations not fetched (%s); citing the law read before the call",
+            name.value,
+            type(error).__name__,
+        )
+        return tuple(provision_citation(provision) for provision in read)
 
 
 def refused_check(

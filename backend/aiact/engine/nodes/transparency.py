@@ -25,10 +25,10 @@ are applied here, in code:
 
 Every citation is fetched through `get_provision`, or is a retrieved guideline passage. The step
 cites the Art. 50 paragraphs its finding rests on, never the whole article (E16): the duties shown,
-or all four duty paragraphs when it rules every one out or assumes them all.
+or all four duty paragraphs when it finds none or a person must review them all.
 """
 
-from collections.abc import Callable, Collection, Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -41,12 +41,15 @@ from aiact.dates import long_date
 from aiact.db import connect
 from aiact.engine.nodes import transparency_texts as texts
 from aiact.engine.nodes.common import (
+    Cite,
+    cited_provisions,
     facts_section,
     guidance_citation,
     guidance_section,
     lookup_for,
     named_passages,
     provision_citation,
+    refusal_citations,
     refused_check,
 )
 from aiact.engine.nodes.guideline_retrieval import (
@@ -104,7 +107,7 @@ MARKING = "art:50:2"
 GRACE_PERIOD = "art:111:4"
 MARKING_DEADLINE = date(2026, 12, 2)
 """Art. 111(4): systems placed on the market before 2 August 2026 mark their outputs by then."""
-ALL_DUTIES = ("art:50:1", "art:50:2", "art:50:3", "art:50:4")
+ALL_DUTIES = texts.DUTY_PARAGRAPHS
 """Every duty Art. 50 places on a provider or a deployer."""
 
 GRACE_TEXTS: dict[MarketTiming, str] = {
@@ -274,22 +277,15 @@ def _grace(
     )
 
 
-def _duty_paragraphs(
-    provisions: Collection[str], state: EngineState, library: GuidelineLibrary
-) -> tuple[Provision, ...]:
-    """The duty paragraphs among `provisions`, fetched in the order of Art. 50."""
-    lookup = lookup_for(state)
-    return tuple(library.provision(pid, lookup) for pid in ALL_DUTIES if pid in provisions)
-
-
-def _cited(
-    settled: Settlement, state: EngineState, library: GuidelineLibrary
-) -> tuple[Provision, ...]:
-    """The paragraphs of every duty shown; every duty paragraph, Art. 50(1) to (4), when none is
-    raised, since the finding rules each of them out (E16: never Art. 50 as a whole, whose
-    later paragraphs place no duty)."""
+def _cited(settled: Settlement) -> tuple[str, ...]:
+    """The duty paragraphs the finding rests on, in the order of Art. 50 (E16: never Art. 50 as
+    a whole, whose later paragraphs place no duty): with a duty listed, the paragraphs of the
+    duties listed and those considered and ruled out; with none, all four, Art. 50(1) to (4),
+    since "no transparency duty applies" rules out each of them, considered or not."""
+    if not settled.listed:
+        return ALL_DUTIES
     shown = {duty.provision for duty in (*settled.listed, *settled.considered)}
-    return _duty_paragraphs(shown or ALL_DUTIES, state, library)
+    return tuple(pid for pid in ALL_DUTIES if pid in shown)
 
 
 def to_outcome(
@@ -304,7 +300,7 @@ def to_outcome(
     settled = settle(answer)
     grace = _grace(settled, answer, state, library)
     citations = (
-        *(provision_citation(p) for p in _cited(settled, state, library)),
+        *cited_provisions(_cited(settled), state, library),
         *((provision_citation(grace.provision),) if grace else ()),
         *(
             guidance_citation(hit, language)
@@ -337,16 +333,19 @@ def to_outcome(
     )
 
 
-def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:
+def refusal_outcome(state: EngineState, retrieved: Retrieved, cite: Cite) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    every Art. 50 duty assumed until a person reviews it (the stricter reading), citing each
-    duty's paragraph, fetched from `library`. The review question is a missing fact."""
+    every Art. 50 duty assumed until a person reviews it (the stricter reading). It cites the
+    paragraph of each duty the reviewer checks (`texts.REFUSAL_CITATIONS`, E16) through `cite`,
+    or Art. 50 as read before the call when the corpus can't give them. The review question is a
+    missing fact."""
     language = state["language"]
+    read = (retrieved.article,)
     return refused_check(
         StepName.TRANSPARENCY,
         language,
         texts.REFUSAL[language],
-        tuple(provision_citation(p) for p in _duty_paragraphs(ALL_DUTIES, state, library)),
+        refusal_citations(StepName.TRANSPARENCY, texts.REFUSAL_CITATIONS, cite, read),
         ask(texts.PERSON_REVIEW, language, StepName.TRANSPARENCY),
         transparency_duties=ALL_DUTIES,
     )
@@ -407,6 +406,10 @@ class TransparencyCheck:
         with connect() as connection:
             return use(GuidelineCorpus(connection, self._embedder, SOURCE))
 
+    def _citing(self, state: EngineState) -> Cite:
+        """`cited_provisions` over the corpus, as `_reading` opens it."""
+        return lambda ids: self._reading(lambda library: cited_provisions(ids, state, library))
+
     def __call__(self, state: EngineState) -> CheckOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises
         `TransparencyOutputError` when any other reply doesn't fit `TransparencyAnswer`, and
@@ -419,7 +422,7 @@ class TransparencyCheck:
         try:
             answer = parse_reply(reply, TransparencyAnswer)
         except ProviderRefusalError:
-            return self._reading(lambda library: refusal_outcome(state, library))
+            return refusal_outcome(state, retrieved, self._citing(state))
         except ValidationError as exc:
             message = (
                 f"transparency answer doesn't fit the schema: {describe_validation_error(exc)}"

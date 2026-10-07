@@ -328,7 +328,17 @@ def test_every_duty_ruled_out_leaves_none_and_says_why() -> None:
         "No transparency duty under Art. 50 applies. Considered Art. 50(2): It only corrects "
         "spelling."
     )
-    assert cited(result) == ["art:50:2"]
+    assert cited(result) == ["art:50:1", "art:50:2", "art:50:3", "art:50:4"]
+
+
+def test_a_duty_raised_and_excepted_still_cites_all_four_when_none_applies() -> None:
+    """E16: "no transparency duty applies" rules out Art. 50(1) to (4), so it cites all four,
+    the one considered and set aside by its exception included."""
+    obvious = duty(Answer.YES, Answer.YES, fact="Only trained staff use it, so it is obvious.")
+    result = outcome(answer(interaction=obvious))
+    assert result.transparency_duties == ()
+    assert "Considered Art. 50(1)" in result.step.decision
+    assert cited(result) == ["art:50:1", "art:50:2", "art:50:3", "art:50:4"]
 
 
 def test_an_open_fact_lists_the_duty_as_assumed_and_asks_it() -> None:
@@ -710,6 +720,40 @@ def test_a_provider_refusal_assumes_every_duty_for_a_person_to_review() -> None:
     assert cited(result) == ["art:50:1", "art:50:2", "art:50:3", "art:50:4"]
     assert [pid for pid, _ in library.lookups] == ["art:50", *node.ALL_DUTIES]
     assert step.decision.startswith("The model provider's content filter blocked")
+
+
+class BrokenAfterReading(FakeLibrary):
+    """A corpus that fails once the read before the model call (Art. 50) is done."""
+
+    def __init__(self, error: Exception) -> None:
+        super().__init__()
+        self._error = error
+
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
+        if self.lookups:
+            raise self._error
+        return super().provision(provision_id, lookup)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [ProvisionNotFoundError("art:50:1"), psycopg.OperationalError("connection lost")],
+    ids=["missing-row", "dropped-connection"],
+)
+def test_a_refusal_whose_citations_cannot_be_fetched_still_returns_its_step(
+    error: Exception, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The refusal cites Art. 50 as read before the call instead of raising; the log names only
+    the error's type."""
+    library = BrokenAfterReading(error)
+    check = TransparencyCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=library)
+    with caplog.at_level("WARNING"):
+        result = check(state())
+    assert result.step.error == "provider_refusal"
+    assert result.step.missing_fact is not None
+    assert cited(result) == ["art:50"]
+    assert type(error).__name__ in caplog.text
+    assert TOOL not in caplog.text and "connection lost" not in caplog.text
 
 
 def test_a_refusal_is_reported_in_german() -> None:

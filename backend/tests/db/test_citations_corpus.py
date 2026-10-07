@@ -89,6 +89,10 @@ CASES = [
         cite("guide:guide-high-risk-annex-iii:ex:015", "guide-high-risk-annex-iii", None),
         lookup(AFTER),
     ),
+    # The paragraph and point ids E16's citations fetch, and the replays' recordings hold.
+    (cite("art:50:2", "ai-act-consolidated", LawVersion.AMENDED), lookup(AFTER)),
+    (cite("art:5:1:bb", "ai-act-consolidated", LawVersion.AMENDED), lookup(AFTER)),
+    (cite("art:2:1", "ai-act-consolidated", LawVersion.AMENDED), lookup(AFTER)),
     (cite("art:5:1:zz", "ai-act-consolidated", LawVersion.AMENDED), lookup(AFTER)),
 ]
 """Citations that resolve and that don't: each version, language, date and document kind."""

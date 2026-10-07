@@ -41,12 +41,15 @@ from aiact.dates import long_date
 from aiact.db import connect
 from aiact.engine.nodes import prohibited_texts as texts
 from aiact.engine.nodes.common import (
+    Cite,
+    cited_provisions,
     facts_section,
     guidance_citation,
     guidance_section,
     lookup_for,
     named_passages,
     provision_citation,
+    refusal_citations,
     refused_check,
 )
 from aiact.engine.nodes.guideline_retrieval import (
@@ -103,8 +106,6 @@ the answer covers every Art. 5 practice."""
 
 NO_MATCH_CITATION = "art:5:1"
 """What a step that found no practice raised cites: the list of prohibited practices."""
-REFUSAL_POINTS = ("art:5:1:ba", "art:5:1:bb")
-"""What a refused step cites once points (ba) and (bb) apply: the points its decision names."""
 
 
 class ProhibitedOutputError(ValueError):
@@ -292,31 +293,31 @@ def to_outcome(
     return CheckOutcome(step=step, matched=settled.matched, follow_up_questions=questions)
 
 
-def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:
+def refusal_outcome(state: EngineState, retrieved: Retrieved, cite: Cite) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    prohibited assumed until a person reviews it, citing what the decision names, fetched from
-    `library` (E16): points (ba) and (bb), which may apply. Before 2 December 2026 it says they
-    don't apply yet, so the other prohibitions can't be ruled out, and cites Art. 5(1) and Art.
-    113(a); the original text has neither point, so it names none and cites Art. 5(1).
-    The run goes on: the review question is a missing fact, so the step can't end it."""
+    prohibited assumed until a person reviews it. It cites what the reviewer checks (E16), through
+    `cite`: points (ba) and (bb), which the review question asks about; before 2 December 2026,
+    when it says they don't apply yet, the rest of the Art. 5(1) list and their start date, Art.
+    113(a); under the original text, which has neither point, the Art. 5(1) list. When the corpus
+    can't give them, it cites Art. 5 as read before the call. The run goes on: the review
+    question is a missing fact, so the step can't end it."""
     language, as_of = state["language"], state["as_of"]
-    cited: tuple[str, ...] = REFUSAL_POINTS
+    cited = texts.REFUSAL_CITATIONS
     assumption = texts.REFUSAL[language]
     if state["law_version"] is LawVersion.ORIGINAL:
-        cited = (NO_MATCH_CITATION,)
+        cited = texts.REFUSAL_CITATIONS_ORIGINAL
         assumption = texts.REFUSAL_ORIGINAL[language]
     elif as_of < DECEMBER_PROHIBITIONS_APPLY_FROM:
-        cited = (NO_MATCH_CITATION, APPLICATION_DATES)
+        cited = texts.REFUSAL_CITATIONS_BEFORE_DECEMBER
         assumption = texts.REFUSAL_BEFORE_DECEMBER[language].format(
             start=long_date(DECEMBER_PROHIBITIONS_APPLY_FROM, language.value),
             as_of=long_date(as_of, language.value),
         )
-    lookup = lookup_for(state)
     return refused_check(
         StepName.PROHIBITED,
         language,
         assumption,
-        tuple(provision_citation(library.provision(pid, lookup)) for pid in cited),
+        refusal_citations(StepName.PROHIBITED, cited, cite, (retrieved.article,)),
         ask(texts.PERSON_REVIEW, language, StepName.PROHIBITED),
         matched=True,
     )
@@ -376,6 +377,10 @@ class ProhibitedCheck:
         with connect() as connection:
             return use(GuidelineCorpus(connection, self._embedder, SOURCE))
 
+    def _citing(self, state: EngineState) -> Cite:
+        """`cited_provisions` over the corpus, as `_reading` opens it."""
+        return lambda ids: self._reading(lambda library: cited_provisions(ids, state, library))
+
     def __call__(self, state: EngineState) -> CheckOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises
         `ProhibitedOutputError` when any other reply doesn't fit `ProhibitedAnswer`, and
@@ -387,7 +392,7 @@ class ProhibitedCheck:
         try:
             answer = parse_reply(reply, ProhibitedAnswer)
         except ProviderRefusalError:
-            return self._reading(lambda library: refusal_outcome(state, library))
+            return refusal_outcome(state, retrieved, self._citing(state))
         except ValidationError as exc:
             message = f"prohibited answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise ProhibitedOutputError(message) from None

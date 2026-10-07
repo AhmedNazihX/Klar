@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
+import psycopg
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
@@ -34,7 +35,7 @@ from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
 from aiact.eval.experiments.matchers import replay_state, scope_matches
-from aiact.retrieval.provisions import Provision
+from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import SearchHit, SearchResults
 from aiact.schemas import (
     DISCLAIMER,
@@ -528,8 +529,40 @@ def test_a_provider_refusal_assumes_in_scope_for_a_person_to_review() -> None:
     assert step.missing_fact.id == "scope_person_review"
     assert outcome.follow_up_questions == (step.missing_fact,)
     assert [c.provision_id for c in step.citations] == ["art:3:1", "art:2:1"]
-    assert library.fetched == ["art:3:1", "art:2", "art:3:1", "art:2:1"]
+    assert library.fetched == ["art:3:1", "art:2", "art:2:1"]  # Art. 3(1) as read is reused
     assert step.decision.startswith("The model provider's content filter blocked")
+
+
+@dataclass
+class BrokenAfterReading(FakeLibrary):
+    """A corpus that fails once the reads before the model call (Art. 3(1), Art. 2) are done."""
+
+    error: Exception = field(default_factory=lambda: psycopg.OperationalError("connection lost"))
+
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
+        if len(self.fetched) >= len(node.LAW_IN_PROMPT):
+            raise self.error
+        return super().provision(provision_id, lookup)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [ProvisionNotFoundError("art:2:1"), psycopg.OperationalError("connection lost")],
+    ids=["missing-row", "dropped-connection"],
+)
+def test_a_refusal_whose_citations_cannot_be_fetched_still_returns_its_step(
+    error: Exception, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The refusal cites the law read before the call instead of raising; the log names only
+    the error's type."""
+    library = BrokenAfterReading(error=error)
+    with caplog.at_level("WARNING"):
+        outcome = _filtered_check(library=library)(state())
+    assert outcome.step.error == "provider_refusal"
+    assert outcome.step.missing_fact is not None
+    assert cited(outcome) == ["art:3:1", "art:2"]
+    assert type(error).__name__ in caplog.text
+    assert TOOL not in caplog.text and "connection lost" not in caplog.text
 
 
 def test_a_refused_scope_step_keeps_the_run_going() -> None:

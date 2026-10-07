@@ -272,3 +272,7 @@ REFUSAL: Mapping[Language, str] = {
 }
 """The refusal step's assumption, after the shared first sentence (`common.BLOCKED`): in scope,
 the stricter reading."""
+REFUSAL_CITATIONS = (AI_SYSTEM.article, EU_LINK.article)
+"""What the refusal step cites (E16): what the person reviewing checks the description against
+(`PERSON_REVIEW`), the AI system definition, Art. 3(1), and the Act's scope, Art. 2(1); the
+review question names the Art. 2 exclusions."""
