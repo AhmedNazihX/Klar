@@ -436,6 +436,7 @@
       },
       "minimal": "No specific duties for this tool. One general duty applies to every company that uses AI:",
       "limited": "Tell people they're dealing with AI. Klar drafts the disclosure for you.",
+      "limitedNoDraft": "The Art. 50 duties below say what people must be told, or how the tool's outputs must be marked as made by AI.",
       "none": "No duties are listed for this result.",
       "draftDisclosure": "Draft disclosure",
       "draftDocument": "Draft document",

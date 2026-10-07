@@ -436,6 +436,7 @@
       },
       "minimal": "Keine besonderen Pflichten für dieses Tool. Eine allgemeine Pflicht gilt für jedes Unternehmen, das KI nutzt:",
       "limited": "Sagen Sie Menschen, dass sie es mit KI zu tun haben. Klar entwirft den Hinweis für Sie.",
+      "limitedNoDraft": "Die Pflichten nach Art. 50 unten legen fest, was Menschen erfahren müssen oder wie die Ausgaben des Tools als KI-erzeugt zu kennzeichnen sind.",
       "none": "Für dieses Ergebnis sind keine Pflichten aufgeführt.",
       "draftDisclosure": "Hinweis entwerfen",
       "draftDocument": "Dokument entwerfen",

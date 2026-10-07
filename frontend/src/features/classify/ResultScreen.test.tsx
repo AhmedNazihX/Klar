@@ -15,6 +15,7 @@ import {
   legacyMarked,
   legacyMarkedDeployer,
   limitedRisk,
+  limitedRiskProvider,
   minimalRisk,
   OUT_OF_SCOPE_DECISION,
   outOfScope,
@@ -321,21 +322,57 @@ describe('Result variants (decision 026)', () => {
   )
 
   it.each([
-    ['en', 'Limited risk', 'Draft disclosure', 'Art. 50(4)'],
-    ['de', 'Begrenztes Risiko', 'Hinweis entwerfen', 'Art. 50 Abs. 4'],
+    ['en', 'Limited risk', 'Klar drafts the disclosure for you.', 'Draft disclosure', 'Art. 50(4)'],
+    [
+      'de',
+      'Begrenztes Risiko',
+      'Klar entwirft den Hinweis für Sie.',
+      'Hinweis entwerfen',
+      'Art. 50 Abs. 4',
+    ],
   ] as const)(
     'shows the Art. 50 duty with its drafted disclosure (%s)',
-    async (language, name, link, ref) => {
+    async (language, name, promise, link, ref) => {
       await openResult(limitedRisk(), { language })
       const summary = screen.getByRole('region', {
         name: language === 'en' ? 'Result' : 'Ergebnis',
       })
       expect(within(summary).getByText(name)).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: link })).toHaveAttribute(
+      const todo = todoList(language)
+      expect(todo).toHaveTextContent(promise)
+      expect(within(todo).getByRole('link', { name: link })).toHaveAttribute(
         'href',
         '/app/documents/art_50_4_disclosure',
       )
-      expect(within(todoList(language)).getByText(ref)).toBeInTheDocument()
+      expect(within(todo).getByText(ref)).toBeInTheDocument()
+    },
+  )
+
+  it.each([
+    [
+      'en',
+      "Tell people they're talking to an AI system",
+      'The Art. 50 duties below say',
+      /Klar drafts|Draft disclosure/,
+      'Art. 50(1)',
+    ],
+    [
+      'de',
+      'Personen darüber informieren, dass sie mit einem KI-System interagieren',
+      'Die Pflichten nach Art. 50 unten legen fest',
+      /entwirft|Hinweis entwerfen/,
+      'Art. 50 Abs. 1',
+    ],
+  ] as const)(
+    'states an Art. 50 duty without a template and promises no draft (%s)',
+    async (language, label, intro, draft, ref) => {
+      await openResult(limitedRiskProvider(), { language })
+      const todo = todoList(language)
+      expect(todo).not.toHaveTextContent(draft)
+      expect(within(todo).queryByRole('link')).toBeNull()
+      expect(within(todo).getByText(new RegExp(`^${intro}`))).toBeInTheDocument()
+      expect(within(todo).getByRole('checkbox', { name: label })).toBeInTheDocument()
+      expect(within(todo).getByText(ref)).toBeInTheDocument()
     },
   )
 

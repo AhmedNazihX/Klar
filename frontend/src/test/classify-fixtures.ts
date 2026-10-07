@@ -239,6 +239,51 @@ export function limitedRisk(): ClassificationResult {
   }
 }
 
+const ART_50_1: Citation = {
+  provision_id: 'art:50:1',
+  document_id: 'ai-act-consolidated',
+  language: 'en',
+  quote:
+    'Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system',
+}
+
+const CHATBOT_DISCLOSURE: Obligation = {
+  duty: 'Design the system so that people are informed they are interacting with an AI system, unless that is obvious.',
+  duty_de:
+    'Das System so konzipieren und entwickeln, dass Personen informiert werden, dass sie mit einem KI-System interagieren, es sei denn, dies ist offensichtlich.',
+  label_en: "Tell people they're talking to an AI system",
+  label_de: 'Personen darüber informieren, dass sie mit einem KI-System interagieren',
+  group: 'build',
+  article: 'art:50:1',
+  applies_from: '2026-08-02',
+}
+
+/** Item 19 for a provider's Art. 50(1) chatbot duty, which has no draft template in C9: the
+ *  result states the duty and promises no draft. */
+export function limitedRiskProvider(): ClassificationResult {
+  const base = decidedHighRisk()
+  const steps = notHighRisk(base).map((step) =>
+    step.step === 'transparency'
+      ? {
+          ...step,
+          decision:
+            'Art. 50(1) applies: people talk to the chatbot directly, so they must be told it is an AI system.',
+          citations: [ART_50_1],
+        }
+      : step,
+  )
+  return {
+    ...base,
+    risk_class: 'limited_risk',
+    role: 'provider',
+    annex_point: null,
+    legal_review: null,
+    transparency_duties: ['art:50:1'],
+    steps,
+    obligations: [AI_LITERACY, CHATBOT_DISCLOSURE],
+  }
+}
+
 /** Decision 026 item 19: minimal risk, with only the general Art. 4 duty. */
 export function minimalRisk(): ClassificationResult {
   const base = decidedHighRisk()

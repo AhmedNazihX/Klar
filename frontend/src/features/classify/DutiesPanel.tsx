@@ -32,9 +32,18 @@ function dutyNote(t: TFunction, obligation: Obligation, language: Language): Rea
   return null
 }
 
+/** The limited-risk intro promises a draft only when an Art. 50 duty has a template (C9 has
+ *  them for 50(3) and 50(4)); otherwise it says what the duties ask, and no link shows. */
+function limitedIntro(t: TFunction, result: ClassificationResult): string {
+  const hasDraft = (result.obligations ?? []).some(
+    (obligation) => isTransparencyDuty(obligation) && obligation.document,
+  )
+  return hasDraft ? t('result.todo.limited') : t('result.todo.limitedNoDraft')
+}
+
 function introFor(t: TFunction, result: ClassificationResult): string {
   if (result.risk_class === 'minimal_risk') return t('result.todo.minimal')
-  if (result.risk_class === 'limited_risk') return t('result.todo.limited')
+  if (result.risk_class === 'limited_risk') return limitedIntro(t, result)
   if ((result.obligations ?? []).length === 0) return t('result.todo.none')
   return result.role ? t(`result.todo.intro.${result.role}`) : t('result.todo.none')
 }
