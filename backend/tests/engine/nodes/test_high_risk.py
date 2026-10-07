@@ -45,7 +45,7 @@ from aiact.engine.nodes.high_risk_retrieval import (
     Retrieved,
     retrieve,
 )
-from aiact.engine.nodes.high_risk_texts import TEXTS, version_words
+from aiact.engine.nodes.high_risk_texts import TEXTS, annex_i_entry, version_words
 from aiact.engine.nodes.key_facts import Answer
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
@@ -817,6 +817,47 @@ def test_only_the_original_text_gets_the_note_that_art_6_1a_to_1c_do_not_exist()
         f"Law version:\n{node.ORIGINAL_INSTRUCTIONS}\nAnnex I:\n"
     )
     assert "It has no Art. 6(1a), (1b) or (1c)" in " ".join(node.ORIGINAL_INSTRUCTIONS.split())
+
+
+@pytest.mark.parametrize(
+    ("language", "text", "line"),
+    [
+        pytest.param(
+            Language.EN,
+            ORIGINAL_ANNEX_I_TEXT["annex:I:A:1"],
+            "[annex:I:A:1] Directive 2006/42/EC on machinery (repealed and replaced by "
+            "Regulation (EU) 2023/1230 on machinery)",
+            id="en",
+        ),
+        pytest.param(
+            Language.DE,
+            "1. Richtlinie 2006/42/EG des Europäischen Parlaments und des Rates vom 17. Mai 2006 "
+            "über Maschinen und zur Änderung der Richtlinie 95/16/EG (ABl. L 157 vom 9.6.2006, "
+            "S. 24)",
+            "[annex:I:A:1] Richtlinie 2006/42/EG über Maschinen und zur Änderung der Richtlinie "
+            "95/16/EG (aufgehoben und ersetzt durch die Verordnung (EU) 2023/1230 über Maschinen)",
+            id="de",
+        ),
+    ],
+)
+def test_the_original_a_1_entry_names_the_machinery_regulation_that_replaced_it(
+    language: Language, text: str, line: str
+) -> None:
+    """The original A.1 names only Directive 2006/42/EC: the prompt adds Regulation (EU)
+    2023/1230, which repeals it, so a product under the Regulation is matched to A.1."""
+    assert annex_i_entry(provision("annex:I:A:1", text, language, ORIGINAL)) == line
+    assert annex_i_entry(provision("annex:I:A:1", text, language)) == line.split(" (")[0]
+
+
+def test_only_the_original_prompt_lists_machinery_with_its_replacing_regulation() -> None:
+    entry = (
+        "[annex:I:A:1] Directive 2006/42/EC on machinery (repealed and replaced by "
+        "Regulation (EU) 2023/1230 on machinery)\n"
+    )
+    original = node.high_risk_messages(state(law_version=ORIGINAL), retrieved(law_version=ORIGINAL))
+    amended = node.high_risk_messages(state(), retrieved())
+    assert entry in str(original[1].content)
+    assert "replaced by" not in str(amended[1].content)
 
 
 # --- Retrieval and analogy -----------------------------------------------------------------------

@@ -387,3 +387,26 @@ def law_title(provision: Provision) -> str:
     for dative, accusative in GERMAN_ACCUSATIVE.items():
         title = title.replace(f"über {dative}", f"über {accusative}")
     return title
+
+
+ANNEX_I_SUCCESSORS: Mapping[tuple[LawVersion | None, Language, str], str] = {
+    (LawVersion.ORIGINAL, EN, "annex:I:A:1"): (
+        "repealed and replaced by Regulation (EU) 2023/1230 on machinery"
+    ),
+    (LawVersion.ORIGINAL, DE, "annex:I:A:1"): (
+        "aufgehoben und ersetzt durch die Verordnung (EU) 2023/1230 über Maschinen"
+    ),
+}
+"""The act that has since replaced an Annex I law the original text still names (E11). The
+original A.1 names Directive 2006/42/EC, which Regulation (EU) 2023/1230 "on machinery and
+repealing Directive 2006/42/EC" replaces (its title, as quoted in Omnibus Art. 1(41)(b)); the
+Omnibus moves the updated reference to Section B (recital 42)."""
+
+
+def annex_i_entry(provision: Provision) -> str:
+    """One Annex I line of the high-risk prompt: the id, the law's short title, and the act that
+    replaced it where the text read still names a repealed one."""
+    key = (provision.law_version, provision.language, provision.provision_id)
+    successor = ANNEX_I_SUCCESSORS.get(key)
+    note = f" ({successor})" if successor else ""
+    return f"[{provision.provision_id}] {law_title(provision)}{note}"

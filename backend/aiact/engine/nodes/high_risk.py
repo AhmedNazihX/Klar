@@ -77,6 +77,7 @@ from aiact.engine.nodes.high_risk_texts import (
     REFUSAL_CITATIONS,
     ROUTE_NAMES,
     TEXTS,
+    annex_i_entry,
     law_title,
     point_name,
     version_words,
@@ -754,7 +755,7 @@ def _law_version_section(state: EngineState) -> str:
 def high_risk_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMessage]:
     """The fixed instructions first; the original-text note and the retrieved provisions next;
     the per-case context and the description last (005)."""
-    annex_i = "\n".join(f"[{p.provision_id}] {law_title(p)}" for p in retrieved.annex_i) or "-"
+    annex_i = "\n".join(annex_i_entry(p) for p in retrieved.annex_i) or "-"
     annex_iii = "\n".join(
         f"[{p.provision_id}] {' '.join(p.text.split())}" for p in retrieved.annex_iii
     )
