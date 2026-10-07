@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, ServerSentEventsResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses } from './types.gen';
+import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentsData, DraftDocumentsErrors, DraftDocumentsResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -57,3 +57,34 @@ export const listObligations = <ThrowOnError extends boolean = false>(options: O
  * The texts the answers draw on: title, status, law version and dates.
  */
 export const listDocuments = <ThrowOnError extends boolean = false>(options?: Options<ListDocumentsData, ThrowOnError>): RequestResult<ListDocumentsResponses, ListDocumentsErrors, ThrowOnError> => (options?.client ?? client).get<ListDocumentsResponses, ListDocumentsErrors, ThrowOnError>({ url: '/documents', ...options });
+
+/**
+ * Draft Documents
+ *
+ * Drafts every document the result calls for with the user's answers, runs the three
+ * automatic checks on each, and lists each one's interview questions. Every draft is labelled
+ * DRAFT and carries the "guidance, not legal advice" notice.
+ */
+export const draftDocuments = <ThrowOnError extends boolean = false>(options: Options<DraftDocumentsData, ThrowOnError>): RequestResult<DraftDocumentsResponses, DraftDocumentsErrors, ThrowOnError> => (options.client ?? client).post<DraftDocumentsResponses, DraftDocumentsErrors, ThrowOnError>({
+    url: '/documents/drafts',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Export Document
+ *
+ * One document as a Word (.docx) or PDF file, drafted as `draft_documents` drafts it, and
+ * only once all three automatic checks pass.
+ */
+export const exportDocument = <ThrowOnError extends boolean = false>(options: Options<ExportDocumentData, ThrowOnError>): RequestResult<ExportDocumentResponses, ExportDocumentErrors, ThrowOnError> => (options.client ?? client).post<ExportDocumentResponses, ExportDocumentErrors, ThrowOnError>({
+    url: '/documents/export',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});

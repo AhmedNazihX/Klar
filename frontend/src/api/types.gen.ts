@@ -37,6 +37,45 @@ export type AnswerOutcome = {
 };
 
 /**
+ * CheckName
+ */
+export type CheckName = 'sections_present' | 'nothing_invented' | 'facts_match';
+
+/**
+ * CheckResult
+ *
+ * One check's outcome. `problems` names each failure; it passes when there are none.
+ */
+export type CheckResult = {
+    check: CheckName;
+    /**
+     * Passed
+     */
+    passed: boolean;
+    /**
+     * Problems
+     */
+    problems?: Array<string>;
+};
+
+/**
+ * CheckedDraft
+ *
+ * A drafted document, its three automatic checks and its interview, in the order asked.
+ */
+export type CheckedDraft = {
+    document: DraftDocument;
+    /**
+     * Checks
+     */
+    checks: Array<CheckResult>;
+    /**
+     * Questions
+     */
+    questions: Array<InterviewQuestion>;
+};
+
+/**
  * Citation
  *
  * One quoted provision. `english_only` marks guidance that has no official text in `de`.
@@ -265,6 +304,153 @@ export type DocumentList = {
 export type DocumentStatus = 'final' | 'draft' | 'consolidated';
 
 /**
+ * DraftDocument
+ *
+ * A document drafted from a classification result and the user's answers.
+ */
+export type DraftDocument = {
+    /**
+     * Template
+     */
+    template: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Article
+     *
+     * The duty it answers, e.g. `art:26:7`.
+     */
+    article: string;
+    language: Language;
+    /**
+     * Label
+     */
+    label?: 'DRAFT';
+    /**
+     * Note
+     *
+     * A line under the title: for an SME or a small mid-cap, that a simplified technical documentation form is expected (P8b).
+     */
+    note?: string | null;
+    /**
+     * Sections
+     */
+    sections: Array<DraftSection>;
+    /**
+     * Unanswered
+     *
+     * Interview questions still to answer.
+     */
+    unanswered: number;
+    status: DraftStatus;
+    /**
+     * The AI Act text of the result drafted from.
+     */
+    law_version: LawVersion;
+    /**
+     * As Of
+     *
+     * The result's law date.
+     */
+    as_of: string;
+    /**
+     * Disclaimer
+     */
+    disclaimer: string;
+};
+
+/**
+ * DraftList
+ *
+ * Every document the result calls for, in the order the documents list shows them.
+ */
+export type DraftList = {
+    /**
+     * Documents
+     */
+    documents: Array<CheckedDraft>;
+};
+
+/**
+ * DraftSection
+ *
+ * One section of a drafted document. No paragraphs means it is still "To fill in".
+ */
+export type DraftSection = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Heading
+     */
+    heading: string;
+    provenance: Provenance;
+    /**
+     * Paragraphs
+     */
+    paragraphs?: Array<string>;
+    /**
+     * Question Keys
+     *
+     * The interview questions whose answers fill the section, in the order asked; interview sections only.
+     */
+    question_keys?: Array<string>;
+    /**
+     * Unanswered
+     *
+     * The questions of `question_keys` still to answer, in order.
+     */
+    unanswered?: Array<string>;
+    status: SectionStatus;
+    /**
+     * The requirement the section answers, quoted word for word from the AI Act (skeletons only); shown above the "To fill in" marker.
+     */
+    requirement?: Citation | null;
+};
+
+/**
+ * DraftStatus
+ *
+ * A document's state on the documents list: "Needs N answers" or "Ready to review".
+ */
+export type DraftStatus = 'needs_answers' | 'ready_to_review';
+
+/**
+ * DraftsRequest
+ *
+ * A tool's classification result and the user's answers, by template id.
+ */
+export type DraftsRequest = {
+    /**
+     * Result
+     *
+     * A ClassificationResult as `POST /classify` returned it. It is parsed against the result contract (a result that breaks it is a 422), and the drafts are built from the parsed result.
+     */
+    result: {
+        [key: string]: unknown;
+    };
+    /**
+     * The language of the drafts' wording and notice.
+     */
+    language: Language;
+    /**
+     * The company profile's size class; null without a profile.
+     */
+    size_class?: SizeClass | null;
+    /**
+     * Answers
+     */
+    answers?: {
+        [key: string]: unknown | {
+            [key: string]: string;
+        };
+    };
+};
+
+/**
  * ErrorEvent
  *
  * A node failed, so the run stopped without a result.
@@ -290,6 +476,38 @@ export type ErrorEvent = {
  * Where a fact came from; used instead of a numeric confidence score.
  */
 export type EvidenceTag = 'stated' | 'inferred' | 'assumed';
+
+/**
+ * ExportRequest
+ *
+ * One document of the result, its answers and the file wanted.
+ */
+export type ExportRequest = {
+    /**
+     * Result
+     *
+     * A ClassificationResult as `POST /classify` returned it. It is parsed against the result contract (a result that breaks it is a 422), and the drafts are built from the parsed result.
+     */
+    result: {
+        [key: string]: unknown;
+    };
+    /**
+     * Template
+     */
+    template: string;
+    language: Language;
+    size_class?: SizeClass | null;
+    /**
+     * Answers
+     */
+    answers?: {
+        [key: string]: string;
+    };
+    /**
+     * Format
+     */
+    format: 'docx' | 'pdf';
+};
 
 /**
  * Fact
@@ -388,6 +606,28 @@ export type HttpValidationError = {
  * How a system became high-risk; the two routes have different dates (Art. 113(c)).
  */
 export type HighRiskRoute = 'annex_iii' | 'annex_i';
+
+/**
+ * InterviewQuestion
+ *
+ * One question of a document's guided interview, and the section its answer fills.
+ */
+export type InterviewQuestion = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Section
+     *
+     * The key of the section the answer fills.
+     */
+    section: string;
+};
 
 /**
  * Language
@@ -577,6 +817,13 @@ export type OpenQuestion = {
 };
 
 /**
+ * Provenance
+ *
+ * Where a section's content comes from; the interface shows it as a tag on the section.
+ */
+export type Provenance = 'classification' | 'interview' | 'template';
+
+/**
  * Provision
  *
  * One provision's text, with the version, language and status it comes from and the notice.
@@ -692,6 +939,13 @@ export type RiskClass = 'out_of_scope' | 'prohibited' | 'high_risk' | 'limited_r
 export type Role = 'provider' | 'deployer' | 'importer' | 'distributor';
 
 /**
+ * SectionStatus
+ *
+ * A section's state, as the DocSkeleton artboard shows it beside the section.
+ */
+export type SectionStatus = 'drafted' | 'questions' | 'to_fill_in' | 'needs_evidence' | 'generated_last';
+
+/**
  * SettledBy
  *
  * Something that would settle an open question. Guidance is named as it stands (for example
@@ -711,6 +965,14 @@ export type SettledBy = {
  * What could settle an open question of law (E12, decision 026 item 4).
  */
 export type SettledByKind = 'guidance' | 'provider';
+
+/**
+ * SizeClass
+ *
+ * The company profile's size class (P19's `inventories.size_class`), passed in by the
+ * caller: derived from the profile's bands, never from the description.
+ */
+export type SizeClass = 'sme' | 'smc' | 'none';
 
 /**
  * SourceSpan
@@ -1015,3 +1277,59 @@ export type ListDocumentsResponses = {
 };
 
 export type ListDocumentsResponse = ListDocumentsResponses[keyof ListDocumentsResponses];
+
+export type DraftDocumentsData = {
+    body: DraftsRequest;
+    path?: never;
+    query?: never;
+    url: '/documents/drafts';
+};
+
+export type DraftDocumentsErrors = {
+    /**
+     * Not a valid request
+     */
+    422: unknown;
+};
+
+export type DraftDocumentsResponses = {
+    /**
+     * Successful Response
+     */
+    200: DraftList;
+};
+
+export type DraftDocumentsResponse = DraftDocumentsResponses[keyof DraftDocumentsResponses];
+
+export type ExportDocumentData = {
+    body: ExportRequest;
+    path?: never;
+    query?: never;
+    url: '/documents/export';
+};
+
+export type ExportDocumentErrors = {
+    /**
+     * The result calls for no such document
+     */
+    404: unknown;
+    /**
+     * The draft failed its automatic checks
+     */
+    409: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ExportDocumentError = ExportDocumentErrors[keyof ExportDocumentErrors];
+
+export type ExportDocumentResponses = {
+    /**
+     * The document as a file (an attachment)
+     */
+    200: Blob | File;
+};
+
+export type ExportDocumentResponse = ExportDocumentResponses[keyof ExportDocumentResponses];

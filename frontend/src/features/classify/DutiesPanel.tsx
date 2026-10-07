@@ -51,7 +51,14 @@ function introFor(t: TFunction, result: ClassificationResult): string {
 /** "What you need to do": each duty as an action (C9's short label) with its article, its
  *  Art. 111(2) marking and a link to its draft document where C9 names one (for the Art. 50
  *  duties, the drafted disclosure: decision 026 item 19). */
-export function DutiesPanel({ result }: { result: ClassificationResult }): JSX.Element {
+export function DutiesPanel({
+  result,
+  toolId,
+}: {
+  result: ClassificationResult
+  /** The tool the result is for; its duties' documents open for it. */
+  toolId?: string
+}): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
@@ -85,6 +92,7 @@ export function DutiesPanel({ result }: { result: ClassificationResult }): JSX.E
                   : t('result.todo.draftDocument')
               }
               documentId={obligation.document}
+              toolId={toolId}
             />
           ))}
         </ul>

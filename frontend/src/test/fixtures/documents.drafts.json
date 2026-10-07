@@ -1,0 +1,3620 @@
+{
+  "provider_result": {
+    "facts": [
+      {
+        "text": "The company uses a tool bought from a vendor",
+        "evidence": "stated",
+        "source_span": {
+          "start": 135,
+          "end": 161
+        }
+      },
+      {
+        "text": "The tool scores and ranks applicants",
+        "evidence": "stated",
+        "source_span": {
+          "start": 89,
+          "end": 133
+        }
+      },
+      {
+        "text": "The tool was not modified",
+        "evidence": "stated",
+        "source_span": {
+          "start": 166,
+          "end": 182
+        }
+      },
+      {
+        "text": "The tool is used under the vendor's name",
+        "evidence": "assumed",
+        "source_span": null
+      },
+      {
+        "text": "The tool is used in the EU",
+        "evidence": "assumed",
+        "source_span": null
+      }
+    ],
+    "steps": [
+      {
+        "step": "scope",
+        "decision": "In scope: an AI system used in the EU",
+        "facts_used": [
+          {
+            "text": "The tool scores and ranks applicants",
+            "evidence": "stated",
+            "source_span": {
+              "start": 89,
+              "end": 133
+            }
+          },
+          {
+            "text": "The tool is used in the EU",
+            "evidence": "assumed",
+            "source_span": null
+          }
+        ],
+        "citations": [
+          {
+            "provision_id": "art:3:1",
+            "document_id": "ai-act-consolidated",
+            "law_version": "amended",
+            "document_status": null,
+            "language": "en",
+            "quote": "'AI system' means a machine-based system",
+            "english_only": false,
+            "changed_by_omnibus": false
+          }
+        ],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      },
+      {
+        "step": "prohibited",
+        "decision": "No prohibited practice matches",
+        "facts_used": [
+          {
+            "text": "No prohibited practice is described",
+            "evidence": "inferred",
+            "source_span": null
+          }
+        ],
+        "citations": [
+          {
+            "provision_id": "art:5:1",
+            "document_id": "ai-act-consolidated",
+            "law_version": "amended",
+            "document_status": null,
+            "language": "en",
+            "quote": "The following AI practices shall be prohibited:",
+            "english_only": false,
+            "changed_by_omnibus": false
+          }
+        ],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      },
+      {
+        "step": "high_risk",
+        "decision": "High-risk: recruitment use; ranking candidates is profiling, so Art. 6(3) does not exempt it",
+        "facts_used": [
+          {
+            "text": "The tool scores and ranks applicants",
+            "evidence": "stated",
+            "source_span": {
+              "start": 89,
+              "end": 133
+            }
+          }
+        ],
+        "citations": [
+          {
+            "provision_id": "annex:III:4:a",
+            "document_id": "ai-act-consolidated",
+            "law_version": "amended",
+            "document_status": null,
+            "language": "en",
+            "quote": "AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates",
+            "english_only": false,
+            "changed_by_omnibus": false
+          },
+          {
+            "provision_id": "art:6:3",
+            "document_id": "ai-act-consolidated",
+            "law_version": "amended",
+            "document_status": null,
+            "language": "en",
+            "quote": "an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons",
+            "english_only": false,
+            "changed_by_omnibus": false
+          }
+        ],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      },
+      {
+        "step": "transparency",
+        "decision": "No separate transparency duty identified from the description",
+        "facts_used": [
+          {
+            "text": "The tool doesn't interact with applicants or generate content",
+            "evidence": "inferred",
+            "source_span": null
+          }
+        ],
+        "citations": [
+          {
+            "provision_id": "art:50:1",
+            "document_id": "ai-act-consolidated",
+            "law_version": "amended",
+            "document_status": null,
+            "language": "en",
+            "quote": "Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system",
+            "english_only": false,
+            "changed_by_omnibus": false
+          }
+        ],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      },
+      {
+        "step": "role_obligations",
+        "decision": "Stays a deployer: not modified, not rebranded, used for its intended purpose",
+        "facts_used": [
+          {
+            "text": "The company uses a tool bought from a vendor",
+            "evidence": "stated",
+            "source_span": {
+              "start": 135,
+              "end": 161
+            }
+          },
+          {
+            "text": "The tool was not modified",
+            "evidence": "stated",
+            "source_span": {
+              "start": 166,
+              "end": 182
+            }
+          },
+          {
+            "text": "The tool is used under the vendor's name",
+            "evidence": "assumed",
+            "source_span": null
+          }
+        ],
+        "citations": [
+          {
+            "provision_id": "art:26:1",
+            "document_id": "ai-act-consolidated",
+            "law_version": "amended",
+            "document_status": null,
+            "language": "en",
+            "quote": "Deployers of high-risk AI systems shall take appropriate technical and organisational measures to ensure they use such systems in accordance with the instructions for use accompanying the systems",
+            "english_only": false,
+            "changed_by_omnibus": false
+          }
+        ],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      }
+    ],
+    "risk_class": "high_risk",
+    "status": "decided",
+    "role": "provider",
+    "also_role": null,
+    "role_switch_reason": null,
+    "annex_point": "annex:III:4:a",
+    "transparency_duties": [],
+    "deciding_facts": [
+      {
+        "text": "The tool scores and ranks applicants",
+        "evidence": "stated",
+        "source_span": {
+          "start": 89,
+          "end": 133
+        }
+      },
+      {
+        "text": "The tool was not modified",
+        "evidence": "stated",
+        "source_span": {
+          "start": 166,
+          "end": 182
+        }
+      },
+      {
+        "text": "The tool is used under the vendor's name",
+        "evidence": "assumed",
+        "source_span": null
+      }
+    ],
+    "obligations": [
+      {
+        "duty": "Establish, implement, document and maintain a risk management system, run as a continuous process over the system's whole lifecycle.",
+        "duty_de": "Ein Risikomanagementsystem einrichten, anwenden, dokumentieren und aufrechterhalten, als kontinuierlichen Prozess über den gesamten Lebenszyklus des Systems.",
+        "label_en": "Run a risk management system for its whole life",
+        "label_de": "Ein Risikomanagementsystem über den gesamten Lebenszyklus betreiben",
+        "group": "build",
+        "document": "art_9_risk_management",
+        "article": "art:9",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "duty": "Have a documented quality management system (Art. 17).",
+        "duty_de": "Über ein dokumentiertes Qualitätsmanagementsystem verfügen, das Art. 17 entspricht.",
+        "label_en": "Set up a quality management system",
+        "label_de": "Ein Qualitätsmanagementsystem einrichten",
+        "group": "prove",
+        "document": "art_17_quality_management",
+        "article": "art:16:c",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": "The quality management system may be proportionate to the size of the organisation for SMEs, including start-ups, and SMCs (Art. 17(2)). SMEs without partner or linked enterprises may comply with certain elements in a simplified manner (Art. 63(1)).",
+        "note": null
+      },
+      {
+        "duty": "Draw up the technical documentation (Annex IV) before placing the system on the market, and keep it up to date.",
+        "duty_de": "Die technische Dokumentation (Anhang IV) erstellen, bevor das System in Verkehr gebracht oder in Betrieb genommen wird, und sie auf dem neuesten Stand halten.",
+        "label_en": "Write the technical documentation and keep it up to date",
+        "label_de": "Die technische Dokumentation erstellen und aktuell halten",
+        "group": "prove",
+        "document": "annex_iv_technical_documentation",
+        "article": "art:11:1",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": "SMEs, including start-ups, and SMCs may provide the Annex IV elements in a simplified manner, using the Commission's simplified form (Art. 11(1)). As of 24 September 2026 the form did not appear to be published.",
+        "note": null
+      }
+    ],
+    "law_version": "amended",
+    "law_text": {
+      "document_id": "ai-act-consolidated",
+      "celex": "02024R1689-20260727",
+      "version_date": "2026-07-27"
+    },
+    "as_of": "2026-09-27",
+    "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
+    "legal_review": null,
+    "not_assessed": [],
+    "follow_up_questions": [
+      {
+        "id": "own_branding",
+        "text": "Do you use the tool under the vendor's name, without your own branding?",
+        "about": "art:25:1",
+        "hint": null,
+        "options": [],
+        "if_yes": null,
+        "citations": []
+      },
+      {
+        "id": "eu_use",
+        "text": "Is the tool used in the EU?",
+        "about": "scope",
+        "hint": null,
+        "options": [],
+        "if_yes": null,
+        "citations": []
+      }
+    ]
+  },
+  "deployer": {
+    "en": [
+      {
+        "document": {
+          "template": "art_26_2_oversight",
+          "title": "Human oversight record",
+          "article": "art:26:2",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "The system",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company has 40 employees and operates in logistics.",
+                "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+                "The company bought the tool from a vendor and did not change it."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a), assumed until you answer its open question.",
+                "It lists the duty under Art. 26(2), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "why",
+              "heading": "Why we keep this record",
+              "provenance": "template",
+              "paragraphs": [
+                "Under Article 26(2) of the EU AI Act, a deployer of a high-risk AI system must assign human oversight to people who have the necessary competence, training and authority, and give them the support they need."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "overseers",
+              "heading": "Who oversees the system",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["overseers"],
+              "unanswered": ["overseers"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "competence",
+              "heading": "Their competence and training",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["competence"],
+              "unanswered": ["competence"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "authority",
+              "heading": "Their authority and support",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["authority"],
+              "unanswered": ["authority"],
+              "status": "questions",
+              "requirement": null
+            }
+          ],
+          "unanswered": 3,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-10-06",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "overseers",
+            "text": "Who is assigned to oversee the system? Give names or roles.",
+            "section": "overseers"
+          },
+          {
+            "key": "competence",
+            "text": "What competence and training do they have for this task?",
+            "section": "competence"
+          },
+          {
+            "key": "authority",
+            "text": "What authority and support do they have, for example to stop the system or override its output?",
+            "section": "authority"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_26_7_workers",
+          "title": "Notice to workers' representatives",
+          "article": "art:26:7",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "What we plan to use",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company has 40 employees and operates in logistics.",
+                "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+                "The company bought the tool from a vendor and did not change it."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a), assumed until you answer its open question.",
+                "It lists the duty under Art. 26(7), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "why",
+              "heading": "Why we're telling you",
+              "provenance": "template",
+              "paragraphs": [
+                "Under Article 26(7) of the EU AI Act, an employer must inform workers' representatives and the workers affected before it puts a high-risk AI system into service or uses it at the workplace."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "recipients",
+              "heading": "Who this notice is for",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["recipients"],
+              "unanswered": ["recipients"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "tool",
+              "heading": "The tool and its supplier",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["tool_and_supplier"],
+              "unanswered": ["tool_and_supplier"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "start",
+              "heading": "When we start",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["start_date"],
+              "unanswered": ["start_date"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "reviewer",
+              "heading": "Who reviews the tool's output",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["reviewer"],
+              "unanswered": ["reviewer"],
+              "status": "questions",
+              "requirement": null
+            }
+          ],
+          "unanswered": 4,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-10-06",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "recipients",
+            "text": "Is there a works council? Who receives this notice?",
+            "section": "recipients"
+          },
+          {
+            "key": "tool_and_supplier",
+            "text": "What is the tool called, and who supplies it?",
+            "section": "tool"
+          },
+          {
+            "key": "start_date",
+            "text": "When do you plan to start?",
+            "section": "start"
+          },
+          {
+            "key": "reviewer",
+            "text": "Who reviews the tool's output?",
+            "section": "reviewer"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_26_11_affected",
+          "title": "Notice to the people affected",
+          "article": "art:26:11",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "What we use",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company has 40 employees and operates in logistics.",
+                "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+                "The company bought the tool from a vendor and did not change it."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a), assumed until you answer its open question.",
+                "It lists the duty under Art. 26(11), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "why",
+              "heading": "Why we're telling you",
+              "provenance": "template",
+              "paragraphs": [
+                "Under Article 26(11) of the EU AI Act, a deployer of a high-risk AI system listed in Annex III that makes decisions, or helps make decisions, about people must inform those people that the system is used."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "tool",
+              "heading": "The tool and its supplier",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["tool_and_supplier"],
+              "unanswered": ["tool_and_supplier"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "decisions",
+              "heading": "What it is used for",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["decisions"],
+              "unanswered": ["decisions"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "contact",
+              "heading": "Who to contact",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["contact"],
+              "unanswered": ["contact"],
+              "status": "questions",
+              "requirement": null
+            }
+          ],
+          "unanswered": 3,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-10-06",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "tool_and_supplier",
+            "text": "What is the tool called, and who supplies it?",
+            "section": "tool"
+          },
+          {
+            "key": "decisions",
+            "text": "Which decisions about people does the tool make or help make?",
+            "section": "decisions"
+          },
+          {
+            "key": "contact",
+            "text": "Who can people contact with questions about the tool?",
+            "section": "contact"
+          }
+        ]
+      }
+    ],
+    "en_answered": [
+      {
+        "document": {
+          "template": "art_26_2_oversight",
+          "title": "Human oversight record",
+          "article": "art:26:2",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "The system",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company has 40 employees and operates in logistics.",
+                "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+                "The company bought the tool from a vendor and did not change it."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a), assumed until you answer its open question.",
+                "It lists the duty under Art. 26(2), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "why",
+              "heading": "Why we keep this record",
+              "provenance": "template",
+              "paragraphs": [
+                "Under Article 26(2) of the EU AI Act, a deployer of a high-risk AI system must assign human oversight to people who have the necessary competence, training and authority, and give them the support they need."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "overseers",
+              "heading": "Who oversees the system",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["overseers"],
+              "unanswered": ["overseers"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "competence",
+              "heading": "Their competence and training",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["competence"],
+              "unanswered": ["competence"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "authority",
+              "heading": "Their authority and support",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["authority"],
+              "unanswered": ["authority"],
+              "status": "questions",
+              "requirement": null
+            }
+          ],
+          "unanswered": 3,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-10-06",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "overseers",
+            "text": "Who is assigned to oversee the system? Give names or roles.",
+            "section": "overseers"
+          },
+          {
+            "key": "competence",
+            "text": "What competence and training do they have for this task?",
+            "section": "competence"
+          },
+          {
+            "key": "authority",
+            "text": "What authority and support do they have, for example to stop the system or override its output?",
+            "section": "authority"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_26_7_workers",
+          "title": "Notice to workers' representatives",
+          "article": "art:26:7",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "What we plan to use",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company has 40 employees and operates in logistics.",
+                "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+                "The company bought the tool from a vendor and did not change it."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a), assumed until you answer its open question.",
+                "It lists the duty under Art. 26(7), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "why",
+              "heading": "Why we're telling you",
+              "provenance": "template",
+              "paragraphs": [
+                "Under Article 26(7) of the EU AI Act, an employer must inform workers' representatives and the workers affected before it puts a high-risk AI system into service or uses it at the workplace."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "recipients",
+              "heading": "Who this notice is for",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["recipients"],
+              "unanswered": ["recipients"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "tool",
+              "heading": "The tool and its supplier",
+              "provenance": "interview",
+              "paragraphs": ["TalentRank, supplied by Rank GmbH."],
+              "question_keys": ["tool_and_supplier"],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "start",
+              "heading": "When we start",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["start_date"],
+              "unanswered": ["start_date"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "reviewer",
+              "heading": "Who reviews the tool's output",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["reviewer"],
+              "unanswered": ["reviewer"],
+              "status": "questions",
+              "requirement": null
+            }
+          ],
+          "unanswered": 3,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-10-06",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "recipients",
+            "text": "Is there a works council? Who receives this notice?",
+            "section": "recipients"
+          },
+          {
+            "key": "tool_and_supplier",
+            "text": "What is the tool called, and who supplies it?",
+            "section": "tool"
+          },
+          {
+            "key": "start_date",
+            "text": "When do you plan to start?",
+            "section": "start"
+          },
+          {
+            "key": "reviewer",
+            "text": "Who reviews the tool's output?",
+            "section": "reviewer"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_26_11_affected",
+          "title": "Notice to the people affected",
+          "article": "art:26:11",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "What we use",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company has 40 employees and operates in logistics.",
+                "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+                "The company bought the tool from a vendor and did not change it."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a), assumed until you answer its open question.",
+                "It lists the duty under Art. 26(11), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "why",
+              "heading": "Why we're telling you",
+              "provenance": "template",
+              "paragraphs": [
+                "Under Article 26(11) of the EU AI Act, a deployer of a high-risk AI system listed in Annex III that makes decisions, or helps make decisions, about people must inform those people that the system is used."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "tool",
+              "heading": "The tool and its supplier",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["tool_and_supplier"],
+              "unanswered": ["tool_and_supplier"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "decisions",
+              "heading": "What it is used for",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["decisions"],
+              "unanswered": ["decisions"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "contact",
+              "heading": "Who to contact",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["contact"],
+              "unanswered": ["contact"],
+              "status": "questions",
+              "requirement": null
+            }
+          ],
+          "unanswered": 3,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-10-06",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "tool_and_supplier",
+            "text": "What is the tool called, and who supplies it?",
+            "section": "tool"
+          },
+          {
+            "key": "decisions",
+            "text": "Which decisions about people does the tool make or help make?",
+            "section": "decisions"
+          },
+          {
+            "key": "contact",
+            "text": "Who can people contact with questions about the tool?",
+            "section": "contact"
+          }
+        ]
+      }
+    ],
+    "de": [
+      {
+        "document": {
+          "template": "art_26_2_oversight",
+          "title": "Nachweis der menschlichen Aufsicht",
+          "article": "art:26:2",
+          "language": "de",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "Das System",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company has 40 employees and operates in logistics.",
+                "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+                "The company bought the tool from a vendor and did not change it."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Seine Einstufung",
+              "provenance": "classification",
+              "paragraphs": [
+                "Ihre Einstufung: Hochrisiko, Anhang III Nummer 4 Buchstabe a, angenommen, bis Sie die offene Frage beantworten.",
+                "Sie nennt die Pflicht nach Art. 26 Abs. 2, die ab dem 2. Dezember 2027 gilt."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "why",
+              "heading": "Warum wir diesen Nachweis führen",
+              "provenance": "template",
+              "paragraphs": [
+                "Nach Artikel 26 Absatz 2 der KI-Verordnung muss ein Betreiber eines Hochrisiko-KI-Systems die menschliche Aufsicht natürlichen Personen übertragen, die über die erforderliche Kompetenz, Ausbildung und Befugnis verfügen, und ihnen die nötige Unterstützung geben."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "overseers",
+              "heading": "Wer das System beaufsichtigt",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["overseers"],
+              "unanswered": ["overseers"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "competence",
+              "heading": "Kompetenz und Ausbildung",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["competence"],
+              "unanswered": ["competence"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "authority",
+              "heading": "Befugnisse und Unterstützung",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["authority"],
+              "unanswered": ["authority"],
+              "status": "questions",
+              "requirement": null
+            }
+          ],
+          "unanswered": 3,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-10-06",
+          "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "overseers",
+            "text": "Wem ist die Aufsicht über das System übertragen? Nennen Sie Namen oder Funktionen.",
+            "section": "overseers"
+          },
+          {
+            "key": "competence",
+            "text": "Welche Kompetenz und Ausbildung haben sie für diese Aufgabe?",
+            "section": "competence"
+          },
+          {
+            "key": "authority",
+            "text": "Welche Befugnisse und welche Unterstützung haben sie, zum Beispiel um das System anzuhalten oder seine Ergebnisse zu übergehen?",
+            "section": "authority"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_26_7_workers",
+          "title": "Information der Arbeitnehmervertreter",
+          "article": "art:26:7",
+          "language": "de",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "Was wir einsetzen wollen",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company has 40 employees and operates in logistics.",
+                "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+                "The company bought the tool from a vendor and did not change it."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Seine Einstufung",
+              "provenance": "classification",
+              "paragraphs": [
+                "Ihre Einstufung: Hochrisiko, Anhang III Nummer 4 Buchstabe a, angenommen, bis Sie die offene Frage beantworten.",
+                "Sie nennt die Pflicht nach Art. 26 Abs. 7, die ab dem 2. Dezember 2027 gilt."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "why",
+              "heading": "Warum wir Sie informieren",
+              "provenance": "template",
+              "paragraphs": [
+                "Nach Artikel 26 Absatz 7 der KI-Verordnung muss ein Arbeitgeber die Arbeitnehmervertreter und die betroffenen Arbeitnehmer informieren, bevor er ein Hochrisiko-KI-System am Arbeitsplatz in Betrieb nimmt oder verwendet."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "recipients",
+              "heading": "An wen sich diese Information richtet",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["recipients"],
+              "unanswered": ["recipients"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "tool",
+              "heading": "Das Tool und sein Anbieter",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["tool_and_supplier"],
+              "unanswered": ["tool_and_supplier"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "start",
+              "heading": "Wann wir beginnen",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["start_date"],
+              "unanswered": ["start_date"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "reviewer",
+              "heading": "Wer die Ergebnisse des Tools prüft",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["reviewer"],
+              "unanswered": ["reviewer"],
+              "status": "questions",
+              "requirement": null
+            }
+          ],
+          "unanswered": 4,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-10-06",
+          "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "recipients",
+            "text": "Gibt es einen Betriebsrat? Wer erhält diese Information?",
+            "section": "recipients"
+          },
+          {
+            "key": "tool_and_supplier",
+            "text": "Wie heißt das Tool, und wer liefert es?",
+            "section": "tool"
+          },
+          {
+            "key": "start_date",
+            "text": "Wann wollen Sie beginnen?",
+            "section": "start"
+          },
+          {
+            "key": "reviewer",
+            "text": "Wer prüft die Ergebnisse des Tools?",
+            "section": "reviewer"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_26_11_affected",
+          "title": "Information der betroffenen Personen",
+          "article": "art:26:11",
+          "language": "de",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "Was wir einsetzen",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company has 40 employees and operates in logistics.",
+                "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+                "The company bought the tool from a vendor and did not change it."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Seine Einstufung",
+              "provenance": "classification",
+              "paragraphs": [
+                "Ihre Einstufung: Hochrisiko, Anhang III Nummer 4 Buchstabe a, angenommen, bis Sie die offene Frage beantworten.",
+                "Sie nennt die Pflicht nach Art. 26 Abs. 11, die ab dem 2. Dezember 2027 gilt."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "why",
+              "heading": "Warum wir Sie informieren",
+              "provenance": "template",
+              "paragraphs": [
+                "Nach Artikel 26 Absatz 11 der KI-Verordnung muss ein Betreiber eines in Anhang III genannten Hochrisiko-KI-Systems, das Entscheidungen über natürliche Personen trifft oder dabei unterstützt, diese Personen darüber informieren, dass das System bei ihnen verwendet wird."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "tool",
+              "heading": "Das Tool und sein Anbieter",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["tool_and_supplier"],
+              "unanswered": ["tool_and_supplier"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "decisions",
+              "heading": "Wofür es verwendet wird",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["decisions"],
+              "unanswered": ["decisions"],
+              "status": "questions",
+              "requirement": null
+            },
+            {
+              "key": "contact",
+              "heading": "An wen Sie sich wenden können",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["contact"],
+              "unanswered": ["contact"],
+              "status": "questions",
+              "requirement": null
+            }
+          ],
+          "unanswered": 3,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-10-06",
+          "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "tool_and_supplier",
+            "text": "Wie heißt das Tool, und wer liefert es?",
+            "section": "tool"
+          },
+          {
+            "key": "decisions",
+            "text": "Welche Entscheidungen über Personen trifft das Tool oder bereitet es vor?",
+            "section": "decisions"
+          },
+          {
+            "key": "contact",
+            "text": "An wen können sich Personen mit Fragen zum Tool wenden?",
+            "section": "contact"
+          }
+        ]
+      }
+    ]
+  },
+  "provider": {
+    "en": [
+      {
+        "document": {
+          "template": "annex_iv_technical_documentation",
+          "title": "Technical documentation (Annex IV)",
+          "article": "art:11:1",
+          "language": "en",
+          "label": "DRAFT",
+          "note": "A simplified form for SMEs and small mid-caps is expected (Art. 11(1)). Until the Commission publishes it, this is the full Annex IV.",
+          "sections": [
+            {
+              "key": "system",
+              "heading": "The system",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company uses a tool bought from a vendor",
+                "The tool scores and ranks applicants",
+                "The tool was not modified"
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a).",
+                "It lists the duty under Art. 11(1), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "general_description",
+              "heading": "General description of the system",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": [
+                "intended_purpose",
+                "interactions",
+                "software_versions",
+                "market_forms",
+                "hardware",
+                "product_component",
+                "user_interface",
+                "instructions_for_use"
+              ],
+              "unanswered": [
+                "intended_purpose",
+                "interactions",
+                "software_versions",
+                "market_forms",
+                "hardware",
+                "product_component",
+                "user_interface",
+                "instructions_for_use"
+              ],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "annex:IV:1",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A general description of the AI system including:\n(a) its intended purpose, the name of the provider and the version of the system reflecting its relation to previous versions;\n(b) how the AI system interacts with, or can be used to interact with, hardware or software, including with other AI systems, that are not part of the AI system itself, where applicable;\n(c) the versions of relevant software or firmware, and any requirements related to version updates;\n(d) the description of all the forms in which the AI system is placed on the market or put into service, such as software packages embedded into hardware, downloads, or APIs;\n(e) the description of the hardware on which the AI system is intended to run;\n(f) where the AI system is a component of products, photographs or illustrations showing external features, the marking and internal layout of those products;\n(g) a basic description of the user-interface provided to the deployer;\n(h) instructions for use for the deployer, and a basic description of the user-interface provided to the deployer, where applicable;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "development",
+              "heading": "Elements and development process",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": [
+                "development_methods",
+                "design_specifications",
+                "architecture",
+                "data_requirements",
+                "oversight_assessment",
+                "predetermined_changes",
+                "validation_testing",
+                "cybersecurity"
+              ],
+              "unanswered": [
+                "development_methods",
+                "design_specifications",
+                "architecture",
+                "data_requirements",
+                "oversight_assessment",
+                "predetermined_changes",
+                "validation_testing",
+                "cybersecurity"
+              ],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "annex:IV:2",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A detailed description of the elements of the AI system and of the process for its development, including:\n(a) the methods and steps performed for the development of the AI system, including, where relevant, recourse to pre-trained systems or tools provided by third parties and how those were used, integrated or modified by the provider;\n(b) the design specifications of the system, namely the general logic of the AI system and of the algorithms; the key design choices including the rationale and assumptions made, including with regard to persons or groups of persons in respect of who, the system is intended to be used; the main classification choices; what the system is designed to optimise for, and the relevance of the different parameters; the description of the expected output and output quality of the system; the decisions about any possible trade-off made regarding the technical solutions adopted to comply with the requirements set out in Chapter III, Section 2;\n(c) the description of the system architecture explaining how software components build on or feed into each other and integrate into the overall processing; the computational resources used to develop, train, test and validate the AI system;\n(d) where relevant, the data requirements in terms of datasheets describing the training methodologies and techniques and the training data sets used, including a general description of these data sets, information about their provenance, scope and main characteristics; how the data was obtained and selected; labelling procedures (e.g. for supervised learning), data cleaning methodologies (e.g. outliers detection);\n(e) assessment of the human oversight measures needed in accordance with Article 14, including an assessment of the technical measures needed to facilitate the interpretation of the outputs of AI systems by the deployers, in accordance with Article 13(3), point (d);\n(f) where applicable, a detailed description of pre-determined changes to the AI system and its performance, together with all the relevant information related to the technical solutions adopted to ensure continuous compliance of the AI system with the relevant requirements set out in Chapter III, Section 2;\n(g) the validation and testing procedures used, including information about the validation and testing data used and their main characteristics; metrics used to measure accuracy, robustness and compliance with other relevant requirements set out in Chapter III, Section 2, as well as potentially discriminatory impacts; test logs and all test reports dated and signed by the responsible persons, including with regard to pre-determined changes as referred to under point (f);\n(h) cybersecurity measures put in place;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "monitoring",
+              "heading": "Monitoring, functioning and control",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": [
+                "capabilities_limitations",
+                "unintended_outcomes",
+                "oversight_measures",
+                "input_data"
+              ],
+              "unanswered": [
+                "capabilities_limitations",
+                "unintended_outcomes",
+                "oversight_measures",
+                "input_data"
+              ],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "annex:IV:3",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "Detailed information about the monitoring, functioning and control of the AI system, in particular with regard to: its capabilities and limitations in performance, including the degrees of accuracy for specific persons or groups of persons on which the system is intended to be used and the overall expected level of accuracy in relation to its intended purpose; the foreseeable unintended outcomes and sources of risks to health and safety, fundamental rights and discrimination in view of the intended purpose of the AI system; the human oversight measures needed in accordance with Article 14, including the technical measures put in place to facilitate the interpretation of the outputs of AI systems by the deployers; specifications on input data, as appropriate;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "performance_metrics",
+              "heading": "Performance metrics",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["metrics_appropriateness"],
+              "unanswered": ["metrics_appropriateness"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "annex:IV:4",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A description of the appropriateness of the performance metrics for the specific AI system;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "risk_management",
+              "heading": "Risk management system",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_management_system"],
+              "unanswered": ["risk_management_system"],
+              "status": "to_fill_in",
+              "requirement": {
+                "provision_id": "annex:IV:5",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A detailed description of the risk management system in accordance with Article 9;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "lifecycle_changes",
+              "heading": "Changes through the lifecycle",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["relevant_changes"],
+              "unanswered": ["relevant_changes"],
+              "status": "to_fill_in",
+              "requirement": {
+                "provision_id": "annex:IV:6",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A description of relevant changes made by the provider to the system through its lifecycle;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "standards",
+              "heading": "Standards applied",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["harmonised_standards"],
+              "unanswered": ["harmonised_standards"],
+              "status": "needs_evidence",
+              "requirement": {
+                "provision_id": "annex:IV:7",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A list of the harmonised standards applied in full or in part the references of which have been published in the Official Journal of the European Union; where no such harmonised standards have been applied, a detailed description of the solutions adopted to meet the requirements set out in Chapter III, Section 2, including a list of other relevant standards and technical specifications applied;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "declaration_of_conformity",
+              "heading": "EU declaration of conformity",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["declaration_copy"],
+              "unanswered": ["declaration_copy"],
+              "status": "generated_last",
+              "requirement": {
+                "provision_id": "annex:IV:8",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A copy of the EU declaration of conformity referred to in Article 47;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "post_market_monitoring",
+              "heading": "Post-market monitoring",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["post_market_plan"],
+              "unanswered": ["post_market_plan"],
+              "status": "to_fill_in",
+              "requirement": {
+                "provision_id": "annex:IV:9",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A detailed description of the system in place to evaluate the AI system performance in the post-market phase in accordance with Article 72, including the post-market monitoring plan referred to in Article 72(3).",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            }
+          ],
+          "unanswered": 26,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-09-27",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "intended_purpose",
+            "text": "What is the system's intended purpose, who is its provider, and which version is this, in relation to earlier versions?",
+            "section": "general_description"
+          },
+          {
+            "key": "interactions",
+            "text": "Does the system interact with hardware or software that isn't part of it, including other AI systems? How?",
+            "section": "general_description"
+          },
+          {
+            "key": "software_versions",
+            "text": "Which versions of software or firmware does it use, and what do version updates require?",
+            "section": "general_description"
+          },
+          {
+            "key": "market_forms",
+            "text": "In which forms is it placed on the market or put into service, for example a software package, a download or an API?",
+            "section": "general_description"
+          },
+          {
+            "key": "hardware",
+            "text": "What hardware is it intended to run on?",
+            "section": "general_description"
+          },
+          {
+            "key": "product_component",
+            "text": "Is it a component of a product? If so, which photographs or illustrations show the product's external features, marking and internal layout?",
+            "section": "general_description"
+          },
+          {
+            "key": "user_interface",
+            "text": "What is the user interface provided to the deployer like, in brief?",
+            "section": "general_description"
+          },
+          {
+            "key": "instructions_for_use",
+            "text": "Where are the instructions for use for the deployer?",
+            "section": "general_description"
+          },
+          {
+            "key": "development_methods",
+            "text": "Which methods and steps were used to develop the system, including any pre-trained systems or third-party tools, and how were those used, integrated or modified?",
+            "section": "development"
+          },
+          {
+            "key": "design_specifications",
+            "text": "What are the design specifications: the general logic and algorithms, the key design choices with their rationale and assumptions, what the system optimises for, its expected output and output quality, and any trade-offs made to meet the requirements?",
+            "section": "development"
+          },
+          {
+            "key": "architecture",
+            "text": "How is the system built: how do its software components build on or feed into each other, and which computational resources were used to develop, train, test and validate it?",
+            "section": "development"
+          },
+          {
+            "key": "data_requirements",
+            "text": "Which training methods and data sets were used: their provenance, scope and main characteristics, and how the data was obtained, selected, labelled and cleaned?",
+            "section": "development"
+          },
+          {
+            "key": "oversight_assessment",
+            "text": "Which human oversight measures does the system need (Art. 14), and which technical measures help deployers interpret its outputs?",
+            "section": "development"
+          },
+          {
+            "key": "predetermined_changes",
+            "text": "Are changes to the system and its performance determined in advance? If so, what are they, and how do you make sure it keeps meeting the requirements?",
+            "section": "development"
+          },
+          {
+            "key": "validation_testing",
+            "text": "Which validation and testing procedures and data were used, and which metrics measure accuracy, robustness and potentially discriminatory impacts? Where are the dated and signed test logs and reports?",
+            "section": "development"
+          },
+          {
+            "key": "cybersecurity",
+            "text": "Which cybersecurity measures are in place?",
+            "section": "development"
+          },
+          {
+            "key": "capabilities_limitations",
+            "text": "What are the system's capabilities and limitations in performance, including its accuracy for the persons or groups it is used on and its expected accuracy overall?",
+            "section": "monitoring"
+          },
+          {
+            "key": "unintended_outcomes",
+            "text": "Which unintended outcomes and sources of risk to health, safety and fundamental rights, and of discrimination, can be foreseen?",
+            "section": "monitoring"
+          },
+          {
+            "key": "oversight_measures",
+            "text": "Which human oversight measures are in place, including the technical measures that help deployers interpret the outputs?",
+            "section": "monitoring"
+          },
+          {
+            "key": "input_data",
+            "text": "Which specifications apply to the input data, if any?",
+            "section": "monitoring"
+          },
+          {
+            "key": "metrics_appropriateness",
+            "text": "Which performance metrics do you use, and why are they appropriate for this system?",
+            "section": "performance_metrics"
+          },
+          {
+            "key": "risk_management_system",
+            "text": "Describe the risk management system under Art. 9 in detail, or name the document that does.",
+            "section": "risk_management"
+          },
+          {
+            "key": "relevant_changes",
+            "text": "Which relevant changes have you made to the system through its lifecycle?",
+            "section": "lifecycle_changes"
+          },
+          {
+            "key": "harmonised_standards",
+            "text": "Which harmonised standards published in the Official Journal do you apply, in full or in part? If none, how do you meet the requirements, and which other standards and technical specifications do you apply?",
+            "section": "standards"
+          },
+          {
+            "key": "declaration_copy",
+            "text": "Once the EU declaration of conformity (Art. 47) is drawn up, where is its copy kept?",
+            "section": "declaration_of_conformity"
+          },
+          {
+            "key": "post_market_plan",
+            "text": "How do you evaluate the system's performance once it is on the market (Art. 72), and where is the post-market monitoring plan (Art. 72(3))?",
+            "section": "post_market_monitoring"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_17_quality_management",
+          "title": "Quality management system (Art. 17)",
+          "article": "art:16:c",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "The system",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company uses a tool bought from a vendor",
+                "The tool scores and ranks applicants",
+                "The tool was not modified"
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a).",
+                "It lists the duty under Art. 16(c), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "compliance_strategy",
+              "heading": "Strategy for regulatory compliance",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["compliance_strategy"],
+              "unanswered": ["compliance_strategy"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:a",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "a strategy for regulatory compliance, including compliance with conformity assessment procedures and procedures for the management of modifications to the high-risk AI system;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "design_control",
+              "heading": "Design, design control and verification",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["design_control"],
+              "unanswered": ["design_control"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:b",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "techniques, procedures and systematic actions to be used for the design, design control and design verification of the high-risk AI system;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "development_quality",
+              "heading": "Development, quality control and assurance",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["development_quality"],
+              "unanswered": ["development_quality"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:c",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "techniques, procedures and systematic actions to be used for the development, quality control and quality assurance of the high-risk AI system;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "test_procedures",
+              "heading": "Examination, test and validation",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["test_procedures"],
+              "unanswered": ["test_procedures"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:d",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "examination, test and validation procedures to be carried out before, during and after the development of the high-risk AI system, and the frequency with which they have to be carried out;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "technical_specifications",
+              "heading": "Technical specifications and standards",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["technical_specifications"],
+              "unanswered": ["technical_specifications"],
+              "status": "needs_evidence",
+              "requirement": {
+                "provision_id": "art:17:1:e",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "technical specifications, including standards, to be applied and, where the relevant harmonised standards are not applied in full or do not cover all of the relevant requirements set out in Section 2, the means to be used to ensure that the high-risk AI system complies with those requirements;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "data_management",
+              "heading": "Data management",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["data_management"],
+              "unanswered": ["data_management"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:f",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "systems and procedures for data management, including data acquisition, data collection, data analysis, data labelling, data storage, data filtration, data mining, data aggregation, data retention and any other operation regarding the data that is performed before and for the purpose of the placing on the market or the putting into service of high-risk AI systems;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "risk_management",
+              "heading": "Risk management system",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_management_document"],
+              "unanswered": ["risk_management_document"],
+              "status": "to_fill_in",
+              "requirement": {
+                "provision_id": "art:17:1:g",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the risk management system referred to in Article 9;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "post_market_monitoring",
+              "heading": "Post-market monitoring",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["post_market_monitoring"],
+              "unanswered": ["post_market_monitoring"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:h",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the setting-up, implementation and maintenance of a post-market monitoring system, in accordance with Article 72;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "incident_reporting",
+              "heading": "Reporting serious incidents",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["incident_reporting"],
+              "unanswered": ["incident_reporting"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:i",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "procedures related to the reporting of a serious incident in accordance with Article 73;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "communication",
+              "heading": "Communication",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["communication"],
+              "unanswered": ["communication"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:j",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the handling of communication with national competent authorities, other relevant authorities, including those providing or supporting the access to data, notified bodies, other operators, customers or other interested parties;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "record_keeping",
+              "heading": "Record-keeping",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["record_keeping"],
+              "unanswered": ["record_keeping"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:k",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "systems and procedures for record-keeping of all relevant documentation and information;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "resource_management",
+              "heading": "Resource management",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["resource_management"],
+              "unanswered": ["resource_management"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:l",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "resource management, including security-of-supply related measures;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "accountability",
+              "heading": "Accountability",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["accountability"],
+              "unanswered": ["accountability"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:m",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "an accountability framework setting out the responsibilities of the management and other staff with regard to all the aspects listed in this paragraph.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            }
+          ],
+          "unanswered": 13,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-09-27",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "compliance_strategy",
+            "text": "What is your strategy for regulatory compliance, including conformity assessment and the management of changes to the system?",
+            "section": "compliance_strategy"
+          },
+          {
+            "key": "design_control",
+            "text": "Which techniques, procedures and systematic actions do you use to design the system and to control and verify its design?",
+            "section": "design_control"
+          },
+          {
+            "key": "development_quality",
+            "text": "Which techniques, procedures and systematic actions do you use for development, quality control and quality assurance?",
+            "section": "development_quality"
+          },
+          {
+            "key": "test_procedures",
+            "text": "Which examination, test and validation procedures do you carry out before, during and after development, and how often?",
+            "section": "test_procedures"
+          },
+          {
+            "key": "technical_specifications",
+            "text": "Which technical specifications and standards do you apply, and where the harmonised standards don't cover every requirement, how do you meet it?",
+            "section": "technical_specifications"
+          },
+          {
+            "key": "data_management",
+            "text": "Which systems and procedures govern your data management, from acquisition and labelling to storage and retention?",
+            "section": "data_management"
+          },
+          {
+            "key": "risk_management_document",
+            "text": "Which document sets out your risk management system under Art. 9?",
+            "section": "risk_management"
+          },
+          {
+            "key": "post_market_monitoring",
+            "text": "How do you set up, run and maintain post-market monitoring (Art. 72)?",
+            "section": "post_market_monitoring"
+          },
+          {
+            "key": "incident_reporting",
+            "text": "What is your procedure for reporting a serious incident (Art. 73)?",
+            "section": "incident_reporting"
+          },
+          {
+            "key": "communication",
+            "text": "How do you handle communication with authorities, notified bodies, other operators, customers and other interested parties?",
+            "section": "communication"
+          },
+          {
+            "key": "record_keeping",
+            "text": "Which systems and procedures keep records of all relevant documentation and information?",
+            "section": "record_keeping"
+          },
+          {
+            "key": "resource_management",
+            "text": "How do you manage resources, including security of supply?",
+            "section": "resource_management"
+          },
+          {
+            "key": "accountability",
+            "text": "Who in management and among other staff is responsible for each of these aspects?",
+            "section": "accountability"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_9_risk_management",
+          "title": "Risk management system (Art. 9)",
+          "article": "art:9",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "The system",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company uses a tool bought from a vendor",
+                "The tool scores and ranks applicants",
+                "The tool was not modified"
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a).",
+                "It lists the duty under Art. 9, which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "process",
+              "heading": "The risk management system",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_owner", "review_cycle"],
+              "unanswered": ["risk_owner", "review_cycle"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:1",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A risk management system shall be established, implemented, documented and maintained in relation to high-risk AI systems.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "known_risks",
+              "heading": "Known and foreseeable risks",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["known_risks"],
+              "unanswered": ["known_risks"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:2:a",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the identification and analysis of the known and the reasonably foreseeable risks that the high-risk AI system can pose to health, safety or fundamental rights when the high-risk AI system is used in accordance with its intended purpose;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "risk_estimation",
+              "heading": "Estimating and evaluating the risks",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_estimation"],
+              "unanswered": ["risk_estimation"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:2:b",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the estimation and evaluation of the risks that may emerge when the high-risk AI system is used in accordance with its intended purpose, and under conditions of reasonably foreseeable misuse;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "post_market_risks",
+              "heading": "Risks from post-market data",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["post_market_risks"],
+              "unanswered": ["post_market_risks"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:2:c",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the evaluation of other risks possibly arising, based on the analysis of data gathered from the post-market monitoring system referred to in Article 72;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "risk_measures",
+              "heading": "Risk management measures",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_measures"],
+              "unanswered": ["risk_measures"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:2:d",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the adoption of appropriate and targeted risk management measures designed to address the risks identified pursuant to point (a).",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "residual_risk",
+              "heading": "Residual risk",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["residual_risk", "risk_reduction", "deployer_information"],
+              "unanswered": ["residual_risk", "risk_reduction", "deployer_information"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:5",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "The risk management measures referred to in paragraph 2, point (d), shall be such that the relevant residual risk associated with each hazard, as well as the overall residual risk of the high-risk AI systems is judged to be acceptable.\nIn identifying the most appropriate risk management measures, the following shall be ensured:\n(a) elimination or reduction of risks identified and evaluated pursuant to paragraph 2 in as far as technically feasible through adequate design and development of the high-risk AI system;\n(b) where appropriate, implementation of adequate mitigation and control measures addressing risks that cannot be eliminated;\n(c) provision of information required pursuant to Article 13 and, where appropriate, training to deployers.\nWith a view to eliminating or reducing risks related to the use of the high-risk AI system, due consideration shall be given to the technical knowledge, experience, education, the training to be expected by the deployer, and the presumable context in which the system is intended to be used.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "testing",
+              "heading": "Testing",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["testing"],
+              "unanswered": ["testing"],
+              "status": "needs_evidence",
+              "requirement": {
+                "provision_id": "art:9:6",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "High-risk AI systems shall be tested for the purpose of identifying the most appropriate and targeted risk management measures. Testing shall ensure that high-risk AI systems perform consistently for their intended purpose and that they are in compliance with the requirements set out in this Section.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "test_metrics",
+              "heading": "When and against what it is tested",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["test_metrics"],
+              "unanswered": ["test_metrics"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:8",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "The testing of high-risk AI systems shall be performed, as appropriate, at any time throughout the development process, and, in any event, prior to their being placed on the market or put into service. Testing shall be carried out against prior defined metrics and probabilistic thresholds that are appropriate to the intended purpose of the high-risk AI system.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "vulnerable_groups",
+              "heading": "Minors and vulnerable groups",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["vulnerable_groups"],
+              "unanswered": ["vulnerable_groups"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:9",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "When implementing the risk management system as provided for in paragraphs 1 to 7, providers shall give consideration to whether in view of its intended purpose the high-risk AI system is likely to have an adverse impact on persons under the age of 18 and, as appropriate, other vulnerable groups.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            }
+          ],
+          "unanswered": 12,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-09-27",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "risk_owner",
+            "text": "Who establishes, implements and maintains the risk management system, and where is it documented?",
+            "section": "process"
+          },
+          {
+            "key": "review_cycle",
+            "text": "How often is it reviewed and updated through the system's lifecycle?",
+            "section": "process"
+          },
+          {
+            "key": "known_risks",
+            "text": "Which known and reasonably foreseeable risks to health, safety or fundamental rights can the system pose when it is used as intended?",
+            "section": "known_risks"
+          },
+          {
+            "key": "risk_estimation",
+            "text": "How do you estimate and evaluate the risks, under intended use and under reasonably foreseeable misuse?",
+            "section": "risk_estimation"
+          },
+          {
+            "key": "post_market_risks",
+            "text": "How do you evaluate other risks from the data your post-market monitoring gathers (Art. 72)?",
+            "section": "post_market_risks"
+          },
+          {
+            "key": "risk_measures",
+            "text": "Which risk management measures address the risks you identified?",
+            "section": "risk_measures"
+          },
+          {
+            "key": "residual_risk",
+            "text": "Why is the residual risk of each hazard, and the overall residual risk, acceptable?",
+            "section": "residual_risk"
+          },
+          {
+            "key": "risk_reduction",
+            "text": "How do design and development eliminate or reduce the risks, and which mitigation and control measures address those that can't be eliminated?",
+            "section": "residual_risk"
+          },
+          {
+            "key": "deployer_information",
+            "text": "Which information (Art. 13) and, where appropriate, training do deployers get?",
+            "section": "residual_risk"
+          },
+          {
+            "key": "testing",
+            "text": "Which tests identify the most appropriate risk management measures and show that the system performs consistently for its intended purpose? Where are the results?",
+            "section": "testing"
+          },
+          {
+            "key": "test_metrics",
+            "text": "When during development is the system tested, and against which metrics and probabilistic thresholds, defined beforehand?",
+            "section": "test_metrics"
+          },
+          {
+            "key": "vulnerable_groups",
+            "text": "Is the system likely to have an adverse impact on people under 18 or other vulnerable groups? How have you considered this?",
+            "section": "vulnerable_groups"
+          }
+        ]
+      }
+    ],
+    "en_answered": [
+      {
+        "document": {
+          "template": "annex_iv_technical_documentation",
+          "title": "Technical documentation (Annex IV)",
+          "article": "art:11:1",
+          "language": "en",
+          "label": "DRAFT",
+          "note": "A simplified form for SMEs and small mid-caps is expected (Art. 11(1)). Until the Commission publishes it, this is the full Annex IV.",
+          "sections": [
+            {
+              "key": "system",
+              "heading": "The system",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company uses a tool bought from a vendor",
+                "The tool scores and ranks applicants",
+                "The tool was not modified"
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a).",
+                "It lists the duty under Art. 11(1), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "general_description",
+              "heading": "General description of the system",
+              "provenance": "interview",
+              "paragraphs": ["Scores drivers for bonuses."],
+              "question_keys": [
+                "intended_purpose",
+                "interactions",
+                "software_versions",
+                "market_forms",
+                "hardware",
+                "product_component",
+                "user_interface",
+                "instructions_for_use"
+              ],
+              "unanswered": [
+                "interactions",
+                "software_versions",
+                "market_forms",
+                "hardware",
+                "product_component",
+                "user_interface",
+                "instructions_for_use"
+              ],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "annex:IV:1",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A general description of the AI system including:\n(a) its intended purpose, the name of the provider and the version of the system reflecting its relation to previous versions;\n(b) how the AI system interacts with, or can be used to interact with, hardware or software, including with other AI systems, that are not part of the AI system itself, where applicable;\n(c) the versions of relevant software or firmware, and any requirements related to version updates;\n(d) the description of all the forms in which the AI system is placed on the market or put into service, such as software packages embedded into hardware, downloads, or APIs;\n(e) the description of the hardware on which the AI system is intended to run;\n(f) where the AI system is a component of products, photographs or illustrations showing external features, the marking and internal layout of those products;\n(g) a basic description of the user-interface provided to the deployer;\n(h) instructions for use for the deployer, and a basic description of the user-interface provided to the deployer, where applicable;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "development",
+              "heading": "Elements and development process",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": [
+                "development_methods",
+                "design_specifications",
+                "architecture",
+                "data_requirements",
+                "oversight_assessment",
+                "predetermined_changes",
+                "validation_testing",
+                "cybersecurity"
+              ],
+              "unanswered": [
+                "development_methods",
+                "design_specifications",
+                "architecture",
+                "data_requirements",
+                "oversight_assessment",
+                "predetermined_changes",
+                "validation_testing",
+                "cybersecurity"
+              ],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "annex:IV:2",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A detailed description of the elements of the AI system and of the process for its development, including:\n(a) the methods and steps performed for the development of the AI system, including, where relevant, recourse to pre-trained systems or tools provided by third parties and how those were used, integrated or modified by the provider;\n(b) the design specifications of the system, namely the general logic of the AI system and of the algorithms; the key design choices including the rationale and assumptions made, including with regard to persons or groups of persons in respect of who, the system is intended to be used; the main classification choices; what the system is designed to optimise for, and the relevance of the different parameters; the description of the expected output and output quality of the system; the decisions about any possible trade-off made regarding the technical solutions adopted to comply with the requirements set out in Chapter III, Section 2;\n(c) the description of the system architecture explaining how software components build on or feed into each other and integrate into the overall processing; the computational resources used to develop, train, test and validate the AI system;\n(d) where relevant, the data requirements in terms of datasheets describing the training methodologies and techniques and the training data sets used, including a general description of these data sets, information about their provenance, scope and main characteristics; how the data was obtained and selected; labelling procedures (e.g. for supervised learning), data cleaning methodologies (e.g. outliers detection);\n(e) assessment of the human oversight measures needed in accordance with Article 14, including an assessment of the technical measures needed to facilitate the interpretation of the outputs of AI systems by the deployers, in accordance with Article 13(3), point (d);\n(f) where applicable, a detailed description of pre-determined changes to the AI system and its performance, together with all the relevant information related to the technical solutions adopted to ensure continuous compliance of the AI system with the relevant requirements set out in Chapter III, Section 2;\n(g) the validation and testing procedures used, including information about the validation and testing data used and their main characteristics; metrics used to measure accuracy, robustness and compliance with other relevant requirements set out in Chapter III, Section 2, as well as potentially discriminatory impacts; test logs and all test reports dated and signed by the responsible persons, including with regard to pre-determined changes as referred to under point (f);\n(h) cybersecurity measures put in place;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "monitoring",
+              "heading": "Monitoring, functioning and control",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": [
+                "capabilities_limitations",
+                "unintended_outcomes",
+                "oversight_measures",
+                "input_data"
+              ],
+              "unanswered": [
+                "capabilities_limitations",
+                "unintended_outcomes",
+                "oversight_measures",
+                "input_data"
+              ],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "annex:IV:3",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "Detailed information about the monitoring, functioning and control of the AI system, in particular with regard to: its capabilities and limitations in performance, including the degrees of accuracy for specific persons or groups of persons on which the system is intended to be used and the overall expected level of accuracy in relation to its intended purpose; the foreseeable unintended outcomes and sources of risks to health and safety, fundamental rights and discrimination in view of the intended purpose of the AI system; the human oversight measures needed in accordance with Article 14, including the technical measures put in place to facilitate the interpretation of the outputs of AI systems by the deployers; specifications on input data, as appropriate;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "performance_metrics",
+              "heading": "Performance metrics",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["metrics_appropriateness"],
+              "unanswered": ["metrics_appropriateness"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "annex:IV:4",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A description of the appropriateness of the performance metrics for the specific AI system;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "risk_management",
+              "heading": "Risk management system",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_management_system"],
+              "unanswered": ["risk_management_system"],
+              "status": "to_fill_in",
+              "requirement": {
+                "provision_id": "annex:IV:5",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A detailed description of the risk management system in accordance with Article 9;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "lifecycle_changes",
+              "heading": "Changes through the lifecycle",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["relevant_changes"],
+              "unanswered": ["relevant_changes"],
+              "status": "to_fill_in",
+              "requirement": {
+                "provision_id": "annex:IV:6",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A description of relevant changes made by the provider to the system through its lifecycle;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "standards",
+              "heading": "Standards applied",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["harmonised_standards"],
+              "unanswered": ["harmonised_standards"],
+              "status": "needs_evidence",
+              "requirement": {
+                "provision_id": "annex:IV:7",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A list of the harmonised standards applied in full or in part the references of which have been published in the Official Journal of the European Union; where no such harmonised standards have been applied, a detailed description of the solutions adopted to meet the requirements set out in Chapter III, Section 2, including a list of other relevant standards and technical specifications applied;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "declaration_of_conformity",
+              "heading": "EU declaration of conformity",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["declaration_copy"],
+              "unanswered": ["declaration_copy"],
+              "status": "generated_last",
+              "requirement": {
+                "provision_id": "annex:IV:8",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A copy of the EU declaration of conformity referred to in Article 47;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "post_market_monitoring",
+              "heading": "Post-market monitoring",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["post_market_plan"],
+              "unanswered": ["post_market_plan"],
+              "status": "to_fill_in",
+              "requirement": {
+                "provision_id": "annex:IV:9",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A detailed description of the system in place to evaluate the AI system performance in the post-market phase in accordance with Article 72, including the post-market monitoring plan referred to in Article 72(3).",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            }
+          ],
+          "unanswered": 25,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-09-27",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "intended_purpose",
+            "text": "What is the system's intended purpose, who is its provider, and which version is this, in relation to earlier versions?",
+            "section": "general_description"
+          },
+          {
+            "key": "interactions",
+            "text": "Does the system interact with hardware or software that isn't part of it, including other AI systems? How?",
+            "section": "general_description"
+          },
+          {
+            "key": "software_versions",
+            "text": "Which versions of software or firmware does it use, and what do version updates require?",
+            "section": "general_description"
+          },
+          {
+            "key": "market_forms",
+            "text": "In which forms is it placed on the market or put into service, for example a software package, a download or an API?",
+            "section": "general_description"
+          },
+          {
+            "key": "hardware",
+            "text": "What hardware is it intended to run on?",
+            "section": "general_description"
+          },
+          {
+            "key": "product_component",
+            "text": "Is it a component of a product? If so, which photographs or illustrations show the product's external features, marking and internal layout?",
+            "section": "general_description"
+          },
+          {
+            "key": "user_interface",
+            "text": "What is the user interface provided to the deployer like, in brief?",
+            "section": "general_description"
+          },
+          {
+            "key": "instructions_for_use",
+            "text": "Where are the instructions for use for the deployer?",
+            "section": "general_description"
+          },
+          {
+            "key": "development_methods",
+            "text": "Which methods and steps were used to develop the system, including any pre-trained systems or third-party tools, and how were those used, integrated or modified?",
+            "section": "development"
+          },
+          {
+            "key": "design_specifications",
+            "text": "What are the design specifications: the general logic and algorithms, the key design choices with their rationale and assumptions, what the system optimises for, its expected output and output quality, and any trade-offs made to meet the requirements?",
+            "section": "development"
+          },
+          {
+            "key": "architecture",
+            "text": "How is the system built: how do its software components build on or feed into each other, and which computational resources were used to develop, train, test and validate it?",
+            "section": "development"
+          },
+          {
+            "key": "data_requirements",
+            "text": "Which training methods and data sets were used: their provenance, scope and main characteristics, and how the data was obtained, selected, labelled and cleaned?",
+            "section": "development"
+          },
+          {
+            "key": "oversight_assessment",
+            "text": "Which human oversight measures does the system need (Art. 14), and which technical measures help deployers interpret its outputs?",
+            "section": "development"
+          },
+          {
+            "key": "predetermined_changes",
+            "text": "Are changes to the system and its performance determined in advance? If so, what are they, and how do you make sure it keeps meeting the requirements?",
+            "section": "development"
+          },
+          {
+            "key": "validation_testing",
+            "text": "Which validation and testing procedures and data were used, and which metrics measure accuracy, robustness and potentially discriminatory impacts? Where are the dated and signed test logs and reports?",
+            "section": "development"
+          },
+          {
+            "key": "cybersecurity",
+            "text": "Which cybersecurity measures are in place?",
+            "section": "development"
+          },
+          {
+            "key": "capabilities_limitations",
+            "text": "What are the system's capabilities and limitations in performance, including its accuracy for the persons or groups it is used on and its expected accuracy overall?",
+            "section": "monitoring"
+          },
+          {
+            "key": "unintended_outcomes",
+            "text": "Which unintended outcomes and sources of risk to health, safety and fundamental rights, and of discrimination, can be foreseen?",
+            "section": "monitoring"
+          },
+          {
+            "key": "oversight_measures",
+            "text": "Which human oversight measures are in place, including the technical measures that help deployers interpret the outputs?",
+            "section": "monitoring"
+          },
+          {
+            "key": "input_data",
+            "text": "Which specifications apply to the input data, if any?",
+            "section": "monitoring"
+          },
+          {
+            "key": "metrics_appropriateness",
+            "text": "Which performance metrics do you use, and why are they appropriate for this system?",
+            "section": "performance_metrics"
+          },
+          {
+            "key": "risk_management_system",
+            "text": "Describe the risk management system under Art. 9 in detail, or name the document that does.",
+            "section": "risk_management"
+          },
+          {
+            "key": "relevant_changes",
+            "text": "Which relevant changes have you made to the system through its lifecycle?",
+            "section": "lifecycle_changes"
+          },
+          {
+            "key": "harmonised_standards",
+            "text": "Which harmonised standards published in the Official Journal do you apply, in full or in part? If none, how do you meet the requirements, and which other standards and technical specifications do you apply?",
+            "section": "standards"
+          },
+          {
+            "key": "declaration_copy",
+            "text": "Once the EU declaration of conformity (Art. 47) is drawn up, where is its copy kept?",
+            "section": "declaration_of_conformity"
+          },
+          {
+            "key": "post_market_plan",
+            "text": "How do you evaluate the system's performance once it is on the market (Art. 72), and where is the post-market monitoring plan (Art. 72(3))?",
+            "section": "post_market_monitoring"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_17_quality_management",
+          "title": "Quality management system (Art. 17)",
+          "article": "art:16:c",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "The system",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company uses a tool bought from a vendor",
+                "The tool scores and ranks applicants",
+                "The tool was not modified"
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a).",
+                "It lists the duty under Art. 16(c), which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "compliance_strategy",
+              "heading": "Strategy for regulatory compliance",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["compliance_strategy"],
+              "unanswered": ["compliance_strategy"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:a",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "a strategy for regulatory compliance, including compliance with conformity assessment procedures and procedures for the management of modifications to the high-risk AI system;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "design_control",
+              "heading": "Design, design control and verification",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["design_control"],
+              "unanswered": ["design_control"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:b",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "techniques, procedures and systematic actions to be used for the design, design control and design verification of the high-risk AI system;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "development_quality",
+              "heading": "Development, quality control and assurance",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["development_quality"],
+              "unanswered": ["development_quality"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:c",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "techniques, procedures and systematic actions to be used for the development, quality control and quality assurance of the high-risk AI system;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "test_procedures",
+              "heading": "Examination, test and validation",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["test_procedures"],
+              "unanswered": ["test_procedures"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:d",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "examination, test and validation procedures to be carried out before, during and after the development of the high-risk AI system, and the frequency with which they have to be carried out;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "technical_specifications",
+              "heading": "Technical specifications and standards",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["technical_specifications"],
+              "unanswered": ["technical_specifications"],
+              "status": "needs_evidence",
+              "requirement": {
+                "provision_id": "art:17:1:e",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "technical specifications, including standards, to be applied and, where the relevant harmonised standards are not applied in full or do not cover all of the relevant requirements set out in Section 2, the means to be used to ensure that the high-risk AI system complies with those requirements;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "data_management",
+              "heading": "Data management",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["data_management"],
+              "unanswered": ["data_management"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:f",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "systems and procedures for data management, including data acquisition, data collection, data analysis, data labelling, data storage, data filtration, data mining, data aggregation, data retention and any other operation regarding the data that is performed before and for the purpose of the placing on the market or the putting into service of high-risk AI systems;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "risk_management",
+              "heading": "Risk management system",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_management_document"],
+              "unanswered": ["risk_management_document"],
+              "status": "to_fill_in",
+              "requirement": {
+                "provision_id": "art:17:1:g",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the risk management system referred to in Article 9;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "post_market_monitoring",
+              "heading": "Post-market monitoring",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["post_market_monitoring"],
+              "unanswered": ["post_market_monitoring"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:h",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the setting-up, implementation and maintenance of a post-market monitoring system, in accordance with Article 72;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "incident_reporting",
+              "heading": "Reporting serious incidents",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["incident_reporting"],
+              "unanswered": ["incident_reporting"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:i",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "procedures related to the reporting of a serious incident in accordance with Article 73;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "communication",
+              "heading": "Communication",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["communication"],
+              "unanswered": ["communication"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:j",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the handling of communication with national competent authorities, other relevant authorities, including those providing or supporting the access to data, notified bodies, other operators, customers or other interested parties;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "record_keeping",
+              "heading": "Record-keeping",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["record_keeping"],
+              "unanswered": ["record_keeping"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:k",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "systems and procedures for record-keeping of all relevant documentation and information;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "resource_management",
+              "heading": "Resource management",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["resource_management"],
+              "unanswered": ["resource_management"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:l",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "resource management, including security-of-supply related measures;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "accountability",
+              "heading": "Accountability",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["accountability"],
+              "unanswered": ["accountability"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:17:1:m",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "an accountability framework setting out the responsibilities of the management and other staff with regard to all the aspects listed in this paragraph.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            }
+          ],
+          "unanswered": 13,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-09-27",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "compliance_strategy",
+            "text": "What is your strategy for regulatory compliance, including conformity assessment and the management of changes to the system?",
+            "section": "compliance_strategy"
+          },
+          {
+            "key": "design_control",
+            "text": "Which techniques, procedures and systematic actions do you use to design the system and to control and verify its design?",
+            "section": "design_control"
+          },
+          {
+            "key": "development_quality",
+            "text": "Which techniques, procedures and systematic actions do you use for development, quality control and quality assurance?",
+            "section": "development_quality"
+          },
+          {
+            "key": "test_procedures",
+            "text": "Which examination, test and validation procedures do you carry out before, during and after development, and how often?",
+            "section": "test_procedures"
+          },
+          {
+            "key": "technical_specifications",
+            "text": "Which technical specifications and standards do you apply, and where the harmonised standards don't cover every requirement, how do you meet it?",
+            "section": "technical_specifications"
+          },
+          {
+            "key": "data_management",
+            "text": "Which systems and procedures govern your data management, from acquisition and labelling to storage and retention?",
+            "section": "data_management"
+          },
+          {
+            "key": "risk_management_document",
+            "text": "Which document sets out your risk management system under Art. 9?",
+            "section": "risk_management"
+          },
+          {
+            "key": "post_market_monitoring",
+            "text": "How do you set up, run and maintain post-market monitoring (Art. 72)?",
+            "section": "post_market_monitoring"
+          },
+          {
+            "key": "incident_reporting",
+            "text": "What is your procedure for reporting a serious incident (Art. 73)?",
+            "section": "incident_reporting"
+          },
+          {
+            "key": "communication",
+            "text": "How do you handle communication with authorities, notified bodies, other operators, customers and other interested parties?",
+            "section": "communication"
+          },
+          {
+            "key": "record_keeping",
+            "text": "Which systems and procedures keep records of all relevant documentation and information?",
+            "section": "record_keeping"
+          },
+          {
+            "key": "resource_management",
+            "text": "How do you manage resources, including security of supply?",
+            "section": "resource_management"
+          },
+          {
+            "key": "accountability",
+            "text": "Who in management and among other staff is responsible for each of these aspects?",
+            "section": "accountability"
+          }
+        ]
+      },
+      {
+        "document": {
+          "template": "art_9_risk_management",
+          "title": "Risk management system (Art. 9)",
+          "article": "art:9",
+          "language": "en",
+          "label": "DRAFT",
+          "note": null,
+          "sections": [
+            {
+              "key": "system",
+              "heading": "The system",
+              "provenance": "classification",
+              "paragraphs": [
+                "The company uses a tool bought from a vendor",
+                "The tool scores and ranks applicants",
+                "The tool was not modified"
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "duty",
+              "heading": "Its classification",
+              "provenance": "classification",
+              "paragraphs": [
+                "Your classification: high-risk, Annex III point 4(a).",
+                "It lists the duty under Art. 9, which applies from 2 December 2027."
+              ],
+              "question_keys": [],
+              "unanswered": [],
+              "status": "drafted",
+              "requirement": null
+            },
+            {
+              "key": "process",
+              "heading": "The risk management system",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_owner", "review_cycle"],
+              "unanswered": ["risk_owner", "review_cycle"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:1",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "A risk management system shall be established, implemented, documented and maintained in relation to high-risk AI systems.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "known_risks",
+              "heading": "Known and foreseeable risks",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["known_risks"],
+              "unanswered": ["known_risks"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:2:a",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the identification and analysis of the known and the reasonably foreseeable risks that the high-risk AI system can pose to health, safety or fundamental rights when the high-risk AI system is used in accordance with its intended purpose;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "risk_estimation",
+              "heading": "Estimating and evaluating the risks",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_estimation"],
+              "unanswered": ["risk_estimation"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:2:b",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the estimation and evaluation of the risks that may emerge when the high-risk AI system is used in accordance with its intended purpose, and under conditions of reasonably foreseeable misuse;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "post_market_risks",
+              "heading": "Risks from post-market data",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["post_market_risks"],
+              "unanswered": ["post_market_risks"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:2:c",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the evaluation of other risks possibly arising, based on the analysis of data gathered from the post-market monitoring system referred to in Article 72;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "risk_measures",
+              "heading": "Risk management measures",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["risk_measures"],
+              "unanswered": ["risk_measures"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:2:d",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the adoption of appropriate and targeted risk management measures designed to address the risks identified pursuant to point (a).",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "residual_risk",
+              "heading": "Residual risk",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["residual_risk", "risk_reduction", "deployer_information"],
+              "unanswered": ["residual_risk", "risk_reduction", "deployer_information"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:5",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "The risk management measures referred to in paragraph 2, point (d), shall be such that the relevant residual risk associated with each hazard, as well as the overall residual risk of the high-risk AI systems is judged to be acceptable.\nIn identifying the most appropriate risk management measures, the following shall be ensured:\n(a) elimination or reduction of risks identified and evaluated pursuant to paragraph 2 in as far as technically feasible through adequate design and development of the high-risk AI system;\n(b) where appropriate, implementation of adequate mitigation and control measures addressing risks that cannot be eliminated;\n(c) provision of information required pursuant to Article 13 and, where appropriate, training to deployers.\nWith a view to eliminating or reducing risks related to the use of the high-risk AI system, due consideration shall be given to the technical knowledge, experience, education, the training to be expected by the deployer, and the presumable context in which the system is intended to be used.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "testing",
+              "heading": "Testing",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["testing"],
+              "unanswered": ["testing"],
+              "status": "needs_evidence",
+              "requirement": {
+                "provision_id": "art:9:6",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "High-risk AI systems shall be tested for the purpose of identifying the most appropriate and targeted risk management measures. Testing shall ensure that high-risk AI systems perform consistently for their intended purpose and that they are in compliance with the requirements set out in this Section.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "test_metrics",
+              "heading": "When and against what it is tested",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["test_metrics"],
+              "unanswered": ["test_metrics"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:8",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "The testing of high-risk AI systems shall be performed, as appropriate, at any time throughout the development process, and, in any event, prior to their being placed on the market or put into service. Testing shall be carried out against prior defined metrics and probabilistic thresholds that are appropriate to the intended purpose of the high-risk AI system.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            },
+            {
+              "key": "vulnerable_groups",
+              "heading": "Minors and vulnerable groups",
+              "provenance": "interview",
+              "paragraphs": [],
+              "question_keys": ["vulnerable_groups"],
+              "unanswered": ["vulnerable_groups"],
+              "status": "questions",
+              "requirement": {
+                "provision_id": "art:9:9",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "When implementing the risk management system as provided for in paragraphs 1 to 7, providers shall give consideration to whether in view of its intended purpose the high-risk AI system is likely to have an adverse impact on persons under the age of 18 and, as appropriate, other vulnerable groups.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            }
+          ],
+          "unanswered": 12,
+          "status": "needs_answers",
+          "law_version": "amended",
+          "as_of": "2026-09-27",
+          "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+        },
+        "checks": [
+          {
+            "check": "sections_present",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "nothing_invented",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "check": "facts_match",
+            "passed": true,
+            "problems": []
+          }
+        ],
+        "questions": [
+          {
+            "key": "risk_owner",
+            "text": "Who establishes, implements and maintains the risk management system, and where is it documented?",
+            "section": "process"
+          },
+          {
+            "key": "review_cycle",
+            "text": "How often is it reviewed and updated through the system's lifecycle?",
+            "section": "process"
+          },
+          {
+            "key": "known_risks",
+            "text": "Which known and reasonably foreseeable risks to health, safety or fundamental rights can the system pose when it is used as intended?",
+            "section": "known_risks"
+          },
+          {
+            "key": "risk_estimation",
+            "text": "How do you estimate and evaluate the risks, under intended use and under reasonably foreseeable misuse?",
+            "section": "risk_estimation"
+          },
+          {
+            "key": "post_market_risks",
+            "text": "How do you evaluate other risks from the data your post-market monitoring gathers (Art. 72)?",
+            "section": "post_market_risks"
+          },
+          {
+            "key": "risk_measures",
+            "text": "Which risk management measures address the risks you identified?",
+            "section": "risk_measures"
+          },
+          {
+            "key": "residual_risk",
+            "text": "Why is the residual risk of each hazard, and the overall residual risk, acceptable?",
+            "section": "residual_risk"
+          },
+          {
+            "key": "risk_reduction",
+            "text": "How do design and development eliminate or reduce the risks, and which mitigation and control measures address those that can't be eliminated?",
+            "section": "residual_risk"
+          },
+          {
+            "key": "deployer_information",
+            "text": "Which information (Art. 13) and, where appropriate, training do deployers get?",
+            "section": "residual_risk"
+          },
+          {
+            "key": "testing",
+            "text": "Which tests identify the most appropriate risk management measures and show that the system performs consistently for its intended purpose? Where are the results?",
+            "section": "testing"
+          },
+          {
+            "key": "test_metrics",
+            "text": "When during development is the system tested, and against which metrics and probabilistic thresholds, defined beforehand?",
+            "section": "test_metrics"
+          },
+          {
+            "key": "vulnerable_groups",
+            "text": "Is the system likely to have an adverse impact on people under 18 or other vulnerable groups? How have you considered this?",
+            "section": "vulnerable_groups"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -69,6 +69,14 @@ function stepRows(): HTMLElement[] {
 }
 
 describe('Result summary', () => {
+  it('opens Draft documents for this tool', async () => {
+    await openResult(decidedHighRisk())
+    expect(screen.getByRole('link', { name: 'Draft documents' })).toHaveAttribute(
+      'href',
+      `/app/documents?tool=${TOOL_ID}`,
+    )
+  })
+
   it('shows the class, the role and Annex point, and the date duties apply from', async () => {
     await openResult(decidedHighRisk())
     const summary = screen.getByRole('region', { name: 'Result' })
@@ -161,7 +169,7 @@ describe('Result summary', () => {
       const oversight = within(todo).getByRole('checkbox', { name: label }).closest('li')
       expect(within(oversight as HTMLElement).getByRole('link', { name: link })).toHaveAttribute(
         'href',
-        '/app/documents/art_26_2_oversight',
+        `/app/documents/art_26_2_oversight?tool=${TOOL_ID}`,
       )
       // Oversight, the workers' notice and the notice to the people affected have templates.
       expect(within(todo).getAllByRole('link', { name: link })).toHaveLength(3)
@@ -404,7 +412,7 @@ describe('Result variants (decision 026)', () => {
       expect(todo).toHaveTextContent(promise)
       expect(within(todo).getByRole('link', { name: link })).toHaveAttribute(
         'href',
-        '/app/documents/art_50_4_disclosure',
+        `/app/documents/art_50_4_disclosure?tool=${TOOL_ID}`,
       )
       expect(within(todo).getByText(ref)).toBeInTheDocument()
     },

@@ -154,6 +154,72 @@
     "amended": "Geändert, 2026",
     "original": "Ursprünglich, 2024"
   },
+  "documents": {
+    "navLabel": "Dokumente",
+    "breadcrumb": "Brotkrümelnavigation",
+    "forTool": "Für {{tool}}",
+    "needsAnswers_one": "{{article}}. {{count}} Antwort fehlt",
+    "needsAnswers_other": "{{article}}. {{count}} Antworten fehlen",
+    "readyToReview": "{{article}}. Bereit zur Prüfung",
+    "noDocuments": "Für sein Ergebnis sind keine Dokumente nötig.",
+    "drafting": "Die Dokumente werden entworfen …",
+    "draftFailed": "Klar konnte die Dokumente für dieses Tool nicht entwerfen.",
+    "tryAgain": "Erneut versuchen",
+    "notFound": "Keines Ihrer Tools hat dieses Dokument. Wählen Sie eines aus der Liste.",
+    "empty": {
+      "body": "Noch keine Dokumente. Stufen Sie ein Tool ein, dann entwirft Klar die Dokumente, die sein Ergebnis verlangt.",
+      "action": "Tool einstufen"
+    },
+    "download": {
+      "docx": ".docx herunterladen",
+      "pdf": "PDF herunterladen",
+      "failed": "Klar konnte die Datei nicht erstellen. Bitte versuchen Sie es erneut.",
+      "checksFailed": "Der Entwurf hat die automatischen Prüfungen nicht bestanden und kann nicht heruntergeladen werden."
+    },
+    "preview": "Dokumentvorschau",
+    "lawLine": "Geprüfte Fassung der KI-Verordnung: {{version}}, gültig am {{date}}.",
+    "preparedWith": "Entwurf erstellt mit Klar.",
+    "toFillIn": "Noch auszufüllen. Beantworten Sie es im geführten Interview.",
+    "provenance": {
+      "classification": "Aus Ihrer Einstufung",
+      "interview": "Aus Ihren Interview-Antworten"
+    },
+    "sectionStatus": {
+      "drafted": "Entworfen",
+      "questions_one": "{{count}} Frage",
+      "questions_other": "{{count}} Fragen",
+      "to_fill_in": "Noch auszufüllen",
+      "needs_evidence": "Nachweise nötig",
+      "generated_last": "Wird zuletzt erstellt"
+    },
+    "interview": {
+      "title": "Geführtes Interview",
+      "sectionTitle": "Interview: {{section}}",
+      "progress": "{{answered}} von {{total}} beantwortet",
+      "answeredList": "Beantwortet",
+      "upcomingList": "Noch offen",
+      "change": "Ändern",
+      "skip": "Später beantworten",
+      "save": "Antwort speichern",
+      "saving": "Wird gespeichert …",
+      "hintNotice": "So in den Hinweis übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
+      "hintSkeleton": "So übernommen, wie Sie es angeben, als Satz. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
+      "tooLong": "Eine Antwort darf bis zu 20.000 Zeichen lang sein.",
+      "done": "Alle Fragen hier sind beantwortet. Lesen Sie den Entwurf durch, bevor Sie ihn verwenden.",
+      "skippedAll": "Die übrigen Fragen haben Sie vorerst übersprungen.",
+      "showSkipped": "Zurück zu den übersprungenen Fragen"
+    },
+    "checks": {
+      "title": "Automatische Prüfungen",
+      "skeletonTitle": "Bevor Sie unterschreiben",
+      "skeletonIntro": "Klar prüft den Entwurf; Sie und Ihre Fachleute prüfen den Inhalt.",
+      "passed": "Bestanden",
+      "failed": "Nicht bestanden",
+      "sections_present": "Alle erforderlichen Abschnitte sind vorhanden",
+      "nothing_invented": "Kein Inhalt, den Sie nicht angegeben haben",
+      "facts_match": "Die Fakten stimmen mit der Einstufung überein"
+    }
+  },
   "welcome": {
     "title": "Sehen wir uns an, wo Ihre KI-Tools stehen.",
     "intro": "Fügen Sie die Tools Ihres Unternehmens einzeln hinzu. Klar prüft jedes in der Reihenfolge der KI-Verordnung, belegt jeden Schritt und erstellt Ihre Aufgabenliste mit Fristen.",
