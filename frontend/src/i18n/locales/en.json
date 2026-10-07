@@ -278,7 +278,11 @@
     "language": "Klar answers in English. Citations quote the English text.",
     "run": "Run the checks",
     "running": "Checking…",
-    "untitled": "Your tool"
+    "untitled": "Your tool",
+    "draftTool": {
+      "note": "Adds a new check to {{name}}.",
+      "newTool": "Classify as a new tool instead"
+    }
   },
   "progress": {
     "heading": "Checking in the Act's order",
@@ -554,6 +558,8 @@
       "heading": "Company summary",
       "prohibited_one": "{{name}} is prohibited: stop using it now.",
       "prohibited_other": "{{count}} tools are prohibited: stop using them now.",
+      "prohibitedAssumed_one": "One of them is assumed prohibited until its open question is settled.",
+      "prohibitedAssumed_other": "{{count}} of them are assumed prohibited until their open questions are settled.",
       "next": {
         "provider": "Next come your duties as the provider of <name/>, from <date/>.",
         "deployer": "Next come your duties as the deployer of <name/>, from <date/>.",

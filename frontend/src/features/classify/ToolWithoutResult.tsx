@@ -27,7 +27,10 @@ export function ToolWithoutResult({
   const navigate = useNavigate()
 
   function classify(): void {
-    saveDraft({ name: tool.name ?? '', description: tool.description }, tool.toolId)
+    saveDraft(
+      { name: tool.name ?? '', description: tool.description },
+      { toolId: tool.toolId, name: tool.name },
+    )
     void navigate({ to: '/app/classify' })
   }
 

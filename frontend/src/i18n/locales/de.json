@@ -278,7 +278,11 @@
     "language": "Klar antwortet auf Deutsch. Zitate geben den amtlichen deutschen Text wieder.",
     "run": "Prüfungen starten",
     "running": "Wird geprüft…",
-    "untitled": "Ihr Tool"
+    "untitled": "Ihr Tool",
+    "draftTool": {
+      "note": "Fügt eine neue Prüfung für {{name}} hinzu.",
+      "newTool": "Stattdessen als neues Tool prüfen"
+    }
   },
   "progress": {
     "heading": "Prüfung in der Reihenfolge der Verordnung",
@@ -554,6 +558,8 @@
       "heading": "Unternehmensübersicht",
       "prohibited_one": "{{name}} ist verboten: Nutzen Sie es ab sofort nicht mehr.",
       "prohibited_other": "{{count}} Tools sind verboten: Nutzen Sie sie ab sofort nicht mehr.",
+      "prohibitedAssumed_one": "Bei einem davon ist das Verbot angenommen, bis seine offene Frage geklärt ist.",
+      "prohibitedAssumed_other": "Bei {{count}} davon ist das Verbot angenommen, bis ihre offenen Fragen geklärt sind.",
       "next": {
         "provider": "Als Nächstes kommen Ihre Pflichten als Anbieter von <name/>, ab dem <date/>.",
         "deployer": "Als Nächstes kommen Ihre Pflichten als Betreiber von <name/>, ab dem <date/>.",

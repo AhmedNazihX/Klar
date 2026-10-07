@@ -149,7 +149,7 @@ Rows link to each tool's result. A decided row shows *Decided* as quiet text; op
 
 The Class and Status columns are never narrower than their widest pill (*High-risk, assumed*, *Needs more information*, or longer in German), so a pill can't spill into the next column; the Tool column gives way instead, and its description truncates. Basis and Applies from give way too, breaking only between citations and words.
 
-One exception, at 1280 px: a class pill wider than 200 px wraps onto two lines inside the pill. Only German *Außerhalb des Anwendungsbereichs* (261 px) is that wide. Kept on one line, the six German columns need about 1080 px against the panel's 958 (story P6, measured in `InventoryScreen.browser.test.tsx`). A tool without a result says why in quiet text, not a pill, and that text may wrap too.
+The Tool column keeps at least 160 px. To make room for it in German, two class pills wrap onto two lines inside the pill at 1280 px, and no others: *Außerhalb des Anwendungsbereichs* (261 px on one line) and *Hochrisiko, angenommen* (190 px). German class pills are capped at 160 px, the narrowest the out-of-scope pill gets on two lines (*Anwendungsbereichs* alone fills it); English ones at 200 px, which none reaches. The cap is by width, so a rarer assumed German class wider than 160 px would wrap the same way (*Verboten, angenommen*, 181 px, on an open prohibited result). Cells sit 12 px in from their neighbours rather than 16, without which the German table runs about 20 px past the panel's 958 (story P6, measured in `InventoryScreen.browser.test.tsx`). A tool without a result says why in quiet text, not a pill, and that text may wrap too.
 
 ## DescriptionField
 

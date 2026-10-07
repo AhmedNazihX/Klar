@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult } from '@/api'
 import { ScreenTitle } from '@/components/ScreenTitle'
+import { Button } from '@/components/ui/button'
 import { ClassifyRunError, useClassify } from '@/hooks/use-classify'
 import { useLanguage } from '@/hooks/use-language'
 import { useSaveClassifiedTool } from '@/hooks/use-save-classified-tool'
@@ -18,10 +19,32 @@ import {
   readDraft,
   saveDraft,
   type ClassificationRun,
+  type DraftTool,
 } from './classification-store'
 import { DescriptionForm } from './DescriptionForm'
 import { DescriptionFormSchema, type DescriptionFormValues } from './description-form'
 import { ProgressPanel } from './ProgressPanel'
+import { toolName } from './result-text'
+
+/** The quiet line while the draft is for a tool the user has ("Classify this tool"): the run is
+ *  saved on it, as its next check, unless the user makes it a new tool instead. */
+function DraftToolNote({
+  tool,
+  onNewTool,
+}: {
+  tool: DraftTool
+  onNewTool: () => void
+}): JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <p className="m-0 mb-3 flex flex-wrap items-center gap-x-2 text-body-small text-slate">
+      {t('classify.draftTool.note', { name: toolName(t, tool.name) })}
+      <Button variant="link" size="sm" className="h-auto px-0" onClick={onNewTool}>
+        {t('classify.draftTool.newTool')}
+      </Button>
+    </p>
+  )
+}
 
 /**
  * Describe a tool (artboards `Classify`, `ClassifyError`): the description form beside the live
@@ -39,8 +62,9 @@ export function ClassifyScreen(): JSX.Element {
   const { progress, run } = useClassify()
   const save = useSaveClassifiedTool()
   // The draft is read on mount only: useForm takes its values as defaults and owns them after;
-  // its tool (after "Classify this tool") is where the run is saved.
-  const [{ values: draftValues, toolId: draftToolId }] = useState(readDraft)
+  // its tool (after "Classify this tool") is where the run is saved, until the user lets it go.
+  const [{ values: draftValues, tool: initialTool }] = useState(readDraft)
+  const [draftTool, setDraftTool] = useState(initialTool)
   const form = useForm<DescriptionFormValues>({
     resolver: zodResolver(DescriptionFormSchema),
     defaultValues: draftValues,
@@ -56,7 +80,7 @@ export function ClassifyScreen(): JSX.Element {
     let saveFailure: ClassificationRun['saveFailure']
     try {
       savedId = await save.mutateAsync({
-        toolId: draftToolId,
+        toolId: draftTool?.toolId ?? null,
         name,
         description: values.description,
         result,
@@ -74,7 +98,7 @@ export function ClassifyScreen(): JSX.Element {
   }
 
   function start(values: DescriptionFormValues): void {
-    saveDraft(values, draftToolId)
+    saveDraft(values, draftTool)
     run.mutate(
       // The original text is only a view of the dates (decision 020): runs stay on the amended text.
       { description: values.description, language },
@@ -92,6 +116,15 @@ export function ClassifyScreen(): JSX.Element {
       </div>
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1">
+          {draftTool && (
+            <DraftToolNote
+              tool={draftTool}
+              onNewTool={() => {
+                setDraftTool(null)
+                saveDraft(form.getValues(), null)
+              }}
+            />
+          )}
           {/* Busy until the run is saved too, so a second click can't start another paid run. */}
           <DescriptionForm
             form={form}
@@ -105,7 +138,7 @@ export function ClassifyScreen(): JSX.Element {
           failure={run.isError ? (failure ?? { kind: 'network' }) : null}
           onTryAgain={() => void submit()}
           onSaveForLater={() => {
-            saveDraft(form.getValues(), draftToolId)
+            saveDraft(form.getValues(), draftTool)
             void navigate({ to: '/app/inventory' })
           }}
         />

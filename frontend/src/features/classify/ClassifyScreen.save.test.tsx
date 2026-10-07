@@ -24,7 +24,7 @@ import {
   userDataHandlers,
 } from '@/test/user-data-handlers'
 
-import { clearDraft } from './classification-store'
+import { clearDraft, readDraft, saveDraft } from './classification-store'
 
 vi.mock('@/lib/supabase', async (importOriginal) => {
   const actual = await importOriginal<typeof SupabaseModule>()
@@ -196,4 +196,63 @@ describe('Classify, saving the run to the inventory', () => {
       expect(classifyRequests).toBe(1)
     },
   )
+})
+
+describe('Classify, a draft for a tool the user has', () => {
+  const OLD_TOOL_ID = '7c1e4b2a-9d3f-4a5e-8b6c-0d1e2f3a4b5c'
+
+  /** "Classify this tool" left this draft: the old tool's name and description, and its id. */
+  async function openDraft(language: 'en' | 'de' = 'en') {
+    await i18n.changeLanguage(language)
+    saveDraft(
+      { name: 'Old screener', description: WORKED_EXAMPLE_DESCRIPTION },
+      { toolId: OLD_TOOL_ID, name: 'Old screener' },
+    )
+    server.use(saveHandler())
+    const user = userEvent.setup()
+    const rendered = renderRoute('/app/classify')
+    await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+    return { user, ...rendered }
+  }
+
+  it.each([
+    ['en', 'Adds a new check to Old screener.', 'Classify as a new tool instead'],
+    ['de', 'Fügt eine neue Prüfung für Old screener hinzu.', 'Stattdessen als neues Tool prüfen'],
+  ] as const)('says the run is added to that tool (%s)', async (language, note, action) => {
+    await openDraft(language)
+    expect(screen.getByText(note)).toBeVisible()
+    expect(screen.getByRole('button', { name: action })).toBeVisible()
+  })
+
+  it('saves the run on that tool while the line is shown', async () => {
+    const { user } = await openDraft()
+    await user.click(screen.getByRole('button', { name: 'Run the checks' }))
+
+    await expect.poll(() => saves.length).toBe(1)
+    expect(saves[0]).toMatchObject({ target_system_id: OLD_TOOL_ID })
+  })
+
+  it('"Classify as a new tool instead" lets the tool go: the next save creates a new tool', async () => {
+    const { user, router } = await openDraft()
+    await user.click(screen.getByRole('button', { name: 'Classify as a new tool instead' }))
+
+    expect(screen.queryByText('Adds a new check to Old screener.')).toBeNull()
+    // The kept draft forgets the tool too, so coming back later doesn't bring it back.
+    expect(readDraft()).toEqual({
+      values: { name: 'Old screener', description: WORKED_EXAMPLE_DESCRIPTION },
+      tool: null,
+    })
+    await user.click(screen.getByRole('button', { name: 'Run the checks' }))
+
+    await expect.poll(() => saves.length).toBe(1)
+    expect(saves[0]).toMatchObject({ tool_name: 'Old screener', target_system_id: null })
+    await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${SYSTEM_ID}`)
+  })
+
+  it('shows no line for a new tool', async () => {
+    await i18n.changeLanguage('en')
+    renderRoute('/app/classify')
+    await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+    expect(screen.queryByRole('button', { name: 'Classify as a new tool instead' })).toBeNull()
+  })
 })

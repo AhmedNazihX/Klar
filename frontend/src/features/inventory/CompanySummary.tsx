@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import type { JSX } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 
@@ -13,11 +14,12 @@ import { cn } from '@/lib/utils'
 import {
   classCounts,
   nextDuties,
+  prohibitedTools,
   transparencyInForce,
   type ClassCount,
   type NextDuties,
+  type ProhibitedTools,
 } from './company-summary'
-import { isChecked } from './tool-facts'
 
 const DOT_CLASS: Record<RiskClass, string> = {
   prohibited: 'bg-risk-prohibited-dot',
@@ -25,6 +27,21 @@ const DOT_CLASS: Record<RiskClass, string> = {
   limited_risk: 'bg-risk-limited-dot',
   minimal_risk: 'bg-risk-minimal-dot',
   out_of_scope: 'bg-risk-out-dot',
+}
+
+/** "Call mood scoring is prohibited…", saying when that is assumed (one tool: its class; several:
+ *  how many of them). */
+function prohibitedSentence(t: TFunction, prohibited: ProhibitedTools): string {
+  const sentence = t('inventory.summary.prohibited', {
+    count: prohibited.total,
+    name: toolName(t, prohibited.named.name),
+  })
+  if (prohibited.assumed === 0) return sentence
+  const assumed =
+    prohibited.total === 1
+      ? t('inventory.summary.assumedClass', { riskClass: t('pill.prohibited') })
+      : t('inventory.summary.prohibitedAssumed', { count: prohibited.assumed })
+  return `${sentence} ${assumed}`
 }
 
 /** "One tool is prohibited…", then the duties coming next (or already applying) under the law
@@ -38,20 +55,10 @@ function SummarySentence({
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
-  const prohibited = tools
-    .filter(isChecked)
-    .filter((tool) => tool.result.risk_class === 'prohibited')
-  const [firstProhibited] = prohibited
+  const prohibited = prohibitedTools(tools)
   return (
     <p className="m-0 max-w-[620px] text-body-large text-ink">
-      {firstProhibited && (
-        <>
-          {t('inventory.summary.prohibited', {
-            count: prohibited.length,
-            name: toolName(t, firstProhibited.name),
-          })}{' '}
-        </>
-      )}
+      {prohibited && <>{prohibitedSentence(t, prohibited)} </>}
       {next && (
         <>
           {/* The name goes in as an element, never into the string Trans parses for tags. */}
@@ -66,7 +73,7 @@ function SummarySentence({
             ` ${t('inventory.summary.assumedClass', { riskClass: t(`pill.${next.tool.result.risk_class}`) })}`}
         </>
       )}
-      {!firstProhibited && !next && t('inventory.summary.calm')}
+      {!prohibited && !next && t('inventory.summary.calm')}
     </p>
   )
 }

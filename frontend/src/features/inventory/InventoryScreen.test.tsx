@@ -288,6 +288,65 @@ describe('Inventory, the summary sentence', () => {
   })
 
   it.each([
+    [
+      'en',
+      'Call mood scoring is prohibited: stop using it now. Its class (Prohibited) is assumed until its open question is settled.',
+    ],
+    [
+      'de',
+      'Call mood scoring ist verboten: Nutzen Sie es ab sofort nicht mehr. Seine Klasse (Verboten) ist angenommen, bis seine offene Frage geklärt ist.',
+    ],
+  ] as const)(
+    'says a prohibited class is assumed while its question is open (%s)',
+    async (language, sentence) => {
+      tools = [toolRow('Call mood scoring', { ...prohibitedResult(), status: 'legally_ambiguous' })]
+      expect(await summaryUnder('/app/inventory', language)).toHaveTextContent(sentence)
+    },
+  )
+
+  it.each([
+    [
+      'en',
+      '2 tools are prohibited: stop using them now. One of them is assumed prohibited until its open question is settled.',
+    ],
+    [
+      'de',
+      '2 Tools sind verboten: Nutzen Sie sie ab sofort nicht mehr. Bei einem davon ist das Verbot angenommen, bis seine offene Frage geklärt ist.',
+    ],
+  ] as const)('says how many prohibited tools are assumed (%s)', async (language, sentence) => {
+    tools = [
+      toolRow('Call mood scoring', { ...prohibitedResult(), status: 'needs_more_information' }),
+      toolRow('Emotion reader', prohibitedResult()),
+    ]
+    expect(await summaryUnder('/app/inventory', language)).toHaveTextContent(sentence)
+  })
+
+  it.each([
+    [
+      'en',
+      '3 tools are prohibited: stop using them now. 2 of them are assumed prohibited until their open questions are settled.',
+    ],
+    [
+      'de',
+      '3 Tools sind verboten: Nutzen Sie sie ab sofort nicht mehr. Bei 2 davon ist das Verbot angenommen, bis ihre offenen Fragen geklärt sind.',
+    ],
+  ] as const)('counts several assumed prohibited tools (%s)', async (language, sentence) => {
+    tools = [
+      toolRow('Call mood scoring', { ...prohibitedResult(), status: 'needs_more_information' }),
+      toolRow('Face scraper', { ...prohibitedResult(), status: 'legally_ambiguous' }),
+      toolRow('Emotion reader', prohibitedResult()),
+    ]
+    expect(await summaryUnder('/app/inventory', language)).toHaveTextContent(sentence)
+  })
+
+  it('says nothing is assumed when the prohibited tool is decided', async () => {
+    tools = [toolRow('Call mood scoring', prohibitedResult())]
+    const summary = await summaryUnder('/app/inventory', 'en')
+    expect(summary).toHaveTextContent('Call mood scoring is prohibited: stop using it now.')
+    expect(summary).not.toHaveTextContent('assumed')
+  })
+
+  it.each([
     ['en', 'Your tool is prohibited: stop using it now.'],
     ['de', 'Ihr Tool ist verboten: Nutzen Sie es ab sofort nicht mehr.'],
   ] as const)('names an unnamed tool in the reader’s language (%s)', async (language, sentence) => {

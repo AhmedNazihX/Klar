@@ -77,11 +77,14 @@ export function putRun(queryClient: QueryClient, run: ClassificationRun): void {
   queryClient.setQueryData(classificationRunKey(run.toolId), { kind: 'run', run })
 }
 
-/** The description being worked on, and the tool it is for: null for a new tool; a tool's id
- *  after "Classify this tool", so the run is saved on that tool. */
-export type ClassifyDraft = { values: DescriptionFormValues; toolId: string | null }
+/** The tool a draft's run is saved on, with the name it had when "Classify this tool" was used. */
+export type DraftTool = { toolId: string; name: string | null }
 
-const EMPTY_DRAFT: ClassifyDraft = { values: { name: '', description: '' }, toolId: null }
+/** The description being worked on, and the tool it is for: null for a new tool; the tool after
+ *  "Classify this tool", so the run is saved on that tool. */
+export type ClassifyDraft = { values: DescriptionFormValues; tool: DraftTool | null }
+
+const EMPTY_DRAFT: ClassifyDraft = { values: { name: '', description: '' }, tool: null }
 let savedDraft: ClassifyDraft = EMPTY_DRAFT
 
 /** The draft kept for this session: "Save for later", "Edit description" and "Classify this
@@ -90,8 +93,8 @@ export function readDraft(): ClassifyDraft {
   return savedDraft
 }
 
-export function saveDraft(values: DescriptionFormValues, toolId: string | null = null): void {
-  savedDraft = { values: { ...values }, toolId }
+export function saveDraft(values: DescriptionFormValues, tool: DraftTool | null = null): void {
+  savedDraft = { values: { ...values }, tool }
 }
 
 export function clearDraft(): void {

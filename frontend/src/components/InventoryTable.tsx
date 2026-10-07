@@ -35,15 +35,17 @@ const HEADINGS = ['tool', 'role', 'class', 'basis', 'appliesFrom', 'status'] as 
 
 // Class and Status are never narrower than their widest pill, which stays on one line
 // (components.md › InventoryTable). All six columns still fit the panel at 1280 px, in German
-// too: the Tool column gives way (it takes the width left over, down to 96 px; its name wraps and
-// its description truncates), and Basis and Applies from wrap between citations and words.
+// too: the Tool column gives way (it takes the width left over, down to 160 px; its name wraps and
+// its description truncates), and Basis and Applies from wrap between citations and words. Cells
+// sit 12 px from their neighbours' edges: at 16 px the German table runs about 20 px past the panel.
 const PILL_CELL = 'w-px whitespace-nowrap'
-const TOOL_CELL = 'w-full min-w-24 max-w-0'
-const CELL = 'px-4 py-3.5 align-middle text-body-small text-ink'
-// The exception components.md allows: a class pill wider than 200 px wraps inside the pill. Only
-// German "Außerhalb des Anwendungsbereichs" (261 px) is; the widest one-line pill, "Hochrisiko,
-// angenommen", is 190 px. Six one-line columns in German need about 1080 px, the panel has 958.
-const CLASS_PILL_FIT = 'w-max max-w-[12.5rem] whitespace-normal'
+const TOOL_CELL = 'w-full min-w-40 max-w-0'
+const CELL = 'px-3 py-3.5 align-middle text-body-small text-ink'
+// The exceptions components.md allows: a class pill wider than its cap wraps inside the pill. In
+// English the cap is 200 px and no class pill reaches it. In German it is 160 px, and two pills
+// wrap: "Außerhalb des Anwendungsbereichs" (261 px on one line) and "Hochrisiko, angenommen"
+// (190 px). 160 px is the narrowest two-line out-of-scope pill: "Anwendungsbereichs" alone needs it.
+const CLASS_PILL_FIT = 'w-max max-w-[12.5rem] whitespace-normal [&:lang(de)]:max-w-[10rem]'
 // A tool without a result says why in quiet text, not a pill: it wraps past 144 px ("Gespeichertes
 // Ergebnis nicht lesbar") so its column stays as narrow as the widest status pill.
 const QUIET_STATUS_FIT = 'inline-block w-max max-w-36 whitespace-normal text-slate'
@@ -76,7 +78,7 @@ export function InventoryTable({ rows, label }: InventoryTableProps): JSX.Elemen
                 <th
                   key={heading}
                   scope="col"
-                  className="px-4 pt-5 pb-3 text-caption font-semibold whitespace-nowrap text-slate first:pl-7 last:pr-7"
+                  className="px-3 pt-5 pb-3 text-caption font-semibold whitespace-nowrap text-slate first:pl-7 last:pr-7"
                 >
                   {t(`inventory.table.${heading}`)}
                 </th>

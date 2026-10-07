@@ -15,6 +15,7 @@ import { ambiguousResult, prohibitedResult, toolId } from '@/test/inventory-fixt
 import {
   classCounts,
   nextDuties,
+  prohibitedTools,
   sharedLawDate,
   toolsNeedingYou,
   transparencyInForce,
@@ -149,6 +150,33 @@ describe('nextDuties', () => {
     const next = nextDuties([tool('Paused', WORKED_EXAMPLE), tool('Minimal', minimalRisk())], TODAY)
     expect(next?.tool.name).toBe('Paused')
     expect(next).toMatchObject({ date: '2027-12-02', isAssumed: true })
+  })
+})
+
+/** A prohibited result left open: the class it keeps is assumed. */
+function openProhibited(): ClassificationResult {
+  return { ...prohibitedResult(), status: 'legally_ambiguous' }
+}
+
+describe('prohibitedTools', () => {
+  it('names a decided prohibited tool before an assumed one, counting the assumed ones', () => {
+    const summary = prohibitedTools([
+      tool('Open', openProhibited()),
+      tool('Decided', prohibitedResult()),
+      tool('Screening', decidedHighRisk()),
+    ])
+    expect(summary?.named.name).toBe('Decided')
+    expect(summary).toMatchObject({ total: 2, assumed: 1 })
+  })
+
+  it('names an assumed one when no prohibited tool is decided', () => {
+    const summary = prohibitedTools([tool('Open', openProhibited())])
+    expect(summary?.named.name).toBe('Open')
+    expect(summary).toMatchObject({ total: 1, assumed: 1 })
+  })
+
+  it('is null without a prohibited tool', () => {
+    expect(prohibitedTools([tool('Screening', decidedHighRisk()), tool('Draft', null)])).toBeNull()
   })
 })
 

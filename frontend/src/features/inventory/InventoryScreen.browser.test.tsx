@@ -1,7 +1,7 @@
 // The inventory table's layout in a real browser (components.md › InventoryTable): at 1280 px all
 // six columns fit inside the panel, in German too, with the longest pills and date cells; the
-// Class and Status pills stay on one line, the Tool column gives way, and each Basis citation
-// stays whole on its line.
+// Tool column keeps at least 160 px; the Class and Status pills stay on one line but for the two
+// German exceptions, which wrap inside their pill; and each Basis citation stays whole on its line.
 import { screen, within } from '@testing-library/react'
 import i18n from 'i18next'
 import { describe, expect, it } from 'vitest'
@@ -69,8 +69,9 @@ function textLines(cell: Element): number {
 
 const CLASS_COLUMN = 2
 const STATUS_COLUMN = 5
-/** The one pill too wide for a one-line Class column at 1280 px (components.md exception). */
-const OUT_OF_SCOPE_DE = 'Außerhalb des Anwendungsbereichs'
+/** The two German pills that wrap inside their pill at 1280 px (components.md exceptions). */
+const TWO_LINE_DE = ['Außerhalb des Anwendungsbereichs', 'Hochrisiko, angenommen']
+const TOOL_MIN_WIDTH = 160
 
 async function openInventory(language: 'en' | 'de'): Promise<HTMLElement> {
   await i18n.changeLanguage(language)
@@ -97,44 +98,56 @@ describe('the inventory table at 1280 px', () => {
     expect(status?.getBoundingClientRect().right).toBeLessThanOrEqual(
       panel.getBoundingClientRect().right,
     )
+    const tool = within(table).getAllByRole('columnheader').at(0)
+    expect(tool?.getBoundingClientRect().width).toBeGreaterThanOrEqual(TOOL_MIN_WIDTH)
   })
 
   it.each([
     ['en', ['High-risk, assumed', 'Needs more information', 'Out of scope']],
-    ['de', ['Hochrisiko, angenommen', 'Weitere Angaben nötig']],
-  ] as const)('keeps every Class and Status pill on one line (%s)', async (language, widest) => {
-    await page.viewport(DESKTOP.width, DESKTOP.height)
-    const table = await openInventory(language)
-    const rows = within(table).getAllByRole('row').slice(1)
-    expect(rows).toHaveLength(widestTools().length)
-    const pills = rows.flatMap((row) => {
-      const cells = within(row).getAllByRole('cell')
-      return [cells[CLASS_COLUMN], cells[STATUS_COLUMN]].flatMap((cell) => [
-        ...(cell?.querySelectorAll('[data-kind], [data-status]') ?? []),
-      ])
-    })
-    const oneLine = pills.filter((pill) => pill.textContent !== OUT_OF_SCOPE_DE)
-    // Every row's class pill but the two without a result, and the two open statuses.
-    expect(pills).toHaveLength(widestTools().length - 2 + 2)
-    for (const pill of oneLine) expect(textLines(pill), pill.textContent).toBe(1)
-    // The widest one-line pills are among them.
-    const texts = oneLine.map((pill) => pill.textContent)
-    for (const text of widest) expect(texts).toContain(text)
-  })
+    ['de', ['Weitere Angaben nötig', 'Rechtlich unklar', 'Hochrisiko']],
+  ] as const)(
+    'keeps every other Class and Status pill on one line (%s)',
+    async (language, widest) => {
+      await page.viewport(DESKTOP.width, DESKTOP.height)
+      const table = await openInventory(language)
+      const rows = within(table).getAllByRole('row').slice(1)
+      expect(rows).toHaveLength(widestTools().length)
+      const pills = rows.flatMap((row) => {
+        const cells = within(row).getAllByRole('cell')
+        return [cells[CLASS_COLUMN], cells[STATUS_COLUMN]].flatMap((cell) => [
+          ...(cell?.querySelectorAll('[data-kind], [data-status]') ?? []),
+        ])
+      })
+      const exceptions: readonly string[] = language === 'de' ? TWO_LINE_DE : []
+      const oneLine = pills.filter((pill) => !exceptions.includes(pill.textContent))
+      // Every row's class pill but the two without a result, and the two open statuses.
+      expect(pills).toHaveLength(widestTools().length - 2 + 2)
+      for (const pill of oneLine) expect(textLines(pill), pill.textContent).toBe(1)
+      // The widest one-line pills are among them.
+      const texts = oneLine.map((pill) => pill.textContent)
+      for (const text of widest) expect(texts).toContain(text)
+    },
+  )
 
-  it('wraps only the German out-of-scope pill, inside the pill (components.md exception)', async () => {
-    await page.viewport(DESKTOP.width, DESKTOP.height)
-    const table = await openInventory('de')
-    const pill = within(table).getByText(OUT_OF_SCOPE_DE)
-    expect(textLines(pill)).toBe(2)
-    // Its two lines stay inside the pill and its cell.
-    const cell = pill.closest('td')
-    if (!cell) throw new Error('The pill sits in its cell.')
-    expect(pill.scrollWidth).toBeLessThanOrEqual(pill.clientWidth)
-    expect(pill.getBoundingClientRect().right).toBeLessThanOrEqual(
-      cell.getBoundingClientRect().right,
-    )
-  })
+  it.each(TWO_LINE_DE)(
+    'wraps the German "%s" pill onto two lines inside the pill (components.md exception)',
+    async (text) => {
+      await page.viewport(DESKTOP.width, DESKTOP.height)
+      const table = await openInventory('de')
+      const pills = within(table).getAllByText(text)
+      expect(pills.length).toBeGreaterThan(0)
+      for (const pill of pills) {
+        expect(textLines(pill)).toBe(2)
+        // Its two lines stay inside the pill and its cell.
+        const cell = pill.closest('td')
+        if (!cell) throw new Error('The pill sits in its cell.')
+        expect(pill.scrollWidth).toBeLessThanOrEqual(pill.clientWidth)
+        expect(pill.getBoundingClientRect().right).toBeLessThanOrEqual(
+          cell.getBoundingClientRect().right,
+        )
+      }
+    },
+  )
 
   it.each(['en', 'de'] as const)(
     'keeps each Basis citation and Art. 111(2) tag whole (%s)',

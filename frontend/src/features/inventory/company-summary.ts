@@ -62,6 +62,19 @@ export function toolsNeedingYou(tools: readonly InventoryTool[]): NeedsYou[] {
   return NEED_ORDER.flatMap((kind) => needs.filter((need) => need.kind === kind))
 }
 
+/** The prohibited tools the summary sentence opens with: how many, how many of them are assumed,
+ *  and the one it names when there is only one (a decided one before an assumed one). */
+export type ProhibitedTools = { named: CheckedTool; total: number; assumed: number }
+
+export function prohibitedTools(tools: readonly InventoryTool[]): ProhibitedTools | null {
+  const prohibited = tools
+    .filter(isChecked)
+    .filter((tool) => tool.result.risk_class === 'prohibited')
+  const assumed = prohibited.filter((tool) => tool.result.status !== 'decided')
+  const named = prohibited.find((tool) => tool.result.status === 'decided') ?? prohibited[0]
+  return named ? { named, total: prohibited.length, assumed: assumed.length } : null
+}
+
 /**
  * The duties the summary sentence names: the tool whose duties start soonest under the law text
  * on show, or, when every such date has come (the route's 2024 date under the original text),
