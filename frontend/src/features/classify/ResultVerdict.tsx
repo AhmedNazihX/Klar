@@ -10,14 +10,8 @@ import { useLanguage } from '@/hooks/use-language'
 import type { Language } from '@/i18n'
 
 import { checkNumber } from './classify-progress'
-import {
-  longDate,
-  monthsUntil,
-  PUBLIC_AUTHORITY_DEADLINE,
-  ROUTE_DATES,
-  routeOfPoint,
-} from './dates'
-import { basisSentence, dutiesDate, pausedStep } from './result-text'
+import { longDate, monthsUntil, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
+import { amendedRouteDate, basisSentence, dutiesDate, pausedStep } from './result-text'
 
 /** The roles that supply the system: Art. 111(2) counts per copy supplied (decision 022). */
 const SUPPLIER_ROLES: readonly Role[] = ['provider', 'importer', 'distributor']
@@ -84,21 +78,30 @@ function pausedLine(t: TFunction, result: ClassificationResult): string | null {
 }
 
 /** The Art. 111(2) sentences for the markings the duties carry, plus the per-copy caveat for a
- *  role that supplies the system (decision 026 item 24). */
+ *  role that supplies the system (decision 026 item 24). The route's date comes from the duties
+ *  the engine dated; when Art. 111(2) moved every one of them to 2030 (a provider or deployer of
+ *  a system for public authorities), the result has no route date and the sentences go without. */
 function legacySentences(t: TFunction, result: ClassificationResult, language: Language): string[] {
   const statuses = new Set(
     (result.obligations ?? [])
       .map((obligation) => obligation.legacy)
       .filter((status): status is LegacyStatus => Boolean(status)),
   )
-  const route = routeOfPoint(result.annex_point) ?? 'annex_iii'
   if (statuses.size === 0) return []
-  const date = longDate(ROUTE_DATES[route].amended, language)
+  const routeDate = amendedRouteDate(result, routeOfPoint(result.annex_point) ?? 'annex_iii')
+  const date = routeDate && longDate(routeDate, language)
   const deadline = longDate(PUBLIC_AUTHORITY_DEADLINE, language)
-  const marked = [...statuses].map((status) => t(`result.legacy.${status}`, { date, deadline }))
+  // Without a route date no duty is merely unchanged-marked: they are all public-authority ones.
+  const marked = date
+    ? [...statuses].map((status) => t(`result.legacy.${status}`, { date, deadline }))
+    : [t('result.legacy.publicAuthorityUndated', { deadline })]
   const roles = [result.role, result.also_role]
   const supplies = roles.some((role) => role && SUPPLIER_ROLES.includes(role))
-  return supplies ? [...marked, t('result.legacy.perProduct', { date })] : marked
+  if (!supplies) return marked
+  const perCopy = date
+    ? t('result.legacy.perProduct', { date })
+    : t('result.legacy.perProductUndated')
+  return [...marked, perCopy]
 }
 
 /** The top of the result (ResultSummary): the class and its status, who you are and why, the

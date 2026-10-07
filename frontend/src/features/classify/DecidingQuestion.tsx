@@ -8,7 +8,7 @@ import { LawDate } from '@/components/LawDate'
 import { RiskPill } from '@/components/RiskPill'
 import { useLanguage } from '@/hooks/use-language'
 
-import { longDate, ROUTE_DATES } from './dates'
+import { longDate, ORIGINAL_ROUTE_DATES } from './dates'
 import { provisionName } from './provision-names'
 import { citationSource } from './result-text'
 
@@ -32,7 +32,7 @@ function IfYes({ outcome }: { outcome: AnswerOutcome }): JSX.Element {
               date: (
                 <LawDate
                   amended={longDate(amended, language)}
-                  original={longDate(route ? ROUTE_DATES[route].original : amended, language)}
+                  original={longDate(route ? ORIGINAL_ROUTE_DATES[route] : amended, language)}
                 />
               ),
             }}

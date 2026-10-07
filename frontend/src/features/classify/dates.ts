@@ -1,11 +1,12 @@
 import type { HighRiskRoute } from '@/api'
 import type { Language } from '@/i18n'
 
-/** The Chapter III date on each high-risk route, under the amended and the original text
- *  (Art. 113; decision 026 item 11 swaps only these route dates under the original text). */
-export const ROUTE_DATES: Record<HighRiskRoute, { amended: string; original: string }> = {
-  annex_iii: { amended: '2027-12-02', original: '2026-08-02' },
-  annex_i: { amended: '2028-08-02', original: '2027-08-02' },
+/** The Chapter III date on each high-risk route under the original text (Art. 113). The engine
+ *  dates every result by the amended text (a duty's `applies_from`, a question's `duties_from`);
+ *  the original text is only a view of those dates, swapped in here (decision 026 item 11). */
+export const ORIGINAL_ROUTE_DATES: Record<HighRiskRoute, string> = {
+  annex_iii: '2026-08-02',
+  annex_i: '2027-08-02',
 }
 
 /** The date Art. 111(2) gives legacy high-risk systems meant for public authorities. */

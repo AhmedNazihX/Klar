@@ -410,7 +410,9 @@
     "legacy": {
       "legacy_unchanged": "Art. 111(2): the tool was on the market or in use before {{date}}, so the marked high-risk duties apply only if its design or intended purpose changes significantly. The class stays high-risk.",
       "legacy_public_authority": "Art. 111(2): the tool was on the market or in use before {{date}} and is meant for public authorities, so the marked high-risk duties apply from {{deadline}}. The class stays high-risk.",
+      "publicAuthorityUndated": "Art. 111(2): the tool was on the market or in use before its high-risk duties first applied and is meant for public authorities, so the marked high-risk duties apply from {{deadline}}. The class stays high-risk.",
       "perProduct": "This covers copies placed on the market or put into service before {{date}}; copies supplied on or after that date may be fully covered.",
+      "perProductUndated": "This covers copies placed on the market or put into service before that date; copies supplied on or after it may be fully covered.",
       "afterChange": "Only after a significant change",
       "from": "From {{date}}",
       "tag": "Art. 111(2)"

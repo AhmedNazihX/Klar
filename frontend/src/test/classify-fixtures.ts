@@ -65,6 +65,17 @@ export function decidedHighRisk(): ClassificationResult {
 }
 
 // The duties below carry the texts of C9's obligations table (supabase/seed/obligations.yaml).
+const AI_LITERACY_PROVIDER: Obligation = {
+  duty: 'Take measures to support the AI literacy of staff and others who operate or use the system on your behalf.',
+  duty_de:
+    'Maßnahmen ergreifen, um die KI-Kompetenz Ihres Personals und anderer Personen zu unterstützen, die in Ihrem Auftrag mit dem Betrieb und der Nutzung des Systems befasst sind.',
+  label_en: 'Help the people who run or use it build their AI literacy',
+  label_de: 'Die KI-Kompetenz der Personen fördern, die es betreiben oder nutzen',
+  group: 'after_launch',
+  article: 'art:4:1',
+  applies_from: '2025-02-02',
+}
+
 const IMPORTER_CHECK: Obligation = {
   duty: 'Before placing the system on the market, verify that the provider carried out the conformity assessment, drew up the technical documentation, affixed the CE marking with the declaration of conformity and instructions, and appointed an authorised representative.',
   duty_de:
@@ -130,6 +141,22 @@ export function legacyMarked(): ClassificationResult {
     obligations: [
       { ...RISK_MANAGEMENT, legacy: 'legacy_unchanged' },
       { ...TECHNICAL_DOCUMENTATION, applies_from: '2030-08-02', legacy: 'legacy_public_authority' },
+    ],
+  }
+}
+
+/** Item 24 for a provider of a system for public authorities: Art. 111(2) dates every route
+ *  duty 2 August 2030, so the result carries no route date of its own. */
+export function legacyForPublicAuthorities(): ClassificationResult {
+  const base = decidedHighRisk()
+  const legacy = { applies_from: '2030-08-02', legacy: 'legacy_public_authority' as const }
+  return {
+    ...base,
+    role: 'provider',
+    obligations: [
+      AI_LITERACY_PROVIDER,
+      { ...RISK_MANAGEMENT, ...legacy },
+      { ...TECHNICAL_DOCUMENTATION, ...legacy },
     ],
   }
 }

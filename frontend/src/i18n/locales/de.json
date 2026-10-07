@@ -410,7 +410,9 @@
     "legacy": {
       "legacy_unchanged": "Art. 111 Abs. 2: Das Tool war vor dem {{date}} in Verkehr oder in Betrieb, deshalb gelten die markierten Hochrisiko-Pflichten nur, wenn sich seine Konzeption oder Zweckbestimmung erheblich ändert. Die Einstufung bleibt Hochrisiko.",
       "legacy_public_authority": "Art. 111 Abs. 2: Das Tool war vor dem {{date}} in Verkehr oder in Betrieb und ist für Behörden bestimmt, deshalb gelten die markierten Hochrisiko-Pflichten ab dem {{deadline}}. Die Einstufung bleibt Hochrisiko.",
+      "publicAuthorityUndated": "Art. 111 Abs. 2: Das Tool war vor dem Geltungsbeginn seiner Hochrisiko-Pflichten in Verkehr oder in Betrieb und ist für Behörden bestimmt, deshalb gelten die markierten Hochrisiko-Pflichten ab dem {{deadline}}. Die Einstufung bleibt Hochrisiko.",
       "perProduct": "Das gilt für Exemplare, die vor dem {{date}} in Verkehr gebracht oder in Betrieb genommen wurden; spätere Exemplare können voll erfasst sein.",
+      "perProductUndated": "Das gilt für Exemplare, die vor diesem Datum in Verkehr gebracht oder in Betrieb genommen wurden; spätere Exemplare können voll erfasst sein.",
       "afterChange": "Nur nach einer erheblichen Änderung",
       "from": "Ab dem {{date}}",
       "tag": "Art. 111 Abs. 2"

@@ -9,7 +9,9 @@ import {
   ANNEX_I_QUESTION,
   annexINeedsInfo,
   decidedHighRisk,
+  legacyForPublicAuthorities,
   legacyMarked,
+  legacyMarkedDeployer,
   limitedRisk,
   minimalRisk,
   OUT_OF_SCOPE_DECISION,
@@ -342,6 +344,43 @@ describe('Result variants (decision 026)', () => {
     expect(within(todo).getByText('Only after a significant change')).toBeInTheDocument()
     expect(within(todo).getByText('From 2 August 2030')).toBeInTheDocument()
     expect(within(todo).getAllByText('Art. 111(2)')).toHaveLength(2)
+  })
+
+  it("marks a deployer's legacy duties without the per-copy caveat (item 24)", async () => {
+    await openResult(legacyMarkedDeployer())
+    const note = within(screen.getByRole('region', { name: 'Result' })).getByRole('note')
+    expect(note).toHaveTextContent(
+      'Art. 111(2): the tool was on the market or in use before 2 December 2027',
+    )
+    expect(note).not.toHaveTextContent('This covers copies')
+    expect(
+      within(todoList('en')).getAllByText('Only after a significant change').length,
+    ).toBeGreaterThan(0)
+  })
+
+  it.each([
+    ['en', 'Result', 'apply from 2 August 2030', 'This covers copies placed on the market'],
+    ['de', 'Ergebnis', 'ab dem 2. August 2030', 'Das gilt für Exemplare'],
+  ] as const)(
+    'words the Art. 111(2) note without a route date when every duty moved to 2030 (%s)',
+    async (language, region, deadline, perCopy) => {
+      await openResult(legacyForPublicAuthorities(), { language })
+      const note = within(screen.getByRole('region', { name: region })).getByRole('note')
+      expect(note).toHaveTextContent(deadline)
+      expect(note).toHaveTextContent(perCopy)
+      expect(note).not.toHaveTextContent(/\{\{|2027|2028/)
+    },
+  )
+
+  it('takes the date duties apply from from the duties the engine dated', async () => {
+    const result = decidedHighRisk()
+    const moved = (result.obligations ?? []).map((obligation) =>
+      obligation.high_risk_route ? { ...obligation, applies_from: '2028-03-01' } : obligation,
+    )
+    await openResult({ ...result, obligations: moved })
+    const summary = screen.getByRole('region', { name: 'Result' })
+    expect(within(summary).getByText('1 March 2028')).toBeInTheDocument()
+    expect(within(summary).queryByText('2 December 2027')).toBeNull()
   })
 
   it('renders in German with the German notice', async () => {

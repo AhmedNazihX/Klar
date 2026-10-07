@@ -4,6 +4,7 @@ import type {
   Citation,
   ClassificationResult,
   FollowUpQuestion,
+  HighRiskRoute,
   Obligation,
   StepName,
   StepResult,
@@ -11,7 +12,7 @@ import type {
 import type { Language } from '@/i18n'
 import type en from '@/i18n/locales/en.json'
 
-import { ROUTE_DATES, routeOfPoint } from './dates'
+import { ORIGINAL_ROUTE_DATES, routeOfPoint } from './dates'
 import { annexPointKey, isLawProvision, provisionName } from './provision-names'
 
 /** The summary and reviewer's step rows, in the Act's order: Facts, Role, the four checks, Duties. */
@@ -69,9 +70,24 @@ export function dutyLabel(obligation: Obligation, language: Language): string {
 export type DutiesDate =
   { kind: 'route'; amended: string; original: string } | { kind: 'fixed'; date: string }
 
+/** The route's Chapter III date as the engine dated the route's duties (amended text); a duty
+ *  Art. 111(2) moves to 2030 doesn't count. */
+export function amendedRouteDate(
+  result: ClassificationResult,
+  route: HighRiskRoute,
+): string | null {
+  const duty = (result.obligations ?? []).find(
+    (obligation) =>
+      obligation.high_risk_route === route && obligation.legacy !== 'legacy_public_authority',
+  )
+  return duty?.applies_from ?? null
+}
+
 export function dutiesDate(result: ClassificationResult): DutiesDate | null {
   const route = routeOfPoint(result.annex_point)
-  if (result.risk_class === 'high_risk' && route) return { kind: 'route', ...ROUTE_DATES[route] }
+  const amended =
+    route && result.risk_class === 'high_risk' ? amendedRouteDate(result, route) : null
+  if (route && amended) return { kind: 'route', amended, original: ORIGINAL_ROUTE_DATES[route] }
   const dates = (result.obligations ?? [])
     .filter((obligation) => !obligation.is_informational)
     .map((obligation) => obligation.applies_from)
