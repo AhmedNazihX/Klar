@@ -2,9 +2,10 @@
 from what the corpus returns, the follow-up question of a key fact, the per-case blocks of their
 prompts, and the step for a reply the provider refused (decision 029)."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
+from typing import Protocol
 
 from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
 from aiact.retrieval.provisions import Provision
@@ -61,6 +62,26 @@ def provision_citation(provision: Provision) -> Citation:
         quote=provision.text,
         english_only=provision.english_only,
     )
+
+
+class ProvisionLibrary(Protocol):
+    """What every check's corpus library offers: one provision by its id."""
+
+    def provision(self, provision_id: str, lookup: Lookup) -> Provision: ...
+
+
+def cited_provisions(
+    ids: Iterable[str],
+    state: EngineState,
+    library: ProvisionLibrary,
+    known: Sequence[Provision] = (),
+) -> tuple[Citation, ...]:
+    """Citations of `ids`, in order: each provision taken from `known` (what the node already
+    read) when it is there, else fetched from `library` on the run's lookup. Raises what the
+    library raises (`ProvisionNotFoundError`, a database error)."""
+    lookup = lookup_for(state)
+    read = {provision.provision_id: provision for provision in known}
+    return tuple(provision_citation(read.get(pid) or library.provision(pid, lookup)) for pid in ids)
 
 
 def guidance_citation(hit: SearchHit, language: Language) -> Citation:

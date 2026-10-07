@@ -23,7 +23,9 @@ are applied here, in code:
   guidelines' wider reading noted, and an unknown date is asked. The original text has no
   Art. 111(4).
 
-Every citation is fetched through `get_provision`, or is a retrieved guideline passage.
+Every citation is fetched through `get_provision`, or is a retrieved guideline passage. The step
+cites the Art. 50 paragraphs its finding rests on, never the whole article (E16): the duties shown,
+or all four duty paragraphs when it finds none or a person must review them all.
 """
 
 from collections.abc import Callable, Sequence
@@ -39,6 +41,7 @@ from aiact.dates import long_date
 from aiact.db import connect
 from aiact.engine.nodes import transparency_texts as texts
 from aiact.engine.nodes.common import (
+    cited_provisions,
     facts_section,
     guidance_citation,
     guidance_section,
@@ -102,7 +105,7 @@ MARKING = "art:50:2"
 GRACE_PERIOD = "art:111:4"
 MARKING_DEADLINE = date(2026, 12, 2)
 """Art. 111(4): systems placed on the market before 2 August 2026 mark their outputs by then."""
-ALL_DUTIES = ("art:50:1", "art:50:2", "art:50:3", "art:50:4")
+ALL_DUTIES = texts.DUTY_PARAGRAPHS
 """Every duty Art. 50 places on a provider or a deployer."""
 
 GRACE_TEXTS: dict[MarketTiming, str] = {
@@ -272,16 +275,15 @@ def _grace(
     )
 
 
-def _cited(
-    settled: Settlement, state: EngineState, retrieved: Retrieved, library: GuidelineLibrary
-) -> tuple[Provision, ...]:
-    """The paragraphs of every duty shown, fetched in the order of Art. 50; Art. 50 as a whole
-    when none is raised."""
+def _cited(settled: Settlement) -> tuple[str, ...]:
+    """The duty paragraphs the finding rests on, in the order of Art. 50 (E16: never Art. 50 as
+    a whole, whose later paragraphs place no duty): with a duty listed, the paragraphs of the
+    duties listed and those considered and ruled out; with none, all four, Art. 50(1) to (4),
+    since "no transparency duty applies" rules out each of them, considered or not."""
+    if not settled.listed:
+        return ALL_DUTIES
     shown = {duty.provision for duty in (*settled.listed, *settled.considered)}
-    if not shown:
-        return (retrieved.article,)
-    lookup = lookup_for(state)
-    return tuple(library.provision(pid, lookup) for pid in ALL_DUTIES if pid in shown)
+    return tuple(pid for pid in ALL_DUTIES if pid in shown)
 
 
 def to_outcome(
@@ -296,7 +298,7 @@ def to_outcome(
     settled = settle(answer)
     grace = _grace(settled, answer, state, library)
     citations = (
-        *(provision_citation(p) for p in _cited(settled, state, retrieved, library)),
+        *cited_provisions(_cited(settled), state, library),
         *((provision_citation(grace.provision),) if grace else ()),
         *(
             guidance_citation(hit, language)
@@ -329,16 +331,17 @@ def to_outcome(
     )
 
 
-def refusal_outcome(state: EngineState, retrieved: Retrieved) -> CheckOutcome:
+def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    every Art. 50 duty assumed until a person reviews it (the stricter reading), citing Art. 50
-    as fetched. The review question is a missing fact."""
+    every Art. 50 duty assumed until a person reviews it (the stricter reading). It cites the
+    paragraph of each duty the reviewer checks (`PERSON_REVIEW` asks about every one, E16),
+    fetched from `library`. The review question is a missing fact."""
     language = state["language"]
     return refused_check(
         StepName.TRANSPARENCY,
         language,
         texts.REFUSAL[language],
-        (provision_citation(retrieved.article),),
+        cited_provisions(ALL_DUTIES, state, library),
         ask(texts.PERSON_REVIEW, language, StepName.TRANSPARENCY),
         transparency_duties=ALL_DUTIES,
     )
@@ -411,7 +414,7 @@ class TransparencyCheck:
         try:
             answer = parse_reply(reply, TransparencyAnswer)
         except ProviderRefusalError:
-            return refusal_outcome(state, retrieved)
+            return self._reading(lambda library: refusal_outcome(state, library))
         except ValidationError as exc:
             message = (
                 f"transparency answer doesn't fit the schema: {describe_validation_error(exc)}"

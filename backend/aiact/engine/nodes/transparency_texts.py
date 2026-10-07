@@ -134,6 +134,8 @@ REFUSAL: Mapping[Language, str] = {
     "4 angenommen.",
 }
 """The refusal step's assumption, after the shared first sentence (`common.BLOCKED`)."""
+DUTY_PARAGRAPHS = ("art:50:1", "art:50:2", "art:50:3", "art:50:4")
+"""Every paragraph of Art. 50 that places a duty on a provider or a deployer."""
 
 # --- Naming and decision sentences --------------------------------------------------------------
 

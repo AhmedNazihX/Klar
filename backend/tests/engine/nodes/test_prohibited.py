@@ -71,7 +71,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
-from tests.engine.built_corpus import unresolved_citations
+from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
     corpus_recording,
@@ -258,6 +258,24 @@ def test_no_practice_raised_is_a_decided_no_match_citing_the_list() -> None:
     assert result.step.decision == "No prohibited practice under Art. 5 matches."
     assert cited(result) == ["art:5:1"]
     assert result.follow_up_questions == ()
+
+
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        pytest.param(answer(), ["art:5:1"], id="no-match"),
+        pytest.param(answer(WORKPLACE_EMOTIONS), ["art:5:1:f"], id="match"),
+    ],
+)
+def test_the_step_cites_the_paragraph_or_point_it_checked_not_art_5(
+    given: ProhibitedAnswer, expected: list[str]
+) -> None:
+    """E16, both ways: the Art. 5(1) list it found nothing in, or the point that matched, each
+    fetched by its own id; Art. 5 as a whole is read only for the prompt."""
+    library = FakeLibrary()
+    result = outcome(given, library=library)
+    assert cited(result) == expected
+    assert [pid for pid, _ in library.lookups] == ["art:5", *expected]
 
 
 def test_emotion_recognition_at_work_is_prohibited() -> None:
@@ -918,8 +936,10 @@ def _filtered(content: str) -> GenericFakeChatModel:
 
 
 def test_a_provider_refusal_is_a_step_for_a_person_to_review() -> None:
-    """Decision 029: not a broken output; prohibited assumed, Art. 5 cited, review asked."""
-    check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
+    """Decision 029: not a broken output; prohibited assumed, the points (ba) and (bb) its
+    decision names cited (E16), review asked."""
+    library = FakeLibrary()
+    check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=library)
     result = check(state(as_of=AFTER_DECEMBER))
     assert result.matched
     step = result.step
@@ -928,20 +948,22 @@ def test_a_provider_refusal_is_a_step_for_a_person_to_review() -> None:
     assert step.missing_fact is not None
     assert step.missing_fact.id == "person_review"
     assert result.follow_up_questions == (step.missing_fact,)
-    assert cited(result) == ["art:5"]
+    assert cited(result) == ["art:5:1:ba", "art:5:1:bb"]
+    assert [pid for pid, _ in library.lookups] == ["art:5", "art:5:1:ba", "art:5:1:bb"]
     assert step.decision.startswith("The model provider's content filter blocked")
     assert "Art. 5(1)(ba) or (bb) may apply" in step.decision
 
 
 def test_a_refusal_before_2_december_2026_says_ba_and_bb_do_not_apply_yet() -> None:
-    """Any other Art. 5 point may still apply, so prohibited stays assumed; Art. 113(a) cited."""
+    """Any other Art. 5 point may still apply, so prohibited stays assumed; the Art. 5(1) list
+    and Art. 113(a) cited."""
     check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
     result = check(state(as_of=BEFORE_DECEMBER))
     assert result.matched
     step = result.step
     assert step.status is Status.NEEDS_MORE_INFORMATION
     assert step.error == "provider_refusal"
-    assert cited(result) == ["art:5", "art:113:a"]
+    assert cited(result) == ["art:5:1", "art:113:a"]
     assert "Art. 5(1)(ba) and (bb) apply only from 2 December 2026" in step.decision
     assert "on 16 November 2026" in step.decision
     assert "the other prohibitions of Art. 5 can't be ruled out" in step.decision
@@ -965,7 +987,7 @@ def test_a_refusal_under_the_original_text_names_no_point_ba_or_bb(
     assert result.matched
     step = result.step
     assert step.status is Status.NEEDS_MORE_INFORMATION
-    assert cited(result) == ["art:5"]
+    assert cited(result) == ["art:5:1"]
     assert expected in step.decision
     assert "ba" not in step.decision
     assert "113" not in step.decision
@@ -1216,6 +1238,7 @@ def test_b5c_case_replay(
         run_state = replay_state(case, AS_OF)
         result = check(run_state)
     assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
     matches = prohibited_matches(result, case)
     step = result.step
     shown = (result.matched, step.status, cited(result), step.decision)
@@ -1265,6 +1288,7 @@ def test_replay_original_text_reads_no_december_point(
         run_state: EngineState = {**replay_state(case, AS_OF), "law_version": LawVersion.ORIGINAL}
         result = check(run_state)
     assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
     step = result.step
     shown = (result.matched, step.status, cited(result), step.decision)
     assert not result.matched, shown

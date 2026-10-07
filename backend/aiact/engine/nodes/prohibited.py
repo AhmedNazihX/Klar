@@ -24,7 +24,8 @@ Act's rules are applied here, in code:
   deciding fact left open makes it `needs_more_information`; either way prohibited is the
   labelled working assumption, `matched` is set, and the run goes on (decision 010).
 
-Every citation is fetched through `get_provision`, or is a retrieved guideline passage.
+Every citation is fetched through `get_provision`, or is a retrieved guideline passage. The step
+cites the Art. 5 points and paragraphs its finding names, never the whole article (E16).
 """
 
 from collections.abc import Callable, Sequence
@@ -40,6 +41,7 @@ from aiact.dates import long_date
 from aiact.db import connect
 from aiact.engine.nodes import prohibited_texts as texts
 from aiact.engine.nodes.common import (
+    cited_provisions,
     facts_section,
     guidance_citation,
     guidance_section,
@@ -102,6 +104,14 @@ the answer covers every Art. 5 practice."""
 
 NO_MATCH_CITATION = "art:5:1"
 """What a step that found no practice raised cites: the list of prohibited practices."""
+REFUSAL_CITATIONS = ("art:5:1:ba", "art:5:1:bb")
+"""What the refusal step cites (E16): the points the person reviewing checks (`PERSON_REVIEW`
+asks about them)."""
+REFUSAL_CITATIONS_BEFORE_DECEMBER = (NO_MATCH_CITATION, APPLICATION_DATES)
+"""Before 2 December 2026 points (ba) and (bb) don't apply yet: the reviewer checks the rest of
+the Art. 5(1) list, and their start date, Art. 113(a)."""
+REFUSAL_CITATIONS_ORIGINAL = (NO_MATCH_CITATION,)
+"""Under the original text, which has neither point: the Art. 5(1) list the reviewer checks."""
 
 
 class ProhibitedOutputError(ValueError):
@@ -289,21 +299,21 @@ def to_outcome(
     return CheckOutcome(step=step, matched=settled.matched, follow_up_questions=questions)
 
 
-def refusal_outcome(
-    state: EngineState, retrieved: Retrieved, library: GuidelineLibrary
-) -> CheckOutcome:
+def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    prohibited assumed until a person reviews it (any Art. 5 point may apply), citing Art. 5 as
-    fetched. Before 2 December 2026 it says points (ba) and (bb) don't apply yet and cites Art.
-    113(a), fetched from `library`; the original text has neither point, so it names no point.
-    The run goes on: the review question is a missing fact, so the step can't end it."""
+    prohibited assumed until a person reviews it. It cites what the reviewer checks (E16),
+    fetched from `library`: points (ba) and (bb), which the review question asks about; before 2
+    December 2026, when it says they don't apply yet, the rest of the Art. 5(1) list and their
+    start date, Art. 113(a); under the original text, which has neither point, the Art. 5(1)
+    list. The run goes on: the review question is a missing fact, so the step can't end it."""
     language, as_of = state["language"], state["as_of"]
-    cited = (retrieved.article,)
+    cited: tuple[str, ...] = REFUSAL_CITATIONS
     assumption = texts.REFUSAL[language]
     if state["law_version"] is LawVersion.ORIGINAL:
+        cited = REFUSAL_CITATIONS_ORIGINAL
         assumption = texts.REFUSAL_ORIGINAL[language]
     elif as_of < DECEMBER_PROHIBITIONS_APPLY_FROM:
-        cited = (*cited, library.provision(APPLICATION_DATES, lookup_for(state)))
+        cited = REFUSAL_CITATIONS_BEFORE_DECEMBER
         assumption = texts.REFUSAL_BEFORE_DECEMBER[language].format(
             start=long_date(DECEMBER_PROHIBITIONS_APPLY_FROM, language.value),
             as_of=long_date(as_of, language.value),
@@ -312,7 +322,7 @@ def refusal_outcome(
         StepName.PROHIBITED,
         language,
         assumption,
-        tuple(provision_citation(p) for p in cited),
+        cited_provisions(cited, state, library),
         ask(texts.PERSON_REVIEW, language, StepName.PROHIBITED),
         matched=True,
     )
@@ -383,7 +393,7 @@ class ProhibitedCheck:
         try:
             answer = parse_reply(reply, ProhibitedAnswer)
         except ProviderRefusalError:
-            return self._reading(lambda library: refusal_outcome(state, retrieved, library))
+            return self._reading(lambda library: refusal_outcome(state, library))
         except ValidationError as exc:
             message = f"prohibited answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise ProhibitedOutputError(message) from None

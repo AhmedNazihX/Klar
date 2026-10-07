@@ -24,7 +24,8 @@ fixed key-fact questions; the Act's rules are applied here, in code:
 `matched` is True only for a decided out-of-scope finding: an uncertain scope question keeps the
 run going (decision 010), and its working assumption is in scope, the stricter reading. A reply
 the provider's content filter refused (decision 029) is not assessed: in scope is assumed until
-a person reviews the description, and the step cites the law the model was given.
+a person reviews the description, and the step cites what the reviewer checks it against, Art.
+3(1) and Art. 2(1). Citations name paragraphs, never the whole of Art. 2 (E16).
 
 Guideline searches pass `max_distance=None` (a signal, not a filter), and pass the caller's
 `exclude_source_example_ids` and the run's `include_held_out` (False except in V8's gap run)
@@ -45,11 +46,11 @@ from pydantic import Field, ValidationError
 
 from aiact.engine.nodes.common import (
     Lookup,
+    cited_provisions,
     facts_section,
     guidance_citation,
     lookup_for,
     named_passages,
-    provision_citation,
     refused_check,
 )
 from aiact.engine.nodes.key_facts import Answer, CitedFact, KeyFact, facts_used
@@ -68,6 +69,7 @@ from aiact.engine.nodes.scope_texts import (
     READING_SIDES,
     READINGS,
     REFUSAL,
+    REFUSAL_CITATIONS,
     TEXTS,
     ScopeQuestion,
 )
@@ -426,11 +428,10 @@ def to_outcome(
 ) -> CheckOutcome:
     """The scope step and whether it ends the run, from the model's answer and the passages it
     read. The cited provisions are fetched from `library`."""
-    language, lookup = state["language"], lookup_for(state)
+    language = state["language"]
     settled = settle_scope(answer, guidance)
-    laws = tuple(library.provision(pid, lookup) for pid in settled.cited_articles())
     cited = (
-        *(provision_citation(provision) for provision in laws),
+        *cited_provisions(settled.cited_articles(), state, library),
         *(guidance_citation(hit, language) for hit in _guidance_used(answer, guidance)),
     )
     missing = settled.missing if not settled.is_out_of_scope else ()
@@ -447,16 +448,19 @@ def to_outcome(
     return CheckOutcome(step=step, matched=settled.is_out_of_scope, follow_up_questions=questions)
 
 
-def refusal_outcome(state: EngineState, law: Sequence[Provision]) -> CheckOutcome:
+def refusal_outcome(
+    state: EngineState, law: Sequence[Provision], library: ScopeLibrary
+) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    in scope assumed until a person reviews it, citing the law the model was given. The review
-    question is a missing fact, so the run goes on."""
+    in scope assumed until a person reviews it. It cites what the reviewer checks the description
+    against (`REFUSAL_CITATIONS`, E16): Art. 3(1) as the model read it in `law`, and Art. 2(1),
+    fetched from `library`. The review question is a missing fact, so the run goes on."""
     language = state["language"]
     return refused_check(
         StepName.SCOPE,
         language,
         REFUSAL[language],
-        tuple(provision_citation(provision) for provision in law),
+        cited_provisions(REFUSAL_CITATIONS, state, library, known=law),
         _question(PERSON_REVIEW, language),
     )
 
@@ -525,7 +529,7 @@ class ScopeCheck:
         try:
             answer = parse_reply(reply, ScopeAnswer)
         except ProviderRefusalError:
-            return refusal_outcome(state, law)
+            return refusal_outcome(state, law, self._library)
         except ValidationError as exc:
             message = f"scope answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise ScopeOutputError(message) from None

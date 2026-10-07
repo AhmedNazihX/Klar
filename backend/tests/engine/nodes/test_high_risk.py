@@ -72,7 +72,11 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
-from tests.engine.built_corpus import built_validator, unresolved_citations
+from tests.engine.built_corpus import (
+    built_validator,
+    unresolved_citations,
+    whole_articles,
+)
 from tests.engine.nodes.corpus_recording import (
     CorpusRecording,
     corpus_recording,
@@ -633,6 +637,26 @@ def test_no_route_is_a_decided_not_high_risk() -> None:
     assert result.step.status is Status.DECIDED
     assert cited(result) == ["art:6:1", "art:6:2"]
     assert result.follow_up_questions == ()
+
+
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        pytest.param(answer(), ["art:6:1", "art:6:2"], id="no-match"),
+        pytest.param(
+            answer(RANKS_APPLICANTS, art_6_3(Art63Condition.D, profiling=YES)),
+            ["annex:III:4:a", "art:6:2", "art:6:3"],
+            id="match",
+        ),
+    ],
+)
+def test_the_step_cites_the_paragraphs_it_checked_not_art_6(
+    given: HighRiskAnswer, expected: list[str]
+) -> None:
+    """E16, both ways: the two routes it ruled out, or the Annex III point with Art. 6(2) and the
+    Art. 6(3) paragraph whose last subparagraph (profiling, not split out in the corpus) keeps it
+    high-risk; never Art. 6 as a whole."""
+    assert cited(outcome(given)) == expected
 
 
 def test_german_decisions_and_questions() -> None:
@@ -1450,6 +1474,7 @@ def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     run_state = replay_state(WORKED_EXAMPLE_CASE, AS_OF)
     result = replay_check(run_state)
     assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
     assert result.high_risk_route is HighRiskRoute.ANNEX_III
     assert result.annex_point == "annex:III:4:a"
     assert not result.annex_iii_exempt
@@ -1563,6 +1588,7 @@ def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -
     run_state = replay_state(case, AS_OF)
     result = replay_check(run_state)
     assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
     matches = high_risk_matches(result, case)
     step = result.step
     shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
@@ -1602,6 +1628,7 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
     run_state: EngineState = {**replay_state(case, AS_OF), "law_version": LawVersion.ORIGINAL}
     result = replay_check(run_state)
     assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
     return result
 
 

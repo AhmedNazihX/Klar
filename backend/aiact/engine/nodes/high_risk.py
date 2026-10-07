@@ -41,11 +41,10 @@ from pydantic import Field, ValidationError
 
 from aiact.db import connect
 from aiact.engine.nodes.common import (
+    cited_provisions,
     clipped,
     facts_section,
     guidance_citation,
-    lookup_for,
-    provision_citation,
     refused_check,
 )
 from aiact.engine.nodes.high_risk_questions import (
@@ -650,16 +649,13 @@ def to_outcome(
 ) -> CheckOutcome:
     """The high_risk step and its findings, from the model's answer and what was retrieved. The
     cited provisions come from `retrieved` or are fetched from `library`."""
-    language, lookup = state["language"], lookup_for(state)
+    language = state["language"]
     settled = settle(answer, language)
     law = _law(answer.annex_i.point, retrieved)
     examples = _examples(answer, retrieved.guidance)
-    known = {p.provision_id: p for p in (*retrieved.annex_i, *retrieved.annex_iii)}
-    provisions = [
-        known.get(pid) or library.provision(pid, lookup) for pid in dict.fromkeys(settled.cited)
-    ]
+    known = (*retrieved.annex_i, *retrieved.annex_iii)
     citations = (
-        *(provision_citation(p) for p in provisions),
+        *cited_provisions(dict.fromkeys(settled.cited), state, library, known),
         *(guidance_citation(hit, language) for hit in examples),
     )
     missing = _missing_question(settled, answer, state, law, citations)
@@ -691,12 +687,12 @@ def refusal_outcome(state: EngineState, library: HighRiskLibrary) -> CheckOutcom
     high-risk on the Annex III route (its duties apply first) assumed until a person reviews it,
     with no Annex point, citing Art. 6(1) and 6(2) as fetched from `library`. The review
     question is a missing fact."""
-    language, lookup = state["language"], lookup_for(state)
+    language = state["language"]
     return refused_check(
         StepName.HIGH_RISK,
         language,
         REFUSAL[language],
-        tuple(provision_citation(library.provision(pid, lookup)) for pid in REFUSAL_CITATIONS),
+        cited_provisions(REFUSAL_CITATIONS, state, library),
         _question(PERSON_REVIEW, None, state, ""),
         high_risk_route=HighRiskRoute.ANNEX_III,
     )

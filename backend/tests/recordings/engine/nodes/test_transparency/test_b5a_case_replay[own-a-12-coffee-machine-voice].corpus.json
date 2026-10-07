@@ -175,5 +175,50 @@
   "text": "Die Anbieter stellen sicher, dass KI-Systeme, die für die direkte Interaktion mit natürlichen Personen bestimmt sind, so konzipiert und entwickelt werden, dass die betreffenden natürlichen Personen informiert werden, dass sie mit einem KI-System interagieren, es sei denn, dies ist aus Sicht einer angemessen informierten, aufmerksamen und verständigen natürlichen Person aufgrund der Umstände und des Kontexts der Nutzung offensichtlich. Diese Pflicht gilt nicht für gesetzlich zur Aufdeckung, Verhütung, Ermittlung oder Verfolgung von Straftaten zugelassene KI-Systeme, wenn geeignete Schutzvorkehrungen für die Rechte und Freiheiten Dritter bestehen, es sei denn, diese Systeme stehen der Öffentlichkeit zur Anzeige einer Straftat zur Verfügung.",
   "valid_from": "2026-07-27",
   "valid_to": null
+ },
+ "{\"as_of\": \"2026-10-01\", \"exclude_source_example_ids\": [], \"language\": \"de\", \"law_version\": \"amended\", \"lookup\": \"art:50:2\"}": {
+  "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
+  "doc_key": "ai-act-consolidated",
+  "doc_type": "law",
+  "document_title": "AI Act, consolidated text as of 27 July 2026",
+  "english_only": false,
+  "heading": "Artikel 50 — Transparenzpflichten für Anbieter und Betreiber bestimmter KI-Systeme",
+  "language": "de",
+  "law_version": "amended",
+  "provision_id": "art:50:2",
+  "status": "consolidated",
+  "text": "Anbieter von KI-Systemen, einschließlich KI-Systemen mit allgemeinem Verwendungszweck, die synthetische Audio-, Bild-, Video- oder Textinhalte erzeugen, stellen sicher, dass die Ausgaben des KI-Systems in einem maschinenlesbaren Format gekennzeichnet und als künstlich erzeugt oder manipuliert erkennbar sind. Die Anbieter sorgen dafür, dass — soweit technisch möglich — ihre technischen Lösungen wirksam, interoperabel, belastbar und zuverlässig sind und berücksichtigen dabei die Besonderheiten und Beschränkungen der verschiedenen Arten von Inhalten, die Umsetzungskosten und den allgemein anerkannten Stand der Technik, wie er in den einschlägigen technischen Normen zum Ausdruck kommen kann. Diese Pflicht gilt nicht, soweit die KI-Systeme eine unterstützende Funktion für die Standardbearbeitung ausführen oder die vom Betreiber bereitgestellten Eingabedaten oder deren Semantik nicht wesentlich verändern oder wenn sie zur Aufdeckung, Verhütung, Ermittlung oder Verfolgung von Straftaten gesetzlich zugelassen sind.",
+  "valid_from": "2026-07-27",
+  "valid_to": null
+ },
+ "{\"as_of\": \"2026-10-01\", \"exclude_source_example_ids\": [], \"language\": \"de\", \"law_version\": \"amended\", \"lookup\": \"art:50:3\"}": {
+  "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
+  "doc_key": "ai-act-consolidated",
+  "doc_type": "law",
+  "document_title": "AI Act, consolidated text as of 27 July 2026",
+  "english_only": false,
+  "heading": "Artikel 50 — Transparenzpflichten für Anbieter und Betreiber bestimmter KI-Systeme",
+  "language": "de",
+  "law_version": "amended",
+  "provision_id": "art:50:3",
+  "status": "consolidated",
+  "text": "Die Betreiber eines Emotionserkennungssystems oder eines Systems zur biometrischen Kategorisierung informieren die davon betroffenen natürlichen Personen über den Betrieb des Systems und verarbeiten personenbezogene Daten gemäß den Verordnungen (EU) 2016/679 und (EU) 2018/1725 und der Richtlinie (EU) 2016/680. Diese Pflicht gilt nicht für gesetzlich zur Aufdeckung, Verhütung oder Ermittlung von Straftaten zugelassene KI-Systeme, die zur biometrischen Kategorisierung und Emotionserkennung im Einklang mit dem Unionsrecht verwendet werden, sofern geeignete Schutzvorkehrungen für die Rechte und Freiheiten Dritter bestehen.",
+  "valid_from": "2026-07-27",
+  "valid_to": null
+ },
+ "{\"as_of\": \"2026-10-01\", \"exclude_source_example_ids\": [], \"language\": \"de\", \"law_version\": \"amended\", \"lookup\": \"art:50:4\"}": {
+  "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
+  "doc_key": "ai-act-consolidated",
+  "doc_type": "law",
+  "document_title": "AI Act, consolidated text as of 27 July 2026",
+  "english_only": false,
+  "heading": "Artikel 50 — Transparenzpflichten für Anbieter und Betreiber bestimmter KI-Systeme",
+  "language": "de",
+  "law_version": "amended",
+  "provision_id": "art:50:4",
+  "status": "consolidated",
+  "text": "Betreiber eines KI-Systems, das Bild-, Ton- oder Videoinhalte erzeugt oder manipuliert, die ein Deepfake sind, müssen offenlegen, dass die Inhalte künstlich erzeugt oder manipuliert wurden. Diese Pflicht gilt nicht, wenn die Verwendung zur Aufdeckung, Verhütung, Ermittlung oder Verfolgung von Straftaten gesetzlich zugelassen ist. Ist der Inhalt Teil eines offensichtlich künstlerischen, kreativen, satirischen, fiktionalen oder analogen Werks oder Programms, so beschränken sich die in diesem Absatz festgelegten Transparenzpflichten darauf, das Vorhandensein solcher erzeugten oder manipulierten Inhalte in geeigneter Weise offenzulegen, die die Darstellung oder den Genuss des Werks nicht beeinträchtigt.\nBetreiber eines KI-Systems, das Text erzeugt oder manipuliert, der veröffentlicht wird, um die Öffentlichkeit über Angelegenheiten von öffentlichem Interesse zu informieren, müssen offenlegen, dass der Text künstlich erzeugt oder manipuliert wurde. Diese Pflicht gilt nicht, wenn die Verwendung zur Aufdeckung, Verhütung, Ermittlung oder Verfolgung von Straftaten gesetzlich zugelassen ist oder wenn die durch KI erzeugten Inhalte einem Verfahren der menschlichen Überprüfung oder redaktionellen Kontrolle unterzogen wurden und wenn eine natürliche oder juristische Person die redaktionelle Verantwortung für die Veröffentlichung der Inhalte trägt.",
+  "valid_from": "2026-07-27",
+  "valid_to": null
  }
 }
