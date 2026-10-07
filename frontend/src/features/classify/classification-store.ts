@@ -1,14 +1,15 @@
 import { queryOptions } from '@tanstack/react-query'
 
 import type { ClassificationResult } from '@/api'
-import type { Language } from '@/i18n'
 
-/** One finished run: what was asked, and the engine's result. */
+import type { DescriptionFormValues } from './description-form'
+
+/** One finished run: what was asked, and the engine's result. `name` is as the user typed it,
+ *  possibly empty: screens then show "Your tool" in the reader's language. */
 export type ClassificationRun = {
   toolId: string
   name: string
   description: string
-  language: Language
   result: ClassificationResult
 }
 
@@ -26,19 +27,16 @@ export function classificationRunOptions(toolId: string) {
   })
 }
 
-/** What the description form holds. */
-export type ClassifyDraft = { name: string; description: string }
-
-const EMPTY_DRAFT: ClassifyDraft = { name: '', description: '' }
-let savedDraft: ClassifyDraft = EMPTY_DRAFT
+const EMPTY_DRAFT: DescriptionFormValues = { name: '', description: '' }
+let savedDraft: DescriptionFormValues = EMPTY_DRAFT
 
 /** The description being worked on, kept for this session: "Save for later" and "Edit
  *  description" bring it back to the form. Never sent anywhere until the user runs the checks. */
-export function readDraft(): ClassifyDraft {
+export function readDraft(): DescriptionFormValues {
   return savedDraft
 }
 
-export function saveDraft(draft: ClassifyDraft): void {
+export function saveDraft(draft: DescriptionFormValues): void {
   savedDraft = { ...draft }
 }
 

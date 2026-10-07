@@ -172,6 +172,30 @@ describe('Classify, a run', () => {
     await expect.poll(() => requests).toBe(2)
   })
 
+  it('tries again with the description as it is now, not as it was first sent', async () => {
+    const bodies: unknown[] = []
+    server.use(
+      http.post(CLASSIFY_URL, async ({ request }) => {
+        bodies.push(await request.json())
+        return HttpResponse.json({}, { status: 503 })
+      }),
+    )
+    const { user } = await openClassify()
+    await describeAndRun(user)
+    await screen.findByRole('alert')
+
+    const field = screen.getByLabelText('In your own words')
+    await user.clear(field)
+    await user.type(field, 'A chatbot that answers customer questions.')
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+
+    await expect.poll(() => bodies.length).toBe(2)
+    expect(bodies[1]).toEqual({
+      description: 'A chatbot that answers customer questions.',
+      language: 'en',
+    })
+  })
+
   it.each([
     [429, '7', "You've started many checks in a short time. Try again in 7 seconds."],
     [503, '10', 'Klar is busy right now. Try again in 10 seconds.'],
@@ -194,17 +218,33 @@ describe('Classify, a run', () => {
     expect(screen.getByText("The checks couldn't start")).toBeVisible()
   })
 
-  it('keeps the description for later', async () => {
+  it('keeps the description for later, edits since the run included', async () => {
     server.use(http.post(CLASSIFY_URL, () => HttpResponse.json({}, { status: 503 })))
     const { user, router } = await openClassify()
     await describeAndRun(user)
-    await user.click(await screen.findByRole('button', { name: 'Save for later' }))
+    const saveForLater = await screen.findByRole('button', { name: 'Save for later' })
+    await user.type(screen.getByLabelText('In your own words'), ' It runs every Monday.')
+    await user.click(saveForLater)
     await expect.poll(() => router.state.location.pathname).toBe('/app/inventory')
+    // The form is gone: what comes back is the saved draft, not the same form still mounted.
+    await screen.findByRole('heading', { level: 1, name: 'Your AI tools' })
+    expect(screen.queryByLabelText('In your own words')).toBeNull()
 
     await router.navigate({ to: '/app/classify' })
     expect(await screen.findByLabelText('In your own words')).toHaveValue(
-      WORKED_EXAMPLE_DESCRIPTION,
+      `${WORKED_EXAMPLE_DESCRIPTION} It runs every Monday.`,
     )
+  })
+
+  it('keeps an unnamed tool unnamed, so its result reads "Your tool" in either language', async () => {
+    server.use(classifyHandler(WORKED_EXAMPLE_EVENTS))
+    const { user } = await openClassify()
+    await user.type(screen.getByLabelText('In your own words'), WORKED_EXAMPLE_DESCRIPTION)
+    await user.click(screen.getByRole('button', { name: 'Run the checks' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Your tool' })).toBeVisible()
+
+    await i18n.changeLanguage('de')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ihr Tool' })).toBeVisible()
   })
 
   it('runs in German, in German', async () => {

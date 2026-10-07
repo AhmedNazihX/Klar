@@ -22,7 +22,6 @@ async function openResult(language: 'en' | 'de', view?: 'reviewer'): Promise<voi
     toolId: TOOL_ID,
     name: 'Applicant screening',
     description: WORKED_EXAMPLE_DESCRIPTION,
-    language,
     result: decidedHighRisk(),
   }
   client.setQueryData(classificationRunOptions(TOOL_ID).queryKey, run)

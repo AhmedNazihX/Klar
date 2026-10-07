@@ -38,7 +38,6 @@ async function openResult(
     toolId: TOOL_ID,
     name: 'Applicant screening',
     description: WORKED_EXAMPLE_DESCRIPTION,
-    language,
     result,
   }
   client.setQueryData(classificationRunOptions(TOOL_ID).queryKey, run)

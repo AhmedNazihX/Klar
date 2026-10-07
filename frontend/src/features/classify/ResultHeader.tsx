@@ -47,8 +47,9 @@ export function CheckedOnLine({ result }: { result: ClassificationResult }): JSX
   return <p className="m-0 text-body-small text-slate">{line}</p>
 }
 
-/** The result's title row: the tool's name and when it was checked, then the view switch and
- *  the actions. Buttons never shrink; the title wraps instead (localisation.md). */
+/** The result's title row: the tool's name (or "Your tool" when it has none) and when it was
+ *  checked, then the view switch and the actions. Buttons never shrink; the title wraps instead
+ *  (localisation.md). */
 export function ResultHeader({
   name,
   result,
@@ -58,11 +59,12 @@ export function ResultHeader({
   result: ClassificationResult
   actions: ReactNode
 }): JSX.Element {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div className="flex min-w-0 flex-col gap-1.5">
         <h1 className="m-0 text-[30px] leading-tight font-semibold tracking-[-0.03em] break-words text-ink md:text-heading-page">
-          {name}
+          {name || t('classify.untitled')}
         </h1>
         <CheckedOnLine result={result} />
       </div>

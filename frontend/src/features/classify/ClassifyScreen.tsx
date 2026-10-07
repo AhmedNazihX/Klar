@@ -1,6 +1,8 @@
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useState, type JSX } from 'react'
+import type { JSX } from 'react'
+import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
 import { ClassifyRunError, useClassify } from '@/hooks/use-classify'
@@ -14,13 +16,14 @@ import {
   type ClassificationRun,
 } from './classification-store'
 import { DescriptionForm } from './DescriptionForm'
-import type { DescriptionFormValues } from './description-form'
+import { DescriptionFormSchema, type DescriptionFormValues } from './description-form'
 import { ProgressPanel } from './ProgressPanel'
 
 /**
  * Describe a tool (artboards `Classify`, `ClassifyError`): the description form beside the live
  * check list. A finished run opens its result; a run that stops keeps the description and shows
- * where and why. Runs start only when the user asks: each one is a paid model run.
+ * where and why. Runs start only when the user asks: each one is a paid model run. Try again
+ * and Save for later take what the form holds now, edits since the last run included.
  */
 export function ClassifyScreen(): JSX.Element {
   const { t } = useTranslation()
@@ -28,13 +31,14 @@ export function ClassifyScreen(): JSX.Element {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { progress, run } = useClassify()
-  // The draft is read once: the form owns the values from then on.
-  const [draft] = useState(readDraft)
-  const [lastValues, setLastValues] = useState<DescriptionFormValues | null>(null)
+  // useForm takes its defaults on mount only (the saved draft); the form owns the values after.
+  const form = useForm<DescriptionFormValues>({
+    resolver: zodResolver(DescriptionFormSchema),
+    defaultValues: readDraft(),
+  })
 
   function start(values: DescriptionFormValues): void {
     saveDraft(values)
-    setLastValues(values)
     run.mutate(
       // The original text is only a view of the dates (decision 020): runs stay on the amended text.
       { description: values.description, language },
@@ -43,9 +47,8 @@ export function ClassifyScreen(): JSX.Element {
           const toolId = crypto.randomUUID()
           const saved: ClassificationRun = {
             toolId,
-            name: values.name || t('classify.untitled'),
+            name: values.name,
             description: values.description,
-            language,
             result,
           }
           queryClient.setQueryData(classificationRunOptions(toolId).queryKey, saved)
@@ -57,6 +60,7 @@ export function ClassifyScreen(): JSX.Element {
     )
   }
 
+  const submit = form.handleSubmit(start)
   const failure = run.error instanceof ClassifyRunError ? run.error.failure : null
   return (
     <>
@@ -68,16 +72,17 @@ export function ClassifyScreen(): JSX.Element {
       </div>
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1">
-          <DescriptionForm defaultValues={draft} isRunning={run.isPending} onSubmit={start} />
+          <DescriptionForm form={form} isRunning={run.isPending} onSubmit={submit} />
         </div>
         <ProgressPanel
           progress={progress}
           isRunning={run.isPending}
           failure={run.isError ? (failure ?? { kind: 'network' }) : null}
-          onTryAgain={() => {
-            if (lastValues) start(lastValues)
+          onTryAgain={() => void submit()}
+          onSaveForLater={() => {
+            saveDraft(form.getValues())
+            void navigate({ to: '/app/inventory' })
           }}
-          onSaveForLater={() => void navigate({ to: '/app/inventory' })}
         />
       </div>
     </>

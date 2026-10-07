@@ -1,6 +1,5 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useId, type JSX } from 'react'
-import { useForm } from 'react-hook-form'
+import { useId, type BaseSyntheticEvent, type JSX } from 'react'
+import type { UseFormReturn } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/Button'
@@ -8,7 +7,7 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { Icon } from '@/components/Icon'
 import { cn } from '@/lib/utils'
 
-import { DescriptionFormSchema, errorKey, type DescriptionFormValues } from './description-form'
+import { errorKey, type DescriptionFormValues } from './description-form'
 
 const TIP_KEYS = ['decides', 'affects', 'origin', 'changes'] as const
 
@@ -33,9 +32,11 @@ function FieldError({
 }
 
 export type DescriptionFormProps = {
-  defaultValues: DescriptionFormValues
+  /** The screen owns the form, so Try again and Save for later read what is in it now. */
+  form: UseFormReturn<DescriptionFormValues>
   isRunning: boolean
-  onSubmit: (values: DescriptionFormValues) => void
+  /** The form's validated submit (`form.handleSubmit(…)`). */
+  onSubmit: (event?: BaseSyntheticEvent) => Promise<void>
 }
 
 /**
@@ -43,27 +44,18 @@ export type DescriptionFormProps = {
  * description with the four things worth mentioning and the privacy line, the language Klar
  * answers in, and Run the checks.
  */
-export function DescriptionForm({
-  defaultValues,
-  isRunning,
-  onSubmit,
-}: DescriptionFormProps): JSX.Element {
+export function DescriptionForm({ form, isRunning, onSubmit }: DescriptionFormProps): JSX.Element {
   const { t } = useTranslation()
   const nameId = useId()
   const descriptionId = useId()
   const nameErrorId = useId()
   const descriptionErrorId = useId()
   const tipsId = useId()
-  const form = useForm<DescriptionFormValues>({
-    resolver: zodResolver(DescriptionFormSchema),
-    defaultValues,
-  })
   const { errors } = form.formState
-  const submit = form.handleSubmit(onSubmit)
 
   return (
     <GlassPanel as="section" className="flex min-w-0 flex-col gap-4 p-6">
-      <form noValidate onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
+      <form noValidate onSubmit={(event) => void onSubmit(event)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label htmlFor={nameId} className="text-body-small font-semibold text-ink">
             {t('classify.nameLabel')}
