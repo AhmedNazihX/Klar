@@ -15,6 +15,11 @@ the Act's rules are applied here, in code:
   product or its safety component (Art. 6(1)(a), 6(1a), 6(1b)), and the product needs a third-
   party conformity assessment (Art. 6(1)(b), 6(1c)). The result names the law, and for Section B
   says that Art. 2(2) leaves the duties to the sector law.
+- **The original text** (E11): the Omnibus added Art. 6(1a)-(1c) and moved machinery from Annex I
+  A.1 to B.21. Under `original` the model is told the three paragraphs don't exist (a third-party
+  assessment then counts whatever risks it checks), the Annex points shown are the original's
+  (machinery under A.1), the decision cites the original Art. 2(2), and the dates a yes or a
+  reading gives are the original Art. 113's.
 - **Uncertain facts:** a deciding fact left open makes the step `needs_more_information`, a
   question the law leaves open makes it `legally_ambiguous`; either way the stricter reading
   (high-risk) is the labelled working assumption, and the step asks the deciding question.
@@ -72,8 +77,10 @@ from aiact.engine.nodes.high_risk_texts import (
     REFUSAL_CITATIONS,
     ROUTE_NAMES,
     TEXTS,
+    annex_i_entry,
     law_title,
     point_name,
+    version_words,
 )
 from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
 from aiact.engine.nodes.questions import ask, hint, open_question
@@ -98,6 +105,7 @@ from aiact.schemas import (
     FollowUpQuestion,
     HighRiskRoute,
     Language,
+    LawVersion,
     OpenQuestion,
     Status,
     StepName,
@@ -108,6 +116,8 @@ from aiact.settings import Settings
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "high_risk.md"
 HIGH_RISK_INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
+ORIGINAL_INSTRUCTIONS = PROMPT_PATH.with_name("high_risk_original.md").read_text(encoding="utf-8")
+"""How the Annex I key facts are read under the original text, which has no Art. 6(1a)-(1c)."""
 
 MAX_OUTPUT_TOKENS = 6000
 """Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005), and a
@@ -497,9 +507,12 @@ def _law(point: str | None, retrieved: Retrieved) -> str:
     raise HighRiskOutputError("the answer's annex_i.point has no text in this law version")
 
 
-def _if_yes(key: KeyQuestion, answer: HighRiskAnswer, language: Language) -> AnswerOutcome | None:
-    """What a yes to `key` settles: high-risk on its route, when every other fact the route needs
-    is a yes and the law leaves none of it open; otherwise None (the step doesn't know)."""
+def _if_yes(
+    key: KeyQuestion, answer: HighRiskAnswer, language: Language, law_version: LawVersion
+) -> AnswerOutcome | None:
+    """What a yes to `key` settles: high-risk on its route, with the route's duties dated under
+    `law_version`, when every other fact the route needs is a yes and the law leaves none of it
+    open; otherwise None (the step doesn't know)."""
     annex_i = answer.annex_i
     if key in ANNEX_I_QUESTIONS:
         facts = (
@@ -509,7 +522,7 @@ def _if_yes(key: KeyQuestion, answer: HighRiskAnswer, language: Language) -> Ans
         )
         others = (f for asked, f in zip(ANNEX_I_QUESTIONS, facts, strict=True) if asked != key)
         if annex_i.settled_in_law is Settled.YES and all(f is Answer.YES for f in others):
-            return high_risk_outcome(HighRiskRoute.ANNEX_I, annex_i.point)
+            return high_risk_outcome(HighRiskRoute.ANNEX_I, annex_i.point, law_version)
         return None
     if answer.annex_iii.point not in ANNEX_III_POINTS or _open_on_annex_iii(answer):
         return None
@@ -518,27 +531,29 @@ def _if_yes(key: KeyQuestion, answer: HighRiskAnswer, language: Language) -> Ans
     is_use_known = answer.annex_iii.uses is Answer.YES  # only who uses it is open
     is_listing = is_use_known and key is iii.listed.missing and iii.exempt is Answer.NO
     if is_profiling or is_listing:
-        return high_risk_outcome(HighRiskRoute.ANNEX_III, answer.annex_iii.point)
+        return high_risk_outcome(HighRiskRoute.ANNEX_III, answer.annex_iii.point, law_version)
     return None
 
 
 def _question(
     key: KeyQuestion,
     answer: HighRiskAnswer | None,
-    language: Language,
+    state: EngineState,
     law: str,
     citations: Sequence[Citation] = (),
 ) -> FollowUpQuestion:
     """The question for `key`, naming the Annex I `law`, with what a yes settles (`_if_yes`)."""
-    if_yes = _if_yes(key, answer, language) if answer else None
-    text = key.question[language].format(law=law)
+    language = state["language"]
+    if_yes = _if_yes(key, answer, language, state["law_version"]) if answer else None
+    words = version_words(language, state["law_version"])
+    text = key.question[language].format(law=law, **words)
     return ask(key, language, StepName.HIGH_RISK, text=text, if_yes=if_yes, citations=citations)
 
 
 def _missing_question(
     settled: Settlement,
     answer: HighRiskAnswer,
-    language: Language,
+    state: EngineState,
     law: str,
     citations: Sequence[Citation],
 ) -> FollowUpQuestion | None:
@@ -548,20 +563,21 @@ def _missing_question(
         return None
     quotes = question_citations(settled.route, settled.point, citations)
     if settled.missing is ANNEX_III_USE and answer.question is not None:
-        why = hint(StepName.HIGH_RISK, ANNEX_III_USE.article, language)
+        why = hint(StepName.HIGH_RISK, ANNEX_III_USE.article, state["language"])
         return as_contract(answer.question).model_copy(update={"hint": why, "citations": quotes})
-    return _question(settled.missing, answer, language, law, quotes)
+    return _question(settled.missing, answer, state, law, quotes)
 
 
 def _open_question(
     settled: Settlement,
     answer: HighRiskAnswer,
-    language: Language,
+    state: EngineState,
     law: str,
     citations: Sequence[Citation],
 ) -> OpenQuestion | None:
     """The open question of law with its two readings, quoting the step's `citations`, and what
     would settle it."""
+    language = state["language"]
     plain = settled.open_question
     if plain is None:
         return None
@@ -570,7 +586,9 @@ def _open_question(
     if settled.is_open_on_exemption:
         condition = f"art:6:3:{answer.art_6_3.condition.value}"
         exemption = condition if condition in settled.cited else "art:6:3"
-    stricter, lenient = reading_sides(settled.route, settled.point, law, language, exemption)
+    stricter, lenient = reading_sides(
+        settled.route, settled.point, law, language, state["law_version"], exemption
+    )
     settles = settled_by(language, is_open_on_exemption=settled.is_open_on_exemption)
     return open_question(plain, stricter, lenient, citations, settles)
 
@@ -597,16 +615,19 @@ def _examples(answer: HighRiskAnswer, guidance: Sequence[SearchHit]) -> tuple[Se
 def _decision(
     settled: Settlement,
     answer: HighRiskAnswer,
-    language: Language,
+    state: EngineState,
     law: str,
     examples: Sequence[SearchHit],
     question: FollowUpQuestion | None,
 ) -> str:
+    language = state["language"]
     texts = TEXTS[language]
+    words = version_words(language, state["law_version"])
     point = point_name(settled.point, language) if settled.point else ""
     route = ROUTE_NAMES[language][settled.route.value] if settled.route else ""
     asked = settled.open_question.question if settled.open_question else ""
     values = {
+        **words,
         "point": point,
         "law": law,
         "condition": answer.art_6_3.condition.value,
@@ -641,20 +662,20 @@ def to_outcome(
         *(provision_citation(p) for p in provisions),
         *(guidance_citation(hit, language) for hit in examples),
     )
-    missing = _missing_question(settled, answer, language, law, citations)
+    missing = _missing_question(settled, answer, state, law, citations)
     step = StepResult(
         step=StepName.HIGH_RISK,
-        decision=_decision(settled, answer, language, law, examples, missing),
+        decision=_decision(settled, answer, state, law, examples, missing),
         facts_used=_facts_used(answer, settled, state.get("facts", ())),
         citations=citations,
         status=settled.status,
         missing_fact=missing,
-        open_question=_open_question(settled, answer, language, law, citations),
+        open_question=_open_question(settled, answer, state, law, citations),
     )
     questions: dict[str, FollowUpQuestion] = {missing.id: missing} if missing else {}
     for key in settled.questions:
         if key is not settled.missing:
-            questions.setdefault(key.id, _question(key, answer, language, law))
+            questions.setdefault(key.id, _question(key, answer, state, law))
     return CheckOutcome(
         step=step,
         high_risk_route=settled.route,
@@ -676,7 +697,7 @@ def refusal_outcome(state: EngineState, library: HighRiskLibrary) -> CheckOutcom
         language,
         REFUSAL[language],
         tuple(provision_citation(library.provision(pid, lookup)) for pid in REFUSAL_CITATIONS),
-        _question(PERSON_REVIEW, None, language, ""),
+        _question(PERSON_REVIEW, None, state, ""),
         high_risk_route=HighRiskRoute.ANNEX_III,
     )
 
@@ -723,10 +744,18 @@ def _passage(provision_id: str, text: str, heading: str | None = None) -> str:
     return f"[{provision_id}]{title}\n{body}"
 
 
+def _law_version_section(state: EngineState) -> str:
+    """The original-text note (no Art. 6(1a)-(1c), E11), or nothing: the instructions are
+    written for the amended text, whose requests stay as they were."""
+    if state["law_version"] is not LawVersion.ORIGINAL:
+        return ""
+    return f"Law version:\n{ORIGINAL_INSTRUCTIONS}\n"
+
+
 def high_risk_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMessage]:
-    """The fixed instructions first; the retrieved provisions next; the per-case context and the
-    description last (005)."""
-    annex_i = "\n".join(f"[{p.provision_id}] {law_title(p)}" for p in retrieved.annex_i) or "-"
+    """The fixed instructions first; the original-text note and the retrieved provisions next;
+    the per-case context and the description last (005)."""
+    annex_i = "\n".join(annex_i_entry(p) for p in retrieved.annex_i) or "-"
     annex_iii = "\n".join(
         f"[{p.provision_id}] {' '.join(p.text.split())}" for p in retrieved.annex_iii
     )
@@ -737,6 +766,7 @@ def high_risk_messages(state: EngineState, retrieved: Retrieved) -> list[BaseMes
     return [
         SystemMessage(HIGH_RISK_INSTRUCTIONS),
         HumanMessage(
+            f"{_law_version_section(state)}"
             f"Annex I:\n{annex_i}\n\n"
             f"Annex III:\n{annex_iii or '-'}\n\n"
             f"Guideline passages and examples found:\n{guidance}\n\n"

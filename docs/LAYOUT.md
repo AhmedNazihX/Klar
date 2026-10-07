@@ -70,6 +70,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        reading_side.py: what a texts module says about one reading (E12)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
+│   │   │   │                        high_risk_original.md: the original-text note, no Art. 6(1a)-(1c) (E11)
 │   │   │   ├── citations.py         citation existence validator, one retry, the changed_by_omnibus marker (E9)
 │   │   │   ├── classify.py          classify_system, run_classification, stream_classification, the answers
 │   │   │   │                        appended to the description (decision 019), engine_nodes (E10)

@@ -422,7 +422,7 @@ def test_the_result_carries_the_notice_in_the_language_asked(
 
 @pytest.mark.parametrize("law_version", [LawVersion.ORIGINAL, "original"])
 def test_a_law_version_the_table_does_not_hold_raises(law_version: LawVersion | str) -> None:
-    with pytest.raises(UnknownLawVersionError, match="not original"):
+    with pytest.raises(UnknownLawVersionError, match="not modelled for the original text"):
         list_obligations(Role.DEPLOYER, RiskClass.HIGH_RISK, law_version=law_version)
 
 

@@ -64,7 +64,9 @@ class CheckOutcome(ContractModel):
       e.g. `annex:III:4:a`, or the Annex I legislation, e.g. `annex:I:A:11`; None when the
       system is not high-risk, exempt ones included (their decision still names the point). An
       `annex:I:B:` point is Section B: Art. 2(2) then leaves only Art. 6(1), 60a and 102-112 of
-      the Act, so the duties come from the sector law.
+      the Act (the original text: 6(1), 102-109 and 112), so the duties come from the sector law.
+      Which law is in Section B depends on the text: the Omnibus moved machinery from A.1 to
+      B.21.
     - `transparency_duties` (transparency): every Art. 50 provision that applies, e.g.
       `art:50:1`, including duties that are only assumed or uncertain. The role step lists an
       Art. 50 duty only when it is here, so a duty left out is a duty the result drops.

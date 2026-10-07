@@ -248,7 +248,7 @@ async def test_a_law_version_the_table_lacks_comes_back_with_its_message(
     monkeypatch.setattr(obligations_module, "default_table", lambda: load_table(path))
     arguments = {"role": "deployer", "risk_class": "high_risk"}
     text = _error_text(await client.call_tool("list_obligations", arguments))
-    assert "holds the original text, not amended" in text
+    assert "not modelled for the amended text: the table holds the original text" in text
 
 
 @pytest.mark.anyio

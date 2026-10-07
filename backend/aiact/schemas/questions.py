@@ -29,8 +29,8 @@ class AnswerOutcome(ContractModel):
     )
     duties_from: date | None = Field(
         default=None,
-        description="The date the route's high-risk duties apply from under the amended Art. 113 "
-        "(the interface shows the original text's dates under it, decision 026 item 11); None "
+        description="The date the route's high-risk duties apply from under the Art. 113 of the "
+        "result's law version (the original text's dates for an original-text run, E11); None "
         "when the AI Act itself sets no duties (an Annex I Section B product, Art. 2(2)).",
     )
 

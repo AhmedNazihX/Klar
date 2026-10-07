@@ -1,6 +1,7 @@
 """The fixed texts of the high-risk node (E5): the deciding key facts with their stable follow-up
 ids and the provisions they rest on, how Annex points are named, and the decision sentences, in
-English and German. `{law}` is the Annex I legislation's short title, from the corpus."""
+English and German. `{law}` is the Annex I legislation's short title, from the corpus; the other
+placeholders of the Annex I texts are the law version's `VERSION_WORDS`."""
 
 import re
 from collections.abc import Mapping
@@ -8,7 +9,7 @@ from collections.abc import Mapping
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.provision_names import annex_point_name
 from aiact.retrieval.provisions import Provision
-from aiact.schemas import Language
+from aiact.schemas import Language, LawVersion
 
 EN, DE = Language.EN, Language.DE
 
@@ -40,11 +41,11 @@ THIRD_PARTY_ASSESSMENT = KeyQuestion(
     article="art:6:1:b",
     question={
         EN: "Under {law}, must the product undergo a third-party conformity assessment (for "
-        "example by a notified body) for health and safety before it is placed on the market or "
-        "put into service?",
+        "example by a notified body){for_health} before it is placed on the market or put into "
+        "service?",
         DE: "Muss das Produkt nach {law} vor dem Inverkehrbringen oder der Inbetriebnahme eine "
-        "Konformitätsbewertung durch Dritte (zum Beispiel eine benannte Stelle) zu Gesundheit und "
-        "Sicherheit durchlaufen?",
+        "Konformitätsbewertung durch Dritte (zum Beispiel eine benannte Stelle){for_health} "
+        "durchlaufen?",
     },
 )
 ANNEX_I_QUESTIONS = (INTENDED_PURPOSE, SAFETY_COMPONENT, THIRD_PARTY_ASSESSMENT)
@@ -166,15 +167,15 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "i_high": "High-risk under Art. 6(1): the AI system is a safety component of a product "
         "covered by {law} ({point}), or is itself such a product, and the product needs a "
         "third-party conformity assessment.",
-        "i_section_b": "{law} is listed in Annex I Section B, so under Art. 2(2) only Art. 6(1), "
-        "Art. 60a and Art. 102 to 112 of the AI Act apply: the high-risk requirements reach the "
-        "product through {law}, and the AI Act itself imposes no further obligations.",
+        "i_section_b": "{law} is listed in Annex I Section B, so under Art. 2(2) only {art_2_2} "
+        "of the AI Act apply: the high-risk requirements reach the product through {law}, and "
+        "the AI Act itself imposes no further obligations.",
         "i_not_covered": "The product is not covered by {law} ({point}), so Art. 6(1) does not "
         "apply.",
         "i_not_safety": "The AI system is not a safety component of the product covered by {law} "
-        "({point}) (Art. 6(1)(a), 6(1a)), so Art. 6(1) does not apply.",
+        "({point}) (Art. 6(1)(a){art_6_1a}), so Art. 6(1) does not apply.",
         "i_no_third_party": "The product covered by {law} ({point}) does not need a third-party "
-        "conformity assessment for health and safety (Art. 6(1)(b), 6(1c)), so Art. 6(1) does not "
+        "conformity assessment{for_health} (Art. 6(1)(b){art_6_1c}), so Art. 6(1) does not "
         "apply.",
         "none": "Not high-risk: no Annex III use was found, and the system is not a safety "
         "component of a product under Annex I that needs a third-party conformity assessment.",
@@ -198,16 +199,16 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "Produkts, das unter {law} fällt ({point}), oder selbst ein solches Produkt, und das "
         "Produkt muss eine Konformitätsbewertung durch Dritte durchlaufen.",
         "i_section_b": "{law} ist in Anhang I Abschnitt B aufgeführt, daher gelten nach "
-        "Art. 2 Abs. 2 von der KI-Verordnung nur Art. 6 Abs. 1, Art. 60a und Art. 102 bis 112: "
+        "Art. 2 Abs. 2 von der KI-Verordnung nur {art_2_2}: "
         "Die Hochrisiko-Anforderungen erreichen das Produkt über {law}, die KI-Verordnung selbst "
         "legt keine weiteren Pflichten auf.",
         "i_not_covered": "Das Produkt fällt nicht unter {law} ({point}), daher gilt Art. 6 "
         "Abs. 1 nicht.",
         "i_not_safety": "Das KI-System ist kein Sicherheitsbauteil des Produkts, das unter {law} "
-        "fällt ({point}) (Art. 6 Abs. 1 Buchst. a, Abs. 1a), daher gilt Art. 6 Abs. 1 nicht.",
+        "fällt ({point}) (Art. 6 Abs. 1 Buchst. a{art_6_1a}), daher gilt Art. 6 Abs. 1 nicht.",
         "i_no_third_party": "Das Produkt, das unter {law} fällt ({point}), muss keine "
-        "Konformitätsbewertung durch Dritte zu Gesundheit und Sicherheit durchlaufen (Art. 6 "
-        "Abs. 1 Buchst. b, Abs. 1c), daher gilt Art. 6 Abs. 1 nicht.",
+        "Konformitätsbewertung durch Dritte{for_health} durchlaufen (Art. 6 "
+        "Abs. 1 Buchst. b{art_6_1c}), daher gilt Art. 6 Abs. 1 nicht.",
         "none": "Kein Hochrisiko: Es wurde keine Verwendung nach Anhang III gefunden, und das "
         "System ist kein Sicherheitsbauteil eines Produkts nach Anhang I, das eine "
         "Konformitätsbewertung durch Dritte durchlaufen muss.",
@@ -220,6 +221,47 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "examples": "Verglichen mit den Beispielen aus den Leitlinien {ids}.",
     },
 }
+
+VERSION_WORDS: Mapping[LawVersion, Mapping[Language, Mapping[str, str]]] = {
+    LawVersion.AMENDED: {
+        EN: {
+            "art_2_2": "Art. 6(1), Art. 60a and Art. 102 to 112",
+            "art_6_1a": ", 6(1a)",
+            "art_6_1c": ", 6(1c)",
+            "for_health": " for health and safety",
+        },
+        DE: {
+            "art_2_2": "Art. 6 Abs. 1, Art. 60a und Art. 102 bis 112",
+            "art_6_1a": ", Abs. 1a",
+            "art_6_1c": ", Abs. 1c",
+            "for_health": " zu Gesundheit und Sicherheit",
+        },
+    },
+    LawVersion.ORIGINAL: {
+        EN: {
+            "art_2_2": "Art. 6(1), Art. 102 to 109 and Art. 112",
+            "art_6_1a": "",
+            "art_6_1c": "",
+            "for_health": "",
+        },
+        DE: {
+            "art_2_2": "Art. 6 Abs. 1, Art. 102 bis 109 und Art. 112",
+            "art_6_1a": "",
+            "art_6_1c": "",
+            "for_health": "",
+        },
+    },
+}
+"""The parts of the Annex I sentences and questions that depend on the law version (E11). The
+original text has no Art. 6(1a)-(1c), so a third-party assessment counts whatever risks it checks
+(no "for health and safety"), and its Art. 2(2) keeps only Art. 6(1), 102 to 109 and 112 for a
+Section B product."""
+
+
+def version_words(language: Language, law_version: LawVersion) -> Mapping[str, str]:
+    """The `VERSION_WORDS` a sentence or question is formatted with, for the law version read."""
+    return VERSION_WORDS[law_version][language]
+
 
 OPEN_FALLBACK: Mapping[Language, Mapping[str, tuple[str, str, str]]] = {
     EN: {
@@ -332,7 +374,8 @@ HARMONISATION_WORDS = re.compile(
 GERMAN_ACCUSATIVE: Mapping[str, str] = {"Druckgeräten": "Druckgeräte"}
 """A noun left in the dative once "über die Bereitstellung von" is dropped from a title."""
 TITLE_END = re.compile(
-    r",| and repealing| und zur Aufhebung| zur Aufhebung| sowie| auf dem Markt| \(OJ| \(ABl"
+    r",| and repealing| und zur Aufhebung| zur Aufhebung| und zur Änderung| sowie| auf dem Markt"
+    r"| \(OJ| \(ABl"
 )
 
 
@@ -345,3 +388,30 @@ def law_title(provision: Provision) -> str:
     for dative, accusative in GERMAN_ACCUSATIVE.items():
         title = title.replace(f"über {dative}", f"über {accusative}")
     return title
+
+
+ANNEX_I_SUCCESSORS: Mapping[tuple[LawVersion | None, Language, str], str] = {
+    (LawVersion.ORIGINAL, EN, "annex:I:A:1"): (
+        "repealed by Regulation (EU) 2023/1230 on machinery with effect from 20 January 2027; "
+        "references to the Directive are read as references to that Regulation"
+    ),
+    (LawVersion.ORIGINAL, DE, "annex:I:A:1"): (
+        "mit Wirkung vom 20. Januar 2027 aufgehoben durch die Verordnung (EU) 2023/1230 über "
+        "Maschinen; Verweise auf die Richtlinie gelten als Verweise auf diese Verordnung"
+    ),
+}
+"""The act that repeals an Annex I law the original text still names (E11). The
+original A.1 names Directive 2006/42/EC, which Regulation (EU) 2023/1230 "on machinery and
+repealing Directive 2006/42/EC" repeals (its title, as quoted in Omnibus Art. 1(41)(b)) with
+effect from 20 January 2027, and references to the Directive are read as references to the
+Regulation (both from the Regulation's repeal article, which data/ does not hold; the prompt names
+no article); the Omnibus moves the updated reference to Section B (recital 42)."""
+
+
+def annex_i_entry(provision: Provision) -> str:
+    """One Annex I line of the high-risk prompt: the id, the law's short title, and the act that
+    repeals it where the text read still names a law being repealed."""
+    key = (provision.law_version, provision.language, provision.provision_id)
+    successor = ANNEX_I_SUCCESSORS.get(key)
+    note = f" ({successor})" if successor else ""
+    return f"[{provision.provision_id}] {law_title(provision)}{note}"
