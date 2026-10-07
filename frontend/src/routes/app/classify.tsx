@@ -1,16 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import type { JSX } from 'react'
-import { useTranslation } from 'react-i18next'
 
-import { ScreenPlaceholder } from '@/components/ScreenPlaceholder'
+import { ClassifyScreen } from '@/features/classify/ClassifyScreen'
 
-// Empty until P5 (artboards `Classify`, `ClassifyVague`, `ClassifyError`).
+// Describe a tool and run the checks (P5; artboards `Classify`, `ClassifyError`). The follow-up
+// questions are P5b's, "Not enough to start" P20's (artboard `ClassifyVague`).
 export const Route = createFileRoute('/app/classify')({
   component: ClassifyScreen,
   staticData: { titleKey: 'screen.classify' },
 })
-
-function ClassifyScreen(): JSX.Element {
-  const { t } = useTranslation()
-  return <ScreenPlaceholder title={t('screen.classify')} />
-}

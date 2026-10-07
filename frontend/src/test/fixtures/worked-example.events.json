@@ -1,0 +1,1033 @@
+[
+  {
+    "event": "facts",
+    "facts": [
+      {
+        "text": "The company has 40 employees and operates in logistics.",
+        "evidence": "stated",
+        "source_span": {
+          "start": 0,
+          "end": 35
+        }
+      },
+      {
+        "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+        "evidence": "stated",
+        "source_span": {
+          "start": 56,
+          "end": 133
+        }
+      },
+      {
+        "text": "The tool is used to screen people applying for jobs.",
+        "evidence": "inferred",
+        "source_span": null
+      },
+      {
+        "text": "The company bought the tool from a vendor and did not change it.",
+        "evidence": "stated",
+        "source_span": {
+          "start": 135,
+          "end": 182
+        }
+      }
+    ],
+    "follow_up_questions": [
+      {
+        "id": "ai_inference",
+        "text": "Does the tool use AI to infer scores or rankings from application information, rather than only applying fixed rules written by people?",
+        "about": "scope",
+        "hint": null,
+        "options": [],
+        "if_yes": null,
+        "citations": []
+      },
+      {
+        "id": "eu_use",
+        "text": "Is the tool used in the EU, or placed on the EU market?",
+        "about": "scope",
+        "hint": null,
+        "options": [],
+        "if_yes": null,
+        "citations": []
+      },
+      {
+        "id": "human_review",
+        "text": "Does a person review the tool’s scores and shortlist before they affect hiring decisions?",
+        "about": "high_risk",
+        "hint": null,
+        "options": [],
+        "if_yes": null,
+        "citations": []
+      },
+      {
+        "id": "own_brand",
+        "text": "Is the tool placed on the market or put into service under your company’s name or brand?",
+        "about": "role_obligations",
+        "hint": null,
+        "options": [],
+        "if_yes": null,
+        "citations": []
+      },
+      {
+        "id": "recruitment_purpose",
+        "text": "Is the tool used to support decisions about selecting or hiring job applicants?",
+        "about": "high_risk",
+        "hint": null,
+        "options": [],
+        "if_yes": null,
+        "citations": []
+      }
+    ]
+  },
+  {
+    "event": "step_started",
+    "step": "scope"
+  },
+  {
+    "event": "step",
+    "step": {
+      "step": "scope",
+      "decision": "Working assumption: in scope, pending an answer to: How does the system produce its outputs: is it trained on data or does it otherwise infer them, or does it only apply rules or calculations that people defined?",
+      "facts_used": [
+        {
+          "text": "The description gives no location information suggesting the system is outside the Union.",
+          "evidence": "assumed",
+          "source_span": null
+        },
+        {
+          "text": "The company has 40 employees and operates in logistics.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 0,
+            "end": 35
+          }
+        },
+        {
+          "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 56,
+            "end": 133
+          }
+        },
+        {
+          "text": "The tool is used to screen people applying for jobs.",
+          "evidence": "inferred",
+          "source_span": null
+        }
+      ],
+      "citations": [
+        {
+          "provision_id": "art:3:1",
+          "document_id": "ai-act-consolidated",
+          "law_version": "amended",
+          "document_status": "consolidated",
+          "language": "en",
+          "quote": "‘AI system’ means a machine-based system that is designed to operate with varying levels of autonomy and that may exhibit adaptiveness after deployment, and that, for explicit or implicit objectives, infers, from the input it receives, how to generate outputs such as predictions, content, recommendations, or decisions that can influence physical or virtual environments;",
+          "english_only": false,
+          "changed_by_omnibus": false
+        },
+        {
+          "provision_id": "recital:12",
+          "document_id": "ai-act",
+          "law_version": "original",
+          "document_status": "final",
+          "language": "en",
+          "quote": "The notion of ‘AI system’ in this Regulation should be clearly defined and should be closely aligned with the work of international organisations working on AI to ensure legal certainty, facilitate international convergence and wide acceptance, while providing the flexibility to accommodate the rapid technological developments in this field. Moreover, the definition should be based on key characteristics of AI systems that distinguish it from simpler traditional software systems or programming approaches and should not cover systems that are based on the rules defined solely by natural persons to automatically execute operations. A key characteristic of AI systems is their capability to infer. This capability to infer refers to the process of obtaining the outputs, such as predictions, content, recommendations, or decisions, which can influence physical and virtual environments, and to a capability of AI systems to derive models or algorithms, or both, from inputs or data. The techniques that enable inference while building an AI system include machine learning approaches that learn from data how to achieve certain objectives, and logic- and knowledge-based approaches that infer from encoded knowledge or symbolic representation of the task to be solved. The capacity of an AI system to infer transcends basic data processing by enabling learning, reasoning or modelling. The term ‘machine-based’ refers to the fact that AI systems run on machines. The reference to explicit or implicit objectives underscores that AI systems can operate according to explicit defined objectives or to implicit objectives. The objectives of the AI system may be different from the intended purpose of the AI system in a specific context. For the purposes of this Regulation, environments should be understood to be the contexts in which the AI systems operate, whereas outputs generated by the AI system reflect different functions performed by AI systems and include predictions, content, recommendations or decisions. AI systems are designed to operate with varying levels of autonomy, meaning that they have some degree of independence of actions from human involvement and of capabilities to operate without human intervention. The adaptiveness that an AI system could exhibit after deployment, refers to self-learning capabilities, allowing the system to change while in use. AI systems can be used on a stand-alone basis or as a component of a product, irrespective of whether the system is physically integrated into the product (embedded) or serves the functionality of the product without being integrated therein (non-embedded).",
+          "english_only": false,
+          "changed_by_omnibus": false
+        },
+        {
+          "provision_id": "art:2:1",
+          "document_id": "ai-act-consolidated",
+          "law_version": "amended",
+          "document_status": "consolidated",
+          "language": "en",
+          "quote": "This Regulation applies to:\n(a) providers placing on the market or putting into service AI systems or placing on the market general-purpose AI models in the Union, irrespective of whether those providers are established or located within the Union or in a third country;\n(b) deployers of AI systems that have their place of establishment or are located within the Union;\n(c) providers and deployers of AI systems that have their place of establishment or are located in a third country, where the output produced by the AI system is used in the Union;\n(d) importers and distributors of AI systems;\n(e) product manufacturers placing on the market or putting into service an AI system together with their product and under their own name or trademark;\n(f) authorised representatives of providers, which are not established in the Union;\n(g) affected persons that are located in the Union.",
+          "english_only": false,
+          "changed_by_omnibus": false
+        },
+        {
+          "provision_id": "art:2:10",
+          "document_id": "ai-act-consolidated",
+          "law_version": "amended",
+          "document_status": "consolidated",
+          "language": "en",
+          "quote": "This Regulation does not apply to obligations of deployers who are natural persons using AI systems in the course of a purely personal non-professional activity.",
+          "english_only": false,
+          "changed_by_omnibus": false
+        }
+      ],
+      "status": "needs_more_information",
+      "missing_fact": {
+        "id": "ai_system",
+        "text": "How does the system produce its outputs: is it trained on data or does it otherwise infer them, or does it only apply rules or calculations that people defined?",
+        "about": "art:3:1",
+        "hint": "The answer decides whether the AI Act applies to the system (Art. 3(1)).",
+        "options": [],
+        "if_yes": null,
+        "citations": []
+      },
+      "open_question": null,
+      "error": null
+    },
+    "matches": []
+  },
+  {
+    "event": "step_started",
+    "step": "prohibited"
+  },
+  {
+    "event": "step",
+    "step": {
+      "step": "prohibited",
+      "decision": "No prohibited practice under Art. 5 matches. Considered Art. 5(1)(c): The tool scores and ranks job applicants, but the description does not say whether it evaluates them over time based on social behaviour or personal or personality characteristics.",
+      "facts_used": [
+        {
+          "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 56,
+            "end": 133
+          }
+        },
+        {
+          "text": "The tool is used to screen people applying for jobs.",
+          "evidence": "inferred",
+          "source_span": null
+        }
+      ],
+      "citations": [
+        {
+          "provision_id": "art:5:1:c",
+          "document_id": "ai-act-consolidated",
+          "law_version": "amended",
+          "document_status": "consolidated",
+          "language": "en",
+          "quote": "the placing on the market, the putting into service or the use of AI systems for the evaluation or classification of natural persons or groups of persons over a certain period of time based on their social behaviour or known, inferred or predicted personal or personality characteristics, with the social score leading to either or both of the following:\n(i) detrimental or unfavourable treatment of certain natural persons or groups of persons in social contexts that are unrelated to the contexts in which the data was originally generated or collected;\n(ii) detrimental or unfavourable treatment of certain natural persons or groups of persons that is unjustified or disproportionate to their social behaviour or its gravity;",
+          "english_only": false,
+          "changed_by_omnibus": false
+        }
+      ],
+      "status": "decided",
+      "missing_fact": null,
+      "open_question": null,
+      "error": null
+    },
+    "matches": []
+  },
+  {
+    "event": "step_started",
+    "step": "high_risk"
+  },
+  {
+    "event": "step",
+    "step": {
+      "step": "high_risk",
+      "decision": "High-risk: the system is used as listed in Annex III point 4(a) (Art. 6(2)). It profiles natural persons, so the Art. 6(3) exemption cannot apply.",
+      "facts_used": [
+        {
+          "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 56,
+            "end": 133
+          }
+        },
+        {
+          "text": "The tool is used to screen people applying for jobs.",
+          "evidence": "inferred",
+          "source_span": null
+        },
+        {
+          "text": "The company has 40 employees and operates in logistics.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 0,
+            "end": 35
+          }
+        }
+      ],
+      "citations": [
+        {
+          "provision_id": "annex:III:4:a",
+          "document_id": "ai-act-consolidated",
+          "law_version": "amended",
+          "document_status": "consolidated",
+          "language": "en",
+          "quote": "AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;",
+          "english_only": false,
+          "changed_by_omnibus": false
+        },
+        {
+          "provision_id": "art:6:2",
+          "document_id": "ai-act-consolidated",
+          "law_version": "amended",
+          "document_status": "consolidated",
+          "language": "en",
+          "quote": "In addition to the high-risk AI systems referred to in paragraph 1, AI systems referred to in Annex III shall be considered to be high-risk.",
+          "english_only": false,
+          "changed_by_omnibus": false
+        },
+        {
+          "provision_id": "art:6:3",
+          "document_id": "ai-act-consolidated",
+          "law_version": "amended",
+          "document_status": "consolidated",
+          "language": "en",
+          "quote": "By derogation from paragraph 2, an AI system referred to in Annex III shall not be considered to be high-risk where it does not pose a significant risk of harm to the health, safety or fundamental rights of natural persons, including by not materially influencing the outcome of decision making.\nThe first subparagraph shall apply where any of the following conditions is fulfilled:\n(a) the AI system is intended to perform a narrow procedural task;\n(b) the AI system is intended to improve the result of a previously completed human activity;\n(c) the AI system is intended to detect decision-making patterns or deviations from prior decision-making patterns and is not meant to replace or influence the previously completed human assessment, without proper human review; or\n(d) the AI system is intended to perform a preparatory task to an assessment relevant for the purposes of the use cases listed in Annex III.\nNotwithstanding the first subparagraph, an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons.",
+          "english_only": false,
+          "changed_by_omnibus": false
+        }
+      ],
+      "status": "decided",
+      "missing_fact": null,
+      "open_question": null,
+      "error": null
+    },
+    "matches": ["annex:III:4:a"]
+  },
+  {
+    "event": "step_started",
+    "step": "transparency"
+  },
+  {
+    "event": "step",
+    "step": {
+      "step": "transparency",
+      "decision": "No transparency duty under Art. 50 applies.",
+      "facts_used": [],
+      "citations": [
+        {
+          "provision_id": "art:50",
+          "document_id": "ai-act-consolidated",
+          "law_version": "amended",
+          "document_status": "consolidated",
+          "language": "en",
+          "quote": "1. Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system, unless this is obvious from the point of view of a natural person who is reasonably well-informed, observant and circumspect, taking into account the circumstances and the context of use. This obligation shall not apply to AI systems authorised by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, unless those systems are available for the public to report a criminal offence.\n2. Providers of AI systems, including general-purpose AI systems, generating synthetic audio, image, video or text content, shall ensure that the outputs of the AI system are marked in a machine-readable format and detectable as artificially generated or manipulated. Providers shall ensure their technical solutions are effective, interoperable, robust and reliable as far as this is technically feasible, taking into account the specificities and limitations of various types of content, the costs of implementation and the generally acknowledged state of the art, as may be reflected in relevant technical standards. This obligation shall not apply to the extent the AI systems perform an assistive function for standard editing or do not substantially alter the input data provided by the deployer or the semantics thereof, or where authorised by law to detect, prevent, investigate or prosecute criminal offences.\n3. Deployers of an emotion recognition system or a biometric categorisation system shall inform the natural persons exposed thereto of the operation of the system, and shall process the personal data in accordance with Regulations (EU) 2016/679 and (EU) 2018/1725 and Directive (EU) 2016/680, as applicable. This obligation shall not apply to AI systems used for biometric categorisation and emotion recognition, which are permitted by law to detect, prevent or investigate criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, and in accordance with Union law.\n4. Deployers of an AI system that generates or manipulates image, audio or video content constituting a deep fake, shall disclose that the content has been artificially generated or manipulated. This obligation shall not apply where the use is authorised by law to detect, prevent, investigate or prosecute criminal offence. Where the content forms part of an evidently artistic, creative, satirical, fictional or analogous work or programme, the transparency obligations set out in this paragraph are limited to disclosure of the existence of such generated or manipulated content in an appropriate manner that does not hamper the display or enjoyment of the work.\nDeployers of an AI system that generates or manipulates text which is published with the purpose of informing the public on matters of public interest shall disclose that the text has been artificially generated or manipulated. This obligation shall not apply where the use is authorised by law to detect, prevent, investigate or prosecute criminal offences or where the AI-generated content has undergone a process of human review or editorial control and where a natural or legal person holds editorial responsibility for the publication of the content.\n5. The information referred to in paragraphs 1 to 4 shall be provided to the natural persons concerned in a clear and distinguishable manner at the latest at the time of the first interaction or exposure. The information shall conform to the applicable accessibility requirements.\n6. Paragraphs 1 to 4 shall not affect the requirements and obligations set out in Chapter III, and shall be without prejudice to other transparency obligations laid down in Union or national law for deployers of AI systems.\n7. The Commission shall encourage and facilitate the drawing up of codes of practice at Union level to facilitate the effective implementation of the obligations regarding the detection, marking and labelling of artificially generated or manipulated content. The Commission, taking utmost account of the opinion of the Board, shall assess whether adherence to those codes of practice is adequate to ensure compliance with the obligations laid down in paragraphs 2 and 4 of this Article, in accordance with the procedure laid down in Article 56(6). If it deems the code of practice to be inadequate, the Commission may adopt an implementing act specifying common rules for the implementation of those obligations in accordance with the examination procedure laid down in Article 98(2).",
+          "english_only": false,
+          "changed_by_omnibus": true
+        }
+      ],
+      "status": "decided",
+      "missing_fact": null,
+      "open_question": null,
+      "error": null
+    },
+    "matches": []
+  },
+  {
+    "event": "step_started",
+    "step": "role_obligations"
+  },
+  {
+    "event": "step",
+    "step": {
+      "step": "role_obligations",
+      "decision": "Role: deployer. 11 duties listed for a high_risk system (amended text). 6 conditional duties left out because their condition doesn't apply.",
+      "facts_used": [
+        {
+          "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 56,
+            "end": 133
+          }
+        },
+        {
+          "text": "The company bought the tool from a vendor and did not change it.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 135,
+            "end": 182
+          }
+        },
+        {
+          "text": "The company bought and uses the vendor's tool as-is; it is not described as building its own system on a general-purpose AI model.",
+          "evidence": "assumed",
+          "source_span": null
+        },
+        {
+          "text": "The company is not described as putting its own name or trademark on the vendor's system.",
+          "evidence": "assumed",
+          "source_span": null
+        },
+        {
+          "text": "The company is not described as using the tool for a purpose its provider did not intend.",
+          "evidence": "assumed",
+          "source_span": null
+        }
+      ],
+      "citations": [
+        {
+          "provision_id": "art:3:4",
+          "document_id": "ai-act-consolidated",
+          "law_version": "amended",
+          "document_status": "consolidated",
+          "language": "en",
+          "quote": "‘deployer’ means a natural or legal person, public authority, agency or other body using an AI system under its authority except where the AI system is used in the course of a personal non-professional activity;",
+          "english_only": false,
+          "changed_by_omnibus": false
+        }
+      ],
+      "status": "decided",
+      "missing_fact": null,
+      "open_question": null,
+      "error": null
+    },
+    "matches": []
+  },
+  {
+    "event": "result",
+    "result": {
+      "facts": [
+        {
+          "text": "The company has 40 employees and operates in logistics.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 0,
+            "end": 35
+          }
+        },
+        {
+          "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 56,
+            "end": 133
+          }
+        },
+        {
+          "text": "The tool is used to screen people applying for jobs.",
+          "evidence": "inferred",
+          "source_span": null
+        },
+        {
+          "text": "The company bought the tool from a vendor and did not change it.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 135,
+            "end": 182
+          }
+        }
+      ],
+      "steps": [
+        {
+          "step": "scope",
+          "decision": "Working assumption: in scope, pending an answer to: How does the system produce its outputs: is it trained on data or does it otherwise infer them, or does it only apply rules or calculations that people defined?",
+          "facts_used": [
+            {
+              "text": "The description gives no location information suggesting the system is outside the Union.",
+              "evidence": "assumed",
+              "source_span": null
+            },
+            {
+              "text": "The company has 40 employees and operates in logistics.",
+              "evidence": "stated",
+              "source_span": {
+                "start": 0,
+                "end": 35
+              }
+            },
+            {
+              "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+              "evidence": "stated",
+              "source_span": {
+                "start": 56,
+                "end": 133
+              }
+            },
+            {
+              "text": "The tool is used to screen people applying for jobs.",
+              "evidence": "inferred",
+              "source_span": null
+            }
+          ],
+          "citations": [
+            {
+              "provision_id": "art:3:1",
+              "document_id": "ai-act-consolidated",
+              "law_version": "amended",
+              "document_status": "consolidated",
+              "language": "en",
+              "quote": "‘AI system’ means a machine-based system that is designed to operate with varying levels of autonomy and that may exhibit adaptiveness after deployment, and that, for explicit or implicit objectives, infers, from the input it receives, how to generate outputs such as predictions, content, recommendations, or decisions that can influence physical or virtual environments;",
+              "english_only": false,
+              "changed_by_omnibus": false
+            },
+            {
+              "provision_id": "recital:12",
+              "document_id": "ai-act",
+              "law_version": "original",
+              "document_status": "final",
+              "language": "en",
+              "quote": "The notion of ‘AI system’ in this Regulation should be clearly defined and should be closely aligned with the work of international organisations working on AI to ensure legal certainty, facilitate international convergence and wide acceptance, while providing the flexibility to accommodate the rapid technological developments in this field. Moreover, the definition should be based on key characteristics of AI systems that distinguish it from simpler traditional software systems or programming approaches and should not cover systems that are based on the rules defined solely by natural persons to automatically execute operations. A key characteristic of AI systems is their capability to infer. This capability to infer refers to the process of obtaining the outputs, such as predictions, content, recommendations, or decisions, which can influence physical and virtual environments, and to a capability of AI systems to derive models or algorithms, or both, from inputs or data. The techniques that enable inference while building an AI system include machine learning approaches that learn from data how to achieve certain objectives, and logic- and knowledge-based approaches that infer from encoded knowledge or symbolic representation of the task to be solved. The capacity of an AI system to infer transcends basic data processing by enabling learning, reasoning or modelling. The term ‘machine-based’ refers to the fact that AI systems run on machines. The reference to explicit or implicit objectives underscores that AI systems can operate according to explicit defined objectives or to implicit objectives. The objectives of the AI system may be different from the intended purpose of the AI system in a specific context. For the purposes of this Regulation, environments should be understood to be the contexts in which the AI systems operate, whereas outputs generated by the AI system reflect different functions performed by AI systems and include predictions, content, recommendations or decisions. AI systems are designed to operate with varying levels of autonomy, meaning that they have some degree of independence of actions from human involvement and of capabilities to operate without human intervention. The adaptiveness that an AI system could exhibit after deployment, refers to self-learning capabilities, allowing the system to change while in use. AI systems can be used on a stand-alone basis or as a component of a product, irrespective of whether the system is physically integrated into the product (embedded) or serves the functionality of the product without being integrated therein (non-embedded).",
+              "english_only": false,
+              "changed_by_omnibus": false
+            },
+            {
+              "provision_id": "art:2:1",
+              "document_id": "ai-act-consolidated",
+              "law_version": "amended",
+              "document_status": "consolidated",
+              "language": "en",
+              "quote": "This Regulation applies to:\n(a) providers placing on the market or putting into service AI systems or placing on the market general-purpose AI models in the Union, irrespective of whether those providers are established or located within the Union or in a third country;\n(b) deployers of AI systems that have their place of establishment or are located within the Union;\n(c) providers and deployers of AI systems that have their place of establishment or are located in a third country, where the output produced by the AI system is used in the Union;\n(d) importers and distributors of AI systems;\n(e) product manufacturers placing on the market or putting into service an AI system together with their product and under their own name or trademark;\n(f) authorised representatives of providers, which are not established in the Union;\n(g) affected persons that are located in the Union.",
+              "english_only": false,
+              "changed_by_omnibus": false
+            },
+            {
+              "provision_id": "art:2:10",
+              "document_id": "ai-act-consolidated",
+              "law_version": "amended",
+              "document_status": "consolidated",
+              "language": "en",
+              "quote": "This Regulation does not apply to obligations of deployers who are natural persons using AI systems in the course of a purely personal non-professional activity.",
+              "english_only": false,
+              "changed_by_omnibus": false
+            }
+          ],
+          "status": "needs_more_information",
+          "missing_fact": {
+            "id": "ai_system",
+            "text": "How does the system produce its outputs: is it trained on data or does it otherwise infer them, or does it only apply rules or calculations that people defined?",
+            "about": "art:3:1",
+            "hint": "The answer decides whether the AI Act applies to the system (Art. 3(1)).",
+            "options": [],
+            "if_yes": null,
+            "citations": []
+          },
+          "open_question": null,
+          "error": null
+        },
+        {
+          "step": "prohibited",
+          "decision": "No prohibited practice under Art. 5 matches. Considered Art. 5(1)(c): The tool scores and ranks job applicants, but the description does not say whether it evaluates them over time based on social behaviour or personal or personality characteristics.",
+          "facts_used": [
+            {
+              "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+              "evidence": "stated",
+              "source_span": {
+                "start": 56,
+                "end": 133
+              }
+            },
+            {
+              "text": "The tool is used to screen people applying for jobs.",
+              "evidence": "inferred",
+              "source_span": null
+            }
+          ],
+          "citations": [
+            {
+              "provision_id": "art:5:1:c",
+              "document_id": "ai-act-consolidated",
+              "law_version": "amended",
+              "document_status": "consolidated",
+              "language": "en",
+              "quote": "the placing on the market, the putting into service or the use of AI systems for the evaluation or classification of natural persons or groups of persons over a certain period of time based on their social behaviour or known, inferred or predicted personal or personality characteristics, with the social score leading to either or both of the following:\n(i) detrimental or unfavourable treatment of certain natural persons or groups of persons in social contexts that are unrelated to the contexts in which the data was originally generated or collected;\n(ii) detrimental or unfavourable treatment of certain natural persons or groups of persons that is unjustified or disproportionate to their social behaviour or its gravity;",
+              "english_only": false,
+              "changed_by_omnibus": false
+            }
+          ],
+          "status": "decided",
+          "missing_fact": null,
+          "open_question": null,
+          "error": null
+        },
+        {
+          "step": "high_risk",
+          "decision": "High-risk: the system is used as listed in Annex III point 4(a) (Art. 6(2)). It profiles natural persons, so the Art. 6(3) exemption cannot apply.",
+          "facts_used": [
+            {
+              "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+              "evidence": "stated",
+              "source_span": {
+                "start": 56,
+                "end": 133
+              }
+            },
+            {
+              "text": "The tool is used to screen people applying for jobs.",
+              "evidence": "inferred",
+              "source_span": null
+            },
+            {
+              "text": "The company has 40 employees and operates in logistics.",
+              "evidence": "stated",
+              "source_span": {
+                "start": 0,
+                "end": 35
+              }
+            }
+          ],
+          "citations": [
+            {
+              "provision_id": "annex:III:4:a",
+              "document_id": "ai-act-consolidated",
+              "law_version": "amended",
+              "document_status": "consolidated",
+              "language": "en",
+              "quote": "AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;",
+              "english_only": false,
+              "changed_by_omnibus": false
+            },
+            {
+              "provision_id": "art:6:2",
+              "document_id": "ai-act-consolidated",
+              "law_version": "amended",
+              "document_status": "consolidated",
+              "language": "en",
+              "quote": "In addition to the high-risk AI systems referred to in paragraph 1, AI systems referred to in Annex III shall be considered to be high-risk.",
+              "english_only": false,
+              "changed_by_omnibus": false
+            },
+            {
+              "provision_id": "art:6:3",
+              "document_id": "ai-act-consolidated",
+              "law_version": "amended",
+              "document_status": "consolidated",
+              "language": "en",
+              "quote": "By derogation from paragraph 2, an AI system referred to in Annex III shall not be considered to be high-risk where it does not pose a significant risk of harm to the health, safety or fundamental rights of natural persons, including by not materially influencing the outcome of decision making.\nThe first subparagraph shall apply where any of the following conditions is fulfilled:\n(a) the AI system is intended to perform a narrow procedural task;\n(b) the AI system is intended to improve the result of a previously completed human activity;\n(c) the AI system is intended to detect decision-making patterns or deviations from prior decision-making patterns and is not meant to replace or influence the previously completed human assessment, without proper human review; or\n(d) the AI system is intended to perform a preparatory task to an assessment relevant for the purposes of the use cases listed in Annex III.\nNotwithstanding the first subparagraph, an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons.",
+              "english_only": false,
+              "changed_by_omnibus": false
+            }
+          ],
+          "status": "decided",
+          "missing_fact": null,
+          "open_question": null,
+          "error": null
+        },
+        {
+          "step": "transparency",
+          "decision": "No transparency duty under Art. 50 applies.",
+          "facts_used": [],
+          "citations": [
+            {
+              "provision_id": "art:50",
+              "document_id": "ai-act-consolidated",
+              "law_version": "amended",
+              "document_status": "consolidated",
+              "language": "en",
+              "quote": "1. Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system, unless this is obvious from the point of view of a natural person who is reasonably well-informed, observant and circumspect, taking into account the circumstances and the context of use. This obligation shall not apply to AI systems authorised by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, unless those systems are available for the public to report a criminal offence.\n2. Providers of AI systems, including general-purpose AI systems, generating synthetic audio, image, video or text content, shall ensure that the outputs of the AI system are marked in a machine-readable format and detectable as artificially generated or manipulated. Providers shall ensure their technical solutions are effective, interoperable, robust and reliable as far as this is technically feasible, taking into account the specificities and limitations of various types of content, the costs of implementation and the generally acknowledged state of the art, as may be reflected in relevant technical standards. This obligation shall not apply to the extent the AI systems perform an assistive function for standard editing or do not substantially alter the input data provided by the deployer or the semantics thereof, or where authorised by law to detect, prevent, investigate or prosecute criminal offences.\n3. Deployers of an emotion recognition system or a biometric categorisation system shall inform the natural persons exposed thereto of the operation of the system, and shall process the personal data in accordance with Regulations (EU) 2016/679 and (EU) 2018/1725 and Directive (EU) 2016/680, as applicable. This obligation shall not apply to AI systems used for biometric categorisation and emotion recognition, which are permitted by law to detect, prevent or investigate criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, and in accordance with Union law.\n4. Deployers of an AI system that generates or manipulates image, audio or video content constituting a deep fake, shall disclose that the content has been artificially generated or manipulated. This obligation shall not apply where the use is authorised by law to detect, prevent, investigate or prosecute criminal offence. Where the content forms part of an evidently artistic, creative, satirical, fictional or analogous work or programme, the transparency obligations set out in this paragraph are limited to disclosure of the existence of such generated or manipulated content in an appropriate manner that does not hamper the display or enjoyment of the work.\nDeployers of an AI system that generates or manipulates text which is published with the purpose of informing the public on matters of public interest shall disclose that the text has been artificially generated or manipulated. This obligation shall not apply where the use is authorised by law to detect, prevent, investigate or prosecute criminal offences or where the AI-generated content has undergone a process of human review or editorial control and where a natural or legal person holds editorial responsibility for the publication of the content.\n5. The information referred to in paragraphs 1 to 4 shall be provided to the natural persons concerned in a clear and distinguishable manner at the latest at the time of the first interaction or exposure. The information shall conform to the applicable accessibility requirements.\n6. Paragraphs 1 to 4 shall not affect the requirements and obligations set out in Chapter III, and shall be without prejudice to other transparency obligations laid down in Union or national law for deployers of AI systems.\n7. The Commission shall encourage and facilitate the drawing up of codes of practice at Union level to facilitate the effective implementation of the obligations regarding the detection, marking and labelling of artificially generated or manipulated content. The Commission, taking utmost account of the opinion of the Board, shall assess whether adherence to those codes of practice is adequate to ensure compliance with the obligations laid down in paragraphs 2 and 4 of this Article, in accordance with the procedure laid down in Article 56(6). If it deems the code of practice to be inadequate, the Commission may adopt an implementing act specifying common rules for the implementation of those obligations in accordance with the examination procedure laid down in Article 98(2).",
+              "english_only": false,
+              "changed_by_omnibus": true
+            }
+          ],
+          "status": "decided",
+          "missing_fact": null,
+          "open_question": null,
+          "error": null
+        },
+        {
+          "step": "role_obligations",
+          "decision": "Role: deployer. 11 duties listed for a high_risk system (amended text). 6 conditional duties left out because their condition doesn't apply.",
+          "facts_used": [
+            {
+              "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+              "evidence": "stated",
+              "source_span": {
+                "start": 56,
+                "end": 133
+              }
+            },
+            {
+              "text": "The company bought the tool from a vendor and did not change it.",
+              "evidence": "stated",
+              "source_span": {
+                "start": 135,
+                "end": 182
+              }
+            },
+            {
+              "text": "The company bought and uses the vendor's tool as-is; it is not described as building its own system on a general-purpose AI model.",
+              "evidence": "assumed",
+              "source_span": null
+            },
+            {
+              "text": "The company is not described as putting its own name or trademark on the vendor's system.",
+              "evidence": "assumed",
+              "source_span": null
+            },
+            {
+              "text": "The company is not described as using the tool for a purpose its provider did not intend.",
+              "evidence": "assumed",
+              "source_span": null
+            }
+          ],
+          "citations": [
+            {
+              "provision_id": "art:3:4",
+              "document_id": "ai-act-consolidated",
+              "law_version": "amended",
+              "document_status": "consolidated",
+              "language": "en",
+              "quote": "‘deployer’ means a natural or legal person, public authority, agency or other body using an AI system under its authority except where the AI system is used in the course of a personal non-professional activity;",
+              "english_only": false,
+              "changed_by_omnibus": false
+            }
+          ],
+          "status": "decided",
+          "missing_fact": null,
+          "open_question": null,
+          "error": null
+        }
+      ],
+      "risk_class": "high_risk",
+      "status": "needs_more_information",
+      "role": "deployer",
+      "also_role": null,
+      "role_switch_reason": null,
+      "annex_point": "annex:III:4:a",
+      "transparency_duties": [],
+      "deciding_facts": [
+        {
+          "text": "The description gives no location information suggesting the system is outside the Union.",
+          "evidence": "assumed",
+          "source_span": null
+        },
+        {
+          "text": "The company has 40 employees and operates in logistics.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 0,
+            "end": 35
+          }
+        },
+        {
+          "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 56,
+            "end": 133
+          }
+        },
+        {
+          "text": "The tool is used to screen people applying for jobs.",
+          "evidence": "inferred",
+          "source_span": null
+        },
+        {
+          "text": "The company bought the tool from a vendor and did not change it.",
+          "evidence": "stated",
+          "source_span": {
+            "start": 135,
+            "end": 182
+          }
+        },
+        {
+          "text": "The company bought and uses the vendor's tool as-is; it is not described as building its own system on a general-purpose AI model.",
+          "evidence": "assumed",
+          "source_span": null
+        },
+        {
+          "text": "The company is not described as putting its own name or trademark on the vendor's system.",
+          "evidence": "assumed",
+          "source_span": null
+        },
+        {
+          "text": "The company is not described as using the tool for a purpose its provider did not intend.",
+          "evidence": "assumed",
+          "source_span": null
+        }
+      ],
+      "obligations": [
+        {
+          "duty": "Take measures to support the AI literacy of staff and others who operate or use the system on your behalf.",
+          "duty_de": "Maßnahmen ergreifen, um die KI-Kompetenz Ihres Personals und anderer Personen zu unterstützen, die in Ihrem Auftrag mit dem Betrieb und der Nutzung des Systems befasst sind.",
+          "label_en": "Help the people who run or use it build their AI literacy",
+          "label_de": "Die KI-Kompetenz der Personen fördern, die es betreiben oder nutzen",
+          "group": "after_launch",
+          "document": null,
+          "article": "art:4:1",
+          "applies_from": "2025-02-02",
+          "high_risk_route": null,
+          "applies_if": null,
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": "The Omnibus softened this duty: the original text required ensuring \"a sufficient level of AI literacy\"; the amended text requires supporting measures and no specific level."
+        },
+        {
+          "duty": "Use the system according to the provider's instructions for use, with appropriate technical and organisational measures.",
+          "duty_de": "Das System gemäß der beigefügten Betriebsanleitung verwenden und dafür geeignete technische und organisatorische Maßnahmen treffen.",
+          "label_en": "Use the tool as the vendor's instructions say",
+          "label_de": "Das Tool gemäß der Betriebsanleitung des Anbieters einsetzen",
+          "group": null,
+          "document": null,
+          "article": "art:26:1",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": null,
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": null
+        },
+        {
+          "duty": "Assign human oversight to people with the necessary competence, training, authority and support.",
+          "duty_de": "Die menschliche Aufsicht natürlichen Personen übertragen, die über die erforderliche Kompetenz, Ausbildung und Befugnis verfügen, und ihnen die erforderliche Unterstützung zukommen lassen.",
+          "label_en": "Put trained people in charge of reviewing its output",
+          "label_de": "Geschulten Personen die menschliche Aufsicht übertragen",
+          "group": null,
+          "document": "art_26_2_oversight",
+          "article": "art:26:2",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": null,
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": null
+        },
+        {
+          "duty": "Make sure the input data is relevant and sufficiently representative for the intended purpose.",
+          "duty_de": "Dafür sorgen, dass die Eingabedaten der Zweckbestimmung des Systems entsprechen und ausreichend repräsentativ sind.",
+          "label_en": "Check that the input data suits the purpose, where you control it",
+          "label_de": "Prüfen, ob die Eingabedaten zum Zweck passen, soweit Sie sie kontrollieren",
+          "group": null,
+          "document": null,
+          "article": "art:26:4",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": "You control the input data.",
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": null
+        },
+        {
+          "duty": "Monitor the system's operation; if it presents a risk, inform the provider or distributor and the market surveillance authority and suspend its use; report serious incidents to the provider first.",
+          "duty_de": "Den Betrieb des Systems überwachen; birgt es ein Risiko, den Anbieter oder Händler und die Marktüberwachungsbehörde informieren und die Verwendung aussetzen; schwerwiegende Vorfälle zuerst dem Anbieter melden.",
+          "label_en": "Watch how it performs and report serious problems to the vendor",
+          "label_de": "Den Betrieb überwachen und schwerwiegende Probleme dem Anbieter melden",
+          "group": null,
+          "document": null,
+          "article": "art:26:5",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": null,
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": null
+        },
+        {
+          "duty": "Keep the logs the system generates, where they are under your control, for at least six months.",
+          "duty_de": "Die vom System automatisch erzeugten Protokolle, soweit sie Ihrer Kontrolle unterliegen, mindestens sechs Monate aufbewahren.",
+          "label_en": "Keep the logs it creates for at least six months",
+          "label_de": "Die automatisch erzeugten Protokolle mindestens sechs Monate aufbewahren",
+          "group": null,
+          "document": null,
+          "article": "art:26:6",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": null,
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": null
+        },
+        {
+          "duty": "Inform workers' representatives and the affected workers before using the system at the workplace.",
+          "duty_de": "Vor der Inbetriebnahme oder Verwendung am Arbeitsplatz die Arbeitnehmervertreter und die betroffenen Arbeitnehmer informieren, dass sie der Verwendung des Systems unterliegen werden.",
+          "label_en": "Tell workers' representatives and staff before you start",
+          "label_de": "Arbeitnehmervertretung und Beschäftigte vor dem Einsatz informieren",
+          "group": null,
+          "document": "art_26_7_workers",
+          "article": "art:26:7",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": "You are an employer and use the system at the workplace.",
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": null
+        },
+        {
+          "duty": "Use the provider's information (Art. 13) for your data protection impact assessment.",
+          "duty_de": "Die gemäß Art. 13 bereitgestellten Informationen für Ihre Datenschutz-Folgenabschätzung verwenden.",
+          "label_en": "Use the vendor's information for your data protection impact assessment",
+          "label_de": "Die Angaben des Anbieters für Ihre Datenschutz-Folgenabschätzung nutzen",
+          "group": null,
+          "document": null,
+          "article": "art:26:9",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": "A data protection impact assessment is required under Art. 35 GDPR or Art. 27 of Directive (EU) 2016/680.",
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": null
+        },
+        {
+          "duty": "Inform the people concerned that they are subject to the use of the high-risk system.",
+          "duty_de": "Die betroffenen natürlichen Personen darüber informieren, dass sie der Verwendung des Hochrisiko-KI-Systems unterliegen.",
+          "label_en": "Tell the people affected that it's used in decisions about them",
+          "label_de": "Betroffene Personen informieren, dass das Tool bei Entscheidungen über sie eingesetzt wird",
+          "group": null,
+          "document": "art_26_11_affected",
+          "article": "art:26:11",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": "The system makes, or helps make, decisions about natural persons.",
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": null
+        },
+        {
+          "duty": "Cooperate with the competent authorities in any action they take about the system.",
+          "duty_de": "Mit den zuständigen Behörden bei allen Maßnahmen zusammenarbeiten, die diese im Zusammenhang mit dem System ergreifen.",
+          "label_en": "Cooperate with the authorities when they act on it",
+          "label_de": "Mit den Behörden bei ihren Maßnahmen zusammenarbeiten",
+          "group": null,
+          "document": null,
+          "article": "art:26:12",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": null,
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": null
+        },
+        {
+          "duty": "On request, give an affected person clear and meaningful explanations of the role of the system in the decision and the main elements of the decision taken.",
+          "duty_de": "Betroffenen Personen auf Anfrage eine klare und aussagekräftige Erläuterung zur Rolle des Systems im Entscheidungsprozess und zu den wichtigsten Elementen der getroffenen Entscheidung geben.",
+          "label_en": "Explain its role in a decision when an affected person asks",
+          "label_de": "Auf Anfrage Betroffener die Rolle des Systems bei einer Entscheidung erläutern",
+          "group": null,
+          "document": null,
+          "article": "art:86:1",
+          "applies_from": "2027-12-02",
+          "high_risk_route": "annex_iii",
+          "applies_if": "Decisions taken on the basis of the system's output produce legal effects on people or similarly significantly affect them (not for Annex III point 2, critical infrastructure).",
+          "is_informational": false,
+          "legacy": null,
+          "relief_note": null,
+          "note": "Chapter IX formally applies from 2 August 2026 (Art. 113, general date), but these duties only reach high-risk systems once their high-risk rules apply."
+        }
+      ],
+      "law_version": "amended",
+      "law_text": {
+        "document_id": "ai-act-consolidated",
+        "celex": "02024R1689-20260727",
+        "version_date": "2026-07-27"
+      },
+      "as_of": "2026-10-06",
+      "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
+      "legal_review": "Have this result reviewed by a lawyer: a high-risk system carries duties with legal consequences.",
+      "not_assessed": [],
+      "follow_up_questions": [
+        {
+          "id": "ai_system",
+          "text": "How does the system produce its outputs: is it trained on data or does it otherwise infer them, or does it only apply rules or calculations that people defined?",
+          "about": "art:3:1",
+          "hint": "The answer decides whether the AI Act applies to the system (Art. 3(1)).",
+          "options": [],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "ai_inference",
+          "text": "Does the tool use AI to infer scores or rankings from application information, rather than only applying fixed rules written by people?",
+          "about": "scope",
+          "hint": null,
+          "options": [],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "eu_use",
+          "text": "Is the tool used in the EU, or placed on the EU market?",
+          "about": "scope",
+          "hint": null,
+          "options": [],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "human_review",
+          "text": "Does a person review the tool’s scores and shortlist before they affect hiring decisions?",
+          "about": "high_risk",
+          "hint": null,
+          "options": [],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "own_brand",
+          "text": "Is the tool placed on the market or put into service under your company’s name or brand?",
+          "about": "role_obligations",
+          "hint": null,
+          "options": [],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "recruitment_purpose",
+          "text": "Is the tool used to support decisions about selecting or hiring job applicants?",
+          "about": "high_risk",
+          "hint": null,
+          "options": [],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "significant_design_change",
+          "text": "Is a significant change to the system's design or intended purpose planned or foreseen for on or after 2 December 2027?",
+          "about": "art:111:2",
+          "hint": "The answer decides the company's role and its duties (Art. 111(2)).",
+          "options": ["yes", "no", "not_sure"],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "for_public_authority",
+          "text": "Is the system meant for use by public authorities?",
+          "about": "art:111:2",
+          "hint": "The answer decides the company's role and its duties (Art. 111(2)).",
+          "options": ["yes", "no", "not_sure"],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "confirm_the_description_gives_no_location_information_suggesting",
+          "text": "Please confirm: The description gives no location information suggesting the system is outside the Union.",
+          "about": null,
+          "hint": null,
+          "options": ["yes", "no", "not_sure"],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "confirm_the_company_bought_and_uses_the_vendor_s_tool_as_is_it",
+          "text": "Please confirm: The company bought and uses the vendor's tool as-is; it is not described as building its own system on a general-purpose AI model.",
+          "about": null,
+          "hint": null,
+          "options": ["yes", "no", "not_sure"],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "confirm_the_company_is_not_described_as_putting_its_own_name_or",
+          "text": "Please confirm: The company is not described as putting its own name or trademark on the vendor's system.",
+          "about": null,
+          "hint": null,
+          "options": ["yes", "no", "not_sure"],
+          "if_yes": null,
+          "citations": []
+        },
+        {
+          "id": "confirm_the_company_is_not_described_as_using_the_tool_for_a",
+          "text": "Please confirm: The company is not described as using the tool for a purpose its provider did not intend.",
+          "about": null,
+          "hint": null,
+          "options": ["yes", "no", "not_sure"],
+          "if_yes": null,
+          "citations": []
+        }
+      ]
+    }
+  }
+]

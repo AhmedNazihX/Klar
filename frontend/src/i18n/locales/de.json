@@ -77,6 +77,8 @@
     "assumed": "Angenommen"
   },
   "citation": {
+    "showFull": "Ganzen Text zeigen",
+    "showLess": "Weniger zeigen",
     "englishOnly": {
       "tag": "Amtlicher Text nur auf Englisch verfügbar",
       "explanation": "Für diesen Text gibt es keine amtliche deutsche Fassung; Klar übersetzt Rechtstexte nicht selbst."
@@ -255,5 +257,274 @@
       "badFile": "Diese Datei ist kein Klar-Export. Wählen Sie eine Datei, die Sie unter „Ihre Daten“ exportiert haben.",
       "failed": "Das hat nicht geklappt. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
     }
+  },
+  "classify": {
+    "title": "Tool beschreiben",
+    "subtitle": "Ein paar Sätze genügen. Klar fragt nach allem, was das Ergebnis entscheidet.",
+    "nameLabel": "Wie nennen Sie das Tool?",
+    "namePlaceholder": "Zum Beispiel: Bewerbungsvorauswahl",
+    "nameTooLong": "Halten Sie den Namen unter 200 Zeichen.",
+    "descriptionLabel": "In Ihren eigenen Worten",
+    "descriptionRequired": "Beschreiben Sie das Tool zuerst in ein, zwei Sätzen.",
+    "descriptionTooLong": "Halten Sie die Beschreibung unter 20.000 Zeichen.",
+    "tipsLabel": "Hilfreich sind Angaben zu:",
+    "tips": {
+      "decides": "was es entscheidet oder vorschlägt",
+      "affects": "wen es betrifft",
+      "origin": "gekauft oder selbst entwickelt",
+      "changes": "was Sie daran geändert haben"
+    },
+    "privacy": "Lassen Sie Namen und andere persönliche Angaben von Bewerbenden oder Beschäftigten weg.",
+    "language": "Klar antwortet auf Deutsch. Zitate geben den amtlichen deutschen Text wieder.",
+    "run": "Prüfungen starten",
+    "running": "Wird geprüft…",
+    "untitled": "Ihr Tool"
+  },
+  "progress": {
+    "heading": "Prüfung in der Reihenfolge der Verordnung",
+    "subtitle": "Kein Schritt wird übersprungen. Das dauert meist unter einer Minute.",
+    "check": {
+      "facts": "Fakten gelesen",
+      "scope": "1 Anwendungsbereich",
+      "prohibited": "2 Verbotene Praktiken",
+      "high_risk": "3 Hochrisiko",
+      "transparency": "4 Transparenz",
+      "role_obligations": "Rolle und Pflichten"
+    },
+    "reference": {
+      "facts": "Ihre Beschreibung",
+      "scope": "Art. 2–3",
+      "prohibited": "Art. 5",
+      "high_risk": "Art. 6, Anhang I und III",
+      "transparency": "Art. 50",
+      "role_obligations": "Art. 16, 23–26"
+    },
+    "runningDetail": {
+      "facts": "Ihre Beschreibung wird gelesen",
+      "scope": "Prüft, ob die Verordnung gilt",
+      "prohibited": "Vergleich mit den verbotenen Praktiken",
+      "high_risk": "Vergleich Ihrer Beschreibung mit Anhang I und Anhang III",
+      "transparency": "Prüft die Pflichten nach Art. 50",
+      "role_obligations": "Ermittelt Ihre Rolle und Ihre Pflichten"
+    },
+    "factsFound_one": "{{count}} Fakt gefunden, {{questions}} zu bestätigen",
+    "factsFound_other": "{{count}} Fakten gefunden, {{questions}} zu bestätigen",
+    "outcome": {
+      "inScope": "Anwendbar",
+      "noMatch": "Kein Treffer",
+      "checked": "Geprüft",
+      "ambiguous": "Rechtlich unklar",
+      "listed": "Aufgeführte Verwendungen gefunden",
+      "notListed": "Keine aufgeführte Verwendung gefunden"
+    },
+    "detail": "{{outcome}}. {{reference}}",
+    "paused": "Wartet auf eine Angabe. {{reference}}",
+    "waiting": "Wartet. {{reference}}",
+    "notRun": "Noch nicht geprüft",
+    "state": {
+      "done": "Erledigt",
+      "running": "Läuft",
+      "waiting": "Wartet",
+      "paused": "Wartet auf Sie",
+      "error": "Angehalten"
+    },
+    "accuracy": "Diese Einschätzung ist nur so genau wie Ihre Beschreibung.",
+    "stopped": {
+      "title": "Die Prüfungen konnten nicht abgeschlossen werden",
+      "notStarted": "Die Prüfungen konnten nicht starten",
+      "atCheck": "Angehalten bei Prüfung {{number}} von 4.",
+      "atFacts": "Angehalten beim Lesen der Fakten.",
+      "atDuties": "Angehalten nach den vier Prüfungen.",
+      "body": "Nichts geht verloren: Ihre Beschreibung bleibt erhalten. Klar rät nie eine Einstufung, wenn eine Prüfung scheitert, deshalb gibt es noch kein Ergebnis.",
+      "tryAgain": "Erneut versuchen",
+      "saveForLater": "Für später speichern"
+    },
+    "reason": {
+      "check": "Angehalten: Diese Prüfung konnte nicht abgeschlossen werden.",
+      "busy": "Klar ist gerade ausgelastet. Versuchen Sie es in {{seconds}} Sekunden erneut.",
+      "unavailable": "Die Prüfungen sind gerade nicht verfügbar. Versuchen Sie es später erneut.",
+      "tooMany": "Sie haben in kurzer Zeit viele Prüfungen gestartet. Versuchen Sie es in {{seconds}} Sekunden erneut.",
+      "tooManyNoTime": "Sie haben in kurzer Zeit viele Prüfungen gestartet. Versuchen Sie es in einer Minute erneut.",
+      "invalid": "Die Beschreibung konnte nicht gesendet werden. Halten Sie sie unter 20.000 Zeichen und versuchen Sie es erneut.",
+      "server": "Der Dienst hat mit einem Fehler geantwortet (HTTP {{status}}).",
+      "network": "Der Dienst hat nicht geantwortet. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "incomplete": "Die Verbindung brach ab, bevor die Prüfungen fertig waren."
+    }
+  },
+  "result": {
+    "notFound": {
+      "body": "Dieses Ergebnis ist nicht in dieser Sitzung. Vorerst behält Klar ein Ergebnis nur, solange dieser Tab offen ist; starten Sie die Prüfungen erneut, um es zu sehen.",
+      "action": "Tool einstufen"
+    },
+    "checkedOn": "Geprüft am {{date}} anhand der konsolidierten KI-Verordnung vom {{lawDate}}.",
+    "checkedOnAmended": "Geprüft am {{date}} anhand der geänderten KI-Verordnung.",
+    "checkedOnOriginal": "Geprüft am {{date}} anhand der ursprünglichen KI-Verordnung von 2024.",
+    "view": {
+      "label": "Ansicht",
+      "summary": "Übersicht",
+      "reviewer": "Prüfansicht"
+    },
+    "editDescription": "Beschreibung bearbeiten",
+    "draftDocuments": "Dokumente entwerfen",
+    "label": "Ergebnis",
+    "assumed": "Angenommen",
+    "role": {
+      "provider": "Sie sind Anbieter.",
+      "deployer": "Sie sind Betreiber.",
+      "importer": "Sie sind Einführer.",
+      "distributor": "Sie sind Händler."
+    },
+    "alsoRole": {
+      "provider": "Sie sind außerdem Anbieter.",
+      "deployer": "Sie sind außerdem Betreiber.",
+      "importer": "Sie sind außerdem Einführer.",
+      "distributor": "Sie sind außerdem Händler."
+    },
+    "roleName": {
+      "provider": "Anbieter",
+      "deployer": "Betreiber",
+      "importer": "Einführer",
+      "distributor": "Händler"
+    },
+    "basis": {
+      "annexIII": "Das Tool ist in {{point}} aufgeführt: {{label}}.",
+      "annexIIIPlain": "Das Tool ist in {{point}} aufgeführt.",
+      "annexI": "Das Tool ist Teil eines Produkts, das unter {{point}} fällt.",
+      "high_risk": "Das Tool ist ein Hochrisiko-System.",
+      "prohibited": "Es entspricht einer nach Art. 5 verbotenen Praktik.",
+      "limited_risk": "Es gelten Transparenzpflichten nach Art. 50.",
+      "minimal_risk": "Es ist weder verboten noch ein Hochrisiko-System und hat keine Pflicht nach Art. 50.",
+      "out_of_scope": "Die KI-Verordnung gilt dafür nicht."
+    },
+    "paused": "Klar hat bei Prüfung {{number}} eine Angabe angenommen. Die Frage unten klärt sie.",
+    "pausedAtDuties": "Klar hat bei der Ermittlung Ihrer Rolle eine Angabe angenommen. Die Frage unten klärt sie.",
+    "dutiesFrom": "Ihre Pflichten gelten ab",
+    "monthsAway_one": "In etwa {{count}} Monat",
+    "monthsAway_other": "In etwa {{count}} Monaten",
+    "alreadyApplies": "Gilt bereits",
+    "alreadyAppliesOriginal": "Gilt nach dem ursprünglichen Text bereits",
+    "legalReview": {
+      "high_risk": "Bei einem Hochrisiko-Ergebnis empfehlen wir eine rechtliche Prüfung, bevor Sie sich darauf verlassen.",
+      "prohibited": "Bei einem Verbot empfehlen wir rechtliche Beratung, bevor Sie weitermachen.",
+      "ambiguous": "Bei einem rechtlich unklaren Ergebnis empfehlen wir eine rechtliche Prüfung, bevor Sie sich darauf verlassen.",
+      "other": "Wir empfehlen eine rechtliche Prüfung, bevor Sie sich auf dieses Ergebnis verlassen."
+    },
+    "legacy": {
+      "legacy_unchanged": "Art. 111 Abs. 2: Das Tool war vor dem {{date}} in Verkehr oder in Betrieb, deshalb gelten die markierten Hochrisiko-Pflichten nur, wenn sich seine Konzeption oder Zweckbestimmung erheblich ändert. Die Einstufung bleibt Hochrisiko.",
+      "legacy_public_authority": "Art. 111 Abs. 2: Das Tool war vor dem {{date}} in Verkehr oder in Betrieb und ist für Behörden bestimmt, deshalb gelten die markierten Hochrisiko-Pflichten ab dem {{deadline}}. Die Einstufung bleibt Hochrisiko.",
+      "publicAuthorityUndated": "Art. 111 Abs. 2: Das Tool war vor dem Geltungsbeginn seiner Hochrisiko-Pflichten in Verkehr oder in Betrieb und ist für Behörden bestimmt, deshalb gelten die markierten Hochrisiko-Pflichten ab dem {{deadline}}. Die Einstufung bleibt Hochrisiko.",
+      "perProduct": "Das gilt für Exemplare, die vor dem {{date}} in Verkehr gebracht oder in Betrieb genommen wurden; spätere Exemplare können voll erfasst sein.",
+      "perProductUndated": "Das gilt für Exemplare, die vor diesem Datum in Verkehr gebracht oder in Betrieb genommen wurden; spätere Exemplare können voll erfasst sein.",
+      "afterChange": "Nur nach einer erheblichen Änderung",
+      "from": "Ab dem {{date}}",
+      "tag": "Art. 111 Abs. 2"
+    },
+    "question": {
+      "eyebrow": "Eine Frage entscheidet",
+      "assumption": "Bis Sie antworten, ist das Ergebnis oben eine Arbeitsannahme: die strengere Lesart, damit nichts übersehen wird.",
+      "ifYes": "Wenn ja",
+      "ifNo": "Wenn nein",
+      "ifYesPoint": "{{point}}. Pflichten ab dem <date/>.",
+      "ifYesPointNoDate": "{{point}}.",
+      "ifNoText": "In diesem Punkt kein Hochrisiko. Die Transparenzprüfung entscheidet dann, ob Pflichten gelten."
+    },
+    "todo": {
+      "heading": "Was Sie tun müssen",
+      "intro": {
+        "provider": "Das Tool wird unter Ihrem Namen in Verkehr gebracht oder in Betrieb genommen, deshalb liegen die Pflichten für Entwicklung, Dokumentation und Überwachung bei Ihnen.",
+        "deployer": "Sie haben das Tool nicht entwickelt, deshalb liegen die meisten technischen Pflichten beim Anbieter. Als Betreiber müssen Sie es gemäß der Betriebsanleitung verwenden, menschliche Aufsicht sicherstellen und Beschäftigte sowie Betroffene informieren.",
+        "importer": "Sie bringen das Tool in die EU, deshalb prüfen Sie vor dem Verkauf, ob der Anbieter seine Pflichten erfüllt hat (Art. 23).",
+        "distributor": "Sie geben das Tool weiter, deshalb prüfen Sie vorher, ob es die nötige Kennzeichnung und Unterlagen hat (Art. 24)."
+      },
+      "minimal": "Keine besonderen Pflichten für dieses Tool. Eine allgemeine Pflicht gilt für jedes Unternehmen, das KI nutzt:",
+      "limited": "Sagen Sie Menschen, dass sie es mit KI zu tun haben. Klar entwirft den Hinweis für Sie.",
+      "limitedNoDraft": "Die Pflichten nach Art. 50 unten legen fest, was Menschen erfahren müssen oder wie die Ausgaben des Tools als KI-erzeugt zu kennzeichnen sind.",
+      "none": "Für dieses Ergebnis sind keine Pflichten aufgeführt.",
+      "draftDisclosure": "Hinweis entwerfen",
+      "draftDocument": "Dokument entwerfen",
+      "onlyIf": "Nur wenn: {{condition}}",
+      "forInformation": "Zur Information"
+    },
+    "outOfScope": {
+      "heading": "Warum die KI-Verordnung nicht gilt",
+      "intro": "Für dieses Tool gibt es deshalb keine Pflichten nach der Verordnung."
+    },
+    "facts": {
+      "heading": "Das Ergebnis beruht auf",
+      "intro": "Ist eine dieser Angaben falsch, kann sich die Einstufung ändern.",
+      "change": "Ändern",
+      "accuracy": "Diese Einschätzung ist nur so genau wie die Beschreibung."
+    },
+    "steps": {
+      "heading": "Wie Klar zum Ergebnis kam",
+      "expandAll": "Alle Schritte mit Zitaten aufklappen",
+      "facts": "Fakten",
+      "role": "Rolle",
+      "duties": "Pflichten",
+      "factsLine_one": "{{count}} Fakt gefunden, {{assumed}} angenommen",
+      "factsLine_other": "{{count}} Fakten gefunden, {{assumed}} angenommen",
+      "yourDescription": "Ihre Beschreibung",
+      "notChecked": "Nicht geprüft",
+      "paused": "Vorerst angenommen: eine Angabe fehlt",
+      "ambiguous": "Rechtlich unklar: Es gilt die strengere Lesart",
+      "inScope": "Anwendbar",
+      "outOfScope": "Außerhalb des Anwendungsbereichs",
+      "noBan": "Kein Treffer bei den verbotenen Praktiken",
+      "ban": "Entspricht einer verbotenen Praktik",
+      "highRiskAnnexIII": "Ja: {{label}}",
+      "highRiskAnnexI": "Ja: Teil eines Produkts nach Anhang I",
+      "highRisk": "Ja: Hochrisiko",
+      "notHighRisk": "Kein Hochrisiko",
+      "transparencyDuties_one": "{{count}} Pflicht nach Art. 50",
+      "transparencyDuties_other": "{{count}} Pflichten nach Art. 50",
+      "noTransparency": "Keine eigene Pflicht gefunden",
+      "dutiesCount_one": "{{count}} Pflicht",
+      "dutiesCount_other": "{{count}} Pflichten",
+      "noDuties": "Keine Pflichten aufgeführt",
+      "decision": "Entscheidung",
+      "factsUsed": "Beruht auf",
+      "openQuestion": "Offene Frage",
+      "checked": "Geprüft: {{provisions}}",
+      "showProvision_one": "Vorschrift zeigen",
+      "showProvision_other": "Vorschriften zeigen",
+      "noFacts": "Keine einzelne Angabe; siehe die Entscheidung."
+    },
+    "reviewer": {
+      "exportJson": "Als JSON exportieren"
+    },
+    "quoteLanguage": {
+      "en": "Englisch",
+      "de": "Deutsch"
+    },
+    "citationSource": "{{provision}}, {{language}}",
+    "citationSourceDraft": "{{provision}}, {{language}}, Entwurf",
+    "notice": "Antworten zitieren die konsolidierte KI-Verordnung (CELEX {{celex}}) und Leitlinien der Kommission, teils noch im Entwurf."
+  },
+  "annexPoint": {
+    "III_1_a": "biometrische Fernidentifizierung",
+    "III_1_b": "biometrische Kategorisierung nach sensiblen Merkmalen",
+    "III_1_c": "Emotionserkennung",
+    "III_2": "Sicherheitsbauteile kritischer Infrastruktur",
+    "III_3_a": "Zugang oder Zulassung zu Bildung und Ausbildung",
+    "III_3_b": "Bewertung von Lernergebnissen",
+    "III_3_c": "Bewertung des angemessenen Bildungsniveaus",
+    "III_3_d": "Überwachung von Prüflingen bei Prüfungen",
+    "III_4_a": "Einstellung und Auswahl von Personen",
+    "III_4_b": "Entscheidungen über Arbeitsverhältnisse, Aufgaben und Leistung",
+    "III_5_a": "Anspruch auf öffentliche Unterstützungsleistungen und Dienste",
+    "III_5_b": "Kreditwürdigkeit und Bonitätsbewertung",
+    "III_5_c": "Risikobewertung und Preisbildung bei Lebens- und Krankenversicherungen",
+    "III_5_d": "Notrufe, Einsatzsteuerung und Triage",
+    "III_6_a": "Risiko, Opfer einer Straftat zu werden",
+    "III_6_b": "Lügendetektoren und ähnliche Instrumente bei der Strafverfolgung",
+    "III_6_c": "Bewertung der Verlässlichkeit von Beweismitteln",
+    "III_6_d": "Risiko einer Straftat oder erneuten Straftat",
+    "III_6_e": "Profiling bei strafrechtlichen Ermittlungen",
+    "III_7_a": "Lügendetektoren und ähnliche Instrumente an Grenzen",
+    "III_7_b": "Risikobewertung von Personen bei der Einreise",
+    "III_7_c": "Prüfung von Asyl-, Visums- und Aufenthaltsanträgen",
+    "III_7_d": "Aufdeckung, Erkennung oder Identifizierung von Personen bei der Migration",
+    "III_8_a": "Unterstützung von Gerichten bei der Ermittlung und Anwendung des Rechts",
+    "III_8_b": "Beeinflussung von Wahlen oder Abstimmungen"
   }
 }

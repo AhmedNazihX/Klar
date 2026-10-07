@@ -464,7 +464,53 @@
 .app-column > .app-closing {
   --enter-step: 9;
 }
+/* On load, a screen's check list resolves step by step, 170 ms apart, and the verdict comes into
+   focus (README › Motion › App screens). Both ride on the screen's load class, so they clear
+   with it after 3.5 s and stop under reduced motion. */
+.app-screen-intro .check-list > li {
+  animation: app-rise 0.45s var(--ease-out) both;
+  animation-delay: calc(300ms + var(--check-step, 0) * 170ms);
+}
+@keyframes verdict-focus {
+  from {
+    opacity: 0;
+    filter: blur(var(--focus-blur));
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+.app-screen-intro .verdict {
+  animation: verdict-focus var(--duration-reveal) var(--ease-out) 200ms both;
+}
 /* app-load:end */
+
+/* check-progress:start
+   CheckProgress's markers: the running step's ring turns slowly; a step waiting for the user
+   pulses gently in Lens blue. The reduced-motion block below stops both. */
+@keyframes check-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@keyframes check-pulse {
+  50% {
+    box-shadow:
+      inset 0 0 0 1.5px var(--color-lens-blue),
+      0 0 0 5px rgb(45 75 224 / 0.12);
+  }
+}
+.check-ring {
+  background: conic-gradient(var(--color-lens-blue) 0 70%, rgb(45 75 224 / 0.15) 70% 100%);
+  mask: radial-gradient(circle, transparent 7px, #000 7.5px);
+  animation: check-spin 1.6s linear infinite;
+}
+.check-pause {
+  box-shadow: inset 0 0 0 1.5px var(--color-lens-blue);
+  animation: check-pulse 2.4s var(--ease-settle) infinite;
+}
+/* check-progress:end */
 
 /* law-version:start
    Dates the Digital Omnibus moved follow the law version switch (LawSwitch toggles .law-original on

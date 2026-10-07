@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Icon } from '@/components/Icon'
+import { ScreenTitle } from '@/components/ScreenTitle'
 
 import { CompanyProfileForm } from './CompanyProfileForm'
 import { HowItWorks } from './HowItWorks'
@@ -16,9 +17,7 @@ export function WelcomeScreen(): JSX.Element {
   return (
     <>
       <div className="flex max-w-[760px] flex-col gap-2.5">
-        <h1 className="m-0 text-[30px] leading-tight font-semibold tracking-[-0.03em] text-ink md:text-heading-page">
-          {t('welcome.title')}
-        </h1>
+        <ScreenTitle>{t('welcome.title')}</ScreenTitle>
         <p className="m-0 text-body-large text-slate">{t('welcome.intro')}</p>
       </div>
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">

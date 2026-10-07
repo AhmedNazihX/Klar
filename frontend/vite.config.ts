@@ -28,6 +28,16 @@ export default defineConfig({
   build: {
     // No public source maps in production (frontend-security rule).
     sourcemap: false,
+    // supabase-js, the heaviest library, gets its own chunk, downloaded beside the main one. Without
+    // the group, once the result route shared TanStack Query with the app frame, the bundler merged
+    // the user-data chunk (supabase-js with it) into the main bundle (about 600 kB).
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [{ name: 'supabase', test: /node_modules[\\/]@supabase[\\/]/ }],
+        },
+      },
+    },
   },
   test: {
     projects: [
