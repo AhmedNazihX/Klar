@@ -5,7 +5,7 @@ import type { ClassificationResult } from '@/api'
 import { saveClassifiedTool } from '@/lib/inventory'
 import { supabase } from '@/lib/supabase'
 
-import { anonymousSessionOptions } from './use-anonymous-session'
+import { withAnonymousSession } from './use-anonymous-session'
 import { userDataKey, userDataOverviewOptions } from './use-user-data-overview'
 
 export type SaveClassifiedToolVariables = {
@@ -31,10 +31,10 @@ export function useSaveClassifiedTool(
   return useMutation({
     mutationFn: async ({ toolId, name, description, result, inventoryName }) => {
       if (!client) return null
-      await queryClient.query(anonymousSessionOptions(client))
+      const sessionClient = await withAnonymousSession(queryClient, client)
       // The inventory the profile lives on (the overview's), so tools and profile stay together.
       const overview = await queryClient.query(userDataOverviewOptions(queryClient, client))
-      return saveClassifiedTool(client, {
+      return saveClassifiedTool(sessionClient, {
         toolId,
         inventoryId: overview.inventoryId,
         inventoryName,

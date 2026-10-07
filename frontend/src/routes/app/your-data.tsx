@@ -1,16 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import type { JSX } from 'react'
-import { useTranslation } from 'react-i18next'
 
-import { ScreenPlaceholder } from '@/components/ScreenPlaceholder'
+import { YourDataScreen } from '@/features/your-data/YourDataScreen'
 
-// Empty until P12 (artboard `YourData`).
+// What Klar keeps, who processes it, download, import and delete (P12, artboard `YourData`).
 export const Route = createFileRoute('/app/your-data')({
   component: YourDataScreen,
   staticData: { titleKey: 'screen.yourData' },
 })
-
-function YourDataScreen(): JSX.Element {
-  const { t } = useTranslation()
-  return <ScreenPlaceholder title={t('screen.yourData')} />
-}

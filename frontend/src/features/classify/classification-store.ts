@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { queryOptions, type QueryClient } from '@tanstack/react-query'
 
 import type { ClassificationResult } from '@/api'
-import { anonymousSessionOptions } from '@/hooks/use-anonymous-session'
+import { withAnonymousSession } from '@/hooks/use-anonymous-session'
 import { fetchInventoryTool, type InventoryTool } from '@/lib/inventory'
 
 import type { DescriptionFormValues } from './description-form'
@@ -28,8 +28,12 @@ export type ToolResult =
   | { kind: 'no-result' | 'unreadable'; tool: InventoryTool }
   | { kind: 'missing' }
 
-export function classificationRunKey(toolId: string) {
-  return ['classification-run', toolId] as const
+/** Every run's query starts with this key, so a sign-out can forget them all. */
+export const classificationRunKey = ['classification-run'] as const
+
+/** A tool's result page, under the runs' key (a sign-out forgets it with them). */
+export function toolResultKey(toolId: string) {
+  return [...classificationRunKey, toolId] as const
 }
 
 function toToolResult(tool: InventoryTool | null): ToolResult {
@@ -59,11 +63,11 @@ export function toolResultOptions(
   toolId: string,
 ) {
   return queryOptions({
-    queryKey: classificationRunKey(toolId),
+    queryKey: toolResultKey(toolId),
     queryFn: async (): Promise<ToolResult> => {
       if (!client) return { kind: 'missing' }
-      await queryClient.query(anonymousSessionOptions(client))
-      return toToolResult(await fetchInventoryTool(client, toolId))
+      const sessionClient = await withAnonymousSession(queryClient, client)
+      return toToolResult(await fetchInventoryTool(sessionClient, toolId))
     },
     // A run stays as it was read or made (a fresh one keeps saying whether it was saved). A tool
     // without one is read again on each visit, so an import or a run since then shows.
@@ -74,7 +78,7 @@ export function toolResultOptions(
 
 /** Shows `run` on its tool's result page, without reading it back. */
 export function putRun(queryClient: QueryClient, run: ClassificationRun): void {
-  queryClient.setQueryData(classificationRunKey(run.toolId), { kind: 'run', run })
+  queryClient.setQueryData(toolResultKey(run.toolId), { kind: 'run', run })
 }
 
 /** The tool a draft's run is saved on, with the name it had when "Classify this tool" was used. */

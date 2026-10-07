@@ -10,7 +10,7 @@ import {
 import { fetchInventoryTools, type InventoryTool } from '@/lib/inventory'
 import { supabase } from '@/lib/supabase'
 
-import { anonymousSessionOptions } from './use-anonymous-session'
+import { withAnonymousSession } from './use-anonymous-session'
 import { userDataKey } from './use-user-data-overview'
 
 /** Under the user-data key, so an import or a save refreshes it with the overview. */
@@ -22,9 +22,7 @@ export function inventoryToolsOptions(queryClient: QueryClient, client: Supabase
   return queryOptions({
     queryKey: inventoryToolsKey,
     queryFn: async (): Promise<InventoryTool[]> => {
-      if (!client) throw new Error('Supabase is not configured.')
-      await queryClient.query(anonymousSessionOptions(client))
-      return fetchInventoryTools(client)
+      return fetchInventoryTools(await withAnonymousSession(queryClient, client))
     },
     enabled: client !== null,
   })

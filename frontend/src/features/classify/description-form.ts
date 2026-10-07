@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /** The API's limit on a description (ClassifyRequest, backend). */
-const DESCRIPTION_MAX = 20_000
+export const DESCRIPTION_MAX = 20_000
 /** The systems table's limit on a tool's name. */
 const NAME_MAX = 200
 

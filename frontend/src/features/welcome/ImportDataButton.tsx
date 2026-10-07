@@ -14,12 +14,15 @@ const FOCUS_RING = 'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-
  * "Import your data": restores a file exported from Your data (import_my_data). Nothing is
  * classified again. The label is the control, so the file input keeps its keyboard focus.
  * `link` (Welcome's tools panel) is a centred link with a hint under it; `ghost` (the Inventory's
- * header) is a ghost button for a button row, without the hint.
+ * header) is a ghost button for a button row, without the hint. Your data passes `className` to
+ * align it with its panel.
  */
 export function ImportDataButton({
   variant = 'link',
+  className,
 }: {
   variant?: 'link' | 'ghost'
+  className?: string
 }): JSX.Element {
   const { t } = useTranslation()
   const importData = useImportUserData()
@@ -33,7 +36,7 @@ export function ImportDataButton({
   }
 
   return (
-    <div className={cn('flex flex-col gap-2', isGhost ? 'items-end' : 'items-center')}>
+    <div className={cn('flex flex-col gap-2', isGhost ? 'items-end' : 'items-center', className)}>
       <label
         className={cn(
           FOCUS_RING,
