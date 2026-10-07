@@ -1,21 +1,30 @@
-"""The short deployer documents (INIT > Documentation drafting), in English and German.
+"""The section kinds every document template is built from, and the short deployer documents
+(INIT > Documentation drafting), in English and German.
 
 Each template lists its required sections in order. A section is pre-filled from the result
-(`prefill.py`), filled with the user's interview answer word for word, or the template's own
+(`prefill.py`), filled with the user's interview answers word for word, or the template's own
 fixed wording, which states only the duty the document answers. Nothing else enters a draft.
+The provider document skeletons are in `skeletons/` (P8b).
 """
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from types import MappingProxyType
 
-from aiact.drafting.models import Provenance
+from aiact.drafting.models import Provenance, SectionStatus
 from aiact.drafting.prefill import Fill
-from aiact.schemas import Language
+from aiact.schemas import LAW_TEXTS, Citation, DocumentStatus, Language, LawVersion
 
 EN, DE = Language.EN, Language.DE
 
 Texts = Mapping[Language, str]
+
+
+@dataclass(frozen=True)
+class Question:
+    """One interview question, stored under `key` in `interview_answers.question_key`."""
+
+    key: str
+    text: Texts
 
 
 @dataclass(frozen=True)
@@ -55,22 +64,80 @@ class ClassificationSection:
             raise ValueError(f"section {self.key!r} needs its line for when no facts were stated")
 
 
-SectionSpec = TemplateSection | InterviewSection | ClassificationSection
+AMENDED_TEXT = LAW_TEXTS[LawVersion.AMENDED]
+"""The text a skeleton quotes: the duties are modelled for the amended Act only (decision 020),
+so a skeleton quotes the requirements in force, whichever version the result was checked
+against."""
+
+
+@dataclass(frozen=True)
+class Requirement:
+    """A provision's requirement, quoted word for word from the amended AI Act: the English text
+    and the official German one, as `get_provision` returns them (a test keeps them equal)."""
+
+    provision_id: str
+    quote: Texts
+
+    def citation(self, language: Language) -> Citation:
+        return Citation(
+            provision_id=self.provision_id,
+            document_id=AMENDED_TEXT.document_id,
+            law_version=LawVersion.AMENDED,
+            document_status=DocumentStatus.CONSOLIDATED,
+            language=language,
+            quote=self.quote[language],
+        )
+
+
+@dataclass(frozen=True)
+class RequirementSection:
+    """A section a provision requires (a skeleton's): the requirement quoted, and the interview
+    questions whose answers fill it, each answer word for word as a paragraph in the order
+    asked. `waits_for` is what the section shows until every question is answered."""
+
+    key: str
+    heading: Texts
+    requirement: Requirement
+    questions: tuple[Question, ...]
+    waits_for: SectionStatus = SectionStatus.QUESTIONS
+    provenance: Provenance = Provenance.INTERVIEW
+
+    def __post_init__(self) -> None:
+        if not self.questions:
+            raise ValueError(f"section {self.key!r} needs a question that fills it")
+        if self.waits_for is SectionStatus.DRAFTED:
+            raise ValueError(f"section {self.key!r} can't wait for nothing")
+
+
+SectionSpec = TemplateSection | InterviewSection | ClassificationSection | RequirementSection
+
+
+def section_questions(spec: SectionSpec) -> tuple[Question, ...]:
+    """The questions whose answers fill `spec`, in order; none for a pre-filled or fixed one."""
+    if isinstance(spec, InterviewSection):
+        return (Question(spec.question_key, spec.question),)
+    if isinstance(spec, RequirementSection):
+        return spec.questions
+    return ()
 
 
 @dataclass(frozen=True)
 class DocumentTemplate:
-    """A short document answering one duty (`article`), with its required sections in order."""
+    """A document answering one duty (`article`), with its required sections in order.
+
+    `small_company_note` is the line a draft carries for an SME or a small mid-cap (the Annex IV
+    skeleton's "simplified form expected", P8b)."""
 
     id: str
     article: str
     title: Texts
     sections: tuple[SectionSpec, ...]
+    small_company_note: Texts | None = None
 
     @property
-    def questions(self) -> tuple[InterviewSection, ...]:
+    def questions(self) -> tuple[Question, ...]:
         """The interview questions, in the order the sections ask them."""
-        return tuple(spec for spec in self.sections if isinstance(spec, InterviewSection))
+        return tuple(question for spec in self.sections for question in section_questions(spec))
 
 
 # --- Shared sections ------------------------------------------------------------------------------
@@ -347,9 +414,4 @@ DEPLOYER_TEMPLATES: tuple[DocumentTemplate, ...] = (
     GENERATED_CONTENT_DISCLOSURE,
 )
 """Every short deployer document, in the order the documents list shows them. Of the Art. 50
-duties only (3) and (4) are a deployer's; (1) and (2) are the provider's (P8b, P28)."""
-
-TEMPLATES: Mapping[str, DocumentTemplate] = MappingProxyType(
-    {template.id: template for template in DEPLOYER_TEMPLATES}
-)
-"""The templates by id, as a draft's `template` names them."""
+duties only (3) and (4) are a deployer's; (1) and (2) are the provider's (P28)."""
