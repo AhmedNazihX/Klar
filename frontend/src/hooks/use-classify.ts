@@ -8,6 +8,7 @@ import {
   type ProgressAction,
   type ProgressState,
 } from '@/features/classify/classify-progress'
+import { SSE_MAX_RETRY_ATTEMPTS } from '@/lib/api-client-config'
 
 /** Why a run ended without a result. Klar never shows a class after any of these. */
 export type ClassifyFailure =
@@ -37,13 +38,20 @@ function retryAfterSeconds(response: Response): number | null {
   return Number.isFinite(seconds) && seconds >= 0 ? seconds : null
 }
 
+/** A run stopped because a newer one replaced it or the screen went: nothing of it may reach
+ *  the check list any more, which belongs to the next run. */
+function stoppedByCaller(): DOMException {
+  return new DOMException('The classification was stopped.', 'AbortError')
+}
+
 /**
  * Runs one classification over `POST /classify` and feeds every streamed event to `dispatch`.
- * Resolves with the result, or rejects with a ClassifyRunError. The generated SSE client never
- * retries (each run is paid) and ends a failed stream without throwing, so the HTTP status is
- * read from the response itself.
+ * Resolves with the result, or rejects with a ClassifyRunError. The SSE client never retries
+ * (each run is paid; pinned on this call too, so no per-call option can turn retries on) and
+ * ends a failed stream without throwing, so the HTTP status is read from the response itself.
+ * Once `signal` aborts, nothing more is dispatched.
  */
-export async function runClassification(
+async function runClassification(
   body: ClassifyRequest,
   dispatch: Dispatch<ProgressAction>,
   signal: AbortSignal,
@@ -56,6 +64,7 @@ export async function runClassification(
   const { stream } = await classify({
     body,
     signal,
+    sseMaxRetryAttempts: SSE_MAX_RETRY_ATTEMPTS,
     fetch: async (input: URL | RequestInfo, init?: RequestInit) => {
       const response = await globalThis.fetch(input, init)
       if (!response.ok) {
@@ -72,18 +81,20 @@ export async function runClassification(
     },
   })
   for await (const event of stream) {
+    if (signal.aborted) break
     dispatch({ type: 'event', event })
     if (event.event === 'error') {
       throw new ClassifyRunError({ kind: 'check', node: event.step, message: event.message })
     }
     if (event.event === 'result') return event.result
   }
+  if (signal.aborted) throw stoppedByCaller()
   dispatch({ type: 'stopped' })
   if (seen.refused) throw new ClassifyRunError(seen.refused)
   throw new ClassifyRunError({ kind: seen.hasStreamFailed ? 'network' : 'incomplete' })
 }
 
-export type UseClassify = {
+type UseClassify = {
   progress: ProgressState
   run: UseMutationResult<ClassificationResult, Error, ClassifyRequest>
 }
