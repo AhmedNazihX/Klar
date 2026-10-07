@@ -701,6 +701,64 @@ def test_a_section_b_product_cites_the_original_art_2_2_under_the_original_text(
     assert "nur Art. 6 Abs. 1, Art. 102 bis 109 und Art. 112" in german
     amended = outcome(answer(one=annex_i("annex:I:B:21", YES, YES, YES))).step.decision
     assert "only Art. 6(1), Art. 60a and Art. 102 to 112 of the AI Act apply" in amended
+    machinery = "Verordnung (EU) 2023/1230 über Maschinen"
+    german_amended = TEXTS[Language.DE]["i_section_b"].format(
+        law=machinery, **version_words(Language.DE, LawVersion.AMENDED)
+    )
+    assert german_amended == (
+        "Verordnung (EU) 2023/1230 über Maschinen ist in Anhang I Abschnitt B aufgeführt, daher "
+        "gelten nach Art. 2 Abs. 2 von der KI-Verordnung nur Art. 6 Abs. 1, Art. 60a und "
+        "Art. 102 bis 112: Die Hochrisiko-Anforderungen erreichen das Produkt über "
+        "Verordnung (EU) 2023/1230 über Maschinen, die KI-Verordnung selbst legt keine weiteren "
+        "Pflichten auf."
+    )
+
+
+@pytest.mark.parametrize(
+    ("facts", "language", "sentence"),
+    [
+        pytest.param(
+            (YES, Answer.NO, YES),
+            Language.EN,
+            "The AI system is not a safety component of the product covered by Regulation (EU) "
+            "2017/745 on medical devices (Annex I Section A point 11) (Art. 6(1)(a), 6(1a)), so "
+            "Art. 6(1) does not apply.",
+            id="en-not-a-safety-component",
+        ),
+        pytest.param(
+            (YES, YES, Answer.NO),
+            Language.EN,
+            "The product covered by Regulation (EU) 2017/745 on medical devices (Annex I Section "
+            "A point 11) does not need a third-party conformity assessment for health and safety "
+            "(Art. 6(1)(b), 6(1c)), so Art. 6(1) does not apply.",
+            id="en-no-third-party-assessment",
+        ),
+        pytest.param(
+            (YES, Answer.NO, YES),
+            Language.DE,
+            "Das KI-System ist kein Sicherheitsbauteil des Produkts, das unter Verordnung (EU) "
+            "2017/745 über Medizinprodukte fällt (Anhang I Abschnitt A Nummer 11) (Art. 6 Abs. 1 "
+            "Buchst. a, Abs. 1a), daher gilt Art. 6 Abs. 1 nicht.",
+            id="de-not-a-safety-component",
+        ),
+        pytest.param(
+            (YES, YES, Answer.NO),
+            Language.DE,
+            "Das Produkt, das unter Verordnung (EU) 2017/745 über Medizinprodukte fällt (Anhang I "
+            "Abschnitt A Nummer 11), muss keine Konformitätsbewertung durch Dritte zu Gesundheit "
+            "und Sicherheit durchlaufen (Art. 6 Abs. 1 Buchst. b, Abs. 1c), daher gilt Art. 6 "
+            "Abs. 1 nicht.",
+            id="de-no-third-party-assessment",
+        ),
+    ],
+)
+def test_the_amended_text_cites_art_6_1a_and_1c_in_the_exact_sentence(
+    facts: tuple[Answer, Answer, Answer], language: Language, sentence: str
+) -> None:
+    """The re-audit's gap: the amended punctuation of Art. 6(1a)/(1c) pinned to the character."""
+    result = outcome(answer(one=annex_i("annex:I:A:11", *facts)), language)
+    assert result.high_risk_route is None
+    assert result.step.decision == f"{TEXTS[language]['none']} {sentence}"
 
 
 @pytest.mark.parametrize(
