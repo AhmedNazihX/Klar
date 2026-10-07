@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 
 import type { CheckedDraft } from '@/api'
-import type { ClassificationRun } from '@/features/classify/classification-store'
+import type { ClassificationRun, ToolResult } from '@/features/classify/classification-store'
 
 /**
  * The tools this session has a result for (the Classify screen keeps each finished run in the
@@ -9,8 +9,8 @@ import type { ClassificationRun } from '@/features/classify/classification-store
  */
 export function sessionTools(queryClient: QueryClient): ClassificationRun[] {
   return queryClient
-    .getQueriesData<ClassificationRun | null>({ queryKey: ['classification-run'] })
-    .flatMap(([, run]) => (run ? [run] : []))
+    .getQueriesData<ToolResult>({ queryKey: ['classification-run'] })
+    .flatMap(([, page]) => (page?.kind === 'run' ? [page.run] : []))
 }
 
 /** One tool and its drafted documents, once drafted. */

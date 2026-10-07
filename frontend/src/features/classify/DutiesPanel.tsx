@@ -11,15 +11,10 @@ import type { Language } from '@/i18n'
 
 import { longDate } from './dates'
 import { provisionName } from './provision-names'
-import { citationSource, dutyLabel } from './result-text'
+import { citationSource, dutyLabel, isTransparencyDuty } from './result-text'
 
 /** The article column is wider in German (localisation.md: "Art. 26 Abs. 11"). */
 const REFERENCE_WIDTH: Record<Language, number> = { en: 86, de: 112 }
-const TRANSPARENCY_ARTICLE = 'art:50'
-
-function isTransparencyDuty(obligation: Obligation): boolean {
-  return obligation.article === TRANSPARENCY_ARTICLE || obligation.article.startsWith('art:50:')
-}
 
 /** The line under a duty: its Art. 111(2) marking (decision 026 item 24), or its condition. */
 function dutyNote(t: TFunction, obligation: Obligation, language: Language): ReactNode {

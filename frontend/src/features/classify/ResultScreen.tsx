@@ -34,7 +34,7 @@ function SummaryView({
   const question = result.status === 'needs_more_information' ? pausedStep(result) : null
 
   function editDescription(): void {
-    saveDraft({ name: run.name, description: run.description })
+    saveDraft({ name: run.name ?? '', description: run.description })
     void navigate({ to: '/app/classify' })
   }
 
@@ -69,12 +69,30 @@ function SummaryView({
           onViewChange('reviewer')
         }}
       />
-      <ResultNotice result={result} />
+      <ResultNotice result={result} isStored={run.isStored} />
     </>
   )
 }
 
-/** A tool this session has no result for. */
+/** A fresh run the inventory couldn't take: it shows here, but only until the tab goes. */
+function NotSavedNote({
+  failure,
+}: {
+  failure: NonNullable<ClassificationRun['saveFailure']>
+}): JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <p
+      role="alert"
+      data-failure={failure}
+      className="m-0 rounded-card-small px-4 py-3 text-body-small text-ink glass-thin"
+    >
+      {failure === 'storage-full' ? t('result.notSaved.storageFull') : t('result.notSaved.failed')}
+    </p>
+  )
+}
+
+/** A tool id the user has no tool for (not theirs, or deleted). */
 export function ResultNotFound(): JSX.Element {
   const { t } = useTranslation()
   return (
@@ -100,9 +118,15 @@ export function ResultScreen({
   view: ResultView
   onViewChange: (view: ResultView) => void
 }): JSX.Element {
-  return view === 'reviewer' ? (
-    <ReviewerView run={run} onViewChange={onViewChange} />
-  ) : (
-    <SummaryView run={run} onViewChange={onViewChange} />
+  // A fragment, so the note and the view's panels stay the screen's direct children (load motion).
+  return (
+    <>
+      {run.saveFailure && <NotSavedNote failure={run.saveFailure} />}
+      {view === 'reviewer' ? (
+        <ReviewerView run={run} onViewChange={onViewChange} />
+      ) : (
+        <SummaryView run={run} onViewChange={onViewChange} />
+      )}
+    </>
   )
 }

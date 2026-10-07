@@ -4,8 +4,8 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { saveCompanyProfile, type CompanyProfileInput } from '@/lib/company-profile'
 import { supabase } from '@/lib/supabase'
 
-import { anonymousSessionOptions } from './use-anonymous-session'
-import { userDataOverviewKey } from './use-user-data-overview'
+import { withAnonymousSession } from './use-anonymous-session'
+import { userDataKey } from './use-user-data-overview'
 
 export type SaveCompanyProfileVariables = {
   inventoryId: string | null
@@ -14,17 +14,17 @@ export type SaveCompanyProfileVariables = {
   inventoryName: string
 }
 
-/** Saves the company profile onto the user's inventory, then re-reads the overview. */
+/** Saves the company profile onto the user's inventory, then re-reads every user-data query. */
 export function useSaveCompanyProfile(
   client: SupabaseClient | null = supabase,
 ): UseMutationResult<void, unknown, SaveCompanyProfileVariables> {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ inventoryId, profile, inventoryName }) => {
-      if (!client) throw new Error('Supabase is not configured.')
-      await queryClient.query(anonymousSessionOptions(client))
-      await saveCompanyProfile(client, inventoryId, profile, inventoryName)
+      const sessionClient = await withAnonymousSession(queryClient, client)
+      await saveCompanyProfile(sessionClient, inventoryId, profile, inventoryName)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: userDataOverviewKey }),
+    // The overview and Your data's counts (profiles, storage) both change.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: userDataKey }),
   })
 }

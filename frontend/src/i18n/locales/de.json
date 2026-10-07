@@ -324,6 +324,71 @@
       "failed": "Das hat nicht geklappt. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
     }
   },
+  "yourData": {
+    "intro": "Alles liegt in Ihrer anonymen Sitzung. Nehmen Sie es mit oder löschen Sie es, wann immer Sie möchten.",
+    "keep": {
+      "heading": "Was Klar speichert",
+      "systems": "Tools und ihre Beschreibungen",
+      "classifications": "Ergebnisse der Einstufung",
+      "interviewAnswers": "Antworten für Ihre Dokumententwürfe",
+      "dutyProgress": "Abgehakte Pflichten in Ihren Checklisten",
+      "companyProfiles": "Unternehmensprofil",
+      "storage": "{{used}} von {{budget}} Speicher belegt",
+      "retention": "Wird nach 30 Tagen ohne Aktivität automatisch gelöscht. Nie zum Trainieren von Modellen verwendet.",
+      "failed": "Klar konnte nicht laden, was gespeichert ist. Prüfen Sie Ihre Verbindung und laden Sie die Seite neu."
+    },
+    "who": {
+      "heading": "Wer sie verarbeitet",
+      "models": "Sprachmodelle, über OpenRouter",
+      "modelsRole": "Prüfungen und Antworten",
+      "modelsDetail": "OpenRouter leitet jede Anfrage weiter; seine eigene Verarbeitung ist nicht auf die EU beschränkt. Die Modelle laufen in EU-Regionen bei Microsoft Azure und Google Vertex AI.",
+      "search": "Suche in den Rechtstexten, bei einem Anbieter in der EU",
+      "searchRole": "Embeddings",
+      "searchDetail": "Nebius macht in der EU aus Ihrer Beschreibung eine Suche in der Verordnung.",
+      "storage": "Speicherung der Sitzung",
+      "storageRole": "Supabase",
+      "storageDetail": "Ihre gespeicherten Daten, nur für Sie sichtbar.",
+      "noTraining": "Jede Anfrage an ein Modell wird ohne Datenspeicherung beim Anbieter und ohne Training gestellt.",
+      "privacyLink": "Datenschutzerklärung lesen"
+    },
+    "download": {
+      "heading": "Alles herunterladen",
+      "body": "Eine Kopie all Ihrer Daten in einer Datei (JSON), für Ihre Unterlagen oder andere Werkzeuge. Importieren Sie sie, um sie in einer neuen Sitzung wiederherzustellen.",
+      "button": "Daten herunterladen (JSON)",
+      "pending": "Wird vorbereitet …",
+      "failed": "Der Download hat nicht geklappt. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+    },
+    "delete": {
+      "heading": "Meine Daten löschen",
+      "body": "Löscht alles, was Klar für diese Sitzung speichert: Ihre Tools, Beschreibungen, Ergebnisse, Antworten für Dokumente, abgehakten Pflichten und Ihr Unternehmensprofil, und beendet die Sitzung. Das lässt sich nicht rückgängig machen. Laden Sie vorher eine Kopie herunter, wenn Sie eine brauchen.",
+      "button": "Meine Daten löschen",
+      "dialogTitle": "Alles löschen?",
+      "dialogBody": "Ihre Tools mit Beschreibungen und Ergebnissen, Ihre Antworten für Dokumente, abgehakten Pflichten und Ihr Unternehmensprofil werden endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
+      "dialogBodyCounts": "Klar löscht {{items}} endgültig. Das lässt sich nicht rückgängig machen.",
+      "lost": {
+        "systems_one": "{{count}}\u00a0Tool",
+        "systems_other": "{{count}}\u00a0Tools",
+        "classifications_one": "{{count}}\u00a0Ergebnis",
+        "classifications_other": "{{count}}\u00a0Ergebnisse",
+        "interviewAnswers_one": "{{count}}\u00a0Antwort für Dokumente",
+        "interviewAnswers_other": "{{count}}\u00a0Antworten für Dokumente",
+        "dutyProgress_one": "{{count}}\u00a0abgehakte Pflicht",
+        "dutyProgress_other": "{{count}}\u00a0abgehakte Pflichten",
+        "companyProfile": "Ihr Unternehmensprofil"
+      },
+      "word": "LÖSCHEN",
+      "confirmLabel": "Geben Sie {{word}} ein, um zu bestätigen",
+      "cancel": "Abbrechen",
+      "confirm": "Alles löschen",
+      "pending": "Wird gelöscht …",
+      "failed": "Ihre Daten wurden nicht gelöscht. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+    },
+    "deleted": {
+      "title": "Ihre Daten sind gelöscht.",
+      "body": "Ihre Tools, Beschreibungen, Ergebnisse, Antworten für Dokumente, abgehakten Pflichten und Ihr Unternehmensprofil sind gelöscht, und diese Sitzung ist beendet. Nichts wird für Training aufbewahrt.",
+      "startAgain": "Neu beginnen"
+    }
+  },
   "classify": {
     "title": "Tool beschreiben",
     "subtitle": "Ein paar Sätze genügen. Klar fragt nach allem, was das Ergebnis entscheidet.",
@@ -341,10 +406,24 @@
       "changes": "was Sie daran geändert haben"
     },
     "privacy": "Lassen Sie Namen und andere persönliche Angaben von Bewerbenden oder Beschäftigten weg.",
+    "personalData": {
+      "title": "Diese Beschreibung enthält möglicherweise personenbezogene Daten:",
+      "kinds": {
+        "email": "eine E-Mail-Adresse",
+        "phone": "eine Telefonnummer",
+        "iban": "eine Kontonummer (IBAN)",
+        "name": "etwas, das wie ein Personenname aussieht"
+      },
+      "advice": "Klar braucht sie für die Einstufung nicht. Beschreiben Sie Personen besser über ihre Rolle, etwa „die Bewerberin“ oder „eine Teamleitung“. Diese Prüfung läuft in Ihrem Browser und sendet nichts."
+    },
     "language": "Klar antwortet auf Deutsch. Zitate geben den amtlichen deutschen Text wieder.",
     "run": "Prüfungen starten",
     "running": "Wird geprüft…",
-    "untitled": "Ihr Tool"
+    "untitled": "Ihr Tool",
+    "draftTool": {
+      "note": "Fügt eine neue Prüfung für {{name}} hinzu.",
+      "newTool": "Stattdessen als neues Tool prüfen"
+    }
   },
   "progress": {
     "heading": "Prüfung in der Reihenfolge der Verordnung",
@@ -419,7 +498,7 @@
   },
   "result": {
     "notFound": {
-      "body": "Dieses Ergebnis ist nicht in dieser Sitzung. Vorerst behält Klar ein Ergebnis nur, solange dieser Tab offen ist; starten Sie die Prüfungen erneut, um es zu sehen.",
+      "body": "Dieses Tool ist nicht in Ihrem Inventar. Vielleicht wurde es gelöscht oder in einem anderen Browser geprüft.",
       "action": "Tool einstufen"
     },
     "checkedOn": "Geprüft am {{date}} anhand der konsolidierten KI-Verordnung vom {{lawDate}}.",
@@ -564,7 +643,24 @@
     },
     "citationSource": "{{provision}}, {{language}}",
     "citationSourceDraft": "{{provision}}, {{language}}, Entwurf",
-    "notice": "Antworten zitieren die konsolidierte KI-Verordnung (CELEX {{celex}}) und Leitlinien der Kommission, teils noch im Entwurf."
+    "notice": "Antworten zitieren die konsolidierte KI-Verordnung (CELEX {{celex}}) und Leitlinien der Kommission, teils noch im Entwurf.",
+    "notSaved": {
+      "failed": "Dieses Ergebnis wurde nicht in Ihrem Inventar gespeichert. Es bleibt auf dieser Seite, bis Sie sie neu laden oder verlassen.",
+      "storageFull": "Dieses Ergebnis wurde nicht gespeichert: Ihre Daten haben die Speichergrenze erreicht. Schaffen Sie unter „Ihre Daten“ Platz und starten Sie die Prüfungen erneut."
+    },
+    "unchecked": {
+      "body": "Für dieses Tool gibt es noch kein gespeichertes Ergebnis. Stufen Sie es ein, um seine Klasse und Pflichten zu sehen."
+    },
+    "unreadable": {
+      "body": "Dieses gespeicherte Ergebnis ist nicht lesbar. Die Datei, aus der es stammt, wurde vielleicht bearbeitet. Stufen Sie das Tool erneut ein, um ein neues Ergebnis zu erhalten."
+    },
+    "withoutResult": {
+      "action": "Dieses Tool einstufen"
+    },
+    "stored": {
+      "notice": "Gespeichertes Ergebnis. Klar prüft gespeicherte Ergebnisse nicht erneut; lesen Sie es als Orientierung, nicht als geprüften Nachweis.",
+      "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+    }
   },
   "annexPoint": {
     "III_1_a": "biometrische Fernidentifizierung",
@@ -592,5 +688,69 @@
     "III_7_d": "Aufdeckung, Erkennung oder Identifizierung von Personen bei der Migration",
     "III_8_a": "Unterstützung von Gerichten bei der Ermittlung und Anwendung des Rechts",
     "III_8_b": "Beeinflussung von Wahlen oder Abstimmungen"
+  },
+  "inventory": {
+    "count_one": "{{count}} Tool, eingestuft nach der KI-Verordnung in der Fassung vom {{date}}.",
+    "count_other": "{{count}} Tools, eingestuft nach der KI-Verordnung in der Fassung vom {{date}}.",
+    "countPlain_one": "{{count}} Tool in Ihrem Inventar.",
+    "countPlain_other": "{{count}} Tools in Ihrem Inventar.",
+    "add": "Tool hinzufügen",
+    "summary": {
+      "heading": "Unternehmensübersicht",
+      "prohibited_one": "{{name}} ist verboten: Nutzen Sie es ab sofort nicht mehr.",
+      "prohibited_other": "{{count}} Tools sind verboten: Nutzen Sie sie ab sofort nicht mehr.",
+      "prohibitedAssumed_one": "Bei einem davon ist das Verbot angenommen, bis seine offene Frage geklärt ist.",
+      "prohibitedAssumed_other": "Bei {{count}} davon ist das Verbot angenommen, bis ihre offenen Fragen geklärt sind.",
+      "next": {
+        "provider": "Als Nächstes kommen Ihre Pflichten als Anbieter von <name/>, ab dem <date/>.",
+        "deployer": "Als Nächstes kommen Ihre Pflichten als Betreiber von <name/>, ab dem <date/>.",
+        "importer": "Als Nächstes kommen Ihre Pflichten als Einführer von <name/>, ab dem <date/>.",
+        "distributor": "Als Nächstes kommen Ihre Pflichten als Händler von <name/>, ab dem <date/>.",
+        "none": "Als Nächstes kommen die Pflichten für <name/>, ab dem <date/>."
+      },
+      "calm": "Kein Tool ist verboten, und keine Pflichten stehen noch bevor.",
+      "inForce": "Bereits in Kraft",
+      "transparency_one": "Transparenz, {{count}} Tool",
+      "transparency_other": "Transparenz, {{count}} Tools",
+      "transparencySince": "Art. 50, seit dem {{date}}",
+      "countsLabel": "Tools je Klasse",
+      "assumedCount": "{{count}} angenommen",
+      "assumedNote_one": "{{count}} Tool wird in seiner strengeren Klasse gezählt, bis seine offene Frage geklärt ist.",
+      "assumedNote_other": "{{count}} Tools werden in ihrer strengeren Klasse gezählt, bis ihre offenen Fragen geklärt sind.",
+      "source": "Zusammengefasst aus den in Ihren Daten gespeicherten Ergebnissen. Klar prüft gespeicherte Ergebnisse nicht erneut; lesen Sie dies als Orientierung, nicht als geprüften Nachweis.",
+      "since": {
+        "provider": "Ihre Pflichten als Anbieter von <name/> gelten seit dem <date/>.",
+        "deployer": "Ihre Pflichten als Betreiber von <name/> gelten seit dem <date/>.",
+        "importer": "Ihre Pflichten als Einführer von <name/> gelten seit dem <date/>.",
+        "distributor": "Ihre Pflichten als Händler von <name/> gelten seit dem <date/>.",
+        "none": "Die Pflichten für <name/> gelten seit dem <date/>."
+      },
+      "assumedClass": "Seine Klasse ({{riskClass}}) ist angenommen, bis seine offene Frage geklärt ist."
+    },
+    "needs": {
+      "heading_one": "{{count}} Tool braucht Sie",
+      "heading_other": "{{count}} Tools brauchen Sie",
+      "prohibited": "Nutzen oder liefern Sie es ab sofort nicht mehr",
+      "needsInfo_one": "Beantworten Sie {{count}} Frage, um die Prüfung abzuschließen",
+      "needsInfo_other": "Beantworten Sie {{count}} Fragen, um die Prüfung abzuschließen",
+      "ambiguous": "Zwei Lesarten von {{provision}}. Rechtliche Prüfung empfohlen",
+      "ambiguousPlain": "Zwei Lesarten des Rechts. Rechtliche Prüfung empfohlen"
+    },
+    "table": {
+      "label": "Ihre Tools und ihre Ergebnisse",
+      "tool": "Tool",
+      "role": "Ihre Rolle",
+      "class": "Klasse",
+      "basis": "Grundlage",
+      "appliesFrom": "Gilt ab",
+      "status": "Status",
+      "none": "–",
+      "assumedClass": "{{riskClass}}, angenommen",
+      "noDuty": "Keine besondere Pflicht",
+      "since": "Seit dem {{date}}",
+      "from": "Ab dem {{date}}",
+      "unchecked": "Noch nicht geprüft",
+      "unreadable": "Gespeichertes Ergebnis nicht lesbar"
+    }
   }
 }

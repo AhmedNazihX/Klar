@@ -409,6 +409,12 @@ export type DraftSection = {
      * The requirement the section answers, quoted word for word from the AI Act (skeletons only); shown above the "To fill in" marker.
      */
     requirement?: Citation | null;
+    /**
+     * Quotes
+     *
+     * The provisions a pre-filled section quotes, word for word from the corpus at the result's law version and date, in the document's language, never from the result: the Art. 5(1) points of the vendor message's finding.
+     */
+    quotes?: Array<Citation>;
 };
 
 /**
@@ -427,7 +433,7 @@ export type DraftsRequest = {
     /**
      * Result
      *
-     * A ClassificationResult as `POST /classify` returned it. It is parsed against the result contract (a result that breaks it is a 422), and the drafts are built from the parsed result.
+     * A `ClassificationResult`, as the `result` event of `POST /classify` carries it; the route validates it against the result contract.
      */
     result: {
         [key: string]: unknown;
@@ -486,7 +492,7 @@ export type ExportRequest = {
     /**
      * Result
      *
-     * A ClassificationResult as `POST /classify` returned it. It is parsed against the result contract (a result that breaks it is a 422), and the drafts are built from the parsed result.
+     * A `ClassificationResult`, as the `result` event of `POST /classify` carries it; the route validates it against the result contract.
      */
     result: {
         [key: string]: unknown;
@@ -591,16 +597,6 @@ export type FollowUpQuestion = {
 };
 
 /**
- * HTTPValidationError
- */
-export type HttpValidationError = {
-    /**
-     * Detail
-     */
-    detail?: Array<ValidationError>;
-};
-
-/**
  * HighRiskRoute
  *
  * How a system became high-risk; the two routes have different dates (Art. 113(c)).
@@ -628,6 +624,26 @@ export type InterviewQuestion = {
      */
     section: string;
 };
+
+/**
+ * InvalidField
+ *
+ * One validation failure: its type (e.g. `string_too_long`) and where it is.
+ */
+export type InvalidField = {
+    /**
+     * Type
+     */
+    type: string;
+    /**
+     * Loc
+     *
+     * Where it failed, e.g. ["body", "answers"]; at most two parts.
+     */
+    loc: Array<string | number>;
+};
+
+export type JsonValue = unknown;
 
 /**
  * Language
@@ -1068,30 +1084,61 @@ export type StepStartedEvent = {
 };
 
 /**
- * ValidationError
+ * Unprocessable
+ *
+ * A 422: why the request can't be processed, quoting none of it.
  */
-export type ValidationError = {
+export type Unprocessable = {
     /**
-     * Location
+     * Detail
      */
-    loc: Array<string | number>;
+    detail: string;
     /**
-     * Message
+     * Errors
+     *
+     * The validation failures, when the request failed validation.
      */
-    msg: string;
+    errors?: Array<InvalidField>;
+};
+
+/**
+ * VendorLetter
+ *
+ * The drafted letter (labelled DRAFT, with the notice) and the automatic checks on it.
+ */
+export type VendorLetter = {
+    document: DraftDocument;
     /**
-     * Error Type
+     * Checks
      */
-    type: string;
+    checks: Array<CheckResult>;
+};
+
+/**
+ * VendorLetterRequest
+ *
+ * A classification result, the letter's language and the answers given so far.
+ */
+export type VendorLetterRequest = {
     /**
-     * Input
+     * Result
+     *
+     * The classification result, as `POST /classify` sent it.
      */
-    input?: unknown;
-    /**
-     * Context
-     */
-    ctx?: {
+    result: {
         [key: string]: unknown;
+    };
+    /**
+     * The language of the letter's wording, its quotes of the Act and the notice.
+     */
+    language: Language;
+    /**
+     * Answers
+     *
+     * The interview answers by question key (vendor, tool_name, sender); a question left out stays "To fill in".
+     */
+    answers?: {
+        [key: string]: unknown | string;
     };
 };
 
@@ -1104,9 +1151,9 @@ export type ClassifyData = {
 
 export type ClassifyErrors = {
     /**
-     * Validation Error
+     * Not a valid request; the body quotes none of it
      */
-    422: HttpValidationError;
+    422: Unprocessable;
     /**
      * Too many classifications
      */
@@ -1176,9 +1223,9 @@ export type GetProvisionErrors = {
      */
     404: unknown;
     /**
-     * Validation Error
+     * Not a valid request; the body quotes none of it
      */
-    422: HttpValidationError;
+    422: Unprocessable;
     /**
      * The corpus is unreachable
      */
@@ -1228,9 +1275,9 @@ export type ListObligationsData = {
 
 export type ListObligationsErrors = {
     /**
-     * Validation Error
+     * Not a valid request; the body quotes none of it
      */
-    422: HttpValidationError;
+    422: Unprocessable;
 };
 
 export type ListObligationsError = ListObligationsErrors[keyof ListObligationsErrors];
@@ -1258,9 +1305,9 @@ export type ListDocumentsData = {
 
 export type ListDocumentsErrors = {
     /**
-     * Validation Error
+     * Not a valid request; the body quotes none of it
      */
-    422: HttpValidationError;
+    422: Unprocessable;
     /**
      * The corpus is unreachable
      */
@@ -1278,6 +1325,39 @@ export type ListDocumentsResponses = {
 
 export type ListDocumentsResponse = ListDocumentsResponses[keyof ListDocumentsResponses];
 
+export type DraftVendorLetterData = {
+    body: VendorLetterRequest;
+    path?: never;
+    query?: never;
+    url: '/documents/vendor-letter';
+};
+
+export type DraftVendorLetterErrors = {
+    /**
+     * Not a valid request or result, a result that calls for no vendor letter or cites a point of Art. 5(1) the Act doesn't have, or an answer to a question the letter doesn't ask; the body quotes none of it
+     */
+    422: Unprocessable;
+    /**
+     * Too many requests
+     */
+    429: unknown;
+    /**
+     * The corpus is unreachable
+     */
+    503: unknown;
+};
+
+export type DraftVendorLetterError = DraftVendorLetterErrors[keyof DraftVendorLetterErrors];
+
+export type DraftVendorLetterResponses = {
+    /**
+     * Successful Response
+     */
+    200: VendorLetter;
+};
+
+export type DraftVendorLetterResponse = DraftVendorLetterResponses[keyof DraftVendorLetterResponses];
+
 export type DraftDocumentsData = {
     body: DraftsRequest;
     path?: never;
@@ -1287,10 +1367,12 @@ export type DraftDocumentsData = {
 
 export type DraftDocumentsErrors = {
     /**
-     * Not a valid request
+     * Not a valid request; the body quotes none of it
      */
-    422: unknown;
+    422: Unprocessable;
 };
+
+export type DraftDocumentsError = DraftDocumentsErrors[keyof DraftDocumentsErrors];
 
 export type DraftDocumentsResponses = {
     /**
@@ -1318,9 +1400,9 @@ export type ExportDocumentErrors = {
      */
     409: unknown;
     /**
-     * Validation Error
+     * Not a valid request; the body quotes none of it
      */
-    422: HttpValidationError;
+    422: Unprocessable;
 };
 
 export type ExportDocumentError = ExportDocumentErrors[keyof ExportDocumentErrors];

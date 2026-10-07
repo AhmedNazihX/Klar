@@ -1,5 +1,5 @@
 import type { HighRiskRoute } from '@/api'
-import type { Language } from '@/i18n'
+import { LANGUAGE_LOCALES, type Language } from '@/i18n'
 
 /** The Chapter III date on each high-risk route under the original text (Art. 113). The engine
  *  dates every result by the amended text (a duty's `applies_from`, a question's `duties_from`);
@@ -12,7 +12,6 @@ export const ORIGINAL_ROUTE_DATES: Record<HighRiskRoute, string> = {
 /** The date Art. 111(2) gives legacy high-risk systems meant for public authorities. */
 export const PUBLIC_AUTHORITY_DEADLINE = '2030-08-02'
 
-const LOCALES: Record<Language, string> = { en: 'en-GB', de: 'de-DE' }
 const DAY_MS = 86_400_000
 const DAYS_PER_MONTH = 30.44
 
@@ -23,9 +22,19 @@ function parseIsoDate(isoDate: string): Date {
 
 /** "2 December 2027" / "2. Dezember 2027" (localisation.md › German dates). */
 export function longDate(isoDate: string, language: Language): string {
-  return new Intl.DateTimeFormat(LOCALES[language], {
+  return new Intl.DateTimeFormat(LANGUAGE_LOCALES[language], {
     day: 'numeric',
     month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(parseIsoDate(isoDate))
+}
+
+/** "2 Dec 2027" / "2. Dez. 2027", for table cells (the Inventory's "Applies from"). */
+export function shortDate(isoDate: string, language: Language): string {
+  return new Intl.DateTimeFormat(LANGUAGE_LOCALES[language], {
+    day: 'numeric',
+    month: 'short',
     year: 'numeric',
     timeZone: 'UTC',
   }).format(parseIsoDate(isoDate))

@@ -8,6 +8,7 @@ import { Icon } from '@/components/Icon'
 import { cn } from '@/lib/utils'
 
 import { errorKey, type DescriptionFormValues } from './description-form'
+import { PersonalDataNotice } from './PersonalDataNotice'
 
 const TIP_KEYS = ['decides', 'affects', 'origin', 'changes'] as const
 
@@ -41,8 +42,8 @@ export type DescriptionFormProps = {
 
 /**
  * Where the user describes the tool in their own words (artboard `Classify`): a name, the
- * description with the four things worth mentioning and the privacy line, the language Klar
- * answers in, and Run the checks.
+ * description with the personal-data warning, the four things worth mentioning and the privacy
+ * line, the language Klar answers in, and Run the checks.
  */
 export function DescriptionForm({ form, isRunning, onSubmit }: DescriptionFormProps): JSX.Element {
   const { t } = useTranslation()
@@ -85,6 +86,7 @@ export function DescriptionForm({ form, isRunning, onSubmit }: DescriptionFormPr
             {...form.register('description')}
           />
           <FieldError id={descriptionErrorId} message={errors.description?.message} />
+          <PersonalDataNotice control={form.control} />
         </div>
         <div id={tipsId} className="flex flex-wrap items-center gap-2">
           <span className="text-caption font-normal text-slate">{t('classify.tipsLabel')}</span>

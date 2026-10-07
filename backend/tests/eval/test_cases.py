@@ -1,5 +1,6 @@
 import json
 from collections import Counter
+from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
 
@@ -7,7 +8,10 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
+from aiact.engine.nodes import high_risk_texts, role_texts, scope_texts
 from aiact.engine.nodes.high_risk_retrieval import ANNEX_III_POINTS
+from aiact.engine.nodes.role_texts import KeyQuestion, legacy_questions
+from aiact.engine.nodes.scope_texts import ScopeQuestion
 from aiact.eval.cases import (
     CASES_DIR,
     QA_DIR_NAME,
@@ -27,6 +31,7 @@ from aiact.eval.cases import (
     load_yaml_file,
     score_appliedai,
 )
+from aiact.eval.metrics import SOFT_WORDING_TAG
 from aiact.eval.split import SPLIT_FILE, Split
 from aiact.schemas import Language, RiskClass, Role, Status
 
@@ -322,9 +327,16 @@ def test_soft_pair_fixture_carries_pair_id_and_key_fact_answers() -> None:
     assert plain.key_fact_answers == {}
     assert soft.key_fact_answers == {
         "ranks_people": "Yes, it orders the applications by a score.",
-        "annex:III:4:a": "HR uses the order to decide whom to invite.",
+        "annex_iii_use": "HR uses the order to decide whom to invite.",
     }
     assert soft.business_function == "hr"
+
+
+def test_key_fact_answers_reject_a_provision_topic_key() -> None:
+    with pytest.raises(ValidationError):
+        BenchmarkCase.model_validate(
+            with_changes(key_fact_answers={"annex:III:4:a": "HR uses the order."})
+        )
 
 
 def test_flip_variant_provisions_are_listed_once_in_order() -> None:
@@ -547,6 +559,63 @@ def test_the_committed_annex_match_set_has_its_counts_and_points() -> None:
         assert item.source_example_id is None, item.id
         expected.update(item.label.annex_point)
     assert set(ANNEX_III_POINTS) - expected == set()
+
+
+SOFT_PAIR_RANGE = range(10, 21)
+MIN_GERMAN_SHARE = 0.25
+PLAIN_WORDING_TAG = "wording:plain"
+
+
+def _asked_id(value: object) -> str | None:
+    """The id of a fixed question the engine can ask; a scope note (no question) has none."""
+    if isinstance(value, KeyQuestion):
+        return value.id
+    if isinstance(value, ScopeQuestion) and value.question is not None:
+        return value.id
+    return None
+
+
+def _fixed_question_ids() -> frozenset[str]:
+    """Every fixed follow-up question id of the scope, high-risk and role nodes: the keys a
+    stored answer may have (decision 019 as amended 2026-10-07)."""
+    legacy = legacy_questions(date(2026, 8, 2), "art:111:2")
+    values: list[object] = list(vars(legacy).values())
+    for module in (scope_texts, high_risk_texts, role_texts):
+        for value in vars(module).values():
+            values.extend(value.values() if isinstance(value, Mapping) else [value])
+    return frozenset(qid for qid in map(_asked_id, values) if qid is not None)
+
+
+def test_the_committed_soft_pair_set_has_its_pairs_and_answers() -> None:
+    """B6's DoD: 10-20 pairs, each the same high-risk system worded plainly and softly with one
+    label; the softened case is tagged `wording:soft` (the tag the downgrade rate reads) and
+    carries `key_fact_answers` keyed by the ids of the engine's fixed questions (decision 019);
+    both languages, at least a quarter German."""
+    question_ids = _fixed_question_ids()
+    cases = load_cases(CaseSet.SOFT_PAIRS)
+    assert all(case.pair_id is not None for case in cases)
+    pairs = {
+        pair_id: [case for case in cases if case.pair_id == pair_id]
+        for pair_id in {case.pair_id for case in cases}
+    }
+    assert len(pairs) in SOFT_PAIR_RANGE
+    for pair_id, pair in pairs.items():
+        soft = [case for case in pair if SOFT_WORDING_TAG in case.tags]
+        assert len(soft) == 1, pair_id
+        (plain,) = [case for case in pair if case is not soft[0]]
+        assert PLAIN_WORDING_TAG in plain.tags, pair_id
+        assert plain.description != soft[0].description, pair_id
+        assert soft[0].key_fact_answers, pair_id
+        assert set(soft[0].key_fact_answers) <= question_ids, pair_id
+        first, second = pair
+        assert first.label == second.label, pair_id
+        assert isinstance(first.label, CaseLabel)
+        assert first.label.risk_class is RiskClass.HIGH_RISK, pair_id
+        assert first.language is second.language, pair_id
+        assert all(f"pair:{pair_id}" in case.tags for case in pair), pair_id
+    languages = Counter(pair[0].language for pair in pairs.values())
+    assert set(languages) == {Language.EN, Language.DE}
+    assert languages[Language.DE] / len(pairs) >= MIN_GERMAN_SHARE
 
 
 def test_no_committed_case_derives_from_a_pile_a_example() -> None:

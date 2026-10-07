@@ -27,7 +27,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── settings.py              pydantic-settings, read from .env (F1)
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
 │   │   ├── db.py                    direct Postgres connection (DATABASE_URL) for server-only tables (C3)
-│   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b)
+│   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b);
+│   │   │                            LONG_DATE_PATTERNS, reading them back (P28, moved from drafting)
 │   │   ├── provision_names.py       how a result names an article provision or Annex point (EN, DE), shared by
 │   │   │                            the engine's texts and drafting (P8a, moved out of E4–E6's texts)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3);
@@ -67,10 +68,13 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        questions.py: hints, answer options and the structured readings
 │   │   │   │                        the checks show (E12); high_risk_questions.py: what a yes settles,
 │   │   │   │                        the Annex I question's quotes, the readings and settled_by (E12);
-│   │   │   │                        reading_side.py: what a texts module says about one reading (E12)
+│   │   │   │                        reading_side.py: what a texts module says about one reading (E12);
+│   │   │   │                        corpus.py: the checks' one corpus reader (get_provision, search)
+│   │   │   │                        and the short connection each step reads it over (E15)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
 │   │   │   │                        high_risk_original.md: the original-text note, no Art. 6(1a)-(1c) (E11)
+│   │   │   ├── clients.py           the engine's chat models and query embedder, built once per process (E15)
 │   │   │   ├── citations.py         citation existence validator, one retry, the changed_by_omnibus marker (E9)
 │   │   │   ├── classify.py          classify_system, run_classification, stream_classification, the answers
 │   │   │   │                        appended to the description (decision 019), engine_nodes (E10)
@@ -117,6 +121,11 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            every template by id), skeletons/: annex_iv.py, art_9.py, art_17.py,
 │   │   │                            art_27.py (the four skeletons), quotes.py (their requirements, word
 │   │   │                            for word, EN and DE; checked against data/parsed/), common.py
+│   │   │                            P28: vendor_letters/: fills.py (the result's facts, as pre-fills),
+│   │   │                            templates.py (the prohibited message and the ambiguous request,
+│   │   │                            EN and DE), facts.py (their facts check), quotes.py (the
+│   │   │                            Art. 5(1) points quoted from the corpus, LawQuotes; decision 031),
+│   │   │                            draft.py (draft_vendor_letter); registered in registry.py
 │   │   │                            P9: prose.py (a skeleton's answers written up as sentences, no
 │   │   │                            word added), documents.py (checked_drafts: every document a result
 │   │   │                            calls for, drafted, checked, with its interview), paper.py (a draft
@@ -130,7 +139,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;
 │   │                                documents.py `POST /documents/drafts` and `/documents/export` (P9);
 │   │                                dependencies.py settings, node builder, database, limits; rate_limit.py the rate and
-│   │                                concurrency limits; body_limit.py the 413 body cap; openapi.py the schema export,
+│   │                                concurrency limits; body_limit.py the 413 body cap; errors.py the one
+│   │                                422 body, quoting no input; documents.py
+│   │                                `POST /documents/vendor-letter` (P28); openapi.py the schema export,
 │   │                                `aiact api openapi`; `aiact api serve` runs it
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)
@@ -178,7 +189,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)
-│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3, C9)
+│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3, C9);
+│   │                                *_inventory_tools.sql: each tool with its latest run, a security-invoker view;
+│   │                                *_save_classified_tool.sql: optional tool names, a tool and its first run saved at once;
+│   │                                *_save_run_on_existing_tool.sql: or the next run on a tool the user has (P6)
 │   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7);
 │                                    the screens' labels (EN, DE), German duties, groups, documents (C9)
 │
@@ -212,25 +226,34 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            AppFrame, AppSidebar, SidebarNav, AppTopBar, SiteFrame, SiteNav,
 │       │                            SiteFooter, MistGround, ScreenPlaceholder, PhoneLabel (P15); the
 │       │                            sidebar's CompanyLine (P18); the result's CheckProgress, FactCard,
-│       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5)
+│       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
+│       │                            InventoryTable (P6)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
-│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6),
+│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12),
 │       │                            documents/ (P9: the documents screen, interview, checks, downloads; interview-answers.ts
 │       │                            reads and upserts interview_answers through supabase-js)
 │       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15),
 │       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18),
 │       │                            use-classify.ts (the streamed run), use-language.ts (P5),
+│       │                            use-inventory-tools.ts, use-save-classified-tool.ts (P6),
+│       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12),
 │       │                            use-interview-answers.ts, use-document-drafts.ts (drafts and exports, P9)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
-│       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18)
+│       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
+│       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
+│       │                            before a screen reads it) (P6);
+│       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
 │       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4), reduced-motion.ts (matchMedia stub, P14),
 │                                    browser-setup.ts (the browser project), shell-routes.ts (every screen route, by frame) (P15),
 │                                    user-data-handlers.ts (MSW handlers for the user's Supabase data, P18),
+│                                    your-data-store.ts (an in-memory user-data store behind the counts, export, import and delete, P12),
+│                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded
 │                                    worked example's SSE events and result variants, P5),
+│                                    inventory-fixtures.ts (inventory_tools rows, prohibited and ambiguous results, P6)
 │                                    documents-fixtures.ts + fixtures/documents.drafts.json (drafts dumped from
 │                                    the backend's drafter, and the documents handlers, P9)
 │

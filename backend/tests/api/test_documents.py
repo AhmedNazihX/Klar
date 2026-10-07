@@ -11,6 +11,7 @@ import httpx
 import pytest
 
 from aiact.api import create_app
+from aiact.api.documents import INVALID_RESULT
 from aiact.drafting import CheckName, CheckResult
 from aiact.drafting.documents import checked_drafts
 from aiact.schemas import DISCLAIMER, ClassificationResult, Language
@@ -124,17 +125,17 @@ async def test_a_stale_answer_key_is_left_out_logged_by_count_and_never_a_422(
 
 
 BROKEN_RESULTS = [
-    ({"note": SECRET}, ("body", "result", "note")),
-    ({"risk_class": "limited_risk", "transparency_duties": []}, ("body", "result")),
-    ({"risk_class": SECRET}, ("body", "result", "risk_class")),
+    {"note": SECRET},
+    {"risk_class": "limited_risk", "transparency_duties": []},
+    {"risk_class": SECRET},
 ]
 """A field the contract doesn't have, a rule of the contract broken, a value it doesn't allow."""
 
 
 @pytest.mark.parametrize("route", ["/documents/drafts", "/documents/export"])
-@pytest.mark.parametrize(("changes", "where"), BROKEN_RESULTS)
+@pytest.mark.parametrize("changes", BROKEN_RESULTS)
 async def test_a_result_that_breaks_the_contract_is_refused_without_echoing_it(
-    client: httpx.AsyncClient, route: str, changes: dict[str, object], where: tuple[str, ...]
+    client: httpx.AsyncClient, route: str, changes: dict[str, object]
 ) -> None:
     body = {**_body(provider_result()), "template": ANNEX_IV, "format": "pdf"}
     if route.endswith("drafts"):
@@ -142,7 +143,7 @@ async def test_a_result_that_breaks_the_contract_is_refused_without_echoing_it(
     body["result"] |= changes
     response = await client.post(route, json=body)
     assert response.status_code == 422
-    assert [tuple(problem["loc"]) for problem in response.json()["detail"]] == [where]
+    assert response.json() == {"detail": INVALID_RESULT}
     assert SECRET not in response.text
 
 

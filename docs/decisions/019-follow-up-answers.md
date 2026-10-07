@@ -24,3 +24,4 @@ answer is answered "don't know". Fixed answers are free and reproducible; append
 - B6: the case format gains `key_fact_answers`.
 - V8: two stored run_ids for the downgrade rate, without and with the answers.
 - P5's follow-up loop uses the same append rule.
+- Amended 2026-10-07 (user, at B6 review): V8 appends only the stored answers whose key is the id of a question the engine asked in that run; any other question is answered "don't know". Keys are fixed-question ids (`annex_iii_use`, `ai_system`, …); model-written questions (`about: high_risk`) get no stored answer.

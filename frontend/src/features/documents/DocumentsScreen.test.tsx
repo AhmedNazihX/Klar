@@ -6,10 +6,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import type { ClassificationResult } from '@/api'
-import {
-  classificationRunOptions,
-  type ClassificationRun,
-} from '@/features/classify/classification-store'
+import { putRun, type ClassificationRun } from '@/features/classify/classification-store'
 import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { WORKED_EXAMPLE } from '@/test/classify-fixtures'
@@ -82,7 +79,7 @@ async function openDocuments(
   const client = createTestQueryClient()
   for (const tool of tools) {
     const run: ClassificationRun = { ...tool, description: 'A tool.' }
-    client.setQueryData(classificationRunOptions(tool.toolId).queryKey, run)
+    putRun(client, run)
   }
   const user = userEvent.setup()
   const rendered = renderRoute(path, client)

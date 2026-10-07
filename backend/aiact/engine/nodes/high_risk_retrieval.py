@@ -18,12 +18,11 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
-import psycopg
-
 from aiact.engine.nodes.common import Lookup, lookup_for
+from aiact.engine.nodes.corpus import CorpusReader
 from aiact.engine.state import EngineState
-from aiact.retrieval.provisions import Provision, ProvisionNotFoundError, get_provision
-from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
+from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
+from aiact.retrieval.search import SearchHit
 from aiact.schemas import Language
 
 GUIDANCE_SEARCH_LIMIT = 8
@@ -56,43 +55,14 @@ class HighRiskLibrary(Protocol):
     ) -> tuple[SearchHit, ...]: ...
 
 
-class HighRiskCorpus:
-    """The corpus through `get_provision` and `search_ai_act`, over one connection and one
-    embedder (`HighRiskCheck` opens the connection once per step). Every search carries the
-    caller's exclusions and no distance cut-off (C8)."""
-
-    def __init__(self, connection: psycopg.Connection, embedder: QueryEmbedder) -> None:
-        self._connection = connection
-        self._embedder = embedder
-
-    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
-        """Raises `ProvisionNotFoundError` when the corpus has no text for it."""
-        return get_provision(
-            provision_id,
-            lookup.language,
-            lookup.law_version,
-            lookup.as_of,
-            include_held_out=lookup.include_held_out,
-            connection=self._connection,
-        )
+class HighRiskCorpus(CorpusReader):
+    """The corpus over one connection and one embedder (`HighRiskCheck` opens the connection
+    once per use). Every search carries the caller's exclusions and no distance cut-off (C8)."""
 
     def search(
         self, query: str, lookup: Lookup, *, language: Language, doc_type: str, limit: int
     ) -> tuple[SearchHit, ...]:
-        results = search_ai_act(
-            query,
-            language,
-            lookup.law_version,
-            lookup.as_of,
-            doc_types={doc_type},
-            exclude_source_example_ids=lookup.exclude_source_example_ids,
-            include_held_out=lookup.include_held_out,
-            max_distance=None,
-            limit=limit,
-            embedder=self._embedder,
-            connection=self._connection,
-        )
-        return results.hits
+        return self.passages(query, lookup, language=language, doc_types={doc_type}, limit=limit)
 
 
 @dataclass(frozen=True)

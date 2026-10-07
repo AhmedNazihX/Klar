@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, ServerSentEventsResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentsData, DraftDocumentsErrors, DraftDocumentsResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses } from './types.gen';
+import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentsData, DraftDocumentsErrors, DraftDocumentsResponses, DraftVendorLetterData, DraftVendorLetterErrors, DraftVendorLetterResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -57,6 +57,22 @@ export const listObligations = <ThrowOnError extends boolean = false>(options: O
  * The texts the answers draw on: title, status, law version and dates.
  */
 export const listDocuments = <ThrowOnError extends boolean = false>(options?: Options<ListDocumentsData, ThrowOnError>): RequestResult<ListDocumentsResponses, ListDocumentsErrors, ThrowOnError> => (options?.client ?? client).get<ListDocumentsResponses, ListDocumentsErrors, ThrowOnError>({ url: '/documents', ...options });
+
+/**
+ * Draft Vendor Letter
+ *
+ * Draft the vendor letter the result calls for: a message about a prohibited result, or a
+ * request for the vendor's assessment of a legally ambiguous one. Guidance, not legal
+ * advice.
+ */
+export const draftVendorLetter = <ThrowOnError extends boolean = false>(options: Options<DraftVendorLetterData, ThrowOnError>): RequestResult<DraftVendorLetterResponses, DraftVendorLetterErrors, ThrowOnError> => (options.client ?? client).post<DraftVendorLetterResponses, DraftVendorLetterErrors, ThrowOnError>({
+    url: '/documents/vendor-letter',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Draft Documents

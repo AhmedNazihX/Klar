@@ -10,9 +10,12 @@ import {
 import { fetchUserDataOverview, type UserDataOverview } from '@/lib/company-profile'
 import { supabase } from '@/lib/supabase'
 
-import { anonymousSessionOptions } from './use-anonymous-session'
+import { withAnonymousSession } from './use-anonymous-session'
 
-export const userDataOverviewKey = ['user-data', 'overview'] as const
+/** Every query over the user's saved data starts with this key, so a write (an import, a saved
+ *  run) can refresh them all, and a sign-out forget them. */
+export const userDataKey = ['user-data'] as const
+export const userDataOverviewKey = [...userDataKey, 'overview'] as const
 
 /**
  * The user's company profile and tool count, read once the anonymous session exists (through the
@@ -22,9 +25,7 @@ export function userDataOverviewOptions(queryClient: QueryClient, client: Supaba
   return queryOptions({
     queryKey: userDataOverviewKey,
     queryFn: async (): Promise<UserDataOverview> => {
-      if (!client) throw new Error('Supabase is not configured.')
-      await queryClient.query(anonymousSessionOptions(client))
-      return fetchUserDataOverview(client)
+      return fetchUserDataOverview(await withAnonymousSession(queryClient, client))
     },
     enabled: client !== null,
   })

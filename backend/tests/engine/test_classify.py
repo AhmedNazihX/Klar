@@ -29,6 +29,7 @@ from aiact.engine import (
 from aiact.engine import classify as classify_module
 from aiact.engine.citations import CitationValidator, OmnibusChanges
 from aiact.engine.classify import ANSWERS_HEADING, NodeBuilder, engine_nodes
+from aiact.engine.clients import NODE_TOKENS
 from aiact.engine.graph import CheckNode, EngineNodes
 from aiact.engine.nodes.common import lookup_for
 from aiact.engine.nodes.facts import ExtractedFact, FactExtractor, FactsAnswer
@@ -555,23 +556,20 @@ def engine_settings(**values: object) -> Settings:
 def test_the_engine_nodes_meter_their_models_under_their_own_names(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    built: list[int] = []
+    paid = AIMessage(
+        content=FactsAnswer(facts=(), questions=()).model_dump_json(),
+        response_metadata={"cost": 0.002},
+        usage_metadata={"input_tokens": 90, "output_tokens": 10, "total_tokens": 100},
+    )
 
-    def fake_engine_model(*, max_tokens: int, settings: Settings) -> GenericFakeChatModel:
-        built.append(max_tokens)
-        paid = AIMessage(
-            content=FactsAnswer(facts=(), questions=()).model_dump_json(),
-            response_metadata={"cost": 0.002},
-            usage_metadata={"input_tokens": 90, "output_tokens": 10, "total_tokens": 100},
-        )
-        return GenericFakeChatModel(messages=iter([paid]))
+    def fake_engine_chats(settings: Settings) -> dict[str, GenericFakeChatModel]:
+        return {node: GenericFakeChatModel(messages=iter([paid])) for node in NODE_TOKENS}
 
-    monkeypatch.setattr(classify_module, "engine_chat_model", fake_engine_model)
+    monkeypatch.setattr(classify_module, "engine_chats", fake_engine_chats)
     meter = UsageMeter()
     nodes = engine_nodes(engine_settings(), meter)
     assert set(nodes.checks) == set(STEP_ORDER)
     assert nodes.finalize is finalize
-    assert len(built) == 1 + len(STEP_ORDER)  # one model per node, each with its own cap
 
     nodes.facts(stub_state())
     usage = meter.usage()

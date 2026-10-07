@@ -7,12 +7,22 @@ fixed wording, which states only the duty the document answers. Nothing else ent
 The provider document skeletons are in `skeletons/` (P8b).
 """
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
 from aiact.drafting.models import Provenance, SectionStatus
 from aiact.drafting.prefill import Fill
-from aiact.schemas import LAW_TEXTS, Citation, DocumentStatus, Language, LawVersion
+from aiact.schemas import (
+    LAW_TEXTS,
+    Citation,
+    ClassificationResult,
+    DocumentStatus,
+    Language,
+    LawVersion,
+    OpenQuestion,
+    StepName,
+)
 
 EN, DE = Language.EN, Language.DE
 
@@ -126,18 +136,49 @@ class DocumentTemplate:
     """A document answering one duty (`article`), with its required sections in order.
 
     `small_company_note` is the line a draft carries for an SME or a small mid-cap (the Annex IV
-    skeleton's "simplified form expected", P8b)."""
+    skeleton's "simplified form expected", P8b). `open_question_articles` is for a document
+    about the question of law a result leaves open (the vendor request, P28): the article each
+    check's question falls under, so its draft answers that one rather than `article`."""
 
     id: str
     article: str
     title: Texts
     sections: tuple[SectionSpec, ...]
     small_company_note: Texts | None = None
+    open_question_articles: Mapping[StepName, str] | None = None
 
     @property
     def questions(self) -> tuple[Question, ...]:
         """The interview questions, in the order the sections ask them."""
         return tuple(question for spec in self.sections for question in section_questions(spec))
+
+    def article_for(self, result: ClassificationResult) -> str:
+        """The article a draft of the template from `result` answers: `article`, or, with
+        `open_question_articles`, the article of the result's first question of law: the one
+        its applied reading rests on, when that is one of those articles (the role check's
+        own-name question is about Art. 3), else the one of the check that leaves it open."""
+        if self.open_question_articles is None:
+            return self.article
+        step = next((step for step in result.steps if step.open_question), None)
+        if step is None or step.open_question is None:
+            return self.article
+        cited = _applied_article(step.open_question)
+        if cited is not None and cited in self.open_question_articles.values():
+            return cited
+        return self.open_question_articles.get(step.step, self.article)
+
+
+ARTICLE_OF = re.compile(r"(art:\d+)(?::|\Z)")
+"""The article a provision id of the Act belongs to: `art:3` for `art:3:3`."""
+
+
+def _applied_article(question: OpenQuestion) -> str | None:
+    """The article the applied reading of `question` cites, if it cites one of the Act."""
+    applied = next((reading for reading in question.readings if reading.is_applied), None)
+    if applied is None or applied.citation is None:
+        return None
+    found = ARTICLE_OF.match(applied.citation.provision_id)
+    return found.group(1) if found else None
 
 
 # --- Shared sections ------------------------------------------------------------------------------

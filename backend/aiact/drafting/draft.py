@@ -1,14 +1,16 @@
 """Drafting one document from its template, a classification result and the user's answers.
 
 No model is involved: a draft holds the result's facts, the user's answers word for word, the
-template's fixed wording and the requirements it quotes, nothing else (INIT > Documentation
-drafting). A skeleton's answers are written up as sentences (`prose.py`). Draft only from a
-result the backend validated, never from a row the browser wrote (P3's audit). The deployer
-documents (`deployer.py`) and the skeletons (`skeletons/`) are both drafted here.
+template's fixed wording and the provisions it quotes, nothing else (INIT > Documentation
+drafting). A skeleton's answers are written up as sentences (`prose.py`). A result posted by the
+browser is only checked against the result contract, so a draft never takes the Act's text from
+it: a quote is the template's own (the skeletons' requirements) or read from the corpus by the
+caller and passed in as `quotes` (decision 031). The deployer documents (`deployer.py`), the
+skeletons (`skeletons/`) and the vendor letters (`vendor_letters/`) are all drafted here.
 """
 
 import logging
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from aiact.drafting.models import (
     DraftDocument,
@@ -19,7 +21,7 @@ from aiact.drafting.models import (
     status_for,
     unanswered_count,
 )
-from aiact.drafting.prefill import PREFILLS
+from aiact.drafting.prefill import PREFILLS, QUOTING_FILLS
 from aiact.drafting.prose import write_up
 from aiact.drafting.templates import (
     ClassificationSection,
@@ -30,7 +32,7 @@ from aiact.drafting.templates import (
     TemplateSection,
     section_questions,
 )
-from aiact.schemas import DISCLAIMER, ClassificationResult, Language
+from aiact.schemas import DISCLAIMER, Citation, ClassificationResult, Language
 
 logger = logging.getLogger(__name__)
 
@@ -41,27 +43,43 @@ SMALL_COMPANIES = frozenset({SizeClass.SME, SizeClass.SMC})
 """The size classes the simplified technical documentation form is for (Art. 11(1))."""
 
 
+class UnknownQuestionError(ValueError):
+    """An answer names a question the template doesn't ask."""
+
+
+def refuse_unasked(template: DocumentTemplate, answers: Answers) -> None:
+    """Raises UnknownQuestionError when an answer names a question `template` doesn't ask: for a
+    request that posts its own answers (the vendor letter's), where such a key is a mistake
+    rather than a stale stored row."""
+    unknown = sorted(set(answers) - {question.key for question in template.questions})
+    if unknown:
+        raise UnknownQuestionError(f"{template.id} asks no question {unknown}")
+
+
 def draft_document(
     template: DocumentTemplate,
     result: ClassificationResult,
     answers: Answers,
     language: Language,
     size_class: SizeClass | None = None,
+    quotes: Sequence[Citation] = (),
 ) -> DraftDocument:
     """One document: its sections in the template's order, each pre-filled, answered or fixed.
     `size_class` is the company profile's (None without a profile); it decides the template's
-    small-company note. An answer to a question the template doesn't ask (a stale row, say) is
-    left out and logged, so it never blocks the draft. Raises DutyDateError when the result
-    lists the document's duty with several dates."""
+    small-company note. `quotes` are the provisions the quoting pre-filled sections
+    (`QUOTING_FILLS`) quote, read from the corpus in `language`. An answer to a question the
+    template doesn't ask (a stale row, say) is left out and logged, so it never blocks the
+    draft. Raises DutyDateError when the result lists the document's duty with several dates."""
     answers = _asked_answers(template, answers)
+    article = template.article_for(result)
     sections = tuple(
-        _section(spec, result, answers, language, template.article) for spec in template.sections
+        _section(spec, result, answers, language, article, quotes) for spec in template.sections
     )
     unanswered = unanswered_count(sections)
     return DraftDocument(
         template=template.id,
         title=template.title[language],
-        article=template.article,
+        article=article,
         language=language,
         note=small_company_note(template, size_class, language),
         sections=sections,
@@ -143,17 +161,23 @@ def _section(
     answers: Answers,
     language: Language,
     article: str,
+    quotes: Sequence[Citation],
 ) -> DraftSection:
     if isinstance(spec, ClassificationSection):
-        return prefilled_section(spec, result, language, article)
+        return prefilled_section(spec, result, language, article, quotes)
     return supplied_section(spec, answers, language)
 
 
 def prefilled_section(
-    spec: ClassificationSection, result: ClassificationResult, language: Language, article: str
+    spec: ClassificationSection,
+    result: ClassificationResult,
+    language: Language,
+    article: str,
+    quotes: Sequence[Citation] = (),
 ) -> DraftSection:
     """The section from the result, or its fixed `empty` line when the result has nothing for
-    it, so an empty pre-filled section never waits for an answer no one is asked for."""
+    it, so an empty pre-filled section never waits for an answer no one is asked for. A fill
+    that quotes the provisions it names (`QUOTING_FILLS`) quotes `quotes`, the corpus's text."""
     paragraphs = PREFILLS[spec.fill](result, language, article)
     if paragraphs or spec.empty is None:
         provenance = spec.provenance
@@ -165,4 +189,5 @@ def prefilled_section(
         provenance=provenance,
         paragraphs=paragraphs,
         status=SectionStatus.DRAFTED,
+        quotes=tuple(quotes) if spec.fill in QUOTING_FILLS else (),
     )

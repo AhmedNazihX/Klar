@@ -1,0 +1,48 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query'
+
+import type { ClassificationResult } from '@/api'
+import { saveClassifiedTool } from '@/lib/inventory'
+import { supabase } from '@/lib/supabase'
+
+import { withAnonymousSession } from './use-anonymous-session'
+import { userDataKey, userDataOverviewOptions } from './use-user-data-overview'
+
+export type SaveClassifiedToolVariables = {
+  /** The tool the run is saved on, as its next run; null to save it as a new tool. */
+  toolId: string | null
+  /** Null when the user gave none: the name is never filled in with a placeholder. */
+  name: string | null
+  description: string
+  result: ClassificationResult
+  /** The name a new inventory gets when the user has none yet. */
+  inventoryName: string
+}
+
+/**
+ * Saves a finished run in the user's inventory, on the given tool or as a new one, and resolves
+ * with the tool's id; with Supabase not configured, nothing is saved and it resolves with null.
+ * Re-reads the user's data afterwards (the inventory and the overview's tool count).
+ */
+export function useSaveClassifiedTool(
+  client: SupabaseClient | null = supabase,
+): UseMutationResult<string | null, unknown, SaveClassifiedToolVariables> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ toolId, name, description, result, inventoryName }) => {
+      if (!client) return null
+      const sessionClient = await withAnonymousSession(queryClient, client)
+      // The inventory the profile lives on (the overview's), so tools and profile stay together.
+      const overview = await queryClient.query(userDataOverviewOptions(queryClient, client))
+      return saveClassifiedTool(sessionClient, {
+        toolId,
+        inventoryId: overview.inventoryId,
+        inventoryName,
+        name,
+        description,
+        result,
+      })
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: userDataKey }),
+  })
+}
