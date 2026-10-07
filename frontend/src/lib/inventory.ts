@@ -6,12 +6,14 @@ import type { ClassificationResult } from '@/api'
 import { parseStoredResult } from './stored-result'
 
 // The user's tools and their runs in Supabase (story P6): systems and classifications (P3, P19),
-// read through the inventory_tools view (each tool with its latest run, owner-only RLS).
+// read through the inventory_tools view (each tool with its latest run, owner-only RLS) and
+// written through save_classified_tool (one transaction).
 
 /** One tool in the inventory, with its latest result. */
 export type InventoryTool = {
   toolId: string
-  name: string
+  /** Null when the user gave none: screens then show "Your tool" in their language. */
+  name: string | null
   description: string
   createdAt: string
   /** The latest run's result; null while the tool has none, or when it can't be read. */
@@ -24,7 +26,7 @@ const TOOL_COLUMNS = 'id, name, description, created_at, run_no, result'
 
 const ToolRowSchema = z.object({
   id: z.uuid(),
-  name: z.string(),
+  name: z.string().nullable(),
   description: z.string(),
   created_at: z.string(),
   run_no: z.number().int().nullable(),
@@ -69,55 +71,31 @@ export async function fetchInventoryTool(
   return row ? toTool(row) : null
 }
 
-const IdRowSchema = z.object({ id: z.uuid() })
-
-async function insertReturningId(
-  client: SupabaseClient,
-  table: 'inventories' | 'systems',
-  values: Record<string, unknown>,
-): Promise<string> {
-  const inserted = await client.from(table).insert(values).select('id').single()
-  if (inserted.error) throw inserted.error
-  return IdRowSchema.parse(inserted.data).id
-}
-
 export type NewRun = {
   /** The inventory the tool goes into; null when the user has none yet. */
   inventoryId: string | null
   /** The name a new inventory gets. */
   inventoryName: string
-  /** The tool's name as stored (1 to 200 characters). */
-  name: string
+  /** The tool's name (1 to 200 characters), or null when the user gave none. */
+  name: string | null
   description: string
   result: ClassificationResult
 }
 
 /**
- * Adds a classified tool: the inventory if the user has none, the system, then its first run with
- * the inputs it used (P19's `inputs`). The database numbers the run and stamps the times. If the
- * run can't be written, the system goes again, so no tool is left without its result.
- * Returns the new tool's id.
+ * Adds a classified tool through save_classified_tool: the inventory if the user has none, the
+ * system, then its first run with the inputs it used (P19's `inputs`), all in one transaction,
+ * so a run that can't be written leaves no tool behind. The database numbers the run and stamps
+ * the times. Returns the new tool's id.
  */
 export async function saveClassifiedTool(client: SupabaseClient, run: NewRun): Promise<string> {
-  const inventoryId =
-    run.inventoryId ?? (await insertReturningId(client, 'inventories', { name: run.inventoryName }))
-  const toolId = await insertReturningId(client, 'systems', {
-    inventory_id: inventoryId,
-    name: run.name,
-    description: run.description,
+  const saved = await client.rpc('save_classified_tool', {
+    target_inventory_id: run.inventoryId,
+    new_inventory_name: run.inventoryName,
+    tool_name: run.name,
+    tool_description: run.description,
+    tool_result: run.result,
   })
-  const classification = await client.from('classifications').insert({
-    system_id: toolId,
-    risk_class: run.result.risk_class,
-    status: run.result.status,
-    law_version: run.result.law_version,
-    result: run.result,
-    inputs: { description: run.description, answers: {} },
-  })
-  if (classification.error) {
-    // Best effort: the run's own error is the one to report.
-    await client.from('systems').delete().eq('id', toolId)
-    throw classification.error
-  }
-  return toolId
+  if (saved.error) throw saved.error
+  return z.uuid().parse(saved.data)
 }

@@ -98,7 +98,7 @@ export function ReviewerView({
           />
         )
       })}
-      <ResultNotice result={result} />
+      <ResultNotice result={result} isStored={run.isStored} />
     </>
   )
 }

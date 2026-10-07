@@ -2,9 +2,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import type { JSX } from 'react'
 
-import { classificationRunOptions } from '@/features/classify/classification-store'
+import {
+  classificationRunOptions,
+  inventoryToolOptions,
+} from '@/features/classify/classification-store'
 import type { ResultView } from '@/features/classify/ResultHeader'
 import { ResultNotFound, ResultScreen } from '@/features/classify/ResultScreen'
+import { ToolWithoutResult } from '@/features/classify/ToolWithoutResult'
 import { supabase } from '@/lib/supabase'
 
 /** `view=reviewer` opens the reviewer view; the summary is the default and stays out of the
@@ -29,10 +33,19 @@ function ResultRoute(): JSX.Element | null {
   const navigate = Route.useNavigate()
   const queryClient = useQueryClient()
   const run = useQuery(classificationRunOptions(queryClient, supabase, toolId))
+  // Without a run to show, the tool itself says why: never checked, unreadable, or not there.
+  const tool = useQuery({
+    ...inventoryToolOptions(queryClient, supabase, toolId),
+    enabled: run.data === null,
+  })
   // A read that failed shows the screen's ErrorView (routes/app.tsx), not "not found".
   if (run.isError) throw run.error
+  if (tool.isError) throw tool.error
   if (run.isPending) return null
-  if (!run.data) return <ResultNotFound />
+  if (!run.data) {
+    if (tool.isPending) return null
+    return tool.data ? <ToolWithoutResult tool={tool.data} /> : <ResultNotFound />
+  }
   return (
     <ResultScreen
       run={run.data}

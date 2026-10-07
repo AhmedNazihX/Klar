@@ -9,7 +9,8 @@ import { anonymousSessionOptions } from './use-anonymous-session'
 import { userDataKey, userDataOverviewOptions } from './use-user-data-overview'
 
 export type SaveClassifiedToolVariables = {
-  name: string
+  /** Null when the user gave none: the name is never filled in with a placeholder. */
+  name: string | null
   description: string
   result: ClassificationResult
   /** The name a new inventory gets when the user has none yet. */

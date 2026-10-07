@@ -3,9 +3,10 @@ import { Trans, useTranslation } from 'react-i18next'
 
 import type { RiskClass } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
-import { LawDate } from '@/components/LawDate'
 import { longDate, shortDate } from '@/features/classify/dates'
+import { toolName } from '@/features/classify/result-text'
 import { useLanguage } from '@/hooks/use-language'
+import { useLawVersion } from '@/hooks/use-law-version'
 import type { InventoryTool } from '@/lib/inventory'
 import { cn } from '@/lib/utils'
 
@@ -26,7 +27,8 @@ const DOT_CLASS: Record<RiskClass, string> = {
   out_of_scope: 'bg-risk-out-dot',
 }
 
-/** "One tool is prohibited…", then the duties coming next. */
+/** "One tool is prohibited…", then the duties coming next (or already applying) under the law
+ *  text on show. */
 function SummarySentence({
   tools,
   next,
@@ -40,32 +42,29 @@ function SummarySentence({
     .filter(isChecked)
     .filter((tool) => tool.result.risk_class === 'prohibited')
   const [firstProhibited] = prohibited
-  const applies = next?.appliesFrom
-  const date =
-    applies?.kind === 'route' ? (
-      <LawDate
-        amended={longDate(applies.amended, language)}
-        original={longDate(applies.original, language)}
-      />
-    ) : (
-      applies && <span>{longDate(applies.date, language)}</span>
-    )
   return (
     <p className="m-0 max-w-[620px] text-body-large text-ink">
       {firstProhibited && (
         <>
           {t('inventory.summary.prohibited', {
             count: prohibited.length,
-            name: firstProhibited.name,
+            name: toolName(t, firstProhibited.name),
           })}{' '}
         </>
       )}
       {next && (
-        // The name goes in as an element, never into the string Trans parses for tags.
-        <Trans
-          i18nKey={`inventory.summary.next.${next.tool.result.role ?? 'none'}`}
-          components={{ name: <span>{next.tool.name}</span>, date: date ?? <span /> }}
-        />
+        <>
+          {/* The name goes in as an element, never into the string Trans parses for tags. */}
+          <Trans
+            i18nKey={`inventory.summary.${next.isInForce ? 'since' : 'next'}.${next.tool.result.role ?? 'none'}`}
+            components={{
+              name: <span>{toolName(t, next.tool.name)}</span>,
+              date: <span>{longDate(next.date, language)}</span>,
+            }}
+          />
+          {next.isAssumed &&
+            ` ${t('inventory.summary.assumedClass', { riskClass: t(`pill.${next.tool.result.risk_class}`) })}`}
+        </>
       )}
       {!firstProhibited && !next && t('inventory.summary.calm')}
     </p>
@@ -151,6 +150,7 @@ export function CompanySummary({
   today: Date
 }): JSX.Element {
   const { t } = useTranslation()
+  const law = useLawVersion()
   const counts = classCounts(tools)
   const assumed = counts.reduce((sum, count) => sum + count.assumed, 0)
   return (
@@ -162,7 +162,7 @@ export function CompanySummary({
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 flex-col gap-2">
           <h2 className="m-0 text-caption text-slate">{t('inventory.summary.heading')}</h2>
-          <SummarySentence tools={tools} next={nextDuties(tools, today)} />
+          <SummarySentence tools={tools} next={nextDuties(tools, today, law)} />
         </div>
         <InForceBox tools={tools} today={today} />
       </div>

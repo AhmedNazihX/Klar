@@ -33,8 +33,10 @@ export type InventoryTableProps = {
 
 const HEADINGS = ['tool', 'role', 'class', 'basis', 'appliesFrom', 'status'] as const
 
-// Class and status never get narrower than their widest pill; the Tool column gives way instead.
-const PILL_CELL = 'w-px whitespace-nowrap'
+// All six columns fit the panel, in German too: the Tool column gives way first (it takes the
+// width left over, its name wraps and its description truncates), then a long pill or an
+// Art. 111(2) date wraps inside its cell rather than pushing Status out of the panel.
+const TOOL_CELL = 'w-full min-w-[160px] max-w-0'
 const CELL = 'px-4 py-3.5 align-middle text-body-small text-ink'
 
 function StatusCell({ row }: { row: InventoryRow }): JSX.Element {
@@ -79,20 +81,18 @@ export function InventoryTable({ rows, label }: InventoryTableProps): JSX.Elemen
                 // The link covers the row, so the row shows its keyboard focus.
                 className="relative border-b border-border-subtle last:border-b-0 hover:bg-white/40 has-[a:focus-visible]:bg-white/40 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:outline-lens-blue"
               >
-                <td className={`${CELL} pl-7`}>
+                <td className={`${CELL} ${TOOL_CELL} pl-7`}>
                   <Link
                     to="/app/inventory/$toolId"
                     params={{ toolId: row.toolId }}
-                    className="block font-semibold text-ink after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                    className="block font-semibold break-words text-ink after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
                   >
                     {row.name}
                   </Link>
-                  <span className="block max-w-[320px] truncate text-caption text-slate">
-                    {row.what}
-                  </span>
+                  <span className="block truncate text-caption text-slate">{row.what}</span>
                 </td>
                 <td className={`${CELL} whitespace-nowrap`}>{row.role}</td>
-                <td className={`${CELL} ${PILL_CELL}`}>
+                <td className={CELL}>
                   {row.riskClass ? (
                     <RiskPill kind={row.riskClass} label={row.classLabel} />
                   ) : (
@@ -100,8 +100,8 @@ export function InventoryTable({ rows, label }: InventoryTableProps): JSX.Elemen
                   )}
                 </td>
                 <td className={CELL}>{row.basis}</td>
-                <td className={`${CELL} whitespace-nowrap`}>{row.from}</td>
-                <td className={`${CELL} ${PILL_CELL} pr-7`}>
+                <td className={CELL}>{row.from}</td>
+                <td className={`${CELL} pr-7`}>
                   <StatusCell row={row} />
                 </td>
               </tr>

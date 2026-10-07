@@ -7,6 +7,7 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { RiskPill } from '@/components/RiskPill'
 import { StatusPill } from '@/components/StatusPill'
 import { provisionName } from '@/features/classify/provision-names'
+import { toolName } from '@/features/classify/result-text'
 import { useLanguage } from '@/hooks/use-language'
 import type { Language } from '@/i18n'
 
@@ -54,7 +55,9 @@ export function NeedsYouPanel({ needs }: { needs: readonly NeedsYou[] }): JSX.El
               className="flex lift flex-col gap-1.5 rounded-card-small px-4 py-3 glass-thin focus-visible:outline-2 focus-visible:outline-lens-blue"
             >
               <span className="flex flex-wrap items-center justify-between gap-2">
-                <span className="min-w-0 font-semibold break-words text-ink">{need.tool.name}</span>
+                <span className="min-w-0 font-semibold break-words text-ink">
+                  {toolName(t, need.tool.name)}
+                </span>
                 <NeedPill need={need} />
               </span>
               <span className="text-caption text-slate">{action(t, need, language)}</span>

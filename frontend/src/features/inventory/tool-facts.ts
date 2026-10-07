@@ -163,8 +163,22 @@ export function openQuestionCount(result: ClassificationResult): number {
   return Math.max(1, paused.length)
 }
 
-/** The first line of a description, for the table's one-line "what"; the cell cuts it with an
- *  ellipsis where it runs out of room. */
-export function firstLine(description: string): string {
-  return description.trim().split(/\r?\n/, 1)[0] ?? ''
+/** The first sentence of a description (of its first line, when that has no full stop). */
+export function firstSentence(description: string): string {
+  const [line = ''] = description.trim().split(/\r?\n/, 1)
+  const end = line.search(/[.!?](\s|$)/)
+  return end === -1 ? line : line.slice(0, end + 1)
+}
+
+/**
+ * The table's one-line "what" (the cell cuts it with an ellipsis where it runs out of room). A
+ * description often opens with the company ("We're a 40-person logistics company."), so it is
+ * the first fact the prohibited-practices check used, which states what the tool does in the
+ * result's words; an assumed fact is left out (it says what the description doesn't). Without
+ * one, the description's first sentence.
+ */
+export function whatItDoes(tool: InventoryTool): string {
+  const practices = tool.result?.steps.find((step) => step.step === 'prohibited')
+  const fact = practices?.facts_used?.find((used) => used.evidence !== 'assumed')
+  return fact?.text ?? firstSentence(tool.description)
 }

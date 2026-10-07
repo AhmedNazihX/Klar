@@ -20,6 +20,7 @@ const STEP_NAMES = ['scope', 'prohibited', 'high_risk', 'transparency', 'role_ob
 
 const CitationSchema = z.looseObject({
   provision_id: z.string(),
+  document_id: z.string(),
   language: z.enum(['en', 'de']),
   quote: z.string(),
 })
@@ -48,10 +49,14 @@ const StepSchema = z.looseObject({
     .nullish(),
 })
 
-// The dating fields only: the texts (duty, labels) came with later stories (C9), and a result
-// stored before them still loads; the screens render whatever text is there as plain text.
+// The texts (duty, labels) came with C9, so a result stored before them still loads: a missing
+// one reads as empty (never undefined in a key), and an empty label shows the provision's name
+// (dutyLabel). One that is there must be a string, or the result is unreadable.
 const ObligationSchema = z.looseObject({
   article: z.string(),
+  duty: z.string().default(''),
+  label_en: z.string().default(''),
+  label_de: z.string().default(''),
   applies_from: z.iso.date(),
   high_risk_route: z.enum(['annex_iii', 'annex_i']).nullish(),
   legacy: z.enum(['legacy_unchanged', 'legacy_public_authority']).nullish(),
@@ -62,7 +67,7 @@ const StoredResultSchema = z.looseObject({
   risk_class: z.enum(RISK_CLASSES),
   status: z.enum(STATUSES),
   law_version: z.enum(['original', 'amended']),
-  law_text: z.looseObject({ version_date: z.iso.date() }).optional(),
+  law_text: z.looseObject({ version_date: z.iso.date(), celex: z.string().optional() }).optional(),
   as_of: z.iso.date(),
   disclaimer: z.string(),
   facts: z.array(FactSchema),

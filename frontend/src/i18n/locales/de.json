@@ -502,6 +502,19 @@
     "notSaved": {
       "failed": "Dieses Ergebnis wurde nicht in Ihrem Inventar gespeichert. Es bleibt auf dieser Seite, bis Sie sie neu laden oder verlassen.",
       "storageFull": "Dieses Ergebnis wurde nicht gespeichert: Ihre Daten haben die Speichergrenze erreicht. Schaffen Sie unter „Ihre Daten“ Platz und starten Sie die Prüfungen erneut."
+    },
+    "unchecked": {
+      "body": "Für dieses Tool gibt es noch kein gespeichertes Ergebnis. Stufen Sie es ein, um seine Klasse und Pflichten zu sehen."
+    },
+    "unreadable": {
+      "body": "Dieses gespeicherte Ergebnis ist nicht lesbar. Die Datei, aus der es stammt, wurde vielleicht bearbeitet. Stufen Sie das Tool erneut ein, um ein neues Ergebnis zu erhalten."
+    },
+    "withoutResult": {
+      "action": "Dieses Tool einstufen"
+    },
+    "stored": {
+      "notice": "Gespeichertes Ergebnis. Klar prüft gespeicherte Ergebnisse nicht erneut; lesen Sie es als Orientierung, nicht als geprüften Nachweis.",
+      "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
     }
   },
   "annexPoint": {
@@ -557,7 +570,15 @@
       "assumedCount": "{{count}} angenommen",
       "assumedNote_one": "{{count}} Tool wird in seiner strengeren Klasse gezählt, bis seine offene Frage geklärt ist.",
       "assumedNote_other": "{{count}} Tools werden in ihrer strengeren Klasse gezählt, bis ihre offenen Fragen geklärt sind.",
-      "source": "Zusammengefasst aus den in Ihren Daten gespeicherten Ergebnissen. Klar prüft gespeicherte Ergebnisse nicht erneut; lesen Sie dies als Orientierung, nicht als geprüften Nachweis."
+      "source": "Zusammengefasst aus den in Ihren Daten gespeicherten Ergebnissen. Klar prüft gespeicherte Ergebnisse nicht erneut; lesen Sie dies als Orientierung, nicht als geprüften Nachweis.",
+      "since": {
+        "provider": "Ihre Pflichten als Anbieter von <name/> gelten seit dem <date/>.",
+        "deployer": "Ihre Pflichten als Betreiber von <name/> gelten seit dem <date/>.",
+        "importer": "Ihre Pflichten als Einführer von <name/> gelten seit dem <date/>.",
+        "distributor": "Ihre Pflichten als Händler von <name/> gelten seit dem <date/>.",
+        "none": "Die Pflichten für <name/> gelten seit dem <date/>."
+      },
+      "assumedClass": "Seine Klasse ({{riskClass}}) ist angenommen, bis seine offene Frage geklärt ist."
     },
     "needs": {
       "heading_one": "{{count}} Tool braucht Sie",

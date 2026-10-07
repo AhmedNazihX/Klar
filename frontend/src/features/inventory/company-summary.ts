@@ -1,4 +1,5 @@
 import type { RiskClass } from '@/api'
+import type { LawVersion } from '@/components/LawSwitch'
 import { isTransparencyDuty } from '@/features/classify/result-text'
 import type { InventoryTool } from '@/lib/inventory'
 
@@ -9,7 +10,6 @@ import {
   isChecked,
   isoDay,
   openQuestionCount,
-  type AppliesFrom,
   type CheckedTool,
 } from './tool-facts'
 
@@ -62,31 +62,54 @@ export function toolsNeedingYou(tools: readonly InventoryTool[]): NeedsYou[] {
   return NEED_ORDER.flatMap((kind) => needs.filter((need) => need.kind === kind))
 }
 
-/** The duties coming next: the tool whose duties start soonest, among those still ahead. */
+/**
+ * The duties the summary sentence names: the tool whose duties start soonest under the law text
+ * on show, or, when every such date has come (the route's 2024 date under the original text),
+ * the one whose duties applied last. A decided result is preferred: an assumed one is named only
+ * when no decided one has dated duties, and the sentence then says its class is assumed.
+ */
 export type NextDuties = {
   tool: CheckedTool
-  appliesFrom: Extract<AppliesFrom, { kind: 'route' | 'from' }>
+  /** The date under the law text on show (ISO). */
+  date: string
+  /** The date has come: the duties already apply. */
+  isInForce: boolean
+  /** The tool's class is assumed (needs more information, legally ambiguous). */
+  isAssumed: boolean
 }
 
-function startDate(applies: NextDuties['appliesFrom']): string {
-  return applies.kind === 'route' ? applies.amended : applies.date
+/** The date a tool's dated duties start under `law`; null when they have none to name. */
+function dutiesStart(tool: CheckedTool, today: Date, law: LawVersion): string | null {
+  if (tool.result.risk_class === 'prohibited') return null
+  const applies = appliesFrom(tool.result, today)
+  if (applies.kind === 'route') return law === 'original' ? applies.original : applies.amended
+  return applies.kind === 'from' ? applies.date : null
 }
 
-export function nextDuties(tools: readonly InventoryTool[], today: Date): NextDuties | null {
-  const ahead = tools.filter(isChecked).flatMap((tool): NextDuties[] => {
-    if (tool.result.risk_class === 'prohibited') return []
-    const applies = appliesFrom(tool.result, today)
-    return applies.kind === 'route' || applies.kind === 'from'
-      ? [{ tool, appliesFrom: applies }]
-      : []
-  })
-  return ahead.reduce<NextDuties | null>(
-    (soonest, next) =>
-      soonest === null || startDate(next.appliesFrom) < startDate(soonest.appliesFrom)
-        ? next
-        : soonest,
+function pick(dated: readonly NextDuties[]): NextDuties | null {
+  const ahead = dated.filter((next) => !next.isInForce)
+  if (ahead.length > 0) {
+    return ahead.reduce((soonest, next) => (next.date < soonest.date ? next : soonest))
+  }
+  return dated.reduce<NextDuties | null>(
+    (latest, next) => (latest === null || next.date > latest.date ? next : latest),
     null,
   )
+}
+
+export function nextDuties(
+  tools: readonly InventoryTool[],
+  today: Date,
+  law: LawVersion = 'amended',
+): NextDuties | null {
+  const day = isoDay(today)
+  const dated = tools.filter(isChecked).flatMap((tool): NextDuties[] => {
+    const date = dutiesStart(tool, today, law)
+    if (date === null) return []
+    const isAssumed = tool.result.status !== 'decided'
+    return [{ tool, date, isInForce: date <= day, isAssumed }]
+  })
+  return pick(dated.filter((next) => !next.isAssumed)) ?? pick(dated)
 }
 
 /** The Art. 50 transparency duties already in force: how many tools have one, and since when. */

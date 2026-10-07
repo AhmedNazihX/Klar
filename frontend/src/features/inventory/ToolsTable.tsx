@@ -1,17 +1,17 @@
 import type { TFunction } from 'i18next'
-import type { JSX, ReactNode } from 'react'
+import { Fragment, type JSX, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult } from '@/api'
 import { InventoryTable, type InventoryRow } from '@/components/InventoryTable'
 import { LawDate } from '@/components/LawDate'
 import { shortDate } from '@/features/classify/dates'
-import { statusPill } from '@/features/classify/result-text'
+import { statusPill, toolName } from '@/features/classify/result-text'
 import { useLanguage } from '@/hooks/use-language'
 import type { Language } from '@/i18n'
 import type { InventoryTool } from '@/lib/inventory'
 
-import { appliesFrom, basisReferences, firstLine, type AppliesFrom } from './tool-facts'
+import { appliesFrom, basisReferences, whatItDoes, type AppliesFrom } from './tool-facts'
 
 /** The Art. 111(2) tag beside a legacy-marked date (decision 026 item 24). */
 function LegacyTag({ children }: { children: ReactNode }): JSX.Element {
@@ -22,6 +22,13 @@ function LegacyTag({ children }: { children: ReactNode }): JSX.Element {
   )
 }
 
+/** A short date line that never breaks inside ("2 Dec 2027", "Seit dem 2. Aug. 2026"). */
+function DateLine({ children }: { children: ReactNode }): JSX.Element {
+  return <span className="whitespace-nowrap">{children}</span>
+}
+
+// The Art. 111(2) lines wrap like prose, with the tag kept whole: the column gives way rather
+// than pushing the table past its panel.
 function appliesFromCell(t: TFunction, applies: AppliesFrom, language: Language): ReactNode {
   switch (applies.kind) {
     case 'none':
@@ -30,14 +37,23 @@ function appliesFromCell(t: TFunction, applies: AppliesFrom, language: Language)
       // The route's dates follow the law version switch (decision 026 item 11).
       return (
         <LawDate
+          className="whitespace-nowrap"
           amended={shortDate(applies.amended, language)}
           original={shortDate(applies.original, language)}
         />
       )
     case 'from':
-      return t('inventory.table.from', { date: shortDate(applies.date, language) })
+      return (
+        <DateLine>
+          {t('inventory.table.from', { date: shortDate(applies.date, language) })}
+        </DateLine>
+      )
     case 'since':
-      return t('inventory.table.since', { date: shortDate(applies.date, language) })
+      return (
+        <DateLine>
+          {t('inventory.table.since', { date: shortDate(applies.date, language) })}
+        </DateLine>
+      )
     case 'afterChange':
       return (
         <>
@@ -55,10 +71,17 @@ function appliesFromCell(t: TFunction, applies: AppliesFrom, language: Language)
   }
 }
 
-function basisCell(t: TFunction, result: ClassificationResult, language: Language): string {
+/** The Basis column: each citation stays whole on its line; lines break only between them. */
+function basisCell(t: TFunction, result: ClassificationResult, language: Language): ReactNode {
   if (result.risk_class === 'minimal_risk') return t('inventory.table.noDuty')
   const references = basisReferences(result, language)
-  return references.length > 0 ? references.join(', ') : t('inventory.table.none')
+  if (references.length === 0) return t('inventory.table.none')
+  return references.map((reference, position) => (
+    <Fragment key={reference}>
+      {position > 0 && ', '}
+      <span className="whitespace-nowrap">{reference}</span>
+    </Fragment>
+  ))
 }
 
 function checkedRow(
@@ -71,8 +94,8 @@ function checkedRow(
   const isAssumed = result.status !== 'decided'
   return {
     toolId: tool.toolId,
-    name: tool.name,
-    what: firstLine(tool.description),
+    name: toolName(t, tool.name),
+    what: whatItDoes(tool),
     role: result.role ? t(`result.roleName.${result.role}`) : t('inventory.table.none'),
     riskClass: result.risk_class,
     // An open result keeps the stricter class it was given, and says it is assumed.
@@ -90,8 +113,8 @@ function toRow(t: TFunction, tool: InventoryTool, language: Language, today: Dat
   const none = t('inventory.table.none')
   return {
     toolId: tool.toolId,
-    name: tool.name,
-    what: firstLine(tool.description),
+    name: toolName(t, tool.name),
+    what: whatItDoes(tool),
     role: none,
     riskClass: null,
     basis: none,

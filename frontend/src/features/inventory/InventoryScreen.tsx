@@ -102,7 +102,7 @@ export function InventoryScreen({ today }: { today: Date }): JSX.Element {
           {list.length > 0 && <CountLine tools={list} />}
         </div>
         <div className="flex flex-wrap items-start gap-3">
-          <ImportDataButton />
+          <ImportDataButton variant="ghost" />
           <AddTool />
         </div>
       </div>

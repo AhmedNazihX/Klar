@@ -502,6 +502,19 @@
     "notSaved": {
       "failed": "This result wasn't saved to your inventory. It stays on this page until you reload or leave it.",
       "storageFull": "This result wasn't saved: your data has reached its storage limit. Make room under Your data, then run the checks again."
+    },
+    "unchecked": {
+      "body": "No saved result for this tool yet. Classify it to see its class and duties."
+    },
+    "unreadable": {
+      "body": "This saved result can't be read. The file it came from may have been edited. Classify the tool again to get a new result."
+    },
+    "withoutResult": {
+      "action": "Classify this tool"
+    },
+    "stored": {
+      "notice": "Saved result. Klar doesn't re-check saved results, so read it as guidance, not a verified record.",
+      "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
     }
   },
   "annexPoint": {
@@ -557,7 +570,15 @@
       "assumedCount": "{{count}} assumed",
       "assumedNote_one": "{{count}} tool is counted in its stricter class until its open question is settled.",
       "assumedNote_other": "{{count}} tools are counted in their stricter class until their open questions are settled.",
-      "source": "Summed up from the results saved in your data. Klar doesn't re-check saved results, so read this as guidance, not a verified record."
+      "source": "Summed up from the results saved in your data. Klar doesn't re-check saved results, so read this as guidance, not a verified record.",
+      "since": {
+        "provider": "Your duties as the provider of <name/> apply since <date/>.",
+        "deployer": "Your duties as the deployer of <name/> apply since <date/>.",
+        "importer": "Your duties as the importer of <name/> apply since <date/>.",
+        "distributor": "Your duties as the distributor of <name/> apply since <date/>.",
+        "none": "The duties for <name/> apply since <date/>."
+      },
+      "assumedClass": "Its class ({{riskClass}}) is assumed until its open question is settled."
     },
     "needs": {
       "heading_one": "{{count}} tool needs you",

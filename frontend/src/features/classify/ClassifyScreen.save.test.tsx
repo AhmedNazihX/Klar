@@ -14,15 +14,13 @@ import {
   WORKED_EXAMPLE_DESCRIPTION,
   WORKED_EXAMPLE_EVENTS,
 } from '@/test/classify-fixtures'
-import { CLASSIFICATIONS_URL } from '@/test/inventory-fixtures'
+import { SAVE_TOOL_URL } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
 import {
   FIRST_RENDER_MS,
-  INVENTORIES_URL,
   INVENTORY_ID,
   inventoryRow,
-  SYSTEMS_URL,
   userDataHandlers,
 } from '@/test/user-data-handlers'
 
@@ -40,37 +38,28 @@ vi.mock('@/lib/supabase', async (importOriginal) => {
 const SYSTEM_ID = '3b9d2f1e-6a4c-4e0b-8f3a-1c2d3e4f5a6b'
 
 let inventories: Record<string, unknown>[] = []
-let writes: { table: string; body: unknown }[] = []
+let saves: unknown[] = []
 let classifyRequests = 0
 
-/** Records the writes a save makes; the run's insert fails with `runError` when given. */
-function saveHandlers(runError: { status: number; code: string } | null = null) {
-  return [
-    http.post(INVENTORIES_URL, async ({ request }) => {
-      writes.push({ table: 'inventories', body: await request.json() })
-      return HttpResponse.json({ id: INVENTORY_ID }, { status: 201 })
-    }),
-    http.post(SYSTEMS_URL, async ({ request }) => {
-      writes.push({ table: 'systems', body: await request.json() })
-      return HttpResponse.json({ id: SYSTEM_ID }, { status: 201 })
-    }),
-    http.post(CLASSIFICATIONS_URL, async ({ request }) => {
-      writes.push({ table: 'classifications', body: await request.json() })
-      return runError
-        ? HttpResponse.json(
-            { code: runError.code, message: 'refused' },
-            { status: runError.status },
-          )
-        : new HttpResponse(null, { status: 201 })
-    }),
-    http.delete(SYSTEMS_URL, () => new HttpResponse(null, { status: 204 })),
-  ]
+/** Records each save_classified_tool call; it answers with the new tool's id, or fails with
+ *  `error`. With `held`, the answer waits until that promise resolves. */
+function saveHandler(
+  error: { status: number; code: string } | null = null,
+  held: Promise<void> = Promise.resolve(),
+) {
+  return http.post(SAVE_TOOL_URL, async ({ request }) => {
+    saves.push(await request.json())
+    await held
+    return error
+      ? HttpResponse.json({ code: error.code, message: 'refused' }, { status: error.status })
+      : HttpResponse.json(SYSTEM_ID)
+  })
 }
 
 beforeEach(() => {
   clearDraft()
   inventories = [inventoryRow()]
-  writes = []
+  saves = []
   classifyRequests = 0
   server.use(
     ...userDataHandlers(
@@ -102,37 +91,25 @@ async function classify(name: string, language: 'en' | 'de' = 'en') {
       name: language === 'de' ? 'Prüfungen starten' : 'Run the checks',
     }),
   )
-  return rendered
+  return { user, ...rendered }
 }
 
 describe('Classify, saving the run to the inventory', () => {
-  it('adds the tool and its run to the inventory and opens the saved tool', async () => {
-    server.use(...saveHandlers())
+  it('saves the tool and its run in one call and opens the saved tool', async () => {
+    server.use(saveHandler())
     const { router } = await classify('Applicant screening')
 
     await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${SYSTEM_ID}`)
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Applicant screening' }),
     ).toBeInTheDocument()
-    expect(writes).toEqual([
+    expect(saves).toEqual([
       {
-        table: 'systems',
-        body: {
-          inventory_id: INVENTORY_ID,
-          name: 'Applicant screening',
-          description: WORKED_EXAMPLE_DESCRIPTION,
-        },
-      },
-      {
-        table: 'classifications',
-        body: {
-          system_id: SYSTEM_ID,
-          risk_class: WORKED_EXAMPLE.risk_class,
-          status: WORKED_EXAMPLE.status,
-          law_version: WORKED_EXAMPLE.law_version,
-          result: WORKED_EXAMPLE,
-          inputs: { description: WORKED_EXAMPLE_DESCRIPTION, answers: {} },
-        },
+        target_inventory_id: INVENTORY_ID,
+        new_inventory_name: 'AI inventory',
+        tool_name: 'Applicant screening',
+        tool_description: WORKED_EXAMPLE_DESCRIPTION,
+        tool_result: WORKED_EXAMPLE,
       },
     ])
     expect(screen.queryByRole('alert')).toBeNull()
@@ -143,17 +120,42 @@ describe('Classify, saving the run to the inventory', () => {
     ['en', 'AI inventory', 'Your tool'],
     ['de', 'KI-Inventar', 'Ihr Tool'],
   ] as const)(
-    'creates the inventory when there is none, and names an unnamed tool (%s)',
-    async (language, inventoryName, toolName) => {
+    'names a new inventory, and stores an unnamed tool without a name (%s)',
+    async (language, inventoryName, shownName) => {
       inventories = []
-      server.use(...saveHandlers())
+      server.use(saveHandler())
       await classify('', language)
 
-      await expect.poll(() => writes.length).toBe(3)
-      expect(writes[0]).toEqual({ table: 'inventories', body: { name: inventoryName } })
-      expect(writes[1]?.body).toMatchObject({ inventory_id: INVENTORY_ID, name: toolName })
+      await expect.poll(() => saves.length).toBe(1)
+      expect(saves[0]).toMatchObject({
+        target_inventory_id: null,
+        new_inventory_name: inventoryName,
+        tool_name: null,
+      })
+      // The placeholder is shown, in the reader's language, never stored.
+      expect(await screen.findByRole('heading', { level: 1, name: shownName })).toBeInTheDocument()
     },
   )
+
+  it('stays busy until the run is saved, so a second click starts no second run', async () => {
+    let release = (): void => undefined
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    server.use(saveHandler(null, held))
+    const { user, router } = await classify('Applicant screening')
+
+    await expect.poll(() => saves.length).toBe(1)
+    const button = screen.getByRole('button', { name: 'Checking…' })
+    expect(button).toBeDisabled()
+    await user.click(button)
+    expect(classifyRequests).toBe(1)
+
+    release()
+    await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${SYSTEM_ID}`)
+    expect(classifyRequests).toBe(1)
+    expect(saves).toHaveLength(1)
+  })
 
   it.each([
     [
@@ -179,7 +181,7 @@ describe('Classify, saving the run to the inventory', () => {
   ] as const)(
     'still opens a run it could not save, and says so (%s, %s)',
     async (language, code, message) => {
-      server.use(...saveHandlers({ status: 400, code }))
+      server.use(saveHandler({ status: 400, code }))
       const { router } = await classify('Applicant screening', language)
 
       expect(await screen.findByRole('alert', {}, { timeout: FIRST_RENDER_MS })).toHaveTextContent(

@@ -83,15 +83,11 @@ describe('nextDuties', () => {
       [tool('Later', later), tool('Sooner', decidedHighRisk()), tool('Limited', limitedRisk())],
       TODAY,
     )
+    expect(next).toMatchObject({ date: '2027-12-02', isInForce: false, isAssumed: false })
     expect(next?.tool.name).toBe('Sooner')
-    expect(next?.appliesFrom).toEqual({
-      kind: 'route',
-      amended: '2027-12-02',
-      original: '2026-08-02',
-    })
   })
 
-  it('skips duties already in force, Art. 111(2) markings and prohibited tools', () => {
+  it('skips Art. 50 duties already in force, Art. 111(2) markings and prohibited tools', () => {
     const tools = [
       tool('Limited', limitedRisk()),
       tool('Legacy', legacyMarkedDeployer()),
@@ -102,7 +98,57 @@ describe('nextDuties', () => {
 
   it('counts an Art. 50 duty as next while its date is still ahead', () => {
     const next = nextDuties([tool('Limited', limitedRisk())], new Date(2026, 7, 1))
-    expect(next?.appliesFrom).toEqual({ kind: 'from', date: '2026-08-02' })
+    expect(next).toMatchObject({ date: '2026-08-02', isInForce: false })
+  })
+
+  describe('under the original text, with the route date of 2 August 2026', () => {
+    const tools = [tool('Screening', decidedHighRisk())]
+
+    it('names it as still ahead the day before', () => {
+      expect(nextDuties(tools, new Date(2026, 7, 1), 'original')).toMatchObject({
+        date: '2026-08-02',
+        isInForce: false,
+      })
+    })
+
+    it('says the duties apply from that day on', () => {
+      expect(nextDuties(tools, new Date(2026, 7, 2), 'original')).toMatchObject({
+        date: '2026-08-02',
+        isInForce: true,
+      })
+      expect(nextDuties(tools, TODAY, 'original')).toMatchObject({ isInForce: true })
+    })
+
+    it('still names a date ahead before one that has come', () => {
+      const limitedAhead = tool('Limited', {
+        ...limitedRisk(),
+        obligations: (limitedRisk().obligations ?? []).map((duty) => ({
+          ...duty,
+          applies_from: '2027-01-01',
+        })),
+      })
+      const next = nextDuties([...tools, limitedAhead], TODAY, 'original')
+      expect(next).toMatchObject({ date: '2027-01-01', isInForce: false })
+      expect(next?.tool.name).toBe('Limited')
+    })
+  })
+
+  it('names a decided result before an assumed one with an earlier date', () => {
+    const later: ClassificationResult = {
+      ...decidedHighRisk(),
+      obligations: (decidedHighRisk().obligations ?? []).map((duty) =>
+        duty.high_risk_route ? { ...duty, applies_from: '2028-08-02' } : duty,
+      ),
+    }
+    const next = nextDuties([tool('Paused', WORKED_EXAMPLE), tool('Decided', later)], TODAY)
+    expect(next?.tool.name).toBe('Decided')
+    expect(next).toMatchObject({ date: '2028-08-02', isAssumed: false })
+  })
+
+  it('names an assumed result, flagged, only when no decided one has dated duties', () => {
+    const next = nextDuties([tool('Paused', WORKED_EXAMPLE), tool('Minimal', minimalRisk())], TODAY)
+    expect(next?.tool.name).toBe('Paused')
+    expect(next).toMatchObject({ date: '2027-12-02', isAssumed: true })
   })
 })
 

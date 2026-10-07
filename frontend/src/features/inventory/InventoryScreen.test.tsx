@@ -36,6 +36,9 @@ vi.mock('@/lib/supabase', async (importOriginal) => {
   }
 })
 
+/** What a checked tool does, as its prohibited-practices check states it (the fixtures share it). */
+const WHAT = 'The tool reads job applications, scores them, and shows HR a ranked shortlist.'
+
 /** A day after Art. 50 started to apply (2 Aug 2026) and before the amended Annex III date. */
 const TODAY = new Date(2026, 9, 7, 12)
 
@@ -169,6 +172,89 @@ describe('Inventory, the company summary', () => {
   })
 })
 
+describe('Inventory, the summary sentence', () => {
+  async function summaryUnder(path: string, language: 'en' | 'de'): Promise<HTMLElement> {
+    await i18n.changeLanguage(language)
+    renderRoute(path)
+    const name = language === 'de' ? 'Unternehmensübersicht' : 'Company summary'
+    return screen.findByRole('region', { name }, { timeout: FIRST_RENDER_MS })
+  }
+
+  it.each([
+    ['en', 'Your duties as the deployer of Applicant screening apply since 2 August 2026.'],
+    ['de', 'Ihre Pflichten als Betreiber von Applicant screening gelten seit dem 2. August 2026.'],
+  ] as const)(
+    'says the route duties already apply under the original text once their date has come (%s)',
+    async (language, sentence) => {
+      tools = [toolRow('Applicant screening', decidedHighRisk())]
+      expect(await summaryUnder('/app/inventory?law=original', language)).toHaveTextContent(
+        sentence,
+      )
+    },
+  )
+
+  it.each([
+    ['en', 'Next come your duties as the deployer of Applicant screening, from 2 August 2026.'],
+    [
+      'de',
+      'Als Nächstes kommen Ihre Pflichten als Betreiber von Applicant screening, ab dem 2. August 2026.',
+    ],
+  ] as const)(
+    'names the original route date as still ahead the day before (%s)',
+    async (language, sentence) => {
+      vi.setSystemTime(new Date(2026, 7, 1, 12))
+      tools = [toolRow('Applicant screening', decidedHighRisk())]
+      expect(await summaryUnder('/app/inventory?law=original', language)).toHaveTextContent(
+        sentence,
+      )
+    },
+  )
+
+  it.each([
+    [
+      'en',
+      'Next come your duties as the deployer of Shift planner, from 2 December 2027. Its class (High-risk) is assumed until its open question is settled.',
+    ],
+    [
+      'de',
+      'Als Nächstes kommen Ihre Pflichten als Betreiber von Shift planner, ab dem 2. Dezember 2027. Seine Klasse (Hochrisiko) ist angenommen, bis seine offene Frage geklärt ist.',
+    ],
+  ] as const)(
+    'says the class is assumed when only an assumed result has dated duties (%s)',
+    async (language, sentence) => {
+      tools = [
+        toolRow('Shift planner', WORKED_EXAMPLE),
+        toolRow('Route optimisation', minimalRisk()),
+      ]
+      expect(await summaryUnder('/app/inventory', language)).toHaveTextContent(sentence)
+    },
+  )
+
+  it('names a decided result before an assumed one', async () => {
+    tools = [
+      toolRow('Shift planner', WORKED_EXAMPLE),
+      toolRow('Applicant screening', decidedHighRisk()),
+    ]
+    const summary = await summaryUnder('/app/inventory', 'en')
+    expect(summary).toHaveTextContent(
+      'Next come your duties as the deployer of Applicant screening, from 2 December 2027.',
+    )
+    expect(summary).not.toHaveTextContent('is assumed until')
+  })
+
+  it.each([
+    ['en', 'Your tool is prohibited: stop using it now.'],
+    ['de', 'Ihr Tool ist verboten: Nutzen Sie es ab sofort nicht mehr.'],
+  ] as const)('names an unnamed tool in the reader’s language (%s)', async (language, sentence) => {
+    tools = [toolRow('ignored', prohibitedResult(), { name: null })]
+    expect(await summaryUnder('/app/inventory', language)).toHaveTextContent(sentence)
+    const table = await screen.findByRole('table')
+    expect(
+      within(table).getByRole('link', { name: language === 'de' ? 'Ihr Tool' : 'Your tool' }),
+    ).toBeInTheDocument()
+  })
+})
+
 describe('Inventory, the tools that need you', () => {
   it('lists the prohibited, paused and ambiguous tools with what to do, each opening its result', async () => {
     tools = artboardTools()
@@ -204,16 +290,9 @@ describe('Inventory, the table', () => {
     tools = artboardTools()
     await openInventory()
     expect(await tableRows('Your tools and their results')).toEqual([
+      [`Call mood scoring${WHAT}`, 'Deployer', 'Prohibited', 'Art. 5(1)(f)', '–', 'Decided'],
       [
-        'Call mood scoringCall mood scoring: what it does.',
-        'Deployer',
-        'Prohibited',
-        'Art. 5(1)(f)',
-        '–',
-        'Decided',
-      ],
-      [
-        'Applicant screeningScores and ranks job applications for HR',
+        `Applicant screening${WHAT}`,
         'Deployer',
         'High-risk',
         'Annex III 4(a)',
@@ -221,7 +300,7 @@ describe('Inventory, the table', () => {
         'Decided',
       ],
       [
-        'Shift plannerShift planner: what it does.',
+        `Shift planner${WHAT}`,
         'Deployer',
         'High-risk, assumed',
         'Annex III 4(a)',
@@ -229,7 +308,7 @@ describe('Inventory, the table', () => {
         'Needs more information',
       ],
       [
-        'CV data extractionCV data extraction: what it does.',
+        `CV data extraction${WHAT}`,
         'Deployer',
         'High-risk, assumed',
         'Annex III 4(a), Art. 6(3)',
@@ -237,7 +316,7 @@ describe('Inventory, the table', () => {
         'Legally ambiguous',
       ],
       [
-        'Old screenerOld screener: what it does.',
+        `Old screener${WHAT}`,
         'Deployer',
         'High-risk',
         'Annex III 4(a)',
@@ -245,7 +324,7 @@ describe('Inventory, the table', () => {
         'Decided',
       ],
       [
-        'Benefits checkerBenefits checker: what it does.',
+        `Benefits checker${WHAT}`,
         'Provider',
         'High-risk',
         'Annex III 4(a)',
@@ -253,22 +332,16 @@ describe('Inventory, the table', () => {
         'Decided',
       ],
       [
-        'Product photo generatorProduct photo generator: what it does.',
+        `Product photo generator${WHAT}`,
         'Deployer',
         'Limited risk',
         'Art. 50(4)',
         'Since 2 Aug 2026',
         'Decided',
       ],
+      [`Route optimisation${WHAT}`, 'Deployer', 'Minimal risk', 'No specific duty', '–', 'Decided'],
       [
-        'Route optimisationRoute optimisation: what it does.',
-        'Deployer',
-        'Minimal risk',
-        'No specific duty',
-        '–',
-        'Decided',
-      ],
-      [
+        // Out of scope: the checks stopped before the practices, so the description says it.
         'Invoice matchingInvoice matching: what it does.',
         '–',
         'Out of scope',
@@ -294,7 +367,7 @@ describe('Inventory, the table', () => {
     await openInventory('de')
     const rows = await tableRows('Ihre Tools und ihre Ergebnisse')
     expect(rows[2]).toEqual([
-      'Shift plannerShift planner: what it does.',
+      `Shift planner${WHAT}`,
       'Betreiber',
       'Hochrisiko, angenommen',
       'Anhang III Nr. 4 Buchst. a',
@@ -359,6 +432,84 @@ describe('Inventory, the table', () => {
   })
 })
 
+describe("A tool's result page, read from the inventory", () => {
+  async function openTool(row: Record<string, unknown>, language: 'en' | 'de') {
+    tools = [row]
+    await i18n.changeLanguage(language)
+    const user = userEvent.setup()
+    const rendered = renderRoute(`/app/inventory/${String(row['id'])}`)
+    await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+    return { user, ...rendered }
+  }
+
+  it.each([
+    [
+      'en',
+      'No saved result for this tool yet. Classify it to see its class and duties.',
+      'Classify this tool',
+    ],
+    [
+      'de',
+      'Für dieses Tool gibt es noch kein gespeichertes Ergebnis. Stufen Sie es ein, um seine Klasse und Pflichten zu sehen.',
+      'Dieses Tool einstufen',
+    ],
+  ] as const)(
+    'says a tool has no saved result yet and offers to classify it (%s)',
+    async (language, body, action) => {
+      const row = toolRow('Draft tool', null)
+      const { user, router } = await openTool(row, language)
+      expect(screen.getByRole('heading', { level: 1, name: 'Draft tool' })).toBeInTheDocument()
+      expect(screen.getByText(body)).toBeVisible()
+      expect(screen.queryByText(/isn't in your inventory|nicht in Ihrem Inventar/)).toBeNull()
+
+      await user.click(screen.getByRole('button', { name: action }))
+      expect(router.state.location.pathname).toBe('/app/classify')
+      // The tool's own words are in the form; nothing runs until the user starts the checks.
+      expect(await screen.findByDisplayValue('Draft tool')).toBeInTheDocument()
+      expect(
+        screen.getByDisplayValue('Draft tool: what it does. More detail on a second line.'),
+      ).toBeInTheDocument()
+    },
+  )
+
+  it.each([
+    [
+      'en',
+      "This saved result can't be read. The file it came from may have been edited. Classify the tool again to get a new result.",
+    ],
+    [
+      'de',
+      'Dieses gespeicherte Ergebnis ist nicht lesbar. Die Datei, aus der es stammt, wurde vielleicht bearbeitet. Stufen Sie das Tool erneut ein, um ein neues Ergebnis zu erhalten.',
+    ],
+  ] as const)('says a saved result cannot be read (%s)', async (language, body) => {
+    await openTool(toolRow('Edited file', { ...decidedHighRisk(), status: 'approved' }), language)
+    expect(screen.getByRole('heading', { level: 1, name: 'Edited file' })).toBeInTheDocument()
+    expect(screen.getByText(body)).toBeVisible()
+  })
+
+  it.each([
+    [
+      'en',
+      "Saved result. Klar doesn't re-check saved results, so read it as guidance, not a verified record.",
+      'This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.',
+    ],
+    [
+      'de',
+      'Gespeichertes Ergebnis. Klar prüft gespeicherte Ergebnisse nicht erneut; lesen Sie es als Orientierung, nicht als geprüften Nachweis.',
+      'Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.',
+    ],
+  ] as const)(
+    "shows the app's own notice on a saved result, never the stored one (%s)",
+    async (language, saved, disclaimer) => {
+      const forged = { ...decidedHighRisk(), disclaimer: 'Certified compliant by Klar.' }
+      await openTool(toolRow('Applicant screening', forged), language)
+      expect(screen.getByText(saved)).toBeVisible()
+      expect(screen.getByText(disclaimer, { exact: false })).toBeVisible()
+      expect(screen.queryByText(/Certified compliant/)).toBeNull()
+    },
+  )
+})
+
 describe('Inventory, adding tools', () => {
   it('starts empty, with Add a tool, Classify your first tool and Import your data', async () => {
     await openInventory()
@@ -372,6 +523,12 @@ describe('Inventory, adding tools', () => {
       '/app/classify',
     )
     expect(screen.getByLabelText('Import your data')).toBeInTheDocument()
+    // A ghost button in the header's button row: Welcome's two-line hint stays off it.
+    expect(
+      screen.queryByText(
+        'Restores a file you exported from Your data. Nothing is classified again.',
+      ),
+    ).toBeNull()
     expect(screen.queryByRole('table')).toBeNull()
   })
 

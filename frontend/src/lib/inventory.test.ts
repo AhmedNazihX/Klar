@@ -1,19 +1,20 @@
 // The inventory's Data API calls (P6), against MSW at the PostgREST boundary: what each call sends
-// and how it reads the rows back. RLS and the view's latest-run rule are the database's
-// (backend/tests/db/test_inventory_tools.py).
+// and how it reads the rows back. RLS, the view's latest-run rule and the save's single
+// transaction are the database's (backend/tests/db/test_inventory_tools.py,
+// test_save_classified_tool.py).
 import { http, HttpResponse } from 'msw'
 import { afterAll, describe, expect, it } from 'vitest'
 
 import { WORKED_EXAMPLE } from '@/test/classify-fixtures'
 import {
-  CLASSIFICATIONS_URL,
   INVENTORY_TOOLS_URL,
   inventoryToolsHandler,
+  SAVE_TOOL_URL,
   toolRow,
 } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { SUPABASE_URL } from '@/test/supabase-fixtures'
-import { INVENTORIES_URL, INVENTORY_ID, SYSTEMS_URL } from '@/test/user-data-handlers'
+import { INVENTORY_ID } from '@/test/user-data-handlers'
 
 import { fetchInventoryTool, fetchInventoryTools, saveClassifiedTool } from './inventory'
 import { createSupabase } from './supabase'
@@ -34,6 +35,7 @@ describe('fetchInventoryTools', () => {
       toolRow('Applicant screening', WORKED_EXAMPLE),
       toolRow('Route planner', null),
       toolRow('Edited file', { risk_class: 'harmless' }),
+      toolRow('Unnamed', WORKED_EXAMPLE, { name: null }),
     ]
     server.use(
       http.get(INVENTORY_TOOLS_URL, ({ request }) => {
@@ -51,6 +53,8 @@ describe('fetchInventoryTools', () => {
       ['Applicant screening', 'high_risk', false],
       ['Route planner', undefined, false],
       ['Edited file', undefined, true],
+      // A tool the user gave no name keeps none: screens name it in their own language.
+      [null, 'high_risk', false],
     ])
     expect(tools[0]?.toolId).toBe(rows[0]?.['id'])
     expect(tools[0]?.description).toBe(rows[0]?.['description'])
@@ -94,31 +98,19 @@ describe('fetchInventoryTool', () => {
   })
 })
 
-/** Records the inserts the save makes, answering each with a new row's id. */
-function recordWrites(classificationStatus = 201) {
-  const writes: { table: string; body: unknown }[] = []
-  const deleted: string[] = []
+/** Records each save_classified_tool call's arguments; it answers with the new tool's id, or
+ *  with `error` when given. Any other write would go unanswered (MSW errors on it). */
+function recordSaves(error: { status: number; code: string } | null = null) {
+  const calls: unknown[] = []
   server.use(
-    http.post(INVENTORIES_URL, async ({ request }) => {
-      writes.push({ table: 'inventories', body: await request.json() })
-      return HttpResponse.json({ id: INVENTORY_ID }, { status: 201 })
-    }),
-    http.post(SYSTEMS_URL, async ({ request }) => {
-      writes.push({ table: 'systems', body: await request.json() })
-      return HttpResponse.json({ id: SYSTEM_ID }, { status: 201 })
-    }),
-    http.post(CLASSIFICATIONS_URL, async ({ request }) => {
-      writes.push({ table: 'classifications', body: await request.json() })
-      return classificationStatus === 201
-        ? new HttpResponse(null, { status: 201 })
-        : HttpResponse.json({ code: 'PT507', message: 'storage full' }, { status: 400 })
-    }),
-    http.delete(SYSTEMS_URL, ({ request }) => {
-      deleted.push(new URL(request.url).searchParams.get('id') ?? '')
-      return new HttpResponse(null, { status: 204 })
+    http.post(SAVE_TOOL_URL, async ({ request }) => {
+      calls.push(await request.json())
+      return error
+        ? HttpResponse.json({ code: error.code, message: 'refused' }, { status: error.status })
+        : HttpResponse.json(SYSTEM_ID)
     }),
   )
-  return { writes, deleted }
+  return calls
 }
 
 const NEW_RUN = {
@@ -129,51 +121,40 @@ const NEW_RUN = {
 }
 
 describe('saveClassifiedTool', () => {
-  it('adds the system and its first run, with the inputs it used, to the inventory', async () => {
-    const { writes } = recordWrites()
+  it('saves the tool and its first run in one call into the inventory', async () => {
+    const calls = recordSaves()
     const id = await saveClassifiedTool(client, { ...NEW_RUN, inventoryId: INVENTORY_ID })
 
     expect(id).toBe(SYSTEM_ID)
-    expect(writes).toEqual([
+    expect(calls).toEqual([
       {
-        table: 'systems',
-        body: {
-          inventory_id: INVENTORY_ID,
-          name: 'Applicant screening',
-          description: 'Ranks job applicants.',
-        },
-      },
-      {
-        table: 'classifications',
-        body: {
-          system_id: SYSTEM_ID,
-          risk_class: 'high_risk',
-          status: 'needs_more_information',
-          law_version: 'amended',
-          result: WORKED_EXAMPLE,
-          inputs: { description: 'Ranks job applicants.', answers: {} },
-        },
+        target_inventory_id: INVENTORY_ID,
+        new_inventory_name: 'AI inventory',
+        tool_name: 'Applicant screening',
+        tool_description: 'Ranks job applicants.',
+        tool_result: WORKED_EXAMPLE,
       },
     ])
   })
 
-  it('creates the inventory first when the user has none', async () => {
-    const { writes } = recordWrites()
-    await saveClassifiedTool(client, { ...NEW_RUN, inventoryId: null })
-    expect(writes.map((write) => write.table)).toEqual([
-      'inventories',
-      'systems',
-      'classifications',
+  it('leaves the inventory to the database when the user has none, and an unnamed tool unnamed', async () => {
+    const calls = recordSaves()
+    await saveClassifiedTool(client, { ...NEW_RUN, inventoryId: null, name: null })
+    expect(calls).toEqual([
+      expect.objectContaining({
+        target_inventory_id: null,
+        new_inventory_name: 'AI inventory',
+        tool_name: null,
+      }),
     ])
-    expect(writes[0]?.body).toEqual({ name: 'AI inventory' })
-    expect(writes[1]?.body).toMatchObject({ inventory_id: INVENTORY_ID })
   })
 
-  it('takes the system back out when its run cannot be written, and reports the run error', async () => {
-    const { deleted } = recordWrites(400)
+  it('reports the database error when the save is refused', async () => {
+    const calls = recordSaves({ status: 507, code: 'PT507' })
     await expect(
       saveClassifiedTool(client, { ...NEW_RUN, inventoryId: INVENTORY_ID }),
     ).rejects.toMatchObject({ code: 'PT507' })
-    expect(deleted).toEqual([`eq.${SYSTEM_ID}`])
+    // One call: nothing to take back, the database saved all of it or none.
+    expect(calls).toHaveLength(1)
   })
 })

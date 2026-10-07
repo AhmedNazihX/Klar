@@ -17,10 +17,10 @@ import { ambiguousResult, prohibitedResult, toolId } from '@/test/inventory-fixt
 import {
   appliesFrom,
   basisReferences,
-  firstLine,
   isoDay,
   openQuestionCount,
   sortTools,
+  whatItDoes,
 } from './tool-facts'
 
 /** The day Art. 50 started to apply, and the day before (Art. 113). */
@@ -146,11 +146,43 @@ describe('sortTools', () => {
   })
 })
 
-describe('helpers', () => {
-  it('reads the first line of a description', () => {
-    expect(firstLine('  Ranks applicants.\nUses scores.')).toBe('Ranks applicants.')
+describe('whatItDoes', () => {
+  it("states what the tool does from the facts its check used, not the description's opening", () => {
+    const checked = {
+      ...tool('Applicant screening', WORKED_EXAMPLE),
+      description: "We're a 40-person logistics company. We use a tool that reads applications.",
+    }
+    expect(whatItDoes(checked)).toBe(
+      'The tool reads job applications, scores them, and shows HR a ranked shortlist.',
+    )
   })
 
+  it('leaves out an assumed fact, which says what the description does not', () => {
+    const assumedOnly: ClassificationResult = {
+      ...WORKED_EXAMPLE,
+      steps: WORKED_EXAMPLE.steps.map((step) =>
+        step.step === 'prohibited'
+          ? {
+              ...step,
+              facts_used: [{ text: 'It is not described as scoring.', evidence: 'assumed' }],
+            }
+          : step,
+      ),
+    }
+    const checked = { ...tool('Scorer', assumedOnly), description: 'Scores people. It is new.' }
+    expect(whatItDoes(checked)).toBe('Scores people.')
+  })
+
+  it.each([
+    ['the first sentence', '  Ranks applicants. Uses scores.\nMore.', 'Ranks applicants.'],
+    ['the first line without a full stop', 'Ranks applicants\nUses scores.', 'Ranks applicants'],
+    ['a version number whole', 'Runs v2.1 of the model. Then more.', 'Runs v2.1 of the model.'],
+  ])("reads an unchecked tool's description up to %s", (_, description, what) => {
+    expect(whatItDoes({ ...tool('Draft', null), description })).toBe(what)
+  })
+})
+
+describe('helpers', () => {
   it('writes today as the calendar day', () => {
     expect(isoDay(new Date(2026, 0, 5, 23, 30))).toBe('2026-01-05')
   })

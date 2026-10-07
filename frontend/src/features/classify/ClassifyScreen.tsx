@@ -46,12 +46,13 @@ export function ClassifyScreen(): JSX.Element {
   /** Adds the finished run to the inventory, then opens its result. A run that can't be saved
    *  still opens (it was paid for), under a local id and with a note that it wasn't saved. */
   async function keep(values: DescriptionFormValues, result: ClassificationResult): Promise<void> {
+    // An unnamed tool stays unnamed: the screens show "Your tool" in the reader's language.
+    const name = values.name === '' ? null : values.name
     let savedId: string | null = null
     let saveFailure: ClassificationRun['saveFailure']
     try {
       savedId = await save.mutateAsync({
-        // The database needs a name; the form leaves it optional.
-        name: values.name || t('classify.untitled'),
+        name,
         description: values.description,
         result,
         inventoryName: t('welcome.inventoryName'),
@@ -63,7 +64,7 @@ export function ClassifyScreen(): JSX.Element {
     const toolId = savedId ?? crypto.randomUUID()
     const kept: ClassificationRun = {
       toolId,
-      name: values.name,
+      name,
       description: values.description,
       result,
       saveFailure,

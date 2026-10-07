@@ -34,7 +34,7 @@ function SummaryView({
   const question = result.status === 'needs_more_information' ? pausedStep(result) : null
 
   function editDescription(): void {
-    saveDraft({ name: run.name, description: run.description })
+    saveDraft({ name: run.name ?? '', description: run.description })
     void navigate({ to: '/app/classify' })
   }
 
@@ -69,7 +69,7 @@ function SummaryView({
           onViewChange('reviewer')
         }}
       />
-      <ResultNotice result={result} />
+      <ResultNotice result={result} isStored={run.isStored} />
     </>
   )
 }
@@ -92,7 +92,7 @@ function NotSavedNote({
   )
 }
 
-/** A tool the user has no result for (not theirs, deleted, or never checked). */
+/** A tool id the user has no tool for (not theirs, or deleted). */
 export function ResultNotFound(): JSX.Element {
   const { t } = useTranslation()
   return (
