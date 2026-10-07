@@ -1,0 +1,24 @@
+id: annex-match-23-hausnotruf-alarmreihenfolge
+set_name: annex_match
+language: de
+description: >-
+  Wir betreiben mit rund 60 Beschäftigten einen Hausnotrufdienst in Sachsen und betreuen etwa 9.000
+  ältere Kundinnen und Kunden, die zu Hause einen Notrufknopf am Handgelenk und Sturzsensoren
+  tragen. Seit März sortiert eine KI-Software eines niederländischen Herstellers alle eingehenden
+  Alarme vor: Sie bewertet Knopfdruck, Sensordaten und die hinterlegten Vorerkrankungen, ordnet
+  jeden Alarm einer Dringlichkeitsstufe zu und bestimmt, für wen zuerst ein Rettungswagen geschickt
+  wird. Unsere Mitarbeitenden in der Zentrale sehen die Reihenfolge und arbeiten sie ab. Wir haben
+  die Software mit den Werkseinstellungen übernommen. Außerdem liefern wir mittags Essen auf Rädern
+  aus.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:5:d"]
+label_citation: ["annex:III:5:d", "art:6:2", "art:3:4"]
+notes: >-
+  Draft label, awaiting review (X0b). Point: it evaluates and classifies emergency calls by natural
+  persons (alarm-button activations and sensor alerts) and sets the priority in which emergency
+  medical aid is dispatched, Annex III 5(d); the point doesn't require a public operator. Role: uses
+  the manufacturer's software with its factory settings.
+tags:
+  - "annex_iii_area:5"

@@ -1,0 +1,22 @@
+id: annex-match-26-polygraf-koerpersignale
+set_name: annex_match
+language: de
+description: >-
+  Wir sind eine Kriminalpolizeiinspektion mit gut 120 Beamtinnen und Beamten und erproben seit dem
+  Frühjahr bei freiwilligen Befragungen ein digitales Polygrafensystem eines kanadischen
+  Herstellers. Am Körper der befragten Person messen Sensoren den Hautleitwert, den Puls und über
+  einen Atemgurt die Atmung. Ein KI-Modell wertet die Messkurven zu jeder Frage aus und markiert die
+  Antwort als „vermutlich wahr“ oder „vermutlich gelogen“. Die Einschätzung fließt in den
+  Befragungsbericht ein und beeinflusst, wen wir weiter als Verdächtigen führen. An der Software
+  haben wir nichts verändert. Unser Dienstgebäude bekommt gerade eine Photovoltaikanlage aufs Dach.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: ["annex:III:6:b"]
+label_citation: ["annex:III:6:b", "art:6:2", "art:3:4"]
+notes: >-
+  Draft label, awaiting review (X0b). Point: a polygraph used by a law-enforcement authority,
+  Annex III 6(b). It infers truthfulness, not emotions, so 1(c) is not added. Role: the police use
+  the manufacturer's system unchanged.
+tags:
+  - "annex_iii_area:6"

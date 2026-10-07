@@ -1,0 +1,24 @@
+id: annex-match-47-trackside-hot-axle-detector
+set_name: annex_match
+language: en
+description: >-
+  We're a 150-person maker of railway monitoring equipment in Wrocław. Our trackside detector is
+  installed on main lines every 30 to 50 kilometres: as a train passes, infrared scanners and
+  microphones record each axle box and wheel, and a neural network we trained ourselves recognises
+  overheating bearings, flat spots and cracked wheels. When it finds a dangerous defect, it sends a
+  stop order through the signalling system so the train is halted before the next station. Before
+  it goes into service, a notified body checks the detector against the EU railway
+  interoperability requirements. We sell it to infrastructure managers in Poland, Czechia and
+  Slovakia. Our canteen serves pierogi on Fridays.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:B:17"]
+label_citation: ["annex:I:B:17", "art:6:1:a", "art:6:1:b", "art:2:2", "art:3:3"]
+notes: >-
+  Draft label, awaiting review (X0b). Point: a safety component of the rail system under the Rail
+  Interoperability Directive (Annex I Section B point 17), assessed by a notified body; for Section
+  B, Art. 2(2) applies Art. 6(1) only. Role: develops the detector and supplies it under its own
+  name.
+tags:
+  - "annex_i_section:b"
