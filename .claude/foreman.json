@@ -8,7 +8,8 @@
     "cd frontend && corepack pnpm lint && corepack pnpm build && corepack pnpm test"
   ],
   "link_files": [
-    "backend/.env"
+    "backend/.env",
+    "frontend/.env.local"
   ],
   "env": {
     "AIACT_DATA_DIR": "{MAIN}/data"
