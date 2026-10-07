@@ -13,8 +13,9 @@ tool-call correctness (`aiact.eval.tool_calls`) can read from a trace which look
 - **Recorded only once resolved.** The metadata is set when the lookup returns. A provision id
   can come from a model (the citation validator looks up whatever a step cited), so an id that
   resolved nowhere could carry the description's words: a failed lookup records no id, only its
-  name and its error (cut down to the exception type outside development). An id longer than
-  the lookups accept (`MAX_PROVISION_ID_CHARS`) is never recorded either.
+  name and its error (cut down to the exception type outside development). A recorded id is
+  therefore always a corpus id; the id length cap (`MAX_PROVISION_ID_CHARS`) is enforced where
+  ids come in, at the API and MCP boundaries.
 - **No handles.** The connection and the embedder are dropped from the inputs: a connection's
   text names its host and user.
 """
@@ -41,10 +42,10 @@ RUN_TYPE = "tool"
 MetadataOf = Callable[[Mapping[str, object]], Mapping[str, object]]
 
 
-def provision_metadata(inputs: Mapping[str, object], *, max_chars: int) -> Mapping[str, object]:
-    """A provision lookup's metadata: the id looked up, when it is at most `max_chars` long."""
+def provision_metadata(inputs: Mapping[str, object]) -> Mapping[str, object]:
+    """A provision lookup's metadata: the id looked up."""
     provision_id = inputs.get("provision_id")
-    if not isinstance(provision_id, str) or len(provision_id) > max_chars:
+    if not isinstance(provision_id, str):
         return {}
     return {PROVISION_ID: provision_id}
 

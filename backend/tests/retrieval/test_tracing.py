@@ -13,7 +13,7 @@ from langsmith.run_helpers import get_current_run_tree, tracing_context
 
 from aiact.engine.tracing import build_client
 from aiact.retrieval import provisions, search, tracing
-from aiact.retrieval.provisions import MAX_PROVISION_ID_CHARS, ProvisionNotFoundError, get_provision
+from aiact.retrieval.provisions import ProvisionNotFoundError, get_provision
 from aiact.retrieval.search import search_ai_act
 from tests.engine.test_tracing import RecordingSession
 
@@ -211,12 +211,3 @@ def test_search_metadata_holds_the_filters_only() -> None:
         tracing.DOC_KEYS: ["a", "b"],
         tracing.DOC_TYPES: None,
     }
-
-
-def test_an_id_longer_than_the_lookups_accept_is_never_recorded() -> None:
-    longest = "art:" + "1" * (MAX_PROVISION_ID_CHARS - len("art:"))
-    record = tracing.provision_metadata
-    assert record({"provision_id": longest}, max_chars=MAX_PROVISION_ID_CHARS) == {
-        tracing.PROVISION_ID: longest
-    }
-    assert record({"provision_id": longest + "1"}, max_chars=MAX_PROVISION_ID_CHARS) == {}

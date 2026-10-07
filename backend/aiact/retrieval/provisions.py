@@ -24,7 +24,6 @@ No model is involved: this is a plain lookup over the corpus tables (decisions 0
 import re
 from collections.abc import Mapping
 from datetime import date
-from functools import partial
 from types import MappingProxyType
 from typing import Any, LiteralString
 
@@ -106,7 +105,7 @@ class Provision(ContractModel):
     disclaimer: str
 
 
-@traced_lookup(partial(provision_metadata, max_chars=MAX_PROVISION_ID_CHARS))
+@traced_lookup(provision_metadata)
 def get_provision(
     provision_id: str,
     language: Language | str = Language.EN,
@@ -140,7 +139,7 @@ def get_provision(
 
 
 # Traced although no tool-call expectation uses it: every lookup is a run of its own.
-@traced_lookup(partial(provision_metadata, max_chars=MAX_PROVISION_ID_CHARS))
+@traced_lookup(provision_metadata)
 def get_omnibus_provision(
     provision_id: str,
     language: Language | str = Language.EN,

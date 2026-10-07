@@ -18,8 +18,9 @@ run, and reported as a rate per step.
 - **Only traces that can be scored.** A trace LangSmith returns no runs for (expired, another
   workspace, not yet ingested) and a trace without a single lookup run (recorded before lookups
   were traced, or not fully ingested) would read as a step that skipped its lookups, so both are
-  counted apart and left out of the rates. A stored run with no lookup run in any trace is
-  refused (`NoLookupRunsError`).
+  counted apart and left out of the rates. So is a trace with a lookup run that has no end time
+  yet: a lookup's metadata arrives with its end, so until then it would read as a lookup of
+  nothing. A stored run with no trace left to score is refused (`NoLookupRunsError`).
 
 Traces are read with only the fields the check needs (never a run's inputs or outputs, which a
 development trace carries in full), and the report names no case and quotes no description.
@@ -58,12 +59,14 @@ SELECTED_FIELDS: tuple[str, ...] = (
     "name",
     "run_type",
     "start_time",
+    "end_time",
     "parent_run_id",
     "error",
     "extra",
 )
 """The run fields read from LangSmith: what the check reads, plus `run_type` and `start_time`,
-which a `langsmith.schemas.Run` requires; never `inputs` or `outputs`."""
+which a `langsmith.schemas.Run` requires; never `inputs` or `outputs`. `end_time` tells a run
+whose end (with a lookup's metadata) has been ingested."""
 
 
 class TraceRun(ContractModel):
@@ -74,6 +77,8 @@ class TraceRun(ContractModel):
     name: str
     error: str | None = None
     metadata: dict[str, JsonValue] = Field(default_factory=dict)
+    has_ended: bool = True
+    """False while the run's end (its error and a lookup's metadata) isn't ingested."""
 
 
 @dataclass(frozen=True)
@@ -269,6 +274,7 @@ class TraceCounts(ContractModel):
 
     scored: int = Field(ge=0)
     no_lookups: int = Field(ge=0, description="Traces with runs but no lookup run.")
+    ingesting: int = Field(ge=0, description="Traces with a lookup run that has no end yet.")
     no_runs: int = Field(ge=0, description="Traces LangSmith returned no runs for.")
     untraced: int = Field(ge=0, description="Cases stored without a trace id.")
 
@@ -280,6 +286,7 @@ def render_markdown(run_id: UUID, rates: Sequence[StepRate], counts: TraceCounts
         f"- Traces scored: {counts.scored}",
         f"- Left out, no lookup run: {counts.no_lookups} (recorded before lookups were traced,"
         " or not fully ingested)",
+        f"- Left out, still being ingested: {counts.ingesting} (a lookup run has no end yet)",
         f"- Left out, no runs returned: {counts.no_runs} (expired, another workspace, or not yet"
         " ingested)",
         f"- Cases without a trace: {counts.untraced}",
@@ -330,7 +337,7 @@ class RunNotFoundError(LookupError):
 
 
 class NoLookupRunsError(LookupError):
-    """No trace of the stored run holds a lookup run, so no step can be scored."""
+    """No trace of the stored run can be scored, so no step has a rate."""
 
 
 def stored_traces(conn: psycopg.Connection, run_id: UUID) -> StoredTraces:
@@ -367,6 +374,7 @@ def _trace_run(run: Run) -> TraceRun:
         name=run.name,
         error=run.error,
         metadata=metadata if isinstance(metadata, dict) else {},
+        has_ended=run.end_time is not None,
     )
 
 
@@ -374,23 +382,31 @@ def has_lookup_runs(runs: Sequence[TraceRun]) -> bool:
     return any(run.name in LookupTool for run in runs)
 
 
+def is_ingesting(runs: Sequence[TraceRun]) -> bool:
+    """Whether a lookup run of the trace has no end yet (its metadata comes with the end)."""
+    return any(run.name in LookupTool and not run.has_ended for run in runs)
+
+
 def check_traces(
     source: RunSource, stored: StoredTraces
 ) -> tuple[tuple[StepCheck, ...], TraceCounts]:
     """The step checks of every trace that can be scored, and how the traces split."""
     checks: list[StepCheck] = []
-    no_runs = no_lookups = 0
+    no_runs = no_lookups = ingesting = 0
     for trace_id in stored.trace_ids:
         runs = trace_runs(source, trace_id)
         if not runs:
             no_runs += 1
         elif not has_lookup_runs(runs):
             no_lookups += 1
+        elif is_ingesting(runs):
+            ingesting += 1
         else:
             checks.extend(check_trace(runs))
     counts = TraceCounts(
-        scored=len(stored.trace_ids) - no_runs - no_lookups,
+        scored=len(stored.trace_ids) - no_runs - no_lookups - ingesting,
         no_lookups=no_lookups,
+        ingesting=ingesting,
         no_runs=no_runs,
         untraced=stored.untraced,
     )
@@ -403,8 +419,10 @@ def tool_call_report(conn: psycopg.Connection, source: RunSource, run_id: UUID) 
     checks, counts = check_traces(source, stored_traces(conn, run_id))
     if not counts.scored:
         raise NoLookupRunsError(
-            "no lookup runs in these traces: recorded before tool-call tracing, or not yet"
-            f" ingested ({counts.no_lookups} without a lookup run, {counts.no_runs} with no runs"
-            f" returned, {counts.untraced} cases without a trace)"
+            "no lookup runs in these traces: LangSmith returned no runs for them (expired, another"
+            " workspace, or not yet ingested), no case got past the facts step, every case was"
+            " stored without a trace id, or the traces were recorded before tool-call tracing"
+            f" ({counts.no_runs} with no runs returned, {counts.no_lookups} without a lookup run,"
+            f" {counts.ingesting} still being ingested, {counts.untraced} cases without a trace)"
         )
     return render_markdown(run_id, step_rates(checks), counts)

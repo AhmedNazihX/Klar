@@ -226,11 +226,12 @@ def test_the_rate_is_reported_per_step_over_the_traces_where_it_ran() -> None:
     assert rates[StepName.HIGH_RISK].rate.total == 0
 
     run_id = uuid4()
-    counts = TraceCounts(scored=3, no_lookups=4, no_runs=2, untraced=1)
+    counts = TraceCounts(scored=3, no_lookups=4, ingesting=5, no_runs=2, untraced=1)
     lines = render_markdown(run_id, step_rates(checks), counts).splitlines()
     assert lines[0] == f"## Tool-call correctness, run {run_id}"
     assert "- Traces scored: 3" in lines
     assert any(line.startswith("- Left out, no lookup run: 4 (") for line in lines)
+    assert any(line.startswith("- Left out, still being ingested: 5 (") for line in lines)
     assert any(line.startswith("- Left out, no runs returned: 2 (") for line in lines)
     assert "- Cases without a trace: 1" in lines
     assert "| prohibited | 66.7% | 2/3 | Art. 5 fetched (1) |" in lines
@@ -265,15 +266,21 @@ RunRow = dict[str, object]
 
 
 def _row(
-    name: str, parent: RunRow | None = None, metadata: dict[str, object] | None = None
+    name: str,
+    parent: RunRow | None = None,
+    metadata: dict[str, object] | None = None,
+    *,
+    has_ended: bool = True,
 ) -> RunRow:
-    """A run as LangSmith's API returns it, with only the selected fields."""
+    """A run as LangSmith's API returns it, with only the selected fields; without its end
+    (`has_ended` False) as long as its end post isn't ingested."""
     return {
         "id": str(uuid4()),
         "trace_id": str(uuid4()),
         "name": name,
         "run_type": "tool",
         "start_time": "2026-10-07T10:00:00Z",
+        "end_time": "2026-10-07T10:00:01Z" if has_ended else None,
         "parent_run_id": None if parent is None else parent["id"],
         "error": None,
         "extra": {"metadata": metadata or {}},
@@ -331,10 +338,30 @@ def test_traces_that_cannot_be_scored_are_counted_apart_and_left_out_of_the_rate
     assert "| prohibited | 0.0% | 0/1 |" in text  # not 0/3: the old traces are left out
 
 
-def test_a_run_with_no_lookup_run_in_any_trace_is_refused() -> None:
+def test_a_trace_with_a_lookup_run_not_yet_ended_is_left_out_as_still_being_ingested() -> None:
+    """Its metadata comes with its end: until then it would score as a lookup of nothing."""
+    step = _row("prohibited")
+    pending = [step, _row("get_provision", step, has_ended=False)]
+    langsmith = FakeLangSmith({"scored": _scored_trace(), "pending": pending})
+    text = tool_call_report(FakeConnection(["scored", "pending"]), langsmith, uuid4())  # pyright: ignore[reportArgumentType]
+    assert "- Traces scored: 1" in text
+    assert "- Left out, still being ingested: 1 (" in text
+    assert "| prohibited | 0.0% | 0/1 |" in text  # the pending trace is not a second miss
+
+
+def test_a_run_with_no_lookup_run_in_any_trace_is_refused_naming_every_cause() -> None:
     langsmith = FakeLangSmith({"old": [_row("prohibited")]})
-    with pytest.raises(NoLookupRunsError, match="no lookup runs in these traces"):
-        tool_call_report(FakeConnection(["old", "expired"]), langsmith, uuid4())  # pyright: ignore[reportArgumentType]
+    with pytest.raises(NoLookupRunsError, match="no lookup runs in these traces") as refused:
+        tool_call_report(FakeConnection(["old", "expired", None]), langsmith, uuid4())  # pyright: ignore[reportArgumentType]
+    message = str(refused.value)
+    for cause in (
+        "returned no runs",
+        "no case got past the facts step",
+        "stored without a trace id",
+        "recorded before tool-call tracing",
+    ):
+        assert cause in message
+    assert "(1 with no runs returned, 1 without a lookup run, 0 still being ingested," in message
 
 
 def test_the_selected_fields_are_enough_for_a_run() -> None:
