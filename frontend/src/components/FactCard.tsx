@@ -10,17 +10,16 @@ import type { Evidence } from './pill-kinds'
 export type FactCardProps = {
   fact: ReactNode
   evidence: Evidence
-  /** Assumed facts offer Change and Confirm; the consumer handles both. */
-  onConfirm?: () => void
+  /** Assumed facts offer Change; the consumer handles it. Confirm comes with the follow-up
+   *  loop (P5b). */
   onChange?: () => void
 }
 
 /** One fact a result rests on, with its evidence tag. Assumed cards get a Lens blue ring so they
- *  are found first, and Change and Confirm. */
-export function FactCard({ fact, evidence, onConfirm, onChange }: FactCardProps): JSX.Element {
+ *  are found first, and Change. */
+export function FactCard({ fact, evidence, onChange }: FactCardProps): JSX.Element {
   const { t } = useTranslation()
   const isAssumed = evidence === 'assumed'
-  const hasActions = isAssumed && (onConfirm ?? onChange)
   return (
     <div
       className={cn(
@@ -31,19 +30,10 @@ export function FactCard({ fact, evidence, onConfirm, onChange }: FactCardProps)
       <span className="text-body-small font-medium text-ink">{fact}</span>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <EvidenceTag kind={evidence} />
-        {hasActions && (
-          <div className="flex shrink-0 gap-1.5">
-            {onChange && (
-              <Button variant="ghost" size="sm" onClick={onChange}>
-                {t('result.facts.change')}
-              </Button>
-            )}
-            {onConfirm && (
-              <Button size="sm" onClick={onConfirm}>
-                {t('result.facts.confirm')}
-              </Button>
-            )}
-          </div>
+        {isAssumed && onChange && (
+          <Button variant="ghost" size="sm" className="shrink-0" onClick={onChange}>
+            {t('result.facts.change')}
+          </Button>
         )}
       </div>
     </div>

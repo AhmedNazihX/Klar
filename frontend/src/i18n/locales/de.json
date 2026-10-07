@@ -450,7 +450,6 @@
     "facts": {
       "heading": "Das Ergebnis beruht auf",
       "intro": "Ist eine dieser Angaben falsch, kann sich die Einstufung ändern.",
-      "confirm": "Bestätigen",
       "change": "Ändern",
       "accuracy": "Diese Einschätzung ist nur so genau wie die Beschreibung."
     },

@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
 /** The API's limit on a description (ClassifyRequest, backend). */
-export const DESCRIPTION_MAX = 20_000
+const DESCRIPTION_MAX = 20_000
 /** The systems table's limit on a tool's name. */
-export const NAME_MAX = 200
+const NAME_MAX = 200
 
 /** The description form: an optional name and the description the checks run on. */
 export const DescriptionFormSchema = z.object({
