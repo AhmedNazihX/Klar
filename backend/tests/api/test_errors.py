@@ -3,6 +3,7 @@ and the start of its location, never the input, on every route, at any nesting d
 one 422 schema the routes document."""
 
 import json
+import logging
 
 import httpx
 import pytest
@@ -57,6 +58,18 @@ async def test_an_over_long_answer_is_not_echoed(client: httpx.AsyncClient) -> N
     )
     [error] = _refused(response).errors
     assert (error.type, error.loc) == ("string_too_long", ("body", "answers"))
+
+
+async def test_an_over_long_answer_is_not_logged(
+    client: httpx.AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    answer = f"{SECRET} " * 200
+    with caplog.at_level(logging.DEBUG):
+        response = await client.post(
+            "/documents/vendor-letter", json=_letter_body(answers={"vendor": answer})
+        )
+    _refused(response)
+    assert SECRET not in caplog.text
 
 
 async def test_a_bad_key_and_a_bad_language_are_not_echoed(client: httpx.AsyncClient) -> None:

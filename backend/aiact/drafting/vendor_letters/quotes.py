@@ -14,6 +14,8 @@ from collections.abc import Sequence
 from datetime import date
 from typing import Protocol
 
+from pydantic import ValidationError
+
 from aiact.drafting.vendor_letters.fills import deciding_points
 from aiact.schemas import Citation, ClassificationResult, Language, LawVersion
 
@@ -48,7 +50,8 @@ def quoted_points(
 ) -> tuple[Citation, ...]:
     """The Art. 5(1) points a decided prohibited result decided on, quoted from the corpus in
     the letter's `language`; none, with no lookup, for any other result. Raises
-    UnknownPointError when the result cites a point the corpus doesn't have."""
+    UnknownPointError when the result cites a point the corpus doesn't have or the lookup finds
+    malformed; a corpus row that doesn't fit its model (ValidationError) is raised as it is."""
     points = deciding_points(result)
     if not points:
         return ()
@@ -58,5 +61,8 @@ def quoted_points(
     as_of = None if result.law_version is LawVersion.ORIGINAL else result.as_of
     try:
         return law_quotes(points, language, result.law_version, as_of)
-    except LookupError:
+    except ValidationError:
+        raise  # a ValueError too, but a corrupt corpus row, not an unknown point
+    except (LookupError, ValueError):
+        # Not in the corpus, or an id the lookup finds malformed (`citations.resolve` alike).
         raise UnknownPointError("a cited Art. 5(1) point is not in the corpus") from None

@@ -2,11 +2,13 @@
 
 Like `facts_check.py`, it never calls the letters' pre-fills (`fills.py`), so a drafting bug
 can't pass its own check: the date and text checked must be the result's, the finding must name
-every Art. 5(1) point a decided prohibited result decided on and quote each from the text and
-in the language checked (the quote's words are the corpus's: the nothing-invented check compares
-them with what the caller read, decision 031), the facts must be the result's deciding facts,
-and the open question, its readings and what would settle it must be the result's first open
-question's. Problems name sections and positions, never the user's text.
+every Art. 5(1) point a decided prohibited result decided on, in the wording for one point or
+for several, and quote each from the text and in the language checked (the quote's words are
+the corpus's: the nothing-invented check compares them with what the caller read, decision
+031), the facts must be the result's deciding facts, and the open question, its readings and
+what would settle it must be the result's first open question's. An Art. 5(1) point is what
+`is_art_5_point` says it is, for the drafter and this check alike. Problems name sections and
+positions, never the user's text.
 """
 
 import re
@@ -16,7 +18,7 @@ from aiact.dates import LONG_DATE_PATTERNS, long_date
 from aiact.drafting.models import DraftSection, Provenance
 from aiact.drafting.prefill import Fill
 from aiact.drafting.templates import ClassificationSection
-from aiact.drafting.vendor_letters.fills import TEXTS, applies_on
+from aiact.drafting.vendor_letters.fills import TEXTS, applies_on, finding_key, is_art_5_point
 from aiact.provision_names import article_provision_name
 from aiact.schemas import (
     LAW_TEXTS,
@@ -61,7 +63,7 @@ def _decided_points(result: ClassificationResult) -> list[str]:
         if step.step is StepName.PROHIBITED
         for citation in step.citations
     ]
-    points = [pid for pid in cited if pid.startswith("art:5:1:") and pid.count(":") == 3]
+    points = [pid for pid in cited if is_art_5_point(pid)]
     return list(dict.fromkeys(pid for pid in points if applies_on(pid, result.as_of)))
 
 
@@ -104,6 +106,9 @@ def _finding(
     if sentence is None:
         return ["it must name the Art. 5(1) points, from the classification"]
     problems = []
+    before, after = TEXTS[language][finding_key(len(points))].split("{points}")
+    if not (sentence.startswith(before) and sentence.endswith(after)):
+        problems.append(f"it is not the finding's wording for {len(points)} point(s)")
     named = ART_5_MENTIONS[language].findall(sentence)
     if named != [article_provision_name(point, language) for point in points]:
         problems.append("the Art. 5 points named are not the ones the result decided on")

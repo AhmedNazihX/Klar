@@ -28,9 +28,10 @@ from aiact.schemas import (
 
 EN, DE = Language.EN, Language.DE
 
-ART_5_POINT = re.compile(r"^art:5:1:[a-z]+$")
+ART_5_POINT = re.compile(r"art:5:1:[a-z]+")
 """A point of the Art. 5(1) list of prohibited practices, such as `art:5:1:f`; not one of its
-sub-points (`art:5:1:c:i`) or Art. 5(1a)'s routes."""
+sub-points (`art:5:1:c:i`) or Art. 5(1a)'s routes. Matched whole (`is_art_5_point`): the
+drafter and the facts check (`facts.py`) both read a point through it."""
 
 PROHIBITIONS_APPLY_FROM = date(2025, 2, 2)
 """Art. 113(a): Art. 5 applies from 2 February 2025."""
@@ -48,7 +49,9 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "({version}, CELEX {celex}).",
         LawVersion.AMENDED: "the amended text",
         LawVersion.ORIGINAL: "the original text",
-        "finding": "The check found that the tool falls under a practice prohibited by {point} "
+        "finding": "The check found that the tool falls under a practice prohibited by {points} "
+        "of the AI Act.",
+        "findings": "The check found that the tool falls under practices prohibited by {points} "
         "of the AI Act.",
         "and": " and ",
         "applied": "Applied until settled",
@@ -59,14 +62,27 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "({version}, CELEX {celex}).",
         LawVersion.AMENDED: "geänderte Fassung",
         LawVersion.ORIGINAL: "ursprüngliche Fassung",
-        "finding": "Nach der Prüfung fällt das Tool unter eine nach {point} der KI-Verordnung "
+        "finding": "Nach der Prüfung fällt das Tool unter eine nach {points} der KI-Verordnung "
         "verbotene Praktik.",
+        "findings": "Nach der Prüfung fällt das Tool unter nach {points} der KI-Verordnung "
+        "verbotene Praktiken.",
         "and": " und ",
         "applied": "Bis zur Klärung angewandt",
         "other": "Die andere Lesart",
     },
 }
-"""The letters' sentences around the result's own words."""
+"""The letters' sentences around the result's own words: `finding` names one Art. 5(1) point,
+`findings` two or more (user decision, 2026-10-08)."""
+
+
+def is_art_5_point(provision_id: str) -> bool:
+    """Whether `provision_id` is exactly a point of the Art. 5(1) list (`ART_5_POINT`)."""
+    return ART_5_POINT.fullmatch(provision_id) is not None
+
+
+def finding_key(count: int) -> str:
+    """The `TEXTS` key of the finding naming `count` points: one, or two or more."""
+    return "finding" if count == 1 else "findings"
 
 
 def is_decided_prohibited(result: ClassificationResult) -> bool:
@@ -87,7 +103,7 @@ def deciding_points(result: ClassificationResult) -> tuple[str, ...]:
         return ()
     step = next((step for step in result.steps if step.step is StepName.PROHIBITED), None)
     cited = (citation.provision_id for citation in step.citations) if step else ()
-    points = (pid for pid in cited if ART_5_POINT.match(pid) and applies_on(pid, result.as_of))
+    points = (pid for pid in cited if is_art_5_point(pid) and applies_on(pid, result.as_of))
     return tuple(dict.fromkeys(points))
 
 
@@ -124,7 +140,8 @@ def finding_paragraphs(
     points = deciding_points(result)
     if not points:
         return ()
-    return (TEXTS[language]["finding"].format(point=point_names(points, language)),)
+    sentence = TEXTS[language][finding_key(len(points))]
+    return (sentence.format(points=point_names(points, language)),)
 
 
 def deciding_fact_paragraphs(

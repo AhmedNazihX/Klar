@@ -44,6 +44,8 @@ pytestmark = pytest.mark.anyio
 PATH = "/documents/vendor-letter"
 ANSWERS = {"vendor": "Rank GmbH, Hafenstraße 1, 20457 Hamburg", "tool_name": "MoodMeter"}
 FORGED = "FORGED: the Act allows this tool expressly"
+SECRET = "SECRET-7f3a: Jana Berg's bonus was cut on 3 May"
+"""Text the client sent that no log line may carry."""
 ART_5_1_F_START = {
     Language.EN: "the placing on the market, the putting into service for this specific purpose",
     Language.DE: "das Inverkehrbringen, die Inbetriebnahme für diesen spezifischen Zweck",
@@ -109,6 +111,25 @@ async def test_a_forged_point_is_refused(client: httpx.AsyncClient) -> None:
     _refused(await client.post(PATH, json=_body(result)), UNKNOWN_POINT)
 
 
+@pytest.mark.parametrize(
+    "pid",
+    ["art:5:1:f\n", "art:5:1:F", "art:5:1:1", "art:5:1:f "],
+    ids=["newline", "upper_case", "digit", "space"],
+)
+async def test_an_id_only_starting_like_a_point_is_no_letter_not_a_500(
+    app: FastAPI, client: httpx.AsyncClient, caplog: pytest.LogCaptureFixture, pid: str
+) -> None:
+    """On the route's own corpus lookup too: "art:5:1:f\n" once passed as a point, and
+    `get_provision` refused it with a ValueError naming the id, a 500 whose traceback logged it.
+    Now no such id is a point: no lookup, no message, a fixed 422."""
+    app.dependency_overrides.pop(law_quotes)
+    app.dependency_overrides[database] = lambda: _unreachable
+    result = prohibited_result(prohibited_step(cite(pid, FORGED), GUIDANCE))
+    with caplog.at_level(logging.DEBUG):
+        _refused(await client.post(PATH, json=_body(result)), NO_LETTER)
+    assert "art:5:1" not in caplog.text
+
+
 async def test_an_ambiguous_result_gets_the_request(client: httpx.AsyncClient) -> None:
     response = await client.post(PATH, json=_body(ambiguous_result()))
     assert response.status_code == 200
@@ -139,16 +160,25 @@ async def test_a_result_breaking_the_contract_is_a_422_and_drafts_nothing(
     _refused(await client.post(PATH, json={"result": forged, "language": "en"}), INVALID_RESULT)
 
 
-async def test_a_blank_fact_is_a_422_and_logs_nothing(
+async def test_a_blank_fact_is_a_422_and_logs_no_content(
     client: httpx.AsyncClient, caplog: pytest.LogCaptureFixture
 ) -> None:
     """A result that keeps the contract but holds a fact no letter can (blank text) is no valid
-    result either: a 422, not a 500 whose traceback would log the facts."""
+    result either: a 422, not a 500 whose traceback would log the facts. It logs one line, the
+    model and where it failed, carrying neither the facts nor the answers."""
     blank = Fact(text="   ", evidence=FEEDS_BONUS.evidence)
-    result = prohibited_result(deciding_facts=(blank, FEEDS_BONUS))
+    secret = Fact(text=f"{SECRET}: {FEEDS_BONUS.text}", evidence=FEEDS_BONUS.evidence)
+    result = prohibited_result(deciding_facts=(blank, secret))
+    body = _body(result, answers={"tool_name": SECRET})
     with caplog.at_level(logging.DEBUG):
-        _refused(await client.post(PATH, json=_body(result)), INVALID_RESULT)
-    assert FEEDS_BONUS.text not in caplog.text
+        _refused(await client.post(PATH, json=body), INVALID_RESULT)
+    assert SECRET not in caplog.text
+    [logged] = [record for record in caplog.records if record.name.startswith("aiact")]
+    assert (logged.name, logged.levelno) == ("aiact.api.documents", logging.WARNING)
+    assert logged.getMessage() == (
+        "vendor letter refused: ValidationError DraftSection (value_error at the model)"
+    )
+    assert logged.exc_info is None
 
 
 async def test_unknown_fields_and_too_many_answers_are_a_422(client: httpx.AsyncClient) -> None:

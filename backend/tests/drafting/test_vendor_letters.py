@@ -9,6 +9,7 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from aiact.drafting import (
     TEMPLATES,
@@ -32,6 +33,13 @@ from aiact.drafting import (
 from aiact.drafting.vendor_letters import fills
 from aiact.drafting.vendor_letters.quotes import MAX_POINTS
 from aiact.engine.nodes import prohibited_practices
+from aiact.engine.nodes.questions import open_question
+from aiact.engine.nodes.role_texts import (
+    OWN_NAME_OPEN,
+    SUBSTANTIAL_MODIFICATION_OPEN,
+    OpenInLaw,
+    open_in_law_parts,
+)
 from aiact.schemas import (
     DISCLAIMER,
     Citation,
@@ -39,8 +47,10 @@ from aiact.schemas import (
     Language,
     LawVersion,
     RiskClass,
+    Role,
     Status,
     StepName,
+    StepResult,
 )
 from tests.drafting.builders import (
     ambiguous_result,
@@ -157,6 +167,53 @@ def test_other_results_call_for_no_letter(result: ClassificationResult) -> None:
 def test_a_prohibited_step_citing_no_art_5_1_point_calls_for_no_message() -> None:
     result = prohibited_result(prohibited_step(GUIDANCE))
     assert vendor_letter_for(result) is None
+
+
+NOT_POINTS = ["art:5:1:f\n", "art:5:1:F", "art:5:1:1", "art:5:1:f ", "art:5:1:c:i", "art:5:1a"]
+NOT_POINT_IDS = ["newline", "upper_case", "digit", "space", "sub_point", "route"]
+
+
+@pytest.mark.parametrize("pid", NOT_POINTS, ids=NOT_POINT_IDS)
+def test_only_a_whole_art_5_1_point_is_one(pid: str) -> None:
+    """The drafter and the facts check read a point through one definition: an id that only
+    starts like one (a final newline once passed `$`) is none, so no message is drafted and
+    no lookup is made."""
+    assert not fills.is_art_5_point(pid)
+    result = prohibited_result(prohibited_step(cite(pid, FORGED), GUIDANCE))
+    assert fills.deciding_points(result) == ()
+    assert vendor_letter_for(result) is None
+    assert quoted_points(result, EN, _never) == ()
+
+
+def test_a_point_the_lookup_finds_malformed_is_an_unknown_point() -> None:
+    """`get_provision` raises ValueError for a malformed id: an unknown point, like
+    `citations.resolve` reads it, not an error that would name the id."""
+
+    def malformed(
+        provision_ids: Sequence[str],
+        language: Language,
+        law_version: LawVersion,
+        as_of: date | None,
+    ) -> tuple[Citation, ...]:
+        raise ValueError("malformed provision id 'art:5:1:f'")
+
+    with pytest.raises(UnknownPointError) as refused:
+        quoted_points(prohibited_result(), EN, malformed)
+    assert "art:5:1:f" not in str(refused.value)
+
+
+def test_a_corrupt_corpus_row_is_raised_not_read_as_an_unknown_point() -> None:
+    def corrupt(
+        provision_ids: Sequence[str],
+        language: Language,
+        law_version: LawVersion,
+        as_of: date | None,
+    ) -> tuple[Citation, ...]:
+        Citation.model_validate({"provision_id": "art:5:1:f"})
+        raise AssertionError("the row above is invalid")
+
+    with pytest.raises(ValidationError):
+        quoted_points(prohibited_result(), EN, corrupt)
 
 
 def test_both_letters_are_registered_for_the_checks() -> None:
@@ -297,10 +354,18 @@ def test_a_result_that_is_not_prohibited_is_quoted_without_a_lookup() -> None:
 
 
 TWO_POINTS = {
-    EN: "The check found that the tool falls under a practice prohibited by Art. 5(1)(c) and "
+    EN: "The check found that the tool falls under practices prohibited by Art. 5(1)(c) and "
     "Art. 5(1)(f) of the AI Act.",
-    DE: "Nach der Prüfung fällt das Tool unter eine nach Art. 5 Abs. 1 Buchst. c und Art. 5 "
-    "Abs. 1 Buchst. f der KI-Verordnung verbotene Praktik.",
+    DE: "Nach der Prüfung fällt das Tool unter nach Art. 5 Abs. 1 Buchst. c und Art. 5 Abs. 1 "
+    "Buchst. f der KI-Verordnung verbotene Praktiken.",
+}
+"""Two or more points take the plural wording (user decision, 2026-10-08); one keeps the
+approved singular sentence (`MESSAGE_TEXT`)."""
+THREE_POINTS = {
+    EN: "The check found that the tool falls under practices prohibited by Art. 5(1)(a), "
+    "Art. 5(1)(c) and Art. 5(1)(f) of the AI Act.",
+    DE: "Nach der Prüfung fällt das Tool unter nach Art. 5 Abs. 1 Buchst. a, Art. 5 Abs. 1 "
+    "Buchst. c und Art. 5 Abs. 1 Buchst. f der KI-Verordnung verbotene Praktiken.",
 }
 
 
@@ -313,11 +378,51 @@ def test_every_deciding_point_is_named_and_quoted(language: Language) -> None:
     assert all(outcome.passed for outcome in letter_checks(document, result, {}))
 
 
-def test_three_points_are_listed_with_commas() -> None:
+@pytest.mark.parametrize("language", [EN, DE])
+def test_three_points_are_listed_with_commas(language: Language) -> None:
     manipulation = cite("art:5:1:a", "subliminal techniques")
     result = prohibited_result(prohibited_step(manipulation, SOCIAL, EMOTIONS))
-    [finding] = _section(letter(result, {}, EN), "finding")
-    assert "by Art. 5(1)(a), Art. 5(1)(c) and Art. 5(1)(f) of the AI Act." in finding
+    document = letter(result, {}, language)
+    assert _section(document, "finding") == (THREE_POINTS[language],)
+    assert all(outcome.passed for outcome in letter_checks(document, result, {}))
+
+
+SINGULAR_FOR_TWO = {
+    EN: "The check found that the tool falls under a practice prohibited by Art. 5(1)(c) and "
+    "Art. 5(1)(f) of the AI Act.",
+    DE: "Nach der Prüfung fällt das Tool unter eine nach Art. 5 Abs. 1 Buchst. c und Art. 5 "
+    "Abs. 1 Buchst. f der KI-Verordnung verbotene Praktik.",
+}
+PLURAL_FOR_ONE = {
+    EN: "The check found that the tool falls under practices prohibited by Art. 5(1)(f) of the "
+    "AI Act.",
+    DE: "Nach der Prüfung fällt das Tool unter nach Art. 5 Abs. 1 Buchst. f der KI-Verordnung "
+    "verbotene Praktiken.",
+}
+
+
+@pytest.mark.parametrize("language", [EN, DE])
+def test_the_facts_check_finds_the_wording_for_another_number_of_points(
+    language: Language,
+) -> None:
+    two = prohibited_result(prohibited_step(SOCIAL, EMOTIONS))
+    singular = edit_section(
+        letter(two, {}, language),
+        "finding",
+        lambda section: changed(section, paragraphs=(SINGULAR_FOR_TWO[language],)),
+    )
+    assert _facts_problems(singular, two) == (
+        "section 'finding': it is not the finding's wording for 2 point(s)",
+    )
+    one = prohibited_result()
+    plural = edit_section(
+        letter(one, {}, language),
+        "finding",
+        lambda section: changed(section, paragraphs=(PLURAL_FOR_ONE[language],)),
+    )
+    assert _facts_problems(plural, one) == (
+        "section 'finding': it is not the finding's wording for 1 point(s)",
+    )
 
 
 def test_the_message_quotes_the_art_5_1_point_not_a_sub_point_route_or_guideline() -> None:
@@ -519,6 +624,37 @@ def test_the_request_is_about_the_article_of_the_open_question(
     assert all(outcome.passed for outcome in letter_checks(document, result, {}))
 
 
+def _role_open_in_law(open_in_law: OpenInLaw) -> ClassificationResult:
+    """The worked example with the role check's question of law left open, as the engine words
+    it for a deployer, each reading citing the provisions the engine names."""
+    citations = tuple(cite(pid, f"The text of {pid}") for pid in open_in_law.articles)
+    question = open_question(*open_in_law_parts(open_in_law, Role.DEPLOYER, EN), citations)
+    step = StepResult(
+        step=StepName.ROLE_OBLIGATIONS,
+        decision="Assumed the provider until the role question is settled",
+        citations=citations,
+        status=Status.LEGALLY_AMBIGUOUS,
+        open_question=question,
+    )
+    return rebuild(worked_example_result(), status=Status.LEGALLY_AMBIGUOUS, steps=steps_with(step))
+
+
+@pytest.mark.parametrize(
+    ("open_in_law", "article"),
+    [(OWN_NAME_OPEN, "art:3"), (SUBSTANTIAL_MODIFICATION_OPEN, "art:25")],
+    ids=["own_name", "substantial_modification"],
+)
+def test_a_role_question_is_about_the_article_its_applied_reading_rests_on(
+    open_in_law: OpenInLaw, article: str
+) -> None:
+    """Putting one's own name on a system that isn't high-risk turns on Art. 3(3), not on
+    Art. 25; a substantial modification on Art. 25(1)(b)."""
+    result = _role_open_in_law(open_in_law)
+    document = letter(result, {}, EN)
+    assert (document.template, document.article) == (REQUEST, article)
+    assert all(outcome.passed for outcome in letter_checks(document, result, {}))
+
+
 def test_the_facts_check_finds_a_request_about_another_article() -> None:
     result = _open_at(StepName.TRANSPARENCY)
     document = letter(result, {}, EN)
@@ -682,6 +818,7 @@ def test_the_facts_check_finds_a_deciding_point_left_out(language: Language) -> 
         document, "finding", lambda section: changed(section, paragraphs=_section(one, "finding"))
     )
     assert _facts_problems(dropped, result) == (
+        "section 'finding': it is not the finding's wording for 2 point(s)",
         "section 'finding': the Art. 5 points named are not the ones the result decided on",
     )
     unquoted = edit_section(

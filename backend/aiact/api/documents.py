@@ -16,9 +16,11 @@ through `get_provision` (held-out examples hidden; untraced, as no engine run is
 the threadpool, inside the lookups' rate limit; the body cap (`API_MAX_BODY_BYTES`) bounds the
 result and the answers. Nothing here logs the result or the answers, and no error names any part
 of them: a refused letter is a 422 with a fixed message, and a body that fails validation is the
-app's 422, which quotes none of it (`errors.py`).
+app's 422, which quotes none of it (`errors.py`). A letter the drafter can't write from a valid
+result logs one line naming the model and the failures' places, never their values.
 """
 
+import logging
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
@@ -37,7 +39,7 @@ from aiact.api.dependencies import (
     database,
     limit_lookups,
 )
-from aiact.api.errors import UNPROCESSABLE, Unprocessable
+from aiact.api.errors import MAX_ERRORS, UNPROCESSABLE, Unprocessable, invalid_field
 from aiact.drafting import (
     Answers,
     CheckResult,
@@ -55,6 +57,8 @@ from aiact.engine.citations import CitationSource, CorpusCitations, load_omnibus
 from aiact.engine.nodes.common import provision_citation
 from aiact.schemas import Citation, ClassificationResult, Language, LawVersion
 from aiact.schemas.base import ContractModel
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/documents", dependencies=[Depends(limit_lookups)], responses=UNPROCESSABLE
@@ -199,6 +203,19 @@ def _valid_result(posted: dict[str, JsonValue]) -> ClassificationResult:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, INVALID_RESULT) from None
 
 
+def _log_unwritable(exc: ValidationError) -> None:
+    """One line on a letter the drafter couldn't write: the model and where each failure is,
+    as the 422 body names them (`invalid_field`), never a value."""
+    places = [invalid_field(dict(error)) for error in exc.errors(include_input=False)[:MAX_ERRORS]]
+    where = ", ".join(f"{place.type} at {_place(place.loc)}" for place in places)
+    logger.warning("vendor letter refused: %s %s (%s)", type(exc).__name__, exc.title, where)
+
+
+def _place(loc: Sequence[str | int]) -> str:
+    """A failure's field path (`paragraphs.0`), or the model for a failure of the whole."""
+    return ".".join(map(str, loc)) or "the model"
+
+
 def _letter(
     result: ClassificationResult, answers: Answers, language: Language, quotes: Sequence[Citation]
 ) -> DraftDocument:
@@ -210,5 +227,6 @@ def _letter(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, NO_LETTER) from None
     except UnknownQuestionError:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, UNKNOWN_QUESTION) from None
-    except ValidationError:
+    except ValidationError as exc:
+        _log_unwritable(exc)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, INVALID_RESULT) from None

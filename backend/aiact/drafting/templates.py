@@ -7,6 +7,7 @@ fixed wording, which states only the duty the document answers. Nothing else ent
 The provider document skeletons are in `skeletons/` (P8b).
 """
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
@@ -19,6 +20,7 @@ from aiact.schemas import (
     DocumentStatus,
     Language,
     LawVersion,
+    OpenQuestion,
     StepName,
 )
 
@@ -152,12 +154,31 @@ class DocumentTemplate:
 
     def article_for(self, result: ClassificationResult) -> str:
         """The article a draft of the template from `result` answers: `article`, or, with
-        `open_question_articles`, the article of the check that leaves the result's first
-        question of law open."""
+        `open_question_articles`, the article of the result's first question of law: the one
+        its applied reading rests on, when that is one of those articles (the role check's
+        own-name question is about Art. 3), else the one of the check that leaves it open."""
         if self.open_question_articles is None:
             return self.article
-        step = next((step.step for step in result.steps if step.open_question), None)
-        return self.open_question_articles.get(step, self.article) if step else self.article
+        step = next((step for step in result.steps if step.open_question), None)
+        if step is None or step.open_question is None:
+            return self.article
+        cited = _applied_article(step.open_question)
+        if cited is not None and cited in self.open_question_articles.values():
+            return cited
+        return self.open_question_articles.get(step.step, self.article)
+
+
+ARTICLE_OF = re.compile(r"(art:\d+)(?::|\Z)")
+"""The article a provision id of the Act belongs to: `art:3` for `art:3:3`."""
+
+
+def _applied_article(question: OpenQuestion) -> str | None:
+    """The article the applied reading of `question` cites, if it cites one of the Act."""
+    applied = next((reading for reading in question.readings if reading.is_applied), None)
+    if applied is None or applied.citation is None:
+        return None
+    found = ARTICLE_OF.match(applied.citation.provision_id)
+    return found.group(1) if found else None
 
 
 # --- Shared sections ------------------------------------------------------------------------------

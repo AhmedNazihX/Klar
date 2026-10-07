@@ -104,7 +104,9 @@ OPEN_QUESTION_ARTICLES: Mapping[StepName, str] = {
 }
 """The article each check's open question falls under, which the request is about: what makes
 it an AI system (Art. 3), a prohibited practice (Art. 5), high-risk (Art. 6), a transparency
-duty (Art. 50), or a deployer the provider (Art. 25, with the definitions of Art. 3)."""
+duty (Art. 50), or a deployer the provider (Art. 25, with the definitions of Art. 3). A question
+whose applied reading rests on one of these articles is about that one instead: the role
+check's own-name question is about Art. 3(3) (`DocumentTemplate.article_for`)."""
 
 AMBIGUOUS_REQUEST = DocumentTemplate(
     id="vendor_request_ambiguous",
