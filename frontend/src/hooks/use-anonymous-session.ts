@@ -28,7 +28,8 @@ export function anonymousSessionOptions(client: SupabaseClient | null) {
     gcTime: Infinity,
     // After endAnonymousSession the query is stale: only a read or write may start the next
     // session, never the network coming back (each start makes a new user). Focus refetches are
-    // off app-wide (createQueryClient), as are reconnects; this keeps the session's own.
+    // off app-wide, and reconnects refetch reads only while a session is held (createQueryClient);
+    // this keeps the session itself from ever refetching on one.
     refetchOnReconnect: false,
   })
 }
@@ -36,6 +37,12 @@ export function anonymousSessionOptions(client: SupabaseClient | null) {
 /** Whether this tab has started its anonymous session: the session's query holds a user id. */
 export function hasAnonymousSession(queryClient: QueryClient): boolean {
   return queryClient.getQueryData(anonymousSessionKey) !== undefined
+}
+
+/** Whether this tab holds a session in use: started, and not ended since (endAnonymousSession). */
+export function holdsAnonymousSession(queryClient: QueryClient): boolean {
+  const state = queryClient.getQueryState(anonymousSessionKey)
+  return state?.data !== undefined && !state.isInvalidated
 }
 
 /**
