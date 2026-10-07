@@ -156,7 +156,7 @@ def test_a_section_relabelled_as_prefilled_fails_the_invented_content_check() ->
         _notice(),
         "reviewer",
         lambda s: changed(
-            s, provenance=Provenance.CLASSIFICATION, question_key=None, paragraphs=(INJECTED,)
+            s, provenance=Provenance.CLASSIFICATION, question_keys=(), paragraphs=(INJECTED,)
         ),
     )
     _failed(
@@ -166,7 +166,7 @@ def test_a_section_relabelled_as_prefilled_fails_the_invented_content_check() ->
 
 
 def test_an_answer_moved_to_another_question_fails_the_invented_content_check() -> None:
-    document = edit_section(_notice(), "start", lambda s: changed(s, question_key="reviewer"))
+    document = edit_section(_notice(), "start", lambda s: changed(s, question_keys=("reviewer",)))
     _failed(
         check_nothing_invented(document, worked_example_result(), WORKERS_ANSWERS),
         "answers another question",

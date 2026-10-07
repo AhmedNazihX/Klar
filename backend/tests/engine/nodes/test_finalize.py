@@ -61,7 +61,14 @@ ENGINE_INPUT: EngineInput = {
     "exclude_source_example_ids": (),
 }
 OPEN = open_question("Does the law settle this?", "Stricter.", "Lenient.")
-LITERACY = Obligation(duty="Ensure AI literacy", article="art:4:1", applies_from=date(2025, 2, 2))
+LITERACY = Obligation(
+    duty="Ensure AI literacy",
+    duty_de="KI-Kompetenz fördern.",
+    label_en="Build AI literacy",
+    label_de="KI-Kompetenz fördern",
+    article="art:4:1",
+    applies_from=date(2025, 2, 2),
+)
 
 RANKS = Fact(text="The tool ranks applicants", evidence=EvidenceTag.STATED,
              source_span=SourceSpan(start=33, end=69))  # fmt: skip
@@ -599,7 +606,7 @@ def test_an_assumed_section_b_result_keeps_every_duty_and_names_art_2_2_as_possi
               StepName.ROLE_OBLIGATIONS: role}  # fmt: skip
     result = run(checks)
     assert (result.risk_class, result.annex_point) == (RiskClass.HIGH_RISK, "annex:I:B:21")
-    assert {"art:4:1", "art:16:a", "art:50:1"} <= {o.article for o in result.obligations}
+    assert {"art:4:1", "art:9", "art:50:1"} <= {o.article for o in result.obligations}
     assert result.transparency_duties == ("art:50:1",)
     decision = result.steps[-1].decision
     assert "If the system is high-risk as a product" in decision
@@ -623,7 +630,7 @@ def test_a_section_a_product_keeps_its_duties() -> None:
     role = real_role(role_answer(Role.PROVIDER, legacy=legacy_answer()))
     result = run({StepName.HIGH_RISK: device, StepName.ROLE_OBLIGATIONS: role})
     assert result.annex_point == "annex:I:A:11"
-    assert "art:16:a" in [o.article for o in result.obligations]
+    assert "art:9" in [o.article for o in result.obligations]
 
 
 # --- A broken contract ---------------------------------------------------------------------------

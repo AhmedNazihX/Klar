@@ -122,13 +122,56 @@ STEPS = (
 )
 
 OBLIGATIONS = tuple(
-    Obligation(duty=duty, article=article, applies_from=HIGH_RISK_DUTIES_FROM)
-    for duty, article in (
-        ("Use the system according to the provider's instructions", "art:26:1"),
-        ("Assign human oversight to competent people", "art:26:2"),
-        ("Keep the logs the system generates", "art:26:6"),
-        ("Inform workers' representatives before use at the workplace", "art:26:7"),
-        ("Inform applicants that the system is used to decide about them", "art:26:11"),
+    Obligation(
+        duty=duty,
+        duty_de=duty_de,
+        label_en=label_en,
+        label_de=label_de,
+        document=document,
+        article=article,
+        applies_from=HIGH_RISK_DUTIES_FROM,
+    )
+    for duty, duty_de, label_en, label_de, document, article in (
+        (
+            "Use the system according to the provider's instructions",
+            "Das System gemäß der Betriebsanleitung verwenden.",
+            "Use the tool as the vendor's instructions say",
+            "Das Tool gemäß der Betriebsanleitung des Anbieters einsetzen",
+            None,
+            "art:26:1",
+        ),
+        (
+            "Assign human oversight to competent people",
+            "Die menschliche Aufsicht kompetenten Personen übertragen.",
+            "Put trained people in charge of reviewing its output",
+            "Geschulten Personen die menschliche Aufsicht übertragen",
+            "art_26_2_oversight",
+            "art:26:2",
+        ),
+        (
+            "Keep the logs the system generates",
+            "Die automatisch erzeugten Protokolle aufbewahren.",
+            "Keep the logs it creates for at least six months",
+            "Die automatisch erzeugten Protokolle mindestens sechs Monate aufbewahren",
+            None,
+            "art:26:6",
+        ),
+        (
+            "Inform workers' representatives before use at the workplace",
+            "Vor der Verwendung am Arbeitsplatz die Arbeitnehmervertreter informieren.",
+            "Tell workers' representatives and staff before you start",
+            "Arbeitnehmervertretung und Beschäftigte vor dem Einsatz informieren",
+            "art_26_7_workers",
+            "art:26:7",
+        ),
+        (
+            "Inform applicants that the system is used to decide about them",
+            "Bewerbende informieren, dass das System bei Entscheidungen über sie verwendet wird.",
+            "Tell applicants the tool is used in decisions about them",
+            "Bewerbende informieren, dass das Tool bei Entscheidungen über sie eingesetzt wird",
+            "art_26_11_affected",
+            "art:26:11",
+        ),
     )
 )
 

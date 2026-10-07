@@ -120,6 +120,11 @@ class Rate(ContractModel):
     def value(self) -> float | None:
         return self.hits / self.total if self.total else None
 
+    @property
+    def percent(self) -> str:
+        """The rate as a report shows it: a percentage, or n/a when nothing was counted."""
+        return "n/a" if self.value is None else f"{self.value:.1%}"
+
 
 class PrecisionRecall(ContractModel):
     """How well one uncertain status is predicted against the labels that carry it."""

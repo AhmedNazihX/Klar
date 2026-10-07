@@ -4,7 +4,17 @@ from collections.abc import Callable
 
 from aiact.drafting import DraftDocument, DraftSection
 from aiact.drafting.models import status_for, unanswered_count
-from aiact.schemas import ClassificationResult, LegacyStatus, RiskClass, Role, Status, StepName
+from aiact.obligations.list import list_obligations
+from aiact.schemas import (
+    ClassificationResult,
+    HighRiskRoute,
+    LegacyStatus,
+    Obligation,
+    RiskClass,
+    Role,
+    Status,
+    StepName,
+)
 from tests.schemas.builders import ambiguous, missing_fact, rebuild, steps_with
 from tests.schemas.worked_example import EU_USE, worked_example_result
 
@@ -87,6 +97,32 @@ def no_stated_facts_result() -> ClassificationResult:
 
 def provider_also_deployer_result() -> ClassificationResult:
     return rebuild(worked_example_result(), role=Role.PROVIDER, also_role=Role.DEPLOYER)
+
+
+PROVIDER_DUTIES = ("art:9", "art:16:c", "art:11:1")
+"""The provider duties the skeletons answer: the Art. 9 row (C9), Art. 16(c) and Art. 11(1)."""
+
+FRIA_DUTY = "art:27:1"
+
+
+def _duties(role: Role, *articles: str) -> tuple[Obligation, ...]:
+    """The committed table's high-risk (Annex III) duties of `role` with these articles."""
+    listed = list_obligations(role, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III).obligations
+    return tuple(duty for duty in listed if duty.article in articles)
+
+
+def provider_result() -> ClassificationResult:
+    """The worked example as the high-risk system's provider, with the duties the skeletons
+    answer."""
+    duties = _duties(Role.PROVIDER, *PROVIDER_DUTIES)
+    return rebuild(worked_example_result(), role=Role.PROVIDER, obligations=duties)
+
+
+def fria_deployer_result() -> ClassificationResult:
+    """The worked example with the deployer's impact assessment duty listed (Art. 27(1))."""
+    result = worked_example_result()
+    fria = _duties(Role.DEPLOYER, FRIA_DUTY)
+    return rebuild(result, obligations=(*result.obligations, *fria))
 
 
 def fresh_results() -> tuple[ClassificationResult, ...]:

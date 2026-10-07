@@ -47,6 +47,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            build.py + load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5), get_omnibus_provision (E9); search.py: search_ai_act (C6; relevance score and cut-off C8);
 │   │   │                            documents.py: list_documents, the corpus's texts with title, status and dates (P1)
+│   │   │                            tracing.py: each lookup a LangSmith run under the engine's trace, its ids as metadata (V7)
 │   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)
@@ -96,7 +97,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support, invented content (V5)
 │   │   │   ├── ragas_metrics.py     context precision/recall, faithfulness, provision recall on the Q&A set;
 │   │   │   │                        `aiact evaluate ragas`, stored in eval_runs (V6)
-│   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)
+│   │   │   ├── tool_calls.py        tool-call correctness per step from a stored run's LangSmith traces;
+│   │   │   │                        `aiact evaluate tool-calls` (V7)
 │   │   │   └── experiments/         embeddings.py (X1a), free_agent.py (S1); X2: smoke.py (`aiact evaluate smoke`),
 │   │   │                            smoke_verdict.py (decision 023's rule over stored runs, `smoke-compare`),
 │   │   │                            matchers.py (replay states and label matchers, shared with the E3–E7 replays),
@@ -104,11 +106,16 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   │                            P8a: models.py (DraftDocument, sections with their provenance, status),
-│   │   │                            templates.py (the deployer documents, EN and DE), prefill.py (sections
-│   │   │                            from the result), deployer.py (draft_deployer_documents), checks.py
-│   │   │                            (the three automatic checks, reused by P28's vendor letters),
-│   │   │                            facts_check.py (the facts check, read from the result alone); never
-│   │   │                            imports aiact.engine (tests/drafting/test_imports.py)
+│   │   │                            templates.py (the section kinds and the deployer documents, EN and DE),
+│   │   │                            prefill.py (sections from the result), deployer.py
+│   │   │                            (draft_deployer_documents), checks.py (the three automatic checks,
+│   │   │                            reused by P28's vendor letters), facts_check.py (the facts check, read
+│   │   │                            from the result alone); never imports aiact.engine
+│   │   │                            (tests/drafting/test_imports.py).
+│   │   │                            P8b: draft.py (draft_document, any template), registry.py (TEMPLATES,
+│   │   │                            every template by id), skeletons/: annex_iv.py, art_9.py, art_17.py,
+│   │   │                            art_27.py (the four skeletons), quotes.py (their requirements, word
+│   │   │                            for word, EN and DE; checked against data/parsed/), common.py
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;
@@ -160,8 +167,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)
-│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3)
-│   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7)
+│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3, C9)
+│   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7);
+│                                    the screens' labels (EN, DE), German duties, groups, documents (C9)
 │
 ├── frontend/                        Vite + React + TypeScript SPA, pnpm (P4); run `pnpm …` from here
 │   ├── package.json, pnpm-lock.yaml scripts: dev, build, test, lint, format, gen:api; lockfile committed (P4)
