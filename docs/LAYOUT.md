@@ -169,7 +169,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)
 │   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3, C9);
-│   │                                *_inventory_tools.sql: each tool with its latest run, a security-invoker view (P6)
+│   │                                *_inventory_tools.sql: each tool with its latest run, a security-invoker view;
+│   │                                *_save_classified_tool.sql: optional tool names, a tool and its first run saved at once (P6)
 │   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7);
 │                                    the screens' labels (EN, DE), German duties, groups, documents (C9)
 │
