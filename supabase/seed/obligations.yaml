@@ -27,6 +27,7 @@
 #                       After launch); only on entries a provider has, and on every high-risk one
 #   document            the drafting template that answers the duty (aiact/drafting/templates.py, P8a;
 #                       the provider skeletons, P8b), if any
+# German labels reviewed and approved by the user, 2026-10-07 (C9).
 
 law_version: amended
 checked_on: 2026-09-28
