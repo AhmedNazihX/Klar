@@ -202,13 +202,13 @@ describe('Classify, a draft for a tool the user has', () => {
   const OLD_TOOL_ID = '7c1e4b2a-9d3f-4a5e-8b6c-0d1e2f3a4b5c'
 
   /** "Classify this tool" left this draft: the old tool's name and description, and its id. */
-  async function openDraft(language: 'en' | 'de' = 'en') {
+  async function openDraft(language: 'en' | 'de' = 'en', held?: Promise<void>) {
     await i18n.changeLanguage(language)
     saveDraft(
       { name: 'Old screener', description: WORKED_EXAMPLE_DESCRIPTION },
       { toolId: OLD_TOOL_ID, name: 'Old screener' },
     )
-    server.use(saveHandler())
+    server.use(saveHandler(null, held))
     const user = userEvent.setup()
     const rendered = renderRoute('/app/classify')
     await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
@@ -225,11 +225,29 @@ describe('Classify, a draft for a tool the user has', () => {
   })
 
   it('saves the run on that tool while the line is shown', async () => {
-    const { user } = await openDraft()
+    const { user, router } = await openDraft()
     await user.click(screen.getByRole('button', { name: 'Run the checks' }))
 
     await expect.poll(() => saves.length).toBe(1)
     expect(saves[0]).toMatchObject({ target_system_id: OLD_TOOL_ID })
+    // Let the run finish, or its late clearDraft() lands in the next test.
+    await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${SYSTEM_ID}`)
+  })
+
+  it('keeps the old tool in the kept draft while the run is on', async () => {
+    let release = (): void => undefined
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const { user, router } = await openDraft('en', held)
+    await user.click(screen.getByRole('button', { name: 'Run the checks' }))
+
+    // The save is held, so the run isn't finished and the draft hasn't been cleared yet.
+    await expect.poll(() => saves.length).toBe(1)
+    expect(readDraft().tool).toEqual({ toolId: OLD_TOOL_ID, name: 'Old screener' })
+
+    release()
+    await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${SYSTEM_ID}`)
   })
 
   it('"Classify as a new tool instead" lets the tool go: the next save creates a new tool', async () => {

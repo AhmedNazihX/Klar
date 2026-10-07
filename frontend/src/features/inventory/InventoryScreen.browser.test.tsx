@@ -14,6 +14,8 @@ import {
   decidedHighRisk,
   legacyForPublicAuthorities,
   legacyMarkedDeployer,
+  limitedRisk,
+  minimalRisk,
   outOfScope,
   WORKED_EXAMPLE,
 } from '@/test/classify-fixtures'
@@ -39,7 +41,8 @@ function tool(
 }
 
 /** One tool for each widest cell: the assumed class with "Needs more information", the
- *  ambiguous one with two citations, out of scope, both Art. 111(2) dates, a result that can't
+ *  ambiguous one with two citations, out of scope, limited and minimal risk (so a third German
+ *  pill wrapping under the 160 px cap is caught), both Art. 111(2) dates, a result that can't
  *  be read ("Gespeichertes Ergebnis nicht lesbar") and a long name. */
 function widestTools(): InventoryTool[] {
   return [
@@ -50,9 +53,18 @@ function widestTools(): InventoryTool[] {
     tool('Old screener', legacyMarkedDeployer()),
     tool('Benefits checker', legacyForPublicAuthorities()),
     tool('Invoice matching', outOfScope()),
+    tool('Support chatbot', undatedLimitedRisk()),
+    tool('Spam filter', minimalRisk()),
     tool('Draft tool', null),
     tool('Edited file', null, true),
   ]
+}
+
+/** Limited risk without a dated Art. 50 duty, so its Applies from cell is "–". With the dated one
+ *  ("Seit dem 2. Aug. 2026", never broken) the German table runs past its panel: see the
+ *  known-gap test below. */
+function undatedLimitedRisk(): ClassificationResult {
+  return { ...limitedRisk(), obligations: [] }
 }
 
 /** How many lines a cell's text runs to: the distinct heights its text boxes sit at. */
@@ -102,6 +114,25 @@ describe('the inventory table at 1280 px', () => {
     expect(tool?.getBoundingClientRect().width).toBeGreaterThanOrEqual(TOOL_MIN_WIDTH)
   })
 
+  it.each(['en', 'de'] as const)(
+    'gives the Tool column a 160 px minimum, so it can not be squeezed below it (%s)',
+    async (language) => {
+      await page.viewport(DESKTOP.width, DESKTOP.height)
+      const table = await openInventory(language)
+      // The rule itself: the width test above passes while the column has room to spare.
+      const cells = within(table).getAllByRole('cell')
+      expect(getComputedStyle(cells[0] as Element).minWidth).toBe(`${TOOL_MIN_WIDTH}px`)
+
+      // A narrower panel squeezes the table: the Tool column holds 160 px (the panel scrolls).
+      const panel = table.closest('section')
+      if (!panel) throw new Error('The table sits in its glass panel.')
+      const scroller = panel.firstElementChild as HTMLElement
+      scroller.style.width = '700px'
+      const tool = within(table).getAllByRole('columnheader').at(0)
+      expect(tool?.getBoundingClientRect().width).toBeGreaterThanOrEqual(TOOL_MIN_WIDTH)
+    },
+  )
+
   it.each([
     ['en', ['High-risk, assumed', 'Needs more information', 'Out of scope']],
     ['de', ['Weitere Angaben nötig', 'Rechtlich unklar', 'Hochrisiko']],
@@ -148,6 +179,27 @@ describe('the inventory table at 1280 px', () => {
       }
     },
   )
+
+  // Known gap (found in P6 round 4): a limited-risk tool with a dated Art. 50 duty puts "Seit dem
+  // 2. Aug. 2026" (never broken) in Applies from, and the German table runs 37 px past the panel
+  // even with the Tool column at its 160 px minimum. Passes as a failure now; when the table is
+  // fixed it goes red, and `.fails` comes off.
+  it.fails('fits the German table with a dated limited-risk tool (known gap)', async () => {
+    await page.viewport(DESKTOP.width, DESKTOP.height)
+    await i18n.changeLanguage('de')
+    const client = createTestQueryClient()
+    client.setQueryData(inventoryToolsKey, [...widestTools(), tool('Dated chatbot', limitedRisk())])
+    renderRoute('/app/inventory', client)
+    const table = await screen.findByRole(
+      'table',
+      { name: 'Ihre Tools und ihre Ergebnisse' },
+      { timeout: FIRST_RENDER_MS },
+    )
+    await document.fonts.ready
+    const panel = table.closest('section')
+    if (!panel) throw new Error('The table sits in its glass panel.')
+    expect(table.scrollWidth).toBeLessThanOrEqual(panel.clientWidth)
+  })
 
   it.each(['en', 'de'] as const)(
     'keeps each Basis citation and Art. 111(2) tag whole (%s)',
