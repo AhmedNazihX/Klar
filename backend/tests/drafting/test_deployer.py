@@ -1,5 +1,6 @@
 """The short deployer documents drafted from a result and the user's answers (P8a)."""
 
+import logging
 import re
 from datetime import date
 
@@ -14,7 +15,6 @@ from aiact.drafting import (
     DraftStatus,
     DutyDateError,
     Provenance,
-    UnknownQuestionError,
     deployer_templates_for,
     draft_deployer_documents,
     draft_document,
@@ -124,9 +124,16 @@ def test_a_blank_answer_leaves_the_section_to_fill_in() -> None:
     assert document.unanswered == 4
 
 
-def test_an_answer_to_a_question_the_template_does_not_ask_is_rejected() -> None:
-    with pytest.raises(UnknownQuestionError, match="works_council"):
-        _workers_notice({"works_council": "Yes"})
+def test_an_answer_to_a_question_the_template_does_not_ask_is_left_out_and_logged(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    stale = {**WORKERS_ANSWERS, "works_council": "A stale answer, secret words"}
+    with caplog.at_level(logging.WARNING, logger="aiact.drafting.draft"):
+        document = _workers_notice(stale)
+    assert document == _workers_notice(WORKERS_ANSWERS)
+    assert caplog.messages == [f"{WORKERS}: left out 1 answers to questions it doesn't ask"]
+    assert "secret" not in caplog.text
+    assert "works_council" not in caplog.text
 
 
 # --- Where each section's content comes from -----------------------------------------------------

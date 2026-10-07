@@ -55,7 +55,7 @@ C9_DOCUMENT_KEYS = [
 """The template ids the obligations seed's `document` keys name (C9)."""
 
 DEVELOPMENT_ANSWERS = {
-    "development_methods": "Fine-tuned an open model on our own CVs.",
+    "development_methods": "fine-tuned an open model on our own CVs",
     "cybersecurity": "  Access control and yearly penetration tests.  ",
 }
 
@@ -154,7 +154,7 @@ def test_each_section_shows_what_it_waits_for() -> None:
     }
 
 
-def test_answers_fill_a_section_word_for_word_in_the_order_asked() -> None:
+def test_answers_fill_a_section_written_up_as_sentences_in_the_order_asked() -> None:
     development = _section(_annex_iv(answers=DEVELOPMENT_ANSWERS), "development")
     assert development.paragraphs == (
         "Fine-tuned an open model on our own CVs.",
@@ -254,6 +254,27 @@ def test_a_misstated_status_fails_the_invented_content_check() -> None:
     )
     outcome = check_nothing_invented(document, provider_result(), {})
     assert outcome.problems == ("section 'standards' misstates what is left to answer",)
+
+
+def test_an_answer_left_unwritten_up_fails_the_invented_content_check() -> None:
+    raw = DEVELOPMENT_ANSWERS["development_methods"]
+    document = edit_section(
+        _annex_iv(answers=DEVELOPMENT_ANSWERS),
+        "development",
+        lambda s: changed(s, paragraphs=(raw, *s.paragraphs[1:])),
+    )
+    outcome = check_nothing_invented(document, provider_result(), DEVELOPMENT_ANSWERS)
+    assert outcome.problems == ("section 'development' holds content the user didn't supply",)
+
+
+def test_a_word_added_to_a_written_up_answer_fails_the_invented_content_check() -> None:
+    document = edit_section(
+        _annex_iv(answers=DEVELOPMENT_ANSWERS),
+        "development",
+        lambda s: changed(s, paragraphs=(f"{s.paragraphs[0][:-1]} last year.", *s.paragraphs[1:])),
+    )
+    outcome = check_nothing_invented(document, provider_result(), DEVELOPMENT_ANSWERS)
+    assert outcome.problems == ("section 'development' holds content the user didn't supply",)
 
 
 def test_an_answer_written_into_another_section_fails_the_invented_content_check() -> None:

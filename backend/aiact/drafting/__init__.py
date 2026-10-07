@@ -13,7 +13,7 @@ from aiact.drafting.checks import (
     run_checks,
 )
 from aiact.drafting.deployer import deployer_templates_for, draft_deployer_documents
-from aiact.drafting.draft import Answers, UnknownQuestionError, draft_document
+from aiact.drafting.draft import Answers, draft_document
 from aiact.drafting.models import (
     DraftDocument,
     DraftSection,
@@ -47,7 +47,6 @@ __all__ = [
     "Provenance",
     "SectionStatus",
     "SizeClass",
-    "UnknownQuestionError",
     "check_facts_match",
     "check_nothing_invented",
     "check_sections_present",
