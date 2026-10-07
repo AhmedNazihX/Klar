@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { buttonVariants } from '@/components/button-variants'
 import { GlassPanel } from '@/components/GlassPanel'
+import { ScreenTitle } from '@/components/ScreenTitle'
 
 import { saveDraft, type ClassificationRun } from './classification-store'
 import { DecidingQuestion } from './DecidingQuestion'
@@ -78,9 +79,7 @@ export function ResultNotFound(): JSX.Element {
   const { t } = useTranslation()
   return (
     <>
-      <h1 className="m-0 text-[30px] leading-tight font-semibold tracking-[-0.03em] text-ink md:text-heading-page">
-        {t('screen.result')}
-      </h1>
+      <ScreenTitle>{t('screen.result')}</ScreenTitle>
       <GlassPanel className="flex flex-col items-start gap-4">
         <p className="m-0 text-body text-slate">{t('result.notFound.body')}</p>
         <Link to="/app/classify" className={buttonVariants()}>

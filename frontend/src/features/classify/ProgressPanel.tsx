@@ -3,7 +3,11 @@ import { useId, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/Button'
-import { CheckProgress, type CheckProgressStep } from '@/components/CheckProgress'
+import {
+  CheckProgress,
+  type CheckProgressState,
+  type CheckProgressStep,
+} from '@/components/CheckProgress'
 import { GlassPanel } from '@/components/GlassPanel'
 import type { ClassifyFailure } from '@/hooks/use-classify'
 import { useLanguage } from '@/hooks/use-language'
@@ -15,7 +19,6 @@ import {
   checkState,
   didContinue,
   type CheckId,
-  type CheckState,
   type ProgressState,
 } from './classify-progress'
 import { failureReason } from './failure-reason'
@@ -74,7 +77,7 @@ function doneRow(id: CheckId, context: RowContext): Partial<CheckProgressStep> {
 
 function rowDetail(
   id: CheckId,
-  state: CheckState,
+  state: CheckProgressState,
   context: RowContext,
 ): Partial<CheckProgressStep> {
   const { t, progress, failure } = context

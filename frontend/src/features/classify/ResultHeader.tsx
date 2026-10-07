@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult } from '@/api'
 import { buttonVariants } from '@/components/button-variants'
+import { ScreenTitle } from '@/components/ScreenTitle'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { useLanguage } from '@/hooks/use-language'
 
@@ -34,7 +35,7 @@ export function ViewSwitch({
 }
 
 /** "Checked on 6 October 2026 against the consolidated AI Act of 27 July 2026." */
-export function CheckedOnLine({ result }: { result: ClassificationResult }): JSX.Element {
+function CheckedOnLine({ result }: { result: ClassificationResult }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const date = longDate(result.as_of, language)
@@ -63,9 +64,7 @@ export function ResultHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div className="flex min-w-0 flex-col gap-1.5">
-        <h1 className="m-0 text-[30px] leading-tight font-semibold tracking-[-0.03em] break-words text-ink md:text-heading-page">
-          {name || t('classify.untitled')}
-        </h1>
+        <ScreenTitle className="break-words">{name || t('classify.untitled')}</ScreenTitle>
         <CheckedOnLine result={result} />
       </div>
       <div className="flex min-w-0 flex-wrap items-center gap-2.5">{actions}</div>

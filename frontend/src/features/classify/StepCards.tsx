@@ -8,13 +8,19 @@ import { StepCard, type StepCardFact, type StepCardQuote } from '@/components/St
 import { useLanguage } from '@/hooks/use-language'
 
 import { provisionName } from './provision-names'
-import { citationSource, dutyLabel, rowReferences, stepOutcome } from './result-text'
+import {
+  citationSource,
+  dutyLabel,
+  rowReferences,
+  statusPill,
+  stepOutcome,
+  uniqueFacts,
+} from './result-text'
 
 type HeadingLevel = 2 | 3
 
 function cardFacts(facts: readonly Fact[]): StepCardFact[] {
-  // A fact's text is its identity: the engine never lists the same fact twice in a step.
-  return [...new Map(facts.map((fact) => [fact.text, fact])).values()].map((fact) => ({
+  return uniqueFacts(facts).map((fact) => ({
     id: fact.text,
     text: fact.text,
     evidence: fact.evidence,
@@ -29,8 +35,9 @@ function StepOutcome({
   result: ClassificationResult
 }): JSX.Element {
   const { t } = useTranslation()
-  if (step.status === 'needs_more_information') return <StatusPill status="needs-info" size="sm" />
-  if (step.status === 'legally_ambiguous') return <StatusPill status="ambiguous" size="sm" />
+  if (step.status && step.status !== 'decided') {
+    return <StatusPill status={statusPill(step.status)} size="sm" />
+  }
   if (step.step === 'high_risk' && result.risk_class === 'high_risk') {
     return <RiskPill kind="high_risk" />
   }

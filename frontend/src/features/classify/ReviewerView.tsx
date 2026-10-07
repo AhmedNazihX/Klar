@@ -11,7 +11,7 @@ import type { ClassificationRun } from './classification-store'
 import { provisionName } from './provision-names'
 import { ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
-import { decidingStep, SUMMARY_ROWS } from './result-text'
+import { decidingStep, statusPill, SUMMARY_ROWS } from './result-text'
 import { DutiesStepCard, EngineStepCard, FactsStepCard } from './StepCards'
 
 const JSON_INDENT = 2
@@ -41,11 +41,7 @@ function ResultPills({ result }: { result: ClassificationResult }): JSX.Element 
       {result.annex_point && (
         <StatusPill status="decided">{provisionName(result.annex_point, language)}</StatusPill>
       )}
-      {result.status === 'decided' ? (
-        <StatusPill status="decided" />
-      ) : (
-        <StatusPill status={result.status === 'legally_ambiguous' ? 'ambiguous' : 'needs-info'} />
-      )}
+      <StatusPill status={statusPill(result.status)} />
     </div>
   )
 }

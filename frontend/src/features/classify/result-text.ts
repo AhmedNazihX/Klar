@@ -3,12 +3,15 @@ import i18n, { type TFunction } from 'i18next'
 import type {
   Citation,
   ClassificationResult,
+  Fact,
   FollowUpQuestion,
   HighRiskRoute,
   Obligation,
+  Status,
   StepName,
   StepResult,
 } from '@/api'
+import type { Status as PillStatus } from '@/components/pill-kinds'
 import type { Language } from '@/i18n'
 import type en from '@/i18n/locales/en.json'
 
@@ -26,6 +29,23 @@ export const SUMMARY_ROWS = [
   'duties',
 ] as const
 export type SummaryRowId = (typeof SUMMARY_ROWS)[number]
+
+/** The StatusPill look of an engine status: the uncertain ones never look decided. */
+export function statusPill(status: Status): Exclude<PillStatus, 'draft'> {
+  switch (status) {
+    case 'decided':
+      return 'decided'
+    case 'legally_ambiguous':
+      return 'ambiguous'
+    case 'needs_more_information':
+      return 'needs-info'
+  }
+}
+
+/** Each fact once: a fact's text is its identity (the engine lists a fact once per step). */
+export function uniqueFacts(facts: readonly Fact[]): Fact[] {
+  return [...new Map(facts.map((fact) => [fact.text, fact])).values()]
+}
 
 /** How many provisions a collapsed step row names; the rest are in its expanded card. */
 const MAX_ROW_REFERENCES = 3

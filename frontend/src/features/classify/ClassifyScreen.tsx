@@ -5,6 +5,7 @@ import type { JSX } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
+import { ScreenTitle } from '@/components/ScreenTitle'
 import { ClassifyRunError, useClassify } from '@/hooks/use-classify'
 import { useLanguage } from '@/hooks/use-language'
 
@@ -65,9 +66,7 @@ export function ClassifyScreen(): JSX.Element {
   return (
     <>
       <div className="flex max-w-[760px] flex-col gap-1.5">
-        <h1 className="m-0 text-[30px] leading-tight font-semibold tracking-[-0.03em] text-ink md:text-heading-page">
-          {t('classify.title')}
-        </h1>
+        <ScreenTitle>{t('classify.title')}</ScreenTitle>
         <p className="m-0 text-body text-slate">{t('classify.subtitle')}</p>
       </div>
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">

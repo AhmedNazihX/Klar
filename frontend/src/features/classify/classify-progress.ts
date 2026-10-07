@@ -1,4 +1,5 @@
 import type { ClassifyResponse, StepName, StepResult } from '@/api'
+import type { CheckProgressState } from '@/components/CheckProgress'
 
 /** The rows of the live check list, in the engine's order: the facts, the four checks in the
  *  Act's order, then the role and its duties. */
@@ -13,14 +14,7 @@ export const CHECK_IDS = [
 export type CheckId = (typeof CHECK_IDS)[number]
 
 /** The four checks the "Stopped at check N of 4" line counts. */
-export const NUMBERED_CHECKS: readonly StepName[] = [
-  'scope',
-  'prohibited',
-  'high_risk',
-  'transparency',
-]
-
-export type CheckState = 'waiting' | 'running' | 'done' | 'paused' | 'error'
+const NUMBERED_CHECKS: readonly StepName[] = ['scope', 'prohibited', 'high_risk', 'transparency']
 
 /** What the stream has said so far. */
 export type ProgressState = {
@@ -53,7 +47,7 @@ const NODE_ROWS: Record<string, CheckId> = {
 }
 
 /** The row a node id belongs to; an unknown id falls on the first row not yet finished. */
-export function rowOfNode(node: string, state: ProgressState): CheckId {
+function rowOfNode(node: string, state: ProgressState): CheckId {
   return NODE_ROWS[node] ?? firstOpenRow(state)
 }
 
@@ -103,7 +97,11 @@ export function progressReducer(state: ProgressState, action: ProgressAction): P
 }
 
 /** One row's state. While nothing has started, every row waits. */
-export function checkState(id: CheckId, state: ProgressState, isRunning: boolean): CheckState {
+export function checkState(
+  id: CheckId,
+  state: ProgressState,
+  isRunning: boolean,
+): CheckProgressState {
   if (state.stoppedAt === id) return 'error'
   if (id === 'facts') {
     if (state.facts) return 'done'

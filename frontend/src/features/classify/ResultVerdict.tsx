@@ -11,7 +11,7 @@ import type { Language } from '@/i18n'
 
 import { checkNumber } from './classify-progress'
 import { longDate, monthsUntil, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
-import { amendedRouteDate, basisSentence, dutiesDate, pausedStep } from './result-text'
+import { amendedRouteDate, basisSentence, dutiesDate, pausedStep, statusPill } from './result-text'
 
 /** The roles that supply the system: Art. 111(2) counts per copy supplied (decision 022). */
 const SUPPLIER_ROLES: readonly Role[] = ['provider', 'importer', 'distributor']
@@ -22,7 +22,7 @@ function StatusPills({ result }: { result: ClassificationResult }): JSX.Element 
   return (
     <>
       <StatusPill status="decided">{t('result.assumed')}</StatusPill>
-      <StatusPill status={result.status === 'legally_ambiguous' ? 'ambiguous' : 'needs-info'} />
+      <StatusPill status={statusPill(result.status)} />
     </>
   )
 }

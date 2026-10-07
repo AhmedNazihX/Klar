@@ -201,7 +201,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            AppFrame, AppSidebar, SidebarNav, AppTopBar, SiteFrame, SiteNav,
 │       │                            SiteFooter, MistGround, ScreenPlaceholder, PhoneLabel (P15); the
 │       │                            sidebar's CompanyLine (P18); the result's CheckProgress, FactCard,
-│       │                            ObligationItem, ResultSummary, StepRow, StepCard (P5)
+│       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6)
