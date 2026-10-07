@@ -834,7 +834,8 @@ def test_only_the_original_text_gets_the_note_that_art_6_1a_to_1c_do_not_exist()
             Language.EN,
             ORIGINAL_ANNEX_I_TEXT["annex:I:A:1"],
             "[annex:I:A:1] Directive 2006/42/EC on machinery (repealed by Regulation (EU) "
-            "2023/1230 on machinery with effect from 20 January 2027)",
+            "2023/1230 on machinery with effect from 20 January 2027; references to the Directive "
+            "are read as references to that Regulation)",
             id="en",
         ),
         pytest.param(
@@ -843,7 +844,8 @@ def test_only_the_original_text_gets_the_note_that_art_6_1a_to_1c_do_not_exist()
             "über Maschinen und zur Änderung der Richtlinie 95/16/EG (ABl. L 157 vom 9.6.2006, "
             "S. 24)",
             "[annex:I:A:1] Richtlinie 2006/42/EG über Maschinen (mit Wirkung vom 20. Januar 2027 "
-            "aufgehoben durch die Verordnung (EU) 2023/1230 über Maschinen)",
+            "aufgehoben durch die Verordnung (EU) 2023/1230 über Maschinen; Verweise auf die "
+            "Richtlinie gelten als Verweise auf diese Verordnung)",
             id="de",
         ),
     ],
@@ -860,7 +862,8 @@ def test_the_original_a_1_entry_names_the_machinery_regulation_that_repeals_it(
 def test_only_the_original_prompt_lists_machinery_with_its_repealing_regulation() -> None:
     entry = (
         "[annex:I:A:1] Directive 2006/42/EC on machinery (repealed by Regulation (EU) "
-        "2023/1230 on machinery with effect from 20 January 2027)\n"
+        "2023/1230 on machinery with effect from 20 January 2027; references to the Directive are "
+        "read as references to that Regulation)\n"
     )
     original = node.high_risk_messages(state(law_version=ORIGINAL), retrieved(law_version=ORIGINAL))
     amended = node.high_risk_messages(state(), retrieved())

@@ -392,18 +392,20 @@ def law_title(provision: Provision) -> str:
 
 ANNEX_I_SUCCESSORS: Mapping[tuple[LawVersion | None, Language, str], str] = {
     (LawVersion.ORIGINAL, EN, "annex:I:A:1"): (
-        "repealed by Regulation (EU) 2023/1230 on machinery with effect from 20 January 2027"
+        "repealed by Regulation (EU) 2023/1230 on machinery with effect from 20 January 2027; "
+        "references to the Directive are read as references to that Regulation"
     ),
     (LawVersion.ORIGINAL, DE, "annex:I:A:1"): (
         "mit Wirkung vom 20. Januar 2027 aufgehoben durch die Verordnung (EU) 2023/1230 über "
-        "Maschinen"
+        "Maschinen; Verweise auf die Richtlinie gelten als Verweise auf diese Verordnung"
     ),
 }
 """The act that repeals an Annex I law the original text still names (E11). The
 original A.1 names Directive 2006/42/EC, which Regulation (EU) 2023/1230 "on machinery and
 repealing Directive 2006/42/EC" repeals (its title, as quoted in Omnibus Art. 1(41)(b)) with
-effect from 20 January 2027 (a date from that Regulation, which data/ does not hold); the
-Omnibus moves the updated reference to Section B (recital 42)."""
+effect from 20 January 2027, and references to the Directive are read as references to the
+Regulation (both from the Regulation's repeal article, which data/ does not hold; the prompt names
+no article); the Omnibus moves the updated reference to Section B (recital 42)."""
 
 
 def annex_i_entry(provision: Provision) -> str:
