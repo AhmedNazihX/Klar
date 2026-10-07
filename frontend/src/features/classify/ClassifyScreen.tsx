@@ -1,30 +1,58 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import type { JSX } from 'react'
+import { useState, type JSX } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
+import type { ClassificationResult } from '@/api'
 import { ScreenTitle } from '@/components/ScreenTitle'
+import { Button } from '@/components/ui/button'
 import { ClassifyRunError, useClassify } from '@/hooks/use-classify'
 import { useLanguage } from '@/hooks/use-language'
+import { useSaveClassifiedTool } from '@/hooks/use-save-classified-tool'
+import { classifyWriteFailure } from '@/lib/company-profile'
 
 import {
-  classificationRunOptions,
   clearDraft,
+  putRun,
   readDraft,
   saveDraft,
   type ClassificationRun,
+  type DraftTool,
 } from './classification-store'
 import { DescriptionForm } from './DescriptionForm'
 import { DescriptionFormSchema, type DescriptionFormValues } from './description-form'
 import { ProgressPanel } from './ProgressPanel'
+import { toolName } from './result-text'
+
+/** The quiet line while the draft is for a tool the user has ("Classify this tool"): the run is
+ *  saved on it, as its next check, unless the user makes it a new tool instead. */
+function DraftToolNote({
+  tool,
+  onNewTool,
+}: {
+  tool: DraftTool
+  onNewTool: () => void
+}): JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <p className="m-0 mb-3 flex flex-wrap items-center gap-x-2 text-body-small text-slate">
+      {t('classify.draftTool.note', { name: toolName(t, tool.name) })}
+      <Button variant="link" size="sm" className="h-auto px-0" onClick={onNewTool}>
+        {t('classify.draftTool.newTool')}
+      </Button>
+    </p>
+  )
+}
 
 /**
  * Describe a tool (artboards `Classify`, `ClassifyError`): the description form beside the live
- * check list. A finished run opens its result; a run that stops keeps the description and shows
- * where and why. Runs start only when the user asks: each one is a paid model run. Try again
- * and Save for later take what the form holds now, edits since the last run included.
+ * check list. A finished run is added to the inventory (P6): as a new tool, or as the next run of
+ * the tool "Classify this tool" came from. It then opens its result;
+ * a run that stops keeps the description and shows where and why. Runs start only when the user
+ * asks: each one is a paid model run. Try again and Save for later take what the form holds now,
+ * edits since the last run included.
  */
 export function ClassifyScreen(): JSX.Element {
   const { t } = useTranslation()
@@ -32,32 +60,49 @@ export function ClassifyScreen(): JSX.Element {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { progress, run } = useClassify()
-  // useForm takes its defaults on mount only (the saved draft); the form owns the values after.
+  const save = useSaveClassifiedTool()
+  // The draft is read on mount only: useForm takes its values as defaults and owns them after;
+  // its tool (after "Classify this tool") is where the run is saved, until the user lets it go.
+  const [{ values: draftValues, tool: initialTool }] = useState(readDraft)
+  const [draftTool, setDraftTool] = useState(initialTool)
   const form = useForm<DescriptionFormValues>({
     resolver: zodResolver(DescriptionFormSchema),
-    defaultValues: readDraft(),
+    defaultValues: draftValues,
   })
 
+  /** Adds the finished run to the inventory (on the draft's tool, else as a new tool), then opens
+   *  its result. A run that can't be saved still opens (it was paid for), under a local id and
+   *  with a note that it wasn't saved. */
+  async function keep(values: DescriptionFormValues, result: ClassificationResult): Promise<void> {
+    // An unnamed tool stays unnamed: the screens show "Your tool" in the reader's language.
+    const name = values.name === '' ? null : values.name
+    let savedId: string | null = null
+    let saveFailure: ClassificationRun['saveFailure']
+    try {
+      savedId = await save.mutateAsync({
+        toolId: draftTool?.toolId ?? null,
+        name,
+        description: values.description,
+        result,
+        inventoryName: t('welcome.inventoryName'),
+      })
+    } catch (error) {
+      saveFailure =
+        classifyWriteFailure(error, 'save') === 'storage-full' ? 'storage-full' : 'failed'
+    }
+    const toolId = savedId ?? crypto.randomUUID()
+    putRun(queryClient, { toolId, name, description: values.description, result, saveFailure })
+    clearDraft()
+    // The app frame keeps the law version in the address across links.
+    void navigate({ to: '/app/inventory/$toolId', params: { toolId } })
+  }
+
   function start(values: DescriptionFormValues): void {
-    saveDraft(values)
+    saveDraft(values, draftTool)
     run.mutate(
       // The original text is only a view of the dates (decision 020): runs stay on the amended text.
       { description: values.description, language },
-      {
-        onSuccess: (result) => {
-          const toolId = crypto.randomUUID()
-          const saved: ClassificationRun = {
-            toolId,
-            name: values.name,
-            description: values.description,
-            result,
-          }
-          queryClient.setQueryData(classificationRunOptions(toolId).queryKey, saved)
-          clearDraft()
-          // The app frame keeps the law version in the address across links.
-          void navigate({ to: '/app/inventory/$toolId', params: { toolId } })
-        },
-      },
+      { onSuccess: (result) => void keep(values, result) },
     )
   }
 
@@ -71,7 +116,21 @@ export function ClassifyScreen(): JSX.Element {
       </div>
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1">
-          <DescriptionForm form={form} isRunning={run.isPending} onSubmit={submit} />
+          {draftTool && (
+            <DraftToolNote
+              tool={draftTool}
+              onNewTool={() => {
+                setDraftTool(null)
+                saveDraft(form.getValues(), null)
+              }}
+            />
+          )}
+          {/* Busy until the run is saved too, so a second click can't start another paid run. */}
+          <DescriptionForm
+            form={form}
+            isRunning={run.isPending || save.isPending}
+            onSubmit={submit}
+          />
         </div>
         <ProgressPanel
           progress={progress}
@@ -79,7 +138,7 @@ export function ClassifyScreen(): JSX.Element {
           failure={run.isError ? (failure ?? { kind: 'network' }) : null}
           onTryAgain={() => void submit()}
           onSaveForLater={() => {
-            saveDraft(form.getValues())
+            saveDraft(form.getValues(), draftTool)
             void navigate({ to: '/app/inventory' })
           }}
         />

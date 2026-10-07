@@ -4,12 +4,13 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { importUserData, type ImportCounts } from '@/lib/company-profile'
 import { supabase } from '@/lib/supabase'
 
-import { anonymousSessionOptions } from './use-anonymous-session'
+import { withAnonymousSession } from './use-anonymous-session'
 import { userDataKey } from './use-user-data-overview'
 
 /**
  * Restores a file exported from Your data (import_my_data adds its inventories, tools and runs to
- * the user's own). Nothing is classified again. Re-reads the overview and the counts afterwards.
+ * the user's own). Nothing is classified again. Re-reads the overview, the counts and the tools
+ * afterwards.
  */
 export function useImportUserData(
   client: SupabaseClient | null = supabase,
@@ -17,9 +18,7 @@ export function useImportUserData(
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (file) => {
-      if (!client) throw new Error('Supabase is not configured.')
-      await queryClient.query(anonymousSessionOptions(client))
-      return importUserData(client, file)
+      return importUserData(await withAnonymousSession(queryClient, client), file)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: userDataKey }),
   })

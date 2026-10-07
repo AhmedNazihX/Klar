@@ -9,6 +9,7 @@ import { SegmentedControl } from '@/components/SegmentedControl'
 import { useLanguage } from '@/hooks/use-language'
 
 import { longDate } from './dates'
+import { toolName } from './result-text'
 
 export type ResultView = 'summary' | 'reviewer'
 
@@ -56,7 +57,7 @@ export function ResultHeader({
   result,
   actions,
 }: {
-  name: string
+  name: string | null
   result: ClassificationResult
   actions: ReactNode
 }): JSX.Element {
@@ -64,7 +65,7 @@ export function ResultHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div className="flex min-w-0 flex-col gap-1.5">
-        <ScreenTitle className="break-words">{name || t('classify.untitled')}</ScreenTitle>
+        <ScreenTitle className="break-words">{toolName(t, name)}</ScreenTitle>
         <CheckedOnLine result={result} />
       </div>
       <div className="flex min-w-0 flex-wrap items-center gap-2.5">{actions}</div>

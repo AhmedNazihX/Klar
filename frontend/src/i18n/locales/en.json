@@ -353,7 +353,11 @@
     "language": "Klar answers in English. Citations quote the English text.",
     "run": "Run the checks",
     "running": "Checking…",
-    "untitled": "Your tool"
+    "untitled": "Your tool",
+    "draftTool": {
+      "note": "Adds a new check to {{name}}.",
+      "newTool": "Classify as a new tool instead"
+    }
   },
   "progress": {
     "heading": "Checking in the Act's order",
@@ -428,7 +432,7 @@
   },
   "result": {
     "notFound": {
-      "body": "This result isn't in this session. For now Klar keeps a result only while this tab is open, so run the checks again to see it.",
+      "body": "This tool isn't in your inventory. It may have been deleted, or it was checked in another browser.",
       "action": "Classify a tool"
     },
     "checkedOn": "Checked on {{date}} against the consolidated AI Act of {{lawDate}}.",
@@ -573,7 +577,24 @@
     },
     "citationSource": "{{provision}}, {{language}}",
     "citationSourceDraft": "{{provision}}, {{language}}, draft",
-    "notice": "Answers cite the consolidated AI Act (CELEX {{celex}}) and Commission guidance, some of it still in draft."
+    "notice": "Answers cite the consolidated AI Act (CELEX {{celex}}) and Commission guidance, some of it still in draft.",
+    "notSaved": {
+      "failed": "This result wasn't saved to your inventory. It stays on this page until you reload or leave it.",
+      "storageFull": "This result wasn't saved: your data has reached its storage limit. Make room under Your data, then run the checks again."
+    },
+    "unchecked": {
+      "body": "No saved result for this tool yet. Classify it to see its class and duties."
+    },
+    "unreadable": {
+      "body": "This saved result can't be read. The file it came from may have been edited. Classify the tool again to get a new result."
+    },
+    "withoutResult": {
+      "action": "Classify this tool"
+    },
+    "stored": {
+      "notice": "Saved result. Klar doesn't re-check saved results, so read it as guidance, not a verified record.",
+      "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+    }
   },
   "annexPoint": {
     "III_1_a": "remote biometric identification",
@@ -601,5 +622,69 @@
     "III_7_d": "detecting, recognising or identifying people in migration",
     "III_8_a": "assisting courts in researching and applying the law",
     "III_8_b": "influencing elections or referendums"
+  },
+  "inventory": {
+    "count_one": "{{count}} tool, classified under the AI Act as amended on {{date}}.",
+    "count_other": "{{count}} tools, classified under the AI Act as amended on {{date}}.",
+    "countPlain_one": "{{count}} tool in your inventory.",
+    "countPlain_other": "{{count}} tools in your inventory.",
+    "add": "Add a tool",
+    "summary": {
+      "heading": "Company summary",
+      "prohibited_one": "{{name}} is prohibited: stop using it now.",
+      "prohibited_other": "{{count}} tools are prohibited: stop using them now.",
+      "prohibitedAssumed_one": "One of them is assumed prohibited until its open question is settled.",
+      "prohibitedAssumed_other": "{{count}} of them are assumed prohibited until their open questions are settled.",
+      "next": {
+        "provider": "Next come your duties as the provider of <name/>, from <date/>.",
+        "deployer": "Next come your duties as the deployer of <name/>, from <date/>.",
+        "importer": "Next come your duties as the importer of <name/>, from <date/>.",
+        "distributor": "Next come your duties as the distributor of <name/>, from <date/>.",
+        "none": "Next come the duties for <name/>, from <date/>."
+      },
+      "calm": "No tool is prohibited, and no duties are still to start.",
+      "inForce": "Already in force",
+      "transparency_one": "Transparency, {{count}} tool",
+      "transparency_other": "Transparency, {{count}} tools",
+      "transparencySince": "Art. 50, since {{date}}",
+      "countsLabel": "Tools per class",
+      "assumedCount": "{{count}} assumed",
+      "assumedNote_one": "{{count}} tool is counted in its stricter class until its open question is settled.",
+      "assumedNote_other": "{{count}} tools are counted in their stricter class until their open questions are settled.",
+      "source": "Summed up from the results saved in your data. Klar doesn't re-check saved results, so read this as guidance, not a verified record.",
+      "since": {
+        "provider": "Your duties as the provider of <name/> have applied since <date/>.",
+        "deployer": "Your duties as the deployer of <name/> have applied since <date/>.",
+        "importer": "Your duties as the importer of <name/> have applied since <date/>.",
+        "distributor": "Your duties as the distributor of <name/> have applied since <date/>.",
+        "none": "The duties for <name/> have applied since <date/>."
+      },
+      "assumedClass": "Its class ({{riskClass}}) is assumed until its open question is settled."
+    },
+    "needs": {
+      "heading_one": "{{count}} tool needs you",
+      "heading_other": "{{count}} tools need you",
+      "prohibited": "Stop using or supplying it now",
+      "needsInfo_one": "Answer {{count}} question to finish the check",
+      "needsInfo_other": "Answer {{count}} questions to finish the check",
+      "ambiguous": "Two readings of {{provision}}. Legal review recommended",
+      "ambiguousPlain": "Two readings of the law. Legal review recommended"
+    },
+    "table": {
+      "label": "Your tools and their results",
+      "tool": "Tool",
+      "role": "Your role",
+      "class": "Class",
+      "basis": "Basis",
+      "appliesFrom": "Applies from",
+      "status": "Status",
+      "none": "–",
+      "assumedClass": "{{riskClass}}, assumed",
+      "noDuty": "No specific duty",
+      "since": "Since {{date}}",
+      "from": "From {{date}}",
+      "unchecked": "Not checked yet",
+      "unreadable": "Saved result can't be read"
+    }
   }
 }

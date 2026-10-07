@@ -1,10 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import type { JSX } from 'react'
 
-import { classificationRunOptions } from '@/features/classify/classification-store'
+import { toolResultOptions } from '@/features/classify/classification-store'
 import type { ResultView } from '@/features/classify/ResultHeader'
 import { ResultNotFound, ResultScreen } from '@/features/classify/ResultScreen'
+import { ToolWithoutResult } from '@/features/classify/ToolWithoutResult'
+import { supabase } from '@/lib/supabase'
 
 /** `view=reviewer` opens the reviewer view; the summary is the default and stays out of the
  *  address. Like `law`, the key is always set so a bogus value can't slip through. */
@@ -26,12 +28,21 @@ function ResultRoute(): JSX.Element | null {
   const { toolId } = Route.useParams()
   const { view } = Route.useSearch()
   const navigate = Route.useNavigate()
-  const run = useQuery(classificationRunOptions(toolId))
-  if (run.isPending) return null
-  if (!run.data) return <ResultNotFound />
+  const queryClient = useQueryClient()
+  const page = useQuery(toolResultOptions(queryClient, supabase, toolId))
+  // A read that failed shows the screen's ErrorView (routes/app.tsx), not "not found".
+  if (page.isError) throw page.error
+  if (page.isPending) return null
+  // Without a run to show, the tool itself says why: never checked, unreadable, or not there.
+  if (page.data.kind === 'missing') return <ResultNotFound />
+  if (page.data.kind !== 'run') {
+    return (
+      <ToolWithoutResult tool={page.data.tool} isUnreadable={page.data.kind === 'unreadable'} />
+    )
+  }
   return (
     <ResultScreen
-      run={run.data}
+      run={page.data.run}
       view={view ?? 'summary'}
       onViewChange={(next) => {
         void navigate({

@@ -4,7 +4,7 @@ import { screen } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 
-import { readDraft, saveDraft } from '@/features/classify/classification-store'
+import { readDraft, saveDraft, toolResultKey } from '@/features/classify/classification-store'
 import { EMPTY_OVERVIEW } from '@/lib/company-profile'
 import { createQueryClient } from '@/lib/query-client'
 import type * as SupabaseModule from '@/lib/supabase'
@@ -29,7 +29,7 @@ vi.mock('@/lib/supabase', async (importOriginal) => {
 })
 
 const COUNTS_KEY = ['user-data', 'counts']
-const RUN_KEY = ['classification-run', 'tool-1']
+const RUN_KEY = toolResultKey('tool-1')
 const SESSION_KEY = ['auth', 'anonymous-session']
 
 // A company profile and no tools: the sidebar names the company until the session is forgotten.
@@ -73,7 +73,11 @@ describe('a sign-out in another tab', () => {
     const queryClient = createTestQueryClient()
     queryClient.setQueryData(COUNTS_KEY, { systems: 2 })
     queryClient.setQueryData(RUN_KEY, { toolId: 'tool-1' })
-    saveDraft({ name: 'CV screener', description: 'Ranks applicants.' })
+    // A draft for a tool the user has ("Classify this tool"): the tool is forgotten with it.
+    saveDraft(
+      { name: 'CV screener', description: 'Ranks applicants.' },
+      { toolId: 'tool-1', name: 'CV screener' },
+    )
     renderRoute('/app/classify', queryClient)
     // The app frame starts this tab's session and shows the profile it reads.
     expect(
@@ -85,7 +89,9 @@ describe('a sign-out in another tab', () => {
     const signedOut = await openOtherTab().auth.signOut()
     expect(signedOut.error).toBeNull()
 
-    await vi.waitFor(() => expect(readDraft()).toEqual({ name: '', description: '' }))
+    await vi.waitFor(() =>
+      expect(readDraft()).toEqual({ values: { name: '', description: '' }, tool: null }),
+    )
     expect(queryClient.getQueryData(COUNTS_KEY)).toBeUndefined()
     expect(queryClient.getQueryData(RUN_KEY)).toBeUndefined()
     expect(queryClient.getQueryData(userDataOverviewKey)).toEqual(EMPTY_OVERVIEW)
@@ -164,7 +170,10 @@ describe('a sign-out while this tab’s session is still starting', () => {
       status: 'pending',
       fetchStatus: 'fetching',
     })
-    expect(readDraft()).toEqual({ name: 'CV screener', description: 'Ranks applicants.' })
+    expect(readDraft()).toEqual({
+      values: { name: 'CV screener', description: 'Ranks applicants.' },
+      tool: null,
+    })
 
     answerSignup()
     await vi.waitFor(() => expect(queryClient.getQueryData(SESSION_KEY)).toBe(USER_ID))

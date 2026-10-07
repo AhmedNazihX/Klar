@@ -179,7 +179,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)
-│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3, C9)
+│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3, C9);
+│   │                                *_inventory_tools.sql: each tool with its latest run, a security-invoker view;
+│   │                                *_save_classified_tool.sql: optional tool names, a tool and its first run saved at once;
+│   │                                *_save_run_on_existing_tool.sql: or the next run on a tool the user has (P6)
 │   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7);
 │                                    the screens' labels (EN, DE), German duties, groups, documents (C9)
 │
@@ -213,16 +216,20 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            AppFrame, AppSidebar, SidebarNav, AppTopBar, SiteFrame, SiteNav,
 │       │                            SiteFooter, MistGround, ScreenPlaceholder, PhoneLabel (P15); the
 │       │                            sidebar's CompanyLine (P18); the result's CheckProgress, FactCard,
-│       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5)
+│       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
+│       │                            InventoryTable (P6)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12)
 │       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15),
 │       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18),
 │       │                            use-classify.ts (the streamed run), use-language.ts (P5),
+│       │                            use-inventory-tools.ts, use-save-classified-tool.ts (P6),
 │       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
+│       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
+│       │                            before a screen reads it) (P6);
 │       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
 │       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
@@ -232,7 +239,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    your-data-store.ts (an in-memory user-data store behind the counts, export, import and delete, P12),
 │                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded
-│                                    worked example's SSE events and result variants, P5)
+│                                    worked example's SSE events and result variants, P5),
+│                                    inventory-fixtures.ts (inventory_tools rows, prohibited and ambiguous results, P6)
 │
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves

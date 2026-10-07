@@ -2,6 +2,7 @@
 // profile, the tool count and import_my_data. Each test passes the rows it needs.
 import { http, HttpResponse, type HttpHandler } from 'msw'
 
+import { inventoryToolsHandler } from './inventory-fixtures'
 import { anonymousSession, SIGNUP_URL, SUPABASE_URL } from './supabase-fixtures'
 
 export const INVENTORIES_URL = `${SUPABASE_URL}/rest/v1/inventories`
@@ -26,14 +27,17 @@ export function inventoryRow(fields: Record<string, string | null> = {}): Record
   }
 }
 
-/** The signup a fresh client makes, then the reads: these inventories and this many tools. */
+/** The signup a fresh client makes, then the reads: these inventories, this many tools and, for
+ *  the Inventory screen (P6), these inventory_tools rows (none unless given). */
 export function userDataHandlers(
   rows: () => Record<string, unknown>[],
   toolCount: () => number,
+  tools: () => Record<string, unknown>[] = () => [],
 ): HttpHandler[] {
   return [
     http.post(SIGNUP_URL, () => HttpResponse.json(anonymousSession())),
     http.get(INVENTORIES_URL, () => HttpResponse.json(rows())),
+    inventoryToolsHandler(tools),
     http.head(
       SYSTEMS_URL,
       () =>

@@ -80,9 +80,21 @@ export function basisSentence(
   return t(`result.basis.${result.risk_class}`)
 }
 
-/** The duty in plain words: C9's short action label in the screen's language. */
+/** An Art. 50 transparency duty (`art:50` or one of its paragraphs). */
+export function isTransparencyDuty(obligation: Obligation): boolean {
+  return obligation.article === 'art:50' || obligation.article.startsWith('art:50:')
+}
+
+/** The duty in plain words: C9's short action label in the screen's language, or the provision's
+ *  name for a stored result from before C9, which has no labels. */
 export function dutyLabel(obligation: Obligation, language: Language): string {
-  return language === 'de' ? obligation.label_de : obligation.label_en
+  const label = language === 'de' ? obligation.label_de : obligation.label_en
+  return label || provisionName(obligation.article, language)
+}
+
+/** A tool's name, or "Your tool" in the screen's language when the user gave none. */
+export function toolName(t: TFunction, name: string | null): string {
+  return name ?? t('classify.untitled')
 }
 
 /** The date duties apply from: the route's dates (moved by the Omnibus) on a High-risk result,

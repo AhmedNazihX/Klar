@@ -1,16 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { JSX } from 'react'
-import { useTranslation } from 'react-i18next'
 
-import { ScreenPlaceholder } from '@/components/ScreenPlaceholder'
+import { InventoryScreen } from '@/features/inventory/InventoryScreen'
 
-// Empty until P6 (artboard `Inventory`).
+// The AI inventory (P6; artboard `Inventory`). Every row opens its tool's result at
+// /app/inventory/$toolId.
 export const Route = createFileRoute('/app/inventory/')({
-  component: InventoryScreen,
+  component: InventoryRoute,
   staticData: { titleKey: 'screen.inventory' },
 })
 
-function InventoryScreen(): JSX.Element {
-  const { t } = useTranslation()
-  return <ScreenPlaceholder title={t('screen.inventory')} />
+function InventoryRoute(): JSX.Element {
+  return <InventoryScreen today={new Date()} />
 }
