@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-02
 - **Story:** E4 (docs/BACKLOG.md)
-- **Status:** accepted (user, 2026-10-02, option A)
+- **Status:** accepted (user, 2026-10-02, option A); its "prohibited assumed" part superseded by 030 (2026-10-07)
 
 ## Question
 E4's first B5c recording sent all 17 category-c cases to the pinned engine model (decision 004,
