@@ -12,7 +12,15 @@ from dataclasses import dataclass
 
 from aiact.drafting.models import Provenance, SectionStatus
 from aiact.drafting.prefill import Fill
-from aiact.schemas import LAW_TEXTS, Citation, DocumentStatus, Language, LawVersion
+from aiact.schemas import (
+    LAW_TEXTS,
+    Citation,
+    ClassificationResult,
+    DocumentStatus,
+    Language,
+    LawVersion,
+    StepName,
+)
 
 EN, DE = Language.EN, Language.DE
 
@@ -126,18 +134,30 @@ class DocumentTemplate:
     """A document answering one duty (`article`), with its required sections in order.
 
     `small_company_note` is the line a draft carries for an SME or a small mid-cap (the Annex IV
-    skeleton's "simplified form expected", P8b)."""
+    skeleton's "simplified form expected", P8b). `open_question_articles` is for a document
+    about the question of law a result leaves open (the vendor request, P28): the article each
+    check's question falls under, so its draft answers that one rather than `article`."""
 
     id: str
     article: str
     title: Texts
     sections: tuple[SectionSpec, ...]
     small_company_note: Texts | None = None
+    open_question_articles: Mapping[StepName, str] | None = None
 
     @property
     def questions(self) -> tuple[Question, ...]:
         """The interview questions, in the order the sections ask them."""
         return tuple(question for spec in self.sections for question in section_questions(spec))
+
+    def article_for(self, result: ClassificationResult) -> str:
+        """The article a draft of the template from `result` answers: `article`, or, with
+        `open_question_articles`, the article of the check that leaves the result's first
+        question of law open."""
+        if self.open_question_articles is None:
+            return self.article
+        step = next((step.step for step in result.steps if step.open_question), None)
+        return self.open_question_articles.get(step, self.article) if step else self.article
 
 
 # --- Shared sections ------------------------------------------------------------------------------

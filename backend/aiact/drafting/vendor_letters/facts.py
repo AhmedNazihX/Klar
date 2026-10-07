@@ -2,9 +2,11 @@
 
 Like `facts_check.py`, it never calls the letters' pre-fills (`fills.py`), so a drafting bug
 can't pass its own check: the date and text checked must be the result's, the finding must name
-and quote the Art. 5 point a decided prohibited result cites, the facts must be the result's
-deciding facts, and the open question, its readings and what would settle it must be the
-result's first open question's. Problems name sections and positions, never the user's text.
+every Art. 5(1) point a decided prohibited result decided on and quote each from the text and
+in the language checked (the quote's words are the corpus's: the nothing-invented check compares
+them with what the caller read, decision 031), the facts must be the result's deciding facts,
+and the open question, its readings and what would settle it must be the result's first open
+question's. Problems name sections and positions, never the user's text.
 """
 
 import re
@@ -14,11 +16,10 @@ from aiact.dates import LONG_DATE_PATTERNS, long_date
 from aiact.drafting.models import DraftSection, Provenance
 from aiact.drafting.prefill import Fill
 from aiact.drafting.templates import ClassificationSection
-from aiact.drafting.vendor_letters.fills import TEXTS
+from aiact.drafting.vendor_letters.fills import TEXTS, applies_on
 from aiact.provision_names import article_provision_name
 from aiact.schemas import (
     LAW_TEXTS,
-    Citation,
     ClassificationResult,
     Language,
     OpenQuestion,
@@ -49,13 +50,19 @@ def _open_question(result: ClassificationResult) -> OpenQuestion | None:
     return next((step.open_question for step in result.steps if step.open_question), None)
 
 
-def _cited_point(result: ClassificationResult) -> Citation | None:
-    """The first Art. 5(1) point the prohibited step of a decided prohibited result cites."""
+def _decided_points(result: ClassificationResult) -> list[str]:
+    """The Art. 5(1) points the prohibited step of a decided prohibited result cites, each once,
+    in its order, leaving out a point that applies only after the result's date."""
     if result.risk_class is not RiskClass.PROHIBITED or result.status is not Status.DECIDED:
-        return None
-    step = next((step for step in result.steps if step.step is StepName.PROHIBITED), None)
-    points = (c for c in step.citations if c.provision_id.count(":") == 3) if step else ()
-    return next((c for c in points if c.provision_id.startswith("art:5:1:")), None)
+        return []
+    cited = [
+        citation.provision_id
+        for step in result.steps
+        if step.step is StepName.PROHIBITED
+        for citation in step.citations
+    ]
+    points = [pid for pid in cited if pid.startswith("art:5:1:") and pid.count(":") == 3]
+    return list(dict.fromkeys(pid for pid in points if applies_on(pid, result.as_of)))
 
 
 def _one_sentence(section: DraftSection) -> str | None:
@@ -90,18 +97,22 @@ def _finding(
     result: ClassificationResult,
     language: Language,
 ) -> list[str]:
-    point = _cited_point(result)
-    if point is None:
+    points = _decided_points(result)
+    if not points:
         return ["the result is not a decided prohibited one citing an Art. 5(1) point"]
     sentence = _one_sentence(section)
     if sentence is None:
-        return ["it must name the Art. 5 point, from the classification"]
+        return ["it must name the Art. 5(1) points, from the classification"]
     problems = []
     named = ART_5_MENTIONS[language].findall(sentence)
-    if named != [article_provision_name(point.provision_id, language)]:
-        problems.append("the Art. 5 point named is not the one the result cites")
-    if section.requirement != point:
-        problems.append("the quote is not the result's citation of the Art. 5 point")
+    if named != [article_provision_name(point, language) for point in points]:
+        problems.append("the Art. 5 points named are not the ones the result decided on")
+    text = LAW_TEXTS[result.law_version]
+    quoted = [(q.provision_id, q.document_id, q.law_version) for q in section.quotes]
+    if quoted != [(point, text.document_id, result.law_version) for point in points]:
+        problems.append("the quotes are not the points named, from the text checked against")
+    if any(q.language is not language and not q.english_only for q in section.quotes):
+        problems.append("a quote is not in the letter's language")
     return problems
 
 

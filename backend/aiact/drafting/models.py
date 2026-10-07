@@ -2,8 +2,8 @@
 
 Every document is labelled DRAFT and carries the "guidance, not legal advice" notice (INIT >
 Documentation drafting). A section with no paragraphs is shown as "To fill in"; a skeleton's
-section also quotes the requirement it answers (P8b), and the vendor message's finding the
-Art. 5 point the result cites (P28).
+section also quotes the requirement it answers (P8b), and the vendor message's finding quotes
+each Art. 5(1) point the result decided on, from the corpus (P28; decision 031).
 """
 
 from collections.abc import Iterable
@@ -85,8 +85,13 @@ class DraftSection(ContractModel):
     requirement: Citation | None = Field(
         default=None,
         description="The requirement the section answers, quoted word for word from the AI Act "
-        '(skeletons), shown above the "To fill in" marker; or the provision a vendor letter '
-        "quotes from the result (the Art. 5 point of the prohibited message).",
+        '(skeletons only); shown above the "To fill in" marker.',
+    )
+    quotes: tuple[Citation, ...] = Field(
+        default=(),
+        description="The provisions a pre-filled section quotes, word for word from the corpus "
+        "at the result's law version and date, in the document's language, never from the "
+        "result: the Art. 5(1) points of the vendor message's finding.",
     )
 
     @model_validator(mode="after")

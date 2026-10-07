@@ -3,18 +3,19 @@
 Each `*_paragraphs` function is a pre-fill (`prefill.PREFILLS`): it reads the result alone and
 returns a section's paragraphs. The facts, the open question, its readings and what would settle
 it are the result's own words, in the language the result was written in; only the sentences
-around them are in the letter's language. `prohibited_quote` is the Art. 5 point the message
-quotes. The facts check (`facts.py`) verifies the written sections without calling these.
+around them are in the letter's language. `deciding_points` are the Art. 5(1) points the message
+names; their text comes from the corpus (`quotes.py`), never from the result (decision 031). The
+facts check (`facts.py`) verifies the written sections without calling these.
 """
 
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from datetime import date
 
 from aiact.dates import long_date
 from aiact.provision_names import article_provision_name
 from aiact.schemas import (
     LAW_TEXTS,
-    Citation,
     ClassificationResult,
     Language,
     LawVersion,
@@ -31,6 +32,16 @@ ART_5_POINT = re.compile(r"^art:5:1:[a-z]+$")
 """A point of the Art. 5(1) list of prohibited practices, such as `art:5:1:f`; not one of its
 sub-points (`art:5:1:c:i`) or Art. 5(1a)'s routes."""
 
+PROHIBITIONS_APPLY_FROM = date(2025, 2, 2)
+"""Art. 113(a): Art. 5 applies from 2 February 2025."""
+LATER_POINTS: Mapping[str, date] = {
+    "art:5:1:ba": date(2026, 12, 2),
+    "art:5:1:bb": date(2026, 12, 2),
+}
+"""Art. 113(a) as the Omnibus amends it: points (ba) and (bb) apply only from 2 December 2026. A
+decided prohibited step cites a point that applies only later after the points that decide it
+(`tests/drafting/test_vendor_letters.py` pins these dates to the engine's)."""
+
 TEXTS: Mapping[Language, Mapping[str, str]] = {
     EN: {
         "checked": "We checked the tool against the EU AI Act as it applies on {date} "
@@ -39,6 +50,7 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         LawVersion.ORIGINAL: "the original text",
         "finding": "The check found that the tool falls under a practice prohibited by {point} "
         "of the AI Act.",
+        "and": " and ",
         "applied": "Applied until settled",
         "other": "The other reading",
     },
@@ -49,6 +61,7 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         LawVersion.ORIGINAL: "ursprüngliche Fassung",
         "finding": "Nach der Prüfung fällt das Tool unter eine nach {point} der KI-Verordnung "
         "verbotene Praktik.",
+        "and": " und ",
         "applied": "Bis zur Klärung angewandt",
         "other": "Die andere Lesart",
     },
@@ -61,15 +74,29 @@ def is_decided_prohibited(result: ClassificationResult) -> bool:
     return result.risk_class is RiskClass.PROHIBITED and result.status is Status.DECIDED
 
 
-def prohibited_quote(result: ClassificationResult) -> Citation | None:
-    """The Art. 5(1) point a decided prohibited result's step cites first: the point it found
-    met (the step lists the met practices' points before those that apply only from a later
-    date). None for any other result."""
+def applies_on(point: str, day: date) -> bool:
+    """Whether the Art. 5(1) `point` applies on `day` (Art. 113(a))."""
+    return LATER_POINTS.get(point, PROHIBITIONS_APPLY_FROM) <= day
+
+
+def deciding_points(result: ClassificationResult) -> tuple[str, ...]:
+    """The Art. 5(1) points a decided prohibited result's step cites that apply on the result's
+    date: the points it found met, each once, in the step's order. None for any other
+    result."""
     if not is_decided_prohibited(result):
-        return None
+        return ()
     step = next((step for step in result.steps if step.step is StepName.PROHIBITED), None)
-    citations = step.citations if step else ()
-    return next((c for c in citations if ART_5_POINT.match(c.provision_id)), None)
+    cited = (citation.provision_id for citation in step.citations) if step else ()
+    points = (pid for pid in cited if ART_5_POINT.match(pid) and applies_on(pid, result.as_of))
+    return tuple(dict.fromkeys(points))
+
+
+def point_names(points: Sequence[str], language: Language) -> str:
+    """The points as a sentence names them: "Art. 5(1)(f)", "Art. 5(1)(c) and Art. 5(1)(f)"."""
+    names = [article_provision_name(point, language) for point in points]
+    if len(names) < 2:
+        return "".join(names)
+    return ", ".join(names[:-1]) + TEXTS[language]["and"] + names[-1]
 
 
 def open_question(result: ClassificationResult) -> OpenQuestion | None:
@@ -92,13 +119,12 @@ def checked_paragraphs(
 def finding_paragraphs(
     result: ClassificationResult, language: Language, article: str
 ) -> tuple[str, ...]:
-    """The Art. 5 point the tool falls under; nothing for a result that isn't a decided
+    """Every Art. 5(1) point the tool falls under; nothing for a result that isn't a decided
     prohibited one."""
-    quote = prohibited_quote(result)
-    if quote is None:
+    points = deciding_points(result)
+    if not points:
         return ()
-    point = article_provision_name(quote.provision_id, language)
-    return (TEXTS[language]["finding"].format(point=point),)
+    return (TEXTS[language]["finding"].format(point=point_names(points, language)),)
 
 
 def deciding_fact_paragraphs(

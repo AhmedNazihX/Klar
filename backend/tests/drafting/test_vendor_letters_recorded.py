@@ -1,16 +1,12 @@
 """P28's DoD: each vendor letter in English and German, drafted from a recorded result (see
-`recorded_results.py`), passes P8a's three checks, holds the result's own facts, and fails the
-nothing-invented check once a fact is injected. Replay only: no model, database or network."""
+`recorded_results.py`), passes P8a's three checks, holds the result's own facts, quotes the Act
+from the corpus in the letter's language (decision 031), and fails the nothing-invented check
+once a fact is injected. Replay only: no model, database or network (the corpus is the one built
+from `data/parsed/`)."""
 
 import pytest
 
-from aiact.drafting import (
-    DraftDocument,
-    DraftStatus,
-    check_nothing_invented,
-    draft_vendor_letter,
-    run_checks,
-)
+from aiact.drafting import DraftDocument, DraftStatus, check_nothing_invented, quoted_points
 from aiact.schemas import (
     DISCLAIMER,
     ClassificationResult,
@@ -29,6 +25,7 @@ from tests.drafting.recorded_results import (
     recorded_ambiguous_result,
     recorded_prohibited_result,
 )
+from tests.drafting.vendor_builders import corpus_quotes, letter, letter_checks
 
 INJECTED = "The vendor has already admitted the tool breaks the law."
 CHECKED = {
@@ -43,6 +40,11 @@ FINDING = {
     Language.DE: "Nach der Prüfung fällt das Tool unter eine nach Art. 5 Abs. 1 Buchst. f der "
     "KI-Verordnung verbotene Praktik.",
 }
+QUOTE_START = {
+    Language.EN: "the placing on the market, the putting into service for this specific purpose",
+    Language.DE: "das Inverkehrbringen, die Inbetriebnahme für diesen spezifischen Zweck",
+}
+"""Art. 5(1)(f) as the corpus words it: an English letter quotes the English Act."""
 APPLIED = {Language.EN: "Applied until settled: ", Language.DE: "Bis zur Klärung angewandt: "}
 OTHER = {Language.EN: "The other reading: ", Language.DE: "Die andere Lesart: "}
 
@@ -73,18 +75,19 @@ def _assert_a_valid_letter(
 ) -> DraftDocument:
     """The letter in `language`: DRAFT, with the notice, its names to fill in, every check
     passed, and an injected fact caught by the nothing-invented check."""
-    document = draft_vendor_letter(result, {}, language)
+    document = letter(result, {}, language)
     assert document.template == template
     assert (document.label, document.disclaimer) == ("DRAFT", DISCLAIMER[language])
     assert (document.unanswered, document.status) == (3, DraftStatus.NEEDS_ANSWERS)
     assert _section(document, "checked") == (CHECKED[language],)
-    outcomes = run_checks(document, result, {}, None)
+    outcomes = letter_checks(document, result, {})
     assert all(outcome.passed for outcome in outcomes), outcomes
     key = "facts" if template == "vendor_message_prohibited" else "readings"
     injected = edit_section(
         document, key, lambda section: changed(section, paragraphs=(*section.paragraphs, INJECTED))
     )
-    assert not check_nothing_invented(injected, result, {}, None).passed
+    quotes = quoted_points(result, language, corpus_quotes())
+    assert not check_nothing_invented(injected, result, {}, None, quotes).passed
     return document
 
 
@@ -102,13 +105,16 @@ def test_the_message_on_a_recorded_prohibited_result(
     assert (result.risk_class, result.status) == (RiskClass.PROHIBITED, Status.DECIDED)
     [step] = [step for step in result.steps if step.step is StepName.PROHIBITED]
     [point] = [c for c in step.citations if c.provision_id == "art:5:1:f"]
+    assert point.language is Language.DE  # the case is German
     assert result.deciding_facts
     for language in Language:
         document = _assert_a_valid_letter(result, language, "vendor_message_prohibited")
+        assert document.article == "art:5"
         assert _section(document, "finding") == (FINDING[language],)
         finding = next(section for section in document.sections if section.key == "finding")
-        assert finding.requirement == point
-        assert point.language is Language.DE  # the case is German: the quote stays the Act's own
+        [quote] = finding.quotes
+        assert (quote.provision_id, quote.language) == ("art:5:1:f", language)
+        assert quote.quote.startswith(QUOTE_START[language])
         assert _section(document, "facts") == tuple(fact.text for fact in result.deciding_facts)
 
 
@@ -130,6 +136,7 @@ def test_the_request_on_a_recorded_ambiguous_result(
     stricter, lenient = question.readings
     for language in Language:
         document = _assert_a_valid_letter(result, language, "vendor_request_ambiguous")
+        assert document.article == "art:6"
         assert _section(document, "question") == (question.question,)
         applied, other = _section(document, "readings")
         assert applied.startswith(f"{APPLIED[language]}High-risk under Art. 6(1). ")

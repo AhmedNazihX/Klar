@@ -377,9 +377,15 @@ export type DraftSection = {
     unanswered?: Array<string>;
     status: SectionStatus;
     /**
-     * The requirement the section answers, quoted word for word from the AI Act (skeletons), shown above the "To fill in" marker; or the provision a vendor letter quotes from the result (the Art. 5 point of the prohibited message).
+     * The requirement the section answers, quoted word for word from the AI Act (skeletons only); shown above the "To fill in" marker.
      */
     requirement?: Citation | null;
+    /**
+     * Quotes
+     *
+     * The provisions a pre-filled section quotes, word for word from the corpus at the result's law version and date, in the document's language, never from the result: the Art. 5(1) points of the vendor message's finding.
+     */
+    quotes?: Array<Citation>;
 };
 
 /**
@@ -498,21 +504,29 @@ export type FollowUpQuestion = {
 };
 
 /**
- * HTTPValidationError
- */
-export type HttpValidationError = {
-    /**
-     * Detail
-     */
-    detail?: Array<ValidationError>;
-};
-
-/**
  * HighRiskRoute
  *
  * How a system became high-risk; the two routes have different dates (Art. 113(c)).
  */
 export type HighRiskRoute = 'annex_iii' | 'annex_i';
+
+/**
+ * InvalidField
+ *
+ * One validation failure: its type (e.g. `string_too_long`) and where it is.
+ */
+export type InvalidField = {
+    /**
+     * Type
+     */
+    type: string;
+    /**
+     * Loc
+     *
+     * Where it failed, e.g. ["body", "answers"]; at most two parts.
+     */
+    loc: Array<string | number>;
+};
 
 export type JsonValue = unknown;
 
@@ -947,31 +961,21 @@ export type StepStartedEvent = {
 };
 
 /**
- * ValidationError
+ * Unprocessable
+ *
+ * A 422: why the request can't be processed, quoting none of it.
  */
-export type ValidationError = {
+export type Unprocessable = {
     /**
-     * Location
+     * Detail
      */
-    loc: Array<string | number>;
+    detail: string;
     /**
-     * Message
+     * Errors
+     *
+     * The validation failures, when the request failed validation.
      */
-    msg: string;
-    /**
-     * Error Type
-     */
-    type: string;
-    /**
-     * Input
-     */
-    input?: unknown;
-    /**
-     * Context
-     */
-    ctx?: {
-        [key: string]: unknown;
-    };
+    errors?: Array<InvalidField>;
 };
 
 /**
@@ -1002,7 +1006,7 @@ export type VendorLetterRequest = {
         [key: string]: unknown;
     };
     /**
-     * The language of the letter's wording and notice.
+     * The language of the letter's wording, its quotes of the Act and the notice.
      */
     language: Language;
     /**
@@ -1024,9 +1028,9 @@ export type ClassifyData = {
 
 export type ClassifyErrors = {
     /**
-     * Validation Error
+     * Not a valid request; the body quotes none of it
      */
-    422: HttpValidationError;
+    422: Unprocessable;
     /**
      * Too many classifications
      */
@@ -1096,9 +1100,9 @@ export type GetProvisionErrors = {
      */
     404: unknown;
     /**
-     * Validation Error
+     * Not a valid request; the body quotes none of it
      */
-    422: HttpValidationError;
+    422: Unprocessable;
     /**
      * The corpus is unreachable
      */
@@ -1148,9 +1152,9 @@ export type ListObligationsData = {
 
 export type ListObligationsErrors = {
     /**
-     * Validation Error
+     * Not a valid request; the body quotes none of it
      */
-    422: HttpValidationError;
+    422: Unprocessable;
 };
 
 export type ListObligationsError = ListObligationsErrors[keyof ListObligationsErrors];
@@ -1178,9 +1182,9 @@ export type ListDocumentsData = {
 
 export type ListDocumentsErrors = {
     /**
-     * Validation Error
+     * Not a valid request; the body quotes none of it
      */
-    422: HttpValidationError;
+    422: Unprocessable;
     /**
      * The corpus is unreachable
      */
@@ -1207,14 +1211,20 @@ export type DraftVendorLetterData = {
 
 export type DraftVendorLetterErrors = {
     /**
-     * Not a valid result, a result that calls for no vendor letter, or an answer to a question the letter doesn't ask
+     * Not a valid request or result, a result that calls for no vendor letter or cites a point of Art. 5(1) the Act doesn't have, or an answer to a question the letter doesn't ask; the body quotes none of it
      */
-    422: unknown;
+    422: Unprocessable;
     /**
      * Too many requests
      */
     429: unknown;
+    /**
+     * The corpus is unreachable
+     */
+    503: unknown;
 };
+
+export type DraftVendorLetterError = DraftVendorLetterErrors[keyof DraftVendorLetterErrors];
 
 export type DraftVendorLetterResponses = {
     /**

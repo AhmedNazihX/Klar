@@ -12,7 +12,6 @@ from aiact.dates import long_date
 from aiact.drafting.vendor_letters import fills as vendor
 from aiact.provision_names import annex_point_name, article_provision_name
 from aiact.schemas import (
-    Citation,
     ClassificationResult,
     EvidenceTag,
     Language,
@@ -35,7 +34,7 @@ class Fill(StrEnum):
     CHECKED = "checked"
     """The date checked and the text of the Act checked against (vendor letters)."""
     PROHIBITED_FINDING = "prohibited_finding"
-    """The Art. 5 point the tool falls under, which the section quotes (vendor message)."""
+    """The Art. 5(1) points the tool falls under, which the section quotes (vendor message)."""
     DECIDING_FACTS = "deciding_facts"
     """The facts the result rests on (vendor message)."""
     OPEN_QUESTION = "open_question"
@@ -163,8 +162,6 @@ PREFILLS: Mapping[Fill, Prefill] = {
     Fill.SETTLED_BY: vendor.settled_by_paragraphs,
 }
 
-PREFILL_QUOTES: Mapping[Fill, Callable[[ClassificationResult], Citation | None]] = {
-    Fill.PROHIBITED_FINDING: vendor.prohibited_quote,
-}
-"""The provision a pre-filled section quotes from the result (its `requirement`), by fill;
-the other fills quote none."""
+QUOTING_FILLS = frozenset({Fill.PROHIBITED_FINDING})
+"""The fills whose section quotes the provisions it names (its `quotes`), with the text read
+from the corpus (decision 031); the other fills quote none."""

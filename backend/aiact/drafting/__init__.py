@@ -36,6 +36,7 @@ from aiact.drafting.vendor_letters.draft import (
     draft_vendor_letter,
     vendor_letter_for,
 )
+from aiact.drafting.vendor_letters.quotes import LawQuotes, UnknownPointError, quoted_points
 from aiact.drafting.vendor_letters.templates import VENDOR_LETTER_TEMPLATES
 
 __all__ = [
@@ -52,10 +53,12 @@ __all__ = [
     "DraftSection",
     "DraftStatus",
     "DutyDateError",
+    "LawQuotes",
     "NoVendorLetterError",
     "Provenance",
     "SectionStatus",
     "SizeClass",
+    "UnknownPointError",
     "UnknownQuestionError",
     "check_facts_match",
     "check_nothing_invented",
@@ -65,6 +68,7 @@ __all__ = [
     "draft_document",
     "draft_skeletons",
     "draft_vendor_letter",
+    "quoted_points",
     "run_checks",
     "skeleton_templates_for",
     "vendor_letter_for",

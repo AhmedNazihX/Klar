@@ -7,6 +7,8 @@ from the result (`fills.py`); the request to the vendor is the template's fixed 
 claims nothing the result doesn't.
 """
 
+from collections.abc import Mapping
+
 from aiact.drafting.prefill import Fill
 from aiact.drafting.templates import (
     DE,
@@ -16,6 +18,7 @@ from aiact.drafting.templates import (
     InterviewSection,
     TemplateSection,
 )
+from aiact.schemas import StepName
 
 RECIPIENT = InterviewSection(
     "recipient",
@@ -92,9 +95,21 @@ PROHIBITED_MESSAGE = DocumentTemplate(
 
 # --- A legally ambiguous result: the request -----------------------------------------------------
 
+OPEN_QUESTION_ARTICLES: Mapping[StepName, str] = {
+    StepName.SCOPE: "art:3",
+    StepName.PROHIBITED: "art:5",
+    StepName.HIGH_RISK: "art:6",
+    StepName.TRANSPARENCY: "art:50",
+    StepName.ROLE_OBLIGATIONS: "art:25",
+}
+"""The article each check's open question falls under, which the request is about: what makes
+it an AI system (Art. 3), a prohibited practice (Art. 5), high-risk (Art. 6), a transparency
+duty (Art. 50), or a deployer the provider (Art. 25, with the definitions of Art. 3)."""
+
 AMBIGUOUS_REQUEST = DocumentTemplate(
     id="vendor_request_ambiguous",
     article="art:6",
+    open_question_articles=OPEN_QUESTION_ARTICLES,
     title={
         EN: "Request to the vendor: a point the law leaves open",
         DE: "Anfrage an den Anbieter: ein Punkt, den das Recht offenlässt",

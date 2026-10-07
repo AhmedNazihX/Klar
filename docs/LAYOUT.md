@@ -120,13 +120,15 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            for word, EN and DE; checked against data/parsed/), common.py
 │   │   │                            P28: vendor_letters/: fills.py (the result's facts, as pre-fills),
 │   │   │                            templates.py (the prohibited message and the ambiguous request,
-│   │   │                            EN and DE), facts.py (their facts check), draft.py
-│   │   │                            (draft_vendor_letter); registered in registry.py
+│   │   │                            EN and DE), facts.py (their facts check), quotes.py (the
+│   │   │                            Art. 5(1) points quoted from the corpus, LawQuotes; decision 031),
+│   │   │                            draft.py (draft_vendor_letter); registered in registry.py
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;
 │   │                                dependencies.py settings, node builder, database, limits; rate_limit.py the rate and
-│   │                                concurrency limits; body_limit.py the 413 body cap; documents.py
+│   │                                concurrency limits; body_limit.py the 413 body cap; errors.py the one
+│   │                                422 body, quoting no input; documents.py
 │   │                                `POST /documents/vendor-letter` (P28); openapi.py the schema export,
 │   │                                `aiact api openapi`; `aiact api serve` runs it
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py

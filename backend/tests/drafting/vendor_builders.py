@@ -1,11 +1,25 @@
-"""Results the vendor-letter tests share: a decided prohibited result and legally ambiguous
-ones, derived from INIT's worked example (the recorded ones are in `recorded_results.py`)."""
+"""What the vendor-letter tests share: a decided prohibited result and legally ambiguous ones,
+derived from INIT's worked example (the recorded ones are in `recorded_results.py`), and the
+corpus the message quotes, built from `data/parsed/` (no database)."""
 
+from collections.abc import Mapping
+from contextlib import nullcontext
+
+from aiact.api.documents import CorpusQuotes
+from aiact.drafting import (
+    CheckResult,
+    DraftDocument,
+    LawQuotes,
+    draft_vendor_letter,
+    quoted_points,
+    run_checks,
+)
 from aiact.schemas import (
     Citation,
     ClassificationResult,
     EvidenceTag,
     Fact,
+    Language,
     OpenQuestion,
     Reading,
     RiskClass,
@@ -15,8 +29,32 @@ from aiact.schemas import (
     StepName,
     StepResult,
 )
+from aiact.settings import get_settings
+from tests.engine.built_corpus import built_corpus
 from tests.schemas.builders import ends_early, rebuild, steps_with
 from tests.schemas.worked_example import STEPS, cite, worked_example_result
+
+
+def corpus_quotes() -> LawQuotes:
+    """The API's `LawQuotes` over the corpus built from `data/parsed/` instead of the database."""
+    return CorpusQuotes(lambda: nullcontext(built_corpus()), get_settings().aiact_data_dir)
+
+
+def letter(
+    result: ClassificationResult, answers: Mapping[str, str], language: Language
+) -> DraftDocument:
+    """The vendor letter as the route drafts it: its quotes read from the built corpus."""
+    quotes = quoted_points(result, language, corpus_quotes())
+    return draft_vendor_letter(result, answers, language, quotes)
+
+
+def letter_checks(
+    document: DraftDocument, result: ClassificationResult, answers: Mapping[str, str]
+) -> tuple[CheckResult, ...]:
+    """The three checks as the route runs them on `document`."""
+    quotes = quoted_points(result, document.language, corpus_quotes())
+    return run_checks(document, result, answers, None, quotes)
+
 
 EMOTIONS_QUOTE = (
     "the placing on the market, the putting into service for this specific purpose, or the use "

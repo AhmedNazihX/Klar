@@ -111,21 +111,21 @@
               }
             }
           },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Too many classifications"
           },
           "503": {
             "description": "Every slot is taken (with Retry-After), or the engine is not configured"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
@@ -200,6 +200,16 @@
               }
             }
           },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Not a valid lookup"
           },
@@ -208,16 +218,6 @@
           },
           "503": {
             "description": "The corpus is unreachable"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
@@ -315,11 +315,11 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Not a valid request; the body quotes none of it",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/Unprocessable"
                 }
               }
             }
@@ -356,18 +356,18 @@
               }
             }
           },
-          "503": {
-            "description": "The corpus is unreachable"
-          },
           "422": {
-            "description": "Validation Error",
+            "description": "Not a valid request; the body quotes none of it",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/Unprocessable"
                 }
               }
             }
+          },
+          "503": {
+            "description": "The corpus is unreachable"
           }
         }
       }
@@ -399,10 +399,20 @@
             }
           },
           "422": {
-            "description": "Not a valid result, a result that calls for no vendor letter, or an answer to a question the letter doesn't ask"
+            "description": "Not a valid request or result, a result that calls for no vendor letter or cites a point of Art. 5(1) the Act doesn't have, or an answer to a question the letter doesn't ask; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
           },
           "429": {
             "description": "Too many requests"
+          },
+          "503": {
+            "description": "The corpus is unreachable"
           }
         }
       }
@@ -1045,7 +1055,16 @@
                 "type": "null"
               }
             ],
-            "description": "The requirement the section answers, quoted word for word from the AI Act (skeletons), shown above the \"To fill in\" marker; or the provision a vendor letter quotes from the result (the Art. 5 point of the prohibited message)."
+            "description": "The requirement the section answers, quoted word for word from the AI Act (skeletons only); shown above the \"To fill in\" marker."
+          },
+          "quotes": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "title": "Quotes",
+            "description": "The provisions a pre-filled section quotes, word for word from the corpus at the result's law version and date, in the document's language, never from the result: the Art. 5(1) points of the vendor message's finding.",
+            "default": []
           }
         },
         "additionalProperties": false,
@@ -1242,19 +1261,6 @@
         "title": "FollowUpQuestion",
         "description": "A key-fact question. Its `id` keys the user's answer when the engine runs again."
       },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
-      },
       "HighRiskRoute": {
         "type": "string",
         "enum": [
@@ -1263,6 +1269,37 @@
         ],
         "title": "HighRiskRoute",
         "description": "How a system became high-risk; the two routes have different dates (Art. 113(c))."
+      },
+      "InvalidField": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Loc",
+            "description": "Where it failed, e.g. [\"body\", \"answers\"]; at most two parts."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "loc"
+        ],
+        "title": "InvalidField",
+        "description": "One validation failure: its type (e.g. `string_too_long`) and where it is."
       },
       "JsonValue": {},
       "Language": {
@@ -1958,45 +1995,29 @@
         "title": "StepStartedEvent",
         "description": "A check started: the interface marks it running."
       },
-      "ValidationError": {
+      "Unprocessable": {
         "properties": {
-          "loc": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "errors": {
             "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
+              "$ref": "#/components/schemas/InvalidField"
             },
             "type": "array",
-            "title": "Location"
-          },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
+            "title": "Errors",
+            "description": "The validation failures, when the request failed validation.",
+            "default": []
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
-          "loc",
-          "msg",
-          "type"
+          "detail"
         ],
-        "title": "ValidationError"
+        "title": "Unprocessable",
+        "description": "A 422: why the request can't be processed, quoting none of it."
       },
       "VendorLetter": {
         "properties": {
@@ -2030,7 +2051,7 @@
           },
           "language": {
             "$ref": "#/components/schemas/Language",
-            "description": "The language of the letter's wording and notice."
+            "description": "The language of the letter's wording, its quotes of the Act and the notice."
           },
           "answers": {
             "patternProperties": {

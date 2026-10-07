@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import ValidationError
 
 from aiact.api.dependencies import ConnectionFactory, database, limit_lookups
+from aiact.api.errors import UNPROCESSABLE
 from aiact.corpus.build import AI_ACT_IN_FORCE
 from aiact.obligations.list import ObligationList, list_obligations
 from aiact.retrieval.documents import DocumentList, list_documents
@@ -30,7 +31,7 @@ from aiact.retrieval.provisions import (
 )
 from aiact.schemas import HighRiskRoute, Language, LawVersion, LegacyStatus, RiskClass, Role
 
-router = APIRouter(dependencies=[Depends(limit_lookups)])
+router = APIRouter(dependencies=[Depends(limit_lookups)], responses=UNPROCESSABLE)
 
 Connect = Annotated[ConnectionFactory, Depends(database)]
 LanguageQuery = Annotated[
