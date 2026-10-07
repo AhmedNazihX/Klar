@@ -4,9 +4,17 @@ from collections.abc import Callable
 
 from aiact.drafting import DraftDocument, DraftSection
 from aiact.drafting.models import status_for, unanswered_count
-from aiact.schemas import ClassificationResult, LegacyStatus, RiskClass, Role, Status, StepName
+from aiact.schemas import (
+    ClassificationResult,
+    LegacyStatus,
+    Obligation,
+    RiskClass,
+    Role,
+    Status,
+    StepName,
+)
 from tests.schemas.builders import ambiguous, missing_fact, rebuild, steps_with
-from tests.schemas.worked_example import EU_USE, worked_example_result
+from tests.schemas.worked_example import EU_USE, HIGH_RISK_DUTIES_FROM, worked_example_result
 
 WORKERS = "art_26_7_workers"
 WORKERS_ANSWERS = {
@@ -87,6 +95,37 @@ def no_stated_facts_result() -> ClassificationResult:
 
 def provider_also_deployer_result() -> ClassificationResult:
     return rebuild(worked_example_result(), role=Role.PROVIDER, also_role=Role.DEPLOYER)
+
+
+PROVIDER_DUTIES = (
+    ("Meet the high-risk requirements (Art. 9 to 15)", "art:16:a"),
+    ("Have a documented quality management system (Art. 17)", "art:16:c"),
+    ("Draw up the technical documentation (Annex IV)", "art:11:1"),
+)
+"""The provider duties the skeletons answer, as the obligations seed words them (shortened)."""
+
+FRIA_DUTY = ("Carry out a fundamental rights impact assessment before first use", "art:27:1")
+
+
+def _duties(*duties: tuple[str, str]) -> tuple[Obligation, ...]:
+    return tuple(
+        Obligation(duty=duty, article=article, applies_from=HIGH_RISK_DUTIES_FROM)
+        for duty, article in duties
+    )
+
+
+def provider_result() -> ClassificationResult:
+    """The worked example as the high-risk system's provider, with the duties the skeletons
+    answer."""
+    return rebuild(
+        worked_example_result(), role=Role.PROVIDER, obligations=_duties(*PROVIDER_DUTIES)
+    )
+
+
+def fria_deployer_result() -> ClassificationResult:
+    """The worked example with the deployer's impact assessment duty listed (Art. 27(1))."""
+    result = worked_example_result()
+    return rebuild(result, obligations=(*result.obligations, *_duties(FRIA_DUTY)))
 
 
 def fresh_results() -> tuple[ClassificationResult, ...]:

@@ -3,9 +3,10 @@ Documents artboard names them. They are deterministic and read the draft against
 the user's answers and the classification result. The judged "no invented content" score is V5's.
 
 - Every required section is present: the template's sections, each once, in order, none added.
-- No content you didn't supply: the title and headings are the template's; each fixed section
-  holds the template's wording; each interview section holds the user's answer word for word, or
-  nothing; each pre-filled section holds only the drafter's wording of the result.
+- No content you didn't supply: the title, note and headings are the template's; each fixed
+  section holds the template's wording; each interview section holds the user's answers word for
+  word, or nothing, and a skeleton's section quotes the template's requirement; each pre-filled
+  section holds only the drafter's wording of the result.
 - Facts match the classification: verified from the result alone, not by drafting again
   (`facts_check.py`): the stated facts, the class, Annex point and its certainty, the duty's
   date, the duty itself, and the result's law version and date.
@@ -17,17 +18,12 @@ from typing import Self
 
 from pydantic import model_validator
 
-from aiact.drafting.deployer import Answers, prefilled_section, supplied_paragraphs
+from aiact.drafting.draft import Answers, prefilled_section, supplied_section
 from aiact.drafting.facts_check import prefilled_problems
 from aiact.drafting.models import DraftDocument, DraftSection
 from aiact.drafting.prefill import DutyDateError
-from aiact.drafting.templates import (
-    TEMPLATES,
-    ClassificationSection,
-    DocumentTemplate,
-    InterviewSection,
-    SectionSpec,
-)
+from aiact.drafting.registry import TEMPLATES
+from aiact.drafting.templates import ClassificationSection, DocumentTemplate, SectionSpec
 from aiact.schemas import ClassificationResult, Language
 from aiact.schemas.base import ContractModel
 
@@ -105,6 +101,8 @@ def check_nothing_invented(
     problems = []
     if document.title != template.title[document.language]:
         problems.append("the title is not the template's")
+    if document.note not in _notes(template, document.language):
+        problems.append("the note is not the template's")
     known = {spec.key for spec in template.sections}
     problems += [
         f"section {section.key!r} is not the template's"
@@ -145,6 +143,13 @@ def _pairs(
     return [(specs[section.key], section) for section in document.sections if section.key in specs]
 
 
+def _notes(template: DocumentTemplate, language: Language) -> set[str | None]:
+    """The notes a draft of `template` may carry: none, or its small-company note (the checks
+    don't know the company's size class)."""
+    note = template.small_company_note
+    return {None} if note is None else {None, note[language]}
+
+
 def _repeated(keys: list[str]) -> list[str]:
     return sorted({key for key in keys if keys.count(key) > 1})
 
@@ -164,10 +169,15 @@ def _invented(
         return _prefill_invented(spec, section, template, result, language)
     if section.provenance is not spec.provenance:
         return [f"section {key!r} claims to come from {section.provenance.value}"]
-    if isinstance(spec, InterviewSection) and section.question_key != spec.question_key:
+    expected = supplied_section(spec, answers, language)
+    if section.question_keys != expected.question_keys:
         return [f"section {key!r} answers another question"]
-    if section.paragraphs != supplied_paragraphs(spec, answers, language):
+    if section.paragraphs != expected.paragraphs:
         return [f"section {key!r} holds content the user didn't supply"]
+    if section.requirement != expected.requirement:
+        return [f"section {key!r} quotes a requirement the template doesn't"]
+    if (section.unanswered, section.status) != (expected.unanswered, expected.status):
+        return [f"section {key!r} misstates what is left to answer"]
     return []
 
 
@@ -184,4 +194,6 @@ def _prefill_invented(
         return [f"section {spec.key!r}: the result lists its duty with several dates"]
     if (section.provenance, section.paragraphs) != (drafted.provenance, drafted.paragraphs):
         return [f"section {spec.key!r} holds content the result doesn't give"]
+    if section.requirement is not None:
+        return [f"section {spec.key!r} quotes a requirement the template doesn't"]
     return []

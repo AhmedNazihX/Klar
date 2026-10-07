@@ -104,11 +104,16 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   │                            P8a: models.py (DraftDocument, sections with their provenance, status),
-│   │   │                            templates.py (the deployer documents, EN and DE), prefill.py (sections
-│   │   │                            from the result), deployer.py (draft_deployer_documents), checks.py
-│   │   │                            (the three automatic checks, reused by P28's vendor letters),
-│   │   │                            facts_check.py (the facts check, read from the result alone); never
-│   │   │                            imports aiact.engine (tests/drafting/test_imports.py)
+│   │   │                            templates.py (the section kinds and the deployer documents, EN and DE),
+│   │   │                            prefill.py (sections from the result), deployer.py
+│   │   │                            (draft_deployer_documents), checks.py (the three automatic checks,
+│   │   │                            reused by P28's vendor letters), facts_check.py (the facts check, read
+│   │   │                            from the result alone); never imports aiact.engine
+│   │   │                            (tests/drafting/test_imports.py).
+│   │   │                            P8b: draft.py (draft_document, any template), registry.py (TEMPLATES,
+│   │   │                            every template by id), skeletons/: annex_iv.py, art_9.py, art_17.py,
+│   │   │                            art_27.py (the four skeletons), quotes.py (their requirements, word
+│   │   │                            for word, EN and DE; checked against data/parsed/), common.py
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;

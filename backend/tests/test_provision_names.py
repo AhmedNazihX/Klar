@@ -18,6 +18,10 @@ EN, DE = Language.EN, Language.DE
         ("art:5:1:ba", DE, "Art. 5 Abs. 1 Buchst. ba"),
         ("art:5:1:c:i", EN, "Art. 5(1)(c)(i)"),
         ("art:5:1:c:i", DE, "Art. 5 Abs. 1 Buchst. c Ziff. i"),
+        ("art:16:a", EN, "Art. 16(a)"),
+        ("art:16:a", DE, "Art. 16 Buchst. a"),
+        ("art:113:c:i", EN, "Art. 113(c)(i)"),
+        ("art:113:c:i", DE, "Art. 113 Buchst. c Ziff. i"),
     ],
 )
 def test_article_provision_names(provision: str, language: Language, name: str) -> None:
