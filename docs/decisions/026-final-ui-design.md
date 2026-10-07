@@ -65,6 +65,7 @@ report (2026-10-01, sections 1–6) listed the gaps. The user went through them 
 | C3 | Retention period placeholder | A: fill in "30 days" ("nach 30 Tagen ohne Aktivität") on the privacy notice and the site footer | Decision 013 | P15, P17, P12, P18 |
 
 ## Consequences
+- **Amended 2026-10-07 (user, P5 review):** item 19's "link to the drafted disclosure" holds only where a template exists (Art. 50(3), 50(4)); for Art. 50(1)/(2) the limited-risk result states the duty without promising a draft until P8a/P9 add those templates. A step that didn't decide the class shows "Checked: <provisions>" with its quotes behind a toggle; the deciding step keeps its quotes open (components.md: shorten only with an ellipsis).
 - **INIT:** out of scope "National penalty rules" (item 1); the Documentation drafting table gains a vendor-letter
   row (item 3); Storage adds a company profile and checklist progress (items 7, 9); the Ethics line covers
   prohibited outcomes (item 12); the simplified-form sentence names SMEs and small mid-caps (item 22).
