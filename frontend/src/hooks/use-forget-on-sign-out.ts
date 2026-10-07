@@ -2,28 +2,36 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { hashKey, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 
-import { clearDraft } from '@/features/classify/classification-store'
+import { classificationRunKey, clearDraft } from '@/features/classify/classification-store'
 import { EMPTY_OVERVIEW } from '@/lib/company-profile'
 import { supabase } from '@/lib/supabase'
 
-import { userDataOverviewKey } from './use-user-data-overview'
+import { endAnonymousSession, hasAnonymousSession } from './use-anonymous-session'
+import { userDataKey, userDataOverviewKey } from './use-user-data-overview'
 
 /**
- * Forgets the ended session in this tab: the description draft and every cached query (the
- * user's data, runs, the session itself). The sidebar's overview is emptied rather than removed,
- * as it stays on screen. The app frame (SessionNotice) then starts a new, empty anonymous
- * session, so saving works again without a reload.
+ * Forgets the ended session in this tab: the description draft, the cached user data and runs.
+ * The sidebar's overview is emptied rather than removed, as it stays on screen. The session is
+ * only marked as ended: a new one starts when this tab next needs it, so an open tab that merely
+ * hears of the sign-out never signs in by itself (each sign-in makes an anonymous user).
  */
 function forgetSession(queryClient: QueryClient): void {
   clearDraft()
   queryClient.setQueryData(userDataOverviewKey, EMPTY_OVERVIEW)
   const overviewHash = hashKey(userDataOverviewKey)
-  queryClient.removeQueries({ predicate: (query) => query.queryHash !== overviewHash })
+  queryClient.removeQueries({
+    queryKey: userDataKey,
+    predicate: (query) => query.queryHash !== overviewHash,
+  })
+  queryClient.removeQueries({ queryKey: classificationRunKey })
+  endAnonymousSession(queryClient)
 }
 
 /**
  * Forgets the session whenever it ends: after Delete my data in this tab, and in every other open
- * tab too, which supabase-js tells of the sign-out. Mounted once, at the root of the app.
+ * tab too, which supabase-js tells of the sign-out. A tab that holds no session yet has nothing
+ * to forget: at start-up supabase-js signs out a stored session that is no longer valid while the
+ * session's query is still loading, and that load goes on. Mounted once, at the root of the app.
  */
 export function useForgetOnSignOut(client: SupabaseClient | null = supabase): void {
   const queryClient = useQueryClient()
@@ -31,7 +39,7 @@ export function useForgetOnSignOut(client: SupabaseClient | null = supabase): vo
     if (!client) return
     // The callback stays synchronous: supabase-js runs it while it holds its auth lock.
     const { data } = client.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') forgetSession(queryClient)
+      if (event === 'SIGNED_OUT' && hasAnonymousSession(queryClient)) forgetSession(queryClient)
     })
     return () => data.subscription.unsubscribe()
   }, [client, queryClient])

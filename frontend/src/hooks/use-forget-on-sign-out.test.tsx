@@ -1,15 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { screen } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { readDraft, saveDraft } from '@/features/classify/classification-store'
 import { EMPTY_OVERVIEW } from '@/lib/company-profile'
 import type * as SupabaseModule from '@/lib/supabase'
 import { createSupabase, supabase } from '@/lib/supabase'
-import { SUPABASE_URL } from '@/test/supabase-fixtures'
+import { server } from '@/test/msw-server'
+import { anonymousSession, SIGNUP_URL, SUPABASE_URL, USER_ID } from '@/test/supabase-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
+import { createUserDataStore, type StoredInventory } from '@/test/your-data-store'
 
+import { withAnonymousSession } from './use-anonymous-session'
 import { userDataOverviewKey } from './use-user-data-overview'
 
 vi.mock('@/lib/supabase', async (importOriginal) => {
@@ -25,7 +29,28 @@ const COUNTS_KEY = ['user-data', 'counts']
 const RUN_KEY = ['classification-run', 'tool-1']
 const SESSION_KEY = ['auth', 'anonymous-session']
 
+// A company profile and no tools: the sidebar names the company until the session is forgotten.
+const PROFILE_ONLY: StoredInventory[] = [
+  {
+    name: 'AI inventory',
+    company_name: 'Nordwerk Logistik GmbH',
+    staff_band: null,
+    turnover_band: null,
+    established_in: null,
+    used_in: null,
+    created_at: '2026-09-30T09:00:00+00:00',
+    systems: [],
+  },
+]
+
 let otherTab: SupabaseClient | null = null
+
+/** A second tab's client on the same stored session, as another open tab of the app has. */
+function openOtherTab(): SupabaseClient {
+  otherTab = createSupabase({ url: SUPABASE_URL, anonKey: 'test-anon-key' })
+  if (!otherTab) throw new Error('expected a client')
+  return otherTab
+}
 
 afterEach(async () => {
   await otherTab?.auth.stopAutoRefresh()
@@ -37,30 +62,108 @@ afterAll(async () => {
 })
 
 describe('a sign-out in another tab', () => {
-  it('forgets the draft and the cached user data, runs and session in this one', async () => {
+  it('forgets this tab’s draft, user data and runs, and signs in again only when used', async () => {
+    const store = createUserDataStore(PROFILE_ONLY)
+    server.use(...store.handlers)
     const queryClient = createTestQueryClient()
-    queryClient.setQueryData(userDataOverviewKey, {
-      inventoryId: 'inventory-1',
-      profile: null,
-      toolCount: 2,
-    })
     queryClient.setQueryData(COUNTS_KEY, { systems: 2 })
     queryClient.setQueryData(RUN_KEY, { toolId: 'tool-1' })
-    queryClient.setQueryData(SESSION_KEY, 'user-1')
     saveDraft({ name: 'CV screener', description: 'Ranks applicants.' })
-    renderRoute('/privacy', queryClient)
-    await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+    renderRoute('/app/classify', queryClient)
+    // The app frame starts this tab's session and shows the profile it reads.
+    expect(
+      await screen.findByText('Nordwerk Logistik GmbH', {}, { timeout: FIRST_RENDER_MS }),
+    ).toBeInTheDocument()
+    expect(store.calls.signup).toBe(1)
 
-    // Another tab's client, on the same stored session, ends it (as Delete my data does there):
-    // supabase-js tells this tab's client of the SIGNED_OUT.
-    otherTab = createSupabase({ url: SUPABASE_URL, anonKey: 'test-anon-key' })
-    const signedOut = await otherTab?.auth.signOut()
-    expect(signedOut?.error).toBeNull()
+    // Another tab ends the session (as Delete my data does there): supabase-js tells this one.
+    const signedOut = await openOtherTab().auth.signOut()
+    expect(signedOut.error).toBeNull()
 
     await vi.waitFor(() => expect(readDraft()).toEqual({ name: '', description: '' }))
     expect(queryClient.getQueryData(COUNTS_KEY)).toBeUndefined()
     expect(queryClient.getQueryData(RUN_KEY)).toBeUndefined()
-    expect(queryClient.getQueryData(SESSION_KEY)).toBeUndefined()
     expect(queryClient.getQueryData(userDataOverviewKey)).toEqual(EMPTY_OVERVIEW)
+    expect(await screen.findByText('No company profile yet')).toBeInTheDocument()
+    // The session is marked as ended, not started again: this tab hasn't been used since.
+    expect(queryClient.getQueryState(SESSION_KEY)).toMatchObject({
+      isInvalidated: true,
+      fetchStatus: 'idle',
+    })
+    expect(store.calls.signup).toBe(1)
+
+    // The other tab goes on first and starts the one new session; this tab, used next, takes
+    // that stored session instead of signing in a second time.
+    const signedIn = await otherTab?.auth.signInAnonymously()
+    expect(signedIn?.error).toBeNull()
+    expect(store.calls.signup).toBe(2)
+    await withAnonymousSession(queryClient, supabase)
+    expect(queryClient.getQueryState(SESSION_KEY)).toMatchObject({
+      data: USER_ID,
+      isInvalidated: false,
+    })
+    expect(store.calls.signup).toBe(2)
+  })
+
+  it('signs in on this tab’s next use when no other tab has', async () => {
+    const store = createUserDataStore(PROFILE_ONLY)
+    server.use(...store.handlers)
+    const queryClient = createTestQueryClient()
+    renderRoute('/app/classify', queryClient)
+    await screen.findByText('Nordwerk Logistik GmbH', {}, { timeout: FIRST_RENDER_MS })
+
+    await openOtherTab().auth.signOut()
+    expect(await screen.findByText('No company profile yet')).toBeInTheDocument()
+    expect(store.calls.signup).toBe(1)
+
+    await withAnonymousSession(queryClient, supabase)
+    expect(store.calls.signup).toBe(2)
+  })
+})
+
+describe('a sign-out while this tab’s session is still starting', () => {
+  it('keeps the session loading and the draft, and signs in once', async () => {
+    // At start-up supabase-js signs out a stored session that is no longer valid, while the
+    // session's query is already waiting on the sign-in.
+    let signups = 0
+    let answerSignup: () => void = () => undefined
+    const signupAnswered = new Promise<void>((resolve) => {
+      answerSignup = resolve
+    })
+    server.use(...createUserDataStore(PROFILE_ONLY).handlers)
+    // Ahead of the store's own sign-up: this one answers only when the test says so.
+    server.use(
+      http.post(SIGNUP_URL, async () => {
+        signups += 1
+        await signupAnswered
+        return HttpResponse.json(anonymousSession())
+      }),
+    )
+    let stopListening: () => void = () => undefined
+    const heardSignOut = new Promise<void>((resolve) => {
+      const listener = supabase?.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT') resolve()
+      })
+      stopListening = () => listener?.data.subscription.unsubscribe()
+    })
+    const queryClient = createTestQueryClient()
+    renderRoute('/app/classify', queryClient)
+    await expect.poll(() => signups, { timeout: FIRST_RENDER_MS }).toBe(1)
+    // Typed while the session starts: this tab holds no session yet, so nothing is forgotten.
+    saveDraft({ name: 'CV screener', description: 'Ranks applicants.' })
+
+    await openOtherTab().auth.signOut()
+    await heardSignOut
+    stopListening()
+    expect(queryClient.getQueryState(SESSION_KEY)).toMatchObject({
+      status: 'pending',
+      fetchStatus: 'fetching',
+    })
+    expect(readDraft()).toEqual({ name: 'CV screener', description: 'Ranks applicants.' })
+
+    answerSignup()
+    await vi.waitFor(() => expect(queryClient.getQueryData(SESSION_KEY)).toBe(USER_ID))
+    expect(await screen.findByText('Nordwerk Logistik GmbH')).toBeInTheDocument()
+    expect(signups).toBe(1)
   })
 })
