@@ -136,7 +136,7 @@ def test_answers_are_written_in_word_for_word() -> None:
     document = _workers_notice({"reviewer": "  HR team lead, as named.\nAnd her deputy.  "})
     section = next(section for section in document.sections if section.key == "reviewer")
     assert section.paragraphs == ("HR team lead, as named.\nAnd her deputy.",)
-    assert (section.provenance, section.question_key) == (Provenance.INTERVIEW, "reviewer")
+    assert (section.provenance, section.question_keys) == (Provenance.INTERVIEW, ("reviewer",))
 
 
 def test_prefilled_facts_are_only_the_ones_the_user_stated() -> None:
@@ -254,7 +254,7 @@ def test_every_template_is_complete_in_both_languages(template: DocumentTemplate
     assert TEMPLATES[template.id] is template
     assert re.fullmatch(TEMPLATE_PATTERN, template.id)
     keys = [spec.key for spec in template.sections]
-    question_keys = [question.question_key for question in template.questions]
+    question_keys = [question.key for question in template.questions]
     assert len(set(keys)) == len(keys)
     assert len(set(question_keys)) == len(question_keys)
     for language in Language:
