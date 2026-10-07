@@ -886,6 +886,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From X2b's backlog review (user, 2026-10-02):** DoD addition: the same refusal and second-model counts as V8, per full run. The Method page and `accuracy.json` figures (P27) name the second model and the refused share, so "engine model GPT-6 Luna" is not misleading.
   **From V6 (merged):** aiact evaluate report can't render qa (RAGAS) runs yet: means are in eval_runs.config.outcome.means and per-item scores in eval_case_results; add a RAGAS table. backend/aiact/cli.py is ~826 lines (over the 800 soft ceiling): split the evaluate commands into their own module when next touched.
   **From B4 (merged):** No case sets business_function: report Commission cases by their area:<folder> tag (and verdict:/annex_i_section: tags). cb-307's verdict tag records the Commission's leaning, not its label.
+  **From V7 (merged):** cli.py was 874 lines on main before V7 and grows past 900 with it: split the evaluate commands (eval_app, ~lines 277-745) into their own module, and pull out one helper for the repeated 'except psycopg.Error → database error (...); check DATABASE_URL → exit 2' block (9 copies). Do it in its own small refactor or with the next eval CLI change, not inside a feature story.
 
 - [ ] **S2 · Premium comparison** · Deps: V8 · Type: mixed
   Output: Claude Sonnet 5 on 25 cases, added to the report.
