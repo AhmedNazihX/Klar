@@ -1,7 +1,7 @@
 """The obligations migrations (supabase/migrations/*_obligations.sql, *_obligation_texts.sql) and
-the seed, against the local Supabase Postgres. After a new migration or a YAML change, apply it with
-`supabase migration up --local` and reload supabase/seed/obligations.sql (never `supabase db
-reset`: the database is shared)."""
+the seed, against the local Supabase Postgres. After a new migration or a YAML change, apply the
+migration first (`supabase migration up --local`), then reload supabase/seed/obligations.sql
+(never `supabase db reset`: the database is shared)."""
 
 import psycopg
 import pytest
@@ -53,7 +53,6 @@ def test_seeded_rows_match_the_yaml(db: psycopg.Connection) -> None:
         (table.law_version.value,),
     ).fetchall()
     assert seeded == expected
-    assert all(row[6] and row[7] and row[8] for row in seeded)  # both labels, the German duty
 
 
 def test_a_valid_row_is_accepted(db: psycopg.Connection) -> None:

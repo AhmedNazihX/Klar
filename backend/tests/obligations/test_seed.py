@@ -49,6 +49,14 @@ def test_seed_escapes_quotes_and_writes_nulls() -> None:
     assert "delete from public.obligations where law_version = 'amended';" in sql
 
 
+def test_the_delete_and_insert_run_in_one_transaction() -> None:
+    """A seed that fails half-way (e.g. loaded before the migration) keeps the old rows."""
+    sql = render_seed_sql(QUOTED)
+    steps = ("begin;", "delete from public.obligations", "insert into", "commit;")
+    assert [sql.index(step) for step in steps] == sorted(sql.index(step) for step in steps)
+    assert sql.rstrip().endswith("commit;")
+
+
 def test_write_seed_sql_is_idempotent(tmp_path: Path) -> None:
     target = tmp_path / "obligations.sql"
     assert write_seed_sql(QUOTED, target) is True

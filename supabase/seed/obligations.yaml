@@ -55,10 +55,10 @@ obligations:
   - key: prohibited-practice
     roles: [provider, deployer, importer]
     risk_classes: [prohibited]
-    duty: Do not place the system on the market, put it into service or use it.
-    duty_de: "Das System nicht in Verkehr bringen, nicht in Betrieb nehmen und nicht verwenden."
-    label_en: "Don't offer it, put it into service or use it"
-    label_de: "Das System weder anbieten noch in Betrieb nehmen noch verwenden"
+    duty: &prohibited Do not place the system on the market, put it into service or use it.
+    duty_de: &prohibited-de "Das System nicht in Verkehr bringen, nicht in Betrieb nehmen und nicht verwenden."
+    label_en: &prohibited-label-en "Don't offer it, put it into service or use it"
+    label_de: &prohibited-label-de "Das System weder anbieten noch in Betrieb nehmen noch verwenden"
     article: art:5:1
     applies_from: 2025-02-02
     applies_if: The practice falls under Art. 5(1) points (a) to (h).
@@ -66,10 +66,10 @@ obligations:
   - key: prohibited-intimate-imagery
     roles: [provider, deployer, importer]
     risk_classes: [prohibited]
-    duty: Do not place the system on the market, put it into service or use it.
-    duty_de: "Das System nicht in Verkehr bringen, nicht in Betrieb nehmen und nicht verwenden."
-    label_en: "Don't offer it, put it into service or use it"
-    label_de: "Das System weder anbieten noch in Betrieb nehmen noch verwenden"
+    duty: *prohibited
+    duty_de: *prohibited-de
+    label_en: *prohibited-label-en
+    label_de: *prohibited-label-de
     article: art:5:1:ba
     applies_from: 2026-12-02
     applies_if: >-
@@ -79,10 +79,10 @@ obligations:
   - key: prohibited-csam
     roles: [provider, deployer, importer]
     risk_classes: [prohibited]
-    duty: Do not place the system on the market, put it into service or use it.
-    duty_de: "Das System nicht in Verkehr bringen, nicht in Betrieb nehmen und nicht verwenden."
-    label_en: "Don't offer it, put it into service or use it"
-    label_de: "Das System weder anbieten noch in Betrieb nehmen noch verwenden"
+    duty: *prohibited
+    duty_de: *prohibited-de
+    label_en: *prohibited-label-en
+    label_de: *prohibited-label-de
     article: art:5:1:bb
     applies_from: 2026-12-02
     applies_if: >-
@@ -95,11 +95,11 @@ obligations:
     duty: &distributor-prohibited >-
       This system can't lawfully be placed on the EU market or used (Art. 5). The Act doesn't name
       distributors in Art. 5, but don't supply it.
-    duty_de: >-
-      Dieses System darf in der EU nicht rechtmäßig in Verkehr gebracht oder verwendet werden (Art.
-      5). Art. 5 nennt Händler nicht ausdrücklich, liefern Sie es dennoch nicht.
-    label_en: "Don't supply it: it can't lawfully be sold or used in the EU"
-    label_de: "Nicht liefern: Es darf in der EU weder in Verkehr gebracht noch verwendet werden"
+    duty_de: &distributor-prohibited-de >-
+      Dieses System darf in der EU nicht rechtmäßig in Verkehr gebracht oder verwendet werden
+      (Art. 5). Art. 5 nennt Händler nicht ausdrücklich, liefern Sie es dennoch nicht.
+    label_en: &distributor-prohibited-label-en "Don't supply it: it can't lawfully be sold or used in the EU"
+    label_de: &distributor-prohibited-label-de "Nicht liefern: Es darf in der EU weder in Verkehr gebracht noch verwendet werden"
     article: art:5:1
     applies_from: 2025-02-02
     is_informational: true
@@ -109,11 +109,9 @@ obligations:
     roles: [distributor]
     risk_classes: [prohibited]
     duty: *distributor-prohibited
-    duty_de: >-
-      Dieses System darf in der EU nicht rechtmäßig in Verkehr gebracht oder verwendet werden (Art.
-      5). Art. 5 nennt Händler nicht ausdrücklich, liefern Sie es dennoch nicht.
-    label_en: "Don't supply it: it can't lawfully be sold or used in the EU"
-    label_de: "Nicht liefern: Es darf in der EU weder in Verkehr gebracht noch verwendet werden"
+    duty_de: *distributor-prohibited-de
+    label_en: *distributor-prohibited-label-en
+    label_de: *distributor-prohibited-label-de
     article: art:5:1:ba
     applies_from: 2026-12-02
     is_informational: true
@@ -123,35 +121,109 @@ obligations:
     roles: [distributor]
     risk_classes: [prohibited]
     duty: *distributor-prohibited
-    duty_de: >-
-      Dieses System darf in der EU nicht rechtmäßig in Verkehr gebracht oder verwendet werden (Art.
-      5). Art. 5 nennt Händler nicht ausdrücklich, liefern Sie es dennoch nicht.
-    label_en: "Don't supply it: it can't lawfully be sold or used in the EU"
-    label_de: "Nicht liefern: Es darf in der EU weder in Verkehr gebracht noch verwendet werden"
+    duty_de: *distributor-prohibited-de
+    label_en: *distributor-prohibited-label-en
+    label_de: *distributor-prohibited-label-de
     article: art:5:1:bb
     applies_from: 2026-12-02
     is_informational: true
     applies_if: The system generates or manipulates child sexual abuse material.
 
   # --- High-risk: provider (Art. 16 and the duties it points to) --------------------------------
-  - key: hr-provider-requirements
+  # Art. 16(a) ("meet the requirements in Section 2") is listed as one row per requirement, as the
+  # provider layout shows them (user, 2026-10-07, C9); Art. 11 has its own row below.
+  - key: hr-provider-risk-management
     roles: [provider]
     risk_classes: [high_risk]
     duty: >-
-      Make sure the system meets the high-risk requirements: risk management, data governance,
-      technical documentation, logging, instructions for deployers, human oversight, accuracy,
-      robustness and cybersecurity (Art. 9 to 15).
+      Establish, implement, document and maintain a risk management system, run as a continuous
+      process over the system's whole lifecycle.
     duty_de: >-
-      Sicherstellen, dass das System die Anforderungen an Hochrisiko-KI-Systeme erfüllt:
-      Risikomanagementsystem, Daten und Daten-Governance, technische Dokumentation,
-      Aufzeichnungspflichten, Transparenz und Bereitstellung von Informationen für die Betreiber,
-      menschliche Aufsicht sowie Genauigkeit, Robustheit und Cybersicherheit (Art. 9 bis 15).
-    label_en: "Build it to meet the high-risk requirements, from risk management to cybersecurity"
-    label_de: >-
-      Die Hochrisiko-Anforderungen erfüllen, vom Risikomanagement bis zur Cybersicherheit
+      Ein Risikomanagementsystem einrichten, anwenden, dokumentieren und aufrechterhalten, als
+      kontinuierlichen Prozess über den gesamten Lebenszyklus des Systems.
+    label_en: "Run a risk management system for its whole life"
+    label_de: "Ein Risikomanagementsystem über den gesamten Lebenszyklus betreiben"
     group: build
     document: art_9_risk_management
-    article: art:16:a
+    article: art:9
+    applies_from: {annex_iii: 2027-12-02, annex_i: 2028-08-02}
+
+  - key: hr-provider-data-governance
+    roles: [provider]
+    risk_classes: [high_risk]
+    duty: >-
+      Develop the system on training, validation and testing data sets that meet the quality
+      criteria of Art. 10 and are subject to appropriate data governance and management practices.
+    duty_de: >-
+      Das System mit Trainings-, Validierungs- und Testdatensätzen entwickeln, die den
+      Qualitätskriterien des Art. 10 entsprechen und geeigneten Daten-Governance- und
+      Datenverwaltungsverfahren unterliegen.
+    label_en: "Use training and test data that fit the purpose"
+    label_de: "Trainings- und Testdaten verwenden, die zum Zweck passen"
+    group: build
+    article: art:10
+    applies_from: {annex_iii: 2027-12-02, annex_i: 2028-08-02}
+
+  - key: hr-provider-record-keeping
+    roles: [provider]
+    risk_classes: [high_risk]
+    duty: Make sure the system technically allows the automatic recording of events (logs) over its lifetime.
+    duty_de: >-
+      Sicherstellen, dass die Technik des Systems die automatische Aufzeichnung von Ereignissen
+      (Protokollierung) während seines Lebenszyklus ermöglicht.
+    label_en: "Make it log its operation automatically"
+    label_de: "Den Betrieb automatisch protokollieren lassen"
+    group: build
+    article: art:12
+    applies_from: {annex_iii: 2027-12-02, annex_i: 2028-08-02}
+
+  - key: hr-provider-transparency
+    roles: [provider]
+    risk_classes: [high_risk]
+    duty: >-
+      Design the system so that its operation is transparent enough for deployers to interpret its
+      output and use it appropriately, and give it concise, complete, correct and clear instructions
+      for use.
+    duty_de: >-
+      Das System so konzipieren und entwickeln, dass sein Betrieb hinreichend transparent ist, damit
+      die Betreiber seine Ausgaben angemessen interpretieren und verwenden können, und ihm präzise,
+      vollständige, korrekte und eindeutige Betriebsanleitungen beifügen.
+    label_en: "Write clear instructions for the people who use it"
+    label_de: "Eine verständliche Betriebsanleitung für die Betreiber erstellen"
+    group: build
+    article: art:13
+    applies_from: {annex_iii: 2027-12-02, annex_i: 2028-08-02}
+
+  - key: hr-provider-human-oversight
+    roles: [provider]
+    risk_classes: [high_risk]
+    duty: >-
+      Design the system so that natural persons can oversee it effectively while it is in use,
+      including through appropriate human-machine interface tools.
+    duty_de: >-
+      Das System so konzipieren und entwickeln, dass es während der Dauer seiner Verwendung, auch
+      mit geeigneten Instrumenten einer Mensch-Maschine-Schnittstelle, von natürlichen Personen
+      wirksam beaufsichtigt werden kann.
+    label_en: "Design it so people can oversee and override it"
+    label_de: "Es so gestalten, dass Menschen es beaufsichtigen und eingreifen können"
+    group: build
+    article: art:14
+    applies_from: {annex_iii: 2027-12-02, annex_i: 2028-08-02}
+
+  - key: hr-provider-accuracy
+    roles: [provider]
+    risk_classes: [high_risk]
+    duty: >-
+      Design the system to achieve an appropriate level of accuracy, robustness and cybersecurity,
+      and to perform consistently in those respects throughout its lifecycle.
+    duty_de: >-
+      Das System so konzipieren und entwickeln, dass es ein angemessenes Maß an Genauigkeit,
+      Robustheit und Cybersicherheit erreicht und in dieser Hinsicht während seines gesamten
+      Lebenszyklus beständig funktioniert.
+    label_en: "Make it accurate, robust and secure"
+    label_de: "Für Genauigkeit, Robustheit und Cybersicherheit sorgen"
+    group: build
+    article: art:15
     applies_from: {annex_iii: 2027-12-02, annex_i: 2028-08-02}
 
   - key: hr-provider-contact

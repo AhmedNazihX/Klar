@@ -126,8 +126,12 @@ def test_high_risk_without_a_route_lists_route_dependent_duties_once_per_route()
 def test_provider_high_risk_gets_art_16_and_the_duties_it_points_to() -> None:
     duties = _list(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
     articles = _articles(duties)
-    art_16 = [f"art:16:{point}" for point in "abcdefghijkl"]
+    art_16 = [f"art:16:{point}" for point in "bcdefghijkl"]
     assert set(art_16) <= set(articles)
+    # Art. 16(a) is listed as its requirements, one row each (user, 2026-10-07, C9).
+    requirements = ["art:9", "art:10", "art:12", "art:13", "art:14", "art:15"]
+    assert articles[1:7] == requirements
+    assert "art:16:a" not in articles
     assert {"art:11:1", "art:22:1", "art:72:1", "art:73:1", "art:50:1", "art:50:2"} <= set(articles)
     high_risk = [d for d in duties if not d.article.startswith(("art:4:", "art:50:", "art:53:"))]
     assert {d.applies_from for d in high_risk} == {ANNEX_III_FROM}
@@ -142,13 +146,13 @@ def test_provider_high_risk_relief_for_smes_and_small_mid_caps() -> None:
         assert relief is not None
         assert "SMC" in relief
         assert "SME" in relief
-    assert by_article["art:16:a"].relief_note is None
+    assert by_article["art:9"].relief_note is None
 
 
 def test_provider_registration_in_the_eu_database_is_annex_iii_only() -> None:
     annex_i = _articles(_list(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_I))
     assert "art:16:i" not in annex_i
-    assert "art:16:a" in annex_i
+    assert "art:9" in annex_i
 
 
 def test_limited_risk_transparency_duties_apply_from_2_aug_2026() -> None:
