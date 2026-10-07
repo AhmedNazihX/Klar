@@ -374,7 +374,8 @@ HARMONISATION_WORDS = re.compile(
 GERMAN_ACCUSATIVE: Mapping[str, str] = {"Druckgeräten": "Druckgeräte"}
 """A noun left in the dative once "über die Bereitstellung von" is dropped from a title."""
 TITLE_END = re.compile(
-    r",| and repealing| und zur Aufhebung| zur Aufhebung| sowie| auf dem Markt| \(OJ| \(ABl"
+    r",| and repealing| und zur Aufhebung| zur Aufhebung| und zur Änderung| sowie| auf dem Markt"
+    r"| \(OJ| \(ABl"
 )
 
 
@@ -391,21 +392,23 @@ def law_title(provision: Provision) -> str:
 
 ANNEX_I_SUCCESSORS: Mapping[tuple[LawVersion | None, Language, str], str] = {
     (LawVersion.ORIGINAL, EN, "annex:I:A:1"): (
-        "repealed and replaced by Regulation (EU) 2023/1230 on machinery"
+        "repealed by Regulation (EU) 2023/1230 on machinery with effect from 20 January 2027"
     ),
     (LawVersion.ORIGINAL, DE, "annex:I:A:1"): (
-        "aufgehoben und ersetzt durch die Verordnung (EU) 2023/1230 über Maschinen"
+        "mit Wirkung vom 20. Januar 2027 aufgehoben durch die Verordnung (EU) 2023/1230 über "
+        "Maschinen"
     ),
 }
-"""The act that has since replaced an Annex I law the original text still names (E11). The
+"""The act that repeals an Annex I law the original text still names (E11). The
 original A.1 names Directive 2006/42/EC, which Regulation (EU) 2023/1230 "on machinery and
-repealing Directive 2006/42/EC" replaces (its title, as quoted in Omnibus Art. 1(41)(b)); the
+repealing Directive 2006/42/EC" repeals (its title, as quoted in Omnibus Art. 1(41)(b)) with
+effect from 20 January 2027 (a date from that Regulation, which data/ does not hold); the
 Omnibus moves the updated reference to Section B (recital 42)."""
 
 
 def annex_i_entry(provision: Provision) -> str:
     """One Annex I line of the high-risk prompt: the id, the law's short title, and the act that
-    replaced it where the text read still names a repealed one."""
+    repeals it where the text read still names a law being repealed."""
     key = (provision.law_version, provision.language, provision.provision_id)
     successor = ANNEX_I_SUCCESSORS.get(key)
     note = f" ({successor})" if successor else ""

@@ -661,6 +661,14 @@ def test_the_law_title_is_shortened_to_number_and_subject() -> None:
         Language.DE,
     )
     assert law_title(pressure) == "Richtlinie 2014/68/EU über Druckgeräte"
+    machinery = provision(
+        "annex:I:A:1",
+        "1. Richtlinie 2006/42/EG des Europäischen Parlaments und des Rates vom 17. Mai 2006 über "
+        "Maschinen und zur Änderung der Richtlinie 95/16/EG (ABl. L 157 vom 9.6.2006, S. 24)",
+        Language.DE,
+        LawVersion.ORIGINAL,
+    )
+    assert law_title(machinery) == "Richtlinie 2006/42/EG über Maschinen"
 
 
 # --- The original text (E11) --------------------------------------------------------------------
@@ -825,8 +833,8 @@ def test_only_the_original_text_gets_the_note_that_art_6_1a_to_1c_do_not_exist()
         pytest.param(
             Language.EN,
             ORIGINAL_ANNEX_I_TEXT["annex:I:A:1"],
-            "[annex:I:A:1] Directive 2006/42/EC on machinery (repealed and replaced by "
-            "Regulation (EU) 2023/1230 on machinery)",
+            "[annex:I:A:1] Directive 2006/42/EC on machinery (repealed by Regulation (EU) "
+            "2023/1230 on machinery with effect from 20 January 2027)",
             id="en",
         ),
         pytest.param(
@@ -834,13 +842,13 @@ def test_only_the_original_text_gets_the_note_that_art_6_1a_to_1c_do_not_exist()
             "1. Richtlinie 2006/42/EG des Europäischen Parlaments und des Rates vom 17. Mai 2006 "
             "über Maschinen und zur Änderung der Richtlinie 95/16/EG (ABl. L 157 vom 9.6.2006, "
             "S. 24)",
-            "[annex:I:A:1] Richtlinie 2006/42/EG über Maschinen und zur Änderung der Richtlinie "
-            "95/16/EG (aufgehoben und ersetzt durch die Verordnung (EU) 2023/1230 über Maschinen)",
+            "[annex:I:A:1] Richtlinie 2006/42/EG über Maschinen (mit Wirkung vom 20. Januar 2027 "
+            "aufgehoben durch die Verordnung (EU) 2023/1230 über Maschinen)",
             id="de",
         ),
     ],
 )
-def test_the_original_a_1_entry_names_the_machinery_regulation_that_replaced_it(
+def test_the_original_a_1_entry_names_the_machinery_regulation_that_repeals_it(
     language: Language, text: str, line: str
 ) -> None:
     """The original A.1 names only Directive 2006/42/EC: the prompt adds Regulation (EU)
@@ -849,15 +857,15 @@ def test_the_original_a_1_entry_names_the_machinery_regulation_that_replaced_it(
     assert annex_i_entry(provision("annex:I:A:1", text, language)) == line.split(" (")[0]
 
 
-def test_only_the_original_prompt_lists_machinery_with_its_replacing_regulation() -> None:
+def test_only_the_original_prompt_lists_machinery_with_its_repealing_regulation() -> None:
     entry = (
-        "[annex:I:A:1] Directive 2006/42/EC on machinery (repealed and replaced by "
-        "Regulation (EU) 2023/1230 on machinery)\n"
+        "[annex:I:A:1] Directive 2006/42/EC on machinery (repealed by Regulation (EU) "
+        "2023/1230 on machinery with effect from 20 January 2027)\n"
     )
     original = node.high_risk_messages(state(law_version=ORIGINAL), retrieved(law_version=ORIGINAL))
     amended = node.high_risk_messages(state(), retrieved())
     assert entry in str(original[1].content)
-    assert "replaced by" not in str(amended[1].content)
+    assert "repealed by" not in str(amended[1].content)
 
 
 # --- Retrieval and analogy -----------------------------------------------------------------------
@@ -1608,6 +1616,7 @@ def test_replay_original_machinery_guard_is_annex_i_section_a(
     assert result.annex_point == "annex:I:A:1", shown
     assert step.status is Status.DECIDED, shown
     assert "art:2:2" not in cited(result), shown
+    assert "Art. 2 Abs. 2" not in step.decision, shown  # the case is German
 
 
 @pytest.mark.vcr

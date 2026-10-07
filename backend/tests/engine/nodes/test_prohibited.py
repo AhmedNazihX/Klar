@@ -1235,7 +1235,8 @@ DECEMBER_PROVISIONS = ("art:5:1:ba", "art:5:1:bb", "art:5:1a", "art:5:1b", "art:
 
 @pytest.mark.xfail(
     strict=True,
-    reason="provider refusal (decision 030); passes once X2b answers refused requests",
+    reason="provider refusal (decision 030): record only after X2b adds its refusal route, "
+    "then drop this mark",
 )
 @pytest.mark.vcr
 def test_replay_original_text_reads_no_december_point(
@@ -1245,8 +1246,11 @@ def test_replay_original_text_reads_no_december_point(
     Art. 5(1a) and (1b): not prohibited, and no December point is read or cited. Its amended
     replay (`test_b5c_case_replay`) reads it against (ba) and its Art. 5(1a) routes. The other
     (ba) cases are refused by the provider's content filter (decision 029), so they can't show
-    the difference. own-c-03 itself was refused under the original text too (decision 030), so
-    it has no recording yet."""
+    the difference.
+
+    The provider refused own-c-03 under the original text too (decision 030), so it has no
+    recording and skips. Its "record it with" skip message does not apply yet: recording waits
+    for X2b's refusal route; record it then and drop the xfail mark."""
     case = next((c for c in B5C_CASES if c.id == "own-c-03-image-tool-with-safeguards"), None)
     if case is None:
         pytest.skip(f"own-c-03 is not in {B5C_CASES_DIR}")
