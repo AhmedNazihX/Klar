@@ -39,7 +39,6 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Protocol
 
-import psycopg
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError
@@ -53,6 +52,7 @@ from aiact.engine.nodes.common import (
     named_passages,
     refused_check,
 )
+from aiact.engine.nodes.corpus import CorpusReader, CorpusReading
 from aiact.engine.nodes.key_facts import Answer, CitedFact, KeyFact, facts_used
 from aiact.engine.nodes.questions import follow_up, hint, open_question
 from aiact.engine.nodes.reading_side import ReadingSide
@@ -82,8 +82,8 @@ from aiact.llm.structured import (
     json_schema_format,
     parse_reply,
 )
-from aiact.retrieval.provisions import Provision, get_provision
-from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
+from aiact.retrieval.provisions import Provision
+from aiact.retrieval.search import QueryEmbedder, SearchHit
 from aiact.schemas import (
     Citation,
     EvidenceTag,
@@ -182,47 +182,36 @@ class ScopeLibrary(Protocol):
     def definition_guidance(self, query: str, lookup: Lookup) -> tuple[SearchHit, ...]: ...
 
 
-class CorpusLibrary:
-    """The corpus through `get_provision` and `search_ai_act`. Without a `connection`, each call
-    opens one from DATABASE_URL; without an `embedder`, search builds one from the settings."""
-
-    def __init__(
-        self, connection: psycopg.Connection | None = None, embedder: QueryEmbedder | None = None
-    ) -> None:
-        self._connection = connection
-        self._embedder = embedder
-
-    def provision(self, provision_id: str, lookup: Lookup) -> Provision:
-        """Raises `ProvisionNotFoundError` when the corpus has no text for it."""
-        return get_provision(
-            provision_id,
-            lookup.language,
-            lookup.law_version,
-            lookup.as_of,
-            include_held_out=lookup.include_held_out,
-            connection=self._connection,
-        )
+class CorpusLibrary(CorpusReader):
+    """The corpus over one connection and one embedder (`ScopeCheck` opens the connection once
+    per use), its guidance searches limited to the definition guidelines."""
 
     def definition_guidance(self, query: str, lookup: Lookup) -> tuple[SearchHit, ...]:
         """The best passages of the definition guidelines in the language asked for, else in
         English (most guidance exists only in English)."""
         for language in dict.fromkeys((lookup.language, Language.EN)):
-            results = search_ai_act(
+            hits = self.passages(
                 query,
-                language,
-                lookup.law_version,
-                lookup.as_of,
+                lookup,
+                language=language,
                 doc_keys=GUIDANCE_DOC_KEYS,
-                exclude_source_example_ids=lookup.exclude_source_example_ids,
-                include_held_out=lookup.include_held_out,
-                max_distance=None,
                 limit=GUIDANCE_PASSAGES,
-                embedder=self._embedder,
-                connection=self._connection,
             )
-            if results.hits:
-                return results.hits
+            if hits:
+                return hits
         return ()
+
+
+def retrieve(
+    state: EngineState, library: ScopeLibrary
+) -> tuple[tuple[Provision, ...], tuple[SearchHit, ...]]:
+    """The law the prompt quotes (Art. 3(1) and Art. 2) by lookup, then the definition guidance
+    closest to the description. Raises `ProvisionNotFoundError` when the corpus lacks a
+    provision."""
+    lookup = lookup_for(state)
+    law = tuple(library.provision(pid, lookup) for pid in LAW_IN_PROMPT)
+    query = GUIDANCE_QUERY.format(description=state["description"])
+    return law, library.definition_guidance(query, lookup)
 
 
 # --- Settling scope -----------------------------------------------------------------------------
@@ -510,27 +499,26 @@ class ScopeCheck:
         """`chat` replaces the OpenRouter model and `library` the corpus (tests). Raises
         `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the
         model is always pinned to its EU endpoint with fallbacks off (decision 005). Without a
-        `library`, searches embed with `embedder` (shared by a run, E10), or with one built from
-        the settings."""
+        `library`, the query embedder is `embedder` (shared by a run, E10) or is built here
+        from the same settings, so `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER` must be set too;
+        each step then reads the corpus over a short connection before the model call, and
+        another for the citations after it."""
         self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
-        self._library = library or CorpusLibrary(embedder=embedder)
+        self._reading = CorpusReading(library, CorpusLibrary, embedder=embedder, settings=settings)
 
     def __call__(self, state: EngineState) -> CheckOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises
         `ScopeOutputError` when any other reply doesn't fit `ScopeAnswer`, and
         `ProvisionNotFoundError` when the corpus lacks a provision the step reads or cites."""
-        lookup = lookup_for(state)
-        law = tuple(self._library.provision(pid, lookup) for pid in LAW_IN_PROMPT)
-        query = GUIDANCE_QUERY.format(description=state["description"])
-        guidance = self._library.definition_guidance(query, lookup)
+        law, guidance = self._reading(lambda library: retrieve(state, library))
         reply = self._model.invoke(
             scope_messages(state, law, guidance), response_format=SCOPE_RESPONSE_FORMAT
         )
         try:
             answer = parse_reply(reply, ScopeAnswer)
         except ProviderRefusalError:
-            return refusal_outcome(state, law, self._library)
+            return self._reading(lambda library: refusal_outcome(state, law, library))
         except ValidationError as exc:
             message = f"scope answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise ScopeOutputError(message) from None
-        return to_outcome(answer, state, guidance, self._library)
+        return self._reading(lambda library: to_outcome(answer, state, guidance, library))

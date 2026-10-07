@@ -5,17 +5,21 @@ The descriptions and answers here are invented, not benchmark cases. The replay 
 cases only to compare the node's outcome with their labels.
 """
 
-from contextlib import nullcontext
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any
+from typing import Any, cast
 
+import psycopg
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
 
+from aiact.db import connect
 from aiact.engine.graph import build_graph
+from aiact.engine.nodes import corpus as corpus_module
 from aiact.engine.nodes import scope as node
 from aiact.engine.nodes.key_facts import Answer, KeyFact
 from aiact.engine.nodes.scope import (
@@ -34,6 +38,7 @@ from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
 from aiact.eval.experiments.matchers import replay_state, scope_matches
+from aiact.llm import OpenRouterEmbeddings
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit, SearchResults
 from aiact.schemas import (
@@ -570,6 +575,18 @@ def _results(language: Language, *hits: SearchHit) -> SearchResults:
     )
 
 
+NO_CONNECTION = cast(psycopg.Connection, None)
+"""The searches are replaced, so the connection is never used."""
+
+
+class FakeEmbedder:
+    model = "qwen/qwen3-embedding-8b"
+    dimensions = 2
+
+    def embed_query(self, text: str) -> list[float]:
+        return [1.0, 0.0]
+
+
 def test_guidance_search_is_limited_to_the_definition_guidelines_and_falls_back_to_english(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -579,9 +596,9 @@ def test_guidance_search_is_limited_to_the_definition_guidelines_and_falls_back_
         calls.append({"language": language, **kwargs})
         return _results(language) if language is Language.DE else _results(language, *PASSAGES)
 
-    monkeypatch.setattr(node, "search_ai_act", fake_search)
+    monkeypatch.setattr(corpus_module, "search_ai_act", fake_search)
     lookup = Lookup(Language.DE, LawVersion.AMENDED, AS_OF, ("hr-ex-001",))
-    found = CorpusLibrary().definition_guidance("q", lookup)
+    found = CorpusLibrary(NO_CONNECTION, FakeEmbedder()).definition_guidance("q", lookup)
     assert found == PASSAGES
     assert [call["language"] for call in calls] == [Language.DE, Language.EN]
     for call in calls:
@@ -599,9 +616,9 @@ def test_english_guidance_is_searched_once(monkeypatch: pytest.MonkeyPatch) -> N
         languages.append(language)
         return _results(language)
 
-    monkeypatch.setattr(node, "search_ai_act", fake_search)
+    monkeypatch.setattr(corpus_module, "search_ai_act", fake_search)
     lookup = Lookup(Language.EN, LawVersion.AMENDED, AS_OF, ())
-    assert CorpusLibrary().definition_guidance("q", lookup) == ()
+    assert CorpusLibrary(NO_CONNECTION, FakeEmbedder()).definition_guidance("q", lookup) == ()
     assert languages == [Language.EN]
 
 
@@ -705,6 +722,12 @@ def luna_settings(openrouter_settings: Settings) -> Settings:
     )
 
 
+@contextmanager
+def _live_corpus(settings: Settings) -> Iterator[CorpusLibrary]:
+    with connect() as connection:
+        yield CorpusLibrary(connection, OpenRouterEmbeddings(settings=settings))
+
+
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -729,7 +752,7 @@ def test_b5b_case_replay(
         default_cassette_name,
         record_mode,
         RECORD_COMMAND,
-        lambda: nullcontext(CorpusLibrary()),
+        lambda: _live_corpus(luna_settings),
     ) as recording:
         library = RecordedScopeLibrary(recording)
         run_state = replay_state(case, AS_OF)

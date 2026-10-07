@@ -23,8 +23,8 @@ from pydantic import Field, SecretStr
 from aiact.db import connect
 from aiact.engine.citations import with_checked_citations
 from aiact.engine.graph import EngineNodes, build_graph
+from aiact.engine.nodes import corpus as corpus_module
 from aiact.engine.nodes import high_risk as node
-from aiact.engine.nodes import high_risk_retrieval as retrieval
 from aiact.engine.nodes.common import Lookup
 from aiact.engine.nodes.high_risk import (
     AnnexIAnswer,
@@ -930,7 +930,7 @@ def test_the_corpus_hands_the_filter_to_search_ai_act_over_one_connection(
         seen.append(kwargs)
         return FakeSearch()(query, language, law_version, as_of, **kwargs)
 
-    monkeypatch.setattr(retrieval, "search_ai_act", spy)
+    monkeypatch.setattr(corpus_module, "search_ai_act", spy)
     connection, embedder = cast(psycopg.Connection, object()), FakeEmbedder()
     library = HighRiskCorpus(connection, embedder)
     retrieve(state(language=Language.DE, exclude=EXCLUDED), _only_search(library))
@@ -964,7 +964,7 @@ def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPa
         seen.append(connection)
         return provision(provision_id)
 
-    monkeypatch.setattr(retrieval, "get_provision", spy)
+    monkeypatch.setattr(corpus_module, "get_provision", spy)
     connection = cast(psycopg.Connection, object())
     library = HighRiskCorpus(connection, FakeEmbedder())
     library.provision("art:6:1", Lookup(Language.EN, LawVersion.AMENDED, AS_OF, ()))
@@ -1033,10 +1033,10 @@ def test_a_check_without_a_library_builds_one_embedder_and_holds_no_connection_o
     def no_connection_open() -> None:
         assert not any(c.is_open for c in connections)
 
-    monkeypatch.setattr(node, "connect", fake_connect)
-    monkeypatch.setattr(node, "OpenRouterEmbeddings", Embeddings)
-    monkeypatch.setattr(retrieval, "search_ai_act", search)
-    monkeypatch.setattr(retrieval, "get_provision", lookup)
+    monkeypatch.setattr(corpus_module, "connect", fake_connect)
+    monkeypatch.setattr(corpus_module, "OpenRouterEmbeddings", Embeddings)
+    monkeypatch.setattr(corpus_module, "search_ai_act", search)
+    monkeypatch.setattr(corpus_module, "get_provision", lookup)
     replies = iter([AIMessage(content=answer(RANKS_APPLICANTS).model_dump_json())] * 2)
     settings = _settings()
     check = HighRiskCheck(settings, chat=ProbeChat(messages=replies, probe=no_connection_open))

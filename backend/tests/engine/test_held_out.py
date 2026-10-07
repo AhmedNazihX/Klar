@@ -15,7 +15,7 @@ import pytest
 
 from aiact.engine import citations
 from aiact.engine.citations import CorpusCitations, resolve
-from aiact.engine.nodes import guideline_retrieval, high_risk_retrieval, prohibited, scope
+from aiact.engine.nodes import corpus, prohibited, scope
 from aiact.engine.nodes.common import Lookup
 from aiact.engine.nodes.guideline_retrieval import GuidelineCorpus
 from aiact.engine.nodes.high_risk_retrieval import HighRiskCorpus
@@ -64,7 +64,7 @@ def _provision(call: Callable[[], object]) -> None:
 
 
 def scope_calls(lookup: Lookup) -> None:
-    library = scope.CorpusLibrary(embedder=EMBEDDER)
+    library = scope.CorpusLibrary(NO_CONNECTION, EMBEDDER)
     _provision(lambda: library.provision("art:3:1", lookup))
     library.definition_guidance("a tool", lookup)
 
@@ -93,18 +93,15 @@ def citation_calls(lookup: Lookup) -> None:
 
 
 CALLERS: dict[str, tuple[ModuleType, Callable[[Lookup], None], set[str]]] = {
-    "scope": (scope, scope_calls, {"get_provision", "search_ai_act"}),
-    "prohibited and transparency": (
-        guideline_retrieval,
-        guideline_calls,
-        {"get_provision", "search_ai_act"},
-    ),
-    "high_risk": (high_risk_retrieval, high_risk_calls, {"get_provision", "search_ai_act"}),
+    "scope": (corpus, scope_calls, {"get_provision", "search_ai_act"}),
+    "prohibited and transparency": (corpus, guideline_calls, {"get_provision", "search_ai_act"}),
+    "high_risk": (corpus, high_risk_calls, {"get_provision", "search_ai_act"}),
     "citation validator": (citations, citation_calls, {"get_provision"}),
 }
-"""Every module that calls the retrieval functions for the engine, what drives its calls, and
-which functions it calls. (The facts and role checks call none: role quotes the parsed Act and
-the validator re-quotes it.)"""
+"""Every corpus library the engine reads through, the module that calls the retrieval functions
+for it (the checks' libraries share `aiact.engine.nodes.corpus`), and which functions it calls.
+(The facts and role checks call none: role quotes the parsed Act and the validator re-quotes
+it.)"""
 
 
 @pytest.mark.parametrize("name", sorted(CALLERS))
