@@ -39,11 +39,12 @@ export function renderWithProviders(ui: ReactElement): RenderResult {
   )
 }
 
-/** Render the whole app at `path`, with its real routes; `router` tells where it went. */
+/** Render the whole app at `path`, with its real routes; `router` tells where it went. Pass a
+ *  `client` to start from data already in the query cache. */
 export function renderRoute(
   path: string,
+  client: QueryClient = createTestQueryClient(),
 ): RenderResult & { router: ReturnType<typeof createAppRouter> } {
-  const client = createTestQueryClient()
   const router = createAppRouter(client, createMemoryHistory({ initialEntries: [path] }))
   const result = render(
     <Providers client={client}>

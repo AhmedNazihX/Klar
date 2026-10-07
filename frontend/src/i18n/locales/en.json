@@ -255,5 +255,268 @@
       "badFile": "This file isn't a Klar export. Choose a file you exported from Your data.",
       "failed": "That didn't work. Check your connection and try again."
     }
+  },
+  "classify": {
+    "title": "Describe the tool",
+    "subtitle": "A few sentences are enough. Klar asks for anything that decides the outcome.",
+    "nameLabel": "What do you call the tool?",
+    "namePlaceholder": "For example: Applicant screening",
+    "nameTooLong": "Keep the name under 200 characters.",
+    "descriptionLabel": "In your own words",
+    "descriptionRequired": "Describe the tool in a sentence or two first.",
+    "descriptionTooLong": "Keep the description under 20,000 characters.",
+    "tipsLabel": "Helpful to mention:",
+    "tips": {
+      "decides": "what it decides or suggests",
+      "affects": "who it affects",
+      "origin": "bought or built",
+      "changes": "anything you changed"
+    },
+    "privacy": "Leave out names and other personal details of applicants or staff.",
+    "language": "Klar answers in English. Citations quote the English text.",
+    "run": "Run the checks",
+    "running": "Checking…",
+    "untitled": "Your tool"
+  },
+  "progress": {
+    "heading": "Checking in the Act's order",
+    "subtitle": "No step is skipped. This usually takes under a minute.",
+    "check": {
+      "facts": "Facts read",
+      "scope": "1 Scope",
+      "prohibited": "2 Prohibited practices",
+      "high_risk": "3 High-risk",
+      "transparency": "4 Transparency",
+      "role_obligations": "Role and duties"
+    },
+    "reference": {
+      "facts": "Your description",
+      "scope": "Art. 2–3",
+      "prohibited": "Art. 5",
+      "high_risk": "Art. 6, Annex I and III",
+      "transparency": "Art. 50",
+      "role_obligations": "Art. 16, 23–26"
+    },
+    "runningDetail": {
+      "facts": "Reading your description",
+      "scope": "Checking whether the Act applies",
+      "prohibited": "Comparing with the banned practices",
+      "high_risk": "Comparing your description with Annex I and Annex III",
+      "transparency": "Checking the Art. 50 duties",
+      "role_obligations": "Working out your role and its duties"
+    },
+    "factsFound_one": "{{count}} fact found, {{questions}} to confirm",
+    "factsFound_other": "{{count}} facts found, {{questions}} to confirm",
+    "outcome": {
+      "inScope": "In scope",
+      "noMatch": "No match",
+      "checked": "Checked",
+      "ambiguous": "Legally ambiguous",
+      "listed": "Listed uses found",
+      "notListed": "No listed use found"
+    },
+    "detail": "{{outcome}}. {{reference}}",
+    "paused": "Waiting for one fact. {{reference}}",
+    "waiting": "Waiting. {{reference}}",
+    "notRun": "Not run yet",
+    "state": {
+      "done": "Done",
+      "running": "Running",
+      "waiting": "Waiting",
+      "paused": "Waiting for you",
+      "error": "Stopped"
+    },
+    "accuracy": "This assessment is only as accurate as the description you give.",
+    "stopped": {
+      "title": "The checks couldn't finish",
+      "notStarted": "The checks couldn't start",
+      "atCheck": "Stopped at check {{number}} of 4.",
+      "atFacts": "Stopped while reading the facts.",
+      "atDuties": "Stopped after the four checks.",
+      "body": "Nothing is lost: your description is kept. Klar never guesses a class when a check fails, so there's no result yet.",
+      "tryAgain": "Try again",
+      "saveForLater": "Save for later"
+    },
+    "reason": {
+      "check": "Stopped: this check couldn't finish.",
+      "busy": "Klar is busy right now. Try again in {{seconds}} seconds.",
+      "unavailable": "The checks aren't available right now. Try again later.",
+      "tooMany": "You've started many checks in a short time. Try again in {{seconds}} seconds.",
+      "tooManyNoTime": "You've started many checks in a short time. Try again in a minute.",
+      "invalid": "The description couldn't be sent. Keep it under 20,000 characters and try again.",
+      "server": "The service answered with an error (HTTP {{status}}).",
+      "network": "The service didn't respond. Check your connection and try again.",
+      "incomplete": "The connection ended before the checks finished."
+    }
+  },
+  "result": {
+    "notFound": {
+      "body": "This result isn't in this session. For now Klar keeps a result only while this tab is open, so run the checks again to see it.",
+      "action": "Classify a tool"
+    },
+    "checkedOn": "Checked on {{date}} against the consolidated AI Act of {{lawDate}}.",
+    "checkedOnAmended": "Checked on {{date}} against the AI Act as amended.",
+    "checkedOnOriginal": "Checked on {{date}} against the original AI Act of 2024.",
+    "view": {
+      "label": "View",
+      "summary": "Summary",
+      "reviewer": "Reviewer"
+    },
+    "editDescription": "Edit description",
+    "draftDocuments": "Draft documents",
+    "label": "Result",
+    "assumed": "Assumed",
+    "role": {
+      "provider": "You're the provider.",
+      "deployer": "You're the deployer.",
+      "importer": "You're the importer.",
+      "distributor": "You're the distributor."
+    },
+    "alsoRole": {
+      "provider": "You're also the provider.",
+      "deployer": "You're also the deployer.",
+      "importer": "You're also the importer.",
+      "distributor": "You're also the distributor."
+    },
+    "roleName": {
+      "provider": "Provider",
+      "deployer": "Deployer",
+      "importer": "Importer",
+      "distributor": "Distributor"
+    },
+    "basis": {
+      "annexIII": "The tool is listed in {{point}}: {{label}}.",
+      "annexIIIPlain": "The tool is listed in {{point}}.",
+      "annexI": "The tool is part of a product covered by {{point}}.",
+      "high_risk": "The tool is high-risk.",
+      "prohibited": "It matches a practice banned by Art. 5.",
+      "limited_risk": "Transparency duties under Art. 50 apply.",
+      "minimal_risk": "It isn't banned, isn't high-risk and has no Art. 50 duty.",
+      "out_of_scope": "The AI Act doesn't apply to it."
+    },
+    "paused": "Klar assumed one fact at check {{number}}. The question below settles it.",
+    "pausedAtDuties": "Klar assumed one fact while working out your role. The question below settles it.",
+    "dutiesFrom": "Your duties apply from",
+    "monthsAway_one": "About {{count}} month from today",
+    "monthsAway_other": "About {{count}} months from today",
+    "alreadyApplies": "Already applies",
+    "alreadyAppliesOriginal": "Already applies under the original text",
+    "legalReview": {
+      "high_risk": "For a high-risk result, we recommend a legal review before you rely on it.",
+      "prohibited": "For a prohibited result, we recommend legal advice before you go on.",
+      "ambiguous": "For a legally ambiguous result, we recommend a legal review before you rely on it.",
+      "other": "We recommend a legal review before you rely on this result."
+    },
+    "legacy": {
+      "legacy_unchanged": "Art. 111(2): the tool was on the market or in use before {{date}}, so the marked high-risk duties apply only if its design or intended purpose changes significantly. The class stays high-risk.",
+      "legacy_public_authority": "Art. 111(2): the tool was on the market or in use before {{date}} and is meant for public authorities, so the marked high-risk duties apply from {{deadline}}. The class stays high-risk.",
+      "perProduct": "This covers copies placed on the market or put into service before {{date}}; copies supplied on or after that date may be fully covered.",
+      "afterChange": "Only after a significant change",
+      "from": "From {{date}}",
+      "tag": "Art. 111(2)"
+    },
+    "question": {
+      "eyebrow": "One question decides it",
+      "assumption": "Until you answer, the result above is a working assumption: the stricter reading, so nothing is missed.",
+      "ifYes": "If yes",
+      "ifNo": "If no",
+      "ifYesPoint": "{{point}}. Duties from <date/>.",
+      "ifYesPointNoDate": "{{point}}.",
+      "ifNoText": "Not high-risk on this point. The transparency check then decides whether any duties apply."
+    },
+    "todo": {
+      "heading": "What you need to do",
+      "intro": {
+        "provider": "The tool is placed on the market or put into service under your name, so the duties for building, documenting and monitoring it are yours.",
+        "deployer": "You didn't build the tool, so most technical duties sit with its provider. As the company using it, you must use it as instructed, keep people in charge of it, and tell staff and the people it affects.",
+        "importer": "You bring the tool into the EU, so you check that its provider did its part before you sell it (Art. 23).",
+        "distributor": "You pass the tool on, so you check that it carries the required marking and documents before you do (Art. 24)."
+      },
+      "minimal": "No specific duties for this tool. One general duty applies to every company that uses AI:",
+      "limited": "Tell people they're dealing with AI. Klar drafts the disclosure for you.",
+      "none": "No duties are listed for this result.",
+      "draftDisclosure": "Draft disclosure",
+      "onlyIf": "Only if: {{condition}}",
+      "forInformation": "For information"
+    },
+    "outOfScope": {
+      "heading": "Why the AI Act doesn't apply",
+      "intro": "So there are no duties under the Act for this tool."
+    },
+    "facts": {
+      "heading": "The result rests on",
+      "intro": "If any of these is wrong, the class may change.",
+      "confirm": "Confirm",
+      "change": "Change",
+      "accuracy": "This assessment is only as accurate as the description provided."
+    },
+    "steps": {
+      "heading": "How Klar got here",
+      "expandAll": "Expand every step with quotes",
+      "facts": "Facts",
+      "role": "Role",
+      "duties": "Duties",
+      "factsLine_one": "{{count}} fact found, {{assumed}} assumed",
+      "factsLine_other": "{{count}} facts found, {{assumed}} assumed",
+      "yourDescription": "Your description",
+      "notChecked": "Not checked",
+      "paused": "Assumed for now: one fact is missing",
+      "ambiguous": "Legally ambiguous: the stricter reading applies",
+      "inScope": "In scope",
+      "outOfScope": "Out of scope",
+      "noBan": "No match with a banned practice",
+      "ban": "Matches a banned practice",
+      "highRiskAnnexIII": "Yes: {{label}}",
+      "highRiskAnnexI": "Yes: part of a product under Annex I",
+      "highRisk": "Yes: high-risk",
+      "notHighRisk": "Not high-risk",
+      "transparencyDuties_one": "{{count}} duty under Art. 50",
+      "transparencyDuties_other": "{{count}} duties under Art. 50",
+      "noTransparency": "No separate duty found",
+      "dutiesCount_one": "{{count}} duty",
+      "dutiesCount_other": "{{count}} duties",
+      "noDuties": "No duties listed",
+      "decision": "Decision",
+      "factsUsed": "Facts it rests on",
+      "openQuestion": "Open question",
+      "noFacts": "No single fact; see the decision."
+    },
+    "reviewer": {
+      "exportJson": "Export as JSON"
+    },
+    "quoteLanguage": {
+      "en": "English",
+      "de": "German"
+    },
+    "citationSource": "{{provision}}, {{language}}",
+    "citationSourceDraft": "{{provision}}, {{language}}, draft",
+    "notice": "Answers cite the consolidated AI Act (CELEX {{celex}}) and Commission guidance, some of it still in draft."
+  },
+  "annexPoint": {
+    "III_1_a": "remote biometric identification",
+    "III_1_b": "biometric categorisation by sensitive attributes",
+    "III_1_c": "emotion recognition",
+    "III_2": "safety components of critical infrastructure",
+    "III_3_a": "access or admission to education and training",
+    "III_3_b": "evaluating learning outcomes",
+    "III_3_c": "assessing the level of education a person can access",
+    "III_3_d": "monitoring students during tests",
+    "III_4_a": "recruitment and selection of people",
+    "III_4_b": "decisions about work relationships, tasks and performance",
+    "III_5_a": "eligibility for public assistance benefits and services",
+    "III_5_b": "creditworthiness and credit scores",
+    "III_5_c": "risk assessment and pricing in life and health insurance",
+    "III_5_d": "emergency calls, dispatch and patient triage",
+    "III_6_a": "assessing the risk of becoming a victim of crime",
+    "III_6_b": "polygraphs and similar tools in law enforcement",
+    "III_6_c": "assessing the reliability of evidence",
+    "III_6_d": "assessing the risk of offending or reoffending",
+    "III_6_e": "profiling in criminal investigations",
+    "III_7_a": "polygraphs and similar tools at borders",
+    "III_7_b": "risk assessment of people entering the EU",
+    "III_7_c": "examining asylum, visa and residence applications",
+    "III_7_d": "detecting, recognising or identifying people in migration",
+    "III_8_a": "assisting courts in researching and applying the law",
+    "III_8_b": "influencing elections or referendums"
   }
 }
