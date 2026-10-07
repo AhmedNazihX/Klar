@@ -2,10 +2,8 @@
 step. Synthetic traces for the rules; one traced engine run (scripted nodes, real lookups over a
 stand-in database) for the whole path from the posted runs to the rate. No network."""
 
-import json
-from collections.abc import Iterable, Sequence
-from datetime import UTC, datetime
-from uuid import UUID, uuid4
+from collections.abc import Iterable, Iterator, Mapping, Sequence
+from uuid import uuid4
 
 import pytest
 from langchain_core.tracers.langchain import LangChainTracer
@@ -26,8 +24,11 @@ from aiact.eval import records, tool_calls
 from aiact.eval.tool_calls import (
     ANNEX_III_POINTS,
     EXPECTED_LOOKUPS,
+    SELECTED_FIELDS,
+    NoLookupRunsError,
     RunNotFoundError,
     StepCheck,
+    TraceCounts,
     TraceRecordError,
     TraceRun,
     check_trace,
@@ -35,6 +36,7 @@ from aiact.eval.tool_calls import (
     step_rates,
     stored_traces,
     tool_call_report,
+    trace_runs,
 )
 from aiact.retrieval import provisions, search
 from aiact.retrieval import tracing as lookup_tracing
@@ -42,8 +44,7 @@ from aiact.retrieval.provisions import get_provision
 from aiact.retrieval.search import search_ai_act
 from aiact.schemas import Language, StepName
 from aiact.settings import Settings
-from tests.engine.test_tracing import RecordingSession
-from tests.retrieval.test_tracing import ROW, FakeEmbedder
+from tests.retrieval.test_tracing import ROW, FakeEmbedder, UrlRecordingSession, posted_runs
 
 SECRET = "the night shifts of our Leipzig depot"
 DESCRIPTION = f"We use a tool that ranks applicants for {SECRET}."
@@ -119,6 +120,27 @@ def test_a_lookup_counts_for_its_own_step_only() -> None:
     trace.fetched(scope, "art:5")
     missing = _by_step(check_trace(trace.runs))
     assert "Art. 5 fetched" in missing[StepName.PROHIBITED]
+
+
+def test_a_lookup_under_the_second_step_counts_for_the_second_step() -> None:
+    trace = TraceBuilder()
+    trace.step(StepName.SCOPE)
+    prohibited = trace.step(StepName.PROHIBITED)
+    trace.fetched(prohibited, "art:5")
+    missing = _by_step(check_trace(trace.runs))
+    assert "Art. 5 fetched" not in missing[StepName.PROHIBITED]
+    assert missing[StepName.SCOPE] == tuple(e.label for e in EXPECTED_LOOKUPS[StepName.SCOPE])
+
+
+def test_a_lookup_under_a_step_inside_another_step_belongs_to_the_inner_one() -> None:
+    trace = TraceBuilder()
+    outer = trace.step(StepName.SCOPE)
+    inner = trace.step(StepName.PROHIBITED, parent=outer)
+    trace.fetched(inner, "art:3:1")
+    trace.fetched(inner, "art:5")
+    missing = _by_step(check_trace(trace.runs))
+    assert "Art. 3(1) fetched" in missing[StepName.SCOPE]
+    assert "Art. 5 fetched" not in missing[StepName.PROHIBITED]
 
 
 def test_a_lookup_nested_deeper_belongs_to_the_nearest_step_above_it() -> None:
@@ -204,9 +226,13 @@ def test_the_rate_is_reported_per_step_over_the_traces_where_it_ran() -> None:
     assert rates[StepName.HIGH_RISK].rate.total == 0
 
     run_id = uuid4()
-    lines = render_markdown(run_id, step_rates(checks), traces=3, untraced=1).splitlines()
+    counts = TraceCounts(scored=3, no_lookups=4, no_runs=2, untraced=1)
+    lines = render_markdown(run_id, step_rates(checks), counts).splitlines()
     assert lines[0] == f"## Tool-call correctness, run {run_id}"
-    assert "- Traces checked: 3 (1 cases without a trace)" in lines
+    assert "- Traces scored: 3" in lines
+    assert any(line.startswith("- Left out, no lookup run: 4 (") for line in lines)
+    assert any(line.startswith("- Left out, no runs returned: 2 (") for line in lines)
+    assert "- Cases without a trace: 1" in lines
     assert "| prohibited | 66.7% | 2/3 | Art. 5 fetched (1) |" in lines
     assert "| scope | 100.0% | 1/1 |  |" in lines
     assert "| high_risk | n/a | 0/0 |  |" in lines
@@ -235,47 +261,94 @@ class FakeConnection:
         return FakeCursor([(trace_id,) for trace_id in self.trace_ids])
 
 
-def _run(run_id: UUID, name: str, parent: UUID | None, metadata: dict[str, object]) -> Run:
-    return Run(
-        id=run_id,
-        name=name,
-        start_time=datetime(2026, 10, 7, tzinfo=UTC),
-        run_type="tool",
-        inputs={},
-        trace_id=uuid4(),
-        parent_run_id=parent,
-        extra={"metadata": metadata},
-    )
+RunRow = dict[str, object]
+
+
+def _row(
+    name: str, parent: RunRow | None = None, metadata: dict[str, object] | None = None
+) -> RunRow:
+    """A run as LangSmith's API returns it, with only the selected fields."""
+    return {
+        "id": str(uuid4()),
+        "trace_id": str(uuid4()),
+        "name": name,
+        "run_type": "tool",
+        "start_time": "2026-10-07T10:00:00Z",
+        "parent_run_id": None if parent is None else parent["id"],
+        "error": None,
+        "extra": {"metadata": metadata or {}},
+    }
+
+
+def _scored_trace() -> list[RunRow]:
+    step = _row("prohibited", metadata={"ls_run_depth": 1})
+    return [step, _row("get_provision", step, {lookup_tracing.PROVISION_ID: "art:5"})]
 
 
 class FakeLangSmith:
-    """Answers `list_runs` with one trace's runs and keeps the fields asked for."""
+    """Answers `list_runs` per trace id as the client does: a `Run` built from each returned row,
+    which holds only the fields asked for. Keeps what was asked."""
 
-    def __init__(self, runs: Sequence[Run]) -> None:
-        self.runs = runs
+    def __init__(self, traces: Mapping[str, Sequence[RunRow]]) -> None:
+        self.traces = traces
         self.asked: list[tuple[str, tuple[str, ...]]] = []
 
-    def list_runs(self, *, trace_id: str, select: Sequence[str]) -> Iterable[Run]:
+    def list_runs(self, *, trace_id: str, select: Sequence[str]) -> Iterator[Run]:
         self.asked.append((trace_id, tuple(select)))
-        return iter(self.runs)
+        for row in self.traces.get(trace_id, ()):
+            yield Run(**{field: value for field, value in row.items() if field in select})  # pyright: ignore[reportArgumentType]
 
 
 def test_a_stored_runs_traces_are_read_without_inputs_or_outputs() -> None:
-    step = uuid4()
-    langsmith = FakeLangSmith(
-        [
-            _run(step, "prohibited", None, {"ls_run_depth": 1}),
-            _run(uuid4(), "get_provision", step, {lookup_tracing.PROVISION_ID: "art:5"}),
-        ]
-    )
+    langsmith = FakeLangSmith({"trace-a": _scored_trace(), "trace-b": _scored_trace()})
     connection = FakeConnection(["trace-a", None, "trace-b"])
     run_id = uuid4()
     text = tool_call_report(connection, langsmith, run_id)  # pyright: ignore[reportArgumentType]
     assert connection.params == [(run_id,)]
     assert [trace for trace, _ in langsmith.asked] == ["trace-a", "trace-b"]
     assert all("inputs" not in fields and "outputs" not in fields for _, fields in langsmith.asked)
-    assert "- Traces checked: 2 (1 cases without a trace)" in text
+    assert "- Traces scored: 2" in text
+    assert "- Cases without a trace: 1" in text
     assert "| prohibited | 0.0% | 0/2 | prohibited-practice guidelines searched (2) |" in text
+
+
+def test_traces_that_cannot_be_scored_are_counted_apart_and_left_out_of_the_rates() -> None:
+    step_only = [_row("prohibited")]  # recorded before lookups were traced
+    langsmith = FakeLangSmith(
+        {
+            "scored": _scored_trace(),
+            "old": step_only,
+            "older": step_only,
+            "facts-only": [_row("facts")],
+        }
+    )
+    trace_ids = ["scored", "old", "older", "facts-only", "expired", None]
+    text = tool_call_report(FakeConnection(trace_ids), langsmith, uuid4())  # pyright: ignore[reportArgumentType]
+    assert "- Traces scored: 1" in text
+    assert "- Left out, no lookup run: 3 (" in text
+    assert "- Left out, no runs returned: 1 (" in text
+    assert "- Cases without a trace: 1" in text
+    assert "| prohibited | 0.0% | 0/1 |" in text  # not 0/3: the old traces are left out
+
+
+def test_a_run_with_no_lookup_run_in_any_trace_is_refused() -> None:
+    langsmith = FakeLangSmith({"old": [_row("prohibited")]})
+    with pytest.raises(NoLookupRunsError, match="no lookup runs in these traces"):
+        tool_call_report(FakeConnection(["old", "expired"]), langsmith, uuid4())  # pyright: ignore[reportArgumentType]
+
+
+def test_the_selected_fields_are_enough_for_a_run() -> None:
+    row = _row("get_provision")
+    assert set(row) == set(SELECTED_FIELDS)
+    [run] = trace_runs(FakeLangSmith({"t": [row]}), "t")
+    assert run.name == "get_provision"
+
+
+def test_a_run_that_cannot_be_read_is_an_error_naming_the_trace() -> None:
+    row = _row("get_provision")
+    del row["start_time"]
+    with pytest.raises(TraceRecordError, match="trace t: a run could not be read"):
+        trace_runs(FakeLangSmith({"t": [row]}), "t")
 
 
 def test_a_run_with_no_stored_cases_is_not_found() -> None:
@@ -304,9 +377,34 @@ def test_cli_prints_the_report(monkeypatch: pytest.MonkeyPatch) -> None:
     assert outcome.stdout == "table\n"
 
 
+def _cli_report(monkeypatch: pytest.MonkeyPatch, langsmith: FakeLangSmith, trace_ids: list[str]):
+    settings = Settings(_env_file=None, langsmith_api_key=SecretStr("k"))  # pyright: ignore[reportCallIssue]
+    monkeypatch.setattr("aiact.cli.get_settings", lambda: settings)
+    monkeypatch.setattr(tool_calls, "langsmith_source", lambda _settings: langsmith)
+    monkeypatch.setattr(records, "connect", lambda: FakeConnectionContext(trace_ids))
+    return cli.invoke(app, ["evaluate", "tool-calls", str(uuid4())])
+
+
+def test_cli_refuses_a_run_without_lookup_runs(monkeypatch: pytest.MonkeyPatch) -> None:
+    outcome = _cli_report(monkeypatch, FakeLangSmith({"old": [_row("prohibited")]}), ["old"])
+    assert outcome.exit_code == 2
+    assert outcome.stderr.startswith("Error: no lookup runs in these traces")
+
+
+def test_cli_exits_2_on_a_run_it_cannot_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    row = _row("get_provision")
+    del row["run_type"]
+    outcome = _cli_report(monkeypatch, FakeLangSmith({"t": [row]}), ["t"])
+    assert outcome.exit_code == 2
+    assert outcome.stderr.startswith("Error: trace t: a run could not be read (ValidationError)")
+
+
 class FakeConnectionContext:
-    def __enter__(self) -> object:
-        return object()
+    def __init__(self, trace_ids: Sequence[str | None] = ()) -> None:
+        self.trace_ids = trace_ids
+
+    def __enter__(self) -> FakeConnection:
+        return FakeConnection(self.trace_ids)
 
     def __exit__(self, *exc: object) -> None:
         return None
@@ -333,29 +431,26 @@ def _with_lookups(node: CheckNode) -> CheckNode:
     return run
 
 
-def _posted_trace(sent: Sequence[str]) -> list[TraceRun]:
-    """The runs a recording session received, as the check reads them (each run's create post;
-    an end post carries no name)."""
-    created = [json.loads(body) for body in sent if body.startswith("{")]
+def _posted_trace(session: UrlRecordingSession) -> list[TraceRun]:
+    """The runs a recording session received, as the check reads them."""
     return [
         TraceRun(
-            id=str(run["id"]),
+            id=run["id"],
             parent_run_id=run.get("parent_run_id"),
             name=run["name"],
             error=run.get("error"),
-            metadata=(run.get("extra") or {}).get("metadata") or {},
+            metadata=dict((run["extra"] or {}).get("metadata") or {}),  # pyright: ignore[reportArgumentType]
         )
-        for run in created
-        if "name" in run
+        for run in posted_runs(session).values()
     ]
 
 
-def traced_engine_run(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+def traced_engine_run(monkeypatch: pytest.MonkeyPatch) -> UrlRecordingSession:
     """A traced classification in production (metadata only) whose prohibited check makes real
     lookups (over a stand-in database), posting into a recording session."""
     monkeypatch.setattr(provisions, "_rows", lambda query, params, connection: [ROW])
     monkeypatch.setattr(search, "_run", lambda connection, statement, params: [])
-    session = RecordingSession()
+    session = UrlRecordingSession()
     client = build_client(
         "lsv2-test-key",
         is_metadata_only=True,
@@ -391,12 +486,12 @@ def traced_engine_run(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     [tracer] = tracers
     tracer.wait_for_futures()
     client.flush()
-    return session.sent
+    return session
 
 
 def test_a_traced_engine_run_gives_the_rate_per_step(monkeypatch: pytest.MonkeyPatch) -> None:
-    sent = traced_engine_run(monkeypatch)
-    rates = {rate.step: rate.rate for rate in step_rates(check_trace(_posted_trace(sent)))}
+    session = traced_engine_run(monkeypatch)
+    rates = {rate.step: rate.rate for rate in step_rates(check_trace(_posted_trace(session)))}
     assert (rates[StepName.PROHIBITED].hits, rates[StepName.PROHIBITED].total) == (1, 1)
     assert all(
         rates[step].hits == 0 and rates[step].total == 1
@@ -408,6 +503,6 @@ def test_a_traced_engine_run_gives_the_rate_per_step(monkeypatch: pytest.MonkeyP
 def test_the_traced_lookups_post_no_description_in_production(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    sent = traced_engine_run(monkeypatch)
+    sent = traced_engine_run(monkeypatch).sent
     assert [body for body in sent if lookup_tracing.PROVISION_ID in body]
     assert not [body for body in sent if SECRET in body]

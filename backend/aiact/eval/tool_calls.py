@@ -6,8 +6,8 @@ run, and reported as a rate per step.
   the engine: scope reads the AI-system definition (Art. 3(1)) and Art. 2 and searches the
   definition guidelines; the prohibited check reads Art. 5 and searches its guidelines; the
   high-risk check reads every Annex III point and the Annex I list and searches the guidelines;
-  transparency reads Art. 50 and searches its guidelines; the role check resolves the definition
-  of the role it names (Art. 3(3), (4), (6) or (7)), which the citation validator looks up.
+  transparency reads Art. 50 and searches its guidelines; the role check resolves a role
+  definition (any of Art. 3(3), (4), (6), (7)), which the citation validator looks up.
 - **What a step did look up** is read from its trace: every lookup is a run of its own
   (`aiact.retrieval.tracing`), with the provision id or the search's document filter as metadata,
   which a metadata-only trace keeps. A lookup belongs to the nearest step run above it. Only a
@@ -15,6 +15,11 @@ run, and reported as a rate per step.
 - **The rate** of a step is the share of the traces where the step ran in which every expected
   lookup was made. A step that didn't run (the run ended early) isn't counted. The report also
   counts, per expected lookup, the traces that missed it.
+- **Only traces that can be scored.** A trace LangSmith returns no runs for (expired, another
+  workspace, not yet ingested) and a trace without a single lookup run (recorded before lookups
+  were traced, or not fully ingested) would read as a step that skipped its lookups, so both are
+  counted apart and left out of the rates. A stored run with no lookup run in any trace is
+  refused (`NoLookupRunsError`).
 
 Traces are read with only the fields the check needs (never a run's inputs or outputs, which a
 development trace carries in full), and the report names no case and quotes no description.
@@ -30,7 +35,7 @@ from uuid import UUID
 import psycopg
 from langsmith import Client
 from langsmith.schemas import Run
-from pydantic import Field, JsonValue
+from pydantic import Field, JsonValue, ValidationError
 
 from aiact.eval.metrics import Rate
 from aiact.retrieval import tracing as lookup_tracing
@@ -47,8 +52,18 @@ class LookupTool(StrEnum):
     SEARCH_AI_ACT = "search_ai_act"
 
 
-SELECTED_FIELDS: tuple[str, ...] = ("id", "trace_id", "name", "parent_run_id", "error", "extra")
-"""The run fields read from LangSmith: never `inputs` or `outputs`."""
+SELECTED_FIELDS: tuple[str, ...] = (
+    "id",
+    "trace_id",
+    "name",
+    "run_type",
+    "start_time",
+    "parent_run_id",
+    "error",
+    "extra",
+)
+"""The run fields read from LangSmith: what the check reads, plus `run_type` and `start_time`,
+which a `langsmith.schemas.Run` requires; never `inputs` or `outputs`."""
 
 
 class TraceRun(ContractModel):
@@ -249,11 +264,25 @@ def _rate(step: StepName, checks: Sequence[StepCheck]) -> StepRate:
     )
 
 
-def render_markdown(run_id: UUID, rates: Sequence[StepRate], traces: int, untraced: int) -> str:
+class TraceCounts(ContractModel):
+    """How a stored run's cases split into scored traces and the ones left out."""
+
+    scored: int = Field(ge=0)
+    no_lookups: int = Field(ge=0, description="Traces with runs but no lookup run.")
+    no_runs: int = Field(ge=0, description="Traces LangSmith returned no runs for.")
+    untraced: int = Field(ge=0, description="Cases stored without a trace id.")
+
+
+def render_markdown(run_id: UUID, rates: Sequence[StepRate], counts: TraceCounts) -> str:
     lines = [
         f"## Tool-call correctness, run {run_id}",
         "",
-        f"- Traces checked: {traces} ({untraced} cases without a trace)",
+        f"- Traces scored: {counts.scored}",
+        f"- Left out, no lookup run: {counts.no_lookups} (recorded before lookups were traced,"
+        " or not fully ingested)",
+        f"- Left out, no runs returned: {counts.no_runs} (expired, another workspace, or not yet"
+        " ingested)",
+        f"- Cases without a trace: {counts.untraced}",
         "",
         "| Step | Correct | Count | Missed |",
         "| --- | ---: | ---: | --- |",
@@ -263,9 +292,9 @@ def render_markdown(run_id: UUID, rates: Sequence[StepRate], traces: int, untrac
 
 
 def _row(rate: StepRate) -> str:
-    shown = "n/a" if rate.rate.value is None else f"{rate.rate.value:.1%}"
     missed = "; ".join(f"{label} ({count})" for label, count in rate.missed.items())
-    return f"| {rate.step.value} | {shown} | {rate.rate.hits}/{rate.rate.total} | {missed} |"
+    cells = (rate.step.value, rate.rate.percent, f"{rate.rate.hits}/{rate.rate.total}", missed)
+    return f"| {' | '.join(cells)} |"
 
 
 # --- Reading the traces -------------------------------------------------------------------------
@@ -300,6 +329,10 @@ class RunNotFoundError(LookupError):
     """No `eval_case_results` row has the requested run id."""
 
 
+class NoLookupRunsError(LookupError):
+    """No trace of the stored run holds a lookup run, so no step can be scored."""
+
+
 def stored_traces(conn: psycopg.Connection, run_id: UUID) -> StoredTraces:
     """The trace ids of a stored run's cases, in case order. Raises `RunNotFoundError` for a run
     with no cases."""
@@ -313,10 +346,17 @@ def stored_traces(conn: psycopg.Connection, run_id: UUID) -> StoredTraces:
 
 
 def trace_runs(source: RunSource, trace_id: str) -> tuple[TraceRun, ...]:
-    """The runs of one trace, as the check reads them."""
-    return tuple(
-        _trace_run(run) for run in source.list_runs(trace_id=trace_id, select=SELECTED_FIELDS)
-    )
+    """The runs of one trace, as the check reads them. Raises `TraceRecordError` (naming only the
+    error type: a run's fields may quote what was traced) when a run can't be read."""
+    # `list_runs` is deprecated and removed after 31 Jan 2027; its replacement is
+    # `client.traces.list_runs` (async, needs the project id).
+    runs = source.list_runs(trace_id=trace_id, select=SELECTED_FIELDS)
+    try:
+        return tuple(_trace_run(run) for run in runs)
+    except ValidationError as error:
+        raise TraceRecordError(
+            f"trace {trace_id}: a run could not be read ({type(error).__name__})"
+        ) from error
 
 
 def _trace_run(run: Run) -> TraceRun:
@@ -330,13 +370,41 @@ def _trace_run(run: Run) -> TraceRun:
     )
 
 
+def has_lookup_runs(runs: Sequence[TraceRun]) -> bool:
+    return any(run.name in LookupTool for run in runs)
+
+
+def check_traces(
+    source: RunSource, stored: StoredTraces
+) -> tuple[tuple[StepCheck, ...], TraceCounts]:
+    """The step checks of every trace that can be scored, and how the traces split."""
+    checks: list[StepCheck] = []
+    no_runs = no_lookups = 0
+    for trace_id in stored.trace_ids:
+        runs = trace_runs(source, trace_id)
+        if not runs:
+            no_runs += 1
+        elif not has_lookup_runs(runs):
+            no_lookups += 1
+        else:
+            checks.extend(check_trace(runs))
+    counts = TraceCounts(
+        scored=len(stored.trace_ids) - no_runs - no_lookups,
+        no_lookups=no_lookups,
+        no_runs=no_runs,
+        untraced=stored.untraced,
+    )
+    return tuple(checks), counts
+
+
 def tool_call_report(conn: psycopg.Connection, source: RunSource, run_id: UUID) -> str:
-    """The per-step tool-call correctness of a stored run, as markdown."""
-    stored = stored_traces(conn, run_id)
-    checks = [
-        check
-        for trace_id in stored.trace_ids
-        for check in check_trace(trace_runs(source, trace_id))
-    ]
-    rates = step_rates(checks)
-    return render_markdown(run_id, rates, len(stored.trace_ids), stored.untraced)
+    """The per-step tool-call correctness of a stored run, as markdown. Raises
+    `NoLookupRunsError` when no trace of the run can be scored."""
+    checks, counts = check_traces(source, stored_traces(conn, run_id))
+    if not counts.scored:
+        raise NoLookupRunsError(
+            "no lookup runs in these traces: recorded before tool-call tracing, or not yet"
+            f" ingested ({counts.no_lookups} without a lookup run, {counts.no_runs} with no runs"
+            f" returned, {counts.untraced} cases without a trace)"
+        )
+    return render_markdown(run_id, step_rates(checks), counts)

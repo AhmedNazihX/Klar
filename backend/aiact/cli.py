@@ -491,6 +491,7 @@ def eval_tool_calls(
         records.DatabaseNotConfiguredError,
         tool_calls.TracingNotConfiguredError,
         tool_calls.RunNotFoundError,
+        tool_calls.NoLookupRunsError,
         tool_calls.TraceRecordError,
     ) as error:
         typer.echo(f"Error: {error}", err=True)

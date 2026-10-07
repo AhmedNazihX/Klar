@@ -185,5 +185,4 @@ def _precision_recall(name: str, scores: PrecisionRecall) -> list[tuple[str, Rat
 def _row(name: str, value: Rate | int) -> str:
     if isinstance(value, int):
         return f"| {name} | {value} | |"
-    shown = "n/a" if value.value is None else f"{value.value:.1%}"
-    return f"| {name} | {shown} | {value.hits}/{value.total} |"
+    return f"| {name} | {value.percent} | {value.hits}/{value.total} |"
