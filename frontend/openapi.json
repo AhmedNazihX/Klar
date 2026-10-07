@@ -1090,7 +1090,50 @@
           "duty": {
             "type": "string",
             "minLength": 1,
-            "title": "Duty"
+            "title": "Duty",
+            "description": "The formal duty, in English."
+          },
+          "duty_de": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Duty De",
+            "description": "The formal duty in German, in the official German text's terms."
+          },
+          "label_en": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Label En",
+            "description": "A short plain label, as an action: \"Keep the logs it creates for at least six months\"."
+          },
+          "label_de": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Label De",
+            "description": "The short label in German."
+          },
+          "group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObligationGroup"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The provider layout's group (`build`, `prove`, `after_launch`); set on every high-risk provider duty and only on duties a provider has. A duty shared with another role keeps it there too (so a provider that also uses the system gets the duty once); only the provider layout shows it."
+          },
+          "document": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document",
+            "description": "The drafting template that answers this duty (e.g. `art_26_2_oversight`), if any."
           },
           "article": {
             "type": "string",
@@ -1172,11 +1215,24 @@
         "type": "object",
         "required": [
           "duty",
+          "duty_de",
+          "label_en",
+          "label_de",
           "article",
           "applies_from"
         ],
         "title": "Obligation",
-        "description": "One duty with its article reference and the date it applies from."
+        "description": "One duty with its article reference and the date it applies from.\n\nEach duty carries its texts in both languages, so a screen can switch language without a\nnew lookup: a short plain label (an action, for the checklists) and the formal duty (for the\nreport)."
+      },
+      "ObligationGroup": {
+        "type": "string",
+        "enum": [
+          "build",
+          "prove",
+          "after_launch"
+        ],
+        "title": "ObligationGroup",
+        "description": "Where a provider duty sits in the provider layout (C9, decision 026; artboard\n`ResultProvider`)."
       },
       "ObligationList": {
         "properties": {

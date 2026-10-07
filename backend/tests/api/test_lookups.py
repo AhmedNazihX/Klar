@@ -204,6 +204,13 @@ async def test_obligations_come_from_the_committed_table(client: httpx.AsyncClie
     assert {o["applies_from"] for o in body["obligations"] if o["article"] == "art:26:1"} == {
         "2027-12-02"
     }
+    art_26_6 = next(o for o in body["obligations"] if o["article"] == "art:26:6")
+    assert art_26_6["label_en"] == "Keep the logs it creates for at least six months"
+    assert art_26_6["label_de"] == (
+        "Die automatisch erzeugten Protokolle mindestens sechs Monate aufbewahren"
+    )
+    # A deployer-only duty has no group; one shared with the provider keeps the provider's.
+    assert art_26_6["group"] is None
 
 
 @pytest.mark.anyio

@@ -31,7 +31,7 @@ keys of the obligations seed (C9)."""
 
 def skeleton_templates_for(result: ClassificationResult) -> tuple[DocumentTemplate, ...]:
     """The skeletons whose duty the result lists: Annex IV (Art. 11(1)), Art. 17 (Art. 16(c)) and
-    Art. 9 (Art. 16(a)) for a high-risk provider, Art. 27 for a deployer the result lists the
+    Art. 9 (the Art. 9 row) for a high-risk provider, Art. 27 for a deployer the result lists the
     impact assessment for. The engine lists only the duties of the result's roles."""
     articles = {obligation.article for obligation in result.obligations}
     return tuple(template for template in SKELETON_TEMPLATES if template.article in articles)

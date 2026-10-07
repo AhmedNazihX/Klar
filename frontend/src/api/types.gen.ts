@@ -442,12 +442,46 @@ export type LegacyStatus = 'legacy_unchanged' | 'legacy_public_authority';
  * Obligation
  *
  * One duty with its article reference and the date it applies from.
+ *
+ * Each duty carries its texts in both languages, so a screen can switch language without a
+ * new lookup: a short plain label (an action, for the checklists) and the formal duty (for the
+ * report).
  */
 export type Obligation = {
     /**
      * Duty
+     *
+     * The formal duty, in English.
      */
     duty: string;
+    /**
+     * Duty De
+     *
+     * The formal duty in German, in the official German text's terms.
+     */
+    duty_de: string;
+    /**
+     * Label En
+     *
+     * A short plain label, as an action: "Keep the logs it creates for at least six months".
+     */
+    label_en: string;
+    /**
+     * Label De
+     *
+     * The short label in German.
+     */
+    label_de: string;
+    /**
+     * The provider layout's group (`build`, `prove`, `after_launch`); set on every high-risk provider duty and only on duties a provider has. A duty shared with another role keeps it there too (so a provider that also uses the system gets the duty once); only the provider layout shows it.
+     */
+    group?: ObligationGroup | null;
+    /**
+     * Document
+     *
+     * The drafting template that answers this duty (e.g. `art_26_2_oversight`), if any.
+     */
+    document?: string | null;
     /**
      * Article
      *
@@ -489,6 +523,14 @@ export type Obligation = {
      */
     note?: string | null;
 };
+
+/**
+ * ObligationGroup
+ *
+ * Where a provider duty sits in the provider layout (C9, decision 026; artboard
+ * `ResultProvider`).
+ */
+export type ObligationGroup = 'build' | 'prove' | 'after_launch';
 
 /**
  * ObligationList

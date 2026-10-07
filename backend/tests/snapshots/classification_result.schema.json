@@ -331,12 +331,57 @@
     },
     "Obligation": {
       "additionalProperties": false,
-      "description": "One duty with its article reference and the date it applies from.",
+      "description": "One duty with its article reference and the date it applies from.\n\nEach duty carries its texts in both languages, so a screen can switch language without a\nnew lookup: a short plain label (an action, for the checklists) and the formal duty (for the\nreport).",
       "properties": {
         "duty": {
+          "description": "The formal duty, in English.",
           "minLength": 1,
           "title": "Duty",
           "type": "string"
+        },
+        "duty_de": {
+          "description": "The formal duty in German, in the official German text's terms.",
+          "minLength": 1,
+          "title": "Duty De",
+          "type": "string"
+        },
+        "label_en": {
+          "description": "A short plain label, as an action: \"Keep the logs it creates for at least six months\".",
+          "minLength": 1,
+          "title": "Label En",
+          "type": "string"
+        },
+        "label_de": {
+          "description": "The short label in German.",
+          "minLength": 1,
+          "title": "Label De",
+          "type": "string"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ObligationGroup"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The provider layout's group (`build`, `prove`, `after_launch`); set on every high-risk provider duty and only on duties a provider has. A duty shared with another role keeps it there too (so a provider that also uses the system gets the duty once); only the provider layout shows it."
+        },
+        "document": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The drafting template that answers this duty (e.g. `art_26_2_oversight`), if any.",
+          "title": "Document"
         },
         "article": {
           "description": "E.g. `art:26:1`.",
@@ -421,11 +466,24 @@
       },
       "required": [
         "duty",
+        "duty_de",
+        "label_en",
+        "label_de",
         "article",
         "applies_from"
       ],
       "title": "Obligation",
       "type": "object"
+    },
+    "ObligationGroup": {
+      "description": "Where a provider duty sits in the provider layout (C9, decision 026; artboard\n`ResultProvider`).",
+      "enum": [
+        "build",
+        "prove",
+        "after_launch"
+      ],
+      "title": "ObligationGroup",
+      "type": "string"
     },
     "OpenQuestion": {
       "additionalProperties": false,

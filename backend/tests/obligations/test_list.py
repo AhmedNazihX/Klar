@@ -33,6 +33,7 @@ from aiact.schemas import (
     LawVersion,
     LegacyStatus,
     Obligation,
+    ObligationGroup,
     RiskClass,
     Role,
 )
@@ -125,13 +126,24 @@ def test_high_risk_without_a_route_lists_route_dependent_duties_once_per_route()
 def test_provider_high_risk_gets_art_16_and_the_duties_it_points_to() -> None:
     duties = _list(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
     articles = _articles(duties)
-    art_16 = [f"art:16:{point}" for point in "abcdefghijkl"]
+    art_16 = [f"art:16:{point}" for point in "bcdefghijkl"]
     assert set(art_16) <= set(articles)
+    # Art. 16(a) is listed as its requirements, one row each (user, 2026-10-07, C9).
+    requirements = ["art:9", "art:10", "art:12", "art:13", "art:14", "art:15"]
+    assert articles[1:7] == requirements
+    assert "art:16:a" not in articles
     assert {"art:11:1", "art:22:1", "art:72:1", "art:73:1", "art:50:1", "art:50:2"} <= set(articles)
     high_risk = [d for d in duties if not d.article.startswith(("art:4:", "art:50:", "art:53:"))]
     assert {d.applies_from for d in high_risk} == {ANNEX_III_FROM}
     by_article = _by_article(duties)
     assert by_article["art:22:1"].applies_if is not None  # providers outside the Union
+
+
+def test_the_requirements_split_from_art_16_a_are_built_in() -> None:
+    """The user's grouping of the Art. 9 to 15 rows (2026-10-07, C9): Build it right."""
+    duties = _list(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
+    requirements = {"art:9", "art:10", "art:12", "art:13", "art:14", "art:15"}
+    assert {d.group for d in duties if d.article in requirements} == {ObligationGroup.BUILD}
 
 
 def test_provider_high_risk_relief_for_smes_and_small_mid_caps() -> None:
@@ -141,13 +153,13 @@ def test_provider_high_risk_relief_for_smes_and_small_mid_caps() -> None:
         assert relief is not None
         assert "SMC" in relief
         assert "SME" in relief
-    assert by_article["art:16:a"].relief_note is None
+    assert by_article["art:9"].relief_note is None
 
 
 def test_provider_registration_in_the_eu_database_is_annex_iii_only() -> None:
     annex_i = _articles(_list(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_I))
     assert "art:16:i" not in annex_i
-    assert "art:16:a" in annex_i
+    assert "art:9" in annex_i
 
 
 def test_limited_risk_transparency_duties_apply_from_2_aug_2026() -> None:
@@ -307,11 +319,15 @@ def test_every_row_cites_an_article_of_the_consolidated_act() -> None:
 
 # --- Loader rules -----------------------------------------------------------------------------
 
-ENTRY = {
+ENTRY: dict[str, object] = {
     "key": "a-duty",
     "roles": ["provider"],
     "risk_classes": ["high_risk"],
     "duty": "Do something.",
+    "duty_de": "Etwas tun.",
+    "label_en": "Do it",
+    "label_de": "Es tun",
+    "group": "build",
     "article": "art:16:a",
     "applies_from": {"annex_iii": "2027-12-02"},
 }
@@ -332,11 +348,24 @@ def test_a_custom_table_is_used_when_given() -> None:
     assert duties == (
         Obligation(
             duty="Do something.",
+            duty_de="Etwas tun.",
+            label_en="Do it",
+            label_de="Es tun",
+            group=ObligationGroup.BUILD,
             article="art:16:a",
             applies_from=ANNEX_III_FROM,
             high_risk_route=HighRiskRoute.ANNEX_III,
         ),
     )
+
+
+def test_a_duty_shared_with_another_role_is_the_same_duty_for_both() -> None:
+    """Same group and texts, so a provider that also uses the system gets the duty once."""
+    table = ObligationTable.model_validate(_table(ENTRY | {"roles": ["provider", "deployer"]}))
+    provider = _list(Role.PROVIDER, RiskClass.HIGH_RISK, table=table)
+    deployer = _list(Role.DEPLOYER, RiskClass.HIGH_RISK, table=table)
+    assert provider == deployer
+    assert [duty.group for duty in deployer] == [ObligationGroup.BUILD]
 
 
 @pytest.mark.parametrize(
@@ -347,6 +376,12 @@ def test_a_custom_table_is_used_when_given() -> None:
         ({"risk_classes": ["out_of_scope"], "applies_from": "2026-08-02"}, "out_of_scope"),
         ({"article": "annex:III:4:a"}, "article"),
         ({"roles": []}, "roles"),
+        ({"group": None}, "needs a group"),
+        ({"roles": ["deployer"]}, "only for provider duties"),
+        ({"group": "later"}, "group"),
+        ({"document": "Art 26 notice"}, "document"),
+        ({"label_de": ""}, "label_de"),
+        ({"duty_de": ""}, "duty_de"),
     ],
 )
 def test_invalid_entries_are_rejected(change: dict[str, object], message: str) -> None:

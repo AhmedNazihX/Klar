@@ -3,8 +3,8 @@ of paragraph 2, the measures and residual risk (paragraph 5), testing (paragraph
 the impact on minors and vulnerable groups (paragraph 9).
 
 Paragraphs 3, 4, 7 and 10 limit or permit rather than require something the document must
-describe, so they have no section. The duty it answers is Art. 16(a): meeting the Section 2
-requirements, Art. 9 among them.
+describe, so they have no section. The duty it answers is the obligations table's Art. 9 row,
+one of the rows Art. 16(a) (meeting the Section 2 requirements) is listed as (C9).
 """
 
 from aiact.drafting.models import SectionStatus
@@ -146,7 +146,7 @@ VULNERABLE_GROUPS = required(
 
 ART_9_SKELETON = DocumentTemplate(
     id="art_9_risk_management",
-    article="art:16:a",
+    article="art:9",
     title={EN: "Risk management system (Art. 9)", DE: "Risikomanagementsystem (Art. 9)"},
     sections=(
         *PREFILLED,

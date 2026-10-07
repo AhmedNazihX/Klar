@@ -179,6 +179,21 @@ async def test_list_obligations_gives_the_notice_in_german(client: Client) -> No
     assert ObligationList.model_validate(result.structured_content).disclaimer == DISCLAIMER_DE
 
 
+@pytest.mark.anyio
+async def test_list_obligations_carries_the_screens_texts(client: Client) -> None:
+    """The labels in both languages, the German duty, the provider group and the document (C9)."""
+    arguments = {"role": "provider", "risk_class": "high_risk", "route": "annex_iii"}
+    result = await client.call_tool("list_obligations", arguments)
+    assert isinstance(result.structured_content, dict)
+    duties = result.structured_content["obligations"]
+    art_11 = next(duty for duty in duties if duty["article"] == "art:11:1")
+    assert art_11["label_en"] == "Write the technical documentation and keep it up to date"
+    assert art_11["label_de"] == "Die technische Dokumentation erstellen und aktuell halten"
+    assert art_11["duty_de"].startswith("Die technische Dokumentation (Anhang IV) erstellen")
+    assert art_11["group"] == "prove"
+    assert art_11["document"] == "annex_iv_technical_documentation"
+
+
 class FailingEmbedder(NoEmbedder):
     """The embeddings API fails with details a caller must not see."""
 
@@ -216,6 +231,9 @@ obligations:
     roles: [deployer]
     risk_classes: [high_risk]
     duty: Support AI literacy.
+    duty_de: KI-Kompetenz fördern.
+    label_en: Support AI literacy
+    label_de: KI-Kompetenz fördern
     article: art:4
     applies_from: 2025-02-02
 """

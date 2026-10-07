@@ -238,7 +238,7 @@ def test_each_art_25_switch_makes_a_provider_of_a_high_risk_system(
     assert reason is not None
     assert f"Art. {article}" in reason
     assert outcome.step.status is Status.DECIDED
-    assert "art:16:a" in articles(outcome)
+    assert "art:9" in articles(outcome)
     # A deployer still uses the system, so it keeps its duties; an importer or distributor that
     # became the provider has the provider's duties instead of its own (Art. 25(1)).
     uses_it = base is Role.DEPLOYER
@@ -253,7 +253,7 @@ def test_a_switched_deployer_gets_provider_and_deployer_duties_once_each() -> No
     )
     outcome = to_outcome(answer, state())
     kept = articles(outcome)
-    assert {"art:16:a", "art:16:i", "art:26:1", "art:26:2", "art:26:6", "art:26:7"} <= set(kept)
+    assert {"art:9", "art:16:i", "art:26:1", "art:26:2", "art:26:6", "art:26:7"} <= set(kept)
     assert kept.count("art:4:1") == 1  # AI literacy is on both lists, listed once
     assert outcome.step.decision.startswith("Role: provider, and also deployer.")
 
@@ -448,7 +448,7 @@ def test_the_working_assumption_keeps_the_base_roles_duties(
     answer = role_answer(base, changed_purpose=key_fact(Answer.UNKNOWN))
     outcome = to_outcome(answer, state())
     assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, base)
-    assert own_duties | {"art:16:a"} <= set(articles(outcome))
+    assert own_duties | {"art:9"} <= set(articles(outcome))
 
 
 def test_every_unknown_deciding_fact_becomes_a_follow_up_question() -> None:
@@ -552,7 +552,7 @@ def test_a_contested_modification_is_ambiguous_with_provider_assumed() -> None:
     assert finding(outcome).role_switch_reason is None  # assumed, not a settled switch
     assert [c.provision_id for c in step.citations] == ["art:3:4", "art:25:1:b", "art:3:23"]
     assert "Working assumption: provider, keeping the deployer duties" in step.decision
-    assert {"art:16:a", "art:26:1"} <= set(articles(outcome))
+    assert {"art:9", "art:26:1"} <= set(articles(outcome))
 
 
 def test_a_contested_modification_with_an_open_switch_still_asks_it() -> None:
@@ -644,7 +644,7 @@ def test_an_assumed_section_b_product_keeps_its_duties_and_names_art_2_2_as_poss
     high-risk step; an assumed one keeps every duty that may apply, the stricter reading."""
     answer = role_answer(Role.PROVIDER, legacy=legacy_answer())
     outcome = to_outcome(answer, section_b_state(status))
-    assert {"art:4:1", "art:16:a"} <= set(articles(outcome))
+    assert {"art:4:1", "art:9"} <= set(articles(outcome))
     assert "If the system is high-risk as a product" in outcome.step.decision
     assert "No AI Act duties listed" not in outcome.step.decision
     assert "art:2:2" in [c.provision_id for c in outcome.step.citations]
@@ -654,7 +654,7 @@ def test_a_section_a_product_keeps_its_duties() -> None:
     outcome = to_outcome(
         role_answer(Role.PROVIDER, legacy=legacy_answer()), section_b_state(point="annex:I:A:11")
     )
-    assert "art:16:a" in articles(outcome)
+    assert "art:9" in articles(outcome)
     assert "art:2:2" not in [c.provision_id for c in outcome.step.citations]
     assert "Section B" not in outcome.step.decision
 
@@ -685,7 +685,7 @@ def test_an_unknown_role_asks_for_it() -> None:
     assert outcome.step.missing_fact is not None
     assert outcome.step.missing_fact.id == "operator_role"
     assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
-    assert {"art:16:a", "art:26:1"} <= set(articles(outcome))
+    assert {"art:9", "art:26:1"} <= set(articles(outcome))
 
 
 def test_a_repurposed_gpai_system_reports_its_switch_next_to_the_gpai_rule() -> None:
@@ -737,7 +737,7 @@ def test_a_provider_that_does_not_build_on_gpai_gets_no_flag() -> None:
     outcome = to_outcome(role_answer(Role.PROVIDER), state())
     assert finding(outcome).role is Role.PROVIDER
     assert "art:53:1:b" not in articles(outcome)
-    assert "art:16:a" in articles(outcome)
+    assert "art:9" in articles(outcome)
 
 
 def test_an_unknown_gpai_base_needs_information() -> None:
@@ -1171,8 +1171,8 @@ def test_a_legacy_public_authority_system_applies_from_2_aug_2030(
 ) -> None:
     legacy = legacy_answer(placed_before=Answer.YES, public_authority=Answer.YES)
     outcome = legacy_outcome(legacy, Role.PROVIDER, route)
-    art_16_a = by_article(outcome)["art:16:a"]
-    assert (art_16_a.applies_from, art_16_a.legacy) == (
+    art_9 = by_article(outcome)["art:9"]
+    assert (art_9.applies_from, art_9.legacy) == (
         date(2030, 8, 2),
         LegacyStatus.PUBLIC_AUTHORITY,
     )
@@ -1548,7 +1548,7 @@ def test_a_provider_refusal_assumes_provider_and_deployer_for_a_person_to_review
     assert step.decision.startswith("The model provider's content filter blocked")
     assert [c.provision_id for c in step.citations] == ["art:3:3", "art:3:4"]
     assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
-    assert {"art:16:a", "art:26:1", "art:26:7"} <= set(articles(outcome))  # open conditions kept
+    assert {"art:9", "art:26:1", "art:26:7"} <= set(articles(outcome))  # open conditions kept
 
 
 def test_a_role_refusal_is_reported_in_german() -> None:
@@ -1589,7 +1589,7 @@ def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> Non
     assert not unresolved_citations(outcome.step, run_state)
     assert finding(outcome).role is Role.PROVIDER
     assert "25(1)(a)" in (finding(outcome).role_switch_reason or "")
-    assert "art:16:a" in articles(outcome)
+    assert "art:9" in articles(outcome)
 
 
 # --- B5d replay: the own role cases -------------------------------------------------------------
