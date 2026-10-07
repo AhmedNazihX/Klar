@@ -187,8 +187,7 @@ def test_the_prefilled_sections_name_the_skeleton_s_duty() -> None:
     duty = _section(document, "duty")
     assert duty.provenance is Provenance.CLASSIFICATION
     assert (
-        duty.paragraphs[1]
-        == "Sie nennt die Pflicht nach Art. 16 Buchst. a, die ab dem 2. Dezember 2027 gilt."
+        duty.paragraphs[1] == "Sie nennt die Pflicht nach Art. 9, die ab dem 2. Dezember 2027 gilt."
     )
 
 

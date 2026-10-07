@@ -13,8 +13,12 @@ def article_provision_name(provision_id: str, language: Language) -> str:
     """An article's paragraph or point: `art:50:1` is "Art. 50(1)" in English and "Art. 50 Abs. 1"
     in German; `art:5:1:ba` is "Art. 5(1)(ba)" or "Art. 5 Abs. 1 Buchst. ba"; `art:5:1:c:i` is
     "Art. 5(1)(c)(i)" or "Art. 5 Abs. 1 Buchst. c Ziff. i". An article with points and no
-    paragraphs: `art:16:a` is "Art. 16(a)" or "Art. 16 Buchst. a"."""
-    _, article, paragraph, *points = provision_id.split(":")
+    paragraphs: `art:16:a` is "Art. 16(a)" or "Art. 16 Buchst. a". A whole article: `art:9` is
+    "Art. 9" in both."""
+    _, article, *rest = provision_id.split(":")
+    if not rest:
+        return f"Art. {article}"
+    paragraph, *points = rest
     if language is DE and paragraph and not paragraph[0].isdigit():
         return f"Art. {article} Buchst. " + " Ziff. ".join((paragraph, *points))
     if language is DE:
