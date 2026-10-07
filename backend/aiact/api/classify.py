@@ -37,6 +37,7 @@ from aiact.api.dependencies import (
     limit_classify,
     node_builder,
 )
+from aiact.api.errors import UNPROCESSABLE_BESIDE_A_STREAM
 from aiact.engine import ClassifyEvent, ClassifyRequest, stream_classification
 from aiact.engine.classify import NodeBuilder
 from aiact.llm import LLMConfigError
@@ -57,7 +58,7 @@ EVENTS_DESCRIPTION = (
 """The stream's schema is each event's (`schema`, which the generated client types the stream
 with; FastAPI's own `itemSchema` says the same in OpenAPI 3.2's form)."""
 
-router = APIRouter()
+router = APIRouter(responses=UNPROCESSABLE_BESIDE_A_STREAM)
 
 
 def started_run(

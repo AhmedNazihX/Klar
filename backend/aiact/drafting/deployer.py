@@ -2,8 +2,8 @@
 answers (`draft.py` drafts each one).
 
 No model is involved: a draft holds the result's facts, the user's answers word for word and the
-template's fixed wording, nothing else (INIT > Documentation drafting). Draft only from a result
-the backend validated, never from a row the browser wrote (P3's audit).
+template's fixed wording, nothing else (INIT > Documentation drafting). A result the browser posts
+is only checked against the result contract, so no Act text is ever taken from it (decision 031).
 """
 
 from collections.abc import Mapping

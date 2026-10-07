@@ -6,13 +6,14 @@ the user's answers and the classification result. The judged "no invented conten
 - No content you didn't supply: the title, note and headings are the template's; each fixed
   section holds the template's wording; each interview section holds the user's answers word for
   word, or nothing, and a skeleton's section quotes the template's requirement; each pre-filled
-  section holds only the drafter's wording of the result.
+  section holds only the drafter's wording of the result, and quotes only the corpus's text the
+  caller read for it (`quotes`, decision 031).
 - Facts match the classification: verified from the result alone, not by drafting again
   (`facts_check.py`): the stated facts, the class, Annex point and its certainty, the duty's
   date, the duty itself, and the result's law version and date.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from enum import Enum, StrEnum
 from typing import Self
 
@@ -29,7 +30,7 @@ from aiact.drafting.models import DraftDocument, DraftSection, SizeClass
 from aiact.drafting.prefill import DutyDateError
 from aiact.drafting.registry import TEMPLATES
 from aiact.drafting.templates import ClassificationSection, DocumentTemplate, SectionSpec
-from aiact.schemas import ClassificationResult, Language
+from aiact.schemas import Citation, ClassificationResult, Language
 from aiact.schemas.base import ContractModel
 
 
@@ -83,12 +84,13 @@ def run_checks(
     result: ClassificationResult,
     answers: Answers,
     size_class: CompanySize = SIZE_CLASS_UNKNOWN,
+    quotes: Sequence[Citation] = (),
 ) -> tuple[CheckResult, ...]:
-    """All three checks on `document`, against the result, the answers and the company size
-    class it was drafted from (see `check_nothing_invented` for the size class)."""
+    """All three checks on `document`, against the result, the answers, the company size class
+    and the corpus quotes it was drafted from (see `check_nothing_invented`)."""
     return (
         check_sections_present(document),
-        check_nothing_invented(document, result, answers, size_class),
+        check_nothing_invented(document, result, answers, size_class, quotes),
         check_facts_match(document, result),
     )
 
@@ -116,10 +118,13 @@ def check_nothing_invented(
     result: ClassificationResult,
     answers: Answers,
     size_class: CompanySize = SIZE_CLASS_UNKNOWN,
+    quotes: Sequence[Citation] = (),
 ) -> CheckResult:
     """Guarantees every word of the draft is the template's, the user's answer as given, or the
     drafter's wording of the result: no added section, sentence or paragraph, no answer moved to
-    another question, and no section passing as another kind to escape the comparison.
+    another question, and no section passing as another kind to escape the comparison. A
+    quoting pre-filled section quotes exactly `quotes`, the corpus's text the caller read for
+    the draft; no other section quotes anything but its template's requirement.
 
     With the company's `size_class` (None for no profile), the note must be exactly the one the
     template gives that company; without it, the template's note or none is accepted."""
@@ -138,27 +143,27 @@ def check_nothing_invented(
         if section.key not in known
     ]
     for spec, section in _pairs(template, document):
-        problems += _invented(spec, section, document, template, result, answers)
+        problems += _invented(spec, section, document, template, result, answers, quotes)
     return _outcome(CheckName.NOTHING_INVENTED, problems)
 
 
 def check_facts_match(document: DraftDocument, result: ClassificationResult) -> CheckResult:
     """Guarantees, from the result alone, that each pre-filled section states the result's facts
-    (`facts_check.py`), that the draft answers its template's duty, and that it carries the
-    result's law version and date."""
+    (`facts_check.py`), that the draft answers its template's duty (for the vendor request, the
+    article of the result's open question), and that it carries the result's law version and
+    date."""
     template = TEMPLATES.get(document.template)
     if template is None:
         return _outcome(CheckName.FACTS_MATCH, [f"unknown template {document.template!r}"])
     problems = []
     if (document.law_version, document.as_of) != (result.law_version, result.as_of):
         problems.append("the law version or date differs from the result's")
-    if document.article != template.article:
-        problems.append(f"the duty {document.article} is not the template's {template.article}")
+    article = template.article_for(result)
+    if document.article != article:
+        problems.append(f"the duty {document.article} is not the template's {article}")
     for spec, section in _pairs(template, document):
         if isinstance(spec, ClassificationSection):
-            problems += prefilled_problems(
-                spec, section, result, document.language, template.article
-            )
+            problems += prefilled_problems(spec, section, result, document.language, article)
     return _outcome(CheckName.FACTS_MATCH, problems)
 
 
@@ -193,12 +198,13 @@ def _invented(
     template: DocumentTemplate,
     result: ClassificationResult,
     answers: Answers,
+    quotes: Sequence[Citation],
 ) -> list[str]:
     key, language = spec.key, document.language
     if section.heading != spec.heading[language]:
         return [f"section {key!r} has a heading the template doesn't give"]
     if isinstance(spec, ClassificationSection):
-        return _prefill_invented(spec, section, template, result, language)
+        return _prefill_invented(spec, section, template, result, language, quotes)
     if section.provenance is not spec.provenance:
         return [f"section {key!r} claims to come from {section.provenance.value}"]
     expected = supplied_section(spec, answers, language)
@@ -206,7 +212,7 @@ def _invented(
         return [f"section {key!r} answers another question"]
     if section.paragraphs != expected.paragraphs:
         return [f"section {key!r} holds content the user didn't supply"]
-    if section.requirement != expected.requirement:
+    if (section.requirement, section.quotes) != (expected.requirement, expected.quotes):
         return [f"section {key!r} quotes a requirement the template doesn't"]
     if (section.unanswered, section.status) != (expected.unanswered, expected.status):
         return [f"section {key!r} misstates what is left to answer"]
@@ -219,13 +225,16 @@ def _prefill_invented(
     template: DocumentTemplate,
     result: ClassificationResult,
     language: Language,
+    quotes: Sequence[Citation],
 ) -> list[str]:
     try:
-        drafted = prefilled_section(spec, result, language, template.article)
+        drafted = prefilled_section(spec, result, language, template.article_for(result), quotes)
     except DutyDateError:
         return [f"section {spec.key!r}: the result lists its duty with several dates"]
     if (section.provenance, section.paragraphs) != (drafted.provenance, drafted.paragraphs):
         return [f"section {spec.key!r} holds content the result doesn't give"]
     if section.requirement is not None:
         return [f"section {spec.key!r} quotes a requirement the template doesn't"]
+    if section.quotes != drafted.quotes:
+        return [f"section {spec.key!r} quotes a text the corpus doesn't give"]
     return []

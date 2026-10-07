@@ -111,21 +111,21 @@
               }
             }
           },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Too many classifications"
           },
           "503": {
             "description": "Every slot is taken (with Retry-After), or the engine is not configured"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
@@ -200,6 +200,16 @@
               }
             }
           },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Not a valid lookup"
           },
@@ -208,16 +218,6 @@
           },
           "503": {
             "description": "The corpus is unreachable"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
@@ -315,11 +315,11 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Not a valid request; the body quotes none of it",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/Unprocessable"
                 }
               }
             }
@@ -356,18 +356,63 @@
               }
             }
           },
-          "503": {
-            "description": "The corpus is unreachable"
-          },
           "422": {
-            "description": "Validation Error",
+            "description": "Not a valid request; the body quotes none of it",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/Unprocessable"
                 }
               }
             }
+          },
+          "503": {
+            "description": "The corpus is unreachable"
+          }
+        }
+      }
+    },
+    "/documents/vendor-letter": {
+      "post": {
+        "summary": "Draft Vendor Letter",
+        "description": "Draft the vendor letter the result calls for: a message about a prohibited result, or a\nrequest for the vendor's assessment of a legally ambiguous one. Guidance, not legal\nadvice.",
+        "operationId": "draft_vendor_letter",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendorLetterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorLetter"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a valid request or result, a result that calls for no vendor letter or cites a point of Art. 5(1) the Act doesn't have, or an answer to a question the letter doesn't ask; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "503": {
+            "description": "The corpus is unreachable"
           }
         }
       }
@@ -433,6 +478,42 @@
         ],
         "title": "AnswerOutcome",
         "description": "What a \"yes\" settles, where the step asking knows it: the class and, for high-risk, the\nroute, the provision and the date the duties apply from (decision 026 items 13 and 18). A\n\"no\" has no such outcome: no class is predicted before the remaining checks run, so the\ninterface shows the fixed sentence of decision 026 item 13 instead."
+      },
+      "CheckName": {
+        "type": "string",
+        "enum": [
+          "sections_present",
+          "nothing_invented",
+          "facts_match"
+        ],
+        "title": "CheckName"
+      },
+      "CheckResult": {
+        "properties": {
+          "check": {
+            "$ref": "#/components/schemas/CheckName"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Problems",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "check",
+          "passed"
+        ],
+        "title": "CheckResult",
+        "description": "One check's outcome. `problems` names each failure; it passes when there are none."
       },
       "Citation": {
         "properties": {
@@ -831,6 +912,181 @@
         "title": "DocumentStatus",
         "description": "The status of a corpus document (matches F4's `documents.status`)."
       },
+      "DraftDocument": {
+        "properties": {
+          "template": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+            "title": "Template"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Title"
+          },
+          "article": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Article",
+            "description": "The duty it answers, e.g. `art:26:7`."
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "label": {
+            "type": "string",
+            "const": "DRAFT",
+            "title": "Label",
+            "default": "DRAFT"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "A line under the title: for an SME or a small mid-cap, that a simplified technical documentation form is expected (P8b)."
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/DraftSection"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Sections"
+          },
+          "unanswered": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Unanswered",
+            "description": "Interview questions still to answer."
+          },
+          "status": {
+            "$ref": "#/components/schemas/DraftStatus"
+          },
+          "law_version": {
+            "$ref": "#/components/schemas/LawVersion",
+            "description": "The AI Act text of the result drafted from."
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of",
+            "description": "The result's law date."
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "template",
+          "title",
+          "article",
+          "language",
+          "sections",
+          "unanswered",
+          "status",
+          "law_version",
+          "as_of",
+          "disclaimer"
+        ],
+        "title": "DraftDocument",
+        "description": "A document drafted from a classification result and the user's answers."
+      },
+      "DraftSection": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "title": "Key"
+          },
+          "heading": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Heading"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "paragraphs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Paragraphs",
+            "default": []
+          },
+          "question_keys": {
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,63}$"
+            },
+            "type": "array",
+            "title": "Question Keys",
+            "description": "The interview questions whose answers fill the section, in the order asked; interview sections only.",
+            "default": []
+          },
+          "unanswered": {
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,63}$"
+            },
+            "type": "array",
+            "title": "Unanswered",
+            "description": "The questions of `question_keys` still to answer, in order.",
+            "default": []
+          },
+          "status": {
+            "$ref": "#/components/schemas/SectionStatus"
+          },
+          "requirement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Citation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The requirement the section answers, quoted word for word from the AI Act (skeletons only); shown above the \"To fill in\" marker."
+          },
+          "quotes": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "title": "Quotes",
+            "description": "The provisions a pre-filled section quotes, word for word from the corpus at the result's law version and date, in the document's language, never from the result: the Art. 5(1) points of the vendor message's finding.",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "heading",
+          "provenance",
+          "status"
+        ],
+        "title": "DraftSection",
+        "description": "One section of a drafted document. No paragraphs means it is still \"To fill in\"."
+      },
+      "DraftStatus": {
+        "type": "string",
+        "enum": [
+          "needs_answers",
+          "ready_to_review"
+        ],
+        "title": "DraftStatus",
+        "description": "A document's state on the documents list: \"Needs N answers\" or \"Ready to review\"."
+      },
       "ErrorEvent": {
         "properties": {
           "event": {
@@ -1005,19 +1261,6 @@
         "title": "FollowUpQuestion",
         "description": "A key-fact question. Its `id` keys the user's answer when the engine runs again."
       },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
-      },
       "HighRiskRoute": {
         "type": "string",
         "enum": [
@@ -1027,6 +1270,38 @@
         "title": "HighRiskRoute",
         "description": "How a system became high-risk; the two routes have different dates (Art. 113(c))."
       },
+      "InvalidField": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Loc",
+            "description": "Where it failed, e.g. [\"body\", \"answers\"]; at most two parts."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "loc"
+        ],
+        "title": "InvalidField",
+        "description": "One validation failure: its type (e.g. `string_too_long`) and where it is."
+      },
+      "JsonValue": {},
       "Language": {
         "type": "string",
         "enum": [
@@ -1297,6 +1572,16 @@
         "title": "OpenQuestion",
         "description": "A question the law and guidance don't settle, with both possible readings."
       },
+      "Provenance": {
+        "type": "string",
+        "enum": [
+          "classification",
+          "interview",
+          "template"
+        ],
+        "title": "Provenance",
+        "description": "Where a section's content comes from; the interface shows it as a tag on the section."
+      },
       "Provision": {
         "properties": {
           "provision_id": {
@@ -1503,6 +1788,18 @@
         "title": "Role",
         "description": "The operator role the obligations follow from (Art. 3, 16, 23-26)."
       },
+      "SectionStatus": {
+        "type": "string",
+        "enum": [
+          "drafted",
+          "questions",
+          "to_fill_in",
+          "needs_evidence",
+          "generated_last"
+        ],
+        "title": "SectionStatus",
+        "description": "A section's state, as the DocSkeleton artboard shows it beside the section."
+      },
       "SettledBy": {
         "properties": {
           "kind": {
@@ -1698,45 +1995,85 @@
         "title": "StepStartedEvent",
         "description": "A check started: the interface marks it running."
       },
-      "ValidationError": {
+      "Unprocessable": {
         "properties": {
-          "loc": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "errors": {
             "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
+              "$ref": "#/components/schemas/InvalidField"
             },
             "type": "array",
-            "title": "Location"
-          },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
+            "title": "Errors",
+            "description": "The validation failures, when the request failed validation.",
+            "default": []
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
-          "loc",
-          "msg",
-          "type"
+          "detail"
         ],
-        "title": "ValidationError"
+        "title": "Unprocessable",
+        "description": "A 422: why the request can't be processed, quoting none of it."
+      },
+      "VendorLetter": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/DraftDocument"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckResult"
+            },
+            "type": "array",
+            "title": "Checks"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "document",
+          "checks"
+        ],
+        "title": "VendorLetter",
+        "description": "The drafted letter (labelled DRAFT, with the notice) and the automatic checks on it."
+      },
+      "VendorLetterRequest": {
+        "properties": {
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result",
+            "description": "The classification result, as `POST /classify` sent it."
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of the letter's wording, its quotes of the Act and the notice."
+          },
+          "answers": {
+            "patternProperties": {
+              "^[a-z][a-z0-9_]{0,63}$": {
+                "type": "string",
+                "maxLength": 2000
+              }
+            },
+            "type": "object",
+            "maxProperties": 10,
+            "title": "Answers",
+            "description": "The interview answers by question key (vendor, tool_name, sender); a question left out stays \"To fill in\"."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "result",
+          "language"
+        ],
+        "title": "VendorLetterRequest",
+        "description": "A classification result, the letter's language and the answers given so far."
       }
     }
   }

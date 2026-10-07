@@ -5,6 +5,7 @@ writing them), so neither imports the other. Keyed by language code: `aiact.sche
 values and the corpus's language literals are both these strings.
 """
 
+import re
 from collections.abc import Mapping
 from datetime import date
 
@@ -22,3 +23,10 @@ def long_date(day: date, language: str) -> str:
     month = MONTHS[language][day.month - 1]
     separator = ". " if language == "de" else " "
     return f"{day.day}{separator}{month} {day.year}"
+
+
+LONG_DATE_PATTERNS: Mapping[str, re.Pattern[str]] = {
+    "en": re.compile(rf"\b\d{{1,2}} (?:{'|'.join(EN_MONTHS)}) \d{{4}}\b"),
+    "de": re.compile(rf"\b\d{{1,2}}\. (?:{'|'.join(DE_MONTHS)}) \d{{4}}\b"),
+}
+"""A long date as `long_date` writes it, per language, for reading the dates a text gives."""

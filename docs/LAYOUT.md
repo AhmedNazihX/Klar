@@ -27,7 +27,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── settings.py              pydantic-settings, read from .env (F1)
 │   │   ├── deps.py                  generates and checks docs/DEPENDENCIES.md; `aiact deps` (F8)
 │   │   ├── db.py                    direct Postgres connection (DATABASE_URL) for server-only tables (C3)
-│   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b)
+│   │   ├── dates.py                 month names and long dates (EN, DE) shared by corpus and engine texts (C7b);
+│   │   │                            LONG_DATE_PATTERNS, reading them back (P28, moved from drafting)
 │   │   ├── provision_names.py       how a result names an article provision or Annex point (EN, DE), shared by
 │   │   │                            the engine's texts and drafting (P8a, moved out of E4–E6's texts)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3);
@@ -120,11 +121,18 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            every template by id), skeletons/: annex_iv.py, art_9.py, art_17.py,
 │   │   │                            art_27.py (the four skeletons), quotes.py (their requirements, word
 │   │   │                            for word, EN and DE; checked against data/parsed/), common.py
+│   │   │                            P28: vendor_letters/: fills.py (the result's facts, as pre-fills),
+│   │   │                            templates.py (the prohibited message and the ambiguous request,
+│   │   │                            EN and DE), facts.py (their facts check), quotes.py (the
+│   │   │                            Art. 5(1) points quoted from the corpus, LawQuotes; decision 031),
+│   │   │                            draft.py (draft_vendor_letter); registered in registry.py
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;
 │   │                                dependencies.py settings, node builder, database, limits; rate_limit.py the rate and
-│   │                                concurrency limits; body_limit.py the 413 body cap; openapi.py the schema export,
+│   │                                concurrency limits; body_limit.py the 413 body cap; errors.py the one
+│   │                                422 body, quoting no input; documents.py
+│   │                                `POST /documents/vendor-letter` (P28); openapi.py the schema export,
 │   │                                `aiact api openapi`; `aiact api serve` runs it
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)

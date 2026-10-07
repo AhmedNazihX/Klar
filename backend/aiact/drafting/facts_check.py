@@ -3,25 +3,20 @@
 It never calls the drafter's `prefill` functions, so a drafting bug can't pass its own check: the
 system section must hold exactly the result's stated facts, the class sentence must name the
 result's class and Annex point (marked assumed exactly when the result isn't decided), and the
-duty sentence must give the result's date for the document's duty. Problems name sections and
-positions, never the user's text.
+duty sentence must give the result's date for the document's duty. The vendor letters' sections
+are verified in `vendor_letters/facts.py`. Problems name sections and positions, never the
+user's text.
 """
 
 import re
-from collections.abc import Mapping
 
-from aiact.dates import MONTHS, long_date
+from aiact.dates import LONG_DATE_PATTERNS, long_date
 from aiact.drafting.models import DraftSection, Provenance
 from aiact.drafting.prefill import ASSUMED, CLASS_NAMES, LEGACY_ARTICLE, Fill
 from aiact.drafting.templates import ClassificationSection
-from aiact.provision_names import annex_point_name, article_provision_name
+from aiact.drafting.vendor_letters.facts import vendor_problems
+from aiact.provision_names import annex_point_name, article_provision_name, names_provision
 from aiact.schemas import ClassificationResult, EvidenceTag, Language, LegacyStatus, Status
-
-DATE_PATTERNS: Mapping[Language, re.Pattern[str]] = {
-    Language.EN: re.compile(rf"\b\d{{1,2}} (?:{'|'.join(MONTHS['en'])}) \d{{4}}\b"),
-    Language.DE: re.compile(rf"\b\d{{1,2}}\. (?:{'|'.join(MONTHS['de'])}) \d{{4}}\b"),
-}
-"""A long date as `aiact.dates.long_date` writes it."""
 
 ANNEX_MENTION = re.compile(r"(?:Annex|Anhang) I[^,]*?(?=[,.](?:\s|$))")
 """An Annex point named in a sentence, up to the comma or full stop that ends it."""
@@ -40,6 +35,8 @@ def prefilled_problems(
             return _system_problems(spec, section, result, language)
         case Fill.CLASSIFICATION_AND_DUTY:
             return _duty_problems(section, result, language, article)
+        case _:
+            return vendor_problems(spec, section, result, language)
 
 
 def _system_problems(
@@ -85,7 +82,7 @@ def _duty_problems(
     class_sentence, duty_sentence = section.paragraphs
     problems = _class_problems(class_sentence, result, language)
     problems += _date_problems(duty_sentence, result, language, article)
-    if not _names(duty_sentence, article_provision_name(article, language)):
+    if not names_provision(duty_sentence, article_provision_name(article, language)):
         problems.append(f"section {key!r} doesn't name the duty {article}")
     return [f"section {key!r}: {problem}" for problem in problems]
 
@@ -119,14 +116,8 @@ def _date_problems(
     is_legacy = bool(duties) and duties[0].legacy is LegacyStatus.UNCHANGED
     expected = {long_date(duties[0].applies_from, language)} if duties and not is_legacy else set()
     problems = []
-    if set(DATE_PATTERNS[language].findall(sentence)) != expected:
+    if set(LONG_DATE_PATTERNS[language].findall(sentence)) != expected:
         problems.append("the date is not the result's")
-    if _names(sentence, article_provision_name(LEGACY_ARTICLE, language)) != is_legacy:
+    if names_provision(sentence, article_provision_name(LEGACY_ARTICLE, language)) != is_legacy:
         problems.append("the Art. 111(2) wording doesn't match the result")
     return problems
-
-
-def _names(sentence: str, provision: str) -> bool:
-    """Whether `sentence` names `provision` itself, not a longer one it begins
-    ("Art. 26 Abs. 1" is not named by "Art. 26 Abs. 11")."""
-    return re.search(re.escape(provision) + r"(?![\w(])", sentence) is not None

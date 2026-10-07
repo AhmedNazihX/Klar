@@ -4,6 +4,8 @@ Shared by the engine's texts (E4-E6, writing decisions) and the drafted document
 drafting needn't import the engine.
 """
 
+import re
+
 from aiact.schemas import Language
 
 DE = Language.DE
@@ -42,3 +44,9 @@ def annex_point_name(point: str, language: Language) -> str:
     if language is DE:
         return f"Anhang III Nummer {number}" + (f" Buchstabe {letter}" if letter else "")
     return f"Annex III point {number}" + (f"({letter})" if letter else "")
+
+
+def names_provision(text: str, provision: str) -> bool:
+    """Whether `text` names `provision` (as the functions above write it) itself, not a longer
+    one it begins ("Art. 26 Abs. 1" is not named by "Art. 26 Abs. 11")."""
+    return re.search(re.escape(provision) + r"(?![\w(])", text) is not None

@@ -4,7 +4,8 @@ stack). `create_app` builds it with its settings and, from the outside in:
 - CORS for `CORS_ORIGINS` only, without credentials, exposing `Retry-After`;
 - `BodySizeLimit`: a body over `API_MAX_BODY_BYTES` is a 413 before it is read;
 - the routes, with their rate limits and the classification slots, and handlers that turn an
-  unreachable database into a 503 without its error text.
+  unreachable database into a 503 without its error text, and a request that fails validation
+  into a 422 that quotes none of it (`errors.py`).
 `API_DOCS=false` hides /docs, /redoc and /openapi.json. `aiact api serve` runs the app;
 `aiact api openapi` exports its schema for the frontend's generated client.
 """
@@ -14,14 +15,16 @@ from importlib.metadata import version
 
 import psycopg
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
-from aiact.api import classify, lookups
+from aiact.api import classify, documents, lookups
 from aiact.api.body_limit import BodySizeLimit
 from aiact.api.dependencies import context_for
+from aiact.api.errors import invalid_request
 from aiact.db import DatabaseNotConfiguredError
 from aiact.settings import Settings, get_settings
 
@@ -72,6 +75,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.api_allowed_hosts))
     app.include_router(classify.router)
     app.include_router(lookups.router)
+    app.include_router(documents.router)
+    app.add_exception_handler(RequestValidationError, invalid_request)
     app.add_exception_handler(DatabaseNotConfiguredError, _corpus_unavailable)
     app.add_exception_handler(psycopg.OperationalError, _corpus_unavailable)
     return app
