@@ -24,7 +24,8 @@ fixed key-fact questions; the Act's rules are applied here, in code:
 `matched` is True only for a decided out-of-scope finding: an uncertain scope question keeps the
 run going (decision 010), and its working assumption is in scope, the stricter reading. A reply
 the provider's content filter refused (decision 029) is not assessed: in scope is assumed until
-a person reviews the description, and the step cites the law the model was given.
+a person reviews the description, and the step cites Art. 3(1) and Art. 2(1), as an in-scope
+finding does. Citations name paragraphs, never the whole of Art. 2 (E16).
 
 Guideline searches pass `max_distance=None` (a signal, not a filter), and pass the caller's
 `exclude_source_example_ids` and the run's `include_held_out` (False except in V8's gap run)
@@ -106,6 +107,9 @@ DEFINITION_ARTICLE = "art:3:1"
 SCOPE_ARTICLE = "art:2"
 LAW_IN_PROMPT = (DEFINITION_ARTICLE, SCOPE_ARTICLE)
 """The provisions the model always reads: the definition and the whole of Art. 2."""
+REFUSAL_CITATIONS = (DEFINITION_ARTICLE, EU_LINK.article)
+"""What a refused step cites: the in-scope reading it assumes, an AI system (Art. 3(1)) placed
+on the market or used in the Union (Art. 2(1)), as an in-scope finding cites it."""
 
 GUIDANCE_DOC_KEYS = frozenset({"guide-definition"})
 """The manifest key of the Commission's guidelines on the AI system definition; the search is
@@ -447,16 +451,17 @@ def to_outcome(
     return CheckOutcome(step=step, matched=settled.is_out_of_scope, follow_up_questions=questions)
 
 
-def refusal_outcome(state: EngineState, law: Sequence[Provision]) -> CheckOutcome:
+def refusal_outcome(state: EngineState, library: ScopeLibrary) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    in scope assumed until a person reviews it, citing the law the model was given. The review
-    question is a missing fact, so the run goes on."""
-    language = state["language"]
+    in scope assumed until a person reviews it, citing what that assumption rests on (E16): the
+    AI system definition and Art. 2(1), fetched from `library`. The review question is a missing
+    fact, so the run goes on."""
+    language, lookup = state["language"], lookup_for(state)
     return refused_check(
         StepName.SCOPE,
         language,
         REFUSAL[language],
-        tuple(provision_citation(provision) for provision in law),
+        tuple(provision_citation(library.provision(pid, lookup)) for pid in REFUSAL_CITATIONS),
         _question(PERSON_REVIEW, language),
     )
 
@@ -525,7 +530,7 @@ class ScopeCheck:
         try:
             answer = parse_reply(reply, ScopeAnswer)
         except ProviderRefusalError:
-            return refusal_outcome(state, law)
+            return refusal_outcome(state, self._library)
         except ValidationError as exc:
             message = f"scope answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise ScopeOutputError(message) from None

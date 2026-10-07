@@ -48,7 +48,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
-from tests.engine.built_corpus import unresolved_citations
+from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     CorpusRecording,
     corpus_recording,
@@ -240,6 +240,28 @@ def test_each_art_2_exclusion_takes_an_ai_system_out_of_scope(
     assert cited(outcome) == expected
     assert outcome.step.decision.startswith("Out of scope: the AI Act does not apply.")
     assert "Answer" in " ".join(f.text for f in outcome.step.facts_used)
+
+
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        pytest.param(scope_answer(), ["art:3:1", "art:2:1"], id="no-match"),
+        pytest.param(
+            scope_answer(personal_use=key_fact(Answer.YES, EvidenceTag.STATED)),
+            ["art:3:1", "art:2:10"],
+            id="match",
+        ),
+    ],
+)
+def test_the_step_cites_the_paragraphs_it_checked_not_art_2(
+    given: ScopeAnswer, expected: list[str]
+) -> None:
+    """E16, both ways: in scope rests on Art. 2(1), out of scope on the paragraph that excludes
+    it; each is fetched by its own id, and Art. 2 as a whole is read only for the prompt."""
+    library = FakeLibrary()
+    outcome = to_outcome(given, state(), PASSAGES, library)
+    assert cited(outcome) == expected
+    assert library.fetched == expected
 
 
 def test_a_system_in_development_is_classified_as_planned_with_art_2_8_noted() -> None:
@@ -486,15 +508,18 @@ def test_the_node_reads_art_3_1_and_art_2_and_passes_the_exclusions_through() ->
 REFUSAL_TEXT = "I'm sorry, but I cannot assist with that request."
 
 
-def _filtered_check(content: str = REFUSAL_TEXT) -> ScopeCheck:
+def _filtered_check(content: str = REFUSAL_TEXT, library: FakeLibrary | None = None) -> ScopeCheck:
     """The node over a reply the provider's content filter stopped (decision 029)."""
     reply = AIMessage(content=content, response_metadata={"finish_reason": "content_filter"})
     chat = GenericFakeChatModel(messages=iter([reply]))
-    return ScopeCheck(_settings(), chat=chat, library=FakeLibrary())
+    return ScopeCheck(_settings(), chat=chat, library=library or FakeLibrary())
 
 
 def test_a_provider_refusal_assumes_in_scope_for_a_person_to_review() -> None:
-    outcome = _filtered_check()(state())
+    """Decision 029; the step cites what the assumed in-scope reading rests on, Art. 3(1) and
+    Art. 2(1), never Art. 2 as a whole (E16)."""
+    library = FakeLibrary()
+    outcome = _filtered_check(library=library)(state())
     step = outcome.step
     assert outcome.matched is False  # in scope, the stricter reading: the run goes on
     assert step.status is Status.NEEDS_MORE_INFORMATION
@@ -502,7 +527,8 @@ def test_a_provider_refusal_assumes_in_scope_for_a_person_to_review() -> None:
     assert step.missing_fact is not None
     assert step.missing_fact.id == "scope_person_review"
     assert outcome.follow_up_questions == (step.missing_fact,)
-    assert [c.provision_id for c in step.citations] == ["art:3:1", "art:2"]
+    assert [c.provision_id for c in step.citations] == ["art:3:1", "art:2:1"]
+    assert library.fetched == ["art:3:1", "art:2", "art:3:1", "art:2:1"]
     assert step.decision.startswith("The model provider's content filter blocked")
 
 
@@ -709,6 +735,7 @@ def test_b5b_case_replay(
         run_state = replay_state(case, AS_OF)
         outcome = ScopeCheck(luna_settings, library=library)(run_state)
     assert not unresolved_citations(outcome.step, run_state)
+    assert not whole_articles(outcome.step)
     matches = scope_matches(outcome, case)
     shown = (outcome.matched, outcome.step.status, cited(outcome), outcome.step.decision)
     expect_known_gap(KNOWN_GAPS, outcome, case, matches=matches, shown=shown)

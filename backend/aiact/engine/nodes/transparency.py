@@ -23,10 +23,12 @@ are applied here, in code:
   guidelines' wider reading noted, and an unknown date is asked. The original text has no
   Art. 111(4).
 
-Every citation is fetched through `get_provision`, or is a retrieved guideline passage.
+Every citation is fetched through `get_provision`, or is a retrieved guideline passage. The step
+cites the Art. 50 paragraphs its finding rests on, never the whole article (E16): the duties shown,
+or all four duty paragraphs when it rules every one out or assumes them all.
 """
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -272,16 +274,22 @@ def _grace(
     )
 
 
-def _cited(
-    settled: Settlement, state: EngineState, retrieved: Retrieved, library: GuidelineLibrary
+def _duty_paragraphs(
+    provisions: Collection[str], state: EngineState, library: GuidelineLibrary
 ) -> tuple[Provision, ...]:
-    """The paragraphs of every duty shown, fetched in the order of Art. 50; Art. 50 as a whole
-    when none is raised."""
-    shown = {duty.provision for duty in (*settled.listed, *settled.considered)}
-    if not shown:
-        return (retrieved.article,)
+    """The duty paragraphs among `provisions`, fetched in the order of Art. 50."""
     lookup = lookup_for(state)
-    return tuple(library.provision(pid, lookup) for pid in ALL_DUTIES if pid in shown)
+    return tuple(library.provision(pid, lookup) for pid in ALL_DUTIES if pid in provisions)
+
+
+def _cited(
+    settled: Settlement, state: EngineState, library: GuidelineLibrary
+) -> tuple[Provision, ...]:
+    """The paragraphs of every duty shown; every duty paragraph, Art. 50(1) to (4), when none is
+    raised, since the finding rules each of them out (E16: never Art. 50 as a whole, whose
+    later paragraphs place no duty)."""
+    shown = {duty.provision for duty in (*settled.listed, *settled.considered)}
+    return _duty_paragraphs(shown or ALL_DUTIES, state, library)
 
 
 def to_outcome(
@@ -296,7 +304,7 @@ def to_outcome(
     settled = settle(answer)
     grace = _grace(settled, answer, state, library)
     citations = (
-        *(provision_citation(p) for p in _cited(settled, state, retrieved, library)),
+        *(provision_citation(p) for p in _cited(settled, state, library)),
         *((provision_citation(grace.provision),) if grace else ()),
         *(
             guidance_citation(hit, language)
@@ -329,16 +337,16 @@ def to_outcome(
     )
 
 
-def refusal_outcome(state: EngineState, retrieved: Retrieved) -> CheckOutcome:
+def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:
     """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    every Art. 50 duty assumed until a person reviews it (the stricter reading), citing Art. 50
-    as fetched. The review question is a missing fact."""
+    every Art. 50 duty assumed until a person reviews it (the stricter reading), citing each
+    duty's paragraph, fetched from `library`. The review question is a missing fact."""
     language = state["language"]
     return refused_check(
         StepName.TRANSPARENCY,
         language,
         texts.REFUSAL[language],
-        (provision_citation(retrieved.article),),
+        tuple(provision_citation(p) for p in _duty_paragraphs(ALL_DUTIES, state, library)),
         ask(texts.PERSON_REVIEW, language, StepName.TRANSPARENCY),
         transparency_duties=ALL_DUTIES,
     )
@@ -411,7 +419,7 @@ class TransparencyCheck:
         try:
             answer = parse_reply(reply, TransparencyAnswer)
         except ProviderRefusalError:
-            return refusal_outcome(state, retrieved)
+            return self._reading(lambda library: refusal_outcome(state, library))
         except ValidationError as exc:
             message = (
                 f"transparency answer doesn't fit the schema: {describe_validation_error(exc)}"

@@ -45,7 +45,7 @@ from aiact.schemas import (
     StepResult,
 )
 from aiact.settings import Settings, get_settings
-from tests.engine.built_corpus import built_validator, unresolved_citations
+from tests.engine.built_corpus import built_validator, unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -77,15 +77,16 @@ ANNEX_III_FROM = date(2027, 12, 2)
 INIT_BASIS: dict[StepName, set[str]] = {
     StepName.SCOPE: {"art:3:1", "art:2:1"},
     StepName.HIGH_RISK: {"annex:III:4:a", "art:6:3"},
-    StepName.TRANSPARENCY: {"art:50"},
+    StepName.TRANSPARENCY: {"art:50:1", "art:50:2", "art:50:3", "art:50:4"},
     StepName.ROLE_OBLIGATIONS: {"art:3:4"},
 }
 """The Basis column of INIT's table, as the ids each step cites: Art. 2-3 (the AI system
 definition and the territorial scope), Annex III 4(a) and Art. 6(3), Art. 50 (no duty raised,
-so the whole article), and for the role the deployer definition (INIT names Art. 25, whose
-switches a deployer that keeps its role doesn't trigger, so the step cites none of them).
-Art. 5 is checked apart (`ART_5`): a step that matches no practice cites either the Art. 5(1)
-list or the points it considered and set aside."""
+so each duty paragraph it rules out, Art. 50(1) to (4): E16), and for the role the deployer
+definition (INIT names Art. 25, whose switches a deployer that keeps its role doesn't trigger,
+so the step cites none of them). Art. 5 is checked apart (`ART_5`): a step that matches no
+practice cites either the Art. 5(1) list or the points it considered and set aside. No step
+cites a whole article its text splits into paragraphs (`whole_articles`, E16)."""
 ART_5 = "art:5"
 """The prohibited step's Basis: every id it cites is a provision of Art. 5."""
 
@@ -171,6 +172,7 @@ def assert_the_expected_classification(result: ClassificationResult) -> None:
     }
     for step in result.steps:
         assert not unresolved_citations(step, state), step.step  # pyright: ignore[reportArgumentType]
+        assert not whole_articles(step), step.step
 
 
 def stub_result(scope: StepResult) -> ClassificationResult:

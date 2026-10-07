@@ -58,7 +58,7 @@ from aiact.schemas import (
 )
 from aiact.schemas.result import derived_status
 from aiact.settings import Settings
-from tests.engine.built_corpus import unresolved_citations
+from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
 from tests.schemas.builders import open_question
 
@@ -912,8 +912,10 @@ EVERY_BRANCH = [
 def test_every_outcome_cites_the_provisions_its_role_rests_on(
     answer: RoleAnswer, given: EngineState
 ) -> None:
-    cited = to_outcome(answer, given).step.citations
+    step = to_outcome(answer, given).step
+    cited = step.citations
     assert cited
+    assert not whole_articles(step)  # paragraphs and points only (E16)
     for citation in cited:
         assert citation.language is given["language"]
         assert citation.law_version is given["law_version"]
@@ -936,6 +938,26 @@ def test_a_switch_cites_its_point_of_art_25_and_the_base_role(switch: str, artic
         (article, "ai-act-consolidated"),
     ]
     assert "deployer" in cited[0].quote
+
+
+@pytest.mark.parametrize(
+    ("answer", "expected"),
+    [
+        pytest.param(role_answer(), ["art:3:4"], id="no-match"),
+        pytest.param(
+            role_answer(own_brand=key_fact(Answer.YES, EvidenceTag.STATED)),
+            ["art:3:4", "art:25:1:a"],
+            id="match",
+        ),
+    ],
+)
+def test_the_step_cites_the_points_it_checked_not_art_3_or_art_25(
+    answer: RoleAnswer, expected: list[str]
+) -> None:
+    """E16, both ways: a deployer that keeps its role cites its definition, Art. 3(4); one that
+    switches under Art. 25(1) cites the point too, never Art. 3 or Art. 25 as a whole."""
+    cited = to_outcome(answer, state()).step.citations
+    assert [c.provision_id for c in cited] == expected
 
 
 @pytest.mark.parametrize(
@@ -1615,6 +1637,7 @@ def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> Non
     run_state = state(description=REBRANDER)
     outcome = RoleObligationsCheck(luna_settings)(run_state)
     assert not unresolved_citations(outcome.step, run_state)
+    assert not whole_articles(outcome.step)
     assert finding(outcome).role is Role.PROVIDER
     assert "25(1)(a)" in (finding(outcome).role_switch_reason or "")
     assert "art:9" in articles(outcome)
@@ -1690,6 +1713,7 @@ def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     run_state = role_check_state(case, ROLE_AS_OF)
     outcome = RoleObligationsCheck(luna_settings)(run_state)
     assert not unresolved_citations(outcome.step, run_state)
+    assert not whole_articles(outcome.step)
     found = finding(outcome)
     switches = sorted(c for c in cited(outcome) if c.startswith("art:25:1:"))
     shown = (found.role, found.also_role, switches, outcome.step.status, outcome.step.decision)

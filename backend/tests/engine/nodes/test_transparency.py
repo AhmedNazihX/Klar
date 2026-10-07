@@ -68,7 +68,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
-from tests.engine.built_corpus import unresolved_citations
+from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
     corpus_recording,
@@ -236,12 +236,32 @@ def cited(result: CheckOutcome) -> list[str]:
 # --- Applying Art. 50 ----------------------------------------------------------------------------
 
 
-def test_no_duty_raised_is_decided_with_no_duties_citing_art_50() -> None:
+def test_no_duty_raised_is_decided_with_no_duties_citing_each_duty_paragraph() -> None:
+    """E16: the finding rules out Art. 50(1) to (4), so it cites those four paragraphs, never
+    Art. 50 as a whole (whose paragraphs 5 to 7 place no duty)."""
     result = outcome(answer())
     assert result.transparency_duties == ()
     assert result.step.status is Status.DECIDED
     assert result.step.decision == "No transparency duty under Art. 50 applies."
-    assert cited(result) == ["art:50"]
+    assert cited(result) == ["art:50:1", "art:50:2", "art:50:3", "art:50:4"]
+
+
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        pytest.param(answer(), list(node.ALL_DUTIES), id="no-match"),
+        pytest.param(answer(deep_fake=APPLIES), ["art:50:4"], id="match"),
+    ],
+)
+def test_the_step_cites_the_paragraphs_it_checked_not_art_50(
+    given: TransparencyAnswer, expected: list[str]
+) -> None:
+    """E16, both ways: the paragraphs ruled out or applied, each fetched by its own id."""
+    library = FakeLibrary()
+    result = outcome(given, library=library)
+    assert cited(result) == expected
+    fetched = [pid for pid, _ in library.lookups]
+    assert fetched == ["art:50", *expected]  # Art. 50 whole only for the prompt
 
 
 @pytest.mark.parametrize(
@@ -675,7 +695,8 @@ def _filtered(content: str) -> GenericFakeChatModel:
 
 
 def test_a_provider_refusal_assumes_every_duty_for_a_person_to_review() -> None:
-    """Decision 029: not a broken output; every Art. 50 duty assumed, Art. 50 cited."""
+    """Decision 029: not a broken output; every Art. 50 duty assumed, each duty's paragraph
+    cited (E16)."""
     library = FakeLibrary()
     check = TransparencyCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=library)
     result = check(state())
@@ -686,7 +707,8 @@ def test_a_provider_refusal_assumes_every_duty_for_a_person_to_review() -> None:
     assert step.missing_fact is not None
     assert step.missing_fact.id == "transparency_person_review"
     assert result.follow_up_questions == (step.missing_fact,)
-    assert cited(result) == ["art:50"]
+    assert cited(result) == ["art:50:1", "art:50:2", "art:50:3", "art:50:4"]
+    assert [pid for pid, _ in library.lookups] == ["art:50", *node.ALL_DUTIES]
     assert step.decision.startswith("The model provider's content filter blocked")
 
 
@@ -995,6 +1017,7 @@ def test_b5a_case_replay(
         run_state = replay_state(case, AS_OF)
         result = check(run_state)
     assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
     matches = transparency_matches(result, case)
     step = result.step
     shown = (result.transparency_duties, step.status, cited(result), step.decision)
