@@ -2,12 +2,16 @@
 `KlarPdf`).
 
 Every text goes through `multi_cell` as plain text (fpdf2's markdown is off), after `printable`.
+A character the embedded fonts can't draw (an emoji, a CJK character) is shown as "?", never
+dropped unseen, and only the count is logged: fpdf2 would log the characters themselves.
 """
 
+import logging
 import secrets
 
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
+from fpdf.fonts import TTFFont
 
 from aiact.export.paper import Block, FillMarker, Heading, Note, Paper, Paragraph, Quote
 from aiact.export.style import (
@@ -27,7 +31,12 @@ from aiact.export.style import (
 )
 from aiact.export.text import printable
 
+logger = logging.getLogger(__name__)
+
 SERIF, SANS = "Newsreader", "Geist"
+UNDRAWABLE = "?"
+"""What stands in for a character the font has no glyph for."""
+KEPT_CONTROLS = frozenset("\n\t")
 FOOTER_FROM_BOTTOM_MM = 22.0
 BOTTOM_MARGIN_MM = 30.0
 """Where a page breaks: above the footer, which holds the disclaimer and the page line."""
@@ -47,6 +56,7 @@ class KlarPdf(FPDF):
         super().__init__(orientation="portrait", unit="mm", format="A4")
         self.footer_text = printable(footer_text)
         self.page_of = page_of
+        self.undrawable_count = 0
         # fpdf2 swaps the page-count alias for the count wherever it appears, so the alias is
         # random: no text the user wrote can contain it.
         self.alias_nb_pages(f"{{pages-{secrets.token_hex(8)}}}")
@@ -72,13 +82,26 @@ class KlarPdf(FPDF):
         self.multi_cell(
             0,
             line_height,
-            printable(text),
+            self._drawable(printable(text)),
             align="L",
             fill=fill is not None,
             padding=PADDING_MM if fill is not None else 0,
             new_x=XPos.LMARGIN,
             new_y=YPos.NEXT,
         )
+
+    def _drawable(self, text: str) -> str:
+        """`text` with each character the current font can't draw as `UNDRAWABLE`, counted."""
+        font = self.current_font
+        if not isinstance(font, TTFFont):
+            return text
+        drawn = "".join(
+            char if char in KEPT_CONTROLS or ord(char) in font.cmap else UNDRAWABLE for char in text
+        )
+        self.undrawable_count += sum(
+            1 for kept, char in zip(drawn, text, strict=True) if kept != char
+        )
+        return drawn
 
     def write_logo(self) -> None:
         self.image(LOGO_PNG, x=MARGIN_MM, y=MARGIN_MM, w=LOGO_WIDTH_MM)
@@ -139,4 +162,7 @@ def render_pdf(paper: Paper) -> bytes:
     pdf.write_title(paper.title, paper.stamp, paper.lines)
     for block in paper.blocks:
         pdf.write_block(block)
-    return bytes(pdf.output())
+    content = bytes(pdf.output())
+    if pdf.undrawable_count:
+        logger.warning("PDF: %d characters no font can draw shown as ?", pdf.undrawable_count)
+    return content

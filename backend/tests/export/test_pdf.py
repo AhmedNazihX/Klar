@@ -1,13 +1,15 @@
 """PDF files (P9): every block as plain text, the fonts embedded, the footer and page line on
 every page."""
 
+import logging
 from io import BytesIO
 from typing import cast
 
+import pytest
 from pypdf import PdfReader
 from pypdf.generic import DictionaryObject
 
-from aiact.export import render_pdf
+from aiact.export import Paper, Paragraph, render_pdf
 from aiact.schemas import Language
 from tests.export.papers import FOOTER, MARKUP, sample_paper
 from tests.export.reading import one_line, pdf_pages
@@ -63,3 +65,20 @@ def test_the_fonts_are_embedded_and_the_logo_drawn() -> None:
     assert len(cast(DictionaryObject, resources["/XObject"])) == 1, "the flat lockup"
     assert reader.metadata is not None
     assert reader.metadata.title == "Größere Dokumentation: a test"
+
+
+def test_a_character_no_font_can_draw_shows_as_a_question_mark_and_only_its_count_is_logged(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    paper = Paper(
+        language=Language.EN,
+        title="Undrawable",
+        blocks=(Paragraph("Ship it \U0001f600 to Łódź 漢"),),
+        footer=FOOTER,
+    )
+    with caplog.at_level(logging.DEBUG):
+        page = pdf_pages(render_pdf(paper))[0]
+    assert "Ship it ? to Łódź ?" in page
+    assert "PDF: 2 characters no font can draw shown as ?" in caplog.text
+    assert "\U0001f600" not in caplog.text
+    assert "漢" not in caplog.text
