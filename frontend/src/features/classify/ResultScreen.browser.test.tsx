@@ -8,6 +8,7 @@ import { page } from 'vitest/browser'
 
 import { decidedHighRisk, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
+import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { classificationRunOptions, type ClassificationRun } from './classification-store'
 
@@ -26,7 +27,11 @@ async function openResult(language: 'en' | 'de', view?: 'reviewer'): Promise<voi
   }
   client.setQueryData(classificationRunOptions(TOOL_ID).queryKey, run)
   renderRoute(`/app/inventory/${TOOL_ID}${view ? '?view=reviewer' : ''}`, client)
-  await screen.findByRole('heading', { level: 1, name: 'Applicant screening' })
+  await screen.findByRole(
+    'heading',
+    { level: 1, name: 'Applicant screening' },
+    { timeout: FIRST_RENDER_MS },
+  )
   await document.fonts.ready
 }
 

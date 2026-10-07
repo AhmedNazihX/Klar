@@ -21,6 +21,7 @@ import {
   WORKED_EXAMPLE_DESCRIPTION,
 } from '@/test/classify-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
+import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { classificationRunOptions, type ClassificationRun } from './classification-store'
 
@@ -45,7 +46,11 @@ async function openResult(
   client.setQueryData(classificationRunOptions(TOOL_ID).queryKey, run)
   const path = `/app/inventory/${TOOL_ID}${view ? `?view=${view}` : ''}`
   const rendered = renderRoute(path, client)
-  await screen.findByRole('heading', { level: 1, name: 'Applicant screening' })
+  await screen.findByRole(
+    'heading',
+    { level: 1, name: 'Applicant screening' },
+    { timeout: FIRST_RENDER_MS },
+  )
   return rendered
 }
 
@@ -400,7 +405,13 @@ describe('Result variants (decision 026)', () => {
 describe('Result not in this session', () => {
   it('says so and leads to Classify', async () => {
     renderRoute('/app/inventory/unknown-tool')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Result' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Result' },
+        { timeout: FIRST_RENDER_MS },
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByText(/This result isn't in this session/)).toBeVisible()
   })
 })

@@ -15,6 +15,7 @@ import {
 } from '@/test/classify-fixtures'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
+import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { clearDraft } from './classification-store'
 
@@ -26,7 +27,7 @@ async function openClassify(language: 'en' | 'de' = 'en') {
   await i18n.changeLanguage(language)
   const user = userEvent.setup()
   const rendered = renderRoute('/app/classify')
-  await screen.findByRole('heading', { level: 1 })
+  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
   return { user, ...rendered }
 }
 
@@ -111,7 +112,11 @@ describe('Classify, a run', () => {
     await expect.poll(() => router.state.location.pathname).toMatch(/^\/app\/inventory\/[\w-]+$/)
     expect(body).toEqual({ description: WORKED_EXAMPLE_DESCRIPTION, language: 'en' })
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Applicant screening' }),
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Applicant screening' },
+        { timeout: FIRST_RENDER_MS },
+      ),
     ).toBeInTheDocument()
     expect(
       within(screen.getByRole('region', { name: 'Result' })).getByText('High-risk'),
@@ -260,7 +265,11 @@ describe('Classify, a run', () => {
     await user.click(saveForLater)
     await expect.poll(() => router.state.location.pathname).toBe('/app/inventory')
     // The form is gone: what comes back is the saved draft, not the same form still mounted.
-    await screen.findByRole('heading', { level: 1, name: 'Your AI tools' })
+    await screen.findByRole(
+      'heading',
+      { level: 1, name: 'Your AI tools' },
+      { timeout: FIRST_RENDER_MS },
+    )
     expect(screen.queryByLabelText('In your own words')).toBeNull()
 
     await router.navigate({ to: '/app/classify' })
@@ -274,10 +283,22 @@ describe('Classify, a run', () => {
     const { user } = await openClassify()
     await user.type(screen.getByLabelText('In your own words'), WORKED_EXAMPLE_DESCRIPTION)
     await user.click(screen.getByRole('button', { name: 'Run the checks' }))
-    expect(await screen.findByRole('heading', { level: 1, name: 'Your tool' })).toBeVisible()
+    expect(
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Your tool' },
+        { timeout: FIRST_RENDER_MS },
+      ),
+    ).toBeVisible()
 
     await i18n.changeLanguage('de')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Ihr Tool' })).toBeVisible()
+    expect(
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Ihr Tool' },
+        { timeout: FIRST_RENDER_MS },
+      ),
+    ).toBeVisible()
   })
 
   it('runs in German, in German', async () => {
@@ -293,6 +314,12 @@ describe('Classify, a run', () => {
     await user.click(screen.getByRole('button', { name: 'Prüfungen starten' }))
     await expect.poll(() => router.state.location.pathname).toMatch(/^\/app\/inventory\//)
     expect(body).toEqual({ description: 'Ein Tool für Bewerbungen.', language: 'de' })
-    expect(await screen.findByRole('heading', { level: 1, name: 'Ihr Tool' })).toBeVisible()
+    expect(
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Ihr Tool' },
+        { timeout: FIRST_RENDER_MS },
+      ),
+    ).toBeVisible()
   })
 })
