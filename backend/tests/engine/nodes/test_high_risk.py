@@ -1303,19 +1303,35 @@ def _live_corpus(settings: Settings) -> Iterator[HighRiskCorpus]:
         yield HighRiskCorpus(connection, OpenRouterEmbeddings(settings=settings))
 
 
+@contextmanager
+def _recorded_check(
+    settings: Settings,
+    record_mode: str,
+    cassette_dir: str,
+    cassette_name: str,
+    record_command: str,
+) -> Iterator[HighRiskCheck]:
+    """A `HighRiskCheck` over the recorded model and corpus; skips while nothing is recorded,
+    naming `record_command`."""
+    with corpus_recording(
+        cassette_dir,
+        cassette_name,
+        record_mode,
+        record_command,
+        lambda: _live_corpus(settings),
+    ) as recording:
+        yield HighRiskCheck(settings, library=RecordedHighRiskLibrary(recording))
+
+
 @pytest.fixture
 def replay_check(
     luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
 ) -> Iterator[HighRiskCheck]:
     """A `HighRiskCheck` over the recorded model and corpus; skips while nothing is recorded."""
-    with corpus_recording(
-        vcr_cassette_dir,
-        default_cassette_name,
-        record_mode,
-        RECORD_COMMAND,
-        lambda: _live_corpus(luna_settings),
-    ) as recording:
-        yield HighRiskCheck(luna_settings, library=RecordedHighRiskLibrary(recording))
+    with _recorded_check(
+        luna_settings, record_mode, vcr_cassette_dir, default_cassette_name, RECORD_COMMAND
+    ) as check:
+        yield check
 
 
 @pytest.mark.vcr
@@ -1463,14 +1479,10 @@ def original_replay_check(
     luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
 ) -> Iterator[HighRiskCheck]:
     """`replay_check` for the original-text replays, whose skip names their own command."""
-    with corpus_recording(
-        vcr_cassette_dir,
-        default_cassette_name,
-        record_mode,
-        ORIGINAL_RECORD_COMMAND,
-        lambda: _live_corpus(luna_settings),
-    ) as recording:
-        yield HighRiskCheck(luna_settings, library=RecordedHighRiskLibrary(recording))
+    with _recorded_check(
+        luna_settings, record_mode, vcr_cassette_dir, default_cassette_name, ORIGINAL_RECORD_COMMAND
+    ) as check:
+        yield check
 
 
 def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
