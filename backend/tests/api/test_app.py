@@ -85,7 +85,14 @@ def test_the_cors_origins_come_from_the_settings() -> None:
 def test_the_operation_ids_are_the_route_names() -> None:
     schema = json.loads(openapi_json())
     ids = {op["operationId"] for path in schema["paths"].values() for op in path.values()}
-    assert ids == {"classify", "get_provision", "list_obligations", "list_documents"}
+    assert ids == {
+        "classify",
+        "get_provision",
+        "list_obligations",
+        "list_documents",
+        "draft_documents",
+        "export_document",
+    }
 
 
 def _property_names(value: object) -> set[str]:

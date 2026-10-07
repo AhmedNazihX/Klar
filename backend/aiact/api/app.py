@@ -19,7 +19,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
-from aiact.api import classify, lookups
+from aiact.api import classify, documents, lookups
 from aiact.api.body_limit import BodySizeLimit
 from aiact.api.dependencies import context_for
 from aiact.db import DatabaseNotConfiguredError
@@ -72,6 +72,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.api_allowed_hosts))
     app.include_router(classify.router)
     app.include_router(lookups.router)
+    app.include_router(documents.router)
     app.add_exception_handler(DatabaseNotConfiguredError, _corpus_unavailable)
     app.add_exception_handler(psycopg.OperationalError, _corpus_unavailable)
     return app

@@ -371,6 +371,90 @@
           }
         }
       }
+    },
+    "/documents/drafts": {
+      "post": {
+        "summary": "Draft Documents",
+        "description": "Drafts every document the result calls for with the user's answers, runs the three\nautomatic checks on each, and lists each one's interview questions. Every draft is labelled\nDRAFT and carries the \"guidance, not legal advice\" notice.",
+        "operationId": "draft_documents",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a valid request"
+          }
+        }
+      }
+    },
+    "/documents/export": {
+      "post": {
+        "summary": "Export Document",
+        "description": "One document as a Word (.docx) or PDF file, drafted as `draft_documents` drafts it, and\nonly once all three automatic checks pass.",
+        "operationId": "export_document",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The document as a file (an attachment)",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The result calls for no such document"
+          },
+          "409": {
+            "description": "The draft failed its automatic checks"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -433,6 +517,72 @@
         ],
         "title": "AnswerOutcome",
         "description": "What a \"yes\" settles, where the step asking knows it: the class and, for high-risk, the\nroute, the provision and the date the duties apply from (decision 026 items 13 and 18). A\n\"no\" has no such outcome: no class is predicted before the remaining checks run, so the\ninterface shows the fixed sentence of decision 026 item 13 instead."
+      },
+      "CheckName": {
+        "type": "string",
+        "enum": [
+          "sections_present",
+          "nothing_invented",
+          "facts_match"
+        ],
+        "title": "CheckName"
+      },
+      "CheckResult": {
+        "properties": {
+          "check": {
+            "$ref": "#/components/schemas/CheckName"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Problems",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "check",
+          "passed"
+        ],
+        "title": "CheckResult",
+        "description": "One check's outcome. `problems` names each failure; it passes when there are none."
+      },
+      "CheckedDraft": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/DraftDocument"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckResult"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewQuestion"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "document",
+          "checks",
+          "questions"
+        ],
+        "title": "CheckedDraft",
+        "description": "A drafted document, its three automatic checks and its interview, in the order asked."
       },
       "Citation": {
         "properties": {
@@ -831,6 +981,245 @@
         "title": "DocumentStatus",
         "description": "The status of a corpus document (matches F4's `documents.status`)."
       },
+      "DraftDocument": {
+        "properties": {
+          "template": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+            "title": "Template"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Title"
+          },
+          "article": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Article",
+            "description": "The duty it answers, e.g. `art:26:7`."
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "label": {
+            "type": "string",
+            "const": "DRAFT",
+            "title": "Label",
+            "default": "DRAFT"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "A line under the title: for an SME or a small mid-cap, that a simplified technical documentation form is expected (P8b)."
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/DraftSection"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Sections"
+          },
+          "unanswered": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Unanswered",
+            "description": "Interview questions still to answer."
+          },
+          "status": {
+            "$ref": "#/components/schemas/DraftStatus"
+          },
+          "law_version": {
+            "$ref": "#/components/schemas/LawVersion",
+            "description": "The AI Act text of the result drafted from."
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of",
+            "description": "The result's law date."
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "template",
+          "title",
+          "article",
+          "language",
+          "sections",
+          "unanswered",
+          "status",
+          "law_version",
+          "as_of",
+          "disclaimer"
+        ],
+        "title": "DraftDocument",
+        "description": "A document drafted from a classification result and the user's answers."
+      },
+      "DraftList": {
+        "properties": {
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/CheckedDraft"
+            },
+            "type": "array",
+            "title": "Documents"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "documents"
+        ],
+        "title": "DraftList",
+        "description": "Every document the result calls for, in the order the documents list shows them."
+      },
+      "DraftSection": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "title": "Key"
+          },
+          "heading": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Heading"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "paragraphs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Paragraphs",
+            "default": []
+          },
+          "question_keys": {
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,63}$"
+            },
+            "type": "array",
+            "title": "Question Keys",
+            "description": "The interview questions whose answers fill the section, in the order asked; interview sections only.",
+            "default": []
+          },
+          "unanswered": {
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,63}$"
+            },
+            "type": "array",
+            "title": "Unanswered",
+            "description": "The questions of `question_keys` still to answer, in order.",
+            "default": []
+          },
+          "status": {
+            "$ref": "#/components/schemas/SectionStatus"
+          },
+          "requirement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Citation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The requirement the section answers, quoted word for word from the AI Act (skeletons only); shown above the \"To fill in\" marker."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "heading",
+          "provenance",
+          "status"
+        ],
+        "title": "DraftSection",
+        "description": "One section of a drafted document. No paragraphs means it is still \"To fill in\"."
+      },
+      "DraftStatus": {
+        "type": "string",
+        "enum": [
+          "needs_answers",
+          "ready_to_review"
+        ],
+        "title": "DraftStatus",
+        "description": "A document's state on the documents list: \"Needs N answers\" or \"Ready to review\"."
+      },
+      "DraftsRequest": {
+        "properties": {
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result",
+            "description": "A ClassificationResult as `POST /classify` returned it. It is parsed against the result contract (a result that breaks it is a 422), and the drafts are built from the parsed result."
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of the drafts' wording and notice."
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The company profile's size class; null without a profile."
+          },
+          "answers": {
+            "patternProperties": {
+              "^[a-z0-9]+(_[a-z0-9]+)*$": {
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 20000
+                },
+                "propertyNames": {
+                  "maxLength": 200,
+                  "minLength": 1
+                },
+                "type": "object",
+                "maxProperties": 100
+              }
+            },
+            "propertyNames": {
+              "maxLength": 200
+            },
+            "type": "object",
+            "maxProperties": 20,
+            "title": "Answers"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "result",
+          "language"
+        ],
+        "title": "DraftsRequest",
+        "description": "A tool's classification result and the user's answers, by template id."
+      },
       "ErrorEvent": {
         "properties": {
           "event": {
@@ -866,6 +1255,66 @@
         ],
         "title": "EvidenceTag",
         "description": "Where a fact came from; used instead of a numeric confidence score."
+      },
+      "ExportRequest": {
+        "properties": {
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result",
+            "description": "A ClassificationResult as `POST /classify` returned it. It is parsed against the result contract (a result that breaks it is a 422), and the drafts are built from the parsed result."
+          },
+          "template": {
+            "type": "string",
+            "maxLength": 200,
+            "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+            "title": "Template"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeClass"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "answers": {
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 20000
+            },
+            "propertyNames": {
+              "maxLength": 200,
+              "minLength": 1
+            },
+            "type": "object",
+            "maxProperties": 100,
+            "title": "Answers"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "docx",
+              "pdf"
+            ],
+            "title": "Format"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "result",
+          "template",
+          "language",
+          "format"
+        ],
+        "title": "ExportRequest",
+        "description": "One document of the result, its answers and the file wanted."
       },
       "Fact": {
         "properties": {
@@ -1026,6 +1475,34 @@
         ],
         "title": "HighRiskRoute",
         "description": "How a system became high-risk; the two routes have different dates (Art. 113(c))."
+      },
+      "InterviewQuestion": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "title": "Key"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section",
+            "description": "The key of the section the answer fills."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "text",
+          "section"
+        ],
+        "title": "InterviewQuestion",
+        "description": "One question of a document's guided interview, and the section its answer fills."
       },
       "Language": {
         "type": "string",
@@ -1297,6 +1774,16 @@
         "title": "OpenQuestion",
         "description": "A question the law and guidance don't settle, with both possible readings."
       },
+      "Provenance": {
+        "type": "string",
+        "enum": [
+          "classification",
+          "interview",
+          "template"
+        ],
+        "title": "Provenance",
+        "description": "Where a section's content comes from; the interface shows it as a tag on the section."
+      },
       "Provision": {
         "properties": {
           "provision_id": {
@@ -1503,6 +1990,18 @@
         "title": "Role",
         "description": "The operator role the obligations follow from (Art. 3, 16, 23-26)."
       },
+      "SectionStatus": {
+        "type": "string",
+        "enum": [
+          "drafted",
+          "questions",
+          "to_fill_in",
+          "needs_evidence",
+          "generated_last"
+        ],
+        "title": "SectionStatus",
+        "description": "A section's state, as the DocSkeleton artboard shows it beside the section."
+      },
       "SettledBy": {
         "properties": {
           "kind": {
@@ -1531,6 +2030,16 @@
         ],
         "title": "SettledByKind",
         "description": "What could settle an open question of law (E12, decision 026 item 4)."
+      },
+      "SizeClass": {
+        "type": "string",
+        "enum": [
+          "sme",
+          "smc",
+          "none"
+        ],
+        "title": "SizeClass",
+        "description": "The company profile's size class (P19's `inventories.size_class`), passed in by the\ncaller: derived from the profile's bands, never from the description."
       },
       "SourceSpan": {
         "properties": {
