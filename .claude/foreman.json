@@ -118,6 +118,17 @@
       "enforced_by": [".claude/rules/frontend.md", "foreman:security-reviewer"]
     }
   ],
+  "review_checklist": "docs/REVIEW_CHECKLIST.md",
+  "post_merge": [
+    {
+      "when": ["supabase/seed/obligations.sql"],
+      "run": "uv run --directory backend python -I -c \"import pathlib, psycopg; psycopg.connect('postgresql://postgres:postgres@127.0.0.1:54322/postgres', autocommit=True).execute(pathlib.Path('../supabase/seed/obligations.sql').read_text())\" && uv run --directory backend pytest -q tests/db/test_obligations_schema.py"
+    },
+    {
+      "when": ["eval/cases/**", "eval/commission_examples/**", "eval/isolation/embeddings.json"],
+      "run": "uv run --directory backend aiact evaluate isolation-embed"
+    }
+  ],
   "docs": {"max_bytes": 20000, "exclude": []},
   "cost_cap_usd": 0.1,
   "max_review_stories": 2

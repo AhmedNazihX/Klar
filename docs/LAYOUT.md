@@ -225,6 +225,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── DEPENDENCIES.md              generated from pyproject + lockfiles; never edited by hand (F8)
 │   ├── dependency-licences.json     licence + summary cache per name==version (npm:name==version for the frontend), written by `aiact deps generate` (F8, P4)
 │   ├── corpus_stats.md              row counts per document (C3)
+│   ├── REVIEW_CHECKLIST.md          recurring review findings; workers check their diff against it before DONE (foreman.json › review_checklist)
 │   ├── design-system/               copy of the user's Klar design system (README brand book, localisation, components, components.d.ts, tokens.json); the claude.ai artifact is the source
 │   └── decisions/NNN-<slug>.md      decision records (/decision skill)
 │
