@@ -3,15 +3,45 @@ import { useEffect, useId, useRef, useState, type JSX, type SyntheticEvent } fro
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/Button'
+import { useMyDataCounts } from '@/hooks/use-my-data-counts'
+import type { MyDataCounts } from '@/lib/user-data'
 
 import { DANGER_BUTTON_CLASS } from './danger-button'
 
-export type DeleteDialogProps = {
+type DeleteDialogProps = {
   isOpen: boolean
   /** Called when the dialog closes: Cancel, Escape, or the browser closing it. */
   onClose: () => void
   /** The screen's deletion, so its outcome outlives the dialog. */
   deletion: UseMutationResult<void, unknown, void>
+}
+
+// The kinds the dialog counts, in the order "What Klar keeps" lists them. The company profile,
+// one at most, is named without a number.
+const COUNTED_KINDS = [
+  'systems',
+  'classifications',
+  'interviewAnswers',
+  'dutyProgress',
+] as const satisfies readonly (keyof MyDataCounts)[]
+
+/**
+ * What the deletion takes, from the counts the screen has loaded: "2 tools, 3 results … will be
+ * deleted for good", only the kinds the user has. Without counts (loading, failed, or nothing
+ * stored) it names the kinds instead.
+ */
+function useLossText(): string {
+  const { t, i18n } = useTranslation()
+  const counts = useMyDataCounts().data
+  if (!counts) return t('yourData.delete.dialogBody')
+  const counted = COUNTED_KINDS.filter((kind) => counts[kind] > 0).map((kind) =>
+    t(`yourData.delete.lost.${kind}`, { count: counts[kind] }),
+  )
+  const items =
+    counts.companyProfiles > 0 ? [...counted, t('yourData.delete.lost.companyProfile')] : counted
+  if (items.length === 0) return t('yourData.delete.dialogBody')
+  const list = new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(items)
+  return t('yourData.delete.dialogBodyCounts', { items: list })
 }
 
 /**
@@ -28,6 +58,7 @@ export function DeleteDialog({ isOpen, onClose, deletion }: DeleteDialogProps): 
   const [typed, setTyped] = useState('')
   const word = t('yourData.delete.word')
   const isConfirmed = typed.trim() === word
+  const lossText = useLossText()
 
   // The open state lives in React; the browser's modal (top layer, inert page) follows it.
   useEffect(() => {
@@ -62,7 +93,7 @@ export function DeleteDialog({ isOpen, onClose, deletion }: DeleteDialogProps): 
           {t('yourData.delete.dialogTitle')}
         </h2>
         <p id={bodyId} className="m-0 text-body-small text-ink-2">
-          {t('yourData.delete.dialogBody')}
+          {lossText}
         </p>
         <label htmlFor={inputId} className="text-label font-semibold">
           {t('yourData.delete.confirmLabel', { word })}

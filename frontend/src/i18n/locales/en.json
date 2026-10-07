@@ -298,6 +298,18 @@
       "button": "Delete my data",
       "dialogTitle": "Delete everything?",
       "dialogBody": "Your tools with their descriptions and results, your document answers, checklist ticks and company profile will be deleted for good. Klar can’t bring them back.",
+      "dialogBodyCounts": "{{items}} will be deleted for good. This can’t be undone.",
+      "lost": {
+        "systems_one": "{{count}} tool",
+        "systems_other": "{{count}} tools",
+        "classifications_one": "{{count}} result",
+        "classifications_other": "{{count}} results",
+        "interviewAnswers_one": "{{count}} document answer",
+        "interviewAnswers_other": "{{count}} document answers",
+        "dutyProgress_one": "{{count}} ticked duty",
+        "dutyProgress_other": "{{count}} ticked duties",
+        "companyProfile": "your company profile"
+      },
       "word": "DELETE",
       "confirmLabel": "Type {{word}} to confirm",
       "cancel": "Cancel",

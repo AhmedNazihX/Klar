@@ -4,7 +4,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { supabase } from '@/lib/supabase'
 import { downloadJson, exportFileName, exportUserData } from '@/lib/user-data'
 
-import { anonymousSessionOptions } from './use-anonymous-session'
+import { withAnonymousSession } from './use-anonymous-session'
 
 /**
  * "Download everything": reads the user's data (export_my_data) and saves it as a JSON file that
@@ -16,9 +16,7 @@ export function useExportUserData(
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      if (!client) throw new Error('Supabase is not configured.')
-      await queryClient.query(anonymousSessionOptions(client))
-      const document = await exportUserData(client)
+      const document = await exportUserData(await withAnonymousSession(queryClient, client))
       downloadJson(document, exportFileName(new Date()))
     },
   })

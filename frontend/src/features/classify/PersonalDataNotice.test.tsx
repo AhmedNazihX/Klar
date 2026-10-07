@@ -43,8 +43,37 @@ describe('the personal-data warning under the description', () => {
     ).toBeInTheDocument()
   })
 
+  it('sends nothing while it checks every kind', async () => {
+    const user = await openClassify()
+    const requests: string[] = []
+    const record = ({ request }: { request: Request }): void => {
+      requests.push(`${request.method} ${request.url}`)
+    }
+    server.events.on('request:start', record)
+    try {
+      await user.type(
+        screen.getByLabelText('In your own words'),
+        'Frau Schulz (schulz@example.de, 0170 1234567) is paid to DE89 3704 0044 0532 0130 00.',
+      )
+      await vi.waitFor(() =>
+        expect(
+          within(notice())
+            .getAllByRole('listitem')
+            .map((item) => item.textContent),
+        ).toEqual([
+          'an email address',
+          'a phone number',
+          'a bank account number (IBAN)',
+          'what looks like a person’s name',
+        ]),
+      )
+    } finally {
+      server.events.removeListener('request:start', record)
+    }
+    expect(requests).toEqual([])
+  })
+
   it('lists what it found and how to avoid it, in English', async () => {
-    // No handler is installed: a request while typing would fail the test (MSW errors on it).
     const user = await openClassify()
     await user.type(screen.getByLabelText('In your own words'), WITH_CONTACT)
     const region = notice()

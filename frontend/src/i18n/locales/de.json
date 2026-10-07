@@ -298,6 +298,18 @@
       "button": "Meine Daten löschen",
       "dialogTitle": "Alles löschen?",
       "dialogBody": "Ihre Tools mit Beschreibungen und Ergebnissen, Ihre Antworten für Dokumente, abgehakten Pflichten und Ihr Unternehmensprofil werden endgültig gelöscht. Klar kann sie nicht wiederherstellen.",
+      "dialogBodyCounts": "Klar löscht {{items}} endgültig. Das lässt sich nicht rückgängig machen.",
+      "lost": {
+        "systems_one": "{{count}} Tool",
+        "systems_other": "{{count}} Tools",
+        "classifications_one": "{{count}} Ergebnis",
+        "classifications_other": "{{count}} Ergebnisse",
+        "interviewAnswers_one": "{{count}} Antwort für Dokumente",
+        "interviewAnswers_other": "{{count}} Antworten für Dokumente",
+        "dutyProgress_one": "{{count}} abgehakte Pflicht",
+        "dutyProgress_other": "{{count}} abgehakte Pflichten",
+        "companyProfile": "Ihr Unternehmensprofil"
+      },
       "word": "LÖSCHEN",
       "confirmLabel": "Geben Sie {{word}} ein, um zu bestätigen",
       "cancel": "Abbrechen",

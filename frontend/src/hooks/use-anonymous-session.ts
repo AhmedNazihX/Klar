@@ -1,5 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { queryOptions, useQuery, type UseQueryResult } from '@tanstack/react-query'
+import {
+  queryOptions,
+  useQuery,
+  type QueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query'
 
 import { ensureAnonymousSession } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
@@ -21,6 +26,19 @@ export function anonymousSessionOptions(client: SupabaseClient | null) {
     staleTime: Infinity,
     gcTime: Infinity,
   })
+}
+
+/**
+ * Waits for the anonymous session (through its one query) before a read or write of the user's
+ * own data, and returns the client to run it on. Throws when Supabase is not configured.
+ */
+export async function withAnonymousSession(
+  queryClient: QueryClient,
+  client: SupabaseClient | null,
+): Promise<SupabaseClient> {
+  if (!client) throw new Error('Supabase is not configured.')
+  await queryClient.query(anonymousSessionOptions(client))
+  return client
 }
 
 /**

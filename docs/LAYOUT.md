@@ -209,7 +209,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15),
 │       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18),
 │       │                            use-classify.ts (the streamed run), use-language.ts (P5),
-│       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts (P12)
+│       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12)

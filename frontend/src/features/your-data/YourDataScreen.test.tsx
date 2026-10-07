@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/react-query'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18n from 'i18next'
@@ -9,7 +10,7 @@ import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
+import { FIRST_RENDER_MS, INVENTORIES_URL } from '@/test/user-data-handlers'
 import {
   COUNTS_URL,
   createUserDataStore,
@@ -63,6 +64,37 @@ const SAVED: StoredInventory[] = [
         ],
         interview_answers: [],
         duty_progress: [],
+      },
+    ],
+  },
+]
+
+// One tool with a run, a document answer and two duty ticks, and no company profile: the
+// singular forms, a plural, and kinds left out of the delete dialog's count.
+const ONE_OF_EACH: StoredInventory[] = [
+  {
+    name: 'AI inventory',
+    company_name: null,
+    staff_band: null,
+    turnover_band: null,
+    established_in: null,
+    used_in: null,
+    created_at: '2026-09-30T09:00:00+00:00',
+    systems: [
+      {
+        name: 'CV screener',
+        description: 'Ranks applicants by their CV.',
+        created_at: '2026-09-30T09:05:00+00:00',
+        classifications: [
+          { run_no: 1, risk_class: 'high_risk', status: 'decided', law_version: 'amended' },
+        ],
+        interview_answers: [
+          { template: 'annex_iv', question_key: 'purpose', answer: 'Shortlisting.' },
+        ],
+        duty_progress: [
+          { obligation_key: 'art_26_1', created_at: '2026-10-01T09:00:00+00:00' },
+          { obligation_key: 'art_26_2', created_at: '2026-10-01T09:05:00+00:00' },
+        ],
       },
     ],
   },
@@ -126,6 +158,11 @@ function countOf(label: string): string | null {
   return screen.getByText(label).nextElementSibling?.textContent ?? null
 }
 
+/** Opens the delete dialog from its panel (named the same as its button). */
+async function openDeleteDialog(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(within(panel(name)).getByRole('button', { name }))
+}
+
 async function deleteEverything(user: ReturnType<typeof userEvent.setup>, word = 'DELETE') {
   await user.click(within(panel('Delete my data')).getByRole('button', { name: 'Delete my data' }))
   await user.type(screen.getByLabelText(`Type ${word} to confirm`), word)
@@ -141,7 +178,7 @@ describe('Your data, what Klar keeps and who processes it', () => {
     expect(countOf('Answers for your draft documents')).toBe('2')
     expect(countOf('Ticked duties on your checklists')).toBe('1')
     expect(countOf('Company profile')).toBe('1')
-    expect(within(keep).getByText(/^\d+ kB of 4 MB storage used$/)).toBeInTheDocument()
+    expect(within(keep).getByText('< 1 kB of 4 MB storage used')).toBeInTheDocument()
     expect(
       within(keep).getByText(
         'Deleted automatically after 30 days without activity. Never used to train models.',
@@ -189,7 +226,7 @@ describe('Your data, what Klar keeps and who processes it', () => {
         'Wird nach 30 Tagen ohne Aktivität automatisch gelöscht. Nie zum Trainieren von Modellen verwendet.',
       ),
     ).toBeInTheDocument()
-    expect(within(keep).getByText(/^\d+ kB von 4 MB Speicher belegt$/)).toBeInTheDocument()
+    expect(within(keep).getByText('< 1 kB von 4 MB Speicher belegt')).toBeInTheDocument()
     const who = panel('Wer sie verarbeitet')
     expect(
       within(who).getByText(
@@ -206,6 +243,28 @@ describe('Your data, what Klar keeps and who processes it', () => {
         name: 'Daten herunterladen (JSON)',
       }),
     ).toBeInTheDocument()
+  })
+
+  it('reads the counts again after the profile is saved on Welcome', async () => {
+    server.use(http.patch(INVENTORIES_URL, () => new HttpResponse(null, { status: 204 })))
+    // The app keeps data fresh for 30 s: only the save's refresh makes Your data read again.
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: 30_000, gcTime: Infinity } },
+    })
+    const user = userEvent.setup()
+    const { router } = renderRoute('/app/your-data', queryClient)
+    await vi.waitFor(() => expect(countOf('Company profile')).toBe('1'), {
+      timeout: FIRST_RENDER_MS,
+    })
+    expect(store.calls.counts).toBe(1)
+
+    await router.navigate({ to: '/app/welcome' })
+    await user.click(await screen.findByRole('button', { name: '750+' }))
+    await user.click(screen.getByRole('button', { name: 'Save and add a tool' }))
+    await expect.poll(() => router.state.location.pathname).toBe('/app/classify')
+
+    await router.navigate({ to: '/app/your-data' })
+    await vi.waitFor(() => expect(store.calls.counts).toBe(2))
   })
 
   it('has no axe violations', async () => {
@@ -319,13 +378,6 @@ describe('Your data, delete', () => {
       within(panel('Meine Daten löschen')).getByRole('button', { name: 'Meine Daten löschen' }),
     )
     const dialog = screen.getByRole('dialog', { name: 'Alles löschen?' })
-    expect(
-      within(dialog).getByText(
-        'Ihre Tools mit Beschreibungen und Ergebnissen, Ihre Antworten für Dokumente, abgehakten ' +
-          'Pflichten und Ihr Unternehmensprofil werden endgültig gelöscht. Klar kann sie nicht ' +
-          'wiederherstellen.',
-      ),
-    ).toBeInTheDocument()
     const field = within(dialog).getByLabelText('Geben Sie LÖSCHEN ein, um zu bestätigen')
     await user.type(field, 'DELETE')
     expect(within(dialog).getByRole('button', { name: 'Alles löschen' })).toBeDisabled()
@@ -337,6 +389,78 @@ describe('Your data, delete', () => {
       'href',
       '/app/welcome',
     )
+  })
+
+  it('states what it deletes with the counts on screen, in English and German', async () => {
+    const { user, unmount } = await openYourData()
+    await vi.waitFor(() => expect(countOf('Classification results')).toBe('3'))
+    await openDeleteDialog(user, 'Delete my data')
+    expect(
+      within(screen.getByRole('dialog', { name: 'Delete everything?' })).getByText(
+        '2 tools, 3 results, 2 document answers, 1 ticked duty, and your company profile will be ' +
+          'deleted for good. This can’t be undone.',
+      ),
+    ).toBeInTheDocument()
+    unmount()
+
+    const german = await openYourData('de')
+    await vi.waitFor(() => expect(countOf('Ergebnisse der Einstufung')).toBe('3'))
+    await openDeleteDialog(german.user, 'Meine Daten löschen')
+    expect(
+      within(screen.getByRole('dialog', { name: 'Alles löschen?' })).getByText(
+        'Klar löscht 2 Tools, 3 Ergebnisse, 2 Antworten für Dokumente, 1 abgehakte Pflicht und Ihr ' +
+          'Unternehmensprofil endgültig. Das lässt sich nicht rückgängig machen.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('counts only the kinds stored, with the singular for one', async () => {
+    server.use(...createUserDataStore(ONE_OF_EACH).handlers)
+    const { user, unmount } = await openYourData()
+    await vi.waitFor(() => expect(countOf('Classification results')).toBe('1'))
+    await openDeleteDialog(user, 'Delete my data')
+    expect(
+      within(screen.getByRole('dialog', { name: 'Delete everything?' })).getByText(
+        '1 tool, 1 result, 1 document answer, and 2 ticked duties will be deleted for good. This ' +
+          'can’t be undone.',
+      ),
+    ).toBeInTheDocument()
+    unmount()
+
+    const german = await openYourData('de')
+    await vi.waitFor(() => expect(countOf('Ergebnisse der Einstufung')).toBe('1'))
+    await openDeleteDialog(german.user, 'Meine Daten löschen')
+    expect(
+      within(screen.getByRole('dialog', { name: 'Alles löschen?' })).getByText(
+        'Klar löscht 1 Tool, 1 Ergebnis, 1 Antwort für Dokumente und 2 abgehakte Pflichten ' +
+          'endgültig. Das lässt sich nicht rückgängig machen.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('names the kinds instead when the counts could not be read, in English and German', async () => {
+    server.use(http.post(COUNTS_URL, () => HttpResponse.json({}, { status: 500 })))
+    const { user, unmount } = await openYourData()
+    await screen.findByRole('alert')
+    await openDeleteDialog(user, 'Delete my data')
+    expect(
+      within(screen.getByRole('dialog', { name: 'Delete everything?' })).getByText(
+        'Your tools with their descriptions and results, your document answers, checklist ticks ' +
+          'and company profile will be deleted for good. Klar can’t bring them back.',
+      ),
+    ).toBeInTheDocument()
+    unmount()
+
+    const german = await openYourData('de')
+    await screen.findByRole('alert')
+    await openDeleteDialog(german.user, 'Meine Daten löschen')
+    expect(
+      within(screen.getByRole('dialog', { name: 'Alles löschen?' })).getByText(
+        'Ihre Tools mit Beschreibungen und Ergebnissen, Ihre Antworten für Dokumente, abgehakten ' +
+          'Pflichten und Ihr Unternehmensprofil werden endgültig gelöscht. Klar kann sie nicht ' +
+          'wiederherstellen.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('keeps everything on screen and says so when the deletion fails', async () => {

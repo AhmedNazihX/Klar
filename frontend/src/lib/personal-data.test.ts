@@ -30,6 +30,15 @@ describe('findPersonalData', () => {
     expect(findPersonalData(text)).toEqual(['email', 'phone', 'iban', 'name'])
   })
 
+  it('stays fast on a long text without spaces, and still finds an email at its end', () => {
+    // Before the email's runs were bounded, this took about 8 s (320 ms at 20 kB).
+    const text = `${'a'.repeat(100_000)}/anna@example.com`
+    const started = performance.now()
+    const kinds = findPersonalData(text)
+    expect(performance.now() - started).toBeLessThan(1_000)
+    expect(kinds).toEqual(['email'])
+  })
+
   it.each([
     [
       'a description without personal data',

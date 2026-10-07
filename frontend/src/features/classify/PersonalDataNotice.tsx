@@ -1,11 +1,11 @@
-import { useDeferredValue, type JSX } from 'react'
+import { useDeferredValue, useMemo, type JSX } from 'react'
 import { useWatch, type Control } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
 import { Icon } from '@/components/Icon'
 import { findPersonalData } from '@/lib/personal-data'
 
-import type { DescriptionFormValues } from './description-form'
+import { DESCRIPTION_MAX, type DescriptionFormValues } from './description-form'
 
 /**
  * The personal-data warning under the description field (decision 026, item 15): what the
@@ -19,9 +19,13 @@ export function PersonalDataNotice({
   control: Control<DescriptionFormValues>
 }): JSX.Element {
   const { t } = useTranslation()
-  const description = useWatch({ control, name: 'description' })
-  // Typing stays smooth on a long description: the check catches up between keystrokes.
-  const kinds = findPersonalData(useDeferredValue(description))
+  const description = useDeferredValue(useWatch({ control, name: 'description' }))
+  // Typing stays smooth on a long description: the check catches up between keystrokes, runs
+  // once per deferred value, and reads no further than the form accepts.
+  const kinds = useMemo(
+    () => findPersonalData(description.slice(0, DESCRIPTION_MAX)),
+    [description],
+  )
   return (
     <div role="status">
       {kinds.length > 0 && (

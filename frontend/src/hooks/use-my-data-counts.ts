@@ -4,10 +4,8 @@ import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-q
 import { supabase } from '@/lib/supabase'
 import { fetchMyDataCounts, type MyDataCounts } from '@/lib/user-data'
 
-import { anonymousSessionOptions } from './use-anonymous-session'
+import { withAnonymousSession } from './use-anonymous-session'
 import { userDataKey } from './use-user-data-overview'
-
-export const myDataCountsKey = [...userDataKey, 'counts'] as const
 
 /**
  * What Klar keeps for the user (my_data_counts), read once the anonymous session exists.
@@ -18,12 +16,8 @@ export function useMyDataCounts(
 ): UseQueryResult<MyDataCounts> {
   const queryClient = useQueryClient()
   return useQuery({
-    queryKey: myDataCountsKey,
-    queryFn: async () => {
-      if (!client) throw new Error('Supabase is not configured.')
-      await queryClient.query(anonymousSessionOptions(client))
-      return fetchMyDataCounts(client)
-    },
+    queryKey: [...userDataKey, 'counts'],
+    queryFn: async () => fetchMyDataCounts(await withAnonymousSession(queryClient, client)),
     enabled: client !== null,
   })
 }

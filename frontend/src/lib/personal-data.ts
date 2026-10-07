@@ -7,7 +7,10 @@
 export const PERSONAL_DATA_KINDS = ['email', 'phone', 'iban', 'name'] as const
 export type PersonalDataKind = (typeof PERSONAL_DATA_KINDS)[number]
 
-const EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.\p{L}{2,}/gu
+// Bounded like RFC 5321 (a local part of up to 64 characters, labels of up to 63): unbounded runs
+// make a long text without spaces take seconds, as each start retries the whole run.
+const EMAIL =
+  /[\p{L}\p{N}._%+-]{1,64}@[\p{L}\p{N}-]{1,63}(?:\.[\p{L}\p{N}-]{1,63})*\.\p{L}{2,63}/gu
 
 // Two letters and two check digits, then the account in groups of four (spaced or not) and a
 // shorter last group. The checksum decides; the length is checked there too.

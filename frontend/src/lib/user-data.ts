@@ -47,14 +47,17 @@ export async function fetchMyDataCounts(client: SupabaseClient): Promise<MyDataC
 const BYTES_PER_KB = 1024
 const BYTES_PER_MB = 1024 * 1024
 
-/** "12 kB", "1.5 MB": a storage figure in the reader's locale. */
+/** "12 kB", "1.5 MB": a storage figure in the reader's locale. Under a kilobyte reads "< 1 kB",
+ *  so a stored row never shows as "0 kB"; nothing at all does. */
 export function formatBytes(bytes: number, language: string): string {
   const isMegabytes = bytes >= BYTES_PER_MB
-  return new Intl.NumberFormat(language, {
+  const format = new Intl.NumberFormat(language, {
     style: 'unit',
     unit: isMegabytes ? 'megabyte' : 'kilobyte',
     maximumFractionDigits: isMegabytes ? 1 : 0,
-  }).format(bytes / (isMegabytes ? BYTES_PER_MB : BYTES_PER_KB))
+  })
+  if (bytes > 0 && bytes < BYTES_PER_KB) return `< ${format.format(1)}`
+  return format.format(bytes / (isMegabytes ? BYTES_PER_MB : BYTES_PER_KB))
 }
 
 // The envelope export_my_data writes and import_my_data checks; the rest goes through unread.
