@@ -1570,7 +1570,6 @@ ORIGINAL_RECORD_COMMAND = (
 )
 """Records only the original-text replays; `RECORD_COMMAND` (`-k replay`) would read the live
 corpus again for every replay."""
-RECORDING_PENDING = pytest.mark.xfail(strict=True, reason="recording pending (E11)")
 
 
 @pytest.fixture
@@ -1595,7 +1594,6 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
     return result
 
 
-@RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_machinery_guard_is_annex_i_section_a(
     original_replay_check: HighRiskCheck,
@@ -1612,7 +1610,6 @@ def test_replay_original_machinery_guard_is_annex_i_section_a(
     assert "art:2:2" not in cited(result), shown
 
 
-@RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     original_replay_check: HighRiskCheck,
