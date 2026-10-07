@@ -188,6 +188,15 @@ describe('Classify, a run', () => {
     await expect.poll(() => requests).toBe(2)
   })
 
+  it('passes axe when a run has stopped', async () => {
+    server.use(classifyHandler(eventsStoppingAtTransparency()))
+    const { user, container } = await openClassify()
+    await describeAndRun(user)
+    await screen.findByRole('alert')
+    const results = await axe(container, { rules: { 'color-contrast': { enabled: false } } })
+    expect(results.violations).toEqual([])
+  })
+
   it("never shows the engine's own message, even for a node the app doesn't know", async () => {
     const events: ClassifyResponse[] = [
       ...eventsStoppingAtTransparency().slice(0, -1),

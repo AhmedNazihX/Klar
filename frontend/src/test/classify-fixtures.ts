@@ -15,6 +15,7 @@ import type {
   Citation,
   ClassificationResult,
   ClassifyResponse,
+  FollowUpQuestion,
   Obligation,
   StepResult,
 } from '@/api'
@@ -262,7 +263,8 @@ const ART_3_1: Citation = {
 export const OUT_OF_SCOPE_DECISION =
   "Out of scope: the tool only applies fixed rules that people wrote; it doesn't infer how to produce its outputs, so it isn't an AI system (Art. 3(1))."
 
-/** Decision 026 item 19: out of scope, with why and the quote, and no duty list. */
+/** Decision 026 item 19: out of scope, with why and the quote, and no duty list. It carries a
+ *  stray duty on purpose: the layout must show no list even then. */
 export function outOfScope(): ClassificationResult {
   const scope = WORKED_EXAMPLE.steps.find((step) => step.step === 'scope')
   if (!scope) throw new Error('The recorded result has a scope step.')
@@ -273,7 +275,7 @@ export function outOfScope(): ClassificationResult {
     role: null,
     annex_point: null,
     legal_review: null,
-    obligations: [],
+    obligations: [AI_LITERACY],
     follow_up_questions: [],
     not_assessed: ['prohibited', 'high_risk', 'transparency', 'role_obligations'],
     steps: [
@@ -340,6 +342,40 @@ export function annexINeedsInfo(): ClassificationResult {
             missing_fact: { ...question, options: [...question.options] },
             citations: [ART_6_1, ANNEX_I_A_1],
           }
+        : step,
+    ),
+  }
+}
+
+export const ANNEX_III_QUESTION =
+  'Does the tool rank or filter the applications so that HR decides whom to invite from its list?'
+
+/** Decision 026 item 13 on the Annex III route: a High-risk check waiting on one fact, with what a
+ *  yes would mean (E12's `if_yes`) and the recorded Annex III 4(a) quote. */
+export function annexIIINeedsInfo(): ClassificationResult {
+  const base = decidedHighRisk()
+  const recorded = base.steps.find((step) => step.step === 'high_risk')
+  if (!recorded) throw new Error('The recorded result has a high-risk step.')
+  const question: FollowUpQuestion = {
+    id: 'used_for_recruitment',
+    text: ANNEX_III_QUESTION,
+    about: 'annex:III:4:a',
+    options: ['yes', 'no', 'not_sure'],
+    if_yes: {
+      risk_class: 'high_risk',
+      high_risk_route: 'annex_iii',
+      provision_id: 'annex:III:4:a',
+      duties_from: '2027-12-02',
+    },
+    citations: recorded.citations ?? [],
+  }
+  return {
+    ...base,
+    status: 'needs_more_information',
+    follow_up_questions: [question],
+    steps: withSteps(base, (step) =>
+      step.step === 'high_risk'
+        ? { ...step, status: 'needs_more_information', missing_fact: question }
         : step,
     ),
   }

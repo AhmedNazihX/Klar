@@ -7,6 +7,8 @@ import { axe } from 'vitest-axe'
 import type { ClassificationResult } from '@/api'
 import {
   ANNEX_I_QUESTION,
+  ANNEX_III_QUESTION,
+  annexIIINeedsInfo,
   annexINeedsInfo,
   decidedHighRisk,
   legacyForPublicAuthorities,
@@ -265,27 +267,55 @@ describe('Result statuses', () => {
   })
 })
 
+describe('Result statuses, the Annex III route', () => {
+  it('asks the deciding question with If yes from if_yes and the fixed If no (item 13)', async () => {
+    await openResult(annexIIINeedsInfo())
+    const summary = screen.getByRole('region', { name: 'Result' })
+    expect(within(summary).getByText('Needs more information')).toBeInTheDocument()
+    expect(summary).toHaveTextContent('Klar assumed one fact at check 3.')
+    const question = screen.getByRole('region', { name: ANNEX_III_QUESTION })
+    const ifYes = within(question).getByText('If yes').nextElementSibling as HTMLElement
+    expect(within(ifYes).getByText('High-risk')).toBeInTheDocument()
+    expect(ifYes).toHaveTextContent('Annex III 4(a). Duties from 2 December 2027')
+    // The original text's Annex III date, shown under the law switch (item 11).
+    expect(within(ifYes).getByText('2 August 2026')).toHaveClass('law-original-only')
+    const ifNo = within(question).getByText('If no').nextElementSibling as HTMLElement
+    expect(ifNo).toHaveTextContent(
+      'Not high-risk on this point. The transparency check then decides whether any duties apply.',
+    )
+    expect(within(question).getByText('Annex III 4(a), English')).toBeVisible()
+  })
+
+  it('passes axe with the deciding question (needs more information)', async () => {
+    const { container } = await openResult(annexIIINeedsInfo())
+    const results = await axe(container, AXE_OPTIONS)
+    expect(results.violations).toEqual([])
+  })
+})
+
 describe('Result variants (decision 026)', () => {
   it.each([
-    ['en', "You're the importer.", 'Art. 23(1)'],
-    ['de', 'Sie sind Einführer.', 'Art. 23 Abs. 1'],
+    ['en', "You're the importer.", 'You bring the tool into the EU', 'Art. 23(1)'],
+    ['de', 'Sie sind Einführer.', 'Sie bringen das Tool in die EU', 'Art. 23 Abs. 1'],
   ] as const)(
-    'gives an importer its role sentence and duties (%s)',
-    async (language, sentence, ref) => {
+    'gives an importer its role sentence, to-do intro and duties (%s)',
+    async (language, sentence, intro, ref) => {
       await openResult(withRole('importer'), { language })
       expect(screen.getByText(sentence)).toBeInTheDocument()
+      expect(within(todoList(language)).getByText(new RegExp(`^${intro}`))).toBeInTheDocument()
       expect(within(todoList(language)).getByText(ref)).toBeInTheDocument()
     },
   )
 
   it.each([
-    ['en', "You're the distributor.", 'Art. 24(1)'],
-    ['de', 'Sie sind Händler.', 'Art. 24 Abs. 1'],
+    ['en', "You're the distributor.", 'You pass the tool on', 'Art. 24(1)'],
+    ['de', 'Sie sind Händler.', 'Sie geben das Tool weiter', 'Art. 24 Abs. 1'],
   ] as const)(
-    'gives a distributor its role sentence and duties (%s)',
-    async (language, sentence, ref) => {
+    'gives a distributor its role sentence, to-do intro and duties (%s)',
+    async (language, sentence, intro, ref) => {
       await openResult(withRole('distributor'), { language })
       expect(screen.getByText(sentence)).toBeInTheDocument()
+      expect(within(todoList(language)).getByText(new RegExp(`^${intro}`))).toBeInTheDocument()
       expect(within(todoList(language)).getByText(ref)).toBeInTheDocument()
     },
   )
@@ -310,12 +340,16 @@ describe('Result variants (decision 026)', () => {
   )
 
   it.each([
-    ['en', 'No specific duties for this tool.', 'Art. 4(1)'],
-    ['de', 'Keine besonderen Pflichten für dieses Tool.', 'Art. 4 Abs. 1'],
+    ['en', 'Minimal risk', 'No specific duties for this tool.', 'Art. 4(1)'],
+    ['de', 'Minimales Risiko', 'Keine besonderen Pflichten für dieses Tool.', 'Art. 4 Abs. 1'],
   ] as const)(
     'says a minimal-risk tool has no specific duties, plus Art. 4 (%s)',
-    async (language, line, ref) => {
+    async (language, name, line, ref) => {
       await openResult(minimalRisk(), { language })
+      const summary = screen.getByRole('region', {
+        name: language === 'en' ? 'Result' : 'Ergebnis',
+      })
+      expect(within(summary).getByText(name)).toBeInTheDocument()
       expect(screen.getByText(new RegExp(`^${line}`))).toBeInTheDocument()
       expect(within(todoList(language)).getByText(ref)).toBeInTheDocument()
     },
@@ -335,6 +369,9 @@ describe('Result variants (decision 026)', () => {
       const why = screen.getByRole('region', { name: heading })
       expect(within(why).getByText(OUT_OF_SCOPE_DECISION)).toBeInTheDocument()
       expect(within(why).getByText(/‘AI system’ means a machine-based system/)).toBeVisible()
+      // No duty list, even though the result carries a duty.
+      const todoHeading = language === 'en' ? 'What you need to do' : 'Was Sie tun müssen'
+      expect(screen.queryByRole('region', { name: todoHeading })).toBeNull()
       expect(screen.queryByRole('checkbox')).toBeNull()
     },
   )
