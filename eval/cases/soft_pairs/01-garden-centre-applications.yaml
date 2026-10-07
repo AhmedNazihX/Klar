@@ -1,0 +1,64 @@
+- id: soft-01-garden-centre-applications-plain
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We run 14 garden centres in the Netherlands and hire about 200 seasonal staff every spring.
+    Since 2025 we have used RecruitLane, a hiring tool we license from a Dutch software company.
+    It reads each application and CV, gives the applicant a score for how well they fit the job,
+    and ranks everyone. Applicants below a cut-off we set receive an automatic rejection email;
+    HR only reads the top of the ranked list and invites those people to an interview. We use the
+    tool as the vendor supplies it, under the vendor's name. Our stores also started selling
+    indoor plants online last year.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:a"
+  label_citation: ["annex:III:4:a", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-01
+  business_function: hr
+  notes: >-
+    Draft for user review (B6). Class: scoring and ranking applicants and rejecting those below a
+    cut-off is filtering applications and evaluating candidates (Annex III 4(a)); scoring each
+    applicant from their CV is profiling, so Art. 6(3) third subparagraph keeps it high-risk.
+    Role: the chain uses the licensed tool unchanged under the vendor's name (Art. 3(4)):
+    deployer.
+  tags: ["pair:soft-01", "wording:plain"]
+- id: soft-01-garden-centre-applications-soft
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We run 14 garden centres in the Netherlands and bring on about 200 seasonal helpers every
+    spring. To keep the spring rush manageable, our HR team uses RecruitLane, a hiring tool
+    licensed from a Dutch software company. It helps the team stay on top of incoming
+    applications, puts them into a sensible order and takes care of routine replies, so
+    recruiters can spend their time talking to people rather than sorting paperwork. We use it as
+    the vendor supplies it. Our stores also started selling indoor plants online last year.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:4:a"
+  label_citation: ["annex:III:4:a", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-01
+  business_function: hr
+  key_fact_answers:
+    annex_iii_use: >-
+      The tool scores every application for fit with the job and ranks the applicants; HR
+      invites people from the top of the list.
+    profiling: >-
+      Yes. It evaluates each applicant from their CV and answers, for example their experience
+      and availability, and gives them a score.
+    "annex:III:4:a": >-
+      It is used to select seasonal staff: applications below our cut-off score are rejected
+      automatically.
+    "art:6:3": >-
+      No one reviews the automatically rejected applications; HR only reads the top of the
+      ranked list.
+    "art:3:1": >-
+      It is a machine-learning model the vendor trained on past hiring data; it works out the
+      scores itself, not from rules we wrote.
+  notes: >-
+    Draft for user review (B6). The same system as soft-01-garden-centre-applications-plain:
+    "puts them into a sensible order" is the ranking and "takes care of routine replies" includes
+    the automatic rejections. Label and reasoning as for the plain case (Annex III 4(a),
+    profiling under Art. 6(3), deployer under Art. 3(4)).
+  tags: ["pair:soft-01", "wording:soft"]

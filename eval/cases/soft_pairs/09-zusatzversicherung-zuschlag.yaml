@@ -1,0 +1,64 @@
+- id: soft-09-zusatzversicherung-zuschlag-plain
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind ein mittelgroßer Krankenversicherer aus Köln und verkaufen unter anderem Zahn- und
+    Krankenhauszusatzversicherungen an Privatpersonen. Seit 2026 läuft jeder Antrag durch
+    RiskPilot, eine Software eines Münchner Insurtechs. Sie schätzt aus Alter, Vorerkrankungen,
+    Behandlungen der letzten Jahre und den Gesundheitsfragen im Antrag, welche Leistungskosten die
+    einzelne Person voraussichtlich verursacht, und legt danach einen Risikozuschlag auf den
+    Beitrag fest oder empfiehlt die Ablehnung. Die Sachbearbeitung übernimmt das Ergebnis fast
+    immer. Wir setzen die Software unverändert ein. Unsere Kundenzeitschrift erscheint seit diesem
+    Jahr nur noch digital.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:c"
+  label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-09
+  business_function: finance
+  notes: >-
+    Draft for user review (B6). Class: the system assesses the health risk of each applicant and
+    sets their premium surcharge or recommends refusal, which is risk assessment and pricing in
+    relation to natural persons in health insurance (Annex III 5(c)); evaluating each person's
+    health from their own data is profiling, so Art. 6(3) third subparagraph keeps it
+    high-risk. Role: the insurer uses the bought software unchanged (Art. 3(4)): deployer.
+  tags: ["pair:soft-09", "wording:plain"]
+- id: soft-09-zusatzversicherung-zuschlag-soft
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind ein mittelgroßer Krankenversicherer aus Köln und verkaufen unter anderem Zahn- und
+    Krankenhauszusatzversicherungen. Seit 2026 unterstützt uns RiskPilot, eine Software eines
+    Münchner Insurtechs, bei der Antragsbearbeitung: Sie liest die Angaben aus dem Antrag aus,
+    ordnet sie übersichtlich und schlägt der Sachbearbeitung den passenden Tarif vor. So bekommen
+    Kundinnen und Kunden schneller eine Antwort. Wir setzen die Software unverändert ein. Unsere
+    Kundenzeitschrift erscheint seit diesem Jahr nur noch digital.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:c"
+  label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-09
+  business_function: finance
+  key_fact_answers:
+    annex_iii_use: >-
+      RiskPilot schätzt für jede antragstellende Person die voraussichtlichen Leistungskosten und
+      legt danach einen Risikozuschlag auf den Beitrag fest oder empfiehlt die Ablehnung.
+    "annex:III:5:c": >-
+      Ja. Es geht um die Risikobewertung und die Preisgestaltung für einzelne Personen in der
+      Krankenzusatzversicherung.
+    profiling: >-
+      Ja. Sie bewertet die Gesundheit der einzelnen Person anhand von Alter, Vorerkrankungen,
+      Behandlungen und den Gesundheitsfragen im Antrag.
+    "art:6:3": >-
+      Die Sachbearbeitung übernimmt Zuschlag oder Ablehnungsempfehlung fast immer ohne eigene
+      Prüfung.
+    "art:3:1": >-
+      Ja. Das Insurtech hat ein Modell mit den Leistungsdaten vieler Versicherter trainiert.
+  notes: >-
+    Draft for user review (B6). The same system as soft-09-zusatzversicherung-zuschlag-plain:
+    "den passenden Tarif vorschlagen" is the individual risk surcharge or the refusal. Label and
+    reasoning as for the plain case (Annex III 5(c), profiling under Art. 6(3), deployer under
+    Art. 3(4)).
+  tags: ["pair:soft-09", "wording:soft"]

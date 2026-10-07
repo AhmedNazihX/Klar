@@ -1,0 +1,61 @@
+- id: soft-07-insurance-ombudsman-drafts-plain
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We are an independent insurance ombudsman scheme in Ireland that settles disputes between
+    consumers and insurers out of court; member insurers must accept our decisions up to EUR
+    50,000. Since 2026 we have used CaseCompass, licensed from a legal-tech firm. For each
+    complaint it reads the file, identifies the policy terms and our earlier decisions that
+    apply, assesses the facts and writes a recommended decision, including whether the complaint
+    is upheld and how much compensation is due. Case handlers sign the recommendation, usually
+    unchanged. We use the tool as licensed. Our office moved to a new building in March.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:8:a"
+  label_citation: ["annex:III:8:a", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-07
+  business_function: legal
+  notes: >-
+    Draft for user review (B6). Class: the system researches and interprets the facts and the
+    policy terms and applies them to each complaint in alternative dispute resolution (Annex III
+    8(a), "used in a similar way in alternative dispute resolution"); it writes the outcome that
+    handlers usually sign unchanged, so it is not a preparatory task under Art. 6(3)(d) and no
+    other Art. 6(3) condition applies. Role: the scheme uses the licensed tool as is (Art. 3(4)):
+    deployer.
+  tags: ["pair:soft-07", "wording:plain"]
+- id: soft-07-insurance-ombudsman-drafts-soft
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We are an independent insurance ombudsman scheme in Ireland that settles disputes between
+    consumers and insurers out of court. Since 2026 our case handlers have used CaseCompass,
+    licensed from a legal-tech firm, as a research and writing aid: it brings together the
+    documents in a complaint file, points to relevant policy wording and our earlier decisions,
+    and helps handlers prepare their written decisions more quickly. We use the tool as licensed.
+    Our office moved to a new building in March.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:8:a"
+  label_citation: ["annex:III:8:a", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-07
+  business_function: legal
+  key_fact_answers:
+    annex_iii_use: >-
+      For each complaint it assesses the facts against the policy terms and our earlier
+      decisions and writes a recommended decision: whether the complaint is upheld and how much
+      compensation is due.
+    judicial_use: >-
+      Yes. We are an alternative dispute resolution body; member insurers must accept our
+      decisions up to EUR 50,000.
+    "art:6:3": >-
+      Case handlers sign the recommended decision, usually without changing it.
+    "art:3:1": >-
+      Yes. It is built on a large language model.
+  notes: >-
+    Draft for user review (B6). The same system as soft-07-insurance-ombudsman-drafts-plain:
+    "helps handlers prepare their written decisions" is the recommended decision with outcome
+    and compensation that handlers usually sign unchanged. Label and reasoning as for the plain
+    case (Annex III 8(a), not a preparatory task under Art. 6(3)(d), deployer under Art. 3(4)).
+  tags: ["pair:soft-07", "wording:soft"]

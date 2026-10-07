@@ -1,0 +1,64 @@
+- id: soft-06-gas-network-shut-off-plain
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We are a regional gas distribution company in Slovenia supplying about 60,000 homes and
+    businesses through 2,100 km of pipes. Since last year we have used PipeGuard, software from an
+    Italian vendor connected to our pressure and flow sensors. When its model detects a likely
+    leak or a dangerous pressure drop, it closes the remote-controlled valves on its own to
+    isolate the affected section, without waiting for an operator, and then alerts the control
+    room. A wrong or missed shut-off could leave gas escaping in a street. We use the vendor's
+    standard version. We also replaced our fleet of service vans this year.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:2"
+  label_citation: ["annex:III:2", "art:3:14", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-06
+  business_function: operations
+  notes: >-
+    Draft for user review (B6). Class: the system isolates leaking sections of a gas supply
+    network on its own, a safety function whose failure endangers people and property, so it is
+    a safety component (Art. 3(14)) in the management and operation of the supply of gas (Annex
+    III 2); acting on the valves itself is not a narrow procedural or preparatory task, so none
+    of the Art. 6(3) conditions applies. Role: the company uses the vendor's standard version
+    (Art. 3(4)): deployer.
+  tags: ["pair:soft-06", "wording:plain"]
+- id: soft-06-gas-network-shut-off-soft
+  set_name: soft_pairs
+  language: en
+  description: >-
+    We are a regional gas distribution company in Slovenia supplying about 60,000 homes and
+    businesses. Since last year we have used PipeGuard, software from an Italian vendor that sits
+    on top of our sensor data. It helps our control room keep an eye on pressure and flow across
+    the network, smooths day-to-day operations and can step in on the valves when something
+    looks off. We use the vendor's standard version. We also replaced our fleet of service vans
+    this year.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:2"
+  label_citation: ["annex:III:2", "art:3:14", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-06
+  business_function: operations
+  key_fact_answers:
+    annex_iii_use: >-
+      When its model detects a likely leak or a dangerous pressure drop, it closes
+      remote-controlled valves on its own to isolate that section, and then alerts the control
+      room.
+    "annex:III:2": >-
+      Yes. The automatic shut-off protects the safety of our gas supply network: a wrong or
+      missed shut-off could leave gas escaping in a street.
+    "art:3:14": >-
+      Yes. It shuts off sections without waiting for an operator; if it fails, a leak may not be
+      isolated, which endangers people and property.
+    "art:6:3": >-
+      No operator confirms a shut-off before it happens.
+    "art:3:1": >-
+      Yes. The vendor trained the model on sensor data from several gas networks.
+  notes: >-
+    Draft for user review (B6). The same system as soft-06-gas-network-shut-off-plain: "can step
+    in on the valves when something looks off" is the automatic shut-off on a suspected leak.
+    Label and reasoning as for the plain case (Annex III 2, safety component under Art. 3(14),
+    deployer under Art. 3(4)).
+  tags: ["pair:soft-06", "wording:soft"]

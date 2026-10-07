@@ -1,0 +1,62 @@
+- id: soft-12-mobilfunk-ratenkauf-plain
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind ein regionaler Mobilfunkanbieter aus Bayern mit rund 400.000 Privatkundinnen und
+    -kunden. Wer bei uns ein Smartphone mit Vertrag in monatlichen Raten kaufen will, durchläuft
+    seit 2026 RatenRadar, ein Bonitätsmodell eines Frankfurter Fintechs. Es bewertet aus
+    Einkommen, bisherigem Zahlungsverhalten, Auskunfteidaten und Wohndauer, wie wahrscheinlich die
+    Person ihre Raten nicht zahlt, und entscheidet danach, ob sie das Gerät auf Raten bekommt und
+    bis zu welchem Betrag. Wir nutzen das Modell unverändert. Seit dem Sommer bieten wir außerdem
+    eSIM-Tarife für Smartwatches an.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:b"
+  label_citation: ["annex:III:5:b", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-12
+  business_function: finance
+  notes: >-
+    Draft for user review (B6). Class: the model evaluates the creditworthiness of natural persons
+    buying a phone on instalments and decides whether and up to what amount they get credit
+    (Annex III 5(b)); it is not used for fraud detection. Scoring each customer's economic
+    situation is profiling, so Art. 6(3) third subparagraph keeps it high-risk. Role: the operator
+    uses the bought model unchanged (Art. 3(4)): deployer.
+  tags: ["pair:soft-12", "wording:plain"]
+- id: soft-12-mobilfunk-ratenkauf-soft
+  set_name: soft_pairs
+  language: de
+  description: >-
+    Wir sind ein regionaler Mobilfunkanbieter aus Bayern mit rund 400.000 Privatkundinnen und
+    -kunden. Seit 2026 nutzen wir RatenRadar von einem Frankfurter Fintech im Bestellprozess für
+    Smartphones mit Vertrag. Das Tool prüft die Angaben im Antrag automatisch, ergänzt fehlende
+    Daten und schlägt die passende Zahlungsoption vor, damit die Bestellung ohne Rückfragen
+    durchläuft. Wir nutzen das Modell unverändert. Seit dem Sommer bieten wir außerdem
+    eSIM-Tarife für Smartwatches an.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:b"
+  label_citation: ["annex:III:5:b", "art:6:2", "art:6:3", "art:3:4"]
+  pair_id: soft-12
+  business_function: finance
+  key_fact_answers:
+    annex_iii_use: >-
+      RatenRadar schätzt für jede Person, wie wahrscheinlich sie ihre Raten nicht zahlt, und
+      entscheidet danach, ob sie das Gerät auf Raten bekommt und bis zu welchem Betrag.
+    "annex:III:5:b": >-
+      Ja. Es bewertet die Kreditwürdigkeit anhand von Einkommen, Zahlungsverhalten,
+      Auskunfteidaten und Wohndauer. Betrugserkennung ist nicht der Zweck.
+    profiling: >-
+      Ja. Es bewertet die wirtschaftliche Lage und die Zuverlässigkeit der einzelnen Kundin oder
+      des einzelnen Kunden.
+    "art:6:3": >-
+      Das Ergebnis gilt automatisch; niemand prüft es im Einzelfall nach.
+    "art:3:1": >-
+      Ja. Es ist ein Machine-Learning-Modell, das mit Zahlungsdaten trainiert wurde.
+  notes: >-
+    Draft for user review (B6). The same system as soft-12-mobilfunk-ratenkauf-plain: "schlägt
+    die passende Zahlungsoption vor" is the credit decision on instalments and their limit, and
+    "ergänzt fehlende Daten" includes the credit-bureau data. Label and reasoning as for the
+    plain case (Annex III 5(b), profiling under Art. 6(3), deployer under Art. 3(4)).
+  tags: ["pair:soft-12", "wording:soft"]

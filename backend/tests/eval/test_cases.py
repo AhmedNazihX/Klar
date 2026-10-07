@@ -27,6 +27,7 @@ from aiact.eval.cases import (
     load_yaml_file,
     score_appliedai,
 )
+from aiact.eval.metrics import SOFT_WORDING_TAG
 from aiact.eval.split import SPLIT_FILE, Split
 from aiact.schemas import Language, RiskClass, Role, Status
 
@@ -547,6 +548,37 @@ def test_the_committed_annex_match_set_has_its_counts_and_points() -> None:
         assert item.source_example_id is None, item.id
         expected.update(item.label.annex_point)
     assert set(ANNEX_III_POINTS) - expected == set()
+
+
+SOFT_PAIR_RANGE = range(10, 21)
+MIN_GERMAN_SHARE = 0.25
+
+
+def test_the_committed_soft_pair_set_has_its_pairs_and_answers() -> None:
+    """B6's DoD: 10-20 pairs, each the same high-risk system worded plainly and softly with one
+    label; the softened case is tagged `wording:soft` (the tag the downgrade rate reads) and
+    carries `key_fact_answers` (decision 019); both languages, at least a quarter German."""
+    assert SOFT_WORDING_TAG == "wording:soft"
+    cases = load_cases(CaseSet.SOFT_PAIRS)
+    assert all(case.pair_id is not None for case in cases)
+    pairs = {
+        pair_id: [case for case in cases if case.pair_id == pair_id]
+        for pair_id in {case.pair_id for case in cases}
+    }
+    assert len(pairs) in SOFT_PAIR_RANGE
+    for pair_id, pair in pairs.items():
+        soft = [case for case in pair if "wording:soft" in case.tags]
+        assert len(soft) == 1, pair_id
+        assert soft[0].key_fact_answers, pair_id
+        first, second = pair
+        assert first.label == second.label, pair_id
+        assert isinstance(first.label, CaseLabel)
+        assert first.label.risk_class is RiskClass.HIGH_RISK, pair_id
+        assert first.language is second.language, pair_id
+        assert all(f"pair:{pair_id}" in case.tags for case in pair), pair_id
+    languages = Counter(pair[0].language for pair in pairs.values())
+    assert set(languages) == {Language.EN, Language.DE}
+    assert languages[Language.DE] / len(pairs) >= MIN_GERMAN_SHARE
 
 
 def test_no_committed_case_derives_from_a_pile_a_example() -> None:
