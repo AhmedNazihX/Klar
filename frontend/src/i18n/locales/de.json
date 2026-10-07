@@ -258,6 +258,59 @@
       "failed": "Das hat nicht geklappt. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
     }
   },
+  "yourData": {
+    "intro": "Alles liegt in Ihrer anonymen Sitzung. Nehmen Sie es mit oder löschen Sie es, wann immer Sie möchten.",
+    "keep": {
+      "heading": "Was Klar speichert",
+      "systems": "Tools und ihre Beschreibungen",
+      "classifications": "Ergebnisse der Einstufung",
+      "interviewAnswers": "Antworten für Ihre Dokumententwürfe",
+      "dutyProgress": "Abgehakte Pflichten in Ihren Checklisten",
+      "companyProfiles": "Unternehmensprofil",
+      "storage": "{{used}} von {{budget}} Speicher belegt",
+      "retention": "Wird nach 30 Tagen ohne Aktivität automatisch gelöscht. Nie zum Trainieren von Modellen verwendet.",
+      "failed": "Klar konnte nicht laden, was gespeichert ist. Prüfen Sie Ihre Verbindung und laden Sie die Seite neu."
+    },
+    "who": {
+      "heading": "Wer sie verarbeitet",
+      "models": "Sprachmodelle, über OpenRouter",
+      "modelsRole": "Prüfungen und Antworten",
+      "modelsDetail": "OpenRouter leitet jede Anfrage weiter; seine eigene Verarbeitung ist nicht auf die EU beschränkt. Die Modelle laufen in EU-Regionen bei Microsoft Azure und Google Vertex AI.",
+      "search": "Suche in den Rechtstexten, bei einem Anbieter in der EU",
+      "searchRole": "Embeddings",
+      "searchDetail": "Nebius macht in der EU aus Ihrer Beschreibung eine Suche in der Verordnung.",
+      "storage": "Speicherung der Sitzung",
+      "storageRole": "Supabase",
+      "storageDetail": "Ihre gespeicherten Daten, nur für Sie sichtbar.",
+      "noTraining": "Jede Anfrage an ein Modell wird ohne Datenspeicherung beim Anbieter und ohne Training gestellt.",
+      "privacyLink": "Datenschutzerklärung lesen"
+    },
+    "download": {
+      "heading": "Alles herunterladen",
+      "body": "Eine Kopie all Ihrer Daten in einer Datei (JSON), für Ihre Unterlagen oder andere Werkzeuge. Importieren Sie sie, um sie in einer neuen Sitzung wiederherzustellen.",
+      "button": "Daten herunterladen (JSON)",
+      "pending": "Wird vorbereitet …",
+      "failed": "Der Download hat nicht geklappt. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+    },
+    "delete": {
+      "heading": "Meine Daten löschen",
+      "body": "Löscht alles, was Klar für diese Sitzung speichert: Ihre Tools, Beschreibungen, Ergebnisse, Antworten für Dokumente, abgehakten Pflichten und Ihr Unternehmensprofil, und beendet die Sitzung. Das lässt sich nicht rückgängig machen. Laden Sie vorher eine Kopie herunter, wenn Sie eine brauchen.",
+      "button": "Meine Daten löschen",
+      "dialogTitle": "Alles löschen?",
+      "dialogBody": "Ihre Tools mit Beschreibungen und Ergebnissen, Ihre Antworten für Dokumente, abgehakten Pflichten und Ihr Unternehmensprofil werden endgültig gelöscht. Klar kann sie nicht wiederherstellen.",
+      "word": "LÖSCHEN",
+      "confirmLabel": "Geben Sie {{word}} ein, um zu bestätigen",
+      "cancel": "Abbrechen",
+      "confirm": "Alles löschen",
+      "pending": "Wird gelöscht …",
+      "failed": "Ihre Daten wurden nicht gelöscht. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+    },
+    "deleted": {
+      "title": "Ihre Daten sind gelöscht.",
+      "body": "Ihre Tools, Beschreibungen, Ergebnisse, Antworten für Dokumente, abgehakten Pflichten und Ihr Unternehmensprofil sind gelöscht, und diese Sitzung ist beendet. Nichts wird für Training aufbewahrt.",
+      "startAgain": "Neu beginnen"
+    }
+  },
   "classify": {
     "title": "Tool beschreiben",
     "subtitle": "Ein paar Sätze genügen. Klar fragt nach allem, was das Ergebnis entscheidet.",
@@ -275,6 +328,16 @@
       "changes": "was Sie daran geändert haben"
     },
     "privacy": "Lassen Sie Namen und andere persönliche Angaben von Bewerbenden oder Beschäftigten weg.",
+    "personalData": {
+      "title": "Diese Beschreibung enthält möglicherweise personenbezogene Daten:",
+      "kinds": {
+        "email": "eine E-Mail-Adresse",
+        "phone": "eine Telefonnummer",
+        "iban": "eine Kontonummer (IBAN)",
+        "name": "etwas, das wie ein Personenname aussieht"
+      },
+      "advice": "Klar braucht sie für die Einstufung nicht. Beschreiben Sie Personen besser über ihre Rolle, etwa „die Bewerberin“ oder „eine Teamleitung“. Diese Prüfung läuft in Ihrem Browser und sendet nichts."
+    },
     "language": "Klar antwortet auf Deutsch. Zitate geben den amtlichen deutschen Text wieder.",
     "run": "Prüfungen starten",
     "running": "Wird geprüft…",

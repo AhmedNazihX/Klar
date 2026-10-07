@@ -1,0 +1,99 @@
+import type { UseMutationResult } from '@tanstack/react-query'
+import { useEffect, useId, useRef, useState, type JSX, type SyntheticEvent } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import { Button } from '@/components/Button'
+
+import { DANGER_BUTTON_CLASS } from './danger-button'
+
+export type DeleteDialogProps = {
+  isOpen: boolean
+  /** Called when the dialog closes: Cancel, Escape, or the browser closing it. */
+  onClose: () => void
+  /** The screen's deletion, so its outcome outlives the dialog. */
+  deletion: UseMutationResult<void, unknown, void>
+}
+
+/**
+ * "Delete everything?": the user types the confirmation word (DELETE, in German LÖSCHEN) before
+ * the button works. A native modal dialog: opening it focuses the field (its first control),
+ * focus stays inside, Escape closes it and focus goes back to the button that opened it.
+ */
+export function DeleteDialog({ isOpen, onClose, deletion }: DeleteDialogProps): JSX.Element {
+  const { t } = useTranslation()
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
+  const bodyId = useId()
+  const inputId = useId()
+  const [typed, setTyped] = useState('')
+  const word = t('yourData.delete.word')
+  const isConfirmed = typed.trim() === word
+
+  // The open state lives in React; the browser's modal (top layer, inert page) follows it.
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (isOpen && !dialog.open) dialog.showModal()
+    if (!isOpen && dialog.open) dialog.close()
+  }, [isOpen])
+
+  function close(): void {
+    setTyped('')
+    // Only a failure is cleared: a success has already replaced the screen with "deleted".
+    if (deletion.isError) deletion.reset()
+    onClose()
+  }
+
+  function confirm(event: SyntheticEvent): void {
+    event.preventDefault()
+    if (isConfirmed) deletion.mutate()
+  }
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={titleId}
+      aria-describedby={bodyId}
+      onClose={close}
+      className="m-auto w-[min(480px,calc(100vw-32px))] rounded-card border border-white/80 bg-white/96 p-7 text-ink shadow-glass backdrop:bg-ink/28 backdrop:backdrop-blur-sm"
+    >
+      <form onSubmit={confirm} className="flex flex-col gap-4">
+        <h2 id={titleId} className="m-0 text-[22px] leading-tight font-semibold tracking-[-0.02em]">
+          {t('yourData.delete.dialogTitle')}
+        </h2>
+        <p id={bodyId} className="m-0 text-body-small text-ink-2">
+          {t('yourData.delete.dialogBody')}
+        </p>
+        <label htmlFor={inputId} className="text-label font-semibold">
+          {t('yourData.delete.confirmLabel', { word })}
+        </label>
+        <input
+          id={inputId}
+          type="text"
+          autoComplete="off"
+          value={typed}
+          onChange={(event) => setTyped(event.target.value)}
+          className="h-11.5 rounded-field border border-border-subtle bg-white px-3.5 text-body font-medium tracking-[0.04em] text-ink"
+        />
+        {deletion.isError && (
+          <p role="alert" className="m-0 text-body-small text-risk-prohibited">
+            {t('yourData.delete.failed')}
+          </p>
+        )}
+        <div className="mt-1 flex flex-wrap justify-end gap-2.5">
+          <Button variant="ghost" onClick={() => dialogRef.current?.close()}>
+            {t('yourData.delete.cancel')}
+          </Button>
+          <Button
+            type="submit"
+            variant="ghost"
+            disabled={!isConfirmed || deletion.isPending}
+            className={DANGER_BUTTON_CLASS}
+          >
+            {deletion.isPending ? t('yourData.delete.pending') : t('yourData.delete.confirm')}
+          </Button>
+        </div>
+      </form>
+    </dialog>
+  )
+}

@@ -3,14 +3,16 @@ import { useTranslation } from 'react-i18next'
 
 import { useImportUserData } from '@/hooks/use-import-user-data'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
 
 import { WriteFailureMessage } from './WriteFailureMessage'
 
 /**
  * "Import your data": restores a file exported from Your data (import_my_data). Nothing is
  * classified again. The label is the control, so the file input keeps its keyboard focus.
+ * Centred by default (Welcome); Your data passes `className` to align it with its panel.
  */
-export function ImportDataButton(): JSX.Element {
+export function ImportDataButton({ className }: { className?: string }): JSX.Element {
   const { t } = useTranslation()
   const importData = useImportUserData()
 
@@ -22,7 +24,7 @@ export function ImportDataButton(): JSX.Element {
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className={cn('flex flex-col items-center gap-2', className)}>
       <label className="cursor-pointer rounded-md text-body-small font-medium text-lens-blue hover:underline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-lens-blue">
         <input
           type="file"

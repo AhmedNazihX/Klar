@@ -12,7 +12,9 @@ import { supabase } from '@/lib/supabase'
 
 import { anonymousSessionOptions } from './use-anonymous-session'
 
-export const userDataOverviewKey = ['user-data', 'overview'] as const
+/** Every query over the user's saved data starts with this key, so a write can refresh them all. */
+export const userDataKey = ['user-data'] as const
+export const userDataOverviewKey = [...userDataKey, 'overview'] as const
 
 /**
  * The user's company profile and tool count, read once the anonymous session exists (through the
