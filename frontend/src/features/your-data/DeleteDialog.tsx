@@ -3,7 +3,9 @@ import { useEffect, useId, useRef, useState, type JSX, type SyntheticEvent } fro
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/Button'
+import { useLanguage } from '@/hooks/use-language'
 import { useMyDataCounts } from '@/hooks/use-my-data-counts'
+import { LANGUAGE_LOCALES } from '@/i18n'
 import type { MyDataCounts } from '@/lib/user-data'
 
 import { DANGER_BUTTON_CLASS } from './danger-button'
@@ -25,17 +27,14 @@ const COUNTED_KINDS = [
   'dutyProgress',
 ] as const satisfies readonly (keyof MyDataCounts)[]
 
-// The list's locale per app language: British English, with no comma before "and", as the app's
-// other English lists. Any other language lists in its own locale.
-const LIST_LOCALES: Readonly<Partial<Record<string, string>>> = { en: 'en-GB' }
-
 /**
  * What the deletion takes, from the counts the screen has loaded: "Klar will delete 2 tools,
  * 3 results … for good", only the kinds the user has. Without counts (loading, failed, or nothing
  * stored) it names the kinds instead.
  */
 function useLossText(): string {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const language = useLanguage()
   const counts = useMyDataCounts().data
   if (!counts) return t('yourData.delete.dialogBody')
   const counted = COUNTED_KINDS.filter((kind) => counts[kind] > 0).map((kind) =>
@@ -44,8 +43,10 @@ function useLossText(): string {
   const items =
     counts.companyProfiles > 0 ? [...counted, t('yourData.delete.lost.companyProfile')] : counted
   if (items.length === 0) return t('yourData.delete.dialogBody')
-  const listLocale = LIST_LOCALES[i18n.language] ?? i18n.language
-  const list = new Intl.ListFormat(listLocale, { type: 'conjunction' }).format(items)
+  // British English lists put no comma before "and", like the app's other English lists.
+  const list = new Intl.ListFormat(LANGUAGE_LOCALES[language], { type: 'conjunction' }).format(
+    items,
+  )
   return t('yourData.delete.dialogBodyCounts', { items: list })
 }
 

@@ -7,8 +7,9 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { Icon } from '@/components/Icon'
 
 /**
- * Where a deletion ends: the data is gone and the session has ended. Start again opens Welcome,
- * which starts a new anonymous session. The heading takes focus, as the dialog that had it is gone.
+ * Where a deletion ends: the data is gone and the session has ended. Start again opens Welcome;
+ * a new anonymous session starts only on the next save or read of the user's data. The heading
+ * takes focus, as the dialog that had it is gone.
  */
 export function DeletedPanel(): JSX.Element {
   const { t } = useTranslation()
