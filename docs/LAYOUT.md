@@ -230,7 +230,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   └── decisions/NNN-<slug>.md      decision records (/decision skill)
 │
 └── .claude/                         Claude Code tooling (see CLAUDE.md › Project tooling)
-    ├── foreman.json, settings.json, rules/, skills/ (case, eval), agents/ (isolation-auditor)
+    ├── foreman.json, settings.json, rules/, skills/ (case, eval), agents/ (isolation-auditor, ui-reviewer)
     └── worktrees/                   agent worktrees (gitignored)
 ```
 

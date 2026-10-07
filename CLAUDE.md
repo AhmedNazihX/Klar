@@ -65,6 +65,7 @@ The full layout lives in **`docs/LAYOUT.md`**: the tree down to key files, which
 - **Don't name things with the bare word `eval`** in shell commands (for example `supabase migration new eval`): the lane guard reads it as a path. Use names like `eval_records`.
 - **Lockfiles.** If `uv.lock` conflicts, regenerate it with `uv lock`, then run `uv run aiact deps generate` and commit `docs/DEPENDENCIES.md` and `docs/dependency-licences.json` with it. Case changes need `uv run aiact evaluate isolation-embed` and a committed `eval/isolation/embeddings.json`; on a merge conflict, regenerate it.
 - **Paid calls.** A worker may spend up to `cost_cap_usd` in the config without asking; anything more, and any full benchmark run, needs the user's go-ahead.
+- **UI review, UI stories only.** For a story that adds or changes screens under `frontend/` (the P stories with an artboard in the backlog's Design reference), launch `ui-reviewer` in `story-finish` step 2 with the other reviewers; it isn't in `reviewers`, so other stories never run it. After a fix round that touches those screens, rerun it as a re-check: pass its earlier deviations and the fix commits.
 
 ## Project tooling (`.claude/`)
 - **Scoped rules:** `.claude/rules/*.md` load only when Claude reads matching files. Subfolders are read too, so keep this folder small and specific to this project.

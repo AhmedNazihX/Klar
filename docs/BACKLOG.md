@@ -724,6 +724,8 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From P18 (merged):** Pre-fill the scope follow-up answers from the company profile (decision 026 item 2): established_in and used_in come from useUserDataOverview.
   **From E12 (merged):** The model's own Annex III question (e.g. the artboard's shift-planner) has no options and no if_yes (answered in words); case-specific options/titles would need a prompt change and re-recording.
   **User decision (2026-10-07, P5 artboard check):** the Confirm button on assumed facts (shown in the artboard next to Change) belongs here, not in P5: Confirm sends the confirmation to the engine and the result updates. P5 ships Change only.
+  **From the UI-review trial (2026-10-07; seen on P5 at 4418030, still on main):** (1) the summary's Facts step row contradicts the facts panel beside it: "4 facts found, 0 assumed" next to 4 Assumed cards (DE: "7 Fakten gefunden, 1 angenommen" beside 4). StepsPanel counts result.facts, FactsPanel shows deciding_facts; Result.dc.html's counts agree with its cards. (2) The Role step's decision text shows raw keys: "11 Pflichten für ein System der Klasse high_risk (amended Fassung)" (EN has the same {risk_class}/{version} placeholders), from backend/aiact/engine/nodes/role_texts.py "duties". Map both to plain words, EN and DE.
+  **From the UI-review trial (2026-10-07; still on main):** the Reviewer view has no "Texts used" section (Reviewer.dc.html lists the AI Act consolidation, Regulation (EU) 2026/1744 and the guidelines with Final/Draft status). P1's documents endpoint exists for it; no story renders it yet. Also noted: the reviewer view never shows the legal-review line (decision 026 item 12).
 
 - [ ] **P6 · AI inventory** · Deps: P5, P3 · Type: agent · Resource: db-schema
   Context: Design reference (above), `Inventory` artboard. Output: add and classify many systems, an overview table, a company-level summary (the stricter reading flagged). DoD: component and API tests.
@@ -794,6 +796,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From P15 (merged):** Review the new DE strings from P15: sidebar (KI-Inventar, Tool einstufen, Pflichten, Dokumente, Fragen stellen), screen titles, site nav and footer, the phone law labels 'Geändert, 2026' / 'Ursprünglich, 2024', and the empty company copy.
   **From P18 (merged):** New welcome.* and sidebar keys exist in EN and DE (the locales test checks key parity); the Art. 99(6a) source line says 'in der geänderten Fassung'.
   **From P5 (merged):** New EN/DE strings to review for German completeness: result.todo.limitedNoDraft, Checked/Geprüft line, 'Show the provision(s)' / 'Vorschrift(en) zeigen', 'Show full text' / 'Ganzen Text zeigen', 'Show less' / 'Weniger zeigen', the public-authority undated legacy wording.
+  **From the UI-review trial (2026-10-07; still on main):** each duty's condition line in German shows English text ("Nur wenn: You control the input data."), because Obligation.applies_if has no German field (C9 added label_de and duty_de only). Needs an applies_if_de in the obligations data and seed, or the line hidden in DE until then.
 
 - [ ] **P12 · Privacy surface** · Deps: P5, P19 · Type: agent
   Output: a warning when a description contains personal data, a privacy notice naming OpenRouter, the model providers and the Nebius host, a delete-my-data button, and export and import buttons over P3's RPCs (INIT › Scope, Storage). DoD: component tests, including an export–import round trip.
@@ -898,6 +901,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   Context: Design reference; artboard `ResultMobile`; README › Building the screens (On a phone).
   Output: the result at 390 px in one column in the desktop's reading order: back link, title, compact LawSwitch, ResultSummary, duties, facts, steps as tappable rows, a Composer for "Ask about this result", Draft documents full width at the end; the other app screens checked at 390 px with no sideways scroll.
   DoD: a test at 390 px shows the sections in order and no sideways scroll on every app route; touch targets are at least 44 px; one axe pass at that width.
+  **From the UI-review trial (2026-10-07):** at 375 px the to-do rows that carry a "Draft document" link squeeze the duty label into a one-word column, and "charge" runs into "Draft document" with no gap. Screenshots: .playwright-mcp/p5-*.png (gitignored, main checkout).
 
 - [ ] **P27 · Publish the measured accuracy** · Deps: W1, P16, P17 · Type: mixed
   Context: INIT › Evaluation; decision 024 and its addendum (2026-10-01: the data-only exception); decision 026 item 14; artboards `Main` (accuracy) and `Method` (Results).
