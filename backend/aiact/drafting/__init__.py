@@ -1,7 +1,8 @@
 """Documentation drafting (INIT > Documentation drafting): the short deployer documents drafted
 from a classification result and the user's interview answers, and the three automatic checks
 (P8a); the skeletons of the heavy documents, each required section quoting its requirement
-(P8b). Every draft is labelled DRAFT and carries the "guidance, not legal advice" notice."""
+(P8b); the short vendor letters for a prohibited or a legally ambiguous result (P28). Every
+draft is labelled DRAFT and carries the "guidance, not legal advice" notice."""
 
 from aiact.drafting.checks import (
     CHECK_LABELS,
@@ -30,12 +31,19 @@ from aiact.drafting.skeletons import (
     skeleton_templates_for,
 )
 from aiact.drafting.templates import DEPLOYER_TEMPLATES, DocumentTemplate
+from aiact.drafting.vendor_letters.draft import (
+    NoVendorLetterError,
+    draft_vendor_letter,
+    vendor_letter_for,
+)
+from aiact.drafting.vendor_letters.templates import VENDOR_LETTER_TEMPLATES
 
 __all__ = [
     "CHECK_LABELS",
     "DEPLOYER_TEMPLATES",
     "SKELETON_TEMPLATES",
     "TEMPLATES",
+    "VENDOR_LETTER_TEMPLATES",
     "Answers",
     "CheckName",
     "CheckResult",
@@ -44,6 +52,7 @@ __all__ = [
     "DraftSection",
     "DraftStatus",
     "DutyDateError",
+    "NoVendorLetterError",
     "Provenance",
     "SectionStatus",
     "SizeClass",
@@ -55,6 +64,8 @@ __all__ = [
     "draft_deployer_documents",
     "draft_document",
     "draft_skeletons",
+    "draft_vendor_letter",
     "run_checks",
     "skeleton_templates_for",
+    "vendor_letter_for",
 ]

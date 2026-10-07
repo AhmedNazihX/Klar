@@ -18,7 +18,7 @@ from aiact.drafting.models import (
     status_for,
     unanswered_count,
 )
-from aiact.drafting.prefill import PREFILLS
+from aiact.drafting.prefill import PREFILL_QUOTES, PREFILLS
 from aiact.drafting.templates import (
     ClassificationSection,
     DocumentTemplate,
@@ -140,16 +140,19 @@ def prefilled_section(
     spec: ClassificationSection, result: ClassificationResult, language: Language, article: str
 ) -> DraftSection:
     """The section from the result, or its fixed `empty` line when the result has nothing for
-    it, so an empty pre-filled section never waits for an answer no one is asked for."""
+    it, so an empty pre-filled section never waits for an answer no one is asked for. A fill
+    that quotes a provision of the result (`PREFILL_QUOTES`) sets the section's requirement."""
     paragraphs = PREFILLS[spec.fill](result, language, article)
     if paragraphs or spec.empty is None:
         provenance = spec.provenance
     else:
         provenance, paragraphs = Provenance.TEMPLATE, (spec.empty[language],)
+    quote = PREFILL_QUOTES.get(spec.fill)
     return DraftSection(
         key=spec.key,
         heading=spec.heading[language],
         provenance=provenance,
         paragraphs=paragraphs,
         status=SectionStatus.DRAFTED,
+        requirement=quote(result) if quote else None,
     )

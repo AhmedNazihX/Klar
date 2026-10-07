@@ -37,6 +37,28 @@ export type AnswerOutcome = {
 };
 
 /**
+ * CheckName
+ */
+export type CheckName = 'sections_present' | 'nothing_invented' | 'facts_match';
+
+/**
+ * CheckResult
+ *
+ * One check's outcome. `problems` names each failure; it passes when there are none.
+ */
+export type CheckResult = {
+    check: CheckName;
+    /**
+     * Passed
+     */
+    passed: boolean;
+    /**
+     * Problems
+     */
+    problems?: Array<string>;
+};
+
+/**
  * Citation
  *
  * One quoted provision. `english_only` marks guidance that has no official text in `de`.
@@ -265,6 +287,109 @@ export type DocumentList = {
 export type DocumentStatus = 'final' | 'draft' | 'consolidated';
 
 /**
+ * DraftDocument
+ *
+ * A document drafted from a classification result and the user's answers.
+ */
+export type DraftDocument = {
+    /**
+     * Template
+     */
+    template: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Article
+     *
+     * The duty it answers, e.g. `art:26:7`.
+     */
+    article: string;
+    language: Language;
+    /**
+     * Label
+     */
+    label?: 'DRAFT';
+    /**
+     * Note
+     *
+     * A line under the title: for an SME or a small mid-cap, that a simplified technical documentation form is expected (P8b).
+     */
+    note?: string | null;
+    /**
+     * Sections
+     */
+    sections: Array<DraftSection>;
+    /**
+     * Unanswered
+     *
+     * Interview questions still to answer.
+     */
+    unanswered: number;
+    status: DraftStatus;
+    /**
+     * The AI Act text of the result drafted from.
+     */
+    law_version: LawVersion;
+    /**
+     * As Of
+     *
+     * The result's law date.
+     */
+    as_of: string;
+    /**
+     * Disclaimer
+     */
+    disclaimer: string;
+};
+
+/**
+ * DraftSection
+ *
+ * One section of a drafted document. No paragraphs means it is still "To fill in".
+ */
+export type DraftSection = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Heading
+     */
+    heading: string;
+    provenance: Provenance;
+    /**
+     * Paragraphs
+     */
+    paragraphs?: Array<string>;
+    /**
+     * Question Keys
+     *
+     * The interview questions whose answers fill the section, in the order asked; interview sections only.
+     */
+    question_keys?: Array<string>;
+    /**
+     * Unanswered
+     *
+     * The questions of `question_keys` still to answer, in order.
+     */
+    unanswered?: Array<string>;
+    status: SectionStatus;
+    /**
+     * The requirement the section answers, quoted word for word from the AI Act (skeletons), shown above the "To fill in" marker; or the provision a vendor letter quotes from the result (the Art. 5 point of the prohibited message).
+     */
+    requirement?: Citation | null;
+};
+
+/**
+ * DraftStatus
+ *
+ * A document's state on the documents list: "Needs N answers" or "Ready to review".
+ */
+export type DraftStatus = 'needs_answers' | 'ready_to_review';
+
+/**
  * ErrorEvent
  *
  * A node failed, so the run stopped without a result.
@@ -388,6 +513,8 @@ export type HttpValidationError = {
  * How a system became high-risk; the two routes have different dates (Art. 113(c)).
  */
 export type HighRiskRoute = 'annex_iii' | 'annex_i';
+
+export type JsonValue = unknown;
 
 /**
  * Language
@@ -577,6 +704,13 @@ export type OpenQuestion = {
 };
 
 /**
+ * Provenance
+ *
+ * Where a section's content comes from; the interface shows it as a tag on the section.
+ */
+export type Provenance = 'classification' | 'interview' | 'template';
+
+/**
  * Provision
  *
  * One provision's text, with the version, language and status it comes from and the notice.
@@ -690,6 +824,13 @@ export type RiskClass = 'out_of_scope' | 'prohibited' | 'high_risk' | 'limited_r
  * The operator role the obligations follow from (Art. 3, 16, 23-26).
  */
 export type Role = 'provider' | 'deployer' | 'importer' | 'distributor';
+
+/**
+ * SectionStatus
+ *
+ * A section's state, as the DocSkeleton artboard shows it beside the section.
+ */
+export type SectionStatus = 'drafted' | 'questions' | 'to_fill_in' | 'needs_evidence' | 'generated_last';
 
 /**
  * SettledBy
@@ -830,6 +971,47 @@ export type ValidationError = {
      */
     ctx?: {
         [key: string]: unknown;
+    };
+};
+
+/**
+ * VendorLetter
+ *
+ * The drafted letter (labelled DRAFT, with the notice) and the automatic checks on it.
+ */
+export type VendorLetter = {
+    document: DraftDocument;
+    /**
+     * Checks
+     */
+    checks: Array<CheckResult>;
+};
+
+/**
+ * VendorLetterRequest
+ *
+ * A classification result, the letter's language and the answers given so far.
+ */
+export type VendorLetterRequest = {
+    /**
+     * Result
+     *
+     * The classification result, as `POST /classify` sent it.
+     */
+    result: {
+        [key: string]: unknown;
+    };
+    /**
+     * The language of the letter's wording and notice.
+     */
+    language: Language;
+    /**
+     * Answers
+     *
+     * The interview answers by question key (vendor, tool_name, sender); a question left out stays "To fill in".
+     */
+    answers?: {
+        [key: string]: unknown | string;
     };
 };
 
@@ -1015,3 +1197,30 @@ export type ListDocumentsResponses = {
 };
 
 export type ListDocumentsResponse = ListDocumentsResponses[keyof ListDocumentsResponses];
+
+export type DraftVendorLetterData = {
+    body: VendorLetterRequest;
+    path?: never;
+    query?: never;
+    url: '/documents/vendor-letter';
+};
+
+export type DraftVendorLetterErrors = {
+    /**
+     * Not a valid result, a result that calls for no vendor letter, or an answer to a question the letter doesn't ask
+     */
+    422: unknown;
+    /**
+     * Too many requests
+     */
+    429: unknown;
+};
+
+export type DraftVendorLetterResponses = {
+    /**
+     * Successful Response
+     */
+    200: VendorLetter;
+};
+
+export type DraftVendorLetterResponse = DraftVendorLetterResponses[keyof DraftVendorLetterResponses];

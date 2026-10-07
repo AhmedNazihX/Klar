@@ -4,6 +4,7 @@ duties in both languages, the provider groups and the drafting templates the dut
 import pytest
 
 from aiact.drafting.registry import TEMPLATES
+from aiact.drafting.vendor_letters.templates import VENDOR_LETTER_TEMPLATES
 from aiact.obligations.list import ObligationEntry, load_table
 from aiact.schemas import ObligationGroup, Role
 
@@ -47,9 +48,16 @@ def test_every_document_key_is_a_drafting_template() -> None:
 
 def test_each_template_is_linked_from_the_one_duty_it_answers() -> None:
     """Every result that lists the duty can offer its draft: the duty is the one the template
-    answers (`DocumentTemplate.article`), e.g. the Art. 9 skeleton on the Art. 9 row."""
+    answers (`DocumentTemplate.article`), e.g. the Art. 9 skeleton on the Art. 9 row. The vendor
+    letters answer no duty: a prohibited or ambiguous result offers them (P28), and no row links
+    them."""
+    letters = {template.id for template in VENDOR_LETTER_TEMPLATES}
+    duty_templates = {key: t for key, t in TEMPLATES.items() if key not in letters}
     linked = {
         key: sorted(entry.article for entry in ENTRIES if entry.document == key)
         for key in TEMPLATES
     }
-    assert linked == {key: [template.article] for key, template in TEMPLATES.items()}
+    assert linked == {
+        **{key: [template.article] for key, template in duty_templates.items()},
+        **{key: [] for key in letters},
+    }

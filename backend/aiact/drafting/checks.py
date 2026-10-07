@@ -226,6 +226,6 @@ def _prefill_invented(
         return [f"section {spec.key!r}: the result lists its duty with several dates"]
     if (section.provenance, section.paragraphs) != (drafted.provenance, drafted.paragraphs):
         return [f"section {spec.key!r} holds content the result doesn't give"]
-    if section.requirement is not None:
+    if section.requirement != drafted.requirement:
         return [f"section {spec.key!r} quotes a requirement the template doesn't"]
     return []

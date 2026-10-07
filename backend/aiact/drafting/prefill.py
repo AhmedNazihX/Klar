@@ -9,8 +9,10 @@ from collections.abc import Callable, Mapping
 from enum import StrEnum
 
 from aiact.dates import long_date
+from aiact.drafting.vendor_letters import fills as vendor
 from aiact.provision_names import annex_point_name, article_provision_name
 from aiact.schemas import (
+    Citation,
     ClassificationResult,
     EvidenceTag,
     Language,
@@ -30,6 +32,18 @@ class Fill(StrEnum):
     """The facts the user stated about the system."""
     CLASSIFICATION_AND_DUTY = "classification_and_duty"
     """The class with its Annex point, and the document's duty with its date."""
+    CHECKED = "checked"
+    """The date checked and the text of the Act checked against (vendor letters)."""
+    PROHIBITED_FINDING = "prohibited_finding"
+    """The Art. 5 point the tool falls under, which the section quotes (vendor message)."""
+    DECIDING_FACTS = "deciding_facts"
+    """The facts the result rests on (vendor message)."""
+    OPEN_QUESTION = "open_question"
+    """The question of law the result leaves open (vendor request)."""
+    READINGS = "readings"
+    """The open question's two readings, the applied one marked (vendor request)."""
+    SETTLED_BY = "settled_by"
+    """What would settle the open question (vendor request)."""
 
 
 class DutyDateError(ValueError):
@@ -141,4 +155,16 @@ Prefill = Callable[[ClassificationResult, Language, str], tuple[str, ...]]
 PREFILLS: Mapping[Fill, Prefill] = {
     Fill.SYSTEM_FACTS: _system_facts,
     Fill.CLASSIFICATION_AND_DUTY: _classification_and_duty,
+    Fill.CHECKED: vendor.checked_paragraphs,
+    Fill.PROHIBITED_FINDING: vendor.finding_paragraphs,
+    Fill.DECIDING_FACTS: vendor.deciding_fact_paragraphs,
+    Fill.OPEN_QUESTION: vendor.question_paragraphs,
+    Fill.READINGS: vendor.reading_paragraphs,
+    Fill.SETTLED_BY: vendor.settled_by_paragraphs,
 }
+
+PREFILL_QUOTES: Mapping[Fill, Callable[[ClassificationResult], Citation | None]] = {
+    Fill.PROHIBITED_FINDING: vendor.prohibited_quote,
+}
+"""The provision a pre-filled section quotes from the result (its `requirement`), by fill;
+the other fills quote none."""
