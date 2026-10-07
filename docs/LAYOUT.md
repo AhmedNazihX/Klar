@@ -47,6 +47,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            build.py + load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5), get_omnibus_provision (E9); search.py: search_ai_act (C6; relevance score and cut-off C8);
 │   │   │                            documents.py: list_documents, the corpus's texts with title, status and dates (P1)
+│   │   │                            tracing.py: each lookup a LangSmith run under the engine's trace, its ids as metadata (V7)
 │   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
 │   │   ├── engine/                  ⚠ created only after B3 (hook-enforced)
 │   │   │   ├── graph.py, state.py   the staged LangGraph (E1)
@@ -96,7 +97,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support, invented content (V5)
 │   │   │   ├── ragas_metrics.py     context precision/recall, faithfulness, provision recall on the Q&A set;
 │   │   │   │                        `aiact evaluate ragas`, stored in eval_runs (V6)
-│   │   │   ├── tool_calls.py        tool-call correctness from traces (V7)
+│   │   │   ├── tool_calls.py        tool-call correctness per step from a stored run's LangSmith traces;
+│   │   │   │                        `aiact evaluate tool-calls` (V7)
 │   │   │   └── experiments/         embeddings.py (X1a), free_agent.py (S1); X2: smoke.py (`aiact evaluate smoke`),
 │   │   │                            smoke_verdict.py (decision 023's rule over stored runs, `smoke-compare`),
 │   │   │                            matchers.py (replay states and label matchers, shared with the E3–E7 replays),

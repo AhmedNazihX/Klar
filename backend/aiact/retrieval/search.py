@@ -43,6 +43,8 @@ No model is involved apart from the query embedding.
   Annex point); Q&A and MCP use it. X1 calibrates the value: Qwen3 cosines are compressed.
 - **Parents.** A parent row includes all its descendants' text (C1), so a row that is an
   ancestor or a descendant of a better-ranked hit is skipped (`distinct_units`).
+- **Tracing (V7).** Inside a traced engine run, a search is a LangSmith run of its own, with the
+  documents and types it was limited to as metadata, never the query (`aiact.retrieval.tracing`).
 """
 
 from collections.abc import Collection, Sequence
@@ -58,6 +60,7 @@ from psycopg.rows import dict_row
 from aiact.corpus.embed import vector_literal
 from aiact.db import connect
 from aiact.llm.embeddings import OpenRouterEmbeddings
+from aiact.retrieval.tracing import search_metadata, traced_lookup
 from aiact.schemas import DISCLAIMER, DocumentStatus, Language, LawVersion
 from aiact.schemas.base import ContractModel
 from aiact.settings import get_settings
@@ -287,6 +290,7 @@ class SearchResults(ContractModel):
     disclaimer: str
 
 
+@traced_lookup(search_metadata)
 def search_ai_act(
     query: str,
     language: Language | str = Language.EN,

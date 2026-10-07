@@ -13,6 +13,7 @@ from uuid import UUID
 
 import psycopg
 import typer
+from langsmith.utils import LangSmithError
 
 from aiact import db, deps
 from aiact.corpus import embed as corpus_embed_module
@@ -29,6 +30,7 @@ from aiact.eval import (
     report,
     runner,
     similarity,
+    tool_calls,
 )
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases, load_qa_items
@@ -472,6 +474,35 @@ def eval_report(
     except psycopg.Error as error:
         # A connection error's text can name the server; only the type is printed.
         typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(text, nl=False)
+
+
+@eval_app.command("tool-calls")
+def eval_tool_calls(
+    run_id: Annotated[UUID, typer.Argument(help="The eval_runs id whose traces to check")],
+) -> None:
+    """Print a stored run's tool-call correctness per step, from its LangSmith traces (V7)."""
+    try:
+        source = tool_calls.langsmith_source(get_settings())
+        with records.connect() as connection:
+            text = tool_calls.tool_call_report(connection, source, run_id)
+    except (
+        records.DatabaseNotConfiguredError,
+        tool_calls.TracingNotConfiguredError,
+        tool_calls.RunNotFoundError,
+        tool_calls.NoLookupRunsError,
+        tool_calls.TraceRecordError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    except LangSmithError as error:
+        name = type(error).__name__
+        typer.echo(f"Error: LangSmith error ({name}); check LANGSMITH_API_KEY", err=True)
         raise typer.Exit(code=2) from error
     typer.echo(text, nl=False)
 

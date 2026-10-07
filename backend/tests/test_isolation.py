@@ -245,6 +245,9 @@ NOT_ENTRY_POINTS: dict[str, str] = {
     "dates), never a provision row",
     "aiact.retrieval.documents.DocumentInfo": "a result type of list_documents",
     "aiact.retrieval.documents.DocumentList": "the result type of list_documents",
+    "aiact.retrieval.tracing.traced_lookup": "traces a lookup it wraps; runs no query itself",
+    "aiact.retrieval.tracing.provision_metadata": "a lookup's trace metadata; runs no query",
+    "aiact.retrieval.tracing.search_metadata": "a search's trace metadata; runs no query",
 }
 """Public callables of `aiact.retrieval` that return no corpus rows by themselves, or no
 guideline rows (so never a held-out example), and why."""
