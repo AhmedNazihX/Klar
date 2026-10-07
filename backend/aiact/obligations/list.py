@@ -1,7 +1,9 @@
 """`list_obligations`: the duties and dates for a role and risk class (story C7; INIT > Scope).
 
 The table lives in `supabase/seed/obligations.yaml`, which is also the source of the database seed
-(`aiact.obligations.seed`). No model is involved: this is a plain lookup.
+(`aiact.obligations.seed`). No model is involved: this is a plain lookup. Each duty carries the
+screens' texts (C9): a short label in English and German, the formal duty in German, the provider
+layout's group and the drafting template it links to.
 
 Art. 111(2) (C7b, decision 022) is applied on top of the table: a high-risk system placed on the
 market or put into service before its route's Chapter III date keeps its class, but its high-risk
@@ -26,10 +28,12 @@ from aiact.schemas import (
     LawVersion,
     LegacyStatus,
     Obligation,
+    ObligationGroup,
     RiskClass,
     Role,
 )
 from aiact.schemas.base import ContractModel
+from aiact.schemas.obligations import DOCUMENT_KEY_PATTERN
 from aiact.settings import BACKEND_DIR
 
 OBLIGATIONS_FILE = BACKEND_DIR.parent / "supabase" / "seed" / "obligations.yaml"
@@ -72,6 +76,11 @@ class ObligationEntry(ContractModel):
     roles: tuple[Role, ...] = Field(min_length=1)
     risk_classes: tuple[RiskClass, ...] = Field(min_length=1)
     duty: str = Field(min_length=1)
+    duty_de: str = Field(min_length=1)
+    label_en: str = Field(min_length=1)
+    label_de: str = Field(min_length=1)
+    group: ObligationGroup | None = None
+    document: str | None = Field(default=None, pattern=DOCUMENT_KEY_PATTERN)
     article: str = Field(min_length=1)
     applies_from: date | Mapping[HighRiskRoute, date]
     applies_if: str | None = None
@@ -84,6 +93,7 @@ class ObligationEntry(ContractModel):
         for name, values in (("roles", self.roles), ("risk_classes", self.risk_classes)):
             if len(set(values)) != len(values):
                 raise ValueError(f"{self.key}: repeated value in {name}")
+        self._check_group()
         if isinstance(self.applies_from, Mapping):
             if not self.applies_from:
                 raise ValueError(f"{self.key}: applies_from needs at least one route")
@@ -92,6 +102,14 @@ class ObligationEntry(ContractModel):
         if RiskClass.OUT_OF_SCOPE in self.risk_classes:
             raise ValueError(f"{self.key}: an out_of_scope system has no obligations")
         return self
+
+    def _check_group(self) -> None:
+        """A group is for provider duties, and every high-risk provider duty has one."""
+        is_provider = Role.PROVIDER in self.roles
+        if self.group is not None and not is_provider:
+            raise ValueError(f"{self.key}: a group is only for provider duties")
+        if self.group is None and is_provider and RiskClass.HIGH_RISK in self.risk_classes:
+            raise ValueError(f"{self.key}: a high-risk provider duty needs a group")
 
     def dated(self) -> tuple[tuple[HighRiskRoute | None, date], ...]:
         """The (route, date) pairs; route None when the date is the same for every route."""
@@ -134,6 +152,11 @@ class ObligationTable(ContractModel):
                 risk_class=risk_class,
                 obligation=Obligation(
                     duty=entry.duty,
+                    duty_de=entry.duty_de,
+                    label_en=entry.label_en,
+                    label_de=entry.label_de,
+                    group=entry.group,
+                    document=entry.document,
                     article=entry.article,
                     applies_from=applies_from,
                     high_risk_route=route,
@@ -215,9 +238,10 @@ def list_obligations(
     it, route-dependent duties appear once per route, each tagged with its `high_risk_route`.
     Duties that exist on one route only are left out for the other. Plain strings are accepted
     for the enums; an unknown value raises ValueError, and a law version the table doesn't hold
-    raises UnknownLawVersionError. `language` picks the notice's language (the duties are in
-    English). `legacy` (see `legacy_status`) marks the high-risk duties of a system Art. 111(2)
-    covers; the class and the other duties stay as they are.
+    raises UnknownLawVersionError. `language` picks the notice's language (each duty carries its
+    label and formal wording in both English and German). `legacy` (see `legacy_status`) marks
+    the high-risk duties of a system Art. 111(2) covers; the class and the other duties stay as
+    they are.
     """
     role, risk_class, version = Role(role), RiskClass(risk_class), LawVersion(law_version)
     status = LegacyStatus(legacy) if legacy is not None else None

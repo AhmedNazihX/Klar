@@ -33,6 +33,7 @@ from aiact.schemas import (
     LawVersion,
     LegacyStatus,
     Obligation,
+    ObligationGroup,
     RiskClass,
     Role,
 )
@@ -307,11 +308,15 @@ def test_every_row_cites_an_article_of_the_consolidated_act() -> None:
 
 # --- Loader rules -----------------------------------------------------------------------------
 
-ENTRY = {
+ENTRY: dict[str, object] = {
     "key": "a-duty",
     "roles": ["provider"],
     "risk_classes": ["high_risk"],
     "duty": "Do something.",
+    "duty_de": "Etwas tun.",
+    "label_en": "Do it",
+    "label_de": "Es tun",
+    "group": "build",
     "article": "art:16:a",
     "applies_from": {"annex_iii": "2027-12-02"},
 }
@@ -332,11 +337,24 @@ def test_a_custom_table_is_used_when_given() -> None:
     assert duties == (
         Obligation(
             duty="Do something.",
+            duty_de="Etwas tun.",
+            label_en="Do it",
+            label_de="Es tun",
+            group=ObligationGroup.BUILD,
             article="art:16:a",
             applies_from=ANNEX_III_FROM,
             high_risk_route=HighRiskRoute.ANNEX_III,
         ),
     )
+
+
+def test_a_duty_shared_with_another_role_is_the_same_duty_for_both() -> None:
+    """Same group and texts, so a provider that also uses the system gets the duty once."""
+    table = ObligationTable.model_validate(_table(ENTRY | {"roles": ["provider", "deployer"]}))
+    provider = _list(Role.PROVIDER, RiskClass.HIGH_RISK, table=table)
+    deployer = _list(Role.DEPLOYER, RiskClass.HIGH_RISK, table=table)
+    assert provider == deployer
+    assert [duty.group for duty in deployer] == [ObligationGroup.BUILD]
 
 
 @pytest.mark.parametrize(
@@ -347,6 +365,12 @@ def test_a_custom_table_is_used_when_given() -> None:
         ({"risk_classes": ["out_of_scope"], "applies_from": "2026-08-02"}, "out_of_scope"),
         ({"article": "annex:III:4:a"}, "article"),
         ({"roles": []}, "roles"),
+        ({"group": None}, "needs a group"),
+        ({"roles": ["deployer"]}, "only for provider duties"),
+        ({"group": "later"}, "group"),
+        ({"document": "Art 26 notice"}, "document"),
+        ({"label_de": ""}, "label_de"),
+        ({"duty_de": ""}, "duty_de"),
     ],
 )
 def test_invalid_entries_are_rejected(change: dict[str, object], message: str) -> None:

@@ -25,6 +25,11 @@ COLUMNS = (
     "relief_note",
     "note",
     "law_version",
+    "label_en",
+    "label_de",
+    "duty_de",
+    "duty_group",
+    "document",
 )
 
 
@@ -56,6 +61,11 @@ def _values(position: int, row: ObligationRow, table: ObligationTable) -> str:
         obligation.relief_note,
         obligation.note,
         table.law_version.value,
+        obligation.label_en,
+        obligation.label_de,
+        obligation.duty_de,
+        obligation.group.value if obligation.group else None,
+        obligation.document,
     )
     return "  (" + ", ".join(_literal(value) for value in values) + ")"
 

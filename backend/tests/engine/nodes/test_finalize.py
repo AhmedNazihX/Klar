@@ -61,7 +61,14 @@ ENGINE_INPUT: EngineInput = {
     "exclude_source_example_ids": (),
 }
 OPEN = open_question("Does the law settle this?", "Stricter.", "Lenient.")
-LITERACY = Obligation(duty="Ensure AI literacy", article="art:4:1", applies_from=date(2025, 2, 2))
+LITERACY = Obligation(
+    duty="Ensure AI literacy",
+    duty_de="KI-Kompetenz fördern.",
+    label_en="Build AI literacy",
+    label_de="KI-Kompetenz fördern",
+    article="art:4:1",
+    applies_from=date(2025, 2, 2),
+)
 
 RANKS = Fact(text="The tool ranks applicants", evidence=EvidenceTag.STATED,
              source_span=SourceSpan(start=33, end=69))  # fmt: skip

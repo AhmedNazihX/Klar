@@ -160,8 +160,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)
-│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3)
-│   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7)
+│   ├── migrations/                  <timestamp>_<name>.sql via `supabase migration new` (F4, F5, C7, P3, C3, C9)
+│   └── seed/                        obligations.yaml, the source; obligations.sql, generated from it (C7);
+│                                    the screens' labels (EN, DE), German duties, groups, documents (C9)
 │
 ├── frontend/                        Vite + React + TypeScript SPA, pnpm (P4); run `pnpm …` from here
 │   ├── package.json, pnpm-lock.yaml scripts: dev, build, test, lint, format, gen:api; lockfile committed (P4)

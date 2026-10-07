@@ -31,7 +31,6 @@ from aiact.schemas import (
     DISCLAIMER,
     Language,
     LegacyStatus,
-    Obligation,
     Role,
     Status,
     StepName,
@@ -190,9 +189,8 @@ def test_a_legacy_duty_applies_only_after_a_significant_change() -> None:
 
 def test_a_duty_listed_with_several_dates_is_refused() -> None:
     result = worked_example_result()
-    later = Obligation(
-        duty="Assign human oversight", article="art:26:2", applies_from=date(2028, 8, 2)
-    )
+    later = result.obligations[1].model_copy(update={"applies_from": date(2028, 8, 2)})
+    assert later.article == "art:26:2"
     with pytest.raises(DutyDateError, match="art:26:2"):
         draft_document(
             TEMPLATES["art_26_2_oversight"],
