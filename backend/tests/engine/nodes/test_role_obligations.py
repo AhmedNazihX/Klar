@@ -856,8 +856,16 @@ def test_art_6_4_follows_the_high_risk_steps_exemption(risk_class: RiskClass) ->
 @pytest.mark.parametrize(
     ("language", "says"),
     [
-        (Language.EN, "Duties not modelled for the original text"),
-        (Language.DE, "Pflichten für die original Fassung nicht modelliert"),
+        (
+            Language.EN,
+            "Duties not modelled for the original text: the obligations table "
+            "covers only the amended text",
+        ),
+        (
+            Language.DE,
+            "Pflichten für die ursprüngliche Fassung nicht modelliert: Die "
+            "Pflichtentabelle deckt nur die geänderte Fassung ab",
+        ),
     ],
 )
 def test_the_original_text_lists_no_duties_and_says_they_are_not_modelled(

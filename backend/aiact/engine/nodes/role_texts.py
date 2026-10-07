@@ -9,7 +9,7 @@ from datetime import date
 from aiact.dates import long_date
 from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.llm.replies import OpenQuestion
-from aiact.schemas import Language, Role
+from aiact.schemas import Language, LawVersion, Role
 
 
 @dataclass(frozen=True)
@@ -344,6 +344,17 @@ def open_in_law_parts(
     return plain, provider, kept
 
 
+VERSION_NAMES: Mapping[Language, Mapping[LawVersion, str]] = {
+    Language.EN: {LawVersion.ORIGINAL: "original text", LawVersion.AMENDED: "amended text"},
+    Language.DE: {
+        LawVersion.ORIGINAL: "ursprüngliche Fassung",
+        LawVersion.AMENDED: "geänderte Fassung",
+    },
+}
+"""How the role step's sentences name a law version (the screens' words: "Ursprüngliche
+Fassung", "Geänderte Fassung")."""
+
+
 TEXTS: Mapping[Language, Mapping[str, str]] = {
     Language.EN: {
         "role": "Role: {role}.",
@@ -373,13 +384,13 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "assumption_own_name": "Working assumption: provider, keeping the {base} duties. If you "
         "do place it under your own name, whether that makes you its provider is legally open "
         "(Art. 3(3)); if not, you stay a {base}. Please answer: {question}",
-        "duties": "{count} duties listed for a {risk_class} system ({version} text).",
+        "duties": "{count} duties listed for a {risk_class} system ({version}).",
         "condition_not_met": "{count} conditional duties left out because their condition "
         "doesn't apply.",
         "not_found": "{count} duties left out because no earlier check reported the finding they "
         "depend on.",
-        "not_modelled": "Duties not modelled for the {asked} text: the obligations table covers "
-        "only the {version} text, so no duties are listed.",
+        "not_modelled": "Duties not modelled for the {asked}: the obligations table covers only "
+        "the {version}, so no duties are listed.",
         "legacy_unchanged": "Art. 111(2): the system was on the market or in use before {date}, "
         "so {count} high-risk duties apply only if its design or intended purpose changes "
         "significantly on or after that date (a substantial modification); the class stays "
@@ -428,14 +439,13 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "assumption_own_name": "Arbeitsannahme: Anbieter, mit den Pflichten als {base}. Bringen "
         "Sie es unter eigenem Namen in Verkehr, ist rechtlich offen, ob Sie damit Anbieter werden "
         "(Art. 3 Nr. 3); wenn nicht, bleiben Sie {base}. Bitte beantworten Sie: {question}",
-        "duties": "{count} Pflichten für ein System der Klasse {risk_class} ({version} Fassung).",
+        "duties": "{count} Pflichten für ein System der Klasse {risk_class} ({version}).",
         "condition_not_met": "{count} bedingte Pflichten entfallen, weil ihre Bedingung nicht "
         "erfüllt ist.",
         "not_found": "{count} Pflichten entfallen, weil keine frühere Prüfung den Befund gemeldet "
         "hat, von dem sie abhängen.",
-        "not_modelled": "Pflichten für die {asked} Fassung nicht modelliert: Die "
-        "Pflichtentabelle deckt nur die {version} Fassung ab, daher sind keine Pflichten "
-        "aufgeführt.",
+        "not_modelled": "Pflichten für die {asked} nicht modelliert: Die Pflichtentabelle deckt "
+        "nur die {version} ab, daher sind keine Pflichten aufgeführt.",
         "legacy_unchanged": "Art. 111 Abs. 2: Das System war vor dem {date} in Verkehr oder in "
         "Betrieb; daher gelten {count} Hochrisiko-Pflichten nur, wenn seine Konzeption oder "
         "Zweckbestimmung ab diesem Datum erheblich verändert wird (eine wesentliche Veränderung). "

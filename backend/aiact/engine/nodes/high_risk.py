@@ -76,9 +76,10 @@ from aiact.engine.nodes.high_risk_texts import (
     REFUSAL,
     REFUSAL_CITATIONS,
     ROUTE_NAMES,
-    decision_texts,
+    TEXTS,
     law_title,
     point_name,
+    version_words,
 )
 from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
 from aiact.engine.nodes.questions import ask, hint, open_question
@@ -543,7 +544,8 @@ def _question(
     """The question for `key`, naming the Annex I `law`, with what a yes settles (`_if_yes`)."""
     language = state["language"]
     if_yes = _if_yes(key, answer, language, state["law_version"]) if answer else None
-    text = key.question[language].format(law=law)
+    words = version_words(language, state["law_version"])
+    text = key.question[language].format(law=law, **words)
     return ask(key, language, StepName.HIGH_RISK, text=text, if_yes=if_yes, citations=citations)
 
 
@@ -618,11 +620,13 @@ def _decision(
     question: FollowUpQuestion | None,
 ) -> str:
     language = state["language"]
-    texts = decision_texts(language, state["law_version"])
+    texts = TEXTS[language]
+    words = version_words(language, state["law_version"])
     point = point_name(settled.point, language) if settled.point else ""
     route = ROUTE_NAMES[language][settled.route.value] if settled.route else ""
     asked = settled.open_question.question if settled.open_question else ""
     values = {
+        **words,
         "point": point,
         "law": law,
         "condition": answer.art_6_3.condition.value,

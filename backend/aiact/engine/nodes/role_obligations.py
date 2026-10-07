@@ -68,6 +68,7 @@ from aiact.engine.nodes.role_texts import (
     SUBSTANTIAL_MODIFICATION_OPEN,
     SWITCHES,
     TEXTS,
+    VERSION_NAMES,
     KeyQuestion,
     OpenInLaw,
     open_in_law_parts,
@@ -689,9 +690,10 @@ def select_obligations(
     legacy = legacy or LegacySettlement()
     if is_section_b(state):
         return (), (texts["section_b"],)
+    names = VERSION_NAMES[language]
     if table.law_version is not law_version:
-        held = table.law_version.value
-        return (), (texts["not_modelled"].format(version=held, asked=law_version.value),)
+        held, asked = names[table.law_version], names[law_version]
+        return (), (texts["not_modelled"].format(version=held, asked=asked),)
     lists = [
         list_obligations(role, risk_class, route, law_version, table, legacy=legacy.status)
         for role in roles
@@ -702,7 +704,7 @@ def select_obligations(
     answers = {condition: by_id.get(cid, Answer.UNKNOWN) for condition, cid in ids.items()}
     verdicts = [(o, _kept(o, answers, state, settled.gpai)) for o in listed]
     kept = tuple(o for o, verdict in verdicts if verdict is Kept.YES)
-    version = lists[0].law_version.value
+    version = names[lists[0].law_version]
     counts = {v: sum(verdict is v for _, verdict in verdicts) for v in Kept if v is not Kept.YES}
     summary = (
         texts["duties"].format(count=len(kept), risk_class=risk_class.value, version=version),

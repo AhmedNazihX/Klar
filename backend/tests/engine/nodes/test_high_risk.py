@@ -45,7 +45,7 @@ from aiact.engine.nodes.high_risk_retrieval import (
     Retrieved,
     retrieve,
 )
-from aiact.engine.nodes.high_risk_texts import decision_texts
+from aiact.engine.nodes.high_risk_texts import TEXTS, version_words
 from aiact.engine.nodes.key_facts import Answer
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
@@ -695,7 +695,9 @@ def test_a_section_b_product_cites_the_original_art_2_2_under_the_original_text(
     assert "only Art. 6(1), Art. 102 to 109 and Art. 112 of the AI Act apply" in decision
     assert "60a" not in decision
     assert "art:2:2" in cited(result)
-    german = decision_texts(Language.DE, ORIGINAL)["i_section_b"]
+    german = TEXTS[Language.DE]["i_section_b"].format(
+        law="", **version_words(Language.DE, ORIGINAL)
+    )
     assert "nur Art. 6 Abs. 1, Art. 102 bis 109 und Art. 112" in german
     amended = outcome(answer(one=annex_i("annex:I:B:21", YES, YES, YES))).step.decision
     assert "only Art. 6(1), Art. 60a and Art. 102 to 112 of the AI Act apply" in amended
@@ -721,6 +723,29 @@ def test_the_original_text_names_no_art_6_1a_to_1c(
     english = outcome(given, law_version=ORIGINAL).step.decision
     assert "(Art. 6(1)(a))" in english or "(Art. 6(1)(b))" in english
     assert "for health and safety" not in english
+
+
+@pytest.mark.parametrize(
+    ("language", "restriction"),
+    [(Language.EN, "for health and safety"), (Language.DE, "zu Gesundheit und Sicherheit")],
+)
+def test_the_third_party_question_asks_art_6_1c_only_under_the_amended_text(
+    language: Language, restriction: str
+) -> None:
+    """Under the original text any third-party assessment counts (no Art. 6(1c)): the question
+    must not let a radio-only notified body be answered "no"."""
+    given = answer(one=annex_i("annex:I:A:11", YES, YES, Answer.UNKNOWN))
+    asked: dict[LawVersion, str] = {}
+    for law_version in LawVersion:
+        result = outcome(given, language, law_version)
+        missing = result.step.missing_fact
+        assert missing is not None and missing.id == "third_party_assessment"
+        assert missing.text in result.step.decision
+        asked[law_version] = missing.text
+    assert restriction in asked[LawVersion.AMENDED]
+    assert restriction not in asked[ORIGINAL]
+    assert asked[ORIGINAL] == asked[LawVersion.AMENDED].replace(f" {restriction}", "")
+    assert not any(name in asked[ORIGINAL] for name in OMNIBUS_PARAGRAPHS)
 
 
 def test_only_the_original_text_gets_the_note_that_art_6_1a_to_1c_do_not_exist() -> None:
@@ -1423,13 +1448,29 @@ def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -
 # --- Replays under the original text (E11) -------------------------------------------------------
 #
 # One Omnibus-changed case per rule, replayed under the original text; the amended side of each
-# pair is the case's `test_replay_annex_i_case`. Recorded with `RECORD_COMMAND` like the others.
+# pair is the case's `test_replay_annex_i_case`. Record them with `ORIGINAL_RECORD_COMMAND`.
 
 ORIGINAL_RECORD_COMMAND = (
     "uv run pytest tests/engine/nodes/test_high_risk.py -k replay_original --record-mode=once"
 )
-"""Records only the original-text replays (the whole `-k replay` run re-reads the corpus)."""
+"""Records only the original-text replays; `RECORD_COMMAND` (`-k replay`) would read the live
+corpus again for every replay."""
 RECORDING_PENDING = pytest.mark.xfail(strict=True, reason="recording pending (E11)")
+
+
+@pytest.fixture
+def original_replay_check(
+    luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
+) -> Iterator[HighRiskCheck]:
+    """`replay_check` for the original-text replays, whose skip names their own command."""
+    with corpus_recording(
+        vcr_cassette_dir,
+        default_cassette_name,
+        record_mode,
+        ORIGINAL_RECORD_COMMAND,
+        lambda: _live_corpus(luna_settings),
+    ) as recording:
+        yield HighRiskCheck(luna_settings, library=RecordedHighRiskLibrary(recording))
 
 
 def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
@@ -1445,11 +1486,13 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
 
 @RECORDING_PENDING
 @pytest.mark.vcr
-def test_replay_original_machinery_guard_is_annex_i_section_a(replay_check: HighRiskCheck) -> None:
+def test_replay_original_machinery_guard_is_annex_i_section_a(
+    original_replay_check: HighRiskCheck,
+) -> None:
     """own-e-04's press guard is machinery: Annex I B.21 under the amended text, with Art. 2(2);
     under the original text the machinery law is A.1, so it is high-risk with its AI Act duties
     and no Art. 2(2)."""
-    result = _original_replay("own-e-04-press-camera-guard", replay_check)
+    result = _original_replay("own-e-04-press-camera-guard", original_replay_check)
     step = result.step
     shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
     assert result.high_risk_route is HighRiskRoute.ANNEX_I, shown
@@ -1460,12 +1503,14 @@ def test_replay_original_machinery_guard_is_annex_i_section_a(replay_check: High
 
 @RECORDING_PENDING
 @pytest.mark.vcr
-def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(replay_check: HighRiskCheck) -> None:
+def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
+    original_replay_check: HighRiskCheck,
+) -> None:
     """own-e-06's speaker: under the amended text Art. 6(1c) (a radio-only notified body) and
     6(1a) (a convenience feature) keep it out of Annex I. The original text has neither: its
     assistant is still no safety component (Art. 3(14)), so it stays not high-risk, but the
     decision names no paragraph the Omnibus added."""
-    result = _original_replay("own-e-06-smart-speaker-radio-check", replay_check)
+    result = _original_replay("own-e-06-smart-speaker-radio-check", original_replay_check)
     step = result.step
     shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
     assert result.high_risk_route is None, shown
