@@ -139,6 +139,13 @@ def test_provider_high_risk_gets_art_16_and_the_duties_it_points_to() -> None:
     assert by_article["art:22:1"].applies_if is not None  # providers outside the Union
 
 
+def test_the_requirements_split_from_art_16_a_are_built_in() -> None:
+    """The user's grouping of the Art. 9 to 15 rows (2026-10-07, C9): Build it right."""
+    duties = _list(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
+    requirements = {"art:9", "art:10", "art:12", "art:13", "art:14", "art:15"}
+    assert {d.group for d in duties if d.article in requirements} == {ObligationGroup.BUILD}
+
+
 def test_provider_high_risk_relief_for_smes_and_small_mid_caps() -> None:
     by_article = _by_article(_list(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III))
     for article in ("art:16:c", "art:11:1"):

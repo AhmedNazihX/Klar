@@ -80,9 +80,10 @@ class Obligation(ContractModel):
     @model_validator(mode="before")
     @classmethod
     def _fill_the_texts_of_a_stored_duty(cls, data: object) -> object:
-        """A duty stored before C9 (a saved result or benchmark run) has no labels or German
-        duty: they come from the current table's entry for its article, else its English `duty`
-        stands in for all three. Engine results always carry them, from the table."""
+        """A duty stored before C9 (a saved result or benchmark run) has no labels, German duty,
+        group or document: they come from the current table's entry for its article (fields
+        it stored win), else its English `duty` stands in for the three texts and it gets no
+        group or document. Engine results always carry them, from the table."""
         if not isinstance(data, dict) or all(field in data for field in STORED_TEXT_FIELDS):
             return data
         article, duty = data.get("article"), data.get("duty")

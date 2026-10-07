@@ -191,17 +191,24 @@ def default_table() -> ObligationTable:
     return load_table()
 
 
-def texts_for_stored_duty(article: str, duty: str) -> dict[str, str]:
-    """The texts a duty stored before C9 lacks (`STORED_TEXT_FIELDS`): those of the committed
-    table's entry for `article` (the one with this English `duty` when several share the
-    article), else `duty` itself for all three, e.g. for a duty the table no longer lists."""
+def texts_for_stored_duty(article: str, duty: str) -> dict[str, object]:
+    """The fields a duty stored before C9 lacks: those of the committed table's entry for
+    `article` (the one with this English `duty` when several share the article), texts
+    (`STORED_TEXT_FIELDS`), `group` and `document`; else `duty` itself for the three texts and
+    no group or document, e.g. for a duty the table no longer lists."""
     entries = [entry for entry in default_table().obligations if entry.article == article]
     same_duty = [entry for entry in entries if entry.duty == duty]
     match = same_duty or (entries if len(entries) == 1 else [])
     if not match:
         return dict.fromkeys(STORED_TEXT_FIELDS, duty)
     entry = match[0]
-    return {"duty_de": entry.duty_de, "label_en": entry.label_en, "label_de": entry.label_de}
+    return {
+        "duty_de": entry.duty_de,
+        "label_en": entry.label_en,
+        "label_de": entry.label_de,
+        "group": entry.group,
+        "document": entry.document,
+    }
 
 
 def legacy_status(

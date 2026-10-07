@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from aiact.schemas import ClassificationResult, Obligation
+from aiact.schemas import ClassificationResult, Obligation, ObligationGroup
 from aiact.schemas.obligations import STORED_TEXT_FIELDS
 from tests.schemas.worked_example import worked_example_result
 
@@ -46,6 +46,30 @@ def test_a_duty_the_table_no_longer_lists_falls_back_to_its_english_text() -> No
     """E.g. the Art. 16(a) bundle, split into Art. 9 to 15 in C9."""
     duty = Obligation.model_validate(_stored("art:16:a", "Meet the high-risk requirements."))
     assert (duty.duty_de, duty.label_en, duty.label_de) == ("Meet the high-risk requirements.",) * 3
+    assert (duty.group, duty.document) == (None, None)
+
+
+@pytest.mark.parametrize(
+    ("article", "group", "document"),
+    [
+        ("art:9", ObligationGroup.BUILD, "art_9_risk_management"),
+        ("art:11:1", ObligationGroup.PROVE, "annex_iv_technical_documentation"),
+    ],
+)
+def test_a_stored_provider_duty_gets_the_tables_group_and_document(
+    article: str, group: ObligationGroup, document: str
+) -> None:
+    duty = Obligation.model_validate(_stored(article, "A duty stored before C9."))
+    assert (duty.group, duty.document) == (group, document)
+
+
+def test_a_stored_group_and_document_are_kept() -> None:
+    given = _stored("art:9", "Run a risk management system.") | {
+        "group": "after_launch",
+        "document": "mine",
+    }
+    duty = Obligation.model_validate(given)
+    assert (duty.group, duty.document) == (ObligationGroup.AFTER_LAUNCH, "mine")
 
 
 def test_texts_that_are_present_are_kept() -> None:
