@@ -3,7 +3,6 @@ import { queryOptions, type QueryClient } from '@tanstack/react-query'
 
 import type { ClassificationResult } from '@/api'
 import { anonymousSessionOptions } from '@/hooks/use-anonymous-session'
-import { userDataKey } from '@/hooks/use-user-data-overview'
 import { fetchInventoryTool, type InventoryTool } from '@/lib/inventory'
 
 import type { DescriptionFormValues } from './description-form'
@@ -22,72 +21,77 @@ export type ClassificationRun = {
   isStored?: boolean
 }
 
+/** What a tool's result page shows: its latest run, the tool without a result (never checked,
+ *  or a saved result Klar can't read), or nothing (no such tool). */
+export type ToolResult =
+  | { kind: 'run'; run: ClassificationRun }
+  | { kind: 'no-result' | 'unreadable'; tool: InventoryTool }
+  | { kind: 'missing' }
+
 export function classificationRunKey(toolId: string) {
   return ['classification-run', toolId] as const
 }
 
+function toToolResult(tool: InventoryTool | null): ToolResult {
+  if (!tool) return { kind: 'missing' }
+  if (tool.hasUnreadableResult) return { kind: 'unreadable', tool }
+  if (!tool.result) return { kind: 'no-result', tool }
+  return {
+    kind: 'run',
+    run: {
+      toolId: tool.toolId,
+      name: tool.name,
+      description: tool.description,
+      result: tool.result,
+      isStored: true,
+    },
+  }
+}
+
 /**
- * A tool's latest run. The Classify screen puts a fresh run in the cache under its tool id when
- * the stream ends; any other tool loads from the user's inventory. Null when the user has no such
- * tool, it has no readable result, or Supabase is not configured (inventoryToolOptions tells
- * those apart).
+ * A tool's result page, in one read. The Classify screen puts a fresh run in the cache under its
+ * tool id when the stream ends (putRun); any other tool loads from the user's inventory. Without
+ * Supabase there is nothing to load: a tool that isn't in the cache is missing.
  */
-export function classificationRunOptions(
+export function toolResultOptions(
   queryClient: QueryClient,
   client: SupabaseClient | null,
   toolId: string,
 ) {
   return queryOptions({
     queryKey: classificationRunKey(toolId),
-    queryFn: async (): Promise<ClassificationRun | null> => {
-      if (!client) return null
+    queryFn: async (): Promise<ToolResult> => {
+      if (!client) return { kind: 'missing' }
       await queryClient.query(anonymousSessionOptions(client))
-      const tool = await fetchInventoryTool(client, toolId)
-      if (!tool?.result) return null
-      return {
-        toolId: tool.toolId,
-        name: tool.name,
-        description: tool.description,
-        result: tool.result,
-        isStored: true,
-      }
+      return toToolResult(await fetchInventoryTool(client, toolId))
     },
-    staleTime: Infinity,
+    // A run stays as it was read or made (a fresh one keeps saying whether it was saved). A tool
+    // without one is read again on each visit, so an import or a run since then shows.
+    staleTime: (query) => (query.state.data?.kind === 'run' ? Infinity : 0),
     gcTime: Infinity,
   })
 }
 
-/**
- * The tool itself, for a result page with no run to show: whether the tool exists without a
- * saved result, with one that can't be read, or not at all (null). Null too without Supabase.
- */
-export function inventoryToolOptions(
-  queryClient: QueryClient,
-  client: SupabaseClient | null,
-  toolId: string,
-) {
-  return queryOptions({
-    // Under the user-data key, so an import or a save reads it again.
-    queryKey: [...userDataKey, 'tool', toolId] as const,
-    queryFn: async (): Promise<InventoryTool | null> => {
-      if (!client) return null
-      await queryClient.query(anonymousSessionOptions(client))
-      return fetchInventoryTool(client, toolId)
-    },
-  })
+/** Shows `run` on its tool's result page, without reading it back. */
+export function putRun(queryClient: QueryClient, run: ClassificationRun): void {
+  queryClient.setQueryData(classificationRunKey(run.toolId), { kind: 'run', run })
 }
 
-const EMPTY_DRAFT: DescriptionFormValues = { name: '', description: '' }
-let savedDraft: DescriptionFormValues = EMPTY_DRAFT
+/** The description being worked on, and the tool it is for: null for a new tool; a tool's id
+ *  after "Classify this tool", so the run is saved on that tool. */
+export type ClassifyDraft = { values: DescriptionFormValues; toolId: string | null }
 
-/** The description being worked on, kept for this session: "Save for later" and "Edit
- *  description" bring it back to the form. Never sent anywhere until the user runs the checks. */
-export function readDraft(): DescriptionFormValues {
+const EMPTY_DRAFT: ClassifyDraft = { values: { name: '', description: '' }, toolId: null }
+let savedDraft: ClassifyDraft = EMPTY_DRAFT
+
+/** The draft kept for this session: "Save for later", "Edit description" and "Classify this
+ *  tool" bring it back to the form. Never sent anywhere until the user runs the checks. */
+export function readDraft(): ClassifyDraft {
   return savedDraft
 }
 
-export function saveDraft(draft: DescriptionFormValues): void {
-  savedDraft = { ...draft }
+export function saveDraft(values: DescriptionFormValues, toolId: string | null = null): void {
+  savedDraft = { values: { ...values }, toolId }
 }
 
 export function clearDraft(): void {

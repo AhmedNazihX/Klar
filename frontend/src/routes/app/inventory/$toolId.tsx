@@ -2,10 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import type { JSX } from 'react'
 
-import {
-  classificationRunOptions,
-  inventoryToolOptions,
-} from '@/features/classify/classification-store'
+import { toolResultOptions } from '@/features/classify/classification-store'
 import type { ResultView } from '@/features/classify/ResultHeader'
 import { ResultNotFound, ResultScreen } from '@/features/classify/ResultScreen'
 import { ToolWithoutResult } from '@/features/classify/ToolWithoutResult'
@@ -32,23 +29,20 @@ function ResultRoute(): JSX.Element | null {
   const { view } = Route.useSearch()
   const navigate = Route.useNavigate()
   const queryClient = useQueryClient()
-  const run = useQuery(classificationRunOptions(queryClient, supabase, toolId))
-  // Without a run to show, the tool itself says why: never checked, unreadable, or not there.
-  const tool = useQuery({
-    ...inventoryToolOptions(queryClient, supabase, toolId),
-    enabled: run.data === null,
-  })
+  const page = useQuery(toolResultOptions(queryClient, supabase, toolId))
   // A read that failed shows the screen's ErrorView (routes/app.tsx), not "not found".
-  if (run.isError) throw run.error
-  if (tool.isError) throw tool.error
-  if (run.isPending) return null
-  if (!run.data) {
-    if (tool.isPending) return null
-    return tool.data ? <ToolWithoutResult tool={tool.data} /> : <ResultNotFound />
+  if (page.isError) throw page.error
+  if (page.isPending) return null
+  // Without a run to show, the tool itself says why: never checked, unreadable, or not there.
+  if (page.data.kind === 'missing') return <ResultNotFound />
+  if (page.data.kind !== 'run') {
+    return (
+      <ToolWithoutResult tool={page.data.tool} isUnreadable={page.data.kind === 'unreadable'} />
+    )
   }
   return (
     <ResultScreen
-      run={run.data}
+      run={page.data.run}
       view={view ?? 'summary'}
       onViewChange={(next) => {
         void navigate({

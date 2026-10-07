@@ -10,7 +10,8 @@ import { decidedHighRisk } from './classify-fixtures'
 import { SUPABASE_URL } from './supabase-fixtures'
 
 export const INVENTORY_TOOLS_URL = `${SUPABASE_URL}/rest/v1/inventory_tools`
-/** save_classified_tool: a classified tool, its inventory if needed and its first run, at once. */
+/** save_classified_tool: a classified tool, its inventory if needed and its first run, at once;
+ *  or the next run on a tool the user has. */
 export const SAVE_TOOL_URL = `${SUPABASE_URL}/rest/v1/rpc/save_classified_tool`
 
 const ART_5_1_F: Citation = {

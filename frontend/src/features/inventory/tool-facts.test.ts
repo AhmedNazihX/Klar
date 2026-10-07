@@ -169,15 +169,27 @@ describe('whatItDoes', () => {
           : step,
       ),
     }
-    const checked = { ...tool('Scorer', assumedOnly), description: 'Scores people. It is new.' }
-    expect(whatItDoes(checked)).toBe('Scores people.')
+    const checked = {
+      ...tool('Scorer', assumedOnly),
+      description: 'Scores people. It is new.\nMore.',
+    }
+    expect(whatItDoes(checked)).toBe('Scores people. It is new.')
   })
 
   it.each([
-    ['the first sentence', '  Ranks applicants. Uses scores.\nMore.', 'Ranks applicants.'],
-    ['the first line without a full stop', 'Ranks applicants\nUses scores.', 'Ranks applicants'],
-    ['a version number whole', 'Runs v2.1 of the model. Then more.', 'Runs v2.1 of the model.'],
-  ])("reads an unchecked tool's description up to %s", (_, description, what) => {
+    ['its first line', '  Ranks applicants. Uses scores.\nMore.', 'Ranks applicants. Uses scores.'],
+    ['a line without a full stop', 'Ranks applicants\nUses scores.', 'Ranks applicants'],
+    [
+      'past "e.g."',
+      'Ranks applicants, e.g. for sales roles. Uses scores.',
+      'Ranks applicants, e.g. for sales roles. Uses scores.',
+    ],
+    [
+      'past "z. B."',
+      'Bewertet Bewerbungen, z. B. für den Vertrieb.\nMehr.',
+      'Bewertet Bewerbungen, z. B. für den Vertrieb.',
+    ],
+  ])("reads an unchecked tool's description: %s", (_, description, what) => {
     expect(whatItDoes({ ...tool('Draft', null), description })).toBe(what)
   })
 })

@@ -147,7 +147,9 @@ Every AI tool the company uses in one glass table: tool and what it does, the co
 
 Rows link to each tool's result. A decided row shows *Decided* as quiet text; open rows show their StatusPill so they stand out, and their class reads *High-risk, assumed* while a question or legal review is pending. Keep *what it does* to one line; it truncates rather than wraps. Put a company summary and a *needs you* list above it rather than extra columns.
 
-The Class and Status columns are never narrower than their widest pill (*High-risk, assumed*, *Needs more information*, or longer in German), so a pill can't spill into the next column; the Tool column gives way instead, and its description truncates.
+The Class and Status columns are never narrower than their widest pill (*High-risk, assumed*, *Needs more information*, or longer in German), so a pill can't spill into the next column; the Tool column gives way instead, and its description truncates. Basis and Applies from give way too, breaking only between citations and words.
+
+One exception, at 1280 px: a class pill wider than 200 px wraps onto two lines inside the pill. Only German *Außerhalb des Anwendungsbereichs* (261 px) is that wide. Kept on one line, the six German columns need about 1080 px against the panel's 958 (story P6, measured in `InventoryScreen.browser.test.tsx`). A tool without a result says why in quiet text, not a pill, and that text may wrap too.
 
 ## DescriptionField
 

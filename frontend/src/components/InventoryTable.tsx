@@ -33,11 +33,20 @@ export type InventoryTableProps = {
 
 const HEADINGS = ['tool', 'role', 'class', 'basis', 'appliesFrom', 'status'] as const
 
-// All six columns fit the panel, in German too: the Tool column gives way first (it takes the
-// width left over, its name wraps and its description truncates), then a long pill or an
-// Art. 111(2) date wraps inside its cell rather than pushing Status out of the panel.
-const TOOL_CELL = 'w-full min-w-[160px] max-w-0'
+// Class and Status are never narrower than their widest pill, which stays on one line
+// (components.md › InventoryTable). All six columns still fit the panel at 1280 px, in German
+// too: the Tool column gives way (it takes the width left over, down to 96 px; its name wraps and
+// its description truncates), and Basis and Applies from wrap between citations and words.
+const PILL_CELL = 'w-px whitespace-nowrap'
+const TOOL_CELL = 'w-full min-w-24 max-w-0'
 const CELL = 'px-4 py-3.5 align-middle text-body-small text-ink'
+// The exception components.md allows: a class pill wider than 200 px wraps inside the pill. Only
+// German "Außerhalb des Anwendungsbereichs" (261 px) is; the widest one-line pill, "Hochrisiko,
+// angenommen", is 190 px. Six one-line columns in German need about 1080 px, the panel has 958.
+const CLASS_PILL_FIT = 'w-max max-w-[12.5rem] whitespace-normal'
+// A tool without a result says why in quiet text, not a pill: it wraps past 144 px ("Gespeichertes
+// Ergebnis nicht lesbar") so its column stays as narrow as the widest status pill.
+const QUIET_STATUS_FIT = 'inline-block w-max max-w-36 whitespace-normal text-slate'
 
 function StatusCell({ row }: { row: InventoryRow }): JSX.Element {
   const { t } = useTranslation()
@@ -45,7 +54,7 @@ function StatusCell({ row }: { row: InventoryRow }): JSX.Element {
   if (row.status === 'decided') {
     return <span className="text-slate">{t('status.decided')}</span>
   }
-  if (row.status === null) return <span className="text-slate">{row.statusLabel}</span>
+  if (row.status === null) return <span className={QUIET_STATUS_FIT}>{row.statusLabel}</span>
   return <StatusPill status={row.status} size="sm" />
 }
 
@@ -92,16 +101,20 @@ export function InventoryTable({ rows, label }: InventoryTableProps): JSX.Elemen
                   <span className="block truncate text-caption text-slate">{row.what}</span>
                 </td>
                 <td className={`${CELL} whitespace-nowrap`}>{row.role}</td>
-                <td className={CELL}>
+                <td className={`${CELL} ${PILL_CELL}`}>
                   {row.riskClass ? (
-                    <RiskPill kind={row.riskClass} label={row.classLabel} />
+                    <RiskPill
+                      kind={row.riskClass}
+                      label={row.classLabel}
+                      className={CLASS_PILL_FIT}
+                    />
                   ) : (
                     <span className="text-slate">{t('inventory.table.none')}</span>
                   )}
                 </td>
                 <td className={CELL}>{row.basis}</td>
                 <td className={CELL}>{row.from}</td>
-                <td className={`${CELL} pr-7`}>
+                <td className={`${CELL} ${PILL_CELL} pr-7`}>
                   <StatusCell row={row} />
                 </td>
               </tr>

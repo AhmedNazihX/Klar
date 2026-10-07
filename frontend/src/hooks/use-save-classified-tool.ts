@@ -9,6 +9,8 @@ import { anonymousSessionOptions } from './use-anonymous-session'
 import { userDataKey, userDataOverviewOptions } from './use-user-data-overview'
 
 export type SaveClassifiedToolVariables = {
+  /** The tool the run is saved on, as its next run; null to save it as a new tool. */
+  toolId: string | null
   /** Null when the user gave none: the name is never filled in with a placeholder. */
   name: string | null
   description: string
@@ -18,21 +20,22 @@ export type SaveClassifiedToolVariables = {
 }
 
 /**
- * Saves a finished run as a new tool in the user's inventory and resolves with its id; with
- * Supabase not configured, nothing is saved and it resolves with null. Re-reads the user's data
- * afterwards (the inventory and the overview's tool count).
+ * Saves a finished run in the user's inventory, on the given tool or as a new one, and resolves
+ * with the tool's id; with Supabase not configured, nothing is saved and it resolves with null.
+ * Re-reads the user's data afterwards (the inventory and the overview's tool count).
  */
 export function useSaveClassifiedTool(
   client: SupabaseClient | null = supabase,
 ): UseMutationResult<string | null, unknown, SaveClassifiedToolVariables> {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ name, description, result, inventoryName }) => {
+    mutationFn: async ({ toolId, name, description, result, inventoryName }) => {
       if (!client) return null
       await queryClient.query(anonymousSessionOptions(client))
       // The inventory the profile lives on (the overview's), so tools and profile stay together.
       const overview = await queryClient.query(userDataOverviewOptions(queryClient, client))
       return saveClassifiedTool(client, {
+        toolId,
         inventoryId: overview.inventoryId,
         inventoryName,
         name,

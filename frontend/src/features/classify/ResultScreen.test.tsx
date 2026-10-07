@@ -26,7 +26,7 @@ import {
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
-import { classificationRunKey, type ClassificationRun } from './classification-store'
+import { putRun, type ClassificationRun } from './classification-store'
 
 const TOOL_ID = 'applicant-screening'
 const AI_NOTICE = 'Guidance, not legal advice. Klar is an AI system.'
@@ -46,7 +46,7 @@ async function openResult(
     description: WORKED_EXAMPLE_DESCRIPTION,
     result,
   }
-  client.setQueryData(classificationRunKey(TOOL_ID), run)
+  putRun(client, run)
   const path = `/app/inventory/${TOOL_ID}${view ? `?view=${view}` : ''}`
   const rendered = renderRoute(path, client)
   await screen.findByRole(

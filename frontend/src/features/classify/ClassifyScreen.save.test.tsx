@@ -110,6 +110,8 @@ describe('Classify, saving the run to the inventory', () => {
         tool_name: 'Applicant screening',
         tool_description: WORKED_EXAMPLE_DESCRIPTION,
         tool_result: WORKED_EXAMPLE,
+        // A run from an empty form is a new tool.
+        target_system_id: null,
       },
     ])
     expect(screen.queryByRole('alert')).toBeNull()

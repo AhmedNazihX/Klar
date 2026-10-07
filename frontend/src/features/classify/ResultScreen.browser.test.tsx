@@ -10,7 +10,7 @@ import { decidedHighRisk, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fix
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
-import { classificationRunKey, type ClassificationRun } from './classification-store'
+import { putRun, type ClassificationRun } from './classification-store'
 
 const PHONE = { width: 390, height: 844 } as const
 const DESKTOP = { width: 1440, height: 1000 } as const
@@ -25,7 +25,7 @@ async function openResult(language: 'en' | 'de', view?: 'reviewer'): Promise<voi
     description: WORKED_EXAMPLE_DESCRIPTION,
     result: decidedHighRisk(),
   }
-  client.setQueryData(classificationRunKey(TOOL_ID), run)
+  putRun(client, run)
   renderRoute(`/app/inventory/${TOOL_ID}${view ? '?view=reviewer' : ''}`, client)
   await screen.findByRole(
     'heading',

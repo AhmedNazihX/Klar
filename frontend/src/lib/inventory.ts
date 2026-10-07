@@ -7,7 +7,7 @@ import { parseStoredResult } from './stored-result'
 
 // The user's tools and their runs in Supabase (story P6): systems and classifications (P3, P19),
 // read through the inventory_tools view (each tool with its latest run, owner-only RLS) and
-// written through save_classified_tool (one transaction).
+// written through save_classified_tool (one transaction, a new tool or a tool's next run).
 
 /** One tool in the inventory, with its latest result. */
 export type InventoryTool = {
@@ -72,7 +72,9 @@ export async function fetchInventoryTool(
 }
 
 export type NewRun = {
-  /** The inventory the tool goes into; null when the user has none yet. */
+  /** The tool the run is saved on, as its next run; null for a new tool. */
+  toolId: string | null
+  /** The inventory a new tool goes into; null when the user has none yet. */
   inventoryId: string | null
   /** The name a new inventory gets. */
   inventoryName: string
@@ -83,10 +85,11 @@ export type NewRun = {
 }
 
 /**
- * Adds a classified tool through save_classified_tool: the inventory if the user has none, the
- * system, then its first run with the inputs it used (P19's `inputs`), all in one transaction,
- * so a run that can't be written leaves no tool behind. The database numbers the run and stamps
- * the times. Returns the new tool's id.
+ * Saves a classified run through save_classified_tool, all in one transaction with the inputs it
+ * used (P19's `inputs`): on `toolId` as its next run (the tool takes the name and description it
+ * was run with), or as a new tool (the inventory if the user has none, the system, its first
+ * run), so a run that can't be written leaves nothing behind. The database numbers the run and
+ * stamps the times. Returns the tool's id.
  */
 export async function saveClassifiedTool(client: SupabaseClient, run: NewRun): Promise<string> {
   const saved = await client.rpc('save_classified_tool', {
@@ -95,6 +98,7 @@ export async function saveClassifiedTool(client: SupabaseClient, run: NewRun): P
     tool_name: run.name,
     tool_description: run.description,
     tool_result: run.result,
+    target_system_id: run.toolId,
   })
   if (saved.error) throw saved.error
   return z.uuid().parse(saved.data)

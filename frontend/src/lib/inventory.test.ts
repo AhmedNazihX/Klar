@@ -114,6 +114,7 @@ function recordSaves(error: { status: number; code: string } | null = null) {
 }
 
 const NEW_RUN = {
+  toolId: null,
   inventoryName: 'AI inventory',
   name: 'Applicant screening',
   description: 'Ranks job applicants.',
@@ -133,7 +134,22 @@ describe('saveClassifiedTool', () => {
         tool_name: 'Applicant screening',
         tool_description: 'Ranks job applicants.',
         tool_result: WORKED_EXAMPLE,
+        target_system_id: null,
       },
+    ])
+  })
+
+  it("saves a run on the user's tool as its next run, in the same call", async () => {
+    const calls = recordSaves()
+    const id = await saveClassifiedTool(client, {
+      ...NEW_RUN,
+      toolId: SYSTEM_ID,
+      inventoryId: INVENTORY_ID,
+    })
+
+    expect(id).toBe(SYSTEM_ID)
+    expect(calls).toEqual([
+      expect.objectContaining({ target_system_id: SYSTEM_ID, tool_name: 'Applicant screening' }),
     ])
   })
 

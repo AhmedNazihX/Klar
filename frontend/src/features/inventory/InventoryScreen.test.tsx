@@ -5,9 +5,11 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { clearDraft } from '@/features/classify/classification-store'
 import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import {
+  classifyHandler,
   decidedHighRisk,
   legacyForPublicAuthorities,
   legacyMarkedDeployer,
@@ -15,11 +17,13 @@ import {
   minimalRisk,
   outOfScope,
   WORKED_EXAMPLE,
+  WORKED_EXAMPLE_EVENTS,
 } from '@/test/classify-fixtures'
 import {
   ambiguousResult,
   INVENTORY_TOOLS_URL,
   prohibitedResult,
+  SAVE_TOOL_URL,
   toolRow,
 } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
@@ -47,6 +51,7 @@ let tools: Record<string, unknown>[] = []
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(TODAY)
+  clearDraft()
   tools = []
   server.use(
     ...userDataHandlers(
@@ -181,12 +186,52 @@ describe('Inventory, the summary sentence', () => {
   }
 
   it.each([
-    ['en', 'Your duties as the deployer of Applicant screening apply since 2 August 2026.'],
-    ['de', 'Ihre Pflichten als Betreiber von Applicant screening gelten seit dem 2. August 2026.'],
+    [
+      'en',
+      'deployer',
+      'Your duties as the deployer of Applicant screening have applied since 2 August 2026.',
+    ],
+    [
+      'de',
+      'deployer',
+      'Ihre Pflichten als Betreiber von Applicant screening gelten seit dem 2. August 2026.',
+    ],
+    [
+      'en',
+      'provider',
+      'Your duties as the provider of Applicant screening have applied since 2 August 2026.',
+    ],
+    [
+      'de',
+      'provider',
+      'Ihre Pflichten als Anbieter von Applicant screening gelten seit dem 2. August 2026.',
+    ],
+    [
+      'en',
+      'importer',
+      'Your duties as the importer of Applicant screening have applied since 2 August 2026.',
+    ],
+    [
+      'de',
+      'importer',
+      'Ihre Pflichten als Einführer von Applicant screening gelten seit dem 2. August 2026.',
+    ],
+    [
+      'en',
+      'distributor',
+      'Your duties as the distributor of Applicant screening have applied since 2 August 2026.',
+    ],
+    [
+      'de',
+      'distributor',
+      'Ihre Pflichten als Händler von Applicant screening gelten seit dem 2. August 2026.',
+    ],
+    ['en', null, 'The duties for Applicant screening have applied since 2 August 2026.'],
+    ['de', null, 'Die Pflichten für Applicant screening gelten seit dem 2. August 2026.'],
   ] as const)(
-    'says the route duties already apply under the original text once their date has come (%s)',
-    async (language, sentence) => {
-      tools = [toolRow('Applicant screening', decidedHighRisk())]
+    'says the route duties already apply under the original text once their date has come (%s, %s)',
+    async (language, role, sentence) => {
+      tools = [toolRow('Applicant screening', { ...decidedHighRisk(), role })]
       expect(await summaryUnder('/app/inventory?law=original', language)).toHaveTextContent(
         sentence,
       )
@@ -471,6 +516,68 @@ describe("A tool's result page, read from the inventory", () => {
       ).toBeInTheDocument()
     },
   )
+
+  it('reads a tool without a result once', async () => {
+    let reads = 0
+    server.use(
+      http.get(INVENTORY_TOOLS_URL, ({ request }) => {
+        if (new URL(request.url).searchParams.has('id')) reads += 1
+        // Falls through to the rows' handler.
+        return undefined
+      }),
+    )
+    await openTool(toolRow('Draft tool', null), 'en')
+    expect(screen.getByRole('button', { name: 'Classify this tool' })).toBeVisible()
+    expect(reads).toBe(1)
+  })
+
+  it('saves "Classify this tool" on the same tool: its row shows the result, and no second row', async () => {
+    const saves: Record<string, unknown>[] = []
+    let classifyRequests = 0
+    server.use(
+      classifyHandler(WORKED_EXAMPLE_EVENTS, () => {
+        classifyRequests += 1
+      }),
+      // As the database does it: the run lands on the tool it names, as that tool's next run.
+      http.post(SAVE_TOOL_URL, async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>
+        saves.push(body)
+        tools = tools.map((tool) =>
+          tool['id'] === body['target_system_id']
+            ? { ...tool, run_no: 1, result: body['tool_result'] }
+            : tool,
+        )
+        return HttpResponse.json(String(body['target_system_id']))
+      }),
+    )
+    const row = toolRow('Draft tool', null)
+    const id = String(row['id'])
+    const { user, router } = await openTool(row, 'en')
+    await user.click(screen.getByRole('button', { name: 'Classify this tool' }))
+    await user.click(await screen.findByRole('button', { name: 'Run the checks' }))
+
+    await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${id}`)
+    expect(await screen.findByRole('heading', { level: 1, name: 'Draft tool' })).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('region', { name: 'Result' })).getByText(/High-risk/),
+    ).toBeVisible()
+    expect(saves).toEqual([
+      expect.objectContaining({ target_system_id: id, tool_name: 'Draft tool' }),
+    ])
+    expect(classifyRequests).toBe(1)
+
+    await router.navigate({ to: '/app/inventory' })
+    const rows = await tableRows('Your tools and their results')
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.[0]).toMatch(/^Draft tool/)
+    expect(rows[0]?.slice(2)).toEqual([
+      'High-risk, assumed',
+      'Annex III 4(a)',
+      '2 Dec 20272 Aug 2026',
+      'Needs more information',
+    ])
+    expect(classifyRequests).toBe(1)
+  })
 
   it.each([
     [

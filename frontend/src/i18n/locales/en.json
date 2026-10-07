@@ -572,11 +572,11 @@
       "assumedNote_other": "{{count}} tools are counted in their stricter class until their open questions are settled.",
       "source": "Summed up from the results saved in your data. Klar doesn't re-check saved results, so read this as guidance, not a verified record.",
       "since": {
-        "provider": "Your duties as the provider of <name/> apply since <date/>.",
-        "deployer": "Your duties as the deployer of <name/> apply since <date/>.",
-        "importer": "Your duties as the importer of <name/> apply since <date/>.",
-        "distributor": "Your duties as the distributor of <name/> apply since <date/>.",
-        "none": "The duties for <name/> apply since <date/>."
+        "provider": "Your duties as the provider of <name/> have applied since <date/>.",
+        "deployer": "Your duties as the deployer of <name/> have applied since <date/>.",
+        "importer": "Your duties as the importer of <name/> have applied since <date/>.",
+        "distributor": "Your duties as the distributor of <name/> have applied since <date/>.",
+        "none": "The duties for <name/> have applied since <date/>."
       },
       "assumedClass": "Its class ({{riskClass}}) is assumed until its open question is settled."
     },
