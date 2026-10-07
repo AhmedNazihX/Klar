@@ -21,7 +21,7 @@ from pydantic import SecretStr
 
 from aiact.db import connect
 from aiact.engine.graph import EngineNodes, build_graph
-from aiact.engine.nodes import guideline_retrieval as retrieval
+from aiact.engine.nodes import corpus as corpus_module
 from aiact.engine.nodes import prohibited as node
 from aiact.engine.nodes import prohibited_texts as texts
 from aiact.engine.nodes.common import Lookup
@@ -805,7 +805,7 @@ def test_the_corpus_limits_the_search_to_its_guideline_without_a_cut_off(
             disclaimer=DISCLAIMER[language],
         )
 
-    monkeypatch.setattr(retrieval, "search_ai_act", spy)
+    monkeypatch.setattr(corpus_module, "search_ai_act", spy)
     connection, embedder = cast(psycopg.Connection, object()), FakeEmbedder()
     lookup = Lookup(Language.EN, LawVersion.AMENDED, AS_OF, EXCLUDED)
     corpus = GuidelineCorpus(connection, embedder, node.SOURCE)
@@ -816,6 +816,7 @@ def test_the_corpus_limits_the_search_to_its_guideline_without_a_cut_off(
     assert seen == [
         {
             "doc_keys": node.SOURCE.doc_keys,
+            "doc_types": None,
             "exclude_source_example_ids": EXCLUDED,
             "include_held_out": False,
             "max_distance": None,
@@ -835,7 +836,7 @@ def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPa
         seen.append((provision_id, *args, connection))
         return provision(provision_id)
 
-    monkeypatch.setattr(retrieval, "get_provision", spy)
+    monkeypatch.setattr(corpus_module, "get_provision", spy)
     connection = cast(psycopg.Connection, object())
     library = GuidelineCorpus(connection, FakeEmbedder(), node.SOURCE)
     library.provision("art:5", Lookup(Language.DE, LawVersion.AMENDED, AS_OF, ()))

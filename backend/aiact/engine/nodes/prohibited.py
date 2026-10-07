@@ -28,9 +28,10 @@ Every citation is fetched through `get_provision`, or is a retrieved guideline p
 cites the Art. 5 points and paragraphs its finding names, never the whole article (E16).
 """
 
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
+from functools import partial
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
@@ -38,7 +39,6 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import ValidationError
 
 from aiact.dates import long_date
-from aiact.db import connect
 from aiact.engine.nodes import prohibited_texts as texts
 from aiact.engine.nodes.common import (
     cited_provisions,
@@ -50,6 +50,7 @@ from aiact.engine.nodes.common import (
     provision_citation,
     refused_check,
 )
+from aiact.engine.nodes.corpus import CorpusReading
 from aiact.engine.nodes.guideline_retrieval import (
     GuidelineCorpus,
     GuidelineLibrary,
@@ -69,7 +70,7 @@ from aiact.engine.nodes.questions import ask, open_question
 from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
-from aiact.llm import OpenRouterEmbeddings, engine_chat_model
+from aiact.llm import engine_chat_model
 from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.structured import (
     ProviderRefusalError,
@@ -370,17 +371,9 @@ class ProhibitedCheck:
         corpus over a short connection before the model call, and another for the citations
         after it."""
         self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
-        self._library = library
-        self._embedder = None if library else embedder or OpenRouterEmbeddings(settings=settings)
-
-    def _reading[T](self, use: Callable[[GuidelineLibrary], T]) -> T:
-        """`use` applied to the corpus: the given library, or one over a fresh connection that
-        is closed before this returns (none stays open during the model call)."""
-        if self._library is not None:
-            return use(self._library)
-        assert self._embedder is not None  # built whenever no library is given
-        with connect() as connection:
-            return use(GuidelineCorpus(connection, self._embedder, SOURCE))
+        self._reading = CorpusReading(
+            library, partial(GuidelineCorpus, source=SOURCE), embedder=embedder, settings=settings
+        )
 
     def __call__(self, state: EngineState) -> CheckOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises

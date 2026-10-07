@@ -1,0 +1,190 @@
+"""The engine's model clients, built once per process (E15): every run of the process shares the
+chat model of each node and the query embedder, so repeated classifications leave no HTTP
+clients behind. Live clients are counted without a garbage collection, with the collector off,
+so clients a run left in reference cycles would stay countable. The end-to-end check replays
+INIT's worked example several times on the engine's own nodes, from E10's recording
+(`tests/recordings/engine/test_classify_worked_example/test_replay_worked_example.*`); re-record
+that replay (its `RECORD_COMMAND`), never this test."""
+
+import gc
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
+from functools import partial
+
+import httpx
+import pytest
+from langchain_openrouter import ChatOpenRouter
+from pydantic import SecretStr
+
+from aiact.engine import run_classification
+from aiact.engine.classify import NodeBuilder, engine_nodes
+from aiact.engine.clients import engine_chats, engine_embeddings
+from aiact.engine.usage import UsageMeter
+from aiact.llm import LLMConfigError
+from aiact.settings import Settings
+from tests.conftest import RECORDINGS_DIR
+from tests.engine.built_corpus import built_validator
+from tests.engine.nodes.corpus_recording import corpus_recording
+from tests.engine.test_classify_worked_example import (
+    LUNA,
+    LUNA_PROVIDER,
+    RECORD_COMMAND,
+    LiveCorpus,
+    assert_the_expected_result,
+    recorded_libraries,
+    worked_example_request,
+)
+
+RECORDING = RECORDINGS_DIR / "engine" / "test_classify_worked_example"
+CASSETTE = "test_replay_worked_example"
+REPEATS = 3
+"""Runs after the first, which may build the process's clients."""
+
+
+def live_http_clients() -> int:
+    """The httpx clients alive now, counted without a garbage collection. By `type`, not
+    `isinstance`: a lazy proxy (openai's module client) builds a client when asked its
+    `__class__`."""
+    clients = (httpx.Client, httpx.AsyncClient)
+    return sum(issubclass(type(item), clients) for item in gc.get_objects())
+
+
+@pytest.fixture
+def no_automatic_gc() -> Iterator[None]:
+    """The collector off, so clients left in reference cycles stay countable."""
+    gc.disable()
+    try:
+        yield
+    finally:
+        gc.enable()
+
+
+def engine_settings(**values: object) -> Settings:
+    configured: dict[str, object] = {
+        "openrouter_api_key": SecretStr("k"),
+        "engine_model": "openai/gpt-6-luna-20260922",
+        "engine_provider": "azure/eu",
+        "embedding_model": "qwen/qwen3-embedding-8b",
+        "embedding_provider": "nebius",
+        **values,
+    }
+    return Settings(_env_file=None, **configured)  # pyright: ignore[reportCallIssue]
+
+
+# --- The clients --------------------------------------------------------------------------------
+
+
+def test_every_node_gets_the_pinned_engine_model_with_its_own_output_cap() -> None:
+    chats = engine_chats(engine_settings())
+    assert {
+        node: chat.max_tokens for node, chat in chats.items() if isinstance(chat, ChatOpenRouter)
+    } == {
+        "facts": 4000,
+        "scope": 3000,
+        "prohibited": 6000,
+        "high_risk": 6000,
+        "transparency": 4000,
+        "role_obligations": 4000,
+    }
+    for chat in chats.values():
+        assert isinstance(chat, ChatOpenRouter)
+        assert chat.model_name == "openai/gpt-6-luna-20260922"
+        assert chat.openrouter_provider is not None
+        assert chat.openrouter_provider["order"] == ["azure/eu"]
+        assert chat.openrouter_provider["allow_fallbacks"] is False
+
+
+def test_equal_settings_get_the_same_models_and_embedder() -> None:
+    first, again = engine_chats(engine_settings()), engine_chats(engine_settings())
+    assert all(again[node] is model for node, model in first.items())
+    assert engine_embeddings(engine_settings()) is engine_embeddings(engine_settings())
+
+
+def test_other_settings_get_their_own_models_and_embedder() -> None:
+    other = engine_settings(engine_model="openai/gpt-6-sol", embedding_model="qwen/qwen3-mini")
+    chat = engine_chats(other)["facts"]
+    assert isinstance(chat, ChatOpenRouter) and chat.model_name == "openai/gpt-6-sol"
+    assert chat is not engine_chats(engine_settings())["facts"]
+    assert engine_embeddings(other).model == "qwen/qwen3-mini"
+    assert engine_embeddings(other) is not engine_embeddings(engine_settings())
+
+
+@pytest.mark.parametrize("missing", ["engine_model", "engine_provider", "openrouter_api_key"])
+def test_a_missing_model_setting_raises_on_every_call(missing: str) -> None:
+    unset = engine_settings(**{missing: None})
+    for _ in range(2):
+        with pytest.raises(LLMConfigError):
+            engine_chats(unset)
+
+
+@pytest.mark.parametrize("missing", ["embedding_model", "embedding_provider"])
+def test_a_missing_embedding_setting_raises_on_every_call(missing: str) -> None:
+    unset = engine_settings(**{missing: None})
+    for _ in range(2):
+        with pytest.raises(LLMConfigError):
+            engine_embeddings(unset)
+
+
+@pytest.mark.usefixtures("no_automatic_gc")
+def test_building_a_runs_nodes_again_builds_no_http_client() -> None:
+    """The production default: no injected models, the embedder built for the live corpus."""
+    settings = engine_settings()
+    engine_nodes(settings, UsageMeter())
+    after_first = live_http_clients()
+    for _ in range(REPEATS):
+        engine_nodes(settings, UsageMeter())
+    assert live_http_clients() == after_first
+
+
+# --- Repeated runs ------------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def vcr_cassette_dir() -> str:
+    return str(RECORDING)
+
+
+@pytest.fixture
+def default_cassette_name() -> str:
+    return CASSETTE
+
+
+@pytest.fixture
+def luna_settings(openrouter_settings: Settings, record_mode: str) -> Settings:
+    if record_mode != "none":
+        pytest.skip(f"replay only: record the engine's replay instead, `{RECORD_COMMAND}`")
+    return openrouter_settings.model_copy(
+        update={"engine_model": LUNA, "engine_provider": LUNA_PROVIDER, "langsmith_api_key": None}
+    )
+
+
+def no_live_corpus() -> AbstractContextManager[LiveCorpus]:
+    raise AssertionError("this test only replays")
+
+
+@pytest.fixture
+def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
+    with corpus_recording(
+        str(RECORDING), CASSETTE, record_mode, RECORD_COMMAND, no_live_corpus
+    ) as recording:
+        yield partial(
+            engine_nodes, libraries=recorded_libraries(recording), validator=built_validator()
+        )
+
+
+@pytest.mark.vcr(allow_playback_repeats=True)
+@pytest.mark.usefixtures("no_automatic_gc")
+def test_repeated_classifications_leave_no_http_clients_behind(
+    luna_settings: Settings, replay_nodes: NodeBuilder
+) -> None:
+    def classify() -> None:
+        run = run_classification(
+            worked_example_request(), settings=luna_settings, build_nodes=replay_nodes
+        )
+        assert_the_expected_result(run)
+
+    classify()
+    after_first = live_http_clients()
+    for _ in range(REPEATS):
+        classify()
+    assert live_http_clients() == after_first
