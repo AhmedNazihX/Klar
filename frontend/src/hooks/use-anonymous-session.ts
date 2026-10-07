@@ -13,7 +13,8 @@ const anonymousSessionKey = ['auth', 'anonymous-session'] as const
 
 /**
  * The anonymous session as a query. Everything that needs the session goes through this one key,
- * so two screens starting at once never sign in twice (which would make two anonymous users).
+ * so two screens starting at once never sign in twice (which would make two anonymous users);
+ * across tabs, the lock in ensureAnonymousSession does the same.
  */
 export function anonymousSessionOptions(client: SupabaseClient | null) {
   return queryOptions({
@@ -25,6 +26,10 @@ export function anonymousSessionOptions(client: SupabaseClient | null) {
     enabled: client !== null,
     staleTime: Infinity,
     gcTime: Infinity,
+    // After endAnonymousSession the query is stale: only a read or write may start the next
+    // session, never the network coming back (each start makes a new user). Focus refetches are
+    // off app-wide (createQueryClient), as are reconnects; this keeps the session's own.
+    refetchOnReconnect: false,
   })
 }
 
@@ -36,8 +41,9 @@ export function hasAnonymousSession(queryClient: QueryClient): boolean {
 /**
  * Marks this tab's session as ended without starting a new one. Nothing signs in until a read or
  * write needs the session again (withAnonymousSession, or a screen mounting
- * useAnonymousSession); that one fetch reuses a session another tab has stored since, and signs
- * in only when there is none.
+ * useAnonymousSession); regaining focus or the network doesn't. That one fetch runs under the
+ * cross-tab lock (ensureAnonymousSession): it reuses a session another tab has stored since, or
+ * is storing at that moment, and signs in only when there is none.
  */
 export function endAnonymousSession(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: anonymousSessionKey, refetchType: 'none' })

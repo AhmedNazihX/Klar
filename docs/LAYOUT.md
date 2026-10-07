@@ -219,6 +219,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    browser-setup.ts (the browser project), shell-routes.ts (every screen route, by frame) (P15),
 │                                    user-data-handlers.ts (MSW handlers for the user's Supabase data, P18),
 │                                    your-data-store.ts (an in-memory user-data store behind the counts, export, import and delete, P12),
+│                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded
 │                                    worked example's SSE events and result variants, P5)
 │

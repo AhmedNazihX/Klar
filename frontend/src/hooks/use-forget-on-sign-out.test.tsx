@@ -1,16 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { onlineManager } from '@tanstack/react-query'
 import { screen } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { readDraft, saveDraft } from '@/features/classify/classification-store'
 import { EMPTY_OVERVIEW } from '@/lib/company-profile'
+import { createQueryClient } from '@/lib/query-client'
 import type * as SupabaseModule from '@/lib/supabase'
 import { createSupabase, supabase } from '@/lib/supabase'
 import { server } from '@/test/msw-server'
+import { reconnect } from '@/test/reconnect'
 import { anonymousSession, SIGNUP_URL, SUPABASE_URL, USER_ID } from '@/test/supabase-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
+import { FIRST_RENDER_MS, INVENTORIES_URL, SYSTEMS_URL } from '@/test/user-data-handlers'
 import { createUserDataStore, type StoredInventory } from '@/test/your-data-store'
 
 import { withAnonymousSession } from './use-anonymous-session'
@@ -53,6 +56,8 @@ function openOtherTab(): SupabaseClient {
 }
 
 afterEach(async () => {
+  onlineManager.setOnline(true)
+  server.events.removeAllListeners()
   await otherTab?.auth.stopAutoRefresh()
   otherTab = null
 })
@@ -165,5 +170,68 @@ describe('a sign-out while this tab’s session is still starting', () => {
     await vi.waitFor(() => expect(queryClient.getQueryData(SESSION_KEY)).toBe(USER_ID))
     expect(await screen.findByText('Nordwerk Logistik GmbH')).toBeInTheDocument()
     expect(signups).toBe(1)
+  })
+})
+
+describe('after a sign-out in another tab', () => {
+  it('starts no session when the network comes back', async () => {
+    const store = createUserDataStore(PROFILE_ONLY)
+    server.use(...store.handlers)
+    // The app's own query client, with every read stale at once: a reconnect would refetch the
+    // sidebar's overview, if the app let it, and that read would sign in.
+    const queryClient = createQueryClient()
+    queryClient.setDefaultOptions({
+      queries: { ...queryClient.getDefaultOptions().queries, staleTime: 0, retry: false },
+    })
+    renderRoute('/app/classify', queryClient)
+    await screen.findByText('Nordwerk Logistik GmbH', {}, { timeout: FIRST_RENDER_MS })
+    await openOtherTab().auth.signOut()
+    expect(await screen.findByText('No company profile yet')).toBeInTheDocument()
+
+    await reconnect(queryClient)
+
+    expect(queryClient.getQueryState(SESSION_KEY)).toMatchObject({ isInvalidated: true })
+    expect(store.calls.signup).toBe(1)
+  })
+
+  it('drops a read of the overview that was under way, so the old profile stays gone', async () => {
+    const store = createUserDataStore(PROFILE_ONLY)
+    server.use(...store.handlers)
+    const queryClient = createTestQueryClient()
+    renderRoute('/app/classify', queryClient)
+    await screen.findByText('Nordwerk Logistik GmbH', {}, { timeout: FIRST_RENDER_MS })
+
+    // The next read of the profile waits until the test lets it through, then gets the store's
+    // answer, which still holds the profile (only the session has ended).
+    let heldReads = 0
+    let release: () => void = () => undefined
+    const released = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    server.use(
+      http.get(INVENTORIES_URL, async () => {
+        heldReads += 1
+        await released
+        return undefined
+      }),
+    )
+    // The read's last request is the tool count.
+    const answered = new Promise<void>((resolve) => {
+      server.events.on('response:mocked', ({ request }) => {
+        if (request.method === 'HEAD' && request.url.startsWith(SYSTEMS_URL)) resolve()
+      })
+    })
+    const heldRead = queryClient.refetchQueries({ queryKey: userDataOverviewKey, exact: true })
+    await expect.poll(() => heldReads).toBe(1)
+
+    await openOtherTab().auth.signOut()
+    expect(await screen.findByText('No company profile yet')).toBeInTheDocument()
+
+    release()
+    await answered
+    await heldRead
+    expect(queryClient.getQueryData(userDataOverviewKey)).toEqual(EMPTY_OVERVIEW)
+    expect(screen.queryByText('Nordwerk Logistik GmbH')).not.toBeInTheDocument()
+    expect(store.calls.signup).toBe(1)
   })
 })
