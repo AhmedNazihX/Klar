@@ -316,6 +316,17 @@ def test_with_the_size_class_the_note_must_match_the_company(language: Language)
     assert check_nothing_invented(sme, provider_result(), {}).passed, "size class not given"
 
 
+def test_run_checks_catches_an_smes_missing_note_only_when_given_the_size_class() -> None:
+    """`run_checks` hands the size class on to the invented-content check: an SME's Annex IV
+    without its note passes every check without the size class, and fails that one with it."""
+    no_note = draft_document(ANNEX_IV_SKELETON, provider_result(), {}, EN, SizeClass.NONE)
+    assert all(outcome.passed for outcome in run_checks(no_note, provider_result(), {}))
+    with_size = run_checks(no_note, provider_result(), {}, SizeClass.SME)
+    assert [(o.check.value, o.problems) for o in with_size if not o.passed] == [
+        ("nothing_invented", ("the note is not the template's",))
+    ]
+
+
 # --- The templates and the section rules ---------------------------------------------------------
 
 

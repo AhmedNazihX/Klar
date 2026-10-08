@@ -21,7 +21,7 @@ def sample_paper(language: Language = Language.EN, *, paragraphs: int = 1) -> Pa
             Heading("The system"),
             Paragraph(MARKUP),
             Paragraph("Line one\nline two\x07"),
-            Quote("the methods and steps performed for the development", "Annex IV, point 2"),
+            Quote("the methods and steps performed for the development", "Annex IV 2"),
             FillMarker("To fill in."),
             *(Paragraph(LONG) for _ in range(paragraphs)),
         ),

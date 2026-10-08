@@ -127,9 +127,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            Art. 5(1) points quoted from the corpus, LawQuotes; decision 031),
 │   │   │                            draft.py (draft_vendor_letter); registered in registry.py
 │   │   │                            P9: prose.py (a skeleton's answers written up as sentences, no
-│   │   │                            word added), documents.py (checked_drafts: every document a result
-│   │   │                            calls for, drafted, checked, with its interview), paper.py (a draft
-│   │   │                            laid out as an export Paper)
+│   │   │                            word added), documents.py (listed_documents and checked_draft: the
+│   │   │                            documents a result calls for with their interviews, and one drafted
+│   │   │                            and checked), paper.py (a draft laid out as an export Paper)
 │   │   ├── export/                  Word and PDF files from a format-neutral Paper (P9; P25's report
 │   │   │                            reuses KlarPdf): paper.py, pdf.py (fpdf2), word.py (python-docx),
 │   │   │                            text.py (printable text), style.py; assets/: the flat lockup and the
@@ -137,7 +137,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;
-│   │                                documents.py `POST /documents/drafts` and `/documents/export` (P9);
+│   │                                drafts.py `POST /documents/list`, `/documents/draft` and `/documents/export` (P9);
 │   │                                dependencies.py settings, node builder, database, limits; rate_limit.py the rate and
 │   │                                concurrency limits; body_limit.py the 413 body cap; errors.py the one
 │   │                                422 body, quoting no input; documents.py
@@ -253,9 +253,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded
 │                                    worked example's SSE events and result variants, P5),
-│                                    inventory-fixtures.ts (inventory_tools rows, prohibited and ambiguous results, P6)
-│                                    documents-fixtures.ts + fixtures/documents.drafts.json (drafts dumped from
-│                                    the backend's drafter, and the documents handlers, P9)
+│                                    inventory-fixtures.ts (inventory_tools rows, prohibited and ambiguous results, P6),
+│                                    documents-fixtures.ts + fixtures/documents.drafts.json (lists and drafts dumped
+│                                    from the backend's drafter, and the documents handlers, P9)
 │
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves

@@ -89,6 +89,8 @@ def test_the_api_hardening_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
         "API_DOCS",
         "API_MAX_BODY_BYTES",
         "CLASSIFY_MAX_CONCURRENT",
+        "RATE_LIMIT_EXPORTS",
+        "EXPORT_MAX_CONCURRENT",
     )
     for name in names:
         monkeypatch.delenv(name, raising=False)
@@ -99,3 +101,4 @@ def test_the_api_hardening_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.api_docs is True
     assert settings.api_max_body_bytes == 262_144
     assert settings.classify_max_concurrent == 4
+    assert (settings.rate_limit_exports, settings.export_max_concurrent) == (10, 2)

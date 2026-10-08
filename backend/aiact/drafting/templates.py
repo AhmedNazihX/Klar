@@ -2,8 +2,9 @@
 (INIT > Documentation drafting), in English and German.
 
 Each template lists its required sections in order. A section is pre-filled from the result
-(`prefill.py`), filled with the user's interview answers word for word, or the template's own
-fixed wording, which states only the duty the document answers. Nothing else enters a draft.
+(`prefill.py`), filled with the user's interview answers word for word, the template's wording
+for the choice the user picks (`ChoiceSection`), or the template's own fixed wording, which
+states only the duty the document answers. Nothing else enters a draft.
 The provider document skeletons are in `skeletons/` (P8b).
 """
 
@@ -30,11 +31,23 @@ Texts = Mapping[Language, str]
 
 
 @dataclass(frozen=True)
+class Choice:
+    """One answer a choice question offers: stored as `key`, shown as `label`, and drafted as the
+    template's own `text`."""
+
+    key: str
+    label: Texts
+    text: Texts
+
+
+@dataclass(frozen=True)
 class Question:
-    """One interview question, stored under `key` in `interview_answers.question_key`."""
+    """One interview question, stored under `key` in `interview_answers.question_key`. A choice
+    question offers `choices`, and its answer is one of their keys."""
 
     key: str
     text: Texts
+    choices: tuple[Choice, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -56,6 +69,29 @@ class InterviewSection:
     question_key: str
     question: Texts
     provenance: Provenance = Provenance.INTERVIEW
+
+
+@dataclass(frozen=True)
+class ChoiceSection:
+    """Filled with the template's wording for the choice the user picks (`choices`), so a notice
+    names only what applies; "To fill in" until one of them is picked. An interview section, as
+    the user's answer decides it, but its words are the template's: an answer is only a
+    choice's key."""
+
+    key: str
+    heading: Texts
+    question_key: str
+    question: Texts
+    choices: tuple[Choice, ...]
+    provenance: Provenance = Provenance.INTERVIEW
+
+    def __post_init__(self) -> None:
+        if len(self.choices) < 2:
+            raise ValueError(f"section {self.key!r} needs at least two choices")
+
+    def chosen(self, answer: str) -> Choice | None:
+        """The choice `answer` names, or None for no answer or one that names none."""
+        return next((choice for choice in self.choices if choice.key == answer.strip()), None)
 
 
 @dataclass(frozen=True)
@@ -119,13 +155,17 @@ class RequirementSection:
             raise ValueError(f"section {self.key!r} can't wait for nothing")
 
 
-SectionSpec = TemplateSection | InterviewSection | ClassificationSection | RequirementSection
+SectionSpec = (
+    TemplateSection | InterviewSection | ChoiceSection | ClassificationSection | RequirementSection
+)
 
 
 def section_questions(spec: SectionSpec) -> tuple[Question, ...]:
     """The questions whose answers fill `spec`, in order; none for a pre-filled or fixed one."""
     if isinstance(spec, InterviewSection):
         return (Question(spec.question_key, spec.question),)
+    if isinstance(spec, ChoiceSection):
+        return (Question(spec.question_key, spec.question, spec.choices),)
     if isinstance(spec, RequirementSection):
         return spec.questions
     return ()
@@ -376,15 +416,47 @@ EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
     },
     sections=(
         DUTY,
-        TemplateSection(
+        ChoiceSection(
             "notice",
             NOTICE,
+            "recognises",
             {
-                EN: "An AI system for emotion recognition or biometric categorisation is in "
-                "operation here.",
-                DE: "Hier ist ein KI-System zur Emotionserkennung oder biometrischen "
-                "Kategorisierung in Betrieb.",
+                EN: "Does the system recognise emotions, sort people into categories from "
+                "biometric data, or both?",
+                DE: "Erkennt das System Emotionen, ordnet es Personen anhand biometrischer Daten "
+                "Kategorien zu oder beides?",
             },
+            (
+                Choice(
+                    "emotion_recognition",
+                    {EN: "It recognises emotions", DE: "Es erkennt Emotionen"},
+                    {
+                        EN: "An AI system for emotion recognition is in operation here.",
+                        DE: "Hier ist ein KI-System zur Emotionserkennung in Betrieb.",
+                    },
+                ),
+                Choice(
+                    "biometric_categorisation",
+                    {
+                        EN: "It sorts people into categories from biometric data",
+                        DE: "Es ordnet Personen anhand biometrischer Daten Kategorien zu",
+                    },
+                    {
+                        EN: "An AI system for biometric categorisation is in operation here.",
+                        DE: "Hier ist ein KI-System zur biometrischen Kategorisierung in Betrieb.",
+                    },
+                ),
+                Choice(
+                    "both",
+                    {EN: "Both", DE: "Beides"},
+                    {
+                        EN: "An AI system for emotion recognition and biometric categorisation "
+                        "is in operation here.",
+                        DE: "Hier ist ein KI-System zur Emotionserkennung und biometrischen "
+                        "Kategorisierung in Betrieb.",
+                    },
+                ),
+            ),
         ),
         TemplateSection(
             "why",

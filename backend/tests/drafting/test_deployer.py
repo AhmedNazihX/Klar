@@ -18,6 +18,7 @@ from aiact.drafting import (
     deployer_templates_for,
     draft_deployer_documents,
     draft_document,
+    run_checks,
 )
 from aiact.drafting.models import TEMPLATE_PATTERN
 from aiact.drafting.prefill import Fill
@@ -225,9 +226,72 @@ def test_a_disclosure_not_in_the_obligations_names_the_duty_without_a_date() -> 
         "Your classification: limited risk.",
         "It lists the duty under Art. 50(3).",
     )
-    assert _section(document, "notice") == (
-        "An AI system for emotion recognition or biometric categorisation is in operation here.",
-    )
+    assert _section(document, "notice") == ()
+
+
+ART_50_3 = "art_50_3_disclosure"
+NOTICES = {
+    ("emotion_recognition", Language.EN): "An AI system for emotion recognition is in operation "
+    "here.",
+    ("emotion_recognition", Language.DE): "Hier ist ein KI-System zur Emotionserkennung in "
+    "Betrieb.",
+    ("biometric_categorisation", Language.EN): "An AI system for biometric categorisation is in "
+    "operation here.",
+    ("biometric_categorisation", Language.DE): "Hier ist ein KI-System zur biometrischen "
+    "Kategorisierung in Betrieb.",
+    ("both", Language.EN): "An AI system for emotion recognition and biometric categorisation is "
+    "in operation here.",
+    ("both", Language.DE): "Hier ist ein KI-System zur Emotionserkennung und biometrischen "
+    "Kategorisierung in Betrieb.",
+}
+"""The Art. 50(3) notice for each choice: it names only what the system does."""
+
+
+@pytest.mark.parametrize(("choice", "language"), list(NOTICES))
+def test_the_art_50_3_notice_names_only_what_the_user_chose(
+    choice: str, language: Language
+) -> None:
+    result = limited_risk_result("art:50:3")
+    document = draft_document(TEMPLATES[ART_50_3], result, {"recognises": choice}, language)
+    notice = next(section for section in document.sections if section.key == "notice")
+    assert notice.paragraphs == (NOTICES[choice, language],)
+    assert (notice.unanswered, notice.status.value) == ((), "drafted")
+    assert all(check.passed for check in run_checks(document, result, {"recognises": choice}))
+
+
+@pytest.mark.parametrize("answer", ["", "emotion recognition", "Both!", "both and more"])
+def test_an_art_50_3_answer_that_names_no_choice_leaves_the_notice_to_fill_in(answer: str) -> None:
+    result = limited_risk_result("art:50:3")
+    document = draft_document(TEMPLATES[ART_50_3], result, {"recognises": answer}, Language.EN)
+    notice = next(section for section in document.sections if section.key == "notice")
+    assert (notice.paragraphs, notice.unanswered) == ((), ("recognises",))
+    assert all(check.passed for check in run_checks(document, result, {"recognises": answer}))
+
+
+def test_a_notice_that_names_another_choice_than_the_answer_fails_nothing_invented() -> None:
+    result = limited_risk_result("art:50:3")
+    document = draft_document(TEMPLATES[ART_50_3], result, {"recognises": "both"}, Language.EN)
+    checks = run_checks(document, result, {"recognises": "emotion_recognition"})
+    assert [check.check.value for check in checks if not check.passed] == ["nothing_invented"]
+
+
+def test_the_art_50_3_choice_is_asked_in_both_languages() -> None:
+    (question,) = [q for q in TEMPLATES[ART_50_3].questions if q.key == "recognises"]
+    assert question.text == {
+        Language.EN: "Does the system recognise emotions, sort people into categories from "
+        "biometric data, or both?",
+        Language.DE: "Erkennt das System Emotionen, ordnet es Personen anhand biometrischer Daten "
+        "Kategorien zu oder beides?",
+    }
+    assert [(c.key, c.label[Language.EN], c.label[Language.DE]) for c in question.choices] == [
+        ("emotion_recognition", "It recognises emotions", "Es erkennt Emotionen"),
+        (
+            "biometric_categorisation",
+            "It sorts people into categories from biometric data",
+            "Es ordnet Personen anhand biometrischer Daten Kategorien zu",
+        ),
+        ("both", "Both", "Beides"),
+    ]
 
 
 # --- The draft's own rules -----------------------------------------------------------------------

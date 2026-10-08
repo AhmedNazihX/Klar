@@ -69,3 +69,23 @@ async def test_the_route_quotes_the_database(client: httpx.AsyncClient) -> None:
     expected = corpus_quotes()(("art:5:1:f",), Language.DE, LawVersion.AMENDED, result.as_of)
     assert (quote,) == expected
     assert all(check.passed for check in letter.checks)
+
+
+@pytest.mark.anyio
+async def test_the_documents_draft_route_quotes_the_database_too(
+    client: httpx.AsyncClient,
+) -> None:
+    """P9's `POST /documents/draft` lists the vendor message and drafts it through the same
+    `law_quotes`, with no override: the corpus's text, never the posted result's."""
+    result = prohibited_result(step_citing(EMOTIONS))
+    body = {
+        "result": result.model_dump(mode="json"),
+        "language": "en",
+        "template": "vendor_message_prohibited",
+    }
+    response = await client.post("/documents/draft", json=body)
+    assert response.status_code == 200
+    quotes = [q for s in response.json()["document"]["sections"] for q in s["quotes"]]
+    expected = corpus_quotes()(("art:5:1:f",), Language.EN, LawVersion.AMENDED, result.as_of)
+    assert quotes == [quote.model_dump(mode="json") for quote in expected]
+    assert all(check["passed"] for check in response.json()["checks"])

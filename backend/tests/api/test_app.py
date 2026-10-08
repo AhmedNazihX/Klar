@@ -90,7 +90,8 @@ def test_the_operation_ids_are_the_route_names() -> None:
         "get_provision",
         "list_obligations",
         "list_documents",
-        "draft_documents",
+        "list_result_documents",
+        "draft_document",
         "export_document",
         "draft_vendor_letter",
     }

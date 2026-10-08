@@ -1,10 +1,4 @@
-"""The documents a result calls for. `POST /documents/drafts` drafts, checks and lists every one
-with its guided interview, and `POST /documents/export` hands one over as a Word or PDF file (P9;
-artboards Documents and DocSkeleton); the answers are the user's own, stored by the browser in
-`interview_answers`, each capped as the database caps it, and a key the template doesn't ask (a
-stale row) is left out and logged by count, never a 422.
-
-`POST /documents/vendor-letter`: the short vendor letter a classification result calls for
+"""`POST /documents/vendor-letter`: the short vendor letter a classification result calls for
 (P28; decision 026 item 3), with P8a's three automatic checks on it.
 
 The body's result is validated here against the result contract (`ClassificationResult`'s own
@@ -33,9 +27,9 @@ from dataclasses import dataclass
 from datetime import date
 from functools import partial
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, Literal
+from typing import Annotated, ClassVar
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import Field, JsonValue, StringConstraints, ValidationError, WithJsonSchema
 
 from aiact.api.dependencies import (
@@ -50,27 +44,17 @@ from aiact.drafting import (
     Answers,
     CheckResult,
     DraftDocument,
-    DutyDateError,
     LawQuotes,
     NoVendorLetterError,
-    SizeClass,
     UnknownPointError,
     UnknownQuestionError,
     draft_vendor_letter,
     quoted_points,
     run_checks,
 )
-from aiact.drafting.documents import (
-    CheckedDraft,
-    DocumentNotCalledForError,
-    checked_draft,
-    checked_drafts,
-)
-from aiact.drafting.models import TEMPLATE_PATTERN, QuestionKey
-from aiact.drafting.paper import document_paper
+from aiact.drafting.models import QuestionKey
 from aiact.engine.citations import CitationSource, CorpusCitations, load_omnibus_changes
 from aiact.engine.nodes.common import provision_citation
-from aiact.export import render_docx, render_pdf
 from aiact.schemas import Citation, ClassificationResult, Language, LawVersion
 from aiact.schemas.base import ContractModel
 
@@ -201,7 +185,7 @@ def vendor_letter(
     """Draft the vendor letter the result calls for: a message about a prohibited result, or a
     request for the vendor's assessment of a legally ambiguous one. Guidance, not legal
     advice."""
-    result = _valid_result(body.result)
+    result = valid_result(body.result)
     try:
         quotes = quoted_points(result, body.language, quotes_from)
     except UnknownPointError:
@@ -211,7 +195,7 @@ def vendor_letter(
     return VendorLetter(document=document, checks=checks)
 
 
-def _valid_result(posted: dict[str, JsonValue]) -> ClassificationResult:
+def valid_result(posted: dict[str, JsonValue]) -> ClassificationResult:
     """The posted result, if it keeps the result contract; a 422 that quotes none of it if not."""
     try:
         return ClassificationResult.model_validate(posted)
@@ -246,115 +230,3 @@ def _letter(
     except ValidationError as exc:
         _log_unwritable(exc)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, INVALID_RESULT) from None
-
-
-# --- The documents a result calls for (P9) -----------------------------------------------------
-
-MAX_ANSWER_CHARS = 20_000
-"""As `interview_answers.answer` allows."""
-MAX_QUESTION_KEY_CHARS = 200
-"""As `interview_answers.question_key` allows."""
-MAX_TEMPLATE_CHARS = 200
-MAX_ANSWERS_PER_TEMPLATE = 100
-"""The longest interview asks 26 questions; the rest leaves room for stale rows."""
-MAX_TEMPLATES = 20
-"""Eleven templates exist; the rest leaves room for stale rows."""
-
-DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-PDF = "application/pdf"
-MEDIA_TYPES = {"docx": DOCX, "pdf": PDF}
-
-NOT_CALLED_FOR = "This result calls for no such document."
-SEVERAL_DATES = "The result lists this document's duty with several dates, so it can't be drafted."
-CHECKS_FAILED = "The draft failed its automatic checks, so it can't be exported."
-
-TemplateId = Annotated[str, Field(pattern=TEMPLATE_PATTERN, max_length=MAX_TEMPLATE_CHARS)]
-StoredQuestionKey = Annotated[str, Field(min_length=1, max_length=MAX_QUESTION_KEY_CHARS)]
-AnswerText = Annotated[str, Field(max_length=MAX_ANSWER_CHARS)]
-TemplateAnswers = Annotated[
-    dict[StoredQuestionKey, AnswerText], Field(max_length=MAX_ANSWERS_PER_TEMPLATE)
-]
-ExportFormat = Literal["docx", "pdf"]
-
-
-class DraftsRequest(ContractModel):
-    """A tool's classification result and the user's answers, by template id."""
-
-    result: ResultJson
-    language: Language = Field(description="The language of the drafts' wording and notice.")
-    size_class: SizeClass | None = Field(
-        default=None, description="The company profile's size class; null without a profile."
-    )
-    answers: Annotated[dict[TemplateId, TemplateAnswers], Field(max_length=MAX_TEMPLATES)] = Field(
-        default_factory=dict
-    )
-
-
-class ExportRequest(ContractModel):
-    """One document of the result, its answers and the file wanted."""
-
-    result: ResultJson
-    template: TemplateId
-    language: Language
-    size_class: SizeClass | None = None
-    answers: TemplateAnswers = Field(default_factory=dict)
-    format: ExportFormat
-
-
-class DraftList(ContractModel):
-    """Every document the result calls for, in the order the documents list shows them."""
-
-    documents: tuple[CheckedDraft, ...]
-
-
-FILE_RESPONSE: dict[str, Any] = {
-    "description": "The document as a file (an attachment)",
-    "content": {media: {"schema": {"type": "string", "format": "binary"}} for media in (DOCX, PDF)},
-}
-
-
-@router.post("/drafts", name="draft_documents", response_model=DraftList)
-def drafts(body: DraftsRequest) -> DraftList:
-    """Drafts every document the result calls for with the user's answers, runs the three
-    automatic checks on each, and lists each one's interview questions. Every draft is labelled
-    DRAFT and carries the "guidance, not legal advice" notice."""
-    result = _valid_result(body.result)
-    try:
-        documents = checked_drafts(result, body.answers, body.language, body.size_class)
-    except DutyDateError:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, SEVERAL_DATES) from None
-    return DraftList(documents=documents)
-
-
-@router.post(
-    "/export",
-    name="export_document",
-    response_class=Response,
-    responses={
-        status.HTTP_200_OK: FILE_RESPONSE,
-        status.HTTP_404_NOT_FOUND: {"description": "The result calls for no such document"},
-        status.HTTP_409_CONFLICT: {"description": "The draft failed its automatic checks"},
-    },
-)
-def export(body: ExportRequest) -> Response:
-    """One document as a Word (.docx) or PDF file, drafted as `draft_documents` drafts it, and
-    only once all three automatic checks pass."""
-    result = _valid_result(body.result)
-    try:
-        checked = checked_draft(body.template, result, body.answers, body.language, body.size_class)
-    except DocumentNotCalledForError:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, NOT_CALLED_FOR) from None
-    except DutyDateError:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, SEVERAL_DATES) from None
-    failed = [check.check.value for check in checked.checks if not check.passed]
-    if failed:
-        logger.error("export of %s refused: checks failed: %s", body.template, failed)
-        raise HTTPException(status.HTTP_409_CONFLICT, CHECKS_FAILED)
-    paper = document_paper(checked.document)
-    content = render_pdf(paper) if body.format == "pdf" else render_docx(paper)
-    filename = f"{body.template}.{body.format}"  # a template id: [a-z0-9_] only
-    return Response(
-        content,
-        media_type=MEDIA_TYPES[body.format],
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )

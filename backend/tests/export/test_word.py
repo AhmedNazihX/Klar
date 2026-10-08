@@ -21,7 +21,7 @@ def test_every_block_is_written_as_given_in_order() -> None:
         MARKUP,
         "Line one\nline two",
         "the methods and steps performed for the development",
-        "Annex IV, point 2",
+        "Annex IV 2",
         "To fill in.",
         LONG,
     ]

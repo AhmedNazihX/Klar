@@ -141,7 +141,8 @@ def test_every_route_documents_the_one_422_schema() -> None:
         "GET /obligations",
         "GET /documents",
         "POST /documents/vendor-letter",
-        "POST /documents/drafts",
+        "POST /documents/list",
+        "POST /documents/draft",
         "POST /documents/export",
     }
     assert all(

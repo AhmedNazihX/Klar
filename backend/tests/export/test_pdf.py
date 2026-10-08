@@ -9,10 +9,16 @@ import pytest
 from pypdf import PdfReader
 from pypdf.generic import DictionaryObject
 
-from aiact.export import Paper, Paragraph, render_pdf
+from aiact.export import Paper, Paragraph, render_docx, render_pdf
+from aiact.export.pdf import SANS, KlarPdf
+from aiact.export.text import printable
 from aiact.schemas import Language
 from tests.export.papers import FOOTER, MARKUP, sample_paper
-from tests.export.reading import one_line, pdf_pages
+from tests.export.reading import one_line, pdf_pages, read_docx
+
+A4_WIDTH_PT = 595.28
+RIGHT_MARGIN_PT = A4_WIDTH_PT - 20.0 * 72 / 25.4
+"""Where the text ends on the right: A4's width less the 20 mm margin, in points."""
 
 
 def test_every_block_is_written_as_given() -> None:
@@ -24,7 +30,7 @@ def test_every_block_is_written_as_given() -> None:
         "A simplified form is expected.",
         "The system",
         "the methods and steps performed for the development",
-        "Annex IV, point 2",
+        "Annex IV 2",
         "To fill in.",
     ):
         assert text in first
@@ -82,3 +88,57 @@ def test_a_character_no_font_can_draw_shows_as_a_question_mark_and_only_its_coun
     assert "PDF: 2 characters no font can draw shown as ?" in caplog.text
     assert "\U0001f600" not in caplog.text
     assert "漢" not in caplog.text
+
+
+def _page_lines(data: bytes) -> list[tuple[str, float]]:
+    """Each page's "Page N of M" line and the x, in points, where it starts."""
+    lines: list[tuple[str, float]] = []
+    for page in PdfReader(BytesIO(data)).pages:
+
+        def visit(text: str, _cm: object, tm: list[float], _font: object, _size: object) -> None:
+            if text.startswith("Page "):
+                lines.append((text, tm[4]))
+
+        page.extract_text(visitor_text=visit)
+    return lines
+
+
+def test_the_page_line_ends_at_the_right_margin_on_every_page() -> None:
+    lines = _page_lines(render_pdf(sample_paper(paragraphs=12)))
+    measure = KlarPdf("", "")
+    measure.set_font(SANS, "", 8)
+    assert [text for text, _ in lines] == [f"Page {n} of {len(lines)}" for n in (1, 2, 3, 4)]
+    for text, start in lines:
+        # A cell keeps its text `c_margin` (1 mm) inside its edge.
+        end = start + (measure.get_string_width(text) + measure.c_margin) * 72 / 25.4
+        assert abs(end - RIGHT_MARGIN_PT) < 0.5, (text, start, end)
+
+
+INVISIBLE_AND_SPACES = "z.\u202fB. Soft\u00adhyphen \ufeffBOM zero\u200bwidth thin\u2009space"
+
+
+def test_invisible_characters_and_spaces_the_fonts_lack_never_print_as_question_marks(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    paper = Paper(
+        language=Language.DE,
+        title="Hinweis",
+        blocks=(Paragraph(INVISIBLE_AND_SPACES), Paragraph("non\u2011breaking")),
+        footer=FOOTER,
+    )
+    with caplog.at_level(logging.WARNING):
+        page = pdf_pages(render_pdf(paper))[0]
+    assert "z. B. Softhyphen BOM zerowidth thin space" in page
+    assert "non-breaking" in page
+    assert "?" not in page
+    assert "characters no font can draw" not in caplog.text
+
+
+def test_the_pdf_alone_replaces_what_its_fonts_cannot_draw() -> None:
+    """`printable`, which both formats share, keeps every visible and invisible character; only
+    the PDF's own step draws them its way, so the Word file keeps them as the user wrote them."""
+    text = f"{INVISIBLE_AND_SPACES} \U0001f600"
+    assert printable(text) == text
+    paper = Paper(language=Language.EN, title="T", blocks=(Paragraph(text),), footer=FOOTER)
+    assert text in read_docx(render_docx(paper)).paragraphs
+    assert "zerowidth thin space ?" in pdf_pages(render_pdf(paper))[0]

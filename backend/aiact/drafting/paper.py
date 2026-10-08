@@ -1,15 +1,17 @@
 """A drafted document laid out for Word and PDF (P9): its DRAFT stamp, title, law text and date,
 the note, then each section's heading and content. A section still waiting shows the requirement
-it answers (a skeleton's) and its "To fill in" marker, so nothing unfilled passes for content.
-The disclaimer closes every page. Only the draft's own texts go in: the template's wording, the
-result's facts and the user's answers, exactly as the draft holds them."""
+it answers (a skeleton's) and its "To fill in" marker, so nothing unfilled passes for content. A
+vendor message's section shows the Art. 5(1) points it quotes, read from the corpus. The
+disclaimer closes every page. Only the draft's own texts go in: the template's wording and
+requirements, the corpus's quotes, the result's facts and the user's answers, exactly as the draft
+holds them (never a text of the Act taken from the posted result, decision 031)."""
 
 from collections.abc import Mapping
 
 from aiact.dates import long_date
 from aiact.drafting.models import DraftDocument, DraftSection, SectionStatus
 from aiact.export import Block, FillMarker, Heading, Note, Paper, Paragraph, Quote
-from aiact.provision_names import article_provision_name
+from aiact.provision_names import provision_name
 from aiact.schemas import LAW_TEXTS, Citation, Language
 
 EN, DE = Language.EN, Language.DE
@@ -62,8 +64,13 @@ def document_paper(document: DraftDocument) -> Paper:
 
 
 def _section(section: DraftSection, language: Language) -> tuple[Block, ...]:
-    """The heading, the paragraphs, and, while the section waits, its requirement and marker."""
-    content = tuple(Paragraph(paragraph) for paragraph in section.paragraphs)
+    """The heading, the paragraphs and the provisions the section quotes (a vendor message's
+    Art. 5(1) points, read from the corpus), and, while the section waits, its requirement and
+    marker."""
+    content = (
+        *(Paragraph(paragraph) for paragraph in section.paragraphs),
+        *(_quote(citation) for citation in section.quotes),
+    )
     if section.status is SectionStatus.DRAFTED:
         return (Heading(section.heading), *content)
     requirement = (_quote(section.requirement),) if section.requirement is not None else ()
@@ -76,15 +83,3 @@ def _quote(citation: Citation) -> Quote:
         provision=provision_name(citation.provision_id, citation.language)
     )
     return Quote(citation.quote, source)
-
-
-def provision_name(provision_id: str, language: Language) -> str:
-    """A skeleton's requirement as the Act names it: `annex:IV:2` is "Annex IV, point 2" or
-    "Anhang IV Nummer 2"; an article's paragraph or point as `article_provision_name` names it."""
-    parts = provision_id.split(":")
-    if parts[0] != "annex":
-        return article_provision_name(provision_id, language)
-    annex, point = parts[1], parts[2] if len(parts) > 2 else None
-    if language is DE:
-        return f"Anhang {annex}" + (f" Nummer {point}" if point else "")
-    return f"Annex {annex}" + (f", point {point}" if point else "")

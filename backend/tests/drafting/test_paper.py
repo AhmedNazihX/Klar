@@ -4,7 +4,7 @@ footer, and each section's content or its requirement and marker, in English and
 import pytest
 
 from aiact.drafting import TEMPLATES, DraftDocument, SizeClass, draft_document
-from aiact.drafting.paper import document_paper, provision_name
+from aiact.drafting.paper import document_paper
 from aiact.export import FillMarker, Heading, Note, Paragraph, Quote
 from aiact.schemas import DISCLAIMER, Language
 from tests.drafting.builders import WORKERS, WORKERS_ANSWERS, provider_result
@@ -56,7 +56,7 @@ def test_a_waiting_section_shows_its_requirement_and_its_marker() -> None:
     quote, marker = paper.blocks[start + 1], paper.blocks[start + 2]
     assert isinstance(quote, Quote)
     assert quote.text.startswith("A detailed description of the elements of the AI system")
-    assert quote.source == "Annex IV, point 2, Regulation (EU) 2024/1689, consolidated text"
+    assert quote.source == "Annex IV 2, Regulation (EU) 2024/1689, consolidated text"
     assert marker == FillMarker("To fill in.")
 
 
@@ -65,7 +65,7 @@ def test_a_german_waiting_section_quotes_the_german_text_and_marks_it_in_german(
     start = paper.blocks.index(Heading("Bestandteile und Entwicklungsprozess"))
     quote, marker = paper.blocks[start + 1], paper.blocks[start + 2]
     assert isinstance(quote, Quote)
-    assert quote.source == "Anhang IV Nummer 2, Verordnung (EU) 2024/1689, konsolidierte Fassung"
+    assert quote.source == "Anhang IV Nr. 2, Verordnung (EU) 2024/1689, konsolidierte Fassung"
     assert marker == FillMarker("Noch auszufüllen.")
 
 
@@ -113,16 +113,3 @@ def test_a_waiting_notice_section_is_marked_in_the_drafts_language() -> None:
     paper = document_paper(draft_document(template, worked_example_result(), {}, DE))
     assert FillMarker("Noch auszufüllen.") in paper.blocks
     assert not any(isinstance(block, Quote) for block in paper.blocks)
-
-
-@pytest.mark.parametrize(
-    ("provision_id", "en", "de"),
-    [
-        ("annex:IV:2", "Annex IV, point 2", "Anhang IV Nummer 2"),
-        ("annex:IV", "Annex IV", "Anhang IV"),
-        ("art:9:2:a", "Art. 9(2)(a)", "Art. 9 Abs. 2 Buchst. a"),
-        ("art:17:1:m", "Art. 17(1)(m)", "Art. 17 Abs. 1 Buchst. m"),
-    ],
-)
-def test_requirements_are_named_as_the_act_names_them(provision_id: str, en: str, de: str) -> None:
-    assert (provision_name(provision_id, EN), provision_name(provision_id, DE)) == (en, de)

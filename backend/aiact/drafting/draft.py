@@ -24,6 +24,7 @@ from aiact.drafting.models import (
 from aiact.drafting.prefill import PREFILLS, QUOTING_FILLS
 from aiact.drafting.prose import write_up
 from aiact.drafting.templates import (
+    ChoiceSection,
     ClassificationSection,
     DocumentTemplate,
     InterviewSection,
@@ -116,14 +117,17 @@ def small_company_note(
 
 
 def supplied_section(
-    spec: TemplateSection | InterviewSection | RequirementSection,
+    spec: TemplateSection | InterviewSection | ChoiceSection | RequirementSection,
     answers: Answers,
     language: Language,
 ) -> DraftSection:
-    """The section the template or the user supplies: the fixed wording, or each answer in the
-    order asked, with the questions still unanswered or answered blank, and the requirement it
-    quotes. A notice's answers are written in as given (without surrounding blank space); a
-    skeleton's are written up as sentences (`write_up`)."""
+    """The section the template or the user supplies: the fixed wording, the template's wording
+    for the choice picked, or each answer in the order asked, with the questions still
+    unanswered or answered blank, and the requirement it quotes. A notice's answers are written
+    in as given (without surrounding blank space); a skeleton's are written up as sentences
+    (`write_up`)."""
+    if isinstance(spec, ChoiceSection):
+        return _chosen_section(spec, answers, language)
     if isinstance(spec, TemplateSection):
         return DraftSection(
             key=spec.key,
@@ -148,6 +152,21 @@ def supplied_section(
         unanswered=unanswered,
         status=_waiting_status(spec) if unanswered else SectionStatus.DRAFTED,
         requirement=spec.requirement.citation(language) if is_requirement else None,
+    )
+
+
+def _chosen_section(spec: ChoiceSection, answers: Answers, language: Language) -> DraftSection:
+    """The template's wording for the choice picked; "To fill in" while none is (an answer that
+    names no choice, from a stale row say, counts as none)."""
+    chosen = spec.chosen(answers.get(spec.question_key, ""))
+    return DraftSection(
+        key=spec.key,
+        heading=spec.heading[language],
+        provenance=spec.provenance,
+        paragraphs=(chosen.text[language],) if chosen else (),
+        question_keys=(spec.question_key,),
+        unanswered=() if chosen else (spec.question_key,),
+        status=SectionStatus.DRAFTED if chosen else SectionStatus.QUESTIONS,
     )
 
 
