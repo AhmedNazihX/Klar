@@ -7,42 +7,62 @@ interactions:
       2-3), prohibited practices (Art. 5), high-risk (Art. 6 with Annex I and Annex
       III, and the Art. 6(3) exception), transparency duties (Art. 50), and the company''s
       role and obligations (Art. 16, 23-26). Extract the facts those checks depend
-      on, and ask about the ones the description leaves open.\n\n## Facts\n\nList
-      the facts that matter for the checks above, one fact per entry, each a short
-      sentence. Tag each one with its evidence:\n\n- `stated`: the description says
-      it. Give `quote`: the shortest passage of the description that says it, copied
-      character for character, in the description''s own language. Do not fix typos,
-      translate, shorten with \"...\" or join separate passages. A stated fact has
-      no `question`.\n- `inferred`: the description doesn''t say it, but it follows
-      from what it says (for example, a tool that \"shows HR a ranked shortlist\"
-      ranks people). `quote` is null. Give a `question` asking the user to confirm
-      it.\n- `assumed`: nothing in the description points either way, and you take
-      the usual default (for example, that the system is used in the EU). `quote`
-      is null. Give a `question` asking the user to confirm it.\n\nNever tag a fact
-      `stated` unless the quote really says it. When in doubt, tag it `inferred`.\n\nThe
-      facts the checks usually depend on:\n\n- What the system does and what it is
-      for: its purpose, its outputs, and the area it is used in (employment, education,
-      credit, insurance, public benefits, law enforcement, migration, justice, elections,
-      critical infrastructure, biometrics, a product covered by EU product law).\n-
-      Whether it is an AI system at all: it infers from inputs how to produce outputs
-      such as predictions, content, recommendations or decisions, rather than following
-      fixed rules written by people.\n- Where it is used or placed on the market (the
-      EU or not), and any exclusion: military or national security use, scientific
-      research only, purely personal use.\n- Whether it ranks, scores, filters, profiles
-      or makes decisions about people, and what those decisions affect.\n- Whether
-      a person reviews its outputs before they take effect.\n- Who uses it: the company
-      itself, its customers, a public authority, or someone acting on behalf of one.\n-
-      The company''s role: whether it built the system or had it built, bought it,
-      puts its own name or brand on it, modified it substantially, or uses it for
-      a purpose other than the one it was sold for; whether it is built on a general-purpose
-      AI model; whether the company imports or resells it.\n- Whether it talks to
-      people, generates or edits text, images, audio or video, or recognises emotions
-      or sorts people by biometric data.\n\n## Key-fact questions\n\n`questions` lists
-      what the user should be asked about facts the description does not settle, when
-      the answer could change the outcome of a check. Each question asks about one
-      fact, in plain words, and can be answered in a sentence. Ask at most 6, most
-      decisive first. Do not repeat a question already attached to an inferred or
-      assumed fact.\n\nSome features flip an outcome when present. When the description
+      on, and ask about the ones the description leaves open.\n\nKeep your reasoning
+      and your answer short. Read the description once, note what it says and what
+      it leaves open, then answer. Do not weigh how the law applies or what the outcome
+      will be: the later checks do that, not you. Do not go through every possible
+      fact, every flip feature or every id below one by one; use them only when the
+      description points to them.\n\n## Facts\n\nList the facts that matter for the
+      checks above, one fact per entry, each a short sentence: at most 10 facts, the
+      ones a check turns on. Leave out background a check doesn''t need (company size,
+      vendor names, rollout dates, unrelated features). Tag each one with its evidence:\n\n-
+      `stated`: the description says it. Give `quote`: the shortest passage of the
+      description that says it, copied character for character, in the description''s
+      own language. Do not fix typos, translate, shorten with \"...\" or join separate
+      passages. A stated fact has no `question`.\n- `inferred`: the description doesn''t
+      say it, but it follows from what it says (for example, a tool that \"shows HR
+      a ranked shortlist\" ranks people). `quote` is null. Give a `question` asking
+      the user to confirm it.\n- `assumed`: nothing in the description points either
+      way, and you take the usual default (for example, that the system is used in
+      the EU). `quote` is null. Give a `question` asking the user to confirm it.\n\nNever
+      tag a fact `stated` unless the quote really says it. When in doubt, tag it `inferred`.
+      Add an `inferred` or `assumed` fact only when it could change the outcome of
+      a check.\n\nThe facts the checks usually depend on:\n\n- What the system does
+      and what it is for: its purpose, its outputs, and the area it is used in (employment,
+      education, credit, insurance, public benefits, law enforcement, migration, justice,
+      elections, critical infrastructure, biometrics, a product covered by EU product
+      law).\n- Whether it is an AI system at all: it infers from inputs how to produce
+      outputs such as predictions, content, recommendations or decisions, rather than
+      following fixed rules written by people.\n- Where it is used or placed on the
+      market (the EU or not), and any exclusion: military or national security use,
+      scientific research only, purely personal use.\n- Whether it ranks, scores,
+      filters, profiles or makes decisions about people, and what those decisions
+      affect.\n- Whether a person reviews its outputs before they take effect.\n-
+      Who uses it: the company itself, its customers, a public authority, or someone
+      acting on behalf of one.\n- The company''s role: whether it built the system
+      or had it built, bought it, puts its own name or brand on it, modified it substantially,
+      or uses it for a purpose other than the one it was sold for; whether it is built
+      on a general-purpose AI model; whether the company imports or resells it.\n-
+      Whether it talks to people, generates or edits text, images, audio or video,
+      or recognises emotions or sorts people by biometric data.\n\n## Enough to start\n\nThe
+      checks can only start when the description says two things. Set `says_what_it_decides`
+      to true when it says what the system does with its input: what it decides, suggests,
+      scores, sorts, predicts, generates or controls (for example \"ranks applicants\",
+      \"answers customers'' questions\", \"predicts when a bearing will fail\"). Set
+      `says_who_it_affects` to true when it says whom its outputs concern (for example
+      applicants, staff, customers, students, patients, the public) or, for a system
+      that concerns no person, the machine, product or process it acts on. Read both
+      from the whole description, including what follows from its context: \"shows
+      HR a ranked shortlist of applicants\" says both.\n\nA bare area or label is
+      not enough: \"we use machine learning in finance\" or \"an AI solution for our
+      sales team\" names a field or a kind of tool, not what it decides or whom it
+      affects. Set a field to false only when the description gives no way to tell.
+      List the facts it does give either way.\n\n## Key-fact questions\n\n`questions`
+      lists what the user should be asked about facts the description does not settle,
+      when the answer could change the outcome of a check. Each question asks about
+      one fact, in plain words, and can be answered in a sentence. Ask at most 6,
+      most decisive first. Do not repeat a question already attached to an inferred
+      or assumed fact.\n\nSome features flip an outcome when present. When the description
       matches the base case but does not say whether the feature is there, ask about
       it:\n\n- Checking payments or customers for fraud or money laundering: does
       it also assess creditworthiness or set credit scores for individuals?\n- Analysing
@@ -59,16 +79,37 @@ interactions:
       is the scheme run by or for a public authority?\n- Scholarships or funding:
       does the decision decide admission, or only fund students already admitted?\n\n##
       Ids and language\n\nEach question has an `id`: a short snake_case name for the
-      fact it asks about, starting with a letter, for example `human_review`, `eu_use`,
-      `infers_emotions`. Use the same id every time you ask about the same fact. `about`
-      names the check the answer matters for: `scope`, `prohibited`, `high_risk`,
-      `transparency` or `role_obligations`.\n\nWrite every fact `text` and question
-      `text` in the language the user message asks for (`en`: English, `de`: German).
-      Quotes stay in the description''s own language.\n\nAnswer with JSON matching
-      the schema, and nothing else.\n","role":"system"},{"content":"Language for facts
-      and questions: en\n\nDescription:\nWe''re a 40-person logistics company. We
-      use a tool that reads incoming job applications, scores them, and shows HR a
-      ranked shortlist. We bought it from a vendor and didn''t change it.","role":"user"}],"max_tokens":4000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"facts_answer","schema":{"$defs":{"EvidenceTag":{"description":"Where
+      fact it asks about, starting with a letter. The list below only names questions;
+      it is not a checklist. Decide first what to ask, from what the description leaves
+      open, and never ask about a fact just because it has an id here. When a question
+      you ask is about one of these common facts, use its id exactly:\n\n- `ai_system`:
+      whether it infers its outputs or only applies rules people wrote.\n- `eu_link`:
+      whether it is placed on the market or used in the EU, or its output is used
+      there.\n- `intended_purpose`: what it is for, when the description leaves that
+      open.\n- `human_review`: whether a person reviews its outputs before they take
+      effect.\n- `profiling`: whether it evaluates or predicts things about individual
+      people from their personal data.\n- `public_authority_user`: whether a public
+      authority, or someone acting on its behalf, uses it.\n- `safety_component`:
+      whether it is a safety component of a product, or is itself a product, covered
+      by EU product law.\n- `operator_role`: whether the company built it, had it
+      built, or uses a system someone else provides.\n- `own_brand`: whether the company
+      puts its own name or trademark on it.\n- `substantial_modification`: whether
+      the company changed it beyond what its provider foresaw.\n- `changed_purpose`:
+      whether the company uses it for a purpose its provider did not intend.\n- `builds_on_gpai`:
+      whether it is built on a general-purpose AI model from another provider.\n-
+      `interacts_directly`: whether people interact with it directly.\n- `generates_synthetic_content`:
+      whether it generates or edits text, images, audio or video.\n- `infers_emotions`:
+      whether it infers people''s emotions.\n- `creditworthiness`: whether it assesses
+      creditworthiness or sets credit scores for individuals.\n\nFor any other fact,
+      make up a short id of the same kind. Use the same id every time you ask about
+      the same fact. `about` names the check the answer matters for: `scope`, `prohibited`,
+      `high_risk`, `transparency` or `role_obligations`.\n\nWrite every fact `text`
+      and question `text` in the language the user message asks for (`en`: English,
+      `de`: German). Quotes stay in the description''s own language.\n\nAnswer with
+      JSON matching the schema, and nothing else.\n","role":"system"},{"content":"Language
+      for facts and questions: en\n\nDescription:\nWe''re a 40-person logistics company.
+      We use a tool that reads incoming job applications, scores them, and shows HR
+      a ranked shortlist. We bought it from a vendor and didn''t change it.","role":"user"}],"max_tokens":6000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"facts_answer","schema":{"$defs":{"EvidenceTag":{"description":"Where
       a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"ExtractedFact":{"additionalProperties":false,"description":"One
       fact as the model returns it. Enum fields carry no description: strict structured\noutput
       rejects keywords next to a `$ref`; the prompt explains every field instead.","properties":{"text":{"minLength":1,"title":"Text","type":"string"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"quote":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"For
@@ -77,8 +118,12 @@ interactions:
       key-fact question. Its `id` keys the user''s answer when the engine runs again.","properties":{"id":{"description":"Stable
       slug, for example `human_review`.","pattern":"^[a-z][a-z0-9_]{0,63}$","title":"Id","type":"string"},"text":{"minLength":1,"title":"Text","type":"string"},"about":{"anyOf":[{"type":"string"},{"type":"null"}],"default":null,"description":"What
       the answer settles, for example a step or provision_id.","title":"About"}},"required":["id","text","about"],"title":"FollowUpQuestion","type":"object"}},"additionalProperties":false,"description":"The
-      model''s whole answer; also the JSON schema it must fill.","properties":{"facts":{"items":{"$ref":"#/$defs/ExtractedFact"},"title":"Facts","type":"array"},"questions":{"description":"Key-fact
-      questions the description leaves open, most decisive first.","items":{"$ref":"#/$defs/FollowUpQuestion"},"title":"Questions","type":"array"}},"required":["facts","questions"],"title":"FactsAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+      model''s whole answer; also the JSON schema it must fill.","properties":{"facts":{"items":{"$ref":"#/$defs/ExtractedFact"},"title":"Facts","type":"array"},"says_what_it_decides":{"description":"Whether
+      the description says what the system decides, suggests, produces or controls.","title":"Says
+      What It Decides","type":"boolean"},"says_who_it_affects":{"description":"Whether
+      the description says whom (or, for no person, what) its outputs concern.","title":"Says
+      Who It Affects","type":"boolean"},"questions":{"description":"Key-fact questions
+      the description leaves open, most decisive first.","items":{"$ref":"#/$defs/FollowUpQuestion"},"title":"Questions","type":"array"}},"required":["facts","says_what_it_decides","says_who_it_affects","questions"],"title":"FactsAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
     headers:
       content-type:
       - application/json
@@ -86,95 +131,33 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "\n         \n\n         \n\n         \n\n         \n\n         \n{\"id\":\"gen-1790714255-YOCfbHBxDH0nnZKTQIkl\",\"object\":\"chat.completion\",\"created\":1790714255,\"model\":\"openai/gpt-6-luna\",\"provider\":\"Azure\",\"system_fingerprint\":null,\"service_tier\":\"default\",\"choices\":[{\"index\":0,\"logprobs\":null,\"finish_reason\":\"stop\",\"native_finish_reason\":\"completed\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\n
-        \ \\\"facts\\\": [\\n    {\\n      \\\"text\\\": \\\"The company is a 40-person
-        logistics company.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"quote\\\":
-        \\\"We're a 40-person logistics company.\\\",\\n      \\\"question\\\": null\\n
-        \   },\\n    {\\n      \\\"text\\\": \\\"The tool reads job applications,
-        scores them, and gives HR a ranked shortlist.\\\",\\n      \\\"evidence\\\":
-        \\\"stated\\\",\\n      \\\"quote\\\": \\\"reads incoming job applications,
-        scores them, and shows HR a ranked shortlist\\\",\\n      \\\"question\\\":
-        null\\n    },\\n    {\\n      \\\"text\\\": \\\"The company bought the tool
-        from a vendor.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"quote\\\":
-        \\\"We bought it from a vendor\\\",\\n      \\\"question\\\": null\\n    },\\n
-        \   {\\n      \\\"text\\\": \\\"The company has not changed the tool.\\\",\\n
-        \     \\\"evidence\\\": \\\"stated\\\",\\n      \\\"quote\\\": \\\"didn't
-        change it\\\",\\n      \\\"question\\\": null\\n    },\\n    {\\n      \\\"text\\\":
-        \\\"The tool appears to infer scores from application information rather than
-        only applying fixed rules.\\\",\\n      \\\"evidence\\\": \\\"inferred\\\",\\n
-        \     \\\"quote\\\": null,\\n      \\\"question\\\": {\\n        \\\"id\\\":
-        \\\"ai_inference\\\",\\n        \\\"text\\\": \\\"Does the tool use a model
-        to infer scores from application information, rather than only following fixed
-        rules written by people?\\\",\\n        \\\"about\\\": \\\"scope\\\"\\n      }\\n
-        \   },\\n    {\\n      \\\"text\\\": \\\"The tool is assumed to be used in
-        the EU.\\\",\\n      \\\"evidence\\\": \\\"assumed\\\",\\n      \\\"quote\\\":
-        null,\\n      \\\"question\\\": {\\n        \\\"id\\\": \\\"eu_use\\\",\\n
-        \       \\\"text\\\": \\\"Is the tool used in the EU or placed on the EU market?\\\",\\n
-        \       \\\"about\\\": \\\"scope\\\"\\n      }\\n    }\\n  ],\\n  \\\"questions\\\":
-        [\\n    {\\n      \\\"id\\\": \\\"human_review\\\",\\n      \\\"text\\\":
-        \\\"Does a person review the tool\u2019s scores and shortlist before they
-        affect hiring decisions?\\\",\\n      \\\"about\\\": \\\"high_risk\\\"\\n
-        \   },\\n    {\\n      \\\"id\\\": \\\"material_influence\\\",\\n      \\\"text\\\":
-        \\\"How much do the scores or shortlist influence who is selected for hiring?\\\",\\n
-        \     \\\"about\\\": \\\"high_risk\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"built_on_gpai\\\",\\n      \\\"text\\\": \\\"Is the tool built on a general-purpose
-        AI model?\\\",\\n      \\\"about\\\": \\\"role_obligations\\\"\\n    }\\n
-        \ ]\\n}\",\"refusal\":null,\"reasoning\":\"**Gathering JSON facts**\\n\\nI
-        need to capture the exact quoted facts about the system that outputs employment
-        recruitment scores and rankings. It seems the tool reads job applications,
-        scores them, and creates a ranked shortlist, which suggests it may involve
-        AI. However, I should confirm whether the system infers from inputs or uses
-        fixed rules. There are questions about human review before decisions and any
-        potential implications of EU regulations. I\u2019ll ensure no duplicate fact
-        questions and that key questions are clearly stated.**Clarifying roles and
-        obligations**\\n\\nI need to clarify the obligations related to the provider
-        and the small logistics company with 40 employees. There are data inputs related
-        to employment applications, and I should consolidate these short facts. I
-        must ask about hiring decisions and human review, particularly since the ranked
-        shortlist is classified as high risk. It\u2019s essential to know if the HR
-        team makes final decisions and whether the scoring materially influences the
-        selection. I also need to confirm whether the vendor's role has changed.**Inquiring
-        about roles and transparency**\\n\\nI need to ask about the company\u2019s
-        role\u2014whether it imports or resells the system, as transparency in the
-        employment process is important. I want to clarify if applicants directly
-        interact with the system or if it\u2019s purely an automated tool that reads
-        applications for HR. Art 50 mentions interactions involving emotions, but
-        that doesn't seem to apply here. I should inquire if the system infers emotions
-        or biometric data and ensure my questions align with the strict JSON schema.\",\"reasoning_details\":[{\"type\":\"reasoning.summary\",\"summary\":\"**Gathering
-        JSON facts**\\n\\nI need to capture the exact quoted facts about the system
-        that outputs employment recruitment scores and rankings. It seems the tool
-        reads job applications, scores them, and creates a ranked shortlist, which
-        suggests it may involve AI. However, I should confirm whether the system infers
-        from inputs or uses fixed rules. There are questions about human review before
-        decisions and any potential implications of EU regulations. I\u2019ll ensure
-        no duplicate fact questions and that key questions are clearly stated.**Clarifying
-        roles and obligations**\\n\\nI need to clarify the obligations related to
-        the provider and the small logistics company with 40 employees. There are
-        data inputs related to employment applications, and I should consolidate these
-        short facts. I must ask about hiring decisions and human review, particularly
-        since the ranked shortlist is classified as high risk. It\u2019s essential
-        to know if the HR team makes final decisions and whether the scoring materially
-        influences the selection. I also need to confirm whether the vendor's role
-        has changed.**Inquiring about roles and transparency**\\n\\nI need to ask
-        about the company\u2019s role\u2014whether it imports or resells the system,
-        as transparency in the employment process is important. I want to clarify
-        if applicants directly interact with the system or if it\u2019s purely an
-        automated tool that reads applications for HR. Art 50 mentions interactions
-        involving emotions, but that doesn't seem to apply here. I should inquire
-        if the system infers emotions or biometric data and ensure my questions align
-        with the strict JSON schema.\",\"format\":\"azure-openai-responses-v1\",\"index\":0},{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqvCGV4n1RbIobDkNQI70u31HMRnJimKPUlE5PuQFyXKgkNkyjl-QltKMcq7nnNdtebkXd1Vnz9ZTRQ-Bl7DggdQXhfqzUWD2q_TKfRoll_-NzpEyCIwgjowXecuN_kSjLr0LMUa1fioC6WxsG9u1BAB1JTsBTWyhUjDhUOatBKCNLdxKfZyAP2KkCJyopxMfxxzAddCbYGsSJXDniv1j8xzeztDzqE4PEds2L3r3HUFrfpCN_n8mhG6_qoguf2GggqIdS_UvdUHAWVXRd-k0M8c0LJWQ5Qk3G6SWSnav0hyHf959y_uYf1Dd8jpdPNNq2Paw1b95vsZPWggbVjx6Ihdo5aJKBXj7JPQ1_UzXGTFbUS7DLg5NXL-GEixBq_YwbYAUQ108TcglSR9sOCpu07q3erLcyAO36igt86xEm5hcHRSWYcoOSUYfj53beXvnXouvUXwBVb7pyap43UM0vdUvTwP1Wur9J-LYVGLJf5HRh_7RnwzDhvqhQRARegHTg0KBrW_b4iFAepzjD0MXyKNISJDJUTD1eDnr3mU9PwpW3Ke9rpH0G90fjPjv7-63sppKDLv7qDvGymhLjT07zngKPYPsLKRPAFKjU9PvzW4PZj1tDhebtlV4HMnp20asVxOubCX4taI3K_ER1nYhtgLjls0XdhBjGTawUofC3C6yQL1dtdV2TrAXnoy0Tc_Mo6cOWfAaNXMrDWafKtRF8XdiageoTWqEXMUz2uAb_-B0ij76XFA-AbWBug34JzuEMNW-wVBQwv2jPkEbIBlJb2yC1ywi8qze4HhIjc9RaUq-0Sue-5edfin8VT5GLdT4ZjjKRm0VqBnPJOPcSw8pJULSp7wZ_XYAmE6Bc-dV56P9n2mVxD9hdU-R1azq-3HdkGOrXi2oiGDAyEYeyS4vBCfv5rKm8KHYX_5_qqXukefTNn4B7GH_PGPCE3F1kINOd5D4Fthk9pCw0Vv0PN2GVcvVXSlzwfKLJkdh7KhG79LIMx0IvK-w_yH5YbHq6QfqJS300kFDFDXNgKi-Ojh-kRQzBtxS9bM7NycPsCRr_s5vNONJaE1m6SYM7n0dTJuQtu4VEk5YscUTvS-bf47SRkScEBv_fmFZYmRy6wRadNvH2nm4ssSjRfoncjh_CpF-mi6fvUFn3gydwkzk9pAx2ivk-mMutLImbWoP3-fTDGlcbaP3IqjwGFAxus_9nhOprHitB6dHljO8qew51mW70SM9rI9eEd_vX59jXzqZzhJS8HkGoWfDiXUDpB-gO1YqDovcfym4c1iXd4LsmviUs0hu05pNBlQ0H6q_gmOFK1IfraxL6I7dsSNEwGpmMNgt2LbIhhpnNGT6w294ftmyIxh0gRqbIJG5hXHethY4o7kDt8WQfvOyqfJT9lH9N_tnEaIB_VwkKfU4eI0X0Dj1FBR0WcHsS83krVebMGAQFHf9J48jYuZ3VOlJRWsWKhrDwzGsxE0rtTyvL-TH57eDqcQov47P_lDgMZN_0A1EgIX08MF-JQrUaXurTaDHFkyjIEbX14Yemy7v0cR0qbAbu_NTchgVG8jXuRRuOin_FHVHrb0_LNQQBCJdyM-eeKfl90VizJguWSdgmSXfYFe6UOp370oeFoHOEOyaCZluWN5XRu52LBWAzn8qiwJaPEH7mYv2qSG9QJ1z8OAhSo9rdaeAUtaFsfqIDCp0sfoYVoOlOKfoS44xOlnDjBstpHXarPBU_678kJg64xCGp7NTIcvr4EtXypIAr5h5X75lDoiCTQnMndw6HJTVXsOGPZdGGCoJjbOAgyZJkeTvTy7U8Fnfm_udcBT7fnmGPzrZ0PNTUlk1viGUJxjW8JsUyVp164EFUUaulklLZUMG0fFcxY51FoXnfmUQo5OOWSEeN9056OyQ7xy_-BagKkkHlpONK6JIUkyiwTksNw8bOseZ_n4iM_XeRZgvLpxnYeoJrW3icKsSNAV-KEHIPPCAC4rqUiGlm4vkkXNJLT3aaIyqQDWgZUWfcpf9qGCFR820nHyk0izgam_87g6m8H2diQ8mSGBbtWqj1KMRjRycDGS4ylRx1GCwJWTWMq_BuUH8AzTfogi8lY1RSETMdc3vzwR8WfEvWF7L0-f3Y8Y-YxdHMBnYMgHIpewiurHGl8oMaGpudz_C5M0ZCEt-9gptl1YOODecnaJWQq52-GYi8PJ8_QQ93uJv3h1k8-1tiCBQXdFRlZjFhXOZsXeY6ao2E2b9uT0jsloU9wjnXWOb6y1Tbh7kvA4WuykOGY3wC8pnPK5wFNIkw1_rO7cdsxPPGctOJC8sAm2iu-e53uSlBF6EqdsKt_dHs6N9Q8hotVMKkTQlLiSus3Ecz9UGnG-lhXPGg5Q0dVxjMZXP1bWJd16ipABisimpuDN3sav1x9bYkQIWTFn_H4IbE9dQrasRJqA_dhKo0mmhVA187fXzaHUDTHKd7PHg_LnxllYimKJwc4CoSYkaNLGP31ifhLH3RgXqZtcmp_OF1axcmusc6RJcF76gW5BtuloVaxRz0pfr44cho2tpBRL0Rq0vDxGNuXclIqjByDQT7c6wTQEdxZfv1G7oAsMtqW9X3SyHUyD7vXHFCS1S6mfvzA39jwYWfuZGQRS1z0CoQGNXASkAupj1aHFQDM01Xi9i6MElXscsPVTcXDxfyWA-oJhZO7Fhh2V6fzjQUMg58zJ5ZDkPlV6XYVShjmlycfnj7oRWB9kfGpjhal5z7yLUEh3MC4svUvMkRawVfdyjDVEjER4roj96fnR9nFNiA9_wcUH7vG_9Zg4MbdCT8uiEaEEVk3-DFV-7E1bj_eF4mK06x5yXc4Qifck_3SCQmvmb5bNymd5ZGqp1ngxVaoiBefcUb5CcgcBPKeymJPqPF4kcKMHEPp4EqgLgfdG_PKGhejbv2Rt24e049SbP5zmcBi9QHin0sVMdOZYQWMMEduUt9lg3_RIJSxxdIydXdu2AWvf0UeGohAUz7AxGUK7mR_hNhLySj7RdRwn9Jr1EAaYafsjfHrD2tSur2_dX_g6kL6n3wj6s6eSlo5s-lnK6EwaCuIEvDpAeUV49R1NuFPQaDNfZyDey8hII7u1ivhl7xt-wLeuY9brgDFKcXe3IgIcsi0Tu9wsP1bdu4JY5PlkCG1ol0z1bCbO1MJqpmulWD0pZCjlr9tOvWPdIjx7rdZ-P5VXoMjD33tAqOTYd48IJs4PWEKciIMeKwqsMVvhdcikDEeCwWFK63ce5tHaLLHBAVgNHK_-Dg4x-RVHYoBEFSX8VQ3MLaBVV94sbdhpr7Ij9aRySjSz4uUD2wIEGacAtgz1B7lYCE34_BgCNAbjE52oOXPebo498WPOAw5mhktysgNeb331b13WCxAXCxi-1nCJ890SRPqyD5rYPLn1uAJpHz9Y-Q0Exw2Dffaj1kJgvBoXTN-YGIfh1IGtYrstITqKYs3WlTNUwQfcglgbJ9-EwRMCmNfGqBtMTXUmRhn4EI7K_aPSVQ89_caLktvVTUHl_xmX7IQqzO2Q7zL7M0pSu3d3hWZf0U0uKF2XXEVb0Frkbwsd91gIp4rJ-TZnRMBmQ5mm-6NIBKmwRGgykttqNRvS2olJE6VBOD3tSFQH-621g6bjRVmd8H2F9n3c_xnXSzTNmH1LTZ19Um2kmQ__dsLTQtAsuZSk6M9DQI9JkAUvpDPCjrMw72Tfjt5qBkQtGqIw-bezumZ_8_zkJI6v8qiNiyMizTjlL2vNln_l5jvTI7DrSWYA6o1gqsh6VdL3SqghEuBvmPYBF2y6QmDHEM6pzdLKsQ_e2xKsT1GmuQww8SP2G-uBwNWgXRdryktK8tr7SFmyUB2g0mGgh8qyS8AGNrwmM-RUoL7r8qXc0e0XauJGplpWu-ep8RwKxiwKZUQnbnJMaCuHFNBkLm-XgbH3aMK1n0JlHHEHIFYpLBy1GYDYQV6r7RU4Ff7ZqZERs2wYj7nBu-kE77TDWVfq3h3boakWxMwoVl0NvWJJDit6_7jNHNEjQTIPdopV3kDP3XWtMwRN9Ff9toYkSEB3SrkrI3fLcbdTAXkKE_2s8wp9jwXdalNc8Yc_s4dkHBvFCNpSfl3q5SxYRr1mwI7MbBWbooQJhhGE_1yPhpFRLbNx7LvGwNLj6lB6Jvj1XyH_PdajSLnDTWT8RxiyC0udZSNhpR4an6fcyCu3xjxinQBrTtuqhQwFBrHhIQKkFOCJ9ix2V4ju3pR1bwxFO6a6JlB3Qt10BdsX-wrPE6vZEmFi6-YaJhPN6z70l7k9mW2rUjJASMxSScd9YoeKcpUO3fWuhAxv0t7lpFy_QDei22eyC6fO3OB-JXTsO4dJmKUp6pXu7qP7r4v0_HGHTsWtEBVSViV3ob1PT78dp1iOAAovhcc_S371c8WMLdBPUGT3ukTwWIb9sPoal_GolwYuBG82Mp6toHIGqLaS9jFPd6LUUrvpGzHSfFuUfxJl8cN9vbJKot5rmBgriay-3guvuJecEOgKh5k__9wZ9JWQcgb58MqYstoO4gqA67z4LnD8fSBuegy6V52MgR2SP8FR1Btu5dmGCIOQT_gihm3j3lmTRzWPUiIffM6hhueTP5hsciToP2DHGl9_8ehQ5xpMg3nkhfG_aFjshMVPWfRmbcOEJXpELTxhFBSePzbYSywHXi3kjcwGki_XbWDjJ6fn-RoaBV551KNuxFVj31IIIgpqhHcNBzOHZPiB1yNe_cOR8em2p0nlPcC31EqOXrIA2YhxBv2eefc--JV47B1LStovamlAQHzzg=.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_022ca65b947aa564016abc218fb6708190939b109918a63a68\",\"index\":1},{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqvCGXYsK_8EX7LvHEKJ2oAjPZ1bDqlQtNUAltetGcFw1ue7lbG_MgVKe6QzfSDB7i_4dahDf4dQBCQyR43BIgRzVOoTg9Htb-zOufQeU8coHoQYuIQdqImvQHihIQ177ukhWP5ibCmCA4DyXtJMvADLNmaIpuYnjLva2mpWbQp_NUxTHvk8eH29ixEDQgT4xdpt6t5M2Cr_8q4w6Bc3rYBrgdhbEpeCt1J-cIgqInJPpOgcvLV4dPiebJr3AlCEH0o46N7ePSvDwDun35LU3uK6oYaA0Y0IOFb1KPzWU15sTC9ZW-4YPGYJnqKN0CjjM1C64tBT4l97dqxsQUkVlNyl3Ysb872yIrFJ29yhoj9zdu-U2bCbo-Nhn_RCsYwRh0qzzT6selBlg-dbPmYA5FHgFM3Oosw0wIHFrEmjKHnl-SgQuNhHTqm7VChwchren2gj1pv-OW8D9nyLm3vzVnAos9hr5aaIjRQxnQGk3ma9KnUnE9zI83ZcwJ3zV7NQtAlE4fGxKadFWlA7sMxUBZXKQlXSDpLlGR5-Q2rS72QLQmq3BZ60kKq-hUJRJ1wIF9HqNBaau2NcTjDqkKP9rbbMOo_JB5Xd4brib0Zfppdo8BL27MwuTorYLLs14jI1G-iXEDje2udI-2IKwbJRx9BQLYVJjYvBscZjzytcNB7O2awEOy_RkFGzg3qNeeYJJtuMBwjV1MwT1eeXfJNpctcay1PX1iubRbyS5c5i5r04ma1z_3xAx7ZKbLKnSZIjHZEJGSS3cjZFoo-Z7K_9A3wDMI5qk4QrPtZKhGTq5x2Y73YSxitJprlxp1KK2N-YEww30sUh014bxn6BTa4cmQmNN0upkieQQFPGSJYc6ciNpcpp7ANdSZ1fQ1_U5-mnz-Df8rVFKqJnP9MHbYUom21Sjuo-e-qvy5EjLO8eXJKM1IXD_cptmV5cF5fI0Am8oDosqD5M6sweqqwPkIADUSEmAZefSyPoNQZeVNPH90psLZOqvdq3IuY5FkFTfgEIzhxRa6ZNkePDGVnmLz9NHFxcbH2NVJ9SbcY_Aau_KNUfuLV63csWLy5MywORFMIUUgqwbXzMXJ078ohNFt8sUDFLwpKJUvPVIdY5jiT4gmH9M4O2-XBxzcG9Mr06JAl8weK2l7eNEOQdoZg0yxV92WLot8xcng-gNYLlWY4fKZVZtiWcxln0RmBuhGiRZz97HO2Ju0eRl9h8_o2F2OuJXRLsUCAZTJAVTCf08MjExVDpBSAPHStLZKI-z9o4YY_86Zv8708c7PpQv5nST1d7ztPq1SSqw3JqmKt37Y-lxHN9AzekX1A4ueTxNi5ac6bXJ-J5jxAMBe8a4da-yj2dqDl1TxT2b0jrMbA1U99w_5HdTpga2yQbyiJr8N13LF05LZ1DljuTZxCyWHKaPeeBcmcN21k9NoUVkNgvjwv1H0E8wmK1d5xgX48Ql6052bY9OvORK7MfBKE0MURyUSbfL-FoxqEa4j3pI9N_ye-ZYpSoNktN3f96P7WvsZ-buctUjDcOqHrtsvHziap89xT7JuR_L78KRYJHeu_9E3PGU7ZZ-YGyh6xPEIJdosRUhfJntpCXui5Vyy7d7NV9Wrmknp5pm9Fa3geAkZ423GVMM_1vmxR3Cy2vTu2ueru65NjCOoXf7OoEruWfPJef4H70LOYgM_tItUbdW393lqZZHiEX8YZq7IX9eqP8zHxsUTUM03lDT4nR4q5yC_KCbBAaHLX0JQn7sk9lmxSKZciZZVdNWzZ3-sxaTHc1K9MXZ6MwOeHct4HNZgI0s8x-Tnex4soXKsW8YVi-6u2rBGsYHlq1up-6afF_HAGMCn2SEoDrETPQvLisLdNlXctsdd9TuStQ8E-CxK_oIGB4W-rimPCWiBwAoeTUzIKuJh2FV5ASEJMjV0t7Ejp3yltMxPjbRxZDHoBULGmBxbIvV1XyCy4kGWTfmz-Ctwsf8bqmt30BlXEfKhqFSO3qP6waQ8Rpuzb7UrTqQ2oDijrfF6FP9TAS7yqe-VpWS5VhhToWtvYpkSN51HqsL7HQt973uFMmIavTcjcbxAFRU1bvtRmUqySlqRLEXUgt1cf5vu6lvZWAByXi9dsF-T_KUgOGHHl4IADZwTgWFpr39hNERLSpTCHNcR8X-RhB6EDaG3K6n-CCoKkAmvwGqChE_K32Zubl5rt7AZkl-HAM5qaxLsEvh33_pjf7xCBjnJGSzRHasx9Ri-CooVwcHyaEBjCArFfAxOrqCTPDgUnbNOtSYTxuHaxXbm-XCU4ZKLSwZdNbvxit8P6YPZQpfuZfk0naXoHKnOOa4Phaav4z6qOituwLsfnAWWzrqhgq_-sxSLvtO5fAXH8DU22xkZlPpW4GB7nN1nR9LbdmrYmkMeI-JK_WNJw7GkObtaRec_7kCXu3osFNFvTFUz61xeXC6ypaPm0DXHMMO84rNZdNuGWAnHLpX8U2u1PowrJk5oZ7TH0lMg04AKhwrGhj53YpW62tdRY6AcMYj7tms5-8IfGUJzCZADJ_7T03dByBBiH_2nrk_Cfo63G5NGOJLBPg0Jbdqr7RT2cWhGumiJr9RFp2SnEssRSVgdNnn3xvwhneqwQpjsPTQMANQ8AL9TrCp5KAnbujfRo-SWl6x9oKaGIzDElCGNEr9Z7tDzLfe703T-ZKl-b_MO6anoetY4TaCSsCBeFgldpafs9HGY0xeBvqcH1bK7UBJIEnP2SGUmqc6SRSX2y0uxzjtqXRb6ckI6tiIMrWbaXnM3yoWvqT0svmRMVlcL4-d9NSv4YXnBOSKSDr0vquOURL1B4VKH4o7LN3293KdSxXOTEJSgtTXmmcmNDF3BzAjQ7FfeEimXFpuSXpWQs-ssBNTSzKtQBChw-gdePQZZhSX_o578-_q19Qekjd4CplsuTf5h5cKXp2USIjr5b2kG6T_5rru0GO4SoO3eZGDrtam6GMem8w4cBLXTJDPClzL8i5tEbnEzW-r7bjIDnD68GH4I1cDk4qLyblCe4mj1wQe20Cdopz19QBERzyzJPxPeRdIA8ZPJZaZcaFBgqreALAkLqvbHBmrLAeNMLXJrryotV2-QebPUaoodVzdI_vPyEvXIkVsha0as8hrWGyC3j9uJGqkLlqTR91yX-xMHbkM3gE1QE0Ya4qMWTrcvy2aWxFt6F3MT19lmOJdCyOMooh-5mQhuGlEqOFVBJ9SwHu5u44pITu9do0Cvg26CS1eb-awJGU8ABxHZhPIvmW4JN_15LHtjQqQhND_k5om909Z8Eqi1FqxpHfIEyvD23UCy-FBgZh1daUPw8L4gpidzdbQylmWA4DS6WCIubU90zeqI3Wib36NUHYTtH93qJPGkPF70HzNWghgT1UV5Y5_HcHHNsq_IrMn5ehKuB89exFqVzUvxeazX7Mz2VsJxo19Hk2BYiLSX-MT6g9wYw08e5A9JzEWN82rHcMDJp6iX4OzAtQkgFashPbBd9qThxrUc7vhpZQb0338mfTFYffpn0kuMZkQ2f1caCRNWxG9hY1AAbsA2RmlvAEtJzREssPHPlxmXkz1vhi2K_1AJvyKnzkyPKdYxXHdRNhTuhXlMNjR7qjvW_Tkyfd0ySdHG0gTRMoFleQ5o-8hla489Dc6zAnSuNeqpUc7ODJTRAChg2aL02y2bCO8mx0B5bm-5Yw-qP13rcUdFW_pK0jB7XAd0-j65MMtUpIjW7x25w9yTyK0xB4MnzQW1CKC2w0yIxTDIbgTH2h_2FNN0D_lyJikBQJO_iMpN4gV7VayzYnu_lQ_vAWcZcAqHFIyOjK4N-RJ7P_Gg7VZBUteiwkyb2xoMpOf_iSJvaYWIbr4qCjk2DqHQn7UZyxOzPgyz6Nhrs4K2hgkU4fcrArxqTvPH_EH-v9dHOs70k6B5USva5vqURQMbNYnd-kwrB4Yuj7SKAymvFUde1hKki8-qx-uVfC51qOvl5OCNzOS_yiEpYzub-OTvL-sHisXTYqmZuLhdRi0lTO3fmZq4qMRdJpeNScAJ-g0YXFZKkm_NZ0lRBF4zJRW8s1sdE7b3cJY7srrcqUavpXzS1Te4O3285GGe44mWKwHSwhzk9oFPzyF7C7Nzc2BDaebVsvgWIZXpp-HPDXLiByILXrywrLBCpwR6_KwK-zEYiKKO_mAZ2RHKP0yNWhDwxXjtc_7Qmwd2PjkXk3t8TfDDwxZdjduWmmi7nVCMo7AVVF7rpKwwxMzAfeYddDy-orTLw9HxdY04seXeBBjdQX8EYihXwu1KBihzipy-AGgUxtbzyXTCsrU0axHimSEhHf95wVtZ7mGQ-tU8etB6Mydu5tkZwJhJd0FpA_NVcyibMogOPWWNdKwspGn54UclSkDTPfV8FYJHj7imoYxVCBUHcW4hWLJ_Qtz9Hj1z_NNDpJjfHegw7f0Wj9nJtsaCP33j8ajk-Z9aVFBJfQc_zEpR7BBuUuxuaiGnsQPEip0XGmAwEqGKyS8kg3J9ZjczjWQbvonCTT9rt4SxqjWU56yojFzpRpzMEYg32WkFoMNIFhbkFZuzMTdPVQtI0Aa9FvMMCLh68BsFzFOK4-O3uV5JwOfcZzhwM8_iP7gAxZQxlbwEYsdhjYtTLvHja8tQvO9sb-n7rLSc6lKEvYi0Wgls-sl7URF7mLQ0EKP0FI3zJvDs-fZR9luxquUqwThBnQlqAgL9N2aa5zwiAm_zhLx0yK5xjxExxsZigJDFSUSyStdQeXWZ35Zrg7zNb9D1WCq5cm1f_6BELrf24QN4jst_H-LHgxoedOyaVMdhSBCwla9OUAFrPpvVWLq4Yo0mIUN8ZqZ-aBgFOlPUKKBpQVI=.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_022ca65b947aa564016abc21957bb481909a74ede3c5642fd5\",\"index\":2},{\"type\":\"reasoning.summary\",\"summary\":\"**Clarifying
-        logistics company tool use**\\n\\nThe company is a logistics firm with about
-        40 employees, and they've mentioned that they use a tool to read incoming
-        job applications, score them, and present HR with a ranked shortlist. I need
-        to confirm if HR really uses this tool to rank applicants. The tool was purchased
-        from a vendor and remains unchanged. It seems likely the tool is AI, but I
-        should ask about whether the scoring relies on learned information or fixed
-        rules.**Examining AI and inference**\\n\\nI need to clarify if the questions
-        about AI and the EU are within scope. I can infer that the tool reads and
-        scores applications but also consider the possibility that it follows fixed
-        rules. It seems the tool likely infers scores from the application information,
-        so I should ask for confirmation if it uses a learned or inferential model.
-        I just need to ensure I\u2019m not duplicating questions in my outputs.\",\"format\":\"azure-openai-responses-v1\",\"index\":3},{\"type\":\"reasoning.encrypted\",\"data\":\"gAAAAABqvCGbITjM2tT4iP55t5WGBPZOtjbIWEE2T1ShJYP2gfjROdieuOxxq1NZ95CQiIku47PbIPI61cEqyxD3MnvLCa_tz7bE2-BiuJeNxQ6RCCYd7vI9thFBmqnjK2yEN8HKRDCEpDYRTLmOZwfZV09U9stZq1sSJ1Lyv0vaQUOT2fbUZEWtR8N-RUU3ZDBAY2asLXFMdbwcEiHnB8Gb0oVC7UKkU5yqwVrVe21G5lpZAd4g2hpWVxwEj4FGj7xQagGgIlRDvrN8ufiZV62JY7r5tIkVwT99wndR2Ze66GfA0bYffiYV0Z5uRFbAbXmsZ4AfyFlF-rZslcC4Ze3egh3kvIUurJ9qUUq8wAEsY_a6cgWyCZG-mSTnRLZ07cHp1maD4CppgCZk2Oxss1gIDcskT4GR9AHAhSUYaK2kCX3snC4xDIhjUXIiQNbbtN8sL9GTYOC4r4iOuePXJTYxY4LDx4pD2-8ATht9GP5w-Sgk53wwSmsZftY5hHgK7xqyRe0S0tiUWKvhUsGdD627iCHdCilvsV4ZGxta_BN7Wcg_mWyxxI2srnCvZQaZ1icxw6yqn2VMoYvMl_H4hXpMnDluOg5-W1-4fZZAgHaq0pkPBkf9Nqj-py29f3O-AvuXSl4XsmEals-wNEYn_JeASJVTdvY7d16kXZXDmw6Mcww0Ku5TCwnARw4Dno3Y5N2Gv9xdsVEnNBGb_2bBt7NpHWSW2IJV_RbVNkglZSVTGkM2G-VR2kulNWzyyMDp8W03d285h-4Fr5fdsBRCGj8h0gniP8CiK4f3bmCs4NIfSCsgV_XaZykWyDulF4Vk_vGt-7AEByyXLemDBSGTRuYRROo2Q81ZVp3-53gFP6_1Mq1OAN1F3bMajWMHRltTHKOx5bvMpjaLmZnVtc5Dl47Dgg6wnmH2qfcKD2CbPuLpHN6yNfHImIK2Lr4pHhG3I2C9-wPhH5R9JIJOxYQ0uxrj3kUfyL2xRodYHHxJAUhERT2FnMNdFxM_4n5j5QORQD5oO0BcaUziToe8Mv8bC1Bw8M1b7iLoU0TufWXZSP-D7CNFKxzfRNrLWQrHyKK2KYCmbESuALwYAdjULIysNM0IZz7SsmjevGnebfiFpOkf1QqkzYRJ2Rk9P1CLlxfYCPLuHcDim6KIAi-r_xGxibKydNPqhrY0uAiD3Mckn7-NeRpWAY24Ylyf712Z6DRv7fB1mWr_WLLsjcYqEuyl64M4fNTKh_7k90cUS2gJilVd8TyAE3vdl1spmaoJVsAbNmMDQei2EGIKimz4WUd0lz_BMW2aSUzGuirIm6nYnroYHviWuPmuxag4aRMBRfsFA8zzmfmTEArBVdSblZdRQFPoFJqMfX-c4oiK--T62VpaSUrDwdYl5dCYspHQxLzFP3vLnnLOStlvzXKE9btkqcyEAOZO0AN192em1x6ooahqTTnblqkisknwOFU1lVdKA58vkI6PDTuWkYJojbHueAxjpq98yLCH52nUi4aaFan0M_hJy7KIjkaVCKaChV0V_J-hgV3J_Z47kTO5oOd4rbejTaDUDtpGU5YI94VzO0Gavxh6m3JkHysKQ3NoRx5kWtOsHeFtazNtOc7lpJVi1Wl97QRKyyddXeqJX4tw1eh9D5QEjSGqX3Vfj2-OfirfH5Q6x3cOBCzcnK3tUjt0dKnma-p9RB_JNJwKJqXxK_qIEIEGvy9HPUN6v-cT_rW1p_NxFYBPu3yOUijKcHqKdPy7Vz7A24euzthQnRkwF7gW_raPHrYb0ymoNSWJv45JhI1wS20qGhoLiRGYXfeW_ZIef2-WpakVcX52xJbwU7ikDkJYToHeUvR1mn88uC929daM5iceY0Og8G8zcK7X7KbokYxARDtSI5Q9sDaIRKho6gvWmqIaWg_WtqsfTj8I0VsLzWRlv_BH7xGw-uavYNcTzllFJKCJg_OLKnvZwixWsJBorCMiJxbXxfm7uGLY5ugR7FeD8JybhGK6SzWIBMe17wB0TShQyBdDu3TDjbHhRWdnd-P9eo-2IxM6ElBW-Jw1JilqFYPJKyHFhjzt6148KrFGNbuPkVPaPolB_dQgvEttT_HyG03h5zedLmWE1s9jPUrXYwWOMSRb435-EHT0V7XO2Wux_x8ga3GuFMoCSjgmOnfaoVRBMFlTCh2fFvMO0UthlMPAxo5qkXKlfxkARDNyrug87aAT8gFWlSPtOVoXdkrMo-1Fo8EDs7QxmXBCBEP0NU1kBN0bLEOUwd4q7gNNZiMcYwTecWyHWJL-oBYczn2sU6SBuVfaEDpyYvJjyVUz_xTiwE4w4Rh3kLHNPVxjMBosGYbw4hZeRMivvR3vJZnLzhI6v5C5jeaCMUuuUMTiVCgnMNR2Cl_0LoLNmxpxUmtlVNTq2vgVrswmcNTl-j-xw1hDdZLefRLiZyzH9ZesWHTVqOGZE1qd9cBOs8Vyiq0DNswSSNEruA1PdCZWOH6ohObehOeHQhkUn29EpjfBoTnrqcLwMUoI6e4FFD7PCDjXJGO7T4vr0jUjItngn6Fz7hgOg51yuttn7Bdm-48ShMNzp5JQ8QNZmnyWG_0BRkvRRylx943oF7ZdSaOqVDwnrNulKKo4-tfqHQ4mcFIHOOTEWQAAB2wJgGomvVVCdEx_Z5ltpvgFADmOSMQNz0Pb-HeIjv0_Lnu5eiz7h-GXeKjzUts1gHaHAGtToubfNdNWIn6dmB8YajxCiQAj0rpAFBfwrKcGAX7Lo1TUhlL1cwpCEmE6e0fTnYvZXA5Ai8s53xPTk1QTexHOjiIL2DTYDgt9eMC9zhz1KeYjDk9feHqvs_TWjkPX1ioYfri2Pf_S4zy7yUVM3RB7Xh0D24r0Dm472tfiPJhqckQJIHTgE-v2LfG8fqnaGoW73Nbq9FdX6pnVak0R_vhhu4wl2DlF5LqXHb0pzaTnAUWuFgchpy4utHs9Y3pNR6mRu_O6FR1h_EikbzFQRBSgS9eYjLc1MdbM7zqx09mYrfsyq1gZAIARoXt9QEmvLwkHvgkE4oo8Ji5UCQde6o0n2KOozwGfjCM2lCOCm7sc9jLWnu5ZmqXH3XD0zfFiUfwEZmjYE4H56ieDaz-4FG6oJ-ZXcI1bLqQbRa5t5dfotfSMfDGKN1SQMkPqISEWzXDsoqbU7FR-90eAz3D_lhfDXJoykxCNy-tDlXxGrb6gq7c8s7BfOS2ia3tp66_4pObORNlv6l7PZrA6SKT3a3MK_2N-M1uT4R96x65fF9ldGWy2i_42gOaY7THB3BICcijIBX6mH7Kq4UZnEWcOA-HVg5z5tP2yMmw-1oVY_c-r7cYsIf_FL8EsCWq1jFCiAQq3c9zR5vgfrzfKL1lA-03Dranj8uOYO__fJu0bMKuztkclUXYm8GD0cUCA_GjJV9KLiWXMNBDbh9OmjP5uwAvgXkhbyVUVwX9RufNEn5E2g12mGlIrli11lfu2ATpdCDoO6NtfsBEjY8qHhuyg36_aFXxE1GqnvPhcfR7ygNIzvjhtfEyafDZcgRtXW0c6x8bWgYGw2BD14jtEi6rjvRCOnRU_wany2bIOJwHPgmdbapwyGZt8_PA4AM7OmBdctJWdt3SQNHpjORcGoYlR3Y7ix98t_Lv1vnosMa7alqXtkwDTqeRcH6lHyyzLqh7_BHGncR_f6cKfSI4Lvk0Nxp-nbj_slL28DKXXf8NBfLKNVTc35WPEw6zPDbj5IKm1U7dOpQ8GRCv2_FB9Em99s24rZ4CWMMxSth8YOa0b4C5opuGbcD9WSMQ42RV__TP-oF5gD8KbaJkmMzf2QIEIHq1eqh6O8DF2gPs9o7VqRLVyZavwtLL1Jv0MzNpKx3w1qW9VvjF6DSVpeH5WIdiQKUAcBFZJ1k3nDkv8sTY1zoNLrkbqvTnkNGRHlodHW49Hw_8YK9Y918Hpp0sxhHeQRC_HtD4akKrX34NVorUR-6sViKas4_XTYNZP5uXTACDFCcGLDz1gzu2cPFkr05oS785PJA1L_VTm2_JFdovou5fumI7l6dWqoM6jRhtf7GeuzjdVgCYL5HRnnAp8Vg1Tiuxit0eGIWD0PDigVQ59vh0oAAd0yhv_02N_cmV9LNAvjTA_AJoBS-89DQXjTqeLS2DIdJbY3Olz2JzVTMXs1QAtMbdu712bmT8iGP1pPXo6agnkX_sDOl_HX61-8Heh9WHTC79JtLFuRKdBLTTFZMEnP2Y1mQzfZVOz.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUvZXUifQ\",\"format\":\"azure-openai-responses-v1\",\"id\":\"rs_022ca65b947aa564016abc219762b8819092444d1cce9b396c\",\"index\":4}]}}],\"usage\":{\"prompt_tokens\":1586,\"completion_tokens\":1999,\"total_tokens\":3585,\"cost\":0.0013174425,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":1583,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0013174425,\"upstream_inference_prompt_cost\":0.0002179925,\"upstream_inference_completions_cost\":0.00109945},\"completion_tokens_details\":{\"reasoning_tokens\":1489,\"image_tokens\":0,\"audio_tokens\":0}}}"
+      string: "{\"id\": \"gen-1791501687-WzDD1NzXMsQpxJQuvNEv\", \"object\": \"chat.completion\",
+        \"created\": 1791501687, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+        \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
+        [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
+        \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\\"facts\\\":[{\\\"text\\\":\\\"The
+        tool reads incoming job applications, scores them, and shows HR a ranked shortlist.\\\",\\\"evidence\\\":\\\"stated\\\",\\\"quote\\\":\\\"reads
+        incoming job applications, scores them, and shows HR a ranked shortlist\\\",\\\"question\\\":null},{\\\"text\\\":\\\"The
+        company bought the tool from a vendor and did not change it.\\\",\\\"evidence\\\":\\\"stated\\\",\\\"quote\\\":\\\"We
+        bought it from a vendor and didn't change it.\\\",\\\"question\\\":null},{\\\"text\\\":\\\"Its
+        scores and shortlist rank individual job applicants.\\\",\\\"evidence\\\":\\\"inferred\\\",\\\"quote\\\":null,\\\"question\\\":{\\\"id\\\":\\\"profiling\\\",\\\"text\\\":\\\"Does
+        the tool evaluate or predict things about individual applicants using their
+        personal data?\\\",\\\"about\\\":\\\"high_risk\\\"}}],\\\"says_what_it_decides\\\":true,\\\"says_who_it_affects\\\":true,\\\"questions\\\":[{\\\"id\\\":\\\"ai_system\\\",\\\"text\\\":\\\"Does
+        the tool infer its scores or rankings from inputs, or does it only apply rules
+        people wrote?\\\",\\\"about\\\":\\\"scope\\\"},{\\\"id\\\":\\\"eu_link\\\",\\\"text\\\":\\\"Is
+        the tool placed on the market or used in the EU, or are its outputs used there?\\\",\\\"about\\\":\\\"scope\\\"},{\\\"id\\\":\\\"human_review\\\",\\\"text\\\":\\\"Does
+        a person review the tool\u2019s scores or rankings before they affect recruitment
+        decisions?\\\",\\\"about\\\":\\\"high_risk\\\"},{\\\"id\\\":\\\"changed_purpose\\\",\\\"text\\\":\\\"Is
+        the tool used for a purpose its vendor did not intend?\\\",\\\"about\\\":\\\"role_obligations\\\"},{\\\"id\\\":\\\"own_brand\\\",\\\"text\\\":\\\"Does
+        the company put its own name or trademark on the tool?\\\",\\\"about\\\":\\\"role_obligations\\\"},{\\\"id\\\":\\\"builds_on_gpai\\\",\\\"text\\\":\\\"Is
+        the tool built on a general-purpose AI model from another provider?\\\",\\\"about\\\":\\\"role_obligations\\\"}]}\",
+        \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 2400, \"completion_tokens\":
+        2360, \"total_tokens\": 4760, \"cost\": 0.001324697, \"is_byok\": false, \"prompt_tokens_details\":
+        {\"cached_tokens\": 2397, \"cache_write_tokens\": 0, \"audio_tokens\": 0,
+        \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\": 0.001324697,
+        \"upstream_inference_prompt_cost\": 2.6697e-05, \"upstream_inference_completions_cost\":
+        0.001298}, \"completion_tokens_details\": {\"reasoning_tokens\": 2001, \"image_tokens\":
+        0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
       - application/json

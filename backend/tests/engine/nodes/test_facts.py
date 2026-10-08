@@ -9,7 +9,6 @@ import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
-from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.engine.graph import CheckNode, EngineGraph, EngineNodes, build_graph
 from aiact.engine.nodes import facts
@@ -452,12 +451,6 @@ def engine_settings(openrouter_settings: Settings) -> Settings:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=CannotOverwriteExistingCassetteException,
-    reason="recording pending (E13): the facts prompt and answer schema changed; re-record, "
-    "then drop this mark",
-)
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", list(REPLAY_CASES))
 def test_recorded_facts(case: str, engine_settings: Settings) -> None:
@@ -591,11 +584,6 @@ THIN_REPLAYS: dict[str, tuple[str, Language]] = {
 }
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=CannotOverwriteExistingCassetteException,
-    reason="recording pending (E13): record, then drop this mark",
-)
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", list(THIN_REPLAYS))
 def test_recorded_thin_description_asks_for_a_description(
@@ -647,11 +635,6 @@ def test_the_own_cases_hold_the_three_approved_thin_descriptions() -> None:
     assert all(case.label_citation == () for case in thin.values())
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=CannotOverwriteExistingCassetteException,
-    reason="recording pending (E13): record, then drop this mark",
-)
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", OWN_CASES, ids=lambda case: case.id)
 def test_recorded_own_case_is_flagged_as_its_label_expects(

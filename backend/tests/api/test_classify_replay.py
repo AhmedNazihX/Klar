@@ -80,12 +80,6 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
         )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="facts recording pending (E13): the facts prompt and answer schema changed; re-record "
-    "the worked example, then drop this mark",
-)
 @pytest.mark.vcr
 @pytest.mark.anyio
 async def test_the_worked_example_streams_every_step_then_the_expected_result(
