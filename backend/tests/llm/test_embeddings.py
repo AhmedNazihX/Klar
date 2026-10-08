@@ -92,12 +92,20 @@ def test_the_query_instruction_defaults_to_the_setting() -> None:
     assert configured.query_text("chatbot") == "Instruct: Match the Annex III point\nQuery:chatbot"
 
 
-def test_an_empty_instruction_sends_the_query_as_is() -> None:
+def test_an_empty_instruction_sends_the_query_as_is(monkeypatch: pytest.MonkeyPatch) -> None:
     """For a model that isn't instruction-aware (OpenAI's comparison arm)."""
     client = OpenRouterEmbeddings(
         model=MODEL, provider=PROVIDER, query_instruction="", settings=_settings()
     )
-    assert client.query_text("chatbot for HR") == "chatbot for HR"
+    sent: list[list[str]] = []
+
+    def fake_embed(texts: list[str]) -> list[list[float]]:
+        sent.append(texts)
+        return [[1.0]]
+
+    monkeypatch.setattr(client, "_embed", fake_embed)
+    client.embed_query("chatbot for HR")
+    assert sent == [["chatbot for HR"]]
 
 
 def test_settings_supply_model_provider_and_dimensions() -> None:

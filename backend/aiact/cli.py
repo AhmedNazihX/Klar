@@ -19,6 +19,7 @@ from aiact import db, deps
 from aiact.corpus import embed as corpus_embed_module
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
+from aiact.engine.usage import UsageMeter
 from aiact.eval import (
     academic,
     citation_index,
@@ -436,14 +437,14 @@ def eval_ragas(
     try:
         items = load_qa_items()
         git_sha, is_dirty = runner.current_git_state()
-        embeddings = (
-            embedding_experiment.build_embeddings(embedding_experiment.ARMS[arm])
-            if arm is not None
-            else None
-        )
-        parts = ragas_metrics.build_parts(top_k, embeddings=embeddings)
         options = ragas_metrics.RagasOptions(git_sha, is_dirty, subset, seed, max_cost_usd)
         with records.connect() as connection:
+            embeddings = None
+            if arm is not None:
+                # Checked before any paid call: an arm without vectors would score as bad.
+                embedding_experiment.require_embedded(connection, arm)
+                embeddings = embedding_experiment.build_embeddings(embedding_experiment.ARMS[arm])
+            parts = ragas_metrics.build_parts(top_k, embeddings=embeddings)
             summary = ragas_metrics.run_ragas(
                 items, parts, records.PostgresRunStore(connection), options
             )
@@ -453,6 +454,7 @@ def eval_ragas(
         CalledProcessError,
         LLMConfigError,
         ragas_metrics.RagasNotInstalledError,
+        embedding_experiment.ArmNotEmbeddedError,
         records.DatabaseNotConfiguredError,
     ) as error:
         typer.echo(f"Error: {error}", err=True)
@@ -494,7 +496,12 @@ def eval_embeddings(
         typer.Option(help="Query instruction for the Qwen3 arms [default: the setting]"),
     ] = None,
     max_cost_usd: Annotated[
-        float, typer.Option(min=0.000001, help="Per run: start no new query once this is spent")
+        float,
+        typer.Option(
+            min=0.000001,
+            help="For the whole command: start no new query once this is spent (or a cost is"
+            " unknown)",
+        ),
     ] = embedding_experiment.DEFAULT_MAX_COST_USD,
 ) -> None:
     """Compare embedding arms by model-free context precision and recall on the Annex-matching
@@ -517,21 +524,24 @@ def eval_embeddings(
         with records.connect() as connection:
             for name in arms:
                 embedding_experiment.require_embedded(connection, name)
-            for name in arms:
-                embeddings = embedding_experiment.build_embeddings(
-                    embedding_experiment.ARMS[name], instruction=instruction
+            meter = UsageMeter()  # one cap for every run of the command
+            for name, chosen in ((name, chosen) for name in arms for chosen in sets):
+                summary = embedding_experiment.run_arm(
+                    name,
+                    chosen,
+                    queries[chosen],
+                    embedding_experiment.build_embeddings(
+                        embedding_experiment.ARMS[name], instruction=instruction
+                    ),
+                    records.PostgresRunStore(connection),
+                    options,
+                    meter=meter,
+                    connection=connection,
                 )
-                for chosen in sets:
-                    summary = embedding_experiment.run_arm(
-                        name,
-                        chosen,
-                        queries[chosen],
-                        embeddings,
-                        records.PostgresRunStore(connection),
-                        options,
-                        connection=connection,
-                    )
-                    _echo_arm_summary(summary)
+                _echo_arm_summary(summary)
+                if summary.status is runner.RunStatus.COST_CAP_REACHED:
+                    typer.echo("Stopped: the cost cap is reached or a cost is unknown", err=True)
+                    raise typer.Exit(code=1)
     except (
         CaseFileError,
         FileNotFoundError,

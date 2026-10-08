@@ -40,7 +40,7 @@ from aiact.eval.ragas_metrics import (
 )
 from aiact.eval.runner import RunStatus
 from aiact.llm.ragas_llm import ragas_chat_model, ragas_model
-from aiact.retrieval.search import SearchHit, SearchResults
+from aiact.retrieval.search import FROM_SETTINGS, SearchHit, SearchResults
 from aiact.schemas import DocumentStatus, Language, LawVersion
 from aiact.settings import Settings
 from tests.eval.test_runner import InterruptingStore, MemoryStore
@@ -203,8 +203,10 @@ def test_the_search_retriever_searches_the_question_in_its_language() -> None:
     calls: list[tuple[object, ...]] = []
     hits = (hit("art:5:1:f"),)
 
-    def search(query: str, language: Language, *, limit: int, embedder: object) -> SearchResults:
-        calls.append((query, language, limit))
+    def search(
+        query: str, language: Language, *, limit: int, embedder: object, max_distance: object
+    ) -> SearchResults:
+        calls.append((query, language, limit, max_distance))
         return SearchResults(
             query=query,
             language=language,
@@ -219,10 +221,13 @@ def test_the_search_retriever_searches_the_question_in_its_language() -> None:
     retriever = SearchRetriever(top_k=3, search=search)
     question = item(1).model_copy(update={"language": Language.DE})
     assert retriever(question) == hits
-    assert calls == [(question.question, Language.DE, 3)]
+    assert calls == [(question.question, Language.DE, 3, FROM_SETTINGS)]
     config = retriever.config()
     assert isinstance(config, dict)
     assert (config["search"], config["top_k"]) == ("search_ai_act", 3)
+    # Another embedding arm (X1a) searches without the cut-off calibrated for the default one.
+    SearchRetriever(top_k=3, search=search, is_cut_off=False)(question)
+    assert calls[-1] == (question.question, Language.DE, 3, None)
 
 
 # --- the run -----------------------------------------------------------------------------
