@@ -79,7 +79,7 @@ export function InventoryTable({ rows, label }: InventoryTableProps): JSX.Elemen
                 <th
                   key={heading}
                   scope="col"
-                  className="px-3 pt-5 pb-3 text-caption font-semibold whitespace-nowrap text-slate first:pl-7 last:pr-7"
+                  className="px-3 pt-5 pb-3 text-caption font-semibold whitespace-nowrap text-slate first:pl-6 last:pr-6"
                 >
                   {t(`inventory.table.${heading}`)}
                 </th>
@@ -93,7 +93,7 @@ export function InventoryTable({ rows, label }: InventoryTableProps): JSX.Elemen
                 // The link covers the row, so the row shows its keyboard focus.
                 className="relative border-b border-border-subtle last:border-b-0 hover:bg-white/40 has-[a:focus-visible]:bg-white/40 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:outline-lens-blue"
               >
-                <td className={`${CELL} ${TOOL_CELL} pl-7`}>
+                <td className={`${CELL} ${TOOL_CELL} pl-6`}>
                   <Link
                     to="/app/inventory/$toolId"
                     params={{ toolId: row.toolId }}
@@ -117,7 +117,7 @@ export function InventoryTable({ rows, label }: InventoryTableProps): JSX.Elemen
                 </td>
                 <td className={CELL}>{row.basis}</td>
                 <td className={CELL}>{row.from}</td>
-                <td className={`${CELL} ${PILL_CELL} pr-7`}>
+                <td className={`${CELL} ${PILL_CELL} pr-6`}>
                   <StatusCell row={row} />
                 </td>
               </tr>
