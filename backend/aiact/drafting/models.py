@@ -24,6 +24,17 @@ QuestionKey = Annotated[str, Field(pattern=SLUG_PATTERN)]
 """An interview question's key, as `interview_answers.question_key` stores it."""
 
 
+class DocumentKind(StrEnum):
+    """What a document is, which says how the screen words its interview and lays it out: a
+    skeleton gets the section-by-section layout (artboard `DocSkeleton`)."""
+
+    NOTICE = "notice"
+    RECORD = "record"
+    DISCLOSURE = "disclosure"
+    SKELETON = "skeleton"
+    LETTER = "letter"
+
+
 class Provenance(StrEnum):
     """Where a section's content comes from; the interface shows it as a tag on the section."""
 

@@ -8,6 +8,7 @@ describe('provisionName', () => {
     ['art:26:11', 'Art. 26(11)', 'Art. 26 Abs. 11'],
     ['art:50', 'Art. 50', 'Art. 50'],
     ['art:5:1:c:i', 'Art. 5(1)(c)(i)', 'Art. 5 Abs. 1 Buchst. c Ziff. i'],
+    ['art:16:c', 'Art. 16(c)', 'Art. 16 Buchst. c'],
     ['annex:III:4:a', 'Annex III 4(a)', 'Anhang III Nr. 4 Buchst. a'],
     ['annex:III:2', 'Annex III 2', 'Anhang III Nr. 2'],
     ['annex:I:A:11', 'Annex I Section A point 11', 'Anhang I Abschnitt A Nr. 11'],

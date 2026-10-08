@@ -1,16 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { JSX } from 'react'
-import { useTranslation } from 'react-i18next'
 
-import { ScreenPlaceholder } from '@/components/ScreenPlaceholder'
+import { validateDocumentSearch } from '@/features/documents/document-search'
+import { DocumentsScreen } from '@/features/documents/DocumentsScreen'
 
-// Empty until P8a (artboard `Documents`).
+// Draft documents (P9; artboard `Documents`): the first document of the first tool, or of `tool`.
 export const Route = createFileRoute('/app/documents/')({
-  component: DocumentsScreen,
+  validateSearch: validateDocumentSearch,
+  component: DocumentsRoute,
   staticData: { titleKey: 'screen.documents' },
 })
 
-function DocumentsScreen(): JSX.Element {
-  const { t } = useTranslation()
-  return <ScreenPlaceholder title={t('screen.documents')} />
+function DocumentsRoute(): JSX.Element {
+  const { tool } = Route.useSearch()
+  return <DocumentsScreen toolId={tool} />
 }

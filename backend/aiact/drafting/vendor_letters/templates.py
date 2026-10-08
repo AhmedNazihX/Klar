@@ -9,6 +9,7 @@ claims nothing the result doesn't.
 
 from collections.abc import Mapping
 
+from aiact.drafting.models import DocumentKind
 from aiact.drafting.prefill import Fill
 from aiact.drafting.templates import (
     DE,
@@ -54,6 +55,7 @@ SENDER = InterviewSection(
 PROHIBITED_MESSAGE = DocumentTemplate(
     id="vendor_message_prohibited",
     article="art:5",
+    kind=DocumentKind.LETTER,
     title={
         EN: "Message to the vendor: a prohibited practice",
         DE: "Nachricht an den Anbieter: eine verbotene Praktik",
@@ -111,6 +113,7 @@ check's own-name question is about Art. 3(3) (`DocumentTemplate.article_for`).""
 AMBIGUOUS_REQUEST = DocumentTemplate(
     id="vendor_request_ambiguous",
     article="art:6",
+    kind=DocumentKind.LETTER,
     open_question_articles=OPEN_QUESTION_ARTICLES,
     title={
         EN: "Request to the vendor: a point the law leaves open",

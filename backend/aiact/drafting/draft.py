@@ -2,14 +2,18 @@
 
 No model is involved: a draft holds the result's facts, the user's answers word for word, the
 template's fixed wording and the provisions it quotes, nothing else (INIT > Documentation
-drafting). A result posted by the browser is only checked against the result contract, so a
-draft never takes the Act's text from it: a quote is the template's own (the skeletons'
-requirements) or read from the corpus by the caller and passed in as `quotes` (decision 031).
-The deployer documents (`deployer.py`), the skeletons (`skeletons/`) and the vendor letters
-(`vendor_letters/`) are all drafted here.
+drafting). A skeleton's answers are written up as sentences (`prose.py`). A result posted by the
+browser is only checked against the result contract, so a draft never takes the Act's text from
+it: a quote is the template's own (the skeletons' requirements) or read from the corpus by the
+caller and passed in as `quotes` (decision 031). The deployer documents (`deployer.py`), the
+skeletons (`skeletons/`) and the vendor letters (`vendor_letters/`) are all drafted here.
 """
 
-from collections.abc import Mapping, Sequence
+import logging
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
+
+from pydantic import ValidationError
 
 from aiact.drafting.models import (
     DraftDocument,
@@ -21,7 +25,9 @@ from aiact.drafting.models import (
     unanswered_count,
 )
 from aiact.drafting.prefill import PREFILLS, QUOTING_FILLS
+from aiact.drafting.prose import without_blank, write_up
 from aiact.drafting.templates import (
+    ChoiceSection,
     ClassificationSection,
     DocumentTemplate,
     InterviewSection,
@@ -32,6 +38,8 @@ from aiact.drafting.templates import (
 )
 from aiact.schemas import DISCLAIMER, Citation, ClassificationResult, Language
 
+logger = logging.getLogger(__name__)
+
 Answers = Mapping[str, str]
 """One template's interview answers by question key, as `interview_answers` stores them."""
 
@@ -41,6 +49,35 @@ SMALL_COMPANIES = frozenset({SizeClass.SME, SizeClass.SMC})
 
 class UnknownQuestionError(ValueError):
     """An answer names a question the template doesn't ask."""
+
+
+class UnwritableTextError(ValueError):
+    """A fact or an answer a section can't hold (a blank fact, say). `error` is pydantic's, for
+    logging where it failed; its text quotes the input, so this error's message never does."""
+
+    def __init__(self, error: ValidationError) -> None:
+        super().__init__(f"{error.title} can't hold the text it was given")
+        self.error = error
+
+
+@contextmanager
+def _users_text() -> Iterator[None]:
+    """A section built from the result's facts or the user's answers: the model refusing it is
+    an UnwritableTextError. Only those sections are built inside it, never a model holding the
+    template's or the corpus's text, whose refusal is a bug, raised as it is."""
+    try:
+        yield
+    except ValidationError as exc:
+        raise UnwritableTextError(exc) from None
+
+
+def refuse_unasked(template: DocumentTemplate, answers: Answers) -> None:
+    """Raises UnknownQuestionError when an answer names a question `template` doesn't ask: for a
+    request that posts its own answers (the vendor letter's), where such a key is a mistake
+    rather than a stale stored row."""
+    unknown = sorted(set(answers) - {question.key for question in template.questions})
+    if unknown:
+        raise UnknownQuestionError(f"{template.id} asks no question {unknown}")
 
 
 def draft_document(
@@ -54,13 +91,11 @@ def draft_document(
     """One document: its sections in the template's order, each pre-filled, answered or fixed.
     `size_class` is the company profile's (None without a profile); it decides the template's
     small-company note. `quotes` are the provisions the quoting pre-filled sections
-    (`QUOTING_FILLS`) quote, read from the corpus in `language`. Raises UnknownQuestionError for
-    an answer to a question the template doesn't ask, and DutyDateError when the result lists
-    the document's duty with several dates."""
-    asked = {question.key for question in template.questions}
-    unknown = sorted(set(answers) - asked)
-    if unknown:
-        raise UnknownQuestionError(f"{template.id} asks no question {unknown}")
+    (`QUOTING_FILLS`) quote, read from the corpus in `language`. An answer to a question the
+    template doesn't ask (a stale row, say) is left out and logged, so it never blocks the
+    draft. Raises DutyDateError when the result lists the document's duty with several dates,
+    and UnwritableTextError when a fact or an answer is one no section can hold."""
+    answers = _asked_answers(template, answers)
     article = template.article_for(result)
     sections = tuple(
         _section(spec, result, answers, language, article, quotes) for spec in template.sections
@@ -68,7 +103,7 @@ def draft_document(
     unanswered = unanswered_count(sections)
     return DraftDocument(
         template=template.id,
-        title=template.title[language],
+        title=template.title_for(answers, language),
         article=article,
         language=language,
         note=small_company_note(template, size_class, language),
@@ -79,6 +114,20 @@ def draft_document(
         as_of=result.as_of,
         disclaimer=DISCLAIMER[language],
     )
+
+
+def _asked_answers(template: DocumentTemplate, answers: Answers) -> Answers:
+    """The answers to the questions `template` asks. The others are logged by count only: their
+    keys and texts are the user's."""
+    asked = {question.key for question in template.questions}
+    kept = {key: answer for key, answer in answers.items() if key in asked}
+    if len(kept) < len(answers):
+        logger.warning(
+            "%s: left out %d answers to questions it doesn't ask",
+            template.id,
+            len(answers) - len(kept),
+        )
+    return kept
 
 
 def small_company_note(
@@ -92,13 +141,17 @@ def small_company_note(
 
 
 def supplied_section(
-    spec: TemplateSection | InterviewSection | RequirementSection,
+    spec: TemplateSection | InterviewSection | ChoiceSection | RequirementSection,
     answers: Answers,
     language: Language,
 ) -> DraftSection:
-    """The section the template or the user supplies: the fixed wording, or each answer as given
-    (without surrounding blank space) in the order asked, with the questions still unanswered
-    or answered blank, and the requirement it quotes."""
+    """The section the template or the user supplies: the fixed wording, the template's wording
+    for the choice picked, or each answer in the order asked, with the questions still
+    unanswered or answered blank, and the requirement it quotes. A notice's answers are written
+    in as given (without surrounding blank space); a skeleton's are written up as sentences
+    (`write_up`)."""
+    if isinstance(spec, ChoiceSection):
+        return _chosen_section(spec, answers, language)
     if isinstance(spec, TemplateSection):
         return DraftSection(
             key=spec.key,
@@ -107,21 +160,41 @@ def supplied_section(
             paragraphs=(spec.text[language],),
             status=SectionStatus.DRAFTED,
         )
+    is_requirement = isinstance(spec, RequirementSection)
+    written = write_up if is_requirement else without_blank
     given = [
-        (question.key, answers.get(question.key, "").strip())
+        (question.key, written(answers.get(question.key, "")))
         for question in section_questions(spec)
     ]
     unanswered = tuple(key for key, answer in given if not answer)
-    is_requirement = isinstance(spec, RequirementSection)
+    requirement = spec.requirement.citation(language) if is_requirement else None
+    # The heading is the template's, built in here too: a fixed non-blank literal, so a refusal
+    # here comes from the answers.
+    with _users_text():
+        return DraftSection(
+            key=spec.key,
+            heading=spec.heading[language],
+            provenance=spec.provenance,
+            paragraphs=tuple(answer for _, answer in given if answer),
+            question_keys=tuple(key for key, _ in given),
+            unanswered=unanswered,
+            status=_waiting_status(spec) if unanswered else SectionStatus.DRAFTED,
+            requirement=requirement,
+        )
+
+
+def _chosen_section(spec: ChoiceSection, answers: Answers, language: Language) -> DraftSection:
+    """The template's wording for the choice picked; "To fill in" while none is (an answer that
+    names no choice, from a stale row say, counts as none)."""
+    chosen = spec.chosen(answers.get(spec.question_key, ""))
     return DraftSection(
         key=spec.key,
         heading=spec.heading[language],
         provenance=spec.provenance,
-        paragraphs=tuple(answer for _, answer in given if answer),
-        question_keys=tuple(key for key, _ in given),
-        unanswered=unanswered,
-        status=_waiting_status(spec) if unanswered else SectionStatus.DRAFTED,
-        requirement=spec.requirement.citation(language) if is_requirement else None,
+        paragraphs=(chosen.text[language],) if chosen else (),
+        question_keys=(spec.question_key,),
+        unanswered=() if chosen else (spec.question_key,),
+        status=SectionStatus.DRAFTED if chosen else SectionStatus.QUESTIONS,
     )
 
 
@@ -157,11 +230,14 @@ def prefilled_section(
         provenance = spec.provenance
     else:
         provenance, paragraphs = Provenance.TEMPLATE, (spec.empty[language],)
-    return DraftSection(
-        key=spec.key,
-        heading=spec.heading[language],
-        provenance=provenance,
-        paragraphs=paragraphs,
-        status=SectionStatus.DRAFTED,
-        quotes=tuple(quotes) if spec.fill in QUOTING_FILLS else (),
-    )
+    # The heading and `empty` line are the template's, built in here too: fixed non-blank
+    # literals, so a refusal here comes from the result's facts.
+    with _users_text():
+        return DraftSection(
+            key=spec.key,
+            heading=spec.heading[language],
+            provenance=provenance,
+            paragraphs=paragraphs,
+            status=SectionStatus.DRAFTED,
+            quotes=tuple(quotes) if spec.fill in QUOTING_FILLS else (),
+        )

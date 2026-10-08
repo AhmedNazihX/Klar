@@ -73,11 +73,11 @@ export function ResultHeader({
   )
 }
 
-/** "Draft documents": the documents a result leads to (P8a, P9). */
-export function DraftDocumentsLink(): JSX.Element {
+/** "Draft documents": the documents a result leads to (P8a, P9), opened for its tool. */
+export function DraftDocumentsLink({ toolId }: { toolId: string }): JSX.Element {
   const { t } = useTranslation()
   return (
-    <Link to="/app/documents" className={buttonVariants()}>
+    <Link to="/app/documents" search={{ tool: toolId }} className={buttonVariants()}>
       {t('result.draftDocuments')}
     </Link>
   )

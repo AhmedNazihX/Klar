@@ -2,8 +2,9 @@
 (INIT > Documentation drafting), in English and German.
 
 Each template lists its required sections in order. A section is pre-filled from the result
-(`prefill.py`), filled with the user's interview answers word for word, or the template's own
-fixed wording, which states only the duty the document answers. Nothing else enters a draft.
+(`prefill.py`), filled with the user's interview answers word for word, the template's wording
+for the choice the user picks (`ChoiceSection`), or the template's own fixed wording, which
+states only the duty the document answers. Nothing else enters a draft.
 The provider document skeletons are in `skeletons/` (P8b).
 """
 
@@ -11,8 +12,9 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from aiact.drafting.models import Provenance, SectionStatus
+from aiact.drafting.models import DocumentKind, Provenance, SectionStatus
 from aiact.drafting.prefill import Fill
+from aiact.drafting.prose import without_blank
 from aiact.schemas import (
     LAW_TEXTS,
     Citation,
@@ -30,11 +32,25 @@ Texts = Mapping[Language, str]
 
 
 @dataclass(frozen=True)
+class Choice:
+    """One answer a choice question offers: stored as `key`, shown as `label`, and drafted as the
+    template's own `text`. `title`, when set, is the document's title once it is picked, so the
+    title names only what applies too."""
+
+    key: str
+    label: Texts
+    text: Texts
+    title: Texts | None = None
+
+
+@dataclass(frozen=True)
 class Question:
-    """One interview question, stored under `key` in `interview_answers.question_key`."""
+    """One interview question, stored under `key` in `interview_answers.question_key`. A choice
+    question offers `choices`, and its answer is one of their keys."""
 
     key: str
     text: Texts
+    choices: tuple[Choice, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -56,6 +72,31 @@ class InterviewSection:
     question_key: str
     question: Texts
     provenance: Provenance = Provenance.INTERVIEW
+
+
+@dataclass(frozen=True)
+class ChoiceSection:
+    """Filled with the template's wording for the choice the user picks (`choices`), so a notice
+    names only what applies; "To fill in" until one of them is picked. An interview section, as
+    the user's answer decides it, but its words are the template's: an answer is only a
+    choice's key."""
+
+    key: str
+    heading: Texts
+    question_key: str
+    question: Texts
+    choices: tuple[Choice, ...]
+    provenance: Provenance = Provenance.INTERVIEW
+
+    def __post_init__(self) -> None:
+        if len(self.choices) < 2:
+            raise ValueError(f"section {self.key!r} needs at least two choices")
+
+    def chosen(self, answer: str) -> Choice | None:
+        """The choice `answer` names, or None for no answer or one that names none."""
+        return next(
+            (choice for choice in self.choices if choice.key == without_blank(answer)), None
+        )
 
 
 @dataclass(frozen=True)
@@ -119,13 +160,17 @@ class RequirementSection:
             raise ValueError(f"section {self.key!r} can't wait for nothing")
 
 
-SectionSpec = TemplateSection | InterviewSection | ClassificationSection | RequirementSection
+SectionSpec = (
+    TemplateSection | InterviewSection | ChoiceSection | ClassificationSection | RequirementSection
+)
 
 
 def section_questions(spec: SectionSpec) -> tuple[Question, ...]:
     """The questions whose answers fill `spec`, in order; none for a pre-filled or fixed one."""
     if isinstance(spec, InterviewSection):
         return (Question(spec.question_key, spec.question),)
+    if isinstance(spec, ChoiceSection):
+        return (Question(spec.question_key, spec.question, spec.choices),)
     if isinstance(spec, RequirementSection):
         return spec.questions
     return ()
@@ -142,10 +187,21 @@ class DocumentTemplate:
 
     id: str
     article: str
+    kind: DocumentKind
     title: Texts
     sections: tuple[SectionSpec, ...]
     small_company_note: Texts | None = None
     open_question_articles: Mapping[StepName, str] | None = None
+
+    def title_for(self, answers: Mapping[str, str], language: Language) -> str:
+        """The title in `language`: the one the choice picked gives (`Choice.title`), else the
+        template's."""
+        for spec in self.sections:
+            if isinstance(spec, ChoiceSection):
+                chosen = spec.chosen(answers.get(spec.question_key, ""))
+                if chosen is not None and chosen.title is not None:
+                    return chosen.title[language]
+        return self.title[language]
 
     @property
     def questions(self) -> tuple[Question, ...]:
@@ -225,6 +281,7 @@ PLACEMENT = InterviewSection(
 OVERSIGHT_RECORD = DocumentTemplate(
     id="art_26_2_oversight",
     article="art:26:2",
+    kind=DocumentKind.RECORD,
     title={EN: "Human oversight record", DE: "Nachweis der menschlichen Aufsicht"},
     sections=(
         _system({EN: "The system", DE: "Das System"}),
@@ -280,6 +337,7 @@ OVERSIGHT_RECORD = DocumentTemplate(
 WORKERS_NOTICE = DocumentTemplate(
     id="art_26_7_workers",
     article="art:26:7",
+    kind=DocumentKind.NOTICE,
     title={EN: "Notice to workers' representatives", DE: "Information der Arbeitnehmervertreter"},
     sections=(
         _system({EN: "What we plan to use", DE: "Was wir einsetzen wollen"}),
@@ -326,6 +384,7 @@ WORKERS_NOTICE = DocumentTemplate(
 AFFECTED_NOTICE = DocumentTemplate(
     id="art_26_11_affected",
     article="art:26:11",
+    kind=DocumentKind.NOTICE,
     title={EN: "Notice to the people affected", DE: "Information der betroffenen Personen"},
     sections=(
         _system({EN: "What we use", DE: "Was wir einsetzen"}),
@@ -370,21 +429,63 @@ AFFECTED_NOTICE = DocumentTemplate(
 EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
     id="art_50_3_disclosure",
     article="art:50:3",
+    kind=DocumentKind.DISCLOSURE,
     title={
         EN: "Disclosure: emotion recognition or biometric categorisation",
         DE: "Hinweis: Emotionserkennung oder biometrische Kategorisierung",
     },
     sections=(
         DUTY,
-        TemplateSection(
+        ChoiceSection(
             "notice",
             NOTICE,
+            "recognises",
             {
-                EN: "An AI system for emotion recognition or biometric categorisation is in "
-                "operation here.",
-                DE: "Hier ist ein KI-System zur Emotionserkennung oder biometrischen "
-                "Kategorisierung in Betrieb.",
+                EN: "Does the system recognise emotions, sort people into categories from "
+                "biometric data, or both?",
+                DE: "Erkennt das System Emotionen, ordnet es Personen anhand biometrischer Daten "
+                "Kategorien zu oder beides?",
             },
+            (
+                Choice(
+                    "emotion_recognition",
+                    {EN: "It recognises emotions", DE: "Es erkennt Emotionen"},
+                    {
+                        EN: "An AI system for emotion recognition is in operation here.",
+                        DE: "Hier ist ein KI-System zur Emotionserkennung in Betrieb.",
+                    },
+                    {EN: "Disclosure: emotion recognition", DE: "Hinweis: Emotionserkennung"},
+                ),
+                Choice(
+                    "biometric_categorisation",
+                    {
+                        EN: "It sorts people into categories from biometric data",
+                        DE: "Es ordnet Personen anhand biometrischer Daten Kategorien zu",
+                    },
+                    {
+                        EN: "An AI system for biometric categorisation is in operation here.",
+                        DE: "Hier ist ein KI-System zur biometrischen Kategorisierung in Betrieb.",
+                    },
+                    {
+                        EN: "Disclosure: biometric categorisation",
+                        DE: "Hinweis: biometrische Kategorisierung",
+                    },
+                ),
+                Choice(
+                    "both",
+                    {EN: "Both", DE: "Beides"},
+                    {
+                        EN: "An AI system for emotion recognition and biometric categorisation "
+                        "is in operation here.",
+                        DE: "Hier ist ein KI-System zur Emotionserkennung und biometrischen "
+                        "Kategorisierung in Betrieb.",
+                    },
+                    {
+                        EN: "Disclosure: emotion recognition and biometric categorisation",
+                        DE: "Hinweis: Emotionserkennung und biometrische Kategorisierung",
+                    },
+                ),
+            ),
         ),
         TemplateSection(
             "why",
@@ -416,6 +517,7 @@ EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
 GENERATED_CONTENT_DISCLOSURE = DocumentTemplate(
     id="art_50_4_disclosure",
     article="art:50:4",
+    kind=DocumentKind.DISCLOSURE,
     title={
         EN: "Disclosure: AI-generated or manipulated content",
         DE: "Hinweis: KI-erzeugte oder manipulierte Inhalte",

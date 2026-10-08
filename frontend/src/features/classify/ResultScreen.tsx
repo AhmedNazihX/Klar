@@ -54,7 +54,7 @@ function SummaryView({
             <Button variant="ghost" onClick={editDescription}>
               {t('result.editDescription')}
             </Button>
-            <DraftDocumentsLink />
+            <DraftDocumentsLink toolId={run.toolId} />
           </>
         }
       />
@@ -65,7 +65,7 @@ function SummaryView({
         {result.risk_class === 'out_of_scope' ? (
           <OutOfScopePanel result={result} />
         ) : (
-          <DutiesPanel result={result} />
+          <DutiesPanel result={result} toolId={run.toolId} />
         )}
         <FactsPanel result={result} onChange={editDescription} />
       </div>
