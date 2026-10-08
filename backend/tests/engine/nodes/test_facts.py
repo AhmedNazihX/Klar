@@ -635,6 +635,18 @@ def test_the_own_cases_cover_every_check_category_in_both_languages() -> None:
     assert {case.language for case in described} == {Language.EN, Language.DE}
 
 
+def test_the_own_cases_hold_the_three_approved_thin_descriptions() -> None:
+    thin = {case.id: case for case in OWN_CASES if expects_description(case)}
+    assert sorted(thin) == [
+        "own-t-01-ai-for-hr",
+        "own-t-02-sales-team-ai-tool",
+        "own-t-03-ki-im-kundenservice",
+    ]
+    assert [case.language for case in thin.values()] == [Language.EN, Language.EN, Language.DE]
+    assert all("thin-description" in case.tags for case in thin.values())
+    assert all(case.label_citation == () for case in thin.values())
+
+
 @pytest.mark.xfail(
     strict=True,
     raises=CannotOverwriteExistingCassetteException,

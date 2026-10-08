@@ -1,0 +1,17 @@
+id: own-t-02-sales-team-ai-tool
+set_name: own
+language: en
+description: >-
+  We're a 60-person office furniture wholesaler in Lyon. Since last spring our sales team has used
+  an AI tool from a start-up, and everyone says it saves them a lot of time.
+label:
+  risk_class: null
+  status: needs_more_information
+notes: >-
+  Too thin to start (E13, decision 032). The description gives the company, its size and sector,
+  and that the tool was bought from a start-up, but not what the tool does or decides (drafting
+  emails, scoring leads, setting prices, chatting with customers) or whom it affects (the sales
+  staff, the customers). Without that no class can be given, so the engine should ask the three
+  description questions and predict no class. Label approved by user 2026-10-09.
+tags:
+  - "thin-description"

@@ -1,0 +1,18 @@
+id: own-t-03-ki-im-kundenservice
+set_name: own
+language: de
+description: >-
+  Wir sind ein Stadtwerk mit 250 Beschäftigten. Seit diesem Jahr setzen wir im Kundenservice KI
+  ein.
+label:
+  risk_class: null
+  status: needs_more_information
+notes: >-
+  Too thin to start (E13, decision 032). The description gives the company (a municipal utility,
+  250 staff) and the area (customer service), which hints at customers but doesn't say how the
+  tool touches them. It doesn't say what the tool does or decides (a chatbot answering questions,
+  routing or summarising requests, deciding on payment plans) or whether it was bought or built.
+  Without that no class can be given, so the engine should ask the three description questions
+  and predict no class. Label approved by user 2026-10-09.
+tags:
+  - "thin-description"

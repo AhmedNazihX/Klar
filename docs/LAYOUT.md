@@ -173,6 +173,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── commission_b/            <area>/<NNN>-<slug>.yaml: one rewrite per Pile B example, by Annex area
 │   │   │                            (annex_i, annex_iii_1 … annex_iii_8), NNN its hr-ex number (B4)
 │   │   ├── own/<category>/          (B5a–e)
+│   │   ├── own/thin/                thin-description cases (own-t-*): no class, needs_more_information (E13, decision 032)
 │   │   ├── soft_pairs/              (B6)
 │   │   ├── qa/                      (B7)
 │   │   ├── consistency/             (B8)

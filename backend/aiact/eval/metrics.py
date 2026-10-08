@@ -14,10 +14,10 @@ Scoring rules decided here:
   (`needs_info_on_ambiguous`). It leaves risk-class accuracy and both uncertain-outcome
   precision/recall pairs. For appliedAI this is `score_appliedai`'s `is_counted_separately`.
 - Every other label is scored on the result's working-assumption class, whatever its status.
-- Needs a description (E13; the rule proposed in decision 032, pending the user's agreement): a
-  result with no class (the run ended before the checks) is scored in two rows of its own. A
-  thin-description case (its label expects no class) is a hit there when the result asks for a
-  description (`description_asked`), and leaves risk-class accuracy. Any other case answered
+- Needs a description (E13; decision 032, option A): a result with no class (the run ended
+  before the checks) is scored in two rows of its own. A thin-description case (its label
+  expects no class) is a hit there when the result asks for a description
+  (`description_asked`), and leaves risk-class accuracy. Any other case answered
   with no class counts in the false-flag row (`description_asked_wrongly`), stays a miss in
   risk-class and role accuracy, and leaves false-low-risk and the downgrade rate: no class was
   shown, so none was shown too low. Its status (`needs_more_information`) counts in that
