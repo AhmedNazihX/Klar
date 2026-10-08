@@ -6,8 +6,10 @@ import { Button } from '@/components/Button'
 import { RiskPill } from '@/components/RiskPill'
 import { StatusPill } from '@/components/StatusPill'
 import { useLanguage } from '@/hooks/use-language'
+import type { OriginalRun } from '@/hooks/use-original-run'
 
 import type { ClassificationRun } from './classification-store'
+import { LawComparison } from './LawComparison'
 import { provisionName } from './provision-names'
 import { ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
@@ -49,13 +51,23 @@ function ResultPills({ result }: { result: ClassificationResult }): JSX.Element 
 /**
  * The reviewer view (artboard `Reviewer`): every step expanded, in the Act's order, with its
  * decision, the facts it rests on with their evidence tags, and the quoted provisions. The step
- * that decided a High-risk result is highlighted. VersionDiff (P10) and the thread (P7) join it.
+ * that decided a High-risk result is highlighted. Beside the steps, "Original Act vs amended"
+ * (VersionDiff, P10); the thread (P7) joins it.
  */
 export function ReviewerView({
   run,
+  original,
+  shouldFocusComparison = false,
+  onComparisonFocused,
   onViewChange,
 }: {
   run: ClassificationRun
+  /** The original-text run the comparison shows (the result screen owns it). */
+  original: OriginalRun
+  /** Whether the comparison takes the focus as the view opens. */
+  shouldFocusComparison?: boolean
+  /** Called once the comparison has taken that focus. */
+  onComparisonFocused?: () => void
   onViewChange: (view: ResultView) => void
 }): JSX.Element {
   const { t } = useTranslation()
@@ -81,23 +93,41 @@ export function ReviewerView({
         }
       />
       <ResultPills result={result} />
-      {SUMMARY_ROWS.map((id) => {
-        if (id === 'facts') return <FactsStepCard key={id} result={result} headingLevel={2} />
-        if (id === 'duties') return <DutiesStepCard key={id} result={result} headingLevel={2} />
-        const step = result.steps.find((candidate) => candidate.step === id)
-        if (!step) return null
-        const name = id === 'role_obligations' ? t('result.steps.role') : t(`progress.check.${id}`)
-        return (
-          <EngineStepCard
-            key={id}
-            name={name}
-            step={step}
-            result={result}
-            headingLevel={2}
-            highlight={deciding === id}
-          />
-        )
-      })}
+      <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
+        <div className="flex min-w-0 flex-1 flex-col gap-5">
+          {SUMMARY_ROWS.map((id) => {
+            if (id === 'facts') return <FactsStepCard key={id} result={result} headingLevel={2} />
+            if (id === 'duties')
+              return <DutiesStepCard key={id} result={result} headingLevel={2} hasOriginalNote />
+            const step = result.steps.find((candidate) => candidate.step === id)
+            if (!step) return null
+            const name =
+              id === 'role_obligations' ? t('result.steps.role') : t(`progress.check.${id}`)
+            return (
+              <EngineStepCard
+                key={id}
+                name={name}
+                step={step}
+                result={result}
+                headingLevel={2}
+                highlight={deciding === id}
+              />
+            )
+          })}
+        </div>
+        {/* The comparison needs the amended result as its one side: a result run under the
+            original text has nothing to compare against. */}
+        {result.law_version === 'amended' && (
+          <div className="flex min-w-0 flex-col gap-4 xl:w-[380px] xl:shrink-0">
+            <LawComparison
+              run={run}
+              original={original}
+              shouldTakeFocus={shouldFocusComparison}
+              onFocused={onComparisonFocused}
+            />
+          </div>
+        )}
+      </div>
       <ResultNotice result={result} isStored={run.isStored} />
     </>
   )

@@ -15,7 +15,7 @@ import type { Status as PillStatus } from '@/components/pill-kinds'
 import type { Language } from '@/i18n'
 import type en from '@/i18n/locales/en.json'
 
-import { ORIGINAL_ROUTE_DATES, routeOfPoint } from './dates'
+import { routeDates, routeOfPoint } from './dates'
 import { annexPointKey, isLawProvision, provisionName } from './provision-names'
 
 /** The summary and reviewer's step rows, in the Act's order: Facts, Role, the four checks, Duties. */
@@ -115,18 +115,26 @@ export function amendedRouteDate(
   return duty?.applies_from ?? null
 }
 
+/** The date Art. 111(2) moved a high-risk result's route duties to (2 August 2030, a system for
+ *  public authorities), the same under either text; null when no route duty was moved. */
+export function publicAuthorityLegacyDate(result: ClassificationResult): string | null {
+  const route = routeOfPoint(result.annex_point)
+  if (route === null || result.risk_class !== 'high_risk') return null
+  if (amendedRouteDate(result, route) !== null) return null
+  const moved = (result.obligations ?? []).find(
+    (obligation) =>
+      obligation.high_risk_route === route && obligation.legacy === 'legacy_public_authority',
+  )
+  return moved?.applies_from ?? null
+}
+
 export function dutiesDate(result: ClassificationResult): DutiesDate | null {
   const route = routeOfPoint(result.annex_point)
   if (route && result.risk_class === 'high_risk') {
     const amended = amendedRouteDate(result, route)
-    if (amended) return { kind: 'route', amended, original: ORIGINAL_ROUTE_DATES[route] }
-    // Art. 111(2) moved every route duty to 2 August 2030 (a system for public authorities):
-    // that is when the high-risk duties apply, under either text.
-    const moved = (result.obligations ?? []).find(
-      (obligation) =>
-        obligation.high_risk_route === route && obligation.legacy === 'legacy_public_authority',
-    )
-    if (moved) return { kind: 'fixed', date: moved.applies_from }
+    if (amended) return { kind: 'route', ...routeDates(route, amended) }
+    const moved = publicAuthorityLegacyDate(result)
+    if (moved !== null) return { kind: 'fixed', date: moved }
   }
   const dates = (result.obligations ?? [])
     .filter((obligation) => !obligation.is_informational)

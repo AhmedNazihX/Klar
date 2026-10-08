@@ -1,16 +1,18 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import type { JSX } from 'react'
+import { useCallback, useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/Button'
 import { buttonVariants } from '@/components/button-variants'
 import { GlassPanel } from '@/components/GlassPanel'
 import { ScreenTitle } from '@/components/ScreenTitle'
+import { useOriginalRun } from '@/hooks/use-original-run'
 
 import { saveDraft, type ClassificationRun } from './classification-store'
 import { DecidingQuestion } from './DecidingQuestion'
 import { DutiesPanel, OutOfScopePanel } from './DutiesPanel'
 import { FactsPanel } from './FactsPanel'
+import { OriginalTextNote } from './OriginalTextNote'
 import { DraftDocumentsLink, ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
 import { ResultVerdict } from './ResultVerdict'
@@ -24,9 +26,12 @@ import { StepsPanel } from './StepsPanel'
 function SummaryView({
   run,
   onViewChange,
+  onCompare,
 }: {
   run: ClassificationRun
   onViewChange: (view: ResultView) => void
+  /** Opens "Original Act vs amended" in the reviewer view. */
+  onCompare: () => void
 }): JSX.Element {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -54,6 +59,7 @@ function SummaryView({
         }
       />
       <ResultVerdict result={result} today={new Date()} />
+      <OriginalTextNote run={run} onCompare={onCompare} />
       {question && <DecidingQuestion question={question.missing_fact} />}
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         {result.risk_class === 'out_of_scope' ? (
@@ -108,7 +114,9 @@ export function ResultNotFound(): JSX.Element {
   )
 }
 
-/** One tool's result, as the summary or the reviewer view. */
+/** One tool's result, as the summary or the reviewer view. The original-text run lives here, above
+ *  the view switch, so a run started in the reviewer view goes on (and keeps its answer) while the
+ *  user reads the summary. */
 export function ResultScreen({
   run,
   view,
@@ -118,14 +126,42 @@ export function ResultScreen({
   view: ResultView
   onViewChange: (view: ResultView) => void
 }): JSX.Element {
+  const original = useOriginalRun(run)
+  // Set only by the summary's "Compare the two texts", so the comparison then takes the focus.
+  const [shouldFocusComparison, setShouldFocusComparison] = useState(false)
+
+  // Once the comparison has the focus the request is spent: a later arrival in the reviewer view
+  // (browser back or forward, the view switch) doesn't pull the focus again.
+  const dropFocusRequest = useCallback(() => {
+    setShouldFocusComparison(false)
+  }, [])
+
+  function changeView(next: ResultView): void {
+    setShouldFocusComparison(false)
+    onViewChange(next)
+  }
+
   // A fragment, so the note and the view's panels stay the screen's direct children (load motion).
   return (
     <>
       {run.saveFailure && <NotSavedNote failure={run.saveFailure} />}
       {view === 'reviewer' ? (
-        <ReviewerView run={run} onViewChange={onViewChange} />
+        <ReviewerView
+          run={run}
+          original={original}
+          shouldFocusComparison={shouldFocusComparison}
+          onComparisonFocused={dropFocusRequest}
+          onViewChange={changeView}
+        />
       ) : (
-        <SummaryView run={run} onViewChange={onViewChange} />
+        <SummaryView
+          run={run}
+          onViewChange={changeView}
+          onCompare={() => {
+            setShouldFocusComparison(true)
+            onViewChange('reviewer')
+          }}
+        />
       )}
     </>
   )

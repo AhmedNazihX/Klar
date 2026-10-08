@@ -45,6 +45,13 @@ export function holdsAnonymousSession(queryClient: QueryClient): boolean {
   return state?.data !== undefined && !state.isInvalidated
 }
 
+/** The user id of the session this tab holds, or null when it holds none (not started, or ended).
+ *  A run that outlives the session it started under compares this before it keeps its answer. */
+export function heldSessionId(queryClient: QueryClient): string | null {
+  if (!holdsAnonymousSession(queryClient)) return null
+  return queryClient.getQueryData<string>(anonymousSessionKey) ?? null
+}
+
 /**
  * Marks this tab's session as ended without starting a new one. Nothing signs in until a read or
  * write needs the session again (withAnonymousSession, or a screen mounting

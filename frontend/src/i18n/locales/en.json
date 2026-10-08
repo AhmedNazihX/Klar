@@ -612,7 +612,9 @@
       "draftDisclosure": "Draft disclosure",
       "draftDocument": "Draft document",
       "onlyIf": "Only if: {{condition}}",
-      "forInformation": "For information"
+      "forInformation": "For information",
+      "notModelled": "Duties not modelled for the original text: Klar's duty lists cover only the amended text, so none are listed.",
+      "originalDates": "Dates follow the original Art. 113. The duties shown are the amended text's."
     },
     "outOfScope": {
       "heading": "Why the AI Act doesn't apply",
@@ -684,6 +686,13 @@
     "stored": {
       "notice": "Saved result. Klar doesn't re-check saved results, so read it as guidance, not a verified record.",
       "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+    },
+    "original": {
+      "notChecked": "This page shows the class under the amended text. To see the class under the original 2024 text, compare the two texts.",
+      "differs": "Under the original 2024 text, Klar finds: {{riskClass}}. This page shows the amended text's result.",
+      "otherBasis": "Under the original 2024 text, the class is the same ({{riskClass}}), on another basis: {{basis}}.",
+      "same": "Under the original 2024 text, the class is the same: {{riskClass}}.",
+      "compare": "Compare the two texts"
     }
   },
   "annexPoint": {
@@ -776,5 +785,41 @@
       "unchecked": "Not checked yet",
       "unreadable": "Saved result can't be read"
     }
+  },
+  "diff": {
+    "heading": "Original Act vs amended",
+    "original": "Original",
+    "amended": "Amended",
+    "row": {
+      "class": "Class",
+      "basis": "Basis",
+      "role": "Role",
+      "dutiesFrom": "Duties from"
+    },
+    "assumedClass": "{{riskClass}}, assumed",
+    "noValue": "–",
+    "notChecked": "Not checked yet",
+    "note": {
+      "changed": "The values in blue changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.",
+      "unchanged": "Nothing in this table changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.",
+      "classSame": "The class didn't.",
+      "dateChanged": "The date in blue changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.",
+      "notChecked": "Klar hasn't checked the class and role under the original text yet."
+    },
+    "steps": {
+      "heading": "Steps that changed",
+      "none": "No step's outcome differs between the two texts.",
+      "change": "Original: {{original}}. Amended: {{amended}}.",
+      "why": "Changed by the Omnibus: {{provisions}}",
+      "withPoint": "{{outcome}} ({{point}})"
+    },
+    "check": {
+      "hint": "Klar can run the checks again on the same description under the original 2024 text. That result isn't saved to your inventory.",
+      "start": "Check under the original text",
+      "running": "Checking under the original text…",
+      "retry": "Try again",
+      "stopped": "The check under the original text stopped. {{reason}}"
+    },
+    "dutiesNotModelled": "Duties under the original text aren't modelled: Klar's duty lists follow the amended text only."
   }
 }
