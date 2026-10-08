@@ -17,7 +17,7 @@ from aiact.drafting.documents import (
     templates_for,
 )
 from aiact.drafting.registry import TEMPLATES
-from aiact.schemas import Citation, Language, LawVersion
+from aiact.schemas import Citation, ClassificationResult, Language, LawVersion
 from tests.drafting.builders import (
     WORKERS,
     WORKERS_ANSWERS,
@@ -171,10 +171,84 @@ def test_a_choice_question_lists_its_choices_in_the_drafts_language() -> None:
     (asked, *_) = interview(TEMPLATES["art_50_3_disclosure"], DE)
     assert (asked.key, asked.section) == ("recognises", "notice")
     assert asked.choices == (
-        InterviewChoice(key="emotion_recognition", label="Es erkennt Emotionen"),
+        InterviewChoice(
+            key="emotion_recognition",
+            label="Es erkennt Emotionen",
+            title="Hinweis: Emotionserkennung",
+        ),
         InterviewChoice(
             key="biometric_categorisation",
             label="Es ordnet Personen anhand biometrischer Daten Kategorien zu",
+            title="Hinweis: biometrische Kategorisierung",
         ),
-        InterviewChoice(key="both", label="Beides"),
+        InterviewChoice(
+            key="both",
+            label="Beides",
+            title="Hinweis: Emotionserkennung und biometrische Kategorisierung",
+        ),
     )
+
+
+EMOTION_BIOMETRIC = "art_50_3_disclosure"
+
+
+@pytest.mark.parametrize(
+    ("choice", "language", "title"),
+    [
+        ("", EN, "Disclosure: emotion recognition or biometric categorisation"),
+        ("emotion_recognition", EN, "Disclosure: emotion recognition"),
+        ("biometric_categorisation", EN, "Disclosure: biometric categorisation"),
+        ("both", EN, "Disclosure: emotion recognition and biometric categorisation"),
+        ("", DE, "Hinweis: Emotionserkennung oder biometrische Kategorisierung"),
+        ("emotion_recognition", DE, "Hinweis: Emotionserkennung"),
+        ("biometric_categorisation", DE, "Hinweis: biometrische Kategorisierung"),
+        ("both", DE, "Hinweis: Emotionserkennung und biometrische Kategorisierung"),
+    ],
+)
+def test_the_art_50_3_title_names_only_the_choice_picked(
+    choice: str, language: Language, title: str
+) -> None:
+    result = limited_risk_result("art:50:3")
+    answers = {"recognises": choice} if choice else {}
+    draft = checked_draft(EMOTION_BIOMETRIC, result, answers, language, None, no_corpus)
+    assert draft.document.title == title
+    assert all(check.passed for check in draft.checks), "the title is the template's own"
+
+
+@pytest.mark.parametrize(
+    ("result", "kinds"),
+    [
+        (
+            fria_deployer_result(),
+            {
+                "art_26_2_oversight": "record",
+                "art_26_7_workers": "notice",
+                "art_26_11_affected": "notice",
+                "art_27_fria": "skeleton",
+            },
+        ),
+        (
+            provider_result(),
+            {
+                ANNEX_IV: "skeleton",
+                "art_17_quality_management": "skeleton",
+                "art_9_risk_management": "skeleton",
+            },
+        ),
+        (
+            limited_risk_result("art:50:3", "art:50:4"),
+            {"art_50_3_disclosure": "disclosure", "art_50_4_disclosure": "disclosure"},
+        ),
+        (prohibited_result(), {MESSAGE: "letter"}),
+    ],
+    ids=["deployer", "provider", "limited risk", "prohibited"],
+)
+def test_the_list_says_what_each_document_is(
+    result: ClassificationResult, kinds: dict[str, str]
+) -> None:
+    listed = listed_documents(result, EN)
+    assert {item.template: item.kind.value for item in listed} == kinds
+
+
+def test_the_vendor_request_is_a_letter() -> None:
+    assert TEMPLATES["vendor_request_ambiguous"].kind.value == "letter"

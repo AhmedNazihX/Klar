@@ -602,6 +602,7 @@
     "documents": [
      {
       "template": "art_26_2_oversight",
+      "kind": "record",
       "title": "Human oversight record",
       "article": "art:26:2",
       "questions": [
@@ -627,6 +628,7 @@
      },
      {
       "template": "art_26_7_workers",
+      "kind": "notice",
       "title": "Notice to workers' representatives",
       "article": "art:26:7",
       "questions": [
@@ -658,6 +660,7 @@
      },
      {
       "template": "art_26_11_affected",
+      "kind": "notice",
       "title": "Notice to the people affected",
       "article": "art:26:11",
       "questions": [
@@ -687,6 +690,7 @@
     "documents": [
      {
       "template": "art_26_2_oversight",
+      "kind": "record",
       "title": "Nachweis der menschlichen Aufsicht",
       "article": "art:26:2",
       "questions": [
@@ -712,6 +716,7 @@
      },
      {
       "template": "art_26_7_workers",
+      "kind": "notice",
       "title": "Information der Arbeitnehmervertreter",
       "article": "art:26:7",
       "questions": [
@@ -743,6 +748,7 @@
      },
      {
       "template": "art_26_11_affected",
+      "kind": "notice",
       "title": "Information der betroffenen Personen",
       "article": "art:26:11",
       "questions": [
@@ -1832,6 +1838,7 @@
     "documents": [
      {
       "template": "annex_iv_technical_documentation",
+      "kind": "skeleton",
       "title": "Technical documentation (Annex IV)",
       "article": "art:11:1",
       "questions": [
@@ -1995,6 +2002,7 @@
      },
      {
       "template": "art_17_quality_management",
+      "kind": "skeleton",
       "title": "Quality management system (Art. 17)",
       "article": "art:16:c",
       "questions": [
@@ -2080,6 +2088,7 @@
      },
      {
       "template": "art_9_risk_management",
+      "kind": "skeleton",
       "title": "Risk management system (Art. 9)",
       "article": "art:9",
       "questions": [
@@ -2163,6 +2172,7 @@
     "documents": [
      {
       "template": "annex_iv_technical_documentation",
+      "kind": "skeleton",
       "title": "Technische Dokumentation (Anhang IV)",
       "article": "art:11:1",
       "questions": [
@@ -2326,6 +2336,7 @@
      },
      {
       "template": "art_17_quality_management",
+      "kind": "skeleton",
       "title": "Qualitätsmanagementsystem (Art. 17)",
       "article": "art:16:c",
       "questions": [
@@ -2411,6 +2422,7 @@
      },
      {
       "template": "art_9_risk_management",
+      "kind": "skeleton",
       "title": "Risikomanagementsystem (Art. 9)",
       "article": "art:9",
       "questions": [
@@ -4259,6 +4271,7 @@
     "documents": [
      {
       "template": "art_50_3_disclosure",
+      "kind": "disclosure",
       "title": "Disclosure: emotion recognition or biometric categorisation",
       "article": "art:50:3",
       "questions": [
@@ -4269,15 +4282,18 @@
         "choices": [
          {
           "key": "emotion_recognition",
-          "label": "It recognises emotions"
+          "label": "It recognises emotions",
+          "title": "Disclosure: emotion recognition"
          },
          {
           "key": "biometric_categorisation",
-          "label": "It sorts people into categories from biometric data"
+          "label": "It sorts people into categories from biometric data",
+          "title": "Disclosure: biometric categorisation"
          },
          {
           "key": "both",
-          "label": "Both"
+          "label": "Both",
+          "title": "Disclosure: emotion recognition and biometric categorisation"
          }
         ]
        },
@@ -4301,6 +4317,7 @@
     "documents": [
      {
       "template": "art_50_3_disclosure",
+      "kind": "disclosure",
       "title": "Hinweis: Emotionserkennung oder biometrische Kategorisierung",
       "article": "art:50:3",
       "questions": [
@@ -4311,15 +4328,18 @@
         "choices": [
          {
           "key": "emotion_recognition",
-          "label": "Es erkennt Emotionen"
+          "label": "Es erkennt Emotionen",
+          "title": "Hinweis: Emotionserkennung"
          },
          {
           "key": "biometric_categorisation",
-          "label": "Es ordnet Personen anhand biometrischer Daten Kategorien zu"
+          "label": "Es ordnet Personen anhand biometrischer Daten Kategorien zu",
+          "title": "Hinweis: biometrische Kategorisierung"
          },
          {
           "key": "both",
-          "label": "Beides"
+          "label": "Beides",
+          "title": "Hinweis: Emotionserkennung und biometrische Kategorisierung"
          }
         ]
        },
@@ -4454,15 +4474,18 @@
       "choices": [
        {
         "key": "emotion_recognition",
-        "label": "It recognises emotions"
+        "label": "It recognises emotions",
+        "title": "Disclosure: emotion recognition"
        },
        {
         "key": "biometric_categorisation",
-        "label": "It sorts people into categories from biometric data"
+        "label": "It sorts people into categories from biometric data",
+        "title": "Disclosure: biometric categorisation"
        },
        {
         "key": "both",
-        "label": "Both"
+        "label": "Both",
+        "title": "Disclosure: emotion recognition and biometric categorisation"
        }
       ]
      },
@@ -4595,15 +4618,18 @@
       "choices": [
        {
         "key": "emotion_recognition",
-        "label": "Es erkennt Emotionen"
+        "label": "Es erkennt Emotionen",
+        "title": "Hinweis: Emotionserkennung"
        },
        {
         "key": "biometric_categorisation",
-        "label": "Es ordnet Personen anhand biometrischer Daten Kategorien zu"
+        "label": "Es ordnet Personen anhand biometrischer Daten Kategorien zu",
+        "title": "Hinweis: biometrische Kategorisierung"
        },
        {
         "key": "both",
-        "label": "Beides"
+        "label": "Beides",
+        "title": "Hinweis: Emotionserkennung und biometrische Kategorisierung"
        }
       ]
      },
@@ -4626,7 +4652,7 @@
    "art_50_3_disclosure": {
     "document": {
      "template": "art_50_3_disclosure",
-     "title": "Disclosure: emotion recognition or biometric categorisation",
+     "title": "Disclosure: emotion recognition and biometric categorisation",
      "article": "art:50:3",
      "language": "en",
      "label": "DRAFT",
@@ -4736,15 +4762,18 @@
       "choices": [
        {
         "key": "emotion_recognition",
-        "label": "It recognises emotions"
+        "label": "It recognises emotions",
+        "title": "Disclosure: emotion recognition"
        },
        {
         "key": "biometric_categorisation",
-        "label": "It sorts people into categories from biometric data"
+        "label": "It sorts people into categories from biometric data",
+        "title": "Disclosure: biometric categorisation"
        },
        {
         "key": "both",
-        "label": "Both"
+        "label": "Both",
+        "title": "Disclosure: emotion recognition and biometric categorisation"
        }
       ]
      },

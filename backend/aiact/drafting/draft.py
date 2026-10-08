@@ -103,7 +103,7 @@ def draft_document(
     unanswered = unanswered_count(sections)
     return DraftDocument(
         template=template.id,
-        title=template.title[language],
+        title=template.title_for(answers, language),
         article=article,
         language=language,
         note=small_company_note(template, size_class, language),

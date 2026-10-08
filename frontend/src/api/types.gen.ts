@@ -281,6 +281,14 @@ export type DocumentInfo = {
 };
 
 /**
+ * DocumentKind
+ *
+ * What a document is, which says how the screen words its interview and lays it out: a
+ * skeleton gets the section-by-section layout (artboard `DocSkeleton`).
+ */
+export type DocumentKind = 'notice' | 'record' | 'disclosure' | 'skeleton' | 'letter';
+
+/**
  * DocumentStatus
  *
  * The status of a corpus document (matches F4's `documents.status`).
@@ -601,6 +609,12 @@ export type InterviewChoice = {
      * Label
      */
     label: string;
+    /**
+     * Title
+     *
+     * The document's title once this choice is picked; null keeps its own.
+     */
+    title?: string | null;
 };
 
 /**
@@ -729,6 +743,10 @@ export type ListedDocument = {
      * Template
      */
     template: string;
+    /**
+     * What the document is: a skeleton is laid out section by section.
+     */
+    kind: DocumentKind;
     /**
      * Title
      */

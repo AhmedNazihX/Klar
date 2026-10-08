@@ -7,7 +7,7 @@ and an SME or a small mid-cap gets the note that a simplified form is expected (
 Documentation drafting; decision 026, items 21 and 22).
 """
 
-from aiact.drafting.models import SectionStatus
+from aiact.drafting.models import DocumentKind, SectionStatus
 from aiact.drafting.skeletons.common import PREFILLED, ask, required
 from aiact.drafting.templates import DE, EN, DocumentTemplate
 
@@ -260,6 +260,7 @@ POST_MARKET_MONITORING = required(
 ANNEX_IV_SKELETON = DocumentTemplate(
     id="annex_iv_technical_documentation",
     article="art:11:1",
+    kind=DocumentKind.SKELETON,
     title={EN: "Technical documentation (Annex IV)", DE: "Technische Dokumentation (Anhang IV)"},
     sections=(
         *PREFILLED,

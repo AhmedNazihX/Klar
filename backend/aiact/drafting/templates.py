@@ -12,7 +12,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from aiact.drafting.models import Provenance, SectionStatus
+from aiact.drafting.models import DocumentKind, Provenance, SectionStatus
 from aiact.drafting.prefill import Fill
 from aiact.drafting.prose import without_blank
 from aiact.schemas import (
@@ -34,11 +34,13 @@ Texts = Mapping[Language, str]
 @dataclass(frozen=True)
 class Choice:
     """One answer a choice question offers: stored as `key`, shown as `label`, and drafted as the
-    template's own `text`."""
+    template's own `text`. `title`, when set, is the document's title once it is picked, so the
+    title names only what applies too."""
 
     key: str
     label: Texts
     text: Texts
+    title: Texts | None = None
 
 
 @dataclass(frozen=True)
@@ -185,10 +187,21 @@ class DocumentTemplate:
 
     id: str
     article: str
+    kind: DocumentKind
     title: Texts
     sections: tuple[SectionSpec, ...]
     small_company_note: Texts | None = None
     open_question_articles: Mapping[StepName, str] | None = None
+
+    def title_for(self, answers: Mapping[str, str], language: Language) -> str:
+        """The title in `language`: the one the choice picked gives (`Choice.title`), else the
+        template's."""
+        for spec in self.sections:
+            if isinstance(spec, ChoiceSection):
+                chosen = spec.chosen(answers.get(spec.question_key, ""))
+                if chosen is not None and chosen.title is not None:
+                    return chosen.title[language]
+        return self.title[language]
 
     @property
     def questions(self) -> tuple[Question, ...]:
@@ -268,6 +281,7 @@ PLACEMENT = InterviewSection(
 OVERSIGHT_RECORD = DocumentTemplate(
     id="art_26_2_oversight",
     article="art:26:2",
+    kind=DocumentKind.RECORD,
     title={EN: "Human oversight record", DE: "Nachweis der menschlichen Aufsicht"},
     sections=(
         _system({EN: "The system", DE: "Das System"}),
@@ -323,6 +337,7 @@ OVERSIGHT_RECORD = DocumentTemplate(
 WORKERS_NOTICE = DocumentTemplate(
     id="art_26_7_workers",
     article="art:26:7",
+    kind=DocumentKind.NOTICE,
     title={EN: "Notice to workers' representatives", DE: "Information der Arbeitnehmervertreter"},
     sections=(
         _system({EN: "What we plan to use", DE: "Was wir einsetzen wollen"}),
@@ -369,6 +384,7 @@ WORKERS_NOTICE = DocumentTemplate(
 AFFECTED_NOTICE = DocumentTemplate(
     id="art_26_11_affected",
     article="art:26:11",
+    kind=DocumentKind.NOTICE,
     title={EN: "Notice to the people affected", DE: "Information der betroffenen Personen"},
     sections=(
         _system({EN: "What we use", DE: "Was wir einsetzen"}),
@@ -413,6 +429,7 @@ AFFECTED_NOTICE = DocumentTemplate(
 EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
     id="art_50_3_disclosure",
     article="art:50:3",
+    kind=DocumentKind.DISCLOSURE,
     title={
         EN: "Disclosure: emotion recognition or biometric categorisation",
         DE: "Hinweis: Emotionserkennung oder biometrische Kategorisierung",
@@ -437,6 +454,7 @@ EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
                         EN: "An AI system for emotion recognition is in operation here.",
                         DE: "Hier ist ein KI-System zur Emotionserkennung in Betrieb.",
                     },
+                    {EN: "Disclosure: emotion recognition", DE: "Hinweis: Emotionserkennung"},
                 ),
                 Choice(
                     "biometric_categorisation",
@@ -448,6 +466,10 @@ EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
                         EN: "An AI system for biometric categorisation is in operation here.",
                         DE: "Hier ist ein KI-System zur biometrischen Kategorisierung in Betrieb.",
                     },
+                    {
+                        EN: "Disclosure: biometric categorisation",
+                        DE: "Hinweis: biometrische Kategorisierung",
+                    },
                 ),
                 Choice(
                     "both",
@@ -457,6 +479,10 @@ EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
                         "is in operation here.",
                         DE: "Hier ist ein KI-System zur Emotionserkennung und biometrischen "
                         "Kategorisierung in Betrieb.",
+                    },
+                    {
+                        EN: "Disclosure: emotion recognition and biometric categorisation",
+                        DE: "Hinweis: Emotionserkennung und biometrische Kategorisierung",
                     },
                 ),
             ),
@@ -491,6 +517,7 @@ EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
 GENERATED_CONTENT_DISCLOSURE = DocumentTemplate(
     id="art_50_4_disclosure",
     article="art:50:4",
+    kind=DocumentKind.DISCLOSURE,
     title={
         EN: "Disclosure: AI-generated or manipulated content",
         DE: "Hinweis: KI-erzeugte oder manipulierte Inhalte",

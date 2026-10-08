@@ -132,7 +132,7 @@ def check_nothing_invented(
     if template is None:
         return _outcome(CheckName.NOTHING_INVENTED, [f"unknown template {document.template!r}"])
     problems = []
-    if document.title != template.title[document.language]:
+    if document.title != template.title_for(answers, document.language):
         problems.append("the title is not the template's")
     if document.note not in _notes(template, document.language, size_class):
         problems.append("the note is not the template's")

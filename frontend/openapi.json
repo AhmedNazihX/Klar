@@ -1060,6 +1060,18 @@
         "title": "DocumentInfo",
         "description": "One text of the corpus, as the interface lists it."
       },
+      "DocumentKind": {
+        "type": "string",
+        "enum": [
+          "notice",
+          "record",
+          "disclosure",
+          "skeleton",
+          "letter"
+        ],
+        "title": "DocumentKind",
+        "description": "What a document is, which says how the screen words its interview and lays it out: a\nskeleton gets the section-by-section layout (artboard `DocSkeleton`)."
+      },
       "DocumentStatus": {
         "type": "string",
         "enum": [
@@ -1556,6 +1568,18 @@
             "type": "string",
             "minLength": 1,
             "title": "Label"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "The document's title once this choice is picked; null keeps its own."
           }
         },
         "additionalProperties": false,
@@ -1722,6 +1746,10 @@
             "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
             "title": "Template"
           },
+          "kind": {
+            "$ref": "#/components/schemas/DocumentKind",
+            "description": "What the document is: a skeleton is laid out section by section."
+          },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -1745,6 +1773,7 @@
         "type": "object",
         "required": [
           "template",
+          "kind",
           "title",
           "article",
           "questions"

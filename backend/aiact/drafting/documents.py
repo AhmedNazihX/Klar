@@ -17,7 +17,13 @@ from pydantic import Field
 from aiact.drafting.checks import CheckResult, run_checks
 from aiact.drafting.deployer import deployer_templates_for
 from aiact.drafting.draft import Answers, draft_document
-from aiact.drafting.models import TEMPLATE_PATTERN, DraftDocument, QuestionKey, SizeClass
+from aiact.drafting.models import (
+    TEMPLATE_PATTERN,
+    DocumentKind,
+    DraftDocument,
+    QuestionKey,
+    SizeClass,
+)
 from aiact.drafting.prefill import QUOTING_FILLS
 from aiact.drafting.skeletons import skeleton_templates_for
 from aiact.drafting.templates import ClassificationSection, DocumentTemplate, section_questions
@@ -32,6 +38,10 @@ class InterviewChoice(ContractModel):
 
     key: QuestionKey
     label: str = Field(min_length=1)
+    title: str | None = Field(
+        default=None,
+        description="The document's title once this choice is picked; null keeps its own.",
+    )
 
 
 class InterviewQuestion(ContractModel):
@@ -48,6 +58,9 @@ class ListedDocument(ContractModel):
     """A document the result calls for, as the documents list shows it before it is drafted."""
 
     template: str = Field(pattern=TEMPLATE_PATTERN)
+    kind: DocumentKind = Field(
+        description="What the document is: a skeleton is laid out section by section."
+    )
     title: str = Field(min_length=1)
     article: str = Field(min_length=1, description="The duty it answers, e.g. `art:26:7`.")
     questions: tuple[InterviewQuestion, ...]
@@ -83,6 +96,7 @@ def listed_documents(
     return tuple(
         ListedDocument(
             template=template.id,
+            kind=template.kind,
             title=template.title[language],
             article=template.article_for(result),
             questions=interview(template, language),
@@ -139,7 +153,11 @@ def interview(template: DocumentTemplate, language: Language) -> tuple[Interview
             text=question.text[language],
             section=spec.key,
             choices=tuple(
-                InterviewChoice(key=choice.key, label=choice.label[language])
+                InterviewChoice(
+                    key=choice.key,
+                    label=choice.label[language],
+                    title=choice.title[language] if choice.title else None,
+                )
                 for choice in question.choices
             ),
         )
