@@ -19,9 +19,10 @@ DEFAULT_DATA_DIR = BACKEND_DIR.parent / "data"
 
 DEFAULT_QUERY_INSTRUCTION = (
     "Given a description of an AI system or a question about the EU AI Act, "
-    "retrieve the provisions of the AI Act that apply"
+    "retrieve the article, Annex point or recital of the AI Act that governs it"
 )
-"""Qwen3's query-side task text (`EMBEDDING_QUERY_INSTRUCTION`); X1a compares it (decision 003)."""
+"""Qwen3's query-side task text (`EMBEDDING_QUERY_INSTRUCTION`): the "governs it" text chosen in
+decision 003 for Q&A and MCP searches. X1b gives description searches no instruction."""
 
 
 class Settings(BaseSettings):

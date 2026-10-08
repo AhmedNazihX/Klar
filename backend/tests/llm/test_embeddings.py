@@ -82,7 +82,7 @@ def test_the_query_instruction_defaults_to_the_setting() -> None:
     default = OpenRouterEmbeddings(model=MODEL, provider=PROVIDER, settings=_settings())
     assert default.query_instruction == (
         "Given a description of an AI system or a question about the EU AI Act, "
-        "retrieve the provisions of the AI Act that apply"
+        "retrieve the article, Annex point or recital of the AI Act that governs it"
     )
     configured = OpenRouterEmbeddings(
         model=MODEL,

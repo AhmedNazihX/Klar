@@ -526,6 +526,10 @@ def eval_embeddings(
                 embedding_experiment.require_embedded(connection, name)
             meter = UsageMeter()  # one cap for every run of the command
             for name, chosen in ((name, chosen) for name in arms for chosen in sets):
+                if embedding_experiment.is_over_budget(meter, max_cost_usd):
+                    # Checked before the run starts, so no empty eval_runs row is recorded.
+                    typer.echo("Stopped: the cost cap is reached or a cost is unknown", err=True)
+                    raise typer.Exit(code=1)
                 summary = embedding_experiment.run_arm(
                     name,
                     chosen,

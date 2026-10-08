@@ -1,9 +1,10 @@
 # 003 · Embeddings: Qwen3-Embedding-8B at 1536 dimensions, query instruction under review
 
-- **Date:** 2026-10-08
+- **Date:** 2026-10-08 (measured); accepted 2026-10-09
 - **Story:** X1a (docs/BACKLOG.md); feeds X1b (search tuning and the relevance cut-off)
-- **Status:** proposed. The Qwen3 numbers below are measured. The OpenAI arm and the judged RAGAS runs are
-  still to run (paid, above the story's cost cap), and the query instruction is the user's choice.
+- **Status:** accepted 2026-10-09, option B: one model (Qwen3-Embedding-8B, 1536, Nebius) with a query side that
+  differs per job (see Decision). The OpenAI arm is measured with the free metrics; the judged RAGAS runs were
+  not run (user decision 2026-10-09; they can run later).
 
 ## Question
 INIT › Tech stack › Embeddings picks Qwen3-Embedding-8B (Nebius, EU) at 1536 dimensions with a fixed query-side
@@ -48,9 +49,14 @@ P = context precision, R = context recall (strict), L = lenient Annex recall, RR
 | Qwen3 1536 | "governs it" (below) | 0.174 / 0.250 / 0.396 / 0.180 | 0.185 / 0.333 | 0.259 / 0.571 | 0.504 / 0.718 / 0.541 | 0.725 / 0.704 | f196a558, 67308d21 |
 | Qwen3 1024 | current (placeholder) | 0.144 / 0.208 / 0.375 / 0.155 | 0.222 / 0.190 | 0.296 / 0.476 | 0.499 / 0.632 / 0.550 | 0.600 / 0.704 | 18641694, d6a9e118 |
 | Qwen3 1024 | "governs it" | 0.167 / 0.208 / 0.396 / 0.178 | 0.185 / 0.238 | 0.296 / 0.524 | 0.496 / 0.701 / 0.538 | 0.700 / 0.704 | 47b92584, 2f21c0b4 |
-| OpenAI 3-large 1536 | none (not instruction-aware) | pending | | | pending | | |
+| OpenAI 3-large 1536 | none (not instruction-aware) | 0.284 / 0.583 / 0.688 / 0.299 | 0.481 / 0.714 | 0.593 / 0.810 | 0.194 / 0.253 / 0.240 | 0.175 / 0.426 | dabf3f19, 80bf1fd3 |
 
-Run ids are the first 8 characters of `eval_runs.id`, all at commit 690109b with a clean tree. Ten earlier runs
+Judged RAGAS context precision, recall and faithfulness (`uv run aiact evaluate ragas --arm <arm>`): **not run
+(user decision 2026-10-09; can run later)**, for every arm. The free metrics above decide this record.
+
+Run ids are the first 8 characters of `eval_runs.id`. The Qwen3 runs are at commit 690109b with a clean tree;
+the OpenAI runs came afterwards (full ids dabf3f19-d624-4f96-bd95-2c8493a01362 and
+80bf1fd3-c58a-4bc4-8572-008213d6457c). Ten earlier runs
 at c884764 (d234f3c7, e0861fa5, 622343d5, 7ffbb4ad, 1eb719f8, 96d717ee, 50c35f8a, ca9e5699, fc6dbf57, bfd90f0f)
 are **superseded**: their Q&A rule also credited a hit under a required provision, and they have no lenient
 recall. The instructions:
@@ -59,15 +65,12 @@ recall. The instructions:
 - "governs it": "Given a description of an AI system or a question about the EU AI Act, retrieve the article, Annex point
   or recital of the AI Act that governs it"
 
-Cost: the query embeddings of all twenty runs came to about $0.001. Embedding the corpus for Qwen3 1024 (about
-1.3 million tokens, 9,083 rows) cost about $0.013.
-
-Pending (paid, needs the user's go-ahead):
-- the OpenAI arm: `uv run aiact corpus embed --model openai3l --dims 1536` (about 1.3 million tokens at $0.13
-  per million, about $0.17), then `uv run aiact evaluate embeddings --arm openai3l-1536` (under $0.01);
-- the judged RAGAS context precision and recall (and faithfulness) on the Q&A set per arm:
-  `uv run aiact evaluate ragas --arm <arm>`, about $0.0077 per item, 29 items, about $0.22 per arm, $0.67 for
-  all three. With `--arm`, search applies no distance cut-off.
+Cost, on the embedding API (OpenRouter), not counting the coding agents' own token use:
+- the query embeddings of the twenty Qwen3 runs: about $0.001; the corpus for Qwen3 1024 (about 1.3 million
+  tokens, 9,083 rows): about $0.013;
+- the OpenAI arm: embedding the corpus (`uv run aiact corpus embed --model openai3l --dims 1536`) took 5,682
+  texts for 9,081 rows, 1,209,546 tokens, $0.157241; two texts over 24,000 characters were not embedded (the
+  omnibus `art:1` rows that search excludes); the Annex run cost $0.000893 and the Q&A run $0.000095.
 
 ## Reading
 - **1536 vs 1024: level.** Strict Annex recall is 0.208 for both; lenient differs by one item. Q&A recall differs
@@ -84,21 +87,39 @@ Pending (paid, needs the user's go-ahead):
     except the no-instruction Annex gain, which shows a direction rather than a settled value.
 - **Strict Annex matching is weak for every arm**, and the gap between the strict and lenient columns is the
   confound above. The top 5 are mostly long parent rows. Of the 240 top-5 hits of run 7a22e08e: 159 are
-  articles (Art. 3, Art. 5, Art. 6 and the like), 46 recitals, 15 the whole of Annex III or I, 7 an area or
-  section, and 13 a point. This is a search matter for X1b (parent rows, `doc_keys`, the keyword weight), not
+  articles (Art. 3, Art. 5, Art. 6 and the like), 46 recitals, 16 a whole annex (15 Annex III, 1 Annex VIII), 7 an area or
+  section, and 12 a point. This is a search matter for X1b (parent rows, `doc_keys`, the keyword weight), not
   an embedding one. The engine is not affected: it looks up every Annex point itself (E5) and searches only
   the guidelines.
 
-## Decision (proposed)
-- Keep **Qwen3-Embedding-8B on Nebius at 1536 dimensions** unless the OpenAI arm, once run, beats it clearly on
-  both sets.
-- Query instruction (the user's choice). The recommended option: set `EMBEDDING_QUERY_INSTRUCTION` to the "governs
-  it" text, which beats the placeholder on both sets, and have X1b add a separate query side for system
-  descriptions (no instruction, or one written for descriptions), measured with this command. The alternative is
-  to keep one instruction for both.
-- If the instruction changes, the corpus does *not* need re-embedding (documents get no instruction), but
-  `tests/recordings/db/test_search_ai_act/` must be re-recorded. The isolation cache
-  (`eval/isolation/embeddings.json`) embeds documents without an instruction and stays valid.
+- **OpenAI text-embedding-3-large (1536) wins Annex matching and loses Q&A badly.**
+  - Annex matching: 0.583 strict and 0.688 lenient, against 0.250 / 0.396 for Qwen3 with the "governs it"
+    text and 0.312 / 0.625 for Qwen3 with no instruction. On strict recall OpenAI finds 28 of 48 items, Qwen3
+    without an instruction 15; on lenient recall the lead over Qwen3 without an instruction is 0.063 (three
+    items), so most of the strict gap is the parent-row effect above.
+  - Q&A: 0.253 context recall, against 0.718 for Qwen3 "governs it" and 0.391 for Qwen3 with no instruction.
+    German questions fare better (0.426) than English (0.175).
+  - Qwen3 with no instruction reaches 0.625 lenient Annex recall; Qwen3 "governs it" is the best on Q&A (0.718).
+
+## Decision (accepted 2026-10-09, option B)
+- **One model: Qwen3-Embedding-8B on Nebius at 1536 dimensions**, with a query side that differs per job:
+  - Q&A and MCP searches use the "governs it" instruction. `EMBEDDING_QUERY_INSTRUCTION` defaults to it
+    (`aiact/settings.py`).
+  - Description searches (Annex matching inside the engine) use no instruction. That per-job split is not built
+    here: **X1b** wires and measures it, together with the search matters above.
+- **A two-model setup was rejected** (OpenAI for descriptions, Qwen3 for questions): it needs two vendors and a
+  US provider for descriptions, against decision 005's EU pinning, for a gain that is mostly the
+  strict-vs-lenient parent-row effect.
+- **The OpenAI vectors stay** in `provision_embeddings` (their partial index is in migration
+  `20261008012443_embedding_arm_indexes.sql`). Rebuilding them would cost about $0.16 (measured above), so
+  deleting them saves nothing worth the loss.
+- The judged RAGAS runs were skipped by the user's decision. Run them later with
+  `uv run aiact evaluate ragas --arm <arm>` (about $0.22 per arm on the Q&A set).
+- Changing the default instruction does not need a corpus re-embedding (documents get no instruction), but
+  `tests/recordings/db/test_search_ai_act/` must be re-recorded: its two cassettes hold the old instruction.
+  The isolation cache (`eval/isolation/embeddings.json`) embeds benchmark texts as documents, without an
+  instruction, so it stays valid, and B13's cosine limit 0.9 (`EMBEDDING_COSINE_LIMIT`) needs no change: the
+  model is the same and the limit is measured on document-to-document cosines.
 
 ## Consequences
 - `EMBEDDING_QUERY_INSTRUCTION` (default in `aiact/settings.py`) sets the instruction; `OpenRouterEmbeddings`

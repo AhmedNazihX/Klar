@@ -524,6 +524,26 @@ def test_the_command_stops_once_a_run_reaches_the_cap(monkeypatch: pytest.Monkey
     assert "cost cap" in result.stderr
 
 
+def test_the_command_starts_no_run_when_the_cap_is_already_spent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = MemoryStore()
+    runs: list[tuple[str, ExperimentSet, int, object]] = []
+    _patch_command(monkeypatch, store, runs)
+    checks: list[UsageMeter] = []
+
+    def spent_after_one_run(meter: UsageMeter, max_cost_usd: float) -> bool:
+        checks.append(meter)
+        return len(checks) > 1
+
+    monkeypatch.setattr(experiment, "is_over_budget", spent_after_one_run)
+    result = CliRunner().invoke(app, ["evaluate", "embeddings"])
+    assert result.exit_code == 1
+    assert len(runs) == 1 and len(store.runs) == 1  # the second run left no eval_runs row
+    assert len(checks) == 2 and checks[0] is checks[1]
+    assert "cost cap" in result.stderr
+
+
 def test_the_command_refuses_an_arm_without_all_its_corpus_vectors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
