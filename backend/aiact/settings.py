@@ -17,6 +17,13 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE = BACKEND_DIR / ".env"
 DEFAULT_DATA_DIR = BACKEND_DIR.parent / "data"
 
+DEFAULT_QUERY_INSTRUCTION = (
+    "Given a description of an AI system or a question about the EU AI Act, "
+    "retrieve the article, Annex point or recital of the AI Act that governs it"
+)
+"""Qwen3's query-side task text (`EMBEDDING_QUERY_INSTRUCTION`): the "governs it" text chosen in
+decision 003 for Q&A and MCP searches. X1b gives description searches no instruction."""
+
 
 class Settings(BaseSettings):
     """Every key the app reads. `.env.example` lists the same keys with placeholder values."""
@@ -59,6 +66,9 @@ class Settings(BaseSettings):
     embedding_model: str | None = None
     embedding_provider: str | None = None
     embedding_dimensions: int = 1536
+    # The task text put before every search query (documents get none). Changing it changes every
+    # query vector: re-record tests/recordings/db/test_search_ai_act/ (decision 003).
+    embedding_query_instruction: str = Field(default=DEFAULT_QUERY_INSTRUCTION, min_length=1)
 
     # Search: the meaning arm's cosine-distance cut-off for Q&A and MCP (C8); None = no cut-off.
     # Left unset until X1 calibrates it.

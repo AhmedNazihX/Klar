@@ -78,6 +78,36 @@ def test_embed_query_sends_the_configured_instruction(monkeypatch: pytest.Monkey
     assert sent == [["Instruct: Find provisions\nQuery:chatbot for HR"]]
 
 
+def test_the_query_instruction_defaults_to_the_setting() -> None:
+    default = OpenRouterEmbeddings(model=MODEL, provider=PROVIDER, settings=_settings())
+    assert default.query_instruction == (
+        "Given a description of an AI system or a question about the EU AI Act, "
+        "retrieve the article, Annex point or recital of the AI Act that governs it"
+    )
+    configured = OpenRouterEmbeddings(
+        model=MODEL,
+        provider=PROVIDER,
+        settings=_settings(embedding_query_instruction="Match the Annex III point"),
+    )
+    assert configured.query_text("chatbot") == "Instruct: Match the Annex III point\nQuery:chatbot"
+
+
+def test_an_empty_instruction_sends_the_query_as_is(monkeypatch: pytest.MonkeyPatch) -> None:
+    """For a model that isn't instruction-aware (OpenAI's comparison arm)."""
+    client = OpenRouterEmbeddings(
+        model=MODEL, provider=PROVIDER, query_instruction="", settings=_settings()
+    )
+    sent: list[list[str]] = []
+
+    def fake_embed(texts: list[str]) -> list[list[float]]:
+        sent.append(texts)
+        return [[1.0]]
+
+    monkeypatch.setattr(client, "_embed", fake_embed)
+    client.embed_query("chatbot for HR")
+    assert sent == [["chatbot for HR"]]
+
+
 def test_settings_supply_model_provider_and_dimensions() -> None:
     client = OpenRouterEmbeddings(
         settings=_settings(embedding_model=MODEL, embedding_provider=PROVIDER)

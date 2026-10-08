@@ -19,6 +19,7 @@ from aiact import db, deps
 from aiact.corpus import embed as corpus_embed_module
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParseError, RawFileError, parse_all
 from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
+from aiact.engine.usage import UsageMeter
 from aiact.eval import (
     academic,
     citation_index,
@@ -34,6 +35,7 @@ from aiact.eval import (
 )
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases, load_qa_items
+from aiact.eval.experiments import embeddings as embedding_experiment
 from aiact.eval.experiments import smoke, smoke_recheck, smoke_verdict
 from aiact.eval.experiments.smoke_served import VerifyAll
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
@@ -420,14 +422,29 @@ def eval_ragas(
         float, typer.Option(min=0.000001, help="Start no new item once this much is spent")
     ] = ragas_metrics.DEFAULT_MAX_COST_USD,
     seed: Annotated[int, typer.Option(help="Seed for the --subset sample")] = 0,
+    arm: Annotated[
+        str | None,
+        typer.Option(
+            help=f"Search with this embedding arm (X1a): {' | '.join(embedding_experiment.ARMS)}"
+            " [default: the EMBEDDING_* settings]"
+        ),
+    ] = None,
 ) -> None:
     """Score retrieval and answers on the Q&A set with RAGAS and record the run (V6)."""
+    if arm is not None and arm not in embedding_experiment.ARMS:
+        typer.echo(f"Error: unknown --arm {arm!r}", err=True)
+        raise typer.Exit(code=2)
     try:
         items = load_qa_items()
         git_sha, is_dirty = runner.current_git_state()
-        parts = ragas_metrics.build_parts(top_k)
         options = ragas_metrics.RagasOptions(git_sha, is_dirty, subset, seed, max_cost_usd)
         with records.connect() as connection:
+            embeddings = None
+            if arm is not None:
+                # Checked before any paid call: an arm without vectors would score as bad.
+                embedding_experiment.require_embedded(connection, arm)
+                embeddings = embedding_experiment.build_embeddings(embedding_experiment.ARMS[arm])
+            parts = ragas_metrics.build_parts(top_k, embeddings=embeddings)
             summary = ragas_metrics.run_ragas(
                 items, parts, records.PostgresRunStore(connection), options
             )
@@ -437,6 +454,7 @@ def eval_ragas(
         CalledProcessError,
         LLMConfigError,
         ragas_metrics.RagasNotInstalledError,
+        embedding_experiment.ArmNotEmbeddedError,
         records.DatabaseNotConfiguredError,
     ) as error:
         typer.echo(f"Error: {error}", err=True)
@@ -453,6 +471,106 @@ def eval_ragas(
         f"run {summary.run_id}: {summary.status.value}, {summary.cases_scored}/"
         f"{summary.cases_planned} items ({summary.cases_failed} failed), "
         f"${summary.cost_usd:.4f}, {summary.tokens} tokens; {means}"
+    )
+
+
+@eval_app.command("embeddings")
+def eval_embeddings(
+    arm: Annotated[
+        list[str] | None,
+        typer.Option(
+            help=f"Arms to compare (repeatable): {' | '.join(embedding_experiment.ARMS)}"
+            " [default: all]"
+        ),
+    ] = None,
+    set_name: Annotated[
+        list[embedding_experiment.ExperimentSet] | None,
+        typer.Option("--set", help="Sets to search (repeatable) [default: both]"),
+    ] = None,
+    top_k: Annotated[
+        int,
+        typer.Option(min=1, max=embedding_experiment.SEARCH_DEPTH, help="Hits judged per query"),
+    ] = embedding_experiment.DEFAULT_TOP_K,
+    instruction: Annotated[
+        str | None,
+        typer.Option(help="Query instruction for the Qwen3 arms [default: the setting]"),
+    ] = None,
+    max_cost_usd: Annotated[
+        float,
+        typer.Option(
+            min=0.000001,
+            help="For the whole command: start no new query once this is spent (or a cost is"
+            " unknown)",
+        ),
+    ] = embedding_experiment.DEFAULT_MAX_COST_USD,
+) -> None:
+    """Compare embedding arms by model-free context precision and recall on the Annex-matching
+    and Q&A sets (X1a), one recorded run per arm and set. Costs only the query embeddings."""
+    arms = arm or list(embedding_experiment.ARMS)
+    unknown = sorted(set(arms) - set(embedding_experiment.ARMS))
+    if unknown:
+        typer.echo(f"Error: unknown --arm {', '.join(unknown)}", err=True)
+        raise typer.Exit(code=2)
+    sets = set_name or list(embedding_experiment.ExperimentSet)
+    try:
+        queries = {
+            embedding_experiment.ExperimentSet.ANNEX_MATCH: embedding_experiment.annex_queries(
+                load_cases(CaseSet.ANNEX_MATCH)
+            ),
+            embedding_experiment.ExperimentSet.QA: embedding_experiment.qa_queries(load_qa_items()),
+        }
+        git_sha, is_dirty = runner.current_git_state()
+        options = embedding_experiment.ExperimentOptions(git_sha, is_dirty, top_k, max_cost_usd)
+        with records.connect() as connection:
+            for name in arms:
+                embedding_experiment.require_embedded(connection, name)
+            meter = UsageMeter()  # one cap for every run of the command
+            for name, chosen in ((name, chosen) for name in arms for chosen in sets):
+                if embedding_experiment.is_over_budget(meter, max_cost_usd):
+                    # Checked before the run starts, so no empty eval_runs row is recorded.
+                    typer.echo("Stopped: the cost cap is reached or a cost is unknown", err=True)
+                    raise typer.Exit(code=1)
+                summary = embedding_experiment.run_arm(
+                    name,
+                    chosen,
+                    queries[chosen],
+                    embedding_experiment.build_embeddings(
+                        embedding_experiment.ARMS[name], instruction=instruction
+                    ),
+                    records.PostgresRunStore(connection),
+                    options,
+                    meter=meter,
+                    connection=connection,
+                )
+                _echo_arm_summary(summary)
+                if summary.status is runner.RunStatus.COST_CAP_REACHED:
+                    typer.echo("Stopped: the cost cap is reached or a cost is unknown", err=True)
+                    raise typer.Exit(code=1)
+    except (
+        CaseFileError,
+        FileNotFoundError,
+        CalledProcessError,
+        LLMConfigError,
+        embedding_experiment.ArmNotEmbeddedError,
+        records.DatabaseNotConfiguredError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+
+
+def _echo_arm_summary(summary: embedding_experiment.ArmSummary) -> None:
+    means = ", ".join(
+        f"{name} {'n/a' if value is None else f'{value:.3f}'}"
+        for name, value in summary.means.items()
+    )
+    typer.echo(
+        f"{summary.arm} {summary.experiment_set.value}: run {summary.run_id}, "
+        f"{summary.status.value}, {summary.cases_scored}/{summary.cases_planned} "
+        f"({summary.cases_failed} failed), ${summary.cost_usd:.6f}; {means}"
     )
 
 

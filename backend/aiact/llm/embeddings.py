@@ -2,7 +2,8 @@
 
 Stored vectors and query vectors must come from the same model, provider and dimension
 count (INIT > Tech stack > Embeddings), so the provider is pinned with fallbacks off.
-Qwen3 is instruction-aware: queries get a task instruction prefix, documents don't.
+Qwen3 is instruction-aware: queries get a task instruction prefix (`EMBEDDING_QUERY_INSTRUCTION`),
+documents don't. A model that isn't (OpenAI's) is given an empty instruction: the query goes as is.
 Every vector is L2-normalised here and checked, whatever the provider returned.
 """
 
@@ -22,12 +23,6 @@ from aiact.llm.routing import APP_TITLE, provider_preferences, require_api_key, 
 from aiact.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_QUERY_INSTRUCTION = (
-    "Given a description of an AI system or a question about the EU AI Act, "
-    "retrieve the provisions of the AI Act that apply"
-)
-"""Placeholder task text; story X1 fixes the exact wording on the Annex-matching set."""
 
 NORM_WARN_TOLERANCE = 1e-3
 """Nebius returns unit vectors; a raw length further than this from 1 is logged as a warning."""
@@ -84,10 +79,11 @@ class OpenRouterEmbeddings(Embeddings):
         model: str | None = None,
         provider: str | None = None,
         dimensions: int | None = None,
-        query_instruction: str = DEFAULT_QUERY_INSTRUCTION,
+        query_instruction: str | None = None,
         settings: Settings | None = None,
     ) -> None:
-        """Model, provider and dimensions default to `EMBEDDING_*` settings.
+        """Model, provider, dimensions and query instruction default to `EMBEDDING_*` settings;
+        an empty `query_instruction` sends queries without one.
 
         Raises `LLMConfigError` when the model, the provider or the API key is not set.
         """
@@ -97,7 +93,9 @@ class OpenRouterEmbeddings(Embeddings):
             settings.embedding_provider, "EMBEDDING_PROVIDER"
         )
         self.dimensions = dimensions or settings.embedding_dimensions
-        self.query_instruction = query_instruction
+        self.query_instruction = (
+            settings.embedding_query_instruction if query_instruction is None else query_instruction
+        )
         self._routing = ProviderPreferences.model_validate(
             provider_preferences([self.provider], allow_fallbacks=False)
         )
@@ -112,7 +110,11 @@ class OpenRouterEmbeddings(Embeddings):
 
     def embed_query(self, text: str) -> list[float]:
         """Embed a search query with the task instruction prefix."""
-        return self._embed([format_query(text, self.query_instruction)])[0]
+        return self._embed([self.query_text(text)])[0]
+
+    def query_text(self, text: str) -> str:
+        """The text sent for a search query: wrapped in the instruction, or as is without one."""
+        return format_query(text, self.query_instruction) if self.query_instruction else text
 
     def embed_batch(self, texts: list[str]) -> EmbeddingBatch:
         """Embed corpus texts in one request and report its tokens and cost (0, and

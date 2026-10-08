@@ -53,7 +53,13 @@ from aiact.eval.runner import (
     select_subset,
 )
 from aiact.llm.embeddings import OpenRouterEmbeddings
-from aiact.retrieval.search import QueryEmbedder, SearchHit, SearchResults, search_ai_act
+from aiact.retrieval.search import (
+    FROM_SETTINGS,
+    QueryEmbedder,
+    SearchHit,
+    SearchResults,
+    search_ai_act,
+)
 from aiact.settings import Settings, get_settings
 
 if TYPE_CHECKING:
@@ -137,15 +143,22 @@ class Scorer(Protocol):
 
 @dataclass(frozen=True)
 class SearchRetriever:
-    """`search_ai_act` with the settings' relevance cut-off and Pile B excluded (decision 012)."""
+    """`search_ai_act` with Pile B excluded (decision 012) and the settings' relevance cut-off,
+    or none (`is_cut_off` False) when X1a compares another embedding arm: the setting is
+    calibrated for the default arm only."""
 
     top_k: int = DEFAULT_TOP_K
     embedder: QueryEmbedder | None = None
     search: Callable[..., SearchResults] = search_ai_act
+    is_cut_off: bool = True
 
     def __call__(self, item: QAItem) -> Sequence[SearchHit]:
         results = self.search(
-            item.question, item.language, limit=self.top_k, embedder=self.embedder
+            item.question,
+            item.language,
+            limit=self.top_k,
+            embedder=self.embedder,
+            max_distance=FROM_SETTINGS if self.is_cut_off else None,
         )
         return results.hits
 
@@ -153,7 +166,7 @@ class SearchRetriever:
         return {
             "search": "search_ai_act",
             "top_k": self.top_k,
-            "max_distance": get_settings().search_max_distance,
+            "max_distance": get_settings().search_max_distance if self.is_cut_off else None,
         }
 
 
@@ -261,9 +274,25 @@ class RagasParts:
     aclose: Callable[[], Awaitable[None]] = field(default=_nothing_to_close)
 
 
-def build_parts(top_k: int = DEFAULT_TOP_K, settings: Settings | None = None) -> RagasParts:
-    """The real run: the RAGAS route, the configured embedding arm, one meter. Build new parts
-    for each run: the run closes the model's client when it ends.
+def embedding_config(embeddings: OpenRouterEmbeddings) -> dict[str, JsonValue]:
+    """`eval_runs.config.embedding`: the arm as it ran."""
+    return {
+        "model": embeddings.model,
+        "provider": embeddings.provider,
+        "dimensions": embeddings.dimensions,
+        "query_instruction": embeddings.query_instruction or None,
+    }
+
+
+def build_parts(
+    top_k: int = DEFAULT_TOP_K,
+    settings: Settings | None = None,
+    *,
+    embeddings: OpenRouterEmbeddings | None = None,
+) -> RagasParts:
+    """The real run: the RAGAS route, the embedding arm, one meter. Without `embeddings` the
+    configured arm searches with the `SEARCH_MAX_DISTANCE` cut-off; an arm X1a passes searches
+    without one. Build new parts for each run: the run closes the model's client when it ends.
 
     Raises `RagasNotInstalledError` without the `eval` group, and `LLMConfigError` when the API
     key or an `EMBEDDING_*` setting is not set.
@@ -275,9 +304,12 @@ def build_parts(top_k: int = DEFAULT_TOP_K, settings: Settings | None = None) ->
     settings = settings or get_settings()
     meter = UsageMeter()
     model = ragas_model(lambda cost, tokens: meter.add(MODEL_NODE, cost, tokens), settings=settings)
-    embeddings = OpenRouterEmbeddings(settings=settings)
+    is_default_arm = embeddings is None
+    embeddings = embeddings or OpenRouterEmbeddings(settings=settings)
     return RagasParts(
-        retriever=SearchRetriever(top_k, meter.embedder(SEARCH_NODE, embeddings)),
+        retriever=SearchRetriever(
+            top_k, meter.embedder(SEARCH_NODE, embeddings), is_cut_off=is_default_arm
+        ),
         answerer=PlainAnswerer(
             ragas_chat_model(max_tokens=ANSWER_MAX_TOKENS, settings=settings), meter
         ),
@@ -285,11 +317,7 @@ def build_parts(top_k: int = DEFAULT_TOP_K, settings: Settings | None = None) ->
         meter=meter,
         model=model.model,
         provider=model.provider,
-        embedding={
-            "model": embeddings.model,
-            "provider": embeddings.provider,
-            "dimensions": embeddings.dimensions,
-        },
+        embedding=embedding_config(embeddings),
         aclose=model.aclose,
     )
 
@@ -345,12 +373,15 @@ def provision_recall(required: Sequence[str], hits: Sequence[SearchHit]) -> floa
     """The share of `required` provision ids that an AI Act hit covers: the hit's own provision
     or an ancestor of it (`art:5:1` covers `art:5:1:f`). Guidance hits never count."""
     found = [hit.provision_id for hit in hits if hit.law_version is not None]
-    covered = [
-        provision
-        for provision in required
-        if any(provision == hit or provision.startswith(f"{hit}:") for hit in found)
-    ]
+    covered = [provision for provision in required if any(covers(hit, provision) for hit in found)]
     return len(covered) / len(required)
+
+
+def covers(hit: str, provision: str) -> bool:
+    """Whether a hit's row holds `provision`'s text: it is the provision or an ancestor of it
+    (`art:5:1` covers `art:5:1:f`; a parent's text includes its children's, C1). A child never
+    covers its parent, nor does a shared prefix (`art:5:11` and `art:5:1`)."""
+    return provision == hit or provision.startswith(f"{hit}:")
 
 
 def select_items(items: Sequence[QAItem], size: int | None, seed: int) -> tuple[QAItem, ...]:
@@ -396,7 +427,7 @@ async def _run(
         raise
     store.finish_run(run_id, run_outcome(status, planned, records, parts.meter))
     usage = parts.meter.usage()
-    scored = _scored(records)
+    scored = scored_records(records)
     return RagasSummary(
         run_id=run_id,
         status=status,
@@ -479,18 +510,21 @@ def _error(item: QAItem, exc: Exception) -> JsonValue:
     return {"type": type(exc).__name__, "message": str(exc)[:ERROR_MESSAGE_LIMIT]}
 
 
-def _scored(records: Sequence[CaseRecord]) -> list[CaseRecord]:
+def scored_records(records: Sequence[CaseRecord]) -> list[CaseRecord]:
+    """The records scored without error."""
     return [record for record in records if record.scores["is_error"] is False]
 
 
-def metric_means(records: Sequence[CaseRecord]) -> dict[str, float | None]:
+def metric_means(
+    records: Sequence[CaseRecord], metrics: Sequence[str] = METRICS
+) -> dict[str, float | None]:
     """Each metric's mean over the items scored without error that have a value for it; None
     when none has."""
     means: dict[str, float | None] = {}
-    for metric in METRICS:
+    for metric in metrics:
         values = [
             float(value)
-            for record in _scored(records)
+            for record in scored_records(records)
             if isinstance(value := record.scores.get(metric), int | float)
             and not isinstance(value, bool)
         ]
@@ -504,7 +538,7 @@ def run_outcome(
     """`eval_runs.config.outcome`: the status, the case counts, each metric's mean, and what the
     run spent in all (more than the stored rows' sum when an item in flight was interrupted)."""
     usage = meter.usage()
-    scored = _scored(records)
+    scored = scored_records(records)
     means: dict[str, JsonValue] = dict(metric_means(records))
     return {
         "status": status.value,
