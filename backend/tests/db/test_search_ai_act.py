@@ -562,11 +562,6 @@ def _top(results: SearchResults) -> list[str]:
     return [f"{h.doc_key} {h.provision_id}" for h in results.hits]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="recording pending (X1a, decision 003): the default query instruction changed; "
-    "delete this test's cassette, record it, then drop this mark",
-)
 @pytest.mark.vcr
 def test_a_softly_worded_tenant_query_finds_annex_iii_5b(
     db: psycopg.Connection, qwen3: OpenRouterEmbeddings
@@ -581,11 +576,6 @@ def test_a_softly_worded_tenant_query_finds_annex_iii_5b(
     assert "ai-act-consolidated annex:III:5:b" in _top(results), _top(results)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="recording pending (X1a, decision 003): the default query instruction changed; "
-    "delete this test's cassette, record it, then drop this mark",
-)
 @pytest.mark.vcr
 def test_a_german_query_finds_annex_iii_5b(db: psycopg.Connection, qwen3: OpenRouterEmbeddings):
     """None of the query's telling words (Miete, Kontoauszug) occur in the German corpus, so the
