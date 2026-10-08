@@ -1,0 +1,72 @@
+- id: cons-07-rebranded-loan-scoring-a
+  set_name: consistency
+  language: en
+  description: >-
+    We are a lending-software broker in Milan with 30 staff. We license a credit-scoring model
+    from a fintech in Madrid, which already sells it on the market, and resell it to small
+    consumer lenders in Italy as "CreditLume by Arcoveggio". Our logo is on the interface, the
+    reports and the user manual, and the Madrid company's name appears nowhere. Our licence does
+    not shift the provider's obligations between us; we haven't changed the model itself. The
+    lenders use it to decide whether a private individual gets a loan and up to what limit; it is
+    not used to detect fraud. We don't use it ourselves. We had a stand at a banking trade fair in
+    Bologna this spring.
+  label:
+    risk_class: high_risk
+    role: provider
+    annex_point: "annex:III:5:b"
+  label_citation: ["art:25:1:a", "annex:III:5:b", "art:6:2", "art:6:3"]
+  business_function: finance
+  notes: >-
+    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
+    labels, hard ones go to the user). Class: the model evaluates the creditworthiness of natural
+    persons and is not used for fraud detection (Annex III 5(b)); scoring each borrower is
+    profiling, so Art. 6(3) third subparagraph keeps it high-risk. Role: the broker puts its own
+    name and trademark on a high-risk system already on the market, so it is the provider under
+    Art. 25(1)(a) (as own-d-01); the licence leaves the obligations with it, and it doesn't use
+    the system, so it is not also a deployer. Same facts as -b and -c.
+  tags: ["triple:cons-07"]
+- id: cons-07-rebranded-loan-scoring-b
+  set_name: consistency
+  language: en
+  description: >-
+    Lending-software broker, Milan, 30 employees. We sell "CreditLume by Arcoveggio" to small
+    Italian consumer lenders. It is really a credit-scoring model licensed from a Madrid fintech
+    that already markets it; the model is unchanged, but it carries only our branding (interface,
+    reports, manual) and no mention of the Madrid company. Under the licence the provider's
+    obligations are not reallocated. Lenders rely on it to approve or decline personal loans for
+    private individuals and to set the credit limit; fraud detection is not a use. We are not a
+    user of it ourselves. This spring we exhibited at a banking trade fair in Bologna.
+  label:
+    risk_class: high_risk
+    role: provider
+    annex_point: "annex:III:5:b"
+  label_citation: ["art:25:1:a", "annex:III:5:b", "art:6:2", "art:6:3"]
+  business_function: finance
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-07-rebranded-loan-scoring-a with the same facts;
+    label and reasoning as there (Annex III 5(b), profiling under Art. 6(3), provider under
+    Art. 25(1)(a)).
+  tags: ["triple:cons-07"]
+- id: cons-07-rebranded-loan-scoring-c
+  set_name: consistency
+  language: en
+  description: >-
+    Small consumer lenders across Italy know the scoring tool we sell as "CreditLume by
+    Arcoveggio". We're a broker for lending software in Milan, 30 people, and the model behind it
+    actually comes from a fintech in Madrid that already sells it elsewhere; we license it, leave
+    the model as it is, and put only our own logo on the screens, reports and manual, so the
+    Madrid name isn't visible anywhere. Nothing in our licence moves the provider duties between
+    the two companies. Lenders use the score to say yes or no to a private person's loan and to
+    fix how much they can borrow; it isn't a fraud check. We don't use it in-house. In spring we
+    had a stand at a banking fair in Bologna.
+  label:
+    risk_class: high_risk
+    role: provider
+    annex_point: "annex:III:5:b"
+  label_citation: ["art:25:1:a", "annex:III:5:b", "art:6:2", "art:6:3"]
+  business_function: finance
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-07-rebranded-loan-scoring-a with the same facts;
+    label and reasoning as there (Annex III 5(b), profiling under Art. 6(3), provider under
+    Art. 25(1)(a)).
+  tags: ["triple:cons-07"]

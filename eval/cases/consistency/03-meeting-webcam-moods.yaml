@@ -1,0 +1,67 @@
+- id: cons-03-meeting-webcam-moods-a
+  set_name: consistency
+  language: en
+  description: >-
+    We are a software consultancy with about 400 employees in Warsaw and Kraków. Since spring
+    2026 our video-meeting platform has run MeetPulse, an add-on we bought from a US vendor. During
+    internal meetings it analyses each employee's facial expressions on their webcam and works out
+    whether they are frustrated, bored or enthusiastic. Managers receive a weekly report with these
+    emotions for every person in their team, and the reports are used in performance reviews. It
+    is not used for health or safety purposes. We run MeetPulse as the vendor supplies it. Last
+    year we moved the Kraków office into a new building.
+  label:
+    risk_class: prohibited
+    role: deployer
+  label_citation: ["art:5:1:f", "art:3:39", "art:3:4"]
+  business_function: hr
+  notes: >-
+    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
+    labels, hard ones go to the user). Class: the add-on infers employees' emotions from their
+    facial expressions, which is biometric data, so it is an emotion recognition system
+    (Art. 3(39)); used at the workplace and not for medical or safety reasons, its use is
+    prohibited under Art. 5(1)(f), which applies since 2 February 2025. Role: the consultancy uses
+    the bought add-on under its authority (Art. 3(4)): deployer. Same facts as -b and -c.
+  tags: ["triple:cons-03"]
+- id: cons-03-meeting-webcam-moods-b
+  set_name: consistency
+  language: en
+  description: >-
+    IT consultancy, around 400 staff, offices in Warsaw and Kraków. Tool in question: MeetPulse,
+    a plug-in for our video-meeting platform purchased from an American company and running
+    unchanged since spring 2026. What it does: reads employees' faces through their webcams in
+    internal meetings and classifies how each person feels (frustrated, bored, enthusiastic). What
+    happens with that: team leads get a weekly per-person emotion report, which feeds into
+    performance reviews. It has nothing to do with health or safety. Unrelated: the Kraków team
+    moved into a new building last year.
+  label:
+    risk_class: prohibited
+    role: deployer
+  label_citation: ["art:5:1:f", "art:3:39", "art:3:4"]
+  business_function: hr
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-03-meeting-webcam-moods-a with the same facts;
+    label and reasoning as there (emotion recognition at the workplace, Art. 5(1)(f) with
+    Art. 3(39); deployer under Art. 3(4)).
+  tags: ["triple:cons-03"]
+- id: cons-03-meeting-webcam-moods-c
+  set_name: consistency
+  language: en
+  description: >-
+    Our managers wanted a better feel for how their teams experience meetings, so since spring
+    2026 we've used MeetPulse, an add-on for our video-meeting platform from a vendor in the US.
+    We're a software consultancy, about 400 people between Warsaw and Kraków. The add-on watches
+    the webcam picture of each employee in our internal meetings and reads from their facial
+    expressions whether they are frustrated, bored or enthusiastic. Every week each manager gets
+    those emotions per team member, and we draw on them in performance reviews. Health and safety
+    play no part in it. We use the add-on exactly as supplied. The Kraków office moved to a new
+    building last year.
+  label:
+    risk_class: prohibited
+    role: deployer
+  label_citation: ["art:5:1:f", "art:3:39", "art:3:4"]
+  business_function: hr
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-03-meeting-webcam-moods-a with the same facts;
+    label and reasoning as there (emotion recognition at the workplace, Art. 5(1)(f) with
+    Art. 3(39); deployer under Art. 3(4)).
+  tags: ["triple:cons-03"]

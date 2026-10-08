@@ -1,0 +1,62 @@
+- id: cons-04-helpdesk-keyword-queues-a
+  set_name: consistency
+  language: en
+  description: >-
+    We are an online furniture retailer in Vienna with 70 employees. Customer emails land in our
+    helpdesk software, which sorts them into queues for deliveries, returns and invoices. The
+    sorting is a list of rules our support lead wrote herself: if the subject or text contains
+    words such as "refund", "return" or "damaged", the email goes to the returns queue, and so
+    on; anything that matches no rule goes to a general queue. The software doesn't learn from
+    past emails; it applies the list exactly as written, and the support lead edits the list by
+    hand when needed. The agents then answer the emails themselves. We are opening a showroom in
+    Linz next year.
+  label:
+    risk_class: out_of_scope
+  label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
+  business_function: customer_service
+  notes: >-
+    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
+    labels, hard ones go to the user). Class: the sorting executes keyword rules written and
+    maintained solely by a person and derives nothing from data, so it lacks the capability to
+    infer and is not an AI system under Art. 3(1) (recital 12; guide-definition para 46, as in
+    own-b-01). Role: none, because the Act does not apply. Same facts as -b and -c.
+  tags: ["triple:cons-04"]
+- id: cons-04-helpdesk-keyword-queues-b
+  set_name: consistency
+  language: en
+  description: >-
+    Online furniture shop, Vienna, 70 people. Incoming customer emails are routed in the helpdesk
+    tool to one of three queues: deliveries, returns, invoices. Routing logic: a hand-written rule
+    list maintained by our support lead, for example subject or body contains "refund", "return"
+    or "damaged" means returns queue. No rule matched means general queue. There is no learning
+    component; the tool executes the rules as written, and only the support lead changes them, by
+    hand. Replies are written by our support agents. Planned: a showroom in Linz next year.
+  label:
+    risk_class: out_of_scope
+  label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
+  business_function: customer_service
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-04-helpdesk-keyword-queues-a with the same facts;
+    label and reasoning as there (hand-written rules, no capability to infer, not an AI system
+    under Art. 3(1); no role).
+  tags: ["triple:cons-04"]
+- id: cons-04-helpdesk-keyword-queues-c
+  set_name: consistency
+  language: en
+  description: >-
+    Our helpdesk does a bit of automatic sorting, and we'd like to know where it stands. We sell
+    furniture online from Vienna and have 70 staff. When a customer writes in, the helpdesk
+    software looks for certain words our support lead put on a list: "refund", "return",
+    "damaged" and similar words send the email to the returns queue, other words to deliveries or
+    invoices, and if nothing on the list appears it goes to a general queue. She wrote the list
+    herself and changes it by hand; the software doesn't learn anything from earlier emails, it
+    just follows the list. Our agents write all the replies. Next year we open a showroom in Linz.
+  label:
+    risk_class: out_of_scope
+  label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
+  business_function: customer_service
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-04-helpdesk-keyword-queues-a with the same facts;
+    label and reasoning as there (hand-written rules, no capability to infer, not an AI system
+    under Art. 3(1); no role).
+  tags: ["triple:cons-04"]

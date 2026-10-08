@@ -1,0 +1,67 @@
+- id: cons-05-brewery-keg-forecast-a
+  set_name: consistency
+  language: en
+  description: >-
+    We are a craft brewery near Ghent with 60 employees, selling mostly through drinks
+    wholesalers. Since 2025 we have used a forecasting tool from a Dutch analytics company: a
+    machine-learning model that learns from our past sales, weather forecasts and the local event
+    calendar and predicts how many kegs of each beer the wholesalers will order over the next six
+    weeks. Our brewmaster plans the brewing schedule with it and can ignore the forecast. The tool
+    uses no data about individual people and doesn't talk to anyone; it only shows numbers on a
+    dashboard. We use it unchanged under the vendor's name. Our new taproom opened in May.
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
+  business_function: operations
+  notes: >-
+    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
+    labels, hard ones go to the user). Class: a machine-learning model that infers demand
+    forecasts from data, so an AI system (Art. 3(1)); no Annex III use or Annex I product and no
+    Art. 50 function (no interaction with people, no synthetic content), so minimal_risk (as
+    own-d-11). Role: the brewery uses the bought tool unchanged (Art. 3(4)): deployer. Same facts
+    as -b and -c.
+  tags: ["triple:cons-05"]
+- id: cons-05-brewery-keg-forecast-b
+  set_name: consistency
+  language: en
+  description: >-
+    Craft brewery, Ghent area, 60 staff; most of our beer goes out through drinks wholesalers.
+    Since 2025: a demand-forecasting tool licensed from a Dutch analytics firm, used unchanged and
+    under their name. Method: machine learning on our historical sales, weather forecasts and the
+    regional events calendar. Output: expected keg orders per beer from the wholesalers for the
+    coming six weeks, shown on a dashboard. Use: input to the brewmaster's brewing schedule; he is
+    free to override it. No personal data is processed and there is no chat or other interaction
+    with people. The taproom opened in May.
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
+  business_function: operations
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-05-brewery-keg-forecast-a with the same facts;
+    label and reasoning as there (AI system under Art. 3(1), no Annex III or Art. 50 trigger,
+    minimal_risk; deployer under Art. 3(4)).
+  tags: ["triple:cons-05"]
+- id: cons-05-brewery-keg-forecast-c
+  set_name: consistency
+  language: en
+  description: >-
+    Brewing the right amount of each beer used to be guesswork for us. We're a craft brewery of 60
+    people outside Ghent and sell mainly to drinks wholesalers. Since 2025 a tool from a Dutch
+    analytics company has helped: its machine-learning model looks at what we sold in the past,
+    the weather forecast and what's on in the local events calendar, and tells us how many kegs of
+    each beer the wholesalers are likely to order in the next six weeks. The brewmaster plans
+    production from that dashboard, but it's his call. Nothing about individual people goes in,
+    and the tool doesn't converse with anyone. We use it as the vendor ships it, with their name
+    on it. In May we opened a taproom.
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
+  business_function: operations
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-05-brewery-keg-forecast-a with the same facts;
+    label and reasoning as there (AI system under Art. 3(1), no Annex III or Art. 50 trigger,
+    minimal_risk; deployer under Art. 3(4)).
+  tags: ["triple:cons-05"]

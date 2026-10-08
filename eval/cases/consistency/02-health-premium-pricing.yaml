@@ -1,0 +1,72 @@
+- id: cons-02-health-premium-pricing-a
+  set_name: consistency
+  language: en
+  description: >-
+    We are a mutual insurer in Ireland with about 250,000 members on our private health insurance
+    plans. Since January 2026 every new application is priced by RiskWeave, a machine-learning
+    model licensed from a Danish insurtech that trained it on claims data. From the applicant's
+    age, medical questionnaire, past claims and lifestyle answers it estimates the person's
+    expected claims costs and sets their individual monthly premium. Our underwriters only look at
+    applications the model marks as incomplete; all other premiums go out as calculated. We use
+    RiskWeave as delivered, under the vendor's name. Members can now also send claim receipts by
+    photo through our app.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:c"
+  label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
+  business_function: finance
+  notes: >-
+    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
+    labels, hard ones go to the user). Class: the model assesses risk and sets prices for natural
+    persons in health insurance (Annex III 5(c)); estimating each applicant's expected costs from
+    their own health and lifestyle data is profiling, so Art. 6(3) third subparagraph keeps it
+    high-risk. Role: the insurer uses the licensed model unchanged under the vendor's name
+    (Art. 3(4)): deployer. Same facts as -b and -c.
+  tags: ["triple:cons-02"]
+- id: cons-02-health-premium-pricing-b
+  set_name: consistency
+  language: en
+  description: >-
+    Irish mutual, private health cover, roughly 250,000 members. Pricing of new business has been
+    automated since January 2026 with RiskWeave, a model from a Danish insurtech. It is machine
+    learning, trained by the vendor on claims history, and we run it unchanged with the vendor's
+    branding. For each applicant it takes age, the medical questionnaire, prior claims and the
+    lifestyle questions, predicts what that person is likely to claim, and outputs their monthly
+    premium. Underwriting only gets involved when the model flags an application as incomplete;
+    otherwise the premium is issued as is. Also new this year: claim receipts can be uploaded as a
+    photo in our app.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:c"
+  label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
+  business_function: finance
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-02-health-premium-pricing-a with the same facts;
+    label and reasoning as there (Annex III 5(c), profiling under Art. 6(3), deployer under
+    Art. 3(4)).
+  tags: ["triple:cons-02"]
+- id: cons-02-health-premium-pricing-c
+  set_name: consistency
+  language: en
+  description: >-
+    How much a new member pays for health cover with us is decided by software now. We're a
+    mutual health insurer in Ireland, around 250,000 members, and since January 2026 we've used
+    RiskWeave, bought in from an insurtech in Denmark. The vendor built it as a machine-learning
+    model on claims data, and we haven't changed it or put our own name on it. It looks at the
+    applicant's age, their answers on the medical and lifestyle questionnaire and their earlier
+    claims, works out what they will probably cost us, and gives them a personal monthly premium.
+    An underwriter sees an application only if the model says something is missing. Separately,
+    members can now photograph claim receipts in our app.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:c"
+  label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
+  business_function: finance
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-02-health-premium-pricing-a with the same facts;
+    label and reasoning as there (Annex III 5(c), profiling under Art. 6(3), deployer under
+    Art. 3(4)).
+  tags: ["triple:cons-02"]

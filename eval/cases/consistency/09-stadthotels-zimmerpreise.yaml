@@ -1,0 +1,70 @@
+- id: cons-09-stadthotels-zimmerpreise-a
+  set_name: consistency
+  language: de
+  description: >-
+    Wir betreiben acht Stadthotels in Österreich und beschäftigen rund 350 Menschen. Seit 2025
+    nutzen wir ein Revenue-Management-Tool eines Wiener Anbieters. Dahinter steckt ein
+    Machine-Learning-Modell, das aus unserem Buchungsverlauf, Veranstaltungen in der Stadt und den
+    Preisen der Mitbewerber lernt und jeden Tag die Zimmerpreise pro Hotel und Zimmerkategorie
+    festlegt. Alle Gäste sehen für dasselbe Zimmer am selben Tag denselben Preis; Daten über
+    einzelne Personen fließen nicht ein. Unsere Revenue-Managerin kann jeden Preis übersteuern.
+    Mit Gästen kommuniziert das Tool nicht. Wir nutzen es unverändert unter dem Namen des
+    Anbieters. Beim Frühstück setzen wir seit diesem Jahr auf regionale Produkte.
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
+  business_function: sales
+  notes: >-
+    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
+    labels, hard ones go to the user). Class: a machine-learning model that infers prices from
+    data, so an AI system (Art. 3(1)); it sets the same price for every guest, uses no personal
+    data, and has no Annex III use (not credit, not insurance pricing for natural persons), no
+    Annex I product and no Art. 50 function, so minimal_risk. Role: the group uses the bought tool
+    unchanged (Art. 3(4)): deployer. Same facts as -b and -c.
+  tags: ["triple:cons-09"]
+- id: cons-09-stadthotels-zimmerpreise-b
+  set_name: consistency
+  language: de
+  description: >-
+    Hotelgruppe, acht Stadthotels in Österreich, etwa 350 Beschäftigte. Eingesetztes System: ein
+    Revenue-Management-Tool eines Wiener Softwareanbieters, seit 2025 im Betrieb, unverändert und
+    unter dessen Namen. Technik: Machine Learning auf Basis unserer Buchungshistorie, des
+    städtischen Veranstaltungskalenders und der Preise der Konkurrenz. Aufgabe: tägliche
+    Festlegung der Zimmerpreise je Haus und Kategorie. Der Preis ist für alle Gäste gleich,
+    personenbezogene Daten werden nicht verarbeitet, und mit Gästen interagiert das Tool nicht.
+    Die Revenue-Managerin kann Preise manuell überschreiben. Sonstiges: Das Frühstücksbuffet
+    bietet seit diesem Jahr regionale Produkte.
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
+  business_function: sales
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-09-stadthotels-zimmerpreise-a with the same
+    facts; label and reasoning as there (AI system under Art. 3(1), no Annex III or Art. 50
+    trigger, minimal_risk; deployer under Art. 3(4)).
+  tags: ["triple:cons-09"]
+- id: cons-09-stadthotels-zimmerpreise-c
+  set_name: consistency
+  language: de
+  description: >-
+    Was ein Zimmer in einem unserer acht Stadthotels in Österreich kostet, legt seit 2025 jeden
+    Tag eine Software fest. Wir sind eine Hotelgruppe mit rund 350 Mitarbeitenden, und das
+    Revenue-Management-Tool haben wir von einem Anbieter aus Wien gekauft; wir nutzen es so, wie
+    er es liefert, unter seinem Namen. Ein Machine-Learning-Modell lernt aus unseren bisherigen
+    Buchungen, aus Veranstaltungen in der Stadt und aus den Preisen anderer Hotels und setzt den
+    Preis pro Hotel und Zimmerkategorie. Jeder Gast bekommt am selben Tag für dasselbe Zimmer
+    denselben Preis, und Angaben zu einzelnen Personen nutzt das Tool nicht. Mit Gästen spricht
+    oder schreibt es nicht. Unsere Revenue-Managerin kann jeden Preis ändern. Beim Frühstück gibt
+    es seit diesem Jahr regionale Produkte.
+  label:
+    risk_class: minimal_risk
+    role: deployer
+  label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
+  business_function: sales
+  notes: >-
+    Drafted 2026-10-08 (B8). Paraphrase of cons-09-stadthotels-zimmerpreise-a with the same
+    facts; label and reasoning as there (AI system under Art. 3(1), no Annex III or Art. 50
+    trigger, minimal_risk; deployer under Art. 3(4)).
+  tags: ["triple:cons-09"]
