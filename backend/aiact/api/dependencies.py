@@ -13,6 +13,7 @@ from fastapi import HTTPException, Request, status
 from aiact import db
 from aiact.api.rate_limit import ConcurrencyLimit, RateLimiter
 from aiact.engine.classify import NodeBuilder, engine_nodes
+from aiact.export.pool import RenderPool
 from aiact.settings import Settings
 
 ConnectionFactory = Callable[[], AbstractContextManager[psycopg.Connection]]
@@ -29,6 +30,8 @@ class ApiContext:
     classify_limit: RateLimiter
     lookup_limit: RateLimiter
     classify_slots: ConcurrencyLimit
+    export_limit: RateLimiter
+    export_slots: RenderPool
 
 
 def context_for(settings: Settings) -> ApiContext:
@@ -37,6 +40,8 @@ def context_for(settings: Settings) -> ApiContext:
         classify_limit=RateLimiter(settings.rate_limit_classify),
         lookup_limit=RateLimiter(settings.rate_limit_lookups),
         classify_slots=ConcurrencyLimit(settings.classify_max_concurrent),
+        export_limit=RateLimiter(settings.rate_limit_exports),
+        export_slots=RenderPool(settings.export_max_concurrent, settings.export_timeout_seconds),
     )
 
 
@@ -61,6 +66,10 @@ async def limit_classify(request: Request) -> None:
 
 async def limit_lookups(request: Request) -> None:
     _count(api_context(request).lookup_limit, request)
+
+
+async def limit_exports(request: Request) -> None:
+    _count(api_context(request).export_limit, request)
 
 
 def client_key(request: Request) -> str:

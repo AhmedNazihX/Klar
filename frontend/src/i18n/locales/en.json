@@ -154,6 +154,96 @@
     "amended": "As amended, 2026",
     "original": "Original, 2024"
   },
+  "documents": {
+    "navLabel": "Documents",
+    "navToggle": "Documents ({{count}})",
+    "breadcrumb": "Breadcrumb",
+    "forTool": "For {{tool}}",
+    "needsAnswers_one": "{{article}}. Needs {{count}} answer",
+    "needsAnswers_other": "{{article}}. Needs {{count}} answers",
+    "readyToReview": "{{article}}. Ready to review",
+    "noDocuments": "Its result calls for no documents.",
+    "drafting": "Drafting the documents…",
+    "draftingOne": "Drafting the document…",
+    "draftFailed": "Klar couldn't draft this tool's documents.",
+    "documentFailed": "Klar couldn't draft this document.",
+    "tooLarge": "This document's answers are too long to send together. Please shorten some answers.",
+    "staleDraft": "The draft shown doesn't hold your latest answers yet.",
+    "toolsLoading": "Loading your tools…",
+    "toolsFailed": "Klar couldn't load your tools.",
+    "tryAgain": "Try again",
+    "notFound": "None of your tools has this document. Pick one from the list.",
+    "empty": {
+      "body": "No documents yet. Classify a tool, and Klar drafts the documents its result calls for.",
+      "action": "Classify a tool"
+    },
+    "download": {
+      "docx": "Download .docx",
+      "pdf": "Download PDF",
+      "failed": "Klar couldn't make the file. Please try again.",
+      "checksFailed": "The draft failed its automatic checks, so it can't be downloaded.",
+      "tooLong": "This document is too long to make into a file. Please shorten some answers.",
+      "busy": "Klar is busy making other files. Please try again in a moment.",
+      "timedOut": "Making this file took too long. Please try again; if it happens again, shorten some answers."
+    },
+    "preview": "Document preview",
+    "lawLine": "AI Act as checked: {{version}}, applying on {{date}}.",
+    "preparedWith": "Draft prepared with Klar.",
+    "toFillIn": "To fill in. Answer it in the guided interview.",
+    "provenance": {
+      "classification": "From your classification",
+      "interview": "From your interview answers"
+    },
+    "sectionStatus": {
+      "drafted": "Drafted",
+      "questions_one": "{{count}} question",
+      "questions_other": "{{count}} questions",
+      "to_fill_in": "To fill in",
+      "needs_evidence": "Needs evidence",
+      "generated_last": "Generated last"
+    },
+    "interview": {
+      "title": "Guided interview",
+      "sectionTitle": "Interview: {{section}}",
+      "progress": "{{answered}} of {{total}} answered",
+      "answeredList": "Answered",
+      "upcomingList": "Still to answer",
+      "change": "Change",
+      "skip": "Skip for now",
+      "save": "Save answer",
+      "saving": "Saving…",
+      "hintNotice": "Written into the notice as you give it. Klar won't add anything you didn't say.",
+      "hintSkeleton": "Written in as you give it, as a sentence. Klar won't add anything you didn't say.",
+      "tooLong": "An answer can be up to 20,000 characters.",
+      "done": "Every question here is answered. Read the draft through before you use it.",
+      "skippedAll": "You've skipped the rest for now.",
+      "showSkipped": "Back to the skipped questions",
+      "hintChoice": "Klar writes its own set wording for what you pick.",
+      "hintRecord": "Written into the record as you give it. Klar won't add anything you didn't say.",
+      "hintDisclosure": "Written into the disclosure as you give it. Klar won't add anything you didn't say.",
+      "hintLetter": "Written into the letter as you give it. Klar won't add anything you didn't say.",
+      "hintRequirement": "{{provision}}: {{section}}. Written in as you give it, as a sentence. Klar won't add anything you didn't say."
+    },
+    "checks": {
+      "title": "Automatic checks",
+      "skeletonTitle": "Before you sign",
+      "skeletonIntro": "Klar checks the draft; you and your experts check the substance.",
+      "passed": "Passed",
+      "failed": "Failed",
+      "sections_present": "Every required section is present",
+      "nothing_invented": "No content you didn't supply",
+      "facts_match": "Facts match the classification"
+    },
+    "skeleton": {
+      "intro": "{{source}}, for {{tool}}. Klar fills in what it knows and asks you for the rest.",
+      "introNoSource": "For {{tool}}. Klar fills in what it knows and asks you for the rest.",
+      "progress": "{{drafted}} of {{total}} sections drafted",
+      "sections": "{{source}} sections",
+      "sectionsPlain": "Sections",
+      "sectionsToggle": "{{source}} sections ({{count}})",
+      "sectionsPlainToggle": "Sections ({{count}})"
+    }
+  },
   "welcome": {
     "title": "Let's see where your AI tools stand.",
     "intro": "Add the tools your company uses, one at a time. Klar checks each one in the AI Act's order, cites every step, and builds your to-do list with dates.",

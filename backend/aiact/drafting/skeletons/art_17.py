@@ -5,13 +5,14 @@ Art. 17(2) lets an SME or a small mid-cap implement these in proportion to its s
 lists every aspect, so the skeleton is the same for every company.
 """
 
-from aiact.drafting.models import SectionStatus
+from aiact.drafting.models import DocumentKind, SectionStatus
 from aiact.drafting.skeletons.common import PREFILLED, ask, required
 from aiact.drafting.templates import DE, EN, DocumentTemplate
 
 ART_17_SKELETON = DocumentTemplate(
     id="art_17_quality_management",
     article="art:16:c",
+    kind=DocumentKind.SKELETON,
     title={EN: "Quality management system (Art. 17)", DE: "Qualitätsmanagementsystem (Art. 17)"},
     sections=(
         *PREFILLED,

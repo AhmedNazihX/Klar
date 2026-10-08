@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { draftVendorLetter, getProvision, listDocuments, listObligations, type Options } from '../sdk.gen';
-import type { DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse } from '../types.gen';
+import { draftDocument, draftVendorLetter, exportDocument, getProvision, listDocuments, listObligations, listResultDocuments, type Options } from '../sdk.gen';
+import type { DraftDocumentData, DraftDocumentError, DraftDocumentResponse, DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, ExportDocumentData, ExportDocumentError, ExportDocumentResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse, ListResultDocumentsData, ListResultDocumentsError, ListResultDocumentsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -113,6 +113,66 @@ export const draftVendorLetterMutation = (options?: Partial<Options<DraftVendorL
     const mutationOptions: UseMutationOptions<DraftVendorLetterResponse, DraftVendorLetterError, Options<DraftVendorLetterData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await draftVendorLetter({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * List Result Documents
+ *
+ * Every document the result calls for, with the duty it answers and its guided interview,
+ * not yet drafted.
+ */
+export const listResultDocumentsMutation = (options?: Partial<Options<ListResultDocumentsData>>): UseMutationOptions<ListResultDocumentsResponse, ListResultDocumentsError, Options<ListResultDocumentsData>> => {
+    const mutationOptions: UseMutationOptions<ListResultDocumentsResponse, ListResultDocumentsError, Options<ListResultDocumentsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await listResultDocuments({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Draft Document
+ *
+ * One document drafted with the user's answers, its three automatic checks, and its
+ * interview. Labelled DRAFT, with the "guidance, not legal advice" notice.
+ */
+export const draftDocumentMutation = (options?: Partial<Options<DraftDocumentData>>): UseMutationOptions<DraftDocumentResponse, DraftDocumentError, Options<DraftDocumentData>> => {
+    const mutationOptions: UseMutationOptions<DraftDocumentResponse, DraftDocumentError, Options<DraftDocumentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await draftDocument({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Export Document
+ *
+ * One document as a Word (.docx) or PDF file: the draft `draft_document` returns for the
+ * same body, and only once all three automatic checks pass.
+ */
+export const exportDocumentMutation = (options?: Partial<Options<ExportDocumentData>>): UseMutationOptions<ExportDocumentResponse, ExportDocumentError, Options<ExportDocumentData>> => {
+    const mutationOptions: UseMutationOptions<ExportDocumentResponse, ExportDocumentError, Options<ExportDocumentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await exportDocument({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

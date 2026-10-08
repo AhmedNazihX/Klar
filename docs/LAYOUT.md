@@ -126,9 +126,19 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            EN and DE), facts.py (their facts check), quotes.py (the
 │   │   │                            Art. 5(1) points quoted from the corpus, LawQuotes; decision 031),
 │   │   │                            draft.py (draft_vendor_letter); registered in registry.py
+│   │   │                            P9: prose.py (a skeleton's answers written up as sentences, no
+│   │   │                            word added), documents.py (listed_documents and checked_draft: the
+│   │   │                            documents a result calls for with their interviews, and one drafted
+│   │   │                            and checked), paper.py (a draft laid out as an export Paper)
+│   │   ├── export/                  Word and PDF files from a format-neutral Paper (P9; P25's report
+│   │   │                            reuses KlarPdf): paper.py, pdf.py (fpdf2), word.py (python-docx),
+│   │   │                            text.py (printable text), style.py, pool.py (renders in worker
+│   │   │                            processes, stopped at a time limit); assets/: the flat lockup and the
+│   │   │                            Newsreader and Geist fonts (OFL), their sources in assets/README.md
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;
+│   │                                drafts.py `POST /documents/list`, `/documents/draft` and `/documents/export` (P9);
 │   │                                dependencies.py settings, node builder, database, limits; rate_limit.py the rate and
 │   │                                concurrency limits; body_limit.py the 413 body cap; errors.py the one
 │   │                                422 body, quoting no input; documents.py
@@ -145,6 +155,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── engine/built_corpus.py   the corpus built in memory from data/parsed/, which the replays check
 │       │                            their citations against (no database in CI) (E9)
 │       ├── snapshots/               committed JSON snapshots, e.g. the result's JSON Schema (F3)
+│       ├── export/reading.py        a PDF's and a Word file's text read back for the tests (P9)
 │       ├── test_network_guard.py    proves unmarked tests can't reach the network (F6)
 │       └── test_isolation.py        benchmark isolation check (B13)
 │
@@ -220,12 +231,16 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            InventoryTable (P6)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
-│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12)
+│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12),
+│       │                            documents/ (P9: the documents screen, interview, checks, downloads, a skeleton's
+│       │                            SkeletonHeader and SectionList; interview-answers.ts reads and upserts interview_answers
+│       │                            through supabase-js; DocumentsScreen.browser.test.tsx the phone and desktop layout)
 │       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15),
 │       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18),
 │       │                            use-classify.ts (the streamed run), use-language.ts (P5),
 │       │                            use-inventory-tools.ts, use-save-classified-tool.ts (P6),
-│       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12)
+│       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12),
+│       │                            use-interview-answers.ts, use-document-drafts.ts (drafts and exports, P9)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
@@ -240,7 +255,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded
 │                                    worked example's SSE events and result variants, P5),
-│                                    inventory-fixtures.ts (inventory_tools rows, prohibited and ambiguous results, P6)
+│                                    inventory-fixtures.ts (inventory_tools rows, prohibited and ambiguous results, P6),
+│                                    documents-fixtures.ts + fixtures/documents.drafts.json (lists and drafts dumped
+│                                    from the backend's drafter, and the documents handlers, P9)
 │
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves

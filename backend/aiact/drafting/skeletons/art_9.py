@@ -7,7 +7,7 @@ describe, so they have no section. The duty it answers is the obligations table'
 one of the rows Art. 16(a) (meeting the Section 2 requirements) is listed as (C9).
 """
 
-from aiact.drafting.models import SectionStatus
+from aiact.drafting.models import DocumentKind, SectionStatus
 from aiact.drafting.skeletons.common import PREFILLED, ask, required
 from aiact.drafting.templates import DE, EN, DocumentTemplate
 
@@ -147,6 +147,7 @@ VULNERABLE_GROUPS = required(
 ART_9_SKELETON = DocumentTemplate(
     id="art_9_risk_management",
     article="art:9",
+    kind=DocumentKind.SKELETON,
     title={EN: "Risk management system (Art. 9)", DE: "Risikomanagementsystem (Art. 9)"},
     sections=(
         *PREFILLED,

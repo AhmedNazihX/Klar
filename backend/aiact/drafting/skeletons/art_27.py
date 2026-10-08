@@ -6,12 +6,14 @@ The AI Office is to publish a questionnaire template (Art. 27(5)); until it does
 follows paragraph 1.
 """
 
+from aiact.drafting.models import DocumentKind
 from aiact.drafting.skeletons.common import PREFILLED, ask, required
 from aiact.drafting.templates import DE, EN, DocumentTemplate
 
 ART_27_SKELETON = DocumentTemplate(
     id="art_27_fria",
     article="art:27:1",
+    kind=DocumentKind.SKELETON,
     title={
         EN: "Fundamental rights impact assessment (Art. 27)",
         DE: "Grundrechte-Folgenabschätzung (Art. 27)",
