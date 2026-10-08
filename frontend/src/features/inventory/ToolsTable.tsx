@@ -22,9 +22,23 @@ function LegacyTag({ children }: { children: ReactNode }): JSX.Element {
   )
 }
 
-/** A short date line that never breaks inside ("2 Dec 2027", "Seit dem 2. Aug. 2026"). */
-function DateLine({ children }: { children: ReactNode }): JSX.Element {
-  return <span className="whitespace-nowrap">{children}</span>
+const DATE_MARK = '§DATE§'
+
+/**
+ * A translated line around a date ("Seit dem 2. Aug. 2026"): the words wrap like prose, the date
+ * itself never breaks ("2. Aug. / 2026" is not allowed).
+ */
+function datedLine(line: (date: string) => string, isoDate: string, language: Language): ReactNode {
+  const [before = '', after = ''] = line(DATE_MARK).split(DATE_MARK)
+  return (
+    <>
+      {before}
+      <span data-date className="whitespace-nowrap">
+        {shortDate(isoDate, language)}
+      </span>
+      {after}
+    </>
+  )
 }
 
 // The Art. 111(2) lines wrap like prose, with the tag kept whole: the column gives way rather
@@ -43,17 +57,9 @@ function appliesFromCell(t: TFunction, applies: AppliesFrom, language: Language)
         />
       )
     case 'from':
-      return (
-        <DateLine>
-          {t('inventory.table.from', { date: shortDate(applies.date, language) })}
-        </DateLine>
-      )
+      return datedLine((date) => t('inventory.table.from', { date }), applies.date, language)
     case 'since':
-      return (
-        <DateLine>
-          {t('inventory.table.since', { date: shortDate(applies.date, language) })}
-        </DateLine>
-      )
+      return datedLine((date) => t('inventory.table.since', { date }), applies.date, language)
     case 'afterChange':
       return (
         <>
@@ -64,7 +70,7 @@ function appliesFromCell(t: TFunction, applies: AppliesFrom, language: Language)
     case 'legacyFrom':
       return (
         <>
-          {t('result.legacy.from', { date: shortDate(applies.date, language) })}
+          {datedLine((date) => t('result.legacy.from', { date }), applies.date, language)}
           <LegacyTag>{t('result.legacy.tag')}</LegacyTag>
         </>
       )
