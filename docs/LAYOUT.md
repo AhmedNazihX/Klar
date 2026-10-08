@@ -217,7 +217,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            SiteFooter, MistGround, ScreenPlaceholder, PhoneLabel (P15); the
 │       │                            sidebar's CompanyLine (P18); the result's CheckProgress, FactCard,
 │       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
-│       │                            InventoryTable (P6)
+│       │                            InventoryTable (P6); VersionDiff (P10)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12)
@@ -225,7 +225,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18),
 │       │                            use-classify.ts (the streamed run), use-language.ts (P5),
 │       │                            use-inventory-tools.ts, use-save-classified-tool.ts (P6),
-│       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12)
+│       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12),
+│       │                            use-original-run.ts (the same description checked under the original text, P10)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
@@ -240,7 +241,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded
 │                                    worked example's SSE events and result variants, P5),
-│                                    inventory-fixtures.ts (inventory_tools rows, prohibited and ambiguous results, P6)
+│                                    inventory-fixtures.ts (inventory_tools rows, prohibited and ambiguous results, P6),
+│                                    original-text-fixtures.ts (results under both texts, for the comparison, P10)
 │
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves

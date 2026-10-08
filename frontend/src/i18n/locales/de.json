@@ -522,7 +522,9 @@
       "draftDisclosure": "Hinweis entwerfen",
       "draftDocument": "Dokument entwerfen",
       "onlyIf": "Nur wenn: {{condition}}",
-      "forInformation": "Zur Information"
+      "forInformation": "Zur Information",
+      "notModelled": "Pflichten für die ursprüngliche Fassung nicht modelliert: Klars Pflichtenlisten decken nur die geänderte Fassung ab, daher sind keine aufgeführt.",
+      "originalDates": "Die Daten folgen dem ursprünglichen Art. 113. Die angezeigten Pflichten sind die der geänderten Fassung."
     },
     "outOfScope": {
       "heading": "Warum die KI-Verordnung nicht gilt",
@@ -594,6 +596,13 @@
     "stored": {
       "notice": "Gespeichertes Ergebnis. Klar prüft gespeicherte Ergebnisse nicht erneut; lesen Sie es als Orientierung, nicht als geprüften Nachweis.",
       "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+    },
+    "original": {
+      "notChecked": "Diese Seite zeigt die Klasse nach der geänderten Fassung. Um die Klasse nach der ursprünglichen Fassung von 2024 zu sehen, vergleichen Sie die beiden Fassungen.",
+      "differs": "Nach der ursprünglichen Fassung von 2024 kommt Klar zu: {{riskClass}}. Diese Seite zeigt das Ergebnis nach der geänderten Fassung.",
+      "otherBasis": "Nach der ursprünglichen Fassung von 2024 ist die Klasse gleich ({{riskClass}}), mit anderer Grundlage: {{basis}}.",
+      "same": "Nach der ursprünglichen Fassung von 2024 ist die Klasse gleich: {{riskClass}}.",
+      "compare": "Beide Fassungen vergleichen"
     }
   },
   "annexPoint": {
@@ -686,5 +695,41 @@
       "unchecked": "Noch nicht geprüft",
       "unreadable": "Gespeichertes Ergebnis nicht lesbar"
     }
+  },
+  "diff": {
+    "heading": "Ursprüngliche und geänderte Fassung",
+    "original": "Ursprünglich",
+    "amended": "Geändert",
+    "row": {
+      "class": "Klasse",
+      "basis": "Grundlage",
+      "role": "Rolle",
+      "dutiesFrom": "Pflichten ab"
+    },
+    "assumedClass": "{{riskClass}}, angenommen",
+    "noValue": "–",
+    "notChecked": "Noch nicht geprüft",
+    "notModelled": "Nicht modelliert",
+    "note": {
+      "changed": "Die blau markierten Werte hat der digitale Omnibus geändert, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026.",
+      "unchanged": "Der digitale Omnibus, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026, hat an dieser Tabelle nichts geändert.",
+      "classSame": "Die Klasse ist gleich geblieben.",
+      "notChecked": "Klasse und Rolle nach der ursprünglichen Fassung erscheinen, sobald Klar sie geprüft hat."
+    },
+    "steps": {
+      "heading": "Geänderte Prüfschritte",
+      "none": "Kein Prüfschritt kommt nach den beiden Fassungen zu einem anderen Ergebnis.",
+      "change": "Ursprünglich: {{original}}. Geändert: {{amended}}.",
+      "why": "Vom Omnibus geändert: {{provisions}}",
+      "withPoint": "{{outcome}} ({{point}})"
+    },
+    "check": {
+      "hint": "Klar kann die Prüfungen mit derselben Beschreibung nach der ursprünglichen Fassung von 2024 wiederholen. Dieses Ergebnis wird nicht in Ihrem Inventar gespeichert.",
+      "start": "Nach ursprünglicher Fassung prüfen",
+      "running": "Prüfung nach ursprünglicher Fassung läuft …",
+      "retry": "Erneut versuchen",
+      "stopped": "Die Prüfung nach der ursprünglichen Fassung wurde angehalten. {{reason}}"
+    },
+    "dutiesNotModelled": "Pflichten nach der ursprünglichen Fassung sind nicht modelliert: Klars Pflichtenlisten folgen nur der geänderten Fassung."
   }
 }

@@ -15,7 +15,7 @@ import type { Status as PillStatus } from '@/components/pill-kinds'
 import type { Language } from '@/i18n'
 import type en from '@/i18n/locales/en.json'
 
-import { ORIGINAL_ROUTE_DATES, routeOfPoint } from './dates'
+import { routeDates, routeOfPoint } from './dates'
 import { annexPointKey, isLawProvision, provisionName } from './provision-names'
 
 /** The summary and reviewer's step rows, in the Act's order: Facts, Role, the four checks, Duties. */
@@ -119,7 +119,7 @@ export function dutiesDate(result: ClassificationResult): DutiesDate | null {
   const route = routeOfPoint(result.annex_point)
   if (route && result.risk_class === 'high_risk') {
     const amended = amendedRouteDate(result, route)
-    if (amended) return { kind: 'route', amended, original: ORIGINAL_ROUTE_DATES[route] }
+    if (amended) return { kind: 'route', ...routeDates(route, amended) }
     // Art. 111(2) moved every route duty to 2 August 2030 (a system for public authorities):
     // that is when the high-risk duties apply, under either text.
     const moved = (result.obligations ?? []).find(

@@ -8,7 +8,7 @@ import { LawDate } from '@/components/LawDate'
 import { RiskPill } from '@/components/RiskPill'
 import { useLanguage } from '@/hooks/use-language'
 
-import { longDate, ORIGINAL_ROUTE_DATES } from './dates'
+import { longDate, routeDates } from './dates'
 import { provisionName } from './provision-names'
 import { citationSource } from './result-text'
 
@@ -18,21 +18,21 @@ function IfYes({ outcome }: { outcome: AnswerOutcome }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const point = outcome.provision_id ? provisionName(outcome.provision_id, language) : ''
-  const route = outcome.high_risk_route
   const amended = outcome.duties_from
+  const dates = amended ? routeDates(outcome.high_risk_route ?? null, amended) : null
   return (
     <>
       <RiskPill kind={outcome.risk_class} />
       <span>
-        {amended ? (
+        {dates ? (
           <Trans
             i18nKey="result.question.ifYesPoint"
             values={{ point }}
             components={{
               date: (
                 <LawDate
-                  amended={longDate(amended, language)}
-                  original={longDate(route ? ORIGINAL_ROUTE_DATES[route] : amended, language)}
+                  amended={longDate(dates.amended, language)}
+                  original={longDate(dates.original, language)}
                 />
               ),
             }}

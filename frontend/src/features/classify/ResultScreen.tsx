@@ -11,6 +11,7 @@ import { saveDraft, type ClassificationRun } from './classification-store'
 import { DecidingQuestion } from './DecidingQuestion'
 import { DutiesPanel, OutOfScopePanel } from './DutiesPanel'
 import { FactsPanel } from './FactsPanel'
+import { OriginalTextNote } from './OriginalTextNote'
 import { DraftDocumentsLink, ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
 import { ResultVerdict } from './ResultVerdict'
@@ -54,6 +55,12 @@ function SummaryView({
         }
       />
       <ResultVerdict result={result} today={new Date()} />
+      <OriginalTextNote
+        run={run}
+        onCompare={() => {
+          onViewChange('reviewer')
+        }}
+      />
       {question && <DecidingQuestion question={question.missing_fact} />}
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         {result.risk_class === 'out_of_scope' ? (
