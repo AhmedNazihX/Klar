@@ -37,14 +37,16 @@ export type DocumentTool = {
 
 /** Why the API refused a document request, by its HTTP status: the request was too large or the
  *  document too long for a file (413), the draft failed its checks (409), Klar is busy (429,
- *  503), or anything else (no response at all, offline, included). */
-export type DocumentFailure = 'too-large' | 'checks-failed' | 'busy' | 'failed'
+ *  503), the file took too long to make (504), or anything else (no response at all, offline,
+ *  included). */
+export type DocumentFailure = 'too-large' | 'checks-failed' | 'busy' | 'timed-out' | 'failed'
 
 const FAILURES: Readonly<Record<number, DocumentFailure>> = {
   409: 'checks-failed',
   413: 'too-large',
   429: 'busy',
   503: 'busy',
+  504: 'timed-out',
 }
 
 export class DocumentRequestError extends Error {

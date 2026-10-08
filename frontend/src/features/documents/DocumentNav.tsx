@@ -8,6 +8,7 @@ import { provisionName } from '@/features/classify/provision-names'
 import { useLanguage } from '@/hooks/use-language'
 import { cn } from '@/lib/utils'
 
+import { ClosedOnSmallScreens } from './ClosedOnSmallScreens'
 import type { SelectedDocument } from './document-selection'
 import type { AnswersByTemplate } from './interview-answers'
 import { documentTitle, unansweredCount } from './interview'
@@ -49,9 +50,12 @@ function DocumentStatus({
 function GroupBody({
   group,
   selected,
+  onOpen,
 }: {
   group: NavGroup
   selected: SelectedDocument | null
+  /** A document was picked (the list closes on a phone). */
+  onOpen: () => void
 }): JSX.Element {
   const { t } = useTranslation()
   if (group.isError) {
@@ -86,6 +90,7 @@ function GroupBody({
               params={{ documentId: document.template }}
               search={(previous) => ({ ...previous, tool: group.toolId })}
               aria-current={isCurrent ? 'page' : undefined}
+              onClick={onOpen}
               className={cn(
                 'flex flex-col gap-1 rounded-card-small p-3 text-ink no-underline',
                 isCurrent
@@ -106,7 +111,9 @@ function GroupBody({
 }
 
 /** The documents of every tool, grouped by tool (decision 026 item 20), with their statuses. A
- *  document's title is the one its stored answers give it (`documentTitle`). */
+ *  document's title is the one its stored answers give it (`documentTitle`). Below 1280 px the
+ *  list is a closed disclosure ("Documents (N)"), so a phone opens on the document rather than
+ *  the list, and picking a document closes it again; from 1280 px it is always open. */
 export function DocumentNav({
   groups,
   selected,
@@ -117,26 +124,38 @@ export function DocumentNav({
   className?: string
 }): JSX.Element {
   const { t } = useTranslation()
+  const count = groups.reduce((total, group) => total + (group.documents?.length ?? 0), 0)
   return (
     <GlassPanel
       as="div"
       padded={false}
-      className={cn('flex w-full shrink-0 flex-col gap-2.5 px-3.5 py-5', className)}
+      className={cn('flex w-full shrink-0 flex-col gap-2.5 px-3.5 py-3 xl:py-5', className)}
     >
-      <nav aria-label={t('documents.navLabel')} className="flex flex-col gap-2.5">
-        {groups.map((group, index) => (
-          <section
-            key={group.toolId}
-            aria-label={t('documents.forTool', { tool: group.toolName })}
-            className={cn('flex flex-col gap-1', index > 0 && 'border-t border-hairline pt-2.5')}
+      <ClosedOnSmallScreens label={t('documents.navToggle', { count })} openFrom="xl">
+        {(list) => (
+          <nav
+            id={list.id}
+            aria-label={t('documents.navLabel')}
+            className={cn('flex-col gap-2.5', list.className)}
           >
-            <h2 className="m-0 px-2 pb-1 text-caption font-medium text-slate">
-              {t('documents.forTool', { tool: group.toolName })}
-            </h2>
-            <GroupBody group={group} selected={selected} />
-          </section>
-        ))}
-      </nav>
+            {groups.map((group, index) => (
+              <section
+                key={group.toolId}
+                aria-label={t('documents.forTool', { tool: group.toolName })}
+                className={cn(
+                  'flex flex-col gap-1',
+                  index > 0 && 'border-t border-hairline pt-2.5',
+                )}
+              >
+                <h2 className="m-0 px-2 pb-1 text-caption font-medium text-slate">
+                  {t('documents.forTool', { tool: group.toolName })}
+                </h2>
+                <GroupBody group={group} selected={selected} onOpen={list.close} />
+              </section>
+            ))}
+          </nav>
+        )}
+      </ClosedOnSmallScreens>
     </GlassPanel>
   )
 }

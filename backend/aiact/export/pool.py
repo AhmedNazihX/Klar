@@ -16,6 +16,7 @@ the error's type.
 import logging
 import multiprocessing
 import queue
+import threading
 from collections.abc import Callable
 from multiprocessing.connection import Connection
 from multiprocessing.context import SpawnContext, SpawnProcess
@@ -59,10 +60,17 @@ class RenderWorker:
         self._timeout = timeout_seconds
         self._process: SpawnProcess | None = None
         self._connection: Connection | None = None
+        self._stopping = threading.Lock()
+
+    @property
+    def timeout_seconds(self) -> float:
+        """How long a render may run before it is stopped."""
+        return self._timeout
 
     @property
     def is_running(self) -> bool:
-        return self._process is not None and self._process.is_alive()
+        process = self._process  # read once: another thread's `stop` may take it
+        return process is not None and process.is_alive()
 
     def run[*Args, Value](self, function: Callable[[*Args], Value], *args: *Args) -> Value:
         """`function(*args)` in the worker process; `RenderTimeout` past the time limit (the
@@ -71,7 +79,6 @@ class RenderWorker:
         try:
             connection.send((function, args))
             if not connection.poll(self._timeout):
-                logger.warning("render stopped after %s seconds", self._timeout)
                 self.stop()
                 raise RenderTimeout
             is_done, value = connection.recv()
@@ -83,14 +90,24 @@ class RenderWorker:
         return cast(Value, value)
 
     def stop(self) -> None:
-        """Kill the process (a running render included); the next `run` starts a new one."""
-        if self._connection is not None:
-            self._connection.close()
-        if self._process is not None:
-            self._process.kill()
-            self._process.join(STOP_TIMEOUT_SECONDS)
-            self._process.close()
-        self._process, self._connection = None, None
+        """Kill the process (a running render included); the next `run` starts a new one. Safe
+        to call from two threads at once (the app's shutdown and the request holding the
+        worker): one of them takes the process, the other finds none."""
+        with self._stopping:
+            process, connection = self._process, self._connection
+            self._process, self._connection = None, None
+        if connection is not None:
+            connection.close()
+        if process is None:
+            return
+        process.kill()
+        process.join(STOP_TIMEOUT_SECONDS)
+        if process.exitcode is None:
+            logger.error(
+                "a render worker didn't exit %s seconds after it was killed", STOP_TIMEOUT_SECONDS
+            )
+            return
+        process.close()
 
     def _started(self) -> Connection:
         if self._connection is not None and self.is_running:

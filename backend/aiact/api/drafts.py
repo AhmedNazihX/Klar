@@ -80,6 +80,9 @@ RENDERERS = {"docx": render_docx, "pdf": render_pdf}
 CHECKS_FAILED = "The draft failed its automatic checks, so it can't be exported."
 TOO_LONG = "This document is too long to make into a file. Please shorten some answers."
 BUSY = "Klar is busy making other files. Please try again in a moment."
+TIMED_OUT = (
+    "Making this file took too long. Please try again; if it happens again, shorten some answers."
+)
 
 TemplateId = Annotated[str, Field(pattern=TEMPLATE_PATTERN, max_length=MAX_TEMPLATE_CHARS)]
 StoredQuestionKey = Annotated[str, Field(min_length=1, max_length=MAX_QUESTION_KEY_CHARS)]
@@ -174,6 +177,7 @@ def draft(
         status.HTTP_503_SERVICE_UNAVAILABLE: {
             "description": "Every export slot is taken, or the corpus is unreachable"
         },
+        status.HTTP_504_GATEWAY_TIMEOUT: {"description": "The file took too long to make"},
     },
 )
 def export(
@@ -228,11 +232,14 @@ def _block_texts(block: Block) -> tuple[str, ...]:
 
 
 def _rendered(worker: RenderWorker, file_format: ExportFormat, paper: Paper) -> bytes:
-    """The file, rendered in `worker`'s process; a 413 when it takes past the time limit."""
+    """The file, rendered in `worker`'s process; a 504 when it runs past the time limit. The limit
+    is wall-clock time, so a busy host can trip it on a normal document: the message says to try
+    again, not that the document is too long."""
     try:
         return worker.run(RENDERERS[file_format], paper)
     except RenderTimeout:
-        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, TOO_LONG) from None
+        logger.warning("export refused: the render ran past %g seconds", worker.timeout_seconds)
+        raise HTTPException(status.HTTP_504_GATEWAY_TIMEOUT, TIMED_OUT) from None
 
 
 @contextmanager

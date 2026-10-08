@@ -315,7 +315,10 @@ describe('The Art. 50(3) disclosure', () => {
       'It sorts people into categories from biometric data',
       'Both',
     ])
-    expect(interview).toHaveTextContent("Klar writes the notice's own wording for what you pick.")
+    // The choice's hint names no document: this one is a disclosure, not a notice.
+    expect(choice).toHaveAccessibleDescription(
+      'Klar writes its own set wording for what you pick.',
+    )
     await user.click(within(choice).getByRole('radio', { name: 'Both' }))
     await user.click(within(interview).getByRole('button', { name: 'Save answer' }))
     await vi.waitFor(() => {
@@ -385,9 +388,7 @@ describe('The Art. 50(3) disclosure', () => {
       'Es ordnet Personen anhand biometrischer Daten Kategorien zu',
       'Beides',
     ])
-    expect(interview).toHaveTextContent(
-      'Klar übernimmt für Ihre Auswahl den Wortlaut des Hinweises.',
-    )
+    expect(interview).toHaveTextContent('Für Ihre Auswahl übernimmt Klar einen festen Wortlaut.')
   })
 })
 
@@ -452,6 +453,16 @@ describe('Downloads', () => {
     [413, 'de', 'Dieses Dokument ist zu lang für eine Datei. Bitte kürzen Sie einige Antworten.'],
     [503, 'en', 'Klar is busy making other files. Please try again in a moment.'],
     [503, 'de', 'Klar erstellt gerade andere Dateien. Bitte versuchen Sie es gleich noch einmal.'],
+    [
+      504,
+      'en',
+      'Making this file took too long. Please try again; if it happens again, shorten some answers.',
+    ],
+    [
+      504,
+      'de',
+      'Das Erstellen der Datei hat zu lange gedauert. Bitte versuchen Sie es erneut; wenn es wieder passiert, kürzen Sie einige Antworten.',
+    ],
     [500, 'en', "Klar couldn't make the file. Please try again."],
   ] as const)(
     'says why a %i made no file (%s), and sends nothing again by itself',

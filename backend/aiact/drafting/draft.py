@@ -168,6 +168,8 @@ def supplied_section(
     ]
     unanswered = tuple(key for key, answer in given if not answer)
     requirement = spec.requirement.citation(language) if is_requirement else None
+    # The heading is the template's, built in here too: a fixed non-blank literal, so a refusal
+    # here comes from the answers.
     with _users_text():
         return DraftSection(
             key=spec.key,
@@ -228,6 +230,8 @@ def prefilled_section(
         provenance = spec.provenance
     else:
         provenance, paragraphs = Provenance.TEMPLATE, (spec.empty[language],)
+    # The heading and `empty` line are the template's, built in here too: fixed non-blank
+    # literals, so a refusal here comes from the result's facts.
     with _users_text():
         return DraftSection(
             key=spec.key,

@@ -156,6 +156,7 @@
   },
   "documents": {
     "navLabel": "Dokumente",
+    "navToggle": "Dokumente ({{count}})",
     "breadcrumb": "Brotkrümelnavigation",
     "forTool": "Für {{tool}}",
     "needsAnswers_one": "{{article}}. {{count}} Antwort fehlt",
@@ -182,7 +183,8 @@
       "failed": "Klar konnte die Datei nicht erstellen. Bitte versuchen Sie es erneut.",
       "checksFailed": "Der Entwurf hat die automatischen Prüfungen nicht bestanden und kann nicht heruntergeladen werden.",
       "tooLong": "Dieses Dokument ist zu lang für eine Datei. Bitte kürzen Sie einige Antworten.",
-      "busy": "Klar erstellt gerade andere Dateien. Bitte versuchen Sie es gleich noch einmal."
+      "busy": "Klar erstellt gerade andere Dateien. Bitte versuchen Sie es gleich noch einmal.",
+      "timedOut": "Das Erstellen der Datei hat zu lange gedauert. Bitte versuchen Sie es erneut; wenn es wieder passiert, kürzen Sie einige Antworten."
     },
     "preview": "Dokumentvorschau",
     "lawLine": "Geprüfte Fassung der KI-Verordnung: {{version}}, gültig am {{date}}.",
@@ -216,7 +218,7 @@
       "done": "Alle Fragen hier sind beantwortet. Lesen Sie den Entwurf durch, bevor Sie ihn verwenden.",
       "skippedAll": "Die übrigen Fragen haben Sie vorerst übersprungen.",
       "showSkipped": "Zurück zu den übersprungenen Fragen",
-      "hintChoice": "Klar übernimmt für Ihre Auswahl den Wortlaut des Hinweises.",
+      "hintChoice": "Für Ihre Auswahl übernimmt Klar einen festen Wortlaut.",
       "hintRecord": "So in den Nachweis übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
       "hintDisclosure": "So in den Hinweis übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
       "hintLetter": "So in das Schreiben übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
@@ -237,7 +239,9 @@
       "introNoSource": "Für {{tool}}. Klar füllt aus, was es weiß, und fragt Sie nach dem Rest.",
       "progress": "{{drafted}} von {{total}} Abschnitten entworfen",
       "sections": "Abschnitte nach {{source}}",
-      "sectionsPlain": "Abschnitte"
+      "sectionsPlain": "Abschnitte",
+      "sectionsToggle": "Abschnitte nach {{source}} ({{count}})",
+      "sectionsPlainToggle": "Abschnitte ({{count}})"
     }
   },
   "welcome": {

@@ -548,8 +548,13 @@ RUNAWAY = dict.fromkeys(QUESTIONS[:5], "a" + "\u0301" * 19_999)
 of PDF rendering (round 3's security review measured 68.8 s)."""
 
 
+TIMED_OUT = (
+    "Making this file took too long. Please try again; if it happens again, shorten some answers."
+)
+
+
 async def test_a_runaway_render_is_stopped_refused_and_its_slot_comes_back(
-    export_app: Callable[..., FastAPI],
+    export_app: Callable[..., FastAPI], caplog: pytest.LogCaptureFixture
 ) -> None:
     app = export_app(rate_limit_exports=10, export_max_concurrent=1, export_timeout_seconds=2)
     runaway = {**_draft_body(provider_result(), ANNEX_IV, answers=RUNAWAY), "format": "pdf"}
@@ -557,12 +562,16 @@ async def test_a_runaway_render_is_stopped_refused_and_its_slot_comes_back(
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
         started = time.monotonic()
-        stopped = await client.post("/documents/export", json=runaway)
+        with caplog.at_level(logging.DEBUG):
+            stopped = await client.post("/documents/export", json=runaway)
         took = time.monotonic() - started
         after = await client.post("/documents/export", json=plain)
-    assert (stopped.status_code, stopped.json()) == (413, {"detail": TOO_LONG})
+    # Its own message, which says to try again: the limit is wall-clock time, not length.
+    assert (stopped.status_code, stopped.json()) == (504, {"detail": TIMED_OUT})
     assert took < 30, "the render was stopped at its time limit, not left to finish"
     assert after.status_code == 200, "the stopped render gave its one slot back"
+    logged = [record.getMessage() for record in caplog.records if record.name.startswith("aiact")]
+    assert logged == ["export refused: the render ran past 2 seconds"]
 
 
 async def test_the_export_workers_stop_when_the_app_shuts_down(

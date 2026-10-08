@@ -156,6 +156,7 @@
   },
   "documents": {
     "navLabel": "Documents",
+    "navToggle": "Documents ({{count}})",
     "breadcrumb": "Breadcrumb",
     "forTool": "For {{tool}}",
     "needsAnswers_one": "{{article}}. Needs {{count}} answer",
@@ -182,7 +183,8 @@
       "failed": "Klar couldn't make the file. Please try again.",
       "checksFailed": "The draft failed its automatic checks, so it can't be downloaded.",
       "tooLong": "This document is too long to make into a file. Please shorten some answers.",
-      "busy": "Klar is busy making other files. Please try again in a moment."
+      "busy": "Klar is busy making other files. Please try again in a moment.",
+      "timedOut": "Making this file took too long. Please try again; if it happens again, shorten some answers."
     },
     "preview": "Document preview",
     "lawLine": "AI Act as checked: {{version}}, applying on {{date}}.",
@@ -216,7 +218,7 @@
       "done": "Every question here is answered. Read the draft through before you use it.",
       "skippedAll": "You've skipped the rest for now.",
       "showSkipped": "Back to the skipped questions",
-      "hintChoice": "Klar writes the notice's own wording for what you pick.",
+      "hintChoice": "Klar writes its own set wording for what you pick.",
       "hintRecord": "Written into the record as you give it. Klar won't add anything you didn't say.",
       "hintDisclosure": "Written into the disclosure as you give it. Klar won't add anything you didn't say.",
       "hintLetter": "Written into the letter as you give it. Klar won't add anything you didn't say.",
@@ -237,7 +239,9 @@
       "introNoSource": "For {{tool}}. Klar fills in what it knows and asks you for the rest.",
       "progress": "{{drafted}} of {{total}} sections drafted",
       "sections": "{{source}} sections",
-      "sectionsPlain": "Sections"
+      "sectionsPlain": "Sections",
+      "sectionsToggle": "{{source}} sections ({{count}})",
+      "sectionsPlainToggle": "Sections ({{count}})"
     }
   },
   "welcome": {

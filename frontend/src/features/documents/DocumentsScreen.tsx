@@ -96,6 +96,7 @@ const DRAFT_FAILURE_KEYS = {
   'too-large': 'documents.tooLarge',
   'checks-failed': 'documents.documentFailed',
   busy: 'documents.documentFailed',
+  'timed-out': 'documents.documentFailed',
   failed: 'documents.documentFailed',
 } as const
 
@@ -209,14 +210,15 @@ function SelectedDocumentView({
       {isSkeleton ? (
         <>
           <SkeletonHeader title={document.title} toolName={toolName} sections={sections} />
-          {/* DocSkeleton: the numbered sections on the left; on a phone after the document. */}
+          {/* DocSkeleton: the numbered sections on the left, before the document in reading
+              order too. */}
           <div className="flex min-w-0 flex-col items-stretch gap-5 lg:flex-row lg:items-start">
-            {body}
             <SectionList
               source={titleParts(document.title).source}
               sections={sections}
-              className="lg:order-first lg:w-[260px]"
+              className="lg:w-[260px]"
             />
+            {body}
           </div>
         </>
       ) : (
@@ -278,10 +280,18 @@ function ToolDocuments({
   const selectedIndex = selected ? tools.indexOf(selected.tool) : -1
   const selectedAnswers = answerQueries[selectedIndex]?.data
   const isSettled = groups.every((group) => !group.isLoading)
-  // A skeleton's page has its section list on the left (DocSkeleton), so the documents follow it
-  // at every width; any other page has them on the left from xl. On a phone the document and its
-  // interview come first, the documents after.
+  // A skeleton's page has its section list on the left (DocSkeleton), so the documents follow the
+  // document at every width; any other page has them on the left from xl, and first. Reading
+  // order is the order on screen (no CSS `order`); on a phone the list is closed (`DocumentNav`),
+  // so the document and its interview are still near the top.
   const isSkeleton = selected?.document.kind === 'skeleton'
+  const nav = (
+    <DocumentNav
+      groups={groups}
+      selected={selected}
+      className={isSkeleton ? undefined : 'xl:w-[270px]'}
+    />
+  )
 
   return (
     <div
@@ -290,6 +300,7 @@ function ToolDocuments({
         !isSkeleton && 'xl:flex-row xl:items-start',
       )}
     >
+      {!isSkeleton && nav}
       <div className="flex min-w-0 grow flex-col gap-5">
         {selected ? (
           <SelectedDocumentView
@@ -309,11 +320,7 @@ function ToolDocuments({
           )
         )}
       </div>
-      <DocumentNav
-        groups={groups}
-        selected={selected}
-        className={isSkeleton ? undefined : 'xl:order-first xl:w-[270px]'}
-      />
+      {isSkeleton && nav}
     </div>
   )
 }

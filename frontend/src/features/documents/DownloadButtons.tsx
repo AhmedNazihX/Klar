@@ -13,6 +13,7 @@ const FAILURE_KEYS = {
   'checks-failed': 'documents.download.checksFailed',
   'too-large': 'documents.download.tooLong',
   busy: 'documents.download.busy',
+  'timed-out': 'documents.download.timedOut',
   failed: 'documents.download.failed',
 } as const satisfies Record<DocumentFailure, string>
 

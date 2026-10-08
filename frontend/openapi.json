@@ -564,6 +564,9 @@
           },
           "413": {
             "description": "The document is too long for a file"
+          },
+          "504": {
+            "description": "The file took too long to make"
           }
         }
       }

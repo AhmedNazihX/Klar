@@ -1553,6 +1553,10 @@ export type ExportDocumentErrors = {
      * Every export slot is taken, or the corpus is unreachable
      */
     503: unknown;
+    /**
+     * The file took too long to make
+     */
+    504: unknown;
 };
 
 export type ExportDocumentError = ExportDocumentErrors[keyof ExportDocumentErrors];
