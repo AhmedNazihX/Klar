@@ -72,7 +72,10 @@ rate.
   A stored `operator_role` answer is therefore not appended to a thin run, as only answers to questions asked in
   that run are. This matters only if a soft-wording (B6) case is ever thin.
 - **Re-recording:** the facts prompt and its answer schema changed, so every facts recording and the worked example's
-  end-to-end replay are re-recorded once (cost logged in the E13 hand-over).
+  end-to-end replay are re-recorded once. OpenRouter cost (2026-10-09, summed from the recorded responses):
+  - final recording (commit 5033d93: 5 facts replays, 2 thin replays, 76 own cases, the worked example): $0.1126
+  - a first attempt, discarded because 7 answers were cut off at the old 4,000-token cap: $0.138
+  - the live length checks for the prompt fix: about $0.05
 - **Facts answer length:** the first re-recording cut 7 own cases and the worked example off at the 4,000-token
   cap (finish_reason `length`), mostly on reasoning. The facts prompt now keeps the answer short and says the
   fact-id list only names questions, not a checklist; the worked example's answer fell from 2,414 to about 1,450
