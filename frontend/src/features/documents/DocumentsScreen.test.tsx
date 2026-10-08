@@ -335,6 +335,37 @@ describe('The Art. 50(3) disclosure', () => {
     ).toBeInTheDocument()
   })
 
+  it.each([
+    ['en', 'Disclosure: emotion recognition and biometric categorisation'],
+    ['de', 'Hinweis: Emotionserkennung und biometrische Kategorisierung'],
+  ] as const)(
+    'names in its title and list entry only what the choice picked (%s)',
+    async (language, title) => {
+      answerRows = [
+        { template: 'art_50_3_disclosure', question_key: 'recognises', answer: ART_50_3_CHOICE },
+      ]
+      await openDocuments(`/app/documents/art_50_3_disclosure?tool=${MOODS}`, {
+        tools: [MOOD_METER],
+        language,
+      })
+      const nav = await screen.findByRole(
+        'navigation',
+        { name: language === 'de' ? 'Dokumente' : 'Documents' },
+        { timeout: FIRST_RENDER_MS },
+      )
+      expect(await within(nav).findByRole('link', { name: new RegExp(title) })).toHaveAttribute(
+        'aria-current',
+        'page',
+      )
+      expect(within(nav).queryByText(/ oder | or /)).not.toBeInTheDocument()
+      if (language === 'en') {
+        // The fixture's drafts with an answer are English: the draft's title is the drafter's.
+        const article = await preview()
+        expect(within(article).getByRole('heading', { level: 1 })).toHaveTextContent(title)
+      }
+    },
+  )
+
   it('asks the choice in German', async () => {
     await openDocuments(`/app/documents/art_50_3_disclosure?tool=${MOODS}`, {
       tools: [MOOD_METER],
@@ -482,7 +513,7 @@ describe('A skeleton', () => {
     })
     expect(interview).toHaveTextContent('0 of 8 answered')
     expect(interview).toHaveTextContent(
-      "Written in as you give it, as a sentence. Klar won't add anything you didn't say.",
+      "Annex IV 1: General description of the system. Written in as you give it, as a sentence. Klar won't add anything you didn't say.",
     )
     expect(screen.getByRole('region', { name: 'Before you sign' })).toHaveTextContent(
       'Klar checks the draft; you and your experts check the substance.',
@@ -492,6 +523,104 @@ describe('A skeleton', () => {
     expect(await within(general).findByText('Scores drivers for bonuses.')).toBeInTheDocument()
     expect(within(general).getByText('7 questions')).toBeInTheDocument()
     expect(interview).toHaveTextContent('1 of 8 answered')
+  })
+
+  it('has the DocSkeleton heading and its numbered sections, each with its status', async () => {
+    await openDocuments(`/app/documents/annex_iv_technical_documentation?tool=${DRIVERS}`, {
+      tools: [DRIVER_SCORING],
+    })
+    const article = await preview()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Technical documentation')
+    expect(within(article).getByRole('heading', { level: 2, name: /\(Annex IV\)/ })).toBeVisible()
+    expect(
+      screen.getByText(
+        'Annex IV, for Driver scoring. Klar fills in what it knows and asks you for the rest.',
+      ),
+    ).toBeInTheDocument()
+    const progress = screen.getByRole('progressbar', { name: '2 of 11 sections drafted' })
+    expect(progress).toHaveAttribute('aria-valuenow', '2')
+    expect(progress).toHaveAttribute('aria-valuemax', '11')
+    const sections = screen.getByRole('navigation', { name: 'Annex IV sections' })
+    const links = within(sections).getAllByRole('link')
+    expect(links.map((link) => link.textContent)).toEqual([
+      '1The systemDrafted',
+      '2Its classificationDrafted',
+      '3General description of the system8 questions',
+      '4Elements and development process8 questions',
+      '5Monitoring, functioning and control4 questions',
+      '6Performance metrics1 question',
+      '7Risk management systemTo fill in',
+      '8Changes through the lifecycleTo fill in',
+      '9Standards appliedNeeds evidence',
+      '10EU declaration of conformityGenerated last',
+      '11Post-market monitoringTo fill in',
+    ])
+    expect(links[2]).toHaveAttribute('href', '#section-general_description')
+    expect(within(article).getByRole('region', { name: 'General description of the system' })).toBe(
+      document.getElementById('section-general_description'),
+    )
+  })
+
+  it('has the DocSkeleton heading in German, and the Art. 17 duty named as German cites it', async () => {
+    await openDocuments(`/app/documents/art_17_quality_management?tool=${DRIVERS}`, {
+      tools: [DRIVER_SCORING],
+      language: 'de',
+    })
+    await preview('Dokumentvorschau')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Qualitätsmanagementsystem')
+    expect(
+      screen.getByText(
+        'Art. 17, für Driver scoring. Klar füllt aus, was es weiß, und fragt Sie nach dem Rest.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('progressbar', { name: '2 von 15 Abschnitten entworfen' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Abschnitte nach Art. 17' })).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Dokumente' })
+    expect(
+      within(nav).getByRole('link', { name: /Qualitätsmanagementsystem \(Art\. 17\)/ }),
+    ).toHaveTextContent('Art. 16 Buchst. c. 13 Antworten fehlen')
+  })
+
+  it('keeps a short document without the skeleton heading or section list', async () => {
+    await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
+    const article = await preview()
+    expect(within(article).getByRole('heading', { level: 1 })).toHaveTextContent(
+      "Notice to workers' representatives",
+    )
+    expect(screen.queryByRole('navigation', { name: /sections/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('progressbar', { name: /sections drafted/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('The hint names what the answer is written into', () => {
+  it.each([
+    ['en', "Written into the record as you give it. Klar won't add anything you didn't say."],
+    [
+      'de',
+      'So in den Nachweis übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.',
+    ],
+  ] as const)('a record (%s)', async (language, hint) => {
+    await openDocuments(`/app/documents/art_26_2_oversight?tool=${APPLICANTS}`, { language })
+    await preview(language === 'de' ? 'Dokumentvorschau' : 'Document preview')
+    const interview = screen.getByRole('region', {
+      name: language === 'de' ? 'Geführtes Interview' : 'Guided interview',
+    })
+    expect(interview).toHaveTextContent(hint)
+  })
+
+  it('a disclosure, once its choice is made', async () => {
+    answerRows = [
+      { template: 'art_50_3_disclosure', question_key: 'recognises', answer: ART_50_3_CHOICE },
+    ]
+    await openDocuments(`/app/documents/art_50_3_disclosure?tool=${MOODS}`, {
+      tools: [MOOD_METER],
+    })
+    await preview()
+    expect(screen.getByRole('region', { name: 'Guided interview' })).toHaveTextContent(
+      "Written into the disclosure as you give it. Klar won't add anything you didn't say.",
+    )
   })
 })
 
@@ -520,11 +649,26 @@ describe('In German', () => {
     expect(
       screen.getByRole('region', { name: 'Interview: General description of the system' }),
     ).toHaveTextContent(
-      'So übernommen, wie Sie es angeben, als Satz. Klar fügt nichts hinzu, was Sie nicht gesagt haben.',
+      'Anhang IV Nr. 1: General description of the system. So übernommen, wie Sie es angeben, als Satz. Klar fügt nichts hinzu, was Sie nicht gesagt haben.',
     )
     expect(screen.getByRole('region', { name: 'Bevor Sie unterschreiben' })).toHaveTextContent(
       'Klar prüft den Entwurf; Sie und Ihre Fachleute prüfen den Inhalt.',
     )
+  })
+
+  it('names a skeleton without its provision in the title in both languages', () => {
+    const tool = 'Driver scoring'
+    expect([
+      i18n.t('documents.skeleton.introNoSource', { lng: 'en', tool }),
+      i18n.t('documents.skeleton.introNoSource', { lng: 'de', tool }),
+      i18n.t('documents.skeleton.sectionsPlain', { lng: 'en' }),
+      i18n.t('documents.skeleton.sectionsPlain', { lng: 'de' }),
+    ]).toEqual([
+      'For Driver scoring. Klar fills in what it knows and asks you for the rest.',
+      'Für Driver scoring. Klar füllt aus, was es weiß, und fragt Sie nach dem Rest.',
+      'Sections',
+      'Abschnitte',
+    ])
   })
 
   it('says in German that there is nothing to draft yet', async () => {
@@ -689,7 +833,7 @@ describe('Something fails', () => {
       alert: "This document's answers are too long to send together. Please shorten some answers.",
       title: 'Guided interview',
       progress: '1 of 4 answered',
-      hint: "Written in as you give it. Klar won't add anything you didn't say.",
+      hint: "Written into the notice as you give it. Klar won't add anything you didn't say.",
       change: 'Change: Is there a works council? Who receives this notice?',
       save: 'Save answer',
     },
@@ -699,7 +843,7 @@ describe('Something fails', () => {
         'Die Antworten zu diesem Dokument sind zusammen zu lang. Bitte kürzen Sie einige Antworten.',
       title: 'Geführtes Interview',
       progress: '1 von 4 beantwortet',
-      hint: 'So übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.',
+      hint: 'So in den Hinweis übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.',
       change: 'Ändern: Gibt es einen Betriebsrat? Wer erhält diese Information?',
       save: 'Antwort speichern',
     },
@@ -725,6 +869,7 @@ describe('Something fails', () => {
       await user.click(within(interview).getByRole('button', { name: change }))
       const field = within(interview).getByRole('textbox')
       expect(field).toHaveValue('x'.repeat(20_000))
+      expect(field.tagName).toBe('TEXTAREA')
       await user.clear(field)
       await user.type(field, 'The works council.')
       await user.click(within(interview).getByRole('button', { name: save }))

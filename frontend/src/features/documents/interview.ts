@@ -1,4 +1,4 @@
-import type { CheckedDraft, InterviewQuestion } from '@/api'
+import type { DraftSection, InterviewQuestion, ListedDocument } from '@/api'
 
 /** One document's stored answers, by question key. */
 export type TemplateAnswers = Readonly<Record<string, string>>
@@ -16,9 +16,34 @@ export type InterviewState = {
   upcoming: readonly InterviewQuestion[]
 }
 
-/** Whether the document is a skeleton: its sections quote the requirement they answer. */
-export function isSkeleton(draft: CheckedDraft): boolean {
-  return draft.document.sections.some((section) => section.requirement != null)
+/** The document's title for the answers stored: the one the choice picked gives (the Art. 50(3)
+ *  disclosure names only what applies, as its draft does), else the listed title. */
+export function documentTitle(document: ListedDocument, answers: TemplateAnswers): string {
+  for (const question of document.questions) {
+    const answer = withoutBlank(answers[question.key] ?? '')
+    const chosen = (question.choices ?? []).find((choice) => choice.key === answer)
+    if (chosen?.title) return chosen.title
+  }
+  return document.title
+}
+
+/** A skeleton's title split into its name and the provision it follows: "Technical
+ *  documentation (Annex IV)" is "Technical documentation" and "Annex IV". A title without the
+ *  provision in brackets is all name. */
+export function titleParts(title: string): { name: string; source: string | null } {
+  const match = /^(.+) \(([^()]+)\)$/.exec(title)
+  if (!match?.[1] || !match[2]) return { name: title, source: null }
+  return { name: match[1], source: match[2] }
+}
+
+/** The id of a section's element in the document, which the skeleton's section list links to. */
+export function sectionAnchor(key: string): string {
+  return `section-${key}`
+}
+
+/** How many of a draft's sections are drafted: "N of M sections drafted". */
+export function draftedCount(sections: readonly DraftSection[]): number {
+  return sections.filter((section) => section.status === 'drafted').length
 }
 
 /**

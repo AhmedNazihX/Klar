@@ -232,8 +232,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12),
-│       │                            documents/ (P9: the documents screen, interview, checks, downloads; interview-answers.ts
-│       │                            reads and upserts interview_answers through supabase-js)
+│       │                            documents/ (P9: the documents screen, interview, checks, downloads, a skeleton's
+│       │                            SkeletonHeader and SectionList; interview-answers.ts reads and upserts interview_answers
+│       │                            through supabase-js; DocumentsScreen.browser.test.tsx the phone and desktop layout)
 │       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15),
 │       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18),
 │       │                            use-classify.ts (the streamed run), use-language.ts (P5),

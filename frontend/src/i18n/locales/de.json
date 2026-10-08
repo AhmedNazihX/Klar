@@ -212,12 +212,15 @@
       "saving": "Wird gespeichert …",
       "hintNotice": "So in den Hinweis übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
       "hintSkeleton": "So übernommen, wie Sie es angeben, als Satz. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
-      "hintAny": "So übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
       "tooLong": "Eine Antwort darf bis zu 20.000 Zeichen lang sein.",
       "done": "Alle Fragen hier sind beantwortet. Lesen Sie den Entwurf durch, bevor Sie ihn verwenden.",
       "skippedAll": "Die übrigen Fragen haben Sie vorerst übersprungen.",
       "showSkipped": "Zurück zu den übersprungenen Fragen",
-      "hintChoice": "Klar übernimmt für Ihre Auswahl den Wortlaut des Hinweises."
+      "hintChoice": "Klar übernimmt für Ihre Auswahl den Wortlaut des Hinweises.",
+      "hintRecord": "So in den Nachweis übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
+      "hintDisclosure": "So in den Hinweis übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
+      "hintLetter": "So in das Schreiben übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.",
+      "hintRequirement": "{{provision}}: {{section}}. So übernommen, wie Sie es angeben, als Satz. Klar fügt nichts hinzu, was Sie nicht gesagt haben."
     },
     "checks": {
       "title": "Automatische Prüfungen",
@@ -228,6 +231,13 @@
       "sections_present": "Alle erforderlichen Abschnitte sind vorhanden",
       "nothing_invented": "Kein Inhalt, den Sie nicht angegeben haben",
       "facts_match": "Die Fakten stimmen mit der Einstufung überein"
+    },
+    "skeleton": {
+      "intro": "{{source}}, für {{tool}}. Klar füllt aus, was es weiß, und fragt Sie nach dem Rest.",
+      "introNoSource": "Für {{tool}}. Klar füllt aus, was es weiß, und fragt Sie nach dem Rest.",
+      "progress": "{{drafted}} von {{total}} Abschnitten entworfen",
+      "sections": "Abschnitte nach {{source}}",
+      "sectionsPlain": "Abschnitte"
     }
   },
   "welcome": {

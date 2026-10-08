@@ -7,36 +7,9 @@ import { StatusPill } from '@/components/StatusPill'
 import { longDate } from '@/features/classify/dates'
 import { citationSource } from '@/features/classify/result-text'
 import { useLanguage } from '@/hooks/use-language'
-import { cn } from '@/lib/utils'
 
-/** A skeleton section's status beside its heading (artboard `DocSkeleton`). */
-function SectionStatusPill({ section }: { section: DraftSection }): JSX.Element {
-  const { t } = useTranslation()
-  const count = section.unanswered?.length ?? 0
-  const label =
-    section.status === 'questions'
-      ? t('documents.sectionStatus.questions', { count })
-      : t(`documents.sectionStatus.${section.status}`)
-  return (
-    <span
-      data-section-status={section.status}
-      className={cn(
-        'inline-flex min-h-[22px] items-center rounded-pill px-2 text-xs font-semibold whitespace-nowrap',
-        section.status === 'drafted' &&
-          'bg-risk-minimal-tint text-risk-minimal shadow-[inset_0_0_0_1px_var(--color-risk-minimal-ring)]',
-        section.status === 'questions' && 'bg-lens-blue text-white',
-        section.status === 'to_fill_in' &&
-          'border-[1.5px] border-dashed border-status-info-ring bg-white/60 text-ink-2',
-        section.status === 'needs_evidence' &&
-          'bg-risk-high-tint text-risk-high shadow-[inset_0_0_0_1px_var(--color-risk-high-ring)]',
-        section.status === 'generated_last' &&
-          'bg-white/60 text-slate shadow-[inset_0_0_0_1px_var(--color-border-subtle)]',
-      )}
-    >
-      {label}
-    </span>
-  )
-}
+import { sectionAnchor } from './interview'
+import { SectionStatusPill } from './SectionStatusPill'
 
 function Section({
   section,
@@ -56,7 +29,11 @@ function Section({
   const unanswered = section.unanswered ?? []
   const paragraphKeys = (section.question_keys ?? []).filter((key) => !unanswered.includes(key))
   return (
-    <section aria-label={section.heading} className="flex flex-col gap-2">
+    <section
+      id={sectionAnchor(section.key)}
+      aria-label={section.heading}
+      className="flex scroll-mt-6 flex-col gap-2"
+    >
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="m-0 text-body-small font-semibold text-ink">{section.heading}</h2>
         {isSkeleton && <SectionStatusPill section={section} />}
@@ -99,19 +76,32 @@ function Section({
 }
 
 /** The document on white (artboards `Documents`, `DocSkeleton`): its title with the DRAFT stamp,
- *  the law version and date, the note, every section, and the notice. User text is shown as
- *  text, never as markup. */
-export function DraftView({ document }: { document: DraftDocument }): JSX.Element {
+ *  the law version and date, the note, every section, and the notice. A skeleton's page has its
+ *  own heading (`SkeletonHeader`), so a skeleton's title here is a level below it. A long title
+ *  breaks inside its words rather than pushing a phone's page sideways (German
+ *  "Qualitätsmanagementsystem"). User text is shown as text, never as markup. */
+export function DraftView({
+  document,
+  isSkeleton,
+}: {
+  document: DraftDocument
+  isSkeleton: boolean
+}): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
-  const isSkeleton = document.sections.some((section) => section.requirement != null)
+  const Title = isSkeleton ? 'h2' : 'h1'
   return (
     <article
       aria-label={t('documents.preview')}
       className="flex min-w-0 grow flex-col gap-5 rounded-card border border-white/95 bg-white/90 px-6 py-8 shadow-glass md:px-12 md:py-10"
     >
-      <div className="flex items-start justify-between gap-5">
-        <h1 className="m-0 font-serif text-document-title text-ink">{document.title}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-x-5 gap-y-2">
+        <Title
+          lang={document.language}
+          className="m-0 min-w-0 font-serif text-document-title [overflow-wrap:anywhere] hyphens-auto text-ink"
+        >
+          {document.title}
+        </Title>
         <StatusPill status="draft" className="shrink-0" />
       </div>
       <p className="m-0 text-caption text-slate">

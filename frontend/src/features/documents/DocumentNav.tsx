@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 
 import type { SelectedDocument } from './document-selection'
 import type { AnswersByTemplate } from './interview-answers'
-import { unansweredCount } from './interview'
+import { documentTitle, unansweredCount } from './interview'
 
 /** One tool's group in the list: its documents once listed, or why there are none to show. */
 export type NavGroup = {
@@ -93,7 +93,9 @@ function GroupBody({
                   : 'hover:bg-white/45',
               )}
             >
-              <span className="text-body-small font-semibold">{document.title}</span>
+              <span className="text-body-small font-semibold">
+                {documentTitle(document, group.answers[document.template] ?? {})}
+              </span>
               <DocumentStatus document={document} answers={group.answers} />
             </Link>
           </li>
@@ -103,20 +105,23 @@ function GroupBody({
   )
 }
 
-/** The documents of every tool, grouped by tool (decision 026 item 20), with their statuses. */
+/** The documents of every tool, grouped by tool (decision 026 item 20), with their statuses. A
+ *  document's title is the one its stored answers give it (`documentTitle`). */
 export function DocumentNav({
   groups,
   selected,
+  className,
 }: {
   groups: readonly NavGroup[]
   selected: SelectedDocument | null
+  className?: string
 }): JSX.Element {
   const { t } = useTranslation()
   return (
     <GlassPanel
       as="div"
       padded={false}
-      className="flex w-full shrink-0 flex-col gap-2.5 px-3.5 py-5 xl:w-[270px]"
+      className={cn('flex w-full shrink-0 flex-col gap-2.5 px-3.5 py-5', className)}
     >
       <nav aria-label={t('documents.navLabel')} className="flex flex-col gap-2.5">
         {groups.map((group, index) => (

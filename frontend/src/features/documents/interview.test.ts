@@ -7,7 +7,15 @@ import {
   PROVIDER_DOCUMENTS,
 } from '@/test/documents-fixtures'
 
-import { interviewState, isAnswered, isSkeleton, unansweredCount, withoutBlank } from './interview'
+import {
+  documentTitle,
+  draftedCount,
+  interviewState,
+  isAnswered,
+  titleParts,
+  unansweredCount,
+  withoutBlank,
+} from './interview'
 
 function draft(drafts: Readonly<Record<string, CheckedDraft>>, template: string): CheckedDraft {
   const found = drafts[template]
@@ -61,8 +69,6 @@ describe('The guided interview', () => {
   })
 
   it("keeps a skeleton's interview to the section of the question asked", () => {
-    expect(isSkeleton(ANNEX_IV)).toBe(true)
-    expect(isSkeleton(WORKERS)).toBe(false)
     const general = ANNEX_IV.questions.filter((q) => q.section === 'general_description')
     const answers = Object.fromEntries(general.map((q) => [q.key, 'Given.']))
     const state = interviewState(ANNEX_IV.questions, true, answers, NONE, null)
@@ -114,5 +120,64 @@ describe('What a document still needs', () => {
     expect(unansweredCount(chosen.questions, { recognises: 'both' })).toBe(
       chosen.document.unanswered,
     )
+  })
+})
+
+describe('documentTitle', () => {
+  function listed(language: 'en' | 'de') {
+    const found = LIMITED_DOCUMENTS.list[language].documents.find(
+      (item) => item.template === 'art_50_3_disclosure',
+    )
+    if (!found) throw new Error('no Art. 50(3) disclosure in the fixture')
+    return found
+  }
+
+  it.each([
+    ['', 'en', 'Disclosure: emotion recognition or biometric categorisation'],
+    ['emotion_recognition', 'en', 'Disclosure: emotion recognition'],
+    ['biometric_categorisation', 'en', 'Disclosure: biometric categorisation'],
+    ['both', 'en', 'Disclosure: emotion recognition and biometric categorisation'],
+    ['', 'de', 'Hinweis: Emotionserkennung oder biometrische Kategorisierung'],
+    ['emotion_recognition', 'de', 'Hinweis: Emotionserkennung'],
+    ['biometric_categorisation', 'de', 'Hinweis: biometrische Kategorisierung'],
+    ['both', 'de', 'Hinweis: Emotionserkennung und biometrische Kategorisierung'],
+  ] as const)(
+    'names the Art. 50(3) disclosure for the choice %j (%s)',
+    (choice, language, title) => {
+      expect(documentTitle(listed(language), choice ? { recognises: choice } : {})).toBe(title)
+    },
+  )
+
+  it('keeps the title of a document without a choice, and for an answer naming no choice', () => {
+    const workers = DEPLOYER_DOCUMENTS.list.en.documents[1]
+    if (!workers) throw new Error('no workers notice in the fixture')
+    expect(documentTitle(workers, { recipients: 'The works council' })).toBe(workers.title)
+    expect(documentTitle(listed('en'), { recognises: 'Both' })).toBe(
+      'Disclosure: emotion recognition or biometric categorisation',
+    )
+  })
+
+  it("gives the title the drafter gives the choice's draft", () => {
+    expect(documentTitle(listed('en'), { recognises: 'both' })).toBe(
+      draft(LIMITED_DOCUMENTS.en_answered, 'art_50_3_disclosure').document.title,
+    )
+  })
+})
+
+describe('titleParts', () => {
+  it.each([
+    ['Technical documentation (Annex IV)', 'Technical documentation', 'Annex IV'],
+    ['Technische Dokumentation (Anhang IV)', 'Technische Dokumentation', 'Anhang IV'],
+    ['Qualitätsmanagementsystem (Art. 17)', 'Qualitätsmanagementsystem', 'Art. 17'],
+    ['Human oversight record', 'Human oversight record', null],
+  ])('splits %j', (title, name, source) => {
+    expect(titleParts(title)).toEqual({ name, source })
+  })
+})
+
+describe('draftedCount', () => {
+  it('counts the drafted sections of a skeleton', () => {
+    expect(draftedCount(ANNEX_IV.document.sections)).toBe(2)
+    expect(ANNEX_IV.document.sections).toHaveLength(11)
   })
 })

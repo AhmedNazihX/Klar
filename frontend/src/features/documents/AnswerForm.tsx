@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
-import type { InterviewChoice, InterviewQuestion } from '@/api'
+import type { DocumentKind, InterviewChoice, InterviewQuestion } from '@/api'
 import { Button } from '@/components/Button'
 
 import { MAX_ANSWER_CHARS } from './interview-answers'
@@ -19,22 +19,29 @@ export type AnswerFormProps = {
   question: InterviewQuestion
   /** The answer given before, if any; the field starts with it. */
   given: string
-  /** What the answer is written into: a skeleton's answers run longer, so they get a text area,
-   *  as do a document's whose draft couldn't be drawn ('unknown'), so a long one can be shortened. */
-  kind: AnswerKind
+  /** What the answer is written into, which the hint names. */
+  kind: DocumentKind
+  /** A text area rather than one line: a skeleton's answers run longer, and so may a document's
+   *  whose draft couldn't be drawn, so a long one can be shortened. */
+  isLong: boolean
+  /** A skeleton's requirement the question answers, named in the hint ("Annex IV 2: Elements
+   *  and development process"); null when unknown or not a skeleton. */
+  requirement: Requirement | null
   isSaving: boolean
   onSave: (answer: string) => void
   onSkip: () => void
 }
 
-/** Where an answer goes: a short document, a skeleton, or a document not drafted yet. */
-export type AnswerKind = 'notice' | 'skeleton' | 'unknown'
+/** A requirement as the hint names it: its provision ("Annex IV 2") and its section's heading. */
+export type Requirement = { provision: string; section: string }
 
 const HINT_KEYS = {
   notice: 'documents.interview.hintNotice',
+  record: 'documents.interview.hintRecord',
+  disclosure: 'documents.interview.hintDisclosure',
+  letter: 'documents.interview.hintLetter',
   skeleton: 'documents.interview.hintSkeleton',
-  unknown: 'documents.interview.hintAny',
-} as const
+} as const satisfies Record<DocumentKind, string>
 
 type FieldProps = {
   fieldId: string
@@ -85,8 +92,15 @@ function TextField({
   )
 }
 
-function hintKey(isChoice: boolean, kind: AnswerKind) {
-  return isChoice ? ('documents.interview.hintChoice' as const) : HINT_KEYS[kind]
+/** How the answer is written in, for its document's kind; a skeleton's hint first names the
+ *  requirement the question answers (artboard `DocSkeleton`). */
+function useHint(isChoice: boolean, kind: DocumentKind, requirement: Requirement | null): string {
+  const { t } = useTranslation()
+  if (isChoice) return t('documents.interview.hintChoice')
+  if (kind === 'skeleton' && requirement) {
+    return t('documents.interview.hintRequirement', requirement)
+  }
+  return t(HINT_KEYS[kind])
 }
 
 /** One question of the guided interview: the field (or a choice question's options), the
@@ -96,6 +110,8 @@ export function AnswerForm({
   question,
   given,
   kind,
+  isLong,
+  requirement,
   isSaving,
   onSave,
   onSkip,
@@ -110,6 +126,7 @@ export function AnswerForm({
   })
   const choices = question.choices ?? []
   const isChoice = choices.length > 0
+  const hint = useHint(isChoice, kind, requirement)
   const hasError = form.formState.errors.answer !== undefined
   const field: FieldProps = {
     fieldId,
@@ -143,11 +160,11 @@ export function AnswerForm({
         {isChoice ? (
           <ChoiceField {...field} choices={choices} />
         ) : (
-          <TextField {...field} isLong={kind !== 'notice'} />
+          <TextField {...field} isLong={isLong} />
         )}
       </Wrapper>
       <p id={hintId} className="m-0 text-micro text-slate">
-        {t(hintKey(isChoice, kind))}
+        {hint}
       </p>
       {hasError && (
         <p id={errorId} className="m-0 text-caption text-risk-prohibited">

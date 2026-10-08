@@ -16,15 +16,17 @@ import { useInterviewAnswers } from '@/hooks/use-interview-answers'
 import { useInventoryTools } from '@/hooks/use-inventory-tools'
 import { useLanguage } from '@/hooks/use-language'
 import { useUserDataOverview } from '@/hooks/use-user-data-overview'
+import { cn } from '@/lib/utils'
 
 import { ChecksPanel } from './ChecksPanel'
 import { DocumentNav, type NavGroup } from './DocumentNav'
 import { documentTools, selectDocument, type SelectedDocument } from './document-selection'
 import { DownloadButtons } from './DownloadButtons'
 import { DraftView } from './DraftView'
-import type { TemplateAnswers } from './interview'
-import { isSkeleton } from './interview'
+import { titleParts, type TemplateAnswers } from './interview'
 import { InterviewPanel } from './InterviewPanel'
+import { SectionList } from './SectionList'
+import { SkeletonHeader } from './SkeletonHeader'
 
 export type DocumentsScreenProps = {
   /** The template id of the document to show (`/app/documents/<id>`); the first one without. */
@@ -166,6 +168,7 @@ function SelectedDocumentView({
       key={`${tool.toolId}:${template}`}
       toolId={tool.toolId}
       template={template}
+      kind={document.kind}
       questions={document.questions}
       draft={draft.data}
       answers={answers}
@@ -183,17 +186,42 @@ function SelectedDocumentView({
       </>
     )
   }
+  const isSkeleton = document.kind === 'skeleton'
+  const { sections } = draft.data.document
+  const body = (
+    <div className="flex min-w-0 grow flex-col items-stretch gap-5 2xl:flex-row 2xl:items-start">
+      <DraftView document={draft.data.document} isSkeleton={isSkeleton} />
+      <div
+        className={cn(
+          'flex w-full shrink-0 flex-col gap-4',
+          isSkeleton ? '2xl:w-[320px]' : '2xl:w-[340px]',
+        )}
+      >
+        {interview}
+        <ChecksPanel checks={draft.data.checks} isSkeleton={isSkeleton} />
+      </div>
+    </div>
+  )
   return (
     <>
       {header}
       {failure && <GlassPanel>{failure}</GlassPanel>}
-      <div className="flex min-w-0 flex-col items-stretch gap-5 2xl:flex-row 2xl:items-start">
-        <DraftView document={draft.data.document} />
-        <div className="flex w-full shrink-0 flex-col gap-4 2xl:w-[340px]">
-          {interview}
-          <ChecksPanel checks={draft.data.checks} isSkeleton={isSkeleton(draft.data)} />
-        </div>
-      </div>
+      {isSkeleton ? (
+        <>
+          <SkeletonHeader title={document.title} toolName={toolName} sections={sections} />
+          {/* DocSkeleton: the numbered sections on the left; on a phone after the document. */}
+          <div className="flex min-w-0 flex-col items-stretch gap-5 lg:flex-row lg:items-start">
+            {body}
+            <SectionList
+              source={titleParts(document.title).source}
+              sections={sections}
+              className="lg:order-first lg:w-[260px]"
+            />
+          </div>
+        </>
+      ) : (
+        body
+      )}
     </>
   )
 }
@@ -250,10 +278,18 @@ function ToolDocuments({
   const selectedIndex = selected ? tools.indexOf(selected.tool) : -1
   const selectedAnswers = answerQueries[selectedIndex]?.data
   const isSettled = groups.every((group) => !group.isLoading)
+  // A skeleton's page has its section list on the left (DocSkeleton), so the documents follow it
+  // at every width; any other page has them on the left from xl. On a phone the document and its
+  // interview come first, the documents after.
+  const isSkeleton = selected?.document.kind === 'skeleton'
 
   return (
-    <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
-      <DocumentNav groups={groups} selected={selected} />
+    <div
+      className={cn(
+        'flex min-w-0 flex-col items-stretch gap-5',
+        !isSkeleton && 'xl:flex-row xl:items-start',
+      )}
+    >
       <div className="flex min-w-0 grow flex-col gap-5">
         {selected ? (
           <SelectedDocumentView
@@ -273,6 +309,11 @@ function ToolDocuments({
           )
         )}
       </div>
+      <DocumentNav
+        groups={groups}
+        selected={selected}
+        className={isSkeleton ? undefined : 'xl:order-first xl:w-[270px]'}
+      />
     </div>
   )
 }

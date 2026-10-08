@@ -212,12 +212,15 @@
       "saving": "Saving…",
       "hintNotice": "Written into the notice as you give it. Klar won't add anything you didn't say.",
       "hintSkeleton": "Written in as you give it, as a sentence. Klar won't add anything you didn't say.",
-      "hintAny": "Written in as you give it. Klar won't add anything you didn't say.",
       "tooLong": "An answer can be up to 20,000 characters.",
       "done": "Every question here is answered. Read the draft through before you use it.",
       "skippedAll": "You've skipped the rest for now.",
       "showSkipped": "Back to the skipped questions",
-      "hintChoice": "Klar writes the notice's own wording for what you pick."
+      "hintChoice": "Klar writes the notice's own wording for what you pick.",
+      "hintRecord": "Written into the record as you give it. Klar won't add anything you didn't say.",
+      "hintDisclosure": "Written into the disclosure as you give it. Klar won't add anything you didn't say.",
+      "hintLetter": "Written into the letter as you give it. Klar won't add anything you didn't say.",
+      "hintRequirement": "{{provision}}: {{section}}. Written in as you give it, as a sentence. Klar won't add anything you didn't say."
     },
     "checks": {
       "title": "Automatic checks",
@@ -228,6 +231,13 @@
       "sections_present": "Every required section is present",
       "nothing_invented": "No content you didn't supply",
       "facts_match": "Facts match the classification"
+    },
+    "skeleton": {
+      "intro": "{{source}}, for {{tool}}. Klar fills in what it knows and asks you for the rest.",
+      "introNoSource": "For {{tool}}. Klar fills in what it knows and asks you for the rest.",
+      "progress": "{{drafted}} of {{total}} sections drafted",
+      "sections": "{{source}} sections",
+      "sectionsPlain": "Sections"
     }
   },
   "welcome": {

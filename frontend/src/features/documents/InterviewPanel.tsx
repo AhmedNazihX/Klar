@@ -1,18 +1,22 @@
 import { useId, useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { CheckedDraft, InterviewQuestion } from '@/api'
+import type { CheckedDraft, DocumentKind, InterviewQuestion } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
 import { Icon } from '@/components/Icon'
+import { provisionName } from '@/features/classify/provision-names'
 import { WriteFailureMessage } from '@/features/welcome/WriteFailureMessage'
 import { useSaveInterviewAnswer } from '@/hooks/use-interview-answers'
+import { useLanguage } from '@/hooks/use-language'
 
-import { AnswerForm, type AnswerKind } from './AnswerForm'
-import { interviewState, isSkeleton } from './interview'
+import { AnswerForm } from './AnswerForm'
+import { interviewState } from './interview'
 
 export type InterviewPanelProps = {
   toolId: string
   template: string
+  /** What the document is: a skeleton's interview runs section by section. */
+  kind: DocumentKind
   /** The document's questions, as its listing gives them. */
   questions: readonly InterviewQuestion[]
   /** Its draft; undefined while none can be shown (one that failed, say because its answers are
@@ -58,18 +62,28 @@ function AnsweredItem({
 export function InterviewPanel({
   toolId,
   template,
+  kind,
   questions,
   draft,
   answers,
 }: InterviewPanelProps): JSX.Element {
   const { t } = useTranslation()
+  const language = useLanguage()
   const headingId = useId()
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set())
   const [chosenKey, setChosenKey] = useState<string | null>(null)
   const save = useSaveInterviewAnswer()
-  const kind = answerKind(draft)
   const state = interviewState(questions, kind === 'skeleton', answers, skipped, chosenKey)
-  const sectionHeading = draft?.document.sections.find((s) => s.key === state.section)?.heading
+  const section = draft?.document.sections.find((s) => s.key === state.section)
+  const sectionHeading = section?.heading
+  // The requirement the question answers, for a skeleton's hint ("Annex IV 2: Elements and
+  // development process").
+  const requirement = section?.requirement
+    ? {
+        provision: provisionName(section.requirement.provision_id, language),
+        section: section.heading,
+      }
+    : null
   const total = state.questions.length
   const answered = state.answered.length
   const { current } = state
@@ -139,6 +153,8 @@ export function InterviewPanel({
           question={current}
           given={answers[current.key] ?? ''}
           kind={kind}
+          isLong={kind === 'skeleton' || !draft}
+          requirement={requirement}
           isSaving={save.isPending}
           onSave={(answer) => {
             saveAnswer(current, answer)
@@ -171,11 +187,6 @@ export function InterviewPanel({
       )}
     </GlassPanel>
   )
-}
-
-function answerKind(draft: CheckedDraft | undefined): AnswerKind {
-  if (!draft) return 'unknown'
-  return isSkeleton(draft) ? 'skeleton' : 'notice'
 }
 
 function InterviewEnd({
