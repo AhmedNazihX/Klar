@@ -10,7 +10,10 @@ skeletons (`skeletons/`) and the vendor letters (`vendor_letters/`) are all draf
 """
 
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
+
+from pydantic import ValidationError
 
 from aiact.drafting.models import (
     DraftDocument,
@@ -48,6 +51,26 @@ class UnknownQuestionError(ValueError):
     """An answer names a question the template doesn't ask."""
 
 
+class UnwritableTextError(ValueError):
+    """A fact or an answer a section can't hold (a blank fact, say). `error` is pydantic's, for
+    logging where it failed; its text quotes the input, so this error's message never does."""
+
+    def __init__(self, error: ValidationError) -> None:
+        super().__init__(f"{error.title} can't hold the text it was given")
+        self.error = error
+
+
+@contextmanager
+def _users_text() -> Iterator[None]:
+    """A section built from the result's facts or the user's answers: the model refusing it is
+    an UnwritableTextError. Only those sections are built inside it, never a model holding the
+    template's or the corpus's text, whose refusal is a bug, raised as it is."""
+    try:
+        yield
+    except ValidationError as exc:
+        raise UnwritableTextError(exc) from None
+
+
 def refuse_unasked(template: DocumentTemplate, answers: Answers) -> None:
     """Raises UnknownQuestionError when an answer names a question `template` doesn't ask: for a
     request that posts its own answers (the vendor letter's), where such a key is a mistake
@@ -70,7 +93,8 @@ def draft_document(
     small-company note. `quotes` are the provisions the quoting pre-filled sections
     (`QUOTING_FILLS`) quote, read from the corpus in `language`. An answer to a question the
     template doesn't ask (a stale row, say) is left out and logged, so it never blocks the
-    draft. Raises DutyDateError when the result lists the document's duty with several dates."""
+    draft. Raises DutyDateError when the result lists the document's duty with several dates,
+    and UnwritableTextError when a fact or an answer is one no section can hold."""
     answers = _asked_answers(template, answers)
     article = template.article_for(result)
     sections = tuple(
@@ -143,16 +167,18 @@ def supplied_section(
         for question in section_questions(spec)
     ]
     unanswered = tuple(key for key, answer in given if not answer)
-    return DraftSection(
-        key=spec.key,
-        heading=spec.heading[language],
-        provenance=spec.provenance,
-        paragraphs=tuple(answer for _, answer in given if answer),
-        question_keys=tuple(key for key, _ in given),
-        unanswered=unanswered,
-        status=_waiting_status(spec) if unanswered else SectionStatus.DRAFTED,
-        requirement=spec.requirement.citation(language) if is_requirement else None,
-    )
+    requirement = spec.requirement.citation(language) if is_requirement else None
+    with _users_text():
+        return DraftSection(
+            key=spec.key,
+            heading=spec.heading[language],
+            provenance=spec.provenance,
+            paragraphs=tuple(answer for _, answer in given if answer),
+            question_keys=tuple(key for key, _ in given),
+            unanswered=unanswered,
+            status=_waiting_status(spec) if unanswered else SectionStatus.DRAFTED,
+            requirement=requirement,
+        )
 
 
 def _chosen_section(spec: ChoiceSection, answers: Answers, language: Language) -> DraftSection:
@@ -202,11 +228,12 @@ def prefilled_section(
         provenance = spec.provenance
     else:
         provenance, paragraphs = Provenance.TEMPLATE, (spec.empty[language],)
-    return DraftSection(
-        key=spec.key,
-        heading=spec.heading[language],
-        provenance=provenance,
-        paragraphs=paragraphs,
-        status=SectionStatus.DRAFTED,
-        quotes=tuple(quotes) if spec.fill in QUOTING_FILLS else (),
-    )
+    with _users_text():
+        return DraftSection(
+            key=spec.key,
+            heading=spec.heading[language],
+            provenance=provenance,
+            paragraphs=paragraphs,
+            status=SectionStatus.DRAFTED,
+            quotes=tuple(quotes) if spec.fill in QUOTING_FILLS else (),
+        )

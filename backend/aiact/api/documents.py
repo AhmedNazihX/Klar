@@ -49,6 +49,7 @@ from aiact.drafting import (
     NoVendorLetterError,
     UnknownPointError,
     UnknownQuestionError,
+    UnwritableTextError,
     draft_vendor_letter,
     quoted_points,
     run_checks,
@@ -209,9 +210,10 @@ def valid_result(posted: dict[str, JsonValue]) -> ClassificationResult:
 def refused_drafts() -> Iterator[None]:
     """Every document route's drafting, with each reason the drafter refuses a document as its
     HTTP error, a fixed message that quotes none of the request. A result that keeps the
-    contract can still hold a text no document can (a blank fact): that is not a valid result
-    either, a 422 logged in one content-free line (`_log_unwritable`), never a 500 whose
-    traceback would carry the facts."""
+    contract can still hold a text no document can (a blank fact, `UnwritableTextError`): that
+    is not a valid result either, a 422 logged in one content-free line (`_log_unwritable`),
+    never a 500 whose traceback would carry the facts. A corpus row or a template a model
+    refuses is not the request's fault: its ValidationError stays a 500."""
     try:
         yield
     except DocumentNotCalledForError:
@@ -224,8 +226,8 @@ def refused_drafts() -> Iterator[None]:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, UNKNOWN_POINT) from None
     except DutyDateError:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, SEVERAL_DATES) from None
-    except ValidationError as exc:
-        _log_unwritable(exc)
+    except UnwritableTextError as exc:
+        _log_unwritable(exc.error)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, INVALID_RESULT) from None
 
 

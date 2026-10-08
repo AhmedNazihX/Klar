@@ -15,6 +15,7 @@ from typing import Any
 import httpx
 import pytest
 from fastapi import FastAPI
+from pydantic import ValidationError
 
 from aiact.api import create_app
 from aiact.api.dependencies import ApiContext
@@ -23,7 +24,7 @@ from aiact.api.drafts import MAX_FILE_CHARS, MAX_FILE_LINES, RENDERERS
 from aiact.drafting import CheckName, CheckResult, SizeClass
 from aiact.drafting.documents import checked_draft
 from aiact.export.pool import RenderWorker
-from aiact.schemas import DISCLAIMER, ClassificationResult, Fact, Language
+from aiact.schemas import DISCLAIMER, Citation, ClassificationResult, Fact, Language
 from tests.api.conftest import BASE_URL, api_settings
 from tests.drafting.builders import WORKERS, WORKERS_ANSWERS, provider_result
 from tests.drafting.vendor_builders import (
@@ -335,6 +336,25 @@ async def test_a_blank_fact_in_a_vendor_message_is_a_422_that_logs_no_content(
         "draft refused: ValidationError DraftSection (value_error at the model)"
     )
     assert logged.exc_info is None
+
+
+def _corrupt_corpus(*_lookup: object) -> tuple[Citation, ...]:
+    """A corpus lookup whose row doesn't fit the citation model."""
+    return (Citation.model_validate({"provision_id": "art:5:1:a"}),)
+
+
+@pytest.mark.parametrize("route", ["draft", "export"])
+async def test_a_corrupt_corpus_row_is_a_server_error_not_an_invalid_result(
+    app: FastAPI, client: httpx.AsyncClient, route: str
+) -> None:
+    """Only a model built from the result's facts or the answers is the request's fault (422):
+    a corpus row the citation model refuses is raised as it is, a 500."""
+    app.dependency_overrides[law_quotes] = lambda: _corrupt_corpus
+    body = {**_draft_body(prohibited_result(), MESSAGE), "format": "pdf"}
+    if route == "draft":
+        del body["format"]
+    with pytest.raises(ValidationError, match="Citation"):
+        await client.post(f"/documents/{route}", json=body)
 
 
 # --- Export ------------------------------------------------------------------------------------

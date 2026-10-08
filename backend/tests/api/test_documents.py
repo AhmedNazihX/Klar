@@ -12,6 +12,7 @@ import httpx
 import psycopg
 import pytest
 from fastapi import FastAPI
+from pydantic import ValidationError
 
 from aiact.api import create_app
 from aiact.api.app import CORPUS_UNAVAILABLE
@@ -26,7 +27,7 @@ from aiact.api.documents import (
     law_quotes,
 )
 from aiact.api.errors import Unprocessable
-from aiact.schemas import DISCLAIMER, ClassificationResult, Fact, Language
+from aiact.schemas import DISCLAIMER, Citation, ClassificationResult, Fact, Language
 from tests.api.conftest import BASE_URL, api_settings
 from tests.drafting.builders import ambiguous_result
 from tests.drafting.vendor_builders import (
@@ -179,6 +180,20 @@ async def test_a_blank_fact_is_a_422_and_logs_no_content(
         "draft refused: ValidationError DraftSection (value_error at the model)"
     )
     assert logged.exc_info is None
+
+
+async def test_a_corrupt_corpus_row_is_a_server_error_not_an_invalid_result(
+    app: FastAPI, client: httpx.AsyncClient
+) -> None:
+    """A corpus row the citation model refuses is no fault of the request: raised as it is (a
+    500), never the 422 a blank fact gets."""
+
+    def corrupt(*_lookup: object) -> tuple[Citation, ...]:
+        return (Citation.model_validate({"provision_id": "art:5:1:a"}),)
+
+    app.dependency_overrides[law_quotes] = lambda: corrupt
+    with pytest.raises(ValidationError, match="Citation"):
+        await client.post(PATH, json=_body(prohibited_result()))
 
 
 async def test_unknown_fields_and_too_many_answers_are_a_422(client: httpx.AsyncClient) -> None:
