@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18n from 'i18next'
 import { delay, http, HttpResponse } from 'msw'
@@ -363,6 +363,18 @@ describe('The summary under the original text', () => {
     const todo = screen.getByRole('region', { name: 'What you need to do' })
     expect(within(todo).getByRole('note')).toHaveTextContent(DATES_NOTICE)
     expect(within(todo).getAllByRole('listitem').length).toBeGreaterThan(0)
+  })
+
+  it('shows the dates notice once, also with the Duties step open', async () => {
+    const { user } = await openResult({ result: decidedHighRisk(), law: 'original' })
+    const steps = screen.getByRole('region', { name: 'How Klar got here' })
+    const row = within(steps)
+      .getAllByRole('button', { expanded: false })
+      .find((button) => button.textContent.startsWith('Duties'))
+    if (!row) throw new Error('The steps list has a Duties row.')
+    await user.click(row)
+    expect(row).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getAllByText(DATES_NOTICE)).toHaveLength(1)
   })
 
   it('shows no such notice under the amended text', async () => {
@@ -735,6 +747,28 @@ describe('The law switch and the original-text run', () => {
     expect(
       await screen.findByRole('heading', { level: 2, name: 'Original Act vs amended' }),
     ).toHaveFocus()
+  })
+
+  it('leaves the comparison unfocused when the reviewer view comes back later', async () => {
+    const { user, router } = await openResult({ result: decidedHighRisk(), law: 'original' })
+    await user.click(screen.getByRole('button', { name: 'Compare the two texts' }))
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Original Act vs amended' }),
+    ).toHaveFocus()
+    // The view changes by the address (a link, the history), not by the view switch.
+    const path = `/app/inventory/${TOOL_ID}?law=original`
+    act(() => {
+      router.history.push(path)
+    })
+    await screen.findByRole('button', { name: 'Compare the two texts' })
+    act(() => {
+      router.history.push(`${path}&view=reviewer`)
+    })
+    const heading = await screen.findByRole('heading', {
+      level: 2,
+      name: 'Original Act vs amended',
+    })
+    expect(heading).not.toHaveFocus()
   })
 
   it.each([

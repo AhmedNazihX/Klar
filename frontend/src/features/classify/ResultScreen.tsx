@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useState, type JSX } from 'react'
+import { useCallback, useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/Button'
@@ -130,6 +130,12 @@ export function ResultScreen({
   // Set only by the summary's "Compare the two texts", so the comparison then takes the focus.
   const [shouldFocusComparison, setShouldFocusComparison] = useState(false)
 
+  // Once the comparison has the focus the request is spent: a later arrival in the reviewer view
+  // (browser back or forward, the view switch) doesn't pull the focus again.
+  const dropFocusRequest = useCallback(() => {
+    setShouldFocusComparison(false)
+  }, [])
+
   function changeView(next: ResultView): void {
     setShouldFocusComparison(false)
     onViewChange(next)
@@ -144,6 +150,7 @@ export function ResultScreen({
           run={run}
           original={original}
           shouldFocusComparison={shouldFocusComparison}
+          onComparisonFocused={dropFocusRequest}
           onViewChange={changeView}
         />
       ) : (

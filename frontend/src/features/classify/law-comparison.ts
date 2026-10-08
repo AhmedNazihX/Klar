@@ -5,7 +5,7 @@ import type { Language } from '@/i18n'
 
 import { ORIGINAL_ROUTE_DATES, routeOfPoint, shortDate } from './dates'
 import { provisionName } from './provision-names'
-import { amendedRouteDate, dutiesDate, stepOutcome } from './result-text'
+import { dutiesDate, publicAuthorityLegacyDate, stepOutcome } from './result-text'
 
 /** One row of "Original Act vs amended": the value under each text. */
 export type ComparisonRow = {
@@ -56,18 +56,6 @@ function amendedDutiesFrom(result: ClassificationResult, language: Language, non
   return shortDate(date.kind === 'route' ? date.amended : date.date, language)
 }
 
-/** Whether Art. 111(2) dates a high-risk result's duties: a legacy system for public authorities,
- *  whose route duties all apply from 2 August 2030, under either text. */
-function isPublicAuthorityLegacy(result: ClassificationResult): boolean {
-  const route = routeOfPoint(result.annex_point)
-  if (result.risk_class !== 'high_risk' || route === null) return false
-  const isMoved = (result.obligations ?? []).some(
-    (obligation) =>
-      obligation.high_risk_route === route && obligation.legacy === 'legacy_public_authority',
-  )
-  return isMoved && amendedRouteDate(result, route) === null
-}
-
 /** The date duties apply from under the original text, or a dash. Only the route dates move
  *  (Art. 113, decision 026 item 11): a high-risk route takes its original date, unless Art. 111(2)
  *  fixes 2030 on the same route under both texts; while the class is the same, any other date
@@ -82,7 +70,7 @@ function originalDutiesFrom(
   const isSameClass = original.risk_class === amended.risk_class
   const route = original.risk_class === 'high_risk' ? routeOfPoint(original.annex_point) : null
   const isSameRoute = isSameClass && route !== null && route === routeOfPoint(amended.annex_point)
-  if (route && !(isSameRoute && isPublicAuthorityLegacy(amended))) {
+  if (route && !(isSameRoute && publicAuthorityLegacyDate(amended) !== null)) {
     return shortDate(ORIGINAL_ROUTE_DATES[route], language)
   }
   return isSameClass ? amendedDutiesFrom(amended, language, none) : none

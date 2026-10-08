@@ -58,6 +58,7 @@ export function ReviewerView({
   run,
   original,
   shouldFocusComparison = false,
+  onComparisonFocused,
   onViewChange,
 }: {
   run: ClassificationRun
@@ -65,6 +66,8 @@ export function ReviewerView({
   original: OriginalRun
   /** Whether the comparison takes the focus as the view opens. */
   shouldFocusComparison?: boolean
+  /** Called once the comparison has taken that focus. */
+  onComparisonFocused?: () => void
   onViewChange: (view: ResultView) => void
 }): JSX.Element {
   const { t } = useTranslation()
@@ -94,7 +97,8 @@ export function ReviewerView({
         <div className="flex min-w-0 flex-1 flex-col gap-5">
           {SUMMARY_ROWS.map((id) => {
             if (id === 'facts') return <FactsStepCard key={id} result={result} headingLevel={2} />
-            if (id === 'duties') return <DutiesStepCard key={id} result={result} headingLevel={2} />
+            if (id === 'duties')
+              return <DutiesStepCard key={id} result={result} headingLevel={2} hasOriginalNote />
             const step = result.steps.find((candidate) => candidate.step === id)
             if (!step) return null
             const name =
@@ -115,7 +119,12 @@ export function ReviewerView({
             original text has nothing to compare against. */}
         {result.law_version === 'amended' && (
           <div className="flex min-w-0 flex-col gap-4 xl:w-[380px] xl:shrink-0">
-            <LawComparison run={run} original={original} shouldTakeFocus={shouldFocusComparison} />
+            <LawComparison
+              run={run}
+              original={original}
+              shouldTakeFocus={shouldFocusComparison}
+              onFocused={onComparisonFocused}
+            />
           </div>
         )}
       </div>

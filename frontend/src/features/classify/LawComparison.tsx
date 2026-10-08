@@ -133,12 +133,15 @@ export function LawComparison({
   run,
   original,
   shouldTakeFocus = false,
+  onFocused,
 }: {
   run: ClassificationRun
   /** The original-text run, owned by the result screen so that it outlives a view change. */
   original: OriginalRun
   /** Whether the panel takes the focus when it shows (opened from the summary's "Compare"). */
   shouldTakeFocus?: boolean
+  /** Called once the panel has taken the focus, so the screen can drop the request. */
+  onFocused?: () => void
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
@@ -146,8 +149,10 @@ export function LawComparison({
   const headingRef = useRef<HTMLHeadingElement>(null)
   // Focus is outside React: move it once, when the panel opens from the summary.
   useEffect(() => {
-    if (shouldTakeFocus) headingRef.current?.focus()
-  }, [shouldTakeFocus])
+    if (!shouldTakeFocus) return
+    headingRef.current?.focus()
+    onFocused?.()
+  }, [shouldTakeFocus, onFocused])
   const rows = comparisonRows(t, run.result, original.result, language)
   return (
     <GlassPanel

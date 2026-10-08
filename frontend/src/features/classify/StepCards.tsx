@@ -130,13 +130,16 @@ export function FactsStepCard({
   )
 }
 
-/** The duties the role step listed, each with its article. */
+/** The duties the role step listed, each with its article. The original-text dates note belongs
+ *  to the reviewer view's card; on the summary the duties panel above already shows it. */
 export function DutiesStepCard({
   result,
   headingLevel = 3,
+  hasOriginalNote = false,
 }: {
   result: ClassificationResult
   headingLevel?: HeadingLevel
+  hasOriginalNote?: boolean
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
@@ -153,7 +156,7 @@ export function DutiesStepCard({
       }
       factLabel={t('result.steps.factsUsed')}
     >
-      <OriginalDatesNote result={result} />
+      {hasOriginalNote && <OriginalDatesNote result={result} />}
       {obligations.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-2 p-0 text-body-small text-ink">
           {obligations.map((obligation) => (
