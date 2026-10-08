@@ -7,7 +7,8 @@ or the corpus's, never the posted result's (decision 031); the corpus is the one
 The end-to-end test fills one skeleton (Annex IV) through the API and exports it."""
 
 import logging
-from collections.abc import Iterator
+import time
+from collections.abc import Callable, Iterator
 from datetime import date
 from typing import Any
 
@@ -18,9 +19,10 @@ from fastapi import FastAPI
 from aiact.api import create_app
 from aiact.api.dependencies import ApiContext
 from aiact.api.documents import INVALID_RESULT, law_quotes
-from aiact.api.drafts import MAX_FILE_CHARS, MAX_FILE_LINES
+from aiact.api.drafts import MAX_FILE_CHARS, MAX_FILE_LINES, RENDERERS
 from aiact.drafting import CheckName, CheckResult, SizeClass
 from aiact.drafting.documents import checked_draft
+from aiact.export.pool import RenderWorker
 from aiact.schemas import DISCLAIMER, ClassificationResult, Fact, Language
 from tests.api.conftest import BASE_URL, api_settings
 from tests.drafting.builders import WORKERS, WORKERS_ANSWERS, provider_result
@@ -51,6 +53,23 @@ def built_corpus_quotes(app: FastAPI) -> Iterator[None]:
     """The routes read the corpus built from `data/parsed/`, not the database."""
     app.dependency_overrides[law_quotes] = corpus_quotes
     yield
+
+
+@pytest.fixture
+def export_app() -> Iterator[Callable[..., FastAPI]]:
+    """Apps with their own limits, reading the built corpus; their export workers are stopped
+    after the test."""
+    apps: list[FastAPI] = []
+
+    def build(**changes: object) -> FastAPI:
+        app = create_app(api_settings(**changes))
+        app.dependency_overrides[law_quotes] = corpus_quotes
+        apps.append(app)
+        return app
+
+    yield build
+    for app in apps:
+        app.state.context.export_slots.close()
 
 
 def _body(result: ClassificationResult, **fields: Any) -> dict[str, Any]:
@@ -420,7 +439,9 @@ async def test_a_draft_too_long_for_a_file_is_a_413_before_rendering(
     status_code: int,
 ) -> None:
     rendered: list[object] = []
-    monkeypatch.setattr("aiact.api.drafts.render_pdf", lambda paper: rendered.append(paper) or b"%")
+    monkeypatch.setattr(
+        RenderWorker, "run", lambda _worker, _fn, paper: rendered.append(paper) or b"%"
+    )
     body = {**_draft_body(provider_result(), ANNEX_IV, answers=answers), "format": "pdf"}
     response = await client.post("/documents/export", json=body)
     assert response.status_code == status_code
@@ -429,9 +450,8 @@ async def test_a_draft_too_long_for_a_file_is_a_413_before_rendering(
         assert rendered == []
 
 
-async def test_exports_have_their_own_rate_limit() -> None:
-    app = create_app(api_settings(rate_limit_exports=1, rate_limit_lookups=100))
-    app.dependency_overrides[law_quotes] = corpus_quotes
+async def test_exports_have_their_own_rate_limit(export_app: Callable[..., FastAPI]) -> None:
+    app = export_app(rate_limit_exports=1, rate_limit_lookups=100)
     export = {**_draft_body(provider_result(), ANNEX_IV), "format": "pdf"}
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
@@ -445,9 +465,10 @@ async def test_exports_have_their_own_rate_limit() -> None:
     assert drafted.status_code == 200, "an export doesn't use up the lookups' limit"
 
 
-async def test_list_and_draft_share_the_lookup_rate_limit() -> None:
-    app = create_app(api_settings(rate_limit_lookups=2))
-    app.dependency_overrides[law_quotes] = corpus_quotes
+async def test_list_and_draft_share_the_lookup_rate_limit(
+    export_app: Callable[..., FastAPI],
+) -> None:
+    app = export_app(rate_limit_lookups=2)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
         body = _body(provider_result())
@@ -459,25 +480,28 @@ async def test_list_and_draft_share_the_lookup_rate_limit() -> None:
     assert "Retry-After" in refused.headers
 
 
-async def test_an_export_with_every_slot_taken_is_a_503_that_gives_back_its_count() -> None:
-    app = create_app(api_settings(rate_limit_exports=1, export_max_concurrent=1))
-    app.dependency_overrides[law_quotes] = corpus_quotes
+async def test_an_export_with_every_slot_taken_is_a_503_that_gives_back_its_count(
+    export_app: Callable[..., FastAPI],
+) -> None:
+    app = export_app(rate_limit_exports=1, export_max_concurrent=1)
     context: ApiContext = app.state.context
     export = {**_draft_body(provider_result(), ANNEX_IV), "format": "docx"}
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
-        assert context.export_slots.try_acquire()
+        taken = context.export_slots.try_acquire()
+        assert taken is not None
         busy = await client.post("/documents/export", json=export)
-        context.export_slots.release()
+        context.export_slots.release(taken)
         after = await client.post("/documents/export", json=export)
     assert (busy.status_code, busy.headers["Retry-After"]) == (503, "5")
     assert busy.json()["detail"] == "Klar is busy making other files. Please try again in a moment."
     assert after.status_code == 200, "the refused export didn't use up the client's one export"
 
 
-async def test_an_export_gives_its_slot_back_when_its_file_is_made() -> None:
-    app = create_app(api_settings(rate_limit_exports=10, export_max_concurrent=1))
-    app.dependency_overrides[law_quotes] = corpus_quotes
+async def test_an_export_gives_its_slot_back_when_its_file_is_made(
+    export_app: Callable[..., FastAPI],
+) -> None:
+    app = export_app(rate_limit_exports=10, export_max_concurrent=1)
     export = {**_draft_body(provider_result(), ANNEX_IV), "format": "docx"}
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
@@ -487,17 +511,49 @@ async def test_an_export_gives_its_slot_back_when_its_file_is_made() -> None:
 
 
 async def test_an_export_gives_its_slot_back_when_its_render_fails(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, export_app: Callable[..., FastAPI]
 ) -> None:
-    def broken(_paper: object) -> bytes:
-        raise RuntimeError("render failed")
-
-    monkeypatch.setattr("aiact.api.drafts.render_pdf", broken)
-    app = create_app(api_settings(rate_limit_exports=10, export_max_concurrent=1))
-    app.dependency_overrides[law_quotes] = corpus_quotes
+    monkeypatch.setitem(RENDERERS, "pdf", int)  # int(paper) raises in the worker process
+    app = export_app(rate_limit_exports=10, export_max_concurrent=1)
     export = _draft_body(provider_result(), ANNEX_IV)
     transport = httpx.ASGITransport(app=app, raise_app_exceptions=False)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
         failed = await client.post("/documents/export", json={**export, "format": "pdf"})
         after = await client.post("/documents/export", json={**export, "format": "docx"})
     assert (failed.status_code, after.status_code) == (500, 200)
+
+
+RUNAWAY = dict.fromkeys(QUESTIONS[:5], "a" + "\u0301" * 19_999)
+"""Five answers of one letter under 19,999 combining marks: within every cap, yet over a minute
+of PDF rendering (round 3's security review measured 68.8 s)."""
+
+
+async def test_a_runaway_render_is_stopped_refused_and_its_slot_comes_back(
+    export_app: Callable[..., FastAPI],
+) -> None:
+    app = export_app(rate_limit_exports=10, export_max_concurrent=1, export_timeout_seconds=2)
+    runaway = {**_draft_body(provider_result(), ANNEX_IV, answers=RUNAWAY), "format": "pdf"}
+    plain = {**_draft_body(provider_result(), ANNEX_IV), "format": "docx"}
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        started = time.monotonic()
+        stopped = await client.post("/documents/export", json=runaway)
+        took = time.monotonic() - started
+        after = await client.post("/documents/export", json=plain)
+    assert (stopped.status_code, stopped.json()) == (413, {"detail": TOO_LONG})
+    assert took < 30, "the render was stopped at its time limit, not left to finish"
+    assert after.status_code == 200, "the stopped render gave its one slot back"
+
+
+async def test_the_export_workers_stop_when_the_app_shuts_down(
+    export_app: Callable[..., FastAPI],
+) -> None:
+    app = export_app(export_max_concurrent=1)
+    context: ApiContext = app.state.context
+    async with app.router.lifespan_context(app):
+        worker = context.export_slots.try_acquire()
+        assert worker is not None
+        assert worker.run(len, "abc") == 3
+        context.export_slots.release(worker)
+        assert worker.is_running
+    assert not worker.is_running

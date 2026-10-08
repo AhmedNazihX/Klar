@@ -102,3 +102,4 @@ def test_the_api_hardening_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.api_max_body_bytes == 262_144
     assert settings.classify_max_concurrent == 4
     assert (settings.rate_limit_exports, settings.export_max_concurrent) == (10, 2)
+    assert settings.export_timeout_seconds == 10.0

@@ -132,7 +132,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            and checked), paper.py (a draft laid out as an export Paper)
 │   │   ├── export/                  Word and PDF files from a format-neutral Paper (P9; P25's report
 │   │   │                            reuses KlarPdf): paper.py, pdf.py (fpdf2), word.py (python-docx),
-│   │   │                            text.py (printable text), style.py; assets/: the flat lockup and the
+│   │   │                            text.py (printable text), style.py, pool.py (renders in worker
+│   │   │                            processes, stopped at a time limit); assets/: the flat lockup and the
 │   │   │                            Newsreader and Geist fonts (OFL), their sources in assets/README.md
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py

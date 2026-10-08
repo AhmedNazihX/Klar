@@ -13,11 +13,13 @@ user's own, stored by the browser in `interview_answers`, each capped as the dat
 key the template doesn't ask (a stale row) is left out and logged by count, never a 422.
 
 An export renders a file, which costs CPU: it has its own rate limit (`RATE_LIMIT_EXPORTS`) and
-takes one of `EXPORT_MAX_CONCURRENT` slots while it renders (none free: a 503 with
+renders in one of `EXPORT_MAX_CONCURRENT` worker processes (none free: a 503 with
 `Retry-After`, the rate-limit count given back). A file longer than `MAX_FILE_CHARS`
 characters or `MAX_FILE_LINES` lines, counted on the texts as the renderers draw them, is
-refused with a 413 before anything is rendered. The routes are plain `def`: drafting and
-rendering run in FastAPI's threadpool. Nothing here logs the result, a fact or an answer, and
+refused with a 413 before anything is rendered; since no cap on a text's shape bounds what
+drawing it costs, a render past `EXPORT_TIMEOUT_SECONDS` is stopped and refused with the same
+413 (`aiact.export.pool`). The routes are plain `def`: drafting runs in FastAPI's threadpool,
+which waits there for the worker's file. Nothing here logs the result, a fact or an answer, and
 no error quotes them; the drafter's refusals are mapped as the vendor letter's route maps them
 (`refused_drafts`).
 """
@@ -49,6 +51,7 @@ from aiact.drafting.documents import (
 from aiact.drafting.models import TEMPLATE_PATTERN
 from aiact.drafting.paper import document_paper
 from aiact.export import Block, Paper, Quote, render_docx, render_pdf
+from aiact.export.pool import RenderTimeout, RenderWorker
 from aiact.export.text import printable
 from aiact.schemas import Language
 from aiact.schemas.base import ContractModel
@@ -72,6 +75,7 @@ BUSY_RETRY_SECONDS = 5
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 PDF = "application/pdf"
 MEDIA_TYPES = {"docx": DOCX, "pdf": PDF}
+RENDERERS = {"docx": render_docx, "pdf": render_pdf}
 
 CHECKS_FAILED = "The draft failed its automatic checks, so it can't be exported."
 TOO_LONG = "This document is too long to make into a file. Please shorten some answers."
@@ -187,8 +191,8 @@ def export(
         raise HTTPException(status.HTTP_409_CONFLICT, CHECKS_FAILED)
     paper = document_paper(checked.document)
     _refuse_too_long(paper)
-    with _export_slot(request, context):
-        content = render_pdf(paper) if body.format == "pdf" else render_docx(paper)
+    with _export_worker(request, context) as worker:
+        content = _rendered(worker, body.format, paper)
     filename = f"{body.template}.{body.format}"  # a template id: [a-z0-9_] only
     return Response(
         content,
@@ -223,12 +227,21 @@ def _block_texts(block: Block) -> tuple[str, ...]:
     return (block.text, block.source) if isinstance(block, Quote) else (block.text,)
 
 
+def _rendered(worker: RenderWorker, file_format: ExportFormat, paper: Paper) -> bytes:
+    """The file, rendered in `worker`'s process; a 413 when it takes past the time limit."""
+    try:
+        return worker.run(RENDERERS[file_format], paper)
+    except RenderTimeout:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, TOO_LONG) from None
+
+
 @contextmanager
-def _export_slot(request: Request, context: ApiContext) -> Iterator[None]:
-    """One of the export slots while a file renders; a 503 when none is free, giving back the
+def _export_worker(request: Request, context: ApiContext) -> Iterator[RenderWorker]:
+    """One of the export workers while a file renders; a 503 when none is free, giving back the
     rate-limit count the request took, since it made no file."""
     slots = context.export_slots
-    if not slots.try_acquire():
+    worker = slots.try_acquire()
+    if worker is None:
         context.export_limit.refund(client_key(request))
         logger.warning("export refused: every slot is taken")
         raise HTTPException(
@@ -237,6 +250,6 @@ def _export_slot(request: Request, context: ApiContext) -> Iterator[None]:
             headers={"Retry-After": str(BUSY_RETRY_SECONDS)},
         )
     try:
-        yield
+        yield worker
     finally:
-        slots.release()
+        slots.release(worker)
