@@ -22,7 +22,7 @@ from aiact.drafting.models import (
     unanswered_count,
 )
 from aiact.drafting.prefill import PREFILLS, QUOTING_FILLS
-from aiact.drafting.prose import write_up
+from aiact.drafting.prose import without_blank, write_up
 from aiact.drafting.templates import (
     ChoiceSection,
     ClassificationSection,
@@ -137,7 +137,7 @@ def supplied_section(
             status=SectionStatus.DRAFTED,
         )
     is_requirement = isinstance(spec, RequirementSection)
-    written = write_up if is_requirement else str.strip
+    written = write_up if is_requirement else without_blank
     given = [
         (question.key, written(answers.get(question.key, "")))
         for question in section_questions(spec)

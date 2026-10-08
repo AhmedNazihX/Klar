@@ -361,8 +361,16 @@ describe('The Art. 50(3) disclosure', () => {
 })
 
 describe('Downloads', () => {
-  it("sends one export per click with the result, the answers, the profile's size class and the format", async () => {
+  it("sends one export per click with the result, the document's own answers, the profile's size class and the format", async () => {
     profileSizeClass = 'smc'
+    answerRows = [
+      {
+        template: 'art_26_7_workers',
+        question_key: 'tool_and_supplier',
+        answer: WORKERS_TOOL_ANSWER,
+      },
+      { template: 'art_26_2_oversight', question_key: 'overseers', answer: 'Another document.' },
+    ]
     const createObjectURL = vi.fn(() => 'blob:file')
     const revokeObjectURL = vi.fn()
     vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL }))
@@ -388,7 +396,7 @@ describe('Downloads', () => {
       template: 'art_26_7_workers',
       language: 'en',
       size_class: 'smc',
-      answers: {},
+      answers: { tool_and_supplier: WORKERS_TOOL_ANSWER },
       format: 'pdf',
     })
     await vi.waitFor(() => {
@@ -672,6 +680,108 @@ describe('Something fails', () => {
       await vi.waitFor(() => {
         expect(calls).toBe(2)
       })
+    },
+  )
+
+  it.each([
+    {
+      language: 'en',
+      alert: "This document's answers are too long to send together. Please shorten some answers.",
+      title: 'Guided interview',
+      progress: '1 of 4 answered',
+      hint: "Written in as you give it. Klar won't add anything you didn't say.",
+      change: 'Change: Is there a works council? Who receives this notice?',
+      save: 'Save answer',
+    },
+    {
+      language: 'de',
+      alert:
+        'Die Antworten zu diesem Dokument sind zusammen zu lang. Bitte kürzen Sie einige Antworten.',
+      title: 'Geführtes Interview',
+      progress: '1 von 4 beantwortet',
+      hint: 'So übernommen, wie Sie es angeben. Klar fügt nichts hinzu, was Sie nicht gesagt haben.',
+      change: 'Ändern: Gibt es einen Betriebsrat? Wer erhält diese Information?',
+      save: 'Antwort speichern',
+    },
+  ] as const)(
+    'keeps the interview when the answers are too long to draft, so one can be shortened ($language)',
+    async ({ language, alert, title, progress, hint, change, save }) => {
+      answerRows = [
+        { template: 'art_26_7_workers', question_key: 'recipients', answer: 'x'.repeat(20_000) },
+      ]
+      server.use(
+        http.post(DRAFT_URL, () => HttpResponse.json({ detail: 'too large' }, { status: 413 })),
+      )
+      const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`, {
+        language,
+      })
+      const main = await screen.findByRole('main', undefined, { timeout: FIRST_RENDER_MS })
+      expect(
+        await within(main).findByRole('alert', undefined, { timeout: FIRST_RENDER_MS }),
+      ).toHaveTextContent(alert)
+      const interview = await screen.findByRole('region', { name: title })
+      expect(interview).toHaveTextContent(progress)
+      expect(interview).toHaveTextContent(hint)
+      await user.click(within(interview).getByRole('button', { name: change }))
+      const field = within(interview).getByRole('textbox')
+      expect(field).toHaveValue('x'.repeat(20_000))
+      await user.clear(field)
+      await user.type(field, 'The works council.')
+      await user.click(within(interview).getByRole('button', { name: save }))
+      await vi.waitFor(() => {
+        expect(traffic.savedAnswers.map((saved) => saved.body)).toEqual([
+          {
+            system_id: APPLICANTS,
+            template: 'art_26_7_workers',
+            question_key: 'recipients',
+            answer: 'The works council.',
+          },
+        ])
+      })
+    },
+  )
+
+  it.each([
+    [
+      'en',
+      "Klar couldn't draft this document.",
+      "The draft shown doesn't hold your latest answers yet.",
+    ],
+    [
+      'de',
+      'Klar konnte dieses Dokument nicht entwerfen.',
+      'Der angezeigte Entwurf enthält Ihre neuesten Antworten noch nicht.',
+    ],
+  ] as const)(
+    'says when the draft after a save failed and the one on show is stale (%s)',
+    async (language, message, stale) => {
+      let drafts = 0
+      server.use(
+        http.post(DRAFT_URL, () => {
+          drafts += 1
+          // The first draft comes from the fixtures; the one after the save fails.
+          return drafts > 1 ? HttpResponse.json({ detail: 'busy' }, { status: 503 }) : undefined
+        }),
+      )
+      const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`, {
+        language,
+      })
+      const article = await preview(language === 'de' ? 'Dokumentvorschau' : 'Document preview')
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      const interview = screen.getByRole('region', {
+        name: language === 'de' ? 'Geführtes Interview' : 'Guided interview',
+      })
+      await user.type(within(interview).getByRole('textbox'), 'The works council.')
+      await user.click(
+        within(interview).getByRole('button', {
+          name: language === 'de' ? 'Antwort speichern' : 'Save answer',
+        }),
+      )
+      const alert = await screen.findByRole('alert')
+      expect(alert).toHaveTextContent(message)
+      expect(alert).toHaveTextContent(stale)
+      expect(drafts).toBe(2)
+      expect(article).toBeInTheDocument()
     },
   )
 

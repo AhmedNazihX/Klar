@@ -21,11 +21,12 @@ from aiact.api.documents import INVALID_RESULT, law_quotes
 from aiact.api.drafts import MAX_FILE_CHARS, MAX_FILE_LINES
 from aiact.drafting import CheckName, CheckResult, SizeClass
 from aiact.drafting.documents import checked_draft
-from aiact.schemas import DISCLAIMER, ClassificationResult, Language
+from aiact.schemas import DISCLAIMER, ClassificationResult, Fact, Language
 from tests.api.conftest import BASE_URL, api_settings
 from tests.drafting.builders import WORKERS, WORKERS_ANSWERS, provider_result
 from tests.drafting.vendor_builders import (
     EMOTIONS,
+    FEEDS_BONUS,
     GUIDANCE,
     corpus_quotes,
     prohibited_result,
@@ -292,6 +293,31 @@ async def test_a_duty_with_several_dates_is_a_422_not_a_crash(client: httpx.Asyn
     )
 
 
+@pytest.mark.parametrize("route", ["draft", "export"])
+async def test_a_blank_fact_in_a_vendor_message_is_a_422_that_logs_no_content(
+    client: httpx.AsyncClient, caplog: pytest.LogCaptureFixture, route: str
+) -> None:
+    """A result that keeps the contract but holds a fact no document can (blank text) is refused
+    as `/documents/vendor-letter` refuses it: a 422, not a 500 whose traceback would log the
+    facts, and one log line carrying neither the facts nor the answers."""
+    blank = Fact(text="   ", evidence=FEEDS_BONUS.evidence)
+    secret = Fact(text=f"{SECRET}: {FEEDS_BONUS.text}", evidence=FEEDS_BONUS.evidence)
+    result = prohibited_result(deciding_facts=(blank, secret))
+    body = {**_draft_body(result, MESSAGE, answers={"tool_name": SECRET}), "format": "pdf"}
+    if route == "draft":
+        del body["format"]
+    with caplog.at_level(logging.DEBUG):
+        response = await client.post(f"/documents/{route}", json=body)
+    assert (response.status_code, response.json()) == (422, {"detail": INVALID_RESULT})
+    assert SECRET not in caplog.text
+    [logged] = [record for record in caplog.records if record.name.startswith("aiact")]
+    assert (logged.name, logged.levelno) == ("aiact.api.documents", logging.WARNING)
+    assert logged.getMessage() == (
+        "draft refused: ValidationError DraftSection (value_error at the model)"
+    )
+    assert logged.exc_info is None
+
+
 # --- Export ------------------------------------------------------------------------------------
 
 
@@ -373,8 +399,19 @@ def _long_answers(count: int, answer: str) -> dict[str, str]:
         (_long_answers(7, "x" * 20_000), 413),
         (_long_answers(4, "a\n" * 400), 200),
         (_long_answers(4, "a\n" * 600), 413),
+        (_long_answers(4, "a\r" * 600), 413),
+        (_long_answers(4, "a\r\n" * 400), 200),
+        (_long_answers(4, "a\r\n" * 600), 413),
     ],
-    ids=["80k characters", "140k characters", "1,600 lines", "2,400 lines"],
+    ids=[
+        "80k characters",
+        "140k characters",
+        "1,600 lines",
+        "2,400 lines",
+        "2,400 lines by lone carriage returns",
+        "1,600 lines by CRLF, each one break",
+        "2,400 lines by CRLF",
+    ],
 )
 async def test_a_draft_too_long_for_a_file_is_a_413_before_rendering(
     client: httpx.AsyncClient,
@@ -436,3 +473,31 @@ async def test_an_export_with_every_slot_taken_is_a_503_that_gives_back_its_coun
     assert (busy.status_code, busy.headers["Retry-After"]) == (503, "5")
     assert busy.json()["detail"] == "Klar is busy making other files. Please try again in a moment."
     assert after.status_code == 200, "the refused export didn't use up the client's one export"
+
+
+async def test_an_export_gives_its_slot_back_when_its_file_is_made() -> None:
+    app = create_app(api_settings(rate_limit_exports=10, export_max_concurrent=1))
+    app.dependency_overrides[law_quotes] = corpus_quotes
+    export = {**_draft_body(provider_result(), ANNEX_IV), "format": "docx"}
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        first = await client.post("/documents/export", json=export)
+        second = await client.post("/documents/export", json=export)
+    assert (first.status_code, second.status_code) == (200, 200)
+
+
+async def test_an_export_gives_its_slot_back_when_its_render_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def broken(_paper: object) -> bytes:
+        raise RuntimeError("render failed")
+
+    monkeypatch.setattr("aiact.api.drafts.render_pdf", broken)
+    app = create_app(api_settings(rate_limit_exports=10, export_max_concurrent=1))
+    app.dependency_overrides[law_quotes] = corpus_quotes
+    export = _draft_body(provider_result(), ANNEX_IV)
+    transport = httpx.ASGITransport(app=app, raise_app_exceptions=False)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        failed = await client.post("/documents/export", json={**export, "format": "pdf"})
+        after = await client.post("/documents/export", json={**export, "format": "docx"})
+    assert (failed.status_code, after.status_code) == (500, 200)

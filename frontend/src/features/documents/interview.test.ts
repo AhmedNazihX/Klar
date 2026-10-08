@@ -7,7 +7,7 @@ import {
   PROVIDER_DOCUMENTS,
 } from '@/test/documents-fixtures'
 
-import { interviewState, isAnswered, isSkeleton, unansweredCount } from './interview'
+import { interviewState, isAnswered, isSkeleton, unansweredCount, withoutBlank } from './interview'
 
 function draft(drafts: Readonly<Record<string, CheckedDraft>>, template: string): CheckedDraft {
   const found = drafts[template]
@@ -26,7 +26,7 @@ function keys(questions: readonly { key: string }[]): string[] {
 
 describe('The guided interview', () => {
   it('asks the first unanswered question, and a blank answer counts as unanswered', () => {
-    const state = interviewState(WORKERS, { recipients: '   ' }, NONE, null)
+    const state = interviewState(WORKERS.questions, false, { recipients: '   ' }, NONE, null)
     expect(state.current?.key).toBe('recipients')
     expect(state.section).toBeNull()
     expect(keys(state.answered)).toEqual([])
@@ -35,15 +35,27 @@ describe('The guided interview', () => {
 
   it('moves past a skipped question and comes back to a chosen one', () => {
     const answers = { tool_and_supplier: 'TalentRank.' }
-    const skipped = interviewState(WORKERS, answers, new Set(['recipients']), null)
+    const skipped = interviewState(WORKERS.questions, false, answers, new Set(['recipients']), null)
     expect(skipped.current?.key).toBe('start_date')
     expect(keys(skipped.answered)).toEqual(['tool_and_supplier'])
-    const chosen = interviewState(WORKERS, answers, new Set(['recipients']), 'tool_and_supplier')
+    const chosen = interviewState(
+      WORKERS.questions,
+      false,
+      answers,
+      new Set(['recipients']),
+      'tool_and_supplier',
+    )
     expect(chosen.current?.key).toBe('tool_and_supplier')
   })
 
   it('ends when every question is answered or skipped', () => {
-    const state = interviewState(WORKERS, {}, new Set(keys(WORKERS.questions)), null)
+    const state = interviewState(
+      WORKERS.questions,
+      false,
+      {},
+      new Set(keys(WORKERS.questions)),
+      null,
+    )
     expect(state.current).toBeNull()
     expect(keys(state.upcoming)).toEqual(keys(WORKERS.questions))
   })
@@ -53,7 +65,7 @@ describe('The guided interview', () => {
     expect(isSkeleton(WORKERS)).toBe(false)
     const general = ANNEX_IV.questions.filter((q) => q.section === 'general_description')
     const answers = Object.fromEntries(general.map((q) => [q.key, 'Given.']))
-    const state = interviewState(ANNEX_IV, answers, NONE, null)
+    const state = interviewState(ANNEX_IV.questions, true, answers, NONE, null)
     expect(state.section).toBe('development')
     expect(state.questions.length).toBeGreaterThan(0)
     expect(state.questions.every((q) => q.section === 'development')).toBe(true)
@@ -74,7 +86,22 @@ describe('What a document still needs', () => {
     expect(isAnswered({ recognises: 'both' }, choice)).toBe(true)
     expect(isAnswered({ recognises: ' both ' }, choice)).toBe(true)
     expect(isAnswered({ recognises: 'Both!' }, choice)).toBe(false)
+    expect(isAnswered({ recognises: 'BOTH' }, choice)).toBe(false)
+    expect(isAnswered({ recognises: '\ufeffboth\x85' }, choice)).toBe(true)
     expect(isAnswered({}, choice)).toBe(false)
+  })
+
+  it('reads blank as the drafter does: whitespace and the byte order mark, nothing else', () => {
+    const [first] = WORKERS.questions
+    if (!first) throw new Error('the workers notice asks questions')
+    for (const blank of ['\ufeff', ' \x1c\x85\u3000\ufeff ']) {
+      expect(isAnswered({ [first.key]: blank }, first)).toBe(false)
+    }
+    expect(unansweredCount(WORKERS.questions, { [first.key]: '\ufeff' })).toBe(
+      WORKERS.document.unanswered,
+    )
+    expect(withoutBlank('\ufeff Rank GmbH\x1f')).toBe('Rank GmbH')
+    expect(withoutBlank('Rank GmbH\u200b')).toBe('Rank GmbH\u200b')
   })
 
   it('counts the questions left, as the drafted document does', () => {

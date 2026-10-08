@@ -1,8 +1,12 @@
 """A skeleton's answers written up as sentences (P9): no word added, changed or moved."""
 
+import re
+import sys
+from pathlib import Path
+
 import pytest
 
-from aiact.drafting.prose import write_up
+from aiact.drafting.prose import BLANK, without_blank, write_up
 
 
 @pytest.mark.parametrize(
@@ -37,3 +41,27 @@ def test_only_the_first_letter_and_the_closing_full_stop_change() -> None:
     answer = "the vendor's DPO, dpo@example.com, reviews it"
     assert write_up(answer) == "The vendor's DPO, dpo@example.com, reviews it."
     assert write_up(answer)[1:-1] == answer[1:]
+
+
+def test_blank_is_pythons_whitespace_and_the_byte_order_mark() -> None:
+    """The one definition of blank; `interview.ts` lists the same characters."""
+    whitespace = {chr(code) for code in range(sys.maxunicode + 1) if chr(code).isspace()}
+    assert set(BLANK) == whitespace | {"\ufeff"}
+    assert len(BLANK) == len(set(BLANK))
+
+
+def test_a_blank_answer_writes_up_as_nothing_and_an_answer_loses_its_blank_space() -> None:
+    assert write_up("\ufeff \x1c\x85") == ""
+    assert without_blank("\ufeff both\u3000") == "both"
+
+
+INTERVIEW_TS = Path(__file__).parents[3] / "frontend/src/features/documents/interview.ts"
+"""Where the Documents screen counts the questions left, with its own copy of `BLANK`."""
+
+
+def test_the_documents_screen_reads_blank_with_the_same_characters() -> None:
+    """The screen's "Needs N answers" agrees with the drafter's unanswered count."""
+    match = re.search(r"BLANK_CODE_POINTS = \[([^\]]*)\]", INTERVIEW_TS.read_text())
+    assert match is not None, "interview.ts lists the blank characters as BLANK_CODE_POINTS"
+    code_points = [int(point, 16) for point in match.group(1).replace(",", " ").split()]
+    assert "".join(map(chr, code_points)) == BLANK

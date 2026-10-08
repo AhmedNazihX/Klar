@@ -17,7 +17,8 @@ the threadpool, inside the lookups' rate limit; the body cap (`API_MAX_BODY_BYTE
 result and the answers. Nothing here logs the result or the answers, and no error names any part
 of them: a refused letter is a 422 with a fixed message, and a body that fails validation is the
 app's 422, which quotes none of it (`errors.py`). A letter the drafter can't write from a valid
-result logs one line naming the model and the failures' places, never their values.
+result logs one line naming the model and the failures' places, never their values. Every
+document route (`drafts.py` too) maps the drafter's refusals through the one `refused_drafts`.
 """
 
 import logging
@@ -41,9 +42,9 @@ from aiact.api.dependencies import (
 )
 from aiact.api.errors import MAX_ERRORS, UNPROCESSABLE, Unprocessable, invalid_field
 from aiact.drafting import (
-    Answers,
     CheckResult,
     DraftDocument,
+    DutyDateError,
     LawQuotes,
     NoVendorLetterError,
     UnknownPointError,
@@ -52,6 +53,7 @@ from aiact.drafting import (
     quoted_points,
     run_checks,
 )
+from aiact.drafting.documents import DocumentNotCalledForError
 from aiact.drafting.models import QuestionKey
 from aiact.engine.citations import CitationSource, CorpusCitations, load_omnibus_changes
 from aiact.engine.nodes.common import provision_citation
@@ -71,6 +73,8 @@ NO_LETTER = (
 UNKNOWN_QUESTION = "An answer names a question the letter doesn't ask."
 INVALID_RESULT = "The result is not a valid classification result."
 UNKNOWN_POINT = "The result cites a point of Art. 5(1) the AI Act's text doesn't have."
+NOT_CALLED_FOR = "This result calls for no such document."
+SEVERAL_DATES = "The result lists this document's duty with several dates, so it can't be drafted."
 
 ResultJson = Annotated[
     dict[str, JsonValue],
@@ -186,11 +190,9 @@ def vendor_letter(
     request for the vendor's assessment of a legally ambiguous one. Guidance, not legal
     advice."""
     result = valid_result(body.result)
-    try:
+    with refused_drafts():
         quotes = quoted_points(result, body.language, quotes_from)
-    except UnknownPointError:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, UNKNOWN_POINT) from None
-    document = _letter(result, body.answers, body.language, quotes)
+        document = draft_vendor_letter(result, body.answers, body.language, quotes)
     checks = run_checks(document, result, body.answers, size_class=None, quotes=quotes)
     return VendorLetter(document=document, checks=checks)
 
@@ -203,30 +205,38 @@ def valid_result(posted: dict[str, JsonValue]) -> ClassificationResult:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, INVALID_RESULT) from None
 
 
+@contextmanager
+def refused_drafts() -> Iterator[None]:
+    """Every document route's drafting, with each reason the drafter refuses a document as its
+    HTTP error, a fixed message that quotes none of the request. A result that keeps the
+    contract can still hold a text no document can (a blank fact): that is not a valid result
+    either, a 422 logged in one content-free line (`_log_unwritable`), never a 500 whose
+    traceback would carry the facts."""
+    try:
+        yield
+    except DocumentNotCalledForError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, NOT_CALLED_FOR) from None
+    except NoVendorLetterError:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, NO_LETTER) from None
+    except UnknownQuestionError:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, UNKNOWN_QUESTION) from None
+    except UnknownPointError:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, UNKNOWN_POINT) from None
+    except DutyDateError:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, SEVERAL_DATES) from None
+    except ValidationError as exc:
+        _log_unwritable(exc)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, INVALID_RESULT) from None
+
+
 def _log_unwritable(exc: ValidationError) -> None:
-    """One line on a letter the drafter couldn't write: the model and where each failure is,
+    """One line on a document the drafter couldn't write: the model and where each failure is,
     as the 422 body names them (`invalid_field`), never a value."""
     places = [invalid_field(dict(error)) for error in exc.errors(include_input=False)[:MAX_ERRORS]]
     where = ", ".join(f"{place.type} at {_place(place.loc)}" for place in places)
-    logger.warning("vendor letter refused: %s %s (%s)", type(exc).__name__, exc.title, where)
+    logger.warning("draft refused: %s %s (%s)", type(exc).__name__, exc.title, where)
 
 
 def _place(loc: Sequence[str | int]) -> str:
     """A failure's field path (`paragraphs.0`), or the model for a failure of the whole."""
     return ".".join(map(str, loc)) or "the model"
-
-
-def _letter(
-    result: ClassificationResult, answers: Answers, language: Language, quotes: Sequence[Citation]
-) -> DraftDocument:
-    """The letter, or a 422 with a fixed message. A result that keeps the contract can still
-    hold a text no letter can (a blank fact): that is not a valid result either."""
-    try:
-        return draft_vendor_letter(result, answers, language, quotes)
-    except NoVendorLetterError:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, NO_LETTER) from None
-    except UnknownQuestionError:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, UNKNOWN_QUESTION) from None
-    except ValidationError as exc:
-        _log_unwritable(exc)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, INVALID_RESULT) from None

@@ -90,6 +90,18 @@ def test_a_character_no_font_can_draw_shows_as_a_question_mark_and_only_its_coun
     assert "漢" not in caplog.text
 
 
+def test_the_users_own_question_marks_are_not_counted_as_undrawable(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    paper = Paper(
+        language=Language.EN, title="Asked", blocks=(Paragraph("Why? \U0001f600"),), footer=FOOTER
+    )
+    with caplog.at_level(logging.DEBUG):
+        page = pdf_pages(render_pdf(paper))[0]
+    assert "Why? ?" in page
+    assert "PDF: 1 characters no font can draw shown as ?" in caplog.text
+
+
 def _page_lines(data: bytes) -> list[tuple[str, float]]:
     """Each page's "Page N of M" line and the x, in points, where it starts."""
     lines: list[tuple[str, float]] = []

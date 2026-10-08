@@ -19,12 +19,22 @@ export type AnswerFormProps = {
   question: InterviewQuestion
   /** The answer given before, if any; the field starts with it. */
   given: string
-  /** A skeleton's answers run longer, so they get a text area. */
-  isLong: boolean
+  /** What the answer is written into: a skeleton's answers run longer, so they get a text area,
+   *  as do a document's whose draft couldn't be drawn ('unknown'), so a long one can be shortened. */
+  kind: AnswerKind
   isSaving: boolean
   onSave: (answer: string) => void
   onSkip: () => void
 }
+
+/** Where an answer goes: a short document, a skeleton, or a document not drafted yet. */
+export type AnswerKind = 'notice' | 'skeleton' | 'unknown'
+
+const HINT_KEYS = {
+  notice: 'documents.interview.hintNotice',
+  skeleton: 'documents.interview.hintSkeleton',
+  unknown: 'documents.interview.hintAny',
+} as const
 
 type FieldProps = {
   fieldId: string
@@ -75,11 +85,8 @@ function TextField({
   )
 }
 
-function hintKey(isChoice: boolean, isLong: boolean) {
-  if (isChoice) return 'documents.interview.hintChoice' as const
-  return isLong
-    ? ('documents.interview.hintSkeleton' as const)
-    : ('documents.interview.hintNotice' as const)
+function hintKey(isChoice: boolean, kind: AnswerKind) {
+  return isChoice ? ('documents.interview.hintChoice' as const) : HINT_KEYS[kind]
 }
 
 /** One question of the guided interview: the field (or a choice question's options), the
@@ -88,7 +95,7 @@ function hintKey(isChoice: boolean, isLong: boolean) {
 export function AnswerForm({
   question,
   given,
-  isLong,
+  kind,
   isSaving,
   onSave,
   onSkip,
@@ -136,11 +143,11 @@ export function AnswerForm({
         {isChoice ? (
           <ChoiceField {...field} choices={choices} />
         ) : (
-          <TextField {...field} isLong={isLong} />
+          <TextField {...field} isLong={kind !== 'notice'} />
         )}
       </Wrapper>
       <p id={hintId} className="m-0 text-micro text-slate">
-        {t(hintKey(isChoice, isLong))}
+        {t(hintKey(isChoice, kind))}
       </p>
       {hasError && (
         <p id={errorId} className="m-0 text-caption text-risk-prohibited">

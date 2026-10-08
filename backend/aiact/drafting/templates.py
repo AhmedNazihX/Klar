@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 from aiact.drafting.models import Provenance, SectionStatus
 from aiact.drafting.prefill import Fill
+from aiact.drafting.prose import without_blank
 from aiact.schemas import (
     LAW_TEXTS,
     Citation,
@@ -91,7 +92,9 @@ class ChoiceSection:
 
     def chosen(self, answer: str) -> Choice | None:
         """The choice `answer` names, or None for no answer or one that names none."""
-        return next((choice for choice in self.choices if choice.key == answer.strip()), None)
+        return next(
+            (choice for choice in self.choices if choice.key == without_blank(answer)), None
+        )
 
 
 @dataclass(frozen=True)

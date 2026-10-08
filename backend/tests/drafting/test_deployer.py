@@ -119,8 +119,10 @@ def test_all_questions_answered_make_it_ready_to_review() -> None:
     assert (document.status, document.unanswered) == (DraftStatus.READY_TO_REVIEW, 0)
 
 
-def test_a_blank_answer_leaves_the_section_to_fill_in() -> None:
-    document = _workers_notice({"reviewer": "   "})
+@pytest.mark.parametrize("blank", ["   ", "\ufeff", " \ufeff\x1c\x85\u3000 "])
+def test_a_blank_answer_leaves_the_section_to_fill_in(blank: str) -> None:
+    """Blank is `BLANK`'s space only, a byte order mark too, as the Documents screen counts it."""
+    document = _workers_notice({"reviewer": blank})
     assert _section(document, "reviewer") == ()
     assert document.unanswered == 4
 
@@ -259,7 +261,9 @@ def test_the_art_50_3_notice_names_only_what_the_user_chose(
     assert all(check.passed for check in run_checks(document, result, {"recognises": choice}))
 
 
-@pytest.mark.parametrize("answer", ["", "emotion recognition", "Both!", "both and more"])
+@pytest.mark.parametrize(
+    "answer", ["", "\ufeff", "emotion recognition", "Both!", "BOTH", "both and more"]
+)
 def test_an_art_50_3_answer_that_names_no_choice_leaves_the_notice_to_fill_in(answer: str) -> None:
     result = limited_risk_result("art:50:3")
     document = draft_document(TEMPLATES[ART_50_3], result, {"recognises": answer}, Language.EN)

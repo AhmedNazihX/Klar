@@ -176,7 +176,7 @@ async def test_a_blank_fact_is_a_422_and_logs_no_content(
     [logged] = [record for record in caplog.records if record.name.startswith("aiact")]
     assert (logged.name, logged.levelno) == ("aiact.api.documents", logging.WARNING)
     assert logged.getMessage() == (
-        "vendor letter refused: ValidationError DraftSection (value_error at the model)"
+        "draft refused: ValidationError DraftSection (value_error at the model)"
     )
     assert logged.exc_info is None
 

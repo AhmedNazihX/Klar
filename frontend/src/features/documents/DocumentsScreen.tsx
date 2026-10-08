@@ -97,6 +97,33 @@ const DRAFT_FAILURE_KEYS = {
   failed: 'documents.documentFailed',
 } as const
 
+/** Why the draft couldn't be drawn, with Try again. A stale draft (the one before the last save)
+ *  stays on show, and the alert says it lacks the latest answers. */
+function DraftFailure({
+  error,
+  isStale,
+  onRetry,
+}: {
+  error: unknown
+  isStale: boolean
+  onRetry: () => void
+}): JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <div role="alert" className="flex flex-col items-start gap-2">
+      <p className="m-0 text-body text-ink">{t(DRAFT_FAILURE_KEYS[documentFailure(error)])}</p>
+      {isStale && <p className="m-0 text-body-small text-slate">{t('documents.staleDraft')}</p>}
+      <button
+        type="button"
+        onClick={onRetry}
+        className="cursor-pointer border-0 bg-transparent p-0 text-label text-lens-blue hover:underline"
+      >
+        {t('documents.tryAgain')}
+      </button>
+    </div>
+  )
+}
+
 /** The document on show: drafted with its answers, its interview and its checks, with the
  *  downloads above. The downloads post what the draft was made from, size class included. */
 function SelectedDocumentView({
@@ -127,43 +154,43 @@ function SelectedDocumentView({
       )}
     </div>
   )
+  const failure = draft.isError && (
+    <DraftFailure
+      error={draft.error}
+      isStale={draft.data !== undefined}
+      onRetry={() => void draft.refetch()}
+    />
+  )
+  const interview = (
+    <InterviewPanel
+      key={`${tool.toolId}:${template}`}
+      toolId={tool.toolId}
+      template={template}
+      questions={document.questions}
+      draft={draft.data}
+      answers={answers}
+    />
+  )
   if (!draft.data) {
+    // A draft that failed keeps its interview, so the answers that made it fail can be changed.
     return (
       <>
         {header}
         <GlassPanel>
-          {draft.isError ? (
-            <div role="alert" className="flex flex-col items-start gap-2">
-              <p className="m-0 text-body text-ink">
-                {t(DRAFT_FAILURE_KEYS[documentFailure(draft.error)])}
-              </p>
-              <button
-                type="button"
-                onClick={() => void draft.refetch()}
-                className="cursor-pointer border-0 bg-transparent p-0 text-label text-lens-blue hover:underline"
-              >
-                {t('documents.tryAgain')}
-              </button>
-            </div>
-          ) : (
-            <p className="m-0 text-body text-slate">{t('documents.draftingOne')}</p>
-          )}
+          {failure || <p className="m-0 text-body text-slate">{t('documents.draftingOne')}</p>}
         </GlassPanel>
+        {draft.isError && interview}
       </>
     )
   }
   return (
     <>
       {header}
+      {failure && <GlassPanel>{failure}</GlassPanel>}
       <div className="flex min-w-0 flex-col items-stretch gap-5 2xl:flex-row 2xl:items-start">
         <DraftView document={draft.data.document} />
         <div className="flex w-full shrink-0 flex-col gap-4 2xl:w-[340px]">
-          <InterviewPanel
-            key={`${tool.toolId}:${template}`}
-            toolId={tool.toolId}
-            draft={draft.data}
-            answers={answers}
-          />
+          {interview}
           <ChecksPanel checks={draft.data.checks} isSkeleton={isSkeleton(draft.data)} />
         </div>
       </div>

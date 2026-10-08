@@ -7,12 +7,17 @@ import { Icon } from '@/components/Icon'
 import { WriteFailureMessage } from '@/features/welcome/WriteFailureMessage'
 import { useSaveInterviewAnswer } from '@/hooks/use-interview-answers'
 
-import { AnswerForm } from './AnswerForm'
+import { AnswerForm, type AnswerKind } from './AnswerForm'
 import { interviewState, isSkeleton } from './interview'
 
 export type InterviewPanelProps = {
   toolId: string
-  draft: CheckedDraft
+  template: string
+  /** The document's questions, as its listing gives them. */
+  questions: readonly InterviewQuestion[]
+  /** Its draft; undefined while none can be shown (one that failed, say because its answers are
+   *  too long to send): the interview then asks every question, so an answer can be shortened. */
+  draft: CheckedDraft | undefined
   /** The answers stored for this document's template, by question key. */
   answers: Readonly<Record<string, string>>
 }
@@ -50,21 +55,28 @@ function AnsweredItem({
  * draft is redrawn from it; nothing is written in that the user didn't give.
  * Mount it per document (`key`), so skipped questions belong to that document.
  */
-export function InterviewPanel({ toolId, draft, answers }: InterviewPanelProps): JSX.Element {
+export function InterviewPanel({
+  toolId,
+  template,
+  questions,
+  draft,
+  answers,
+}: InterviewPanelProps): JSX.Element {
   const { t } = useTranslation()
   const headingId = useId()
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set())
   const [chosenKey, setChosenKey] = useState<string | null>(null)
   const save = useSaveInterviewAnswer()
-  const state = interviewState(draft, answers, skipped, chosenKey)
-  const sectionHeading = draft.document.sections.find((s) => s.key === state.section)?.heading
+  const kind = answerKind(draft)
+  const state = interviewState(questions, kind === 'skeleton', answers, skipped, chosenKey)
+  const sectionHeading = draft?.document.sections.find((s) => s.key === state.section)?.heading
   const total = state.questions.length
   const answered = state.answered.length
   const { current } = state
 
   function saveAnswer(question: InterviewQuestion, answer: string): void {
     save.mutate(
-      { toolId, template: draft.document.template, questionKey: question.key, answer },
+      { toolId, template, questionKey: question.key, answer },
       {
         onSuccess: () => {
           setChosenKey(null)
@@ -126,7 +138,7 @@ export function InterviewPanel({ toolId, draft, answers }: InterviewPanelProps):
           key={current.key}
           question={current}
           given={answers[current.key] ?? ''}
-          isLong={isSkeleton(draft)}
+          kind={kind}
           isSaving={save.isPending}
           onSave={(answer) => {
             saveAnswer(current, answer)
@@ -159,6 +171,11 @@ export function InterviewPanel({ toolId, draft, answers }: InterviewPanelProps):
       )}
     </GlassPanel>
   )
+}
+
+function answerKind(draft: CheckedDraft | undefined): AnswerKind {
+  if (!draft) return 'unknown'
+  return isSkeleton(draft) ? 'skeleton' : 'notice'
 }
 
 function InterviewEnd({

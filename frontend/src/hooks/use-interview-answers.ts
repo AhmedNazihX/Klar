@@ -19,7 +19,7 @@ import {
 import { documentDraftsKey, interviewAnswersKey } from '@/features/documents/query-keys'
 import { supabase } from '@/lib/supabase'
 
-import { anonymousSessionOptions } from './use-anonymous-session'
+import { withAnonymousSession } from './use-anonymous-session'
 
 const NO_ANSWERS: AnswersByTemplate = {}
 
@@ -34,8 +34,7 @@ export function interviewAnswersOptions(
     queryKey: interviewAnswersKey(toolId),
     queryFn: async (): Promise<AnswersByTemplate> => {
       if (!client) return NO_ANSWERS
-      await queryClient.query(anonymousSessionOptions(client))
-      return fetchInterviewAnswers(client, toolId)
+      return fetchInterviewAnswers(await withAnonymousSession(queryClient, client), toolId)
     },
     staleTime: Infinity,
   })
@@ -60,9 +59,7 @@ export function useSaveInterviewAnswer(
   return useMutation({
     retry: false,
     mutationFn: async (saved: InterviewAnswer) => {
-      if (!client) throw new Error('Supabase is not configured.')
-      await queryClient.query(anonymousSessionOptions(client))
-      await saveInterviewAnswer(client, saved)
+      await saveInterviewAnswer(await withAnonymousSession(queryClient, client), saved)
     },
     onSuccess: (_result, saved) => {
       queryClient.setQueryData(interviewAnswersKey(saved.toolId), (answers?: AnswersByTemplate) =>

@@ -14,10 +14,12 @@ key the template doesn't ask (a stale row) is left out and logged by count, neve
 
 An export renders a file, which costs CPU: it has its own rate limit (`RATE_LIMIT_EXPORTS`) and
 takes one of `EXPORT_MAX_CONCURRENT` slots while it renders (none free: a 503 with
-`Retry-After`, the rate-limit count given back). A draft longer than `MAX_FILE_CHARS`
-characters or `MAX_FILE_LINES` lines is refused with a 413 before anything is rendered. The
-routes are plain `def`: drafting and rendering run in FastAPI's threadpool. Nothing here logs
-the result, a fact or an answer, and no error quotes them.
+`Retry-After`, the rate-limit count given back). A file longer than `MAX_FILE_CHARS`
+characters or `MAX_FILE_LINES` lines, counted on the texts as the renderers draw them, is
+refused with a 413 before anything is rendered. The routes are plain `def`: drafting and
+rendering run in FastAPI's threadpool. Nothing here logs the result, a fact or an answer, and
+no error quotes them; the drafter's refusals are mapped as the vendor letter's route maps them
+(`refused_drafts`).
 """
 
 import logging
@@ -35,19 +37,19 @@ from aiact.api.dependencies import (
     limit_exports,
     limit_lookups,
 )
-from aiact.api.documents import UNKNOWN_POINT, ResultJson, law_quotes, valid_result
+from aiact.api.documents import ResultJson, law_quotes, refused_drafts, valid_result
 from aiact.api.errors import UNPROCESSABLE
-from aiact.drafting import DraftDocument, DutyDateError, LawQuotes, SizeClass, UnknownPointError
+from aiact.drafting import LawQuotes, SizeClass
 from aiact.drafting.documents import (
     CheckedDraft,
-    DocumentNotCalledForError,
     ListedDocument,
     checked_draft,
     listed_documents,
 )
 from aiact.drafting.models import TEMPLATE_PATTERN
 from aiact.drafting.paper import document_paper
-from aiact.export import render_docx, render_pdf
+from aiact.export import Block, Paper, Quote, render_docx, render_pdf
+from aiact.export.text import printable
 from aiact.schemas import Language
 from aiact.schemas.base import ContractModel
 
@@ -63,7 +65,7 @@ MAX_ANSWERS = 100
 MAX_FILE_CHARS = 120_000
 """The longest draft made into a file, in characters: about 40 pages."""
 MAX_FILE_LINES = 2_000
-"""The most lines a file's paragraphs may hold, so line breaks can't make thousands of pages."""
+"""The most lines a file's texts may hold, so line breaks can't make thousands of pages."""
 BUSY_RETRY_SECONDS = 5
 """`Retry-After` when every export slot is taken; a file takes well under a second."""
 
@@ -71,8 +73,6 @@ DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 PDF = "application/pdf"
 MEDIA_TYPES = {"docx": DOCX, "pdf": PDF}
 
-NOT_CALLED_FOR = "This result calls for no such document."
-SEVERAL_DATES = "The result lists this document's duty with several dates, so it can't be drafted."
 CHECKS_FAILED = "The draft failed its automatic checks, so it can't be exported."
 TOO_LONG = "This document is too long to make into a file. Please shorten some answers."
 BUSY = "Klar is busy making other files. Please try again in a moment."
@@ -185,8 +185,8 @@ def export(
     if failed:
         logger.error("export of %s refused: checks failed: %s", body.template, failed)
         raise HTTPException(status.HTTP_409_CONFLICT, CHECKS_FAILED)
-    _refuse_too_long(checked.document)
     paper = document_paper(checked.document)
+    _refuse_too_long(paper)
     with _export_slot(request, context):
         content = render_pdf(paper) if body.format == "pdf" else render_docx(paper)
     filename = f"{body.template}.{body.format}"  # a template id: [a-z0-9_] only
@@ -200,26 +200,27 @@ def export(
 def _checked(body: DraftRequest, quotes_from: LawQuotes) -> CheckedDraft:
     """The document drafted and checked, or the HTTP error that says why it can't be."""
     result = valid_result(body.result)
-    try:
+    with refused_drafts():
         return checked_draft(
             body.template, result, body.answers, body.language, body.size_class, quotes_from
         )
-    except DocumentNotCalledForError:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, NOT_CALLED_FOR) from None
-    except DutyDateError:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, SEVERAL_DATES) from None
-    except UnknownPointError:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, UNKNOWN_POINT) from None
 
 
-def _refuse_too_long(document: DraftDocument) -> None:
-    """A 413 for a draft over `MAX_FILE_CHARS` characters or `MAX_FILE_LINES` lines."""
-    paragraphs = [paragraph for section in document.sections for paragraph in section.paragraphs]
-    chars = sum(len(paragraph) for paragraph in paragraphs)
-    lines = sum(paragraph.count("\n") + 1 for paragraph in paragraphs)
+def _refuse_too_long(paper: Paper) -> None:
+    """A 413 for a file over `MAX_FILE_CHARS` characters or `MAX_FILE_LINES` lines, counted on
+    the texts its blocks draw as the renderers draw them (`printable`: every `\r\n` and lone
+    `\r` a line break), so no line break gets past the count."""
+    texts = [printable(text) for block in paper.blocks for text in _block_texts(block)]
+    chars = sum(len(text) for text in texts)
+    lines = sum(text.count("\n") + 1 for text in texts)
     if chars > MAX_FILE_CHARS or lines > MAX_FILE_LINES:
         logger.warning("export refused: %d characters, %d lines", chars, lines)
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, TOO_LONG)
+
+
+def _block_texts(block: Block) -> tuple[str, ...]:
+    """The texts a block draws: a quote's source line too."""
+    return (block.text, block.source) if isinstance(block, Quote) else (block.text,)
 
 
 @contextmanager
