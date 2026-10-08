@@ -151,7 +151,7 @@ def require_embedded(connection: psycopg.Connection, arm_name: str) -> None:
     params = {"model": arm.corpus.model, "dims": arm.dims, "max_chars": arm.corpus.max_input_chars}
     current = _count(connection, COUNT_CURRENT, params)
     in_scope = _count(connection, COUNT_IN_SCOPE, params)
-    if current < in_scope:
+    if current == 0 or current < in_scope:  # an empty corpus (as in CI) has nothing to search
         model = next(key for key, value in CORPUS_ARMS.items() if value == arm.corpus)
         raise ArmNotEmbeddedError(
             f"{arm_name} has current vectors for {current} of {in_scope} provision rows; run "

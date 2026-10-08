@@ -438,13 +438,15 @@ def eval_ragas(
         items = load_qa_items()
         git_sha, is_dirty = runner.current_git_state()
         options = ragas_metrics.RagasOptions(git_sha, is_dirty, subset, seed, max_cost_usd)
+        # Without --arm, the RAGAS install and API key are checked before the database is opened.
+        parts = ragas_metrics.build_parts(top_k) if arm is None else None
         with records.connect() as connection:
-            embeddings = None
             if arm is not None:
                 # Checked before any paid call: an arm without vectors would score as bad.
                 embedding_experiment.require_embedded(connection, arm)
                 embeddings = embedding_experiment.build_embeddings(embedding_experiment.ARMS[arm])
-            parts = ragas_metrics.build_parts(top_k, embeddings=embeddings)
+                parts = ragas_metrics.build_parts(top_k, embeddings=embeddings)
+            assert parts is not None
             summary = ragas_metrics.run_ragas(
                 items, parts, records.PostgresRunStore(connection), options
             )
