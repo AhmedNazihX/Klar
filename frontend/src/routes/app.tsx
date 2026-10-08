@@ -3,6 +3,7 @@ import {
   createFileRoute,
   Outlet,
   retainSearchParams,
+  useNavigate,
   useRouterState,
   type ErrorComponentProps,
 } from '@tanstack/react-router'
@@ -59,7 +60,9 @@ function ScreenError({ reset }: ErrorComponentProps): JSX.Element {
  */
 function AppLayout(): JSX.Element {
   const { law } = Route.useSearch()
-  const navigate = Route.useNavigate()
+  // Not bound to this layout route: the switch changes `law` on the screen on show and keeps its
+  // path and its other search params (a tool's result, its view), as the language switch does.
+  const navigate = useNavigate()
   return (
     <AppFrame
       law={{

@@ -60,6 +60,7 @@ def app(settings: Settings) -> Iterator[FastAPI]:
     built = create_app(settings)
     yield built
     built.dependency_overrides.clear()
+    built.state.context.export_slots.close()
 
 
 @pytest.fixture

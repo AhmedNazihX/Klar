@@ -1,0 +1,69 @@
+- id: cons-01-master-admissions-ranking-a
+  set_name: consistency
+  language: en
+  description: >-
+    We are a private university of applied sciences in Rotterdam with about 6,000 students. For
+    our master's programmes we use AdmitIQ, an admissions tool licensed from a UK
+    education-technology company; it is a machine-learning model the vendor trained on earlier
+    admission rounds. The tool reads each application, including grades, CV and motivation
+    letter, gives every applicant a score and ranks them. Offers go to the top of the ranking up
+    to the number of places, and everyone else receives a rejection; the admissions office does
+    not re-check the ranking. We use AdmitIQ as the vendor supplies it, under the vendor's name.
+    Our new campus library opens in 2027.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:3:a"
+  label_citation: ["annex:III:3:a", "art:6:2", "art:6:3", "art:3:4"]
+  business_function: education
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the tool decides who is admitted to a university
+    programme (Annex III 3(a)); scoring each applicant from their own application is profiling,
+    so Art. 6(3) third subparagraph keeps it high-risk. Role: the university uses the licensed
+    tool unchanged under the vendor's name (Art. 3(4)): deployer. Same facts as -b and -c.
+  tags: ["triple:cons-01"]
+- id: cons-01-master-admissions-ranking-b
+  set_name: consistency
+  language: en
+  description: >-
+    Applied-sciences university, Rotterdam, roughly 6,000 students. Master's admissions run
+    through AdmitIQ, which we license unchanged from a UK edtech firm and which keeps the vendor's
+    branding. Under the hood it's a machine-learning model trained by the vendor on past admission
+    rounds. Input: each applicant's grades, CV and motivation letter. Output: a score per
+    applicant and a ranked list. We fill the available places from the top of that list and send
+    rejections to the rest; nobody in admissions reviews the order before the decisions go out.
+    Unrelated, but the new campus library is due to open in 2027.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:3:a"
+  label_citation: ["annex:III:3:a", "art:6:2", "art:6:3", "art:3:4"]
+  business_function: education
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-01-master-admissions-ranking-a with the same
+    facts; label and reasoning as there (Annex III 3(a), profiling under Art. 6(3), deployer
+    under Art. 3(4)).
+  tags: ["triple:cons-01"]
+- id: cons-01-master-admissions-ranking-c
+  set_name: consistency
+  language: en
+  description: >-
+    Quick summary for the compliance review: at our university of applied sciences in Rotterdam
+    (around 6,000 students), deciding who gets into a master's programme is now done with AdmitIQ.
+    We didn't build it. A UK edtech company licenses it to us; they trained its machine-learning
+    model on previous admission rounds, and we run it unmodified with their name on it. Every
+    application, meaning grades, CV and motivation letter, gets a score, and the applicants are
+    ranked. Whoever is high enough on the ranking for the places we have gets an offer, the others
+    get a rejection, and the admissions team doesn't go back over the ranking. Side note: the new
+    campus library opens in 2027.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:3:a"
+  label_citation: ["annex:III:3:a", "art:6:2", "art:6:3", "art:3:4"]
+  business_function: education
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-01-master-admissions-ranking-a with the same
+    facts; label and reasoning as there (Annex III 3(a), profiling under Art. 6(3), deployer
+    under Art. 3(4)).
+  tags: ["triple:cons-01"]

@@ -9,7 +9,7 @@ with `quoted_points` and passes them in.
 
 from collections.abc import Sequence
 
-from aiact.drafting.draft import Answers, draft_document
+from aiact.drafting.draft import Answers, draft_document, refuse_unasked
 from aiact.drafting.models import DraftDocument
 from aiact.drafting.templates import DocumentTemplate
 from aiact.drafting.vendor_letters.fills import deciding_points, open_question
@@ -51,4 +51,5 @@ def draft_vendor_letter(
         raise NoVendorLetterError(
             "a vendor letter needs a decided prohibited result or a legally ambiguous one"
         )
+    refuse_unasked(template, answers)
     return draft_document(template, result, answers, language, quotes=quotes)

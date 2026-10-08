@@ -9,6 +9,17 @@ export const ORIGINAL_ROUTE_DATES: Record<HighRiskRoute, string> = {
   annex_i: '2027-08-02',
 }
 
+/** A route's Chapter III date under each text: the amended one as the engine dated it, the
+ *  original one from Art. 113. The one helper every screen uses for the law switch's dates (the
+ *  result, the inventory, the deciding question; decision 026 item 11). Without a route the date
+ *  is the same under both. */
+export function routeDates(
+  route: HighRiskRoute | null,
+  amended: string,
+): { amended: string; original: string } {
+  return { amended, original: route ? ORIGINAL_ROUTE_DATES[route] : amended }
+}
+
 /** The date Art. 111(2) gives legacy high-risk systems meant for public authorities. */
 export const PUBLIC_AUTHORITY_DEADLINE = '2030-08-02'
 

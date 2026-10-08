@@ -96,6 +96,12 @@ class Settings(BaseSettings):
     # Requests per client address per minute: classifications cost model calls, lookups don't.
     rate_limit_classify: int = Field(default=5, ge=1)
     rate_limit_lookups: int = Field(default=120, ge=1)
+    # Word and PDF files: rendering one costs up to seconds of CPU, so few per client address
+    # per minute, and few at once, each in one of this many worker processes (one more is refused
+    # at once, 503). A render past the time limit is stopped and refused (413).
+    rate_limit_exports: int = Field(default=10, ge=1)
+    export_max_concurrent: int = Field(default=2, ge=1)
+    export_timeout_seconds: float = Field(default=10.0, gt=0)
     # Classifications running at once in this process; one more is refused at once (503).
     classify_max_concurrent: int = Field(default=4, ge=1)
 

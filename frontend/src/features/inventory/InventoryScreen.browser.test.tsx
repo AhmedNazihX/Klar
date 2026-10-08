@@ -80,6 +80,7 @@ function textLines(cell: Element): number {
 }
 
 const CLASS_COLUMN = 2
+const APPLIES_FROM_COLUMN = 4
 const STATUS_COLUMN = 5
 /** The two German pills that wrap inside their pill at 1280 px (components.md exceptions). */
 const TWO_LINE_DE = ['Außerhalb des Anwendungsbereichs', 'Hochrisiko, angenommen']
@@ -209,6 +210,28 @@ describe('the inventory table at 1280 px', () => {
       for (const date of dates) {
         expect(date.getClientRects().length, date.textContent).toBe(1)
       }
+    },
+  )
+
+  // Decision 026 item 11: under the original text the route's Applies-from date is Art. 113's.
+  it.each([
+    ['en', '2 Aug 2026', '2 Dec 2027'],
+    ['de', '2. Aug. 2026', '2. Dez. 2027'],
+  ] as const)(
+    'shows the original Art. 113 date under the original text (%s)',
+    async (language, original, amended) => {
+      await page.viewport(DESKTOP.width, DESKTOP.height)
+      await i18n.changeLanguage(language)
+      const client = createTestQueryClient()
+      client.setQueryData(inventoryToolsKey, [tool('Applicant screening', decidedHighRisk())])
+      renderRoute('/app/inventory?law=original', client)
+      const name =
+        language === 'de' ? 'Ihre Tools und ihre Ergebnisse' : 'Your tools and their results'
+      const table = await screen.findByRole('table', { name }, { timeout: FIRST_RENDER_MS })
+      const [, row] = within(table).getAllByRole('row')
+      const appliesFrom = row && within(row).getAllByRole('cell')[APPLIES_FROM_COLUMN]
+      expect(appliesFrom?.innerText).toBe(original)
+      expect(table.innerText).not.toContain(amended)
     },
   )
 

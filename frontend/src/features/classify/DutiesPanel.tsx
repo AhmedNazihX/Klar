@@ -10,6 +10,7 @@ import { useLanguage } from '@/hooks/use-language'
 import type { Language } from '@/i18n'
 
 import { longDate } from './dates'
+import { OriginalDatesNote } from './OriginalDatesNote'
 import { provisionName } from './provision-names'
 import { citationSource, dutyLabel, isTransparencyDuty } from './result-text'
 
@@ -37,6 +38,8 @@ function limitedIntro(t: TFunction, result: ClassificationResult): string {
 }
 
 function introFor(t: TFunction, result: ClassificationResult): string {
+  // The engine lists no duties under the original text (decision 020): it says so, not "none".
+  if (result.law_version === 'original') return t('result.todo.notModelled')
   if (result.risk_class === 'minimal_risk') return t('result.todo.minimal')
   if (result.risk_class === 'limited_risk') return limitedIntro(t, result)
   if ((result.obligations ?? []).length === 0) return t('result.todo.none')
@@ -46,7 +49,14 @@ function introFor(t: TFunction, result: ClassificationResult): string {
 /** "What you need to do": each duty as an action (C9's short label) with its article, its
  *  Art. 111(2) marking and a link to its draft document where C9 names one (for the Art. 50
  *  duties, the drafted disclosure: decision 026 item 19). */
-export function DutiesPanel({ result }: { result: ClassificationResult }): JSX.Element {
+export function DutiesPanel({
+  result,
+  toolId,
+}: {
+  result: ClassificationResult
+  /** The tool the result is for; its duties' documents open for it. */
+  toolId?: string
+}): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
@@ -62,6 +72,7 @@ export function DutiesPanel({ result }: { result: ClassificationResult }): JSX.E
           {t('result.todo.heading')}
         </h2>
         <p className="m-0 max-w-[620px] text-body-small text-slate">{introFor(t, result)}</p>
+        <OriginalDatesNote result={result} />
       </div>
       {obligations.length > 0 && (
         <ul className="m-0 flex list-none flex-col p-0">
@@ -80,6 +91,7 @@ export function DutiesPanel({ result }: { result: ClassificationResult }): JSX.E
                   : t('result.todo.draftDocument')
               }
               documentId={obligation.document}
+              toolId={toolId}
             />
           ))}
         </ul>

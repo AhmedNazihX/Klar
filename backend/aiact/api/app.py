@@ -3,7 +3,8 @@ stack). `create_app` builds it with its settings and, from the outside in:
 - `TrustedHostMiddleware`: only `API_ALLOWED_HOSTS` in the Host header (against DNS rebinding);
 - CORS for `CORS_ORIGINS` only, without credentials, exposing `Retry-After`;
 - `BodySizeLimit`: a body over `API_MAX_BODY_BYTES` is a 413 before it is read;
-- the routes, with their rate limits and the classification slots, and handlers that turn an
+- the routes, with their rate limits, the classification slots and the export workers (stopped
+  at shutdown), and handlers that turn an
   unreachable database into a 503 without its error text, and a request that fails validation
   into a 422 that quotes none of it (`errors.py`).
 `API_DOCS=false` hides /docs, /redoc and /openapi.json. `aiact api serve` runs the app;
@@ -11,6 +12,8 @@ stack). `create_app` builds it with its settings and, from the outside in:
 """
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from importlib.metadata import version
 
 import psycopg
@@ -21,9 +24,9 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
-from aiact.api import classify, documents, lookups
+from aiact.api import classify, documents, drafts, lookups
 from aiact.api.body_limit import BodySizeLimit
-from aiact.api.dependencies import context_for
+from aiact.api.dependencies import ApiContext, context_for
 from aiact.api.errors import invalid_request
 from aiact.db import DatabaseNotConfiguredError
 from aiact.settings import Settings, get_settings
@@ -57,6 +60,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description=DESCRIPTION,
         version=version("aiact"),
         generate_unique_id_function=operation_id,
+        lifespan=_lifespan,
         docs_url=DOCS_URL if docs else None,
         redoc_url=REDOC_URL if docs else None,
         openapi_url=OPENAPI_URL if docs else None,
@@ -76,10 +80,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(classify.router)
     app.include_router(lookups.router)
     app.include_router(documents.router)
+    app.include_router(drafts.router)
     app.add_exception_handler(RequestValidationError, invalid_request)
     app.add_exception_handler(DatabaseNotConfiguredError, _corpus_unavailable)
     app.add_exception_handler(psycopg.OperationalError, _corpus_unavailable)
     return app
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """On shutdown, stop the export workers' processes."""
+    yield
+    context: ApiContext = app.state.context
+    context.export_slots.close()
 
 
 async def _corpus_unavailable(_request: Request, exc: Exception) -> JSONResponse:
