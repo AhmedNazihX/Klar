@@ -15,7 +15,7 @@ from langchain_core.messages import AIMessage
 from langchain_core.outputs import LLMResult
 
 from aiact.llm.chat import reply_usage
-from aiact.llm.embeddings import OpenRouterEmbeddings, format_query
+from aiact.llm.embeddings import OpenRouterEmbeddings
 from aiact.schemas.base import ContractModel
 
 
@@ -107,7 +107,7 @@ class MeteredEmbedder:
 
     def embed_query(self, text: str) -> list[float]:
         """The query's vector, as `OpenRouterEmbeddings.embed_query` makes it."""
-        batch = self._inner.embed_batch([format_query(text, self._inner.query_instruction)])
+        batch = self._inner.embed_batch([self._inner.query_text(text)])
         cost = batch.cost_usd if batch.is_cost_known else None
         self._meter.add(self._node, cost, batch.tokens)
         return batch.vectors[0]

@@ -515,7 +515,7 @@ def test_flash_lite_answers_and_judges_one_item(openrouter_settings: Settings) -
 
 def test_the_command_runs_the_qa_set_and_prints_the_means(monkeypatch: pytest.MonkeyPatch) -> None:
     store = MemoryStore()
-    monkeypatch.setattr(ragas_metrics, "build_parts", lambda top_k: parts())
+    monkeypatch.setattr(ragas_metrics, "build_parts", lambda top_k, **_: parts())
     monkeypatch.setattr(records, "connect", contextlib.nullcontext)
     monkeypatch.setattr(records, "PostgresRunStore", lambda connection: store)
     result = CliRunner().invoke(app, ["evaluate", "ragas", "--subset", "2"])
@@ -528,7 +528,7 @@ def test_the_command_runs_the_qa_set_and_prints_the_means(monkeypatch: pytest.Mo
 
 def test_the_command_runs_every_answerable_item_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     store = MemoryStore()
-    monkeypatch.setattr(ragas_metrics, "build_parts", lambda top_k: parts())
+    monkeypatch.setattr(ragas_metrics, "build_parts", lambda top_k, **_: parts())
     monkeypatch.setattr(records, "connect", contextlib.nullcontext)
     monkeypatch.setattr(records, "PostgresRunStore", lambda connection: store)
     result = CliRunner().invoke(app, ["evaluate", "ragas"])

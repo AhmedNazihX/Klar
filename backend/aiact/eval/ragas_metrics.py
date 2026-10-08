@@ -261,9 +261,15 @@ class RagasParts:
     aclose: Callable[[], Awaitable[None]] = field(default=_nothing_to_close)
 
 
-def build_parts(top_k: int = DEFAULT_TOP_K, settings: Settings | None = None) -> RagasParts:
-    """The real run: the RAGAS route, the configured embedding arm, one meter. Build new parts
-    for each run: the run closes the model's client when it ends.
+def build_parts(
+    top_k: int = DEFAULT_TOP_K,
+    settings: Settings | None = None,
+    *,
+    embeddings: OpenRouterEmbeddings | None = None,
+) -> RagasParts:
+    """The real run: the RAGAS route, the embedding arm (`embeddings`, default the configured
+    one; X1a passes each arm it compares), one meter. Build new parts for each run: the run
+    closes the model's client when it ends.
 
     Raises `RagasNotInstalledError` without the `eval` group, and `LLMConfigError` when the API
     key or an `EMBEDDING_*` setting is not set.
@@ -275,7 +281,7 @@ def build_parts(top_k: int = DEFAULT_TOP_K, settings: Settings | None = None) ->
     settings = settings or get_settings()
     meter = UsageMeter()
     model = ragas_model(lambda cost, tokens: meter.add(MODEL_NODE, cost, tokens), settings=settings)
-    embeddings = OpenRouterEmbeddings(settings=settings)
+    embeddings = embeddings or OpenRouterEmbeddings(settings=settings)
     return RagasParts(
         retriever=SearchRetriever(top_k, meter.embedder(SEARCH_NODE, embeddings)),
         answerer=PlainAnswerer(
@@ -289,6 +295,7 @@ def build_parts(top_k: int = DEFAULT_TOP_K, settings: Settings | None = None) ->
             "model": embeddings.model,
             "provider": embeddings.provider,
             "dimensions": embeddings.dimensions,
+            "query_instruction": embeddings.query_instruction or None,
         },
         aclose=model.aclose,
     )
