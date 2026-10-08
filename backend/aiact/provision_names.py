@@ -46,6 +46,34 @@ def annex_point_name(point: str, language: Language) -> str:
     return f"Annex III point {number}" + (f"({letter})" if letter else "")
 
 
+def annex_name(provision_id: str, language: Language) -> str:
+    """Any Annex or Annex point as the screens name it (frontend `provision-names.ts`): `annex:IV`
+    is "Annex IV" or "Anhang IV"; `annex:IV:2` is "Annex IV 2" or "Anhang IV Nr. 2";
+    `annex:III:4:a` is "Annex III 4(a)" or "Anhang III Nr. 4 Buchst. a"; `annex:I:A:11` is
+    "Annex I Section A point 11" or "Anhang I Abschnitt A Nr. 11"."""
+    annex, *rest = provision_id.split(":")[1:]
+    if annex == "I" and len(rest) == 2:
+        section, number = rest
+        if language is DE:
+            return f"Anhang I Abschnitt {section} Nr. {number}"
+        return f"Annex I Section {section} point {number}"
+    head = f"Anhang {annex}" if language is DE else f"Annex {annex}"
+    if not rest:
+        return head
+    number, letter = rest[0], rest[1] if len(rest) > 1 else None
+    if language is DE:
+        return f"{head} Nr. {number}" + (f" Buchst. {letter}" if letter else "")
+    return f"{head} {number}" + (f"({letter})" if letter else "")
+
+
+def provision_name(provision_id: str, language: Language) -> str:
+    """An article's or an Annex's provision as the screens name it: `article_provision_name` for
+    an article, `annex_name` for an Annex."""
+    if provision_id.startswith("annex:"):
+        return annex_name(provision_id, language)
+    return article_provision_name(provision_id, language)
+
+
 def names_provision(text: str, provision: str) -> bool:
     """Whether `text` names `provision` (as the functions above write it) itself, not a longer
     one it begins ("Art. 26 Abs. 1" is not named by "Art. 26 Abs. 11")."""

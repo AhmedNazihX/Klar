@@ -2,7 +2,7 @@
 
 import pytest
 
-from aiact.provision_names import annex_point_name, article_provision_name
+from aiact.provision_names import annex_point_name, article_provision_name, provision_name
 from aiact.schemas import Language
 
 EN, DE = Language.EN, Language.DE
@@ -45,3 +45,25 @@ def test_article_provision_names(provision: str, language: Language, name: str) 
 )
 def test_annex_point_names(point: str, language: Language, name: str) -> None:
     assert annex_point_name(point, language) == name
+
+
+@pytest.mark.parametrize(
+    ("provision", "language", "name"),
+    [
+        ("annex:IV", EN, "Annex IV"),
+        ("annex:IV", DE, "Anhang IV"),
+        ("annex:IV:2", EN, "Annex IV 2"),
+        ("annex:IV:2", DE, "Anhang IV Nr. 2"),
+        ("annex:III:4:a", EN, "Annex III 4(a)"),
+        ("annex:III:4:a", DE, "Anhang III Nr. 4 Buchst. a"),
+        ("annex:I:A:11", EN, "Annex I Section A point 11"),
+        ("annex:I:A:11", DE, "Anhang I Abschnitt A Nr. 11"),
+        ("art:9:2", EN, "Art. 9(2)"),
+        ("art:9:2", DE, "Art. 9 Abs. 2"),
+    ],
+)
+def test_provision_names_as_the_screens_write_them(
+    provision: str, language: Language, name: str
+) -> None:
+    """The frontend's `provisionName` wording, so a file names a requirement as the screen does."""
+    assert provision_name(provision, language) == name

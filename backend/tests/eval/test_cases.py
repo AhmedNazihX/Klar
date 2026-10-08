@@ -31,7 +31,7 @@ from aiact.eval.cases import (
     load_yaml_file,
     score_appliedai,
 )
-from aiact.eval.metrics import SOFT_WORDING_TAG
+from aiact.eval.metrics import CONSISTENCY_GROUP_PREFIX, SOFT_WORDING_TAG
 from aiact.eval.split import SPLIT_FILE, Split
 from aiact.schemas import Language, RiskClass, Role, Status
 
@@ -657,6 +657,32 @@ def test_the_committed_soft_pair_set_has_its_pairs_and_answers() -> None:
     languages = Counter(pair[0].language for pair in pairs.values())
     assert set(languages) == {Language.EN, Language.DE}
     assert languages[Language.DE] / len(pairs) >= MIN_GERMAN_SHARE
+
+
+TRIPLE_SIZE = 3
+TRIPLE_RANGE = range(8, 21)
+
+
+def test_the_committed_consistency_set_has_its_triples() -> None:
+    """B8's DoD: every case carries exactly one `triple:<id>` tag (the only grouping the
+    consistency metric reads), every triple has exactly 3 paraphrases with one label, one
+    language and three different descriptions; both languages, at least a quarter German."""
+    cases = load_cases(CaseSet.CONSISTENCY)
+    triples: dict[str, list[BenchmarkCase]] = {}
+    for case in cases:
+        tags = [tag for tag in case.tags if tag.startswith(CONSISTENCY_GROUP_PREFIX)]
+        assert len(tags) == 1, case.id
+        triples.setdefault(tags[0], []).append(case)
+    assert len(triples) in TRIPLE_RANGE
+    for tag, members in triples.items():
+        assert len(members) == TRIPLE_SIZE, tag
+        assert all(case.label == members[0].label for case in members), tag
+        assert len({case.label_citation for case in members}) == 1, tag
+        assert len({case.language for case in members}) == 1, tag
+        assert len({case.description for case in members}) == TRIPLE_SIZE, tag
+    languages = Counter(members[0].language for members in triples.values())
+    assert set(languages) == {Language.EN, Language.DE}
+    assert languages[Language.DE] / len(triples) >= MIN_GERMAN_SHARE
 
 
 def test_no_committed_case_derives_from_a_pile_a_example() -> None:

@@ -28,10 +28,15 @@ const EXAMPLE: Record<Language, string> = { en: 'example', de: 'Beispiel' }
 const RECITAL: Record<Language, string> = { en: 'Recital', de: 'Erwägungsgrund' }
 
 /** `art:26:11` → "Art. 26(11)" / "Art. 26 Abs. 11"; `art:5:1:c:i` → "Art. 5(1)(c)(i)" /
- *  "Art. 5 Abs. 1 Buchst. c Ziff. i" (localisation.md › German citation style). */
+ *  "Art. 5 Abs. 1 Buchst. c Ziff. i" (localisation.md › German citation style). An article with
+ *  points and no paragraphs: `art:16:c` → "Art. 16(c)" / "Art. 16 Buchst. c", as the backend's
+ *  `article_provision_name` writes it in the drafts. */
 function articleName(parts: readonly string[], language: Language): string {
   const [article, paragraph, ...points] = parts
   if (paragraph === undefined) return `Art. ${article}`
+  if (language === 'de' && !/^\d/.test(paragraph)) {
+    return `Art. ${article} Buchst. ${[paragraph, ...points].join(' Ziff. ')}`
+  }
   if (language === 'de') {
     const letters = ['Buchst.', 'Ziff.'] as const
     const tail = points.map((point, n) => ` ${letters[Math.min(n, 1)]} ${point}`).join('')

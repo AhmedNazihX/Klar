@@ -351,7 +351,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DocumentList"
+                  "$ref": "#/components/schemas/aiact__retrieval__documents__DocumentList"
                 }
               }
             }
@@ -413,6 +413,160 @@
           },
           "503": {
             "description": "The corpus is unreachable"
+          }
+        }
+      }
+    },
+    "/documents/list": {
+      "post": {
+        "summary": "List Result Documents",
+        "description": "Every document the result calls for, with the duty it answers and its guided interview,\nnot yet drafted.",
+        "operationId": "list_result_documents",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/aiact__api__drafts__DocumentList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/documents/draft": {
+      "post": {
+        "summary": "Draft Document",
+        "description": "One document drafted with the user's answers, its three automatic checks, and its\ninterview. Labelled DRAFT, with the \"guidance, not legal advice\" notice.",
+        "operationId": "draft_document",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckedDraft"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The result calls for no such document"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "503": {
+            "description": "The corpus is unreachable"
+          }
+        }
+      }
+    },
+    "/documents/export": {
+      "post": {
+        "summary": "Export Document",
+        "description": "One document as a Word (.docx) or PDF file: the draft `draft_document` returns for the\nsame body, and only once all three automatic checks pass.",
+        "operationId": "export_document",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The document as a file (an attachment)",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The result calls for no such document"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "503": {
+            "description": "Every export slot is taken, or the corpus is unreachable"
+          },
+          "409": {
+            "description": "The draft failed its automatic checks"
+          },
+          "413": {
+            "description": "The document is too long for a file"
+          },
+          "504": {
+            "description": "The file took too long to make"
           }
         }
       }
@@ -514,6 +668,36 @@
         ],
         "title": "CheckResult",
         "description": "One check's outcome. `problems` names each failure; it passes when there are none."
+      },
+      "CheckedDraft": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/DraftDocument"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckResult"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewQuestion"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "document",
+          "checks",
+          "questions"
+        ],
+        "title": "CheckedDraft",
+        "description": "A drafted document, its three automatic checks and its interview, in the order asked."
       },
       "Citation": {
         "properties": {
@@ -886,28 +1070,17 @@
         "title": "DocumentInfo",
         "description": "One text of the corpus, as the interface lists it."
       },
-      "DocumentList": {
-        "properties": {
-          "documents": {
-            "items": {
-              "$ref": "#/components/schemas/DocumentInfo"
-            },
-            "type": "array",
-            "title": "Documents"
-          },
-          "disclaimer": {
-            "type": "string",
-            "title": "Disclaimer"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "documents",
-          "disclaimer"
+      "DocumentKind": {
+        "type": "string",
+        "enum": [
+          "notice",
+          "record",
+          "disclosure",
+          "skeleton",
+          "letter"
         ],
-        "title": "DocumentList",
-        "description": "Every text the answers can draw on, in `doc_key` order, with the notice."
+        "title": "DocumentKind",
+        "description": "What a document is, which says how the screen words its interview and lays it out: a\nskeleton gets the section-by-section layout (artboard `DocSkeleton`)."
       },
       "DocumentStatus": {
         "type": "string",
@@ -1006,6 +1179,60 @@
         ],
         "title": "DraftDocument",
         "description": "A document drafted from a classification result and the user's answers."
+      },
+      "DraftRequest": {
+        "properties": {
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result",
+            "description": "A `ClassificationResult`, as the `result` event of `POST /classify` carries it; the route validates it against the result contract."
+          },
+          "template": {
+            "type": "string",
+            "maxLength": 200,
+            "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+            "title": "Template"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of the draft's wording and notice."
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The company profile's size class; null without a profile."
+          },
+          "answers": {
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 20000
+            },
+            "propertyNames": {
+              "maxLength": 200,
+              "minLength": 1
+            },
+            "type": "object",
+            "maxProperties": 100,
+            "title": "Answers",
+            "description": "The answers stored for this document, by question key."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "result",
+          "template",
+          "language"
+        ],
+        "title": "DraftRequest",
+        "description": "One document of the result, with the user's answers to its interview."
       },
       "DraftSection": {
         "properties": {
@@ -1129,6 +1356,69 @@
         ],
         "title": "EvidenceTag",
         "description": "Where a fact came from; used instead of a numeric confidence score."
+      },
+      "ExportRequest": {
+        "properties": {
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result",
+            "description": "A `ClassificationResult`, as the `result` event of `POST /classify` carries it; the route validates it against the result contract."
+          },
+          "template": {
+            "type": "string",
+            "maxLength": 200,
+            "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+            "title": "Template"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of the draft's wording and notice."
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The company profile's size class; null without a profile."
+          },
+          "answers": {
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 20000
+            },
+            "propertyNames": {
+              "maxLength": 200,
+              "minLength": 1
+            },
+            "type": "object",
+            "maxProperties": 100,
+            "title": "Answers",
+            "description": "The answers stored for this document, by question key."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "docx",
+              "pdf"
+            ],
+            "title": "Format"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "result",
+          "template",
+          "language",
+          "format"
+        ],
+        "title": "ExportRequest",
+        "description": "One document as `draft_document` drafts it, and the file wanted."
       },
       "Fact": {
         "properties": {
@@ -1277,6 +1567,76 @@
         "title": "HighRiskRoute",
         "description": "How a system became high-risk; the two routes have different dates (Art. 113(c))."
       },
+      "InterviewChoice": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Label"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "The document's title once this choice is picked; null keeps its own."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "InterviewChoice",
+        "description": "One answer a choice question offers: the key stored as the answer, and its label."
+      },
+      "InterviewQuestion": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "title": "Key"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section",
+            "description": "The key of the section the answer fills."
+          },
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewChoice"
+            },
+            "type": "array",
+            "title": "Choices",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "text",
+          "section"
+        ],
+        "title": "InterviewQuestion",
+        "description": "One question of a document's guided interview, and the section its answer fills. A choice\nquestion lists its `choices`; its answer is one of their keys."
+      },
       "InvalidField": {
         "properties": {
           "type": {
@@ -1366,6 +1726,70 @@
         ],
         "title": "LegacyStatus",
         "description": "How Art. 111(2) treats a high-risk system placed on the market or put into service before\nits route's Chapter III date, with no significant change planned from that date."
+      },
+      "ListRequest": {
+        "properties": {
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result",
+            "description": "A `ClassificationResult`, as the `result` event of `POST /classify` carries it; the route validates it against the result contract."
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of the titles and the questions."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "result",
+          "language"
+        ],
+        "title": "ListRequest",
+        "description": "A tool's classification result and the language of the list."
+      },
+      "ListedDocument": {
+        "properties": {
+          "template": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+            "title": "Template"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DocumentKind",
+            "description": "What the document is: a skeleton is laid out section by section."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Title"
+          },
+          "article": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Article",
+            "description": "The duty it answers, e.g. `art:26:7`."
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewQuestion"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "template",
+          "kind",
+          "title",
+          "article",
+          "questions"
+        ],
+        "title": "ListedDocument",
+        "description": "A document the result calls for, as the documents list shows it before it is drafted."
       },
       "Obligation": {
         "properties": {
@@ -1836,6 +2260,16 @@
         "title": "SettledByKind",
         "description": "What could settle an open question of law (E12, decision 026 item 4)."
       },
+      "SizeClass": {
+        "type": "string",
+        "enum": [
+          "sme",
+          "smc",
+          "none"
+        ],
+        "title": "SizeClass",
+        "description": "The company profile's size class (P19's `inventories.size_class`), passed in by the\ncaller: derived from the profile's bands, never from the description."
+      },
       "SourceSpan": {
         "properties": {
           "start": {
@@ -2081,6 +2515,47 @@
         ],
         "title": "VendorLetterRequest",
         "description": "A classification result, the letter's language and the answers given so far."
+      },
+      "aiact__api__drafts__DocumentList": {
+        "properties": {
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/ListedDocument"
+            },
+            "type": "array",
+            "title": "Documents"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "documents"
+        ],
+        "title": "DocumentList",
+        "description": "Every document the result calls for, in the order the documents list shows them."
+      },
+      "aiact__retrieval__documents__DocumentList": {
+        "properties": {
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentInfo"
+            },
+            "type": "array",
+            "title": "Documents"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "documents",
+          "disclaimer"
+        ],
+        "title": "DocumentList",
+        "description": "Every text the answers can draw on, in `doc_key` order, with the notice."
       }
     }
   }

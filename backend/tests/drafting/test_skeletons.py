@@ -55,7 +55,7 @@ C9_DOCUMENT_KEYS = [
 """The template ids the obligations seed's `document` keys name (C9)."""
 
 DEVELOPMENT_ANSWERS = {
-    "development_methods": "Fine-tuned an open model on our own CVs.",
+    "development_methods": "fine-tuned an open model on our own CVs",
     "cybersecurity": "  Access control and yearly penetration tests.  ",
 }
 
@@ -154,7 +154,7 @@ def test_each_section_shows_what_it_waits_for() -> None:
     }
 
 
-def test_answers_fill_a_section_word_for_word_in_the_order_asked() -> None:
+def test_answers_fill_a_section_written_up_as_sentences_in_the_order_asked() -> None:
     development = _section(_annex_iv(answers=DEVELOPMENT_ANSWERS), "development")
     assert development.paragraphs == (
         "Fine-tuned an open model on our own CVs.",
@@ -256,6 +256,27 @@ def test_a_misstated_status_fails_the_invented_content_check() -> None:
     assert outcome.problems == ("section 'standards' misstates what is left to answer",)
 
 
+def test_an_answer_left_unwritten_up_fails_the_invented_content_check() -> None:
+    raw = DEVELOPMENT_ANSWERS["development_methods"]
+    document = edit_section(
+        _annex_iv(answers=DEVELOPMENT_ANSWERS),
+        "development",
+        lambda s: changed(s, paragraphs=(raw, *s.paragraphs[1:])),
+    )
+    outcome = check_nothing_invented(document, provider_result(), DEVELOPMENT_ANSWERS)
+    assert outcome.problems == ("section 'development' holds content the user didn't supply",)
+
+
+def test_a_word_added_to_a_written_up_answer_fails_the_invented_content_check() -> None:
+    document = edit_section(
+        _annex_iv(answers=DEVELOPMENT_ANSWERS),
+        "development",
+        lambda s: changed(s, paragraphs=(f"{s.paragraphs[0][:-1]} last year.", *s.paragraphs[1:])),
+    )
+    outcome = check_nothing_invented(document, provider_result(), DEVELOPMENT_ANSWERS)
+    assert outcome.problems == ("section 'development' holds content the user didn't supply",)
+
+
 def test_an_answer_written_into_another_section_fails_the_invented_content_check() -> None:
     answers = {"cybersecurity": "Access control."}
     document = edit_section(
@@ -293,6 +314,17 @@ def test_with_the_size_class_the_note_must_match_the_company(language: Language)
         outcome = check_nothing_invented(neither, provider_result(), {}, size_class)
         assert outcome.problems == note_problem
     assert check_nothing_invented(sme, provider_result(), {}).passed, "size class not given"
+
+
+def test_run_checks_catches_an_smes_missing_note_only_when_given_the_size_class() -> None:
+    """`run_checks` hands the size class on to the invented-content check: an SME's Annex IV
+    without its note passes every check without the size class, and fails that one with it."""
+    no_note = draft_document(ANNEX_IV_SKELETON, provider_result(), {}, EN, SizeClass.NONE)
+    assert all(outcome.passed for outcome in run_checks(no_note, provider_result(), {}))
+    with_size = run_checks(no_note, provider_result(), {}, SizeClass.SME)
+    assert [(o.check.value, o.problems) for o in with_size if not o.passed] == [
+        ("nothing_invented", ("the note is not the template's",))
+    ]
 
 
 # --- The templates and the section rules ---------------------------------------------------------

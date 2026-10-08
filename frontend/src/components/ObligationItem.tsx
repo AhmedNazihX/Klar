@@ -13,6 +13,8 @@ export type ObligationItemProps = {
   /** The duty's draft document, if there is one: the link's text and the document's id. */
   docLabel?: ReactNode
   documentId?: string | null
+  /** The tool the document belongs to: documents are keyed by tool and template (P9). */
+  toolId?: string
   /** Informational lines get no checkbox: there is nothing to tick off. */
   isInformational?: boolean
   /** The article column: 86 px in English, at least 112 px in German (localisation.md). */
@@ -30,6 +32,7 @@ export function ObligationItem({
   tag,
   docLabel,
   documentId,
+  toolId,
   isInformational = false,
   referenceWidth = DEFAULT_REFERENCE_WIDTH,
 }: ObligationItemProps): JSX.Element {
@@ -61,6 +64,7 @@ export function ObligationItem({
         <Link
           to="/app/documents/$documentId"
           params={{ documentId }}
+          search={{ tool: toolId }}
           className="shrink-0 text-label whitespace-nowrap text-lens-blue no-underline hover:underline"
         >
           {docLabel}

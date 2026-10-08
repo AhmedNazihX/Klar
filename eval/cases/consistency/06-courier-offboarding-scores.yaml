@@ -1,0 +1,70 @@
+- id: cons-06-courier-offboarding-scores-a
+  set_name: consistency
+  language: en
+  description: >-
+    We are a 45-person software company in Lisbon. Our product, RideRank, is workforce software
+    for food-delivery companies, built around a machine-learning model we developed and trained
+    ourselves. It evaluates each courier's work from their delivery times, customer ratings and
+    cancelled jobs and gives every courier a monthly performance score. Couriers whose score
+    falls below a threshold are automatically offboarded, which ends their contract with the
+    delivery company, without anyone reviewing the case first. We have sold RideRank under our
+    own name to delivery companies in Portugal and Spain since 2025; we don't use it for our own
+    staff. We also sponsor a cycling club in Porto.
+  label:
+    risk_class: high_risk
+    role: provider
+    annex_point: "annex:III:4:b"
+  label_citation: ["art:3:3", "annex:III:4:b", "art:6:2", "art:6:3"]
+  business_function: hr
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the system evaluates the performance of people in a
+    work-related relationship and decides on terminating their contracts (Annex III 4(b)); scoring
+    each courier from their own work data is profiling, so Art. 6(3) third subparagraph keeps it
+    high-risk. Role: the company develops the system and places it on the market under its own
+    name (Art. 3(3)): provider; it doesn't use it for its own staff, so it is not also a deployer.
+    Same facts as -b and -c.
+  tags: ["triple:cons-06"]
+- id: cons-06-courier-offboarding-scores-b
+  set_name: consistency
+  language: en
+  description: >-
+    Company: software developer in Lisbon, 45 employees. Product: RideRank, workforce software
+    for food-delivery firms, based on our own machine-learning model, developed and trained
+    in-house. Function: scores every courier once a month on performance, using delivery times,
+    customer ratings and cancelled jobs. Consequence: below a set threshold the courier is
+    offboarded automatically, which ends their contract with the delivery firm; no person reviews
+    the case beforehand. Market: sold under the RideRank name to delivery firms in Portugal and
+    Spain since 2025. Own use: none for our staff. Other: we sponsor a cycling club in Porto.
+  label:
+    risk_class: high_risk
+    role: provider
+    annex_point: "annex:III:4:b"
+  label_citation: ["art:3:3", "annex:III:4:b", "art:6:2", "art:6:3"]
+  business_function: hr
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-06-courier-offboarding-scores-a with the same
+    facts; label and reasoning as there (Annex III 4(b), profiling under Art. 6(3), provider under
+    Art. 3(3)).
+  tags: ["triple:cons-06"]
+- id: cons-06-courier-offboarding-scores-c
+  set_name: consistency
+  language: en
+  description: >-
+    Since 2025 food-delivery companies in Portugal and Spain have run their courier fleets with
+    RideRank, the software we sell under that name. We're a software company of 45 people in
+    Lisbon and built it ourselves around a machine-learning model we trained. Every month it
+    looks at each courier's delivery times, customer ratings and cancelled jobs and gives them a
+    performance score. If a courier ends up below the threshold, RideRank offboards them
+    automatically and their contract with the delivery company ends; nobody looks at the case
+    first. We don't use it for our own employees. We also sponsor a cycling club in Porto.
+  label:
+    risk_class: high_risk
+    role: provider
+    annex_point: "annex:III:4:b"
+  label_citation: ["art:3:3", "annex:III:4:b", "art:6:2", "art:6:3"]
+  business_function: hr
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-06-courier-offboarding-scores-a with the same
+    facts; label and reasoning as there (Annex III 4(b), profiling under Art. 6(3), provider under
+    Art. 3(3)).
+  tags: ["triple:cons-06"]

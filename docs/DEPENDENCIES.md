@@ -18,6 +18,7 @@ Source: `backend/uv.lock`.
 | --- | --- | --- | --- | --- | --- |
 | docling-core | runtime | >=2.96.0 | 2.99.0 | MIT | A python library to define and validate data types in Docling. |
 | fastapi | runtime | >=0.142.2 | 0.142.2 | MIT | FastAPI framework, high performance, easy to learn, fast to code, ready for pro… |
+| fpdf2 | runtime | >=2.8.9 | 2.8.9 | LGPL-3.0-only | Simple & fast PDF generation for Python |
 | httpx | runtime | >=0.28.1 | 0.28.1 | BSD-3-Clause | The next generation HTTP client. |
 | langchain-openrouter | runtime | >=0.2.9 | 0.2.9 | MIT | An integration package connecting OpenRouter and LangChain |
 | langgraph | runtime | >=1.2.12 | 1.2.12 | MIT | Building stateful, multi-actor applications with LLMs |
@@ -27,10 +28,12 @@ Source: `backend/uv.lock`.
 | openrouter | runtime | >=0.11.46 | 0.11.46 | Apache-2.0 | Official Python Client SDK for OpenRouter. |
 | psycopg[binary] | runtime | >=3.3.6 | 3.3.6 | LGPL-3.0-only | PostgreSQL database adapter for Python |
 | pydantic-settings | runtime | >=2.15.0 | 2.15.0 | MIT | Settings management using Pydantic |
+| python-docx | runtime | >=1.2.0 | 1.2.0 | MIT | Create, read, and update Microsoft Word .docx files. |
 | pyyaml | runtime | >=6.0.3 | 6.0.3 | MIT | YAML parser and emitter for Python |
 | typer | runtime | >=0.27.2 | 0.27.2 | MIT | Typer, build great CLIs. Easy to code. Based on Python type hints. |
 | uvicorn | runtime | >=0.54.0 | 0.54.0 | BSD-3-Clause | The lightning-fast ASGI server. |
 | lxml-stubs | dev | >=0.5.1 | 0.5.1 | Apache Software License | Type annotations for the lxml package |
+| pypdf | dev | >=6.19.0 | 6.19.0 | BSD-3-Clause | A pure-python PDF library capable of splitting, merging, cropping, and transfor… |
 | pyright | dev | >=1.1.414 | 1.1.414 | MIT | Command line wrapper for pyright |
 | pytest | dev | >=9.1.1 | 9.1.1 | MIT | pytest: simple powerful testing with Python |
 | pytest-recording | dev | >=0.13.4 | 0.13.4 | MIT | A pytest plugin powered by VCR.py to record and replay HTTP traffic |
@@ -62,7 +65,7 @@ Source: `backend/uv.lock`.
 | cuda-toolkit | 13.0.3.0 | unknown | docling-slim |
 | dataclasses-json | 0.6.7 | MIT | ragas |
 | datasets | 5.1.0 | Apache 2.0 | ragas |
-| defusedxml | 0.7.1 | PSFL | docling-core, docling-slim |
+| defusedxml | 0.7.1 | PSFL | docling-core, docling-slim, fpdf2 |
 | dill | 0.4.1 | BSD-3-Clause | ragas |
 | diskcache | 5.6.3 | Apache 2.0 | ragas |
 | distro | 1.9.0 | Apache License, Version 2.0 | langchain-openrouter, langgraph, langsmith, openai, ragas |
@@ -72,6 +75,7 @@ Source: `backend/uv.lock`.
 | docstring-parser | 0.18.0 | MIT | ragas |
 | filelock | 4.0.6 | MIT | docling-slim, ragas |
 | filetype | 1.2.0 | MIT | docling-slim |
+| fonttools | 4.66.1 | MIT | fpdf2 |
 | frozenlist | 1.8.0 | Apache-2.0 | ragas |
 | fsspec | 2026.7.0 | BSD-3-Clause | docling-slim, ragas |
 | h11 | 0.16.0 | MIT | docling-slim, httpx, langchain-openrouter, langgraph, langsmith, mcp, openai, o… |
@@ -129,7 +133,7 @@ Source: `backend/uv.lock`.
 | ormsgpack | 1.12.2 | Apache-2.0 OR MIT | langgraph, ragas |
 | packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | docling-slim, langchain-openrouter, langgraph, langsmith, pytest, pytest-record… |
 | pandas | 3.0.6 | BSD License | docling-core, docling-slim, ragas |
-| pillow | 12.3.0 | MIT-CMU | docling-core, docling-slim, ragas |
+| pillow | 12.3.0 | MIT-CMU | docling-core, docling-slim, fpdf2, ragas |
 | pluggy | 1.6.0 | MIT | docling-slim, pytest, pytest-recording |
 | propcache | 0.5.4 | Apache-2.0 | ragas |
 | psutil | 7.2.2 | BSD-3-Clause | docling-slim |
