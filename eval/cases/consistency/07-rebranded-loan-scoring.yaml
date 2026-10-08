@@ -17,8 +17,7 @@
   label_citation: ["art:25:1:a", "annex:III:5:b", "art:6:2", "art:6:3"]
   business_function: finance
   notes: >-
-    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
-    labels, hard ones go to the user). Class: the model evaluates the creditworthiness of natural
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the model evaluates the creditworthiness of natural
     persons and is not used for fraud detection (Annex III 5(b)); scoring each borrower is
     profiling, so Art. 6(3) third subparagraph keeps it high-risk. Role: the broker puts its own
     name and trademark on a high-risk system already on the market, so it is the provider under
@@ -43,7 +42,7 @@
   label_citation: ["art:25:1:a", "annex:III:5:b", "art:6:2", "art:6:3"]
   business_function: finance
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-07-rebranded-loan-scoring-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-07-rebranded-loan-scoring-a with the same facts;
     label and reasoning as there (Annex III 5(b), profiling under Art. 6(3), provider under
     Art. 25(1)(a)).
   tags: ["triple:cons-07"]
@@ -66,7 +65,7 @@
   label_citation: ["art:25:1:a", "annex:III:5:b", "art:6:2", "art:6:3"]
   business_function: finance
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-07-rebranded-loan-scoring-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-07-rebranded-loan-scoring-a with the same facts;
     label and reasoning as there (Annex III 5(b), profiling under Art. 6(3), provider under
     Art. 25(1)(a)).
   tags: ["triple:cons-07"]

@@ -17,8 +17,7 @@
   label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
   business_function: finance
   notes: >-
-    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
-    labels, hard ones go to the user). Class: the model assesses risk and sets prices for natural
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the model assesses risk and sets prices for natural
     persons in health insurance (Annex III 5(c)); estimating each applicant's expected costs from
     their own health and lifestyle data is profiling, so Art. 6(3) third subparagraph keeps it
     high-risk. Role: the insurer uses the licensed model unchanged under the vendor's name
@@ -43,7 +42,7 @@
   label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
   business_function: finance
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-02-health-premium-pricing-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-02-health-premium-pricing-a with the same facts;
     label and reasoning as there (Annex III 5(c), profiling under Art. 6(3), deployer under
     Art. 3(4)).
   tags: ["triple:cons-02"]
@@ -66,7 +65,7 @@
   label_citation: ["annex:III:5:c", "art:6:2", "art:6:3", "art:3:4"]
   business_function: finance
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-02-health-premium-pricing-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-02-health-premium-pricing-a with the same facts;
     label and reasoning as there (Annex III 5(c), profiling under Art. 6(3), deployer under
     Art. 3(4)).
   tags: ["triple:cons-02"]

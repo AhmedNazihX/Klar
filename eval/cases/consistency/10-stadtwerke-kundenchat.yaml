@@ -16,8 +16,7 @@
   label_citation: ["art:50:1", "art:50:2", "art:3:3", "art:3:68"]
   business_function: customer_service
   notes: >-
-    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
-    labels, hard ones go to the user). Class: the chat interacts directly with customers
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the chat interacts directly with customers
     (Art. 50(1)) and generates text (Art. 50(2)); no Annex III use (it decides nothing about
     customers), so limited_risk. Put into service in September 2026, after 2 August 2026, so the
     Art. 111(4) grace period does not arise. Role: the utility built its own AI system on a
@@ -45,7 +44,7 @@
   label_citation: ["art:50:1", "art:50:2", "art:3:3", "art:3:68"]
   business_function: customer_service
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-10-stadtwerke-kundenchat-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-10-stadtwerke-kundenchat-a with the same facts;
     label and reasoning as there (Art. 50(1) and 50(2), limited_risk; provider under Art. 3(3) as
     a downstream provider, Art. 3(68)).
   tags: ["triple:cons-10"]
@@ -67,7 +66,7 @@
   label_citation: ["art:50:1", "art:50:2", "art:3:3", "art:3:68"]
   business_function: customer_service
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-10-stadtwerke-kundenchat-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-10-stadtwerke-kundenchat-a with the same facts;
     label and reasoning as there (Art. 50(1) and 50(2), limited_risk; provider under Art. 3(3) as
     a downstream provider, Art. 3(68)).
   tags: ["triple:cons-10"]

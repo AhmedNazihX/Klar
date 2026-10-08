@@ -16,8 +16,7 @@
   label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
   business_function: sales
   notes: >-
-    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
-    labels, hard ones go to the user). Class: a machine-learning model that infers prices from
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: a machine-learning model that infers prices from
     data, so an AI system (Art. 3(1)); it sets the same price for every guest, uses no personal
     data, and has no Annex III use (not credit, not insurance pricing for natural persons), no
     Annex I product and no Art. 50 function, so minimal_risk. Role: the group uses the bought tool
@@ -41,7 +40,7 @@
   label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
   business_function: sales
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-09-stadthotels-zimmerpreise-a with the same
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-09-stadthotels-zimmerpreise-a with the same
     facts; label and reasoning as there (AI system under Art. 3(1), no Annex III or Art. 50
     trigger, minimal_risk; deployer under Art. 3(4)).
   tags: ["triple:cons-09"]
@@ -64,7 +63,7 @@
   label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
   business_function: sales
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-09-stadthotels-zimmerpreise-a with the same
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-09-stadthotels-zimmerpreise-a with the same
     facts; label and reasoning as there (AI system under Art. 3(1), no Annex III or Art. 50
     trigger, minimal_risk; deployer under Art. 3(4)).
   tags: ["triple:cons-09"]

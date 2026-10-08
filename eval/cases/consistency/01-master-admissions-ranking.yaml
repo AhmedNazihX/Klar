@@ -17,8 +17,7 @@
   label_citation: ["annex:III:3:a", "art:6:2", "art:6:3", "art:3:4"]
   business_function: education
   notes: >-
-    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
-    labels, hard ones go to the user). Class: the tool decides who is admitted to a university
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the tool decides who is admitted to a university
     programme (Annex III 3(a)); scoring each applicant from their own application is profiling,
     so Art. 6(3) third subparagraph keeps it high-risk. Role: the university uses the licensed
     tool unchanged under the vendor's name (Art. 3(4)): deployer. Same facts as -b and -c.
@@ -41,7 +40,7 @@
   label_citation: ["annex:III:3:a", "art:6:2", "art:6:3", "art:3:4"]
   business_function: education
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-01-master-admissions-ranking-a with the same
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-01-master-admissions-ranking-a with the same
     facts; label and reasoning as there (Annex III 3(a), profiling under Art. 6(3), deployer
     under Art. 3(4)).
   tags: ["triple:cons-01"]
@@ -64,7 +63,7 @@
   label_citation: ["annex:III:3:a", "art:6:2", "art:6:3", "art:3:4"]
   business_function: education
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-01-master-admissions-ranking-a with the same
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-01-master-admissions-ranking-a with the same
     facts; label and reasoning as there (Annex III 3(a), profiling under Art. 6(3), deployer
     under Art. 3(4)).
   tags: ["triple:cons-01"]

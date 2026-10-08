@@ -15,8 +15,7 @@
   label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
   business_function: operations
   notes: >-
-    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
-    labels, hard ones go to the user). Class: a machine-learning model that infers demand
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: a machine-learning model that infers demand
     forecasts from data, so an AI system (Art. 3(1)); no Annex III use or Annex I product and no
     Art. 50 function (no interaction with people, no synthetic content), so minimal_risk (as
     own-d-11). Role: the brewery uses the bought tool unchanged (Art. 3(4)): deployer. Same facts
@@ -39,7 +38,7 @@
   label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
   business_function: operations
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-05-brewery-keg-forecast-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-05-brewery-keg-forecast-a with the same facts;
     label and reasoning as there (AI system under Art. 3(1), no Annex III or Art. 50 trigger,
     minimal_risk; deployer under Art. 3(4)).
   tags: ["triple:cons-05"]
@@ -61,7 +60,7 @@
   label_citation: ["art:3:1", "art:6:2", "art:50:1", "art:3:4"]
   business_function: operations
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-05-brewery-keg-forecast-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-05-brewery-keg-forecast-a with the same facts;
     label and reasoning as there (AI system under Art. 3(1), no Annex III or Art. 50 trigger,
     minimal_risk; deployer under Art. 3(4)).
   tags: ["triple:cons-05"]

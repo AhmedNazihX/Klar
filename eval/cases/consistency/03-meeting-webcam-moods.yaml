@@ -15,8 +15,7 @@
   label_citation: ["art:5:1:f", "art:3:39", "art:3:4"]
   business_function: hr
   notes: >-
-    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
-    labels, hard ones go to the user). Class: the add-on infers employees' emotions from their
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the add-on infers employees' emotions from their
     facial expressions, which is biometric data, so it is an emotion recognition system
     (Art. 3(39)); used at the workplace and not for medical or safety reasons, its use is
     prohibited under Art. 5(1)(f), which applies since 2 February 2025. Role: the consultancy uses
@@ -39,7 +38,7 @@
   label_citation: ["art:5:1:f", "art:3:39", "art:3:4"]
   business_function: hr
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-03-meeting-webcam-moods-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-03-meeting-webcam-moods-a with the same facts;
     label and reasoning as there (emotion recognition at the workplace, Art. 5(1)(f) with
     Art. 3(39); deployer under Art. 3(4)).
   tags: ["triple:cons-03"]
@@ -61,7 +60,7 @@
   label_citation: ["art:5:1:f", "art:3:39", "art:3:4"]
   business_function: hr
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-03-meeting-webcam-moods-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-03-meeting-webcam-moods-a with the same facts;
     label and reasoning as there (emotion recognition at the workplace, Art. 5(1)(f) with
     Art. 3(39); deployer under Art. 3(4)).
   tags: ["triple:cons-03"]

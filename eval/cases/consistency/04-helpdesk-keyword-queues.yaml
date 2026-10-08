@@ -15,8 +15,7 @@
   label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
   business_function: customer_service
   notes: >-
-    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
-    labels, hard ones go to the user). Class: the sorting executes keyword rules written and
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the sorting executes keyword rules written and
     maintained solely by a person and derives nothing from data, so it lacks the capability to
     infer and is not an AI system under Art. 3(1) (recital 12; guide-definition para 46, as in
     own-b-01). Role: none, because the Act does not apply. Same facts as -b and -c.
@@ -36,7 +35,7 @@
   label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
   business_function: customer_service
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-04-helpdesk-keyword-queues-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-04-helpdesk-keyword-queues-a with the same facts;
     label and reasoning as there (hand-written rules, no capability to infer, not an AI system
     under Art. 3(1); no role).
   tags: ["triple:cons-04"]
@@ -56,7 +55,7 @@
   label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
   business_function: customer_service
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-04-helpdesk-keyword-queues-a with the same facts;
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-04-helpdesk-keyword-queues-a with the same facts;
     label and reasoning as there (hand-written rules, no capability to infer, not an AI system
     under Art. 3(1); no role).
   tags: ["triple:cons-04"]

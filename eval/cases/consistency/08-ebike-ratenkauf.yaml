@@ -17,8 +17,7 @@
   label_citation: ["annex:III:5:b", "art:6:2", "art:6:3", "art:3:4"]
   business_function: finance
   notes: >-
-    Drafted 2026-10-08 (B8); clear label under the user's standing rule (the agent decides clear
-    labels, hard ones go to the user). Class: the model evaluates the creditworthiness of natural
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the model evaluates the creditworthiness of natural
     persons buying on instalments and decides on the credit and its limit, and it is not used for
     fraud detection (Annex III 5(b)); assessing each customer's economic situation is profiling,
     so Art. 6(3) third subparagraph keeps it high-risk. Role: the chain uses the bought model
@@ -44,7 +43,7 @@
   label_citation: ["annex:III:5:b", "art:6:2", "art:6:3", "art:3:4"]
   business_function: finance
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-08-ebike-ratenkauf-a with the same facts; label
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-08-ebike-ratenkauf-a with the same facts; label
     and reasoning as there (Annex III 5(b), profiling under Art. 6(3), deployer under Art. 3(4)).
   tags: ["triple:cons-08"]
 - id: cons-08-ebike-ratenkauf-c
@@ -67,6 +66,6 @@
   label_citation: ["annex:III:5:b", "art:6:2", "art:6:3", "art:3:4"]
   business_function: finance
   notes: >-
-    Drafted 2026-10-08 (B8). Paraphrase of cons-08-ebike-ratenkauf-a with the same facts; label
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-08-ebike-ratenkauf-a with the same facts; label
     and reasoning as there (Annex III 5(b), profiling under Art. 6(3), deployer under Art. 3(4)).
   tags: ["triple:cons-08"]
