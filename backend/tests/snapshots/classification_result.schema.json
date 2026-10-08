@@ -221,7 +221,7 @@
             }
           ],
           "default": null,
-          "description": "Why the answer matters, naming the provision it decides, in the result's language.",
+          "description": "Why the answer matters, naming the provision it decides, or examples of an answer (a needs-a-description question), in the result's language.",
           "title": "Hint"
         },
         "options": {
@@ -780,16 +780,23 @@
       "type": "array"
     },
     "steps": {
-      "description": "In the Act's check order.",
+      "description": "In the Act's check order; empty only for a needs-a-description result.",
       "items": {
         "$ref": "#/$defs/StepResult"
       },
-      "minItems": 1,
       "title": "Steps",
       "type": "array"
     },
     "risk_class": {
-      "$ref": "#/$defs/RiskClass"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RiskClass"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The headline class; null exactly when the run ended before the checks because the description was too thin to start (needs a description, E13)."
     },
     "status": {
       "$ref": "#/$defs/Status",

@@ -3,12 +3,14 @@
 import pytest
 from pydantic import ValidationError
 
-from aiact.schemas import RiskClass, Status, StepName
+from aiact.schemas import STEP_ORDER, ClassificationResult, RiskClass, Status, StepName
 from tests.schemas.builders import (
+    DESCRIPTION_QUESTIONS,
     ambiguous,
     dumped_steps,
     ends_early,
     missing_fact,
+    needs_description,
     rebuild,
     steps_with,
     unverified,
@@ -108,3 +110,81 @@ def test_duplicate_steps_are_rejected() -> None:
     first = dumped_steps(1)[0]
     with pytest.raises(ValidationError, match="check order"):
         rebuild(worked_example_result(), steps=[first, first])
+
+
+# needs a description (E13): no steps, no class
+
+
+def test_a_needs_description_result_has_no_steps_and_no_class() -> None:
+    result = needs_description()
+    assert result.steps == ()
+    assert result.risk_class is None
+    assert result.needs_description
+    assert result.status is Status.NEEDS_MORE_INFORMATION
+
+
+def test_a_needs_description_result_round_trips_through_json() -> None:
+    result = needs_description()
+    assert ClassificationResult.model_validate_json(result.model_dump_json()) == result
+
+
+def test_a_result_with_steps_is_not_a_needs_description_result() -> None:
+    assert not worked_example_result().needs_description
+
+
+@pytest.mark.parametrize("risk_class", list(RiskClass))
+def test_no_steps_with_a_class_is_rejected(risk_class: RiskClass) -> None:
+    with pytest.raises(ValidationError, match="no class exactly when it has no steps"):
+        needs_description(risk_class=risk_class)
+
+
+@pytest.mark.parametrize("count", range(1, len(STEP_ORDER) + 1))
+def test_no_class_with_steps_is_rejected(count: int) -> None:
+    with pytest.raises(ValidationError, match="no class exactly when it has no steps"):
+        needs_description(steps=dumped_steps(count), status=Status.DECIDED)
+
+
+@pytest.mark.parametrize("status", [Status.DECIDED, Status.LEGALLY_AMBIGUOUS])
+def test_a_needs_description_result_is_needs_more_information(status: Status) -> None:
+    with pytest.raises(ValidationError, match="imply status needs_more_information"):
+        needs_description(status=status)
+
+
+@pytest.mark.parametrize("left_out", range(len(DESCRIPTION_QUESTIONS)))
+def test_a_needs_description_result_asks_all_three_questions(left_out: int) -> None:
+    asked = tuple(q for i, q in enumerate(DESCRIPTION_QUESTIONS) if i != left_out)
+    with pytest.raises(ValidationError, match="needs-a-description result asks"):
+        needs_description(follow_up_questions=asked)
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        {"annex_point": "annex:III:4:a"},
+        {"transparency_duties": ("art:50:1",)},
+        {"legal_review": "Have this result reviewed by a lawyer."},
+        {"deciding_facts": worked_example_result().deciding_facts},
+        {"obligations": worked_example_result().obligations},
+    ],
+)
+def test_a_needs_description_result_has_no_class_fields(field: dict[str, object]) -> None:
+    with pytest.raises(ValidationError, match="needs-a-description result has no"):
+        needs_description(**field)
+
+
+def test_a_needs_description_result_has_no_role() -> None:
+    with pytest.raises(ValidationError, match="role is set exactly"):
+        needs_description(role="deployer")
+
+
+@pytest.mark.parametrize("count", range(1, len(STEP_ORDER)))
+def test_other_short_step_lists_are_still_rejected(count: int) -> None:
+    """Only the three early ends are allowed: a high-risk result with any shorter list fails."""
+    with pytest.raises(ValidationError, match="needs the steps"):
+        rebuild(worked_example_result(), steps=dumped_steps(count), role=None, obligations=())
+
+
+def test_a_result_stored_before_e13_still_loads() -> None:
+    """Stored results always carry a class and at least one step."""
+    stored = worked_example_result().model_dump(mode="json")
+    assert ClassificationResult.model_validate(stored).risk_class is RiskClass.HIGH_RISK

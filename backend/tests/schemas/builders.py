@@ -1,7 +1,9 @@
 """Helpers that derive valid and invalid variants of the worked example."""
 
 from aiact.schemas import (
+    DESCRIPTION_QUESTION_IDS,
     ClassificationResult,
+    FollowUpQuestion,
     OpenQuestion,
     Reading,
     RiskClass,
@@ -91,3 +93,28 @@ def ends_early(
         annex_point=None,
         obligations=(),
     )
+
+
+DESCRIPTION_QUESTIONS = tuple(
+    FollowUpQuestion(id=question_id, text=f"Question {number}?")
+    for number, question_id in enumerate(DESCRIPTION_QUESTION_IDS, start=1)
+)
+"""The three needs-a-description questions, with placeholder texts."""
+
+
+def needs_description(**changes: object) -> ClassificationResult:
+    """The worked example turned into a needs-a-description result (E13): no steps, no class,
+    the three description questions."""
+    fields: dict[str, object] = {
+        "steps": [],
+        "risk_class": None,
+        "status": Status.NEEDS_MORE_INFORMATION,
+        "role": None,
+        "annex_point": None,
+        "transparency_duties": (),
+        "deciding_facts": (),
+        "obligations": (),
+        "legal_review": None,
+        "follow_up_questions": DESCRIPTION_QUESTIONS,
+    }
+    return rebuild(worked_example_result(), **fields | changes)

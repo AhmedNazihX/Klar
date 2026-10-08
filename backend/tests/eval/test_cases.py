@@ -185,6 +185,47 @@ def test_ambiguous_label_with_notes_needs_no_citation() -> None:
     assert case.label_citation == ()
 
 
+THIN_LABEL = {"risk_class": None, "status": "needs_more_information"}
+
+
+def test_a_thin_description_label_expects_no_class_and_needs_notes_not_a_citation() -> None:
+    case = BenchmarkCase.model_validate(
+        with_changes(
+            label=THIN_LABEL,
+            label_citation=[],
+            notes="It says neither what the tool decides nor whom it affects.",
+            tags=["thin-description"],
+        )
+    )
+    assert isinstance(case.label, CaseLabel)
+    assert case.label.expects_description
+    assert case.label.risk_class is None
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"label": THIN_LABEL, "label_citation": []},
+        {"label": {"risk_class": None}, "notes": "Thin."},
+        {"label": {"risk_class": None, "status": "legally_ambiguous"}, "notes": "Thin."},
+        {"label": {**THIN_LABEL, "role": "deployer"}, "notes": "Thin."},
+        {"label": {**THIN_LABEL, "annex_point": "annex:III:4:a"}, "notes": "Thin."},
+    ],
+    ids=["no-notes", "decided", "ambiguous", "with-role", "with-annex-point"],
+)
+def test_invalid_thin_description_labels_are_rejected(
+    tmp_path: Path, changes: dict[str, object]
+) -> None:
+    path = write_yaml(tmp_path, "case.yaml", with_changes(**changes))
+    with pytest.raises(CaseFileError):
+        load_yaml_file(path)
+
+
+def test_a_label_still_needs_its_class_key() -> None:
+    with pytest.raises(ValidationError):
+        CaseLabel.model_validate({"status": "decided"})
+
+
 def write_case_with_as_of(folder: Path, as_of: str) -> Path:
     """A case file with an unquoted `as_of` line, as a hand-written case file has it."""
     path = write_yaml(folder, "dated.yaml", VALID_CASE)

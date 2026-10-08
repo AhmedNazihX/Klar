@@ -86,7 +86,12 @@ async function runClassification(
     if (event.event === 'error') {
       throw new ClassifyRunError({ kind: 'check' })
     }
-    if (event.event === 'result') return event.result
+    if (event.event === 'result') {
+      // A needs-a-description result (E13) has no class to show or keep. Until P20 shows its
+      // three prompts, the run ends like an unfinished one: no class, and nothing saved.
+      if (event.result.risk_class === null) throw new ClassifyRunError({ kind: 'incomplete' })
+      return event.result
+    }
   }
   if (signal.aborted) throw stoppedByCaller()
   dispatch({ type: 'stopped' })

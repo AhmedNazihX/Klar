@@ -21,6 +21,12 @@ The facts the checks usually depend on:
 - The company's role: whether it built the system or had it built, bought it, puts its own name or brand on it, modified it substantially, or uses it for a purpose other than the one it was sold for; whether it is built on a general-purpose AI model; whether the company imports or resells it.
 - Whether it talks to people, generates or edits text, images, audio or video, or recognises emotions or sorts people by biometric data.
 
+## Enough to start
+
+The checks can only start when the description says two things. Set `says_what_it_decides` to true when it says what the system does with its input: what it decides, suggests, scores, sorts, predicts, generates or controls (for example "ranks applicants", "answers customers' questions", "predicts when a bearing will fail"). Set `says_who_it_affects` to true when it says whom its outputs concern (for example applicants, staff, customers, students, patients, the public) or, for a system that concerns no person, the machine, product or process it acts on. Read both from the whole description, including what follows from its context: "shows HR a ranked shortlist of applicants" says both.
+
+A bare area or label is not enough: "we use machine learning in finance" or "an AI solution for our sales team" names a field or a kind of tool, not what it decides or whom it affects. Set a field to false only when the description gives no way to tell. List the facts it does give either way.
+
 ## Key-fact questions
 
 `questions` lists what the user should be asked about facts the description does not settle, when the answer could change the outcome of a check. Each question asks about one fact, in plain words, and can be answered in a sentence. Ask at most 6, most decisive first. Do not repeat a question already attached to an inferred or assumed fact.
@@ -38,7 +44,26 @@ Some features flip an outcome when present. When the description matches the bas
 
 ## Ids and language
 
-Each question has an `id`: a short snake_case name for the fact it asks about, starting with a letter, for example `human_review`, `eu_use`, `infers_emotions`. Use the same id every time you ask about the same fact. `about` names the check the answer matters for: `scope`, `prohibited`, `high_risk`, `transparency` or `role_obligations`.
+Each question has an `id`: a short snake_case name for the fact it asks about, starting with a letter. When a question asks about one of these common facts, use its id exactly:
+
+- `ai_system`: whether it infers its outputs or only applies rules people wrote.
+- `eu_link`: whether it is placed on the market or used in the EU, or its output is used there.
+- `intended_purpose`: what it is for, when the description leaves that open.
+- `human_review`: whether a person reviews its outputs before they take effect.
+- `profiling`: whether it evaluates or predicts things about individual people from their personal data.
+- `public_authority_user`: whether a public authority, or someone acting on its behalf, uses it.
+- `safety_component`: whether it is a safety component of a product, or is itself a product, covered by EU product law.
+- `operator_role`: whether the company built it, had it built, or uses a system someone else provides.
+- `own_brand`: whether the company puts its own name or trademark on it.
+- `substantial_modification`: whether the company changed it beyond what its provider foresaw.
+- `changed_purpose`: whether the company uses it for a purpose its provider did not intend.
+- `builds_on_gpai`: whether it is built on a general-purpose AI model from another provider.
+- `interacts_directly`: whether people interact with it directly.
+- `generates_synthetic_content`: whether it generates or edits text, images, audio or video.
+- `infers_emotions`: whether it infers people's emotions.
+- `creditworthiness`: whether it assesses creditworthiness or sets credit scores for individuals.
+
+For any other fact, make up a short id of the same kind. Use the same id every time you ask about the same fact. `about` names the check the answer matters for: `scope`, `prohibited`, `high_risk`, `transparency` or `role_obligations`.
 
 Write every fact `text` and question `text` in the language the user message asks for (`en`: English, `de`: German). Quotes stay in the description's own language.
 

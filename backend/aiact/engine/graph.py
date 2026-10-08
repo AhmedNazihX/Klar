@@ -3,10 +3,12 @@
 facts → scope → prohibited → high_risk → transparency → role_obligations → finalize.
 
 The edges are fixed here and the nodes can't change them: a node only returns its outcome.
-The only branches are after scope and prohibited, and each goes either to the next check or
-to finalize, so no path skips a check. A stopping check ends the run only when it matched and
-its step may end the run (`can_end_run`, decision 010); otherwise the run goes on with the
-stricter reading as the working assumption.
+The only branches are after facts, scope and prohibited, and each goes either to the next node
+or to finalize, so no path skips a check. After facts, a description too thin to start (E13,
+decision 010 addendum) goes straight to finalize: no check runs, and no class is given.
+A stopping check ends the run only when it matched and its step may end the run
+(`can_end_run`, decision 010); otherwise the run goes on with the stricter reading as the
+working assumption.
 """
 
 from collections.abc import Callable, Mapping
@@ -73,7 +75,11 @@ def run_ends_after(state: EngineState, name: StepName) -> bool:
 def _facts_node(node: FactsNode) -> GraphNode:
     def run(state: EngineState) -> StateUpdate:
         outcome = node(state)
-        return {"facts": outcome.facts, "follow_up_questions": outcome.follow_up_questions}
+        return {
+            "facts": outcome.facts,
+            "follow_up_questions": outcome.follow_up_questions,
+            "needs_description": outcome.needs_description,
+        }
 
     return run
 
@@ -121,6 +127,10 @@ def _finalize_node(node: FinalizeNode) -> GraphNode:
     return run
 
 
+def _route_after_facts(state: EngineState) -> str:
+    return FINALIZE if state.get("needs_description", False) else STEP_ORDER[0].value
+
+
 def _route_after(name: StepName, next_check: StepName) -> Callable[[EngineState], str]:
     def route(state: EngineState) -> str:
         return FINALIZE if run_ends_after(state, name) else next_check
@@ -137,7 +147,7 @@ def build_graph(nodes: EngineNodes) -> EngineGraph:
     builder.add_node(FINALIZE, _finalize_node(nodes.finalize))
 
     builder.add_edge(START, FACTS)
-    builder.add_edge(FACTS, STEP_ORDER[0])
+    builder.add_conditional_edges(FACTS, _route_after_facts, [STEP_ORDER[0].value, FINALIZE])
     for name, next_check in pairwise(STEP_ORDER):
         if name in STOPPING_STEPS:
             route = _route_after(name, next_check)

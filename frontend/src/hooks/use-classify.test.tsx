@@ -4,11 +4,18 @@ import { delay, http, HttpResponse } from 'msw'
 import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 
-import { CLASSIFY_URL, sseBody, WORKED_EXAMPLE_EVENTS } from '@/test/classify-fixtures'
+import type { ClassifyResponse } from '@/api'
+import {
+  CLASSIFY_URL,
+  classifyHandler,
+  sseBody,
+  WORKED_EXAMPLE,
+  WORKED_EXAMPLE_EVENTS,
+} from '@/test/classify-fixtures'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient } from '@/test/test-utils'
 
-import { useClassify } from './use-classify'
+import { ClassifyRunError, useClassify } from './use-classify'
 
 function renderUseClassify() {
   const client = createTestQueryClient()
@@ -61,5 +68,41 @@ describe('useClassify', () => {
     expect(result.current.progress.facts).toBeNull()
     expect(result.current.run.isPending).toBe(true)
     expect(firstError).toBeInstanceOf(DOMException)
+  })
+
+  it('ends a needs-a-description run without a class until P20 shows its prompts', async () => {
+    // E13: the description was too thin to start, so no check ran and no class was given.
+    const thin: ClassifyResponse = {
+      event: 'result',
+      result: {
+        ...WORKED_EXAMPLE,
+        steps: [],
+        risk_class: null,
+        status: 'needs_more_information',
+        role: null,
+        also_role: null,
+        role_switch_reason: null,
+        annex_point: null,
+        transparency_duties: [],
+        deciding_facts: [],
+        obligations: [],
+        legal_review: null,
+        follow_up_questions: [
+          { id: 'what_it_decides', text: 'What does it decide or suggest?' },
+          { id: 'who_it_affects', text: 'Who does it affect?' },
+          { id: 'bought_or_built', text: 'Did you buy it or build it?' },
+        ],
+      },
+    }
+    server.use(classifyHandler([...WORKED_EXAMPLE_EVENTS.slice(0, 1), thin]))
+    const { result } = renderUseClassify()
+
+    let outcome: unknown
+    await act(async () => {
+      outcome = await result.current.run.mutateAsync(BODY).catch((error: unknown) => error)
+    })
+
+    expect(outcome).toBeInstanceOf(ClassifyRunError)
+    expect((outcome as ClassifyRunError).failure).toEqual({ kind: 'incomplete' })
   })
 })

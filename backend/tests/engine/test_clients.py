@@ -20,7 +20,7 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_openrouter import ChatOpenRouter
 from pydantic import SecretStr
 
-from aiact.engine import classify, run_classification
+from aiact.engine import ClassificationFailedError, classify, run_classification
 from aiact.engine.classify import NodeBuilder, engine_nodes
 from aiact.engine.clients import engine_chats, engine_embeddings
 from aiact.engine.usage import UsageMeter
@@ -261,6 +261,12 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
         )
 
 
+@pytest.mark.xfail(
+    strict=True,
+    raises=ClassificationFailedError,
+    reason="facts recording pending (E13): the facts prompt and answer schema changed; re-record "
+    "the worked example, then drop this mark",
+)
 @pytest.mark.vcr(allow_playback_repeats=True)
 @pytest.mark.usefixtures("no_automatic_gc")
 def test_repeated_classifications_leave_no_http_clients_behind(

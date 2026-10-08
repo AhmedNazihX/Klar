@@ -230,7 +230,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
 │       │                            before a screen reads it) (P6);
-│       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12)
+│       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12);
+│       │                            risk-class (a result's class; a needs-a-description result has none) (E13)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
 │       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4), reduced-motion.ts (matchMedia stub, P14),

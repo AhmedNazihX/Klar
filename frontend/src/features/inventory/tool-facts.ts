@@ -3,6 +3,7 @@ import { dutiesDate, isTransparencyDuty } from '@/features/classify/result-text'
 import { isLawProvision, provisionName } from '@/features/classify/provision-names'
 import type { Language } from '@/i18n'
 import type { InventoryTool } from '@/lib/inventory'
+import { riskClassOf } from '@/lib/risk-class'
 
 // What the inventory shows about one tool, read from its latest result (artboard `Inventory`).
 
@@ -26,7 +27,7 @@ export const CLASS_ORDER: readonly RiskClass[] = [
  *  (oldest first). */
 export function sortTools(tools: readonly InventoryTool[]): InventoryTool[] {
   const rank = (tool: InventoryTool): number =>
-    tool.result ? CLASS_ORDER.indexOf(tool.result.risk_class) : CLASS_ORDER.length
+    tool.result ? CLASS_ORDER.indexOf(riskClassOf(tool.result)) : CLASS_ORDER.length
   return tools
     .map((tool, index) => ({ tool, index }))
     .sort((a, b) => rank(a.tool) - rank(b.tool) || a.index - b.index)
@@ -86,7 +87,7 @@ function transparencyAppliesFrom(result: ClassificationResult, today: Date): App
 
 /** When the tool's duties apply, as the result dated them; `today` decides "since" or "from". */
 export function appliesFrom(result: ClassificationResult, today: Date): AppliesFrom {
-  switch (result.risk_class) {
+  switch (riskClassOf(result)) {
     case 'minimal_risk':
     case 'out_of_scope':
       return { kind: 'none' }
@@ -126,7 +127,7 @@ export function ambiguousProvision(result: ClassificationResult): string | null 
 /** The provision ids the class rests on, for the "Basis" column; empty when there is none to
  *  name (minimal risk names no duty instead). */
 function basisIds(result: ClassificationResult): string[] {
-  switch (result.risk_class) {
+  switch (riskClassOf(result)) {
     case 'high_risk': {
       const ids = [result.annex_point, ambiguousProvision(result)]
       return [...new Set(ids.filter((id): id is string => Boolean(id)))]

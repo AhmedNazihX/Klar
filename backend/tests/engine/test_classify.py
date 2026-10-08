@@ -7,6 +7,7 @@ database or network is used. INIT's worked example end to end is in
 import logging
 from collections.abc import Callable
 from datetime import date
+from functools import partial
 
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
@@ -32,7 +33,12 @@ from aiact.engine.classify import ANSWERS_HEADING, NodeBuilder, engine_nodes
 from aiact.engine.clients import NODE_TOKENS
 from aiact.engine.graph import CheckNode, EngineNodes
 from aiact.engine.nodes.common import lookup_for
-from aiact.engine.nodes.facts import ExtractedFact, FactExtractor, FactsAnswer
+from aiact.engine.nodes.facts import (
+    ExtractedFact,
+    FactExtractor,
+    FactsAnswer,
+    description_questions,
+)
 from aiact.engine.nodes.finalize import finalize
 from aiact.engine.nodes.role_texts import legacy_questions
 from aiact.engine.scripted import Script, no_match, scripted_nodes
@@ -41,6 +47,7 @@ from aiact.engine.usage import UsageMeter
 from aiact.llm import LLMConfigError
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.schemas import (
+    DESCRIPTION_QUESTION_IDS,
     STEP_ORDER,
     Citation,
     ClassificationResult,
@@ -83,12 +90,16 @@ def given(nodes: EngineNodes) -> NodeBuilder:
     return lambda _settings, _meter: nodes
 
 
+enough_answer = partial(FactsAnswer, says_what_it_decides=True, says_who_it_affects=True)
+"""A facts answer for a description that says what the system decides and whom it affects."""
+
+
 def chat(*replies: AIMessage) -> GenericFakeChatModel:
     return GenericFakeChatModel(messages=iter(replies))
 
 
 def facts_reply(*facts: ExtractedFact) -> AIMessage:
-    return AIMessage(content=FactsAnswer(facts=facts, questions=()).model_dump_json())
+    return AIMessage(content=enough_answer(facts=facts, questions=()).model_dump_json())
 
 
 EU_FACT = ExtractedFact(
@@ -486,6 +497,20 @@ def test_the_stream_sends_the_facts_each_check_as_it_starts_and_ends_then_the_re
     assert result.result.risk_class is RiskClass.HIGH_RISK
 
 
+def test_a_thin_description_streams_the_facts_then_a_result_with_no_class_and_no_step() -> None:
+    thin = FactsOutcome(
+        follow_up_questions=description_questions(Language.EN), needs_description=True
+    )
+    builder = given(scripted_nodes(Script(facts=thin)))
+    events = list(stream_classification(request(), settings=SETTINGS, build_nodes=builder))
+    assert [event.event for event in events] == ["facts", "result"]
+    result = events[-1]
+    assert isinstance(result, ResultEvent)
+    assert result.result.risk_class is None
+    assert result.result.steps == ()
+    assert [q.id for q in result.result.follow_up_questions] == list(DESCRIPTION_QUESTION_IDS)
+
+
 def test_a_failed_check_ends_the_stream_with_an_error_that_names_it_and_no_class() -> None:
     builder = given(stub_nodes(fail_at=StepName.HIGH_RISK))
     events = list(stream_classification(request(), settings=SETTINGS, build_nodes=builder))
@@ -517,7 +542,7 @@ def test_the_run_reports_and_logs_its_cost_per_node(caplog: pytest.LogCaptureFix
     def builder(_settings: Settings, meter: UsageMeter) -> EngineNodes:
         stub = stub_nodes()
         paid = AIMessage(
-            content=FactsAnswer(facts=(), questions=()).model_dump_json(),
+            content=enough_answer(facts=(), questions=()).model_dump_json(),
             response_metadata={"cost": 0.0021},
             usage_metadata={"input_tokens": 1500, "output_tokens": 500, "total_tokens": 2000},
         )
@@ -557,7 +582,7 @@ def test_the_engine_nodes_meter_their_models_under_their_own_names(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     paid = AIMessage(
-        content=FactsAnswer(facts=(), questions=()).model_dump_json(),
+        content=enough_answer(facts=(), questions=()).model_dump_json(),
         response_metadata={"cost": 0.002},
         usage_metadata={"input_tokens": 90, "output_tokens": 10, "total_tokens": 100},
     )

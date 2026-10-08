@@ -598,12 +598,19 @@
               "$ref": "#/components/schemas/StepResult"
             },
             "type": "array",
-            "minItems": 1,
             "title": "Steps",
-            "description": "In the Act's check order."
+            "description": "In the Act's check order; empty only for a needs-a-description result."
           },
           "risk_class": {
-            "$ref": "#/components/schemas/RiskClass"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The headline class; null exactly when the run ended before the checks because the description was too thin to start (needs a description, E13)."
           },
           "status": {
             "$ref": "#/components/schemas/Status",
@@ -1220,7 +1227,7 @@
               }
             ],
             "title": "Hint",
-            "description": "Why the answer matters, naming the provision it decides, in the result's language."
+            "description": "Why the answer matters, naming the provision it decides, or examples of an answer (a needs-a-description question), in the result's language."
           },
           "options": {
             "items": {

@@ -17,7 +17,12 @@ from functools import partial
 import pytest
 
 from aiact.db import connect
-from aiact.engine import ClassificationRun, ClassifyRequest, run_classification
+from aiact.engine import (
+    ClassificationFailedError,
+    ClassificationRun,
+    ClassifyRequest,
+    run_classification,
+)
 from aiact.engine.classify import CorpusLibraries, NodeBuilder, engine_nodes
 from aiact.engine.nodes import prohibited, transparency
 from aiact.engine.nodes.common import Lookup
@@ -351,6 +356,12 @@ def replay_nodes(
         )
 
 
+@pytest.mark.xfail(
+    strict=True,
+    raises=ClassificationFailedError,
+    reason="facts recording pending (E13): the facts prompt and answer schema changed; re-record "
+    "the worked example, then drop this mark",
+)
 @pytest.mark.vcr
 def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
     run = run_classification(

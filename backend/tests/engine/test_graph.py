@@ -17,9 +17,12 @@ from aiact.engine.graph import (
     NodeContractError,
     build_graph,
 )
+from aiact.engine.nodes.facts import description_questions
+from aiact.engine.nodes.finalize import finalize
 from aiact.engine.scripted import Script, no_match, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineInput, EngineState, FactsOutcome
 from aiact.schemas import (
+    DESCRIPTION_QUESTION_IDS,
     DISCLAIMER_EN,
     STEP_ORDER,
     ClassificationResult,
@@ -173,10 +176,14 @@ def graph_edges(graph: EngineGraph) -> set[tuple[str, str]]:
     return {(edge.source, edge.target) for edge in graph.get_graph().edges}
 
 
-def test_the_graph_has_exactly_the_fixed_order_and_the_two_early_exits() -> None:
+def test_the_graph_has_exactly_the_fixed_order_and_the_three_early_exits() -> None:
     full_chain = [START, *NODE_ORDER, END]
     expected = set(pairwise(full_chain))
-    expected |= {(StepName.SCOPE.value, FINALIZE), (StepName.PROHIBITED.value, FINALIZE)}
+    expected |= {
+        (FACTS, FINALIZE),
+        (StepName.SCOPE.value, FINALIZE),
+        (StepName.PROHIBITED.value, FINALIZE),
+    }
 
     assert graph_edges(build_graph(scripted_nodes(Script()))) == expected
 
@@ -199,6 +206,7 @@ def test_no_path_skips_a_check() -> None:
     assert all(path[:2] == (START, FACTS) and path[-2:] == (FINALIZE, END) for path in paths)
     assert checks_per_path == sorted(
         [
+            (),
             (StepName.SCOPE.value,),
             (StepName.SCOPE.value, StepName.PROHIBITED.value),
             tuple(name.value for name in STEP_ORDER),
@@ -251,3 +259,56 @@ def test_every_check_needs_a_node() -> None:
 
     with pytest.raises(ValueError, match="one node per check"):
         EngineNodes(facts=scripted.facts, checks=checks, finalize=scripted.finalize)
+
+
+# --- a description too thin to start (E13) -------------------------------------------------------
+
+
+def _thin_facts() -> FactsOutcome:
+    return FactsOutcome(
+        facts=(Fact(text="The company uses AI in HR.", evidence=EvidenceTag.INFERRED),),
+        follow_up_questions=description_questions(Language.EN),
+        needs_description=True,
+    )
+
+
+def test_a_thin_description_ends_the_run_before_any_check() -> None:
+    scripted = scripted_nodes(Script(facts=_thin_facts()))
+    nodes = EngineNodes(facts=scripted.facts, checks=scripted.checks, finalize=finalize)
+    visited, result = run(build_graph(nodes))
+
+    assert visited == [FACTS, FINALIZE]
+    assert result.steps == ()
+    assert result.risk_class is None
+    assert result.needs_description
+    assert result.status is Status.NEEDS_MORE_INFORMATION
+    assert [q.id for q in result.follow_up_questions] == list(DESCRIPTION_QUESTION_IDS)
+    assert [f.text for f in result.facts] == ["The company uses AI in HR."]
+
+
+@pytest.mark.parametrize("law_version", list(LawVersion))
+def test_a_thin_run_keeps_its_law_version_and_language(law_version: LawVersion) -> None:
+    scripted = scripted_nodes(Script(facts=_thin_facts()))
+    nodes = EngineNodes(facts=scripted.facts, checks=scripted.checks, finalize=finalize)
+    state = build_graph(nodes).invoke({**ENGINE_INPUT, "law_version": law_version})
+    result = state["result"]
+    assert result.law_version is law_version
+    assert result.disclaimer == DISCLAIMER_EN
+    assert result.needs_description
+
+
+def test_the_scripted_finalize_gives_the_same_early_end() -> None:
+    visited, result = run(build_graph(scripted_nodes(Script(facts=_thin_facts()))))
+    assert visited == [FACTS, FINALIZE]
+    assert result.needs_description
+
+
+def test_a_described_system_runs_every_check() -> None:
+    visited, result = run(build_graph(scripted_nodes(Script())))
+    assert visited == list(NODE_ORDER)
+    assert not result.needs_description
+
+
+def test_a_thin_outcome_must_ask_exactly_the_three_questions() -> None:
+    with pytest.raises(ValidationError, match="a thin description asks exactly"):
+        FactsOutcome(follow_up_questions=(MISSING,), needs_description=True)

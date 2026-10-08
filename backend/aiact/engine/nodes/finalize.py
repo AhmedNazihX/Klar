@@ -24,6 +24,9 @@ works, Ethical considerations). No model is called.
   step relied on that neither the facts node extracted nor a check already asks about (INIT >
   Evidence tags; decision 026); each id once, the first one kept, so a missing fact is listed
   with its own text.
+- **Needs a description** (E13): when the facts node found the description too thin to start,
+  no check ran; the result has no steps and no class, keeps the facts, and asks the facts
+  node's three description questions (`description_result`).
 - **Legal review** is recommended for high-risk, prohibited and legally ambiguous results (INIT
   > Ethical considerations, decision 026 item 12), in the result's language: the class's own
   sentence, then what each open question of law leaves assumed.
@@ -208,10 +211,31 @@ def legal_review(
     return " ".join((texts["lead"], *clauses)) if clauses else None
 
 
+def description_result(state: EngineState) -> ClassificationResult:
+    """The needs-a-description result (E13): the run ended before the checks, so it has no
+    steps and no class, and asks only the facts node's questions."""
+    return ClassificationResult(
+        facts=state.get("facts", ()),
+        steps=(),
+        risk_class=None,
+        status=Status.NEEDS_MORE_INFORMATION,
+        law_version=state["law_version"],
+        as_of=state["as_of"],
+        disclaimer=DISCLAIMER[state["language"]],
+        follow_up_questions=state.get("follow_up_questions", ()),
+    )
+
+
 def finalize(state: EngineState) -> ClassificationResult:
     """The result of one run: the finalize node for the graph (`EngineNodes(finalize=finalize,
     …)`). Raises `FinalizeOutputError` when the steps and findings break the result contract (a
     check skipped, a missing fact not asked); its message names the fields, never their values."""
+    if state.get("needs_description", False):
+        try:
+            return description_result(state)
+        except ValidationError as exc:
+            message = f"the result breaks its contract: {describe_validation_error(exc)}"
+            raise FinalizeOutputError(message) from None
     steps: tuple[StepResult, ...] = state.get("steps", ())
     language = state["language"]
     risk_class = final_class(state)

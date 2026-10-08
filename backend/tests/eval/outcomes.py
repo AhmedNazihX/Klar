@@ -3,7 +3,14 @@
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.metrics import Outcome
 from aiact.schemas import ClassificationResult, Language, RiskClass, Role, Status, StepName
-from tests.schemas.builders import ambiguous, dumped_steps, ends_early, missing_fact, rebuild
+from tests.schemas.builders import (
+    ambiguous,
+    dumped_steps,
+    ends_early,
+    missing_fact,
+    needs_description,
+    rebuild,
+)
 from tests.schemas.builders import steps_with as replaced_steps
 from tests.schemas.worked_example import worked_example_result
 
@@ -36,6 +43,23 @@ def case(
         notes="Open question and both readings." if status is Status.LEGALLY_AMBIGUOUS else None,
         tags=tags,
     )
+
+
+def thin_case(case_id: str) -> BenchmarkCase:
+    """A thin-description case: its label expects no class (E13)."""
+    return BenchmarkCase(
+        id=case_id,
+        set_name=CaseSet.OWN,
+        language=Language.EN,
+        description="We use AI.",
+        label=CaseLabel(risk_class=None, status=Status.NEEDS_MORE_INFORMATION),
+        notes="It says neither what the tool decides nor whom it affects.",
+    )
+
+
+def description_result() -> ClassificationResult:
+    """A needs-a-description result: no steps, no class."""
+    return needs_description()
 
 
 def _points(annex_point: str | None) -> tuple[str, ...]:

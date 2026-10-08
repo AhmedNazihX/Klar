@@ -13,6 +13,11 @@ flip an outcome when present (decision 001, product rule).
 
 A reply the provider's content filter refused (decision 029) gives no facts and one question
 asking for a person's review; the checks then read the description themselves.
+
+The model also says whether the description states what the system decides and who it
+affects (E13). When either is missing, the description is too thin to start: the outcome
+asks only the three fixed questions of `DESCRIPTION_QUESTIONS` (artboard `ClassifyVague`), and
+the graph ends the run before the checks with no class (decision 010 addendum).
 """
 
 import re
@@ -33,7 +38,15 @@ from aiact.llm.structured import (
     json_schema_format,
     parse_reply,
 )
-from aiact.schemas import YES_NO, EvidenceTag, Fact, FollowUpQuestion, Language, SourceSpan
+from aiact.schemas import (
+    DESCRIPTION_QUESTION_IDS,
+    YES_NO,
+    EvidenceTag,
+    Fact,
+    FollowUpQuestion,
+    Language,
+    SourceSpan,
+)
 from aiact.schemas.base import ContractModel
 from aiact.settings import Settings
 
@@ -61,6 +74,49 @@ PERSON_REVIEW_TEXT: dict[Language, str] = {
 }
 """The question a refused reply asks instead of facts (decision 029), after the shared first
 sentence (`common.BLOCKED`)."""
+
+DESCRIPTION_TEXTS: dict[str, dict[Language, tuple[str, str]]] = {
+    "what_it_decides": {
+        Language.EN: (
+            "What does it decide or suggest?",
+            "For example: it ranks applicants, answers staff questions, plans shifts.",
+        ),
+        Language.DE: (
+            "Was entscheidet es oder was schlägt es vor?",
+            "Zum Beispiel: Es reiht Bewerbungen, beantwortet Fragen von Beschäftigten, plant "
+            "Schichten.",
+        ),
+    },
+    "who_it_affects": {
+        Language.EN: ("Who does it affect?", "For example: applicants, your staff, customers."),
+        Language.DE: (
+            "Wen betrifft es?",
+            "Zum Beispiel: Bewerbende, Ihre Beschäftigten, Kundschaft.",
+        ),
+    },
+    "bought_or_built": {
+        Language.EN: (
+            "Did you buy it or build it?",
+            "And whether you changed it or put your own name on it.",
+        ),
+        Language.DE: (
+            "Haben Sie es gekauft oder selbst entwickelt?",
+            "Und ob Sie es verändert oder Ihren eigenen Namen daraufgesetzt haben.",
+        ),
+    },
+}
+"""The question and its example line (the hint) for each needs-a-description question, as the
+artboard `ClassifyVague` words them."""
+
+
+def description_questions(language: Language) -> tuple[FollowUpQuestion, ...]:
+    """The three questions a too-thin description asks, answered in words, in their fixed order."""
+    texts = (DESCRIPTION_TEXTS[question_id][language] for question_id in DESCRIPTION_QUESTION_IDS)
+    return tuple(
+        FollowUpQuestion(id=question_id, text=text, hint=hint)
+        for question_id, (text, hint) in zip(DESCRIPTION_QUESTION_IDS, texts, strict=True)
+    )
+
 
 WORD_CHAR = re.compile(r"\w")
 
@@ -93,6 +149,14 @@ class FactsAnswer(ContractModel):
     """The model's whole answer; also the JSON schema it must fill."""
 
     facts: tuple[ExtractedFact, ...]
+    says_what_it_decides: bool = Field(
+        description="Whether the description says what the system decides, suggests, produces "
+        "or controls."
+    )
+    says_who_it_affects: bool = Field(
+        description="Whether the description says whom (or, for no person, what) its outputs "
+        "concern."
+    )
     questions: tuple[replies.FollowUpQuestion, ...] = Field(
         description="Key-fact questions the description leaves open, most decisive first."
     )
@@ -195,8 +259,15 @@ def confirm_question(fact: Fact, language: Language, taken: set[str]) -> FollowU
 
 def to_outcome(answer: FactsAnswer, description: str, language: Language) -> FactsOutcome:
     """The facts and questions for the graph. Key-fact questions come first, then the
-    confirm questions, each id once (the first one asked wins)."""
+    confirm questions, each id once (the first one asked wins). A description that doesn't say
+    what the system decides or who it affects asks only the three description questions."""
     facts = tuple(_fact(extracted, description) for extracted in answer.facts)
+    if not (answer.says_what_it_decides and answer.says_who_it_affects):
+        return FactsOutcome(
+            facts=facts,
+            follow_up_questions=description_questions(language),
+            needs_description=True,
+        )
     by_id: dict[str, FollowUpQuestion] = {}
     for question in answer.questions:
         by_id.setdefault(question.id, replies.as_contract(question))

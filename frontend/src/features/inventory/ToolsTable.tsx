@@ -12,6 +12,7 @@ import type { Language } from '@/i18n'
 import type { InventoryTool } from '@/lib/inventory'
 
 import { appliesFrom, basisReferences, whatItDoes, type AppliesFrom } from './tool-facts'
+import { riskClassOf } from '@/lib/risk-class'
 
 /** The Art. 111(2) tag beside a legacy-marked date (decision 026 item 24). */
 function LegacyTag({ children }: { children: ReactNode }): JSX.Element {
@@ -103,10 +104,10 @@ function checkedRow(
     name: toolName(t, tool.name),
     what: whatItDoes(tool),
     role: result.role ? t(`result.roleName.${result.role}`) : t('inventory.table.none'),
-    riskClass: result.risk_class,
+    riskClass: riskClassOf(result),
     // An open result keeps the stricter class it was given, and says it is assumed.
     classLabel: isAssumed
-      ? t('inventory.table.assumedClass', { riskClass: t(`pill.${result.risk_class}`) })
+      ? t('inventory.table.assumedClass', { riskClass: t(`pill.${riskClassOf(result)}`) })
       : undefined,
     basis: basisCell(t, result, language),
     from: appliesFromCell(t, appliesFrom(result, today), language),

@@ -3,13 +3,15 @@ replays of five recorded engine-model answers in English and German. Every descr
 invented (the first is INIT's worked example); none comes from the benchmark."""
 
 from datetime import date
+from functools import partial
 
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
+from vcr.errors import CannotOverwriteExistingCassetteException
 
-from aiact.engine.graph import build_graph
+from aiact.engine.graph import CheckNode, EngineGraph, EngineNodes, build_graph
 from aiact.engine.nodes import facts
 from aiact.engine.nodes.facts import (
     ExtractedFact,
@@ -19,15 +21,30 @@ from aiact.engine.nodes.facts import (
     find_span,
     to_outcome,
 )
+from aiact.engine.nodes.finalize import finalize
 from aiact.engine.scripted import Script, scripted_nodes
-from aiact.engine.state import EngineState, FactsOutcome
+from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
+from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
 from aiact.llm import LLMConfigError
 from aiact.llm.replies import FollowUpQuestion as ReplyQuestion
-from aiact.schemas import EvidenceTag, FollowUpQuestion, Language, LawVersion
+from aiact.llm.structured import json_schema_format
+from aiact.schemas import (
+    DESCRIPTION_QUESTION_IDS,
+    STEP_ORDER,
+    EvidenceTag,
+    FollowUpQuestion,
+    Language,
+    LawVersion,
+    Status,
+    StepName,
+)
 from aiact.settings import Settings
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
+
+enough_answer = partial(FactsAnswer, says_what_it_decides=True, says_who_it_affects=True)
+"""A facts answer for a description that says what the system decides and whom it affects."""
 
 WORKED_EXAMPLE = (
     "We're a 40-person logistics company. We use a tool that reads incoming job applications, "
@@ -147,7 +164,7 @@ def test_a_whole_word_quote_still_matches(description: str, quote: str, expected
 
 
 def test_an_invented_short_quote_is_downgraded_and_asked() -> None:
-    answer = FactsAnswer(facts=(stated("It is an AI system", "AI"),), questions=())
+    answer = enough_answer(facts=(stated("It is an AI system", "AI"),), questions=())
     outcome = to_outcome(answer, PAYMENTS, Language.EN)
     assert outcome.facts[0].evidence is EvidenceTag.INFERRED
     assert [q.id for q in outcome.follow_up_questions] == ["confirm_it_is_an_ai_system"]
@@ -157,7 +174,7 @@ def test_an_invented_short_quote_is_downgraded_and_asked() -> None:
 
 
 def test_a_stated_fact_gets_the_span_of_its_quote() -> None:
-    answer = FactsAnswer(facts=(stated("Ranks applicants", "a ranked shortlist"),), questions=())
+    answer = enough_answer(facts=(stated("Ranks applicants", "a ranked shortlist"),), questions=())
     outcome = to_outcome(answer, WORKED_EXAMPLE, Language.EN)
 
     (fact,) = outcome.facts
@@ -171,7 +188,7 @@ def test_a_stated_fact_gets_the_span_of_its_quote() -> None:
 def test_a_stated_fact_without_a_findable_quote_becomes_inferred_and_asked(
     quote: str | None,
 ) -> None:
-    answer = FactsAnswer(facts=(stated("Filters applicants", quote),), questions=())
+    answer = enough_answer(facts=(stated("Filters applicants", quote),), questions=())
     outcome = to_outcome(answer, WORKED_EXAMPLE, Language.EN)
 
     (fact,) = outcome.facts
@@ -185,9 +202,9 @@ def test_a_stated_fact_without_a_findable_quote_becomes_inferred_and_asked(
 
 def test_a_confirm_question_id_comes_from_the_fact_not_its_position() -> None:
     fact = unstated("Nobody reviews the ranking", EvidenceTag.INFERRED)
-    alone = to_outcome(FactsAnswer(facts=(fact,), questions=()), WORKED_EXAMPLE, Language.EN)
+    alone = to_outcome(enough_answer(facts=(fact,), questions=()), WORKED_EXAMPLE, Language.EN)
     later = to_outcome(
-        FactsAnswer(facts=(stated("Scores", "scores them"), fact), questions=()),
+        enough_answer(facts=(stated("Scores", "scores them"), fact), questions=()),
         WORKED_EXAMPLE,
         Language.EN,
     )
@@ -197,7 +214,7 @@ def test_a_confirm_question_id_comes_from_the_fact_not_its_position() -> None:
 
 def test_confirm_question_ids_are_unique_within_a_reply() -> None:
     clash = ReplyQuestion(id="confirm_used_in_the_eu", text="Is it used in the EU?")
-    answer = FactsAnswer(
+    answer = enough_answer(
         facts=(
             unstated("Used in the EU", EvidenceTag.ASSUMED),
             unstated("Used in the EU.", EvidenceTag.ASSUMED),
@@ -244,7 +261,7 @@ def test_fact_slugs_keep_every_word_that_fits() -> None:
 
 def test_a_repeated_long_id_drops_whole_words_before_its_number() -> None:
     long_fact = "The system is used by the human resources department to rank every applicant"
-    answer = FactsAnswer(
+    answer = enough_answer(
         facts=(
             unstated(long_fact, EvidenceTag.INFERRED),
             unstated(long_fact + ".", EvidenceTag.INFERRED),
@@ -260,14 +277,14 @@ def test_a_repeated_long_id_drops_whole_words_before_its_number() -> None:
 
 @pytest.mark.parametrize("evidence", [EvidenceTag.INFERRED, EvidenceTag.ASSUMED])
 def test_an_unstated_fact_keeps_the_models_confirm_question(evidence: EvidenceTag) -> None:
-    answer = FactsAnswer(facts=(unstated("Used in the EU", evidence, EU_USE),), questions=())
+    answer = enough_answer(facts=(unstated("Used in the EU", evidence, EU_USE),), questions=())
     outcome = to_outcome(answer, WORKED_EXAMPLE, Language.EN)
     assert outcome.facts[0].evidence is evidence
     assert outcome.follow_up_questions == asked(EU_USE)
 
 
 def test_the_default_confirm_question_is_in_the_asked_language() -> None:
-    answer = FactsAnswer(
+    answer = enough_answer(
         facts=(unstated("Wird in der EU genutzt", EvidenceTag.ASSUMED),), questions=()
     )
     outcome = to_outcome(answer, WORKED_EXAMPLE, Language.DE)
@@ -275,7 +292,7 @@ def test_the_default_confirm_question_is_in_the_asked_language() -> None:
 
 
 def test_key_fact_questions_come_first_and_each_id_is_asked_once() -> None:
-    answer = FactsAnswer(
+    answer = enough_answer(
         facts=(
             stated("Scores applications", "scores them"),
             unstated("Used in the EU", EvidenceTag.ASSUMED, EU_USE),
@@ -296,7 +313,7 @@ def test_a_stated_fact_drops_a_confirm_question() -> None:
     fact = ExtractedFact(
         text="Scores applications", evidence=EvidenceTag.STATED, quote="scores", question=EU_USE
     )
-    outcome = to_outcome(FactsAnswer(facts=(fact,), questions=()), WORKED_EXAMPLE, Language.EN)
+    outcome = to_outcome(enough_answer(facts=(fact,), questions=()), WORKED_EXAMPLE, Language.EN)
     assert outcome.follow_up_questions == ()
 
 
@@ -309,7 +326,7 @@ def _fake_extractor(content: str) -> FactExtractor:
 
 
 def test_the_node_turns_the_reply_into_facts_and_questions() -> None:
-    answer = FactsAnswer(
+    answer = enough_answer(
         facts=(stated("Scores applications", "scores them"),), questions=(HUMAN_REVIEW,)
     )
     outcome = _fake_extractor(answer.model_dump_json())(engine_input(WORKED_EXAMPLE))
@@ -346,7 +363,7 @@ def test_a_provider_refusal_gives_no_facts_and_asks_for_a_person_to_review(
 
 
 def test_a_filtered_reply_with_usable_facts_is_used() -> None:
-    usable = FactsAnswer(facts=(stated("Scores applications", "scores them"),), questions=())
+    usable = enough_answer(facts=(stated("Scores applications", "scores them"),), questions=())
     outcome = _filtered_extractor(usable.model_dump_json())(engine_input(WORKED_EXAMPLE))
     assert [fact.text for fact in outcome.facts] == ["Scores applications"]
 
@@ -375,7 +392,7 @@ def test_the_prompt_puts_the_instructions_first_and_the_description_last() -> No
 
 
 def test_the_graph_runs_the_node_and_carries_its_facts_and_questions() -> None:
-    answer = FactsAnswer(
+    answer = enough_answer(
         facts=(stated("Scores applications", "scores them"),), questions=(HUMAN_REVIEW,)
     )
     nodes = scripted_nodes(Script())
@@ -409,21 +426,21 @@ REPLAY_CASES: dict[str, tuple[str, Language, dict[str, str]]] = {
         "We make packaging machines. A model we trained on sensor data predicts when a bearing "
         "will fail, so our service team can replace it before the machine stops.",
         Language.EN,
-        {"safety_function": "safety"},
+        {"safety_component": "safety"},
     ),
     "exam_proctoring_de": (
         "Unsere Hochschule nutzt bei Online-Prüfungen eine gekaufte Software, die über die "
         "Webcam das Verhalten der Studierenden auswertet und auffällige Stellen für die "
         "Aufsicht markiert.",
         Language.DE,
-        {"emotion_inference": "emotion"},
+        {"infers_emotions": "emotion"},
     ),
     "customer_chatbot_de": (
         "Wir sind ein Stadtwerk mit 300 Mitarbeitenden. Auf unserer Website beantwortet ein "
         "Chatbot Fragen zu Tarifen und Rechnungen. Wir haben ihn selbst auf Basis eines großen "
         "Sprachmodells gebaut.",
         Language.DE,
-        {"eu_use": "eu"},
+        {"eu_link": "eu"},
     ),
 }
 
@@ -435,12 +452,19 @@ def engine_settings(openrouter_settings: Settings) -> Settings:
     )
 
 
+@pytest.mark.xfail(
+    strict=True,
+    raises=CannotOverwriteExistingCassetteException,
+    reason="recording pending (E13): the facts prompt and answer schema changed; re-record, "
+    "then drop this mark",
+)
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", list(REPLAY_CASES))
 def test_recorded_facts(case: str, engine_settings: Settings) -> None:
     description, language, must_ask = REPLAY_CASES[case]
     outcome = FactExtractor(engine_settings)(engine_input(description, language))
 
+    assert not outcome.needs_description
     assert any(fact.evidence is EvidenceTag.STATED for fact in outcome.facts)
     assert_stated_facts_point_into(outcome, description)
     if any(fact.evidence is not EvidenceTag.STATED for fact in outcome.facts):
@@ -448,3 +472,168 @@ def test_recorded_facts(case: str, engine_settings: Settings) -> None:
     asked = {question.id: question.text.lower() for question in outcome.follow_up_questions}
     for question_id, keyword in must_ask.items():
         assert keyword in asked.get(question_id, ""), question_id
+
+
+# --- a description too thin to start (E13) -------------------------------------------------------
+
+THIN = "We use AI for HR."
+"""INIT's "AI for HR" line (decision 026 item 10): no word on what the tool decides or whom it
+affects."""
+THIN_DE = "Wir nutzen KI im Personalbereich."
+
+
+def thin_answer(decides: bool, affects: bool) -> FactsAnswer:
+    fact = unstated("The company uses AI in HR.", EvidenceTag.INFERRED, HUMAN_REVIEW)
+    return FactsAnswer(
+        facts=(fact,),
+        says_what_it_decides=decides,
+        says_who_it_affects=affects,
+        questions=(EU_USE,),
+    )
+
+
+@pytest.mark.parametrize(("decides", "affects"), [(False, True), (True, False), (False, False)])
+def test_a_description_missing_what_it_decides_or_whom_it_affects_is_thin(
+    decides: bool, affects: bool
+) -> None:
+    outcome = to_outcome(thin_answer(decides, affects), THIN, Language.EN)
+    assert outcome.needs_description
+    assert [q.id for q in outcome.follow_up_questions] == [
+        "what_it_decides",
+        "who_it_affects",
+        "bought_or_built",
+    ]
+    assert [f.text for f in outcome.facts] == ["The company uses AI in HR."]
+
+
+def test_a_description_that_says_both_is_not_thin() -> None:
+    outcome = to_outcome(thin_answer(True, True), WORKED_EXAMPLE, Language.EN)
+    assert not outcome.needs_description
+    assert [q.id for q in outcome.follow_up_questions] == ["eu_use", "human_review"]
+
+
+@pytest.mark.parametrize(
+    ("language", "expected"),
+    [
+        (
+            Language.EN,
+            [
+                (
+                    "What does it decide or suggest?",
+                    "For example: it ranks applicants, answers staff questions, plans shifts.",
+                ),
+                ("Who does it affect?", "For example: applicants, your staff, customers."),
+                (
+                    "Did you buy it or build it?",
+                    "And whether you changed it or put your own name on it.",
+                ),
+            ],
+        ),
+        (
+            Language.DE,
+            [
+                (
+                    "Was entscheidet es oder was schlägt es vor?",
+                    "Zum Beispiel: Es reiht Bewerbungen, beantwortet Fragen von Beschäftigten, "
+                    "plant Schichten.",
+                ),
+                ("Wen betrifft es?", "Zum Beispiel: Bewerbende, Ihre Beschäftigten, Kundschaft."),
+                (
+                    "Haben Sie es gekauft oder selbst entwickelt?",
+                    "Und ob Sie es verändert oder Ihren eigenen Namen daraufgesetzt haben.",
+                ),
+            ],
+        ),
+    ],
+)
+def test_the_description_questions_are_worded_as_the_artboard(
+    language: Language, expected: list[tuple[str, str]]
+) -> None:
+    questions = facts.description_questions(language)
+    assert [(q.text, q.hint) for q in questions] == expected
+    assert all(q.options == () and q.if_yes is None for q in questions)
+
+
+def test_the_answer_schema_asks_the_model_both_flags() -> None:
+    schema = FactsAnswer.model_json_schema()
+    assert {"says_what_it_decides", "says_who_it_affects"} <= set(schema["required"])
+    assert json_schema_format("facts_answer", FactsAnswer) == facts.FACTS_RESPONSE_FORMAT
+
+
+def _no_check(name: StepName) -> CheckNode:
+    def fail(_state: EngineState) -> CheckOutcome:
+        raise AssertionError(f"the {name.value} check ran on a thin description")
+
+    return fail
+
+
+def _thin_graph(extractor: FactExtractor) -> EngineGraph:
+    """The facts node and the real finalize; every check fails the test if it runs."""
+    nodes = EngineNodes(
+        facts=extractor,
+        checks={name: _no_check(name) for name in STEP_ORDER},
+        finalize=finalize,
+    )
+    return build_graph(nodes)
+
+
+def test_the_graph_ends_a_thin_run_before_the_checks() -> None:
+    extractor = _fake_extractor(thin_answer(False, False).model_dump_json())
+    result = _thin_graph(extractor).invoke(engine_input(THIN))["result"]
+    assert result.steps == ()
+    assert result.risk_class is None
+    assert [q.id for q in result.follow_up_questions] == list(DESCRIPTION_QUESTION_IDS)
+
+
+THIN_REPLAYS: dict[str, tuple[str, Language]] = {
+    "ai_for_hr_en": (THIN, Language.EN),
+    "ki_im_personalbereich_de": (THIN_DE, Language.DE),
+}
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=CannotOverwriteExistingCassetteException,
+    reason="recording pending (E13): record, then drop this mark",
+)
+@pytest.mark.vcr
+@pytest.mark.parametrize("case", list(THIN_REPLAYS))
+def test_recorded_thin_description_asks_for_a_description(
+    case: str, engine_settings: Settings
+) -> None:
+    """The DoD replay: "We use AI for HR." ends before the checks with the three questions and
+    no class."""
+    description, language = THIN_REPLAYS[case]
+    result = _thin_graph(FactExtractor(engine_settings)).invoke(
+        engine_input(description, language)
+    )["result"]
+
+    assert result.needs_description
+    assert result.steps == ()
+    assert result.risk_class is None
+    assert result.status is Status.NEEDS_MORE_INFORMATION
+    assert result.follow_up_questions == facts.description_questions(language)
+
+
+OWN_CASES_DIR = CASES_DIR / CaseSet.OWN.value
+OWN_CASES = [
+    case for path in sorted(OWN_CASES_DIR.rglob("*.yaml")) for case in load_yaml_file(path)
+]
+"""Every own case (categories a to e); the check nodes replay them, so none may be thin."""
+
+
+def test_the_own_cases_are_there() -> None:
+    assert len(OWN_CASES) == 73
+    assert {case.language for case in OWN_CASES} == {Language.EN, Language.DE}
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=CannotOverwriteExistingCassetteException,
+    reason="recording pending (E13): record, then drop this mark",
+)
+@pytest.mark.vcr
+@pytest.mark.parametrize("case", OWN_CASES, ids=lambda case: case.id)
+def test_recorded_own_case_is_not_thin(case: BenchmarkCase, engine_settings: Settings) -> None:
+    outcome = FactExtractor(engine_settings)(engine_input(case.description, case.language))
+    assert not outcome.needs_description

@@ -11,6 +11,7 @@ from typing import Annotated, NotRequired, Self, TypedDict
 from pydantic import model_validator
 
 from aiact.schemas import (
+    DESCRIPTION_QUESTION_IDS,
     ClassificationResult,
     Fact,
     FollowUpQuestion,
@@ -29,10 +30,23 @@ STOPPING_STEPS: frozenset[StepName] = frozenset({StepName.SCOPE, StepName.PROHIB
 
 
 class FactsOutcome(ContractModel):
-    """What the facts node extracted: the facts and the key-fact questions they raise."""
+    """What the facts node extracted: the facts and the key-fact questions they raise.
+
+    `needs_description` flags a description too thin to start (E13): what the tool decides or
+    who it affects is missing. The run then ends before the checks, and the questions are
+    exactly the three `DESCRIPTION_QUESTION_IDS`.
+    """
 
     facts: tuple[Fact, ...] = ()
     follow_up_questions: tuple[FollowUpQuestion, ...] = ()
+    needs_description: bool = False
+
+    @model_validator(mode="after")
+    def _thin_asks_for_a_description(self) -> Self:
+        ids = tuple(question.id for question in self.follow_up_questions)
+        if self.needs_description and ids != DESCRIPTION_QUESTION_IDS:
+            raise ValueError(f"a thin description asks exactly {list(DESCRIPTION_QUESTION_IDS)}")
+        return self
 
 
 class RoleFinding(ContractModel):
@@ -142,6 +156,7 @@ class EngineState(EngineInput, total=False):
     per-check findings are present only when their check set them (see `CheckOutcome`)."""
 
     facts: tuple[Fact, ...]
+    needs_description: bool
     follow_up_questions: Annotated[tuple[FollowUpQuestion, ...], operator.add]
     asked_facts: Annotated[tuple[str, ...], operator.add]
     steps: Annotated[tuple[StepResult, ...], operator.add]

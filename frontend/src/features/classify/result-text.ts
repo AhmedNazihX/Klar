@@ -17,6 +17,7 @@ import type en from '@/i18n/locales/en.json'
 
 import { ORIGINAL_ROUTE_DATES, routeOfPoint } from './dates'
 import { annexPointKey, isLawProvision, provisionName } from './provision-names'
+import { riskClassOf } from '@/lib/risk-class'
 
 /** The summary and reviewer's step rows, in the Act's order: Facts, Role, the four checks, Duties. */
 export const SUMMARY_ROWS = [
@@ -77,7 +78,7 @@ export function basisSentence(
       ? t('result.basis.annexIII', { point: name, label })
       : t('result.basis.annexIIIPlain', { point: name })
   }
-  return t(`result.basis.${result.risk_class}`)
+  return t(`result.basis.${riskClassOf(result)}`)
 }
 
 /** An Art. 50 transparency duty (`art:50` or one of its paragraphs). */
@@ -150,7 +151,7 @@ export function pausedStep(
 
 /** The step that decided the class, for the reviewer's highlighted card. */
 export function decidingStep(result: ClassificationResult): StepName | null {
-  switch (result.risk_class) {
+  switch (riskClassOf(result)) {
     case 'out_of_scope':
       return 'scope'
     case 'prohibited':

@@ -27,6 +27,8 @@ from aiact.eval.metrics import (
     citation_matches,
     citations_exist,
     consistency,
+    description_asked,
+    description_asked_wrongly,
     downgraded,
     false_low_risk,
     flags_flip_variant,
@@ -55,8 +57,10 @@ from tests.eval.outcomes import (
     WORKED_EXAMPLE_PROVISIONS,
     appliedai_case,
     case,
+    description_result,
     outcome,
     result,
+    thin_case,
 )
 from tests.schemas.builders import ambiguous, rebuild, steps_with
 from tests.schemas.worked_example import cite, worked_example_result
@@ -396,6 +400,8 @@ def test_case_scores_hold_only_numbers_booleans_or_null() -> None:
         "basis_accuracy": None,
         "flip_variant_flagged": None,
         "citation_accuracy": False,
+        "description_asked": None,
+        "description_asked_wrongly": False,
         "citation_existence": True,
     }
 
@@ -628,3 +634,91 @@ def test_summarize_collects_every_metric() -> None:
     assert metrics.role_accuracy == Rate(hits=1, total=1)
     assert metrics.appliedai_disagreement_review == 1
     assert metrics.citation_existence.value == 1.0
+
+
+# --- needs a description (E13) -----------------------------------------------------------------
+
+
+def test_a_thin_case_answered_with_a_description_request_is_a_hit() -> None:
+    assert description_asked(outcome(thin_case("t"), description_result())) is True
+
+
+@pytest.mark.parametrize("predicted", list(RiskClass))
+def test_a_thin_case_answered_with_a_class_is_a_miss(predicted: RiskClass) -> None:
+    assert description_asked(outcome(thin_case("t"), result(predicted))) is False
+
+
+def test_a_failed_thin_case_is_a_miss() -> None:
+    assert description_asked(outcome(thin_case("t"), failed=True)) is False
+
+
+def test_a_thin_case_leaves_risk_class_accuracy() -> None:
+    assert risk_class_match(outcome(thin_case("t"), description_result())) is None
+    assert risk_class_match(outcome(thin_case("t"), result())) is None
+    assert description_asked_wrongly(outcome(thin_case("t"), description_result())) is None
+
+
+def test_another_case_answered_with_a_description_request_is_a_false_flag() -> None:
+    flagged = outcome(case("a"), description_result())
+    assert description_asked_wrongly(flagged) is True
+    assert description_asked_wrongly(outcome(case("a"))) is False
+    assert description_asked_wrongly(outcome(case("a"), failed=True)) is None
+    assert description_asked(flagged) is None
+
+
+def test_a_false_flag_misses_class_and_role_but_is_not_a_false_low() -> None:
+    label = case("a", role=Role.DEPLOYER, tags=(SOFT_WORDING_TAG,))
+    flagged = outcome(label, description_result())
+    assert risk_class_match(flagged) is False
+    assert role_match(flagged) is False
+    assert false_low_risk(flagged) is None
+    assert downgraded(flagged) is None
+    assert annex_point_match(flagged) is None
+    assert basis_match(flagged) is None
+
+
+@pytest.mark.parametrize(
+    ("label", "expected"),
+    [
+        (AppliedAILabel.HIGH, False),
+        (AppliedAILabel.PROHIBITED, False),
+        (AppliedAILabel.LOW, False),
+        (AppliedAILabel.UNCLEAR, None),
+    ],
+)
+def test_an_appliedai_case_answered_with_a_description_request(
+    label: AppliedAILabel, expected: bool | None
+) -> None:
+    """A class label misses; `unclear` answered needs-more-information is counted apart."""
+    flagged = outcome(appliedai_case("x", label), description_result())
+    assert risk_class_match(flagged) is expected
+    assert description_asked_wrongly(flagged) is True
+
+
+def test_a_thin_case_answered_so_is_a_needs_more_information_true_positive() -> None:
+    outcomes = [outcome(thin_case("t"), description_result())]
+    scores = uncertain_outcomes(outcomes, Status.NEEDS_MORE_INFORMATION)
+    assert (scores.true_positives, scores.predicted, scores.labelled) == (1, 1, 1)
+
+
+def test_a_group_with_a_description_request_is_not_consistent() -> None:
+    tag = f"{CONSISTENCY_GROUP_PREFIX}t"
+    outcomes = [
+        outcome(case("a", tags=(tag,))),
+        outcome(case("b", tags=(tag,)), description_result()),
+    ]
+    assert consistency(outcomes) == Rate(hits=0, total=1)
+
+
+def test_the_summary_counts_both_description_rows() -> None:
+    outcomes = [
+        outcome(thin_case("t1"), description_result()),
+        outcome(thin_case("t2"), result()),
+        outcome(case("a"), description_result()),
+        outcome(case("b")),
+        outcome(case("c")),
+    ]
+    metrics = summarize(outcomes, None)
+    assert metrics.description_asked == Rate(hits=1, total=2)
+    assert metrics.description_asked_wrongly == Rate(hits=1, total=3)
+    assert metrics.risk_class_accuracy == Rate(hits=2, total=3)
