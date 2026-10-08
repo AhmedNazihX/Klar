@@ -70,7 +70,7 @@ describe('useClassify', () => {
     expect(firstError).toBeInstanceOf(DOMException)
   })
 
-  it('ends a needs-a-description run without a class until P20 shows its prompts', async () => {
+  it('ends a needs-a-description run without a class with its three questions', async () => {
     // E13: the description was too thin to start, so no check ran and no class was given.
     const thin: ClassifyResponse = {
       event: 'result',
@@ -103,6 +103,13 @@ describe('useClassify', () => {
     })
 
     expect(outcome).toBeInstanceOf(ClassifyRunError)
-    expect((outcome as ClassifyRunError).failure).toEqual({ kind: 'incomplete' })
+    expect((outcome as ClassifyRunError).failure).toEqual({
+      kind: 'needs_description',
+      questions: [
+        'What does it decide or suggest?',
+        'Who does it affect?',
+        'Did you buy it or build it?',
+      ],
+    })
   })
 })

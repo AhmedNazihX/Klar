@@ -61,5 +61,11 @@ Proposed: option A. Waiting for the user.
 - **B10c** writes the thin-description cases with the `/case` skill; the user approves them.
 - **P20** shows the outcome; until then the classify screen ends such a run like an unfinished one (no class, nothing
   saved).
+- **Fixed question ids:** the facts prompt now lists fixed ids for common facts (E8's hand-over note), so the
+  facts replays check `safety_component`, `infers_emotions` and `eu_link` where decision 015 (Consequences) names
+  `safety_function`, `emotion_inference` and the old `eu_use`; `creditworthiness` and `human_review` are unchanged.
+- **Follow-up answers (decision 019):** a thin result asks `bought_or_built`, not the role check's `operator_role`.
+  A stored `operator_role` answer is therefore not appended to a thin run, as only answers to questions asked in
+  that run are. This matters only if a soft-wording (B6) case is ever thin.
 - **Re-recording:** the facts prompt and its answer schema changed, so every facts recording and the worked example's
   end-to-end replay are re-recorded once (cost logged in the E13 hand-over).

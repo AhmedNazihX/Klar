@@ -407,6 +407,10 @@
       "paused": "Wartet auf Sie",
       "error": "Angehalten"
     },
+    "needsDescription": {
+      "title": "Klar braucht etwas mehr, um zu starten",
+      "waiting": "Wartet auf eine Beschreibung. Bis dahin wird nichts geraten."
+    },
     "accuracy": "Diese Einschätzung ist nur so genau wie Ihre Beschreibung.",
     "stopped": {
       "title": "Die Prüfungen konnten nicht abgeschlossen werden",
@@ -427,7 +431,8 @@
       "invalid": "Die Beschreibung konnte nicht gesendet werden. Halten Sie sie unter 20.000 Zeichen und versuchen Sie es erneut.",
       "server": "Der Dienst hat mit einem Fehler geantwortet (HTTP {{status}}).",
       "network": "Der Dienst hat nicht geantwortet. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
-      "incomplete": "Die Verbindung brach ab, bevor die Prüfungen fertig waren."
+      "incomplete": "Die Verbindung brach ab, bevor die Prüfungen fertig waren.",
+      "needsDescription": "Klar muss wissen, was das Tool entscheidet und wen es betrifft. Ergänzen Sie das in Ihrer Beschreibung und starten Sie die Prüfungen erneut."
     }
   },
   "result": {

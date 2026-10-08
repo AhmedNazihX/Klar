@@ -24,7 +24,7 @@ from aiact.engine.nodes.facts import (
 from aiact.engine.nodes.finalize import finalize
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
-from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
+from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
 from aiact.llm import LLMConfigError
 from aiact.llm.replies import FollowUpQuestion as ReplyQuestion
 from aiact.llm.structured import json_schema_format
@@ -619,12 +619,20 @@ OWN_CASES_DIR = CASES_DIR / CaseSet.OWN.value
 OWN_CASES = [
     case for path in sorted(OWN_CASES_DIR.rglob("*.yaml")) for case in load_yaml_file(path)
 ]
-"""Every own case (categories a to e); the check nodes replay them, so none may be thin."""
+"""Every own case. A thin-description case (its label expects no class) must come back thin;
+every other one is replayed by a check node, so it must not."""
+CHECK_CATEGORIES = frozenset("abcde")
+"""The own categories the check nodes replay (`own-<category>-…`)."""
 
 
-def test_the_own_cases_are_there() -> None:
-    assert len(OWN_CASES) == 73
-    assert {case.language for case in OWN_CASES} == {Language.EN, Language.DE}
+def expects_description(case: BenchmarkCase) -> bool:
+    return isinstance(case.label, CaseLabel) and case.label.expects_description
+
+
+def test_the_own_cases_cover_every_check_category_in_both_languages() -> None:
+    described = [case for case in OWN_CASES if not expects_description(case)]
+    assert {case.id.split("-")[1] for case in described} == CHECK_CATEGORIES
+    assert {case.language for case in described} == {Language.EN, Language.DE}
 
 
 @pytest.mark.xfail(
@@ -634,6 +642,8 @@ def test_the_own_cases_are_there() -> None:
 )
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", OWN_CASES, ids=lambda case: case.id)
-def test_recorded_own_case_is_not_thin(case: BenchmarkCase, engine_settings: Settings) -> None:
+def test_recorded_own_case_is_flagged_as_its_label_expects(
+    case: BenchmarkCase, engine_settings: Settings
+) -> None:
     outcome = FactExtractor(engine_settings)(engine_input(case.description, case.language))
-    assert not outcome.needs_description
+    assert outcome.needs_description is expects_description(case)

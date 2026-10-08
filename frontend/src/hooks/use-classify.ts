@@ -20,6 +20,9 @@ export type ClassifyFailure =
   | { kind: 'network' }
   /** The stream ended before a result or an error came. */
   | { kind: 'incomplete' }
+  /** The description was too thin to start (E13): no check ran and no class was given. Carries
+   *  the engine's three questions (what it decides, who it affects, bought or built). */
+  | { kind: 'needs_description'; questions: string[] }
 
 export class ClassifyRunError extends Error {
   readonly failure: ClassifyFailure
@@ -87,9 +90,12 @@ async function runClassification(
       throw new ClassifyRunError({ kind: 'check' })
     }
     if (event.event === 'result') {
-      // A needs-a-description result (E13) has no class to show or keep. Until P20 shows its
-      // three prompts, the run ends like an unfinished one: no class, and nothing saved.
-      if (event.result.risk_class === null) throw new ClassifyRunError({ kind: 'incomplete' })
+      // A needs-a-description result (E13) has no class to show or keep: the run stops with the
+      // engine's questions (P20 replaces this with the ClassifyVague prompts). Nothing is saved.
+      if (event.result.risk_class === null) {
+        const questions = (event.result.follow_up_questions ?? []).map((question) => question.text)
+        throw new ClassifyRunError({ kind: 'needs_description', questions })
+      }
       return event.result
     }
   }
