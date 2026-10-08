@@ -1,18 +1,23 @@
 import { describe, expect, it } from 'vitest'
 
 import type { CheckedDraft } from '@/api'
-import { DEPLOYER_DRAFTS, PROVIDER_DRAFTS } from '@/test/documents-fixtures'
+import {
+  DEPLOYER_DOCUMENTS,
+  LIMITED_DOCUMENTS,
+  PROVIDER_DOCUMENTS,
+} from '@/test/documents-fixtures'
 
-import { interviewState, isSkeleton } from './interview'
+import { interviewState, isAnswered, isSkeleton, unansweredCount } from './interview'
 
-function draft(drafts: readonly CheckedDraft[], template: string): CheckedDraft {
-  const found = drafts.find((item) => item.document.template === template)
+function draft(drafts: Readonly<Record<string, CheckedDraft>>, template: string): CheckedDraft {
+  const found = drafts[template]
   if (!found) throw new Error(`no ${template} in the fixture`)
   return found
 }
 
-const WORKERS = draft(DEPLOYER_DRAFTS.en, 'art_26_7_workers')
-const ANNEX_IV = draft(PROVIDER_DRAFTS.en, 'annex_iv_technical_documentation')
+const WORKERS = draft(DEPLOYER_DOCUMENTS.en, 'art_26_7_workers')
+const ANNEX_IV = draft(PROVIDER_DOCUMENTS.en, 'annex_iv_technical_documentation')
+const ART_50_3 = draft(LIMITED_DOCUMENTS.en, 'art_50_3_disclosure')
 const NONE = new Set<string>()
 
 function keys(questions: readonly { key: string }[]): string[] {
@@ -53,5 +58,34 @@ describe('The guided interview', () => {
     expect(state.questions.length).toBeGreaterThan(0)
     expect(state.questions.every((q) => q.section === 'development')).toBe(true)
     expect(state.answered).toEqual([])
+  })
+})
+
+describe('What a document still needs', () => {
+  const [choice] = ART_50_3.questions
+
+  it('counts a choice question answered only by one of its choices, as the drafter does', () => {
+    if (!choice) throw new Error('the Art. 50(3) disclosure asks a choice first')
+    expect(choice.choices?.map((option) => option.key)).toEqual([
+      'emotion_recognition',
+      'biometric_categorisation',
+      'both',
+    ])
+    expect(isAnswered({ recognises: 'both' }, choice)).toBe(true)
+    expect(isAnswered({ recognises: ' both ' }, choice)).toBe(true)
+    expect(isAnswered({ recognises: 'Both!' }, choice)).toBe(false)
+    expect(isAnswered({}, choice)).toBe(false)
+  })
+
+  it('counts the questions left, as the drafted document does', () => {
+    expect(unansweredCount(WORKERS.questions, {})).toBe(WORKERS.document.unanswered)
+    const answered = draft(DEPLOYER_DOCUMENTS.en_answered, 'art_26_7_workers')
+    expect(unansweredCount(answered.questions, { tool_and_supplier: 'TalentRank.' })).toBe(
+      answered.document.unanswered,
+    )
+    const chosen = draft(LIMITED_DOCUMENTS.en_answered, 'art_50_3_disclosure')
+    expect(unansweredCount(chosen.questions, { recognises: 'both' })).toBe(
+      chosen.document.unanswered,
+    )
   })
 })

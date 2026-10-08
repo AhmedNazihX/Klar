@@ -6,22 +6,26 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import type { ClassificationResult } from '@/api'
-import { putRun, type ClassificationRun } from '@/features/classify/classification-store'
 import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { WORKED_EXAMPLE } from '@/test/classify-fixtures'
 import {
   ANNEX_IV_ANSWER,
   ANSWERS_URL,
-  DEPLOYER_DRAFTS,
+  ART_50_3_CHOICE,
+  DEPLOYER_DOCUMENTS,
+  DRAFT_URL,
   documentsHandlers,
-  DRAFTS_URL,
   EXPORT_URL,
+  LIMITED_RESULT,
+  LIST_URL,
+  newTraffic,
   PROVIDER_RESULT,
   WORKERS_TOOL_ANSWER,
   type AnswerRow,
   type DocumentsTraffic,
 } from '@/test/documents-fixtures'
+import { INVENTORY_TOOLS_URL, toolRow } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
@@ -37,20 +41,24 @@ vi.mock('@/lib/supabase', async (importOriginal) => {
 
 const APPLICANTS = '0b6f7c1e-1111-4a5b-9c3d-000000000001'
 const DRIVERS = '0b6f7c1e-2222-4a5b-9c3d-000000000002'
+const MOODS = '0b6f7c1e-3333-4a5b-9c3d-000000000003'
 const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false } } }
 
 let answerRows: AnswerRow[] = []
 let profileSizeClass: string | null = null
+let toolRows: Record<string, unknown>[] = []
 let traffic: DocumentsTraffic
 
 beforeEach(() => {
   answerRows = []
   profileSizeClass = null
-  traffic = { draftBodies: [], savedAnswers: [], exports: [] }
+  toolRows = []
+  traffic = newTraffic()
   server.use(
     ...userDataHandlers(
       () => [inventoryRow({ size_class: profileSizeClass, staff_band: '10-49' })],
-      () => 2,
+      () => toolRows.length,
+      () => toolRows,
     ),
     ...documentsHandlers(() => answerRows, traffic),
   )
@@ -67,7 +75,9 @@ const APPLICANT_SCREENING: Tool = {
   result: WORKED_EXAMPLE,
 }
 const DRIVER_SCORING: Tool = { toolId: DRIVERS, name: 'Driver scoring', result: PROVIDER_RESULT }
+const MOOD_METER: Tool = { toolId: MOODS, name: 'Mood meter', result: LIMITED_RESULT }
 
+/** Opens `path` with `tools` in the user's inventory (inventory_tools rows, P6). */
 async function openDocuments(
   path: string,
   {
@@ -76,25 +86,25 @@ async function openDocuments(
   }: { tools?: Tool[]; language?: 'en' | 'de' } = {},
 ) {
   await i18n.changeLanguage(language)
-  const client = createTestQueryClient()
-  for (const tool of tools) {
-    const run: ClassificationRun = { ...tool, description: 'A tool.' }
-    putRun(client, run)
-  }
+  toolRows = tools.map((tool) => toolRow(tool.name, tool.result, { id: tool.toolId }))
   const user = userEvent.setup()
-  const rendered = renderRoute(path, client)
+  const rendered = renderRoute(path, createTestQueryClient())
   return { user, ...rendered }
 }
 
-async function preview(): Promise<HTMLElement> {
-  return screen.findByRole('article', { name: 'Document preview' }, { timeout: FIRST_RENDER_MS })
+async function preview(name = 'Document preview'): Promise<HTMLElement> {
+  return screen.findByRole('article', { name }, { timeout: FIRST_RENDER_MS })
 }
 
 describe('Documents list', () => {
   it("lists every tool's documents grouped by tool, with their statuses", async () => {
     profileSizeClass = 'sme'
     await openDocuments('/app/documents', { tools: [APPLICANT_SCREENING, DRIVER_SCORING] })
-    const nav = await screen.findByRole('navigation', { name: 'Documents' })
+    const nav = await screen.findByRole(
+      'navigation',
+      { name: 'Documents' },
+      { timeout: FIRST_RENDER_MS },
+    )
     const applicants = await within(nav).findByRole('region', { name: 'For Applicant screening' })
     expect(
       await within(applicants).findByRole('link', { name: /Human oversight record/ }),
@@ -111,19 +121,37 @@ describe('Documents list', () => {
     expect(opened).toHaveAttribute('href', `/app/documents/art_26_2_oversight?tool=${APPLICANTS}`)
   })
 
-  it("drafts each tool from its own result with the profile's size class", async () => {
+  it("lists each inventory tool from its own result and drafts only the open document, with the profile's size class", async () => {
     profileSizeClass = 'sme'
     await openDocuments('/app/documents', { tools: [APPLICANT_SCREENING, DRIVER_SCORING] })
     await preview()
     await vi.waitFor(() => {
-      expect(traffic.draftBodies.map((body) => body.result.role).sort()).toEqual([
+      expect(traffic.listBodies.map((body) => body.result.role).sort()).toEqual([
         'deployer',
         'provider',
       ])
     })
+    await vi.waitFor(() => {
+      expect(traffic.draftBodies.at(-1)).toMatchObject({ size_class: 'sme' })
+    })
+    expect(new Set(traffic.draftBodies.map((body) => body.template))).toEqual(
+      new Set(['art_26_2_oversight']),
+    )
     for (const body of traffic.draftBodies) {
-      expect(body).toMatchObject({ language: 'en', size_class: 'sme', answers: {} })
+      expect(body).toMatchObject({ language: 'en', answers: {} })
     }
+  })
+
+  it("sends a document's draft only that document's answers", async () => {
+    answerRows = [
+      { template: 'art_26_7_workers', question_key: 'tool_and_supplier', answer: 'TalentRank.' },
+      { template: 'art_26_2_oversight', question_key: 'tool_and_supplier', answer: 'Other.' },
+    ]
+    await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
+    await preview()
+    expect(traffic.draftBodies.map((body) => [body.template, body.answers])).toEqual([
+      ['art_26_7_workers', { tool_and_supplier: 'TalentRank.' }],
+    ])
   })
 
   it('says there is nothing to draft before a tool is classified', async () => {
@@ -173,9 +201,8 @@ describe('A short document', () => {
     expect(system).toHaveTextContent('From your classification')
     const tool = within(article).getByRole('region', { name: 'The tool and its supplier' })
     expect(tool).toHaveTextContent('To fill in. Answer it in the guided interview.')
-    expect(article).toHaveTextContent(
-      `Draft prepared with Klar. ${DEPLOYER_DRAFTS.en[1]?.document.disclaimer ?? ''}`,
-    )
+    const disclaimer = DEPLOYER_DOCUMENTS.en.art_26_7_workers?.document.disclaimer ?? ''
+    expect(article).toHaveTextContent(`Draft prepared with Klar. ${disclaimer}`)
     const checks = screen.getByRole('region', { name: 'Automatic checks' })
     expect(
       within(checks)
@@ -188,9 +215,10 @@ describe('A short document', () => {
     ])
   })
 
-  it('saves an answer under all four key columns and redraws the notice with it', async () => {
+  it('saves an answer under the inventory tool and all four key columns, and redraws the notice with it', async () => {
     const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
-    const interview = await screen.findByRole('region', { name: 'Guided interview' })
+    await preview()
+    const interview = screen.getByRole('region', { name: 'Guided interview' })
     expect(interview).toHaveTextContent('0 of 4 answered')
     await user.click(within(interview).getByRole('button', { name: 'Skip for now' }))
     const field = within(interview).getByLabelText('What is the tool called, and who supplies it?')
@@ -215,11 +243,13 @@ describe('A short document', () => {
     })
     const tool = await within(await preview()).findByText(WORKERS_TOOL_ANSWER)
     expect(tool.closest('section')).toHaveTextContent('From your interview answers')
-    expect(traffic.draftBodies.at(-1)?.answers).toEqual({
-      art_26_7_workers: { tool_and_supplier: WORKERS_TOOL_ANSWER },
-    })
+    expect(traffic.draftBodies.at(-1)?.answers).toEqual({ tool_and_supplier: WORKERS_TOOL_ANSWER })
     expect(interview).toHaveTextContent('1 of 4 answered')
     expect(within(interview).getByLabelText('When do you plan to start?')).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Documents' })
+    expect(
+      within(nav).getByRole('link', { name: /Notice to workers' representatives/ }),
+    ).toHaveTextContent('Art. 26(7). Needs 3 answers')
   })
 
   it('shows a full storage apart from other save failures', async () => {
@@ -232,7 +262,8 @@ describe('A short document', () => {
       ),
     )
     const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
-    const interview = await screen.findByRole('region', { name: 'Guided interview' })
+    await preview()
+    const interview = screen.getByRole('region', { name: 'Guided interview' })
     await user.type(within(interview).getByRole('textbox'), 'The works council.')
     await user.click(within(interview).getByRole('button', { name: 'Save answer' }))
     const alert = await within(interview).findByRole('alert')
@@ -248,7 +279,8 @@ describe('A short document', () => {
       },
     ]
     const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
-    const interview = await screen.findByRole('region', { name: 'Guided interview' })
+    await preview()
+    const interview = screen.getByRole('region', { name: 'Guided interview' })
     expect(await within(interview).findByText('1 of 4 answered')).toBeInTheDocument()
     await user.click(
       within(interview).getByRole('button', {
@@ -261,8 +293,76 @@ describe('A short document', () => {
   })
 })
 
+describe('The Art. 50(3) disclosure', () => {
+  it('asks which the system does and drafts the notice for the choice, saved as its key', async () => {
+    const { user } = await openDocuments(`/app/documents/art_50_3_disclosure?tool=${MOODS}`, {
+      tools: [MOOD_METER],
+    })
+    const article = await preview()
+    expect(within(article).getByRole('region', { name: 'The notice' })).toHaveTextContent(
+      'To fill in. Answer it in the guided interview.',
+    )
+    const interview = screen.getByRole('region', { name: 'Guided interview' })
+    const choice = within(interview).getByRole('group', {
+      name: 'Does the system recognise emotions, sort people into categories from biometric data, or both?',
+    })
+    expect(
+      within(choice)
+        .getAllByRole('radio')
+        .map((radio) => radio.closest('label')?.textContent),
+    ).toEqual([
+      'It recognises emotions',
+      'It sorts people into categories from biometric data',
+      'Both',
+    ])
+    expect(interview).toHaveTextContent("Klar writes the notice's own wording for what you pick.")
+    await user.click(within(choice).getByRole('radio', { name: 'Both' }))
+    await user.click(within(interview).getByRole('button', { name: 'Save answer' }))
+    await vi.waitFor(() => {
+      expect(traffic.savedAnswers.map((saved) => saved.body)).toEqual([
+        {
+          system_id: MOODS,
+          template: 'art_50_3_disclosure',
+          question_key: 'recognises',
+          answer: ART_50_3_CHOICE,
+        },
+      ])
+    })
+    expect(
+      await within(await preview()).findByText(
+        'An AI system for emotion recognition and biometric categorisation is in operation here.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('asks the choice in German', async () => {
+    await openDocuments(`/app/documents/art_50_3_disclosure?tool=${MOODS}`, {
+      tools: [MOOD_METER],
+      language: 'de',
+    })
+    await preview('Dokumentvorschau')
+    const interview = screen.getByRole('region', { name: 'Geführtes Interview' })
+    const choice = within(interview).getByRole('group', {
+      name: 'Erkennt das System Emotionen, ordnet es Personen anhand biometrischer Daten Kategorien zu oder beides?',
+    })
+    expect(
+      within(choice)
+        .getAllByRole('radio')
+        .map((radio) => radio.closest('label')?.textContent),
+    ).toEqual([
+      'Es erkennt Emotionen',
+      'Es ordnet Personen anhand biometrischer Daten Kategorien zu',
+      'Beides',
+    ])
+    expect(interview).toHaveTextContent(
+      'Klar übernimmt für Ihre Auswahl den Wortlaut des Hinweises.',
+    )
+  })
+})
+
 describe('Downloads', () => {
-  it('sends one export per click with the result, the answers and the format', async () => {
+  it("sends one export per click with the result, the answers, the profile's size class and the format", async () => {
+    profileSizeClass = 'smc'
     const createObjectURL = vi.fn(() => 'blob:file')
     const revokeObjectURL = vi.fn()
     vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL }))
@@ -276,6 +376,9 @@ describe('Downloads', () => {
     )
     const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
     await preview()
+    await vi.waitFor(() => {
+      expect(traffic.draftBodies.at(-1)?.size_class).toBe('smc')
+    })
     await user.click(screen.getByRole('button', { name: 'Download PDF' }))
     await vi.waitFor(() => {
       expect(traffic.exports).toHaveLength(1)
@@ -284,7 +387,7 @@ describe('Downloads', () => {
       result: JSON.parse(JSON.stringify(WORKED_EXAMPLE)) as unknown,
       template: 'art_26_7_workers',
       language: 'en',
-      size_class: null,
+      size_class: 'smc',
       answers: {},
       format: 'pdf',
     })
@@ -295,25 +398,41 @@ describe('Downloads', () => {
     await vi.waitFor(() => {
       expect(traffic.exports).toHaveLength(2)
     })
-    expect(traffic.exports[1]).toMatchObject({ format: 'docx' })
+    expect(traffic.exports[1]).toMatchObject({ format: 'docx', size_class: 'smc' })
     vi.unstubAllGlobals()
   })
 
-  it('says when the draft failed its checks, and sends nothing again by itself', async () => {
-    server.use(
-      http.post(EXPORT_URL, () => {
-        traffic.exports.push({})
-        return HttpResponse.json({ detail: 'checks' }, { status: 409 })
-      }),
-    )
-    const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
-    await preview()
-    await user.click(screen.getByRole('button', { name: 'Download .docx' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      "The draft failed its automatic checks, so it can't be downloaded.",
-    )
-    expect(traffic.exports).toHaveLength(1)
-  })
+  it.each([
+    [409, 'en', "The draft failed its automatic checks, so it can't be downloaded."],
+    [
+      409,
+      'de',
+      'Der Entwurf hat die automatischen Prüfungen nicht bestanden und kann nicht heruntergeladen werden.',
+    ],
+    [413, 'en', 'This document is too long to make into a file. Please shorten some answers.'],
+    [413, 'de', 'Dieses Dokument ist zu lang für eine Datei. Bitte kürzen Sie einige Antworten.'],
+    [503, 'en', 'Klar is busy making other files. Please try again in a moment.'],
+    [503, 'de', 'Klar erstellt gerade andere Dateien. Bitte versuchen Sie es gleich noch einmal.'],
+    [500, 'en', "Klar couldn't make the file. Please try again."],
+  ] as const)(
+    'says why a %i made no file (%s), and sends nothing again by itself',
+    async (status, language, message) => {
+      server.use(
+        http.post(EXPORT_URL, () => {
+          traffic.exports.push({})
+          return HttpResponse.json({ detail: 'refused' }, { status })
+        }),
+      )
+      const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`, {
+        language,
+      })
+      await preview(language === 'de' ? 'Dokumentvorschau' : 'Document preview')
+      const name = language === 'de' ? '.docx herunterladen' : 'Download .docx'
+      await user.click(screen.getByRole('button', { name }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(message)
+      expect(traffic.exports).toHaveLength(1)
+    },
+  )
 })
 
 describe('A skeleton', () => {
@@ -374,11 +493,7 @@ describe('In German', () => {
       tools: [DRIVER_SCORING],
       language: 'de',
     })
-    const article = await screen.findByRole(
-      'article',
-      { name: 'Dokumentvorschau' },
-      { timeout: FIRST_RENDER_MS },
-    )
+    const article = await preview('Dokumentvorschau')
     // The provider fixture is drafted in English: only the screen's own words are German here.
     const statuses = within(article)
       .getAllByText((_, element) => element?.hasAttribute('data-section-status') ?? false)
@@ -422,11 +537,7 @@ describe('In German', () => {
     const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`, {
       language: 'de',
     })
-    const article = await screen.findByRole(
-      'article',
-      { name: 'Dokumentvorschau' },
-      { timeout: FIRST_RENDER_MS },
-    )
+    const article = await preview('Dokumentvorschau')
     expect(within(article).getByText('ENTWURF')).toBeInTheDocument()
     expect(article).toHaveTextContent(
       'Geprüfte Fassung der KI-Verordnung: Geändert, 2026, gültig am 6. Oktober 2026.',
@@ -462,10 +573,21 @@ describe('In German', () => {
     await user.click(within(interview).getByRole('button', { name: 'Später beantworten' }))
     expect(traffic.draftBodies.at(-1)?.language).toBe('de')
   })
+
+  it('names the loading states in both languages', () => {
+    expect([
+      i18n.t('documents.draftingOne', { lng: 'en' }),
+      i18n.t('documents.draftingOne', { lng: 'de' }),
+    ]).toEqual(['Drafting the document…', 'Das Dokument wird entworfen …'])
+    expect([
+      i18n.t('documents.toolsLoading', { lng: 'en' }),
+      i18n.t('documents.toolsLoading', { lng: 'de' }),
+    ]).toEqual(['Loading your tools…', 'Ihre Tools werden geladen …'])
+  })
 })
 
 describe('Accessibility', () => {
-  it('passes axe on a skeleton and on a notice', async () => {
+  it('passes axe on a skeleton, a notice and a choice question', async () => {
     profileSizeClass = 'sme'
     const { container, unmount } = await openDocuments(
       `/app/documents/annex_iv_technical_documentation?tool=${DRIVERS}`,
@@ -477,14 +599,20 @@ describe('Accessibility', () => {
     const notice = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
     await preview()
     expect((await axe(notice.container, AXE_OPTIONS)).violations).toEqual([])
+    notice.unmount()
+    const choice = await openDocuments(`/app/documents/art_50_3_disclosure?tool=${MOODS}`, {
+      tools: [MOOD_METER],
+    })
+    await preview()
+    expect((await axe(choice.container, AXE_OPTIONS)).violations).toEqual([])
   })
 })
 
-describe('Drafting fails', () => {
-  it('names the tool whose documents could not be drafted and offers to try again', async () => {
+describe('Something fails', () => {
+  it('names the tool whose documents could not be listed and offers to try again', async () => {
     let calls = 0
     server.use(
-      http.post(DRAFTS_URL, () => {
+      http.post(LIST_URL, () => {
         calls += 1
         return HttpResponse.json({ detail: 'down' }, { status: 503 })
       }),
@@ -503,5 +631,58 @@ describe('Drafting fails', () => {
     await vi.waitFor(() => {
       expect(calls).toBe(2)
     })
+  })
+
+  it.each([
+    [
+      413,
+      'en',
+      "This document's answers are too long to send together. Please shorten some answers.",
+    ],
+    [
+      413,
+      'de',
+      'Die Antworten zu diesem Dokument sind zusammen zu lang. Bitte kürzen Sie einige Antworten.',
+    ],
+    [503, 'en', "Klar couldn't draft this document."],
+    [503, 'de', 'Klar konnte dieses Dokument nicht entwerfen.'],
+  ] as const)(
+    'says why a %i drafted no document (%s), and tries again only when asked',
+    async (status, language, message) => {
+      let calls = 0
+      server.use(
+        http.post(DRAFT_URL, () => {
+          calls += 1
+          return HttpResponse.json({ detail: 'refused' }, { status })
+        }),
+      )
+      const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`, {
+        language,
+      })
+      const main = await screen.findByRole('main', undefined, { timeout: FIRST_RENDER_MS })
+      expect(
+        await within(main).findByRole('alert', undefined, { timeout: FIRST_RENDER_MS }),
+      ).toHaveTextContent(message)
+      expect(calls).toBe(1)
+      await user.click(
+        within(main).getByRole('button', {
+          name: language === 'de' ? 'Erneut versuchen' : 'Try again',
+        }),
+      )
+      await vi.waitFor(() => {
+        expect(calls).toBe(2)
+      })
+    },
+  )
+
+  it.each([
+    ['en', "Klar couldn't load your tools."],
+    ['de', 'Klar konnte Ihre Tools nicht laden.'],
+  ] as const)('says when the tools could not be loaded (%s)', async (language, message) => {
+    server.use(http.get(INVENTORY_TOOLS_URL, () => HttpResponse.json({}, { status: 500 })))
+    await openDocuments('/app/documents', { language })
+    expect(
+      await screen.findByRole('alert', undefined, { timeout: FIRST_RENDER_MS }),
+    ).toHaveTextContent(message)
   })
 })

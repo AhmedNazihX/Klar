@@ -69,6 +69,15 @@ function Section({
           {paragraph}
         </p>
       ))}
+      {(section.quotes ?? []).map((quote) => (
+        <Citation
+          key={quote.provision_id}
+          language={quote.language}
+          source={citationSource(t, quote, language)}
+        >
+          {quote.quote}
+        </Citation>
+      ))}
       {provenance && (
         <span className="text-micro text-slate">{t(`documents.provenance.${provenance}`)}</span>
       )}

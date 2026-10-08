@@ -163,7 +163,12 @@
     "readyToReview": "{{article}}. Ready to review",
     "noDocuments": "Its result calls for no documents.",
     "drafting": "Drafting the documents…",
+    "draftingOne": "Drafting the document…",
     "draftFailed": "Klar couldn't draft this tool's documents.",
+    "documentFailed": "Klar couldn't draft this document.",
+    "tooLarge": "This document's answers are too long to send together. Please shorten some answers.",
+    "toolsLoading": "Loading your tools…",
+    "toolsFailed": "Klar couldn't load your tools.",
     "tryAgain": "Try again",
     "notFound": "None of your tools has this document. Pick one from the list.",
     "empty": {
@@ -174,7 +179,9 @@
       "docx": "Download .docx",
       "pdf": "Download PDF",
       "failed": "Klar couldn't make the file. Please try again.",
-      "checksFailed": "The draft failed its automatic checks, so it can't be downloaded."
+      "checksFailed": "The draft failed its automatic checks, so it can't be downloaded.",
+      "tooLong": "This document is too long to make into a file. Please shorten some answers.",
+      "busy": "Klar is busy making other files. Please try again in a moment."
     },
     "preview": "Document preview",
     "lawLine": "AI Act as checked: {{version}}, applying on {{date}}.",
@@ -207,7 +214,8 @@
       "tooLong": "An answer can be up to 20,000 characters.",
       "done": "Every question here is answered. Read the draft through before you use it.",
       "skippedAll": "You've skipped the rest for now.",
-      "showSkipped": "Back to the skipped questions"
+      "showSkipped": "Back to the skipped questions",
+      "hintChoice": "Klar writes the notice's own wording for what you pick."
     },
     "checks": {
       "title": "Automatic checks",

@@ -281,22 +281,6 @@ export type DocumentInfo = {
 };
 
 /**
- * DocumentList
- *
- * Every text the answers can draw on, in `doc_key` order, with the notice.
- */
-export type DocumentList = {
-    /**
-     * Documents
-     */
-    documents: Array<DocumentInfo>;
-    /**
-     * Disclaimer
-     */
-    disclaimer: string;
-};
-
-/**
  * DocumentStatus
  *
  * The status of a corpus document (matches F4's `documents.status`).
@@ -362,15 +346,39 @@ export type DraftDocument = {
 };
 
 /**
- * DraftList
+ * DraftRequest
  *
- * Every document the result calls for, in the order the documents list shows them.
+ * One document of the result, with the user's answers to its interview.
  */
-export type DraftList = {
+export type DraftRequest = {
     /**
-     * Documents
+     * Result
+     *
+     * A `ClassificationResult`, as the `result` event of `POST /classify` carries it; the route validates it against the result contract.
      */
-    documents: Array<CheckedDraft>;
+    result: {
+        [key: string]: unknown;
+    };
+    /**
+     * Template
+     */
+    template: string;
+    /**
+     * The language of the draft's wording and notice.
+     */
+    language: Language;
+    /**
+     * The company profile's size class; null without a profile.
+     */
+    size_class?: SizeClass | null;
+    /**
+     * Answers
+     *
+     * The answers stored for this document, by question key.
+     */
+    answers?: {
+        [key: string]: string;
+    };
 };
 
 /**
@@ -425,38 +433,6 @@ export type DraftSection = {
 export type DraftStatus = 'needs_answers' | 'ready_to_review';
 
 /**
- * DraftsRequest
- *
- * A tool's classification result and the user's answers, by template id.
- */
-export type DraftsRequest = {
-    /**
-     * Result
-     *
-     * A `ClassificationResult`, as the `result` event of `POST /classify` carries it; the route validates it against the result contract.
-     */
-    result: {
-        [key: string]: unknown;
-    };
-    /**
-     * The language of the drafts' wording and notice.
-     */
-    language: Language;
-    /**
-     * The company profile's size class; null without a profile.
-     */
-    size_class?: SizeClass | null;
-    /**
-     * Answers
-     */
-    answers?: {
-        [key: string]: unknown | {
-            [key: string]: string;
-        };
-    };
-};
-
-/**
  * ErrorEvent
  *
  * A node failed, so the run stopped without a result.
@@ -486,7 +462,7 @@ export type EvidenceTag = 'stated' | 'inferred' | 'assumed';
 /**
  * ExportRequest
  *
- * One document of the result, its answers and the file wanted.
+ * One document as `draft_document` drafts it, and the file wanted.
  */
 export type ExportRequest = {
     /**
@@ -501,10 +477,18 @@ export type ExportRequest = {
      * Template
      */
     template: string;
+    /**
+     * The language of the draft's wording and notice.
+     */
     language: Language;
+    /**
+     * The company profile's size class; null without a profile.
+     */
     size_class?: SizeClass | null;
     /**
      * Answers
+     *
+     * The answers stored for this document, by question key.
      */
     answers?: {
         [key: string]: string;
@@ -604,9 +588,26 @@ export type FollowUpQuestion = {
 export type HighRiskRoute = 'annex_iii' | 'annex_i';
 
 /**
+ * InterviewChoice
+ *
+ * One answer a choice question offers: the key stored as the answer, and its label.
+ */
+export type InterviewChoice = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+};
+
+/**
  * InterviewQuestion
  *
- * One question of a document's guided interview, and the section its answer fills.
+ * One question of a document's guided interview, and the section its answer fills. A choice
+ * question lists its `choices`; its answer is one of their keys.
  */
 export type InterviewQuestion = {
     /**
@@ -623,6 +624,10 @@ export type InterviewQuestion = {
      * The key of the section the answer fills.
      */
     section: string;
+    /**
+     * Choices
+     */
+    choices?: Array<InterviewChoice>;
 };
 
 /**
@@ -693,6 +698,52 @@ export type LawVersion = 'original' | 'amended';
  * its route's Chapter III date, with no significant change planned from that date.
  */
 export type LegacyStatus = 'legacy_unchanged' | 'legacy_public_authority';
+
+/**
+ * ListRequest
+ *
+ * A tool's classification result and the language of the list.
+ */
+export type ListRequest = {
+    /**
+     * Result
+     *
+     * A `ClassificationResult`, as the `result` event of `POST /classify` carries it; the route validates it against the result contract.
+     */
+    result: {
+        [key: string]: unknown;
+    };
+    /**
+     * The language of the titles and the questions.
+     */
+    language: Language;
+};
+
+/**
+ * ListedDocument
+ *
+ * A document the result calls for, as the documents list shows it before it is drafted.
+ */
+export type ListedDocument = {
+    /**
+     * Template
+     */
+    template: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Article
+     *
+     * The duty it answers, e.g. `art:26:7`.
+     */
+    article: string;
+    /**
+     * Questions
+     */
+    questions: Array<InterviewQuestion>;
+};
 
 /**
  * Obligation
@@ -1142,6 +1193,34 @@ export type VendorLetterRequest = {
     };
 };
 
+/**
+ * DocumentList
+ *
+ * Every document the result calls for, in the order the documents list shows them.
+ */
+export type AiactApiDraftsDocumentList = {
+    /**
+     * Documents
+     */
+    documents: Array<ListedDocument>;
+};
+
+/**
+ * DocumentList
+ *
+ * Every text the answers can draw on, in `doc_key` order, with the notice.
+ */
+export type AiactRetrievalDocumentsDocumentList = {
+    /**
+     * Documents
+     */
+    documents: Array<DocumentInfo>;
+    /**
+     * Disclaimer
+     */
+    disclaimer: string;
+};
+
 export type ClassifyData = {
     body: ClassifyRequest;
     path?: never;
@@ -1320,7 +1399,7 @@ export type ListDocumentsResponses = {
     /**
      * Successful Response
      */
-    200: DocumentList;
+    200: AiactRetrievalDocumentsDocumentList;
 };
 
 export type ListDocumentsResponse = ListDocumentsResponses[keyof ListDocumentsResponses];
@@ -1358,30 +1437,71 @@ export type DraftVendorLetterResponses = {
 
 export type DraftVendorLetterResponse = DraftVendorLetterResponses[keyof DraftVendorLetterResponses];
 
-export type DraftDocumentsData = {
-    body: DraftsRequest;
+export type ListResultDocumentsData = {
+    body: ListRequest;
     path?: never;
     query?: never;
-    url: '/documents/drafts';
+    url: '/documents/list';
 };
 
-export type DraftDocumentsErrors = {
+export type ListResultDocumentsErrors = {
     /**
      * Not a valid request; the body quotes none of it
      */
     422: Unprocessable;
+    /**
+     * Too many requests
+     */
+    429: unknown;
 };
 
-export type DraftDocumentsError = DraftDocumentsErrors[keyof DraftDocumentsErrors];
+export type ListResultDocumentsError = ListResultDocumentsErrors[keyof ListResultDocumentsErrors];
 
-export type DraftDocumentsResponses = {
+export type ListResultDocumentsResponses = {
     /**
      * Successful Response
      */
-    200: DraftList;
+    200: AiactApiDraftsDocumentList;
 };
 
-export type DraftDocumentsResponse = DraftDocumentsResponses[keyof DraftDocumentsResponses];
+export type ListResultDocumentsResponse = ListResultDocumentsResponses[keyof ListResultDocumentsResponses];
+
+export type DraftDocumentData = {
+    body: DraftRequest;
+    path?: never;
+    query?: never;
+    url: '/documents/draft';
+};
+
+export type DraftDocumentErrors = {
+    /**
+     * The result calls for no such document
+     */
+    404: unknown;
+    /**
+     * Not a valid request; the body quotes none of it
+     */
+    422: Unprocessable;
+    /**
+     * Too many requests
+     */
+    429: unknown;
+    /**
+     * The corpus is unreachable
+     */
+    503: unknown;
+};
+
+export type DraftDocumentError = DraftDocumentErrors[keyof DraftDocumentErrors];
+
+export type DraftDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    200: CheckedDraft;
+};
+
+export type DraftDocumentResponse = DraftDocumentResponses[keyof DraftDocumentResponses];
 
 export type ExportDocumentData = {
     body: ExportRequest;
@@ -1400,9 +1520,21 @@ export type ExportDocumentErrors = {
      */
     409: unknown;
     /**
+     * The document is too long for a file
+     */
+    413: unknown;
+    /**
      * Not a valid request; the body quotes none of it
      */
     422: Unprocessable;
+    /**
+     * Too many requests
+     */
+    429: unknown;
+    /**
+     * Every export slot is taken, or the corpus is unreachable
+     */
+    503: unknown;
 };
 
 export type ExportDocumentError = ExportDocumentErrors[keyof ExportDocumentErrors];

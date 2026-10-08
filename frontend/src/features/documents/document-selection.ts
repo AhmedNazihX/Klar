@@ -1,25 +1,20 @@
-import type { QueryClient } from '@tanstack/react-query'
+import type { ListedDocument } from '@/api'
+import type { DocumentTool } from '@/hooks/use-document-drafts'
+import type { InventoryTool } from '@/lib/inventory'
 
-import type { CheckedDraft } from '@/api'
-import type { ClassificationRun, ToolResult } from '@/features/classify/classification-store'
-
-/**
- * The tools this session has a result for (the Classify screen keeps each finished run in the
- * query cache, P5). P6 stores runs in Supabase and loads them into the same cache entries.
- */
-export function sessionTools(queryClient: QueryClient): ClassificationRun[] {
-  return queryClient
-    .getQueriesData<ToolResult>({ queryKey: ['classification-run'] })
-    .flatMap(([, page]) => (page?.kind === 'run' ? [page.run] : []))
+/** The inventory's tools that have a result Klar can read: the ones with documents to draft.
+ *  Their ids are the inventory's (`systems.id`), which interview answers are stored under. */
+export function documentTools(tools: readonly InventoryTool[]): DocumentTool[] {
+  return tools.flatMap(({ toolId, name, result }) => (result ? [{ toolId, name, result }] : []))
 }
 
-/** One tool and its drafted documents, once drafted. */
+/** One tool and the documents its result calls for, once listed. */
 export type ToolDocuments = {
-  tool: ClassificationRun
-  drafts: readonly CheckedDraft[] | undefined
+  tool: DocumentTool
+  documents: readonly ListedDocument[] | undefined
 }
 
-export type SelectedDocument = { tool: ClassificationRun; draft: CheckedDraft }
+export type SelectedDocument = { tool: DocumentTool; document: ListedDocument }
 
 /**
  * The document on show. A document is keyed by its tool and its template id (P5's duty links
@@ -32,11 +27,11 @@ export function selectDocument(
   toolId: string | undefined,
 ): SelectedDocument | null {
   const candidates = toolId ? entries.filter((entry) => entry.tool.toolId === toolId) : entries
-  for (const { tool, drafts } of candidates) {
-    const draft = documentId
-      ? drafts?.find((item) => item.document.template === documentId)
-      : drafts?.[0]
-    if (draft) return { tool, draft }
+  for (const { tool, documents } of candidates) {
+    const document = documentId
+      ? documents?.find((item) => item.template === documentId)
+      : documents?.[0]
+    if (document) return { tool, document }
   }
   return null
 }

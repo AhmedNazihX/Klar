@@ -2,30 +2,41 @@ import { Link } from '@tanstack/react-router'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { CheckedDraft } from '@/api'
+import type { ListedDocument } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
 import { provisionName } from '@/features/classify/provision-names'
 import { useLanguage } from '@/hooks/use-language'
 import { cn } from '@/lib/utils'
 
 import type { SelectedDocument } from './document-selection'
+import type { AnswersByTemplate } from './interview-answers'
+import { unansweredCount } from './interview'
 
-/** One tool's group in the list: its documents once drafted, or why there are none to show. */
+/** One tool's group in the list: its documents once listed, or why there are none to show. */
 export type NavGroup = {
   toolId: string
   toolName: string
-  drafts: readonly CheckedDraft[] | undefined
+  documents: readonly ListedDocument[] | undefined
+  /** The answers stored for the tool, which say what each document still needs. */
+  answers: AnswersByTemplate
   isLoading: boolean
   isError: boolean
   onRetry: () => void
 }
 
-/** "Art. 26(7). Needs 2 answers" or "Art. 26(7). Ready to review" (artboard `Documents`). */
-function DocumentStatus({ draft }: { draft: CheckedDraft }): JSX.Element {
+/** "Art. 26(7). Needs 2 answers" or "Art. 26(7). Ready to review" (artboard `Documents`),
+ *  counted from the document's questions and the answers stored for it, as the drafter counts. */
+function DocumentStatus({
+  document,
+  answers,
+}: {
+  document: ListedDocument
+  answers: AnswersByTemplate
+}): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
-  const article = provisionName(draft.document.article, language)
-  const { unanswered } = draft.document
+  const article = provisionName(document.article, language)
+  const unanswered = unansweredCount(document.questions, answers[document.template] ?? {})
   return (
     <span className="text-caption text-slate">
       {unanswered > 0
@@ -57,23 +68,22 @@ function GroupBody({
       </div>
     )
   }
-  if (group.isLoading || !group.drafts) {
+  if (group.isLoading || !group.documents) {
     return <p className="m-0 px-3 py-2 text-caption text-slate">{t('documents.drafting')}</p>
   }
-  if (group.drafts.length === 0) {
+  if (group.documents.length === 0) {
     return <p className="m-0 px-3 py-2 text-caption text-slate">{t('documents.noDocuments')}</p>
   }
   return (
     <ul className="m-0 flex list-none flex-col gap-1 p-0">
-      {group.drafts.map((draft) => {
+      {group.documents.map((document) => {
         const isCurrent =
-          selected?.tool.toolId === group.toolId &&
-          selected.draft.document.template === draft.document.template
+          selected?.tool.toolId === group.toolId && selected.document.template === document.template
         return (
-          <li key={draft.document.template}>
+          <li key={document.template}>
             <Link
               to="/app/documents/$documentId"
-              params={{ documentId: draft.document.template }}
+              params={{ documentId: document.template }}
               search={(previous) => ({ ...previous, tool: group.toolId })}
               aria-current={isCurrent ? 'page' : undefined}
               className={cn(
@@ -83,8 +93,8 @@ function GroupBody({
                   : 'hover:bg-white/45',
               )}
             >
-              <span className="text-body-small font-semibold">{draft.document.title}</span>
-              <DocumentStatus draft={draft} />
+              <span className="text-body-small font-semibold">{document.title}</span>
+              <DocumentStatus document={document} answers={group.answers} />
             </Link>
           </li>
         )

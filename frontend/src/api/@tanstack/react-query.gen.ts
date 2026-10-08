@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { draftDocuments, draftVendorLetter, exportDocument, getProvision, listDocuments, listObligations, type Options } from '../sdk.gen';
-import type { DraftDocumentsData, DraftDocumentsError, DraftDocumentsResponse, DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, ExportDocumentData, ExportDocumentError, ExportDocumentResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse } from '../types.gen';
+import { draftDocument, draftVendorLetter, exportDocument, getProvision, listDocuments, listObligations, listResultDocuments, type Options } from '../sdk.gen';
+import type { DraftDocumentData, DraftDocumentError, DraftDocumentResponse, DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, ExportDocumentData, ExportDocumentError, ExportDocumentResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse, ListResultDocumentsData, ListResultDocumentsError, ListResultDocumentsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -124,16 +124,35 @@ export const draftVendorLetterMutation = (options?: Partial<Options<DraftVendorL
 };
 
 /**
- * Draft Documents
+ * List Result Documents
  *
- * Drafts every document the result calls for with the user's answers, runs the three
- * automatic checks on each, and lists each one's interview questions. Every draft is labelled
- * DRAFT and carries the "guidance, not legal advice" notice.
+ * Every document the result calls for, with the duty it answers and its guided interview,
+ * not yet drafted.
  */
-export const draftDocumentsMutation = (options?: Partial<Options<DraftDocumentsData>>): UseMutationOptions<DraftDocumentsResponse, DraftDocumentsError, Options<DraftDocumentsData>> => {
-    const mutationOptions: UseMutationOptions<DraftDocumentsResponse, DraftDocumentsError, Options<DraftDocumentsData>> = {
+export const listResultDocumentsMutation = (options?: Partial<Options<ListResultDocumentsData>>): UseMutationOptions<ListResultDocumentsResponse, ListResultDocumentsError, Options<ListResultDocumentsData>> => {
+    const mutationOptions: UseMutationOptions<ListResultDocumentsResponse, ListResultDocumentsError, Options<ListResultDocumentsData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await draftDocuments({
+            const { data } = await listResultDocuments({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Draft Document
+ *
+ * One document drafted with the user's answers, its three automatic checks, and its
+ * interview. Labelled DRAFT, with the "guidance, not legal advice" notice.
+ */
+export const draftDocumentMutation = (options?: Partial<Options<DraftDocumentData>>): UseMutationOptions<DraftDocumentResponse, DraftDocumentError, Options<DraftDocumentData>> => {
+    const mutationOptions: UseMutationOptions<DraftDocumentResponse, DraftDocumentError, Options<DraftDocumentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await draftDocument({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -147,8 +166,8 @@ export const draftDocumentsMutation = (options?: Partial<Options<DraftDocumentsD
 /**
  * Export Document
  *
- * One document as a Word (.docx) or PDF file, drafted as `draft_documents` drafts it, and
- * only once all three automatic checks pass.
+ * One document as a Word (.docx) or PDF file: the draft `draft_document` returns for the
+ * same body, and only once all three automatic checks pass.
  */
 export const exportDocumentMutation = (options?: Partial<Options<ExportDocumentData>>): UseMutationOptions<ExportDocumentResponse, ExportDocumentError, Options<ExportDocumentData>> => {
     const mutationOptions: UseMutationOptions<ExportDocumentResponse, ExportDocumentError, Options<ExportDocumentData>> = {

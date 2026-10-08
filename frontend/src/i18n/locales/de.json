@@ -163,7 +163,12 @@
     "readyToReview": "{{article}}. Bereit zur Prüfung",
     "noDocuments": "Für sein Ergebnis sind keine Dokumente nötig.",
     "drafting": "Die Dokumente werden entworfen …",
+    "draftingOne": "Das Dokument wird entworfen …",
     "draftFailed": "Klar konnte die Dokumente für dieses Tool nicht entwerfen.",
+    "documentFailed": "Klar konnte dieses Dokument nicht entwerfen.",
+    "tooLarge": "Die Antworten zu diesem Dokument sind zusammen zu lang. Bitte kürzen Sie einige Antworten.",
+    "toolsLoading": "Ihre Tools werden geladen …",
+    "toolsFailed": "Klar konnte Ihre Tools nicht laden.",
     "tryAgain": "Erneut versuchen",
     "notFound": "Keines Ihrer Tools hat dieses Dokument. Wählen Sie eines aus der Liste.",
     "empty": {
@@ -174,7 +179,9 @@
       "docx": ".docx herunterladen",
       "pdf": "PDF herunterladen",
       "failed": "Klar konnte die Datei nicht erstellen. Bitte versuchen Sie es erneut.",
-      "checksFailed": "Der Entwurf hat die automatischen Prüfungen nicht bestanden und kann nicht heruntergeladen werden."
+      "checksFailed": "Der Entwurf hat die automatischen Prüfungen nicht bestanden und kann nicht heruntergeladen werden.",
+      "tooLong": "Dieses Dokument ist zu lang für eine Datei. Bitte kürzen Sie einige Antworten.",
+      "busy": "Klar erstellt gerade andere Dateien. Bitte versuchen Sie es gleich noch einmal."
     },
     "preview": "Dokumentvorschau",
     "lawLine": "Geprüfte Fassung der KI-Verordnung: {{version}}, gültig am {{date}}.",
@@ -207,7 +214,8 @@
       "tooLong": "Eine Antwort darf bis zu 20.000 Zeichen lang sein.",
       "done": "Alle Fragen hier sind beantwortet. Lesen Sie den Entwurf durch, bevor Sie ihn verwenden.",
       "skippedAll": "Die übrigen Fragen haben Sie vorerst übersprungen.",
-      "showSkipped": "Zurück zu den übersprungenen Fragen"
+      "showSkipped": "Zurück zu den übersprungenen Fragen",
+      "hintChoice": "Klar übernimmt für Ihre Auswahl den Wortlaut des Hinweises."
     },
     "checks": {
       "title": "Automatische Prüfungen",

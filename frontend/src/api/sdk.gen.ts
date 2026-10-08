@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, ServerSentEventsResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentsData, DraftDocumentsErrors, DraftDocumentsResponses, DraftVendorLetterData, DraftVendorLetterErrors, DraftVendorLetterResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses } from './types.gen';
+import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentData, DraftDocumentErrors, DraftDocumentResponses, DraftVendorLetterData, DraftVendorLetterErrors, DraftVendorLetterResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses, ListResultDocumentsData, ListResultDocumentsErrors, ListResultDocumentsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -75,14 +75,28 @@ export const draftVendorLetter = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Draft Documents
+ * List Result Documents
  *
- * Drafts every document the result calls for with the user's answers, runs the three
- * automatic checks on each, and lists each one's interview questions. Every draft is labelled
- * DRAFT and carries the "guidance, not legal advice" notice.
+ * Every document the result calls for, with the duty it answers and its guided interview,
+ * not yet drafted.
  */
-export const draftDocuments = <ThrowOnError extends boolean = false>(options: Options<DraftDocumentsData, ThrowOnError>): RequestResult<DraftDocumentsResponses, DraftDocumentsErrors, ThrowOnError> => (options.client ?? client).post<DraftDocumentsResponses, DraftDocumentsErrors, ThrowOnError>({
-    url: '/documents/drafts',
+export const listResultDocuments = <ThrowOnError extends boolean = false>(options: Options<ListResultDocumentsData, ThrowOnError>): RequestResult<ListResultDocumentsResponses, ListResultDocumentsErrors, ThrowOnError> => (options.client ?? client).post<ListResultDocumentsResponses, ListResultDocumentsErrors, ThrowOnError>({
+    url: '/documents/list',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Draft Document
+ *
+ * One document drafted with the user's answers, its three automatic checks, and its
+ * interview. Labelled DRAFT, with the "guidance, not legal advice" notice.
+ */
+export const draftDocument = <ThrowOnError extends boolean = false>(options: Options<DraftDocumentData, ThrowOnError>): RequestResult<DraftDocumentResponses, DraftDocumentErrors, ThrowOnError> => (options.client ?? client).post<DraftDocumentResponses, DraftDocumentErrors, ThrowOnError>({
+    url: '/documents/draft',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -93,8 +107,8 @@ export const draftDocuments = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Export Document
  *
- * One document as a Word (.docx) or PDF file, drafted as `draft_documents` drafts it, and
- * only once all three automatic checks pass.
+ * One document as a Word (.docx) or PDF file: the draft `draft_document` returns for the
+ * same body, and only once all three automatic checks pass.
  */
 export const exportDocument = <ThrowOnError extends boolean = false>(options: Options<ExportDocumentData, ThrowOnError>): RequestResult<ExportDocumentResponses, ExportDocumentErrors, ThrowOnError> => (options.client ?? client).post<ExportDocumentResponses, ExportDocumentErrors, ThrowOnError>({
     url: '/documents/export',

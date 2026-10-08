@@ -1,31 +1,22 @@
 import { describe, expect, it } from 'vitest'
 
-import type { ClassificationRun } from '@/features/classify/classification-store'
+import type { DocumentTool } from '@/hooks/use-document-drafts'
+import type { InventoryTool } from '@/lib/inventory'
 import { WORKED_EXAMPLE } from '@/test/classify-fixtures'
-import { DEPLOYER_DRAFTS, PROVIDER_DRAFTS, PROVIDER_RESULT } from '@/test/documents-fixtures'
+import { DEPLOYER_DOCUMENTS, PROVIDER_DOCUMENTS, PROVIDER_RESULT } from '@/test/documents-fixtures'
 
-import { selectDocument, type ToolDocuments } from './document-selection'
+import { documentTools, selectDocument, type ToolDocuments } from './document-selection'
 
-const APPLICANTS: ClassificationRun = {
-  toolId: 'a',
-  name: 'Applicants',
-  description: 'x',
-  result: WORKED_EXAMPLE,
-}
-const DRIVERS: ClassificationRun = {
-  toolId: 'd',
-  name: 'Drivers',
-  description: 'y',
-  result: PROVIDER_RESULT,
-}
+const APPLICANTS: DocumentTool = { toolId: 'a', name: 'Applicants', result: WORKED_EXAMPLE }
+const DRIVERS: DocumentTool = { toolId: 'd', name: 'Drivers', result: PROVIDER_RESULT }
 const ENTRIES: ToolDocuments[] = [
-  { tool: APPLICANTS, drafts: DEPLOYER_DRAFTS.en },
-  { tool: DRIVERS, drafts: PROVIDER_DRAFTS.en },
+  { tool: APPLICANTS, documents: DEPLOYER_DOCUMENTS.list.en.documents },
+  { tool: DRIVERS, documents: PROVIDER_DOCUMENTS.list.en.documents },
 ]
 
 function picked(documentId?: string, toolId?: string): [string, string] | null {
   const selected = selectDocument(ENTRIES, documentId, toolId)
-  return selected ? [selected.tool.toolId, selected.draft.document.template] : null
+  return selected ? [selected.tool.toolId, selected.document.template] : null
 }
 
 describe('Which document is on show', () => {
@@ -38,11 +29,32 @@ describe('Which document is on show', () => {
     expect(picked('art_9_risk_management')).toEqual(['d', 'art_9_risk_management'])
   })
 
-  it('shows nothing for a template the tool does not have, or while drafts load', () => {
+  it('shows nothing for a template the tool does not have, or while the list loads', () => {
     expect(picked('art_9_risk_management', 'a')).toBeNull()
     expect(picked('unknown')).toBeNull()
-    expect(selectDocument([{ tool: APPLICANTS, drafts: undefined }], undefined, undefined)).toBe(
+    expect(selectDocument([{ tool: APPLICANTS, documents: undefined }], undefined, undefined)).toBe(
       null,
     )
+  })
+})
+
+describe('Which tools have documents', () => {
+  function tool(toolId: string, result: InventoryTool['result']): InventoryTool {
+    return {
+      toolId,
+      name: null,
+      description: 'x',
+      createdAt: '2026-10-01T09:00:00+00:00',
+      result,
+      hasUnreadableResult: false,
+    }
+  }
+
+  it("keeps the inventory's tools with a result, under their inventory ids", () => {
+    const tools = [tool('t1', WORKED_EXAMPLE), tool('t2', null), tool('t3', PROVIDER_RESULT)]
+    expect(documentTools(tools)).toEqual([
+      { toolId: 't1', name: null, result: WORKED_EXAMPLE },
+      { toolId: 't3', name: null, result: PROVIDER_RESULT },
+    ])
   })
 })
