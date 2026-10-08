@@ -73,3 +73,9 @@ rate.
   that run are. This matters only if a soft-wording (B6) case is ever thin.
 - **Re-recording:** the facts prompt and its answer schema changed, so every facts recording and the worked example's
   end-to-end replay are re-recorded once (cost logged in the E13 hand-over).
+- **Facts answer length:** the first re-recording cut 7 own cases and the worked example off at the 4,000-token
+  cap (finish_reason `length`), mostly on reasoning. The facts prompt now keeps the answer short and says the
+  fact-id list only names questions, not a checklist; the worked example's answer fell from 2,414 to about 1,450
+  tokens. Long own-case descriptions still reach about 4,000 whatever the prompt (a live pre-E13 baseline gave
+  2,472-3,950; own-c-17 3,910-4,000), so the facts node's `MAX_OUTPUT_TOKENS`, a runaway bound, is now 6,000
+  (the user's decision, 2026-10-09).

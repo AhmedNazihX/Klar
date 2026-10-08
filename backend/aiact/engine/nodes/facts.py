@@ -53,8 +53,11 @@ from aiact.settings import Settings
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "facts.md"
 FACTS_INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
 
-MAX_OUTPUT_TOKENS = 4000
-"""Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005)."""
+MAX_OUTPUT_TOKENS = 6000
+"""Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005). On long
+own-case descriptions the answer, mostly reasoning, reaches about 4,000 whatever the prompt (the
+pre-E13 prompt used 2,472-3,950 live, own-c-17 3,910-4,000), so E13 raised it from 4,000
+(decision 032)."""
 
 QUOTE_EDGES = " \t\n\"'“”„«».,;:…‚‘’"  # noqa: RUF001 (typographic quotes, on purpose)
 """Punctuation and quote marks a model may add around a quote; trimmed before matching."""
