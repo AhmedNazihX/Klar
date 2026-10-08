@@ -18,11 +18,17 @@ from aiact.schemas.enums import (
 from aiact.schemas.evidence import Citation, Fact, OpenQuestion, Reading, SettledBy, SourceSpan
 from aiact.schemas.law_text import LAW_TEXTS, LawText
 from aiact.schemas.obligations import Obligation
-from aiact.schemas.questions import YES_NO, AnswerOutcome, FollowUpQuestion
+from aiact.schemas.questions import (
+    DESCRIPTION_QUESTION_IDS,
+    YES_NO,
+    AnswerOutcome,
+    FollowUpQuestion,
+)
 from aiact.schemas.result import ClassificationResult
 from aiact.schemas.steps import PROVIDER_REFUSAL, STEP_ORDER, StepName, StepResult
 
 __all__ = [
+    "DESCRIPTION_QUESTION_IDS",
     "DISCLAIMER",
     "DISCLAIMER_DE",
     "DISCLAIMER_EN",

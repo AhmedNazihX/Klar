@@ -9,6 +9,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from aiact.engine.graph import CheckNode, EngineNodes, run_ends_after
+from aiact.engine.nodes.finalize import description_result
 from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
 from aiact.schemas import (
     DISCLAIMER,
@@ -68,6 +69,8 @@ def _follow_ups(state: EngineState) -> tuple[FollowUpQuestion, ...]:
 
 
 def _finalize(state: EngineState, script: Script) -> ClassificationResult:
+    if state.get("needs_description", False):
+        return description_result(state)
     steps: tuple[StepResult, ...] = state.get("steps", ())
     risk_class = _risk_class(state, steps, script)
     has_role_step = len(steps) == len(STEP_ORDER)

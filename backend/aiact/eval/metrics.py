@@ -14,6 +14,14 @@ Scoring rules decided here:
   (`needs_info_on_ambiguous`). It leaves risk-class accuracy and both uncertain-outcome
   precision/recall pairs. For appliedAI this is `score_appliedai`'s `is_counted_separately`.
 - Every other label is scored on the result's working-assumption class, whatever its status.
+- Needs a description (E13; decision 032, option A): a result with no class (the run ended
+  before the checks) is scored in two rows of its own. A thin-description case (its label
+  expects no class) is a hit there when the result asks for a description
+  (`description_asked`), and leaves risk-class accuracy. Any other case answered
+  with no class counts in the false-flag row (`description_asked_wrongly`), stays a miss in
+  risk-class and role accuracy, and leaves false-low-risk and the downgrade rate: no class was
+  shown, so none was shown too low. Its status (`needs_more_information`) counts in that
+  status's precision and recall like any other.
 - A failed case (no result) is a miss wherever its label is scored: risk-class and role accuracy,
   and recall of an uncertain status, whatever the label. So a failed appliedAI `unclear` case is an
   accuracy miss and an ambiguous recall miss; a failed own ambiguous case is an ambiguous recall
@@ -166,7 +174,10 @@ def _unsafe_label_class(case: BenchmarkCase) -> RiskClass | None:
 
 
 def accepted_classes(case: BenchmarkCase, label: CaseLabel) -> frozenset[RiskClass]:
-    """The result classes that match a case's label, with the academic set's low bucket."""
+    """The result classes that match a case's label, with the academic set's low bucket; none
+    for a label that expects no class."""
+    if label.risk_class is None:
+        return frozenset()
     if case.set_name is not CaseSet.ACADEMIC or label.risk_class not in LOW_BUCKET:
         return frozenset({label.risk_class})
     if LOW_OR_OUT_OF_SCOPE_TAG in case.tags:
@@ -194,7 +205,7 @@ def risk_class_match(outcome: Outcome) -> bool | None:
             return False
         score = score_appliedai(label, result.risk_class, result.status)
         return None if score.is_counted_separately else score.is_match
-    if label.status is Status.LEGALLY_AMBIGUOUS:
+    if label.status is Status.LEGALLY_AMBIGUOUS or label.expects_description:
         return None
     return result is not None and result.risk_class in accepted_classes(outcome.case, label)
 
@@ -202,7 +213,7 @@ def risk_class_match(outcome: Outcome) -> bool | None:
 def false_low_risk(outcome: Outcome) -> bool | None:
     """Whether a high-risk or prohibited system was classified lower (the costliest error)."""
     expected, result = _unsafe_label_class(outcome.case), outcome.result
-    if expected is None or result is None:
+    if expected is None or result is None or result.risk_class is None:
         return None
     return RISK_RANK[result.risk_class] < RISK_RANK[expected]
 
@@ -232,6 +243,25 @@ def downgraded(outcome: Outcome) -> bool | None:
     if SOFT_WORDING_TAG not in outcome.case.tags:
         return None
     return false_low_risk(outcome)
+
+
+def _expects_description(case: BenchmarkCase) -> bool:
+    return isinstance(case.label, CaseLabel) and case.label.expects_description
+
+
+def description_asked(outcome: Outcome) -> bool | None:
+    """For a thin-description case: did the result ask for a description (no class, E13)?
+    A failed case is a miss."""
+    if not _expects_description(outcome.case):
+        return None
+    return outcome.result is not None and outcome.result.needs_description
+
+
+def description_asked_wrongly(outcome: Outcome) -> bool | None:
+    """For any other case with a result: did the run end asking for a description anyway?"""
+    if _expects_description(outcome.case) or outcome.result is None:
+        return None
+    return outcome.result.needs_description
 
 
 def citations_exist(outcome: Outcome, exists: CitationExists) -> bool | None:
@@ -301,6 +331,8 @@ SCORERS: dict[str, Scorer] = {
     "basis_accuracy": basis_match,
     "flip_variant_flagged": flip_variant_flagged,
     "citation_accuracy": citation_match,
+    "description_asked": description_asked,
+    "description_asked_wrongly": description_asked_wrongly,
 }
 
 
@@ -494,6 +526,8 @@ class RunMetrics(ContractModel):
     basis_accuracy: Rate
     flip_variant_flagged: Rate
     citation_accuracy: Rate
+    description_asked: Rate
+    description_asked_wrongly: Rate
     consistency: Rate
     citation_existence: Rate
     appliedai_disagreement_review: int
@@ -516,6 +550,8 @@ def summarize(outcomes: Sequence[Outcome], exists: CitationExists | None) -> Run
         basis_accuracy=rate(outcomes, basis_match),
         flip_variant_flagged=rate(outcomes, flip_variant_flagged),
         citation_accuracy=rate(outcomes, citation_match),
+        description_asked=rate(outcomes, description_asked),
+        description_asked_wrongly=rate(outcomes, description_asked_wrongly),
         consistency=consistency(outcomes),
         citation_existence=citation_existence(outcomes, exists),
         appliedai_disagreement_review=appliedai_review_count(outcomes),

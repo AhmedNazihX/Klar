@@ -15,6 +15,11 @@ SLUG_PATTERN = r"^[a-z][a-z0-9_]{0,63}$"
 YES_NO: tuple[AnswerOption, ...] = (AnswerOption.YES, AnswerOption.NO, AnswerOption.NOT_SURE)
 """The answers offered to a yes/no question."""
 
+DESCRIPTION_QUESTION_IDS: tuple[str, ...] = ("what_it_decides", "who_it_affects", "bought_or_built")
+"""The three questions a "needs a description" result asks, in this order (E13, decision 010
+addendum): what the tool decides or suggests, who it affects, and whether it was bought or
+built."""
+
 
 class AnswerOutcome(ContractModel):
     """What a "yes" settles, where the step asking knows it: the class and, for high-risk, the
@@ -51,8 +56,8 @@ class FollowUpQuestion(ContractModel):
     )
     hint: str | None = Field(
         default=None,
-        description="Why the answer matters, naming the provision it decides, in the result's "
-        "language.",
+        description="Why the answer matters, naming the provision it decides, or examples of an "
+        "answer (a needs-a-description question), in the result's language.",
     )
     options: tuple[AnswerOption, ...] = Field(
         default=(),

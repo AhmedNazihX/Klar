@@ -21,7 +21,7 @@ from aiact.drafting import (
     run_checks,
 )
 from aiact.drafting.models import TEMPLATE_PATTERN
-from aiact.drafting.prefill import Fill
+from aiact.drafting.prefill import Fill, NoClassError
 from aiact.drafting.templates import (
     NO_STATED_FACTS,
     ClassificationSection,
@@ -37,7 +37,7 @@ from aiact.schemas import (
     StepName,
 )
 from tests.drafting.builders import WORKERS, WORKERS_ANSWERS, limited_risk_result
-from tests.schemas.builders import missing_fact, rebuild, steps_with
+from tests.schemas.builders import missing_fact, needs_description, rebuild, steps_with
 from tests.schemas.worked_example import EU_USE, worked_example_result
 
 
@@ -345,3 +345,9 @@ def test_every_template_is_complete_in_both_languages(template: DocumentTemplate
 def test_a_system_facts_section_needs_its_no_facts_line() -> None:
     with pytest.raises(ValueError, match="no facts were stated"):
         ClassificationSection("system", {Language.EN: "The system"}, Fill.SYSTEM_FACTS)
+
+
+def test_a_needs_description_result_drafts_no_document() -> None:
+    """A result with no class (E13) has no class sentence to state."""
+    with pytest.raises(NoClassError):
+        draft_document(TEMPLATES[WORKERS], needs_description(), {}, Language.EN)

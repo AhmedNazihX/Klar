@@ -139,9 +139,10 @@ class FlipVariant(ContractModel):
 
 class CaseLabel(ContractModel):
     """The expected answer in the engine's vocabulary. An uncertain status keeps the stricter
-    reading in `risk_class`, as the engine does (INIT > Risk classes)."""
+    reading in `risk_class`, as the engine does (INIT > Risk classes). A description too thin to
+    start (E13) expects no class: `risk_class` is null and the status `needs_more_information`."""
 
-    risk_class: RiskClass
+    risk_class: RiskClass | None
     status: Status = Status.DECIDED
     role: Role | None = None
     annex_point: tuple[AnnexPoint, ...] = Field(
@@ -149,6 +150,21 @@ class CaseLabel(ContractModel):
         description="Every Annex point the system falls under; a result naming any one matches. "
         "A file may give one point as a plain string.",
     )
+
+    @property
+    def expects_description(self) -> bool:
+        """Whether the label expects the needs-a-description outcome (no class, E13)."""
+        return self.risk_class is None
+
+    @model_validator(mode="after")
+    def _no_class_only_for_a_thin_description(self) -> Self:
+        if self.expects_description and (
+            self.status is not Status.NEEDS_MORE_INFORMATION or self.role or self.annex_point
+        ):
+            raise ValueError(
+                "a label without a class is needs_more_information, with no role or annex_point"
+            )
+        return self
 
     @field_validator("annex_point", mode="before")
     @classmethod
@@ -222,10 +238,14 @@ class BenchmarkCase(ContractModel):
     @model_validator(mode="after")
     def _cite_or_ambiguous(self) -> Self:
         """INIT > Label rules: a label cites what settles it, or is ambiguous with the open
-        question and both readings in `notes`."""
+        question and both readings in `notes`. A needs-a-description label rests on no
+        provision, so it says in `notes` what the description leaves out instead (E13)."""
         if self.set_name not in OWN_LABELLED_SETS or not isinstance(self.label, CaseLabel):
             return self
-        if self.label.status is Status.LEGALLY_AMBIGUOUS:
+        if self.label.expects_description:
+            if not self.notes:
+                raise ValueError("a label without a class needs what is missing in notes")
+        elif self.label.status is Status.LEGALLY_AMBIGUOUS:
             if not self.notes:
                 raise ValueError("an ambiguous label needs the open question and readings in notes")
         elif not self.label_citation:
@@ -452,11 +472,14 @@ APPLIEDAI_MATCHES: dict[AppliedAILabel, frozenset[RiskClass]] = {
 Annex II references in the labels are read as Annex I."""
 
 
-def score_appliedai(label: AppliedAILabel, risk_class: RiskClass, status: Status) -> AppliedAIScore:
+def score_appliedai(
+    label: AppliedAILabel, risk_class: RiskClass | None, status: Status
+) -> AppliedAIScore:
     """Score an engine answer against an appliedAI label.
 
     For high, prohibited and low an uncertain answer is scored on its working-assumption class,
-    so "assumed high-risk pending legal review" matches `high`.
+    so "assumed high-risk pending legal review" matches `high`. An answer with no class (needs a
+    description, E13) matches none of them.
     """
     if label is AppliedAILabel.UNCLEAR:
         is_match = status is Status.LEGALLY_AMBIGUOUS

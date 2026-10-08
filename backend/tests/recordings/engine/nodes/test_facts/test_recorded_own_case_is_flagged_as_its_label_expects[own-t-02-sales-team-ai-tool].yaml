@@ -1,0 +1,162 @@
+interactions:
+- request:
+    body: '{"messages":[{"content":"You extract the facts about one AI system from
+      a company''s description of it, as the first step of a classification under
+      the EU AI Act (Regulation (EU) 2024/1689, as amended by the Digital Omnibus).
+      You do not classify the system. Later steps check, in this order: scope (Art.
+      2-3), prohibited practices (Art. 5), high-risk (Art. 6 with Annex I and Annex
+      III, and the Art. 6(3) exception), transparency duties (Art. 50), and the company''s
+      role and obligations (Art. 16, 23-26). Extract the facts those checks depend
+      on, and ask about the ones the description leaves open.\n\nKeep your reasoning
+      and your answer short. Read the description once, note what it says and what
+      it leaves open, then answer. Do not weigh how the law applies or what the outcome
+      will be: the later checks do that, not you. Do not go through every possible
+      fact, every flip feature or every id below one by one; use them only when the
+      description points to them.\n\n## Facts\n\nList the facts that matter for the
+      checks above, one fact per entry, each a short sentence: at most 10 facts, the
+      ones a check turns on. Leave out background a check doesn''t need (company size,
+      vendor names, rollout dates, unrelated features). Tag each one with its evidence:\n\n-
+      `stated`: the description says it. Give `quote`: the shortest passage of the
+      description that says it, copied character for character, in the description''s
+      own language. Do not fix typos, translate, shorten with \"...\" or join separate
+      passages. A stated fact has no `question`.\n- `inferred`: the description doesn''t
+      say it, but it follows from what it says (for example, a tool that \"shows HR
+      a ranked shortlist\" ranks people). `quote` is null. Give a `question` asking
+      the user to confirm it.\n- `assumed`: nothing in the description points either
+      way, and you take the usual default (for example, that the system is used in
+      the EU). `quote` is null. Give a `question` asking the user to confirm it.\n\nNever
+      tag a fact `stated` unless the quote really says it. When in doubt, tag it `inferred`.
+      Add an `inferred` or `assumed` fact only when it could change the outcome of
+      a check.\n\nThe facts the checks usually depend on:\n\n- What the system does
+      and what it is for: its purpose, its outputs, and the area it is used in (employment,
+      education, credit, insurance, public benefits, law enforcement, migration, justice,
+      elections, critical infrastructure, biometrics, a product covered by EU product
+      law).\n- Whether it is an AI system at all: it infers from inputs how to produce
+      outputs such as predictions, content, recommendations or decisions, rather than
+      following fixed rules written by people.\n- Where it is used or placed on the
+      market (the EU or not), and any exclusion: military or national security use,
+      scientific research only, purely personal use.\n- Whether it ranks, scores,
+      filters, profiles or makes decisions about people, and what those decisions
+      affect.\n- Whether a person reviews its outputs before they take effect.\n-
+      Who uses it: the company itself, its customers, a public authority, or someone
+      acting on behalf of one.\n- The company''s role: whether it built the system
+      or had it built, bought it, puts its own name or brand on it, modified it substantially,
+      or uses it for a purpose other than the one it was sold for; whether it is built
+      on a general-purpose AI model; whether the company imports or resells it.\n-
+      Whether it talks to people, generates or edits text, images, audio or video,
+      or recognises emotions or sorts people by biometric data.\n\n## Enough to start\n\nThe
+      checks can only start when the description says two things. Set `says_what_it_decides`
+      to true when it says what the system does with its input: what it decides, suggests,
+      scores, sorts, predicts, generates or controls (for example \"ranks applicants\",
+      \"answers customers'' questions\", \"predicts when a bearing will fail\"). Set
+      `says_who_it_affects` to true when it says whom its outputs concern (for example
+      applicants, staff, customers, students, patients, the public) or, for a system
+      that concerns no person, the machine, product or process it acts on. Read both
+      from the whole description, including what follows from its context: \"shows
+      HR a ranked shortlist of applicants\" says both.\n\nA bare area or label is
+      not enough: \"we use machine learning in finance\" or \"an AI solution for our
+      sales team\" names a field or a kind of tool, not what it decides or whom it
+      affects. Set a field to false only when the description gives no way to tell.
+      List the facts it does give either way.\n\n## Key-fact questions\n\n`questions`
+      lists what the user should be asked about facts the description does not settle,
+      when the answer could change the outcome of a check. Each question asks about
+      one fact, in plain words, and can be answered in a sentence. Ask at most 6,
+      most decisive first. Do not repeat a question already attached to an inferred
+      or assumed fact.\n\nSome features flip an outcome when present. When the description
+      matches the base case but does not say whether the feature is there, ask about
+      it:\n\n- Checking payments or customers for fraud or money laundering: does
+      it also assess creditworthiness or set credit scores for individuals?\n- Analysing
+      faces, voices or behaviour (for example in interviews, exams, border checks
+      or at work): is it used as a polygraph or similar tool, or does it infer emotions?\n-
+      Supporting a court, authority or dispute body with documents or cases: does
+      it recommend whether something is admissible or how to decide, or does it change
+      the content of a decision?\n- Supporting political campaigns: do voters see
+      its output directly, or is it only used to organise or run the campaign?\n-
+      Rating or scoring people''s reliability or behaviour: is the score used outside
+      the context where the data was collected, or does it predict whether a person
+      will commit a crime?\n- Workplace or education monitoring by webcam, voice or
+      keystrokes: does it infer emotions?\n- Public benefits, pensions or social services:
+      is the scheme run by or for a public authority?\n- Scholarships or funding:
+      does the decision decide admission, or only fund students already admitted?\n\n##
+      Ids and language\n\nEach question has an `id`: a short snake_case name for the
+      fact it asks about, starting with a letter. The list below only names questions;
+      it is not a checklist. Decide first what to ask, from what the description leaves
+      open, and never ask about a fact just because it has an id here. When a question
+      you ask is about one of these common facts, use its id exactly:\n\n- `ai_system`:
+      whether it infers its outputs or only applies rules people wrote.\n- `eu_link`:
+      whether it is placed on the market or used in the EU, or its output is used
+      there.\n- `intended_purpose`: what it is for, when the description leaves that
+      open.\n- `human_review`: whether a person reviews its outputs before they take
+      effect.\n- `profiling`: whether it evaluates or predicts things about individual
+      people from their personal data.\n- `public_authority_user`: whether a public
+      authority, or someone acting on its behalf, uses it.\n- `safety_component`:
+      whether it is a safety component of a product, or is itself a product, covered
+      by EU product law.\n- `operator_role`: whether the company built it, had it
+      built, or uses a system someone else provides.\n- `own_brand`: whether the company
+      puts its own name or trademark on it.\n- `substantial_modification`: whether
+      the company changed it beyond what its provider foresaw.\n- `changed_purpose`:
+      whether the company uses it for a purpose its provider did not intend.\n- `builds_on_gpai`:
+      whether it is built on a general-purpose AI model from another provider.\n-
+      `interacts_directly`: whether people interact with it directly.\n- `generates_synthetic_content`:
+      whether it generates or edits text, images, audio or video.\n- `infers_emotions`:
+      whether it infers people''s emotions.\n- `creditworthiness`: whether it assesses
+      creditworthiness or sets credit scores for individuals.\n\nFor any other fact,
+      make up a short id of the same kind. Use the same id every time you ask about
+      the same fact. `about` names the check the answer matters for: `scope`, `prohibited`,
+      `high_risk`, `transparency` or `role_obligations`.\n\nWrite every fact `text`
+      and question `text` in the language the user message asks for (`en`: English,
+      `de`: German). Quotes stay in the description''s own language.\n\nAnswer with
+      JSON matching the schema, and nothing else.\n","role":"system"},{"content":"Language
+      for facts and questions: en\n\nDescription:\nWe''re a 60-person office furniture
+      wholesaler in Lyon. Since last spring our sales team has used an AI tool from
+      a start-up, and everyone says it saves them a lot of time.","role":"user"}],"max_tokens":6000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"facts_answer","schema":{"$defs":{"EvidenceTag":{"description":"Where
+      a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"ExtractedFact":{"additionalProperties":false,"description":"One
+      fact as the model returns it. Enum fields carry no description: strict structured\noutput
+      rejects keywords next to a `$ref`; the prompt explains every field instead.","properties":{"text":{"minLength":1,"title":"Text","type":"string"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"quote":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"For
+      a stated fact: the passage, copied verbatim.","title":"Quote"},"question":{"anyOf":[{"$ref":"#/$defs/FollowUpQuestion"},{"type":"null"}],"description":"For
+      an inferred or assumed fact: the question that confirms it."}},"required":["text","evidence","quote","question"],"title":"ExtractedFact","type":"object"},"FollowUpQuestion":{"additionalProperties":false,"description":"A
+      key-fact question. Its `id` keys the user''s answer when the engine runs again.","properties":{"id":{"description":"Stable
+      slug, for example `human_review`.","pattern":"^[a-z][a-z0-9_]{0,63}$","title":"Id","type":"string"},"text":{"minLength":1,"title":"Text","type":"string"},"about":{"anyOf":[{"type":"string"},{"type":"null"}],"default":null,"description":"What
+      the answer settles, for example a step or provision_id.","title":"About"}},"required":["id","text","about"],"title":"FollowUpQuestion","type":"object"}},"additionalProperties":false,"description":"The
+      model''s whole answer; also the JSON schema it must fill.","properties":{"facts":{"items":{"$ref":"#/$defs/ExtractedFact"},"title":"Facts","type":"array"},"says_what_it_decides":{"description":"Whether
+      the description says what the system decides, suggests, produces or controls.","title":"Says
+      What It Decides","type":"boolean"},"says_who_it_affects":{"description":"Whether
+      the description says whom (or, for no person, what) its outputs concern.","title":"Says
+      Who It Affects","type":"boolean"},"questions":{"description":"Key-fact questions
+      the description leaves open, most decisive first.","items":{"$ref":"#/$defs/FollowUpQuestion"},"title":"Questions","type":"array"}},"required":["facts","says_what_it_decides","says_who_it_affects","questions"],"title":"FactsAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+    headers:
+      content-type:
+      - application/json
+    method: POST
+    uri: https://openrouter.ai/api/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\": \"gen-1791502970-T0wwjngJM9aky36SeoaM\", \"object\": \"chat.completion\",
+        \"created\": 1791502970, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+        \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
+        [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
+        \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\\"facts\\\":[{\\\"text\\\":\\\"The
+        company is based in Lyon.\\\",\\\"evidence\\\":\\\"stated\\\",\\\"quote\\\":\\\"in
+        Lyon\\\",\\\"question\\\":null},{\\\"text\\\":\\\"The sales team has used
+        an AI tool supplied by a start-up.\\\",\\\"evidence\\\":\\\"stated\\\",\\\"quote\\\":\\\"our
+        sales team has used an AI tool from a start-up\\\",\\\"question\\\":null},{\\\"text\\\":\\\"The
+        tool is used in the EU.\\\",\\\"evidence\\\":\\\"inferred\\\",\\\"quote\\\":null,\\\"question\\\":{\\\"id\\\":\\\"eu_link\\\",\\\"text\\\":\\\"Is
+        the tool used in the EU, or are its outputs used there?\\\",\\\"about\\\":\\\"scope\\\"}}],\\\"says_what_it_decides\\\":false,\\\"says_who_it_affects\\\":false,\\\"questions\\\":[{\\\"id\\\":\\\"intended_purpose\\\",\\\"text\\\":\\\"What
+        does the tool do with its inputs, and what is it used for?\\\",\\\"about\\\":\\\"scope\\\"},{\\\"id\\\":\\\"ai_system\\\",\\\"text\\\":\\\"Does
+        the tool infer its outputs from inputs, or does it only apply rules people
+        wrote?\\\",\\\"about\\\":\\\"scope\\\"},{\\\"id\\\":\\\"human_review\\\",\\\"text\\\":\\\"Does
+        a person review the tool\u2019s outputs before they take effect?\\\",\\\"about\\\":\\\"high_risk\\\"}]}\",
+        \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 2400, \"completion_tokens\":
+        756, \"total_tokens\": 3156, \"cost\": 0.0004492015, \"is_byok\": false, \"prompt_tokens_details\":
+        {\"cached_tokens\": 2344, \"cache_write_tokens\": 53, \"audio_tokens\": 0,
+        \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\": 0.0004492015,
+        \"upstream_inference_prompt_cost\": 3.34015e-05, \"upstream_inference_completions_cost\":
+        0.0004158}, \"completion_tokens_details\": {\"reasoning_tokens\": 516, \"image_tokens\":
+        0, \"audio_tokens\": 0}}}"
+    headers:
+      content-type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1

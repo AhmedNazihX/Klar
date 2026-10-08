@@ -137,10 +137,13 @@ export type ClassificationResult = {
     /**
      * Steps
      *
-     * In the Act's check order.
+     * In the Act's check order; empty only for a needs-a-description result.
      */
     steps: Array<StepResult>;
-    risk_class: RiskClass;
+    /**
+     * The headline class; null exactly when the run ended before the checks because the description was too thin to start (needs a description, E13).
+     */
+    risk_class: RiskClass | null;
     /**
      * Derived from the steps; see `derived_status`.
      */
@@ -567,7 +570,7 @@ export type FollowUpQuestion = {
     /**
      * Hint
      *
-     * Why the answer matters, naming the provision it decides, in the result's language.
+     * Why the answer matters, naming the provision it decides, or examples of an answer (a needs-a-description question), in the result's language.
      */
     hint?: string | null;
     /**

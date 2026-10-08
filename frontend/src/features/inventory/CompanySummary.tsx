@@ -20,6 +20,7 @@ import {
   type NextDuties,
   type ProhibitedTools,
 } from './company-summary'
+import { riskClassOf } from '@/lib/risk-class'
 
 const DOT_CLASS: Record<RiskClass, string> = {
   prohibited: 'bg-risk-prohibited-dot',
@@ -70,7 +71,7 @@ function SummarySentence({
             }}
           />
           {next.isAssumed &&
-            ` ${t('inventory.summary.assumedClass', { riskClass: t(`pill.${next.tool.result.risk_class}`) })}`}
+            ` ${t('inventory.summary.assumedClass', { riskClass: t(`pill.${riskClassOf(next.tool.result)}`) })}`}
         </>
       )}
       {!prohibited && !next && t('inventory.summary.calm')}

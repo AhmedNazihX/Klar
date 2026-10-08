@@ -17,7 +17,11 @@ from functools import partial
 import pytest
 
 from aiact.db import connect
-from aiact.engine import ClassificationRun, ClassifyRequest, run_classification
+from aiact.engine import (
+    ClassificationRun,
+    ClassifyRequest,
+    run_classification,
+)
 from aiact.engine.classify import CorpusLibraries, NodeBuilder, engine_nodes
 from aiact.engine.nodes import prohibited, transparency
 from aiact.engine.nodes.common import Lookup

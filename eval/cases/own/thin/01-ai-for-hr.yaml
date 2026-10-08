@@ -1,0 +1,16 @@
+id: own-t-01-ai-for-hr
+set_name: own
+language: en
+description: We use AI for HR.
+label:
+  risk_class: null
+  status: needs_more_information
+notes: >-
+  Too thin to start (E13, decision 032). The description says only that AI is used somewhere in
+  HR. It doesn't say what the tool decides or suggests (screening or ranking applicants, planning
+  shifts, answering staff questions) or whom it affects (applicants, staff), nor whether it was
+  bought or built. The class could be anything from minimal risk to high risk under Annex III
+  point 4, so the engine should ask the three description questions and predict no class. Label
+  approved by user 2026-10-09.
+tags:
+  - "thin-description"

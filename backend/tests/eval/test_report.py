@@ -70,7 +70,9 @@ def test_report_is_a_markdown_table_of_every_metric() -> None:
     assert "| Basis accuracy (Commission cases) | n/a | 0/0 |" in lines
     assert "| Flip variant asked or flagged | n/a | 0/0 |" in lines
     assert "| Label citation cited (any of) | 0.0% | 0/2 |" in lines
-    assert len(table) == 19  # header, separator and 17 metric rows
+    assert "| Needs a description: asked (thin cases) | n/a | 0/0 |" in lines
+    assert "| Needs a description: asked wrongly (other cases) | 0.0% | 0/2 |" in lines
+    assert len(table) == 21  # header, separator and 19 metric rows
 
 
 def test_report_rows_show_each_commission_metric_under_its_own_name() -> None:

@@ -15,6 +15,7 @@ import { ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
 import { decidingStep, statusPill, SUMMARY_ROWS } from './result-text'
 import { DutiesStepCard, EngineStepCard, FactsStepCard } from './StepCards'
+import { riskClassOf } from '@/lib/risk-class'
 
 const JSON_INDENT = 2
 
@@ -36,7 +37,7 @@ function ResultPills({ result }: { result: ClassificationResult }): JSX.Element 
   const language = useLanguage()
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <RiskPill kind={result.risk_class} />
+      <RiskPill kind={riskClassOf(result)} />
       {result.role && (
         <StatusPill status="decided">{t(`result.roleName.${result.role}`)}</StatusPill>
       )}

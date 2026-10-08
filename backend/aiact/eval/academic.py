@@ -273,7 +273,7 @@ def build_cases(
 def write_cases(cases: Iterable[BenchmarkCase], out_dir: Path = ACADEMIC_DIR) -> tuple[Path, ...]:
     """Write one YAML list per risk class (`<risk_class>.yaml`), in id order; returns the paths."""
     out_dir.mkdir(parents=True, exist_ok=True)
-    by_class: dict[RiskClass, list[BenchmarkCase]] = {}
+    by_class: dict[RiskClass | None, list[BenchmarkCase]] = {}
     for case in sorted(cases, key=lambda case: case.id):
         if isinstance(case.label, CaseLabel):
             by_class.setdefault(case.label.risk_class, []).append(case)

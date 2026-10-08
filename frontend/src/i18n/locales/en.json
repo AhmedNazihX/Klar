@@ -497,6 +497,10 @@
       "paused": "Waiting for you",
       "error": "Stopped"
     },
+    "needsDescription": {
+      "title": "Klar needs a little more to start",
+      "waiting": "Waiting for a description. Nothing is guessed in the meantime."
+    },
     "accuracy": "This assessment is only as accurate as the description you give.",
     "stopped": {
       "title": "The checks couldn't finish",
@@ -517,7 +521,8 @@
       "invalid": "The description couldn't be sent. Keep it under 20,000 characters and try again.",
       "server": "The service answered with an error (HTTP {{status}}).",
       "network": "The service didn't respond. Check your connection and try again.",
-      "incomplete": "The connection ended before the checks finished."
+      "incomplete": "The connection ended before the checks finished.",
+      "needsDescription": "Klar needs to know what the tool decides and who it affects. Add that to your description and run it again."
     }
   },
   "result": {

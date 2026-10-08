@@ -83,7 +83,7 @@ def test_every_node_gets_the_pinned_engine_model_with_its_own_output_cap() -> No
     assert {
         node: chat.max_tokens for node, chat in chats.items() if isinstance(chat, ChatOpenRouter)
     } == {
-        "facts": 4000,
+        "facts": 6000,
         "scope": 3000,
         "prohibited": 6000,
         "high_risk": 6000,

@@ -130,6 +130,7 @@ export function ProgressPanel({
   const language = useLanguage()
   const headingId = useId()
   const rows = progressRows({ t, language, progress, failure }, isRunning)
+  const isThin = failure?.kind === 'needs_description'
   return (
     <GlassPanel
       as="section"
@@ -141,16 +142,28 @@ export function ProgressPanel({
           {t('progress.heading')}
         </h2>
         <p className="m-0 text-caption font-normal text-slate">
-          {failure ? stoppedTitle(t, progress) : t('progress.subtitle')}
+          {isThin
+            ? t('progress.needsDescription.waiting')
+            : failure
+              ? stoppedTitle(t, progress)
+              : t('progress.subtitle')}
         </p>
       </div>
       {failure && (
         <div role="alert" className="flex flex-col gap-3 rounded-card-small px-4 py-3.5 glass-thin">
           <p className="m-0 text-body-small font-semibold text-ink">
-            {t('progress.stopped.title')}
+            {isThin ? t('progress.needsDescription.title') : t('progress.stopped.title')}
           </p>
           <p className="m-0 text-caption font-normal text-ink-2">{failureReason(t, failure)}</p>
-          <p className="m-0 text-caption font-normal text-ink-2">{t('progress.stopped.body')}</p>
+          {failure.kind === 'needs_description' ? (
+            <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-caption font-normal text-ink-2">
+              {failure.questions.map((question) => (
+                <li key={question}>{question}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="m-0 text-caption font-normal text-ink-2">{t('progress.stopped.body')}</p>
+          )}
           <div className="flex flex-wrap gap-2.5">
             <Button size="sm" onClick={onTryAgain}>
               {t('progress.stopped.tryAgain')}

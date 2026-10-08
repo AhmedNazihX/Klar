@@ -17,6 +17,8 @@ export function failureReason(t: TFunction, failure: ClassifyFailure): string {
       return t('progress.reason.network')
     case 'incomplete':
       return t('progress.reason.incomplete')
+    case 'needs_description':
+      return t('progress.reason.needsDescription')
     case 'http': {
       const seconds = failure.retryAfterSeconds
       if (failure.status === HTTP_TOO_MANY) {

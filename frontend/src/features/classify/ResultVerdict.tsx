@@ -12,6 +12,7 @@ import type { Language } from '@/i18n'
 import { checkNumber } from './classify-progress'
 import { longDate, monthsUntil, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
 import { amendedRouteDate, basisSentence, dutiesDate, pausedStep, statusPill } from './result-text'
+import { riskClassOf } from '@/lib/risk-class'
 
 /** The roles that supply the system: Art. 111(2) counts per copy supplied (decision 022). */
 const SUPPLIER_ROLES: readonly Role[] = ['provider', 'importer', 'distributor']
@@ -119,7 +120,7 @@ export function ResultVerdict({
   const legacy = legacySentences(t, result, language)
   return (
     <ResultSummary
-      riskClass={result.risk_class}
+      riskClass={riskClassOf(result)}
       status={<StatusPills result={result} />}
       statement={
         <>

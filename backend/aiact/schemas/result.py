@@ -1,6 +1,9 @@
 """The structured result of classifying one AI system.
 
-The cross-field rules below can't be expressed in JSON Schema; decision 010 covers them.
+The cross-field rules below can't be expressed in JSON Schema; decision 010 covers them. A result
+lists every check, or ends early after a stopping check (decision 010), or ends before the checks
+because the description is too thin to start (E13, decision 010 addendum 2026-10-01): a "needs a
+description" result has no steps and no class, and asks the three `DESCRIPTION_QUESTION_IDS`.
 """
 
 from collections.abc import Iterable
@@ -15,7 +18,7 @@ from aiact.schemas.enums import LawVersion, RiskClass, Role, Status
 from aiact.schemas.evidence import Fact
 from aiact.schemas.law_text import LAW_TEXTS, LawText
 from aiact.schemas.obligations import Obligation
-from aiact.schemas.questions import FollowUpQuestion
+from aiact.schemas.questions import DESCRIPTION_QUESTION_IDS, FollowUpQuestion
 from aiact.schemas.steps import PROVIDER_REFUSAL, STEP_ORDER, StepName, StepResult
 
 SCOPE_ONLY = STEP_ORDER[: STEP_ORDER.index(StepName.SCOPE) + 1]
@@ -61,8 +64,13 @@ class ClassificationResult(ContractModel):
     kept as the labelled working assumption."""
 
     facts: tuple[Fact, ...] = Field(description="Facts extracted from the description.")
-    steps: tuple[StepResult, ...] = Field(min_length=1, description="In the Act's check order.")
-    risk_class: RiskClass
+    steps: tuple[StepResult, ...] = Field(
+        description="In the Act's check order; empty only for a needs-a-description result."
+    )
+    risk_class: RiskClass | None = Field(
+        description="The headline class; null exactly when the run ended before the checks "
+        "because the description was too thin to start (needs a description, E13)."
+    )
     status: Status = Field(description="Derived from the steps; see `derived_status`.")
     role: Role | None = Field(
         default=None, description="Set exactly when the role_obligations step ran."
@@ -104,6 +112,11 @@ class ClassificationResult(ContractModel):
     )
     follow_up_questions: tuple[FollowUpQuestion, ...] = ()
 
+    @property
+    def needs_description(self) -> bool:
+        """Whether the run ended before the checks: the description was too thin to start."""
+        return not self.steps
+
     def _step(self, name: StepName) -> StepResult | None:
         return next((step for step in self.steps if step.step is name), None)
 
@@ -120,6 +133,8 @@ class ClassificationResult(ContractModel):
 
     @model_validator(mode="after")
     def _no_check_skipped(self) -> Self:
+        if self.needs_description or self.risk_class is None:
+            return self._is_a_needs_description_result()
         names = tuple(step.step for step in self.steps)
         if names != STEP_ORDER[: len(names)]:
             raise ValueError("steps must follow the check order, each once, with none skipped")
@@ -131,9 +146,31 @@ class ClassificationResult(ContractModel):
             )
         return self
 
+    def _is_a_needs_description_result(self) -> Self:
+        """No steps and no class go together, and such a result only asks for a description."""
+        if self.steps or self.risk_class is not None:
+            raise ValueError("a result has no class exactly when it has no steps")
+        asked = {question.id for question in self.follow_up_questions}
+        if not set(DESCRIPTION_QUESTION_IDS) <= asked:
+            raise ValueError(f"a needs-a-description result asks {list(DESCRIPTION_QUESTION_IDS)}")
+        if (
+            self.deciding_facts
+            or self.obligations
+            or self.annex_point
+            or self.transparency_duties
+            or self.legal_review
+        ):
+            raise ValueError(
+                "a needs-a-description result has no deciding_facts, obligations, annex_point, "
+                "transparency_duties or legal_review"
+            )
+        return self
+
     @model_validator(mode="after")
     def _status_matches_steps(self) -> Self:
-        expected = derived_status(self.steps)
+        expected = (
+            Status.NEEDS_MORE_INFORMATION if self.needs_description else derived_status(self.steps)
+        )
         if self.status is not expected:
             raise ValueError(f"the steps imply status {expected.value}, not {self.status.value}")
         return self
