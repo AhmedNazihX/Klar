@@ -1,0 +1,72 @@
+- id: cons-10-stadtwerke-kundenchat-a
+  set_name: consistency
+  language: de
+  description: >-
+    Wir sind die Stadtwerke einer Stadt in Thüringen mit rund 90.000 Strom- und Gaskunden. Unsere
+    IT hat selbst einen Chat-Assistenten namens „Wattbert“ gebaut, der auf einem großen
+    Sprachmodell eines US-Anbieters aufsetzt, das wir über dessen Schnittstelle anbinden. Seit
+    September 2026 beantwortet er auf unserer Website Kundenfragen zu Tarifen, Abschlägen und
+    Umzügen und formuliert die Antworten selbst. Über Kundinnen und Kunden entscheidet er nichts,
+    weder Sperren noch Bonität; schwierige Anliegen leitet er an unser Serviceteam weiter. Wir
+    setzen ihn nur auf unserer eigenen Website ein und verkaufen ihn nicht. Außerdem betreiben wir
+    das städtische Freibad.
+  label:
+    risk_class: limited_risk
+    role: provider
+  label_citation: ["art:50:1", "art:50:2", "art:3:3", "art:3:68"]
+  business_function: customer_service
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the chat interacts directly with customers
+    (Art. 50(1)) and generates text (Art. 50(2)); no Annex III use (it decides nothing about
+    customers), so limited_risk. Put into service in September 2026, after 2 August 2026, so the
+    Art. 111(4) grace period does not arise. Role: the utility built its own AI system on a
+    third-party general-purpose model and put it into service under its own name, so it is the
+    provider (Art. 3(3)) and a downstream provider (Art. 3(68)), and also the deployer; the model
+    provider's Art. 53 duties are only flagged. Doubt carried over from own-d-06 (not on the
+    class): whether chat answers count as synthetic text under Art. 50(2) is read as yes. Same
+    facts as -b and -c.
+  tags: ["triple:cons-10"]
+- id: cons-10-stadtwerke-kundenchat-b
+  set_name: consistency
+  language: de
+  description: >-
+    Stadtwerke in Thüringen, etwa 90.000 Kundinnen und Kunden für Strom und Gas. System:
+    „Wattbert“, ein Chat-Assistent, den unsere eigene IT entwickelt hat; technisch basiert er auf
+    dem großen Sprachmodell eines amerikanischen Anbieters, angebunden über dessen API. Im Einsatz
+    seit September 2026, ausschließlich auf unserer Website, kein Verkauf an Dritte. Aufgabe:
+    Fragen zu Tarifen, Abschlagszahlungen und Umzügen beantworten; die Antworten erzeugt der
+    Assistent selbst. Keine Entscheidungen über Kunden, also keine Sperren und keine
+    Bonitätsprüfung; komplizierte Fälle gehen an das Serviceteam. Ebenfalls bei uns: der Betrieb
+    des städtischen Freibads.
+  label:
+    risk_class: limited_risk
+    role: provider
+  label_citation: ["art:50:1", "art:50:2", "art:3:3", "art:3:68"]
+  business_function: customer_service
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-10-stadtwerke-kundenchat-a with the same facts;
+    label and reasoning as there (Art. 50(1) and 50(2), limited_risk; provider under Art. 3(3) as
+    a downstream provider, Art. 3(68)).
+  tags: ["triple:cons-10"]
+- id: cons-10-stadtwerke-kundenchat-c
+  set_name: consistency
+  language: de
+  description: >-
+    Auf unserer Website können Kundinnen und Kunden seit September 2026 mit „Wattbert“ chatten.
+    Wir sind die Stadtwerke einer thüringischen Stadt, rund 90.000 Strom- und Gaskunden, und
+    Wattbert hat unsere IT-Abteilung selbst gebaut: Im Hintergrund arbeitet ein großes
+    Sprachmodell eines Anbieters aus den USA, das wir über seine Schnittstelle nutzen. Wattbert
+    erklärt Tarife, Abschläge und was bei einem Umzug zu tun ist, und schreibt seine Antworten
+    selbst. Entscheidungen über Kunden trifft er keine, weder zu Sperren noch zur Bonität;
+    schwierige Fälle übernimmt das Serviceteam. Wattbert läuft nur bei uns, verkauft wird er
+    nicht. Nebenbei betreiben wir auch das städtische Freibad.
+  label:
+    risk_class: limited_risk
+    role: provider
+  label_citation: ["art:50:1", "art:50:2", "art:3:3", "art:3:68"]
+  business_function: customer_service
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-10-stadtwerke-kundenchat-a with the same facts;
+    label and reasoning as there (Art. 50(1) and 50(2), limited_risk; provider under Art. 3(3) as
+    a downstream provider, Art. 3(68)).
+  tags: ["triple:cons-10"]

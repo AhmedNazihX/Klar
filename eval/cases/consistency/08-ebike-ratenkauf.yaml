@@ -1,0 +1,71 @@
+- id: cons-08-ebike-ratenkauf-a
+  set_name: consistency
+  language: de
+  description: >-
+    Wir sind eine Kette von 22 Fahrradläden in Nordrhein-Westfalen mit rund 300 Beschäftigten.
+    Wer bei uns ein E-Bike auf Raten kaufen möchte, wird seit Anfang 2026 von RadKredit geprüft,
+    einem Machine-Learning-Modell eines Kölner Fintechs, das der Anbieter mit Zahlungsdaten
+    trainiert hat. Aus Einkommen, Wohnsituation, Zahlungsverhalten und der Auskunftei-Abfrage
+    bewertet es, ob die Kundin oder der Kunde die Raten zahlen kann, und entscheidet über Zusage
+    oder Absage sowie den Höchstbetrag. Das Personal im Laden sieht nur das Ergebnis. Zur
+    Betrugserkennung nutzen wir es nicht. Wir setzen RadKredit unverändert unter dem Namen des
+    Anbieters ein. Im Frühjahr haben wir eine eigene Werkstatt für Lastenräder eröffnet.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:b"
+  label_citation: ["annex:III:5:b", "art:6:2", "art:6:3", "art:3:4"]
+  business_function: finance
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Class: the model evaluates the creditworthiness of natural
+    persons buying on instalments and decides on the credit and its limit, and it is not used for
+    fraud detection (Annex III 5(b)); assessing each customer's economic situation is profiling,
+    so Art. 6(3) third subparagraph keeps it high-risk. Role: the chain uses the bought model
+    unchanged under the vendor's name (Art. 3(4)): deployer. Same facts as -b and -c.
+  tags: ["triple:cons-08"]
+- id: cons-08-ebike-ratenkauf-b
+  set_name: consistency
+  language: de
+  description: >-
+    Fahrradhandelskette, 22 Filialen in Nordrhein-Westfalen, etwa 300 Beschäftigte. Betroffener
+    Prozess: Ratenkauf von E-Bikes, seit Anfang 2026 über RadKredit. Das ist ein
+    Machine-Learning-Modell eines Fintechs aus Köln, vom Anbieter mit Zahlungsdaten trainiert; wir
+    nutzen es unverändert und unter dessen Namen. Eingaben: Einkommen, Wohnsituation,
+    Zahlungsverhalten, Auskunftei-Daten. Ergebnis: eine Einschätzung, ob die Person die Raten
+    zahlen kann, und daraus die Entscheidung über Zusage oder Absage samt Höchstbetrag. Die
+    Mitarbeitenden in der Filiale sehen nur dieses Ergebnis. Für die Betrugsprävention wird das
+    Modell nicht eingesetzt. Sonstiges: Seit dem Frühjahr haben wir eine eigene
+    Lastenrad-Werkstatt.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:b"
+  label_citation: ["annex:III:5:b", "art:6:2", "art:6:3", "art:3:4"]
+  business_function: finance
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-08-ebike-ratenkauf-a with the same facts; label
+    and reasoning as there (Annex III 5(b), profiling under Art. 6(3), deployer under Art. 3(4)).
+  tags: ["triple:cons-08"]
+- id: cons-08-ebike-ratenkauf-c
+  set_name: consistency
+  language: de
+  description: >-
+    Ob jemand sein neues E-Bike bei uns in Raten abzahlen darf, sagt uns seit Anfang 2026
+    RadKredit. Wir sind eine Fahrradkette mit 22 Läden in Nordrhein-Westfalen und ungefähr 300
+    Mitarbeitenden. RadKredit kommt von einem Kölner Fintech, ist ein Machine-Learning-Modell und
+    wurde dort mit Zahlungsdaten trainiert; wir haben daran nichts verändert, und es läuft unter
+    dem Namen des Anbieters. Das Modell schaut sich Einkommen, Wohnsituation, Zahlungsverhalten
+    und die Auskunftei-Abfrage an, schätzt ein, ob die Raten bezahlt werden können, und
+    entscheidet dann über Zusage oder Absage und den Höchstbetrag. Im Laden sehen unsere Leute
+    nur das Ergebnis. Betrug erkennen soll es nicht. Übrigens: Im Frühjahr kam eine eigene
+    Werkstatt für Lastenräder dazu.
+  label:
+    risk_class: high_risk
+    role: deployer
+    annex_point: "annex:III:5:b"
+  label_citation: ["annex:III:5:b", "art:6:2", "art:6:3", "art:3:4"]
+  business_function: finance
+  notes: >-
+    Label approved 2026-10-08 (checked by the orchestrator under the user's standing delegation for clear labels). Paraphrase of cons-08-ebike-ratenkauf-a with the same facts; label
+    and reasoning as there (Annex III 5(b), profiling under Art. 6(3), deployer under Art. 3(4)).
+  tags: ["triple:cons-08"]
