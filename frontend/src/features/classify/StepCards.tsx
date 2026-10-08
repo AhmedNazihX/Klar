@@ -7,6 +7,7 @@ import { StatusPill } from '@/components/StatusPill'
 import { StepCard, type StepCardFact, type StepCardQuote } from '@/components/StepCard'
 import { useLanguage } from '@/hooks/use-language'
 
+import { OriginalDatesNote } from './OriginalDatesNote'
 import { provisionName } from './provision-names'
 import {
   citationSource,
@@ -152,6 +153,7 @@ export function DutiesStepCard({
       }
       factLabel={t('result.steps.factsUsed')}
     >
+      <OriginalDatesNote result={result} />
       {obligations.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-2 p-0 text-body-small text-ink">
           {obligations.map((obligation) => (

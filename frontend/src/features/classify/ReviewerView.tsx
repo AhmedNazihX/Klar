@@ -6,6 +6,7 @@ import { Button } from '@/components/Button'
 import { RiskPill } from '@/components/RiskPill'
 import { StatusPill } from '@/components/StatusPill'
 import { useLanguage } from '@/hooks/use-language'
+import type { OriginalRun } from '@/hooks/use-original-run'
 
 import type { ClassificationRun } from './classification-store'
 import { LawComparison } from './LawComparison'
@@ -55,9 +56,15 @@ function ResultPills({ result }: { result: ClassificationResult }): JSX.Element 
  */
 export function ReviewerView({
   run,
+  original,
+  shouldFocusComparison = false,
   onViewChange,
 }: {
   run: ClassificationRun
+  /** The original-text run the comparison shows (the result screen owns it). */
+  original: OriginalRun
+  /** Whether the comparison takes the focus as the view opens. */
+  shouldFocusComparison?: boolean
   onViewChange: (view: ResultView) => void
 }): JSX.Element {
   const { t } = useTranslation()
@@ -108,7 +115,7 @@ export function ReviewerView({
             original text has nothing to compare against. */}
         {result.law_version === 'amended' && (
           <div className="flex min-w-0 flex-col gap-4 xl:w-[380px] xl:shrink-0">
-            <LawComparison run={run} />
+            <LawComparison run={run} original={original} shouldTakeFocus={shouldFocusComparison} />
           </div>
         )}
       </div>

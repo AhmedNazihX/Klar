@@ -481,7 +481,7 @@
     "monthsAway_one": "In etwa {{count}} Monat",
     "monthsAway_other": "In etwa {{count}} Monaten",
     "alreadyApplies": "Gilt bereits",
-    "alreadyAppliesOriginal": "Gilt nach dem ursprünglichen Text bereits",
+    "alreadyAppliesOriginal": "Gilt nach der ursprünglichen Fassung bereits",
     "legalReview": {
       "high_risk": "Bei einem Hochrisiko-Ergebnis empfehlen wir eine rechtliche Prüfung, bevor Sie sich darauf verlassen.",
       "prohibited": "Bei einem Verbot empfehlen wir rechtliche Beratung, bevor Sie weitermachen.",
@@ -709,12 +709,12 @@
     "assumedClass": "{{riskClass}}, angenommen",
     "noValue": "–",
     "notChecked": "Noch nicht geprüft",
-    "notModelled": "Nicht modelliert",
     "note": {
       "changed": "Die blau markierten Werte hat der digitale Omnibus geändert, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026.",
       "unchanged": "Der digitale Omnibus, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026, hat an dieser Tabelle nichts geändert.",
       "classSame": "Die Klasse ist gleich geblieben.",
-      "notChecked": "Klasse und Rolle nach der ursprünglichen Fassung erscheinen, sobald Klar sie geprüft hat."
+      "dateChanged": "Das blau markierte Datum hat der digitale Omnibus geändert, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026.",
+      "notChecked": "Klasse und Rolle nach der ursprünglichen Fassung hat Klar noch nicht geprüft."
     },
     "steps": {
       "heading": "Geänderte Prüfschritte",

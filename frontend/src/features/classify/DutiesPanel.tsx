@@ -7,10 +7,10 @@ import { Citation } from '@/components/Citation'
 import { GlassPanel } from '@/components/GlassPanel'
 import { ObligationItem } from '@/components/ObligationItem'
 import { useLanguage } from '@/hooks/use-language'
-import { useLawVersion } from '@/hooks/use-law-version'
 import type { Language } from '@/i18n'
 
 import { longDate } from './dates'
+import { OriginalDatesNote } from './OriginalDatesNote'
 import { provisionName } from './provision-names'
 import { citationSource, dutyLabel, isTransparencyDuty } from './result-text'
 
@@ -53,12 +53,7 @@ export function DutiesPanel({ result }: { result: ClassificationResult }): JSX.E
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
-  const law = useLawVersion()
   const obligations = result.obligations ?? []
-  // Under the original text only the route dates swap; the duties stay the amended text's
-  // (decision 026 item 11), and the list says so.
-  const isAmendedListUnderOriginal =
-    law === 'original' && result.law_version === 'amended' && obligations.length > 0
   return (
     <GlassPanel
       as="section"
@@ -70,11 +65,7 @@ export function DutiesPanel({ result }: { result: ClassificationResult }): JSX.E
           {t('result.todo.heading')}
         </h2>
         <p className="m-0 max-w-[620px] text-body-small text-slate">{introFor(t, result)}</p>
-        {isAmendedListUnderOriginal && (
-          <p role="note" className="m-0 max-w-[620px] text-body-small text-ink-2">
-            {t('result.todo.originalDates')}
-          </p>
-        )}
+        <OriginalDatesNote result={result} />
       </div>
       {obligations.length > 0 && (
         <ul className="m-0 flex list-none flex-col p-0">

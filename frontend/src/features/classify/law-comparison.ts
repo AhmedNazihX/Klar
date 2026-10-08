@@ -5,7 +5,7 @@ import type { Language } from '@/i18n'
 
 import { ORIGINAL_ROUTE_DATES, routeOfPoint, shortDate } from './dates'
 import { provisionName } from './provision-names'
-import { dutiesDate, stepOutcome } from './result-text'
+import { amendedRouteDate, dutiesDate, stepOutcome } from './result-text'
 
 /** One row of "Original Act vs amended": the value under each text. */
 export type ComparisonRow = {
@@ -34,12 +34,6 @@ const COMPARED_STEPS: readonly StepName[] = [
   'role_obligations',
 ]
 
-/** The classes with no duties to date, under either text. */
-const UNDATED_CLASSES: ReadonlySet<ClassificationResult['risk_class']> = new Set([
-  'minimal_risk',
-  'out_of_scope',
-])
-
 /** The class as a pill names it, "assumed" while the result isn't decided. */
 export function classLabel(t: TFunction, result: ClassificationResult): string {
   const riskClass = t(`pill.${result.risk_class}`)
@@ -54,45 +48,51 @@ function basisLabel(result: ClassificationResult, language: Language, none: stri
   return result.annex_point ? provisionName(result.annex_point, language) : none
 }
 
-/** The date duties apply from under the amended text, as the result's summary shows it. */
-function amendedDutiesFrom(t: TFunction, result: ClassificationResult, language: Language): string {
+/** The date duties apply from under the amended text, as the result's summary shows it, or a
+ *  dash when no duty is dated. */
+function amendedDutiesFrom(result: ClassificationResult, language: Language, none: string): string {
   const date = dutiesDate(result)
-  if (date === null) return t('result.steps.noDuties')
+  if (date === null) return none
   return shortDate(date.kind === 'route' ? date.amended : date.date, language)
 }
 
-/** The date duties apply from under the original text. Only the route dates move (Art. 113,
- *  decision 026 item 11): a high-risk route takes its original date; while the class is the
- *  same, any other date (or none) stays the amended one, as the summary shows it; a class that
- *  differs has dated duties only if it is minimal risk or out of scope (none), otherwise none Klar
- *  could name, as the original text's duties aren't modelled (decision 020). */
+/** Whether Art. 111(2) dates a high-risk result's duties: a legacy system for public authorities,
+ *  whose route duties all apply from 2 August 2030, under either text. */
+function isPublicAuthorityLegacy(result: ClassificationResult): boolean {
+  const route = routeOfPoint(result.annex_point)
+  if (result.risk_class !== 'high_risk' || route === null) return false
+  const isMoved = (result.obligations ?? []).some(
+    (obligation) =>
+      obligation.high_risk_route === route && obligation.legacy === 'legacy_public_authority',
+  )
+  return isMoved && amendedRouteDate(result, route) === null
+}
+
+/** The date duties apply from under the original text, or a dash. Only the route dates move
+ *  (Art. 113, decision 026 item 11): a high-risk route takes its original date, unless Art. 111(2)
+ *  fixes 2030 on the same route under both texts; while the class is the same, any other date
+ *  stays the amended one, as the summary shows it. A class that differs has no date Klar could
+ *  name, as the original text's duties aren't modelled (decision 020). */
 function originalDutiesFrom(
-  t: TFunction,
   amended: ClassificationResult,
   original: ClassificationResult,
   language: Language,
+  none: string,
 ): string {
+  const isSameClass = original.risk_class === amended.risk_class
   const route = original.risk_class === 'high_risk' ? routeOfPoint(original.annex_point) : null
-  if (route) return shortDate(ORIGINAL_ROUTE_DATES[route], language)
-  if (original.risk_class === amended.risk_class) {
-    const date = dutiesDate(amended)
-    if (date === null) return t('result.steps.noDuties')
-    if (date.kind === 'fixed') return shortDate(date.date, language)
-    return t('diff.notModelled')
+  const isSameRoute = isSameClass && route !== null && route === routeOfPoint(amended.annex_point)
+  if (route && !(isSameRoute && isPublicAuthorityLegacy(amended))) {
+    return shortDate(ORIGINAL_ROUTE_DATES[route], language)
   }
-  if (UNDATED_CLASSES.has(original.risk_class)) return t('result.steps.noDuties')
-  return t('diff.notModelled')
+  return isSameClass ? amendedDutiesFrom(amended, language, none) : none
 }
 
-/** Before the original text is checked, only the date is known: the summary's own swap. */
-function swappedDutiesFrom(
-  t: TFunction,
-  amended: ClassificationResult,
-  language: Language,
-): string {
+/** Before the original text is checked, the one value known is a route's Art. 113 date, the
+ *  summary's own swap; anything else waits for the check. */
+function swappedDutiesFrom(amended: ClassificationResult, language: Language): string | null {
   const date = dutiesDate(amended)
-  if (date === null) return t('result.steps.noDuties')
-  return shortDate(date.kind === 'route' ? date.original : date.date, language)
+  return date?.kind === 'route' ? shortDate(date.original, language) : null
 }
 
 /**
@@ -106,21 +106,22 @@ export function comparisonRows(
   original: ClassificationResult | undefined,
   language: Language,
 ): ComparisonRow[] {
-  const dutiesFrom = amendedDutiesFrom(t, amended, language)
+  const none = t('diff.noValue')
+  const dutiesFrom = amendedDutiesFrom(amended, language, none)
   if (!original) {
     const notChecked = t('diff.notChecked')
+    const swapped = swappedDutiesFrom(amended, language)
     return [
       { id: 'class', original: notChecked, amended: classLabel(t, amended), isKnown: false },
       { id: 'role', original: notChecked, amended: roleLabel(t, amended), isKnown: false },
       {
         id: 'dutiesFrom',
-        original: swappedDutiesFrom(t, amended, language),
+        original: swapped ?? notChecked,
         amended: dutiesFrom,
-        isKnown: true,
+        isKnown: swapped !== null,
       },
     ]
   }
-  const none = t('diff.noValue')
   const hasBasis = Boolean(amended.annex_point ?? original.annex_point)
   const rows: ComparisonRow[] = [
     {
@@ -138,7 +139,7 @@ export function comparisonRows(
     { id: 'role', original: roleLabel(t, original), amended: roleLabel(t, amended), isKnown: true },
     {
       id: 'dutiesFrom',
-      original: originalDutiesFrom(t, amended, original, language),
+      original: originalDutiesFrom(amended, original, language, none),
       amended: dutiesFrom,
       isKnown: true,
     },
@@ -146,16 +147,19 @@ export function comparisonRows(
   return hasBasis ? rows : rows.filter((row) => row.id !== 'basis')
 }
 
-/** A step's outcome in one line; the high-risk check names its Annex point, which the Omnibus
- *  can move while the outcome stays (machinery: Annex I Section A point 1 to Section B). */
+/** A step's outcome in one line, or null when the run never reached it. The role reads as the
+ *  table's Role row does (a run that stopped early, at a ban, still names it); the high-risk
+ *  check names its Annex point, which the Omnibus can move while the outcome stays (machinery:
+ *  Annex I Section A point 1 to Section B). */
 function outcomeOf(
   t: TFunction,
   result: ClassificationResult,
   step: StepName,
   language: Language,
-): string {
+): string | null {
+  if (step === 'role_obligations') return result.role ? roleLabel(t, result) : null
   const found = result.steps.find((candidate) => candidate.step === step)
-  if (!found) return t('result.steps.notChecked')
+  if (!found) return null
   const outcome = stepOutcome(t, found, result)
   const point = result.risk_class === 'high_risk' ? result.annex_point : null
   if (step !== 'high_risk' || !point) return outcome
@@ -174,8 +178,9 @@ function omnibusProvisions(
   return [...new Set(ids)].map((id) => provisionName(id, language))
 }
 
-/** The steps whose outcome differs between the texts, in the Act's order, each with the
- *  provisions the Omnibus changed that the amended step rests on. */
+/** The steps both runs assessed whose outcome differs between the texts, in the Act's order,
+ *  each with the provisions the Omnibus changed that the amended step rests on. A step only one
+ *  run reached (the other stopped earlier, e.g. at a ban) isn't a change. */
 export function changedSteps(
   t: TFunction,
   amended: ClassificationResult,
@@ -185,7 +190,7 @@ export function changedSteps(
   return COMPARED_STEPS.flatMap((step) => {
     const before = outcomeOf(t, original, step, language)
     const after = outcomeOf(t, amended, step, language)
-    if (before === after) return []
+    if (before === null || after === null || before === after) return []
     return [
       {
         step,

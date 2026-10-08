@@ -6,12 +6,16 @@ import { describe, expect, it } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import type { ClassificationResult, ClassifyRequest } from '@/api'
+import { inventoryToolsKey } from '@/hooks/use-inventory-tools'
+import { anonymousSessionOptions, endAnonymousSession } from '@/hooks/use-anonymous-session'
 import { originalRunKey } from '@/hooks/use-original-run'
 import {
   CLASSIFY_URL,
   classifyHandler,
   decidedHighRisk,
+  legacyForPublicAuthorities,
   minimalRisk,
+  sseBody,
   WORKED_EXAMPLE,
   WORKED_EXAMPLE_DESCRIPTION,
 } from '@/test/classify-fixtures'
@@ -41,6 +45,8 @@ type Open = {
   language?: 'en' | 'de'
   /** An original-text run already checked in this tab. */
   original?: ClassificationResult
+  /** The user id of the anonymous session this tab holds. */
+  session?: string
 }
 
 async function openResult({
@@ -50,9 +56,11 @@ async function openResult({
   law,
   language = 'en',
   original,
+  session,
 }: Open) {
   await i18n.changeLanguage(language)
   const client = createTestQueryClient()
+  if (session) client.setQueryData(anonymousSessionOptions(null).queryKey, session)
   const run: ClassificationRun = {
     toolId: TOOL_ID,
     name: 'Tool under two texts',
@@ -71,7 +79,7 @@ async function openResult({
     { level: 1, name: 'Tool under two texts' },
     { timeout: FIRST_RENDER_MS },
   )
-  return { ...rendered, user: userEvent.setup() }
+  return { ...rendered, client, user: userEvent.setup() }
 }
 
 /** Counts the `POST /classify` requests and keeps their bodies; each answers with `result`. */
@@ -92,20 +100,21 @@ function comparison(language: 'en' | 'de' = 'en'): HTMLElement {
 }
 
 /** The table's rows as [label, original, amended], each value marked "-" when struck through
- *  (del) and "+" when shown as the change (ins). */
+ *  (del) and "+" when shown as the change (ins). A value is its cell's last element: a table
+ *  that can stack shows its column's name before it. */
 function diffRows(panel: HTMLElement): string[][] {
   const [, ...rows] = within(panel).getAllByRole('row')
-  return rows.map((row) => {
-    const [label, ...cells] = Array.from(row.children)
-    return [
-      label?.textContent ?? '',
-      ...cells.map((cell) => {
-        if (cell.querySelector('del')) return `-${cell.textContent}`
-        if (cell.querySelector('ins')) return `+${cell.textContent}`
-        return cell.textContent
+  return rows.map((row) => [
+    within(row).getByRole('rowheader').textContent,
+    ...within(row)
+      .getAllByRole('cell')
+      .map((cell) => {
+        const value = cell.lastElementChild?.textContent ?? ''
+        if (cell.querySelector('del')) return `-${value}`
+        if (cell.querySelector('ins')) return `+${value}`
+        return value
       }),
-    ]
-  })
+  ])
 }
 
 describe('Original Act vs amended (reviewer view)', () => {
@@ -122,18 +131,21 @@ describe('Original Act vs amended (reviewer view)', () => {
 
     const panel = comparison()
     expect(await within(panel).findByText('Steps that changed')).toBeInTheDocument()
+    // No date on either side: the original text's duties aren't modelled, and a ban has none.
     expect(diffRows(panel)).toEqual([
       ['Class', '-Limited risk', '+Prohibited'],
       ['Role', 'Provider', 'Provider'],
-      ['Duties from', '-Not modelled', '+No duties listed'],
+      ['Duties from', '–', '–'],
     ])
+    // Only the step both runs assessed: the amended run stopped at the ban, so High-risk and
+    // Transparency (reached only under the original text) and the role (the same) aren't changes.
     const steps = within(panel)
       .getAllByRole('listitem')
       .map((item) => item.textContent)
-    expect(steps[0]).toBe(
+    expect(steps).toEqual([
       '2 Prohibited practicesOriginal: No match with a banned practice. Amended: Matches a banned practice.Changed by the Omnibus: Art. 5(1)(ba)',
-    )
-    expect(steps).toHaveLength(4)
+    ])
+    expect(panel).not.toHaveTextContent('Not checked')
     expect(panel).toHaveTextContent(
       'The values in blue changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.',
     )
@@ -164,7 +176,7 @@ describe('Original Act vs amended (reviewer view)', () => {
       ['Class', 'High-risk', 'High-risk'],
       ['Basis', '-Annex I Section A point 1', '+Annex I Section B point 21'],
       ['Role', 'Provider', 'Provider'],
-      ['Duties from', '-2 Aug 2027', '+No duties listed'],
+      ['Duties from', '-2 Aug 2027', '+–'],
     ])
     const [highRisk] = within(panel).getAllByRole('listitem')
     expect(highRisk).toHaveTextContent(
@@ -184,13 +196,66 @@ describe('Original Act vs amended (reviewer view)', () => {
       ['Role', 'Not checked yet', 'Deployer'],
       ['Duties from', '-2 Aug 2026', '+2 Dec 2027'],
     ])
+    // The note says only what is known: the date moved; the class isn't checked yet.
     expect(panel).toHaveTextContent(
-      'The values in blue changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026. The class and role under the original text show once Klar has checked it.',
+      "The date in blue changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026. Klar hasn't checked the class and role under the original text yet.",
     )
+    expect(panel).not.toHaveTextContent('Nothing in this table changed')
     expect(
       within(panel).getByRole('button', { name: 'Check under the original text' }),
     ).toBeEnabled()
     expect(bodies).toHaveLength(0)
+  })
+
+  it.each([
+    [
+      'en',
+      'Not checked yet',
+      "Klar hasn't checked the class and role under the original text yet.",
+    ],
+    [
+      'de',
+      'Noch nicht geprüft',
+      'Klasse und Rolle nach der ursprünglichen Fassung hat Klar noch nicht geprüft.',
+    ],
+  ] as const)(
+    'before the check, with no route date to swap, claims no change and fills no date (%s)',
+    async (language, notChecked, note) => {
+      await openResult({
+        result: intimateImageAmended(),
+        description: INTIMATE_IMAGE_DESCRIPTION,
+        view: 'reviewer',
+        language,
+      })
+      const panel = comparison(language)
+      // The original column holds no value it doesn't know: only a route's Art. 113 date could be.
+      expect(diffRows(panel).map((row) => row.slice(1))).toEqual([
+        [notChecked, language === 'en' ? 'Prohibited' : 'Verboten'],
+        [notChecked, language === 'en' ? 'Provider' : 'Anbieter'],
+        [notChecked, '–'],
+      ])
+      expect(within(panel).getByText(note)).toBeInTheDocument()
+      expect(panel).not.toHaveTextContent(/Nothing in this table|nichts geändert|blue|blau/)
+    },
+  )
+
+  it('keeps the Art. 111(2) date of a legacy system for public authorities under both texts', async () => {
+    const original = {
+      ...legacyForPublicAuthorities(),
+      law_version: 'original' as const,
+      obligations: [],
+    }
+    await openResult({ result: legacyForPublicAuthorities(), view: 'reviewer', original })
+    const panel = comparison()
+    expect(diffRows(panel).at(-1)).toEqual(['Duties from', '2 Aug 2030', '2 Aug 2030'])
+    expect(panel).toHaveTextContent(
+      'Nothing in this table changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.',
+    )
+  })
+
+  it('before the check of a legacy system for public authorities, leaves its date unchecked', async () => {
+    await openResult({ result: legacyForPublicAuthorities(), view: 'reviewer' })
+    expect(diffRows(comparison()).at(-1)).toEqual(['Duties from', 'Not checked yet', '2 Aug 2030'])
   })
 
   it("says when nothing changed, and that the class didn't", async () => {
@@ -245,7 +310,7 @@ describe('Original Act vs amended (reviewer view)', () => {
     expect(diffRows(panel)).toEqual([
       ['Klasse', '-Begrenztes Risiko', '+Verboten'],
       ['Rolle', 'Anbieter', 'Anbieter'],
-      ['Pflichten ab', '-Nicht modelliert', '+Keine Pflichten aufgeführt'],
+      ['Pflichten ab', '–', '–'],
     ])
     expect(within(panel).getByText('Geänderte Prüfschritte')).toBeInTheDocument()
     expect(within(panel).getAllByRole('listitem')[0]).toHaveTextContent(
@@ -269,7 +334,7 @@ describe('Original Act vs amended (reviewer view)', () => {
       'Klar kann die Prüfungen mit derselben Beschreibung nach der ursprünglichen Fassung von 2024 wiederholen. Dieses Ergebnis wird nicht in Ihrem Inventar gespeichert.',
     )
     expect(panel).toHaveTextContent(
-      'Klasse und Rolle nach der ursprünglichen Fassung erscheinen, sobald Klar sie geprüft hat.',
+      'Das blau markierte Datum hat der digitale Omnibus geändert, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026. Klasse und Rolle nach der ursprünglichen Fassung hat Klar noch nicht geprüft.',
     )
     expect(diffRows(panel)[0]).toEqual(['Klasse', 'Noch nicht geprüft', 'Hochrisiko'])
   })
@@ -529,5 +594,173 @@ describe('Original Act vs amended, the remaining lines', () => {
       'Die Prüfung nach der ursprünglichen Fassung wurde angehalten. Die Prüfungen sind gerade nicht verfügbar. Versuchen Sie es später erneut.',
     )
     expect(within(comparison('de')).getByRole('button', { name: 'Erneut versuchen' })).toBeEnabled()
+  })
+})
+
+/** A classify request held open until `release`: the run streams its result only then. */
+function classifyHeld(result: ClassificationResult): {
+  release: () => void
+  requests: () => number
+} {
+  let release = (): void => undefined
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  let count = 0
+  server.use(
+    http.post(CLASSIFY_URL, async () => {
+      count += 1
+      await gate
+      return new HttpResponse(sseBody([{ event: 'result', result }]), {
+        headers: { 'Content-Type': 'text/event-stream' },
+      })
+    }),
+  )
+  return {
+    release: () => {
+      release()
+    },
+    requests: () => count,
+  }
+}
+
+describe('The law switch and the original-text run', () => {
+  const DATES_NOTICE =
+    "Dates follow the original Art. 113. The duties shown are the amended text's."
+
+  it('switching the law on a result keeps the screen, the view and the result, and sends nothing', async () => {
+    const bodies = classifyReturning(intimateImageOriginal())
+    const { user, router } = await openResult({ result: decidedHighRisk(), view: 'reviewer' })
+    const group = screen.getByRole('group', { name: 'Law version' })
+    // The top bar's labels hold a phone and a wide variant, both in the accessible name.
+    await user.click(within(group).getByRole('button', { name: /Original, 2024/ }))
+    expect(router.state.location.pathname).toBe(`/app/inventory/${TOOL_ID}`)
+    expect(router.state.location.search).toEqual({ view: 'reviewer', law: 'original' })
+    expect(comparison()).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Tool under two texts' })).toBeVisible()
+    await user.click(within(group).getByRole('button', { name: /As amended, 27 Jul 2026/ }))
+    expect(router.state.location.search).toEqual({ view: 'reviewer' })
+    expect(comparison()).toBeInTheDocument()
+    expect(bodies).toHaveLength(0)
+  })
+
+  it.each([
+    ['the summary', undefined],
+    ['the reviewer view', 'reviewer'],
+  ] as const)(
+    'opening %s under the original text, with no original run, sends no paid request',
+    async (_, view) => {
+      const bodies = classifyReturning(intimateImageOriginal())
+      await openResult({ result: decidedHighRisk(), law: 'original', view })
+      expect((await screen.findAllByText(DATES_NOTICE)).length).toBeGreaterThan(0)
+      expect(bodies).toHaveLength(0)
+    },
+  )
+
+  it('opening the inventory under the original text sends no paid request', async () => {
+    const bodies = classifyReturning(intimateImageOriginal())
+    const client = createTestQueryClient()
+    client.setQueryData(inventoryToolsKey, [
+      {
+        toolId: TOOL_ID,
+        name: 'Tool under two texts',
+        description: WORKED_EXAMPLE_DESCRIPTION,
+        createdAt: '2026-10-01T09:00:00+00:00',
+        result: decidedHighRisk(),
+        hasUnreadableResult: false,
+      },
+    ])
+    renderRoute('/app/inventory?law=original', client)
+    expect(
+      await screen.findByRole(
+        'link',
+        { name: 'Tool under two texts' },
+        { timeout: FIRST_RENDER_MS },
+      ),
+    ).toBeInTheDocument()
+    expect(bodies).toHaveLength(0)
+  })
+
+  it('a run started in the reviewer view goes on while the summary shows, and keeps its answer', async () => {
+    const held = classifyHeld(intimateImageOriginal())
+    const { user } = await openResult({
+      result: intimateImageAmended(),
+      description: INTIMATE_IMAGE_DESCRIPTION,
+      view: 'reviewer',
+      law: 'original',
+    })
+    await user.click(
+      within(comparison()).getByRole('button', { name: 'Check under the original text' }),
+    )
+    await within(comparison()).findByRole('button', { name: 'Checking under the original text…' })
+    await user.click(screen.getByRole('button', { name: 'Summary' }))
+    held.release()
+    expect(
+      await screen.findByText(
+        "Under the original 2024 text, Klar finds: Limited risk. This page shows the amended text's result.",
+      ),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Reviewer' }))
+    expect(diffRows(comparison())[0]).toEqual(['Class', '-Limited risk', '+Prohibited'])
+    expect(held.requests()).toBe(1)
+  })
+
+  it.each([
+    ['kept while the session is the same', false, '-Limited risk'],
+    ['dropped once the session ended (sign-out, Delete my data)', true, 'Not checked yet'],
+  ] as const)("a run's answer is %s", async (_, endsSession, originalClass) => {
+    const held = classifyHeld(intimateImageOriginal())
+    const { user, client } = await openResult({
+      result: intimateImageAmended(),
+      description: INTIMATE_IMAGE_DESCRIPTION,
+      view: 'reviewer',
+      session: 'user-1',
+    })
+    await user.click(
+      within(comparison()).getByRole('button', { name: 'Check under the original text' }),
+    )
+    await within(comparison()).findByRole('button', { name: 'Checking under the original text…' })
+    if (endsSession) endAnonymousSession(client)
+    held.release()
+    // The run has ended either way: the button is back, or the comparison is filled.
+    await within(comparison()).findByText(
+      endsSession ? 'Check under the original text' : 'Steps that changed',
+    )
+    expect(diffRows(comparison())[0]?.[1]).toBe(originalClass)
+  })
+
+  it('"Compare the two texts" moves the focus to the comparison', async () => {
+    const { user } = await openResult({ result: decidedHighRisk(), law: 'original' })
+    await user.click(screen.getByRole('button', { name: 'Compare the two texts' }))
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Original Act vs amended' }),
+    ).toHaveFocus()
+  })
+
+  it.each([
+    ['en', DATES_NOTICE],
+    [
+      'de',
+      'Die Daten folgen dem ursprünglichen Art. 113. Die angezeigten Pflichten sind die der geänderten Fassung.',
+    ],
+  ] as const)(
+    "the reviewer view's duty list says its dates follow Art. 113 under the original text (%s)",
+    async (language, notice) => {
+      const first = await openResult({
+        result: decidedHighRisk(),
+        view: 'reviewer',
+        law: 'original',
+        language,
+      })
+      expect(screen.getByText(notice)).toBeInTheDocument()
+      first.unmount()
+      await openResult({ result: decidedHighRisk(), view: 'reviewer', language })
+      expect(screen.queryByText(notice)).toBeNull()
+    },
+  )
+
+  it('German summary: a route date that has come under the original text says so', async () => {
+    await openResult({ result: decidedHighRisk(), law: 'original', language: 'de' })
+    expect(screen.getByText('Gilt nach der ursprünglichen Fassung bereits')).toBeInTheDocument()
   })
 })

@@ -41,7 +41,9 @@ function ResultRoute(): JSX.Element | null {
     )
   }
   return (
+    // Keyed by tool: another tool's page starts with its own original-text run, not this one's.
     <ResultScreen
+      key={toolId}
       run={page.data.run}
       view={view ?? 'summary'}
       onViewChange={(next) => {

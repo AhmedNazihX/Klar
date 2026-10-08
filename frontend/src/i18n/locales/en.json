@@ -709,12 +709,12 @@
     "assumedClass": "{{riskClass}}, assumed",
     "noValue": "–",
     "notChecked": "Not checked yet",
-    "notModelled": "Not modelled",
     "note": {
       "changed": "The values in blue changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.",
       "unchanged": "Nothing in this table changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.",
       "classSame": "The class didn't.",
-      "notChecked": "The class and role under the original text show once Klar has checked it."
+      "dateChanged": "The date in blue changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.",
+      "notChecked": "Klar hasn't checked the class and role under the original text yet."
     },
     "steps": {
       "heading": "Steps that changed",

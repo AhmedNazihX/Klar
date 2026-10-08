@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { useId, type JSX } from 'react'
+import { useEffect, useId, useRef, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult } from '@/api'
@@ -7,7 +7,7 @@ import { Button } from '@/components/Button'
 import { GlassPanel } from '@/components/GlassPanel'
 import { VersionDiff, type VersionDiffRow } from '@/components/VersionDiff'
 import { useLanguage } from '@/hooks/use-language'
-import { useOriginalRun, type OriginalRun } from '@/hooks/use-original-run'
+import type { OriginalRun } from '@/hooks/use-original-run'
 
 import type { ClassificationRun } from './classification-store'
 import { failureReason } from './failure-reason'
@@ -17,6 +17,14 @@ import {
   type ChangedStep,
   type ComparisonRow,
 } from './law-comparison'
+
+/** A date and an Annex point stay whole on one line; a class or a role wraps between words. */
+const ROW_KINDS: Record<ComparisonRow['id'], VersionDiffRow['kind']> = {
+  class: 'text',
+  basis: 'reference',
+  role: 'text',
+  dutiesFrom: 'date',
+}
 
 function diffRow(t: TFunction, row: ComparisonRow): VersionDiffRow {
   return {
@@ -29,24 +37,27 @@ function diffRow(t: TFunction, row: ComparisonRow): VersionDiffRow {
     ),
     after: row.amended,
     isChanged: row.isKnown && row.original !== row.amended,
+    kind: ROW_KINDS[row.id],
   }
 }
 
-/** What the table says about the Omnibus, one sentence each: whether anything changed, then that
- *  the class didn't when something else did, or that class and role are still to be checked. */
+/** What the table says about the Omnibus, one sentence each. Before the original text is checked
+ *  only the date is known: whether the Omnibus moved it, then that class and role aren't checked
+ *  yet. After: whether anything changed, then that the class didn't when something else did. */
 function diffNote(
   t: TFunction,
   rows: readonly ComparisonRow[],
   original: ClassificationResult | undefined,
 ): string {
   const hasChange = rows.some((row) => row.isKnown && row.original !== row.amended)
-  const sentences = [hasChange ? t('diff.note.changed') : t('diff.note.unchanged')]
-  const classRow = rows.find((row) => row.id === 'class')
-  if (!original) sentences.push(t('diff.note.notChecked'))
-  else if (hasChange && classRow?.original === classRow?.amended) {
-    sentences.push(t('diff.note.classSame'))
+  if (!original) {
+    const notChecked = t('diff.note.notChecked')
+    return hasChange ? `${t('diff.note.dateChanged')} ${notChecked}` : notChecked
   }
-  return sentences.join(' ')
+  const classRow = rows.find((row) => row.id === 'class')
+  if (!hasChange) return t('diff.note.unchanged')
+  if (classRow?.original !== classRow?.amended) return t('diff.note.changed')
+  return `${t('diff.note.changed')} ${t('diff.note.classSame')}`
 }
 
 /** The steps whose outcome the Omnibus changed, each with the changed provisions it rests on. */
@@ -118,11 +129,25 @@ function CheckOriginal({ original }: { original: OriginalRun }): JSX.Element {
  * listed with the provisions the Omnibus changed, and the duties' notice: the original text's
  * duties aren't modelled (decision 020).
  */
-export function LawComparison({ run }: { run: ClassificationRun }): JSX.Element {
+export function LawComparison({
+  run,
+  original,
+  shouldTakeFocus = false,
+}: {
+  run: ClassificationRun
+  /** The original-text run, owned by the result screen so that it outlives a view change. */
+  original: OriginalRun
+  /** Whether the panel takes the focus when it shows (opened from the summary's "Compare"). */
+  shouldTakeFocus?: boolean
+}): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
-  const original = useOriginalRun(run)
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  // Focus is outside React: move it once, when the panel opens from the summary.
+  useEffect(() => {
+    if (shouldTakeFocus) headingRef.current?.focus()
+  }, [shouldTakeFocus])
   const rows = comparisonRows(t, run.result, original.result, language)
   return (
     <GlassPanel
@@ -130,7 +155,12 @@ export function LawComparison({ run }: { run: ClassificationRun }): JSX.Element 
       aria-labelledby={headingId}
       className="flex min-w-0 flex-col gap-3.5 p-5.5"
     >
-      <h2 id={headingId} className="m-0 text-heading-panel text-ink">
+      <h2
+        id={headingId}
+        ref={headingRef}
+        tabIndex={-1}
+        className="m-0 text-heading-panel text-ink outline-none"
+      >
         {t('diff.heading')}
       </h2>
       <VersionDiff

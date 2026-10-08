@@ -6,6 +6,7 @@ import {
   type ClassificationRun,
 } from '@/features/classify/classification-store'
 
+import { heldSessionId } from './use-anonymous-session'
 import { ClassifyRunError, useClassify, type ClassifyFailure } from './use-classify'
 import { useLanguage } from './use-language'
 
@@ -54,6 +55,7 @@ export function useOriginalRun(run: ClassificationRun): OriginalRun {
   const result = useOriginalResult(run)
 
   function start(): void {
+    const session = heldSessionId(queryClient)
     classify.mutate(
       {
         description: run.description,
@@ -63,6 +65,9 @@ export function useOriginalRun(run: ClassificationRun): OriginalRun {
       },
       {
         onSuccess: (checked) => {
+          // A sign-out or Delete my data (here or in another tab) while the run streamed forgot
+          // the session's runs: this one belongs to that session and isn't kept either.
+          if (session !== null && heldSessionId(queryClient) !== session) return
           queryClient.setQueryData(originalRunKey(run), checked)
         },
       },
