@@ -835,5 +835,73 @@
       "stopped": "The check under the original text stopped. {{reason}}"
     },
     "dutiesNotModelled": "Duties under the original text aren't modelled: Klar's duty lists follow the amended text only."
+  },
+  "obligations": {
+    "intro": {
+      "date_one": "Every duty across your {{count}} classified tool, by the date it applies from.",
+      "date_other": "Every duty across your {{count}} classified tools, by the date it applies from.",
+      "tool_one": "Every duty across your {{count}} classified tool, tool by tool.",
+      "tool_other": "Every duty across your {{count}} classified tools, tool by tool."
+    },
+    "groupBy": "Group by",
+    "byDate": "By date",
+    "byTool": "By tool",
+    "notChecked": "Klar keeps the list; it doesn't check the work for you.",
+    "section": {
+      "stop": "Stop now",
+      "stopNote": "Prohibited practices, Art. 5",
+      "since": "In force since {{date}}",
+      "inForce": "In force",
+      "from": "From <date/>",
+      "inMonths_one": "In {{count}} month",
+      "inMonths_other": "In {{count}} months",
+      "alreadyApplies": "Already applies",
+      "route": {
+        "annex_iii": "High-risk, Annex III",
+        "annex_i": "High-risk, Annex I"
+      },
+      "none": "No specific duties",
+      "noneNote": "Minimal risk or out of scope"
+    },
+    "card": {
+      "done": "{{done}} of {{total}} done",
+      "showAll": "Show all {{count}} duties",
+      "showFewer": "Show fewer",
+      "stricter": {
+        "legally_ambiguous": "These duties apply if the stricter reading holds. Klar recommends a legal review before you plan around it.",
+        "needs_more_information": "These duties apply if the stricter reading holds. Answer the open question to find out whether they do."
+      },
+      "provider_one": "{{count}} provider duty, from building and documenting the tool to monitoring it after launch.",
+      "provider_other": "{{count}} provider duties, from building and documenting the tool to monitoring it after launch.",
+      "openProvider": "Open the provider duties",
+      "draftReady": "Draft ready"
+    },
+    "next": {
+      "heading": "Next date",
+      "tools": "Duties start for {{tools}}.",
+      "toolsAndMore_one": "Duties start for {{tools}}, and possibly for {{count}} more tool.",
+      "toolsAndMore_other": "Duties start for {{tools}}, and possibly for {{count}} more tools.",
+      "onlyAssumed_one": "Duties may start for {{count}} tool, if the stricter reading holds.",
+      "onlyAssumed_other": "Duties may start for {{count}} tools, if the stricter reading holds.",
+      "none": "No duty dates ahead."
+    },
+    "progress": {
+      "heading": "Progress",
+      "done": "{{done}} of {{total}} done",
+      "label": "Duties done",
+      "body": "Tick duties off as you go. Klar keeps the list; it doesn't check the work for you."
+    },
+    "export": {
+      "heading": "Take the checklist with you",
+      "body": "Every duty with its article and date, for your files or your lawyer.",
+      "pdf": "Download PDF",
+      "word": "Download Word",
+      "pending": "Making the file…"
+    },
+    "saveFailed": "Klar couldn't save that tick. Please try again.",
+    "empty": {
+      "title": "No duties yet",
+      "body": "Classify a tool to see what it asks of you."
+    }
   }
 }

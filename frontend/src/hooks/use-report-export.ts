@@ -2,9 +2,14 @@ import { useMutation, type UseMutationResult } from '@tanstack/react-query'
 
 import {
   exportInventoryReport,
+  exportObligationsChecklist,
   exportResultReport,
+  type ChecklistRequest,
+  type ChecklistTool,
+  type InventoryDuty as ReportDuty,
   type InventoryReportRequest,
   type InventoryTool as ReportTool,
+  type Obligation,
   type ResultReportRequest,
 } from '@/api'
 import type { Language } from '@/i18n'
@@ -65,13 +70,48 @@ export function reportTool(tool: InventoryTool, language: Language): ReportTool 
     also_role: result.also_role ?? null,
     law_version: result.law_version,
     as_of: result.as_of,
+    duties: (result.obligations ?? []).map((duty) => reportDuty(duty, language)),
+  }
+}
+
+function reportDuty(duty: Obligation, language: Language): ReportDuty {
+  return {
+    label: language === 'de' ? duty.label_de : duty.label_en,
+    article: duty.article,
+    applies_from: duty.applies_from,
+    legacy: duty.legacy ?? null,
+  }
+}
+
+/** One tool as the obligations checklist lists it: the inventory report's summary, each duty
+ *  with whether the user ticked it off (`done` holds the tool's ticked keys). */
+export function checklistTool(
+  tool: InventoryTool,
+  language: Language,
+  done: ReadonlySet<string>,
+): ChecklistTool {
+  const summary = reportTool(tool, language)
+  const { result } = tool
+  if (!result || result.risk_class === null) return { ...summary, duties: [] }
+  return {
+    ...summary,
     duties: (result.obligations ?? []).map((duty) => ({
-      label: language === 'de' ? duty.label_de : duty.label_en,
-      article: duty.article,
-      applies_from: duty.applies_from,
-      legacy: duty.legacy ?? null,
+      ...reportDuty(duty, language),
+      is_done: duty.key ? done.has(duty.key) : false,
     })),
   }
+}
+
+/** The obligations checklist (Obligations, "Take the checklist with you"): every duty with its
+ *  ticked state, made by the API in the screen's language and saved by the browser. */
+export function useExportChecklist(): UseMutationResult<void, Error, ChecklistRequest> {
+  return useMutation({
+    retry: false,
+    mutationFn: async (request: ChecklistRequest) => {
+      const file = fileOf(await exportObligationsChecklist({ body: request, parseAs: 'blob' }))
+      saveFile(file, `klar-obligations-checklist.${request.format}`)
+    },
+  })
 }
 
 /** The inventory report (Your data, "Report (PDF)"): every tool with its class and duties, made

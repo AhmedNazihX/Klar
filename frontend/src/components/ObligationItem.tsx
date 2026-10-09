@@ -19,6 +19,10 @@ export type ObligationItemProps = {
   isInformational?: boolean
   /** The article column: 86 px in English, at least 112 px in German (localisation.md). */
   referenceWidth?: number
+  /** The duty is ticked off; with `onCheckedChange`, the box shows the saved tick. */
+  checked?: boolean
+  /** Called with the box's new state when the user ticks or clears it. */
+  onCheckedChange?: (checked: boolean) => void
 }
 
 const DEFAULT_REFERENCE_WIDTH = 86
@@ -35,6 +39,8 @@ export function ObligationItem({
   toolId,
   isInformational = false,
   referenceWidth = DEFAULT_REFERENCE_WIDTH,
+  checked,
+  onCheckedChange,
 }: ObligationItemProps): JSX.Element {
   return (
     <li className="flex min-h-13 items-center gap-3.5 border-t border-hairline py-2.5">
@@ -44,6 +50,8 @@ export function ObligationItem({
         <input
           type="checkbox"
           aria-label={label}
+          checked={onCheckedChange ? (checked ?? false) : undefined}
+          onChange={onCheckedChange && ((event) => onCheckedChange(event.target.checked))}
           className="size-5 shrink-0 cursor-pointer accent-lens-blue"
         />
       )}

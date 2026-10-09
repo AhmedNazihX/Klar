@@ -835,5 +835,73 @@
       "stopped": "Die Prüfung nach der ursprünglichen Fassung wurde angehalten. {{reason}}"
     },
     "dutiesNotModelled": "Pflichten nach der ursprünglichen Fassung sind nicht modelliert: Klars Pflichtenlisten folgen nur der geänderten Fassung."
+  },
+  "obligations": {
+    "intro": {
+      "date_one": "Alle Pflichten Ihres {{count}} eingestuften Tools, nach dem Datum, ab dem sie gelten.",
+      "date_other": "Alle Pflichten Ihrer {{count}} eingestuften Tools, nach dem Datum, ab dem sie gelten.",
+      "tool_one": "Alle Pflichten Ihres {{count}} eingestuften Tools, Tool für Tool.",
+      "tool_other": "Alle Pflichten Ihrer {{count}} eingestuften Tools, Tool für Tool."
+    },
+    "groupBy": "Gruppieren nach",
+    "byDate": "Nach Datum",
+    "byTool": "Nach Tool",
+    "notChecked": "Klar führt die Liste; ob die Arbeit getan ist, prüft Klar nicht.",
+    "section": {
+      "stop": "Jetzt beenden",
+      "stopNote": "Verbotene Praktiken, Art. 5",
+      "since": "In Kraft seit dem {{date}}",
+      "inForce": "In Kraft",
+      "from": "Ab dem <date/>",
+      "inMonths_one": "In {{count}} Monat",
+      "inMonths_other": "In {{count}} Monaten",
+      "alreadyApplies": "Gilt bereits",
+      "route": {
+        "annex_iii": "Hochrisiko, Anhang III",
+        "annex_i": "Hochrisiko, Anhang I"
+      },
+      "none": "Keine besonderen Pflichten",
+      "noneNote": "Minimales Risiko oder außerhalb des Anwendungsbereichs"
+    },
+    "card": {
+      "done": "{{done}} von {{total}} erledigt",
+      "showAll": "Alle {{count}} Pflichten zeigen",
+      "showFewer": "Weniger zeigen",
+      "stricter": {
+        "legally_ambiguous": "Diese Pflichten gelten, wenn die strengere Auslegung zutrifft. Klar empfiehlt eine rechtliche Prüfung, bevor Sie damit planen.",
+        "needs_more_information": "Diese Pflichten gelten, wenn die strengere Auslegung zutrifft. Beantworten Sie die offene Frage, um zu klären, ob sie gelten."
+      },
+      "provider_one": "{{count}} Anbieterpflicht, vom Entwickeln und Dokumentieren des Tools bis zur Beobachtung nach dem Inverkehrbringen.",
+      "provider_other": "{{count}} Anbieterpflichten, vom Entwickeln und Dokumentieren des Tools bis zur Beobachtung nach dem Inverkehrbringen.",
+      "openProvider": "Anbieterpflichten öffnen",
+      "draftReady": "Entwurf bereit"
+    },
+    "next": {
+      "heading": "Nächstes Datum",
+      "tools": "Pflichten beginnen für {{tools}}.",
+      "toolsAndMore_one": "Pflichten beginnen für {{tools}} und möglicherweise für {{count}} weiteres Tool.",
+      "toolsAndMore_other": "Pflichten beginnen für {{tools}} und möglicherweise für {{count}} weitere Tools.",
+      "onlyAssumed_one": "Pflichten beginnen möglicherweise für {{count}} Tool, wenn die strengere Auslegung zutrifft.",
+      "onlyAssumed_other": "Pflichten beginnen möglicherweise für {{count}} Tools, wenn die strengere Auslegung zutrifft.",
+      "none": "Keine anstehenden Termine für Pflichten."
+    },
+    "progress": {
+      "heading": "Fortschritt",
+      "done": "{{done}} von {{total}} erledigt",
+      "label": "Erledigte Pflichten",
+      "body": "Haken Sie Pflichten ab, sobald sie erledigt sind. Klar führt die Liste; ob die Arbeit getan ist, prüft Klar nicht."
+    },
+    "export": {
+      "heading": "Checkliste mitnehmen",
+      "body": "Jede Pflicht mit Artikel und Datum, für Ihre Unterlagen oder Ihre rechtliche Beratung.",
+      "pdf": "PDF herunterladen",
+      "word": "Word herunterladen",
+      "pending": "Datei wird erstellt …"
+    },
+    "saveFailed": "Klar konnte diesen Haken nicht speichern. Bitte versuchen Sie es erneut.",
+    "empty": {
+      "title": "Noch keine Pflichten",
+      "body": "Stufen Sie ein Tool ein, um zu sehen, was es von Ihnen verlangt."
+    }
   }
 }
