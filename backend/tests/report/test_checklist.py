@@ -222,6 +222,17 @@ def test_under_the_original_text_each_route_duty_takes_its_routes_original_date(
     assert "Art. 26(6) 2 December 2027" in amended and "Art. 26(1) 2 August 2028" in amended
 
 
+def test_a_public_authority_duty_on_a_route_date_keeps_it_under_the_original_text() -> None:
+    """The route swap skips an Art. 111(2) duty even when its date is the route's own."""
+    on_route_date = LOGS.model_copy(
+        update={"applies_from": date(2027, 12, 2), "legacy": LegacyStatus.PUBLIC_AUTHORITY}
+    )
+    tool = SCREENING.model_copy(update={"duties": (on_route_date,)})
+    original = _pages((tool,), law_version=LawVersion.ORIGINAL)
+    assert "2 December 2027 (Art. 111(2))" in original
+    assert "2 August 2026" not in original
+
+
 def test_the_checklist_names_the_law_text_its_dates_follow() -> None:
     notice = "Dates follow the original Art. 113. The duties shown are the amended text's."
     original = _pages(law_version=LawVersion.ORIGINAL)

@@ -539,6 +539,8 @@ async def test_the_checklist_keeps_the_inventory_reports_caps(client: httpx.Asyn
     )
     assert (too_many.status_code, not_a_flag.status_code) == (422, 422)
     assert (other_law.status_code, no_law.status_code) == (422, 422)
+    for refused in (other_law, no_law):
+        assert any(error["loc"][-1] == "law_version" for error in refused.json()["errors"])
     assert ChecklistRequest.model_fields["tools"].metadata[0].max_length == 100
 
 

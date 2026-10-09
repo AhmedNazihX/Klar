@@ -44,7 +44,7 @@ export function ObligationItem({
 }: ObligationItemProps): JSX.Element {
   return (
     <li className="@container border-t border-hairline">
-      <div className="grid min-h-13 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3.5 gap-y-1.5 py-2.5 @lg:grid-cols-[auto_minmax(0,1fr)_auto]">
+      <div className="grid min-h-13 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3.5 gap-y-1.5 py-2.5 @md:grid-cols-[auto_minmax(0,1fr)_auto]">
         {isInformational ? (
           <span aria-hidden="true" className="size-5 shrink-0" />
         ) : (
@@ -71,7 +71,7 @@ export function ObligationItem({
         </span>
         {/* In a narrow row (a phone) the draft link and the article sit under the duty, so the
             duty keeps its width and the article stays whole. */}
-        <span className="col-start-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 @lg:col-start-3 @lg:row-start-1 @lg:flex-nowrap">
+        <span className="col-start-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 @md:col-start-3 @md:row-start-1 @md:flex-nowrap">
           {docLabel && documentId && (
             <Link
               to="/app/documents/$documentId"
@@ -83,7 +83,7 @@ export function ObligationItem({
             </Link>
           )}
           <span
-            className="shrink-0 text-caption font-normal whitespace-nowrap text-slate @lg:text-right"
+            className="shrink-0 text-caption font-normal whitespace-nowrap text-slate @md:text-right"
             style={{ minWidth: referenceWidth }}
           >
             {reference}
