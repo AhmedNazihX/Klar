@@ -1,11 +1,14 @@
 """Making a file from a `Paper`, for every route that returns one (the drafted documents, P9; the
-reports, P25): the length cap checked before anything is rendered, a render in one of the export
-workers (none free: a 503 with `Retry-After`, the rate-limit count given back), stopped past its
-time limit (a 504), a render that fails a 413 (the count given back too: a table cell taller than
-a page is the one way a capped paper fails), and the file as an attachment.
+reports, P25): the length caps checked before anything is rendered, a render in one of the export
+workers (none free: a 503 with `Retry-After`, the rate-limit count given back, since nothing was
+rendered), stopped past its time limit (a 504), a render that fails anyway a 413 with the count
+kept (it took a worker and its time, so a client can't repeat it for free), and the file as an
+attachment.
 
 A file longer than `MAX_FILE_CHARS` characters or `MAX_FILE_LINES` lines, counted on the texts as
-the renderers draw them, is refused with a 413. Nothing here logs a text of the paper.
+the renderers draw them, or with a table cell that may wrap past `MAX_CELL_LINES` lines (taller
+than a page, which fpdf2 can't draw), is refused with a 413 before any worker is taken. Nothing
+here logs a text of the paper.
 """
 
 import logging
@@ -16,7 +19,8 @@ from typing import Any, Literal
 from fastapi import HTTPException, Request, Response, status
 
 from aiact.api.dependencies import ApiContext, client_key
-from aiact.export import Paper, block_texts
+from aiact.export import Paper, Table, block_texts
+from aiact.export.pdf import MAX_CELL_LINES, tallest_cell
 from aiact.export.pool import RenderFailed, RenderTimeout, RenderWorker
 from aiact.export.text import printable
 
@@ -60,12 +64,16 @@ def refuse_too_long(
     """A 413 saying `too_long` for a file over `max_chars` characters or `max_lines` lines,
     counted on the texts its blocks draw as the renderers draw them (`printable`: every `\\r\\n`
     and lone `\\r` a line break), so no line break gets past the count. Each text counts as a
-    line at least, a table's cells too."""
+    line at least, a table's cells too. A table cell that may wrap past `MAX_CELL_LINES` lines
+    (`tallest_cell`) is refused too: it would be taller than a page."""
     texts = [printable(text) for block in paper.blocks for text in block_texts(block)]
     chars = sum(len(text) for text in texts)
     lines = sum(text.count("\n") + 1 for text in texts)
-    if chars > max_chars or lines > max_lines:
-        logger.warning("export refused: %d characters, %d lines", chars, lines)
+    cell = max((tallest_cell(b) for b in paper.blocks if isinstance(b, Table)), default=0)
+    if chars > max_chars or lines > max_lines or cell > MAX_CELL_LINES:
+        logger.warning(
+            "export refused: %d characters, %d lines, a cell of %d lines", chars, lines, cell
+        )
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, too_long)
 
 
@@ -82,10 +90,10 @@ def rendered(worker: RenderWorker, render: Renderer, paper: Paper, timed_out: st
 
 @contextmanager
 def export_worker(request: Request, context: ApiContext, too_long: str) -> Iterator[RenderWorker]:
-    """One of the export workers while a file renders; a 503 when none is free, and a 413
-    saying `too_long` when the render fails (fpdf2 can't fit a table cell taller than a page),
-    each giving back the rate-limit count the request took, since it made no file. The error's
-    type is logged, never its text."""
+    """One of the export workers while a file renders; a 503 when none is free, giving back the
+    rate-limit count the request took, since nothing was rendered; a 413 saying `too_long` when
+    the render fails, keeping the count, since the render took a worker and its time. The
+    error's type is logged, never its text."""
     slots = context.export_slots
     worker = slots.try_acquire()
     if worker is None:
@@ -99,7 +107,6 @@ def export_worker(request: Request, context: ApiContext, too_long: str) -> Itera
     try:
         yield worker
     except RenderFailed as failed:
-        context.export_limit.refund(client_key(request))
         logger.warning("export refused: the render failed (%s)", failed)
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, too_long) from None
     finally:

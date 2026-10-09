@@ -531,17 +531,19 @@ async def test_an_export_gives_its_slot_back_when_its_file_is_made(
     assert (first.status_code, second.status_code) == (200, 200)
 
 
-async def test_an_export_whose_render_fails_is_a_413_that_gives_back_its_slot_and_count(
+async def test_an_export_whose_render_fails_is_a_413_that_gives_back_its_slot_not_its_count(
     monkeypatch: pytest.MonkeyPatch, export_app: Callable[..., FastAPI]
 ) -> None:
     monkeypatch.setitem(RENDERERS, "pdf", int)  # int(paper) raises in the worker process
-    app = export_app(rate_limit_exports=1, export_max_concurrent=1)
+    app = export_app(rate_limit_exports=2, export_max_concurrent=1)
     export = _draft_body(provider_result(), ANNEX_IV)
     transport = httpx.ASGITransport(app=app, raise_app_exceptions=False)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
         failed = await client.post("/documents/export", json={**export, "format": "pdf"})
         after = await client.post("/documents/export", json={**export, "format": "docx"})
-    assert (failed.status_code, after.status_code) == (413, 200)
+        limited = await client.post("/documents/export", json={**export, "format": "docx"})
+    # The one slot came back (the second export rendered); the failed one kept its count.
+    assert (failed.status_code, after.status_code, limited.status_code) == (413, 200, 429)
     assert failed.json() == {
         "detail": "This document is too long to make into a file. Please shorten some answers."
     }

@@ -83,6 +83,14 @@ SIGNATURE_ROOM_MM = 10.0
 """The space above the signature lines, to write in."""
 SIGNATURE_GAP_MM = 10.0
 """Between two signature lines side by side."""
+A4_WIDTH_MM = 210.0
+MAX_CELL_LINES = 60
+"""The most lines a table cell may wrap to. fpdf2 can't break a cell across pages and fails on
+one taller than a page; an empty A4 page holds 68 lines at the tables' line height, and this
+leaves room for a header row that wraps."""
+WIDEST_GLYPH_MM = 3.4
+"""Wider than any glyph of the tables' font at its size (Geist's per mille sign is 3.3 mm at
+8 pt), so `cell_lines` never counts too few lines."""
 
 
 class KlarPdf(FPDF):
@@ -299,6 +307,31 @@ class KlarPdf(FPDF):
     def _style(self, family: str, style: str, size: float, colour: str) -> None:
         self.set_font(family, style, size)
         self.set_text_color(*rgb(colour))
+
+
+def cell_lines(text: str, share: float) -> int:
+    """At most how many lines `text` wraps to in a table column `share` of the page's width:
+    each line break starts a line, and each word is counted as if it started a new one and
+    every character were the widest glyph."""
+    width = share * (A4_WIDTH_MM - 2 * MARGIN_MM) - 2 * CELL_PADDING_MM
+    per_line = max(1, int(width // WIDEST_GLYPH_MM))
+    return sum(
+        max(1, sum(-(-(len(word) + 1) // per_line) for word in line.split(" ") if word))
+        for line in printable(text).split("\n")
+    )
+
+
+def tallest_cell(table: Table) -> int:
+    """The most lines any cell of `table`, its header's included, may wrap to (`cell_lines`)."""
+    total = sum(table.widths)
+    return max(
+        (
+            cell_lines(text, width / total)
+            for row in (table.header, *table.rows)
+            for text, width in zip(row, table.widths, strict=True)
+        ),
+        default=0,
+    )
 
 
 def render_pdf(paper: Paper) -> bytes:

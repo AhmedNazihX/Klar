@@ -6,11 +6,20 @@ from io import BytesIO
 from typing import cast
 
 import pytest
+from fpdf.fonts import TTFFont
 from pypdf import PdfReader
 from pypdf.generic import DictionaryObject
 
 from aiact.export import Paper, Paragraph, Table, render_docx, render_pdf
-from aiact.export.pdf import SANS, KlarPdf
+from aiact.export.pdf import (
+    MAX_CELL_LINES,
+    SANS,
+    TABLE_FONT_PT,
+    WIDEST_GLYPH_MM,
+    KlarPdf,
+    cell_lines,
+    tallest_cell,
+)
 from aiact.export.text import printable
 from aiact.schemas import Language
 from tests.export.papers import FOOTER, MARKUP, report_paper, sample_paper
@@ -187,3 +196,39 @@ def test_a_table_cell_draws_what_no_font_can_as_a_question_mark(
         page = pdf_pages(render_pdf(paper))[0]
     assert "Ship it ?" in page
     assert "PDF: 1 characters no font can draw shown as ?" in caplog.text
+
+
+def test_the_cell_cap_and_the_widest_glyph_are_pinned() -> None:
+    assert (MAX_CELL_LINES, WIDEST_GLYPH_MM) == (60, 3.4)
+    pdf = KlarPdf(FOOTER, "{page}/{pages}")
+    pdf.add_page()
+    pdf.set_font(SANS, "", TABLE_FONT_PT)
+    font = pdf.current_font
+    assert isinstance(font, TTFFont)
+    widest = max(pdf.get_string_width(chr(code)) for code in font.cmap if code > 32)
+    assert widest <= WIDEST_GLYPH_MM
+
+
+def _one_cell(text: str, header: str = "Duties apply from") -> Table:
+    return Table((header,), ((text,),), (1.0,))
+
+
+def test_a_cell_of_the_most_lines_allowed_fits_a_page() -> None:
+    tallest = _one_cell("a\n" * (MAX_CELL_LINES - 1) + "a")
+    assert tallest_cell(tallest) == MAX_CELL_LINES
+    assert tallest_cell(_one_cell("a\n" * MAX_CELL_LINES + "a")) == MAX_CELL_LINES + 1
+    paper = Paper(language=Language.EN, title="Cells", blocks=(tallest,), footer=FOOTER)
+    # fpdf2 moves the row to a page of its own, where it fits (a taller one raises).
+    assert pdf_pages(render_pdf(paper))[-1].count("a") >= MAX_CELL_LINES
+
+
+def test_wrapping_is_never_counted_short() -> None:
+    """Words of the widest glyph in a narrow column: the count may be high, never low, so a
+    cell it allows still fits a page."""
+    word = "\u2030" * 7
+    table = Table(("A", "B"), (("x", " ".join([word] * 40)),), (4.0, 1.0))
+    counted = tallest_cell(table)
+    assert counted <= MAX_CELL_LINES
+    paper = Paper(language=Language.EN, title="Cells", blocks=(table,), footer=FOOTER)
+    assert len(pdf_pages(render_pdf(paper))) == 1
+    assert cell_lines("a\nb", 1.0) == 2

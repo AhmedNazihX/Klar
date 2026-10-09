@@ -16,6 +16,7 @@ from aiact.api.dependencies import ApiContext
 from aiact.api.reports import (
     INVENTORY_MAX_CHARS,
     INVENTORY_MAX_LINES,
+    RENDERERS,
     InventoryReportRequest,
     report_date,
 )
@@ -286,26 +287,51 @@ async def test_an_annex_point_the_report_cant_name_still_makes_a_report(
     assert response.status_code == 200
 
 
-async def test_a_cell_taller_than_a_page_is_a_413_that_gives_back_its_count(
-    report_app: Callable[..., FastAPI], caplog: pytest.LogCaptureFixture
+async def test_a_cell_taller_than_a_page_is_a_413_before_any_worker_is_taken(
+    report_app: Callable[..., FastAPI],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """fpdf2 can't break a table cell across pages, so the render fails; the request made no
-    file, so its rate-limit count is given back."""
-    app = report_app(rate_limit_exports=1)
-    tall = Fact(text=f"{SECRET}\n" * 499 + SECRET, evidence=EvidenceTag.ASSUMED)
+    """fpdf2 can't break a table cell across pages: such a paper is refused before rendering,
+    even with every export slot taken (a 413, not a 503), and no worker runs."""
+    runs: list[object] = []
+    monkeypatch.setattr(RenderWorker, "run", lambda _worker, *args: runs.append(args) or b"%")
+    app = report_app(export_max_concurrent=1)
+    context: ApiContext = app.state.context
+    tall = Fact(text=f"{SECRET}\n" * 60 + SECRET, evidence=EvidenceTag.ASSUMED)
     worked = worked_example_result()
     result = worked.model_copy(update={"deciding_facts": (tall, *worked.deciding_facts)})
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        taken = context.export_slots.try_acquire()
+        assert taken is not None
         with caplog.at_level(logging.DEBUG):
             refused = await client.post("/reports/result", json=_body(result))
-        after = await client.post("/reports/result", json=_body(format="docx"))
+        context.export_slots.release(taken)
     assert (refused.status_code, refused.json()) == (
         413,
         {"detail": "This report is too long to make into a file."},
     )
-    assert after.status_code == 200
+    assert runs == []
     assert SECRET not in caplog.text
+
+
+async def test_a_render_that_fails_is_a_413_that_keeps_its_count(
+    report_app: Callable[..., FastAPI], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A failed render took a worker and its time: the count stays, so it can't be repeated
+    for free."""
+    monkeypatch.setitem(RENDERERS, "pdf", int)  # int(paper) raises in the worker process
+    app = report_app(rate_limit_exports=1)
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        failed = await client.post("/reports/result", json=_body())
+        after = await client.post("/reports/result", json=_body(format="docx"))
+    assert (failed.status_code, failed.json()) == (
+        413,
+        {"detail": "This report is too long to make into a file."},
+    )
+    assert after.status_code == 429
 
 
 def test_the_report_date_is_today() -> None:
