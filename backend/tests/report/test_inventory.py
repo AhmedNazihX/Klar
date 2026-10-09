@@ -44,7 +44,7 @@ CHATBOT = InventoryTool(
     risk_class=RiskClass.LIMITED_RISK,
     status=Status.LEGALLY_AMBIGUOUS,
     role=Role.PROVIDER,
-    law_version=LawVersion.ORIGINAL,
+    law_version=LawVersion.AMENDED,
     as_of=date(2026, 9, 30),
     duties=(
         InventoryDuty(
@@ -101,7 +101,7 @@ def test_each_classified_tool_lists_its_duties() -> None:
         "Art. 26(6) 2 December 2027",
         "Tell workers' representatives and staff before you start Art. 26(7) Only after a "
         "significant change (Art. 111(2))",
-        "Your tool Checked under the original 2024 text, as it applies on 30 September 2026.",
+        "Your tool Checked under the amended text, as it applies on 30 September 2026.",
         "Spam filter The result lists no specific duties for this tool.",
     ):
         assert line in text, line
@@ -185,6 +185,39 @@ def test_a_duty_is_labelled_as_the_table_labels_it_when_the_table_has_it() -> No
     tool = SCREENING.model_copy(update={"duties": (posted, unknown)})
     english = _pages(tools=(tool,))
     assert "Keep the logs it creates for at least six months Art. 26(6)" in english
-    assert "A duty Klar no longer lists Art. 99(1)" in english
+    assert "A duty Klar no longer lists" not in english
+    assert (
+        "1 more duty the result lists is not in Klar's table of duties, so it is left out here."
+        in english
+    )
     german = _pages(Language.DE, tools=(tool,))
     assert "Die automatisch erzeugten Protokolle mindestens sechs Monate aufbewahren" in german
+
+
+SECRET = "Confidential: the Hamburg pilot of Project Falcon"
+
+
+def test_a_posted_label_never_prints() -> None:
+    """Decision 031: a duty the table lacks for the tool (another article, another role, a law
+    version it doesn't hold) is left out and counted, never shown with its posted label."""
+    forged = (
+        InventoryDuty(label=SECRET, article="art:99:1", applies_from=date(2027, 12, 2)),
+        InventoryDuty(label=SECRET, article="art:16:a", applies_from=date(2027, 12, 2)),
+    )
+    original = SCREENING.model_copy(update={"law_version": LawVersion.ORIGINAL})
+    tools = (SCREENING.model_copy(update={"duties": forged}), original)
+    for language in (Language.EN, Language.DE):
+        assert "Confidential" not in _pages(language, tools=tools)
+    english = _pages(tools=tools)
+    assert "2 more duties the result lists are not in Klar's table of duties" in english
+    assert "Applicant screening Checked under the original 2024 text" in english
+    assert "Keep the logs it creates" not in english
+
+
+def test_a_provider_that_also_deploys_keeps_its_deployer_duties() -> None:
+    provider = SCREENING.model_copy(update={"role": Role.PROVIDER})
+    assert "Keep the logs it creates" not in _pages(tools=(provider,))
+    both = provider.model_copy(update={"also_role": Role.DEPLOYER})
+    text = _pages(tools=(both,))
+    assert "Keep the logs it creates for at least six months Art. 26(6)" in text
+    assert "not in Klar's table" not in text

@@ -620,6 +620,9 @@
           "429": {
             "description": "Too many requests"
           },
+          "500": {
+            "description": "The file couldn't be made"
+          },
           "503": {
             "description": "Every export slot is taken"
           },
@@ -677,6 +680,9 @@
           },
           "429": {
             "description": "Too many requests"
+          },
+          "500": {
+            "description": "The file couldn't be made"
           },
           "503": {
             "description": "Every export slot is taken"
@@ -1917,6 +1923,17 @@
                 "type": "null"
               }
             ]
+          },
+          "also_role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tool's second role, when the result gives one."
           },
           "law_version": {
             "anyOf": [

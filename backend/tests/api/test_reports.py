@@ -237,9 +237,13 @@ async def test_a_report_too_long_for_a_file_is_a_413_before_rendering(
     monkeypatch.setattr(
         RenderWorker, "run", lambda _worker, _fn, paper: rendered.append(paper) or b"%"
     )
-    # A duty the table lacks keeps its posted label.
-    duties = [{"label": "x" * 1_000, "article": "art:99:1", "applies_from": "2027-12-02"}] * 100
-    body = {"tools": [_tool(duties=duties)] * 2, "language": "en", "format": "pdf"}
+    # 2,500 duties the table has (so each prints), three cells each: over the line cap, within
+    # the body cap.
+    body = {
+        "tools": [_tool(duties=_tool()["duties"] * 100)] * 25,
+        "language": "en",
+        "format": "pdf",
+    }
     response = await client.post("/reports/inventory", json=body)
     assert response.status_code == 413
     assert response.json() == {"detail": "This report is too long to make into a file."}

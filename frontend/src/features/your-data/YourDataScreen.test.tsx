@@ -371,6 +371,7 @@ describe('Your data, the report (PDF)', () => {
               risk_class: WORKED_EXAMPLE.risk_class,
               status: WORKED_EXAMPLE.status,
               role: WORKED_EXAMPLE.role,
+              also_role: WORKED_EXAMPLE.also_role ?? null,
               law_version: WORKED_EXAMPLE.law_version,
               as_of: WORKED_EXAMPLE.as_of,
               duties: duties.map((duty) => ({

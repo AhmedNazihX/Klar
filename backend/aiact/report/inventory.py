@@ -5,10 +5,11 @@ then each tool's duties, as a `Paper`.
 A whole inventory of full results would not fit the API's body cap (a recorded result is about
 30 kB), so each tool comes as the summary its stored result gives: the class, status, role, law
 version and date, and each duty's short label, article and timing, in the report's language.
-These are the user's own stored data. A duty's label is the obligations table's when the table
-has the duty for the tool's class, role and law version (`aiact.report.duties`), else the posted
-short label; the report quotes no text of the Act and names provisions in the report's citation
-style (decision 031). The dates follow the inventory screen (`tool_duties_from`): a prohibited
+These are the user's own stored data. A duty's label is the obligations table's, found by the
+tool's class, roles (its role and the one it also has), the duty's article and the law version
+(`aiact.report.duties`); a posted duty the table lacks is left out and counted, as in the report
+for a lawyer, so no posted label is ever printed (decision 031). The report quotes no text of the
+Act and names provisions in the report's citation style. The dates follow the inventory screen (`tool_duties_from`): a prohibited
 tool's line says to stop using or supplying it.
 """
 
@@ -66,6 +67,9 @@ class InventoryTool(ContractModel):
     risk_class: RiskClass | None = None
     status: Status | None = None
     role: Role | None = None
+    also_role: Role | None = Field(
+        default=None, description="The tool's second role, when the result gives one."
+    )
     law_version: LawVersion | None = None
     as_of: date | None = Field(
         default=None, description="The date the result applies the law as of."
@@ -74,11 +78,17 @@ class InventoryTool(ContractModel):
 
 
 class _Duty(NamedTuple):
-    """A tool's duty as the report shows it: its label (the table's when it has the duty) and
-    what dates it."""
+    """A tool's duty as the report shows it: the table's label and what dates it."""
 
     label: str
     timing: DutyTiming
+
+
+class _Duties(NamedTuple):
+    """A tool's duties the table has, and how many posted ones it lacks."""
+
+    found: tuple[_Duty, ...]
+    left_out: int
 
 
 def inventory_report(
@@ -106,33 +116,36 @@ def inventory_report(
     )
 
 
-def _duties(tool: InventoryTool, language: Language) -> tuple[_Duty, ...]:
-    return tuple(_duty(tool, duty, language) for duty in tool.duties)
+def _duties(tool: InventoryTool, language: Language) -> _Duties:
+    found = tuple(
+        duty for duty in (_duty(tool, posted, language) for posted in tool.duties) if duty
+    )
+    return _Duties(found=found, left_out=len(tool.duties) - len(found))
 
 
-def _duty(tool: InventoryTool, duty: InventoryDuty, language: Language) -> _Duty:
-    """The duty with the table's label and markings when the table has it for this tool's
-    class, role and law version, else as posted."""
-    entry = None
-    if tool.risk_class is not None and tool.role is not None and tool.law_version is not None:
-        entry = table_entry(
-            duty.article,
-            (duty.label,),
-            risk_class=tool.risk_class,
-            roles=(tool.role,),
-            law_version=tool.law_version,
-        )
-    label = duty.label
-    if entry is not None:
-        label = entry.label_de if language is Language.DE else entry.label_en
+def _duty(tool: InventoryTool, duty: InventoryDuty, language: Language) -> _Duty | None:
+    """The duty with the table's label and markings, when the table has it for this tool's
+    class, roles and law version; else None."""
+    roles = tuple(role for role in (tool.role, tool.also_role) if role is not None)
+    if tool.risk_class is None or not roles or tool.law_version is None:
+        return None
+    entry = table_entry(
+        duty.article,
+        (duty.label,),
+        risk_class=tool.risk_class,
+        roles=roles,
+        law_version=tool.law_version,
+    )
+    if entry is None:
+        return None
     timing = DutyTiming(
         article=duty.article,
         applies_from=duty.applies_from,
         legacy=duty.legacy,
-        is_route_duty=entry is not None and isinstance(entry.applies_from, Mapping),
-        is_informational=entry is not None and entry.is_informational,
+        is_route_duty=isinstance(entry.applies_from, Mapping),
+        is_informational=entry.is_informational,
     )
-    return _Duty(label=label, timing=timing)
+    return _Duty(label=entry.label_de if language is Language.DE else entry.label_en, timing=timing)
 
 
 def _tool_name(tool: InventoryTool, language: Language) -> str:
@@ -140,7 +153,7 @@ def _tool_name(tool: InventoryTool, language: Language) -> str:
 
 
 def _overview(
-    listed: tuple[tuple[InventoryTool, tuple[_Duty, ...]], ...], language: Language
+    listed: tuple[tuple[InventoryTool, _Duties], ...], language: Language
 ) -> tuple[Block, ...]:
     if not listed:
         return (Paragraph(texts.NO_TOOLS[language]),)
@@ -150,7 +163,9 @@ def _overview(
             class_name(tool.risk_class, tool.status, language),
             texts.STATUS_NAMES[tool.status][language] if tool.status else texts.NOTHING,
             texts.ROLE_NAMES[tool.role][language] if tool.role else texts.NOTHING,
-            tool_duties_from(tool.risk_class, tuple(duty.timing for duty in duties), language),
+            tool_duties_from(
+                tool.risk_class, tuple(duty.timing for duty in duties.found), language
+            ),
         )
         for tool, duties in listed
     )
@@ -158,11 +173,10 @@ def _overview(
     return (Table(header, rows, TOOL_WIDTHS),)
 
 
-def _tool_duties(
-    tool: InventoryTool, duties: tuple[_Duty, ...], language: Language
-) -> tuple[Block, ...]:
+def _tool_duties(tool: InventoryTool, duties: _Duties, language: Language) -> tuple[Block, ...]:
     """A classified tool's heading, the law it was checked under, and its duties; a prohibited
-    tool's says to stop using or supplying it first."""
+    tool's says to stop using or supplying it first. Then how many posted duties the table
+    lacks, when any."""
     if tool.risk_class is None:
         return ()
     law: tuple[Block, ...] = ()
@@ -172,17 +186,23 @@ def _tool_duties(
     if tool.risk_class is RiskClass.PROHIBITED:
         law = (*law, Paragraph(texts.STOP_USING_TOOL[language]))
     heading = Heading(_tool_name(tool, language))
-    if not duties:
+    left_out = duties.left_out
+    notes = (
+        (Paragraph(texts.LEFT_OUT[left_out == 1][language].format(count=left_out)),)
+        if left_out
+        else ()
+    )
+    if not duties.found:
         if tool.risk_class is RiskClass.PROHIBITED:
-            return (heading, *law)
-        return (heading, *law, Paragraph(texts.NO_DUTIES[language]))
+            return (heading, *law, *notes)
+        return (heading, *law, Paragraph(texts.NO_DUTIES[language]), *notes)
     rows = tuple(
         (
             duty.label,
             article_provision_name(duty.timing.article, language),
             duty_timing(duty.timing.applies_from, duty.timing.legacy, language),
         )
-        for duty in duties
+        for duty in duties.found
     )
     header = (*(column[language] for column in texts.DUTY_HEADER), texts.FROM_HEADER[language])
-    return (heading, *law, Table(header, rows, DUTY_WIDTHS))
+    return (heading, *law, Table(header, rows, DUTY_WIDTHS), *notes)

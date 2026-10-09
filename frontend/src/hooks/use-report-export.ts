@@ -51,7 +51,7 @@ export function useExportResultReport(
   })
 }
 
-/** One tool as the inventory report lists it: its latest result's class, status, role, law
+/** One tool as the inventory report lists it: its latest result's class, status, roles, law
  *  version and date, and each duty's short label in `language`. A tool without a result Klar can
  *  read, or with no class, is listed as not classified yet. */
 export function reportTool(tool: InventoryTool, language: Language): ReportTool {
@@ -62,6 +62,7 @@ export function reportTool(tool: InventoryTool, language: Language): ReportTool 
     risk_class: result.risk_class,
     status: result.status,
     role: result.role ?? null,
+    also_role: result.also_role ?? null,
     law_version: result.law_version,
     as_of: result.as_of,
     duties: (result.obligations ?? []).map((duty) => ({

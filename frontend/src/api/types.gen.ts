@@ -730,6 +730,10 @@ export type InventoryTool = {
     risk_class?: RiskClass | null;
     status?: Status | null;
     role?: Role | null;
+    /**
+     * The tool's second role, when the result gives one.
+     */
+    also_role?: Role | null;
     law_version?: LawVersion | null;
     /**
      * As Of
@@ -1708,6 +1712,10 @@ export type ExportResultReportErrors = {
      */
     429: unknown;
     /**
+     * The file couldn't be made
+     */
+    500: unknown;
+    /**
      * Every export slot is taken
      */
     503: unknown;
@@ -1748,6 +1756,10 @@ export type ExportInventoryReportErrors = {
      * Too many requests
      */
     429: unknown;
+    /**
+     * The file couldn't be made
+     */
+    500: unknown;
     /**
      * Every export slot is taken
      */
