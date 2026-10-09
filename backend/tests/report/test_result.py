@@ -9,7 +9,8 @@ from pathlib import Path
 import pytest
 
 from aiact.export import Fields, Heading, Paper, Table, render_docx, render_pdf
-from aiact.report import NoClassError, report_id, result_report
+from aiact.report import NoClassError, result_report
+from aiact.report.result import report_id
 from aiact.schemas import (
     DISCLAIMER_DE,
     DISCLAIMER_EN,

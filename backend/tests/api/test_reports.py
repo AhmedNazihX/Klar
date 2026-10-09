@@ -23,7 +23,7 @@ from aiact.api.reports import (
 from aiact.export import pool
 from aiact.export.pool import RenderTimeout, RenderWorker
 from aiact.obligations.list import default_table, list_obligations
-from aiact.report import MAX_NAME_CHARS
+from aiact.report.common import MAX_NAME_CHARS
 from aiact.schemas import (
     DISCLAIMER_EN,
     ClassificationResult,

@@ -246,7 +246,11 @@ def _outcome(step: StepResult, result: ClassificationResult, language: Language)
     if step.step is StepName.ROLE_OBLIGATIONS:
         # The contract sets the role exactly when this step is present.
         role = result.role
-        return texts.ROLE_NAMES[role][language] if role else texts.NO_ROLE[language]
+        return (
+            texts.ROLE_NAMES[role][language]
+            if role
+            else texts.STEP_OUTCOMES["notChecked"][language]
+        )
     label = _annex_label(result.annex_point)
     outcome = texts.STEP_OUTCOMES[_outcome_key(step.step, result, has_label=label is not None)]
     count = len(result.transparency_duties)

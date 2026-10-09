@@ -11,7 +11,6 @@ from aiact.dates import long_date
 from aiact.provision_names import article_provision_name
 from aiact.report.duties import DutyTiming
 from aiact.report.texts import (
-    AFTER_CHANGE,
     ASSUMED_CLASS,
     CLASS_NAMES,
     FOOTER,
@@ -61,7 +60,8 @@ def duty_timing(applies_from: date, legacy: LegacyStatus | None, language: Langu
     its 2030 date marked with the article."""
     article = article_provision_name(LEGACY_ARTICLE, language)
     if legacy is LegacyStatus.UNCHANGED:
-        return AFTER_CHANGE[language].format(article=article)
+        after_change = ONLY_AFTER_CHANGE[language].format(article=article)
+        return after_change[:1].upper() + after_change[1:]
     if legacy is LegacyStatus.PUBLIC_AUTHORITY:
         return LEGACY_FROM[language].format(date=day(applies_from, language), article=article)
     return day(applies_from, language)
@@ -78,11 +78,16 @@ def applies_when(applies_from: date, legacy: LegacyStatus | None, language: Lang
 
 
 def duties_from(duties: Sequence[DutyTiming], language: Language) -> str:
-    """When the duties apply, as the Result screen dates them (`dutiesDate`): a high-risk
-    result's route date (its Chapter III date), else the earliest date of a duty that isn't
-    informational; "No specific duties" without one. When Art. 111(2) marks every route duty,
-    "only after a significant change", or its 2030 date for a system meant for public
-    authorities, as the inventory says it."""
+    """When the duties apply. Without Art. 111(2), the Result screen's rule (`dutiesDate`): a
+    high-risk result's route date (its Chapter III date), else the earliest date of a duty that
+    isn't informational; "No specific duties" without one.
+
+    When Art. 111(2) marks every route duty, the inventory screen's rule (`appliesFrom`) instead:
+    "only after a significant change", or the 2030 date (with the article) for a system meant
+    for public authorities. The Result screen shows the route date there and says the Art.
+    111(2) case in its own sentences beside it (`ResultVerdict`'s `result.legacy`); the report
+    has no such sentences, and a bare route date in its grid would date duties the system
+    doesn't have until it changes."""
     route = [duty for duty in duties if duty.is_route_duty]
     if route and all(duty.legacy is not None for duty in route):
         authority = next((d for d in route if d.legacy is LegacyStatus.PUBLIC_AUTHORITY), None)

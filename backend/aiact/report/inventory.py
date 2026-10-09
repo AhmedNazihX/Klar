@@ -9,8 +9,9 @@ These are the user's own stored data. A duty's label is the obligations table's,
 tool's class, roles (its role and the one it also has), the duty's article and the law version
 (`aiact.report.duties`); a posted duty the table lacks is left out and counted, as in the report
 for a lawyer, so no posted label is ever printed (decision 031). The report quotes no text of the
-Act and names provisions in the report's citation style. The dates follow the inventory screen (`tool_duties_from`): a prohibited
-tool's line says to stop using or supplying it.
+Act and names provisions in the report's citation style. The dates follow the inventory screen
+(`tool_duties_from`), from the duties the table has: a prohibited tool's line says to stop using
+or supplying it.
 """
 
 from collections.abc import Mapping
@@ -184,7 +185,7 @@ def _tool_duties(tool: InventoryTool, duties: _Duties, language: Language) -> tu
         line = texts.TOOL_LAW[tool.law_version is LawVersion.AMENDED][language]
         law = (Paragraph(line.format(as_of=day(tool.as_of, language))),)
     if tool.risk_class is RiskClass.PROHIBITED:
-        law = (*law, Paragraph(texts.STOP_USING_TOOL[language]))
+        law = (*law, Paragraph(f"{texts.STOP_USING[language]}."))
     heading = Heading(_tool_name(tool, language))
     left_out = duties.left_out
     notes = (

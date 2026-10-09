@@ -79,6 +79,7 @@ STEP_REFERENCES: Mapping[StepName, ByLanguage] = {
 """What a step checks, for a step that cites no provision of the Act (the screens' references)."""
 STEP_OUTCOMES: Mapping[str, ByLanguage] = MappingProxyType(
     {
+        "notChecked": _texts("Not checked", "Nicht geprüft"),
         "paused": _texts(
             "Assumed for now: one fact is missing", "Vorerst angenommen: eine Angabe fehlt"
         ),
@@ -237,10 +238,8 @@ NO_DUTIES_DATE = _texts("No specific duties", "Keine besonderen Pflichten")
 STOP_USING = _texts(
     "Stop using or supplying it now", "Nutzen oder liefern Sie es ab sofort nicht mehr"
 )
-STOP_USING_TOOL = _texts(
-    "Stop using or supplying it now.", "Nutzen oder liefern Sie es ab sofort nicht mehr."
-)
-"""A prohibited tool's line, as the inventory's "needs you" says it (`inventory.needs`)."""
+"""A prohibited tool's line, as the inventory's "needs you" says it (`inventory.needs`); the
+report's paragraph adds the full stop."""
 
 BASIS = _texts("Basis", "Grundlage")
 BASIS_ANNEX_III = _texts(
@@ -291,6 +290,7 @@ ONLY_AFTER_CHANGE = _texts(
     "only after a significant change ({article})",
     "nur nach einer wesentlichen Änderung ({article})",
 )
+"""After a heading or a provision; a cell of its own starts it with a capital."""
 DUTY_HEADER = (_texts("Duty", "Pflicht"), _texts("Provision", "Vorschrift"))
 FROM_HEADER = _texts("Applies from", "Gilt ab")
 NO_DUTIES = _texts(
@@ -313,10 +313,6 @@ LEFT_OUT: Mapping[bool, ByLanguage] = {
 """Posted duties no entry of the obligations table matches (`aiact.report.duties`), by whether
 there is exactly one."""
 APPLIES_IF = _texts("{duty} Applies if: {condition}", "{duty} Gilt, wenn: {condition}")
-AFTER_CHANGE = _texts(
-    "Only after a significant change ({article})",
-    "Nur nach einer wesentlichen Änderung ({article})",
-)
 LEGACY_FROM = _texts("{date} ({article})", "{date} ({article})")
 
 LEGAL_REVIEW = _texts("Points for legal review", "Punkte für die rechtliche Prüfung")

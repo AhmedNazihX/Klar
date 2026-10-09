@@ -265,6 +265,14 @@ def _outcomes(result: ClassificationResult, language: Language) -> dict[str, str
     return {row[0]: row[1] for row in _tables(_report(result, language))[1].rows}
 
 
+def test_a_role_step_with_no_role_says_not_checked_as_the_screen_does() -> None:
+    """The contract sets the role whenever the role step is there; a copy that skips it (a
+    hand-edited result) still says what the screen's `stepOutcome` says."""
+    no_role = worked_example_result().model_copy(update={"role": None})
+    assert _outcomes(no_role, EN)["Role"] == "Not checked"
+    assert _outcomes(no_role, DE)["Rolle"] == "Nicht geprüft"
+
+
 OUT_OF_SCOPE = ends_early(
     RiskClass.OUT_OF_SCOPE, steps_with(worked_example_result().steps[0], 1), Status.DECIDED
 )
