@@ -37,7 +37,14 @@ from aiact.export import (
 )
 from aiact.provision_names import article_provision_name, provision_name
 from aiact.report import texts
-from aiact.report.common import applies_when, class_name, day, duties_from, footer
+from aiact.report.common import (
+    applies_when,
+    class_name,
+    day,
+    duties_from,
+    footer,
+    left_out_note,
+)
 from aiact.report.duties import formal_duties, timing
 from aiact.schemas import (
     LAW_TEXTS,
@@ -303,15 +310,12 @@ def _duties(
     """The duties in their formal wording (the table's), with their provision. When most of
     them apply, from one date, or only after a significant change, goes in the heading, as the
     artboard shows it; a duty that applies otherwise says so after its provision. Then how many
-    posted duties the table lacks, when any."""
+    posted duties the table lacks, when any; "no specific duties" only when the result lists
+    none at all."""
     heading = _duties_heading(result, language)
-    notes = (
-        (Paragraph(texts.LEFT_OUT[left_out == 1][language].format(count=left_out)),)
-        if left_out
-        else ()
-    )
     if not duties:
-        return (Heading(heading), Paragraph(texts.NO_DUTIES[language]), *notes)
+        none = left_out_note(left_out, language) or (Paragraph(texts.NO_DUTIES[language]),)
+        return (Heading(heading), *none)
     timings = Counter((duty.applies_from, duty.legacy) for duty in duties)
     usual = timings.most_common(1)[0][0]
     when = texts.WHEN[language]
@@ -329,7 +333,7 @@ def _duties(
     )
     dated = when.format(what=heading, when=applies_when(*usual, language))
     header = tuple(column[language] for column in texts.DUTY_HEADER)
-    return (Heading(dated), Table(header, rows, DUTY_WIDTHS), *notes)
+    return (Heading(dated), Table(header, rows, DUTY_WIDTHS), *left_out_note(left_out, language))
 
 
 def _duties_heading(result: ClassificationResult, language: Language) -> str:

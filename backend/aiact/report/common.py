@@ -8,6 +8,7 @@ from typing import Annotated
 from pydantic import StringConstraints
 
 from aiact.dates import long_date
+from aiact.export import Paragraph
 from aiact.provision_names import article_provision_name
 from aiact.report.duties import DutyTiming
 from aiact.report.texts import (
@@ -15,6 +16,7 @@ from aiact.report.texts import (
     CLASS_NAMES,
     FOOTER,
     FROM_DATE,
+    LEFT_OUT,
     LEGACY_FROM,
     NO_DUTIES_DATE,
     NOT_CLASSIFIED,
@@ -37,6 +39,14 @@ def footer(language: Language) -> str:
     """The notice on every page: the disclaimer in the report's language (never the posted
     result's), then that Klar, an AI system, prepared it."""
     return f"{DISCLAIMER[language]} {FOOTER[language]}"
+
+
+def left_out_note(left_out: int, language: Language) -> tuple[Paragraph, ...]:
+    """How many posted duties the obligations table lacks, so the report leaves them out; nothing
+    when it lacks none."""
+    if not left_out:
+        return ()
+    return (Paragraph(LEFT_OUT[left_out == 1][language].format(count=left_out)),)
 
 
 def day(value: date, language: Language) -> str:

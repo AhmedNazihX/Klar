@@ -206,6 +206,18 @@ def test_a_cell_taller_than_a_page_is_too_long() -> None:
         render_pdf(_one_cell("a\n" * 79 + "a"))
 
 
+def test_another_table_error_stays_a_value_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Only fpdf2's "row too high" is the text's fault: any other error drawing a table is
+    raised as it is, a renderer bug, not `RenderTooLong`."""
+
+    def broken(*_args: object, **_kwargs: object) -> None:
+        raise ValueError("something else")
+
+    monkeypatch.setattr(KlarPdf, "_table", broken)
+    with pytest.raises(ValueError, match=r"^something else$"):
+        render_pdf(_one_cell("a"))
+
+
 def test_a_long_cell_of_words_is_too_long_however_it_wraps() -> None:
     """Words that wrap, not line breaks: the renderer's own measure decides."""
     with pytest.raises(RenderTooLong):

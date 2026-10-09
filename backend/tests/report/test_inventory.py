@@ -221,3 +221,20 @@ def test_a_provider_that_also_deploys_keeps_its_deployer_duties() -> None:
     text = _pages(tools=(both,))
     assert "Keep the logs it creates for at least six months Art. 26(6)" in text
     assert "not in Klar's table" not in text
+
+
+def test_a_tool_the_table_cant_match_keeps_its_date_and_says_only_what_is_left_out() -> None:
+    """Under a law version the table doesn't hold, the overview still dates the tool from its
+    posted duties' dates (the run's own), and its section counts the duties it leaves out
+    without also saying the result lists none."""
+    original = SCREENING.model_copy(update={"law_version": LawVersion.ORIGINAL})
+    english = _pages(tools=(original,))
+    assert "Applicant screening High-risk Decided Deployer 2 December 2027" in english
+    assert "2 more duties the result lists are not in Klar's table of duties" in english
+    assert "no specific duties" not in english.lower()
+    for posted in original.duties:
+        assert posted.label not in english
+    german = _pages(Language.DE, tools=(original,))
+    assert "Applicant screening Hochrisiko Entschieden Betreiber 2. Dezember 2027" in german
+    assert "2 weitere Pflichten, die das Ergebnis nennt" in german
+    assert "keine besonderen Pflichten" not in german

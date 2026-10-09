@@ -261,7 +261,13 @@ class KlarPdf(FPDF):
     ) -> None:
         """`rows` as a table across the page, the first one its header (repeated on a new
         page); each text as the current font can draw it. `RenderTooLong` for a row taller than
-        a page (fpdf2's `ROW_TOO_HIGH`), which no font or layout change here would fit."""
+        a page (fpdf2's `ROW_TOO_HIGH`), which no font or layout change here would fit.
+
+        fpdf2 measures a row against an empty page, then draws the repeated header above it, so
+        a row just short of a page (about 67 or 68 lines of a table cell) is not refused: its
+        last line or two spill onto one more page, outside the table's lines. Accepted, with no
+        guard of our own: only crafted input makes a cell that tall (a report's cells are a
+        name, a label or a duty), and no text is lost, only laid out past the table."""
         self.set_draw_color(*rgb(HAIRLINE))
         try:
             self._table(rows, widths=widths, headings=headings)

@@ -349,6 +349,17 @@ def test_duties_the_table_lacks_are_counted_in_german_and_english() -> None:
     )
 
 
+def test_a_result_whose_every_duty_is_left_out_doesnt_say_it_lists_none() -> None:
+    result = worked_example_result()
+    unknown = result.obligations[0].model_copy(update={"article": "art:99:1"})
+    changed = rebuild(result, obligations=(unknown,))
+    text, german = _text(changed), _text(changed, DE)
+    assert "1 more duty the result lists is not in Klar's table of duties" in text
+    assert "no specific duties" not in text
+    assert "1 weitere Pflicht, die das Ergebnis nennt" in german
+    assert "keine besonderen Pflichten" not in german
+
+
 def test_a_legacy_duty_heading_in_english() -> None:
     result = worked_example_result()
     duties = tuple(

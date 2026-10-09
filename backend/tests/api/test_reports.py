@@ -20,7 +20,8 @@ from aiact.api.reports import (
     InventoryReportRequest,
     report_date,
 )
-from aiact.export import pool
+from aiact.export import Paper, pool, render_pdf
+from aiact.export.pdf import KlarPdf
 from aiact.export.pool import RenderTimeout, RenderWorker
 from aiact.obligations.list import default_table, list_obligations
 from aiact.report.common import MAX_NAME_CHARS
@@ -29,12 +30,13 @@ from aiact.schemas import (
     ClassificationResult,
     EvidenceTag,
     Fact,
+    Obligation,
     RiskClass,
     Role,
 )
 from tests.api.conftest import BASE_URL, api_settings
 from tests.drafting.builders import limited_risk_result
-from tests.export.reading import pdf_pages, read_docx
+from tests.export.reading import one_line, pdf_pages, read_docx
 from tests.schemas.builders import needs_description, rebuild
 from tests.schemas.worked_example import worked_example_result
 
@@ -42,6 +44,8 @@ pytestmark = pytest.mark.anyio
 
 PREPARED_ON = date(2026, 10, 1)
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+APPLIES_IF = {"en": "Applies if:", "de": "Gilt, wenn:"}
+"""What comes before a duty's condition in the report, by language."""
 SECRET = "Confidential: the Hamburg pilot of Project Falcon"
 """A name the logs and errors must never show."""
 
@@ -98,6 +102,9 @@ async def test_the_worked_example_is_a_two_page_pdf_of_the_posted_results_class(
     first, second = pdf_pages(response.content)
     assert "Nordwerk Logistik GmbH. Prepared on 1 October 2026." in first
     assert "Class Status Role Duties apply from High-risk Decided Deployer" in first
+    assert "How the result was reached" in first
+    assert "Duties of the deployer, from 2 December 2027" in second
+    assert "Points for legal review" in second
     for page in (first, second):
         assert DISCLAIMER_EN in page
 
@@ -331,22 +338,53 @@ async def test_a_renderer_error_is_a_500_logged_as_an_error_by_its_type_only(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Klar's fault, not the text's: not "too long", and logged at error level, with no text of
-    the report."""
+    the report. The count stays, as for a 413: the render took a worker and its time."""
     monkeypatch.setitem(RENDERERS, "pdf", int)  # int(paper) raises in the worker process
-    app = report_app()
+    app = report_app(rate_limit_exports=1)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
         with caplog.at_level(logging.DEBUG):
             failed = await client.post(
                 "/reports/result", json=_body(tool_name=SECRET, company=SECRET)
             )
+        after = await client.post("/reports/result", json=_body(format="docx"))
     assert (failed.status_code, failed.json()) == (
         500,
         {"detail": "Klar couldn't make this file. Please try again later."},
     )
+    assert after.status_code == 429
     errors = [r.getMessage() for r in caplog.records if r.levelno == logging.ERROR]
     assert errors == ["export failed: the render raised TypeError"]
     assert SECRET not in caplog.text
+
+
+def render_pdf_with_another_table_error(paper: Paper) -> bytes:
+    """`render_pdf` with its table draw raising a `ValueError` that isn't fpdf2's "row too
+    high". Run in a worker process, which a test's monkeypatch doesn't reach, so it patches
+    there."""
+
+    def broken(*_args: object, **_kwargs: object) -> None:
+        raise ValueError("something else")
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(KlarPdf, "_table", broken)
+        return render_pdf(paper)
+
+
+async def test_another_table_error_is_a_500_not_a_413(
+    report_app: Callable[..., FastAPI],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    monkeypatch.setitem(RENDERERS, "pdf", render_pdf_with_another_table_error)
+    app = report_app()
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        with caplog.at_level(logging.DEBUG):
+            failed = await client.post("/reports/result", json=_body())
+    assert failed.status_code == 500
+    errors = [r.getMessage() for r in caplog.records if r.levelno == logging.ERROR]
+    assert errors == ["export failed: the render raised ValueError"]
 
 
 async def test_a_worker_that_doesnt_start_is_a_503_that_gives_back_its_count(
@@ -388,18 +426,36 @@ def test_every_reportable_table_entry_is_posted() -> None:
     ) in posted
 
 
+def _printed_duty(duty: Obligation, language: str) -> str:
+    """A posted table duty as the report prints it: its formal wording in `language`, then its
+    condition (English only), on one line."""
+    text = duty.duty_de if language == "de" else duty.duty
+    if duty.applies_if is not None:
+        text = f"{text} {APPLIES_IF[language]} {duty.applies_if}"
+    return one_line(text)
+
+
 @pytest.mark.parametrize("language", ["en", "de"])
 async def test_every_table_duty_makes_a_report(
     report_app: Callable[..., FastAPI], language: str
 ) -> None:
     """The long duties with their conditions (Art. 27(1), Art. 26(10), Art. 53(1)(b)) fit a
-    page: no deployer of a credit score or a public body is refused its report."""
+    page, and each one reaches the file: no deployer of a credit score or a public body is
+    refused its report or loses a duty from it."""
     app = report_app(rate_limit_exports=100)
     transport = httpx.ASGITransport(app=app)
+    printed: set[str] = set()
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
         for result in _every_table_duty():
             response = await client.post("/reports/result", json=_body(result, language=language))
             assert response.status_code == 200, (result.role, result.risk_class)
+            text = " ".join(pdf_pages(response.content))
+            for duty in result.obligations:
+                assert _printed_duty(duty, language) in text, (result.role, duty.article)
+                printed.add(duty.article)
+    fria = next(e for e in default_table().obligations if e.article == "art:27:1")
+    assert fria.applies_if is not None
+    assert "art:27:1" in printed
 
 
 def test_the_report_date_is_today() -> None:
