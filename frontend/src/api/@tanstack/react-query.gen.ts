@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { draftDocument, draftVendorLetter, exportDocument, getProvision, listDocuments, listObligations, listResultDocuments, type Options } from '../sdk.gen';
-import type { DraftDocumentData, DraftDocumentError, DraftDocumentResponse, DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, ExportDocumentData, ExportDocumentError, ExportDocumentResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse, ListResultDocumentsData, ListResultDocumentsError, ListResultDocumentsResponse } from '../types.gen';
+import { draftDocument, draftVendorLetter, exportDocument, exportInventoryReport, exportResultReport, getProvision, listDocuments, listObligations, listResultDocuments, type Options } from '../sdk.gen';
+import type { DraftDocumentData, DraftDocumentError, DraftDocumentResponse, DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, ExportDocumentData, ExportDocumentError, ExportDocumentResponse, ExportInventoryReportData, ExportInventoryReportError, ExportInventoryReportResponse, ExportResultReportData, ExportResultReportError, ExportResultReportResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse, ListResultDocumentsData, ListResultDocumentsError, ListResultDocumentsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -173,6 +173,47 @@ export const exportDocumentMutation = (options?: Partial<Options<ExportDocumentD
     const mutationOptions: UseMutationOptions<ExportDocumentResponse, ExportDocumentError, Options<ExportDocumentData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await exportDocument({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Export Result Report
+ *
+ * The report for a lawyer: the result, its facts and their sources, the steps and the
+ * provisions they cite, the duties, the points for legal review and a box for the reviewer to
+ * sign, as a PDF or Word file. Guidance, not legal advice.
+ */
+export const exportResultReportMutation = (options?: Partial<Options<ExportResultReportData>>): UseMutationOptions<ExportResultReportResponse, ExportResultReportError, Options<ExportResultReportData>> => {
+    const mutationOptions: UseMutationOptions<ExportResultReportResponse, ExportResultReportError, Options<ExportResultReportData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await exportResultReport({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Export Inventory Report
+ *
+ * The inventory report: every tool with its class, status, role and first duty date, then
+ * each tool's duties, as a PDF or Word file. Guidance, not legal advice.
+ */
+export const exportInventoryReportMutation = (options?: Partial<Options<ExportInventoryReportData>>): UseMutationOptions<ExportInventoryReportResponse, ExportInventoryReportError, Options<ExportInventoryReportData>> => {
+    const mutationOptions: UseMutationOptions<ExportInventoryReportResponse, ExportInventoryReportError, Options<ExportInventoryReportData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await exportInventoryReport({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

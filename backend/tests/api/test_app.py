@@ -94,6 +94,8 @@ def test_the_operation_ids_are_the_route_names() -> None:
         "draft_document",
         "export_document",
         "draft_vendor_letter",
+        "export_result_report",
+        "export_inventory_report",
     }
 
 

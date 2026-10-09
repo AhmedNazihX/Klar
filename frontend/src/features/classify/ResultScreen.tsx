@@ -11,6 +11,7 @@ import { useOriginalRun } from '@/hooks/use-original-run'
 import { saveDraft, type ClassificationRun } from './classification-store'
 import { DecidingQuestion } from './DecidingQuestion'
 import { DutiesPanel, OutOfScopePanel } from './DutiesPanel'
+import { ExportReportButton } from './ExportReportButton'
 import { FactsPanel } from './FactsPanel'
 import { OriginalTextNote } from './OriginalTextNote'
 import { DraftDocumentsLink, ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
@@ -55,6 +56,7 @@ function SummaryView({
               {t('result.editDescription')}
             </Button>
             <DraftDocumentsLink toolId={run.toolId} />
+            <ExportReportButton run={run} />
           </>
         }
       />

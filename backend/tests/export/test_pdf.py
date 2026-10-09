@@ -9,11 +9,12 @@ import pytest
 from pypdf import PdfReader
 from pypdf.generic import DictionaryObject
 
-from aiact.export import Paper, Paragraph, render_docx, render_pdf
+from aiact.export import Paper, Paragraph, Table, render_docx, render_pdf
 from aiact.export.pdf import SANS, KlarPdf
+from aiact.export.pool import RenderTooLong
 from aiact.export.text import printable
 from aiact.schemas import Language
-from tests.export.papers import FOOTER, MARKUP, sample_paper
+from tests.export.papers import FOOTER, MARKUP, report_paper, sample_paper
 from tests.export.reading import one_line, pdf_pages, read_docx
 
 A4_WIDTH_PT = 595.28
@@ -154,3 +155,70 @@ def test_the_pdf_alone_replaces_what_its_fonts_cannot_draw() -> None:
     paper = Paper(language=Language.EN, title="T", blocks=(Paragraph(text),), footer=FOOTER)
     assert text in read_docx(render_docx(paper)).paragraphs
     assert "zerowidth thin space ?" in pdf_pages(render_pdf(paper))[0]
+
+
+def test_the_reports_blocks_are_drawn_as_given_and_the_page_break_starts_a_page() -> None:
+    first, second = pdf_pages(render_pdf(report_paper()))
+    for text in (
+        "Classification report · Report KR-0000ABCD Applicant screening",
+        "Class Status High-risk Decided",
+        f"Facts Fact Source {one_line(MARKUP)} Stated by the user",
+    ):
+        assert text in first, text
+    assert "Duties" not in first
+    assert (
+        "Duties Points for legal review. For the reviewer Reviewed by Date Not legal advice."
+        in second
+    )
+    for number, page in enumerate((first, second), start=1):
+        assert FOOTER in page
+        assert f"Page {number} of 2" in page
+
+
+def test_a_table_cell_draws_what_no_font_can_as_a_question_mark(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    paper = Paper(
+        language=Language.EN,
+        title="Cells",
+        blocks=(Table(("Fact",), (("Ship it \U0001f600",),), (1.0,)),),
+        footer=FOOTER,
+    )
+    with caplog.at_level(logging.DEBUG):
+        page = pdf_pages(render_pdf(paper))[0]
+    assert "Ship it ?" in page
+    assert "PDF: 1 characters no font can draw shown as ?" in caplog.text
+
+
+def _one_cell(text: str, header: str = "Duties apply from") -> Paper:
+    table = Table((header,), ((text,),), (1.0,))
+    return Paper(language=Language.EN, title="Cells", blocks=(table,), footer=FOOTER)
+
+
+def test_a_cell_as_tall_as_a_page_moves_to_a_page_of_its_own() -> None:
+    pages = pdf_pages(render_pdf(_one_cell("a\n" * 59 + "a")))
+    assert pages[-1].count("a") >= 60
+
+
+def test_a_cell_taller_than_a_page_is_too_long() -> None:
+    """fpdf2 can't break a row across pages: its error is raised as `RenderTooLong`."""
+    with pytest.raises(RenderTooLong):
+        render_pdf(_one_cell("a\n" * 79 + "a"))
+
+
+def test_another_table_error_stays_a_value_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Only fpdf2's "row too high" is the text's fault: any other error drawing a table is
+    raised as it is, a renderer bug, not `RenderTooLong`."""
+
+    def broken(*_args: object, **_kwargs: object) -> None:
+        raise ValueError("something else")
+
+    monkeypatch.setattr(KlarPdf, "_table", broken)
+    with pytest.raises(ValueError, match=r"^something else$"):
+        render_pdf(_one_cell("a"))
+
+
+def test_a_long_cell_of_words_is_too_long_however_it_wraps() -> None:
+    """Words that wrap, not line breaks: the renderer's own measure decides."""
+    with pytest.raises(RenderTooLong):
+        render_pdf(_one_cell(" ".join(["word"] * 3_000)))

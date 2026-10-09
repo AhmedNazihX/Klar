@@ -3,10 +3,14 @@
 from io import BytesIO
 from zipfile import ZipFile
 
+from docx import Document
+
 from aiact.export import render_docx
 from aiact.schemas import Language
-from tests.export.papers import FOOTER, LONG, MARKUP, sample_paper
+from tests.export.papers import FOOTER, LONG, MARKUP, report_paper, sample_paper
 from tests.export.reading import read_docx
+
+SIGNATURE_LINE = "_" * 48
 
 
 def test_every_block_is_written_as_given_in_order() -> None:
@@ -53,3 +57,35 @@ def test_the_flat_lockup_is_the_only_picture() -> None:
         media = [name for name in archive.namelist() if name.startswith("word/media/")]
     assert len(media) == 1
     assert media[0].endswith(".png")
+
+
+def test_the_reports_blocks_are_word_tables_a_page_break_and_signature_lines() -> None:
+    data = render_docx(report_paper())
+    texts = [text for text in read_docx(data).paragraphs if text]
+    assert texts == [
+        "Classification report · Report KR-0000ABCD",
+        "Applicant screening",
+        "Prepared on 1 October 2026.",
+        "Facts",
+        "Duties",
+        "Points for legal review.",
+        "For the reviewer",
+        SIGNATURE_LINE,
+        "Reviewed by",
+        SIGNATURE_LINE,
+        "Date",
+        "Not legal advice.",
+    ]
+    tables = Document(BytesIO(data)).tables
+    assert [[cell.text for cell in row.cells] for row in tables[0].rows] == [
+        ["Class", "Status"],
+        ["High-risk", "Decided"],
+    ]
+    assert [[cell.text for cell in row.cells] for row in tables[1].rows] == [
+        ["Fact", "Source"],
+        [MARKUP, "Stated by the user"],
+    ]
+    with ZipFile(BytesIO(data)) as archive:
+        body = archive.read("word/document.xml").decode()
+    assert body.count("<w:tblHeader/>") == 2, "each table's header repeats on a new page"
+    assert '<w:br w:type="page"/>' in body

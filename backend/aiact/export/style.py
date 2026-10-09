@@ -14,6 +14,8 @@ LENS_BLUE = "#2D4BE0"
 FILL_TINT = "#EEF1FD"
 """Lens blue at 7% on white: the ground of a "To fill in" marker."""
 QUOTE_TINT = "#F3F5F9"
+HAIRLINE = "#EEEFF0"
+"""Ink at 7% on white (the `hairline` token): the rules between a table's rows."""
 STAMP = "#873A00"
 """The DRAFT stamp's colour (the draft StatusPill)."""
 

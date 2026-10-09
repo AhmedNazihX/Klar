@@ -8,7 +8,15 @@ from collections.abc import Iterator
 
 import pytest
 
-from aiact.export.pool import RenderFailed, RenderPool, RenderTimeout, RenderWorker
+from aiact.export import Paper, Table, render_pdf
+from aiact.export.pool import (
+    RenderFailed,
+    RenderPool,
+    RenderTimeout,
+    RenderTooLong,
+    RenderWorker,
+)
+from aiact.schemas import Language
 
 TIMEOUT_SECONDS = 1.0
 STOP_BOUND_SECONDS = 10.0
@@ -60,6 +68,16 @@ def test_a_failed_render_comes_back_as_its_error_type_only(worker: RenderWorker)
     assert str(raised.value) == "ValueError"
     assert SECRET not in repr(raised.value)
     assert worker.run(len, "ab") == 2, "the worker survives a failed render"
+
+
+def test_a_paper_too_long_to_draw_comes_back_as_render_too_long(worker: RenderWorker) -> None:
+    """Told apart from any other failure, so the route can blame the text, not Klar."""
+    table = Table(("Duty",), ((f"{SECRET}\n" * 80,),), (1.0,))
+    paper = Paper(language=Language.EN, title="Tall", blocks=(table,), footer="Footer")
+    with pytest.raises(RenderTooLong) as raised:
+        worker.run(render_pdf, paper)
+    assert SECRET not in repr(raised.value)
+    assert worker.run(len, "ab") == 2, "the worker survives it"
 
 
 def test_every_worker_taken_gives_none_until_one_is_released(pool: RenderPool) -> None:

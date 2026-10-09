@@ -524,7 +524,7 @@
         },
         "responses": {
           "200": {
-            "description": "The document as a file (an attachment)",
+            "description": "The file (an attachment)",
             "content": {
               "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
                 "schema": {
@@ -564,6 +564,128 @@
           },
           "413": {
             "description": "The document is too long for a file"
+          },
+          "504": {
+            "description": "The file took too long to make"
+          }
+        }
+      }
+    },
+    "/reports/result": {
+      "post": {
+        "summary": "Export Result Report",
+        "description": "The report for a lawyer: the result, its facts and their sources, the steps and the\nprovisions they cite, the duties, the points for legal review and a box for the reviewer to\nsign, as a PDF or Word file. Guidance, not legal advice.",
+        "operationId": "export_result_report",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The file (an attachment)",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The document is too long for a file"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "500": {
+            "description": "The file couldn't be made"
+          },
+          "503": {
+            "description": "Every export slot is taken"
+          },
+          "504": {
+            "description": "The file took too long to make"
+          }
+        }
+      }
+    },
+    "/reports/inventory": {
+      "post": {
+        "summary": "Export Inventory Report",
+        "description": "The inventory report: every tool with its class, status, role and first duty date, then\neach tool's duties, as a PDF or Word file. Guidance, not legal advice.",
+        "operationId": "export_inventory_report",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The file (an attachment)",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The document is too long for a file"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "500": {
+            "description": "The file couldn't be made"
+          },
+          "503": {
+            "description": "Every export slot is taken"
           },
           "504": {
             "description": "The file took too long to make"
@@ -1668,6 +1790,189 @@
         "title": "InvalidField",
         "description": "One validation failure: its type (e.g. `string_too_long`) and where it is."
       },
+      "InventoryDuty": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Label",
+            "description": "The duty's short label in the report's language (`label_en`, `label_de`)."
+          },
+          "article": {
+            "type": "string",
+            "maxLength": 200,
+            "pattern": "^art:[0-9]+[a-z]?(:[A-Za-z0-9]+)*$",
+            "title": "Article"
+          },
+          "applies_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Applies From"
+          },
+          "legacy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegacyStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "label",
+          "article",
+          "applies_from"
+        ],
+        "title": "InventoryDuty",
+        "description": "One duty of a tool's stored result, as the report lists it."
+      },
+      "InventoryReportRequest": {
+        "properties": {
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/InventoryTool"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Tools"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of the report's wording and notice."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "docx",
+              "pdf"
+            ],
+            "title": "Format"
+          },
+          "company": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company",
+            "description": "The company's name from its profile; null without one."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tools",
+          "language",
+          "format"
+        ],
+        "title": "InventoryReportRequest",
+        "description": "Every tool of the user's inventory, summarised, and the report wanted."
+      },
+      "InventoryTool": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Null when the user gave none: \"Your tool\"."
+          },
+          "risk_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskClass"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Status"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "also_role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tool's second role, when the result gives one."
+          },
+          "law_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LawVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of",
+            "description": "The date the result applies the law as of."
+          },
+          "duties": {
+            "items": {
+              "$ref": "#/components/schemas/InventoryDuty"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Duties",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "InventoryTool",
+        "description": "One tool of the inventory and the summary of its latest stored result; a tool with no\nresult Klar can read has no class."
+      },
       "JsonValue": {},
       "Language": {
         "type": "string",
@@ -2195,6 +2500,65 @@
           "result"
         ],
         "title": "ResultEvent"
+      },
+      "ResultReportRequest": {
+        "properties": {
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result",
+            "description": "The classification result, as `POST /classify` sent it."
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of the report's wording and notice."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "docx",
+              "pdf"
+            ],
+            "title": "Format"
+          },
+          "tool_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Name",
+            "description": "The tool's name; null when the user gave none (\"Your tool\")."
+          },
+          "company": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company",
+            "description": "The company's name from its profile; null without one."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "result",
+          "language",
+          "format"
+        ],
+        "title": "ResultReportRequest",
+        "description": "One tool's result, and the report wanted."
       },
       "RiskClass": {
         "type": "string",

@@ -141,8 +141,8 @@ export function exportFileName(request: ExportRequest): string {
   return `${request.template}.${request.format}`
 }
 
-async function fetchFile(request: ExportRequest): Promise<Blob> {
-  const { data, response } = await exportDocument({ body: request, parseAs: 'blob' })
+/** Turns a file response into its Blob, or the refusal it stands for (`documentFailure`). */
+export function fileOf({ data, response }: { data?: unknown; response?: Response }): Blob {
   // No response at all (offline) leaves `response` unset.
   if (!response?.ok || !(data instanceof Blob)) {
     throw new DocumentRequestError(response?.status ?? null)
@@ -150,8 +150,12 @@ async function fetchFile(request: ExportRequest): Promise<Blob> {
   return data
 }
 
+async function fetchFile(request: ExportRequest): Promise<Blob> {
+  return fileOf(await exportDocument({ body: request, parseAs: 'blob' }))
+}
+
 /** Hands a file to the browser to save. */
-function saveFile(file: Blob, name: string): void {
+export function saveFile(file: Blob, name: string): void {
   const url = URL.createObjectURL(file)
   const link = document.createElement('a')
   link.href = url

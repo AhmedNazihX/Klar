@@ -665,6 +665,88 @@ export type InvalidField = {
     loc: Array<string | number>;
 };
 
+/**
+ * InventoryDuty
+ *
+ * One duty of a tool's stored result, as the report lists it.
+ */
+export type InventoryDuty = {
+    /**
+     * Label
+     *
+     * The duty's short label in the report's language (`label_en`, `label_de`).
+     */
+    label: string;
+    /**
+     * Article
+     */
+    article: string;
+    /**
+     * Applies From
+     */
+    applies_from: string;
+    legacy?: LegacyStatus | null;
+};
+
+/**
+ * InventoryReportRequest
+ *
+ * Every tool of the user's inventory, summarised, and the report wanted.
+ */
+export type InventoryReportRequest = {
+    /**
+     * Tools
+     */
+    tools: Array<InventoryTool>;
+    /**
+     * The language of the report's wording and notice.
+     */
+    language: Language;
+    /**
+     * Format
+     */
+    format: 'docx' | 'pdf';
+    /**
+     * Company
+     *
+     * The company's name from its profile; null without one.
+     */
+    company?: string | null;
+};
+
+/**
+ * InventoryTool
+ *
+ * One tool of the inventory and the summary of its latest stored result; a tool with no
+ * result Klar can read has no class.
+ */
+export type InventoryTool = {
+    /**
+     * Name
+     *
+     * Null when the user gave none: "Your tool".
+     */
+    name?: string | null;
+    risk_class?: RiskClass | null;
+    status?: Status | null;
+    role?: Role | null;
+    /**
+     * The tool's second role, when the result gives one.
+     */
+    also_role?: Role | null;
+    law_version?: LawVersion | null;
+    /**
+     * As Of
+     *
+     * The date the result applies the law as of.
+     */
+    as_of?: string | null;
+    /**
+     * Duties
+     */
+    duties?: Array<InventoryDuty>;
+};
+
 export type JsonValue = unknown;
 
 /**
@@ -1010,6 +1092,42 @@ export type ResultEvent = {
      */
     event?: 'result';
     result: ClassificationResult;
+};
+
+/**
+ * ResultReportRequest
+ *
+ * One tool's result, and the report wanted.
+ */
+export type ResultReportRequest = {
+    /**
+     * Result
+     *
+     * The classification result, as `POST /classify` sent it.
+     */
+    result: {
+        [key: string]: unknown;
+    };
+    /**
+     * The language of the report's wording and notice.
+     */
+    language: Language;
+    /**
+     * Format
+     */
+    format: 'docx' | 'pdf';
+    /**
+     * Tool Name
+     *
+     * The tool's name; null when the user gave none ("Your tool").
+     */
+    tool_name?: string | null;
+    /**
+     * Company
+     *
+     * The company's name from its profile; null without one.
+     */
+    company?: string | null;
 };
 
 /**
@@ -1566,9 +1684,99 @@ export type ExportDocumentError = ExportDocumentErrors[keyof ExportDocumentError
 
 export type ExportDocumentResponses = {
     /**
-     * The document as a file (an attachment)
+     * The file (an attachment)
      */
     200: Blob | File;
 };
 
 export type ExportDocumentResponse = ExportDocumentResponses[keyof ExportDocumentResponses];
+
+export type ExportResultReportData = {
+    body: ResultReportRequest;
+    path?: never;
+    query?: never;
+    url: '/reports/result';
+};
+
+export type ExportResultReportErrors = {
+    /**
+     * The document is too long for a file
+     */
+    413: unknown;
+    /**
+     * Not a valid request; the body quotes none of it
+     */
+    422: Unprocessable;
+    /**
+     * Too many requests
+     */
+    429: unknown;
+    /**
+     * The file couldn't be made
+     */
+    500: unknown;
+    /**
+     * Every export slot is taken
+     */
+    503: unknown;
+    /**
+     * The file took too long to make
+     */
+    504: unknown;
+};
+
+export type ExportResultReportError = ExportResultReportErrors[keyof ExportResultReportErrors];
+
+export type ExportResultReportResponses = {
+    /**
+     * The file (an attachment)
+     */
+    200: Blob | File;
+};
+
+export type ExportResultReportResponse = ExportResultReportResponses[keyof ExportResultReportResponses];
+
+export type ExportInventoryReportData = {
+    body: InventoryReportRequest;
+    path?: never;
+    query?: never;
+    url: '/reports/inventory';
+};
+
+export type ExportInventoryReportErrors = {
+    /**
+     * The document is too long for a file
+     */
+    413: unknown;
+    /**
+     * Not a valid request; the body quotes none of it
+     */
+    422: Unprocessable;
+    /**
+     * Too many requests
+     */
+    429: unknown;
+    /**
+     * The file couldn't be made
+     */
+    500: unknown;
+    /**
+     * Every export slot is taken
+     */
+    503: unknown;
+    /**
+     * The file took too long to make
+     */
+    504: unknown;
+};
+
+export type ExportInventoryReportError = ExportInventoryReportErrors[keyof ExportInventoryReportErrors];
+
+export type ExportInventoryReportResponses = {
+    /**
+     * The file (an attachment)
+     */
+    200: Blob | File;
+};
+
+export type ExportInventoryReportResponse = ExportInventoryReportResponses[keyof ExportInventoryReportResponses];

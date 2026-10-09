@@ -20,7 +20,8 @@ from pydantic import ValidationError
 from aiact.api import create_app
 from aiact.api.dependencies import ApiContext
 from aiact.api.documents import INVALID_RESULT, law_quotes
-from aiact.api.drafts import MAX_FILE_CHARS, MAX_FILE_LINES, RENDERERS
+from aiact.api.drafts import RENDERERS
+from aiact.api.files import MAX_FILE_CHARS, MAX_FILE_LINES
 from aiact.drafting import CheckName, CheckResult, SizeClass
 from aiact.drafting.documents import checked_draft
 from aiact.export.pool import RenderWorker
@@ -530,9 +531,10 @@ async def test_an_export_gives_its_slot_back_when_its_file_is_made(
     assert (first.status_code, second.status_code) == (200, 200)
 
 
-async def test_an_export_gives_its_slot_back_when_its_render_fails(
+async def test_an_export_whose_render_fails_is_a_500_that_gives_back_its_slot(
     monkeypatch: pytest.MonkeyPatch, export_app: Callable[..., FastAPI]
 ) -> None:
+    """A renderer error is Klar's, not the answers': never "shorten some answers"."""
     monkeypatch.setitem(RENDERERS, "pdf", int)  # int(paper) raises in the worker process
     app = export_app(rate_limit_exports=10, export_max_concurrent=1)
     export = _draft_body(provider_result(), ANNEX_IV)
@@ -541,6 +543,7 @@ async def test_an_export_gives_its_slot_back_when_its_render_fails(
         failed = await client.post("/documents/export", json={**export, "format": "pdf"})
         after = await client.post("/documents/export", json={**export, "format": "docx"})
     assert (failed.status_code, after.status_code) == (500, 200)
+    assert failed.json() == {"detail": "Klar couldn't make this file. Please try again later."}
 
 
 RUNAWAY = dict.fromkeys(QUESTIONS[:5], "a" + "\u0301" * 19_999)

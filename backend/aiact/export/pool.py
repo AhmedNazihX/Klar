@@ -10,7 +10,8 @@ busy it gives `None`.
 A worker is started on first use, in a fresh interpreter (`spawn`: the API runs threads, which a
 fork would copy mid-lock), and imports the renderers before it reports ready, so the time limit
 counts the render only. Nothing a worker sends back on failure carries the text it rendered: only
-the error's type.
+the error's type. A render that raised `RenderTooLong` (a PDF table row taller than a page) is
+raised as `RenderTooLong` here too, so a route can tell the user's text from a renderer bug.
 """
 
 import logging
@@ -36,6 +37,15 @@ class RenderTimeout(Exception):
 
 class RenderFailed(Exception):
     """A render raised, or its worker died; the message is the error's type only."""
+
+
+class WorkerNotStarted(RenderFailed):
+    """A new worker didn't start in time: nothing was rendered."""
+
+
+class RenderTooLong(Exception):
+    """The paper can't be drawn: a table row is taller than a page (the renderer's own answer,
+    `aiact.export.pdf`)."""
 
 
 def _serve(connection: Connection) -> None:
@@ -74,7 +84,8 @@ class RenderWorker:
 
     def run[*Args, Value](self, function: Callable[[*Args], Value], *args: *Args) -> Value:
         """`function(*args)` in the worker process; `RenderTimeout` past the time limit (the
-        process is stopped), `RenderFailed` if it raised or the worker died."""
+        process is stopped), `RenderTooLong` if it raised that, `RenderFailed` if it raised
+        anything else or the worker died (`WorkerNotStarted` if it never started)."""
         connection = self._started()
         try:
             connection.send((function, args))
@@ -86,7 +97,7 @@ class RenderWorker:
             self.stop()
             raise RenderFailed(type(exc).__name__) from None
         if not is_done:
-            raise RenderFailed(value)
+            raise RenderTooLong if value == RenderTooLong.__name__ else RenderFailed(value)
         return cast(Value, value)
 
     def stop(self) -> None:
@@ -120,7 +131,7 @@ class RenderWorker:
         self._process, self._connection = process, parent
         if not parent.poll(START_TIMEOUT_SECONDS) or parent.recv() != READY:
             self.stop()
-            raise RenderFailed("the worker didn't start")
+            raise WorkerNotStarted("the worker didn't start")
         return parent
 
 
