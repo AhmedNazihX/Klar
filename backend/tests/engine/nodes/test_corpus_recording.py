@@ -112,7 +112,15 @@ def _case_ids(category: str) -> set[str]:
     ("module", "test", "category", "extra"),
     [
         ("test_scope", "test_b5b_case_replay", "b", set()),
-        ("test_high_risk", "test_replay_annex_i_case", "e", {"test_replay_worked_example"}),
+        (
+            "test_high_risk",
+            "test_replay_annex_i_case",
+            "e",
+            {
+                "test_replay_worked_example",
+                "test_replay_original_machinery_guard_is_annex_i_section_a",
+            },
+        ),
         ("test_prohibited", "test_b5c_case_replay", "c", set()),
         ("test_transparency", "test_b5a_case_replay", "a", set()),
         (

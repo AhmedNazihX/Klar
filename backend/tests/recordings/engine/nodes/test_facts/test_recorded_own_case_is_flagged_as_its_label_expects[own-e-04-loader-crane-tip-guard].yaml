@@ -107,15 +107,18 @@ interactions:
       and question `text` in the language the user message asks for (`en`: English,
       `de`: German). Quotes stay in the description''s own language.\n\nAnswer with
       JSON matching the schema, and nothing else.\n","role":"system"},{"content":"Language
-      for facts and questions: en\n\nDescription:\nWe''re a 40-person robotics start-up
-      in Eindhoven. We sell a vision kit that machine builders mount on collaborative
-      robot arms: a camera and a small neural network watch the workspace and slow
-      the arm down, or stop it, when a person comes within reach. The machine builders
-      integrate the kit into their robot cells and sell those to factories. We train
-      the model in-house and are still deciding how updates will reach customers.
-      We haven''t talked to a notified body yet and haven''t worked out which conformity
-      route the kit will take. First pilot deliveries are planned for spring 2027.
-      Our founders met at a drone-racing hackathon.","role":"user"}],"max_tokens":6000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"facts_answer","schema":{"$defs":{"EvidenceTag":{"description":"Where
+      for facts and questions: de\n\nDescription:\nWir bauen im Sauerland mit rund
+      250 Leuten Ladekrane, die auf Lkw montiert werden. F\u00fcr die neue Baureihe
+      ersetzen wir die klassische Lastmomentbegrenzung durch ein lernendes Modell:
+      Ein neuronales Netz wertet Hydraulikdr\u00fccke, Auslegerwinkel, St\u00fctzenstellung
+      und das Einsinken der Abst\u00fctzung aus, sch\u00e4tzt laufend, wie nah der
+      Kran am Kippen oder an einer \u00dcberlastung des Auslegers ist, und sperrt
+      jede Bewegung, die ihn dar\u00fcber hinausbringen w\u00fcrde. Das Modell lernt
+      im Betrieb nicht weiter, es wird nur \u00fcber gepr\u00fcfte Updates von uns
+      ausgetauscht. Weil keine harmonisierte Norm eine solche KI-gest\u00fctzte Lastbegrenzung
+      abdeckt, muss nach der Maschinenverordnung eine benannte Stelle die Konformit\u00e4t
+      bewerten; der Termin beim Pr\u00fcfer steht schon. Ausgeliefert wird die Baureihe
+      ab Februar 2027, \u00fcbrigens mit einer neuen Funkfernsteuerung in Signalorange.","role":"user"}],"max_tokens":6000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"facts_answer","schema":{"$defs":{"EvidenceTag":{"description":"Where
       a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"ExtractedFact":{"additionalProperties":false,"description":"One
       fact as the model returns it. Enum fields carry no description: strict structured\noutput
       rejects keywords next to a `$ref`; the prompt explains every field instead.","properties":{"text":{"minLength":1,"title":"Text","type":"string"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"quote":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"For
@@ -137,51 +140,67 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791502826-cCLSc9qOgZeZruSr7rQM", "object": "chat.completion",
-        "created": 1791502826, "model": "openai/gpt-6-luna", "provider": "Azure",
-        "system_fingerprint": null, "service_tier": "default", "choices": [{"index":
-        0, "logprobs": null, "finish_reason": "stop", "native_finish_reason": "completed",
-        "message": {"role": "assistant", "content": "{\n  \"facts\": [\n    {\n      \"text\":
-        \"The kit uses camera vision and a neural network to monitor the workspace
-        and slow or stop a collaborative robot arm when a person comes within reach.\",\n      \"evidence\":
-        \"stated\",\n      \"quote\": \"a camera and a small neural network watch
-        the workspace and slow the arm down, or stop it, when a person comes within
-        reach.\",\n      \"question\": null\n    },\n    {\n      \"text\": \"Machine
-        builders integrate the kit into robot cells and sell those cells to factories.\",\n      \"evidence\":
-        \"stated\",\n      \"quote\": \"The machine builders integrate the kit into
-        their robot cells and sell those to factories.\",\n      \"question\": null\n    },\n    {\n      \"text\":
-        \"The company trains the model in-house.\",\n      \"evidence\": \"stated\",\n      \"quote\":
-        \"We train the model in-house\",\n      \"question\": null\n    },\n    {\n      \"text\":
-        \"The system appears to infer its outputs from camera inputs using the neural
-        network.\",\n      \"evidence\": \"inferred\",\n      \"quote\": null,\n      \"question\":
-        {\n        \"id\": \"ai_system\",\n        \"text\": \"Does the neural network
-        infer the system''s outputs from camera inputs, rather than the system only
-        applying fixed rules written by people?\",\n        \"about\": \"scope\"\n      }\n    },\n    {\n      \"text\":
-        \"The kit appears intended to perform a safety function for the robot cell.\",\n      \"evidence\":
-        \"inferred\",\n      \"quote\": null,\n      \"question\": {\n        \"id\":
-        \"safety_component\",\n        \"text\": \"Is the kit a safety component of
-        a product, or is it itself a product covered by EU product legislation?\",\n        \"about\":
-        \"high_risk\"\n      }\n    },\n    {\n      \"text\": \"The kit''s outputs
-        appear to affect the robot arm directly, without a person reviewing them first.\",\n      \"evidence\":
-        \"inferred\",\n      \"quote\": null,\n      \"question\": {\n        \"id\":
-        \"human_review\",\n        \"text\": \"Does a person review the system''s
-        outputs before they slow or stop the arm?\",\n        \"about\": \"high_risk\"\n      }\n    },\n    {\n      \"text\":
-        \"EU market placement or use is not explicit; EU placement or use is assumed.\",\n      \"evidence\":
-        \"assumed\",\n      \"quote\": null,\n      \"question\": {\n        \"id\":
-        \"eu_link\",\n        \"text\": \"Will the kit be placed on the market or
-        used in the EU, or will its output be used in the EU?\",\n        \"about\":
-        \"scope\"\n      }\n    }\n  ],\n  \"says_what_it_decides\": true,\n  \"says_who_it_affects\":
-        true,\n  \"questions\": [\n    {\n      \"id\": \"operator_role\",\n      \"text\":
-        \"Did your company build or commission the full kit, or does it sell a system
-        provided by someone else?\",\n      \"about\": \"role_obligations\"\n    },\n    {\n      \"id\":
-        \"own_brand\",\n      \"text\": \"Will the kit be placed on the market under
-        your company''s name or trademark?\",\n      \"about\": \"role_obligations\"\n    }\n  ]\n}",
-        "refusal": null}}], "usage": {"prompt_tokens": 2487, "completion_tokens":
-        2863, "total_tokens": 5350, "cost": 0.001620014, "is_byok": false, "prompt_tokens_details":
-        {"cached_tokens": 2344, "cache_write_tokens": 140, "audio_tokens": 0, "video_tokens":
-        0}, "cost_details": {"upstream_inference_cost": 0.001620014, "upstream_inference_prompt_cost":
-        4.5364e-05, "upstream_inference_completions_cost": 0.00157465}, "completion_tokens_details":
-        {"reasoning_tokens": 2175, "image_tokens": 0, "audio_tokens": 0}}}'
+      string: "{\"id\": \"gen-1791581324-U95P7AGPvz0LBm8rh1Ao\", \"object\": \"chat.completion\",
+        \"created\": 1791581324, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+        \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
+        [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
+        \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
+        \ \\\"facts\\\": [\\n    {\\n      \\\"text\\\": \\\"Das neuronale Netz wertet
+        Krandaten aus, sch\xE4tzt die N\xE4he zu Kippen oder \xDCberlastung und sperrt
+        gef\xE4hrliche Bewegungen.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n
+        \     \\\"quote\\\": \\\"Ein neuronales Netz wertet Hydraulikdr\xFCcke, Auslegerwinkel,
+        St\xFCtzenstellung und das Einsinken der Abst\xFCtzung aus, sch\xE4tzt laufend,
+        wie nah der Kran am Kippen oder an einer \xDCberlastung des Auslegers ist,
+        und sperrt jede Bewegung, die ihn dar\xFCber hinausbringen w\xFCrde.\\\",\\n
+        \     \\\"question\\\": null\\n    },\\n    {\\n      \\\"text\\\": \\\"Die
+        Ausgaben betreffen die Stabilit\xE4t und Bewegungen des Ladekrans.\\\",\\n
+        \     \\\"evidence\\\": \\\"stated\\\",\\n      \\\"quote\\\": \\\"wie nah
+        der Kran am Kippen oder an einer \xDCberlastung des Auslegers ist, und sperrt
+        jede Bewegung\\\",\\n      \\\"question\\\": null\\n    },\\n    {\\n      \\\"text\\\":
+        \\\"Das Modell lernt w\xE4hrend des Betriebs nicht weiter und wird nur durch
+        gepr\xFCfte Updates des Unternehmens ausgetauscht.\\\",\\n      \\\"evidence\\\":
+        \\\"stated\\\",\\n      \\\"quote\\\": \\\"Das Modell lernt im Betrieb nicht
+        weiter, es wird nur \xFCber gepr\xFCfte Updates von uns ausgetauscht.\\\",\\n
+        \     \\\"question\\\": null\\n    },\\n    {\\n      \\\"text\\\": \\\"Die
+        Beschreibung sagt, dass die Konformit\xE4t nach der Maschinenverordnung durch
+        eine benannte Stelle bewertet werden muss.\\\",\\n      \\\"evidence\\\":
+        \\\"stated\\\",\\n      \\\"quote\\\": \\\"muss nach der Maschinenverordnung
+        eine benannte Stelle die Konformit\xE4t bewerten\\\",\\n      \\\"question\\\":
+        null\\n    },\\n    {\\n      \\\"text\\\": \\\"Das Unternehmen integriert
+        das Modell in die von ihm gebaute neue Kranbaureihe.\\\",\\n      \\\"evidence\\\":
+        \\\"inferred\\\",\\n      \\\"quote\\\": null,\\n      \\\"question\\\": {\\n
+        \       \\\"id\\\": \\\"operator_role\\\",\\n        \\\"text\\\": \\\"Hat
+        Ihr Unternehmen das Modell selbst entwickelt oder entwickeln lassen, oder
+        nutzt es ein von einem anderen Anbieter bereitgestelltes Modell?\\\",\\n        \\\"about\\\":
+        \\\"role_obligations\\\"\\n      }\\n    },\\n    {\\n      \\\"text\\\":
+        \\\"Das Modell wirkt als sicherheitsbezogene Komponente, indem es gef\xE4hrliche
+        Kranbewegungen sperrt.\\\",\\n      \\\"evidence\\\": \\\"inferred\\\",\\n
+        \     \\\"quote\\\": null,\\n      \\\"question\\\": {\\n        \\\"id\\\":
+        \\\"safety_component\\\",\\n        \\\"text\\\": \\\"Ist das Modell eine
+        Sicherheitskomponente der Maschine oder selbst ein von EU-Produktrecht erfasstes
+        Produkt?\\\",\\n        \\\"about\\\": \\\"scope\\\"\\n      }\\n    },\\n
+        \   {\\n      \\\"text\\\": \\\"Die Bewegungssperre greift ohne vorherige
+        menschliche Pr\xFCfung der Modellausgabe.\\\",\\n      \\\"evidence\\\": \\\"inferred\\\",\\n
+        \     \\\"quote\\\": null,\\n      \\\"question\\\": {\\n        \\\"id\\\":
+        \\\"human_review\\\",\\n        \\\"text\\\": \\\"Pr\xFCft eine Person die
+        Ausgabe des Modells, bevor die Bewegungssperre wirksam wird?\\\",\\n        \\\"about\\\":
+        \\\"high_risk\\\"\\n      }\\n    }\\n  ],\\n  \\\"says_what_it_decides\\\":
+        true,\\n  \\\"says_who_it_affects\\\": true,\\n  \\\"questions\\\": [\\n    {\\n
+        \     \\\"id\\\": \\\"eu_link\\\",\\n      \\\"text\\\": \\\"Wird die Baureihe
+        in der EU in Verkehr gebracht oder eingesetzt, oder werden ihre Ausgaben dort
+        genutzt?\\\",\\n      \\\"about\\\": \\\"scope\\\"\\n    },\\n    {\\n      \\\"id\\\":
+        \\\"own_brand\\\",\\n      \\\"text\\\": \\\"Wird die Baureihe mit dem Namen
+        oder der Marke Ihres Unternehmens in Verkehr gebracht?\\\",\\n      \\\"about\\\":
+        \\\"role_obligations\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"builds_on_gpai\\\",\\n
+        \     \\\"text\\\": \\\"Baut das Modell auf einem KI-Modell eines anderen
+        Anbieters auf, das f\xFCr allgemeine Zwecke bestimmt ist?\\\",\\n      \\\"about\\\":
+        \\\"role_obligations\\\"\\n    }\\n  ]\\n}\", \"refusal\": null}}], \"usage\":
+        {\"prompt_tokens\": 2567, \"completion_tokens\": 2685, \"total_tokens\": 5252,
+        \"cost\": 0.00182963, \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\":
+        0, \"cache_write_tokens\": 2564, \"audio_tokens\": 0, \"video_tokens\": 0},
+        \"cost_details\": {\"upstream_inference_cost\": 0.00182963, \"upstream_inference_prompt_cost\":
+        0.00035288, \"upstream_inference_completions_cost\": 0.00147675}, \"completion_tokens_details\":
+        {\"reasoning_tokens\": 1860, \"image_tokens\": 0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
       - application/json

@@ -15,6 +15,7 @@ label:
   risk_class: minimal_risk
   role: provider
 label_citation: ["art:2:3", "recital:24", "art:3:1", "art:3:3"]
+business_function: public_services
 notes: >-
   Approved by user 2026-09-30. Scope: an AI system (trained network that infers detections) whose
   provider places it on the market for a military purpose and also for civilian purposes;

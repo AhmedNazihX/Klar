@@ -15,6 +15,7 @@ description: >-
 label:
   risk_class: out_of_scope
 label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
+business_function: hr
 notes: >-
   Approved by user 2026-09-30. Class: the system filters applications on criteria the recruiter
   sets herself and sorts them by date; the description rules out a trained model, scores and

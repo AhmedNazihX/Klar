@@ -13,6 +13,7 @@ label:
   risk_class: minimal_risk
   role: provider
 label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:A:11", "art:3:3"]
+business_function: product_safety
 notes: >-
   Approved by user 2026-09-30. Class: the braking assistant is a safety component (Art. 3(14)) of
   a medical device (Annex I Section A point 11), so Art. 6(1)(a) is met, but a class I device

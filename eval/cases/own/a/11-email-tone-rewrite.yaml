@@ -13,6 +13,7 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:50:2", "guide:guide-art50:para:90", "guide:guide-art50:para:91", "guide:guide-art50:para:92"]
+business_function: productivity
 as_of: 2026-10-01
 notes: >-
   Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources).

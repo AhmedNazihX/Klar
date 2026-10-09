@@ -13,6 +13,7 @@ label:
   risk_class: limited_risk
   role: deployer
 label_citation: ["art:3:4", "art:50:1", "art:50:2", "art:4:1"]
+business_function: productivity
 notes: >-
   Approved by user 2026-09-29 as limited_risk: the class describes the system (INIT › Risk
   classes), whoever bears its Art. 50 duties. Role: the firm uses a general-purpose AI system

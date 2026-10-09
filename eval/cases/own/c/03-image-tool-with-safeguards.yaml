@@ -14,6 +14,7 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:5:1a:a:ii", "art:5:1:ba", "art:50:2", "art:3:3", "art:3:68"]
+business_function: productivity
 as_of: 2027-01-15
 notes: >-
   Approved by user 2026-10-01. Class: the tool can generate photo-style images of people,

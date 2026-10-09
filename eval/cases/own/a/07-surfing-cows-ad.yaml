@@ -12,6 +12,7 @@ label:
   risk_class: limited_risk
   role: deployer
 label_citation: ["art:3:60", "art:50:4", "art:50:2", "art:3:4", "guide:guide-art50:para:113", "guide:guide-art50:para:116"]
+business_function: marketing
 as_of: 2026-10-01
 notes: >-
   Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Trap: AI-generated video in an ad, but not a deep fake: cows that

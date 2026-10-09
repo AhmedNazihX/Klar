@@ -13,6 +13,7 @@ label:
   risk_class: prohibited
   role: deployer
 label_citation: ["art:5:1:ba", "art:5:1a:b", "art:113:a", "art:3:4"]
+business_function: content
 as_of: 2027-02-15
 notes: >-
   Approved by user 2026-10-01. Class: the website uses an AI system to generate realistic

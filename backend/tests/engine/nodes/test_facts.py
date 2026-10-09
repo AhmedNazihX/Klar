@@ -636,7 +636,10 @@ def test_the_own_cases_hold_the_three_approved_thin_descriptions() -> None:
 
 
 @pytest.mark.vcr
-@pytest.mark.parametrize("case", OWN_CASES, ids=lambda case: case.id)
+@pytest.mark.parametrize(
+    "case",
+    [pytest.param(case, id=case.id) for case in OWN_CASES],
+)
 def test_recorded_own_case_is_flagged_as_its_label_expects(
     case: BenchmarkCase, engine_settings: Settings
 ) -> None:

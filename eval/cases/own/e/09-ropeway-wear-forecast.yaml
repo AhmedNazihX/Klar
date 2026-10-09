@@ -14,7 +14,9 @@ label:
   risk_class: high_risk
   status: legally_ambiguous
   role: provider
+  annex_point: ["annex:I:A:8"]
 label_citation: ["art:6:1a", "art:6:1b", "art:6:1:b", "art:3:14", "annex:I:A:8"]
+business_function: operations
 notes: >-
   Approved by user 2026-09-30. Open question 1: is the tool a safety component? Reading A: it is a
   maintenance planning aid for service efficiency, so Art. 6(1a) excludes it. Reading B: its
@@ -33,7 +35,12 @@ tags:
   - "annex_i_section:a"
   - "annex_i_point:annex:I:A:8"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

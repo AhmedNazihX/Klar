@@ -102,6 +102,28 @@ OWN_LABELLED_SETS = frozenset(
 """Sets whose labels are the student's own, so the cite-or-ambiguous rule applies."""
 
 
+class BusinessFunction(StrEnum):
+    """What the system does for the business that uses it; W1 reports accuracy per value, so
+    the list is closed and each case fits exactly one."""
+
+    HR = "hr"  # hiring, workforce management and staff monitoring
+    FINANCE = "finance"  # credit, insurance, pricing of financial products, investing, collection
+    SALES = "sales"  # selling to one customer: offers, prices, instalments, in-app purchases
+    MARKETING = "marketing"  # advertising, campaigns, promotional content and audience analysis
+    CUSTOMER_SERVICE = "customer_service"  # answering, routing and supporting customers
+    CONTENT = "content"  # media, publishing and creative output for an audience
+    PRODUCTIVITY = "productivity"  # general office and developer tools: write, translate, code
+    CONSUMER_PRODUCT = "consumer_product"  # an AI feature of a consumer app, game or device
+    PRODUCT_SAFETY = "product_safety"  # the safety function of a machine, vehicle or device
+    OPERATIONS = "operations"  # logistics, forecasting, maintenance and production planning
+    HEALTHCARE = "healthcare"  # diagnosis, triage and patient care
+    EDUCATION = "education"  # teaching, admission and assessment of learners
+    PUBLIC_SERVICES = "public_services"  # public administration, benefits and civil monitoring
+    SECURITY = "security"  # policing, private security, defence and national security
+    LEGAL = "legal"  # legal work: claims, complaints and legal drafting
+    RESEARCH = "research"  # scientific research and development
+
+
 class AppliedAILabel(StrEnum):
     """The appliedAI experts' label: coarser than `RiskClass`, given against the 2021 draft."""
 
@@ -211,8 +233,8 @@ class BenchmarkCase(ContractModel):
         description="Fixed answers to likely key-fact questions, by fixed question id "
         '(decision 019); a question with no entry is answered "don\'t know".',
     )
-    business_function: str | None = Field(
-        default=None, pattern=SLUG_PATTERN, description="For example `hr`; W1 reports by it."
+    business_function: BusinessFunction | None = Field(
+        default=None, description="For example `hr`; W1 reports by it."
     )
     as_of: date | None = Field(
         default=None,

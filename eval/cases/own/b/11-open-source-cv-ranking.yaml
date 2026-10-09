@@ -16,6 +16,7 @@ label:
   role: provider
   annex_point: "annex:III:4:a"
 label_citation: ["art:2:12", "annex:III:4:a", "art:6:3", "art:3:3", "art:3:11"]
+business_function: hr
 notes: >-
   Approved by user 2026-09-30. Scope: the Art. 2(12) open-source exclusion does not apply to a
   system put into service as a high-risk AI system, so the open-source licence of the model
@@ -35,7 +36,12 @@ tags:
   - "trap:exclusion_not_met"
   - "also_role:deployer"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

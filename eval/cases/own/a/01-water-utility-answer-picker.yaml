@@ -13,6 +13,7 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:50:1", "art:3:3", "guide:guide-art50:para:11", "guide:guide-art50:para:30", "guide:guide-art50:para:65"]
+business_function: customer_service
 as_of: 2026-10-01
 notes: >-
   Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the chat is an AI system (a trained model infers the

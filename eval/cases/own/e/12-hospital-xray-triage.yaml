@@ -13,7 +13,9 @@ description: >-
 label:
   risk_class: high_risk
   role: deployer
+  annex_point: ["annex:I:A:11"]
 label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:3:4", "art:26:1"]
+business_function: healthcare
 notes: >-
   Approved by user 2026-09-30. Class: CE-marked class IIa medical device software certified
   through a notified body (Annex I Section A point 11), so Art. 6(1) is met: high_risk. Role: the

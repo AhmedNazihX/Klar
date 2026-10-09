@@ -14,6 +14,7 @@ label:
   role: distributor
   annex_point: "annex:III:4:a"
 label_citation: ["art:3:7", "art:24:1", "annex:III:4:a", "art:6:3"]
+business_function: hr
 notes: >-
   Approved by user 2026-09-29. Role: the reseller makes a system from an
   EU-based provider available on the market and is neither provider nor importer, so it is a

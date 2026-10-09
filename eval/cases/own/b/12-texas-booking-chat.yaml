@@ -12,6 +12,7 @@ description: >-
 label:
   risk_class: out_of_scope
 label_citation: ["art:2:1"]
+business_function: customer_service
 notes: >-
   Approved by user 2026-09-30. Class: a chat assistant is an AI system and would carry an
   Art. 50(1) duty in the Union, but none of the Art. 2(1) triggers is met: nothing is placed on the
