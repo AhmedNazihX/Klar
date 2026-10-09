@@ -1,9 +1,11 @@
 # 033 · Refused requests: a second pinned EU model, measured before it is adopted
 
-- **Date:** 2026-10-09 (draft)
+- **Date:** 2026-10-09 (draft); rule, privacy wording, decision date and paid run approved by the user 2026-10-10;
+  measured 2026-10-10
 - **Story:** X2b (docs/BACKLOG.md); revisits decision 004 for refused requests only; builds on 023, 029, 030
-- **Status:** proposed. The rule below is fixed before the run and waits for the user's approval, as do the privacy
-  wording and the paid run. No paid call has been made for this record.
+- **Status:** accepted (user, 2026-10-10). Verdict under the rule fixed before the run: **adopt** Gemini 3.1
+  Flash-Lite for refused requests (13 of 13 answered, 7 of 7 labelled answers matching; see Results). The route
+  itself is built by a later story (X2c).
 
 ## Question
 GPT-6 Luna on `azure/eu` stays the engine model (decision 004). Azure's content filter refuses some descriptions
@@ -25,7 +27,7 @@ The rate varies from run to run: own-c-06, 14 and 16 were answered in E4's run a
 answered in E4's and E10's prohibited runs but refused twice under the original text (E11) and in E13's facts run.
 So the measurement reads several Luna runs together.
 
-## The rule (fixed before the run; proposed, for the user to approve)
+## The rule (fixed before the run; approved by the user 2026-10-10, rule 2 at 4 in 5)
 Implemented in `backend/aiact/eval/experiments/smoke_refusals.py` (`ANSWERED_SHARE`, `MATCHED_SHARE`), in integers.
 
 - **M** is the set of probes (node and case) Luna's provider refused in at least one of the Luna runs below.
@@ -53,7 +55,7 @@ answers": taken literally, every answered labelled probe must match (N of N). Ru
 the same tolerance as rule 1, because one model-to-model disagreement on a legally hard case (Art. 5(1)(ba)/(bb)
 descriptions are near the line by design) would otherwise reject a model that answers everything. With the
 recordings' 8 prohibited probes the difference is one probe: 4 in 5 accepts 7 of 8 matching, "all of them" needs
-8 of 8. The threshold stays at 4 in 5 until the user picks; changing it is one constant (`MATCHED_SHARE`).
+8 of 8. The user chose 4 in 5 (2026-10-10, before the run); `MATCHED_SHARE` stays (4, 5).
 
 ## How it is measured
 `aiact evaluate smoke` (X2's harness), with the node and case subset X2b adds (`--node`, `--case`): the engine's own
@@ -88,9 +90,31 @@ uv run aiact evaluate smoke-refusals --engine-run <run 1> --engine-run <run 2> -
 ```
 
 ## Results
-Pending the paid run. The table per node (facts on all own cases; scope `own/b`, prohibited `own/c`, high-risk
-`own/e`, role `own/d`, transparency `own/a`): cases run, refused by Luna, answered by the second model, matching the
-label, refused by both, with each run's id and cost, as `smoke-refusals` prints it.
+Measured 2026-10-10 on story branch `story/X2b-refusal-route-measure-decide` at 8e955a0, printed by
+`aiact evaluate smoke-refusals` from the stored `eval_runs` rows. Run 4 was given the 8 cases Luna refused in runs 1–3
+(own-c-16 was answered in all three, so it was left out of the command above).
+
+| Node | Cases run | Refused by Luna | Answered by the second model | Matching the label | Refused by both | Broken | No answer |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| facts | 77 | 6 | 6 | - | 0 | 0 | 0 |
+| scope | 13 | 0 | 0 | 0/0 | 0 | 0 | 0 |
+| prohibited | 17 | 7 | 7 | 7/7 | 0 | 0 | 0 |
+| high_risk | 15 | 0 | 0 | 0/0 | 0 | 0 | 0 |
+| transparency | 16 | 0 | 0 | 0/0 | 0 | 0 | 0 |
+| role_obligations | 13 | 0 | 0 | 0/0 | 0 | 0 | 0 |
+
+| Run | Model | Probes | Cost (USD) |
+| --- | --- | --- | --- |
+| 9bca1781-5620-466a-929e-69d0eb1ea26f | luna (run 1, every node) | 151 | 0.1934 |
+| 311613fb-9f91-498f-9f22-a63551ee6e9f | luna (run 2, facts and prohibited on own/c) | 34 | 0.0310 |
+| 4ccd0883-8e4e-4101-b1fc-23e3f52088a1 | luna (run 3, the same) | 34 | 0.0333 |
+| c5ceecfe-afcb-403f-b413-bf42be1bda60 | gemini (run 4, facts and prohibited on the 8 refused cases) | 16 | 0.0607 |
+| | | **Total** | **0.3184** |
+
+M = 13 refused probes (12 per Luna run, varying between runs: facts on own-c-04 only in runs 1 and 3, prohibited
+on own-c-06 only in runs 2 and 3, on own-c-14 only in runs 1 and 2), all on the image-abuse and manipulation cases
+of `own/c` (c-01 to c-07, c-14). N = ⌈4·13/5⌉ = 11. Rule 1: 13 of 13 answered. Rule 2: 7 of 7 labelled answers
+match, which also meets the DoD's literal "all of them". No other node was refused. **Verdict: adopt.**
 
 ## The route, if the second model is adopted
 - **The only exception to decision 004's no-fallback pin.** Every other call stays pinned to one model on one
@@ -106,7 +130,7 @@ label, refused by both, with each run's id and cost, as `smoke-refusals` prints 
   `allow_fallbacks: false`, and the second model's reply checked against its pinned provider like the first's.
 - **When both refuse**, decision 030 applies: the check is not assessed and the result carries no class.
 
-## Privacy wording (for the user to check; INIT › Data policy, Ethical considerations › Choice of model providers)
+## Privacy wording (accepted by the user 2026-10-10; INIT › Data policy, Ethical considerations › Choice of model providers)
 Adopting the route adds a second processor for the refused requests only: Google, through OpenRouter, on Vertex
 AI in the EU. The "Who processes it" panel already names Google Vertex AI next to Microsoft Azure
 (`frontend/src/i18n/locales/*.json`, `privacy.who.modelsDetail`); the proposed sentence says what goes there and
@@ -126,8 +150,9 @@ The privacy notice names Google as a processor for these requests, reached throu
 
 ## If the second model also refuses
 The fallback is an own Azure deployment with modified content filters (off OpenRouter; it needs Microsoft's approval;
-user, 2026-10-02, BACKLOG › X2b "From E4"). Proposed decision date: **2026-10-16**, one week after the run, before the
-build freezes when W1 starts (decision 024).
+user, 2026-10-02, BACKLOG › X2b "From E4"). Decision date: **2026-10-16** (accepted by the user 2026-10-10), one week
+after the run, before the build freezes when W1 starts (decision 024). With the verdict "adopt", this applies only if
+the built route's own tests or a later run show Gemini refusing too.
 
 ## Consequences (once accepted and measured)
 - **Adopted:** a story implements the route in `aiact/llm` and the six model-calling nodes (one place:
