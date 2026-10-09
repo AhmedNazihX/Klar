@@ -49,7 +49,8 @@ screenshots):
 - Measure layout with `browser_evaluate` (for example `scrollWidth` against `clientWidth`, or whether an element's
   `getClientRects().length` is 1), not with screenshots.
 - Take a screenshot only to back a layout finding you report: at most one per screen and width. Don't read
-  screenshot files back or process them with other tools.
+  screenshot files back or process them with other tools. Save each one under `.playwright-mcp/` (gitignored), for
+  example `filename: ".playwright-mcp/p25-result-de-1280.png"`: a bare file name lands untracked in the repo root.
 - Keep `browser_wait_for` waits to 10 seconds or less. If a page hasn't loaded after one retry, note it under "Not
   checked" and move on.
 
