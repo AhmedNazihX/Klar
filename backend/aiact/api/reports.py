@@ -14,10 +14,10 @@ nothing to report: a 422. The inventory report takes each tool as the summary it
 gives (`InventoryTool`), since a whole inventory of results would not fit the body cap.
 
 A report is a file like a drafted document's export, made the same way (`aiact.api.files`): the
-exports' rate limit, the length cap, one of the export workers, the time limit, and a 413 for a
-render that fails (a table cell taller than a page). The routes are plain `def`, waiting in
-FastAPI's threadpool for the worker's file. Nothing here logs the result,
-a fact, a tool's name or the company, and no error quotes them.
+exports' rate limit, the length cap, one of the export workers, the time limit, and a 413 when the
+renderer finds a table row taller than a page. The routes are plain `def`, waiting in FastAPI's
+threadpool for the worker's file. Nothing here logs the result, a fact, a tool's name or the
+company, and no error quotes them.
 """
 
 from datetime import date

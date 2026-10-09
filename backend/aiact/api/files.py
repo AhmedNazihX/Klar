@@ -1,14 +1,15 @@
 """Making a file from a `Paper`, for every route that returns one (the drafted documents, P9; the
 reports, P25): the length caps checked before anything is rendered, a render in one of the export
 workers (none free: a 503 with `Retry-After`, the rate-limit count given back, since nothing was
-rendered), stopped past its time limit (a 504), a render that fails anyway a 413 with the count
-kept (it took a worker and its time, so a client can't repeat it for free), and the file as an
-attachment.
+rendered), stopped past its time limit (a 504), and the file as an attachment.
 
 A file longer than `MAX_FILE_CHARS` characters or `MAX_FILE_LINES` lines, counted on the texts as
-the renderers draw them, or with a table cell that may wrap past `MAX_CELL_LINES` lines (taller
-than a page, which fpdf2 can't draw), is refused with a 413 before any worker is taken. Nothing
-here logs a text of the paper.
+the renderers draw them, is refused with a 413 before any worker is taken. A render the renderer
+itself finds too long (`RenderTooLong`: a PDF table row taller than a page) is a 413 too, the
+count kept, since it took a worker and its time. Any other failure is Klar's, not the text's: a
+renderer error or a dead worker is a 500, logged as an error; a worker that didn't start in time
+a 503 with `Retry-After`, the count given back. Nothing here logs a text of the paper, only an
+error's type.
 """
 
 import logging
@@ -19,9 +20,14 @@ from typing import Any, Literal
 from fastapi import HTTPException, Request, Response, status
 
 from aiact.api.dependencies import ApiContext, client_key
-from aiact.export import Paper, Table, block_texts
-from aiact.export.pdf import MAX_CELL_LINES, tallest_cell
-from aiact.export.pool import RenderFailed, RenderTimeout, RenderWorker
+from aiact.export import Paper, block_texts
+from aiact.export.pool import (
+    RenderFailed,
+    RenderTimeout,
+    RenderTooLong,
+    RenderWorker,
+    WorkerNotStarted,
+)
 from aiact.export.text import printable
 
 logger = logging.getLogger(__name__)
@@ -39,6 +45,7 @@ ExportFormat = Literal["docx", "pdf"]
 MEDIA_TYPES: dict[ExportFormat, str] = {"docx": DOCX, "pdf": PDF}
 
 BUSY = "Klar is busy making other files. Please try again in a moment."
+FAILED = "Klar couldn't make this file. Please try again later."
 
 FILE_RESPONSE: dict[str, Any] = {
     "description": "The file (an attachment)",
@@ -47,6 +54,7 @@ FILE_RESPONSE: dict[str, Any] = {
 FILE_ERRORS: dict[int | str, dict[str, Any]] = {
     status.HTTP_413_CONTENT_TOO_LARGE: {"description": "The document is too long for a file"},
     status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Too many requests"},
+    status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "The file couldn't be made"},
     status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Every export slot is taken"},
     status.HTTP_504_GATEWAY_TIMEOUT: {"description": "The file took too long to make"},
 }
@@ -64,16 +72,12 @@ def refuse_too_long(
     """A 413 saying `too_long` for a file over `max_chars` characters or `max_lines` lines,
     counted on the texts its blocks draw as the renderers draw them (`printable`: every `\\r\\n`
     and lone `\\r` a line break), so no line break gets past the count. Each text counts as a
-    line at least, a table's cells too. A table cell that may wrap past `MAX_CELL_LINES` lines
-    (`tallest_cell`) is refused too: it would be taller than a page."""
+    line at least, a table's cells too."""
     texts = [printable(text) for block in paper.blocks for text in block_texts(block)]
     chars = sum(len(text) for text in texts)
     lines = sum(text.count("\n") + 1 for text in texts)
-    cell = max((tallest_cell(b) for b in paper.blocks if isinstance(b, Table)), default=0)
-    if chars > max_chars or lines > max_lines or cell > MAX_CELL_LINES:
-        logger.warning(
-            "export refused: %d characters, %d lines, a cell of %d lines", chars, lines, cell
-        )
+    if chars > max_chars or lines > max_lines:
+        logger.warning("export refused: %d characters, %d lines", chars, lines)
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, too_long)
 
 
@@ -90,27 +94,41 @@ def rendered(worker: RenderWorker, render: Renderer, paper: Paper, timed_out: st
 
 @contextmanager
 def export_worker(request: Request, context: ApiContext, too_long: str) -> Iterator[RenderWorker]:
-    """One of the export workers while a file renders; a 503 when none is free, giving back the
-    rate-limit count the request took, since nothing was rendered; a 413 saying `too_long` when
-    the render fails, keeping the count, since the render took a worker and its time. The
-    error's type is logged, never its text."""
+    """One of the export workers while a file renders; a 503 when none is free or a new one
+    didn't start, giving back the rate-limit count the request took, since nothing was
+    rendered; a 413 saying `too_long` when the renderer finds the paper too long, keeping the
+    count, since the render took a worker and its time; a 500 when the render failed otherwise
+    (a renderer error, a dead worker), logged as an error. The error's type is logged, never its
+    text."""
     slots = context.export_slots
     worker = slots.try_acquire()
     if worker is None:
-        context.export_limit.refund(client_key(request))
         logger.warning("export refused: every slot is taken")
-        raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE,
-            BUSY,
-            headers={"Retry-After": str(BUSY_RETRY_SECONDS)},
-        )
+        raise _busy(request, context)
     try:
         yield worker
-    except RenderFailed as failed:
-        logger.warning("export refused: the render failed (%s)", failed)
+    except RenderTooLong:
+        logger.warning("export refused: a table row is taller than a page")
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, too_long) from None
+    except WorkerNotStarted:
+        logger.error("export failed: a render worker didn't start in time")
+        raise _busy(request, context) from None
+    except RenderFailed as failed:
+        logger.error("export failed: the render raised %s", failed)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, FAILED) from None
     finally:
         slots.release(worker)
+
+
+def _busy(request: Request, context: ApiContext) -> HTTPException:
+    """A 503 with `Retry-After`, the request's rate-limit count given back: nothing was
+    rendered."""
+    context.export_limit.refund(client_key(request))
+    return HTTPException(
+        status.HTTP_503_SERVICE_UNAVAILABLE,
+        BUSY,
+        headers={"Retry-After": str(BUSY_RETRY_SECONDS)},
+    )
 
 
 def attachment(content: bytes, file_format: ExportFormat, stem: str) -> Response:

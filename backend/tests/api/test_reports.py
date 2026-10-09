@@ -20,13 +20,22 @@ from aiact.api.reports import (
     InventoryReportRequest,
     report_date,
 )
+from aiact.export import pool
 from aiact.export.pool import RenderTimeout, RenderWorker
+from aiact.obligations.list import default_table, list_obligations
 from aiact.report import MAX_NAME_CHARS
-from aiact.schemas import DISCLAIMER_EN, ClassificationResult, EvidenceTag, Fact
+from aiact.schemas import (
+    DISCLAIMER_EN,
+    ClassificationResult,
+    EvidenceTag,
+    Fact,
+    RiskClass,
+    Role,
+)
 from tests.api.conftest import BASE_URL, api_settings
 from tests.drafting.builders import limited_risk_result
 from tests.export.reading import pdf_pages, read_docx
-from tests.schemas.builders import needs_description
+from tests.schemas.builders import needs_description, rebuild
 from tests.schemas.worked_example import worked_example_result
 
 pytestmark = pytest.mark.anyio
@@ -287,51 +296,106 @@ async def test_an_annex_point_the_report_cant_name_still_makes_a_report(
     assert response.status_code == 200
 
 
-async def test_a_cell_taller_than_a_page_is_a_413_before_any_worker_is_taken(
-    report_app: Callable[..., FastAPI],
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """fpdf2 can't break a table cell across pages: such a paper is refused before rendering,
-    even with every export slot taken (a 413, not a 503), and no worker runs."""
-    runs: list[object] = []
-    monkeypatch.setattr(RenderWorker, "run", lambda _worker, *args: runs.append(args) or b"%")
-    app = report_app(export_max_concurrent=1)
-    context: ApiContext = app.state.context
-    tall = Fact(text=f"{SECRET}\n" * 60 + SECRET, evidence=EvidenceTag.ASSUMED)
+def _with_tall_fact(lines: int) -> ClassificationResult:
+    tall = Fact(text=f"{SECRET}\n" * (lines - 1) + SECRET, evidence=EvidenceTag.ASSUMED)
     worked = worked_example_result()
-    result = worked.model_copy(update={"deciding_facts": (tall, *worked.deciding_facts)})
+    return worked.model_copy(update={"deciding_facts": (tall, *worked.deciding_facts)})
+
+
+async def test_a_cell_taller_than_a_page_is_a_413_that_keeps_its_count(
+    report_app: Callable[..., FastAPI], caplog: pytest.LogCaptureFixture
+) -> None:
+    """fpdf2 can't break a table row across pages: the renderer's own error is a 413 saying the
+    report is too long, and the count stays (the render took a worker and its time)."""
+    app = report_app(rate_limit_exports=1)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
-        taken = context.export_slots.try_acquire()
-        assert taken is not None
         with caplog.at_level(logging.DEBUG):
-            refused = await client.post("/reports/result", json=_body(result))
-        context.export_slots.release(taken)
+            refused = await client.post("/reports/result", json=_body(_with_tall_fact(80)))
+        after = await client.post("/reports/result", json=_body(format="docx"))
     assert (refused.status_code, refused.json()) == (
         413,
         {"detail": "This report is too long to make into a file."},
     )
-    assert runs == []
+    assert after.status_code == 429
     assert SECRET not in caplog.text
 
 
-async def test_a_render_that_fails_is_a_413_that_keeps_its_count(
+async def test_a_renderer_error_is_a_500_logged_as_an_error_by_its_type_only(
+    report_app: Callable[..., FastAPI],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Klar's fault, not the text's: not "too long", and logged at error level, with no text of
+    the report."""
+    monkeypatch.setitem(RENDERERS, "pdf", int)  # int(paper) raises in the worker process
+    app = report_app()
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        with caplog.at_level(logging.DEBUG):
+            failed = await client.post(
+                "/reports/result", json=_body(tool_name=SECRET, company=SECRET)
+            )
+    assert (failed.status_code, failed.json()) == (
+        500,
+        {"detail": "Klar couldn't make this file. Please try again later."},
+    )
+    errors = [r.getMessage() for r in caplog.records if r.levelno == logging.ERROR]
+    assert errors == ["export failed: the render raised TypeError"]
+    assert SECRET not in caplog.text
+
+
+async def test_a_worker_that_doesnt_start_is_a_503_that_gives_back_its_count(
     report_app: Callable[..., FastAPI], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A failed render took a worker and its time: the count stays, so it can't be repeated
-    for free."""
-    monkeypatch.setitem(RENDERERS, "pdf", int)  # int(paper) raises in the worker process
+    monkeypatch.setattr(pool, "START_TIMEOUT_SECONDS", 0.0)  # no new worker is ready at once
     app = report_app(rate_limit_exports=1)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
-        failed = await client.post("/reports/result", json=_body())
+        busy = await client.post("/reports/result", json=_body(format="docx"))
+        monkeypatch.undo()
         after = await client.post("/reports/result", json=_body(format="docx"))
-    assert (failed.status_code, failed.json()) == (
-        413,
-        {"detail": "This report is too long to make into a file."},
+    assert (busy.status_code, busy.headers["Retry-After"]) == (503, "5")
+    assert after.status_code == 200, "the count was given back"
+
+
+def _every_table_duty() -> tuple[ClassificationResult, ...]:
+    """For each role, a high-risk and a limited-risk result listing every duty the committed
+    table gives that role (on every route): together, every entry a result report can print."""
+    high, limited = worked_example_result(), limited_risk_result("art:50:1")
+    return tuple(
+        rebuild(base, role=role, obligations=list_obligations(role, risk_class).obligations)
+        for role in Role
+        for base, risk_class in ((high, RiskClass.HIGH_RISK), (limited, RiskClass.LIMITED_RISK))
     )
-    assert after.status_code == 429
+
+
+def test_every_reportable_table_entry_is_posted() -> None:
+    posted = {(duty.article, duty.duty) for r in _every_table_duty() for duty in r.obligations}
+    reportable = {
+        (entry.article, entry.duty)
+        for entry in default_table().obligations
+        if {RiskClass.HIGH_RISK, RiskClass.LIMITED_RISK} & set(entry.risk_classes)
+    }
+    assert reportable <= posted
+    assert (
+        "art:27:1",
+        next(e.duty for e in default_table().obligations if e.article == "art:27:1"),
+    ) in posted
+
+
+@pytest.mark.parametrize("language", ["en", "de"])
+async def test_every_table_duty_makes_a_report(
+    report_app: Callable[..., FastAPI], language: str
+) -> None:
+    """The long duties with their conditions (Art. 27(1), Art. 26(10), Art. 53(1)(b)) fit a
+    page: no deployer of a credit score or a public body is refused its report."""
+    app = report_app(rate_limit_exports=100)
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        for result in _every_table_duty():
+            response = await client.post("/reports/result", json=_body(result, language=language))
+            assert response.status_code == 200, (result.role, result.risk_class)
 
 
 def test_the_report_date_is_today() -> None:

@@ -12,6 +12,7 @@ last, once the page count is known (`KlarPdf.finish`).
 """
 
 import logging
+import re
 import unicodedata
 from collections.abc import Mapping
 
@@ -33,6 +34,7 @@ from aiact.export.paper import (
     SmallText,
     Table,
 )
+from aiact.export.pool import RenderTooLong
 from aiact.export.style import (
     FILL_TINT,
     FONTS,
@@ -83,14 +85,11 @@ SIGNATURE_ROOM_MM = 10.0
 """The space above the signature lines, to write in."""
 SIGNATURE_GAP_MM = 10.0
 """Between two signature lines side by side."""
-A4_WIDTH_MM = 210.0
-MAX_CELL_LINES = 60
-"""The most lines a table cell may wrap to. fpdf2 can't break a cell across pages and fails on
-one taller than a page; an empty A4 page holds 68 lines at the tables' line height, and this
-leaves room for a header row that wraps."""
-WIDEST_GLYPH_MM = 3.4
-"""Wider than any glyph of the tables' font at its size (Geist's per mille sign is 3.3 mm at
-8 pt), so `cell_lines` never counts too few lines."""
+ROW_TOO_HIGH = re.compile(
+    r"The row with index \d+ is too high and cannot be rendered on a single page"
+)
+"""fpdf2's message (`fpdf.table.Table.render`, 2.8) for a table row taller than a page, which it
+can't break across pages: raised as a `ValueError`."""
 
 
 class KlarPdf(FPDF):
@@ -261,8 +260,23 @@ class KlarPdf(FPDF):
         headings: FontFace,
     ) -> None:
         """`rows` as a table across the page, the first one its header (repeated on a new
-        page); each text as the current font can draw it."""
+        page); each text as the current font can draw it. `RenderTooLong` for a row taller than
+        a page (fpdf2's `ROW_TOO_HIGH`), which no font or layout change here would fit."""
         self.set_draw_color(*rgb(HAIRLINE))
+        try:
+            self._table(rows, widths=widths, headings=headings)
+        except ValueError as error:
+            if not ROW_TOO_HIGH.fullmatch(str(error)):
+                raise
+            raise RenderTooLong from None
+
+    def _table(
+        self,
+        rows: tuple[tuple[str, ...], ...],
+        *,
+        widths: tuple[float, ...],
+        headings: FontFace,
+    ) -> None:
         with self.table(
             col_widths=widths,
             width=self.epw,
@@ -307,31 +321,6 @@ class KlarPdf(FPDF):
     def _style(self, family: str, style: str, size: float, colour: str) -> None:
         self.set_font(family, style, size)
         self.set_text_color(*rgb(colour))
-
-
-def cell_lines(text: str, share: float) -> int:
-    """At most how many lines `text` wraps to in a table column `share` of the page's width:
-    each line break starts a line, and each word is counted as if it started a new one and
-    every character were the widest glyph."""
-    width = share * (A4_WIDTH_MM - 2 * MARGIN_MM) - 2 * CELL_PADDING_MM
-    per_line = max(1, int(width // WIDEST_GLYPH_MM))
-    return sum(
-        max(1, sum(-(-(len(word) + 1) // per_line) for word in line.split(" ") if word))
-        for line in printable(text).split("\n")
-    )
-
-
-def tallest_cell(table: Table) -> int:
-    """The most lines any cell of `table`, its header's included, may wrap to (`cell_lines`)."""
-    total = sum(table.widths)
-    return max(
-        (
-            cell_lines(text, width / total)
-            for row in (table.header, *table.rows)
-            for text, width in zip(row, table.widths, strict=True)
-        ),
-        default=0,
-    )
 
 
 def render_pdf(paper: Paper) -> bytes:
