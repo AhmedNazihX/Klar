@@ -35,6 +35,10 @@ DRAFTs of the user's own description.
 - P9: any quoted requirement in a draft or export comes from the corpus or the template (P8b's skeleton quotes
   already do); no quote is taken from the posted result. Correct its docstrings the same way.
 - P25 (PDF report), P21 and P22 (the result screens that open the letters) follow the same rule.
+- Duty wording counts as law text (user, 2026-10-09, P25 review): a report prints each duty's formal wording,
+  condition and label from the obligations table (`aiact.report.duties`), keyed by class, role, article and law
+  version; a posted duty the table lacks is left out and counted, never printed or used to date a tool. The posted
+  dates and Art. 111(2) markings of matched duties are the run's own and stay.
 - "Backend-validated result" in older notes (P3 audit, P8a hand-over) now means "contract-validated, with the law
   text re-derived from the corpus", not "issued by the backend".
 - Revisit if a public deployment (S3) needs results that can be shown to third parties as Klar's own: option B
