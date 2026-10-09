@@ -10,10 +10,10 @@ tool's class, roles (its role and the one it also has), the duty's article and t
 (`aiact.report.duties`); a posted duty the table lacks is left out and counted, as in the report
 for a lawyer, so no posted label is ever printed (decision 031). The report quotes no text of the
 Act and names provisions in the report's citation style. The dates follow the inventory screen
-(`tool_duties_from`), from every posted duty's article, date and Art. 111(2) marking (the run's
-own, not the Act's text; decision 031 protects only the labels), with the table's route and
-informational markings where it has the duty: a prohibited tool's line says to stop using or
-supplying it.
+(`tool_duties_from`), from the duties the table has only, with the table's route and
+informational markings and each duty's posted date and Art. 111(2) marking: a posted duty the
+table lacks is counted, never dated, so a tool none of whose duties the table has gets an empty
+date cell. A prohibited tool's line says to stop using or supplying it.
 """
 
 from collections.abc import Mapping
@@ -90,12 +90,10 @@ class _Duty(NamedTuple):
 
 
 class _Duties(NamedTuple):
-    """A tool's duties the table has, how many posted ones it lacks, and what dates every
-    posted one (for the overview's date)."""
+    """A tool's duties the table has, and how many posted ones it lacks."""
 
     found: tuple[_Duty, ...]
     left_out: int
-    timings: tuple[DutyTiming, ...]
 
 
 def inventory_report(
@@ -124,14 +122,9 @@ def inventory_report(
 
 
 def _duties(tool: InventoryTool, language: Language) -> _Duties:
-    entries = tuple((posted, _entry(tool, posted)) for posted in tool.duties)
-    timings = tuple(_timing(posted, entry) for posted, entry in entries)
-    found = tuple(
-        _Duty(label=entry.label_de if language is Language.DE else entry.label_en, timing=timing)
-        for (_, entry), timing in zip(entries, timings, strict=True)
-        if entry is not None
-    )
-    return _Duties(found=found, left_out=len(tool.duties) - len(found), timings=timings)
+    entries = ((posted, _entry(tool, posted)) for posted in tool.duties)
+    found = tuple(_found(posted, entry, language) for posted, entry in entries if entry is not None)
+    return _Duties(found=found, left_out=len(tool.duties) - len(found))
 
 
 def _entry(tool: InventoryTool, duty: InventoryDuty) -> ObligationEntry | None:
@@ -149,16 +142,17 @@ def _entry(tool: InventoryTool, duty: InventoryDuty) -> ObligationEntry | None:
     )
 
 
-def _timing(duty: InventoryDuty, entry: ObligationEntry | None) -> DutyTiming:
-    """What dates the duty: its posted article, date and marking, with the table's route and
-    informational markings when the table has it (neither, when it doesn't)."""
-    return DutyTiming(
+def _found(duty: InventoryDuty, entry: ObligationEntry, language: Language) -> _Duty:
+    """A duty the table has: the table's label and route and informational markings, with the
+    posted date and Art. 111(2) marking."""
+    timing = DutyTiming(
         article=duty.article,
         applies_from=duty.applies_from,
         legacy=duty.legacy,
-        is_route_duty=entry is not None and isinstance(entry.applies_from, Mapping),
-        is_informational=entry is not None and entry.is_informational,
+        is_route_duty=isinstance(entry.applies_from, Mapping),
+        is_informational=entry.is_informational,
     )
+    return _Duty(label=entry.label_de if language is Language.DE else entry.label_en, timing=timing)
 
 
 def _tool_name(tool: InventoryTool, language: Language) -> str:
@@ -176,12 +170,20 @@ def _overview(
             class_name(tool.risk_class, tool.status, language),
             texts.STATUS_NAMES[tool.status][language] if tool.status else texts.NOTHING,
             texts.ROLE_NAMES[tool.role][language] if tool.role else texts.NOTHING,
-            tool_duties_from(tool.risk_class, duties.timings, language),
+            _duties_from(tool, duties, language),
         )
         for tool, duties in listed
     )
     header = tuple(column[language] for column in texts.INVENTORY_HEADER)
     return (Table(header, rows, TOOL_WIDTHS),)
+
+
+def _duties_from(tool: InventoryTool, duties: _Duties, language: Language) -> str:
+    """When the tool's duties apply, from the duties the table has only; an empty cell when it
+    lists duties but the table has none of them (they are counted, never dated)."""
+    if duties.left_out and not duties.found and tool.risk_class is not RiskClass.PROHIBITED:
+        return texts.NOTHING
+    return tool_duties_from(tool.risk_class, tuple(duty.timing for duty in duties.found), language)
 
 
 def _tool_duties(tool: InventoryTool, duties: _Duties, language: Language) -> tuple[Block, ...]:

@@ -5,6 +5,7 @@ from datetime import date
 
 from aiact.export import render_pdf
 from aiact.report import InventoryDuty, InventoryTool, inventory_report
+from aiact.report.texts import NOTHING
 from aiact.schemas import (
     DISCLAIMER_DE,
     DISCLAIMER_EN,
@@ -223,18 +224,37 @@ def test_a_provider_that_also_deploys_keeps_its_deployer_duties() -> None:
     assert "not in Klar's table" not in text
 
 
-def test_a_tool_the_table_cant_match_keeps_its_date_and_says_only_what_is_left_out() -> None:
-    """Under a law version the table doesn't hold, the overview still dates the tool from its
-    posted duties' dates (the run's own), and its section counts the duties it leaves out
-    without also saying the result lists none."""
+def test_a_tool_none_of_whose_duties_the_table_has_gets_no_date_and_only_the_left_out_note() -> (
+    None
+):
+    """Under a law version the table doesn't hold, the tool's duties are counted, never dated:
+    an empty date cell, and its section says only how many are left out, not that the result
+    lists none."""
     original = SCREENING.model_copy(update={"law_version": LawVersion.ORIGINAL})
     english = _pages(tools=(original,))
-    assert "Applicant screening High-risk Decided Deployer 2 December 2027" in english
+    assert f"Applicant screening High-risk Decided Deployer {NOTHING}" in english
+    assert "2 December 2027" not in english
     assert "2 more duties the result lists are not in Klar's table of duties" in english
     assert "no specific duties" not in english.lower()
     for posted in original.duties:
         assert posted.label not in english
     german = _pages(Language.DE, tools=(original,))
-    assert "Applicant screening Hochrisiko Entschieden Betreiber 2. Dezember 2027" in german
+    assert f"Applicant screening Hochrisiko Entschieden Betreiber {NOTHING}" in german
+    assert "Dezember 2027" not in german
     assert "2 weitere Pflichten, die das Ergebnis nennt" in german
     assert "keine besonderen Pflichten" not in german
+
+
+def test_a_tools_date_comes_from_the_duties_the_table_has_only() -> None:
+    """An unmatched duty with an earlier date (and no Art. 111(2) marking) doesn't date the
+    tool: its matched duty does."""
+    unmatched = InventoryDuty(
+        label="A duty Klar no longer lists", article="art:99:1", applies_from=date(2026, 2, 2)
+    )
+    tool = SCREENING.model_copy(update={"duties": (unmatched, SCREENING.duties[0])})
+    english = _pages(tools=(tool,))
+    assert "Applicant screening High-risk Decided Deployer 2 December 2027" in english
+    assert "2 February 2026" not in english
+    assert "1 more duty the result lists is not in Klar's table of duties" in english
+    german = _pages(Language.DE, tools=(tool,))
+    assert "Applicant screening Hochrisiko Entschieden Betreiber 2. Dezember 2027" in german
