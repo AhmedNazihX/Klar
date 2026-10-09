@@ -379,3 +379,28 @@ TOOL_LAW: Mapping[bool, ByLanguage] = {
     ),
 }
 """A tool's law line in the inventory report, by whether the text is the amended one."""
+
+CHECKLIST_KICKER = _texts("Obligations checklist", "Pflichten-Checkliste")
+CHECKLIST_TITLE = _texts("Your obligations", "Ihre Pflichten")
+DONE_COUNT = _texts("{done} of {total} done.", "{done} von {total} erledigt.")
+"""Ticked duties of the tickable ones (the Obligations screen's "N of M done")."""
+NOT_CHECKED_WORK = _texts(
+    "Klar keeps the list; it doesn't check the work for you.",
+    "Klar führt die Liste; ob die Arbeit getan ist, prüft Klar nicht.",
+)
+"""Said wherever progress shows (decision 026 item 9); the screens' `obligations.notChecked`."""
+CHECKLIST_NOTE = _texts(
+    "A duty marked done is one you ticked off in Klar.",
+    "Als erledigt markiert ist eine Pflicht, die Sie in Klar abgehakt haben.",
+)
+STRICTER_READING = _texts(
+    "These duties apply if the stricter reading holds.",
+    "Diese Pflichten gelten, wenn die strengere Auslegung zutrifft.",
+)
+"""An assumed class (needs more information, legally ambiguous) never reads as settled."""
+STATE_HEADER = _texts("Status", "Stand")
+DONE_STATES: Mapping[bool, ByLanguage] = {
+    True: _texts("Done", "Erledigt"),
+    False: _texts("Open", "Offen"),
+}
+"""A duty's ticked state in the checklist, by whether the user ticked it off."""

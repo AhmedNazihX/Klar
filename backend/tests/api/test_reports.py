@@ -5,10 +5,12 @@ made in the export workers."""
 import logging
 from collections.abc import Callable, Iterator
 from datetime import date
+from io import BytesIO
 from typing import Any
 
 import httpx
 import pytest
+from docx import Document
 from fastapi import FastAPI
 
 from aiact.api import create_app
@@ -17,6 +19,7 @@ from aiact.api.reports import (
     INVENTORY_MAX_CHARS,
     INVENTORY_MAX_LINES,
     RENDERERS,
+    ChecklistRequest,
     InventoryReportRequest,
     report_date,
 )
@@ -460,3 +463,63 @@ async def test_every_table_duty_makes_a_report(
 
 def test_the_report_date_is_today() -> None:
     assert report_date() == date.today()
+
+
+def _checklist_tool() -> dict[str, Any]:
+    """Applicant screening with one duty ticked off and one open."""
+    return _tool(
+        duties=[
+            {"label": "Keep the logs", "article": "art:26:6", "applies_from": "2027-12-02"}
+            | {"is_done": True},
+            {"label": "Use it as instructed", "article": "art:26:1", "applies_from": "2027-12-02"},
+        ]
+    )
+
+
+async def test_the_checklist_is_a_pdf_with_each_duties_ticked_state(
+    client: httpx.AsyncClient,
+) -> None:
+    body = {"tools": [_checklist_tool()], "language": "en", "format": "pdf"}
+    response = await client.post("/reports/checklist", json=body)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.headers["content-disposition"] == (
+        'attachment; filename="klar-obligations-checklist.pdf"'
+    )
+    text = " ".join(pdf_pages(response.content))
+    assert "Applicant screening High-risk, Deployer. 1 of 2 done." in text
+    assert "Done Keep the logs it creates for at least six months Art. 26(6)" in text
+    assert "Open Use the tool as the vendor's instructions say Art. 26(1)" in text
+
+
+async def test_the_checklist_is_a_word_file_with_each_duties_ticked_state(
+    client: httpx.AsyncClient,
+) -> None:
+    body = {"tools": [_checklist_tool()], "language": "de", "format": "docx"}
+    response = await client.post("/reports/checklist", json=body)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == DOCX
+    assert response.headers["content-disposition"] == (
+        'attachment; filename="klar-obligations-checklist.docx"'
+    )
+    [table] = Document(BytesIO(response.content)).tables
+    rows = [[cell.text for cell in row.cells] for row in table.rows]
+    assert rows[0] == ["Stand", "Pflicht", "Vorschrift", "Gilt ab"]
+    assert [(row[0], row[2]) for row in rows[1:]] == [
+        ("Erledigt", "Art. 26 Abs. 6"),
+        ("Offen", "Art. 26 Abs. 1"),
+    ]
+    assert "1 von 2 erledigt." in " ".join(read_docx(response.content).paragraphs)
+
+
+async def test_the_checklist_keeps_the_inventory_reports_caps(client: httpx.AsyncClient) -> None:
+    body: dict[str, Any] = {"language": "en", "format": "docx"}
+    too_many = await client.post(
+        "/reports/checklist", json={**body, "tools": [_checklist_tool()] * 101}
+    )
+    not_a_flag = await client.post(
+        "/reports/checklist",
+        json={**body, "tools": [_tool(duties=[_tool()["duties"][0] | {"is_done": "maybe"}])]},
+    )
+    assert (too_many.status_code, not_a_flag.status_code) == (422, 422)
+    assert ChecklistRequest.model_fields["tools"].metadata[0].max_length == 100

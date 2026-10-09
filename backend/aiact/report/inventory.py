@@ -82,8 +82,8 @@ class InventoryTool(ContractModel):
     duties: tuple[InventoryDuty, ...] = Field(default=(), max_length=MAX_DUTIES)
 
 
-class _Duty(NamedTuple):
-    """A tool's duty as the report shows it: the table's label and what dates it."""
+class ListedDuty(NamedTuple):
+    """A tool's duty as a report shows it: the table's label and what dates it."""
 
     label: str
     timing: DutyTiming
@@ -92,7 +92,7 @@ class _Duty(NamedTuple):
 class _Duties(NamedTuple):
     """A tool's duties the table has, and how many posted ones it lacks."""
 
-    found: tuple[_Duty, ...]
+    found: tuple[ListedDuty, ...]
     left_out: int
 
 
@@ -122,9 +122,15 @@ def inventory_report(
 
 
 def _duties(tool: InventoryTool, language: Language) -> _Duties:
-    entries = ((posted, _entry(tool, posted)) for posted in tool.duties)
-    found = tuple(_found(posted, entry, language) for posted, entry in entries if entry is not None)
+    listed = (listed_duty(tool, posted, language) for posted in tool.duties)
+    found = tuple(duty for duty in listed if duty is not None)
     return _Duties(found=found, left_out=len(tool.duties) - len(found))
+
+
+def listed_duty(tool: InventoryTool, duty: InventoryDuty, language: Language) -> ListedDuty | None:
+    """The duty as a report lists it, when the table has it; else None (left out, counted)."""
+    entry = _entry(tool, duty)
+    return None if entry is None else _found(duty, entry, language)
 
 
 def _entry(tool: InventoryTool, duty: InventoryDuty) -> ObligationEntry | None:
@@ -142,7 +148,7 @@ def _entry(tool: InventoryTool, duty: InventoryDuty) -> ObligationEntry | None:
     )
 
 
-def _found(duty: InventoryDuty, entry: ObligationEntry, language: Language) -> _Duty:
+def _found(duty: InventoryDuty, entry: ObligationEntry, language: Language) -> ListedDuty:
     """A duty the table has: the table's label and route and informational markings, with the
     posted date and Art. 111(2) marking."""
     timing = DutyTiming(
@@ -152,10 +158,13 @@ def _found(duty: InventoryDuty, entry: ObligationEntry, language: Language) -> _
         is_route_duty=isinstance(entry.applies_from, Mapping),
         is_informational=entry.is_informational,
     )
-    return _Duty(label=entry.label_de if language is Language.DE else entry.label_en, timing=timing)
+    return ListedDuty(
+        label=entry.label_de if language is Language.DE else entry.label_en, timing=timing
+    )
 
 
-def _tool_name(tool: InventoryTool, language: Language) -> str:
+def tool_name(tool: InventoryTool, language: Language) -> str:
+    """The tool's name, or "Your tool" in the report's language."""
     return tool.name or texts.UNNAMED_TOOL[language]
 
 
@@ -166,7 +175,7 @@ def _overview(
         return (Paragraph(texts.NO_TOOLS[language]),)
     rows = tuple(
         (
-            _tool_name(tool, language),
+            tool_name(tool, language),
             class_name(tool.risk_class, tool.status, language),
             texts.STATUS_NAMES[tool.status][language] if tool.status else texts.NOTHING,
             texts.ROLE_NAMES[tool.role][language] if tool.role else texts.NOTHING,
@@ -198,7 +207,7 @@ def _tool_duties(tool: InventoryTool, duties: _Duties, language: Language) -> tu
         law = (Paragraph(line.format(as_of=day(tool.as_of, language))),)
     if tool.risk_class is RiskClass.PROHIBITED:
         law = (*law, Paragraph(f"{texts.STOP_USING[language]}."))
-    heading = Heading(_tool_name(tool, language))
+    heading = Heading(tool_name(tool, language))
     notes = left_out_note(duties.left_out, language)
     if not duties.found:
         if notes or tool.risk_class is RiskClass.PROHIBITED:

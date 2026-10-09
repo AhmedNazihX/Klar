@@ -5,7 +5,15 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from aiact.schemas import ClassificationResult, Obligation, ObligationGroup
+from aiact.obligations.list import list_obligations
+from aiact.schemas import (
+    ClassificationResult,
+    HighRiskRoute,
+    Obligation,
+    ObligationGroup,
+    RiskClass,
+    Role,
+)
 from aiact.schemas.obligations import STORED_TEXT_FIELDS
 from tests.schemas.worked_example import worked_example_result
 
@@ -91,3 +99,22 @@ def test_an_empty_label_is_still_rejected() -> None:
             article="art:26:6",
             applies_from=date(2027, 12, 2),
         )
+
+
+def test_a_result_stored_before_the_key_still_loads() -> None:
+    """A duty saved before P24 has no `key` (the table's key a tick is saved under)."""
+    listed = list_obligations(Role.DEPLOYER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
+    current = worked_example_result().model_copy(update={"obligations": listed.obligations})
+    stored = current.model_dump(mode="json")
+    assert all(duty["key"] for duty in stored["obligations"])
+    for duty in stored["obligations"]:
+        del duty["key"]
+    result = ClassificationResult.model_validate(stored)
+    assert len(result.obligations) == len(listed.obligations)
+    assert {duty.key for duty in result.obligations} == {None}
+
+
+@pytest.mark.parametrize("key", ["Hr-Logs", "hr_logs", "-hr", "a" * 201])
+def test_a_key_that_is_not_a_table_key_is_rejected(key: str) -> None:
+    with pytest.raises(ValidationError, match="key"):
+        Obligation.model_validate({**_stored("art:26:6", "Keep the logs"), "key": key})
