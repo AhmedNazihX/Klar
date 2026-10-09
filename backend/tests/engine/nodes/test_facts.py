@@ -9,7 +9,6 @@ import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
-from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.engine.graph import CheckNode, EngineGraph, EngineNodes, build_graph
 from aiact.engine.nodes import facts
@@ -636,26 +635,10 @@ def test_the_own_cases_hold_the_three_approved_thin_descriptions() -> None:
     assert all(case.label_citation == () for case in thin.values())
 
 
-PENDING_RECORDING = frozenset({"own-e-04-loader-crane-tip-guard", "own-e-07-grinder-burst-kit"})
-"""Own cases B10c rewrote; the orchestrator records them after review and drops them here."""
-
-
-RECORDING_PENDING = pytest.mark.xfail(
-    strict=True,
-    raises=CannotOverwriteExistingCassetteException,
-    reason="recording pending: B10c rewrote this case's description",
-)
-
-
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
-    [
-        pytest.param(
-            case, id=case.id, marks=RECORDING_PENDING if case.id in PENDING_RECORDING else ()
-        )
-        for case in OWN_CASES
-    ],
+    [pytest.param(case, id=case.id) for case in OWN_CASES],
 )
 def test_recorded_own_case_is_flagged_as_its_label_expects(
     case: BenchmarkCase, engine_settings: Settings
