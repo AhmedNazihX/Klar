@@ -861,7 +861,9 @@
         "annex_i": "Hochrisiko, Anhang I"
       },
       "none": "Keine besonderen Pflichten",
-      "noneNote": "Minimales Risiko oder außerhalb des Anwendungsbereichs"
+      "noneNote": "Minimales Risiko oder außerhalb des Anwendungsbereichs",
+      "transparency": "Transparenz, Art. 50",
+      "other": "Weitere Pflichten"
     },
     "card": {
       "done": "{{done}} von {{total}} erledigt",
@@ -874,7 +876,10 @@
       "provider_one": "{{count}} Anbieterpflicht, vom Entwickeln und Dokumentieren des Tools bis zur Beobachtung nach dem Inverkehrbringen.",
       "provider_other": "{{count}} Anbieterpflichten, vom Entwickeln und Dokumentieren des Tools bis zur Beobachtung nach dem Inverkehrbringen.",
       "openProvider": "Anbieterpflichten öffnen",
-      "draftReady": "Entwurf bereit"
+      "draftReady": "Entwurf bereit",
+      "from": "Ab dem {{date}}",
+      "showMore": "{{count}} weitere zeigen",
+      "noDuties": "Keine besonderen Pflichten"
     },
     "next": {
       "heading": "Nächstes Datum",

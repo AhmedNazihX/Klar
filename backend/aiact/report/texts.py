@@ -393,6 +393,28 @@ CHECKLIST_NOTE = _texts(
     "A duty marked done is one you ticked off in Klar.",
     "Als erledigt markiert ist eine Pflicht, die Sie in Klar abgehakt haben.",
 )
+CHECKLIST_LAW: Mapping[bool, ByLanguage] = {
+    True: _texts(
+        "Dates under Regulation (EU) 2024/1689 as amended, consolidated text of {version} "
+        "(CELEX {celex}).",
+        "Daten nach der Verordnung (EU) 2024/1689 in geänderter Fassung, konsolidierter Text "
+        "vom {version} (CELEX {celex}).",
+    ),
+    False: _texts(
+        "Dates under Regulation (EU) 2024/1689 as published on {version} (CELEX {celex}).",
+        "Daten nach der Verordnung (EU) 2024/1689 in der am {version} veröffentlichten "
+        "Fassung (CELEX {celex}).",
+    ),
+}
+"""The law text the checklist's dates follow, the one the Obligations screen showed, by whether
+it is the amended one."""
+ORIGINAL_DATES = _texts(
+    "Dates follow the original Art. 113. The duties shown are the amended text's.",
+    "Die Daten folgen dem ursprünglichen Art. 113. Die angezeigten Pflichten sind die der "
+    "geänderten Fassung.",
+)
+"""Under the original text only the high-risk route dates swap (decision 026 item 11); the
+screens' `result.todo.originalDates`."""
 STRICTER_READING = _texts(
     "These duties apply if the stricter reading holds.",
     "Diese Pflichten gelten, wenn die strengere Auslegung zutrifft.",

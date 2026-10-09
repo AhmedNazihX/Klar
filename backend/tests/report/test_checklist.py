@@ -55,14 +55,23 @@ def _pages(
     tools: tuple[ChecklistTool, ...] = (SCREENING,),
     language: Language = Language.EN,
     company: str | None = COMPANY,
+    law_version: LawVersion = LawVersion.AMENDED,
 ) -> str:
-    paper = checklist_report(tools, language=language, prepared_on=PREPARED_ON, company=company)
+    paper = checklist_report(
+        tools,
+        language=language,
+        law_version=law_version,
+        prepared_on=PREPARED_ON,
+        company=company,
+    )
     return " ".join(pdf_pages(render_pdf(paper)))
 
 
 def _table_rows(tools: tuple[ChecklistTool, ...]) -> list[list[str]]:
     """The first duty table of the checklist's Word file, cell by cell."""
-    paper = checklist_report(tools, language=Language.EN, prepared_on=PREPARED_ON)
+    paper = checklist_report(
+        tools, language=Language.EN, law_version=LawVersion.AMENDED, prepared_on=PREPARED_ON
+    )
     table = Document(BytesIO(render_docx(paper))).tables[0]
     return [[cell.text for cell in row.cells] for row in table.rows]
 
@@ -187,3 +196,60 @@ def test_a_duty_with_nothing_to_tick_is_listed_without_a_state_and_not_counted()
     stored = SCREENING.model_copy(update={"duties": (keyless, INFORM_STAFF)})
     assert "Applicant screening High-risk, Deployer. 0 of 1 done." in _pages((stored,))
     assert [row[0] for row in _table_rows((stored,))[1:]] == [NOTHING, "Open"]
+
+
+ANNEX_I_DUTY = ChecklistDuty(
+    label="Use it as instructed", article="art:26:1", applies_from=date(2028, 8, 2)
+)
+AUTHORITY_DUTY = LOGS.model_copy(
+    update={"applies_from": date(2030, 8, 2), "legacy": LegacyStatus.PUBLIC_AUTHORITY}
+)
+
+
+def test_under_the_original_text_each_route_duty_takes_its_routes_original_date() -> None:
+    """Annex III 2 December 2027 becomes 2 August 2026, Annex I 2 August 2028 becomes 2 August
+    2027 (the original Art. 113); a 2030 Art. 111(2) date and "only after a significant change"
+    stay, as on the screen."""
+    tool = SCREENING.model_copy(update={"duties": (LOGS, ANNEX_I_DUTY, INFORM_STAFF)})
+    authority = SCREENING.model_copy(update={"name": "Benefits", "duties": (AUTHORITY_DUTY,)})
+    original = _pages((tool, authority), law_version=LawVersion.ORIGINAL)
+    assert "Art. 26(6) 2 August 2026" in original
+    assert "Art. 26(1) 2 August 2027" in original
+    assert "Only after a significant change (Art. 111(2))" in original
+    assert "2 August 2030 (Art. 111(2))" in original
+    assert "2 December 2027" not in original and "2028" not in original
+    amended = _pages((tool,))
+    assert "Art. 26(6) 2 December 2027" in amended and "Art. 26(1) 2 August 2028" in amended
+
+
+def test_the_checklist_names_the_law_text_its_dates_follow() -> None:
+    notice = "Dates follow the original Art. 113. The duties shown are the amended text's."
+    original = _pages(law_version=LawVersion.ORIGINAL)
+    assert (
+        "Dates under Regulation (EU) 2024/1689 as published on 12 July 2024 (CELEX 32024R1689)."
+    ) in original
+    assert notice in original
+    assert "Checked under the amended text, as it applies on 27 September 2026." in original
+    amended = _pages()
+    assert notice not in amended
+    assert (
+        "Dates under Regulation (EU) 2024/1689 as amended, consolidated text of 27 July 2026 "
+        "(CELEX 02024R1689-20260727)."
+    ) in amended
+
+
+def test_a_german_checklist_names_its_law_text_and_original_dates() -> None:
+    original = _pages(language=Language.DE, law_version=LawVersion.ORIGINAL)
+    for line in (
+        "Daten nach der Verordnung (EU) 2024/1689 in der am 12. Juli 2024 veröffentlichten "
+        "Fassung (CELEX 32024R1689).",
+        "Die Daten folgen dem ursprünglichen Art. 113. Die angezeigten Pflichten sind die der "
+        "geänderten Fassung.",
+        "Geprüft nach der geänderten Fassung, wie sie am 27. September 2026 gilt.",
+        "Art. 26 Abs. 6 2. August 2026",
+    ):
+        assert line in original, line
+    assert (
+        "Daten nach der Verordnung (EU) 2024/1689 in geänderter Fassung, konsolidierter Text "
+        "vom 27. Juli 2026 (CELEX 02024R1689-20260727)."
+    ) in _pages(language=Language.DE)

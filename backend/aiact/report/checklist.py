@@ -10,8 +10,12 @@ they ticked off, and the checklist says that Klar doesn't check the work (decisi
 A duty with nothing to tick off is listed without a state and never counted, as on the screen:
 an informational one, or one the screen sent without a state (`is_done` null: a duty stored
 before duties carried their key, which the screen can't tick). The dates are the stored results'
-own, as on the inventory report. The rest of a tool's block is the inventory report's
-(`common`): its stop line, its duty cells and what closes its list.
+own, as on the inventory report, except under the original text: the checklist follows the law
+text the screen showed (`law_version`, named under the title), and under the original one a
+high-risk route duty takes the original Art. 113 date of its route, with the screen's notice
+that only those dates swap (decision 026 item 11; an Art. 111(2) date stays). The rest of a
+tool's block is the inventory report's (`common`): the law its result was checked under, its
+stop line, its duty cells and what closes its list.
 """
 
 from datetime import date
@@ -20,6 +24,7 @@ from typing import NamedTuple
 from pydantic import Field
 
 from aiact.export import Block, Heading, Note, Paper, Paragraph, Table
+from aiact.obligations.list import ORIGINAL_CHAPTER_III_DATES
 from aiact.report import texts
 from aiact.report.common import (
     after_duties,
@@ -30,14 +35,16 @@ from aiact.report.common import (
     footer,
     stop_line,
 )
+from aiact.report.duties import DutyTiming
 from aiact.report.inventory import (
     InventoryDuty,
     InventoryTool,
     ListedDuty,
     listed_duty,
+    tool_law,
     tool_name,
 )
-from aiact.schemas import Language, Status
+from aiact.schemas import LAW_TEXTS, Language, LawVersion, LegacyStatus, Status
 
 CHECKLIST_WIDTHS = (0.9, 3.0, 1.0, 1.3)
 
@@ -77,38 +84,72 @@ def checklist_report(
     tools: tuple[ChecklistTool, ...],
     *,
     language: Language,
+    law_version: LawVersion,
     prepared_on: date,
     company: str | None = None,
 ) -> Paper:
-    """The checklist in `language`: the overall progress, then each classified tool with its
-    progress and its duties' ticked state. A tool without a class has no duties to list."""
-    listed = tuple((tool, _ticked(tool, language)) for tool in tools if tool.risk_class)
+    """The checklist in `language`, dated under `law_version` (the text the screen showed): the
+    overall progress, then each classified tool with its progress and its duties' ticked state.
+    A tool without a class has no duties to list."""
+    listed = tuple(
+        (tool, _ticked(tool, language, law_version)) for tool in tools if tool.risk_class
+    )
     overall = _progress(tuple(duty for _, duties in listed for duty in duties))
     prepared = texts.PREPARED[language].format(date=day(prepared_on, language))
     done = texts.DONE_COUNT[language].format(done=overall.done, total=overall.total)
     tool_blocks = tuple(
         block for tool, duties in listed for block in _tool_blocks(tool, duties, language)
     )
+    original_dates = (
+        (Paragraph(texts.ORIGINAL_DATES[language]),) if law_version is LawVersion.ORIGINAL else ()
+    )
     return Paper(
         language=language,
         kicker=texts.CHECKLIST_KICKER[language],
         title=company or texts.CHECKLIST_TITLE[language],
-        lines=(f"{prepared} {done}",),
+        lines=(f"{prepared} {done}", _law_line(law_version, language)),
         blocks=(
             Note(f"{texts.NOT_CHECKED_WORK[language]} {texts.CHECKLIST_NOTE[language]}"),
+            *original_dates,
             *(tool_blocks or (Paragraph(texts.NO_TOOLS[language]),)),
         ),
         footer=footer(language),
     )
 
 
-def _ticked(tool: ChecklistTool, language: Language) -> tuple[_Ticked, ...]:
+def _law_line(law_version: LawVersion, language: Language) -> str:
+    """The law text the checklist's dates follow, with its date and CELEX number."""
+    law_text = LAW_TEXTS[law_version]
+    return texts.CHECKLIST_LAW[law_version is LawVersion.AMENDED][language].format(
+        version=day(law_text.version_date, language), celex=law_text.celex
+    )
+
+
+def _ticked(
+    tool: ChecklistTool, language: Language, law_version: LawVersion
+) -> tuple[_Ticked, ...]:
     found = ((listed_duty(tool, duty, language), duty.is_done) for duty in tool.duties)
     return tuple(
-        _Ticked(duty, None if duty.timing.is_informational else is_done)
+        _Ticked(
+            duty._replace(timing=_dated(duty.timing, law_version)),
+            None if duty.timing.is_informational else is_done,
+        )
         for duty, is_done in found
         if duty is not None
     )
+
+
+def _dated(timing: DutyTiming, law_version: LawVersion) -> DutyTiming:
+    """The duty's timing under `law_version`: under the original text a route duty takes its
+    route's original Art. 113 date, as the screen swaps it (`routeDates`); an Art. 111(2) date
+    for public authorities stays, and every other date is the same under both texts."""
+    if (
+        law_version is LawVersion.AMENDED
+        or timing.route is None
+        or timing.legacy is LegacyStatus.PUBLIC_AUTHORITY
+    ):
+        return timing
+    return timing._replace(applies_from=ORIGINAL_CHAPTER_III_DATES[timing.route])
 
 
 def _progress(duties: tuple[_Ticked, ...]) -> _Progress:
@@ -121,7 +162,7 @@ def _tool_blocks(
     tool: ChecklistTool, duties: tuple[_Ticked, ...], language: Language
 ) -> tuple[Block, ...]:
     """A tool's heading, its class, role and progress, its stop line or what an assumed class
-    says, its duties and what closes the list."""
+    says, the law its result was checked under, its duties and what closes the list."""
     progress = _progress(duties)
     summary = class_name(tool.risk_class, tool.status, language)
     if tool.role is not None:
@@ -137,6 +178,7 @@ def _tool_blocks(
         Paragraph(f"{summary}. {done}"),
         *stop_line(tool.risk_class, language),
         *stricter,
+        *tool_law(tool, language),
     )
     closing = after_duties(
         has_duties=bool(duties),

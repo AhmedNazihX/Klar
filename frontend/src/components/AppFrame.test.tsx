@@ -150,6 +150,38 @@ describe('AppFrame law version', () => {
     expect(buttons[1]).toHaveAttribute('aria-pressed', 'true')
   })
 
+  it('keeps the original text notice across a language switch (EN, DE, EN)', async () => {
+    const user = userEvent.setup()
+    await openApp('/app/obligations?law=original')
+    expect(document.querySelector('.app-frame')).toHaveClass(LAW_ORIGINAL_CLASS)
+
+    await user.click(
+      within(screen.getByRole('group', { name: 'Language' })).getAllByRole(
+        'button',
+      )[1] as HTMLElement,
+    )
+    await screen.findByRole('group', { name: 'Sprache' })
+    expect(document.querySelector('.app-frame')).toHaveClass(LAW_ORIGINAL_CLASS)
+
+    await user.click(
+      within(screen.getByRole('group', { name: 'Sprache' })).getAllByRole(
+        'button',
+      )[0] as HTMLElement,
+    )
+    await screen.findByRole('group', { name: 'Language' })
+    expect(document.querySelector('.app-frame')).toHaveClass(LAW_ORIGINAL_CLASS)
+  })
+
+  it('keeps the original text notice once the load motion clears', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await openApp('/app/inventory?law=original')
+    act(() => {
+      vi.advanceTimersByTime(LOAD_MOTION_MS)
+    })
+    expect(document.querySelector('.app-frame')).not.toHaveClass('app-intro')
+    expect(document.querySelector('.app-frame')).toHaveClass(LAW_ORIGINAL_CLASS)
+  })
+
   it('drops an unknown law version from the address and the links', async () => {
     const { router } = await openApp('/app/inventory?law=bogus')
     const [amended, original] = within(

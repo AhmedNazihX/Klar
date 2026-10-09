@@ -162,7 +162,7 @@ describe('Obligations, ticking duties', () => {
     tools = [screening]
     const { user } = await openObligations()
     const route = section(/^From 2 December 2027/)
-    expect(within(route).getByText('0 of 11 done')).toBeInTheDocument()
+    expect(within(route).getByText('0 of 10 done')).toBeInTheDocument()
     expect(progressLine()).toBe('0 of 11 done')
     expect(screen.getByRole('progressbar', { name: 'Duties done' })).toHaveAttribute(
       'aria-valuenow',
@@ -177,7 +177,7 @@ describe('Obligations, ticking duties', () => {
     ])
     await vi.waitFor(() => expect(progressLine()).toBe('1 of 11 done'))
     expect(box).toBeChecked()
-    expect(within(route).getByText('1 of 11 done')).toBeInTheDocument()
+    expect(within(route).getByText('1 of 10 done')).toBeInTheDocument()
     expect(screen.getByRole('progressbar', { name: 'Duties done' })).toHaveAttribute(
       'aria-valuenow',
       '1',
@@ -261,7 +261,11 @@ describe('Obligations, By date and By tool', () => {
       'Applicant screening',
       'Product photo generator',
       'Route optimisation',
+      'Invoice matching',
     ])
+    // A tool without duties has its card too, as By date lists it under No specific duties.
+    const invoices = screen.getByRole('link', { name: 'Invoice matching' }).closest('[data-tone]')
+    expect(invoices).toHaveTextContent('Invoice matchingOut of scopeNo specific duties')
     expect(await allBoxes(user)).toEqual(byDate)
   })
 
@@ -277,6 +281,8 @@ describe('Obligations, By date and By tool', () => {
     const { user } = await openObligations()
     const route = section(/^From 2 December 2027/)
     expect(within(route).getAllByRole('checkbox')).toHaveLength(4)
+    // The count beside it is over the same ten duties.
+    expect(within(route).getByText('0 of 10 done')).toBeInTheDocument()
     await user.click(within(route).getByRole('button', { name: 'Show all 10 duties' }))
     expect(within(route).getAllByRole('checkbox')).toHaveLength(10)
     expect(within(route).getByRole('button', { name: 'Show fewer' })).toHaveAttribute(
@@ -284,6 +290,32 @@ describe('Obligations, By date and By tool', () => {
       'true',
     )
   })
+
+  it.each([
+    ['en', 'Show 6 more', '0 of 9 done'],
+    ['de', '6 weitere zeigen', '0 von 9 erledigt'],
+  ] as const)(
+    '(%s) counts the hidden lines when one has nothing to tick, so the link and count never clash',
+    async (language, more, done) => {
+      // One of the ten route duties is information only: nine to tick, ten lines.
+      const result = decidedHighRisk()
+      const informational = (result.obligations ?? []).find((duty) => duty.high_risk_route)
+      tools = [
+        toolRow('Applicant screening', {
+          ...result,
+          obligations: (result.obligations ?? []).map((duty) =>
+            duty === informational ? { ...duty, is_informational: true } : duty,
+          ),
+        }),
+      ]
+      await openObligations('/app/obligations', language)
+      const route = section(
+        language === 'en' ? /^From 2 December 2027/ : /^Ab dem 2\. Dezember 2027/,
+      )
+      expect(within(route).getByText(done)).toBeInTheDocument()
+      expect(within(route).getByRole('button', { name: more })).toBeInTheDocument()
+    },
+  )
 
   it('links a duty with a drafting template to its draft', async () => {
     tools = [toolRow('Applicant screening', decidedHighRisk())]
@@ -310,6 +342,121 @@ describe('Obligations, By date and By tool', () => {
       within(from2030).getByRole('link', { name: 'Open the provider duties' }),
     ).toHaveAttribute('href', `/app/inventory/${String(benefits['id'])}`)
   })
+})
+
+describe('Obligations, what each section holds', () => {
+  it.each([
+    ['en', 'In force since 2 August 2026', 'Transparency, Art. 50'],
+    ['de', 'In Kraft seit dem 2. August 2026', 'Transparenz, Art. 50'],
+  ] as const)(
+    '(%s) names the transparency duties beside their date',
+    async (language, name, line) => {
+      tools = [toolRow('Product photo generator', limitedRisk())]
+      await openObligations('/app/obligations', language)
+      expect(section(name)).toHaveAccessibleDescription(line)
+    },
+  )
+
+  it('sets a dated section apart from the route section of the same date', async () => {
+    const chat = limitedRisk()
+    const [literacy] = chat.obligations ?? []
+    if (!literacy) throw new Error('The fixture has duties.')
+    const assessment = {
+      ...literacy,
+      key: 'art-6-4',
+      article: 'art:6:4',
+      applies_from: '2027-12-02',
+    }
+    tools = [
+      toolRow('Applicant screening', decidedHighRisk()),
+      toolRow('Customer chat assistant', {
+        ...chat,
+        obligations: [...(chat.obligations ?? []), assessment],
+      }),
+    ]
+    await openObligations()
+    const [route, plain] = screen.getAllByRole('region', { name: /^From 2 December 2027/ })
+    expect(route).toHaveAccessibleDescription('High-risk, Annex III')
+    expect(plain).toHaveAccessibleDescription('Art. 6(4)')
+    expect(plain).toHaveTextContent('Customer chat assistant')
+  })
+
+  it.each([
+    ['en', /^From 2 December 2027/, 'Other duties', 'No specific duties'],
+    ['de', /^Ab dem 2\. Dezember 2027/, 'Weitere Pflichten', 'Keine besonderen Pflichten'],
+  ] as const)(
+    '(%s) calls a same-date section of several articles "other duties"; By tool shows a tool without any',
+    async (language, sameDay, other, none) => {
+      const chat = limitedRisk()
+      const [literacy] = chat.obligations ?? []
+      if (!literacy) throw new Error('The fixture has duties.')
+      const later = { ...literacy, applies_from: '2027-12-02' }
+      tools = [
+        toolRow('Applicant screening', decidedHighRisk()),
+        toolRow('Customer chat assistant', {
+          ...chat,
+          obligations: [
+            { ...later, key: 'art-6-4', article: 'art:6:4' },
+            { ...later, key: 'art-49-2', article: 'art:49:2' },
+          ],
+        }),
+        toolRow('Invoice matching', outOfScope()),
+      ]
+      const { user } = await openObligations('/app/obligations', language)
+      const [, plain] = screen.getAllByRole('region', { name: sameDay })
+      expect(plain).toHaveAccessibleDescription(other)
+
+      await user.click(
+        screen.getByRole('button', { name: language === 'en' ? 'By tool' : 'Nach Tool' }),
+      )
+      const invoices = (await screen.findByRole('link', { name: 'Invoice matching' })).closest(
+        '[data-tone]',
+      )
+      expect(invoices).toHaveTextContent(none)
+    },
+  )
+
+  it.each([
+    ['en', 'From 2 December 2026'],
+    ['de', 'Ab dem 2. Dezember 2026'],
+  ] as const)(
+    '(%s) dates a Stop now duty that only applies from December 2026',
+    async (language, from) => {
+      const [literacy] = decidedHighRisk().obligations ?? []
+      if (!literacy) throw new Error('The fixture has duties.')
+      const banned = (key: string, article: string, appliesFrom: string, label: string) => ({
+        ...literacy,
+        key,
+        article,
+        applies_from: appliesFrom,
+        label_en: label,
+        label_de: label,
+        applies_if: null,
+      })
+      tools = [
+        toolRow('Image app', {
+          ...prohibitedResult(),
+          obligations: [
+            banned('prohibited-emotions', 'art:5:1:f', '2025-02-02', 'Stop the emotion reading'),
+            banned(
+              'prohibited-intimate-images',
+              'art:5:1:ba',
+              '2026-12-02',
+              'Stop the intimate images',
+            ),
+            banned('prohibited-child-images', 'art:5:1:bb', '2026-12-02', 'Stop the child images'),
+          ],
+        }),
+      ]
+      await openObligations('/app/obligations', language)
+      const stop = section(language === 'en' ? 'Stop now' : 'Jetzt beenden')
+      const [inForce, ba, bb] = within(stop).getAllByRole('listitem')
+      expect(ba).toHaveTextContent(`Stop the intimate images${from}`)
+      expect(bb).toHaveTextContent(`Stop the child images${from}`)
+      // Banned since February 2025: no date to wait for.
+      expect(inForce).not.toHaveTextContent(language === 'en' ? /From \d/ : /Ab dem \d/)
+    },
+  )
 })
 
 describe('Obligations, uncertain and legacy tools', () => {
@@ -434,7 +581,15 @@ describe('Obligations, the checklist download', () => {
     const { user } = await openObligations('/app/obligations', 'de')
     await user.click(screen.getByRole('button', { name: 'PDF herunterladen' }))
     await vi.waitFor(() => expect(checklists).toHaveLength(1))
-    expect(checklists[0]).toMatchObject({ format: 'pdf', language: 'de' })
+    expect(checklists[0]).toMatchObject({ format: 'pdf', language: 'de', law_version: 'amended' })
+  })
+
+  it('asks for the checklist under the original text when the screen shows it', async () => {
+    tools = [toolRow('Applicant screening', decidedHighRisk())]
+    const { user } = await openObligations('/app/obligations?law=original')
+    await user.click(screen.getByRole('button', { name: 'Download PDF' }))
+    await vi.waitFor(() => expect(checklists).toHaveLength(1))
+    expect(checklists[0]).toMatchObject({ format: 'pdf', law_version: 'original' })
   })
 
   it('counts a result stored before duties had keys the same on screen and in the checklist', async () => {
@@ -507,7 +662,7 @@ describe('Obligations, German and accessibility', () => {
     const route = section(/^Ab dem 2\. Dezember 2027/)
     expect(route).toHaveTextContent('In 14 Monaten')
     expect(route).toHaveTextContent('Hochrisiko, Anhang III')
-    expect(within(route).getByText('0 von 11 erledigt')).toBeInTheDocument()
+    expect(within(route).getByText('0 von 10 erledigt')).toBeInTheDocument()
     expect(
       within(route).getByRole('button', { name: 'Alle 10 Pflichten zeigen' }),
     ).toBeInTheDocument()

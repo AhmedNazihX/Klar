@@ -13,14 +13,20 @@ import { tickKey, type DutyTick } from '@/lib/duty-progress'
 /** A tool on the screen with the duties it lists there. */
 export type ToolDuties = { tool: CheckedTool; duties: Obligation[] }
 
+/** What a dated section's duties are, for the line beside its heading (artboard `Obligations`:
+ *  "Transparency, Art. 50"): Art. 50's transparency duties, or one article all its duties come
+ *  from; else, when a route section has the same date, "other duties", so the two read apart. */
+export type SectionCategory =
+  { kind: 'transparency' } | { kind: 'article'; article: string } | { kind: 'other' }
+
 /** The By date sections, in the screen's order. */
 export type DateSection =
   /** A prohibited tool's duties: stop now (Art. 5). */
   | { kind: 'stop'; tools: ToolDuties[] }
   /** Duties whose date has come. */
-  | { kind: 'since'; date: string; tools: ToolDuties[] }
+  | { kind: 'since'; date: string; category: SectionCategory | null; tools: ToolDuties[] }
   /** Duties whose date is still ahead (an Art. 111(2) 2030 date included). */
-  | { kind: 'from'; date: string; tools: ToolDuties[] }
+  | { kind: 'from'; date: string; category: SectionCategory | null; tools: ToolDuties[] }
   /** A high-risk route's duties: its Chapter III date, which the Digital Omnibus moved. */
   | { kind: 'route'; route: HighRiskRoute; amended: string; original: string; tools: ToolDuties[] }
   /** Art. 111(2): duties that apply only after a significant change. */
@@ -54,11 +60,10 @@ function dutiesOf(tool: CheckedTool): Obligation[] {
   return tool.result.risk_class === 'out_of_scope' ? [] : (tool.result.obligations ?? [])
 }
 
-/** Every tool with its duties, for By tool: a prohibited tool even without any. */
+/** Every tool with its duties, for By tool: a tool without any too, so By tool lists the same
+ *  tools as By date (whose "No specific duties" section lists those). */
 export function toolCards(tools: readonly CheckedTool[]): ToolDuties[] {
-  return tools
-    .map((tool) => ({ tool, duties: dutiesOf(tool) }))
-    .filter(({ tool, duties }) => duties.length > 0 || tool.result.risk_class === 'prohibited')
+  return tools.map((tool) => ({ tool, duties: dutiesOf(tool) }))
 }
 
 type Slot =
@@ -112,17 +117,43 @@ function slotRank(slot: Slot): [number, string] {
   }
 }
 
-function toSection(slot: Slot, tools: ToolDuties[], today: Date): DateSection {
+const TRANSPARENCY_ARTICLE = 'art:50'
+
+/** The article an article ID belongs to: `art:6:4` → `art:6`. */
+function articleOf(article: string): string {
+  return article.split(':').slice(0, 2).join(':')
+}
+
+/** What a dated section's duties are; `hasRouteTwin` when a route section has its date. */
+function categoryOf(tools: readonly ToolDuties[], hasRouteTwin: boolean): SectionCategory | null {
+  const articles = [...new Set(tools.flatMap(({ duties }) => duties.map((duty) => duty.article)))]
+  const parents = [...new Set(articles.map(articleOf))]
+  const [onlyArticle] = articles
+  const [onlyParent] = parents
+  if (parents.length === 1 && onlyParent === TRANSPARENCY_ARTICLE) return { kind: 'transparency' }
+  if (articles.length === 1 && onlyArticle) return { kind: 'article', article: onlyArticle }
+  if (parents.length === 1 && onlyParent) return { kind: 'article', article: onlyParent }
+  return hasRouteTwin ? { kind: 'other' } : null
+}
+
+function toSection(
+  slot: Slot,
+  tools: ToolDuties[],
+  today: Date,
+  routeDays: ReadonlySet<string>,
+): DateSection {
   switch (slot.kind) {
     case 'stop':
     case 'afterChange':
       return { kind: slot.kind, tools }
     case 'route':
       return { kind: 'route', route: slot.route, ...routeDates(slot.route, slot.amended), tools }
-    case 'dated':
+    case 'dated': {
+      const category = categoryOf(tools, routeDays.has(slot.date))
       return slot.date <= isoDay(today)
-        ? { kind: 'since', date: slot.date, tools }
-        : { kind: 'from', date: slot.date, tools }
+        ? { kind: 'since', date: slot.date, category, tools }
+        : { kind: 'from', date: slot.date, category, tools }
+    }
   }
 }
 
@@ -142,18 +173,24 @@ function addTo(buckets: Map<string, Bucket>, slot: Slot, tool: CheckedTool, duty
 export function dateSections(tools: readonly CheckedTool[], today: Date): DateSection[] {
   const buckets = new Map<string, Bucket>()
   for (const { tool, duties } of toolCards(tools)) {
-    // Only a prohibited tool is listed without duties (`toolCards`).
-    if (duties.length === 0) addTo(buckets, { kind: 'stop' }, tool)
+    // Without duties only a prohibited tool is listed here, under Stop now; the others are in
+    // "No specific duties" (`toolsWithoutDuties`).
+    if (duties.length === 0 && tool.result.risk_class === 'prohibited') {
+      addTo(buckets, { kind: 'stop' }, tool)
+    }
     const summary = isProviderSummary(tool) ? summarySlot(tool, duties) : null
     for (const duty of duties) addTo(buckets, summary ?? slotOf(tool, duty), tool, duty)
   }
+  const routeDays = new Set(
+    [...buckets.values()].flatMap(({ slot }) => (slot.kind === 'route' ? [slot.amended] : [])),
+  )
   return [...buckets.values()]
     .sort((a, b) => {
       const [rankA, dateA] = slotRank(a.slot)
       const [rankB, dateB] = slotRank(b.slot)
       return rankA - rankB || dateA.localeCompare(dateB)
     })
-    .map((bucket) => toSection(bucket.slot, [...bucket.tools.values()], today))
+    .map((bucket) => toSection(bucket.slot, [...bucket.tools.values()], today, routeDays))
 }
 
 /** How many of the duties are ticked off, of those that can be. */
@@ -164,15 +201,20 @@ export function ticksOn(ticks: readonly DutyTick[], toolId: string): Set<string>
   return new Set(ticks.filter((tick) => tick.toolId === toolId).map((tick) => tick.obligationKey))
 }
 
-/** The tool's progress over all its duties (each key once). */
-export function toolProgress(tool: CheckedTool, ticks: readonly DutyTick[]): Progress {
-  const keys = new Set(
-    dutiesOf(tool)
-      .map(tickKey)
-      .filter((key): key is string => key !== null),
-  )
-  const done = ticksOn(ticks, tool.toolId)
+/** The progress over these duties of the tool (each key once). */
+export function dutiesProgress(
+  toolId: string,
+  duties: readonly Obligation[],
+  ticks: readonly DutyTick[],
+): Progress {
+  const keys = new Set(duties.map(tickKey).filter((key): key is string => key !== null))
+  const done = ticksOn(ticks, toolId)
   return { done: [...keys].filter((key) => done.has(key)).length, total: keys.size }
+}
+
+/** The tool's progress over all its duties. */
+export function toolProgress(tool: CheckedTool, ticks: readonly DutyTick[]): Progress {
+  return dutiesProgress(tool.toolId, dutiesOf(tool), ticks)
 }
 
 /** Every tool's progress added up. */

@@ -105,10 +105,13 @@ function ChecklistPanel({
   const headingId = useId()
   const download = useExportChecklist()
   const overview = useUserDataOverview()
+  // The checklist is dated under the law text on show, as the screen is (decision 026 item 11).
+  const law = useLawVersion()
   function save(format: 'pdf' | 'docx'): void {
     download.mutate({
       tools: tools.map((tool) => checklistTool(tool, language, ticksOn(ticks, tool.toolId))),
       language,
+      law_version: law,
       format,
       company: overview.data?.profile?.companyName ?? null,
     })

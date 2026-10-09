@@ -861,7 +861,9 @@
         "annex_i": "High-risk, Annex I"
       },
       "none": "No specific duties",
-      "noneNote": "Minimal risk or out of scope"
+      "noneNote": "Minimal risk or out of scope",
+      "transparency": "Transparency, Art. 50",
+      "other": "Other duties"
     },
     "card": {
       "done": "{{done}} of {{total}} done",
@@ -874,7 +876,10 @@
       "provider_one": "{{count}} provider duty, from building and documenting the tool to monitoring it after launch.",
       "provider_other": "{{count}} provider duties, from building and documenting the tool to monitoring it after launch.",
       "openProvider": "Open the provider duties",
-      "draftReady": "Draft ready"
+      "draftReady": "Draft ready",
+      "from": "From {{date}}",
+      "showMore": "Show {{count}} more",
+      "noDuties": "No specific duties"
     },
     "next": {
       "heading": "Next date",

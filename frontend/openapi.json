@@ -950,6 +950,10 @@
             "$ref": "#/components/schemas/Language",
             "description": "The language of the checklist's wording and notice."
           },
+          "law_version": {
+            "$ref": "#/components/schemas/LawVersion",
+            "description": "The law text the Obligations screen shows; under the original one the high-risk route dates follow the original Art. 113 (decision 026 item 11)."
+          },
           "format": {
             "type": "string",
             "enum": [
@@ -978,6 +982,7 @@
         "required": [
           "tools",
           "language",
+          "law_version",
           "format"
         ],
         "title": "ChecklistRequest",

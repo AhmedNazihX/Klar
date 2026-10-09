@@ -52,7 +52,7 @@ from aiact.report import (
     inventory_report,
     result_report,
 )
-from aiact.schemas import Language
+from aiact.schemas import Language, LawVersion
 from aiact.schemas.base import ContractModel
 
 INVENTORY_MAX_LINES = 6_000
@@ -113,6 +113,10 @@ class ChecklistRequest(ContractModel):
 
     tools: tuple[ChecklistTool, ...] = Field(max_length=InventoryReportRequest.MAX_TOOLS)
     language: Language = Field(description="The language of the checklist's wording and notice.")
+    law_version: LawVersion = Field(
+        description="The law text the Obligations screen shows; under the original one the "
+        "high-risk route dates follow the original Art. 113 (decision 026 item 11)."
+    )
     format: ExportFormat
     company: Name | None = Field(
         default=None, description="The company's name from its profile; null without one."
@@ -201,7 +205,11 @@ def export_obligations_checklist(
     whether it is done, its provision and its date, as a PDF or Word file. Klar keeps the list;
     it doesn't check the work. Guidance, not legal advice."""
     paper = checklist_report(
-        body.tools, language=body.language, prepared_on=prepared_on, company=body.company
+        body.tools,
+        language=body.language,
+        law_version=body.law_version,
+        prepared_on=prepared_on,
+        company=body.company,
     )
     # The inventory report's caps: a checklist row has one cell more, and still fits them.
     refuse_too_long(paper, TOO_LONG, max_chars=INVENTORY_MAX_CHARS, max_lines=INVENTORY_MAX_LINES)

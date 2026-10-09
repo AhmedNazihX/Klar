@@ -120,6 +120,10 @@ export type ChecklistRequest = {
      */
     language: Language;
     /**
+     * The law text the Obligations screen shows; under the original one the high-risk route dates follow the original Art. 113 (decision 026 item 11).
+     */
+    law_version: LawVersion;
+    /**
      * Format
      */
     format: 'docx' | 'pdf';

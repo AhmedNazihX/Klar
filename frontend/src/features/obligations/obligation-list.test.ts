@@ -16,6 +16,7 @@ import { tickKey } from '@/lib/duty-progress'
 
 import {
   dateSections,
+  dutiesProgress,
   nextDate,
   overallProgress,
   toolCards,
@@ -81,6 +82,41 @@ describe('By date', () => {
     ])
   })
 
+  it('says what a dated section holds, and sets a plain section apart from a route twin', () => {
+    // An Art. 6(4) duty dated like the Annex III route: its section has the route's date.
+    const [literacy] = decidedHighRisk().obligations ?? []
+    if (!literacy) throw new Error('The fixture has duties.')
+    const assessment = {
+      ...literacy,
+      key: 'art-6-4',
+      article: 'art:6:4',
+      applies_from: '2027-12-02',
+    }
+    const chat = tool('Customer chat assistant', {
+      ...limitedRisk(),
+      obligations: [...(limitedRisk().obligations ?? []), assessment],
+    })
+    const mixed = tool('Mixed', {
+      ...limitedRisk(),
+      obligations: [assessment, { ...assessment, key: 'art-4-x', article: 'art:4' }],
+    })
+    const categories = (tools: CheckedTool[]) =>
+      dateSections(tools, TODAY).map((section) =>
+        'category' in section
+          ? `${section.kind} ${section.date} ${JSON.stringify(section.category)}`
+          : section.kind,
+      )
+    expect(categories([SCREENING, chat])).toEqual([
+      'since 2025-02-02 {"kind":"article","article":"art:4:1"}',
+      'since 2026-08-02 {"kind":"transparency"}',
+      'route',
+      'from 2027-12-02 {"kind":"article","article":"art:6:4"}',
+    ])
+    // Two articles: no single one to name, so "other duties" beside the route twin; none alone.
+    expect(categories([SCREENING, mixed]).at(-1)).toBe('from 2027-12-02 {"kind":"other"}')
+    expect(categories([mixed])).toEqual(['from 2027-12-02 null'])
+  })
+
   it('lists no section for tools without specific duties, which are named apart', () => {
     expect(dateSections([INVOICES], TODAY)).toEqual([])
     expect(toolsWithoutDuties([SCREENING, ROUTES, INVOICES])).toEqual([ROUTES, INVOICES])
@@ -107,6 +143,20 @@ describe('By tool', () => {
       'CV data extraction',
     ])
   })
+
+  it('lists a tool without duties too, as By date does under "No specific duties"', () => {
+    expect(
+      toolCards([SCREENING, ROUTES, INVOICES]).map(
+        ({ tool: t, duties }) => `${t.name ?? ''}:${duties.length}`,
+      ),
+    ).toEqual([
+      'Applicant screening:11',
+      // Minimal risk: AI literacy (Art. 4) only.
+      'Route optimisation:1',
+      // Out of scope: no duties, whatever its result lists.
+      'Invoice matching:0',
+    ])
+  })
 })
 
 describe('Progress', () => {
@@ -119,6 +169,9 @@ describe('Progress', () => {
       { toolId: OLD_SCREENER.toolId, obligationKey: 'hr-deployer-instructions' },
     ]
     expect(toolProgress(SCREENING, ticks)).toEqual({ done: 2, total: 11 })
+    // A card counts the duties it lists: Art. 4's section holds one of Applicant screening's.
+    const literacyOnly = (SCREENING.result.obligations ?? []).slice(0, 1)
+    expect(dutiesProgress(SCREENING.toolId, literacyOnly, ticks)).toEqual({ done: 1, total: 1 })
     expect(toolProgress(PHOTOS, ticks)).toEqual({ done: 1, total: 2 })
     expect(overallProgress([SCREENING, PHOTOS], ticks)).toEqual({ done: 3, total: 13 })
   })

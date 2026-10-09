@@ -15,7 +15,13 @@ import type { Language } from '@/i18n'
 import type { DutyTick } from '@/lib/duty-progress'
 import { riskClassOf } from '@/lib/risk-class'
 
-import { ticksOn, toolProgress, type DateSection, type ToolDuties } from './obligation-list'
+import {
+  dutiesProgress,
+  ticksOn,
+  type DateSection,
+  type SectionCategory,
+  type ToolDuties,
+} from './obligation-list'
 import { ToolDutiesCard, type TickHandler } from './ToolDutiesCard'
 
 /** "In 14 months" while the date is ahead, "Already applies" once it has come. */
@@ -27,6 +33,24 @@ function whenTag(t: TFunction, isoDate: string, today: Date): string {
 }
 
 type Heading = { title: ReactNode; tag?: ReactNode; note?: ReactNode }
+
+/** The line beside a dated section's heading: what its duties are ("Transparency, Art. 50"). */
+function categoryNote(
+  t: TFunction,
+  category: SectionCategory | null,
+  language: Language,
+): string | undefined {
+  switch (category?.kind) {
+    case 'transparency':
+      return t('obligations.section.transparency')
+    case 'article':
+      return provisionName(category.article, language)
+    case 'other':
+      return t('obligations.section.other')
+    case undefined:
+      return undefined
+  }
+}
 
 function sectionHeading(
   t: TFunction,
@@ -45,6 +69,7 @@ function sectionHeading(
       return {
         title: t('obligations.section.since', { date: longDate(section.date, language) }),
         tag: t('obligations.section.inForce'),
+        note: categoryNote(t, section.category, language),
       }
     case 'from':
       return {
@@ -55,6 +80,7 @@ function sectionHeading(
           />
         ),
         tag: whenTag(t, section.date, today),
+        note: categoryNote(t, section.category, language),
       }
     case 'route':
       // The route's dates follow the law version switch (decision 026 item 11).
@@ -109,8 +135,14 @@ function SectionFrame({
   children: ReactNode
 }): JSX.Element {
   const headingId = useId()
+  const noteId = useId()
   return (
-    <GlassPanel as="section" aria-labelledby={headingId} className="flex flex-col gap-4 px-6 py-6">
+    <GlassPanel
+      as="section"
+      aria-labelledby={headingId}
+      aria-describedby={heading.note ? noteId : undefined}
+      className="flex flex-col gap-4 px-6 py-6"
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1.5">
         <div className="flex flex-wrap items-center gap-3">
           <h2 id={headingId} className="m-0 text-heading-small text-ink">
@@ -120,22 +152,29 @@ function SectionFrame({
             <span className="text-caption font-semibold text-ink-2">{heading.tag}</span>
           )}
         </div>
-        {heading.note && <span className="text-caption text-slate">{heading.note}</span>}
+        {heading.note && (
+          <span id={noteId} className="text-caption text-slate">
+            {heading.note}
+          </span>
+        )}
       </div>
       {children}
     </GlassPanel>
   )
 }
 
-/** The cards of a section, each tool with its own ticks and progress. */
+/** The cards of a section, each tool with its ticks and its progress over the duties the card
+ *  lists (the artboard's "1 of 7 done" beside "Show all 7 duties"). */
 export function ToolCards({
   entries,
   ticks,
   onTick,
+  today,
 }: {
   entries: readonly ToolDuties[]
   ticks: readonly DutyTick[]
   onTick: TickHandler
+  today: Date
 }): JSX.Element {
   return (
     <div className="flex flex-col gap-3">
@@ -144,9 +183,10 @@ export function ToolCards({
           key={tool.toolId}
           tool={tool}
           duties={duties}
-          progress={toolProgress(tool, ticks)}
+          progress={dutiesProgress(tool.toolId, duties, ticks)}
           done={ticksOn(ticks, tool.toolId)}
           onTick={onTick}
+          today={today}
         />
       ))}
     </div>
@@ -175,26 +215,28 @@ export function DateSections({
           key={sectionKey(section)}
           heading={sectionHeading(t, section, language, today)}
         >
-          <ToolCards entries={section.tools} ticks={ticks} onTick={onTick} />
+          <ToolCards entries={section.tools} ticks={ticks} onTick={onTick} today={today} />
         </SectionFrame>
       ))}
     </>
   )
 }
 
-/** By tool: one panel per tool with every duty it has. */
+/** By tool: one panel per tool with every duty it has; a tool without any says so. */
 export function ToolSections({
   entries,
   ticks,
   onTick,
+  today,
 }: {
   entries: readonly ToolDuties[]
   ticks: readonly DutyTick[]
   onTick: TickHandler
+  today: Date
 }): JSX.Element {
   return (
     <GlassPanel className="flex flex-col gap-3 px-6 py-6">
-      <ToolCards entries={entries} ticks={ticks} onTick={onTick} />
+      <ToolCards entries={entries} ticks={ticks} onTick={onTick} today={today} />
     </GlassPanel>
   )
 }

@@ -80,6 +80,10 @@ def _body(result: ClassificationResult | None = None, **fields: Any) -> dict[str
     return {"result": dumped, "language": "en", "format": "pdf", **fields}
 
 
+AMENDED = "amended"
+"""The checklist's law version when a test isn't about it."""
+
+
 def _tool(**fields: Any) -> dict[str, Any]:
     return {
         "name": "Applicant screening",
@@ -479,7 +483,7 @@ def _checklist_tool() -> dict[str, Any]:
 async def test_the_checklist_is_a_pdf_with_each_duties_ticked_state(
     client: httpx.AsyncClient,
 ) -> None:
-    body = {"tools": [_checklist_tool()], "language": "en", "format": "pdf"}
+    body = {"tools": [_checklist_tool()], "language": "en", "format": "pdf", "law_version": AMENDED}
     response = await client.post("/reports/checklist", json=body)
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
@@ -495,7 +499,12 @@ async def test_the_checklist_is_a_pdf_with_each_duties_ticked_state(
 async def test_the_checklist_is_a_word_file_with_each_duties_ticked_state(
     client: httpx.AsyncClient,
 ) -> None:
-    body = {"tools": [_checklist_tool()], "language": "de", "format": "docx"}
+    body = {
+        "tools": [_checklist_tool()],
+        "language": "de",
+        "format": "docx",
+        "law_version": AMENDED,
+    }
     response = await client.post("/reports/checklist", json=body)
     assert response.status_code == 200
     assert response.headers["content-type"] == DOCX
@@ -513,7 +522,7 @@ async def test_the_checklist_is_a_word_file_with_each_duties_ticked_state(
 
 
 async def test_the_checklist_keeps_the_inventory_reports_caps(client: httpx.AsyncClient) -> None:
-    body: dict[str, Any] = {"language": "en", "format": "docx"}
+    body: dict[str, Any] = {"language": "en", "format": "docx", "law_version": AMENDED}
     too_many = await client.post(
         "/reports/checklist", json={**body, "tools": [_checklist_tool()] * 101}
     )
@@ -521,5 +530,63 @@ async def test_the_checklist_keeps_the_inventory_reports_caps(client: httpx.Asyn
         "/reports/checklist",
         json={**body, "tools": [_tool(duties=[_tool()["duties"][0] | {"is_done": "maybe"}])]},
     )
+    other_law = await client.post(
+        "/reports/checklist", json={**body, "tools": [_checklist_tool()], "law_version": "draft"}
+    )
+    no_law = await client.post(
+        "/reports/checklist",
+        json={"language": "en", "format": "docx", "tools": [_checklist_tool()]},
+    )
     assert (too_many.status_code, not_a_flag.status_code) == (422, 422)
+    assert (other_law.status_code, no_law.status_code) == (422, 422)
     assert ChecklistRequest.model_fields["tools"].metadata[0].max_length == 100
+
+
+async def test_the_checklist_under_the_original_text_takes_its_route_dates(
+    client: httpx.AsyncClient,
+) -> None:
+    """The screen under ?law=original dates Annex III duties 2 August 2026 (P10's `routeDates`);
+    the checklist downloaded from it does too, with the screen's notice and the law it follows.
+    The amended export keeps the stored 2 December 2027 and has no notice."""
+    tools = [_checklist_tool()]
+    original = await client.post(
+        "/reports/checklist",
+        json={"tools": tools, "language": "en", "format": "pdf", "law_version": "original"},
+    )
+    amended = await client.post(
+        "/reports/checklist",
+        json={"tools": tools, "language": "en", "format": "pdf", "law_version": AMENDED},
+    )
+    original_text = " ".join(pdf_pages(original.content))
+    amended_text = " ".join(pdf_pages(amended.content))
+    notice = "Dates follow the original Art. 113. The duties shown are the amended text's."
+    assert "Art. 26(6) 2 August 2026" in original_text
+    assert "2 December 2027" not in original_text
+    assert notice in original_text
+    assert (
+        "Dates under Regulation (EU) 2024/1689 as published on 12 July 2024 (CELEX 32024R1689)."
+        in original_text
+    )
+    assert "Art. 26(6) 2 December 2027" in amended_text
+    assert notice not in amended_text
+    assert (
+        "Dates under Regulation (EU) 2024/1689 as amended, consolidated text of 27 July 2026 "
+        "(CELEX 02024R1689-20260727)."
+    ) in amended_text
+
+
+async def test_the_checklist_and_the_inventory_report_name_the_law_version(
+    client: httpx.AsyncClient,
+) -> None:
+    """Each tool's block says which text its result was checked under, as of when."""
+    checked = "Checked under the amended text, as it applies on 27 September 2026."
+    checklist = await client.post(
+        "/reports/checklist",
+        json={"tools": [_checklist_tool()], "language": "en", "format": "pdf"}
+        | {"law_version": AMENDED},
+    )
+    inventory = await client.post(
+        "/reports/inventory", json={"tools": [_tool()], "language": "en", "format": "pdf"}
+    )
+    assert checked in " ".join(pdf_pages(checklist.content))
+    assert checked in " ".join(pdf_pages(inventory.content))

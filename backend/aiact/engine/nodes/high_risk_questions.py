@@ -4,16 +4,15 @@ question quotes Art. 6(1) and the Annex I entry naming the product law), the two
 open question, and what would settle it. The dates a yes or a reading gives are the law version's
 (E11): the original Art. 113 dates differ from the amended ones."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from datetime import date
-from types import MappingProxyType
 
 from aiact.corpus.sources import HIGH_RISK_DATE
 from aiact.dates import long_date
 from aiact.engine.nodes.high_risk_texts import READINGS, SETTLED_BY, point_name
 from aiact.engine.nodes.questions import quoted
 from aiact.engine.nodes.reading_side import ReadingSide
-from aiact.obligations.list import CHAPTER_III_DATES
+from aiact.obligations.list import CHAPTER_III_DATES, ORIGINAL_CHAPTER_III_DATES
 from aiact.schemas import (
     AnswerOutcome,
     Citation,
@@ -32,13 +31,6 @@ SECTION_B_PREFIX = "annex:I:B:"
 
 GUIDELINES_DRAFT_DATE = date.fromisoformat(HIGH_RISK_DATE)
 """The date of the Commission's draft high-risk guidelines, as fetched."""
-
-ORIGINAL_CHAPTER_III_DATES: Mapping[HighRiskRoute, date] = MappingProxyType(
-    {HighRiskRoute.ANNEX_III: date(2026, 8, 2), HighRiskRoute.ANNEX_I: date(2027, 8, 2)}
-)
-"""Art. 113 of the original text: Chapter III applies from 2 August 2026, Art. 6(1) and its
-obligations from 2 August 2027 (decision 020's addendum). The amended dates are the obligations
-table's (`CHAPTER_III_DATES`)."""
 
 
 def chapter_iii_date(route: HighRiskRoute, law_version: LawVersion) -> date:

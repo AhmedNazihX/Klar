@@ -50,6 +50,13 @@ CHAPTER_III_DATES: Mapping[HighRiskRoute, date] = {
 """The date Chapter III applies from on each route (Art. 113(c)(i) and (ii)); the table's route
 dates are these, and Art. 111(2) counts a legacy system from them."""
 
+ORIGINAL_CHAPTER_III_DATES: Mapping[HighRiskRoute, date] = {
+    HighRiskRoute.ANNEX_III: date(2026, 8, 2),
+    HighRiskRoute.ANNEX_I: date(2027, 8, 2),
+}
+"""Art. 113 of the original text: Chapter III applies from 2 August 2026, Art. 6(1) and its
+obligations from 2 August 2027 (decision 020's addendum)."""
+
 PUBLIC_AUTHORITY_DEADLINE = date(2030, 8, 2)
 """Art. 111(2), second sentence: providers and deployers of legacy high-risk systems meant for
 public authorities comply by this date; importers and distributors keep the first sentence's

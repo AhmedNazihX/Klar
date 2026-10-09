@@ -38,7 +38,7 @@ from aiact.report.common import (
     tool_duties_from,
 )
 from aiact.report.duties import DutyTiming, table_entry
-from aiact.schemas import Language, LawVersion, LegacyStatus, RiskClass, Role, Status
+from aiact.schemas import HighRiskRoute, Language, LawVersion, LegacyStatus, RiskClass, Role, Status
 from aiact.schemas.base import ContractModel
 from aiact.schemas.obligations import ARTICLE_PATTERN
 
@@ -158,10 +158,28 @@ def _found(duty: InventoryDuty, entry: ObligationEntry, language: Language) -> L
         legacy=duty.legacy,
         is_route_duty=isinstance(entry.applies_from, Mapping),
         is_informational=entry.is_informational,
+        route=_route(entry, duty.applies_from),
     )
     return ListedDuty(
         label=entry.label_de if language is Language.DE else entry.label_en, timing=timing
     )
+
+
+def _route(entry: ObligationEntry, applies_from: date) -> HighRiskRoute | None:
+    """The route whose table date the posted duty carries, for a duty the table dates per
+    route; None for another duty, or a date that is no route's (an Art. 111(2) one)."""
+    if not isinstance(entry.applies_from, Mapping):
+        return None
+    routes = [route for route, start in entry.applies_from.items() if start == applies_from]
+    return routes[0] if len(routes) == 1 else None
+
+
+def tool_law(tool: InventoryTool, language: Language) -> tuple[Paragraph, ...]:
+    """The law text the tool's result was checked under, and as of when; nothing without one."""
+    if tool.law_version is None or tool.as_of is None:
+        return ()
+    line = texts.TOOL_LAW[tool.law_version is LawVersion.AMENDED][language]
+    return (Paragraph(line.format(as_of=day(tool.as_of, language))),)
 
 
 def tool_name(tool: InventoryTool, language: Language) -> str:
@@ -202,10 +220,6 @@ def _tool_duties(tool: InventoryTool, duties: _Duties, language: Language) -> tu
     lacks, when any; "no specific duties" only when the result lists none at all."""
     if tool.risk_class is None:
         return ()
-    law: tuple[Block, ...] = ()
-    if tool.law_version is not None and tool.as_of is not None:
-        line = texts.TOOL_LAW[tool.law_version is LawVersion.AMENDED][language]
-        law = (Paragraph(line.format(as_of=day(tool.as_of, language))),)
     heading = Heading(tool_name(tool, language))
     closing = after_duties(
         has_duties=bool(duties.found),
@@ -213,7 +227,7 @@ def _tool_duties(tool: InventoryTool, duties: _Duties, language: Language) -> tu
         risk_class=tool.risk_class,
         language=language,
     )
-    opening = (heading, *law, *stop_line(tool.risk_class, language))
+    opening = (heading, *tool_law(tool, language), *stop_line(tool.risk_class, language))
     if not duties.found:
         return (*opening, *closing)
     rows = tuple(duty_cells(duty.label, duty.timing, language) for duty in duties.found)

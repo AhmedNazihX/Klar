@@ -97,7 +97,7 @@ function DutyList({
           {without.length > 0 && <NoDutiesSection tools={without} />}
         </>
       ) : (
-        <ToolSections entries={toolCards(tools)} ticks={ticks} onTick={onTick} />
+        <ToolSections entries={toolCards(tools)} ticks={ticks} onTick={onTick} today={today} />
       )}
     </div>
   )
