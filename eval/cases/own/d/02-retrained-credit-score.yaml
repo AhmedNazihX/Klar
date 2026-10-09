@@ -16,6 +16,7 @@ label:
   role: provider
   annex_point: "annex:III:5:b"
 label_citation: ["art:25:1:b", "art:3:23", "annex:III:5:b", "art:6:3"]
+business_function: finance
 notes: >-
   Approved by user 2026-09-29. Class: creditworthiness scoring of natural persons
   is Annex III 5(b); scoring applicants is profiling, so no Art. 6(3) exemption. Role: retraining
@@ -35,7 +36,12 @@ tags:
   - "role_switch:art25_1_b"
   - "also_role:deployer"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

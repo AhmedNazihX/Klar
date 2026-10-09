@@ -15,6 +15,7 @@ label:
   role: provider
   annex_point: "annex:III:4:a"
 label_citation: ["annex:III:4:a", "art:6:2", "art:6:3", "art:50:1", "art:50:2", "art:3:3"]
+business_function: hr
 as_of: 2026-10-01
 notes: >-
   Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the chatbot evaluates applicants and ranks them for
@@ -33,7 +34,12 @@ tags:
   - "scope:art2_8_noted"
   - "trap:high_risk_and_transparency"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

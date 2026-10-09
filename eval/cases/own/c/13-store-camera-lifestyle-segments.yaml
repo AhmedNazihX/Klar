@@ -14,6 +14,7 @@ label:
   risk_class: prohibited
   role: provider
 label_citation: ["art:5:1:g", "art:3:40", "guide:guide-prohibited:para:273", "art:3:3"]
+business_function: marketing
 notes: >-
   Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the system assigns individual shoppers to categories
   based on their facial (biometric) data, so it is a biometric categorisation system (Art. 3(40));

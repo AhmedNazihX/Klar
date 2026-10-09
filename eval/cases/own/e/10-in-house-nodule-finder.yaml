@@ -15,7 +15,9 @@ label:
   risk_class: high_risk
   status: legally_ambiguous
   role: provider
+  annex_point: ["annex:I:A:11"]
 label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:3:3", "art:3:11"]
+business_function: healthcare
 notes: >-
   Approved by user 2026-09-30. Open question: does Art. 6(1)(b) look at the product as actually
   handled, or at the device class? Reading A: the MDR's in-house exemption means this software is
@@ -34,7 +36,12 @@ tags:
   - "annex_i_point:annex:I:A:11"
   - "also_role:deployer"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

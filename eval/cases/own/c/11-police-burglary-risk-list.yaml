@@ -13,6 +13,7 @@ label:
   risk_class: prohibited
   role: deployer
 label_citation: ["art:5:1:d", "art:3:4"]
+business_function: law_enforcement
 notes: >-
   Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the tool assesses the risk of individuals committing a
   criminal offence based solely on profiling and personality traits (demographics, neighbourhood,

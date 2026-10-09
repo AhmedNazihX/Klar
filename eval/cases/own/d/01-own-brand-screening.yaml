@@ -16,6 +16,7 @@ label:
   role: provider
   annex_point: "annex:III:4:a"
 label_citation: ["art:25:1:a", "annex:III:4:a", "art:6:2", "art:6:3"]
+business_function: hr
 notes: >-
   Approved by user 2026-09-29 (the description states that the licence doesn't reallocate the
   provider's obligations, and that the clients run the system while the agency doesn't use it, so
@@ -31,7 +32,12 @@ tags:
   - "category:d"
   - "role_switch:art25_1_a"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

@@ -13,22 +13,29 @@ description: >-
 label:
   risk_class: high_risk
   role: provider
+  annex_point: ["annex:I:A:11"]
 label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:3:3"]
+business_function: healthcare
 notes: >-
   Approved by user 2026-09-30. Class: the app is itself a product covered by the MDR (Annex I
   Section A point 11) and, as a class IIa device, needs a notified body, so both conditions of
   Art. 6(1) are met: high_risk via Annex I. Role: it develops the app and places it on the market
   under its own name (Art. 3(3)). Obligations: provider duties on the Annex I route, from 2 August
   2028 (Art. 113(c)(ii)); Art. 16(i) (registration under Art. 49(1)) is left out because it covers
-  Annex III systems only. The GPs are deployers. annex_point is left empty because the schema's
-  pattern does not accept the corpus id annex:I:A:11. Placed on the market in autumn 2028, after
+  Annex III systems only. The GPs are deployers. annex_point names annex:I:A:11 (backfilled in
+  B10c, once the schema accepted Annex I ids). Placed on the market in autumn 2028, after
   the Annex I date (2 August 2028), so Art. 111(2) does not arise.
 tags:
   - "category:e"
   - "annex_i_section:a"
   - "annex_i_point:annex:I:A:11"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

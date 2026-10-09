@@ -15,6 +15,7 @@ label:
   role: provider
   annex_point: "annex:III:4:a"
 label_citation: ["art:25:1:c", "art:3:66", "annex:III:4:a", "art:6:3"]
+business_function: hr
 notes: >-
   Approved by user 2026-09-29 (Art. 26(7) left out: applicants are not workers subject to the
   system). The assistant is a general-purpose AI system
@@ -37,7 +38,12 @@ tags:
   - "gpai_based"
   - "also_role:deployer"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

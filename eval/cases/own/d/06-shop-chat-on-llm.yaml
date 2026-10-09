@@ -13,6 +13,8 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:3:3", "art:3:68", "art:50:1", "art:50:2", "art:111:4"]
+as_of: 2026-10-01
+business_function: customer_service
 notes: >-
   Approved by user 2026-09-29. Role: the start-up builds its own AI system on a
   third-party general-purpose AI model and places it on the market under its own name, so it is
@@ -23,6 +25,7 @@ notes: >-
   use, so limited_risk. Art. 50(2) grace period: placed on the market in March 2025, before 2
   August 2026, so marking is due by 2 December 2026 (Art. 111(4)). Doubt: whether a customer
   service chat's answers count as "synthetic text content" for Art. 50(2) is read here as yes.
+  B10c: judged on 1 October 2026 (as_of), so the grace period still runs, as in category a.
 tags:
   - "category:d"
   - "role_switch:none"
@@ -30,3 +33,4 @@ tags:
   - "obligation:art:4:1"
   - "obligation:art:50:1"
   - "obligation:art:50:2"
+  - "timing:art111_4_grace"

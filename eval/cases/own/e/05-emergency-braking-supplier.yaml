@@ -13,7 +13,9 @@ description: >-
 label:
   risk_class: high_risk
   role: provider
+  annex_point: ["annex:I:B:18", "annex:I:B:19"]
 label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:B:18", "annex:I:B:19", "art:2:2"]
+business_function: product_safety
 notes: >-
   Approved by user 2026-09-30. Class: emergency braking is a safety function (Art. 3(14)) of a
   motor vehicle covered by the type-approval regulations in Annex I Section B (points 18 and 19);
@@ -30,3 +32,4 @@ tags:
   - "annex_i_section:b"
   - "annex_i_point:annex:I:B:18"
   - "annex_i_point:annex:I:B:19"
+  - "obligations:none"

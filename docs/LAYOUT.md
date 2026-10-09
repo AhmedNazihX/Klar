@@ -180,7 +180,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                in aiact/eval/cases.py (qa/ holds QAItem items, loaded by load_qa_items; F7b)
 │   │   ├── commission_b/            <area>/<NNN>-<slug>.yaml: one rewrite per Pile B example, by Annex area
 │   │   │                            (annex_i, annex_iii_1 … annex_iii_8), NNN its hr-ex number (B4)
-│   │   ├── own/<category>/          (B5a–e)
+│   │   ├── own/<category>/          a–e, the letter in the case id and its `category:` tag: a transparency, b scope,
+│   │   │                            c prohibited practices, d roles, e Annex I (B5a–e; aligned in B10c)
 │   │   ├── own/thin/                thin-description cases (own-t-*): no class, needs_more_information (E13, decision 032)
 │   │   ├── soft_pairs/              (B6)
 │   │   ├── qa/                      (B7)

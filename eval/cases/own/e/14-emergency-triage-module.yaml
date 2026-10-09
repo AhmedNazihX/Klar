@@ -12,16 +12,16 @@ description: >-
 label:
   risk_class: high_risk
   role: provider
-  annex_point: "annex:III:5:d"
+  annex_point: ["annex:III:5:d", "annex:I:A:11"]
 label_citation: ["art:6:1:a", "art:6:1:b", "annex:I:A:11", "art:6:2", "annex:III:5:d", "art:6:3", "art:43:3"]
+business_function: healthcare
 notes: >-
   Approved by user 2026-09-30. Class: high_risk on two routes. Annex I: class IIa medical device
   software that needs a notified body before launch (Section A point 11), so Art. 6(1) is met.
   Annex III: emergency healthcare patient triage is point 5(d); the module evaluates each
   patient's health data to set priority, which is profiling, so no Art. 6(3) exemption. The
-  conformity assessment follows the MDR procedure (Art. 43(3), last subparagraph). annex_point is
-  set to the Annex III point, because the schema cannot hold the Annex I id and the Annex III
-  point is also correct. Role: provider under its own name. Provider duties including Art. 16(i)
+  conformity assessment follows the MDR procedure (Art. 43(3), last subparagraph). annex_point
+  names both points, the Annex III one first (B10c; either counts). Role: provider under its own name. Provider duties including Art. 16(i)
   (registration, Annex III). Sales start in autumn 2028, after both 2 December 2027 (Annex III)
   and 2 August 2028 (Annex I), so both routes apply by launch and Art. 111(2) does not arise.
 tags:
@@ -30,7 +30,12 @@ tags:
   - "annex_i_point:annex:I:A:11"
   - "also_route:annex_iii"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

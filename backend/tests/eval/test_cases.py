@@ -63,8 +63,8 @@ def with_changes(**changes: object) -> dict[str, object]:
 
 def test_loads_every_yaml_file_in_a_set_including_subfolders() -> None:
     cases = load_cases(CaseSet.OWN, FIXTURES)
-    assert [case.id for case in cases] == ["fixture-own-002", "fixture-own-001"]
-    ambiguous, chatbot = cases
+    assert [case.id for case in cases] == ["fixture-own-001", "fixture-own-002"]
+    chatbot, ambiguous = cases
     assert chatbot.label == CaseLabel(risk_class=RiskClass.LIMITED_RISK, role=Role.PROVIDER)
     assert chatbot.label_citation == ("art:50:1",)
     assert isinstance(ambiguous.label, CaseLabel)
@@ -497,7 +497,7 @@ def test_annex_match_labels_need_a_citation(tmp_path: Path) -> None:
 
 
 def test_the_moved_fixture_uses_a_section_b_point() -> None:
-    ambiguous = load_cases(CaseSet.OWN, FIXTURES)[0]
+    _, ambiguous = load_cases(CaseSet.OWN, FIXTURES)
     assert isinstance(ambiguous.label, CaseLabel)
     assert ambiguous.label.annex_point == ("annex:I:B:21",)
 

@@ -14,6 +14,7 @@ description: >-
 label:
   risk_class: out_of_scope
 label_citation: ["art:3:1", "recital:12", "guide:guide-definition:para:46"]
+business_function: hr
 notes: >-
   Approved by user 2026-09-30. Class: the software executes pay rules written and maintained
   solely by people; it derives nothing from data, so it lacks the capability to infer and is not an

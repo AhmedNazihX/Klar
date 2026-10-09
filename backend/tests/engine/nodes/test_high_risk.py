@@ -1503,10 +1503,11 @@ def _decides_not_high_risk(result: CheckOutcome, case: BenchmarkCase) -> bool:
 
 
 KNOWN_GAPS: dict[str, KnownGap] = {
-    "own-e-07-cobot-vision-kit": KnownGap(
+    "own-e-07-grinder-burst-kit": KnownGap(
         "decides not high-risk (no Annex III use, not an Annex I safety component) instead of "
         "asking whether the Machinery Regulation requires a third-party assessment (Annex I "
-        "B.21) (E10 re-record, user 2026-10-06)",
+        "B.21) (E10 re-record, user 2026-10-06; carried over from the robot-arm wording B10c "
+        "replaced, so check it on the re-record)",
         _decides_not_high_risk,
     ),
     "own-e-10-in-house-nodule-finder": KnownGap(
@@ -1636,10 +1637,10 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
 def test_replay_original_machinery_guard_is_annex_i_section_a(
     original_replay_check: HighRiskCheck,
 ) -> None:
-    """own-e-04's press guard is machinery: Annex I B.21 under the amended text, with Art. 2(2);
-    under the original text the machinery law is A.1, so it is high-risk with its AI Act duties
-    and no Art. 2(2)."""
-    result = _original_replay("own-e-04-press-camera-guard", original_replay_check)
+    """own-e-04's crane load limiter is machinery: Annex I B.21 under the amended text, with
+    Art. 2(2); under the original text the machinery law is A.1, so it is high-risk with its AI
+    Act duties and no Art. 2(2)."""
+    result = _original_replay("own-e-04-loader-crane-tip-guard", original_replay_check)
     step = result.step
     shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
     assert result.high_risk_route is HighRiskRoute.ANNEX_I, shown

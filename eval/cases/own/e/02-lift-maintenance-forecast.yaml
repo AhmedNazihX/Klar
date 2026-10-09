@@ -15,6 +15,7 @@ label:
   risk_class: minimal_risk
   role: provider
 label_citation: ["art:6:1a", "art:6:1b", "art:3:14", "annex:I:A:4", "art:3:3"]
+business_function: operations
 notes: >-
   Approved by user 2026-09-30. Class: lifts are Annex I Section A point 4, but the module is used
   solely for service efficiency (planning technician tours, ordering parts), so under Art. 6(1a)
