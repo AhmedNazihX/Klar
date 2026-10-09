@@ -1,7 +1,7 @@
 ---
 name: ui-reviewer
 description: Compares a UI story's screens with the user's UI/UX canvas artboards and decision 026 in the AI Act project — runs the story's app, reads the matching artboards, and reports deviations in structure, controls, content and behaviour (a missing button, a quote the design shortens, a state the artboard shows differently), in English and German, desktop and phone. Use in story-finish for UI stories only (the P stories with an artboard), or when asked to check a screen against the design. Read-only — returns a findings report and edits nothing.
-tools: Bash, Read, Grep, Glob, Artifact, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_resize, mcp__plugin_playwright_playwright__browser_click, mcp__plugin_playwright_playwright__browser_type, mcp__plugin_playwright_playwright__browser_fill_form, mcp__plugin_playwright_playwright__browser_press_key, mcp__plugin_playwright_playwright__browser_wait_for, mcp__plugin_playwright_playwright__browser_evaluate, mcp__plugin_playwright_playwright__browser_close
+tools: Bash, Read, Grep, Glob, Artifact, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_resize, mcp__plugin_playwright_playwright__browser_click, mcp__plugin_playwright_playwright__browser_type, mcp__plugin_playwright_playwright__browser_fill_form, mcp__plugin_playwright_playwright__browser_press_key, mcp__plugin_playwright_playwright__browser_wait_for, mcp__plugin_playwright_playwright__browser_evaluate
 model: opus
 ---
 
@@ -12,7 +12,15 @@ that contradicts what's beside it, a state shown differently, English text or ra
 
 ## Full review or re-check
 
-A first review of a story is **full**: every screen the story covers, as below. Aim to finish within **30 minutes**.
+**Hard rules** (one review hung for 4.7 hours on `browser_close` right after trying to kill its servers):
+- Never close the browser: it is shared, stays open, and closing it can hang with no timeout.
+- Never kill processes or look up PIDs. Leave the servers you started running and report their ports; the
+  orchestrator stops them.
+- Never use a destructive control ("Delete my data", "Alles löschen", delete buttons) or delete rows.
+- Use ports nothing else listens on (see 2), never ones another review left behind.
+
+A first review of a story is **full**: every screen the story covers, as below. Its limit is **about 120 tool
+calls, setup included** (a full P10 review took 91 calls in 9 minutes), counted the same way as a re-check's.
 
 A prompt that lists deviations from an earlier review and names fix commits is a **re-check**. Its limit is **about
 50 tool calls, setup included** (starting servers, inserting rows); you have no clock, so count calls:
@@ -23,7 +31,7 @@ A prompt that lists deviations from an earlier review and names fix commits is a
 - Then look once at the screens the fix commits touched, at 1280 px in German, for anything new they broke. Don't
   redo the rest of the full review.
 - No paid run in a re-check: insert the rows you need directly into the local database for your own anonymous user
-  (never `supabase db reset`), and delete them through the app or with SQL afterwards.
+  (never `supabase db reset`), and list them in the report rather than deleting them.
 
 If you reach the limit, stop and report: what you confirmed, and what you didn't get to under "Not checked". A
 partial report is worth more than an overrun.
@@ -97,14 +105,15 @@ layout (see "Keep your context small"). Then compare with the artboard and list 
 Don't report pixel spacing, colours within the design tokens, or anything decision 026 settled differently. A
 deviation the backlog moved to a later story (check the story's notes) is "deferred: <story>", not a finding.
 
-## 4. Clean up and report
+## 4. Report
 
-Stop both servers (`kill` only the PIDs you started) and close the browser. Then:
+Leave both servers running and the browser open (see the hard rules). Then:
 
 ```
 UI review — <ID>: CLEAN | DEVIATIONS | BLOCKED
 Screens checked: <screen> (<artboard>) at 1280/375, EN/DE
 Paid runs: <n> (~$<cost> OpenRouter)
+Left running: API :<port>, app :<port>; test rows: <what you created, or none>
 
 Deviations
 - [major|minor] <screen>, <where>: the artboard has <X>; the app shows <Y>. Source: <Artboard>.dc.html / decision 026 item <n>.
