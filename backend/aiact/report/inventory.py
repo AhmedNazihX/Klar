@@ -24,16 +24,17 @@ from pydantic import Field
 
 from aiact.export import Block, Heading, Note, Paper, Paragraph, Table
 from aiact.obligations.list import ObligationEntry
-from aiact.provision_names import article_provision_name
 from aiact.report import texts
 from aiact.report.common import (
     MAX_NAME_CHARS,
     Name,
+    after_duties,
     class_name,
     day,
-    duty_timing,
+    duty_cells,
+    duty_header,
     footer,
-    left_out_note,
+    stop_line,
     tool_duties_from,
 )
 from aiact.report.duties import DutyTiming, table_entry
@@ -205,21 +206,15 @@ def _tool_duties(tool: InventoryTool, duties: _Duties, language: Language) -> tu
     if tool.law_version is not None and tool.as_of is not None:
         line = texts.TOOL_LAW[tool.law_version is LawVersion.AMENDED][language]
         law = (Paragraph(line.format(as_of=day(tool.as_of, language))),)
-    if tool.risk_class is RiskClass.PROHIBITED:
-        law = (*law, Paragraph(f"{texts.STOP_USING[language]}."))
     heading = Heading(tool_name(tool, language))
-    notes = left_out_note(duties.left_out, language)
-    if not duties.found:
-        if notes or tool.risk_class is RiskClass.PROHIBITED:
-            return (heading, *law, *notes)
-        return (heading, *law, Paragraph(texts.NO_DUTIES[language]))
-    rows = tuple(
-        (
-            duty.label,
-            article_provision_name(duty.timing.article, language),
-            duty_timing(duty.timing.applies_from, duty.timing.legacy, language),
-        )
-        for duty in duties.found
+    closing = after_duties(
+        has_duties=bool(duties.found),
+        left_out=duties.left_out,
+        risk_class=tool.risk_class,
+        language=language,
     )
-    header = (*(column[language] for column in texts.DUTY_HEADER), texts.FROM_HEADER[language])
-    return (heading, *law, Table(header, rows, DUTY_WIDTHS), *notes)
+    opening = (heading, *law, *stop_line(tool.risk_class, language))
+    if not duties.found:
+        return (*opening, *closing)
+    rows = tuple(duty_cells(duty.label, duty.timing, language) for duty in duties.found)
+    return (*opening, Table(duty_header(language), rows, DUTY_WIDTHS), *closing)

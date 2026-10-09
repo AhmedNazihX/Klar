@@ -7,8 +7,11 @@ duty with its ticked state. The labels are the obligations table's, found as in 
 report (`listed_duty`): a posted duty the table lacks is left out and counted, so no posted label
 is ever printed (decision 031). The ticked state is the user's own: the counts say how many duties
 they ticked off, and the checklist says that Klar doesn't check the work (decision 026 item 9).
-An informational duty has nothing to tick off: it is listed without a state and never counted.
-The dates are the stored results' own, as on the inventory report.
+A duty with nothing to tick off is listed without a state and never counted, as on the screen:
+an informational one, or one the screen sent without a state (`is_done` null: a duty stored
+before duties carried their key, which the screen can't tick). The dates are the stored results'
+own, as on the inventory report. The rest of a tool's block is the inventory report's
+(`common`): its stop line, its duty cells and what closes its list.
 """
 
 from datetime import date
@@ -17,9 +20,16 @@ from typing import NamedTuple
 from pydantic import Field
 
 from aiact.export import Block, Heading, Note, Paper, Paragraph, Table
-from aiact.provision_names import article_provision_name
 from aiact.report import texts
-from aiact.report.common import class_name, day, duty_timing, footer, left_out_note
+from aiact.report.common import (
+    after_duties,
+    class_name,
+    day,
+    duty_cells,
+    duty_header,
+    footer,
+    stop_line,
+)
 from aiact.report.inventory import (
     InventoryDuty,
     InventoryTool,
@@ -27,7 +37,7 @@ from aiact.report.inventory import (
     listed_duty,
     tool_name,
 )
-from aiact.schemas import Language, RiskClass, Status
+from aiact.schemas import Language, Status
 
 CHECKLIST_WIDTHS = (0.9, 3.0, 1.0, 1.3)
 
@@ -35,7 +45,11 @@ CHECKLIST_WIDTHS = (0.9, 3.0, 1.0, 1.3)
 class ChecklistDuty(InventoryDuty):
     """A tool's duty, and whether the user ticked it off."""
 
-    is_done: bool = Field(default=False, description="The user ticked the duty off.")
+    is_done: bool | None = Field(
+        default=False,
+        description="The user ticked the duty off; null when it has nothing to tick off (a "
+        "duty without its key, stored before duties carried one), so it isn't counted.",
+    )
 
 
 class ChecklistTool(InventoryTool):
@@ -48,10 +62,10 @@ class ChecklistTool(InventoryTool):
 
 
 class _Ticked(NamedTuple):
-    """A duty the table has, and whether the user ticked it off."""
+    """A duty the table has, and its ticked state; None when it has nothing to tick off."""
 
     duty: ListedDuty
-    is_done: bool
+    is_done: bool | None
 
 
 class _Progress(NamedTuple):
@@ -90,53 +104,61 @@ def checklist_report(
 
 def _ticked(tool: ChecklistTool, language: Language) -> tuple[_Ticked, ...]:
     found = ((listed_duty(tool, duty, language), duty.is_done) for duty in tool.duties)
-    return tuple(_Ticked(duty, is_done) for duty, is_done in found if duty is not None)
+    return tuple(
+        _Ticked(duty, None if duty.timing.is_informational else is_done)
+        for duty, is_done in found
+        if duty is not None
+    )
 
 
 def _progress(duties: tuple[_Ticked, ...]) -> _Progress:
-    """Ticked and tickable duties: an informational one has nothing to tick off."""
-    tickable = tuple(duty for duty in duties if not duty.duty.timing.is_informational)
-    return _Progress(done=sum(duty.is_done for duty in tickable), total=len(tickable))
+    """Ticked duties of those with something to tick off."""
+    states = tuple(duty.is_done for duty in duties if duty.is_done is not None)
+    return _Progress(done=sum(states), total=len(states))
 
 
 def _tool_blocks(
     tool: ChecklistTool, duties: tuple[_Ticked, ...], language: Language
 ) -> tuple[Block, ...]:
-    """A tool's heading, its class, role and progress, what a prohibited or assumed class says
-    first, its duties and how many posted duties the table lacks."""
+    """A tool's heading, its class, role and progress, its stop line or what an assumed class
+    says, its duties and what closes the list."""
     progress = _progress(duties)
     summary = class_name(tool.risk_class, tool.status, language)
     if tool.role is not None:
         summary = f"{summary}, {texts.ROLE_NAMES[tool.role][language]}"
     done = texts.DONE_COUNT[language].format(done=progress.done, total=progress.total)
-    lines: list[Block] = [Heading(tool_name(tool, language)), Paragraph(f"{summary}. {done}")]
-    if tool.risk_class is RiskClass.PROHIBITED:
-        lines.append(Paragraph(f"{texts.STOP_USING[language]}."))
-    if tool.status not in (None, Status.DECIDED):
-        lines.append(Paragraph(texts.STRICTER_READING[language]))
-    notes = left_out_note(len(tool.duties) - len(duties), language)
+    stricter = (
+        ()
+        if tool.status in (None, Status.DECIDED)
+        else (Paragraph(texts.STRICTER_READING[language]),)
+    )
+    opening = (
+        Heading(tool_name(tool, language)),
+        Paragraph(f"{summary}. {done}"),
+        *stop_line(tool.risk_class, language),
+        *stricter,
+    )
+    closing = after_duties(
+        has_duties=bool(duties),
+        left_out=len(tool.duties) - len(duties),
+        risk_class=tool.risk_class,
+        language=language,
+    )
     if not duties:
-        return (*lines, *(notes or (Paragraph(texts.NO_DUTIES[language]),)))
-    return (*lines, _table(duties, language), *notes)
+        return (*opening, *closing)
+    return (*opening, _table(duties, language), *closing)
 
 
 def _table(duties: tuple[_Ticked, ...], language: Language) -> Table:
-    """One row per duty: its ticked state (none for an informational one), label, provision and
-    date."""
+    """The inventory report's duty rows, each after its ticked state (none when it has nothing
+    to tick off)."""
     rows = tuple(
         (
             texts.NOTHING
-            if ticked.duty.timing.is_informational
+            if ticked.is_done is None
             else texts.DONE_STATES[ticked.is_done][language],
-            ticked.duty.label,
-            article_provision_name(ticked.duty.timing.article, language),
-            duty_timing(ticked.duty.timing.applies_from, ticked.duty.timing.legacy, language),
+            *duty_cells(ticked.duty.label, ticked.duty.timing, language),
         )
         for ticked in duties
     )
-    header = (
-        texts.STATE_HEADER[language],
-        *(column[language] for column in texts.DUTY_HEADER),
-        texts.FROM_HEADER[language],
-    )
-    return Table(header, rows, CHECKLIST_WIDTHS)
+    return Table((texts.STATE_HEADER[language], *duty_header(language)), rows, CHECKLIST_WIDTHS)

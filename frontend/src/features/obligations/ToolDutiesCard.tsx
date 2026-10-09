@@ -19,7 +19,9 @@ import type { CheckedTool } from '@/features/inventory/tool-facts'
 import { useLanguage } from '@/hooks/use-language'
 import { riskClassOf } from '@/lib/risk-class'
 
-import { isAssumed, isProviderSummary, tickKey, type Progress } from './obligation-list'
+import { tickKey } from '@/lib/duty-progress'
+
+import { isAssumed, isProviderSummary, type Progress } from './obligation-list'
 
 /** How many duties a card shows before "Show all". */
 export const DUTY_PREVIEW = 4

@@ -436,6 +436,27 @@ describe('Obligations, the checklist download', () => {
     await vi.waitFor(() => expect(checklists).toHaveLength(1))
     expect(checklists[0]).toMatchObject({ format: 'pdf', language: 'de' })
   })
+
+  it('counts a result stored before duties had keys the same on screen and in the checklist', async () => {
+    const stored = decidedHighRisk()
+    const keyless = {
+      ...stored,
+      // As stored before P24: the duty has no key at all (the JSON drops undefined).
+      obligations: (stored.obligations ?? []).map((duty) => ({ ...duty, key: undefined })),
+    }
+    tools = [toolRow('Applicant screening', keyless)]
+    const { user } = await openObligations()
+    // Nothing to tick: no box, and nothing counted.
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
+    expect(progressLine()).toBe('0 of 0 done')
+    await user.click(screen.getByRole('button', { name: 'Download PDF' }))
+    await vi.waitFor(() => expect(checklists).toHaveLength(1))
+    const [sent] = checklists as { tools: { duties: { is_done: boolean | null }[] }[] }[]
+    const states = sent?.tools[0]?.duties.map((duty) => duty.is_done) ?? []
+    // Sent without a state, so the checklist lists them uncounted too: 0 of 0 done.
+    expect(states).toHaveLength(11)
+    expect(new Set(states)).toEqual(new Set([null]))
+  })
 })
 
 describe('Obligations, German and accessibility', () => {

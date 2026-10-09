@@ -12,12 +12,12 @@ import {
   outOfScope,
   WORKED_EXAMPLE,
 } from '@/test/classify-fixtures'
+import { tickKey } from '@/lib/duty-progress'
 
 import {
   dateSections,
   nextDate,
   overallProgress,
-  tickKey,
   toolCards,
   toolProgress,
   toolsWithoutDuties,

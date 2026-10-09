@@ -1,5 +1,6 @@
-"""What both reports share: the names of a class, status and role, a duty's timing, and the
-footer. Every text is the report's language, from `texts.py`."""
+"""What the reports share: the names of a class, status and role, a duty's timing and table
+row, what a tool's duty list opens and closes with, and the footer. Every text is the report's
+language, from `texts.py`."""
 
 from collections.abc import Iterable, Sequence
 from datetime import date
@@ -14,10 +15,13 @@ from aiact.report.duties import DutyTiming
 from aiact.report.texts import (
     ASSUMED_CLASS,
     CLASS_NAMES,
+    DUTY_HEADER,
     FOOTER,
     FROM_DATE,
+    FROM_HEADER,
     LEFT_OUT,
     LEGACY_FROM,
+    NO_DUTIES,
     NO_DUTIES_DATE,
     NOT_CLASSIFIED,
     NOTHING,
@@ -47,6 +51,39 @@ def left_out_note(left_out: int, language: Language) -> tuple[Paragraph, ...]:
     if not left_out:
         return ()
     return (Paragraph(LEFT_OUT[left_out == 1][language].format(count=left_out)),)
+
+
+def stop_line(risk_class: RiskClass | None, language: Language) -> tuple[Paragraph, ...]:
+    """A prohibited tool's first line: stop using or supplying it; nothing for another class."""
+    if risk_class is not RiskClass.PROHIBITED:
+        return ()
+    return (Paragraph(f"{STOP_USING[language]}."),)
+
+
+def after_duties(
+    *, has_duties: bool, left_out: int, risk_class: RiskClass | None, language: Language
+) -> tuple[Paragraph, ...]:
+    """What follows a tool's duties: how many posted duties the table lacks, when any; else,
+    when it lists none, "no specific duties", except for a prohibited tool, whose stop line
+    says what to do."""
+    notes = left_out_note(left_out, language)
+    if notes or has_duties or risk_class is RiskClass.PROHIBITED:
+        return notes
+    return (Paragraph(NO_DUTIES[language]),)
+
+
+def duty_header(language: Language) -> tuple[str, ...]:
+    """A duty table's columns: the duty, its provision and when it applies."""
+    return (*(column[language] for column in DUTY_HEADER), FROM_HEADER[language])
+
+
+def duty_cells(label: str, timing: DutyTiming, language: Language) -> tuple[str, str, str]:
+    """A duty's row in a duty table: its label, its provision and when it applies."""
+    return (
+        label,
+        article_provision_name(timing.article, language),
+        duty_timing(timing.applies_from, timing.legacy, language),
+    )
 
 
 def day(value: date, language: Language) -> str:

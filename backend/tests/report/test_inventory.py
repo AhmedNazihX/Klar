@@ -118,7 +118,7 @@ def test_a_german_inventory_report() -> None:
         "Ihr Tool Begrenztes Risiko (angenommen) Rechtlich unklar Anbieter 2. August 2026",
         "Shift planner Noch nicht eingestuft",
         "Art. 26 Abs. 6 2. Dezember 2027",
-        "Nur nach einer wesentlichen Änderung (Art. 111 Abs. 2)",
+        "Nur nach einer erheblichen Änderung (Art. 111 Abs. 2)",
         "Geprüft nach der geänderten Fassung, wie sie am 27. September 2026 gilt.",
     ):
         assert line in text, line

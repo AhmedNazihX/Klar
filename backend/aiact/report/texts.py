@@ -288,7 +288,7 @@ WHEN = _texts("{what}, {when}", "{what}, {when}")
 FROM_DATE = _texts("from {date}", "ab dem {date}")
 ONLY_AFTER_CHANGE = _texts(
     "only after a significant change ({article})",
-    "nur nach einer wesentlichen Änderung ({article})",
+    "nur nach einer erheblichen Änderung ({article})",
 )
 """After a heading or a provision; a cell of its own starts it with a capital."""
 DUTY_HEADER = (_texts("Duty", "Pflicht"), _texts("Provision", "Vorschrift"))

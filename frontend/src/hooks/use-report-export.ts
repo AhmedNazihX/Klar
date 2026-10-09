@@ -13,6 +13,7 @@ import {
   type ResultReportRequest,
 } from '@/api'
 import type { Language } from '@/i18n'
+import { tickKey } from '@/lib/duty-progress'
 import type { InventoryTool } from '@/lib/inventory'
 
 import { documentFailure, fileOf, saveFile, type DocumentFailure } from './use-document-drafts'
@@ -60,6 +61,14 @@ export function useExportResultReport(
  *  version and date, and each duty's short label in `language`. A tool without a result Klar can
  *  read, or with no class, is listed as not classified yet. */
 export function reportTool(tool: InventoryTool, language: Language): ReportTool {
+  return summaryOf(tool, (duty) => reportDuty(duty, language))
+}
+
+/** A tool's summary for a report, each duty as `toDuty` gives it; no duties without a class. */
+function summaryOf<Duty>(
+  tool: InventoryTool,
+  toDuty: (duty: Obligation) => Duty,
+): Omit<ReportTool, 'duties'> & { duties: Duty[] } {
   const { result } = tool
   if (!result || result.risk_class === null) return { name: tool.name, duties: [] }
   return {
@@ -70,7 +79,7 @@ export function reportTool(tool: InventoryTool, language: Language): ReportTool 
     also_role: result.also_role ?? null,
     law_version: result.law_version,
     as_of: result.as_of,
-    duties: (result.obligations ?? []).map((duty) => reportDuty(duty, language)),
+    duties: (result.obligations ?? []).map(toDuty),
   }
 }
 
@@ -90,16 +99,12 @@ export function checklistTool(
   language: Language,
   done: ReadonlySet<string>,
 ): ChecklistTool {
-  const summary = reportTool(tool, language)
-  const { result } = tool
-  if (!result || result.risk_class === null) return { ...summary, duties: [] }
-  return {
-    ...summary,
-    duties: (result.obligations ?? []).map((duty) => ({
-      ...reportDuty(duty, language),
-      is_done: duty.key ? done.has(duty.key) : false,
-    })),
-  }
+  // A duty with nothing to tick off (no key, or information) goes without a state: the
+  // checklist then lists it without one and leaves it out of the counts, as the screen does.
+  return summaryOf(tool, (duty) => {
+    const key = tickKey(duty)
+    return { ...reportDuty(duty, language), is_done: key === null ? null : done.has(key) }
+  })
 }
 
 /** The obligations checklist (Obligations, "Take the checklist with you"): every duty with its

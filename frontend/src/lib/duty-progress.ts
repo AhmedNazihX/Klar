@@ -1,12 +1,26 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 
+import type { Obligation } from '@/api'
+
 // The duties a user ticked off, per tool (story P24 on P19's duty_progress table, owner-only RLS).
 // A tick is a row: ticking inserts it, unticking deletes it; a tick is never edited. The database
 // stamps when it was ticked (created_at).
 
 /** One ticked duty: the tool and the obligations table's key for the duty. */
 export type DutyTick = { toolId: string; obligationKey: string }
+
+/**
+ * The key a duty's tick is saved under; null when there is nothing to tick off: an
+ * informational line, or a duty stored before duties carried their key. One rule for the screen's
+ * boxes and counts and the checklist's (which lists such a duty without a state, uncounted).
+ * A keyed duty comes from the obligations table, so the checklist's lookup finds it, unless the
+ * table has since been reseeded without it; the browser can't know that, so it counts it.
+ */
+export function tickKey(duty: Obligation): string | null {
+  if (duty.is_informational) return null
+  return duty.key ?? null
+}
 
 const TickRowSchema = z.object({
   system_id: z.uuid(),

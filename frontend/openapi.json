@@ -913,9 +913,16 @@
             ]
           },
           "is_done": {
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Is Done",
-            "description": "The user ticked the duty off.",
+            "description": "The user ticked the duty off; null when it has nothing to tick off (a duty without its key, stored before duties carried one), so it isn't counted.",
             "default": false
           }
         },

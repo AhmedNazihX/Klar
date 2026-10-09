@@ -163,3 +163,27 @@ def test_the_word_file_has_the_ticked_state_in_its_table() -> None:
     rows = _table_rows((SCREENING,))
     assert rows[0] == ["Status", "Duty", "Provision", "Applies from"]
     assert [row[0] for row in rows[1:]] == ["Done", "Open"]
+
+
+def test_a_prohibited_tool_without_duties_says_only_to_stop() -> None:
+    banned = ChecklistTool(
+        name="Bild-App",
+        risk_class=RiskClass.PROHIBITED,
+        status=Status.DECIDED,
+        role=Role.DEPLOYER,
+        law_version=LawVersion.AMENDED,
+        as_of=date(2026, 9, 27),
+    )
+    text = _pages((banned,))
+    assert "Bild-App Prohibited, Deployer. 0 of 0 done. Stop using or supplying it now." in text
+    assert "no specific duties" not in text.lower()
+    assert "Nutzen oder liefern Sie es ab sofort nicht mehr." in _pages((banned,), Language.DE)
+
+
+def test_a_duty_with_nothing_to_tick_is_listed_without_a_state_and_not_counted() -> None:
+    """A duty stored before duties carried their key: the screen can't tick it, so it sends no
+    state (`is_done` null) and the checklist counts it as the screen does."""
+    keyless = LOGS.model_copy(update={"is_done": None})
+    stored = SCREENING.model_copy(update={"duties": (keyless, INFORM_STAFF)})
+    assert "Applicant screening High-risk, Deployer. 0 of 1 done." in _pages((stored,))
+    assert [row[0] for row in _table_rows((stored,))[1:]] == [NOTHING, "Open"]

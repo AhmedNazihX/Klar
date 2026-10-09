@@ -99,9 +99,9 @@ export type ChecklistDuty = {
     /**
      * Is Done
      *
-     * The user ticked the duty off.
+     * The user ticked the duty off; null when it has nothing to tick off (a duty without its key, stored before duties carried one), so it isn't counted.
      */
-    is_done?: boolean;
+    is_done?: boolean | null;
 };
 
 /**

@@ -3,7 +3,7 @@ import type { LawVersion } from '@/components/LawSwitch'
 import { ORIGINAL_ROUTE_DATES, routeDates } from '@/features/classify/dates'
 import { isChecked, isoDay, sortTools, type CheckedTool } from '@/features/inventory/tool-facts'
 import type { InventoryTool } from '@/lib/inventory'
-import type { DutyTick } from '@/lib/duty-progress'
+import { tickKey, type DutyTick } from '@/lib/duty-progress'
 
 // The Obligations screen's list (artboard `Obligations`): every duty across the inventory, from
 // each tool's latest stored result, grouped by the date it applies from or by tool, with the
@@ -25,13 +25,6 @@ export type DateSection =
   | { kind: 'route'; route: HighRiskRoute; amended: string; original: string; tools: ToolDuties[] }
   /** Art. 111(2): duties that apply only after a significant change. */
   | { kind: 'afterChange'; tools: ToolDuties[] }
-
-/** The duty's key a tick is saved under; null when there is nothing to tick off (an
- *  informational line, or a duty stored before duties carried their key). */
-export function tickKey(duty: Obligation): string | null {
-  if (duty.is_informational) return null
-  return duty.key ?? null
-}
 
 /** A high-risk provider's duties are summarised with a link to its own screen (P23). */
 export function isProviderSummary(tool: CheckedTool): boolean {
