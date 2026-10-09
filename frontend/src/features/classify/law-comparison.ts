@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next'
 
 import type { ClassificationResult, StepName } from '@/api'
 import type { Language } from '@/i18n'
+import { riskClassOf } from '@/lib/risk-class'
 
 import { ORIGINAL_ROUTE_DATES, routeOfPoint, shortDate } from './dates'
 import { provisionName } from './provision-names'
@@ -36,7 +37,7 @@ const COMPARED_STEPS: readonly StepName[] = [
 
 /** The class as a pill names it, "assumed" while the result isn't decided. */
 export function classLabel(t: TFunction, result: ClassificationResult): string {
-  const riskClass = t(`pill.${result.risk_class}`)
+  const riskClass = t(`pill.${riskClassOf(result)}`)
   return result.status === 'decided' ? riskClass : t('diff.assumedClass', { riskClass })
 }
 
