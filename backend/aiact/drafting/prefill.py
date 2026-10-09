@@ -50,7 +50,8 @@ class DutyDateError(ValueError):
 
 
 class NoClassError(ValueError):
-    """The result has no class (a needs-a-description result, E13), so no document states one."""
+    """The result has no class (a needs-a-description result, E13, or a refused check, decision
+    030), so no document states one."""
 
 
 CLASS_NAMES: Mapping[Language, Mapping[RiskClass, str]] = {
@@ -133,7 +134,9 @@ def _classification_and_duty(
 
 def _class_sentence(result: ClassificationResult, language: Language) -> str:
     if result.risk_class is None:
-        raise NoClassError("a needs-a-description result has no class to state")
+        raise NoClassError(
+            "a result with no class (too thin to start, or a refused check) has no class to state"
+        )
     name = CLASS_NAMES[language][result.risk_class]
     if result.annex_point is not None:
         name = f"{name}, {annex_point_name(result.annex_point, language)}"

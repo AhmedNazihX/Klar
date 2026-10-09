@@ -280,7 +280,7 @@ IMPACT_ASSESSMENT_REGISTRATION = _question(
     "EU-Datenbank registriert (Art. 49)?",
 )
 
-# --- A provider refusal (decision 029) -----------------------------------------------------------
+# --- A provider refusal (decisions 029, 030) ----------------------------------------------------
 
 PERSON_REVIEW = _question(
     "person_review",
@@ -293,30 +293,6 @@ PERSON_REVIEW = _question(
     "Material, in dem Kinder vorkommen (Art. 5 Abs. 1 Buchst. ba, bb)?",
     is_yes_no=False,
 )
-REFUSAL: Mapping[Language, str] = {
-    EN: "Art. 5(1)(ba) or (bb) may apply: prohibited is assumed until a person has reviewed it.",
-    DE: "Art. 5 Abs. 1 Buchst. ba oder bb kann greifen: Bis ein Mensch sie geprüft hat, wird ein "
-    "Verbot angenommen.",
-}
-"""The refusal step's assumption, after the shared first sentence (`common.BLOCKED`)."""
-REFUSAL_BEFORE_DECEMBER: Mapping[Language, str] = {
-    EN: "Art. 5(1)(ba) and (bb) apply only from {start} (Art. 113(a)), so on {as_of} they do not "
-    "yet prohibit it, but the other prohibitions of Art. 5 can't be ruled out: prohibited is "
-    "assumed until a person has reviewed it.",
-    DE: "Art. 5 Abs. 1 Buchst. ba und bb gelten erst ab dem {start} (Art. 113 Buchst. a), daher "
-    "verbieten sie das System am {as_of} noch nicht, die anderen Verbote des Art. 5 lassen sich "
-    "aber nicht ausschließen: Bis ein Mensch die Beschreibung geprüft hat, wird ein Verbot "
-    "angenommen.",
-}
-"""The refusal step's assumption before the December 2026 prohibitions apply."""
-REFUSAL_ORIGINAL: Mapping[Language, str] = {
-    EN: "None of the Art. 5 prohibitions can be ruled out: prohibited is assumed until a person "
-    "has reviewed it.",
-    DE: "Keines der Verbote des Art. 5 lässt sich ausschließen: Bis ein Mensch die Beschreibung "
-    "geprüft hat, wird ein Verbot angenommen.",
-}
-"""The refusal step's assumption under the original text, which has no points (ba) or (bb)."""
-
 
 # --- Naming and decision sentences --------------------------------------------------------------
 

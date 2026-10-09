@@ -76,7 +76,7 @@ from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
     corpus_recording,
 )
-from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap, refused
+from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap, refused
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -936,13 +936,17 @@ def _filtered(content: str) -> GenericFakeChatModel:
     return GenericFakeChatModel(messages=iter([reply]))
 
 
+NOT_ASSESSED_EN = NOT_ASSESSED["en"]
+NOT_ASSESSED_DE = NOT_ASSESSED["de"]
+
+
 def test_a_provider_refusal_is_a_step_for_a_person_to_review() -> None:
-    """Decision 029: not a broken output; prohibited assumed, the points (ba) and (bb) its
-    decision names cited (E16), review asked."""
+    """Decisions 029, 030: not a broken output, and no finding: nothing is assumed prohibited.
+    The points (ba) and (bb) the review asks about are cited (E16), and the review asked."""
     library = FakeLibrary()
     check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=library)
     result = check(state(as_of=AFTER_DECEMBER))
-    assert result.matched
+    assert not result.matched
     step = result.step
     assert step.status is Status.NEEDS_MORE_INFORMATION
     assert step.error == "provider_refusal"
@@ -951,33 +955,24 @@ def test_a_provider_refusal_is_a_step_for_a_person_to_review() -> None:
     assert result.follow_up_questions == (step.missing_fact,)
     assert cited(result) == ["art:5:1:ba", "art:5:1:bb"]
     assert [pid for pid, _ in library.lookups] == ["art:5", "art:5:1:ba", "art:5:1:bb"]
-    assert step.decision.startswith("The model provider's content filter blocked")
-    assert "Art. 5(1)(ba) or (bb) may apply" in step.decision
+    assert step.decision == NOT_ASSESSED_EN
 
 
-def test_a_refusal_before_2_december_2026_says_ba_and_bb_do_not_apply_yet() -> None:
-    """Any other Art. 5 point may still apply, so prohibited stays assumed; the Art. 5(1) list
-    and Art. 113(a) cited."""
+def test_a_refusal_before_2_december_2026_cites_the_list_and_their_start_date() -> None:
+    """Points (ba) and (bb) don't apply yet: the Art. 5(1) list and Art. 113(a) are cited."""
     check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
     result = check(state(as_of=BEFORE_DECEMBER))
-    assert result.matched
+    assert not result.matched
     step = result.step
     assert step.status is Status.NEEDS_MORE_INFORMATION
     assert step.error == "provider_refusal"
     assert cited(result) == ["art:5:1", "art:113:a"]
-    assert "Art. 5(1)(ba) and (bb) apply only from 2 December 2026" in step.decision
-    assert "on 16 November 2026" in step.decision
-    assert "the other prohibitions of Art. 5 can't be ruled out" in step.decision
-    assert "may apply" not in step.decision
+    assert step.decision == NOT_ASSESSED_EN
 
 
 @pytest.mark.parametrize("as_of", [BEFORE_DECEMBER, AFTER_DECEMBER])
 @pytest.mark.parametrize(
-    ("language", "expected"),
-    [
-        (Language.EN, "None of the Art. 5 prohibitions can be ruled out"),
-        (Language.DE, "Keines der Verbote des Art. 5 lässt sich ausschließen"),
-    ],
+    ("language", "expected"), [(Language.EN, NOT_ASSESSED_EN), (Language.DE, NOT_ASSESSED_DE)]
 )
 def test_a_refusal_under_the_original_text_names_no_point_ba_or_bb(
     as_of: date, language: Language, expected: str
@@ -985,38 +980,32 @@ def test_a_refusal_under_the_original_text_names_no_point_ba_or_bb(
     """The original text has no (ba) or (bb), and its Art. 113(a) doesn't name them."""
     check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
     result = check(state(as_of=as_of, language=language, law_version=LawVersion.ORIGINAL))
-    assert result.matched
+    assert not result.matched
     step = result.step
     assert step.status is Status.NEEDS_MORE_INFORMATION
     assert cited(result) == ["art:5:1"]
-    assert expected in step.decision
-    assert "ba" not in step.decision
-    assert "113" not in step.decision
+    assert step.decision == expected
 
 
-@pytest.mark.parametrize(
-    ("as_of", "expected"),
-    [
-        (BEFORE_DECEMBER, "Art. 5 Abs. 1 Buchst. ba und bb gelten erst ab dem 2. Dezember 2026"),
-        (AFTER_DECEMBER, "Art. 5 Abs. 1 Buchst. ba oder bb kann greifen"),
-    ],
-)
-def test_a_refusal_is_reported_in_german(as_of: date, expected: str) -> None:
+@pytest.mark.parametrize("as_of", [BEFORE_DECEMBER, AFTER_DECEMBER])
+def test_a_refusal_is_reported_in_german(as_of: date) -> None:
     check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
     result = check(state(as_of=as_of, language=Language.DE))
-    assert result.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
-    assert expected in result.step.decision
+    assert result.step.decision == NOT_ASSESSED_DE
     assert result.step.missing_fact is not None
     assert result.step.missing_fact.text.startswith("Bitte lassen Sie")
 
 
-def test_a_refusal_keeps_the_run_going_with_prohibited_assumed() -> None:
+def test_a_refusal_runs_every_check_and_gives_no_class() -> None:
+    """Decision 030: a refused check yields no risk class, and the result names it."""
     check = ProhibitedCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
     final = _run(check)
     assert tuple(s.step for s in final.get("steps", ())) == STEP_ORDER
     result = final.get("result")
     assert result is not None
-    assert result.risk_class is RiskClass.PROHIBITED
+    assert result.risk_class is None
+    assert result.not_assessed == (StepName.PROHIBITED,)
+    assert result.status is Status.NEEDS_MORE_INFORMATION
 
 
 def test_a_filtered_reply_with_a_usable_answer_is_used() -> None:
@@ -1172,8 +1161,8 @@ def _b5c_cases() -> list[BenchmarkCase]:
 
 B5C_CASES = _b5c_cases()
 
-REFUSED = KnownGap("provider content filter (decision 029)", refused)
-REFUSED_IN_E10 = KnownGap("provider content filter (decision 029), E10 re-record", refused)
+REFUSED = KnownGap("provider content filter (decisions 029, 030)", refused)
+REFUSED_IN_E10 = KnownGap("provider content filter (decisions 029, 030), E10 re-record", refused)
 
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-c-01-undress-photo-app": REFUSED,

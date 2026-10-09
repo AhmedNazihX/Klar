@@ -59,7 +59,7 @@ from aiact.schemas import (
 from aiact.schemas.result import derived_status
 from aiact.settings import Settings
 from tests.engine.built_corpus import unresolved_citations, whole_articles
-from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
 from tests.schemas.builders import open_question
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -1587,7 +1587,8 @@ def _filtered_check(content: str = REFUSAL_TEXT) -> RoleObligationsCheck:
     return RoleObligationsCheck(_settings(), chat=GenericFakeChatModel(messages=iter([reply])))
 
 
-def test_a_provider_refusal_assumes_provider_and_deployer_for_a_person_to_review() -> None:
+def test_a_provider_refusal_assumes_no_role_for_a_person_to_review() -> None:
+    """Decision 030: no role and no duty assumed; both definitions cited for the reviewer."""
     outcome = _filtered_check()(state())
     step = outcome.step
     assert step.status is Status.NEEDS_MORE_INFORMATION
@@ -1595,15 +1596,14 @@ def test_a_provider_refusal_assumes_provider_and_deployer_for_a_person_to_review
     assert step.missing_fact is not None
     assert step.missing_fact.id == "role_person_review"
     assert outcome.follow_up_questions == (step.missing_fact,)
-    assert step.decision.startswith("The model provider's content filter blocked")
+    assert step.decision == NOT_ASSESSED["en"]
     assert [c.provision_id for c in step.citations] == ["art:3:3", "art:3:4"]
-    assert (finding(outcome).role, finding(outcome).also_role) == (Role.PROVIDER, Role.DEPLOYER)
-    assert {"art:9", "art:26:1", "art:26:7"} <= set(articles(outcome))  # open conditions kept
+    assert outcome.role is None
 
 
 def test_a_role_refusal_is_reported_in_german() -> None:
     outcome = _filtered_check()(state(language=Language.DE))
-    assert outcome.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
+    assert outcome.step.decision == NOT_ASSESSED["de"]
     assert outcome.step.missing_fact is not None
     assert outcome.step.missing_fact.text.startswith("Bitte lassen Sie")
 

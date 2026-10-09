@@ -112,4 +112,31 @@ describe('useClassify', () => {
       ],
     })
   })
+
+  it('stops a run whose check the provider refused with no class and no thin prompts', async () => {
+    // Decision 030: a refused check gives no class, but the result still lists every step.
+    const refused: ClassifyResponse = {
+      event: 'result',
+      result: {
+        ...WORKED_EXAMPLE,
+        risk_class: null,
+        status: 'needs_more_information',
+        annex_point: null,
+        transparency_duties: [],
+        obligations: [],
+        legal_review: null,
+        not_assessed: ['prohibited'],
+      },
+    }
+    server.use(classifyHandler([...WORKED_EXAMPLE_EVENTS.slice(0, 1), refused]))
+    const { result } = renderUseClassify()
+
+    let outcome: unknown
+    await act(async () => {
+      outcome = await result.current.run.mutateAsync(BODY).catch((error: unknown) => error)
+    })
+
+    expect(outcome).toBeInstanceOf(ClassifyRunError)
+    expect((outcome as ClassifyRunError).failure).toEqual({ kind: 'check' })
+  })
 })

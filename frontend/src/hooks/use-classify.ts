@@ -90,9 +90,12 @@ async function runClassification(
       throw new ClassifyRunError({ kind: 'check' })
     }
     if (event.event === 'result') {
-      // A needs-a-description result (E13) has no class to show or keep: the run stops with the
-      // engine's questions (P20 replaces this with the ClassifyVague prompts). Nothing is saved.
+      // A result with no class is never shown or kept. A needs-a-description result (E13) has no
+      // steps: the run stops with the engine's questions (P20 replaces this with the
+      // ClassifyVague prompts). One with steps had a check the model provider refused (decision
+      // 030): the check list marks it, and the run stops as a check that couldn't finish.
       if (event.result.risk_class === null) {
+        if (event.result.steps.length > 0) throw new ClassifyRunError({ kind: 'check' })
         const questions = (event.result.follow_up_questions ?? []).map((question) => question.text)
         throw new ClassifyRunError({ kind: 'needs_description', questions })
       }

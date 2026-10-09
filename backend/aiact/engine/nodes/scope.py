@@ -68,7 +68,6 @@ from aiact.engine.nodes.scope_texts import (
     PRE_MARKET_DEVELOPMENT,
     READING_SIDES,
     READINGS,
-    REFUSAL,
     REFUSAL_CITATIONS,
     TEXTS,
     ScopeQuestion,
@@ -440,15 +439,14 @@ def to_outcome(
 def refusal_outcome(
     state: EngineState, law: Sequence[Provision], library: ScopeLibrary
 ) -> CheckOutcome:
-    """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    in scope assumed until a person reviews it. It cites what the reviewer checks the description
-    against (`REFUSAL_CITATIONS`, E16): Art. 3(1) as the model read it in `law`, and Art. 2(1),
-    fetched from `library`. The review question is a missing fact, so the run goes on."""
+    """The step for a reply the provider's content filter refused (decisions 029, 030): not
+    assessed, and no class until a person reviews it. It cites what the reviewer checks the
+    description against (`REFUSAL_CITATIONS`, E16): Art. 3(1) as the model read it in `law`, and
+    Art. 2(1), fetched from `library`. The review question is a missing fact."""
     language = state["language"]
     return refused_check(
         StepName.SCOPE,
         language,
-        REFUSAL[language],
         cited_provisions(REFUSAL_CITATIONS, state, library, known=law),
         _question(PERSON_REVIEW, language),
     )

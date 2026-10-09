@@ -128,12 +128,6 @@ PERSON_REVIEW = _question(
     "Menschen biometrisch Kategorien zu oder erzeugt es Deepfakes (Art. 50)?",
     is_yes_no=False,
 )
-REFUSAL: Mapping[Language, str] = {
-    EN: "Every transparency duty of Art. 50(1) to (4) is assumed until a person has reviewed it.",
-    DE: "Bis ein Mensch sie geprüft hat, werden alle Transparenzpflichten nach Art. 50 Abs. 1 bis "
-    "4 angenommen.",
-}
-"""The refusal step's assumption, after the shared first sentence (`common.BLOCKED`)."""
 DUTY_PARAGRAPHS = ("art:50:1", "art:50:2", "art:50:3", "art:50:4")
 """Every paragraph of Art. 50 that places a duty on a provider or a deployer."""
 

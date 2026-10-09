@@ -82,7 +82,7 @@ from tests.engine.nodes.corpus_recording import (
     corpus_recording,
     lookup_call,
 )
-from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -1246,10 +1246,11 @@ def _filtered_check(content: str = REFUSAL_TEXT) -> HighRiskCheck:
     return HighRiskCheck(_settings(), chat=chat, library=FakeLibrary())
 
 
-def test_a_provider_refusal_assumes_high_risk_on_annex_iii_for_a_person_to_review() -> None:
+def test_a_provider_refusal_finds_nothing_for_a_person_to_review() -> None:
+    """Decision 030: no route, Annex point or exemption is assumed, so no class rests on it."""
     result = _filtered_check()(state())
     step = result.step
-    assert result.high_risk_route is HighRiskRoute.ANNEX_III  # its duties apply first
+    assert result.high_risk_route is None
     assert (result.annex_point, result.annex_iii_exempt) == (None, False)
     assert step.status is Status.NEEDS_MORE_INFORMATION
     assert step.error == "provider_refusal"
@@ -1257,12 +1258,12 @@ def test_a_provider_refusal_assumes_high_risk_on_annex_iii_for_a_person_to_revie
     assert step.missing_fact.id == "high_risk_person_review"
     assert result.follow_up_questions == (step.missing_fact,)
     assert cited(result) == ["art:6:1", "art:6:2"]
-    assert step.decision.startswith("The model provider's content filter blocked")
+    assert step.decision == NOT_ASSESSED["en"]
 
 
 def test_a_high_risk_refusal_is_reported_in_german() -> None:
     result = _filtered_check()(state(language=Language.DE))
-    assert result.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
+    assert result.step.decision == NOT_ASSESSED["de"]
     assert result.step.missing_fact is not None
     assert result.step.missing_fact.text.startswith("Bitte lassen Sie")
 

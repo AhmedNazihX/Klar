@@ -375,8 +375,6 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "one, under Annex I Section B, Art. 2(2) applies only a few provisions of the AI Act to "
         "it, none of them a duty of this role, and its requirements come from the sector law; "
         "until the high-risk check is settled, the duties stay listed.",
-        "refusal": "Working assumption until a person has reviewed it: provider, keeping the "
-        "deployer duties.",
         "assumption_also": "Working assumption: also {also}, pending an answer to: {question}",
         "assumption": "Working assumption: provider, keeping the other role's duties, pending an "
         "answer to: {question}",
@@ -429,8 +427,6 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "der KI-Verordnung, keine davon eine Pflicht dieser Rolle, und seine Anforderungen "
         "ergeben sich aus dem Sektorrecht; solange die Hochrisiko-Prüfung offen ist, bleiben die "
         "Pflichten aufgeführt.",
-        "refusal": "Arbeitsannahme, bis ein Mensch sie geprüft hat: Anbieter, mit den Pflichten "
-        "als Betreiber.",
         "assumption_also": "Arbeitsannahme: zugleich {also}, bis diese Frage beantwortet ist: "
         "{question}",
         "assumption": "Arbeitsannahme: Anbieter, mit den Pflichten der anderen Rolle, bis diese "

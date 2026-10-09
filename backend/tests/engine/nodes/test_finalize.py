@@ -16,6 +16,7 @@ from pydantic import SecretStr
 
 from aiact.engine.graph import CheckNode, EngineNodes, build_graph
 from aiact.engine.nodes import role_obligations
+from aiact.engine.nodes.common import refused_check
 from aiact.engine.nodes.finalize import LEGAL_REVIEW, FinalizeOutputError, finalize
 from aiact.engine.nodes.high_risk import HighRiskCheck
 from aiact.engine.nodes.key_facts import Answer
@@ -645,7 +646,7 @@ def test_a_result_that_breaks_the_contract_raises_without_user_text() -> None:
     message = str(raised.value)
     assert message == (
         "the result breaks its contract: answer: Value error, role is set exactly when the "
-        "role_obligations step is present"
+        "role_obligations step is present and not refused"
     )  # describe_validation_error's output: location and message, no input values
     assert "input_value" not in message
     assert DESCRIPTION not in message
@@ -656,47 +657,56 @@ def test_a_result_that_breaks_the_contract_raises_without_user_text() -> None:
 # --- A provider refusal (decision 029; X2b's DoD addition) ---------------------------------------
 
 
-def test_a_refused_prohibited_step_keeps_prohibited_and_names_the_step() -> None:
+def refused(name: StepName) -> CheckOutcome:
+    """A check the provider refused, as every node returns it (`common.refused_check`)."""
+    review = FollowUpQuestion(id=f"{name.value}_person_review", text="Please review it.")
+    return refused_check(name, Language.EN, (), review)
+
+
+@pytest.mark.parametrize("name", STEP_ORDER)
+def test_a_refused_check_yields_no_risk_class(name: StepName) -> None:
+    """Decision 030: whichever check the provider refused, the result has no class and names
+    the check; every check still runs."""
+    role = real_role(role_answer(Role.DEPLOYER, legacy=legacy_answer()))
+    checks = {StepName.ROLE_OBLIGATIONS: role, name: refused(name)}
+    result = run(checks)
+    assert result.risk_class is None
+    assert result.not_assessed == (name,)
+    assert result.status is Status.NEEDS_MORE_INFORMATION
+    assert [s.step for s in result.steps] == list(STEP_ORDER)
+    assert f"{name.value}_person_review" in question_ids(result)
+    assert result.role is (None if name is StepName.ROLE_OBLIGATIONS else Role.DEPLOYER)
+
+
+def test_a_refused_prohibited_step_gives_no_class_and_names_the_step() -> None:
     check = ProhibitedCheck(settings(), chat=filtered(), library=ProhibitedLibrary())
     result = run({StepName.PROHIBITED: check})
-    assert result.risk_class is RiskClass.PROHIBITED
-    assert result.status in (Status.NEEDS_MORE_INFORMATION, Status.LEGALLY_AMBIGUOUS)
+    assert result.risk_class is None
+    assert result.status is Status.NEEDS_MORE_INFORMATION
     assert result.not_assessed == (StepName.PROHIBITED,)
     assert [s.step for s in result.steps] == list(STEP_ORDER)  # the run goes on
     assert "person_review" in question_ids(result)
-    assert result.legal_review == LEGAL_REVIEW[Language.EN][RiskClass.PROHIBITED]
+    assert result.legal_review is None
 
 
-def test_a_refused_high_risk_step_assumes_high_risk_and_names_the_step() -> None:
+def test_a_refused_high_risk_step_drops_what_a_class_brings() -> None:
+    """The other checks' findings (an Art. 50 duty, the role's duties) are not shown without a
+    class; the role and the steps stay."""
     check = HighRiskCheck(settings(), chat=filtered(), library=HighRiskLibrary())
     role = real_role(role_answer(Role.DEPLOYER, legacy=legacy_answer()))
-    result = run({StepName.HIGH_RISK: check, StepName.ROLE_OBLIGATIONS: role})
-    assert (result.risk_class, result.status) == (
-        RiskClass.HIGH_RISK,
-        Status.NEEDS_MORE_INFORMATION,
-    )
+    checks = {StepName.HIGH_RISK: check, StepName.TRANSPARENCY: CHATTY,
+              StepName.ROLE_OBLIGATIONS: role}  # fmt: skip
+    result = run(checks)
+    assert (result.risk_class, result.status) == (None, Status.NEEDS_MORE_INFORMATION)
     assert result.not_assessed == (StepName.HIGH_RISK,)
-    assert result.annex_point is None
     assert "high_risk_person_review" in question_ids(result)
-    assert "art:26:1" in [o.article for o in result.obligations]
+    assert (result.annex_point, result.transparency_duties, result.obligations) == (None, (), ())
+    assert (result.legal_review, result.role) == (None, Role.DEPLOYER)
 
 
 def test_every_refused_step_is_named_in_check_order() -> None:
-    def refused(name: StepName) -> CheckOutcome:
-        review = FollowUpQuestion(id=f"{name.value}_person_review", text="Please review it.")
-        refusal = StepResult(
-            step=name,
-            decision="The model provider's content filter blocked this description.",
-            status=Status.NEEDS_MORE_INFORMATION,
-            missing_fact=review,
-            error="provider_refusal",
-        )
-        return CheckOutcome(step=refusal, follow_up_questions=(review,))
-
-    transparency = refused(StepName.TRANSPARENCY).model_copy(
-        update={"transparency_duties": ("art:50:1", "art:50:2", "art:50:3", "art:50:4")}
-    )
-    result = run({StepName.SCOPE: refused(StepName.SCOPE), StepName.TRANSPARENCY: transparency})
+    result = run({StepName.SCOPE: refused(StepName.SCOPE),
+                  StepName.TRANSPARENCY: refused(StepName.TRANSPARENCY)})  # fmt: skip
     assert result.not_assessed == (StepName.SCOPE, StepName.TRANSPARENCY)
-    assert result.risk_class is RiskClass.LIMITED_RISK  # every Art. 50 duty assumed
+    assert result.risk_class is None
     assert result.status is Status.NEEDS_MORE_INFORMATION

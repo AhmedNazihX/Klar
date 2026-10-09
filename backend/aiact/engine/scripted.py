@@ -72,18 +72,19 @@ def _finalize(state: EngineState, script: Script) -> ClassificationResult:
     if state.get("needs_description", False):
         return description_result(state)
     steps: tuple[StepResult, ...] = state.get("steps", ())
-    risk_class = _risk_class(state, steps, script)
-    has_role_step = len(steps) == len(STEP_ORDER)
+    refused = refused_steps(steps)
+    # A refused check gives no class (decision 030), and no finding a class would bring.
+    risk_class = None if refused else _risk_class(state, steps, script)
+    has_role = len(steps) == len(STEP_ORDER) and StepName.ROLE_OBLIGATIONS not in refused
+    has_duties = risk_class is not None and risk_class is not RiskClass.OUT_OF_SCOPE
     return ClassificationResult(
         facts=state.get("facts", ()),
         steps=steps,
         risk_class=risk_class,
         status=derived_status(steps),
-        not_assessed=refused_steps(steps),
-        role=script.role if has_role_step else None,
-        transparency_duties=()
-        if risk_class is RiskClass.OUT_OF_SCOPE
-        else script.transparency_duties,
+        not_assessed=refused,
+        role=script.role if has_role else None,
+        transparency_duties=script.transparency_duties if has_duties else (),
         law_version=state["law_version"],
         as_of=state["as_of"],
         disclaimer=DISCLAIMER[state["language"]],

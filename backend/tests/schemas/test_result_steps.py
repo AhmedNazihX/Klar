@@ -134,13 +134,14 @@ def test_a_result_with_steps_is_not_a_needs_description_result() -> None:
 
 @pytest.mark.parametrize("risk_class", list(RiskClass))
 def test_no_steps_with_a_class_is_rejected(risk_class: RiskClass) -> None:
-    with pytest.raises(ValidationError, match="no class exactly when it has no steps"):
+    with pytest.raises(ValidationError, match="a result with no steps has no class"):
         needs_description(risk_class=risk_class)
 
 
 @pytest.mark.parametrize("count", range(1, len(STEP_ORDER) + 1))
 def test_no_class_with_steps_is_rejected(count: int) -> None:
-    with pytest.raises(ValidationError, match="no class exactly when it has no steps"):
+    """Only a refused check (decision 030) leaves a result with steps without a class."""
+    with pytest.raises(ValidationError, match="has a class unless the model provider refused"):
         needs_description(steps=dumped_steps(count), status=Status.DECIDED)
 
 

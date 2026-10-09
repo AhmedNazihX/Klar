@@ -333,18 +333,16 @@ def to_outcome(
 
 
 def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:
-    """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    every Art. 50 duty assumed until a person reviews it (the stricter reading). It cites the
+    """The step for a reply the provider's content filter refused (decisions 029, 030): not
+    assessed, and no class or duty until a person reviews it. It cites the
     paragraph of each duty the reviewer checks (`PERSON_REVIEW` asks about every one, E16),
     fetched from `library`. The review question is a missing fact."""
     language = state["language"]
     return refused_check(
         StepName.TRANSPARENCY,
         language,
-        texts.REFUSAL[language],
         cited_provisions(ALL_DUTIES, state, library),
         ask(texts.PERSON_REVIEW, language, StepName.TRANSPARENCY),
-        transparency_duties=ALL_DUTIES,
     )
 
 

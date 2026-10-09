@@ -59,7 +59,7 @@ from tests.engine.nodes.corpus_recording import (
     corpus_recording,
     lookup_call,
 )
-from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -520,13 +520,13 @@ def _filtered_check(content: str = REFUSAL_TEXT, library: FakeLibrary | None = N
     return ScopeCheck(_settings(), chat=chat, library=library or FakeLibrary())
 
 
-def test_a_provider_refusal_assumes_in_scope_for_a_person_to_review() -> None:
-    """Decision 029; the step cites what the assumed in-scope reading rests on, Art. 3(1) and
-    Art. 2(1), never Art. 2 as a whole (E16)."""
+def test_a_provider_refusal_is_a_step_for_a_person_to_review() -> None:
+    """Decisions 029, 030; the step cites what the reviewer checks, Art. 3(1) and Art. 2(1),
+    never Art. 2 as a whole (E16)."""
     library = FakeLibrary()
     outcome = _filtered_check(library=library)(state())
     step = outcome.step
-    assert outcome.matched is False  # in scope, the stricter reading: the run goes on
+    assert outcome.matched is False  # no finding: the run goes on
     assert step.status is Status.NEEDS_MORE_INFORMATION
     assert step.error == "provider_refusal"
     assert step.missing_fact is not None
@@ -534,18 +534,19 @@ def test_a_provider_refusal_assumes_in_scope_for_a_person_to_review() -> None:
     assert outcome.follow_up_questions == (step.missing_fact,)
     assert [c.provision_id for c in step.citations] == ["art:3:1", "art:2:1"]
     assert library.fetched == ["art:3:1", "art:2", "art:2:1"]  # Art. 3(1) as read is reused
-    assert step.decision.startswith("The model provider's content filter blocked")
+    assert step.decision == NOT_ASSESSED["en"]
 
 
 def test_a_refused_scope_step_keeps_the_run_going() -> None:
     final = _run(_filtered_check()(state()))
     assert tuple(s.step for s in final["steps"]) == STEP_ORDER
     assert final["result"].not_assessed == (StepName.SCOPE,)
+    assert final["result"].risk_class is None  # decision 030
 
 
 def test_a_scope_refusal_is_reported_in_german() -> None:
     outcome = _filtered_check()(state(language=Language.DE))
-    assert outcome.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
+    assert outcome.step.decision == NOT_ASSESSED["de"]
     assert outcome.step.missing_fact is not None
     assert outcome.step.missing_fact.text.startswith("Bitte lassen Sie")
 

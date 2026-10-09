@@ -142,14 +142,6 @@ PERSON_REVIEW = KeyQuestion(
         "EU-Rechtsvorschriften fällt (Art. 6)?",
     },
 )
-REFUSAL: Mapping[Language, str] = {
-    EN: "Until a person has reviewed it, the system is assumed to be high-risk, and the Annex III "
-    "requirements are assumed.",
-    DE: "Bis ein Mensch sie geprüft hat, wird angenommen, dass das System hochriskant ist, und es "
-    "werden die Anforderungen nach Anhang III angenommen.",
-}
-"""The refusal step's assumption, after the shared first sentence (`common.BLOCKED`): high-risk
-on the Annex III route, whose dates come first."""
 REFUSAL_CITATIONS = ("art:6:1", "art:6:2")
 """What the refusal step cites: the two routes to high-risk."""
 

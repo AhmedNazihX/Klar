@@ -88,8 +88,8 @@ DUTY_WIDTHS = (3.8, 1.0)
 
 
 class NoClassError(ValueError):
-    """The result has no class (a needs-a-description result, E13): there is nothing to
-    report."""
+    """The result has no class (a needs-a-description result, E13, or a refused check, decision
+    030): there is nothing to report."""
 
 
 def report_id(result: ClassificationResult) -> str:
@@ -111,7 +111,9 @@ def result_report(
     with no class."""
     risk_class = result.risk_class
     if risk_class is None:
-        raise NoClassError("a needs-a-description result has no class to report")
+        raise NoClassError(
+            "a result with no class (too thin to start, or a refused check) has nothing to report"
+        )
     duties = formal_duties(
         result.obligations,
         risk_class=risk_class,

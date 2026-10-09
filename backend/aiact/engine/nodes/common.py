@@ -1,20 +1,19 @@
 """What the checks share (E3, E4, E5, E7, E8): the corpus lookup of one run, the citations built
 from what the corpus returns, the follow-up question of a key fact, the per-case blocks of their
-prompts, and the step for a reply the provider refused (decision 029)."""
+prompts, and the step for a reply the provider refused (decisions 029, 030)."""
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Protocol
 
-from aiact.engine.state import CheckOutcome, EngineState, RoleFinding
+from aiact.engine.state import CheckOutcome, EngineState
 from aiact.retrieval.provisions import Provision
 from aiact.retrieval.search import SearchHit
 from aiact.schemas import (
     PROVIDER_REFUSAL,
     Citation,
     FollowUpQuestion,
-    HighRiskRoute,
     Language,
     LawVersion,
     Status,
@@ -121,7 +120,7 @@ def named_passages(numbers: Sequence[int], guidance: Sequence[SearchHit]) -> tup
     return tuple(guidance[n - 1] for n in in_range)
 
 
-# --- A provider refusal (decision 029) -----------------------------------------------------------
+# --- A provider refusal (decisions 029, 030) ----------------------------------------------------
 
 BLOCKED: Mapping[Language, str] = {
     Language.EN: "The model provider's content filter blocked this description, so it could not "
@@ -130,37 +129,29 @@ BLOCKED: Mapping[Language, str] = {
     "konnte sie nicht automatisch geprüft werden.",
 }
 """The first sentence of every refused step's decision."""
+NO_CLASS: Mapping[Language, str] = {
+    Language.EN: "No risk class is given: a person must review the description.",
+    Language.DE: "Es wird keine Risikoklasse angegeben: Ein Mensch muss die Beschreibung prüfen.",
+}
+"""The second sentence of every refused step's decision (decision 030)."""
 
 
 def refused_check(
     name: StepName,
     language: Language,
-    assumption: str,
     citations: Sequence[Citation],
     review: FollowUpQuestion,
-    *,
-    matched: bool = False,
-    high_risk_route: HighRiskRoute | None = None,
-    transparency_duties: tuple[str, ...] = (),
-    role: RoleFinding | None = None,
 ) -> CheckOutcome:
-    """The step of a check whose reply the provider's content filter refused (decision 029):
-    not assessed (`BLOCKED`, then the stricter reading the check assumes), `needs_more_information`
-    with the person-review question as its missing fact, so the run goes on, and the check's
-    assumed findings."""
+    """The step of a check whose reply the provider's content filter refused (decisions 029,
+    030): not assessed (`BLOCKED`, `NO_CLASS`), `needs_more_information` with the person-review
+    question as its missing fact, and no finding at all, so no class can rest on it. The run
+    goes on (no check is skipped), and the result carries no class (`finalize`)."""
     step = StepResult(
         step=name,
-        decision=f"{BLOCKED[language]} {assumption}",
+        decision=f"{BLOCKED[language]} {NO_CLASS[language]}",
         citations=tuple(citations),
         status=Status.NEEDS_MORE_INFORMATION,
         missing_fact=review,
         error=PROVIDER_REFUSAL,
     )
-    return CheckOutcome(
-        step=step,
-        matched=matched,
-        high_risk_route=high_risk_route,
-        transparency_duties=transparency_duties,
-        role=role,
-        follow_up_questions=(review,),
-    )
+    return CheckOutcome(step=step, follow_up_questions=(review,))

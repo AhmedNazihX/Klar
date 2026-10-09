@@ -4,6 +4,8 @@ The cross-field rules below can't be expressed in JSON Schema; decision 010 cove
 lists every check, or ends early after a stopping check (decision 010), or ends before the checks
 because the description is too thin to start (E13, decision 010 addendum 2026-10-01): a "needs a
 description" result has no steps and no class, and asks the three `DESCRIPTION_QUESTION_IDS`.
+A result with a check the model provider refused (decision 030) has steps but no class either:
+nothing the refused check would have found can be assumed, so no class is given.
 """
 
 from collections.abc import Iterable
@@ -68,12 +70,15 @@ class ClassificationResult(ContractModel):
         description="In the Act's check order; empty only for a needs-a-description result."
     )
     risk_class: RiskClass | None = Field(
-        description="The headline class; null exactly when the run ended before the checks "
-        "because the description was too thin to start (needs a description, E13)."
+        description="The headline class; null when the run ended before the checks because the "
+        "description was too thin to start (needs a description, E13), or when the model "
+        "provider refused a check (`not_assessed`, decision 030)."
     )
     status: Status = Field(description="Derived from the steps; see `derived_status`.")
     role: Role | None = Field(
-        default=None, description="Set exactly when the role_obligations step ran."
+        default=None,
+        description="Set exactly when the role_obligations step ran and the model provider "
+        "didn't refuse it.",
     )
     also_role: Role | None = Field(
         default=None,
@@ -107,8 +112,8 @@ class ClassificationResult(ContractModel):
     )
     not_assessed: tuple[StepName, ...] = Field(
         default=(),
-        description="The checks the model provider refused to assess (decision 029), in check "
-        "order; each needs a person's review, and its stricter reading is assumed.",
+        description="The checks the model provider refused to assess (decisions 029, 030), in "
+        "check order; each needs a person's review, and a result that lists one has no class.",
     )
     follow_up_questions: tuple[FollowUpQuestion, ...] = ()
 
@@ -133,11 +138,13 @@ class ClassificationResult(ContractModel):
 
     @model_validator(mode="after")
     def _no_check_skipped(self) -> Self:
-        if self.needs_description or self.risk_class is None:
+        if self.needs_description:
             return self._is_a_needs_description_result()
         names = tuple(step.step for step in self.steps)
         if names != STEP_ORDER[: len(names)]:
             raise ValueError("steps must follow the check order, each once, with none skipped")
+        if self.risk_class is None:
+            return self._is_a_refused_result()
         if self.risk_class is RiskClass.OUT_OF_SCOPE and not self._ends_at(StepName.SCOPE):
             raise ValueError("an out_of_scope result needs a decided scope step")
         if names != self._expected_steps():
@@ -147,24 +154,37 @@ class ClassificationResult(ContractModel):
         return self
 
     def _is_a_needs_description_result(self) -> Self:
-        """No steps and no class go together, and such a result only asks for a description."""
-        if self.steps or self.risk_class is not None:
-            raise ValueError("a result has no class exactly when it has no steps")
+        """No steps means no class, and such a result only asks for a description."""
+        if self.risk_class is not None:
+            raise ValueError("a result with no steps has no class")
         asked = {question.id for question in self.follow_up_questions}
         if not set(DESCRIPTION_QUESTION_IDS) <= asked:
             raise ValueError(f"a needs-a-description result asks {list(DESCRIPTION_QUESTION_IDS)}")
-        if (
-            self.deciding_facts
-            or self.obligations
-            or self.annex_point
-            or self.transparency_duties
-            or self.legal_review
-        ):
+        if self.deciding_facts or self._has_class_findings():
             raise ValueError(
                 "a needs-a-description result has no deciding_facts, obligations, annex_point, "
                 "transparency_duties or legal_review"
             )
         return self
+
+    def _is_a_refused_result(self) -> Self:
+        """A result with steps has no class only when the model provider refused a check
+        (decision 030); it then lists nothing a class would bring."""
+        if not refused_steps(self.steps):
+            raise ValueError(
+                "a result with steps has a class unless the model provider refused a check"
+            )
+        if self._has_class_findings():
+            raise ValueError(
+                "a result with a refused check has no obligations, annex_point, "
+                "transparency_duties or legal_review"
+            )
+        return self
+
+    def _has_class_findings(self) -> bool:
+        return bool(
+            self.obligations or self.annex_point or self.transparency_duties or self.legal_review
+        )
 
     @model_validator(mode="after")
     def _status_matches_steps(self) -> Self:
@@ -177,9 +197,12 @@ class ClassificationResult(ContractModel):
 
     @model_validator(mode="after")
     def _role_iff_role_step(self) -> Self:
-        has_role_step = self._step(StepName.ROLE_OBLIGATIONS) is not None
-        if has_role_step != (self.role is not None):
-            raise ValueError("role is set exactly when the role_obligations step is present")
+        role_step = self._step(StepName.ROLE_OBLIGATIONS)
+        has_role = role_step is not None and role_step.error != PROVIDER_REFUSAL
+        if has_role != (self.role is not None):
+            raise ValueError(
+                "role is set exactly when the role_obligations step is present and not refused"
+            )
         if self.role is None and (self.role_switch_reason or self.also_role):
             raise ValueError("role_switch_reason and also_role need a role")
         if self.also_role is not None and self.also_role is self.role:

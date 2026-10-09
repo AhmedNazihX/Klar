@@ -145,6 +145,67 @@ def test_not_assessed_names_exactly_the_refused_steps() -> None:
         rebuild(worked_example_result(), not_assessed=(StepName.SCOPE,))
 
 
+# a refused check gives no class (decision 030)
+
+
+def _refused_result(
+    name: StepName = StepName.PROHIBITED, **changes: object
+) -> ClassificationResult:
+    """The worked example with `name` refused: no class and nothing a class brings."""
+    fields: dict[str, object] = {
+        "steps": steps_with(_refused(name)),
+        "risk_class": None,
+        "status": Status.NEEDS_MORE_INFORMATION,
+        "annex_point": None,
+        "obligations": (),
+        "not_assessed": (name,),
+    }
+    return rebuild(worked_example_result(), **fields | changes)
+
+
+@pytest.mark.parametrize("name", list(StepName))
+def test_a_result_with_a_refused_check_may_have_no_class(name: StepName) -> None:
+    role = None if name is StepName.ROLE_OBLIGATIONS else Role.DEPLOYER
+    result = _refused_result(name, role=role)
+    assert result.risk_class is None
+    assert result.not_assessed == (name,)
+    assert not result.needs_description
+    assert ClassificationResult.model_validate_json(result.model_dump_json()) == result
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        {"annex_point": "annex:III:4:a"},
+        {"transparency_duties": ("art:50:1",)},
+        {"legal_review": "Have this result reviewed by a lawyer."},
+        {"obligations": OBLIGATIONS},
+    ],
+)
+def test_a_result_with_a_refused_check_lists_nothing_a_class_brings(
+    field: dict[str, object],
+) -> None:
+    with pytest.raises(ValidationError, match="refused check has no obligations"):
+        _refused_result(StepName.PROHIBITED, **field)
+
+
+def test_a_refused_role_step_sets_no_role() -> None:
+    assert _refused_result(StepName.ROLE_OBLIGATIONS, role=None).role is None
+    with pytest.raises(ValidationError, match="present and not refused"):
+        _refused_result(StepName.ROLE_OBLIGATIONS, role=Role.DEPLOYER)
+
+
+def test_a_result_stored_before_decision_030_still_loads() -> None:
+    """Before X2b a refused step kept its stricter reading as the class (decision 029)."""
+    stored = rebuild(
+        worked_example_result(),
+        steps=steps_with(_refused(StepName.HIGH_RISK)),
+        status=Status.NEEDS_MORE_INFORMATION,
+        not_assessed=(StepName.HIGH_RISK,),
+    ).model_dump(mode="json")
+    assert ClassificationResult.model_validate(stored).risk_class is RiskClass.HIGH_RISK
+
+
 # status derived from the steps
 
 
