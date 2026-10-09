@@ -15,7 +15,7 @@ import type { Status as PillStatus } from '@/components/pill-kinds'
 import type { Language } from '@/i18n'
 import type en from '@/i18n/locales/en.json'
 
-import { routeDates, routeOfPoint } from './dates'
+import { longDate, routeDates, routeOfPoint } from './dates'
 import { annexPointKey, isLawProvision, provisionName } from './provision-names'
 import { riskClassOf } from '@/lib/risk-class'
 
@@ -91,6 +91,20 @@ export function isTransparencyDuty(obligation: Obligation): boolean {
 export function dutyLabel(obligation: Obligation, language: Language): string {
   const label = language === 'de' ? obligation.label_de : obligation.label_en
   return label || provisionName(obligation.article, language)
+}
+
+/** A duty list's article column is wider in German (localisation.md: "Art. 26 Abs. 11"). */
+export const DUTY_REFERENCE_WIDTH: Record<Language, number> = { en: 86, de: 112 }
+
+/** The line under a duty: its Art. 111(2) marking (decision 026 item 24), or its condition. */
+export function dutyNote(t: TFunction, obligation: Obligation, language: Language): string | null {
+  if (obligation.legacy === 'legacy_unchanged') return t('result.legacy.afterChange')
+  if (obligation.legacy === 'legacy_public_authority') {
+    return t('result.legacy.from', { date: longDate(obligation.applies_from, language) })
+  }
+  if (obligation.applies_if) return t('result.todo.onlyIf', { condition: obligation.applies_if })
+  if (obligation.is_informational) return t('result.todo.forInformation')
+  return null
 }
 
 /** A tool's name, or "Your tool" in the screen's language when the user gave none. */

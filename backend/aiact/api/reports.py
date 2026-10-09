@@ -2,7 +2,9 @@
 - `POST /reports/result`: the report for a lawyer (artboard `ExportPDF`), one result as a two-page
   A4 PDF or a Word file, in English or German;
 - `POST /reports/inventory`: the inventory report (artboard `YourData`), every tool with its
-  class, status, role and duties.
+  class, status, role and duties;
+- `POST /reports/checklist`: the obligations checklist (P24; artboard `Obligations`), every duty of
+  every tool with its date and whether the user ticked it off.
 
 The posted result is validated against the result contract and nothing more (`valid_result`,
 decision 031): it may be a row the browser wrote or an imported file. Its facts and the steps'
@@ -11,7 +13,8 @@ wording, conditions and labels come from the obligations table, looked up by the
 role, article and law version, never from the posted result (`aiact.report.duties`), and the
 notice is the report language's own. A result with no class (needs a description, E13) has
 nothing to report: a 422. The inventory report takes each tool as the summary its stored result
-gives (`InventoryTool`), since a whole inventory of results would not fit the body cap.
+gives (`InventoryTool`), since a whole inventory of results would not fit the body cap; the
+checklist takes the same summary with each duty's ticked state (`ChecklistTool`).
 
 A report is a file like a drafted document's export, made the same way (`aiact.api.files`): the
 exports' rate limit, the length cap, one of the export workers, the time limit, and a 413 when the
@@ -40,8 +43,16 @@ from aiact.api.files import (
     rendered,
 )
 from aiact.export import Paper, render_docx, render_pdf
-from aiact.report import InventoryTool, Name, NoClassError, inventory_report, result_report
-from aiact.schemas import Language
+from aiact.report import (
+    ChecklistTool,
+    InventoryTool,
+    Name,
+    NoClassError,
+    checklist_report,
+    inventory_report,
+    result_report,
+)
+from aiact.schemas import Language, LawVersion
 from aiact.schemas.base import ContractModel
 
 INVENTORY_MAX_LINES = 6_000
@@ -58,6 +69,7 @@ RESULT_STEM = "klar-report"
 """The report's file name; the browser saves it under its own name for the tool
 (`resultReportFileName`), so the server's is only a fallback."""
 INVENTORY_STEM = "klar-inventory-report"
+CHECKLIST_STEM = "klar-obligations-checklist"
 
 NO_CLASS = "This result has no class yet, so there is no report to make. Describe the tool first."
 TOO_LONG = "This report is too long to make into a file."
@@ -89,6 +101,22 @@ class InventoryReportRequest(ContractModel):
 
     tools: tuple[InventoryTool, ...] = Field(max_length=MAX_TOOLS)
     language: Language = Field(description="The language of the report's wording and notice.")
+    format: ExportFormat
+    company: Name | None = Field(
+        default=None, description="The company's name from its profile; null without one."
+    )
+
+
+class ChecklistRequest(ContractModel):
+    """Every tool of the user's inventory, summarised with each duty's ticked state, and the
+    checklist wanted."""
+
+    tools: tuple[ChecklistTool, ...] = Field(max_length=InventoryReportRequest.MAX_TOOLS)
+    language: Language = Field(description="The language of the checklist's wording and notice.")
+    law_version: LawVersion = Field(
+        description="The law text the Obligations screen shows; under the original one the "
+        "high-risk route dates follow the original Art. 113 (decision 026 item 11)."
+    )
     format: ExportFormat
     company: Name | None = Field(
         default=None, description="The company's name from its profile; null without one."
@@ -158,6 +186,34 @@ def export_inventory_report(
     )
     refuse_too_long(paper, TOO_LONG, max_chars=INVENTORY_MAX_CHARS, max_lines=INVENTORY_MAX_LINES)
     return _file(request, context, paper, body.format, INVENTORY_STEM)
+
+
+@router.post(
+    "/checklist",
+    name="export_obligations_checklist",
+    response_class=Response,
+    dependencies=[Depends(limit_exports)],
+    responses=REPORT_RESPONSES,
+)
+def export_obligations_checklist(
+    request: Request,
+    body: ChecklistRequest,
+    prepared_on: Annotated[date, Depends(report_date)],
+    context: Annotated[ApiContext, Depends(api_context)],
+) -> Response:
+    """The obligations checklist: every classified tool with its progress, then each duty with
+    whether it is done, its provision and its date, as a PDF or Word file. Klar keeps the list;
+    it doesn't check the work. Guidance, not legal advice."""
+    paper = checklist_report(
+        body.tools,
+        language=body.language,
+        law_version=body.law_version,
+        prepared_on=prepared_on,
+        company=body.company,
+    )
+    # The inventory report's caps: a checklist row has one cell more, and still fits them.
+    refuse_too_long(paper, TOO_LONG, max_chars=INVENTORY_MAX_CHARS, max_lines=INVENTORY_MAX_LINES)
+    return _file(request, context, paper, body.format, CHECKLIST_STEM)
 
 
 def _file(

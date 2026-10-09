@@ -288,7 +288,7 @@ WHEN = _texts("{what}, {when}", "{what}, {when}")
 FROM_DATE = _texts("from {date}", "ab dem {date}")
 ONLY_AFTER_CHANGE = _texts(
     "only after a significant change ({article})",
-    "nur nach einer wesentlichen Änderung ({article})",
+    "nur nach einer erheblichen Änderung ({article})",
 )
 """After a heading or a provision; a cell of its own starts it with a capital."""
 DUTY_HEADER = (_texts("Duty", "Pflicht"), _texts("Provision", "Vorschrift"))
@@ -379,3 +379,50 @@ TOOL_LAW: Mapping[bool, ByLanguage] = {
     ),
 }
 """A tool's law line in the inventory report, by whether the text is the amended one."""
+
+CHECKLIST_KICKER = _texts("Obligations checklist", "Pflichten-Checkliste")
+CHECKLIST_TITLE = _texts("Your obligations", "Ihre Pflichten")
+DONE_COUNT = _texts("{done} of {total} done.", "{done} von {total} erledigt.")
+"""Ticked duties of the tickable ones (the Obligations screen's "N of M done")."""
+NOT_CHECKED_WORK = _texts(
+    "Klar keeps the list; it doesn't check the work for you.",
+    "Klar führt die Liste; ob die Arbeit getan ist, prüft Klar nicht.",
+)
+"""Said wherever progress shows (decision 026 item 9); the screens' `obligations.notChecked`."""
+CHECKLIST_NOTE = _texts(
+    "A duty marked done is one you ticked off in Klar.",
+    "Als erledigt markiert ist eine Pflicht, die Sie in Klar abgehakt haben.",
+)
+CHECKLIST_LAW: Mapping[bool, ByLanguage] = {
+    True: _texts(
+        "Dates under Regulation (EU) 2024/1689 as amended, consolidated text of {version} "
+        "(CELEX {celex}).",
+        "Daten nach der Verordnung (EU) 2024/1689 in geänderter Fassung, konsolidierter Text "
+        "vom {version} (CELEX {celex}).",
+    ),
+    False: _texts(
+        "Dates under Regulation (EU) 2024/1689 as published on {version} (CELEX {celex}).",
+        "Daten nach der Verordnung (EU) 2024/1689 in der am {version} veröffentlichten "
+        "Fassung (CELEX {celex}).",
+    ),
+}
+"""The law text the checklist's dates follow, the one the Obligations screen showed, by whether
+it is the amended one."""
+ORIGINAL_DATES = _texts(
+    "Dates follow the original Art. 113. The duties shown are the amended text's.",
+    "Die Daten folgen dem ursprünglichen Art. 113. Die angezeigten Pflichten sind die der "
+    "geänderten Fassung.",
+)
+"""Under the original text only the high-risk route dates swap (decision 026 item 11); the
+screens' `result.todo.originalDates`."""
+STRICTER_READING = _texts(
+    "These duties apply if the stricter reading holds.",
+    "Diese Pflichten gelten, wenn die strengere Auslegung zutrifft.",
+)
+"""An assumed class (needs more information, legally ambiguous) never reads as settled."""
+STATE_HEADER = _texts("Status", "Stand")
+DONE_STATES: Mapping[bool, ByLanguage] = {
+    True: _texts("Done", "Erledigt"),
+    False: _texts("Open", "Offen"),
+}
+"""A duty's ticked state in the checklist, by whether the user ticked it off."""

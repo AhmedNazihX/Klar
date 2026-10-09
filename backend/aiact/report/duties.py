@@ -13,7 +13,7 @@ from datetime import date
 from typing import NamedTuple
 
 from aiact.obligations.list import ObligationEntry, default_table
-from aiact.schemas import LawVersion, LegacyStatus, Obligation, RiskClass, Role
+from aiact.schemas import HighRiskRoute, LawVersion, LegacyStatus, Obligation, RiskClass, Role
 
 TRANSPARENCY_ARTICLE = "art:50"
 
@@ -27,6 +27,8 @@ class DutyTiming(NamedTuple):
     is_route_duty: bool
     """Dated per high-risk route (Annex III or Annex I), so by the route's Chapter III date."""
     is_informational: bool
+    route: HighRiskRoute | None = None
+    """The high-risk route that dates it, when it is a route duty and the route is known."""
 
     @property
     def is_transparency(self) -> bool:
@@ -114,4 +116,5 @@ def timing(duty: Obligation) -> DutyTiming:
         legacy=duty.legacy,
         is_route_duty=duty.high_risk_route is not None,
         is_informational=duty.is_informational,
+        route=duty.high_risk_route,
     )

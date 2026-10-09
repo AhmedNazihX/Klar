@@ -17,6 +17,9 @@ const RISK_CLASSES = [
 const STATUSES = ['decided', 'needs_more_information', 'legally_ambiguous'] as const
 const ROLES = ['provider', 'deployer', 'importer', 'distributor'] as const
 const STEP_NAMES = ['scope', 'prohibited', 'high_risk', 'transparency', 'role_obligations'] as const
+/** A duty's key, as the result contract and duty_progress.obligation_key bound it. */
+const OBLIGATION_KEY_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
+const OBLIGATION_KEY_MAX = 200
 
 const CitationSchema = z.looseObject({
   provision_id: z.string(),
@@ -53,6 +56,8 @@ const StepSchema = z.looseObject({
 // one reads as empty (never undefined in a key), and an empty label shows the provision's name
 // (dutyLabel). One that is there must be a string, or the result is unreadable.
 const ObligationSchema = z.looseObject({
+  // The table's key a tick is saved under (P24); a duty stored before it has none.
+  key: z.string().max(OBLIGATION_KEY_MAX).regex(OBLIGATION_KEY_PATTERN).nullish(),
   article: z.string(),
   duty: z.string().default(''),
   label_en: z.string().default(''),

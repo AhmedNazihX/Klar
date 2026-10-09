@@ -347,6 +347,7 @@ def test_a_custom_table_is_used_when_given() -> None:
     duties = _list(Role.PROVIDER, RiskClass.HIGH_RISK, table=table)
     assert duties == (
         Obligation(
+            key="a-duty",
             duty="Do something.",
             duty_de="Etwas tun.",
             label_en="Do it",
@@ -569,3 +570,23 @@ def test_the_legacy_marking_leaves_other_classes_alone() -> None:
         Role.PROVIDER, RiskClass.LIMITED_RISK, legacy="legacy_unchanged"
     ).obligations
     assert limited == _list(Role.PROVIDER, RiskClass.LIMITED_RISK)
+
+
+def test_each_duty_carries_its_tables_key() -> None:
+    """The key a tick on the Obligations screen is saved under (`duty_progress.obligation_key`)."""
+    by_article = _by_article(_list(Role.DEPLOYER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III))
+    assert by_article["art:26:6"].key == "hr-deployer-logs"
+    assert by_article["art:26:1"].key == "hr-deployer-instructions"
+    assert by_article["art:4:1"].key == "ai-literacy"
+
+
+@pytest.mark.parametrize("role", list(Role))
+@pytest.mark.parametrize("risk_class", list(RiskClass))
+@pytest.mark.parametrize("route", list(HighRiskRoute))
+def test_a_roles_duties_have_distinct_keys(
+    role: Role, risk_class: RiskClass, route: HighRiskRoute
+) -> None:
+    """One tick per duty: no two duties a result lists for one role share a key."""
+    keys = [duty.key for duty in _list(role, risk_class, route)]
+    assert None not in keys
+    assert len(keys) == len(set(keys))

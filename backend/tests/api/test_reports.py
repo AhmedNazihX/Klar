@@ -5,10 +5,12 @@ made in the export workers."""
 import logging
 from collections.abc import Callable, Iterator
 from datetime import date
+from io import BytesIO
 from typing import Any
 
 import httpx
 import pytest
+from docx import Document
 from fastapi import FastAPI
 
 from aiact.api import create_app
@@ -17,6 +19,7 @@ from aiact.api.reports import (
     INVENTORY_MAX_CHARS,
     INVENTORY_MAX_LINES,
     RENDERERS,
+    ChecklistRequest,
     InventoryReportRequest,
     report_date,
 )
@@ -75,6 +78,10 @@ def report_app() -> Iterator[Callable[..., FastAPI]]:
 def _body(result: ClassificationResult | None = None, **fields: Any) -> dict[str, Any]:
     dumped = (result or worked_example_result()).model_dump(mode="json")
     return {"result": dumped, "language": "en", "format": "pdf", **fields}
+
+
+AMENDED = "amended"
+"""The checklist's law version when a test isn't about it."""
 
 
 def _tool(**fields: Any) -> dict[str, Any]:
@@ -460,3 +467,128 @@ async def test_every_table_duty_makes_a_report(
 
 def test_the_report_date_is_today() -> None:
     assert report_date() == date.today()
+
+
+def _checklist_tool() -> dict[str, Any]:
+    """Applicant screening with one duty ticked off and one open."""
+    return _tool(
+        duties=[
+            {"label": "Keep the logs", "article": "art:26:6", "applies_from": "2027-12-02"}
+            | {"is_done": True},
+            {"label": "Use it as instructed", "article": "art:26:1", "applies_from": "2027-12-02"},
+        ]
+    )
+
+
+async def test_the_checklist_is_a_pdf_with_each_duties_ticked_state(
+    client: httpx.AsyncClient,
+) -> None:
+    body = {"tools": [_checklist_tool()], "language": "en", "format": "pdf", "law_version": AMENDED}
+    response = await client.post("/reports/checklist", json=body)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.headers["content-disposition"] == (
+        'attachment; filename="klar-obligations-checklist.pdf"'
+    )
+    text = " ".join(pdf_pages(response.content))
+    assert "Applicant screening High-risk, Deployer. 1 of 2 done." in text
+    assert "Done Keep the logs it creates for at least six months Art. 26(6)" in text
+    assert "Open Use the tool as the vendor's instructions say Art. 26(1)" in text
+
+
+async def test_the_checklist_is_a_word_file_with_each_duties_ticked_state(
+    client: httpx.AsyncClient,
+) -> None:
+    body = {
+        "tools": [_checklist_tool()],
+        "language": "de",
+        "format": "docx",
+        "law_version": AMENDED,
+    }
+    response = await client.post("/reports/checklist", json=body)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == DOCX
+    assert response.headers["content-disposition"] == (
+        'attachment; filename="klar-obligations-checklist.docx"'
+    )
+    [table] = Document(BytesIO(response.content)).tables
+    rows = [[cell.text for cell in row.cells] for row in table.rows]
+    assert rows[0] == ["Stand", "Pflicht", "Vorschrift", "Gilt ab"]
+    assert [(row[0], row[2]) for row in rows[1:]] == [
+        ("Erledigt", "Art. 26 Abs. 6"),
+        ("Offen", "Art. 26 Abs. 1"),
+    ]
+    assert "1 von 2 erledigt." in " ".join(read_docx(response.content).paragraphs)
+
+
+async def test_the_checklist_keeps_the_inventory_reports_caps(client: httpx.AsyncClient) -> None:
+    body: dict[str, Any] = {"language": "en", "format": "docx", "law_version": AMENDED}
+    too_many = await client.post(
+        "/reports/checklist", json={**body, "tools": [_checklist_tool()] * 101}
+    )
+    not_a_flag = await client.post(
+        "/reports/checklist",
+        json={**body, "tools": [_tool(duties=[_tool()["duties"][0] | {"is_done": "maybe"}])]},
+    )
+    other_law = await client.post(
+        "/reports/checklist", json={**body, "tools": [_checklist_tool()], "law_version": "draft"}
+    )
+    no_law = await client.post(
+        "/reports/checklist",
+        json={"language": "en", "format": "docx", "tools": [_checklist_tool()]},
+    )
+    assert (too_many.status_code, not_a_flag.status_code) == (422, 422)
+    assert (other_law.status_code, no_law.status_code) == (422, 422)
+    for refused in (other_law, no_law):
+        assert any(error["loc"][-1] == "law_version" for error in refused.json()["errors"])
+    assert ChecklistRequest.model_fields["tools"].metadata[0].max_length == 100
+
+
+async def test_the_checklist_under_the_original_text_takes_its_route_dates(
+    client: httpx.AsyncClient,
+) -> None:
+    """The screen under ?law=original dates Annex III duties 2 August 2026 (P10's `routeDates`);
+    the checklist downloaded from it does too, with the screen's notice and the law it follows.
+    The amended export keeps the stored 2 December 2027 and has no notice."""
+    tools = [_checklist_tool()]
+    original = await client.post(
+        "/reports/checklist",
+        json={"tools": tools, "language": "en", "format": "pdf", "law_version": "original"},
+    )
+    amended = await client.post(
+        "/reports/checklist",
+        json={"tools": tools, "language": "en", "format": "pdf", "law_version": AMENDED},
+    )
+    original_text = " ".join(pdf_pages(original.content))
+    amended_text = " ".join(pdf_pages(amended.content))
+    notice = "Dates follow the original Art. 113. The duties shown are the amended text's."
+    assert "Art. 26(6) 2 August 2026" in original_text
+    assert "2 December 2027" not in original_text
+    assert notice in original_text
+    assert (
+        "Dates under Regulation (EU) 2024/1689 as published on 12 July 2024 (CELEX 32024R1689)."
+        in original_text
+    )
+    assert "Art. 26(6) 2 December 2027" in amended_text
+    assert notice not in amended_text
+    assert (
+        "Dates under Regulation (EU) 2024/1689 as amended, consolidated text of 27 July 2026 "
+        "(CELEX 02024R1689-20260727)."
+    ) in amended_text
+
+
+async def test_the_checklist_and_the_inventory_report_name_the_law_version(
+    client: httpx.AsyncClient,
+) -> None:
+    """Each tool's block says which text its result was checked under, as of when."""
+    checked = "Checked under the amended text, as it applies on 27 September 2026."
+    checklist = await client.post(
+        "/reports/checklist",
+        json={"tools": [_checklist_tool()], "language": "en", "format": "pdf"}
+        | {"law_version": AMENDED},
+    )
+    inventory = await client.post(
+        "/reports/inventory", json={"tools": [_tool()], "language": "en", "format": "pdf"}
+    )
+    assert checked in " ".join(pdf_pages(checklist.content))
+    assert checked in " ".join(pdf_pages(inventory.content))

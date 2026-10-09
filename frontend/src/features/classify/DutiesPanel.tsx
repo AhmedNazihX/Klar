@@ -1,32 +1,22 @@
 import type { TFunction } from 'i18next'
-import { useId, type JSX, type ReactNode } from 'react'
+import { useId, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { ClassificationResult, Obligation } from '@/api'
+import type { ClassificationResult } from '@/api'
 import { Citation } from '@/components/Citation'
 import { GlassPanel } from '@/components/GlassPanel'
 import { ObligationItem } from '@/components/ObligationItem'
 import { useLanguage } from '@/hooks/use-language'
-import type { Language } from '@/i18n'
 
-import { longDate } from './dates'
 import { OriginalDatesNote } from './OriginalDatesNote'
 import { provisionName } from './provision-names'
-import { citationSource, dutyLabel, isTransparencyDuty } from './result-text'
-
-/** The article column is wider in German (localisation.md: "Art. 26 Abs. 11"). */
-const REFERENCE_WIDTH: Record<Language, number> = { en: 86, de: 112 }
-
-/** The line under a duty: its Art. 111(2) marking (decision 026 item 24), or its condition. */
-function dutyNote(t: TFunction, obligation: Obligation, language: Language): ReactNode {
-  if (obligation.legacy === 'legacy_unchanged') return t('result.legacy.afterChange')
-  if (obligation.legacy === 'legacy_public_authority') {
-    return t('result.legacy.from', { date: longDate(obligation.applies_from, language) })
-  }
-  if (obligation.applies_if) return t('result.todo.onlyIf', { condition: obligation.applies_if })
-  if (obligation.is_informational) return t('result.todo.forInformation')
-  return null
-}
+import {
+  citationSource,
+  DUTY_REFERENCE_WIDTH,
+  dutyLabel,
+  dutyNote,
+  isTransparencyDuty,
+} from './result-text'
 
 /** The limited-risk intro promises a draft only when an Art. 50 duty has a template (C9 has
  *  them for 50(3) and 50(4)); otherwise it says what the duties ask, and no link shows. */
@@ -81,7 +71,7 @@ export function DutiesPanel({
               key={`${obligation.article}:${obligation.duty}`}
               label={dutyLabel(obligation, language)}
               reference={provisionName(obligation.article, language)}
-              referenceWidth={REFERENCE_WIDTH[language]}
+              referenceWidth={DUTY_REFERENCE_WIDTH[language]}
               note={dutyNote(t, obligation, language)}
               tag={obligation.legacy ? t('result.legacy.tag') : undefined}
               isInformational={obligation.is_informational ?? false}
