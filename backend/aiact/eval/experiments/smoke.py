@@ -7,6 +7,9 @@ Each model runs the merged engine nodes on the approved own cases, one probe per
 - scope (E3) on the B5b cases (`own/b`);
 - high_risk (E5) on INIT's worked example and the B5e cases (`own/e`);
 - role_obligations (E7) on the B5d cases (`own/d`) whose label names a role.
+X2's plan is these four (`X2_NODES`). X2b (refused requests) adds prohibited (E4) on the B5c
+cases (`own/c`) and transparency (E6) on the B5a cases (`own/a`), and narrows a run to some
+nodes and cases (`plan_probes(nodes=…, case_ids=…)`).
 
 Every check probe gets its replay test's state and is scored with the same rules
 (`matchers`, which the replay tests import too), so a model's accuracy here can be checked against
@@ -14,7 +17,7 @@ the committed Luna recordings. The node code, prompts and retrieval are the engi
 model and its pinned endpoint change, and the model makes no retries, so every billed attempt is
 one the probe counts.
 
-A probe's outcome is one of three:
+A probe's outcome is one of four:
 - **broken**: the model answered, but the answer doesn't fit the node's schema or the result
   contract (the node's `*OutputError`, or a `ValidationError` from the contract: cross-field rules
   aren't in the JSON Schema, decision 010 addendum). A reply cut off by the output cap
@@ -28,6 +31,8 @@ A probe's outcome is one of three:
   JSON at $0 cost; decision 023 addendum, part 7), and isn't looked up in the generation records.
   Not counted as broken or wrong, but too many of them make the comparison inconclusive (parts
   4-6). Every probe stores each call's cost, finish reason and native finish reason.
+- **refused**: the provider's content filter refused the call with no parseable answer: the
+  node returned its refusal outcome (decisions 029, 030). Not scored, and not broken.
 - **answered**: scored against the label (facts: not scored).
 
 A generation record that doesn't show up within the lookup's ~18 s window (or whose lookup fails
@@ -68,17 +73,19 @@ from langchain_core.outputs import Generation, LLMResult
 from openrouter.errors import NoResponseError, OpenRouterError
 from pydantic import JsonValue, ValidationError
 
-from aiact.engine.nodes import facts, high_risk, role_obligations, scope
+from aiact.engine.nodes import facts, high_risk, prohibited, role_obligations, scope, transparency
 from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
 from aiact.eval.experiments.matchers import (
     WORKED_EXAMPLE,
     high_risk_matches,
+    prohibited_matches,
     replay_state,
     role_check_state,
     role_matches,
     runs_role_check,
     scope_matches,
+    transparency_matches,
 )
 from aiact.eval.experiments.smoke_served import (
     Served,
@@ -93,6 +100,7 @@ from aiact.eval.runner import CaseRecord, RunStore, Score, label_record
 from aiact.llm import EmbeddingError, engine_chat_model
 from aiact.llm.generations import GenerationLookup, GenerationLookupError, GenerationPendingError
 from aiact.llm.structured import describe_validation_error
+from aiact.schemas import PROVIDER_REFUSAL
 from aiact.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -117,21 +125,38 @@ class NodeName(StrEnum):
 
     FACTS = "facts"
     SCOPE = "scope"
+    PROHIBITED = "prohibited"
     HIGH_RISK = "high_risk"
+    TRANSPARENCY = "transparency"
     ROLE = "role_obligations"
 
 
+X2_NODES = (NodeName.FACTS, NodeName.SCOPE, NodeName.HIGH_RISK, NodeName.ROLE)
+"""The nodes X2's plan probes (decision 023), the default."""
+CHECK_ORDER = (
+    NodeName.SCOPE,
+    NodeName.PROHIBITED,
+    NodeName.HIGH_RISK,
+    NodeName.TRANSPARENCY,
+    NodeName.ROLE,
+)
+"""The checks in the engine's order, as a plan lists them."""
+
 CASE_FOLDERS: Mapping[NodeName, str] = {
     NodeName.SCOPE: "b",
+    NodeName.PROHIBITED: "c",
     NodeName.ROLE: "d",
     NodeName.HIGH_RISK: "e",
+    NodeName.TRANSPARENCY: "a",
 }
 """The own-case folder (`eval/cases/own/<folder>`) each check is probed on."""
 
 MAX_OUTPUT_TOKENS: Mapping[NodeName, int] = {
     NodeName.FACTS: facts.MAX_OUTPUT_TOKENS,
     NodeName.SCOPE: scope.MAX_OUTPUT_TOKENS,
+    NodeName.PROHIBITED: prohibited.MAX_OUTPUT_TOKENS,
     NodeName.HIGH_RISK: high_risk.MAX_OUTPUT_TOKENS,
+    NodeName.TRANSPARENCY: transparency.MAX_OUTPUT_TOKENS,
     NodeName.ROLE: role_obligations.MAX_OUTPUT_TOKENS,
 }
 
@@ -170,16 +195,21 @@ class NodeTokens:
 
 
 TYPICAL_TOKENS: Mapping[NodeName, NodeTokens] = {
-    NodeName.FACTS: NodeTokens(prompt=1582, completion=1800, max_prompt=1587),
+    NodeName.FACTS: NodeTokens(prompt=2489, completion=2382, max_prompt=2550),
     NodeName.SCOPE: NodeTokens(prompt=4096, completion=1523, max_prompt=4433),
     NodeName.HIGH_RISK: NodeTokens(prompt=7972, completion=1017, max_prompt=8744),
     NodeName.ROLE: NodeTokens(prompt=1958, completion=1452, max_prompt=2194),
+    NodeName.PROHIBITED: NodeTokens(prompt=10408, completion=2006, max_prompt=11630),
+    NodeName.TRANSPARENCY: NodeTokens(prompt=6614, completion=1403, max_prompt=7707),
 }
 """Mean (and largest) tokens of one call, from the committed Luna recordings of each node's
-replay tests (47 calls, $0.052 in total). Completion tokens include Luna's reasoning, so for
+replay tests (X2: 47 calls, $0.052 in total). Completion tokens include Luna's reasoning, so for
 Gemini, which doesn't reason, the estimate is an upper bound. The role figures are C7b's
 recordings: its high-risk requests carry the Art. 111(2) section, at about 2,170 prompt and up to
-2,206 completion tokens of the node's 3,000 cap."""
+2,206 completion tokens of the node's 3,000 cap. The prohibited and transparency figures (X2b)
+are the answered calls of the E4 and E6 recordings committed on 2026-10-09: 9 prohibited calls
+(the 8 refused ones carry no usage) and 16 transparency calls; the facts figures, of the 78
+answered E13 facts recordings (its prompt grew for the thin-description check)."""
 
 PROMPT_MARGIN = 1.5
 """The worst-case prompt is the largest recorded one times this (longer descriptions)."""
@@ -220,17 +250,42 @@ def _folder_cases(node: NodeName, cases_dir: Path) -> tuple[BenchmarkCase, ...]:
     return tuple(case for path in paths for case in load_yaml_file(path))
 
 
-def plan_probes(cases_dir: Path = CASES_DIR) -> tuple[Probe, ...]:
-    """Every probe, checks first (scope, high_risk, role), then facts on each case they use."""
-    role_cases = (c for c in _folder_cases(NodeName.ROLE, cases_dir) if runs_role_check(c))
-    checks = (
-        *(Probe(NodeName.SCOPE, c) for c in _folder_cases(NodeName.SCOPE, cases_dir)),
-        Probe(NodeName.HIGH_RISK, WORKED_EXAMPLE),
-        *(Probe(NodeName.HIGH_RISK, c) for c in _folder_cases(NodeName.HIGH_RISK, cases_dir)),
-        *(Probe(NodeName.ROLE, c) for c in role_cases),
-    )
-    cases = {probe.case.id: probe.case for probe in checks}
-    return (*checks, *(Probe(NodeName.FACTS, case) for case in cases.values()))
+def _check_cases(node: NodeName, cases_dir: Path) -> tuple[BenchmarkCase, ...]:
+    """The cases `node` is probed on: its folder; high_risk also INIT's worked example, and the
+    role check only the cases whose label names a role."""
+    cases = _folder_cases(node, cases_dir)
+    if node is NodeName.HIGH_RISK:
+        return (WORKED_EXAMPLE, *cases)
+    if node is NodeName.ROLE:
+        return tuple(case for case in cases if runs_role_check(case))
+    return cases
+
+
+class UnknownCaseError(ValueError):
+    """A case id asked for that no probe of the planned nodes has."""
+
+
+def plan_probes(
+    cases_dir: Path = CASES_DIR,
+    *,
+    nodes: Sequence[NodeName] = X2_NODES,
+    case_ids: Sequence[str] = (),
+) -> tuple[Probe, ...]:
+    """Every probe of `nodes`: the checks first, in the engine's order, then facts on each case
+    they use (on every check's cases when facts is the only node). With `case_ids`, only those
+    cases' probes; raises `UnknownCaseError` for an id no probe of `nodes` has."""
+    checks = [node for node in CHECK_ORDER if node in nodes]
+    probes = [Probe(n, c) for n in checks for c in _check_cases(n, cases_dir)]
+    if NodeName.FACTS in nodes:
+        used = probes or [Probe(n, c) for n in CHECK_ORDER for c in _check_cases(n, cases_dir)]
+        cases = {probe.case.id: probe.case for probe in used}
+        probes += [Probe(NodeName.FACTS, case) for case in cases.values()]
+    if not case_ids:
+        return tuple(probes)
+    unknown = sorted(set(case_ids) - {probe.case.id for probe in probes})
+    if unknown:
+        raise UnknownCaseError(f"no probe of the planned nodes has the case(s) {unknown}")
+    return tuple(probe for probe in probes if probe.case.id in case_ids)
 
 
 def probe_state(probe: Probe) -> EngineState:
@@ -242,9 +297,19 @@ def probe_state(probe: Probe) -> EngineState:
 
 MATCHERS: Mapping[NodeName, Callable[[CheckOutcome, BenchmarkCase], bool]] = {
     NodeName.SCOPE: scope_matches,
+    NodeName.PROHIBITED: prohibited_matches,
     NodeName.HIGH_RISK: high_risk_matches,
+    NodeName.TRANSPARENCY: transparency_matches,
     NodeName.ROLE: role_matches,
 }
+
+
+def is_refused(outcome: FactsOutcome | CheckOutcome) -> bool:
+    """Whether the node returned its refusal outcome: the provider's content filter refused the
+    call with no parseable answer (decisions 029, 030)."""
+    if isinstance(outcome, CheckOutcome):
+        return outcome.step.error == PROVIDER_REFUSAL
+    return any(q.id == facts.PERSON_REVIEW_ID for q in outcome.follow_up_questions)
 
 
 def is_correct(probe: Probe, outcome: FactsOutcome | CheckOutcome) -> bool | None:
@@ -384,15 +449,21 @@ def engine_node(node: NodeName, settings: Settings, tracker: UsageTracker) -> No
         return facts.FactExtractor(settings, chat=chat)
     if node is NodeName.SCOPE:
         return scope.ScopeCheck(settings, chat=chat)
+    if node is NodeName.PROHIBITED:
+        return prohibited.ProhibitedCheck(settings, chat=chat)
     if node is NodeName.HIGH_RISK:
         return high_risk.HighRiskCheck(settings, chat=chat)
+    if node is NodeName.TRANSPARENCY:
+        return transparency.TransparencyCheck(settings, chat=chat)
     return role_obligations.RoleObligationsCheck(settings, chat=chat)
 
 
 BROKEN_OUTPUT_ERRORS: tuple[type[Exception], ...] = (
     facts.FactsOutputError,
     scope.ScopeOutputError,
+    prohibited.ProhibitedOutputError,
     high_risk.HighRiskOutputError,
+    transparency.TransparencyOutputError,
     role_obligations.RoleOutputError,
     ValidationError,
 )
@@ -423,6 +494,7 @@ def is_no_answer(exc: Exception) -> bool:
 
 class ProbeKind(StrEnum):
     ANSWERED = "answered"
+    REFUSED = "refused"
     BROKEN = "broken"
     FAILED = "failed"
 
@@ -450,6 +522,8 @@ def _run_node(probe: Probe, node: NodeRunner, state: EngineState) -> _Ran:
             raise
         logger.warning("probe %s got no answer: %s", probe.probe_id, type(exc).__name__)
         return _Ran(ProbeKind.FAILED, {"error": _error(exc)}, None)
+    if is_refused(outcome):
+        return _Ran(ProbeKind.REFUSED, outcome.model_dump(mode="json"), None)
     return _Ran(ProbeKind.ANSWERED, outcome.model_dump(mode="json"), is_correct(probe, outcome))
 
 
@@ -518,6 +592,7 @@ def run_probe(
     scores: dict[str, Score] = {
         "broken": ran.kind is ProbeKind.BROKEN,
         "failed": ran.kind is ProbeKind.FAILED,
+        "refused": ran.kind is ProbeKind.REFUSED,
         "correct": ran.correct,
         "served_as_pinned": served.as_pinned,
         "pending_verification": bool(served.pending),

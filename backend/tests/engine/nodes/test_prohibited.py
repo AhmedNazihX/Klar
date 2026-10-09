@@ -936,6 +936,12 @@ def _filtered(content: str) -> GenericFakeChatModel:
     return GenericFakeChatModel(messages=iter([reply]))
 
 
+ORIGINAL_REVIEW = {
+    Language.EN: "Please have a person review the description: does the system fall under a "
+    "practice Art. 5(1) prohibits?",
+    Language.DE: "Bitte lassen Sie die Beschreibung von einem Menschen prüfen: Fällt das System "
+    "unter eine nach Art. 5 Abs. 1 verbotene Praktik?",
+}
 NOT_ASSESSED_EN = NOT_ASSESSED["en"]
 NOT_ASSESSED_DE = NOT_ASSESSED["de"]
 
@@ -985,6 +991,8 @@ def test_a_refusal_under_the_original_text_names_no_point_ba_or_bb(
     assert step.status is Status.NEEDS_MORE_INFORMATION
     assert cited(result) == ["art:5:1"]
     assert step.decision == expected
+    assert step.missing_fact is not None
+    assert step.missing_fact.text == ORIGINAL_REVIEW[language]
 
 
 @pytest.mark.parametrize("as_of", [BEFORE_DECEMBER, AFTER_DECEMBER])

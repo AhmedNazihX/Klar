@@ -305,10 +305,12 @@ def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutco
     assessed, and no class until a person reviews it. It cites what the reviewer checks (E16),
     fetched from `library`: points (ba) and (bb), which the review question asks about; before 2
     December 2026, when they don't apply yet, the rest of the Art. 5(1) list and their start
-    date, Art. 113(a); under the original text, which has neither point, the Art. 5(1) list."""
+    date, Art. 113(a); under the original text, which has neither point, the Art. 5(1) list,
+    and the review question asks about that list instead."""
     cited: tuple[str, ...] = REFUSAL_CITATIONS
+    review = texts.PERSON_REVIEW
     if state["law_version"] is LawVersion.ORIGINAL:
-        cited = REFUSAL_CITATIONS_ORIGINAL
+        cited, review = REFUSAL_CITATIONS_ORIGINAL, texts.PERSON_REVIEW_ORIGINAL
     elif state["as_of"] < DECEMBER_PROHIBITIONS_APPLY_FROM:
         cited = REFUSAL_CITATIONS_BEFORE_DECEMBER
     language = state["language"]
@@ -316,7 +318,7 @@ def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutco
         StepName.PROHIBITED,
         language,
         cited_provisions(cited, state, library),
-        ask(texts.PERSON_REVIEW, language, StepName.PROHIBITED),
+        ask(review, language, StepName.PROHIBITED),
     )
 
 

@@ -293,6 +293,16 @@ PERSON_REVIEW = _question(
     "Material, in dem Kinder vorkommen (Art. 5 Abs. 1 Buchst. ba, bb)?",
     is_yes_no=False,
 )
+PERSON_REVIEW_ORIGINAL = _question(
+    "person_review_original",
+    "art:5:1",
+    "Please have a person review the description: does the system fall under a practice "
+    "Art. 5(1) prohibits?",
+    "Bitte lassen Sie die Beschreibung von einem Menschen prüfen: Fällt das System unter eine "
+    "nach Art. 5 Abs. 1 verbotene Praktik?",
+    is_yes_no=False,
+)
+"""The review question under the original text, which has no points (ba) or (bb)."""
 
 # --- Naming and decision sentences --------------------------------------------------------------
 
