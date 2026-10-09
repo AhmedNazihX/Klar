@@ -9,6 +9,7 @@ from aiact.schemas import (
     Status,
     StepName,
 )
+from aiact.schemas.result import STOPPING_STEPS
 from tests.schemas.builders import (
     ambiguous,
     dumped_steps,
@@ -220,6 +221,19 @@ def test_a_refused_result_cut_short_is_rejected() -> None:
         _refused_result(
             StepName.PROHIBITED, steps=steps_with(refused(StepName.PROHIBITED), 2), role=None
         )
+
+
+@pytest.mark.parametrize("count", [3, 4])
+def test_a_refused_result_cut_short_after_a_decided_check_that_cannot_stop_is_rejected(
+    count: int,
+) -> None:
+    """A decided last step ends a refused run early only when it is a stopping check: a run cut
+    after a decided high_risk (or transparency) step is incomplete, not ended early."""
+    steps = steps_with(refused(StepName.SCOPE), count)
+    assert steps[-1]["step"] not in STOPPING_STEPS
+    assert steps[-1]["status"] is Status.DECIDED
+    with pytest.raises(ValidationError, match="lists every check, or ends after a stopping"):
+        _refused_result(StepName.SCOPE, steps=steps, role=None)
 
 
 def test_a_refused_result_may_end_after_a_stopping_check_that_decided() -> None:

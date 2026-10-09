@@ -109,6 +109,21 @@ def test_a_refused_probe_is_neither_a_reply_nor_scored() -> None:
     )
 
 
+def test_a_refused_gemini_probe_is_neither_a_reply_nor_scored() -> None:
+    """The same rule on Gemini's side: its refusal, stored with a correct score, is counted as
+    refused, out of its replies (the broken share's base) and out of the accuracy."""
+    luna = [*scores(10), ProbeScore("scope:c-010", ProbeKind.ANSWERED, False)]
+    gemini = [*scores(10), ProbeScore("scope:c-010", ProbeKind.REFUSED, True)]
+    result = compare(luna, gemini)
+    assert (result.gemini.refused, result.gemini.replied, result.luna.refused) == (1, 10, 0)
+    assert (result.scored, result.luna_correct, result.gemini_correct) == (10, 10, 10)
+    assert result.verdict is Verdict.KEEP_LUNA
+    text = smoke_verdict.format_comparison(result, {})
+    assert (
+        f"| {GEMINI.model} | - | 0/10 (0.0%) | 0/11 (0.0%) | 1/11 (9.1%) | 10/10 (100.0%) |" in text
+    )
+
+
 def test_many_unanswered_luna_probes_make_it_inconclusive() -> None:
     result = compare(scores(15, failed=5), scores(20))
     assert result.verdict is Verdict.INCONCLUSIVE

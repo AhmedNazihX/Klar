@@ -102,9 +102,7 @@ describe('ProgressPanel, a check the model provider refused (decision 030)', () 
     expect(within(alert).getByRole('button', { name: 'Save for later' })).toBeInTheDocument()
     expect(alert).not.toHaveTextContent("The checks couldn't finish")
     expect(screen.queryByText("The checks couldn't start")).toBeNull()
-    expect(
-      screen.getByText('Every check ran, but not every check could be assessed.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Not every check could be assessed.')).toBeInTheDocument()
     expect(
       screen.getByText("Blocked by the model provider's content filter: not assessed."),
     ).toBeInTheDocument()
@@ -127,11 +125,46 @@ describe('ProgressPanel, a check the model provider refused (decision 030)', () 
     )
     expect(within(alert).queryByRole('button', { name: 'Erneut versuchen' })).toBeNull()
     expect(within(alert).getByRole('button', { name: 'Für später speichern' })).toBeInTheDocument()
-    expect(
-      screen.getByText('Alle Prüfungen sind gelaufen, aber nicht jede konnte bewertet werden.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Nicht jede Prüfung konnte bewertet werden.')).toBeInTheDocument()
     expect(
       screen.getByText('Vom Inhaltsfilter des Modellanbieters blockiert: nicht geprüft.'),
     ).toBeInTheDocument()
+  })
+})
+
+describe('ProgressPanel, a refused check followed by a stopping check that ended the run', () => {
+  /** Scope refused, then a decided Art. 5 match ended the run: the later checks never ran. */
+  function endedEarly(): ProgressState {
+    const [scope, prohibited] = providerRefused().steps
+    if (!scope || !prohibited) throw new Error('The fixture lists every check.')
+    const steps = [
+      { ...scope, status: 'needs_more_information' as const, error: 'provider_refusal' },
+      { ...prohibited, status: 'decided' as const },
+    ]
+    return {
+      facts: { count: 3, questions: 1 },
+      started: steps.map((step) => step.step),
+      steps: Object.fromEntries(steps.map((step) => [step.step, { result: step, matches: [] }])),
+      stoppedAt: null,
+    }
+  }
+
+  it.each([
+    ['en', 'Not every check could be assessed.', 'Every check ran'],
+    ['de', 'Nicht jede Prüfung konnte bewertet werden.', 'Alle Prüfungen sind gelaufen'],
+  ] as const)('never says every check ran (%s)', async (language, subtitle, claim) => {
+    await i18n.changeLanguage(language)
+    renderWithProviders(
+      <ProgressPanel
+        progress={endedEarly()}
+        isRunning={false}
+        failure={{ kind: 'provider_refused', steps: ['scope'], questions: [PERSON_REVIEW.text] }}
+        onTryAgain={() => {}}
+        onSaveForLater={() => {}}
+      />,
+    )
+    await screen.findByRole('alert')
+    expect(screen.getByText(subtitle)).toBeInTheDocument()
+    expect(screen.queryByText(new RegExp(claim))).toBeNull()
   })
 })

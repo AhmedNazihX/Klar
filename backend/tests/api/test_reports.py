@@ -124,21 +124,26 @@ async def test_a_german_word_report(client: httpx.AsyncClient) -> None:
     assert word.language == "de"
 
 
-@pytest.mark.parametrize(
-    "result",
-    [needs_description(), stored_before_decision_030(worked_example_result())],
-    ids=["needs_description", "check_not_assessed"],
-)
-async def test_a_result_with_no_class_is_a_422(
-    client: httpx.AsyncClient, result: ClassificationResult
-) -> None:
-    """A result stored before decision 030 lists a refused check next to the class it assumed:
-    that class rests on a check nobody assessed, so no report states it."""
-    response = await client.post("/reports/result", json=_body(result))
+async def test_a_result_with_no_class_is_a_422(client: httpx.AsyncClient) -> None:
+    response = await client.post("/reports/result", json=_body(needs_description()))
     assert response.status_code == 422
     assert response.json() == {
         "detail": "This result has no class yet, so there is no report to make. "
         "Describe the tool first."
+    }
+
+
+async def test_a_result_with_a_check_not_assessed_is_a_422_that_says_so(
+    client: httpx.AsyncClient,
+) -> None:
+    """A result stored before decision 030 lists a refused check next to the class it assumed:
+    that class rests on a check nobody assessed, so no report states it."""
+    stored = stored_before_decision_030(worked_example_result())
+    response = await client.post("/reports/result", json=_body(stored))
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": "A check of this result was not assessed, so it has no class to report. "
+        "Classify the tool again, or have a person review that check."
     }
 
 

@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import type { ClassificationResult } from '@/api'
 
+import { hasAssessedClass } from './risk-class'
 import { parseStoredResult } from './stored-result'
 
 // The user's tools and their runs in Supabase (story P6): systems and classifications (P3, P19),
@@ -16,7 +17,9 @@ export type InventoryTool = {
   name: string | null
   description: string
   createdAt: string
-  /** The latest run's result; null while the tool has none, or when it can't be read. */
+  /** The latest run's result; null while the tool has none, when it can't be read, or when it
+   *  has no assessed class (`hasAssessedClass`: a result stored before decision 030 with a
+   *  check not assessed), so every screen and export shows the tool as not classified yet. */
   result: ClassificationResult | null
   /** A run exists but its stored result isn't one Klar can show (an edited or broken file). */
   hasUnreadableResult: boolean
@@ -36,14 +39,14 @@ type ToolRow = z.infer<typeof ToolRowSchema>
 
 function toTool(row: ToolRow): InventoryTool {
   const hasRun = row.run_no !== null
-  const result = hasRun ? parseStoredResult(row.result) : null
+  const stored = hasRun ? parseStoredResult(row.result) : null
   return {
     toolId: row.id,
     name: row.name,
     description: row.description,
     createdAt: row.created_at,
-    result,
-    hasUnreadableResult: hasRun && result === null,
+    result: stored && hasAssessedClass(stored) ? stored : null,
+    hasUnreadableResult: hasRun && stored === null,
   }
 }
 

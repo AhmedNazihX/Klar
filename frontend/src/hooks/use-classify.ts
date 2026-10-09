@@ -28,10 +28,11 @@ export type ClassifyFailure =
   /** The description was too thin to start (E13): no check ran and no class was given. Carries
    *  the engine's three questions (what it decides, who it affects, bought or built). */
   | { kind: 'needs_description'; questions: string[] }
-  /** Every check ran, but the model provider's content filter blocked one or more (decision 030):
-   *  no class is given and a person must review the description. Carries the blocked checks
-   *  (`not_assessed`) and their person-review questions. Trying again would likely be blocked
-   *  again, so no retry is offered. */
+  /** The run finished (every check, or up to a stopping check that decided), but the model
+   *  provider's content filter blocked one or more checks (decision 030): no class is given and
+   *  a person must review the description. Carries the blocked checks (`not_assessed`) and their
+   *  person-review questions. Trying again would likely be blocked again, so no retry is
+   *  offered. */
   | { kind: 'provider_refused'; steps: StepName[]; questions: string[] }
 
 export class ClassifyRunError extends Error {

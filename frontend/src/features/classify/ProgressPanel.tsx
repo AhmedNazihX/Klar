@@ -117,8 +117,10 @@ function subtitle(t: TFunction, progress: ProgressState, failure: ClassifyFailur
   return stoppedTitle(t, progress)
 }
 
-/** Every check ran but the model provider blocked some (decision 030): which ones, and that a
- *  person must review the description. No Try again: the filter would likely block it again. */
+/** The model provider blocked some checks (decision 030): which ones, and that a person must
+ *  review the description. The run went on to every check, or ended at a later stopping check
+ *  that decided, so nothing here says every check ran. No Try again: the filter would likely
+ *  block it again. */
 function RefusedAlert({
   failure,
   onSaveForLater,

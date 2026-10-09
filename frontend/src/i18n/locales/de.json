@@ -512,7 +512,7 @@
     },
     "refused": {
       "title": "Ein Mensch muss diese Beschreibung prüfen",
-      "subtitle": "Alle Prüfungen sind gelaufen, aber nicht jede konnte bewertet werden.",
+      "subtitle": "Nicht jede Prüfung konnte bewertet werden.",
       "blocked": "Der Inhaltsfilter des Modellanbieters hat diese Prüfungen blockiert:",
       "row": "Vom Inhaltsfilter des Modellanbieters blockiert: nicht geprüft.",
       "body": "Ihre Beschreibung bleibt erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb gibt es kein Ergebnis."

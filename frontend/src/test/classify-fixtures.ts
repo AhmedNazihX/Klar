@@ -103,6 +103,26 @@ export function providerRefused(): ClassificationResult {
   }
 }
 
+/** The worked example as decision 029 stored it with its transparency check refused, before
+ *  decision 030: the refused check listed in `not_assessed`, the class and its duties kept. */
+export function storedBeforeDecision030(): ClassificationResult {
+  return {
+    ...WORKED_EXAMPLE,
+    status: 'needs_more_information',
+    not_assessed: ['transparency'],
+    steps: withSteps(WORKED_EXAMPLE, (step) =>
+      step.step === 'transparency'
+        ? {
+            ...step,
+            status: 'needs_more_information',
+            missing_fact: PERSON_REVIEW,
+            error: 'provider_refusal',
+          }
+        : step,
+    ),
+  }
+}
+
 // The duties below carry the texts of C9's obligations table (supabase/seed/obligations.yaml).
 const AI_LITERACY_PROVIDER: Obligation = {
   duty: 'Take measures to support the AI literacy of staff and others who operate or use the system on your behalf.',
@@ -360,7 +380,6 @@ export function outOfScope(): ClassificationResult {
     legal_review: null,
     obligations: [AI_LITERACY],
     follow_up_questions: [],
-    not_assessed: ['prohibited', 'high_risk', 'transparency', 'role_obligations'],
     steps: [
       {
         ...scope,

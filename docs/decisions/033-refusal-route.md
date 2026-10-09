@@ -122,7 +122,7 @@ for each check the filter blocked, not once per description.
   Vertex AI in der EU gesendet (keine Datenspeicherung beim Anbieter, kein Training), für jede blockierte Prüfung.
   Das geschieht nur, wenn der Filter sie blockiert."
 
-The privacy notice names Google as a processor for these descriptions, reached through OpenRouter.
+The privacy notice names Google as a processor for these requests, reached through OpenRouter.
 
 ## If the second model also refuses
 The fallback is an own Azure deployment with modified content filters (off OpenRouter; it needs Microsoft's approval;

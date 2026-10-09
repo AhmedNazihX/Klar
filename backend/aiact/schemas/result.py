@@ -25,8 +25,11 @@ from aiact.schemas.steps import PROVIDER_REFUSAL, STEP_ORDER, StepName, StepResu
 
 SCOPE_ONLY = STEP_ORDER[: STEP_ORDER.index(StepName.SCOPE) + 1]
 UP_TO_ART_5 = STEP_ORDER[: STEP_ORDER.index(StepName.PROHIBITED) + 1]
-STOPPING_STEPS = frozenset({StepName.SCOPE, StepName.PROHIBITED})
-"""The checks that may end a run early (decision 010): out of scope, or prohibited."""
+STOPPING_STEPS: frozenset[StepName] = frozenset({StepName.SCOPE, StepName.PROHIBITED})
+"""The checks that may end a run early (decision 010): out of scope (Art. 2-3), or prohibited
+(Art. 5). The engine (`aiact.engine.graph`) stops only when such a check matched and may end the
+run; a result's rule here is looser: a refused result may end after a stopping check that decided
+whether or not it matched, since the schema can't see the check's finding."""
 
 
 def can_end_run(step: StepResult) -> bool:

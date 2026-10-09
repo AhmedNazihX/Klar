@@ -273,9 +273,12 @@ class PreparedRun:
 def prepare_run(
     connection: psycopg.Connection, run_id: UUID, cases_dir: Path | None = None
 ) -> PreparedRun:
-    """Read one stored run and pick its qualifying probes; reads only."""
+    """Read one stored run and pick its qualifying probes; reads only. Its rows are looked up in
+    the plan of every node, which holds the probes of any narrower plan (X2's, or an X2b run of
+    some nodes or cases) as well as the prohibited, transparency and thin-case facts probes."""
     arm, rows = _load(connection, run_id)
-    probes = {probe.probe_id: probe for probe in plan_probes(cases_dir or CASES_DIR)}
+    every_probe = plan_probes(cases_dir or CASES_DIR, nodes=tuple(NodeName))
+    probes = {probe.probe_id: probe for probe in every_probe}
     chosen = tuple(row for row in rows if qualifies(row))
     rescored = {row.case_id: rescore(_probe_for(row, probes), row.predicted) for row in chosen}
     ids = {row.case_id: _generation_ids(row) for row in chosen}

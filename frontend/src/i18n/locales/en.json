@@ -512,7 +512,7 @@
     },
     "refused": {
       "title": "A person must review this description",
-      "subtitle": "Every check ran, but not every check could be assessed.",
+      "subtitle": "Not every check could be assessed.",
       "blocked": "The model provider's content filter blocked these checks:",
       "row": "Blocked by the model provider's content filter: not assessed.",
       "body": "Your description is kept. Klar never guesses a class for a check it couldn't assess, so there's no result."

@@ -12,7 +12,8 @@ import { toolName } from './result-text'
 
 /**
  * A tool in the inventory with no result to show: it was never checked (a tool restored from a
- * file without its runs), or its saved result can't be read. "Classify this tool" opens Classify
+ * file without its runs, or one whose result, stored before decision 030, rests on a check not
+ * assessed: `hasAssessedClass`), or its saved result can't be read. "Classify this tool" opens Classify
  * with its name and description in the form, and the run is saved on this tool (its next run),
  * not as a new one; nothing runs until the user starts the checks.
  */

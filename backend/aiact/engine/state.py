@@ -25,9 +25,7 @@ from aiact.schemas import (
     StepResult,
 )
 from aiact.schemas.base import ContractModel
-
-STOPPING_STEPS: frozenset[StepName] = frozenset({StepName.SCOPE, StepName.PROHIBITED})
-"""The checks whose match may end the run early: out_of_scope (Art. 2-3) and prohibited (Art. 5)."""
+from aiact.schemas.result import STOPPING_STEPS
 
 
 class FactsOutcome(ContractModel):

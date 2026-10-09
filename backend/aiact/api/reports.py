@@ -10,7 +10,8 @@ outcomes are the user's own run, written in the report's own sentences; the duti
 wording, conditions and labels come from the obligations table, looked up by the result's class,
 role, article and law version, never from the posted result (`aiact.report.duties`), and the
 notice is the report language's own. A result with no class (needs a description, E13) has
-nothing to report: a 422. The inventory report takes each tool as the summary its stored result
+nothing to report: a 422; so has one that lists a check not assessed (`assessed_class`, decision
+030), with its own message. The inventory report takes each tool as the summary its stored result
 gives (`InventoryTool`), since a whole inventory of results would not fit the body cap.
 
 A report is a file like a drafted document's export, made the same way (`aiact.api.files`): the
@@ -60,6 +61,10 @@ RESULT_STEM = "klar-report"
 INVENTORY_STEM = "klar-inventory-report"
 
 NO_CLASS = "This result has no class yet, so there is no report to make. Describe the tool first."
+NOT_ASSESSED = (
+    "A check of this result was not assessed, so it has no class to report. Classify the tool "
+    "again, or have a person review that check."
+)
 TOO_LONG = "This report is too long to make into a file."
 TIMED_OUT = "Making this report took too long. Please try again."
 
@@ -124,16 +129,18 @@ def export_result_report(
     """The report for a lawyer: the result, its facts and their sources, the steps and the
     provisions they cite, the duties, the points for legal review and a box for the reviewer to
     sign, as a PDF or Word file. Guidance, not legal advice."""
+    result = valid_result(body.result)
     try:
         paper = result_report(
-            valid_result(body.result),
+            result,
             language=body.language,
             prepared_on=prepared_on,
             tool_name=body.tool_name,
             company=body.company,
         )
     except NoClassError:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, NO_CLASS) from None
+        message = NOT_ASSESSED if result.not_assessed else NO_CLASS
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, message) from None
     refuse_too_long(paper, TOO_LONG)
     return _file(request, context, paper, body.format, RESULT_STEM)
 
