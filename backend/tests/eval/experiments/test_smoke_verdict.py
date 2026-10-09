@@ -91,6 +91,24 @@ def test_accuracy_uses_only_probes_both_models_replied_to() -> None:
     assert (result.luna_correct, result.gemini_correct) == (8, 9)
 
 
+def test_a_refused_probe_is_neither_a_reply_nor_scored() -> None:
+    """X2b: a refusal is counted in its own column, out of the broken share and the accuracy,
+    even when its row carries a correct score (a recheck before X2b's fix stored False)."""
+    luna = [*scores(10), ProbeScore("scope:c-010", ProbeKind.REFUSED, False)]
+    gemini = [*scores(10), ProbeScore("scope:c-010", ProbeKind.ANSWERED, True)]
+    result = compare(luna, gemini)
+    assert (result.luna.refused, result.luna.replied, result.gemini.refused) == (1, 10, 0)
+    assert (result.scored, result.luna_correct, result.gemini_correct) == (10, 10, 10)
+    assert result.verdict is Verdict.KEEP_LUNA
+    text = smoke_verdict.format_comparison(result, {})
+    assert (
+        "| Model | Run id | Broken answers | No answer | Refused | Accuracy (same probes) |" in text
+    )
+    assert (
+        f"| {LUNA.model} | - | 0/10 (0.0%) | 0/11 (0.0%) | 1/11 (9.1%) | 10/10 (100.0%) |" in text
+    )
+
+
 def test_many_unanswered_luna_probes_make_it_inconclusive() -> None:
     result = compare(scores(15, failed=5), scores(20))
     assert result.verdict is Verdict.INCONCLUSIVE
@@ -191,8 +209,13 @@ def test_the_comparison_table_names_the_run_ids_and_the_verdict() -> None:
     luna_id, gemini_id = uuid4(), uuid4()
     comparison = compare(scores(8, 1, broken=1), scores(9, 1))
     text = smoke_verdict.format_comparison(comparison, {"luna": luna_id, "gemini": gemini_id})
-    luna_row = f"| {LUNA.model} | {luna_id} | 1/10 (10.0%): scope 1 | 0/10 (0.0%) | 8/10 (80.0%) |"
-    gemini_row = f"| {GEMINI.model} | {gemini_id} | 0/10 (0.0%) | 0/10 (0.0%) | 9/10 (90.0%) |"
+    luna_row = (
+        f"| {LUNA.model} | {luna_id} | 1/10 (10.0%): scope 1 | 0/10 (0.0%) | 0/10 (0.0%) | "
+        "8/10 (80.0%) |"
+    )
+    gemini_row = (
+        f"| {GEMINI.model} | {gemini_id} | 0/10 (0.0%) | 0/10 (0.0%) | 0/10 (0.0%) | 9/10 (90.0%) |"
+    )
     assert luna_row in text
     assert gemini_row in text
     assert "Verdict: drop_luna" in text

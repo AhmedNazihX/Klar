@@ -35,7 +35,13 @@ from tests.drafting.builders import (
 )
 from tests.drafting.vendor_builders import prohibited_result
 from tests.export.reading import one_line, pdf_pages, read_docx
-from tests.schemas.builders import ends_early, needs_description, rebuild, steps_with, unverified
+from tests.schemas.builders import (
+    ends_early,
+    needs_description,
+    rebuild,
+    steps_with,
+    stored_before_decision_030,
+)
 from tests.schemas.worked_example import worked_example_result
 
 PREPARED_ON = date(2026, 10, 1)
@@ -324,17 +330,13 @@ def test_an_open_question_and_a_missing_fact_are_points_for_legal_review() -> No
     assert "Missing fact (3 High-risk): Is the tool used in the EU?" in paused
 
 
-def test_a_check_not_assessed_is_a_point_for_legal_review() -> None:
-    refused = unverified(StepName.HIGH_RISK).model_copy(update={"error": "provider_refusal"})
-    result = rebuild(
-        worked_example_result(),
-        status=Status.NEEDS_MORE_INFORMATION,
-        steps=steps_with(refused),
-        not_assessed=(StepName.HIGH_RISK,),
-    )
-    pages = " ".join(_pages(result))
-    assert "3 High-risk Not assessed: a person must review this check." in pages
-    assert "Not assessed (3 High-risk): the model provider declined to assess this check" in pages
+def test_a_result_with_a_check_not_assessed_has_no_report() -> None:
+    """Decision 030: a class next to a check nobody assessed (a result stored before 030) is
+    never stated, so there is no report to make."""
+    result = stored_before_decision_030(worked_example_result())
+    assert result.risk_class is not None
+    with pytest.raises(NoClassError):
+        _report(result)
 
 
 def test_nothing_open_says_so() -> None:

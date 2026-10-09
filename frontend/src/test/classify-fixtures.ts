@@ -65,6 +65,44 @@ export function decidedHighRisk(): ClassificationResult {
   }
 }
 
+/** The person-review question of a prohibited check the provider refused, as the engine asks it
+ *  under the original text (prohibited_texts.PERSON_REVIEW_ORIGINAL). */
+export const PERSON_REVIEW: FollowUpQuestion = {
+  id: 'person_review_original',
+  text: 'Please have a person review the description: does the system fall under a practice Art. 5(1) prohibits?',
+  about: 'art:5:1',
+  hint: null,
+  options: [],
+}
+
+/** The worked example with its prohibited check refused by the model provider's content filter
+ *  (decision 030): every step, no class and nothing a class brings. */
+export function providerRefused(): ClassificationResult {
+  return {
+    ...WORKED_EXAMPLE,
+    risk_class: null,
+    status: 'needs_more_information',
+    annex_point: null,
+    transparency_duties: [],
+    obligations: [],
+    legal_review: null,
+    not_assessed: ['prohibited'],
+    follow_up_questions: [...(WORKED_EXAMPLE.follow_up_questions ?? []), PERSON_REVIEW],
+    steps: withSteps(WORKED_EXAMPLE, (step) =>
+      step.step === 'prohibited'
+        ? {
+            ...step,
+            status: 'needs_more_information',
+            decision:
+              "The model provider's content filter blocked this description, so it could not be assessed automatically. No risk class is given: a person must review the description.",
+            missing_fact: PERSON_REVIEW,
+            error: 'provider_refusal',
+          }
+        : step,
+    ),
+  }
+}
+
 // The duties below carry the texts of C9's obligations table (supabase/seed/obligations.yaml).
 const AI_LITERACY_PROVIDER: Obligation = {
   duty: 'Take measures to support the AI literacy of staff and others who operate or use the system on your behalf.',

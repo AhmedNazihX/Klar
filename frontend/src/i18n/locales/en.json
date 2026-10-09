@@ -510,6 +510,13 @@
       "title": "Klar needs a little more to start",
       "waiting": "Waiting for a description. Nothing is guessed in the meantime."
     },
+    "refused": {
+      "title": "A person must review this description",
+      "subtitle": "Every check ran, but not every check could be assessed.",
+      "blocked": "The model provider's content filter blocked these checks:",
+      "row": "Blocked by the model provider's content filter: not assessed.",
+      "body": "Your description is kept. Klar never guesses a class for a check it couldn't assess, so there's no result."
+    },
     "accuracy": "This assessment is only as accurate as the description you give.",
     "stopped": {
       "title": "The checks couldn't finish",
@@ -531,7 +538,8 @@
       "server": "The service answered with an error (HTTP {{status}}).",
       "network": "The service didn't respond. Check your connection and try again.",
       "incomplete": "The connection ended before the checks finished.",
-      "needsDescription": "Klar needs to know what the tool decides and who it affects. Add that to your description and run it again."
+      "needsDescription": "Klar needs to know what the tool decides and who it affects. Add that to your description and run it again.",
+      "providerRefused": "The model provider's content filter blocked a check, so it couldn't be assessed automatically. No risk class is given: a person must review the description."
     }
   },
   "result": {

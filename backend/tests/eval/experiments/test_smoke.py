@@ -131,8 +131,9 @@ def test_a_plan_narrowed_to_nodes_lists_their_checks_in_engine_order(cases_dir: 
     ]
 
 
-def test_facts_alone_runs_on_every_checks_cases(cases_dir: Path) -> None:
+def test_facts_alone_runs_on_every_own_case_the_thin_ones_too(cases_dir: Path) -> None:
     write_cases(cases_dir, "c", [case("c-1", RiskClass.PROHIBITED)])
+    write_cases(cases_dir, "thin", [case("t-1")])
     probes = smoke.plan_probes(cases_dir, nodes=(NodeName.FACTS,))
     assert [probe.probe_id for probe in probes] == [
         "facts:b-1",
@@ -141,7 +142,18 @@ def test_facts_alone_runs_on_every_checks_cases(cases_dir: Path) -> None:
         "facts:e-1",
         "facts:e-2",
         "facts:d-1",
+        "facts:t-1",
     ]
+
+
+def test_facts_run_on_the_thin_cases_only_when_every_check_is_planned(cases_dir: Path) -> None:
+    """X2b's run 1 plans every check, so facts covers every own case; X2's plan stays as it was."""
+    write_cases(cases_dir, "thin", [case("t-1")])
+    every = smoke.plan_probes(cases_dir, nodes=tuple(NodeName))
+    assert [p.probe_id for p in every if p.node is NodeName.FACTS][-1] == "facts:t-1"
+    assert sum(p.case.id == "t-1" for p in every) == 1
+    x2 = smoke.plan_probes(cases_dir)
+    assert "t-1" not in {p.case.id for p in x2}
 
 
 def test_a_plan_narrowed_to_cases_keeps_only_their_probes(cases_dir: Path) -> None:
@@ -167,6 +179,18 @@ def test_x2b_probes_prohibited_on_own_c_and_transparency_on_own_a() -> None:
     )
     assert smoke.MAX_OUTPUT_TOKENS[NodeName.PROHIBITED] == 6000
     assert smoke.MAX_OUTPUT_TOKENS[NodeName.TRANSPARENCY] == 4000
+
+
+def test_x2b_run_1_plans_facts_on_all_77_own_cases() -> None:
+    """The DoD's "facts on all own cases": 74 cases the checks use and the 3 thin ones."""
+    probes = smoke.plan_probes(nodes=tuple(NodeName))
+    facts_cases = {probe.case.id for probe in probes if probe.node is NodeName.FACTS}
+    assert len(facts_cases) == 77
+    assert {
+        "own-t-01-ai-for-hr",
+        "own-t-02-sales-team-ai-tool",
+        "own-t-03-ki-im-kundenservice",
+    } <= facts_cases
 
 
 def test_the_default_plan_covers_every_approved_own_case() -> None:

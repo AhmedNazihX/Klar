@@ -98,9 +98,29 @@ def test_the_reasons_name_both_shares() -> None:
 
 
 def test_answered_facts_count_for_answering_but_not_for_matching() -> None:
+    engine = [refused("facts:c-1", "facts:c-2", "facts:c-3", "facts:c-4", "prohibited:c-1")]
+    second = [*(probe(f"facts:c-{n}", A) for n in range(1, 5)), probe("prohibited:c-1", A, True)]
+    table = tabulate(engine, second)
+    assert (table.verdict, sum(r.answered for r in table.rows)) == (Verdict.ADOPT, 5)
+    assert sum(r.labelled for r in table.rows) == 1
+
+
+def test_no_labelled_answer_is_inconclusive() -> None:
+    """Only facts probes refused: the label rule has nothing to read, and 0 of 0 proves nothing."""
     engine = [refused("facts:c-1", "facts:c-2", "facts:c-3", "facts:c-4", "facts:c-5")]
     second = [probe(f"facts:c-{n}", A) for n in range(1, 6)]
-    assert tabulate(engine, second).verdict is Verdict.ADOPT
+    table = tabulate(engine, second)
+    assert table.verdict is Verdict.INCONCLUSIVE
+    assert table.reasons == (
+        "the second model answered no labelled probe, so the label rule can't be applied",
+    )
+
+
+def test_too_few_answers_reject_even_with_no_labelled_answer() -> None:
+    pids = [f"prohibited:c-{n}" for n in range(5)]
+    table = tabulate([refused(*pids)], refused(*pids))
+    assert table.verdict is Verdict.REJECT
+    assert table.reasons == ("answered 0 of 5 refused probes, fewer than 4 in 5",)
 
 
 def test_nothing_refused_is_inconclusive() -> None:

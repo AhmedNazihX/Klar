@@ -37,7 +37,7 @@ from aiact.schemas import (
 from tests.api.conftest import BASE_URL, api_settings
 from tests.drafting.builders import limited_risk_result
 from tests.export.reading import one_line, pdf_pages, read_docx
-from tests.schemas.builders import needs_description, rebuild
+from tests.schemas.builders import needs_description, rebuild, stored_before_decision_030
 from tests.schemas.worked_example import worked_example_result
 
 pytestmark = pytest.mark.anyio
@@ -124,8 +124,17 @@ async def test_a_german_word_report(client: httpx.AsyncClient) -> None:
     assert word.language == "de"
 
 
-async def test_a_result_with_no_class_is_a_422(client: httpx.AsyncClient) -> None:
-    response = await client.post("/reports/result", json=_body(needs_description()))
+@pytest.mark.parametrize(
+    "result",
+    [needs_description(), stored_before_decision_030(worked_example_result())],
+    ids=["needs_description", "check_not_assessed"],
+)
+async def test_a_result_with_no_class_is_a_422(
+    client: httpx.AsyncClient, result: ClassificationResult
+) -> None:
+    """A result stored before decision 030 lists a refused check next to the class it assumed:
+    that class rests on a check nobody assessed, so no report states it."""
+    response = await client.post("/reports/result", json=_body(result))
     assert response.status_code == 422
     assert response.json() == {
         "detail": "This result has no class yet, so there is no report to make. "

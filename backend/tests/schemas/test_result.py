@@ -2,14 +2,12 @@ import pytest
 from pydantic import ValidationError
 
 from aiact.schemas import (
-    PROVIDER_REFUSAL,
     ClassificationResult,
     FollowUpQuestion,
     RiskClass,
     Role,
     Status,
     StepName,
-    StepResult,
 )
 from tests.schemas.builders import (
     ambiguous,
@@ -17,9 +15,11 @@ from tests.schemas.builders import (
     ends_early,
     missing_fact,
     rebuild,
+    refused,
     steps_with,
+    stored_before_decision_030,
 )
-from tests.schemas.worked_example import EU_USE_QUESTION, OBLIGATIONS, worked_example_result
+from tests.schemas.worked_example import OBLIGATIONS, worked_example_result
 
 
 def test_worked_example_is_a_valid_high_risk_deployer_result() -> None:
@@ -120,18 +120,8 @@ def test_legal_review_is_an_optional_line() -> None:
 # steps the provider refused (decision 029)
 
 
-def _refused(name: StepName) -> StepResult:
-    return StepResult(
-        step=name,
-        decision="The provider's content filter blocked this description.",
-        status=Status.NEEDS_MORE_INFORMATION,
-        missing_fact=EU_USE_QUESTION,
-        error=PROVIDER_REFUSAL,
-    )
-
-
 def test_not_assessed_names_exactly_the_refused_steps() -> None:
-    steps = steps_with(_refused(StepName.HIGH_RISK))
+    steps = steps_with(refused(StepName.HIGH_RISK))
     result = rebuild(
         worked_example_result(),
         steps=steps,
@@ -153,7 +143,7 @@ def _refused_result(
 ) -> ClassificationResult:
     """The worked example with `name` refused: no class and nothing a class brings."""
     fields: dict[str, object] = {
-        "steps": steps_with(_refused(name)),
+        "steps": steps_with(refused(name)),
         "risk_class": None,
         "status": Status.NEEDS_MORE_INFORMATION,
         "annex_point": None,
@@ -197,13 +187,48 @@ def test_a_refused_role_step_sets_no_role() -> None:
 
 def test_a_result_stored_before_decision_030_still_loads() -> None:
     """Before X2b a refused step kept its stricter reading as the class (decision 029)."""
-    stored = rebuild(
-        worked_example_result(),
-        steps=steps_with(_refused(StepName.HIGH_RISK)),
-        status=Status.NEEDS_MORE_INFORMATION,
-        not_assessed=(StepName.HIGH_RISK,),
-    ).model_dump(mode="json")
-    assert ClassificationResult.model_validate(stored).risk_class is RiskClass.HIGH_RISK
+    stored = stored_before_decision_030(worked_example_result()).model_dump(mode="json")
+    loaded = ClassificationResult.model_validate(stored)
+    assert loaded.risk_class is RiskClass.HIGH_RISK
+    assert loaded.assessed_class is None  # never stated: it rests on a check not assessed
+
+
+def test_a_result_stored_before_decision_030_with_a_refused_role_step_keeps_its_role() -> None:
+    """Under decision 029 a refused role step kept the role it assumed, next to the class."""
+    stored = stored_before_decision_030(worked_example_result(), StepName.ROLE_OBLIGATIONS)
+    loaded = ClassificationResult.model_validate(stored.model_dump(mode="json"))
+    assert (loaded.risk_class, loaded.role) == (RiskClass.HIGH_RISK, Role.DEPLOYER)
+
+
+def test_a_classified_result_states_its_class() -> None:
+    assert worked_example_result().assessed_class is RiskClass.HIGH_RISK
+    assert _refused_result().assessed_class is None
+
+
+def test_a_result_with_steps_and_no_class_needs_a_refused_check() -> None:
+    with pytest.raises(
+        ValidationError, match="has a class unless the model provider refused a check"
+    ):
+        rebuild(worked_example_result(), risk_class=None, annex_point=None, obligations=())
+
+
+def test_a_refused_result_cut_short_is_rejected() -> None:
+    """A run with a refused check lists every check unless a stopping check decided."""
+    with pytest.raises(ValidationError, match="lists every check, or ends after a stopping"):
+        _refused_result(StepName.SCOPE, steps=steps_with(refused(StepName.SCOPE), 1), role=None)
+    with pytest.raises(ValidationError, match="lists every check, or ends after a stopping"):
+        _refused_result(
+            StepName.PROHIBITED, steps=steps_with(refused(StepName.PROHIBITED), 2), role=None
+        )
+
+
+def test_a_refused_result_may_end_after_a_stopping_check_that_decided() -> None:
+    """Scope refused, then a decided Art. 5 step ends the run: no class, two steps."""
+    result = _refused_result(
+        StepName.SCOPE, steps=steps_with(refused(StepName.SCOPE), 2), role=None
+    )
+    assert [step.step for step in result.steps] == [StepName.SCOPE, StepName.PROHIBITED]
+    assert result.risk_class is None
 
 
 # status derived from the steps

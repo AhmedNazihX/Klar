@@ -110,7 +110,8 @@ EXPERIMENT = "x2_engine_smoke"
 BENCHMARK = CaseSet.OWN.value
 
 DEFAULT_MAX_COST_USD = 0.5
-"""The spending cap per model; the dry-run estimate for both models together is about $0.38."""
+"""The spending cap per model. X2's dry-run estimate for both models together was about $0.38;
+X2b's smaller runs print their own (`aiact evaluate smoke --dry-run`)."""
 DEFAULT_CONCURRENCY = 4
 ERROR_MESSAGE_LIMIT = 300
 AS_OF = date(2026, 9, 30)
@@ -150,6 +151,8 @@ CASE_FOLDERS: Mapping[NodeName, str] = {
     NodeName.TRANSPARENCY: "a",
 }
 """The own-case folder (`eval/cases/own/<folder>`) each check is probed on."""
+THIN_FOLDER = "thin"
+"""The own cases too thin to start the checks (E13): only the facts node runs on them."""
 
 MAX_OUTPUT_TOKENS: Mapping[NodeName, int] = {
     NodeName.FACTS: facts.MAX_OUTPUT_TOKENS,
@@ -244,8 +247,10 @@ class Probe:
         return f"{self.node.value}:{self.case.id}"
 
 
-def _folder_cases(node: NodeName, cases_dir: Path) -> tuple[BenchmarkCase, ...]:
-    set_dir = cases_dir / CaseSet.OWN.value / CASE_FOLDERS[node]
+def _folder_cases(node: NodeName | None, cases_dir: Path) -> tuple[BenchmarkCase, ...]:
+    """The cases of `node`'s folder; None is the thin cases' folder."""
+    folder = THIN_FOLDER if node is None else CASE_FOLDERS[node]
+    set_dir = cases_dir / CaseSet.OWN.value / folder
     paths = sorted(set_dir.rglob("*.yaml")) if set_dir.is_dir() else []
     return tuple(case for path in paths for case in load_yaml_file(path))
 
@@ -261,6 +266,17 @@ def _check_cases(node: NodeName, cases_dir: Path) -> tuple[BenchmarkCase, ...]:
     return cases
 
 
+def _facts_cases(checks: Sequence[NodeName], cases_dir: Path) -> tuple[BenchmarkCase, ...]:
+    """The cases facts runs on: every case the planned checks use, each once. With every check
+    planned, or none (facts alone), that is every own case, so the thin ones (`own/thin`, E13)
+    join them (X2b: "facts on all own cases"); X2's plan, without prohibited and transparency,
+    stays as it was."""
+    is_every_case = not checks or set(checks) == set(CHECK_ORDER)
+    used = [c for n in (checks or CHECK_ORDER) for c in _check_cases(n, cases_dir)]
+    thin = _folder_cases(None, cases_dir) if is_every_case else ()
+    return tuple({case.id: case for case in (*used, *thin)}.values())
+
+
 class UnknownCaseError(ValueError):
     """A case id asked for that no probe of the planned nodes has."""
 
@@ -272,14 +288,12 @@ def plan_probes(
     case_ids: Sequence[str] = (),
 ) -> tuple[Probe, ...]:
     """Every probe of `nodes`: the checks first, in the engine's order, then facts on each case
-    they use (on every check's cases when facts is the only node). With `case_ids`, only those
-    cases' probes; raises `UnknownCaseError` for an id no probe of `nodes` has."""
+    they use (`_facts_cases`). With `case_ids`, only those cases' probes; raises
+    `UnknownCaseError` for an id no probe of `nodes` has."""
     checks = [node for node in CHECK_ORDER if node in nodes]
     probes = [Probe(n, c) for n in checks for c in _check_cases(n, cases_dir)]
     if NodeName.FACTS in nodes:
-        used = probes or [Probe(n, c) for n in CHECK_ORDER for c in _check_cases(n, cases_dir)]
-        cases = {probe.case.id: probe.case for probe in used}
-        probes += [Probe(NodeName.FACTS, case) for case in cases.values()]
+        probes += [Probe(NodeName.FACTS, case) for case in _facts_cases(checks, cases_dir)]
     if not case_ids:
         return tuple(probes)
     unknown = sorted(set(case_ids) - {probe.case.id for probe in probes})

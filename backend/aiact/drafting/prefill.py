@@ -133,11 +133,12 @@ def _classification_and_duty(
 
 
 def _class_sentence(result: ClassificationResult, language: Language) -> str:
-    if result.risk_class is None:
+    risk_class = result.assessed_class
+    if risk_class is None:
         raise NoClassError(
             "a result with no class (too thin to start, or a refused check) has no class to state"
         )
-    name = CLASS_NAMES[language][result.risk_class]
+    name = CLASS_NAMES[language][risk_class]
     if result.annex_point is not None:
         name = f"{name}, {annex_point_name(result.annex_point, language)}"
     key = "class" if result.status is Status.DECIDED else result.status

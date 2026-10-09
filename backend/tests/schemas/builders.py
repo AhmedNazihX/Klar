@@ -2,6 +2,7 @@
 
 from aiact.schemas import (
     DESCRIPTION_QUESTION_IDS,
+    PROVIDER_REFUSAL,
     ClassificationResult,
     FollowUpQuestion,
     OpenQuestion,
@@ -11,6 +12,7 @@ from aiact.schemas import (
     StepName,
     StepResult,
 )
+from aiact.schemas.result import derived_status
 from tests.schemas.worked_example import EU_USE_QUESTION, worked_example_result
 
 
@@ -70,6 +72,34 @@ def unverified(name: StepName) -> StepResult:
         decision="Decided, but a citation could not be verified",
         status=Status.NEEDS_MORE_INFORMATION,
         error="citation_unverified",
+    )
+
+
+def refused(name: StepName) -> StepResult:
+    """A step the model provider's content filter refused (decision 029); uses the worked
+    example's `eu_use` question, so the follow-up rule holds."""
+    return StepResult(
+        step=name,
+        decision="The provider's content filter blocked this description.",
+        status=Status.NEEDS_MORE_INFORMATION,
+        missing_fact=EU_USE_QUESTION,
+        error=PROVIDER_REFUSAL,
+    )
+
+
+def stored_before_decision_030(
+    result: ClassificationResult, name: StepName = StepName.HIGH_RISK
+) -> ClassificationResult:
+    """`result` as decision 029 stored it with its `name` check refused: the step refused and
+    listed in `not_assessed`, the class and its findings kept."""
+    steps = [refused(name) if step.step is name else step for step in result.steps]
+    questions = {q.id: q for q in (*result.follow_up_questions, EU_USE_QUESTION)}
+    return rebuild(
+        result,
+        steps=[step.model_dump() for step in steps],
+        status=derived_status(steps),
+        not_assessed=(name,),
+        follow_up_questions=tuple(q.model_dump() for q in questions.values()),
     )
 
 

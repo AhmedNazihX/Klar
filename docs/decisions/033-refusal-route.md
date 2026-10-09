@@ -39,10 +39,21 @@ Implemented in `backend/aiact/eval/experiments/smoke_refusals.py` (`ANSWERED_SHA
 - **Inconclusive**, and neither rule applied, when Luna refused nothing in these runs, or when more than 1 in 10 of
   the M probes got no answer from the second model (a transport or provider error, a reply not shown to come from
   its pinned provider, a probe its run didn't plan; decision 023 addendum, part 4). An inconclusive run is repeated.
-- Otherwise the second model is **rejected**, and the own-Azure fallback below is decided.
+- **Rejected** when rule 1 fails, or rule 2 fails on at least one labelled answer; the own-Azure fallback below is
+  then decided.
+- **Inconclusive** too when rule 1 holds but none of the second model's answers carries a label (only facts probes
+  were refused, say): rule 2 has nothing to read, and "0 of 0 matching" proves nothing. The run is repeated with
+  refused check probes, or the user decides on rule 1 alone.
 
 Example with the recordings' numbers: if M is 13 (8 prohibited, 5 facts), N is 11; with 8 prohibited answers, at
 least 7 must match their label (7 × 5 ≥ 8 × 4).
+
+**Where this differs from the DoD's wording (for the user to choose).** The DoD reads "matches the label on those it
+answers": taken literally, every answered labelled probe must match (N of N). Rule 2 above asks for 4 in 5 instead,
+the same tolerance as rule 1, because one model-to-model disagreement on a legally hard case (Art. 5(1)(ba)/(bb)
+descriptions are near the line by design) would otherwise reject a model that answers everything. With the
+recordings' 8 prohibited probes the difference is one probe: 4 in 5 accepts 7 of 8 matching, "all of them" needs
+8 of 8. The threshold stays at 4 in 5 until the user picks; changing it is one constant (`MATCHED_SHARE`).
 
 ## How it is measured
 `aiact evaluate smoke` (X2's harness), with the node and case subset X2b adds (`--node`, `--case`): the engine's own
@@ -57,18 +68,22 @@ spend was about three quarters of its cold estimate, decision 004; refused calls
 
 | Run | Model | Nodes and cases | Probes | Estimate |
 | --- | --- | --- | --- | --- |
-| 1 | Luna | facts on every case below (74), scope `own/b` (13), prohibited `own/c` (17), high_risk `own/e` and the worked example (15), transparency `own/a` (16), role `own/d` with a role (13) | 148 | ≤ $0.231 |
+| 1 | Luna | facts on every own case (77: the 74 below and the 3 too thin to start, `own/thin`, E13), scope `own/b` (13), prohibited `own/c` (17), high_risk `own/e` and the worked example (15), transparency `own/a` (16), role `own/d` with a role (13) | 151 | ≤ $0.236 |
 | 2, 3 | Luna | facts and prohibited on `own/c` (17 + 17), again, for the run-to-run rate | 34 each | ≤ $0.065 each |
 | 4 | Gemini 3.1 Flash-Lite | the nodes with a refusal, on the cases Luna refused in runs 1–3 (from the recordings: facts and prohibited on 9 cases) | ~18 | ≤ $0.097 |
-| | | **Total** | ~234 | **≤ $0.46** |
+| | | **Total** | ~237 | **≤ $0.47** ($0.463) |
 
-Commands (each run is capped with `--max-cost-usd`; the Gemini case list comes from runs 1–3):
+Facts runs on the thin cases only when every check is planned (run 1) or facts runs alone: X2's own plan is unchanged.
+`--case` takes a case's full id (`own-c-01-undress-photo-app`, as `--dry-run` prints them), repeated per case.
+
+Commands (each run is capped with `--max-cost-usd`; the Gemini case list comes from runs 1–3, shown here with the
+nine cases the recordings saw refused):
 
 ```
 uv run aiact evaluate smoke --model luna --node facts --node scope --node prohibited --node high_risk --node transparency --node role_obligations --max-cost-usd 0.30
 uv run aiact evaluate smoke --model luna --node facts --node prohibited --max-cost-usd 0.10
 uv run aiact evaluate smoke --model luna --node facts --node prohibited --max-cost-usd 0.10
-uv run aiact evaluate smoke --model gemini --node facts --node prohibited --case <each case Luna refused> --max-cost-usd 0.15
+uv run aiact evaluate smoke --model gemini --node facts --node prohibited --case own-c-01-undress-photo-app --case own-c-02-undress-app-before-december --case own-c-03-image-tool-with-safeguards --case own-c-04-studio-digital-doubles-consent --case own-c-05-gossip-site-fake-nudes --case own-c-06-dating-app-nudity-blur --case own-c-07-unfiltered-image-generator --case own-c-14-kids-game-sad-pet-offers --case own-c-16-police-live-search-missing-child --max-cost-usd 0.15
 uv run aiact evaluate smoke-refusals --engine-run <run 1> --engine-run <run 2> --engine-run <run 3> --second-run <run 4>
 ```
 
@@ -92,16 +107,20 @@ label, refused by both, with each run's id and cost, as `smoke-refusals` prints 
 - **When both refuse**, decision 030 applies: the check is not assessed and the result carries no class.
 
 ## Privacy wording (for the user to check; INIT › Data policy, Ethical considerations › Choice of model providers)
-Adopting the route adds a second processor for the refused descriptions only: Google, through OpenRouter, on Vertex
+Adopting the route adds a second processor for the refused requests only: Google, through OpenRouter, on Vertex
 AI in the EU. The "Who processes it" panel already names Google Vertex AI next to Microsoft Azure
-(`frontend/src/i18n/locales/*.json`, `privacy.who.modelsDetail`); the proposed sentence says when a description goes
-there:
+(`frontend/src/i18n/locales/*.json`, `privacy.who.modelsDetail`); the proposed sentence says what goes there and
+when. A refused check's request is more than the description: it carries the facts extracted from it (facts from
+the user's answers to follow-up questions included) and the law text retrieved for the check, and it is sent once
+for each check the filter blocked, not once per description.
 
-- EN: "If Microsoft Azure's content filter blocks a description, that description alone is sent once more to Gemini
-  3.1 Flash-Lite on Google Vertex AI in the EU, with zero data retention and no training."
-- DE: "Blockiert der Inhaltsfilter von Microsoft Azure eine Beschreibung, wird nur diese Beschreibung noch einmal an
-  Gemini 3.1 Flash-Lite bei Google Vertex AI in der EU gesendet, ohne Datenspeicherung beim Anbieter und ohne
-  Training."
+- EN: "If Microsoft Azure's content filter blocks a check, that check's request (the description and the facts and
+  answers taken from it) is sent once more to Gemini 3.1 Flash-Lite on Google Vertex AI in the EU (zero data
+  retention, no training), for each check the filter blocked. This happens only when the filter blocks it."
+- DE: "Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung, wird die Anfrage dieser Prüfung (die
+  Beschreibung sowie die daraus gewonnenen Fakten und Antworten) noch einmal an Gemini 3.1 Flash-Lite bei Google
+  Vertex AI in der EU gesendet (keine Datenspeicherung beim Anbieter, kein Training), für jede blockierte Prüfung.
+  Das geschieht nur, wenn der Filter sie blockiert."
 
 The privacy notice names Google as a processor for these descriptions, reached through OpenRouter.
 

@@ -15,7 +15,9 @@ node and case subset).
   least `MATCHED_SHARE` of the labelled probes it answers. Both are compared in integers.
 - **Inconclusive**, and neither applied, when the engine model refused nothing, or when more
   than `smoke_verdict.FAILED_SHARE_LIMIT` of the M probes got no answer from the second model
-  (decision 023 addendum, part 4). An inconclusive run is repeated.
+  (decision 023 addendum, part 4). An inconclusive run is repeated. Also inconclusive: the
+  second model answers enough, but none of its answers carries a label (only facts probes were
+  refused, say), so the label rule can't be applied; a share of zero proves nothing.
 """
 
 from collections.abc import Mapping, Sequence
@@ -129,9 +131,14 @@ def tabulate(
     reasons: list[str] = []
     if not _at_least(answered, refused, ANSWERED_SHARE):
         reasons.append(f"answered {answered} of {refused} refused probes, fewer than 4 in 5")
-    if not _at_least(matched, labelled, MATCHED_SHARE):
+    if labelled and not _at_least(matched, labelled, MATCHED_SHARE):
         reasons.append(f"matched the label on {matched} of {labelled}, fewer than 4 in 5")
-    return RefusalTable(rows, Verdict.REJECT if reasons else Verdict.ADOPT, tuple(reasons))
+    if reasons:
+        return RefusalTable(rows, Verdict.REJECT, tuple(reasons))
+    if not labelled:
+        reason = "the second model answered no labelled probe, so the label rule can't be applied"
+        return RefusalTable(rows, Verdict.INCONCLUSIVE, (reason,))
+    return RefusalTable(rows, Verdict.ADOPT, ())
 
 
 # --- Reading stored runs ------------------------------------------------------------------------

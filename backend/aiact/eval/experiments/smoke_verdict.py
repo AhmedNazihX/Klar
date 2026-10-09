@@ -6,6 +6,8 @@ exactly 10% broken keeps Luna and exactly 10 points below drops it.
 
 - The broken share is over the model's replies (answered or broken), facts included.
 - Accuracy is over the labelled probes both models replied to; a broken answer counts as wrong.
+- A probe the provider's content filter refused (X2b) is neither a reply nor scored: it is left
+  out of the broken share and the accuracy, and counted in its own column.
 - More than 10% of probes without a usable answer, for either model, makes the verdict
   `inconclusive` (decision 023 addendum, parts 4-6, accepted by the user on 2026-10-01).
 
@@ -29,6 +31,10 @@ ACCURACY_GAP_LIMIT = (10, 100)
 """Luna is dropped when its accuracy is 10 or more points (of 100) below Gemini's (decision 023)."""
 FAILED_SHARE_LIMIT = (1, 10)
 """More than 1 in 10 probes without an answer, for either model, makes the verdict inconclusive."""
+
+
+REPLIED = frozenset({ProbeKind.ANSWERED, ProbeKind.BROKEN})
+"""The probes the accuracy is read from: a failed or refused probe has no reply to score."""
 
 
 @dataclass(frozen=True)
@@ -70,6 +76,7 @@ class ArmSummary:
     answered: int
     broken: int
     failed: int
+    refused: int
     broken_by_node: Mapping[str, int]
 
     @property
@@ -91,6 +98,7 @@ def summarize(name: str, scores: Sequence[ProbeScore], planned: Sequence[str]) -
         answered=kinds.count(ProbeKind.ANSWERED),
         broken=kinds.count(ProbeKind.BROKEN),
         failed=kinds.count(ProbeKind.FAILED),
+        refused=kinds.count(ProbeKind.REFUSED),
         broken_by_node=broken_by_node,
     )
 
@@ -136,8 +144,8 @@ def compare(luna: Sequence[ProbeScore], gemini: Sequence[ProbeScore]) -> Compari
     planned = sorted({score.probe_id for score in (*luna, *gemini)})
     luna_summary = summarize(LUNA.name, luna, planned)
     gemini_summary = summarize(GEMINI.name, gemini, planned)
-    luna_by_id = {s.probe_id: s for s in luna if s.kind is not ProbeKind.FAILED}
-    gemini_by_id = {s.probe_id: s for s in gemini if s.kind is not ProbeKind.FAILED}
+    luna_by_id = {s.probe_id: s for s in luna if s.kind in REPLIED}
+    gemini_by_id = {s.probe_id: s for s in gemini if s.kind in REPLIED}
     common = [
         pid
         for pid in planned
@@ -280,8 +288,8 @@ def _share(count: int, total: int) -> str:
 def format_comparison(comparison: Comparison, run_ids: Mapping[str, UUID]) -> str:
     """The comparison as a markdown table, for decision 004."""
     rows = [
-        "| Model | Run id | Broken answers | No answer | Accuracy (same probes) |",
-        "| --- | --- | --- | --- | --- |",
+        "| Model | Run id | Broken answers | No answer | Refused | Accuracy (same probes) |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
     arms = (
         (comparison.luna, comparison.luna_correct),
@@ -292,7 +300,8 @@ def format_comparison(comparison: Comparison, run_ids: Mapping[str, UUID]) -> st
         broken = _share(arm.broken, arm.replied) + (f": {by_node}" if by_node else "")
         rows.append(
             f"| {ARMS[arm.name].model} | {run_ids.get(arm.name, '-')} | {broken} | "
-            f"{_share(arm.failed, arm.planned)} | {_share(correct, comparison.scored)} |"
+            f"{_share(arm.failed, arm.planned)} | {_share(arm.refused, arm.planned)} | "
+            f"{_share(correct, comparison.scored)} |"
         )
     rows += ["", *comparison.notes] if comparison.notes else []
     rows += ["", f"Verdict: {comparison.verdict.value}"]

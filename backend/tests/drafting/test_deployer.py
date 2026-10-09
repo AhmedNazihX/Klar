@@ -30,6 +30,7 @@ from aiact.drafting.templates import (
 )
 from aiact.schemas import (
     DISCLAIMER,
+    ClassificationResult,
     Language,
     LegacyStatus,
     Role,
@@ -37,7 +38,13 @@ from aiact.schemas import (
     StepName,
 )
 from tests.drafting.builders import WORKERS, WORKERS_ANSWERS, limited_risk_result
-from tests.schemas.builders import missing_fact, needs_description, rebuild, steps_with
+from tests.schemas.builders import (
+    missing_fact,
+    needs_description,
+    rebuild,
+    steps_with,
+    stored_before_decision_030,
+)
 from tests.schemas.worked_example import EU_USE, worked_example_result
 
 
@@ -347,7 +354,13 @@ def test_a_system_facts_section_needs_its_no_facts_line() -> None:
         ClassificationSection("system", {Language.EN: "The system"}, Fill.SYSTEM_FACTS)
 
 
-def test_a_needs_description_result_drafts_no_document() -> None:
-    """A result with no class (E13) has no class sentence to state."""
+@pytest.mark.parametrize(
+    "result",
+    [needs_description(), stored_before_decision_030(worked_example_result())],
+    ids=["needs_description", "check_not_assessed"],
+)
+def test_a_result_with_no_class_drafts_no_document(result: ClassificationResult) -> None:
+    """A result with no class (E13), or with a check not assessed next to the class decision 029
+    assumed, has no class sentence to state."""
     with pytest.raises(NoClassError):
-        draft_document(TEMPLATES[WORKERS], needs_description(), {}, Language.EN)
+        draft_document(TEMPLATES[WORKERS], result, {}, Language.EN)

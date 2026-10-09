@@ -37,7 +37,7 @@ from tests.drafting.vendor_builders import (
     prohibited_step,
 )
 from tests.export.reading import one_line, pdf_pages, read_docx
-from tests.schemas.builders import rebuild
+from tests.schemas.builders import rebuild, stored_before_decision_030
 from tests.schemas.worked_example import worked_example_result
 
 pytestmark = pytest.mark.anyio
@@ -371,6 +371,22 @@ async def test_a_notice_is_exported_with_its_answers_as_given(client: httpx.Asyn
     paragraphs = read_docx(response.content).paragraphs
     assert "ENTWURF" in paragraphs
     assert all(answer in paragraphs for answer in WORKERS_ANSWERS.values())
+
+
+async def test_a_result_with_a_check_not_assessed_calls_for_no_document(
+    client: httpx.AsyncClient,
+) -> None:
+    """A result stored before decision 030 lists a refused check next to the class it assumed:
+    no document states that class (`assessed_class`)."""
+    stored = stored_before_decision_030(provider_result())
+    assert provider_result().risk_class is stored.risk_class is not None
+    listed = await client.post("/documents/list", json=_body(stored))
+    assert (listed.status_code, listed.json()["documents"]) == (200, [])
+    response = await client.post("/documents/draft", json=_draft_body(stored, ANNEX_IV))
+    assert (response.status_code, response.json()["detail"]) == (
+        404,
+        "This result calls for no such document.",
+    )
 
 
 async def test_a_document_the_result_does_not_call_for_is_a_404(client: httpx.AsyncClient) -> None:

@@ -149,7 +149,7 @@ export type ClassificationResult = {
      */
     status: Status;
     /**
-     * Set exactly when the role_obligations step ran and the model provider didn't refuse it.
+     * Set when the role_obligations step ran and the model provider didn't refuse it. A result stored before decision 030 may also keep the role a refused role step assumed, next to a class.
      */
     role?: Role | null;
     /**
@@ -204,7 +204,7 @@ export type ClassificationResult = {
     /**
      * Not Assessed
      *
-     * The checks the model provider refused to assess (decisions 029, 030), in check order; each needs a person's review, and a result that lists one has no class.
+     * The checks the model provider refused to assess (decisions 029, 030), in check order; each needs a person's review. Results produced since decision 030 have no class when they list one; earlier stored results may (see `assessed_class`).
      */
     not_assessed?: Array<StepName>;
     /**

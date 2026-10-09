@@ -80,7 +80,10 @@ class DocumentNotCalledForError(LookupError):
 
 def templates_for(result: ClassificationResult) -> tuple[DocumentTemplate, ...]:
     """The documents the result calls for: the short deployer documents, the skeletons, then the
-    vendor letter (P28), in the order the documents list shows them."""
+    vendor letter (P28), in the order the documents list shows them. None for a result with no
+    class or a check not assessed (`assessed_class`): no document states a class nobody gave."""
+    if result.assessed_class is None:
+        return ()
     letter = vendor_letter_for(result)
     return (
         *deployer_templates_for(result),

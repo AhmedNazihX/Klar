@@ -15,7 +15,10 @@ would have kept, read from the stored `predicted` exactly as the live path class
 - an `error` of any other type (a transport, provider or database error) was never an answer, so
   the probe is not rechecked;
 - no `error`: the stored outcome is the **answer**; it is read back into the node's outcome model
-  and scored with the shared matchers against the case's label, as `smoke.is_correct` scores it.
+  and scored with the shared matchers against the case's label, as `smoke.is_correct` scores it;
+- no `error`, but the node's refusal outcome (X2b): a **refused** probe, unscored. It is read
+  from the stored row without re-validating it: a refusal stored before decision 030 carries
+  the findings decision 029 assumed, which the outcome model now rejects.
 
 Every call confirmed on the arm's pinned provider (the same exact-name check as the live path,
 `smoke_served.settle`): the probe gets the score its reply earns, and `predicted.smoke.recheck`
@@ -37,6 +40,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 from pydantic import JsonValue, ValidationError
 
+from aiact.engine.nodes import facts
 from aiact.engine.state import CheckOutcome, FactsOutcome
 from aiact.eval.cases import CASES_DIR
 from aiact.eval.experiments.smoke import (
@@ -64,6 +68,7 @@ from aiact.eval.experiments.smoke_verdict import SmokeRunError
 from aiact.eval.records import PostgresRunStore
 from aiact.eval.runner import CaseRecord, Score, label_record
 from aiact.llm.generations import may_come_later
+from aiact.schemas import PROVIDER_REFUSAL
 
 RECHECK_BY = "smoke-recheck"
 NOT_OUTCOME = frozenset({"smoke", "not_pinned"})
@@ -149,15 +154,29 @@ def qualifies(row: StoredRow) -> bool:
     return may_come_later(reason) and reply_kind(row.predicted) is not None
 
 
+def is_stored_refusal(node: NodeName, stored: Mapping[str, JsonValue]) -> bool:
+    """Whether the stored outcome is the node's refusal outcome (`smoke.is_refused`), read from
+    the row itself: a refusal stored before decision 030 no longer validates."""
+    if node is NodeName.FACTS:
+        questions = stored.get("follow_up_questions")
+        return isinstance(questions, list) and any(
+            isinstance(q, dict) and q.get("id") == facts.PERSON_REVIEW_ID for q in questions
+        )
+    step = stored.get("step")
+    return isinstance(step, dict) and step.get("error") == PROVIDER_REFUSAL
+
+
 def rescore(probe: Probe, predicted: Mapping[str, JsonValue]) -> tuple[ProbeKind, bool | None]:
-    """The kind and correctness the live path gives this stored reply."""
+    """The kind and correctness the live path gives this stored reply; a refusal is unscored."""
     kind = reply_kind(predicted)
     if kind is None:
         raise RecheckError(f"probe {probe.probe_id} got no answer; nothing to rescore")
     if kind is ProbeKind.BROKEN:
         return kind, broken_correct(probe.node)
-    model = FactsOutcome if probe.node is NodeName.FACTS else CheckOutcome
     stored = {key: value for key, value in predicted.items() if key not in NOT_OUTCOME}
+    if is_stored_refusal(probe.node, stored):
+        return ProbeKind.REFUSED, None
+    model = FactsOutcome if probe.node is NodeName.FACTS else CheckOutcome
     try:
         outcome = model.model_validate(stored)
     except ValidationError as error:
@@ -198,6 +217,7 @@ def rechecked_record(
     confirmed: dict[str, Score] = {
         "broken": kind is ProbeKind.BROKEN,
         "failed": False,
+        "refused": kind is ProbeKind.REFUSED,
         "correct": correct,
         "is_error": kind is not ProbeKind.ANSWERED,
     }

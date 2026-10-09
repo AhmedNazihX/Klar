@@ -25,6 +25,8 @@ from aiact.schemas.steps import PROVIDER_REFUSAL, STEP_ORDER, StepName, StepResu
 
 SCOPE_ONLY = STEP_ORDER[: STEP_ORDER.index(StepName.SCOPE) + 1]
 UP_TO_ART_5 = STEP_ORDER[: STEP_ORDER.index(StepName.PROHIBITED) + 1]
+STOPPING_STEPS = frozenset({StepName.SCOPE, StepName.PROHIBITED})
+"""The checks that may end a run early (decision 010): out of scope, or prohibited."""
 
 
 def can_end_run(step: StepResult) -> bool:
@@ -77,8 +79,9 @@ class ClassificationResult(ContractModel):
     status: Status = Field(description="Derived from the steps; see `derived_status`.")
     role: Role | None = Field(
         default=None,
-        description="Set exactly when the role_obligations step ran and the model provider "
-        "didn't refuse it.",
+        description="Set when the role_obligations step ran and the model provider didn't refuse "
+        "it. A result stored before decision 030 may also keep the role a refused role step "
+        "assumed, next to a class.",
     )
     also_role: Role | None = Field(
         default=None,
@@ -113,7 +116,8 @@ class ClassificationResult(ContractModel):
     not_assessed: tuple[StepName, ...] = Field(
         default=(),
         description="The checks the model provider refused to assess (decisions 029, 030), in "
-        "check order; each needs a person's review, and a result that lists one has no class.",
+        "check order; each needs a person's review. Results produced since decision 030 have no "
+        "class when they list one; earlier stored results may (see `assessed_class`).",
     )
     follow_up_questions: tuple[FollowUpQuestion, ...] = ()
 
@@ -121,6 +125,13 @@ class ClassificationResult(ContractModel):
     def needs_description(self) -> bool:
         """Whether the run ended before the checks: the description was too thin to start."""
         return not self.steps
+
+    @property
+    def assessed_class(self) -> RiskClass | None:
+        """The class a report or document may state: none when a check was not assessed. A result
+        stored before decision 030 can list a refused check next to the class it assumed; that
+        class rests on a check nobody assessed, so it is never stated."""
+        return None if self.not_assessed else self.risk_class
 
     def _step(self, name: StepName) -> StepResult | None:
         return next((step for step in self.steps if step.step is name), None)
@@ -179,6 +190,13 @@ class ClassificationResult(ContractModel):
                 "a result with a refused check has no obligations, annex_point, "
                 "transparency_duties or legal_review"
             )
+        last = self.steps[-1]
+        ends_early = last.step in STOPPING_STEPS and can_end_run(last)
+        if len(self.steps) != len(STEP_ORDER) and not ends_early:
+            raise ValueError(
+                "a result with a refused check lists every check, or ends after a stopping check "
+                "that decided"
+            )
         return self
 
     def _has_class_findings(self) -> bool:
@@ -198,8 +216,13 @@ class ClassificationResult(ContractModel):
     @model_validator(mode="after")
     def _role_iff_role_step(self) -> Self:
         role_step = self._step(StepName.ROLE_OBLIGATIONS)
-        has_role = role_step is not None and role_step.error != PROVIDER_REFUSAL
-        if has_role != (self.role is not None):
+        is_refused = role_step is not None and role_step.error == PROVIDER_REFUSAL
+        needs_role = role_step is not None and not is_refused
+        # A result stored before decision 030 kept the role its refused role step assumed (029),
+        # next to a class; it still loads. Since 030 a refused role step leaves the role unset.
+        may_keep_role = is_refused and self.risk_class is not None
+        has_role = self.role is not None
+        if has_role != needs_role and not (has_role and may_keep_role):
             raise ValueError(
                 "role is set exactly when the role_obligations step is present and not refused"
             )
