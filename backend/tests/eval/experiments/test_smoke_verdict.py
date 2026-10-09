@@ -164,6 +164,19 @@ def test_a_stored_row_is_read_back_by_its_flags() -> None:
     assert smoke_verdict.probe_score("facts:e-1", failed).kind is ProbeKind.FAILED
 
 
+def test_a_stored_refused_row_is_read_back_as_refused() -> None:
+    """X2b: an answered row flagged refused counts as refused, whatever its correct score."""
+    row: Mapping[str, JsonValue] = {
+        "broken": False,
+        "failed": False,
+        "refused": True,
+        "correct": True,
+    }
+    assert smoke_verdict.probe_score("scope:b-1", row) == ProbeScore(
+        "scope:b-1", ProbeKind.REFUSED, True
+    )
+
+
 def test_only_rechecks_that_confirmed_a_probe_are_noted_with_any_other_provider() -> None:
     entries: tuple[Mapping[str, JsonValue], ...] = (
         {"at": "2026-10-02T09:00:00+00:00", "by": "smoke-recheck", "confirmed": 0},
