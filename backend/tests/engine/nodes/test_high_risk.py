@@ -1504,10 +1504,10 @@ def _decides_not_high_risk(result: CheckOutcome, case: BenchmarkCase) -> bool:
 
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-e-07-grinder-burst-kit": KnownGap(
-        "decides not high-risk (no Annex III use, not an Annex I safety component) instead of "
-        "asking whether the Machinery Regulation requires a third-party assessment (Annex I "
-        "B.21) (carried over from the robot-arm wording B10c replaced, pending a re-check on "
-        "the re-record)",
+        "decides not high-risk (no Annex III use; it reads Annex I A.11, medical devices, and "
+        "says not covered) instead of asking whether the Machinery Regulation requires a "
+        "third-party assessment (Annex I B.21) (B10c re-record of the grinder wording, user "
+        "2026-10-09)",
         _decides_not_high_risk,
     ),
     "own-e-10-in-house-nodule-finder": KnownGap(
