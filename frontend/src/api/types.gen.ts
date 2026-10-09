@@ -233,7 +233,7 @@ export type ClassificationResult = {
      */
     steps: Array<StepResult>;
     /**
-     * The headline class; null exactly when the run ended before the checks because the description was too thin to start (needs a description, E13).
+     * The headline class; null when the run ended before the checks because the description was too thin to start (needs a description, E13), or when the model provider refused a check (`not_assessed`, decision 030).
      */
     risk_class: RiskClass | null;
     /**
@@ -241,7 +241,7 @@ export type ClassificationResult = {
      */
     status: Status;
     /**
-     * Set exactly when the role_obligations step ran.
+     * Set when the role_obligations step ran and the model provider didn't refuse it. A result stored before decision 030 may also keep the role a refused role step assumed, next to a class.
      */
     role?: Role | null;
     /**
@@ -296,7 +296,7 @@ export type ClassificationResult = {
     /**
      * Not Assessed
      *
-     * The checks the model provider refused to assess (decision 029), in check order; each needs a person's review, and its stricter reading is assumed.
+     * The checks the model provider refused to assess (decisions 029, 030), in check order; each needs a person's review. Results produced since decision 030 have no class when they list one; earlier stored results may (see `assessed_class`).
      */
     not_assessed?: Array<StepName>;
     /**

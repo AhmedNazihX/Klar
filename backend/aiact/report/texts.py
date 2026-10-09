@@ -200,11 +200,6 @@ ANNEX_III_LABELS: Mapping[str, ByLanguage] = MappingProxyType(
     }
 )
 """An Annex III point's plain label, as the screens name it (`annexPoint` in the locales)."""
-STEP_NOT_ASSESSED = _texts(
-    "Not assessed: a person must review this check.",
-    "Nicht bewertet: Diese Prüfung muss eine Person vornehmen.",
-)
-
 FOOTER = _texts("Prepared with Klar, an AI system.", "Erstellt mit Klar, einem KI-System.")
 PREPARED = _texts("Prepared on {date}.", "Erstellt am {date}.")
 LAW_LINES: Mapping[bool, ByLanguage] = {
@@ -325,12 +320,6 @@ OPEN_QUESTION = _texts(
     "Open question of law ({step}): {question}", "Offene Rechtsfrage ({step}): {question}"
 )
 MISSING_FACT = _texts("Missing fact ({step}): {question}", "Fehlende Angabe ({step}): {question}")
-NOT_ASSESSED = _texts(
-    "Not assessed ({step}): the model provider declined to assess this check, so a person must "
-    "review it.",
-    "Nicht bewertet ({step}): Der Modellanbieter hat diese Prüfung abgelehnt, daher muss eine "
-    "Person sie vornehmen.",
-)
 NOTHING_TO_REVIEW = _texts(
     "No fact the result rests on is assumed, and no question is open.",
     "Keine Tatsache, auf der das Ergebnis beruht, ist angenommen, und keine Frage ist offen.",

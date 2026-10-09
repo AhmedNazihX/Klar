@@ -60,7 +60,6 @@ from aiact.schemas import (
     StepName,
     StepResult,
 )
-from aiact.schemas.steps import PROVIDER_REFUSAL
 
 REPORT_ID_PREFIX = "KR-"
 REPORT_ID_DIGITS = 8
@@ -88,8 +87,8 @@ DUTY_WIDTHS = (3.8, 1.0)
 
 
 class NoClassError(ValueError):
-    """The result has no class (a needs-a-description result, E13): there is nothing to
-    report."""
+    """The result has no class (a needs-a-description result, E13, or a refused check, decision
+    030): there is nothing to report."""
 
 
 def report_id(result: ClassificationResult) -> str:
@@ -108,10 +107,12 @@ def result_report(
     company: str | None = None,
 ) -> Paper:
     """`result` as the report for a lawyer, in `language`; raises NoClassError for a result
-    with no class."""
-    risk_class = result.risk_class
+    with no class, or with a check not assessed (`assessed_class`)."""
+    risk_class = result.assessed_class
     if risk_class is None:
-        raise NoClassError("a needs-a-description result has no class to report")
+        raise NoClassError(
+            "a result with no class (too thin to start, or a refused check) has nothing to report"
+        )
     duties = formal_duties(
         result.obligations,
         risk_class=risk_class,
@@ -243,9 +244,7 @@ def _steps(result: ClassificationResult, language: Language) -> tuple[Block, ...
 
 def _outcome(step: StepResult, result: ClassificationResult, language: Language) -> str:
     """The step's outcome in one plain line, as the Result screen's step row says it
-    (`stepOutcome`); a check the provider refused is not assessed."""
-    if step.error == PROVIDER_REFUSAL:
-        return texts.STEP_NOT_ASSESSED[language]
+    (`stepOutcome`). No step was refused: a result with a check not assessed has no report."""
     if step.status is Status.NEEDS_MORE_INFORMATION:
         return texts.STEP_OUTCOMES["paused"][language]
     if step.status is Status.LEGALLY_AMBIGUOUS:
@@ -378,8 +377,6 @@ def _legal_review(result: ClassificationResult, language: Language) -> tuple[Blo
 def _open_points(steps: Iterable[StepResult], language: Language) -> Iterable[str]:
     for step in steps:
         name = texts.STEP_NAMES[step.step][language]
-        if step.error == PROVIDER_REFUSAL:
-            yield texts.NOT_ASSESSED[language].format(step=name)
         if step.open_question is not None:
             yield texts.OPEN_QUESTION[language].format(
                 step=name, question=step.open_question.question

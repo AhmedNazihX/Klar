@@ -1,7 +1,12 @@
 import { useMutation, type UseMutationResult } from '@tanstack/react-query'
 import { useEffect, useReducer, useRef, type Dispatch } from 'react'
 
-import { classify, type ClassificationResult, type ClassifyRequest } from '@/api'
+import {
+  classify,
+  type ClassificationResult,
+  type ClassifyRequest,
+  type StepName,
+} from '@/api'
 import {
   INITIAL_PROGRESS,
   progressReducer,
@@ -23,6 +28,12 @@ export type ClassifyFailure =
   /** The description was too thin to start (E13): no check ran and no class was given. Carries
    *  the engine's three questions (what it decides, who it affects, bought or built). */
   | { kind: 'needs_description'; questions: string[] }
+  /** The run finished (every check, or up to a stopping check that decided), but the model
+   *  provider's content filter blocked one or more checks (decision 030): no class is given and
+   *  a person must review the description. Carries the blocked checks (`not_assessed`) and their
+   *  person-review questions. Trying again would likely be blocked again, so no retry is
+   *  offered. */
+  | { kind: 'provider_refused'; steps: StepName[]; questions: string[] }
 
 export class ClassifyRunError extends Error {
   readonly failure: ClassifyFailure
@@ -39,6 +50,15 @@ function retryAfterSeconds(response: Response): number | null {
   if (header === null) return null
   const seconds = Number.parseInt(header, 10)
   return Number.isFinite(seconds) && seconds >= 0 ? seconds : null
+}
+
+/** The failure of a result whose checks the model provider refused (decision 030). */
+function providerRefused(result: ClassificationResult): ClassifyFailure {
+  const steps = result.not_assessed ?? []
+  const questions = result.steps
+    .filter((step) => steps.includes(step.step))
+    .flatMap((step) => (step.missing_fact ? [step.missing_fact.text] : []))
+  return { kind: 'provider_refused', steps, questions: [...new Set(questions)] }
 }
 
 /** A run stopped because a newer one replaced it or the screen went: nothing of it may reach
@@ -90,9 +110,12 @@ async function runClassification(
       throw new ClassifyRunError({ kind: 'check' })
     }
     if (event.event === 'result') {
-      // A needs-a-description result (E13) has no class to show or keep: the run stops with the
-      // engine's questions (P20 replaces this with the ClassifyVague prompts). Nothing is saved.
+      // A result with no class is never shown or kept. A needs-a-description result (E13) has no
+      // steps: the run stops with the engine's questions (P20 replaces this with the
+      // ClassifyVague prompts). One with steps had a check the model provider refused (decision
+      // 030): the run stops with the blocked checks and the person-review questions.
       if (event.result.risk_class === null) {
+        if (event.result.steps.length > 0) throw new ClassifyRunError(providerRefused(event.result))
         const questions = (event.result.follow_up_questions ?? []).map((question) => question.text)
         throw new ClassifyRunError({ kind: 'needs_description', questions })
       }

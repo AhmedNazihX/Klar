@@ -84,6 +84,7 @@ const StoredResultSchema = z.looseObject({
   deciding_facts: z.array(FactSchema).optional(),
   obligations: z.array(ObligationSchema).optional(),
   follow_up_questions: z.array(QuestionSchema).optional(),
+  not_assessed: z.array(z.enum(STEP_NAMES)).optional(),
 })
 
 /** A stored result, or null when it isn't one Klar can show. */

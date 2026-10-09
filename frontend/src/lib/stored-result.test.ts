@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { dutyLabel } from '@/features/classify/result-text'
-import { limitedRisk, WORKED_EXAMPLE } from '@/test/classify-fixtures'
+import { limitedRisk, storedBeforeDecision030, WORKED_EXAMPLE } from '@/test/classify-fixtures'
 import { ambiguousResult } from '@/test/inventory-fixtures'
 
 import { parseStoredResult } from './stored-result'
@@ -27,8 +27,13 @@ describe('parseStoredResult', () => {
     ['the recorded worked example', WORKED_EXAMPLE],
     ['a limited-risk result', limitedRisk()],
     ['a legally ambiguous result', ambiguousResult()],
+    ['a result stored before decision 030 with a check not assessed', storedBeforeDecision030()],
   ])('keeps %s as stored', (_, result) => {
     expect(parseStoredResult(result)).toEqual(result)
+  })
+
+  it('reads a check not assessed that is not a check as unreadable', () => {
+    expect(parseStoredResult({ ...WORKED_EXAMPLE, not_assessed: ['facts'] })).toBeNull()
   })
 
   it('still reads a result stored before the duty texts and E12 fields existed', () => {

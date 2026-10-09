@@ -333,7 +333,7 @@ def test_an_uncertain_step_keeps_its_status_and_question(
 
 
 def test_a_refused_step_keeps_its_refusal_error_without_a_retry() -> None:
-    """Running a refused step again would only be refused again (decision 029)."""
+    """Running a refused step again would only be refused again (decisions 029, 030)."""
     step = StepResult(
         step=StepName.PROHIBITED,
         decision="Blocked.",
@@ -342,7 +342,7 @@ def test_a_refused_step_keeps_its_refusal_error_without_a_retry() -> None:
         missing_fact=MISSING,
         error=PROVIDER_REFUSAL,
     )
-    node = ScriptedNode(CheckOutcome(step=step, matched=True))
+    node = ScriptedNode(CheckOutcome(step=step))
     flagged = built_validator().checked(node)(STATE).step
     assert node.calls == 1
     assert (flagged.error, flagged.citations) == (PROVIDER_REFUSAL, ())

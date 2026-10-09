@@ -19,16 +19,17 @@ from typer.testing import CliRunner
 
 from aiact import cli
 from aiact.engine.nodes import facts
+from aiact.engine.state import CheckOutcome
 from aiact.eval import records
 from aiact.eval.experiments import smoke, smoke_recheck, smoke_verdict
-from aiact.eval.experiments.smoke import GEMINI, LUNA, ModelArm, Probe, RunStatus
+from aiact.eval.experiments.smoke import GEMINI, LUNA, ModelArm, NodeName, Probe, RunStatus
 from aiact.eval.experiments.smoke_recheck import RecheckError, RecheckResult
 from aiact.eval.experiments.smoke_verdict import Verdict
 from aiact.eval.records import PostgresRunStore
 from aiact.eval.runner import CaseRecord
 from aiact.llm.generations import GenerationLookupError, GenerationNotFoundError
-from aiact.schemas import RiskClass, Role
-from tests.eval.experiments.builders import case, role_outcome
+from aiact.schemas import RiskClass, Role, StepName
+from tests.eval.experiments.builders import case, role_outcome, step
 from tests.eval.experiments.stored_rows import SETTINGS, first_run_failed, probe_row
 
 pytestmark = pytest.mark.db
@@ -38,6 +39,7 @@ AT = datetime(2026, 10, 2, 9, 0, tzinfo=UTC)
 D1 = case("d-1", RiskClass.LIMITED_RISK, role=Role.DEPLOYER)
 ROLE_PROBE = "role_obligations:d-1"
 TRANSPORT_PROBE = "high_risk:init-worked-example"
+PROHIBITED_PROBE = "prohibited:c-1"
 
 
 @pytest.fixture
@@ -256,6 +258,29 @@ def test_a_case_whose_label_changed_since_the_run_is_refused(
         smoke_recheck.recheck_run(db, run_id, verify, cases_dir, AT)
     assert verify.asked == []  # refused before any lookup
     assert rows_of(db, run_id) == before
+
+
+def test_an_x2b_prohibited_probe_is_rechecked(db: psycopg.Connection, cases_dir: Path) -> None:
+    """X2b plans prohibited, which X2's default plan doesn't: its rows must still be found."""
+    c1 = case("c-1", RiskClass.PROHIBITED, role=None, citation=("art:5:1:a",))
+    target = cases_dir / "own" / "c"
+    target.mkdir(parents=True)
+    dumped = c1.model_dump(mode="json", exclude_none=True)
+    (target / f"{c1.id}.yaml").write_text(yaml.safe_dump(dumped), encoding="utf-8")
+    probe = next(
+        p
+        for p in smoke.plan_probes(cases_dir, nodes=(NodeName.PROHIBITED,))
+        if p.probe_id == PROHIBITED_PROBE
+    )
+    outcome = CheckOutcome(step=step(StepName.PROHIBITED), matched=True)
+    run_id = store_run(db, LUNA, [first_run_failed(probe_row(probe, outcome, LUNA))])
+    prepared = smoke_recheck.prepare_run(db, run_id, cases_dir)
+    assert [row.case_id for row in prepared.chosen] == [PROHIBITED_PROBE]
+    assert prepared.rescored[PROHIBITED_PROBE] == (smoke.ProbeKind.ANSWERED, True)
+    summary = smoke_recheck.apply_recheck(db, prepared, Verifier("Azure"), AT)
+    assert [(p.case_id, p.result) for p in summary.probes] == [
+        (PROHIBITED_PROBE, RecheckResult.CONFIRMED)
+    ]
 
 
 def test_a_run_that_is_not_a_smoke_run_is_refused(db: psycopg.Connection, cases_dir: Path) -> None:

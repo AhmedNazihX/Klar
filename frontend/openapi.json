@@ -1178,7 +1178,7 @@
                 "type": "null"
               }
             ],
-            "description": "The headline class; null exactly when the run ended before the checks because the description was too thin to start (needs a description, E13)."
+            "description": "The headline class; null when the run ended before the checks because the description was too thin to start (needs a description, E13), or when the model provider refused a check (`not_assessed`, decision 030)."
           },
           "status": {
             "$ref": "#/components/schemas/Status",
@@ -1193,7 +1193,7 @@
                 "type": "null"
               }
             ],
-            "description": "Set exactly when the role_obligations step ran."
+            "description": "Set when the role_obligations step ran and the model provider didn't refuse it. A result stored before decision 030 may also keep the role a refused role step assumed, next to a class."
           },
           "also_role": {
             "anyOf": [
@@ -1290,7 +1290,7 @@
             },
             "type": "array",
             "title": "Not Assessed",
-            "description": "The checks the model provider refused to assess (decision 029), in check order; each needs a person's review, and its stricter reading is assumed.",
+            "description": "The checks the model provider refused to assess (decisions 029, 030), in check order; each needs a person's review. Results produced since decision 030 have no class when they list one; earlier stored results may (see `assessed_class`).",
             "default": []
           },
           "follow_up_questions": {

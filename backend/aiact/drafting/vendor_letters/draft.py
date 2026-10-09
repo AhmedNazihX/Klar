@@ -25,7 +25,11 @@ class NoVendorLetterError(ValueError):
 def vendor_letter_for(result: ClassificationResult) -> DocumentTemplate | None:
     """The message for a decided prohibited result (the Art. 5(1) points its step cites), the
     request for a result that leaves a question of law open; None for any other result, a
-    result that only needs more information included (the user answers its question)."""
+    result that only needs more information included (the user answers its question), and for
+    a result with no class or a check not assessed (`assessed_class`, as `templates_for`): an
+    open question next to a refused check is no question to put to the vendor."""
+    if result.assessed_class is None:
+        return None
     if deciding_points(result):
         return PROHIBITED_MESSAGE
     if open_question(result) is not None:

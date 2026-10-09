@@ -107,7 +107,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   └── experiments/         embeddings.py (X1a), free_agent.py (S1); X2: smoke.py (`aiact evaluate smoke`),
 │   │   │                            smoke_verdict.py (decision 023's rule over stored runs, `smoke-compare`),
 │   │   │                            matchers.py (replay states and label matchers, shared with the E3–E7 replays),
-│   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`)
+│   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`);
+│   │   │                            X2b: smoke_refusals.py (decision 033's rule for refused requests, `smoke-refusals`)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   │                            P8a: models.py (DraftDocument, sections with their provenance, status),

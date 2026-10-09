@@ -264,14 +264,6 @@ PERSON_REVIEW = ScopeQuestion(
         "Anwendungsbereich der Verordnung aus?",
     },
 )
-REFUSAL: Mapping[Language, str] = {
-    Language.EN: "The system is assumed to be an AI system within the Act's scope until a person "
-    "has reviewed it.",
-    Language.DE: "Bis ein Mensch sie geprüft hat, wird angenommen, dass es sich um ein KI-System "
-    "im Anwendungsbereich der Verordnung handelt.",
-}
-"""The refusal step's assumption, after the shared first sentence (`common.BLOCKED`): in scope,
-the stricter reading."""
 REFUSAL_CITATIONS = (AI_SYSTEM.article, EU_LINK.article)
 """What the refusal step cites (E16): what the person reviewing checks the description against
 (`PERSON_REVIEW`), the AI system definition, Art. 3(1), and the Act's scope, Art. 2(1); the

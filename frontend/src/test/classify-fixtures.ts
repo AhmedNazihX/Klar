@@ -65,6 +65,64 @@ export function decidedHighRisk(): ClassificationResult {
   }
 }
 
+/** The person-review question of a prohibited check the provider refused, as the engine asks it
+ *  under the original text (prohibited_texts.PERSON_REVIEW_ORIGINAL). */
+export const PERSON_REVIEW: FollowUpQuestion = {
+  id: 'person_review_original',
+  text: 'Please have a person review the description: does the system fall under a practice Art. 5(1) prohibits?',
+  about: 'art:5:1',
+  hint: null,
+  options: [],
+}
+
+/** The worked example with its prohibited check refused by the model provider's content filter
+ *  (decision 030): every step, no class and nothing a class brings. */
+export function providerRefused(): ClassificationResult {
+  return {
+    ...WORKED_EXAMPLE,
+    risk_class: null,
+    status: 'needs_more_information',
+    annex_point: null,
+    transparency_duties: [],
+    obligations: [],
+    legal_review: null,
+    not_assessed: ['prohibited'],
+    follow_up_questions: [...(WORKED_EXAMPLE.follow_up_questions ?? []), PERSON_REVIEW],
+    steps: withSteps(WORKED_EXAMPLE, (step) =>
+      step.step === 'prohibited'
+        ? {
+            ...step,
+            status: 'needs_more_information',
+            decision:
+              "The model provider's content filter blocked this description, so it could not be assessed automatically. No risk class is given: a person must review the description.",
+            missing_fact: PERSON_REVIEW,
+            error: 'provider_refusal',
+          }
+        : step,
+    ),
+  }
+}
+
+/** The worked example as decision 029 stored it with its transparency check refused, before
+ *  decision 030: the refused check listed in `not_assessed`, the class and its duties kept. */
+export function storedBeforeDecision030(): ClassificationResult {
+  return {
+    ...WORKED_EXAMPLE,
+    status: 'needs_more_information',
+    not_assessed: ['transparency'],
+    steps: withSteps(WORKED_EXAMPLE, (step) =>
+      step.step === 'transparency'
+        ? {
+            ...step,
+            status: 'needs_more_information',
+            missing_fact: PERSON_REVIEW,
+            error: 'provider_refusal',
+          }
+        : step,
+    ),
+  }
+}
+
 // The duties below carry the texts of C9's obligations table (supabase/seed/obligations.yaml).
 const AI_LITERACY_PROVIDER: Obligation = {
   key: 'ai-literacy',
@@ -330,7 +388,6 @@ export function outOfScope(): ClassificationResult {
     legal_review: null,
     obligations: [AI_LITERACY],
     follow_up_questions: [],
-    not_assessed: ['prohibited', 'high_risk', 'transparency', 'role_obligations'],
     steps: [
       {
         ...scope,

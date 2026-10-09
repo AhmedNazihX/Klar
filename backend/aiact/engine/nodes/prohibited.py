@@ -301,31 +301,24 @@ def to_outcome(
 
 
 def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:
-    """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    prohibited assumed until a person reviews it. It cites what the reviewer checks (E16),
+    """The step for a reply the provider's content filter refused (decisions 029, 030): not
+    assessed, and no class until a person reviews it. It cites what the reviewer checks (E16),
     fetched from `library`: points (ba) and (bb), which the review question asks about; before 2
-    December 2026, when it says they don't apply yet, the rest of the Art. 5(1) list and their
-    start date, Art. 113(a); under the original text, which has neither point, the Art. 5(1)
-    list. The run goes on: the review question is a missing fact, so the step can't end it."""
-    language, as_of = state["language"], state["as_of"]
+    December 2026, when they don't apply yet, the rest of the Art. 5(1) list and their start
+    date, Art. 113(a); under the original text, which has neither point, the Art. 5(1) list,
+    and the review question asks about that list instead."""
     cited: tuple[str, ...] = REFUSAL_CITATIONS
-    assumption = texts.REFUSAL[language]
+    review = texts.PERSON_REVIEW
     if state["law_version"] is LawVersion.ORIGINAL:
-        cited = REFUSAL_CITATIONS_ORIGINAL
-        assumption = texts.REFUSAL_ORIGINAL[language]
-    elif as_of < DECEMBER_PROHIBITIONS_APPLY_FROM:
+        cited, review = REFUSAL_CITATIONS_ORIGINAL, texts.PERSON_REVIEW_ORIGINAL
+    elif state["as_of"] < DECEMBER_PROHIBITIONS_APPLY_FROM:
         cited = REFUSAL_CITATIONS_BEFORE_DECEMBER
-        assumption = texts.REFUSAL_BEFORE_DECEMBER[language].format(
-            start=long_date(DECEMBER_PROHIBITIONS_APPLY_FROM, language.value),
-            as_of=long_date(as_of, language.value),
-        )
+    language = state["language"]
     return refused_check(
         StepName.PROHIBITED,
         language,
-        assumption,
         cited_provisions(cited, state, library),
-        ask(texts.PERSON_REVIEW, language, StepName.PROHIBITED),
-        matched=True,
+        ask(review, language, StepName.PROHIBITED),
     )
 
 

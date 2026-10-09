@@ -9,6 +9,10 @@ works, Ethical considerations). No model is called.
   is the labelled working assumption: the status says so, and the legal-review line names it.
 - **Status** follows the steps (`derived_status`); a refused step (decision 029) is
   `needs_more_information`, and `not_assessed` names it.
+- **A refused check** (decision 030): the model provider's content filter blocked a check, so
+  the result has no class, and nothing a class brings: no Annex point, Art. 50 duties,
+  obligations or legal-review line (`refused_result`). The other steps, the role and the
+  questions stay, so the person reviewing sees what the checks that ran found.
 - **Findings** are copied as the checks set them: the Annex point whatever the final class
   (F7b: the metrics read the basis from it), the Art. 50 duties, the role, the role kept next
   to it (`also_role`, shown as "You also use it", decision 026) and its duties. A product the
@@ -141,10 +145,12 @@ def final_class(state: EngineState) -> RiskClass:
     return risk_class
 
 
-def deciding_facts(steps: Sequence[StepResult], risk_class: RiskClass) -> tuple[Fact, ...]:
+def deciding_facts(steps: Sequence[StepResult], risk_class: RiskClass | None) -> tuple[Fact, ...]:
     """The facts of the steps the outcome rests on (the class's steps, every uncertain step,
-    the role step), in check order, each fact once."""
-    deciding = {*CLASS_STEPS[risk_class], StepName.ROLE_OBLIGATIONS}
+    the role step), in check order, each fact once. With no class (a refused check), the
+    uncertain steps and the role step."""
+    class_steps = CLASS_STEPS[risk_class] if risk_class else ()
+    deciding = {*class_steps, StepName.ROLE_OBLIGATIONS}
     rests_on = (s for s in steps if s.step in deciding or s.status is not Status.DECIDED)
     by_text = {fact.text: fact for step in rests_on for fact in step.facts_used}
     return tuple(by_text.values())
@@ -226,42 +232,71 @@ def description_result(state: EngineState) -> ClassificationResult:
     )
 
 
-def finalize(state: EngineState) -> ClassificationResult:
-    """The result of one run: the finalize node for the graph (`EngineNodes(finalize=finalize,
-    …)`). Raises `FinalizeOutputError` when the steps and findings break the result contract (a
-    check skipped, a missing fact not asked); its message names the fields, never their values."""
-    if state.get("needs_description", False):
-        try:
-            return description_result(state)
-        except ValidationError as exc:
-            message = f"the result breaks its contract: {describe_validation_error(exc)}"
-            raise FinalizeOutputError(message) from None
+def refused_result(state: EngineState) -> ClassificationResult:
+    """The result of a run with a check the model provider refused (decision 030): no class, and
+    nothing a class brings (Annex point, Art. 50 duties, obligations, legal review)."""
+    steps: tuple[StepResult, ...] = state.get("steps", ())
+    role = state.get("role")
+    return ClassificationResult(
+        facts=state.get("facts", ()),
+        steps=steps,
+        risk_class=None,
+        status=derived_status(steps),
+        role=role.role if role else None,
+        also_role=role.also_role if role else None,
+        role_switch_reason=role.role_switch_reason if role else None,
+        deciding_facts=deciding_facts(steps, None),
+        law_version=state["law_version"],
+        as_of=state["as_of"],
+        disclaimer=DISCLAIMER[state["language"]],
+        not_assessed=refused_steps(steps),
+        follow_up_questions=follow_up_questions(state),
+    )
+
+
+def classified_result(state: EngineState) -> ClassificationResult:
+    """The result of a run whose checks all answered: the class and its findings."""
     steps: tuple[StepResult, ...] = state.get("steps", ())
     language = state["language"]
     risk_class = final_class(state)
     role = state.get("role")
     is_out = risk_class is RiskClass.OUT_OF_SCOPE
     duties = () if is_out or is_section_b(state) else state.get("transparency_duties", ())
+    return ClassificationResult(
+        facts=state.get("facts", ()),
+        steps=steps,
+        risk_class=risk_class,
+        status=derived_status(steps),
+        role=role.role if role else None,
+        also_role=role.also_role if role else None,
+        role_switch_reason=role.role_switch_reason if role else None,
+        annex_point=state.get("annex_point"),
+        transparency_duties=duties,
+        deciding_facts=deciding_facts(steps, risk_class),
+        obligations=role.obligations if role else (),
+        law_version=state["law_version"],
+        as_of=state["as_of"],
+        disclaimer=DISCLAIMER[language],
+        legal_review=legal_review(steps, risk_class, role.role if role else None, language),
+        not_assessed=refused_steps(steps),
+        follow_up_questions=follow_up_questions(state),
+    )
+
+
+def finalize(state: EngineState) -> ClassificationResult:
+    """The result of one run: the finalize node for the graph (`EngineNodes(finalize=finalize,
+    …)`): a needs-a-description result, a class-less one when the provider refused a check
+    (decision 030), else the classified one. Raises `FinalizeOutputError` when the steps and
+    findings break the result contract (a check skipped, a missing fact not asked); its message
+    names the fields, never their values."""
+    if state.get("needs_description", False):
+        build = description_result
+    elif refused_steps(state.get("steps", ())):
+        build = refused_result
+    else:
+        build = classified_result
     try:
-        return ClassificationResult(
-            facts=state.get("facts", ()),
-            steps=steps,
-            risk_class=risk_class,
-            status=derived_status(steps),
-            role=role.role if role else None,
-            also_role=role.also_role if role else None,
-            role_switch_reason=role.role_switch_reason if role else None,
-            annex_point=state.get("annex_point"),
-            transparency_duties=duties,
-            deciding_facts=deciding_facts(steps, risk_class),
-            obligations=role.obligations if role else (),
-            law_version=state["law_version"],
-            as_of=state["as_of"],
-            disclaimer=DISCLAIMER[language],
-            legal_review=legal_review(steps, risk_class, role.role if role else None, language),
-            not_assessed=refused_steps(steps),
-            follow_up_questions=follow_up_questions(state),
-        )
+        return build(state)
     except ValidationError as exc:
         message = f"the result breaks its contract: {describe_validation_error(exc)}"
         raise FinalizeOutputError(message) from None

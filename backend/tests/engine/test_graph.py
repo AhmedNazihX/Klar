@@ -20,15 +20,17 @@ from aiact.engine.graph import (
 from aiact.engine.nodes.facts import description_questions
 from aiact.engine.nodes.finalize import finalize
 from aiact.engine.scripted import Script, no_match, scripted_nodes
-from aiact.engine.state import CheckOutcome, EngineInput, EngineState, FactsOutcome
+from aiact.engine.state import CheckOutcome, EngineInput, EngineState, FactsOutcome, RoleFinding
 from aiact.schemas import (
     DESCRIPTION_QUESTION_IDS,
     DISCLAIMER_EN,
+    PROVIDER_REFUSAL,
     STEP_ORDER,
     ClassificationResult,
     EvidenceTag,
     Fact,
     FollowUpQuestion,
+    HighRiskRoute,
     Language,
     LawVersion,
     RiskClass,
@@ -251,6 +253,32 @@ def test_a_node_cannot_return_another_checks_step() -> None:
 def test_only_scope_and_prohibited_can_stop_the_run(name: StepName) -> None:
     with pytest.raises(ValidationError, match="no class that stops the run"):
         CheckOutcome(step=no_match(name).step, matched=True)
+
+
+REFUSED_FINDINGS: dict[StepName, dict[str, object]] = {
+    StepName.SCOPE: {"matched": True},
+    StepName.PROHIBITED: {"matched": True},
+    StepName.HIGH_RISK: {"high_risk_route": HighRiskRoute.ANNEX_III},
+    StepName.TRANSPARENCY: {"transparency_duties": ("art:50:1",)},
+    StepName.ROLE_OBLIGATIONS: {"role": RoleFinding(role=Role.PROVIDER)},
+}
+"""What each check assumed on a refusal before decision 030."""
+
+
+@pytest.mark.parametrize("name", STEP_ORDER)
+def test_a_refused_check_has_no_finding(name: StepName) -> None:
+    """Decision 030: no class may rest on a check the provider refused."""
+    review = FollowUpQuestion(id="person_review", text="Please review it.")
+    refusal = StepResult(
+        step=name,
+        decision="Blocked.",
+        status=Status.NEEDS_MORE_INFORMATION,
+        missing_fact=review,
+        error=PROVIDER_REFUSAL,
+    )
+    assert CheckOutcome(step=refusal).step.error == PROVIDER_REFUSAL
+    with pytest.raises(ValidationError, match="a refused check has no finding"):
+        CheckOutcome(step=refusal, **REFUSED_FINDINGS[name])  # pyright: ignore[reportArgumentType]
 
 
 def test_every_check_needs_a_node() -> None:

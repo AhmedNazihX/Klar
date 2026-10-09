@@ -72,7 +72,6 @@ from aiact.engine.nodes.high_risk_texts import (
     PROFILING,
     PUBLIC_AUTHORITY_USER,
     PUBLIC_SCHEME,
-    REFUSAL,
     REFUSAL_CITATIONS,
     ROUTE_NAMES,
     TEXTS,
@@ -683,18 +682,15 @@ def to_outcome(
 
 
 def refusal_outcome(state: EngineState, library: HighRiskLibrary) -> CheckOutcome:
-    """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    high-risk on the Annex III route (its duties apply first) assumed until a person reviews it,
-    with no Annex point, citing Art. 6(1) and 6(2) as fetched from `library`. The review
-    question is a missing fact."""
+    """The step for a reply the provider's content filter refused (decisions 029, 030): not
+    assessed, and no class until a person reviews it, citing Art. 6(1) and 6(2) as fetched from
+    `library`. The review question is a missing fact."""
     language = state["language"]
     return refused_check(
         StepName.HIGH_RISK,
         language,
-        REFUSAL[language],
         cited_provisions(REFUSAL_CITATIONS, state, library),
         _question(PERSON_REVIEW, None, state, ""),
-        high_risk_route=HighRiskRoute.ANNEX_III,
     )
 
 

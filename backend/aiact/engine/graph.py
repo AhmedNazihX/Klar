@@ -19,15 +19,9 @@ from typing import Protocol
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from aiact.engine.state import (
-    STOPPING_STEPS,
-    CheckOutcome,
-    EngineInput,
-    EngineState,
-    FactsOutcome,
-)
+from aiact.engine.state import CheckOutcome, EngineInput, EngineState, FactsOutcome
 from aiact.schemas import STEP_ORDER, ClassificationResult, StepName
-from aiact.schemas.result import can_end_run
+from aiact.schemas.result import STOPPING_STEPS, can_end_run
 
 FACTS = "facts"
 FINALIZE = "finalize"

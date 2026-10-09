@@ -5,7 +5,7 @@
 import { http, HttpResponse } from 'msw'
 import { afterAll, describe, expect, it } from 'vitest'
 
-import { WORKED_EXAMPLE } from '@/test/classify-fixtures'
+import { storedBeforeDecision030, WORKED_EXAMPLE } from '@/test/classify-fixtures'
 import {
   INVENTORY_TOOLS_URL,
   inventoryToolsHandler,
@@ -58,6 +58,13 @@ describe('fetchInventoryTools', () => {
     ])
     expect(tools[0]?.toolId).toBe(rows[0]?.['id'])
     expect(tools[0]?.description).toBe(rows[0]?.['description'])
+  })
+
+  it('reads a result whose class rests on a check not assessed as no result, not unreadable', async () => {
+    server.use(inventoryToolsHandler(() => [toolRow('Before 030', storedBeforeDecision030())]))
+    const [tool] = await fetchInventoryTools(client)
+    expect(tool?.result).toBeNull()
+    expect(tool?.hasUnreadableResult).toBe(false)
   })
 
   it('passes a read error on', async () => {

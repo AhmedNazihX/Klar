@@ -36,7 +36,7 @@ from aiact.eval import (
 from aiact.eval import split as eval_split
 from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases, load_qa_items
 from aiact.eval.experiments import embeddings as embedding_experiment
-from aiact.eval.experiments import smoke, smoke_recheck, smoke_verdict
+from aiact.eval.experiments import smoke, smoke_recheck, smoke_refusals, smoke_verdict
 from aiact.eval.experiments.smoke_served import VerifyAll
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
 from aiact.llm.generations import GenerationLookup
@@ -756,18 +756,27 @@ def eval_smoke(
     concurrency: Annotated[
         int, typer.Option(min=1, max=runner.MAX_CONCURRENCY, help="Probes in flight at once")
     ] = smoke.DEFAULT_CONCURRENCY,
+    node: Annotated[
+        list[smoke.NodeName] | None,
+        typer.Option(help="Probe only this node; repeat for several [default: X2's four]"),
+    ] = None,
+    case: Annotated[
+        list[str] | None, typer.Option(help="Probe only this case id; repeat for several")
+    ] = None,
 ) -> None:
     """The engine model smoke test (X2, decision 023): each model on the staged nodes and the
-    approved own cases, stored in eval_runs, then decision 023's rule applied to the stored rows."""
+    approved own cases, stored in eval_runs, then decision 023's rule applied to the stored rows.
+    `--node` and `--case` narrow the plan (X2b: the refused requests, decision 033)."""
     unknown = sorted(set(model or ()) - set(smoke.ARMS))
     if unknown:
         known = ", ".join(smoke.ARMS)
         typer.echo(f"Error: unknown model {', '.join(unknown)}; one of: {known}", err=True)
         raise typer.Exit(code=2)
     arms = [smoke.ARMS[name] for name in dict.fromkeys(model or smoke.ARMS)]
+    nodes = tuple(dict.fromkeys(node)) if node else smoke.X2_NODES
     try:
-        probes = smoke.plan_probes()
-    except CaseFileError as error:
+        probes = smoke.plan_probes(nodes=nodes, case_ids=tuple(dict.fromkeys(case or ())))
+    except (CaseFileError, smoke.UnknownCaseError) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
     typer.echo(smoke.format_plan(probes, arms))
@@ -881,6 +890,32 @@ def _recheck_and_compare(
         typer.echo("No comparison: give one luna and one gemini run.")
     else:
         typer.echo(_smoke_comparison(connection, pair))
+
+
+@eval_app.command("smoke-refusals")
+def eval_smoke_refusals(
+    engine_run: Annotated[
+        list[UUID], typer.Option(help="A stored Luna smoke run's id; repeat for several runs")
+    ],
+    second_run: Annotated[
+        UUID, typer.Option(help="The second model's stored smoke run on the refused cases")
+    ],
+) -> None:
+    """Apply decision 033's rule to stored smoke runs and print the table per node (X2b,
+    read-only): does the second model answer what Luna's provider refused?"""
+    try:
+        with records.connect() as connection:
+            table, runs = smoke_refusals.compare_stored(
+                connection, list(dict.fromkeys(engine_run)), second_run
+            )
+    except (records.DatabaseNotConfiguredError, smoke_verdict.SmokeRunError, ValueError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(smoke_refusals.format_table(table, runs))
 
 
 def _smoke_comparison(connection: psycopg.Connection, run_ids: dict[str, UUID]) -> str:

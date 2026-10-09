@@ -22,7 +22,8 @@ from pydantic import JsonValue, SecretStr, ValidationError
 from typer.testing import CliRunner
 
 from aiact import cli
-from aiact.engine.nodes import facts, high_risk, role_obligations, scope
+from aiact.engine.nodes import facts, high_risk, prohibited, role_obligations, scope, transparency
+from aiact.engine.nodes.common import refused_check
 from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
 from aiact.eval import records, runner
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseSet
@@ -44,7 +45,7 @@ from aiact.llm.generations import (
     GenerationTransientError,
 )
 from aiact.retrieval.provisions import ProvisionNotFoundError
-from aiact.schemas import Language, RiskClass, Role, Status, StepName, StepResult
+from aiact.schemas import FollowUpQuestion, Language, RiskClass, Role, Status, StepName, StepResult
 from aiact.settings import Settings
 from tests.eval.experiments.builders import case, role_outcome
 
@@ -115,6 +116,81 @@ def test_a_missing_folder_plans_no_probe_for_it(tmp_path: Path) -> None:
         "high_risk:init-worked-example",
         "facts:init-worked-example",
     ]
+
+
+def test_a_plan_narrowed_to_nodes_lists_their_checks_in_engine_order(cases_dir: Path) -> None:
+    write_cases(cases_dir, "c", [case("c-1", RiskClass.PROHIBITED)])
+    write_cases(cases_dir, "a", [case("a-1", RiskClass.LIMITED_RISK)])
+    nodes = (NodeName.TRANSPARENCY, NodeName.FACTS, NodeName.PROHIBITED)
+    probes = smoke.plan_probes(cases_dir, nodes=nodes)
+    assert [probe.probe_id for probe in probes] == [
+        "prohibited:c-1",
+        "transparency:a-1",
+        "facts:c-1",
+        "facts:a-1",
+    ]
+
+
+def test_facts_alone_runs_on_every_own_case_the_thin_ones_too(cases_dir: Path) -> None:
+    write_cases(cases_dir, "c", [case("c-1", RiskClass.PROHIBITED)])
+    write_cases(cases_dir, "thin", [case("t-1")])
+    probes = smoke.plan_probes(cases_dir, nodes=(NodeName.FACTS,))
+    assert [probe.probe_id for probe in probes] == [
+        "facts:b-1",
+        "facts:c-1",
+        "facts:init-worked-example",
+        "facts:e-1",
+        "facts:e-2",
+        "facts:d-1",
+        "facts:t-1",
+    ]
+
+
+def test_facts_run_on_the_thin_cases_only_when_every_check_is_planned(cases_dir: Path) -> None:
+    """X2b's run 1 plans every check, so facts covers every own case; X2's plan stays as it was."""
+    write_cases(cases_dir, "thin", [case("t-1")])
+    every = smoke.plan_probes(cases_dir, nodes=tuple(NodeName))
+    assert [p.probe_id for p in every if p.node is NodeName.FACTS][-1] == "facts:t-1"
+    assert sum(p.case.id == "t-1" for p in every) == 1
+    x2 = smoke.plan_probes(cases_dir)
+    assert "t-1" not in {p.case.id for p in x2}
+
+
+def test_a_plan_narrowed_to_cases_keeps_only_their_probes(cases_dir: Path) -> None:
+    probes = smoke.plan_probes(cases_dir, case_ids=("e-2", "b-1"))
+    assert [probe.probe_id for probe in probes] == [
+        "scope:b-1",
+        "high_risk:e-2",
+        "facts:b-1",
+        "facts:e-2",
+    ]
+
+
+def test_a_case_no_planned_probe_has_is_refused(cases_dir: Path) -> None:
+    with pytest.raises(smoke.UnknownCaseError, match=r"\['d-9'\]"):
+        smoke.plan_probes(cases_dir, nodes=(NodeName.SCOPE,), case_ids=("b-1", "d-9"))
+
+
+def test_x2b_probes_prohibited_on_own_c_and_transparency_on_own_a() -> None:
+    assert smoke.X2_NODES == ("facts", "scope", "high_risk", "role_obligations")
+    assert (smoke.CASE_FOLDERS[NodeName.PROHIBITED], smoke.CASE_FOLDERS[NodeName.TRANSPARENCY]) == (
+        "c",
+        "a",
+    )
+    assert smoke.MAX_OUTPUT_TOKENS[NodeName.PROHIBITED] == 6000
+    assert smoke.MAX_OUTPUT_TOKENS[NodeName.TRANSPARENCY] == 4000
+
+
+def test_x2b_run_1_plans_facts_on_all_77_own_cases() -> None:
+    """The DoD's "facts on all own cases": 74 cases the checks use and the 3 thin ones."""
+    probes = smoke.plan_probes(nodes=tuple(NodeName))
+    facts_cases = {probe.case.id for probe in probes if probe.node is NodeName.FACTS}
+    assert len(facts_cases) == 77
+    assert {
+        "own-t-01-ai-for-hr",
+        "own-t-02-sales-team-ai-tool",
+        "own-t-03-ki-im-kundenservice",
+    } <= facts_cases
 
 
 def test_the_default_plan_covers_every_approved_own_case() -> None:
@@ -241,6 +317,7 @@ def test_a_fitting_answer_is_scored_with_its_cost_and_provider() -> None:
     assert record.scores == {
         "broken": False,
         "failed": False,
+        "refused": False,
         "correct": True,
         "served_as_pinned": True,
         "pending_verification": False,
@@ -259,6 +336,40 @@ def test_a_fitting_answer_is_scored_with_its_cost_and_provider() -> None:
     assert info(record)["lookup_skipped"] is None
     assert record.label["id"] == "d-1"
     assert nodes.seen == [(NodeName.ROLE, LUNA.model, LUNA.provider)]
+
+
+def _refused_check(name: StepName) -> CheckOutcome:
+    review = FollowUpQuestion(id="person_review", text="Please review it.")
+    return refused_check(name, Language.EN, (), review)
+
+
+@pytest.mark.parametrize(
+    ("probe", "outcome"),
+    [
+        (Probe(NodeName.PROHIBITED, case("c-1", RiskClass.PROHIBITED)), "check"),
+        (Probe(NodeName.FACTS, case("c-1", RiskClass.PROHIBITED)), "facts"),
+    ],
+)
+def test_a_provider_refusal_is_refused_not_broken_and_not_scored(
+    probe: Probe, outcome: str
+) -> None:
+    """Decisions 029, 030: the node's refusal outcome is neither an answer nor a broken one."""
+    result = (
+        facts.refusal_outcome(Language.EN)
+        if outcome == "facts"
+        else _refused_check(StepName.PROHIBITED)
+    )
+    record = probe_on(FakeNodes(result, 0.0, 0), probe=probe)
+    scores = record.scores
+    assert (scores["refused"], scores["broken"], scores["failed"]) == (True, False, False)
+    assert (scores["correct"], scores["is_error"]) == (None, True)
+
+
+def test_a_check_that_answered_is_not_refused() -> None:
+    assert not smoke.is_refused(role_outcome(Role.DEPLOYER))
+    assert not smoke.is_refused(FactsOutcome())
+    assert smoke.is_refused(_refused_check(StepName.SCOPE))
+    assert smoke.is_refused(facts.refusal_outcome(Language.DE))
 
 
 def test_a_wrong_answer_is_answered_but_not_correct() -> None:
@@ -350,6 +461,7 @@ def test_an_answer_that_misses_the_schema_is_broken_and_wrong() -> None:
     assert record.scores == {
         "broken": True,
         "failed": False,
+        "refused": False,
         "correct": False,
         "served_as_pinned": True,
         "pending_verification": False,
@@ -367,6 +479,8 @@ def test_an_answer_that_misses_the_schema_is_broken_and_wrong() -> None:
         high_risk.HighRiskOutputError("x"),
         role_obligations.RoleOutputError("x"),
         scope.ScopeOutputError("x"),
+        prohibited.ProhibitedOutputError("x"),
+        transparency.TransparencyOutputError("x"),
     ],
 )
 def test_every_nodes_output_error_is_broken(error: Exception) -> None:
@@ -579,6 +693,8 @@ def test_a_reply_without_cost_or_usage_is_charged_its_worst_case() -> None:
         (NodeName.SCOPE, scope.ScopeCheck),
         (NodeName.HIGH_RISK, high_risk.HighRiskCheck),
         (NodeName.ROLE, role_obligations.RoleObligationsCheck),
+        (NodeName.PROHIBITED, prohibited.ProhibitedCheck),
+        (NodeName.TRANSPARENCY, transparency.TransparencyCheck),
     ],
 )
 def test_each_node_is_the_engines_own_on_the_arms_pinned_model_without_retries(
@@ -856,7 +972,7 @@ def test_the_estimate_prices_typical_tokens_cold() -> None:
         Probe(NodeName.HIGH_RISK, case("e-1")),
         Probe(NodeName.ROLE, case("d-1")),
     )
-    expected = (1582 + 7972 + 1958) * 0.11 / 1e6 + (1800 + 1017 + 1452) * 0.55 / 1e6
+    expected = (2489 + 7972 + 1958) * 0.11 / 1e6 + (2382 + 1017 + 1452) * 0.55 / 1e6
     assert smoke.estimate_cost(probes, LUNA) == pytest.approx(expected)
 
 
@@ -882,6 +998,22 @@ def test_the_dry_run_for_one_model_prices_only_it() -> None:
     result = cli_runner.invoke(cli.app, ["evaluate", "smoke", "--dry-run", "--model", "gemini"])
     assert result.exit_code == 0, result.output
     assert "gemini (" in result.stdout and "luna (" not in result.stdout
+
+
+def test_the_dry_run_narrows_to_the_given_nodes_and_cases() -> None:
+    arguments = ["evaluate", "smoke", "--dry-run", "--model", "gemini", "--node", "prohibited"]
+    arguments += ["--node", "facts", "--case", "own-c-01-undress-photo-app"]
+    result = cli_runner.invoke(cli.app, arguments)
+    assert result.exit_code == 0, result.output
+    assert result.stdout.startswith("2 probes on 1 cases (no model call made)")
+    assert "  prohibited: 1" in result.stdout and "  facts: 1" in result.stdout
+
+
+def test_an_unknown_case_is_refused_before_any_call() -> None:
+    arguments = ["evaluate", "smoke", "--dry-run", "--node", "scope", "--case", "own-x-99"]
+    result = cli_runner.invoke(cli.app, arguments)
+    assert result.exit_code == 2
+    assert "own-x-99" in result.stderr
 
 
 def test_an_unknown_model_is_refused() -> None:

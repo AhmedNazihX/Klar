@@ -8,6 +8,8 @@ import type { ClassifyResponse } from '@/api'
 import {
   CLASSIFY_URL,
   classifyHandler,
+  PERSON_REVIEW,
+  providerRefused,
   sseBody,
   WORKED_EXAMPLE,
   WORKED_EXAMPLE_EVENTS,
@@ -110,6 +112,25 @@ describe('useClassify', () => {
         'Who does it affect?',
         'Did you buy it or build it?',
       ],
+    })
+  })
+
+  it('stops a run whose check the provider refused with the blocked checks and the review question', async () => {
+    // Decision 030: a refused check gives no class, but the result still lists every step.
+    const refused: ClassifyResponse = { event: 'result', result: providerRefused() }
+    server.use(classifyHandler([...WORKED_EXAMPLE_EVENTS.slice(0, 1), refused]))
+    const { result } = renderUseClassify()
+
+    let outcome: unknown
+    await act(async () => {
+      outcome = await result.current.run.mutateAsync(BODY).catch((error: unknown) => error)
+    })
+
+    expect(outcome).toBeInstanceOf(ClassifyRunError)
+    expect((outcome as ClassifyRunError).failure).toEqual({
+      kind: 'provider_refused',
+      steps: ['prohibited'],
+      questions: [PERSON_REVIEW.text],
     })
   })
 })

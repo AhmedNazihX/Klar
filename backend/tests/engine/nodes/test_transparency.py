@@ -73,7 +73,7 @@ from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
     corpus_recording,
 )
-from tests.engine.nodes.known_gaps import KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -705,13 +705,13 @@ def _filtered(content: str) -> GenericFakeChatModel:
     return GenericFakeChatModel(messages=iter([reply]))
 
 
-def test_a_provider_refusal_assumes_every_duty_for_a_person_to_review() -> None:
-    """Decision 029: not a broken output; every Art. 50 duty assumed, each duty's paragraph
-    cited (E16)."""
+def test_a_provider_refusal_assumes_no_duty_for_a_person_to_review() -> None:
+    """Decisions 029, 030: not a broken output; no Art. 50 duty assumed, each duty's paragraph
+    cited for the reviewer (E16)."""
     library = FakeLibrary()
     check = TransparencyCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=library)
     result = check(state())
-    assert result.transparency_duties == ("art:50:1", "art:50:2", "art:50:3", "art:50:4")
+    assert result.transparency_duties == ()
     step = result.step
     assert step.status is Status.NEEDS_MORE_INFORMATION
     assert step.error == "provider_refusal"
@@ -720,13 +720,13 @@ def test_a_provider_refusal_assumes_every_duty_for_a_person_to_review() -> None:
     assert result.follow_up_questions == (step.missing_fact,)
     assert cited(result) == ["art:50:1", "art:50:2", "art:50:3", "art:50:4"]
     assert [pid for pid, _ in library.lookups] == ["art:50", *node.ALL_DUTIES]
-    assert step.decision.startswith("The model provider's content filter blocked")
+    assert step.decision == NOT_ASSESSED["en"]
 
 
 def test_a_refusal_is_reported_in_german() -> None:
     check = TransparencyCheck(_settings(), chat=_filtered(REFUSAL_TEXT), library=FakeLibrary())
     result = check(state(language=Language.DE))
-    assert result.step.decision.startswith("Der Inhaltsfilter des Modellanbieters")
+    assert result.step.decision == NOT_ASSESSED["de"]
     assert result.step.missing_fact is not None
     assert result.step.missing_fact.text.startswith("Bitte lassen Sie")
 

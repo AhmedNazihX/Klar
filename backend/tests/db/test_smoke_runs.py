@@ -14,9 +14,10 @@ from psycopg.types.json import Jsonb
 from pydantic import JsonValue, SecretStr
 
 from aiact.cli import _smoke_comparison  # pyright: ignore[reportPrivateUsage]
+from aiact.engine.nodes.common import refused_check
 from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome, RoleFinding
 from aiact.eval.cases import BenchmarkCase, CaseLabel, CaseSet
-from aiact.eval.experiments import smoke, smoke_verdict
+from aiact.eval.experiments import smoke, smoke_refusals, smoke_verdict
 from aiact.eval.experiments.smoke import (
     GEMINI,
     LUNA,
@@ -29,7 +30,7 @@ from aiact.eval.experiments.smoke_verdict import SmokeRunError, Verdict
 from aiact.eval.records import PostgresRunStore
 from aiact.eval.runner import CaseRecord
 from aiact.llm.generations import GenerationLookupError, GenerationNotFoundError
-from aiact.schemas import Language, RiskClass, Role, StepName, StepResult
+from aiact.schemas import FollowUpQuestion, Language, RiskClass, Role, StepName, StepResult
 from aiact.settings import Settings
 
 pytestmark = pytest.mark.db
@@ -228,3 +229,51 @@ def test_updating_a_case_the_run_does_not_have_is_an_error(db: psycopg.Connectio
     missing = CaseRecord("role_obligations:nowhere", {}, {}, {}, None, 0.0, 0)
     with pytest.raises(LookupError, match="no stored case"):
         PostgresRunStore(db).update_case(run.run_id, missing)
+
+
+# --- X2b: the refused requests (decision 033) ---------------------------------------------------
+
+
+def refusing() -> smoke.NodeFactory:
+    """Every probe is refused by the provider's content filter, at no cost."""
+
+    def build(node: NodeName, settings: Settings, tracker: UsageTracker) -> smoke.NodeRunner:
+        def run(state: EngineState) -> FactsOutcome | CheckOutcome:
+            tracker.record(CallRecord(0.0, 0, f"gen-{uuid4().hex}", "content_filter"))
+            review = FollowUpQuestion(id="role_person_review", text="Please review it.")
+            return refused_check(StepName.ROLE_OBLIGATIONS, Language.EN, (), review)
+
+        return run
+
+    return build
+
+
+def test_the_refusal_table_comes_from_the_stored_rows(db: psycopg.Connection) -> None:
+    luna = smoke.run_arm(
+        LUNA,
+        probes(),
+        PostgresRunStore(db),
+        SETTINGS,
+        GIT_STATE,
+        factory=refusing(),
+        served_by=lambda generation_id: LUNA.served_by,
+    )
+    refused_row = db.execute(
+        "select scores -> 'refused', scores -> 'correct' from eval_case_results"
+        " where run_id = %s limit 1",
+        (luna.run_id,),
+    ).fetchone()
+    assert refused_row == (True, None)
+    gemini = run(db, GEMINI, Role.DEPLOYER)
+    table, runs = smoke_refusals.compare_stored(db, [luna.run_id], gemini.run_id)
+    role = next(row for row in table.rows if row.node is NodeName.ROLE)
+    assert (role.cases_run, role.refused, role.answered, role.matched) == (4, 4, 4, 4)
+    assert table.verdict is smoke_refusals.Verdict.ADOPT
+    assert [(info.arm, info.cost_usd) for info in runs] == [
+        ("luna", 0.0),
+        ("gemini", pytest.approx(0.004)),
+    ]
+    with pytest.raises(SmokeRunError, match="not the engine model's"):
+        smoke_refusals.compare_stored(db, [gemini.run_id], luna.run_id)
+    with pytest.raises(SmokeRunError, match="not a second model's"):
+        smoke_refusals.compare_stored(db, [luna.run_id], luna.run_id)

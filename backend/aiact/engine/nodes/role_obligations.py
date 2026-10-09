@@ -609,27 +609,22 @@ def to_outcome(
     return CheckOutcome(step=step, role=finding, follow_up_questions=questions)
 
 
-def refusal_outcome(
-    state: EngineState, table: ObligationTable | None = None, data_dir: Path | None = None
-) -> CheckOutcome:
-    """The step for a reply the provider's content filter refused (decision 029): not assessed,
-    provider keeping the deployer duties assumed (the stricter reading, as for an unknown role)
-    until a person reviews it, with every duty whose condition is open, citing both
-    definitions. The review question is a missing fact."""
+def refusal_outcome(state: EngineState, data_dir: Path | None = None) -> CheckOutcome:
+    """The step for a reply the provider's content filter refused (decisions 029, 030): not
+    assessed, and no role, duty or class until a person reviews it, citing the definitions of
+    the provider and the deployer the reviewer checks (and Art. 2(2) for an Annex I Section B
+    point). The review question is a missing fact."""
     language = state["language"]
     settled = RoleSettlement(
         base=None, role=Role.PROVIDER, also_role=Role.DEPLOYER, gpai=Answer.UNKNOWN, used=()
     )
-    obligations, summary = select_obligations((), state, settled, table or default_table())
     source = data_dir or get_settings().aiact_data_dir
     cited = (*settled.cited_articles(), *_section_b_articles(state))
     return refused_check(
         StepName.ROLE_OBLIGATIONS,
         language,
-        " ".join((TEXTS[language]["refusal"], *summary)),
         citations(cited, state["law_version"], language, source),
         ask(PERSON_REVIEW, language, StepName.ROLE_OBLIGATIONS),
-        role=RoleFinding(role=settled.role, also_role=settled.also_role, obligations=obligations),
     )
 
 
@@ -805,7 +800,7 @@ class RoleObligationsCheck:
         try:
             answer = parse_reply(reply, model)
         except ProviderRefusalError:
-            return refusal_outcome(state, self._table, self._data_dir)
+            return refusal_outcome(state, self._data_dir)
         except ValidationError as exc:
             message = f"role answer doesn't fit the schema: {describe_validation_error(exc)}"
             raise RoleOutputError(message) from None

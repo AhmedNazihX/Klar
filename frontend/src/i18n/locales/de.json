@@ -510,6 +510,13 @@
       "title": "Klar braucht etwas mehr, um zu starten",
       "waiting": "Wartet auf eine Beschreibung. Bis dahin wird nichts geraten."
     },
+    "refused": {
+      "title": "Ein Mensch muss diese Beschreibung prüfen",
+      "subtitle": "Nicht jede Prüfung konnte bewertet werden.",
+      "blocked": "Der Inhaltsfilter des Modellanbieters hat diese Prüfungen blockiert:",
+      "row": "Vom Inhaltsfilter des Modellanbieters blockiert: nicht geprüft.",
+      "body": "Ihre Beschreibung bleibt erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb gibt es kein Ergebnis."
+    },
     "accuracy": "Diese Einschätzung ist nur so genau wie Ihre Beschreibung.",
     "stopped": {
       "title": "Die Prüfungen konnten nicht abgeschlossen werden",
@@ -531,7 +538,8 @@
       "server": "Der Dienst hat mit einem Fehler geantwortet (HTTP {{status}}).",
       "network": "Der Dienst hat nicht geantwortet. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
       "incomplete": "Die Verbindung brach ab, bevor die Prüfungen fertig waren.",
-      "needsDescription": "Klar muss wissen, was das Tool entscheidet und wen es betrifft. Ergänzen Sie das in Ihrer Beschreibung und starten Sie die Prüfungen erneut."
+      "needsDescription": "Klar muss wissen, was das Tool entscheidet und wen es betrifft. Ergänzen Sie das in Ihrer Beschreibung und starten Sie die Prüfungen erneut.",
+      "providerRefused": "Der Inhaltsfilter des Modellanbieters hat eine Prüfung blockiert, daher konnte sie nicht automatisch geprüft werden. Es wird keine Risikoklasse angegeben: Ein Mensch muss die Beschreibung prüfen."
     }
   },
   "result": {

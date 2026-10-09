@@ -82,6 +82,9 @@ function rowDetail(
 ): Partial<CheckProgressStep> {
   const { t, progress, failure } = context
   const reference = t(`progress.reference.${id}`)
+  if (failure?.kind === 'provider_refused' && id !== 'facts' && failure.steps.includes(id)) {
+    return { detail: t('progress.refused.row') }
+  }
   switch (state) {
     case 'error':
       return { detail: failure ? failureReason(t, failure) : t('progress.reason.check') }
@@ -104,6 +107,51 @@ function progressRows(context: RowContext, isRunning: boolean): CheckProgressSte
     const state = checkState(id, context.progress, isRunning)
     return { id, name: context.t(`progress.check.${id}`), state, ...rowDetail(id, state, context) }
   })
+}
+
+/** The line under the heading: why the run stopped, or what the checks are doing. */
+function subtitle(t: TFunction, progress: ProgressState, failure: ClassifyFailure | null): string {
+  if (failure === null) return t('progress.subtitle')
+  if (failure.kind === 'needs_description') return t('progress.needsDescription.waiting')
+  if (failure.kind === 'provider_refused') return t('progress.refused.subtitle')
+  return stoppedTitle(t, progress)
+}
+
+/** The model provider blocked some checks (decision 030): which ones, and that a person must
+ *  review the description. The run went on to every check, or ended at a later stopping check
+ *  that decided, so nothing here says every check ran. No Try again: the filter would likely
+ *  block it again. */
+function RefusedAlert({
+  failure,
+  onSaveForLater,
+}: {
+  failure: Extract<ClassifyFailure, { kind: 'provider_refused' }>
+  onSaveForLater: () => void
+}): JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <div role="alert" className="flex flex-col gap-3 rounded-card-small px-4 py-3.5 glass-thin">
+      <p className="m-0 text-body-small font-semibold text-ink">{t('progress.refused.title')}</p>
+      <p className="m-0 text-caption font-normal text-ink-2">{failureReason(t, failure)}</p>
+      <p className="m-0 text-caption font-normal text-ink-2">{t('progress.refused.blocked')}</p>
+      <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-caption font-normal text-ink-2">
+        {failure.steps.map((step) => (
+          <li key={step}>{t(`progress.check.${step}`)}</li>
+        ))}
+      </ul>
+      {failure.questions.map((question) => (
+        <p key={question} className="m-0 text-caption font-normal text-ink">
+          {question}
+        </p>
+      ))}
+      <p className="m-0 text-caption font-normal text-ink-2">{t('progress.refused.body')}</p>
+      <div className="flex flex-wrap gap-2.5">
+        <Button size="sm" variant="ghost" onClick={onSaveForLater}>
+          {t('progress.stopped.saveForLater')}
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 export type ProgressPanelProps = {
@@ -142,14 +190,13 @@ export function ProgressPanel({
           {t('progress.heading')}
         </h2>
         <p className="m-0 text-caption font-normal text-slate">
-          {isThin
-            ? t('progress.needsDescription.waiting')
-            : failure
-              ? stoppedTitle(t, progress)
-              : t('progress.subtitle')}
+          {subtitle(t, progress, failure)}
         </p>
       </div>
-      {failure && (
+      {failure?.kind === 'provider_refused' && (
+        <RefusedAlert failure={failure} onSaveForLater={onSaveForLater} />
+      )}
+      {failure && failure.kind !== 'provider_refused' && (
         <div role="alert" className="flex flex-col gap-3 rounded-card-small px-4 py-3.5 glass-thin">
           <p className="m-0 text-body-small font-semibold text-ink">
             {isThin ? t('progress.needsDescription.title') : t('progress.stopped.title')}

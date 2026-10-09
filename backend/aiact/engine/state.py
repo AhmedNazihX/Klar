@@ -12,6 +12,7 @@ from pydantic import model_validator
 
 from aiact.schemas import (
     DESCRIPTION_QUESTION_IDS,
+    PROVIDER_REFUSAL,
     ClassificationResult,
     Fact,
     FollowUpQuestion,
@@ -24,9 +25,7 @@ from aiact.schemas import (
     StepResult,
 )
 from aiact.schemas.base import ContractModel
-
-STOPPING_STEPS: frozenset[StepName] = frozenset({StepName.SCOPE, StepName.PROHIBITED})
-"""The checks whose match may end the run early: out_of_scope (Art. 2-3) and prohibited (Art. 5)."""
+from aiact.schemas.result import STOPPING_STEPS
 
 
 class FactsOutcome(ContractModel):
@@ -131,6 +130,23 @@ class CheckOutcome(ContractModel):
             raise ValueError("an Art. 6(3)-exempt system is not high-risk")
         if self.annex_point is not None and self.high_risk_route is None:
             raise ValueError("annex_point is set only with the high_risk_route it rests on")
+        return self
+
+    @model_validator(mode="after")
+    def _refused_step_finds_nothing(self) -> Self:
+        """A check the provider refused found nothing, so no class can rest on it (decision
+        030)."""
+        if self.step.error != PROVIDER_REFUSAL:
+            return self
+        if (
+            self.matched
+            or self.high_risk_route is not None
+            or self.annex_iii_exempt
+            or self.annex_point is not None
+            or self.transparency_duties
+            or self.role is not None
+        ):
+            raise ValueError("a refused check has no finding (decision 030)")
         return self
 
 

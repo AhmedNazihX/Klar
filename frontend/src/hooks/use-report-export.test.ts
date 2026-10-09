@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { InventoryTool } from '@/lib/inventory'
-import { WORKED_EXAMPLE } from '@/test/classify-fixtures'
+import { storedBeforeDecision030, WORKED_EXAMPLE } from '@/test/classify-fixtures'
 
 import { reportTool } from './use-report-export'
 
@@ -28,5 +28,12 @@ describe('reportTool', () => {
     expect(reportTool(storedTool({ ...WORKED_EXAMPLE, also_role: null }), 'en').also_role).toBe(
       null,
     )
+  })
+
+  it('lists a result whose class rests on a check not assessed as not classified yet', () => {
+    expect(reportTool(storedTool(storedBeforeDecision030()), 'en')).toEqual({
+      name: 'CV screener',
+      duties: [],
+    })
   })
 })

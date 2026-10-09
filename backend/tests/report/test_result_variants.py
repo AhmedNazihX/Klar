@@ -24,12 +24,11 @@ from aiact.schemas import (
     RiskClass,
     Role,
     Status,
-    StepName,
 )
 from tests.drafting.builders import ambiguous_result, limited_risk_result, needs_information_result
 from tests.drafting.vendor_builders import prohibited_result, prohibited_step
 from tests.export.reading import pdf_pages
-from tests.schemas.builders import ends_early, rebuild, steps_with, unverified
+from tests.schemas.builders import ends_early, rebuild, steps_with
 from tests.schemas.worked_example import cite, worked_example_result
 
 EN, DE = Language.EN, Language.DE
@@ -203,19 +202,6 @@ def test_the_german_wording_of_open_and_empty_cases() -> None:
     assert "3 Hochrisiko Vorerst angenommen: eine Angabe fehlt" in paused
     assert "Fehlende Angabe (3 Hochrisiko): Is the tool used in the EU?" in paused
     assert "Weitere Angaben nötig" in paused
-    refused = unverified(StepName.HIGH_RISK).model_copy(update={"error": "provider_refusal"})
-    not_assessed = rebuild(
-        worked_example_result(),
-        status=Status.NEEDS_MORE_INFORMATION,
-        steps=steps_with(refused),
-        not_assessed=(StepName.HIGH_RISK,),
-    )
-    german = _text(not_assessed, DE)
-    assert "Nicht bewertet: Diese Prüfung muss eine Person vornehmen." in german
-    assert (
-        "Nicht bewertet (3 Hochrisiko): Der Modellanbieter hat diese Prüfung abgelehnt, daher muss "
-        "eine Person sie vornehmen."
-    ) in german
     settled = rebuild(worked_example_result(), deciding_facts=worked_example_result().facts[:3])
     assert (
         "Keine Tatsache, auf der das Ergebnis beruht, ist angenommen, und keine Frage ist offen."

@@ -11,6 +11,7 @@ from uuid import uuid4
 import pytest
 
 from aiact.engine.nodes import facts, role_obligations
+from aiact.engine.nodes.common import refused_check
 from aiact.engine.state import FactsOutcome
 from aiact.eval.experiments import smoke_recheck
 from aiact.eval.experiments.smoke import GEMINI, LUNA, NodeName, Probe, ProbeKind
@@ -22,9 +23,10 @@ from aiact.eval.experiments.smoke_recheck import (
     StoredRow,
 )
 from aiact.eval.experiments.smoke_served import Served
+from aiact.eval.experiments.smoke_verdict import probe_score
 from aiact.eval.runner import CaseRecord
 from aiact.llm.generations import GenerationNotFoundError
-from aiact.schemas import RiskClass, Role
+from aiact.schemas import FollowUpQuestion, Language, RiskClass, Role, StepName
 from tests.eval.experiments.builders import case, role_outcome
 from tests.eval.experiments.stored_rows import first_run_failed, probe_row
 
@@ -144,6 +146,41 @@ def test_a_stored_answer_that_does_not_read_back_is_an_error() -> None:
     row = first_run(ROLE, role_outcome(Role.DEPLOYER))
     with pytest.raises(RecheckError, match="doesn't read back"):
         smoke_recheck.rescore(ROLE, {**row.predicted, "unexpected": 1})
+
+
+PROHIBITED = Probe(NodeName.PROHIBITED, case("c-1", RiskClass.PROHIBITED))
+REVIEW = FollowUpQuestion(id="person_review", text="Please review it.")
+
+
+@pytest.mark.parametrize(
+    ("probe", "result"),
+    [
+        (PROHIBITED, refused_check(StepName.PROHIBITED, Language.EN, (), REVIEW)),
+        (FACTS, facts.refusal_outcome(Language.EN)),
+    ],
+    ids=["check", "facts"],
+)
+def test_a_refused_reply_is_rescored_as_refused_and_unscored(probe: Probe, result: object) -> None:
+    row = first_run(probe, result, "content_filter")
+    assert smoke_recheck.qualifies(row)
+    assert smoke_recheck.rescore(probe, row.predicted) == (ProbeKind.REFUSED, None)
+
+
+def test_a_refusal_stored_before_decision_030_is_rescored_without_validating_it() -> None:
+    """Under decision 029 a refused prohibited check assumed its finding (`matched`), which
+    `CheckOutcome` now rejects; the recheck reads it as refused instead of aborting."""
+    outcome = refused_check(StepName.PROHIBITED, Language.EN, (), REVIEW)
+    row = first_run(PROHIBITED, outcome, "content_filter")
+    stored = {**row.predicted, "matched": True}
+    assert smoke_recheck.rescore(PROHIBITED, stored) == (ProbeKind.REFUSED, None)
+
+
+def test_a_confirmed_refused_row_reads_back_as_refused() -> None:
+    row = first_run(PROHIBITED, refused_check(StepName.PROHIBITED, Language.EN, (), REVIEW))
+    served = Served(("Azure",), as_pinned=True)
+    record = smoke_recheck.rechecked_record(row, (ProbeKind.REFUSED, None), served, AT)
+    assert (record.scores["refused"], record.scores["correct"]) == (True, None)
+    assert probe_score(row.case_id, record.scores).kind is ProbeKind.REFUSED
 
 
 def test_a_confirmed_row_gets_its_score_and_the_audit_trail() -> None:

@@ -15,6 +15,7 @@ import {
 import type { Language } from '@/i18n'
 import { tickKey } from '@/lib/duty-progress'
 import type { InventoryTool } from '@/lib/inventory'
+import { hasAssessedClass, riskClassOf } from '@/lib/risk-class'
 
 import { documentFailure, fileOf, saveFile, type DocumentFailure } from './use-document-drafts'
 
@@ -59,7 +60,7 @@ export function useExportResultReport(
 
 /** One tool as the inventory report lists it: its latest result's class, status, roles, law
  *  version and date, and each duty's short label in `language`. A tool without a result Klar can
- *  read, or with no class, is listed as not classified yet. */
+ *  read, or with no assessed class (`hasAssessedClass`), is listed as not classified yet. */
 export function reportTool(tool: InventoryTool, language: Language): ReportTool {
   return summaryOf(tool, (duty) => reportDuty(duty, language))
 }
@@ -70,10 +71,10 @@ function summaryOf<Duty>(
   toDuty: (duty: Obligation) => Duty,
 ): Omit<ReportTool, 'duties'> & { duties: Duty[] } {
   const { result } = tool
-  if (!result || result.risk_class === null) return { name: tool.name, duties: [] }
+  if (!result || !hasAssessedClass(result)) return { name: tool.name, duties: [] }
   return {
     name: tool.name,
-    risk_class: result.risk_class,
+    risk_class: riskClassOf(result),
     status: result.status,
     role: result.role ?? null,
     also_role: result.also_role ?? null,

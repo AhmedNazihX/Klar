@@ -27,7 +27,7 @@ from aiact.api.documents import (
     law_quotes,
 )
 from aiact.api.errors import Unprocessable
-from aiact.schemas import DISCLAIMER, Citation, ClassificationResult, Fact, Language
+from aiact.schemas import DISCLAIMER, Citation, ClassificationResult, Fact, Language, StepName
 from tests.api.conftest import BASE_URL, api_settings
 from tests.drafting.builders import ambiguous_result
 from tests.drafting.vendor_builders import (
@@ -38,6 +38,7 @@ from tests.drafting.vendor_builders import (
     prohibited_result,
     prohibited_step,
 )
+from tests.schemas.builders import stored_before_decision_030
 from tests.schemas.worked_example import cite, worked_example_result
 
 pytestmark = pytest.mark.anyio
@@ -145,6 +146,16 @@ async def test_an_ambiguous_result_gets_the_request(client: httpx.AsyncClient) -
 
 async def test_a_result_that_calls_for_no_letter_is_a_422(client: httpx.AsyncClient) -> None:
     _refused(await client.post(PATH, json=_body(worked_example_result())), NO_LETTER)
+
+
+async def test_an_open_question_next_to_a_check_not_assessed_gets_no_letter(
+    client: httpx.AsyncClient,
+) -> None:
+    """A result stored before decision 030 with a refused check keeps its class, but no document
+    states it (`templates_for`): the letter route refuses it the same way, open question or not."""
+    result = stored_before_decision_030(ambiguous_result(), StepName.TRANSPARENCY)
+    assert result.risk_class is not None
+    _refused(await client.post(PATH, json=_body(result)), NO_LETTER)
 
 
 async def test_an_answer_the_letter_does_not_ask_for_is_a_422(client: httpx.AsyncClient) -> None:

@@ -44,3 +44,13 @@ def expect_known_gap(
 def refused(outcome: CheckOutcome, _case: BenchmarkCase) -> bool:
     """The provider's content filter refused the reply (decision 029)."""
     return outcome.step.error == PROVIDER_REFUSAL
+
+
+NOT_ASSESSED = {
+    "en": "The model provider's content filter blocked this description, so it could not be "
+    "assessed automatically. No risk class is given: a person must review the description.",
+    "de": "Der Inhaltsfilter des Modellanbieters hat diese Beschreibung blockiert, daher konnte "
+    "sie nicht automatisch geprüft werden. Es wird keine Risikoklasse angegeben: Ein Mensch muss "
+    "die Beschreibung prüfen.",
+}
+"""Every refused step's decision, by language (decision 030): written out, not imported."""
