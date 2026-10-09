@@ -1,7 +1,8 @@
-"""PDF files, drawn with fpdf2: A4, the flat lockup, the fonts embedded (P9; P25's report reuses
-`KlarPdf`).
+"""PDF files, drawn with fpdf2: A4, the flat lockup, the fonts embedded (P9; P25's reports add
+the field grid, tables and the sign-off box).
 
-Every text goes through `multi_cell` as plain text (fpdf2's markdown is off), after `printable`.
+Every text goes through `multi_cell`, or a table cell, as plain text (fpdf2's markdown is off),
+after `printable`.
 A visible character the embedded fonts can't draw (an emoji, a CJK character) is shown as "?",
 never dropped unseen, and only the count is logged: fpdf2 would log the characters themselves.
 Invisible format characters are left out, and spaces and the non-breaking hyphen the fonts lack
@@ -15,13 +16,26 @@ import unicodedata
 from collections.abc import Mapping
 
 from fpdf import FPDF
-from fpdf.enums import XPos, YPos
-from fpdf.fonts import TTFFont
+from fpdf.enums import TableBordersLayout, XPos, YPos
+from fpdf.fonts import FontFace, TTFFont
 
-from aiact.export.paper import Block, FillMarker, Heading, Note, Paper, Paragraph, Quote
+from aiact.export.paper import (
+    Block,
+    Fields,
+    FillMarker,
+    Heading,
+    Note,
+    PageBreak,
+    Paper,
+    Paragraph,
+    Quote,
+    SignOff,
+    Table,
+)
 from aiact.export.style import (
     FILL_TINT,
     FONTS,
+    HAIRLINE,
     INK,
     INK_2,
     LENS_BLUE,
@@ -59,6 +73,12 @@ LOGO_GAP_MM = 8.0
 HEADING_KEEP_MM = 24.0
 """The room a heading needs below it for a few lines of its section; otherwise it starts the
 next page."""
+CELL_PADDING_MM = 1.6
+TABLE_LINE_MM = 4.4
+SIGN_OFF_KEEP_MM = 70.0
+"""The room the sign-off box needs; otherwise it starts the next page, whole."""
+SIGNATURE_ROOM_MM = 12.0
+"""The space above each signature line, to write in."""
 
 
 class KlarPdf(FPDF):
@@ -142,10 +162,16 @@ class KlarPdf(FPDF):
         self.image(LOGO_PNG, x=MARGIN_MM, y=MARGIN_MM, w=LOGO_WIDTH_MM)
         self.set_y(MARGIN_MM + LOGO_HEIGHT_MM + LOGO_GAP_MM)
 
-    def write_title(self, title: str, stamp: str | None, lines: tuple[str, ...]) -> None:
+    def write_title(
+        self, title: str, stamp: str | None, lines: tuple[str, ...], kicker: str | None = None
+    ) -> None:
         if stamp is not None:
             self._style(SANS, "B", 9, STAMP)
             self.write_text(stamp, 5)
+            self.ln(1)
+        if kicker is not None:
+            self._style(SANS, "B", 9, SLATE)
+            self.write_text(kicker, 5)
             self.ln(1)
         self._style(SERIF, "B", 22, INK)
         self.write_text(title, 9.5)
@@ -181,6 +207,82 @@ class KlarPdf(FPDF):
                 self._style(SANS, "", 9.5, INK_2)
                 self.write_text(text, 4.8, fill=QUOTE_TINT)
                 self.ln(2)
+            case Fields(items=items):
+                self._write_fields(items)
+            case Table():
+                self._write_table(block)
+            case SignOff():
+                self._write_sign_off(block)
+            case PageBreak():
+                self.add_page()
+
+    def _write_fields(self, items: tuple[tuple[str, str], ...]) -> None:
+        """Each label above its value, side by side, between two hairlines."""
+        self._style(SANS, "B", 11, INK)
+        labels = FontFace(family=SANS, emphasis="", size_pt=8, color=rgb(SLATE))
+        self._table_rows(
+            (tuple(label for label, _ in items), tuple(value for _, value in items)),
+            widths=(1.0,) * len(items),
+            headings=labels,
+            borders=TableBordersLayout.HORIZONTAL_LINES,
+        )
+        self.ln(3)
+
+    def _write_table(self, table: Table) -> None:
+        self._style(SANS, "", 9, INK_2)
+        header = FontFace(family=SANS, emphasis="B", size_pt=8, color=rgb(SLATE))
+        self._table_rows(
+            (table.header, *table.rows),
+            widths=table.widths,
+            headings=header,
+            borders=TableBordersLayout.HORIZONTAL_LINES,
+        )
+        self.ln(3)
+
+    def _table_rows(
+        self,
+        rows: tuple[tuple[str, ...], ...],
+        *,
+        widths: tuple[float, ...],
+        headings: FontFace,
+        borders: TableBordersLayout,
+    ) -> None:
+        """`rows` as a table across the page, the first one its header (repeated on a new
+        page); each text as the current font can draw it."""
+        self.set_draw_color(*rgb(HAIRLINE))
+        with self.table(
+            col_widths=widths,
+            width=self.epw,
+            align="LEFT",
+            v_align="TOP",
+            text_align="LEFT",
+            borders_layout=borders,
+            headings_style=headings,
+            line_height=TABLE_LINE_MM,
+            padding=CELL_PADDING_MM,
+            markdown=False,
+        ) as table:
+            for texts in rows:
+                row = table.row()
+                for text in texts:
+                    row.cell(self._drawable(printable(text)))
+
+    def _write_sign_off(self, sign_off: SignOff) -> None:
+        """The heading, a line to sign on above each label, then the text; kept on one page."""
+        if self.will_page_break(SIGN_OFF_KEEP_MM):
+            self.add_page()
+        self.ln(3)
+        self._style(SANS, "B", 11, INK)
+        self.write_text(sign_off.heading, 6)
+        self.set_draw_color(*rgb(SLATE))
+        for label in sign_off.labels:
+            self.ln(SIGNATURE_ROOM_MM)
+            self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+            self._style(SANS, "", 8, SLATE)
+            self.write_text(label, 4.4)
+        self.ln(3)
+        self._style(SANS, "", 9.5, INK_2)
+        self.write_text(sign_off.text, 4.8, fill=QUOTE_TINT)
 
     def _style(self, family: str, style: str, size: float, colour: str) -> None:
         self.set_font(family, style, size)
@@ -194,7 +296,7 @@ def render_pdf(paper: Paper) -> bytes:
     pdf.set_title(printable(paper.title))
     pdf.add_page()
     pdf.write_logo()
-    pdf.write_title(paper.title, paper.stamp, paper.lines)
+    pdf.write_title(paper.title, paper.stamp, paper.lines, paper.kicker)
     for block in paper.blocks:
         pdf.write_block(block)
     content = pdf.finish()

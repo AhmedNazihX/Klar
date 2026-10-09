@@ -151,7 +151,7 @@ async function fetchFile(request: ExportRequest): Promise<Blob> {
 }
 
 /** Hands a file to the browser to save. */
-function saveFile(file: Blob, name: string): void {
+export function saveFile(file: Blob, name: string): void {
   const url = URL.createObjectURL(file)
   const link = document.createElement('a')
   link.href = url

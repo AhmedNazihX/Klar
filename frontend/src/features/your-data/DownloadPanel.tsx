@@ -7,9 +7,12 @@ import { ImportDataButton } from '@/features/welcome/ImportDataButton'
 import { useExportUserData } from '@/hooks/use-export-user-data'
 import { supabase } from '@/lib/supabase'
 
+import { InventoryReportButton } from './InventoryReportButton'
+
 /**
- * "Download everything": the data file (export_my_data as JSON), and Import, which restores such
- * a file (decision 026 item 8). P25 adds the PDF report here.
+ * "Download everything": the data file (export_my_data as JSON) beside the report (PDF) of the
+ * inventory, results and duties (P25), and Import, which restores a data file (decision 026
+ * item 8).
  */
 export function DownloadPanel(): JSX.Element {
   const { t } = useTranslation()
@@ -21,13 +24,14 @@ export function DownloadPanel(): JSX.Element {
         {t('yourData.download.heading')}
       </h2>
       <p className="m-0 text-label font-normal text-slate">{t('yourData.download.body')}</p>
-      <div>
+      <div className="flex flex-wrap gap-2.5">
         <Button
           disabled={exportData.isPending || supabase === null}
           onClick={() => exportData.mutate()}
         >
           {exportData.isPending ? t('yourData.download.pending') : t('yourData.download.button')}
         </Button>
+        <InventoryReportButton />
       </div>
       {exportData.isError && (
         <p role="alert" className="m-0 text-body-small text-risk-prohibited">

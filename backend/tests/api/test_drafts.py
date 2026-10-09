@@ -20,7 +20,8 @@ from pydantic import ValidationError
 from aiact.api import create_app
 from aiact.api.dependencies import ApiContext
 from aiact.api.documents import INVALID_RESULT, law_quotes
-from aiact.api.drafts import MAX_FILE_CHARS, MAX_FILE_LINES, RENDERERS
+from aiact.api.drafts import RENDERERS
+from aiact.api.files import MAX_FILE_CHARS, MAX_FILE_LINES
 from aiact.drafting import CheckName, CheckResult, SizeClass
 from aiact.drafting.documents import checked_draft
 from aiact.export.pool import RenderWorker

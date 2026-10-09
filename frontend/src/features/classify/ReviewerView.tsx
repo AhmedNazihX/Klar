@@ -9,6 +9,7 @@ import { useLanguage } from '@/hooks/use-language'
 import type { OriginalRun } from '@/hooks/use-original-run'
 
 import type { ClassificationRun } from './classification-store'
+import { ExportReportButton } from './ExportReportButton'
 import { LawComparison } from './LawComparison'
 import { provisionName } from './provision-names'
 import { ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
@@ -90,6 +91,7 @@ export function ReviewerView({
             >
               {t('result.reviewer.exportJson')}
             </Button>
+            <ExportReportButton run={run} />
           </>
         }
       />

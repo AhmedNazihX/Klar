@@ -130,11 +130,14 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            word added), documents.py (listed_documents and checked_draft: the
 │   │   │                            documents a result calls for with their interviews, and one drafted
 │   │   │                            and checked), paper.py (a draft laid out as an export Paper)
-│   │   ├── export/                  Word and PDF files from a format-neutral Paper (P9; P25's report
-│   │   │                            reuses KlarPdf): paper.py, pdf.py (fpdf2), word.py (python-docx),
+│   │   ├── export/                  Word and PDF files from a format-neutral Paper (P9; P25 adds the
+│   │   │                            field grid, tables, page break and sign-off box): paper.py, pdf.py (fpdf2), word.py (python-docx),
 │   │   │                            text.py (printable text), style.py, pool.py (renders in worker
 │   │   │                            processes, stopped at a time limit); assets/: the flat lockup and the
 │   │   │                            Newsreader and Geist fonts (OFL), their sources in assets/README.md
+│   │   ├── report/                  the reports as Papers (P25): result.py (the report for a lawyer,
+│   │   │                            two A4 pages), inventory.py (the inventory report), common.py,
+│   │   │                            texts.py (EN, DE); never imports aiact.engine or aiact.drafting
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;
@@ -142,7 +145,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                dependencies.py settings, node builder, database, limits; rate_limit.py the rate and
 │   │                                concurrency limits; body_limit.py the 413 body cap; errors.py the one
 │   │                                422 body, quoting no input; documents.py
-│   │                                `POST /documents/vendor-letter` (P28); openapi.py the schema export,
+│   │                                `POST /documents/vendor-letter` (P28); reports.py `POST /reports/result`
+│   │                                and `/reports/inventory`, files.py a Paper made into a file in the
+│   │                                export workers, shared with drafts.py (P25); openapi.py the schema export,
 │   │                                `aiact api openapi`; `aiact api serve` runs it
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)
@@ -243,6 +248,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12),
 │       │                            use-original-run.ts (the same description checked under the original text, P10)
 │       │                            use-interview-answers.ts, use-document-drafts.ts (drafts and exports, P9)
+│       │                            use-report-export.ts (the report for a lawyer and the inventory report, P25)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked

@@ -9,11 +9,11 @@ import pytest
 from pypdf import PdfReader
 from pypdf.generic import DictionaryObject
 
-from aiact.export import Paper, Paragraph, render_docx, render_pdf
+from aiact.export import Paper, Paragraph, Table, render_docx, render_pdf
 from aiact.export.pdf import SANS, KlarPdf
 from aiact.export.text import printable
 from aiact.schemas import Language
-from tests.export.papers import FOOTER, MARKUP, sample_paper
+from tests.export.papers import FOOTER, MARKUP, report_paper, sample_paper
 from tests.export.reading import one_line, pdf_pages, read_docx
 
 A4_WIDTH_PT = 595.28
@@ -154,3 +154,33 @@ def test_the_pdf_alone_replaces_what_its_fonts_cannot_draw() -> None:
     paper = Paper(language=Language.EN, title="T", blocks=(Paragraph(text),), footer=FOOTER)
     assert text in read_docx(render_docx(paper)).paragraphs
     assert "zerowidth thin space ?" in pdf_pages(render_pdf(paper))[0]
+
+
+def test_the_reports_blocks_are_drawn_as_given_and_the_page_break_starts_a_page() -> None:
+    first, second = pdf_pages(render_pdf(report_paper()))
+    for text in (
+        "Classification report · Report KR-0000ABCD Applicant screening",
+        "Class Status High-risk Decided",
+        f"Facts Fact Source {one_line(MARKUP)} Stated by the user",
+    ):
+        assert text in first, text
+    assert "Duties" not in first
+    assert "Duties For the reviewer Reviewed by Date Not legal advice." in second
+    for number, page in enumerate((first, second), start=1):
+        assert FOOTER in page
+        assert f"Page {number} of 2" in page
+
+
+def test_a_table_cell_draws_what_no_font_can_as_a_question_mark(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    paper = Paper(
+        language=Language.EN,
+        title="Cells",
+        blocks=(Table(("Fact",), (("Ship it \U0001f600",),), (1.0,)),),
+        footer=FOOTER,
+    )
+    with caplog.at_level(logging.DEBUG):
+        page = pdf_pages(render_pdf(paper))[0]
+    assert "Ship it ?" in page
+    assert "PDF: 1 characters no font can draw shown as ?" in caplog.text

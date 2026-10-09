@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, ServerSentEventsResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentData, DraftDocumentErrors, DraftDocumentResponses, DraftVendorLetterData, DraftVendorLetterErrors, DraftVendorLetterResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses, ListResultDocumentsData, ListResultDocumentsErrors, ListResultDocumentsResponses } from './types.gen';
+import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentData, DraftDocumentErrors, DraftDocumentResponses, DraftVendorLetterData, DraftVendorLetterErrors, DraftVendorLetterResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, ExportInventoryReportData, ExportInventoryReportErrors, ExportInventoryReportResponses, ExportResultReportData, ExportResultReportErrors, ExportResultReportResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses, ListResultDocumentsData, ListResultDocumentsErrors, ListResultDocumentsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -112,6 +112,37 @@ export const draftDocument = <ThrowOnError extends boolean = false>(options: Opt
  */
 export const exportDocument = <ThrowOnError extends boolean = false>(options: Options<ExportDocumentData, ThrowOnError>): RequestResult<ExportDocumentResponses, ExportDocumentErrors, ThrowOnError> => (options.client ?? client).post<ExportDocumentResponses, ExportDocumentErrors, ThrowOnError>({
     url: '/documents/export',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Export Result Report
+ *
+ * The report for a lawyer: the result, its facts and their sources, the steps and the
+ * provisions they cite, the duties, the points for legal review and a box for the reviewer to
+ * sign, as a PDF or Word file. Guidance, not legal advice.
+ */
+export const exportResultReport = <ThrowOnError extends boolean = false>(options: Options<ExportResultReportData, ThrowOnError>): RequestResult<ExportResultReportResponses, ExportResultReportErrors, ThrowOnError> => (options.client ?? client).post<ExportResultReportResponses, ExportResultReportErrors, ThrowOnError>({
+    url: '/reports/result',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Export Inventory Report
+ *
+ * The inventory report: every tool with its class, status, role and first duty date, then
+ * each tool's duties, as a PDF or Word file. Guidance, not legal advice.
+ */
+export const exportInventoryReport = <ThrowOnError extends boolean = false>(options: Options<ExportInventoryReportData, ThrowOnError>): RequestResult<ExportInventoryReportResponses, ExportInventoryReportErrors, ThrowOnError> => (options.client ?? client).post<ExportInventoryReportResponses, ExportInventoryReportErrors, ThrowOnError>({
+    url: '/reports/inventory',
     ...options,
     headers: {
         'Content-Type': 'application/json',

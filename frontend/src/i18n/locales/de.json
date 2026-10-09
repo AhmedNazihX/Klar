@@ -10,6 +10,13 @@
     "en": "English",
     "de": "Deutsch"
   },
+  "report": {
+    "export": "PDF exportieren",
+    "pending": "PDF wird erstellt …",
+    "tooLong": "Dieser Bericht ist zu lang für eine Datei.",
+    "timedOut": "Das Erstellen des Berichts hat zu lange gedauert. Bitte versuchen Sie es erneut.",
+    "failed": "Klar konnte den Bericht nicht erstellen. Bitte versuchen Sie es erneut."
+  },
   "session": {
     "failed": "In diesem Browser konnte keine Sitzung gestartet werden, daher kann nichts gespeichert werden. Laden Sie die Seite neu, um es erneut zu versuchen."
   },
@@ -377,8 +384,9 @@
     },
     "download": {
       "heading": "Alles herunterladen",
-      "body": "Eine Kopie all Ihrer Daten in einer Datei (JSON), für Ihre Unterlagen oder andere Werkzeuge. Importieren Sie sie, um sie in einer neuen Sitzung wiederherzustellen.",
+      "body": "Eine Kopie all Ihrer Daten. Der Bericht ist für Menschen, die Datendatei (JSON) für andere Werkzeuge. Importieren Sie die Datendatei, um sie in einer neuen Sitzung wiederherzustellen.",
       "button": "Daten herunterladen (JSON)",
+      "report": "Bericht (PDF)",
       "pending": "Wird vorbereitet …",
       "failed": "Der Download hat nicht geklappt. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
     },

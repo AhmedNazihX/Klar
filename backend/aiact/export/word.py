@@ -1,4 +1,5 @@
-"""Word files (.docx), drawn with python-docx: A4, the flat lockup, then the paper's blocks (P9).
+"""Word files (.docx), drawn with python-docx: A4, the flat lockup, then the paper's blocks (P9;
+P25's reports add the field grid, tables and the sign-off box, as Word tables).
 
 Every text is set as a run's text, after `printable`: python-docx writes it into the XML as text,
 escaped, never as markup. Word can't embed Newsreader and Geist, and few readers have them, so a
@@ -9,15 +10,30 @@ from io import BytesIO
 
 from docx import Document
 from docx.document import Document as WordDocument
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Mm, Pt, RGBColor
+from docx.table import Table as WordTable
+from docx.table import _Row as WordRow  # pyright: ignore[reportPrivateUsage]
 from docx.text.paragraph import Paragraph as WordParagraph
 
-from aiact.export.paper import Block, FillMarker, Heading, Note, Paper, Paragraph, Quote
+from aiact.export.paper import (
+    Block,
+    Fields,
+    FillMarker,
+    Heading,
+    Note,
+    PageBreak,
+    Paper,
+    Paragraph,
+    Quote,
+    SignOff,
+    Table,
+)
 from aiact.export.style import (
     FILL_TINT,
+    HAIRLINE,
     INK,
     INK_2,
     LENS_BLUE,
@@ -32,6 +48,8 @@ from aiact.export.text import printable
 
 SERIF, SANS = "Georgia", "Arial"
 A4_WIDTH_MM, A4_HEIGHT_MM = 210, 297
+SIGNATURE_LINE = "_" * 48
+"""The line a reviewer signs on, above its label."""
 
 
 def render_docx(paper: Paper) -> bytes:
@@ -41,6 +59,8 @@ def render_docx(paper: Paper) -> bytes:
     document.add_picture(str(LOGO_PNG), width=Mm(LOGO_WIDTH_MM))
     if paper.stamp is not None:
         _text(document.add_paragraph(), paper.stamp, SANS, 9, STAMP, bold=True)
+    if paper.kicker is not None:
+        _text(document.add_paragraph(), paper.kicker, SANS, 9, SLATE, bold=True)
     _text(document.add_paragraph(), paper.title, SERIF, 22, INK)
     for line in paper.lines:
         _text(document.add_paragraph(), line, SANS, 9, SLATE)
@@ -72,6 +92,21 @@ def _set_up(document: WordDocument, paper: Paper) -> None:
 
 
 def _block(document: WordDocument, block: Block) -> None:
+    match block:
+        case Fields(items=items):
+            _table(document, (tuple(k for k, _ in items), tuple(v for _, v in items)), bold=True)
+            return
+        case Table(header=header, rows=rows):
+            _table(document, (header, *rows), bold=False)
+            return
+        case SignOff():
+            _sign_off(document, block)
+            return
+        case PageBreak():
+            document.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+            return
+        case _:
+            pass
     paragraph = document.add_paragraph()
     match block:
         case Heading(text=text):
@@ -90,6 +125,59 @@ def _block(document: WordDocument, block: Block) -> None:
         case Note(text=text):
             _shade(paragraph, QUOTE_TINT)
             _text(paragraph, text, SANS, 9.5, INK_2)
+
+
+def _table(document: WordDocument, rows: tuple[tuple[str, ...], ...], *, bold: bool) -> None:
+    """`rows` as a Word table, the first row its header (small, slate; repeated on a new page),
+    then each row's texts (bold for the field grid's values), with hairlines between rows."""
+    header, *body = rows
+    table = document.add_table(rows=len(rows), cols=len(header))
+    _row_lines(table)
+    for cell, text in zip(table.rows[0].cells, header, strict=True):
+        _text(cell.paragraphs[0], text, SANS, 8, SLATE, bold=not bold)
+    _repeat_as_header(table.rows[0])
+    for row, texts in zip(table.rows[1:], body, strict=True):
+        for cell, text in zip(row.cells, texts, strict=True):
+            _text(
+                cell.paragraphs[0], text, SANS, 11 if bold else 9, INK if bold else INK_2, bold=bold
+            )
+    document.add_paragraph()
+
+
+def _row_lines(table: WordTable) -> None:
+    """Hairlines between the rows and above and below the table, none between the columns."""
+    borders = OxmlElement("w:tblBorders")
+    for side in ("top", "bottom", "insideH"):
+        line = OxmlElement(f"w:{side}")
+        line.set(qn("w:val"), "single")
+        line.set(qn("w:sz"), "4")
+        line.set(qn("w:color"), HAIRLINE.removeprefix("#"))
+        borders.append(line)
+    table._tbl.tblPr.append(borders)  # pyright: ignore[reportPrivateUsage]
+
+
+def _repeat_as_header(row: WordRow) -> None:
+    """The row is the table's header, repeated at the top of each page it runs onto."""
+    row._tr.get_or_add_trPr().append(OxmlElement("w:tblHeader"))  # pyright: ignore[reportPrivateUsage]
+
+
+def _sign_off(document: WordDocument, sign_off: SignOff) -> None:
+    """The heading, a line to sign on above each label, then the text, kept together."""
+    heading = document.add_paragraph()
+    heading.paragraph_format.space_before = Pt(10)
+    heading.paragraph_format.keep_with_next = True
+    _text(heading, sign_off.heading, SANS, 11, INK, bold=True)
+    for label in sign_off.labels:
+        line = document.add_paragraph()
+        line.paragraph_format.space_before = Pt(24)
+        line.paragraph_format.keep_with_next = True
+        _text(line, SIGNATURE_LINE, SANS, 9, SLATE)
+        caption = document.add_paragraph()
+        caption.paragraph_format.keep_with_next = True
+        _text(caption, label, SANS, 8, SLATE)
+    text = document.add_paragraph()
+    _shade(text, QUOTE_TINT)
+    _text(text, sign_off.text, SANS, 9.5, INK_2)
 
 
 def _text(
