@@ -12,7 +12,7 @@ description: >-
 label:
   risk_class: out_of_scope
 label_citation: ["art:2:12", "recital:102", "recital:103"]
-business_function: product
+business_function: consumer_product
 notes: >-
   Approved by user 2026-09-30. Class: an AI system released under a free and open-source licence
   (weights and code public, free to use, modify and redistribute: recital 102), with no

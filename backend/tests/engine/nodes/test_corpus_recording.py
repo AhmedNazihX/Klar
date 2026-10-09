@@ -116,11 +116,15 @@ def _case_ids(category: str) -> set[str]:
             "test_high_risk",
             "test_replay_annex_i_case",
             "e",
-            {"test_replay_worked_example"},
+            {
+                "test_replay_worked_example",
+                "test_replay_original_machinery_guard_is_annex_i_section_a",
+            },
             marks=pytest.mark.xfail(
                 strict=True,
                 raises=AssertionError,
-                reason="recording pending: B10c rewrote own-e-04 and own-e-07",
+                reason="recording pending: B10c rewrote own-e-04 (also the original-text replay) "
+                "and own-e-07",
             ),
         ),
         ("test_prohibited", "test_b5c_case_replay", "c", set()),

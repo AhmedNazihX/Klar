@@ -1506,8 +1506,8 @@ KNOWN_GAPS: dict[str, KnownGap] = {
     "own-e-07-grinder-burst-kit": KnownGap(
         "decides not high-risk (no Annex III use, not an Annex I safety component) instead of "
         "asking whether the Machinery Regulation requires a third-party assessment (Annex I "
-        "B.21) (E10 re-record, user 2026-10-06; carried over from the robot-arm wording B10c "
-        "replaced, so check it on the re-record)",
+        "B.21) (carried over from the robot-arm wording B10c replaced, pending a re-check on "
+        "the re-record)",
         _decides_not_high_risk,
     ),
     "own-e-10-in-house-nodule-finder": KnownGap(
