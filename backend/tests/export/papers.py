@@ -11,6 +11,7 @@ from aiact.export import (
     Paragraph,
     Quote,
     SignOff,
+    SmallText,
     Table,
 )
 from aiact.schemas import Language
@@ -41,8 +42,8 @@ def sample_paper(language: Language = Language.EN, *, paragraphs: int = 1) -> Pa
 
 
 def report_paper(language: Language = Language.EN) -> Paper:
-    """A paper with the report's blocks: the kicker, the field grid, a table, a page break and
-    the sign-off box."""
+    """A paper with the report's blocks: the kicker, the field grid, a table, a page break, a
+    small text and the sign-off box."""
     return Paper(
         language=language,
         title="Applicant screening",
@@ -54,6 +55,7 @@ def report_paper(language: Language = Language.EN) -> Paper:
             Table(("Fact", "Source"), ((MARKUP, "Stated by the user"),), (3.0, 1.0)),
             PageBreak(),
             Heading("Duties"),
+            SmallText("Points for legal review."),
             SignOff("For the reviewer", ("Reviewed by", "Date"), "Not legal advice."),
         ),
         footer=FOOTER,

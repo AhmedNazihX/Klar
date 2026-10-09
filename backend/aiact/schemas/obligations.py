@@ -10,6 +10,9 @@ from aiact.schemas.enums import HighRiskRoute, LegacyStatus, ObligationGroup
 DOCUMENT_KEY_PATTERN = r"^[a-z0-9]+(_[a-z0-9]+)*$"
 """A drafting template id, e.g. `art_26_2_oversight` (aiact.drafting.templates)."""
 
+ARTICLE_PATTERN = r"^art:[0-9]+[a-z]?(:[A-Za-z0-9]+)*$"
+"""An article, paragraph or point a duty belongs to, e.g. `art:26:1` or `art:5:1:ba`."""
+
 STORED_TEXT_FIELDS = ("duty_de", "label_en", "label_de")
 """The texts C9 added, which a duty stored before C9 lacks."""
 
@@ -45,9 +48,7 @@ class Obligation(ContractModel):
         description="The drafting template that answers this duty (e.g. `art_26_2_oversight`), "
         "if any.",
     )
-    article: str = Field(
-        min_length=1, pattern=r"^art:[0-9]+[a-z]?(:[A-Za-z0-9]+)*$", description="E.g. `art:26:1`."
-    )
+    article: str = Field(min_length=1, pattern=ARTICLE_PATTERN, description="E.g. `art:26:1`.")
     applies_from: date
     high_risk_route: HighRiskRoute | None = Field(
         default=None,

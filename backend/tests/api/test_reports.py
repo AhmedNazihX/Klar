@@ -14,14 +14,14 @@ from fastapi import FastAPI
 from aiact.api import create_app
 from aiact.api.dependencies import ApiContext
 from aiact.api.reports import (
+    INVENTORY_MAX_CHARS,
     INVENTORY_MAX_LINES,
-    MAX_NAME_CHARS,
     InventoryReportRequest,
     report_date,
 )
 from aiact.export.pool import RenderTimeout, RenderWorker
-from aiact.report import report_id
-from aiact.schemas import DISCLAIMER_EN, ClassificationResult
+from aiact.report import MAX_NAME_CHARS
+from aiact.schemas import DISCLAIMER_EN, ClassificationResult, EvidenceTag, Fact
 from tests.api.conftest import BASE_URL, api_settings
 from tests.drafting.builders import limited_risk_result
 from tests.export.reading import pdf_pages, read_docx
@@ -83,10 +83,8 @@ async def test_the_worked_example_is_a_two_page_pdf_of_the_posted_results_class(
     response = await client.post("/reports/result", json=body)
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
-    report = report_id(worked_example_result()).lower()
-    assert response.headers["content-disposition"] == (
-        f'attachment; filename="klar-report-{report}.pdf"'
-    )
+    # A constant name: the browser saves it under its own (`resultReportFileName`).
+    assert response.headers["content-disposition"] == 'attachment; filename="klar-report.pdf"'
     first, second = pdf_pages(response.content)
     assert "Nordwerk Logistik GmbH. Prepared on 1 October 2026." in first
     assert "Class Status Role Duties apply from High-risk Decided Deployer" in first
@@ -163,7 +161,8 @@ async def test_the_inventory_report(client: httpx.AsyncClient) -> None:
     text = " ".join(pdf_pages(response.content))
     assert "Applicant screening High-risk Decided Deployer 2 December 2027" in text
     assert "Your tool Not classified yet" in text
-    assert "Keep the logs Art. 26(6) 2 December 2027" in text
+    # The table's label for the duty, not the posted one.
+    assert "Keep the logs it creates for at least six months Art. 26(6) 2 December 2027" in text
 
 
 async def test_the_inventory_reports_caps(client: httpx.AsyncClient) -> None:
@@ -199,11 +198,12 @@ async def test_a_duty_label_is_capped_at_1000_characters(
 
 
 def test_the_report_caps_are_pinned() -> None:
-    assert (InventoryReportRequest.MAX_TOOLS, INVENTORY_MAX_LINES, MAX_NAME_CHARS) == (
-        100,
-        6_000,
-        200,
-    )
+    assert (
+        InventoryReportRequest.MAX_TOOLS,
+        INVENTORY_MAX_LINES,
+        INVENTORY_MAX_CHARS,
+        MAX_NAME_CHARS,
+    ) == (100, 6_000, 200_000, 200)
 
 
 async def test_a_hundred_tools_of_a_dozen_duties_each_fit(
@@ -227,7 +227,8 @@ async def test_a_report_too_long_for_a_file_is_a_413_before_rendering(
     monkeypatch.setattr(
         RenderWorker, "run", lambda _worker, _fn, paper: rendered.append(paper) or b"%"
     )
-    duties = [{"label": "x" * 1_000, "article": "art:26:6", "applies_from": "2027-12-02"}] * 100
+    # A duty the table lacks keeps its posted label.
+    duties = [{"label": "x" * 1_000, "article": "art:99:1", "applies_from": "2027-12-02"}] * 100
     body = {"tools": [_tool(duties=duties)] * 2, "language": "en", "format": "pdf"}
     response = await client.post("/reports/inventory", json=body)
     assert response.status_code == 413
@@ -274,6 +275,37 @@ async def test_a_report_past_its_time_limit_is_a_504(
         504,
         {"detail": "Making this report took too long. Please try again."},
     )
+
+
+@pytest.mark.parametrize("point", ["annex:III", "x", "annex:I:", "annex:III:99:z"])
+async def test_an_annex_point_the_report_cant_name_still_makes_a_report(
+    client: httpx.AsyncClient, point: str
+) -> None:
+    result = worked_example_result().model_copy(update={"annex_point": point})
+    response = await client.post("/reports/result", json=_body(result))
+    assert response.status_code == 200
+
+
+async def test_a_cell_taller_than_a_page_is_a_413_that_gives_back_its_count(
+    report_app: Callable[..., FastAPI], caplog: pytest.LogCaptureFixture
+) -> None:
+    """fpdf2 can't break a table cell across pages, so the render fails; the request made no
+    file, so its rate-limit count is given back."""
+    app = report_app(rate_limit_exports=1)
+    tall = Fact(text=f"{SECRET}\n" * 499 + SECRET, evidence=EvidenceTag.ASSUMED)
+    worked = worked_example_result()
+    result = worked.model_copy(update={"deciding_facts": (tall, *worked.deciding_facts)})
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        with caplog.at_level(logging.DEBUG):
+            refused = await client.post("/reports/result", json=_body(result))
+        after = await client.post("/reports/result", json=_body(format="docx"))
+    assert (refused.status_code, refused.json()) == (
+        413,
+        {"detail": "This report is too long to make into a file."},
+    )
+    assert after.status_code == 200
+    assert SECRET not in caplog.text
 
 
 def test_the_report_date_is_today() -> None:

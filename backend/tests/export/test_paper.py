@@ -11,6 +11,7 @@ from aiact.export import (
     Paragraph,
     Quote,
     SignOff,
+    SmallText,
     Table,
     block_texts,
 )
@@ -19,6 +20,7 @@ from aiact.export import (
 def test_every_text_a_block_draws_is_counted() -> None:
     assert block_texts(Heading("h")) == ("h",)
     assert block_texts(Paragraph("p")) == ("p",)
+    assert block_texts(SmallText("s")) == ("s",)
     assert block_texts(FillMarker("f")) == ("f",)
     assert block_texts(Note("n")) == ("n",)
     assert block_texts(Quote("q", "s")) == ("q", "s")

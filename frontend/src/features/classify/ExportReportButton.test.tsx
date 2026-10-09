@@ -8,6 +8,7 @@ import type { ClassificationResult } from '@/api'
 import { env } from '@/lib/env'
 import type * as SupabaseModule from '@/lib/supabase'
 import { WORKED_EXAMPLE, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixtures'
+import { ambiguousResult } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
@@ -109,6 +110,33 @@ describe('Export PDF', () => {
       ])
     },
   )
+
+  it('on a legally ambiguous result sends that result', async () => {
+    answerWith(200)
+    const ambiguous = ambiguousResult()
+    const user = await openResult(ambiguous)
+    await user.click(screen.getByRole('button', { name: 'Export PDF' }))
+    await vi.waitFor(() => {
+      expect(createObjectURL).toHaveBeenCalledTimes(1)
+    })
+    expect(reports).toEqual([
+      {
+        result: JSON.parse(JSON.stringify(ambiguous)) as unknown,
+        language: 'en',
+        format: 'pdf',
+        tool_name: 'Applicant screening',
+        company: COMPANY,
+      },
+    ])
+    expect(reports[0]).toMatchObject({ result: { status: 'legally_ambiguous' } })
+  })
+
+  it('shows a refusal below the button, out of the flow, so the header actions stay put', async () => {
+    answerWith(504)
+    const user = await openResult(WORKED_EXAMPLE)
+    await user.click(screen.getByRole('button', { name: 'Export PDF' }))
+    expect(await screen.findByRole('alert')).toHaveClass('absolute', 'top-full')
+  })
 
   it.each([
     [413, 'en', 'This report is too long to make into a file.'],

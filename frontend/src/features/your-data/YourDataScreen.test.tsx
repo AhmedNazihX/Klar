@@ -173,6 +173,19 @@ function panel(name: string): HTMLElement {
   return screen.getByRole('region', { name })
 }
 
+/** Picks the data file (JSON) in "Download everything" and downloads it. */
+async function downloadData(
+  user: ReturnType<typeof userEvent.setup>,
+  language: 'en' | 'de' = 'en',
+): Promise<void> {
+  const [choice, button] =
+    language === 'de'
+      ? ['Daten (JSON): alles, maschinenlesbar', 'Herunterladen']
+      : ['Data (JSON): everything, machine-readable', 'Download']
+  await user.click(screen.getByRole('radio', { name: choice }))
+  await user.click(screen.getByRole('button', { name: button }))
+}
+
 /** The count shown beside a row's label in "What Klar keeps". */
 function countOf(label: string): string | null {
   return screen.getByText(label).nextElementSibling?.textContent ?? null
@@ -265,11 +278,16 @@ describe('Your data, what Klar keeps and who processes it', () => {
       'href',
       '/privacy',
     )
+    const download = panel('Alles herunterladen')
     expect(
-      within(panel('Alles herunterladen')).getByRole('button', {
-        name: 'Daten herunterladen (JSON)',
+      within(download).getByRole('radio', {
+        name: 'Bericht (PDF): Inventar, Ergebnisse und Pflichten',
       }),
-    ).toBeInTheDocument()
+    ).toBeChecked()
+    expect(
+      within(download).getByRole('radio', { name: 'Daten (JSON): alles, maschinenlesbar' }),
+    ).not.toBeChecked()
+    expect(within(download).getByRole('button', { name: 'Herunterladen' })).toBeInTheDocument()
   })
 
   it('reads the counts again after the profile is saved on Welcome', async () => {
@@ -330,13 +348,14 @@ describe('Your data, the report (PDF)', () => {
   }
 
   it.each([
-    ['en', 'Report (PDF)'],
-    ['de', 'Bericht (PDF)'],
+    ['en', 'Report (PDF): inventory, results and duties', 'Download'],
+    ['de', 'Bericht (PDF): Inventar, Ergebnisse und Pflichten', 'Herunterladen'],
   ] as const)(
-    'sends every tool, summarised in %s, with the company, and saves the PDF',
-    async (language, name) => {
+    'by default (%s) sends every tool, summarised, with the company, and saves the PDF',
+    async (language, choice, name) => {
       answerWith(200)
       const { user } = await openYourData(language)
+      expect(screen.getByRole('radio', { name: choice })).toBeChecked()
       const button = screen.getByRole('button', { name })
       await vi.waitFor(() => expect(button).toBeEnabled())
       await user.click(button)
@@ -381,7 +400,7 @@ describe('Your data, the report (PDF)', () => {
       answerWith(status)
       const { user } = await openYourData(language)
       const button = screen.getByRole('button', {
-        name: language === 'de' ? 'Bericht (PDF)' : 'Report (PDF)',
+        name: language === 'de' ? 'Herunterladen' : 'Download',
       })
       await vi.waitFor(() => expect(button).toBeEnabled())
       await user.click(button)
@@ -395,7 +414,7 @@ describe('Your data, the report (PDF)', () => {
 describe('Your data, download and import', () => {
   it('downloads export_my_data as a dated JSON file', async () => {
     const { user } = await openYourData()
-    await user.click(screen.getByRole('button', { name: 'Download data (JSON)' }))
+    await downloadData(user)
     await vi.waitFor(() => expect(downloads).toHaveLength(1))
     const [download] = downloads
     expect(download?.fileName).toMatch(/^klar-data-\d{4}-\d{2}-\d{2}\.json$/)
@@ -407,7 +426,7 @@ describe('Your data, download and import', () => {
   it('says when the download fails, and saves nothing', async () => {
     server.use(http.post(EXPORT_URL, () => HttpResponse.json({}, { status: 500 })))
     const { user } = await openYourData()
-    await user.click(screen.getByRole('button', { name: 'Download data (JSON)' }))
+    await downloadData(user)
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The download didn’t work. Check your connection and try again.',
     )
@@ -418,7 +437,7 @@ describe('Your data, download and import', () => {
     const { user } = await openYourData()
     await vi.waitFor(() => expect(countOf('Classification results')).toBe('3'))
 
-    await user.click(screen.getByRole('button', { name: 'Download data (JSON)' }))
+    await downloadData(user)
     await vi.waitFor(() => expect(downloads).toHaveLength(1))
     const text = (await downloads[0]?.blob.text()) ?? ''
 
@@ -638,7 +657,7 @@ describe('Your data, every German line', () => {
       'Speicherung der Sitzung',
       'Ihre gespeicherten Daten, nur für Sie sichtbar.',
       'Jede Anfrage an ein Modell wird ohne Datenspeicherung beim Anbieter und ohne Training gestellt.',
-      'Eine Kopie all Ihrer Daten. Der Bericht ist für Menschen, die Datendatei (JSON) für andere ' +
+      'Eine Kopie all Ihrer Daten. Der Bericht ist für Menschen; die Datendatei (JSON) für andere ' +
         'Werkzeuge. Importieren Sie die Datendatei, um sie in einer neuen Sitzung wiederherzustellen.',
       'Löscht alles, was Klar für diese Sitzung speichert: Ihre Tools, Beschreibungen, Ergebnisse, ' +
         'Antworten für Dokumente, abgehakten Pflichten und Ihr Unternehmensprofil, und beendet die ' +
@@ -654,7 +673,7 @@ describe('Your data, every German line', () => {
     let answer: (response: Response) => void = () => undefined
     server.use(http.post(EXPORT_URL, () => new Promise<Response>((resolve) => (answer = resolve))))
     const { user } = await openYourData('de')
-    await user.click(screen.getByRole('button', { name: 'Daten herunterladen (JSON)' }))
+    await downloadData(user, 'de')
     expect(await screen.findByRole('button', { name: 'Wird vorbereitet …' })).toBeDisabled()
     answer(HttpResponse.json({}, { status: 500 }))
     expect(await screen.findByRole('alert')).toHaveTextContent(

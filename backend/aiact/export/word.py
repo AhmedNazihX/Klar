@@ -29,6 +29,7 @@ from aiact.export.paper import (
     Paragraph,
     Quote,
     SignOff,
+    SmallText,
     Table,
 )
 from aiact.export.style import (
@@ -122,6 +123,8 @@ def _block(document: WordDocument, block: Block) -> None:
         case FillMarker(text=text):
             _shade(paragraph, FILL_TINT)
             _text(paragraph, text, SANS, 10, LENS_BLUE, bold=True)
+        case SmallText(text=text):
+            _text(paragraph, text, SANS, 9.5, INK_2)
         case Note(text=text):
             _shade(paragraph, QUOTE_TINT)
             _text(paragraph, text, SANS, 9.5, INK_2)

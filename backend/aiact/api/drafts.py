@@ -179,7 +179,7 @@ def export(
         raise HTTPException(status.HTTP_409_CONFLICT, CHECKS_FAILED)
     paper = document_paper(checked.document)
     refuse_too_long(paper, TOO_LONG)
-    with export_worker(request, context) as worker:
+    with export_worker(request, context, TOO_LONG) as worker:
         content = _rendered(worker, body.format, paper)
     return attachment(content, body.format, body.template)  # a template id: [a-z0-9_] only
 

@@ -165,7 +165,10 @@ def test_the_reports_blocks_are_drawn_as_given_and_the_page_break_starts_a_page(
     ):
         assert text in first, text
     assert "Duties" not in first
-    assert "Duties For the reviewer Reviewed by Date Not legal advice." in second
+    assert (
+        "Duties Points for legal review. For the reviewer Reviewed by Date Not legal advice."
+        in second
+    )
     for number, page in enumerate((first, second), start=1):
         assert FOOTER in page
         assert f"Page {number} of 2" in page

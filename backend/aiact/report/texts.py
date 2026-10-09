@@ -77,14 +77,128 @@ STEP_REFERENCES: Mapping[StepName, ByLanguage] = {
     StepName.TRANSPARENCY: _texts("Art. 50", "Art. 50"),
 }
 """What a step checks, for a step that cites no provision of the Act (the screens' references)."""
-STEP_ASSUMED = _texts(
-    "Assumed until a missing fact is confirmed.",
-    "Angenommen, bis eine fehlende Angabe bestätigt ist.",
+STEP_OUTCOMES: Mapping[str, ByLanguage] = MappingProxyType(
+    {
+        "paused": _texts(
+            "Assumed for now: one fact is missing", "Vorerst angenommen: eine Angabe fehlt"
+        ),
+        "ambiguous": _texts(
+            "Legally ambiguous: the stricter reading applies",
+            "Rechtlich unklar: Es gilt die strengere Lesart",
+        ),
+        "inScope": _texts("In scope", "Anwendbar"),
+        "outOfScope": _texts("Out of scope", "Außerhalb des Anwendungsbereichs"),
+        "noBan": _texts(
+            "No match with a banned practice", "Kein Treffer bei den verbotenen Praktiken"
+        ),
+        "ban": _texts("Matches a banned practice", "Entspricht einer verbotenen Praktik"),
+        "highRiskAnnexIII": _texts("Yes: {label}", "Ja: {label}"),
+        "highRiskAnnexI": _texts(
+            "Yes: part of a product under Annex I", "Ja: Teil eines Produkts nach Anhang I"
+        ),
+        "highRisk": _texts("Yes: high-risk", "Ja: Hochrisiko"),
+        "notHighRisk": _texts("Not high-risk", "Kein Hochrisiko"),
+        "transparencyDuty": _texts("1 duty under Art. 50", "1 Pflicht nach Art. 50"),
+        "transparencyDuties": _texts(
+            "{count} duties under Art. 50", "{count} Pflichten nach Art. 50"
+        ),
+        "noTransparency": _texts("No separate duty found", "Keine eigene Pflicht gefunden"),
+    }
 )
-STEP_AMBIGUOUS = _texts(
-    "The law leaves this open; the stricter reading is applied.",
-    "Das Recht lässt dies offen; die strengere Lesart wird angewandt.",
+"""A step's outcome in one plain line, as the Result screen's step rows say it
+(`result.steps` in the locales, `stepOutcome` in `result-text.ts`)."""
+ANNEX_III_LABELS: Mapping[str, ByLanguage] = MappingProxyType(
+    {
+        "III_1_a": _texts("remote biometric identification", "biometrische Fernidentifizierung"),
+        "III_1_b": _texts(
+            "biometric categorisation by sensitive attributes",
+            "biometrische Kategorisierung nach sensiblen Merkmalen",
+        ),
+        "III_1_c": _texts("emotion recognition", "Emotionserkennung"),
+        "III_2": _texts(
+            "safety components of critical infrastructure",
+            "Sicherheitsbauteile kritischer Infrastruktur",
+        ),
+        "III_3_a": _texts(
+            "access or admission to education and training",
+            "Zugang oder Zulassung zu Bildung und Ausbildung",
+        ),
+        "III_3_b": _texts("evaluating learning outcomes", "Bewertung von Lernergebnissen"),
+        "III_3_c": _texts(
+            "assessing the level of education a person can access",
+            "Bewertung des angemessenen Bildungsniveaus",
+        ),
+        "III_3_d": _texts(
+            "monitoring students during tests", "Überwachung von Prüflingen bei Prüfungen"
+        ),
+        "III_4_a": _texts(
+            "recruitment and selection of people", "Einstellung und Auswahl von Personen"
+        ),
+        "III_4_b": _texts(
+            "decisions about work relationships, tasks and performance",
+            "Entscheidungen über Arbeitsverhältnisse, Aufgaben und Leistung",
+        ),
+        "III_5_a": _texts(
+            "eligibility for public assistance benefits and services",
+            "Anspruch auf öffentliche Unterstützungsleistungen und Dienste",
+        ),
+        "III_5_b": _texts(
+            "creditworthiness and credit scores", "Kreditwürdigkeit und Bonitätsbewertung"
+        ),
+        "III_5_c": _texts(
+            "risk assessment and pricing in life and health insurance",
+            "Risikobewertung und Preisbildung bei Lebens- und Krankenversicherungen",
+        ),
+        "III_5_d": _texts(
+            "emergency calls, dispatch and patient triage",
+            "Notrufe, Einsatzsteuerung und Triage",
+        ),
+        "III_6_a": _texts(
+            "assessing the risk of becoming a victim of crime",
+            "Risiko, Opfer einer Straftat zu werden",
+        ),
+        "III_6_b": _texts(
+            "polygraphs and similar tools in law enforcement",
+            "Lügendetektoren und ähnliche Instrumente bei der Strafverfolgung",
+        ),
+        "III_6_c": _texts(
+            "assessing the reliability of evidence",
+            "Bewertung der Verlässlichkeit von Beweismitteln",
+        ),
+        "III_6_d": _texts(
+            "assessing the risk of offending or reoffending",
+            "Risiko einer Straftat oder erneuten Straftat",
+        ),
+        "III_6_e": _texts(
+            "profiling in criminal investigations", "Profiling bei strafrechtlichen Ermittlungen"
+        ),
+        "III_7_a": _texts(
+            "polygraphs and similar tools at borders",
+            "Lügendetektoren und ähnliche Instrumente an Grenzen",
+        ),
+        "III_7_b": _texts(
+            "risk assessment of people entering the EU",
+            "Risikobewertung von Personen bei der Einreise",
+        ),
+        "III_7_c": _texts(
+            "examining asylum, visa and residence applications",
+            "Prüfung von Asyl-, Visums- und Aufenthaltsanträgen",
+        ),
+        "III_7_d": _texts(
+            "detecting, recognising or identifying people in migration",
+            "Aufdeckung, Erkennung oder Identifizierung von Personen bei der Migration",
+        ),
+        "III_8_a": _texts(
+            "assisting courts in researching and applying the law",
+            "Unterstützung von Gerichten bei der Ermittlung und Anwendung des Rechts",
+        ),
+        "III_8_b": _texts(
+            "influencing elections or referendums",
+            "Beeinflussung von Wahlen oder Abstimmungen",
+        ),
+    }
 )
+"""An Annex III point's plain label, as the screens name it (`annexPoint` in the locales)."""
 STEP_NOT_ASSESSED = _texts(
     "Not assessed: a person must review this check.",
     "Nicht bewertet: Diese Prüfung muss eine Person vornehmen.",
@@ -109,7 +223,7 @@ LAW_LINES: Mapping[bool, ByLanguage] = {
 """The law line, by whether the text is the amended one."""
 
 UNNAMED_TOOL = _texts("Your tool", "Ihr Tool")
-KICKER = _texts("Classification report · Report {id}", "Klassifizierungsbericht · Bericht {id}")
+KICKER = _texts("Classification report · Report {id}", "Bericht zur Einstufung · Bericht {id}")
 
 FIELD_LABELS = MappingProxyType(
     {
@@ -120,17 +234,43 @@ FIELD_LABELS = MappingProxyType(
     }
 )
 NO_DUTIES_DATE = _texts("No specific duties", "Keine besonderen Pflichten")
+STOP_USING = _texts(
+    "Stop using or supplying it now", "Nutzen oder liefern Sie es ab sofort nicht mehr"
+)
+STOP_USING_TOOL = _texts(
+    "Stop using or supplying it now.", "Nutzen oder liefern Sie es ab sofort nicht mehr."
+)
+"""A prohibited tool's line, as the inventory's "needs you" says it (`inventory.needs`)."""
 
 BASIS = _texts("Basis", "Grundlage")
-LISTED_IN = _texts("Listed in {point}.", "Aufgeführt in {point}.")
-ANNEX_I_BASIS = _texts(
-    "A product, or a safety component of one, covered by {point}.",
-    "Ein Produkt oder Sicherheitsbauteil eines Produkts nach {point}.",
+BASIS_ANNEX_III = _texts(
+    "The tool is listed in {point}: {label}.", "Das Tool ist in {point} aufgeführt: {label}."
 )
-MINIMAL_BASIS = _texts(
-    "Not prohibited, not high-risk, and no transparency duty under Art. 50 applies.",
-    "Nicht verboten, kein Hochrisiko, und keine Transparenzpflicht nach Art. 50 greift.",
+BASIS_ANNEX_III_PLAIN = _texts(
+    "The tool is listed in {point}.", "Das Tool ist in {point} aufgeführt."
 )
+BASIS_ANNEX_I = _texts(
+    "The tool is part of a product covered by {point}.",
+    "Das Tool ist Teil eines Produkts, das unter {point} fällt.",
+)
+CLASS_BASIS: Mapping[RiskClass, ByLanguage] = {
+    RiskClass.HIGH_RISK: _texts("The tool is high-risk.", "Das Tool ist ein Hochrisiko-System."),
+    RiskClass.PROHIBITED: _texts(
+        "It matches a practice banned by Art. 5.",
+        "Es entspricht einer nach Art. 5 verbotenen Praktik.",
+    ),
+    RiskClass.LIMITED_RISK: _texts(
+        "Transparency duties under Art. 50 apply.", "Es gelten Transparenzpflichten nach Art. 50."
+    ),
+    RiskClass.MINIMAL_RISK: _texts(
+        "It isn't banned, isn't high-risk and has no Art. 50 duty.",
+        "Es ist weder verboten noch ein Hochrisiko-System und hat keine Pflicht nach Art. 50.",
+    ),
+    RiskClass.OUT_OF_SCOPE: _texts(
+        "The AI Act doesn't apply to it.", "Die KI-Verordnung gilt dafür nicht."
+    ),
+}
+"""The basis, as the Result screen says it (`result.basis` in the locales, `basisSentence`)."""
 FACTS = _texts("Facts the result rests on", "Fakten, auf denen das Ergebnis beruht")
 FACT_HEADER = (_texts("Fact", "Fakt"), _texts("Source", "Quelle"))
 NO_FACTS = _texts("The result lists no facts.", "Das Ergebnis nennt keine Fakten.")
@@ -144,13 +284,34 @@ STEP_HEADER = (
 DUTIES = _texts("Duties", "Pflichten")
 DUTIES_OF = _texts("Duties of {role}", "Pflichten {role}")
 ROLES_JOINED = _texts("{first} and {second}", "{first} und {second}")
-DUTIES_FROM = _texts("{heading}, from {date}", "{heading}, ab dem {date}")
+WHEN = _texts("{what}, {when}", "{what}, {when}")
+"""A duty table's heading, or a duty's provision, with when it applies."""
+FROM_DATE = _texts("from {date}", "ab dem {date}")
+ONLY_AFTER_CHANGE = _texts(
+    "only after a significant change ({article})",
+    "nur nach einer wesentlichen Änderung ({article})",
+)
 DUTY_HEADER = (_texts("Duty", "Pflicht"), _texts("Provision", "Vorschrift"))
 FROM_HEADER = _texts("Applies from", "Gilt ab")
 NO_DUTIES = _texts(
     "The result lists no specific duties for this tool.",
     "Das Ergebnis nennt für dieses Tool keine besonderen Pflichten.",
 )
+LEFT_OUT: Mapping[bool, ByLanguage] = {
+    True: _texts(
+        "1 more duty the result lists is not in Klar's table of duties, so it is left out here.",
+        "1 weitere Pflicht, die das Ergebnis nennt, steht nicht in Klars Pflichtentabelle und "
+        "fehlt deshalb hier.",
+    ),
+    False: _texts(
+        "{count} more duties the result lists are not in Klar's table of duties, so they are "
+        "left out here.",
+        "{count} weitere Pflichten, die das Ergebnis nennt, stehen nicht in Klars "
+        "Pflichtentabelle und fehlen deshalb hier.",
+    ),
+}
+"""Posted duties no entry of the obligations table matches (`aiact.report.duties`), by whether
+there is exactly one."""
 APPLIES_IF = _texts("{duty} Applies if: {condition}", "{duty} Gilt, wenn: {condition}")
 AFTER_CHANGE = _texts(
     "Only after a significant change ({article})",

@@ -19,7 +19,8 @@ export function ExportReportButton({ run }: { run: ClassificationRun }): JSX.Ele
   const overview = useUserDataOverview()
   const exportReport = useExportResultReport(run.toolId)
   return (
-    <div className="flex flex-col items-end gap-2">
+    // The message hangs below the button, out of the flow, so the header's actions never move.
+    <div className="relative flex">
       <Button
         variant="ghost"
         disabled={exportReport.isPending}
@@ -36,7 +37,10 @@ export function ExportReportButton({ run }: { run: ClassificationRun }): JSX.Ele
         {exportReport.isPending ? t('report.pending') : t('report.export')}
       </Button>
       {exportReport.isError && (
-        <p role="alert" className="m-0 text-caption text-risk-prohibited">
+        <p
+          role="alert"
+          className="absolute top-full right-0 z-10 m-0 mt-1.5 w-max max-w-[min(20rem,calc(100vw-2rem))] text-right text-caption text-risk-prohibited"
+        >
           {t(reportFailureKey(exportReport.error))}
         </p>
       )}

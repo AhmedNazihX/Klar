@@ -30,6 +30,7 @@ from aiact.export.paper import (
     Paragraph,
     Quote,
     SignOff,
+    SmallText,
     Table,
 )
 from aiact.export.style import (
@@ -73,12 +74,15 @@ LOGO_GAP_MM = 8.0
 HEADING_KEEP_MM = 24.0
 """The room a heading needs below it for a few lines of its section; otherwise it starts the
 next page."""
-CELL_PADDING_MM = 1.6
-TABLE_LINE_MM = 4.4
-SIGN_OFF_KEEP_MM = 70.0
+TABLE_FONT_PT = 8.0
+CELL_PADDING_MM = 1.0
+TABLE_LINE_MM = 3.6
+SIGN_OFF_KEEP_MM = 50.0
 """The room the sign-off box needs; otherwise it starts the next page, whole."""
-SIGNATURE_ROOM_MM = 12.0
-"""The space above each signature line, to write in."""
+SIGNATURE_ROOM_MM = 10.0
+"""The space above the signature lines, to write in."""
+SIGNATURE_GAP_MM = 10.0
+"""Between two signature lines side by side."""
 
 
 class KlarPdf(FPDF):
@@ -203,6 +207,10 @@ class KlarPdf(FPDF):
                 self._style(SANS, "B", 10, LENS_BLUE)
                 self.write_text(text, 5, fill=FILL_TINT)
                 self.ln(1.5)
+            case SmallText(text=text):
+                self._style(SANS, "", 9.5, INK_2)
+                self.write_text(text, 4.6)
+                self.ln(1)
             case Note(text=text):
                 self._style(SANS, "", 9.5, INK_2)
                 self.write_text(text, 4.8, fill=QUOTE_TINT)
@@ -224,18 +232,16 @@ class KlarPdf(FPDF):
             (tuple(label for label, _ in items), tuple(value for _, value in items)),
             widths=(1.0,) * len(items),
             headings=labels,
-            borders=TableBordersLayout.HORIZONTAL_LINES,
         )
         self.ln(3)
 
     def _write_table(self, table: Table) -> None:
-        self._style(SANS, "", 9, INK_2)
-        header = FontFace(family=SANS, emphasis="B", size_pt=8, color=rgb(SLATE))
+        self._style(SANS, "", TABLE_FONT_PT, INK_2)
+        header = FontFace(family=SANS, emphasis="B", size_pt=TABLE_FONT_PT, color=rgb(SLATE))
         self._table_rows(
             (table.header, *table.rows),
             widths=table.widths,
             headings=header,
-            borders=TableBordersLayout.HORIZONTAL_LINES,
         )
         self.ln(3)
 
@@ -245,7 +251,6 @@ class KlarPdf(FPDF):
         *,
         widths: tuple[float, ...],
         headings: FontFace,
-        borders: TableBordersLayout,
     ) -> None:
         """`rows` as a table across the page, the first one its header (repeated on a new
         page); each text as the current font can draw it."""
@@ -256,7 +261,7 @@ class KlarPdf(FPDF):
             align="LEFT",
             v_align="TOP",
             text_align="LEFT",
-            borders_layout=borders,
+            borders_layout=TableBordersLayout.HORIZONTAL_LINES,
             headings_style=headings,
             line_height=TABLE_LINE_MM,
             padding=CELL_PADDING_MM,
@@ -268,18 +273,25 @@ class KlarPdf(FPDF):
                     row.cell(self._drawable(printable(text)))
 
     def _write_sign_off(self, sign_off: SignOff) -> None:
-        """The heading, a line to sign on above each label, then the text; kept on one page."""
+        """The heading, the lines to sign on side by side, each above its label, then the text;
+        kept on one page."""
         if self.will_page_break(SIGN_OFF_KEEP_MM):
             self.add_page()
         self.ln(3)
         self._style(SANS, "B", 11, INK)
         self.write_text(sign_off.heading, 6)
         self.set_draw_color(*rgb(SLATE))
-        for label in sign_off.labels:
-            self.ln(SIGNATURE_ROOM_MM)
-            self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
-            self._style(SANS, "", 8, SLATE)
-            self.write_text(label, 4.4)
+        self._style(SANS, "", 8, SLATE)
+        count = len(sign_off.labels)
+        width = (self.epw - SIGNATURE_GAP_MM * (count - 1)) / max(count, 1)
+        self.ln(SIGNATURE_ROOM_MM)
+        y = self.get_y()
+        for number, label in enumerate(sign_off.labels):
+            x = self.l_margin + number * (width + SIGNATURE_GAP_MM)
+            self.line(x, y, x + width, y)
+            self.set_xy(x, y)
+            self.cell(width, 4.4, self._drawable(printable(label)))
+        self.set_xy(self.l_margin, y + 4.4)
         self.ln(3)
         self._style(SANS, "", 9.5, INK_2)
         self.write_text(sign_off.text, 4.8, fill=QUOTE_TINT)

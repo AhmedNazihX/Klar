@@ -10,12 +10,7 @@ import {
 import type { Language } from '@/i18n'
 import type { InventoryTool } from '@/lib/inventory'
 
-import {
-  documentFailure,
-  DocumentRequestError,
-  saveFile,
-  type DocumentFailure,
-} from './use-document-drafts'
+import { documentFailure, fileOf, saveFile, type DocumentFailure } from './use-document-drafts'
 
 /** The message for each refusal; a report has no checks to fail, so that refusal reads as any
  *  other failure. */
@@ -32,16 +27,8 @@ export function reportFailureKey(error: unknown): (typeof REPORT_FAILURE_KEYS)[D
   return REPORT_FAILURE_KEYS[documentFailure(error)]
 }
 
-/** Turns a file response into its Blob, or the refusal it stands for (`documentFailure`). */
-function fileOf({ data, response }: { data?: unknown; response?: Response }): Blob {
-  // No response at all (offline) leaves `response` unset.
-  if (!response?.ok || !(data instanceof Blob)) {
-    throw new DocumentRequestError(response?.status ?? null)
-  }
-  return data
-}
-
-/** A result's report file: the tool id names it, the report ID is inside. */
+/** A result's report file: the tool id names it, the report ID is inside. The API names it
+ *  `klar-report.pdf` only as a fallback; this is the name it is saved under. */
 export function resultReportFileName(
   toolId: string,
   format: ResultReportRequest['format'],

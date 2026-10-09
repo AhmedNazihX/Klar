@@ -5,15 +5,18 @@
   class, status, role and duties.
 
 The posted result is validated against the result contract and nothing more (`valid_result`,
-decision 031): it may be a row the browser wrote or an imported file. The report quotes no text
-of the Act, so none can be taken from it; its facts and decisions are the user's own run, and
-its notice is the report language's own. A result with no class (needs a description, E13) has
+decision 031): it may be a row the browser wrote or an imported file. Its facts and the steps'
+outcomes are the user's own run, written in the report's own sentences; the duties' formal
+wording, conditions and labels come from the obligations table, looked up by the result's class,
+role, article and law version, never from the posted result (`aiact.report.duties`), and the
+notice is the report language's own. A result with no class (needs a description, E13) has
 nothing to report: a 422. The inventory report takes each tool as the summary its stored result
 gives (`InventoryTool`), since a whole inventory of results would not fit the body cap.
 
 A report is a file like a drafted document's export, made the same way (`aiact.api.files`): the
-exports' rate limit, the length cap, one of the export workers, the time limit. The routes are
-plain `def`, waiting in FastAPI's threadpool for the worker's file. Nothing here logs the result,
+exports' rate limit, the length cap, one of the export workers, the time limit, and a 413 for a
+render that fails (a table cell taller than a page). The routes are plain `def`, waiting in
+FastAPI's threadpool for the worker's file. Nothing here logs the result,
 a fact, a tool's name or the company, and no error quotes them.
 """
 
@@ -21,7 +24,7 @@ from datetime import date
 from typing import Annotated, Any, ClassVar
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from pydantic import Field, StringConstraints
+from pydantic import Field
 
 from aiact.api.dependencies import ApiContext, api_context, limit_exports
 from aiact.api.documents import ResultJson, valid_result
@@ -37,25 +40,28 @@ from aiact.api.files import (
     rendered,
 )
 from aiact.export import Paper, render_docx, render_pdf
-from aiact.report import InventoryTool, inventory_report, report_id, result_report
+from aiact.report import InventoryTool, Name, NoClassError, inventory_report, result_report
 from aiact.schemas import Language
 from aiact.schemas.base import ContractModel
 
-MAX_NAME_CHARS = 200
-"""A tool's name and the company's, as the database caps them (`systems.name`,
-`inventories.company_name`)."""
-
 INVENTORY_MAX_LINES = 6_000
 """The inventory report's line cap: its tables count each cell as a line, and a hundred tools
-of a dozen duties each come to about 4,300 (the drafted documents keep `MAX_FILE_LINES`)."""
+of a dozen duties each come to about 4,600 (the drafted documents keep `MAX_FILE_LINES`)."""
+INVENTORY_MAX_CHARS = 200_000
+"""The inventory report's character cap: a hundred tools of a dozen duties each, with the
+table's German labels, come to about 135,000 and render in about two seconds (the drafted
+documents keep `MAX_FILE_CHARS`)."""
 
 RENDERERS: dict[ExportFormat, Renderer] = {"docx": render_docx, "pdf": render_pdf}
+
+RESULT_STEM = "klar-report"
+"""The report's file name; the browser saves it under its own name for the tool
+(`resultReportFileName`), so the server's is only a fallback."""
+INVENTORY_STEM = "klar-inventory-report"
 
 NO_CLASS = "This result has no class yet, so there is no report to make. Describe the tool first."
 TOO_LONG = "This report is too long to make into a file."
 TIMED_OUT = "Making this report took too long. Please try again."
-
-Name = Annotated[str, StringConstraints(min_length=1, max_length=MAX_NAME_CHARS)]
 
 
 class ResultReportRequest(ContractModel):
@@ -118,19 +124,18 @@ def export_result_report(
     """The report for a lawyer: the result, its facts and their sources, the steps and the
     provisions they cite, the duties, the points for legal review and a box for the reviewer to
     sign, as a PDF or Word file. Guidance, not legal advice."""
-    result = valid_result(body.result)
-    if result.risk_class is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, NO_CLASS)
-    paper = result_report(
-        result,
-        language=body.language,
-        prepared_on=prepared_on,
-        tool_name=body.tool_name,
-        company=body.company,
-    )
-    stem = f"klar-report-{report_id(result).lower()}"  # [a-z0-9-] only
+    try:
+        paper = result_report(
+            valid_result(body.result),
+            language=body.language,
+            prepared_on=prepared_on,
+            tool_name=body.tool_name,
+            company=body.company,
+        )
+    except NoClassError:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, NO_CLASS) from None
     refuse_too_long(paper, TOO_LONG)
-    return _file(request, context, paper, body.format, stem)
+    return _file(request, context, paper, body.format, RESULT_STEM)
 
 
 @router.post(
@@ -151,14 +156,14 @@ def export_inventory_report(
     paper = inventory_report(
         body.tools, language=body.language, prepared_on=prepared_on, company=body.company
     )
-    refuse_too_long(paper, TOO_LONG, max_lines=INVENTORY_MAX_LINES)
-    return _file(request, context, paper, body.format, "klar-inventory-report")
+    refuse_too_long(paper, TOO_LONG, max_chars=INVENTORY_MAX_CHARS, max_lines=INVENTORY_MAX_LINES)
+    return _file(request, context, paper, body.format, INVENTORY_STEM)
 
 
 def _file(
     request: Request, context: ApiContext, paper: Paper, file_format: ExportFormat, stem: str
 ) -> Response:
     """The paper as a file, made in an export worker within the time limit."""
-    with export_worker(request, context) as worker:
+    with export_worker(request, context, TOO_LONG) as worker:
         content = rendered(worker, RENDERERS[file_format], paper, TIMED_OUT)
     return attachment(content, file_format, stem)

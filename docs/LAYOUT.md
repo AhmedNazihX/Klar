@@ -137,7 +137,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            Newsreader and Geist fonts (OFL), their sources in assets/README.md
 │   │   ├── report/                  the reports as Papers (P25): result.py (the report for a lawyer,
 │   │   │                            two A4 pages), inventory.py (the inventory report), common.py,
-│   │   │                            texts.py (EN, DE); never imports aiact.engine or aiact.drafting
+│   │   │                            duties.py (the duties' texts from the obligations table, never
+│   │   │                            the posted result), texts.py (EN, DE); never imports aiact.engine
+│   │   │                            or aiact.drafting
 │   │   ├── mcp/                     server.py: the 4 MCP tools over stdio, `aiact mcp serve`; lookup tools (P2a), classify_system (P2b)
 │   │   └── api/                     FastAPI app (P1): app.py create_app (trusted hosts, CORS, error handlers); classify.py
 │   │                                `POST /classify` over SSE; lookups.py provisions, obligations, documents;
@@ -151,7 +153,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                `aiact api openapi`; `aiact api serve` runs it
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)
-│       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases); eurlex/ (C1)
+│       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases); eurlex/ (C1);
+│       │                            report/ (the worked example's replayed result, P25)
 │       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6)
 │       ├── recordings/              recorded model responses, <module path under tests/>/<test>.yaml, e.g. llm/test_chat/ (F6);
 │       │                            <test>.corpus.json next to one: the corpus rows a replayed engine node read,

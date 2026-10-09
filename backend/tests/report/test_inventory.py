@@ -133,3 +133,58 @@ def test_an_empty_inventory_without_a_company() -> None:
 def test_one_tool_is_counted_in_the_singular() -> None:
     assert "1 tool." in _pages(tools=(SCREENING,))
     assert "1 Tool." in _pages(Language.DE, tools=(SCREENING,))
+
+
+AI_LITERACY = InventoryDuty(
+    label="Help the people who run or use it build their AI literacy",
+    article="art:4:1",
+    applies_from=date(2025, 2, 2),
+)
+
+
+def test_a_high_risk_tools_duties_apply_from_its_routes_date_not_art_4s() -> None:
+    """As the inventory screen dates it: Art. 4's AI-literacy duty (2 February 2025) doesn't
+    date a high-risk tool; its route's duties do."""
+    tool = SCREENING.model_copy(update={"duties": (AI_LITERACY, *SCREENING.duties[:1])})
+    text = _pages(tools=(tool,))
+    assert "Applicant screening High-risk Decided Deployer 2 December 2027" in text
+    assert "Art. 4(1) 2 February 2025" in text
+
+
+def test_a_limited_risk_tools_duties_apply_from_its_art_50_date() -> None:
+    chatbot = CHATBOT.model_copy(update={"duties": (AI_LITERACY, *CHATBOT.duties)})
+    assert "Your tool Limited risk (assumed) Legally ambiguous Provider 2 August 2026" in _pages(
+        tools=(chatbot,)
+    )
+
+
+def test_a_prohibited_tool_says_to_stop_using_or_supplying_it() -> None:
+    banned = InventoryTool(
+        name="Bild-App", risk_class=RiskClass.PROHIBITED, status=Status.DECIDED, role=Role.DEPLOYER
+    )
+    english = _pages(tools=(banned,))
+    assert "Bild-App Prohibited Decided Deployer Stop using or supplying it now" in english
+    assert "Bild-App Stop using or supplying it now." in english
+    assert "no specific duties" not in english.lower()
+    german = _pages(Language.DE, tools=(banned,))
+    assert (
+        "Bild-App Verboten Entschieden Betreiber Nutzen oder liefern Sie es ab sofort nicht mehr"
+        in german
+    )
+    assert "Bild-App Nutzen oder liefern Sie es ab sofort nicht mehr." in german
+    assert "keine besonderen Pflichten" not in german
+
+
+def test_a_duty_is_labelled_as_the_table_labels_it_when_the_table_has_it() -> None:
+    posted = InventoryDuty(
+        label="Keep the logs", article="art:26:6", applies_from=date(2027, 12, 2)
+    )
+    unknown = InventoryDuty(
+        label="A duty Klar no longer lists", article="art:99:1", applies_from=date(2027, 12, 2)
+    )
+    tool = SCREENING.model_copy(update={"duties": (posted, unknown)})
+    english = _pages(tools=(tool,))
+    assert "Keep the logs it creates for at least six months Art. 26(6)" in english
+    assert "A duty Klar no longer lists Art. 99(1)" in english
+    german = _pages(Language.DE, tools=(tool,))
+    assert "Die automatisch erzeugten Protokolle mindestens sechs Monate aufbewahren" in german

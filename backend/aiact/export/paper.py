@@ -45,6 +45,14 @@ class FillMarker:
 
 
 @dataclass(frozen=True)
+class SmallText:
+    """A line in the product's smaller voice, without a ground: the report's points for legal
+    review, a list a lawyer reads through."""
+
+    text: str
+
+
+@dataclass(frozen=True)
 class Note:
     """A line set apart from the content, such as the simplified-form note."""
 
@@ -89,7 +97,18 @@ class PageBreak:
     """What follows starts a new page."""
 
 
-Block = Heading | Paragraph | Quote | FillMarker | Note | Fields | Table | SignOff | PageBreak
+Block = (
+    Heading
+    | Paragraph
+    | SmallText
+    | Quote
+    | FillMarker
+    | Note
+    | Fields
+    | Table
+    | SignOff
+    | PageBreak
+)
 
 
 def block_texts(block: Block) -> tuple[str, ...]:
@@ -105,7 +124,13 @@ def block_texts(block: Block) -> tuple[str, ...]:
             return (heading, *labels, text)
         case PageBreak():
             return ()
-        case Heading(text=text) | Paragraph(text=text) | FillMarker(text=text) | Note(text=text):
+        case (
+            Heading(text=text)
+            | Paragraph(text=text)
+            | SmallText(text=text)
+            | FillMarker(text=text)
+            | Note(text=text)
+        ):
             return (text,)
 
 

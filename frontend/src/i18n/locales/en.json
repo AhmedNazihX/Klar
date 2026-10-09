@@ -385,8 +385,9 @@
     "download": {
       "heading": "Download everything",
       "body": "A copy of all your data. The report is for people; the data file (JSON) is for other tools. Import the data file to restore it in a new session.",
-      "button": "Download data (JSON)",
-      "report": "Report (PDF)",
+      "button": "Download",
+      "reportChoice": "Report (PDF): inventory, results and duties",
+      "dataChoice": "Data (JSON): everything, machine-readable",
       "pending": "Preparing…",
       "failed": "The download didn’t work. Check your connection and try again."
     },

@@ -384,9 +384,10 @@
     },
     "download": {
       "heading": "Alles herunterladen",
-      "body": "Eine Kopie all Ihrer Daten. Der Bericht ist für Menschen, die Datendatei (JSON) für andere Werkzeuge. Importieren Sie die Datendatei, um sie in einer neuen Sitzung wiederherzustellen.",
-      "button": "Daten herunterladen (JSON)",
-      "report": "Bericht (PDF)",
+      "body": "Eine Kopie all Ihrer Daten. Der Bericht ist für Menschen; die Datendatei (JSON) für andere Werkzeuge. Importieren Sie die Datendatei, um sie in einer neuen Sitzung wiederherzustellen.",
+      "button": "Herunterladen",
+      "reportChoice": "Bericht (PDF): Inventar, Ergebnisse und Pflichten",
+      "dataChoice": "Daten (JSON): alles, maschinenlesbar",
       "pending": "Wird vorbereitet …",
       "failed": "Der Download hat nicht geklappt. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
     },

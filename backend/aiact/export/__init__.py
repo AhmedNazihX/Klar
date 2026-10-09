@@ -14,6 +14,7 @@ from aiact.export.paper import (
     Paragraph,
     Quote,
     SignOff,
+    SmallText,
     Table,
     block_texts,
 )
@@ -33,6 +34,7 @@ __all__ = [
     "Paragraph",
     "Quote",
     "SignOff",
+    "SmallText",
     "Table",
     "block_texts",
     "render_docx",

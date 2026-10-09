@@ -68,6 +68,7 @@ def test_the_reports_blocks_are_word_tables_a_page_break_and_signature_lines() -
         "Prepared on 1 October 2026.",
         "Facts",
         "Duties",
+        "Points for legal review.",
         "For the reviewer",
         SIGNATURE_LINE,
         "Reviewed by",
