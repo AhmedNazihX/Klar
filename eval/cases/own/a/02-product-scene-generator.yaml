@@ -13,6 +13,7 @@ label:
   risk_class: limited_risk
   role: provider
 label_citation: ["art:50:2", "art:111:4", "art:3:3", "guide:guide-art50:para:58", "guide:guide-art50:para:153"]
+business_function: marketing
 as_of: 2026-10-01
 notes: >-
   Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the tool generates new synthetic images (guide para 58);

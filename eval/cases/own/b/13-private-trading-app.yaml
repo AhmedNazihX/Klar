@@ -12,6 +12,7 @@ description: >-
 label:
   risk_class: out_of_scope
 label_citation: ["art:2:10", "art:3:4"]
+business_function: finance
 notes: >-
   Approved by user 2026-09-30. Class: the app is an AI system (it learns from price data and
   decides trades), but the person asking uses it in a purely personal, non-professional activity,

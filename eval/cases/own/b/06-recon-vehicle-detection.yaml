@@ -13,6 +13,7 @@ description: >-
 label:
   risk_class: out_of_scope
 label_citation: ["art:2:3", "recital:24"]
+business_function: security
 notes: >-
   Approved by user 2026-09-30. Class: an AI system (learned from annotated imagery, infers
   detections), but placed on the market exclusively for military and defence purposes, so the

@@ -76,6 +76,98 @@ export type CheckedDraft = {
 };
 
 /**
+ * ChecklistDuty
+ *
+ * A tool's duty, and whether the user ticked it off.
+ */
+export type ChecklistDuty = {
+    /**
+     * Label
+     *
+     * The duty's short label in the report's language (`label_en`, `label_de`).
+     */
+    label: string;
+    /**
+     * Article
+     */
+    article: string;
+    /**
+     * Applies From
+     */
+    applies_from: string;
+    legacy?: LegacyStatus | null;
+    /**
+     * Is Done
+     *
+     * The user ticked the duty off; null when it has nothing to tick off (a duty without its key, stored before duties carried one), so it isn't counted.
+     */
+    is_done?: boolean | null;
+};
+
+/**
+ * ChecklistRequest
+ *
+ * Every tool of the user's inventory, summarised with each duty's ticked state, and the
+ * checklist wanted.
+ */
+export type ChecklistRequest = {
+    /**
+     * Tools
+     */
+    tools: Array<ChecklistTool>;
+    /**
+     * The language of the checklist's wording and notice.
+     */
+    language: Language;
+    /**
+     * The law text the Obligations screen shows; under the original one the high-risk route dates follow the original Art. 113 (decision 026 item 11).
+     */
+    law_version: LawVersion;
+    /**
+     * Format
+     */
+    format: 'docx' | 'pdf';
+    /**
+     * Company
+     *
+     * The company's name from its profile; null without one.
+     */
+    company?: string | null;
+};
+
+/**
+ * ChecklistTool
+ *
+ * A tool of the inventory, its stored result summarised, each duty with its ticked state.
+ */
+export type ChecklistTool = {
+    /**
+     * Name
+     *
+     * Null when the user gave none: "Your tool".
+     */
+    name?: string | null;
+    risk_class?: RiskClass | null;
+    status?: Status | null;
+    role?: Role | null;
+    /**
+     * The tool's second role, when the result gives one.
+     */
+    also_role?: Role | null;
+    law_version?: LawVersion | null;
+    /**
+     * As Of
+     *
+     * The date the result applies the law as of.
+     */
+    as_of?: string | null;
+    /**
+     * Duties
+     */
+    duties?: Array<ChecklistDuty>;
+};
+
+/**
  * Citation
  *
  * One quoted provision. `english_only` marks guidance that has no official text in `de`.
@@ -858,6 +950,12 @@ export type ListedDocument = {
  * report).
  */
 export type Obligation = {
+    /**
+     * Key
+     *
+     * The duty's key in the obligations table (e.g. `hr-deployer-logs`), the one a tick on the Obligations screen is saved under (`duty_progress.obligation_key`); None on a duty stored before the key was added.
+     */
+    key?: string | null;
     /**
      * Duty
      *
@@ -1780,3 +1878,48 @@ export type ExportInventoryReportResponses = {
 };
 
 export type ExportInventoryReportResponse = ExportInventoryReportResponses[keyof ExportInventoryReportResponses];
+
+export type ExportObligationsChecklistData = {
+    body: ChecklistRequest;
+    path?: never;
+    query?: never;
+    url: '/reports/checklist';
+};
+
+export type ExportObligationsChecklistErrors = {
+    /**
+     * The document is too long for a file
+     */
+    413: unknown;
+    /**
+     * Not a valid request; the body quotes none of it
+     */
+    422: Unprocessable;
+    /**
+     * Too many requests
+     */
+    429: unknown;
+    /**
+     * The file couldn't be made
+     */
+    500: unknown;
+    /**
+     * Every export slot is taken
+     */
+    503: unknown;
+    /**
+     * The file took too long to make
+     */
+    504: unknown;
+};
+
+export type ExportObligationsChecklistError = ExportObligationsChecklistErrors[keyof ExportObligationsChecklistErrors];
+
+export type ExportObligationsChecklistResponses = {
+    /**
+     * The file (an attachment)
+     */
+    200: Blob | File;
+};
+
+export type ExportObligationsChecklistResponse = ExportObligationsChecklistResponses[keyof ExportObligationsChecklistResponses];

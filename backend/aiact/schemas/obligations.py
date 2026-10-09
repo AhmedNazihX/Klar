@@ -7,6 +7,9 @@ from pydantic import Field, model_validator
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import HighRiskRoute, LegacyStatus, ObligationGroup
 
+OBLIGATION_KEY_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
+"""A duty's key in the obligations table, e.g. `hr-deployer-logs` (`obligations.obligation_key`)."""
+
 DOCUMENT_KEY_PATTERN = r"^[a-z0-9]+(_[a-z0-9]+)*$"
 """A drafting template id, e.g. `art_26_2_oversight` (aiact.drafting.templates)."""
 
@@ -25,6 +28,14 @@ class Obligation(ContractModel):
     report).
     """
 
+    key: str | None = Field(
+        default=None,
+        pattern=OBLIGATION_KEY_PATTERN,
+        max_length=200,
+        description="The duty's key in the obligations table (e.g. `hr-deployer-logs`), the one "
+        "a tick on the Obligations screen is saved under (`duty_progress.obligation_key`); None "
+        "on a duty stored before the key was added.",
+    )
     duty: str = Field(min_length=1, description="The formal duty, in English.")
     duty_de: str = Field(
         min_length=1, description="The formal duty in German, in the official German text's terms."

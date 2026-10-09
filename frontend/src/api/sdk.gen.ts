@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, ServerSentEventsResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentData, DraftDocumentErrors, DraftDocumentResponses, DraftVendorLetterData, DraftVendorLetterErrors, DraftVendorLetterResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, ExportInventoryReportData, ExportInventoryReportErrors, ExportInventoryReportResponses, ExportResultReportData, ExportResultReportErrors, ExportResultReportResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses, ListResultDocumentsData, ListResultDocumentsErrors, ListResultDocumentsResponses } from './types.gen';
+import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentData, DraftDocumentErrors, DraftDocumentResponses, DraftVendorLetterData, DraftVendorLetterErrors, DraftVendorLetterResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, ExportInventoryReportData, ExportInventoryReportErrors, ExportInventoryReportResponses, ExportObligationsChecklistData, ExportObligationsChecklistErrors, ExportObligationsChecklistResponses, ExportResultReportData, ExportResultReportErrors, ExportResultReportResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses, ListResultDocumentsData, ListResultDocumentsErrors, ListResultDocumentsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -143,6 +143,22 @@ export const exportResultReport = <ThrowOnError extends boolean = false>(options
  */
 export const exportInventoryReport = <ThrowOnError extends boolean = false>(options: Options<ExportInventoryReportData, ThrowOnError>): RequestResult<ExportInventoryReportResponses, ExportInventoryReportErrors, ThrowOnError> => (options.client ?? client).post<ExportInventoryReportResponses, ExportInventoryReportErrors, ThrowOnError>({
     url: '/reports/inventory',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Export Obligations Checklist
+ *
+ * The obligations checklist: every classified tool with its progress, then each duty with
+ * whether it is done, its provision and its date, as a PDF or Word file. Klar keeps the list;
+ * it doesn't check the work. Guidance, not legal advice.
+ */
+export const exportObligationsChecklist = <ThrowOnError extends boolean = false>(options: Options<ExportObligationsChecklistData, ThrowOnError>): RequestResult<ExportObligationsChecklistResponses, ExportObligationsChecklistErrors, ThrowOnError> => (options.client ?? client).post<ExportObligationsChecklistResponses, ExportObligationsChecklistErrors, ThrowOnError>({
+    url: '/reports/checklist',
     ...options,
     headers: {
         'Content-Type': 'application/json',

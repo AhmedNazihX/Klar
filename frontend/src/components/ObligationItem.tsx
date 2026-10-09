@@ -19,6 +19,10 @@ export type ObligationItemProps = {
   isInformational?: boolean
   /** The article column: 86 px in English, at least 112 px in German (localisation.md). */
   referenceWidth?: number
+  /** The duty is ticked off; with `onCheckedChange`, the box shows the saved tick. */
+  checked?: boolean
+  /** Called with the box's new state when the user ticks or clears it. */
+  onCheckedChange?: (checked: boolean) => void
 }
 
 const DEFAULT_REFERENCE_WIDTH = 86
@@ -35,47 +39,57 @@ export function ObligationItem({
   toolId,
   isInformational = false,
   referenceWidth = DEFAULT_REFERENCE_WIDTH,
+  checked,
+  onCheckedChange,
 }: ObligationItemProps): JSX.Element {
   return (
-    <li className="flex min-h-13 items-center gap-3.5 border-t border-hairline py-2.5">
-      {isInformational ? (
-        <span aria-hidden="true" className="size-5 shrink-0" />
-      ) : (
-        <input
-          type="checkbox"
-          aria-label={label}
-          className="size-5 shrink-0 cursor-pointer accent-lens-blue"
-        />
-      )}
-      <span className="flex min-w-0 grow flex-col gap-1">
-        <span className="text-body-small font-medium text-ink">{label}</span>
-        {(note ?? tag) && (
-          <span className="flex flex-wrap items-center gap-2 text-caption font-normal text-slate">
-            {note}
-            {tag && (
-              <span className="inline-flex h-[22px] items-center rounded-tag bg-white/60 px-2 text-xs font-semibold whitespace-nowrap text-ink-2 shadow-[inset_0_0_0_1px_var(--color-border-subtle)]">
-                {tag}
-              </span>
-            )}
-          </span>
+    <li className="@container border-t border-hairline">
+      <div className="grid min-h-13 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3.5 gap-y-1.5 py-2.5 @md:grid-cols-[auto_minmax(0,1fr)_auto]">
+        {isInformational ? (
+          <span aria-hidden="true" className="size-5 shrink-0" />
+        ) : (
+          <input
+            type="checkbox"
+            aria-label={label}
+            checked={onCheckedChange ? (checked ?? false) : undefined}
+            onChange={onCheckedChange && ((event) => onCheckedChange(event.target.checked))}
+            className="size-5 shrink-0 cursor-pointer accent-lens-blue"
+          />
         )}
-      </span>
-      {docLabel && documentId && (
-        <Link
-          to="/app/documents/$documentId"
-          params={{ documentId }}
-          search={{ tool: toolId }}
-          className="shrink-0 text-label whitespace-nowrap text-lens-blue no-underline hover:underline"
-        >
-          {docLabel}
-        </Link>
-      )}
-      <span
-        className="shrink-0 text-right text-caption font-normal whitespace-nowrap text-slate"
-        style={{ minWidth: referenceWidth }}
-      >
-        {reference}
-      </span>
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="text-body-small font-medium text-ink">{label}</span>
+          {(note ?? tag) && (
+            <span className="flex flex-wrap items-center gap-2 text-caption font-normal text-slate">
+              {note}
+              {tag && (
+                <span className="inline-flex h-[22px] items-center rounded-tag bg-white/60 px-2 text-xs font-semibold whitespace-nowrap text-ink-2 shadow-[inset_0_0_0_1px_var(--color-border-subtle)]">
+                  {tag}
+                </span>
+              )}
+            </span>
+          )}
+        </span>
+        {/* In a narrow row (a phone) the draft link and the article sit under the duty, so the
+            duty keeps its width and the article stays whole. */}
+        <span className="col-start-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 @md:col-start-3 @md:row-start-1 @md:flex-nowrap">
+          {docLabel && documentId && (
+            <Link
+              to="/app/documents/$documentId"
+              params={{ documentId }}
+              search={{ tool: toolId }}
+              className="shrink-0 text-label whitespace-nowrap text-lens-blue no-underline hover:underline"
+            >
+              {docLabel}
+            </Link>
+          )}
+          <span
+            className="shrink-0 text-caption font-normal whitespace-nowrap text-slate @md:text-right"
+            style={{ minWidth: referenceWidth }}
+          >
+            {reference}
+          </span>
+        </span>
+      </div>
     </li>
   )
 }

@@ -125,6 +125,7 @@ export function storedBeforeDecision030(): ClassificationResult {
 
 // The duties below carry the texts of C9's obligations table (supabase/seed/obligations.yaml).
 const AI_LITERACY_PROVIDER: Obligation = {
+  key: 'ai-literacy',
   duty: 'Take measures to support the AI literacy of staff and others who operate or use the system on your behalf.',
   duty_de:
     'Maßnahmen ergreifen, um die KI-Kompetenz Ihres Personals und anderer Personen zu unterstützen, die in Ihrem Auftrag mit dem Betrieb und der Nutzung des Systems befasst sind.',
@@ -136,6 +137,7 @@ const AI_LITERACY_PROVIDER: Obligation = {
 }
 
 const IMPORTER_CHECK: Obligation = {
+  key: 'hr-importer-verify',
   duty: 'Before placing the system on the market, verify that the provider carried out the conformity assessment, drew up the technical documentation, affixed the CE marking with the declaration of conformity and instructions, and appointed an authorised representative.',
   duty_de:
     'Vor dem Inverkehrbringen überprüfen, ob der Anbieter das Konformitätsbewertungsverfahren durchgeführt und die technische Dokumentation erstellt hat, ob das System mit der CE- Kennzeichnung versehen ist und ihm die EU-Konformitätserklärung und die Betriebsanleitung beigefügt sind und ob der Anbieter einen Bevollmächtigten benannt hat.',
@@ -148,6 +150,7 @@ const IMPORTER_CHECK: Obligation = {
 }
 
 const DISTRIBUTOR_CHECK: Obligation = {
+  key: 'hr-distributor-verify',
   duty: 'Before making the system available, verify the CE marking, the declaration of conformity and instructions for use, and that the provider and importer put their names and contact details on it.',
   duty_de:
     'Vor der Bereitstellung auf dem Markt überprüfen, ob das System mit der CE-Kennzeichnung versehen ist, ob ihm die EU-Konformitätserklärung und die Betriebsanleitung beigefügt sind und ob Anbieter und Einführer ihren Namen und ihre Kontaktanschrift angegeben haben.',
@@ -165,6 +168,7 @@ export function withRole(role: 'importer' | 'distributor'): ClassificationResult
 }
 
 const RISK_MANAGEMENT: Obligation = {
+  key: 'hr-provider-risk-management',
   duty: "Establish, implement, document and maintain a risk management system, run as a continuous process over the system's whole lifecycle.",
   duty_de:
     'Ein Risikomanagementsystem einrichten, anwenden, dokumentieren und aufrechterhalten, als kontinuierlichen Prozess über den gesamten Lebenszyklus des Systems.',
@@ -178,6 +182,7 @@ const RISK_MANAGEMENT: Obligation = {
 }
 
 const TECHNICAL_DOCUMENTATION: Obligation = {
+  key: 'hr-provider-technical-documentation',
   duty: 'Draw up the technical documentation (Annex IV) before placing the system on the market, and keep it up to date.',
   duty_de:
     'Die technische Dokumentation (Anhang IV) erstellen, bevor das System in Verkehr gebracht oder in Betrieb genommen wird, und sie auf dem neuesten Stand halten.',
@@ -243,6 +248,7 @@ const ART_50_4: Citation = {
 }
 
 const AI_LITERACY: Obligation = {
+  key: 'ai-literacy',
   duty: 'Take measures to support the AI literacy of staff and others who operate or use the system on your behalf.',
   duty_de:
     'Maßnahmen ergreifen, um die KI-Kompetenz Ihres Personals und anderer Personen zu unterstützen, die in Ihrem Auftrag mit dem Betrieb und der Nutzung des Systems befasst sind.',
@@ -253,6 +259,7 @@ const AI_LITERACY: Obligation = {
 }
 
 const DEEP_FAKE_DISCLOSURE: Obligation = {
+  key: 'transparency-deep-fake',
   duty: 'Disclose that deep-fake image, audio or video content, or text published to inform the public on matters of public interest, has been artificially generated or manipulated.',
   duty_de:
     'Offenlegen, dass Deepfake-Bild-, Ton- oder Videoinhalte oder Texte, die veröffentlicht werden, um die Öffentlichkeit über Angelegenheiten von öffentlichem Interesse zu informieren, künstlich erzeugt oder manipuliert wurden.',
@@ -306,6 +313,7 @@ const ART_50_1: Citation = {
 }
 
 const CHATBOT_DISCLOSURE: Obligation = {
+  key: 'transparency-interaction',
   duty: 'Design the system so that people are informed they are interacting with an AI system, unless that is obvious.',
   duty_de:
     'Das System so konzipieren und entwickeln, dass Personen informiert werden, dass sie mit einem KI-System interagieren, es sei denn, dies ist offensichtlich.',

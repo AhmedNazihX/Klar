@@ -15,6 +15,7 @@ label:
   role: provider
   annex_point: "annex:III:5:c"
 label_citation: ["art:3:3", "art:3:6", "annex:III:5:c", "art:6:3"]
+business_function: finance
 notes: >-
   Approved by user 2026-09-29 (role_switch set to none; Art. 3(3) is the basis). Class: risk
   assessment and pricing of natural persons for health insurance is Annex III 5(c); scoring
@@ -29,7 +30,12 @@ tags:
   - "category:d"
   - "role_switch:none"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

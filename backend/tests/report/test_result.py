@@ -364,11 +364,11 @@ def test_a_legacy_duty_applies_only_after_a_significant_change() -> None:
     )
     paper = _report(rebuild(result, obligations=routed), DE)
     headings = [block.text for block in paper.blocks if isinstance(block, Heading)]
-    assert "Pflichten des Betreibers, nur nach einer wesentlichen Änderung (Art. 111 Abs. 2)" in (
+    assert "Pflichten des Betreibers, nur nach einer erheblichen Änderung (Art. 111 Abs. 2)" in (
         headings
     )
     assert _grid(paper)["Pflichten gelten ab"] == (
-        "Nur nach einer wesentlichen Änderung (Art. 111 Abs. 2)"
+        "Nur nach einer erheblichen Änderung (Art. 111 Abs. 2)"
     )
 
 

@@ -1,0 +1,39 @@
+id: own-e-04-loader-crane-tip-guard
+set_name: own
+language: de
+description: >-
+  Wir bauen im Sauerland mit rund 250 Leuten Ladekrane, die auf Lkw montiert werden. Für die neue
+  Baureihe ersetzen wir die klassische Lastmomentbegrenzung durch ein lernendes Modell: Ein
+  neuronales Netz wertet Hydraulikdrücke, Auslegerwinkel, Stützenstellung und das Einsinken der
+  Abstützung aus, schätzt laufend, wie nah der Kran am Kippen oder an einer Überlastung des
+  Auslegers ist, und sperrt jede Bewegung, die ihn darüber hinausbringen würde. Das Modell lernt
+  im Betrieb nicht weiter, es wird nur über geprüfte Updates von uns ausgetauscht. Weil keine
+  harmonisierte Norm eine solche KI-gestützte Lastbegrenzung abdeckt, muss nach der
+  Maschinenverordnung eine benannte Stelle die Konformität bewerten; der Termin beim Prüfer steht
+  schon. Ausgeliefert wird die Baureihe ab Februar 2027, übrigens mit einer neuen Funkfernsteuerung
+  in Signalorange.
+label:
+  risk_class: high_risk
+  role: provider
+  annex_point: ["annex:I:B:21"]
+label_citation: ["art:6:1:a", "art:6:1:b", "art:3:14", "annex:I:B:21", "art:2:2"]
+business_function: product_safety
+notes: >-
+  Label approved by user 2026-09-30. Description rewritten in B10c (2026-10-09), label unchanged:
+  the earlier camera guard that stopped a press when hands entered the danger zone shared its
+  deciding feature with a held-out Commission example (E11's isolation audit). Class: the model
+  blocks crane movements that would tip the crane or overload its boom, a safety function (Art.
+  3(14)), of machinery covered by the Machinery Regulation, which the Omnibus moved to Annex I
+  Section B (point 21); the facts state that a notified body must assess it, so Art. 6(1) is met:
+  high_risk. Because the product is under Section B, Art. 2(2) applies: of the AI Act only Art.
+  6(1), Art. 60a and Arts. 102 to 112 apply, and the high-risk requirements reach the product
+  through the machinery law instead. So no AI Act obligation is tagged, not even Art. 4. Role: the
+  crane maker builds the load limiter and places the crane on the market under its own name.
+  Doubts: (1) whether Art. 4 (AI literacy) is really excluded by the "only" in Art. 2(2) is read
+  here as yes; (2) the engine should say that the obligations come from the machinery law, which
+  INIT keeps out of scope.
+tags:
+  - "category:e"
+  - "annex_i_section:b"
+  - "annex_i_point:annex:I:B:21"
+  - "obligations:none"

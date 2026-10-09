@@ -54,6 +54,30 @@ describe('the result at 390 px', () => {
   })
 })
 
+describe('the duty rows at 1280 px', () => {
+  it.each(['en', 'de'] as const)(
+    'keep the label and its citation on one line (%s)',
+    async (language) => {
+      await page.viewport(1280, DESKTOP.height)
+      await openResult(language)
+      const heading = language === 'en' ? 'What you need to do' : 'Was Sie tun müssen'
+      const section = screen.getByRole('region', { name: heading })
+      const rows = within(section).getAllByRole('listitem')
+      let checked = 0
+      for (const row of rows) {
+        const reference = within(row).queryByText(/^(Art\.|Annex|Anhang)/)
+        if (!reference) continue
+        const column = within(row).getByRole('checkbox').nextElementSibling
+        const columnBottom = column?.getBoundingClientRect().bottom ?? 0
+        // The citation starts above the text block's bottom edge: beside it, not stacked under it.
+        expect(reference.getBoundingClientRect().top, row.textContent).toBeLessThan(columnBottom)
+        checked += 1
+      }
+      expect(checked).toBeGreaterThan(0)
+    },
+  )
+})
+
 describe('the step rows on a desktop', () => {
   it.each(['en', 'de'] as const)('keep every citation on one line (%s)', async (language) => {
     await page.viewport(DESKTOP.width, DESKTOP.height)

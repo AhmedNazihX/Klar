@@ -333,6 +333,21 @@
       "additionalProperties": false,
       "description": "One duty with its article reference and the date it applies from.\n\nEach duty carries its texts in both languages, so a screen can switch language without a\nnew lookup: a short plain label (an action, for the checklists) and the formal duty (for the\nreport).",
       "properties": {
+        "key": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The duty's key in the obligations table (e.g. `hr-deployer-logs`), the one a tick on the Obligations screen is saved under (`duty_progress.obligation_key`); None on a duty stored before the key was added.",
+          "title": "Key"
+        },
         "duty": {
           "description": "The formal duty, in English.",
           "minLength": 1,

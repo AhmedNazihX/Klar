@@ -107,17 +107,17 @@ interactions:
       and question `text` in the language the user message asks for (`en`: English,
       `de`: German). Quotes stay in the description''s own language.\n\nAnswer with
       JSON matching the schema, and nothing else.\n","role":"system"},{"content":"Language
-      for facts and questions: de\n\nDescription:\nWir bauen in Ostwestfalen mit rund
-      250 Leuten hydraulische Pressen f\u00fcr die Blechbearbeitung. F\u00fcr die
-      neue Baureihe ersetzen wir das klassische Lichtgitter durch eine Kamera\u00fcberwachung
-      des Werkzeugraums: Ein neuronales Netz erkennt H\u00e4nde und Arme im Gefahrenbereich
-      und l\u00f6st den Not-Halt aus, bevor der St\u00f6\u00dfel schlie\u00dft. Das
-      Modell lernt im Betrieb nicht weiter, es wird nur \u00fcber gepr\u00fcfte Updates
-      von uns ausgetauscht. Weil keine harmonisierte Norm eine solche kamerabasierte
-      Personenerkennung abdeckt, muss nach der Maschinenverordnung eine benannte Stelle
-      die Konformit\u00e4t bewerten; der Termin beim Pr\u00fcfer steht schon. Ausgeliefert
-      wird die Baureihe ab Februar 2027, \u00fcbrigens mit einem neuen, deutlich gr\u00f6\u00dferen
-      Bedienpanel.","role":"user"}],"max_tokens":6000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"facts_answer","schema":{"$defs":{"EvidenceTag":{"description":"Where
+      for facts and questions: en\n\nDescription:\nWe''re a 40-person industrial-sensing
+      start-up in Eindhoven. We sell a retrofit kit that machine builders fit to high-speed
+      grinding machines: vibration and acoustic sensors on the spindle feed a small
+      neural network that spots the signature of a grinding wheel about to crack or
+      a workpiece working loose, and then brakes the spindle and keeps the guard door
+      locked until it has stopped. The machine builders integrate the kit into their
+      grinders and sell those to factories. We train the model in-house and are still
+      deciding how updates will reach customers. We haven''t talked to a notified
+      body yet and haven''t worked out which conformity route the kit will take. First
+      pilot deliveries are planned for spring 2027. We share our test hall with a
+      university solar-car team.","role":"user"}],"max_tokens":6000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"facts_answer","schema":{"$defs":{"EvidenceTag":{"description":"Where
       a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"ExtractedFact":{"additionalProperties":false,"description":"One
       fact as the model returns it. Enum fields carry no description: strict structured\noutput
       rejects keywords next to a `$ref`; the prompt explains every field instead.","properties":{"text":{"minLength":1,"title":"Text","type":"string"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"quote":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"For
@@ -139,61 +139,57 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "{\"id\": \"gen-1791502770-pXHdv9JwQQG1skdkV66M\", \"object\": \"chat.completion\",
-        \"created\": 1791502770, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+      string: "{\"id\": \"gen-1791581350-t99GzVu2JCWgmNcKpkGZ\", \"object\": \"chat.completion\",
+        \"created\": 1791581350, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
         \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
         [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
         \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
-        \ \\\"facts\\\": [\\n    {\\n      \\\"text\\\": \\\"Ein neuronales Netz erkennt
-        H\xE4nde und Arme im Werkzeugraum und l\xF6st vor dem Schlie\xDFen des St\xF6\xDFels
-        den Not-Halt aus.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"quote\\\":
-        \\\"Ein neuronales Netz erkennt H\xE4nde und Arme im Gefahrenbereich und l\xF6st
-        den Not-Halt aus, bevor der St\xF6\xDFel schlie\xDFt.\\\",\\n      \\\"question\\\":
-        null\\n    },\\n    {\\n      \\\"text\\\": \\\"Die Ausgaben betreffen Personen
-        im Gefahrenbereich und den Betrieb der Presse.\\\",\\n      \\\"evidence\\\":
-        \\\"stated\\\",\\n      \\\"quote\\\": \\\"H\xE4nde und Arme im Gefahrenbereich
-        und l\xF6st den Not-Halt aus\\\",\\n      \\\"question\\\": null\\n    },\\n
-        \   {\\n      \\\"text\\\": \\\"Die Kamera\xFCberwachung ersetzt das klassische
-        Lichtgitter an einer hydraulischen Presse zur Blechbearbeitung.\\\",\\n      \\\"evidence\\\":
-        \\\"stated\\\",\\n      \\\"quote\\\": \\\"hydraulische Pressen f\xFCr die
-        Blechbearbeitung. F\xFCr die neue Baureihe ersetzen wir das klassische Lichtgitter
-        durch eine Kamera\xFCberwachung des Werkzeugraums\\\",\\n      \\\"question\\\":
-        null\\n    },\\n    {\\n      \\\"text\\\": \\\"F\xFCr die neue Pressenbaureihe
-        soll eine benannte Stelle die Konformit\xE4t nach der Maschinenverordnung
-        bewerten.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"quote\\\":
-        \\\"nach der Maschinenverordnung eine benannte Stelle die Konformit\xE4t bewerten\\\",\\n
-        \     \\\"question\\\": null\\n    },\\n    {\\n      \\\"text\\\": \\\"Die
-        Kamera\xFCberwachung ist vermutlich eine Sicherheitskomponente der Presse.\\\",\\n
+        \ \\\"facts\\\": [\\n    {\\n      \\\"text\\\": \\\"A small neural network
+        uses vibration and acoustic sensor data to detect signatures of impending
+        equipment failures.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"quote\\\":
+        \\\"vibration and acoustic sensors on the spindle feed a small neural network
+        that spots the signature of a grinding wheel about to crack or a workpiece
+        working loose\\\",\\n      \\\"question\\\": null\\n    },\\n    {\\n      \\\"text\\\":
+        \\\"The system brakes the spindle and keeps the guard door locked until the
+        machine stops.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n      \\\"quote\\\":
+        \\\"and then brakes the spindle and keeps the guard door locked until it has
+        stopped\\\",\\n      \\\"question\\\": null\\n    },\\n    {\\n      \\\"text\\\":
+        \\\"The system\u2019s outputs concern a grinding machine, its spindle, and
+        the workpiece being processed.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n
+        \     \\\"quote\\\": \\\"high-speed grinding machines\\\",\\n      \\\"question\\\":
+        null\\n    },\\n    {\\n      \\\"text\\\": \\\"The kit is integrated into
+        grinders by machine builders and sold to factories.\\\",\\n      \\\"evidence\\\":
+        \\\"stated\\\",\\n      \\\"quote\\\": \\\"The machine builders integrate
+        the kit into their grinders and sell those to factories.\\\",\\n      \\\"question\\\":
+        null\\n    },\\n    {\\n      \\\"text\\\": \\\"The company trains the model
+        in-house and sells the retrofit kit.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n
+        \     \\\"quote\\\": \\\"We train the model in-house\\\",\\n      \\\"question\\\":
+        null\\n    },\\n    {\\n      \\\"text\\\": \\\"The system directly actuates
+        the spindle brake and guard lock in response to detected hazards.\\\",\\n
         \     \\\"evidence\\\": \\\"inferred\\\",\\n      \\\"quote\\\": null,\\n
-        \     \\\"question\\\": {\\n        \\\"id\\\": \\\"safety_component\\\",\\n
-        \       \\\"text\\\": \\\"Ist die Kamera\xFCberwachung eine Sicherheitskomponente
-        der Presse?\\\",\\n        \\\"about\\\": \\\"high_risk\\\"\\n      }\\n    },\\n
-        \   {\\n      \\\"text\\\": \\\"Das Unternehmen tauscht das Modell \xFCber
-        gepr\xFCfte Updates selbst aus.\\\",\\n      \\\"evidence\\\": \\\"stated\\\",\\n
-        \     \\\"quote\\\": \\\"es wird nur \xFCber gepr\xFCfte Updates von uns ausgetauscht\\\",\\n
-        \     \\\"question\\\": null\\n    }\\n  ],\\n  \\\"says_what_it_decides\\\":
-        true,\\n  \\\"says_who_it_affects\\\": true,\\n  \\\"questions\\\": [\\n    {\\n
-        \     \\\"id\\\": \\\"eu_link\\\",\\n      \\\"text\\\": \\\"Wird die Presse
-        oder das KI-System in der EU in Verkehr gebracht oder verwendet?\\\",\\n      \\\"about\\\":
-        \\\"scope\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"human_review\\\",\\n
-        \     \\\"text\\\": \\\"Pr\xFCft eine Person die Erkennung, bevor der Not-Halt
-        ausgel\xF6st wird?\\\",\\n      \\\"about\\\": \\\"high_risk\\\"\\n    },\\n
-        \   {\\n      \\\"id\\\": \\\"operator_role\\\",\\n      \\\"text\\\": \\\"Hat
-        Ihr Unternehmen das KI-System selbst entwickelt oder entwickeln lassen, oder
-        stammt es von einem anderen Anbieter?\\\",\\n      \\\"about\\\": \\\"role_obligations\\\"\\n
+        \     \\\"question\\\": {\\n        \\\"id\\\": \\\"human_review\\\",\\n        \\\"text\\\":
+        \\\"Does a person review the system\u2019s output before the brake or guard
+        lock takes effect?\\\",\\n        \\\"about\\\": \\\"high_risk\\\"\\n      }\\n
+        \   }\\n  ],\\n  \\\"says_what_it_decides\\\": true,\\n  \\\"says_who_it_affects\\\":
+        true,\\n  \\\"questions\\\": [\\n    {\\n      \\\"id\\\": \\\"eu_link\\\",\\n
+        \     \\\"text\\\": \\\"Will the kit be placed on the EU market, used in the
+        EU, or have its output used there?\\\",\\n      \\\"about\\\": \\\"scope\\\"\\n
+        \   },\\n    {\\n      \\\"id\\\": \\\"safety_component\\\",\\n      \\\"text\\\":
+        \\\"Is the kit a safety component of, or itself a product covered by, EU product
+        legislation?\\\",\\n      \\\"about\\\": \\\"high_risk\\\"\\n    },\\n    {\\n
+        \     \\\"id\\\": \\\"operator_role\\\",\\n      \\\"text\\\": \\\"Did your
+        company build or commission the AI system itself, or does it only supply a
+        system built by someone else?\\\",\\n      \\\"about\\\": \\\"role_obligations\\\"\\n
         \   },\\n    {\\n      \\\"id\\\": \\\"own_brand\\\",\\n      \\\"text\\\":
-        \\\"Wird das KI-System unter dem Namen oder der Marke Ihres Unternehmens angeboten?\\\",\\n
-        \     \\\"about\\\": \\\"role_obligations\\\"\\n    },\\n    {\\n      \\\"id\\\":
-        \\\"substantial_modification\\\",\\n      \\\"text\\\": \\\"Ver\xE4ndert Ihr
-        Unternehmen das Modell \xFCber die beschriebenen gepr\xFCften Updates hinaus
-        in einer Weise, die der Anbieter nicht vorgesehen hat?\\\",\\n      \\\"about\\\":
-        \\\"role_obligations\\\"\\n    }\\n  ]\\n}\", \"refusal\": null}}], \"usage\":
-        {\"prompt_tokens\": 2526, \"completion_tokens\": 3513, \"total_tokens\": 6039,
-        \"cost\": 0.0019828765, \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\":
-        2344, \"cache_write_tokens\": 179, \"audio_tokens\": 0, \"video_tokens\":
-        0}, \"cost_details\": {\"upstream_inference_cost\": 0.0019828765, \"upstream_inference_prompt_cost\":
-        5.07265e-05, \"upstream_inference_completions_cost\": 0.00193215}, \"completion_tokens_details\":
-        {\"reasoning_tokens\": 2795, \"image_tokens\": 0, \"audio_tokens\": 0}}}"
+        \\\"Will the AI system or kit be placed on the market under your company\u2019s
+        name or trademark?\\\",\\n      \\\"about\\\": \\\"role_obligations\\\"\\n
+        \   }\\n  ]\\n}\", \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 2509,
+        \"completion_tokens\": 1639, \"total_tokens\": 4148, \"cost\": 0.000949839,
+        \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\": 2344, \"cache_write_tokens\":
+        162, \"audio_tokens\": 0, \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\":
+        0.000949839, \"upstream_inference_prompt_cost\": 4.8389e-05, \"upstream_inference_completions_cost\":
+        0.00090145}, \"completion_tokens_details\": {\"reasoning_tokens\": 1015, \"image_tokens\":
+        0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
       - application/json

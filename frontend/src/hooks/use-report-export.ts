@@ -2,12 +2,18 @@ import { useMutation, type UseMutationResult } from '@tanstack/react-query'
 
 import {
   exportInventoryReport,
+  exportObligationsChecklist,
   exportResultReport,
+  type ChecklistRequest,
+  type ChecklistTool,
+  type InventoryDuty as ReportDuty,
   type InventoryReportRequest,
   type InventoryTool as ReportTool,
+  type Obligation,
   type ResultReportRequest,
 } from '@/api'
 import type { Language } from '@/i18n'
+import { tickKey } from '@/lib/duty-progress'
 import type { InventoryTool } from '@/lib/inventory'
 import { hasAssessedClass, riskClassOf } from '@/lib/risk-class'
 
@@ -56,6 +62,14 @@ export function useExportResultReport(
  *  version and date, and each duty's short label in `language`. A tool without a result Klar can
  *  read, or with no assessed class (`hasAssessedClass`), is listed as not classified yet. */
 export function reportTool(tool: InventoryTool, language: Language): ReportTool {
+  return summaryOf(tool, (duty) => reportDuty(duty, language))
+}
+
+/** A tool's summary for a report, each duty as `toDuty` gives it; no duties without a class. */
+function summaryOf<Duty>(
+  tool: InventoryTool,
+  toDuty: (duty: Obligation) => Duty,
+): Omit<ReportTool, 'duties'> & { duties: Duty[] } {
   const { result } = tool
   if (!result || !hasAssessedClass(result)) return { name: tool.name, duties: [] }
   return {
@@ -66,13 +80,44 @@ export function reportTool(tool: InventoryTool, language: Language): ReportTool 
     also_role: result.also_role ?? null,
     law_version: result.law_version,
     as_of: result.as_of,
-    duties: (result.obligations ?? []).map((duty) => ({
-      label: language === 'de' ? duty.label_de : duty.label_en,
-      article: duty.article,
-      applies_from: duty.applies_from,
-      legacy: duty.legacy ?? null,
-    })),
+    duties: (result.obligations ?? []).map(toDuty),
   }
+}
+
+function reportDuty(duty: Obligation, language: Language): ReportDuty {
+  return {
+    label: language === 'de' ? duty.label_de : duty.label_en,
+    article: duty.article,
+    applies_from: duty.applies_from,
+    legacy: duty.legacy ?? null,
+  }
+}
+
+/** One tool as the obligations checklist lists it: the inventory report's summary, each duty
+ *  with whether the user ticked it off (`done` holds the tool's ticked keys). */
+export function checklistTool(
+  tool: InventoryTool,
+  language: Language,
+  done: ReadonlySet<string>,
+): ChecklistTool {
+  // A duty with nothing to tick off (no key, or information) goes without a state: the
+  // checklist then lists it without one and leaves it out of the counts, as the screen does.
+  return summaryOf(tool, (duty) => {
+    const key = tickKey(duty)
+    return { ...reportDuty(duty, language), is_done: key === null ? null : done.has(key) }
+  })
+}
+
+/** The obligations checklist (Obligations, "Take the checklist with you"): every duty with its
+ *  ticked state, made by the API in the screen's language and saved by the browser. */
+export function useExportChecklist(): UseMutationResult<void, Error, ChecklistRequest> {
+  return useMutation({
+    retry: false,
+    mutationFn: async (request: ChecklistRequest) => {
+      const file = fileOf(await exportObligationsChecklist({ body: request, parseAs: 'blob' }))
+      saveFile(file, `klar-obligations-checklist.${request.format}`)
+    },
+  })
 }
 
 /** The inventory report (Your data, "Report (PDF)"): every tool with its class and duties, made

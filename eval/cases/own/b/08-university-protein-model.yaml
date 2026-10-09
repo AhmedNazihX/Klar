@@ -12,6 +12,7 @@ description: >-
 label:
   risk_class: out_of_scope
 label_citation: ["art:2:6", "recital:25"]
+business_function: research
 notes: >-
   Approved by user 2026-09-30. Class: an AI system (a trained model that infers binding
   predictions), but specifically developed and put into service for the sole purpose of

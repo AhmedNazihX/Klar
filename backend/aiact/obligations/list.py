@@ -33,13 +33,15 @@ from aiact.schemas import (
     Role,
 )
 from aiact.schemas.base import ContractModel
-from aiact.schemas.obligations import DOCUMENT_KEY_PATTERN, STORED_TEXT_FIELDS
+from aiact.schemas.obligations import (
+    DOCUMENT_KEY_PATTERN,
+    OBLIGATION_KEY_PATTERN,
+    STORED_TEXT_FIELDS,
+)
 from aiact.settings import BACKEND_DIR
 
 OBLIGATIONS_FILE = BACKEND_DIR.parent / "supabase" / "seed" / "obligations.yaml"
 """The committed obligations table."""
-
-KEY_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 
 CHAPTER_III_DATES: Mapping[HighRiskRoute, date] = {
     HighRiskRoute.ANNEX_III: date(2027, 12, 2),
@@ -47,6 +49,13 @@ CHAPTER_III_DATES: Mapping[HighRiskRoute, date] = {
 }
 """The date Chapter III applies from on each route (Art. 113(c)(i) and (ii)); the table's route
 dates are these, and Art. 111(2) counts a legacy system from them."""
+
+ORIGINAL_CHAPTER_III_DATES: Mapping[HighRiskRoute, date] = {
+    HighRiskRoute.ANNEX_III: date(2026, 8, 2),
+    HighRiskRoute.ANNEX_I: date(2027, 8, 2),
+}
+"""Art. 113 of the original text: Chapter III applies from 2 August 2026, Art. 6(1) and its
+obligations from 2 August 2027 (decision 020's addendum)."""
 
 PUBLIC_AUTHORITY_DEADLINE = date(2030, 8, 2)
 """Art. 111(2), second sentence: providers and deployers of legacy high-risk systems meant for
@@ -72,7 +81,7 @@ class UnknownLawVersionError(ObligationsError):
 class ObligationEntry(ContractModel):
     """One duty in the YAML: it may cover several roles and classes, and one date per route."""
 
-    key: str = Field(pattern=KEY_PATTERN)
+    key: str = Field(pattern=OBLIGATION_KEY_PATTERN)
     roles: tuple[Role, ...] = Field(min_length=1)
     risk_classes: tuple[RiskClass, ...] = Field(min_length=1)
     duty: str = Field(min_length=1)
@@ -151,6 +160,7 @@ class ObligationTable(ContractModel):
                 role=role,
                 risk_class=risk_class,
                 obligation=Obligation(
+                    key=entry.key,
                     duty=entry.duty,
                     duty_de=entry.duty_de,
                     label_en=entry.label_en,

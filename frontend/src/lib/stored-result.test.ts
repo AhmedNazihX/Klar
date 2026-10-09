@@ -64,6 +64,13 @@ describe('parseStoredResult', () => {
     expect(dutyLabel(duty, 'en')).toBe('Art. 26(1)')
     expect(dutyLabel(duty, 'de')).toBe('Art. 26 Abs. 1')
     expect(parsed?.law_text).toBeUndefined()
+    // A duty stored before P24 has no key: it loads, with nothing to tick.
+    expect(duty.key).toBeUndefined()
+  })
+
+  it('keeps a duty key of 200 characters', () => {
+    const key = 'a'.repeat(200)
+    expect(parseStoredResult(withFirstDuty({ key }))?.obligations?.[0]?.key).toBe(key)
   })
 
   it.each([
@@ -81,6 +88,9 @@ describe('parseStoredResult', () => {
     ['an English label that is no text', withFirstDuty({ label_en: { x: 1 } })],
     ['a German label that is no text', withFirstDuty({ label_de: 7 })],
     ['a duty that is no text', withFirstDuty({ duty: ['comply'] })],
+    ['a duty key that is no table key', withFirstDuty({ key: 'Drop table;' })],
+    ['a duty key past 200 characters', withFirstDuty({ key: 'a'.repeat(201) })],
+    ['a duty key that is no text', withFirstDuty({ key: 7 })],
     [
       'a CELEX number that is no text',
       { ...WORKED_EXAMPLE, law_text: { ...WORKED_EXAMPLE.law_text, celex: 2024 } },

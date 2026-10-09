@@ -137,7 +137,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            processes, stopped at a time limit); assets/: the flat lockup and the
 │   │   │                            Newsreader and Geist fonts (OFL), their sources in assets/README.md
 │   │   ├── report/                  the reports as Papers (P25): result.py (the report for a lawyer,
-│   │   │                            two A4 pages), inventory.py (the inventory report), common.py,
+│   │   │                            two A4 pages), inventory.py (the inventory report), checklist.py
+│   │   │                            (the obligations checklist with each duty's ticked state, P24), common.py,
 │   │   │                            duties.py (the duties' texts from the obligations table, never
 │   │   │                            the posted result), texts.py (EN, DE); never imports aiact.engine
 │   │   │                            or aiact.drafting
@@ -149,7 +150,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                concurrency limits; body_limit.py the 413 body cap; errors.py the one
 │   │                                422 body, quoting no input; documents.py
 │   │                                `POST /documents/vendor-letter` (P28); reports.py `POST /reports/result`
-│   │                                and `/reports/inventory`, files.py a Paper made into a file in the
+│   │                                and `/reports/inventory`, `/reports/checklist` (P24), files.py a Paper made into a file in the
 │   │                                export workers, shared with drafts.py (P25); openapi.py the schema export,
 │   │                                `aiact api openapi`; `aiact api serve` runs it
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
@@ -181,7 +182,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                in aiact/eval/cases.py (qa/ holds QAItem items, loaded by load_qa_items; F7b)
 │   │   ├── commission_b/            <area>/<NNN>-<slug>.yaml: one rewrite per Pile B example, by Annex area
 │   │   │                            (annex_i, annex_iii_1 … annex_iii_8), NNN its hr-ex number (B4)
-│   │   ├── own/<category>/          (B5a–e)
+│   │   ├── own/<category>/          a–e, the letter in the case id and its `category:` tag: a transparency, b scope,
+│   │   │                            c prohibited practices, d roles, e Annex I (B5a–e; aligned in B10c)
 │   │   ├── own/thin/                thin-description cases (own-t-*): no class, needs_more_information (E13, decision 032)
 │   │   ├── soft_pairs/              (B6)
 │   │   ├── qa/                      (B7)
@@ -241,7 +243,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            InventoryTable (P6); VersionDiff (P10)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
-│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12),
+│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12), obligations/ (P24),
 │       │                            documents/ (P9: the documents screen, interview, checks, downloads, a skeleton's
 │       │                            SkeletonHeader and SectionList; interview-answers.ts reads and upserts interview_answers
 │       │                            through supabase-js; DocumentsScreen.browser.test.tsx the phone and desktop layout)
@@ -252,13 +254,15 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12),
 │       │                            use-original-run.ts (the same description checked under the original text, P10)
 │       │                            use-interview-answers.ts, use-document-drafts.ts (drafts and exports, P9)
-│       │                            use-report-export.ts (the report for a lawyer and the inventory report, P25)
+│       │                            use-report-export.ts (the report for a lawyer and the inventory report, P25; the checklist, P24),
+│       │                            use-duty-progress.ts (the duties ticked off, P24)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
 │       │                            before a screen reads it) (P6);
 │       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12);
-│       │                            risk-class (a result's class; a needs-a-description result has none) (E13)
+│       │                            risk-class (a result's class; a needs-a-description result has none) (E13);
+│       │                            duty-progress (duty_progress ticks through supabase-js, P24)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
 │       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4), reduced-motion.ts (matchMedia stub, P14),

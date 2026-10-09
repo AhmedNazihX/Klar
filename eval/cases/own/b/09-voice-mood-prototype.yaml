@@ -15,6 +15,7 @@ label:
   role: provider
   annex_point: "annex:III:1:c"
 label_citation: ["art:3:39", "art:3:34", "annex:III:1:c", "art:6:2", "art:2:8"]
+business_function: customer_service
 notes: >-
   Approved by user 2026-09-30 (relabelled from out_of_scope under the planned-system rule).
   Class: the software identifies callers' emotions from their voice, which is an emotion
@@ -33,7 +34,12 @@ tags:
   - "trap:prohibition_not_met"
   - "scope:art2_8_noted"
   - "obligation:art:4:1"
-  - "obligation:art:16:a"
+  - "obligation:art:9"
+  - "obligation:art:10"
+  - "obligation:art:12"
+  - "obligation:art:13"
+  - "obligation:art:14"
+  - "obligation:art:15"
   - "obligation:art:16:b"
   - "obligation:art:16:c"
   - "obligation:art:11:1"

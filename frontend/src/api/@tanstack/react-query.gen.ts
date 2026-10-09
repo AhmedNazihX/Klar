@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { draftDocument, draftVendorLetter, exportDocument, exportInventoryReport, exportResultReport, getProvision, listDocuments, listObligations, listResultDocuments, type Options } from '../sdk.gen';
-import type { DraftDocumentData, DraftDocumentError, DraftDocumentResponse, DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, ExportDocumentData, ExportDocumentError, ExportDocumentResponse, ExportInventoryReportData, ExportInventoryReportError, ExportInventoryReportResponse, ExportResultReportData, ExportResultReportError, ExportResultReportResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse, ListResultDocumentsData, ListResultDocumentsError, ListResultDocumentsResponse } from '../types.gen';
+import { draftDocument, draftVendorLetter, exportDocument, exportInventoryReport, exportObligationsChecklist, exportResultReport, getProvision, listDocuments, listObligations, listResultDocuments, type Options } from '../sdk.gen';
+import type { DraftDocumentData, DraftDocumentError, DraftDocumentResponse, DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, ExportDocumentData, ExportDocumentError, ExportDocumentResponse, ExportInventoryReportData, ExportInventoryReportError, ExportInventoryReportResponse, ExportObligationsChecklistData, ExportObligationsChecklistError, ExportObligationsChecklistResponse, ExportResultReportData, ExportResultReportError, ExportResultReportResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse, ListResultDocumentsData, ListResultDocumentsError, ListResultDocumentsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -214,6 +214,27 @@ export const exportInventoryReportMutation = (options?: Partial<Options<ExportIn
     const mutationOptions: UseMutationOptions<ExportInventoryReportResponse, ExportInventoryReportError, Options<ExportInventoryReportData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await exportInventoryReport({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Export Obligations Checklist
+ *
+ * The obligations checklist: every classified tool with its progress, then each duty with
+ * whether it is done, its provision and its date, as a PDF or Word file. Klar keeps the list;
+ * it doesn't check the work. Guidance, not legal advice.
+ */
+export const exportObligationsChecklistMutation = (options?: Partial<Options<ExportObligationsChecklistData>>): UseMutationOptions<ExportObligationsChecklistResponse, ExportObligationsChecklistError, Options<ExportObligationsChecklistData>> => {
+    const mutationOptions: UseMutationOptions<ExportObligationsChecklistResponse, ExportObligationsChecklistError, Options<ExportObligationsChecklistData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await exportObligationsChecklist({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

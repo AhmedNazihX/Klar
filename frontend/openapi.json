@@ -692,6 +692,67 @@
           }
         }
       }
+    },
+    "/reports/checklist": {
+      "post": {
+        "summary": "Export Obligations Checklist",
+        "description": "The obligations checklist: every classified tool with its progress, then each duty with\nwhether it is done, its provision and its date, as a PDF or Word file. Klar keeps the list;\nit doesn't check the work. Guidance, not legal advice.",
+        "operationId": "export_obligations_checklist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChecklistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The file (an attachment)",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The document is too long for a file"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "500": {
+            "description": "The file couldn't be made"
+          },
+          "503": {
+            "description": "Every export slot is taken"
+          },
+          "504": {
+            "description": "The file took too long to make"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -820,6 +881,207 @@
         ],
         "title": "CheckedDraft",
         "description": "A drafted document, its three automatic checks and its interview, in the order asked."
+      },
+      "ChecklistDuty": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Label",
+            "description": "The duty's short label in the report's language (`label_en`, `label_de`)."
+          },
+          "article": {
+            "type": "string",
+            "maxLength": 200,
+            "pattern": "^art:[0-9]+[a-z]?(:[A-Za-z0-9]+)*$",
+            "title": "Article"
+          },
+          "applies_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Applies From"
+          },
+          "legacy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegacyStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_done": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Done",
+            "description": "The user ticked the duty off; null when it has nothing to tick off (a duty without its key, stored before duties carried one), so it isn't counted.",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "label",
+          "article",
+          "applies_from"
+        ],
+        "title": "ChecklistDuty",
+        "description": "A tool's duty, and whether the user ticked it off."
+      },
+      "ChecklistRequest": {
+        "properties": {
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistTool"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Tools"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of the checklist's wording and notice."
+          },
+          "law_version": {
+            "$ref": "#/components/schemas/LawVersion",
+            "description": "The law text the Obligations screen shows; under the original one the high-risk route dates follow the original Art. 113 (decision 026 item 11)."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "docx",
+              "pdf"
+            ],
+            "title": "Format"
+          },
+          "company": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company",
+            "description": "The company's name from its profile; null without one."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tools",
+          "language",
+          "law_version",
+          "format"
+        ],
+        "title": "ChecklistRequest",
+        "description": "Every tool of the user's inventory, summarised with each duty's ticked state, and the\nchecklist wanted."
+      },
+      "ChecklistTool": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Null when the user gave none: \"Your tool\"."
+          },
+          "risk_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskClass"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Status"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "also_role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tool's second role, when the result gives one."
+          },
+          "law_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LawVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of",
+            "description": "The date the result applies the law as of."
+          },
+          "duties": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistDuty"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Duties",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ChecklistTool",
+        "description": "A tool of the inventory, its stored result summarised, each duty with its ticked state."
       },
       "Citation": {
         "properties": {
@@ -2098,6 +2360,20 @@
       },
       "Obligation": {
         "properties": {
+          "key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key",
+            "description": "The duty's key in the obligations table (e.g. `hr-deployer-logs`), the one a tick on the Obligations screen is saved under (`duty_progress.obligation_key`); None on a duty stored before the key was added."
+          },
           "duty": {
             "type": "string",
             "minLength": 1,

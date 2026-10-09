@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { AppSidebar } from './AppSidebar'
 import { AppTopBar, PhoneTopBar, type LawBinding } from './AppTopBar'
 import { LawNotice } from './LawNotice'
-import { LAW_SCOPE_CLASS } from './LawSwitch'
+import { LAW_ORIGINAL_CLASS, LAW_SCOPE_CLASS } from './LawSwitch'
 import { Notice } from './Notice'
 import { SessionNotice } from './SessionNotice'
 
@@ -45,8 +45,12 @@ export function AppFrame({ law, children }: { law: LawBinding; children: ReactNo
   return (
     <div
       onKeyDown={closeOnEscape}
+      // The law class is rendered here as well as set by LawSwitch: React rewrites the whole
+      // class attribute whenever it changes (the load motion clearing), which would drop a
+      // class only the switch had added.
       className={cn(
         LAW_SCOPE_CLASS,
+        law.value === 'original' && LAW_ORIGINAL_CLASS,
         'app-frame min-h-dvh px-4 pt-3 pb-6 md:p-6',
         motion.isFrameEntering && 'app-intro',
       )}

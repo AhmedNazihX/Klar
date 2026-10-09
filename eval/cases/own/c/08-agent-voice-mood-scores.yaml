@@ -13,6 +13,7 @@ label:
   risk_class: prohibited
   role: deployer
 label_citation: ["art:5:1:f", "art:3:39", "guide:guide-prohibited:para:254", "art:3:4"]
+business_function: hr
 notes: >-
   Approved 2026-10-01 (the user delegated review of clear cases to the orchestrator; doubts checked against their sources). Class: the system infers employees' emotions (irritation,
   stress, annoyance) from their voice, which is biometric data, so it is an emotion recognition

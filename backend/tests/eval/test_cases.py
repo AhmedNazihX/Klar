@@ -17,6 +17,7 @@ from aiact.eval.cases import (
     QA_DIR_NAME,
     AppliedAILabel,
     BenchmarkCase,
+    BusinessFunction,
     CaseFileError,
     CaseLabel,
     CaseSet,
@@ -63,8 +64,8 @@ def with_changes(**changes: object) -> dict[str, object]:
 
 def test_loads_every_yaml_file_in_a_set_including_subfolders() -> None:
     cases = load_cases(CaseSet.OWN, FIXTURES)
-    assert [case.id for case in cases] == ["fixture-own-002", "fixture-own-001"]
-    ambiguous, chatbot = cases
+    assert [case.id for case in cases] == ["fixture-own-001", "fixture-own-002"]
+    chatbot, ambiguous = cases
     assert chatbot.label == CaseLabel(risk_class=RiskClass.LIMITED_RISK, role=Role.PROVIDER)
     assert chatbot.label_citation == ("art:50:1",)
     assert isinstance(ambiguous.label, CaseLabel)
@@ -497,7 +498,7 @@ def test_annex_match_labels_need_a_citation(tmp_path: Path) -> None:
 
 
 def test_the_moved_fixture_uses_a_section_b_point() -> None:
-    ambiguous = load_cases(CaseSet.OWN, FIXTURES)[0]
+    _, ambiguous = load_cases(CaseSet.OWN, FIXTURES)
     assert isinstance(ambiguous.label, CaseLabel)
     assert ambiguous.label.annex_point == ("annex:I:B:21",)
 
@@ -561,10 +562,49 @@ def test_qa_loader_rejects_duplicates_and_a_missing_folder(tmp_path: Path) -> No
 YAML_SETS = sorted(set(CaseSet) - {CaseSet.APPLIEDAI})
 
 
+def _ids_in_files(folder: Path) -> list[str]:
+    """Every case id written in the `*.yaml` files under `folder`, read without the loader."""
+    ids: list[str] = []
+    for path in sorted(folder.rglob("*.yaml")):
+        content = yaml.safe_load(path.read_text(encoding="utf-8"))
+        entries = content if isinstance(content, list) else [content]
+        ids.extend(str(entry["id"]) for entry in entries)
+    return ids
+
+
 def test_every_committed_case_file_validates() -> None:
     loaded = {case_set: load_cases(case_set) for case_set in YAML_SETS}
     assert loaded[CaseSet.OWN]
+    for case_set, cases in loaded.items():
+        written = _ids_in_files(CASES_DIR / case_set.value)
+        assert sorted(case.id for case in cases) == sorted(written), case_set
     assert all(isinstance(item, QAItem) for item in load_qa_items())
+
+
+THIN_FOLDER = "thin"
+"""own/thin holds E13's thin descriptions; every other own folder is a headline category."""
+
+
+def test_every_headline_own_case_has_a_business_function() -> None:
+    """B10c: W1 reports per business function, so every own/a-e case names one from the closed
+    list (the model rejects any other value)."""
+    own_dir = CASES_DIR / CaseSet.OWN.value
+    headline = [
+        case
+        for path in sorted(own_dir.rglob("*.yaml"))
+        if path.relative_to(own_dir).parts[0] != THIN_FOLDER
+        for case in load_yaml_file(path)
+    ]
+    assert headline
+    missing = [case.id for case in headline if case.business_function is None]
+    assert missing == []
+
+
+def test_business_function_is_one_of_the_closed_list() -> None:
+    case = BenchmarkCase.model_validate(with_changes(business_function="consumer_product"))
+    assert case.business_function is BusinessFunction.CONSUMER_PRODUCT
+    with pytest.raises(ValidationError, match="business_function"):
+        BenchmarkCase.model_validate(with_changes(business_function="product"))
 
 
 QA_ANSWERABLE_RANGE = range(20, 31)
