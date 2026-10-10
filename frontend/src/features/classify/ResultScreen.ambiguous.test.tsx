@@ -63,9 +63,12 @@ const COPY = {
     reading: (n: number) => `Reading ${String(n)}`,
     applied: 'Applied until settled',
     notHighRisk: 'Not high-risk',
-    source: 'Art. 6(1)(a), English',
+    source: 'Art. 6(1), English',
+    showFull: 'Show full text',
     guidance:
       'Final Commission guidelines on high-risk classification (still a draft, 19 May 2026)',
+    guidanceOf3March2027:
+      'Final Commission guidelines on high-risk classification (still a draft, 3 March 2027)',
     legacy:
       'Art. 111(2): the tool was on the market or in use before 2 August 2028, so the marked high-risk duties apply only if its design or intended purpose changes significantly. The class stays high-risk.',
     settle: 'What would settle it',
@@ -108,9 +111,12 @@ const COPY = {
     reading: (n: number) => `Lesart ${String(n)}`,
     applied: 'Bis zur Klärung angewandt',
     notHighRisk: 'Kein Hochrisiko',
-    source: 'Art. 6 Abs. 1 Buchst. a, Deutsch',
+    source: 'Art. 6 Abs. 1, Deutsch',
+    showFull: 'Ganzen Text zeigen',
     guidance:
       'Endgültige Leitlinien der Kommission zur Einstufung als Hochrisiko (noch ein Entwurf, 19. Mai 2026)',
+    guidanceOf3March2027:
+      'Endgültige Leitlinien der Kommission zur Einstufung als Hochrisiko (noch ein Entwurf, 3. März 2027)',
     legacy:
       'Art. 111 Abs. 2: Das Tool war vor dem 2. August 2028 in Verkehr oder in Betrieb, deshalb gelten die markierten Hochrisiko-Pflichten nur, wenn sich seine Konzeption oder Zweckbestimmung erheblich ändert. Die Einstufung bleibt Hochrisiko.',
     settle: 'Was den Punkt klären würde',
@@ -223,11 +229,17 @@ function variant(
   }
 }
 
-/** Art. 6(1)(a) as the corpus words it in `language`. */
+/** Art. 6(1), which both readings cite, as the corpus words it in `language`, its line breaks
+ *  read as spaces as the screen's text shows them. */
 function pointText(language: Language): string {
-  const text = AMBIGUOUS_PROVISIONS['art:6:1:a']?.[language].text
-  if (!text) throw new Error(`The fixture has no ${language} text of Art. 6(1)(a).`)
-  return text
+  const text = AMBIGUOUS_PROVISIONS['art:6:1']?.[language].text
+  if (!text) throw new Error(`The fixture has no ${language} text of Art. 6(1).`)
+  return text.replace(/\s+/g, ' ')
+}
+
+/** The words a shortened quote of Art. 6(1) opens with. */
+function pointOpening(language: Language): string {
+  return pointText(language).slice(0, 120)
 }
 
 /** The text an element shows under one law version: the other version's parts left out. */
@@ -282,7 +294,7 @@ describe.each(['en', 'de'] as const)('A legally ambiguous result (%s)', (languag
   })
 
   it('shows both readings with their citations, the applied one marked and last', async () => {
-    await openAmbiguous(language)
+    const { user } = await openAmbiguous(language)
     const { applied, other } = recordedReadings()
     const group = screen.getByRole('group', { name: copy.readings })
     const cards = within(group).getAllByRole('region')
@@ -307,14 +319,17 @@ describe.each(['en', 'de'] as const)('A legally ambiguous result (%s)', (languag
     ] as const) {
       expect(within(card).getByText(reading.explanation)).toBeInTheDocument()
       expect(card).toHaveTextContent(reading.consequence ?? '')
-      // The point the readings argue about, as the corpus words it in the screen's language
-      // (the official German text on a German screen), whole: not the opening of Art. 6(1).
+      // The provision the reading cites, as the corpus words it in the screen's language (the
+      // official German text on a German screen): Art. 6(1), shortened, whole on request.
       const quote = await within(card).findByRole('blockquote')
       expect(quote).toHaveAttribute('lang', language)
+      expect(quote).toHaveTextContent(pointOpening(language))
+      expect(quote).not.toHaveTextContent(pointText(language))
+      await user.click(within(card).getByRole('button', { name: copy.showFull }))
       expect(quote).toHaveTextContent(pointText(language))
       expect(within(card).getByText(copy.source)).toBeInTheDocument()
     }
-    expect(new Set(provisionIds)).toEqual(new Set(['art:6:1:a']))
+    expect(new Set(provisionIds)).toEqual(new Set(['art:6:1']))
   })
 
   it('quotes the corpus, never the posted result, even when its quote was changed', async () => {
@@ -333,7 +348,7 @@ describe.each(['en', 'de'] as const)('A legally ambiguous result (%s)', (languag
     }
     await openAmbiguous(language, { result })
     for (const card of readingCards(language)) {
-      expect(await within(card).findByRole('blockquote')).toHaveTextContent(pointText(language))
+      expect(await within(card).findByRole('blockquote')).toHaveTextContent(pointOpening(language))
     }
     expect(screen.queryByText(tampered, { exact: false })).toBeNull()
   })
@@ -365,6 +380,47 @@ describe.each(['en', 'de'] as const)('A legally ambiguous result (%s)', (languag
     // Under the amended text the engine's words stand.
     expect(textUnder(card, 'amended')).toContain(engineWords)
     expect(textUnder(card, 'amended')).not.toContain('2027')
+  })
+
+  it('keeps a dated consequence without the route’s date as the engine wrote it, under both texts', async () => {
+    const consequence = 'If this holds, the high-risk duties apply from 2 August 2029.'
+    const result = {
+      ...RECORDED_AMBIGUOUS,
+      steps: RECORDED_AMBIGUOUS.steps.map((step) => {
+        const question = step.open_question
+        if (!question) return step
+        const readings = question.readings.map((reading) =>
+          reading.is_applied ? { ...reading, consequence } : reading,
+        ) as typeof question.readings
+        return { ...step, open_question: { ...question, readings } }
+      }),
+    }
+    await openAmbiguous(language, { result, search: '?law=original' })
+    const [, card] = readingCards(language)
+    expect(textUnder(card, 'original')).toContain(consequence)
+    expect(textUnder(card, 'amended')).toContain(consequence)
+  })
+
+  it('dates the guidance as the engine did, in the screen’s language', async () => {
+    const result = withSettledBy(RECORDED_AMBIGUOUS, [
+      {
+        kind: 'guidance',
+        text: 'Final Commission guidelines on high-risk classification (still a draft, 3 March 2027)',
+      },
+    ])
+    await openAmbiguous(language, { result })
+    const [, guidance] = settleItems(language) as [HTMLElement, HTMLElement]
+    expect(guidance).toHaveTextContent(copy.guidanceOf3March2027)
+  })
+
+  it('names guidance off the high-risk check in the engine’s words', async () => {
+    const text = 'Commission guidelines on transparency obligations (still a draft, 3 March 2027)'
+    const result = variant(withSettledBy(RECORDED_AMBIGUOUS, [{ kind: 'guidance', text }]), {
+      step: 'transparency',
+    })
+    await openAmbiguous(language, { result })
+    const [, guidance] = settleItems(language) as [HTMLElement, HTMLElement]
+    expect(guidance.textContent).toBe(text)
   })
 
   it('lists what would settle it, the guidance as a plain item with no re-check promise', async () => {
@@ -587,5 +643,8 @@ describe('Export PDF under Take it to a lawyer', () => {
     const alert = await within(lawyer).findByRole('alert')
     expect(alert).not.toHaveClass('absolute')
     expect(alert).not.toHaveClass('top-full')
+    // Its wrapper stacks it under the button, in the flow: no anchor for a hanging message.
+    expect(alert.parentElement).not.toHaveClass('relative')
+    expect(alert.parentElement).toHaveClass('flex-col')
   })
 })

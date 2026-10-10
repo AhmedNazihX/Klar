@@ -46,6 +46,7 @@ export function AmbiguousSummary({
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row">
         <SettleIt
           question={point.question}
+          step={point.step}
           result={result}
           toolId={run.toolId}
           toolName={run.name}

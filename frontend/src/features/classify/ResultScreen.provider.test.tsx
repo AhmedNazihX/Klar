@@ -426,6 +426,9 @@ describe('A legally ambiguous provider result (user decision 2026-10-10, option 
       settle: 'What would settle it',
       duties: 'What the stricter reading commits you to as the provider',
       decidedDuties: 'What you need to do as the provider',
+      dutiesFrom: 'If high-risk, duties from',
+      routeDate: '2 August 2028',
+      literacyDate: '2 February 2025',
     },
     de: {
       result: 'Ergebnis',
@@ -435,6 +438,9 @@ describe('A legally ambiguous provider result (user decision 2026-10-10, option 
       settle: 'Was den Punkt klären würde',
       duties: 'Wozu Sie die strengere Lesart als Anbieter verpflichtet',
       decidedDuties: 'Was Sie als Anbieter tun müssen',
+      dutiesFrom: 'Falls Hochrisiko, Pflichten ab',
+      routeDate: '2. August 2028',
+      literacyDate: '2. Februar 2025',
     },
   } as const
 
@@ -448,6 +454,10 @@ describe('A legally ambiguous provider result (user decision 2026-10-10, option 
       expect(within(summary).getByText(copy.ambiguous)).toBeInTheDocument()
       // No decided-style role pill on the ambiguous verdict.
       expect(within(summary).queryByText(copy.provider)).toBeNull()
+      // The open route's date, not the earliest duty's (Art. 4, already in force).
+      expect(within(summary).getByText(copy.dutiesFrom)).toBeInTheDocument()
+      expect(summary).toHaveTextContent(copy.routeDate)
+      expect(summary).not.toHaveTextContent(copy.literacyDate)
       expect(screen.getByRole('group', { name: copy.readings })).toBeInTheDocument()
 
       const settle = region(copy.settle)

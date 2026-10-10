@@ -9,7 +9,7 @@ import { StatusPill } from '@/components/StatusPill'
 import { SUPPORTED_LANGUAGES } from '@/i18n'
 import { cn } from '@/lib/utils'
 
-import { readingProvision, readingsInOrder } from './ambiguous'
+import { readingsInOrder } from './ambiguous'
 import { longDate } from './dates'
 import { ProvisionQuote } from './ProvisionQuote'
 import { dutiesDate } from './result-text'
@@ -19,8 +19,8 @@ const YEAR = /\b\d{4}\b/
 
 /** What follows if the reading holds, as the engine words it. Its date is the route's under the
  *  result's text; under the original text (the law switch, decision 026 item 11) the route's
- *  original date takes its place, so the card never contradicts the date above. A dated line
- *  whose date can't be found shows under the amended text only. */
+ *  original date takes its place, so the card never contradicts the date above. A line whose
+ *  route date can't be found is shown as the engine wrote it under both texts. */
 function Consequence({
   text,
   result,
@@ -36,9 +36,8 @@ function Consequence({
   const written = SUPPORTED_LANGUAGES.find((language) =>
     text.includes(longDate(dates.amended, language)),
   )
-  const original = written
-    ? text.replace(longDate(dates.amended, written), longDate(dates.original, written))
-    : null
+  if (!written) return <p className={className}>{text}</p>
+  const original = text.replace(longDate(dates.amended, written), longDate(dates.original, written))
   return (
     <p className={className}>
       <LawDate amended={text} original={original} />
@@ -102,7 +101,7 @@ function ReadingCard({
       <p className="m-0 text-[15px] leading-[1.55] text-ink-2">{reading.explanation}</p>
       {citation && (
         <div className="flex w-full flex-col gap-1.5">
-          <ProvisionQuote provisionId={readingProvision(citation.provision_id)} result={result} />
+          <ProvisionQuote provisionId={citation.provision_id} result={result} />
           {citation.changed_by_omnibus && (
             <span className="text-micro text-slate">{t('ambiguous.changedByOmnibus')}</span>
           )}

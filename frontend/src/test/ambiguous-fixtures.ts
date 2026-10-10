@@ -6,7 +6,7 @@
 // for cableways, whose Annex I safety-component question the law leaves open; an English
 // description, bought by a deployer) and the request `POST /documents/vendor-letter` drafts from
 // it in English and German with the tool's name "Ropeway wear forecast", and the
-// `GET /provisions/{id}` answers for Art. 6(1)(a), the point the readings' quotes show, in both
+// `GET /provisions/{id}` answers for Art. 6(1), the provision both readings cite, in both
 // languages at the result's law version and date. The handlers below serve them and keep what
 // was asked.
 import { http, HttpResponse, type HttpHandler } from 'msw'
@@ -66,15 +66,30 @@ export function withLegacy(result: ClassificationResult): ClassificationResult {
   }
 }
 
+/** The recorded result's route duties' date (2 August 2028 on the Annex I route). */
+function recordedRouteDate(): string {
+  const duty = (RECORDED_AMBIGUOUS.obligations ?? []).find(
+    (obligation) => obligation.high_risk_route === 'annex_i',
+  )
+  if (!duty) throw new Error('The recorded ambiguous result has no Annex I duty.')
+  return duty.applies_from
+}
+
 /** The recorded ambiguous result as a provider's (user decision 2026-10-10, option A): the role
  *  set to provider and the duties a provider's high-risk result lists, taken from the recorded
- *  own-brand provider (provider-fixtures.ts). No recorded run is both; this tests the layout,
- *  not the duties' route or dates. */
+ *  own-brand provider (provider-fixtures.ts), moved to the recorded result's Annex I route and
+ *  its date, as a provider's result on that route dates them. Its other duties (Art. 4 from
+ *  2 February 2025) keep their dates. No recorded run is both. */
 export function ambiguousProvider(): ClassificationResult {
+  const routeDate = recordedRouteDate()
   return {
     ...RECORDED_AMBIGUOUS,
     role: 'provider',
-    obligations: OWN_BRAND_PROVIDER.obligations,
+    obligations: (OWN_BRAND_PROVIDER.obligations ?? []).map((obligation) =>
+      obligation.high_risk_route
+        ? { ...obligation, high_risk_route: 'annex_i', applies_from: routeDate }
+        : obligation,
+    ),
   }
 }
 

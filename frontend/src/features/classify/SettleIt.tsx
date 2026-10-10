@@ -1,11 +1,21 @@
 import { useId, useState, type JSX, type ReactNode } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 
-import type { ClassificationResult, FollowUpQuestion, OpenQuestion } from '@/api'
+import type {
+  ClassificationResult,
+  FollowUpQuestion,
+  OpenQuestion,
+  SettledBy,
+  StepName,
+} from '@/api'
 import { Button } from '@/components/Button'
 import { GlassPanel } from '@/components/GlassPanel'
+import { useLanguage } from '@/hooks/use-language'
+import type { Language } from '@/i18n'
 
 import { settledByKinds } from './ambiguous'
+import { longDate, longDateIn } from './dates'
 import { QuestionAnswer, RunAgainButton, type AnswerProps } from './FollowUpQuestions'
 import { VendorLetterDialog } from './VendorLetterDialog'
 
@@ -66,6 +76,15 @@ function AnswerItem({
   )
 }
 
+/** The guidance a question waits for, in the screen's language: on the high-risk check, the
+ *  Commission's high-risk guidelines (the only guidance it names, E12), dated as the engine dated
+ *  them; anywhere else, or with no date found, the engine's own words. */
+function guidanceText(t: TFunction, language: Language, item: SettledBy, step: StepName): string {
+  const date = step === 'high_risk' ? longDateIn(item.text) : null
+  if (date === null) return item.text
+  return t('ambiguous.settledBy.guidance', { date: longDate(date, language) })
+}
+
 /**
  * "What would settle it" (artboard `ResultAmbiguous`, decision 026 items 3 and 4): the questions
  * the user can answer here, which run the checks again (P5b); what the vendor can say, with Draft
@@ -75,6 +94,7 @@ function AnswerItem({
  */
 export function SettleIt({
   question,
+  step,
   result,
   toolId,
   toolName,
@@ -83,6 +103,8 @@ export function SettleIt({
   answers,
 }: {
   question: OpenQuestion
+  /** The step that left the question open. */
+  step: StepName
   result: ClassificationResult
   toolId: string
   /** The tool's name, which the request names. */
@@ -94,6 +116,7 @@ export function SettleIt({
   answers: AnswerProps
 }): JSX.Element {
   const { t } = useTranslation()
+  const language = useLanguage()
   const headingId = useId()
   const [isLetterOpen, setIsLetterOpen] = useState(false)
   const { provider, guidance } = settledByKinds(question)
@@ -137,7 +160,7 @@ export function SettleIt({
         ))}
         {vendorItems}
         {guidance.map((item) => (
-          <Item key={item.text} text={t('ambiguous.settledBy.guidance')} />
+          <Item key={item.text} text={guidanceText(t, language, item, step)} />
         ))}
       </ul>
       {runCount !== undefined && (

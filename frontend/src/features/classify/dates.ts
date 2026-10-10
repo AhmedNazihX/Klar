@@ -1,5 +1,5 @@
 import type { HighRiskRoute } from '@/api'
-import { LANGUAGE_LOCALES, type Language } from '@/i18n'
+import { LANGUAGE_LOCALES, SUPPORTED_LANGUAGES, type Language } from '@/i18n'
 
 /** The Chapter III date on each high-risk route under the original text (Art. 113). The engine
  *  dates every result by the amended text (a duty's `applies_from`, a question's `duties_from`);
@@ -39,6 +39,33 @@ export function longDate(isoDate: string, language: Language): string {
     year: 'numeric',
     timeZone: 'UTC',
   }).format(parseIsoDate(isoDate))
+}
+
+/** Each language's month names, January first, as `longDate` writes them. */
+const MONTH_NAMES = Object.fromEntries(
+  SUPPORTED_LANGUAGES.map((language) => {
+    const format = new Intl.DateTimeFormat(LANGUAGE_LOCALES[language], {
+      month: 'long',
+      timeZone: 'UTC',
+    })
+    const names = Array.from({ length: 12 }, (_, month) => format.format(Date.UTC(2000, month, 1)))
+    return [language, names]
+  }),
+) as Record<Language, string[]>
+
+/** A long date as either language writes it: "19 May 2026", "19. Mai 2026". */
+const LONG_DATE = /(\d{1,2})\.? (\p{L}+) (\d{4})/gu
+
+/** The first long date in `text`, written in English or German, as an ISO date; null when it
+ *  names none. */
+export function longDateIn(text: string): string | null {
+  for (const [, day = '', name = '', year = ''] of text.matchAll(LONG_DATE)) {
+    for (const language of SUPPORTED_LANGUAGES) {
+      const month = MONTH_NAMES[language].indexOf(name) + 1
+      if (month > 0) return `${year}-${String(month).padStart(2, '0')}-${day.padStart(2, '0')}`
+    }
+  }
+  return null
 }
 
 /** "2 Dec 2027" / "2. Dez. 2027", for table cells (the Inventory's "Applies from"). */

@@ -652,9 +652,9 @@
     }
   },
   "provisions": {
-    "art:6:1:a": {
+    "art:6:1": {
       "en": {
-        "provision_id": "art:6:1:a",
+        "provision_id": "art:6:1",
         "doc_key": "ai-act-consolidated",
         "document_title": "AI Act, consolidated text as of 27 July 2026",
         "doc_type": "law",
@@ -663,13 +663,13 @@
         "language": "en",
         "english_only": false,
         "heading": "Article 6 — Classification rules for high-risk AI systems",
-        "text": "the AI system is intended to be used as a safety component of a product, or the AI system is itself a product, covered by the Union harmonisation legislation listed in Annex I;",
+        "text": "Irrespective of whether an AI system is placed on the market or put into service independently of the products referred to in points (a) and (b), that AI system shall be considered to be high-risk where both of the following conditions are fulfilled:\n(a) the AI system is intended to be used as a safety component of a product, or the AI system is itself a product, covered by the Union harmonisation legislation listed in Annex I;\n(b) the product whose safety component pursuant to point (a) is the AI system, or the AI system itself as a product, is required to undergo a third-party conformity assessment, with a view to the placing on the market or the putting into service of that product pursuant to the Union harmonisation legislation listed in Annex I.",
         "valid_from": "2026-07-27",
         "valid_to": null,
         "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
       },
       "de": {
-        "provision_id": "art:6:1:a",
+        "provision_id": "art:6:1",
         "doc_key": "ai-act-consolidated",
         "document_title": "AI Act, consolidated text as of 27 July 2026",
         "doc_type": "law",
@@ -678,7 +678,7 @@
         "language": "de",
         "english_only": false,
         "heading": "Artikel 6 — Einstufungsvorschriften für Hochrisiko-KI-Systeme",
-        "text": "das KI-System soll als Sicherheitsbauteil eines unter die in Anhang I aufgeführten Harmonisierungsrechtsvorschriften der Union fallenden Produkts verwendet werden oder das KI-System ist selbst ein solches Produkt;",
+        "text": "Ungeachtet dessen, ob ein KI-System unabhängig von den unter den Buchstaben a und b genannten Produkten in Verkehr gebracht oder in Betrieb genommen wird, gilt es als Hochrisiko-KI-System, wenn die beiden folgenden Bedingungen erfüllt sind:\na) das KI-System soll als Sicherheitsbauteil eines unter die in Anhang I aufgeführten Harmonisierungsrechtsvorschriften der Union fallenden Produkts verwendet werden oder das KI-System ist selbst ein solches Produkt;\nb) das Produkt, dessen Sicherheitsbauteil gemäß Buchstabe a das KI-System ist, oder das KI-System selbst als Produkt muss einer Konformitätsbewertung durch Dritte im Hinblick auf das Inverkehrbringen oder die Inbetriebnahme dieses Produkts gemäß den in Anhang I aufgeführten Harmonisierungsrechtsvorschriften der Union unterzogen werden.",
         "valid_from": "2026-07-27",
         "valid_to": null,
         "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."

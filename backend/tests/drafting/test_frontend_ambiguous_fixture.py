@@ -4,8 +4,8 @@
 recorded legally ambiguous result (`recorded_ambiguous_result`, own-e-09, whose Annex I
 safety-component question the law leaves open) and the request `POST /documents/vendor-letter`
 drafts from it in English and German with the tool's name the screen sends (`TOOL_ANSWERS`),
-and the `GET /provisions/{id}` answers for the point the readings' quotes show (Art. 6(1)(a)) in
-both languages, at the result's law version and date.
+and the `GET /provisions/{id}` answers for the provision both readings cite (Art. 6(1)) in both
+languages, at the result's law version and date.
 Replay only: no model, database or network (the corpus is the one built from `data/parsed/`).
 
 When the engine, the drafter or the corpus changes on purpose, rewrite the fixture with
@@ -39,9 +39,8 @@ FIXTURE = (
     / "ambiguous.json"
 )
 WRITE_FLAG = "AIACT_WRITE_FRONTEND_FIXTURES"
-PROVISIONS = ("art:6:1:a",)
-"""The point both readings' quotes show: the readings cite Art. 6(1), whose open point on the
-Annex I route is the safety component of point (a) (`readingProvision` in the frontend)."""
+PROVISIONS = ("art:6:1",)
+"""The provision both readings cite and their quotes show, whole (the frontend shortens it)."""
 TOOL_ANSWERS = {"tool_name": "Ropeway wear forecast"}
 """What the screen answers for the letter: the tool's name in the frontend tests' inventory
 (`ResultScreen.ambiguous.test.tsx`). The recipient and the sender stay to fill in."""
