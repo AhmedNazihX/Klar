@@ -39,7 +39,6 @@ from aiact.schemas import (
 )
 from aiact.settings import Settings
 from tests.conftest import REFUSAL_ROUTE
-from tests.engine.nodes.known_gaps import refusal_route_pending
 from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -633,16 +632,13 @@ def test_the_own_cases_hold_the_three_approved_thin_descriptions() -> None:
     assert all(case.label_citation == () for case in thin.values())
 
 
-REFUSED_BY_THE_ENGINE_PROVIDER = frozenset(
-    {
-        "own-c-01-undress-photo-app",
-        "own-c-02-undress-app-before-december",
-        "own-c-03-image-tool-with-safeguards",
-        "own-c-05-gossip-site-fake-nudes",
-        "own-c-07-unfiltered-image-generator",
-    }
-)
-"""The own cases whose recorded facts request the engine provider refused (E13's recording)."""
+SECOND_MODEL_GAPS = {
+    "own-c-03-image-tool-with-safeguards": "the engine provider refused it and the second model "
+    "(decision 033) reads its detailed description as too thin to classify (X2c's recording, "
+    "2026-10-10)",
+}
+"""Recorded facts the refusal route's second model gets wrong, with the reason; each fails
+loudly once it reads as its label expects, so the entry is removed."""
 
 
 @pytest.mark.vcr
@@ -650,7 +646,11 @@ REFUSED_BY_THE_ENGINE_PROVIDER = frozenset(
     "case",
     [
         pytest.param(
-            case, id=case.id, marks=refusal_route_pending(case.id, REFUSED_BY_THE_ENGINE_PROVIDER)
+            case,
+            id=case.id,
+            marks=[pytest.mark.xfail(strict=True, reason=SECOND_MODEL_GAPS[case.id])]
+            if case.id in SECOND_MODEL_GAPS
+            else [],
         )
         for case in OWN_CASES
     ],

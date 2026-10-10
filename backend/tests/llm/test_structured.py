@@ -285,7 +285,7 @@ class Unrecorded(CannotOverwriteExistingCassetteException):
 
 @pytest.mark.parametrize("error", [Unrecorded, RuntimeError])
 def test_any_other_error_of_the_second_call_still_raises(error: type[Exception]) -> None:
-    """A bug, or a replay whose second call isn't recorded (`refusal_route_pending`), is never
+    """A bug, or a replay whose second call isn't recorded, is never
     hidden behind the refusal step."""
 
     class Broken(RecordingChat):

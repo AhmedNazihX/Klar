@@ -80,7 +80,6 @@ from tests.engine.nodes.known_gaps import (
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
-    refusal_route_pending,
 )
 from tests.engine.nodes.pinned import assert_pinned_route
 
@@ -1173,20 +1172,6 @@ KNOWN_GAPS: dict[str, KnownGap] = {}
 it starts matching, so the entry is removed. The refused cases left with X2c: their requests go
 to the second model (decision 033), which answered all of them in X2b's measurement."""
 
-REFUSED_BY_THE_ENGINE_PROVIDER = frozenset(
-    {
-        "own-c-01-undress-photo-app",
-        "own-c-02-undress-app-before-december",
-        "own-c-04-studio-digital-doubles-consent",
-        "own-c-05-gossip-site-fake-nudes",
-        "own-c-06-dating-app-nudity-blur",
-        "own-c-07-unfiltered-image-generator",
-        "own-c-14-kids-game-sad-pet-offers",
-        "own-c-16-police-live-search-missing-child",
-    }
-)
-"""The cases whose recorded request the engine provider refused (E10's re-record)."""
-
 
 def test_the_replays_include_a_case_on_each_side_of_2_december_2026() -> None:
     """The DoD's date pair: own-c-02 is dated before the December prohibitions, own-c-01 after."""
@@ -1216,12 +1201,7 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
-    [
-        pytest.param(
-            case, id=case.id, marks=refusal_route_pending(case.id, REFUSED_BY_THE_ENGINE_PROVIDER)
-        )
-        for case in B5C_CASES
-    ]
+    [pytest.param(case, id=case.id) for case in B5C_CASES]
     or [pytest.param(None, id="no-cases", marks=pytest.mark.skip(reason="no B5c cases"))],
 )
 def test_b5c_case_replay(
@@ -1261,11 +1241,6 @@ DECEMBER_PROVISIONS = ("art:5:1:ba", "art:5:1:bb", "art:5:1a", "art:5:1b", "art:
 """What only the December 2026 prohibitions cite: the points, the routes and their date."""
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="provider refusal (decision 030): recording pending on X2c's refusal route "
-    "(decision 033); record it, then drop this mark",
-)
 @pytest.mark.vcr
 def test_replay_original_text_reads_no_december_point(
     luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
