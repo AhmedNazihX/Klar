@@ -18,13 +18,13 @@ resolution is missing or a case is unlabelled.
 
 | Set | Cases | Agree | Disagree | Not labelled |
 |---|---|---|---|---|
-| commission_b | 153 | 73 | 80 | 0 |
+| commission_b | 153 | 75 | 78 | 0 |
 
-Differences by kind (a case can have several): class 68, status 1, role 7, annex point 9.
+Differences by kind (a case can have several): class 68, status 1, role 6, annex point 8.
 
 Cost of the answers compared: $0.4018.
 
-## Disagreements (80)
+## Disagreements (78)
 
 ### cb-003-palletising-cell-person-stop
 
@@ -35,7 +35,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The AI system is a safety component of machinery (palletizing systems) covered by Regulation (EU) 2023/1230 (Machinery Regulation) listed in Annex I, Section A, point 21. The system is intended to prevent injury by detecting human presence and controlling robot arm speed, making it a safety-critical component that must undergo third-party conformity assessment under the Machinery Regulation, thus meeting Article 6(1) conditions for high-risk classification.
 - Disagreement: `d11288a156f0de03`
 
-**Resolution:**
+**Resolution:** kept: in the Act as amended, the Machinery Regulation (EU) 2023/1230 is Annex I Section B point 21 (annex:I:B:21 in the consolidated text); there is no Section A point 21, so the second model's annex:I:A:21 does not exist. Class and role agree, and the verdict follows hr-ex-003 (a person-detection safe stop in a robot cell is a safety component).
 
 ### cb-006-railcar-overspeed-guard
 
@@ -46,7 +46,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The on-board assistance unit is a safety component of a rail vehicle covered by Directive (EU) 2016/797 (rail interoperability), listed in Annex I Section A point 17. The system performs critical safety functions (speed control, collision avoidance, emergency braking) and has undergone third-party conformity assessment by a notified body as required by that directive. Under Article 6(1), it qualifies as high-risk. The operator is a deployer putting the system into service under its own authority and must comply with the high-risk AI system obligations from 2 August 2028 (Article 113(3)(c)(ii)).
 - Disagreement: `a7fb066432a5fb2f`
 
-**Resolution:**
+**Resolution:** kept: the rail interoperability Directive (EU) 2016/797 is Annex I Section B point 17 in the consolidated Act; Section A has only points 1 to 12, so the second model's annex:I:A:17 does not exist. Class and role agree, following hr-ex-006.
 
 ### cb-017-abuse-material-offender-matching
 
@@ -57,7 +57,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is designed to profile natural persons by extracting biometric data (faces and tattoos) and matching them against databases to identify suspects in criminal investigations. This falls under Annex III, point 6(e), which covers AI systems for profiling of natural persons in the course of detection and investigation of criminal offences. Article 6(3) does not apply because the system performs profiling, which the regulation explicitly states shall always be considered high-risk regardless of other conditions.
 - Disagreement: `4d12856a247e5b46`
 
-**Resolution:**
+**Resolution:** kept: the Commission files this exact use (comparing faces and tattoos in abuse material against a suspects' database to identify an offender without their involvement) under Annex III point 1(a), remote biometric identification (hr-ex-017). Matching someone to identify them is not profiling (evaluating personal aspects), so the second model's point 6(e) does not fit.
 
 ### cb-020-stadium-gate-ban-list
 
@@ -68,7 +68,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system performs remote biometric identification at stadium entry by comparing facial images against a stadium ban list. This falls under Annex III, point 1(a) as a remote biometric identification system. Although the use case (enforcing stadium bans) may be narrower than law enforcement, Article 6(3) does not exempt it because the system performs profiling of natural persons by identifying them against a database, which triggers the mandatory high-risk classification under the profiling rule in Article 6(3), final sentence.
 - Disagreement: `8462522b47d228af`
 
-**Resolution:**
+**Resolution:** kept: the Commission says a face check at a stadium entry against a ban list is not remote, because each visitor has to step actively in front of the system to get in (hr-ex-020), so it falls outside Annex III point 1(a). The second model's appeal to the Art. 6(3) profiling rule doesn't apply, because that rule only works on a system that already falls within Annex III.
 
 ### cb-023-online-exam-identity-check
 
@@ -79,7 +79,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), Art. 2(1)(b)). It does not fall under Art. 5 prohibited practices. It is not high-risk under Art. 6(1) (not a safety component of a product in Annex I) or Art. 6(2) (biometric verification for identity confirmation is excluded from Annex III(1)(a)). However, it performs biometric verification of natural persons and triggers Art. 50(3) transparency obligations for deployers of biometric categorisation and emotion recognition systems, though the system here is narrower. The system falls under Art. 50 transparency requirements as it involves direct interaction with natural persons through biometric processing, placing it in the limited_risk class.
 - Disagreement: `f53bed2f72d8cfd8`
 
-**Resolution:**
+**Resolution:** kept: a one-to-one check of the webcam face against the candidate's own passport photo is biometric verification (Art. 3(36)), which Annex III point 1(a) excludes (hr-ex-023, authentication for remote proctoring). It brings no Art. 50 duty either: Art. 50(3) covers only emotion recognition and biometric categorisation, and guide-art50 para. 31 lists authentication and biometric recognition systems as not interacting directly with people.
 
 ### cb-025-police-handheld-fingerprint-id-card
 
@@ -90,7 +90,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system performs remote biometric identification by comparing a fingerprint against a stored biometric template to verify identity during police traffic stops. This falls under Annex III, point 1(a) as a biometric identification system used by law enforcement. Although the comparison is limited to a single document rather than a database, the system still constitutes biometric identification for law enforcement purposes and is therefore high-risk under Article 6(2) and Annex III:1(a).
 - Disagreement: `cb8d24f84615388f`
 
-**Resolution:**
+**Resolution:** kept: the Commission treats a roadside fingerprint check against the fingerprint stored on the person's own ID card as biometric verification, outside Annex III point 1(a) (hr-ex-025). Being used by the police doesn't turn a one-to-one check into remote identification, and no point 6 use applies.
 
 ### cb-026-residential-entry-panel
 
@@ -101,7 +101,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system performs remote biometric identification by matching residents' faces, fingerprints, or voice against registered biometric data to control access to buildings. This falls under Annex III, point 1(a) (remote biometric identification systems), making it a high-risk AI system under Article 6(2). The exception in Annex III, point 1(a) for biometric verification systems applies only where the sole purpose is to confirm a specific person's identity; here the system also controls physical access, so the exception does not apply.
 - Disagreement: `0ca02752b150dbe4`
 
-**Resolution:**
+**Resolution:** kept: the Commission treats an entry panel that checks residents who chose to register and consciously present themselves at the door as biometric verification, not remote identification (hr-ex-026). It is therefore outside Annex III point 1(a). Controlling access is the sole purpose the verification carve-out names, not a reason to deny it.
 
 ### cb-027-festival-walk-through-lane
 
@@ -112,7 +112,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system performs remote biometric identification of natural persons by matching captured facial images against a registered database of festival attendees. This falls under Annex III, point 1(a) (remote biometric identification systems), making it a high-risk AI system under Article 6(2). The deployer (festival operator) is subject to the obligations of a provider under Article 16 as they are using this high-risk system under their authority.
 - Disagreement: `b4f16320eb28479b`
 
-**Resolution:**
+**Resolution:** kept: the Commission's smart-corridor example is the same set-up: registered visitors walk through a short corridor without stopping, and unregistered ones are approached by staff. It says such systems serve only to grant access and that registered persons actively participate, so they are outside Annex III point 1(a) (hr-ex-027). The second model ignores the remoteness condition.
 
 ### cb-028-pharma-lab-door-faces
 
@@ -123,7 +123,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is a remote biometric identification system using facial recognition to control access to restricted areas. Article 6(2) with Annex III, point 1(a) classifies remote biometric identification systems as high-risk AI systems. The system's use for access control to sensitive facilities (research labs, server room, controlled substances vault) falls squarely within this category, regardless of the narrow procedural task exception in Article 6(3) not applying here since the system makes the access decision itself rather than merely assisting human review.
 - Disagreement: `e76259b12887d107`
 
-**Resolution:**
+**Resolution:** kept: the Commission lists facial recognition that controls physical access to secure areas of a company's buildings as verification for the sole purpose of secure access to premises, outside Annex III point 1(a) (hr-ex-028). The second model treats any face-based access control as remote identification, contrary to that verdict.
 
 ### cb-030-seized-media-presort
 
@@ -134,7 +134,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is deployed by a law enforcement authority (Landeskriminalamt) to evaluate the reliability of evidence in criminal investigations by pre-sorting and categorizing seized digital evidence before human review. This falls under Annex III, point 6(c), which covers AI systems intended to evaluate the reliability of evidence in the course of investigation or prosecution of criminal offences. The system's function of marking images containing children and grouping similar content directly supports evidence assessment in criminal proceedings.
 - Disagreement: `a03ab09d8dcbc3b6`
 
-**Resolution:**
+**Resolution:** kept: the Commission places pre-filtering of seized files (for example flagging whether a child appears) outside point 1(a) (hr-ex-030). Its point 6(c) guidance says structuring, clustering and duplicate detection of collected material are not "evaluation of reliability of evidence" and are outside point 6 (guide-high-risk-annex-iii para. 365). The second model's point 6(c) therefore does not apply.
 
 ### cb-031-incident-footage-timeline
 
@@ -145,7 +145,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), Art. 2(1)(a)). It is not prohibited (Art. 5). It falls under Annex III, point 6(e) as it is intended to be used by law enforcement authorities for profiling of natural persons in the course of detection and investigation of criminal offences by tracking and grouping individuals across video material. Although the system does not assign names, the tracking and grouping of sightings to identify the same person across footage constitutes profiling within the meaning of Art. 3(4) of Directive (EU) 2016/680. The Art. 6(3) exception does not apply because the system materially influences the outcome of criminal investigation decision-making and does not fall within the narrow procedural task or preparatory task categories. As a provider placing the system into service with law enforcement, the company is subject to high-risk requirements under Art. 16.
 - Disagreement: `4466f35125de0653`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts crime-scene analysis of a closed set of material (tracking and clustering people and objects, with no matching against external databases) outside point 1(a) (hr-ex-031). Its point 6 guidance lists data linking, clustering and timeline reconstruction as outside point 6 (guide-high-risk-annex-iii para. 365). Grouping sightings within one incident evaluates no personal aspects, so it is not profiling under point 6(e).
 
 ### cb-039-burglary-series-image-links
 
@@ -156,7 +156,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is deployed by law enforcement to profile natural persons by comparing facial images from investigation files to detect connections between criminal cases. This falls under Annex III, point 6(e), which covers AI systems for profiling of natural persons in the course of detection and investigation of criminal offences. Article 6(3) does not apply because the system performs profiling, which triggers the mandatory high-risk classification regardless of other conditions.
 - Disagreement: `a79e01283dd3cf63`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts cross-checking case files for links on the basis of facial imagery, without using biometric data to identify the common suspects, outside Annex III point 1(a) (hr-ex-039). Linking cases is listed as outside point 6 (guide-high-risk-annex-iii para. 365). No individual is evaluated, so it is not profiling under point 6(e).
 
 ### cb-041-airport-walkway-passenger-categories
 
@@ -167,7 +167,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: Article 5(1)(g) prohibits biometric categorisation systems that categorise natural persons based on biometric data to deduce or infer their race. The system infers ethnic origin from facial and gait biometrics and sorts passengers into groups on that basis, which directly violates this prohibition. The exception for law enforcement does not apply to airport operations.
 - Disagreement: `d5f7b0e199660807`
 
-**Resolution:**
+**Resolution:** kept: the Commission gives this airport system, which infers ethnic origin from gait and face templates to sort passengers, as a high-risk example under Annex III point 1(b) (hr-ex-041), not as a prohibited practice. Art. 5(1)(g) lists only race, political opinions, trade union membership, beliefs and sex life or orientation, which guide-prohibited para. 283 calls "a limited number of sensitive characteristics". The second model reads ethnic origin as race.
 
 ### cb-042-border-lane-age-sex-estimates
 
@@ -178,7 +178,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system performs biometric categorisation by inferring gender and age bracket from facial images of natural persons in a border control context. This falls under Annex III, point 1(b), which lists AI systems intended for biometric categorisation according to sensitive or protected attributes. As a deployer of this high-risk AI system, the border guard service must comply with the requirements in Chapter III of the AI Act, which apply from 2 December 2027 for Annex III systems.
 - Disagreement: `b75482675bca300f`
 
-**Resolution:**
+**Resolution:** kept: the Commission says a border camera that infers travellers' age and gender is not high-risk under point 1(b), because age and gender are not sensitive attributes under Art. 9(1) GDPR (hr-ex-042). The point 7(b) risk-assessment use that would flip it is not in the description. As biometric categorisation it still brings the deployer's Art. 50(3) duty, so limited_risk.
 
 ### cb-043-shop-typing-gender-guess
 
@@ -189,7 +189,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system infers gender from keystroke dynamics and uses this to tailor content, constituting biometric categorisation based on inferred personal characteristics. Article 6(2) with Annex III, point 1(b) classifies AI systems for biometric categorisation of natural persons according to protected attributes as high-risk. The profiling rule in Article 6(3) does not apply because the system materially influences the outcome of decision-making (personalisation of homepage and product suggestions).
 - Disagreement: `029b49b0b8dc8dd0`
 
-**Resolution:**
+**Resolution:** kept: the Commission says keystroke-based gender inference for personalisation is biometric categorisation but not high-risk, because gender is not a sensitive attribute under Art. 9(1) GDPR (hr-ex-043). Point 1(b) requires a sensitive or protected attribute, and the Art. 6(3) argument doesn't arise outside Annex III. The Art. 50(3) duty makes it limited_risk.
 
 ### cb-044-cigarette-machine-age-camera
 
@@ -200,7 +200,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system uses AI to categorise natural persons based on biometric data (facial features) to infer age, which constitutes biometric categorisation under Annex III, point 1(b). Although the company deploys rather than provides the system, it remains a high-risk AI system under Article 6(2) and Annex III. The exception in Article 6(3) does not apply because the system materially influences the outcome of decision-making (whether to dispense the product) and performs profiling, which triggers the mandatory high-risk classification under Article 6(3), final sentence.
 - Disagreement: `ab131374445dcf67`
 
-**Resolution:**
+**Resolution:** kept: the Commission names age estimation for vending machines selling age-restricted products such as tobacco as outside point 1(b), because age is not a sensitive attribute under Art. 9(1) GDPR (hr-ex-044). The profiling rule in Art. 6(3) only works within Annex III. As biometric categorisation it carries the deployer's Art. 50(3) duty, so limited_risk.
 
 ### cb-051-dashcam-drowsiness-warning
 
@@ -211,7 +211,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system performs biometric categorisation by inferring physical and health characteristics (drowsiness, fainting risk) from visual biometric data (eye position, head position, posture). Article 6(2) with Annex III, point 1(b) classifies AI systems intended for biometric categorisation based on inference of characteristics as high-risk. The Art. 6(3) exception does not apply because the system materially influences the outcome of decision-making (suggesting where to stop) and performs profiling of natural persons, which triggers the profiling rule in Art. 6(3) final sentence.
 - Disagreement: `93c616b9b7892563`
 
-**Resolution:**
+**Resolution:** kept: the Commission says driver-drowsiness and sudden-illness detection is not high-risk, because fatigue and pain are physical states, not emotions or intentions (hr-ex-051; recital 18). The second model's point 1(b) needs categorisation by sensitive or protected attributes (Annex III point 1(b)), and drowsiness is neither.
 
 ### cb-059-bus-radio-live-translation
 
@@ -222,7 +222,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The speech translation tool is an AI system within scope (Art. 3(1), Art. 2(1)(b)). It is not prohibited (Art. 5) and does not fall under high-risk categories in Annex I or III, as it performs a narrow assistive function for communication without materially influencing safety-critical decisions. However, as a provider deploying an AI system that interacts directly with natural persons (drivers and passengers), the deployer must comply with Article 50(1) transparency obligations to inform users that they are interacting with an AI system.
 - Disagreement: `e68447f33836c005`
 
-**Resolution:**
+**Resolution:** kept: the Commission lists a real-time translation tool between transport staff, the control centre and passengers as within Annex III point 2 (road traffic), because it contributes to the safety of public transport operations (hr-ex-059). The second model's Art. 50(1) reading also fails on its own terms: guide-art50 para. 31 lists automated translation tools as not interacting directly with people.
 
 ### cb-073-grid-network-intrusion-watch
 
@@ -233,7 +233,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The network-detection AI system is intended to be used as a safety component in the management and operation of critical digital infrastructure (the transmission system operator's communication networks linking substations). Article 6(2) and Annex III, point 2 classify such systems as high-risk. The deployer must comply with Chapter III requirements from 2 December 2027 onwards.
 - Disagreement: `ac6a7e6ff848e188`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts cybersecurity monitoring of grid communication networks, independent of the operational technology that controls the grid, outside Annex III point 2 (hr-ex-073). Recital 55 says components used solely for cybersecurity are not safety components.
 
 ### cb-074-meter-fitting-photo-check
 
@@ -244,7 +244,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI application that analyzes photographs of electricity meter installations to provide quality control feedback to technicians. It qualifies as an AI system under Art. 3(1) and falls within the Act's scope under Art. 2(1)(b) as the company is a deployer located in the Union. The system does not engage in prohibited practices under Art. 5, nor does it constitute a high-risk system under Art. 6: it performs a narrow procedural task of quality assurance on completed work and does not materially influence decision-making, as the technician retains full discretion over corrective actions. The system therefore triggers only the transparency obligations under Art. 50(1), requiring disclosure that natural persons (technicians) are interacting with an AI system.
 - Disagreement: `aa26dc77ebcd0d5c`
 
-**Resolution:**
+**Resolution:** kept: the Commission says quality assurance of meter installation photos has no direct safety function and is outside Annex III point 2 (hr-ex-074). A photo check that returns recommendations isn't a conversational system under Art. 50(1) (guide-art50 paras. 30-31: backend decision-support where the user only sees the output). Role: the company's own data team developed the model and puts it into service for its own fitters, so it is the provider (Art. 3(3)) and also the deployer, not just a deployer.
 
 ### cb-075-outage-early-warning
 
@@ -255,7 +255,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system intended to be used as a safety component in the management and operation of critical digital infrastructure (electricity supply), falling under Annex III, point 2. Although the system does not itself control the grid and operators retain decision-making authority, Article 6(1a) and (1b) clarify that AI systems whose failure or malfunctioning would endanger health and safety qualify as safety components, and the derogation in Article 6(3) does not apply because the system performs profiling-equivalent risk assessment of the grid state rather than a narrow procedural task or preparatory function.
 - Disagreement: `bf267c3ffd1ad684`
 
-**Resolution:**
+**Resolution:** kept: the Commission says an outage early-warning system that only warns the control centre, is one precautionary measure among many and causes no outage when wrong lacks a direct safety function, so it is not high-risk under point 2 (hr-ex-075). The second model cites "Art. 6(1a)/(1b)", which do not exist, and an inapplicable profiling rule.
 
 ### cb-077-regional-demand-forecast
 
@@ -266,7 +266,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The electricity distribution operator is a deployer of an AI system intended to be used as a safety component in the management and operation of critical digital infrastructure (electricity supply), falling under Annex III, point 2. Although the system provides advisory forecasts rather than direct control, it is designed to support critical infrastructure management decisions. Article 6(3) does not apply because the system materially influences the outcome of decision-making for grid operations, and the operator's use case does not qualify as a narrow procedural task, preparatory task, or mere improvement of completed human activity.
 - Disagreement: `f30ce8fbf4d78519`
 
-**Resolution:**
+**Resolution:** kept: the Commission says an assistant that predicts energy consumption at transmission, regional or local level and gives recommendations lacks a direct safety function, so it is outside Annex III point 2 (hr-ex-077). Supporting decisions is not being a safety component.
 
 ### cb-083-degree-finder-for-pupils
 
@@ -277,7 +277,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(a)). It does not engage in prohibited practices (Art. 5). It is not high-risk: although it relates to education, it does not fall under Annex III, point 3, because it does not determine access/admission to institutions, evaluate learning outcomes, assess educational level, or monitor student behaviour—it merely suggests programmes to individual pupils for their own consideration, with no institutional role. Article 50(1) applies: the provider must ensure pupils are informed they are interacting with an AI system unless obvious from context.
 - Disagreement: `031e1f3ff554d2d3`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts programme matching that informs pupils' own choices outside point 3(a) (hr-ex-083). There is no Art. 50(1) duty: the tool is a recommender that returns a results page, and guide-art50 para. 31 (also para. 51) lists recommender systems as not interacting directly with natural persons.
 
 ### cb-086-admissions-round-pattern-audit
 
@@ -288,7 +288,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(a)). It does not engage prohibited practices (Art. 5). Although it relates to education decisions, it falls outside high-risk classification under Art. 6(3) because it performs a preparatory task to assessment (Art. 6(3), second subparagraph, point (d)): it audits completed decisions post-hoc without replacing or influencing human assessment, and does not perform profiling. The system therefore triggers only transparency obligations under Art. 50, making it limited_risk.
 - Disagreement: `7c0e64845b7ef912`
 
-**Resolution:**
+**Resolution:** kept: the Commission says an ex-post review of committee admissions decisions falls under the Art. 6(3)(c) pattern-detection exemption (hr-ex-086). It writes a report for a quality office and interacts with no one, so no Art. 50 duty applies. The second model names no Art. 50 trigger.
 
 ### cb-091-neurodivergent-learning-companion
 
@@ -299,7 +299,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the scope of the EU AI Act (Art. 3(1), Art. 2(1)(a)). It is not prohibited under Art. 5. It falls under Annex III, point 3(b) as an AI system intended to evaluate learning outcomes in educational institutions. Although the system does not assign grades or make final assessments of what the child has learned, it continuously evaluates and adapts the learning process based on the child's performance and behaviour, which constitutes evaluation of learning outcomes used to steer the learning process. The Art. 6(3) exception does not apply because the system performs profiling of natural persons (children with specific needs), which triggers the mandatory high-risk classification under Art. 6(3), final sentence.
 - Disagreement: `21ee2c04edd333d2`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts neurodiverse learning companions that personalise materials, pace and accommodations and inform the teacher, but do not grade or assess learning, outside Annex III point 3(b) (hr-ex-091). The description says the app neither grades nor evaluates what the child has learned. The profiling rule applies only within Annex III.
 
 ### cb-097-technical-college-level-placement
 
@@ -310,18 +310,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system intended to determine access to or admission to educational institutions at all levels by assigning learners to different programme levels based on automated scoring of placement tests. This falls under Annex III, point 3(a). As a deployer using the licensed system under its own authority, the college is subject to high-risk AI system obligations under Article 6(2) and Chapter III (applicable from 2 December 2027 for Annex III systems).
 - Disagreement: `87cd73ca79c8ad96`
 
-**Resolution:**
-
-### cb-098-special-needs-placement-classifier
-
-- Set: commission_b; language: de
-- Label: high_risk, decided; role deployer; annex:III:3:c; cites annex:III:3:c, art:6:2, art:6:3, art:3:52
-- Second model: high_risk, decided; role deployer; annex:III:3:a
-- Differs on: annex point
-- Its reason: The school authority uses an AI system to determine access to and assignment of children to educational institutions and special education programs based on test results, teacher assessments, and medical data. This falls under Annex III, point 3(a), which covers AI systems intended to determine access or admission to educational institutions. The system makes consequential decisions affecting the educational pathway and support level for approximately 1,500 children annually, making it a high-risk AI system under Article 6(2).
-- Disagreement: `fae94ed5e2cfa590`
-
-**Resolution:**
+**Resolution:** kept: the Commission files a vocational placement-test system that decides which level of a programme a learner can join under Annex III point 3(c) (hr-ex-097). The learners are already enrolled, so the system assigns a level inside the institution rather than deciding admission to it, and the second model's point 3(a) is not the fitting point. Point 3(b) is already accepted as an alternative.
 
 ### cb-099-next-year-course-suggestions
 
@@ -332,7 +321,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system intended to be used to assess the appropriate level of education that an individual will receive or will be able to access, within the context of educational and vocational training institutions, falling under Annex III, point 3(c). Although the provider argues the system only reflects user input and does not replace human decision-making, the system's core function is to suggest educational programmes and certificates at levels suited to the user, which constitutes assessment of appropriate educational level. The Art. 6(3) exception does not apply because the system performs profiling of natural persons (students) to tailor educational recommendations, triggering the profiling rule that mandates high-risk classification regardless of other conditions.
 - Disagreement: `49f440f4cecc2675`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts personalised course and programme recommendations, built from the student's own input and not used by any educational institution, outside Annex III point 3(c) (hr-ex-099). Point 3(c) requires use in the context of or within an institution. The profiling rule applies only within Annex III.
 
 ### cb-101-readiness-interview-prep
 
@@ -343,7 +332,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(b)). It does not fall under prohibited practices (Art. 5). It is not high-risk under Art. 6(1) (not a safety component of a product in Annex I) or Art. 6(2) read with Annex III, point 3 (education), because it performs a narrow procedural task—preparing questions for a human-conducted assessment—and does not materially influence the outcome of the admission decision, which remains entirely with the human instructor (Art. 6(3)(a), (b)). The system therefore triggers transparency obligations under Art. 50(1): it must inform natural persons that they are interacting with an AI system during the assessment preparation phase.
 - Disagreement: `1a7cf5dcc4bc2a86`
 
-**Resolution:**
+**Resolution:** kept: the Commission treats a tool that prepares questions and topics for an educator's readiness assessment as an Art. 6(3)(d) preparatory task (hr-ex-101). Its output goes to the instructor as preparation material, not through a conversation with anyone, so there is no Art. 50(1) duty (guide-art50 para. 31: decision-support where the user only sees the output). Role: the academy developed the tool itself and puts it into service under its own name, so it is the provider (Art. 3(3)) and also the deployer.
 
 ### cb-102-tutor-advice-method-review
 
@@ -354,7 +343,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI tool used to evaluate learning outcomes and steer the learning process of apprentices by suggesting improvements to tutor recommendations for advanced course placement. This falls under Annex III, point 3(b), which covers AI systems intended to evaluate learning outcomes in educational institutions. Although the tool is advisory and tutors retain decision-making authority, it materially influences the outcome of decisions affecting apprentices' educational pathways, and does not qualify for the Article 6(3) exception as it is not merely a narrow procedural task or preparatory assessment.
 - Disagreement: `1fbbdc799980cd0b`
 
-**Resolution:**
+**Resolution:** kept: the Commission says a tool that analyses tutors' completed course recommendations and suggests how to improve the method, deciding nothing about any apprentice, falls under the Art. 6(3)(b) exemption (hr-ex-102). The second model ignores that the recommendations it reviews are completed human work.
 
 ### cb-108-proctor-second-opinion
 
@@ -365,7 +354,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the scope of Article 3(1) and Article 2. It is intended to be used for monitoring and detecting prohibited behaviour of students during tests in educational institutions, which falls under Annex III, point 3(d). Although the system supports human decision-making by the proctor rather than making autonomous decisions, Article 6(3) does not apply because the system performs profiling of natural persons (students) to detect cheating patterns, and Article 6(3) explicitly states that profiling triggers high-risk classification regardless of other conditions.
 - Disagreement: `92576ed16bec3625`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts an AI check run only after a human proctor has already observed suspicious behaviour under the Art. 6(3)(b) exemption from point 3(d) (hr-ex-108). The second model's profiling argument is the doubt already recorded in the notes. The Commission's explicit verdict on this exact scenario settles it.
 
 ### cb-119-job-ad-wording-check
 
@@ -376,7 +365,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is intended to be used for recruitment by analyzing job advertisements to filter language before publication. Article 6(2) and Annex III, point 4(a) classify as high-risk AI systems intended to be used for recruitment or selection of natural persons, including to analyze and filter job content. Although the system does not directly evaluate candidates, it is designed to influence the recruitment process by pre-screening advertisement text, which falls within the scope of recruitment-related AI systems.
 - Disagreement: `af00cf89783b1065`
 
-**Resolution:**
+**Resolution:** kept: the Commission says a tool used only to flag non-inclusive wording in job ads, using expert-defined patterns, is not used for recruiting or selecting people and falls outside Annex III point 4(a) (hr-ex-119). Analysing ad text is not "analysing and filtering job applications" or placing targeted ads.
 
 ### cb-123-candidate-cv-fit-tips
 
@@ -387,7 +376,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: This AI system is designed to assist jobseekers in improving their own CV presentations by providing suggestions for skill emphasis and content reorganization. While it relates to recruitment, it falls under Article 50's transparency obligations rather than the high-risk categories in Annex III. The system does not make or influence employment decisions, does not evaluate candidates for employers, and does not perform profiling—it merely provides suggestions to individual users who retain full control over their CV content. Article 50(1) requires disclosure that users are interacting with an AI system, which applies here.
 - Disagreement: `24e29b7e35053e25`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts a CV-tailoring tool started and used by the candidate outside point 4(a) (hr-ex-123). Uploading a CV and a posting and getting a page of tips is a single-turn analysis tool, not a conversational system: guide-art50 para. 30 needs a "genuine conversational or responsive character", and para. 31 excludes single-turn tools and decision-support outputs. So there is no Art. 50(1) duty and the class is minimal_risk.
 
 ### cb-136-voluntary-course-progress-feedback
 
@@ -398,7 +387,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The AI system provides personalized learning recommendations and feedback to employees based on quiz results and course progress on a voluntary learning platform. This falls under Article 50(1) transparency obligations, as the system interacts directly with natural persons (employees) and they must be informed they are interacting with an AI system. The system does not qualify as high-risk under Annex III because it performs a preparatory task to assessment (Article 6(3)(d)) and does not materially influence employment decisions, as the feedback is not used for recruitment, performance evaluation, promotion, or termination decisions.
 - Disagreement: `0aa4746d18d1cb39`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts feedback on voluntary training, shown only to the employee and not used to appraise job performance or decide promotions, outside Annex III point 4(b) (hr-ex-136). Feedback and next-course suggestions based on quiz results are recommender output, not a conversational system (guide-art50 para. 31), so there is no Art. 50(1) duty.
 
 ### cb-154-application-routing-desk
 
@@ -409,7 +398,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the Act's scope (Art. 3(1), 2(1)(b)). It is not prohibited (Art. 5). It falls under Annex III, point 5(a), as it is intended to be used by a public authority to evaluate eligibility for essential public assistance benefits and services and to grant or allocate such benefits by routing applications to the appropriate team for decision-making. Although the system itself does not make the final eligibility determination, it materially influences the outcome by determining which team handles the application, and thus qualifies as high-risk under Art. 6(2) without meeting the Art. 6(3) exceptions (it is not a narrow procedural task, does not improve a completed activity, and is not merely preparatory).
 - Disagreement: `104b5e0225ac8416`
 
-**Resolution:**
+**Resolution:** kept: the Commission says a system that only recommends which body or person should assess an application for public assistance, without evaluating eligibility, falls outside Annex III point 5(a) (hr-ex-154). The second model treats routing as influencing the outcome, which the Commission rejects.
 
 ### cb-155-company-cost-reimbursement-review
 
@@ -420,7 +409,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system evaluates eligibility for and determines amounts of essential public benefits (subsidies/grants) provided by a public authority. This falls under Annex III, point 5(a), which covers AI systems intended to evaluate eligibility for essential public assistance benefits and services and to grant or reduce such benefits. Although human review occurs at the final payment stage, the system's core function is to assess and propose reimbursement decisions on subsidy applications, making it high-risk under Article 6(2) and (3).
 - Disagreement: `50e5075b4a0c9c33`
 
-**Resolution:**
+**Resolution:** kept: point 5(a) covers natural persons' eligibility, and the Commission puts systems that assess reimbursement claims from companies, not natural persons, outside it (hr-ex-155). The description says the applicants are only GmbHs, AGs and cooperatives, which the second model overlooks.
 
 ### cb-156-caseworker-fact-lookup
 
@@ -431,7 +420,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system intended to be used by a public authority (the health-insurance fund) to evaluate eligibility of natural persons for essential public assistance benefits (healthcare benefits such as home nursing and medical devices). Although the system performs a preparatory task by retrieving and presenting facts rather than making the eligibility decision itself, Article 6(3) does not exempt it because it materially influences the outcome of decision-making by the caseworkers who rely on its factual outputs to assess eligibility. The system falls under Annex III, point 5(a), and does not qualify for the Article 6(3) derogation.
 - Disagreement: `1a80eece29829566`
 
-**Resolution:**
+**Resolution:** kept: the Commission says a chatbot that answers a case handler's factual questions about a benefits applicant falls within point 5(a) but is exempted under Art. 6(3)(a) and (d) (hr-ex-156). It gives existing facts in structured form without evaluating eligibility, and the caseworker must review them. The second model's "materially influences" argument is the one the Commission rejects for this example.
 
 ### cb-160-bank-consumer-credit-score
 
@@ -442,7 +431,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The bank is deploying an AI system intended to evaluate the creditworthiness of natural persons and establish their credit score for the purpose of making loan decisions affecting access to essential private services (credit). This falls under Annex III, point 5(b), which lists AI systems for creditworthiness evaluation as high-risk. Article 6(3) exceptions do not apply because the system materially influences the outcome of decision-making on loan approvals and is not merely a narrow procedural task or preparatory assessment.
 - Disagreement: `fbd44a8a8325a043`
 
-**Resolution:**
+**Resolution:** kept: the bank's own risk team built the scoring model and puts it into service for the bank's own lending, so the bank is the provider under Art. 3(3) (developing a system and putting it into service under its own name), as well as the deployer. The second model's deployer-only role ignores that it built the model. Class and Annex point 5(b) agree with hr-ex-160.
 
 ### cb-164-loan-form-inline-help
 
@@ -453,7 +442,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(b)). It does not fall under Art. 5 prohibitions. It is not high-risk under Art. 6(1) (not a safety component of a regulated product) or Art. 6(2) with Annex III, because although it relates to creditworthiness assessment (Annex III, 5(b)), it performs only a preparatory task—plain-language explanation and real-time feedback on form completion—and does not itself evaluate creditworthiness or establish credit scores; the actual credit assessment is performed separately by underwriters. Art. 6(3) applies: the system does not pose significant risk because it is preparatory and does not materially influence the outcome of the credit decision. However, the system is intended to interact directly with natural persons (applicants), triggering Art. 50(1) transparency obligations: users must be informed they are interacting with an AI system.
 - Disagreement: `d8840a5535fc57e6`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts help that explains a credit form and gives dynamic feedback on how answers affect approval, outside the credit-scoring process, outside point 5(b) (hr-ex-164). The description says there is no chat and no generated text; field explanations and a moving indicator are not a conversational exchange (guide-art50 paras. 30-31). So there is no Art. 50(1) duty and the class is minimal_risk.
 
 ### cb-168-securities-lending-limit
 
@@ -464,7 +453,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The AI system evaluates creditworthiness of natural persons to determine eligibility for margin lending, which falls under Annex III, point 5(b) (AI systems intended to evaluate creditworthiness or establish credit scores). Although the system is limited to margin lending rather than consumer credit, it still assesses credit risk for the purpose of granting financial services. The portfolio-analysis screen does not change this classification as it serves a different function.
 - Disagreement: `8d8c6de7b005e8de`
 
-**Resolution:**
+**Resolution:** kept: the Commission says systems used solely to extend margin credit against securities are not high-risk under point 5(b), even though they decide access to financial resources, because margin credit is a non-essential private service (hr-ex-168). The description limits the model to margin lending and rules out consumer loans and mortgages.
 
 ### cb-182-hazard-early-indicators
 
@@ -475,7 +464,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), Art. 2(1)(a)). It does not engage in prohibited practices (Art. 5). It is not high-risk under Art. 6(1) (not a safety component of products in Annex I requiring third-party conformity assessment) or Art. 6(2) with Annex III: while it touches on critical infrastructure and emergency response, it performs only preparatory and analytical tasks (flood mapping, wildfire spread modelling, social media monitoring) without making decisions about emergency dispatch or resource allocation, and thus falls within Art. 6(3)(d) (preparatory task to assessment). The transparency obligation in Art. 50(1) applies because the system interacts directly with natural persons (regional governments, insurers, and the public via the free heat-wave map), requiring disclosure that they are interacting with an AI system unless obvious from context.
 - Disagreement: `78e3dee9c449d8e1`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts general disaster forecasting with no link to dispatching first responders outside Annex III point 5(d) (hr-ex-182), and nothing triggers Art. 50: the platform delivers maps and forecasts to subscribers, it is not designed to interact directly with natural persons (Art. 50(1)), so minimal_risk stands.
 
 ### cb-183-responder-exercise-simulator
 
@@ -486,7 +475,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the Act's scope (Art. 3(1), 2(1)(a)). It is not prohibited (Art. 5). It falls under Annex III, point 2 as an AI system intended to be used as a safety component in the management and operation of critical infrastructure (civil-protection agencies managing emergencies). The derogation in Art. 6(3) does not apply: the system materially influences decision-making by trainers and responders through realistic incident simulation and performance feedback, and it performs profiling of natural persons (measuring response times and identifying missed playbook steps of individual team members), which triggers the profiling rule in Art. 6(3) that overrides all derogation conditions.
 - Disagreement: `75ed892e739c83dc`
 
-**Resolution:**
+**Resolution:** kept: the Commission holds that a simulation platform for training first responders, with automated debriefs, falls outside point 5(d) because it neither classifies real calls nor dispatches or prioritises responders (hr-ex-183); it is not a safety component in the management or operation of critical infrastructure (Annex III point 2), and the Art. 6(3) profiling rule only matters for a system already within Annex III.
 
 ### cb-185-emergency-line-traffic-monitor
 
@@ -497,7 +486,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(b)). It does not fall under prohibited practices (Art. 5). It is not high-risk: although it monitors emergency calls, it performs a narrow procedural task (real-time traffic visualization and fault detection) without making decisions affecting emergency dispatch, triage, or resource allocation, and does not materially influence the outcome of decision-making by emergency services (Art. 6(3), Annex III point 5(d) exception). It triggers transparency obligations under Art. 50(1) because it interacts with or processes data related to emergency call handling, requiring disclosure to relevant stakeholders that AI is in use.
 - Disagreement: `fb20ca89eb49a437`
 
-**Resolution:**
+**Resolution:** kept: conveying emergency-call traffic and connectivity gaps falls outside Annex III point 5(d) (hr-ex-185), and an operations-centre monitoring tool used by engineers does not interact directly with natural persons, so no Art. 50(1) duty and minimal_risk stands.
 
 ### cb-186-ward-bed-planning
 
@@ -508,7 +497,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the Act's scope (Art. 3(1)) used by a public authority deployer in the Union (Art. 2(1)(b)). It does not fall under prohibited practices (Art. 5) or high-risk categories: it performs a narrow procedural task of bed and room scheduling based on medical data, does not make decisions affecting treatment or discharge (physicians retain that authority), and does not profile natural persons or materially influence outcomes of clinical decision-making (Art. 6(3)). However, it processes personal data of patients and generates predictions about individuals, triggering the transparency obligation under Art. 50(1) to inform patients that they are interacting with or subject to an AI system, unless obvious from context.
 - Disagreement: `9a68fdd8646333d6`
 
-**Resolution:**
+**Resolution:** kept: estimating healing time for room and bed management serves none of the purposes in Annex III point 5(d) (hr-ex-186), and a back-office planning tool does not interact directly with patients, so Art. 50(1) does not apply; processing personal data alone is not an Art. 50 trigger.
 
 ### cb-188-flood-fire-prepositioning-brief
 
@@ -519,7 +508,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(b)). It is not prohibited (Art. 5). It falls under Annex III, point 5(d) as an AI system intended to evaluate and classify emergency situations and establish priority in dispatching emergency first response services. Although human review occurs before any action, the system performs profiling-adjacent risk assessment of geographic areas and resource allocation that materially influences the outcome of emergency response decisions, and does not qualify for the Art. 6(3) exceptions (it is not merely a narrow procedural task, preparatory task, or improvement of prior activity, and it performs more than detection of deviations). As a deployer placing the system into service from 2028, you are subject to high-risk requirements under Art. 16 by 2 December 2027 per Art. 113(3)(i).
 - Disagreement: `1ae01b214323ad80`
 
-**Resolution:**
+**Resolution:** kept: the Commission places weather-risk preparatory intelligence for pre-positioning crews within point 5(d) but exempt under Art. 6(3)(d), because analysts and the commander evaluate and confirm it (hr-ex-188); the description keeps that human review, and the system assesses places, not persons, so there is no profiling to block the exemption.
 
 ### cb-189-incident-site-casualty-map
 
@@ -530,7 +519,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system intended to evaluate and classify emergency calls and assist in dispatching emergency first response services by identifying injured persons and their locations at incident scenes. This falls under Annex III, point 5(d), which covers AI systems for emergency triage and dispatch prioritization. The system does not qualify for the Article 6(3) exception because it performs profiling of natural persons (identifying and locating injured individuals) and materially influences emergency response decisions.
 - Disagreement: `27ffb5856b6804c8`
 
-**Resolution:**
+**Resolution:** kept: the Commission holds that an on-site situational-awareness system showing where casualties are and their body temperature is linked to 5(d) triage but exempt under Art. 6(3)(a) and (d), since it only structures existing factual information without prioritising patients (hr-ex-189); locating injured people is not an evaluation of personal aspects, so the second model's profiling objection fails.
 
 ### cb-191-partner-violence-risk-court
 
@@ -541,7 +530,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system assesses the risk of a natural person becoming a victim of criminal offences (intimate partner violence) and is intended to be used by a judicial authority to assist in decision-making on protective measures. This falls under Annex III, point 6(d), which covers AI systems for assessing risk of victimization in law enforcement and judicial contexts. The system is deployed by a public authority (Austrian criminal justice) and materially influences judicial decisions on restraining orders.
 - Disagreement: `7b10fac2914de8f7`
 
-**Resolution:**
+**Resolution:** kept: the Commission files a court tool estimating the probability of severe or repeated intimate partner violence for restraining orders under point 6(a) (hr-ex-191), and 6(a) is the point for the risk of a person becoming a victim; point 6(d), the second model's choice, covers the risk of a person offending or re-offending.
 
 ### cb-195-road-accident-hotspots
 
@@ -552,7 +541,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the Act's scope (Art. 3(1), 2(1)(b)). It is not prohibited (Art. 5). It falls under Annex III, point 2, as an AI system intended to be used as a safety component in the management and operation of road traffic. Although it does not profile natural persons and performs a narrow procedural task of identifying high-risk locations and times, it materially influences the outcome of decision-making on patrol placement and speed-check deployment, and thus qualifies as high-risk under Art. 6(2) and (3).
 - Disagreement: `33d264d4ac1b9711`
 
-**Resolution:**
+**Resolution:** kept: predicting road segments and times where accidents are likely is outside point 6(a) because it concerns accidents, not criminal victimisation, and is location-focused (hr-ex-195); a patrol-planning analytics tool is not a safety component in the management and operation of road traffic, so Annex III point 2 does not apply either.
 
 ### cb-196-crowd-crush-warning
 
@@ -563,7 +552,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The police department is deploying an AI system intended to be used by law enforcement authorities to manage critical infrastructure (crowd safety at large public events). This falls under Annex III, point 2 (critical infrastructure - road traffic and public safety management). The system qualifies as high-risk under Article 6(2) because it is designed to assess and predict safety risks in publicly accessible spaces during large-scale events, which is a core law enforcement safety function that materially influences operational decisions.
 - Disagreement: `8355cb40482ca4c9`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts video analytics predicting overcrowding, stampedes or structural hazards at large gatherings outside point 6(a) (hr-ex-196); crowd management at events is not critical digital infrastructure, road traffic or utility supply, so the second model's Annex III point 2 reading has no textual basis.
 
 ### cb-197-flood-wildfire-population-risk
 
@@ -574,7 +563,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is used by a public authority to evaluate eligibility for essential public services (emergency response and civil protection) and to determine which natural persons receive emergency assistance, falling under Annex III, point 5(a). The flood and wildfire models assess exposure of villages and care homes to inform evacuation planning and emergency warnings, which constitutes a high-risk use case under Article 6(2) and Annex III, point 5(a), as it directly influences the allocation of emergency resources and protection of vulnerable populations.
 - Disagreement: `58ea722ac748a684`
 
-**Resolution:**
+**Resolution:** kept: flood and wildfire models identifying exposed populations are outside point 6(a) (hr-ex-197) and do not dispatch or prioritise responders (point 5(d)); point 5(a) covers evaluating natural persons' eligibility for public assistance benefits and services, not evacuation planning for areas, so the second model's reading fails.
 
 ### cb-198-interview-room-credibility-cues
 
@@ -585,7 +574,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(a)). It is not prohibited (Art. 5). It falls under Annex III, point 6(c) as an AI system intended to be used by law enforcement to evaluate the reliability of evidence in criminal investigations. The Art. 6(3) exception does not apply because the system performs profiling of natural persons (assessing credibility based on facial movements and eye responses), which triggers the mandatory high-risk classification per Art. 6(3), final sentence.
 - Disagreement: `50ad9a46af57ddd6`
 
-**Resolution:**
+**Resolution:** kept: the Commission files micro-expression and eye-tracking credibility analysis during interrogation under point 6(b), polygraphs or similar tools, with no Art. 6(3) exemption (hr-ex-198); point 6(c) concerns evaluating the reliability of evidence, and the Commission does not use it for this example.
 
 ### cb-206-device-data-recovery
 
@@ -596,7 +585,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is deployed by a law enforcement authority (national police) to evaluate the reliability of evidence in the course of investigation of criminal offences, falling under Annex III, point 6(c). Although the tool is a technical aid for data recovery rather than autonomous decision-making, it materially influences what evidence becomes available to investigators and thus the outcome of criminal investigations, and does not qualify for the Article 6(3) exceptions since it is not a narrow procedural task, does not improve a previously completed human activity, and is not merely preparatory.
 - Disagreement: `cb418c8ac559906a`
 
-**Resolution:**
+**Resolution:** kept: the Commission says forensic data recovery from devices does not evaluate the reliability of evidence and falls outside point 6(c) (hr-ex-206); the description states the tool makes no judgement on genuineness or reliability, so 'materially influences what evidence becomes available' is not the 6(c) purpose.
 
 ### cb-207-crime-scene-3d-model
 
@@ -607,7 +596,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the scope of the EU AI Act (Art. 3(1), Art. 2(1)(a)). It is intended to be used by judicial authorities and law enforcement to assist in researching and interpreting facts in the administration of justice, falling under Annex III, point 8(a). The system does not qualify for the Art. 6(3) exception because it materially influences the outcome of decision-making by investigators through its 3D reconstruction and analysis of crime scenes, rather than performing only a narrow procedural task or preparatory function.
 - Disagreement: `303f01d75eef239c`
 
-**Resolution:**
+**Resolution:** kept: crime-scene mapping and reconstruction from collected photos and measurements is outside point 6(c) (hr-ex-207); point 8(a) requires use by or on behalf of a judicial authority, and this software is sold to police and forensic institutes for investigators.
 
 ### cb-210-abuse-material-triage-sorting
 
@@ -618,7 +607,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is deployed by a law enforcement authority (Landeskriminalamt) to evaluate the reliability of evidence in the investigation of criminal offences (child sexual abuse material), which falls under Annex III, point 6(c). Although the system performs a preparatory task by pre-sorting material rather than making final determinations, it still qualifies as high-risk because it materially influences the outcome of investigative decision-making by prioritizing which evidence investigators examine first.
 - Disagreement: `62716f5c8cd825d8`
 
-**Resolution:**
+**Resolution:** kept: the Commission holds that screening abuse material and sorting it into new, registered and synthetic files for prioritisation does not evaluate the reliability of evidence and falls outside point 6(c) (hr-ex-210); prioritising review order is workflow support, and the description leaves out the flip feature (another Annex III use such as 6(a)).
 
 ### cb-214-financial-document-tagging
 
@@ -629,7 +618,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI tool used by a judicial authority (public prosecutor's office) to assist in researching and interpreting facts and evidence in criminal cases by indexing and tagging financial documents. This falls squarely within Annex III, point 8(a), which covers AI systems intended to assist judicial authorities in researching and interpreting facts and the law. The system does not qualify for the Article 6(3) exceptions because it performs more than a narrow procedural task or preparatory function—it actively processes and categorizes evidence to influence investigative decisions, and the deployer's human review does not eliminate the high-risk classification when the system materially influences the outcome of decision-making in criminal proceedings.
 - Disagreement: `08c5d9c9bd98d361`
 
-**Resolution:**
+**Resolution:** kept: the Commission treats indexing and tagging seized financial documents for later reliability checks as within point 6(c) but exempt under Art. 6(3)(a) and (d) (hr-ex-214); even if a prosecutor's office counted as a judicial authority under point 8(a), the same narrow procedural and preparatory task would be exempt, so minimal_risk stands.
 
 ### cb-222-missing-child-suspect-filter
 
@@ -640,7 +629,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system assesses the risk of natural persons offending or re-offending by analyzing sex-offender profiles, past criminal behavior, and behavioral patterns to rank suspects in criminal investigations. This falls under Annex III, point 6(d), which covers AI systems intended to assess the risk of a natural person offending or re-offending not solely on the basis of profiling. The system is placed on the market by a provider (the company) to deployers (police forces) and is therefore subject to high-risk AI system requirements under Article 6(2).
 - Disagreement: `c9784f4e58be3c78`
 
-**Resolution:**
+**Resolution:** kept: the Commission says a system that ranks registered sex offenders as potential suspects in a missing-child case generates individualised risk inferences, which is profiling, and 'falls within the use case of point 6(e)' (hr-ex-222); the label follows that point.
 
 ### cb-225-district-crime-scores
 
@@ -651,7 +640,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system intended to be used by law enforcement authorities to assess the risk of criminal offences occurring in specific areas, which falls under Annex III, point 6(a). The system does not qualify for the Article 6(3) exception because it materially influences the outcome of decision-making regarding police deployment and prevention measures, and does not merely perform a narrow procedural task or preparatory function.
 - Disagreement: `8d72a3b0e1d1b1a1`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts neighbourhood criminality scoring without profiling of individuals outside points 6(d) and 6(e) (hr-ex-225); point 6(a) concerns the risk of a natural person becoming a victim, and the tool scores areas and says nothing about persons.
 
 ### cb-226-fiu-transaction-patterns
 
@@ -662,7 +651,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI model used by law enforcement (the financial intelligence unit of the police) to assess the risk of natural persons offending or re-offending in the context of criminal investigation, specifically money laundering and terrorist financing. This falls under Annex III, point 6(d), which covers AI systems intended to assess the risk of a natural person offending or re-offending. The deployer is the financial intelligence unit, which is part of law enforcement, and the system is placed into service on 2028-10-10, after the application date of Chapter III Section 1 (2 December 2027 for Annex III systems).
 - Disagreement: `e301a8491e760442`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts detection of suspicious transaction patterns (amounts, frequencies, intervals, routing) outside point 6(e), turning high only if the system is enriched with personal data to build and assess individual profiles (hr-ex-226); the description is limited to transaction structure, and point 6(d) (risk of a person offending) is not what the system assesses.
 
 ### cb-230-number-plate-readers
 
@@ -673,7 +662,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system assessing risk of criminal offences by matching vehicle plates against investigation lists, deployed by a law enforcement authority. It falls under Annex III, point 6(d), which covers AI systems assessing the risk of a natural person offending or re-offending. Although the system reads plates rather than faces, it is used to identify vehicles linked to persons suspected of criminal activity, thereby assessing risk associated with natural persons. Article 6(3) does not apply because the system materially influences the outcome of law enforcement decision-making (alerting officers to investigate). The system is subject to high-risk requirements under Chapter III from 2 December 2027.
 - Disagreement: `596f96ac9ad05da1`
 
-**Resolution:**
+**Resolution:** kept: the Commission lists automated number-plate readers among law-enforcement systems not high-risk under point 6, because they are vehicle-focused, not person-focused, and are neither biometrics nor profiling (hr-ex-230, para. 372); matching plates to wanted lists does not assess any person's risk of offending (6(d)).
 
 ### cb-232-customs-object-detection
 
@@ -684,7 +673,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system intended to be used by law enforcement authorities (police and customs) to evaluate the reliability of evidence in the course of investigation or prosecution of criminal offences by detecting weapons, suspicious packages, dangerous substances, and stolen cultural goods from wanted lists. This falls under Annex III, point 6(c), making it a high-risk AI system under Article 6(2). The company is the provider placing the system on the market under its own name.
 - Disagreement: `822717995cda0b9c`
 
-**Resolution:**
+**Resolution:** kept: the Commission says detecting objects such as weapons, suspicious parcels, dangerous goods and stolen cultural objects falls within no use case of point 6 and is not biometrics (hr-ex-232, para. 372); flagging an object on an X-ray is not evaluating the reliability of evidence under 6(c).
 
 ### cb-233-station-cctv-unusual-movement
 
@@ -695,7 +684,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is a law enforcement AI intended to assess the risk of natural persons becoming victims of criminal offences by detecting suspicious movements and behaviours in railway stations, falling under Annex III, point 6(a). The deployer is a law enforcement authority using the system under its authority to support law enforcement operations, and the system does not qualify for the Article 6(3) exception because it performs ongoing monitoring and risk assessment rather than a narrow procedural task, preparatory task, or improvement of prior human activity.
 - Disagreement: `b3b584af10f1ce0a`
 
-**Resolution:**
+**Resolution:** kept: the Commission lists detection of unusual behaviour such as running, raised arms, a fighting stance or a posture suggesting a weapon, without identifying a person, among law-enforcement systems outside point 6 (hr-ex-233, para. 372); the system assesses situations, not any person's risk of becoming a victim (6(a)).
 
 ### cb-234-gunshot-sound-sensors
 
@@ -706,7 +695,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The gunshot detection system is an AI system intended to be used by law enforcement authorities to assess the risk of a natural person becoming the victim of criminal offences (gunshot incidents), falling under Annex III, point 6(a). The system does not qualify for the Article 6(3) derogation because it performs a core law enforcement function rather than a narrow procedural task, preparatory task, or post-hoc improvement, and it materially influences law enforcement decision-making by triggering immediate alerts to police.
 - Disagreement: `25a9a35097c8130b`
 
-**Resolution:**
+**Resolution:** kept: the Commission says real-time gunshot detection falls within no use case of point 6 because it works on sounds, not people (hr-ex-234, para. 372); it does not assess any natural person's risk of becoming a victim (6(a)).
 
 ### cb-239-asylum-interview-transcripts
 
@@ -717,7 +706,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The asylum office is a deployer using an AI system for migration and asylum management. The speech-to-text and translation tool is intended to be used by a competent public authority in the context of asylum processing to assist in examining applications for asylum and assessing eligibility, which falls under Annex III, point 7(d) (detecting, recognising or identifying natural persons in migration, asylum or border control management). Although the tool performs a narrow procedural task (transcription and translation) and caseworkers review outputs, it still materially influences the outcome of asylum decisions by creating the written record on which eligibility assessments depend, making it high-risk under Article 6(2) and (3).
 - Disagreement: `ab6a9a7ae5b8e4b1`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts a tool that transcribes and translates asylum-interview audio without inferring deception outside point 7(a) (hr-ex-239); point 7(d) covers detecting, recognising or identifying natural persons, which transcription does not do, and translation is a listed Art. 50(2) exception (Art. 50 guidelines para. 92).
 
 ### cb-240-interview-neutral-summaries
 
@@ -728,7 +717,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: This is a summarization tool for administrative record-keeping that does not assess credibility, make recommendations, or influence decision-making outcomes. It performs a narrow procedural task of documenting hearing content in sequence without weighting or evaluation, with human review and correction built in. Article 50 transparency obligations apply, but no high-risk classification under Article 6 is triggered.
 - Disagreement: `bdd5c8b802e28075`
 
-**Resolution:**
+**Resolution:** kept: neutral interview summaries are outside point 7(a) (hr-ex-240), but writing summaries is generating synthetic text, so the provider's Art. 50(2) marking duty applies: the Art. 50 guidelines exclude systems that 'extract and structure data, but do not summarise it' (para. 65), which places summarisers inside 50(2); limited_risk stands, and the second model's own reason concedes Art. 50 applies.
 
 ### cb-241-interview-recording-cleanup
 
@@ -739,7 +728,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is designed to assist migration and asylum authorities in processing applicants by detecting and identifying natural persons through facial landmark marking, which falls under Annex III, point 7(d) (AI systems for detecting, recognising or identifying natural persons in migration, asylum or border control management). The system qualifies as high-risk under Article 6(2) read with Annex III, as it materially influences the outcome of asylum proceedings by enabling caseworkers to better identify and assess applicants based on enhanced facial features.
 - Disagreement: `ed7be2b3a542fa32`
 
-**Resolution:**
+**Resolution:** kept: the Commission says normalising interview audio and video, including extracting facial landmarks, without deception inferences can use the Art. 6(3)(d) preparatory-task exception (hr-ex-241); facial landmarks used to steady the image do not detect, recognise or identify anyone, so point 7(d) does not apply.
 
 ### cb-259-speech-origin-indication
 
@@ -750,7 +739,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the Act's scope (Art. 3(1)) used by a public authority for migration and asylum management. It is intended to assist in detecting, recognising or identifying natural persons by analysing linguistic features to infer country or region of origin, which falls under Annex III, point 7(d). The deployer is a public authority using the system under its authority (Art. 3(4)), making it a deployer subject to high-risk obligations from 2 December 2027 (Art. 113(3)(c)(i))—before the stated deployment date of 2028.
 - Disagreement: `6c53ff3e26e4f809`
 
-**Resolution:**
+**Resolution:** kept: the Commission files speech analysis indicating a likely country or region of origin for eligibility reasoning under point 7(c) (hr-ex-259), as it assists the examination of a specific application; inferring origin is not detecting, recognising or identifying a person under point 7(d).
 
 ### cb-262-visa-file-completeness-sorting
 
@@ -761,7 +750,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system performs technical validation of visa applications (checking mandatory fields, formats, and document uploads) and distributes completed files to staff based on objective criteria like visa type and application date. This is a narrow procedural task that does not materially influence decision-making outcomes, falling within Article 6(3) exception (b) as it improves the result of previously completed human activity. However, Article 50(1) applies: the system interacts with natural persons submitting visa applications, so they must be informed they are interacting with an AI system unless this is obvious from context.
 - Disagreement: `31c95c99030176e3`
 
-**Resolution:**
+**Resolution:** kept: the Commission treats technical completeness and format checks plus file assignment by public, objective criteria as a narrow procedural task exempt under Art. 6(3)(a) (hr-ex-262); the system works on submitted files in the back office and does not interact directly with applicants, so there is no Art. 50(1) duty.
 
 ### cb-264-visa-fee-routing
 
@@ -772,7 +761,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system reads passport data to assess visa eligibility and processes applications for asylum, visa or residence permits under Article 6(2) and Annex III, point 7(c). Although the system applies only fixed rules without discretion, it is intended to assist in examining visa applications and determining eligibility, which falls within the high-risk category. Article 6(3) exceptions do not apply because the system materially influences the outcome of visa processing decisions by routing applicants based on nationality and passport type.
 - Disagreement: `57c61ac8afdb3c80`
 
-**Resolution:**
+**Resolution:** kept: the Commission lists a pre-check routing applicants to a fixed fee under strict, objective rules as a narrow procedural task exempt under Art. 6(3)(a) (hr-ex-264); the description confines it to nationality and passport type for the fee and states it does not affect the examination, so it does not materially influence the visa decision.
 
 ### cb-269-asylum-decision-quality-review
 
@@ -783,7 +772,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is deployed by a public authority (asylum office) to assist in researching and interpreting facts and law in the administration of justice by analyzing decision-making patterns in completed asylum procedures. This falls under Annex III, point 8(a), which covers AI systems assisting judicial authorities in applying law to concrete facts. Article 6(3) exceptions do not apply because the system performs profiling of natural persons (asylum applicants) by analyzing their characteristics across similar constellations, which triggers the mandatory high-risk classification under Article 6(3), final sentence.
 - Disagreement: `2efb9d4d1c3c19dc`
 
-**Resolution:**
+**Resolution:** kept: the Commission treats analysing completed eligibility files to detect decision-making patterns or deviations for quality-assurance reporting, without proposing outcomes in live cases, as exempt under Art. 6(3)(c) (hr-ex-269); point 8(a) needs a judicial authority, which an asylum office is not, and the system evaluates no applicant, so the second model's profiling objection fails.
 
 ### cb-272-coastguard-boat-tracking
 
@@ -794,7 +783,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The maritime surveillance system is used by a coast guard (public authority) for law enforcement and border control in the context of migration, asylum and border control management. Article 2(3) of the AI Act explicitly excludes AI systems placed on the market or put into service exclusively for military, defence or national security purposes, regardless of the entity type. Maritime border surveillance and interception operations fall within national security and defence competences, placing this system outside the Act's scope.
 - Disagreement: `f6ba5ed1301304cc`
 
-**Resolution:**
+**Resolution:** kept: the Commission says maritime surveillance that detects and tracks persons for border control, cueing interception or boarding, is within point 7(d) wherever it operates (hr-ex-272); coast-guard border control is migration and border management, not an exclusively military, defence or national-security purpose under Art. 2(3), and buying from a defence supplier does not change the intended purpose.
 
 ### cb-275-sea-rescue-person-detection
 
@@ -805,7 +794,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The AI system is intended to detect and identify natural persons in the context of maritime operations, which falls under Annex III, point 7(d) (migration, asylum and border control management). Although the deployer's stated purpose is life-saving rather than border control, the system's capability to detect and recognize natural persons in migration contexts makes it high-risk under Article 6(2) and Annex III. The exception in Article 6(3) does not apply because the system performs identification of natural persons and materially influences the outcome of emergency response decisions.
 - Disagreement: `83ca83e2ab2cb5e8`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts a system detecting persons in distress at sea exclusively for search and rescue, with no link to migration or border control, outside point 7(d) because its purpose is lifesaving (hr-ex-275); the intended purpose decides, not the capability, and the description routes data only to rescue coordination.
 
 ### cb-280-border-camera-stabiliser
 
@@ -816,7 +805,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within scope (Art. 3(1), Art. 2(1)(a)). It does not fall under Art. 5 prohibitions. It qualifies as high-risk under Art. 6(2) and Annex III, point 7(d), as it is intended to be used by border control authorities in the context of migration, asylum or border control management for the purpose of detecting, recognising or identifying natural persons. Although the system itself performs only image enhancement and does not directly detect or identify, it is designed and deployed as an integral part of the border guards' identification workflow, materially influencing the outcome of their assessment. The Art. 6(3) exception does not apply because the system is not performing a narrow procedural task, preparatory task, or improving a previously completed assessment in isolation; it is a core component of the identification process.
 - Disagreement: `722b7085283e246f`
 
-**Resolution:**
+**Resolution:** kept: the Commission says stabilising, denoising or enhancing border video feeds without any detection, recognition or identification and without cues for a response is a preparatory task under Art. 6(3)(d) (hr-ex-280); the description excludes all of these, so the 'core component of identification' claim contradicts the stated facts.
 
 ### cb-282-small-claims-draft-rulings
 
@@ -827,7 +816,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system intended to assist judicial authorities in applying the law to concrete facts by generating draft judgments and payment orders, which falls under Annex III, point 8(a). Although the system performs a preparatory task (generating a draft for human review and signature), it materially influences the outcome of decision-making in judicial proceedings, and the profiling rule does not apply here, so the Art. 6(3) exception does not eliminate the high-risk classification.
 - Disagreement: `28afac3493aef866`
 
-**Resolution:**
+**Resolution:** kept: the judicial IT office had the system built and puts it into service under the state judiciary's name, which makes it the provider under Art. 3(3) (the courts are the deployers); the class and point 8(a) match hr-ex-282 and are undisputed.
 
 ### cb-288-court-case-assignment
 
@@ -838,7 +827,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The case scheduling tool is an AI system intended to be used by a judicial authority (the court) to assist in administering justice by distributing cases among judges. Article 6(2) and Annex III, point 8(a) classify as high-risk AI systems those intended to assist judicial authorities in applying law to concrete facts or in a similar administrative function. Although the tool performs only case assignment based on judge specialisation and availability rather than substantive legal analysis, it materially influences the outcome of judicial proceedings by determining which judge handles each case, and thus falls within the scope of Annex III:8:a.
 - Disagreement: `c63780ab879098ae`
 
-**Resolution:**
+**Resolution:** kept: the Commission says assigning cases to judges by specialisation, workload or holidays is an ancillary administrative activity outside point 8(a) (hr-ex-288), unless the system also decides procedural questions such as jurisdiction, which the description rules out.
 
 ### cb-289-evidence-timeline-and-search
 
@@ -849,7 +838,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI tool used by a judicial authority (Landgericht Hessen) to assist in organizing and searching evidence materials in criminal proceedings. It performs preparatory and organizational tasks—extracting events, creating chronologies, and enabling searches—without influencing judicial decision-making, which remains entirely with the judges. This falls under Article 50's transparency obligations for AI systems interacting with or assisting judicial processes, rather than Article 6(2) Annex III point 8(a), as it does not assist in researching, interpreting facts, or applying law to concrete facts.
 - Disagreement: `c2e1a6dd5c11c923`
 
-**Resolution:**
+**Resolution:** kept: the Commission puts evidence chronology and search with references outside point 8(a), as it organises access to factual material without evaluating it (hr-ex-289); there is no Art. 50 duty, since a system that extracts and structures data without summarising it is outside Art. 50(2) (Art. 50 guidelines para. 65), and Art. 50 has no rule for 'assisting judicial processes'.
 
 ### cb-290-judgment-redaction-and-fee-check
 
@@ -860,7 +849,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is deployed by a judicial authority (Spanish appeals court) to assist in the administration of justice by processing and preparing case materials before judgment publication and by supporting case intake procedures. Article 6(2) with Annex III, point 8(a) classifies AI systems intended to assist judicial authorities in researching, interpreting facts and law, or applying law to concrete facts as high-risk. The system's role in preparing judicial documents and supporting case administration falls within this scope, even though it does not directly influence judicial decision-making.
 - Disagreement: `6aa299291bef12e4`
 
-**Resolution:**
+**Resolution:** kept: the Commission lists anonymising judicial decisions, verifying court-fee payment and verifying powers of attorney as purely ancillary administrative activities that do not affect adjudication, outside point 8(a) (hr-ex-290); preparing documents for publication is not researching or applying the law.
 
 ### cb-293-case-law-portal-search-summaries
 
@@ -871,18 +860,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the scope of the Act (Art. 3(1)) that will be deployed by a public authority (the judiciary's publications office) to assist in the administration of justice by helping users research and interpret facts and law through plain-language queries and summaries of court decisions. This falls squarely within Annex III, point 8(a), which lists as high-risk AI systems intended to assist judicial authorities in researching and interpreting facts and law. The system does not qualify for the Art. 6(3) exception because it materially influences the outcome of legal research and interpretation, even if it does not directly advise on cases or suggest how they should be decided.
 - Disagreement: `8ad90ada37f1be71`
 
-**Resolution:**
-
-### cb-304-university-voting-behaviour-model
-
-- Set: commission_b; language: en
-- Label: out_of_scope, decided; role provider; no Annex point; cites art:2:6, annex:III:8:b
-- Second model: out_of_scope, decided; no role; no Annex point
-- Differs on: role
-- Its reason: This system falls outside the scope of the EU AI Act under Article 2(6), which exempts AI systems 'specifically developed and put into service for the sole purpose of scientific research and development.' The voter behavior model is developed and used exclusively for academic research, papers, and PhD theses within a university research project, with no commercial deployment, sharing with political actors, or use to influence voters.
-- Disagreement: `fda45a0237b0b1e2`
-
-**Resolution:**
+**Resolution:** kept: the Commission says a public case-law database with keyword, Boolean and natural-language search and decision summaries assists research of the law but carries out only narrow procedural tasks, so it is exempt under Art. 6(3) (hr-ex-293); the summaries are synthetic text under Art. 50(2), giving limited_risk, and the office puts the features into service under its own name, so it is the provider (Art. 3(3)).
 
 ### cb-305-ballot-scan-tally
 
@@ -893,7 +871,7 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI system within the scope of the Act (Art. 3(1)). It is not prohibited under Art. 5. It falls under Annex III, point 8(b), as it is intended to influence the outcome of an election by automating vote counting and candidate tallying, which directly affects the election result. The exception in Art. 6(3) does not apply because the system materially influences the outcome of decision-making (vote counting) and does not merely perform a narrow procedural task or preparatory function. As a deployer placing the system into service in the Union, the municipality is subject to high-risk obligations under Art. 16.
 - Disagreement: `cf64ceab8bdb9f53`
 
-**Resolution:**
+**Resolution:** kept: the Commission says a system used only for mechanical recognition and tallying of ballots is a technical aid whose purpose does not match point 8(b) (hr-ex-305); counting votes cast is not influencing an election's outcome or voting behaviour, and unclear ballots go to the electoral board.
 
 ### cb-307-campaign-copy-tone-check
 
@@ -904,4 +882,21 @@ Cost of the answers compared: $0.4018.
 - Its reason: The system is an AI-based editing tool that assists human writers by suggesting improvements to political communications. It does not generate synthetic content itself, only analyzes and suggests edits to human-written material. Article 50(2) requires marking of AI-generated synthetic content, but this tool performs an assistive function for standard editing without substantially altering input data or generating new content. The system does not fall under Article 5 prohibited practices, nor under Article 6 high-risk categories (Annex III, point 8(b) concerns AI systems intended to influence voting behavior or election outcomes, but this tool merely assists internal editorial review without direct exposure to voters or influence on their behavior).
 - Disagreement: `b2e7ef56c718050f`
 
-**Resolution:**
+**Resolution:** kept: the Commission itself frames a tone checker for human-written campaign texts as arguably within point 8(b) and only says it 'could be exempted' under Art. 6(3)(b) (hr-ex-307), so the label is legally_ambiguous with the stricter high_risk reading as the working assumption, per the cite-or-ambiguous rule and decision 001; the second model's decided minimal_risk skips the Annex III question the Commission raises.
+
+## Resolved earlier, no longer this disagreement
+
+Kept so no resolution is lost: the label, the case or the second model's answer changed
+since it was written. A case listed here and above needs a resolution above.
+
+### cb-098-special-needs-placement-classifier
+
+- Disagreement: `fae94ed5e2cfa590`
+
+**Resolution:** changed: the Commission files the special-education classifier under Annex III point 3(c) (hr-ex-098), which stays the primary point. Our rewrite has the system recommend the "Förderort", i.e. which school or setting the child attends, which also meets point 3(a)'s "assign natural persons to educational and vocational training institutions". Point 3(a) is added as an accepted alternative, as cb-097 already accepts two points.
+
+### cb-304-university-voting-behaviour-model
+
+- Disagreement: `fda45a0237b0b1e2`
+
+**Resolution:** changed: the system is excluded by Art. 2(6) (hr-ex-304: outside point 8(b) and 'in any event' likely excluded), so the Act assigns no operator role, and the project labels out-of-scope cases without a role (own-b-08, the matching research-exclusion case, notes 'Role: none'); the role is removed.

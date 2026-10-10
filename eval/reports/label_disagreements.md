@@ -21,13 +21,13 @@ resolution is missing or a case is unlabelled.
 | own | 76 | 37 | 39 | 0 |
 | soft_pairs | 24 | 22 | 2 | 0 |
 | consistency | 30 | 17 | 13 | 0 |
-| annex_match | 48 | 38 | 10 | 0 |
+| annex_match | 48 | 39 | 9 | 0 |
 
-Differences by kind (a case can have several): class 26, status 7, role 21, annex point 19.
+Differences by kind (a case can have several): class 26, status 7, role 21, annex point 18.
 
 Cost of the answers compared: $0.4495.
 
-## Disagreements (64)
+## Disagreements (63)
 
 ### own-a-01-water-utility-answer-picker
 
@@ -38,7 +38,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The AI system is deployed by a water utility to assist in managing critical digital infrastructure (water supply). Article 6(2) with Annex III, point 2 classifies as high-risk any AI system intended to be used as a safety component in the management and operation of critical digital infrastructure including the supply of water. The chatbot's role in handling customer enquiries about meter readings and payment plans, combined with the utility's management of water supply operations, brings it within this category.
 - Disagreement: `ad4aff28f1c1e192`
 
-**Resolution:**
+**Resolution:** kept: Annex III point 2 covers only AI systems "intended to be used as safety components in the management and operation of … the supply of water"; a customer-enquiry chat that picks pre-written answers about meter readings and payment plans has no safety function in water supply, so it is limited_risk under Art. 50(1). The utility's own digital team built the chat and put it into service under the utility's name, so the utility is the provider (Art. 3(3); guide-art50 para 11, second example), not only a deployer.
 
 ### own-a-03-trip-planning-chat
 
@@ -49,7 +49,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(b)). It does not fall under Art. 5 prohibitions. It is not high-risk under Art. 6(1) (not a safety component of a product in Annex I) or Art. 6(2) (not listed in Annex III). However, it is designed to interact directly with natural persons and generates content (itineraries, recommendations), triggering Art. 50(1) transparency obligations to inform users they are interacting with an AI system. As a deployer placing the system into service in the Union, the company must comply with these transparency requirements.
 - Disagreement: `1e17a61e5acf90a4`
 
-**Resolution:**
+**Resolution:** kept: the company wraps a licensed LLM in its own prompts, booking connections and safety filters and offers the assistant under its own brand, so it develops an AI system and places it on the market under its own name: provider under Art. 3(3) (guide-art50 para 11: a company offering a chatbot under its own name is the provider responsible for Art. 50(1)/(2)). The second model calls it a deployer "placing the system into service", which is the provider's act.
 
 ### own-a-15-intranet-assistant-in-house
 
@@ -60,7 +60,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system within scope (Art. 3(1), Art. 2(1)(b)). It does not fall under prohibited practices (Art. 5). It is not high-risk: it is not a safety component of a product under Annex I (Art. 6(1)), and it does not fall under Annex III categories—it performs internal administrative assistance (answering IT and policy questions, drafting documents) without making decisions about employees or influencing critical outcomes. The Art. 6(3) exception applies: the system performs narrow procedural tasks and preparatory work, not decision-making. No transparency obligations under Art. 50 apply (no direct interaction with natural persons outside the organization, no synthetic content generation, no emotion recognition or biometric categorization). The system therefore carries only minimal risk.
 - Disagreement: `c474435afa94faaf`
 
-**Resolution:**
+**Resolution:** kept: the in-house IT built the assistant on an open model and put it into service for the company's own use, so the company is the provider (Art. 3(3), 3(11); guide-art50 para 11, second example). It drafts documents such as purchase requisitions, i.e. it generates synthetic text, and Art. 50(2) binds providers of such systems with no exception for internal use (drafting is not "standard editing"), so the class is limited_risk, not minimal_risk. The second model reads Art. 50 as limited to outside users, which the provision does not say.
 
 ### own-b-01-overtime-payroll-rules
 
@@ -71,7 +71,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The payroll system is an AI system under Art. 3(1) as it infers outputs (pay calculations) from inputs (hours, rules) to influence decisions. It does not fall under Art. 5 prohibitions, Art. 6 high-risk criteria (not a safety component under Annex I, and does not match Annex III use cases—payroll calculation is not biometric identification, critical infrastructure management, education/vocational training, employment decisions, essential services eligibility, law enforcement, migration control, or judicial processes), nor Art. 50 transparency duties (it does not interact directly with natural persons or generate synthetic content). Therefore it is minimal_risk under Art. 2(1)(b) as a deployer located in the Union.
 - Disagreement: `29d5dc891f434100`
 
-**Resolution:**
+**Resolution:** kept: the payroll package applies pay rules that staff typed in and maintain by hand, and the description says it learns nothing from past data. That is basic data processing following "predefined, explicit instructions" (guide-definition para 46; recital 12), so it lacks the capability to infer and is not an AI system under Art. 3(1). The second model just asserts inference without engaging that exclusion.
 
 ### own-b-02-applicant-portal-filters
 
@@ -82,7 +82,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system applies only explicit, rule-based filtering criteria (driver's license class, language level, location) without machine learning or trained models, and does not make autonomous decisions about candidates. While it is an AI system under Art. 3(1) as it processes inputs to generate filtered outputs, it does not fall under Art. 5 (prohibited practices), Art. 6 (high-risk), or Art. 50 (transparency obligations for interaction or synthetic content). The human reviewer retains full control and reviews filtered-out applications weekly.
 - Disagreement: `9d72bb5837ab94e7`
 
-**Resolution:**
+**Resolution:** kept: the system only hides applications that miss recruiter-set checkboxes and sorts the rest by date, with no trained model, scores or ranking. guide-definition para 46 names "database management systems used to sort or filter data based on specific criteria" as basic data processing outside Art. 3(1). The second model itself says there is no machine learning, yet still calls it an AI system, which contradicts that guidance.
 
 ### own-b-03-bakery-weekday-average
 
@@ -93,7 +93,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system under Art. 3(1) as it infers ordering quantities from sales data to generate recommendations. It falls within the Act's scope under Art. 2(1)(b) as a deployer established in the Union. It does not engage prohibited practices under Art. 5, nor does it qualify as high-risk under Art. 6: it performs a narrow procedural task (averaging historical sales), is intended to improve a previously completed human activity (manual ordering), and does not materially influence decision-making as managers retain full override authority. Art. 50 transparency obligations do not apply as the system does not interact directly with natural persons or generate synthetic content. The system therefore incurs only minimal_risk obligations.
 - Disagreement: `1d2aee2c6b143521`
 
-**Resolution:**
+**Resolution:** kept: the "smart ordering" is a four-week same-weekday average plus a manual uplift. guide-definition para 49 and 51 put such trivial predictors (its own example is "demand forecasting for a store to predict how many items of a product the store will sell each day") outside the AI system definition, so it is out of scope under Art. 3(1). The second model's minimal_risk ignores that exclusion.
 
 ### own-b-04-card-game-opponent
 
@@ -104,7 +104,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system within the scope of the Act (Art. 3(1)): it is a machine-based system that infers from input how to generate outputs (card selections) that can influence virtual environments. It is not prohibited (Art. 5), not high-risk (Art. 6), and does not trigger transparency obligations under Art. 50 because it does not interact directly with natural persons in a way that requires disclosure—the interaction is with game players who understand they are playing against a computer opponent. The system therefore falls under minimal_risk.
 - Disagreement: `79f96186afd88a81`
 
-**Resolution:**
+**Resolution:** kept: the opponent is a look-ahead search with a hand-written evaluation function, with no training and no learning. That is the case guide-definition para 48 places outside the definition ("a chess program using a minimax algorithm with heuristic evaluation functions … without requiring prior learning from data"), so it is not an AI system under Art. 3(1).
 
 ### own-b-05-regression-loan-scorecard
 
@@ -115,7 +115,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system evaluates creditworthiness of natural persons to make credit decisions, falling under Annex III, point 5(b). Although the bank uses established logistic regression methodology, the system makes binding decisions on loan applications (automatic decline below threshold), materially influences the outcome of credit assessment, and does not qualify for the Article 6(3) exceptions as it is not a narrow procedural task, improvement of prior human activity, or preparatory task—it directly determines eligibility for essential financial services.
 - Disagreement: `e48bbdfd56fdd122`
 
-**Resolution:**
+**Resolution:** kept: guide-definition para 42 expressly names "linear or logistic regression methods" with long consolidated use as not transcending basic data processing, while the scorecard learns from data to infer default probabilities that decide applications. The sources conflict on whether it is an AI system at all, so legally_ambiguous with the stricter high_risk (Annex III 5(b)) is correct under cite-or-ambiguous. The bank's own risk team builds it and puts it into service for its own use, so it is the provider (Art. 3(3), 3(11)), not merely a deployer.
 
 ### own-b-07-satellite-dual-use
 
@@ -126,7 +126,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The AI system is intended to be used for detecting and identifying natural persons in the context of border control and migration management (Annex III, point 7(d)), as evidenced by its original development for military troop movement tracking by the Bundeswehr. Although the company now markets it to forestry authorities, the same system is placed on the market under the provider's name for use by public authorities in migration, asylum and border control contexts, making it a high-risk AI system under Article 6(2) and Annex III, point 7(d).
 - Disagreement: `bb0b7f0f8bc1c4e6`
 
-**Resolution:**
+**Resolution:** kept: Annex III 7(d) covers systems used by authorities "in the context of migration, asylum or border control management, for the purpose of detecting, recognising or identifying natural persons". This software detects vehicles, tracks and vegetation change, is sold to forestry administrations and conservation groups, and by its stated design cannot recognise persons. No Annex III or Annex I point applies and there is no Art. 50 function, so the label is minimal_risk. The second model invents a border-control use the description never states.
 
 ### own-b-09-voice-mood-prototype
 
@@ -137,7 +137,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is currently in research, testing and development phase prior to being placed on the market or put into service. Article 2(8) of the AI Act explicitly excludes research, testing or development activities regarding AI systems prior to their being placed on the market or put into service from the Regulation's scope. Since the prototype has never been deployed with real calls, has no pilot customer, and has not been placed on the market or put into service, it falls outside the scope of the AI Act.
 - Disagreement: `5ec40fbeadeae0d5`
 
-**Resolution:**
+**Resolution:** kept: Art. 2(8) exempts only the current "research, testing or development activity … prior to" placing on the market. Under the project's planned-system rule (user-approved relabel, 2026-09-30), the label classifies the call-centre emotion-recognition product the start-up will sell from 2028, which is Annex III 1(c) with the start-up as provider (Art. 3(3)). The notes already record the Art. 2(8) point. The second model labels today's lab activity rather than the system.
 
 ### own-b-11-open-source-cv-ranking
 
@@ -148,7 +148,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system intended to filter and rank job applications for recruitment decisions, falling under Annex III, point 4(a). Although based on open-source code, Article 2(12) exempts open-source AI systems only if they are not placed on the market or put into service as high-risk systems or systems under Articles 5 or 50; this system is placed into service as high-risk. The deployer's planned implementation—automatically rejecting all but the top 20 candidates—constitutes a high-risk recruitment system under Article 6(2) and Annex III, point 4(a), as it materially influences hiring outcomes without the exception conditions in Article 6(3) applying.
 - Disagreement: `4b032a80c3e4f1b1`
 
-**Resolution:**
+**Resolution:** kept: the company's IT builds the ranking system from a downloaded open-source model and will put it into service "nur bei uns, unter unserem Namen", which is putting into service for own use under its own name, so it is the provider (Art. 3(3), 3(11)) and also the deployer. The second model agrees on class and Annex point but misses that building the system makes it the provider.
 
 ### own-b-13-private-trading-app
 
@@ -159,7 +159,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI-based portfolio management app used by a natural person for personal, non-professional investment purposes. Article 2(10) of the EU AI Act explicitly excludes AI systems used by natural persons in the course of purely personal non-professional activity from the Regulation's scope. The user is a teacher using the app solely for private retirement savings, not in any professional capacity or to advise others.
 - Disagreement: `7c1ad3c7a55337f8`
 
-**Resolution:**
+**Resolution:** kept: the teacher uses the app purely for his own savings, so he is not a deployer (Art. 3(4)) and Art. 2(10) excludes the obligations of "deployers who are natural persons using AI systems in the course of a purely personal non-professional activity". By the user's 2026-09-30 decision, that exclusion is labelled out_of_scope. The second model's own reasoning cites the same exclusion, yet it outputs minimal_risk.
 
 ### own-c-02-undress-app-before-december
 
@@ -170,7 +170,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system generates synthetic intimate images of identifiable persons without their consent, which falls under Article 5(1)(ba) of the EU AI Act. This prohibition applies from 2 December 2026 according to Article 113(a), and the system was placed on the market on 1 September 2026, before the prohibition's entry into force. However, as of the assessment date (16 November 2026), the prohibition is imminent and the system clearly violates the requirements of Article 5(1)(ba) regarding non-consensual intimate image generation.
 - Disagreement: `16b2abe9c0703afe`
 
-**Resolution:**
+**Resolution:** kept: Art. 113(a) applies Art. 5(1)(ba) and Art. 5(1a)/(1b) only "from 2 December 2026", and the case date is 16 November 2026, so the app is not yet prohibited. The second model concedes this, yet labels it prohibited. Until then, the provider of a system generating synthetic images, placed on the market after 2 August 2026, must mark its output under Art. 50(2): limited_risk.
 
 ### own-c-04-studio-digital-doubles-consent
 
@@ -181,7 +181,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: Article 5(1)(ba) prohibits placing on the market or putting into service AI systems that generate or manipulate realistic images of identifiable natural persons' intimate parts or engaged in sexually explicit activities without freely-given, specific, informed, unambiguous and explicit consent. Although the company obtained written consent from performers, Article 5(1a)(b) clarifies that use is prohibited where the deployer uses the system for generating such material. The company is deploying the software to generate sexually explicit deepfake content, which falls squarely within this prohibition applicable since 2 December 2026.
 - Disagreement: `9dfb9c9a9c3568c5`
 
-**Resolution:**
+**Resolution:** kept: Art. 5(1)(ba) prohibits generating sexually explicit images of identifiable persons only "without that person's freely-given, specific, informed, unambiguous and explicit consent". The description gives a separate written, scene-specific, revocable consent with no penalty for refusing, so (ba) is not met, and Art. 5(1a)(b) only narrows when use is prohibited; it does not remove the consent condition. The scenes are deep fakes (Art. 3(60)) that the deployer must disclose under Art. 50(4): limited_risk.
 
 ### own-c-06-dating-app-nudity-blur
 
@@ -192,7 +192,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(a)). It does not fall under Art. 5 prohibitions: it does not generate or manipulate intimate images (Art. 5(1)(ba)), but only blurs existing ones without creating new content, and Art. 5(1a)(a) requires generation or manipulation as the intended purpose or a reasonably foreseeable outcome—blurring is neither. It is not high-risk under Art. 6: it performs a narrow procedural task (image filtering) that does not materially influence decisions about persons (Art. 6(3)(a)). It triggers Art. 50 transparency obligations as a system interacting with users and processing image content, requiring disclosure of the blurring function.
 - Disagreement: `f6d3fa24c46a2905`
 
-**Resolution:**
+**Resolution:** kept: Art. 5(1b) takes blurring out of (ba), and no Art. 50 duty applies. The feature talks to no one, so Art. 50(1) is not engaged. A blur overlay the recipient can remove is the kind of minor alteration the Art. 50 guidelines exempt from Art. 50(2) ("deleting and obscuring backgrounds …, pixelation or blurring of faces", guide-art50 para 92), so the label is minimal_risk. The second model's "interacting with users and processing image content" matches no Art. 50 paragraph.
 
 ### own-c-08-agent-voice-mood-scores
 
@@ -203,7 +203,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system evaluates employee emotions (stress, irritation) during work and uses the results to make decisions affecting employment relationships, including performance evaluation and bonus calculation. This falls under Annex III, point 4(b), which covers AI systems for making decisions affecting work-related relationships and monitoring employee behavior. Article 6(3) exceptions do not apply as the system directly influences employment decisions rather than merely assisting human assessment.
 - Disagreement: `34b6910af5a79d14`
 
-**Resolution:**
+**Resolution:** kept: the software infers employees' irritation and stress from their voice at work, for performance reviews and bonuses, with no medical or safety reason. That is prohibited by Art. 5(1)(f), and guide-prohibited para 254 gives exactly this example ("Using webcams and voice recognition systems by a call centre to track their employee's emotions, such as anger, is prohibited"). Art. 5 is checked before Annex III, so the second model's Annex III 4(b) high-risk reading skips the prohibition.
 
 ### own-c-09-crane-operator-stress-alarm
 
@@ -214,7 +214,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system performs biometric categorisation by inferring stress or panic states from biometric data (camera and wristband), which falls under Annex III, point 1(b). Although the deployer argues the system does not materially influence decision-making because it only triggers automated crane slowdown and supervisor alerts, Article 6(3) does not apply because the system performs profiling of natural persons (detecting acute psychological states), which the profiling carve-out in Article 6(3) explicitly excludes from exemption. The system is therefore high-risk.
 - Disagreement: `b1555201db78e800`
 
-**Resolution:**
+**Resolution:** kept: detecting acute stress or panic from camera and wristband data infers emotions from biometric data, which makes it an emotion recognition system (Art. 3(39)), listed as Annex III 1(c) ("AI systems intended to be used for emotion recognition"). Annex III 1(b) covers biometric categorisation "according to sensitive or protected attributes or characteristics", which this system does not do. The safety exception in Art. 5(1)(f) (guide-prohibited para 263, dangerous machines) keeps it out of the prohibition.
 
 ### own-c-10-town-resident-points
 
@@ -225,7 +225,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The municipality deploys an AI system that evaluates eligibility of natural persons for essential public services (kindergarten places and sports facility access) based on a social scoring mechanism combining multiple behavioral data sources. This falls under Annex III, point 5(a), as it uses AI to determine access to essential public services. The system's use of behavioral monitoring (waste sorting, fines, engagement) to influence access to services constitutes a high-risk application under Article 6(2) and Annex III.
 - Disagreement: `b437cd60f8daa506`
 
-**Resolution:**
+**Resolution:** kept: the town scores households over time on social behaviour (fees, waste sorting, fines, volunteering; guide-prohibited para 157), and low scores push them down daycare waiting lists and sports-hall allocations, contexts unrelated to where the data arose and out of proportion to it. That is social scoring prohibited by Art. 5(1)(c)(i) and (ii). Art. 5 takes precedence over the second model's Annex III 5(a) reading.
 
 ### own-c-11-police-burglary-risk-list
 
@@ -236,7 +236,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: This AI system is deployed by a law enforcement authority to assess the risk of natural persons offending (committing burglary) based on profiling using personal characteristics, family background, neighbourhood, employment history and personality traits. It falls under Annex III, point 6(d), which covers AI systems assessing the risk of a natural person offending or re-offending not solely on the basis of profiling. The system does not qualify for the Article 6(3) exception because it materially influences the outcome of decision-making (determining who receives home visits and increased police stops) and performs profiling of natural persons, which triggers the mandatory high-risk classification under Article 6(3), final sentence.
 - Disagreement: `99143fca54cdf1e2`
 
-**Resolution:**
+**Resolution:** kept: the tool predicts each person's risk of committing burglary from age, family background, neighbourhood, schooling, employment and a personality questionnaire, and officers act "even when nothing links them to an actual burglary". That is risk assessment "based solely on the profiling of a natural person or on assessing their personality traits", prohibited by Art. 5(1)(d), and the exception for supporting an assessment already based on objective facts does not apply. Annex III 6(d) covers only assessments "not solely on the basis of profiling", so the second model's reading contradicts the facts.
 
 ### own-c-15-debt-collection-chat-pressure
 
@@ -247,7 +247,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The AI system deploys manipulative techniques with the objective of materially distorting the behaviour of natural persons by using artificial urgency ('only today', 'last warning before court') and personalised timing based on prior responses, causing them to take payment decisions they would not otherwise take. This violates Article 5(1)(a) of the EU AI Act, which prohibits AI systems that deploy purposefully manipulative or deceptive techniques with the objective or effect of materially distorting behaviour and causing significant harm.
 - Disagreement: `bae9dcd9cb9434d4`
 
-**Resolution:**
+**Resolution:** kept: the false deadlines are deceptive, but Art. 5(1)(a) also needs the distortion to cause, or be reasonably likely to cause, "significant harm". The description deliberately leaves that open (the debts are owed; whether debtors cut back elsewhere or borrow is unknown), and guide-prohibited para 91 says significant harm "is fact-specific, requiring … a case-by-case assessment". Under cite-or-ambiguous the status is legally_ambiguous with the stricter class prohibited; the second model treats the harm element as met without facts.
 
 ### own-c-16-police-live-search-missing-child
 
@@ -258,7 +258,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: Article 5(1)(h) prohibits real-time remote biometric identification in publicly accessible spaces for law enforcement unless strictly necessary for one of three objectives. The system's use for finding missing persons falls within Article 5(1)(h)(i), which is a permitted exception. However, the system will be deployed from 2028, after Article 5(1)(h) applies from 2 August 2026. The deployer has satisfied the procedural safeguards of Article 5(2)-(3) (prior judicial authorization, fundamental rights impact assessment, registration, notification). Since the use case and safeguards align with the statutory exception in Article 5(1)(h)(i), the system is not prohibited.
 - Disagreement: `8cbb0cd41278d702`
 
-**Resolution:**
+**Resolution:** kept: real-time remote biometric identification for law enforcement is prohibited by Art. 5(1)(h) "unless and in so far as" it is strictly necessary for a listed objective. The search for missing persons is (h)(i), national law authorises it (Art. 5(5)), each use is approved in advance by a judge (Art. 5(3)), and the FRIA and registration are done (Art. 5(2)). So it is not prohibited, and remote biometric identification is high-risk under Annex III 1(a). The second model's own reasoning concludes "the system is not prohibited", which contradicts its output.
 
 ### own-d-01-own-brand-screening
 
@@ -269,7 +269,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system intended to be used for recruitment and selection of natural persons by analyzing and filtering job applications, falling under Annex III, point 4(a). By placing their name and trademark on the system without modifying it and reselling it to corporate clients, the company qualifies as a distributor under Article 3(7) and becomes a provider under Article 25(1)(a), subject to high-risk AI system obligations that apply from 2 December 2027 under Article 113(3)(c)(i).
 - Disagreement: `d74671b79db04023`
 
-**Resolution:**
+**Resolution:** kept: the agency puts its own name and trademark on a high-risk screening engine already on the market, and the licence does not reallocate obligations, so under Art. 25(1)(a) it "shall be considered to be a provider". The Tallinn company stops being the provider (Art. 25(2)). The second model's own reasoning says the agency "becomes a provider under Article 25(1)(a)", yet it outputs distributor.
 
 ### own-d-02-retrained-credit-score
 
@@ -280,7 +280,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The company uses an AI system to evaluate creditworthiness of natural persons and establish credit scores for consumer lending decisions, which falls under Annex III, point 5(b). Although the company is a deployer rather than the original provider, it has made substantial modifications to the system by retraining it with proprietary data and adding new input features (mobile payment histories), which under Article 25(1)(b) makes it a provider of the modified high-risk system. The system is placed on the market as of July 2026, before the application date of Chapter III requirements (2 December 2027 for Annex III systems per Article 113(3)(c)(i)), but the company must comply with high-risk requirements by that date.
 - Disagreement: `a6c7f1d4f992d05d`
 
-**Resolution:**
+**Resolution:** kept: retraining that the vendor's manual expressly rules out, plus a new input source, is a change not foreseen in the initial conformity assessment that affects Chapter III Section 2 compliance (Art. 3(23)). The system stays high-risk (Annex III 5(b)), so the lender becomes its provider under Art. 25(1)(b), and also its deployer. The second model states this same Art. 25(1)(b) switch in its reasoning but outputs deployer.
 
 ### own-d-03-assistant-repurposed-hiring
 
@@ -291,7 +291,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The company deploys a general-purpose AI assistant to make recruitment decisions by filtering job applications and determining which candidates are invited or rejected. This falls squarely within Annex III, point 4(a), which covers AI systems intended to analyse and filter job applications and evaluate candidates. Article 6(3) does not apply because the system directly influences the outcome of hiring decisions without human review of rejected candidates, and the vendor's usage policy prohibition does not override the legal classification.
 - Disagreement: `90dd763a8a5583b3`
 
-**Resolution:**
+**Resolution:** kept: the gym chain turns a general-purpose assistant, whose vendor excludes hiring use, into an invite/reject filter for applications. Art. 25(1)(c) applies to anyone who "modif[ies] the intended purpose of an AI system, including a general-purpose AI system, which has not been classified as high-risk … in such a way that [it] becomes a high-risk AI system", so the chain is the provider (and also the deployer) of an Annex III 4(a) system. The second model labels the use correctly but misses the switch.
 
 ### own-d-05-white-label-captions
 
@@ -302,7 +302,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system within scope (Art. 3(1), 2(1)(d)) that generates synthetic text content. It does not fall under prohibited practices (Art. 5) or high-risk categories (Art. 6, Annex I, Annex III). However, as a provider of an AI system generating synthetic text published to the public, it triggers transparency obligations under Art. 50(4) requiring disclosure that text has been artificially generated or manipulated when published with the purpose of informing the public on matters of public interest. The company acts as a distributor (Art. 3(7)) reselling under its own name without modification.
 - Disagreement: `1428b6b05ba29300`
 
-**Resolution:**
+**Resolution:** kept: Art. 3(3) needs the provider to develop the system or have it developed, which the agency did neither. Art. 25 cannot convert it because the tool is not high-risk. Yet guide-art50 para 11 treats a company offering a generative application on the Union market "under its own name or trademark" as the provider responsible for Art. 50(2). The provision and the guideline point different ways, so legally_ambiguous with the stricter provider reading is correct, and the second model's decided "distributor" picks one side without addressing the conflict.
 
 ### own-d-07-office-assistant-seats
 
@@ -313,7 +313,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The firm is a deployer of a general-purpose AI assistant used for drafting, summarisation and translation tasks. These are narrow procedural tasks that do not fall under the high-risk categories in Annex III, and the system does not interact directly with natural persons or generate synthetic content for publication. Article 50 transparency obligations do not apply because the outputs are reviewed by a partner before any client-facing use and nothing is published by the AI system itself.
 - Disagreement: `d735c995768275d9`
 
-**Resolution:**
+**Resolution:** kept: the assistant chats directly with staff and generates synthetic text (drafts, summaries, translations), so the system carries Art. 50(1) and 50(2) duties. Under the project's rule that the class describes the system whoever bears its duties (INIT › Risk classes, user-approved 2026-09-29), it is limited_risk, while the firm itself is a deployer with only Art. 4 duties. The second model's claims that it "does not interact directly with natural persons" and generates no synthetic content are factually wrong.
 
 ### own-d-10-rebranded-health-pricing
 
@@ -324,7 +324,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The company is a distributor placing an AI system on the market under its own name and trademark (Art. 3(7), Art. 25(1)(a)). The system evaluates creditworthiness and establishes risk pricing for natural persons in relation to life and health insurance, falling under Annex III, point 5(c). As a distributor making a substantial modification by rebranding and integrating the system into its own offering, the company becomes a provider subject to high-risk obligations under Article 16.
 - Disagreement: `6f655ec3e5dd0599`
 
-**Resolution:**
+**Resolution:** kept: the Cologne company acquired the rights to the system and is the one placing it on the Union market under its own name, logo, hotline and manuals, so it is the provider (Art. 3(3)). Had the Seoul developer already placed it on the market, Art. 25(1)(a) would give the same result for this high-risk Annex III 5(c) system. A distributor is by definition "other than the provider" (Art. 3(7)), and the second model's own reasoning concludes the company "becomes a provider".
 
 ### own-d-12-lender-extra-input
 
@@ -335,7 +335,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system evaluates creditworthiness of natural persons to establish credit scores for lending decisions, falling under Annex III, point 5(b). Although the vendor remains the nominal provider, the deployer has made substantial modifications by adding behavioural inputs (app session data, hesitation patterns) that materially alter the system's decision-making basis, triggering deployer obligations under Article 25(1)(b) as a provider of the modified high-risk system.
 - Disagreement: `65521ffccde46d56`
 
-**Resolution:**
+**Resolution:** kept: the recalibration is a vendor-foreseen feature, but the behavioural input is neither allowed nor forbidden by the documentation. Whether that is a change "not foreseen or planned in the initial conformity assessment" that affects compliance (Art. 3(23)), and so triggers Art. 25(1)(b), is a genuine open reading. legally_ambiguous with the stricter provider role is correct. The second model's reasoning itself finds an Art. 25(1)(b) switch, which contradicts its "deployer, decided" output.
 
 ### own-d-13-mailroom-tool-benefits
 
@@ -346,7 +346,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is used to evaluate eligibility for essential public assistance benefits (housing allowance/Wohngeld) and to make preliminary decisions on granting or refusing such benefits, falling under Annex III, point 5(a). Although human signature remains, the AI system materially influences the outcome of decision-making by pre-classifying applications, and the deployer's modification of the original software to this purpose makes it a high-risk system under Article 6(2) and (3).
 - Disagreement: `89bf825abf31009b`
 
-**Resolution:**
+**Resolution:** kept: the social welfare office extended a mailroom tool, whose maker excludes any other use, into pre-sorting housing-benefit applications as likely eligible or likely to be refused. That modifies the intended purpose of a non-high-risk system so that it becomes an Annex III 5(a) system, which makes the authority the provider under Art. 25(1)(c), putting it into service for its own use (Art. 3(11)), and also the deployer. The second model notes the modification but does not draw the role consequence.
 
 ### own-e-01-skin-lesion-app
 
@@ -357,7 +357,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: DermaSight is an AI system intended to be used to evaluate eligibility for essential public services (healthcare referral decisions) and assist in clinical decision-making affecting access to medical services. It falls under Annex III, point 5(a), as an AI system intended to be used by public authorities or on their behalf to evaluate eligibility for essential public assistance benefits and services, including healthcare services. Although the GP retains final decision-making authority, the system's output materially influences the outcome of the clinical assessment and referral decision, triggering high-risk classification under Article 6(2) and (3)—the narrow procedural task and human review exceptions do not apply because the system performs substantive medical assessment rather than a preparatory task.
 - Disagreement: `1f15fcc36fa91ab7`
 
-**Resolution:**
+**Resolution:** kept: DermaSight is itself a medical device under the MDR (Annex I Section A point 11) and, as class IIa, needs a notified body, so Art. 6(1)(a) and (b) are met. Annex III 5(a) covers systems used "by public authorities or on behalf of public authorities to evaluate the eligibility of natural persons for essential public assistance benefits and services". A GP's melanoma-referral aid sold by a private company evaluates no one's eligibility for public benefits, so it does not fit that point.
 
 ### own-e-04-loader-crane-tip-guard
 
@@ -368,7 +368,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The AI system is a safety component of a loader crane (a machine covered by Regulation (EU) 2023/1230 in Annex I, Section A, point 21) that prevents tip-over and overload by controlling crane movements. The product requires third-party conformity assessment by a notified body under the Machinery Regulation. Article 6(1) therefore classifies this as high-risk.
 - Disagreement: `75ba66b853d6b65f`
 
-**Resolution:**
+**Resolution:** kept: in the consolidated Annex I (as amended by the Omnibus), the Machinery Regulation 2023/1230 is Section B point 21, not Section A. Section A point 11 is the MDR, and Section A stops at point 12. The load limiter is a safety component of a crane that needs a notified body, so it is high_risk via annex:I:B:21. The second model's "annex:I:A:21" does not exist.
 
 ### own-e-05-emergency-braking-supplier
 
@@ -379,7 +379,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The automatic emergency braking system is an AI system (Art. 3(1)) that qualifies as a safety component of motor vehicles covered by Regulation (EU) 2018/858 and (EU) 2019/2144 listed in Annex I, Section A. It undergoes third-party conformity assessment as part of EU vehicle type-approval before placing on the market (Art. 6(1)). Therefore it is high-risk under Annex I, point 11 (motor vehicles and their safety components).
 - Disagreement: `4e199b725de87ecb`
 
-**Resolution:**
+**Resolution:** kept: motor-vehicle type-approval (Regulations 2018/858 and 2019/2144) is listed in Annex I Section B points 18 and 19. Section A point 11 is the Medical Device Regulation 2017/745, so the second model's annex:I:A:11 names the wrong legislation for an emergency braking function.
 
 ### own-e-07-grinder-burst-kit
 
@@ -390,7 +390,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is a safety component of grinding machines covered by Regulation (EU) 2023/1230 on machinery (Annex I, Section A, point 21), and the machines require third-party conformity assessment under that legislation. Article 6(1) classifies such AI systems as high-risk. However, confirmation is needed on whether the system qualifies as a safety component under Article 6(1a)-(1b) (the description suggests it does, as failure would endanger health and safety), and whether the machinery directive's conformity assessment requirement applies to the retrofit kit specifically or only to the integrated machine.
 - Disagreement: `7040c05776a704d5`
 
-**Resolution:**
+**Resolution:** kept: the Machinery Regulation 2023/1230 is Annex I Section B point 21 in the consolidated text. Section A point 11 is the MDR, so the second model's annex:I:A:11 is wrong, even though its own reasoning names the Machinery Regulation. The class and needs_more_information status agree.
 
 ### own-e-09-ropeway-wear-forecast
 
@@ -401,7 +401,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is a safety component of cableway installations (lifts/gondolas) covered by Regulation (EU) 2016/424 in Annex I, Section A. Although the software itself was not part of the original third-party conformity assessment, it materially influences safety-critical maintenance decisions that affect the mechanical integrity of the installation. Under Article 6(1b), AI systems whose failure or malfunctioning would endanger health and safety qualify as safety components, and this predictive maintenance tool directly impacts decisions on deferring inspections of critical load-bearing components.
 - Disagreement: `f141f705264bd500`
 
-**Resolution:**
+**Resolution:** kept: two points are genuinely open. First, whether a maintenance-planning tool is excluded as "performance optimisation, service efficiency" (Art. 6(1a)) or is a safety component because a wrong rating used to defer inspections "would endanger health and safety" (Art. 6(1b)). Second, whether software sold separately and never part of the cableway certification "is required to undergo a third-party conformity assessment" under Regulation 2016/424 (Art. 6(1)(b)). The second model addresses only the first and silently assumes the second, so legally_ambiguous with the stricter high_risk stands.
 
 ### own-e-10-in-house-nodule-finder
 
@@ -412,7 +412,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system intended to be used to evaluate eligibility for and assist in the provision of healthcare services (thorax CT analysis for lung nodule detection and measurement), falling under Annex III, point 5(a). As a university hospital deployer located in the Union using the system under its authority for clinical decision support in patient care, the institution is subject to high-risk AI system obligations under Article 6(2) and Article 3(4). The system does not qualify for the Article 6(3) exception because it materially influences the outcome of radiological assessment and diagnosis, which are core healthcare decisions.
 - Disagreement: `4baa00323020d3bd`
 
-**Resolution:**
+**Resolution:** kept: the hospital's radiology and IT developed the software and put it into service for their own use, so the hospital is the provider (Art. 3(3), 3(11)) as well as the deployer, not a deployer only. Marking and measuring lung nodules is a medical-device function (Annex I Section A point 11), not an evaluation of "eligibility … for essential public assistance benefits and services" (Annex III 5(a)). Whether the MDR in-house exemption means Art. 6(1)(b)'s third-party assessment is "required" is genuinely open, so legally_ambiguous stands.
 
 ### own-e-12-hospital-xray-triage
 
@@ -423,7 +423,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The AI system is intended to be used by a public authority (hospital) to evaluate eligibility for essential public healthcare services and to assist in clinical decision-making regarding patient triage and prioritization. Article 6(2) in conjunction with Annex III, point 5(a) classifies AI systems for evaluating eligibility for essential healthcare services as high-risk. The system's function of prioritizing urgent cases in the work list constitutes a material influence on healthcare delivery decisions, and the deployer (hospital operator) must comply with high-risk AI system requirements under Article 16 from 2 December 2027 onwards.
 - Disagreement: `dd27f22be3ee9c38`
 
-**Resolution:**
+**Resolution:** kept: the software is CE-marked class IIa medical-device software certified through a notified body, so it is high-risk under Art. 6(1) via Annex I Section A point 11. Annex III 5(a) covers public authorities evaluating "eligibility of natural persons for essential public assistance benefits and services"; a privately run hospital reordering a radiology worklist evaluates no one's eligibility. The second model also wrongly calls the private hospital group a public authority.
 
 ### own-t-01-ai-for-hr
 
@@ -434,7 +434,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The description indicates use of AI for HR purposes, which falls under Annex III, point 4(b) covering AI systems intended to make decisions affecting work-related relationships, performance evaluation, or task allocation. However, the description is too vague to determine whether the system qualifies for the Article 6(3) derogation (narrow procedural task, improving prior human activity, detecting patterns without replacing assessment, or preparatory task) or whether it involves profiling, which would make it always high-risk.
 - Disagreement: `448026ada0351295`
 
-**Resolution:**
+**Resolution:** kept: "We use AI for HR" says nothing about what the tool does or whom it affects, so the class could range from minimal risk to Annex III 4(a) or 4(b). Under decision 032 a too-thin description is labelled needs_more_information with no class. The second model agrees the description is too thin but still guesses high_risk and 4(b), which the facts cannot support.
 
 ### own-t-02-sales-team-ai-tool
 
@@ -445,7 +445,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The description does not identify what the AI tool does or how it operates. Without knowing whether it is an 'AI system' as defined in Article 3(1)—a machine-based system designed to operate with varying levels of autonomy that infers from inputs how to generate outputs such as predictions, content, recommendations, or decisions that can influence physical or virtual environments—it cannot be classified under the Act. The description is too thin to establish that the tool meets the definition of an AI system at all.
 - Disagreement: `380fdd6a6f447428`
 
-**Resolution:**
+**Resolution:** kept: the description never says what the sales tool does, so nothing settles any class. Decision 032 labels such cases needs_more_information with no class. The second model's own reasoning says it "cannot be classified" and then outputs a decided out_of_scope, which is a guess, not a finding that the tool fails Art. 3(1).
 
 ### own-t-03-ki-im-kundenservice
 
@@ -456,7 +456,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The municipal utility is a deployer of an AI system in customer service. Without details on the specific functions (e.g., whether it makes decisions on essential services, evaluates eligibility for benefits, or merely provides information), it cannot be determined whether the system qualifies as high-risk under Annex III, point 5. The system triggers transparency obligations under Article 50(1) if it interacts directly with natural persons without making obvious that they interact with AI.
 - Disagreement: `fcc84087f6cf0613`
 
-**Resolution:**
+**Resolution:** kept: "we use AI in customer service" leaves open whether the tool chats with customers, routes requests or decides on payment plans, so no class is settled. Under decision 032 the label is needs_more_information with no class. The second model's limited_risk assumes an Art. 50(1) chatbot the description never states, and its own reasoning admits that.
 
 ### soft-09-zahnzusatz-wartezeiten-plain
 
@@ -467,7 +467,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system evaluates creditworthiness and establishes credit scores for natural persons in the context of insurance eligibility decisions, falling under Annex III, point 5(b). The AI system determines insurance terms, exclusions, and rejection based on automated assessment of dental conditions without meaningful human review, making it a high-risk system under Article 6(2) that requires compliance with Chapter III requirements applicable from 2 December 2027.
 - Disagreement: `e697c66f8b88c359`
 
-**Resolution:**
+**Resolution:** kept: DentaRisk uses each applicant's dental findings to set their personal waiting periods and exclusions, or to refuse cover. That is "risk assessment and pricing in relation to natural persons in the case of life and health insurance" (Annex III 5(c)), and a supplementary dental policy is health insurance. Annex III 5(b) covers creditworthiness and credit scores, and nothing in the description assesses whether anyone can repay a debt.
 
 ### soft-09-zahnzusatz-wartezeiten-soft
 
@@ -478,7 +478,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The AI system evaluates creditworthiness and establishes credit scores for natural persons in the form of insurance eligibility and pricing decisions (Annex III, point 5(b)). Although the company uses the system unmodified, it qualifies as a deployer under Article 3(4) and deploys a high-risk system that makes binding decisions on insurance eligibility with minimal human review, falling under Annex III, point 5(b), which covers AI systems for evaluating creditworthiness or credit scoring.
 - Disagreement: `4b1584a182cfe976`
 
-**Resolution:**
+**Resolution:** kept: According to the fixed key-fact answers, DentaRisk evaluates each applicant's dental findings and sets their waiting periods and exclusions or refuses the application. That is risk assessment and pricing for natural persons in health insurance (Annex III 5(c)). Annex III 5(b) is limited to creditworthiness and credit scoring, and no credit assessment takes place here.
 
 ### cons-02-health-premium-pricing-c
 
@@ -489,7 +489,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system evaluates creditworthiness of natural persons (here, insurance risk and pricing) to determine eligibility for essential services (health insurance), falling under Annex III, point 5(b). As a deployer using the AI system under its authority since January 2026, the company is subject to high-risk obligations under Article 6(2) and Chapter III (applicable from 2 December 2027 for Annex III systems per Article 113(3)(c)(i)).
 - Disagreement: `9b2f96ca02a3beac`
 
-**Resolution:**
+**Resolution:** kept: RiskWeave estimates each applicant's expected claims cost and sets their personal health-insurance premium, which is "risk assessment and pricing in relation to natural persons in the case of life and health insurance" (Annex III 5(c)). Annex III 5(b) covers creditworthiness and credit scores, and pricing an insurance premium is not a credit assessment.
 
 ### cons-03-meeting-webcam-moods-a
 
@@ -500,7 +500,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system analyzes facial expressions to infer emotions of employees during work meetings and the inferred emotions are used in performance reviews affecting work-related decisions. This falls under Annex III, point 1(c) (emotion recognition systems) and Annex III, point 4(b) (AI systems for decisions affecting work-related relationships). Article 6(3) does not apply because the system performs profiling of natural persons and materially influences the outcome of decision-making regarding employment.
 - Disagreement: `e82940ba6bed0f60`
 
-**Resolution:**
+**Resolution:** kept: MeetPulse infers employees' emotions (frustrated, bored, enthusiastic) from their facial expressions, which are biometric data, so it is an emotion recognition system (Art. 3(39)). It is used at the workplace, and the description says it is not used for health or safety. Art. 5(1)(f) prohibits that use, and the prohibition has applied since 2 February 2025. A prohibited practice ranks above Annex III 1(c), which covers only the emotion recognition that remains lawful.
 
 ### cons-03-meeting-webcam-moods-b
 
@@ -511,7 +511,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an emotion recognition system deployed in the workplace to monitor and evaluate employee behavior and performance, falling under Annex III, point 1(c). Article 6(3) does not apply because the system performs profiling of natural persons (evaluating individual emotional states to influence performance reviews), which means it must always be considered high-risk regardless of whether it poses significant risk of harm.
 - Disagreement: `6518a142a0cca652`
 
-**Resolution:**
+**Resolution:** kept: The plug-in reads employees' faces on webcam and classifies how each person feels, which makes it an emotion recognition system on biometric data (Art. 3(39)). It is used in the workplace, and the description says it "has nothing to do with health or safety". Art. 5(1)(f) prohibits that use, so the class is prohibited, not Annex III 1(c) high-risk.
 
 ### cons-03-meeting-webcam-moods-c
 
@@ -522,7 +522,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system infers emotions of natural persons from facial expressions in the workplace context and uses those inferences in performance reviews affecting work-related decisions. Article 5(1)(f) prohibits emotion recognition in workplace settings except for medical or safety reasons, which do not apply here. The system therefore falls under Annex III, point 1(c) as a high-risk emotion recognition system, and the deployer must comply with Chapter III requirements applicable from 2 December 2027.
 - Disagreement: `13888192cee6af03`
 
-**Resolution:**
+**Resolution:** kept: The add-on reads each employee's emotions from facial expressions in internal meetings (Art. 3(39)), for performance reviews, and "health and safety play no part in it". Inferring emotions in the workplace for that purpose is prohibited under Art. 5(1)(f). The second model's own reason says so but then labels the system Annex III 1(c), which only covers emotion recognition outside the prohibition.
 
 ### cons-04-helpdesk-keyword-queues-a
 
@@ -533,7 +533,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system under Art. 3(1) because it infers how to generate outputs (email queue assignments) from inputs (email content) to influence a virtual environment (helpdesk workflow). It falls within scope under Art. 2(1)(b) as a deployer established in the Union. The rule-based email sorting does not engage Art. 5 prohibitions, does not fall under Art. 6 high-risk criteria (it is not a safety component under Art. 6(1), nor does it match any Annex III category such as employment, education, or essential services), and does not trigger Art. 50 transparency duties (it does not interact directly with natural persons or generate synthetic content). It therefore qualifies as minimal_risk.
 - Disagreement: `4814aaebec523377`
 
-**Resolution:**
+**Resolution:** kept: The router applies a keyword list that the support lead wrote and edits by hand, and it learns nothing from past emails. Recital 12 excludes "systems that are based on the rules defined solely by natural persons to automatically execute operations", and the definition guidelines (para. 46) treat fixed human-programmed rules as basic data processing. So the router has no capability to infer, is not an AI system under Art. 3(1), and is out of scope. The second model calls the router "rule-based" and "static" but still treats it as an AI system.
 
 ### cons-04-helpdesk-keyword-queues-b
 
@@ -544,7 +544,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: This is an AI system within scope (Art. 3(1): machine-based system that infers outputs—email routing—from inputs). It does not fall under prohibited practices (Art. 5), is not high-risk (Art. 6: not a safety component under Annex I, and does not match Annex III categories such as biometrics, critical infrastructure, education, employment, essential services, law enforcement, migration, or justice), and does not trigger transparency duties under Art. 50 (no direct interaction with natural persons, no synthetic content generation, no emotion recognition or biometric categorisation). The system is a simple rule-based router with no learning, deployed by a furniture retailer in the EU.
 - Disagreement: `beda1dfd262745c2`
 
-**Resolution:**
+**Resolution:** kept: The routing is a hand-written rule list that only the support lead changes, with "no learning component", so it is a system "based on the rules defined solely by natural persons" (recital 12). It is basic data processing (guide-definition para. 46), not an AI system under Art. 3(1), and is therefore out of scope rather than minimal risk.
 
 ### cons-04-helpdesk-keyword-queues-c
 
@@ -555,7 +555,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: This is an AI system within scope (Art. 3(1)): a machine-based system that infers from input (email content) how to generate outputs (queue assignment) with adaptiveness potential. It does not fall under prohibited practices (Art. 5), nor high-risk categories (Art. 6, Annex I, Annex III): it performs a narrow procedural task of email routing based on static keyword matching without learning, poses no significant risk to health, safety or fundamental rights, and does not profile natural persons. The transparency obligation under Art. 50 does not apply as the system does not interact directly with natural persons. Therefore it is minimal_risk.
 - Disagreement: `82692d783eeb2b22`
 
-**Resolution:**
+**Resolution:** kept: The software only checks emails against a word list that a person wrote and maintains, and "doesn't learn anything from earlier emails". Under recital 12 and guide-definition para. 46, rules defined solely by natural persons do not infer, so this is not an AI system under Art. 3(1) and the Act does not apply. The second model's own reasoning concedes "static keyword matching without learning".
 
 ### cons-07-rebranded-loan-scoring-a
 
@@ -566,7 +566,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI system within the EU AI Act's scope (Art. 3(1), 2(1)). It is not prohibited (Art. 5). It falls under Annex III, point 5(b), as it evaluates creditworthiness of natural persons for lending decisions. Under Art. 6(3), the exception does not apply because the system materially influences the outcome of lending decisions and does not meet any of the narrow procedural task, improvement, or preparatory conditions. The company is a distributor (Art. 3(7)) placing the system on the Union market under its own name or trademark without substantial modification, making it subject to provider obligations under Art. 25(1)(a).
 - Disagreement: `8f123a118998e34e`
 
-**Resolution:**
+**Resolution:** kept: The broker resells as a distributor at the outset, but it puts its own name and trademark on a high-risk credit-scoring system that is already on the market. Under Art. 25(1)(a), "Any distributor, importer, deployer or other third-party shall be considered to be a provider of a high-risk AI system" in that case, and the licence does not reallocate the obligations. The role to label is therefore provider. The second model's own reasoning reaches Art. 25(1)(a) but then outputs the pre-switch role.
 
 ### cons-07-rebranded-loan-scoring-b
 
@@ -577,7 +577,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system evaluates creditworthiness of natural persons for lending decisions, falling under Annex III, point 5(b). The company places its own branding on an unchanged credit-scoring model already on the market, making it a distributor under Article 3(7) that makes an AI system available on the Union market. Article 25(1)(a) applies: by putting their name or trademark on the high-risk system without reallocating provider obligations, they become a provider subject to high-risk requirements.
 - Disagreement: `d304e583cdaeff6a`
 
-**Resolution:**
+**Resolution:** kept: "CreditLume by Arcoveggio" carries only the broker's branding on an unchanged high-risk credit-scoring model that is already on the market, and the provider obligations are not reallocated. Under Art. 25(1)(a) the broker "shall be considered to be a provider", which is the Art. 25 switch our role labels record, so provider is correct and distributor is not.
 
 ### cons-07-rebranded-loan-scoring-c
 
@@ -588,7 +588,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system evaluates creditworthiness of natural persons to determine loan eligibility and amounts, falling squarely within Annex III, point 5(b). The company is a distributor under Art. 3(7) that places the AI system on the Union market by putting its own name and trademark on it without modifying the underlying model, triggering distributor obligations under Art. 25(1)(a). Article 6(3) exceptions do not apply because the system materially influences lending decisions and is not a narrow procedural task, preparatory task, or mere improvement of prior human activity.
 - Disagreement: `4307e0689306d6e2`
 
-**Resolution:**
+**Resolution:** kept: The broker puts only its own logo on a high-risk Annex III 5(b) system that the Madrid fintech already sells, and the licence moves no provider duties. Art. 25(1)(a) therefore makes the broker the provider. The second model wrongly reads Art. 25(1)(a) as triggering "distributor obligations", but the provision makes that party a provider.
 
 ### cons-10-stadtwerke-kundenchat-a
 
@@ -599,7 +599,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: Wattbert is an AI system within the Act's scope (Art. 3(1)) that interacts directly with natural persons on the provider's website. It does not fall under prohibited practices (Art. 5) and is not high-risk under Art. 6, as it performs only narrow informational tasks, does not make decisions affecting customers, and leaks difficult cases to human review. However, it generates text content and interacts directly with users, triggering the transparency obligation under Art. 50(1) to inform users they are interacting with an AI system. The deployer (Stadtwerke) must comply with this transparency requirement.
 - Disagreement: `a3a87c79086914fb`
 
-**Resolution:**
+**Resolution:** kept: The utility's own IT built Wattbert on a third-party language model and runs it on the utility's own website under the Wattbert name. That is developing an AI system and putting it into service under its own name (Art. 3(3)), where "putting into service" includes supply "for own use" (Art. 3(11)). The utility is therefore the provider, and a downstream provider (Art. 3(68)), as well as the deployer. The second model misses that the utility built the system itself.
 
 ### cons-10-stadtwerke-kundenchat-b
 
@@ -610,7 +610,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: Wattbert is an AI system within scope (Art. 3(1), 2(1)(b)) deployed by a Union entity since 2 August 2026. It does not fall under Art. 5 prohibitions or Art. 6 high-risk classification: it performs narrow customer service tasks (tariff and payment inquiries), makes no decisions affecting customers, and does not fall within Annex III categories. However, it interacts directly with natural persons and generates text content, triggering Art. 50(1) transparency obligations (informing users they interact with an AI system) and Art. 50(4) obligations if it generates manipulated text for public information purposes. These transparency duties classify it as limited_risk.
 - Disagreement: `adf00a1ae202e996`
 
-**Resolution:**
+**Resolution:** kept: According to the description, "unsere eigene IT entwickelt hat" Wattbert on a US language model and runs it only on its own website. Developing a system and putting it into service for own use under its own name makes the utility the provider (Art. 3(3) with Art. 3(11); downstream provider, Art. 3(68)), and its own use does not displace that role. The second model also invokes Art. 50(4), but that paragraph concerns deep fakes and text published to inform the public, and does not apply to service-chat answers.
 
 ### cons-10-stadtwerke-kundenchat-c
 
@@ -621,7 +621,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: Wattbert is an AI system within the Act's scope (Art. 3(1), 2(1)(b)): a machine-based system designed to operate with autonomy that generates outputs (text responses) influencing virtual environments. It does not fall under prohibited practices (Art. 5). It is not high-risk under Art. 6(1) (not a safety component of a product in Annex I) or Art. 6(2) with Annex III (does not perform decision-making on creditworthiness, eligibility for benefits, or other listed high-risk functions; the deployer explicitly states it makes no decisions affecting customers). However, it interacts directly with natural persons and generates text content, triggering Art. 50(1) transparency obligations (informing users they interact with an AI system) and potentially Art. 50(4) if it generates manipulated text for public information purposes. This classification as limited_risk applies.
 - Disagreement: `5c1f0a6cf405268e`
 
-**Resolution:**
+**Resolution:** kept: "Wattbert hat unsere IT-Abteilung selbst gebaut" and it runs only on the utility's own website. The utility developed the AI system and put it into service for its own use under its own name, so it is the provider (Art. 3(3), Art. 3(11)) and a downstream provider of the integrated model (Art. 3(68)), as well as the deployer. "Deployer" alone misses the provider duties under Art. 50(1).
 
 ### annex-match-04-regal-display-mimik
 
@@ -632,18 +632,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: ShelfSense is an AI system intended to be used for biometric categorisation, inferring emotional or psychological characteristics (curiosity, enthusiasm, confusion, annoyance) from facial biometric data of natural persons. This falls under Annex III, point 1(b), which lists AI systems intended for biometric categorisation according to inferred attributes or characteristics as high-risk. The system does not qualify for the Article 6(3) exception because it performs profiling of natural persons by inferring personality traits and emotional states from their biometric data, which the regulation explicitly excludes from derogation.
 - Disagreement: `6f80b1ad6dc0ed3a`
 
-**Resolution:**
-
-### annex-match-11-language-placement-test
-
-- Set: annex_match; language: en
-- Label: high_risk, decided; role provider; annex:III:3:c; cites annex:III:3:c, art:6:2, guide:guide-high-risk-annex-iii:para:210, guide:guide-high-risk-annex-iii:para:212, art:3:3
-- Second model: high_risk, decided; role provider; annex:III:3:a
-- Differs on: annex point
-- Its reason: The system is an AI system intended to determine access to educational institutions by assigning natural persons to educational levels (A1-C1), which falls under Annex III, point 3(a). Although the school can override the placement, the system materially influences the outcome of the decision-making process regarding course access, and does not qualify for the Article 6(3) derogation because it performs a substantive assessment rather than a narrow procedural task, preparatory task, or mere improvement of prior human activity.
-- Disagreement: `9f0210a86a4fbac9`
-
-**Resolution:**
+**Resolution:** kept: ShelfSense reads from shoppers' faces whether they look curious, enthusiastic, confused or annoyed, which is inferring emotions from biometric data (Art. 3(39)) and therefore emotion recognition under Annex III 1(c). Annex III 1(b) covers categorisation "according to sensitive or protected attributes or characteristics", and momentary emotions are not such attributes. Shoppers are neither workers nor students, so Art. 5(1)(f) does not apply.
 
 ### annex-match-15-restructuring-redundancy-list
 
@@ -654,7 +643,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is used to make decisions affecting work-related relationships and termination of employment contracts based on individual behaviour and performance characteristics, falling squarely under Annex III, point 4(b). Article 6(3) does not apply because the system materially influences the outcome of termination decisions and performs profiling of natural persons, which triggers the mandatory high-risk classification under Article 6(3), final sentence.
 - Disagreement: `5c41629ff9c01f21`
 
-**Resolution:**
+**Resolution:** kept: The insurer's analytics team "built the model in-house" and uses it on its own staff. That is developing an AI system and putting it into service for own use under its own name (Art. 3(3) with Art. 3(11)), so the insurer is the provider and also the deployer. The second model ignores that the insurer built the system.
 
 ### annex-match-29-lka-verdaechtigenprofile
 
@@ -665,7 +654,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is deployed by a law enforcement authority (Landeskriminalamt) to assess the risk of natural persons offending or re-offending and to profile natural persons in the course of criminal investigation. Article 6(2) read with Annex III, point 6(d) classifies such AI systems as high-risk. The system's core function—creating profiles with contact networks, movement patterns, and group roles, then recommending primary suspects—constitutes profiling for criminal investigation purposes, triggering high-risk classification under Annex III, point 6(d).
 - Disagreement: `f40756ccb36bfcda`
 
-**Resolution:**
+**Resolution:** kept: In ongoing investigations, the platform builds a profile of every person involved (contacts, movement patterns, role in the group) and proposes who should be treated as the main suspect. That is profiling "in the course of the detection, investigation or prosecution of criminal offences" (Annex III 6(e)). The guidelines name this exact use for 6(e): "to identify a list of potential suspects singling them out" (guide-high-risk-annex-iii para. 352). Point 6(d) concerns assessing a person's risk of offending or reoffending, which this platform does not do.
 
 ### annex-match-31-hafenarzt-gesundheitsrisiko
 
@@ -676,7 +665,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The port health authority uses an AI system to assess health risks of ship passengers and crew to determine who undergoes medical examination before disembarkation. This falls under Annex III, point 5(a), as an AI system intended to be used by a public authority to evaluate eligibility for essential public health services. The system materially influences the outcome of the health screening decision and does not qualify for the Article 6(3) exceptions, as it performs a core assessment function rather than a narrow procedural task or preparatory activity.
 - Disagreement: `022f5d36d432a1fc`
 
-**Resolution:**
+**Resolution:** kept: The port health service, a competent public authority, scores crew and passengers of arriving ships for infectious-disease risk before they go ashore. That is assessing "a health risk, posed by a natural person who intends to enter or who has entered into the territory of a Member State" (Annex III 7(b)). Annex III 5(a) concerns eligibility for public assistance benefits and services, and no benefit is granted or refused here.
 
 ### annex-match-42-blood-smear-classifier
 
@@ -687,7 +676,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The system is an AI-based in vitro diagnostic medical device (class C) that is a safety component of a product covered by Annex I, Section A (Regulation (EU) 2017/746 on in vitro diagnostic medical devices), and it undergoes third-party conformity assessment by a notified body. Under Article 6(1), it qualifies as high-risk. The company is a provider under Article 3(3), placing the system on the market in the Union.
 - Disagreement: `d77a95f4c99beee5`
 
-**Resolution:**
+**Resolution:** kept: The software is CE-marked as an in vitro diagnostic medical device, class C, with a notified body. The IVD Regulation 2017/746 is Annex I Section A point 12; point 11 is the Medical Devices Regulation 2017/745. The second model's own reasoning names Regulation 2017/746 and then gives the wrong point number.
 
 ### annex-match-45-self-learning-crane-limiter
 
@@ -698,7 +687,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The neural network control unit is a safety component of tower cranes, which are machinery products covered by Regulation (EU) 2023/1230 (Annex I, Section A, point 21). The system prevents tipping and load swing hazards, making it a safety-critical component that undergoes third-party conformity assessment by a notified body. Article 6(1) classifies such AI systems as high-risk.
 - Disagreement: `b545ef5e5f06e3d7`
 
-**Resolution:**
+**Resolution:** kept: In the Act as amended by the Omnibus, the Machinery Regulation 2023/1230 is listed in Annex I Section B as point 21, and Section A ends at point 12. "annex:I:A:21" does not exist. The self-learning anti-tip safety function falls under annex:I:B:21.
 
 ### annex-match-46-notbremsassistent-fussgaenger
 
@@ -709,7 +698,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The emergency braking system is a safety component of motor vehicles covered by Regulation (EU) 2019/2144 (listed in Annex I, Section A, point 19), and the vehicle manufacturer is required to undergo third-party conformity assessment for market placement. As the developer and supplier placing the system on the market under its own name, the company qualifies as a provider of a high-risk AI system under Article 6(1).
 - Disagreement: `53b43e1b375f18fe`
 
-**Resolution:**
+**Resolution:** kept: The General Safety Regulation 2019/2144 is Annex I Section B point 19, and the vehicle type-approval Regulation 2018/858 is Section B point 18. Section A ends at point 12, so "annex:I:A:19" does not exist. The second model names the right regulation under the wrong section.
 
 ### annex-match-47-trackside-hot-axle-detector
 
@@ -720,7 +709,7 @@ Cost of the answers compared: $0.4495.
 - Its reason: The trackside detector is an AI system (Art. 3(1)) that is a safety component of railway infrastructure covered by Directive (EU) 2016/797 (Annex I, Section A, point 17). The system is required to undergo third-party conformity assessment by a notified body against EU railway interoperability requirements before placing on the market (Art. 6(1)). Both conditions for high-risk classification under Art. 6(1) are fulfilled.
 - Disagreement: `2e624d842baf472b`
 
-**Resolution:**
+**Resolution:** kept: The Rail Interoperability Directive 2016/797 is Annex I Section B point 17. Section A, the New Legislative Framework acts, ends at point 12, so "annex:I:A:17" does not exist. The second model names the right directive under the wrong section.
 
 ### annex-match-48-autonomer-traktor
 
@@ -731,4 +720,15 @@ Cost of the answers compared: $0.4495.
 - Its reason: The AI system is a safety component of an agricultural vehicle (tractor) covered by Regulation (EU) No 167/2013 listed in Annex I, Section A, point 15. The system is required to undergo third-party conformity assessment (EU type-approval) as a condition for placing the product on the market, fulfilling both conditions of Article 6(1). The obstacle and person detection function is safety-critical as its failure or malfunction would endanger health and safety under Article 6(1b).
 - Disagreement: `3e01e6b17f137e47`
 
-**Resolution:**
+**Resolution:** kept: Regulation 167/2013 on agricultural and forestry vehicles is Annex I Section B point 15, and Section A ends at point 12, so "annex:I:A:15" does not exist. The second model names the right regulation under the wrong section, and the label's B:15 (with B:21 also accepted) stands.
+
+## Resolved earlier, no longer this disagreement
+
+Kept so no resolution is lost: the label, the case or the second model's answer changed
+since it was written. A case listed here and above needs a resolution above.
+
+### annex-match-11-language-placement-test
+
+- Disagreement: `9f0210a86a4fbac9`
+
+**Resolution:** changed: The placement test decides which course level a learner may book, and a learner placed at B1 "cannot enrol in a B2 course". The Commission's Annex III guidelines read that both ways. Point 3(c) covers "placement tests ... used to determine the appropriate starting level" (para. 226, example 096). Point 3(a) covers determining "whether a person may enrol, gain entry, or be placed into a specific course" (para. 217), including assignment "to specific programs or courses within an educational or vocational training institution" (para. 219). Both points are therefore accepted, as already done for annex-match-10 (3(c) or 3(a)).
