@@ -18,13 +18,13 @@ resolution is missing or a case is unlabelled.
 
 | Set | Cases | Agree | Disagree | Not labelled |
 |---|---|---|---|---|
-| commission_b | 153 | 75 | 78 | 0 |
+| commission_b | 153 | 76 | 77 | 0 |
 
-Differences by kind (a case can have several): class 68, status 1, role 6, annex point 8.
+Differences by kind (a case can have several): class 68, status 1, role 6, annex point 7.
 
-Cost of the answers compared: $0.4018.
+Cost of the answers compared: $0.4177.
 
-## Disagreements (78)
+## Disagreements (77)
 
 ### cb-003-palletising-cell-person-stop
 
@@ -128,7 +128,7 @@ Cost of the answers compared: $0.4018.
 ### cb-030-seized-media-presort
 
 - Set: commission_b; language: de
-- Label: minimal_risk, decided; role deployer; no Annex point; cites annex:III:1:a, annex:III:6
+- Label: minimal_risk, decided; role deployer; no Annex point; cites annex:III:1:a, annex:III:6, guide:guide-high-risk-annex-iii:para:365
 - Second model: high_risk, decided; role deployer; annex:III:6:c
 - Differs on: class
 - Its reason: The system is deployed by a law enforcement authority (Landeskriminalamt) to evaluate the reliability of evidence in criminal investigations by pre-sorting and categorizing seized digital evidence before human review. This falls under Annex III, point 6(c), which covers AI systems intended to evaluate the reliability of evidence in the course of investigation or prosecution of criminal offences. The system's function of marking images containing children and grouping similar content directly supports evidence assessment in criminal proceedings.
@@ -620,17 +620,6 @@ Cost of the answers compared: $0.4018.
 
 **Resolution:** kept: the Commission treats indexing and tagging seized financial documents for later reliability checks as within point 6(c) but exempt under Art. 6(3)(a) and (d) (hr-ex-214); even if a prosecutor's office counted as a judicial authority under point 8(a), the same narrow procedural and preparatory task would be exempt, so minimal_risk stands.
 
-### cb-222-missing-child-suspect-filter
-
-- Set: commission_b; language: en
-- Label: high_risk, decided; role provider; annex:III:6:e; cites annex:III:6:e, art:6:2, art:6:3, art:5:1:d, art:3:52
-- Second model: high_risk, decided; role provider; annex:III:6:d
-- Differs on: annex point
-- Its reason: The system assesses the risk of natural persons offending or re-offending by analyzing sex-offender profiles, past criminal behavior, and behavioral patterns to rank suspects in criminal investigations. This falls under Annex III, point 6(d), which covers AI systems intended to assess the risk of a natural person offending or re-offending not solely on the basis of profiling. The system is placed on the market by a provider (the company) to deployers (police forces) and is therefore subject to high-risk AI system requirements under Article 6(2).
-- Disagreement: `c9784f4e58be3c78`
-
-**Resolution:** kept: the Commission says a system that ranks registered sex offenders as potential suspects in a missing-child case generates individualised risk inferences, which is profiling, and 'falls within the use case of point 6(e)' (hr-ex-222); the label follows that point.
-
 ### cb-225-district-crime-scores
 
 - Set: commission_b; language: de
@@ -767,12 +756,12 @@ Cost of the answers compared: $0.4018.
 
 - Set: commission_b; language: de
 - Label: minimal_risk, decided; role deployer; no Annex point; cites art:6:3:c, annex:III:7:c, art:6:4
-- Second model: high_risk, decided; role deployer; annex:III:8:a
+- Second model: high_risk, decided; role deployer; annex:III:7:c
 - Differs on: class
-- Its reason: The system is deployed by a public authority (asylum office) to assist in researching and interpreting facts and law in the administration of justice by analyzing decision-making patterns in completed asylum procedures. This falls under Annex III, point 8(a), which covers AI systems assisting judicial authorities in applying law to concrete facts. Article 6(3) exceptions do not apply because the system performs profiling of natural persons (asylum applicants) by analyzing their characteristics across similar constellations, which triggers the mandatory high-risk classification under Article 6(3), final sentence.
-- Disagreement: `2efb9d4d1c3c19dc`
+- Its reason: The system is deployed by an asylum authority to assist in examining asylum applications by analyzing decision patterns and identifying deviations, which falls under Annex III, point 7(c) (AI systems to assist in examination of asylum applications). Although the system performs a retrospective quality control function without directly proposing outcomes for pending cases, it materially influences the assessment process through pattern analysis that informs future decisions, training, and guidelines, thus constituting a high-risk AI system under Article 6(2) and (3).
+- Disagreement: `905b76e74a07edfc`
 
-**Resolution:** kept: the Commission treats analysing completed eligibility files to detect decision-making patterns or deviations for quality-assurance reporting, without proposing outcomes in live cases, as exempt under Art. 6(3)(c) (hr-ex-269); point 8(a) needs a judicial authority, which an asylum office is not, and the system evaluates no applicant, so the second model's profiling objection fails.
+**Resolution:** kept: the program runs retrospectively over closed procedures, compares decisions in similar constellations and flags where branch offices deviate, for training and guidance; it proposes no outcome and doesn't touch pending applications. That is Art. 6(3)(c)'s case of a system that detects decision-making patterns or deviations from prior decision-making patterns without replacing or influencing the completed human assessment, and the Commission's verdict on hr-ex-269 applies that exemption to Annex III point 7(c); the second model's own reason concedes it proposes no outcome.
 
 ### cb-272-coastguard-boat-tracking
 
@@ -888,6 +877,18 @@ Cost of the answers compared: $0.4018.
 
 Kept so no resolution is lost: the label, the case or the second model's answer changed
 since it was written. A case listed here and above needs a resolution above.
+
+### cb-222-missing-child-suspect-filter
+
+- Disagreement: `c9784f4e58be3c78`
+
+**Resolution:** kept: the Commission says a system that ranks registered sex offenders as potential suspects in a missing-child case generates individualised risk inferences, which is profiling, and 'falls within the use case of point 6(e)' (hr-ex-222); the label follows that point.
+
+### cb-269-asylum-decision-quality-review
+
+- Disagreement: `2efb9d4d1c3c19dc`
+
+**Resolution:** kept: the Commission treats analysing completed eligibility files to detect decision-making patterns or deviations for quality-assurance reporting, without proposing outcomes in live cases, as exempt under Art. 6(3)(c) (hr-ex-269); point 8(a) needs a judicial authority, which an asylum office is not, and the system evaluates no applicant, so the second model's profiling objection fails.
 
 ### cb-098-special-needs-placement-classifier
 
