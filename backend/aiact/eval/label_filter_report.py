@@ -1,30 +1,59 @@
-"""The label filter's disagreements report, `eval/reports/label_disagreements.md` (story B9).
+"""The label filter's disagreements reports (story B9).
 
-The report is generated from the cases and the second model's answers (`label_filter.ANSWERS_FILE`)
-and is the one place the user writes a resolution: under each disagreement, after
-`**Resolution:**`, the label kept or changed and why. Regenerating it keeps every resolution
-written so far, and one whose disagreement has gone (the label was changed, or the case edited)
-moves to its own section instead of being lost. `check_report` is the DoD's check: every case
-labelled, every disagreement resolved.
+Each group of `label_filter.OUTPUT_GROUPS` has its own report next to its answers file:
+`eval/reports/label_disagreements.md` for the own sets, `eval/reports/pile_b/label_disagreements.md`
+for Pile B (a folder the Engine lane can't read). A report is generated from the cases and the
+second model's answers and is the one place the user writes a resolution: under each
+disagreement, after `**Resolution:**`, the label kept or changed and why.
+
+A resolution belongs to one disagreement, not to a case: the report writes the disagreement's
+fingerprint (the case's input, its label and the answer) next to it. Regenerating keeps every
+resolution written so far; one whose disagreement has gone or changed (the label was changed, the
+case edited, or a new answer differs) moves to its own section, and the new disagreement is
+unresolved until the user writes again. `check_report` is the DoD's check: every case labelled,
+every disagreement resolved.
 
 A difference is counted where the label states something: the class and the status always, the
 role when the label names one, and the Annex point when both say high_risk and the label names
 points (any one of them matches, as in scoring).
 """
 
+import hashlib
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import NamedTuple
 
-from aiact.eval.cases import BenchmarkCase, CaseLabel, CaseSet
-from aiact.eval.label_filter import REPORTS_DIR, FilterAnswer, FilterRecord, is_current
+from aiact.eval.cases import EVAL_DIR, BenchmarkCase, CaseLabel, CaseSet
+from aiact.eval.label_filter import (
+    OUTPUT_GROUPS,
+    REPORTS_DIR,
+    FilterAnswer,
+    FilterRecord,
+    answers_file,
+    input_sha256,
+    is_current,
+    reports_folder,
+)
 from aiact.schemas import RiskClass, Role, Status
 
-REPORT_FILE = REPORTS_DIR / "label_disagreements.md"
+REPORT_NAME = "label_disagreements.md"
 RESOLUTION_MARK = "**Resolution:**"
 CASE_HEADING = re.compile(r"^### (\S+)\s*$")
+FINGERPRINT_LINE = re.compile(r"^- Disagreement: `([0-9a-f]+)`\s*$")
+SECTION_HEADINGS = ("## ", "### ")
+"""A resolution runs up to the next of these; a line starting with a lone `#` stays in it."""
+FINGERPRINT_CHARS = 16
+
+
+def report_file(case_set: CaseSet, reports_dir: Path = REPORTS_DIR) -> Path:
+    return reports_folder(case_set, reports_dir) / REPORT_NAME
+
+
+class ReportFormatError(ValueError):
+    """A report a person edited so that a resolution can't be read back safely."""
 
 
 class Difference(StrEnum):
@@ -49,11 +78,24 @@ def differences(label: CaseLabel, answer: FilterAnswer) -> tuple[Difference, ...
     return tuple(found)
 
 
+class ResolutionKey(NamedTuple):
+    case_id: str
+    fingerprint: str
+
+
 @dataclass(frozen=True)
 class Disagreement:
     case: BenchmarkCase
     answer: FilterAnswer
     differences: tuple[Difference, ...]
+
+    @property
+    def key(self) -> ResolutionKey:
+        """The case and what it disagrees on: a new input, label or answer is a new key."""
+        label = self.case.model_dump_json(include={"label"})
+        seen = f"{input_sha256(self.case)}\n{label}\n{self.answer.model_dump_json()}"
+        digest = hashlib.sha256(seen.encode()).hexdigest()[:FINGERPRINT_CHARS]
+        return ResolutionKey(self.case.id, digest)
 
 
 @dataclass(frozen=True)
@@ -103,28 +145,54 @@ def _why_unlabelled(record: FilterRecord | None) -> str:
     return "the case or the model changed since it was labelled"
 
 
-def read_resolutions(text: str) -> dict[str, str]:
-    """Each case's resolution as written in a report (empty when none is written yet): the text
-    after `RESOLUTION_MARK` up to the next heading."""
-    resolutions: dict[str, str] = {}
-    case_id: str | None = None
-    lines: list[str] | None = None
-    for line in [*text.splitlines(), "#"]:
-        if line.startswith("#"):
-            if case_id is not None and lines is not None:
-                resolutions[case_id] = "\n".join(lines).strip()
+def read_resolutions(text: str) -> dict[ResolutionKey, str]:
+    """Each disagreement's resolution as written in a report (empty when none is written yet):
+    the text after `RESOLUTION_MARK` up to the next `## ` or `### ` heading. Raises
+    `ReportFormatError` for a case section without the mark, or with a line before it that the
+    report didn't write: regenerating would lose that text."""
+    return dict(_read_section(case_id, lines) for case_id, lines in _case_sections(text))
+
+
+def _case_sections(text: str) -> list[tuple[str, list[str]]]:
+    sections: list[tuple[str, list[str]]] = []
+    for line in text.splitlines():
+        if line.startswith(SECTION_HEADINGS):
             heading = CASE_HEADING.match(line)
-            case_id, lines = (heading.group(1) if heading else None), None
-        elif lines is not None:
-            lines.append(line)
-        elif case_id is not None and line.startswith(RESOLUTION_MARK):
-            lines = [line.removeprefix(RESOLUTION_MARK)]
-    return resolutions
+            sections.append((heading.group(1) if heading else "", []))
+        elif sections:
+            sections[-1][1].append(line)
+    return [(case_id, lines) for case_id, lines in sections if case_id]
 
 
-def read_report_resolutions(path: Path = REPORT_FILE) -> dict[str, str]:
-    """The resolutions in the report at `path`; none when it doesn't exist yet."""
-    return read_resolutions(path.read_text(encoding="utf-8")) if path.exists() else {}
+def _read_section(case_id: str, lines: Sequence[str]) -> tuple[ResolutionKey, str]:
+    fingerprint = ""
+    for index, line in enumerate(lines):
+        if line.startswith(RESOLUTION_MARK):
+            rest = [line.removeprefix(RESOLUTION_MARK), *lines[index + 1 :]]
+            return ResolutionKey(case_id, fingerprint), "\n".join(rest).strip()
+        written = FINGERPRINT_LINE.match(line)
+        if written:
+            fingerprint = written.group(1)
+        elif line.strip() and not line.startswith("- "):
+            raise ReportFormatError(
+                f"{case_id}: a line before `{RESOLUTION_MARK}` that the report didn't write; "
+                "move it after the mark, then run again"
+            )
+    raise ReportFormatError(
+        f"{case_id}: no line starts with `{RESOLUTION_MARK}` (written exactly so); "
+        "fix it by hand, then run again"
+    )
+
+
+def read_report_resolutions(path: Path) -> dict[ResolutionKey, str]:
+    """The resolutions in the report at `path`; none when it doesn't exist yet. Raises
+    `ReportFormatError` naming the file when one can't be read back."""
+    if not path.exists():
+        return {}
+    try:
+        return read_resolutions(path.read_text(encoding="utf-8"))
+    except ReportFormatError as error:
+        raise ReportFormatError(f"{path}: {error}") from None
 
 
 @dataclass(frozen=True)
@@ -137,12 +205,51 @@ class ReportCheck:
         return not self.unresolved and not self.unlabelled
 
 
-def check_report(comparison: Comparison, resolutions: Mapping[str, str]) -> ReportCheck:
-    """The DoD: every case has a current answer and every disagreement a written resolution."""
-    unresolved = tuple(
-        d.case.id for d in comparison.disagreements if not resolutions.get(d.case.id)
-    )
+def check_report(comparison: Comparison, resolutions: Mapping[ResolutionKey, str]) -> ReportCheck:
+    """The DoD: every case has a current answer and every disagreement a written resolution of
+    that same disagreement."""
+    unresolved = tuple(d.case.id for d in comparison.disagreements if not resolutions.get(d.key))
     return ReportCheck(unresolved, tuple(case.id for case in comparison.unlabelled))
+
+
+@dataclass(frozen=True)
+class GroupReport:
+    """One group's report: where it goes, what it compares and what was written in it."""
+
+    path: Path
+    answers_path: Path
+    comparison: Comparison
+    resolutions: Mapping[ResolutionKey, str]
+
+
+def group_reports(
+    cases: Sequence[BenchmarkCase],
+    records: Mapping[str, FilterRecord],
+    model: str,
+    provider: str,
+    reports_dir: Path = REPORTS_DIR,
+) -> tuple[GroupReport, ...]:
+    """A report per group of `OUTPUT_GROUPS` that has cases or a report already. Raises
+    `ReportFormatError` before anything is written when one report can't be read back."""
+    reports: list[GroupReport] = []
+    for group in OUTPUT_GROUPS:
+        group_cases = tuple(case for case in cases if case.set_name in group)
+        path = report_file(group[0], reports_dir)
+        if not group_cases and not path.exists():
+            continue
+        comparison = compare(group_cases, records, model, provider)
+        resolutions = read_report_resolutions(path)
+        answers = answers_file(group[0], reports_dir)
+        reports.append(GroupReport(path, answers, comparison, resolutions))
+    return tuple(reports)
+
+
+def display_path(path: Path) -> str:
+    """`path` from the repo root when it lies under it, else its name."""
+    try:
+        return path.relative_to(EVAL_DIR.parent).as_posix()
+    except ValueError:
+        return path.name
 
 
 # --- rendering ----------------------------------------------------------------------------------
@@ -151,27 +258,35 @@ HEADER = """\
 # Label disagreements (second-model filter)
 
 Generated by `aiact evaluate label-filter` (story B9; INIT > Label rules for own cases) from the
-answers in `eval/reports/label_filter_answers.jsonl`. {model} on `{provider}` labelled every case
-of the own-labelled sets blind: it read the description, the case's fixed answers and the date,
-with the AI Act's consolidated text, never the label, its citation, the notes or a guideline.
+answers in `{answers}`. {model} on `{provider}` labelled every case of these sets
+blind: it read the description, the case's fixed answers and the date, with the AI Act's
+consolidated text, never the label, its citation, the notes or a guideline.
 This catches mistakes; it is not validation, and there is no external legal review of the labels.
 
 **How to resolve.** Under each disagreement, after `**Resolution:**`, write `kept: <reason>` or
 `changed: <reason>`. A changed label is edited in its case file with a row in
-`eval/LABEL_CHANGES.md`. Regenerating this file keeps every resolution;
-`aiact evaluate label-filter --check` fails while one is missing or a case is unlabelled.
+`eval/LABEL_CHANGES.md`. Edit only after the mark, and keep the mark exactly as written.
+Regenerating this file keeps every resolution, tied to the disagreement it answers (the
+`Disagreement` fingerprint): if that disagreement changes, the resolution moves to "Resolved
+earlier" and the new one needs its own. `aiact evaluate label-filter --check` fails while a
+resolution is missing or a case is unlabelled.
 """
 
 
 def render_report(
-    comparison: Comparison, resolutions: Mapping[str, str], model: str, provider: str
+    comparison: Comparison,
+    resolutions: Mapping[ResolutionKey, str],
+    model: str,
+    provider: str,
+    answers: str,
 ) -> str:
     """The report: a summary per set, the cases without an answer, each disagreement with its
-    resolution, and the resolutions whose disagreement has gone."""
-    current = {d.case.id for d in comparison.disagreements}
-    earlier = {cid: text for cid, text in resolutions.items() if cid not in current and text}
+    resolution, and the resolutions whose disagreement has gone or changed. `answers` names the
+    answers file it was built from."""
+    current = {d.key for d in comparison.disagreements}
+    earlier = {key: text for key, text in resolutions.items() if key not in current and text}
     parts = [
-        HEADER.format(model=model, provider=provider),
+        HEADER.format(model=model, provider=provider, answers=answers),
         _summary(comparison),
         _unlabelled(comparison),
         _disagreements(comparison.disagreements, resolutions),
@@ -213,10 +328,10 @@ def _unlabelled(comparison: Comparison) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _disagreements(found: Sequence[Disagreement], resolutions: Mapping[str, str]) -> str:
+def _disagreements(found: Sequence[Disagreement], resolutions: Mapping[ResolutionKey, str]) -> str:
     lines = [f"## Disagreements ({len(found)})", ""]
     for disagreement in found:
-        lines += _disagreement(disagreement, resolutions.get(disagreement.case.id, ""))
+        lines += _disagreement(disagreement, resolutions.get(disagreement.key, ""))
     return "\n".join(lines)
 
 
@@ -234,15 +349,21 @@ def _disagreement(disagreement: Disagreement, resolution: str) -> list[str]:
         f"- Second model: "
         f"{_reading(answer.risk_class, answer.status, answer.role, _points(answer.annex_point))}",
         f"- Differs on: {', '.join(d.value for d in disagreement.differences)}",
-        f"- Its reason: {' '.join(answer.reason.split())}",
+        f"- Its reason: {_one_line(answer.reason)}",
+        f"- Disagreement: `{disagreement.key.fingerprint}`",
         "",
         f"{RESOLUTION_MARK} {resolution}".rstrip(),
         "",
     ]
 
 
+def _one_line(text: str) -> str:
+    """Model-written text on one line, so a reply can't start a heading or a resolution."""
+    return " ".join(text.split())
+
+
 def _points(point: str | None) -> tuple[str, ...]:
-    return (point,) if point else ()
+    return (_one_line(point),) if point else ()
 
 
 def _reading(
@@ -254,13 +375,21 @@ def _reading(
     return f"{shown}, {status.value}; {who}; {where}"
 
 
-def _earlier(resolutions: Mapping[str, str]) -> str:
+def _earlier(resolutions: Mapping[ResolutionKey, str]) -> str:
     lines = [
-        "## Resolved earlier, no longer disagreeing",
+        "## Resolved earlier, no longer this disagreement",
         "",
-        "Kept so no resolution is lost: the label or the case changed since it was written.",
+        "Kept so no resolution is lost: the label, the case or the second model's answer changed",
+        "since it was written. A case listed here and above needs a resolution above.",
         "",
     ]
-    for case_id, text in resolutions.items():
-        lines += [f"### {case_id}", "", f"{RESOLUTION_MARK} {text}", ""]
+    for key, text in resolutions.items():
+        lines += [
+            f"### {key.case_id}",
+            "",
+            f"- Disagreement: `{key.fingerprint}`",
+            "",
+            f"{RESOLUTION_MARK} {text}",
+            "",
+        ]
     return "\n".join(lines)

@@ -962,8 +962,10 @@ def eval_label_filter(
     ] = label_filter.DEFAULT_CONCURRENCY,
 ) -> None:
     """The second-model label filter (B9): Claude Haiku 4.5 labels every own-labelled case blind,
-    and the disagreements go to eval/reports/label_disagreements.md for the user to resolve.
-    Cases already answered are not sent again; the report keeps every resolution written."""
+    and the disagreements go to eval/reports/label_disagreements.md (Pile B's to
+    eval/reports/pile_b/) for the user to resolve. --set, --case and --limit narrow what is
+    labelled; the reports always cover every set. Cases already answered are not sent again; the
+    reports keep every resolution written."""
     sets = tuple(dict.fromkeys(set_name or label_filter.FILTERED_SETS))
     unfiltered = [s.value for s in sets if s not in label_filter.FILTERED_SETS]
     if unfiltered:
@@ -972,24 +974,29 @@ def eval_label_filter(
     settings = get_settings()
     model, provider = settings.label_filter_model, settings.label_filter_provider
     try:
-        cases = label_filter.load_filtered_cases(sets)
-        records = label_filter.read_records(label_filter.ANSWERS_FILE)
+        cases = label_filter.load_filtered_cases(label_filter.FILTERED_SETS)
+        records = label_filter.read_all_records(label_filter.REPORTS_DIR)
     except (CaseFileError, FileNotFoundError, ValueError) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
+    # Read the written resolutions first, so an unreadable report stops the command before a
+    # paid call.
+    reports = _label_filter_reports(cases, records, model, provider)
     if check:
-        _label_filter_check(cases, records, model, provider)
+        _label_filter_check(reports)
         return
-    todo = label_filter.cases_to_label(_chosen(cases, case), records, model, provider)[:limit]
+    chosen = _chosen(tuple(c for c in cases if c.set_name in sets), case)
+    todo = label_filter.cases_to_label(chosen, records, model, provider)[:limit]
     typer.echo(
-        f"{len(cases)} cases, {len(todo)} to label with {model} on {provider}; "
+        f"{len(chosen)} cases, {len(todo)} to label with {model} on {provider}; "
         f"at most ${label_filter.estimate_usd(len(todo)):.2f} (cap ${max_cost_usd:.2f})"
     )
     if dry_run:
         return
     if todo:
         _label_filter_run(todo, settings, max_cost_usd, concurrency)
-    _label_filter_write(cases, model, provider)
+    records = label_filter.read_all_records(label_filter.REPORTS_DIR)
+    _label_filter_write(_label_filter_reports(cases, records, model, provider), model, provider)
 
 
 def _chosen(cases: tuple[BenchmarkCase, ...], ids: list[str] | None) -> tuple[BenchmarkCase, ...]:
@@ -1016,48 +1023,69 @@ def _label_filter_run(
         run_date=date.today(),
         max_cost_usd=max_cost_usd,
         concurrency=concurrency,
-        answers_file=label_filter.ANSWERS_FILE,
+        reports_dir=label_filter.REPORTS_DIR,
     )
     typer.echo(
         f"{summary.labelled} labelled, {summary.failed} failed of {summary.planned}; "
         f"${summary.cost_usd:.4f}, {summary.tokens} tokens"
     )
-    if summary.is_stopped_at_cap:
-        typer.echo(f"Stopped at the cost cap (${max_cost_usd:.2f}); run again to go on", err=True)
+    if summary.stopped is not None:
+        typer.echo(
+            f"Stopped early: {summary.stopped.value} (cap ${max_cost_usd:.2f}). "
+            f"{summary.remaining} cases still to label, at most "
+            f"${label_filter.estimate_usd(summary.remaining):.2f} more; run again to go on",
+            err=True,
+        )
 
 
-def _label_filter_write(cases: tuple[BenchmarkCase, ...], model: str, provider: str) -> None:
-    records = label_filter.read_records(label_filter.ANSWERS_FILE)
-    comparison = label_filter_report.compare(cases, records, model, provider)
-    resolutions = label_filter_report.read_report_resolutions(label_filter_report.REPORT_FILE)
-    report_text = label_filter_report.render_report(comparison, resolutions, model, provider)
-    label_filter_report.REPORT_FILE.write_text(report_text, encoding="utf-8")
-    typer.echo(
-        f"{len(comparison.agreeing)} agree, {len(comparison.disagreements)} disagree, "
-        f"{len(comparison.unlabelled)} not labelled. Written: {label_filter_report.REPORT_FILE}"
-    )
-
-
-def _label_filter_check(
+def _label_filter_reports(
     cases: tuple[BenchmarkCase, ...],
     records: dict[str, label_filter.FilterRecord],
     model: str,
     provider: str,
+) -> tuple[label_filter_report.GroupReport, ...]:
+    try:
+        return label_filter_report.group_reports(
+            cases, records, model, provider, label_filter.REPORTS_DIR
+        )
+    except label_filter_report.ReportFormatError as error:
+        typer.echo(f"Error: {error}. Nothing was written.", err=True)
+        raise typer.Exit(code=2) from error
+
+
+def _label_filter_write(
+    reports: tuple[label_filter_report.GroupReport, ...], model: str, provider: str
 ) -> None:
-    comparison = label_filter_report.compare(cases, records, model, provider)
-    result = label_filter_report.check_report(
-        comparison, label_filter_report.read_report_resolutions(label_filter_report.REPORT_FILE)
-    )
-    for case_id in result.unlabelled:
-        typer.echo(f"NOT LABELLED: {case_id}", err=True)
-    for case_id in result.unresolved:
-        typer.echo(f"NO RESOLUTION: {case_id}", err=True)
-    typer.echo(
-        f"{len(comparison.disagreements)} disagreements, {len(result.unresolved)} without a "
-        f"resolution; {len(result.unlabelled)} cases not labelled",
-        err=not result.is_ok,
-    )
-    if not result.is_ok:
+    for group in reports:
+        answers = label_filter_report.display_path(group.answers_path)
+        text = label_filter_report.render_report(
+            group.comparison, group.resolutions, model, provider, answers
+        )
+        group.path.parent.mkdir(parents=True, exist_ok=True)
+        group.path.write_text(text, encoding="utf-8")
+        comparison = group.comparison
+        typer.echo(
+            f"{len(comparison.agreeing)} agree, {len(comparison.disagreements)} disagree, "
+            f"{len(comparison.unlabelled)} not labelled. Written: {group.path}"
+        )
+
+
+def _label_filter_check(reports: tuple[label_filter_report.GroupReport, ...]) -> None:
+    is_ok = True
+    for group in reports:
+        result = label_filter_report.check_report(group.comparison, group.resolutions)
+        for case_id in result.unlabelled:
+            typer.echo(f"NOT LABELLED: {case_id}", err=True)
+        for case_id in result.unresolved:
+            typer.echo(f"NO RESOLUTION: {case_id}", err=True)
+        typer.echo(
+            f"{group.path}: {len(group.comparison.disagreements)} disagreements, "
+            f"{len(result.unresolved)} without a resolution; "
+            f"{len(result.unlabelled)} cases not labelled",
+            err=not result.is_ok,
+        )
+        is_ok = is_ok and result.is_ok
+    if not is_ok:
         raise typer.Exit(code=1)
 
 

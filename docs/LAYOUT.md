@@ -201,6 +201,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── judge_validation/            hand-labelled judge cases (V4)
 │   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1);
 │   │                                label_filter_answers.jsonl: the second model's answers (B9)
+│   │   └── pile_b/                  label_filter_answers.jsonl and label_disagreements.md for commission_b
+│   │                                only: Pile B's labels and the second model's reasons (B9). The Engine
+│   │                                lane denies this folder; no cb-* id goes in the files above it
 │   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10a)
 │   └── private/                     appliedai.jsonl (B11; gitignored, never tracked; may be absent)
 │

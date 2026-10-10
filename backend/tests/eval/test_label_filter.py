@@ -18,10 +18,13 @@ from aiact.eval.label_filter import (
     FilterAnswer,
     FilterRecord,
     LabelFilter,
+    StopReason,
+    answers_file,
     cases_to_label,
     filter_messages,
     input_sha256,
     law_context,
+    read_all_records,
     read_records,
     run_filter,
 )
@@ -112,9 +115,14 @@ def test_the_prompt_never_shows_the_label_its_citation_notes_tags_or_source() ->
         label_citation=("art:26:7",),
         tags=("verdict:high", "hidden-tag"),
     )
-    sent = json.dumps([m.model_dump() for m in filter_messages(case, LAW, RUN_DATE)])
+    system, human = filter_messages(case, LAW, RUN_DATE)
+    sent = json.dumps([system.model_dump(), human.model_dump()])
     for hidden in ("hidden note", "hidden-tag", "verdict:high", "hr-ex-999", "art:26:7"):
         assert hidden not in sent, hidden
+    # The instructions name every class and quote Annex points as examples, so the label's own
+    # values are looked for in the case's message.
+    for hidden in ("high_risk", "decided", "deployer", "annex:III:4:a"):
+        assert hidden not in str(human.content), hidden
     assert DESCRIPTION in sent
 
 
@@ -173,6 +181,17 @@ def test_law_context_quotes_the_amended_act_and_no_guideline() -> None:
     assert "hr-ex-" not in law
 
 
+def test_one_call_is_estimated_cold_at_the_cache_write_price_for_the_whole_prompt() -> None:
+    assert label_filter.PROMPT_TOKENS_BOUND == 20_000
+    assert label_filter.CACHE_WRITE_USD_PER_MTOK == 1.375
+    assert label_filter.OUTPUT_USD_PER_MTOK == 5.50
+    assert round(label_filter.CALL_ESTIMATE_USD, 8) == 0.03575
+    # Three characters a token, with room for a long case.
+    prompt_chars = len(label_filter.INSTRUCTIONS) + len(law_context()) + 3_000
+    assert prompt_chars / 3 <= label_filter.PROMPT_TOKENS_BOUND
+    assert label_filter.estimate_usd(331) == 11.83
+
+
 def test_law_context_names_a_provision_the_parsed_file_lacks(tmp_path: Path) -> None:
     row = {
         "provision_id": "art:2",
@@ -210,6 +229,7 @@ def test_a_broken_answer_is_a_failed_record_that_still_costs(content: str) -> No
     assert record.answer is None
     assert record.error is not None and record.error.startswith("answer doesn't fit the schema")
     assert DESCRIPTION not in record.error
+    assert not record.is_call_failed
     assert (record.cost_usd, record.tokens) == (0.004, 13200)
 
 
@@ -217,19 +237,22 @@ def test_a_refused_call_is_recorded_as_a_refusal() -> None:
     refused = _reply("", finish_reason="content_filter")
     record = fake_filter(refused).label(make_case(), RUN_DATE)
     assert (record.answer, record.error) == (None, "refused by the provider's content filter")
+    assert not record.is_call_failed
 
 
 def test_a_reply_without_a_cost_is_charged_the_estimate() -> None:
     record = fake_filter(_reply(answer().model_dump_json(), cost=None)).label(make_case(), RUN_DATE)
     assert record.answer == answer()
-    assert (record.cost_usd, record.is_cost_estimated) == (0.02, True)
+    assert (record.cost_usd, record.is_cost_estimated) == (pytest.approx(0.03575), True)
+    assert not record.is_call_failed
 
 
 def test_a_failed_call_is_charged_the_estimate_and_named_by_type() -> None:
     labeller = LabelFilter(_settings(), chat=FailingChat(messages=iter(())), law=LAW)
     record = labeller.label(make_case(), RUN_DATE)
-    assert (record.answer, record.error) == (None, "ConnectTimeout")
-    assert (record.cost_usd, record.is_cost_estimated, record.tokens) == (0.02, True, 0)
+    assert (record.answer, record.error, record.is_call_failed) == (None, "ConnectTimeout", True)
+    assert record.cost_usd == pytest.approx(0.03575)
+    assert (record.is_cost_estimated, record.tokens) == (True, 0)
 
 
 def test_the_default_route_is_haiku_pinned_to_its_eu_endpoint_with_one_attempt() -> None:
@@ -325,15 +348,17 @@ def test_label_filter_roundtrip(openrouter_settings: Settings) -> None:
 
 
 class CountingFilter(LabelFilter):
-    """Answers every case, or fails every case, and remembers the order of the calls."""
+    """Answers every case, or fails every case (no reply, or a broken answer), and remembers the
+    order of the calls."""
 
-    def __init__(self, *, is_failing: bool = False, cost: float = 0.004) -> None:
+    def __init__(self, *, failing: str | None = None, cost: float = 0.004) -> None:
         self.model, self.provider, self.law = HAIKU, EU_VERTEX, LAW
         self.calls: list[str] = []
-        self._is_failing, self._cost = is_failing, cost
+        self._failing, self._cost = failing, cost
 
     def label(self, case: BenchmarkCase, run_date: date) -> FilterRecord:
         self.calls.append(case.id)
+        errors = {"call": "ConnectTimeout", "answer": "refused by the provider's content filter"}
         return FilterRecord(
             case_id=case.id,
             set_name=case.set_name,
@@ -341,8 +366,9 @@ class CountingFilter(LabelFilter):
             judged_on=run_date,
             model=self.model,
             provider=self.provider,
-            answer=None if self._is_failing else answer(),
-            error="ConnectTimeout" if self._is_failing else None,
+            answer=None if self._failing else answer(),
+            error=errors.get(self._failing or ""),
+            is_call_failed=self._failing == "call",
             cost_usd=self._cost,
             tokens=100,
         )
@@ -352,46 +378,74 @@ CASES = tuple(make_case(n) for n in range(1, 8))
 
 
 def test_the_run_appends_every_record_and_sums_the_cost(tmp_path: Path) -> None:
-    answers = tmp_path / "answers.jsonl"
     summary = run_filter(
-        CASES, CountingFilter(), run_date=RUN_DATE, concurrency=3, answers_file=answers
+        CASES, CountingFilter(), run_date=RUN_DATE, concurrency=3, reports_dir=tmp_path
     )
     assert (summary.planned, summary.labelled, summary.failed) == (7, 7, 0)
     assert summary.cost_usd == pytest.approx(0.028)
-    assert set(read_records(answers)) == {case.id for case in CASES}
-    assert not summary.is_stopped_at_cap
+    assert set(read_records(tmp_path / "label_filter_answers.jsonl")) == {c.id for c in CASES}
+    assert (summary.stopped, summary.remaining) == (None, 0)
 
 
 def test_the_run_starts_no_batch_the_cap_cannot_cover(tmp_path: Path) -> None:
     labeller = CountingFilter(cost=0.02)
-    # First batch: one call (0.02 <= 0.07); second: three (0.02 + 0.06 > 0.07), so it stops.
+    # First batch: one call (0.03575 <= 0.12); second: three (0.02 + 3 x 0.03575 > 0.12).
     summary = run_filter(
-        CASES,
-        labeller,
-        run_date=RUN_DATE,
-        max_cost_usd=0.07,
-        concurrency=3,
-        answers_file=tmp_path / "a.jsonl",
+        CASES, labeller, run_date=RUN_DATE, max_cost_usd=0.12, concurrency=3, reports_dir=tmp_path
     )
     assert labeller.calls == [CASES[0].id]
-    assert summary.is_stopped_at_cap
+    assert (summary.stopped, summary.remaining) == (StopReason.COST_CAP, 6)
     assert summary.cost_usd == pytest.approx(0.02)
 
 
-def test_a_batch_that_fails_entirely_stops_the_run(tmp_path: Path) -> None:
-    labeller = CountingFilter(is_failing=True)
-    summary = run_filter(
-        CASES, labeller, run_date=RUN_DATE, concurrency=3, answers_file=tmp_path / "a.jsonl"
+def test_a_batch_no_call_of_which_reaches_the_model_stops_the_run(tmp_path: Path) -> None:
+    labeller = CountingFilter(failing="call")
+    summary = run_filter(CASES, labeller, run_date=RUN_DATE, concurrency=3, reports_dir=tmp_path)
+    # The one-call warm-up never stops the run; the first full batch does.
+    assert labeller.calls == [case.id for case in CASES[:4]]
+    assert (summary.labelled, summary.failed, summary.stopped) == (0, 4, StopReason.NO_ROUTE)
+    assert summary.cost_usd == pytest.approx(0.016)
+    assert summary.remaining == 7
+
+
+def test_cases_whose_answers_fail_never_stop_the_run(tmp_path: Path) -> None:
+    """A case refused or answered off-schema every time, even first in line, can't block the
+    cases after it."""
+    labeller = CountingFilter(failing="answer")
+    summary = run_filter(CASES, labeller, run_date=RUN_DATE, concurrency=3, reports_dir=tmp_path)
+    assert labeller.calls == [case.id for case in CASES]
+    assert (summary.labelled, summary.failed, summary.stopped) == (0, 7, None)
+
+
+def test_pile_b_answers_go_only_to_their_own_folder(tmp_path: Path) -> None:
+    pile_b = make_case(9, id="cb-009-cv-ranker", set_name=CaseSet.COMMISSION_B)
+    soft = make_case(8, id="sp-008-cv-ranker", set_name=CaseSet.SOFT_PAIRS)
+    run_filter((CASES[0], pile_b, soft), CountingFilter(), run_date=RUN_DATE, reports_dir=tmp_path)
+    own_file = tmp_path / "label_filter_answers.jsonl"
+    pile_b_file = tmp_path / "pile_b" / "label_filter_answers.jsonl"
+    assert answers_file(CaseSet.COMMISSION_B, tmp_path) == pile_b_file
+    assert answers_file(CaseSet.SOFT_PAIRS, tmp_path) == own_file
+    assert set(read_records(pile_b_file)) == {pile_b.id}
+    assert set(read_records(own_file)) == {CASES[0].id, soft.id}
+    assert "cb-" not in own_file.read_text(encoding="utf-8")
+    assert set(read_all_records(tmp_path)) == {CASES[0].id, pile_b.id, soft.id}
+
+
+def test_the_reports_folders_are_pinned() -> None:
+    assert label_filter.REPORTS_DIR.parts[-2:] == ("eval", "reports")
+    assert label_filter.answers_file(CaseSet.COMMISSION_B).relative_to(
+        label_filter.REPORTS_DIR
+    ) == Path("pile_b/label_filter_answers.jsonl")
+    assert label_filter.OUTPUT_GROUPS == (
+        (CaseSet.OWN, CaseSet.SOFT_PAIRS, CaseSet.CONSISTENCY, CaseSet.ANNEX_MATCH),
+        (CaseSet.COMMISSION_B,),
     )
-    assert labeller.calls == [CASES[0].id]
-    assert (summary.labelled, summary.failed, summary.cost_usd) == (0, 1, 0.004)
 
 
 def test_only_new_edited_failed_or_rerouted_cases_are_labelled_again(tmp_path: Path) -> None:
-    answers = tmp_path / "answers.jsonl"
-    run_filter(CASES[:3], CountingFilter(), run_date=RUN_DATE, answers_file=answers)
-    run_filter(CASES[3:4], CountingFilter(is_failing=True), run_date=RUN_DATE, answers_file=answers)
-    records = read_records(answers)
+    run_filter(CASES[:3], CountingFilter(), run_date=RUN_DATE, reports_dir=tmp_path)
+    run_filter(CASES[3:4], CountingFilter(failing="call"), run_date=RUN_DATE, reports_dir=tmp_path)
+    records = read_all_records(tmp_path)
     edited = make_case(2, description=DESCRIPTION + " Edited.")
     now = (CASES[0], edited, CASES[2], CASES[3], CASES[4])
     todo = cases_to_label(now, records, HAIKU, EU_VERTEX)
@@ -401,3 +455,4 @@ def test_only_new_edited_failed_or_rerouted_cases_are_labelled_again(tmp_path: P
 
 def test_a_missing_answers_file_has_no_records(tmp_path: Path) -> None:
     assert read_records(tmp_path / "none.jsonl") == {}
+    assert read_all_records(tmp_path) == {}

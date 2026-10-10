@@ -8,10 +8,13 @@ citation, the notes, the tags or the Commission example it came from. Its contex
 Act's own text (the consolidated, amended version from `data/parsed/`), never a guideline, so
 it can't read a Commission verdict either.
 
-Each answer is appended to `ANSWERS_FILE` as soon as it arrives, so an interrupted run resumes
-where it stopped: a case whose input is unchanged and already answered is not sent again.
-`aiact.eval.label_filter_report` compares the answers with the labels and writes the
-disagreements for the user to resolve. The filter catches mistakes; it is not validation.
+Each answer is appended to its answers file (`answers_file`) as soon as its batch ends, so an
+interrupted run resumes where it stopped: a case whose input is unchanged and already answered is
+not sent again. `aiact.eval.label_filter_report` compares the answers with the labels and writes
+the disagreements for the user to resolve. The filter catches mistakes; it is not validation.
+
+Pile B's labels, and the second model's reasons about them, are written to their own folder,
+`eval/reports/pile_b/`, which the Engine lane can't read; the other sets' go to `eval/reports/`.
 """
 
 import hashlib
@@ -20,6 +23,7 @@ from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import date
+from enum import StrEnum
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
@@ -44,12 +48,30 @@ from aiact.settings import Settings, get_settings
 logger = logging.getLogger(__name__)
 
 REPORTS_DIR = EVAL_DIR / "reports"
-ANSWERS_FILE = REPORTS_DIR / "label_filter_answers.jsonl"
+PILE_B_FOLDER = "pile_b"
+"""The subfolder of `REPORTS_DIR` for Pile B's answers and disagreements: they carry its labels
+and the second model's reasons, so the Engine lane must not read them (it denies the folder)."""
+ANSWERS_NAME = "label_filter_answers.jsonl"
 FILTERED_SETS: tuple[CaseSet, ...] = tuple(
     case_set for case_set in CaseSet if case_set in OWN_LABELLED_SETS
 )
 """The sets whose labels are the student's own (INIT > Label rules for own cases), in `CaseSet`
 order. The academic and appliedAI labels are other people's and aren't filtered."""
+OUTPUT_GROUPS: tuple[tuple[CaseSet, ...], ...] = (
+    tuple(case_set for case_set in FILTERED_SETS if case_set is not CaseSet.COMMISSION_B),
+    (CaseSet.COMMISSION_B,),
+)
+"""The sets that share an answers file and a report: the own sets, and Pile B on its own."""
+
+
+def reports_folder(case_set: CaseSet, reports_dir: Path = REPORTS_DIR) -> Path:
+    """Where `case_set`'s answers and disagreements go: Pile B's in `PILE_B_FOLDER`."""
+    return reports_dir / PILE_B_FOLDER if case_set is CaseSet.COMMISSION_B else reports_dir
+
+
+def answers_file(case_set: CaseSet, reports_dir: Path = REPORTS_DIR) -> Path:
+    return reports_folder(case_set, reports_dir) / ANSWERS_NAME
+
 
 LAW_FILE = "ai-act-consolidated.en.jsonl"
 LAW_PROVISIONS = (
@@ -74,10 +96,20 @@ characters, sent first and cached, so each case pays for it at the cache-read pr
 
 MAX_OUTPUT_TOKENS = 1500
 """Bounds a runaway answer; one answer is a few hundred tokens."""
-CALL_ESTIMATE_USD = 0.02
-"""What one call costs before its cache is warm (decision 005: Haiku 4.5 on google-vertex/europe,
-$0.0199 for a 6,463-token prompt; this prompt is about twice as long but caches after the first
-call). Charged to the cap for a call whose real cost is unknown, and used for estimates."""
+PROMPT_TOKENS_BOUND = 20_000
+"""The instructions, the law (about 52,800 characters) and a case, in tokens, rounded up at three
+characters a token; a test holds the real law text to it."""
+CACHE_WRITE_USD_PER_MTOK = 1.375
+"""Haiku 4.5's EU input price, $1.10 per million tokens (decision 005), times 1.25 for a cache
+write: a cold call pays it on the whole prefix."""
+OUTPUT_USD_PER_MTOK = 5.50
+CALL_ESTIMATE_USD = (
+    PROMPT_TOKENS_BOUND * CACHE_WRITE_USD_PER_MTOK + MAX_OUTPUT_TOKENS * OUTPUT_USD_PER_MTOK
+) / 1_000_000
+"""The most one call can cost: a cold prompt at the cache-write price and the longest answer
+(about $0.036; a call that reads the cache costs about a tenth). Charged to the cap for a call
+whose real cost is unknown, kept free for every call of a batch before it starts, and used for
+estimates."""
 DEFAULT_MAX_COST_USD = 1.0
 DEFAULT_CONCURRENCY = 4
 MAX_CONCURRENCY = 8
@@ -184,8 +216,8 @@ def filter_messages(case: BenchmarkCase, law: str, run_date: date) -> list[BaseM
 
 
 class FilterRecord(ContractModel):
-    """One case's labelling, a line of `ANSWERS_FILE`. `answer` is None when the call failed;
-    `error` then says why, by type only (never the description or the reply)."""
+    """One case's labelling, a line of its answers file. `answer` is None when the call or its
+    answer failed; `error` then says why, by type only (never the description or the reply)."""
 
     case_id: str
     set_name: CaseSet
@@ -195,6 +227,11 @@ class FilterRecord(ContractModel):
     provider: str
     answer: FilterAnswer | None
     error: str | None = None
+    is_call_failed: bool = Field(
+        default=False,
+        description="No reply came back (transport, auth, endpoint), as opposed to a reply that "
+        "was refused or broke the schema.",
+    )
     cost_usd: float = Field(ge=0)
     is_cost_estimated: bool = Field(
         default=False, description="No usage came back; `CALL_ESTIMATE_USD` was charged."
@@ -237,7 +274,9 @@ class LabelFilter:
             )
         except Exception as exc:
             logger.warning("label filter call for %s failed: %s", case.id, type(exc).__name__)
-            return record(None, _error(exc), CALL_ESTIMATE_USD, 0, is_estimated=True)
+            return record(
+                None, _error(exc), CALL_ESTIMATE_USD, 0, is_estimated=True, is_call_failed=True
+            )
         cost, tokens = reply_usage(reply)
         is_estimated = cost is None
         spent = CALL_ESTIMATE_USD if cost is None else cost
@@ -255,6 +294,7 @@ class LabelFilter:
             tokens: int,
             *,
             is_estimated: bool,
+            is_call_failed: bool = False,
         ) -> FilterRecord:
             return FilterRecord(
                 case_id=case.id,
@@ -265,6 +305,7 @@ class LabelFilter:
                 provider=self.provider,
                 answer=answer,
                 error=error,
+                is_call_failed=is_call_failed,
                 cost_usd=cost_usd,
                 is_cost_estimated=is_estimated,
                 tokens=tokens,
@@ -290,13 +331,22 @@ def load_filtered_cases(sets: Iterable[CaseSet] = FILTERED_SETS) -> tuple[Benchm
     return tuple(case for case_set in sets for case in load_cases(case_set))
 
 
-def read_records(path: Path = ANSWERS_FILE) -> dict[str, FilterRecord]:
-    """The latest record per case id; none when the file doesn't exist yet."""
+def read_records(path: Path) -> dict[str, FilterRecord]:
+    """The latest record per case id in one answers file; none when it doesn't exist yet."""
     if not path.exists():
         return {}
     lines = path.read_text(encoding="utf-8").splitlines()
     records = (FilterRecord.model_validate_json(line) for line in lines if line.strip())
     return {record.case_id: record for record in records}
+
+
+def read_all_records(reports_dir: Path = REPORTS_DIR) -> dict[str, FilterRecord]:
+    """The latest record per case id across every group's answers file."""
+    return {
+        case_id: record
+        for group in OUTPUT_GROUPS
+        for case_id, record in read_records(answers_file(group[0], reports_dir)).items()
+    }
 
 
 def is_current(record: FilterRecord | None, case: BenchmarkCase, model: str, provider: str) -> bool:
@@ -316,6 +366,11 @@ def cases_to_label(
     return tuple(c for c in cases if not is_current(records.get(c.id), c, model, provider))
 
 
+class StopReason(StrEnum):
+    COST_CAP = "the next batch would pass the cost cap"
+    NO_ROUTE = "no call in a batch reached the model (key, endpoint or network)"
+
+
 @dataclass(frozen=True)
 class RunSummary:
     planned: int
@@ -323,7 +378,13 @@ class RunSummary:
     failed: int
     cost_usd: float
     tokens: int
-    is_stopped_at_cap: bool
+    stopped: StopReason | None
+    """Why the run ended before every planned case was sent; None when it sent them all."""
+
+    @property
+    def remaining(self) -> int:
+        """The planned cases still without an answer: failed or never sent."""
+        return self.planned - self.labelled
 
 
 def run_filter(
@@ -333,30 +394,32 @@ def run_filter(
     run_date: date,
     max_cost_usd: float = DEFAULT_MAX_COST_USD,
     concurrency: int = DEFAULT_CONCURRENCY,
-    answers_file: Path = ANSWERS_FILE,
+    reports_dir: Path = REPORTS_DIR,
 ) -> RunSummary:
-    """Label `cases` in batches, appending each record as its batch ends. The first batch is a
-    single call, so the cached prefix is written before the others read it. No batch starts
-    unless the money spent plus `CALL_ESTIMATE_USD` per call in it stays within `max_cost_usd`.
-    A batch in which every call fails stops the run (a wrong key or a down endpoint)."""
-    answers_file.parent.mkdir(parents=True, exist_ok=True)
+    """Label `cases` in batches, appending each record to its set's answers file as its batch
+    ends. The first batch is a single call, so the cached prefix is written before the others
+    read it. No batch starts unless the money spent plus `CALL_ESTIMATE_USD` per call in it stays
+    within `max_cost_usd`. A batch after the first in which no call got a reply stops the run (a
+    wrong key or a down endpoint); a refused or malformed answer is the case's own failure and
+    never stops it, so a case that always fails can't block every rerun."""
     spent, tokens, labelled, failed = 0.0, 0, 0, 0
-    is_stopped_at_cap = False
+    stopped: StopReason | None = None
     with ThreadPoolExecutor(max_workers=concurrency) as pool:
-        for batch in _batches(cases, concurrency):
+        for number, batch in enumerate(_batches(cases, concurrency)):
             if spent + CALL_ESTIMATE_USD * len(batch) > max_cost_usd:
-                is_stopped_at_cap = True
+                stopped = StopReason.COST_CAP
                 break
             done = list(pool.map(lambda case: labeller.label(case, run_date), batch))
-            _append(answers_file, done)
+            _append(reports_dir, done)
             spent += sum(record.cost_usd for record in done)
             tokens += sum(record.tokens for record in done)
             batch_failed = sum(record.answer is None for record in done)
             labelled, failed = labelled + len(done) - batch_failed, failed + batch_failed
-            if batch_failed == len(done):
-                logger.warning("every call in a batch failed; stopping the run")
+            if number > 0 and all(record.is_call_failed for record in done):
+                logger.warning("no call in a batch reached the model; stopping the run")
+                stopped = StopReason.NO_ROUTE
                 break
-    return RunSummary(len(cases), labelled, failed, spent, tokens, is_stopped_at_cap)
+    return RunSummary(len(cases), labelled, failed, spent, tokens, stopped)
 
 
 def _batches(cases: Sequence[BenchmarkCase], size: int) -> Iterator[Sequence[BenchmarkCase]]:
@@ -366,12 +429,17 @@ def _batches(cases: Sequence[BenchmarkCase], size: int) -> Iterator[Sequence[Ben
         yield cases[start : start + size]
 
 
-def _append(path: Path, records: Iterable[FilterRecord]) -> None:
-    lines = "".join(f"{record.model_dump_json()}\n" for record in records)
-    with path.open("a", encoding="utf-8") as handle:
-        handle.write(lines)
+def _append(reports_dir: Path, records: Iterable[FilterRecord]) -> None:
+    """Append each record to its set's answers file, so Pile B's never reach the shared one."""
+    by_file: dict[Path, list[FilterRecord]] = {}
+    for record in records:
+        by_file.setdefault(answers_file(record.set_name, reports_dir), []).append(record)
+    for path, group in by_file.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write("".join(f"{record.model_dump_json()}\n" for record in group))
 
 
 def estimate_usd(count: int) -> float:
-    """An upper estimate for `count` calls at the cold price; cached calls cost less."""
+    """An upper estimate for `count` calls at the cold price; cached calls cost far less."""
     return round(count * CALL_ESTIMATE_USD, 2)
