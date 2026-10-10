@@ -38,6 +38,9 @@ export type DescriptionFormProps = {
   isRunning: boolean
   /** The form's validated submit (`form.handleSubmit(…)`). */
   onSubmit: (event?: BaseSyntheticEvent) => Promise<void>
+  /** False while Klar asks for more of the description (artboard `ClassifyVague`): the prompts
+   *  below carry Run the checks instead. */
+  hasRunAction?: boolean
 }
 
 /**
@@ -45,7 +48,12 @@ export type DescriptionFormProps = {
  * description with the personal-data warning, the four things worth mentioning and the privacy
  * line, the language Klar answers in, and Run the checks.
  */
-export function DescriptionForm({ form, isRunning, onSubmit }: DescriptionFormProps): JSX.Element {
+export function DescriptionForm({
+  form,
+  isRunning,
+  onSubmit,
+  hasRunAction = true,
+}: DescriptionFormProps): JSX.Element {
   const { t } = useTranslation()
   const nameId = useId()
   const descriptionId = useId()
@@ -103,12 +111,14 @@ export function DescriptionForm({ form, isRunning, onSubmit }: DescriptionFormPr
           <Icon name="privacy" size={16} className="mt-px" />
           <span>{t('classify.privacy')}</span>
         </p>
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <span className="text-caption font-normal text-slate">{t('classify.language')}</span>
-          <Button type="submit" disabled={isRunning}>
-            {isRunning ? t('classify.running') : t('classify.run')}
-          </Button>
-        </div>
+        {hasRunAction && (
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <span className="text-caption font-normal text-slate">{t('classify.language')}</span>
+            <Button type="submit" disabled={isRunning}>
+              {isRunning ? t('classify.running') : t('classify.run')}
+            </Button>
+          </div>
+        )}
       </form>
     </GlassPanel>
   )

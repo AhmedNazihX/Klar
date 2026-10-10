@@ -457,6 +457,11 @@
     "draftTool": {
       "note": "Fügt eine neue Prüfung für {{name}} hinzu.",
       "newTool": "Stattdessen als neues Tool prüfen"
+    },
+    "prompts": {
+      "title": "Klar braucht etwas mehr, um zu starten",
+      "intro": "So beschrieben kann es alles sein, vom Chatbot bis zum Bewerbungstool, und die KI-Verordnung behandelt diese sehr unterschiedlich. Ergänzen Sie zu jedem Punkt ein, zwei Sätze:",
+      "footer": "Ergänzen Sie, was Sie wissen. Klar fragt nach dem Rest."
     }
   },
   "progress": {
@@ -508,8 +513,8 @@
       "error": "Angehalten"
     },
     "needsDescription": {
-      "title": "Klar braucht etwas mehr, um zu starten",
-      "waiting": "Wartet auf eine Beschreibung. Bis dahin wird nichts geraten."
+      "waitingTitle": "Wartet auf eine Beschreibung",
+      "waitingBody": "Die vier Prüfungen beginnen, sobald Klar genug Angaben hat. Bis dahin wird nichts geraten."
     },
     "refused": {
       "title": "Ein Mensch muss diese Beschreibung prüfen",

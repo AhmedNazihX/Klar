@@ -2,15 +2,15 @@ import { screen, within } from '@testing-library/react'
 import i18n from 'i18next'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { PERSON_REVIEW, providerRefused } from '@/test/classify-fixtures'
+import { needsDescription, PERSON_REVIEW, providerRefused } from '@/test/classify-fixtures'
 import { renderWithProviders } from '@/test/test-utils'
 
 import { INITIAL_PROGRESS, type ProgressState } from './classify-progress'
 import { ProgressPanel } from './ProgressPanel'
 
-const QUESTIONS = ['First question?', 'Second question?', 'Third question?']
+const QUESTIONS = needsDescription().follow_up_questions ?? []
 
-async function renderThin(language: 'en' | 'de'): Promise<HTMLElement> {
+async function renderThin(language: 'en' | 'de', isRerun = false): Promise<void> {
   await i18n.changeLanguage(language)
   renderWithProviders(
     <ProgressPanel
@@ -19,42 +19,59 @@ async function renderThin(language: 'en' | 'de'): Promise<HTMLElement> {
       failure={{ kind: 'needs_description', questions: QUESTIONS }}
       onTryAgain={() => {}}
       onSaveForLater={() => {}}
+      isRerun={isRerun}
     />,
   )
-  return screen.findByRole('alert')
 }
 
 afterEach(async () => {
   await i18n.changeLanguage('en')
 })
 
-describe('ProgressPanel, a description too thin to start (E13)', () => {
-  it('asks what the tool decides and whom it affects, and lists the three questions', async () => {
-    const alert = await renderThin('en')
-    expect(alert).toHaveTextContent('Klar needs a little more to start')
+describe('ProgressPanel, a description too thin to start (E13, artboard ClassifyVague)', () => {
+  it('waits for a description in place of the check list, with no alert and no Try again', async () => {
+    await renderThin('en')
+    const panel = await screen.findByRole('region', { name: "Checking in the Act's order" })
+    expect(within(panel).getByText('Waiting for a description')).toBeVisible()
+    expect(
+      within(panel).getByText(
+        'The four checks start once Klar has enough to go on. Nothing is guessed in the meantime.',
+      ),
+    ).toBeVisible()
+    expect(
+      within(panel).getByText('No step is skipped. This usually takes under a minute.'),
+    ).toBeVisible()
+    expect(within(panel).queryByRole('list')).toBeNull()
+    expect(within(panel).queryByRole('alert')).toBeNull()
+    expect(within(panel).queryByRole('button')).toBeNull()
+  })
+
+  it('says the same in German', async () => {
+    await renderThin('de')
+    const panel = await screen.findByRole('region', { name: 'Prüfung in der Reihenfolge der Verordnung' })
+    expect(within(panel).getByText('Wartet auf eine Beschreibung')).toBeVisible()
+    expect(
+      within(panel).getByText(
+        'Die vier Prüfungen beginnen, sobald Klar genug Angaben hat. Bis dahin wird nichts geraten.',
+      ),
+    ).toBeVisible()
+    expect(within(panel).queryByRole('list')).toBeNull()
+  })
+
+  it("on a result's re-run, says the earlier result stands and lists the three prompts", async () => {
+    await renderThin('en', true)
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Your earlier result still stands')
     expect(alert).toHaveTextContent(
       'Klar needs to know what the tool decides and who it affects. Add that to your description and run it again.',
     )
     const items = within(alert).getAllByRole('listitem')
-    expect(items.map((item) => item.textContent)).toEqual(QUESTIONS)
-    expect(alert).not.toHaveTextContent("The checks couldn't finish")
-    expect(alert).not.toHaveTextContent('when a check fails')
-    expect(
-      screen.getByText('Waiting for a description. Nothing is guessed in the meantime.'),
-    ).toBeInTheDocument()
-  })
-
-  it('says the same in German', async () => {
-    const alert = await renderThin('de')
-    expect(alert).toHaveTextContent('Klar braucht etwas mehr, um zu starten')
-    expect(alert).toHaveTextContent(
-      'Klar muss wissen, was das Tool entscheidet und wen es betrifft. Ergänzen Sie das in Ihrer Beschreibung und starten Sie die Prüfungen erneut.',
-    )
-    expect(within(alert).getAllByRole('listitem')).toHaveLength(QUESTIONS.length)
-    expect(alert).not.toHaveTextContent('Die Prüfungen konnten nicht abgeschlossen werden')
-    expect(
-      screen.getByText('Wartet auf eine Beschreibung. Bis dahin wird nichts geraten.'),
-    ).toBeInTheDocument()
+    expect(items.map((item) => item.textContent)).toEqual([
+      'What does it decide or suggest?',
+      'Who does it affect?',
+      'Did you buy it or build it?',
+    ])
+    expect(screen.queryByText('Waiting for a description')).toBeNull()
   })
 })
 

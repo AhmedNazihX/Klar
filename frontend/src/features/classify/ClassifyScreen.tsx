@@ -2,13 +2,18 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState, type JSX } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
-import type { ClassificationResult } from '@/api'
+import type { ClassificationResult, ClassifyRequest, FollowUpQuestion } from '@/api'
 import { ScreenTitle } from '@/components/ScreenTitle'
 import { Button } from '@/components/ui/button'
-import { classifyFailureOf, saveFailureOf, useClassify } from '@/hooks/use-classify'
+import {
+  ClassifyRunError,
+  classifyFailureOf,
+  saveFailureOf,
+  useClassify,
+} from '@/hooks/use-classify'
 import { useLanguage } from '@/hooks/use-language'
 import { useSaveClassifiedTool, type SavedRun } from '@/hooks/use-save-classified-tool'
 
@@ -22,6 +27,8 @@ import {
 } from './classification-store'
 import { DescriptionForm } from './DescriptionForm'
 import { DescriptionFormSchema, type DescriptionFormValues } from './description-form'
+import { DescriptionPrompts } from './DescriptionPrompts'
+import { answersOf, withAnswers, type AnswerDraft, type AnswerDrafts } from './follow-up-answers'
 import { ProgressPanel } from './ProgressPanel'
 import { toolName } from './result-text'
 
@@ -45,11 +52,25 @@ function DraftToolNote({
   )
 }
 
+/** What a run too thin to start asked (E13): the engine's three prompts, and the description
+ *  they were asked about, so Run the checks waits until something is added. */
+type AskedForMore = { questions: FollowUpQuestion[]; description: string }
+
+/** The prompts a run too thin to start asked, or null for any other outcome. */
+function askedForMore(error: unknown, description: string): AskedForMore | null {
+  if (!(error instanceof ClassifyRunError) || error.failure.kind !== 'needs_description') {
+    return null
+  }
+  return { questions: error.failure.questions, description }
+}
+
 /**
- * Describe a tool (artboards `Classify`, `ClassifyError`): the description form beside the live
- * check list. A finished run is added to the inventory (P6): as a new tool, or as the next run of
- * the tool "Classify this tool" came from. It then opens its result;
- * a run that stops keeps the description and shows where and why. Runs start only when the user
+ * Describe a tool (artboards `Classify`, `ClassifyError`, `ClassifyVague`): the description form
+ * beside the live check list. A description too thin to start (E13) asks three prompts under the
+ * form while the checks wait; their answers go with every later run, appended to the
+ * description (decision 019), and a class-less run is never saved. A finished run is added to
+ * the inventory (P6): as a new tool, or as the next run of the tool "Classify this tool" came
+ * from. It then opens its result; a run that stops keeps the description and shows where and why. Runs start only when the user
  * asks: each one is a paid model run. Try again and Save for later take what the form holds now,
  * edits since the last run included.
  */
@@ -68,6 +89,11 @@ export function ClassifyScreen(): JSX.Element {
     resolver: zodResolver(DescriptionFormSchema),
     defaultValues: draftValues,
   })
+  const [asked, setAsked] = useState<AskedForMore | null>(null)
+  const [drafts, setDrafts] = useState<AnswerDrafts>({})
+  const description = useWatch({ control: form.control, name: 'description' })
+  const answers = asked ? answersOf(t, asked.questions, drafts) : {}
+  const hasAnswers = Object.keys(answers).length > 0
 
   /** Adds the finished run to the inventory (on the draft's tool, else as a new tool), then opens
    *  its result. A run that can't be saved still opens (it was paid for), under a local id and
@@ -105,11 +131,16 @@ export function ClassifyScreen(): JSX.Element {
 
   function start(values: DescriptionFormValues): void {
     saveDraft(values, draftTool)
-    run.mutate(
-      // The original text is only a view of the dates (decision 020): runs stay on the amended text.
-      { description: values.description, language },
-      { onSuccess: (result) => void keep(values, result) },
-    )
+    // The original text is only a view of the dates (decision 020): runs stay on the amended text.
+    const body: ClassifyRequest = { description: values.description, language }
+    run.mutate(hasAnswers ? { ...body, answers } : body, {
+      // The tool keeps the answers in its description: the run that asked for them is never saved.
+      onSuccess: (result) =>
+        void keep({ ...values, description: withAnswers(values.description, answers) }, result),
+      onError: (error) => {
+        setAsked((earlier) => askedForMore(error, values.description) ?? earlier)
+      },
+    })
   }
 
   const submit = form.handleSubmit(start)
@@ -135,7 +166,22 @@ export function ClassifyScreen(): JSX.Element {
             form={form}
             isRunning={run.isPending || save.isPending}
             onSubmit={submit}
+            hasRunAction={asked === null}
           />
+          {asked && (
+            <div className="mt-5">
+              <DescriptionPrompts
+                questions={asked.questions}
+                drafts={drafts}
+                onDraftChange={(id: string, draft: AnswerDraft) => {
+                  setDrafts((earlier) => ({ ...earlier, [id]: draft }))
+                }}
+                canRun={hasAnswers || description.trim() !== asked.description.trim()}
+                isRunning={run.isPending || save.isPending}
+                onRun={() => void submit()}
+              />
+            </div>
+          )}
         </div>
         <ProgressPanel
           progress={progress}

@@ -597,6 +597,11 @@ def test_recorded_thin_description_asks_for_a_description(
     assert result.steps == ()
     assert result.risk_class is None
     assert result.status is Status.NEEDS_MORE_INFORMATION
+    assert [q.id for q in result.follow_up_questions] == [
+        "what_it_decides",
+        "who_it_affects",
+        "bought_or_built",
+    ]
     assert result.follow_up_questions == facts.description_questions(language)
 
 
