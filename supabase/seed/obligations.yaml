@@ -916,10 +916,9 @@ obligations:
     applies_if: The system is listed in Annex III, but you concluded under Art. 6(3) that it is not high-risk.
     note: >-
       The Omnibus kept this registration but simplified its content (Omnibus recital 22). The date
-      follows Art. 113(c)(i), as the Commission's AI Act Service Desk timeline (Annex III rules from
-      2 December 2027) and practitioner guides (Modulos, Praxikon) read it. Art. 113(c)(i) names
-      systems "classified as high-risk", so a literal reading would give 2 August 2026; no source
-      found argues it. The user kept 2 December 2027 on 2026-10-10. Check with a lawyer.
+      follows Art. 113(c)(i), as the Commission's AI Act Service Desk timeline reads it (Annex III
+      rules from 2 December 2027). That provision names systems "classified as high-risk", so a
+      literal reading could give 2 August 2026. Check with a lawyer.
 
   # --- Systems built on a general-purpose AI model (Art. 53) -------------------------------------
   # Added by E7: flags the model provider's duties (INIT > Roles). The user reviewed the date on 2026-09-29.
