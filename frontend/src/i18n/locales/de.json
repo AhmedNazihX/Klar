@@ -373,7 +373,7 @@
       "models": "Sprachmodelle, über OpenRouter",
       "modelsRole": "Prüfungen und Antworten",
       "modelsDetail": "OpenRouter leitet jede Anfrage weiter; seine eigene Verarbeitung ist nicht auf die EU beschränkt. Die Modelle laufen in EU-Regionen bei Microsoft Azure und Google Vertex AI.",
-      "modelsRefusal": "Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung, wird die Anfrage dieser Prüfung (die Beschreibung sowie die daraus gewonnenen Fakten und Antworten) noch einmal an Gemini 3.1 Flash-Lite bei Google Vertex AI in der EU gesendet (keine Datenspeicherung beim Anbieter, kein Training), für jede blockierte Prüfung. Das geschieht nur, wenn der Filter sie blockiert.",
+      "modelsRefusal": "Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung oder eine Frage an Klar, wird diese Anfrage (bei einer Prüfung: die Beschreibung sowie die daraus gewonnenen Fakten und Antworten; bei einer Frage: die Frage und, falls vorhanden, das Ergebnis, auf das sie sich bezieht) noch einmal an Gemini 3.1 Flash-Lite bei Google Vertex AI in der EU gesendet (keine Datenspeicherung beim Anbieter, kein Training), für jede blockierte Anfrage. Das geschieht nur, wenn der Filter sie blockiert.",
       "search": "Suche in den Rechtstexten, bei einem Anbieter in der EU",
       "searchRole": "Embeddings",
       "searchDetail": "Nebius macht in der EU aus Ihrer Beschreibung eine Suche in der Verordnung.",

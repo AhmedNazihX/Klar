@@ -27,6 +27,15 @@ describe('qa-history', () => {
     expect(readThread('ask').map((entry) => [entry.id, entry.state])).toEqual([['a', 'answered']])
   })
 
+  it.each(['answered', 'outside_corpus', 'compliance', 'refused'] as const)(
+    'keeps a %s answer across a reload',
+    (kind) => {
+      const answer = { ...answered(), kind, citations: [] }
+      writeThread('ask', [{ id: 'a', question: 'Q?', state: 'answered', answer }])
+      expect(readThread('ask')).toEqual([{ id: 'a', question: 'Q?', state: 'answered', answer }])
+    },
+  )
+
   it('keeps the latest questions only', () => {
     const entries: QaEntry[] = Array.from({ length: MAX_KEPT_QUESTIONS + 2 }, (_, n) => ({
       id: `q${String(n)}`,

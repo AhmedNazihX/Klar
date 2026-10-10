@@ -19,7 +19,8 @@ export class QaError extends Error {
   }
 }
 
-type Asked = { id: string; question: string; language: Language }
+/** One question sent, with the thread it was asked in. */
+type Asked = { id: string; question: string; language: Language; thread: string }
 
 export type QaThread = {
   entries: readonly QaEntry[]
@@ -40,6 +41,9 @@ function newId(): string {
  * questions stay for the browser session (`qa-history`); nothing goes to the database. A result's
  * thread is held above its view switch (`ResultScreen`), so an answer still on its way lands in
  * the thread whichever view is shown; a new `thread` (the next run) starts from its own history.
+ * An answer that comes back after the screen moved to another thread is kept in its own thread's
+ * history (a failure there is dropped: it is asked again by the user), and the new thread's field
+ * is free at once.
  */
 export function useQaThread(
   thread: string,
@@ -64,9 +68,17 @@ export function useQaThread(
     setHeld((current) => ({ ...current, entries: update(current.entries) }))
   }
 
-  function settle(id: string, update: Partial<QaEntry>): void {
-    setEntries((current) =>
-      current.map((entry) => (entry.id === id ? { ...entry, ...update } : entry)),
+  /** Settles a question in the thread shown; one asked in another thread is left alone. */
+  function settle({ id, thread: asked }: Asked, update: Partial<QaEntry>): void {
+    setHeld((current) =>
+      current.thread === asked
+        ? {
+            ...current,
+            entries: current.entries.map((entry) =>
+              entry.id === id ? { ...entry, ...update } : entry,
+            ),
+          }
+        : current,
     )
   }
 
@@ -78,12 +90,21 @@ export function useQaThread(
       if (!response?.ok || !data) throw new QaError(response?.status ?? null)
       return data
     },
-    onSuccess: (answer, { id }) => {
-      settle(id, { state: 'answered', answer, failure: undefined })
+    onSuccess: (answer, asked) => {
+      if (asked.thread !== thread) {
+        // The screen moved on (the next run): keep the answer in its own thread's history.
+        const { id, question } = asked
+        writeThread(asked.thread, [
+          ...readThread(asked.thread),
+          { id, question, state: 'answered', answer },
+        ])
+        return
+      }
+      settle(asked, { state: 'answered', answer, failure: undefined })
     },
-    onError: (error, { id }) => {
+    onError: (error, asked) => {
       const isBusy = error instanceof QaError && error.status === TOO_MANY_REQUESTS
-      settle(id, { state: 'failed', failure: isBusy ? 'busy' : 'failed' })
+      settle(asked, { state: 'failed', failure: isBusy ? 'busy' : 'failed' })
     },
   })
 
@@ -91,20 +112,25 @@ export function useQaThread(
     mutation.mutate(asked)
   }
 
+  // Only a question of this thread holds its field: one still on its way from another thread
+  // (the run before) doesn't.
+  const isAsking = mutation.isPending && mutation.variables.thread === thread
+
   return {
     entries,
     ask: (question) => {
-      if (mutation.isPending) return
-      const asked = { id: newId(), question, language }
+      if (isAsking) return
+      const asked = { id: newId(), question, language, thread }
       setEntries((current) => [...current, { id: asked.id, question, state: 'pending' }])
       send(asked)
     },
     retry: (id) => {
       const failed = entries.find((entry) => entry.id === id && entry.state === 'failed')
-      if (!failed || mutation.isPending) return
-      settle(id, { state: 'pending', failure: undefined })
-      send({ id, question: failed.question, language })
+      if (!failed || isAsking) return
+      const asked = { id, question: failed.question, language, thread }
+      settle(asked, { state: 'pending', failure: undefined })
+      send(asked)
     },
-    isAsking: mutation.isPending,
+    isAsking,
   }
 }
