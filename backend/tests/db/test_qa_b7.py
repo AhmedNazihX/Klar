@@ -94,8 +94,8 @@ def test_b7_answerable_questions_reach_the_model(
 @pytest.mark.xfail(
     strict=True,
     raises=CannotOverwriteExistingCassetteException,
-    reason="replay mismatch (2026-10-10): the recorded request body differs on replay, so the "
-    "request is not deterministic; diagnose, then re-record (orchestrator)",
+    reason="recording pending (orchestrator): the first recording didn't replay; its requests "
+    "proved deterministic on a fake network (2026-10-10), so record it again from scratch",
 )
 @pytest.mark.vcr
 def test_b7_unanswerable_questions_get_the_outside_corpus_answer(
