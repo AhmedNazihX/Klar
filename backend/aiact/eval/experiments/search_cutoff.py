@@ -245,8 +245,11 @@ def run_calibration(
             if is_over_budget(meter, max_cost_usd):
                 status = RunStatus.COST_CAP_REACHED
                 break
+            before = meter.usage()
             measurement = measure(probe, embedder, connection, settings, search=search)
-            store.add_case(run_id, _record(probe, measurement))
+            after = meter.usage()
+            spent = (after.cost_usd - before.cost_usd, after.tokens - before.tokens)
+            store.add_case(run_id, _record(probe, measurement, *spent))
             measurements[probe.id] = measurement
     except BaseException:
         finish_after_failure(store, run_id, _outcome(RunStatus.INTERRUPTED, probes, measurements,
@@ -277,7 +280,7 @@ def _config(
     }
 
 
-def _record(probe: Probe, measurement: Measurement) -> CaseRecord:
+def _record(probe: Probe, measurement: Measurement, cost_usd: float, tokens: int) -> CaseRecord:
     recall: dict[str, float | bool | None] = {
         f"recall_at_{distance:.2f}": value
         for distance, value in measurement.recall_by_distance.items()
@@ -300,8 +303,8 @@ def _record(probe: Probe, measurement: Measurement) -> CaseRecord:
             "is_error": False,
         },
         trace_id=None,
-        cost_usd=0.0,
-        tokens=0,
+        cost_usd=cost_usd,
+        tokens=tokens,
     )
 
 

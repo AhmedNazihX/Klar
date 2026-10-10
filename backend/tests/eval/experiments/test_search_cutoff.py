@@ -254,6 +254,8 @@ def test_a_run_stores_one_row_per_probe_with_what_decides_found() -> None:
     assert outcome["status"] == "completed"
     assert outcome["found_share_at_settings"] == {"answerable": 1.0, "off_topic": 1.0}
     assert calibration.cost_usd == pytest.approx(0.0002)  # one embedding per probe
+    assert [record.cost_usd for _, record in store.cases] == pytest.approx([0.0001, 0.0001])
+    assert [record.tokens for _, record in store.cases] == [7, 7]
 
 
 def test_the_cost_cap_stops_new_probes() -> None:
