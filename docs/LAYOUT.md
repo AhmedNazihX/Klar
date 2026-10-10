@@ -16,6 +16,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check (F2, B13); frontend lint, build, test (P5)
 ├── .github/workflows/label-freeze.yml  label-freeze check, never cancelled (B10a)
 ├── .githooks/                       pre-commit and pre-merge-commit regenerate DEPENDENCIES.md, pre-push checks it (F8)
+├── Makefile                         local dev: `make dev` runs the API and the frontend together; `make db` starts Supabase
 │
 ├── backend/                         the only Python project (uv)
 │   ├── pyproject.toml               deps, ruff, pyright, pytest config; `aiact` console script (F1)
