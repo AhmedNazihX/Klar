@@ -22,12 +22,13 @@ ARTICLE = re.compile(
     r"(?:\s*\((?P<paragraph>\d{1,2}[a-z]?)\))?"
     r"(?:\s*\((?P<point>[a-z]{1,2})\))?"
     r"(?:\s*(?:abs\.|absatz)\s*(?P<absatz>\d{1,2}[a-z]?)\b)?"
-    r"(?:\s*(?:unterabs\.|unterabsatz)\s*\d{1,2}\b)?"
+    r"(?:\s*(?P<unterabsatz>unterabs\.|unterabsatz)\s*\d{1,2}\b)?"
     r"(?:\s*(?:buchst\.|buchstabe)\s*(?P<buchstabe>[a-z]{1,2})\b)?",
     re.IGNORECASE,
 )
 """An article, with its paragraph and point in brackets (EN, and German citing that way) or
-as Absatz and Buchstabe (DE). A German Unterabsatz is skipped: ids number no subparagraphs."""
+as Absatz and Buchstabe (DE). With a German Unterabsatz the reference stops at the paragraph:
+the ids put a point under `sub<n>` only where a list restarts (C1), which a citation can't tell."""
 
 ANNEX = re.compile(
     r"\b(?:annex|anhang)\s+(?P<annex>[IVXL]{1,5})\b"
@@ -54,7 +55,7 @@ def _matches(query: str) -> Iterator[tuple[int, str]]:
     """(position, provision id) for every reference in `query`."""
     for match in ARTICLE.finditer(query):
         paragraph = match["paragraph"] or match["absatz"]
-        point = match["point"] or match["buchstabe"]
+        point = None if match["unterabsatz"] else match["point"] or match["buchstabe"]
         yield (
             match.start(),
             _join("art", [_lower(match["number"]), _lower(paragraph), _lower(point)]),

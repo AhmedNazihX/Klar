@@ -24,11 +24,17 @@ DEFAULT_QUERY_INSTRUCTION = (
 """Qwen3's query-side task text (`EMBEDDING_QUERY_INSTRUCTION`): the "governs it" text chosen in
 decision 003 for Q&A and MCP searches."""
 
-DEFAULT_SEARCH_MAX_DISTANCE = 0.5
-"""`SEARCH_MAX_DISTANCE`: placeholder until X1b's calibration sets it (decision 003)."""
+DEFAULT_SEARCH_MAX_DISTANCE = 0.30
+"""`SEARCH_MAX_DISTANCE`, calibrated in X1b (decision 003, run a221b495): a hit at similarity
+0.70 or more. Every answerable Q&A question's best hit is at 0.747 or more, and provision recall
+in the top 5 stays at its uncut value (0.851) from 0.30 on, while 7 of 9 unanswerable questions
+and 13 of 14 off-topic strings fall below it."""
 
-DEFAULT_MIN_KEYWORD_IDF = 9.0
-"""`SEARCH_MIN_KEYWORD_IDF`: placeholder until X1b's calibration sets it (decision 003)."""
+DEFAULT_MIN_KEYWORD_IDF = 24.0
+"""`SEARCH_MIN_KEYWORD_IDF`, calibrated in X1b (decision 003): above the best keyword hit of
+every unanswerable question and off-topic string (at most 21.3), so keywords alone never make
+them found; it lets 6 long Annex descriptions whose best hit is under 0.70 count as found. The
+summed IDF grows with the query's length, so a long off-topic text could pass it."""
 
 
 class Settings(BaseSettings):

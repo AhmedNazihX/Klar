@@ -50,7 +50,7 @@ def test_env_example_leaves_model_ids_unset(monkeypatch: pytest.MonkeyPatch) -> 
     )
     assert settings.embedding_dimensions == 1536
     # Empty keys keep X1b's calibrated values (decision 003).
-    assert (settings.search_max_distance, settings.search_min_keyword_idf) == (0.5, 9.0)
+    assert (settings.search_max_distance, settings.search_min_keyword_idf) == (0.30, 24.0)
 
 
 def test_relative_data_dir_resolves_against_backend(monkeypatch: pytest.MonkeyPatch) -> None:
