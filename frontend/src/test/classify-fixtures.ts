@@ -103,6 +103,85 @@ export function providerRefused(): ClassificationResult {
   }
 }
 
+/** README › Voice's "AI for HR" line: a description too thin for the checks to start (E13). */
+export const THIN_DESCRIPTION = 'We use AI for HR.'
+
+/** The engine's three prompts as `facts.description_questions` words them (pinned by the
+ *  backend's test_the_description_questions_are_worded_as_the_artboard). */
+const DESCRIPTION_QUESTIONS: Record<'en' | 'de', FollowUpQuestion[]> = {
+  en: [
+    {
+      id: 'what_it_decides',
+      text: 'What does it decide or suggest?',
+      hint: 'For example: it ranks applicants, answers staff questions, plans shifts.',
+      options: [],
+    },
+    {
+      id: 'who_it_affects',
+      text: 'Who does it affect?',
+      hint: 'For example: applicants, your staff, customers.',
+      options: [],
+    },
+    {
+      id: 'bought_or_built',
+      text: 'Did you buy it or build it?',
+      hint: 'And whether you changed it or put your own name on it.',
+      options: [],
+    },
+  ],
+  de: [
+    {
+      id: 'what_it_decides',
+      text: 'Was entscheidet es oder was schlägt es vor?',
+      hint: 'Zum Beispiel: Es reiht Bewerbungen, beantwortet Fragen von Beschäftigten, plant Schichten.',
+      options: [],
+    },
+    {
+      id: 'who_it_affects',
+      text: 'Wen betrifft es?',
+      hint: 'Zum Beispiel: Bewerbende, Ihre Beschäftigten, Kundschaft.',
+      options: [],
+    },
+    {
+      id: 'bought_or_built',
+      text: 'Haben Sie es gekauft oder selbst entwickelt?',
+      hint: 'Und ob Sie es verändert oder Ihren eigenen Namen daraufgesetzt haben.',
+      options: [],
+    },
+  ],
+}
+
+/** A needs-a-description result (E13, decision 032): no steps, no class, nothing a class brings,
+ *  and the three prompts. */
+export function needsDescription(language: 'en' | 'de' = 'en'): ClassificationResult {
+  return {
+    ...WORKED_EXAMPLE,
+    facts: [{ text: 'The company uses AI in HR.', evidence: 'inferred', source_span: null }],
+    steps: [],
+    risk_class: null,
+    status: 'needs_more_information',
+    role: null,
+    also_role: null,
+    role_switch_reason: null,
+    annex_point: null,
+    transparency_duties: [],
+    deciding_facts: [],
+    obligations: [],
+    legal_review: null,
+    not_assessed: [],
+    follow_up_questions: DESCRIPTION_QUESTIONS[language],
+  }
+}
+
+/** The stream of a run too thin to start: its facts, then the result, and no step event. */
+export function needsDescriptionEvents(language: 'en' | 'de' = 'en'): ClassifyResponse[] {
+  const result = needsDescription(language)
+  return [
+    { event: 'facts', facts: result.facts, follow_up_questions: DESCRIPTION_QUESTIONS[language] },
+    { event: 'result', result },
+  ]
+}
+
 /** The worked example as decision 029 stored it with its transparency check refused, before
  *  decision 030: the refused check listed in `not_assessed`, the class and its duties kept. */
 export function storedBeforeDecision030(): ClassificationResult {

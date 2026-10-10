@@ -8,10 +8,10 @@ import type { ClassifyResponse } from '@/api'
 import {
   CLASSIFY_URL,
   classifyHandler,
+  needsDescriptionEvents,
   PERSON_REVIEW,
   providerRefused,
   sseBody,
-  WORKED_EXAMPLE,
   WORKED_EXAMPLE_EVENTS,
 } from '@/test/classify-fixtures'
 import { server } from '@/test/msw-server'
@@ -72,31 +72,9 @@ describe('useClassify', () => {
     expect(firstError).toBeInstanceOf(DOMException)
   })
 
-  it('ends a needs-a-description run without a class with its three questions', async () => {
+  it('ends a needs-a-description run without a class with its three prompts', async () => {
     // E13: the description was too thin to start, so no check ran and no class was given.
-    const thin: ClassifyResponse = {
-      event: 'result',
-      result: {
-        ...WORKED_EXAMPLE,
-        steps: [],
-        risk_class: null,
-        status: 'needs_more_information',
-        role: null,
-        also_role: null,
-        role_switch_reason: null,
-        annex_point: null,
-        transparency_duties: [],
-        deciding_facts: [],
-        obligations: [],
-        legal_review: null,
-        follow_up_questions: [
-          { id: 'what_it_decides', text: 'What does it decide or suggest?' },
-          { id: 'who_it_affects', text: 'Who does it affect?' },
-          { id: 'bought_or_built', text: 'Did you buy it or build it?' },
-        ],
-      },
-    }
-    server.use(classifyHandler([...WORKED_EXAMPLE_EVENTS.slice(0, 1), thin]))
+    server.use(classifyHandler(needsDescriptionEvents()))
     const { result } = renderUseClassify()
 
     let outcome: unknown
@@ -105,14 +83,23 @@ describe('useClassify', () => {
     })
 
     expect(outcome).toBeInstanceOf(ClassifyRunError)
-    expect((outcome as ClassifyRunError).failure).toEqual({
-      kind: 'needs_description',
-      questions: [
+    const failure = (outcome as ClassifyRunError).failure
+    expect(failure.kind).toBe('needs_description')
+    const questions = failure.kind === 'needs_description' ? failure.questions : []
+    expect(questions.map((question) => [question.id, question.text, question.hint])).toEqual([
+      [
+        'what_it_decides',
         'What does it decide or suggest?',
-        'Who does it affect?',
-        'Did you buy it or build it?',
+        'For example: it ranks applicants, answers staff questions, plans shifts.',
       ],
-    })
+      ['who_it_affects', 'Who does it affect?', 'For example: applicants, your staff, customers.'],
+      [
+        'bought_or_built',
+        'Did you buy it or build it?',
+        'And whether you changed it or put your own name on it.',
+      ],
+    ])
+    expect(result.current.progress.started).toEqual([])
   })
 
   it('stops a run whose check the provider refused with the blocked checks and the review question', async () => {

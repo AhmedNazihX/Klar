@@ -10,7 +10,6 @@ description: >-
   organises an annual summer school on survey methods.
 label:
   risk_class: out_of_scope
-  role: provider
 label_citation: ["art:2:6", "annex:III:8:b"]
 source_example_id: hr-ex-304
 accepted_bases: ["outside_use_case"]
@@ -20,7 +19,8 @@ notes: >-
   is outside point 8(b) (it is not intended to influence elections) and "in any event" likely
   excluded by Art. 2(6). Built and put into service solely for scientific research, the Art. 2(6)
   exclusion applies, so out_of_scope (were it not excluded, it would be minimal_risk: not 8(b), no
-  Art. 50 duty). Role: it built the model for its own research (provider).
+  Art. 50 duty). Role: none (an excluded system has no operator role under the Act; as own-b-08;
+  B9 label filter, 2026-10-10).
 tags:
   - "area:annex_iii_8"
   - "verdict:not_high"

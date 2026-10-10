@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import type { JSX } from 'react'
+import type { JSX, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult, LegacyStatus, RiskClass, Role } from '@/api'
@@ -10,6 +10,7 @@ import type { Language } from '@/i18n'
 
 import { checkNumber } from './classify-progress'
 import { longDate, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
+import { isProviderLayout, providerReason } from './provider-layout'
 import { amendedRouteDate, basisSentence, pausedStep, statusPill } from './result-text'
 import { legalReviewLine, useDutiesFrom } from './verdict-lines'
 import { riskClassOf } from '@/lib/risk-class'
@@ -17,15 +18,39 @@ import { riskClassOf } from '@/lib/risk-class'
 /** The roles that supply the system: Art. 111(2) counts per copy supplied (decision 022). */
 const SUPPLIER_ROLES: readonly Role[] = ['provider', 'importer', 'distributor']
 
-export function StatusPills({ result }: { result: ClassificationResult }): JSX.Element {
+/** The status pills, then any pill the layout adds after them (`extra`). */
+export function StatusPills({
+  result,
+  extra,
+}: {
+  result: ClassificationResult
+  extra?: ReactNode
+}): JSX.Element {
   const { t } = useTranslation()
-  if (result.status === 'decided') return <StatusPill status="decided" />
+  if (result.status === 'decided') {
+    return (
+      <>
+        <StatusPill status="decided" />
+        {extra}
+      </>
+    )
+  }
   return (
     <>
       <StatusPill status="decided">{t('result.assumed')}</StatusPill>
       <StatusPill status={statusPill(result.status)} />
+      {extra}
     </>
   )
+}
+
+/** Who you are: the role line, which on the provider layout says why you're the provider. */
+function roleLine(t: TFunction, result: ClassificationResult): string | null {
+  if (!result.role) return null
+  if (!isProviderLayout(result)) return t(`result.role.${result.role}`)
+  const reason = providerReason(result)
+  if (reason === 'stated') return t('result.role.provider')
+  return t(`result.provider.reason.${reason}`)
 }
 
 /** The class as the paused lines name it: three have their own words, the rest the generic line. */
@@ -143,7 +168,7 @@ export function ResultVerdict({
     : {
         statement: (
           <>
-            {result.role && <span>{t(`result.role.${result.role}`)} </span>}
+            {result.role && <span>{roleLine(t, result)} </span>}
             {result.also_role && <span>{t(`result.alsoRole.${result.also_role}`)} </span>}
             <span>{basisSentence(t, result, language)}</span>
           </>
@@ -155,7 +180,17 @@ export function ResultVerdict({
   return (
     <ResultSummary
       riskClass={riskClassOf(result)}
-      status={<StatusPills result={result} />}
+      status={
+        <StatusPills
+          result={result}
+          // The provider layout names the role in a pill too (artboard `ResultProvider`).
+          extra={
+            isProviderLayout(result) && (
+              <StatusPill status="decided">{t('result.roleName.provider')}</StatusPill>
+            )
+          }
+        />
+      }
       {...summary}
       legalReview={legalReviewLine(t, result)}
     >
