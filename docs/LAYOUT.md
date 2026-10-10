@@ -258,10 +258,12 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            sidebar's CompanyLine (P18); the result's CheckProgress, FactCard,
 │       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
 │       │                            InventoryTable (P6); VersionDiff (P10); FactQuestion, ChangeBanner (P5b); Composer, ChatMessage (P7);
-│       │                            Reveal, Typewriter, MenuMark, MistGround's moving lights (P16)
+│       │                            Reveal, Typewriter, MenuMark, MistGround's moving lights (P16);
+│       │                            law-binding.ts (the frame's law binding, for a screen's own switch) and
+│       │                            AppTopBar's ScreenLawSwitch (the compact switch under a phone result's title, P26)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
-│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5; the provider layout
+│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5; ResultScreen.phone.browser.test.tsx the result at 390 px, P26; the provider layout
 │       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23; the ambiguous
 │       │                            layout AmbiguousSummary, AmbiguousVerdict, ReadingCards, SettleIt, TakeItToALawyer, P22), inventory/ (P6), your-data/ (P12), obligations/ (P24),
 │       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads),

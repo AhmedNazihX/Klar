@@ -75,7 +75,7 @@ export function Composer({
           onChange(event.target.value)
         }}
         onKeyDown={onKeyDown}
-        className="[field-sizing:content] max-h-40 min-h-[40px] min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-body-small text-ink outline-none placeholder:text-slate"
+        className="[field-sizing:content] max-h-40 min-h-11 min-w-0 md:min-h-[40px] flex-1 resize-none border-0 bg-transparent py-2 text-body-small text-ink outline-none placeholder:text-slate"
       />
       <button
         type="button"
@@ -86,7 +86,7 @@ export function Composer({
           setIsSent(false)
         }}
         className={cn(
-          'relative inline-flex size-10 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-0 transition-[translate,box-shadow] duration-(--duration-press) ease-settle',
+          'relative inline-flex size-11 shrink-0 md:size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border-0 transition-[translate,box-shadow] duration-(--duration-press) ease-settle',
           canSend
             ? 'liquid-primary text-white shadow-button motion-safe:hover:-translate-y-0.5'
             : 'cursor-default bg-ink/6 text-slate',

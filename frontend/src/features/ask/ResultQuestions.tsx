@@ -48,7 +48,7 @@ export function ResultQuestions({ qa }: { qa: QaThread }): JSX.Element {
                     setDraft(t(`ask.result.${key}`))
                     document.getElementById(fieldId)?.focus()
                   }}
-                  className="h-8 cursor-pointer rounded-pill border-0 px-3 text-[13px] text-ink glass-thin"
+                  className="h-11 cursor-pointer rounded-pill md:h-8 border-0 px-3 text-[13px] text-ink glass-thin"
                 >
                   {t(`ask.result.${key}`)}
                 </button>
