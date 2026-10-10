@@ -5,7 +5,9 @@ the path from the posted run to the count. No network."""
 from collections.abc import Sequence
 from uuid import uuid4
 
+import psycopg
 import pytest
+from langsmith.utils import LangSmithError
 from typer.testing import CliRunner
 
 from aiact.cli import app
@@ -102,6 +104,27 @@ def test_a_failed_lookup_retrieves_nothing() -> None:
     assert retrieved_ids(runs) == frozenset()
 
 
+def test_an_errored_search_retrieves_nothing() -> None:
+    """A search that raised returned no rows, whatever ids its metadata carries."""
+    runs = [
+        TraceRun(id="s", name="high_risk"),
+        TraceRun(
+            id="f",
+            parent_run_id="s",
+            name="search_ai_act",
+            error="OperationalError",
+            metadata={lookup_tracing.HIT_IDS: [PILE_B_ROW]},
+        ),
+        TraceRun(
+            id="g",
+            parent_run_id="s",
+            name="search_ai_act",
+            metadata={lookup_tracing.HIT_IDS: [PILE_A_ROW]},
+        ),
+    ]
+    assert retrieved_ids(runs) == frozenset({PILE_A_ROW})
+
+
 def test_a_traced_search_shows_the_held_out_row_it_returned(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -123,13 +146,14 @@ def test_a_traced_search_shows_the_held_out_row_it_returned(
 
 
 def _search() -> None:
-    search_ai_act(
-        SECRET,
-        doc_keys={"guideline"},
-        max_distance=None,
-        embedder=FakeEmbedder(),
-        connection=DatabaseConnection(),  # pyright: ignore[reportArgumentType]
-    )
+    with lookup_tracing.benchmark_run():
+        search_ai_act(
+            SECRET,
+            doc_keys={"guideline"},
+            max_distance=None,
+            embedder=FakeEmbedder(),
+            connection=DatabaseConnection(),  # pyright: ignore[reportArgumentType]
+        )
 
 
 cli = CliRunner()
@@ -161,3 +185,35 @@ def test_cli_prints_the_report(monkeypatch: pytest.MonkeyPatch) -> None:
     run_id = uuid4()
     outcome = cli.invoke(app, ["evaluate", "held-out-hits", str(run_id)])
     assert (outcome.exit_code, outcome.stdout) == (0, f"## {run_id}\n")
+
+
+def test_cli_database_error_exits_2_and_hides_the_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    def connect() -> object:
+        raise psycopg.OperationalError("could not connect to postgresql://u:hunter2@db:5432/x")
+
+    monkeypatch.setattr(tool_calls, "langsmith_source", lambda settings: object())
+    monkeypatch.setattr(records, "connect", connect)
+    outcome = cli.invoke(app, ["evaluate", "held-out-hits", str(uuid4())])
+    assert outcome.exit_code == 2
+    assert "Error: database error (OperationalError); check DATABASE_URL" in outcome.stderr
+    assert "hunter2" not in outcome.output
+
+
+def test_cli_langsmith_error_exits_2(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Connection:
+        def __enter__(self) -> "Connection":
+            return self
+
+        def __exit__(self, *exc: object) -> None:
+            return None
+
+    def forbidden(conn: object, source: object, run_id: object) -> str:
+        raise LangSmithError("403 Forbidden for https://api.smith.langchain.com, key ls-secret")
+
+    monkeypatch.setattr(tool_calls, "langsmith_source", lambda settings: object())
+    monkeypatch.setattr(records, "connect", Connection)
+    monkeypatch.setattr(held_out_hits, "held_out_report", forbidden)
+    outcome = cli.invoke(app, ["evaluate", "held-out-hits", str(uuid4())])
+    assert outcome.exit_code == 2
+    assert "Error: LangSmith error (LangSmithError); check LANGSMITH_API_KEY" in outcome.stderr
+    assert "ls-secret" not in outcome.output

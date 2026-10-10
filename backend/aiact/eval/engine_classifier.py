@@ -25,6 +25,7 @@ from aiact.eval.runner import (
     ClassifierInput,
 )
 from aiact.llm.routing import require_setting
+from aiact.retrieval.tracing import benchmark_run
 from aiact.schemas import LawVersion
 from aiact.settings import Settings, get_settings
 
@@ -60,13 +61,14 @@ class EngineClassifier:
     def classify(self, request: ClassifierInput) -> Classification:
         engine_request = engine_request_for(request)
         try:
-            run = run_classification(
-                engine_request,
-                settings=self._settings,
-                build_nodes=self._build_nodes,
-                exclude_source_example_ids=request.exclude_source_example_ids,
-                include_held_out=request.include_held_out,
-            )
+            with benchmark_run():  # its searches record their hit ids (held-out-hits, V8)
+                run = run_classification(
+                    engine_request,
+                    settings=self._settings,
+                    build_nodes=self._build_nodes,
+                    exclude_source_example_ids=request.exclude_source_example_ids,
+                    include_held_out=request.include_held_out,
+                )
         except ClassificationFailedError as exc:
             usage = exc.usage
             if usage.cost_usd > 0 or usage.tokens > 0:
@@ -106,5 +108,15 @@ def engine_request_for(request: ClassifierInput) -> ClassifyRequest:
             answers=dict(request.answers),
         )
     except ValidationError as exc:
-        fields = sorted({".".join(str(part) for part in error["loc"]) for error in exc.errors()})
-        raise InvalidRequestError(f"the case's request is invalid at {', '.join(fields)}") from None
+        raise InvalidRequestError(_invalid_fields(exc)) from None
+
+
+def _invalid_fields(exc: ValidationError) -> str:
+    """Which fields failed, by their name only: a deeper `loc` part can be an answer's question
+    id, a key the case's data chose. A check of the whole request has no field."""
+    locs = [error["loc"] for error in exc.errors()]
+    fields = sorted({str(loc[0]) for loc in locs if loc})
+    parts = [f"invalid at {', '.join(fields)}"] if fields else []
+    if any(not loc for loc in locs):
+        parts.append("invalid as a whole (for example a blank description or answer)")
+    return f"the case's request is {' and '.join(parts)}"

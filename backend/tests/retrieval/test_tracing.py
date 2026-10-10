@@ -222,15 +222,31 @@ def test_a_search_posts_the_ids_it_returned_but_never_their_text(
     """V8: the gap run's traces must show which (held-out) rows a search returned."""
     found_rows = [_search_row(1, "guide:x:ex:hr-ex-002"), _search_row(2, "art:5")]
     monkeypatch.setattr(search, "_run", lambda connection, statement, params: found_rows)
-    session = traced(_lookups)
+    session = traced(_benchmark_lookups)
     [found] = [run for run in posted_runs(session).values() if run["name"] == "search_ai_act"]
     assert found["extra"]["metadata"][tracing.HIT_IDS] == ["guide:x:ex:hr-ex-002", "art:5"]
     assert not [body for body in session.sent if HELD_OUT_TEXT in body]
 
 
+def test_a_users_search_posts_no_ids(no_database: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Outside a benchmark run (API, MCP) the trace stays as before V8: the filters only."""
+    found_rows = [_search_row(1, "guide:x:ex:hr-ex-002")]
+    monkeypatch.setattr(search, "_run", lambda connection, statement, params: found_rows)
+    session = traced(_lookups)
+    [found] = [run for run in posted_runs(session).values() if run["name"] == "search_ai_act"]
+    assert tracing.HIT_IDS not in found["extra"]["metadata"]
+    assert found["extra"]["metadata"][tracing.DOC_KEYS] == ["guide-prohibited"]
+    assert not [body for body in session.sent if "hr-ex-002" in body]
+
+
 def test_a_search_that_found_nothing_posts_no_ids(no_database: None) -> None:
-    runs = {run["name"]: run for run in posted_runs(traced(_lookups)).values()}
+    runs = {run["name"]: run for run in posted_runs(traced(_benchmark_lookups)).values()}
     assert runs["search_ai_act"]["extra"]["metadata"][tracing.HIT_IDS] == []
+
+
+def _benchmark_lookups() -> None:
+    with tracing.benchmark_run():
+        _lookups()
 
 
 def test_search_metadata_holds_the_filters_only() -> None:

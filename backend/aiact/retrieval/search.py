@@ -53,8 +53,8 @@ No model is involved apart from the query embedding.
 - **Parents.** A parent row includes all its descendants' text (C1), so a row that is an
   ancestor or a descendant of a better-ranked hit is skipped (`distinct_units`).
 - **Tracing (V7).** Inside a traced engine run, a search is a LangSmith run of its own, with the
-  documents and types it was limited to and the provision ids it returned as metadata, never the
-  query or a hit's text (`aiact.retrieval.tracing`).
+  documents and types it was limited to as metadata (in a benchmark run also the provision ids it
+  returned, V8), never the query or a hit's text (`aiact.retrieval.tracing`).
 """
 
 from collections.abc import Collection, Sequence
@@ -358,8 +358,8 @@ class SearchResults(ContractModel):
 
 
 def hit_metadata(results: "SearchResults") -> dict[str, object]:
-    """A search's trace metadata from its result: the provision ids it returned, never a hit's
-    text."""
+    """A search's trace metadata from its result, recorded in benchmark runs only: the provision
+    ids it returned, never a hit's text."""
     return {HIT_IDS: [hit.provision_id for hit in results.hits]}
 
 

@@ -254,6 +254,8 @@ NOT_ENTRY_POINTS: dict[str, str] = {
     "aiact.retrieval.tracing.traced_lookup": "traces a lookup it wraps; runs no query itself",
     "aiact.retrieval.tracing.provision_metadata": "a lookup's trace metadata; runs no query",
     "aiact.retrieval.tracing.search_metadata": "a search's trace metadata; runs no query",
+    "aiact.retrieval.tracing.benchmark_run": "marks lookups as a benchmark run's; runs no query",
+    "aiact.retrieval.tracing.is_benchmark_run": "reads that mark; runs no query",
 }
 """Public callables of `aiact.retrieval` that return no corpus rows by themselves, or no
 guideline rows (so never a held-out example), and why."""

@@ -9,15 +9,20 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
 
-from aiact.engine import ClassificationFailedError
+from aiact.engine import ClassificationFailedError, run_classification
 from aiact.engine.graph import EngineNodes
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import EngineState, FactsOutcome
 from aiact.engine.usage import UsageMeter
 from aiact.eval import engine_classifier, runner
-from aiact.eval.engine_classifier import EngineClassifier, InvalidRequestError
+from aiact.eval.engine_classifier import (
+    EngineClassifier,
+    InvalidRequestError,
+    engine_request_for,
+)
 from aiact.eval.runner import ClassifierFailedError, ClassifierInput, DummyClassifier, run_benchmark
 from aiact.llm import LLMConfigError
+from aiact.retrieval.tracing import is_benchmark_run
 from aiact.schemas import Language
 from aiact.settings import Settings
 from tests.eval.test_runner import CASES, SPLIT, MemoryStore, options
@@ -63,6 +68,7 @@ class Builder:
         self.spend = spend
         self.served = served
         self.states: list[EngineState] = []
+        self.in_benchmark_run: list[bool] = []
 
     def __call__(self, _settings: Settings, meter: UsageMeter) -> EngineNodes:
         stub = scripted_nodes(Script())
@@ -73,6 +79,7 @@ class Builder:
 
         def facts(state: EngineState) -> FactsOutcome:
             self.states.append(state)
+            self.in_benchmark_run.append(is_benchmark_run())  # read in the node's own thread
             if self.spend:
                 for _ in self.served:
                     model.invoke("describe")
@@ -118,6 +125,21 @@ def test_the_gap_runs_opt_in_reaches_the_engine() -> None:
     [state] = builder.states
     assert state.get("include_held_out") is True
     assert state["exclude_source_example_ids"] == ("hr-ex-002",)
+
+
+def test_a_benchmark_case_marks_its_lookups_as_a_benchmark_runs() -> None:
+    """V8: only a benchmark run's searches record their hit ids in the trace."""
+    builder = Builder()
+    EngineClassifier(settings(), build_nodes=builder).classify(request())
+    assert builder.in_benchmark_run == [True]
+    assert is_benchmark_run() is False  # the mark ends with the case
+
+
+def test_a_users_classification_is_no_benchmark_run() -> None:
+    """The API's and MCP's path: `run_classification` called directly."""
+    builder = Builder()
+    run_classification(engine_request_for(request()), settings=settings(), build_nodes=builder)
+    assert builder.in_benchmark_run == [False]
 
 
 def test_a_case_without_a_date_runs_on_the_run_date() -> None:
@@ -230,3 +252,27 @@ def test_a_rejected_request_names_the_field_only() -> None:
         EngineClassifier(settings(), build_nodes=Builder()).classify(bad)
     assert "secret" not in str(raised.value)
     assert raised.value.__cause__ is None
+
+
+def test_a_rejected_answer_names_the_field_not_the_question_id() -> None:
+    """An answer's `loc` is (`answers`, <question id>, …): only `answers` is named."""
+    question_id = "leipzig_night_shift"
+    bad = ClassifierInput(
+        description="A tool.",
+        language=Language.EN,
+        exclude_source_example_ids=(),
+        answers={question_id: "x" * 1_001},
+    )
+    with pytest.raises(InvalidRequestError) as raised:
+        EngineClassifier(settings(), build_nodes=Builder()).classify(bad)
+    assert str(raised.value) == "the case's request is invalid at answers"
+
+
+def test_a_request_failing_as_a_whole_gets_a_readable_message() -> None:
+    """The blank-text check validates the whole model: its error has no field (`loc` empty)."""
+    bad = ClassifierInput(description="   ", language=Language.EN, exclude_source_example_ids=())
+    with pytest.raises(InvalidRequestError) as raised:
+        EngineClassifier(settings(), build_nodes=Builder()).classify(bad)
+    assert str(raised.value) == (
+        "the case's request is invalid as a whole (for example a blank description or answer)"
+    )
