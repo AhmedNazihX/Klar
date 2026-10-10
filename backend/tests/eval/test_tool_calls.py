@@ -32,6 +32,7 @@ from aiact.eval.tool_calls import (
     TraceRecordError,
     TraceRun,
     check_trace,
+    langsmith_source,
     render_markdown,
     step_rates,
     stored_traces,
@@ -394,6 +395,13 @@ def test_cli_without_a_langsmith_key_exits_2(monkeypatch: pytest.MonkeyPatch) ->
     assert outcome.stderr.startswith("Error: LANGSMITH_API_KEY is not set")
 
 
+def test_traces_are_read_from_the_configured_endpoint() -> None:
+    """An EU-region key works only at the EU API; `held-out-hits` reads through this too."""
+    eu = "https://eu.api.smith.langchain.com"
+    settings = Settings(_env_file=None, langsmith_api_key=SecretStr("k"), langsmith_endpoint=eu)  # pyright: ignore[reportCallIssue]
+    assert langsmith_source(settings).api_url == "https://eu.api.smith.langchain.com"
+
+
 def test_cli_prints_the_report(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = Settings(_env_file=None, langsmith_api_key=SecretStr("k"))  # pyright: ignore[reportCallIssue]
     monkeypatch.setattr("aiact.cli.get_settings", lambda: settings)
@@ -485,7 +493,9 @@ def traced_engine_run(monkeypatch: pytest.MonkeyPatch) -> UrlRecordingSession:
         session=session,
         auto_batch_tracing=False,
     )
-    monkeypatch.setattr(engine_tracing, "_client", lambda _key, *, is_metadata_only: client)
+    monkeypatch.setattr(
+        engine_tracing, "_client", lambda _key, *, is_metadata_only, api_url: client
+    )
     tracers: list[LangChainTracer] = []
 
     def keep(settings: Settings) -> LangChainTracer | None:

@@ -78,9 +78,10 @@ def build_client(
 
 
 @cache
-def _client(api_key: str, *, is_metadata_only: bool) -> Client:
-    """One client per key and mode, so its background batching is shared by every run."""
-    return build_client(api_key, is_metadata_only=is_metadata_only)
+def _client(api_key: str, *, is_metadata_only: bool, api_url: str | None) -> Client:
+    """One client per key, mode and endpoint, so its background batching is shared by every
+    run."""
+    return build_client(api_key, is_metadata_only=is_metadata_only, api_url=api_url)
 
 
 def langsmith_tracer(settings: Settings) -> LangChainTracer | None:
@@ -88,7 +89,11 @@ def langsmith_tracer(settings: Settings) -> LangChainTracer | None:
     key = settings.langsmith_api_key
     if key is None or not key.get_secret_value():
         return None
-    client = _client(key.get_secret_value(), is_metadata_only=is_metadata_only(settings))
+    client = _client(
+        key.get_secret_value(),
+        is_metadata_only=is_metadata_only(settings),
+        api_url=settings.langsmith_endpoint or None,
+    )
     return LangChainTracer(project_name=settings.langsmith_project, client=client)
 
 
