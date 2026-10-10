@@ -70,13 +70,12 @@ from aiact.engine.nodes.questions import ask, open_question
 from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
-from aiact.llm import engine_chat_model
+from aiact.llm import engine_route
 from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
     json_schema_format,
-    parse_reply,
 )
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import QueryEmbedder
@@ -352,18 +351,23 @@ class ProhibitedCheck:
         self,
         settings: Settings | None = None,
         chat: BaseChatModel | None = None,
+        refusal_chat: BaseChatModel | None = None,
         library: GuidelineLibrary | None = None,
         embedder: QueryEmbedder | None = None,
     ) -> None:
-        """`chat` replaces the OpenRouter model and `library` the corpus (tests). Raises
-        `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the
-        model is always pinned to its EU endpoint with fallbacks off (decision 005). Without a
+        """`chat` replaces the OpenRouter model and `library` the corpus (tests), and
+        `refusal_chat` the second model a refused request goes to (decision 033; a `chat` alone
+        has none). Raises `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER`,
+        `REFUSAL_MODEL`, `REFUSAL_PROVIDER` or the API key is not set: both models are always
+        pinned to their EU endpoints with fallbacks off (decisions 005, 033). Without a
         `library`, the query embedder is `embedder` (shared by a run, E10) or is built here
         from the same settings, so
         `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER` must be set too; each step then reads the
         corpus over a short connection before the model call, and another for the citations
         after it."""
-        self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
+        self._route = engine_route(
+            max_tokens=MAX_OUTPUT_TOKENS, settings=settings, chat=chat, refusal_chat=refusal_chat
+        )
         self._reading = CorpusReading(
             library, partial(GuidelineCorpus, source=SOURCE), embedder=embedder, settings=settings
         )
@@ -373,11 +377,10 @@ class ProhibitedCheck:
         `ProhibitedOutputError` when any other reply doesn't fit `ProhibitedAnswer`, and
         `ProvisionNotFoundError` when the corpus lacks a provision the step reads or cites."""
         retrieved = self._reading(lambda library: retrieve(state, library, SOURCE.article))
-        reply = self._model.invoke(
-            prohibited_messages(state, retrieved), response_format=PROHIBITED_RESPONSE_FORMAT
-        )
         try:
-            answer = parse_reply(reply, ProhibitedAnswer)
+            answer = self._route.ask(
+                prohibited_messages(state, retrieved), PROHIBITED_RESPONSE_FORMAT, ProhibitedAnswer
+            )
         except ProviderRefusalError:
             return self._reading(lambda library: refusal_outcome(state, library))
         except ValidationError as exc:

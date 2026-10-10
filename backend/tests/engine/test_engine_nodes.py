@@ -30,7 +30,7 @@ from aiact.engine.nodes import high_risk, prohibited, scope, transparency
 from aiact.engine.nodes.high_risk_texts import REFUSAL_CITATIONS
 from aiact.engine.nodes.prohibited_practices import APPLICATION_DATES
 from aiact.engine.nodes.transparency_duties import MarketTiming
-from aiact.engine.state import CheckOutcome, EngineState
+from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
 from aiact.engine.usage import MeteredEmbedder, UsageMeter
 from aiact.llm.embeddings import EmbeddingBatch, OpenRouterEmbeddings
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
@@ -42,11 +42,14 @@ from aiact.schemas import (
     DocumentStatus,
     Language,
     LawVersion,
+    Status,
     StepName,
     StepResult,
 )
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 from tests.engine.nodes import test_high_risk, test_prohibited, test_scope, test_transparency
+from tests.engine.nodes.known_gaps import NOT_ASSESSED
 
 AS_OF = date(2026, 10, 6)
 SECRET = "the night shifts of our Leipzig depot"
@@ -66,6 +69,7 @@ def settings() -> Settings:
         engine_provider="azure/eu",
         embedding_model="qwen/qwen3-embedding-8b",
         embedding_provider="nebius",
+        **REFUSAL_ROUTE,
     )
 
 
@@ -369,3 +373,82 @@ def test_every_corpus_call_after_the_reply_passes_the_runs_opt_in(
     expected = NODE_LOOKUPS.get((name, kind))
     if expected is not None:
         assert expected in {(module, target) for module, _, target, _ in after}, after
+
+
+# --- A refused request and the second model (decision 033) --------------------------------------
+
+LUNA = "openai/gpt-6-luna-20260922"
+GEMINI = "google/gemini-3.1-flash-lite"
+
+
+def served(reply: AIMessage, model: str) -> AIMessage:
+    """`reply` as OpenRouter returns it from `model`."""
+    metadata = {**reply.response_metadata, "model_name": model}
+    return reply.model_copy(update={"response_metadata": metadata})
+
+
+def route_replies(monkeypatch: pytest.MonkeyPatch, first: AIMessage, second: AIMessage) -> None:
+    """Every node's engine model replies `first` as Luna, its refusal model `second` as Gemini."""
+
+    def chats(reply: AIMessage) -> Callable[[Settings], dict[str, GenericFakeChatModel]]:
+        return lambda _settings: {
+            node: GenericFakeChatModel(messages=iter([reply])) for node in NODE_TOKENS
+        }
+
+    monkeypatch.setattr(classify_module, "engine_chats", chats(served(first, LUNA)))
+    monkeypatch.setattr(classify_module, "refusal_chats", chats(served(second, GEMINI)))
+
+
+def run_nodes(nodes: EngineNodes) -> dict[str, object]:
+    """Every node run once: its outcome, or the broken-output error it raised, by node."""
+    run_state = state(include_held_out=False)
+    runners = {"facts": nodes.facts, **{name.value: nodes.checks[name] for name in STEP_ORDER}}
+    results: dict[str, object] = {}
+    for name, node in runners.items():
+        try:
+            results[name] = node(run_state)
+        except ValueError as error:
+            results[name] = error
+    return results
+
+
+def test_every_nodes_refused_request_goes_once_to_the_second_model(
+    offline: Corpus, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The second model's reply is the one read (cut off here, so each node's broken output,
+    not its refusal step), and each node's two calls are recorded under the model that served
+    them."""
+    route_replies(monkeypatch, REFUSAL, paid_reply())
+    meter = UsageMeter()
+    results = run_nodes(engine_nodes(settings(), meter))
+    assert set(results) == set(NODE_TOKENS)
+    by_node = meter.usage().by_node
+    for name, result in results.items():
+        assert isinstance(result, ValueError), (name, result)
+        assert "doesn't fit the schema" in str(result), name
+        assert (by_node[name].models[LUNA], by_node[name].models[GEMINI]) == (1, 1), name
+
+
+def test_both_refused_gives_decision_029s_step_in_every_node(
+    offline: Corpus, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Decisions 029, 030: not assessed, a person's review asked, no finding."""
+    route_replies(monkeypatch, REFUSAL, REFUSAL)
+    meter = UsageMeter()
+    results = run_nodes(engine_nodes(settings(), meter))
+    facts_outcome = results.pop("facts")
+    assert isinstance(facts_outcome, FactsOutcome)
+    assert facts_outcome.facts == ()
+    assert [q.id for q in facts_outcome.follow_up_questions] == ["facts_person_review"]
+    assert set(results) == {name.value for name in STEP_ORDER}
+    for name, outcome in results.items():
+        assert isinstance(outcome, CheckOutcome), (name, outcome)
+        step = outcome.step
+        assert step.error == "provider_refusal", name
+        assert step.status is Status.NEEDS_MORE_INFORMATION, name
+        assert step.decision == NOT_ASSESSED["en"], name
+        assert step.missing_fact is not None, name
+        assert outcome.follow_up_questions == (step.missing_fact,), name
+    by_node = meter.usage().by_node
+    for name in NODE_TOKENS:
+        assert (by_node[name].models[LUNA], by_node[name].models[GEMINI]) == (1, 1), name

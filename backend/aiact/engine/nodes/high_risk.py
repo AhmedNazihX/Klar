@@ -84,7 +84,7 @@ from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
 from aiact.engine.nodes.questions import ask, hint, open_question
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
-from aiact.llm import engine_chat_model
+from aiact.llm import engine_route
 from aiact.llm.replies import FollowUpQuestion as ReplyQuestion
 from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.replies import as_contract
@@ -92,7 +92,6 @@ from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
     json_schema_format,
-    parse_reply,
 )
 from aiact.retrieval.search import QueryEmbedder, SearchHit
 from aiact.schemas import (
@@ -777,18 +776,23 @@ class HighRiskCheck:
         self,
         settings: Settings | None = None,
         chat: BaseChatModel | None = None,
+        refusal_chat: BaseChatModel | None = None,
         library: HighRiskLibrary | None = None,
         embedder: QueryEmbedder | None = None,
     ) -> None:
-        """`chat` replaces the OpenRouter model and `library` the corpus (tests). Raises
-        `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the
-        model is always pinned to its EU endpoint with fallbacks off (decision 005). Without a
+        """`chat` replaces the OpenRouter model and `library` the corpus (tests), and
+        `refusal_chat` the second model a refused request goes to (decision 033; a `chat` alone
+        has none). Raises `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER`,
+        `REFUSAL_MODEL`, `REFUSAL_PROVIDER` or the API key is not set: both models are always
+        pinned to their EU endpoints with fallbacks off (decisions 005, 033). Without a
         `library`, the query embedder is `embedder` (shared by a run, E10) or is built here
         from the same settings, so
         `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER` must be set too (`EMBEDDING_DIMENSIONS` has
         a default); each step then reads the corpus with it over a short connection before the
         model call, and another for the citations after it."""
-        self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
+        self._route = engine_route(
+            max_tokens=MAX_OUTPUT_TOKENS, settings=settings, chat=chat, refusal_chat=refusal_chat
+        )
         self._reading = CorpusReading(library, HighRiskCorpus, embedder=embedder, settings=settings)
 
     def __call__(self, state: EngineState) -> CheckOutcome:
@@ -797,12 +801,12 @@ class HighRiskCheck:
         retrieved = self._reading(lambda library: retrieve(state, library))
         annex_iii_ids = [p.provision_id for p in retrieved.annex_iii]
         annex_i_ids = [p.provision_id for p in retrieved.annex_i]
-        reply = self._model.invoke(
-            high_risk_messages(state, retrieved),
-            response_format=high_risk_response_format(annex_iii_ids, annex_i_ids),
-        )
         try:
-            answer = parse_reply(reply, HighRiskAnswer)
+            answer = self._route.ask(
+                high_risk_messages(state, retrieved),
+                high_risk_response_format(annex_iii_ids, annex_i_ids),
+                HighRiskAnswer,
+            )
         except ProviderRefusalError:
             return self._reading(lambda library: refusal_outcome(state, library))
         except ValidationError as exc:

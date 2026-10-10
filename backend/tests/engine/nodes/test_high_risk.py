@@ -15,7 +15,6 @@ from typing import cast
 
 import psycopg
 import pytest
-from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import Field, SecretStr
@@ -72,6 +71,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import (
     built_validator,
     unresolved_citations,
@@ -83,6 +83,7 @@ from tests.engine.nodes.corpus_recording import (
     lookup_call,
 )
 from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -1184,7 +1185,7 @@ def test_only_retrieved_examples_are_cited_as_analogies() -> None:
 
 def _settings(**values: object) -> Settings:
     pinned = {"engine_model": LUNA, "engine_provider": LUNA_PROVIDER, **values}
-    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **pinned)  # pyright: ignore[reportCallIssue]
+    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **REFUSAL_ROUTE, **pinned)  # pyright: ignore[reportCallIssue]
 
 
 def _fake_chat(given: HighRiskAnswer | str) -> GenericFakeChatModel:
@@ -1273,17 +1274,10 @@ def test_a_filtered_high_risk_reply_with_a_usable_answer_is_used() -> None:
     assert (result.step.error, result.annex_point) == (None, "annex:III:4:a")
 
 
-def test_the_output_cap_leaves_room_for_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_output_cap_leaves_room_for_reasoning() -> None:
     """own-e-14 (both routes apply) spent all of 3000 output tokens on reasoning; 6000 fits."""
-    asked: dict[str, object] = {}
-
-    def spy(**kwargs: object) -> BaseChatModel:
-        asked.update(kwargs)
-        return _fake_chat(answer())
-
-    monkeypatch.setattr(node, "engine_chat_model", spy)
-    HighRiskCheck(_settings(), library=FakeLibrary())
-    assert asked["max_tokens"] == 6000
+    check = HighRiskCheck(_settings(), library=FakeLibrary())
+    assert_pinned_route(check._route, 6000)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_the_engine_model_must_be_pinned() -> None:

@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from typing import Literal
 
 import openrouter
+from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_openrouter import ChatOpenRouter
 
@@ -19,6 +20,7 @@ from aiact.llm.routing import (
     require_api_key,
     require_setting,
 )
+from aiact.llm.structured import ChatRoute
 from aiact.settings import Settings, get_settings
 
 ModelRole = Literal["engine", "judge", "judge_backup", "label_filter", "ragas"]
@@ -38,6 +40,12 @@ def reply_usage(reply: AIMessage) -> tuple[float | None, int]:
     cost = reply.response_metadata.get("cost")
     tokens = reply.usage_metadata["total_tokens"] if reply.usage_metadata else 0
     return (float(cost) if isinstance(cost, int | float) else None), tokens
+
+
+def reply_model(reply: AIMessage) -> str | None:
+    """The model that wrote a chat reply, as OpenRouter names it (the response's `model`)."""
+    name = reply.response_metadata.get("model_name")
+    return name if isinstance(name, str) and name else None
 
 
 def client_without_retries(settings: Settings) -> openrouter.OpenRouter:
@@ -88,11 +96,70 @@ def engine_chat_model(
     Raises `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set.
     """
     settings = settings or get_settings()
-    model_id = require_setting(settings.engine_model, "ENGINE_MODEL")
-    provider = require_setting(settings.engine_provider, "ENGINE_PROVIDER")
+    return _pinned_chat_model(
+        settings.engine_model,
+        "ENGINE_MODEL",
+        settings.engine_provider,
+        "ENGINE_PROVIDER",
+        max_tokens=max_tokens,
+        max_retries=max_retries,
+        settings=settings,
+    )
+
+
+def refusal_chat_model(
+    *, max_tokens: int, max_retries: int = DEFAULT_MAX_RETRIES, settings: Settings | None = None
+) -> ChatOpenRouter:
+    """The second model a provider refusal goes to (decision 033), pinned to its
+    `REFUSAL_PROVIDER` endpoint with fallbacks off like the engine model: an engine call of its
+    own, never an OpenRouter fallback.
+
+    Raises `LLMConfigError` when `REFUSAL_MODEL`, `REFUSAL_PROVIDER` or the API key is not set.
+    """
+    settings = settings or get_settings()
+    return _pinned_chat_model(
+        settings.refusal_model,
+        "REFUSAL_MODEL",
+        settings.refusal_provider,
+        "REFUSAL_PROVIDER",
+        max_tokens=max_tokens,
+        max_retries=max_retries,
+        settings=settings,
+    )
+
+
+def engine_route(
+    *,
+    max_tokens: int,
+    settings: Settings | None = None,
+    chat: BaseChatModel | None = None,
+    refusal_chat: BaseChatModel | None = None,
+) -> ChatRoute:
+    """A node's models: the given `chat` and `refusal_chat` (the run's, or a test's; without a
+    `refusal_chat` a refusal gets no second call), or, without a `chat`, the engine model and
+    the refusal model, each with the node's output cap. Raises `LLMConfigError` when a model
+    built here lacks its model, provider or API key setting."""
+    if chat is not None:
+        return ChatRoute(chat, refusal_chat)
+    engine = engine_chat_model(max_tokens=max_tokens, settings=settings)
+    second = refusal_chat or refusal_chat_model(max_tokens=max_tokens, settings=settings)
+    return ChatRoute(engine, second)
+
+
+def _pinned_chat_model(
+    model: str | None,
+    model_var: str,
+    provider: str | None,
+    provider_var: str,
+    *,
+    max_tokens: int,
+    max_retries: int,
+    settings: Settings,
+) -> ChatOpenRouter:
+    """`model` on `provider` only, fallbacks off; raises `LLMConfigError` naming the unset one."""
     return chat_model(
-        model=model_id,
-        provider_order=[provider],
+        model=require_setting(model, model_var),
+        provider_order=[require_setting(provider, provider_var)],
         allow_fallbacks=False,
         max_tokens=max_tokens,
         max_retries=max_retries,

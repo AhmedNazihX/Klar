@@ -29,6 +29,11 @@ TESTS_DIR = Path(__file__).parent
 RECORDINGS_DIR = TESTS_DIR / "recordings"
 KEPT_HEADERS = frozenset({"content-type"})
 REPLAY_API_KEY = "replay-without-a-key"
+REFUSAL_ROUTE: dict[str, object] = {
+    "refusal_model": "google/gemini-3.1-flash-lite",
+    "refusal_provider": "google-vertex/eu",
+}
+"""Decision 033's second model for refused requests, as `backend/.env` sets it when recording."""
 """Stands in for the key in replay mode; recordings are matched without headers."""
 
 ANY_HOST = [".*"]
@@ -103,7 +108,8 @@ def vcr_cassette_dir(request: pytest.FixtureRequest) -> str:
 
 @pytest.fixture
 def openrouter_settings(record_mode: str) -> Settings:
-    """Real settings while recording; a placeholder key and no `.env` while replaying."""
+    """Real settings while recording; a placeholder key, the refusal route and no `.env` while
+    replaying."""
     if record_mode != "none":
         return get_settings()
-    return Settings(_env_file=None, openrouter_api_key=SecretStr(REPLAY_API_KEY))  # pyright: ignore[reportCallIssue]
+    return Settings(_env_file=None, openrouter_api_key=SecretStr(REPLAY_API_KEY), **REFUSAL_ROUTE)  # pyright: ignore[reportCallIssue]

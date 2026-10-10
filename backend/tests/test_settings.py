@@ -9,6 +9,8 @@ MODEL_ID_FIELDS = (
     "judge_model",
     "judge_backup_model",
     "label_filter_model",
+    "refusal_model",
+    "refusal_provider",
     "embedding_model",
     "embedding_provider",
 )

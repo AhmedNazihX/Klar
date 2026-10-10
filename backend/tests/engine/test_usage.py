@@ -89,3 +89,19 @@ def test_an_embedding_without_its_cost_is_counted_and_flagged() -> None:
     usage = meter.usage()
     assert (usage.cost_usd, usage.tokens, usage.by_node["scope"].calls) == (0.0, 7, 1)
     assert not usage.is_cost_complete
+
+
+def served_by(model: str) -> AIMessage:
+    return AIMessage(content="{}", response_metadata={"cost": 0.0, "model_name": model})
+
+
+def test_each_call_records_the_model_that_served_it() -> None:
+    """Decision 033: a node's refused request and the second model's answer show apart."""
+    meter = UsageMeter()
+    luna, gemini = "openai/gpt-6-luna-20260922", "google/gemini-3.1-flash-lite"
+    metered_chat(meter, StepName.SCOPE, served_by(luna)).invoke("a")
+    metered_chat(meter, StepName.SCOPE, served_by(gemini)).invoke("a")
+    metered_chat(meter, StepName.SCOPE, reply(0.001, 10)).invoke("b")  # no model named
+    meter.embedder(StepName.SCOPE, FakeEmbeddings()).embed_query("q")
+    models = meter.usage().by_node["scope"].models
+    assert models == {luna: 1, gemini: 1, "unknown": 1, "m": 1}

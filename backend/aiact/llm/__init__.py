@@ -4,7 +4,13 @@ All model calls in the app go through this package. Tests replay recorded HTTP r
 from `tests/recordings/` (see `tests/conftest.py`), so CI never reaches the network.
 """
 
-from aiact.llm.chat import ModelRole, chat_model, engine_chat_model
+from aiact.llm.chat import (
+    ModelRole,
+    chat_model,
+    engine_chat_model,
+    engine_route,
+    refusal_chat_model,
+)
 from aiact.llm.decisions import (
     ChoiceQuestion,
     DecisionsClient,
@@ -25,5 +31,7 @@ __all__ = [
     "OpenRouterEmbeddings",
     "chat_model",
     "engine_chat_model",
+    "engine_route",
     "provider_preferences",
+    "refusal_chat_model",
 ]

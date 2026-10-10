@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     judge_model: str | None = None
     judge_backup_model: str | None = None
     label_filter_model: str | None = None
+    # Refused requests (decision 033): a request the engine provider's content filter refuses
+    # goes once to this second model, pinned to its provider with fallbacks off.
+    refusal_model: str | None = None
+    refusal_provider: str | None = None
     # RAGAS (V6): Gemini 3.1 Flash-Lite on its EU zero-retention endpoint (decision 005), the
     # only model ids with a default; override both together, since the provider is pinned.
     ragas_model: str = "google/gemini-3.1-flash-lite"
