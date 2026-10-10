@@ -1251,9 +1251,8 @@ def test_replay_original_text_reads_no_december_point(
     (ba) cases are refused by the provider's content filter (decision 029), so they can't show
     the difference.
 
-    The provider refused own-c-03 under the original text too (decision 030), so it has no
-    recording and skips. With X2c's refusal route (decision 033) its request goes to the second
-    model when refused: record it, then drop the xfail mark."""
+    The engine provider refused own-c-03 under the original text too (decision 030); its
+    request goes to the second model (decision 033), whose reply is recorded here."""
     case = next((c for c in B5C_CASES if c.id == "own-c-03-image-tool-with-safeguards"), None)
     if case is None:
         pytest.skip(f"own-c-03 is not in {B5C_CASES_DIR}")
