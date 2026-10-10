@@ -19,6 +19,7 @@ import {
   GPAI_HIGH_RISK,
   GPAI_LIMITED,
   OWN_BRAND_PROVIDER,
+  ownBrandCiting,
   PROVIDER_ALSO_DEPLOYER,
 } from '@/test/provider-fixtures'
 import { SUPABASE_URL } from '@/test/supabase-fixtures'
@@ -336,6 +337,43 @@ describe('Provider layout: why the company is the provider', () => {
       'Ergebnis',
       'Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.',
       PROVIDER_ALSO_DEPLOYER,
+    ],
+    [
+      'en',
+      'Result',
+      "You changed it substantially and it stays high-risk, so you're the provider.",
+      ownBrandCiting('art:3:7', 'art:25:1:b'),
+    ],
+    [
+      'de',
+      'Ergebnis',
+      'Sie haben es wesentlich verändert und es bleibt ein Hochrisiko-System, deshalb sind Sie Anbieter.',
+      ownBrandCiting('art:3:7', 'art:25:1:b'),
+    ],
+    // Every point the engine cites is named.
+    [
+      'en',
+      'Result',
+      "You put your own name or trademark on it, and you changed it substantially and it stays high-risk, so you're the provider.",
+      ownBrandCiting('art:3:7', 'art:25:1:a', 'art:25:1:b'),
+    ],
+    [
+      'de',
+      'Ergebnis',
+      'Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, und Sie haben es wesentlich verändert und es bleibt ein Hochrisiko-System, deshalb sind Sie Anbieter.',
+      ownBrandCiting('art:3:7', 'art:25:1:a', 'art:25:1:b'),
+    ],
+    [
+      'en',
+      'Result',
+      "You put your own name or trademark on it, and you changed what it's meant for so that it became high-risk, so you're the provider.",
+      ownBrandCiting('art:3:7', 'art:25:1:a', 'art:25:1:c'),
+    ],
+    [
+      'de',
+      'Ergebnis',
+      'Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, und Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.',
+      ownBrandCiting('art:3:7', 'art:25:1:a', 'art:25:1:c'),
     ],
   ] as const)(
     'names the Art. 25(1) point of a switch (%s): %s',

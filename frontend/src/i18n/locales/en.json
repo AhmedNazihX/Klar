@@ -754,6 +754,10 @@
         "switch_a": "You put your own name or trademark on it, so you're the provider.",
         "switch_b": "You changed it substantially and it stays high-risk, so you're the provider.",
         "switch_c": "You changed what it's meant for so that it became high-risk, so you're the provider.",
+        "switch_ab": "You put your own name or trademark on it, and you changed it substantially and it stays high-risk, so you're the provider.",
+        "switch_ac": "You put your own name or trademark on it, and you changed what it's meant for so that it became high-risk, so you're the provider.",
+        "switch_bc": "You changed it substantially, and you changed what it's meant for so that it became high-risk, so you're the provider.",
+        "switch_abc": "You put your own name or trademark on it, changed it substantially, and changed what it's meant for so that it became high-risk, so you're the provider.",
         "gpai": "You build it on another company's general-purpose AI model, so you're the provider of your system."
       },
       "heading": "What you need to do as the provider",

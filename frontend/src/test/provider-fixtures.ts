@@ -31,3 +31,15 @@ export const GPAI_HIGH_RISK = recorded('own-d-03-assistant-repurposed-hiring')
 /** own-d-06 (German): a shop chat built on a third-party large language model; the provider
  *  through the GPAI build route, limited risk (Art. 50(1)). */
 export const GPAI_LIMITED = recorded('own-d-06-shop-chat-on-llm')
+
+/** OWN_BRAND_PROVIDER's switch, with its role step citing these provisions instead (each with
+ *  the first citation's quote), for the Art. 25(1) points it doesn't record. */
+export function ownBrandCiting(...provisionIds: string[]): ClassificationResult {
+  const steps = OWN_BRAND_PROVIDER.steps.map((step) => {
+    if (step.step !== 'role_obligations') return step
+    const first = step.citations?.[0]
+    if (!first) throw new Error('the role step cites nothing')
+    return { ...step, citations: provisionIds.map((id) => ({ ...first, provision_id: id })) }
+  })
+  return { ...OWN_BRAND_PROVIDER, steps }
+}

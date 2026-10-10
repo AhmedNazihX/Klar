@@ -5,6 +5,7 @@ import { decidedHighRisk, limitedRiskProvider } from '@/test/classify-fixtures'
 import {
   GPAI_HIGH_RISK,
   OWN_BRAND_PROVIDER,
+  ownBrandCiting,
   PROVIDER_ALSO_DEPLOYER,
 } from '@/test/provider-fixtures'
 
@@ -19,17 +20,6 @@ import {
 
 function withPoint(annexPoint: string | null): ClassificationResult {
   return { ...OWN_BRAND_PROVIDER, annex_point: annexPoint }
-}
-
-/** The own-brand switch, with its role step citing only `provisionId`. */
-function citingInRoleStep(provisionId: string): ClassificationResult {
-  const steps = OWN_BRAND_PROVIDER.steps.map((step) => {
-    if (step.step !== 'role_obligations') return step
-    const first = step.citations?.[0]
-    if (!first) throw new Error('the role step cites nothing')
-    return { ...step, citations: [{ ...first, provision_id: provisionId }] }
-  })
-  return { ...OWN_BRAND_PROVIDER, steps }
 }
 
 describe('isProviderLayout', () => {
@@ -111,8 +101,13 @@ describe('isGpaiBased', () => {
 describe('providerReason', () => {
   it.each([
     ['switch_a', OWN_BRAND_PROVIDER],
-    ['switch_b', citingInRoleStep('art:25:1:b')],
+    ['switch_b', ownBrandCiting('art:3:7', 'art:25:1:b')],
     ['switch_c', PROVIDER_ALSO_DEPLOYER],
+    // The engine cites every point that applies, in any order: the sentence names each one.
+    ['switch_ab', ownBrandCiting('art:25:1:b', 'art:3:7', 'art:25:1:a')],
+    ['switch_ac', ownBrandCiting('art:25:1:a', 'art:25:1:c')],
+    ['switch_bc', ownBrandCiting('art:25:1:c', 'art:25:1:b')],
+    ['switch_abc', ownBrandCiting('art:25:1:a', 'art:25:1:b', 'art:25:1:c')],
     ['own', { ...OWN_BRAND_PROVIDER, role_switch_reason: null }],
     ['gpai', GPAI_HIGH_RISK],
   ] as const)('is %s', (expected, result) => {
@@ -120,7 +115,7 @@ describe('providerReason', () => {
   })
 
   it('claims no reason for a switch whose role step cites no Art. 25(1) point', () => {
-    expect(providerReason(citingInRoleStep('art:3:7'))).toBe('stated')
+    expect(providerReason(ownBrandCiting('art:3:7'))).toBe('stated')
   })
 
   it('claims no reason when the role step did not settle the role', () => {

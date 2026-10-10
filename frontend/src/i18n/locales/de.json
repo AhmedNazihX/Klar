@@ -754,6 +754,10 @@
         "switch_a": "Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, deshalb sind Sie Anbieter.",
         "switch_b": "Sie haben es wesentlich verändert und es bleibt ein Hochrisiko-System, deshalb sind Sie Anbieter.",
         "switch_c": "Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.",
+        "switch_ab": "Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, und Sie haben es wesentlich verändert und es bleibt ein Hochrisiko-System, deshalb sind Sie Anbieter.",
+        "switch_ac": "Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, und Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.",
+        "switch_bc": "Sie haben es wesentlich verändert, und Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.",
+        "switch_abc": "Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, haben es wesentlich verändert und seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.",
         "gpai": "Sie bauen es auf dem KI-Modell mit allgemeinem Verwendungszweck eines anderen Unternehmens auf, deshalb sind Sie Anbieter Ihres Systems."
       },
       "heading": "Was Sie als Anbieter tun müssen",

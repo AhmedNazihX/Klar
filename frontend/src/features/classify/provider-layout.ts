@@ -55,25 +55,38 @@ export function isGpaiBased(result: ClassificationResult): boolean {
   return citesDefinition && !isGpaiAsked(result)
 }
 
-/** Why the company is the provider, for the role sentence: the Art. 25(1) point that made it the
- *  provider, the GPAI build route, or in its own right (Art. 3(3)); `stated` when the role step
- *  didn't settle it (an assumed or ambiguous role) or cites no Art. 25(1) point for a switch, so
- *  the sentence claims no reason. */
-export type ProviderReason = 'switch_a' | 'switch_b' | 'switch_c' | 'gpai' | 'own' | 'stated'
+/** The Art. 25(1) points a switch can rest on; the engine cites every one that applies. */
+const SWITCH_POINTS = ['a', 'b', 'c'] as const
 
-/** The Art. 25(1) points the role step cites for a switch, each with its reason. */
-const SWITCH_POINTS: Readonly<Record<string, ProviderReason>> = {
-  'art:25:1:a': 'switch_a',
-  'art:25:1:b': 'switch_b',
-  'art:25:1:c': 'switch_c',
+/** Every set of Art. 25(1) points, by its letters in order, with its role sentence. */
+const SWITCH_REASONS = {
+  a: 'switch_a',
+  b: 'switch_b',
+  c: 'switch_c',
+  ab: 'switch_ab',
+  ac: 'switch_ac',
+  bc: 'switch_bc',
+  abc: 'switch_abc',
+} as const
+
+/** Why the company is the provider, for the role sentence: every Art. 25(1) point the role step
+ *  cites for a switch, the GPAI build route, or in its own right (Art. 3(3)); `stated` when the
+ *  role step didn't settle it (an assumed or ambiguous role) or cites no Art. 25(1) point for a
+ *  switch, so the sentence claims no reason. */
+export type ProviderReason =
+  (typeof SWITCH_REASONS)[keyof typeof SWITCH_REASONS] | 'gpai' | 'own' | 'stated'
+
+function isSwitchSet(letters: string): letters is keyof typeof SWITCH_REASONS {
+  return letters in SWITCH_REASONS
 }
 
 export function providerReason(result: ClassificationResult): ProviderReason {
   const step = roleStep(result)
   if (step?.status !== undefined && step.status !== 'decided') return 'stated'
   if (!result.role_switch_reason) return isGpaiBased(result) ? 'gpai' : 'own'
-  const cited = (step?.citations ?? []).map((citation) => SWITCH_POINTS[citation.provision_id])
-  return cited.find((reason) => reason !== undefined) ?? 'stated'
+  const cited = new Set((step?.citations ?? []).map((citation) => citation.provision_id))
+  const letters = SWITCH_POINTS.filter((point) => cited.has(`art:25:1:${point}`)).join('')
+  return isSwitchSet(letters) ? SWITCH_REASONS[letters] : 'stated'
 }
 
 export type DutyGroups = Record<ObligationGroup, Obligation[]> & {
