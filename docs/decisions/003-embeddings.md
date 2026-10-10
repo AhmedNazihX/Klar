@@ -180,43 +180,49 @@ commit still pinned a whole annex named in passing (below). The Q&A baseline is 
 - The C6 cases still pass: Annex III 5(b) is found in the top 5 (EN) and top 10 (DE) by the recorded tests.
 
 ### Relevance cut-off (`SEARCH_MAX_DISTANCE` 0.30, `SEARCH_MIN_KEYWORD_IDF` 24)
-`uv run aiact evaluate search-cutoff` (`aiact/eval/experiments/search_cutoff.py`), run **9d90bb41** at
-a650381, $0.000135. It searches what Q&A and MCP search (the "governs it" text, the whole corpus) with 100
-probes: the 29 answerable Q&A questions, the 48 Annex descriptions, B7's 9 unanswerable questions, and 14
-off-topic strings (8 EN, 6 DE, in the module). For each it stores the best meaning-arm similarity, the best
+`uv run aiact evaluate search-cutoff` (`aiact/eval/experiments/search_cutoff.py`), run **bc6031fc** at
+e1f2abb, $0.000123. It searches what Q&A and MCP search (the "governs it" text, the whole corpus) with 106
+probes: the 29 answerable Q&A questions, the 48 Annex descriptions, B7's 9 unanswerable questions, 14
+off-topic strings (8 EN, 6 DE) and 6 questions on another act's article by number ("Art. 17 DSGVO", "Article
+101 TFEU"; 3 EN, 3 DE; both in the module). For each it stores the best meaning-arm similarity, the best
 keyword hit's summed IDF, whether it names a provision, the real `found` under the chosen settings (it matches
-the sweep on all 100), and for answerable items the recall in the top 5 at each cut-off from 0.20 to 0.40.
+the sweep on all 106), and for answerable items the recall in the top 5 at each cut-off from 0.20 to 0.40.
+The first run, 9d90bb41 at a650381 (100 probes, before the other-act rule and its probes), chose the same
+values; its numbers differ from these only by the provider's noise (third decimal).
 
 Best similarity and best keyword IDF, [min, median, max]:
 
 | Probes | n | Similarity | Keyword IDF |
 | --- | --- | --- | --- |
-| answerable (EN 20, DE 9) | 29 | 0.747 / 0.803 / 0.880 (DE min 0.747, EN min 0.763) | 0 / 10.6 / 29.4 |
+| answerable (EN 20, DE 9) | 29 | 0.747 / 0.803 / 0.880 (DE min 0.747, EN min 0.764) | 0 / 10.6 / 29.4 |
 | Annex descriptions (EN 27, DE 21) | 48 | 0.655 / 0.723 / 0.799 (DE 0.655 / 0.719 / 0.775) | 14.9 / 26.4 / 83.2 |
-| unanswerable: other law (EN 4, DE 2) | 6 | 0.560 / 0.681 / 0.783 | 7.1 / 14.5 / 21.3 |
-| unanswerable: national law (DE) | 1 | 0.700 (0.6999) | 15.3 |
-| unanswerable: off topic (EN 1, DE 1) | 2 | 0.521, 0.667 | 8.0, 10.7 |
-| off-topic strings (EN 8, DE 6) | 14 | 0.430 / 0.610 / 0.732 | 0 / 6.7 / 11.0 |
+| unanswerable: other law (EN 4, DE 2) | 6 | 0.559 / 0.681 / 0.783 | 7.1 / 14.5 / 21.3 |
+| unanswerable: national law (DE) | 1 | 0.699 | 15.3 |
+| unanswerable: off topic (EN 1, DE 1) | 2 | 0.518, 0.667 | 8.0, 10.7 |
+| off-topic strings (EN 8, DE 6) | 14 | 0.428 / 0.610 / 0.732 | 0 / 6.7 / 11.0 |
+| another act's article (EN 3, DE 3) | 6 | 0.625 / 0.663 / 0.736 | 4.0 / 5.6 / 9.5 |
 
 - **The cut-off: 0.30** (a hit counts at similarity 0.70 or more). It is the smallest cut-off at which recall
   in the top 5 stays at its uncut value, 0.851 (0.29: 0.839; 0.26: 0.805; a cut-off drops low-ranked required
   provisions before it makes a question unfound). Every answerable question stays found (lowest 0.747, German).
-  Rejected: 7 of 9 unanswerable questions and 13 of 14 off-topic strings. Found anyway: qa-none-en-04 (DSA
-  systemic risk, 0.783, close to the Act's own systemic-risk wording), qa-none-en-05 (Product Liability
-  Directive, the near-topic hard negative, 0.720) and "asdf qwerty zxcv" (0.732). The national-law item sits at
-  0.6999, so the margin is thin; 0.31 would find it.
+  Rejected: 7 of 9 unanswerable questions, 13 of 14 off-topic strings and 5 of 6 questions on another act's
+  article. Found anyway: qa-none-en-04 (DSA systemic risk, 0.783, close to the Act's own systemic-risk
+  wording), qa-none-en-05 (Product Liability Directive, the near-topic hard negative, 0.720), "asdf qwerty
+  zxcv" (0.732) and "Article 6 of Regulation (EU) 2016/679 legal bases" (0.736, by meaning: the Act cites that
+  article itself; none of the six counts as named). The national-law item sits at 0.699, so the margin is
+  thin; 0.31 would find it.
 - **The keyword rule: 24.** C8's 9 let almost every unanswerable question through: summed IDF grows with the
   query's length, and their best keyword hits reach 21.3. At 24 keywords never make an unanswerable or
   off-topic probe found, and they rescue the long descriptions whose best hit is under 0.70 but whose rare words
-  match one row well (36 of 48 descriptions pass on similarity, 42 with the rule). A long off-topic text could
+  match one row well (37 of 48 descriptions pass on similarity, 43 with the rule). A long off-topic text could
   pass it; none of the probes does.
-- **Descriptions are the weak spot.** 6 of 48 Annex descriptions stay unfound, all German (0.676–0.700). The
+- **Descriptions are the weak spot.** 5 of 48 Annex descriptions stay unfound, all German (0.676–0.699). The
   engine searches without a cut-off, so classification is not affected; a long German description pasted into
   Q&A or MCP search can get "nothing relevant". One cut-off can't serve both: 0.32 finds 47 of 48 but lets a
   third unanswerable question through.
 - The sets are small (29, 9 and 14 negatives): a cut-off between 0.29 and 0.31 fits them equally; one
   item moves the shares by 3 to 11 points. Query vectors from the provider vary in the third decimal between
-  runs (run a221b495, same probes, had 43 of 48 descriptions found).
+  runs (9d90bb41 found 42 of 48 descriptions, a221b495 and bc6031fc 43).
 
 ### Exact references (`aiact/retrieval/references.py`)
 "Article 50", "Art. 6(3)", "Annex III point 5(b)", "recital 27", "Artikel 26 Absatz 2", "Anhang III Nr. 5
@@ -228,14 +234,29 @@ questions name it as a category, and pinning its whole text first crowded out th
 German Unterabsatz stops the reference at the paragraph (the ids put such points under `sub<n>` only where a
 list restarts). Of the benchmark sets, only qa-en-06 names a provision ("Article 6(3)", required, now found).
 
+**Another act's article is not a reference.** "Article 22 GDPR", "Art. 17 DSGVO", "Article 101 TFEU", "Article
+6 of Regulation (EU) 2016/679" would otherwise pin the AI Act's own Article 22, 17, 101 or 6 first and make
+`found` true. The rule only looks next to the reference: it is skipped when another act's name follows it
+straight away (after "of (the)", "der", "des", or a German "lit." or "Satz" part) or stands straight before it
+("GDPR Article 22"). Other acts are the GDPR (GDPR, DSGVO, DS-GVO, the full names), the Treaties (TFEU, AEUV,
+TEU, EUV, "Treaty", "Vertrag"), the Charter, any Union regulation by number except 2024/1689 (the AI Act), and
+any directive. An act named elsewhere in the query ("Does Article 50 apply under the GDPR too?") leaves the
+reference be. No benchmark question or description changes its references under the rule (all 86 checked),
+so the ranking runs above stand; the calibration's 6 such probes are found by none as named.
+
 ### Not done here
 - **The per-job query side** (no instruction for description searches) is not wired. Inside the engine no
   search does Annex matching: the engine looks every Annex point up (E5) and searches only the guidelines,
   where no labelled set measures the instruction. Q&A and MCP keep the "governs it" text. Wire it only with a
   guideline-retrieval measure behind it.
-- **The engine's guideline searches now rank with the new constants** (keyword weight 0.1, `RRF_K` 10; the
-  annex rule doesn't touch guidelines). Their recorded replays are unaffected; the next benchmark run shows the
-  effect.
+- **The engine keeps C6's ranking** (`ENGINE_TUNING` in `aiact/retrieval/search.py`: keyword weight 0.5,
+  `RRF_K` 60, annex rows with points ranked, no exact-reference pinning), passed by every engine search
+  (`CorpusReader.passages`), so classification results don't change in this story. The new defaults were
+  measured on Q&A questions and Annex descriptions, not on the guideline searches the engine's checks run;
+  retune the engine only once a guideline-retrieval measure exists.
 - **The RAGAS re-run** (V6) against c358b1e3 (`provision_recall` 0.598) was not run: it is paid
   (`uv run aiact evaluate ragas`, about $0.22 per arm on the Q&A set; V6's earlier runs cost $0.45–0.67). The
-  free metric it is tied to, Q&A recall in the top 5, went from 0.718 (X1a) to 0.851 (bfe066f2).
+  free metric it is tied to, Q&A recall in the top 5, went from 0.718 (X1a) to 0.851 (bfe066f2). c358b1e3
+  searched without a cut-off, while `SearchRetriever` now cuts at 0.30: to isolate the ranking change, run
+  `uv run aiact evaluate ragas --no-cut-off` (uncut, like c358b1e3), and the default (cut) as the Q&A path
+  now searches; report both.

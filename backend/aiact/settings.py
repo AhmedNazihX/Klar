@@ -25,16 +25,16 @@ DEFAULT_QUERY_INSTRUCTION = (
 decision 003 for Q&A and MCP searches."""
 
 DEFAULT_SEARCH_MAX_DISTANCE = 0.30
-"""`SEARCH_MAX_DISTANCE`, calibrated in X1b (decision 003, run a221b495): a hit at similarity
+"""`SEARCH_MAX_DISTANCE`, calibrated in X1b (decision 003, run bc6031fc): a hit at similarity
 0.70 or more. Every answerable Q&A question's best hit is at 0.747 or more, and provision recall
-in the top 5 stays at its uncut value (0.851) from 0.30 on, while 7 of 9 unanswerable questions
-and 13 of 14 off-topic strings fall below it."""
+in the top 5 stays at its uncut value (0.851) from 0.30 on, while 7 of 9 unanswerable questions,
+13 of 14 off-topic strings and 5 of 6 questions on another act's article fall below it."""
 
 DEFAULT_MIN_KEYWORD_IDF = 24.0
-"""`SEARCH_MIN_KEYWORD_IDF`, calibrated in X1b (decision 003): above the best keyword hit of
-every unanswerable question and off-topic string (at most 21.3), so keywords alone never make
-them found; it lets 6 long Annex descriptions whose best hit is under 0.70 count as found. The
-summed IDF grows with the query's length, so a long off-topic text could pass it."""
+"""`SEARCH_MIN_KEYWORD_IDF`, calibrated in X1b (decision 003, run bc6031fc): above the best
+keyword hit of every unanswerable question and off-topic string (at most 21.3), so keywords alone
+never make them found; it lets 6 long Annex descriptions whose best hit is under 0.70 count as
+found. The summed IDF grows with the query's length, so a long off-topic text could pass it."""
 
 
 class Settings(BaseSettings):

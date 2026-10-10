@@ -53,7 +53,7 @@ from aiact.eval.experiments.matchers import replay_state, transparency_matches
 from aiact.llm import LLMConfigError, OpenRouterEmbeddings
 from aiact.llm.replies import OpenQuestion
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
-from aiact.retrieval.search import SearchHit, SearchResults
+from aiact.retrieval.search import ENGINE_TUNING, SearchHit, SearchResults
 from aiact.schemas import (
     DISCLAIMER,
     DocumentStatus,
@@ -605,6 +605,7 @@ def test_the_corpus_limits_the_search_to_the_art_50_guidelines_without_a_cut_off
             "limit": node.SOURCE.passages,
             "embedder": embedder,
             "connection": connection,
+            "tuning": ENGINE_TUNING,
         }
     ]
 
