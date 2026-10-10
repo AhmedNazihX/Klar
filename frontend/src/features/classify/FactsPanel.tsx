@@ -1,4 +1,4 @@
-import { useId, type JSX } from 'react'
+import { useId, type JSX, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult } from '@/api'
@@ -11,23 +11,26 @@ import { restingFacts } from './result-text'
  * "The result rests on": the deciding facts, each with its evidence tag. Change reopens the
  * description. Confirm on an assumed fact sends it back to the engine as the user's statement
  * and runs the checks again (the follow-up loop, P5b): marking it here alone would leave the
- * steps and the class as they were.
+ * steps and the class as they were. Panels in `above` go over it, in the same side column (the
+ * provider layout's, P23).
  */
 export function FactsPanel({
   result,
   onChange,
   onConfirm,
   isBusy,
+  above,
 }: {
   result: ClassificationResult
   onChange: () => void
   onConfirm: (fact: string) => void
   isBusy: boolean
+  above?: ReactNode
 }): JSX.Element {
   const { t } = useTranslation()
   const headingId = useId()
   const facts = restingFacts(result)
-  return (
+  const panel = (
     <GlassPanel
       as="aside"
       aria-labelledby={headingId}
@@ -57,5 +60,12 @@ export function FactsPanel({
         {t('result.facts.accuracy')}
       </p>
     </GlassPanel>
+  )
+  if (!above) return panel
+  return (
+    <div className="flex min-w-0 flex-col gap-5 xl:w-[380px] xl:shrink-0">
+      {above}
+      {panel}
+    </div>
   )
 }

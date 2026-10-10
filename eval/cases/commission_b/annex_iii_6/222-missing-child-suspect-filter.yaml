@@ -12,8 +12,8 @@ description: >-
 label:
   risk_class: high_risk
   role: provider
-  annex_point: "annex:III:6:e"
-label_citation: ["annex:III:6:e", "art:6:2", "art:6:3", "art:5:1:d", "art:3:52"]
+  annex_point: ["annex:III:6:e", "annex:III:6:d"]
+label_citation: ["annex:III:6:e", "annex:III:6:d", "art:6:2", "art:6:3", "art:5:1:d", "art:3:52"]
 source_example_id: hr-ex-222
 accepted_bases: ["within_use_case"]
 label_status: settled
@@ -23,7 +23,8 @@ notes: >-
   investigating criminal offences, Annex III point 6(e), high-risk under Art. 6(2); profiling rules
   out Art. 6(3). Not Art. 5(1)(d): the assessment is supported by past criminal behaviour and other
   verifiable facts, not by profiling alone. Role: it develops and sells the system under its own
-  name.
+  name. Point 6(d)'s second limb ('to assess ... past criminal behaviour of natural persons') also
+  fits these facts, so 6(d) is accepted alongside the Commission's 6(e) (B9 label filter, 2026-10-10, orchestrator under the user's standing delegation).
 tags:
   - "area:annex_iii_6"
   - "verdict:high"

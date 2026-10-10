@@ -650,7 +650,8 @@ describe('Result variants (decision 026)', () => {
     )
     expect(note).toHaveTextContent('apply from 2 August 2030')
     expect(note).toHaveTextContent('This covers copies placed on the market')
-    const todo = screen.getByRole('region', { name: 'What you need to do' })
+    // A high-risk provider's duties are in the provider layout (P23).
+    const todo = screen.getByRole('region', { name: 'What you need to do as the provider' })
     expect(within(todo).getByText('Only after a significant change')).toBeInTheDocument()
     expect(within(todo).getByText('From 2 August 2030')).toBeInTheDocument()
     expect(within(todo).getAllByText('Art. 111(2)')).toHaveLength(2)

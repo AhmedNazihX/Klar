@@ -9,6 +9,7 @@ import {
   type CheckProgressStep,
 } from '@/components/CheckProgress'
 import { GlassPanel } from '@/components/GlassPanel'
+import { Icon } from '@/components/Icon'
 import type { ClassifyFailure } from '@/hooks/use-classify'
 import { useLanguage } from '@/hooks/use-language'
 import type { Language } from '@/i18n'
@@ -121,11 +122,39 @@ function subtitle(
   failure: ClassifyFailure | null,
   isRerun: boolean,
 ): string | null {
-  if (failure === null) return t('progress.subtitle')
+  if (failure === null || isWaitingForDescription(failure, isRerun)) return t('progress.subtitle')
   if (isRerun) return null
-  if (failure.kind === 'needs_description') return t('progress.needsDescription.waiting')
   if (failure.kind === 'provider_refused') return t('progress.refused.subtitle')
   return stoppedTitle(t, progress)
+}
+
+/** A first run that found the description too thin to start (E13): the screen asks its three
+ *  prompts, and the checks wait. A re-run that ends so keeps its earlier result, and says why in
+ *  its alert. */
+function isWaitingForDescription(failure: ClassifyFailure | null, isRerun: boolean): boolean {
+  return failure?.kind === 'needs_description' && !isRerun
+}
+
+/** In place of the check list while Klar waits for a description (artboard `ClassifyVague`): no
+ *  check has started, and nothing is guessed. */
+function WaitingForDescription(): JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <div
+      aria-live="polite"
+      className="flex flex-col items-center justify-center gap-2.5 rounded-[18px] border-[1.5px] border-dashed border-ink/20 px-7 py-7 text-center"
+    >
+      <span className="flex size-11 items-center justify-center rounded-[14px] bg-lens-blue/8 text-lens-blue">
+        <Icon name="obligations" size={22} />
+      </span>
+      <p className="m-0 text-body font-semibold text-ink">
+        {t('progress.needsDescription.waitingTitle')}
+      </p>
+      <p className="m-0 max-w-[260px] text-caption font-normal text-slate">
+        {t('progress.needsDescription.waitingBody')}
+      </p>
+    </div>
+  )
 }
 
 /** The model provider blocked some checks (decision 030): which ones, and that a person must
@@ -180,15 +209,8 @@ export type ProgressPanelProps = {
 }
 
 /** The stopped alert's title and body: on a re-run, that the earlier result stands. */
-function stoppedText(
-  t: TFunction,
-  failure: ClassifyFailure,
-  isRerun: boolean,
-): { title: string; body: string | null } {
+function stoppedText(t: TFunction, isRerun: boolean): { title: string; body: string | null } {
   if (isRerun) return { title: t('progress.rerun.title'), body: t('progress.rerun.body') }
-  if (failure.kind === 'needs_description') {
-    return { title: t('progress.needsDescription.title'), body: null }
-  }
   return { title: t('progress.stopped.title'), body: t('progress.stopped.body') }
 }
 
@@ -205,7 +227,7 @@ function StoppedAlert({
   onSaveForLater?: () => void
 }): JSX.Element {
   const { t } = useTranslation()
-  const { title, body } = stoppedText(t, failure, isRerun)
+  const { title, body } = stoppedText(t, isRerun)
   return (
     <div role="alert" className="flex flex-col gap-3 rounded-card-small px-4 py-3.5 glass-thin">
       <p className="m-0 text-body-small font-semibold text-ink">{title}</p>
@@ -213,7 +235,7 @@ function StoppedAlert({
       {failure.kind === 'needs_description' && (
         <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-caption font-normal text-ink-2">
           {failure.questions.map((question) => (
-            <li key={question}>{question}</li>
+            <li key={question.id}>{question.text}</li>
           ))}
         </ul>
       )}
@@ -235,7 +257,8 @@ function StoppedAlert({
 /**
  * The checks beside the description, in the Act's order (artboards `Classify`, `ClassifyError`).
  * When a run stops it says where and why, keeps the description, offers Try again and Save for
- * later, and shows no class.
+ * later, and shows no class. When the description was too thin to start, it waits for one
+ * (artboard `ClassifyVague`): the Classify screen asks the prompts.
  */
 export function ProgressPanel({
   progress,
@@ -250,6 +273,7 @@ export function ProgressPanel({
   const headingId = useId()
   const rows = progressRows({ t, language, progress, failure, isRerun }, isRunning)
   const line = subtitle(t, progress, failure, isRerun)
+  const isWaiting = isWaitingForDescription(failure, isRerun)
   return (
     <GlassPanel
       as="section"
@@ -265,7 +289,7 @@ export function ProgressPanel({
       {failure?.kind === 'provider_refused' && (
         <RefusedAlert failure={failure} onSaveForLater={onSaveForLater} />
       )}
-      {failure && failure.kind !== 'provider_refused' && (
+      {failure && failure.kind !== 'provider_refused' && !isWaiting && (
         <StoppedAlert
           failure={failure}
           isRerun={isRerun}
@@ -273,7 +297,7 @@ export function ProgressPanel({
           onSaveForLater={onSaveForLater}
         />
       )}
-      <CheckProgress steps={rows} />
+      {isWaiting ? <WaitingForDescription /> : <CheckProgress steps={rows} />}
       <p className="m-0 mt-auto rounded-card-small px-3.5 py-3 text-caption font-normal text-ink-2 glass-thin">
         {t('progress.accuracy')}
       </p>

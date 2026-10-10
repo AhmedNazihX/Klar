@@ -156,7 +156,7 @@ def test_annex_cases_become_law_only_annex_queries() -> None:
     assert all(query.doc_types == frozenset({"law"}) for query in queries)
     assert all(query.experiment_set is ExperimentSet.ANNEX_MATCH for query in queries)
     multi = [query for query in queries if len(query.targets) > 1]
-    assert len(multi) == 9  # the 8 tagged multi_point, and item 30 (7(a) or 7(b), X0b)
+    assert len(multi) == 10  # the 9 tagged multi_point, and item 30 (7(a) or 7(b), X0b)
     annex_i = [q for q in queries if any(p.startswith("annex:I:") for p in q.targets)]
     assert len(annex_i) == 9
     assert {query.language for query in queries} == {Language.EN, Language.DE}

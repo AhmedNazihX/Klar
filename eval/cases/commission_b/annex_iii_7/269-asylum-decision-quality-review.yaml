@@ -5,7 +5,7 @@ description: >-
   Wir sind die Qualitätssicherung einer Asylbehörde mit rund 25 Mitarbeitenden. Einmal im Quartal
   lassen wir ab 2028 ein gekauftes Auswertungsprogramm über die abgeschlossenen Verfahren laufen. Es
   vergleicht, wie in ähnlichen Konstellationen entschieden wurde, und zeigt auf, wo einzelne
-  Außenstellen oder Entscheider auffällig vom üblichen Muster abweichen. Daraus schreiben wir einen
+  Außenstellen auffällig vom üblichen Muster abweichen. Daraus schreiben wir einen
   Bericht für die Leitung und passen Schulungen und Leitfäden an. In laufende Verfahren greift das
   Programm nicht ein und schlägt für keinen Antrag ein Ergebnis vor. Wir nutzen es wie geliefert.
   Nebenbei organisieren wir eine Fachtagung zu Herkunftsländern.
@@ -23,7 +23,9 @@ notes: >-
   deviations for quality-assurance reports, without proposing outcomes in live cases, is the
   Art. 6(3)(c) exemption from Annex III point 7(c). No Art. 50 duty: minimal_risk. Art. 6(4): the
   provider must document this assessment before placing it on the market (and register it under
-  Art. 49(2)). Role: deployer of a bought program.
+  Art. 49(2)). Role: deployer of a bought program. 'oder Entscheider' was dropped from the
+  description: flagging individual decision-makers would brush the guidelines' 'without ...
+  evaluating the performance of staff members' caveat (para. (102)); the label is unchanged (B9 label filter, 2026-10-10, orchestrator under the user's standing delegation).
 tags:
   - "area:annex_iii_7"
   - "verdict:not_high"

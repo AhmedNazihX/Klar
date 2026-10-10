@@ -13,8 +13,8 @@ description: >-
 label:
   risk_class: high_risk
   role: deployer
-  annex_point: "annex:III:3:c"
-label_citation: ["annex:III:3:c", "art:6:2", "art:6:3", "art:3:52"]
+  annex_point: ["annex:III:3:c", "annex:III:3:a"]
+label_citation: ["annex:III:3:c", "annex:III:3:a", "art:6:2", "art:6:3", "art:3:52"]
 source_example_id: hr-ex-098
 accepted_bases: ["within_use_case"]
 label_status: settled
@@ -23,7 +23,10 @@ notes: >-
   into programmes and recommending their placement and level of support assesses the appropriate
   level of education they will receive: Annex III point 3(c), high-risk under Art. 6(2). It
   evaluates each child's tests, behaviour and health data, which is profiling, so the Art. 6(3)
-  exemption is unavailable. Role: deployer of bought software.
+  exemption is unavailable. Role: deployer of bought software. Second point (B9 label filter,
+  2026-10-10, orchestrator under the user's standing delegation): the system also recommends the
+  Förderort, i.e. which school or setting the child attends, which fits 3(a) ('assign natural
+  persons to educational ... institutions'); 3(c) stays the Commission's point, as cb-097.
 tags:
   - "area:annex_iii_3"
   - "verdict:high"

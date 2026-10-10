@@ -455,6 +455,25 @@
     "draftTool": {
       "note": "Adds a new check to {{name}}.",
       "newTool": "Classify as a new tool instead"
+    },
+    "prompts": {
+      "title": "Klar needs a little more to start",
+      "intro": "As described, it could be anything from a chatbot to a hiring tool, and the Act treats those very differently. Add a sentence or two on each of these:",
+      "footer": "Add what you know. Klar asks for the rest.",
+      "questions": {
+        "what_it_decides": {
+          "text": "What does it decide or suggest?",
+          "hint": "For example: it ranks applicants, answers staff questions, plans shifts."
+        },
+        "who_it_affects": {
+          "text": "Who does it affect?",
+          "hint": "For example: applicants, your staff, customers."
+        },
+        "bought_or_built": {
+          "text": "Did you buy it or build it?",
+          "hint": "And whether you changed it or put your own name on it."
+        }
+      }
     }
   },
   "progress": {
@@ -506,8 +525,8 @@
       "error": "Stopped"
     },
     "needsDescription": {
-      "title": "Klar needs a little more to start",
-      "waiting": "Waiting for a description. Nothing is guessed in the meantime."
+      "waitingTitle": "Waiting for a description",
+      "waitingBody": "The four checks start once Klar has enough to go on. Nothing is guessed in the meantime."
     },
     "refused": {
       "title": "A person must review this description",
@@ -599,6 +618,7 @@
       "high_risk": "For a high-risk result, we recommend a legal review before you rely on it.",
       "prohibited": "For a prohibited result, we recommend legal advice before you go on.",
       "ambiguous": "For a legally ambiguous result, we recommend a legal review before you rely on it.",
+      "provider": "Provider duties are substantial. We recommend a legal review before you plan the work.",
       "other": "We recommend a legal review before you rely on this result."
     },
     "legacy": {
@@ -744,6 +764,60 @@
         "limited_risk": "Your inventory and obligations show the transparency duties as possible until this is answered.",
         "other": "Your inventory shows this class as assumed until this is answered."
       }
+    },
+    "provider": {
+      "reason": {
+        "own": "You develop it, or have it developed, and supply or use it under your own name, so you're the provider.",
+        "switch_a": "You put your own name or trademark on it, so you're the provider.",
+        "switch_b": "You changed it substantially and it stays high-risk, so you're the provider.",
+        "switch_c": "You changed what it's meant for so that it became high-risk, so you're the provider.",
+        "switch_ab": "You put your own name or trademark on it, and you changed it substantially and it stays high-risk, so you're the provider.",
+        "switch_ac": "You put your own name or trademark on it, and you changed what it's meant for so that it became high-risk, so you're the provider.",
+        "switch_bc": "You changed it substantially, and you changed what it's meant for so that it became high-risk, so you're the provider.",
+        "switch_abc": "You put your own name or trademark on it, changed it substantially, and changed what it's meant for so that it became high-risk, so you're the provider.",
+        "gpai": "You build it on another company's general-purpose AI model, so you're the provider of your system."
+      },
+      "heading": "What you need to do as the provider",
+      "intro": "As the provider, you're responsible for how it's designed, documented and watched after launch.",
+      "group": {
+        "build": {
+          "title": "Build it right",
+          "note": "Before you put it into use"
+        },
+        "prove": {
+          "title": "Prove it",
+          "note": "Documents and checks"
+        },
+        "after_launch": {
+          "title": "After launch",
+          "note": "For as long as it's in use"
+        }
+      },
+      "openSkeleton": "Open skeleton",
+      "otherHeading": {
+        "deployer": "What you need to do as the deployer",
+        "importer": "What you need to do as the importer",
+        "distributor": "What you need to do as the distributor",
+        "none": "Other duties"
+      },
+      "ticksFailed": "Klar couldn't load the duties you ticked off.",
+      "lighter": {
+        "heading": "What makes it lighter",
+        "formTitle": "A simpler documentation form",
+        "form": {
+          "sme": "As an SME, you may provide the technical documentation in Annex IV in a simplified form, on a form the Commission sets. The Commission hasn't published the form yet; until it does, document the full Annex IV.",
+          "smc": "As a small mid-cap, you may provide the technical documentation in Annex IV in a simplified form, on a form the Commission sets. The Commission hasn't published the form yet; until it does, document the full Annex IV."
+        },
+        "internalTitle": "No notified body",
+        "internal": "For systems under Annex III point {{point}}, you assess conformity yourself, by internal control.",
+        "internalReference": "Art. 43(2), Annex VI"
+      },
+      "alsoUse": {
+        "heading": "You also use it",
+        "body": "You use the system yourselves too, so the deployer duties apply as well.",
+        "link": "See the deployer duties"
+      },
+      "gpai": "The model's maker has its own duties under Chapter V (Art. 53). Klar doesn't assess those."
     }
   },
   "annexPoint": {
