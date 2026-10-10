@@ -97,6 +97,7 @@ def test_the_operation_ids_are_the_route_names() -> None:
         "export_result_report",
         "export_inventory_report",
         "export_obligations_checklist",
+        "ask_question",
     }
 
 

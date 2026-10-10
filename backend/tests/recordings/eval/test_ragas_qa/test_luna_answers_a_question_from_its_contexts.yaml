@@ -1,0 +1,66 @@
+interactions:
+- request:
+    body: '{"messages":[{"content":"You answer questions about the EU AI Act and the
+      European Commission''s guidance on it, for people at small companies who are
+      not lawyers. You answer only from the numbered sources the user gives you, never
+      from memory.\n\nSet `kind`:\n- \"compliance\" when the question asks for a verdict
+      on the asker''s own compliance: whether their own company, tool or practice
+      complies with, or is lawful under, the AI Act or any other law (\"Are we compliant?\",
+      \"Is our tool legal?\", \"Am I allowed to keep using our chatbot as it is?\").
+      Klar never says whether anyone complies, so don''t answer it. A question about
+      what the AI Act allows, bans or requires in general is not a compliance question:
+      answer it from the sources with their provisions (\"May an employer use emotion
+      recognition at work?\", \"Is social scoring banned?\", \"Do deployers have to
+      tell people?\").\n- \"outside_corpus\" when the sources don''t answer the question:
+      it is about another EU or national law, or not about the AI Act at all, or the
+      sources only touch its topic.\n- \"answered\" otherwise.\n\nWhen you answer:\n-
+      Lead with the direct answer in plain words, then the detail that matters. At
+      most 150 words, in English. Plain text, no Markdown; separate paragraphs with
+      a blank line.\n- Never put source numbers in the text (\"[1]\", \"(2, 3)\",
+      \"Source 4\"): they go in `cited` only. Name a provision as the Act does (\"Article
+      26(1)\", \"Annex III\") when it helps.\n- In German, use the Act''s official
+      German terms: \"KI-Verordnung\" (never \"AI Act\"), \"KI-System\", \"Anbieter\",
+      \"Betreiber\", \"Hochrisiko-KI-System\".\n- Say only what the sources say. Don''t
+      add conditions, dates, exceptions or examples they don''t contain, and don''t
+      quote more than a short phrase.\n- Put the numbers of the sources your answer
+      rests on in `cited`, most important first. Cite only sources that support what
+      you say, and at least one.\n- Never tell the user that they are or aren''t compliant.\n\nWhen
+      `kind` isn''t \"answered\", leave `answer` empty and `cited` empty.","role":"system"},{"content":"Sources:\n[1]
+      [art:5:1:f] AI Act\nThe following AI practices shall be prohibited: (f) the
+      placing on the market, the putting into service for this specific purpose, or
+      the use of AI systems to infer emotions of a natural person in the areas of
+      workplace and education institutions, except where the use of the AI system
+      is intended to be put in place or into the market for medical or safety reasons;\n\n[2]
+      [art:50:1] AI Act\nProviders shall ensure that AI systems intended to interact
+      directly with natural persons are designed and developed in such a way that
+      the natural persons concerned are informed that they are interacting with an
+      AI system.\n\nQuestion: May an employer use AI to read how stressed staff are
+      from their faces at work?","role":"user"}],"max_tokens":3000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"qa_answer","schema":{"additionalProperties":false,"description":"What
+      the model fills in: the kind, the answer and the numbers of the sources it cites.","properties":{"kind":{"enum":["answered","outside_corpus","compliance"],"title":"Kind","type":"string"},"answer":{"title":"Answer","type":"string"},"cited":{"items":{"type":"integer"},"title":"Cited","type":"array"}},"required":["kind","answer","cited"],"title":"ModelReply","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+    headers:
+      content-type:
+      - application/json
+    method: POST
+    uri: https://openrouter.ai/api/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\": \"gen-1791631063-BKiL7WBHv6UUkClpBamX\", \"object\": \"chat.completion\",
+        \"created\": 1791631063, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+        \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
+        [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
+        \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\\"kind\\\":\\\"answered\\\",\\\"answer\\\":\\\"Generally,
+        no. The AI Act prohibits using AI to infer a person\u2019s emotions in the
+        workplace, except when the system is intended for medical or safety reasons.\\\",\\\"cited\\\":[1]}\",
+        \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 728, \"completion_tokens\":
+        90, \"total_tokens\": 818, \"cost\": 0.00012958, \"is_byok\": false, \"prompt_tokens_details\":
+        {\"cached_tokens\": 0, \"cache_write_tokens\": 0, \"audio_tokens\": 0, \"video_tokens\":
+        0}, \"cost_details\": {\"upstream_inference_cost\": 0.00012958, \"upstream_inference_prompt_cost\":
+        8.008e-05, \"upstream_inference_completions_cost\": 4.95e-05}, \"completion_tokens_details\":
+        {\"reasoning_tokens\": 36, \"image_tokens\": 0, \"audio_tokens\": 0}}}"
+    headers:
+      content-type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1

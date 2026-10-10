@@ -116,7 +116,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`);
 │   │   │                            X2b: smoke_refusals.py (decision 033's rule for refused requests, `smoke-refusals`)
 │   │   │                            X1b: search_cutoff.py (the relevance cut-off's calibration, `search-cutoff`)
-│   │   ├── qa/                      Q&A over the corpus with citations (P7)
+│   │   ├── qa/                      Q&A over the corpus with citations (P7): answer.py (answer_question, the
+│   │   │                            prompt's numbered sources, a result's citations first), scope.py (the
+│   │   │                            "are we compliant?" pre-check), texts.py (fixed answers EN/DE, prompt),
+│   │   │                            models.py (QaAnswer), clients.py (the pinned engine model, the search)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   │                            P8a: models.py (DraftDocument, sections with their provenance, status),
 │   │   │                            templates.py (the section kinds and the deployer documents, EN and DE),
@@ -157,7 +160,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                concurrency limits; body_limit.py the 413 body cap; errors.py the one
 │   │                                422 body, quoting no input; documents.py
 │   │                                `POST /documents/vendor-letter` (P28); reports.py `POST /reports/result`
-│   │                                and `/reports/inventory`, `/reports/checklist` (P24), files.py a Paper made into a file in the
+│   │                                and `/reports/inventory`, `/reports/checklist` (P24); qa.py `POST /qa` (P7); files.py a Paper made into a file in the
 │   │                                export workers, shared with drafts.py (P25); openapi.py the schema export,
 │   │                                `aiact api openapi`; `aiact api serve` runs it
 │   └── tests/                       mirrors the package: tests/<area>/test_*.py
@@ -254,13 +257,14 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            SiteFooter, MistGround, ScreenPlaceholder, PhoneLabel (P15); the
 │       │                            sidebar's CompanyLine (P18); the result's CheckProgress, FactCard,
 │       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
-│       │                            InventoryTable (P6); VersionDiff (P10); FactQuestion, ChangeBanner (P5b);
+│       │                            InventoryTable (P6); VersionDiff (P10); FactQuestion, ChangeBanner (P5b); Composer, ChatMessage (P7);
 │       │                            Reveal, Typewriter, MenuMark, MistGround's moving lights (P16)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5; the provider layout
 │       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23; the ambiguous
 │       │                            layout AmbiguousSummary, AmbiguousVerdict, ReadingCards, SettleIt, TakeItToALawyer, P22), inventory/ (P6), your-data/ (P12), obligations/ (P24),
+│       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads),
 │       │                            documents/ (P9: the documents screen, interview, checks, downloads, a skeleton's
 │       │                            SkeletonHeader and SectionList; interview-answers.ts reads and upserts interview_answers
 │       │                            through supabase-js; DocumentsScreen.browser.test.tsx the phone and desktop layout)
@@ -276,6 +280,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-report-export.ts (the report for a lawyer and the inventory report, P25; the checklist, P24),
 │       │                            use-duty-progress.ts (the duties ticked off, P24), use-tool-ticks.ts (one tool's ticks, P23),
 │       │                            use-provision.ts (a provision's text from the corpus), use-vendor-letter.ts (P28's letter) (P21)
+│       │                            use-qa-thread.ts (a Q&A thread over POST /qa), use-result-questions.ts (a result run's thread), use-corpus-documents.ts (GET /documents) (P7)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
@@ -299,6 +304,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    original-text-fixtures.ts (results under both texts, for the comparison, P10)
 │                                    documents-fixtures.ts + fixtures/documents.drafts.json (lists and drafts dumped
 │                                    from the backend's drafter, and the documents handlers, P9)
+│                                    qa-fixtures.ts (POST /qa answers and GET /documents, P7)
 │                                    prohibited-fixtures.ts + fixtures/prohibited.json (the recorded prohibited result,
 │                                    its vendor letters and the provisions it quotes, dumped and drift-checked by
 │                                    backend/tests/drafting/test_frontend_prohibited_fixture.py, P21)

@@ -27,10 +27,12 @@ from aiact.eval.ragas_metrics import (
     METRICS,
     MODEL_NODE,
     PROVISION_RECALL,
+    ItemAnswer,
     PlainAnswerer,
     RagasOptions,
     RagasParts,
     RagasScorer,
+    Retrieved,
     SearchRetriever,
     context_text,
     finite,
@@ -87,11 +89,12 @@ UNANSWERABLE = QAItem(
 @dataclass
 class FakeRetriever:
     hits: tuple[SearchHit, ...] = (hit("art:5:1"), hit("art:50:1"))
+    found: bool = True
     seen: list[str] = field(default_factory=list)
 
-    def __call__(self, item: QAItem) -> Sequence[SearchHit]:
+    def __call__(self, item: QAItem) -> Retrieved:
         self.seen.append(item.id)
-        return self.hits
+        return Retrieved(self.hits, self.found)
 
     def config(self) -> JsonValue:
         return {"search": "fake"}
@@ -107,12 +110,12 @@ class FakeAnswerer:
     name: str = "fake"
     calls: list[str] = field(default_factory=list)
 
-    async def answer(self, item: QAItem, contexts: Sequence[str]) -> str:
+    async def answer(self, item: QAItem, contexts: Sequence[str], *, found: bool) -> ItemAnswer:
         self.calls.append(item.id)
         self.meter.add(MODEL_NODE, self.cost, 100)
         if item.id in self.failing_ids:
             raise RuntimeError("provider error")
-        return f"Answer to {item.id}"
+        return ItemAnswer(f"Answer to {item.id}", "answered" if found else "outside_corpus")
 
 
 @dataclass
@@ -141,6 +144,7 @@ def parts(
         model="google/gemini-3.1-flash-lite",
         provider="google-vertex/eu",
         embedding={"model": "qwen/qwen3-embedding-8b", "dimensions": 1536},
+        answer_model={"model": "openai/gpt-6-luna-20260922", "provider": "azure/eu"},
     )
 
 
@@ -199,7 +203,8 @@ def test_options_reject_a_cap_that_isnt_positive() -> None:
         RagasOptions(GIT_SHA, max_cost_usd=0)
 
 
-def test_the_search_retriever_searches_the_question_in_its_language() -> None:
+@pytest.mark.parametrize("found", [True, False])
+def test_the_search_retriever_searches_the_question_in_its_language(found: bool) -> None:
     calls: list[tuple[object, ...]] = []
     hits = (hit("art:5:1:f"),)
 
@@ -214,13 +219,13 @@ def test_the_search_retriever_searches_the_question_in_its_language() -> None:
             as_of=date(2026, 10, 6),
             hits=hits,
             max_distance=None,
-            found=True,
+            found=found,
             disclaimer="Guidance, not legal advice.",
         )
 
     retriever = SearchRetriever(top_k=3, search=search)
     question = item(1).model_copy(update={"language": Language.DE})
-    assert retriever(question) == hits
+    assert retriever(question) == Retrieved(hits, found)
     assert calls == [(question.question, Language.DE, 3, FROM_SETTINGS)]
     config = retriever.config()
     assert isinstance(config, dict)
@@ -248,6 +253,7 @@ def test_a_run_stores_every_items_scores_and_the_means() -> None:
     assert config["model"] == "google/gemini-3.1-flash-lite"
     assert config["retrieval"] == {"search": "fake"}
     assert config["answerer"] == "fake"
+    assert config["answer_model"] == {"model": "openai/gpt-6-luna-20260922", "provider": "azure/eu"}
     assert config["metrics"] == list(METRICS)
 
     stored = [record for _, record in store.cases]
@@ -264,6 +270,7 @@ def test_a_run_stores_every_items_scores_and_the_means() -> None:
     }
     assert first.predicted == {
         "answer": "Answer to qa-en-01-test",
+        "answer_kind": "answered",
         "retrieved": [
             {"doc_key": "aiact", "provision_id": "art:5:1"},
             {"doc_key": "aiact", "provision_id": "art:50:1"},
@@ -300,6 +307,7 @@ def test_a_failed_model_call_keeps_the_retrieval_its_cost_and_the_run_goes_on() 
     failed, scored = (record for _, record in store.cases)
     assert failed.predicted == {
         "error": {"type": "RuntimeError", "message": "provider error"},
+        "answer_kind": "error",
         "retrieved": [
             {"doc_key": "aiact", "provision_id": "art:5:1"},
             {"doc_key": "aiact", "provision_id": "art:50:1"},
@@ -319,14 +327,15 @@ def test_a_failed_model_call_keeps_the_retrieval_its_cost_and_the_run_goes_on() 
 
 def test_a_failed_retrieval_is_an_error_row_without_scores() -> None:
     class BrokenRetriever(FakeRetriever):
-        def __call__(self, item: QAItem) -> Sequence[SearchHit]:
+        def __call__(self, item: QAItem) -> Retrieved:
             raise ConnectionError("database went away")
 
     store = MemoryStore()
     run_ragas((item(1),), parts(retriever=BrokenRetriever()), store, RagasOptions(GIT_SHA))
     (_, record), *_ = store.cases
     assert record.predicted == {
-        "error": {"type": "ConnectionError", "message": "database went away"}
+        "error": {"type": "ConnectionError", "message": "database went away"},
+        "answer_kind": "error",
     }
     assert record.scores == {"cost_usd": 0.0, "tokens": 0, "is_error": True}
 
@@ -343,7 +352,7 @@ def test_no_hits_scores_zero_without_calling_the_model() -> None:
     )
     (_, record), *_ = store.cases
     assert answerer.calls == []
-    assert record.predicted == {"answer": None, "retrieved": []}
+    assert record.predicted == {"answer": None, "answer_kind": None, "retrieved": []}
     assert record.scores[CONTEXT_PRECISION] == 0.0
     assert record.scores[CONTEXT_RECALL] == 0.0
     assert record.scores[FAITHFULNESS] is None
@@ -558,6 +567,6 @@ def test_the_command_without_ragas_installed_says_how_to_install_it(
 def test_the_command_without_an_api_key_fails_clearly(monkeypatch: pytest.MonkeyPatch) -> None:
     unconfigured = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
     monkeypatch.setattr(ragas_metrics, "get_settings", lambda: unconfigured)
-    result = CliRunner().invoke(app, ["evaluate", "ragas"])
+    result = CliRunner().invoke(app, ["evaluate", "ragas", "--answerer", "plain_rag"])
     assert result.exit_code == 2
     assert "OPENROUTER_API_KEY" in result.stderr

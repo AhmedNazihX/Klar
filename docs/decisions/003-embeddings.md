@@ -52,7 +52,7 @@ P = context precision, R = context recall (strict), L = lenient Annex recall, RR
 | Qwen3 1024 | "governs it" | 0.167 / 0.208 / 0.396 / 0.178 | 0.185 / 0.238 | 0.296 / 0.524 | 0.496 / 0.701 / 0.538 | 0.700 / 0.704 | 47b92584, 2f21c0b4 |
 | OpenAI 3-large 1536 | none (not instruction-aware) | 0.284 / 0.583 / 0.688 / 0.299 | 0.481 / 0.714 | 0.593 / 0.810 | 0.194 / 0.253 / 0.240 | 0.175 / 0.426 | dabf3f19, 80bf1fd3 |
 
-Judged RAGAS context precision, recall and faithfulness (`uv run aiact evaluate ragas --arm <arm>`): **not run
+Judged RAGAS context precision, recall and faithfulness (`uv run aiact evaluate ragas --arm <arm> --answerer plain_rag`, V6's stand-in answerer, as in c358b1e3): **not run
 (user decision 2026-10-09; can run later)**, for every arm. The free metrics above decide this record.
 
 Run ids are the first 8 characters of `eval_runs.id`. The Qwen3 runs are at commit 690109b with a clean tree;
@@ -115,7 +115,8 @@ Cost, on the embedding API (OpenRouter), not counting the coding agents' own tok
   `20261008012443_embedding_arm_indexes.sql`). Rebuilding them would cost about $0.16 (measured above), so
   deleting them saves nothing worth the loss.
 - The judged RAGAS runs were skipped by the user's decision. Run them later with
-  `uv run aiact evaluate ragas --arm <arm>` (about $0.22 per arm on the Q&A set).
+  `uv run aiact evaluate ragas --arm <arm> --answerer plain_rag` (about $0.22 per arm on the Q&A set; since P7 the
+  command answers with P7's Q&A by default, so `--answerer plain_rag` keeps it comparable with c358b1e3).
 - Changing the default instruction does not need a corpus re-embedding (documents get no instruction), but
   `tests/recordings/db/test_search_ai_act/` must be re-recorded: its two cassettes hold the old instruction.
   The isolation cache (`eval/isolation/embeddings.json`) embeds benchmark texts as documents, without an
@@ -255,7 +256,8 @@ so the ranking runs above stand; the calibration's 6 such probes are found by no
   measured on Q&A questions and Annex descriptions, not on the guideline searches the engine's checks run;
   retune the engine only once a guideline-retrieval measure exists.
 - **The RAGAS re-run** (V6), run after the merge with the user's go-ahead (2026-10-10): run cf3425dd,
-  `uv run aiact evaluate ragas --no-cut-off` (uncut, like c358b1e3; top 5, default embedder), 29/29 items,
+  `uv run aiact evaluate ragas --no-cut-off` (uncut, like c358b1e3; top 5, default embedder; before P7, so on
+  V6's stand-in answerer: to repeat it now, add `--answerer plain_rag`), 29/29 items,
   $0.2045. Against c358b1e3: `provision_recall` 0.598 → **0.851**, context precision 0.777 → 0.889, context
   recall 0.874 → 0.954, faithfulness 0.913 → 0.922. The default (cut at 0.30) arm was not run, by the
   user's choice: the calibration shows recall in the top 5 unchanged at 0.30.

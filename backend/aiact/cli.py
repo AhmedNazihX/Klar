@@ -453,23 +453,37 @@ def eval_ragas(
             " from before X1b calibrated it (V6's c358b1e3). An --arm never cuts."
         ),
     ] = True,
+    answerer: Annotated[
+        str,
+        typer.Option(
+            help=f"Who answers: {' | '.join(ragas_metrics.ANSWERERS)} (P7's Q&A on the engine"
+            " model, or V6's stand-in on the RAGAS model)"
+        ),
+    ] = ragas_metrics.QA_ANSWERER,
 ) -> None:
     """Score retrieval and answers on the Q&A set with RAGAS and record the run (V6)."""
     if arm is not None and arm not in embedding_experiment.ARMS:
         typer.echo(f"Error: unknown --arm {arm!r}", err=True)
+        raise typer.Exit(code=2)
+    if answerer not in ragas_metrics.ANSWERERS:
+        typer.echo(f"Error: unknown --answerer {answerer!r}", err=True)
         raise typer.Exit(code=2)
     try:
         items = load_qa_items()
         git_sha, is_dirty = runner.current_git_state()
         options = ragas_metrics.RagasOptions(git_sha, is_dirty, subset, seed, max_cost_usd)
         # Without --arm, the RAGAS install and API key are checked before the database is opened.
-        parts = ragas_metrics.build_parts(top_k, is_cut_off=cut_off) if arm is None else None
+        parts = (
+            ragas_metrics.build_parts(top_k, is_cut_off=cut_off, answerer=answerer)
+            if arm is None
+            else None
+        )
         with records.connect() as connection:
             if arm is not None:
                 # Checked before any paid call: an arm without vectors would score as bad.
                 embedding_experiment.require_embedded(connection, arm)
                 embeddings = embedding_experiment.build_embeddings(embedding_experiment.ARMS[arm])
-                parts = ragas_metrics.build_parts(top_k, embeddings=embeddings)
+                parts = ragas_metrics.build_parts(top_k, embeddings=embeddings, answerer=answerer)
             assert parts is not None
             summary = ragas_metrics.run_ragas(
                 items, parts, records.PostgresRunStore(connection), options

@@ -240,13 +240,15 @@ describe('Your data, what Klar keeps and who processes it', () => {
           'models run in EU regions on Microsoft Azure and Google Vertex AI.',
       ),
     ).toBeInTheDocument()
-    // Decision 033 › Privacy wording, verbatim.
+    // Decision 033 › Privacy wording, verbatim (widened to questions, user 2026-10-10).
     expect(
       within(who).getByText(
-        "If Microsoft Azure's content filter blocks a check, that check's request (the " +
-          'description and the facts and answers taken from it) is sent once more to Gemini 3.1 ' +
-          'Flash-Lite on Google Vertex AI in the EU (zero data retention, no training), for each ' +
-          'check the filter blocked. This happens only when the filter blocks it.',
+        "If Microsoft Azure's content filter blocks a check or a question to Klar, that " +
+          'request (for a check: the description and the facts and answers taken from it; for ' +
+          "a question: the question and the result it's about, if any) is sent once more to " +
+          'Gemini 3.1 Flash-Lite on Google Vertex AI in the EU (zero data retention, no ' +
+          'training), for each request the filter blocked. This happens only when the filter ' +
+          'blocks it.',
       ),
     ).toBeInTheDocument()
     expect(
@@ -285,11 +287,13 @@ describe('Your data, what Klar keeps and who processes it', () => {
     ).toBeInTheDocument()
     expect(
       within(who).getByText(
-        'Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung, wird die Anfrage dieser ' +
-          'Prüfung (die Beschreibung sowie die daraus gewonnenen Fakten und Antworten) noch einmal ' +
-          'an Gemini 3.1 Flash-Lite bei Google Vertex AI in der EU gesendet (keine ' +
-          'Datenspeicherung beim Anbieter, kein Training), für jede blockierte Prüfung. Das ' +
-          'geschieht nur, wenn der Filter sie blockiert.',
+        'Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung oder eine Frage an ' +
+          'Klar, wird diese Anfrage (bei einer Prüfung: die Beschreibung sowie die daraus ' +
+          'gewonnenen Fakten und Antworten; bei einer Frage: die Frage und, falls vorhanden, ' +
+          'das Ergebnis, auf das sie sich bezieht) noch einmal an Gemini 3.1 Flash-Lite bei ' +
+          'Google Vertex AI in der EU gesendet (keine Datenspeicherung beim Anbieter, kein ' +
+          'Training), für jede blockierte Anfrage. Das geschieht nur, wenn der Filter sie ' +
+          'blockiert.',
       ),
     ).toBeInTheDocument()
     expect(within(who).getByRole('link', { name: 'Datenschutzerklärung lesen' })).toHaveAttribute(

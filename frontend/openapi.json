@@ -753,10 +753,66 @@
           }
         }
       }
+    },
+    "/qa": {
+      "post": {
+        "summary": "Ask Question",
+        "description": "Answer a question about the AI Act, or about one result, from the AI Act and the\nCommission's guidance, citing the provisions the answer rests on. A question outside them,\nor one asking whether someone complies, gets a fixed answer with no citation. Guidance, not\nlegal advice.",
+        "operationId": "ask_question",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QaAnswer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a valid request; the body quotes none of it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unprocessable"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many questions"
+          },
+          "503": {
+            "description": "The model or the legal texts are not available"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AnswerKind": {
+        "type": "string",
+        "enum": [
+          "answered",
+          "outside_corpus",
+          "compliance",
+          "refused"
+        ],
+        "title": "AnswerKind",
+        "description": "Whether the question was answered, and why not when it wasn't."
+      },
       "AnswerOption": {
         "type": "string",
         "enum": [
@@ -2688,6 +2744,106 @@
         ],
         "title": "Provision",
         "description": "One provision's text, with the version, language and status it comes from and the notice."
+      },
+      "QaAnswer": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/AnswerKind"
+          },
+          "answer": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Answer",
+            "description": "Plain text, paragraphs separated by a blank line; for a question not answered, the fixed reason in the question's language."
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "title": "Citations",
+            "description": "The provisions the answer rests on, in the order cited; at least one when `kind` is `answered`, none otherwise."
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "law_version": {
+            "$ref": "#/components/schemas/LawVersion"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of",
+            "description": "The date the amended text was read on; None for the original text."
+          },
+          "disclaimer": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Disclaimer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "answer",
+          "citations",
+          "language",
+          "law_version",
+          "as_of",
+          "disclaimer"
+        ],
+        "title": "QaAnswer",
+        "description": "One answer, with the provisions it rests on (none when it isn't `answered`)."
+      },
+      "QuestionRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Question",
+            "description": "The question, in `language`."
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "The language of the question and the answer."
+          },
+          "law_version": {
+            "$ref": "#/components/schemas/LawVersion",
+            "description": "The AI Act text to answer from; a question about a result reads the result's own.",
+            "default": "amended"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "A `ClassificationResult`, as the `result` event of `POST /classify` carries it; the route validates it against the result contract."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result",
+            "description": "The classification result the question is about, as `POST /classify` sent it; null for a general question."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "question",
+          "language"
+        ],
+        "title": "QuestionRequest",
+        "description": "One question, and the result it is about when it is asked on a result."
       },
       "Reading": {
         "properties": {

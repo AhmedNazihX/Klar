@@ -14,14 +14,20 @@ from those hits alone, and scored:
   text includes its children's (C1).
 
 The three RAGAS metrics run on the RAGAS model (`aiact.llm.ragas_llm`; Gemini 3.1 Flash-Lite by
-default). Until P7's Q&A exists, the answer comes from `PlainAnswerer`, one retrieval-grounded
-prompt on the same route; P7 passes its own `Answerer` to record faithfulness on its answers,
-and X1a passes another embedder to compare embedding arms. Unanswerable items have no reference
+default). The answer comes from P7's Q&A (`QaAnswerer`: its prompt on the engine model with the
+refusal route, and the fixed answer when the search found no hit relevant or the model finds the
+hits don't answer), so faithfulness is measured on the product's answers; `PlainAnswerer`, V6's
+stand-in (one retrieval-grounded prompt on the RAGAS route, runs c358b1e3 and cf3425dd), stays
+for comparison (`--answerer plain_rag`, which a comparison with those runs must pass). X1a
+passes another embedder to compare embedding arms. Unanswerable items have no reference
 answer, so they are left out (C8 and X1 calibrate the relevance cut-off on them).
 
-A run writes one `eval_runs` row (benchmark `qa`) and one `eval_case_results` row per item:
-`label` is the item, `predicted` the answer and the provisions retrieved (or `{"error": …}`,
-with the retrieved provisions when only a model call failed), `scores` the four metrics plus the
+A run writes one `eval_runs` row (benchmark `qa`, its config naming the answerer and the model it
+answers on, `answer_model`) and one `eval_case_results` row per item:
+`label` is the item, `predicted` the answer, its kind (`answer_kind`: answered, outside_corpus,
+compliance or refused for P7's answerer, so a fixed answer scored by RAGAS shows) and the provisions
+retrieved (or `{"error": …}`, with the retrieved provisions when only a model call failed),
+`scores` the four metrics plus the
 runner's `cost_usd`, `tokens` and `is_error`. The run's outcome holds each metric's mean over the
 items scored without error, and what the run spent in all. A cost cap is checked before each item.
 
@@ -53,6 +59,11 @@ from aiact.eval.runner import (
     select_subset,
 )
 from aiact.llm.embeddings import OpenRouterEmbeddings
+from aiact.llm.structured import ChatRoute, ProviderRefusalError
+from aiact.qa import AnswerKind, generate, shown_text
+from aiact.qa.answer import reply_outcome
+from aiact.qa.clients import qa_chat, qa_refusal_chat
+from aiact.qa.texts import NOT_ANSWERED
 from aiact.retrieval.search import (
     FROM_SETTINGS,
     QueryEmbedder,
@@ -84,7 +95,17 @@ DEFAULT_MAX_COST_USD = 0.5
 ANSWER_MAX_TOKENS = 1024
 MODEL_NODE = "ragas_model"
 """The usage-meter node for every call on the RAGAS route (answers and metrics)."""
+QA_NODE = "qa"
+"""The usage-meter node for P7's answers (the engine model)."""
+PLAIN_ANSWERER = "plain_rag"
+QA_ANSWERER = "qa"
+ANSWERERS = (QA_ANSWERER, PLAIN_ANSWERER)
+"""`--answerer`: P7's Q&A (the default), or V6's stand-in on the RAGAS route."""
 SEARCH_NODE = "search"
+ANSWER_KIND = "answer_kind"
+"""The prediction's answer kind: `aiact.qa.AnswerKind`'s value for P7's answerer, `error` when
+the item failed, None for V6's stand-in or when nothing was retrieved to answer from."""
+ERROR_KIND = "error"
 EVAL_GROUP_HINT = (
     "RAGAS is not installed; install the eval dependency group with `uv sync` "
     "(from backend/; a runtime install with --no-default-groups leaves it out)"
@@ -114,10 +135,27 @@ def require_ragas() -> None:
         raise RagasNotInstalledError(EVAL_GROUP_HINT)
 
 
+@dataclass(frozen=True)
+class Retrieved:
+    """A question's hits, and whether the search found them relevant (`SearchResults.found`)."""
+
+    hits: tuple[SearchHit, ...]
+    found: bool = True
+
+
+@dataclass(frozen=True)
+class ItemAnswer:
+    """An answer as the user would see it, and its kind (`aiact.qa.AnswerKind`'s value) when the
+    answerer gives one: P7's does, V6's stand-in doesn't."""
+
+    text: str
+    kind: str | None = None
+
+
 class Retriever(Protocol):
     """Finds the hits a question's answer is grounded on; describes itself for `eval_runs`."""
 
-    def __call__(self, item: QAItem) -> Sequence[SearchHit]: ...
+    def __call__(self, item: QAItem) -> Retrieved: ...
 
     def config(self) -> JsonValue: ...
 
@@ -130,7 +168,7 @@ class Answerer(Protocol):
         """How `eval_runs.config` names it."""
         ...
 
-    async def answer(self, item: QAItem, contexts: Sequence[str]) -> str: ...
+    async def answer(self, item: QAItem, contexts: Sequence[str], *, found: bool) -> ItemAnswer: ...
 
 
 class Scorer(Protocol):
@@ -152,7 +190,7 @@ class SearchRetriever:
     search: Callable[..., SearchResults] = search_ai_act
     is_cut_off: bool = True
 
-    def __call__(self, item: QAItem) -> Sequence[SearchHit]:
+    def __call__(self, item: QAItem) -> Retrieved:
         results = self.search(
             item.question,
             item.language,
@@ -160,7 +198,7 @@ class SearchRetriever:
             embedder=self.embedder,
             max_distance=FROM_SETTINGS if self.is_cut_off else None,
         )
-        return results.hits
+        return Retrieved(results.hits, results.found)
 
     def config(self) -> JsonValue:
         return {
@@ -177,9 +215,11 @@ class PlainAnswerer:
 
     chat: BaseChatModel
     meter: UsageMeter
-    name: str = "plain_rag"
+    name: str = PLAIN_ANSWERER
 
-    async def answer(self, item: QAItem, contexts: Sequence[str]) -> str:
+    async def answer(self, item: QAItem, contexts: Sequence[str], *, found: bool) -> ItemAnswer:
+        """Answers from the hits whether or not the search found them relevant, as V6's runs
+        did (c358b1e3, cf3425dd), so its scores stay comparable."""
         prompt = ANSWER_PROMPT.format(
             language_name=LANGUAGE_NAMES[item.language.value],
             contexts="\n\n".join(contexts),
@@ -191,7 +231,35 @@ class PlainAnswerer:
         text = reply.text.strip()
         if not text:
             raise ValueError("the answer model returned no text")
-        return text
+        return ItemAnswer(text)
+
+
+@dataclass(frozen=True)
+class QaAnswerer:
+    """P7's Q&A answering from the run's contexts: its prompt and its model (the engine model),
+    and the text the user would be shown (the fixed answer when the model finds the contexts
+    don't answer the question), so faithfulness is measured on the product's answers. `route`
+    carries the run's usage callback."""
+
+    route: ChatRoute
+    name: str = QA_ANSWERER
+
+    async def answer(self, item: QAItem, contexts: Sequence[str], *, found: bool) -> ItemAnswer:
+        """The product's answer: hits the search didn't find relevant (`found` False) get the
+        fixed outside-the-corpus answer with no model call, and a question both models refuse
+        the fixed refused answer, as `answer_question` gives them."""
+        if not found:
+            outside = AnswerKind.OUTSIDE_CORPUS
+            return ItemAnswer(NOT_ANSWERED[outside][item.language], outside.value)
+        try:
+            reply = await asyncio.to_thread(
+                generate, item.question, item.language, contexts, self.route
+            )
+        except ProviderRefusalError:
+            refused = AnswerKind.REFUSED
+            return ItemAnswer(NOT_ANSWERED[refused][item.language], refused.value)
+        kind, _ = reply_outcome(reply, len(contexts))
+        return ItemAnswer(shown_text(reply, len(contexts), item.language), kind.value)
 
 
 class PrecisionMetric(Protocol):
@@ -271,6 +339,8 @@ class RagasParts:
     model: str
     provider: str
     embedding: JsonValue = None
+    answer_model: JsonValue = None
+    """The model(s) the answerer runs on, for `eval_runs.config`."""
     aclose: Callable[[], Awaitable[None]] = field(default=_nothing_to_close)
 
 
@@ -290,25 +360,39 @@ def build_parts(
     *,
     embeddings: OpenRouterEmbeddings | None = None,
     is_cut_off: bool = True,
+    answerer: str = QA_ANSWERER,
 ) -> RagasParts:
-    """The real run: the RAGAS route, the embedding arm, one meter. Without `embeddings` the
-    configured arm searches with the `SEARCH_MAX_DISTANCE` cut-off, unless `is_cut_off` is False
+    """The real run: the RAGAS route, the embedding arm, the answerer (`ANSWERERS`: P7's Q&A on
+    the engine model by default), one meter. Without `embeddings` the configured arm searches
+    with the `SEARCH_MAX_DISTANCE` cut-off, unless `is_cut_off` is False
     (to compare with a run from before X1b calibrated it, such as V6's c358b1e3); an arm X1a
     passes always searches without one. Build new parts for each run: the run closes the
     model's client when it ends.
 
-    Raises `RagasNotInstalledError` without the `eval` group, and `LLMConfigError` when the API
-    key or an `EMBEDDING_*` setting is not set.
+    Raises `RagasNotInstalledError` without the `eval` group, `LLMConfigError` when the API
+    key, an `EMBEDDING_*` setting or (for P7's answerer) `ENGINE_MODEL` or `ENGINE_PROVIDER`
+    is not set, and `ValueError` for an unknown answerer.
     """
+    if answerer not in ANSWERERS:
+        raise ValueError(f"unknown answerer {answerer!r}; expected one of {', '.join(ANSWERERS)}")
     require_ragas()
     # Imported here: it loads RAGAS and the OpenAI SDK, which only the `eval` group installs.
     from aiact.llm.ragas_llm import ragas_chat_model, ragas_model
 
     settings = settings or get_settings()
     meter = UsageMeter()
+    is_qa = answerer == QA_ANSWERER
+    answers: Answerer = (
+        QaAnswerer(metered_qa_route(settings, meter))
+        if is_qa
+        else PlainAnswerer(ragas_chat_model(max_tokens=ANSWER_MAX_TOKENS, settings=settings), meter)
+    )
     model = ragas_model(
         lambda cost, tokens: meter.add(MODEL_NODE, cost, tokens, settings.ragas_model),
         settings=settings,
+    )
+    answer_model: JsonValue = (
+        qa_answer_model(settings) if is_qa else {"model": model.model, "provider": model.provider}
     )
     is_default_arm = embeddings is None
     embeddings = embeddings or OpenRouterEmbeddings(settings=settings)
@@ -318,16 +402,37 @@ def build_parts(
             meter.embedder(SEARCH_NODE, embeddings),
             is_cut_off=is_cut_off and is_default_arm,
         ),
-        answerer=PlainAnswerer(
-            ragas_chat_model(max_tokens=ANSWER_MAX_TOKENS, settings=settings), meter
-        ),
+        answerer=answers,
         scorer=RagasScorer.from_llm(model.llm),
         meter=meter,
         model=model.model,
         provider=model.provider,
         embedding=embedding_config(embeddings),
+        answer_model=answer_model,
         aclose=model.aclose,
     )
+
+
+def metered_qa_route(settings: Settings, meter: UsageMeter) -> ChatRoute:
+    """P7's route (`aiact.qa.clients.qa_route`: the engine model, and the refusal model for a
+    refused question) with every reply of either counted on `meter` under `QA_NODE`; the copies
+    share their clients."""
+    callbacks = {"callbacks": [meter.chat_callback(QA_NODE)]}
+    return ChatRoute(
+        qa_chat(settings).model_copy(update=callbacks),
+        qa_refusal_chat(settings).model_copy(update=callbacks),
+    )
+
+
+def qa_answer_model(settings: Settings) -> dict[str, JsonValue]:
+    """`eval_runs.config.answer_model` for P7's answerer: the engine model and provider, and the
+    refusal route's (decision 033)."""
+    return {
+        "model": settings.engine_model,
+        "provider": settings.engine_provider,
+        "refusal_model": settings.refusal_model,
+        "refusal_provider": settings.refusal_provider,
+    }
 
 
 @dataclass(frozen=True)
@@ -456,6 +561,7 @@ def run_config(parts: RagasParts, options: RagasOptions) -> dict[str, JsonValue]
         "embedding": parts.embedding,
         "retrieval": parts.retriever.config(),
         "answerer": parts.answerer.name,
+        "answer_model": parts.answer_model,
         "metrics": list(METRICS),
         "subset": options.subset,
         "seed": options.seed,
@@ -489,11 +595,13 @@ async def _retrieve_answer_score(
     item: QAItem, parts: RagasParts
 ) -> tuple[dict[str, JsonValue], dict[str, Score], bool]:
     """The row's prediction, metric scores and error flag. Once retrieval worked, its provisions
-    and `provision_recall` are kept even when a later model call fails."""
+    and `provision_recall` are kept even when a later model call fails. The prediction names the
+    answer's kind (`ANSWER_KIND`), so a fixed answer scored by RAGAS can be told apart."""
     try:
-        hits = tuple(await asyncio.to_thread(parts.retriever, item))
+        retrieved_hits = await asyncio.to_thread(parts.retriever, item)
     except Exception as exc:
-        return {"error": _error(item, exc)}, {}, True
+        return {"error": _error(item, exc), ANSWER_KIND: ERROR_KIND}, {}, True
+    hits = retrieved_hits.hits
     retrieved: list[JsonValue] = [
         {"doc_key": hit.doc_key, "provision_id": hit.provision_id} for hit in hits
     ]
@@ -503,14 +611,21 @@ async def _retrieve_answer_score(
     if not hits:
         # Nothing to answer from or judge: no hit is useful and no claim is supported by one.
         empty: dict[str, Score] = {CONTEXT_PRECISION: 0.0, CONTEXT_RECALL: 0.0, FAITHFULNESS: None}
-        return {"answer": None, "retrieved": retrieved}, {**empty, **recall}, False
+        nothing: dict[str, JsonValue] = {"answer": None, ANSWER_KIND: None, "retrieved": retrieved}
+        return nothing, {**empty, **recall}, False
     contexts = [context_text(hit) for hit in hits]
     try:
-        answer = await parts.answerer.answer(item, contexts)
-        judged = await parts.scorer.score(item, contexts, answer)
+        answer = await parts.answerer.answer(item, contexts, found=retrieved_hits.found)
+        judged = await parts.scorer.score(item, contexts, answer.text)
     except Exception as exc:
-        return {"error": _error(item, exc), "retrieved": retrieved}, recall, True
-    return {"answer": answer, "retrieved": retrieved}, {**judged, **recall}, False
+        failed: dict[str, JsonValue] = {"error": _error(item, exc), ANSWER_KIND: ERROR_KIND}
+        return {**failed, "retrieved": retrieved}, recall, True
+    predicted: dict[str, JsonValue] = {
+        "answer": answer.text,
+        ANSWER_KIND: answer.kind,
+        "retrieved": retrieved,
+    }
+    return predicted, {**judged, **recall}, False
 
 
 def _error(item: QAItem, exc: Exception) -> JsonValue:

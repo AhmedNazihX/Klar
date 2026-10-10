@@ -5,6 +5,13 @@ export type ClientOptions = {
 };
 
 /**
+ * AnswerKind
+ *
+ * Whether the question was answered, and why not when it wasn't.
+ */
+export type AnswerKind = 'answered' | 'outside_corpus' | 'compliance' | 'refused';
+
+/**
  * AnswerOption
  *
  * An answer the interface offers to a yes/no follow-up question (E12).
@@ -1143,6 +1150,69 @@ export type Provision = {
 };
 
 /**
+ * QaAnswer
+ *
+ * One answer, with the provisions it rests on (none when it isn't `answered`).
+ */
+export type QaAnswer = {
+    kind: AnswerKind;
+    /**
+     * Answer
+     *
+     * Plain text, paragraphs separated by a blank line; for a question not answered, the fixed reason in the question's language.
+     */
+    answer: string;
+    /**
+     * Citations
+     *
+     * The provisions the answer rests on, in the order cited; at least one when `kind` is `answered`, none otherwise.
+     */
+    citations: Array<Citation>;
+    language: Language;
+    law_version: LawVersion;
+    /**
+     * As Of
+     *
+     * The date the amended text was read on; None for the original text.
+     */
+    as_of: string | null;
+    /**
+     * Disclaimer
+     */
+    disclaimer: string;
+};
+
+/**
+ * QuestionRequest
+ *
+ * One question, and the result it is about when it is asked on a result.
+ */
+export type QuestionRequest = {
+    /**
+     * Question
+     *
+     * The question, in `language`.
+     */
+    question: string;
+    /**
+     * The language of the question and the answer.
+     */
+    language: Language;
+    /**
+     * The AI Act text to answer from; a question about a result reads the result's own.
+     */
+    law_version?: LawVersion;
+    /**
+     * Result
+     *
+     * The classification result the question is about, as `POST /classify` sent it; null for a general question.
+     */
+    result?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+/**
  * Reading
  *
  * One possible reading of an open question of law (E12): what it is called, the class it
@@ -1923,3 +1993,36 @@ export type ExportObligationsChecklistResponses = {
 };
 
 export type ExportObligationsChecklistResponse = ExportObligationsChecklistResponses[keyof ExportObligationsChecklistResponses];
+
+export type AskQuestionData = {
+    body: QuestionRequest;
+    path?: never;
+    query?: never;
+    url: '/qa';
+};
+
+export type AskQuestionErrors = {
+    /**
+     * Not a valid request; the body quotes none of it
+     */
+    422: Unprocessable;
+    /**
+     * Too many questions
+     */
+    429: unknown;
+    /**
+     * The model or the legal texts are not available
+     */
+    503: unknown;
+};
+
+export type AskQuestionError = AskQuestionErrors[keyof AskQuestionErrors];
+
+export type AskQuestionResponses = {
+    /**
+     * Successful Response
+     */
+    200: QaAnswer;
+};
+
+export type AskQuestionResponse = AskQuestionResponses[keyof AskQuestionResponses];

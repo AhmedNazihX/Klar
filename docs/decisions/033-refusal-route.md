@@ -146,13 +146,20 @@ when. A refused check's request is more than the description: it carries the fac
 the user's answers to follow-up questions included) and the law text retrieved for the check, and it is sent once
 for each check the filter blocked, not once per description.
 
-- EN: "If Microsoft Azure's content filter blocks a check, that check's request (the description and the facts and
-  answers taken from it) is sent once more to Gemini 3.1 Flash-Lite on Google Vertex AI in the EU (zero data
-  retention, no training), for each check the filter blocked. This happens only when the filter blocks it."
-- DE: "Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung, wird die Anfrage dieser Prüfung (die
-  Beschreibung sowie die daraus gewonnenen Fakten und Antworten) noch einmal an Gemini 3.1 Flash-Lite bei Google
-  Vertex AI in der EU gesendet (keine Datenspeicherung beim Anbieter, kein Training), für jede blockierte Prüfung.
-  Das geschieht nur, wenn der Filter sie blockiert."
+- EN: "If Microsoft Azure's content filter blocks a check or a question to Klar, that request (for a check: the
+  description and the facts and answers taken from it; for a question: the question and the result it's about, if any)
+  is sent once more to Gemini 3.1 Flash-Lite on Google Vertex AI in the EU (zero data retention, no training), for
+  each request the filter blocked. This happens only when the filter blocks it."
+- DE: "Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung oder eine Frage an Klar, wird diese Anfrage (bei
+  einer Prüfung: die Beschreibung sowie die daraus gewonnenen Fakten und Antworten; bei einer Frage: die Frage und,
+  falls vorhanden, das Ergebnis, auf das sie sich bezieht) noch einmal an Gemini 3.1 Flash-Lite bei Google Vertex AI
+  in der EU gesendet (keine Datenspeicherung beim Anbieter, kein Training), für jede blockierte Anfrage. Das geschieht
+  nur, wenn der Filter sie blockiert."
+
+Extended to questions (P7's Q&A takes the same route): accepted by the user 2026-10-10 (option A of P7's security
+re-check). A refused question's request is the question, the corpus passages retrieved for it and, for a question
+about a result, that result's class, role, steps and citations; it is sent once for each question the filter
+blocked. The earlier, check-only wording is replaced by the one above.
 
 The privacy notice names Google as a processor for these requests, reached through OpenRouter.
 

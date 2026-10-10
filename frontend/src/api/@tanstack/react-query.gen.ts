@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { draftDocument, draftVendorLetter, exportDocument, exportInventoryReport, exportObligationsChecklist, exportResultReport, getProvision, listDocuments, listObligations, listResultDocuments, type Options } from '../sdk.gen';
-import type { DraftDocumentData, DraftDocumentError, DraftDocumentResponse, DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, ExportDocumentData, ExportDocumentError, ExportDocumentResponse, ExportInventoryReportData, ExportInventoryReportError, ExportInventoryReportResponse, ExportObligationsChecklistData, ExportObligationsChecklistError, ExportObligationsChecklistResponse, ExportResultReportData, ExportResultReportError, ExportResultReportResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse, ListResultDocumentsData, ListResultDocumentsError, ListResultDocumentsResponse } from '../types.gen';
+import { askQuestion, draftDocument, draftVendorLetter, exportDocument, exportInventoryReport, exportObligationsChecklist, exportResultReport, getProvision, listDocuments, listObligations, listResultDocuments, type Options } from '../sdk.gen';
+import type { AskQuestionData, AskQuestionError, AskQuestionResponse, DraftDocumentData, DraftDocumentError, DraftDocumentResponse, DraftVendorLetterData, DraftVendorLetterError, DraftVendorLetterResponse, ExportDocumentData, ExportDocumentError, ExportDocumentResponse, ExportInventoryReportData, ExportInventoryReportError, ExportInventoryReportResponse, ExportObligationsChecklistData, ExportObligationsChecklistError, ExportObligationsChecklistResponse, ExportResultReportData, ExportResultReportError, ExportResultReportResponse, GetProvisionData, GetProvisionError, GetProvisionResponse, ListDocumentsData, ListDocumentsError, ListDocumentsResponse, ListObligationsData, ListObligationsError, ListObligationsResponse, ListResultDocumentsData, ListResultDocumentsError, ListResultDocumentsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -235,6 +235,28 @@ export const exportObligationsChecklistMutation = (options?: Partial<Options<Exp
     const mutationOptions: UseMutationOptions<ExportObligationsChecklistResponse, ExportObligationsChecklistError, Options<ExportObligationsChecklistData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await exportObligationsChecklist({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ask Question
+ *
+ * Answer a question about the AI Act, or about one result, from the AI Act and the
+ * Commission's guidance, citing the provisions the answer rests on. A question outside them,
+ * or one asking whether someone complies, gets a fixed answer with no citation. Guidance, not
+ * legal advice.
+ */
+export const askQuestionMutation = (options?: Partial<Options<AskQuestionData>>): UseMutationOptions<AskQuestionResponse, AskQuestionError, Options<AskQuestionData>> => {
+    const mutationOptions: UseMutationOptions<AskQuestionResponse, AskQuestionError, Options<AskQuestionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await askQuestion({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

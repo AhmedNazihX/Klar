@@ -40,6 +40,7 @@ from pydantic import BaseModel
 
 import aiact.retrieval
 from aiact.api import classify as api_classify
+from aiact.api import qa as api_qa
 from aiact.corpus.build import DocumentLoad, DocumentRow, ProvisionRow
 from aiact.corpus.embed import ARMS, vector_literal
 from aiact.corpus.load import load_all
@@ -353,6 +354,7 @@ runner's per-case input (set only by `--exclude-mode all`, the gap run)."""
 REQUEST_MODELS: dict[str, type[BaseModel]] = {
     "aiact.engine.ClassifyRequest": ClassifyRequest,
     "aiact.api POST /classify body": get_type_hints(api_classify.started_run)["body"],
+    "aiact.api POST /qa body": get_type_hints(api_qa.ask_question)["body"],
 }
 """Every public request model (the bodies P1 and P2b accept): none may carry the opt-in. Add
 the MCP tool's request model here when it exists. The API's query parameters are checked in
