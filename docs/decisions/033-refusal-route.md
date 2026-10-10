@@ -129,11 +129,12 @@ match, which also meets the DoD's literal "all of them". No other node was refus
   `google/gemini-3.1-flash-lite` on `google-vertex/eu`. Both with `zdr: true`, `data_collection: "deny"`,
   `allow_fallbacks: false`, and the second model's reply checked against its pinned provider like the first's.
 - **When both refuse**, decision 030 applies: the check is not assessed and the result carries no class.
-- **When the second call fails**, the same applies (X2c's review, 2026-10-10): a transport, rate-limit, server or
-  timeout error, or a reply that doesn't fit the schema, after a refusal gives decision 029's step, never a failed
-  classification, because the route must never end worse than no route. The log names the failure's type only
-  (`ProviderRefusalError.reason`, `second_model_failed:<type>`), never the request or the reply. Any other error
-  (a bug) still fails the run (`aiact.llm.structured.SECOND_MODEL_FAILURES` lists the kinds).
+- **When the second call fails transiently**, the same applies (X2c's review, 2026-10-10): a transport,
+  rate-limit, server or timeout error, no response, or a reply that doesn't fit the schema, after a refusal gives
+  decision 029's step, never a failed classification, because the route must never end worse than no route. Only
+  the log carries the failure's type, never the request or the reply. A 4xx config or request error (a mistyped
+  `REFUSAL_MODEL`/`REFUSAL_PROVIDER`, a schema the provider rejects) and any other error (a bug) still fail the run,
+  so they are never counted as refusals (`aiact.llm.structured.SECOND_MODEL_FAILURES` lists the transient kinds).
 
 ## Privacy wording (accepted by the user 2026-10-10; INIT › Data policy, Ethical considerations › Choice of model providers)
 Adopting the route adds a second processor for the refused requests only: Google, through OpenRouter, on Vertex

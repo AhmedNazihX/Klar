@@ -13,6 +13,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.outputs import ChatResult
+from openrouter.errors import BadRequestResponseError, NoResponseError, NotFoundResponseError
 from pydantic import BaseModel, Field, SecretStr, ValidationError
 from vcr.errors import CannotOverwriteExistingCassetteException
 
@@ -131,10 +132,11 @@ def test_without_a_second_model_a_refusal_is_raised_at_once() -> None:
     assert len(first.seen) == 1
 
 
-def test_both_refused_names_the_content_filter() -> None:
-    with pytest.raises(ProviderRefusalError) as raised:
+def test_both_refused_logs_the_second_refusal(caplog: pytest.LogCaptureFixture) -> None:
+    with caplog.at_level(logging.WARNING), pytest.raises(ProviderRefusalError):
         ChatRoute(chat(REFUSED), chat(REFUSED)).ask(MESSAGES, FORMAT, Small)
-    assert raised.value.reason == "content_filter"
+    assert "the second model refused too" in caplog.text
+    assert "failed" not in caplog.text
 
 
 # --- A failed second hop ends as a refusal too: the route is never worse than no route ---------
@@ -147,12 +149,11 @@ SECRET_MESSAGES = [SystemMessage("Answer in JSON."), HumanMessage(f"We rank staf
 def assert_refused_after_a_failed_second_hop(
     second: BaseChatModel, kind: str, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """A refusal sent to `second`, which fails with `kind`: a refusal naming the kind only, with
-    the description in neither the error nor the logs."""
+    """A refusal sent to `second`, which fails with `kind`: a refusal whose log line names the
+    kind only, with the description in neither the error nor the logs."""
     with caplog.at_level(logging.WARNING), pytest.raises(ProviderRefusalError) as raised:
         ChatRoute(chat(REFUSED), second).ask(SECRET_MESSAGES, FORMAT, Small)
     error = raised.value
-    assert error.reason == f"second_model_failed:{kind}"
     assert error.__cause__ is None and error.__suppress_context__
     assert SECRET not in str(error)
     assert f"the second model failed ({kind})" in caplog.text
@@ -194,6 +195,11 @@ def raising(error: type[httpx.TransportError]) -> Callable[[httpx.Request], http
     return handle
 
 
+def no_response(request: httpx.Request) -> httpx.Response:
+    """The SDK's own "no response received" error, as its client raises it."""
+    raise NoResponseError()
+
+
 def provider_error(request: httpx.Request) -> httpx.Response:
     """A 200 whose body is the provider's error, not a completion."""
     return httpx.Response(200, json={"error": {"message": "upstream error", "code": 502}})
@@ -207,6 +213,7 @@ def provider_error(request: httpx.Request) -> httpx.Response:
         pytest.param(status(503), "ServiceUnavailableResponseError", id="unavailable"),
         pytest.param(raising(httpx.ReadTimeout), "ReadTimeout", id="timeout"),
         pytest.param(raising(httpx.ConnectError), "ConnectError", id="transport"),
+        pytest.param(no_response, "NoResponseError", id="no-response"),
         pytest.param(provider_error, "ResponseValidationError", id="provider-error-in-body"),
     ],
 )
@@ -218,15 +225,37 @@ def test_a_failed_call_to_the_second_model_is_a_refusal(
 ) -> None:
     """The real second model (pinned, one attempt) over an endpoint that fails."""
     http_answer.append(handler)
+    assert_refused_after_a_failed_second_hop(pinned_second_model(), kind, caplog)
+
+
+@pytest.mark.parametrize(
+    ("code", "error"),
+    [
+        pytest.param(404, NotFoundResponseError, id="mistyped-model-or-provider"),
+        pytest.param(400, BadRequestResponseError, id="schema-rejected"),
+    ],
+)
+def test_a_config_or_request_error_of_the_second_model_still_raises(
+    code: int,
+    error: type[Exception],
+    http_answer: list[Callable[[httpx.Request], httpx.Response]],
+) -> None:
+    """A 4xx the route can't fix is never counted as a refusal (decision 033)."""
+    http_answer.append(status(code))
+    with pytest.raises(error):
+        ChatRoute(chat(REFUSED), pinned_second_model()).ask(MESSAGES, FORMAT, Small)
+
+
+def pinned_second_model() -> BaseChatModel:
+    """The real second model (pinned, one attempt), over the mocked endpoint."""
     settings = Settings(_env_file=None, openrouter_api_key=SecretStr("k"))  # pyright: ignore[reportCallIssue]
-    second = chat_model(
+    return chat_model(
         model="google/gemini-3.1-flash-lite",
         provider_order=["google-vertex/eu"],
         allow_fallbacks=False,
         max_retries=0,
         settings=settings,
     )
-    assert_refused_after_a_failed_second_hop(second, kind, caplog)
 
 
 class Unrecorded(CannotOverwriteExistingCassetteException):
