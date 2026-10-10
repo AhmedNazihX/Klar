@@ -16,8 +16,10 @@ four Q&A items). `get_provision` returns a whole annex when one is wanted.
 A reference to another act is not one to the AI Act: "Article 22 GDPR", "Art. 17 DSGVO",
 "Article 101 of the Treaty", "Article 6 of Regulation (EU) 2016/679", "GDPR Article 22". The
 rule is simple and only looks next to the reference: it is skipped when another act's name
-(`OTHER_ACT`) follows it straight away (after "of (the)", "der", "des", or a German "lit." or
-"Satz" part) or stands straight before it. An act named elsewhere in the query leaves it be.
+(`OTHER_ACT`, a whole word) follows it straight away (after "of (the)", "der", "des", or a
+German "lit." or "Satz" part) or stands straight before it, or when "of the Treaty" or "der
+Charta" follows it. An act named elsewhere in the query leaves it be, and so does a word that
+only contains a name ("Arbeitsvertrag Artikel 26", "Article 25 treaty obligations").
 """
 
 import re
@@ -53,18 +55,29 @@ RECITAL = re.compile(
 AI_ACT_NUMBER = "2024/1689"
 
 OTHER_ACT = (
-    r"(?:gdpr|ds-?gvo|tfeu|aeuv|teu|euv|charter|charta|treaty|vertrag\w*"
+    r"\b(?:gdpr|ds-?gvo|tfeu|aeuv|teu|euv"
     r"|general\s+data\s+protection\s+regulation|datenschutz-grundverordnung"
+    r"|treaty\s+(?:on|establishing)|vertrag(?:s|es)?\s+über"
+    r"|charter\s+of\s+fundamental\s+rights|charta\s+der\s+grundrechte|grundrechte-?charta"
     r"|(?:regulation|verordnung)\s*\((?:eu|ec|eg|eec|ewg)\)\s*(?:no\.?\s*|nr\.?\s*)?"
     rf"(?!{AI_ACT_NUMBER}\b)\d{{1,4}}/\d{{1,4}}"
     r"|directive|richtlinie)\b"
 )
-"""Another act a provision number may belong to: the GDPR, the Treaties and the Charter by
-name, any Union regulation by number but the AI Act's own, and any directive."""
+"""Another act a provision number may belong to, as a whole word or name: the GDPR, the
+Treaties and the Charter by their names or abbreviations, any Union regulation by number but
+the AI Act's own, and any directive. A word that only starts or ends like one
+("Arbeitsvertrag", "vertragliche", "Unternehmensrichtlinie") is none."""
+
+TREATY_OR_CHARTER = (
+    r"(?:of\s+the\s+|der\s+|des\s+)"
+    r"(?:treaty|treaties|charter|charta|verträge|vertrag(?:s|es)?)\b"
+)
+"""A bare Treaty or Charter word names an act only after "of the", "der" or "des" ("Article 21
+of the Charter", "Artikel 101 des Vertrags"); "Article 25 treaty obligations" names none."""
 
 OTHER_ACT_AFTER = re.compile(
     r"(?:\s*(?:lit\.|litera|satz|s\.|uabs\.)\s*\w{1,3}\b)*"
-    r"\s*,?\s*(?:of\s+(?:the\s+)?|der\s+|des\s+)?" + OTHER_ACT,
+    r"\s*,?\s*(?:(?:of\s+(?:the\s+)?|der\s+|des\s+)?" + OTHER_ACT + "|" + TREATY_OR_CHARTER + ")",
     re.IGNORECASE,
 )
 OTHER_ACT_BEFORE = re.compile(OTHER_ACT + r"(?:'s)?\s*$", re.IGNORECASE)

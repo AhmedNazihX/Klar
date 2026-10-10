@@ -66,6 +66,10 @@ def test_references_keep_the_order_named_and_appear_once() -> None:
         "GDPR Article 22",
         "Article 101 TFEU",
         "Article 21 of the Charter",
+        "Article 101 of the Treaty",
+        "Article 6 of the Treaty on European Union",
+        "Article 16 of the Treaty on the Functioning of the European Union",
+        "Article 8 of the Charter of Fundamental Rights",
         "Article 6 of Regulation (EU) 2016/679",
         "Article 10 of the General Data Protection Regulation",
         "Article 4 of Directive 2001/95/EC",
@@ -88,6 +92,10 @@ def test_an_english_reference_to_another_act_is_no_reference(query: str) -> None
         "Artikel 9 der Datenschutz-Grundverordnung",
         "Artikel 6 der Verordnung (EU) 2016/679",
         "Artikel 10 der Richtlinie (EU) 2016/680",
+        "Artikel 101 des Vertrags",
+        "Artikel 16 des Vertrags über die Arbeitsweise der Europäischen Union",
+        "Artikel 8 der Charta der Grundrechte",
+        "Artikel 21 der Charta",
         "Erwägungsgrund 71 DSGVO",
     ],
 )
@@ -106,6 +114,26 @@ def test_a_german_reference_to_another_act_is_no_reference(query: str) -> None:
     ],
 )
 def test_only_the_reference_next_to_another_act_is_skipped(
+    query: str, ids: tuple[str, ...]
+) -> None:
+    assert exact_references(query) == ids
+
+
+@pytest.mark.parametrize(
+    ("query", "ids"),
+    [
+        ("Arbeitsvertrag Anhang III Nr. 4", ("annex:III:4",)),
+        ("Kündigung Arbeitsvertrag Artikel 26", ("art:26",)),
+        ("Gilt für unseren Arbeitsvertrag Artikel 26 Absatz 7?", ("art:26:7",)),
+        ("Mustervertrag Artikel 25 Absatz 4", ("art:25:4",)),
+        ("Unternehmensrichtlinie Artikel 4", ("art:4",)),
+        ("Artikel 25 vertragliche Pflichten", ("art:25",)),
+        ("Anhang III Nr. 4 Vertragsbeendigung", ("annex:III:4",)),
+        ("Article 25 treaty obligations", ("art:25",)),
+        ("Article 4 charter of AI literacy", ("art:4",)),
+    ],
+)
+def test_a_word_that_only_contains_an_acts_name_names_no_other_act(
     query: str, ids: tuple[str, ...]
 ) -> None:
     assert exact_references(query) == ids
