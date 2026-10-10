@@ -28,7 +28,7 @@ from aiact.retrieval.search import (
     search_ai_act,
 )
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, Language, LawVersion
-from aiact.settings import DEFAULT_MIN_KEYWORD_IDF, Settings
+from aiact.settings import Settings
 
 pytestmark = pytest.mark.db
 
@@ -162,7 +162,7 @@ LOADS = (
         ProvisionRow("guide:test-c6-code:para:1", None, None, None, "A code on zorblax.",
                      GUIDE_PUBLISHED),
         # Four words no other row has and no vector: a strong keyword-only match (C8), also in
-        # an empty database (4 x ln(about 20 units) is above DEFAULT_MIN_KEYWORD_IDF).
+        # an empty database (4 x ln(about 20 units) is above FIXTURE_MIN_KEYWORD_IDF).
         ProvisionRow("guide:test-c6-code:para:2", None, None, None,
                      "Quorvex klimbat drossel wuffling.", GUIDE_PUBLISHED),
     )),
@@ -458,6 +458,8 @@ def test_the_limit_caps_the_hits(corpus: psycopg.Connection):
 OFF_TOPIC = [0.0, 0.0, -1.0]
 """Points away from every visible row: the nearest (art:3) is at cosine distance 0.89."""
 CUT_OFF = 0.5
+FIXTURE_MIN_KEYWORD_IDF = 9.0
+"""A keyword bar the fixture's four rare words clear in an empty database (C8's first value)."""
 
 
 def test_hits_carry_the_similarity_and_the_keyword_idf(corpus: psycopg.Connection):
@@ -495,12 +497,18 @@ def test_a_matching_query_stays_found_under_the_cut_off(corpus: psycopg.Connecti
     )
 
 
-def test_a_strong_keyword_only_match_stays_found(corpus: psycopg.Connection):
+def test_a_strong_keyword_only_match_stays_found(
+    corpus: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
+):
+    """The rule, not the calibrated value (X1b's 24, pinned in test_settings): in an empty
+    database the four fixture words reach only about 4 x ln(20), so the bar is set below that."""
+    bar = Settings(_env_file=None, search_min_keyword_idf=FIXTURE_MIN_KEYWORD_IDF)  # pyright: ignore[reportCallIssue]
+    monkeypatch.setattr(search_module, "get_settings", lambda: bar)
     results = _search(corpus, "quorvex klimbat drossel wuffling", OFF_TOPIC, as_of=AFTER_OMNIBUS,
                       max_distance=CUT_OFF)  # fmt: skip
     assert [h.provision_id for h in results.hits] == ["guide:test-c6-code:para:2"]
     idf = results.hits[0].keyword_idf
-    assert idf is not None and idf >= DEFAULT_MIN_KEYWORD_IDF
+    assert idf is not None and idf >= FIXTURE_MIN_KEYWORD_IDF
     assert results.found
 
 
