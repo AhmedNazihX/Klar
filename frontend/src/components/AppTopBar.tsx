@@ -36,7 +36,7 @@ export function AppTopBar({ title, law }: { title: string; law: LawBinding }): J
 }
 
 // The three-line menu mark from the ResultMobile artboard; the system's icon set has none.
-function MenuMark(): JSX.Element {
+export function MenuMark(): JSX.Element {
   return (
     <svg
       width="18"

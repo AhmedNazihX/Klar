@@ -68,7 +68,7 @@ describe('SiteNav', () => {
   it('opens /de in German', async () => {
     await openSite('/de')
     expect(i18n.resolvedLanguage).toBe('de')
-    expect(screen.getByRole('heading', { name: /Ist Ihr KI-Werkzeug/ })).toBeVisible()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Wo steht Ihr KI‑Tool')
   })
 })
 

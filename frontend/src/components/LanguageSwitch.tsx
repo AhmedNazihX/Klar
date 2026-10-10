@@ -10,20 +10,24 @@ const SHORT_LABEL: Record<Language, string> = { en: 'EN', de: 'DE' }
 /**
  * The EN/DE segmented switch from the artboards. The choice is remembered in localStorage;
  * `onChange` runs after the language changes (the site nav uses it to move between landing pages).
+ * `shown` puts the pill under another language for a moment, so it can flow to the current one
+ * (the German landing page on arrival).
  */
 export function LanguageSwitch({
   className,
   onChange,
+  shown,
 }: {
   className?: string
   onChange?: (language: Language) => void
+  shown?: Language
 }): JSX.Element {
   const { t, i18n } = useTranslation()
   const current = SUPPORTED_LANGUAGES.find((language) => language === i18n.resolvedLanguage)
   return (
     <SegmentedControl<Language>
       label={t('language.label')}
-      value={current ?? 'en'}
+      value={shown ?? current ?? 'en'}
       onChange={(language) => {
         void i18n.changeLanguage(language)
         onChange?.(language)
