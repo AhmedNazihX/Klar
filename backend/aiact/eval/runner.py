@@ -76,8 +76,10 @@ ERROR_MESSAGE_LIMIT = 300
 
 ServedModels = Mapping[str, Mapping[str, int]]
 """`{node: {model: calls}}`, as `MODELS_KEY` stores it."""
-Score = float | bool | None | dict[str, JsonValue]
-"""A metric score, or one of the runner's own (`RUN_SCORE_KEYS`)."""
+Score = float | bool | None
+StoredScore = Score | dict[str, JsonValue]
+"""A stored row's score: a metric's or one of the runner's own (`RUN_SCORE_KEYS`), whose
+`MODELS_KEY` alone is a mapping."""
 Scorer = Callable[[BenchmarkCase, ClassificationResult], Mapping[str, Score]]
 
 
@@ -300,7 +302,7 @@ class CaseRecord:
     case_id: str
     predicted: dict[str, JsonValue]
     label: dict[str, JsonValue]
-    scores: dict[str, Score]
+    scores: Mapping[str, StoredScore]
     trace_id: str | None
     cost_usd: float
     tokens: int
@@ -541,7 +543,7 @@ def _classify_one(item: _Planned, classifier: Classifier, scorer: Scorer) -> _Do
         answer = classifier.classify(item.request)
     except Exception as exc:
         return _Done(_failed_record(case, exc))
-    run_scores: dict[str, Score] = {
+    run_scores: dict[str, StoredScore] = {
         "cost_usd": answer.cost_usd,
         "tokens": answer.tokens,
         "is_error": False,
@@ -591,7 +593,7 @@ def _failed_record(case: BenchmarkCase, exc: Exception) -> CaseRecord:
     )
 
 
-def _served(models: ServedModels | None) -> dict[str, Score]:
+def _served(models: ServedModels | None) -> dict[str, StoredScore]:
     """The `models` score, left out when the classifier didn't report them."""
     if models is None:
         return {}
