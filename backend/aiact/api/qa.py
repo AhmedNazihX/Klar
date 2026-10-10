@@ -4,24 +4,25 @@ it rests on (P7; decision 026, Ask and Reviewer).
 The body is the question, its language, the law version the screen shows and, for a question
 about a result, the result as the browser holds it (validated against the result contract and
 nothing more, as for the reports, decision 031; a question about a result reads the result's own
-law version and date). It has no retrieval options: `include_held_out` never reaches the search
-(decision 012). The answer is `aiact.qa.QaAnswer`, with the law version and the notice.
+law version and date, and its citations' text from the corpus, never the posted quotes). It has
+no retrieval options: `include_held_out` never reaches the search (decision 012). The answer is
+`aiact.qa.QaAnswer`, with the law version and the notice.
 
 The route is plain `def`: the search reads Postgres through psycopg's sync driver and the model
 call is sync, so FastAPI runs it in its threadpool. It has its own rate limit (`RATE_LIMIT_QA`),
 and the app's body limit. A model that isn't configured is a 503 before anything is searched; a
-search or model call that fails is a 503 with a fixed message (an unreachable database too, by
-the app's handler). Nothing here logs the question, the result or the answer, and no error
-quotes them: only the failure's type is logged.
+question both models refuse gets the fixed refused answer (decision 033), not an error; a
+search's embedding or a model call that fails is a 503 with a fixed message (an unreachable
+database too, by the app's handler). Any other error is a bug and stays a 500. Nothing here
+logs the question, the result or the answer, and no error quotes them: only the failure's type
+is logged.
 """
 
 import logging
 from typing import Annotated
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
-from openrouter.errors import NoResponseError, OpenRouterError, ResponseValidationError
-from pydantic import Field, StringConstraints, ValidationError
+from pydantic import Field, StringConstraints
 
 from aiact.api.dependencies import (
     ApiContext,
@@ -34,9 +35,10 @@ from aiact.api.documents import ResultJson, valid_result
 from aiact.api.errors import UNPROCESSABLE
 from aiact.engine.clients import engine_embeddings
 from aiact.llm import EmbeddingError, LLMConfigError
-from aiact.llm.structured import ChatRoute, ProviderRefusalError
+from aiact.llm.structured import ChatRoute
 from aiact.qa import QaAnswer, Searcher, answer_question
-from aiact.qa.clients import corpus_searcher, qa_route
+from aiact.qa.answer import ModelCallError, ResultQuotes
+from aiact.qa.clients import corpus_quotes, corpus_searcher, qa_route
 from aiact.schemas import Language, LawVersion
 from aiact.schemas.base import ContractModel
 
@@ -47,19 +49,9 @@ MAX_QUESTION_CHARS = 1000
 would also raise the search's keyword threshold (X1b: `SEARCH_MIN_KEYWORD_IDF` grows with the
 query's length)."""
 UNAVAILABLE = "Questions can't be answered right now. Please try again later."
-ANSWER_FAILURES: tuple[type[Exception], ...] = (
-    ProviderRefusalError,
-    ValidationError,
-    EmbeddingError,
-    OpenRouterError,
-    NoResponseError,
-    ResponseValidationError,
-    httpx.HTTPError,
-    ValueError,
-)
-"""What a search's embedding or the model call raises when it fails: a refusal, a reply that
-doesn't fit, no response, the provider's or the transport's error (ChatOpenRouter raises a
-provider's error as a plain `ValueError`)."""
+ANSWER_FAILURES: tuple[type[Exception], ...] = (ModelCallError, EmbeddingError)
+"""What a search's embedding or the model call raises when it fails (the model's failures are
+narrowed to `aiact.qa.answer.MODEL_FAILURES` around the call alone)."""
 
 Question = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_QUESTION_CHARS)
@@ -104,6 +96,15 @@ def qa_search(
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, UNAVAILABLE) from None
 
 
+def qa_quotes(
+    context: Annotated[ApiContext, Depends(api_context)],
+    connect: Annotated[ConnectionFactory, Depends(database)],
+) -> ResultQuotes:
+    """The corpus's text of a posted result's citations (tests replace it); a connection opens
+    only for a question about a result."""
+    return corpus_quotes(connect, context.settings.aiact_data_dir)
+
+
 router = APIRouter(responses=UNPROCESSABLE)
 
 
@@ -123,6 +124,7 @@ def ask_question(
     body: QuestionRequest,
     route: Annotated[ChatRoute, Depends(qa_model)],
     search: Annotated[Searcher, Depends(qa_search)],
+    quotes: Annotated[ResultQuotes, Depends(qa_quotes)],
 ) -> QaAnswer:
     """Answer a question about the AI Act, or about one result, from the AI Act and the
     Commission's guidance, citing the provisions the answer rests on. A question outside them,
@@ -137,6 +139,7 @@ def ask_question(
             result=result,
             search=search,
             route=route,
+            quotes=quotes,
         )
     except ANSWER_FAILURES as exc:
         logger.error("question failed: %s", type(exc).__name__)

@@ -1,9 +1,10 @@
 """The Q&A's fixed answers and its prompt (P7; decision 026, Ask).
 
 A question not answered gets a fixed answer in its own language, never the model's words: one
-for a question the corpus doesn't answer, one for a question about compliance. Both name what
-Klar covers (the AI Act and the Commission's guidance on it), so the user knows where to look
-instead.
+for a question the corpus doesn't answer, one for a question about compliance, both naming what
+Klar covers (the AI Act and the Commission's guidance on it) so the user knows where to look
+instead; and one for a question both models refused (decision 033), which asking again won't
+change.
 """
 
 from collections.abc import Mapping
@@ -31,6 +32,15 @@ COMPLIANCE_DE = (
     "Fragen Sie dazu Ihre Rechtsberatung oder Ihre Compliance-Abteilung."
 )
 
+REFUSED_EN = (
+    "I can't answer this question: the language model declined to process it. Asking it again "
+    "won't change that, but you can ask it in other words."
+)
+REFUSED_DE = (
+    "Diese Frage kann ich nicht beantworten: Das Sprachmodell hat ihre Bearbeitung abgelehnt. "
+    "Eine Wiederholung ändert daran nichts, aber Sie können die Frage anders formulieren."
+)
+
 NOT_ANSWERED: Mapping[AnswerKind, Mapping[Language, str]] = MappingProxyType(
     {
         AnswerKind.OUTSIDE_CORPUS: MappingProxyType(
@@ -39,6 +49,7 @@ NOT_ANSWERED: Mapping[AnswerKind, Mapping[Language, str]] = MappingProxyType(
         AnswerKind.COMPLIANCE: MappingProxyType(
             {Language.EN: COMPLIANCE_EN, Language.DE: COMPLIANCE_DE}
         ),
+        AnswerKind.REFUSED: MappingProxyType({Language.EN: REFUSED_EN, Language.DE: REFUSED_DE}),
     }
 )
 """The fixed answer per kind not answered and language."""
@@ -56,14 +67,17 @@ Set `kind`:
 - "compliance" when the question asks whether a company, a tool or a practice complies with, \
 or is lawful under, the AI Act or any other law ("Are we compliant?", "Is our tool legal?"). \
 Klar never says whether anyone complies, so don't answer it.
-- "outside_corpus" when the sources don't answer the question: it is about another law (for \
-example the GDPR, the Data Act, the Digital Services Act or national law) or not about the AI \
-Act at all, or the sources only touch its topic.
+- "outside_corpus" when the sources don't answer the question: it is about another EU or \
+national law, or not about the AI Act at all, or the sources only touch its topic.
 - "answered" otherwise.
 
 When you answer:
 - Lead with the direct answer in plain words, then the detail that matters. At most 150 words, \
 in {language_name}. Plain text, no Markdown; separate paragraphs with a blank line.
+- Never put source numbers in the text ("[1]", "(2, 3)", "Source 4"): they go in `cited` only. \
+Name a provision as the Act does ("Article 26(1)", "Annex III") when it helps.
+- In German, use the Act's official German terms: "KI-Verordnung" (never "AI Act"), \
+"KI-System", "Anbieter", "Betreiber", "Hochrisiko-KI-System".
 - Say only what the sources say. Don't add conditions, dates, exceptions or examples they don't \
 contain, and don't quote more than a short phrase.
 - Put the numbers of the sources your answer rests on in `cited`, most important first. Cite \

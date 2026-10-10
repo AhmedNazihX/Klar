@@ -9,7 +9,7 @@ export type ClientOptions = {
  *
  * Whether the question was answered, and why not when it wasn't.
  */
-export type AnswerKind = 'answered' | 'outside_corpus' | 'compliance';
+export type AnswerKind = 'answered' | 'outside_corpus' | 'compliance' | 'refused';
 
 /**
  * AnswerOption

@@ -3,6 +3,7 @@ notice (P7)."""
 
 from datetime import date
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import Field
 
@@ -19,6 +20,9 @@ class AnswerKind(StrEnum):
     """The AI Act and the Commission's guidance don't answer it: another law, or off-topic."""
     COMPLIANCE = "compliance"
     """It asks whether someone complies; Klar never says (INIT > Ethical considerations)."""
+    REFUSED = "refused"
+    """The provider's content filter refused the question, and the second model did too
+    (decision 033): asking the same question again wouldn't help."""
 
 
 class QaAnswer(ContractModel):
@@ -45,7 +49,8 @@ class QaAnswer(ContractModel):
 class ModelReply(ContractModel):
     """What the model fills in: the kind, the answer and the numbers of the sources it cites."""
 
-    kind: AnswerKind
+    kind: Literal[AnswerKind.ANSWERED, AnswerKind.OUTSIDE_CORPUS, AnswerKind.COMPLIANCE]
+    """The model's own verdict; `refused` is never its to give."""
     answer: str
     cited: tuple[int, ...]
     """The numbers of the sources the answer rests on, as the prompt lists them (1 is the first)."""

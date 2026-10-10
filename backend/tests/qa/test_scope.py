@@ -38,6 +38,12 @@ def test_asking_whether_we_comply_is_a_compliance_question(question: str) -> Non
         "Welche Pflichten erfüllen wir als Betreiber?",
         "Was bedeutet Konformitätsbewertung?",
         "Wie werden wir konform?",
+        # A duty word between the subject and the verdict asks what is required (fix round 1).
+        "Do we need to comply with Article 50?",
+        "Do I have to comply with Article 4 as a deployer?",
+        "Does my chatbot need to comply with Article 50?",
+        "Are we obliged to label deepfakes in compliance with Article 50?",
+        "Sind wir als Betreiber verpflichtet, konform zu sein?",
     ],
 )
 def test_asking_what_the_act_requires_is_not(question: str) -> None:

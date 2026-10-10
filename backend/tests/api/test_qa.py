@@ -10,15 +10,28 @@ import httpx
 import pytest
 from fastapi import FastAPI
 from langchain_core.messages import AIMessage
+from langchain_openrouter import ChatOpenRouter
 from openrouter.errors import NoResponseError
 
-from aiact.api.qa import MAX_QUESTION_CHARS, QuestionRequest, qa_model, qa_search
-from aiact.llm.structured import ChatRoute, ProviderRefusalError
+from aiact.api.qa import QuestionRequest, qa_model, qa_quotes, qa_search
+from aiact.llm.structured import ChatRoute
 from aiact.qa import QaAnswer
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, Language, LawVersion
 from aiact.settings import Settings
 from tests.api.conftest import api_settings
-from tests.qa.test_answer import ART_3_4, FakeSearch, RecordingChat, model
+from tests.engine.test_clients import engine_settings
+from tests.qa.test_answer import (
+    ART_3_4,
+    FORGED,
+    REFUSED_EN,
+    FakeQuotes,
+    FakeSearch,
+    RecordingChat,
+    RefusingChat,
+    corpus_text,
+    forged_result,
+    model,
+)
 from tests.schemas.worked_example import worked_example_result
 
 pytestmark = pytest.mark.anyio
@@ -27,11 +40,17 @@ QUESTION = "What counts as a deployer?"
 SECRET_QUESTION = "Our tool Zorblax-7 screens Jane Doe's application: what counts as a deployer?"
 
 
-def serve(app: FastAPI, chat: RecordingChat, search: FakeSearch | None = None) -> FakeSearch:
-    """The app's model and search replaced by scripted ones."""
+def serve(
+    app: FastAPI,
+    chat: RecordingChat,
+    search: FakeSearch | None = None,
+    quotes: FakeQuotes | None = None,
+) -> FakeSearch:
+    """The app's model, search and corpus quotes replaced by scripted ones."""
     used = search or FakeSearch()
     app.dependency_overrides[qa_model] = lambda: ChatRoute(chat)
     app.dependency_overrides[qa_search] = lambda: used
+    app.dependency_overrides[qa_quotes] = lambda: quotes or FakeQuotes()
     return used
 
 
@@ -67,7 +86,7 @@ async def test_a_question_about_a_result_is_answered_with_that_results_citations
     response = await client.post("/qa", json=body)
     assert response.status_code == 200
     answer = QaAnswer.model_validate(response.json())
-    assert answer.citations == (first,)
+    assert answer.citations == (first.model_copy(update={"quote": corpus_text(first)}),)
     assert search.calls == [
         ("Do we have to tell applicants?", Language.EN, LawVersion.AMENDED, result.as_of)
     ]
@@ -94,7 +113,7 @@ async def test_a_german_compliance_question_gets_the_fixed_answer_in_german(
     [
         {"question": "", "language": "en"},
         {"question": "   ", "language": "en"},
-        {"question": "x" * (MAX_QUESTION_CHARS + 1), "language": "en"},
+        {"question": "x" * 1001, "language": "en"},
         {"question": QUESTION, "language": "fr"},
         {"question": QUESTION, "language": "en", "law_version": "draft"},
         {"question": QUESTION, "language": "en", "include_held_out": True},
@@ -116,7 +135,7 @@ async def test_a_question_of_the_longest_length_is_taken(
     app: FastAPI, client: httpx.AsyncClient
 ) -> None:
     serve(app, model(answer="An answer.", cited=(1,)))
-    body = {"question": "x" * MAX_QUESTION_CHARS, "language": "en"}
+    body = {"question": "x" * 1000, "language": "en"}
     assert (await client.post("/qa", json=body)).status_code == 200
 
 
@@ -141,7 +160,6 @@ def test_the_request_has_no_retrieval_option() -> None:
 @pytest.mark.parametrize(
     "failure",
     [
-        ProviderRefusalError("refused"),
         NoResponseError(f"transport: {SECRET_QUESTION}"),
         ValueError(f"provider error quoting {SECRET_QUESTION}"),
         httpx.ConnectError(f"connect: {SECRET_QUESTION}"),
@@ -166,6 +184,87 @@ async def test_a_failed_model_call_is_a_503_that_quotes_and_logs_nothing(
     }
     assert "Zorblax" not in caplog.text and "Jane Doe" not in caplog.text
     assert type(failure).__name__ in caplog.text
+
+
+async def test_a_question_both_models_refuse_gets_the_fixed_refused_answer(
+    app: FastAPI, client: httpx.AsyncClient
+) -> None:
+    """Decision 033: a refusal is no outage, so it isn't a 503 with a Retry that keeps failing."""
+    first, second = RefusingChat(messages=iter([])), RefusingChat(messages=iter([]))
+    serve(app, first)
+    app.dependency_overrides[qa_model] = lambda: ChatRoute(first, second)
+    response = await client.post("/qa", json={"question": QUESTION, "language": "en"})
+    assert response.status_code == 200
+    answer = QaAnswer.model_validate(response.json())
+    assert (answer.kind.value, answer.answer, answer.citations) == ("refused", REFUSED_EN, ())
+    assert len(first.seen) == 1 and len(second.seen) == 1
+
+
+async def test_a_question_the_first_model_refuses_is_answered_by_the_second(
+    app: FastAPI, client: httpx.AsyncClient
+) -> None:
+    first = RefusingChat(messages=iter([]))
+    second = model(answer="A deployer uses an AI system for work.", cited=(1,))
+    serve(app, first)
+    app.dependency_overrides[qa_model] = lambda: ChatRoute(first, second)
+    response = await client.post("/qa", json={"question": QUESTION, "language": "en"})
+    assert response.status_code == 200
+    assert response.json()["answer"] == "A deployer uses an AI system for work."
+
+
+@pytest.mark.parametrize("settings", [engine_settings()])
+def test_the_apps_model_has_the_refusal_route(app: FastAPI) -> None:
+    """The production dependency, no override: the engine model and the refusal model."""
+    route = qa_model(app.state.context)
+    assert isinstance(route.chat, ChatOpenRouter) and isinstance(route.refusal_chat, ChatOpenRouter)
+    assert route.chat.model_name == "openai/gpt-6-luna-20260922"
+    assert route.refusal_chat.model_name == "google/gemini-3.1-flash-lite"
+
+
+async def test_an_error_outside_the_model_call_is_not_a_503(
+    app: FastAPI, client: httpx.AsyncClient
+) -> None:
+    """A bug (here a search raising ValueError) is a server error, never "try again later"."""
+
+    class BrokenSearch(FakeSearch):
+        def __call__(self, *args: Any) -> Any:
+            raise ValueError("a bug in the search")
+
+    serve(app, model(), BrokenSearch())
+    with pytest.raises(ValueError, match="a bug in the search"):
+        await client.post("/qa", json={"question": QUESTION, "language": "en"})
+
+
+async def test_a_question_under_the_original_text_searches_the_original_text(
+    app: FastAPI, client: httpx.AsyncClient
+) -> None:
+    search = serve(app, model(answer="An answer.", cited=(1,)))
+    body = {"question": QUESTION, "language": "en", "law_version": "original"}
+    response = await client.post("/qa", json=body)
+    assert response.status_code == 200
+    assert search.calls == [(QUESTION, Language.EN, LawVersion.ORIGINAL, None)]
+    assert (response.json()["law_version"], response.json()["as_of"]) == ("original", None)
+
+
+async def test_a_posted_results_forged_quotes_never_reach_the_model_or_the_answer(
+    app: FastAPI, client: httpx.AsyncClient
+) -> None:
+    """Decision 031: a posted result is shape-checked only; its provisions' text comes from the
+    corpus."""
+    chat = model(answer="Because of Annex III.", cited=(1, 2))
+    serve(app, chat)
+    body = {
+        "question": "Why is it high-risk?",
+        "language": "en",
+        "result": forged_result().model_dump(mode="json"),
+    }
+    response = await client.post("/qa", json=body)
+    assert response.status_code == 200
+    assert FORGED not in response.text
+    assert all(FORGED not in message.text for message in chat.seen[0][0])
+    answer = QaAnswer.model_validate(response.json())
+    assert len(answer.citations) == 2
+    assert all(c.quote == corpus_text(c) for c in answer.citations)
 
 
 async def test_a_reply_that_doesnt_fit_is_a_503(app: FastAPI, client: httpx.AsyncClient) -> None:

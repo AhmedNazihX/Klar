@@ -807,7 +807,8 @@
         "enum": [
           "answered",
           "outside_corpus",
-          "compliance"
+          "compliance",
+          "refused"
         ],
         "title": "AnswerKind",
         "description": "Whether the question was answered, and why not when it wasn't."

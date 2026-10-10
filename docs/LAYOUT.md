@@ -275,7 +275,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-report-export.ts (the report for a lawyer and the inventory report, P25; the checklist, P24),
 │       │                            use-duty-progress.ts (the duties ticked off, P24),
 │       │                            use-provision.ts (a provision's text from the corpus), use-vendor-letter.ts (P28's letter) (P21)
-│       │                            use-qa-thread.ts (a Q&A thread over POST /qa), use-corpus-documents.ts (GET /documents) (P7)
+│       │                            use-qa-thread.ts (a Q&A thread over POST /qa), use-result-questions.ts (a result run's thread), use-corpus-documents.ts (GET /documents) (P7)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked

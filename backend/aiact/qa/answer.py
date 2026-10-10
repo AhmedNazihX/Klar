@@ -8,25 +8,36 @@ In order, each step able to end it:
    `SEARCH_MAX_DISTANCE` cut-off, provisions named by number pinned; held-out examples never).
    Hits count only when `SearchResults.found` is True (C8); weak hits are never shown.
 3. A question about a result also gets the result's own citations, first, so its answer cites
-   what the result cites (DoD). Its class, role and each step's decision go into the prompt.
+   what the result cites (DoD). The posted result is only checked against the contract (decision
+   031), so each citation is quoted again from the corpus by its document, provision, law version
+   and language (`ResultQuotes`); one the corpus doesn't have is dropped, and the posted quote is
+   never put before the model or returned. Its class, role, Annex point and each step's decision
+   go into the prompt, each decision and the whole block capped in length.
 4. Nothing to answer from: the fixed outside-the-corpus answer, without a model call.
-5. Otherwise the engine model answers from the numbered sources alone (`generate`). It may still
-   find the sources don't answer (another law close in topic) or that the question is about
-   compliance; either way the answer is the fixed one, never the model's words. An answer citing
-   no source it was given is not shown either: every answer rests on at least one provision.
+5. Otherwise the engine model answers from the numbered sources alone (`generate`), on the
+   refusal route (decision 033). It may still find the sources don't answer (another law close in
+   topic) or that the question is about compliance; either way the answer is the fixed one, never
+   the model's words. An answer citing no source it was given is not shown either: every answer
+   rests on at least one provision. A question both models refuse gets the fixed refused answer;
+   any other failure of the model call is a `ModelCallError`.
 
 The sources are numbered in the prompt and the model cites numbers, so a guideline section and
-an article with the same id can't be confused. Each cited source comes back as a `Citation`
-with its quoted text; a result's citation as the result has it.
+an article with the same id can't be confused. The model is told to keep the numbers out of its
+text, and any it leaves there are taken out (`without_source_numbers`): they would not match the
+citations shown. Each cited source comes back as a `Citation` with its corpus text.
 """
 
+import logging
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date
 
+import httpx
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from openrouter.errors import NoResponseError, OpenRouterError, ResponseValidationError
 
-from aiact.llm.structured import ChatRoute, json_schema_format
+from aiact.llm.structured import ChatRoute, ProviderRefusalError, json_schema_format
 from aiact.qa.models import AnswerKind, ModelReply, QaAnswer
 from aiact.qa.scope import is_compliance_question
 from aiact.qa.texts import (
@@ -37,6 +48,7 @@ from aiact.qa.texts import (
     RESULT_BLOCK,
     RESULT_INSTRUCTIONS,
 )
+from aiact.retrieval.provisions import PROVISION_ID_RE
 from aiact.retrieval.search import SearchHit, SearchResults
 from aiact.schemas import (
     DISCLAIMER,
@@ -46,11 +58,42 @@ from aiact.schemas import (
     LawVersion,
 )
 
+logger = logging.getLogger(__name__)
+
 QA_TOP_K = 5
 """Hits per question, as V6 measures them (`ragas_metrics.DEFAULT_TOP_K`)."""
 MAX_RESULT_CITATIONS = 12
 """The most of a result's citations put before the model: a result cites about six to ten."""
+MAX_DECISION_CHARS = 600
+"""The most of one step's decision put before the model: an engine decision is one to three
+sentences (the worked example's longest is under 100 characters)."""
+MAX_RESULT_BLOCK_CHARS = 3000
+"""The most of a result's lines put before the model; steps past it are left out. A posted
+result is bounded only by the body limit and the contract (decision 031), and six steps of
+`MAX_DECISION_CHARS` would pass this; the worked example's block is under 600 characters."""
+TRUNCATED = "…"
 REPLY_FORMAT = json_schema_format("qa_answer", ModelReply)
+MODEL_FAILURES: tuple[type[Exception], ...] = (
+    ValueError,
+    OpenRouterError,
+    NoResponseError,
+    ResponseValidationError,
+    httpx.HTTPError,
+)
+"""What the model call raises when it fails: a reply that doesn't fit (`ValidationError`, a
+`ValueError`), the provider's error (ChatOpenRouter raises it as a plain `ValueError`, the SDK as
+`OpenRouterError`), no response, or the transport's error."""
+_SEPARATOR = r"\s*(?:[,;\u2013-]|and|und)\s*"
+"""Between two numbers: a comma, a semicolon, a dash (en or hyphen), "and" or "und"."""
+SOURCE_NUMBERS = re.compile(
+    rf"\s*\[\s*\d+(?:{_SEPARATOR}\d+)*\s*\]"
+    rf"|\s*\(\s*(?:sources?|quellen?)\s*\d+(?:{_SEPARATOR}\d+)*\s*\.?\s*\)"
+    rf"|(?:^|\s+)\(\s*\d+(?:{_SEPARATOR}\d+)+\s*\)",
+    re.IGNORECASE,
+)
+"""A reference to the prompt's numbered sources left in the answer's text: "[1]", "[1, 2]",
+"(Sources 6-8.)", "(Quelle 3)", and a list of two or more numbers in parentheses after a space
+("(1, 2, 3, 4)"). A single number in parentheses stays: "Article 6(1)", "point (1)"."""
 LAW_TEXT_NAMES = {
     LawVersion.AMENDED: "the AI Act as amended by the Digital Omnibus",
     LawVersion.ORIGINAL: "the original AI Act of 2024",
@@ -59,6 +102,15 @@ LAW_TEXT_NAMES = {
 
 Searcher = Callable[[str, Language, LawVersion, date | None], SearchResults]
 """Searches the corpus for a question: (question, language, law version, as_of)."""
+ResultQuotes = Callable[[Sequence[Citation], LawVersion, date | None], tuple[Citation, ...]]
+"""Quotes a posted result's citations again from the corpus, read under the result's law version
+on its date (None for the original text): each one the corpus has, by its document, provision,
+law version and language, with the corpus's text; the others are dropped."""
+
+
+class ModelCallError(RuntimeError):
+    """The model call failed (`MODEL_FAILURES`; a refusal is the refused answer instead). It
+    carries the failure's type only, never the reply or the request."""
 
 
 @dataclass(frozen=True)
@@ -77,25 +129,31 @@ def answer_question(
     result: ClassificationResult | None = None,
     search: Searcher,
     route: ChatRoute,
+    quotes: ResultQuotes | None = None,
 ) -> QaAnswer:
     """The answer to `question` in `language` (see the module docstring). A question about a
-    `result` is read under the result's law version and date. Raises what the search and the
-    model call raise (`ProviderRefusalError`, `ValidationError` for a reply that doesn't fit)."""
+    `result` is read under the result's law version and date, its citations quoted again by
+    `quotes` (which it needs: ValueError without). Raises what the search raises, and
+    `ModelCallError` when the model call fails."""
+    if result is not None and quotes is None:
+        raise ValueError("a question about a result needs the corpus's quotes")
     version, as_of = _reading(law_version, result)
     if is_compliance_question(question):
         return not_answered(AnswerKind.COMPLIANCE, language, version, _shown_date(version, as_of))
     found = search(question, language, version, as_of)
     hits = found.hits if found.found else ()
-    sources = _sources(result, hits)
+    quoted = quotes(_result_citations(result), version, as_of) if quotes and result else ()
+    sources = _sources(quoted, hits)
     if not sources:
         return not_answered(AnswerKind.OUTSIDE_CORPUS, language, version, found.as_of)
-    reply = generate(
-        question,
-        language,
-        [source.text for source in sources],
-        route,
-        about_result=_result_block(result) if result is not None else None,
-    )
+    about = _result_block(result, quoted) if result is not None else None
+    try:
+        reply = generate(question, language, [source.text for source in sources], route, about)
+    except ProviderRefusalError:
+        return not_answered(AnswerKind.REFUSED, language, version, found.as_of)
+    except MODEL_FAILURES as exc:
+        logger.error("question model call failed: %s", type(exc).__name__)
+        raise ModelCallError(type(exc).__name__) from None
     return _answer(reply, sources, language, version, found.as_of)
 
 
@@ -104,7 +162,6 @@ def generate(
     language: Language,
     sources: Sequence[str],
     route: ChatRoute,
-    *,
     about_result: str | None = None,
 ) -> ModelReply:
     """The model's reply to `question` from `sources` alone, numbered from 1 in the order given;
@@ -153,17 +210,23 @@ def reply_outcome(reply: ModelReply, source_count: int) -> tuple[AnswerKind, tup
     cited = tuple(
         number - 1 for number in dict.fromkeys(reply.cited) if 1 <= number <= source_count
     )
-    if not cited or not reply.answer.strip():
+    if not cited or not without_source_numbers(reply.answer):
         return AnswerKind.OUTSIDE_CORPUS, ()
     return AnswerKind.ANSWERED, cited
 
 
 def shown_text(reply: ModelReply, source_count: int, language: Language) -> str:
-    """The answer's text as the user is shown it: the model's answer, or the fixed one."""
+    """The answer's text as the user is shown it: the model's answer without source numbers, or
+    the fixed one."""
     kind, _ = reply_outcome(reply, source_count)
     if kind is AnswerKind.ANSWERED:
-        return reply.answer.strip()
+        return without_source_numbers(reply.answer)
     return NOT_ANSWERED[kind][language]
+
+
+def without_source_numbers(text: str) -> str:
+    """`text` trimmed, with the references to numbered sources taken out (`SOURCE_NUMBERS`)."""
+    return SOURCE_NUMBERS.sub("", text).strip()
 
 
 def source_text(provision_id: str, title: str, heading: str | None, text: str) -> str:
@@ -192,9 +255,9 @@ def _shown_date(version: LawVersion, as_of: date | None) -> date | None:
     return as_of or date.today()
 
 
-def _sources(result: ClassificationResult | None, hits: Sequence[SearchHit]) -> list[Source]:
-    """The result's citations (each provision once), then the hits it doesn't already cite."""
-    sources = [_result_source(citation) for citation in _result_citations(result)]
+def _sources(quoted: Sequence[Citation], hits: Sequence[SearchHit]) -> list[Source]:
+    """The result's citations as the corpus quotes them, then the hits they don't already cite."""
+    sources = [_result_source(citation) for citation in quoted]
     seen = {(source.citation.document_id, source.citation.provision_id) for source in sources}
     for hit in hits:
         if (hit.doc_key, hit.provision_id) not in seen:
@@ -204,6 +267,7 @@ def _sources(result: ClassificationResult | None, hits: Sequence[SearchHit]) -> 
 
 
 def _result_citations(result: ClassificationResult | None) -> list[Citation]:
+    """The result's citations, each provision once, at most `MAX_RESULT_CITATIONS`."""
     if result is None:
         return []
     citations: dict[tuple[str, str], Citation] = {}
@@ -232,20 +296,37 @@ def _hit_source(hit: SearchHit) -> Source:
     )
 
 
-def _result_block(result: ClassificationResult) -> str:
+def _result_block(result: ClassificationResult, quoted: Sequence[Citation]) -> str:
     """The result as the prompt shows it: its class, role, Annex point and status, then each
-    step's decision with the provisions it cites."""
+    step's decision (at most `MAX_DECISION_CHARS`) with the provisions it cites that the corpus
+    quoted, until the block reaches `MAX_RESULT_BLOCK_CHARS`."""
     lines = [
         f"- Class: {result.risk_class.value if result.risk_class else 'none yet'}",
         f"- Role: {result.role.value if result.role else 'not decided'}",
         f"- Status: {result.status.value}",
     ]
-    if result.annex_point:
+    if result.annex_point and PROVISION_ID_RE.fullmatch(result.annex_point):
         lines.append(f"- Annex point: {result.annex_point}")
+    known = {(citation.document_id, citation.provision_id) for citation in quoted}
+    size = sum(len(line) + 1 for line in lines)
     for step in result.steps:
-        cited = ", ".join(dict.fromkeys(citation.provision_id for citation in step.citations))
-        lines.append(f"- {step.step.value}: {step.decision}" + (f" ({cited})" if cited else ""))
+        line = _step_line(step.step.value, step.decision, step.citations, known)
+        size += len(line) + 1
+        if size > MAX_RESULT_BLOCK_CHARS:
+            break
+        lines.append(line)
     return RESULT_BLOCK.format(law_text=LAW_TEXT_NAMES[result.law_version], lines="\n".join(lines))
+
+
+def _step_line(
+    step: str, decision: str, citations: Sequence[Citation], known: set[tuple[str, str]]
+) -> str:
+    """One step's line: its decision, capped, and the ids of its citations the corpus quoted."""
+    if len(decision) > MAX_DECISION_CHARS:
+        decision = decision[: MAX_DECISION_CHARS - len(TRUNCATED)] + TRUNCATED
+    ids = (c.provision_id for c in citations if (c.document_id, c.provision_id) in known)
+    cited = ", ".join(dict.fromkeys(ids))
+    return f"- {step}: {decision}" + (f" ({cited})" if cited else "")
 
 
 def _answer(
@@ -262,7 +343,7 @@ def _answer(
         return not_answered(kind, language, version, as_of)
     return QaAnswer(
         kind=kind,
-        answer=reply.answer.strip(),
+        answer=without_source_numbers(reply.answer),
         citations=tuple(sources[index].citation for index in cited),
         language=language,
         law_version=version,

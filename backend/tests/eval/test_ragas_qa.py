@@ -3,6 +3,7 @@ model and returns what the user would be shown; `aiact evaluate ragas` uses it b
 
 import asyncio
 import contextlib
+import dataclasses
 import json
 
 import pytest
@@ -21,15 +22,27 @@ from aiact.eval.ragas_metrics import (
     QA_NODE,
     PlainAnswerer,
     QaAnswerer,
+    RagasOptions,
     build_parts,
     context_text,
-    metered_qa_chat,
+    metered_qa_route,
+    run_ragas,
 )
 from aiact.llm.structured import ChatRoute
 from aiact.qa.answer import REPLY_FORMAT
 from aiact.settings import Settings
 from tests.engine.test_clients import engine_settings
-from tests.eval.test_ragas_metrics import ART_5_1_F, ART_50_1, RECORDED_ITEM, hit, item, parts
+from tests.eval.test_ragas_metrics import (
+    ART_5_1_F,
+    ART_50_1,
+    GIT_SHA,
+    RECORDED_ITEM,
+    FakeRetriever,
+    FakeScorer,
+    hit,
+    item,
+    parts,
+)
 from tests.eval.test_runner import MemoryStore
 from tests.qa.test_answer import RecordingChat
 
@@ -50,8 +63,8 @@ def scripted(kind: str, answer: str, cited: list[int]) -> RecordingChat:
 
 def test_the_qa_answerer_answers_from_the_run_contexts_with_p7s_prompt() -> None:
     chat = scripted("answered", "No: Art. 5(1)(f) prohibits it.", [1])
-    answer = asyncio.run(QaAnswerer(ChatRoute(chat)).answer(item(1), CONTEXTS))
-    assert answer == "No: Art. 5(1)(f) prohibits it."
+    answer = asyncio.run(QaAnswerer(ChatRoute(chat)).answer(item(1), CONTEXTS, found=True))
+    assert (answer.text, answer.kind) == ("No: Art. 5(1)(f) prohibits it.", "answered")
     ((messages, options),) = chat.seen
     assert messages[1].text == (
         f"Sources:\n[1] {CONTEXTS[0]}\n\n[2] {CONTEXTS[1]}\n\nQuestion: Made-up question 1?"
@@ -66,7 +79,8 @@ def test_the_qa_answerer_returns_the_fixed_answer_the_user_would_see(
     kind: str, cited: list[int]
 ) -> None:
     chat = scripted(kind, "Under the DSA, yearly.", cited)
-    assert asyncio.run(QaAnswerer(ChatRoute(chat)).answer(item(1), CONTEXTS)) == OUTSIDE_EN
+    answer = asyncio.run(QaAnswerer(ChatRoute(chat)).answer(item(1), CONTEXTS, found=True))
+    assert (answer.text, answer.kind) == (OUTSIDE_EN, "outside_corpus")
 
 
 def test_the_qa_answerer_is_named_qa_in_the_run_config() -> None:
@@ -75,19 +89,80 @@ def test_the_qa_answerer_is_named_qa_in_the_run_config() -> None:
     assert (QA_ANSWERER, PLAIN_ANSWERER) == ("qa", "plain_rag")
 
 
-def test_the_qa_model_is_metered_under_its_own_node_and_shares_its_client() -> None:
+def test_the_qa_models_are_metered_under_their_own_node_and_share_their_clients() -> None:
+    """P7's route as the product runs it: Luna on azure/eu, and Flash-Lite on google-vertex/eu
+    for a refused question (decision 033), both counted under the `qa` node."""
     meter = UsageMeter()
-    chat = metered_qa_chat(engine_settings(), meter)
-    assert isinstance(chat, ChatOpenRouter)
-    assert chat.model_name == "openai/gpt-6-luna-20260922"
-    assert chat.openrouter_provider is not None
-    assert chat.openrouter_provider["order"] == ["azure/eu"]
-    assert chat.openrouter_provider["allow_fallbacks"] is False
-    (callback,) = chat.callbacks  # pyright: ignore[reportArgumentType, reportGeneralTypeIssues]
-    assert callback._node == QA_NODE  # pyright: ignore[reportAttributeAccessIssue]
+    route = metered_qa_route(engine_settings(), meter)
+    expected = [
+        (route.chat, "openai/gpt-6-luna-20260922", "azure/eu"),
+        (route.refusal_chat, "google/gemini-3.1-flash-lite", "google-vertex/eu"),
+    ]
+    again = metered_qa_route(engine_settings(), meter)
+    for chat, (model, slug, provider), shared in zip(
+        (route.chat, route.refusal_chat),
+        expected,
+        (again.chat, again.refusal_chat),
+        strict=True,
+    ):
+        assert model is chat
+        assert isinstance(chat, ChatOpenRouter)
+        assert (chat.model_name, chat.max_tokens, chat.max_retries) == (slug, 3000, 0)
+        assert chat.openrouter_provider is not None
+        assert chat.openrouter_provider["order"] == [provider]
+        assert chat.openrouter_provider["allow_fallbacks"] is False
+        (callback,) = chat.callbacks  # pyright: ignore[reportArgumentType, reportGeneralTypeIssues]
+        assert callback._node == QA_NODE  # pyright: ignore[reportAttributeAccessIssue]
+        assert isinstance(shared, ChatOpenRouter) and shared.client is chat.client
     assert QA_NODE == "qa"
-    again = metered_qa_chat(engine_settings(), meter)
-    assert isinstance(again, ChatOpenRouter) and again.client is chat.client
+
+
+def test_hits_the_search_found_irrelevant_get_the_outside_answer_without_a_model_call() -> None:
+    """The product never asks the model about hits the search didn't find relevant (C8)."""
+    chat = scripted("answered", "Under Art. 5, yes.", [1])
+    answer = asyncio.run(QaAnswerer(ChatRoute(chat)).answer(item(1), CONTEXTS, found=False))
+    assert (answer.text, answer.kind) == (OUTSIDE_EN, "outside_corpus")
+    assert chat.seen == []
+
+
+@pytest.mark.parametrize(("found", "kind"), [(True, "answered"), (False, "outside_corpus")])
+def test_a_run_passes_found_to_p7s_answerer_and_stores_the_answer_kind(
+    found: bool, kind: str
+) -> None:
+    chat = scripted("answered", "No: Art. 5(1)(f) prohibits it.", [1])
+    meter = UsageMeter()
+    run_parts = dataclasses.replace(
+        parts(meter), retriever=FakeRetriever(found=found), answerer=QaAnswerer(ChatRoute(chat))
+    )
+    store = MemoryStore()
+    run_ragas((item(1),), run_parts, store, RagasOptions(GIT_SHA))
+    ((_, record),) = store.cases
+    assert record.predicted["answer_kind"] == kind
+    assert len(chat.seen) == (1 if found else 0)
+
+
+def test_the_run_config_names_the_answering_models() -> None:
+    settings = engine_settings()
+    default = build_parts(settings=settings)
+    assert default.answer_model == {
+        "model": "openai/gpt-6-luna-20260922",
+        "provider": "azure/eu",
+        "refusal_model": "google/gemini-3.1-flash-lite",
+        "refusal_provider": "google-vertex/eu",
+    }
+    plain = build_parts(settings=settings, answerer="plain_rag")
+    assert plain.answer_model == {"model": plain.model, "provider": plain.provider}
+    store = MemoryStore()
+    run_ragas(
+        (item(1),),
+        dataclasses.replace(default, scorer=FakeScorer(), retriever=FakeRetriever(hits=())),
+        store,
+        RagasOptions(GIT_SHA),
+    )
+    (config,) = (run["config"] for run in store.runs.values())
+    assert isinstance(config, dict) and config["answer_model"] == default.answer_model
+    for built in (default, plain):
+        asyncio.run(_close(built))
 
 
 async def _close(built: ragas_metrics.RagasParts) -> None:
@@ -162,9 +237,9 @@ def test_luna_answers_a_question_from_its_contexts(openrouter_settings: Settings
         update={"engine_model": LUNA, "engine_provider": LUNA_PROVIDER}
     )
     meter = UsageMeter()
-    answerer = QaAnswerer(ChatRoute(metered_qa_chat(settings, meter)))
-    answer = asyncio.run(answerer.answer(RECORDED_ITEM, CONTEXTS))
-    assert answer != OUTSIDE_EN
-    assert "5" in answer
+    answerer = QaAnswerer(metered_qa_route(settings, meter))
+    answer = asyncio.run(answerer.answer(RECORDED_ITEM, CONTEXTS, found=True))
+    assert answer.kind == "answered" and answer.text != OUTSIDE_EN
+    assert "5" in answer.text
     usage = meter.usage()
     assert usage.by_node[QA_NODE].calls == 1 and usage.cost_usd > 0
