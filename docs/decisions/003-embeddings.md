@@ -254,9 +254,8 @@ so the ranking runs above stand; the calibration's 6 such probes are found by no
   (`CorpusReader.passages`), so classification results don't change in this story. The new defaults were
   measured on Q&A questions and Annex descriptions, not on the guideline searches the engine's checks run;
   retune the engine only once a guideline-retrieval measure exists.
-- **The RAGAS re-run** (V6) against c358b1e3 (`provision_recall` 0.598) was not run: it is paid
-  (`uv run aiact evaluate ragas`, about $0.22 per arm on the Q&A set; V6's earlier runs cost $0.45–0.67). The
-  free metric it is tied to, Q&A recall in the top 5, went from 0.718 (X1a) to 0.851 (bfe066f2). c358b1e3
-  searched without a cut-off, while `SearchRetriever` now cuts at 0.30: to isolate the ranking change, run
-  `uv run aiact evaluate ragas --no-cut-off` (uncut, like c358b1e3), and the default (cut) as the Q&A path
-  now searches; report both.
+- **The RAGAS re-run** (V6), run after the merge with the user's go-ahead (2026-10-10): run cf3425dd,
+  `uv run aiact evaluate ragas --no-cut-off` (uncut, like c358b1e3; top 5, default embedder), 29/29 items,
+  $0.2045. Against c358b1e3: `provision_recall` 0.598 → **0.851**, context precision 0.777 → 0.889, context
+  recall 0.874 → 0.954, faithfulness 0.913 → 0.922. The default (cut at 0.30) arm was not run, by the
+  user's choice: the calibration shows recall in the top 5 unchanged at 0.30.
