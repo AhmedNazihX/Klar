@@ -260,6 +260,7 @@ def test_luna_answers_a_question_from_its_contexts(openrouter_settings: Settings
     answerer = QaAnswerer(metered_qa_route(settings, meter))
     answer = asyncio.run(answerer.answer(RECORDED_ITEM, CONTEXTS, found=True))
     assert answer.kind == "answered" and answer.text != OUTSIDE_EN
-    assert "5" in answer.text
+    # The provision goes in the cited chips, not the prose (P7 round 1): check the substance.
+    assert "emotion" in answer.text.lower() and "workplace" in answer.text.lower()
     usage = meter.usage()
     assert usage.by_node[QA_NODE].calls == 1 and usage.cost_usd > 0
