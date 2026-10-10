@@ -7,6 +7,11 @@ not by the number, and the keyword arm drops "50" and "article" as too common (C
 named here are looked up by id and put first (`search_ai_act`). An id the corpus doesn't have
 (say "Article 500") simply finds nothing. Patterns of both languages apply to every query, as
 a German question may well write "Art. 50".
+
+A whole annex ("Annex III" alone) is not taken as a reference: questions name it as a category
+("our Annex III system", "Hochrisiko-Systeme nach Anhang III"), and pinning its whole text, all
+its points in one row, first would crowd out the point that answers them (X1b measured this on
+four Q&A items). `get_provision` returns a whole annex when one is wanted.
 """
 
 import re
@@ -31,7 +36,7 @@ ANNEX = re.compile(
     r"(?:\s*\((?P<letter>[a-z])\)|\s*(?:buchst\.|buchstabe)\s*(?P<buchstabe>[a-z])\b)?",
     re.IGNORECASE,
 )
-"""An annex, with its section, point and letter where given ("Annex I, Section A, point 11",
+"""An annex section or point, with its letter where given ("Annex I, Section A, point 11",
 "Annex III point 5(b)", "Anhang III Nr. 5 Buchstabe b")."""
 
 RECITAL = re.compile(
@@ -55,6 +60,8 @@ def _matches(query: str) -> Iterator[tuple[int, str]]:
             _join("art", [_lower(match["number"]), _lower(paragraph), _lower(point)]),
         )
     for match in ANNEX.finditer(query):
+        if not (match["section"] or match["point"]):
+            continue  # a whole annex: see the module docstring
         letter = match["letter"] or match["buchstabe"]
         sections = [match["section"].upper()] if match["section"] else []
         parts = [match["annex"].upper(), *sections, match["point"], _lower(letter)]
