@@ -50,6 +50,12 @@ function CitedQuote({
   )
 }
 
+/** Why an answer cites nothing: outside the AI Act, or a compliance question. A refused question
+ *  says why in its own text (decision 033), so it has no note. */
+function noCitationNote(answer: QaAnswer, note: string): string | undefined {
+  return answer.kind === 'answered' || answer.kind === 'refused' ? undefined : note
+}
+
 function KlarAnswer({ answer }: { answer: QaAnswer }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
@@ -67,7 +73,7 @@ function KlarAnswer({ answer }: { answer: QaAnswer }): JSX.Element {
       authorLabel={t('ask.klar')}
       citations={citations}
       citationsLabel={t('ask.citationsLabel')}
-      note={isAnswered ? undefined : t('ask.noCitations')}
+      note={noCitationNote(answer, t('ask.noCitations'))}
     >
       <p className="m-0 leading-[1.6] whitespace-pre-line">{answer.answer.trim()}</p>
     </ChatMessage>
@@ -116,6 +122,7 @@ export function QaConversation({
   qa,
   draft,
   onDraftChange,
+  fieldId,
   label,
   placeholder,
   emptyText,
@@ -125,6 +132,8 @@ export function QaConversation({
   qa: QaThread
   draft: string
   onDraftChange: (value: string) => void
+  /** The field's id, so a suggestion that fills it can move the focus to it. */
+  fieldId: string
   /** The field's accessible name. */
   label: string
   placeholder: string
@@ -149,6 +158,7 @@ export function QaConversation({
       <div className="flex flex-col gap-2.5">
         {aboveField}
         <Composer
+          id={fieldId}
           value={draft}
           onChange={onDraftChange}
           onSend={qa.ask}

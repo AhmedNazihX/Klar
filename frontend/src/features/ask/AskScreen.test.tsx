@@ -8,7 +8,7 @@ import { axe } from 'vitest-axe'
 import type { QaAnswer, QuestionRequest } from '@/api'
 import { env } from '@/lib/env'
 import { server } from '@/test/msw-server'
-import { answered, outsideCorpus, qaHandlers } from '@/test/qa-fixtures'
+import { answered, outsideCorpus, QA_URL, qaHandlers } from '@/test/qa-fixtures'
 import { renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
@@ -255,6 +255,84 @@ describe('Ask about the Act', () => {
       ),
     ).toBeVisible()
     expect(sent[0]?.language).toBe('de')
+  })
+
+  it('moves the focus to the field after "Try asking", so Enter asks the question', async () => {
+    const user = userEvent.setup()
+    serve(() => answered())
+    await openAsk()
+
+    await user.click(screen.getByRole('button', { name: 'What changed with the Digital Omnibus?' }))
+    expect(field()).toHaveFocus()
+    await user.keyboard('{Enter}')
+
+    await screen.findByText(/A deployer is anyone/)
+    expect(sent.map((request) => request.question)).toEqual([
+      'What changed with the Digital Omnibus?',
+    ])
+  })
+
+  it('sends nothing more while an answer is on its way', async () => {
+    const user = userEvent.setup()
+    let release: () => void = () => undefined
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    serve(() => answered())
+    server.use(
+      http.post(QA_URL, async ({ request }) => {
+        sent.push((await request.json()) as QuestionRequest)
+        await held
+        return HttpResponse.json(answered())
+      }),
+    )
+    await openAsk()
+
+    await user.type(field(), 'What counts as a deployer?{Enter}')
+    await screen.findByText('Klar is answering …')
+    await user.type(field(), 'And a provider?{Enter}')
+    await user.click(screen.getByRole('button', { name: 'Ask' }))
+    expect(sent).toHaveLength(1)
+
+    release()
+    await screen.findByText(/A deployer is anyone/)
+    expect(sent).toHaveLength(1)
+    expect(field()).toHaveValue('And a provider?')
+  })
+
+  it.each([
+    ['en', 'No provisions cited: the question is outside the AI Act.'],
+    ['de', 'Keine Vorschriften zitiert: Die Frage liegt außerhalb der KI-Verordnung.'],
+  ] as const)('shows a refused question with its own reason and no note (%s)', async (language, note) => {
+    const user = userEvent.setup()
+    const reason =
+      language === 'de'
+        ? 'Diese Frage kann ich nicht beantworten: Das Sprachmodell hat ihre Bearbeitung abgelehnt.'
+        : "I can't answer this question: the language model declined to process it."
+    serve(() => answered({ kind: 'refused', answer: reason, citations: [] }))
+    await openAsk('/app/ask', language)
+
+    await user.type(field(language === 'de' ? 'Ihre Frage' : 'Your question'), 'Q?{Enter}')
+
+    expect(await screen.findByText(reason)).toBeVisible()
+    expect(screen.queryByText(note)).toBeNull()
+    expect(sent).toHaveLength(1)
+  })
+
+  it('lists the texts in German, a text only in English marked as such', async () => {
+    serve(() => answered())
+    await openAsk('/app/ask', 'de')
+    const panel = screen.getByRole('region', { name: 'Grundlage der Antworten' })
+    expect(
+      await within(panel).findByText('KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026'),
+    ).toBeVisible()
+    const items = within(panel)
+      .getAllByRole('listitem')
+      .map((item) => item.textContent)
+    expect(items).toEqual([
+      'KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026Konsolidierte Fassung',
+      'Guidelines on high-risk classificationnur auf EnglischEntwurf',
+    ])
   })
 
   it('has no axe violations with an answer on screen', async () => {

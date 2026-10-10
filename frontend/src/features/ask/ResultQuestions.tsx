@@ -1,45 +1,24 @@
 import { useId, useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { ClassificationResult } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
-import { useQaThread } from '@/hooks/use-qa-thread'
+import type { QaThread } from '@/hooks/use-qa-thread'
 
-import { resultThread } from './qa-history'
 import { QaConversation } from './QaConversation'
 
 const SUGGESTIONS = ['oversight', 'vendors'] as const
 
-/** The questions-about-this-result thread of one run, keyed by it, so the next run starts afresh. */
-export function ResultQuestions({
-  toolId,
-  runNo,
-  result,
-}: {
-  toolId: string
-  runNo: number
-  result: ClassificationResult
-}): JSX.Element {
-  const thread = resultThread(toolId, runNo)
-  return <ResultThread key={thread} thread={thread} result={result} />
-}
-
 /**
  * "Questions about this result" (artboards `Reviewer`, `Result`, `ResultMobile`): questions sent
  * with the result, so each answer cites the result's own provisions, under the result's law
- * version. Suggestions fill the field; nothing is sent until the user asks.
+ * version. Suggestions fill the field and move the focus to it; nothing is sent until the user
+ * asks.
  */
-function ResultThread({
-  thread,
-  result,
-}: {
-  thread: string
-  result: ClassificationResult
-}): JSX.Element {
+export function ResultQuestions({ qa }: { qa: QaThread }): JSX.Element {
   const { t } = useTranslation()
-  const qa = useQaThread(thread, { lawVersion: result.law_version, result })
   const [draft, setDraft] = useState('')
   const headingId = useId()
+  const fieldId = useId()
   return (
     <GlassPanel
       as="section"
@@ -53,6 +32,7 @@ function ResultThread({
         qa={qa}
         draft={draft}
         onDraftChange={setDraft}
+        fieldId={fieldId}
         label={t('ask.result.label')}
         placeholder={t('ask.result.placeholder')}
         aboveField={
@@ -66,6 +46,7 @@ function ResultThread({
                   type="button"
                   onClick={() => {
                     setDraft(t(`ask.result.${key}`))
+                    document.getElementById(fieldId)?.focus()
                   }}
                   className="h-8 cursor-pointer rounded-pill border-0 px-3 text-[13px] text-ink glass-thin"
                 >

@@ -10,6 +10,8 @@ import { useFollowUpAnswers } from '@/hooks/use-follow-up-answers'
 import { useFollowUpRun, type FollowUpRun } from '@/hooks/use-follow-up-run'
 import { ResultQuestions } from '@/features/ask/ResultQuestions'
 import { useOriginalRun } from '@/hooks/use-original-run'
+import type { QaThread } from '@/hooks/use-qa-thread'
+import { useResultQuestions } from '@/hooks/use-result-questions'
 
 import { isDecidedBan } from './ban'
 import { runNumber, saveDraft, type ClassificationRun } from './classification-store'
@@ -37,12 +39,15 @@ import { StepsPanel } from './StepsPanel'
 function SummaryView({
   run,
   followUp,
+  questions,
   onViewChange,
   onCompare,
 }: {
   run: ClassificationRun
   /** The re-run with the answers given here. */
   followUp: FollowUpRun
+  /** Questions about this result (held here, above the view switch). */
+  questions: QaThread
   onViewChange: (view: ResultView) => void
   /** Opens "Original Act vs amended" in the reviewer view. */
   onCompare: () => void
@@ -168,7 +173,7 @@ function SummaryView({
           onViewChange('reviewer')
         }}
       />
-      <ResultQuestions toolId={run.toolId} runNo={runNumber(run)} result={result} />
+      <ResultQuestions qa={questions} />
       <ResultNotice result={result} isStored={run.isStored} />
     </>
   )
@@ -208,9 +213,9 @@ export function ResultNotFound(): JSX.Element {
   )
 }
 
-/** One tool's result, as the summary or the reviewer view. The original-text run and an answer's
- *  re-run live here, above the view switch, so a run started in one view goes on (and keeps its
- *  answer) while the user reads the other. */
+/** One tool's result, as the summary or the reviewer view. The original-text run, an answer's
+ *  re-run and the questions about the result live here, above the view switch, so a run or a
+ *  question started in one view goes on (and keeps its answer) while the user reads the other. */
 export function ResultScreen({
   run,
   view,
@@ -222,6 +227,7 @@ export function ResultScreen({
 }): JSX.Element {
   const original = useOriginalRun(run)
   const followUp = useFollowUpRun(run)
+  const questions = useResultQuestions(run)
   // Set only by the summary's "Compare the two texts", so the comparison then takes the focus.
   const [shouldFocusComparison, setShouldFocusComparison] = useState(false)
 
@@ -244,6 +250,7 @@ export function ResultScreen({
         <ReviewerView
           run={run}
           original={original}
+          questions={questions}
           shouldFocusComparison={shouldFocusComparison}
           onComparisonFocused={dropFocusRequest}
           onViewChange={changeView}
@@ -254,6 +261,7 @@ export function ResultScreen({
           key={runNumber(run)}
           run={run}
           followUp={followUp}
+          questions={questions}
           onViewChange={changeView}
           onCompare={() => {
             setShouldFocusComparison(true)

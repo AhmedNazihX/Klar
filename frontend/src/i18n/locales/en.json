@@ -1071,7 +1071,8 @@
         "law": "Law",
         "final": "Final",
         "draft": "Draft"
-      }
+      },
+      "englishOnly": "English only"
     },
     "result": {
       "heading": "Questions about this result",

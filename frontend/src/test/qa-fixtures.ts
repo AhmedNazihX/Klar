@@ -108,9 +108,23 @@ export const DOCUMENTS: DocumentInfo[] = [
     law_version: null,
     is_amending: false,
     language: 'en',
-    english_only: true,
+    english_only: false,
     published_on: '2026-05-19',
     in_force_from: null,
+  },
+]
+
+/** The texts as `GET /documents?language=de` lists them: German rows under their German titles,
+ *  a text only in English under its English title, marked. */
+export const DOCUMENTS_DE: DocumentInfo[] = [
+  {
+    ...(DOCUMENTS[0] as DocumentInfo),
+    title: 'KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026',
+    language: 'de',
+  },
+  {
+    ...(DOCUMENTS[3] as DocumentInfo),
+    english_only: true,
   },
 ]
 
@@ -126,6 +140,9 @@ export function qaHandlers(sent: QuestionRequest[], reply: () => QaAnswer | numb
       }
       return HttpResponse.json(answer)
     }),
-    http.get(DOCUMENTS_URL, () => HttpResponse.json({ documents: DOCUMENTS, disclaimer: 'x' })),
+    http.get(DOCUMENTS_URL, ({ request }) => {
+      const isGerman = new URL(request.url).searchParams.get('language') === 'de'
+      return HttpResponse.json({ documents: isGerman ? DOCUMENTS_DE : DOCUMENTS, disclaimer: 'x' })
+    }),
   ]
 }

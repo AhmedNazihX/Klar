@@ -54,9 +54,13 @@ export function ChatMessage({
       <span className="sr-only">{authorLabel}: </span>
       {children}
       {citations.length > 0 && (
-        <ul aria-label={citationsLabel} className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+        <ul
+          aria-label={citationsLabel}
+          className="m-0 flex min-w-0 list-none flex-wrap gap-1.5 p-0"
+        >
           {citations.map((citation) => (
-            <li key={citation.id}>
+            // A long guideline name wraps inside its chip, so a phone never scrolls sideways.
+            <li key={citation.id} className="max-w-full min-w-0">
               <button
                 type="button"
                 aria-expanded={openId === citation.id}
@@ -65,7 +69,7 @@ export function ChatMessage({
                   setOpenId((current) => (current === citation.id ? null : citation.id))
                 }}
                 className={cn(
-                  'inline-flex h-6 cursor-pointer items-center rounded-pill border-0 bg-white/75 px-2.5 text-xs font-medium whitespace-nowrap text-ink-2 shadow-[inset_0_0_0_1px_rgb(15_27_45/0.14)] hover:bg-white',
+                  'inline-flex min-h-6 max-w-full cursor-pointer items-center rounded-pill border-0 bg-white/75 px-2.5 py-0.5 text-left text-xs font-medium break-words text-ink-2 shadow-[inset_0_0_0_1px_rgb(15_27_45/0.14)] hover:bg-white',
                   openId === citation.id && 'shadow-[inset_0_0_0_1px_var(--color-lens-blue)]',
                 )}
               >

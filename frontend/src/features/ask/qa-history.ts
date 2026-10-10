@@ -31,7 +31,7 @@ const CitationSchema = z.looseObject({
 })
 
 const AnswerSchema = z.looseObject({
-  kind: z.enum(['answered', 'outside_corpus', 'compliance']),
+  kind: z.enum(['answered', 'outside_corpus', 'compliance', 'refused']),
   answer: z.string(),
   citations: z.array(CitationSchema),
   language: z.enum(['en', 'de']),

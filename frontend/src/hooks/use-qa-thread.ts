@@ -37,18 +37,32 @@ function newId(): string {
 /**
  * One conversation with Klar (`POST /qa`, P7): the Ask page's, or the one about a result, which
  * sends the result with each question so its answer cites the result's provisions. The answered
- * questions stay for the browser session (`qa-history`); nothing goes to the database.
+ * questions stay for the browser session (`qa-history`); nothing goes to the database. A result's
+ * thread is held above its view switch (`ResultScreen`), so an answer still on its way lands in
+ * the thread whichever view is shown; a new `thread` (the next run) starts from its own history.
  */
 export function useQaThread(
   thread: string,
   { lawVersion, result }: { lawVersion: LawVersion; result?: ClassificationResult },
 ): QaThread {
   const language = useLanguage()
-  const [entries, setEntries] = useState<QaEntry[]>(() => readThread(thread))
+  const [held, setHeld] = useState<{ thread: string; entries: QaEntry[] }>(() => ({
+    thread,
+    entries: readThread(thread),
+  }))
+  if (held.thread !== thread) {
+    // Another run's thread: switch to its history while rendering (no effect, no flash).
+    setHeld({ thread, entries: readThread(thread) })
+  }
+  const entries = held.thread === thread ? held.entries : []
 
   useEffect(() => {
-    writeThread(thread, entries)
-  }, [thread, entries])
+    writeThread(held.thread, held.entries)
+  }, [held])
+
+  function setEntries(update: (current: QaEntry[]) => QaEntry[]): void {
+    setHeld((current) => ({ ...current, entries: update(current.entries) }))
+  }
 
   function settle(id: string, update: Partial<QaEntry>): void {
     setEntries((current) =>

@@ -1,6 +1,7 @@
 import { cleanup, screen, within } from '@testing-library/react'
 import userEvent, { type UserEvent } from '@testing-library/user-event'
 import i18n from 'i18next'
+import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { axe } from 'vitest-axe'
 
@@ -8,7 +9,7 @@ import type { ClassificationResult, QaAnswer, QuestionRequest } from '@/api'
 import { putRun, type ClassificationRun } from '@/features/classify/classification-store'
 import { WORKED_EXAMPLE, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixtures'
 import { server } from '@/test/msw-server'
-import { answered, qaHandlers } from '@/test/qa-fixtures'
+import { answered, QA_URL, qaHandlers } from '@/test/qa-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
@@ -129,6 +130,49 @@ describe('Questions about this result', () => {
     await openResult(WORKED_EXAMPLE, { runNo: 2 })
     expect(within(panel()).queryByText('What counts as a deployer?')).toBeNull()
   })
+
+  it('lands an answer still on its way in the thread after switching views', async () => {
+    const user = userEvent.setup()
+    let release: () => void = () => undefined
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    server.use(...qaHandlers(sent, () => answered()))
+    server.use(
+      http.post(QA_URL, async ({ request }) => {
+        sent.push((await request.json()) as QuestionRequest)
+        await held
+        return HttpResponse.json(citingTheResult(WORKED_EXAMPLE))
+      }),
+    )
+    await openResult(WORKED_EXAMPLE, {})
+    await ask(user, within(panel()).getByRole('textbox'), 'Do we have to tell applicants?')
+    await within(panel()).findByText('Klar is answering …')
+
+    await user.click(screen.getByRole('button', { name: 'Reviewer' }))
+    await screen.findByRole('button', { name: 'Reviewer', pressed: true })
+    expect(within(panel()).getByText('Do we have to tell applicants?')).toBeVisible()
+    expect(within(panel()).getByText('Klar is answering …')).toBeVisible()
+
+    release()
+    expect(await within(panel()).findByText(/the people it screens must be told/)).toBeVisible()
+    expect(sent).toHaveLength(1)
+
+    await user.click(screen.getByRole('button', { name: 'Summary' }))
+    expect(await within(panel()).findByText(/the people it screens must be told/)).toBeVisible()
+  }, ROUND_TRIP_MS)
+
+  it('moves the focus to the field after a suggestion, so Enter asks it', async () => {
+    const user = userEvent.setup()
+    server.use(...qaHandlers(sent, () => answered()))
+    await openResult(WORKED_EXAMPLE, {})
+    const questions = panel()
+    await user.click(within(questions).getByRole('button', { name: 'What if we switch vendors?' }))
+    expect(within(questions).getByRole('textbox')).toHaveFocus()
+    await user.keyboard('{Enter}')
+    await within(panel()).findByText(/A deployer is anyone/)
+    expect(sent.map((request) => request.question)).toEqual(['What if we switch vendors?'])
+  }, ROUND_TRIP_MS)
 
   it('reads in German', async () => {
     server.use(...qaHandlers(sent, () => answered()))

@@ -1071,7 +1071,8 @@
         "law": "Rechtsakt",
         "final": "Endfassung",
         "draft": "Entwurf"
-      }
+      },
+      "englishOnly": "nur auf Englisch"
     },
     "result": {
       "heading": "Fragen zu diesem Ergebnis",

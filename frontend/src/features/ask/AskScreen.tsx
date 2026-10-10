@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import { useId, useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { DocumentInfo } from '@/api'
@@ -38,7 +38,7 @@ function shownDocuments(
 }
 
 /** "Answers draw on": every text the corpus holds in the screen's language, with its kind, a
- *  draft marked as one. */
+ *  draft marked as one and a text only in English marked as such. */
 function AnswersDrawOn({ lawVersion }: { lawVersion: LawVersion }): JSX.Element {
   const { t } = useTranslation()
   const documents = useCorpusDocuments(useLanguage())
@@ -61,7 +61,12 @@ function AnswersDrawOn({ lawVersion }: { lawVersion: LawVersion }): JSX.Element 
             const kind = documentKind(document)
             return (
               <li key={document.doc_key} className="flex items-start justify-between gap-2.5">
-                <span className="min-w-0 text-ink">{document.title}</span>
+                <span className="min-w-0 text-ink">
+                  {document.title}
+                  {document.english_only && (
+                    <span className="block text-xs text-slate">{t('ask.sources.englishOnly')}</span>
+                  )}
+                </span>
                 <span
                   className={cn(
                     'shrink-0 text-xs whitespace-nowrap',
@@ -88,6 +93,7 @@ export function AskScreen(): JSX.Element {
   const lawVersion = useLawVersion()
   const qa = useQaThread(ASK_THREAD, { lawVersion })
   const [draft, setDraft] = useState('')
+  const fieldId = useId()
   // A fragment: the title, the panels and the notice stay the screen's direct children (load motion).
   return (
     <>
@@ -105,6 +111,7 @@ export function AskScreen(): JSX.Element {
             qa={qa}
             draft={draft}
             onDraftChange={setDraft}
+            fieldId={fieldId}
             label={t('ask.label')}
             placeholder={t('ask.placeholder')}
             emptyText={t('ask.empty')}
@@ -129,7 +136,9 @@ export function AskScreen(): JSX.Element {
                   key={key}
                   type="button"
                   onClick={() => {
+                    // The field takes the focus, so Enter then asks the question.
                     setDraft(t(`ask.tryAsking.${key}`))
+                    document.getElementById(fieldId)?.focus()
                   }}
                   className="lift cursor-pointer rounded-item border-0 px-3.5 py-2.5 text-left text-body-small leading-[1.4] text-ink glass-thin"
                 >

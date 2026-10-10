@@ -9,8 +9,9 @@ import { useLanguage } from '@/hooks/use-language'
 import type { OriginalRun } from '@/hooks/use-original-run'
 
 import { ResultQuestions } from '@/features/ask/ResultQuestions'
+import type { QaThread } from '@/hooks/use-qa-thread'
 
-import { runNumber, type ClassificationRun } from './classification-store'
+import type { ClassificationRun } from './classification-store'
 import { ExportReportButton } from './ExportReportButton'
 import { LawComparison } from './LawComparison'
 import { provisionName } from './provision-names'
@@ -61,6 +62,7 @@ function ResultPills({ result }: { result: ClassificationResult }): JSX.Element 
 export function ReviewerView({
   run,
   original,
+  questions,
   shouldFocusComparison = false,
   onComparisonFocused,
   onViewChange,
@@ -68,6 +70,8 @@ export function ReviewerView({
   run: ClassificationRun
   /** The original-text run the comparison shows (the result screen owns it). */
   original: OriginalRun
+  /** Questions about this result (the result screen holds them, above the view switch). */
+  questions: QaThread
   /** Whether the comparison takes the focus as the view opens. */
   shouldFocusComparison?: boolean
   /** Called once the comparison has taken that focus. */
@@ -131,7 +135,7 @@ export function ReviewerView({
               onFocused={onComparisonFocused}
             />
           )}
-          <ResultQuestions toolId={run.toolId} runNo={runNumber(run)} result={result} />
+          <ResultQuestions qa={questions} />
         </div>
       </div>
       <ResultNotice result={result} isStored={run.isStored} />
