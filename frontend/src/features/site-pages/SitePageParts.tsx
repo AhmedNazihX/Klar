@@ -9,19 +9,26 @@ import { cn } from '@/lib/utils'
 // the page's heading and lead, the template note, glass sections that arrive on scroll, and the
 // label-and-text rows inside them.
 
-/** The page's one h1 (56 px from md up, as drawn) and the muted lead under it. */
+/**
+ * The page's one h1 (56 px from md up, as drawn) and the muted lead under it. A long German title
+ * ("Datenschutzerklärung") hyphenates, or breaks, rather than overflow a 360 px phone.
+ */
 export function PageIntro({
   title,
   lead,
-  lang,
+  titleLang,
 }: {
   title: string
   lead: ReactNode
-  lang?: string
+  /** The title's language, when it differs from the page's (the Impressum on the English site). */
+  titleLang?: string
 }): JSX.Element {
   return (
-    <div lang={lang} className="flex max-w-[820px] flex-col gap-4.5">
-      <h1 className="m-0 text-[36px] leading-[1.04] font-semibold tracking-[-0.04em] text-ink md:text-[56px]">
+    <div className="flex max-w-[820px] flex-col gap-4.5">
+      <h1
+        lang={titleLang}
+        className="m-0 text-[36px] leading-[1.04] font-semibold tracking-[-0.04em] [overflow-wrap:anywhere] hyphens-auto text-ink md:text-[56px]"
+      >
         {title}
       </h1>
       <p className="m-0 text-body-large text-slate md:text-[19px]">{lead}</p>

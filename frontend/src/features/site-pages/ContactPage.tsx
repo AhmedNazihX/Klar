@@ -14,6 +14,9 @@ import { PageIntro } from './SitePageParts'
 
 // The side panels arrive one stagger step (the 110 ms token) after another.
 const STAGGER_MS = 110
+// Three topics don't fit side by side on a phone ("Datenschutzanfrage"), so below md they stack,
+// full width, each still a 44 px target; the corners follow the 22 px buttons inside 3 px padding.
+const TOPIC_STACK_CLASS = 'max-md:flex max-md:w-full max-md:flex-col max-md:rounded-[25px]'
 const SIDE_LINK_CLASS = 'self-start rounded-md text-label text-lens-blue hover:underline'
 
 /** The topic, the address and the link that opens an email with the topic as its subject. */
@@ -37,17 +40,16 @@ function WritePanel(): JSX.Element {
           <span className="text-label font-semibold text-ink">
             {t('sitePages.contact.write.topic')}
           </span>
-          <div className="max-w-full overflow-x-auto">
-            <SegmentedControl<ContactTopic>
-              label={t('sitePages.contact.write.topic')}
-              value={topic}
-              onChange={setTopic}
-              options={CONTACT_TOPICS.map((value) => ({
-                value,
-                label: t(`sitePages.contact.write.${value}`),
-              }))}
-            />
-          </div>
+          <SegmentedControl<ContactTopic>
+            label={t('sitePages.contact.write.topic')}
+            value={topic}
+            onChange={setTopic}
+            options={CONTACT_TOPICS.map((value) => ({
+              value,
+              label: t(`sitePages.contact.write.${value}`),
+            }))}
+            className={TOPIC_STACK_CLASS}
+          />
         </div>
         <p className="m-0 text-body-small text-ink-2">
           <span className="font-semibold text-ink">{t('sitePages.contact.write.address')}</span>{' '}

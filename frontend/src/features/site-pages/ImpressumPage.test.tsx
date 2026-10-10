@@ -27,8 +27,11 @@ const FIELDS = [
   ['Telefon', '[TELEFON]'],
   ['Umsatzsteuer-ID', '[FALLS VORHANDEN]'],
   ['Registereintrag', '[FALLS VORHANDEN]'],
-  ['Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV', '[NAME, ANSCHRIFT]'],
 ] as const
+// Dropped (user 2026-10-10): Klar has no journalistic-editorial content, so § 18 Abs. 2 MStV
+// doesn't apply.
+const DROPPED_FIELD = 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV'
+const GERMAN_LEAD = 'Angaben gemäß § 5 DDG.'
 const NOTE =
   'Klar bietet eine Orientierungshilfe zur KI-Verordnung, keine Rechtsberatung. Klar ist selbst ein KI-System.'
 const INTRO: Record<Language, { lead: string; template: string }> = {
@@ -45,8 +48,16 @@ const INTRO: Record<Language, { lead: string; template: string }> = {
 describe.each(['en', 'de'] as const)('the Impressum (%s)', (language) => {
   it('shows the German sections and fields, marked as German', async () => {
     await openImpressum(language)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Impressum')
-    expect(screen.getByText(INTRO[language].lead)).toBeInTheDocument()
+    const title = screen.getByRole('heading', { level: 1 })
+    expect(title).toHaveTextContent('Impressum')
+    expect(title).toHaveAttribute('lang', 'de')
+    // Only the German phrase is marked German: the English "Legal notice." keeps the page's language.
+    const german = screen.getByText(GERMAN_LEAD)
+    expect(german).toHaveAttribute('lang', 'de')
+    const lead = german.closest('p')
+    expect(lead?.textContent).toBe(INTRO[language].lead)
+    expect(lead).not.toHaveAttribute('lang')
+    expect(lead?.parentElement).not.toHaveAttribute('lang')
     expect(screen.getByRole('note')).toHaveTextContent(INTRO[language].template)
     const main = screen.getByRole('main')
     const sections = within(main).getAllByRole('region')
@@ -63,6 +74,8 @@ describe.each(['en', 'de'] as const)('the Impressum (%s)', (language) => {
       expect(term.nextElementSibling).toHaveTextContent(placeholder)
     }
     expect(screen.getByText(NOTE)).toBeInTheDocument()
+    expect(screen.queryByText(DROPPED_FIELD)).toBeNull()
+    expect(screen.queryByText('[NAME, ANSCHRIFT]')).toBeNull()
   })
 
   it('marks every unknown as a placeholder', async () => {

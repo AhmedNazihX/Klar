@@ -271,7 +271,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            layout AmbiguousSummary, AmbiguousVerdict, ReadingCards, SettleIt, TakeItToALawyer, P22), inventory/ (P6), your-data/ (P12), obligations/ (P24),
 │       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads),
 │       │                            site-pages/ (P17: MethodPage, PrivacyPage, ImpressumPage, ContactPage, their shared SitePageParts,
-│       │                            placeholder-tags.tsx, contact-mail.ts: the Contact page's mailto link and its still-empty address),
+│       │                            placeholder-tags.tsx, contact-mail.ts: the Contact page's mailto link and its still-empty address;
+│       │                            SitePages.phone.browser.test.tsx the pages at 360 and 390 px),
 │       │                            documents/ (P9: the documents screen, interview, checks, downloads, a skeleton's
 │       │                            SkeletonHeader and SectionList; interview-answers.ts reads and upserts interview_answers
 │       │                            through supabase-js; DocumentsScreen.browser.test.tsx the phone and desktop layout)

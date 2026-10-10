@@ -117,9 +117,8 @@ function ProcessorsSection(): JSX.Element {
     {
       key: 'search',
       label: t('sitePages.privacy.processors.search'),
-      text: (
-        <Trans i18nKey="sitePages.privacy.processors.searchText" components={PLACEHOLDER_TAGS} />
-      ),
+      // One string with the Your data panel, so the region claim changes in one place (decision 005).
+      text: <Trans i18nKey="yourData.who.searchDetail" components={PLACEHOLDER_TAGS} />,
     },
     {
       key: 'storage',

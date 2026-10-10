@@ -233,13 +233,12 @@
         "questions": "Fragen an Klar",
         "questionsText": "Nur in Ihrem Browser für diese Sitzung gespeichert. Was Sie fragen, speichert Klar nicht.",
         "retention": "Wie lange",
-        "retentionText": "Alles wird nach 30 Tagen ohne Aktivität gelöscht. In der App löscht „Ihre Daten“ alles auf einmal, wann immer Sie möchten."
+        "retentionText": "All das wird nach 30 Tagen ohne Aktivität gelöscht. In der App löscht „Ihre Daten“ alles auf einmal, wann immer Sie möchten."
       },
       "processors": {
         "title": "Wer sie außerdem verarbeitet",
         "models": "Sprachmodelle",
         "search": "Suche in den Rechtstexten",
-        "searchText": "Nebius, über OpenRouter angesprochen, macht aus Ihrer Beschreibung eine Suche in der Verordnung (Embeddings). Nebius wurde als Anbieter in der EU gewählt, aber OpenRouter weist für diesen Endpunkt keine Region aus; die Region ist daher <ph>[MIT NEBIUS ZU BESTÄTIGEN]</ph>.",
         "storage": "Speicherung der Sitzung",
         "storageText": "Supabase speichert Ihre Daten und Ihre anonyme Sitzung, nur für Sie sichtbar. Region: <ph>[REGION]</ph>.",
         "transfers": "Übermittlungen außerhalb der EU",
@@ -251,7 +250,7 @@
       }
     },
     "impressum": {
-      "lead": "Angaben gemäß § 5 DDG.",
+      "lead": "<de>Angaben gemäß § 5 DDG.</de>",
       "template": "Vorlage. Vor dem Start jedes Feld in eckigen Klammern ausfüllen.",
       "body": {
         "providerTitle": "Anbieter",
@@ -271,8 +270,6 @@
         "vatIdPh": "[FALLS VORHANDEN]",
         "register": "Registereintrag",
         "registerPh": "[FALLS VORHANDEN]",
-        "responsible": "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV",
-        "responsiblePh": "[NAME, ANSCHRIFT]",
         "noteTitle": "Hinweis",
         "note": "Klar bietet eine Orientierungshilfe zur KI-Verordnung, keine Rechtsberatung. Klar ist selbst ein KI-System."
       }
@@ -524,9 +521,9 @@
       "modelsRole": "Prüfungen und Antworten",
       "modelsDetail": "OpenRouter leitet jede Anfrage weiter; seine eigene Verarbeitung ist nicht auf die EU beschränkt. Die Modelle laufen in EU-Regionen bei Microsoft Azure und Google Vertex AI.",
       "modelsRefusal": "Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung oder eine Frage an Klar, wird diese Anfrage (bei einer Prüfung: die Beschreibung sowie die daraus gewonnenen Fakten und Antworten; bei einer Frage: die Frage und, falls vorhanden, das Ergebnis, auf das sie sich bezieht) noch einmal an Gemini 3.1 Flash-Lite bei Google Vertex AI in der EU gesendet (keine Datenspeicherung beim Anbieter, kein Training), für jede blockierte Anfrage. Das geschieht nur, wenn der Filter sie blockiert.",
-      "search": "Suche in den Rechtstexten, bei einem Anbieter in der EU",
+      "search": "Suche in den Rechtstexten",
       "searchRole": "Embeddings",
-      "searchDetail": "Nebius macht in der EU aus Ihrer Beschreibung eine Suche in der Verordnung.",
+      "searchDetail": "Nebius, über OpenRouter angesprochen, macht aus Ihrer Beschreibung eine Suche in der Verordnung (Embeddings). Nebius wurde als Anbieter in der EU gewählt, aber OpenRouter weist für diesen Endpunkt keine Region aus; die Region ist daher <ph>[MIT NEBIUS ZU BESTÄTIGEN]</ph>.",
       "storage": "Speicherung der Sitzung",
       "storageRole": "Supabase",
       "storageDetail": "Ihre gespeicherten Daten, nur für Sie sichtbar.",
