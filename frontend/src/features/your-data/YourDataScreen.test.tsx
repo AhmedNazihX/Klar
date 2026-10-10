@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { WORKED_EXAMPLE } from '@/test/classify-fixtures'
 import { inventoryToolsHandler, toolRow } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
+import { markedPlaceholders } from '@/test/placeholders'
 import { renderRoute } from '@/test/test-utils'
 import { env } from '@/lib/env'
 import { FIRST_RENDER_MS, INVENTORIES_URL } from '@/test/user-data-handlers'
@@ -173,6 +174,13 @@ function panel(name: string): HTMLElement {
   return screen.getByRole('region', { name })
 }
 
+/** The paragraph in `root` whose whole text, a marked placeholder included, is `text`. */
+function paragraphWithText(root: HTMLElement, text: string): HTMLElement {
+  return within(root).getByText(
+    (_, element) => element?.tagName === 'P' && element.textContent === text,
+  )
+}
+
 /** Picks the data file (JSON) in "Download everything" and downloads it. */
 async function downloadData(
   user: ReturnType<typeof userEvent.setup>,
@@ -251,9 +259,16 @@ describe('Your data, what Klar keeps and who processes it', () => {
           'blocks it.',
       ),
     ).toBeInTheDocument()
-    expect(
-      within(who).getByText('Nebius, in the EU, turns your description into a search of the Act.'),
-    ).toBeInTheDocument()
+    // The region is unconfirmed (decision 005), so the panel claims no more than the privacy notice.
+    expect(within(who).getByText('Search of the legal texts')).toBeInTheDocument()
+    expect(within(who).queryByText(/on an EU host|Nebius, in the EU/)).toBeNull()
+    const search = paragraphWithText(
+      who,
+      'Nebius, reached through OpenRouter, turns your description into a search of the Act ' +
+        '(embeddings). Nebius was chosen as an EU host, but OpenRouter gives this endpoint no ' +
+        'region tag, so its region is [TO CONFIRM WITH NEBIUS].',
+    )
+    expect(markedPlaceholders(search)).toEqual(['[TO CONFIRM WITH NEBIUS]'])
     expect(within(who).getByText('Supabase')).toBeInTheDocument()
     expect(
       within(who).getByText(
@@ -674,9 +689,8 @@ describe('Your data, every German line', () => {
       'Abgehakte Pflichten in Ihren Checklisten',
       'Sprachmodelle, über OpenRouter',
       'Prüfungen und Antworten',
-      'Suche in den Rechtstexten, bei einem Anbieter in der EU',
+      'Suche in den Rechtstexten',
       'Embeddings',
-      'Nebius macht in der EU aus Ihrer Beschreibung eine Suche in der Verordnung.',
       'Speicherung der Sitzung',
       'Ihre gespeicherten Daten, nur für Sie sichtbar.',
       'Jede Anfrage an ein Modell wird ohne Datenspeicherung beim Anbieter und ohne Training gestellt.',
@@ -689,6 +703,14 @@ describe('Your data, every German line', () => {
     ]) {
       expect(screen.getByText(line)).toBeInTheDocument()
     }
+    const search = paragraphWithText(
+      panel('Wer sie verarbeitet'),
+      'Nebius, über OpenRouter angesprochen, macht aus Ihrer Beschreibung eine Suche in der ' +
+        'Verordnung (Embeddings). Nebius wurde als Anbieter in der EU gewählt, aber OpenRouter ' +
+        'weist für diesen Endpunkt keine Region aus; die Region ist daher [MIT NEBIUS ZU ' +
+        'BESTÄTIGEN].',
+    )
+    expect(markedPlaceholders(search)).toEqual(['[MIT NEBIUS ZU BESTÄTIGEN]'])
     expect(screen.getByRole('button', { name: 'Abbrechen', hidden: true })).toBeInTheDocument()
   })
 

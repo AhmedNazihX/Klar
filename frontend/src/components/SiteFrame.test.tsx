@@ -18,6 +18,21 @@ function footer(): HTMLElement {
   return screen.getByRole('contentinfo')
 }
 
+// The footer's data line, exactly (user-approved 2026-10-10): the Nebius region is unconfirmed
+// (decision 005), so it names the host without claiming the EU.
+const FOOTER_DATA = {
+  en:
+    'Klar is itself an AI system, and tells you so on every screen. Your descriptions stay in your ' +
+    'own anonymous session and are deleted after 30 days without activity. Models are reached ' +
+    'through OpenRouter; embeddings run on Nebius (region to be confirmed). Full list of providers ' +
+    'in the privacy notice.',
+  de:
+    'Klar ist selbst ein KI-System und sagt das auf jedem Bildschirm. Ihre Beschreibungen bleiben ' +
+    'in Ihrer anonymen Sitzung und werden nach 30 Tagen ohne Aktivität gelöscht. Die Modelle ' +
+    'werden über OpenRouter angesprochen; Embeddings laufen bei Nebius (Region noch zu ' +
+    'bestätigen). Alle Anbieter stehen in der Datenschutzerklärung.',
+} as const
+
 describe('SiteNav', () => {
   it.each([
     ['en', 'Main', ['How it works', 'Accuracy', 'For AI agents', 'Your data'], 'Classify a tool'],
@@ -77,15 +92,14 @@ describe('SiteFooter', () => {
     await openSite('/method')
     const end = within(footer())
     expect(end.getByText('Guidance, not legal advice.')).toBeInTheDocument()
-    expect(end.getByText(/deleted after 30 days without activity/)).toBeInTheDocument()
-    expect(end.getByText(/OpenRouter/)).toBeInTheDocument()
+    expect(end.getByText(FOOTER_DATA.en)).toBeInTheDocument()
   })
 
   it('says nach 30 Tagen ohne Aktivität (DE)', async () => {
     await openSite('/method', 'de')
     const end = within(footer())
     expect(end.getByText('Orientierungshilfe, keine Rechtsberatung.')).toBeInTheDocument()
-    expect(end.getByText(/nach 30 Tagen ohne Aktivität gelöscht/)).toBeInTheDocument()
+    expect(end.getByText(FOOTER_DATA.de)).toBeInTheDocument()
   })
 
   it('links the four site pages', async () => {

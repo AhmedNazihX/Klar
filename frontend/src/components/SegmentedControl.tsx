@@ -22,24 +22,41 @@ export type SegmentedControlProps<T extends string> = {
 
 // The liquid switch: the pill first stretches to reach the new option (liquid-stretch, ease-settle),
 // then draws its tail in under it (liquid-settle, ease-out). The settle starts just before the
-// stretch ends, as in the system's own control, so the motion reads as one.
-const STRETCH =
-  'left var(--liquid-stretch) var(--ease-settle), width var(--liquid-stretch) var(--ease-settle)'
-const SETTLE =
-  'left var(--liquid-settle) var(--ease-out), width var(--liquid-settle) var(--ease-out)'
+// stretch ends, as in the system's own control, so the motion reads as one. The pill follows the
+// button's whole box, so it also works when a narrow screen stacks the options (flex-col).
+const BOX_PROPERTIES = ['left', 'top', 'width', 'height'] as const
+const transitionOf = (timing: string): string =>
+  BOX_PROPERTIES.map((property) => `${property} ${timing}`).join(', ')
+const STRETCH = transitionOf('var(--liquid-stretch) var(--ease-settle)')
+const SETTLE = transitionOf('var(--liquid-settle) var(--ease-out)')
 const SETTLE_DELAY_MS = 150
 
-type Box = { left: number; width: number }
+type Box = { left: number; top: number; width: number; height: number }
 
 function boxOf(button: HTMLButtonElement | undefined): Box | null {
-  return button ? { left: button.offsetLeft, width: button.offsetWidth } : null
+  return button
+    ? {
+        left: button.offsetLeft,
+        top: button.offsetTop,
+        width: button.offsetWidth,
+        height: button.offsetHeight,
+      }
+    : null
+}
+
+/** The smallest box that covers both: the stretched pill, side by side or stacked. */
+function spanOf(from: Box, to: Box): Box {
+  const left = Math.min(from.left, to.left)
+  const top = Math.min(from.top, to.top)
+  const right = Math.max(from.left + from.width, to.left + to.width)
+  const bottom = Math.max(from.top + from.height, to.top + to.height)
+  return { left, top, width: right - left, height: bottom - top }
 }
 
 function place(thumb: HTMLElement | null, box: Box | null, transition = 'none'): void {
   if (!thumb || !box) return
   thumb.style.transition = transition
-  thumb.style.left = `${box.left}px`
-  thumb.style.width = `${box.width}px`
+  for (const property of BOX_PROPERTIES) thumb.style[property] = `${box[property]}px`
 }
 
 /** A pill switch between two or three equal views (law version, language, Summary or Reviewer). */
@@ -74,9 +91,7 @@ export function SegmentedControl<T extends string>({
     if (!from || !to || previousRef.current === current || isReducedMotion) {
       place(thumbRef.current, to)
     } else {
-      const left = Math.min(from.left, to.left)
-      const right = Math.max(from.left + from.width, to.left + to.width)
-      place(thumbRef.current, { left, width: right - left }, STRETCH)
+      place(thumbRef.current, spanOf(from, to), STRETCH)
       timerRef.current = window.setTimeout(() => {
         timerRef.current = undefined
         // Measured now, not at the click, in case a button resized during the stretch.
@@ -130,7 +145,7 @@ export function SegmentedControl<T extends string>({
       <span
         ref={thumbRef}
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-[3px] left-[3px] w-0 rounded-pill bg-white opacity-0 shadow-segment-thumb group-data-live/seg:opacity-100"
+        className="pointer-events-none absolute top-[3px] left-[3px] h-0 w-0 rounded-pill bg-white opacity-0 shadow-segment-thumb group-data-live/seg:opacity-100"
       />
       {options.map((option) => (
         <button
@@ -145,7 +160,7 @@ export function SegmentedControl<T extends string>({
           onClick={() => {
             choose(option.value)
           }}
-          className="relative z-1 h-11 cursor-pointer rounded-pill px-3.5 md:h-9 text-sm leading-none font-semibold whitespace-nowrap text-slate transition-colors duration-300 ease-settle hover:text-ink aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-segment group-data-live/seg:aria-pressed:bg-transparent group-data-live/seg:aria-pressed:shadow-none"
+          className="relative z-1 h-11 cursor-pointer rounded-pill px-3.5 text-sm leading-none font-semibold whitespace-nowrap text-slate transition-colors duration-300 ease-settle hover:text-ink aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-segment group-data-live/seg:aria-pressed:bg-transparent group-data-live/seg:aria-pressed:shadow-none md:h-9"
         >
           {option.label}
         </button>

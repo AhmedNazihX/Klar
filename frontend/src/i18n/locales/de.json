@@ -119,7 +119,6 @@
     "companySaved": "Unternehmensprofil gespeichert"
   },
   "screen": {
-    "placeholder": "Dieser Bildschirm ist noch im Aufbau.",
     "welcome": "Über Ihr Unternehmen",
     "inventory": "Ihre KI-Tools",
     "classify": "Tool beschreiben",
@@ -139,7 +138,7 @@
     "classify": "Tool einstufen",
     "footer": {
       "guidance": "Orientierungshilfe, keine Rechtsberatung.",
-      "data": "Klar ist selbst ein KI-System und sagt das auf jedem Bildschirm. Ihre Beschreibungen bleiben in Ihrer anonymen Sitzung und werden nach 30 Tagen ohne Aktivität gelöscht. Die Modelle werden über OpenRouter angesprochen; Embeddings laufen bei einem Anbieter in der EU. Alle Anbieter stehen in der Datenschutzerklärung.",
+      "data": "Klar ist selbst ein KI-System und sagt das auf jedem Bildschirm. Ihre Beschreibungen bleiben in Ihrer anonymen Sitzung und werden nach 30 Tagen ohne Aktivität gelöscht. Die Modelle werden über OpenRouter angesprochen; Embeddings laufen bei Nebius (Region noch zu bestätigen). Alle Anbieter stehen in der Datenschutzerklärung.",
       "linksLabel": "Website",
       "method": "So wird gemessen",
       "privacy": "Datenschutz",
@@ -154,6 +153,156 @@
     },
     "menu": "Bereiche",
     "menuClose": "Bereiche schließen"
+  },
+  "sitePages": {
+    "method": {
+      "lead": "Genauigkeit testen und veröffentlichen wir, statt sie zu versprechen. Diese Seite erklärt den Testdatensatz, was wir zählen und wo die Methode an Grenzen stößt.",
+      "set": {
+        "title": "Der Testdatensatz",
+        "text": "Der wichtigste Testdatensatz stammt aus den Beispielen der Kommission für Hochrisiko- und andere Systeme, ergänzt um <ph>[N]</ph> eigens für Klar geschriebene Fälle. Die Hälfte der Kommissionsbeispiele ist aus allem entfernt, was Klar durchsuchen kann, damit es die Antworten nicht einfach nachschlägt. Jeder Fall ist mit seiner richtigen Klasse und Rolle gekennzeichnet, von <ph>[WER DIE FÄLLE KENNZEICHNET]</ph>."
+      },
+      "count": {
+        "title": "Was wir zählen",
+        "riskClass": "Anteil der Fälle, in denen die Klasse von Klar mit dem Label übereinstimmt: verboten, Hochrisiko, begrenztes Risiko, minimales Risiko oder außerhalb des Anwendungsbereichs.",
+        "falseLow": "Anteil der verbotenen oder Hochrisiko-Fälle, die Klar niedriger eingestuft hat. Das ist der teuerste Fehler, deshalb weisen wir ihn gesondert aus.",
+        "citations": "Anteil der zitierten Vorschriften, die im Gesetzestext existieren und sagen, was Klar behauptet. Automatisch an der konsolidierten Verordnung geprüft.",
+        "checker": "Dieselben {{cases}} Fälle, geprüft mit {{name}} und genauso bewertet.",
+        "checkerPending": "Dieselben <ph>[N]</ph> Fälle, geprüft mit <ph>[NAME DES PRÜFTOOLS]</ph> und genauso bewertet."
+      },
+      "score": {
+        "title": "So wird ein Fall bewertet",
+        "run": "Durchlauf",
+        "runText": "Jeder Fall durchläuft die vollständige Prüfung in der Reihenfolge der Verordnung, mit denselben Einstellungen wie für alle Nutzer.",
+        "compare": "Vergleich",
+        "compareText": "Klasse, Rolle und entscheidende Vorschrift werden mit dem Label verglichen.",
+        "citations": "Zitate prüfen",
+        "citationsText": "Jede zitierte Vorschrift wird anhand ihrer Nummer im Gesetzestext nachgeschlagen.",
+        "uncertainty": "Unsicherheit ehrlich zählen",
+        "uncertaintyText": "Ein Ergebnis „Weitere Angaben nötig“ oder „Rechtlich unklar“ zählt nur dann als richtig, wenn auch das Label den Fall als offen einstuft."
+      },
+      "limits": {
+        "title": "Grenzen",
+        "size": "Umfang",
+        "sizeText": "Der Testdatensatz umfasst <ph>[N]</ph> Fälle. Kleine Unterschiede zwischen zwei Durchläufen sind nicht aussagekräftig.",
+        "labels": "Labels",
+        "labelsText": "Die Labels geben die Lesart der Verordnung von <ph>[WER DIE FÄLLE KENNZEICHNET]</ph> wieder und können umstritten sein.",
+        "guidance": "Leitlinien",
+        "guidanceText": "Einige Leitlinien der Kommission sind noch Entwürfe; die Ergebnisse können sich ändern, wenn sie endgültig sind.",
+        "descriptions": "Beschreibungen",
+        "descriptionsText": "Echte Nutzer beschreiben Tools weniger vollständig als Testfälle. Klar ist nur so genau wie die Beschreibung, die es erhält.",
+        "penalties": "Sanktionen",
+        "penaltiesText": "Klar deckt die Höchstbeträge der Geldbußen ab, die die Verordnung selbst festlegt (Art. 99). Nationale Sanktionsvorschriften, die jeder Mitgliedstaat erlässt, sind nicht abgedeckt."
+      },
+      "results": {
+        "title": "Ergebnisse",
+        "lastRun": "Letzter Durchlauf",
+        "lastRunPh": "[DATUM]",
+        "lawVersion": "Fassung des Gesetzes",
+        "lawVersionText": "Konsolidierte KI-Verordnung vom 27. Juli 2026, CELEX 02024R1689-20260727",
+        "report": "Vollständige Ergebnisse",
+        "reportPh": "[LINK ZUM EVALUATIONSBERICHT]"
+      }
+    },
+    "privacy": {
+      "lead": "Wie Klar mit Ihren Eingaben umgeht. Kurz gesagt: Ihre Daten bleiben in einer anonymen Sitzung, werden nie zum Trainieren von Modellen verwendet und nach 30 Tagen ohne Aktivität gelöscht.",
+      "template": "Dies ist eine Vorlage. Vor dem Start muss jedes Feld in eckigen Klammern ausgefüllt und die Erklärung von einer Datenschutzberatung geprüft werden.",
+      "responsible": {
+        "title": "Wer verantwortlich ist",
+        "controller": "Verantwortlicher",
+        "controllerText": "<ph>[NAME]</ph>, <ph>[ANSCHRIFT]</ph>",
+        "contact": "Kontakt für den Datenschutz",
+        "contactPh": "[E-MAIL]",
+        "dpo": "Datenschutzbeauftragte",
+        "dpoPh": "[NAME ODER „NICHT ERFORDERLICH“]"
+      },
+      "purposes": {
+        "title": "Was Klar verarbeitet, und wozu",
+        "descriptions": "Tool-Beschreibungen und Antworten",
+        "descriptionsText": "Um Ihre Tools einzustufen und Ihre Dokumente zu entwerfen, also für den Dienst, den Sie anfordern. Rechtsgrundlage: <ph>[ZU BESTÄTIGEN, Z. B. ART. 6 ABS. 1 BUCHST. B DSGVO]</ph>.",
+        "questions": "Fragen zur Verordnung",
+        "questionsText": "Um sie mit Zitaten zu beantworten. Dieselbe Rechtsgrundlage.",
+        "logs": "Technische Protokolle",
+        "logsText": "Um den Dienst sicher und funktionsfähig zu halten, gespeichert für <ph>[DAUER DER PROTOKOLLE]</ph>. Rechtsgrundlage: <ph>[ZU BESTÄTIGEN, Z. B. ART. 6 ABS. 1 BUCHST. F DSGVO]</ph>.",
+        "never": "Was Klar nie tut",
+        "neverText": "Modelle mit Ihren Daten trainieren, Profile erstellen oder Tracking-Cookies setzen."
+      },
+      "kept": {
+        "title": "Was Klar speichert, und wie lange",
+        "stored": "In Ihrer Sitzung gespeichert",
+        "storedText": "Ihre Liste der Tools mit ihren Beschreibungen, deren Ergebnisse der Einstufung, Ihre Antworten für Dokumententwürfe, Ihr Unternehmensprofil und Ihr Fortschritt in den Checklisten. Nur Sie können sie sehen.",
+        "questions": "Fragen an Klar",
+        "questionsText": "Nur in Ihrem Browser für diese Sitzung gespeichert. Was Sie fragen, speichert Klar nicht.",
+        "retention": "Wie lange",
+        "retentionText": "All das wird nach 30 Tagen ohne Aktivität gelöscht. In der App löscht „Ihre Daten“ alles auf einmal, wann immer Sie möchten."
+      },
+      "processors": {
+        "title": "Wer sie außerdem verarbeitet",
+        "models": "Sprachmodelle",
+        "search": "Suche in den Rechtstexten",
+        "storage": "Speicherung der Sitzung",
+        "storageText": "Supabase speichert Ihre Daten und Ihre anonyme Sitzung, nur für Sie sichtbar. Region: <ph>[REGION]</ph>.",
+        "transfers": "Übermittlungen außerhalb der EU",
+        "transfersPh": "[ZU BESTÄTIGEN, MIT GARANTIEN]"
+      },
+      "rights": {
+        "title": "Ihre Rechte",
+        "text": "Sie können Auskunft über Ihre Daten, Berichtigung, Löschung, Einschränkung und eine übertragbare Kopie verlangen oder der Verarbeitung widersprechen (Artikel 15 bis 21 DSGVO). In der App können Sie unter „Ihre Daten“ alles auf einmal herunterladen oder löschen. Außerdem können Sie sich bei einer Aufsichtsbehörde beschweren; für ein Unternehmen mit Sitz in Nordrhein-Westfalen ist das die LDI NRW, die Landesbeauftragte für Datenschutz und Informationsfreiheit <ph>[BESTÄTIGEN]</ph>."
+      }
+    },
+    "impressum": {
+      "lead": "<de>Angaben gemäß § 5 DDG.</de>",
+      "template": "Vorlage. Vor dem Start jedes Feld in eckigen Klammern ausfüllen.",
+      "body": {
+        "providerTitle": "Anbieter",
+        "name": "Name",
+        "namePh": "[NAME / FIRMA]",
+        "address": "Anschrift",
+        "addressPh": "[STRASSE, PLZ ORT]",
+        "representedBy": "Vertreten durch",
+        "representedByPh": "[NAME, FALLS JURISTISCHE PERSON]",
+        "contactTitle": "Kontakt",
+        "email": "E-Mail",
+        "emailPh": "[E-MAIL]",
+        "phone": "Telefon",
+        "phonePh": "[TELEFON]",
+        "moreTitle": "Weitere Angaben",
+        "vatId": "Umsatzsteuer-ID",
+        "vatIdPh": "[FALLS VORHANDEN]",
+        "register": "Registereintrag",
+        "registerPh": "[FALLS VORHANDEN]",
+        "noteTitle": "Hinweis",
+        "note": "Klar bietet eine Orientierungshilfe zur KI-Verordnung, keine Rechtsberatung. Klar ist selbst ein KI-System."
+      }
+    },
+    "contact": {
+      "lead": "Fragen zu Klar, Feedback oder eine Datenschutzanfrage. Wir lesen alles und antworten innerhalb von <ph>[ANTWORTZEIT]</ph>.",
+      "write": {
+        "title": "Schreiben Sie uns",
+        "topic": "Worum geht es?",
+        "question": "Eine Frage zu Klar",
+        "feedback": "Feedback",
+        "privacy": "Datenschutzanfrage",
+        "address": "E-Mail",
+        "addressPh": "[KONTAKT-E-MAIL]",
+        "send": "E-Mail schreiben",
+        "how": "Damit öffnet sich Ihr E-Mail-Programm mit ausgefülltem Betreff. Klar hat kein Kontaktformular und speichert nichts, was Sie hier senden.",
+        "personal": "Lassen Sie personenbezogene Angaben zu Bewerbenden oder Beschäftigten weg."
+      },
+      "subject": {
+        "question": "Klar: Frage zu Klar",
+        "feedback": "Klar: Feedback",
+        "privacy": "Klar: Datenschutzanfrage"
+      },
+      "legal": {
+        "title": "Rechtsfragen",
+        "text": "Per E-Mail können wir keine Rechtsberatung geben. Fragen zur KI-Verordnung selbst beantwortet „Fragen zur KI-Verordnung“ mit Zitaten; für Ihren eigenen Fall sprechen Sie mit einer Anwältin oder einem Anwalt.",
+        "link": "Fragen zur KI-Verordnung"
+      },
+      "privacy": {
+        "title": "Datenschutzanfragen",
+        "text": "Um Ihre Daten sofort herunterzuladen oder zu löschen, nutzen Sie <yourData>Ihre Daten</yourData> in der App. Andernfalls schreiben Sie an <ph>[DATENSCHUTZ-E-MAIL]</ph>."
+      }
+    }
   },
   "lawShort": {
     "amended": "Geändert, 2026",
@@ -372,9 +521,9 @@
       "modelsRole": "Prüfungen und Antworten",
       "modelsDetail": "OpenRouter leitet jede Anfrage weiter; seine eigene Verarbeitung ist nicht auf die EU beschränkt. Die Modelle laufen in EU-Regionen bei Microsoft Azure und Google Vertex AI.",
       "modelsRefusal": "Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung oder eine Frage an Klar, wird diese Anfrage (bei einer Prüfung: die Beschreibung sowie die daraus gewonnenen Fakten und Antworten; bei einer Frage: die Frage und, falls vorhanden, das Ergebnis, auf das sie sich bezieht) noch einmal an Gemini 3.1 Flash-Lite bei Google Vertex AI in der EU gesendet (keine Datenspeicherung beim Anbieter, kein Training), für jede blockierte Anfrage. Das geschieht nur, wenn der Filter sie blockiert.",
-      "search": "Suche in den Rechtstexten, bei einem Anbieter in der EU",
+      "search": "Suche in den Rechtstexten",
       "searchRole": "Embeddings",
-      "searchDetail": "Nebius macht in der EU aus Ihrer Beschreibung eine Suche in der Verordnung.",
+      "searchDetail": "Nebius, über OpenRouter angesprochen, macht aus Ihrer Beschreibung eine Suche in der Verordnung (Embeddings). Nebius wurde als Anbieter in der EU gewählt, aber OpenRouter weist für diesen Endpunkt keine Region aus; die Region ist daher <ph>[MIT NEBIUS ZU BESTÄTIGEN]</ph>.",
       "storage": "Speicherung der Sitzung",
       "storageRole": "Supabase",
       "storageDetail": "Ihre gespeicherten Daten, nur für Sie sichtbar.",
