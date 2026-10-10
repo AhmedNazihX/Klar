@@ -114,6 +114,8 @@ Cost, on the embedding API (OpenRouter), not counting the coding agents' own tok
 - **The OpenAI vectors stay** in `provision_embeddings` (their partial index is in migration
   `20261008012443_embedding_arm_indexes.sql`). Rebuilding them would cost about $0.16 (measured above), so
   deleting them saves nothing worth the loss.
+  *Amended 2026-10-11 by decision 034 (user):* the hosted Frankfurt database holds only the Qwen3-1536 arm, to stay
+  within Supabase Free's 500 MB; the OpenAI and Qwen3-1024 vectors stay in the local database only.
 - The judged RAGAS runs were skipped by the user's decision. Run them later with
   `uv run aiact evaluate ragas --arm <arm> --answerer plain_rag` (about $0.22 per arm on the Q&A set; since P7 the
   command answers with P7's Q&A by default, so `--answerer plain_rag` keeps it comparable with c358b1e3).

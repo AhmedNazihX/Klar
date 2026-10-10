@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-11
 - **Story:** F11 (docs/BACKLOG.md); brings forward part of S3 (INIT › Tech stack, "Hosting (at deployment)")
-- **Status:** accepted (user, 2026-10-11: option B)
+- **Status:** accepted (user, 2026-10-11: option B; plan: Free, copying only the embeddings in use)
 
 ## Question
 Every worktree, the ~4,400 backend tests, the app and the benchmark runs use one Supabase stack running in Docker
@@ -27,6 +27,16 @@ high, and confirmed it on 2026-10-11 after the measurement below, because the go
 the database the app will run on in production is the one developed and tested against. The slower tests are an
 accepted cost.
 
+**Plan (user, 2026-10-11): Supabase Free, copying only the embeddings the app uses.** The 409 MB splits into three
+embedding arms of ~110 MB each (a 44 MB index plus ~65 MB of vectors; measured index and table sizes) and ~80 MB of
+everything else. Only `qwen/qwen3-embedding-8b` at 1536 dimensions is in use (decision 003), so the hosted copy is
+~190 MB of the Free plan's 500 MB, leaving room for benchmark results. The Qwen3-1024 and OpenAI arms stay only in
+the local database; rebuilding the OpenAI arm later costs ~$0.16 (decision 003). Options weighed: copying all
+409 MB on Free (a benchmark run could push it past 500 MB, which makes the database read-only mid-run), or Pro at
+$25/month. Free projects pause after 7 idle days (restorable for 90 days): open the app before a demo or grading,
+or upgrade to Pro in place, which needs no move. Sources: https://supabase.com/pricing,
+https://supabase.com/docs/guides/platform/database-size, https://supabase.com/docs/guides/platform/billing-faq.
+
 Measured 2026-10-11 (`ps`, `docker stats`, `sysctl vm.swapusage`): the CPU load (load average 16–19 on 12 cores)
 came mostly from two story workers' test runs; the whole local Supabase stack used ~0.35 core and ~3.1 GB RAM
 (mostly Studio and Analytics); swap was 39.9 of 40 GB full. So the move frees memory more than CPU. A cheaper
@@ -36,11 +46,11 @@ of deployment readiness.
 ## Consequences
 - **Order:** F11 does the move. It holds `Resource: db-schema`, so it starts after V8's current work frees the
   resource. V8's paid runs then store their results in the hosted project.
-- **User part:** create the project (Pro plan, region Frankfurt) and put its URL, keys and connection string in
+- **User part:** create the project (Free plan, region Frankfurt) and put its URL, keys and connection string in
   `backend/.env` and `frontend/.env.local`. These are never committed, and the agent never creates or bills an
   account.
 - **Agent part:** link the project and push the 19 migrations. Copy the corpus, obligations and other data rows
-  from local (data only, no re-embedding). Apply `supabase/config.toml`'s auth settings to the hosted project
+  from local (data only, no re-embedding), with `provision_embeddings` limited to the `qwen/qwen3-embedding-8b` 1536 rows and that arm's index only; the other arms' partial indexes are dropped on the hosted project or left empty. Check the hosted database size afterwards. Apply `supabase/config.toml`'s auth settings to the hosted project
   (S3's P3 note). Check that the connection pooler accepts the tests' `PGOPTIONS='-c lock_timeout=15s'` (F9's
   note); otherwise use the session pooler or direct connection that does. Measure the backend test suite's time
   before and after. Update CLAUDE.md (`supabase start`, *Database is shared*) and the READMEs.
