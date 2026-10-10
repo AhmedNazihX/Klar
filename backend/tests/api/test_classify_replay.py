@@ -80,6 +80,13 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
         )
 
 
+@pytest.mark.xfail(
+    strict=True,
+    raises=AssertionError,
+    reason="recording pending (orchestrator): V8 aligned the scope prompt's Art. 50 reading, so "
+    "the worked example's recorded scope request is stale and the stream ends in an error event; "
+    "passes once its RECORD_COMMAND re-records that replay",
+)
 @pytest.mark.vcr
 @pytest.mark.anyio
 async def test_the_worked_example_streams_every_step_then_the_expected_result(
