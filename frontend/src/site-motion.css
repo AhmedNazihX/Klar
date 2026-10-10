@@ -5,6 +5,18 @@
  * ever hidden, and index.css › reduced-motion stops every animation and transition.
  */
 
+/* The public pages' colours that the design system has no token for (docs/design-system/tokens.json
+   lists none): kept here, in one place, rather than in the system's copy. The Typewriter's caret is
+   the literal in the system's own stylesheet (bundle.css › kl-caret); the agent example's code
+   colours on glass-dark (the class it is about, the other values, the trimmed parts) come from the
+   Main artboard. */
+:root {
+  --typewriter-caret: #7c93ff;
+  --code-highlight: #ffb77a;
+  --code-value: #9fe0b8;
+  --code-comment: #8fa0bf;
+}
+
 /* MistGround: two lights drift as the page scrolls, one trails the cursor (MistGround.tsx). */
 .ground-lights {
   position: absolute;
@@ -114,10 +126,7 @@
 }
 
 /* Typewriter: each line opens one character width at a time (the text is monospaced), with a Lens
-   blue caret that blinks at the end. The caret colour is the system's own (bundle.css › kl-caret). */
-.typewriter {
-  --typewriter-caret: #7c93ff;
-}
+   blue caret that blinks at the end. */
 .typewriter > div {
   white-space: pre;
 }
@@ -160,14 +169,6 @@
    so it wins over the glass utility's shadow while the load sequence can still animate it. */
 [data-deciding] {
   box-shadow: var(--shadow-highlight-high);
-}
-
-/* The agent example's code colours on glass-dark, from the Main artboard (the system has no token
-   for them): the class it is about, the other values, and the trimmed parts. */
-.code-panel {
-  --code-highlight: #ffb77a;
-  --code-value: #9fe0b8;
-  --code-comment: #8fa0bf;
 }
 
 /* On load the hero resolves (2.6 s): the headline comes into focus from focus-blur, the four checks

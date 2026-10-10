@@ -1,12 +1,12 @@
 import { Link } from '@tanstack/react-router'
-import { useEffect, useState, type JSX } from 'react'
+import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { buttonVariants } from '@/components/button-variants'
 import { EvidenceTag } from '@/components/EvidenceTag'
 import { GlassPanel } from '@/components/GlassPanel'
 import { Icon } from '@/components/Icon'
-import { prefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
+import { useMotionMoment } from '@/hooks/use-motion-moment'
 import { cn } from '@/lib/utils'
 
 /** How long the hero's load sequence keeps its classes: the verdict's focus ends at 3.5 s. */
@@ -20,21 +20,6 @@ const CHECKS: readonly { key: CheckKey; indent: string }[] = [
   { key: 'high_risk', indent: 'sm:ml-15' },
   { key: 'transparency', indent: 'sm:ml-20' },
 ]
-
-/** True while the load sequence runs: from the first render until HERO_SEQUENCE_MS, never with reduced motion. */
-function useHeroIntro(): boolean {
-  const [isIntro, setIntro] = useState(() => !prefersReducedMotion())
-  useEffect(() => {
-    if (!isIntro) return
-    const timer = window.setTimeout(() => {
-      setIntro(false)
-    }, HERO_SEQUENCE_MS)
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [isIntro])
-  return isIntro
-}
 
 function CheckMark({ isDeciding }: { isDeciding: boolean }): JSX.Element {
   return (
@@ -84,7 +69,7 @@ function CheckPane({ check, step }: { check: (typeof CHECKS)[number]; step: numb
       {isDeciding && (
         <>
           <p className="m-0 pl-10 font-serif text-quote-small text-ink-2">
-            “{t('landing.hero.checks.high_risk.quote')}”
+            {t('landing.hero.checks.high_risk.quote')}
           </p>
           <div className="pl-10">
             <EvidenceTag kind="stated">{t('landing.hero.checks.high_risk.evidence')}</EvidenceTag>
@@ -147,7 +132,7 @@ function CheckCascade(): JSX.Element {
  */
 export function Hero(): JSX.Element {
   const { t } = useTranslation()
-  const isIntro = useHeroIntro()
+  const isIntro = useMotionMoment(HERO_SEQUENCE_MS)
   return (
     <section
       id="top"

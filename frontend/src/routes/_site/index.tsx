@@ -1,13 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import i18n from 'i18next'
 
 import { LandingPage } from '@/features/landing/LandingPage'
+import { showLanguage } from '@/i18n'
 
 // The English landing page (P16, artboard `Main`): arriving here shows the site in English, as
-// arriving at /de shows it in German.
+// arriving at /de shows it in German. The visitor's saved language stays as it was.
 export const Route = createFileRoute('/_site/')({
-  beforeLoad: async () => {
-    if (i18n.resolvedLanguage !== 'en') await i18n.changeLanguage('en')
-  },
+  beforeLoad: () => showLanguage('en'),
   component: LandingPage,
 })

@@ -29,9 +29,7 @@ describe('the site accuracy file', () => {
     ['a figure without its run', { value: 0.5 }],
     ['an empty run id', { value: 0.5, run_id: '' }],
   ])('rejects %s', (_, figure) => {
-    expect(() =>
-      parseSiteAccuracy({ ...SITE_ACCURACY, risk_class_accuracy: figure }),
-    ).toThrow()
+    expect(() => parseSiteAccuracy({ ...SITE_ACCURACY, risk_class_accuracy: figure })).toThrow()
   })
 
   it('rejects a file with a figure missing', () => {

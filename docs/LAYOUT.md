@@ -255,14 +255,14 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            sidebar's CompanyLine (P18); the result's CheckProgress, FactCard,
 │       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
 │       │                            InventoryTable (P6); VersionDiff (P10); FactQuestion, ChangeBanner (P5b);
-│       │                            Reveal, Typewriter, MistGround's moving lights (P16)
+│       │                            Reveal, Typewriter, MenuMark, MistGround's moving lights (P16)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12), obligations/ (P24),
 │       │                            documents/ (P9: the documents screen, interview, checks, downloads, a skeleton's
 │       │                            SkeletonHeader and SectionList; interview-answers.ts reads and upserts interview_answers
 │       │                            through supabase-js; DocumentsScreen.browser.test.tsx the phone and desktop layout)
-│       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15), use-reveal.ts, use-scrolled.ts (P16),
+│       ├── hooks/                   use-<name>.ts, e.g. use-anonymous-session.ts (P4), use-prefers-reduced-motion.ts (P14), use-load-motion.ts (P15), use-reveal.ts, use-scrolled.ts, use-motion-moment.ts (P16),
 │       │                            use-user-data-overview.ts, use-save-company-profile.ts, use-import-user-data.ts, use-law-version.ts (P18),
 │       │                            use-classify.ts (the streamed run), use-language.ts (P5),
 │       │                            use-inventory-tools.ts, use-save-classified-tool.ts (P6),

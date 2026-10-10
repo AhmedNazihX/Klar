@@ -7,6 +7,7 @@ import i18n from 'i18next'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { LANGUAGE_STORAGE_KEY } from '@/i18n'
 import { stubIntersectionObserver } from '@/test/intersection-observer'
 import { stubReducedMotion } from '@/test/reduced-motion'
 import { renderRoute } from '@/test/test-utils'
@@ -305,6 +306,53 @@ describe.each(['en', 'de'] as const)('the landing page (%s)', (language) => {
     // jsdom cannot paint, so colour contrast is checked in the browser (P13).
     const results = await axe(container, { rules: { 'color-contrast': { enabled: false } } })
     expect(results.violations).toEqual([])
+  })
+})
+
+describe('the quoted provision', () => {
+  // Art. 6(3) in the hero's deciding check, in each language's own quotation marks.
+  it.each([
+    [
+      'en',
+      '“…an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons.”',
+    ],
+    [
+      'de',
+      '„… gilt ein in Anhang III aufgeführtes KI-System immer dann als hochriskant, wenn es ein Profiling natürlicher Personen vornimmt.“',
+    ],
+  ] as const)('is quoted the %s way', async (language, quote) => {
+    await openLanding(language)
+    expect(screen.getByText(quote)).toBeInTheDocument()
+  })
+})
+
+describe('the saved language', () => {
+  // The address picks the landing page's language; only the EN/DE switch changes the saved choice.
+  it.each([
+    ['de', 'en', 'Where does your AI tool stand under the AI Act?'],
+    ['en', 'de', 'Wo steht Ihr KI‑Tool nach der KI‑Verordnung?'],
+  ] as const)(
+    'keeps a saved %s choice when the %s landing page opens',
+    async (saved, page, headline) => {
+      await i18n.changeLanguage(saved)
+      expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe(saved)
+      await openLanding(page)
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(headline)
+      expect(i18n.resolvedLanguage).toBe(page)
+      expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe(saved)
+    },
+  )
+
+  it('saves the choice made with the EN/DE switch, and the German page keeps it', async () => {
+    const user = userEvent.setup()
+    const { router } = await openLanding('en')
+    expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('en')
+    const nav = within(screen.getByRole('navigation', { name: 'Main' }))
+    await user.click(nav.getByRole('button', { name: 'Deutsch' }))
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/de')
+    })
+    expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('de')
   })
 })
 

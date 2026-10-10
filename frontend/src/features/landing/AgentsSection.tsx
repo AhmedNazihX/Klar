@@ -107,7 +107,7 @@ export function AgentsSection(): JSX.Element {
         <Typewriter
           label={t('landing.agents.codeLabel')}
           lines={lines}
-          className="code-panel rounded-card px-6 py-7 glass-dark sm:px-8"
+          className="rounded-card px-6 py-7 glass-dark sm:px-8"
         />
       </Reveal>
     </section>

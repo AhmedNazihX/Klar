@@ -1059,7 +1059,7 @@
           "name": "High-risk",
           "finding": "Yes: recruitment, Annex III 4(a)",
           "cite": "Art. 6(3)",
-          "quote": "…an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons.",
+          "quote": "“…an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons.”",
           "evidence": "Stated: scores and ranks"
         },
         "transparency": {

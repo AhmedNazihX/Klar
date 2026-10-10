@@ -39,6 +39,20 @@ function TodayChip({
 }
 
 /**
+ * Today in the phone's stacked list (below 768 px), between the last date passed and the next: a
+ * Lens blue tick in the dots' column, the chip, and a rule across, where the wide line has its chip.
+ */
+function PhoneTodayMarker({ label }: { label: string }): JSX.Element {
+  return (
+    <li data-today-marker className="flex items-center gap-2 md:hidden">
+      <span aria-hidden="true" className="h-0.5 w-4 shrink-0 rounded-full bg-lens-blue" />
+      <TodayChip label={label} />
+      <span aria-hidden="true" className="h-0.5 flex-1 rounded-full bg-lens-blue/30" />
+    </li>
+  )
+}
+
+/**
  * "The dates moved in July 2026." (components.md › Timeline): the four application dates on a line
  * with Today placed at the real date; the Lens blue line draws to it as the panel arrives. Dates
  * that apply already are filled dots, dates to come are rings, and each says so in words. On a
@@ -88,11 +102,7 @@ export function DatesTimeline({ today = new Date() }: { today?: Date }): JSX.Ele
               const isPast = hasPassed(isoDate, today)
               return (
                 <Fragment key={id}>
-                  {index === todayIndex && (
-                    <li className="md:hidden">
-                      <TodayChip label={todayLabel} />
-                    </li>
-                  )}
+                  {index === todayIndex && <PhoneTodayMarker label={todayLabel} />}
                   <li
                     data-past={isPast ? 'true' : undefined}
                     className="relative flex flex-col gap-2 pl-7 md:pl-0"
@@ -118,11 +128,7 @@ export function DatesTimeline({ today = new Date() }: { today?: Date }): JSX.Ele
                 </Fragment>
               )
             })}
-            {todayIndex === TIMELINE_DATES.length && (
-              <li className="md:hidden">
-                <TodayChip label={todayLabel} />
-              </li>
-            )}
+            {todayIndex === TIMELINE_DATES.length && <PhoneTodayMarker label={todayLabel} />}
           </ol>
         </div>
       </Reveal>

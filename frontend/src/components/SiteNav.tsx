@@ -1,16 +1,16 @@
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
-import { useEffect, useId, useState, type JSX } from 'react'
+import { useId, useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { prefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
+import { useMotionMoment } from '@/hooks/use-motion-moment'
 import { useScrolled } from '@/hooks/use-scrolled'
 import type { Language } from '@/i18n'
 import { cn } from '@/lib/utils'
 
-import { MenuMark } from './AppTopBar'
 import { buttonVariants } from './button-variants'
 import { KlarLogo } from './KlarLogo'
 import { LanguageSwitch } from './LanguageSwitch'
+import { MenuMark } from './MenuMark'
 import { LANDING_PATH, landingPathFor } from './site-paths'
 
 const LINK_CLASS =
@@ -31,23 +31,6 @@ const SECTION_LINKS: readonly SectionLink[] = [
   { key: 'accuracy', hash: 'accuracy' },
   { key: 'agents', hash: 'agents' },
 ]
-
-/** True for a moment after the German landing page opens, while the pill still sits under EN. */
-function useArrivalFlow(pathname: string): boolean {
-  const [isArriving, setArriving] = useState(
-    () => pathname === LANDING_PATH.de && !prefersReducedMotion(),
-  )
-  useEffect(() => {
-    if (!isArriving) return
-    const timer = window.setTimeout(() => {
-      setArriving(false)
-    }, ARRIVAL_FLOW_DELAY_MS)
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [isArriving])
-  return isArriving
-}
 
 /** The four links: the landing page's three sections by hash, then the privacy page. */
 function NavLinks({
@@ -95,7 +78,8 @@ export function SiteNav(): JSX.Element {
   const landing = landingPathFor(i18n.resolvedLanguage)
   const isOnLanding = pathname === LANDING_PATH.en || pathname === LANDING_PATH.de
   const isDense = useScrolled(NAV_DENSE_AFTER_PX)
-  const isArriving = useArrivalFlow(pathname)
+  // On arriving at the German landing page the pill sits under EN for a moment, then flows to DE.
+  const isArriving = useMotionMoment(ARRIVAL_FLOW_DELAY_MS, pathname === LANDING_PATH.de)
   const [isMenuOpen, setMenuOpen] = useState(false)
   const menuId = useId()
 

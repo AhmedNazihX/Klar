@@ -2,8 +2,8 @@ import type { ClassificationResult, LawVersion, RiskClass, Role, Status } from '
 
 // The landing page's agent example: what `classify_system` returns for the hero's worked example,
 // trimmed to what the section is about (components.md › CodePanel). The keys are the generated
-// `ClassificationResult`'s own, so the example can't drift from the API (classify-example.test.ts
-// also checks them against src/api/types.gen.ts). `steps` and the disclaimer are trimmed in words,
+// `ClassificationResult`'s own, so the example can't drift from the API (LandingPage.test.tsx › the
+// agent example also checks them against src/api/types.gen.ts). `steps` and the disclaimer are trimmed in words,
 // in the page's language (landing.agents.steps, landing.agents.disclaimer).
 
 /** A key of the result, in the order the example shows them. */
