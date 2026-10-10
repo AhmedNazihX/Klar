@@ -11,6 +11,7 @@ import type { Language } from '@/i18n'
 
 import { checkNumber } from './classify-progress'
 import { longDate, monthsUntil, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
+import { isProviderLayout, providerReason } from './provider-layout'
 import { amendedRouteDate, basisSentence, dutiesDate, pausedStep, statusPill } from './result-text'
 import { riskClassOf } from '@/lib/risk-class'
 
@@ -19,13 +20,35 @@ const SUPPLIER_ROLES: readonly Role[] = ['provider', 'importer', 'distributor']
 
 function StatusPills({ result }: { result: ClassificationResult }): JSX.Element {
   const { t } = useTranslation()
-  if (result.status === 'decided') return <StatusPill status="decided" />
+  // The provider layout names the role in a pill too (artboard `ResultProvider`).
+  const role = isProviderLayout(result) && (
+    <StatusPill status="decided">{t('result.roleName.provider')}</StatusPill>
+  )
+  if (result.status === 'decided') {
+    return (
+      <>
+        <StatusPill status="decided" />
+        {role}
+      </>
+    )
+  }
   return (
     <>
       <StatusPill status="decided">{t('result.assumed')}</StatusPill>
       <StatusPill status={statusPill(result.status)} />
+      {role}
     </>
   )
+}
+
+/** Who you are: the role line, which on the provider layout says why you're the provider (an
+ *  Art. 25(1) switch keeps the engine's reason, which the reviewer view shows with its citation). */
+function roleLine(t: TFunction, result: ClassificationResult): string | null {
+  if (!result.role) return null
+  if (!isProviderLayout(result)) return t(`result.role.${result.role}`)
+  const reason = providerReason(result)
+  if (reason === 'own' || reason === 'gpai') return t(`result.provider.reason.${reason}`)
+  return t('result.role.provider')
 }
 
 function monthsLine(t: TFunction, isoDate: string, today: Date, original = false): string {
@@ -168,7 +191,7 @@ export function ResultVerdict({
     : {
         statement: (
           <>
-            {result.role && <span>{t(`result.role.${result.role}`)} </span>}
+            {result.role && <span>{roleLine(t, result)} </span>}
             {result.also_role && <span>{t(`result.alsoRole.${result.also_role}`)} </span>}
             <span>{basisSentence(t, result, language)}</span>
           </>
