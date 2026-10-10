@@ -1,0 +1,688 @@
+{
+  "result": {
+    "facts": [],
+    "steps": [
+      {
+        "step": "scope",
+        "decision": "Scripted: no scope finding",
+        "facts_used": [],
+        "citations": [],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      },
+      {
+        "step": "prohibited",
+        "decision": "Scripted: no prohibited finding",
+        "facts_used": [],
+        "citations": [],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      },
+      {
+        "step": "high_risk",
+        "decision": "Assumed high-risk on the Annex I route pending legal review: Does standalone predictive-maintenance software that informs decisions to defer safety inspections count as a safety component of a cableway installation under Regulation (EU) 2016/424?",
+        "facts_used": [
+          {
+            "text": "The intended use does not fit an Annex III point.",
+            "evidence": "inferred",
+            "source_span": null
+          },
+          {
+            "text": "The system does not fall under an Annex III point, so the Article 6(3) filter does not arise.",
+            "evidence": "inferred",
+            "source_span": null
+          },
+          {
+            "text": "The software supports decisions about deferring inspections of cableway components, so its safety-component status under the cableway legislation is the unresolved legal issue.",
+            "evidence": "inferred",
+            "source_span": null
+          }
+        ],
+        "citations": [
+          {
+            "provision_id": "annex:I:A:8",
+            "document_id": "ai-act-consolidated",
+            "law_version": "amended",
+            "document_status": "consolidated",
+            "language": "en",
+            "quote": "Regulation (EU) 2016/424 of the European Parliament and of the Council of 9 March 2016 on cableway installations and repealing Directive 2000/9/EC (OJ L 81, 31.3.2016, p. 1);",
+            "english_only": false,
+            "changed_by_omnibus": false
+          },
+          {
+            "provision_id": "art:6:1",
+            "document_id": "ai-act-consolidated",
+            "law_version": "amended",
+            "document_status": "consolidated",
+            "language": "en",
+            "quote": "Irrespective of whether an AI system is placed on the market or put into service independently of the products referred to in points (a) and (b), that AI system shall be considered to be high-risk where both of the following conditions are fulfilled:\n(a) the AI system is intended to be used as a safety component of a product, or the AI system is itself a product, covered by the Union harmonisation legislation listed in Annex I;\n(b) the product whose safety component pursuant to point (a) is the AI system, or the AI system itself as a product, is required to undergo a third-party conformity assessment, with a view to the placing on the market or the putting into service of that product pursuant to the Union harmonisation legislation listed in Annex I.",
+            "english_only": false,
+            "changed_by_omnibus": false
+          }
+        ],
+        "status": "legally_ambiguous",
+        "missing_fact": null,
+        "open_question": {
+          "question": "Does standalone predictive-maintenance software that informs decisions to defer safety inspections count as a safety component of a cableway installation under Regulation (EU) 2016/424?",
+          "readings": [
+            {
+              "title": "High-risk under Art. 6(1)",
+              "risk_class": "high_risk",
+              "explanation": "It counts as a safety component because its recommendations affect the timing of safety inspections, and a malfunction could endanger people by delaying inspection.",
+              "citation": {
+                "provision_id": "art:6:1",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "Irrespective of whether an AI system is placed on the market or put into service independently of the products referred to in points (a) and (b), that AI system shall be considered to be high-risk where both of the following conditions are fulfilled:\n(a) the AI system is intended to be used as a safety component of a product, or the AI system is itself a product, covered by the Union harmonisation legislation listed in Annex I;\n(b) the product whose safety component pursuant to point (a) is the AI system, or the AI system itself as a product, is required to undergo a third-party conformity assessment, with a view to the placing on the market or the putting into service of that product pursuant to the Union harmonisation legislation listed in Annex I.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              },
+              "consequence": "If this holds, the high-risk duties apply from 2 August 2028.",
+              "is_applied": true
+            },
+            {
+              "title": "Art. 6(1) not met",
+              "risk_class": null,
+              "explanation": "It does not count as a safety component because it is maintenance-planning software, is not part of the lifts' assessed safety components, and has no connection to lift controls or brakes.",
+              "citation": {
+                "provision_id": "art:6:1",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "Irrespective of whether an AI system is placed on the market or put into service independently of the products referred to in points (a) and (b), that AI system shall be considered to be high-risk where both of the following conditions are fulfilled:\n(a) the AI system is intended to be used as a safety component of a product, or the AI system is itself a product, covered by the Union harmonisation legislation listed in Annex I;\n(b) the product whose safety component pursuant to point (a) is the AI system, or the AI system itself as a product, is required to undergo a third-party conformity assessment, with a view to the placing on the market or the putting into service of that product pursuant to the Union harmonisation legislation listed in Annex I.",
+                "english_only": false,
+                "changed_by_omnibus": false
+              },
+              "consequence": "If this holds, this point does not make the system high-risk. The transparency check then decides whether any duties apply.",
+              "is_applied": false
+            }
+          ],
+          "settled_by": [
+            {
+              "kind": "guidance",
+              "text": "Final Commission guidelines on high-risk classification (still a draft, 19 May 2026)"
+            }
+          ]
+        },
+        "error": null
+      },
+      {
+        "step": "transparency",
+        "decision": "Scripted: no transparency finding",
+        "facts_used": [],
+        "citations": [],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      },
+      {
+        "step": "role_obligations",
+        "decision": "Scripted: a deployer of the bought tool",
+        "facts_used": [],
+        "citations": [],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      }
+    ],
+    "risk_class": "high_risk",
+    "status": "legally_ambiguous",
+    "role": "deployer",
+    "also_role": null,
+    "role_switch_reason": null,
+    "annex_point": "annex:I:A:8",
+    "transparency_duties": [],
+    "deciding_facts": [
+      {
+        "text": "The intended use does not fit an Annex III point.",
+        "evidence": "inferred",
+        "source_span": null
+      },
+      {
+        "text": "The system does not fall under an Annex III point, so the Article 6(3) filter does not arise.",
+        "evidence": "inferred",
+        "source_span": null
+      },
+      {
+        "text": "The software supports decisions about deferring inspections of cableway components, so its safety-component status under the cableway legislation is the unresolved legal issue.",
+        "evidence": "inferred",
+        "source_span": null
+      }
+    ],
+    "obligations": [
+      {
+        "key": "ai-literacy",
+        "duty": "Take measures to support the AI literacy of staff and others who operate or use the system on your behalf.",
+        "duty_de": "Maßnahmen ergreifen, um die KI-Kompetenz Ihres Personals und anderer Personen zu unterstützen, die in Ihrem Auftrag mit dem Betrieb und der Nutzung des Systems befasst sind.",
+        "label_en": "Help the people who run or use it build their AI literacy",
+        "label_de": "Die KI-Kompetenz der Personen fördern, die es betreiben oder nutzen",
+        "group": "after_launch",
+        "document": null,
+        "article": "art:4:1",
+        "applies_from": "2025-02-02",
+        "high_risk_route": null,
+        "applies_if": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": "The Omnibus softened this duty: the original text required ensuring \"a sufficient level of AI literacy\"; the amended text requires supporting measures and no specific level."
+      },
+      {
+        "key": "hr-deployer-instructions",
+        "duty": "Use the system according to the provider's instructions for use, with appropriate technical and organisational measures.",
+        "duty_de": "Das System gemäß der beigefügten Betriebsanleitung verwenden und dafür geeignete technische und organisatorische Maßnahmen treffen.",
+        "label_en": "Use the tool as the vendor's instructions say",
+        "label_de": "Das Tool gemäß der Betriebsanleitung des Anbieters einsetzen",
+        "group": null,
+        "document": null,
+        "article": "art:26:1",
+        "applies_from": "2028-08-02",
+        "high_risk_route": "annex_i",
+        "applies_if": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-human-oversight",
+        "duty": "Assign human oversight to people with the necessary competence, training, authority and support.",
+        "duty_de": "Die menschliche Aufsicht natürlichen Personen übertragen, die über die erforderliche Kompetenz, Ausbildung und Befugnis verfügen, und ihnen die erforderliche Unterstützung zukommen lassen.",
+        "label_en": "Put trained people in charge of reviewing its output",
+        "label_de": "Geschulten Personen die menschliche Aufsicht übertragen",
+        "group": null,
+        "document": "art_26_2_oversight",
+        "article": "art:26:2",
+        "applies_from": "2028-08-02",
+        "high_risk_route": "annex_i",
+        "applies_if": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-input-data",
+        "duty": "Make sure the input data is relevant and sufficiently representative for the intended purpose.",
+        "duty_de": "Dafür sorgen, dass die Eingabedaten der Zweckbestimmung des Systems entsprechen und ausreichend repräsentativ sind.",
+        "label_en": "Check that the input data suits the purpose, where you control it",
+        "label_de": "Prüfen, ob die Eingabedaten zum Zweck passen, soweit Sie sie kontrollieren",
+        "group": null,
+        "document": null,
+        "article": "art:26:4",
+        "applies_from": "2028-08-02",
+        "high_risk_route": "annex_i",
+        "applies_if": "You control the input data.",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-monitoring",
+        "duty": "Monitor the system's operation; if it presents a risk, inform the provider or distributor and the market surveillance authority and suspend its use; report serious incidents to the provider first.",
+        "duty_de": "Den Betrieb des Systems überwachen; birgt es ein Risiko, den Anbieter oder Händler und die Marktüberwachungsbehörde informieren und die Verwendung aussetzen; schwerwiegende Vorfälle zuerst dem Anbieter melden.",
+        "label_en": "Watch how it performs and report serious problems to the vendor",
+        "label_de": "Den Betrieb überwachen und schwerwiegende Probleme dem Anbieter melden",
+        "group": null,
+        "document": null,
+        "article": "art:26:5",
+        "applies_from": "2028-08-02",
+        "high_risk_route": "annex_i",
+        "applies_if": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-logs",
+        "duty": "Keep the logs the system generates, where they are under your control, for at least six months.",
+        "duty_de": "Die vom System automatisch erzeugten Protokolle, soweit sie Ihrer Kontrolle unterliegen, mindestens sechs Monate aufbewahren.",
+        "label_en": "Keep the logs it creates for at least six months",
+        "label_de": "Die automatisch erzeugten Protokolle mindestens sechs Monate aufbewahren",
+        "group": null,
+        "document": null,
+        "article": "art:26:6",
+        "applies_from": "2028-08-02",
+        "high_risk_route": "annex_i",
+        "applies_if": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-inform-workers",
+        "duty": "Inform workers' representatives and the affected workers before using the system at the workplace.",
+        "duty_de": "Vor der Inbetriebnahme oder Verwendung am Arbeitsplatz die Arbeitnehmervertreter und die betroffenen Arbeitnehmer informieren, dass sie der Verwendung des Systems unterliegen werden.",
+        "label_en": "Tell workers' representatives and staff before you start",
+        "label_de": "Arbeitnehmervertretung und Beschäftigte vor dem Einsatz informieren",
+        "group": null,
+        "document": "art_26_7_workers",
+        "article": "art:26:7",
+        "applies_from": "2028-08-02",
+        "high_risk_route": "annex_i",
+        "applies_if": "You are an employer and use the system at the workplace.",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-dpia",
+        "duty": "Use the provider's information (Art. 13) for your data protection impact assessment.",
+        "duty_de": "Die gemäß Art. 13 bereitgestellten Informationen für Ihre Datenschutz-Folgenabschätzung verwenden.",
+        "label_en": "Use the vendor's information for your data protection impact assessment",
+        "label_de": "Die Angaben des Anbieters für Ihre Datenschutz-Folgenabschätzung nutzen",
+        "group": null,
+        "document": null,
+        "article": "art:26:9",
+        "applies_from": "2028-08-02",
+        "high_risk_route": "annex_i",
+        "applies_if": "A data protection impact assessment is required under Art. 35 GDPR or Art. 27 of Directive (EU) 2016/680.",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-cooperate",
+        "duty": "Cooperate with the competent authorities in any action they take about the system.",
+        "duty_de": "Mit den zuständigen Behörden bei allen Maßnahmen zusammenarbeiten, die diese im Zusammenhang mit dem System ergreifen.",
+        "label_en": "Cooperate with the authorities when they act on it",
+        "label_de": "Mit den Behörden bei ihren Maßnahmen zusammenarbeiten",
+        "group": null,
+        "document": null,
+        "article": "art:26:12",
+        "applies_from": "2028-08-02",
+        "high_risk_route": "annex_i",
+        "applies_if": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "key": "transparency-emotion-biometric",
+        "duty": "Inform the people exposed to the system that it is operating, and process their personal data under the GDPR.",
+        "duty_de": "Die betroffenen natürlichen Personen über den Betrieb des Systems informieren und personenbezogene Daten gemäß der Verordnung (EU) 2016/679 (DSGVO) verarbeiten.",
+        "label_en": "Tell people the emotion recognition or biometric categorisation is running",
+        "label_de": "Betroffene informieren, dass Emotionserkennung oder biometrische Kategorisierung läuft",
+        "group": null,
+        "document": "art_50_3_disclosure",
+        "article": "art:50:3",
+        "applies_from": "2026-08-02",
+        "high_risk_route": null,
+        "applies_if": "The system is an emotion recognition or biometric categorisation system.",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      },
+      {
+        "key": "transparency-deep-fake",
+        "duty": "Disclose that deep-fake image, audio or video content, or text published to inform the public on matters of public interest, has been artificially generated or manipulated.",
+        "duty_de": "Offenlegen, dass Deepfake-Bild-, Ton- oder Videoinhalte oder Texte, die veröffentlicht werden, um die Öffentlichkeit über Angelegenheiten von öffentlichem Interesse zu informieren, künstlich erzeugt oder manipuliert wurden.",
+        "label_en": "Disclose AI-made content that could pass as real",
+        "label_de": "Offenlegen, wenn Inhalte echt wirken, aber KI-erzeugt sind",
+        "group": null,
+        "document": "art_50_4_disclosure",
+        "article": "art:50:4",
+        "applies_from": "2026-08-02",
+        "high_risk_route": null,
+        "applies_if": "The system generates or manipulates deep fakes, or text published to inform the public on matters of public interest (not needed for text under human editorial control).",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "note": null
+      }
+    ],
+    "law_version": "amended",
+    "law_text": {
+      "document_id": "ai-act-consolidated",
+      "celex": "02024R1689-20260727",
+      "version_date": "2026-07-27"
+    },
+    "as_of": "2026-09-30",
+    "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
+    "legal_review": "Have this result reviewed by a lawyer: a high-risk system carries duties with legal consequences. The law and guidance don't settle part of the classification, so the stricter reading (high-risk) is assumed until a lawyer has reviewed it.",
+    "not_assessed": [],
+    "follow_up_questions": []
+  },
+  "letters": {
+    "en": {
+      "document": {
+        "template": "vendor_request_ambiguous",
+        "title": "Request to the vendor: a point the law leaves open",
+        "article": "art:6",
+        "language": "en",
+        "label": "DRAFT",
+        "note": null,
+        "sections": [
+          {
+            "key": "recipient",
+            "heading": "To",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "vendor"
+            ],
+            "unanswered": [
+              "vendor"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "tool",
+            "heading": "The tool",
+            "provenance": "interview",
+            "paragraphs": [
+              "Ropeway wear forecast"
+            ],
+            "question_keys": [
+              "tool_name"
+            ],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "checked",
+            "heading": "Our check",
+            "provenance": "classification",
+            "paragraphs": [
+              "We checked the tool against the EU AI Act as it applies on 30 September 2026 (the amended text, CELEX 02024R1689-20260727)."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "question",
+            "heading": "The point the law leaves open",
+            "provenance": "classification",
+            "paragraphs": [
+              "Does standalone predictive-maintenance software that informs decisions to defer safety inspections count as a safety component of a cableway installation under Regulation (EU) 2016/424?"
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "readings",
+            "heading": "The two readings",
+            "provenance": "classification",
+            "paragraphs": [
+              "Applied until settled: High-risk under Art. 6(1). It counts as a safety component because its recommendations affect the timing of safety inspections, and a malfunction could endanger people by delaying inspection. If this holds, the high-risk duties apply from 2 August 2028.",
+              "The other reading: Art. 6(1) not met. It does not count as a safety component because it is maintenance-planning software, is not part of the lifts' assessed safety components, and has no connection to lift controls or brakes. If this holds, this point does not make the system high-risk. The transparency check then decides whether any duties apply."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "settled_by",
+            "heading": "What would settle it",
+            "provenance": "classification",
+            "paragraphs": [
+              "Final Commission guidelines on high-risk classification (still a draft, 19 May 2026)"
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "request",
+            "heading": "What we ask of you",
+            "provenance": "template",
+            "paragraphs": [
+              "Please tell us how you read this point, and send us anything you hold that would settle it, such as an assessment you documented under the AI Act."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "sender",
+            "heading": "From",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "sender"
+            ],
+            "unanswered": [
+              "sender"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          }
+        ],
+        "unanswered": 2,
+        "status": "needs_answers",
+        "law_version": "amended",
+        "as_of": "2026-09-30",
+        "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+      },
+      "checks": [
+        {
+          "check": "sections_present",
+          "passed": true,
+          "problems": []
+        },
+        {
+          "check": "nothing_invented",
+          "passed": true,
+          "problems": []
+        },
+        {
+          "check": "facts_match",
+          "passed": true,
+          "problems": []
+        }
+      ]
+    },
+    "de": {
+      "document": {
+        "template": "vendor_request_ambiguous",
+        "title": "Anfrage an den Anbieter: ein Punkt, den das Recht offenlässt",
+        "article": "art:6",
+        "language": "de",
+        "label": "DRAFT",
+        "note": null,
+        "sections": [
+          {
+            "key": "recipient",
+            "heading": "An",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "vendor"
+            ],
+            "unanswered": [
+              "vendor"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "tool",
+            "heading": "Das Tool",
+            "provenance": "interview",
+            "paragraphs": [
+              "Ropeway wear forecast"
+            ],
+            "question_keys": [
+              "tool_name"
+            ],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "checked",
+            "heading": "Unsere Prüfung",
+            "provenance": "classification",
+            "paragraphs": [
+              "Wir haben das Tool anhand der KI-Verordnung geprüft, wie sie am 30. September 2026 gilt (geänderte Fassung, CELEX 02024R1689-20260727)."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "question",
+            "heading": "Der Punkt, den das Recht offenlässt",
+            "provenance": "classification",
+            "paragraphs": [
+              "Does standalone predictive-maintenance software that informs decisions to defer safety inspections count as a safety component of a cableway installation under Regulation (EU) 2016/424?"
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "readings",
+            "heading": "Die beiden Lesarten",
+            "provenance": "classification",
+            "paragraphs": [
+              "Bis zur Klärung angewandt: High-risk under Art. 6(1). It counts as a safety component because its recommendations affect the timing of safety inspections, and a malfunction could endanger people by delaying inspection. If this holds, the high-risk duties apply from 2 August 2028.",
+              "Die andere Lesart: Art. 6(1) not met. It does not count as a safety component because it is maintenance-planning software, is not part of the lifts' assessed safety components, and has no connection to lift controls or brakes. If this holds, this point does not make the system high-risk. The transparency check then decides whether any duties apply."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "settled_by",
+            "heading": "Was den Punkt klären würde",
+            "provenance": "classification",
+            "paragraphs": [
+              "Final Commission guidelines on high-risk classification (still a draft, 19 May 2026)"
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "request",
+            "heading": "Worum wir Sie bitten",
+            "provenance": "template",
+            "paragraphs": [
+              "Bitte teilen Sie uns mit, wie Sie diesen Punkt beurteilen, und senden Sie uns Unterlagen, die ihn klären könnten, etwa eine Bewertung, die Sie nach der KI-Verordnung dokumentiert haben."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "sender",
+            "heading": "Absender",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "sender"
+            ],
+            "unanswered": [
+              "sender"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          }
+        ],
+        "unanswered": 2,
+        "status": "needs_answers",
+        "law_version": "amended",
+        "as_of": "2026-09-30",
+        "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+      },
+      "checks": [
+        {
+          "check": "sections_present",
+          "passed": true,
+          "problems": []
+        },
+        {
+          "check": "nothing_invented",
+          "passed": true,
+          "problems": []
+        },
+        {
+          "check": "facts_match",
+          "passed": true,
+          "problems": []
+        }
+      ]
+    }
+  },
+  "provisions": {
+    "art:6:1": {
+      "en": {
+        "provision_id": "art:6:1",
+        "doc_key": "ai-act-consolidated",
+        "document_title": "AI Act, consolidated text as of 27 July 2026",
+        "doc_type": "law",
+        "law_version": "amended",
+        "status": "consolidated",
+        "language": "en",
+        "english_only": false,
+        "heading": "Article 6 — Classification rules for high-risk AI systems",
+        "text": "Irrespective of whether an AI system is placed on the market or put into service independently of the products referred to in points (a) and (b), that AI system shall be considered to be high-risk where both of the following conditions are fulfilled:\n(a) the AI system is intended to be used as a safety component of a product, or the AI system is itself a product, covered by the Union harmonisation legislation listed in Annex I;\n(b) the product whose safety component pursuant to point (a) is the AI system, or the AI system itself as a product, is required to undergo a third-party conformity assessment, with a view to the placing on the market or the putting into service of that product pursuant to the Union harmonisation legislation listed in Annex I.",
+        "valid_from": "2026-07-27",
+        "valid_to": null,
+        "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+      },
+      "de": {
+        "provision_id": "art:6:1",
+        "doc_key": "ai-act-consolidated",
+        "document_title": "AI Act, consolidated text as of 27 July 2026",
+        "doc_type": "law",
+        "law_version": "amended",
+        "status": "consolidated",
+        "language": "de",
+        "english_only": false,
+        "heading": "Artikel 6 — Einstufungsvorschriften für Hochrisiko-KI-Systeme",
+        "text": "Ungeachtet dessen, ob ein KI-System unabhängig von den unter den Buchstaben a und b genannten Produkten in Verkehr gebracht oder in Betrieb genommen wird, gilt es als Hochrisiko-KI-System, wenn die beiden folgenden Bedingungen erfüllt sind:\na) das KI-System soll als Sicherheitsbauteil eines unter die in Anhang I aufgeführten Harmonisierungsrechtsvorschriften der Union fallenden Produkts verwendet werden oder das KI-System ist selbst ein solches Produkt;\nb) das Produkt, dessen Sicherheitsbauteil gemäß Buchstabe a das KI-System ist, oder das KI-System selbst als Produkt muss einer Konformitätsbewertung durch Dritte im Hinblick auf das Inverkehrbringen oder die Inbetriebnahme dieses Produkts gemäß den in Anhang I aufgeführten Harmonisierungsrechtsvorschriften der Union unterzogen werden.",
+        "valid_from": "2026-07-27",
+        "valid_to": null,
+        "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+      }
+    }
+  }
+}

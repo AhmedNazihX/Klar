@@ -890,6 +890,38 @@
       "close": "Schließen"
     }
   },
+  "ambiguous": {
+    "statement": "Die Fakten sind klar, aber das Gesetz lässt einen Punkt offen. Klar geht von der strengeren Lesart aus.",
+    "dutiesFromIfHighRisk": "Falls Hochrisiko, Pflichten ab",
+    "readings": "Die beiden Lesarten",
+    "reading": "Lesart {{number}}",
+    "applied": "Bis zur Klärung angewandt",
+    "changedByOmnibus": "Der digitale Omnibus hat diesen Text geändert.",
+    "settle": {
+      "heading": "Was den Punkt klären würde",
+      "answer": "Beantworten",
+      "draftRequest": "Anfrage entwerfen",
+      "vendorReading": "Wie der Anbieter diesen Punkt einschätzt, falls er ihn geprüft hat"
+    },
+    "settledBy": {
+      "guidance": "Endgültige Leitlinien der Kommission zur Einstufung als Hochrisiko (noch ein Entwurf, {{date}})",
+      "provider": "Die eigene Bewertung des Anbieters nach Art. 6 Abs. 3, dokumentiert nach Art. 6 Abs. 4, falls er eine vorgenommen hat"
+    },
+    "providerDuties": "Wozu Sie die strengere Lesart als Anbieter verpflichtet",
+    "lawyer": {
+      "heading": "Rechtlich prüfen lassen",
+      "body": "Die Prüfansicht zeigt beide Lesarten, die Fakten und jede zitierte Vorschrift, bereit zum Export.",
+      "openReviewer": "Prüfansicht öffnen"
+    },
+    "letter": {
+      "label": "Entwurf einer Anfrage an den Anbieter",
+      "intro": "Prüfen Sie die Anfrage, ergänzen Sie die markierten Teile und senden Sie sie dann aus Ihrem eigenen E-Mail-Postfach.",
+      "drafting": "Die Anfrage wird entworfen …",
+      "failed": "Klar konnte die Anfrage nicht entwerfen.",
+      "copy": "Anfrage kopieren",
+      "copyFailed": "Klar konnte die Anfrage nicht kopieren. Markieren und kopieren Sie sie selbst."
+    }
+  },
   "inventory": {
     "count_one": "{{count}} Tool, eingestuft nach der KI-Verordnung in der Fassung vom {{date}}.",
     "count_other": "{{count}} Tools, eingestuft nach der KI-Verordnung in der Fassung vom {{date}}.",

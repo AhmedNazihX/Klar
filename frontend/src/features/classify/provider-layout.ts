@@ -29,6 +29,17 @@ export function isProviderLayout(result: ClassificationResult): boolean {
   )
 }
 
+/** A legally ambiguous high-risk result for a provider (user decision 2026-10-10, option A):
+ *  the ambiguous layout, with the provider's duties under it as what the stricter, applied
+ *  reading commits it to, and no decided-style Provider pill. */
+export function isAmbiguousProvider(result: ClassificationResult): boolean {
+  return (
+    result.role === 'provider' &&
+    result.risk_class === 'high_risk' &&
+    result.status === 'legally_ambiguous'
+  )
+}
+
 /** The role step, if it ran. */
 function roleStep(result: ClassificationResult): ClassificationResult['steps'][number] | null {
   return result.steps.find((step) => step.step === 'role_obligations') ?? null

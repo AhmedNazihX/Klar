@@ -1,6 +1,24 @@
 import { describe, expect, it } from 'vitest'
 
-import { monthsSince, routeDates } from './dates'
+import { longDateIn, monthsSince, routeDates } from './dates'
+
+describe('longDateIn', () => {
+  it.each([
+    ['Final Commission guidelines (still a draft, 19 May 2026)', '2026-05-19'],
+    ['Endgültige Leitlinien (noch ein Entwurf, 19. Mai 2026)', '2026-05-19'],
+    ['Leitlinien vom 2. März 2027', '2027-03-02'],
+    ['Guidelines of 1 December 2026, revised 5 January 2027', '2026-12-01'],
+  ])('reads %s as %s', (text, date) => {
+    expect(longDateIn(text)).toBe(date)
+  })
+
+  it.each([['Final Commission guidelines'], ['Article 6 of 2024'], ['12 Things 2026']])(
+    'finds no date in %s',
+    (text) => {
+      expect(longDateIn(text)).toBeNull()
+    },
+  )
+})
 
 describe('routeDates', () => {
   it.each([
