@@ -23,9 +23,10 @@ No model is involved apart from the query embedding.
   the order named; such a hit is always relevant.
 - **Vector index.** The meaning arm keeps the partial HNSW index's model and dims predicate and
   cast (decision 009), sets `hnsw.iterative_scan = relaxed_order` so filtered queries aren't
-  short, and re-sorts a materialized CTE by distance, as pgvector advises. At about 9,000 rows the
-  planner prefers an exact scan (about 15 ms), which is also exact; the index takes over when
-  that gets dearer. A vector only counts while its `content_sha256` matches the provision's, so
+  short, and re-sorts a materialized CTE by distance, as pgvector advises. The search runs with
+  plain index scans off, so the meaning arm is an exact scan (about 15 ms at about 9,000 rows)
+  and ranks the same on every run; the approximate index stays ready for a larger corpus. A
+  vector only counts while its `content_sha256` matches the provision's, so
   a stale vector is never ranked.
 - **Filters.** Every filter sits inside the SQL of both arms, never in Python afterwards:
   - law version (default `amended`) by the decision-009 rule, so guidance (null version) stays
@@ -506,25 +507,37 @@ def _statement(model: str, dims: int) -> sql.Composed:
 
 
 ITERATIVE_SCAN = "hnsw.iterative_scan"
+INDEX_SCAN = "enable_indexscan"
 SET_ITERATIVE_SCAN = "select set_config(%s, %s, true)"
 PREVIOUS_ITERATIVE_SCAN = "select coalesce(current_setting(%s, true), '')"
+SEARCH_SETTINGS: tuple[tuple[str, str, str], ...] = (
+    (ITERATIVE_SCAN, "relaxed_order", "off"),
+    # Plain index scans off: the HNSW index is approximate, and which plan the planner picks
+    # shifts with table statistics (after an autovacuum, say), so the same query could rank a
+    # parent and its paragraph differently from run to run. An exact scan of about 9,000 rows
+    # takes about 15 ms; the full-text arm's GIN index is used through bitmap scans, still on.
+    (INDEX_SCAN, "off", "on"),
+)
 
 
 def _run(
     connection: psycopg.Connection, statement: sql.Composed, params: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    """Run the search with `hnsw.iterative_scan = relaxed_order`, then put the setting back.
+    """Run the search with `SEARCH_SETTINGS`, then put each setting back.
 
     Inside a caller's open transaction, `transaction()` is a savepoint and a local setting would
-    outlive it, so the previous value is restored after the query. If the query fails, rolling
-    back the savepoint (or transaction) undoes the setting anyway.
+    outlive it, so the previous values are restored after the query. If the query fails, rolling
+    back the savepoint (or transaction) undoes the settings anyway.
     """
     with connection.transaction(), connection.cursor(row_factory=dict_row) as cursor:
-        previous = cursor.execute(PREVIOUS_ITERATIVE_SCAN, (ITERATIVE_SCAN,)).fetchone()
-        cursor.execute(SET_ITERATIVE_SCAN, (ITERATIVE_SCAN, "relaxed_order"))
+        previous: list[tuple[str, str]] = []
+        for name, value, default in SEARCH_SETTINGS:
+            row = cursor.execute(PREVIOUS_ITERATIVE_SCAN, (name,)).fetchone()
+            previous.append((name, (next(iter(row.values())) if row else "") or default))
+            cursor.execute(SET_ITERATIVE_SCAN, (name, value))
         rows = cursor.execute(statement, params).fetchall()
-        restore = next(iter(previous.values())) if previous else ""
-        cursor.execute(SET_ITERATIVE_SCAN, (ITERATIVE_SCAN, restore or "off"))
+        for name, restore in previous:
+            cursor.execute(SET_ITERATIVE_SCAN, (name, restore))
         return rows
 
 

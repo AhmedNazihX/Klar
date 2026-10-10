@@ -9,6 +9,7 @@ isn't there; their query embeddings are recorded (tests/recordings/db/test_searc
 
 from dataclasses import replace
 from datetime import date
+from typing import Any
 
 import psycopg
 import pytest
@@ -432,6 +433,27 @@ def test_the_iterative_scan_setting_does_not_leak(db: psycopg.Connection):
                   max_distance=None)  # fmt: skip
     row = db.execute("select current_setting('hnsw.iterative_scan')").fetchone()
     assert row == ("strict_order",)
+    assert db.execute("select current_setting('enable_indexscan')").fetchone() == ("on",)
+
+
+def test_the_search_ranks_by_an_exact_scan(db: psycopg.Connection, monkeypatch):
+    """The approximate HNSW index can rank a parent and its paragraph differently as table
+    statistics change, so the search runs with plain index scans off (exact, the same each run)."""
+    seen: list[object] = []
+    real_execute = psycopg.Cursor.execute
+
+    def spy(self: psycopg.Cursor, query: Any, params: Any = None, **kwargs: Any) -> Any:
+        if isinstance(query, sql.Composed) and "vector_hits" in query.as_string(db):
+            row: Any = real_execute(
+                self, "select current_setting('enable_indexscan') as v"
+            ).fetchone()
+            seen.append(row["v"])
+        return real_execute(self, query, params, **kwargs)
+
+    monkeypatch.setattr(psycopg.Cursor, "execute", spy)
+    search_ai_act(NO_WORDS, embedder=FixedEmbedder([1.0, 0.0, 0.0]), connection=db,
+                  max_distance=None)  # fmt: skip
+    assert seen == ["off"]
 
 
 def test_a_stale_vector_is_never_ranked(corpus: psycopg.Connection):
