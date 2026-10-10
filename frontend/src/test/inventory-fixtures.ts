@@ -13,6 +13,19 @@ export const INVENTORY_TOOLS_URL = `${SUPABASE_URL}/rest/v1/inventory_tools`
 /** save_classified_tool: a classified tool, its inventory if needed and its first run, at once;
  *  or the next run on a tool the user has. */
 export const SAVE_TOOL_URL = `${SUPABASE_URL}/rest/v1/rpc/save_classified_tool`
+/** A tool's runs (P5b reads a saved run's id and number back from here). */
+export const CLASSIFICATIONS_URL = `${SUPABASE_URL}/rest/v1/classifications`
+
+/** A saved run's row id. */
+export const SAVED_RUN_ID = '7f3e9a10-2b4c-4d5e-8f60-718293a4b5c6'
+
+/** GET classifications answers with the saved run's id and number (`runNo`), the read-back after
+ *  save_classified_tool. */
+export function savedRunHandler(runNo = 1): HttpHandler {
+  return http.get(CLASSIFICATIONS_URL, () =>
+    HttpResponse.json([{ id: SAVED_RUN_ID, run_no: runNo }]),
+  )
+}
 
 const ART_5_1_F: Citation = {
   provision_id: 'art:5:1:f',

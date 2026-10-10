@@ -8,10 +8,9 @@ import { useTranslation } from 'react-i18next'
 import type { ClassificationResult } from '@/api'
 import { ScreenTitle } from '@/components/ScreenTitle'
 import { Button } from '@/components/ui/button'
-import { ClassifyRunError, useClassify } from '@/hooks/use-classify'
+import { classifyFailureOf, saveFailureOf, useClassify } from '@/hooks/use-classify'
 import { useLanguage } from '@/hooks/use-language'
-import { useSaveClassifiedTool } from '@/hooks/use-save-classified-tool'
-import { classifyWriteFailure } from '@/lib/company-profile'
+import { useSaveClassifiedTool, type SavedRun } from '@/hooks/use-save-classified-tool'
 
 import {
   clearDraft,
@@ -76,10 +75,10 @@ export function ClassifyScreen(): JSX.Element {
   async function keep(values: DescriptionFormValues, result: ClassificationResult): Promise<void> {
     // An unnamed tool stays unnamed: the screens show "Your tool" in the reader's language.
     const name = values.name === '' ? null : values.name
-    let savedId: string | null = null
+    let saved: SavedRun | null = null
     let saveFailure: ClassificationRun['saveFailure']
     try {
-      savedId = await save.mutateAsync({
+      saved = await save.mutateAsync({
         toolId: draftTool?.toolId ?? null,
         name,
         description: values.description,
@@ -87,11 +86,19 @@ export function ClassifyScreen(): JSX.Element {
         inventoryName: t('welcome.inventoryName'),
       })
     } catch (error) {
-      saveFailure =
-        classifyWriteFailure(error, 'save') === 'storage-full' ? 'storage-full' : 'failed'
+      saveFailure = saveFailureOf(error)
     }
-    const toolId = savedId ?? crypto.randomUUID()
-    putRun(queryClient, { toolId, name, description: values.description, result, saveFailure })
+    const toolId = saved?.toolId ?? crypto.randomUUID()
+    putRun(queryClient, {
+      toolId,
+      name,
+      description: values.description,
+      result,
+      saveFailure,
+      // As the database numbered it: a run saved on a tool that had runs isn't run 1.
+      runNo: saved?.run?.runNo,
+      runId: saved?.run?.id,
+    })
     clearDraft()
     // The app frame keeps the law version in the address across links.
     void navigate({ to: '/app/inventory/$toolId', params: { toolId } })
@@ -107,7 +114,6 @@ export function ClassifyScreen(): JSX.Element {
   }
 
   const submit = form.handleSubmit(start)
-  const failure = run.error instanceof ClassifyRunError ? run.error.failure : null
   return (
     <>
       <div className="flex max-w-[760px] flex-col gap-1.5">
@@ -135,7 +141,7 @@ export function ClassifyScreen(): JSX.Element {
         <ProgressPanel
           progress={progress}
           isRunning={run.isPending}
-          failure={run.isError ? (failure ?? { kind: 'network' }) : null}
+          failure={classifyFailureOf(run)}
           onTryAgain={() => void submit()}
           onSaveForLater={() => {
             saveDraft(form.getValues(), draftTool)

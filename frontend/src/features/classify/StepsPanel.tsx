@@ -110,11 +110,14 @@ function useRows(result: ClassificationResult, previous: ClassificationResult | 
 export function StepsPanel({
   result,
   previous,
+  runNo,
   onExpandAll,
 }: {
   result: ClassificationResult
-  /** The run before, when an answer made this one: rows it changed say so. */
+  /** The run before, when an answer made this one: rows it changed say so, and the heading
+   *  names the run ("Run 2: how Klar got here"). */
   previous?: ClassificationResult
+  runNo?: number
   onExpandAll: () => void
 }): JSX.Element {
   const { t } = useTranslation()
@@ -130,7 +133,9 @@ export function StepsPanel({
     >
       <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5">
         <h2 id={headingId} className="m-0 text-heading-small text-ink">
-          {t('result.steps.heading')}
+          {previous && runNo !== undefined
+            ? t('result.steps.runHeading', { number: runNo })
+            : t('result.steps.heading')}
         </h2>
         <button
           type="button"

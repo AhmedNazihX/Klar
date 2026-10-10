@@ -7,7 +7,7 @@ import {
 } from '@/features/classify/classification-store'
 
 import { heldSessionId } from './use-anonymous-session'
-import { ClassifyRunError, useClassify, type ClassifyFailure } from './use-classify'
+import { classifyFailureOf, useClassify, type ClassifyFailure } from './use-classify'
 import { useLanguage } from './use-language'
 
 /** The original-text run of `run`'s description and answers, under the runs' key (a sign-out
@@ -78,10 +78,5 @@ export function useOriginalRun(run: ClassificationRun): OriginalRun {
     )
   }
 
-  let failure: ClassifyFailure | null = null
-  if (classify.isError) {
-    failure =
-      classify.error instanceof ClassifyRunError ? classify.error.failure : { kind: 'network' }
-  }
-  return { result, start, isRunning: classify.isPending, failure }
+  return { result, start, isRunning: classify.isPending, failure: classifyFailureOf(classify) }
 }

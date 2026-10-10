@@ -4,7 +4,7 @@ import i18n from 'i18next'
 import { describe, expect, it } from 'vitest'
 import { axe } from 'vitest-axe'
 
-import type { ClassificationResult } from '@/api'
+import type { ClassificationResult, RiskClass, StepName } from '@/api'
 import {
   ANNEX_I_QUESTION,
   ANNEX_III_QUESTION,
@@ -36,25 +36,46 @@ const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false } } }
 
 async function openResult(
   result: ClassificationResult,
-  { view, language = 'en' }: { view?: 'reviewer'; language?: 'en' | 'de' } = {},
+  {
+    view,
+    language = 'en',
+    name = 'Applicant screening',
+  }: { view?: 'reviewer'; language?: 'en' | 'de'; name?: string | null } = {},
 ) {
   await i18n.changeLanguage(language)
   const client = createTestQueryClient()
   const run: ClassificationRun = {
     toolId: TOOL_ID,
-    name: 'Applicant screening',
+    name,
     description: WORKED_EXAMPLE_DESCRIPTION,
     result,
   }
   putRun(client, run)
   const path = `/app/inventory/${TOOL_ID}${view ? `?view=${view}` : ''}`
   const rendered = renderRoute(path, client)
+  const untitled = language === 'en' ? 'Your tool' : 'Ihr Tool'
   await screen.findByRole(
     'heading',
-    { level: 1, name: 'Applicant screening' },
+    { level: 1, name: name ?? untitled },
     { timeout: FIRST_RENDER_MS },
   )
   return rendered
+}
+
+/** The Annex III question, asked by `step` instead, on a result whose stricter class is
+ *  `riskClass`. */
+function pausedAt(step: StepName, riskClass: RiskClass): ClassificationResult {
+  const base = annexIIINeedsInfo()
+  const question = base.follow_up_questions?.[0]
+  return {
+    ...base,
+    risk_class: riskClass,
+    steps: base.steps.map((recorded) =>
+      recorded.step === step
+        ? { ...recorded, status: 'needs_more_information', missing_fact: question }
+        : { ...recorded, status: 'decided', missing_fact: null },
+    ),
+  }
 }
 
 function todoList(language: 'en' | 'de'): HTMLElement {
@@ -315,7 +336,7 @@ describe('Result statuses', () => {
     const summary = screen.getByRole('region', { name: 'Result' })
     expect(within(summary).getByText('Assumed')).toBeInTheDocument()
     expect(within(summary).getByText('Needs more information')).toBeInTheDocument()
-    expect(summary).toHaveTextContent('Klar assumed one fact at check 1.')
+    expect(summary).toHaveTextContent('Klar paused at check 1.')
     expect(
       screen.getByRole('heading', { level: 2, name: /How does the system produce its outputs/ }),
     ).toBeInTheDocument()
@@ -347,7 +368,7 @@ describe('Result statuses, the Annex III route', () => {
     await openResult(annexIIINeedsInfo())
     const summary = screen.getByRole('region', { name: 'Result' })
     expect(within(summary).getByText('Needs more information')).toBeInTheDocument()
-    expect(summary).toHaveTextContent('Klar assumed one fact at check 3.')
+    expect(summary).toHaveTextContent('Klar paused at check 3.')
     const question = screen.getByRole('region', { name: ANNEX_III_QUESTION })
     const ifYes = within(question).getByText('If yes').nextElementSibling as HTMLElement
     expect(within(ifYes).getByText('High-risk')).toBeInTheDocument()
@@ -360,6 +381,139 @@ describe('Result statuses, the Annex III route', () => {
     )
     expect(within(question).getByText('Annex III 4(a), English')).toBeVisible()
   })
+
+  it.each([
+    [
+      'en',
+      'Klar paused at check 3. One fact decides whether Applicant screening is a high-risk system.',
+      'Until you answer',
+      'Treated as high-risk',
+      'The stricter reading, so nothing is missed',
+      'Your inventory and obligations show the high-risk duties as possible until this is answered.',
+      'Your duties apply from',
+    ],
+    [
+      'de',
+      'Klar hat bei Prüfung 3 angehalten. Eine Angabe entscheidet, ob Applicant screening ein Hochrisiko-System ist.',
+      'Bis zu Ihrer Antwort',
+      'Als Hochrisiko behandelt',
+      'Die strengere Lesart, damit nichts übersehen wird',
+      'Ihr Inventar und Ihre Pflichten zeigen die Hochrisiko-Pflichten als möglich, bis diese Frage beantwortet ist.',
+      'Ihre Pflichten gelten ab',
+    ],
+  ] as const)(
+    'shows the paused verdict: where Klar paused, and what it is treated as until the answer (%s)',
+    async (language, lead, until, treatedAs, stricter, lists, dutiesFrom) => {
+      await openResult(annexIIINeedsInfo(), { language })
+      const summary = screen.getByRole('region', {
+        name: language === 'en' ? 'Result' : 'Ergebnis',
+      })
+      expect(within(summary).getByText(lead)).toBeVisible()
+      expect(within(summary).getByText(until)).toBeVisible()
+      expect(within(summary).getByText(treatedAs)).toBeVisible()
+      expect(within(summary).getByText(stricter)).toBeVisible()
+      expect(within(summary).getByText(lists)).toBeVisible()
+      // The tile replaces the duties date: nothing is dated while the class is assumed.
+      expect(summary).not.toHaveTextContent(dutiesFrom)
+    },
+  )
+
+  // Each pause the verdict words differently: the role step, and each class's "decides" and
+  // "lists" lines; the last rows use a tool without a name.
+  it.each([
+    [
+      'en',
+      'role_obligations',
+      'high_risk',
+      'Klar paused while working out your role. One fact decides which duties are yours.',
+      'Treated as high-risk',
+      'Your inventory and obligations show the high-risk duties as possible until this is answered.',
+    ],
+    [
+      'de',
+      'role_obligations',
+      'high_risk',
+      'Klar hat bei der Ermittlung Ihrer Rolle angehalten. Eine Angabe entscheidet, welche Pflichten Sie haben.',
+      'Als Hochrisiko behandelt',
+      'Ihr Inventar und Ihre Pflichten zeigen die Hochrisiko-Pflichten als möglich, bis diese Frage beantwortet ist.',
+    ],
+    [
+      'en',
+      'transparency',
+      'limited_risk',
+      'Klar paused at check 4. One fact decides whether Applicant screening has transparency duties.',
+      'Treated as limited risk',
+      'Your inventory and obligations show the transparency duties as possible until this is answered.',
+    ],
+    [
+      'de',
+      'transparency',
+      'limited_risk',
+      'Klar hat bei Prüfung 4 angehalten. Eine Angabe entscheidet, ob für Applicant screening Transparenzpflichten gelten.',
+      'Als begrenztes Risiko behandelt',
+      'Ihr Inventar und Ihre Pflichten zeigen die Transparenzpflichten als möglich, bis diese Frage beantwortet ist.',
+    ],
+    [
+      'en',
+      'prohibited',
+      'prohibited',
+      'Klar paused at check 2. One fact decides whether Applicant screening is banned.',
+      'Treated as prohibited',
+      'Your inventory and obligations show the ban as possible until this is answered.',
+    ],
+    [
+      'de',
+      'prohibited',
+      'prohibited',
+      'Klar hat bei Prüfung 2 angehalten. Eine Angabe entscheidet, ob Applicant screening verboten ist.',
+      'Als verboten behandelt',
+      'Ihr Inventar und Ihre Pflichten zeigen das Verbot als möglich, bis diese Frage beantwortet ist.',
+    ],
+    [
+      'en',
+      'scope',
+      'minimal_risk',
+      'Klar paused at check 1. One fact decides how Applicant screening is classified.',
+      'Treated as minimal risk',
+      'Your inventory shows this class as assumed until this is answered.',
+    ],
+    [
+      'de',
+      'scope',
+      'minimal_risk',
+      'Klar hat bei Prüfung 1 angehalten. Eine Angabe entscheidet, wie Applicant screening eingestuft wird.',
+      'Als minimales Risiko behandelt',
+      'Ihr Inventar zeigt diese Einstufung als angenommen, bis diese Frage beantwortet ist.',
+    ],
+    [
+      'en',
+      'scope',
+      'out_of_scope',
+      'Klar paused at check 1. One fact decides how the tool is classified.',
+      'Treated as out of scope',
+      'Your inventory shows this class as assumed until this is answered.',
+    ],
+    [
+      'de',
+      'scope',
+      'out_of_scope',
+      'Klar hat bei Prüfung 1 angehalten. Eine Angabe entscheidet, wie das Tool eingestuft wird.',
+      'Als außerhalb des Anwendungsbereichs behandelt',
+      'Ihr Inventar zeigt diese Einstufung als angenommen, bis diese Frage beantwortet ist.',
+    ],
+  ] as const)(
+    'names the pause and the class for a result paused at %s, %s (%s)',
+    async (language, step, riskClass, lead, treatedAs, lists) => {
+      const name = riskClass === 'out_of_scope' ? null : 'Applicant screening'
+      await openResult(pausedAt(step, riskClass), { language, name })
+      const summary = screen.getByRole('region', {
+        name: language === 'en' ? 'Result' : 'Ergebnis',
+      })
+      expect(within(summary).getByText(lead)).toBeVisible()
+      expect(within(summary).getByText(treatedAs)).toBeVisible()
+      expect(within(summary).getByText(lists)).toBeVisible()
+    },
+  )
 
   it('passes axe with the deciding question (needs more information)', async () => {
     const { container } = await openResult(annexIIINeedsInfo())

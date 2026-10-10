@@ -3,13 +3,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import type { ClassificationResult } from '@/api'
-import { putRun, runNumber, type ClassificationRun } from '@/features/classify/classification-store'
-import { classifyWriteFailure } from '@/lib/company-profile'
+import {
+  putRun,
+  runNumber,
+  toolResultKey,
+  type ClassificationRun,
+} from '@/features/classify/classification-store'
 import { supabase } from '@/lib/supabase'
-import { addFollowUpRun, deleteRun, type Answers } from '@/lib/tool-runs'
+import { addFollowUpRun, deleteRun, type Answers, type RunRef } from '@/lib/tool-runs'
 
-import { withAnonymousSession } from './use-anonymous-session'
-import { ClassifyRunError, useClassify, type ClassifyFailure } from './use-classify'
+import { heldSessionId, withAnonymousSession } from './use-anonymous-session'
+import { classifyFailureOf, saveFailureOf, useClassify, type ClassifyFailure } from './use-classify'
 import { useLanguage } from './use-language'
 import { userDataKey } from './use-user-data-overview'
 
@@ -39,6 +43,10 @@ function isSaved(run: ClassificationRun, client: SupabaseClient | null): client 
  * engine with the description it already has, and the new result becomes the tool's next run,
  * saved with the answers it used (P19's `inputs`) and shown in place with the run before it, so
  * the screen can say what changed and Undo answer can bring it back.
+ *
+ * A re-run or an undo belongs to the session it started under: when a sign-out or Delete my data
+ * (here or in another tab) ends that session before it finishes, its outcome is dropped without a
+ * word, never saved or shown (as useOriginalRun does), and nothing starts a new session for it.
  */
 export function useFollowUpRun(
   run: ClassificationRun,
@@ -50,37 +58,57 @@ export function useFollowUpRun(
   // Busy until the re-run is saved too, so a second click can't start another paid run.
   const [isSaving, setIsSaving] = useState(false)
 
-  /** Saves the re-run on the tool, then shows it. A run that can't be saved still shows (it was
-   *  paid for), with a note that it wasn't saved. */
-  async function keep(answers: Answers, result: ClassificationResult): Promise<void> {
-    let runNo = runNumber(run) + 1
-    let saveFailure = run.saveFailure
-    if (isSaved(run, client)) {
-      setIsSaving(true)
-      try {
-        const sessionClient = await withAnonymousSession(queryClient, client)
-        runNo = await addFollowUpRun(sessionClient, {
-          toolId: run.toolId,
-          description: run.description,
-          answers,
-          result,
-        })
-      } catch (error) {
-        saveFailure =
-          classifyWriteFailure(error, 'save') === 'storage-full' ? 'storage-full' : 'failed'
-      } finally {
-        setIsSaving(false)
-      }
+  /** Whether the session the work started under is still the one this tab holds. */
+  function isSameSession(session: string | null): boolean {
+    return heldSessionId(queryClient) === session
+  }
+
+  /** Saves the re-run on the tool. A run that can't be saved still shows (it was paid for), with
+   *  a note that it wasn't saved. */
+  async function save(
+    answers: Answers,
+    result: ClassificationResult,
+  ): Promise<{ ref: RunRef | null; saveFailure: ClassificationRun['saveFailure'] }> {
+    if (!isSaved(run, client)) return { ref: null, saveFailure: run.saveFailure }
+    setIsSaving(true)
+    try {
+      const sessionClient = await withAnonymousSession(queryClient, client)
+      const ref = await addFollowUpRun(sessionClient, {
+        toolId: run.toolId,
+        description: run.description,
+        answers,
+        result,
+      })
+      return { ref, saveFailure: undefined }
+    } catch (error) {
+      return { ref: null, saveFailure: saveFailureOf(error) }
+    } finally {
+      setIsSaving(false)
     }
+  }
+
+  /** Saves the re-run, then shows it with the run before it. */
+  async function keep(
+    answers: Answers,
+    result: ClassificationResult,
+    session: string | null,
+  ): Promise<void> {
+    if (!isSameSession(session)) return
+    // A saved tool with no session held: it ended before the run started, and its run goes too.
+    if (isSaved(run, client) && session === null) return
+    const { ref, saveFailure } = await save(answers, result)
+    if (!isSameSession(session)) return
     putRun(queryClient, {
       toolId: run.toolId,
       name: run.name,
       description: run.description,
       result,
       saveFailure,
-      runNo,
+      runNo: ref?.runNo ?? runNumber(run) + 1,
+      runId: ref?.id,
       answers,
       previous: {
+        runId: run.runId,
         runNo: runNumber(run),
         result: run.result,
         answers: run.answers ?? {},
@@ -91,20 +119,39 @@ export function useFollowUpRun(
   }
 
   function rerun(answers: Answers): void {
+    const session = heldSessionId(queryClient)
     classify.mutate(
       // Runs stay on the amended text (decision 020), like the first run.
       { description: run.description, language, answers },
-      { onSuccess: (result) => void keep(answers, result) },
+      { onSuccess: (result) => void keep(answers, result, session) },
     )
   }
 
+  /** Deletes the shown run from the user's data; false when it was no longer there (or its id
+   *  is unknown), so the tool's runs changed elsewhere. */
+  async function deleteShownRun(signedIn: SupabaseClient): Promise<boolean> {
+    if (run.runId === undefined) return false
+    return deleteRun(signedIn, run.runId)
+  }
+
   const undo = useMutation({
-    mutationFn: async (): Promise<void> => {
+    mutationFn: async (session: string | null): Promise<void> => {
       const previous = run.previous
-      if (!previous) return
+      if (!previous || !isSameSession(session)) return
       if (isSaved(run, client)) {
-        const sessionClient = await withAnonymousSession(queryClient, client)
-        await deleteRun(sessionClient, run.toolId, runNumber(run))
+        // Ended already: there is no session to delete the run under, and none is started for it.
+        if (session === null) return
+        const isDeleted = await deleteShownRun(client)
+        if (!isSameSession(session)) return
+        if (!isDeleted) {
+          // Another tab or device changed the tool's runs: show them as they are now.
+          await queryClient.invalidateQueries({
+            queryKey: toolResultKey(run.toolId),
+            exact: true,
+          })
+          void queryClient.invalidateQueries({ queryKey: userDataKey })
+          return
+        }
       }
       putRun(queryClient, {
         toolId: run.toolId,
@@ -114,24 +161,20 @@ export function useFollowUpRun(
         saveFailure: previous.saveFailure,
         isStored: run.isStored,
         runNo: previous.runNo,
+        runId: previous.runId,
         answers: previous.answers,
       })
       void queryClient.invalidateQueries({ queryKey: userDataKey })
     },
   })
 
-  let failure: ClassifyFailure | null = null
-  if (classify.isError) {
-    failure =
-      classify.error instanceof ClassifyRunError ? classify.error.failure : { kind: 'network' }
-  }
   return {
     progress,
     rerun,
     isRunning: classify.isPending || isSaving,
-    failure,
+    failure: classifyFailureOf(classify),
     undo: () => {
-      undo.mutate()
+      undo.mutate(heldSessionId(queryClient))
     },
     isUndoing: undo.isPending,
     hasUndoFailed: undo.isError,

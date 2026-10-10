@@ -265,7 +265,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12);
 │       │                            risk-class (a result's class; a needs-a-description result has none) (E13);
 │       │                            duty-progress (duty_progress ticks through supabase-js, P24);
-│       │                            tool-runs (a tool's runs: the latest two, a follow-up run with its answers, undo; P5b)
+│       │                            tool-runs (a tool's runs: the latest two, a follow-up run with its answers, undo by row id; P5b),
+│       │                            log (a read the screen goes on without, logged with its error code only; P5b)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
 │       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4), reduced-motion.ts (matchMedia stub, P14),

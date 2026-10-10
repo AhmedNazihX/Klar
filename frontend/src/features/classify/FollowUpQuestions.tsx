@@ -57,7 +57,9 @@ export function QuestionAnswer({
   )
 }
 
-/** "Add answers and run again": the panel's one action, offered once an answer would be sent. */
+/** "Add answers and run again": the screen's one run action, under the last question panel,
+ *  for every question asked (`count`); enabled once an answer would be sent. Its label wraps on
+ *  a narrow screen (the German one is long) rather than push the page sideways. */
 export function RunAgainButton({
   count,
   hasAnswers,
@@ -66,22 +68,32 @@ export function RunAgainButton({
 }: { count: number } & Pick<AnswerProps, 'hasAnswers' | 'isRunning' | 'onRunAgain'>): JSX.Element {
   const { t } = useTranslation()
   return (
-    <Button className="self-start" disabled={!hasAnswers || isRunning} onClick={onRunAgain}>
+    <Button
+      className="h-auto min-h-11 max-w-full shrink self-start py-3 text-center leading-snug whitespace-normal"
+      disabled={!hasAnswers || isRunning}
+      onClick={onRunAgain}
+    >
       {t('followUp.runAgain', { count })}
     </Button>
   )
 }
 
 /**
- * "Please confirm N facts" (artboard `Classify`, components.md FactQuestion): the facts Klar had
- * to assume, asked back with Yes, No and Not sure (or in words), each with why it matters.
+ * "N open questions" (artboard `Classify`, components.md FactQuestion): what Klar couldn't settle
+ * from the description, asked with Yes, No and Not sure (or in words), each with why it matters.
  * Answering runs the checks again with the answers appended to the description (decision 019).
- * The Art. 111(2) follow-ups come here too (decision 026 item 24).
+ * The Art. 111(2) follow-ups come here too (decision 026 item 24); an assumed fact doesn't: its
+ * card's Confirm answers it. `runCount` puts the screen's run action here, for that many
+ * questions.
  */
 export function FollowUpQuestions({
   questions,
+  runCount,
   ...answers
-}: { questions: readonly FollowUpQuestion[] } & AnswerProps): JSX.Element {
+}: {
+  questions: readonly FollowUpQuestion[]
+  runCount?: number
+} & AnswerProps): JSX.Element {
   const { t } = useTranslation()
   const headingId = useId()
   return (
@@ -97,7 +109,7 @@ export function FollowUpQuestions({
           <ConfirmQuestion key={question.id} question={question} {...answers} />
         ))}
       </div>
-      <RunAgainButton count={questions.length} {...answers} />
+      {runCount !== undefined && <RunAgainButton count={runCount} {...answers} />}
     </GlassPanel>
   )
 }

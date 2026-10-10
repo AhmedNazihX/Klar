@@ -4,6 +4,7 @@ import { queryOptions, type QueryClient } from '@tanstack/react-query'
 import type { ClassificationResult } from '@/api'
 import { withAnonymousSession } from '@/hooks/use-anonymous-session'
 import { fetchInventoryTool, type InventoryTool } from '@/lib/inventory'
+import { logSkippedRead } from '@/lib/log'
 import { fetchLatestRuns, type Answers, type ToolRun } from '@/lib/tool-runs'
 
 import type { DescriptionFormValues } from './description-form'
@@ -20,13 +21,22 @@ export type ClassificationRun = {
   /** Read back from the user's data rather than just run: the browser wrote it (P3), so the
    *  screens say Klar doesn't re-check it and show the app's own notice, not the stored one. */
   isStored?: boolean
-  /** The run's number on its tool; 1 when unknown (a first run, or one never saved). */
+  /** The run's number on its tool, as the database gave it; 1 when unknown (a run never saved,
+   *  or one whose number couldn't be read back). */
   runNo?: number
+  /** The run's row id in the user's data, when known: Undo answer deletes the run by it. */
+  runId?: string
   /** The follow-up answers the run used (P5b), appended to `description` when it ran. */
   answers?: Answers
   /** The run before this one, when an answer made this one: what it changed, and what Undo
-   *  answer restores (with whether it was saved). */
-  previous?: ToolRun & { saveFailure?: ClassificationRun['saveFailure'] }
+   *  answer restores (with whether it was saved, and its row id when known). */
+  previous?: PreviousRun
+}
+
+/** The run an answer replaced: Undo answer shows it again. */
+export type PreviousRun = Omit<ToolRun, 'id'> & {
+  runId?: string
+  saveFailure?: ClassificationRun['saveFailure']
 }
 
 /** A run's number on its tool. */
@@ -49,18 +59,31 @@ export function toolResultKey(toolId: string) {
   return [...classificationRunKey, toolId] as const
 }
 
+type FollowUp = Pick<ClassificationRun, 'runId' | 'answers' | 'previous'>
+
 /** The answers the latest run used and the run before it, read only once a tool has a second
  *  run: a first run has neither. The run before counts only when an answer made the latest one
  *  (a run of an edited description starts afresh). A run read here that isn't the inventory's
- *  latest (written in between) is left out. */
-async function followUpOf(
-  client: SupabaseClient,
-  tool: InventoryTool,
-): Promise<Pick<ClassificationRun, 'answers' | 'previous'>> {
+ *  latest (written in between) is left out. A failed read leaves them out too: the result still
+ *  shows, without what the last answer changed. */
+async function followUpOf(client: SupabaseClient, tool: InventoryTool): Promise<FollowUp> {
   if (tool.runNo === null || tool.runNo < 2) return {}
-  const [latest, previous] = await fetchLatestRuns(client, tool.toolId)
+  let runs: Awaited<ReturnType<typeof fetchLatestRuns>>
+  try {
+    runs = await fetchLatestRuns(client, tool.toolId)
+  } catch (error) {
+    logSkippedRead("Klar couldn't read the tool's last two runs.", error)
+    return {}
+  }
+  const [latest, previous] = runs
   if (latest?.runNo !== tool.runNo || Object.keys(latest.answers).length === 0) return {}
-  return { answers: latest.answers, previous: previous ?? undefined }
+  const before = previous && {
+    runId: previous.id,
+    runNo: previous.runNo,
+    result: previous.result,
+    answers: previous.answers,
+  }
+  return { runId: latest.id, answers: latest.answers, previous: before ?? undefined }
 }
 
 async function toToolResult(

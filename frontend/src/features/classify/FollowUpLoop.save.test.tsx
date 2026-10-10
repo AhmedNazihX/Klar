@@ -1,27 +1,32 @@
 // The follow-up loop with Supabase configured (P5b, P19): a re-run is saved as the tool's next
 // run with the answers it used, a stored tool shows what its last answer changed, Undo answer
-// deletes the latest run, and the company profile pre-selects the EU answer (decision 026 item 2).
-import { screen, within } from '@testing-library/react'
+// deletes the latest run by its row id, a run or undo that outlives its session is dropped, and
+// the company profile pre-selects the EU answer (decision 026 item 2).
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { QueryClient } from '@tanstack/react-query'
 import i18n from 'i18next'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ClassificationResult, ClassifyRequest, FollowUpQuestion } from '@/api'
+import { endAnonymousSession } from '@/hooks/use-anonymous-session'
 import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import {
   ANNEX_III_QUESTION,
   annexIIINeedsInfo,
+  CLASSIFY_URL,
   classifyHandler,
   decidedHighRisk,
   minimalRisk,
+  sseBody,
   WORKED_EXAMPLE_EVENTS,
 } from '@/test/classify-fixtures'
-import { toolRow } from '@/test/inventory-fixtures'
+import { CLASSIFICATIONS_URL, toolRow } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
-import { SUPABASE_URL } from '@/test/supabase-fixtures'
-import { renderRoute } from '@/test/test-utils'
+import { SIGNUP_URL } from '@/test/supabase-fixtures'
+import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 vi.mock('@/lib/supabase', async (importOriginal) => {
@@ -33,8 +38,9 @@ vi.mock('@/lib/supabase', async (importOriginal) => {
   }
 })
 
-const CLASSIFICATIONS_URL = `${SUPABASE_URL}/rest/v1/classifications`
 const ANSWER = `${ANNEX_III_QUESTION} No.`
+const RUN_1 = '0a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c01'
+const RUN_2 = '0a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c02'
 
 type Row = Record<string, unknown>
 
@@ -43,18 +49,21 @@ let tools: Row[] = []
 /** The tool's classifications rows, as the table holds them. */
 let runs: Row[] = []
 let inserts: Row[] = []
-let deletes: string[] = []
+/** Each delete's filter on the row id ("eq.<id>"). */
+let deletes: (string | null)[] = []
 let classifyBodies: ClassifyRequest[] = []
+let signups = 0
 
-/** PostgREST for classifications: reads newest first, inserts numbered by the "database", and
- *  deletes by system and run number. */
+/** PostgREST for classifications: reads newest first, inserts numbered as the database does (the
+ *  highest number plus one, so a deleted run's number comes back), and deletes by row id,
+ *  answering with the rows deleted. */
 function classificationsHandlers(insertError: { status: number; code: string } | null = null) {
   return [
-    http.get(CLASSIFICATIONS_URL, () =>
-      HttpResponse.json(
-        [...runs].sort((a, b) => Number(b['run_no']) - Number(a['run_no'])).slice(0, 2),
-      ),
-    ),
+    http.get(CLASSIFICATIONS_URL, ({ request }) => {
+      const limit = Number(new URL(request.url).searchParams.get('limit') ?? '2')
+      const newest = [...runs].sort((a, b) => Number(b['run_no']) - Number(a['run_no']))
+      return HttpResponse.json(newest.slice(0, limit))
+    }),
     http.post(CLASSIFICATIONS_URL, async ({ request }) => {
       const row = (await request.json()) as Row
       inserts.push(row)
@@ -64,13 +73,17 @@ function classificationsHandlers(insertError: { status: number; code: string } |
           { status: insertError.status },
         )
       }
-      const runNo = runs.length + 1
-      runs.push({ ...row, run_no: runNo })
-      return HttpResponse.json({ run_no: runNo }, { status: 201 })
+      const runNo = Math.max(0, ...runs.map((run) => Number(run['run_no']))) + 1
+      const id = crypto.randomUUID()
+      runs.push({ ...row, id, run_no: runNo })
+      return HttpResponse.json({ id, run_no: runNo }, { status: 201 })
     }),
     http.delete(CLASSIFICATIONS_URL, ({ request }) => {
-      deletes.push(new URL(request.url).search)
-      return new HttpResponse(null, { status: 204 })
+      const filter = new URL(request.url).searchParams.get('id')
+      deletes.push(filter)
+      const deleted = runs.filter((run) => `eq.${String(run['id'])}` === filter)
+      runs = runs.filter((run) => !deleted.includes(run))
+      return HttpResponse.json(deleted.map((run) => ({ id: run['id'] })))
     }),
   ]
 }
@@ -82,7 +95,12 @@ beforeEach(() => {
   inserts = []
   deletes = []
   classifyBodies = []
+  signups = 0
   server.use(
+    // Counts each sign-in, then falls through to the handler that answers it.
+    http.post(SIGNUP_URL, () => {
+      signups += 1
+    }),
     ...userDataHandlers(
       () => inventories,
       () => tools.length,
@@ -108,16 +126,25 @@ function storeTool(result: ClassificationResult, runNo = 1): string {
   return String(row['id'])
 }
 
-async function openTool(toolId: string, language: 'en' | 'de' = 'en') {
+/** The stored tool's first run, as the classifications table holds it. */
+function firstRun(result: ClassificationResult = annexIIINeedsInfo()): Row {
+  return { id: RUN_1, run_no: 1, result, inputs: null }
+}
+
+async function openTool(
+  toolId: string,
+  language: 'en' | 'de' = 'en',
+): Promise<{ user: ReturnType<typeof userEvent.setup>; client: QueryClient }> {
   await i18n.changeLanguage(language)
   const user = userEvent.setup()
-  renderRoute(`/app/inventory/${toolId}`)
+  const client = createTestQueryClient()
+  renderRoute(`/app/inventory/${toolId}`, client)
   await screen.findByRole(
     'heading',
     { level: 1, name: 'Shift planner' },
     { timeout: FIRST_RENDER_MS },
   )
-  return user
+  return { user, client }
 }
 
 async function answerNo(user: ReturnType<typeof userEvent.setup>): Promise<void> {
@@ -126,11 +153,25 @@ async function answerNo(user: ReturnType<typeof userEvent.setup>): Promise<void>
   await user.click(within(question).getByRole('button', { name: 'Add answer and run again' }))
 }
 
+/** A response held until `release` is called. */
+function holdUntilReleased(): { gate: Promise<void>; release: () => void } {
+  let release = (): void => undefined
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  return {
+    gate,
+    release: () => {
+      release()
+    },
+  }
+}
+
 describe('Saving a follow-up run', () => {
   it("adds the re-run as the tool's next run, with the answers beside the description", async () => {
     const toolId = storeTool(annexIIINeedsInfo())
-    runs = [{ run_no: 1, result: annexIIINeedsInfo(), inputs: null }]
-    const user = await openTool(toolId)
+    runs = [firstRun()]
+    const { user } = await openTool(toolId)
     await answerNo(user)
 
     const banner = await screen.findByRole('region', { name: 'Your answer changed the result.' })
@@ -152,16 +193,42 @@ describe('Saving a follow-up run', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
-  it('Undo answer deletes the latest run and shows the run before', async () => {
+  it('Undo answer deletes the re-run by its row id and shows the run before', async () => {
     const toolId = storeTool(annexIIINeedsInfo())
-    runs = [{ run_no: 1, result: annexIIINeedsInfo(), inputs: null }]
-    const user = await openTool(toolId)
+    runs = [firstRun()]
+    const { user } = await openTool(toolId)
     await answerNo(user)
     const banner = await screen.findByRole('region', { name: 'Your answer changed the result.' })
+    const added = String(runs[1]?.['id'])
 
     await user.click(within(banner).getByRole('button', { name: 'Undo answer' }))
     expect(await screen.findByRole('region', { name: ANNEX_III_QUESTION })).toBeVisible()
-    expect(deletes).toEqual([`?system_id=eq.${toolId}&run_no=eq.2`])
+    expect(deletes).toEqual([`eq.${added}`])
+    expect(runs.map((run) => run['id'])).toEqual([RUN_1])
+  })
+
+  it('an undo of a run already gone shows the tool as it is now, not the run before', async () => {
+    const toolId = storeTool(annexIIINeedsInfo())
+    runs = [firstRun()]
+    const { user } = await openTool(toolId)
+    await answerNo(user)
+    const banner = await screen.findByRole('region', { name: 'Your answer changed the result.' })
+    // Another tab undid the answer and ran the tool again: its run 2 is a newer, paid run that
+    // reuses the number of the one shown here.
+    const newer = { id: RUN_2, run_no: 2, result: decidedHighRisk(), inputs: null }
+    runs = [firstRun(), newer]
+    tools = [{ ...tools[0], run_no: 2, result: decidedHighRisk() }]
+
+    await user.click(within(banner).getByRole('button', { name: 'Undo answer' }))
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: /Your answer/ })).toBeNull()
+    })
+    // Nothing of the other tab's was deleted, and the run before isn't shown as the latest.
+    expect(runs.map((run) => run['id'])).toEqual([RUN_1, RUN_2])
+    const summary = screen.getByRole('region', { name: 'Result' })
+    expect(within(summary).getByText('High-risk')).toBeInTheDocument()
+    expect(within(summary).getByText('Decided')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: ANNEX_III_QUESTION })).toBeNull()
   })
 
   it.each([
@@ -188,7 +255,7 @@ describe('Saving a follow-up run', () => {
         ),
       )
       const toolId = storeTool(annexIIINeedsInfo())
-      const user = await openTool(toolId, language)
+      const { user } = await openTool(toolId, language)
       const question = screen.getByRole('region', { name: ANNEX_III_QUESTION })
       await user.click(within(question).getByRole('button', { name: no }))
       await user.click(within(question).getByRole('button', { name: runAgain }))
@@ -204,7 +271,7 @@ describe('Saving a follow-up run', () => {
   it('a re-run the inventory refuses still shows, with a note that it was not saved', async () => {
     server.use(...classificationsHandlers({ status: 400, code: 'PT507' }))
     const toolId = storeTool(annexIIINeedsInfo())
-    const user = await openTool(toolId)
+    const { user } = await openTool(toolId)
     await answerNo(user)
 
     expect(await screen.findByRole('alert')).toHaveAttribute('data-failure', 'storage-full')
@@ -218,12 +285,71 @@ describe('Saving a follow-up run', () => {
   })
 })
 
+describe('A re-run or an undo that outlives its session (sign-out, Delete my data)', () => {
+  it('drops a re-run that finishes after the session ended: nothing saved or shown', async () => {
+    const held = holdUntilReleased()
+    server.use(
+      http.post(CLASSIFY_URL, async ({ request }) => {
+        classifyBodies.push((await request.json()) as ClassifyRequest)
+        await held.gate
+        return new HttpResponse(sseBody([{ event: 'result', result: minimalRisk() }]), {
+          headers: { 'Content-Type': 'text/event-stream' },
+        })
+      }),
+    )
+    const toolId = storeTool(annexIIINeedsInfo())
+    runs = [firstRun()]
+    const { user, client } = await openTool(toolId)
+    const signupsBefore = signups
+    await answerNo(user)
+    await expect.poll(() => classifyBodies.length).toBe(1)
+
+    endAnonymousSession(client)
+    held.release()
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: "Checking in the Act's order" })).toBeNull()
+    })
+    expect(inserts).toEqual([])
+    expect(signups).toBe(signupsBefore)
+    expect(screen.queryByRole('region', { name: /Your answer/ })).toBeNull()
+    expect(screen.getByRole('region', { name: ANNEX_III_QUESTION })).toBeVisible()
+  })
+
+  it('keeps the run before off the screen when the session ends during an undo', async () => {
+    const toolId = storeTool(annexIIINeedsInfo())
+    runs = [firstRun()]
+    const { user, client } = await openTool(toolId)
+    await answerNo(user)
+    const banner = await screen.findByRole('region', { name: 'Your answer changed the result.' })
+    const held = holdUntilReleased()
+    server.use(
+      http.delete(CLASSIFICATIONS_URL, async ({ request }) => {
+        deletes.push(new URL(request.url).searchParams.get('id'))
+        await held.gate
+        return HttpResponse.json([{ id: runs[1]?.['id'] }])
+      }),
+    )
+
+    const undo = within(banner).getByRole('button', { name: 'Undo answer' })
+    await user.click(undo)
+    await expect.poll(() => deletes.length).toBe(1)
+    endAnonymousSession(client)
+    held.release()
+    await waitFor(() => {
+      expect(undo).toBeEnabled()
+    })
+    expect(screen.getByRole('region', { name: 'Your answer changed the result.' })).toBeVisible()
+    expect(screen.queryByRole('region', { name: ANNEX_III_QUESTION })).toBeNull()
+  })
+})
+
 describe('A stored tool after an answer', () => {
   it('shows what its last answer changed, read from its last two runs', async () => {
     const toolId = storeTool(minimalRisk(), 2)
     runs = [
-      { run_no: 1, result: annexIIINeedsInfo(), inputs: { description: 'd', answers: {} } },
+      { id: RUN_1, run_no: 1, result: annexIIINeedsInfo(), inputs: { description: 'd' } },
       {
+        id: RUN_2,
         run_no: 2,
         result: minimalRisk(),
         inputs: { description: 'd', answers: { used_for_recruitment: ANSWER } },
@@ -234,7 +360,7 @@ describe('A stored tool after an answer', () => {
       name: 'Ihre Antwort hat das Ergebnis geändert.',
     })
     expect(banner).toHaveTextContent('Durchlauf 2 von 2')
-    expect(banner).toHaveTextContent(`Sie haben angegeben: „${ANSWER}“`)
+    expect(banner).toHaveTextContent(`Sie haben auf „${ANNEX_III_QUESTION}“ mit „No“ geantwortet`)
   })
 
   it.each([
@@ -243,16 +369,32 @@ describe('A stored tool after an answer', () => {
     ['inputs Klar cannot read', { answers: 'not a map' }],
   ])('shows no change for a second run from %s', async (_, inputs) => {
     const toolId = storeTool(minimalRisk(), 2)
-    runs = [
-      { run_no: 1, result: annexIIINeedsInfo(), inputs: null },
-      { run_no: 2, result: minimalRisk(), inputs },
-    ]
+    runs = [firstRun(), { id: RUN_2, run_no: 2, result: minimalRisk(), inputs }]
     await openTool(toolId)
     // The stored result still shows; only the banner of an answer's re-run is left out.
     expect(
       within(screen.getByRole('region', { name: 'Result' })).getByText('Minimal risk'),
     ).toBeVisible()
     expect(screen.queryByRole('region', { name: /Your answer/ })).toBeNull()
+  })
+
+  it('still shows the result when its last two runs cannot be read', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    server.use(
+      http.get(CLASSIFICATIONS_URL, () =>
+        HttpResponse.json({ code: '57014', message: 'canceling statement' }, { status: 500 }),
+      ),
+    )
+    const toolId = storeTool(minimalRisk(), 2)
+    await openTool(toolId)
+    expect(
+      within(screen.getByRole('region', { name: 'Result' })).getByText('Minimal risk'),
+    ).toBeVisible()
+    expect(screen.queryByRole('region', { name: /Your answer/ })).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+    // Logged with its code only: no user text reaches the console.
+    expect(warn).toHaveBeenCalledWith("Klar couldn't read the tool's last two runs.", '57014')
+    warn.mockRestore()
   })
 })
 
@@ -273,8 +415,8 @@ describe('The company profile pre-selects the EU answer (decision 026 item 2)', 
   ] as const)('pre-selects Yes for a company %s; it is sent only on a run', async (_, profile) => {
     inventories = [inventoryRow(profile)]
     const toolId = storeTool(asksEuLink())
-    const user = await openTool(toolId)
-    const panel = screen.getByRole('region', { name: 'Please confirm 1 fact' })
+    const { user } = await openTool(toolId)
+    const panel = screen.getByRole('region', { name: '1 open question' })
     const group = within(panel).getByRole('group', { name: EU_LINK.text })
     await expect
       .poll(() => within(group).getByRole('button', { name: 'Yes' }).getAttribute('aria-pressed'))
@@ -293,7 +435,7 @@ describe('The company profile pre-selects the EU answer (decision 026 item 2)', 
     inventories = [inventoryRow({ established_in: 'US' })]
     const toolId = storeTool(asksEuLink())
     await openTool(toolId, 'de')
-    const panel = screen.getByRole('region', { name: 'Bitte bestätigen Sie 1 Angabe' })
+    const panel = screen.getByRole('region', { name: '1 offene Frage' })
     const group = within(panel).getByRole('group', { name: EU_LINK.text })
     expect(within(group).getByRole('button', { name: 'Ja' })).toHaveAttribute(
       'aria-pressed',
@@ -314,4 +456,36 @@ describe('The company profile pre-selects the EU answer (decision 026 item 2)', 
       ),
     ).toBeVisible()
   })
+
+  it.each([
+    ['en', 'Confirm', 'Confirmed: HR reviews every shortlist.'],
+    ['de', 'Bestätigen', 'Bestätigt: HR reviews every shortlist.'],
+  ] as const)(
+    'Confirm on a fact card sends only that fact with the run, not the pre-filled answer (%s)',
+    async (language, confirm, line) => {
+      inventories = [inventoryRow({ used_in: 'eu' })]
+      const result: ClassificationResult = {
+        ...asksEuLink(),
+        deciding_facts: [{ text: 'HR reviews every shortlist.', evidence: 'assumed' }],
+      }
+      const toolId = storeTool(result, 2)
+      const earlier = { human_review: 'HR reads every one.' }
+      runs = [
+        firstRun(),
+        { id: RUN_2, run_no: 2, result, inputs: { description: 'd', answers: earlier } },
+      ]
+      const { user } = await openTool(toolId, language)
+      const panel = screen.getByRole('region', { name: /^1 (open question|offene Frage)$/ })
+      await expect
+        .poll(() => within(panel).getAllByRole('button', { pressed: true }).length)
+        .toBe(1)
+
+      const facts = screen.getByRole('complementary', {
+        name: language === 'en' ? 'The result rests on' : 'Das Ergebnis beruht auf',
+      })
+      await user.click(within(facts).getByRole('button', { name: confirm }))
+      await expect.poll(() => classifyBodies.length).toBe(1)
+      expect(classifyBodies[0]?.answers).toEqual({ ...earlier, confirmed_fact_1: line })
+    },
+  )
 })

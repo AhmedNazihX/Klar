@@ -88,12 +88,14 @@ function VendorQuestion({ text }: { text: string }): JSX.Element {
  * The question that decides a result Klar had to assume (artboard `ResultNeedsInfo`, decision 026
  * items 13 and 18): the question in the user's terms and why it matters, its answers, what a yes
  * and a no would mean, the question to ask a vendor, and the provisions it rests on. The model's
- * words are shown as plain text. Answering it runs the checks again (the follow-up loop, P5b).
+ * words are shown as plain text. Answering it runs the checks again (the follow-up loop, P5b);
+ * `runCount` puts the screen's run action here (when no other questions follow).
  */
 export function DecidingQuestion({
   question,
+  runCount,
   ...answers
-}: { question: FollowUpQuestion } & AnswerProps): JSX.Element {
+}: { question: FollowUpQuestion; runCount?: number } & AnswerProps): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
@@ -132,7 +134,7 @@ export function DecidingQuestion({
           {citation.quote}
         </Citation>
       ))}
-      <RunAgainButton count={1} {...answers} />
+      {runCount !== undefined && <RunAgainButton count={runCount} {...answers} />}
       <p className="m-0 text-caption font-normal text-ink-2">{t('result.question.assumption')}</p>
     </GlassPanel>
   )

@@ -93,7 +93,7 @@ export function RerunChange({
 }): JSX.Element {
   const { t } = useTranslation()
   const { previous, result } = run
-  const said = newAnswers(run.answers, previous.answers)
+  const said = newAnswers(t, previous.result, run.answers, previous.answers)
   const number = runNumber(run)
   return (
     <>
@@ -115,7 +115,7 @@ export function RerunChange({
         {said.length > 0 && (
           <ul className="m-0 flex list-none flex-col gap-1 p-0 text-body-small text-ink">
             {said.map((text) => (
-              <li key={text}>{t('followUp.banner.youSaid', { answer: text })}</li>
+              <li key={text}>{text}</li>
             ))}
           </ul>
         )}

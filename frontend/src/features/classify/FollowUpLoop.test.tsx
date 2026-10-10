@@ -31,6 +31,7 @@ import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { putRun, type ClassificationRun } from './classification-store'
+import { uniqueFacts } from './result-text'
 
 const TOOL_ID = 'applicant-screening'
 // Axe can't compute contrast over glass in jsdom (AppFrame.test.tsx does the same).
@@ -76,7 +77,7 @@ async function openResult(
 
 function stepRow(name: RegExp): HTMLElement {
   const section = screen.getByRole('region', {
-    name: /How Klar got here|Wie Klar zum Ergebnis kam/,
+    name: /how Klar got here|wie Klar zum Ergebnis kam/i,
   })
   return within(section).getByRole('button', { name })
 }
@@ -106,7 +107,9 @@ describe('Answering the question that decides a result', () => {
       },
     ])
     expect(banner).toHaveTextContent('Run 2 of 2')
-    expect(banner).toHaveTextContent(`You said: “${ANNEX_III_QUESTION} No.”`)
+    // The answer as the user gave it, not the line the engine read.
+    expect(banner).toHaveTextContent(`You said “No” to “${ANNEX_III_QUESTION}”`)
+    expect(banner).not.toHaveTextContent(`${ANNEX_III_QUESTION} No.`)
     expect(within(banner).getByText('High-risk, assumed')).toBeInTheDocument()
     expect(within(banner).getByText('Minimal risk')).toBeInTheDocument()
     // The re-run result is the one shown, and the question is gone.
@@ -115,6 +118,9 @@ describe('Answering the question that decides a result', () => {
     expect(screen.queryByRole('region', { name: ANNEX_III_QUESTION })).toBeNull()
     expect(stepRow(/^3 High-risk/)).toHaveTextContent('Changed: Not high-risk')
     expect(stepRow(/^1 Scope/)).not.toHaveTextContent('Changed')
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Run 2: how Klar got here' }),
+    ).toBeVisible()
   })
 
   it('lists what changed in the inventory, obligations and needs-you lists', async () => {
@@ -129,7 +135,7 @@ describe('Answering the question that decides a result', () => {
     expect(rows.map((row) => row.textContent)).toEqual([
       'High-risk, assumed→changed toMinimal risk',
       expect.stringMatching(/^\d+ possible duties→changed to1 duty$/),
-      'Answer 1 question to finish the check→changed toNothing to do',
+      'Answer 1 question→changed toNothing to do',
     ])
   })
 
@@ -157,7 +163,8 @@ describe('Answering the question that decides a result', () => {
       within(question).getByRole('textbox', { name: asked.text }),
       '  It is a model trained on past hiring data.  ',
     )
-    await user.click(within(question).getByRole('button', { name: 'Add answer and run again' }))
+    // The worked example asks more questions: the one run action sits under the last panel.
+    await user.click(screen.getByRole('button', { name: 'Add answers and run again' }))
 
     await screen.findByRole('region', { name: 'Your answer changed the result.' })
     expect(bodies[0]?.answers).toEqual({ ai_system: 'It is a model trained on past hiring data.' })
@@ -220,32 +227,60 @@ describe('Answering the question that decides a result', () => {
     expect(await navigator.clipboard.readText()).toBe(ANNEX_III_QUESTION)
   })
 
-  it('a failed re-run keeps the result; Try again sends the same answers once', async () => {
-    const bodies: unknown[] = []
-    server.use(
-      http.post(CLASSIFY_URL, async ({ request }) => {
-        bodies.push(await request.json())
-        return HttpResponse.json({ detail: 'busy' }, { status: 503 })
-      }),
-    )
-    const { user } = await openResult(annexIIINeedsInfo())
-    const question = screen.getByRole('region', { name: ANNEX_III_QUESTION })
-    await user.click(within(question).getByRole('button', { name: 'Yes' }))
-    await user.click(within(question).getByRole('button', { name: 'Add answer and run again' }))
+  it.each([
+    [
+      'en',
+      'Yes',
+      'Add answer and run again',
+      'Try again',
+      'Your earlier result still stands',
+      'Your answers are kept. Try again to run the checks with them.',
+      "The checks couldn't finish",
+      'Nothing is lost',
+    ],
+    [
+      'de',
+      'Ja',
+      'Antwort hinzufügen und erneut prüfen',
+      'Erneut versuchen',
+      'Ihr bisheriges Ergebnis gilt weiter',
+      'Ihre Antworten bleiben erhalten. Versuchen Sie es erneut, um die Prüfungen damit durchzuführen.',
+      'Die Prüfungen konnten nicht abgeschlossen werden',
+      'Nichts geht verloren',
+    ],
+  ] as const)(
+    'a failed re-run says the result shown stands and the answers are kept; Try again sends them once (%s)',
+    async (language, yes, runAgain, tryAgain, title, body, firstRunTitle, firstRunBody) => {
+      const bodies: unknown[] = []
+      server.use(
+        http.post(CLASSIFY_URL, async ({ request }) => {
+          bodies.push(await request.json())
+          return HttpResponse.json({ detail: 'busy' }, { status: 503 })
+        }),
+      )
+      const { user } = await openResult(annexIIINeedsInfo(), { language })
+      const question = screen.getByRole('region', { name: ANNEX_III_QUESTION })
+      await user.click(within(question).getByRole('button', { name: yes }))
+      await user.click(within(question).getByRole('button', { name: runAgain }))
 
-    const alert = await screen.findByRole('alert')
-    expect(alert).toHaveTextContent("The checks couldn't finish")
-    // No class from a failed run: the result shown is still the one before.
-    expect(screen.queryByRole('region', { name: /Your answer/ })).toBeNull()
-    expect(bodies).toHaveLength(1)
+      const alert = await screen.findByRole('alert')
+      expect(alert).toHaveTextContent(title)
+      expect(alert).toHaveTextContent(body)
+      // Not the Classify screen's words, which say there is no result yet.
+      expect(alert).not.toHaveTextContent(firstRunTitle)
+      expect(alert).not.toHaveTextContent(firstRunBody)
+      // No class from a failed run: the result shown is still the one before.
+      expect(screen.queryByRole('region', { name: /Your answer|Ihre Antwort/ })).toBeNull()
+      expect(bodies).toHaveLength(1)
 
-    await user.click(within(alert).getByRole('button', { name: 'Try again' }))
-    await expect.poll(() => bodies.length).toBe(2)
-    expect(bodies[1]).toEqual(bodies[0])
-    expect(bodies[1]).toMatchObject({
-      answers: { used_for_recruitment: `${ANNEX_III_QUESTION} Yes.` },
-    })
-  })
+      await user.click(within(alert).getByRole('button', { name: tryAgain }))
+      await expect.poll(() => bodies.length).toBe(2)
+      expect(bodies[1]).toEqual(bodies[0])
+      expect(bodies[1]).toMatchObject({
+        answers: { used_for_recruitment: `${ANNEX_III_QUESTION} ${yes}.` },
+      })
+    },
+  )
 
   it('passes axe after an answer', async () => {
     rerunReturns(minimalRisk())
@@ -279,16 +314,20 @@ describe('Answering in German', () => {
       answers: { used_for_recruitment: `${ANNEX_III_QUESTION} Nein.` },
     })
     expect(banner).toHaveTextContent('Durchlauf 2 von 2')
-    expect(banner).toHaveTextContent(`Sie haben angegeben: „${ANNEX_III_QUESTION} Nein.“`)
+    expect(banner).toHaveTextContent(`Sie haben auf „${ANNEX_III_QUESTION}“ mit „Nein“ geantwortet`)
     expect(within(banner).getByRole('button', { name: 'Antwort rückgängig machen' })).toBeVisible()
-    expect(
-      screen.getByRole('region', { name: 'Was sich in Ihren Listen geändert hat' }),
-    ).toHaveTextContent('Nichts zu tun')
+    const lists = screen.getByRole('region', { name: 'Was sich in Ihren Listen geändert hat' })
+    expect(within(lists).getAllByRole('definition')[2]).toHaveTextContent(
+      '1 Frage beantworten→geändert zuNichts zu tun',
+    )
     expect(stepRow(/^3 Hochrisiko/)).toHaveTextContent('Geändert: ')
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Durchlauf 2: wie Klar zum Ergebnis kam' }),
+    ).toBeVisible()
   })
 })
 
-describe('Please confirm N facts', () => {
+describe('The open questions panel', () => {
   const legacyQuestion: FollowUpQuestion = {
     id: 'significant_design_change',
     text: "Is a significant change to the system's design or intended purpose planned or foreseen?",
@@ -308,15 +347,15 @@ describe('Please confirm N facts', () => {
   it.each([
     [
       'en',
-      'Please confirm 2 facts',
-      'Klar assumed these. They can change the result.',
+      '2 open questions',
+      "Klar couldn't settle these from the description. Your answers can change the result.",
       'No',
       'No.',
     ],
     [
       'de',
-      'Bitte bestätigen Sie 2 Angaben',
-      'Klar hat diese angenommen. Sie können das Ergebnis ändern.',
+      '2 offene Fragen',
+      'Klar konnte diese nicht aus der Beschreibung klären. Ihre Antworten können das Ergebnis ändern.',
       'Nein',
       'Nein.',
     ],
@@ -354,7 +393,7 @@ describe('Please confirm N facts', () => {
     const { user } = await openResult(withQuestions(), {
       run: { runNo: 2, answers: earlier },
     })
-    const panel = screen.getByRole('region', { name: 'Please confirm 2 facts' })
+    const panel = screen.getByRole('region', { name: '2 open questions' })
     await user.click(
       within(within(panel).getByRole('group', { name: legacyQuestion.text })).getByRole('button', {
         name: 'Yes',
@@ -370,30 +409,94 @@ describe('Please confirm N facts', () => {
       await screen.findByRole('region', { name: "Your answer didn't change the class." }),
     ).toHaveTextContent('Run 3 of 3')
   })
+
+  it.each([
+    ['en', 'Add answers and run again', 'Answer 3 questions'],
+    ['de', 'Antworten hinzufügen und erneut prüfen', '3 Fragen beantworten'],
+  ] as const)(
+    'offers one run action for the deciding question and the panel, and sends both (%s)',
+    async (language, runAgain, needs) => {
+      const bodies = rerunReturns(minimalRisk())
+      const result: ClassificationResult = {
+        ...annexIIINeedsInfo(),
+        follow_up_questions: [
+          ...(annexIIINeedsInfo().follow_up_questions ?? []),
+          legacyQuestion,
+          wordsQuestion,
+        ],
+      }
+      const { user } = await openResult(result, { language })
+      const deciding = screen.getByRole('region', { name: ANNEX_III_QUESTION })
+      expect(within(deciding).queryByRole('button', { name: /run again|erneut prüfen/ })).toBeNull()
+      expect(screen.getAllByRole('button', { name: runAgain })).toHaveLength(1)
+
+      await user.click(
+        within(deciding).getByRole('button', { name: language === 'en' ? 'No' : 'Nein' }),
+      )
+      await user.type(screen.getByRole('textbox', { name: wordsQuestion.text }), 'HR reads all.')
+      await user.click(screen.getByRole('button', { name: runAgain }))
+
+      await expect.poll(() => bodies.length).toBe(1)
+      expect(Object.keys(bodies[0]?.answers ?? {})).toEqual([
+        'used_for_recruitment',
+        'human_review',
+      ])
+      // "Needs you" counts what the paused screen asked: the deciding question and two more.
+      const lists = await screen.findByRole('region', {
+        name:
+          language === 'en'
+            ? 'What changed in your lists'
+            : 'Was sich in Ihren Listen geändert hat',
+      })
+      expect(within(lists).getAllByRole('definition')[2]).toHaveTextContent(needs)
+    },
+  )
 })
 
 describe('Confirm on an assumed fact', () => {
-  it('confirms through the engine’s own question and shows the re-run result', async () => {
-    const bodies = rerunReturns(decidedHighRisk())
-    const confirmQuestion: FollowUpQuestion = {
-      id: 'confirm_the_company_bought_the_tool',
-      text: 'Please confirm: The company bought the tool.',
-      options: ['yes', 'no', 'not_sure'],
-    }
-    const result: ClassificationResult = {
+  const FACT = 'The company bought the tool.'
+  const confirmQuestion: FollowUpQuestion = {
+    id: 'confirm_the_company_bought_the_tool',
+    text: `Please confirm: ${FACT}`,
+    options: ['yes', 'no', 'not_sure'],
+  }
+
+  function assumesFact(): ClassificationResult {
+    return {
       ...decidedHighRisk(),
-      deciding_facts: [{ text: 'The company bought the tool.', evidence: 'assumed' }],
+      deciding_facts: [{ text: FACT, evidence: 'assumed' }],
       follow_up_questions: [confirmQuestion],
     }
-    const { user } = await openResult(result)
-    const facts = screen.getByRole('complementary', { name: 'The result rests on' })
-    await user.click(within(facts).getByRole('button', { name: 'Confirm' }))
+  }
 
-    await screen.findByRole('region', { name: "Your answer didn't change the class." })
-    expect(bodies[0]?.answers).toEqual({
-      confirm_the_company_bought_the_tool: 'Please confirm: The company bought the tool. Yes.',
-    })
-  })
+  it.each([
+    ['en', 'Confirm', /open questions?$/, `You confirmed: “${FACT}”`],
+    ['de', 'Bestätigen', /offene Fragen?$/, `Sie haben bestätigt: „${FACT}“`],
+  ] as const)(
+    'confirms through the engine’s own question, asked only on the card (%s)',
+    async (language, confirm, panel, said) => {
+      const bodies = rerunReturns(decidedHighRisk())
+      const { user } = await openResult(assumesFact(), { language })
+      // The fact has one control, Confirm on its card: the panel doesn't ask it again.
+      expect(screen.queryByRole('region', { name: panel })).toBeNull()
+      expect(screen.queryByRole('group', { name: confirmQuestion.text })).toBeNull()
+      const facts = screen.getByRole('complementary', {
+        name: language === 'en' ? 'The result rests on' : 'Das Ergebnis beruht auf',
+      })
+      await user.click(within(facts).getByRole('button', { name: confirm }))
+
+      const banner = await screen.findByRole('region', {
+        name:
+          language === 'en'
+            ? "Your answer didn't change the class."
+            : 'Ihre Antwort hat die Einstufung nicht geändert.',
+      })
+      expect(bodies[0]?.answers).toEqual({
+        confirm_the_company_bought_the_tool: `${confirmQuestion.text} ${language === 'en' ? 'Yes' : 'Ja'}.`,
+      })
+      expect(banner).toHaveTextContent(said)
+    },
+  )
 
   it('states a fact no question asks about as the user’s own, in German', async () => {
     const bodies = rerunReturns(decidedHighRisk())
@@ -401,7 +504,6 @@ describe('Confirm on an assumed fact', () => {
       ...decidedHighRisk(),
       deciding_facts: [{ text: 'HR reviews every shortlist.', evidence: 'assumed' }],
     }
-    await i18n.changeLanguage('de')
     const { user } = await openResult(result, { language: 'de' })
     const facts = screen.getByRole('complementary', { name: 'Das Ergebnis beruht auf' })
     await user.click(within(facts).getByRole('button', { name: 'Bestätigen' }))
@@ -409,6 +511,50 @@ describe('Confirm on an assumed fact', () => {
     expect(bodies[0]?.answers).toEqual({
       confirmed_fact_1: 'Bestätigt: HR reviews every shortlist.',
     })
+    expect(
+      await screen.findByRole('region', {
+        name: 'Ihre Antwort hat die Einstufung nicht geändert.',
+      }),
+    ).toHaveTextContent('Sie haben bestätigt: „HR reviews every shortlist.“')
+  })
+
+  it('sends only the confirmation, not an answer drafted in the panel', async () => {
+    const bodies = rerunReturns(decidedHighRisk())
+    const drafted: FollowUpQuestion = {
+      id: 'human_review',
+      text: 'Does a person review the shortlist?',
+      options: ['yes', 'no', 'not_sure'],
+    }
+    const result: ClassificationResult = {
+      ...assumesFact(),
+      follow_up_questions: [confirmQuestion, drafted],
+    }
+    const { user } = await openResult(result, { run: { answers: { eu_link: 'In the EU. Yes.' } } })
+    const panel = screen.getByRole('region', { name: '1 open question' })
+    await user.click(within(panel).getByRole('button', { name: 'No' }))
+    const facts = screen.getByRole('complementary', { name: 'The result rests on' })
+    await user.click(within(facts).getByRole('button', { name: 'Confirm' }))
+
+    await expect.poll(() => bodies.length).toBe(1)
+    expect(bodies[0]?.answers).toEqual({
+      eu_link: 'In the EU. Yes.',
+      confirm_the_company_bought_the_tool: `${confirmQuestion.text} Yes.`,
+    })
+  })
+})
+
+describe('The worked example’s questions', () => {
+  it('leaves the assumed facts to their cards: no question asks one of them again', async () => {
+    await openResult(WORKED_EXAMPLE)
+    const facts = screen.getByRole('complementary', { name: 'The result rests on' })
+    const assumed = uniqueFacts(WORKED_EXAMPLE.deciding_facts ?? [])
+      .filter((fact) => fact.evidence === 'assumed')
+      .map((fact) => fact.text)
+    expect(within(facts).getAllByRole('button', { name: 'Confirm' })).toHaveLength(4)
+    expect(assumed).toHaveLength(4)
+    for (const fact of assumed) {
+      expect(screen.queryByRole('group', { name: (name) => name.includes(fact) })).toBeNull()
+    }
   })
 })
 

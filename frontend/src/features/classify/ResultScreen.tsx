@@ -48,6 +48,8 @@ function SummaryView({
   const { result } = run
   const { deciding, others, answerProps, confirm, tryAgain } = useFollowUpAnswers(run, followUp)
   const isRerunShown = followUp.isRunning || followUp.failure !== null
+  // One run action for every question asked, under the last panel (artboard `ResultNeedsInfo`).
+  const runCount = others.length + (deciding ? 1 : 0)
 
   function editDescription(): void {
     // The answers go into the text, and the run onto this tool (P6), unless it was never saved.
@@ -83,16 +85,25 @@ function SummaryView({
           hasUndoFailed={followUp.hasUndoFailed}
         />
       )}
-      <ResultVerdict result={result} today={new Date()} />
+      <ResultVerdict result={result} name={run.name} today={new Date()} />
       <OriginalTextNote run={run} onCompare={onCompare} />
-      {deciding && <DecidingQuestion question={deciding} {...answerProps} />}
-      {others.length > 0 && <FollowUpQuestions questions={others} {...answerProps} />}
+      {deciding && (
+        <DecidingQuestion
+          question={deciding}
+          runCount={others.length === 0 ? runCount : undefined}
+          {...answerProps}
+        />
+      )}
+      {others.length > 0 && (
+        <FollowUpQuestions questions={others} runCount={runCount} {...answerProps} />
+      )}
       {isRerunShown && (
         <ProgressPanel
           progress={followUp.progress}
           isRunning={followUp.isRunning}
           failure={followUp.failure}
           onTryAgain={tryAgain}
+          isRerun
         />
       )}
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
@@ -111,6 +122,7 @@ function SummaryView({
       <StepsPanel
         result={result}
         previous={run.previous?.result}
+        runNo={runNumber(run)}
         onExpandAll={() => {
           onViewChange('reviewer')
         }}

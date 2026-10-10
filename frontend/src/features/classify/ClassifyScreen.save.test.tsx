@@ -1,6 +1,6 @@
 // Classify with Supabase configured (P6): a finished run becomes a tool in the inventory. The
 // other Classify tests run without Supabase, where nothing is saved.
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18n from 'i18next'
 import { http, HttpResponse } from 'msw'
@@ -14,7 +14,7 @@ import {
   WORKED_EXAMPLE_DESCRIPTION,
   WORKED_EXAMPLE_EVENTS,
 } from '@/test/classify-fixtures'
-import { SAVE_TOOL_URL } from '@/test/inventory-fixtures'
+import { CLASSIFICATIONS_URL, SAVE_TOOL_URL, savedRunHandler } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
 import {
@@ -69,6 +69,7 @@ beforeEach(() => {
     classifyHandler(WORKED_EXAMPLE_EVENTS, () => {
       classifyRequests += 1
     }),
+    savedRunHandler(),
   )
 })
 afterAll(async () => {
@@ -116,6 +117,29 @@ describe('Classify, saving the run to the inventory', () => {
     ])
     expect(screen.queryByRole('alert')).toBeNull()
     expect(classifyRequests).toBe(1)
+  })
+
+  it('opens the saved run even when its number cannot be read back', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    server.use(
+      saveHandler(),
+      http.get(CLASSIFICATIONS_URL, () =>
+        HttpResponse.json({ code: '57014', message: 'canceling statement' }, { status: 500 }),
+      ),
+    )
+    const { router } = await classify('Applicant screening')
+
+    await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${SYSTEM_ID}`)
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Applicant screening' }),
+    ).toBeInTheDocument()
+    // The run was saved: no note says otherwise.
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(warn).toHaveBeenCalledWith(
+      "Klar couldn't read back the number of the run it saved.",
+      '57014',
+    )
+    warn.mockRestore()
   })
 
   it.each([
@@ -265,6 +289,36 @@ describe('Classify, a draft for a tool the user has', () => {
     await expect.poll(() => saves.length).toBe(1)
     expect(saves[0]).toMatchObject({ tool_name: 'Old screener', target_system_id: null })
     await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${SYSTEM_ID}`)
+  })
+
+  it('keeps the number the database gave a run saved on that tool, not run 1', async () => {
+    // The tool had two runs: this one is its run 3. Its re-run's save is refused, so the screen
+    // numbers the re-run from the saved run's number alone.
+    server.use(
+      savedRunHandler(3),
+      http.post(CLASSIFICATIONS_URL, () =>
+        HttpResponse.json({ code: 'XX000', message: 'refused' }, { status: 500 }),
+      ),
+    )
+    const { user } = await openDraft()
+    await user.click(screen.getByRole('button', { name: 'Run the checks' }))
+    const asked = WORKED_EXAMPLE.steps.find((step) => step.step === 'scope')?.missing_fact
+    if (!asked) throw new Error('The recorded result pauses at scope.')
+    const question = await screen.findByRole(
+      'region',
+      { name: asked.text },
+      { timeout: FIRST_RENDER_MS },
+    )
+    await user.type(
+      within(question).getByRole('textbox', { name: asked.text }),
+      'A model trained on past hiring data.',
+    )
+    await user.click(screen.getByRole('button', { name: /^Add answers? and run again$/ }))
+
+    const banner = await screen.findByRole('region', {
+      name: "Your answer didn't change the class.",
+    })
+    expect(banner).toHaveTextContent('Run 4 of 4')
   })
 
   it('shows no line for a new tool', async () => {

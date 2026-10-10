@@ -5,6 +5,8 @@ import { EU_MEMBER_STATES } from '@/features/welcome/countries'
 import type { CompanyProfile } from '@/lib/company-profile'
 import type { Answers } from '@/lib/tool-runs'
 
+import { pausedStep, restingFacts } from './result-text'
+
 // The follow-up loop's answers (story P5b, decision 019): what the user picked or wrote for each
 // key-fact question becomes one line of text the engine reads appended to the description. The
 // API bounds them (ClassifyRequest: ids are slugs, at most 40 answers of 1000 characters, none
@@ -96,7 +98,38 @@ export function mergeAnswers(earlier: Answers | undefined, next: Answers): Answe
   return Object.fromEntries(kept)
 }
 
-const CONFIRMED_PREFIX = 'confirmed_fact_'
+/** The facts a result rests on that Klar assumed: each card offers Confirm. */
+export function assumedFacts(result: ClassificationResult): string[] {
+  return restingFacts(result)
+    .filter((fact) => fact.evidence === 'assumed')
+    .map((fact) => fact.text)
+}
+
+/** The assumed fact a question asks the user to confirm (the engine's "Please confirm: <fact>",
+ *  answered Yes or No), if it is one of `facts`. */
+export function confirmedFact(question: FollowUpQuestion, facts: readonly string[]): string | null {
+  if (!isAnswerable(question) || !optionsOf(question).includes('yes')) return null
+  return facts.find((fact) => question.text.endsWith(fact)) ?? null
+}
+
+/** The questions a result's screen asks: the one that decides a paused result, and the others
+ *  in the questions panel. A question confirming an assumed fact isn't asked there: its fact
+ *  card's Confirm answers it, so each fact has one control. */
+export function askedQuestions(result: ClassificationResult): {
+  deciding: FollowUpQuestion | null
+  others: FollowUpQuestion[]
+} {
+  const deciding =
+    result.status === 'needs_more_information' ? (pausedStep(result)?.missing_fact ?? null) : null
+  const facts = assumedFacts(result)
+  const others = answerableQuestions(result).filter(
+    (question) => question.id !== deciding?.id && confirmedFact(question, facts) === null,
+  )
+  return { deciding, others }
+}
+
+/** The id of a fact the user confirmed that no question asked about. */
+export const CONFIRMED_PREFIX = 'confirmed_fact_'
 
 /** Confirm on an assumed fact (user, 2026-10-07): Yes to the engine's own "Please confirm:
  *  <fact>" question when it asked one; otherwise the fact as the user's statement, under the
@@ -107,10 +140,7 @@ export function confirmation(
   earlier: Answers | undefined,
   fact: string,
 ): Answers {
-  const asked = questions.find(
-    (question) =>
-      isAnswerable(question) && optionsOf(question).includes('yes') && question.text.endsWith(fact),
-  )
+  const asked = questions.find((question) => confirmedFact(question, [fact]) !== null)
   const yes = asked && answerText(t, asked, { option: 'yes' })
   if (asked && yes) return { [asked.id]: yes }
   const taken = Object.keys(earlier ?? {}).filter((id) => id.startsWith(CONFIRMED_PREFIX)).length

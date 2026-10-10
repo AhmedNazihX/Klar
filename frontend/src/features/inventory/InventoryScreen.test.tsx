@@ -24,6 +24,7 @@ import {
   INVENTORY_TOOLS_URL,
   prohibitedResult,
   SAVE_TOOL_URL,
+  savedRunHandler,
   toolRow,
 } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
@@ -597,6 +598,7 @@ describe("A tool's result page, read from the inventory", () => {
       classifyHandler(WORKED_EXAMPLE_EVENTS, () => {
         classifyRequests += 1
       }),
+      savedRunHandler(),
       // As the database does it: the run lands on the tool it names, as that tool's next run.
       http.post(SAVE_TOOL_URL, async ({ request }) => {
         const body = (await request.json()) as Record<string, unknown>

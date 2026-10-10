@@ -399,14 +399,14 @@
       "dialogBody": "Ihre Tools mit Beschreibungen und Ergebnissen, Ihre Antworten für Dokumente, abgehakten Pflichten und Ihr Unternehmensprofil werden endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
       "dialogBodyCounts": "Klar löscht {{items}} endgültig. Das lässt sich nicht rückgängig machen.",
       "lost": {
-        "systems_one": "{{count}}\u00a0Tool",
-        "systems_other": "{{count}}\u00a0Tools",
-        "classifications_one": "{{count}}\u00a0Ergebnis",
-        "classifications_other": "{{count}}\u00a0Ergebnisse",
-        "interviewAnswers_one": "{{count}}\u00a0Antwort für Dokumente",
-        "interviewAnswers_other": "{{count}}\u00a0Antworten für Dokumente",
-        "dutyProgress_one": "{{count}}\u00a0abgehakte Pflicht",
-        "dutyProgress_other": "{{count}}\u00a0abgehakte Pflichten",
+        "systems_one": "{{count}} Tool",
+        "systems_other": "{{count}} Tools",
+        "classifications_one": "{{count}} Ergebnis",
+        "classifications_other": "{{count}} Ergebnisse",
+        "interviewAnswers_one": "{{count}} Antwort für Dokumente",
+        "interviewAnswers_other": "{{count}} Antworten für Dokumente",
+        "dutyProgress_one": "{{count}} abgehakte Pflicht",
+        "dutyProgress_other": "{{count}} abgehakte Pflichten",
         "companyProfile": "Ihr Unternehmensprofil"
       },
       "word": "LÖSCHEN",
@@ -540,6 +540,10 @@
       "incomplete": "Die Verbindung brach ab, bevor die Prüfungen fertig waren.",
       "needsDescription": "Klar muss wissen, was das Tool entscheidet und wen es betrifft. Ergänzen Sie das in Ihrer Beschreibung und starten Sie die Prüfungen erneut.",
       "providerRefused": "Der Inhaltsfilter des Modellanbieters hat eine Prüfung blockiert, daher konnte sie nicht automatisch geprüft werden. Es wird keine Risikoklasse angegeben: Ein Mensch muss die Beschreibung prüfen."
+    },
+    "rerun": {
+      "title": "Ihr bisheriges Ergebnis gilt weiter",
+      "body": "Ihre Antworten bleiben erhalten. Versuchen Sie es erneut, um die Prüfungen damit durchzuführen."
     }
   },
   "result": {
@@ -587,8 +591,6 @@
       "minimal_risk": "Es ist weder verboten noch ein Hochrisiko-System und hat keine Pflicht nach Art. 50.",
       "out_of_scope": "Die KI-Verordnung gilt dafür nicht."
     },
-    "paused": "Klar hat bei Prüfung {{number}} eine Angabe angenommen. Die Frage unten klärt sie.",
-    "pausedAtDuties": "Klar hat bei der Ermittlung Ihrer Rolle eine Angabe angenommen. Die Frage unten klärt sie.",
     "dutiesFrom": "Ihre Pflichten gelten ab",
     "monthsAway_one": "In etwa {{count}} Monat",
     "monthsAway_other": "In etwa {{count}} Monaten",
@@ -681,7 +683,8 @@
       "checked": "Geprüft: {{provisions}}",
       "showProvision_one": "Vorschrift zeigen",
       "showProvision_other": "Vorschriften zeigen",
-      "noFacts": "Keine einzelne Angabe; siehe die Entscheidung."
+      "noFacts": "Keine einzelne Angabe; siehe die Entscheidung.",
+      "runHeading": "Durchlauf {{number}}: wie Klar zum Ergebnis kam"
     },
     "reviewer": {
       "exportJson": "Als JSON exportieren"
@@ -716,6 +719,32 @@
       "otherBasis": "Nach der ursprünglichen Fassung von 2024 ist die Klasse gleich ({{riskClass}}), mit anderer Grundlage: {{basis}}.",
       "same": "Nach der ursprünglichen Fassung von 2024 ist die Klasse gleich: {{riskClass}}.",
       "compare": "Beide Fassungen vergleichen"
+    },
+    "pausedVerdict": {
+      "atCheck": "Klar hat bei Prüfung {{number}} angehalten. {{decides}}",
+      "atRole": "Klar hat bei der Ermittlung Ihrer Rolle angehalten. Eine Angabe entscheidet, welche Pflichten Sie haben.",
+      "decides": {
+        "high_risk": "Eine Angabe entscheidet, ob {{tool}} ein Hochrisiko-System ist.",
+        "prohibited": "Eine Angabe entscheidet, ob {{tool}} verboten ist.",
+        "limited_risk": "Eine Angabe entscheidet, ob für {{tool}} Transparenzpflichten gelten.",
+        "other": "Eine Angabe entscheidet, wie {{tool}} eingestuft wird."
+      },
+      "theTool": "das Tool",
+      "until": "Bis zu Ihrer Antwort",
+      "treatedAs": {
+        "prohibited": "Als verboten behandelt",
+        "high_risk": "Als Hochrisiko behandelt",
+        "limited_risk": "Als begrenztes Risiko behandelt",
+        "minimal_risk": "Als minimales Risiko behandelt",
+        "out_of_scope": "Als außerhalb des Anwendungsbereichs behandelt"
+      },
+      "stricter": "Die strengere Lesart, damit nichts übersehen wird",
+      "lists": {
+        "high_risk": "Ihr Inventar und Ihre Pflichten zeigen die Hochrisiko-Pflichten als möglich, bis diese Frage beantwortet ist.",
+        "prohibited": "Ihr Inventar und Ihre Pflichten zeigen das Verbot als möglich, bis diese Frage beantwortet ist.",
+        "limited_risk": "Ihr Inventar und Ihre Pflichten zeigen die Transparenzpflichten als möglich, bis diese Frage beantwortet ist.",
+        "other": "Ihr Inventar zeigt diese Einstufung als angenommen, bis diese Frage beantwortet ist."
+      }
     }
   },
   "annexPoint": {
@@ -919,9 +948,9 @@
     }
   },
   "followUp": {
-    "heading_one": "Bitte bestätigen Sie {{count}} Angabe",
-    "heading_other": "Bitte bestätigen Sie {{count}} Angaben",
-    "intro": "Klar hat diese angenommen. Sie können das Ergebnis ändern.",
+    "heading_one": "{{count}} offene Frage",
+    "heading_other": "{{count}} offene Fragen",
+    "intro": "Klar konnte diese nicht aus der Beschreibung klären. Ihre Antworten können das Ergebnis ändern.",
     "option": {
       "yes": "Ja",
       "no": "Nein",
@@ -947,7 +976,9 @@
       "run": "Durchlauf {{number}} von {{total}}",
       "undo": "Antwort rückgängig machen",
       "undoFailed": "Klar konnte Ihre Antwort nicht rückgängig machen. Bitte versuchen Sie es erneut.",
-      "changeLabel": "geändert zu"
+      "changeLabel": "geändert zu",
+      "youSaidTo": "Sie haben auf „{{question}}“ mit „{{answer}}“ geantwortet",
+      "youConfirmed": "Sie haben bestätigt: „{{fact}}“"
     },
     "lists": {
       "heading": "Was sich in Ihren Listen geändert hat",
@@ -957,7 +988,9 @@
       "possibleDuties_one": "{{count}} mögliche Pflicht",
       "possibleDuties_other": "{{count}} mögliche Pflichten",
       "noDuties": "Keine besonderen Pflichten",
-      "nothing": "Nichts zu tun"
+      "nothing": "Nichts zu tun",
+      "answer_one": "{{count}} Frage beantworten",
+      "answer_other": "{{count}} Fragen beantworten"
     },
     "changed": "Geändert: {{decision}}"
   }
