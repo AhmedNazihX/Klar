@@ -648,7 +648,11 @@ loudly once it reads as its label expects, so the entry is removed."""
         pytest.param(
             case,
             id=case.id,
-            marks=[pytest.mark.xfail(strict=True, reason=SECOND_MODEL_GAPS[case.id])]
+            marks=[
+                pytest.mark.xfail(
+                    strict=True, raises=AssertionError, reason=SECOND_MODEL_GAPS[case.id]
+                )
+            ]
             if case.id in SECOND_MODEL_GAPS
             else [],
         )
@@ -660,3 +664,6 @@ def test_recorded_own_case_is_flagged_as_its_label_expects(
 ) -> None:
     outcome = FactExtractor(engine_settings)(engine_input(case.description, case.language))
     assert outcome.needs_description is expects_description(case)
+    assert facts.PERSON_REVIEW_ID not in {
+        question.id for question in outcome.follow_up_questions
+    }, "the model's reply was read, not decision 029's refusal step"
