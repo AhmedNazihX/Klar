@@ -255,7 +255,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-original-run.ts (the same description checked under the original text, P10)
 │       │                            use-interview-answers.ts, use-document-drafts.ts (drafts and exports, P9)
 │       │                            use-report-export.ts (the report for a lawyer and the inventory report, P25; the checklist, P24),
-│       │                            use-duty-progress.ts (the duties ticked off, P24)
+│       │                            use-duty-progress.ts (the duties ticked off, P24),
+│       │                            use-provision.ts (a provision's text from the corpus), use-vendor-letter.ts (P28's letter) (P21)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
@@ -276,6 +277,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    original-text-fixtures.ts (results under both texts, for the comparison, P10)
 │                                    documents-fixtures.ts + fixtures/documents.drafts.json (lists and drafts dumped
 │                                    from the backend's drafter, and the documents handlers, P9)
+│                                    prohibited-fixtures.ts + fixtures/prohibited.json (the recorded prohibited result,
+│                                    its vendor letters and the provisions it quotes, dumped and drift-checked by
+│                                    backend/tests/drafting/test_frontend_prohibited_fixture.py, P21)
 │
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves

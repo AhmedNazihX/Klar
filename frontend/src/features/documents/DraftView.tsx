@@ -14,9 +14,11 @@ import { SectionStatusPill } from './SectionStatusPill'
 function Section({
   section,
   isSkeleton,
+  toFillIn,
 }: {
   section: DraftSection
   isSkeleton: boolean
+  toFillIn?: string
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
@@ -68,7 +70,7 @@ function Section({
       )}
       {isWaiting && (
         <p className="m-0 rounded-field border-[1.5px] border-dashed border-lens-blue/40 bg-lens-blue-soft px-3.5 py-2.5 text-body-small font-medium text-lens-blue">
-          {t('documents.toFillIn')}
+          {toFillIn ?? t('documents.toFillIn')}
         </p>
       )}
     </section>
@@ -83,9 +85,13 @@ function Section({
 export function DraftView({
   document,
   isSkeleton,
+  toFillIn,
 }: {
   document: DraftDocument
   isSkeleton: boolean
+  /** The marker on a part still to fill in, where no guided interview asks for it (the vendor
+   *  letter, P21); the documents' own marker points to the interview. */
+  toFillIn?: string
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
@@ -116,7 +122,7 @@ export function DraftView({
         </p>
       )}
       {document.sections.map((section) => (
-        <Section key={section.key} section={section} isSkeleton={isSkeleton} />
+        <Section key={section.key} section={section} isSkeleton={isSkeleton} toFillIn={toFillIn} />
       ))}
       <p className="m-0 mt-auto text-micro text-slate">
         {t('documents.preparedWith')} {document.disclaimer}
