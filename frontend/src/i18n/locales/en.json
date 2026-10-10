@@ -457,6 +457,25 @@
     "draftTool": {
       "note": "Adds a new check to {{name}}.",
       "newTool": "Classify as a new tool instead"
+    },
+    "prompts": {
+      "title": "Klar needs a little more to start",
+      "intro": "As described, it could be anything from a chatbot to a hiring tool, and the Act treats those very differently. Add a sentence or two on each of these:",
+      "footer": "Add what you know. Klar asks for the rest.",
+      "questions": {
+        "what_it_decides": {
+          "text": "What does it decide or suggest?",
+          "hint": "For example: it ranks applicants, answers staff questions, plans shifts."
+        },
+        "who_it_affects": {
+          "text": "Who does it affect?",
+          "hint": "For example: applicants, your staff, customers."
+        },
+        "bought_or_built": {
+          "text": "Did you buy it or build it?",
+          "hint": "And whether you changed it or put your own name on it."
+        }
+      }
     }
   },
   "progress": {
@@ -508,8 +527,8 @@
       "error": "Stopped"
     },
     "needsDescription": {
-      "title": "Klar needs a little more to start",
-      "waiting": "Waiting for a description. Nothing is guessed in the meantime."
+      "waitingTitle": "Waiting for a description",
+      "waitingBody": "The four checks start once Klar has enough to go on. Nothing is guessed in the meantime."
     },
     "refused": {
       "title": "A person must review this description",
