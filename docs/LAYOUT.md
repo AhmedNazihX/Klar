@@ -16,6 +16,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check (F2, B13); frontend lint, build, test (P5)
 ├── .github/workflows/label-freeze.yml  label-freeze check, never cancelled (B10a)
 ├── .githooks/                       pre-commit and pre-merge-commit regenerate DEPENDENCIES.md, pre-push checks it (F8)
+├── Makefile                         local dev: `make dev` runs the API and the frontend together; `make db` starts Supabase
 │
 ├── backend/                         the only Python project (uv)
 │   ├── pyproject.toml               deps, ruff, pyright, pytest config; `aiact` console script (F1)
@@ -167,7 +168,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)
 │       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases); eurlex/ (C1);
 │       │                            report/ (the worked example's replayed result, P25)
-│       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6)
+│       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6);
+│       │                            a 15 s lock_timeout on every test DB connection, via PGOPTIONS (F9)
 │       ├── recordings/              recorded model responses, <module path under tests/>/<test>.yaml, e.g. llm/test_chat/ (F6);
 │       │                            <test>.corpus.json next to one: the corpus rows a replayed engine node read,
 │       │                            so the replay needs no database (E3, E4, E5); recorded and replayed by
@@ -259,10 +261,12 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
 │       │                            InventoryTable (P6); VersionDiff (P10); FactQuestion, ChangeBanner (P5b); Composer, ChatMessage (P7);
 │       │                            Reveal, Typewriter, MenuMark, MistGround's moving lights (P16);
-│       │                            Placeholder (a marked unknown) and AccuracyFigure (one published rate or `[—%]`) (P17)
+│       │                            Placeholder (a marked unknown) and AccuracyFigure (one published rate or `[—%]`) (P17);
+│       │                            law-binding.ts (the frame's law binding, for a screen's own switch) and
+│       │                            AppTopBar's ScreenLawSwitch (the compact switch under a phone result's title, P26)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
-│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5; the provider layout
+│       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5; ResultScreen.phone.browser.test.tsx the result at 390 px, P26; the provider layout
 │       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23; the ambiguous
 │       │                            layout AmbiguousSummary, AmbiguousVerdict, ReadingCards, SettleIt, TakeItToALawyer, P22), inventory/ (P6), your-data/ (P12), obligations/ (P24),
 │       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads),
@@ -284,6 +288,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-duty-progress.ts (the duties ticked off, P24), use-tool-ticks.ts (one tool's ticks, P23),
 │       │                            use-provision.ts (a provision's text from the corpus), use-vendor-letter.ts (P28's letter) (P21)
 │       │                            use-qa-thread.ts (a Q&A thread over POST /qa), use-result-questions.ts (a result run's thread), use-corpus-documents.ts (GET /documents) (P7)
+│       │                            use-media-query.ts (a CSS media query kept current; under use-prefers-reduced-motion.ts and use-is-phone.ts, the phone layout) (P26)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked

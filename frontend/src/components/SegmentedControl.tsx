@@ -145,7 +145,7 @@ export function SegmentedControl<T extends string>({
           onClick={() => {
             choose(option.value)
           }}
-          className="relative z-1 h-9 cursor-pointer rounded-pill px-3.5 text-sm leading-none font-semibold whitespace-nowrap text-slate transition-colors duration-300 ease-settle hover:text-ink aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-segment group-data-live/seg:aria-pressed:bg-transparent group-data-live/seg:aria-pressed:shadow-none"
+          className="relative z-1 h-11 cursor-pointer rounded-pill px-3.5 md:h-9 text-sm leading-none font-semibold whitespace-nowrap text-slate transition-colors duration-300 ease-settle hover:text-ink aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-segment group-data-live/seg:aria-pressed:bg-transparent group-data-live/seg:aria-pressed:shadow-none"
         >
           {option.label}
         </button>

@@ -153,7 +153,7 @@ export function StepsPanel({
         <button
           type="button"
           onClick={onExpandAll}
-          className="cursor-pointer border-0 bg-transparent p-0 text-label text-lens-blue hover:underline"
+          className="min-h-11 cursor-pointer border-0 bg-transparent p-0 text-label text-lens-blue hover:underline md:min-h-0"
         >
           {t('result.steps.expandAll')}
         </button>

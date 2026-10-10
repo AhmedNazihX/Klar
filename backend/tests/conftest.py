@@ -1,4 +1,5 @@
-"""Record/replay for model calls (pytest-recording over vcrpy), and the network block.
+"""Record/replay for model calls (pytest-recording over vcrpy), the network block, and a lock
+timeout on every Postgres connection the tests open.
 
 A test marked `@pytest.mark.vcr` replays the HTTP exchanges saved in
 `tests/recordings/<module path under tests/>/<test name>.yaml`, for example
@@ -15,6 +16,7 @@ headers and provider cookies never land on disk.
 """
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -38,6 +40,21 @@ REFUSAL_ROUTE: dict[str, object] = {
 
 ANY_HOST = [".*"]
 """`allowed_hosts` regexes for live tests. The block sees IP addresses, not host names."""
+
+LOCK_TIMEOUT = "15s"
+"""The longest a test's Postgres session waits for a lock. All worktrees share one local database,
+so without it a test could wait forever on a row another worktree's run holds (story F9)."""
+LOCK_TIMEOUT_OPTION = f"-c lock_timeout={LOCK_TIMEOUT}"
+
+
+def pytest_configure() -> None:
+    """Give every Postgres connection the tests open a lock timeout: the fixtures', the ones a
+    test opens itself, `aiact.db.connect()`'s and a subprocess's. libpq reads PGOPTIONS at connect
+    time, so no connect call has to remember it. A lock wait then fails with 55P03 instead of
+    hanging the run."""
+    options = os.environ.get("PGOPTIONS", "")
+    if LOCK_TIMEOUT_OPTION not in options:
+        os.environ["PGOPTIONS"] = f"{options} {LOCK_TIMEOUT_OPTION}".strip()
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

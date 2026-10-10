@@ -105,7 +105,7 @@ describe('Button', () => {
       </Button>,
     )
     const button = await screen.findByRole('button', { name: 'Add a tool' })
-    expect(button).toHaveClass('shadow-button-ghost', 'h-[34px]')
+    expect(button).toHaveClass('shadow-button-ghost', 'md:h-[34px]')
     expect(button).not.toHaveClass('liquid-primary')
     expect(button.querySelector('[data-icon="add"]')).toHaveAttribute('aria-hidden', 'true')
   })

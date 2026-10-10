@@ -380,15 +380,23 @@
 }
 
 /* The mist ground with the four mesh lights (blue top left, peach top right, teal bottom, lilac a
-   corner), each fading out at 62%: glass needs something to blur. */
+   corner), each fading out at 62%: glass needs something to blur. The lights sit on a fixed layer
+   rather than `background-attachment: fixed`, which repaints the whole ground on every scroll frame
+   (and every glass panel re-blurs it); a fixed layer is painted once and scrolls on the GPU. */
 @utility bg-ground {
   background-color: var(--color-mist);
-  background-image:
-    radial-gradient(760px 560px at 6% 12%, var(--color-mesh-blue), transparent 62%),
-    radial-gradient(640px 520px at 96% 8%, var(--color-mesh-peach), transparent 62%),
-    radial-gradient(620px 480px at 44% 96%, var(--color-mesh-teal), transparent 62%),
-    radial-gradient(520px 420px at 80% 80%, var(--color-mesh-lilac), transparent 62%);
-  background-attachment: fixed;
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(760px 560px at 6% 12%, var(--color-mesh-blue), transparent 62%),
+      radial-gradient(640px 520px at 96% 8%, var(--color-mesh-peach), transparent 62%),
+      radial-gradient(620px 480px at 44% 96%, var(--color-mesh-teal), transparent 62%),
+      radial-gradient(520px 420px at 80% 80%, var(--color-mesh-lilac), transparent 62%);
+  }
 }
 
 /* Where backdrop blur is missing or transparency is reduced, glass turns near-opaque so text keeps
@@ -531,6 +539,15 @@
   display: flex;
 }
 /* law-version:end */
+
+/* app-top-bar: on a phone (below md, 48rem), a screen that places the compact law switch under
+   its own title (ScreenLawSwitch, artboard `ResultMobile`) takes the top bar's place, so the
+   switch is read once, in the screen's order. Unlayered, so the bar's `flex` can't bring it back. */
+@media (width < 48rem) {
+  .app-column:has(.screen-law-switch) > .app-top-bar {
+    display: none;
+  }
+}
 
 /* composer:start
    The Composer's send arrow flies up and comes back from below as a question is sent

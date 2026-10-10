@@ -28,8 +28,8 @@
 .ground-light {
   position: absolute;
   border-radius: 50%;
+  /* No transition: MistGround moves the lights every frame, and a transition would restart each time. */
   will-change: transform;
-  transition: transform 0.3s linear;
 }
 .ground-light-a {
   top: 560px;

@@ -48,13 +48,17 @@ export function ObligationItem({
         {isInformational ? (
           <span aria-hidden="true" className="size-5 shrink-0" />
         ) : (
-          <input
-            type="checkbox"
-            aria-label={label}
-            checked={onCheckedChange ? (checked ?? false) : undefined}
-            onChange={onCheckedChange && ((event) => onCheckedChange(event.target.checked))}
-            className="size-5 shrink-0 cursor-pointer accent-lens-blue"
-          />
+          // The 20 px box sits in a 44 px label, its touch target; the negative margin keeps the
+          // row's layout as drawn.
+          <label className="-m-3 flex size-11 shrink-0 cursor-pointer items-center justify-center">
+            <input
+              type="checkbox"
+              aria-label={label}
+              checked={onCheckedChange ? (checked ?? false) : undefined}
+              onChange={onCheckedChange && ((event) => onCheckedChange(event.target.checked))}
+              className="size-5 cursor-pointer accent-lens-blue"
+            />
+          </label>
         )}
         <span className="flex min-w-0 flex-col gap-1">
           <span className="text-body-small font-medium text-ink">{label}</span>
@@ -77,7 +81,7 @@ export function ObligationItem({
               to="/app/documents/$documentId"
               params={{ documentId }}
               search={{ tool: toolId }}
-              className="shrink-0 text-label whitespace-nowrap text-lens-blue no-underline hover:underline"
+              className="inline-flex min-h-11 shrink-0 items-center text-label whitespace-nowrap text-lens-blue no-underline hover:underline md:min-h-0"
             >
               {docLabel}
             </Link>

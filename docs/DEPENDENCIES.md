@@ -229,6 +229,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | @types/react-dom | dev | ^19.2.7 | 19.3.0 | MIT | TypeScript definitions for react-dom |
 | @vitejs/plugin-react | dev | ^6.1.1 | 6.1.1 | MIT | The default Vite plugin for React projects |
 | @vitest/browser-playwright | dev | 5.0.2 | 5.0.2 | MIT | Browser running for Vitest using playwright |
+| axe-core | dev | 4.13.0 | 4.13.0 | MPL-2.0 | Accessibility engine for automated Web UI testing |
 | eslint | dev | ^10.11.0 | 10.11.0 | MIT | An AST-based pattern checker for JavaScript. |
 | eslint-config-prettier | dev | ^10.1.8 | 10.1.8 | MIT | Turns off all rules that are unnecessary or might conflict with Prettier. |
 | eslint-plugin-react-hooks | dev | ^7.1.1 | 7.1.1 | MIT | ESLint rules for React Hooks |
@@ -492,7 +493,6 @@ Source: `frontend/pnpm-lock.yaml`.
 | assertion-error | 2.0.1 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | ast-types | 0.16.3 | MIT | shadcn |
 | atomically | 1.7.0 | MIT | shadcn |
-| axe-core | 4.13.0 | MPL-2.0 | vitest-axe |
 | babel-dead-code-elimination | 1.0.12 | MIT | @tanstack/router-plugin |
 | balanced-match | 4.0.4 | MIT | @eslint/js, eslint, eslint-config-prettier, eslint-plugin-react-hooks, eslint-p… |
 | baseline-browser-mapping | 2.11.26 | Apache-2.0 | @tanstack/router-plugin, eslint-plugin-react-hooks, shadcn |
