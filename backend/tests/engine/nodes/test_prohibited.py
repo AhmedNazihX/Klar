@@ -14,7 +14,6 @@ from typing import cast
 
 import psycopg
 import pytest
-from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
@@ -56,7 +55,7 @@ from aiact.eval.experiments.matchers import prohibited_matches, replay_state
 from aiact.llm import LLMConfigError, OpenRouterEmbeddings
 from aiact.llm.replies import OpenQuestion
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
-from aiact.retrieval.search import SearchHit, SearchResults
+from aiact.retrieval.search import ENGINE_TUNING, SearchHit, SearchResults
 from aiact.schemas import (
     DISCLAIMER,
     STEP_ORDER,
@@ -71,12 +70,18 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
     corpus_recording,
 )
-from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap, refused
+from tests.engine.nodes.known_gaps import (
+    NOT_ASSESSED,
+    KnownGap,
+    expect_known_gap,
+)
+from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -823,6 +828,7 @@ def test_the_corpus_limits_the_search_to_its_guideline_without_a_cut_off(
             "limit": node.SOURCE.passages,
             "embedder": embedder,
             "connection": connection,
+            "tuning": ENGINE_TUNING,
         }
     ]
 
@@ -848,7 +854,7 @@ def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPa
 
 def _settings(**values: object) -> Settings:
     pinned = {"engine_model": LUNA, "engine_provider": LUNA_PROVIDER, **values}
-    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **pinned)  # pyright: ignore[reportCallIssue]
+    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **REFUSAL_ROUTE, **pinned)  # pyright: ignore[reportCallIssue]
 
 
 def _fake_chat(given: ProhibitedAnswer | str) -> GenericFakeChatModel:
@@ -1034,16 +1040,9 @@ def test_a_reply_that_does_not_fit_the_schema_is_a_broken_output() -> None:
     assert "SECRET-VALUE-7731" not in str(raised.value)
 
 
-def test_the_output_cap_leaves_room_for_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
-    asked: dict[str, object] = {}
-
-    def spy(**kwargs: object) -> BaseChatModel:
-        asked.update(kwargs)
-        return _fake_chat(answer())
-
-    monkeypatch.setattr(node, "engine_chat_model", spy)
-    ProhibitedCheck(_settings(), library=FakeLibrary())
-    assert asked["max_tokens"] == 6000
+def test_the_output_cap_leaves_room_for_reasoning() -> None:
+    check = ProhibitedCheck(_settings(), library=FakeLibrary())
+    assert_pinned_route(check._route, 6000)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_the_engine_model_must_be_pinned() -> None:
@@ -1169,21 +1168,10 @@ def _b5c_cases() -> list[BenchmarkCase]:
 
 B5C_CASES = _b5c_cases()
 
-REFUSED = KnownGap("provider content filter (decisions 029, 030)", refused)
-REFUSED_IN_E10 = KnownGap("provider content filter (decisions 029, 030), E10 re-record", refused)
-
-KNOWN_GAPS: dict[str, KnownGap] = {
-    "own-c-01-undress-photo-app": REFUSED,
-    "own-c-02-undress-app-before-december": REFUSED,
-    "own-c-04-studio-digital-doubles-consent": REFUSED,
-    "own-c-05-gossip-site-fake-nudes": REFUSED,
-    "own-c-06-dating-app-nudity-blur": REFUSED_IN_E10,
-    "own-c-07-unfiltered-image-generator": REFUSED,
-    "own-c-14-kids-game-sad-pet-offers": REFUSED_IN_E10,
-    "own-c-16-police-live-search-missing-child": REFUSED_IN_E10,
-}
+KNOWN_GAPS: dict[str, KnownGap] = {}
 """Recorded cases whose Art. 5 outcome differs from the label, with the reason; each fails when
-it starts matching, so the entry is removed."""
+it starts matching, so the entry is removed. The refused cases left with X2c: their requests go
+to the second model (decision 033), which answered all of them in X2b's measurement."""
 
 
 def test_the_replays_include_a_case_on_each_side_of_2_december_2026() -> None:
@@ -1214,8 +1202,8 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
-    B5C_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="no B5c cases"))],
-    ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
+    [pytest.param(case, id=case.id) for case in B5C_CASES]
+    or [pytest.param(None, id="no-cases", marks=pytest.mark.skip(reason="no B5c cases"))],
 )
 def test_b5c_case_replay(
     case: BenchmarkCase,
@@ -1254,11 +1242,6 @@ DECEMBER_PROVISIONS = ("art:5:1:ba", "art:5:1:bb", "art:5:1a", "art:5:1b", "art:
 """What only the December 2026 prohibitions cite: the points, the routes and their date."""
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="provider refusal (decision 030): record only after X2b adds its refusal route, "
-    "then drop this mark",
-)
 @pytest.mark.vcr
 def test_replay_original_text_reads_no_december_point(
     luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
@@ -1269,9 +1252,8 @@ def test_replay_original_text_reads_no_december_point(
     (ba) cases are refused by the provider's content filter (decision 029), so they can't show
     the difference.
 
-    The provider refused own-c-03 under the original text too (decision 030), so it has no
-    recording and skips. Its "record it with" skip message does not apply yet: recording waits
-    for X2b's refusal route; record it then and drop the xfail mark."""
+    The engine provider refused own-c-03 under the original text too (decision 030); its
+    request goes to the second model (decision 033), whose reply is recorded here."""
     case = next((c for c in B5C_CASES if c.id == "own-c-03-image-tool-with-safeguards"), None)
     if case is None:
         pytest.skip(f"own-c-03 is not in {B5C_CASES_DIR}")

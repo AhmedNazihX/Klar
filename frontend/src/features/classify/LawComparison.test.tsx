@@ -680,6 +680,7 @@ describe('The law switch and the original-text run', () => {
         createdAt: '2026-10-01T09:00:00+00:00',
         result: decidedHighRisk(),
         hasUnreadableResult: false,
+        runNo: 1,
       },
     ])
     renderRoute('/app/inventory?law=original', client)

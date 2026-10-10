@@ -46,12 +46,19 @@ from aiact.eval.cases import (
     load_qa_items,
 )
 from aiact.eval.experiments import embeddings as embedding_experiment
-from aiact.eval.experiments import smoke, smoke_recheck, smoke_refusals, smoke_verdict
+from aiact.eval.experiments import (
+    search_cutoff,
+    smoke,
+    smoke_recheck,
+    smoke_refusals,
+    smoke_verdict,
+)
 from aiact.eval.experiments.smoke_served import VerifyAll
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
 from aiact.llm.generations import GenerationLookup
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
+from aiact.retrieval import search as search_module
 from aiact.settings import Settings, get_settings
 
 app = typer.Typer(no_args_is_help=True)
@@ -439,6 +446,13 @@ def eval_ragas(
             " [default: the EMBEDDING_* settings]"
         ),
     ] = None,
+    cut_off: Annotated[
+        bool,
+        typer.Option(
+            help="Search with the SEARCH_MAX_DISTANCE cut-off; --no-cut-off compares with a run"
+            " from before X1b calibrated it (V6's c358b1e3). An --arm never cuts."
+        ),
+    ] = True,
 ) -> None:
     """Score retrieval and answers on the Q&A set with RAGAS and record the run (V6)."""
     if arm is not None and arm not in embedding_experiment.ARMS:
@@ -449,7 +463,7 @@ def eval_ragas(
         git_sha, is_dirty = runner.current_git_state()
         options = ragas_metrics.RagasOptions(git_sha, is_dirty, subset, seed, max_cost_usd)
         # Without --arm, the RAGAS install and API key are checked before the database is opened.
-        parts = ragas_metrics.build_parts(top_k) if arm is None else None
+        parts = ragas_metrics.build_parts(top_k, is_cut_off=cut_off) if arm is None else None
         with records.connect() as connection:
             if arm is not None:
                 # Checked before any paid call: an arm without vectors would score as bad.
@@ -515,9 +529,27 @@ def eval_embeddings(
             " unknown)",
         ),
     ] = embedding_experiment.DEFAULT_MAX_COST_USD,
+    keyword_weight: Annotated[
+        float, typer.Option(min=0.0, help="The keyword arm's RRF weight (X1b tuning)")
+    ] = search_module.KEYWORD_WEIGHT,
+    rrf_k: Annotated[int, typer.Option(min=1, help="The RRF constant (X1b tuning)")] = (
+        search_module.RRF_K
+    ),
+    max_term_share: Annotated[
+        float,
+        typer.Option(min=0.000001, max=1.0, help="Keyword arm: drop words in more rows than this"),
+    ] = search_module.MAX_TERM_SHARE,
+    annex_points_only: Annotated[
+        bool,
+        typer.Option(
+            "--annex-points-only/--with-annex-containers",
+            help="Rank an annex's points, never the annex, area or section rows above them",
+        ),
+    ] = True,
 ) -> None:
     """Compare embedding arms by model-free context precision and recall on the Annex-matching
-    and Q&A sets (X1a), one recorded run per arm and set. Costs only the query embeddings."""
+    and Q&A sets (X1a), one recorded run per arm and set, ranked with the search constants given
+    (X1b tunes them; the defaults are search's own). Costs only the query embeddings."""
     arms = arm or list(embedding_experiment.ARMS)
     unknown = sorted(set(arms) - set(embedding_experiment.ARMS))
     if unknown:
@@ -532,7 +564,12 @@ def eval_embeddings(
             embedding_experiment.ExperimentSet.QA: embedding_experiment.qa_queries(load_qa_items()),
         }
         git_sha, is_dirty = runner.current_git_state()
-        options = embedding_experiment.ExperimentOptions(git_sha, is_dirty, top_k, max_cost_usd)
+        tuning = search_module.SearchTuning(
+            keyword_weight, rrf_k, max_term_share, skips_annex_containers=annex_points_only
+        )
+        options = embedding_experiment.ExperimentOptions(
+            git_sha, is_dirty, top_k, max_cost_usd, tuning
+        )
         with records.connect() as connection:
             for name in arms:
                 embedding_experiment.require_embedded(connection, name)
@@ -584,6 +621,77 @@ def _echo_arm_summary(summary: embedding_experiment.ArmSummary) -> None:
         f"{summary.status.value}, {summary.cases_scored}/{summary.cases_planned} "
         f"({summary.cases_failed} failed), ${summary.cost_usd:.6f}; {means}"
     )
+
+
+@eval_app.command("search-cutoff")
+def eval_search_cutoff(
+    max_cost_usd: Annotated[
+        float,
+        typer.Option(min=0.000001, help="Start no new probe once this is spent (or unknown)"),
+    ] = search_cutoff.DEFAULT_MAX_COST_USD,
+) -> None:
+    """Calibrate search's relevance cut-off (X1b): the best similarity and keyword IDF of the
+    answerable Q&A questions and Annex descriptions against the unanswerable questions and
+    off-topic strings, swept over candidate values; one recorded run. Costs only the query
+    embeddings."""
+    settings = get_settings()
+    try:
+        probes = search_cutoff.build_probes(load_qa_items(), load_cases(CaseSet.ANNEX_MATCH))
+        git_sha, is_dirty = runner.current_git_state()
+        with records.connect() as connection:
+            calibration = search_cutoff.run_calibration(
+                probes,
+                OpenRouterEmbeddings(settings=settings),
+                records.PostgresRunStore(connection),
+                connection,
+                settings,
+                git_sha=git_sha,
+                is_git_dirty=is_dirty,
+                max_cost_usd=max_cost_usd,
+            )
+    except (
+        CaseFileError,
+        FileNotFoundError,
+        CalledProcessError,
+        LLMConfigError,
+        EmbeddingError,
+        records.DatabaseNotConfiguredError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    _echo_calibration(calibration, settings.search_min_keyword_idf, settings.search_max_distance)
+
+
+def _echo_calibration(
+    calibration: search_cutoff.Calibration, min_idf: float, max_distance: float | None
+) -> None:
+    measured = [p for p in calibration.probes if p.id in calibration.measurements]
+    found = calibration.measurements
+    typer.echo(
+        f"run {calibration.run_id}: {calibration.status.value}, {len(found)}/"
+        f"{len(calibration.probes)} probes, ${calibration.cost_usd:.6f}, "
+        f"{calibration.tokens} tokens"
+    )
+    typer.echo("best similarity and top keyword IDF [min, median, max]:")
+    for group, spread in search_cutoff.distributions(measured, found).items():
+        typer.echo(f"  {group}: {spread}")
+    typer.echo(f"found share by cut-off (keyword IDF {min_idf}) and answerable recall@5:")
+    for distance in search_cutoff.DISTANCES:
+        shares = search_cutoff.found_shares(measured, found, distance, min_idf)
+        recall = search_cutoff.mean_recall(measured, found, distance)
+        typer.echo(f"  {distance:.2f}: {shares}, recall {recall}")
+    if max_distance is not None:
+        typer.echo(f"found share by keyword IDF (cut-off {max_distance}):")
+        for idf in search_cutoff.KEYWORD_IDFS:
+            shares = search_cutoff.found_shares(measured, found, max_distance, idf)
+            typer.echo(f"  {idf}: {shares}")
+    if calibration.status is not runner.RunStatus.COMPLETED:
+        typer.echo("Stopped: the cost cap is reached or a cost is unknown", err=True)
+        raise typer.Exit(code=1)
 
 
 @eval_app.command("report")

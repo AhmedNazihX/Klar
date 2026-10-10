@@ -43,7 +43,7 @@ from pydantic import ValidationError
 from aiact.engine.graph import run_ends_after
 from aiact.engine.nodes.facts import confirm_question
 from aiact.engine.nodes.role_obligations import is_section_b, working_class
-from aiact.engine.nodes.role_texts import ROLE_NAMES
+from aiact.engine.nodes.role_texts import CLASS_NAMES, ROLE_NAMES
 from aiact.engine.state import EngineState
 from aiact.llm.structured import describe_validation_error
 from aiact.schemas import (
@@ -78,22 +78,6 @@ transparency check does so only for a limited-risk result."""
 LEGAL_REVIEW_CLASSES = frozenset({RiskClass.HIGH_RISK, RiskClass.PROHIBITED})
 """The classes whose results recommend legal review whatever their status (decision 026)."""
 
-CLASS_NAMES: Mapping[Language, Mapping[RiskClass, str]] = {
-    Language.EN: {
-        RiskClass.OUT_OF_SCOPE: "out of scope",
-        RiskClass.PROHIBITED: "prohibited",
-        RiskClass.HIGH_RISK: "high-risk",
-        RiskClass.LIMITED_RISK: "limited risk",
-        RiskClass.MINIMAL_RISK: "minimal risk",
-    },
-    Language.DE: {
-        RiskClass.OUT_OF_SCOPE: "außerhalb des Anwendungsbereichs",
-        RiskClass.PROHIBITED: "verboten",
-        RiskClass.HIGH_RISK: "Hochrisiko",
-        RiskClass.LIMITED_RISK: "begrenztes Risiko",
-        RiskClass.MINIMAL_RISK: "minimales Risiko",
-    },
-}
 LEGAL_REVIEW: Mapping[Language, Mapping[str, str]] = {
     Language.EN: {
         "lead": "Have this result reviewed by a lawyer.",

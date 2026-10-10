@@ -240,6 +240,15 @@ describe('Your data, what Klar keeps and who processes it', () => {
           'models run in EU regions on Microsoft Azure and Google Vertex AI.',
       ),
     ).toBeInTheDocument()
+    // Decision 033 › Privacy wording, verbatim.
+    expect(
+      within(who).getByText(
+        "If Microsoft Azure's content filter blocks a check, that check's request (the " +
+          'description and the facts and answers taken from it) is sent once more to Gemini 3.1 ' +
+          'Flash-Lite on Google Vertex AI in the EU (zero data retention, no training), for each ' +
+          'check the filter blocked. This happens only when the filter blocks it.',
+      ),
+    ).toBeInTheDocument()
     expect(
       within(who).getByText('Nebius, in the EU, turns your description into a search of the Act.'),
     ).toBeInTheDocument()
@@ -272,6 +281,15 @@ describe('Your data, what Klar keeps and who processes it', () => {
       within(who).getByText(
         'OpenRouter leitet jede Anfrage weiter; seine eigene Verarbeitung ist nicht auf die EU ' +
           'beschränkt. Die Modelle laufen in EU-Regionen bei Microsoft Azure und Google Vertex AI.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(who).getByText(
+        'Blockiert der Inhaltsfilter von Microsoft Azure eine Prüfung, wird die Anfrage dieser ' +
+          'Prüfung (die Beschreibung sowie die daraus gewonnenen Fakten und Antworten) noch einmal ' +
+          'an Gemini 3.1 Flash-Lite bei Google Vertex AI in der EU gesendet (keine ' +
+          'Datenspeicherung beim Anbieter, kein Training), für jede blockierte Prüfung. Das ' +
+          'geschieht nur, wenn der Filter sie blockiert.',
       ),
     ).toBeInTheDocument()
     expect(within(who).getByRole('link', { name: 'Datenschutzerklärung lesen' })).toHaveAttribute(

@@ -30,7 +30,7 @@ from aiact.engine.nodes import high_risk, prohibited, scope, transparency
 from aiact.engine.nodes.high_risk_texts import REFUSAL_CITATIONS
 from aiact.engine.nodes.prohibited_practices import APPLICATION_DATES
 from aiact.engine.nodes.transparency_duties import MarketTiming
-from aiact.engine.state import CheckOutcome, EngineState
+from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
 from aiact.engine.usage import MeteredEmbedder, UsageMeter
 from aiact.llm.embeddings import EmbeddingBatch, OpenRouterEmbeddings
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
@@ -42,11 +42,14 @@ from aiact.schemas import (
     DocumentStatus,
     Language,
     LawVersion,
+    Status,
     StepName,
     StepResult,
 )
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 from tests.engine.nodes import test_high_risk, test_prohibited, test_scope, test_transparency
+from tests.engine.nodes.known_gaps import NOT_ASSESSED
 
 AS_OF = date(2026, 10, 6)
 SECRET = "the night shifts of our Leipzig depot"
@@ -66,6 +69,7 @@ def settings() -> Settings:
         engine_provider="azure/eu",
         embedding_model="qwen/qwen3-embedding-8b",
         embedding_provider="nebius",
+        **REFUSAL_ROUTE,
     )
 
 
@@ -369,3 +373,133 @@ def test_every_corpus_call_after_the_reply_passes_the_runs_opt_in(
     expected = NODE_LOOKUPS.get((name, kind))
     if expected is not None:
         assert expected in {(module, target) for module, _, target, _ in after}, after
+
+
+# --- A refused request and the second model (decision 033) --------------------------------------
+
+LUNA = "openai/gpt-6-luna-20260922"
+GEMINI = "google/gemini-3.1-flash-lite"
+
+
+def served(reply: AIMessage, model: str) -> AIMessage:
+    """`reply` as OpenRouter returns it from `model`."""
+    metadata = {**reply.response_metadata, "model_name": model}
+    return reply.model_copy(update={"response_metadata": metadata})
+
+
+def route_replies(monkeypatch: pytest.MonkeyPatch, first: AIMessage, second: AIMessage) -> None:
+    """Every node's engine model replies `first` as Luna, its refusal model `second` as Gemini."""
+
+    def chats(reply: AIMessage) -> Callable[[Settings], dict[str, GenericFakeChatModel]]:
+        return lambda _settings: {
+            node: GenericFakeChatModel(messages=iter([reply])) for node in NODE_TOKENS
+        }
+
+    monkeypatch.setattr(classify_module, "engine_chats", chats(served(first, LUNA)))
+    monkeypatch.setattr(classify_module, "refusal_chats", chats(served(second, GEMINI)))
+
+
+def run_nodes(nodes: EngineNodes) -> dict[str, object]:
+    """Every node run once: its outcome, or the broken-output error it raised, by node."""
+    run_state = state(include_held_out=False)
+    runners = {"facts": nodes.facts, **{name.value: nodes.checks[name] for name in STEP_ORDER}}
+    results: dict[str, object] = {}
+    for name, node in runners.items():
+        try:
+            results[name] = node(run_state)
+        except ValueError as error:
+            results[name] = error
+    return results
+
+
+@pytest.mark.parametrize(
+    "second",
+    [
+        pytest.param(REFUSAL, id="both-refused"),
+        pytest.param(paid_reply(), id="second-reply-broken"),
+    ],
+)
+def test_a_refusal_the_second_model_cannot_answer_gives_029s_step_in_every_node(
+    second: AIMessage, offline: Corpus, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Decisions 029, 030, 033: each node's refused request goes once to the second model, and
+    when that one refuses too or its reply doesn't fit (cut off here), the check is not assessed,
+    a person's review is asked and there is no finding. Each node's two calls are recorded under
+    the model that served them."""
+    route_replies(monkeypatch, REFUSAL, second)
+    meter = UsageMeter()
+    results = run_nodes(engine_nodes(settings(), meter))
+    facts_outcome = results.pop("facts")
+    assert isinstance(facts_outcome, FactsOutcome)
+    assert facts_outcome.facts == ()
+    assert [q.id for q in facts_outcome.follow_up_questions] == ["facts_person_review"]
+    assert set(results) == {name.value for name in STEP_ORDER}
+    for name, outcome in results.items():
+        assert isinstance(outcome, CheckOutcome), (name, outcome)
+        step = outcome.step
+        assert step.error == "provider_refusal", name
+        assert step.status is Status.NEEDS_MORE_INFORMATION, name
+        assert step.decision == NOT_ASSESSED["en"], name
+        assert step.missing_fact is not None, name
+        assert outcome.follow_up_questions == (step.missing_fact,), name
+    by_node = meter.usage().by_node
+    for name in NODE_TOKENS:
+        assert (by_node[name].models[LUNA], by_node[name].models[GEMINI]) == (1, 1), name
+
+
+def answer(name: StepName, finish_reason: str) -> AIMessage:
+    """The check's parseable answer (`PARSEABLE`), sent with `finish_reason`."""
+    return AIMessage(content=PARSEABLE[name](), response_metadata={"finish_reason": finish_reason})
+
+
+def check_replies(
+    monkeypatch: pytest.MonkeyPatch, first: Callable[[StepName], AIMessage], *, second: bool
+) -> None:
+    """Each retrieving check's engine model replies `first(check)` as Luna (twice, for the
+    citation validator's re-run); its refusal model replies the check's answer as Gemini when
+    `second`, and has no reply otherwise."""
+
+    def chats(
+        reply: Callable[[StepName], AIMessage] | None, model: str
+    ) -> Callable[[Settings], dict[str, GenericFakeChatModel]]:
+        def replies(node: str) -> list[AIMessage]:
+            if reply is None or node not in PARSEABLE:
+                return []
+            return [served(reply(StepName(node)), model)] * 2
+
+        return lambda _settings: {
+            node: GenericFakeChatModel(messages=iter(replies(node))) for node in NODE_TOKENS
+        }
+
+    monkeypatch.setattr(classify_module, "engine_chats", chats(first, LUNA))
+    second_reply = (lambda name: answer(name, "stop")) if second else None
+    monkeypatch.setattr(classify_module, "refusal_chats", chats(second_reply, GEMINI))
+
+
+@pytest.mark.parametrize("name", RETRIEVING, ids=lambda name: name.value)
+def test_the_second_models_answer_to_a_refused_request_is_the_checks_outcome(
+    name: StepName, offline: Corpus, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    check_replies(monkeypatch, lambda _name: REFUSAL, second=True)
+    meter = UsageMeter()
+    outcome = engine_nodes(settings(), meter).checks[name](state(include_held_out=False))
+    assert outcome.step.step is name
+    assert outcome.step.error is None
+    assert outcome.step.citations
+    assert meter.usage().by_node[name].models.get(GEMINI) == 1
+
+
+@pytest.mark.parametrize("name", RETRIEVING, ids=lambda name: name.value)
+def test_a_filtered_reply_with_an_answer_is_the_checks_outcome_with_no_second_call(
+    name: StepName, offline: Corpus, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """own-c-16's shape (decision 029): `content_filter` with a full answer is used as it is."""
+    check_replies(monkeypatch, lambda check: answer(check, "content_filter"), second=False)
+    meter = UsageMeter()
+    outcome = engine_nodes(settings(), meter).checks[name](state(include_held_out=False))
+    assert outcome.step.step is name
+    assert outcome.step.error is None
+    assert outcome.step.citations
+    models = meter.usage().by_node[name].models
+    assert models.get(LUNA, 0) >= 1
+    assert GEMINI not in models

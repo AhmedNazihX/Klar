@@ -23,6 +23,8 @@ export type InventoryTool = {
   result: ClassificationResult | null
   /** A run exists but its stored result isn't one Klar can show (an edited or broken file). */
   hasUnreadableResult: boolean
+  /** The latest run's number (the database's run_no), or null while the tool has none. */
+  runNo: number | null
 }
 
 const TOOL_COLUMNS = 'id, name, description, created_at, run_no, result'
@@ -47,6 +49,7 @@ function toTool(row: ToolRow): InventoryTool {
     createdAt: row.created_at,
     result: stored && hasAssessedClass(stored) ? stored : null,
     hasUnreadableResult: hasRun && stored === null,
+    runNo: row.run_no,
   }
 }
 

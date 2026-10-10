@@ -53,6 +53,7 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     CorpusRecording,
@@ -60,6 +61,7 @@ from tests.engine.nodes.corpus_recording import (
     lookup_call,
 )
 from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -498,7 +500,7 @@ def _fake_check(content: str, library: ScopeLibrary | None = None) -> ScopeCheck
 
 def _settings() -> Settings:
     values = {"engine_model": LUNA, "engine_provider": LUNA_PROVIDER}
-    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **values)  # pyright: ignore[reportCallIssue]
+    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **REFUSAL_ROUTE, **values)  # pyright: ignore[reportCallIssue]
 
 
 def test_the_node_reads_art_3_1_and_art_2_and_passes_the_exclusions_through() -> None:
@@ -653,12 +655,7 @@ def test_the_open_source_exception_names_art_50_and_its_categories() -> None:
 
 def test_the_node_is_pinned_to_the_engine_provider() -> None:
     check = ScopeCheck(_settings(), library=FakeLibrary())
-    assert check._model.openrouter_provider == {  # pyright: ignore[reportAttributeAccessIssue]
-        "data_collection": "deny",
-        "zdr": True,
-        "order": [LUNA_PROVIDER],
-        "allow_fallbacks": False,
-    }
+    assert_pinned_route(check._route, 3000)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 @pytest.mark.parametrize("content", ["not json", '{"ai_system": {"answer": "yes"}}'])

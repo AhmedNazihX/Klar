@@ -41,7 +41,7 @@ from aiact.eval.experiments.embeddings import (
 from aiact.eval.ragas_metrics import provision_recall
 from aiact.eval.runner import RunStatus
 from aiact.llm.embeddings import EmbeddingError
-from aiact.retrieval.search import SearchHit, SearchResults
+from aiact.retrieval.search import DEFAULT_TUNING, SearchHit, SearchResults, SearchTuning
 from aiact.schemas import Language, LawVersion
 from aiact.settings import Settings
 from tests.engine.test_usage import FakeEmbeddings
@@ -619,3 +619,86 @@ def test_build_parts_keeps_the_cut_off_for_the_configured_arm() -> None:
     retriever = ragas_metrics.build_parts(settings=settings).retriever
     assert isinstance(retriever, ragas_metrics.SearchRetriever)
     assert retriever.is_cut_off is True
+
+
+def test_build_parts_can_search_the_configured_arm_without_the_cut_off() -> None:
+    """To compare with V6's c358b1e3, searched before X1b set a cut-off."""
+    settings = Settings(
+        _env_file=None,  # pyright: ignore[reportCallIssue]
+        openrouter_api_key=SecretStr("k"),
+        embedding_model="qwen/qwen3-embedding-8b",
+        embedding_provider="nebius",
+    )
+    retriever = ragas_metrics.build_parts(settings=settings, is_cut_off=False).retriever
+    assert isinstance(retriever, ragas_metrics.SearchRetriever)
+    assert retriever.is_cut_off is False
+    config = retriever.config()
+    assert isinstance(config, dict) and config["max_distance"] is None
+
+
+@pytest.mark.parametrize(("flag", "is_cut_off"), [([], True), (["--no-cut-off"], False)])
+def test_ragas_passes_the_cut_off_choice_to_the_parts(
+    monkeypatch: pytest.MonkeyPatch, flag: list[str], is_cut_off: bool
+) -> None:
+    seen: list[object] = []
+
+    def fake_build_parts(top_k: int, **kwargs: object) -> object:
+        seen.append(kwargs["is_cut_off"])
+        raise records.DatabaseNotConfiguredError("stop here")
+
+    monkeypatch.setattr(ragas_metrics, "build_parts", fake_build_parts)
+    result = CliRunner().invoke(app, ["evaluate", "ragas", *flag])
+    assert result.exit_code == 2
+    assert seen == [is_cut_off]
+
+
+# --- X1b: the search tuning ----------------------------------------------------------------
+
+
+def test_a_run_ranks_with_its_tuning_and_records_it() -> None:
+    store = MemoryStore()
+    search = FakeSearch([similar("annex:III:1:a", 0.7)])
+    tuning = SearchTuning(keyword_weight=0.5, rrf_k=60, skips_annex_containers=False)
+    summary = _run((annex_query("annex:III:1:a"),), search, store, tuning=tuning)
+    assert search.calls[0]["tuning"] == tuning
+    config = store.runs[summary.run_id]["config"]
+    assert isinstance(config, dict)
+    assert config["retrieval"]["tuning"] == {
+        "keyword_weight": 0.5,
+        "rrf_k": 60,
+        "max_term_share": 0.05,
+        "skips_annex_containers": False,
+        "pins_references": True,
+    }
+
+
+def test_a_run_without_a_tuning_ranks_with_searchs_own() -> None:
+    search = FakeSearch([similar("annex:III:1:a", 0.7)])
+    _run((annex_query("annex:III:1:a"),), search, MemoryStore())
+    assert search.calls[0]["tuning"] == DEFAULT_TUNING
+
+
+def test_the_command_passes_its_tuning_options_to_every_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = MemoryStore()
+    tunings: list[object] = []
+
+    def fake_run_arm(arm_name: str, chosen: ExperimentSet, queries: Sequence[Query],
+                     embeddings: object, run_store: object, options: ExperimentOptions,
+                     **kwargs: object) -> experiment.ArmSummary:  # fmt: skip
+        tunings.append(options.tuning)
+        return _summary(store, arm_name, chosen, len(queries), RunStatus.COMPLETED)
+
+    _patch_command(monkeypatch, store, [])
+    monkeypatch.setattr(experiment, "run_arm", fake_run_arm)
+    args = ["evaluate", "embeddings", "--arm", "qwen3-1536", "--keyword-weight", "0.5",
+            "--rrf-k", "60", "--max-term-share", "0.1", "--with-annex-containers"]  # fmt: skip
+    result = CliRunner().invoke(app, args)
+    assert result.exit_code == 0, result.output
+    expected = SearchTuning(keyword_weight=0.5, rrf_k=60, max_term_share=0.1,
+                            skips_annex_containers=False)  # fmt: skip
+    assert tunings == [expected, expected]
+    default = CliRunner().invoke(app, ["evaluate", "embeddings", "--arm", "qwen3-1536"])
+    assert default.exit_code == 0, default.output
+    assert tunings[2:] == [DEFAULT_TUNING, DEFAULT_TUNING]

@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import { useId, useState, type JSX, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -5,8 +6,16 @@ import type { ClassificationResult, StepName, StepResult } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
 import { STEP_COLUMNS_DE, STEP_COLUMNS_EN, StepRow } from '@/components/StepRow'
 import { useLanguage } from '@/hooks/use-language'
+import type { Language } from '@/i18n'
 
-import { rowReferences, stepOutcome, SUMMARY_ROWS, type SummaryRowId } from './result-text'
+import { isDecidedBan } from './ban'
+import {
+  restingFacts,
+  rowReferences,
+  stepOutcome,
+  SUMMARY_ROWS,
+  type SummaryRowId,
+} from './result-text'
 import { DutiesStepCard, EngineStepCard, FactsStepCard } from './StepCards'
 
 type Row = {
@@ -39,19 +48,31 @@ function findStep(result: ClassificationResult, name: StepName): StepResult | un
 }
 
 /** The rows from the result: each with its one-line outcome, references and expanded card. */
-function useRows(result: ClassificationResult): Row[] {
-  const { t } = useTranslation()
-  const language = useLanguage()
+function rowsOf(t: TFunction, language: Language, result: ClassificationResult): Row[] {
   const obligations = result.obligations ?? []
-  const assumed = result.facts.filter((fact) => fact.evidence === 'assumed').length
+  // The same facts the panel beside it shows, so the counts agree with its cards.
+  const facts = restingFacts(result)
+  const assumed = facts.filter((fact) => fact.evidence === 'assumed').length
+  // A decided ban ends the run at Art. 5: the steps after it never ran, and the row says why.
+  const isBan = isDecidedBan(result)
+  const notChecked = isBan ? t('prohibited.notChecked') : t('result.steps.notChecked')
   return SUMMARY_ROWS.map((id): Row => {
     if (id === 'facts') {
       return {
         id,
         name: t('result.steps.facts'),
-        decision: t('result.steps.factsLine', { count: result.facts.length, assumed }),
+        decision: t('result.steps.factsLine', { count: facts.length, assumed }),
         references: [t('result.steps.yourDescription')],
         card: <FactsStepCard result={result} />,
+      }
+    }
+    if (id === 'duties' && isBan) {
+      return {
+        id,
+        name: t('result.steps.duties'),
+        decision: notChecked,
+        references: [],
+        card: null,
       }
     }
     if (id === 'duties') {
@@ -71,7 +92,7 @@ function useRows(result: ClassificationResult): Row[] {
     const name = id === 'role_obligations' ? t('result.steps.role') : t(`progress.check.${id}`)
     const step = findStep(result, id)
     if (!step) {
-      return { id, name, decision: t('result.steps.notChecked'), references: [], card: null }
+      return { id, name, decision: notChecked, references: [], card: null }
     }
     return {
       id,
@@ -83,18 +104,39 @@ function useRows(result: ClassificationResult): Row[] {
   })
 }
 
+/** The rows, each line marked "Changed:" where it differs from the run before (an answer's
+ *  re-run, artboard `ResultRerun`). */
+function useRows(result: ClassificationResult, previous: ClassificationResult | undefined): Row[] {
+  const { t } = useTranslation()
+  const language = useLanguage()
+  const rows = rowsOf(t, language, result)
+  if (!previous) return rows
+  const before = new Map(rowsOf(t, language, previous).map((row) => [row.id, row.decision]))
+  return rows.map((row) =>
+    before.get(row.id) === row.decision
+      ? row
+      : { ...row, decision: t('followUp.changed', { decision: row.decision }) },
+  )
+}
+
 /** "How Klar got here": every step collapsed to one line; a row opens to the step in full. */
 export function StepsPanel({
   result,
+  previous,
+  runNo,
   onExpandAll,
 }: {
   result: ClassificationResult
+  /** The run before, when an answer made this one: rows it changed say so, and the heading
+   *  names the run ("Run 2: how Klar got here"). */
+  previous?: ClassificationResult
+  runNo?: number
   onExpandAll: () => void
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
-  const rows = useRows(result)
+  const rows = useRows(result, previous)
   const [expanded, setExpanded] = useState<ReadonlySet<SummaryRowId>>(new Set())
   return (
     <GlassPanel
@@ -104,7 +146,9 @@ export function StepsPanel({
     >
       <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5">
         <h2 id={headingId} className="m-0 text-heading-small text-ink">
-          {t('result.steps.heading')}
+          {previous && runNo !== undefined
+            ? t('result.steps.runHeading', { number: runNo })
+            : t('result.steps.heading')}
         </h2>
         <button
           type="button"

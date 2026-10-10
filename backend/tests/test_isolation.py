@@ -241,6 +241,9 @@ NOT_ENTRY_POINTS: dict[str, str] = {
     "aiact.retrieval.search.SearchResults": "the result type of search_ai_act",
     "aiact.retrieval.search.prepare_search": "builds search_ai_act's statement; runs no query",
     "aiact.retrieval.search.distinct_units": "dedupes rows search_ai_act already fetched",
+    "aiact.retrieval.search.SearchTuning": "search_ai_act's ranking constants; runs no query",
+    "aiact.retrieval.references.exact_references": "reads provision ids from a query's text; "
+    "runs no query (search_ai_act looks them up under its own filters)",
     "aiact.retrieval.documents.list_documents": "reads only the documents table (titles and "
     "dates), never a provision row",
     "aiact.retrieval.documents.DocumentInfo": "a result type of list_documents",

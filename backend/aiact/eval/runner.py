@@ -14,11 +14,12 @@ retrieval sees the held-out examples too.
 A cost cap is checked before each case starts, so a run can overshoot it by at most the cost of
 the cases already in flight. A classifier that fails after spending raises `ClassifierFailedError`
 so the spend still counts. Each case's cost, tokens and failure flag are stored in that case's
-`eval_case_results.scores` (`cost_usd`, `tokens`, `is_error`, and `scoring_error` when the scorer
-raised) next to its metric scores (V2's `metrics.metric_scorer` for `aiact evaluate run`), and the
-run's final status is merged into `eval_runs.config.outcome`, because the F5 schema has no columns
-for them yet. When a run stops on an error, the cases already in flight are still recorded, so the
-stored total matches what was spent.
+`eval_case_results.scores` (`cost_usd`, `tokens`, `is_error`, `scoring_error` when the scorer
+raised, and `models`, each node's calls by the model that served them, when the classifier
+reports them) next to its metric scores (V2's `metrics.metric_scorer` for `aiact evaluate
+run`), and the run's final status is merged into `eval_runs.config.outcome`, because the F5
+schema has no columns for them yet. When a run stops on an error, the cases already in flight are
+still recorded, so the stored total matches what was spent.
 """
 
 import logging
@@ -65,12 +66,20 @@ DEFAULT_MAX_COST_USD = 1.0
 
 SCORING_ERROR_KEY = "scoring_error"
 """Set (true) on a case whose scorer raised: the prediction is kept, no metric scores are."""
-RUN_SCORE_KEYS = frozenset({"cost_usd", "tokens", "is_error", SCORING_ERROR_KEY})
+MODELS_KEY = "models"
+"""Each node's calls by the model that served them, `{node: {model: calls}}` (decision 033: a
+refused request the second model answered shows under both)."""
+RUN_SCORE_KEYS = frozenset({"cost_usd", "tokens", "is_error", SCORING_ERROR_KEY, MODELS_KEY})
 """Scores the runner itself writes; a metric scorer may not use these names."""
 
 ERROR_MESSAGE_LIMIT = 300
 
+ServedModels = Mapping[str, Mapping[str, int]]
+"""`{node: {model: calls}}`, as `MODELS_KEY` stores it."""
 Score = float | bool | None
+StoredScore = Score | dict[str, JsonValue]
+"""A stored row's score: a metric's or one of the runner's own (`RUN_SCORE_KEYS`), whose
+`MODELS_KEY` alone is a mapping."""
 Scorer = Callable[[BenchmarkCase, ClassificationResult], Mapping[str, Score]]
 
 
@@ -96,11 +105,19 @@ class ClassifierUnavailableError(RuntimeError):
 class ClassifierFailedError(Exception):
     """A classification that failed after spending: carries what it cost, so the cap counts it."""
 
-    def __init__(self, cost_usd: float, tokens: int, cause: BaseException | None = None) -> None:
+    def __init__(
+        self,
+        cost_usd: float,
+        tokens: int,
+        cause: BaseException | None = None,
+        *,
+        models: ServedModels | None = None,
+    ) -> None:
         super().__init__(str(cause) if cause is not None else "classification failed")
         self.cost_usd = cost_usd
         self.tokens = tokens
         self.cause = cause
+        self.models = models
 
 
 @dataclass(frozen=True)
@@ -124,6 +141,8 @@ class Classification:
     cost_usd: float = 0.0
     tokens: int = 0
     trace_id: str | None = None
+    models: ServedModels | None = None
+    """Each node's calls by the model that served them; None when the classifier doesn't say."""
 
 
 @dataclass(frozen=True)
@@ -283,7 +302,7 @@ class CaseRecord:
     case_id: str
     predicted: dict[str, JsonValue]
     label: dict[str, JsonValue]
-    scores: dict[str, Score]
+    scores: Mapping[str, StoredScore]
     trace_id: str | None
     cost_usd: float
     tokens: int
@@ -524,10 +543,11 @@ def _classify_one(item: _Planned, classifier: Classifier, scorer: Scorer) -> _Do
         answer = classifier.classify(item.request)
     except Exception as exc:
         return _Done(_failed_record(case, exc))
-    run_scores: dict[str, Score] = {
+    run_scores: dict[str, StoredScore] = {
         "cost_usd": answer.cost_usd,
         "tokens": answer.tokens,
         "is_error": False,
+        **_served(answer.models),
     }
     unscored = CaseRecord(
         case.id,
@@ -555,6 +575,7 @@ def _failed_record(case: BenchmarkCase, exc: Exception) -> CaseRecord:
     cost_usd, tokens = (
         (exc.cost_usd, exc.tokens) if isinstance(exc, ClassifierFailedError) else (0.0, 0)
     )
+    models = exc.models if isinstance(exc, ClassifierFailedError) else None
     reported = exc.cause if isinstance(exc, ClassifierFailedError) and exc.cause else exc
     logger.warning("case %s failed: %s", case.id, type(reported).__name__)
     error: dict[str, JsonValue] = {
@@ -565,11 +586,19 @@ def _failed_record(case: BenchmarkCase, exc: Exception) -> CaseRecord:
         case.id,
         {"error": error},
         label_record(case),
-        {"cost_usd": cost_usd, "tokens": tokens, "is_error": True},
+        {"cost_usd": cost_usd, "tokens": tokens, "is_error": True, **_served(models)},
         None,
         cost_usd,
         tokens,
     )
+
+
+def _served(models: ServedModels | None) -> dict[str, StoredScore]:
+    """The `models` score, left out when the classifier didn't report them."""
+    if models is None:
+        return {}
+    served: dict[str, JsonValue] = {node: dict(calls) for node, calls in models.items()}
+    return {MODELS_KEY: served}
 
 
 def current_git_state(cwd: Path = BACKEND_DIR) -> tuple[str, bool]:

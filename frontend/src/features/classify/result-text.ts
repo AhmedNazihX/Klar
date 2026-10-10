@@ -48,6 +48,13 @@ export function uniqueFacts(facts: readonly Fact[]): Fact[] {
   return [...new Map(facts.map((fact) => [fact.text, fact])).values()]
 }
 
+/** The facts a result rests on, each once: the deciding facts, or every fact of a result that
+ *  names none. The facts panel shows these and the Facts step row counts them, so the two agree. */
+export function restingFacts(result: ClassificationResult): Fact[] {
+  const deciding = result.deciding_facts ?? []
+  return uniqueFacts(deciding.length > 0 ? deciding : result.facts)
+}
+
 /** How many provisions a collapsed step row names; the rest are in its expanded card. */
 const MAX_ROW_REFERENCES = 3
 

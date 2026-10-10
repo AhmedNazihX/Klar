@@ -40,6 +40,8 @@ type RowContext = {
   language: Language
   progress: ProgressState
   failure: ClassifyFailure | null
+  /** A result's re-run: its alert alone says why it stopped. */
+  isRerun: boolean
 }
 
 function doneOutcome(id: Exclude<CheckId, 'facts'>, { t, progress }: RowContext): string {
@@ -80,13 +82,15 @@ function rowDetail(
   state: CheckProgressState,
   context: RowContext,
 ): Partial<CheckProgressStep> {
-  const { t, progress, failure } = context
+  const { t, progress, failure, isRerun } = context
   const reference = t(`progress.reference.${id}`)
   if (failure?.kind === 'provider_refused' && id !== 'facts' && failure.steps.includes(id)) {
     return { detail: t('progress.refused.row') }
   }
   switch (state) {
     case 'error':
+      // On a re-run the alert above gives the reason; the row's state word marks where.
+      if (isRerun) return {}
       return { detail: failure ? failureReason(t, failure) : t('progress.reason.check') }
     case 'running':
       return { detail: t(`progress.runningDetail.${id}`) }
@@ -109,9 +113,16 @@ function progressRows(context: RowContext, isRunning: boolean): CheckProgressSte
   })
 }
 
-/** The line under the heading: why the run stopped, or what the checks are doing. */
-function subtitle(t: TFunction, progress: ProgressState, failure: ClassifyFailure | null): string {
+/** The line under the heading: why the run stopped, or what the checks are doing. None for a
+ *  re-run that stopped: its alert says so, in the re-run's words. */
+function subtitle(
+  t: TFunction,
+  progress: ProgressState,
+  failure: ClassifyFailure | null,
+  isRerun: boolean,
+): string | null {
   if (failure === null) return t('progress.subtitle')
+  if (isRerun) return null
   if (failure.kind === 'needs_description') return t('progress.needsDescription.waiting')
   if (failure.kind === 'provider_refused') return t('progress.refused.subtitle')
   return stoppedTitle(t, progress)
@@ -126,7 +137,7 @@ function RefusedAlert({
   onSaveForLater,
 }: {
   failure: Extract<ClassifyFailure, { kind: 'provider_refused' }>
-  onSaveForLater: () => void
+  onSaveForLater?: () => void
 }): JSX.Element {
   const { t } = useTranslation()
   return (
@@ -145,11 +156,13 @@ function RefusedAlert({
         </p>
       ))}
       <p className="m-0 text-caption font-normal text-ink-2">{t('progress.refused.body')}</p>
-      <div className="flex flex-wrap gap-2.5">
-        <Button size="sm" variant="ghost" onClick={onSaveForLater}>
-          {t('progress.stopped.saveForLater')}
-        </Button>
-      </div>
+      {onSaveForLater && (
+        <div className="flex flex-wrap gap-2.5">
+          <Button size="sm" variant="ghost" onClick={onSaveForLater}>
+            {t('progress.stopped.saveForLater')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -159,7 +172,64 @@ export type ProgressPanelProps = {
   isRunning: boolean
   failure: ClassifyFailure | null
   onTryAgain: () => void
-  onSaveForLater: () => void
+  /** Omitted on a result's re-run, where the result stays and nothing waits to be saved. */
+  onSaveForLater?: () => void
+  /** A result's re-run (P5b): a failure says the result shown still stands and the answers are
+   *  kept, not that nothing is there yet. */
+  isRerun?: boolean
+}
+
+/** The stopped alert's title and body: on a re-run, that the earlier result stands. */
+function stoppedText(
+  t: TFunction,
+  failure: ClassifyFailure,
+  isRerun: boolean,
+): { title: string; body: string | null } {
+  if (isRerun) return { title: t('progress.rerun.title'), body: t('progress.rerun.body') }
+  if (failure.kind === 'needs_description') {
+    return { title: t('progress.needsDescription.title'), body: null }
+  }
+  return { title: t('progress.stopped.title'), body: t('progress.stopped.body') }
+}
+
+/** Why the run stopped, with Try again (and Save for later on the Classify screen). */
+function StoppedAlert({
+  failure,
+  isRerun,
+  onTryAgain,
+  onSaveForLater,
+}: {
+  failure: Exclude<ClassifyFailure, { kind: 'provider_refused' }>
+  isRerun: boolean
+  onTryAgain: () => void
+  onSaveForLater?: () => void
+}): JSX.Element {
+  const { t } = useTranslation()
+  const { title, body } = stoppedText(t, failure, isRerun)
+  return (
+    <div role="alert" className="flex flex-col gap-3 rounded-card-small px-4 py-3.5 glass-thin">
+      <p className="m-0 text-body-small font-semibold text-ink">{title}</p>
+      <p className="m-0 text-caption font-normal text-ink-2">{failureReason(t, failure)}</p>
+      {failure.kind === 'needs_description' && (
+        <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-caption font-normal text-ink-2">
+          {failure.questions.map((question) => (
+            <li key={question}>{question}</li>
+          ))}
+        </ul>
+      )}
+      {body && <p className="m-0 text-caption font-normal text-ink-2">{body}</p>}
+      <div className="flex flex-wrap gap-2.5">
+        <Button size="sm" onClick={onTryAgain}>
+          {t('progress.stopped.tryAgain')}
+        </Button>
+        {onSaveForLater && (
+          <Button size="sm" variant="ghost" onClick={onSaveForLater}>
+            {t('progress.stopped.saveForLater')}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -173,12 +243,13 @@ export function ProgressPanel({
   failure,
   onTryAgain,
   onSaveForLater,
+  isRerun = false,
 }: ProgressPanelProps): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
-  const rows = progressRows({ t, language, progress, failure }, isRunning)
-  const isThin = failure?.kind === 'needs_description'
+  const rows = progressRows({ t, language, progress, failure, isRerun }, isRunning)
+  const line = subtitle(t, progress, failure, isRerun)
   return (
     <GlassPanel
       as="section"
@@ -189,37 +260,18 @@ export function ProgressPanel({
         <h2 id={headingId} className="m-0 text-heading-small text-ink">
           {t('progress.heading')}
         </h2>
-        <p className="m-0 text-caption font-normal text-slate">
-          {subtitle(t, progress, failure)}
-        </p>
+        {line && <p className="m-0 text-caption font-normal text-slate">{line}</p>}
       </div>
       {failure?.kind === 'provider_refused' && (
         <RefusedAlert failure={failure} onSaveForLater={onSaveForLater} />
       )}
       {failure && failure.kind !== 'provider_refused' && (
-        <div role="alert" className="flex flex-col gap-3 rounded-card-small px-4 py-3.5 glass-thin">
-          <p className="m-0 text-body-small font-semibold text-ink">
-            {isThin ? t('progress.needsDescription.title') : t('progress.stopped.title')}
-          </p>
-          <p className="m-0 text-caption font-normal text-ink-2">{failureReason(t, failure)}</p>
-          {failure.kind === 'needs_description' ? (
-            <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-caption font-normal text-ink-2">
-              {failure.questions.map((question) => (
-                <li key={question}>{question}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="m-0 text-caption font-normal text-ink-2">{t('progress.stopped.body')}</p>
-          )}
-          <div className="flex flex-wrap gap-2.5">
-            <Button size="sm" onClick={onTryAgain}>
-              {t('progress.stopped.tryAgain')}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onSaveForLater}>
-              {t('progress.stopped.saveForLater')}
-            </Button>
-          </div>
-        </div>
+        <StoppedAlert
+          failure={failure}
+          isRerun={isRerun}
+          onTryAgain={onTryAgain}
+          onSaveForLater={onSaveForLater}
+        />
       )}
       <CheckProgress steps={rows} />
       <p className="m-0 mt-auto rounded-card-small px-3.5 py-3 text-caption font-normal text-ink-2 glass-thin">

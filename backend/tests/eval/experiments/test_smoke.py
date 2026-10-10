@@ -47,6 +47,7 @@ from aiact.llm.generations import (
 from aiact.retrieval.provisions import ProvisionNotFoundError
 from aiact.schemas import FollowUpQuestion, Language, RiskClass, Role, Status, StepName, StepResult
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 from tests.eval.experiments.builders import case, role_outcome
 
 GIT_STATE = ("0123456789abcdef0123456789abcdef01234567", False)
@@ -225,11 +226,13 @@ def test_a_check_that_returns_facts_is_a_contract_error() -> None:
 
 
 def settings() -> Settings:
+    """With the refusal route configured, which the smoke harness never takes (decision 004)."""
     return Settings(
         _env_file=None,  # pyright: ignore[reportCallIssue]
         openrouter_api_key=SecretStr("not-a-key"),
         embedding_model="qwen/qwen3-embedding-8b",
         embedding_provider="nebius",
+        **REFUSAL_ROUTE,
     )
 
 
@@ -703,7 +706,9 @@ def test_each_node_is_the_engines_own_on_the_arms_pinned_model_without_retries(
     tracker = UsageTracker(GEMINI, node)
     built = smoke.engine_node(node, smoke.arm_settings(settings(), GEMINI), tracker)
     assert isinstance(built, node_class)
-    chat = built._model  # pyright: ignore[reportAttributeAccessIssue, reportFunctionMemberAccess]
+    route = built._route  # pyright: ignore[reportAttributeAccessIssue, reportFunctionMemberAccess]
+    assert route.refusal_chat is None  # one call per probe: a refusal is the probe's outcome
+    chat = route.chat
     assert chat.model_name == "google/gemini-3.1-flash-lite"
     assert chat.openrouter_provider == {
         "data_collection": "deny",

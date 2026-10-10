@@ -25,7 +25,7 @@ from aiact.engine import (
 from aiact.engine.classify import ClassifyRequest
 from aiact.engine.graph import CheckNode, EngineNodes
 from aiact.engine.scripted import Script, no_match, scripted_nodes
-from aiact.engine.state import CheckOutcome, EngineState
+from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
 from aiact.llm import LLMConfigError
 from aiact.schemas import (
     STEP_ORDER,
@@ -245,6 +245,53 @@ async def test_a_bad_body_is_a_422_before_the_run_is_set_up(
     use_builder(app, never_built)
     response = await post(client, {**BODY, **changes})
     assert response.status_code == 422
+
+
+def description_catcher(seen: list[str]) -> EngineNodes:
+    """The scripted nodes, with a facts node that notes the description the engine reads."""
+    nodes = scripted_nodes(SCRIPT)
+
+    def facts(state: EngineState) -> FactsOutcome:
+        seen.append(state["description"])
+        return nodes.facts(state)
+
+    return EngineNodes(facts=facts, checks=nodes.checks, finalize=nodes.finalize)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("language", "heading"),
+    [("en", "Answers to follow-up questions:"), ("de", "Antworten auf Rückfragen:")],
+)
+async def test_a_follow_up_answer_reaches_the_description_the_engine_reads(
+    app: FastAPI, client: httpx.AsyncClient, language: str, heading: str
+) -> None:
+    # P5b's follow-up loop: the screen sends the original description and the answers; the
+    # engine reads them appended, one line each, under the heading (decision 019).
+    seen: list[str] = []
+    use_nodes(app, description_catcher(seen))
+    answers = {
+        "eu_link": "Yes. Question: Is the system used in the EU?",
+        "confirmed_fact_1": "Confirmed:\nIt ranks the applications.",
+    }
+    response = await post(client, {**BODY, "language": language, "answers": answers})
+    assert response.status_code == 200
+    assert isinstance(sse_events(response.text)[-1], ResultEvent)
+    assert seen == [
+        f"{DESCRIPTION}\n\n{heading}\n"
+        "- eu_link: Yes. Question: Is the system used in the EU?\n"
+        "- confirmed_fact_1: Confirmed: It ranks the applications."
+    ]
+
+
+@pytest.mark.anyio
+async def test_without_answers_the_engine_reads_the_description_alone(
+    app: FastAPI, client: httpx.AsyncClient
+) -> None:
+    seen: list[str] = []
+    use_nodes(app, description_catcher(seen))
+    assert (await post(client)).status_code == 200
+    assert seen == [DESCRIPTION]
 
 
 @pytest.mark.anyio

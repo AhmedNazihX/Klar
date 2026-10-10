@@ -6,13 +6,15 @@ which then never closes them (they are the caller's), so a run that built its ow
 them in reference cycles until a full garbage collection. The engine model of every node, with
 that node's output cap, and the query embedder are therefore built here on first use and shared
 by every later run with the same settings: the API's, the benchmark runner's and
-`classify_system`'s. A run never changes them: its nodes take a copy of their model with the
-run's usage callback (`engine_nodes`; the copy shares the client), and wrap the embedder in the
-run's `MeteredEmbedder`. The httpx clients are safe to share between the API's worker threads.
+`classify_system`'s. So is each node's refusal model, the second pinned model its refused
+requests go to (decision 033). A run never changes them: its nodes take a copy of their models
+with the run's usage callback (`engine_nodes`; the copy shares the client), and wrap the embedder
+in the run's `MeteredEmbedder`. The httpx clients are safe to share between the API's worker
+threads.
 """
 
 import threading
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from functools import lru_cache
 from types import MappingProxyType
 
@@ -25,7 +27,7 @@ from aiact.engine.nodes.prohibited import MAX_OUTPUT_TOKENS as PROHIBITED_TOKENS
 from aiact.engine.nodes.role_obligations import MAX_OUTPUT_TOKENS as ROLE_TOKENS
 from aiact.engine.nodes.scope import MAX_OUTPUT_TOKENS as SCOPE_TOKENS
 from aiact.engine.nodes.transparency import MAX_OUTPUT_TOKENS as TRANSPARENCY_TOKENS
-from aiact.llm import OpenRouterEmbeddings, engine_chat_model
+from aiact.llm import OpenRouterEmbeddings, engine_chat_model, refusal_chat_model
 from aiact.schemas import StepName
 from aiact.settings import Settings
 
@@ -55,7 +57,16 @@ def engine_chats(settings: Settings) -> Mapping[str, BaseChatModel]:
     with these settings, the same models on every later one. Raises `LLMConfigError` when
     `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set (nothing is kept then)."""
     with _BUILDING:
-        return _chats(settings)  # pyright: ignore[reportArgumentType]: frozen, so hashable
+        return _chats(settings, engine_chat_model)  # pyright: ignore[reportArgumentType]: frozen, so hashable
+
+
+def refusal_chats(settings: Settings) -> Mapping[str, BaseChatModel]:
+    """The refusal model of every node in `NODE_TOKENS` (decision 033), like `engine_chats`:
+    each with its node's output cap, pinned to `REFUSAL_PROVIDER` with fallbacks off, built once
+    per settings. Raises `LLMConfigError` when `REFUSAL_MODEL`, `REFUSAL_PROVIDER` or the API
+    key is not set (nothing is kept then)."""
+    with _BUILDING:
+        return _chats(settings, refusal_chat_model)  # pyright: ignore[reportArgumentType]: frozen, so hashable
 
 
 def engine_embeddings(settings: Settings) -> OpenRouterEmbeddings:
@@ -66,13 +77,14 @@ def engine_embeddings(settings: Settings) -> OpenRouterEmbeddings:
         return _embeddings(settings)  # pyright: ignore[reportArgumentType]: frozen, so hashable
 
 
-@lru_cache(maxsize=KEPT_SETTINGS)
-def _chats(settings: Settings) -> Mapping[str, BaseChatModel]:
+ChatBuilder = Callable[..., BaseChatModel]
+"""`engine_chat_model` or `refusal_chat_model`."""
+
+
+@lru_cache(maxsize=2 * KEPT_SETTINGS)
+def _chats(settings: Settings, build: ChatBuilder) -> Mapping[str, BaseChatModel]:
     return MappingProxyType(
-        {
-            node: engine_chat_model(max_tokens=tokens, settings=settings)
-            for node, tokens in NODE_TOKENS.items()
-        }
+        {node: build(max_tokens=tokens, settings=settings) for node, tokens in NODE_TOKENS.items()}
     )
 
 

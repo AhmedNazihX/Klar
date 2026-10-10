@@ -373,6 +373,7 @@
       "models": "Language models, through OpenRouter",
       "modelsRole": "Checks and answers",
       "modelsDetail": "OpenRouter passes each request on; its own processing isn’t limited to the EU. The models run in EU regions on Microsoft Azure and Google Vertex AI.",
+      "modelsRefusal": "If Microsoft Azure's content filter blocks a check, that check's request (the description and the facts and answers taken from it) is sent once more to Gemini 3.1 Flash-Lite on Google Vertex AI in the EU (zero data retention, no training), for each check the filter blocked. This happens only when the filter blocks it.",
       "search": "Search of the legal texts, on an EU host",
       "searchRole": "Embeddings",
       "searchDetail": "Nebius, in the EU, turns your description into a search of the Act.",
@@ -399,14 +400,14 @@
       "dialogBody": "Your tools with their descriptions and results, your document answers, checklist ticks and company profile will be deleted for good. This can’t be undone.",
       "dialogBodyCounts": "Klar will delete {{items}} for good. This can’t be undone.",
       "lost": {
-        "systems_one": "{{count}}\u00a0tool",
-        "systems_other": "{{count}}\u00a0tools",
-        "classifications_one": "{{count}}\u00a0result",
-        "classifications_other": "{{count}}\u00a0results",
-        "interviewAnswers_one": "{{count}}\u00a0document answer",
-        "interviewAnswers_other": "{{count}}\u00a0document answers",
-        "dutyProgress_one": "{{count}}\u00a0ticked duty",
-        "dutyProgress_other": "{{count}}\u00a0ticked duties",
+        "systems_one": "{{count}} tool",
+        "systems_other": "{{count}} tools",
+        "classifications_one": "{{count}} result",
+        "classifications_other": "{{count}} results",
+        "interviewAnswers_one": "{{count}} document answer",
+        "interviewAnswers_other": "{{count}} document answers",
+        "dutyProgress_one": "{{count}} ticked duty",
+        "dutyProgress_other": "{{count}} ticked duties",
         "companyProfile": "your company profile"
       },
       "word": "DELETE",
@@ -540,6 +541,10 @@
       "incomplete": "The connection ended before the checks finished.",
       "needsDescription": "Klar needs to know what the tool decides and who it affects. Add that to your description and run it again.",
       "providerRefused": "The model provider's content filter blocked a check, so it couldn't be assessed automatically. No risk class is given: a person must review the description."
+    },
+    "rerun": {
+      "title": "Your earlier result still stands",
+      "body": "Your answers are kept. Try again to run the checks with them."
     }
   },
   "result": {
@@ -587,8 +592,6 @@
       "minimal_risk": "It isn't banned, isn't high-risk and has no Art. 50 duty.",
       "out_of_scope": "The AI Act doesn't apply to it."
     },
-    "paused": "Klar assumed one fact at check {{number}}. The question below settles it.",
-    "pausedAtDuties": "Klar assumed one fact while working out your role. The question below settles it.",
     "dutiesFrom": "Your duties apply from",
     "monthsAway_one": "About {{count}} month from today",
     "monthsAway_other": "About {{count}} months from today",
@@ -646,6 +649,7 @@
       "heading": "The result rests on",
       "intro": "If any of these is wrong, the class may change.",
       "change": "Change",
+      "confirm": "Confirm",
       "accuracy": "This assessment is only as accurate as the description provided."
     },
     "steps": {
@@ -680,7 +684,8 @@
       "checked": "Checked: {{provisions}}",
       "showProvision_one": "Show the provision",
       "showProvision_other": "Show the provisions",
-      "noFacts": "No single fact; see the decision."
+      "noFacts": "No single fact; see the decision.",
+      "runHeading": "Run {{number}}: how Klar got here"
     },
     "reviewer": {
       "exportJson": "Export as JSON"
@@ -715,6 +720,32 @@
       "otherBasis": "Under the original 2024 text, the class is the same ({{riskClass}}), on another basis: {{basis}}.",
       "same": "Under the original 2024 text, the class is the same: {{riskClass}}.",
       "compare": "Compare the two texts"
+    },
+    "pausedVerdict": {
+      "atCheck": "Klar paused at check {{number}}. {{decides}}",
+      "atRole": "Klar paused while working out your role. One fact decides which duties are yours.",
+      "decides": {
+        "high_risk": "One fact decides whether {{tool}} is a high-risk system.",
+        "prohibited": "One fact decides whether {{tool}} is banned.",
+        "limited_risk": "One fact decides whether {{tool}} has transparency duties.",
+        "other": "One fact decides how {{tool}} is classified."
+      },
+      "theTool": "the tool",
+      "until": "Until you answer",
+      "treatedAs": {
+        "prohibited": "Treated as prohibited",
+        "high_risk": "Treated as high-risk",
+        "limited_risk": "Treated as limited risk",
+        "minimal_risk": "Treated as minimal risk",
+        "out_of_scope": "Treated as out of scope"
+      },
+      "stricter": "The stricter reading, so nothing is missed",
+      "lists": {
+        "high_risk": "Your inventory and obligations show the high-risk duties as possible until this is answered.",
+        "prohibited": "Your inventory and obligations show the ban as possible until this is answered.",
+        "limited_risk": "Your inventory and obligations show the transparency duties as possible until this is answered.",
+        "other": "Your inventory shows this class as assumed until this is answered."
+      }
     }
   },
   "annexPoint": {
@@ -743,6 +774,49 @@
     "III_7_d": "detecting, recognising or identifying people in migration",
     "III_8_a": "assisting courts in researching and applying the law",
     "III_8_b": "influencing elections or referendums"
+  },
+  "prohibited": {
+    "statement": "It matches a practice Art. 5 bans: {{points}}. The checks stop at Article 5.",
+    "statementPlain": "It matches a practice Art. 5 bans. The checks stop at Article 5.",
+    "bannedSince": "Banned since",
+    "monthsAgo_one": "{{count}} month ago",
+    "monthsAgo_other": "{{count}} months ago",
+    "underAMonth": "Less than a month ago",
+    "legalReview": "A prohibited practice is serious. We strongly recommend legal advice now.",
+    "notChecked": "Not checked: a ban ends the checks",
+    "now": {
+      "heading": "What to do now",
+      "intro": "There’s no route to comply: documentation or oversight can’t make a prohibited practice allowed.",
+      "stop": "Stop using or supplying it in the EU.",
+      "askVendor": "Ask the vendor to confirm the finding and stop supplying it to you.",
+      "draftMessage": "Draft a message",
+      "data": "Get legal advice on the data it has already collected and what to do with it."
+    },
+    "fine": {
+      "heading": "Maximum fine",
+      "amount": "€35 m or 7%",
+      "body": "of a company’s total worldwide annual turnover for the preceding financial year, whichever is higher. For SMEs, including start-ups, whichever is lower."
+    },
+    "why": {
+      "heading": "Why the checks stopped"
+    },
+    "quote": {
+      "loading": "Loading the text of {{provision}}…",
+      "failed": "Klar couldn’t load the text of {{provision}}."
+    },
+    "letter": {
+      "label": "Draft message to the vendor",
+      "intro": "Check the message, fill in the parts marked below, then send it from your own email.",
+      "toFillIn": "To fill in before you send it.",
+      "drafting": "Drafting the message…",
+      "failed": "Klar couldn’t draft the message.",
+      "tryAgain": "Try again",
+      "copy": "Copy message",
+      "copied": "Copied. Paste it into your email.",
+      "copyFailed": "Klar couldn’t copy the message. Select it and copy it yourself.",
+      "copyQuote": "“{{quote}}” ({{source}})",
+      "close": "Close"
+    }
   },
   "inventory": {
     "count_one": "{{count}} tool, classified under the AI Act as amended on {{date}}.",
@@ -916,5 +990,50 @@
       "title": "No duties yet",
       "body": "Classify a tool to see what it asks of you."
     }
+  },
+  "followUp": {
+    "heading_one": "{{count}} open question",
+    "heading_other": "{{count}} open questions",
+    "intro": "Klar couldn't settle these from the description. Your answers can change the result.",
+    "option": {
+      "yes": "Yes",
+      "no": "No",
+      "not_sure": "Not sure"
+    },
+    "fromProfile": "Filled in from your company profile. Please check it before you run the checks again.",
+    "runAgain_one": "Add answer and run again",
+    "runAgain_other": "Add answers and run again",
+    "answerLine": "{{question}} {{answer}}.",
+    "confirmedLine": "Confirmed: {{fact}}",
+    "vendor": {
+      "lead": "Not sure? Ask your vendor:",
+      "quoted": "“{{question}}”",
+      "copy": "Copy question",
+      "copied": "Question copied.",
+      "copyFailed": "Copying didn't work here. Select the question above to copy it."
+    },
+    "banner": {
+      "changed": "Your answer changed the result.",
+      "unchanged": "Your answer didn't change the class.",
+      "body": "Klar ran every check again with your answer added to the description.",
+      "youSaid": "You said: “{{answer}}”",
+      "run": "Run {{number}} of {{total}}",
+      "undo": "Undo answer",
+      "undoFailed": "Klar couldn't undo your answer. Please try again.",
+      "changeLabel": "changed to",
+      "youSaidTo": "You said “{{answer}}” to “{{question}}”",
+      "youConfirmed": "You confirmed: “{{fact}}”"
+    },
+    "lists": {
+      "heading": "What changed in your lists",
+      "needs": "Needs you",
+      "duties_one": "{{count}} duty",
+      "duties_other": "{{count}} duties",
+      "possibleDuties_one": "{{count}} possible duty",
+      "possibleDuties_other": "{{count}} possible duties",
+      "noDuties": "No specific duties",
+      "nothing": "Nothing to do"
+    },
+    "changed": "Changed: {{decision}}"
   }
 }

@@ -10,13 +10,13 @@ import pytest
 from aiact.retrieval import search
 from aiact.retrieval.search import (
     CANDIDATES,
-    MIN_KEYWORD_IDF,
+    SearchTuning,
     distinct_units,
     prepare_search,
     search_ai_act,
 )
 from aiact.schemas import Language, LawVersion
-from aiact.settings import Settings
+from aiact.settings import DEFAULT_MIN_KEYWORD_IDF, Settings
 
 
 class RecordingEmbedder:
@@ -194,7 +194,8 @@ def _fused_row(row_id: int, distance: float | None, keyword_idf: float | None) -
     return {
         "id": row_id, "ancestors": [], "score": 0.01, "vector_rank": None if distance is None
         else row_id, "keyword_rank": None if keyword_idf is None else row_id,
-        "distance": distance, "keyword_idf": keyword_idf, "provision_id": f"art:{row_id}",
+        "reference_rank": None, "distance": distance, "keyword_idf": keyword_idf,
+        "provision_id": f"art:{row_id}",
         "doc_key": "ai-act-consolidated", "title": "AI Act", "doc_type": "law",
         "law_version": "amended", "status": "consolidated", "language": "en", "heading": None,
         "text": "…", "valid_from": date(2024, 8, 1), "valid_to": None,
@@ -238,8 +239,8 @@ def test_hits_carry_the_similarity_and_the_keyword_idf(monkeypatch: pytest.Monke
     [
         ([], False),
         ([_fused_row(1, 0.4, None)], True),
-        ([_fused_row(1, None, MIN_KEYWORD_IDF)], True),
-        ([_fused_row(1, None, MIN_KEYWORD_IDF - 0.01), _fused_row(2, None, 1.0)], False),
+        ([_fused_row(1, None, DEFAULT_MIN_KEYWORD_IDF)], True),
+        ([_fused_row(1, None, DEFAULT_MIN_KEYWORD_IDF - 0.01), _fused_row(2, None, 1.0)], False),
     ],
     ids=["no hits", "a meaning-arm hit", "a strong keyword match", "only weak keyword matches"],
 )
@@ -247,3 +248,110 @@ def test_found_needs_a_meaning_arm_hit_or_a_strong_keyword_match(
     monkeypatch: pytest.MonkeyPatch, rows: list[dict[str, Any]], found: bool
 ) -> None:
     assert _captured_search(monkeypatch, rows, setting=0.3)[0].found is found
+
+
+# --- X1b: the tuned constants, the annex rule and exact references ---------------------------
+
+
+def test_the_tuned_constants_are_x1bs_choice() -> None:
+    """Decision 003 (X1b): keyword weight 0.1 and RRF constant 10, annex points over the rows
+    that hold them; the term share, common-row floor and candidate pool unchanged."""
+    assert (
+        SearchTuning(keyword_weight=0.1, rrf_k=10, max_term_share=0.05, skips_annex_containers=True)
+        == search.DEFAULT_TUNING
+    )
+    assert (search.MIN_COMMON_ROWS, CANDIDATES) == (50, 50)
+
+
+def test_the_statement_takes_the_tuning_and_the_references_as_parameters() -> None:
+    tuning = SearchTuning(keyword_weight=0.5, rrf_k=60, max_term_share=0.1,
+                          skips_annex_containers=False)  # fmt: skip
+    params, _ = prepare_search(
+        "Article 50 and Annex III point 5(b)", Language.EN, LawVersion.AMENDED, None, None, (),
+        False, 10, RecordingEmbedder(), tuning=tuning,
+    )  # fmt: skip
+    assert (params["keyword_weight"], params["rrf_k"], params["max_term_share"]) == (0.5, 60, 0.1)
+    assert params["skips_annex_containers"] is False
+    assert params["reference_ids"] == ["art:50", "annex:III:5:b"]
+    plain, _ = prepare_search(
+        "credit", Language.EN, LawVersion.AMENDED, None, None, (), False, 10, RecordingEmbedder()
+    )
+    assert plain["reference_ids"] == []
+    assert (plain["keyword_weight"], plain["rrf_k"], plain["skips_annex_containers"]) == (
+        0.1,
+        10,
+        True,
+    )
+
+
+def test_the_engine_tuning_is_c6s_ranking_and_names_no_reference() -> None:
+    assert (
+        SearchTuning(
+            keyword_weight=0.5,
+            rrf_k=60,
+            max_term_share=0.05,
+            skips_annex_containers=False,
+            pins_references=False,
+        )
+        == search.ENGINE_TUNING
+    )
+    params, _ = prepare_search(
+        "Article 50 and Annex III point 5(b)", Language.EN, LawVersion.AMENDED, None, None, (),
+        False, 10, RecordingEmbedder(), tuning=search.ENGINE_TUNING,
+    )  # fmt: skip
+    assert params["reference_ids"] == []
+    assert (params["keyword_weight"], params["rrf_k"], params["skips_annex_containers"]) == (
+        0.5,
+        60,
+        False,
+    )
+
+
+def test_the_annex_rule_sits_in_both_ranked_arms_and_not_in_the_reference_arm() -> None:
+    _, statement = prepare_search(
+        "q", Language.EN, LawVersion.AMENDED, None, None, (), False, 10, RecordingEmbedder()
+    )
+    text = statement.as_string()
+    nearest = text[text.index("vector_hits as materialized") : text.index("vector_ranked as")]
+    keyword = text[text.index("keyword_ranked as") : text.index("reference_ranked as")]
+    reference = text[text.index("reference_ranked as") : text.index("fused as")]
+    rule = "%(skips_annex_containers)s and p.provision_id like 'annex:%%'"
+    assert rule in nearest and rule in keyword
+    assert rule not in reference
+    assert "order by f.reference_rank nulls last, f.score desc" in text
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"keyword_weight": -0.1}, "keyword_weight must be 0 or more"),
+        ({"keyword_weight": float("nan")}, "keyword_weight must be 0 or more"),
+        ({"rrf_k": 0}, "rrf_k must be at least 1"),
+        ({"max_term_share": 0.0}, r"max_term_share must be in \(0, 1\]"),
+        ({"max_term_share": 1.5}, r"max_term_share must be in \(0, 1\]"),
+    ],
+)
+def test_a_tuning_out_of_range_is_rejected(kwargs: dict[str, float], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        SearchTuning(**kwargs)  # pyright: ignore[reportArgumentType]
+
+
+def test_a_named_provision_is_found_and_carries_its_reference_rank(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    named = {**_fused_row(1, None, None), "reference_rank": 1}
+    results = _captured_search(monkeypatch, [named], setting=0.3)[0]
+    assert results.hits[0].reference_rank == 1
+    assert results.found is True
+
+
+def test_found_reads_the_keyword_idf_from_the_setting(monkeypatch: pytest.MonkeyPatch) -> None:
+    rows = [_fused_row(1, None, 20.0)]
+    run = CapturedRun(rows)
+    monkeypatch.setattr(search, "_run", run)
+    for threshold, found in ((20.0, True), (20.01, False)):
+        settings = Settings(_env_file=None, search_max_distance=0.3,  # pyright: ignore[reportCallIssue]
+                            search_min_keyword_idf=threshold)  # fmt: skip
+        monkeypatch.setattr(search, "get_settings", lambda settings=settings: settings)
+        results = search_ai_act("credit", embedder=RecordingEmbedder(), connection=NoConnection())  # pyright: ignore[reportArgumentType]
+        assert results.found is found

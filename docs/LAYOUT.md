@@ -37,8 +37,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
 │   │   │                            replies.py: the question shapes a model writes, frozen with the recordings (E12)
 │   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3);
-│   │   │                            reply_usage, a reply's cost and tokens (E10)
-│   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
+│   │   │                            reply_usage, a reply's cost and tokens (E10); refusal_chat_model and
+│   │   │                            engine_route, a node's models with the refusal route (X2c)
+│   │   │                            structured.py: JSON-schema response format + error text (V3, E2);
+│   │   │                            ChatRoute, a refused request sent once to the second model (X2c)
 │   │   │                            generations.py: the provider that served a generation (X2)
 │   │   │                            ragas_llm.py: the RAGAS route (RAGAS_MODEL on RAGAS_PROVIDER): the metrics' LLM
 │   │   │                            over the OpenAI SDK, usage metered per reply, telemetry off; the same route
@@ -47,6 +49,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
 │   │   │                            build.py + load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5), get_omnibus_provision (E9); search.py: search_ai_act (C6; relevance score and cut-off C8);
+│   │   │                            references.py: exact references in a query ("Article 50") as provision ids (X1b)
 │   │   │                            documents.py: list_documents, the corpus's texts with title, status and dates (P1)
 │   │   │                            tracing.py: each lookup a LangSmith run under the engine's trace, its ids as metadata (V7)
 │   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
@@ -112,6 +115,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            matchers.py (replay states and label matchers, shared with the E3–E7 replays),
 │   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`);
 │   │   │                            X2b: smoke_refusals.py (decision 033's rule for refused requests, `smoke-refusals`)
+│   │   │                            X1b: search_cutoff.py (the relevance cut-off's calibration, `search-cutoff`)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   │                            P8a: models.py (DraftDocument, sections with their provenance, status),
@@ -167,6 +171,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            tests/engine/nodes/corpus_recording.py (E4)
 │       ├── engine/built_corpus.py   the corpus built in memory from data/parsed/, which the replays check
 │       │                            their citations against (no database in CI) (E9)
+│       ├── engine/nodes/pinned.py   assert_pinned_route: a node's engine and refusal models, each pinned (X2c)
 │       ├── snapshots/               committed JSON snapshots, e.g. the result's JSON Schema (F3)
 │       ├── export/reading.py        a PDF's and a Word file's text read back for the tests (P9)
 │       ├── test_network_guard.py    proves unmarked tests can't reach the network (F6)
@@ -247,7 +252,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            SiteFooter, MistGround, ScreenPlaceholder, PhoneLabel (P15); the
 │       │                            sidebar's CompanyLine (P18); the result's CheckProgress, FactCard,
 │       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
-│       │                            InventoryTable (P6); VersionDiff (P10)
+│       │                            InventoryTable (P6); VersionDiff (P10); FactQuestion, ChangeBanner (P5b)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12), obligations/ (P24),
@@ -260,16 +265,21 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-inventory-tools.ts, use-save-classified-tool.ts (P6),
 │       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12),
 │       │                            use-original-run.ts (the same description checked under the original text, P10)
+│       │                            use-follow-up-run.ts (a result's re-run with answers, saved as the next run; Undo answer),
+│       │                            use-follow-up-answers.ts (the answers given on a result, profile pre-fill, Confirm) (P5b)
 │       │                            use-interview-answers.ts, use-document-drafts.ts (drafts and exports, P9)
 │       │                            use-report-export.ts (the report for a lawyer and the inventory report, P25; the checklist, P24),
-│       │                            use-duty-progress.ts (the duties ticked off, P24)
+│       │                            use-duty-progress.ts (the duties ticked off, P24),
+│       │                            use-provision.ts (a provision's text from the corpus), use-vendor-letter.ts (P28's letter) (P21)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
 │       │                            before a screen reads it) (P6);
 │       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12);
 │       │                            risk-class (a result's class; a needs-a-description result has none) (E13);
-│       │                            duty-progress (duty_progress ticks through supabase-js, P24)
+│       │                            duty-progress (duty_progress ticks through supabase-js, P24);
+│       │                            tool-runs (a tool's runs: the latest two, a follow-up run with its answers, undo by row id; P5b),
+│       │                            log (a read the screen goes on without, logged with its error code only; P5b)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
 │       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4), reduced-motion.ts (matchMedia stub, P14),
@@ -283,6 +293,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    original-text-fixtures.ts (results under both texts, for the comparison, P10)
 │                                    documents-fixtures.ts + fixtures/documents.drafts.json (lists and drafts dumped
 │                                    from the backend's drafter, and the documents handlers, P9)
+│                                    prohibited-fixtures.ts + fixtures/prohibited.json (the recorded prohibited result,
+│                                    its vendor letters and the provisions it quotes, dumped and drift-checked by
+│                                    backend/tests/drafting/test_frontend_prohibited_fixture.py, P21)
 │
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves

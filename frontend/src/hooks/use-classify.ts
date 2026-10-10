@@ -1,12 +1,7 @@
 import { useMutation, type UseMutationResult } from '@tanstack/react-query'
 import { useEffect, useReducer, useRef, type Dispatch } from 'react'
 
-import {
-  classify,
-  type ClassificationResult,
-  type ClassifyRequest,
-  type StepName,
-} from '@/api'
+import { classify, type ClassificationResult, type ClassifyRequest, type StepName } from '@/api'
 import {
   INITIAL_PROGRESS,
   progressReducer,
@@ -14,6 +9,7 @@ import {
   type ProgressState,
 } from '@/features/classify/classify-progress'
 import { SSE_MAX_RETRY_ATTEMPTS } from '@/lib/api-client-config'
+import { classifyWriteFailure } from '@/lib/company-profile'
 
 /** Why a run ended without a result. Klar never shows a class after any of these. */
 export type ClassifyFailure =
@@ -43,6 +39,21 @@ export class ClassifyRunError extends Error {
     this.name = 'ClassifyRunError'
     this.failure = failure
   }
+}
+
+/** Why a run failed, from its mutation; null while it hasn't. An error that isn't the stream's
+ *  own (the request itself failed) counts as no answer at all. */
+export function classifyFailureOf(
+  run: Pick<UseMutationResult<ClassificationResult, Error, ClassifyRequest>, 'isError' | 'error'>,
+): ClassifyFailure | null {
+  if (!run.isError) return null
+  return run.error instanceof ClassifyRunError ? run.error.failure : { kind: 'network' }
+}
+
+/** Why a finished run couldn't be saved in the user's data: their storage is full, or anything
+ *  else. The run still shows (it was paid for), with a note that it lives only in this tab. */
+export function saveFailureOf(error: unknown): 'storage-full' | 'failed' {
+  return classifyWriteFailure(error, 'save') === 'storage-full' ? 'storage-full' : 'failed'
 }
 
 function retryAfterSeconds(response: Response): number | null {

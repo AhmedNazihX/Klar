@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import type { ClassificationResult } from '@/api'
 import { clearDraft } from '@/features/classify/classification-store'
 import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
@@ -24,9 +25,15 @@ import {
   INVENTORY_TOOLS_URL,
   prohibitedResult,
   SAVE_TOOL_URL,
+  savedRunHandler,
   toolRow,
 } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
+import {
+  prohibitedHandlers,
+  RECORDED_PROHIBITED,
+  type ProhibitedTraffic,
+} from '@/test/prohibited-fixtures'
 import { renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS, IMPORT_URL, userDataHandlers } from '@/test/user-data-handlers'
 
@@ -597,6 +604,7 @@ describe("A tool's result page, read from the inventory", () => {
       classifyHandler(WORKED_EXAMPLE_EVENTS, () => {
         classifyRequests += 1
       }),
+      savedRunHandler(),
       // As the database does it: the run lands on the tool it names, as that tool's next run.
       http.post(SAVE_TOOL_URL, async ({ request }) => {
         const body = (await request.json()) as Record<string, unknown>
@@ -674,6 +682,28 @@ describe("A tool's result page, read from the inventory", () => {
       expect(screen.queryByText(/Certified compliant/)).toBeNull()
     },
   )
+
+  it('shows a saved decided ban in the prohibited layout', async () => {
+    server.use(...prohibitedHandlers({ lookups: [], letterBodies: [] }))
+    await openTool(toolRow('Call mood scoring', RECORDED_PROHIBITED), 'en')
+    expect(screen.getByRole('region', { name: 'What to do now' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Draft a message' })).toBeVisible()
+    await screen.findByText('Art. 99(6), English')
+  })
+
+  it.each<[string, Partial<ClassificationResult>]>([
+    ['refused (decision 030)', { risk_class: null, not_assessed: ['prohibited'] }],
+    ['stored before decision 030 with a check not assessed', { not_assessed: ['transparency'] }],
+  ])('never shows the prohibited layout for a saved ban %s', async (_, change) => {
+    const traffic: ProhibitedTraffic = { lookups: [], letterBodies: [] }
+    server.use(...prohibitedHandlers(traffic))
+    await openTool(toolRow('Call mood scoring', { ...RECORDED_PROHIBITED, ...change }), 'en')
+    expect(screen.getByRole('button', { name: 'Classify this tool' })).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'What to do now' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Why the checks stopped' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Draft a message' })).toBeNull()
+    expect(traffic.lookups).toEqual([])
+  })
 })
 
 describe('Inventory, adding tools', () => {

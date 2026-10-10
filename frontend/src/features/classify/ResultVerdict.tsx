@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next'
 import type { JSX, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { ClassificationResult, LegacyStatus, Role } from '@/api'
+import type { ClassificationResult, LegacyStatus, RiskClass, Role } from '@/api'
 import { LawDate } from '@/components/LawDate'
 import { ResultSummary } from '@/components/ResultSummary'
 import { StatusPill } from '@/components/StatusPill'
@@ -70,12 +70,46 @@ function legalReviewLine(t: TFunction, result: ClassificationResult): string | n
   return t('result.legalReview.other')
 }
 
-function pausedLine(t: TFunction, result: ClassificationResult): string | null {
+/** The class as the paused lines name it: three have their own words, the rest the generic line. */
+function namedClass(riskClass: RiskClass): 'high_risk' | 'prohibited' | 'limited_risk' | 'other' {
+  switch (riskClass) {
+    case 'high_risk':
+    case 'prohibited':
+    case 'limited_risk':
+      return riskClass
+    case 'minimal_risk':
+    case 'out_of_scope':
+      return 'other'
+  }
+}
+
+/** A paused result's top (artboard `ResultNeedsInfo`): where Klar paused and what the one fact
+ *  decides, the stricter class it is treated as until the user answers, and what the user's
+ *  lists show meanwhile. Null for a result that didn't pause on a question. */
+function pausedVerdict(
+  t: TFunction,
+  result: ClassificationResult,
+  name: string | null,
+): { lead: string; treatedAs: string; lists: string } | null {
   if (result.status !== 'needs_more_information') return null
   const step = pausedStep(result)
   if (!step) return null
+  const riskClass = riskClassOf(result)
+  const named = namedClass(riskClass)
+  const tool = name ?? t('result.pausedVerdict.theTool')
   const number = checkNumber(step.step)
-  return number === null ? t('result.pausedAtDuties') : t('result.paused', { number })
+  const lead =
+    number === null
+      ? t('result.pausedVerdict.atRole')
+      : t('result.pausedVerdict.atCheck', {
+          number,
+          decides: t(`result.pausedVerdict.decides.${named}`, { tool }),
+        })
+  return {
+    lead,
+    treatedAs: t(`result.pausedVerdict.treatedAs.${riskClass}`),
+    lists: t(`result.pausedVerdict.lists.${named}`),
+  }
 }
 
 /** The Art. 111(2) sentences for the markings the duties carry, plus the per-copy caveat for a
@@ -106,33 +140,48 @@ function legacySentences(t: TFunction, result: ClassificationResult, language: L
 }
 
 /** The top of the result (ResultSummary): the class and its status, who you are and why, the
- *  date duties apply from, the Art. 111(2) notice and the legal-review line. */
+ *  date duties apply from, the Art. 111(2) notice and the legal-review line. A result paused on a
+ *  question says instead where it paused and what it is treated as until the user answers. */
 export function ResultVerdict({
   result,
+  name = null,
   today,
 }: {
   result: ClassificationResult
+  /** The tool's name, for "One fact decides whether <name> is …"; null when it has none. */
+  name?: string | null
   today: Date
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const duties = useDutiesFrom(result, today)
   const legacy = legacySentences(t, result, language)
+  const paused = pausedVerdict(t, result, name)
+  const summary = paused
+    ? {
+        statement: paused.lead,
+        statusLine: paused.lists,
+        dutiesFromLabel: t('result.pausedVerdict.until'),
+        dutiesFrom: paused.treatedAs,
+        dutiesNote: t('result.pausedVerdict.stricter'),
+      }
+    : {
+        statement: (
+          <>
+            {result.role && <span>{t(`result.role.${result.role}`)} </span>}
+            {result.also_role && <span>{t(`result.alsoRole.${result.also_role}`)} </span>}
+            <span>{basisSentence(t, result, language)}</span>
+          </>
+        ),
+        dutiesFromLabel: t('result.dutiesFrom'),
+        dutiesFrom: duties?.date,
+        dutiesNote: duties?.note,
+      }
   return (
     <ResultSummary
       riskClass={riskClassOf(result)}
       status={<StatusPills result={result} />}
-      statement={
-        <>
-          {result.role && <span>{t(`result.role.${result.role}`)} </span>}
-          {result.also_role && <span>{t(`result.alsoRole.${result.also_role}`)} </span>}
-          <span>{basisSentence(t, result, language)}</span>
-        </>
-      }
-      statusLine={pausedLine(t, result)}
-      dutiesFromLabel={t('result.dutiesFrom')}
-      dutiesFrom={duties?.date}
-      dutiesNote={duties?.note}
+      {...summary}
       legalReview={legalReviewLine(t, result)}
     >
       {legacy.length > 0 && (

@@ -47,6 +47,7 @@ describe('Which tools have documents', () => {
       createdAt: '2026-10-01T09:00:00+00:00',
       result,
       hasUnreadableResult: false,
+      runNo: 1,
     }
   }
 

@@ -12,7 +12,6 @@ import pytest
 
 from aiact.engine.state import CheckOutcome
 from aiact.eval.cases import BenchmarkCase
-from aiact.schemas import PROVIDER_REFUSAL
 
 
 @dataclass(frozen=True)
@@ -39,11 +38,6 @@ def expect_known_gap(
         pytest.fail(f"{case.id} now matches its label; remove it from KNOWN_GAPS")
     assert gap.reads(outcome, case), shown
     pytest.xfail(gap.reason)
-
-
-def refused(outcome: CheckOutcome, _case: BenchmarkCase) -> bool:
-    """The provider's content filter refused the reply (decision 029)."""
-    return outcome.step.error == PROVIDER_REFUSAL
 
 
 NOT_ASSESSED = {

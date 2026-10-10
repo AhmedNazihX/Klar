@@ -9,7 +9,7 @@ from datetime import date
 from aiact.dates import long_date
 from aiact.engine.nodes.reading_side import ReadingSide
 from aiact.llm.replies import OpenQuestion
-from aiact.schemas import Language, LawVersion, Role
+from aiact.schemas import Language, LawVersion, RiskClass, Role
 
 
 @dataclass(frozen=True)
@@ -344,6 +344,25 @@ def open_in_law_parts(
     return plain, provider, kept
 
 
+CLASS_NAMES: Mapping[Language, Mapping[RiskClass, str]] = {
+    Language.EN: {
+        RiskClass.OUT_OF_SCOPE: "out of scope",
+        RiskClass.PROHIBITED: "prohibited",
+        RiskClass.HIGH_RISK: "high-risk",
+        RiskClass.LIMITED_RISK: "limited risk",
+        RiskClass.MINIMAL_RISK: "minimal risk",
+    },
+    Language.DE: {
+        RiskClass.OUT_OF_SCOPE: "außerhalb des Anwendungsbereichs",
+        RiskClass.PROHIBITED: "verboten",
+        RiskClass.HIGH_RISK: "Hochrisiko",
+        RiskClass.LIMITED_RISK: "begrenztes Risiko",
+        RiskClass.MINIMAL_RISK: "minimales Risiko",
+    },
+}
+"""A risk class in words, for the decision sentences (the role step's duties line, finalize's
+open class)."""
+
 VERSION_NAMES: Mapping[Language, Mapping[LawVersion, str]] = {
     Language.EN: {LawVersion.ORIGINAL: "original text", LawVersion.AMENDED: "amended text"},
     Language.DE: {
@@ -382,7 +401,7 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "assumption_own_name": "Working assumption: provider, keeping the {base} duties. If you "
         "do place it under your own name, whether that makes you its provider is legally open "
         "(Art. 3(3)); if not, you stay a {base}. Please answer: {question}",
-        "duties": "{count} duties listed for a {risk_class} system ({version}).",
+        "duties": "{count} duties listed for this {risk_class} system ({version}).",
         "condition_not_met": "{count} conditional duties left out because their condition "
         "doesn't apply.",
         "not_found": "{count} duties left out because no earlier check reported the finding they "
@@ -435,7 +454,7 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "assumption_own_name": "Arbeitsannahme: Anbieter, mit den Pflichten als {base}. Bringen "
         "Sie es unter eigenem Namen in Verkehr, ist rechtlich offen, ob Sie damit Anbieter werden "
         "(Art. 3 Nr. 3); wenn nicht, bleiben Sie {base}. Bitte beantworten Sie: {question}",
-        "duties": "{count} Pflichten für ein System der Klasse {risk_class} ({version}).",
+        "duties": "{count} Pflichten für ein System der Risikoklasse „{risk_class}“ ({version}).",
         "condition_not_met": "{count} bedingte Pflichten entfallen, weil ihre Bedingung nicht "
         "erfüllt ist.",
         "not_found": "{count} Pflichten entfallen, weil keine frühere Prüfung den Befund gemeldet "

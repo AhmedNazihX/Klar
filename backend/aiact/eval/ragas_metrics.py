@@ -289,10 +289,13 @@ def build_parts(
     settings: Settings | None = None,
     *,
     embeddings: OpenRouterEmbeddings | None = None,
+    is_cut_off: bool = True,
 ) -> RagasParts:
     """The real run: the RAGAS route, the embedding arm, one meter. Without `embeddings` the
-    configured arm searches with the `SEARCH_MAX_DISTANCE` cut-off; an arm X1a passes searches
-    without one. Build new parts for each run: the run closes the model's client when it ends.
+    configured arm searches with the `SEARCH_MAX_DISTANCE` cut-off, unless `is_cut_off` is False
+    (to compare with a run from before X1b calibrated it, such as V6's c358b1e3); an arm X1a
+    passes always searches without one. Build new parts for each run: the run closes the
+    model's client when it ends.
 
     Raises `RagasNotInstalledError` without the `eval` group, and `LLMConfigError` when the API
     key or an `EMBEDDING_*` setting is not set.
@@ -303,12 +306,17 @@ def build_parts(
 
     settings = settings or get_settings()
     meter = UsageMeter()
-    model = ragas_model(lambda cost, tokens: meter.add(MODEL_NODE, cost, tokens), settings=settings)
+    model = ragas_model(
+        lambda cost, tokens: meter.add(MODEL_NODE, cost, tokens, settings.ragas_model),
+        settings=settings,
+    )
     is_default_arm = embeddings is None
     embeddings = embeddings or OpenRouterEmbeddings(settings=settings)
     return RagasParts(
         retriever=SearchRetriever(
-            top_k, meter.embedder(SEARCH_NODE, embeddings), is_cut_off=is_default_arm
+            top_k,
+            meter.embedder(SEARCH_NODE, embeddings),
+            is_cut_off=is_cut_off and is_default_arm,
         ),
         answerer=PlainAnswerer(
             ragas_chat_model(max_tokens=ANSWER_MAX_TOKENS, settings=settings), meter

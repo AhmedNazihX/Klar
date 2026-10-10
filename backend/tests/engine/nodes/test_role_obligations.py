@@ -58,8 +58,10 @@ from aiact.schemas import (
 )
 from aiact.schemas.result import derived_status
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.pinned import assert_pinned_route
 from tests.schemas.builders import open_question
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -216,6 +218,34 @@ def test_worked_example_stays_a_deployer_with_the_art_26_duties() -> None:
     assert finding(outcome).role_switch_reason is None
     assert {"art:26:1", "art:26:2", "art:26:6"} <= set(articles(outcome))
     assert outcome.step.decision.startswith("Role: deployer.")
+
+
+@pytest.mark.parametrize(
+    ("language", "risk_class", "line"),
+    [
+        (
+            Language.EN,
+            RiskClass.HIGH_RISK,
+            "duties listed for this high-risk system (amended text).",
+        ),
+        (
+            Language.DE,
+            RiskClass.HIGH_RISK,
+            "Pflichten für ein System der Risikoklasse „Hochrisiko“ (geänderte Fassung).",
+        ),
+        (Language.EN, RiskClass.MINIMAL_RISK, "duties listed for this minimal risk system"),
+        (Language.DE, RiskClass.MINIMAL_RISK, "der Risikoklasse „minimales Risiko“"),
+    ],
+)
+def test_the_duties_line_names_the_class_and_text_in_words(
+    language: Language, risk_class: RiskClass, line: str
+) -> None:
+    # The screens show this sentence as it is: no raw key such as `high_risk` (UI review).
+    route = HighRiskRoute.ANNEX_III if risk_class is RiskClass.HIGH_RISK else None
+    answer = role_answer(risk_class=risk_class, route=route)
+    decision = to_outcome(answer, state(risk_class, route, language=language)).step.decision
+    assert line in decision
+    assert risk_class.value not in decision
 
 
 @pytest.mark.parametrize(
@@ -1103,7 +1133,7 @@ def test_findings_are_only_accepted_from_their_own_check() -> None:
 
 def _settings() -> Settings:
     values = {"engine_model": LUNA, "engine_provider": LUNA_PROVIDER}
-    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **values)  # pyright: ignore[reportCallIssue]
+    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **REFUSAL_ROUTE, **values)  # pyright: ignore[reportCallIssue]
 
 
 def _fake_check(content: str) -> tuple[RoleObligationsCheck, GenericFakeChatModel]:
@@ -1549,12 +1579,7 @@ def test_a_high_risk_answer_without_the_legacy_facts_is_a_broken_output() -> Non
 
 def test_the_node_is_pinned_to_the_engine_provider() -> None:
     check = RoleObligationsCheck(_settings())
-    assert check._model.openrouter_provider == {  # pyright: ignore[reportAttributeAccessIssue]
-        "data_collection": "deny",
-        "zdr": True,
-        "order": [LUNA_PROVIDER],
-        "allow_fallbacks": False,
-    }
+    assert_pinned_route(check._route, 4000)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 @pytest.mark.parametrize("content", ["not json", '{"role": {"role": "deployer"}}'])
@@ -1565,17 +1590,10 @@ def test_a_broken_answer_raises_without_quoting_the_description(content: str) ->
     assert CV_TOOL not in str(caught.value)
 
 
-def test_the_output_cap_leaves_room_for_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_output_cap_leaves_room_for_reasoning() -> None:
     """E7's recordings used up to 2206 of 3000 output tokens; the contested answer adds more."""
-    asked: dict[str, object] = {}
-
-    def spy(**kwargs: object) -> GenericFakeChatModel:
-        asked.update(kwargs)
-        return GenericFakeChatModel(messages=iter([]))
-
-    monkeypatch.setattr(node, "engine_chat_model", spy)
-    RoleObligationsCheck(_settings())
-    assert asked["max_tokens"] == 4000
+    check = RoleObligationsCheck(_settings())
+    assert_pinned_route(check._route, 4000)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 REFUSAL_TEXT = "I'm sorry, but I cannot assist with that request."
