@@ -285,6 +285,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-duty-progress.ts (the duties ticked off, P24), use-tool-ticks.ts (one tool's ticks, P23),
 │       │                            use-provision.ts (a provision's text from the corpus), use-vendor-letter.ts (P28's letter) (P21)
 │       │                            use-qa-thread.ts (a Q&A thread over POST /qa), use-result-questions.ts (a result run's thread), use-corpus-documents.ts (GET /documents) (P7)
+│       │                            use-media-query.ts (a CSS media query kept current; under use-prefers-reduced-motion.ts and use-is-phone.ts, the phone layout) (P26)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked

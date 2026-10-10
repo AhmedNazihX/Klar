@@ -1,24 +1,7 @@
-import { useSyncExternalStore } from 'react'
+import { useMediaQuery } from './use-media-query'
 
 /** Below Tailwind's `md` (48rem, 768 px): the app's phone layout (AppFrame folds the sidebar). */
 const PHONE_QUERY = '(width < 48rem)'
-
-function mediaQuery(): MediaQueryList | null {
-  return typeof window.matchMedia === 'function' ? window.matchMedia(PHONE_QUERY) : null
-}
-
-function isPhoneNow(): boolean {
-  return mediaQuery()?.matches ?? false
-}
-
-function subscribe(onChange: () => void): () => void {
-  const query = mediaQuery()
-  if (!query) return () => undefined
-  query.addEventListener('change', onChange)
-  return () => {
-    query.removeEventListener('change', onChange)
-  }
-}
 
 /**
  * True on a phone-width window, kept current as it resizes. For a control a phone shows in
@@ -27,5 +10,5 @@ function subscribe(onChange: () => void): () => void {
  * is false, the desktop layout.
  */
 export function useIsPhone(): boolean {
-  return useSyncExternalStore(subscribe, isPhoneNow, () => false)
+  return useMediaQuery(PHONE_QUERY)
 }

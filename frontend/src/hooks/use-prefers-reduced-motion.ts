@@ -1,23 +1,10 @@
-import { useSyncExternalStore } from 'react'
+import { matchesMediaQuery, useMediaQuery } from './use-media-query'
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 
-function mediaQuery(): MediaQueryList | null {
-  return typeof window.matchMedia === 'function' ? window.matchMedia(REDUCED_MOTION_QUERY) : null
-}
-
 /** True when the visitor asked for reduced motion. Read it where motion is started from script. */
 export function prefersReducedMotion(): boolean {
-  return mediaQuery()?.matches ?? false
-}
-
-function subscribe(onChange: () => void): () => void {
-  const query = mediaQuery()
-  if (!query) return () => undefined
-  query.addEventListener('change', onChange)
-  return () => {
-    query.removeEventListener('change', onChange)
-  }
+  return matchesMediaQuery(REDUCED_MOTION_QUERY)
 }
 
 /**
@@ -26,5 +13,5 @@ function subscribe(onChange: () => void): () => void {
  * such as the segmented control's liquid pill.
  */
 export function usePrefersReducedMotion(): boolean {
-  return useSyncExternalStore(subscribe, prefersReducedMotion, () => false)
+  return useMediaQuery(REDUCED_MOTION_QUERY)
 }

@@ -129,7 +129,8 @@ describe('the result at 390 px', () => {
       await openResult(language)
       const names = NAMES[language]
       // The top bar's switch gives way to the one under the title.
-      // Only what is displayed counts: the top bar's switch and the header's link are display: none.
+      // Only what is displayed counts: the top bar's switch is display: none, and the header's
+      // Draft documents link isn't rendered on a phone (ResultScreen, `!isPhone`).
       const laws = screen.getAllByRole('group', { name: names.law })
       expect(laws).toHaveLength(1)
       within(laws[0] as HTMLElement).getByRole('button', { name: names.amended })
