@@ -58,7 +58,10 @@ class Settings(BaseSettings):
     engine_provider: str | None = None
     judge_model: str | None = None
     judge_backup_model: str | None = None
-    label_filter_model: str | None = None
+    # The second-model label filter (B9): Claude Haiku 4.5 on its EU zero-retention endpoint
+    # (decision 005), pinned with fallbacks off; override both together.
+    label_filter_model: str = "anthropic/claude-haiku-4.5"
+    label_filter_provider: str = "google-vertex/europe"
     # RAGAS (V6): Gemini 3.1 Flash-Lite on its EU zero-retention endpoint (decision 005), the
     # only model ids with a default; override both together, since the provider is pinned.
     ragas_model: str = "google/gemini-3.1-flash-lite"

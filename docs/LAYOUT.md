@@ -90,7 +90,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── label_freeze.py      approved cases changed without a new LABEL_CHANGES.md row; `aiact evaluate label-freeze` (B10a)
 │   │   │   ├── isolation.py         isolation measurements: Pile B tags, n-gram and embedding closeness to the
 │   │   │   │                        retrievable corpus; `aiact evaluate isolation-embed` (B13)
-│   │   │   ├── label_filter.py      second-model label filter; `aiact evaluate label-filter` (B9)
+│   │   │   ├── label_filter.py      second-model label filter: the blind prompt, the pinned Haiku call, the
+│   │   │   │                        resumable answers file; `aiact evaluate label-filter` (B9)
+│   │   │   ├── label_filter_report.py  label vs answer, the disagreements report and the resolutions kept
+│   │   │   │                        across regenerations; `label-filter --check` (B9)
 │   │   │   ├── runner.py            `aiact evaluate run`: classifier registry, subset, exclusions, cost cap (V1)
 │   │   │   ├── engine_classifier.py the runner's `engine` classifier over run_classification (E10)
 │   │   │   ├── records.py           writes eval_runs / eval_case_results over a direct connection (V1)
@@ -196,7 +199,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                contaminated.json: Pile B examples retold in the corpus, with the
 │   │                                measured overlap (decision 016; `isolation.load_contaminated`)
 │   ├── judge_validation/            hand-labelled judge cases (V4)
-│   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1)
+│   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1);
+│   │                                label_filter_answers.jsonl: the second model's answers (B9)
 │   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10a)
 │   └── private/                     appliedai.jsonl (B11; gitignored, never tracked; may be absent)
 │
