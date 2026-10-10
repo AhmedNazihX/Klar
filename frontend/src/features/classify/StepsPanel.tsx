@@ -8,6 +8,7 @@ import { STEP_COLUMNS_DE, STEP_COLUMNS_EN, StepRow } from '@/components/StepRow'
 import { useLanguage } from '@/hooks/use-language'
 import type { Language } from '@/i18n'
 
+import { isDecidedBan } from './ban'
 import {
   restingFacts,
   rowReferences,
@@ -52,6 +53,9 @@ function rowsOf(t: TFunction, language: Language, result: ClassificationResult):
   // The same facts the panel beside it shows, so the counts agree with its cards.
   const facts = restingFacts(result)
   const assumed = facts.filter((fact) => fact.evidence === 'assumed').length
+  // A decided ban ends the run at Art. 5: the steps after it never ran, and the row says why.
+  const isBan = isDecidedBan(result)
+  const notChecked = isBan ? t('prohibited.notChecked') : t('result.steps.notChecked')
   return SUMMARY_ROWS.map((id): Row => {
     if (id === 'facts') {
       return {
@@ -60,6 +64,15 @@ function rowsOf(t: TFunction, language: Language, result: ClassificationResult):
         decision: t('result.steps.factsLine', { count: facts.length, assumed }),
         references: [t('result.steps.yourDescription')],
         card: <FactsStepCard result={result} />,
+      }
+    }
+    if (id === 'duties' && isBan) {
+      return {
+        id,
+        name: t('result.steps.duties'),
+        decision: notChecked,
+        references: [],
+        card: null,
       }
     }
     if (id === 'duties') {
@@ -79,7 +92,7 @@ function rowsOf(t: TFunction, language: Language, result: ClassificationResult):
     const name = id === 'role_obligations' ? t('result.steps.role') : t(`progress.check.${id}`)
     const step = findStep(result, id)
     if (!step) {
-      return { id, name, decision: t('result.steps.notChecked'), references: [], card: null }
+      return { id, name, decision: notChecked, references: [], card: null }
     }
     return {
       id,

@@ -10,6 +10,7 @@ import { useFollowUpAnswers } from '@/hooks/use-follow-up-answers'
 import { useFollowUpRun, type FollowUpRun } from '@/hooks/use-follow-up-run'
 import { useOriginalRun } from '@/hooks/use-original-run'
 
+import { isDecidedBan } from './ban'
 import { runNumber, saveDraft, type ClassificationRun } from './classification-store'
 import { DecidingQuestion } from './DecidingQuestion'
 import { DutiesPanel, OutOfScopePanel } from './DutiesPanel'
@@ -19,6 +20,7 @@ import { withAnswers } from './follow-up-answers'
 import { FollowUpQuestions } from './FollowUpQuestions'
 import { OriginalTextNote } from './OriginalTextNote'
 import { ProgressPanel } from './ProgressPanel'
+import { ProhibitedSummary } from './ProhibitedSummary'
 import { RerunChange } from './RerunChange'
 import { DraftDocumentsLink, ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
@@ -50,6 +52,7 @@ function SummaryView({
   const isRerunShown = followUp.isRunning || followUp.failure !== null
   // One run action for every question asked, under the last panel (artboard `ResultNeedsInfo`).
   const runCount = others.length + (deciding ? 1 : 0)
+  const isBan = isDecidedBan(result)
 
   function editDescription(): void {
     // The answers go into the text, and the run onto this tool (P6), unless it was never saved.
@@ -61,30 +64,74 @@ function SummaryView({
     void navigate({ to: '/app/classify' })
   }
 
+  const header = (
+    <ResultHeader
+      name={run.name}
+      result={result}
+      actions={
+        <>
+          <ViewSwitch view="summary" onViewChange={onViewChange} />
+          <Button variant="ghost" onClick={editDescription}>
+            {t('result.editDescription')}
+          </Button>
+          {/* There's no route to comply with a ban, so there are no documents to draft. */}
+          {!isBan && <DraftDocumentsLink toolId={run.toolId} />}
+          <ExportReportButton run={run} />
+        </>
+      }
+    />
+  )
+
+  // What the last answer changed, with its undo (artboard `ResultRerun`).
+  const rerunChange = run.previous && (
+    <RerunChange
+      run={{ ...run, previous: run.previous }}
+      onUndo={followUp.undo}
+      isUndoing={followUp.isUndoing || followUp.isRunning}
+      hasUndoFailed={followUp.hasUndoFailed}
+    />
+  )
+  const rerunProgress = isRerunShown && (
+    <ProgressPanel
+      progress={followUp.progress}
+      isRunning={followUp.isRunning}
+      failure={followUp.failure}
+      onTryAgain={tryAgain}
+      isRerun
+    />
+  )
+
+  // A decided ban has its own layout (artboard `ResultProhibited`, P21); a fact confirmed there
+  // runs the checks again like anywhere else (P5b).
+  if (isBan) {
+    return (
+      <>
+        {header}
+        {rerunChange}
+        <ProhibitedSummary
+          run={run}
+          note={
+            <>
+              <OriginalTextNote run={run} onCompare={onCompare} />
+              {rerunProgress}
+            </>
+          }
+          onChangeFacts={editDescription}
+          onConfirmFact={confirm}
+          isBusy={followUp.isRunning}
+          onExpandAll={() => {
+            onViewChange('reviewer')
+          }}
+        />
+        <ResultNotice result={result} isStored={run.isStored} />
+      </>
+    )
+  }
+
   return (
     <>
-      <ResultHeader
-        name={run.name}
-        result={result}
-        actions={
-          <>
-            <ViewSwitch view="summary" onViewChange={onViewChange} />
-            <Button variant="ghost" onClick={editDescription}>
-              {t('result.editDescription')}
-            </Button>
-            <DraftDocumentsLink toolId={run.toolId} />
-            <ExportReportButton run={run} />
-          </>
-        }
-      />
-      {run.previous && (
-        <RerunChange
-          run={{ ...run, previous: run.previous }}
-          onUndo={followUp.undo}
-          isUndoing={followUp.isUndoing || followUp.isRunning}
-          hasUndoFailed={followUp.hasUndoFailed}
-        />
-      )}
+      {header}
+      {rerunChange}
       <ResultVerdict result={result} name={run.name} today={new Date()} />
       <OriginalTextNote run={run} onCompare={onCompare} />
       {deciding && (
@@ -97,15 +144,7 @@ function SummaryView({
       {others.length > 0 && (
         <FollowUpQuestions questions={others} runCount={runCount} {...answerProps} />
       )}
-      {isRerunShown && (
-        <ProgressPanel
-          progress={followUp.progress}
-          isRunning={followUp.isRunning}
-          failure={followUp.failure}
-          onTryAgain={tryAgain}
-          isRerun
-        />
-      )}
+      {rerunProgress}
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         {result.risk_class === 'out_of_scope' ? (
           <OutOfScopePanel result={result} />

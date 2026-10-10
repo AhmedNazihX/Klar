@@ -59,6 +59,14 @@ export function monthsUntil(isoDate: string, today: Date): number {
   return Math.max(1, Math.round(days / DAYS_PER_MONTH))
 }
 
+/** Whole months from the date to `today`, rounded like `monthsUntil`; 0 under half a month, or
+ *  when the date hasn't come yet. */
+export function monthsSince(isoDate: string, today: Date): number {
+  const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+  const days = (todayUtc - parseIsoDate(isoDate).getTime()) / DAY_MS
+  return days <= 0 ? 0 : Math.round(days / DAYS_PER_MONTH)
+}
+
 /** The route of a high-risk Annex point (`annex:III:…` or `annex:I:…`), if it is one. */
 export function routeOfPoint(point: string | null | undefined): HighRiskRoute | null {
   if (!point) return null
