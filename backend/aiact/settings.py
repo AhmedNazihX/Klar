@@ -118,6 +118,8 @@ class Settings(BaseSettings):
     # Requests per client address per minute: classifications cost model calls, lookups don't.
     rate_limit_classify: int = Field(default=5, ge=1)
     rate_limit_lookups: int = Field(default=120, ge=1)
+    # Questions (P7): each one is a model call, cheaper than a classification.
+    rate_limit_qa: int = Field(default=20, ge=1)
     # Word and PDF files: rendering one costs up to seconds of CPU, so few per client address
     # per minute, and few at once, each in one of this many worker processes (one more is refused
     # at once, 503). A render past the time limit is stopped and refused (413).

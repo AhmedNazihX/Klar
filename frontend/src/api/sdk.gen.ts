@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, ServerSentEventsResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentData, DraftDocumentErrors, DraftDocumentResponses, DraftVendorLetterData, DraftVendorLetterErrors, DraftVendorLetterResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, ExportInventoryReportData, ExportInventoryReportErrors, ExportInventoryReportResponses, ExportObligationsChecklistData, ExportObligationsChecklistErrors, ExportObligationsChecklistResponses, ExportResultReportData, ExportResultReportErrors, ExportResultReportResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses, ListResultDocumentsData, ListResultDocumentsErrors, ListResultDocumentsResponses } from './types.gen';
+import type { AskQuestionData, AskQuestionErrors, AskQuestionResponses, ClassifyData, ClassifyErrors, ClassifyResponse, ClassifyResponses, DraftDocumentData, DraftDocumentErrors, DraftDocumentResponses, DraftVendorLetterData, DraftVendorLetterErrors, DraftVendorLetterResponses, ExportDocumentData, ExportDocumentErrors, ExportDocumentResponses, ExportInventoryReportData, ExportInventoryReportErrors, ExportInventoryReportResponses, ExportObligationsChecklistData, ExportObligationsChecklistErrors, ExportObligationsChecklistResponses, ExportResultReportData, ExportResultReportErrors, ExportResultReportResponses, GetProvisionData, GetProvisionErrors, GetProvisionResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListObligationsData, ListObligationsErrors, ListObligationsResponses, ListResultDocumentsData, ListResultDocumentsErrors, ListResultDocumentsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -159,6 +159,23 @@ export const exportInventoryReport = <ThrowOnError extends boolean = false>(opti
  */
 export const exportObligationsChecklist = <ThrowOnError extends boolean = false>(options: Options<ExportObligationsChecklistData, ThrowOnError>): RequestResult<ExportObligationsChecklistResponses, ExportObligationsChecklistErrors, ThrowOnError> => (options.client ?? client).post<ExportObligationsChecklistResponses, ExportObligationsChecklistErrors, ThrowOnError>({
     url: '/reports/checklist',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ask Question
+ *
+ * Answer a question about the AI Act, or about one result, from the AI Act and the
+ * Commission's guidance, citing the provisions the answer rests on. A question outside them,
+ * or one asking whether someone complies, gets a fixed answer with no citation. Guidance, not
+ * legal advice.
+ */
+export const askQuestion = <ThrowOnError extends boolean = false>(options: Options<AskQuestionData, ThrowOnError>): RequestResult<AskQuestionResponses, AskQuestionErrors, ThrowOnError> => (options.client ?? client).post<AskQuestionResponses, AskQuestionErrors, ThrowOnError>({
+    url: '/qa',
     ...options,
     headers: {
         'Content-Type': 'application/json',

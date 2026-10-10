@@ -14,9 +14,11 @@ from those hits alone, and scored:
   text includes its children's (C1).
 
 The three RAGAS metrics run on the RAGAS model (`aiact.llm.ragas_llm`; Gemini 3.1 Flash-Lite by
-default). Until P7's Q&A exists, the answer comes from `PlainAnswerer`, one retrieval-grounded
-prompt on the same route; P7 passes its own `Answerer` to record faithfulness on its answers,
-and X1a passes another embedder to compare embedding arms. Unanswerable items have no reference
+default). The answer comes from P7's Q&A (`QaAnswerer`: its prompt on the engine model, and the
+fixed answer when the model finds the hits don't answer), so faithfulness is measured on the
+product's answers; `PlainAnswerer`, V6's stand-in (one retrieval-grounded prompt on the RAGAS
+route, run c358b1e3), stays for comparison (`--answerer plain_rag`). X1a passes another
+embedder to compare embedding arms. Unanswerable items have no reference
 answer, so they are left out (C8 and X1 calibrate the relevance cut-off on them).
 
 A run writes one `eval_runs` row (benchmark `qa`) and one `eval_case_results` row per item:
@@ -53,6 +55,9 @@ from aiact.eval.runner import (
     select_subset,
 )
 from aiact.llm.embeddings import OpenRouterEmbeddings
+from aiact.llm.structured import ChatRoute
+from aiact.qa import generate, shown_text
+from aiact.qa.clients import qa_chat
 from aiact.retrieval.search import (
     FROM_SETTINGS,
     QueryEmbedder,
@@ -84,6 +89,12 @@ DEFAULT_MAX_COST_USD = 0.5
 ANSWER_MAX_TOKENS = 1024
 MODEL_NODE = "ragas_model"
 """The usage-meter node for every call on the RAGAS route (answers and metrics)."""
+QA_NODE = "qa"
+"""The usage-meter node for P7's answers (the engine model)."""
+PLAIN_ANSWERER = "plain_rag"
+QA_ANSWERER = "qa"
+ANSWERERS = (QA_ANSWERER, PLAIN_ANSWERER)
+"""`--answerer`: P7's Q&A (the default), or V6's stand-in on the RAGAS route."""
 SEARCH_NODE = "search"
 EVAL_GROUP_HINT = (
     "RAGAS is not installed; install the eval dependency group with `uv sync` "
@@ -177,7 +188,7 @@ class PlainAnswerer:
 
     chat: BaseChatModel
     meter: UsageMeter
-    name: str = "plain_rag"
+    name: str = PLAIN_ANSWERER
 
     async def answer(self, item: QAItem, contexts: Sequence[str]) -> str:
         prompt = ANSWER_PROMPT.format(
@@ -192,6 +203,23 @@ class PlainAnswerer:
         if not text:
             raise ValueError("the answer model returned no text")
         return text
+
+
+@dataclass(frozen=True)
+class QaAnswerer:
+    """P7's Q&A answering from the run's contexts: its prompt and its model (the engine model),
+    and the text the user would be shown (the fixed answer when the model finds the contexts
+    don't answer the question), so faithfulness is measured on the product's answers. `route`
+    carries the run's usage callback."""
+
+    route: ChatRoute
+    name: str = QA_ANSWERER
+
+    async def answer(self, item: QAItem, contexts: Sequence[str]) -> str:
+        reply = await asyncio.to_thread(
+            generate, item.question, item.language, contexts, self.route
+        )
+        return shown_text(reply, len(contexts), item.language)
 
 
 class PrecisionMetric(Protocol):
@@ -290,22 +318,32 @@ def build_parts(
     *,
     embeddings: OpenRouterEmbeddings | None = None,
     is_cut_off: bool = True,
+    answerer: str = QA_ANSWERER,
 ) -> RagasParts:
-    """The real run: the RAGAS route, the embedding arm, one meter. Without `embeddings` the
-    configured arm searches with the `SEARCH_MAX_DISTANCE` cut-off, unless `is_cut_off` is False
+    """The real run: the RAGAS route, the embedding arm, the answerer (`ANSWERERS`: P7's Q&A on
+    the engine model by default), one meter. Without `embeddings` the configured arm searches
+    with the `SEARCH_MAX_DISTANCE` cut-off, unless `is_cut_off` is False
     (to compare with a run from before X1b calibrated it, such as V6's c358b1e3); an arm X1a
     passes always searches without one. Build new parts for each run: the run closes the
     model's client when it ends.
 
-    Raises `RagasNotInstalledError` without the `eval` group, and `LLMConfigError` when the API
-    key or an `EMBEDDING_*` setting is not set.
+    Raises `RagasNotInstalledError` without the `eval` group, `LLMConfigError` when the API
+    key, an `EMBEDDING_*` setting or (for P7's answerer) `ENGINE_MODEL` or `ENGINE_PROVIDER`
+    is not set, and `ValueError` for an unknown answerer.
     """
+    if answerer not in ANSWERERS:
+        raise ValueError(f"unknown answerer {answerer!r}; expected one of {', '.join(ANSWERERS)}")
     require_ragas()
     # Imported here: it loads RAGAS and the OpenAI SDK, which only the `eval` group installs.
     from aiact.llm.ragas_llm import ragas_chat_model, ragas_model
 
     settings = settings or get_settings()
     meter = UsageMeter()
+    answers: Answerer = (
+        QaAnswerer(ChatRoute(metered_qa_chat(settings, meter)))
+        if answerer == QA_ANSWERER
+        else PlainAnswerer(ragas_chat_model(max_tokens=ANSWER_MAX_TOKENS, settings=settings), meter)
+    )
     model = ragas_model(
         lambda cost, tokens: meter.add(MODEL_NODE, cost, tokens, settings.ragas_model),
         settings=settings,
@@ -318,9 +356,7 @@ def build_parts(
             meter.embedder(SEARCH_NODE, embeddings),
             is_cut_off=is_cut_off and is_default_arm,
         ),
-        answerer=PlainAnswerer(
-            ragas_chat_model(max_tokens=ANSWER_MAX_TOKENS, settings=settings), meter
-        ),
+        answerer=answers,
         scorer=RagasScorer.from_llm(model.llm),
         meter=meter,
         model=model.model,
@@ -328,6 +364,12 @@ def build_parts(
         embedding=embedding_config(embeddings),
         aclose=model.aclose,
     )
+
+
+def metered_qa_chat(settings: Settings, meter: UsageMeter) -> BaseChatModel:
+    """P7's model (`aiact.qa.clients.qa_chat`, shared) with every reply counted on `meter`
+    under `QA_NODE`; the copy shares its client."""
+    return qa_chat(settings).model_copy(update={"callbacks": [meter.chat_callback(QA_NODE)]})
 
 
 @dataclass(frozen=True)

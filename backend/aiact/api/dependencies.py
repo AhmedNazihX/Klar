@@ -29,6 +29,7 @@ class ApiContext:
     settings: Settings
     classify_limit: RateLimiter
     lookup_limit: RateLimiter
+    qa_limit: RateLimiter
     classify_slots: ConcurrencyLimit
     export_limit: RateLimiter
     export_slots: RenderPool
@@ -39,6 +40,7 @@ def context_for(settings: Settings) -> ApiContext:
         settings=settings,
         classify_limit=RateLimiter(settings.rate_limit_classify),
         lookup_limit=RateLimiter(settings.rate_limit_lookups),
+        qa_limit=RateLimiter(settings.rate_limit_qa),
         classify_slots=ConcurrencyLimit(settings.classify_max_concurrent),
         export_limit=RateLimiter(settings.rate_limit_exports),
         export_slots=RenderPool(settings.export_max_concurrent, settings.export_timeout_seconds),
@@ -66,6 +68,10 @@ async def limit_classify(request: Request) -> None:
 
 async def limit_lookups(request: Request) -> None:
     _count(api_context(request).lookup_limit, request)
+
+
+async def limit_qa(request: Request) -> None:
+    _count(api_context(request).qa_limit, request)
 
 
 async def limit_exports(request: Request) -> None:
