@@ -558,6 +558,6 @@ def test_the_command_without_ragas_installed_says_how_to_install_it(
 def test_the_command_without_an_api_key_fails_clearly(monkeypatch: pytest.MonkeyPatch) -> None:
     unconfigured = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
     monkeypatch.setattr(ragas_metrics, "get_settings", lambda: unconfigured)
-    result = CliRunner().invoke(app, ["evaluate", "ragas"])
+    result = CliRunner().invoke(app, ["evaluate", "ragas", "--answerer", "plain_rag"])
     assert result.exit_code == 2
     assert "OPENROUTER_API_KEY" in result.stderr
