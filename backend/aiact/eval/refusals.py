@@ -10,9 +10,9 @@ From each stored case this module reads:
 - **refused by both:** the result lists a not-assessed check.
 A failed case (no result) is counted in none of them: it has no answer to tell them apart.
 
-Risk-class accuracy is given three ways: the reported figure (not-assessed cases left out,
-`metrics.summarize`), with the not-assessed cases counted as misses, and without the cases the
-second model answered, so a reader can see whether either moves the number.
+The run report's main table already gives risk-class accuracy as reported (not-assessed cases
+left out) and with the not-assessed cases counted as misses; this section adds it without the
+cases the second model answered, so a reader can see whether the second model moves the number.
 """
 
 from collections import Counter
@@ -35,7 +35,7 @@ class RefusalCase(ContractModel):
 
 
 class RefusalSummary(ContractModel):
-    """A run's refusals, by case id, and the accuracy with and without them."""
+    """A run's refusals, by case id, and the accuracy without the second model's answers."""
 
     second_model: str | None
     answered: int
@@ -43,8 +43,6 @@ class RefusalSummary(ContractModel):
     engine_refused: tuple[str, ...]
     second_answered: tuple[str, ...]
     both_refused: tuple[str, ...]
-    accuracy: Rate
-    accuracy_not_assessed_as_miss: Rate
     accuracy_without_second_answered: Rate
     calls_by_model: dict[str, int]
 
@@ -57,7 +55,8 @@ def engine_refused_nodes(models: ServedModels, second_model: str | None) -> tupl
 
 
 def summarize_refusals(cases: Sequence[RefusalCase], second_model: str | None) -> RefusalSummary:
-    """Count the refusals of a run's cases and the risk-class accuracy with and without them."""
+    """Count the refusals of a run's cases and the risk-class accuracy without the cases the
+    second model answered."""
     with_result = [case for case in cases if case.outcome.result is not None]
     both = [case for case in with_result if is_not_assessed(case.outcome)]
     refused = [
@@ -68,7 +67,6 @@ def summarize_refusals(cases: Sequence[RefusalCase], second_model: str | None) -
     second = [case for case in refused if not is_not_assessed(case.outcome)]
     second_ids = {case.outcome.case.id for case in second}
     outcomes = [case.outcome for case in cases]
-    metrics = summarize(outcomes, None)
     without_second = [o for o in outcomes if o.case.id not in second_ids]
     return RefusalSummary(
         second_model=second_model,
@@ -76,8 +74,6 @@ def summarize_refusals(cases: Sequence[RefusalCase], second_model: str | None) -
         engine_refused=_ids(refused),
         second_answered=_ids(second),
         both_refused=_ids(both),
-        accuracy=metrics.risk_class_accuracy,
-        accuracy_not_assessed_as_miss=metrics.risk_class_accuracy_not_assessed_as_miss,
         accuracy_without_second_answered=summarize(without_second, None).risk_class_accuracy,
         calls_by_model=calls_by_model(case.models for case in cases),
     )
@@ -117,15 +113,8 @@ def render_refusals(summary: RefusalSummary) -> list[str]:
         f"{_listed(summary.both_refused)}",
         f"- Second model's refusal rate: "
         f"{_share(len(summary.both_refused), len(summary.engine_refused))}",
-        "",
-        "| Risk-class accuracy | Value | Count |",
-        "| --- | ---: | ---: |",
-        _rate_row("Reported (not-assessed cases left out)", summary.accuracy),
-        _rate_row("Not-assessed cases counted as misses", summary.accuracy_not_assessed_as_miss),
-        _rate_row(
-            "Without the cases the second model answered",
-            summary.accuracy_without_second_answered,
-        ),
+        f"- Risk-class accuracy without the cases the second model answered: "
+        f"{_rate(summary.accuracy_without_second_answered)}",
         "",
         "Calls by the model that served them: "
         + (", ".join(f"`{m}` {n}" for m, n in summary.calls_by_model.items()) or "none recorded"),
@@ -137,5 +126,5 @@ def _listed(case_ids: Sequence[str]) -> str:
     return f": {', '.join(case_ids)}" if case_ids else ""
 
 
-def _rate_row(name: str, rate: Rate) -> str:
-    return f"| {name} | {rate.percent} | {rate.hits}/{rate.total} |"
+def _rate(rate: Rate) -> str:
+    return f"{rate.percent} ({rate.hits}/{rate.total})"

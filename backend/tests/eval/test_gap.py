@@ -3,6 +3,7 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+import psycopg
 import pytest
 from typer.testing import CliRunner
 
@@ -32,6 +33,8 @@ def info(run_id: UUID = HELDOUT_ID, **changes: object) -> RunInfo:
 
 def test_a_heldout_run_and_its_gap_run_match() -> None:
     check_pair(info(), info(ALL_ID, exclude_mode="all"))
+    source = "00000000-0000-4000-8000-000000000009"
+    check_pair(info(answers_from=source), info(ALL_ID, exclude_mode="all", answers_from=source))
 
 
 @pytest.mark.parametrize(
@@ -44,6 +47,21 @@ def test_a_heldout_run_and_its_gap_run_match() -> None:
         ({}, {"exclude_mode": "all", "model": "other/model"}, "differ in model"),
         ({}, {"exclude_mode": "all", "subset": 20}, "differ in subset"),
         ({"subset": 20, "seed": 0}, {"exclude_mode": "all", "subset": 20, "seed": 1}, "seed"),
+        (
+            {"second_model": "google/gemini-3.1-flash-lite"},
+            {"exclude_mode": "all", "second_model": None},
+            "differ in second_model",
+        ),
+        (
+            {"answers_from": "00000000-0000-4000-8000-000000000009"},
+            {"exclude_mode": "all"},
+            "differ in answers_from",
+        ),
+        ({"status": "cost_cap_reached"}, {"exclude_mode": "all"}, "status cost_cap_reached"),
+        ({}, {"exclude_mode": "all", "status": "cost_cap_reached"}, "status cost_cap_reached"),
+        ({"status": "interrupted"}, {"exclude_mode": "all"}, "status interrupted"),
+        ({"status": "running"}, {"exclude_mode": "all"}, "status running"),
+        ({"status": None}, {"exclude_mode": "all"}, "status n/a, not completed"),
     ],
 )
 def test_runs_that_cannot_be_compared_are_refused(
@@ -91,3 +109,23 @@ def test_cli_reports_a_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     outcome = cli.invoke(app, ["evaluate", "gap", str(uuid4()), str(uuid4())])
     assert outcome.exit_code == 2
     assert "Error: the runs differ in benchmark" in outcome.stderr
+
+
+@pytest.mark.parametrize(
+    ("error", "message"),
+    [
+        (psycopg.OperationalError("no route to postgresql://u:hunter2@db"), "database error"),
+        (records.DatabaseNotConfiguredError("DATABASE_URL is not set"), "DATABASE_URL is not set"),
+    ],
+)
+def test_cli_database_errors_exit_2(
+    monkeypatch: pytest.MonkeyPatch, error: Exception, message: str
+) -> None:
+    def connect() -> object:
+        raise error
+
+    monkeypatch.setattr(records, "connect", connect)
+    outcome = cli.invoke(app, ["evaluate", "gap", str(uuid4()), str(uuid4())])
+    assert outcome.exit_code == 2
+    assert f"Error: {message}" in outcome.stderr
+    assert "hunter2" not in outcome.output

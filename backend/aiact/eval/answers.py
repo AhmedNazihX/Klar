@@ -7,6 +7,7 @@ stored `key_fact_answers` where the question's id is a key there; any other ques
 model-written one included, is answered "don't know" (decision 019 as amended 2026-10-07, BACKLOG
 > B6). The classifier appends the answers to the description, as the interface does. A case
 whose first run asked nothing, or failed, gets no answers, so its second run repeats the first.
+The second run is refused when a planned case has no stored row in the first run at all.
 """
 
 from collections.abc import Mapping, Sequence
@@ -51,6 +52,19 @@ def asked_questions(
         (run_id,),
     ).fetchall()
     return {case_id: _question_ids(case_id, questions) for case_id, questions in rows}
+
+
+def check_answer_source(
+    planned: Sequence[BenchmarkCase], asked: Mapping[str, Sequence[str]]
+) -> None:
+    """Raise `AnswerSourceError` unless the source run stored a row for every planned case: a
+    case it never ran would silently get no answers. The message gives counts, not texts."""
+    missing = [case.id for case in planned if case.id not in asked]
+    if missing:
+        raise AnswerSourceError(
+            f"{len(missing)} of the {len(planned)} planned cases have no stored row in the "
+            f"source run ({len(asked)} stored); give a run that covered every planned case"
+        )
 
 
 def _question_ids(case_id: str, questions: object) -> tuple[str, ...]:

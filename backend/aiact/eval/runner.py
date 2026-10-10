@@ -39,7 +39,7 @@ from uuid import UUID
 from pydantic import JsonValue, ValidationError
 
 from aiact.eval import split as split_module
-from aiact.eval.answers import fixed_answers
+from aiact.eval.answers import check_answer_source, fixed_answers
 from aiact.eval.cases import (
     APPLIEDAI_FILE,
     CASES_DIR,
@@ -405,13 +405,17 @@ def run_benchmark(
 
     `split` must be given for `ExcludeMode.HELDOUT` and is ignored for `ExcludeMode.ALL`.
     `asked` holds the question ids each case's run `options.answers_from` asked (both or
-    neither); each case then gets its fixed answers to them (decision 019).
+    neither); each case then gets its fixed answers to them (decision 019). Every planned case
+    must have a stored row in that run (`AnswerSourceError` otherwise).
     """
     if options.exclude_mode is ExcludeMode.HELDOUT and split is None:
         raise SplitError("--exclude-mode heldout needs eval/split.json")
     if (asked is None) != (options.answers_from is None):
         raise ValueError("answers need both the source run's id and its questions")
     active_split = split if options.exclude_mode is ExcludeMode.HELDOUT else None
+    selected = select_subset(cases, options.subset, options.seed)
+    if asked is not None:
+        check_answer_source(selected, asked)
     planned = [
         _Planned(
             case,
@@ -421,10 +425,10 @@ def run_benchmark(
                 exclusions_for(case, active_split),
                 case.as_of,
                 include_held_out=options.exclude_mode is ExcludeMode.ALL,
-                answers={} if asked is None else fixed_answers(case, asked.get(case.id, ())),
+                answers={} if asked is None else fixed_answers(case, asked[case.id]),
             ),
         )
-        for case in select_subset(cases, options.subset, options.seed)
+        for case in selected
     ]
     run_id = store.start_run(
         options.git_sha, options.benchmark.value, run_config(options, classifier.info, active_split)

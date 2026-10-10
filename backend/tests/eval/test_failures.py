@@ -82,6 +82,17 @@ def test_failed_and_refused_cases() -> None:
     assert failure(outcome(case("a"), refused_result())) is None
 
 
+def test_a_refused_high_risk_case_is_no_failure() -> None:
+    """Not assessed (decision 030): no class, and a role other than the label's (the refused
+    result keeps the deployer role), yet listed under no step: the refusal section has it."""
+    label = case("a", role=Role.PROVIDER, annex_point=HIGH_ANNEX_POINT)
+    refused = outcome(label, refused_result(StepName.HIGH_RISK))
+    assert refused.result is not None
+    assert (refused.result.not_assessed, refused.result.risk_class) == ((StepName.HIGH_RISK,), None)
+    assert failure(refused) is None
+    assert failures_by_step([refused]) == {}
+
+
 def test_failures_are_grouped_in_check_order() -> None:
     outcomes = [
         outcome(case("z", role=Role.PROVIDER)),

@@ -50,6 +50,10 @@ one question: commit first, or run dirty (the runner then records `git_dirty: tr
 report's commit line says the commit may not reproduce the run). Never commit on your own to get a
 clean tree.
 
+Also run `git diff --stat labels-v1 -- eval/cases` (from the repo root). Runs use the cases as
+tagged `labels-v1` (B10b); if it lists any file, check that each change has its row in
+`eval/LABEL_CHANGES.md`, and if one hasn't, report that and stop before running.
+
 From `backend/`:
 
 ```bash
@@ -61,7 +65,9 @@ uv run aiact evaluate run --set <set> --classifier <classifier> --subset <N> \
 local database is the Supabase CLI default: prefix the command with
 `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres` (never read `.env` to find
 out). An engine run needs `REFUSAL_MODEL` and `REFUSAL_PROVIDER` set (decision 033), and
-`LANGSMITH_API_KEY` for its traces (tool-call correctness, held-out rows retrieved).
+`LANGSMITH_API_KEY` for its traces (tool-call correctness, held-out rows retrieved), with
+`LANGSMITH_ENDPOINT` set to the account's region (an EU-region key is refused at the default US
+endpoint).
 The summary is the line starting `run <run_id>:`, which reads
 `run <run_id>: <status>, <scored>/<planned> cases (<failed> failed), $<cost>, <tokens> tokens`.
 It isn't always the last line (the uncommitted-changes warning follows it). Copy it exactly. On a non-zero exit, show the error and stop; nothing is reported.
@@ -70,7 +76,7 @@ If the status is `cost_cap_reached`, say so plainly: the run covers fewer cases 
 For a gap run the user wants both modes: run `heldout`, then `all`, with the same set, classifier,
 subset and seed, and report both run_ids. Don't subtract them yourself: quote the gap from
 `uv run aiact evaluate gap <heldout run_id> <all run_id>`, which refuses two runs that don't
-match and ends with the comparison's known limits. Then check each run's traces with
+match (settings, appended answers, second model) or didn't both complete, and ends with the comparison's known limits. Then check each run's traces with
 `uv run aiact evaluate held-out-hits <run_id>`: the `all` run should show at least one trace that
 retrieved a held-out row, the `heldout` run none. Paste both outputs into the report verbatim.
 

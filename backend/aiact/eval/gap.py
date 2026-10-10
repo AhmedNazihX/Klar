@@ -1,7 +1,8 @@
 """The held-out vs in-corpus gap from two stored runs (INIT > Benchmark isolation 4, Metrics).
 
-`aiact evaluate gap <heldout run> <all run>` reads both runs by id, checks they are the same
-benchmark, classifier, model, subset and seed with the two exclude modes, and prints their
+`aiact evaluate gap <heldout run> <all run>` reads both runs by id, checks they both completed
+and are the same benchmark, classifier, models, subset, seed and appended answers with the two
+exclude modes (so they covered the same cases with the same inputs), and prints their
 risk-class accuracy (with and without the contaminated cases, decision 016) and the gap:
 held-out accuracy minus in-corpus accuracy, in percentage points (INIT's definition; a large gap
 means the engine leans on memorised examples). Reports quote the gap from this output, never
@@ -23,10 +24,19 @@ from aiact.eval.report import (
     load_stored_cases,
     scored_metrics,
 )
+from aiact.eval.runner import RunStatus
 
 HELDOUT = "heldout"
 ALL = "all"
-MATCHED_SETTINGS = ("benchmark", "classifier", "model", "subset", "seed")
+MATCHED_SETTINGS = (
+    "benchmark",
+    "classifier",
+    "model",
+    "second_model",
+    "subset",
+    "seed",
+    "answers_from",
+)
 """What two runs share to be compared; the exclude mode is what differs."""
 
 LIMITS = (
@@ -47,7 +57,8 @@ LIMITS = (
 
 
 class RunMismatchError(ValueError):
-    """The two runs can't be compared: other settings, or not one `heldout` and one `all` run."""
+    """The two runs can't be compared: other settings, an unfinished run, or not one `heldout`
+    and one `all` run."""
 
 
 def check_pair(heldout: RunInfo, everything: RunInfo) -> None:
@@ -57,6 +68,13 @@ def check_pair(heldout: RunInfo, everything: RunInfo) -> None:
             f"give the {HELDOUT} run first and the {ALL} run second; got exclude modes "
             f"{heldout.exclude_mode} and {everything.exclude_mode}"
         )
+    for run in (heldout, everything):
+        # A run stopped at its cost cap, or interrupted, covered fewer cases.
+        if run.status != RunStatus.COMPLETED:
+            raise RunMismatchError(
+                f"run {run.id} has status {run.status or 'n/a'}, not {RunStatus.COMPLETED}: "
+                "it may have left cases out"
+            )
     for name in MATCHED_SETTINGS:
         first, second = getattr(heldout, name), getattr(everything, name)
         if first != second:

@@ -15,7 +15,12 @@ from tests.eval.outcomes import case, result
 pytestmark = pytest.mark.db
 
 
-def _run(db: psycopg.Connection, exclude_mode: str, benchmark: str = "commission_b") -> UUID:
+def _run(
+    db: psycopg.Connection,
+    exclude_mode: str,
+    benchmark: str = "commission_b",
+    status: str = "completed",
+) -> UUID:
     config = {
         "model": "openai/gpt-6-luna-20260922",
         "embedding": None,
@@ -24,7 +29,7 @@ def _run(db: psycopg.Connection, exclude_mode: str, benchmark: str = "commission
         "exclude_mode": exclude_mode,
         "subset": None,
         "seed": 0,
-        "outcome": {"status": "completed"},
+        "outcome": {"status": status},
     }
     row = db.execute(
         "insert into eval_runs (git_sha, benchmark, config) values (%s, %s, %s) returning id",
@@ -68,6 +73,12 @@ def test_the_gap_of_two_stored_runs(db: psycopg.Connection) -> None:
 def test_runs_of_two_sets_are_refused(db: psycopg.Connection) -> None:
     with pytest.raises(RunMismatchError, match="differ in benchmark"):
         gap_report(db, _run(db, "heldout"), _run(db, "all", "own"))
+
+
+def test_a_run_stopped_at_its_cost_cap_is_refused(db: psycopg.Connection) -> None:
+    stopped = _run(db, "heldout", status="cost_cap_reached")
+    with pytest.raises(RunMismatchError, match="status cost_cap_reached"):
+        gap_report(db, stopped, _run(db, "all"))
 
 
 def test_held_out_ids_are_the_corpus_rows_marked_held_out(db: psycopg.Connection) -> None:

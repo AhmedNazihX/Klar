@@ -18,6 +18,7 @@ from typer.testing import CliRunner, Result
 from aiact.cli import app
 from aiact.eval import answers, citation_index, engine_classifier, records, runner
 from aiact.eval import split as split_module
+from aiact.eval.answers import AnswerSourceError
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.runner import (
     CaseRecord,
@@ -185,7 +186,7 @@ SOURCE_RUN = UUID("00000000-0000-4000-8000-0000000000aa")
 def test_fixed_answers_go_to_the_questions_the_source_run_asked() -> None:
     """Decision 019: stored answers where the case has one, "don't know" otherwise."""
     answered = CASES[0].model_copy(update={"key_fact_answers": {"annex_iii_use": "Yes."}})
-    asked = {answered.id: ("annex_iii_use", "human_review")}
+    asked = {answered.id: ("annex_iii_use", "human_review"), CASES[1].id: ()}
     classifier = PricedClassifier()
     store = MemoryStore()
     summary = run_benchmark(
@@ -204,6 +205,23 @@ def test_fixed_answers_go_to_the_questions_the_source_run_asked() -> None:
     config = store.runs[summary.run_id]["config"]
     assert isinstance(config, dict)
     assert config["answers_from"] == str(SOURCE_RUN)
+
+
+def test_a_source_run_that_never_ran_a_planned_case_is_refused() -> None:
+    """A case the source run has no row for would silently get no answers."""
+    store = MemoryStore()
+    classifier = PricedClassifier()
+    with pytest.raises(AnswerSourceError, match=r"^1 of the 2 planned cases have no stored row"):
+        run_benchmark(
+            CASES[:2],
+            classifier,
+            store,
+            options(answers_from=SOURCE_RUN),
+            SPLIT,
+            asked={CASES[0].id: ("annex_iii_use",)},
+        )
+    assert not store.runs
+    assert not classifier.requests
 
 
 def test_a_run_without_answers_records_none() -> None:

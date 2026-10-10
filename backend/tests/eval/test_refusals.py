@@ -55,10 +55,9 @@ def test_refusals_are_counted_by_case() -> None:
     assert summary.both_refused == ("c",)
 
 
-def test_accuracy_is_given_with_and_without_the_refused_cases() -> None:
+def test_accuracy_is_given_without_the_cases_the_second_model_answered() -> None:
     summary = summarize_refusals(_cases(), GEMINI)
-    assert summary.accuracy == Rate(hits=1, total=3)  # a hit, b miss, d failed; c left out
-    assert summary.accuracy_not_assessed_as_miss == Rate(hits=1, total=4)
+    # a hit, d failed (a miss), c not assessed (left out), b answered by Gemini (left out)
     assert summary.accuracy_without_second_answered == Rate(hits=1, total=2)
 
 
@@ -80,9 +79,8 @@ def test_the_section_names_the_cases_and_the_second_model() -> None:
     assert "- Answered by the second model: 1 of 3 (33.3%): b" in lines
     assert "- Refused by both (not assessed): 1 of 3 (33.3%): c" in lines
     assert "- Second model's refusal rate: 1 of 2 (50.0%)" in lines
-    assert "| Reported (not-assessed cases left out) | 33.3% | 1/3 |" in lines
-    assert "| Not-assessed cases counted as misses | 25.0% | 1/4 |" in lines
-    assert "| Without the cases the second model answered | 50.0% | 1/2 |" in lines
+    assert "- Risk-class accuracy without the cases the second model answered: 50.0% (1/2)" in lines
+    assert not any(line.startswith("| ") for line in lines)  # the main table has the others
 
 
 def test_a_run_without_a_recorded_second_model_says_so() -> None:
