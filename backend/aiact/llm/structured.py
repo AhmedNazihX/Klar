@@ -14,17 +14,7 @@ from dataclasses import dataclass
 import httpx
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
-from openrouter.errors import (
-    BadGatewayResponseError,
-    EdgeNetworkTimeoutResponseError,
-    InternalServerResponseError,
-    NoResponseError,
-    ProviderOverloadedResponseError,
-    RequestTimeoutResponseError,
-    ResponseValidationError,
-    ServiceUnavailableResponseError,
-    TooManyRequestsResponseError,
-)
+from openrouter.errors import NoResponseError, OpenRouterError, ResponseValidationError
 from pydantic import BaseModel, JsonValue, ValidationError
 
 logger = logging.getLogger(__name__)
@@ -32,24 +22,31 @@ logger = logging.getLogger(__name__)
 CONTENT_FILTER = "content_filter"
 """The `finish_reason` a provider sends when its content filter blocked the request or the
 answer (OpenRouter passes it on; LangChain puts it in `response_metadata`)."""
-SECOND_MODEL_FAILURES: tuple[type[Exception], ...] = (
-    TooManyRequestsResponseError,
-    RequestTimeoutResponseError,
-    EdgeNetworkTimeoutResponseError,
-    InternalServerResponseError,
-    BadGatewayResponseError,
-    ServiceUnavailableResponseError,
-    ProviderOverloadedResponseError,
+TRANSIENT_STATUSES = frozenset({408, 429})
+"""The 4xx statuses worth a refusal's step: a timeout and a rate limit. Every 5xx is too."""
+SERVER_ERROR = 500
+TRANSIENT_FAILURES: tuple[type[Exception], ...] = (
     NoResponseError,
     ResponseValidationError,
     httpx.TransportError,
     ValueError,
 )
-"""How the second call can fail transiently: a rate limit (429), a timeout (408, 524) or a server
-error (500, 502, 503, 529), no response or a transport error, and a reply that doesn't fit
-(`ValidationError`, the SDK's `ResponseValidationError`) or that carries the provider's error
-(ChatOpenRouter's plain `ValueError`). A 4xx config or request error (a mistyped model or
-provider, a schema the provider rejects) is not here: it still fails the run, as any bug does."""
+"""Failures transient whatever their status: no response or a transport error, and a reply that
+doesn't fit (`ValidationError`, the SDK's `ResponseValidationError`) or that carries the
+provider's error (ChatOpenRouter's plain `ValueError`)."""
+
+
+def is_transient_failure(exc: Exception) -> bool:
+    """Whether the second call's failure is transient (decision 033): one of
+    `TRANSIENT_FAILURES`, or an HTTP error with status 408, 429 or 5xx, whichever SDK class
+    carries it (the SDK types those statuses only for a JSON body; a gateway's HTML 502 or any
+    504 comes as `OpenRouterDefaultError`). Any other 4xx (a mistyped model or provider, a
+    schema the provider rejects) is a config or request error, and still fails the run."""
+    if isinstance(exc, TRANSIENT_FAILURES):
+        return True
+    if isinstance(exc, OpenRouterError):
+        return exc.status_code in TRANSIENT_STATUSES or exc.status_code >= SERVER_ERROR
+    return False
 
 
 class ProviderRefusalError(RuntimeError):
@@ -121,7 +118,7 @@ class ChatRoute:
         to `refusal_chat`, whose reply is read the same way; only a refusal does, so an answer
         that parses (even under `content_filter`), a broken reply or a transport error never
         reaches the second model. Raises `ProviderRefusalError` when both refuse (or there is no
-        second model), and also when the second call fails transiently (`SECOND_MODEL_FAILURES`),
+        second model), and also when the second call fails transiently (`is_transient_failure`),
         because the route must never end worse than no route (decision 033); a 4xx config or
         request error of the second call still raises. Raises `ValidationError` when the first
         model's answer doesn't fit."""
@@ -139,7 +136,7 @@ class ChatRoute:
         response_format: Mapping[str, object],
         model: type[M],
     ) -> M:
-        """The second model's answer; a transient failure of its call (`SECOND_MODEL_FAILURES`)
+        """The second model's answer; a transient failure of its call (`is_transient_failure`)
         is a refusal, logged by its type only (never the reply or the request, which quote the
         description)."""
         try:
@@ -147,7 +144,9 @@ class ChatRoute:
         except ProviderRefusalError:
             logger.warning("refusal route: the second model refused too")
             raise
-        except SECOND_MODEL_FAILURES as exc:
+        except Exception as exc:
+            if not is_transient_failure(exc):
+                raise
             kind = type(exc).__name__
             logger.warning("refusal route: the second model failed (%s)", kind)
             raise ProviderRefusalError(

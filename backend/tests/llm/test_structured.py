@@ -13,7 +13,12 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.outputs import ChatResult
-from openrouter.errors import BadRequestResponseError, NoResponseError, NotFoundResponseError
+from openrouter.errors import (
+    BadRequestResponseError,
+    NoResponseError,
+    NotFoundResponseError,
+    OpenRouterDefaultError,
+)
 from pydantic import BaseModel, Field, SecretStr, ValidationError
 from vcr.errors import CannotOverwriteExistingCassetteException
 
@@ -188,6 +193,13 @@ def status(code: int) -> Callable[[httpx.Request], httpx.Response]:
     return lambda request: httpx.Response(code, json={"error": {"message": "busy", "code": code}})
 
 
+def html_status(code: int) -> Callable[[httpx.Request], httpx.Response]:
+    """A gateway's non-JSON error page, which the SDK raises as `OpenRouterDefaultError`."""
+    return lambda request: httpx.Response(
+        code, text="<html>Bad gateway</html>", headers={"content-type": "text/html"}
+    )
+
+
 def raising(error: type[httpx.TransportError]) -> Callable[[httpx.Request], httpx.Response]:
     def handle(request: httpx.Request) -> httpx.Response:
         raise error("no answer", request=request)
@@ -209,8 +221,12 @@ def provider_error(request: httpx.Request) -> httpx.Response:
     ("handler", "kind"),
     [
         pytest.param(status(429), "TooManyRequestsResponseError", id="rate-limited"),
+        pytest.param(status(408), "RequestTimeoutResponseError", id="request-timeout"),
         pytest.param(status(500), "InternalServerResponseError", id="server-error"),
         pytest.param(status(503), "ServiceUnavailableResponseError", id="unavailable"),
+        pytest.param(status(504), "OpenRouterDefaultError", id="gateway-timeout-json"),
+        pytest.param(html_status(502), "OpenRouterDefaultError", id="bad-gateway-html"),
+        pytest.param(html_status(503), "OpenRouterDefaultError", id="unavailable-html"),
         pytest.param(raising(httpx.ReadTimeout), "ReadTimeout", id="timeout"),
         pytest.param(raising(httpx.ConnectError), "ConnectError", id="transport"),
         pytest.param(no_response, "NoResponseError", id="no-response"),
@@ -229,19 +245,21 @@ def test_a_failed_call_to_the_second_model_is_a_refusal(
 
 
 @pytest.mark.parametrize(
-    ("code", "error"),
+    ("handler", "error"),
     [
-        pytest.param(404, NotFoundResponseError, id="mistyped-model-or-provider"),
-        pytest.param(400, BadRequestResponseError, id="schema-rejected"),
+        pytest.param(status(404), NotFoundResponseError, id="mistyped-model-or-provider"),
+        pytest.param(status(400), BadRequestResponseError, id="schema-rejected"),
+        pytest.param(html_status(404), OpenRouterDefaultError, id="not-found-html"),
+        pytest.param(html_status(400), OpenRouterDefaultError, id="bad-request-html"),
     ],
 )
 def test_a_config_or_request_error_of_the_second_model_still_raises(
-    code: int,
+    handler: Callable[[httpx.Request], httpx.Response],
     error: type[Exception],
     http_answer: list[Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """A 4xx the route can't fix is never counted as a refusal (decision 033)."""
-    http_answer.append(status(code))
+    """A 4xx the route can't fix is never counted as a refusal (decision 033), whatever its body."""
+    http_answer.append(handler)
     with pytest.raises(error):
         ChatRoute(chat(REFUSED), pinned_second_model()).ask(MESSAGES, FORMAT, Small)
 
