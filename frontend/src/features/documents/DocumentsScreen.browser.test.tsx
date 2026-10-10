@@ -105,6 +105,7 @@ function seededClient(shown: Page, language: Language): QueryClient {
     createdAt: '2026-10-01T09:00:00+00:00',
     result: shown.result,
     hasUnreadableResult: false,
+    runNo: 1,
   }
   client.setQueryData(inventoryToolsKey, [tool])
   client.setQueryData(interviewAnswersKey(shown.toolId), {})

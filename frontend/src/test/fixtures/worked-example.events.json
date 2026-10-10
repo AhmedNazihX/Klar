@@ -325,7 +325,7 @@
     "event": "step",
     "step": {
       "step": "role_obligations",
-      "decision": "Role: deployer. 11 duties listed for a high_risk system (amended text). 6 conditional duties left out because their condition doesn't apply.",
+      "decision": "Role: deployer. 11 duties listed for this high-risk system (amended text). 6 conditional duties left out because their condition doesn't apply.",
       "facts_used": [
         {
           "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",
@@ -620,7 +620,7 @@
         },
         {
           "step": "role_obligations",
-          "decision": "Role: deployer. 11 duties listed for a high_risk system (amended text). 6 conditional duties left out because their condition doesn't apply.",
+          "decision": "Role: deployer. 11 duties listed for this high-risk system (amended text). 6 conditional duties left out because their condition doesn't apply.",
           "facts_used": [
             {
               "text": "The tool reads job applications, scores them, and shows HR a ranked shortlist.",

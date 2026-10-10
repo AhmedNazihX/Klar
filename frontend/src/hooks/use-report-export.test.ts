@@ -13,6 +13,7 @@ function storedTool(result: InventoryTool['result']): InventoryTool {
     createdAt: '2026-09-27T10:00:00Z',
     result,
     hasUnreadableResult: false,
+    runNo: 1,
   }
 }
 

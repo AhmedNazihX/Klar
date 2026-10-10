@@ -242,7 +242,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            SiteFooter, MistGround, ScreenPlaceholder, PhoneLabel (P15); the
 │       │                            sidebar's CompanyLine (P18); the result's CheckProgress, FactCard,
 │       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
-│       │                            InventoryTable (P6); VersionDiff (P10)
+│       │                            InventoryTable (P6); VersionDiff (P10); FactQuestion, ChangeBanner (P5b)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5), inventory/ (P6), your-data/ (P12), obligations/ (P24),
@@ -255,6 +255,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-inventory-tools.ts, use-save-classified-tool.ts (P6),
 │       │                            use-my-data-counts.ts, use-export-user-data.ts, use-delete-user-data.ts, use-forget-on-sign-out.ts (P12),
 │       │                            use-original-run.ts (the same description checked under the original text, P10)
+│       │                            use-follow-up-run.ts (a result's re-run with answers, saved as the next run; Undo answer),
+│       │                            use-follow-up-answers.ts (the answers given on a result, profile pre-fill, Confirm) (P5b)
 │       │                            use-interview-answers.ts, use-document-drafts.ts (drafts and exports, P9)
 │       │                            use-report-export.ts (the report for a lawyer and the inventory report, P25; the checklist, P24),
 │       │                            use-duty-progress.ts (the duties ticked off, P24),
@@ -265,7 +267,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            before a screen reads it) (P6);
 │       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12);
 │       │                            risk-class (a result's class; a needs-a-description result has none) (E13);
-│       │                            duty-progress (duty_progress ticks through supabase-js, P24)
+│       │                            duty-progress (duty_progress ticks through supabase-js, P24);
+│       │                            tool-runs (a tool's runs: the latest two, a follow-up run with its answers, undo by row id; P5b),
+│       │                            log (a read the screen goes on without, logged with its error code only; P5b)
 │       ├── i18n/                    i18next set-up; locales/en.json, locales/de.json (P4)
 │       ├── content/                 static data the site pages read: accuracy.json (placeholders from P16; written only by P27's `aiact evaluate site-metrics`, decision 024 addendum)
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4), reduced-motion.ts (matchMedia stub, P14),

@@ -399,14 +399,14 @@
       "dialogBody": "Your tools with their descriptions and results, your document answers, checklist ticks and company profile will be deleted for good. This can’t be undone.",
       "dialogBodyCounts": "Klar will delete {{items}} for good. This can’t be undone.",
       "lost": {
-        "systems_one": "{{count}}\u00a0tool",
-        "systems_other": "{{count}}\u00a0tools",
-        "classifications_one": "{{count}}\u00a0result",
-        "classifications_other": "{{count}}\u00a0results",
-        "interviewAnswers_one": "{{count}}\u00a0document answer",
-        "interviewAnswers_other": "{{count}}\u00a0document answers",
-        "dutyProgress_one": "{{count}}\u00a0ticked duty",
-        "dutyProgress_other": "{{count}}\u00a0ticked duties",
+        "systems_one": "{{count}} tool",
+        "systems_other": "{{count}} tools",
+        "classifications_one": "{{count}} result",
+        "classifications_other": "{{count}} results",
+        "interviewAnswers_one": "{{count}} document answer",
+        "interviewAnswers_other": "{{count}} document answers",
+        "dutyProgress_one": "{{count}} ticked duty",
+        "dutyProgress_other": "{{count}} ticked duties",
         "companyProfile": "your company profile"
       },
       "word": "DELETE",
@@ -540,6 +540,10 @@
       "incomplete": "The connection ended before the checks finished.",
       "needsDescription": "Klar needs to know what the tool decides and who it affects. Add that to your description and run it again.",
       "providerRefused": "The model provider's content filter blocked a check, so it couldn't be assessed automatically. No risk class is given: a person must review the description."
+    },
+    "rerun": {
+      "title": "Your earlier result still stands",
+      "body": "Your answers are kept. Try again to run the checks with them."
     }
   },
   "result": {
@@ -587,8 +591,6 @@
       "minimal_risk": "It isn't banned, isn't high-risk and has no Art. 50 duty.",
       "out_of_scope": "The AI Act doesn't apply to it."
     },
-    "paused": "Klar assumed one fact at check {{number}}. The question below settles it.",
-    "pausedAtDuties": "Klar assumed one fact while working out your role. The question below settles it.",
     "dutiesFrom": "Your duties apply from",
     "monthsAway_one": "About {{count}} month from today",
     "monthsAway_other": "About {{count}} months from today",
@@ -646,6 +648,7 @@
       "heading": "The result rests on",
       "intro": "If any of these is wrong, the class may change.",
       "change": "Change",
+      "confirm": "Confirm",
       "accuracy": "This assessment is only as accurate as the description provided."
     },
     "steps": {
@@ -680,7 +683,8 @@
       "checked": "Checked: {{provisions}}",
       "showProvision_one": "Show the provision",
       "showProvision_other": "Show the provisions",
-      "noFacts": "No single fact; see the decision."
+      "noFacts": "No single fact; see the decision.",
+      "runHeading": "Run {{number}}: how Klar got here"
     },
     "reviewer": {
       "exportJson": "Export as JSON"
@@ -715,6 +719,32 @@
       "otherBasis": "Under the original 2024 text, the class is the same ({{riskClass}}), on another basis: {{basis}}.",
       "same": "Under the original 2024 text, the class is the same: {{riskClass}}.",
       "compare": "Compare the two texts"
+    },
+    "pausedVerdict": {
+      "atCheck": "Klar paused at check {{number}}. {{decides}}",
+      "atRole": "Klar paused while working out your role. One fact decides which duties are yours.",
+      "decides": {
+        "high_risk": "One fact decides whether {{tool}} is a high-risk system.",
+        "prohibited": "One fact decides whether {{tool}} is banned.",
+        "limited_risk": "One fact decides whether {{tool}} has transparency duties.",
+        "other": "One fact decides how {{tool}} is classified."
+      },
+      "theTool": "the tool",
+      "until": "Until you answer",
+      "treatedAs": {
+        "prohibited": "Treated as prohibited",
+        "high_risk": "Treated as high-risk",
+        "limited_risk": "Treated as limited risk",
+        "minimal_risk": "Treated as minimal risk",
+        "out_of_scope": "Treated as out of scope"
+      },
+      "stricter": "The stricter reading, so nothing is missed",
+      "lists": {
+        "high_risk": "Your inventory and obligations show the high-risk duties as possible until this is answered.",
+        "prohibited": "Your inventory and obligations show the ban as possible until this is answered.",
+        "limited_risk": "Your inventory and obligations show the transparency duties as possible until this is answered.",
+        "other": "Your inventory shows this class as assumed until this is answered."
+      }
     }
   },
   "annexPoint": {
@@ -959,5 +989,50 @@
       "title": "No duties yet",
       "body": "Classify a tool to see what it asks of you."
     }
+  },
+  "followUp": {
+    "heading_one": "{{count}} open question",
+    "heading_other": "{{count}} open questions",
+    "intro": "Klar couldn't settle these from the description. Your answers can change the result.",
+    "option": {
+      "yes": "Yes",
+      "no": "No",
+      "not_sure": "Not sure"
+    },
+    "fromProfile": "Filled in from your company profile. Please check it before you run the checks again.",
+    "runAgain_one": "Add answer and run again",
+    "runAgain_other": "Add answers and run again",
+    "answerLine": "{{question}} {{answer}}.",
+    "confirmedLine": "Confirmed: {{fact}}",
+    "vendor": {
+      "lead": "Not sure? Ask your vendor:",
+      "quoted": "“{{question}}”",
+      "copy": "Copy question",
+      "copied": "Question copied.",
+      "copyFailed": "Copying didn't work here. Select the question above to copy it."
+    },
+    "banner": {
+      "changed": "Your answer changed the result.",
+      "unchanged": "Your answer didn't change the class.",
+      "body": "Klar ran every check again with your answer added to the description.",
+      "youSaid": "You said: “{{answer}}”",
+      "run": "Run {{number}} of {{total}}",
+      "undo": "Undo answer",
+      "undoFailed": "Klar couldn't undo your answer. Please try again.",
+      "changeLabel": "changed to",
+      "youSaidTo": "You said “{{answer}}” to “{{question}}”",
+      "youConfirmed": "You confirmed: “{{fact}}”"
+    },
+    "lists": {
+      "heading": "What changed in your lists",
+      "needs": "Needs you",
+      "duties_one": "{{count}} duty",
+      "duties_other": "{{count}} duties",
+      "possibleDuties_one": "{{count}} possible duty",
+      "possibleDuties_other": "{{count}} possible duties",
+      "noDuties": "No specific duties",
+      "nothing": "Nothing to do"
+    },
+    "changed": "Changed: {{decision}}"
   }
 }

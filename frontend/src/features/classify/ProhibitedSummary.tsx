@@ -17,6 +17,8 @@ export function ProhibitedSummary({
   run,
   note,
   onChangeFacts,
+  onConfirmFact,
+  isBusy,
   onExpandAll,
 }: {
   run: ClassificationRun
@@ -24,6 +26,10 @@ export function ProhibitedSummary({
   note?: ReactNode
   /** Reopens the description. */
   onChangeFacts: () => void
+  /** Confirms an assumed fact, which runs the checks again (P5b). */
+  onConfirmFact: (fact: string) => void
+  /** True while that run is going. */
+  isBusy: boolean
   /** Opens the reviewer view. */
   onExpandAll: () => void
 }): JSX.Element {
@@ -38,7 +44,12 @@ export function ProhibitedSummary({
           <FineTile result={result} />
           <WhyChecksStopped result={result} />
         </div>
-        <FactsPanel result={result} onChange={onChangeFacts} />
+        <FactsPanel
+          result={result}
+          onChange={onChangeFacts}
+          onConfirm={onConfirmFact}
+          isBusy={isBusy}
+        />
       </div>
       <StepsPanel result={result} onExpandAll={onExpandAll} />
     </>

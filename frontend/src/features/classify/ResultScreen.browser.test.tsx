@@ -6,7 +6,12 @@ import i18n from 'i18next'
 import { describe, expect, it } from 'vitest'
 import { page } from 'vitest/browser'
 
-import { decidedHighRisk, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixtures'
+import type { ClassificationResult } from '@/api'
+import {
+  annexIIINeedsInfo,
+  decidedHighRisk,
+  WORKED_EXAMPLE_DESCRIPTION,
+} from '@/test/classify-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
@@ -16,14 +21,18 @@ const PHONE = { width: 390, height: 844 } as const
 const DESKTOP = { width: 1440, height: 1000 } as const
 const TOOL_ID = 'applicant-screening'
 
-async function openResult(language: 'en' | 'de', view?: 'reviewer'): Promise<void> {
+async function openResult(
+  language: 'en' | 'de',
+  view?: 'reviewer',
+  result: ClassificationResult = decidedHighRisk(),
+): Promise<void> {
   await i18n.changeLanguage(language)
   const client = createTestQueryClient()
   const run: ClassificationRun = {
     toolId: TOOL_ID,
     name: 'Applicant screening',
     description: WORKED_EXAMPLE_DESCRIPTION,
-    result: decidedHighRisk(),
+    result,
   }
   putRun(client, run)
   renderRoute(`/app/inventory/${TOOL_ID}${view ? '?view=reviewer' : ''}`, client)
@@ -52,6 +61,43 @@ describe('the result at 390 px', () => {
     await openResult(language, view)
     expect(sidewaysOverflow()).toBe(0)
   })
+})
+
+describe('a paused result with more questions at 390 px', () => {
+  /** The deciding question and another one, so the run action is the plural, longest label. */
+  function pausedWithQuestions(): ClassificationResult {
+    const base = annexIIINeedsInfo()
+    const more = {
+      id: 'human_review',
+      text: 'Does a person review the shortlist before it affects hiring decisions?',
+      options: ['yes', 'no', 'not_sure'] as const,
+    }
+    return {
+      ...base,
+      follow_up_questions: [
+        ...(base.follow_up_questions ?? []),
+        { ...more, options: [...more.options] },
+      ],
+    }
+  }
+
+  it.each([
+    ['en', 'Add answers and run again'],
+    ['de', 'Antworten hinzufügen und erneut prüfen'],
+  ] as const)(
+    'wraps the run action instead of scrolling sideways (%s)',
+    async (language, label) => {
+      await page.viewport(PHONE.width, PHONE.height)
+      await openResult(language, undefined, pausedWithQuestions())
+      const button = screen.getByRole('button', { name: label })
+      // It stays inside its panel's padding: before the fix, the German label stuck out 5 px.
+      const panel = button.parentElement as HTMLElement
+      const inner =
+        panel.getBoundingClientRect().right - parseFloat(getComputedStyle(panel).paddingRight)
+      expect(button.getBoundingClientRect().right, label).toBeLessThanOrEqual(inner)
+      expect(sidewaysOverflow()).toBe(0)
+    },
+  )
 })
 
 describe('the duty rows at 1280 px', () => {
