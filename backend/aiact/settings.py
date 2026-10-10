@@ -70,7 +70,10 @@ class Settings(BaseSettings):
     engine_provider: str | None = None
     judge_model: str | None = None
     judge_backup_model: str | None = None
-    label_filter_model: str | None = None
+    # The second-model label filter (B9): Claude Haiku 4.5 on its EU zero-retention endpoint
+    # (decision 005), pinned with fallbacks off; override both together.
+    label_filter_model: str = "anthropic/claude-haiku-4.5"
+    label_filter_provider: str = "google-vertex/europe"
     # Refused requests (decision 033): a request the engine provider's content filter refuses
     # goes once to this second model, pinned to its provider with fallbacks off.
     refusal_model: str | None = None

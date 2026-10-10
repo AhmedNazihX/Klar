@@ -8,12 +8,13 @@ MODEL_ID_FIELDS = (
     "engine_model",
     "judge_model",
     "judge_backup_model",
-    "label_filter_model",
     "refusal_model",
     "refusal_provider",
     "embedding_model",
     "embedding_provider",
 )
+DEFAULTED_ROUTES = ("ragas_model", "ragas_provider", "label_filter_model", "label_filter_provider")
+"""Model routes with a default (decision 005): empty keys in `.env.example` keep it."""
 
 
 def test_defaults_without_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -37,7 +38,7 @@ def test_reads_environment_and_hides_secrets(
 
 
 def test_env_example_leaves_model_ids_unset(monkeypatch: pytest.MonkeyPatch) -> None:
-    for field in (*MODEL_ID_FIELDS, "ragas_model", "ragas_provider"):
+    for field in (*MODEL_ID_FIELDS, *DEFAULTED_ROUTES):
         monkeypatch.delenv(field.upper(), raising=False)
     monkeypatch.delenv("EMBEDDING_DIMENSIONS", raising=False)
     monkeypatch.delenv("SEARCH_MAX_DISTANCE", raising=False)
@@ -45,10 +46,14 @@ def test_env_example_leaves_model_ids_unset(monkeypatch: pytest.MonkeyPatch) -> 
     settings = Settings(_env_file=BACKEND_DIR / ".env.example")  # pyright: ignore[reportCallIssue]
     for field in MODEL_ID_FIELDS:
         assert getattr(settings, field) is None, field
-    # RAGAS has a default route (decision 005), so empty keys keep it.
+    # RAGAS and the label filter have default routes (decision 005), so empty keys keep them.
     assert (settings.ragas_model, settings.ragas_provider) == (
         "google/gemini-3.1-flash-lite",
         "google-vertex/eu",
+    )
+    assert (settings.label_filter_model, settings.label_filter_provider) == (
+        "anthropic/claude-haiku-4.5",
+        "google-vertex/europe",
     )
     assert settings.embedding_dimensions == 1536
     # Empty keys keep X1b's calibrated values (decision 003).

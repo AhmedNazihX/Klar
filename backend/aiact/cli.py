@@ -6,6 +6,7 @@ Help texts come from the callback docstrings.
 
 from collections.abc import Callable
 from contextlib import nullcontext
+from datetime import date
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Annotated
@@ -24,6 +25,8 @@ from aiact.eval import (
     academic,
     citation_index,
     isolation,
+    label_filter,
+    label_filter_report,
     label_freeze,
     metrics,
     ragas_metrics,
@@ -34,7 +37,14 @@ from aiact.eval import (
     tool_calls,
 )
 from aiact.eval import split as eval_split
-from aiact.eval.cases import CASES_DIR, CaseFileError, CaseSet, load_cases, load_qa_items
+from aiact.eval.cases import (
+    CASES_DIR,
+    BenchmarkCase,
+    CaseFileError,
+    CaseSet,
+    load_cases,
+    load_qa_items,
+)
 from aiact.eval.experiments import embeddings as embedding_experiment
 from aiact.eval.experiments import (
     search_cutoff,
@@ -49,7 +59,7 @@ from aiact.llm.generations import GenerationLookup
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
 from aiact.retrieval import search as search_module
-from aiact.settings import get_settings
+from aiact.settings import Settings, get_settings
 
 app = typer.Typer(no_args_is_help=True)
 corpus_app = typer.Typer(no_args_is_help=True)
@@ -1029,6 +1039,162 @@ def eval_smoke_refusals(
 def _smoke_comparison(connection: psycopg.Connection, run_ids: dict[str, UUID]) -> str:
     comparison = smoke_verdict.compare_runs(connection, run_ids)
     return smoke_verdict.format_comparison(comparison, run_ids)
+
+
+@eval_app.command("label-filter")
+def eval_label_filter(
+    set_name: Annotated[
+        list[CaseSet] | None,
+        typer.Option("--set", help="Label only this set; repeat for several [default: all own]"),
+    ] = None,
+    case: Annotated[
+        list[str] | None, typer.Option(help="Label only this case id; repeat for several")
+    ] = None,
+    limit: Annotated[
+        int | None, typer.Option(min=1, help="Label at most N of the cases still unlabelled")
+    ] = None,
+    dry_run: Annotated[
+        bool, typer.Option(help="Print the plan and the cost estimate; make no call")
+    ] = False,
+    check: Annotated[
+        bool,
+        typer.Option(
+            help="Make no call; fail while a case is unlabelled or a disagreement unresolved"
+        ),
+    ] = False,
+    max_cost_usd: Annotated[
+        float, typer.Option(min=0.000001, help="Start no new batch once this much would be spent")
+    ] = label_filter.DEFAULT_MAX_COST_USD,
+    concurrency: Annotated[
+        int, typer.Option(min=1, max=label_filter.MAX_CONCURRENCY, help="Calls in flight at once")
+    ] = label_filter.DEFAULT_CONCURRENCY,
+) -> None:
+    """The second-model label filter (B9): Claude Haiku 4.5 labels every own-labelled case blind,
+    and the disagreements go to eval/reports/label_disagreements.md (Pile B's to
+    eval/reports/pile_b/) for the user to resolve. --set, --case and --limit narrow what is
+    labelled; the reports always cover every set. Cases already answered are not sent again; the
+    reports keep every resolution written."""
+    sets = tuple(dict.fromkeys(set_name or label_filter.FILTERED_SETS))
+    unfiltered = [s.value for s in sets if s not in label_filter.FILTERED_SETS]
+    if unfiltered:
+        typer.echo(f"Error: not an own-labelled set: {', '.join(unfiltered)}", err=True)
+        raise typer.Exit(code=2)
+    settings = get_settings()
+    model, provider = settings.label_filter_model, settings.label_filter_provider
+    try:
+        cases = label_filter.load_filtered_cases(label_filter.FILTERED_SETS)
+        records = label_filter.read_all_records(label_filter.REPORTS_DIR)
+    except (CaseFileError, FileNotFoundError, ValueError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    # Read the written resolutions first, so an unreadable report stops the command before a
+    # paid call.
+    reports = _label_filter_reports(cases, records, model, provider)
+    if check:
+        _label_filter_check(reports)
+        return
+    chosen = _chosen(tuple(c for c in cases if c.set_name in sets), case)
+    todo = label_filter.cases_to_label(chosen, records, model, provider)[:limit]
+    typer.echo(
+        f"{len(chosen)} cases, {len(todo)} to label with {model} on {provider}; "
+        f"at most ${label_filter.estimate_usd(len(todo)):.2f} (cap ${max_cost_usd:.2f})"
+    )
+    if dry_run:
+        return
+    if todo:
+        _label_filter_run(todo, settings, max_cost_usd, concurrency)
+    records = label_filter.read_all_records(label_filter.REPORTS_DIR)
+    _label_filter_write(_label_filter_reports(cases, records, model, provider), model, provider)
+
+
+def _chosen(cases: tuple[BenchmarkCase, ...], ids: list[str] | None) -> tuple[BenchmarkCase, ...]:
+    if not ids:
+        return cases
+    unknown = sorted(set(ids) - {c.id for c in cases})
+    if unknown:
+        typer.echo(f"Error: unknown case {', '.join(unknown)}", err=True)
+        raise typer.Exit(code=2)
+    return tuple(c for c in cases if c.id in ids)
+
+
+def _label_filter_run(
+    todo: tuple[BenchmarkCase, ...], settings: Settings, max_cost_usd: float, concurrency: int
+) -> None:
+    try:
+        labeller = label_filter.LabelFilter(settings)
+    except (LLMConfigError, LookupError, FileNotFoundError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    summary = label_filter.run_filter(
+        todo,
+        labeller,
+        run_date=date.today(),
+        max_cost_usd=max_cost_usd,
+        concurrency=concurrency,
+        reports_dir=label_filter.REPORTS_DIR,
+    )
+    typer.echo(
+        f"{summary.labelled} labelled, {summary.failed} failed of {summary.planned}; "
+        f"${summary.cost_usd:.4f}, {summary.tokens} tokens"
+    )
+    if summary.stopped is not None:
+        typer.echo(
+            f"Stopped early: {summary.stopped.value} (cap ${max_cost_usd:.2f}). "
+            f"{summary.remaining} cases still to label, at most "
+            f"${label_filter.estimate_usd(summary.remaining):.2f} more; run again to go on",
+            err=True,
+        )
+
+
+def _label_filter_reports(
+    cases: tuple[BenchmarkCase, ...],
+    records: dict[str, label_filter.FilterRecord],
+    model: str,
+    provider: str,
+) -> tuple[label_filter_report.GroupReport, ...]:
+    try:
+        return label_filter_report.group_reports(
+            cases, records, model, provider, label_filter.REPORTS_DIR
+        )
+    except label_filter_report.ReportFormatError as error:
+        typer.echo(f"Error: {error}. Nothing was written.", err=True)
+        raise typer.Exit(code=2) from error
+
+
+def _label_filter_write(
+    reports: tuple[label_filter_report.GroupReport, ...], model: str, provider: str
+) -> None:
+    for group in reports:
+        answers = label_filter_report.display_path(group.answers_path)
+        text = label_filter_report.render_report(
+            group.comparison, group.resolutions, model, provider, answers
+        )
+        group.path.parent.mkdir(parents=True, exist_ok=True)
+        group.path.write_text(text, encoding="utf-8")
+        comparison = group.comparison
+        typer.echo(
+            f"{len(comparison.agreeing)} agree, {len(comparison.disagreements)} disagree, "
+            f"{len(comparison.unlabelled)} not labelled. Written: {group.path}"
+        )
+
+
+def _label_filter_check(reports: tuple[label_filter_report.GroupReport, ...]) -> None:
+    is_ok = True
+    for group in reports:
+        result = label_filter_report.check_report(group.comparison, group.resolutions)
+        for case_id in result.unlabelled:
+            typer.echo(f"NOT LABELLED: {case_id}", err=True)
+        for case_id in result.unresolved:
+            typer.echo(f"NO RESOLUTION: {case_id}", err=True)
+        typer.echo(
+            f"{group.path}: {len(group.comparison.disagreements)} disagreements, "
+            f"{len(result.unresolved)} without a resolution; "
+            f"{len(result.unlabelled)} cases not labelled",
+            err=not result.is_ok,
+        )
+        is_ok = is_ok and result.is_ok
+    if not is_ok:
+        raise typer.Exit(code=1)
 
 
 @mcp_app.callback()
