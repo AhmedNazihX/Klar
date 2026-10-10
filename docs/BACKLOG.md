@@ -147,6 +147,11 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   DoD: `check` exits 0 on a fresh file and non-zero with a clear message after a dependency is added without regenerating (tested on a fixture lockfile); running `generate` twice gives no diff; `uv add <pkg>` then a commit updates the file through the pre-commit hook; a push with a stale file is refused by the pre-push hook.
   **Outcome:** aiact deps generate|check renders docs/DEPENDENCIES.md from uv.lock plus a committed licence cache (docs/dependency-licences.json, from installed metadata or PyPI), so check is offline and platform-independent; .githooks pre-commit regenerates, pre-merge-commit stops a stale merge, pre-push refuses uncommitted/stale dependency files
 
+- [ ] **F9 · Retention-purge test isolation on the shared database** · Deps: – · Type: agent · Resource: db-schema
+  Context: CLAUDE.md › Database is shared; seen 2026-10-10: a main check run hung 33 min and blocked a parallel worktree's run. `backend/tests/db/test_user_data_schema.py` › `test_cleanup_*` calls `private.purge_inactive_anonymous_users(...)`, which deletes every stale anonymous user in the shared local database (its own comment: "the shared database may hold other stale users"), so it waits on row locks held by any other session (another worktree's tests, a UI reviewer's anonymous user, the lock-race tests' connections) — and no lock or statement timeout ends the wait.
+  Output: the purge tests touch only their own users (e.g. a test-only variant or argument that scopes the purge to given user ids, or a per-run schema), and every DB test connection sets a `lock_timeout` (e.g. 15 s) so a lock wait fails instead of hanging; the production purge keeps its behaviour.
+  DoD: two concurrent full `pytest` runs (two worktrees) finish; a test holding a lock on another user's row makes the purge test still pass; a deliberately held lock makes a DB test fail within the timeout rather than hang.
+
 ## Phase 1 — Benchmark before the engine
 
 - [x] **B1 · Fetch source documents** · Deps: F1 · Parallel: F2–F7 · Type: agent · Lane: Corpus
