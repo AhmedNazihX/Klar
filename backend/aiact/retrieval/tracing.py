@@ -10,6 +10,9 @@ tool-call correctness (`aiact.eval.tool_calls`) can read from a trace which look
   types a search was limited to, go into the run's metadata, which a metadata-only trace keeps.
   The search query (the description) never does: it is an input, and the engine's client hides
   inputs outside development.
+- **What a search found.** A search's run also records the provision ids it returned
+  (`HIT_IDS`), corpus ids only, so the gap run (V8) can show from its traces that a held-out
+  example was retrieved, and the reported run that none was.
 - **Recorded only once resolved.** The metadata is set when the lookup returns. A provision id
   can come from a model (the citation validator looks up whatever a step cited), so an id that
   resolved nowhere could carry the description's words: a failed lookup records no id, only its
@@ -33,6 +36,8 @@ DOC_KEYS = "lookup_doc_keys"
 """Metadata: the manifest keys a `search_ai_act` run was limited to (absent: every document)."""
 DOC_TYPES = "lookup_doc_types"
 """Metadata: the document types a `search_ai_act` run was limited to (absent: every type)."""
+HIT_IDS = "lookup_hit_ids"
+"""Metadata: the provision ids a `search_ai_act` run returned, in rank order."""
 
 HANDLES = frozenset({"connection", "embedder"})
 """Arguments that are objects, not values: never part of a run's inputs."""
@@ -67,9 +72,12 @@ def _without_handles(inputs: dict[str, object]) -> dict[str, object]:
     return {name: value for name, value in inputs.items() if name not in HANDLES}
 
 
-def traced_lookup[**P, R](metadata_of: MetadataOf) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """A lookup traced as a run under the current trace, with `metadata_of(inputs)` set as its
-    metadata once it returns; with no current trace, the plain lookup."""
+def traced_lookup[**P, R](
+    metadata_of: MetadataOf, result_metadata_of: Callable[[R], Mapping[str, object]] | None = None
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """A lookup traced as a run under the current trace, with `metadata_of(inputs)` (and
+    `result_metadata_of(result)`, when given) set as its metadata once it returns; with no
+    current trace, the plain lookup."""
 
     def decorate(lookup: Callable[P, R]) -> Callable[P, R]:
         signature = inspect.signature(lookup)
@@ -81,7 +89,10 @@ def traced_lookup[**P, R](metadata_of: MetadataOf) -> Callable[[Callable[P, R]],
             if run is not None:
                 bound = signature.bind(*args, **kwargs)
                 bound.apply_defaults()
-                metadata = metadata_of(bound.arguments)
+                metadata = {
+                    **metadata_of(bound.arguments),
+                    **(result_metadata_of(result) if result_metadata_of else {}),
+                }
                 run.add_metadata({k: v for k, v in metadata.items() if v is not None})
             return result
 

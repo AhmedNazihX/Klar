@@ -25,6 +25,8 @@ from aiact.eval import (
     academic,
     answers,
     citation_index,
+    gap,
+    held_out_hits,
     isolation,
     label_filter,
     label_filter_report,
@@ -775,6 +777,60 @@ def eval_tool_calls(
         tool_calls.RunNotFoundError,
         tool_calls.NoLookupRunsError,
         tool_calls.TraceRecordError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    except LangSmithError as error:
+        name = type(error).__name__
+        typer.echo(f"Error: LangSmith error ({name}); check LANGSMITH_API_KEY", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(text, nl=False)
+
+
+@eval_app.command("gap")
+def eval_gap(
+    heldout_run: Annotated[UUID, typer.Argument(help="The --exclude-mode heldout run's id")],
+    all_run: Annotated[UUID, typer.Argument(help="The --exclude-mode all run's id (the gap run)")],
+) -> None:
+    """Print the held-out vs in-corpus gap of two stored runs of one set (read-only, V8)."""
+    try:
+        with records.connect() as connection:
+            text = gap.gap_report(connection, heldout_run, all_run)
+    except (
+        records.DatabaseNotConfiguredError,
+        report.RunNotFoundError,
+        report.RunRecordError,
+        gap.RunMismatchError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        # A connection error's text can name the server; only the type is printed.
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    typer.echo(text, nl=False)
+
+
+@eval_app.command("held-out-hits")
+def eval_held_out_hits(
+    run_id: Annotated[UUID, typer.Argument(help="The eval_runs id whose traces to read")],
+) -> None:
+    """Print how many of a stored run's traces retrieved a held-out (Pile B) row (read-only,
+    V8): the gap run's should, the reported run's never."""
+    try:
+        source = tool_calls.langsmith_source(get_settings())
+        with records.connect() as connection:
+            text = held_out_hits.held_out_report(connection, source, run_id)
+    except (
+        records.DatabaseNotConfiguredError,
+        tool_calls.TracingNotConfiguredError,
+        tool_calls.RunNotFoundError,
+        tool_calls.TraceRecordError,
+        held_out_hits.NoTraceToCheckError,
     ) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
