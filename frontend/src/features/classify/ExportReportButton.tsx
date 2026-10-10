@@ -13,14 +13,22 @@ import type { ClassificationRun } from './classification-store'
  * result in the screen's language, with the tool's name and the company's from its profile. On
  * Result and Reviewer; the ambiguous result's "Take it to a lawyer" (P22) uses it too.
  */
-export function ExportReportButton({ run }: { run: ClassificationRun }): JSX.Element {
+export function ExportReportButton({
+  run,
+  isInline = false,
+}: {
+  run: ClassificationRun
+  /** The message flows under the button, in a panel; in a header it hangs below, out of the
+   *  flow. */
+  isInline?: boolean
+}): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const overview = useUserDataOverview()
   const exportReport = useExportResultReport(run.toolId)
   return (
-    // The message hangs below the button, out of the flow, so the header's actions never move.
-    <div className="relative flex">
+    // In a header the message hangs below the button, out of the flow, so the actions never move.
+    <div className={isInline ? 'flex flex-col items-start gap-1.5' : 'relative flex'}>
       <Button
         variant="ghost"
         disabled={exportReport.isPending}
@@ -39,7 +47,11 @@ export function ExportReportButton({ run }: { run: ClassificationRun }): JSX.Ele
       {exportReport.isError && (
         <p
           role="alert"
-          className="absolute top-full right-0 z-10 m-0 mt-1.5 w-max max-w-[min(20rem,calc(100vw-2rem))] text-right text-caption text-risk-prohibited"
+          className={
+            isInline
+              ? 'm-0 text-caption text-risk-prohibited'
+              : 'absolute top-full right-0 z-10 m-0 mt-1.5 w-max max-w-[min(20rem,calc(100vw-2rem))] text-right text-caption text-risk-prohibited'
+          }
         >
           {t(reportFailureKey(exportReport.error))}
         </p>

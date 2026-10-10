@@ -31,7 +31,7 @@ export function TakeItToALawyer({
       <p className="m-0 text-body-small text-slate">{t('ambiguous.lawyer.body')}</p>
       <div className="mt-auto flex flex-wrap gap-2.5">
         <Button onClick={onOpenReviewer}>{t('ambiguous.lawyer.openReviewer')}</Button>
-        <ExportReportButton run={run} />
+        <ExportReportButton run={run} isInline />
       </div>
     </GlassPanel>
   )

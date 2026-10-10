@@ -97,6 +97,24 @@ function legacySentences(t: TFunction, result: ClassificationResult, language: L
   return [...marked, perCopy]
 }
 
+/** The Art. 111(2) notice under "duties apply from" (decision 026 item 24); nothing when no duty
+ *  carries a marking. The ambiguous verdict shows it too. */
+export function LegacyNotice({ result }: { result: ClassificationResult }): JSX.Element | null {
+  const { t } = useTranslation()
+  const language = useLanguage()
+  const legacy = legacySentences(t, result, language)
+  if (legacy.length === 0) return null
+  return (
+    <div role="note" className="flex flex-col gap-1.5 rounded-card-small px-4 py-3 glass-thin">
+      {legacy.map((sentence) => (
+        <p key={sentence} className="m-0 text-label font-normal text-ink-2">
+          {sentence}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 /** The top of the result (ResultSummary): the class and its status, who you are and why, the
  *  date duties apply from, the Art. 111(2) notice and the legal-review line. A result paused on a
  *  question says instead where it paused and what it is treated as until the user answers. */
@@ -113,7 +131,6 @@ export function ResultVerdict({
   const { t } = useTranslation()
   const language = useLanguage()
   const duties = useDutiesFrom(result, today)
-  const legacy = legacySentences(t, result, language)
   const paused = pausedVerdict(t, result, name)
   const summary = paused
     ? {
@@ -142,15 +159,7 @@ export function ResultVerdict({
       {...summary}
       legalReview={legalReviewLine(t, result)}
     >
-      {legacy.length > 0 && (
-        <div role="note" className="flex flex-col gap-1.5 rounded-card-small px-4 py-3 glass-thin">
-          {legacy.map((sentence) => (
-            <p key={sentence} className="m-0 text-label font-normal text-ink-2">
-              {sentence}
-            </p>
-          ))}
-        </div>
-      )}
+      <LegacyNotice result={result} />
     </ResultSummary>
   )
 }

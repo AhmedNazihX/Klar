@@ -10,7 +10,7 @@ import { useFollowUpAnswers } from '@/hooks/use-follow-up-answers'
 import { useFollowUpRun, type FollowUpRun } from '@/hooks/use-follow-up-run'
 import { useOriginalRun } from '@/hooks/use-original-run'
 
-import { openPoint } from './ambiguous'
+import { openPoint, questionsOnPoint } from './ambiguous'
 import { AmbiguousSummary } from './AmbiguousSummary'
 import { isDecidedBan } from './ban'
 import { runNumber, saveDraft, type ClassificationRun } from './classification-store'
@@ -56,7 +56,7 @@ function SummaryView({
   const runCount = others.length + (deciding ? 1 : 0)
   const isBan = isDecidedBan(result)
   // The open question of law a legally ambiguous result rests on (its own layout, P22).
-  const point = isBan ? null : openPoint(result)
+  const point = openPoint(result)
 
   function editDescription(): void {
     // The answers go into the text, and the run onto this tool (P6), unless it was never saved.
@@ -137,6 +137,12 @@ function SummaryView({
   // A legally ambiguous result has its own layout (artboard `ResultAmbiguous`, P22): both
   // readings and what would settle the question; an answer there runs the checks again (P5b).
   if (point) {
+    // Only an answer that bears on the open point settles it; the other questions keep their
+    // panel, which then holds the one run action.
+    const { onPoint, elsewhere } = questionsOnPoint(
+      deciding ? [deciding, ...others] : others,
+      point,
+    )
     return (
       <>
         {header}
@@ -150,12 +156,16 @@ function SummaryView({
               {rerunProgress}
             </>
           }
-          questions={deciding ? [deciding, ...others] : others}
+          questions={onPoint}
+          runCount={elsewhere.length === 0 && onPoint.length > 0 ? onPoint.length : undefined}
           answers={answerProps}
           onOpenReviewer={() => {
             onViewChange('reviewer')
           }}
         />
+        {elsewhere.length > 0 && (
+          <FollowUpQuestions questions={elsewhere} runCount={runCount} {...answerProps} />
+        )}
         <ResultNotice result={result} isStored={run.isStored} />
       </>
     )

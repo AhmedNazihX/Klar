@@ -19,6 +19,7 @@ export function AmbiguousSummary({
   point,
   note,
   questions,
+  runCount,
   answers,
   onOpenReviewer,
 }: {
@@ -27,8 +28,11 @@ export function AmbiguousSummary({
   point: OpenPoint
   /** Under the verdict: what the original text's run found, and a re-run's progress. */
   note?: ReactNode
-  /** The result's follow-up questions the user can answer (P5b). */
+  /** The result's follow-up questions whose answer bears on the open point (P5b). */
   questions: readonly FollowUpQuestion[]
+  /** Puts the screen's run action under what would settle it, for that many questions; left
+   *  out when another panel of questions follows and holds it. */
+  runCount?: number
   answers: AnswerProps
   /** Opens the reviewer view. */
   onOpenReviewer: () => void
@@ -38,7 +42,7 @@ export function AmbiguousSummary({
     <>
       <AmbiguousVerdict result={result} question={point.question} today={new Date()} />
       {note}
-      <ReadingCards question={point.question} step={point.step} />
+      <ReadingCards question={point.question} step={point.step} result={result} />
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row">
         <SettleIt
           question={point.question}
@@ -46,6 +50,7 @@ export function AmbiguousSummary({
           toolId={run.toolId}
           toolName={run.name}
           questions={questions}
+          runCount={runCount}
           answers={answers}
         />
         <TakeItToALawyer run={run} onOpenReviewer={onOpenReviewer} />

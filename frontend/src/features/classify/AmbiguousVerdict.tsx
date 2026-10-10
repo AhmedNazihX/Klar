@@ -5,7 +5,7 @@ import type { ClassificationResult, OpenQuestion } from '@/api'
 import { ResultSummary } from '@/components/ResultSummary'
 import { riskClassOf } from '@/lib/risk-class'
 
-import { StatusPills } from './ResultVerdict'
+import { LegacyNotice, StatusPills } from './ResultVerdict'
 import { legalReviewLine, useDutiesFrom } from './verdict-lines'
 
 /**
@@ -39,6 +39,8 @@ export function AmbiguousVerdict({
       dutiesFrom={duties?.date}
       dutiesNote={duties?.note}
       legalReview={legalReviewLine(t, result)}
-    />
+    >
+      <LegacyNotice result={result} />
+    </ResultSummary>
   )
 }

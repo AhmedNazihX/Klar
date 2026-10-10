@@ -831,6 +831,10 @@
       "draftRequest": "Draft a request",
       "vendorReading": "How the vendor reads this point, if they assessed it"
     },
+    "settledBy": {
+      "guidance": "Final Commission guidelines on high-risk classification (still a draft, 19 May 2026)",
+      "provider": "The provider’s own Art. 6(3) assessment, documented under Art. 6(4), if it made one"
+    },
     "lawyer": {
       "heading": "Take it to a lawyer",
       "body": "The reviewer view sets out both readings, the facts and every quoted provision, ready to export.",

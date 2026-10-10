@@ -70,7 +70,8 @@ function AnswerItem({
  * "What would settle it" (artboard `ResultAmbiguous`, decision 026 items 3 and 4): the questions
  * the user can answer here, which run the checks again (P5b); what the vendor can say, with Draft
  * a request (P28's letter), unless the user is the provider; and the guidance the question waits
- * for, named as it stands, as a plain item: Klar promises no re-check when it is final.
+ * for, named as it stands, as a plain item: Klar promises no re-check when it is final. The two
+ * kinds of settled_by are fixed (E12), so their words come from the screen's language.
  */
 export function SettleIt({
   question,
@@ -78,6 +79,7 @@ export function SettleIt({
   toolId,
   toolName,
   questions,
+  runCount,
   answers,
 }: {
   question: OpenQuestion
@@ -85,8 +87,10 @@ export function SettleIt({
   toolId: string
   /** The tool's name, which the request names. */
   toolName: string | null
-  /** The result's follow-up questions the user can answer. */
+  /** The result's follow-up questions whose answer bears on the open point. */
   questions: readonly FollowUpQuestion[]
+  /** Puts the screen's run action here, for that many questions. */
+  runCount?: number
   answers: AnswerProps
 }): JSX.Element {
   const { t } = useTranslation()
@@ -111,7 +115,11 @@ export function SettleIt({
   const vendorItems =
     provider.length > 0
       ? provider.map((item) => (
-          <Item key={item.text} text={item.text} action={canAskVendor && requestButton} />
+          <Item
+            key={item.text}
+            text={t('ambiguous.settledBy.provider')}
+            action={canAskVendor && requestButton}
+          />
         ))
       : canAskVendor && <Item text={t('ambiguous.settle.vendorReading')} action={requestButton} />
   return (
@@ -129,12 +137,12 @@ export function SettleIt({
         ))}
         {vendorItems}
         {guidance.map((item) => (
-          <Item key={item.text} text={item.text} />
+          <Item key={item.text} text={t('ambiguous.settledBy.guidance')} />
         ))}
       </ul>
-      {questions.length > 0 && (
+      {runCount !== undefined && (
         <div className="mt-2">
-          <RunAgainButton count={questions.length} {...answers} />
+          <RunAgainButton count={runCount} {...answers} />
         </div>
       )}
       {canAskVendor && (
