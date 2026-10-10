@@ -33,6 +33,35 @@ void i18n
     },
   })
 
+function readSavedLanguage(): string | null {
+  try {
+    return window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+  } catch {
+    return null // Storage is blocked: the detector can't save a language either.
+  }
+}
+
+function restoreSavedLanguage(saved: string | null): void {
+  try {
+    if (saved === null) window.localStorage.removeItem(LANGUAGE_STORAGE_KEY)
+    else window.localStorage.setItem(LANGUAGE_STORAGE_KEY, saved)
+  } catch {
+    // Storage is blocked: the detector couldn't save over the choice, so there is nothing to undo.
+  }
+}
+
+/**
+ * Shows the site in `language` without saving it as the visitor's choice. A landing page's address
+ * picks its language (`/` English, `/de` German), but only the EN/DE switch changes the language
+ * the app opens in next time (P16): i18next saves every change, so the saved value is put back.
+ */
+export async function showLanguage(language: Language): Promise<void> {
+  if (i18n.resolvedLanguage === language) return
+  const saved = readSavedLanguage()
+  await i18n.changeLanguage(language)
+  restoreSavedLanguage(saved)
+}
+
 // Keep <html lang> in step, so screen readers and hyphenation use the right language.
 function syncDocumentLanguage(language: string): void {
   document.documentElement.lang = language
