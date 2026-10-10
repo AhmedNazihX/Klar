@@ -36,6 +36,7 @@ function tool(name: string, result: ClassificationResult | null): InventoryTool 
     createdAt: '2026-10-01T09:00:00+00:00',
     result,
     hasUnreadableResult: false,
+    runNo: 1,
   }
 }
 

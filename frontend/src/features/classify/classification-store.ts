@@ -4,6 +4,7 @@ import { queryOptions, type QueryClient } from '@tanstack/react-query'
 import type { ClassificationResult } from '@/api'
 import { withAnonymousSession } from '@/hooks/use-anonymous-session'
 import { fetchInventoryTool, type InventoryTool } from '@/lib/inventory'
+import { fetchLatestRuns, type Answers, type ToolRun } from '@/lib/tool-runs'
 
 import type { DescriptionFormValues } from './description-form'
 
@@ -19,6 +20,18 @@ export type ClassificationRun = {
   /** Read back from the user's data rather than just run: the browser wrote it (P3), so the
    *  screens say Klar doesn't re-check it and show the app's own notice, not the stored one. */
   isStored?: boolean
+  /** The run's number on its tool; 1 when unknown (a first run, or one never saved). */
+  runNo?: number
+  /** The follow-up answers the run used (P5b), appended to `description` when it ran. */
+  answers?: Answers
+  /** The run before this one, when an answer made this one: what it changed, and what Undo
+   *  answer restores (with whether it was saved). */
+  previous?: ToolRun & { saveFailure?: ClassificationRun['saveFailure'] }
+}
+
+/** A run's number on its tool. */
+export function runNumber(run: ClassificationRun): number {
+  return run.runNo ?? 1
 }
 
 /** What a tool's result page shows: its latest run, the tool without a result (never checked,
@@ -36,7 +49,24 @@ export function toolResultKey(toolId: string) {
   return [...classificationRunKey, toolId] as const
 }
 
-function toToolResult(tool: InventoryTool | null): ToolResult {
+/** The answers the latest run used and the run before it, read only once a tool has a second
+ *  run: a first run has neither. The run before counts only when an answer made the latest one
+ *  (a run of an edited description starts afresh). A run read here that isn't the inventory's
+ *  latest (written in between) is left out. */
+async function followUpOf(
+  client: SupabaseClient,
+  tool: InventoryTool,
+): Promise<Pick<ClassificationRun, 'answers' | 'previous'>> {
+  if (tool.runNo === null || tool.runNo < 2) return {}
+  const [latest, previous] = await fetchLatestRuns(client, tool.toolId)
+  if (latest?.runNo !== tool.runNo || Object.keys(latest.answers).length === 0) return {}
+  return { answers: latest.answers, previous: previous ?? undefined }
+}
+
+async function toToolResult(
+  client: SupabaseClient,
+  tool: InventoryTool | null,
+): Promise<ToolResult> {
   if (!tool) return { kind: 'missing' }
   if (tool.hasUnreadableResult) return { kind: 'unreadable', tool }
   if (!tool.result) return { kind: 'no-result', tool }
@@ -48,6 +78,8 @@ function toToolResult(tool: InventoryTool | null): ToolResult {
       description: tool.description,
       result: tool.result,
       isStored: true,
+      runNo: tool.runNo ?? undefined,
+      ...(await followUpOf(client, tool)),
     },
   }
 }
@@ -67,7 +99,7 @@ export function toolResultOptions(
     queryFn: async (): Promise<ToolResult> => {
       if (!client) return { kind: 'missing' }
       const sessionClient = await withAnonymousSession(queryClient, client)
-      return toToolResult(await fetchInventoryTool(sessionClient, toolId))
+      return toToolResult(sessionClient, await fetchInventoryTool(sessionClient, toolId))
     },
     // A run stays as it was read or made (a fresh one keeps saying whether it was saved). A tool
     // without one is read again on each visit, so an import or a run since then shows.

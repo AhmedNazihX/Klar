@@ -10,14 +10,16 @@ import { heldSessionId } from './use-anonymous-session'
 import { ClassifyRunError, useClassify, type ClassifyFailure } from './use-classify'
 import { useLanguage } from './use-language'
 
-/** The original-text run of `run`'s description, under the runs' key (a sign-out forgets it with
- *  them). Keyed by what was checked and on which date, so a later run of the tool gets its own. */
+/** The original-text run of `run`'s description and answers, under the runs' key (a sign-out
+ *  forgets it with them). Keyed by what was checked and on which date, so a later run of the tool
+ *  (another answer included) gets its own. */
 export function originalRunKey(run: ClassificationRun) {
   return [
     ...classificationRunKey,
     run.toolId,
     'original',
     run.description,
+    run.answers ?? {},
     run.result.as_of,
   ] as const
 }
@@ -59,6 +61,8 @@ export function useOriginalRun(run: ClassificationRun): OriginalRun {
     classify.mutate(
       {
         description: run.description,
+        // The follow-up answers the tool's run used, so both texts read the same facts (P5b).
+        ...(run.answers && { answers: run.answers }),
         language,
         law_version: 'original',
         as_of: run.result.as_of,

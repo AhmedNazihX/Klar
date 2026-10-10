@@ -126,7 +126,7 @@ function RefusedAlert({
   onSaveForLater,
 }: {
   failure: Extract<ClassifyFailure, { kind: 'provider_refused' }>
-  onSaveForLater: () => void
+  onSaveForLater?: () => void
 }): JSX.Element {
   const { t } = useTranslation()
   return (
@@ -145,11 +145,13 @@ function RefusedAlert({
         </p>
       ))}
       <p className="m-0 text-caption font-normal text-ink-2">{t('progress.refused.body')}</p>
-      <div className="flex flex-wrap gap-2.5">
-        <Button size="sm" variant="ghost" onClick={onSaveForLater}>
-          {t('progress.stopped.saveForLater')}
-        </Button>
-      </div>
+      {onSaveForLater && (
+        <div className="flex flex-wrap gap-2.5">
+          <Button size="sm" variant="ghost" onClick={onSaveForLater}>
+            {t('progress.stopped.saveForLater')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -159,7 +161,8 @@ export type ProgressPanelProps = {
   isRunning: boolean
   failure: ClassifyFailure | null
   onTryAgain: () => void
-  onSaveForLater: () => void
+  /** Omitted on a result's re-run, where the result stays and nothing waits to be saved. */
+  onSaveForLater?: () => void
 }
 
 /**
@@ -215,9 +218,11 @@ export function ProgressPanel({
             <Button size="sm" onClick={onTryAgain}>
               {t('progress.stopped.tryAgain')}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onSaveForLater}>
-              {t('progress.stopped.saveForLater')}
-            </Button>
+            {onSaveForLater && (
+              <Button size="sm" variant="ghost" onClick={onSaveForLater}>
+                {t('progress.stopped.saveForLater')}
+              </Button>
+            )}
           </div>
         </div>
       )}

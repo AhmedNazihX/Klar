@@ -176,11 +176,15 @@ describe('Result summary', () => {
     },
   )
 
-  it('offers Change on an assumed fact, which reopens the description (Confirm is P5b)', async () => {
+  it('offers Change and Confirm on an assumed fact; Change reopens the description', async () => {
     const user = userEvent.setup()
     const { router } = await openResult(decidedHighRisk())
     const facts = screen.getByRole('complementary', { name: 'The result rests on' })
-    expect(within(facts).queryByRole('button', { name: 'Confirm' })).toBeNull()
+    const assumed = (decidedHighRisk().deciding_facts ?? []).filter((f) => f.evidence === 'assumed')
+    expect(assumed.length).toBeGreaterThan(0)
+    expect(within(facts).getAllByRole('button', { name: 'Confirm' })).toHaveLength(
+      new Set(assumed.map((f) => f.text)).size,
+    )
     await user.click(within(facts).getAllByRole('button', { name: 'Change' })[0] as HTMLElement)
     await expect.poll(() => router.state.location.pathname).toBe('/app/classify')
     expect(await screen.findByLabelText('In your own words')).toHaveValue(

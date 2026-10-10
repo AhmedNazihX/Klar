@@ -6,30 +6,39 @@ import { Button } from '@/components/Button'
 import { buttonVariants } from '@/components/button-variants'
 import { GlassPanel } from '@/components/GlassPanel'
 import { ScreenTitle } from '@/components/ScreenTitle'
+import { useFollowUpAnswers } from '@/hooks/use-follow-up-answers'
+import { useFollowUpRun, type FollowUpRun } from '@/hooks/use-follow-up-run'
 import { useOriginalRun } from '@/hooks/use-original-run'
 
-import { saveDraft, type ClassificationRun } from './classification-store'
+import { runNumber, saveDraft, type ClassificationRun } from './classification-store'
 import { DecidingQuestion } from './DecidingQuestion'
 import { DutiesPanel, OutOfScopePanel } from './DutiesPanel'
 import { ExportReportButton } from './ExportReportButton'
 import { FactsPanel } from './FactsPanel'
+import { withAnswers } from './follow-up-answers'
+import { FollowUpQuestions } from './FollowUpQuestions'
 import { OriginalTextNote } from './OriginalTextNote'
+import { ProgressPanel } from './ProgressPanel'
+import { RerunChange } from './RerunChange'
 import { DraftDocumentsLink, ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
 import { ResultVerdict } from './ResultVerdict'
-import { pausedStep } from './result-text'
 import { ReviewerView } from './ReviewerView'
 import { StepsPanel } from './StepsPanel'
 
-/** The summary (artboards `Result`, `ResultNeedsInfo`): the class and role, the question that
- *  decides an assumed result, what to do beside the facts it rests on, how Klar got there with
- *  every step collapsed, and the result's notice. */
+/** The summary (artboards `Result`, `ResultNeedsInfo`, `ResultRerun`): what the last answer
+ *  changed, the class and role, the question that decides an assumed result and the other facts
+ *  to confirm (answering runs the checks again, P5b), what to do beside the facts it rests on,
+ *  how Klar got there with every step collapsed, and the result's notice. */
 function SummaryView({
   run,
+  followUp,
   onViewChange,
   onCompare,
 }: {
   run: ClassificationRun
+  /** The re-run with the answers given here. */
+  followUp: FollowUpRun
   onViewChange: (view: ResultView) => void
   /** Opens "Original Act vs amended" in the reviewer view. */
   onCompare: () => void
@@ -37,10 +46,16 @@ function SummaryView({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { result } = run
-  const question = result.status === 'needs_more_information' ? pausedStep(result) : null
+  const { deciding, others, answerProps, confirm, tryAgain } = useFollowUpAnswers(run, followUp)
+  const isRerunShown = followUp.isRunning || followUp.failure !== null
 
   function editDescription(): void {
-    saveDraft({ name: run.name ?? '', description: run.description })
+    // The answers go into the text, and the run onto this tool (P6), unless it was never saved.
+    const tool = run.saveFailure ? null : { toolId: run.toolId, name: run.name }
+    saveDraft(
+      { name: run.name ?? '', description: withAnswers(run.description, run.answers) },
+      tool,
+    )
     void navigate({ to: '/app/classify' })
   }
 
@@ -60,19 +75,42 @@ function SummaryView({
           </>
         }
       />
+      {run.previous && (
+        <RerunChange
+          run={{ ...run, previous: run.previous }}
+          onUndo={followUp.undo}
+          isUndoing={followUp.isUndoing || followUp.isRunning}
+          hasUndoFailed={followUp.hasUndoFailed}
+        />
+      )}
       <ResultVerdict result={result} today={new Date()} />
       <OriginalTextNote run={run} onCompare={onCompare} />
-      {question && <DecidingQuestion question={question.missing_fact} />}
+      {deciding && <DecidingQuestion question={deciding} {...answerProps} />}
+      {others.length > 0 && <FollowUpQuestions questions={others} {...answerProps} />}
+      {isRerunShown && (
+        <ProgressPanel
+          progress={followUp.progress}
+          isRunning={followUp.isRunning}
+          failure={followUp.failure}
+          onTryAgain={tryAgain}
+        />
+      )}
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         {result.risk_class === 'out_of_scope' ? (
           <OutOfScopePanel result={result} />
         ) : (
           <DutiesPanel result={result} toolId={run.toolId} />
         )}
-        <FactsPanel result={result} onChange={editDescription} />
+        <FactsPanel
+          result={result}
+          onChange={editDescription}
+          onConfirm={confirm}
+          isBusy={followUp.isRunning}
+        />
       </div>
       <StepsPanel
         result={result}
+        previous={run.previous?.result}
         onExpandAll={() => {
           onViewChange('reviewer')
         }}
@@ -116,9 +154,9 @@ export function ResultNotFound(): JSX.Element {
   )
 }
 
-/** One tool's result, as the summary or the reviewer view. The original-text run lives here, above
- *  the view switch, so a run started in the reviewer view goes on (and keeps its answer) while the
- *  user reads the summary. */
+/** One tool's result, as the summary or the reviewer view. The original-text run and an answer's
+ *  re-run live here, above the view switch, so a run started in one view goes on (and keeps its
+ *  answer) while the user reads the other. */
 export function ResultScreen({
   run,
   view,
@@ -129,6 +167,7 @@ export function ResultScreen({
   onViewChange: (view: ResultView) => void
 }): JSX.Element {
   const original = useOriginalRun(run)
+  const followUp = useFollowUpRun(run)
   // Set only by the summary's "Compare the two texts", so the comparison then takes the focus.
   const [shouldFocusComparison, setShouldFocusComparison] = useState(false)
 
@@ -156,8 +195,11 @@ export function ResultScreen({
           onViewChange={changeView}
         />
       ) : (
+        // Keyed by the run, so answers given on one run don't carry over to the next.
         <SummaryView
+          key={runNumber(run)}
           run={run}
+          followUp={followUp}
           onViewChange={changeView}
           onCompare={() => {
             setShouldFocusComparison(true)

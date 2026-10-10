@@ -37,6 +37,7 @@ function tool(
     createdAt: '2026-10-01T09:00:00+00:00',
     result,
     hasUnreadableResult,
+    runNo: result || hasUnreadableResult ? 1 : null,
   }
 }
 

@@ -5,25 +5,28 @@ import type { ClassificationResult } from '@/api'
 import { FactCard } from '@/components/FactCard'
 import { GlassPanel } from '@/components/GlassPanel'
 
-import { uniqueFacts } from './result-text'
+import { restingFacts } from './result-text'
 
 /**
  * "The result rests on": the deciding facts, each with its evidence tag. Change reopens the
- * description. Confirm on an assumed fact comes with the follow-up loop (P5b), which sends the
- * answer back to the engine: marking it here alone would leave the steps and the class as they
- * were.
+ * description. Confirm on an assumed fact sends it back to the engine as the user's statement
+ * and runs the checks again (the follow-up loop, P5b): marking it here alone would leave the
+ * steps and the class as they were.
  */
 export function FactsPanel({
   result,
   onChange,
+  onConfirm,
+  isBusy,
 }: {
   result: ClassificationResult
   onChange: () => void
+  onConfirm: (fact: string) => void
+  isBusy: boolean
 }): JSX.Element {
   const { t } = useTranslation()
   const headingId = useId()
-  const deciding = result.deciding_facts ?? []
-  const facts = uniqueFacts(deciding.length > 0 ? deciding : result.facts)
+  const facts = restingFacts(result)
   return (
     <GlassPanel
       as="aside"
@@ -38,7 +41,16 @@ export function FactsPanel({
       </div>
       <div className="flex flex-col gap-2.5">
         {facts.map((fact) => (
-          <FactCard key={fact.text} fact={fact.text} evidence={fact.evidence} onChange={onChange} />
+          <FactCard
+            key={fact.text}
+            fact={fact.text}
+            evidence={fact.evidence}
+            onChange={onChange}
+            onConfirm={() => {
+              onConfirm(fact.text)
+            }}
+            isBusy={isBusy}
+          />
         ))}
       </div>
       <p className="m-0 mt-auto text-caption font-normal text-slate">

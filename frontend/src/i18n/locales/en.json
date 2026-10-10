@@ -646,6 +646,7 @@
       "heading": "The result rests on",
       "intro": "If any of these is wrong, the class may change.",
       "change": "Change",
+      "confirm": "Confirm",
       "accuracy": "This assessment is only as accurate as the description provided."
     },
     "steps": {
@@ -916,5 +917,48 @@
       "title": "No duties yet",
       "body": "Classify a tool to see what it asks of you."
     }
+  },
+  "followUp": {
+    "heading_one": "Please confirm {{count}} fact",
+    "heading_other": "Please confirm {{count}} facts",
+    "intro": "Klar assumed these. They can change the result.",
+    "option": {
+      "yes": "Yes",
+      "no": "No",
+      "not_sure": "Not sure"
+    },
+    "fromProfile": "Filled in from your company profile. Please check it before you run the checks again.",
+    "runAgain_one": "Add answer and run again",
+    "runAgain_other": "Add answers and run again",
+    "answerLine": "{{question}} {{answer}}.",
+    "confirmedLine": "Confirmed: {{fact}}",
+    "vendor": {
+      "lead": "Not sure? Ask your vendor:",
+      "quoted": "“{{question}}”",
+      "copy": "Copy question",
+      "copied": "Question copied.",
+      "copyFailed": "Copying didn't work here. Select the question above to copy it."
+    },
+    "banner": {
+      "changed": "Your answer changed the result.",
+      "unchanged": "Your answer didn't change the class.",
+      "body": "Klar ran every check again with your answer added to the description.",
+      "youSaid": "You said: “{{answer}}”",
+      "run": "Run {{number}} of {{total}}",
+      "undo": "Undo answer",
+      "undoFailed": "Klar couldn't undo your answer. Please try again.",
+      "changeLabel": "changed to"
+    },
+    "lists": {
+      "heading": "What changed in your lists",
+      "needs": "Needs you",
+      "duties_one": "{{count}} duty",
+      "duties_other": "{{count}} duties",
+      "possibleDuties_one": "{{count}} possible duty",
+      "possibleDuties_other": "{{count}} possible duties",
+      "noDuties": "No specific duties",
+      "nothing": "Nothing to do"
+    },
+    "changed": "Changed: {{decision}}"
   }
 }

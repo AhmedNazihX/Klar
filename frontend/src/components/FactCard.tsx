@@ -10,14 +10,23 @@ import type { Evidence } from './pill-kinds'
 export type FactCardProps = {
   fact: ReactNode
   evidence: Evidence
-  /** Assumed facts offer Change; the consumer handles it. Confirm comes with the follow-up
-   *  loop (P5b). */
+  /** Assumed facts offer Change and Confirm; the consumer handles them (confirming reruns the
+   *  checks with the fact stated, P5b). */
   onChange?: () => void
+  onConfirm?: () => void
+  /** While a re-run is on its way, Confirm can't start another. */
+  isBusy?: boolean
 }
 
 /** One fact a result rests on, with its evidence tag. Assumed cards get a Lens blue ring so they
- *  are found first, and Change. */
-export function FactCard({ fact, evidence, onChange }: FactCardProps): JSX.Element {
+ *  are found first, and Change and Confirm. */
+export function FactCard({
+  fact,
+  evidence,
+  onChange,
+  onConfirm,
+  isBusy = false,
+}: FactCardProps): JSX.Element {
   const { t } = useTranslation()
   const isAssumed = evidence === 'assumed'
   return (
@@ -30,10 +39,19 @@ export function FactCard({ fact, evidence, onChange }: FactCardProps): JSX.Eleme
       <span className="text-body-small font-medium text-ink">{fact}</span>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <EvidenceTag kind={evidence} />
-        {isAssumed && onChange && (
-          <Button variant="ghost" size="sm" className="shrink-0" onClick={onChange}>
-            {t('result.facts.change')}
-          </Button>
+        {isAssumed && (onChange || onConfirm) && (
+          <span className="flex shrink-0 gap-2">
+            {onChange && (
+              <Button variant="ghost" size="sm" onClick={onChange}>
+                {t('result.facts.change')}
+              </Button>
+            )}
+            {onConfirm && (
+              <Button variant="ghost" size="sm" onClick={onConfirm} disabled={isBusy}>
+                {t('result.facts.confirm')}
+              </Button>
+            )}
+          </span>
         )}
       </div>
     </div>

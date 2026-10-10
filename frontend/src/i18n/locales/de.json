@@ -646,6 +646,7 @@
       "heading": "Das Ergebnis beruht auf",
       "intro": "Ist eine dieser Angaben falsch, kann sich die Einstufung ändern.",
       "change": "Ändern",
+      "confirm": "Bestätigen",
       "accuracy": "Diese Einschätzung ist nur so genau wie die Beschreibung."
     },
     "steps": {
@@ -916,5 +917,48 @@
       "title": "Noch keine Pflichten",
       "body": "Stufen Sie ein Tool ein, um zu sehen, was es von Ihnen verlangt."
     }
+  },
+  "followUp": {
+    "heading_one": "Bitte bestätigen Sie {{count}} Angabe",
+    "heading_other": "Bitte bestätigen Sie {{count}} Angaben",
+    "intro": "Klar hat diese angenommen. Sie können das Ergebnis ändern.",
+    "option": {
+      "yes": "Ja",
+      "no": "Nein",
+      "not_sure": "Nicht sicher"
+    },
+    "fromProfile": "Aus Ihrem Unternehmensprofil übernommen. Bitte prüfen Sie es, bevor Sie die Prüfungen erneut starten.",
+    "runAgain_one": "Antwort hinzufügen und erneut prüfen",
+    "runAgain_other": "Antworten hinzufügen und erneut prüfen",
+    "answerLine": "{{question}} {{answer}}.",
+    "confirmedLine": "Bestätigt: {{fact}}",
+    "vendor": {
+      "lead": "Nicht sicher? Fragen Sie Ihren Anbieter:",
+      "quoted": "„{{question}}“",
+      "copy": "Frage kopieren",
+      "copied": "Frage kopiert.",
+      "copyFailed": "Kopieren hat hier nicht funktioniert. Markieren Sie die Frage oben, um sie zu kopieren."
+    },
+    "banner": {
+      "changed": "Ihre Antwort hat das Ergebnis geändert.",
+      "unchanged": "Ihre Antwort hat die Einstufung nicht geändert.",
+      "body": "Klar hat alle Prüfungen erneut durchgeführt, mit Ihrer Antwort als Teil der Beschreibung.",
+      "youSaid": "Sie haben angegeben: „{{answer}}“",
+      "run": "Durchlauf {{number}} von {{total}}",
+      "undo": "Antwort rückgängig machen",
+      "undoFailed": "Klar konnte Ihre Antwort nicht rückgängig machen. Bitte versuchen Sie es erneut.",
+      "changeLabel": "geändert zu"
+    },
+    "lists": {
+      "heading": "Was sich in Ihren Listen geändert hat",
+      "needs": "Braucht Sie",
+      "duties_one": "{{count}} Pflicht",
+      "duties_other": "{{count}} Pflichten",
+      "possibleDuties_one": "{{count}} mögliche Pflicht",
+      "possibleDuties_other": "{{count}} mögliche Pflichten",
+      "noDuties": "Keine besonderen Pflichten",
+      "nothing": "Nichts zu tun"
+    },
+    "changed": "Geändert: {{decision}}"
   }
 }
