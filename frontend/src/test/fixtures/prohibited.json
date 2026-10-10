@@ -96,14 +96,14 @@
             "key": "tool",
             "heading": "The tool",
             "provenance": "interview",
-            "paragraphs": [],
+            "paragraphs": [
+              "Call mood scoring"
+            ],
             "question_keys": [
               "tool_name"
             ],
-            "unanswered": [
-              "tool_name"
-            ],
-            "status": "questions",
+            "unanswered": [],
+            "status": "drafted",
             "requirement": null,
             "quotes": []
           },
@@ -186,7 +186,7 @@
             "quotes": []
           }
         ],
-        "unanswered": 3,
+        "unanswered": 2,
         "status": "needs_answers",
         "law_version": "amended",
         "as_of": "2026-09-30",
@@ -238,14 +238,14 @@
             "key": "tool",
             "heading": "Das Tool",
             "provenance": "interview",
-            "paragraphs": [],
+            "paragraphs": [
+              "Call mood scoring"
+            ],
             "question_keys": [
               "tool_name"
             ],
-            "unanswered": [
-              "tool_name"
-            ],
-            "status": "questions",
+            "unanswered": [],
+            "status": "drafted",
             "requirement": null,
             "quotes": []
           },
@@ -328,7 +328,7 @@
             "quotes": []
           }
         ],
-        "unanswered": 3,
+        "unanswered": 2,
         "status": "needs_answers",
         "law_version": "amended",
         "as_of": "2026-09-30",

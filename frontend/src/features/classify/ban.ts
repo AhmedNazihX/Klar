@@ -8,7 +8,7 @@ const ART_5_POINT = /^art:5:1:[a-z]+$/
 
 /** Art. 113(a): Art. 5 applies from 2 February 2025, the same under both texts, so the date is
  *  plain text, never a LawDate (components.md › LawDate). */
-export const PROHIBITIONS_APPLY_FROM = '2025-02-02'
+const PROHIBITIONS_APPLY_FROM = '2025-02-02'
 
 /** The points the Omnibus added, which apply only from 2 December 2026 (Art. 113(a) as amended).
  *  The original text has no such points, so their date doesn't move between the texts either. */
@@ -31,15 +31,27 @@ export function banStep(result: ClassificationResult): StepResult | undefined {
   return result.steps.find((step) => step.step === 'prohibited')
 }
 
-/** The Art. 5(1) points the ban rests on, each once, in the order the step cites them. */
-export function banPoints(result: ClassificationResult): string[] {
-  const ids = (banStep(result)?.citations ?? []).map((citation) => citation.provision_id)
-  return [...new Set(ids.filter((id) => ART_5_POINT.test(id)))]
+/** The day an Art. 5(1) point starts to apply (Art. 113(a)). */
+function appliesFrom(point: string): string {
+  return LATER_POINTS[point] ?? PROHIBITIONS_APPLY_FROM
 }
 
-/** The date the tool has been banned since: the earliest start among its points, as any one of
- *  them bans it; Art. 5's own date when the step names no point. */
+/** The Art. 5(1) points the ban rests on: those the step cites that apply on the result's date,
+ *  each once, in the order cited. The engine also cites a point that applies only later (the
+ *  Omnibus's (ba) and (bb) before 2 December 2026); it doesn't decide the ban, and the corpus has
+ *  no text of it at that date. The vendor letter reads the points the same way (backend
+ *  `vendor_letters.fills.deciding_points`), so the verdict, "Why the checks stopped" and the
+ *  letter name the same points. ISO dates compare as strings. */
+export function banPoints(result: ClassificationResult): string[] {
+  const ids = (banStep(result)?.citations ?? []).map((citation) => citation.provision_id)
+  const points = ids.filter((id) => ART_5_POINT.test(id) && appliesFrom(id) <= result.as_of)
+  return [...new Set(points)]
+}
+
+/** The date the tool has been banned since: the earliest start among the points it rests on
+ *  (`banPoints`, all in force), as any one of them bans it; Art. 5's own date when the step
+ *  names no point. */
 export function bannedSince(points: readonly string[]): string {
-  const starts = points.map((point) => LATER_POINTS[point] ?? PROHIBITIONS_APPLY_FROM).sort()
+  const starts = points.map(appliesFrom).sort()
   return starts[0] ?? PROHIBITIONS_APPLY_FROM
 }

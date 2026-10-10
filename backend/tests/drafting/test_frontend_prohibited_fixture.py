@@ -2,10 +2,10 @@
 
 `frontend/src/test/fixtures/prohibited.json` holds what the prohibited result screen reads: the
 recorded prohibited result (`recorded_prohibited_result`, own-c-08 decided under Art. 5(1)(f)),
-the vendor message `POST /documents/vendor-letter` drafts from it in English and German, and the
-`GET /provisions/{id}` answers for the deciding point and Art. 99(3) and 99(6) in both languages,
-at the result's law version and date. Replay only: no model, database or network (the corpus is
-the one built from `data/parsed/`).
+the vendor message `POST /documents/vendor-letter` drafts from it in English and German with the
+tool's name the screen sends (`TOOL_ANSWERS`), and the `GET /provisions/{id}` answers for the
+deciding point and Art. 99(3) and 99(6) in both languages, at the result's law version and date.
+Replay only: no model, database or network (the corpus is the one built from `data/parsed/`).
 
 When the engine, the drafter or the corpus changes on purpose, rewrite the fixture with
 `AIACT_WRITE_FRONTEND_FIXTURES=1 uv run pytest tests/drafting/test_frontend_prohibited_fixture.py`
@@ -40,6 +40,9 @@ FIXTURE = (
 WRITE_FLAG = "AIACT_WRITE_FRONTEND_FIXTURES"
 PROVISIONS = ("art:5:1:f", "art:99:3", "art:99:6")
 """The deciding point and the two paragraphs the fine tile quotes."""
+TOOL_ANSWERS = {"tool_name": "Call mood scoring"}
+"""What the screen answers for the letter: the tool's name in the frontend tests' inventory
+(`ResultScreen.prohibited.test.tsx`). The recipient and the sender stay to fill in."""
 
 
 @pytest.fixture
@@ -75,11 +78,11 @@ def _provisions(result: ClassificationResult) -> dict[str, dict[str, object]]:
 
 
 def _letters(result: ClassificationResult) -> dict[str, object]:
-    """The vendor message as the route answers it, with no answers given, by language."""
+    """The vendor message as the route answers it, given the tool's name, by language."""
     letters: dict[str, object] = {}
     for language in Language:
-        document = letter(result, {}, language)
-        checks = letter_checks(document, result, {})
+        document = letter(result, TOOL_ANSWERS, language)
+        checks = letter_checks(document, result, TOOL_ANSWERS)
         letters[language.value] = VendorLetter(document=document, checks=checks).model_dump(
             mode="json"
         )

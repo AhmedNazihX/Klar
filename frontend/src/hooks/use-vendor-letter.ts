@@ -10,21 +10,29 @@ export class VendorLetterError extends Error {
   }
 }
 
+/** The answers the letter can take without an interview: the tool's name, when the user gave it
+ *  one (`tool_name`, P28's question key). The recipient and the sender stay "To fill in". */
+export function letterAnswers(toolName: string | null): Record<string, string> {
+  const name = toolName?.trim()
+  return name ? { tool_name: name } : {}
+}
+
 /** The vendor letter the result calls for (`POST /documents/vendor-letter`, P28), drafted by the
- *  API in `language` with its automatic checks; no model is involved. The recipient, the tool's
- *  name and the sender stay "To fill in". The letter lives only while it is on show (no cache
- *  after it closes), so a later run of the tool never opens an older letter. */
+ *  API in `language` with its automatic checks; no model is involved. The key holds the result
+ *  itself (TanStack Query hashes it, keys sorted), so a later run of the tool, even one on the
+ *  same day, asks for its own letter and never gets an older one, however long a letter stays
+ *  cached. Nothing is kept once the dialog closes. */
 export function vendorLetterOptions(
   toolId: string,
+  toolName: string | null,
   result: ClassificationResult,
   language: Language,
 ) {
+  const answers = letterAnswers(toolName)
   return queryOptions({
-    queryKey: ['vendor-letter', toolId, language] as const,
+    queryKey: ['vendor-letter', toolId, language, answers, result] as const,
     queryFn: async (): Promise<VendorLetter> => {
-      const { data, response } = await draftVendorLetter({
-        body: { result, language, answers: {} },
-      })
+      const { data, response } = await draftVendorLetter({ body: { result, language, answers } })
       if (!response?.ok || !data) throw new VendorLetterError(response?.status ?? null)
       return data
     },
@@ -36,8 +44,9 @@ export function vendorLetterOptions(
 
 export function useVendorLetter(
   toolId: string,
+  toolName: string | null,
   result: ClassificationResult,
   language: Language,
 ): UseQueryResult<VendorLetter> {
-  return useQuery(vendorLetterOptions(toolId, result, language))
+  return useQuery(vendorLetterOptions(toolId, toolName, result, language))
 }

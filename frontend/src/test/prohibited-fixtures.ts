@@ -5,7 +5,8 @@
 // how to rewrite it): the recorded prohibited result (own-c-08, a call centre's software reading
 // its staff's moods from their voices, decided under Art. 5(1)(f); a German description, so its
 // facts and decision are German), the vendor message `POST /documents/vendor-letter` drafts
-// from it in English and German, and the `GET /provisions/{id}` answers for Art. 5(1)(f),
+// from it in English and German with the tool's name "Call mood scoring" (the screen's answer to
+// "The tool"), and the `GET /provisions/{id}` answers for Art. 5(1)(f),
 // Art. 99(3) and Art. 99(6) in both languages at the result's law version and date. The
 // handlers below serve them and keep what was asked.
 import { http, HttpResponse, type HttpHandler } from 'msw'

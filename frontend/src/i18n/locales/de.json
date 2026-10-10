@@ -757,7 +757,7 @@
       "heading": "Was jetzt zu tun ist",
       "intro": "Es gibt keinen Weg zur Konformität: Dokumentation oder Aufsicht machen eine verbotene Praktik nicht zulässig.",
       "stop": "Verwenden oder liefern Sie es in der EU nicht mehr.",
-      "tellVendor": "Sagen Sie dem Anbieter, dass Sie es nicht mehr verwenden, und warum.",
+      "askVendor": "Bitten Sie den Anbieter, das Ergebnis zu bestätigen und es Ihnen nicht weiter bereitzustellen.",
       "draftMessage": "Nachricht entwerfen",
       "data": "Holen Sie rechtlichen Rat ein, was mit den bereits erhobenen Daten geschehen soll."
     },
@@ -780,6 +780,10 @@
       "drafting": "Die Nachricht wird entworfen …",
       "failed": "Klar konnte die Nachricht nicht entwerfen.",
       "tryAgain": "Erneut versuchen",
+      "copy": "Nachricht kopieren",
+      "copied": "Kopiert. Fügen Sie sie in Ihre E-Mail ein.",
+      "copyFailed": "Klar konnte die Nachricht nicht kopieren. Markieren und kopieren Sie sie selbst.",
+      "copyQuote": "„{{quote}}“ ({{source}})",
       "close": "Schließen"
     }
   },

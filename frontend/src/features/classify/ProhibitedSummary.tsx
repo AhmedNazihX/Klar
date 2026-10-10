@@ -34,7 +34,7 @@ export function ProhibitedSummary({
       {note}
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <WhatToDoNow toolId={run.toolId} result={result} />
+          <WhatToDoNow toolId={run.toolId} toolName={run.name} result={result} />
           <FineTile result={result} />
           <WhyChecksStopped result={result} />
         </div>

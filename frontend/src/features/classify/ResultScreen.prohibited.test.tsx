@@ -4,7 +4,7 @@ import i18n from 'i18next'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
-import type { ClassificationResult } from '@/api'
+import type { Citation, ClassificationResult } from '@/api'
 import type { Language } from '@/i18n'
 import { server } from '@/test/msw-server'
 import {
@@ -31,7 +31,7 @@ const COPY = {
     now: 'What to do now',
     steps: [
       'Stop using or supplying it in the EU.',
-      'Tell the vendor you’ve stopped, and why.',
+      'Ask the vendor to confirm the finding and stop supplying it to you.',
       'Get legal advice on the data it has already collected and what to do with it.',
     ],
     noRoute:
@@ -52,8 +52,17 @@ const COPY = {
     stepsHeading: 'How Klar got here',
     highRisk: '3 High-risk',
     transparency: '4 Transparency',
+    dutiesRow: 'Duties',
+    draftLabel: 'DRAFT',
     notChecked: 'Not checked: a ban ends the checks',
     duties: 'What you need to do',
+    draftDocuments: 'Draft documents',
+    exportPdf: 'Export PDF',
+    copy: 'Copy message',
+    copied: 'Copied. Paste it into your email.',
+    copyFailed: 'Klar couldn’t copy the message. Select it and copy it yourself.',
+    copiedQuote: (quote: string) => `“${quote}” (Art. 5(1)(f), English)`,
+    preparedWith: 'Draft prepared with Klar.',
     letter: 'Draft message to the vendor',
     letterIntro:
       'Check the message, fill in the parts marked below, then send it from your own email.',
@@ -71,7 +80,7 @@ const COPY = {
     now: 'Was jetzt zu tun ist',
     steps: [
       'Verwenden oder liefern Sie es in der EU nicht mehr.',
-      'Sagen Sie dem Anbieter, dass Sie es nicht mehr verwenden, und warum.',
+      'Bitten Sie den Anbieter, das Ergebnis zu bestätigen und es Ihnen nicht weiter bereitzustellen.',
       'Holen Sie rechtlichen Rat ein, was mit den bereits erhobenen Daten geschehen soll.',
     ],
     noRoute:
@@ -98,8 +107,17 @@ const COPY = {
     stepsHeading: 'Wie Klar zum Ergebnis kam',
     highRisk: '3 Hochrisiko',
     transparency: '4 Transparenz',
+    dutiesRow: 'Pflichten',
+    draftLabel: 'ENTWURF',
     notChecked: 'Nicht geprüft: Ein Verbot beendet die Prüfung',
     duties: 'Was Sie tun müssen',
+    draftDocuments: 'Dokumente entwerfen',
+    exportPdf: 'PDF exportieren',
+    copy: 'Nachricht kopieren',
+    copied: 'Kopiert. Fügen Sie sie in Ihre E-Mail ein.',
+    copyFailed: 'Klar konnte die Nachricht nicht kopieren. Markieren und kopieren Sie sie selbst.',
+    copiedQuote: (quote: string) => `„${quote}“ (Art. 5 Abs. 1 Buchst. f, Deutsch)`,
+    preparedWith: 'Entwurf erstellt mit Klar.',
     letter: 'Entwurf einer Nachricht an den Anbieter',
     letterIntro:
       'Prüfen Sie die Nachricht, ergänzen Sie die markierten Teile und senden Sie sie dann aus Ihrem eigenen E-Mail-Postfach.',
@@ -138,6 +156,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+  // The clipboard spies: user-event keeps one clipboard stub across tests.
+  vi.restoreAllMocks()
 })
 
 async function openProhibited(
@@ -161,6 +181,25 @@ function textOf(provisionId: string, language: Language): string {
   const text = PROVISIONS[provisionId]?.[language].text
   if (!text) throw new Error(`The fixture has no ${language} text of ${provisionId}.`)
   return text
+}
+
+function summaryRegion(): HTMLElement {
+  return screen.getByRole('region', { name: i18n.language === 'de' ? 'Ergebnis' : 'Result' })
+}
+
+/** `result` with `ids` cited on its Art. 5 step after the ones it has. */
+function withBanCitations(result: ClassificationResult, ids: string[]): ClassificationResult {
+  return {
+    ...result,
+    steps: result.steps.map((step) => {
+      if (step.step !== 'prohibited') return step
+      const citations: Citation[] = step.citations ?? []
+      const [first] = citations
+      if (!first) throw new Error('The recorded Art. 5 step cites nothing.')
+      const added = ids.map((provisionId): Citation => ({ ...first, provision_id: provisionId }))
+      return { ...step, citations: [...citations, ...added] }
+    }),
+  }
 }
 
 function stepRow(name: string): HTMLElement {
@@ -206,7 +245,51 @@ describe.each(['en', 'de'] as const)('A recorded prohibited result (%s)', (langu
 
     expect(stepRow(copy.highRisk)).toHaveTextContent(copy.notChecked)
     expect(stepRow(copy.transparency)).toHaveTextContent(copy.notChecked)
+    expect(stepRow(copy.dutiesRow)).toHaveTextContent(copy.notChecked)
     expect(screen.queryByRole('region', { name: copy.duties })).not.toBeInTheDocument()
+  })
+
+  it('offers no documents to draft, only the PDF export', async () => {
+    await openProhibited(language)
+    expect(screen.queryByRole('link', { name: copy.draftDocuments })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: copy.exportPdf })).toBeInTheDocument()
+  })
+
+  it('copies the message as plain text, naming the tool, for the user’s own email', async () => {
+    const user = userEvent.setup()
+    await openProhibited(language)
+    // userEvent.setup() puts a clipboard stub on the navigator; watch what reaches it.
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText')
+    await user.click(screen.getByRole('button', { name: copy.draft }))
+    const dialog = await screen.findByRole('dialog', { name: copy.letter })
+    await user.click(await within(dialog).findByRole('button', { name: copy.copy }))
+
+    expect(writeText).toHaveBeenCalledTimes(1)
+    const document = VENDOR_LETTERS[language].document
+    const finding = document.sections.find((section) => section.key === 'finding')
+    const quote = finding?.quotes?.[0]?.quote ?? ''
+    const text = writeText.mock.calls[0]?.[0] ?? ''
+    const blocks = text.split('\n\n')
+    expect(blocks[0]).toBe(`${document.title} (${copy.draftLabel})`)
+    expect(blocks).toContain(`${document.sections[0]?.heading ?? ''}\n[${copy.toFillIn}]`)
+    expect(blocks).toContain(`${document.sections[1]?.heading ?? ''}\n${TOOL_NAME}`)
+    expect(blocks).toContain(
+      [finding?.heading, ...(finding?.paragraphs ?? []), copy.copiedQuote(quote)].join('\n'),
+    )
+    expect(text.match(new RegExp(`\\[${copy.toFillIn}\\]`, 'g'))).toHaveLength(2)
+    expect(blocks.at(-1)).toBe(`${copy.preparedWith} ${document.disclaimer}`)
+    expect(await within(dialog).findByText(copy.copied)).toBeInTheDocument()
+  })
+
+  it('says when the browser refuses the clipboard', async () => {
+    const user = userEvent.setup()
+    await openProhibited(language)
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'))
+    await user.click(screen.getByRole('button', { name: copy.draft }))
+    const dialog = await screen.findByRole('dialog', { name: copy.letter })
+    await user.click(await within(dialog).findByRole('button', { name: copy.copy }))
+    expect(await within(dialog).findByText(copy.copyFailed)).toBeInTheDocument()
+    expect(within(dialog).queryByText(copy.copied)).not.toBeInTheDocument()
   })
 
   it('shows the class, where the checks stopped, the date banned since and the legal advice line', async () => {
@@ -250,10 +333,15 @@ describe.each(['en', 'de'] as const)('A recorded prohibited result (%s)', (langu
     expect(quote?.language).toBe(language)
     expect(within(finding).getByRole('blockquote')).toHaveTextContent(quote?.quote ?? '')
     expect(within(dialog).getByText(copy.letterIntro)).toBeInTheDocument()
-    expect(within(dialog).getAllByText(copy.toFillIn)).toHaveLength(3)
+    // The tool's name comes from the inventory; the recipient and the sender stay to fill in.
+    const tool = letter.sections.find((section) => section.key === 'tool')
+    expect(within(dialog).getByRole('region', { name: tool?.heading })).toHaveTextContent(TOOL_NAME)
+    expect(within(dialog).getAllByText(copy.toFillIn)).toHaveLength(2)
     expect(within(dialog).getByText(letter.disclaimer, { exact: false })).toBeInTheDocument()
 
-    expect(traffic.letterBodies).toEqual([{ result: RECORDED_PROHIBITED, language, answers: {} }])
+    expect(traffic.letterBodies).toEqual([
+      { result: RECORDED_PROHIBITED, language, answers: { tool_name: TOOL_NAME } },
+    ])
 
     await user.click(within(dialog).getByRole('button', { name: copy.close }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -314,5 +402,26 @@ describe('The prohibited layout', () => {
     expect(screen.queryByRole('region', { name: 'What to do now' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Draft a message' })).not.toBeInTheDocument()
     expect(traffic.lookups).toEqual([])
+    // Its class isn't settled: plain glass, not the ban's red tint, and its documents stay open.
+    expect(summaryRegion()).not.toHaveAttribute('style')
+    expect(screen.getByRole('link', { name: 'Draft documents' })).toBeInTheDocument()
+  })
+
+  it('tints a decided ban’s summary red', async () => {
+    await openProhibited()
+    expect(summaryRegion().getAttribute('style')).toContain('rgba(255, 226, 226, 0.5)')
+  })
+
+  it('leaves out a cited point that applies only later (Art. 5(1)(ba) before 2 December 2026)', async () => {
+    const result = withBanCitations(RECORDED_PROHIBITED, ['art:5:1:ba'])
+    await openProhibited('en', { result })
+    const why = screen.getByRole('region', { name: 'Why the checks stopped' })
+    expect(await within(why).findByText('Art. 5(1)(f), English')).toBeInTheDocument()
+    expect(within(why).getAllByRole('blockquote')).toHaveLength(1)
+    expect(within(why).queryByText(/5\(1\)\(ba\)/)).not.toBeInTheDocument()
+    expect(within(summaryRegion()).getByText(COPY.en.statement)).toBeInTheDocument()
+    expect(within(summaryRegion()).getByText(COPY.en.sinceDate)).toBeInTheDocument()
+    await screen.findAllByText('Art. 99(6), English')
+    expect(traffic.lookups.map((lookup) => lookup.provisionId)).not.toContain('art:5:1:ba')
   })
 })

@@ -15,8 +15,14 @@ function cite(provisionId: string): Citation {
 }
 
 function citing(...ids: string[]): ClassificationResult {
+  return citingOn(RECORDED_PROHIBITED.as_of, ...ids)
+}
+
+/** The recorded ban, dated `asOf`, its Art. 5 step citing `ids`. */
+function citingOn(asOf: string, ...ids: string[]): ClassificationResult {
   return {
     ...RECORDED_PROHIBITED,
+    as_of: asOf,
     steps: RECORDED_PROHIBITED.steps.map((step) =>
       step.step === 'prohibited' ? { ...step, citations: ids.map(cite) } : step,
     ),
@@ -55,7 +61,31 @@ describe('banPoints', () => {
       'art:99:3',
       'guide:guide-prohibited:para:254',
     ]
-    expect(banPoints(citing(...ids, 'art:5:1:ba'))).toEqual(['art:5:1:ba'])
+    expect(banPoints(citing(...ids, 'art:5:1:f'))).toEqual(['art:5:1:f'])
+  })
+
+  it.each(['art:5:1:ba', 'art:5:1:bb'])(
+    'leaves out %s while it applies only later (the recorded date, 30 September 2026)',
+    (later) => {
+      expect(RECORDED_PROHIBITED.as_of).toBe('2026-09-30')
+      const result = citing('art:5:1:f', later)
+      expect(banPoints(result)).toEqual(['art:5:1:f'])
+      expect(bannedSince(banPoints(result))).toBe('2025-02-02')
+    },
+  )
+
+  it.each([
+    ['2026-12-01', ['art:5:1:f']],
+    ['2026-12-02', ['art:5:1:f', 'art:5:1:ba']],
+    ['2027-03-01', ['art:5:1:f', 'art:5:1:ba']],
+  ])('on %s keeps the points that apply then: %j', (asOf, points) => {
+    expect(banPoints(citingOn(asOf, 'art:5:1:f', 'art:5:1:ba'))).toEqual(points)
+  })
+
+  it('dates a ban that rests on (bb) alone from 2 December 2026, once it applies', () => {
+    const result = citingOn('2026-12-05', 'art:5:1:bb')
+    expect(banPoints(result)).toEqual(['art:5:1:bb'])
+    expect(bannedSince(banPoints(result))).toBe('2026-12-02')
   })
 })
 

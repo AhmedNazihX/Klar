@@ -40,6 +40,7 @@ export function ProhibitedVerdict({
   return (
     <ResultSummary
       riskClass="prohibited"
+      isBan
       status={<StatusPill status="decided" />}
       statement={statement(t, result, language)}
       dutiesFromLabel={t('prohibited.bannedSince')}

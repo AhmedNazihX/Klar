@@ -36,9 +36,12 @@ function Step({
  *  second opens P28's message to the vendor. */
 export function WhatToDoNow({
   toolId,
+  toolName,
   result,
 }: {
   toolId: string
+  /** The tool's name, which the message to the vendor names. */
+  toolName: string | null
   result: ClassificationResult
 }): JSX.Element {
   const { t } = useTranslation()
@@ -71,7 +74,7 @@ export function WhatToDoNow({
             </Button>
           }
         >
-          {t('prohibited.now.tellVendor')}
+          {t('prohibited.now.askVendor')}
         </Step>
         <Step number={3}>{t('prohibited.now.data')}</Step>
       </ol>
@@ -81,6 +84,7 @@ export function WhatToDoNow({
           setIsLetterOpen(false)
         }}
         toolId={toolId}
+        toolName={toolName}
         result={result}
       />
     </GlassPanel>

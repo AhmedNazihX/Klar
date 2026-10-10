@@ -40,6 +40,7 @@ function SummaryView({
   const navigate = useNavigate()
   const { result } = run
   const question = result.status === 'needs_more_information' ? pausedStep(result) : null
+  const isBan = isDecidedBan(result)
 
   function editDescription(): void {
     saveDraft({ name: run.name ?? '', description: run.description })
@@ -56,7 +57,8 @@ function SummaryView({
           <Button variant="ghost" onClick={editDescription}>
             {t('result.editDescription')}
           </Button>
-          <DraftDocumentsLink toolId={run.toolId} />
+          {/* There's no route to comply with a ban, so there are no documents to draft. */}
+          {!isBan && <DraftDocumentsLink toolId={run.toolId} />}
           <ExportReportButton run={run} />
         </>
       }
@@ -64,7 +66,7 @@ function SummaryView({
   )
 
   // A decided ban has its own layout (artboard `ResultProhibited`, P21).
-  if (isDecidedBan(result)) {
+  if (isBan) {
     return (
       <>
         {header}

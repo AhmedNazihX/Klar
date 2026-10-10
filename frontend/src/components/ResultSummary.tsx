@@ -16,15 +16,16 @@ const DOT: Record<RiskClassKind, string> = {
   out_of_scope: 'bg-risk-out-dot shadow-[0_0_0_5px_var(--color-risk-out-tint)]',
 }
 
-/** The warm glass of a High-risk result (artboard `Result`) and the red-tinted glass of a
- *  Prohibited one (artboard `ResultProhibited`); other classes stay plain glass. */
-const TINTS: Partial<Record<RiskClassKind, string>> = {
-  high_risk: 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(255 232 212 / 0.5))',
-  prohibited: 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(255 226 226 / 0.5))',
-}
+/** The Result artboard's warm glass for a High-risk result. */
+const HIGH_RISK_TINT = 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(255 232 212 / 0.5))'
+/** The ResultProhibited artboard's red-tinted glass, for a decided ban only. */
+const BAN_TINT = 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(255 226 226 / 0.5))'
 
 export type ResultSummaryProps = {
   riskClass: RiskClassKind
+  /** A decided ban (`ProhibitedVerdict`) gets the red-tinted glass; an assumed or ambiguous
+   *  Prohibited result keeps plain glass, as its class isn't settled. */
+  isBan?: boolean
   /** The status pills beside the class: Decided, or Assumed with the uncertain status. */
   status: ReactNode
   /** Role and basis: "You're the deployer. The tool is listed in Annex III 4(a): …" */
@@ -43,10 +44,12 @@ export type ResultSummaryProps = {
 /**
  * The top of every result, in an order that never changes: the class in Lexend with its dot and
  * status, who you are and why, then the date duties apply from (or, on a Prohibited result, the
- * date it has been banned since). High-risk and Prohibited results get their tinted glass.
+ * date it has been banned since). A High-risk result gets the warm glass tint and a decided ban
+ * the red one; other results stay plain glass.
  */
 export function ResultSummary({
   riskClass,
+  isBan = false,
   status,
   statement,
   statusLine,
@@ -57,14 +60,15 @@ export function ResultSummary({
   children,
 }: ResultSummaryProps): JSX.Element {
   const { t } = useTranslation()
+  const tint = isBan ? BAN_TINT : riskClass === 'high_risk' ? HIGH_RISK_TINT : undefined
   return (
     <section
       aria-label={t('result.label')}
       data-risk-class={riskClass}
       className="flex min-w-0 flex-col gap-5 rounded-panel px-6 py-6 glass md:px-8.5 md:py-7.5"
-      // The warm tint replaces the glass fill (the glass utility's own background would win
-      // over a background class).
-      style={TINTS[riskClass] ? { background: TINTS[riskClass] } : undefined}
+      // The tint replaces the glass fill (the glass utility's own background would win over a
+      // background class).
+      style={tint ? { background: tint } : undefined}
     >
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 flex-col gap-3.5">
