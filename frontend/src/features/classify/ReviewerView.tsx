@@ -8,7 +8,9 @@ import { StatusPill } from '@/components/StatusPill'
 import { useLanguage } from '@/hooks/use-language'
 import type { OriginalRun } from '@/hooks/use-original-run'
 
-import type { ClassificationRun } from './classification-store'
+import { ResultQuestions } from '@/features/ask/ResultQuestions'
+
+import { runNumber, type ClassificationRun } from './classification-store'
 import { ExportReportButton } from './ExportReportButton'
 import { LawComparison } from './LawComparison'
 import { provisionName } from './provision-names'
@@ -54,7 +56,7 @@ function ResultPills({ result }: { result: ClassificationResult }): JSX.Element 
  * The reviewer view (artboard `Reviewer`): every step expanded, in the Act's order, with its
  * decision, the facts it rests on with their evidence tags, and the quoted provisions. The step
  * that decided a High-risk result is highlighted. Beside the steps, "Original Act vs amended"
- * (VersionDiff, P10); the thread (P7) joins it.
+ * (VersionDiff, P10), and under it "Questions about this result" (P7).
  */
 export function ReviewerView({
   run,
@@ -118,18 +120,19 @@ export function ReviewerView({
             )
           })}
         </div>
-        {/* The comparison needs the amended result as its one side: a result run under the
-            original text has nothing to compare against. */}
-        {result.law_version === 'amended' && (
-          <div className="flex min-w-0 flex-col gap-4 xl:w-[380px] xl:shrink-0">
+        <div className="flex min-w-0 flex-col gap-4 xl:w-[380px] xl:shrink-0">
+          {/* The comparison needs the amended result as its one side: a result run under the
+              original text has nothing to compare against. */}
+          {result.law_version === 'amended' && (
             <LawComparison
               run={run}
               original={original}
               shouldTakeFocus={shouldFocusComparison}
               onFocused={onComparisonFocused}
             />
-          </div>
-        )}
+          )}
+          <ResultQuestions toolId={run.toolId} runNo={runNumber(run)} result={result} />
+        </div>
       </div>
       <ResultNotice result={result} isStored={run.isStored} />
     </>

@@ -530,6 +530,28 @@
 }
 /* law-version:end */
 
+/* composer:start
+   The Composer's send arrow flies up and comes back from below as a question is sent
+   (components.md › Composer); the reduced-motion block below stops it. */
+@keyframes composer-send {
+  45% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  46% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.composer-sent > [data-icon] {
+  animation: composer-send 0.5s var(--ease-out) both;
+}
+/* composer:end */
+
 /* reduced-motion:start
    prefers-reduced-motion turns every animation and transition off; hover lifts and the glint stay
    still. Unlayered and !important, so no component can opt back in. theme.test.ts checks it.

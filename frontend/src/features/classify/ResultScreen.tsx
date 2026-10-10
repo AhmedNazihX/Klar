@@ -8,6 +8,7 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { ScreenTitle } from '@/components/ScreenTitle'
 import { useFollowUpAnswers } from '@/hooks/use-follow-up-answers'
 import { useFollowUpRun, type FollowUpRun } from '@/hooks/use-follow-up-run'
+import { ResultQuestions } from '@/features/ask/ResultQuestions'
 import { useOriginalRun } from '@/hooks/use-original-run'
 
 import { isDecidedBan } from './ban'
@@ -31,7 +32,8 @@ import { StepsPanel } from './StepsPanel'
 /** The summary (artboards `Result`, `ResultNeedsInfo`, `ResultRerun`): what the last answer
  *  changed, the class and role, the question that decides an assumed result and the other facts
  *  to confirm (answering runs the checks again, P5b), what to do beside the facts it rests on,
- *  how Klar got there with every step collapsed, and the result's notice. */
+ *  how Klar got there with every step collapsed, questions about the result (P7), and the
+ *  result's notice. */
 function SummaryView({
   run,
   followUp,
@@ -166,6 +168,7 @@ function SummaryView({
           onViewChange('reviewer')
         }}
       />
+      <ResultQuestions toolId={run.toolId} runNo={runNumber(run)} result={result} />
       <ResultNotice result={result} isStored={run.isStored} />
     </>
   )

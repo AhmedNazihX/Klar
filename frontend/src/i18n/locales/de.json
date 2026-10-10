@@ -1035,5 +1035,52 @@
       "nothing": "Nichts zu tun"
     },
     "changed": "Geändert: {{decision}}"
+  },
+  "ask": {
+    "subtitle": "Klare Antworten, jeweils mit den Vorschriften, auf denen sie beruhen. Auf Deutsch oder Englisch.",
+    "conversation": "Unterhaltung",
+    "empty": "Stellen Sie eine Frage zur KI-Verordnung oder wählen Sie einen der Vorschläge.",
+    "label": "Ihre Frage",
+    "placeholder": "Stellen Sie eine Frage zur KI-Verordnung",
+    "send": "Fragen",
+    "hint": "Eingabetaste zum Fragen, Umschalt+Eingabetaste für eine neue Zeile",
+    "footer": {
+      "amended": "Die Antworten beruhen auf der KI-Verordnung in der Fassung vom 27. Juli 2026. Klar sagt Ihnen nicht, ob Sie die Vorschriften einhalten.",
+      "original": "Die Antworten beruhen auf der ursprünglichen KI-Verordnung von 2024. Klar sagt Ihnen nicht, ob Sie die Vorschriften einhalten."
+    },
+    "you": "Sie",
+    "klar": "Klar",
+    "citationsLabel": "Zitierte Vorschriften",
+    "noCitations": "Keine Vorschriften zitiert: Die Frage liegt außerhalb der KI-Verordnung.",
+    "answering": "Klar antwortet …",
+    "failed": "Klar konnte diese Frage nicht beantworten. Bitte versuchen Sie es erneut.",
+    "busy": "Zu viele Fragen in kurzer Zeit. Bitte warten Sie eine Minute und versuchen Sie es dann erneut.",
+    "retry": "Erneut versuchen",
+    "tryAsking": {
+      "heading": "Fragen Sie zum Beispiel",
+      "oversight": "Was bedeutet „menschliche Aufsicht“ in der Praxis?",
+      "internal": "Gelten die Pflichten nach Art. 50 auch für interne Tools?",
+      "omnibus": "Was hat sich mit dem digitalen Omnibus geändert?"
+    },
+    "sources": {
+      "heading": "Grundlage der Antworten",
+      "loading": "Die Texte werden geladen …",
+      "failed": "Die Liste der Texte kann gerade nicht angezeigt werden.",
+      "kind": {
+        "consolidated": "Konsolidierte Fassung",
+        "law": "Rechtsakt",
+        "final": "Endfassung",
+        "draft": "Entwurf"
+      }
+    },
+    "result": {
+      "heading": "Fragen zu diesem Ergebnis",
+      "label": "Frage zu diesem Ergebnis",
+      "placeholder": "Fragen Sie etwas zu diesem Ergebnis",
+      "footer": "Die Antworten bleiben bei der KI-Verordnung und den Leitlinien der Kommission. Klar sagt Ihnen nicht, ob Sie die Vorschriften einhalten.",
+      "suggestionsLabel": "Vorgeschlagene Fragen",
+      "oversight": "Was gilt als menschliche Aufsicht?",
+      "vendors": "Was ist, wenn wir den Anbieter wechseln?"
+    }
   }
 }

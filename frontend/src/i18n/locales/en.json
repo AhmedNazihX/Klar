@@ -1035,5 +1035,52 @@
       "nothing": "Nothing to do"
     },
     "changed": "Changed: {{decision}}"
+  },
+  "ask": {
+    "subtitle": "Plain answers, each with the provisions they rest on. In English or German.",
+    "conversation": "Conversation",
+    "empty": "Ask a question about the AI Act, or pick one of the suggestions.",
+    "label": "Your question",
+    "placeholder": "Ask a question about the AI Act",
+    "send": "Ask",
+    "hint": "Enter to ask, Shift+Enter for a new line",
+    "footer": {
+      "amended": "Answers use the AI Act as amended on 27 July 2026. Klar won’t tell you whether you’re compliant.",
+      "original": "Answers use the original AI Act of 2024. Klar won’t tell you whether you’re compliant."
+    },
+    "you": "You",
+    "klar": "Klar",
+    "citationsLabel": "Provisions cited",
+    "noCitations": "No provisions cited: the question is outside the AI Act.",
+    "answering": "Klar is answering …",
+    "failed": "Klar couldn’t answer this question. Please try again.",
+    "busy": "Too many questions in a short time. Please wait a minute, then try again.",
+    "retry": "Try again",
+    "tryAsking": {
+      "heading": "Try asking",
+      "oversight": "What does “human oversight” mean in practice?",
+      "internal": "Do the Article 50 duties apply to internal tools?",
+      "omnibus": "What changed with the Digital Omnibus?"
+    },
+    "sources": {
+      "heading": "Answers draw on",
+      "loading": "Loading the texts …",
+      "failed": "The list of texts can’t be shown right now.",
+      "kind": {
+        "consolidated": "Consolidation",
+        "law": "Law",
+        "final": "Final",
+        "draft": "Draft"
+      }
+    },
+    "result": {
+      "heading": "Questions about this result",
+      "label": "Ask about this result",
+      "placeholder": "Ask about this result",
+      "footer": "Answers stay within the AI Act and Commission guidance. Klar won’t tell you whether you’re compliant.",
+      "suggestionsLabel": "Suggested questions",
+      "oversight": "What counts as human oversight?",
+      "vendors": "What if we switch vendors?"
+    }
   }
 }
