@@ -20,6 +20,7 @@ from aiact.eval.ragas_metrics import (
     PLAIN_ANSWERER,
     QA_ANSWERER,
     QA_NODE,
+    ItemAnswer,
     PlainAnswerer,
     QaAnswerer,
     RagasOptions,
@@ -30,6 +31,7 @@ from aiact.eval.ragas_metrics import (
 )
 from aiact.llm.structured import ChatRoute
 from aiact.qa.answer import REPLY_FORMAT
+from aiact.schemas import Language
 from aiact.settings import Settings
 from tests.engine.test_clients import engine_settings
 from tests.eval.test_ragas_metrics import (
@@ -44,7 +46,7 @@ from tests.eval.test_ragas_metrics import (
     parts,
 )
 from tests.eval.test_runner import MemoryStore
-from tests.qa.test_answer import RecordingChat
+from tests.qa.test_answer import REFUSED_DE, REFUSED_EN, RecordingChat, RefusingChat
 
 OUTSIDE_EN = (
     "That's outside what I can answer. I cover the AI Act and the Commission's guidance on it, "
@@ -123,6 +125,31 @@ def test_hits_the_search_found_irrelevant_get_the_outside_answer_without_a_model
     answer = asyncio.run(QaAnswerer(ChatRoute(chat)).answer(item(1), CONTEXTS, found=False))
     assert (answer.text, answer.kind) == (OUTSIDE_EN, "outside_corpus")
     assert chat.seen == []
+
+
+@pytest.mark.parametrize(
+    ("language", "text"), [(Language.EN, REFUSED_EN), (Language.DE, REFUSED_DE)]
+)
+def test_a_question_both_models_refuse_gets_the_fixed_refused_answer(
+    language: Language, text: str
+) -> None:
+    """Fix round 2: as `answer_question`, a refusal is the refused answer, not an error row."""
+    first, second = RefusingChat(messages=iter([])), RefusingChat(messages=iter([]))
+    question = item(1).model_copy(update={"language": language})
+    answerer = QaAnswerer(ChatRoute(first, second))
+    answer = asyncio.run(answerer.answer(question, CONTEXTS, found=True))
+    assert answer == ItemAnswer(text, "refused")
+    assert len(first.seen) == 1 and len(second.seen) == 1
+
+
+def test_the_stand_in_answers_from_the_hits_even_when_the_search_found_them_irrelevant() -> None:
+    """V6's stand-in ignores `found`, so its scores stay comparable with c358b1e3 and cf3425dd."""
+    chat = RecordingChat(messages=iter([AIMessage(content=" Art. 5 bans it. ")]))
+    answerer = PlainAnswerer(chat, UsageMeter())
+    answer = asyncio.run(answerer.answer(item(1), CONTEXTS, found=False))
+    assert answer == ItemAnswer("Art. 5 bans it.")
+    ((messages, _),) = chat.seen
+    assert ART_5_1_F in messages[0].text
 
 
 @pytest.mark.parametrize(("found", "kind"), [(True, "answered"), (False, "outside_corpus")])

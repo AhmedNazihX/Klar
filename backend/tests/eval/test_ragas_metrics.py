@@ -203,7 +203,8 @@ def test_options_reject_a_cap_that_isnt_positive() -> None:
         RagasOptions(GIT_SHA, max_cost_usd=0)
 
 
-def test_the_search_retriever_searches_the_question_in_its_language() -> None:
+@pytest.mark.parametrize("found", [True, False])
+def test_the_search_retriever_searches_the_question_in_its_language(found: bool) -> None:
     calls: list[tuple[object, ...]] = []
     hits = (hit("art:5:1:f"),)
 
@@ -218,13 +219,13 @@ def test_the_search_retriever_searches_the_question_in_its_language() -> None:
             as_of=date(2026, 10, 6),
             hits=hits,
             max_distance=None,
-            found=True,
+            found=found,
             disclaimer="Guidance, not legal advice.",
         )
 
     retriever = SearchRetriever(top_k=3, search=search)
     question = item(1).model_copy(update={"language": Language.DE})
-    assert retriever(question) == Retrieved(hits, True)
+    assert retriever(question) == Retrieved(hits, found)
     assert calls == [(question.question, Language.DE, 3, FROM_SETTINGS)]
     config = retriever.config()
     assert isinstance(config, dict)

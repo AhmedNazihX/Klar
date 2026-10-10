@@ -12,8 +12,9 @@ The route is plain `def`: the search reads Postgres through psycopg's sync drive
 call is sync, so FastAPI runs it in its threadpool. It has its own rate limit (`RATE_LIMIT_QA`),
 and the app's body limit. A model that isn't configured is a 503 before anything is searched; a
 question both models refuse gets the fixed refused answer (decision 033), not an error; a
-search's embedding or a model call that fails is a 503 with a fixed message (an unreachable
-database too, by the app's handler). Any other error is a bug and stays a 500. Nothing here
+search's embedding or a model call that fails, or Omnibus records that can't be read for a
+question about a result, is a 503 with a fixed message (an unreachable database too, by the
+app's handler). Any other error is a bug and stays a 500. Nothing here
 logs the question, the result or the answer, and no error quotes them: only the failure's type
 is logged.
 """
@@ -38,7 +39,12 @@ from aiact.llm import EmbeddingError, LLMConfigError
 from aiact.llm.structured import ChatRoute
 from aiact.qa import QaAnswer, Searcher, answer_question
 from aiact.qa.answer import ModelCallError, ResultQuotes
-from aiact.qa.clients import corpus_quotes, corpus_searcher, qa_route
+from aiact.qa.clients import (
+    OmnibusUnavailableError,
+    corpus_quotes,
+    corpus_searcher,
+    qa_route,
+)
 from aiact.schemas import Language, LawVersion
 from aiact.schemas.base import ContractModel
 
@@ -49,9 +55,14 @@ MAX_QUESTION_CHARS = 1000
 would also raise the search's keyword threshold (X1b: `SEARCH_MIN_KEYWORD_IDF` grows with the
 query's length)."""
 UNAVAILABLE = "Questions can't be answered right now. Please try again later."
-ANSWER_FAILURES: tuple[type[Exception], ...] = (ModelCallError, EmbeddingError)
-"""What a search's embedding or the model call raises when it fails (the model's failures are
-narrowed to `aiact.qa.answer.MODEL_FAILURES` around the call alone)."""
+ANSWER_FAILURES: tuple[type[Exception], ...] = (
+    ModelCallError,
+    EmbeddingError,
+    OmnibusUnavailableError,
+)
+"""What a search's embedding, the model call or the reading of the Omnibus's records (for a
+question about a result) raises when it fails (the model's failures are narrowed to
+`aiact.qa.answer.MODEL_FAILURES` around the call alone)."""
 
 Question = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_QUESTION_CHARS)

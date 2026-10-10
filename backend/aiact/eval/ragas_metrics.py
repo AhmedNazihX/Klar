@@ -24,8 +24,8 @@ answer, so they are left out (C8 and X1 calibrate the relevance cut-off on them)
 
 A run writes one `eval_runs` row (benchmark `qa`, its config naming the answerer and the model it
 answers on, `answer_model`) and one `eval_case_results` row per item:
-`label` is the item, `predicted` the answer, its kind (`answer_kind`: answered, outside_corpus or
-compliance for P7's answerer, so a fixed answer scored by RAGAS shows) and the provisions
+`label` is the item, `predicted` the answer, its kind (`answer_kind`: answered, outside_corpus,
+compliance or refused for P7's answerer, so a fixed answer scored by RAGAS shows) and the provisions
 retrieved (or `{"error": …}`, with the retrieved provisions when only a model call failed),
 `scores` the four metrics plus the
 runner's `cost_usd`, `tokens` and `is_error`. The run's outcome holds each metric's mean over the
@@ -59,7 +59,7 @@ from aiact.eval.runner import (
     select_subset,
 )
 from aiact.llm.embeddings import OpenRouterEmbeddings
-from aiact.llm.structured import ChatRoute
+from aiact.llm.structured import ChatRoute, ProviderRefusalError
 from aiact.qa import AnswerKind, generate, shown_text
 from aiact.qa.answer import reply_outcome
 from aiact.qa.clients import qa_chat, qa_refusal_chat
@@ -246,13 +246,18 @@ class QaAnswerer:
 
     async def answer(self, item: QAItem, contexts: Sequence[str], *, found: bool) -> ItemAnswer:
         """The product's answer: hits the search didn't find relevant (`found` False) get the
-        fixed outside-the-corpus answer with no model call, as `answer_question` gives them."""
+        fixed outside-the-corpus answer with no model call, and a question both models refuse
+        the fixed refused answer, as `answer_question` gives them."""
         if not found:
             outside = AnswerKind.OUTSIDE_CORPUS
             return ItemAnswer(NOT_ANSWERED[outside][item.language], outside.value)
-        reply = await asyncio.to_thread(
-            generate, item.question, item.language, contexts, self.route
-        )
+        try:
+            reply = await asyncio.to_thread(
+                generate, item.question, item.language, contexts, self.route
+            )
+        except ProviderRefusalError:
+            refused = AnswerKind.REFUSED
+            return ItemAnswer(NOT_ANSWERED[refused][item.language], refused.value)
         kind, _ = reply_outcome(reply, len(contexts))
         return ItemAnswer(shown_text(reply, len(contexts), item.language), kind.value)
 

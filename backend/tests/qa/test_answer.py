@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from datetime import date
 from typing import Any
 
+import httpx
 import pytest
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
@@ -580,12 +581,41 @@ def test_an_error_outside_the_model_call_is_not_a_model_failure() -> None:
         answer_question("Q?", Language.EN, search=broken_search, route=ChatRoute(model()))
 
 
+class FailingChat(RecordingChat):
+    """A model whose call raises `error`."""
+
+    error: Exception
+
+    def _generate(
+        self,
+        messages: list[BaseMessage],
+        stop: list[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
+        **kwargs: Any,
+    ) -> ChatResult:
+        raise self.error
+
+
+def test_a_model_failure_is_a_model_call_error_with_its_type_only() -> None:
+    chat = FailingChat(messages=iter([]), error=httpx.ConnectError("the provider is down"))
+    with pytest.raises(ModelCallError, match=r"^ConnectError$"):
+        ask("What counts as a deployer?", chat)
+
+
+def test_a_bug_inside_the_model_call_is_raised_as_it_is() -> None:
+    """Fix round 2: only `MODEL_FAILURES` become `ModelCallError` (the API's 503); a bug in the
+    model call, here a KeyError, stays itself (a 500)."""
+    chat = FailingChat(messages=iter([]), error=KeyError("a bug"))
+    with pytest.raises(KeyError, match="a bug"):
+        ask("What counts as a deployer?", chat)
+
+
 # --- Source numbers in the answer's text (fix round 1) --------------------------------------------
 
 
 def test_source_numbers_the_model_leaves_in_its_text_are_taken_out() -> None:
     reply = (
-        "Deployers must inform the people concerned (1, 2, 3, 4). Art. 26(1) applies [1].\n\n"
+        "Deployers must inform the people concerned. Art. 26(1) applies [1].\n\n"
         "Article 50 covers chatbots [2, 3]. (Sources 1\u20132.)"
     )
     answer = ask("What must deployers do?", model(answer=reply, cited=(1, 2)))
@@ -608,6 +638,39 @@ def test_source_numbers_the_model_leaves_in_its_text_are_taken_out() -> None:
 def test_only_references_to_the_numbered_sources_are_taken_out(text: str, shown: str) -> None:
     reply = ModelReply(kind=AnswerKind.ANSWERED, answer=text, cited=(1,))
     assert shown_text(reply, 1, Language.EN) == shown
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Article 6 (2, 3) applies.",
+        "Art. 26 (1 und 2) gilt.",
+        "Annex III (1\u20138) lists areas.",
+        "From 2 August (2026-2027) on.",
+        "The fines are (1, 2, 3, 4) percent of turnover.",
+        "Article 5 [7] stays: there is no source 7.",
+        "Point [0] isn't a source either.",
+    ],
+)
+def test_numbers_in_plain_parentheses_or_past_the_sources_stay(text: str) -> None:
+    """Fix round 2: only square brackets naming one of the sources, and numbers named as
+    sources, go; numbers in plain parentheses are legal references and always stay."""
+    reply = ModelReply(kind=AnswerKind.ANSWERED, answer=text, cited=(1,))
+    assert shown_text(reply, 2, Language.EN) == text
+
+
+def test_a_marker_at_a_paragraphs_start_keeps_the_paragraph_break() -> None:
+    reply = ModelReply(
+        kind=AnswerKind.ANSWERED, answer="First paragraph.\n\n[2] Second paragraph.", cited=(1,)
+    )
+    assert shown_text(reply, 2, Language.EN) == "First paragraph.\n\nSecond paragraph."
+
+
+def test_a_marker_before_a_line_break_keeps_the_break() -> None:
+    reply = ModelReply(
+        kind=AnswerKind.ANSWERED, answer="- Article 50 [1]\n- Article 26 [2]", cited=(1,)
+    )
+    assert shown_text(reply, 2, Language.EN) == "- Article 50\n- Article 26"
 
 
 def test_an_answer_that_is_only_source_numbers_isnt_shown() -> None:

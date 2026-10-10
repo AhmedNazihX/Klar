@@ -15,6 +15,7 @@ from aiact.engine.citations import OmnibusChanges
 from aiact.llm import LLMConfigError
 from aiact.qa import clients
 from aiact.qa.clients import (
+    OmnibusUnavailableError,
     corpus_quotes,
     corpus_searcher,
     qa_chat,
@@ -196,3 +197,53 @@ def test_no_connection_opens_for_a_result_citing_nothing() -> None:
 
     quotes = corpus_quotes(connect, DATA_DIR)  # pyright: ignore[reportArgumentType]
     assert quotes([], LawVersion.AMENDED, None) == ()
+
+
+# --- The Omnibus's records, read once and a 503 when they can't be (fix round 2) ----------------
+
+PARSED_OMNIBUS = Path(__file__).parents[3] / "data" / "parsed" / "omnibus.en.jsonl"
+
+
+def _quote_one(data_dir: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Citation, ...]:
+    """Quotes one of the worked example's citations through a fake corpus that has it."""
+    (citation, *_) = [c for step in worked_example_result().steps for c in step.citations]
+
+    class FakeCorpus:
+        def __init__(self, connection: object) -> None: ...
+
+        def provision(self, *args: object, **kwargs: object) -> Provision:
+            return _provision(citation, "The corpus's own text.")
+
+    @contextmanager
+    def connect() -> Iterator[str]:
+        yield "connection"
+
+    monkeypatch.setattr(clients, "CorpusCitations", FakeCorpus)
+    quotes = corpus_quotes(connect, data_dir)  # pyright: ignore[reportArgumentType]
+    return quotes([citation], LawVersion.AMENDED, date(2026, 10, 1))
+
+
+def test_the_omnibus_records_are_read_once_per_data_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    parsed = tmp_path / "parsed"
+    parsed.mkdir()
+    (parsed / "omnibus.en.jsonl").write_bytes(PARSED_OMNIBUS.read_bytes())
+    assert len(_quote_one(tmp_path, monkeypatch)) == 1
+    (parsed / "omnibus.en.jsonl").unlink()
+    # Gone from disk, still known: the second question reads no file.
+    assert len(_quote_one(tmp_path, monkeypatch)) == 1
+
+
+@pytest.mark.parametrize(
+    ("content", "failure"),
+    [(None, "FileNotFoundError"), ("", "LoadError"), ("{not json\n", "ValidationError")],
+)
+def test_omnibus_records_that_cant_be_read_raise_their_type_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, content: str | None, failure: str
+) -> None:
+    if content is not None:
+        (tmp_path / "parsed").mkdir()
+        (tmp_path / "parsed" / "omnibus.en.jsonl").write_text(content)
+    with pytest.raises(OmnibusUnavailableError, match=rf"^{failure}$"):
+        _quote_one(tmp_path, monkeypatch)

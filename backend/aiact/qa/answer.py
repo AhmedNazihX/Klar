@@ -83,17 +83,15 @@ MODEL_FAILURES: tuple[type[Exception], ...] = (
 """What the model call raises when it fails: a reply that doesn't fit (`ValidationError`, a
 `ValueError`), the provider's error (ChatOpenRouter raises it as a plain `ValueError`, the SDK as
 `OpenRouterError`), no response, or the transport's error."""
-_SEPARATOR = r"\s*(?:[,;\u2013-]|and|und)\s*"
-"""Between two numbers: a comma, a semicolon, a dash (en or hyphen), "and" or "und"."""
-SOURCE_NUMBERS = re.compile(
-    rf"\s*\[\s*\d+(?:{_SEPARATOR}\d+)*\s*\]"
-    rf"|\s*\(\s*(?:sources?|quellen?)\s*\d+(?:{_SEPARATOR}\d+)*\s*\.?\s*\)"
-    rf"|(?:^|\s+)\(\s*\d+(?:{_SEPARATOR}\d+)+\s*\)",
-    re.IGNORECASE,
-)
-"""A reference to the prompt's numbered sources left in the answer's text: "[1]", "[1, 2]",
-"(Sources 6-8.)", "(Quelle 3)", and a list of two or more numbers in parentheses after a space
-("(1, 2, 3, 4)"). A single number in parentheses stays: "Article 6(1)", "point (1)"."""
+_NUMBERS = r"\d+(?:\s*(?:[,;\u2013-]|and|und)\s*\d+)*"
+"""One number, or several each after a comma, a semicolon, a dash (en or hyphen), "and" or "und"."""
+_MARKER = rf"(?:\[\s*{_NUMBERS}\s*\]|\(\s*(?:sources?|quellen?)\s*{_NUMBERS}\s*\.?\s*\))"
+SOURCE_NUMBERS = re.compile(rf"^{_MARKER}[ \t]*|[ \t]*{_MARKER}", re.IGNORECASE | re.MULTILINE)
+"""A reference to the prompt's numbered sources left in the answer's text, in the two forms that
+can't be a legal reference: numbers in square brackets ("[1]", "[1, 2]") and numbers named as
+sources ("(Sources 6-8.)", "(Quelle 3)"). Numbers in plain parentheses always stay ("Article
+6 (2, 3)", "Annex III (1\u20138)"): the prompt tells the model not to write them. Only the spaces
+and tabs next to a marker go with it, so line and paragraph breaks stay."""
 LAW_TEXT_NAMES = {
     LawVersion.AMENDED: "the AI Act as amended by the Digital Omnibus",
     LawVersion.ORIGINAL: "the original AI Act of 2024",
@@ -210,7 +208,7 @@ def reply_outcome(reply: ModelReply, source_count: int) -> tuple[AnswerKind, tup
     cited = tuple(
         number - 1 for number in dict.fromkeys(reply.cited) if 1 <= number <= source_count
     )
-    if not cited or not without_source_numbers(reply.answer):
+    if not cited or not without_source_numbers(reply.answer, source_count):
         return AnswerKind.OUTSIDE_CORPUS, ()
     return AnswerKind.ANSWERED, cited
 
@@ -220,13 +218,23 @@ def shown_text(reply: ModelReply, source_count: int, language: Language) -> str:
     the fixed one."""
     kind, _ = reply_outcome(reply, source_count)
     if kind is AnswerKind.ANSWERED:
-        return without_source_numbers(reply.answer)
+        return without_source_numbers(reply.answer, source_count)
     return NOT_ANSWERED[kind][language]
 
 
-def without_source_numbers(text: str) -> str:
-    """`text` trimmed, with the references to numbered sources taken out (`SOURCE_NUMBERS`)."""
-    return SOURCE_NUMBERS.sub("", text).strip()
+def without_source_numbers(text: str, source_count: int) -> str:
+    """`text` trimmed, with the references to numbered sources taken out (`SOURCE_NUMBERS`). A
+    number in square brackets goes only when each of its numbers names one of the `source_count`
+    sources: "[7]" after two sources is not a reference to them, and stays."""
+
+    def strip(marker: re.Match[str]) -> str:
+        if marker.group().lstrip().startswith("["):
+            numbers = (int(number) for number in re.findall(r"\d+", marker.group()))
+            if not all(1 <= number <= source_count for number in numbers):
+                return marker.group()
+        return ""
+
+    return SOURCE_NUMBERS.sub(strip, text).strip()
 
 
 def source_text(provision_id: str, title: str, heading: str | None, text: str) -> str:
@@ -343,7 +351,7 @@ def _answer(
         return not_answered(kind, language, version, as_of)
     return QaAnswer(
         kind=kind,
-        answer=without_source_numbers(reply.answer),
+        answer=without_source_numbers(reply.answer, len(sources)),
         citations=tuple(sources[index].citation for index in cited),
         language=language,
         law_version=version,

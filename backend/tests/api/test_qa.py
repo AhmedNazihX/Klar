@@ -4,6 +4,8 @@ rate limit; a 503 that quotes nothing when the model or its setup fails."""
 
 import json
 import logging
+from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -16,6 +18,7 @@ from openrouter.errors import NoResponseError
 from aiact.api.qa import QuestionRequest, qa_model, qa_quotes, qa_search
 from aiact.llm.structured import ChatRoute
 from aiact.qa import QaAnswer
+from aiact.qa.clients import corpus_quotes
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, Language, LawVersion
 from aiact.settings import Settings
 from tests.api.conftest import api_settings
@@ -184,6 +187,31 @@ async def test_a_failed_model_call_is_a_503_that_quotes_and_logs_nothing(
     }
     assert "Zorblax" not in caplog.text and "Jane Doe" not in caplog.text
     assert type(failure).__name__ in caplog.text
+
+
+async def test_omnibus_records_that_cant_be_read_are_a_503_for_a_question_about_a_result(
+    app: FastAPI, client: httpx.AsyncClient, tmp_path: Path
+) -> None:
+    """Fix round 2: the corpus quotes read the Omnibus's records first; without them the
+    question is a 503 with the fixed text, not a 500, and the model is never asked."""
+
+    def connect() -> Iterator[str]:
+        raise AssertionError("no connection expected")
+
+    chat = model(answer="A.", cited=(1,))
+    serve(app, chat)
+    app.dependency_overrides[qa_quotes] = lambda: corpus_quotes(connect, tmp_path)  # pyright: ignore[reportArgumentType]
+    body = {
+        "question": QUESTION,
+        "language": "en",
+        "result": worked_example_result().model_dump(mode="json"),
+    }
+    response = await client.post("/qa", json=body)
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": "Questions can't be answered right now. Please try again later."
+    }
+    assert chat.seen == []
 
 
 async def test_a_question_both_models_refuse_gets_the_fixed_refused_answer(
