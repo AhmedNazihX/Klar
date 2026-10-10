@@ -124,7 +124,10 @@ def build_server(
 
         Returns the best hits with their text, provision id, document and version. `found` is
         false when nothing relevant was found; each hit's `similarity` (1 is closest) shows how
-        close it is. For an exact article or annex reference, use get_provision instead.
+        close it is. A provision the query names by number ('Article 50', 'Annex III point
+        5(b)', 'Artikel 26 Absatz 2') comes first and counts as found; an article of another
+        act ('Article 22 GDPR', 'Art. 17 DSGVO') is not taken as one. For one provision's exact
+        text, get_provision is the direct way.
         """
         # ValueError: the search's own argument checks (an empty query, `original` with as_of).
         with _tool_errors(ValueError), connect() as connection:

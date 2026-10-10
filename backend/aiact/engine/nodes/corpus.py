@@ -4,8 +4,9 @@
 - **`CorpusReader`**: one provision by its id, or the passages a search finds, on the run's
   `Lookup`, over one connection and one query embedder. Every call passes the run's
   `include_held_out` (False except in V8's gap run, decision 012), and every search the caller's
-  `exclude_source_example_ids` and no distance cut-off (C8). Each check's library (scope's, the
-  guideline checks', high-risk's) adds only what it searches for.
+  `exclude_source_example_ids`, no distance cut-off (C8) and C6's ranking (`ENGINE_TUNING`,
+  decision 003). Each check's library (scope's, the guideline checks', high-risk's) adds only
+  what it searches for.
 - **`CorpusReading`**: how a check reaches its library: the one it was given (a replay or a
   test), or the live corpus over a fresh connection for each use, closed before the use
   returns, so no connection stays open while the model answers. The live corpus embeds its
@@ -21,7 +22,7 @@ from aiact.db import connect
 from aiact.engine.nodes.common import Lookup
 from aiact.llm import OpenRouterEmbeddings
 from aiact.retrieval.provisions import Provision, get_provision
-from aiact.retrieval.search import QueryEmbedder, SearchHit, search_ai_act
+from aiact.retrieval.search import ENGINE_TUNING, QueryEmbedder, SearchHit, search_ai_act
 from aiact.schemas import Language
 from aiact.settings import Settings
 
@@ -70,6 +71,7 @@ class CorpusReader:
             limit=limit,
             embedder=self._embedder,
             connection=self._connection,
+            tuning=ENGINE_TUNING,
         )
         return results.hits
 

@@ -155,7 +155,7 @@ async def test_search_applies_the_configured_cut_off(
 ) -> None:
     """The tool leaves `max_distance` to search_ai_act, whose default is SEARCH_MAX_DISTANCE:
     the near row (distance about 0.006) stays, the far one (distance 1) is cut."""
-    unset = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+    unset = Settings(_env_file=None, search_max_distance=None)  # pyright: ignore[reportCallIssue]
     monkeypatch.setattr(search_module, "get_settings", lambda: unset)
     without = await _search(client)
     assert without.max_distance is None

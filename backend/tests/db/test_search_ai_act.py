@@ -21,13 +21,14 @@ from aiact.llm.embeddings import OpenRouterEmbeddings
 from aiact.retrieval import search as search_module
 from aiact.retrieval.search import (
     CANDIDATES,
-    MIN_KEYWORD_IDF,
+    ENGINE_TUNING,
     SearchResults,
+    SearchTuning,
     prepare_search,
     search_ai_act,
 )
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, Language, LawVersion
-from aiact.settings import Settings
+from aiact.settings import DEFAULT_MIN_KEYWORD_IDF, Settings
 
 pytestmark = pytest.mark.db
 
@@ -117,6 +118,12 @@ LOADS = (
         ProvisionRow("art:4", None, None, "Article 4", "Old quibbet.", AI_ACT_IN_FORCE,
                      OMNIBUS_IN_FORCE),
         ProvisionRow("art:4", None, None, "Article 4", "New quibbet.", OMNIBUS_IN_FORCE),
+        # An annex with one point: the annex row holds the point's text (C1), and search ranks
+        # the point, never the annex (X1b), unless the tuning lets it.
+        ProvisionRow("annex:IX", None, None, "Annex IX", "Snorkwhip areas: 1. A snorkwhip point.",
+                     AI_ACT_IN_FORCE),
+        ProvisionRow("annex:IX:1", "annex:IX", AI_ACT_IN_FORCE, "Annex IX", "A snorkwhip point.",
+                     AI_ACT_IN_FORCE),
     )),
     DocumentLoad(replace(AMENDED, language="de"), (
         ProvisionRow("art:1", None, None, "Artikel 1", "Pflichten für Quuxsysteme.",
@@ -155,7 +162,7 @@ LOADS = (
         ProvisionRow("guide:test-c6-code:para:1", None, None, None, "A code on zorblax.",
                      GUIDE_PUBLISHED),
         # Four words no other row has and no vector: a strong keyword-only match (C8), also in
-        # an empty database (4 x ln(about 20 units) is above MIN_KEYWORD_IDF).
+        # an empty database (4 x ln(about 20 units) is above DEFAULT_MIN_KEYWORD_IDF).
         ProvisionRow("guide:test-c6-code:para:2", None, None, None,
                      "Quorvex klimbat drossel wuffling.", GUIDE_PUBLISHED),
     )),
@@ -181,6 +188,8 @@ VECTORS = {
     ("art:2:a", "a frobnic point."): [0.1, 0.9, 0.0],
     ("art:3", "Plimbo rules: 1. (a) a plimbo point."): [0.0, -0.9, -0.1],
     ("art:3:1:a", "a plimbo point."): [0.0, -1.0, 0.0],
+    ("annex:IX", "Snorkwhip areas: 1. A snorkwhip point."): [-0.6, 0.0, 0.8],
+    ("annex:IX:1", "A snorkwhip point."): [-0.8, 0.0, 0.6],
     ("art:1", "Pflichten für Quuxsysteme."): [0.8, 0.2, 0.0],
     ("art:1", "Omnibus zorblax amendment."): ZORBLAX_NEW,
     ("guide:test-c6-guide:para:1", "Guidance on zorblax."): [0.7, 0.3, 0.0],
@@ -491,7 +500,7 @@ def test_a_strong_keyword_only_match_stays_found(corpus: psycopg.Connection):
                       max_distance=CUT_OFF)  # fmt: skip
     assert [h.provision_id for h in results.hits] == ["guide:test-c6-code:para:2"]
     idf = results.hits[0].keyword_idf
-    assert idf is not None and idf >= MIN_KEYWORD_IDF
+    assert idf is not None and idf >= DEFAULT_MIN_KEYWORD_IDF
     assert results.found
 
 
@@ -618,3 +627,143 @@ def test_a_default_search_never_returns_a_loaded_pile_b_row(db: psycopg.Connecti
     opted_in = search_ai_act(text, embedder=embedder, connection=db, include_held_out=True,
                              max_distance=None)  # fmt: skip
     assert provision_id in [h.provision_id for h in opted_in.hits[:3]]
+
+
+# --- X1b: annex points over the rows that hold them; exact references ----------------------
+
+SNORK_AREA = [-0.6, 0.0, 0.8]
+"""The annex row's own vector: the point (cosine 0.96) is the nearest row once it is skipped."""
+
+
+def test_an_annex_point_ranks_and_the_annex_that_holds_it_does_not(corpus: psycopg.Connection):
+    found = _found(_search(corpus, NO_WORDS, SNORK_AREA, as_of=AFTER_OMNIBUS))
+    assert found[0] == (AMENDED.doc_key, "annex:IX:1")
+    assert (AMENDED.doc_key, "annex:IX") not in found
+    containers = SearchTuning(skips_annex_containers=False)
+    with_containers = _found(_search(corpus, NO_WORDS, SNORK_AREA, as_of=AFTER_OMNIBUS,
+                                     tuning=containers))  # fmt: skip
+    assert with_containers[0] == (AMENDED.doc_key, "annex:IX")
+    assert (AMENDED.doc_key, "annex:IX:1") not in with_containers  # inside the annex row
+
+
+def test_the_keyword_arm_skips_the_annex_row_too(corpus: psycopg.Connection):
+    """'areas' is only in the annex row, so with the meaning arm cut (`max_distance=0`) the
+    keywords alone would rank the annex row first and hide its point; skipped, the point is the
+    keyword arm's first row."""
+    query = "snorkwhip areas"
+    skipped = _search(corpus, query, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0)
+    first = skipped.hits[0]
+    assert (first.doc_key, first.provision_id, first.keyword_rank) == (
+        AMENDED.doc_key,
+        "annex:IX:1",
+        1,
+    )
+    assert (AMENDED.doc_key, "annex:IX") not in _found(skipped)
+    containers = SearchTuning(skips_annex_containers=False)
+    kept = _search(corpus, query, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0,
+                   tuning=containers)  # fmt: skip
+    first = kept.hits[0]
+    assert (first.provision_id, first.keyword_rank) == ("annex:IX", 1)
+    assert (AMENDED.doc_key, "annex:IX:1") not in _found(kept)  # inside the annex row
+
+
+def test_an_article_without_points_is_no_container(corpus: psycopg.Connection):
+    """The rule is for annexes: an article with a paragraph under it still ranks (art:2)."""
+    found = _found(_search(corpus, NO_WORDS, [0.0, 1.0, 0.0], as_of=AFTER_OMNIBUS))
+    assert found[0] == (AMENDED.doc_key, "art:2")
+
+
+def _named(results: SearchResults) -> list[tuple[str, int | None]]:
+    """(provision_id, reference_rank) of the named test rows, best first."""
+    return [
+        (h.provision_id, h.reference_rank)
+        for h in results.hits
+        if h.doc_key.startswith("test-c6-") and h.reference_rank is not None
+    ]
+
+
+def test_a_named_provision_comes_first_and_is_found_past_any_cut_off(corpus: psycopg.Connection):
+    results = _search(corpus, "What does Article 2 say?", OFF_TOPIC, as_of=AFTER_OMNIBUS,
+                      max_distance=0.0)  # fmt: skip
+    assert _named(results) == [("art:2", 1)]
+    assert results.hits[0].reference_rank == 1
+    named = next(h for h in results.hits if h.doc_key == AMENDED.doc_key)
+    assert (named.provision_id, named.similarity) == ("art:2", None)
+    assert results.found is True
+    unnamed = _search(corpus, NO_WORDS, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0)
+    assert unnamed.found is False
+
+
+def test_named_provisions_keep_the_order_named(corpus: psycopg.Connection):
+    results = _search(corpus, "Article 6 and Art. 5", OFF_TOPIC, as_of=AFTER_OMNIBUS)
+    assert _named(results) == [("art:6", 1), ("art:5", 2)]
+    assert results.hits[0].reference_rank == 1
+
+
+def test_a_named_provision_is_read_from_the_version_and_date_asked(corpus: psycopg.Connection):
+    after = _search(corpus, "Article 4", OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0)
+    before = _search(corpus, "Article 4", OFF_TOPIC, as_of=BEFORE_OMNIBUS, max_distance=0.0)
+    original = _search(corpus, "Article 4", OFF_TOPIC, law_version="original", max_distance=0.0)
+    texts = [
+        [h.text for h in r.hits if h.doc_key.startswith("test-c6-") and h.reference_rank]
+        for r in (after, before, original)
+    ]
+    assert texts == [["New quibbet."], ["Old quibbet."], []]  # the original text has no art:4
+
+
+def test_a_whole_annex_named_is_not_pinned(corpus: psycopg.Connection):
+    results = _search(corpus, "Annex IX", OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0)
+    assert all(h.reference_rank is None for h in results.hits)
+    point = _search(corpus, "Annex IX point 1", OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0)
+    assert _named(point) == [("annex:IX:1", 1)]
+
+
+# Two example rows whose ids an exact reference can name: one held out (Pile B), one visible.
+NAMED_EXAMPLES = DocumentLoad(
+    replace(GUIDE, doc_key="test-c6-guide-named", title="Test guideline, named rows"),
+    (
+        ProvisionRow("art:90", None, None, None, "A held-out named example.", GUIDE_PUBLISHED,
+                     source_example_id="hr-ex-190", is_held_out=True),
+        ProvisionRow("annex:XX:1", None, None, None, "A visible named example.",
+                     GUIDE_PUBLISHED, source_example_id="hr-ex-191"),
+    ),
+)  # fmt: skip
+
+
+def test_a_named_held_out_row_is_returned_only_when_opted_in(corpus: psycopg.Connection):
+    load_all(corpus, (NAMED_EXAMPLES,))
+    query = "Article 90"
+    default = _search(corpus, query, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0)
+    assert _named(default) == []  # (the loaded corpus, if any, has its own art:90)
+    opted_in = _search(corpus, query, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0,
+                       include_held_out=True)  # fmt: skip
+    assert _named(opted_in) == [("art:90", 1)]
+    excluded = _search(corpus, query, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0,
+                       include_held_out=True, exclude_source_example_ids=["hr-ex-190"])  # fmt: skip
+    assert _named(excluded) == []
+
+
+def test_a_named_row_is_left_out_by_the_exclude_filter(corpus: psycopg.Connection):
+    load_all(corpus, (NAMED_EXAMPLES,))
+    query = "Annex XX point 1"
+    kept = _search(corpus, query, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0)
+    assert _named(kept) == [("annex:XX:1", 1)]
+    excluded = _search(corpus, query, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0,
+                       exclude_source_example_ids=["hr-ex-191"])  # fmt: skip
+    assert _named(excluded) == []
+
+
+def test_another_acts_article_is_not_pinned(corpus: psycopg.Connection):
+    for query in ("Article 2 GDPR", "Art. 2 DSGVO", "Article 2 of Regulation (EU) 2016/679"):
+        results = _search(corpus, query, OFF_TOPIC, as_of=AFTER_OMNIBUS, max_distance=0.0)
+        assert _named(results) == [], query
+
+
+def test_the_engine_tuning_ranks_as_c6_did(corpus: psycopg.Connection):
+    """The engine (`ENGINE_TUNING`) pins no named provision and ranks annex rows with points."""
+    named = _search(corpus, "What does Article 2 say?", OFF_TOPIC, as_of=AFTER_OMNIBUS,
+                    max_distance=0.0, tuning=ENGINE_TUNING)  # fmt: skip
+    assert _named(named) == []
+    annex = _found(_search(corpus, NO_WORDS, SNORK_AREA, as_of=AFTER_OMNIBUS,
+                           tuning=ENGINE_TUNING))  # fmt: skip
+    assert annex[0] == (AMENDED.doc_key, "annex:IX")

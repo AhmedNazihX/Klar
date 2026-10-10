@@ -13,7 +13,7 @@ from aiact.engine.nodes import corpus as corpus_module
 from aiact.engine.nodes.common import Lookup
 from aiact.engine.nodes.corpus import CorpusReader, CorpusReading
 from aiact.llm import LLMConfigError
-from aiact.retrieval.search import QueryEmbedder
+from aiact.retrieval.search import QueryEmbedder, SearchTuning
 from aiact.schemas import Language, LawVersion
 from aiact.settings import Settings
 
@@ -111,7 +111,9 @@ def test_without_a_library_or_an_embedder_the_embedding_settings_are_needed() ->
         CorpusReading(None, live, settings=settings(embedding_provider=None))
 
 
-def test_a_search_passes_the_runs_lookup_and_no_cut_off(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_search_passes_the_runs_lookup_no_cut_off_and_c6s_ranking(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     seen: list[tuple[tuple[object, ...], dict[str, object]]] = []
 
     class NoHits:
@@ -139,4 +141,12 @@ def test_a_search_passes_the_runs_lookup_and_no_cut_off(monkeypatch: pytest.Monk
         "limit": 4,
         "embedder": embedder,
         "connection": connection,
+        # C6's ranking, kept until the engine's guideline searches are measured (decision 003).
+        "tuning": SearchTuning(
+            keyword_weight=0.5,
+            rrf_k=60,
+            max_term_share=0.05,
+            skips_annex_containers=False,
+            pins_references=False,
+        ),
     }

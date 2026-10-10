@@ -14,7 +14,8 @@ they are). Each arm searches both sets the way their callers search:
   and recall is V6's `provision_recall` itself.
 
 No search applies a relevance cut-off (`max_distance=None`): the cut-off is calibrated per arm
-afterwards (X1b), so it mustn't tilt this comparison.
+afterwards (X1b), so it mustn't tilt this comparison. Every search ranks with the run's
+`SearchTuning` (default: search's own constants); X1b varies it to tune them.
 
 The metrics take the relevance verdict from the provision ids instead of a judge model, so they
 cost nothing but the query embeddings and are exact:
@@ -40,7 +41,7 @@ The judged RAGAS metrics on the Q&A set (paid) run through `aiact evaluate ragas
 
 import logging
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import LiteralString
@@ -68,7 +69,14 @@ from aiact.eval.runner import (
     finish_after_failure,
 )
 from aiact.llm.embeddings import EmbeddingError, OpenRouterEmbeddings
-from aiact.retrieval.search import QueryEmbedder, SearchHit, SearchResults, search_ai_act
+from aiact.retrieval.search import (
+    DEFAULT_TUNING,
+    QueryEmbedder,
+    SearchHit,
+    SearchResults,
+    SearchTuning,
+    search_ai_act,
+)
 from aiact.schemas import Language
 from aiact.settings import Settings
 
@@ -306,6 +314,8 @@ class ExperimentOptions:
     top_k: int = DEFAULT_TOP_K
     max_cost_usd: float = DEFAULT_MAX_COST_USD
     """For every run sharing one meter (a whole `evaluate embeddings` command)."""
+    tuning: SearchTuning = DEFAULT_TUNING
+    """The ranking constants every search of the run uses."""
 
     def __post_init__(self) -> None:
         if not 1 <= self.top_k <= SEARCH_DEPTH:
@@ -363,7 +373,7 @@ def run_arm(
             if is_over_budget(meter, options.max_cost_usd):
                 status = RunStatus.COST_CAP_REACHED
                 break
-            record = _score_query(query, embedder, meter, options.top_k, connection, search)
+            record = _score_query(query, embedder, meter, options, connection, search)
             store.add_case(run_id, record)
             records.append(record)
     except BaseException:
@@ -399,6 +409,7 @@ def run_config(
             "top_k": options.top_k,
             "depth": SEARCH_DEPTH,
             "max_distance": None,
+            "tuning": dict(asdict(options.tuning)),
         },
         "metrics": list(METRICS),
         "max_cost_usd": options.max_cost_usd,
@@ -411,7 +422,7 @@ def _score_query(
     query: Query,
     embedder: QueryEmbedder,
     meter: UsageMeter,
-    top_k: int,
+    options: ExperimentOptions,
     connection: psycopg.Connection | None,
     search: Search,
 ) -> CaseRecord:
@@ -425,6 +436,7 @@ def _score_query(
             limit=SEARCH_DEPTH,
             embedder=embedder,
             connection=connection,
+            tuning=options.tuning,
         )
     except EmbeddingError as exc:
         logger.warning("query %s failed: %s", query.id, type(exc).__name__)
@@ -435,7 +447,7 @@ def _score_query(
     else:
         retrieved: list[JsonValue] = [hit.provision_id for hit in results.hits]
         predicted = {"retrieved": retrieved}
-        scores = {**query_scores(query, results.hits, top_k), "is_error": False}
+        scores = {**query_scores(query, results.hits, options.top_k), "is_error": False}
     after = meter.usage()
     cost_usd = after.cost_usd - before.cost_usd
     tokens = after.tokens - before.tokens

@@ -22,7 +22,19 @@ DEFAULT_QUERY_INSTRUCTION = (
     "retrieve the article, Annex point or recital of the AI Act that governs it"
 )
 """Qwen3's query-side task text (`EMBEDDING_QUERY_INSTRUCTION`): the "governs it" text chosen in
-decision 003 for Q&A and MCP searches. X1b gives description searches no instruction."""
+decision 003 for Q&A and MCP searches."""
+
+DEFAULT_SEARCH_MAX_DISTANCE = 0.30
+"""`SEARCH_MAX_DISTANCE`, calibrated in X1b (decision 003, run bc6031fc): a hit at similarity
+0.70 or more. Every answerable Q&A question's best hit is at 0.747 or more, and provision recall
+in the top 5 stays at its uncut value (0.851) from 0.30 on, while 7 of 9 unanswerable questions,
+13 of 14 off-topic strings and 5 of 6 questions on another act's article fall below it."""
+
+DEFAULT_MIN_KEYWORD_IDF = 24.0
+"""`SEARCH_MIN_KEYWORD_IDF`, calibrated in X1b (decision 003, run bc6031fc): above the best
+keyword hit of every unanswerable question and off-topic string (at most 21.3), so keywords alone
+never make them found; it lets 6 long Annex descriptions whose best hit is under 0.70 count as
+found. The summed IDF grows with the query's length, so a long off-topic text could pass it."""
 
 
 class Settings(BaseSettings):
@@ -71,8 +83,10 @@ class Settings(BaseSettings):
     embedding_query_instruction: str = Field(default=DEFAULT_QUERY_INSTRUCTION, min_length=1)
 
     # Search: the meaning arm's cosine-distance cut-off for Q&A and MCP (C8); None = no cut-off.
-    # Left unset until X1 calibrates it.
-    search_max_distance: float | None = Field(default=None, ge=0.0, le=2.0)
+    # The engine searches without one. Calibrated in X1b (decision 003).
+    search_max_distance: float | None = Field(default=DEFAULT_SEARCH_MAX_DISTANCE, ge=0.0, le=2.0)
+    # The summed keyword IDF from which a keyword-only hit still counts as found (C8, X1b).
+    search_min_keyword_idf: float = Field(default=DEFAULT_MIN_KEYWORD_IDF, ge=0.0)
 
     # API (P1): where `aiact api serve` listens, and the browser origins allowed to call it
     # (comma-separated in the environment). The defaults are the Vite dev server's origin
