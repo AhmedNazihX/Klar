@@ -10,7 +10,6 @@ import pytest
 from langchain_core.messages import AIMessage
 from langchain_openrouter import ChatOpenRouter
 from typer.testing import CliRunner
-from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.cli import app
 from aiact.engine.usage import UsageMeter
@@ -250,12 +249,6 @@ LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=CannotOverwriteExistingCassetteException,
-    reason="recording pending (P7): uv run pytest tests/eval/test_ragas_qa.py -k luna "
-    "--record-mode=once -q",
-)
 @pytest.mark.vcr
 def test_luna_answers_a_question_from_its_contexts(openrouter_settings: Settings) -> None:
     """The engine provider accepts P7's reply format, and Luna answers from the contexts: the

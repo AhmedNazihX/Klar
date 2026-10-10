@@ -7,8 +7,6 @@ questions close in topic, such as the DSA's, pass the search's cut-off, and the 
 the sources don't answer them). Unanswerable items have no reference answer, so the test checks
 that the assistant declines, never the text (B7's note).
 
-The recordings are made by the orchestrator once the reviews are done:
-`uv run pytest tests/db/test_qa_b7.py --record-mode=once -q`, then drop `PENDING`.
 """
 
 from datetime import date
@@ -37,13 +35,6 @@ QWEN3 = ARMS["qwen3"]
 DIMS = 1536
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
-
-PENDING = pytest.mark.xfail(
-    strict=True,
-    raises=CannotOverwriteExistingCassetteException,
-    reason="recording pending (P7): uv run pytest tests/db/test_qa_b7.py --record-mode=once -q",
-)
-"""Until the orchestrator records the embeddings and Luna's answers; drop it after recording."""
 
 ITEMS = load_qa_items()
 ANSWERABLE = tuple(item for item in ITEMS if item.answerable)
@@ -81,7 +72,6 @@ def test_the_set_has_both_kinds_in_both_languages() -> None:
         assert {item.language for item in items} == {Language.EN, Language.DE}
 
 
-@PENDING
 @pytest.mark.vcr
 def test_b7_answerable_questions_reach_the_model(
     db: psycopg.Connection, openrouter_settings: Settings
@@ -101,7 +91,12 @@ def test_b7_answerable_questions_reach_the_model(
     assert declined == []
 
 
-@PENDING
+@pytest.mark.xfail(
+    strict=True,
+    raises=CannotOverwriteExistingCassetteException,
+    reason="replay mismatch (2026-10-10): the recorded request body differs on replay, so the "
+    "request is not deterministic; diagnose, then re-record (orchestrator)",
+)
 @pytest.mark.vcr
 def test_b7_unanswerable_questions_get_the_outside_corpus_answer(
     db: psycopg.Connection, openrouter_settings: Settings
