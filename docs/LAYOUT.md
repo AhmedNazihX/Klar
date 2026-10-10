@@ -47,6 +47,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            guidelines.py + guidelines_pdf.py + guideline_examples.py (C2),
 │   │   │                            build.py + load.py (C3), embed.py (C4)
 │   │   ├── retrieval/               provisions.py: get_provision (C5), get_omnibus_provision (E9); search.py: search_ai_act (C6; relevance score and cut-off C8);
+│   │   │                            references.py: exact references in a query ("Article 50") as provision ids (X1b)
 │   │   │                            documents.py: list_documents, the corpus's texts with title, status and dates (P1)
 │   │   │                            tracing.py: each lookup a LangSmith run under the engine's trace, its ids as metadata (V7)
 │   │   ├── obligations/             list.py: list_obligations; seed.py: YAML → SQL seed, `aiact obligations seed` (C7)
@@ -109,6 +110,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            matchers.py (replay states and label matchers, shared with the E3–E7 replays),
 │   │   │                            smoke_served.py (the served-provider judgement), smoke_recheck.py (`smoke-recheck`);
 │   │   │                            X2b: smoke_refusals.py (decision 033's rule for refused requests, `smoke-refusals`)
+│   │   │                            X1b: search_cutoff.py (the relevance cut-off's calibration, `search-cutoff`)
 │   │   ├── qa/                      Q&A over the corpus with citations (P7)
 │   │   ├── drafting/                deployer documents, skeletons, interview, export, automatic checks (P8a, P8b, P9)
 │   │   │                            P8a: models.py (DraftDocument, sections with their provenance, status),

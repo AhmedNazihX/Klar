@@ -2,7 +2,8 @@
 
 - **Date:** 2026-10-08 (measured); accepted 2026-10-09
 - **Story:** X1a (docs/BACKLOG.md); feeds X1b (search tuning and the relevance cut-off)
-- **Status:** accepted 2026-10-09, option B: one model (Qwen3-Embedding-8B, 1536, Nebius) with a query side that
+- **Status:** accepted 2026-10-09, option B; X1b's search tuning, cut-off and exact references are at the end
+  (2026-10-10). Option B: one model (Qwen3-Embedding-8B, 1536, Nebius) with a query side that
   differs per job (see Decision). The OpenAI arm is measured with the free metrics; the judged RAGAS runs were
   not run (user decision 2026-10-09; they can run later).
 
@@ -129,3 +130,112 @@ Cost, on the embedding API (OpenRouter), not counting the coding agents' own tok
   apart from the default arm.
 - If the arm changes, B13's isolation cosine limit 0.9 (`EMBEDDING_COSINE_LIMIT`, measured on Qwen3) must be
   re-measured, `eval/isolation/embeddings.json` regenerated and the corpus re-embedded.
+
+## X1b: search tuning, the relevance cut-off and exact references (2026-10-10)
+Status: done by story X1b; the values are in code and settings. Measured with the accepted arm (Qwen3 1536):
+Annex descriptions without an instruction, Q&A questions with the "governs it" text, as X1a did.
+
+### Ranking (`aiact/retrieval/search.py`, `SearchTuning`)
+`uv run aiact evaluate embeddings --arm qwen3-1536 --set annex_match --instruction "" …` and `--set qa`, with
+the new options `--keyword-weight`, `--rrf-k`, `--max-term-share` and `--annex-points-only/--with-annex-containers`.
+Top 5, as in the table above (R = strict recall, P = context precision).
+
+| Keyword weight | RRF_K | Annex containers | Annex R / P | Annex R en / de | Q&A R / P | Q&A R en / de | Runs (annex, qa) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0.5 | 60 | ranked (C6) | 0.312 / 0.255 | 0.333 / 0.286 | 0.753 / 0.540 | 0.775 / 0.704 | efafb418, 664c5833 |
+| 0 | 60 | ranked | 0.396 / 0.363 | | 0.851 / 0.759 | | bf9cc6f8, 871161d5 |
+| 1 | 60 | ranked | 0.271 / 0.190 | | 0.580 / 0.449 | | 0be0c116, 1d2dd41a |
+| 0.1 | 10 | ranked | 0.396 / 0.363 | | 0.851 / 0.764 | | 6d12822d, cbd4e511 |
+| 0.5 | 60 | skipped | 0.688 / 0.470 | | 0.753 / 0.542 | | abaf406a, 205c6e59 |
+| **0.1** | **10** | **skipped** | **0.708 / 0.630** | **0.630 / 0.810** | **0.851 / 0.754** | **0.833 / 0.889** | 18821f14, bfe066f2 |
+| 0 | 10 | skipped | 0.708 / 0.630 | | 0.851 / 0.777 | | 53c595f1, c351e0ea |
+| 0.25 | 10 | skipped | 0.708 / 0.599 | | 0.851 / 0.757 | | d35c213a, 42e380b1 |
+| 0.1 | 20 | skipped | 0.708 / 0.602 | | 0.851 / 0.754 | | e86f2a0a, 63b52135 |
+| 0.1 | 30 | skipped | 0.708 / 0.601 | | 0.851 / 0.720 | | 40712be5, 9c39c268 |
+| 0.5 | 5 | skipped | 0.729 / 0.599 | | 0.868 / 0.741 | | 75bae7d5, cb3b471a |
+
+`MAX_TERM_SHARE` 0.01 and 0.1 rank exactly as 0.05 at the chosen weight (caa1b329, 12accaa4; a7408e9a,
+eee9e6d8). With the chosen values, the Annex set searched with the "governs it" text (the MCP path) has strict
+recall 0.583 (ad31ccae; X1a: 0.250). Each run's commit is in `eval_runs.git_sha` (55b3504 for most; the
+embeddings code was the same from f4d9c60 on). The eight runs at 36f9dbc and 1b61703a are **superseded**: that
+commit still pinned a whole annex named in passing (below). The Q&A baseline is 0.753, not X1a's 0.718
+(67308d21), because the exact-reference rule finds `art:6:3` for qa-en-06, which names it.
+
+- **The keyword arm only ever cost recall.** Every weight from 0 up lowered both sets (1.0: Q&A 0.580). The
+  meaning arm carries the ranking; the keyword arm now breaks ties between close meaning-arm ranks
+  (`KEYWORD_WEIGHT` 0.1, `RRF_K` 10) and still gives `found` its `keyword_idf`. From 0 to 0.25 and `RRF_K` 10
+  to 30 recall is flat; 0.1 / 10 sits in the middle of that plateau. The single best point (0.5 / 5: one more
+  Annex item, half a Q&A item) sits next to a steep drop (0.5 / 60) and is not taken: on 48 and 29 items that
+  is one item, inside the noise.
+- **Annex points rank on their own** (`skips_annex_containers`): an annex row with points under it (the whole
+  annex, an Annex III area, an Annex I section) is left out of both ranked arms. With it in, the area row
+  outranked its point in 15 of 48 descriptions and `distinct_units` then hid the point. This is X1a's
+  strict-vs-lenient gap: strict recall goes from 0.396 to 0.708 and now equals lenient recall. Q&A recall is
+  unchanged (0.851), precision drops 0.01. Articles keep their parent rows: a whole article holds the paragraph
+  a question needs (V6's rule credits it), and taking leaves only there too cost Q&A recall in the
+  exploration (0.718 to 0.425 at the old weights; not stored).
+- `CANDIDATES` (50), `MIN_COMMON_ROWS` (50) and `MAX_TERM_SHARE` (0.05) stay.
+- German now does better than English on Annex matching (0.810 vs 0.630). The English misses are mostly Annex I
+  machinery and vehicle items, whose descriptions don't name the product legislation.
+- The C6 cases still pass: Annex III 5(b) is found in the top 5 (EN) and top 10 (DE) by the recorded tests.
+
+### Relevance cut-off (`SEARCH_MAX_DISTANCE` 0.30, `SEARCH_MIN_KEYWORD_IDF` 24)
+`uv run aiact evaluate search-cutoff` (`aiact/eval/experiments/search_cutoff.py`), run **9d90bb41** at
+a650381, $0.000135. It searches what Q&A and MCP search (the "governs it" text, the whole corpus) with 100
+probes: the 29 answerable Q&A questions, the 48 Annex descriptions, B7's 9 unanswerable questions, and 14
+off-topic strings (8 EN, 6 DE, in the module). For each it stores the best meaning-arm similarity, the best
+keyword hit's summed IDF, whether it names a provision, the real `found` under the chosen settings (it matches
+the sweep on all 100), and for answerable items the recall in the top 5 at each cut-off from 0.20 to 0.40.
+
+Best similarity and best keyword IDF, [min, median, max]:
+
+| Probes | n | Similarity | Keyword IDF |
+| --- | --- | --- | --- |
+| answerable (EN 20, DE 9) | 29 | 0.747 / 0.803 / 0.880 (DE min 0.747, EN min 0.763) | 0 / 10.6 / 29.4 |
+| Annex descriptions (EN 27, DE 21) | 48 | 0.655 / 0.723 / 0.799 (DE 0.655 / 0.719 / 0.775) | 14.9 / 26.4 / 83.2 |
+| unanswerable: other law (EN 4, DE 2) | 6 | 0.560 / 0.681 / 0.783 | 7.1 / 14.5 / 21.3 |
+| unanswerable: national law (DE) | 1 | 0.700 (0.6999) | 15.3 |
+| unanswerable: off topic (EN 1, DE 1) | 2 | 0.521, 0.667 | 8.0, 10.7 |
+| off-topic strings (EN 8, DE 6) | 14 | 0.430 / 0.610 / 0.732 | 0 / 6.7 / 11.0 |
+
+- **The cut-off: 0.30** (a hit counts at similarity 0.70 or more). It is the smallest cut-off at which recall
+  in the top 5 stays at its uncut value, 0.851 (0.29: 0.839; 0.26: 0.805; a cut-off drops low-ranked required
+  provisions before it makes a question unfound). Every answerable question stays found (lowest 0.747, German).
+  Rejected: 7 of 9 unanswerable questions and 13 of 14 off-topic strings. Found anyway: qa-none-en-04 (DSA
+  systemic risk, 0.783, close to the Act's own systemic-risk wording), qa-none-en-05 (Product Liability
+  Directive, the near-topic hard negative, 0.720) and "asdf qwerty zxcv" (0.732). The national-law item sits at
+  0.6999, so the margin is thin; 0.31 would find it.
+- **The keyword rule: 24.** C8's 9 let almost every unanswerable question through: summed IDF grows with the
+  query's length, and their best keyword hits reach 21.3. At 24 keywords never make an unanswerable or
+  off-topic probe found, and they rescue the long descriptions whose best hit is under 0.70 but whose rare words
+  match one row well (36 of 48 descriptions pass on similarity, 42 with the rule). A long off-topic text could
+  pass it; none of the probes does.
+- **Descriptions are the weak spot.** 6 of 48 Annex descriptions stay unfound, all German (0.676–0.700). The
+  engine searches without a cut-off, so classification is not affected; a long German description pasted into
+  Q&A or MCP search can get "nothing relevant". One cut-off can't serve both: 0.32 finds 47 of 48 but lets a
+  third unanswerable question through.
+- The sets are small (29, 9 and 14 negatives): a cut-off between 0.29 and 0.31 fits them equally; one
+  item moves the shares by 3 to 11 points. Query vectors from the provider vary in the third decimal between
+  runs (run a221b495, same probes, had 43 of 48 descriptions found).
+
+### Exact references (`aiact/retrieval/references.py`)
+"Article 50", "Art. 6(3)", "Annex III point 5(b)", "recital 27", "Artikel 26 Absatz 2", "Anhang III Nr. 5
+Buchstabe b", "Erwägungsgrund 27" are read as provision ids. Search looks them up by id (a third arm, under the
+same version, date, language and held-out filters) and puts them first in the order named; such a hit makes
+`found` true. C8 found that the keyword arm can't find them (English "Article 50" has no keyword hit). In
+the exploration each of eight reference probes (EN and DE) returned its provision first. A whole annex ("Annex III", "Hochrisiko-Systeme nach Anhang III") is **not** a reference: four Q&A
+questions name it as a category, and pinning its whole text first crowded out the point that answers them. A
+German Unterabsatz stops the reference at the paragraph (the ids put such points under `sub<n>` only where a
+list restarts). Of the benchmark sets, only qa-en-06 names a provision ("Article 6(3)", required, now found).
+
+### Not done here
+- **The per-job query side** (no instruction for description searches) is not wired. Inside the engine no
+  search does Annex matching: the engine looks every Annex point up (E5) and searches only the guidelines,
+  where no labelled set measures the instruction. Q&A and MCP keep the "governs it" text. Wire it only with a
+  guideline-retrieval measure behind it.
+- **The engine's guideline searches now rank with the new constants** (keyword weight 0.1, `RRF_K` 10; the
+  annex rule doesn't touch guidelines). Their recorded replays are unaffected; the next benchmark run shows the
+  effect.
+- **The RAGAS re-run** (V6) against c358b1e3 (`provision_recall` 0.598) was not run: it is paid
+  (`uv run aiact evaluate ragas`, about $0.22 per arm on the Q&A set; V6's earlier runs cost $0.45–0.67). The
+  free metric it is tied to, Q&A recall in the top 5, went from 0.718 (X1a) to 0.851 (bfe066f2).

@@ -12,8 +12,14 @@ No model is involved apart from the query embedding.
   searched language and law version once, never held-out rows or the Omnibus
   (`STATISTICS_SCOPE`); a word they don't contain gets the highest weight.
 - **Fusion.** Each arm keeps its best `CANDIDATES` rows; weighted Reciprocal Rank Fusion adds
-  `weight / (RRF_K + rank)` per arm. The keyword arm weighs `KEYWORD_WEIGHT`: soft descriptions
-  rarely share the law's wording, so its top ranks shouldn't displace the meaning arm's.
+  `weight / (RRF_K + rank)` per arm. The keyword arm weighs `KEYWORD_WEIGHT`, little: X1b found
+  it only lowered recall, so it breaks ties (decision 003). The constants travel as one
+  `SearchTuning`, so the experiments can vary them.
+- **Annex points.** An annex row with points under it (the whole annex, an Annex III area, an
+  Annex I section) is left out of both ranked arms, so its points compete on their own (X1b).
+- **Exact references.** The provisions a query names by number ("Article 50", "Anhang III Nr. 4";
+  `aiact.retrieval.references`) are looked up by id under the same filters and come first, in
+  the order named; such a hit is always relevant.
 - **Vector index.** The meaning arm keeps the partial HNSW index's model and dims predicate and
   cast (decision 009), sets `hnsw.iterative_scan = relaxed_order` so filtered queries aren't
   short, and re-sorts a materialized CTE by distance, as pgvector advises. At about 9,000 rows the
@@ -37,10 +43,11 @@ No model is involved apart from the query embedding.
   materialized, as pgvector advises for distance filters (a filter on the index scan itself
   would make an iterative scan walk the whole index for an off-topic query). It defaults to the
   `SEARCH_MAX_DISTANCE` setting; None is no cut-off. `SearchResults.found` tells "nothing
-  relevant" from a match: a hit within the cut-off, or a keyword hit on rare enough words
-  (`MIN_KEYWORD_IDF`), so a match on the law's own rare terms counts. The engine searches
-  without a cut-off (a signal, not a filter: a softly worded description must still reach its
-  Annex point); Q&A and MCP use it. X1 calibrates the value: Qwen3 cosines are compressed.
+  relevant" from a match: a named provision, a hit within the cut-off, or a keyword hit on rare
+  enough words (`SEARCH_MIN_KEYWORD_IDF`), so a match on the law's own rare terms counts. The
+  engine searches without a cut-off (a signal, not a filter: a softly worded description must
+  still reach its Annex point); Q&A and MCP use it. X1b calibrated both values (decision 003):
+  Qwen3 cosines are compressed.
 - **Parents.** A parent row includes all its descendants' text (C1), so a row that is an
   ancestor or a descendant of a better-ranked hit is skipped (`distinct_units`).
 - **Tracing (V7).** Inside a traced engine run, a search is a LangSmith run of its own, with the
