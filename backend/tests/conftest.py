@@ -29,12 +29,12 @@ TESTS_DIR = Path(__file__).parent
 RECORDINGS_DIR = TESTS_DIR / "recordings"
 KEPT_HEADERS = frozenset({"content-type"})
 REPLAY_API_KEY = "replay-without-a-key"
+"""Stands in for the key in replay mode; recordings are matched without headers."""
 REFUSAL_ROUTE: dict[str, object] = {
     "refusal_model": "google/gemini-3.1-flash-lite",
     "refusal_provider": "google-vertex/eu",
 }
 """Decision 033's second model for refused requests, as `backend/.env` sets it when recording."""
-"""Stands in for the key in replay mode; recordings are matched without headers."""
 
 ANY_HOST = [".*"]
 """`allowed_hosts` regexes for live tests. The block sees IP addresses, not host names."""

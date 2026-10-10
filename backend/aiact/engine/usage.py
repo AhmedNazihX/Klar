@@ -43,6 +43,10 @@ class RunUsage(ContractModel):
     is_cost_complete: bool = True
     """False when a reply came without its cost, so `cost_usd` is too low."""
 
+    def models_by_node(self) -> dict[str, dict[str, int]]:
+        """Each node's calls by the model that served them: what a stored case keeps."""
+        return {name: dict(node.models) for name, node in self.by_node.items()}
+
 
 class UsageMeter:
     """The paid calls of one run, counted per node. Thread-safe."""

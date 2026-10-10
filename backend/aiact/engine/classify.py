@@ -389,7 +389,7 @@ def _log_usage(usage: RunUsage, trace_id: str | None) -> None:
     """The run's cost, tokens, per-node split and the models that served each node's calls:
     metadata only."""
     per_node = {name: round(node.cost_usd, 6) for name, node in usage.by_node.items()}
-    models = {name: dict(node.models) for name, node in usage.by_node.items()}
+    models = usage.models_by_node()
     logger.info(
         "classification cost $%.6f%s, %d tokens; per node %s; models %s; trace %s",
         usage.cost_usd,

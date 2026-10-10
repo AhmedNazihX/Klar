@@ -2,16 +2,21 @@
 (decision 029); an answer that parses is used whatever the finish reason. `ChatRoute`: only such
 a refusal sends the same request once to the second model (decision 033)."""
 
+import logging
+from collections.abc import Callable
 from typing import Any
 
 import httpx
 import pytest
 from langchain_core.callbacks import CallbackManagerForLLMRun
+from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.outputs import ChatResult
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, SecretStr, ValidationError
+from vcr.errors import CannotOverwriteExistingCassetteException
 
+from aiact.llm.chat import chat_model
 from aiact.llm.structured import (
     CONTENT_FILTER,
     ChatRoute,
@@ -19,6 +24,7 @@ from aiact.llm.structured import (
     json_schema_format,
     parse_reply,
 )
+from aiact.settings import Settings
 
 
 class Small(BaseModel):
@@ -125,6 +131,119 @@ def test_without_a_second_model_a_refusal_is_raised_at_once() -> None:
     assert len(first.seen) == 1
 
 
-def test_a_broken_reply_from_the_second_model_is_a_validation_error() -> None:
-    with pytest.raises(ValidationError):
-        ChatRoute(chat(REFUSED), chat(reply("{}", "stop"))).ask(MESSAGES, FORMAT, Small)
+def test_both_refused_names_the_content_filter() -> None:
+    with pytest.raises(ProviderRefusalError) as raised:
+        ChatRoute(chat(REFUSED), chat(REFUSED)).ask(MESSAGES, FORMAT, Small)
+    assert raised.value.reason == "content_filter"
+
+
+# --- A failed second hop ends as a refusal too: the route is never worse than no route ---------
+
+SECRET = "the night shifts of our Leipzig depot"
+"""Stands for the user's description in the request and in the second model's reply."""
+SECRET_MESSAGES = [SystemMessage("Answer in JSON."), HumanMessage(f"We rank staff for {SECRET}.")]
+
+
+def assert_refused_after_a_failed_second_hop(
+    second: BaseChatModel, kind: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A refusal sent to `second`, which fails with `kind`: a refusal naming the kind only, with
+    the description in neither the error nor the logs."""
+    with caplog.at_level(logging.WARNING), pytest.raises(ProviderRefusalError) as raised:
+        ChatRoute(chat(REFUSED), second).ask(SECRET_MESSAGES, FORMAT, Small)
+    error = raised.value
+    assert error.reason == f"second_model_failed:{kind}"
+    assert error.__cause__ is None and error.__suppress_context__
+    assert SECRET not in str(error)
+    assert f"the second model failed ({kind})" in caplog.text
+    assert "Leipzig" not in caplog.text
+
+
+@pytest.mark.parametrize("content", ["{}", f'{{"value": "{SECRET}"}}', f"Sure: {SECRET}"])
+def test_a_broken_reply_from_the_second_model_is_a_refusal(
+    content: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    second = chat(reply(content, "stop"))
+    assert_refused_after_a_failed_second_hop(second, "ValidationError", caplog)
+    assert len(second.seen) == 1
+
+
+@pytest.fixture
+def http_answer(monkeypatch: pytest.MonkeyPatch) -> list[Callable[[httpx.Request], httpx.Response]]:
+    """Every HTTP client OpenRouter's SDK builds goes through a mock transport that answers with
+    the handler the test puts in the returned list."""
+    handlers: list[Callable[[httpx.Request], httpx.Response]] = []
+    real_client = httpx.Client
+
+    def client(*args: object, **kwargs: object) -> httpx.Client:
+        transport = httpx.MockTransport(lambda request: handlers[0](request))
+        return real_client(*args, transport=transport, **kwargs)  # pyright: ignore[reportArgumentType]
+
+    monkeypatch.setattr(httpx, "Client", client)
+    return handlers
+
+
+def status(code: int) -> Callable[[httpx.Request], httpx.Response]:
+    return lambda request: httpx.Response(code, json={"error": {"message": "busy", "code": code}})
+
+
+def raising(error: type[httpx.TransportError]) -> Callable[[httpx.Request], httpx.Response]:
+    def handle(request: httpx.Request) -> httpx.Response:
+        raise error("no answer", request=request)
+
+    return handle
+
+
+def provider_error(request: httpx.Request) -> httpx.Response:
+    """A 200 whose body is the provider's error, not a completion."""
+    return httpx.Response(200, json={"error": {"message": "upstream error", "code": 502}})
+
+
+@pytest.mark.parametrize(
+    ("handler", "kind"),
+    [
+        pytest.param(status(429), "TooManyRequestsResponseError", id="rate-limited"),
+        pytest.param(status(500), "InternalServerResponseError", id="server-error"),
+        pytest.param(status(503), "ServiceUnavailableResponseError", id="unavailable"),
+        pytest.param(raising(httpx.ReadTimeout), "ReadTimeout", id="timeout"),
+        pytest.param(raising(httpx.ConnectError), "ConnectError", id="transport"),
+        pytest.param(provider_error, "ResponseValidationError", id="provider-error-in-body"),
+    ],
+)
+def test_a_failed_call_to_the_second_model_is_a_refusal(
+    handler: Callable[[httpx.Request], httpx.Response],
+    kind: str,
+    http_answer: list[Callable[[httpx.Request], httpx.Response]],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The real second model (pinned, one attempt) over an endpoint that fails."""
+    http_answer.append(handler)
+    settings = Settings(_env_file=None, openrouter_api_key=SecretStr("k"))  # pyright: ignore[reportCallIssue]
+    second = chat_model(
+        model="google/gemini-3.1-flash-lite",
+        provider_order=["google-vertex/eu"],
+        allow_fallbacks=False,
+        max_retries=0,
+        settings=settings,
+    )
+    assert_refused_after_a_failed_second_hop(second, kind, caplog)
+
+
+class Unrecorded(CannotOverwriteExistingCassetteException):
+    """What a replay raises for a call its cassette lacks, without a cassette to describe."""
+
+    def __init__(self, message: str) -> None:
+        Exception.__init__(self, message)
+
+
+@pytest.mark.parametrize("error", [Unrecorded, RuntimeError])
+def test_any_other_error_of_the_second_call_still_raises(error: type[Exception]) -> None:
+    """A bug, or a replay whose second call isn't recorded (`refusal_route_pending`), is never
+    hidden behind the refusal step."""
+
+    class Broken(RecordingChat):
+        def _generate(self, *args: Any, **kwargs: Any) -> ChatResult:
+            raise error("not a model failure")
+
+    with pytest.raises(error):
+        ChatRoute(chat(REFUSED), Broken(messages=iter(()))).ask(MESSAGES, FORMAT, Small)

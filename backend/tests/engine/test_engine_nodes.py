@@ -412,28 +412,21 @@ def run_nodes(nodes: EngineNodes) -> dict[str, object]:
     return results
 
 
-def test_every_nodes_refused_request_goes_once_to_the_second_model(
-    offline: Corpus, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    "second",
+    [
+        pytest.param(REFUSAL, id="both-refused"),
+        pytest.param(paid_reply(), id="second-reply-broken"),
+    ],
+)
+def test_a_refusal_the_second_model_cannot_answer_gives_029s_step_in_every_node(
+    second: AIMessage, offline: Corpus, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The second model's reply is the one read (cut off here, so each node's broken output,
-    not its refusal step), and each node's two calls are recorded under the model that served
-    them."""
-    route_replies(monkeypatch, REFUSAL, paid_reply())
-    meter = UsageMeter()
-    results = run_nodes(engine_nodes(settings(), meter))
-    assert set(results) == set(NODE_TOKENS)
-    by_node = meter.usage().by_node
-    for name, result in results.items():
-        assert isinstance(result, ValueError), (name, result)
-        assert "doesn't fit the schema" in str(result), name
-        assert (by_node[name].models[LUNA], by_node[name].models[GEMINI]) == (1, 1), name
-
-
-def test_both_refused_gives_decision_029s_step_in_every_node(
-    offline: Corpus, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Decisions 029, 030: not assessed, a person's review asked, no finding."""
-    route_replies(monkeypatch, REFUSAL, REFUSAL)
+    """Decisions 029, 030, 033: each node's refused request goes once to the second model, and
+    when that one refuses too or its reply doesn't fit (cut off here), the check is not assessed,
+    a person's review is asked and there is no finding. Each node's two calls are recorded under
+    the model that served them."""
+    route_replies(monkeypatch, REFUSAL, second)
     meter = UsageMeter()
     results = run_nodes(engine_nodes(settings(), meter))
     facts_outcome = results.pop("facts")
@@ -452,3 +445,61 @@ def test_both_refused_gives_decision_029s_step_in_every_node(
     by_node = meter.usage().by_node
     for name in NODE_TOKENS:
         assert (by_node[name].models[LUNA], by_node[name].models[GEMINI]) == (1, 1), name
+
+
+def answer(name: StepName, finish_reason: str) -> AIMessage:
+    """The check's parseable answer (`PARSEABLE`), sent with `finish_reason`."""
+    return AIMessage(content=PARSEABLE[name](), response_metadata={"finish_reason": finish_reason})
+
+
+def check_replies(
+    monkeypatch: pytest.MonkeyPatch, first: Callable[[StepName], AIMessage], *, second: bool
+) -> None:
+    """Each retrieving check's engine model replies `first(check)` as Luna (twice, for the
+    citation validator's re-run); its refusal model replies the check's answer as Gemini when
+    `second`, and has no reply otherwise."""
+
+    def chats(
+        reply: Callable[[StepName], AIMessage] | None, model: str
+    ) -> Callable[[Settings], dict[str, GenericFakeChatModel]]:
+        def replies(node: str) -> list[AIMessage]:
+            if reply is None or node not in PARSEABLE:
+                return []
+            return [served(reply(StepName(node)), model)] * 2
+
+        return lambda _settings: {
+            node: GenericFakeChatModel(messages=iter(replies(node))) for node in NODE_TOKENS
+        }
+
+    monkeypatch.setattr(classify_module, "engine_chats", chats(first, LUNA))
+    second_reply = (lambda name: answer(name, "stop")) if second else None
+    monkeypatch.setattr(classify_module, "refusal_chats", chats(second_reply, GEMINI))
+
+
+@pytest.mark.parametrize("name", RETRIEVING, ids=lambda name: name.value)
+def test_the_second_models_answer_to_a_refused_request_is_the_checks_outcome(
+    name: StepName, offline: Corpus, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    check_replies(monkeypatch, lambda _name: REFUSAL, second=True)
+    meter = UsageMeter()
+    outcome = engine_nodes(settings(), meter).checks[name](state(include_held_out=False))
+    assert outcome.step.step is name
+    assert outcome.step.error is None
+    assert outcome.step.citations
+    assert meter.usage().by_node[name].models.get(GEMINI) == 1
+
+
+@pytest.mark.parametrize("name", RETRIEVING, ids=lambda name: name.value)
+def test_a_filtered_reply_with_an_answer_is_the_checks_outcome_with_no_second_call(
+    name: StepName, offline: Corpus, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """own-c-16's shape (decision 029): `content_filter` with a full answer is used as it is."""
+    check_replies(monkeypatch, lambda check: answer(check, "content_filter"), second=False)
+    meter = UsageMeter()
+    outcome = engine_nodes(settings(), meter).checks[name](state(include_held_out=False))
+    assert outcome.step.step is name
+    assert outcome.step.error is None
+    assert outcome.step.citations
+    models = meter.usage().by_node[name].models
+    assert models.get(LUNA, 0) >= 1
+    assert GEMINI not in models

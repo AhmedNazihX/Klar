@@ -16,10 +16,11 @@ from aiact.engine.state import EngineState, FactsOutcome
 from aiact.engine.usage import UsageMeter
 from aiact.eval import engine_classifier, runner
 from aiact.eval.engine_classifier import EngineClassifier
-from aiact.eval.runner import ClassifierFailedError, ClassifierInput
+from aiact.eval.runner import ClassifierFailedError, ClassifierInput, DummyClassifier, run_benchmark
 from aiact.llm import LLMConfigError
 from aiact.schemas import Language
 from aiact.settings import Settings
+from tests.eval.test_runner import CASES, SPLIT, MemoryStore, options
 
 CASE_DATE = date(2027, 3, 1)
 
@@ -36,33 +37,43 @@ def settings(**values: object) -> Settings:
     return Settings(_env_file=None, **configured)  # pyright: ignore[reportCallIssue]
 
 
-def paid_reply(content: str) -> AIMessage:
+LUNA = "openai/gpt-6-luna-20260922"
+GEMINI = "google/gemini-3.1-flash-lite"
+
+
+def paid_reply(content: str, model: str | None = None) -> AIMessage:
+    """A reply billed at $0.003, served by `model` (OpenRouter's `model`; None: unnamed)."""
     return AIMessage(
         content=content,
-        response_metadata={"cost": 0.003},
+        response_metadata={"cost": 0.003, **({"model_name": model} if model else {})},
         usage_metadata={"input_tokens": 400, "output_tokens": 100, "total_tokens": 500},
     )
 
 
 class Builder:
-    """Stub nodes whose facts node makes one paid call (or fails after it), keeping the
-    states it was given."""
+    """Stub nodes whose facts node makes one paid call per model in `served` (or fails after
+    them), keeping the states it was given."""
 
-    def __init__(self, *, fail: bool = False, spend: bool = True) -> None:
+    def __init__(
+        self, *, fail: bool = False, spend: bool = True, served: tuple[str | None, ...] = (None,)
+    ) -> None:
         self.fail = fail
         self.spend = spend
+        self.served = served
         self.states: list[EngineState] = []
 
     def __call__(self, _settings: Settings, meter: UsageMeter) -> EngineNodes:
         stub = scripted_nodes(Script())
         model = GenericFakeChatModel(
-            messages=iter([paid_reply("{}")]), callbacks=[meter.chat_callback("facts")]
+            messages=iter([paid_reply("{}", served) for served in self.served]),
+            callbacks=[meter.chat_callback("facts")],
         )
 
         def facts(state: EngineState) -> FactsOutcome:
             self.states.append(state)
             if self.spend:
-                model.invoke("describe")
+                for _ in self.served:
+                    model.invoke("describe")
             if self.fail:
                 raise ValueError("facts answer doesn't fit the schema")
             return FactsOutcome()
@@ -114,6 +125,43 @@ def test_a_run_that_fails_after_spending_carries_its_cost() -> None:
     assert raised.value.cost_usd == pytest.approx(0.003)
     assert raised.value.tokens == 500
     assert isinstance(raised.value.cause, ClassificationFailedError)
+
+
+REFUSED_THEN_ANSWERED = (LUNA, GEMINI)
+"""The facts request Luna's provider refused and the second model answered (decision 033)."""
+
+
+def test_a_stored_case_records_which_model_served_each_nodes_calls() -> None:
+    """The DoD's "each stored call records which model served it": the case row's scores."""
+    store = MemoryStore()
+    classifier = EngineClassifier(settings(), build_nodes=Builder(served=REFUSED_THEN_ANSWERED))
+    run_benchmark(CASES[:1], classifier, store, options(classifier_name="engine"), SPLIT)
+    [(_, record)] = store.cases
+    assert record.scores["is_error"] is False
+    assert record.scores["models"] == {"facts": {LUNA: 1, GEMINI: 1}}
+    assert record.tokens == 1000
+
+
+def test_a_stored_failed_case_records_which_model_served_each_nodes_calls() -> None:
+    store = MemoryStore()
+    builder = Builder(fail=True, served=REFUSED_THEN_ANSWERED)
+    run_benchmark(
+        CASES[:1],
+        EngineClassifier(settings(), build_nodes=builder),
+        store,
+        options(classifier_name="engine"),
+        SPLIT,
+    )
+    [(_, record)] = store.cases
+    assert record.scores["is_error"] is True
+    assert record.scores["models"] == {"facts": {LUNA: 1, GEMINI: 1}}
+
+
+def test_a_classifier_that_reports_no_models_stores_none() -> None:
+    store = MemoryStore()
+    run_benchmark(CASES[:1], DummyClassifier(), store, options(), SPLIT)
+    [(_, record)] = store.cases
+    assert "models" not in record.scores
 
 
 def test_a_run_that_fails_before_spending_raises_its_own_error() -> None:
