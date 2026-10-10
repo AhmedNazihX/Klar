@@ -5,17 +5,10 @@ import { useTranslation } from 'react-i18next'
 
 import type { Obligation } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
-import { ObligationItem } from '@/components/ObligationItem'
 import { RiskPill } from '@/components/RiskPill'
 import { StatusPill } from '@/components/StatusPill'
-import { provisionName } from '@/features/classify/provision-names'
-import {
-  DUTY_REFERENCE_WIDTH,
-  dutyLabel,
-  dutyNote,
-  statusPill,
-  toolName,
-} from '@/features/classify/result-text'
+import { DutyItem } from '@/features/classify/DutyItem'
+import { dutyNote, statusPill, toolName } from '@/features/classify/result-text'
 import { longDate } from '@/features/classify/dates'
 import { isoDay, type CheckedTool } from '@/features/inventory/tool-facts'
 import { useLanguage } from '@/hooks/use-language'
@@ -117,25 +110,17 @@ function DutyList({
   return (
     <>
       <ul className="m-0 flex list-none flex-col p-0">
-        {shown.map((duty) => {
-          const key = tickKey(duty)
-          return (
-            <ObligationItem
-              key={duty.key ?? `${duty.article}:${duty.duty}`}
-              label={dutyLabel(duty, language)}
-              reference={provisionName(duty.article, language)}
-              referenceWidth={DUTY_REFERENCE_WIDTH[language]}
-              note={noteOf(t, tool, duty, language, today)}
-              tag={duty.legacy ? t('result.legacy.tag') : undefined}
-              isInformational={key === null}
-              docLabel={t('obligations.card.draftReady')}
-              documentId={duty.document}
-              toolId={tool.toolId}
-              checked={key !== null && done.has(key)}
-              onCheckedChange={key === null ? undefined : (isDone) => onTick(tool, key, isDone)}
-            />
-          )
-        })}
+        {shown.map((duty) => (
+          <DutyItem
+            key={duty.key ?? `${duty.article}:${duty.duty}`}
+            duty={duty}
+            toolId={tool.toolId}
+            note={noteOf(t, tool, duty, language, today)}
+            docLabel={t('obligations.card.draftReady')}
+            done={done}
+            onTick={(key, isDone) => onTick(tool, key, isDone)}
+          />
+        ))}
       </ul>
       {duties.length > DUTY_PREVIEW && (
         <button

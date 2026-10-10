@@ -9,6 +9,7 @@ import { ObligationItem } from '@/components/ObligationItem'
 import { useLanguage } from '@/hooks/use-language'
 
 import { OriginalDatesNote } from './OriginalDatesNote'
+import { GpaiNote } from './ProviderNotes'
 import { provisionName } from './provision-names'
 import {
   citationSource,
@@ -63,6 +64,7 @@ export function DutiesPanel({
         </h2>
         <p className="m-0 max-w-[620px] text-body-small text-slate">{introFor(t, result)}</p>
         <OriginalDatesNote result={result} />
+        <GpaiNote result={result} />
       </div>
       {obligations.length > 0 && (
         <ul className="m-0 flex list-none flex-col p-0">

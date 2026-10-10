@@ -620,6 +620,7 @@
       "high_risk": "Bei einem Hochrisiko-Ergebnis empfehlen wir eine rechtliche Prüfung, bevor Sie sich darauf verlassen.",
       "prohibited": "Bei einem Verbot empfehlen wir rechtliche Beratung, bevor Sie weitermachen.",
       "ambiguous": "Bei einem rechtlich unklaren Ergebnis empfehlen wir eine rechtliche Prüfung, bevor Sie sich darauf verlassen.",
+      "provider": "Die Anbieterpflichten sind umfangreich. Wir empfehlen eine rechtliche Prüfung, bevor Sie die Arbeit planen.",
       "other": "Wir empfehlen eine rechtliche Prüfung, bevor Sie sich auf dieses Ergebnis verlassen."
     },
     "legacy": {
@@ -765,6 +766,60 @@
         "limited_risk": "Ihr Inventar und Ihre Pflichten zeigen die Transparenzpflichten als möglich, bis diese Frage beantwortet ist.",
         "other": "Ihr Inventar zeigt diese Einstufung als angenommen, bis diese Frage beantwortet ist."
       }
+    },
+    "provider": {
+      "reason": {
+        "own": "Sie entwickeln es oder lassen es entwickeln und bringen es unter Ihrem eigenen Namen in Verkehr oder nehmen es so in Betrieb, deshalb sind Sie Anbieter.",
+        "switch_a": "Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, deshalb sind Sie Anbieter.",
+        "switch_b": "Sie haben es wesentlich verändert und es bleibt ein Hochrisiko-System, deshalb sind Sie Anbieter.",
+        "switch_c": "Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.",
+        "switch_ab": "Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, und Sie haben es wesentlich verändert und es bleibt ein Hochrisiko-System, deshalb sind Sie Anbieter.",
+        "switch_ac": "Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, und Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.",
+        "switch_bc": "Sie haben es wesentlich verändert, und Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.",
+        "switch_abc": "Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, haben es wesentlich verändert und seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.",
+        "gpai": "Sie bauen es auf dem KI-Modell mit allgemeinem Verwendungszweck eines anderen Unternehmens auf, deshalb sind Sie Anbieter Ihres Systems."
+      },
+      "heading": "Was Sie als Anbieter tun müssen",
+      "intro": "Als Anbieter sind Sie dafür verantwortlich, wie es gestaltet, dokumentiert und nach dem Start überwacht wird.",
+      "group": {
+        "build": {
+          "title": "Richtig bauen",
+          "note": "Bevor Sie es einsetzen"
+        },
+        "prove": {
+          "title": "Nachweisen",
+          "note": "Dokumente und Prüfungen"
+        },
+        "after_launch": {
+          "title": "Nach dem Start",
+          "note": "Solange es im Einsatz ist"
+        }
+      },
+      "openSkeleton": "Gerüst öffnen",
+      "otherHeading": {
+        "deployer": "Was Sie als Betreiber tun müssen",
+        "importer": "Was Sie als Einführer tun müssen",
+        "distributor": "Was Sie als Händler tun müssen",
+        "none": "Weitere Pflichten"
+      },
+      "ticksFailed": "Klar konnte die abgehakten Pflichten nicht laden.",
+      "lighter": {
+        "heading": "Was es leichter macht",
+        "formTitle": "Ein vereinfachtes Dokumentationsformular",
+        "form": {
+          "sme": "Als KMU können Sie die technische Dokumentation nach Anhang IV in vereinfachter Weise bereitstellen, mit einem Formular der Kommission. Die Kommission hat das Formular noch nicht veröffentlicht; bis dahin dokumentieren Sie den vollen Anhang IV.",
+          "smc": "Als kleines Midcap-Unternehmen können Sie die technische Dokumentation nach Anhang IV in vereinfachter Weise bereitstellen, mit einem Formular der Kommission. Die Kommission hat das Formular noch nicht veröffentlicht; bis dahin dokumentieren Sie den vollen Anhang IV."
+        },
+        "internalTitle": "Keine notifizierte Stelle",
+        "internal": "Für Systeme nach Anhang III Nr. {{point}} bewerten Sie die Konformität selbst, durch eine interne Kontrolle.",
+        "internalReference": "Art. 43 Abs. 2, Anhang VI"
+      },
+      "alsoUse": {
+        "heading": "Sie nutzen es auch",
+        "body": "Sie nutzen das System auch selbst, daher gelten zusätzlich die Pflichten als Betreiber.",
+        "link": "Zu den Betreiberpflichten"
+      },
+      "gpai": "Der Anbieter des Modells hat eigene Pflichten nach Kapitel V (Art. 53). Diese bewertet Klar nicht."
     }
   },
   "annexPoint": {
