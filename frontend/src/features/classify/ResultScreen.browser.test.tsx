@@ -113,7 +113,7 @@ describe('the duty rows at 1280 px', () => {
       for (const row of rows) {
         const reference = within(row).queryByText(/^(Art\.|Annex|Anhang)/)
         if (!reference) continue
-        const column = within(row).getByRole('checkbox').nextElementSibling
+        const column = within(row).getByRole('checkbox').closest('label')?.nextElementSibling
         const columnBottom = column?.getBoundingClientRect().bottom ?? 0
         // The citation starts above the text block's bottom edge: beside it, not stacked under it.
         expect(reference.getBoundingClientRect().top, row.textContent).toBeLessThan(columnBottom)

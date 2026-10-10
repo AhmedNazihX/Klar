@@ -8,6 +8,7 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { ScreenTitle } from '@/components/ScreenTitle'
 import { useFollowUpAnswers } from '@/hooks/use-follow-up-answers'
 import { useFollowUpRun, type FollowUpRun } from '@/hooks/use-follow-up-run'
+import { useIsPhone } from '@/hooks/use-is-phone'
 import { ResultQuestions } from '@/features/ask/ResultQuestions'
 import { useOriginalRun } from '@/hooks/use-original-run'
 import type { QaThread } from '@/hooks/use-qa-thread'
@@ -40,7 +41,8 @@ import { StepsPanel } from './StepsPanel'
  *  changed, the class and role, the question that decides an assumed result and the other facts
  *  to confirm (answering runs the checks again, P5b), what to do beside the facts it rests on,
  *  how Klar got there with every step collapsed, questions about the result (P7), and the
- *  result's notice. */
+ *  result's notice. On a phone it is one column in the same order, with Draft documents full
+ *  width at the end (artboard `ResultMobile`, P26). */
 function SummaryView({
   run,
   followUp,
@@ -65,6 +67,7 @@ function SummaryView({
   // One run action for every question asked, under the last panel (artboard `ResultNeedsInfo`).
   const runCount = others.length + (deciding ? 1 : 0)
   const isBan = isDecidedBan(result)
+  const isPhone = useIsPhone()
   // The open question of law a legally ambiguous result rests on (its own layout, P22).
   const point = openPoint(result)
 
@@ -90,7 +93,8 @@ function SummaryView({
           </Button>
           {/* There's no route to comply with a ban, so there are no documents to draft; the
               ambiguous layout leaves them out as drawn (artboard `ResultAmbiguous`). */}
-          {!isBan && !point && <DraftDocumentsLink toolId={run.toolId} />}
+          {/* On a phone the link goes full width at the end (artboard `ResultMobile`). */}
+          {!isBan && !point && !isPhone && <DraftDocumentsLink toolId={run.toolId} />}
           {/* An ambiguous result exports from "Take it to a lawyer" (artboard `ResultAmbiguous`). */}
           {!point && <ExportReportButton run={run} />}
         </>
@@ -237,6 +241,7 @@ function SummaryView({
         }}
       />
       <ResultQuestions qa={questions} />
+      {isPhone && <DraftDocumentsLink toolId={run.toolId} className="w-full" />}
       <ResultNotice result={result} isStored={run.isStored} />
     </>
   )
