@@ -10,7 +10,11 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ClassificationResult, ClassifyRequest, FollowUpQuestion } from '@/api'
-import { endAnonymousSession } from '@/hooks/use-anonymous-session'
+import {
+  endAnonymousSession,
+  heldSessionId,
+  withAnonymousSession,
+} from '@/hooks/use-anonymous-session'
 import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import {
@@ -28,6 +32,8 @@ import { server } from '@/test/msw-server'
 import { SIGNUP_URL } from '@/test/supabase-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
+
+import { putRun } from './classification-store'
 
 vi.mock('@/lib/supabase', async (importOriginal) => {
   const actual = await importOriginal<typeof SupabaseModule>()
@@ -268,6 +274,59 @@ describe('Saving a follow-up run', () => {
     },
   )
 
+  it("numbers the re-run as the database saved it, not the shown run's number plus one", async () => {
+    server.use(
+      http.post(CLASSIFICATIONS_URL, async ({ request }) => {
+        inserts.push((await request.json()) as Row)
+        return HttpResponse.json({ id: RUN_2, run_no: 5 }, { status: 201 })
+      }),
+    )
+    const toolId = storeTool(annexIIINeedsInfo(), 3)
+    runs = [{ ...firstRun(), run_no: 3 }]
+    const { user } = await openTool(toolId)
+    await answerNo(user)
+
+    const banner = await screen.findByRole('region', { name: 'Your answer changed the result.' })
+    expect(banner).toHaveTextContent('Run 5 of 5')
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Run 5: how Klar got here' }),
+    ).toBeVisible()
+  })
+
+  it('an undo of a run whose row id is unknown reads the tool again, deleting nothing', async () => {
+    // The tool's latest run, as another tab left it.
+    const toolId = storeTool(decidedHighRisk(), 2)
+    runs = [firstRun(), { id: RUN_2, run_no: 2, result: decidedHighRisk(), inputs: null }]
+    await i18n.changeLanguage('en')
+    const user = userEvent.setup()
+    const client = createTestQueryClient()
+    putRun(client, {
+      toolId,
+      name: 'Shift planner',
+      description: 'd',
+      result: minimalRisk(),
+      runNo: 2,
+      answers: { used_for_recruitment: ANSWER },
+      previous: { runNo: 1, result: annexIIINeedsInfo(), answers: {} },
+    })
+    renderRoute(`/app/inventory/${toolId}`, client)
+    const banner = await screen.findByRole(
+      'region',
+      { name: 'Your answer changed the result.' },
+      { timeout: FIRST_RENDER_MS },
+    )
+    await expect.poll(() => heldSessionId(client)).not.toBeNull()
+
+    await user.click(within(banner).getByRole('button', { name: 'Undo answer' }))
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: /Your answer/ })).toBeNull()
+    })
+    expect(deletes).toEqual([])
+    const summary = screen.getByRole('region', { name: 'Result' })
+    expect(within(summary).getByText('High-risk')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: ANNEX_III_QUESTION })).toBeNull()
+  })
+
   it('a re-run the inventory refuses still shows, with a note that it was not saved', async () => {
     server.use(...classificationsHandlers({ status: 400, code: 'PT507' }))
     const toolId = storeTool(annexIIINeedsInfo())
@@ -315,6 +374,112 @@ describe('A re-run or an undo that outlives its session (sign-out, Delete my dat
     expect(screen.getByRole('region', { name: ANNEX_III_QUESTION })).toBeVisible()
   })
 
+  it('drops a re-run whose session ends while it is being saved: nothing shown, no sign-in', async () => {
+    const held = holdUntilReleased()
+    server.use(
+      http.post(CLASSIFICATIONS_URL, async ({ request }) => {
+        inserts.push((await request.json()) as Row)
+        await held.gate
+        return HttpResponse.json({ id: RUN_2, run_no: 2 }, { status: 201 })
+      }),
+    )
+    const toolId = storeTool(annexIIINeedsInfo())
+    runs = [firstRun()]
+    const { user, client } = await openTool(toolId)
+    const signupsBefore = signups
+    await answerNo(user)
+    await expect.poll(() => inserts.length).toBe(1)
+
+    endAnonymousSession(client)
+    held.release()
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: "Checking in the Act's order" })).toBeNull()
+    })
+    expect(signups).toBe(signupsBefore)
+    expect(screen.queryByRole('region', { name: /Your answer/ })).toBeNull()
+    expect(screen.getByRole('region', { name: ANNEX_III_QUESTION })).toBeVisible()
+  })
+
+  it('a re-run started with no session on a saved tool saves nothing and signs nobody in', async () => {
+    const toolId = storeTool(annexIIINeedsInfo())
+    runs = [firstRun()]
+    const { user, client } = await openTool(toolId)
+    endAnonymousSession(client)
+    const signupsBefore = signups
+    await answerNo(user)
+    await expect.poll(() => classifyBodies.length).toBe(1)
+
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: "Checking in the Act's order" })).toBeNull()
+    })
+    expect(inserts).toEqual([])
+    expect(signups).toBe(signupsBefore)
+    expect(screen.queryByRole('region', { name: /Your answer/ })).toBeNull()
+    expect(screen.getByRole('region', { name: ANNEX_III_QUESTION })).toBeVisible()
+  })
+
+  it('an undo started with no session on a saved tool deletes nothing and signs nobody in', async () => {
+    const toolId = storeTool(annexIIINeedsInfo())
+    runs = [firstRun()]
+    const { user, client } = await openTool(toolId)
+    await answerNo(user)
+    const banner = await screen.findByRole('region', { name: 'Your answer changed the result.' })
+    endAnonymousSession(client)
+    const signupsBefore = signups
+
+    const undo = within(banner).getByRole('button', { name: 'Undo answer' })
+    await user.click(undo)
+    await waitFor(() => {
+      expect(undo).toBeEnabled()
+    })
+    expect(deletes).toEqual([])
+    expect(signups).toBe(signupsBefore)
+    expect(screen.getByRole('region', { name: 'Your answer changed the result.' })).toBeVisible()
+    expect(screen.queryByRole('region', { name: ANNEX_III_QUESTION })).toBeNull()
+  })
+
+  it('shows a re-run of an unsaved tool started with no session when one starts meanwhile', async () => {
+    const held = holdUntilReleased()
+    server.use(
+      http.post(CLASSIFY_URL, async ({ request }) => {
+        classifyBodies.push((await request.json()) as ClassifyRequest)
+        await held.gate
+        return new HttpResponse(sseBody([{ event: 'result', result: minimalRisk() }]), {
+          headers: { 'Content-Type': 'text/event-stream' },
+        })
+      }),
+    )
+    await i18n.changeLanguage('en')
+    const user = userEvent.setup()
+    const client = createTestQueryClient()
+    // A fresh run the inventory couldn't save: it lives only in this tab.
+    putRun(client, {
+      toolId: 'unsaved-tool',
+      name: 'Shift planner',
+      description: 'd',
+      result: annexIIINeedsInfo(),
+      saveFailure: 'failed',
+    })
+    renderRoute('/app/inventory/unsaved-tool', client)
+    await screen.findByRole(
+      'heading',
+      { level: 1, name: 'Shift planner' },
+      { timeout: FIRST_RENDER_MS },
+    )
+    await expect.poll(() => heldSessionId(client)).not.toBeNull()
+    endAnonymousSession(client)
+    await answerNo(user)
+    await expect.poll(() => classifyBodies.length).toBe(1)
+
+    // Another screen's read starts a session while the run streams.
+    await withAnonymousSession(client, supabase)
+    expect(heldSessionId(client)).not.toBeNull()
+    held.release()
+    const banner = await screen.findByRole('region', { name: 'Your answer changed the result.' })
+    expect(banner).toHaveTextContent('Run 2 of 2')
+    expect(inserts).toEqual([])
+  })
+
   it('keeps the run before off the screen when the session ends during an undo', async () => {
     const toolId = storeTool(annexIIINeedsInfo())
     runs = [firstRun()]
@@ -360,7 +525,8 @@ describe('A stored tool after an answer', () => {
       name: 'Ihre Antwort hat das Ergebnis geändert.',
     })
     expect(banner).toHaveTextContent('Durchlauf 2 von 2')
-    expect(banner).toHaveTextContent(`Sie haben auf „${ANNEX_III_QUESTION}“ mit „No“ geantwortet`)
+    // Given in English, read on a German screen: the choice in German.
+    expect(banner).toHaveTextContent(`Sie haben auf „${ANNEX_III_QUESTION}“ mit „Nein“ geantwortet`)
   })
 
   it.each([

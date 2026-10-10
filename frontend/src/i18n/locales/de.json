@@ -988,9 +988,7 @@
       "possibleDuties_one": "{{count}} mögliche Pflicht",
       "possibleDuties_other": "{{count}} mögliche Pflichten",
       "noDuties": "Keine besonderen Pflichten",
-      "nothing": "Nichts zu tun",
-      "answer_one": "{{count}} Frage beantworten",
-      "answer_other": "{{count}} Fragen beantworten"
+      "nothing": "Nichts zu tun"
     },
     "changed": "Geändert: {{decision}}"
   }

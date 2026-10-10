@@ -58,9 +58,10 @@ export function useFollowUpRun(
   // Busy until the re-run is saved too, so a second click can't start another paid run.
   const [isSaving, setIsSaving] = useState(false)
 
-  /** Whether the session the work started under is still the one this tab holds. */
-  function isSameSession(session: string | null): boolean {
-    return heldSessionId(queryClient) === session
+  /** Whether the session the work started under has ended (useOriginalRun's rule): work started
+   *  with no session isn't dropped when one starts meanwhile, e.g. the overview's retry. */
+  function hasSessionEnded(session: string | null): boolean {
+    return session !== null && heldSessionId(queryClient) !== session
   }
 
   /** Saves the re-run on the tool. A run that can't be saved still shows (it was paid for), with
@@ -93,11 +94,11 @@ export function useFollowUpRun(
     result: ClassificationResult,
     session: string | null,
   ): Promise<void> {
-    if (!isSameSession(session)) return
+    if (hasSessionEnded(session)) return
     // A saved tool with no session held: it ended before the run started, and its run goes too.
     if (isSaved(run, client) && session === null) return
     const { ref, saveFailure } = await save(answers, result)
-    if (!isSameSession(session)) return
+    if (hasSessionEnded(session)) return
     putRun(queryClient, {
       toolId: run.toolId,
       name: run.name,
@@ -108,7 +109,6 @@ export function useFollowUpRun(
       runId: ref?.id,
       answers,
       previous: {
-        runId: run.runId,
         runNo: runNumber(run),
         result: run.result,
         answers: run.answers ?? {},
@@ -137,12 +137,12 @@ export function useFollowUpRun(
   const undo = useMutation({
     mutationFn: async (session: string | null): Promise<void> => {
       const previous = run.previous
-      if (!previous || !isSameSession(session)) return
+      if (!previous || hasSessionEnded(session)) return
       if (isSaved(run, client)) {
         // Ended already: there is no session to delete the run under, and none is started for it.
         if (session === null) return
         const isDeleted = await deleteShownRun(client)
-        if (!isSameSession(session)) return
+        if (hasSessionEnded(session)) return
         if (!isDeleted) {
           // Another tab or device changed the tool's runs: show them as they are now.
           await queryClient.invalidateQueries({
@@ -161,7 +161,6 @@ export function useFollowUpRun(
         saveFailure: previous.saveFailure,
         isStored: run.isStored,
         runNo: previous.runNo,
-        runId: previous.runId,
         answers: previous.answers,
       })
       void queryClient.invalidateQueries({ queryKey: userDataKey })

@@ -24,18 +24,19 @@ export type ClassificationRun = {
   /** The run's number on its tool, as the database gave it; 1 when unknown (a run never saved,
    *  or one whose number couldn't be read back). */
   runNo?: number
-  /** The run's row id in the user's data, when known: Undo answer deletes the run by it. */
+  /** The run's row id in the user's data, when known, on a run an answer made: Undo answer
+   *  deletes it by this id. */
   runId?: string
   /** The follow-up answers the run used (P5b), appended to `description` when it ran. */
   answers?: Answers
   /** The run before this one, when an answer made this one: what it changed, and what Undo
-   *  answer restores (with whether it was saved, and its row id when known). */
+   *  answer restores (with whether it was saved). */
   previous?: PreviousRun
 }
 
-/** The run an answer replaced: Undo answer shows it again. */
+/** The run an answer replaced: Undo answer shows it again. It is never deleted from here (it has
+ *  no `previous` to undo to), so its row id isn't kept. */
 export type PreviousRun = Omit<ToolRun, 'id'> & {
-  runId?: string
   saveFailure?: ClassificationRun['saveFailure']
 }
 
@@ -78,7 +79,6 @@ async function followUpOf(client: SupabaseClient, tool: InventoryTool): Promise<
   const [latest, previous] = runs
   if (latest?.runNo !== tool.runNo || Object.keys(latest.answers).length === 0) return {}
   const before = previous && {
-    runId: previous.id,
     runNo: previous.runNo,
     result: previous.result,
     answers: previous.answers,

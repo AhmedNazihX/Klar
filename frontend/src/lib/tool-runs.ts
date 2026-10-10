@@ -69,21 +69,21 @@ export type FollowUpRun = {
   result: ClassificationResult
 }
 
-/** The tool's latest run's id and number, or null while it has none: a run just saved through
+/** The tool's latest run's number, or null while it has none: a run just saved through
  *  save_classified_tool, which returns only the tool's id. */
-export async function fetchLatestRunRef(
+export async function fetchLatestRunNo(
   client: SupabaseClient,
   toolId: string,
-): Promise<RunRef | null> {
+): Promise<number | null> {
   const runs = await client
     .from('classifications')
-    .select('id, run_no')
+    .select('run_no')
     .eq('system_id', toolId)
     .order('run_no', { ascending: false })
     .limit(1)
   if (runs.error) throw runs.error
-  const [latest] = z.array(RunRefSchema).parse(runs.data)
-  return latest ? { id: latest.id, runNo: latest.run_no } : null
+  const [latest] = z.array(RunRefSchema.pick({ run_no: true })).parse(runs.data)
+  return latest?.run_no ?? null
 }
 
 /** Adds a re-run with its answers as the tool's next run, and resolves with its id and number.

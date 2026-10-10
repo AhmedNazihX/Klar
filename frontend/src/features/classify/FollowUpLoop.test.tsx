@@ -2,7 +2,7 @@
 // answering re-runs the engine with the answers next to the description, the re-run result shows
 // with what it changed, and Undo answer brings the run before back. Without Supabase, as in the
 // other result tests: nothing is saved (FollowUpLoop.save.test.tsx covers the saving).
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18n from 'i18next'
 import { http, HttpResponse } from 'msw'
@@ -26,6 +26,7 @@ import {
   WORKED_EXAMPLE_DESCRIPTION,
   WORKED_EXAMPLE_EVENTS,
 } from '@/test/classify-fixtures'
+import { openQuestionCount } from '@/features/inventory/tool-facts'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
@@ -135,7 +136,7 @@ describe('Answering the question that decides a result', () => {
     expect(rows.map((row) => row.textContent)).toEqual([
       'High-risk, assumed→changed toMinimal risk',
       expect.stringMatching(/^\d+ possible duties→changed to1 duty$/),
-      'Answer 1 question→changed toNothing to do',
+      'Answer 1 question to finish the check→changed toNothing to do',
     ])
   })
 
@@ -282,6 +283,37 @@ describe('Answering the question that decides a result', () => {
     },
   )
 
+  it.each([
+    [
+      'en',
+      'Yes',
+      'Add answer and run again',
+      'The service answered with an error (HTTP 500).',
+      "The checks couldn't start",
+    ],
+    [
+      'de',
+      'Ja',
+      'Antwort hinzufügen und erneut prüfen',
+      'Der Dienst hat mit einem Fehler geantwortet (HTTP 500).',
+      'Die Prüfungen konnten nicht starten',
+    ],
+  ] as const)(
+    'a failed re-run says why once, in the re-run alert only (%s)',
+    async (language, yes, runAgain, reason, notStarted) => {
+      server.use(http.post(CLASSIFY_URL, () => HttpResponse.json({}, { status: 500 })))
+      const { user } = await openResult(annexIIINeedsInfo(), { language })
+      const question = screen.getByRole('region', { name: ANNEX_III_QUESTION })
+      await user.click(within(question).getByRole('button', { name: yes }))
+      await user.click(within(question).getByRole('button', { name: runAgain }))
+
+      const alert = await screen.findByRole('alert')
+      expect(alert).toHaveTextContent(reason)
+      expect(screen.getAllByText(reason)).toHaveLength(1)
+      expect(screen.queryByText(notStarted)).toBeNull()
+    },
+  )
+
   it('passes axe after an answer', async () => {
     rerunReturns(minimalRisk())
     const { user, container } = await openResult(annexIIINeedsInfo())
@@ -318,12 +350,51 @@ describe('Answering in German', () => {
     expect(within(banner).getByRole('button', { name: 'Antwort rückgängig machen' })).toBeVisible()
     const lists = screen.getByRole('region', { name: 'Was sich in Ihren Listen geändert hat' })
     expect(within(lists).getAllByRole('definition')[2]).toHaveTextContent(
-      '1 Frage beantworten→geändert zuNichts zu tun',
+      'Beantworten Sie 1 Frage, um die Prüfung abzuschließen→geändert zuNichts zu tun',
     )
     expect(stepRow(/^3 Hochrisiko/)).toHaveTextContent('Geändert: ')
     expect(
       screen.getByRole('heading', { level: 2, name: 'Durchlauf 2: wie Klar zum Ergebnis kam' }),
     ).toBeVisible()
+  })
+})
+
+describe('An answer read on a screen in the other language', () => {
+  it.each([
+    ['de', 'Nein', 'Antwort hinzufügen und erneut prüfen', 'en', `You said “No” to`],
+    ['en', 'No', 'Add answer and run again', 'de', 'mit „Nein“ geantwortet'],
+  ] as const)(
+    'shows a choice made in %s in the screen’s language now',
+    async (given, no, runAgain, shown, said) => {
+      rerunReturns(minimalRisk())
+      const { user } = await openResult(annexIIINeedsInfo(), { language: given })
+      const question = screen.getByRole('region', { name: ANNEX_III_QUESTION })
+      await user.click(within(question).getByRole('button', { name: no }))
+      await user.click(within(question).getByRole('button', { name: runAgain }))
+      await screen.findByRole('region', { name: /Your answer|Ihre Antwort/ })
+
+      await act(() => i18n.changeLanguage(shown))
+      const banner = screen.getByRole('region', { name: /Your answer|Ihre Antwort/ })
+      expect(banner).toHaveTextContent(said)
+      expect(banner).not.toHaveTextContent(`“${no}”`)
+      expect(banner).not.toHaveTextContent(`„${no}“`)
+    },
+  )
+
+  it('keeps an answer in words as the user typed it', async () => {
+    const asked = WORKED_EXAMPLE.steps.find((step) => step.step === 'scope')?.missing_fact
+    if (!asked) throw new Error('The recorded result pauses at scope.')
+    rerunReturns(decidedHighRisk())
+    const { user } = await openResult(WORKED_EXAMPLE, { language: 'de' })
+    const question = screen.getByRole('region', { name: asked.text })
+    await user.type(within(question).getByRole('textbox', { name: asked.text }), 'Nein')
+    await user.click(screen.getByRole('button', { name: 'Antworten hinzufügen und erneut prüfen' }))
+    await screen.findByRole('region', { name: /Ihre Antwort/ })
+
+    await act(() => i18n.changeLanguage('en'))
+    expect(screen.getByRole('region', { name: /Your answer/ })).toHaveTextContent(
+      `You said “Nein” to “${asked.text}”`,
+    )
   })
 })
 
@@ -411,8 +482,12 @@ describe('The open questions panel', () => {
   })
 
   it.each([
-    ['en', 'Add answers and run again', 'Answer 3 questions'],
-    ['de', 'Antworten hinzufügen und erneut prüfen', '3 Fragen beantworten'],
+    ['en', 'Add answers and run again', 'Answer 1 question to finish the check'],
+    [
+      'de',
+      'Antworten hinzufügen und erneut prüfen',
+      'Beantworten Sie 1 Frage, um die Prüfung abzuschließen',
+    ],
   ] as const)(
     'offers one run action for the deciding question and the panel, and sends both (%s)',
     async (language, runAgain, needs) => {
@@ -428,7 +503,9 @@ describe('The open questions panel', () => {
       const { user } = await openResult(result, { language })
       const deciding = screen.getByRole('region', { name: ANNEX_III_QUESTION })
       expect(within(deciding).queryByRole('button', { name: /run again|erneut prüfen/ })).toBeNull()
-      expect(screen.getAllByRole('button', { name: runAgain })).toHaveLength(1)
+      // One run action on the page, singular or plural, wherever it sits.
+      expect(screen.getAllByRole('button', { name: /run again|erneut prüfen/ }).length).toBe(1)
+      expect(screen.getByRole('button', { name: runAgain })).toBeVisible()
 
       await user.click(
         within(deciding).getByRole('button', { name: language === 'en' ? 'No' : 'Nein' }),
@@ -441,14 +518,19 @@ describe('The open questions panel', () => {
         'used_for_recruitment',
         'human_review',
       ])
-      // "Needs you" counts what the paused screen asked: the deciding question and two more.
+      // "Needs you" is the inventory's own line for the paused run (one paused check, so one
+      // question), not a count of the three questions its screen asked.
+      expect(openQuestionCount(result)).toBe(1)
+      expect(needs).toBe(i18n.t('inventory.needs.needsInfo', { count: 1 }))
       const lists = await screen.findByRole('region', {
         name:
           language === 'en'
             ? 'What changed in your lists'
             : 'Was sich in Ihren Listen geändert hat',
       })
-      expect(within(lists).getAllByRole('definition')[2]).toHaveTextContent(needs)
+      expect(within(lists).getAllByRole('definition')[2]?.textContent).toMatch(
+        new RegExp(`^${needs}→`),
+      )
     },
   )
 })

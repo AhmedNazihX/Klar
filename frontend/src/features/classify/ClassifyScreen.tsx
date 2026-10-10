@@ -96,8 +96,7 @@ export function ClassifyScreen(): JSX.Element {
       result,
       saveFailure,
       // As the database numbered it: a run saved on a tool that had runs isn't run 1.
-      runNo: saved?.run?.runNo,
-      runId: saved?.run?.id,
+      runNo: saved?.runNo ?? undefined,
     })
     clearDraft()
     // The app frame keeps the law version in the address across links.

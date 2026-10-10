@@ -40,6 +40,8 @@ type RowContext = {
   language: Language
   progress: ProgressState
   failure: ClassifyFailure | null
+  /** A result's re-run: its alert alone says why it stopped. */
+  isRerun: boolean
 }
 
 function doneOutcome(id: Exclude<CheckId, 'facts'>, { t, progress }: RowContext): string {
@@ -80,13 +82,15 @@ function rowDetail(
   state: CheckProgressState,
   context: RowContext,
 ): Partial<CheckProgressStep> {
-  const { t, progress, failure } = context
+  const { t, progress, failure, isRerun } = context
   const reference = t(`progress.reference.${id}`)
   if (failure?.kind === 'provider_refused' && id !== 'facts' && failure.steps.includes(id)) {
     return { detail: t('progress.refused.row') }
   }
   switch (state) {
     case 'error':
+      // On a re-run the alert above gives the reason; the row's state word marks where.
+      if (isRerun) return {}
       return { detail: failure ? failureReason(t, failure) : t('progress.reason.check') }
     case 'running':
       return { detail: t(`progress.runningDetail.${id}`) }
@@ -109,9 +113,16 @@ function progressRows(context: RowContext, isRunning: boolean): CheckProgressSte
   })
 }
 
-/** The line under the heading: why the run stopped, or what the checks are doing. */
-function subtitle(t: TFunction, progress: ProgressState, failure: ClassifyFailure | null): string {
+/** The line under the heading: why the run stopped, or what the checks are doing. None for a
+ *  re-run that stopped: its alert says so, in the re-run's words. */
+function subtitle(
+  t: TFunction,
+  progress: ProgressState,
+  failure: ClassifyFailure | null,
+  isRerun: boolean,
+): string | null {
   if (failure === null) return t('progress.subtitle')
+  if (isRerun) return null
   if (failure.kind === 'needs_description') return t('progress.needsDescription.waiting')
   if (failure.kind === 'provider_refused') return t('progress.refused.subtitle')
   return stoppedTitle(t, progress)
@@ -237,7 +248,8 @@ export function ProgressPanel({
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
-  const rows = progressRows({ t, language, progress, failure }, isRunning)
+  const rows = progressRows({ t, language, progress, failure, isRerun }, isRunning)
+  const line = subtitle(t, progress, failure, isRerun)
   return (
     <GlassPanel
       as="section"
@@ -248,7 +260,7 @@ export function ProgressPanel({
         <h2 id={headingId} className="m-0 text-heading-small text-ink">
           {t('progress.heading')}
         </h2>
-        <p className="m-0 text-caption font-normal text-slate">{subtitle(t, progress, failure)}</p>
+        {line && <p className="m-0 text-caption font-normal text-slate">{line}</p>}
       </div>
       {failure?.kind === 'provider_refused' && (
         <RefusedAlert failure={failure} onSaveForLater={onSaveForLater} />

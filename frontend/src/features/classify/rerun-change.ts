@@ -1,12 +1,12 @@
 import i18n, { type TFunction } from 'i18next'
 
-import type { ClassificationResult, FollowUpQuestion } from '@/api'
-import { ambiguousProvision } from '@/features/inventory/tool-facts'
+import type { AnswerOption, ClassificationResult, FollowUpQuestion } from '@/api'
+import { ambiguousProvision, openQuestionCount } from '@/features/inventory/tool-facts'
 import { SUPPORTED_LANGUAGES, type Language } from '@/i18n'
 import { riskClassOf } from '@/lib/risk-class'
 import type { Answers } from '@/lib/tool-runs'
 
-import { askedQuestions, assumedFacts, CONFIRMED_PREFIX, confirmedFact } from './follow-up-answers'
+import { ANSWER_OPTIONS, assumedFacts, CONFIRMED_PREFIX, confirmedFact } from './follow-up-answers'
 import { provisionName } from './provision-names'
 
 // What a follow-up re-run changed (artboard `ResultRerun`): the class before and after, the
@@ -37,14 +37,12 @@ export function dutiesLabel(t: TFunction, result: ClassificationResult): string 
     : t('followUp.lists.possibleDuties', { count })
 }
 
-/** What the tool needs from the user. A paused result counts the questions its screen asked
- *  (the deciding one and the questions panel), so the line agrees with what the user saw. */
+/** What the tool needs from the user: the "Needs you" list's own line for it (a paused result
+ *  counts its open questions as that list does), since this shows the lists as they are. */
 export function needsLabel(t: TFunction, result: ClassificationResult, language: Language): string {
   if (result.risk_class === 'prohibited') return t('inventory.needs.prohibited')
   if (result.status === 'needs_more_information') {
-    const { deciding, others } = askedQuestions(result)
-    const count = Math.max(1, others.length + (deciding ? 1 : 0))
-    return t('followUp.lists.answer', { count })
+    return t('inventory.needs.needsInfo', { count: openQuestionCount(result) })
   }
   if (result.status === 'legally_ambiguous') {
     const provision = ambiguousProvision(result)
@@ -66,9 +64,12 @@ function questionsById(result: ClassificationResult): Map<string, FollowUpQuesti
 // An answer keeps the words of the language it was given in, which may not be the screen's now,
 // so these read it in every language the app has.
 
-/** "Yes" in every language. */
-function yesLabels(): string[] {
-  return SUPPORTED_LANGUAGES.map((lng) => i18n.t('followUp.option.yes', { lng }))
+/** The option a choice's label names, in whichever language it was given ("Nein" is `no`), or
+ *  null for words the user wrote. */
+function optionOf(choice: string): AnswerOption | null {
+  const named = (option: AnswerOption): boolean =>
+    SUPPORTED_LANGUAGES.some((lng) => i18n.t(`followUp.option.${option}`, { lng }) === choice)
+  return ANSWER_OPTIONS.find(named) ?? null
 }
 
 /** The fact in a "Confirmed: <fact>" line, in whichever language it was written. */
@@ -101,11 +102,12 @@ function saidLine(
   if (!question) return t('followUp.banner.youSaid', { answer: line })
   const lead = `${question.text} `
   const choice = line.startsWith(lead) ? line.slice(lead.length).replace(/\.$/, '') : null
+  const option = choice === null ? null : optionOf(choice)
   const fact = confirmedFact(question, facts)
-  if (fact !== null && choice !== null && yesLabels().includes(choice)) {
-    return t('followUp.banner.youConfirmed', { fact })
-  }
-  return t('followUp.banner.youSaidTo', { question: question.text, answer: choice ?? line })
+  if (fact !== null && option === 'yes') return t('followUp.banner.youConfirmed', { fact })
+  // A choice in the screen's language now; words stay as the user typed them.
+  const answer = option ? t(`followUp.option.${option}`) : (choice ?? line)
+  return t('followUp.banner.youSaidTo', { question: question.text, answer })
 }
 
 /** The answers this run added or changed since the run before, as the user gave them. */

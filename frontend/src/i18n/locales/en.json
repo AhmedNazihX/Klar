@@ -988,9 +988,7 @@
       "possibleDuties_one": "{{count}} possible duty",
       "possibleDuties_other": "{{count}} possible duties",
       "noDuties": "No specific duties",
-      "nothing": "Nothing to do",
-      "answer_one": "Answer {{count}} question",
-      "answer_other": "Answer {{count}} questions"
+      "nothing": "Nothing to do"
     },
     "changed": "Changed: {{decision}}"
   }
