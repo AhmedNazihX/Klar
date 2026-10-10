@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { routeDates } from './dates'
+import { monthsSince, routeDates } from './dates'
 
 describe('routeDates', () => {
   it.each([
@@ -15,5 +15,17 @@ describe('routeDates', () => {
       amended: '2026-08-02',
       original: '2026-08-02',
     })
+  })
+})
+
+describe('monthsSince', () => {
+  it.each([
+    ['2025-02-02', '2026-10-01', 20],
+    ['2025-02-02', '2025-03-02', 1],
+    ['2025-02-02', '2025-02-16', 0],
+    ['2025-02-02', '2025-02-02', 0],
+    ['2026-12-02', '2026-10-01', 0],
+  ])('counts the months from %s to %s as %i', (date, today, count) => {
+    expect(monthsSince(date, new Date(`${today}T12:00:00`))).toBe(count)
   })
 })

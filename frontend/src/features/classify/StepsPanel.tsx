@@ -6,6 +6,7 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { STEP_COLUMNS_DE, STEP_COLUMNS_EN, StepRow } from '@/components/StepRow'
 import { useLanguage } from '@/hooks/use-language'
 
+import { isDecidedBan } from './ban'
 import { rowReferences, stepOutcome, SUMMARY_ROWS, type SummaryRowId } from './result-text'
 import { DutiesStepCard, EngineStepCard, FactsStepCard } from './StepCards'
 
@@ -44,6 +45,9 @@ function useRows(result: ClassificationResult): Row[] {
   const language = useLanguage()
   const obligations = result.obligations ?? []
   const assumed = result.facts.filter((fact) => fact.evidence === 'assumed').length
+  // A decided ban ends the run at Art. 5: the steps after it never ran, and the row says why.
+  const isBan = isDecidedBan(result)
+  const notChecked = isBan ? t('prohibited.notChecked') : t('result.steps.notChecked')
   return SUMMARY_ROWS.map((id): Row => {
     if (id === 'facts') {
       return {
@@ -52,6 +56,15 @@ function useRows(result: ClassificationResult): Row[] {
         decision: t('result.steps.factsLine', { count: result.facts.length, assumed }),
         references: [t('result.steps.yourDescription')],
         card: <FactsStepCard result={result} />,
+      }
+    }
+    if (id === 'duties' && isBan) {
+      return {
+        id,
+        name: t('result.steps.duties'),
+        decision: notChecked,
+        references: [],
+        card: null,
       }
     }
     if (id === 'duties') {
@@ -71,7 +84,7 @@ function useRows(result: ClassificationResult): Row[] {
     const name = id === 'role_obligations' ? t('result.steps.role') : t(`progress.check.${id}`)
     const step = findStep(result, id)
     if (!step) {
-      return { id, name, decision: t('result.steps.notChecked'), references: [], card: null }
+      return { id, name, decision: notChecked, references: [], card: null }
     }
     return {
       id,

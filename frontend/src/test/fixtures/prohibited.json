@@ -1,0 +1,454 @@
+{
+  "result": {
+    "facts": [],
+    "steps": [
+      {
+        "step": "scope",
+        "decision": "Scripted: no scope finding",
+        "facts_used": [],
+        "citations": [],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      },
+      {
+        "step": "prohibited",
+        "decision": "Verboten nach Art. 5 Abs. 1 Buchst. f. Die Software leitet aus der Stimme der Beschäftigten Gereiztheit, Stress oder Genervtheit ab und erstellt Werte, die in Jahresgespräche und Bonusberechnungen einfließen.",
+        "facts_used": [
+          {
+            "text": "Die Software leitet aus der Stimme der Beschäftigten Gereiztheit, Stress oder Genervtheit ab und erstellt Werte, die in Jahresgespräche und Bonusberechnungen einfließen.",
+            "evidence": "inferred",
+            "source_span": null
+          }
+        ],
+        "citations": [
+          {
+            "provision_id": "art:5:1:f",
+            "document_id": "ai-act-consolidated",
+            "law_version": "amended",
+            "document_status": "consolidated",
+            "language": "de",
+            "quote": "das Inverkehrbringen, die Inbetriebnahme für diesen spezifischen Zweck oder die Verwendung von KI-Systemen zur Ableitung von Emotionen einer natürlichen Person am Arbeitsplatz und in Bildungseinrichtungen, es sei denn, die Verwendung des KI-Systems soll aus medizinischen Gründen oder Sicherheitsgründen eingeführt oder auf den Markt gebracht werden;",
+            "english_only": false,
+            "changed_by_omnibus": false
+          }
+        ],
+        "status": "decided",
+        "missing_fact": null,
+        "open_question": null,
+        "error": null
+      }
+    ],
+    "risk_class": "prohibited",
+    "status": "decided",
+    "role": null,
+    "also_role": null,
+    "role_switch_reason": null,
+    "annex_point": null,
+    "transparency_duties": [],
+    "deciding_facts": [
+      {
+        "text": "Die Software leitet aus der Stimme der Beschäftigten Gereiztheit, Stress oder Genervtheit ab und erstellt Werte, die in Jahresgespräche und Bonusberechnungen einfließen.",
+        "evidence": "inferred",
+        "source_span": null
+      }
+    ],
+    "obligations": [],
+    "law_version": "amended",
+    "law_text": {
+      "document_id": "ai-act-consolidated",
+      "celex": "02024R1689-20260727",
+      "version_date": "2026-07-27"
+    },
+    "as_of": "2026-09-30",
+    "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
+    "legal_review": "Lassen Sie dieses Ergebnis anwaltlich prüfen, bevor Sie das System nutzen oder bereitstellen: Es ist eine nach Art. 5 verbotene Praktik, oder dies wird angenommen.",
+    "not_assessed": [],
+    "follow_up_questions": []
+  },
+  "letters": {
+    "en": {
+      "document": {
+        "template": "vendor_message_prohibited",
+        "title": "Message to the vendor: a prohibited practice",
+        "article": "art:5",
+        "language": "en",
+        "label": "DRAFT",
+        "note": null,
+        "sections": [
+          {
+            "key": "recipient",
+            "heading": "To",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "vendor"
+            ],
+            "unanswered": [
+              "vendor"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "tool",
+            "heading": "The tool",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "tool_name"
+            ],
+            "unanswered": [
+              "tool_name"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "checked",
+            "heading": "Our check",
+            "provenance": "classification",
+            "paragraphs": [
+              "We checked the tool against the EU AI Act as it applies on 30 September 2026 (the amended text, CELEX 02024R1689-20260727)."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "finding",
+            "heading": "What it found",
+            "provenance": "classification",
+            "paragraphs": [
+              "The check found that the tool falls under a practice prohibited by Art. 5(1)(f) of the AI Act."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": [
+              {
+                "provision_id": "art:5:1:f",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "en",
+                "quote": "the placing on the market, the putting into service for this specific purpose, or the use of AI systems to infer emotions of a natural person in the areas of workplace and education institutions, except where the use of the AI system is intended to be put in place or into the market for medical or safety reasons;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            ]
+          },
+          {
+            "key": "facts",
+            "heading": "The facts it rests on",
+            "provenance": "classification",
+            "paragraphs": [
+              "Die Software leitet aus der Stimme der Beschäftigten Gereiztheit, Stress oder Genervtheit ab und erstellt Werte, die in Jahresgespräche und Bonusberechnungen einfließen."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "request",
+            "heading": "What we ask of you",
+            "provenance": "template",
+            "paragraphs": [
+              "Please confirm in writing whether you agree with this finding, and tell us if any of the facts it rests on is wrong. If the finding holds, the AI Act prohibits placing the tool on the market, putting it into service and using it for this practice, so we ask you to stop supplying it to us for this use."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "sender",
+            "heading": "From",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "sender"
+            ],
+            "unanswered": [
+              "sender"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          }
+        ],
+        "unanswered": 3,
+        "status": "needs_answers",
+        "law_version": "amended",
+        "as_of": "2026-09-30",
+        "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+      },
+      "checks": [
+        {
+          "check": "sections_present",
+          "passed": true,
+          "problems": []
+        },
+        {
+          "check": "nothing_invented",
+          "passed": true,
+          "problems": []
+        },
+        {
+          "check": "facts_match",
+          "passed": true,
+          "problems": []
+        }
+      ]
+    },
+    "de": {
+      "document": {
+        "template": "vendor_message_prohibited",
+        "title": "Nachricht an den Anbieter: eine verbotene Praktik",
+        "article": "art:5",
+        "language": "de",
+        "label": "DRAFT",
+        "note": null,
+        "sections": [
+          {
+            "key": "recipient",
+            "heading": "An",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "vendor"
+            ],
+            "unanswered": [
+              "vendor"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "tool",
+            "heading": "Das Tool",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "tool_name"
+            ],
+            "unanswered": [
+              "tool_name"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "checked",
+            "heading": "Unsere Prüfung",
+            "provenance": "classification",
+            "paragraphs": [
+              "Wir haben das Tool anhand der KI-Verordnung geprüft, wie sie am 30. September 2026 gilt (geänderte Fassung, CELEX 02024R1689-20260727)."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "finding",
+            "heading": "Was sie ergeben hat",
+            "provenance": "classification",
+            "paragraphs": [
+              "Nach der Prüfung fällt das Tool unter eine nach Art. 5 Abs. 1 Buchst. f der KI-Verordnung verbotene Praktik."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": [
+              {
+                "provision_id": "art:5:1:f",
+                "document_id": "ai-act-consolidated",
+                "law_version": "amended",
+                "document_status": "consolidated",
+                "language": "de",
+                "quote": "das Inverkehrbringen, die Inbetriebnahme für diesen spezifischen Zweck oder die Verwendung von KI-Systemen zur Ableitung von Emotionen einer natürlichen Person am Arbeitsplatz und in Bildungseinrichtungen, es sei denn, die Verwendung des KI-Systems soll aus medizinischen Gründen oder Sicherheitsgründen eingeführt oder auf den Markt gebracht werden;",
+                "english_only": false,
+                "changed_by_omnibus": false
+              }
+            ]
+          },
+          {
+            "key": "facts",
+            "heading": "Die Tatsachen, auf denen sie beruht",
+            "provenance": "classification",
+            "paragraphs": [
+              "Die Software leitet aus der Stimme der Beschäftigten Gereiztheit, Stress oder Genervtheit ab und erstellt Werte, die in Jahresgespräche und Bonusberechnungen einfließen."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "request",
+            "heading": "Worum wir Sie bitten",
+            "provenance": "template",
+            "paragraphs": [
+              "Bitte bestätigen Sie uns schriftlich, ob Sie diesem Ergebnis zustimmen, und teilen Sie uns mit, falls eine der Tatsachen, auf denen es beruht, nicht zutrifft. Trifft das Ergebnis zu, verbietet die KI-Verordnung, das Tool für diese Praktik in Verkehr zu bringen, in Betrieb zu nehmen und zu verwenden. Wir bitten Sie daher, es uns für diesen Zweck nicht weiter bereitzustellen."
+            ],
+            "question_keys": [],
+            "unanswered": [],
+            "status": "drafted",
+            "requirement": null,
+            "quotes": []
+          },
+          {
+            "key": "sender",
+            "heading": "Absender",
+            "provenance": "interview",
+            "paragraphs": [],
+            "question_keys": [
+              "sender"
+            ],
+            "unanswered": [
+              "sender"
+            ],
+            "status": "questions",
+            "requirement": null,
+            "quotes": []
+          }
+        ],
+        "unanswered": 3,
+        "status": "needs_answers",
+        "law_version": "amended",
+        "as_of": "2026-09-30",
+        "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+      },
+      "checks": [
+        {
+          "check": "sections_present",
+          "passed": true,
+          "problems": []
+        },
+        {
+          "check": "nothing_invented",
+          "passed": true,
+          "problems": []
+        },
+        {
+          "check": "facts_match",
+          "passed": true,
+          "problems": []
+        }
+      ]
+    }
+  },
+  "provisions": {
+    "art:5:1:f": {
+      "en": {
+        "provision_id": "art:5:1:f",
+        "doc_key": "ai-act-consolidated",
+        "document_title": "AI Act, consolidated text as of 27 July 2026",
+        "doc_type": "law",
+        "law_version": "amended",
+        "status": "consolidated",
+        "language": "en",
+        "english_only": false,
+        "heading": "Article 5 — Prohibited AI practices",
+        "text": "the placing on the market, the putting into service for this specific purpose, or the use of AI systems to infer emotions of a natural person in the areas of workplace and education institutions, except where the use of the AI system is intended to be put in place or into the market for medical or safety reasons;",
+        "valid_from": "2026-07-27",
+        "valid_to": null,
+        "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+      },
+      "de": {
+        "provision_id": "art:5:1:f",
+        "doc_key": "ai-act-consolidated",
+        "document_title": "AI Act, consolidated text as of 27 July 2026",
+        "doc_type": "law",
+        "law_version": "amended",
+        "status": "consolidated",
+        "language": "de",
+        "english_only": false,
+        "heading": "Artikel 5 — Verbotene Praktiken im KI-Bereich",
+        "text": "das Inverkehrbringen, die Inbetriebnahme für diesen spezifischen Zweck oder die Verwendung von KI-Systemen zur Ableitung von Emotionen einer natürlichen Person am Arbeitsplatz und in Bildungseinrichtungen, es sei denn, die Verwendung des KI-Systems soll aus medizinischen Gründen oder Sicherheitsgründen eingeführt oder auf den Markt gebracht werden;",
+        "valid_from": "2026-07-27",
+        "valid_to": null,
+        "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+      }
+    },
+    "art:99:3": {
+      "en": {
+        "provision_id": "art:99:3",
+        "doc_key": "ai-act-consolidated",
+        "document_title": "AI Act, consolidated text as of 27 July 2026",
+        "doc_type": "law",
+        "law_version": "amended",
+        "status": "consolidated",
+        "language": "en",
+        "english_only": false,
+        "heading": "Article 99 — Penalties",
+        "text": "Non-compliance with the prohibition of the AI practices referred to in Article 5 shall be subject to administrative fines of up to EUR 35 000 000 or, if the offender is an undertaking, up to 7 % of its total worldwide annual turnover for the preceding financial year, whichever is higher.",
+        "valid_from": "2026-07-27",
+        "valid_to": null,
+        "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+      },
+      "de": {
+        "provision_id": "art:99:3",
+        "doc_key": "ai-act-consolidated",
+        "document_title": "AI Act, consolidated text as of 27 July 2026",
+        "doc_type": "law",
+        "law_version": "amended",
+        "status": "consolidated",
+        "language": "de",
+        "english_only": false,
+        "heading": "Artikel 99 — Sanktionen",
+        "text": "Bei Missachtung des Verbots der in Artikel 5 genannten KI-Praktiken werden Geldbußen von bis zu 35 000 000 EUR oder — im Falle von Unternehmen — von bis zu 7 % des gesamten weltweiten Jahresumsatzes des vorangegangenen Geschäftsjahres verhängt, je nachdem, welcher Betrag höher ist.",
+        "valid_from": "2026-07-27",
+        "valid_to": null,
+        "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+      }
+    },
+    "art:99:6": {
+      "en": {
+        "provision_id": "art:99:6",
+        "doc_key": "ai-act-consolidated",
+        "document_title": "AI Act, consolidated text as of 27 July 2026",
+        "doc_type": "law",
+        "law_version": "amended",
+        "status": "consolidated",
+        "language": "en",
+        "english_only": false,
+        "heading": "Article 99 — Penalties",
+        "text": "In the case of SMEs, including start-ups, each fine referred to in this Article shall be up to the percentages or amount referred to in paragraphs 3, 4 and 5, whichever thereof is lower.",
+        "valid_from": "2026-07-27",
+        "valid_to": null,
+        "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer."
+      },
+      "de": {
+        "provision_id": "art:99:6",
+        "doc_key": "ai-act-consolidated",
+        "document_title": "AI Act, consolidated text as of 27 July 2026",
+        "doc_type": "law",
+        "law_version": "amended",
+        "status": "consolidated",
+        "language": "de",
+        "english_only": false,
+        "heading": "Artikel 99 — Sanktionen",
+        "text": "Im Falle von KMU, einschließlich Start-up-Unternehmen, gilt für jede in diesem Artikel genannte Geldbuße der jeweils niedrigere Betrag aus den in den Absätzen 3, 4 und 5 genannten Prozentsätzen oder Summen.",
+        "valid_from": "2026-07-27",
+        "valid_to": null,
+        "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+      }
+    }
+  }
+}

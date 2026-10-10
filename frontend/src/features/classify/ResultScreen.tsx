@@ -8,12 +8,14 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { ScreenTitle } from '@/components/ScreenTitle'
 import { useOriginalRun } from '@/hooks/use-original-run'
 
+import { isDecidedBan } from './ban'
 import { saveDraft, type ClassificationRun } from './classification-store'
 import { DecidingQuestion } from './DecidingQuestion'
 import { DutiesPanel, OutOfScopePanel } from './DutiesPanel'
 import { ExportReportButton } from './ExportReportButton'
 import { FactsPanel } from './FactsPanel'
 import { OriginalTextNote } from './OriginalTextNote'
+import { ProhibitedSummary } from './ProhibitedSummary'
 import { DraftDocumentsLink, ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
 import { ResultVerdict } from './ResultVerdict'
@@ -44,22 +46,44 @@ function SummaryView({
     void navigate({ to: '/app/classify' })
   }
 
+  const header = (
+    <ResultHeader
+      name={run.name}
+      result={result}
+      actions={
+        <>
+          <ViewSwitch view="summary" onViewChange={onViewChange} />
+          <Button variant="ghost" onClick={editDescription}>
+            {t('result.editDescription')}
+          </Button>
+          <DraftDocumentsLink toolId={run.toolId} />
+          <ExportReportButton run={run} />
+        </>
+      }
+    />
+  )
+
+  // A decided ban has its own layout (artboard `ResultProhibited`, P21).
+  if (isDecidedBan(result)) {
+    return (
+      <>
+        {header}
+        <ProhibitedSummary
+          run={run}
+          note={<OriginalTextNote run={run} onCompare={onCompare} />}
+          onChangeFacts={editDescription}
+          onExpandAll={() => {
+            onViewChange('reviewer')
+          }}
+        />
+        <ResultNotice result={result} isStored={run.isStored} />
+      </>
+    )
+  }
+
   return (
     <>
-      <ResultHeader
-        name={run.name}
-        result={result}
-        actions={
-          <>
-            <ViewSwitch view="summary" onViewChange={onViewChange} />
-            <Button variant="ghost" onClick={editDescription}>
-              {t('result.editDescription')}
-            </Button>
-            <DraftDocumentsLink toolId={run.toolId} />
-            <ExportReportButton run={run} />
-          </>
-        }
-      />
+      {header}
       <ResultVerdict result={result} today={new Date()} />
       <OriginalTextNote run={run} onCompare={onCompare} />
       {question && <DecidingQuestion question={question.missing_fact} />}

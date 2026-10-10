@@ -744,6 +744,45 @@
     "III_8_a": "assisting courts in researching and applying the law",
     "III_8_b": "influencing elections or referendums"
   },
+  "prohibited": {
+    "statement": "It matches a practice Art. 5 bans: {{points}}. The checks stop at Article 5.",
+    "statementPlain": "It matches a practice Art. 5 bans. The checks stop at Article 5.",
+    "bannedSince": "Banned since",
+    "monthsAgo_one": "{{count}} month ago",
+    "monthsAgo_other": "{{count}} months ago",
+    "underAMonth": "Less than a month ago",
+    "legalReview": "A prohibited practice is serious. We strongly recommend legal advice now.",
+    "notChecked": "Not checked: a ban ends the checks",
+    "now": {
+      "heading": "What to do now",
+      "intro": "There’s no route to comply: documentation or oversight can’t make a prohibited practice allowed.",
+      "stop": "Stop using or supplying it in the EU.",
+      "tellVendor": "Tell the vendor you’ve stopped, and why.",
+      "draftMessage": "Draft a message",
+      "data": "Get legal advice on the data it has already collected and what to do with it."
+    },
+    "fine": {
+      "heading": "Maximum fine",
+      "amount": "€35 m or 7%",
+      "body": "of a company’s total worldwide annual turnover for the preceding financial year, whichever is higher. For SMEs, including start-ups, whichever is lower."
+    },
+    "why": {
+      "heading": "Why the checks stopped"
+    },
+    "quote": {
+      "loading": "Loading the text of {{provision}}…",
+      "failed": "Klar couldn’t load the text of {{provision}}."
+    },
+    "letter": {
+      "label": "Draft message to the vendor",
+      "intro": "Check the message, fill in the parts marked below, then send it from your own email.",
+      "toFillIn": "To fill in before you send it.",
+      "drafting": "Drafting the message…",
+      "failed": "Klar couldn’t draft the message.",
+      "tryAgain": "Try again",
+      "close": "Close"
+    }
+  },
   "inventory": {
     "count_one": "{{count}} tool, classified under the AI Act as amended on {{date}}.",
     "count_other": "{{count}} tools, classified under the AI Act as amended on {{date}}.",

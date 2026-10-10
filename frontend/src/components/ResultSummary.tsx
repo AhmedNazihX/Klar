@@ -16,8 +16,12 @@ const DOT: Record<RiskClassKind, string> = {
   out_of_scope: 'bg-risk-out-dot shadow-[0_0_0_5px_var(--color-risk-out-tint)]',
 }
 
-/** The Result artboard's warm glass for a High-risk result. */
-const HIGH_RISK_TINT = 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(255 232 212 / 0.5))'
+/** The warm glass of a High-risk result (artboard `Result`) and the red-tinted glass of a
+ *  Prohibited one (artboard `ResultProhibited`); other classes stay plain glass. */
+const TINTS: Partial<Record<RiskClassKind, string>> = {
+  high_risk: 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(255 232 212 / 0.5))',
+  prohibited: 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(255 226 226 / 0.5))',
+}
 
 export type ResultSummaryProps = {
   riskClass: RiskClassKind
@@ -38,8 +42,8 @@ export type ResultSummaryProps = {
 
 /**
  * The top of every result, in an order that never changes: the class in Lexend with its dot and
- * status, who you are and why, then the date duties apply from. A High-risk result gets the warm
- * glass tint; other classes stay plain glass.
+ * status, who you are and why, then the date duties apply from (or, on a Prohibited result, the
+ * date it has been banned since). High-risk and Prohibited results get their tinted glass.
  */
 export function ResultSummary({
   riskClass,
@@ -60,7 +64,7 @@ export function ResultSummary({
       className="flex min-w-0 flex-col gap-5 rounded-panel px-6 py-6 glass md:px-8.5 md:py-7.5"
       // The warm tint replaces the glass fill (the glass utility's own background would win
       // over a background class).
-      style={riskClass === 'high_risk' ? { background: HIGH_RISK_TINT } : undefined}
+      style={TINTS[riskClass] ? { background: TINTS[riskClass] } : undefined}
     >
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 flex-col gap-3.5">

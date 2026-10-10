@@ -744,6 +744,45 @@
     "III_8_a": "Unterstützung von Gerichten bei der Ermittlung und Anwendung des Rechts",
     "III_8_b": "Beeinflussung von Wahlen oder Abstimmungen"
   },
+  "prohibited": {
+    "statement": "Es entspricht einer Praktik, die Art. 5 verbietet: {{points}}. Die Prüfung endet bei Artikel 5.",
+    "statementPlain": "Es entspricht einer Praktik, die Art. 5 verbietet. Die Prüfung endet bei Artikel 5.",
+    "bannedSince": "Verboten seit",
+    "monthsAgo_one": "vor {{count}} Monat",
+    "monthsAgo_other": "vor {{count}} Monaten",
+    "underAMonth": "vor weniger als einem Monat",
+    "legalReview": "Eine verbotene Praktik ist ernst. Wir empfehlen dringend, jetzt rechtlichen Rat einzuholen.",
+    "notChecked": "Nicht geprüft: Ein Verbot beendet die Prüfung",
+    "now": {
+      "heading": "Was jetzt zu tun ist",
+      "intro": "Es gibt keinen Weg zur Konformität: Dokumentation oder Aufsicht machen eine verbotene Praktik nicht zulässig.",
+      "stop": "Verwenden oder liefern Sie es in der EU nicht mehr.",
+      "tellVendor": "Sagen Sie dem Anbieter, dass Sie es nicht mehr verwenden, und warum.",
+      "draftMessage": "Nachricht entwerfen",
+      "data": "Holen Sie rechtlichen Rat ein, was mit den bereits erhobenen Daten geschehen soll."
+    },
+    "fine": {
+      "heading": "Höchstbußgeld",
+      "amount": "35 Mio. € oder 7 %",
+      "body": "des gesamten weltweiten Jahresumsatzes eines Unternehmens im vorangegangenen Geschäftsjahr, je nachdem, welcher Betrag höher ist. Für KMU, einschließlich Start-ups, gilt der niedrigere Betrag."
+    },
+    "why": {
+      "heading": "Warum die Prüfung endete"
+    },
+    "quote": {
+      "loading": "Der Text von {{provision}} wird geladen …",
+      "failed": "Klar konnte den Text von {{provision}} nicht laden."
+    },
+    "letter": {
+      "label": "Entwurf einer Nachricht an den Anbieter",
+      "intro": "Prüfen Sie die Nachricht, ergänzen Sie die markierten Teile und senden Sie sie dann aus Ihrem eigenen E-Mail-Postfach.",
+      "toFillIn": "Vor dem Senden auszufüllen.",
+      "drafting": "Die Nachricht wird entworfen …",
+      "failed": "Klar konnte die Nachricht nicht entwerfen.",
+      "tryAgain": "Erneut versuchen",
+      "close": "Schließen"
+    }
+  },
   "inventory": {
     "count_one": "{{count}} Tool, eingestuft nach der KI-Verordnung in der Fassung vom {{date}}.",
     "count_other": "{{count}} Tools, eingestuft nach der KI-Verordnung in der Fassung vom {{date}}.",
