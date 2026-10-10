@@ -1,3 +1,4 @@
+import { FIRST_RENDER_MS } from '@/test/timeouts'
 import { QueryClient } from '@tanstack/react-query'
 import { getDefaultNormalizer, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -14,7 +15,7 @@ import { server } from '@/test/msw-server'
 import { markedPlaceholders } from '@/test/placeholders'
 import { renderRoute } from '@/test/test-utils'
 import { env } from '@/lib/env'
-import { FIRST_RENDER_MS, INVENTORIES_URL } from '@/test/user-data-handlers'
+import { INVENTORIES_URL } from '@/test/user-data-handlers'
 import {
   COUNTS_URL,
   createUserDataStore,
@@ -166,7 +167,7 @@ async function openYourData(language: 'en' | 'de' = 'en') {
   await i18n.changeLanguage(language)
   const user = userEvent.setup()
   const rendered = renderRoute('/app/your-data')
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   return { user, ...rendered }
 }
 

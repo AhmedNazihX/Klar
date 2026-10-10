@@ -17,12 +17,7 @@ import {
 import { CLASSIFICATIONS_URL, SAVE_TOOL_URL, savedRunHandler } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
-import {
-  FIRST_RENDER_MS,
-  INVENTORY_ID,
-  inventoryRow,
-  userDataHandlers,
-} from '@/test/user-data-handlers'
+import { INVENTORY_ID, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 import { clearDraft, readDraft, saveDraft } from './classification-store'
 
@@ -80,7 +75,7 @@ async function classify(name: string, language: 'en' | 'de' = 'en') {
   await i18n.changeLanguage(language)
   const user = userEvent.setup()
   const rendered = renderRoute('/app/classify')
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   const labels =
     language === 'de'
       ? { name: 'Wie nennen Sie das Tool?', description: 'In Ihren eigenen Worten' }
@@ -210,9 +205,7 @@ describe('Classify, saving the run to the inventory', () => {
       server.use(saveHandler({ status: 400, code }))
       const { router } = await classify('Applicant screening', language)
 
-      expect(await screen.findByRole('alert', {}, { timeout: FIRST_RENDER_MS })).toHaveTextContent(
-        message,
-      )
+      expect(await screen.findByRole('alert')).toHaveTextContent(message)
       expect(router.state.location.pathname).toMatch(/^\/app\/inventory\/[\w-]+$/)
       expect(router.state.location.pathname).not.toBe(`/app/inventory/${SYSTEM_ID}`)
       expect(screen.getByRole('heading', { level: 1, name: 'Applicant screening' })).toBeVisible()
@@ -235,7 +228,7 @@ describe('Classify, a draft for a tool the user has', () => {
     server.use(saveHandler(null, held))
     const user = userEvent.setup()
     const rendered = renderRoute('/app/classify')
-    await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+    await screen.findByRole('heading', { level: 1 })
     return { user, ...rendered }
   }
 
@@ -304,11 +297,7 @@ describe('Classify, a draft for a tool the user has', () => {
     await user.click(screen.getByRole('button', { name: 'Run the checks' }))
     const asked = WORKED_EXAMPLE.steps.find((step) => step.step === 'scope')?.missing_fact
     if (!asked) throw new Error('The recorded result pauses at scope.')
-    const question = await screen.findByRole(
-      'region',
-      { name: asked.text },
-      { timeout: FIRST_RENDER_MS },
-    )
+    const question = await screen.findByRole('region', { name: asked.text })
     await user.type(
       within(question).getByRole('textbox', { name: asked.text }),
       'A model trained on past hiring data.',
@@ -324,7 +313,7 @@ describe('Classify, a draft for a tool the user has', () => {
   it('shows no line for a new tool', async () => {
     await i18n.changeLanguage('en')
     renderRoute('/app/classify')
-    await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+    await screen.findByRole('heading', { level: 1 })
     expect(screen.queryByRole('button', { name: 'Classify as a new tool instead' })).toBeNull()
   })
 })

@@ -19,6 +19,8 @@ const DESKTOP = { width: 1440, height: 1000 } as const
 async function open(path: string, language: 'en' | 'de'): Promise<void> {
   await i18n.changeLanguage(language)
   renderRoute(path)
+  // The file's first test (`/app/welcome (en)`) loads the frame and its lazy route chunks cold,
+  // which takes past the default second when another run shares the machine (F10).
   await screen.findByRole('heading', { level: 1 })
   await document.fonts.ready
 }

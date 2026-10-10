@@ -18,7 +18,9 @@ The second line downloads the headless Chromium that `pnpm test` needs: layout t
 - `corepack pnpm dev`: the app on the Vite dev server
 - `corepack pnpm lint`: ESLint
 - `corepack pnpm build`: type check and production build
-- `corepack pnpm test`: all tests, jsdom (`unit`) and Chromium (`browser`)
+- `corepack pnpm test`: all tests, jsdom (`unit`) and Chromium (`browser`). Several worktrees can
+  run it at once: the browser project's server starts at port 63315 and moves to the next free
+  port when that one is taken (only `pnpm dev` keeps a fixed port, 5173)
 - `corepack pnpm exec vitest run --project unit`: only the jsdom tests, no browser needed
 - `corepack pnpm format`: Prettier
 - `corepack pnpm gen:api`: regenerate `src/api/` from `openapi.json`

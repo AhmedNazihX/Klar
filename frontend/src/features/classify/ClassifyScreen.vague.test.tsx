@@ -21,7 +21,7 @@ import {
 import { SAVE_TOOL_URL, savedRunHandler } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
+import { inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 import { clearDraft } from './classification-store'
 import { DESCRIPTION_MAX } from './description-form'
@@ -119,7 +119,7 @@ async function runThin(language: 'en' | 'de' = 'en', description: string = THIN_
   await i18n.changeLanguage(language)
   const user = userEvent.setup()
   const rendered = renderRoute('/app/classify')
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   // A long description is pasted: typing it key by key would take minutes.
   await user.click(screen.getByLabelText(TEXT[language].description))
   await user.paste(description)

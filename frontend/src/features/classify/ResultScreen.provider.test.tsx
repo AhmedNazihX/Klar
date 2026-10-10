@@ -2,6 +2,7 @@
 // Supabase configured: the duties in C9's three groups with their ticks (P24's duty_progress),
 // what makes it lighter from the company profile's size class, "You also use it" for a provider
 // that is also the deployer, and the Chapter V note on a system built on a general-purpose model.
+import { FIRST_RENDER_MS } from '@/test/timeouts'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18n from 'i18next'
@@ -25,7 +26,7 @@ import {
 } from '@/test/provider-fixtures'
 import { SUPABASE_URL } from '@/test/supabase-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
+import { inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 vi.mock('@/lib/supabase', async (importOriginal) => {
   const actual = await importOriginal<typeof SupabaseModule>()

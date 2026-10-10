@@ -23,7 +23,6 @@ import {
   pressGuardOriginal,
 } from '@/test/original-text-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { putRun, type ClassificationRun } from './classification-store'
 
@@ -49,11 +48,7 @@ async function openComparison(
   putRun(client, run)
   if (original) client.setQueryData(originalRunKey(run), original)
   renderRoute(`/app/inventory/${TOOL_ID}?view=reviewer`, client)
-  const panel = await screen.findByRole(
-    'region',
-    { name: PANEL_NAME[language] },
-    { timeout: FIRST_RENDER_MS },
-  )
+  const panel = await screen.findByRole('region', { name: PANEL_NAME[language] })
   await document.fonts.ready
   return panel
 }
@@ -140,11 +135,7 @@ describe('the summary under the original text', () => {
       result: decidedHighRisk(),
     })
     renderRoute('/app/inventory/applicant-screening?law=original', client)
-    const summary = await screen.findByRole(
-      'region',
-      { name: 'Result' },
-      { timeout: FIRST_RENDER_MS },
-    )
+    const summary = await screen.findByRole('region', { name: 'Result' })
     expect(summary.innerText).toContain('2 August 2026')
     expect(summary.innerText).not.toContain('2 December 2027')
   })
@@ -167,11 +158,7 @@ describe('the summary under the original text', () => {
         result: annexINeedsInfo(),
       })
       renderRoute('/app/inventory/press-guard?law=original', client)
-      const question = await screen.findByRole(
-        'region',
-        { name: ANNEX_I_QUESTION },
-        { timeout: FIRST_RENDER_MS },
-      )
+      const question = await screen.findByRole('region', { name: ANNEX_I_QUESTION })
       expect(question.innerText).toContain(original)
       expect(question.innerText).not.toContain(amended)
     },

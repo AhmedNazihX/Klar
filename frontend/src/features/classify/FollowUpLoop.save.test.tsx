@@ -31,7 +31,7 @@ import { CLASSIFICATIONS_URL, toolRow } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { SIGNUP_URL } from '@/test/supabase-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
+import { inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 import { putRun } from './classification-store'
 
@@ -145,11 +145,7 @@ async function openTool(
   const user = userEvent.setup()
   const client = createTestQueryClient()
   renderRoute(`/app/inventory/${toolId}`, client)
-  await screen.findByRole(
-    'heading',
-    { level: 1, name: 'Shift planner' },
-    { timeout: FIRST_RENDER_MS },
-  )
+  await screen.findByRole('heading', { level: 1, name: 'Shift planner' })
   return { user, client }
 }
 
@@ -310,11 +306,7 @@ describe('Saving a follow-up run', () => {
       previous: { runNo: 1, result: annexIIINeedsInfo(), answers: {} },
     })
     renderRoute(`/app/inventory/${toolId}`, client)
-    const banner = await screen.findByRole(
-      'region',
-      { name: 'Your answer changed the result.' },
-      { timeout: FIRST_RENDER_MS },
-    )
+    const banner = await screen.findByRole('region', { name: 'Your answer changed the result.' })
     await expect.poll(() => heldSessionId(client)).not.toBeNull()
 
     await user.click(within(banner).getByRole('button', { name: 'Undo answer' }))
@@ -461,11 +453,7 @@ describe('A re-run or an undo that outlives its session (sign-out, Delete my dat
       saveFailure: 'failed',
     })
     renderRoute('/app/inventory/unsaved-tool', client)
-    await screen.findByRole(
-      'heading',
-      { level: 1, name: 'Shift planner' },
-      { timeout: FIRST_RENDER_MS },
-    )
+    await screen.findByRole('heading', { level: 1, name: 'Shift planner' })
     await expect.poll(() => heldSessionId(client)).not.toBeNull()
     endAnonymousSession(client)
     await answerNo(user)

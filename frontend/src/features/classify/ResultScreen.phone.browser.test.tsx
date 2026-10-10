@@ -13,7 +13,6 @@ import { page } from 'vitest/browser'
 
 import { decidedHighRisk, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { putRun } from './classification-store'
 
@@ -68,11 +67,7 @@ async function openResult(
     result: decidedHighRisk(),
   })
   renderRoute(`/app/inventory/${TOOL_ID}`, client)
-  await screen.findByRole(
-    'heading',
-    { level: 1, name: 'Applicant screening' },
-    { timeout: FIRST_RENDER_MS },
-  )
+  await screen.findByRole('heading', { level: 1, name: 'Applicant screening' })
   await document.fonts.ready
 }
 

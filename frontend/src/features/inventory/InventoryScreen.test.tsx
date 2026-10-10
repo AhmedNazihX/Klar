@@ -35,7 +35,7 @@ import {
   type ProhibitedTraffic,
 } from '@/test/prohibited-fixtures'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, IMPORT_URL, userDataHandlers } from '@/test/user-data-handlers'
+import { IMPORT_URL, userDataHandlers } from '@/test/user-data-handlers'
 
 // The app's Supabase client, pointed at the MSW network boundary.
 vi.mock('@/lib/supabase', async (importOriginal) => {
@@ -98,7 +98,7 @@ async function openInventory(language: 'en' | 'de' = 'en') {
   await i18n.changeLanguage(language)
   const user = userEvent.setup()
   const rendered = renderRoute('/app/inventory')
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   return { user, ...rendered }
 }
 
@@ -189,7 +189,7 @@ describe('Inventory, the summary sentence', () => {
     await i18n.changeLanguage(language)
     renderRoute(path)
     const name = language === 'de' ? 'Unternehmensübersicht' : 'Company summary'
-    return screen.findByRole('region', { name }, { timeout: FIRST_RENDER_MS })
+    return screen.findByRole('region', { name })
   }
 
   it.each([
@@ -502,11 +502,7 @@ describe('Inventory, the table', () => {
 
     expect(router.state.location.pathname).toBe(`/app/inventory/${String(tools[0]?.['id'])}`)
     expect(
-      await screen.findByRole(
-        'heading',
-        { level: 1, name: 'Applicant screening' },
-        { timeout: FIRST_RENDER_MS },
-      ),
+      await screen.findByRole('heading', { level: 1, name: 'Applicant screening' }),
     ).toBeInTheDocument()
     expect(
       within(screen.getByRole('region', { name: 'Result' })).getByText('High-risk'),
@@ -528,9 +524,7 @@ describe('Inventory, the table', () => {
     tools = [toolRow('Applicant screening', decidedHighRisk())]
     await i18n.changeLanguage(language)
     renderRoute('/app/inventory/0d6c1c55-1d2e-4f00-9a3b-6b3c3f1a2b99')
-    expect(
-      await screen.findByRole('heading', { level: 1, name: title }, { timeout: FIRST_RENDER_MS }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: title })).toBeInTheDocument()
     expect(screen.getByText(body)).toBeVisible()
   })
 
@@ -549,7 +543,7 @@ describe("A tool's result page, read from the inventory", () => {
     await i18n.changeLanguage(language)
     const user = userEvent.setup()
     const rendered = renderRoute(`/app/inventory/${String(row['id'])}`)
-    await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+    await screen.findByRole('heading', { level: 1 })
     return { user, ...rendered }
   }
 

@@ -10,9 +10,6 @@ export const SYSTEMS_URL = `${SUPABASE_URL}/rest/v1/systems`
 export const IMPORT_URL = `${SUPABASE_URL}/rest/v1/rpc/import_my_data`
 export const INVENTORY_ID = '0d6c1c55-1d2e-4f00-9a3b-6b3c3f1a2b10'
 
-/** A screen's first render loads its lazy route chunk, which can pass a second in a full run. */
-export const FIRST_RENDER_MS = 5000
-
 /** An inventories row as PostgREST returns it; every profile field null unless given. */
 export function inventoryRow(fields: Record<string, string | null> = {}): Record<string, unknown> {
   return {

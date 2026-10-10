@@ -29,7 +29,6 @@ import {
   pressGuardOriginal,
 } from '@/test/original-text-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { putRun, type ClassificationRun } from './classification-store'
 
@@ -74,11 +73,7 @@ async function openResult({
   if (law) search.set('law', law)
   const query = search.toString()
   const rendered = renderRoute(`/app/inventory/${TOOL_ID}${query ? `?${query}` : ''}`, client)
-  await screen.findByRole(
-    'heading',
-    { level: 1, name: 'Tool under two texts' },
-    { timeout: FIRST_RENDER_MS },
-  )
+  await screen.findByRole('heading', { level: 1, name: 'Tool under two texts' })
   return { ...rendered, client, user: userEvent.setup() }
 }
 
@@ -684,13 +679,7 @@ describe('The law switch and the original-text run', () => {
       },
     ])
     renderRoute('/app/inventory?law=original', client)
-    expect(
-      await screen.findByRole(
-        'link',
-        { name: 'Tool under two texts' },
-        { timeout: FIRST_RENDER_MS },
-      ),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Tool under two texts' })).toBeInTheDocument()
     expect(bodies).toHaveLength(0)
   })
 

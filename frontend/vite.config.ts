@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   // The router plugin must come before react(); it writes src/routeTree.gen.ts.
   // Tests sitting next to route files are not routes.
   plugins: [
@@ -23,8 +23,10 @@ export default defineConfig({
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },
   // The API's default CORS_ORIGINS (backend/aiact/settings.py) allow this origin; a busy port
-  // fails instead of moving to one the API would refuse.
-  server: { port: 5173, strictPort: true },
+  // fails instead of moving to one the API would refuse. Under Vitest (mode 'test') the browser
+  // project's server inherits this setting, so there a busy port moves on instead: two worktrees
+  // can run `pnpm test` at once (story F10).
+  server: { port: 5173, strictPort: mode !== 'test' },
   build: {
     // No public source maps in production (frontend-security rule).
     sourcemap: false,
@@ -43,6 +45,9 @@ export default defineConfig({
     // Tests run without Supabase, as in CI, whatever a developer's .env.local holds: tests that need
     // it stub it themselves, and "without Supabase" tests would otherwise see the local keys.
     env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_ANON_KEY: '' },
+    // Half the cores per run, for both projects: worktrees run `pnpm test` side by side, and two
+    // runs that each take every core starve each other into timeouts (F10).
+    maxWorkers: '50%',
     projects: [
       {
         // Component tests in jsdom: fast, no layout.
@@ -50,6 +55,8 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'jsdom',
+          // Vitest's browser-mode default (the jsdom default is 5 s), for a busy machine (F10).
+          testTimeout: 15_000,
           include: ['src/**/*.test.{ts,tsx}'],
           exclude: ['src/**/*.browser.test.{ts,tsx}'],
           setupFiles: ['./src/test/setup.ts'],
@@ -68,9 +75,12 @@ export default defineConfig({
             headless: true,
             provider: playwright(),
             instances: [{ browser: 'chromium' }],
+            // Twice the 60 s default: on a busy machine a page can take past a minute to connect,
+            // and the files it was to run would then never run (F10).
+            connectTimeout: 120_000,
           },
         },
       },
     ],
   },
-})
+}))

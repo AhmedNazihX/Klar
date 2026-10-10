@@ -7,7 +7,7 @@ import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, userDataHandlers } from '@/test/user-data-handlers'
+import { userDataHandlers } from '@/test/user-data-handlers'
 
 import type { QuotedProvision } from './LawQuote'
 
@@ -35,7 +35,7 @@ afterAll(async () => {
 async function openWelcome(path = '/app/welcome') {
   const user = userEvent.setup()
   renderRoute(path)
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   return user
 }
 

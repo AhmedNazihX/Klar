@@ -4,9 +4,14 @@ import '@testing-library/jest-dom/vitest'
 import '@/index.css'
 import '@/i18n'
 
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import i18n from 'i18next'
 import { afterEach, beforeEach } from 'vitest'
+
+import { FIRST_RENDER_MS } from './timeouts'
+
+// A screen's first render loads its lazy route chunks cold; findBy* and waitFor wait this long.
+configure({ asyncUtilTimeout: FIRST_RENDER_MS })
 
 beforeEach(async () => {
   window.localStorage.clear()

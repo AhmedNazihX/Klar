@@ -9,7 +9,6 @@ import { page } from 'vitest/browser'
 import type { Citation } from '@/api'
 import { answered } from '@/test/qa-fixtures'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { ASK_THREAD, writeThread } from './qa-history'
 
@@ -60,7 +59,7 @@ describe('the Ask page at 390 px', () => {
       seedThread()
       await i18n.changeLanguage(language)
       renderRoute('/app/ask')
-      await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+      await screen.findByRole('heading', { level: 1 })
       await document.fonts.ready
 
       const chips = screen.getByRole('list', {
