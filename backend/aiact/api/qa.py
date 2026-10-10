@@ -58,8 +58,8 @@ ANSWER_FAILURES: tuple[type[Exception], ...] = (
     ValueError,
 )
 """What a search's embedding or the model call raises when it fails: a refusal, a reply that
-doesn't fit, no response, the provider's or the transport's error (ChatOpenRouter raises a provider's error as
-a plain `ValueError`)."""
+doesn't fit, no response, the provider's or the transport's error (ChatOpenRouter raises a
+provider's error as a plain `ValueError`)."""
 
 Question = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_QUESTION_CHARS)

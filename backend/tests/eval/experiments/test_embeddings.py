@@ -594,7 +594,7 @@ def test_ragas_refuses_an_unembedded_arm_before_any_paid_call(
 
 def test_build_parts_searches_the_arm_it_is_given_without_a_cut_off() -> None:
     arm = build_embeddings(ARMS["openai3l-1536"], settings=_settings())
-    parts = ragas_metrics.build_parts(settings=_settings(), embeddings=arm)
+    parts = ragas_metrics.build_parts(settings=_settings(), embeddings=arm, answerer="plain_rag")
     assert parts.embedding == {
         "model": "openai/text-embedding-3-large",
         "provider": "azure",
@@ -616,7 +616,7 @@ def test_build_parts_keeps_the_cut_off_for_the_configured_arm() -> None:
         embedding_model="qwen/qwen3-embedding-8b",
         embedding_provider="nebius",
     )
-    retriever = ragas_metrics.build_parts(settings=settings).retriever
+    retriever = ragas_metrics.build_parts(settings=settings, answerer="plain_rag").retriever
     assert isinstance(retriever, ragas_metrics.SearchRetriever)
     assert retriever.is_cut_off is True
 
@@ -629,7 +629,9 @@ def test_build_parts_can_search_the_configured_arm_without_the_cut_off() -> None
         embedding_model="qwen/qwen3-embedding-8b",
         embedding_provider="nebius",
     )
-    retriever = ragas_metrics.build_parts(settings=settings, is_cut_off=False).retriever
+    retriever = ragas_metrics.build_parts(
+        settings=settings, is_cut_off=False, answerer="plain_rag"
+    ).retriever
     assert isinstance(retriever, ragas_metrics.SearchRetriever)
     assert retriever.is_cut_off is False
     config = retriever.config()

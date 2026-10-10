@@ -147,6 +147,7 @@ def test_every_route_documents_the_one_422_schema() -> None:
         "POST /reports/result",
         "POST /reports/inventory",
         "POST /reports/checklist",
+        "POST /qa",
     }
     assert all(
         body["schema"] == {"$ref": "#/components/schemas/Unprocessable"}
