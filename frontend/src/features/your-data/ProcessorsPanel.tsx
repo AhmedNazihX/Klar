@@ -6,7 +6,8 @@ import { GlassPanel } from '@/components/GlassPanel'
 
 // Every processor in the data chain, named (INIT › Ethical considerations; decision 005): the
 // models through OpenRouter on Azure EU and Google Vertex EU, embeddings on Nebius, storage on
-// Supabase. Keep in step with the privacy notice (P17).
+// Supabase. A check Azure's content filter blocks goes once more to Gemini on Google Vertex EU
+// (decision 033). Keep in step with the privacy notice (P17).
 const PROCESSORS = ['models', 'search', 'storage'] as const
 
 /** "Who processes it": what each processor does with the user's text, and the privacy notice. */
@@ -28,6 +29,11 @@ export function ProcessorsPanel(): JSX.Element {
             <p className="m-0 text-caption font-normal text-slate">
               {t(`yourData.who.${processor}Detail`)}
             </p>
+            {processor === 'models' && (
+              <p className="m-0 text-caption font-normal text-slate">
+                {t('yourData.who.modelsRefusal')}
+              </p>
+            )}
           </li>
         ))}
       </ul>

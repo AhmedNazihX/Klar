@@ -373,6 +373,7 @@
       "models": "Language models, through OpenRouter",
       "modelsRole": "Checks and answers",
       "modelsDetail": "OpenRouter passes each request on; its own processing isn’t limited to the EU. The models run in EU regions on Microsoft Azure and Google Vertex AI.",
+      "modelsRefusal": "If Microsoft Azure's content filter blocks a check, that check's request (the description and the facts and answers taken from it) is sent once more to Gemini 3.1 Flash-Lite on Google Vertex AI in the EU (zero data retention, no training), for each check the filter blocked. This happens only when the filter blocks it.",
       "search": "Search of the legal texts, on an EU host",
       "searchRole": "Embeddings",
       "searchDetail": "Nebius, in the EU, turns your description into a search of the Act.",
