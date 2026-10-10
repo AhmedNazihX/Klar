@@ -15,7 +15,6 @@ from typing import cast
 
 import psycopg
 import pytest
-from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
@@ -68,12 +67,14 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
     corpus_recording,
 )
 from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -631,7 +632,7 @@ def test_provision_lookups_use_the_steps_connection(monkeypatch: pytest.MonkeyPa
 
 def _settings(**values: object) -> Settings:
     pinned = {"engine_model": LUNA, "engine_provider": LUNA_PROVIDER, **values}
-    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **pinned)  # pyright: ignore[reportCallIssue]
+    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **REFUSAL_ROUTE, **pinned)  # pyright: ignore[reportCallIssue]
 
 
 def _fake_chat(given: TransparencyAnswer | str) -> GenericFakeChatModel:
@@ -783,16 +784,9 @@ def test_a_reply_that_does_not_fit_the_schema_is_a_broken_output() -> None:
     assert "SECRET-VALUE-7731" not in str(raised.value)
 
 
-def test_the_output_cap_leaves_room_for_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
-    asked: dict[str, object] = {}
-
-    def spy(**kwargs: object) -> BaseChatModel:
-        asked.update(kwargs)
-        return _fake_chat(answer())
-
-    monkeypatch.setattr(node, "engine_chat_model", spy)
-    TransparencyCheck(_settings(), library=FakeLibrary())
-    assert asked["max_tokens"] == 4000
+def test_the_output_cap_leaves_room_for_reasoning() -> None:
+    check = TransparencyCheck(_settings(), library=FakeLibrary())
+    assert_pinned_route(check._route, 4000)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_the_engine_model_must_be_pinned() -> None:

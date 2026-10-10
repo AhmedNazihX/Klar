@@ -1,10 +1,17 @@
 import httpx
 import pytest
 from langchain_core.messages import AIMessage
+from langchain_openrouter import ChatOpenRouter
 from openrouter.errors import OpenRouterError
 from pydantic import SecretStr
 
-from aiact.llm import LLMConfigError, chat_model, engine_chat_model
+from aiact.llm import (
+    LLMConfigError,
+    chat_model,
+    engine_chat_model,
+    engine_route,
+    refusal_chat_model,
+)
 from aiact.settings import Settings, get_settings
 
 # The planned engine model: cheap, with zero-data-retention endpoints (Azure).
@@ -70,6 +77,65 @@ def test_the_engine_model_needs_a_model_and_a_provider(
     monkeypatch.delenv("ENGINE_PROVIDER", raising=False)
     with pytest.raises(LLMConfigError, match=f"{missing} is not set"):
         engine_chat_model(max_tokens=100, settings=_settings(**values))
+
+
+# --- The refusal route (decision 033) -----------------------------------------------------------
+
+GEMINI = "google/gemini-3.1-flash-lite"
+ROUTE = {
+    "engine_model": CHEAP_MODEL,
+    "engine_provider": "azure/eu",
+    "refusal_model": GEMINI,
+    "refusal_provider": "google-vertex/eu",
+}
+
+
+def test_the_refusal_model_is_pinned_to_its_provider_without_fallbacks() -> None:
+    model = refusal_chat_model(max_tokens=100, settings=_settings(**ROUTE))
+    assert model.model_name == "google/gemini-3.1-flash-lite"
+    assert model.max_tokens == 100
+    assert model.temperature == 0.0
+    assert model.openrouter_provider == {
+        "data_collection": "deny",
+        "zdr": True,
+        "order": ["google-vertex/eu"],
+        "allow_fallbacks": False,
+    }
+
+
+@pytest.mark.parametrize("missing", ["REFUSAL_MODEL", "REFUSAL_PROVIDER"])
+def test_the_refusal_model_needs_a_model_and_a_provider(
+    missing: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("REFUSAL_MODEL", raising=False)
+    monkeypatch.delenv("REFUSAL_PROVIDER", raising=False)
+    values = {**ROUTE, missing.lower(): None}
+    with pytest.raises(LLMConfigError, match=f"{missing} is not set"):
+        refusal_chat_model(max_tokens=100, settings=_settings(**values))
+    with pytest.raises(LLMConfigError, match=f"{missing} is not set"):
+        engine_route(max_tokens=100, settings=_settings(**values))
+
+
+def test_a_route_built_here_has_both_models_at_the_nodes_cap() -> None:
+    route = engine_route(max_tokens=300, settings=_settings(**ROUTE))
+    assert isinstance(route.chat, ChatOpenRouter)
+    assert isinstance(route.refusal_chat, ChatOpenRouter)
+    assert (route.chat.model_name, route.chat.max_tokens) == (CHEAP_MODEL, 300)
+    assert (route.refusal_chat.model_name, route.refusal_chat.max_tokens) == (GEMINI, 300)
+
+
+def test_a_given_chat_alone_gets_no_second_model() -> None:
+    """The smoke harness's nodes (decision 004) and tests: a refusal is the outcome."""
+    given = chat_model(model=CHEAP_MODEL, settings=_settings())
+    route = engine_route(max_tokens=300, settings=_settings(), chat=given)
+    assert route.chat is given
+    assert route.refusal_chat is None
+
+
+def test_a_given_pair_is_used_as_it_is() -> None:
+    first, second = (chat_model(model=m, settings=_settings()) for m in (CHEAP_MODEL, GEMINI))
+    route = engine_route(max_tokens=300, settings=_settings(), chat=first, refusal_chat=second)
+    assert (route.chat, route.refusal_chat) == (first, second)
 
 
 def _assert_chat_roundtrip(settings: Settings) -> None:

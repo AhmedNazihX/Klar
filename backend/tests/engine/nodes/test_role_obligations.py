@@ -58,8 +58,10 @@ from aiact.schemas import (
 )
 from aiact.schemas.result import derived_status
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.pinned import assert_pinned_route
 from tests.schemas.builders import open_question
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -1131,7 +1133,7 @@ def test_findings_are_only_accepted_from_their_own_check() -> None:
 
 def _settings() -> Settings:
     values = {"engine_model": LUNA, "engine_provider": LUNA_PROVIDER}
-    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **values)  # pyright: ignore[reportCallIssue]
+    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **REFUSAL_ROUTE, **values)  # pyright: ignore[reportCallIssue]
 
 
 def _fake_check(content: str) -> tuple[RoleObligationsCheck, GenericFakeChatModel]:
@@ -1577,12 +1579,7 @@ def test_a_high_risk_answer_without_the_legacy_facts_is_a_broken_output() -> Non
 
 def test_the_node_is_pinned_to_the_engine_provider() -> None:
     check = RoleObligationsCheck(_settings())
-    assert check._model.openrouter_provider == {  # pyright: ignore[reportAttributeAccessIssue]
-        "data_collection": "deny",
-        "zdr": True,
-        "order": [LUNA_PROVIDER],
-        "allow_fallbacks": False,
-    }
+    assert_pinned_route(check._route, 4000)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 @pytest.mark.parametrize("content", ["not json", '{"role": {"role": "deployer"}}'])
@@ -1593,17 +1590,10 @@ def test_a_broken_answer_raises_without_quoting_the_description(content: str) ->
     assert CV_TOOL not in str(caught.value)
 
 
-def test_the_output_cap_leaves_room_for_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_output_cap_leaves_room_for_reasoning() -> None:
     """E7's recordings used up to 2206 of 3000 output tokens; the contested answer adds more."""
-    asked: dict[str, object] = {}
-
-    def spy(**kwargs: object) -> GenericFakeChatModel:
-        asked.update(kwargs)
-        return GenericFakeChatModel(messages=iter([]))
-
-    monkeypatch.setattr(node, "engine_chat_model", spy)
-    RoleObligationsCheck(_settings())
-    assert asked["max_tokens"] == 4000
+    check = RoleObligationsCheck(_settings())
+    assert_pinned_route(check._route, 4000)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 REFUSAL_TEXT = "I'm sorry, but I cannot assist with that request."

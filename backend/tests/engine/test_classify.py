@@ -62,6 +62,7 @@ from aiact.schemas import (
     StepResult,
 )
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
 
 AS_OF = date(2026, 10, 6)
 DESCRIPTION = (
@@ -543,7 +544,7 @@ def test_the_run_reports_and_logs_its_cost_per_node(caplog: pytest.LogCaptureFix
         stub = stub_nodes()
         paid = AIMessage(
             content=enough_answer(facts=(), questions=()).model_dump_json(),
-            response_metadata={"cost": 0.0021},
+            response_metadata={"cost": 0.0021, "model_name": "openai/gpt-6-luna-20260922"},
             usage_metadata={"input_tokens": 1500, "output_tokens": 500, "total_tokens": 2000},
         )
         model = GenericFakeChatModel(
@@ -560,6 +561,7 @@ def test_the_run_reports_and_logs_its_cost_per_node(caplog: pytest.LogCaptureFix
     [line] = [r.getMessage() for r in caplog.records if "classification cost" in r.getMessage()]
     assert "$0.002100" in line
     assert "'facts': 0.0021" in line
+    assert "models {'facts': {'openai/gpt-6-luna-20260922': 1}}" in line
     assert DESCRIPTION not in line
 
 
@@ -573,6 +575,7 @@ def engine_settings(**values: object) -> Settings:
         "engine_provider": "azure/eu",
         "embedding_model": "qwen/qwen3-embedding-8b",
         "embedding_provider": "nebius",
+        **REFUSAL_ROUTE,
         **values,
     }
     return Settings(_env_file=None, **configured)  # pyright: ignore[reportCallIssue]
@@ -612,7 +615,10 @@ def stub_state() -> EngineState:
     }
 
 
-@pytest.mark.parametrize("missing", ["engine_model", "engine_provider", "embedding_model"])
+@pytest.mark.parametrize(
+    "missing",
+    ["engine_model", "engine_provider", "refusal_model", "refusal_provider", "embedding_model"],
+)
 def test_the_engine_nodes_need_their_model_settings(missing: str) -> None:
     with pytest.raises(LLMConfigError):
         engine_nodes(engine_settings(**{missing: None}), UsageMeter())

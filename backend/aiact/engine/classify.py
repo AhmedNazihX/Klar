@@ -29,7 +29,7 @@ from langchain_core.runnables import RunnableConfig
 from pydantic import Field, StringConstraints, model_validator
 
 from aiact.engine.citations import CitationValidator
-from aiact.engine.clients import engine_chats, engine_embeddings
+from aiact.engine.clients import engine_chats, engine_embeddings, refusal_chats
 from aiact.engine.events import (
     ClassifyEvent,
     FactsEvent,
@@ -197,16 +197,23 @@ def engine_nodes(
     validator: CitationValidator | None = None,
 ) -> EngineNodes:
     """The engine's own nodes, each check wrapped by the citation validator, every model call
-    and query embedding counted by `meter`. The models and the embedder are the process's
+    and query embedding counted by `meter`. Each node's request the engine provider refuses goes
+    once to its refusal model (decision 033). The models and the embedder are the process's
     (`aiact.engine.clients`), so a run builds no HTTP client of its own. Without `libraries`,
     the checks read the corpus from DATABASE_URL and embed their queries with the settings'
     embedding model; without `validator`, citations are checked against the database too.
     Raises `LLMConfigError` when a model setting or the API key is missing."""
-    models = engine_chats(settings)
+    models, second_models = engine_chats(settings), refusal_chats(settings)
+
+    def metered(model: BaseChatModel, node: str) -> BaseChatModel:
+        """A shared model with the run's usage callback (the copy shares its client)."""
+        return model.model_copy(update={"callbacks": [meter.chat_callback(node)]})
 
     def chat(node: str) -> BaseChatModel:
-        """The node's shared model, with the run's usage callback (the copy shares its client)."""
-        return models[node].model_copy(update={"callbacks": [meter.chat_callback(node)]})
+        return metered(models[node], node)
+
+    def refusal(node: str) -> BaseChatModel:
+        return metered(second_models[node], node)
 
     embeddings = engine_embeddings(settings) if libraries is None else None
 
@@ -220,31 +227,35 @@ def engine_nodes(
         scope: ScopeCheck(
             settings,
             chat=chat(scope),
+            refusal_chat=refusal(scope),
             library=libraries.scope if libraries else None,
             embedder=embedder(scope),
         ),
         prohibited: ProhibitedCheck(
             settings,
             chat=chat(prohibited),
+            refusal_chat=refusal(prohibited),
             library=libraries.prohibited if libraries else None,
             embedder=embedder(prohibited),
         ),
         high_risk: HighRiskCheck(
             settings,
             chat=chat(high_risk),
+            refusal_chat=refusal(high_risk),
             library=libraries.high_risk if libraries else None,
             embedder=embedder(high_risk),
         ),
         transparency: TransparencyCheck(
             settings,
             chat=chat(transparency),
+            refusal_chat=refusal(transparency),
             library=libraries.transparency if libraries else None,
             embedder=embedder(transparency),
         ),
-        role: RoleObligationsCheck(settings, chat=chat(role)),
+        role: RoleObligationsCheck(settings, chat=chat(role), refusal_chat=refusal(role)),
     }
     return EngineNodes(
-        facts=FactExtractor(settings, chat=chat(FACTS)),
+        facts=FactExtractor(settings, chat=chat(FACTS), refusal_chat=refusal(FACTS)),
         checks=(validator or CitationValidator(settings=settings)).checks(checks),
         finalize=finalize,
     )
@@ -375,14 +386,17 @@ def _typed[T](items: object, kind: type[T]) -> tuple[T, ...]:
 
 
 def _log_usage(usage: RunUsage, trace_id: str | None) -> None:
-    """The run's cost, tokens and per-node split: metadata only."""
+    """The run's cost, tokens, per-node split and the models that served each node's calls:
+    metadata only."""
     per_node = {name: round(node.cost_usd, 6) for name, node in usage.by_node.items()}
+    models = usage.models_by_node()
     logger.info(
-        "classification cost $%.6f%s, %d tokens; per node %s; trace %s",
+        "classification cost $%.6f%s, %d tokens; per node %s; models %s; trace %s",
         usage.cost_usd,
         "" if usage.is_cost_complete else " (a reply had no cost)",
         usage.tokens,
         per_node,
+        models,
         trace_id or "-",
     )
 

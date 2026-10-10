@@ -22,11 +22,11 @@ from pydantic import SecretStr
 
 from aiact.engine import classify, run_classification
 from aiact.engine.classify import NodeBuilder, engine_nodes
-from aiact.engine.clients import engine_chats, engine_embeddings
+from aiact.engine.clients import engine_chats, engine_embeddings, refusal_chats
 from aiact.engine.usage import UsageMeter
 from aiact.llm import LLMConfigError
 from aiact.settings import Settings
-from tests.conftest import RECORDINGS_DIR
+from tests.conftest import RECORDINGS_DIR, REFUSAL_ROUTE
 from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import corpus_recording
 from tests.engine.test_classify_worked_example import (
@@ -70,6 +70,7 @@ def engine_settings(**values: object) -> Settings:
         "engine_provider": "azure/eu",
         "embedding_model": "qwen/qwen3-embedding-8b",
         "embedding_provider": "nebius",
+        **REFUSAL_ROUTE,
         **values,
     }
     return Settings(_env_file=None, **configured)  # pyright: ignore[reportCallIssue]
@@ -96,6 +97,32 @@ def test_every_node_gets_the_pinned_engine_model_with_its_own_output_cap() -> No
         assert chat.openrouter_provider is not None
         assert chat.openrouter_provider["order"] == ["azure/eu"]
         assert chat.openrouter_provider["allow_fallbacks"] is False
+
+
+def test_every_node_gets_the_pinned_refusal_model_with_its_own_output_cap() -> None:
+    """Decision 033: the second model a node's refused request goes to."""
+    chats = refusal_chats(engine_settings())
+    engine = engine_chats(engine_settings())
+    assert set(chats) == set(engine)
+    for node, chat in chats.items():
+        assert isinstance(chat, ChatOpenRouter)
+        assert chat.model_name == "google/gemini-3.1-flash-lite"
+        assert chat.max_tokens == engine[node].max_tokens  # pyright: ignore[reportAttributeAccessIssue]
+        assert chat.openrouter_provider == {
+            "data_collection": "deny",
+            "zdr": True,
+            "order": ["google-vertex/eu"],
+            "allow_fallbacks": False,
+        }
+    assert refusal_chats(engine_settings())["facts"] is chats["facts"]
+
+
+@pytest.mark.parametrize("missing", ["refusal_model", "refusal_provider"])
+def test_a_missing_refusal_setting_raises_on_every_call(missing: str) -> None:
+    unset = engine_settings(**{missing: None})
+    for _ in range(2):
+        with pytest.raises(LLMConfigError):
+            refusal_chats(unset)
 
 
 def test_equal_settings_get_the_same_models_and_embedder() -> None:

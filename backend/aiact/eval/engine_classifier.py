@@ -3,8 +3,10 @@
 Each case runs `run_classification` on the case's own date (`ClassifierInput.as_of`, B5c), or the
 run's date when it has none, on the amended text, with the case's exclusions and, in the gap
 run only, the held-out examples (`ClassifierInput.include_held_out`). It reports the
-run's cost, tokens and LangSmith trace id. A run that fails after spending raises
-`ClassifierFailedError(cost_usd, tokens, cause)`, so the runner's cost cap and totals count it.
+run's cost, tokens, LangSmith trace id and each node's calls by the model that served them (a
+request the engine provider refused and the second model answered shows under both, decision
+033). A run that fails after spending raises `ClassifierFailedError(cost_usd, tokens, cause)`,
+with the same models, so the runner's cost cap and totals count it.
 A reply without its cost is logged, since the stored cost then undercounts.
 """
 
@@ -67,7 +69,9 @@ class EngineClassifier:
         except ClassificationFailedError as exc:
             usage = exc.usage
             if usage.cost_usd > 0 or usage.tokens > 0:
-                raise ClassifierFailedError(usage.cost_usd, usage.tokens, exc) from exc
+                raise ClassifierFailedError(
+                    usage.cost_usd, usage.tokens, exc, models=usage.models_by_node()
+                ) from exc
             raise
         usage = run.usage
         if not usage.is_cost_complete:
@@ -77,5 +81,9 @@ class EngineClassifier:
                 usage.cost_usd,
             )
         return Classification(
-            result=run.result, cost_usd=usage.cost_usd, tokens=usage.tokens, trace_id=run.trace_id
+            result=run.result,
+            cost_usd=usage.cost_usd,
+            tokens=usage.tokens,
+            trace_id=run.trace_id,
+            models=usage.models_by_node(),
         )

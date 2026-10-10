@@ -37,8 +37,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
 │   │   │                            replies.py: the question shapes a model writes, frozen with the recordings (E12)
 │   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3);
-│   │   │                            reply_usage, a reply's cost and tokens (E10)
-│   │   │                            structured.py: JSON-schema response format + error text (V3, E2)
+│   │   │                            reply_usage, a reply's cost and tokens (E10); refusal_chat_model and
+│   │   │                            engine_route, a node's models with the refusal route (X2c)
+│   │   │                            structured.py: JSON-schema response format + error text (V3, E2);
+│   │   │                            ChatRoute, a refused request sent once to the second model (X2c)
 │   │   │                            generations.py: the provider that served a generation (X2)
 │   │   │                            ragas_llm.py: the RAGAS route (RAGAS_MODEL on RAGAS_PROVIDER): the metrics' LLM
 │   │   │                            over the OpenAI SDK, usage metered per reply, telemetry off; the same route
@@ -166,6 +168,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            tests/engine/nodes/corpus_recording.py (E4)
 │       ├── engine/built_corpus.py   the corpus built in memory from data/parsed/, which the replays check
 │       │                            their citations against (no database in CI) (E9)
+│       ├── engine/nodes/pinned.py   assert_pinned_route: a node's engine and refusal models, each pinned (X2c)
 │       ├── snapshots/               committed JSON snapshots, e.g. the result's JSON Schema (F3)
 │       ├── export/reading.py        a PDF's and a Word file's text read back for the tests (P9)
 │       ├── test_network_guard.py    proves unmarked tests can't reach the network (F6)

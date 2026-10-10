@@ -31,12 +31,11 @@ from pydantic import Field, ValidationError
 from aiact.engine.nodes.common import BLOCKED
 from aiact.engine.nodes.key_facts import ShortTexts
 from aiact.engine.state import EngineState, FactsOutcome
-from aiact.llm import engine_chat_model, replies
+from aiact.llm import engine_route, replies
 from aiact.llm.structured import (
     ProviderRefusalError,
     describe_validation_error,
     json_schema_format,
-    parse_reply,
 )
 from aiact.schemas import (
     DESCRIPTION_QUESTION_IDS,
@@ -301,21 +300,29 @@ def facts_messages(description: str, language: Language) -> list[BaseMessage]:
 class FactExtractor:
     """The facts node for the graph: `EngineNodes(facts=FactExtractor(), …)`."""
 
-    def __init__(self, settings: Settings | None = None, chat: BaseChatModel | None = None) -> None:
-        """`chat` replaces the OpenRouter model (tests). Raises `LLMConfigError` when
-        `ENGINE_MODEL`, `ENGINE_PROVIDER` or the API key is not set: the model is always pinned
-        to its EU endpoint with fallbacks off (decision 005), so descriptions stay in the EU."""
-        self._model = chat or engine_chat_model(max_tokens=MAX_OUTPUT_TOKENS, settings=settings)
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        chat: BaseChatModel | None = None,
+        refusal_chat: BaseChatModel | None = None,
+    ) -> None:
+        """`chat` replaces the OpenRouter model (tests), and `refusal_chat` the second model
+        a refused request goes to (decision 033; a `chat` alone has none). Raises
+        `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER`, `REFUSAL_MODEL`,
+        `REFUSAL_PROVIDER` or the API key is not set: both models are always pinned to their
+        EU endpoints with fallbacks off (decisions 005, 033), so descriptions stay in the EU."""
+        self._route = engine_route(
+            max_tokens=MAX_OUTPUT_TOKENS, settings=settings, chat=chat, refusal_chat=refusal_chat
+        )
 
     def __call__(self, state: EngineState) -> FactsOutcome:
         """A reply the provider's content filter refused gives `refusal_outcome`. Raises
         `FactsOutputError` when any other reply doesn't fit `FactsAnswer`."""
         description, language = state["description"], state["language"]
-        reply = self._model.invoke(
-            facts_messages(description, language), response_format=FACTS_RESPONSE_FORMAT
-        )
         try:
-            answer = parse_reply(reply, FactsAnswer)
+            answer = self._route.ask(
+                facts_messages(description, language), FACTS_RESPONSE_FORMAT, FactsAnswer
+            )
         except ProviderRefusalError:
             return refusal_outcome(language)
         except ValidationError as exc:

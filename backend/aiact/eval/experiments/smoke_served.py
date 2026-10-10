@@ -10,7 +10,7 @@ from datetime import datetime
 
 from pydantic import JsonValue
 
-from aiact.eval.runner import CaseRecord, Score
+from aiact.eval.runner import CaseRecord, Score, StoredScore
 from aiact.llm.generations import GenerationLookupError
 
 ServedBy = Callable[[str], str]
@@ -110,7 +110,7 @@ def checked_row(
     }
     kept = {key: value for key, value in record.predicted.items() if key != "not_pinned"}
     predicted: dict[str, JsonValue] = {**kept, "smoke": info}
-    scores: dict[str, Score] = {
+    scores: dict[str, StoredScore] = {
         **record.scores,
         "served_as_pinned": served.as_pinned,
         "pending_verification": False,

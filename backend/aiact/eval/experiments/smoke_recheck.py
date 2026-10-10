@@ -66,7 +66,7 @@ from aiact.eval.experiments.smoke_served import (
 )
 from aiact.eval.experiments.smoke_verdict import SmokeRunError
 from aiact.eval.records import PostgresRunStore
-from aiact.eval.runner import CaseRecord, Score, label_record
+from aiact.eval.runner import CaseRecord, Score, StoredScore, label_record
 from aiact.llm.generations import may_come_later
 from aiact.schemas import PROVIDER_REFUSAL
 
@@ -91,7 +91,7 @@ class StoredRow:
     case_id: str
     predicted: dict[str, JsonValue]
     label: dict[str, JsonValue]
-    scores: dict[str, Score]
+    scores: Mapping[str, StoredScore]
 
 
 @dataclass(frozen=True)

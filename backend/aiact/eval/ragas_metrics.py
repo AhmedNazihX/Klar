@@ -306,7 +306,10 @@ def build_parts(
 
     settings = settings or get_settings()
     meter = UsageMeter()
-    model = ragas_model(lambda cost, tokens: meter.add(MODEL_NODE, cost, tokens), settings=settings)
+    model = ragas_model(
+        lambda cost, tokens: meter.add(MODEL_NODE, cost, tokens, settings.ragas_model),
+        settings=settings,
+    )
     is_default_arm = embeddings is None
     embeddings = embeddings or OpenRouterEmbeddings(settings=settings)
     return RagasParts(

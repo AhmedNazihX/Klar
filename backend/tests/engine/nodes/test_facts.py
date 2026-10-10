@@ -38,6 +38,8 @@ from aiact.schemas import (
     StepName,
 )
 from aiact.settings import Settings
+from tests.conftest import REFUSAL_ROUTE
+from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -63,7 +65,7 @@ def asked(*questions: ReplyQuestion) -> tuple[FollowUpQuestion, ...]:
 
 
 def _settings(**values: object) -> Settings:
-    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **values)  # pyright: ignore[reportCallIssue]
+    return Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **REFUSAL_ROUTE, **values)  # pyright: ignore[reportCallIssue]
 
 
 def engine_input(description: str, language: Language = Language.EN) -> EngineState:
@@ -369,12 +371,7 @@ def test_a_filtered_reply_with_usable_facts_is_used() -> None:
 
 def test_the_extractor_is_pinned_to_the_engine_provider() -> None:
     extractor = FactExtractor(_settings(engine_model=LUNA, engine_provider=LUNA_PROVIDER))
-    assert extractor._model.openrouter_provider == {  # pyright: ignore[reportAttributeAccessIssue]
-        "data_collection": "deny",
-        "zdr": True,
-        "order": [LUNA_PROVIDER],
-        "allow_fallbacks": False,
-    }
+    assert_pinned_route(extractor._route, 6000)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_the_extractor_needs_a_pinned_provider() -> None:
@@ -635,13 +632,38 @@ def test_the_own_cases_hold_the_three_approved_thin_descriptions() -> None:
     assert all(case.label_citation == () for case in thin.values())
 
 
+SECOND_MODEL_GAPS = {
+    "own-c-03-image-tool-with-safeguards": "the engine provider refused it and the second model "
+    "(decision 033) reads its detailed description as too thin to classify (X2c's recording, "
+    "2026-10-10)",
+}
+"""Recorded facts the refusal route's second model gets wrong, with the reason; each fails
+loudly once it reads as its label expects, so the entry is removed."""
+
+
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
-    [pytest.param(case, id=case.id) for case in OWN_CASES],
+    [
+        pytest.param(
+            case,
+            id=case.id,
+            marks=[
+                pytest.mark.xfail(
+                    strict=True, raises=AssertionError, reason=SECOND_MODEL_GAPS[case.id]
+                )
+            ]
+            if case.id in SECOND_MODEL_GAPS
+            else [],
+        )
+        for case in OWN_CASES
+    ],
 )
 def test_recorded_own_case_is_flagged_as_its_label_expects(
     case: BenchmarkCase, engine_settings: Settings
 ) -> None:
     outcome = FactExtractor(engine_settings)(engine_input(case.description, case.language))
     assert outcome.needs_description is expects_description(case)
+    assert facts.PERSON_REVIEW_ID not in {
+        question.id for question in outcome.follow_up_questions
+    }, "the model's reply was read, not decision 029's refusal step"
