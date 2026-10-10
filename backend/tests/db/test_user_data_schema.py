@@ -22,7 +22,7 @@ from psycopg import sql
 from psycopg.abc import Params, QueryNoTemplate
 from psycopg.types.json import Jsonb
 
-from tests.db.conftest import _database_url
+from tests.db.conftest import _database_url, rolled_back
 
 pytestmark = pytest.mark.db
 
@@ -787,12 +787,16 @@ def test_import_with_an_invalid_row_adds_nothing(db: psycopg.Connection) -> None
     assert _counts(db, user) == dict.fromkeys(USER_TABLES, 0)
 
 
-def _purge(db: psycopg.Connection, retention: str = RETENTION, later: str = "0 days") -> int:
-    """Run the cleanup as if it were `later` from now."""
+def _purge(
+    db: psycopg.Connection, users: list[UUID], retention: str = RETENTION, later: str = "0 days"
+) -> int:
+    """Run the cleanup over `users` only, as if it were `later` from now. The shared database holds
+    other worktrees' users and a UI reviewer's; an unscoped cleanup would wait on their locks."""
     return _one(
         db,
-        "select private.purge_inactive_anonymous_users(%s::interval, now() + %s::interval)",
-        (retention, later),
+        "select private.purge_inactive_anonymous_users("
+        "%s::interval, now() + %s::interval, only_users => %s)",
+        (retention, later, users),
     )
 
 
@@ -806,7 +810,7 @@ def test_cleanup_deletes_inactive_anonymous_users_and_their_data(db: psycopg.Con
         _add_system(db)
     registered = _create_user(db, is_anonymous=False, age="400 days")
 
-    assert _purge(db, later="31 days") >= 1  # the shared database may hold other stale users
+    assert _purge(db, [stale, registered], later="31 days") == 1
     assert not _user_exists(db, stale)
     assert _counts(db, stale) == dict.fromkeys(USER_TABLES, 0)
     assert _user_exists(db, registered)
@@ -824,7 +828,7 @@ def test_cleanup_keeps_users_active_within_the_retention(db: psycopg.Connection)
     )
     idle = _create_user(db, age="60 days")
 
-    _purge(db, later="29 days")
+    assert _purge(db, [edited, visited, idle], later="29 days") == 1
     assert _user_exists(db, edited)
     assert _user_exists(db, visited)
     assert not _user_exists(db, idle)
@@ -841,7 +845,7 @@ def test_a_future_timestamp_written_directly_does_not_block_the_cleanup(
         )
         db.execute("update inventories set updated_at = 'infinity', created_at = %s", (FUTURE,))
 
-    _purge(db, later="31 days")
+    assert _purge(db, [user], later="31 days") == 1
     assert not _user_exists(db, user)
 
 
@@ -871,16 +875,15 @@ def test_a_future_timestamp_in_an_import_does_not_block_the_cleanup(
         for table in ("inventories", "systems", "classifications"):
             assert _one(db, _on("select bool_and(created_at <= now()) from {}", table))
 
-    _purge(db, later="31 days")
+    assert _purge(db, [user], later="31 days") == 1
     assert not _user_exists(db, user)
 
 
 def test_the_cleanup_racing_a_write_does_not_deadlock(db_connection: psycopg.Connection) -> None:
     """The cleanup locks its targets' storage totals before it deletes them, like a user's write,
     so a write racing the cleanup of the same user waits instead of deadlocking. A blocker holds
-    one of the user's rows to stop the cleanup half-way through its cascade. The cleanup is rolled
-    back (it would delete every anonymous user inactive by then, and the shared database holds
-    no others it may delete)."""
+    one of the user's rows to stop the cleanup half-way through its cascade. The cleanup covers
+    this user only, and is rolled back."""
     admin = db_connection
     with (
         _committed_user(admin) as (user, rows),
@@ -896,26 +899,59 @@ def test_the_cleanup_racing_a_write_does_not_deadlock(db_connection: psycopg.Con
                 _add_classification(writer, rows["systems"], 0)
 
         blocker.execute("select from classifications where user_id = %s for update", (user,))
-        purging = pool.submit(_purge, purger, RETENTION, "31 days")
+        purging = pool.submit(_purge, purger, [user], RETENTION, "31 days")
         _wait_until_blocked(admin, purger_pid)
         writing = pool.submit(write)
         _wait_until_blocked(admin, writer_pid)
         blocker.rollback()
-        assert purging.result(timeout=LOCK_WAIT_SECONDS) >= 1
+        assert purging.result(timeout=LOCK_WAIT_SECONDS) == 1
         purger.rollback()
         writing.result(timeout=LOCK_WAIT_SECONDS)  # the write goes ahead, no 40P01
         writer.rollback()
 
 
+def test_a_cleanup_of_given_users_passes_a_lock_on_another_stale_user(
+    db_connection: psycopg.Connection,
+) -> None:
+    """Another session holds a stale user's row, as another worktree's test or a UI reviewer's
+    session would: the cleanup of this test's own user neither waits for it nor deletes it."""
+    admin = db_connection
+    with _committed_user(admin) as (other, _), psycopg.connect(_database_url()) as holder:
+        holder.execute("select from auth.users where id = %s for update", (other,))
+        with rolled_back(admin):
+            mine = _create_user(admin)
+            admin.execute("set local lock_timeout = '2s'")  # an unscoped cleanup fails here
+            assert _purge(admin, [mine], later="400 days") == 1
+            assert not _user_exists(admin, mine)
+            assert _user_exists(admin, other)
+        holder.rollback()
+
+
+def test_the_cleanup_without_a_user_list_covers_every_stale_user(db: psycopg.Connection) -> None:
+    """The cron job's call: no `only_users`, so every stale anonymous user goes. Measured from two
+    thousand years ago, only this test's (uncommitted) users are stale, so no other session's user
+    is touched or waited on."""
+    ancient = [_create_user(db, age="3000 years"), _create_user(db, age="2500 years")]
+    registered = _create_user(db, is_anonymous=False, age="3000 years")
+    deleted = _one(
+        db,
+        "select private.purge_inactive_anonymous_users(%s::interval, now() - %s::interval)",
+        (RETENTION, "2000 years"),
+    )
+    assert deleted == len(ancient)
+    assert not any(_user_exists(db, user) for user in ancient)
+    assert _user_exists(db, registered)
+
+
 def test_cleanup_refuses_a_retention_under_one_day(db: psycopg.Connection) -> None:
     with pytest.raises(psycopg.errors.InvalidParameterValue), db.transaction():
-        _purge(db, "1 hour")
+        _purge(db, [uuid4()], "1 hour")
 
 
 def test_cleanup_is_not_callable_from_the_data_api_roles(db: psycopg.Connection) -> None:
     user = _create_user(db)
     with as_user(db, user), pytest.raises(psycopg.errors.InsufficientPrivilege), db.transaction():
-        _purge(db)
+        _purge(db, [user])
 
 
 def test_cleanup_runs_daily_with_the_retention_period(db: psycopg.Connection) -> None:
