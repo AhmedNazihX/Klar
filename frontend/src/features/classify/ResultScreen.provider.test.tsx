@@ -13,6 +13,7 @@ import type { ClassificationResult } from '@/api'
 import { userDataOverviewKey } from '@/hooks/use-user-data-overview'
 import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
+import { ambiguousProvider, requestHandlers } from '@/test/ambiguous-fixtures'
 import { CLASSIFICATIONS_URL, toolRow } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import {
@@ -413,6 +414,62 @@ describe('Provider layout: a legally ambiguous result', () => {
     expect(screen.queryByRole('region', { name: 'What you need to do as the provider' })).toBeNull()
     expect(screen.queryByRole('region', { name: 'What makes it lighter' })).toBeNull()
   })
+})
+
+describe('A legally ambiguous provider result (user decision 2026-10-10, option A)', () => {
+  const COPY = {
+    en: {
+      result: 'Result',
+      ambiguous: 'Legally ambiguous',
+      provider: 'Provider',
+      readings: 'The two readings',
+      settle: 'What would settle it',
+      duties: 'What the stricter reading commits you to as the provider',
+      decidedDuties: 'What you need to do as the provider',
+      dutiesFrom: 'If high-risk, duties from',
+      routeDate: '2 August 2028',
+      literacyDate: '2 February 2025',
+    },
+    de: {
+      result: 'Ergebnis',
+      ambiguous: 'Rechtlich unklar',
+      provider: 'Anbieter',
+      readings: 'Die beiden Lesarten',
+      settle: 'Was den Punkt klären würde',
+      duties: 'Wozu Sie die strengere Lesart als Anbieter verpflichtet',
+      decidedDuties: 'Was Sie als Anbieter tun müssen',
+      dutiesFrom: 'Falls Hochrisiko, Pflichten ab',
+      routeDate: '2. August 2028',
+      literacyDate: '2. Februar 2025',
+    },
+  } as const
+
+  it.each(['en', 'de'] as const)(
+    'shows the readings first, then the provider duties the applied reading brings (%s)',
+    async (language) => {
+      const copy = COPY[language]
+      server.use(...requestHandlers([]))
+      await openProvider(ambiguousProvider(), { language })
+      const summary = region(copy.result)
+      expect(within(summary).getByText(copy.ambiguous)).toBeInTheDocument()
+      // No decided-style role pill on the ambiguous verdict.
+      expect(within(summary).queryByText(copy.provider)).toBeNull()
+      // The open route's date, not the earliest duty's (Art. 4, already in force).
+      expect(within(summary).getByText(copy.dutiesFrom)).toBeInTheDocument()
+      expect(summary).toHaveTextContent(copy.routeDate)
+      expect(summary).not.toHaveTextContent(copy.literacyDate)
+      expect(screen.getByRole('group', { name: copy.readings })).toBeInTheDocument()
+
+      const settle = region(copy.settle)
+      const duties = region(copy.duties)
+      expect(screen.queryByRole('region', { name: copy.decidedDuties })).toBeNull()
+      expect(settle.compareDocumentPosition(duties) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      if (language === 'en') {
+        expect(articlesIn('Build it right')).toContain('Art. 9')
+        expect(await within(duties).findByText('0 of 21 done')).toBeInTheDocument()
+      }
+    },
+  )
 })
 
 describe('Provider layout: what makes it lighter', () => {

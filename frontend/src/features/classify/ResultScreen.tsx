@@ -10,6 +10,8 @@ import { useFollowUpAnswers } from '@/hooks/use-follow-up-answers'
 import { useFollowUpRun, type FollowUpRun } from '@/hooks/use-follow-up-run'
 import { useOriginalRun } from '@/hooks/use-original-run'
 
+import { openPoint, questionsOnPoint } from './ambiguous'
+import { AmbiguousSummary } from './AmbiguousSummary'
 import { isDecidedBan } from './ban'
 import { runNumber, saveDraft, type ClassificationRun } from './classification-store'
 import { DecidingQuestion } from './DecidingQuestion'
@@ -22,6 +24,7 @@ import { OriginalTextNote } from './OriginalTextNote'
 import { ProgressPanel } from './ProgressPanel'
 import { ProhibitedSummary } from './ProhibitedSummary'
 import { isProviderLayout } from './provider-layout'
+import { isAmbiguousProvider } from './provider-layout'
 import { ProviderAside, ProviderPanels } from './ProviderPanels'
 import { RerunChange } from './RerunChange'
 import { DraftDocumentsLink, ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
@@ -55,6 +58,8 @@ function SummaryView({
   // One run action for every question asked, under the last panel (artboard `ResultNeedsInfo`).
   const runCount = others.length + (deciding ? 1 : 0)
   const isBan = isDecidedBan(result)
+  // The open question of law a legally ambiguous result rests on (its own layout, P22).
+  const point = openPoint(result)
 
   function editDescription(): void {
     // The answers go into the text, and the run onto this tool (P6), unless it was never saved.
@@ -76,9 +81,11 @@ function SummaryView({
           <Button variant="ghost" onClick={editDescription}>
             {t('result.editDescription')}
           </Button>
-          {/* There's no route to comply with a ban, so there are no documents to draft. */}
-          {!isBan && <DraftDocumentsLink toolId={run.toolId} />}
-          <ExportReportButton run={run} />
+          {/* There's no route to comply with a ban, so there are no documents to draft; the
+              ambiguous layout leaves them out as drawn (artboard `ResultAmbiguous`). */}
+          {!isBan && !point && <DraftDocumentsLink toolId={run.toolId} />}
+          {/* An ambiguous result exports from "Take it to a lawyer" (artboard `ResultAmbiguous`). */}
+          {!point && <ExportReportButton run={run} />}
         </>
       }
     />
@@ -125,6 +132,56 @@ function SummaryView({
             onViewChange('reviewer')
           }}
         />
+        <ResultNotice result={result} isStored={run.isStored} />
+      </>
+    )
+  }
+
+  // A legally ambiguous result has its own layout (artboard `ResultAmbiguous`, P22): both
+  // readings and what would settle the question; an answer there runs the checks again (P5b).
+  if (point) {
+    // Only an answer that bears on the open point settles it; the other questions keep their
+    // panel, which then holds the one run action.
+    const { onPoint, elsewhere } = questionsOnPoint(
+      deciding ? [deciding, ...others] : others,
+      point,
+    )
+    return (
+      <>
+        {header}
+        {rerunChange}
+        <AmbiguousSummary
+          run={run}
+          point={point}
+          note={
+            <>
+              <OriginalTextNote run={run} onCompare={onCompare} />
+              {rerunProgress}
+            </>
+          }
+          questions={onPoint}
+          runCount={elsewhere.length === 0 && onPoint.length > 0 ? onPoint.length : undefined}
+          answers={answerProps}
+          onOpenReviewer={() => {
+            onViewChange('reviewer')
+          }}
+        />
+        {elsewhere.length > 0 && (
+          <FollowUpQuestions questions={elsewhere} runCount={runCount} {...answerProps} />
+        )}
+        {/* A provider's duties under the readings (user decision 2026-10-10, option A). */}
+        {isAmbiguousProvider(result) && (
+          <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
+            <ProviderPanels
+              result={result}
+              toolId={run.toolId}
+              dutiesHeading={t('ambiguous.providerDuties')}
+            />
+            <div className="flex min-w-0 flex-col gap-5 xl:w-[380px] xl:shrink-0">
+              <ProviderAside result={result} />
+            </div>
+          </div>
+        )}
         <ResultNotice result={result} isStored={run.isStored} />
       </>
     )

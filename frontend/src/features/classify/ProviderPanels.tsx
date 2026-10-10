@@ -14,14 +14,17 @@ const OTHER_DUTIES_ID = 'role-duties'
 /**
  * The provider layout's duties (artboard `ResultProvider`, P23), in place of the standard duty
  * list: the provider's duties in three groups, then the duties of the role it keeps (a
- * deployer's, when it also uses the system).
+ * deployer's, when it also uses the system). On a legally ambiguous result `dutiesHeading`
+ * frames the provider's duties as what the applied reading commits it to (P22).
  */
 export function ProviderPanels({
   result,
   toolId,
+  dutiesHeading,
 }: {
   result: ClassificationResult
   toolId: string
+  dutiesHeading?: string
 }): JSX.Element {
   const { t } = useTranslation()
   const ticks = useToolTicks(toolId)
@@ -42,7 +45,13 @@ export function ProviderPanels({
           {t('obligations.saveFailed')}
         </p>
       )}
-      <ProviderDutiesPanel result={result} groups={groups} toolId={toolId} ticks={ticks} />
+      <ProviderDutiesPanel
+        result={result}
+        groups={groups}
+        toolId={toolId}
+        ticks={ticks}
+        heading={dutiesHeading}
+      />
       {groups.other.length > 0 && (
         <DutiesSection
           id={OTHER_DUTIES_ID}

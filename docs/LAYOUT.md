@@ -259,7 +259,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5; the provider layout
-│       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23), inventory/ (P6), your-data/ (P12), obligations/ (P24),
+│       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23; the ambiguous
+│       │                            layout AmbiguousSummary, AmbiguousVerdict, ReadingCards, SettleIt, TakeItToALawyer, P22), inventory/ (P6), your-data/ (P12), obligations/ (P24),
 │       │                            documents/ (P9: the documents screen, interview, checks, downloads, a skeleton's
 │       │                            SkeletonHeader and SectionList; interview-answers.ts reads and upserts interview_answers
 │       │                            through supabase-js; DocumentsScreen.browser.test.tsx the phone and desktop layout)
@@ -304,6 +305,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    provider-fixtures.ts + fixtures/provider.json (provider results from the
 │                                    recorded role replays of own-d-01, 03, 06 and 13, dumped and drift-checked
 │                                    by backend/tests/engine/test_frontend_provider_fixture.py, P23)
+│                                    ambiguous-fixtures.ts + fixtures/ambiguous.json (the recorded legally ambiguous
+│                                    result and its vendor requests, dumped and drift-checked by
+│                                    backend/tests/drafting/test_frontend_ambiguous_fixture.py, P22)
 │
 ├── docs/
 │   ├── BACKLOG.md                   stories, critical path, waves

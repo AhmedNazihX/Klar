@@ -20,12 +20,27 @@ const DOT: Record<RiskClassKind, string> = {
 const HIGH_RISK_TINT = 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(255 232 212 / 0.5))'
 /** The ResultProhibited artboard's red-tinted glass, for a decided ban only. */
 const BAN_TINT = 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(255 226 226 / 0.5))'
+/** The ResultAmbiguous artboard's lilac-tinted glass, for a result the law leaves open. */
+const AMBIGUOUS_TINT = 'linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(240 232 255 / 0.5))'
+
+function tintOf(
+  riskClass: RiskClassKind,
+  isBan: boolean,
+  isAmbiguous: boolean,
+): string | undefined {
+  if (isBan) return BAN_TINT
+  if (isAmbiguous) return AMBIGUOUS_TINT
+  return riskClass === 'high_risk' ? HIGH_RISK_TINT : undefined
+}
 
 export type ResultSummaryProps = {
   riskClass: RiskClassKind
   /** A decided ban (`ProhibitedVerdict`) gets the red-tinted glass; an assumed or ambiguous
    *  Prohibited result keeps plain glass, as its class isn't settled. */
   isBan?: boolean
+  /** A legally ambiguous result (`AmbiguousVerdict`) gets the lilac-tinted glass, whatever the
+   *  class it assumes. */
+  isAmbiguous?: boolean
   /** The status pills beside the class: Decided, or Assumed with the uncertain status. */
   status: ReactNode
   /** Role and basis: "You're the deployer. The tool is listed in Annex III 4(a): …" */
@@ -44,12 +59,13 @@ export type ResultSummaryProps = {
 /**
  * The top of every result, in an order that never changes: the class in Lexend with its dot and
  * status, who you are and why, then the date duties apply from (or, on a Prohibited result, the
- * date it has been banned since). A High-risk result gets the warm glass tint and a decided ban
- * the red one; other results stay plain glass.
+ * date it has been banned since). A High-risk result gets the warm glass tint, a decided ban
+ * the red one and a legally ambiguous result the lilac one; other results stay plain glass.
  */
 export function ResultSummary({
   riskClass,
   isBan = false,
+  isAmbiguous = false,
   status,
   statement,
   statusLine,
@@ -60,7 +76,7 @@ export function ResultSummary({
   children,
 }: ResultSummaryProps): JSX.Element {
   const { t } = useTranslation()
-  const tint = isBan ? BAN_TINT : riskClass === 'high_risk' ? HIGH_RISK_TINT : undefined
+  const tint = tintOf(riskClass, isBan, isAmbiguous)
   return (
     <section
       aria-label={t('result.label')}

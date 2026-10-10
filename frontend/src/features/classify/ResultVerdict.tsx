@@ -3,23 +3,23 @@ import type { JSX, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult, LegacyStatus, RiskClass, Role } from '@/api'
-import { LawDate } from '@/components/LawDate'
 import { ResultSummary } from '@/components/ResultSummary'
 import { StatusPill } from '@/components/StatusPill'
 import { useLanguage } from '@/hooks/use-language'
 import type { Language } from '@/i18n'
 
 import { checkNumber } from './classify-progress'
-import { longDate, monthsUntil, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
+import { longDate, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
 import { isProviderLayout, providerReason } from './provider-layout'
-import { amendedRouteDate, basisSentence, dutiesDate, pausedStep, statusPill } from './result-text'
+import { amendedRouteDate, basisSentence, pausedStep, statusPill } from './result-text'
+import { legalReviewLine, useDutiesFrom } from './verdict-lines'
 import { riskClassOf } from '@/lib/risk-class'
 
 /** The roles that supply the system: Art. 111(2) counts per copy supplied (decision 022). */
 const SUPPLIER_ROLES: readonly Role[] = ['provider', 'importer', 'distributor']
 
 /** The status pills, then any pill the layout adds after them (`extra`). */
-function StatusPills({
+export function StatusPills({
   result,
   extra,
 }: {
@@ -51,50 +51,6 @@ function roleLine(t: TFunction, result: ClassificationResult): string | null {
   const reason = providerReason(result)
   if (reason === 'stated') return t('result.role.provider')
   return t(`result.provider.reason.${reason}`)
-}
-
-function monthsLine(t: TFunction, isoDate: string, today: Date, original = false): string {
-  const count = monthsUntil(isoDate, today)
-  if (count > 0) return t('result.monthsAway', { count })
-  return original ? t('result.alreadyAppliesOriginal') : t('result.alreadyApplies')
-}
-
-/** The date duties apply from and how far away it is; route dates follow the law version switch. */
-function useDutiesFrom(
-  result: ClassificationResult,
-  today: Date,
-): { date: ReactNode; note: ReactNode } | null {
-  const { t } = useTranslation()
-  const language = useLanguage()
-  const date = dutiesDate(result)
-  if (result.risk_class === 'out_of_scope' || date === null) return null
-  if (date.kind === 'fixed') {
-    return { date: longDate(date.date, language), note: monthsLine(t, date.date, today) }
-  }
-  return {
-    date: (
-      <LawDate
-        amended={longDate(date.amended, language)}
-        original={longDate(date.original, language)}
-      />
-    ),
-    note: (
-      <LawDate
-        amended={monthsLine(t, date.amended, today)}
-        original={monthsLine(t, date.original, today, true)}
-      />
-    ),
-  }
-}
-
-function legalReviewLine(t: TFunction, result: ClassificationResult): string | null {
-  if (!result.legal_review) return null
-  if (result.status === 'legally_ambiguous') return t('result.legalReview.ambiguous')
-  // The provider layout's own line (artboard `ResultProvider`).
-  if (isProviderLayout(result)) return t('result.legalReview.provider')
-  if (result.risk_class === 'high_risk') return t('result.legalReview.high_risk')
-  if (result.risk_class === 'prohibited') return t('result.legalReview.prohibited')
-  return t('result.legalReview.other')
 }
 
 /** The class as the paused lines name it: three have their own words, the rest the generic line. */
@@ -166,6 +122,24 @@ function legacySentences(t: TFunction, result: ClassificationResult, language: L
   return [...marked, perCopy]
 }
 
+/** The Art. 111(2) notice under "duties apply from" (decision 026 item 24); nothing when no duty
+ *  carries a marking. The ambiguous verdict shows it too. */
+export function LegacyNotice({ result }: { result: ClassificationResult }): JSX.Element | null {
+  const { t } = useTranslation()
+  const language = useLanguage()
+  const legacy = legacySentences(t, result, language)
+  if (legacy.length === 0) return null
+  return (
+    <div role="note" className="flex flex-col gap-1.5 rounded-card-small px-4 py-3 glass-thin">
+      {legacy.map((sentence) => (
+        <p key={sentence} className="m-0 text-label font-normal text-ink-2">
+          {sentence}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 /** The top of the result (ResultSummary): the class and its status, who you are and why, the
  *  date duties apply from, the Art. 111(2) notice and the legal-review line. A result paused on a
  *  question says instead where it paused and what it is treated as until the user answers. */
@@ -182,7 +156,6 @@ export function ResultVerdict({
   const { t } = useTranslation()
   const language = useLanguage()
   const duties = useDutiesFrom(result, today)
-  const legacy = legacySentences(t, result, language)
   const paused = pausedVerdict(t, result, name)
   const summary = paused
     ? {
@@ -221,15 +194,7 @@ export function ResultVerdict({
       {...summary}
       legalReview={legalReviewLine(t, result)}
     >
-      {legacy.length > 0 && (
-        <div role="note" className="flex flex-col gap-1.5 rounded-card-small px-4 py-3 glass-thin">
-          {legacy.map((sentence) => (
-            <p key={sentence} className="m-0 text-label font-normal text-ink-2">
-              {sentence}
-            </p>
-          ))}
-        </div>
-      )}
+      <LegacyNotice result={result} />
     </ResultSummary>
   )
 }
