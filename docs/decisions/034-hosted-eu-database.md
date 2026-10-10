@@ -23,7 +23,15 @@ in the EU now, instead of only at deployment (S3), and if so as the only databas
 ## Decision
 B: a hosted Supabase project in Frankfurt (`eu-central-1`) becomes the one database for development, tests,
 benchmark runs and the app. The user chose it on 2026-10-11 because the local stack's load on their machine is too
-high; the slower tests are an accepted cost.
+high, and confirmed it on 2026-10-11 after the measurement below, because the goal is a deployment-ready setup:
+the database the app will run on in production is the one developed and tested against. The slower tests are an
+accepted cost.
+
+Measured 2026-10-11 (`ps`, `docker stats`, `sysctl vm.swapusage`): the CPU load (load average 16–19 on 12 cores)
+came mostly from two story workers' test runs; the whole local Supabase stack used ~0.35 core and ~3.1 GB RAM
+(mostly Studio and Analytics); swap was 39.9 of 40 GB full. So the move frees memory more than CPU. A cheaper
+alternative, starting only the needed local services (`supabase start -x …`), was offered and declined in favour
+of deployment readiness.
 
 ## Consequences
 - **Order:** F11 does the move. It holds `Resource: db-schema`, so it starts after V8's current work frees the
