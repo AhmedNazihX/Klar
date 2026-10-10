@@ -11,7 +11,6 @@ import { WORKED_EXAMPLE, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixt
 import { server } from '@/test/msw-server'
 import { answered, QA_URL, qaHandlers } from '@/test/qa-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 const TOOL_ID = 'applicant-screening'
 const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false } } }
@@ -46,11 +45,7 @@ async function openResult(
   }
   putRun(client, run)
   const rendered = renderRoute(`/app/inventory/${TOOL_ID}${view ? `?view=${view}` : ''}`, client)
-  await screen.findByRole(
-    'heading',
-    { level: 1, name: 'Applicant screening' },
-    { timeout: FIRST_RENDER_MS },
-  )
+  await screen.findByRole('heading', { level: 1, name: 'Applicant screening' })
   return { ...rendered, client, run }
 }
 

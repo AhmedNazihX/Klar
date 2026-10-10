@@ -7,12 +7,7 @@ import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
-import {
-  FIRST_RENDER_MS,
-  IMPORT_URL,
-  inventoryRow,
-  userDataHandlers,
-} from '@/test/user-data-handlers'
+import { IMPORT_URL, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 vi.mock('@/lib/supabase', async (importOriginal) => {
   const actual = await importOriginal<typeof SupabaseModule>()
@@ -62,7 +57,7 @@ afterAll(async () => {
 async function openWelcome() {
   const user = userEvent.setup()
   renderRoute('/app/welcome')
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   return user
 }
 

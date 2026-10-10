@@ -1,3 +1,4 @@
+import { FIRST_RENDER_MS } from '@/test/timeouts'
 import { onlineManager } from '@tanstack/react-query'
 import { screen } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
@@ -9,7 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { server } from '@/test/msw-server'
 import { reconnect } from '@/test/reconnect'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, INVENTORIES_URL } from '@/test/user-data-handlers'
+import { INVENTORIES_URL } from '@/test/user-data-handlers'
 import { createUserDataStore } from '@/test/your-data-store'
 
 import { createQueryClient } from './query-client'

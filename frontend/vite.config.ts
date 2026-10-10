@@ -45,6 +45,9 @@ export default defineConfig(({ mode }) => ({
     // Tests run without Supabase, as in CI, whatever a developer's .env.local holds: tests that need
     // it stub it themselves, and "without Supabase" tests would otherwise see the local keys.
     env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_ANON_KEY: '' },
+    // Half the cores per run, for both projects: worktrees run `pnpm test` side by side, and two
+    // runs that each take every core starve each other into timeouts (F10).
+    maxWorkers: '50%',
     projects: [
       {
         // Component tests in jsdom: fast, no layout.
@@ -52,8 +55,7 @@ export default defineConfig(({ mode }) => ({
         test: {
           name: 'unit',
           environment: 'jsdom',
-          // Vitest's browser-mode default (the jsdom default is 5 s). A full run beside another
-          // worktree's slows a test that loads a lazy route cold several-fold (F10).
+          // Vitest's browser-mode default (the jsdom default is 5 s), for a busy machine (F10).
           testTimeout: 15_000,
           include: ['src/**/*.test.{ts,tsx}'],
           exclude: ['src/**/*.browser.test.{ts,tsx}'],
@@ -73,6 +75,9 @@ export default defineConfig(({ mode }) => ({
             headless: true,
             provider: playwright(),
             instances: [{ browser: 'chromium' }],
+            // Twice the 60 s default: on a busy machine a page can take past a minute to connect,
+            // and the files it was to run would then never run (F10).
+            connectTimeout: 120_000,
           },
         },
       },

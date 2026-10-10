@@ -10,7 +10,6 @@ import { env } from '@/lib/env'
 import { server } from '@/test/msw-server'
 import { answered, outsideCorpus, QA_URL, qaHandlers } from '@/test/qa-fixtures'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 // Axe can't compute contrast over glass in jsdom (AppFrame.test.tsx does the same).
 const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false } } }
@@ -25,7 +24,7 @@ function serve(reply: () => QaAnswer | number): void {
 async function openAsk(path = '/app/ask', language: 'en' | 'de' = 'en'): Promise<void> {
   await i18n.changeLanguage(language)
   renderRoute(path)
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
 }
 
 function field(name = 'Your question'): HTMLElement {
@@ -339,7 +338,7 @@ describe('Ask about the Act', () => {
     const user = userEvent.setup()
     serve(() => answered())
     const { container } = renderRoute('/app/ask')
-    await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+    await screen.findByRole('heading', { level: 1 })
     await user.type(field(), 'What counts as a deployer?{Enter}')
     await screen.findByText(/A deployer is anyone/)
     expect((await axe(container, AXE_OPTIONS)).violations).toEqual([])

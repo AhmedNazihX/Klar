@@ -28,7 +28,7 @@ import {
 import { INVENTORY_TOOLS_URL, toolRow } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
+import { inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 vi.mock('@/lib/supabase', async (importOriginal) => {
   const actual = await importOriginal<typeof SupabaseModule>()
@@ -93,18 +93,14 @@ async function openDocuments(
 }
 
 async function preview(name = 'Document preview'): Promise<HTMLElement> {
-  return screen.findByRole('article', { name }, { timeout: FIRST_RENDER_MS })
+  return screen.findByRole('article', { name })
 }
 
 describe('Documents list', () => {
   it("lists every tool's documents grouped by tool, with their statuses", async () => {
     profileSizeClass = 'sme'
     await openDocuments('/app/documents', { tools: [APPLICANT_SCREENING, DRIVER_SCORING] })
-    const nav = await screen.findByRole(
-      'navigation',
-      { name: 'Documents' },
-      { timeout: FIRST_RENDER_MS },
-    )
+    const nav = await screen.findByRole('navigation', { name: 'Documents' })
     const applicants = await within(nav).findByRole('region', { name: 'For Applicant screening' })
     expect(
       await within(applicants).findByRole('link', { name: /Human oversight record/ }),
@@ -159,8 +155,6 @@ describe('Documents list', () => {
     expect(
       await screen.findByText(
         'No documents yet. Classify a tool, and Klar drafts the documents its result calls for.',
-        undefined,
-        { timeout: FIRST_RENDER_MS },
       ),
     ).toBeInTheDocument()
     const main = screen.getByRole('main')
@@ -173,11 +167,7 @@ describe('Documents list', () => {
   it('says so when no tool has the document asked for', async () => {
     await openDocuments('/app/documents/annex_iv_technical_documentation')
     expect(
-      await screen.findByText(
-        'None of your tools has this document. Pick one from the list.',
-        undefined,
-        { timeout: FIRST_RENDER_MS },
-      ),
+      await screen.findByText('None of your tools has this document. Pick one from the list.'),
     ).toBeInTheDocument()
   })
 })
@@ -351,11 +341,9 @@ describe('The Art. 50(3) disclosure', () => {
         tools: [MOOD_METER],
         language,
       })
-      const nav = await screen.findByRole(
-        'navigation',
-        { name: language === 'de' ? 'Dokumente' : 'Documents' },
-        { timeout: FIRST_RENDER_MS },
-      )
+      const nav = await screen.findByRole('navigation', {
+        name: language === 'de' ? 'Dokumente' : 'Documents',
+      })
       expect(await within(nav).findByRole('link', { name: new RegExp(title) })).toHaveAttribute(
         'aria-current',
         'page',
@@ -687,8 +675,6 @@ describe('In German', () => {
     expect(
       await screen.findByText(
         'Noch keine Dokumente. Stufen Sie ein Tool ein, dann entwirft Klar die Dokumente, die sein Ergebnis verlangt.',
-        undefined,
-        { timeout: FIRST_RENDER_MS },
       ),
     ).toBeInTheDocument()
     expect(
@@ -781,11 +767,7 @@ describe('Something fails', () => {
       }),
     )
     const { user } = await openDocuments('/app/documents')
-    const group = await screen.findByRole(
-      'region',
-      { name: 'For Applicant screening' },
-      { timeout: FIRST_RENDER_MS },
-    )
+    const group = await screen.findByRole('region', { name: 'For Applicant screening' })
     expect(await within(group).findByRole('alert')).toHaveTextContent(
       "Klar couldn't draft this tool's documents.",
     )
@@ -822,10 +804,8 @@ describe('Something fails', () => {
       const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`, {
         language,
       })
-      const main = await screen.findByRole('main', undefined, { timeout: FIRST_RENDER_MS })
-      expect(
-        await within(main).findByRole('alert', undefined, { timeout: FIRST_RENDER_MS }),
-      ).toHaveTextContent(message)
+      const main = await screen.findByRole('main')
+      expect(await within(main).findByRole('alert')).toHaveTextContent(message)
       expect(calls).toBe(1)
       await user.click(
         within(main).getByRole('button', {
@@ -870,10 +850,8 @@ describe('Something fails', () => {
       const { user } = await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`, {
         language,
       })
-      const main = await screen.findByRole('main', undefined, { timeout: FIRST_RENDER_MS })
-      expect(
-        await within(main).findByRole('alert', undefined, { timeout: FIRST_RENDER_MS }),
-      ).toHaveTextContent(alert)
+      const main = await screen.findByRole('main')
+      expect(await within(main).findByRole('alert')).toHaveTextContent(alert)
       const interview = await screen.findByRole('region', { name: title })
       expect(interview).toHaveTextContent(progress)
       expect(interview).toHaveTextContent(hint)
@@ -947,8 +925,6 @@ describe('Something fails', () => {
   ] as const)('says when the tools could not be loaded (%s)', async (language, message) => {
     server.use(http.get(INVENTORY_TOOLS_URL, () => HttpResponse.json({}, { status: 500 })))
     await openDocuments('/app/documents', { language })
-    expect(
-      await screen.findByRole('alert', undefined, { timeout: FIRST_RENDER_MS }),
-    ).toHaveTextContent(message)
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
   })
 })

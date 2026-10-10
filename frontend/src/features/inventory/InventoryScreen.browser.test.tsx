@@ -21,7 +21,6 @@ import {
 } from '@/test/classify-fixtures'
 import { ambiguousResult, prohibitedResult, toolId } from '@/test/inventory-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 const DESKTOP = { width: 1280, height: 900 } as const
 
@@ -94,7 +93,7 @@ async function openInventory(language: 'en' | 'de'): Promise<HTMLElement> {
   client.setQueryData(inventoryToolsKey, widestTools())
   renderRoute('/app/inventory', client)
   const name = language === 'de' ? 'Ihre Tools und ihre Ergebnisse' : 'Your tools and their results'
-  const table = await screen.findByRole('table', { name }, { timeout: FIRST_RENDER_MS })
+  const table = await screen.findByRole('table', { name })
   await document.fonts.ready
   return table
 }
@@ -190,11 +189,7 @@ describe('the inventory table at 1280 px', () => {
     const client = createTestQueryClient()
     client.setQueryData(inventoryToolsKey, [...widestTools(), tool('Dated chatbot', limitedRisk())])
     renderRoute('/app/inventory', client)
-    const table = await screen.findByRole(
-      'table',
-      { name: 'Ihre Tools und ihre Ergebnisse' },
-      { timeout: FIRST_RENDER_MS },
-    )
+    const table = await screen.findByRole('table', { name: 'Ihre Tools und ihre Ergebnisse' })
     await document.fonts.ready
     const panel = table.closest('section')
     if (!panel) throw new Error('The table sits in its glass panel.')
@@ -228,7 +223,7 @@ describe('the inventory table at 1280 px', () => {
       renderRoute('/app/inventory?law=original', client)
       const name =
         language === 'de' ? 'Ihre Tools und ihre Ergebnisse' : 'Your tools and their results'
-      const table = await screen.findByRole('table', { name }, { timeout: FIRST_RENDER_MS })
+      const table = await screen.findByRole('table', { name })
       const [, row] = within(table).getAllByRole('row')
       const appliesFrom = row && within(row).getAllByRole('cell')[APPLIES_FROM_COLUMN]
       expect(appliesFrom?.innerText).toBe(original)

@@ -11,7 +11,7 @@ import { WORKED_EXAMPLE, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixt
 import { ambiguousResult } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
+import { inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 import { putRun, type ClassificationRun } from './classification-store'
 
@@ -74,11 +74,7 @@ async function openResult(
   putRun(client, run)
   const user = userEvent.setup()
   renderRoute(`/app/inventory/${TOOL_ID}${view ? `?view=${view}` : ''}`, client)
-  await screen.findByRole(
-    'heading',
-    { level: 1, name: 'Applicant screening' },
-    { timeout: FIRST_RENDER_MS },
-  )
+  await screen.findByRole('heading', { level: 1, name: 'Applicant screening' })
   // The company's name comes from its profile, read once the session exists.
   await screen.findByText(COMPANY)
   return user

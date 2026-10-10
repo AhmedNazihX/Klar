@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { classifyHandler, WORKED_EXAMPLE_EVENTS } from '@/test/classify-fixtures'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { clearDraft } from './classification-store'
 
@@ -21,7 +20,7 @@ async function openClassify(language: 'en' | 'de' = 'en') {
   await i18n.changeLanguage(language)
   const user = userEvent.setup()
   renderRoute('/app/classify')
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   return user
 }
 

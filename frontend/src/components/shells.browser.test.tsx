@@ -8,7 +8,6 @@ import { page } from 'vitest/browser'
 
 import { APP_ROUTES, SITE_ROUTES } from '@/test/shell-routes'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { LOAD_MOTION_MS } from '@/hooks/use-load-motion'
 
@@ -22,7 +21,7 @@ async function open(path: string, language: 'en' | 'de'): Promise<void> {
   renderRoute(path)
   // The file's first test (`/app/welcome (en)`) loads the frame and its lazy route chunks cold,
   // which takes past the default second when another run shares the machine (F10).
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   await document.fonts.ready
 }
 

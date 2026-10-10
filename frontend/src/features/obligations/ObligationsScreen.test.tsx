@@ -22,7 +22,7 @@ import { ambiguousResult, prohibitedResult, toolRow } from '@/test/inventory-fix
 import { server } from '@/test/msw-server'
 import { SUPABASE_URL } from '@/test/supabase-fixtures'
 import { renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
+import { inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 // The app's Supabase client, pointed at the MSW network boundary.
 vi.mock('@/lib/supabase', async (importOriginal) => {
@@ -120,7 +120,7 @@ async function openObligations(path = '/app/obligations', language: 'en' | 'de' 
   await i18n.changeLanguage(language)
   const user = userEvent.setup()
   const rendered = renderRoute(path)
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   await screen.findByRole('region', { name: /^(Progress|Fortschritt)$/ })
   return { user, ...rendered }
 }
@@ -214,7 +214,7 @@ describe('Obligations, ticking duties', () => {
     const { user } = await openObligations()
     const box = screen.getByRole('checkbox', { name: INSTRUCTIONS })
     await user.click(box)
-    expect(await screen.findByRole('alert', {}, { timeout: FIRST_RENDER_MS })).toHaveTextContent(
+    expect(await screen.findByRole('alert')).toHaveTextContent(
       "Klar couldn't save that tick. Please try again.",
     )
     await vi.waitFor(() => expect(box).not.toBeChecked())
@@ -688,15 +688,13 @@ describe('Obligations, German and accessibility', () => {
         name: 'Das Tool gemäß der Betriebsanleitung des Anbieters einsetzen',
       }),
     )
-    expect(await screen.findByRole('alert', {}, { timeout: FIRST_RENDER_MS })).toHaveTextContent(
+    expect(await screen.findByRole('alert')).toHaveTextContent(
       'Klar konnte diesen Haken nicht speichern. Bitte versuchen Sie es erneut.',
     )
     unmount()
     tools = []
     renderRoute('/app/obligations')
-    expect(
-      await screen.findByText('Noch keine Pflichten', {}, { timeout: FIRST_RENDER_MS }),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('Noch keine Pflichten')).toBeInTheDocument()
     expect(
       screen.getByText('Stufen Sie ein Tool ein, um zu sehen, was es von Ihnen verlangt.'),
     ).toBeInTheDocument()
@@ -719,9 +717,7 @@ describe('Obligations, German and accessibility', () => {
     tools = [toolRow('Draft tool', null)]
     await i18n.changeLanguage('en')
     renderRoute('/app/obligations')
-    expect(
-      await screen.findByText('No duties yet', {}, { timeout: FIRST_RENDER_MS }),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('No duties yet')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Classify your first tool' })).toBeInTheDocument()
   })
 })

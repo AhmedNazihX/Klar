@@ -6,12 +6,7 @@ import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
-import {
-  FIRST_RENDER_MS,
-  INVENTORIES_URL,
-  inventoryRow,
-  userDataHandlers,
-} from '@/test/user-data-handlers'
+import { INVENTORIES_URL, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 vi.mock('@/lib/supabase', async (importOriginal) => {
   const actual = await importOriginal<typeof SupabaseModule>()
@@ -41,7 +36,7 @@ afterAll(async () => {
 
 async function start(path = '/app'): Promise<string> {
   const { router } = renderRoute(path)
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   return router.state.location.pathname
 }
 

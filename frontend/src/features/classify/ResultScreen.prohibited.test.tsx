@@ -15,7 +15,6 @@ import {
   type ProhibitedTraffic,
 } from '@/test/prohibited-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { putRun } from './classification-store'
 
@@ -172,7 +171,7 @@ async function openProhibited(
   const client = createTestQueryClient()
   putRun(client, { toolId: TOOL_ID, name: TOOL_NAME, description: 'Mood scores.', result })
   const rendered = renderRoute(`/app/inventory/${TOOL_ID}`, client)
-  await screen.findByRole('heading', { level: 1, name: TOOL_NAME }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1, name: TOOL_NAME })
   return rendered
 }
 

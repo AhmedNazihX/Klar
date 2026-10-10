@@ -305,6 +305,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       └── test/                    setup.ts, test-utils.tsx (renderWithProviders), msw-server.ts, supabase-fixtures.ts (P4), reduced-motion.ts (matchMedia stub, P14), intersection-observer.ts (IntersectionObserver stub, P16),
 │                                    browser-setup.ts (the browser project), shell-routes.ts (every screen route, by frame) (P15),
 │                                    user-data-handlers.ts (MSW handlers for the user's Supabase data, P18),
+│                                    timeouts.ts (FIRST_RENDER_MS, testing-library's wait in both setups, F10),
 │                                    your-data-store.ts (an in-memory user-data store behind the counts, export, import and delete, P12),
 │                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded

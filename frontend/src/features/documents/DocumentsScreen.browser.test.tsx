@@ -27,7 +27,6 @@ import {
   PROVIDER_RESULT,
 } from '@/test/documents-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 type Viewport = { width: number; height: number }
 type Language = 'en' | 'de'
@@ -122,11 +121,9 @@ async function open(shown: Page, viewport: Viewport, language: Language): Promis
   await page.viewport(viewport.width, viewport.height)
   await i18n.changeLanguage(language)
   renderRoute(`/app/documents/${shown.template}?tool=${shown.toolId}`, seededClient(shown, language))
-  const article = await screen.findByRole(
-    'article',
-    { name: language === 'de' ? 'Dokumentvorschau' : 'Document preview' },
-    { timeout: FIRST_RENDER_MS },
-  )
+  const article = await screen.findByRole('article', {
+    name: language === 'de' ? 'Dokumentvorschau' : 'Document preview',
+  })
   await document.fonts.ready
   return article
 }

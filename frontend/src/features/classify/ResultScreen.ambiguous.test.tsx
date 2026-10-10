@@ -33,7 +33,6 @@ import {
 import { classifyHandler, WORKED_EXAMPLE_EVENTS } from '@/test/classify-fixtures'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { putRun } from './classification-store'
 
@@ -187,7 +186,7 @@ async function openAmbiguous(
   const client = createTestQueryClient()
   putRun(client, { toolId: TOOL_ID, name: TOOL_NAME, description: DESCRIPTION, result })
   const rendered = renderRoute(`/app/inventory/${TOOL_ID}${search}`, client)
-  await screen.findByRole('heading', { level: 1, name: TOOL_NAME }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1, name: TOOL_NAME })
   return { ...rendered, user: userEvent.setup() }
 }
 

@@ -13,7 +13,6 @@ import type { InventoryTool } from '@/lib/inventory'
 import { decidedHighRisk, limitedRisk } from '@/test/classify-fixtures'
 import { toolId } from '@/test/inventory-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 const PHONE = { width: 390, height: 844 } as const
 /** The share of the row a duty keeps beside its draft link and citation. */
@@ -61,7 +60,7 @@ async function openObligations(language: 'en' | 'de', group: 'date' | 'tool'): P
   // Supabase isn't configured here, so the screen reads the tools from the cache only.
   client.setQueryData(inventoryToolsKey, toolsWithDrafts())
   renderRoute(`/app/obligations${group === 'tool' ? '?group=tool' : ''}`, client)
-  await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
+  await screen.findByRole('heading', { level: 1 })
   await document.fonts.ready
   for (const button of screen.queryAllByRole('button', { name: /^(Show all|Alle \d+)/ })) {
     button.click()

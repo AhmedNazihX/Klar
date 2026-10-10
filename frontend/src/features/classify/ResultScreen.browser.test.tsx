@@ -13,7 +13,6 @@ import {
   WORKED_EXAMPLE_DESCRIPTION,
 } from '@/test/classify-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { putRun, type ClassificationRun } from './classification-store'
 
@@ -36,11 +35,7 @@ async function openResult(
   }
   putRun(client, run)
   renderRoute(`/app/inventory/${TOOL_ID}${view ? '?view=reviewer' : ''}`, client)
-  await screen.findByRole(
-    'heading',
-    { level: 1, name: 'Applicant screening' },
-    { timeout: FIRST_RENDER_MS },
-  )
+  await screen.findByRole('heading', { level: 1, name: 'Applicant screening' })
   await document.fonts.ready
 }
 

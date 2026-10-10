@@ -9,7 +9,6 @@ import { server } from '@/test/msw-server'
 import { renderRoute } from '@/test/test-utils'
 import {
   INVENTORIES_URL,
-  FIRST_RENDER_MS,
   INVENTORY_ID,
   inventoryRow,
   userDataHandlers,
@@ -45,11 +44,7 @@ afterAll(async () => {
 async function openWelcome() {
   const user = userEvent.setup()
   const rendered = renderRoute('/app/welcome')
-  await screen.findByRole(
-    'heading',
-    { level: 1, name: "Let's see where your AI tools stand." },
-    { timeout: FIRST_RENDER_MS },
-  )
+  await screen.findByRole('heading', { level: 1, name: "Let's see where your AI tools stand." })
   return { user, ...rendered }
 }
 

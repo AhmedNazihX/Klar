@@ -29,7 +29,6 @@ import {
 import { openQuestionCount } from '@/features/inventory/tool-facts'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { putRun, type ClassificationRun } from './classification-store'
 import { uniqueFacts } from './result-text'
@@ -68,11 +67,7 @@ async function openResult(
     ...run,
   })
   const { container } = renderRoute(`/app/inventory/${TOOL_ID}`, client)
-  await screen.findByRole(
-    'heading',
-    { level: 1, name: 'Applicant screening' },
-    { timeout: FIRST_RENDER_MS },
-  )
+  await screen.findByRole('heading', { level: 1, name: 'Applicant screening' })
   return { user: userEvent.setup(), container }
 }
 
@@ -668,11 +663,7 @@ describe('The original-text comparison of a run made by an answer', () => {
       answers,
     })
     renderRoute(`/app/inventory/${TOOL_ID}?view=reviewer`, client)
-    const panel = await screen.findByRole(
-      'region',
-      { name: 'Original Act vs amended' },
-      { timeout: FIRST_RENDER_MS },
-    )
+    const panel = await screen.findByRole('region', { name: 'Original Act vs amended' })
     await userEvent
       .setup()
       .click(within(panel).getByRole('button', { name: 'Check under the original text' }))

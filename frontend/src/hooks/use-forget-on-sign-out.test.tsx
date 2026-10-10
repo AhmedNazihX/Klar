@@ -1,3 +1,4 @@
+import { FIRST_RENDER_MS } from '@/test/timeouts'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { onlineManager } from '@tanstack/react-query'
 import { screen } from '@testing-library/react'
@@ -13,7 +14,7 @@ import { server } from '@/test/msw-server'
 import { reconnect } from '@/test/reconnect'
 import { anonymousSession, SIGNUP_URL, SUPABASE_URL, USER_ID } from '@/test/supabase-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS, INVENTORIES_URL, SYSTEMS_URL } from '@/test/user-data-handlers'
+import { INVENTORIES_URL, SYSTEMS_URL } from '@/test/user-data-handlers'
 import { createUserDataStore, type StoredInventory } from '@/test/your-data-store'
 
 import { withAnonymousSession } from './use-anonymous-session'
@@ -80,9 +81,7 @@ describe('a sign-out in another tab', () => {
     )
     renderRoute('/app/classify', queryClient)
     // The app frame starts this tab's session and shows the profile it reads.
-    expect(
-      await screen.findByText('Nordwerk Logistik GmbH', {}, { timeout: FIRST_RENDER_MS }),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('Nordwerk Logistik GmbH')).toBeInTheDocument()
     expect(store.calls.signup).toBe(1)
 
     // Another tab ends the session (as Delete my data does there): supabase-js tells this one.
@@ -121,7 +120,7 @@ describe('a sign-out in another tab', () => {
     server.use(...store.handlers)
     const queryClient = createTestQueryClient()
     renderRoute('/app/classify', queryClient)
-    await screen.findByText('Nordwerk Logistik GmbH', {}, { timeout: FIRST_RENDER_MS })
+    await screen.findByText('Nordwerk Logistik GmbH')
 
     await openOtherTab().auth.signOut()
     expect(await screen.findByText('No company profile yet')).toBeInTheDocument()
@@ -193,7 +192,7 @@ describe('after a sign-out in another tab', () => {
       queries: { ...queryClient.getDefaultOptions().queries, staleTime: 0, retry: false },
     })
     renderRoute('/app/classify', queryClient)
-    await screen.findByText('Nordwerk Logistik GmbH', {}, { timeout: FIRST_RENDER_MS })
+    await screen.findByText('Nordwerk Logistik GmbH')
     await openOtherTab().auth.signOut()
     expect(await screen.findByText('No company profile yet')).toBeInTheDocument()
 
@@ -208,7 +207,7 @@ describe('after a sign-out in another tab', () => {
     server.use(...store.handlers)
     const queryClient = createTestQueryClient()
     renderRoute('/app/classify', queryClient)
-    await screen.findByText('Nordwerk Logistik GmbH', {}, { timeout: FIRST_RENDER_MS })
+    await screen.findByText('Nordwerk Logistik GmbH')
 
     // The next read of the profile waits until the test lets it through, then gets the store's
     // answer, which still holds the profile (only the session has ended).

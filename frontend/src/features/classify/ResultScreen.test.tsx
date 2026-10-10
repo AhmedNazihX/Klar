@@ -24,7 +24,6 @@ import {
   WORKED_EXAMPLE_DESCRIPTION,
 } from '@/test/classify-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { FIRST_RENDER_MS } from '@/test/user-data-handlers'
 
 import { putRun, type ClassificationRun } from './classification-store'
 
@@ -54,11 +53,7 @@ async function openResult(
   const path = `/app/inventory/${TOOL_ID}${view ? `?view=${view}` : ''}`
   const rendered = renderRoute(path, client)
   const untitled = language === 'en' ? 'Your tool' : 'Ihr Tool'
-  await screen.findByRole(
-    'heading',
-    { level: 1, name: name ?? untitled },
-    { timeout: FIRST_RENDER_MS },
-  )
+  await screen.findByRole('heading', { level: 1, name: name ?? untitled })
   return rendered
 }
 
@@ -726,13 +721,7 @@ describe('Result variants (decision 026)', () => {
 describe('Result not in this session', () => {
   it('says so and leads to Classify', async () => {
     renderRoute('/app/inventory/unknown-tool')
-    expect(
-      await screen.findByRole(
-        'heading',
-        { level: 1, name: 'Result' },
-        { timeout: FIRST_RENDER_MS },
-      ),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Result' })).toBeInTheDocument()
     expect(screen.getByText(/This tool isn't in your inventory/)).toBeVisible()
   })
 })
