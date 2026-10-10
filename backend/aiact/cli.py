@@ -436,6 +436,13 @@ def eval_ragas(
             " [default: the EMBEDDING_* settings]"
         ),
     ] = None,
+    cut_off: Annotated[
+        bool,
+        typer.Option(
+            help="Search with the SEARCH_MAX_DISTANCE cut-off; --no-cut-off compares with a run"
+            " from before X1b calibrated it (V6's c358b1e3). An --arm never cuts."
+        ),
+    ] = True,
 ) -> None:
     """Score retrieval and answers on the Q&A set with RAGAS and record the run (V6)."""
     if arm is not None and arm not in embedding_experiment.ARMS:
@@ -446,7 +453,7 @@ def eval_ragas(
         git_sha, is_dirty = runner.current_git_state()
         options = ragas_metrics.RagasOptions(git_sha, is_dirty, subset, seed, max_cost_usd)
         # Without --arm, the RAGAS install and API key are checked before the database is opened.
-        parts = ragas_metrics.build_parts(top_k) if arm is None else None
+        parts = ragas_metrics.build_parts(top_k, is_cut_off=cut_off) if arm is None else None
         with records.connect() as connection:
             if arm is not None:
                 # Checked before any paid call: an arm without vectors would score as bad.

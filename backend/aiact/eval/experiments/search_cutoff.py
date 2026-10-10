@@ -6,7 +6,9 @@ Four kinds of probe, each searched once with its vector embedded once:
 - **description**: the Annex-matching descriptions (X0), the longest queries a search can get;
 - **unanswerable**: B7's unanswerable questions, reported per tag (`unanswerable:other_law`,
   `national_law`, `off_topic`);
-- **off_topic**: the short strings in `OFF_TOPIC_PROBES`, in English and German.
+- **off_topic**: the short strings in `OFF_TOPIC_PROBES`, in English and German, and the
+  questions in `OTHER_LAW_PROBES` (group `other_law_reference`), which name another act's
+  article by number ("Art. 17 DSGVO"): no exact reference, so they must not count as named.
 
 For each probe the run stores what decides `found` (`SearchResults.found`):
 - `best_similarity`: the top meaning-arm similarity, without a cut-off. A cut-off `d` keeps a
@@ -76,6 +78,18 @@ OFF_TOPIC_PROBES: tuple[tuple[str, Language, str], ...] = (
 """Off-topic strings (C8's three, and more of the kind), not benchmark cases: (id, language,
 text)."""
 
+OTHER_LAW_GROUP = "other_law_reference"
+OTHER_LAW_PROBES: tuple[tuple[str, Language, str], ...] = (
+    ("probe-law-en-gdpr17", Language.EN, "What does Article 17 GDPR say about erasure?"),
+    ("probe-law-en-tfeu101", Language.EN, "Which agreements does Article 101 TFEU prohibit?"),
+    ("probe-law-en-reg2016", Language.EN, "Article 6 of Regulation (EU) 2016/679 legal bases"),
+    ("probe-law-de-dsgvo17", Language.DE, "Wann gilt das Recht auf Löschung nach Art. 17 DSGVO?"),
+    ("probe-law-de-aeuv101", Language.DE, "Was verbietet Artikel 101 AEUV?"),
+    ("probe-law-de-dsgvo6", Language.DE, "Art. 6 Abs. 1 lit. f DSGVO berechtigtes Interesse"),
+)
+"""Questions about another act's article, named by number (X1b): (id, language, text). The
+numbers (17, 101, 6) are AI Act articles too, so naming them must not make the query found."""
+
 
 class ProbeKind(StrEnum):
     ANSWERABLE = "answerable"
@@ -119,7 +133,11 @@ def build_probes(
         Probe(probe_id, text, language, ProbeKind.OFF_TOPIC, ProbeKind.OFF_TOPIC.value)
         for probe_id, language, text in OFF_TOPIC_PROBES
     ]
-    return (*answerable, *descriptions, *unanswerable, *off_topic)
+    other_law = [
+        Probe(probe_id, text, language, ProbeKind.OFF_TOPIC, OTHER_LAW_GROUP)
+        for probe_id, language, text in OTHER_LAW_PROBES
+    ]
+    return (*answerable, *descriptions, *unanswerable, *off_topic, *other_law)
 
 
 def _tag(item: QAItem) -> str:

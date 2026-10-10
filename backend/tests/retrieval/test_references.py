@@ -56,3 +56,56 @@ def test_a_query_without_references_names_none(query: str) -> None:
 def test_references_keep_the_order_named_and_appear_once() -> None:
     query = "Annex III point 4(a), Article 6(3) and again Annex III point 4(a)"
     assert exact_references(query) == ("annex:III:4:a", "art:6:3")
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Article 22 GDPR",
+        "Article 22(1) GDPR",
+        "GDPR Article 22",
+        "Article 101 TFEU",
+        "Article 21 of the Charter",
+        "Article 6 of Regulation (EU) 2016/679",
+        "Article 10 of the General Data Protection Regulation",
+        "Article 4 of Directive 2001/95/EC",
+        "recital 71 GDPR",
+        "Annex II point 1 of Regulation (EU) 2017/745",
+    ],
+)
+def test_an_english_reference_to_another_act_is_no_reference(query: str) -> None:
+    assert exact_references(query) == ()
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Art. 17 DSGVO",
+        "Art. 22 DS-GVO",
+        "Art. 5 Abs. 1 lit. a DSGVO",
+        "DSGVO Art. 9",
+        "Artikel 101 AEUV",
+        "Artikel 9 der Datenschutz-Grundverordnung",
+        "Artikel 6 der Verordnung (EU) 2016/679",
+        "Artikel 10 der Richtlinie (EU) 2016/680",
+        "Erwägungsgrund 71 DSGVO",
+    ],
+)
+def test_a_german_reference_to_another_act_is_no_reference(query: str) -> None:
+    assert exact_references(query) == ()
+
+
+@pytest.mark.parametrize(
+    ("query", "ids"),
+    [
+        ("Article 22(1) GDPR and Article 50", ("art:50",)),
+        ("Does Article 50 apply under the GDPR too?", ("art:50",)),
+        ("Article 6 of Regulation (EU) 2024/1689", ("art:6",)),
+        ("Artikel 6 der Verordnung (EU) 2024/1689", ("art:6",)),
+        ("Art. 17 DSGVO und Artikel 26 Absatz 2", ("art:26:2",)),
+    ],
+)
+def test_only_the_reference_next_to_another_act_is_skipped(
+    query: str, ids: tuple[str, ...]
+) -> None:
+    assert exact_references(query) == ids

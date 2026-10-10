@@ -16,6 +16,7 @@ from aiact.eval.experiments import search_cutoff
 from aiact.eval.experiments.search_cutoff import (
     DISTANCES,
     OFF_TOPIC_PROBES,
+    OTHER_LAW_PROBES,
     TOP_K,
     Measurement,
     OnceEmbedder,
@@ -30,6 +31,7 @@ from aiact.eval.experiments.search_cutoff import (
     run_calibration,
 )
 from aiact.eval.runner import RunStatus
+from aiact.retrieval.references import exact_references
 from aiact.retrieval.search import DEFAULT_LIMIT, SearchHit, SearchResults
 from aiact.schemas import Language, LawVersion
 from aiact.settings import Settings
@@ -96,8 +98,13 @@ def test_the_probes_are_every_qa_item_every_annex_description_and_the_off_topic_
         ProbeKind.ANSWERABLE: 29,
         ProbeKind.DESCRIPTION: 48,
         ProbeKind.UNANSWERABLE: 9,
-        ProbeKind.OFF_TOPIC: 14,
+        ProbeKind.OFF_TOPIC: 20,
     }
+    off_topic_groups = [p.group for p in probes if p.kind is ProbeKind.OFF_TOPIC]
+    assert (off_topic_groups.count("off_topic"), off_topic_groups.count("other_law_reference")) == (
+        14,
+        6,
+    )
     groups = {p.group for p in probes if p.kind is ProbeKind.UNANSWERABLE}
     assert groups == {
         "unanswerable:other_law",
@@ -112,6 +119,14 @@ def test_the_probes_are_every_qa_item_every_annex_description_and_the_off_topic_
 def test_the_off_topic_probes_are_in_both_languages() -> None:
     languages = [language for _, language, _ in OFF_TOPIC_PROBES]
     assert (languages.count(Language.EN), languages.count(Language.DE)) == (8, 6)
+
+
+def test_the_other_law_probes_name_article_numbers_but_no_ai_act_reference() -> None:
+    languages = [language for _, language, _ in OTHER_LAW_PROBES]
+    assert (languages.count(Language.EN), languages.count(Language.DE)) == (3, 3)
+    for _, _, text in OTHER_LAW_PROBES:
+        assert any(word in text for word in ("Article", "Artikel", "Art.")), text
+        assert exact_references(text) == (), text
 
 
 def test_the_candidates_span_0_20_to_0_40() -> None:
@@ -252,7 +267,16 @@ def test_a_run_stores_one_row_per_probe_with_what_decides_found() -> None:
     assert not any(key.startswith("recall_at") for key in off.scores)
     outcome = store.outcomes[calibration.run_id]
     assert outcome["status"] == "completed"
+    assert (outcome["cases_planned"], outcome["cases_scored"]) == (2, 2)
     assert outcome["found_share_at_settings"] == {"answerable": 1.0, "off_topic": 1.0}
+    # Both probes' best hit is at 0.75 and their best keyword row at 12.0 (`FakeSearch`).
+    one = {"n": 1, "similarity": [0.75, 0.75, 0.75], "keyword_idf": [12.0, 12.0, 12.0]}
+    assert outcome["distributions"] == {
+        "answerable": one,
+        "answerable/en": one,
+        "off_topic": one,
+        "off_topic/de": one,
+    }
     assert calibration.cost_usd == pytest.approx(0.0002)  # one embedding per probe
     assert [record.cost_usd for _, record in store.cases] == pytest.approx([0.0001, 0.0001])
     assert [record.tokens for _, record in store.cases] == [7, 7]
@@ -312,7 +336,7 @@ def test_the_command_measures_every_probe_and_prints_the_sweep(
     monkeypatch.setattr("aiact.cli.get_settings", lambda: SETTINGS)
     result = CliRunner().invoke(app, ["evaluate", "search-cutoff"])
     assert result.exit_code == 0, result.output
-    assert seen == [100]
+    assert seen == [106]
     assert "completed, 2/2 probes" in result.stdout
     assert "found share by cut-off" in result.stdout
     # The first two probes are answerable items whose provisions the fake never returns.

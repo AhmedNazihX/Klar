@@ -12,6 +12,12 @@ A whole annex ("Annex III" alone) is not taken as a reference: questions name it
 ("our Annex III system", "Hochrisiko-Systeme nach Anhang III"), and pinning its whole text, all
 its points in one row, first would crowd out the point that answers them (X1b measured this on
 four Q&A items). `get_provision` returns a whole annex when one is wanted.
+
+A reference to another act is not one to the AI Act: "Article 22 GDPR", "Art. 17 DSGVO",
+"Article 101 of the Treaty", "Article 6 of Regulation (EU) 2016/679", "GDPR Article 22". The
+rule is simple and only looks next to the reference: it is skipped when another act's name
+(`OTHER_ACT`) follows it straight away (after "of (the)", "der", "des", or a German "lit." or
+"Satz" part) or stands straight before it. An act named elsewhere in the query leaves it be.
 """
 
 import re
@@ -44,6 +50,25 @@ RECITAL = re.compile(
     r"\b(?:recitals?|erwägungsgr(?:und|ünde))\s+(?P<number>\d{1,3})\b", re.IGNORECASE
 )
 
+AI_ACT_NUMBER = "2024/1689"
+
+OTHER_ACT = (
+    r"(?:gdpr|ds-?gvo|tfeu|aeuv|teu|euv|charter|charta|treaty|vertrag\w*"
+    r"|general\s+data\s+protection\s+regulation|datenschutz-grundverordnung"
+    r"|(?:regulation|verordnung)\s*\((?:eu|ec|eg|eec|ewg)\)\s*(?:no\.?\s*|nr\.?\s*)?"
+    rf"(?!{AI_ACT_NUMBER}\b)\d{{1,4}}/\d{{1,4}}"
+    r"|directive|richtlinie)\b"
+)
+"""Another act a provision number may belong to: the GDPR, the Treaties and the Charter by
+name, any Union regulation by number but the AI Act's own, and any directive."""
+
+OTHER_ACT_AFTER = re.compile(
+    r"(?:\s*(?:lit\.|litera|satz|s\.|uabs\.)\s*\w{1,3}\b)*"
+    r"\s*,?\s*(?:of\s+(?:the\s+)?|der\s+|des\s+)?" + OTHER_ACT,
+    re.IGNORECASE,
+)
+OTHER_ACT_BEFORE = re.compile(OTHER_ACT + r"(?:'s)?\s*$", re.IGNORECASE)
+
 
 def exact_references(query: str) -> tuple[str, ...]:
     """The provision ids `query` names, in the order it names them, each once."""
@@ -52,12 +77,27 @@ def exact_references(query: str) -> tuple[str, ...]:
 
 
 def _matches(query: str) -> Iterator[tuple[int, str]]:
-    """(position, provision id) for every reference in `query`."""
+    """(position, provision id) for every reference to the AI Act in `query`."""
+    return (
+        (start, provision_id)
+        for start, end, provision_id in _candidates(query)
+        if not _names_another_act(query, start, end)
+    )
+
+
+def _names_another_act(query: str, start: int, end: int) -> bool:
+    """Another act is named right after or right before `query[start:end]`."""
+    return bool(OTHER_ACT_AFTER.match(query, end) or OTHER_ACT_BEFORE.search(query, 0, start))
+
+
+def _candidates(query: str) -> Iterator[tuple[int, int, str]]:
+    """(start, end, provision id) for every reference in `query`, whatever act it is in."""
     for match in ARTICLE.finditer(query):
         paragraph = match["paragraph"] or match["absatz"]
         point = None if match["unterabsatz"] else match["point"] or match["buchstabe"]
         yield (
             match.start(),
+            match.end(),
             _join("art", [_lower(match["number"]), _lower(paragraph), _lower(point)]),
         )
     for match in ANNEX.finditer(query):
@@ -66,9 +106,9 @@ def _matches(query: str) -> Iterator[tuple[int, str]]:
         letter = match["letter"] or match["buchstabe"]
         sections = [match["section"].upper()] if match["section"] else []
         parts = [match["annex"].upper(), *sections, match["point"], _lower(letter)]
-        yield match.start(), _join("annex", parts)
+        yield match.start(), match.end(), _join("annex", parts)
     for match in RECITAL.finditer(query):
-        yield match.start(), f"recital:{match['number']}"
+        yield match.start(), match.end(), f"recital:{match['number']}"
 
 
 def _lower(value: str | None) -> str | None:

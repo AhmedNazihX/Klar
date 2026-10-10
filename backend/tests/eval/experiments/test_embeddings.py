@@ -621,6 +621,37 @@ def test_build_parts_keeps_the_cut_off_for_the_configured_arm() -> None:
     assert retriever.is_cut_off is True
 
 
+def test_build_parts_can_search_the_configured_arm_without_the_cut_off() -> None:
+    """To compare with V6's c358b1e3, searched before X1b set a cut-off."""
+    settings = Settings(
+        _env_file=None,  # pyright: ignore[reportCallIssue]
+        openrouter_api_key=SecretStr("k"),
+        embedding_model="qwen/qwen3-embedding-8b",
+        embedding_provider="nebius",
+    )
+    retriever = ragas_metrics.build_parts(settings=settings, is_cut_off=False).retriever
+    assert isinstance(retriever, ragas_metrics.SearchRetriever)
+    assert retriever.is_cut_off is False
+    config = retriever.config()
+    assert isinstance(config, dict) and config["max_distance"] is None
+
+
+@pytest.mark.parametrize(("flag", "is_cut_off"), [([], True), (["--no-cut-off"], False)])
+def test_ragas_passes_the_cut_off_choice_to_the_parts(
+    monkeypatch: pytest.MonkeyPatch, flag: list[str], is_cut_off: bool
+) -> None:
+    seen: list[object] = []
+
+    def fake_build_parts(top_k: int, **kwargs: object) -> object:
+        seen.append(kwargs["is_cut_off"])
+        raise records.DatabaseNotConfiguredError("stop here")
+
+    monkeypatch.setattr(ragas_metrics, "build_parts", fake_build_parts)
+    result = CliRunner().invoke(app, ["evaluate", "ragas", *flag])
+    assert result.exit_code == 2
+    assert seen == [is_cut_off]
+
+
 # --- X1b: the search tuning ----------------------------------------------------------------
 
 
@@ -637,6 +668,7 @@ def test_a_run_ranks_with_its_tuning_and_records_it() -> None:
         "rrf_k": 60,
         "max_term_share": 0.05,
         "skips_annex_containers": False,
+        "pins_references": True,
     }
 
 

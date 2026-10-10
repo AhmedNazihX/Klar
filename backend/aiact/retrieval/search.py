@@ -14,7 +14,8 @@ No model is involved apart from the query embedding.
 - **Fusion.** Each arm keeps its best `CANDIDATES` rows; weighted Reciprocal Rank Fusion adds
   `weight / (RRF_K + rank)` per arm. The keyword arm weighs `KEYWORD_WEIGHT`, little: X1b found
   it only lowered recall, so it breaks ties (decision 003). The constants travel as one
-  `SearchTuning`, so the experiments can vary them.
+  `SearchTuning`, so the experiments can vary them; the engine searches with C6's
+  (`ENGINE_TUNING`) until its own guideline searches are measured.
 - **Annex points.** An annex row with points under it (the whole annex, an Annex III area, an
   Annex I section) is left out of both ranked arms, so its points compete on their own (X1b).
 - **Exact references.** The provisions a query names by number ("Article 50", "Anhang III Nr. 4";
@@ -114,6 +115,8 @@ class SearchTuning:
     """Rank an annex's points, never the annex, area or section row above them (X1b: with the
     rows that hold them in the running, a point's area outranked it in 15 of 48 Annex
     descriptions)."""
+    pins_references: bool = True
+    """Put the provisions the query names by number first (`exact_references`)."""
 
     def __post_init__(self) -> None:
         if not (isfinite(self.keyword_weight) and self.keyword_weight >= 0):
@@ -125,6 +128,14 @@ class SearchTuning:
 
 
 DEFAULT_TUNING = SearchTuning()
+
+ENGINE_TUNING = SearchTuning(
+    keyword_weight=0.5, rrf_k=60, skips_annex_containers=False, pins_references=False
+)
+"""The engine's searches keep C6's ranking (keyword weight 0.5, RRF_K 60, annex rows with
+points in the running, no exact references): X1b measured the new defaults on Q&A questions
+and Annex descriptions, not on the guideline searches the engine's checks run, so the engine is
+retuned only once a guideline-retrieval measure exists (decision 003)."""
 
 
 class _FromSettings(Enum):
@@ -369,7 +380,8 @@ def search_ai_act(
     `SEARCH_MAX_DISTANCE` setting, and None searches without one (as the engine does).
     `doc_keys` limits the search to those documents (manifest keys) inside both arms' SQL.
     The provisions the query names by number ("Article 50", "Anhang III Nr. 4") come first, in
-    the order named (`exact_references`). `tuning` is for experiments only.
+    the order named (`exact_references`). `tuning` is for the experiments and the engine
+    (`ENGINE_TUNING`) only.
     Raises ValueError for an empty query, an unknown doc type, empty `doc_keys`, a `limit` outside
     1..CANDIDATES, a `max_distance` outside 0..2, or `original` together with `as_of`. Without
     an `embedder`, one is built from the settings; without a `connection`, one is opened from
@@ -471,7 +483,7 @@ def prepare_search(
         "include_held_out": include_held_out,
         "max_distance": max_distance,
         "exclude_source_example_ids": list(exclude_source_example_ids),
-        "reference_ids": list(exact_references(query)),
+        "reference_ids": list(exact_references(query)) if tuning.pins_references else [],
         "candidates": CANDIDATES,
         "min_common_rows": MIN_COMMON_ROWS,
         **asdict(tuning),

@@ -284,6 +284,29 @@ def test_the_statement_takes_the_tuning_and_the_references_as_parameters() -> No
     )
 
 
+def test_the_engine_tuning_is_c6s_ranking_and_names_no_reference() -> None:
+    assert (
+        SearchTuning(
+            keyword_weight=0.5,
+            rrf_k=60,
+            max_term_share=0.05,
+            skips_annex_containers=False,
+            pins_references=False,
+        )
+        == search.ENGINE_TUNING
+    )
+    params, _ = prepare_search(
+        "Article 50 and Annex III point 5(b)", Language.EN, LawVersion.AMENDED, None, None, (),
+        False, 10, RecordingEmbedder(), tuning=search.ENGINE_TUNING,
+    )  # fmt: skip
+    assert params["reference_ids"] == []
+    assert (params["keyword_weight"], params["rrf_k"], params["skips_annex_containers"]) == (
+        0.5,
+        60,
+        False,
+    )
+
+
 def test_the_annex_rule_sits_in_both_ranked_arms_and_not_in_the_reference_arm() -> None:
     _, statement = prepare_search(
         "q", Language.EN, LawVersion.AMENDED, None, None, (), False, 10, RecordingEmbedder()
