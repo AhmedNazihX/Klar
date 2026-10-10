@@ -5,11 +5,11 @@ import { Trans, useTranslation } from 'react-i18next'
 import { buttonVariants } from '@/components/button-variants'
 import { GlassPanel } from '@/components/GlassPanel'
 import { Placeholder } from '@/components/Placeholder'
+import { PLACEHOLDER_TAGS } from '@/components/placeholder-tags'
 import { Reveal } from '@/components/Reveal'
 import { SegmentedControl } from '@/components/SegmentedControl'
 
 import { CONTACT_ADDRESS, CONTACT_TOPICS, contactMailto, type ContactTopic } from './contact-mail'
-import { PLACEHOLDER_TAGS } from './placeholder-tags'
 import { PageIntro } from './SitePageParts'
 
 // The side panels arrive one stagger step (the 110 ms token) after another.

@@ -19,6 +19,8 @@ const GUTTER_PX = 16
 /** The smallest touch target, in px (WCAG 2.5.5). */
 const MIN_TARGET_PX = 44
 const FIRST_LOAD_MS = 8000
+/** How far the pill may sit from its button on each side, in px (offset* values are rounded). */
+const PILL_TOLERANCE_PX = 1
 
 const TOPICS: Record<Language, { group: string; topics: string[] }> = {
   en: {
@@ -75,14 +77,12 @@ describe.each(['en', 'de'] as const)('the site pages on a phone (%s)', (language
     // The white pill settles on the chosen topic, in the stacked layout too.
     const pill = control.querySelector<HTMLElement>('span[aria-hidden="true"]')
     if (!pill) throw new Error('The topic switch has no pill.')
+    // The pill is placed from rounded offset* values, so each side may be off by a sub-pixel.
     await vi.waitFor(() => {
       const [from, to] = [pill.getBoundingClientRect(), last.getBoundingClientRect()]
-      expect([from.top, from.left, from.width, from.height]).toEqual([
-        to.top,
-        to.left,
-        to.width,
-        to.height,
-      ])
+      for (const side of ['top', 'right', 'bottom', 'left'] as const) {
+        expect(Math.abs(from[side] - to[side])).toBeLessThanOrEqual(PILL_TOLERANCE_PX)
+      }
     })
   })
 })

@@ -138,7 +138,7 @@
     "classify": "Classify a tool",
     "footer": {
       "guidance": "Guidance, not legal advice.",
-      "data": "Klar is itself an AI system, and tells you so on every screen. Your descriptions stay in your own anonymous session and are deleted after 30 days without activity. Models are reached through OpenRouter; embeddings run on an EU host. Full list of providers in the privacy notice.",
+      "data": "Klar is itself an AI system, and tells you so on every screen. Your descriptions stay in your own anonymous session and are deleted after 30 days without activity. Models are reached through OpenRouter; embeddings run on Nebius (region to be confirmed). Full list of providers in the privacy notice.",
       "linksLabel": "Site",
       "method": "How it’s measured",
       "privacy": "Privacy",

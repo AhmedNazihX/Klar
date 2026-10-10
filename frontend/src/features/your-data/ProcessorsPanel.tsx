@@ -3,7 +3,7 @@ import { useId, type JSX } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { GlassPanel } from '@/components/GlassPanel'
-import { PLACEHOLDER_TAGS } from '@/features/site-pages/placeholder-tags'
+import { PLACEHOLDER_TAGS } from '@/components/placeholder-tags'
 
 // Every processor in the data chain, named (INIT › Ethical considerations; decision 005): the
 // models through OpenRouter on Azure EU and Google Vertex EU, embeddings on Nebius, storage on

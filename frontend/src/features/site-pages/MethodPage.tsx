@@ -4,9 +4,9 @@ import { Trans, useTranslation } from 'react-i18next'
 import { AccuracyFigure } from '@/components/AccuracyFigure'
 import { GlassPanel } from '@/components/GlassPanel'
 import { Placeholder } from '@/components/Placeholder'
+import { PLACEHOLDER_TAGS } from '@/components/placeholder-tags'
 import { SITE_ACCURACY, type SiteAccuracy } from '@/lib/accuracy'
 
-import { PLACEHOLDER_TAGS } from './placeholder-tags'
 import { InfoRows, InfoSection, InfoText, PageIntro, type InfoRow } from './SitePageParts'
 
 function MetricTile({

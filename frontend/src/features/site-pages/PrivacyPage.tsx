@@ -2,8 +2,8 @@ import type { JSX } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { Placeholder } from '@/components/Placeholder'
+import { PLACEHOLDER_TAGS } from '@/components/placeholder-tags'
 
-import { PLACEHOLDER_TAGS } from './placeholder-tags'
 import {
   InfoRows,
   InfoSection,

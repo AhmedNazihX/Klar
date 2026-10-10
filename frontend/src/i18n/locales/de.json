@@ -138,7 +138,7 @@
     "classify": "Tool einstufen",
     "footer": {
       "guidance": "Orientierungshilfe, keine Rechtsberatung.",
-      "data": "Klar ist selbst ein KI-System und sagt das auf jedem Bildschirm. Ihre Beschreibungen bleiben in Ihrer anonymen Sitzung und werden nach 30 Tagen ohne Aktivität gelöscht. Die Modelle werden über OpenRouter angesprochen; Embeddings laufen bei einem Anbieter in der EU. Alle Anbieter stehen in der Datenschutzerklärung.",
+      "data": "Klar ist selbst ein KI-System und sagt das auf jedem Bildschirm. Ihre Beschreibungen bleiben in Ihrer anonymen Sitzung und werden nach 30 Tagen ohne Aktivität gelöscht. Die Modelle werden über OpenRouter angesprochen; Embeddings laufen bei Nebius (Region noch zu bestätigen). Alle Anbieter stehen in der Datenschutzerklärung.",
       "linksLabel": "Website",
       "method": "So wird gemessen",
       "privacy": "Datenschutz",

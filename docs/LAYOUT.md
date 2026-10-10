@@ -261,7 +261,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            ObligationItem, ResultSummary, StepRow, StepCard, ScreenTitle (P5);
 │       │                            InventoryTable (P6); VersionDiff (P10); FactQuestion, ChangeBanner (P5b); Composer, ChatMessage (P7);
 │       │                            Reveal, Typewriter, MenuMark, MistGround's moving lights (P16);
-│       │                            Placeholder (a marked unknown) and AccuracyFigure (one published rate or `[—%]`) (P17);
+│       │                            Placeholder (a marked unknown) with placeholder-tags.tsx (its `<ph>` tag for Trans) and AccuracyFigure (one published rate or `[—%]`) (P17);
 │       │                            law-binding.ts (the frame's law binding, for a screen's own switch) and
 │       │                            AppTopBar's ScreenLawSwitch (the compact switch under a phone result's title, P26)
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
@@ -271,7 +271,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            layout AmbiguousSummary, AmbiguousVerdict, ReadingCards, SettleIt, TakeItToALawyer, P22), inventory/ (P6), your-data/ (P12), obligations/ (P24),
 │       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads),
 │       │                            site-pages/ (P17: MethodPage, PrivacyPage, ImpressumPage, ContactPage, their shared SitePageParts,
-│       │                            placeholder-tags.tsx, contact-mail.ts: the Contact page's mailto link and its still-empty address;
+│       │                            contact-mail.ts: the Contact page's mailto link and its still-empty address;
 │       │                            SitePages.phone.browser.test.tsx the pages at 360 and 390 px),
 │       │                            documents/ (P9: the documents screen, interview, checks, downloads, a skeleton's
 │       │                            SkeletonHeader and SectionList; interview-answers.ts reads and upserts interview_answers
