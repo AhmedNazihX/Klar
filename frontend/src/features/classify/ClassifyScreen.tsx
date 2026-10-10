@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useState, type JSX } from 'react'
+import { useState, type BaseSyntheticEvent, type JSX } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
@@ -26,7 +26,11 @@ import {
   type DraftTool,
 } from './classification-store'
 import { DescriptionForm } from './DescriptionForm'
-import { DescriptionFormSchema, type DescriptionFormValues } from './description-form'
+import {
+  DESCRIPTION_MAX,
+  DescriptionFormSchema,
+  type DescriptionFormValues,
+} from './description-form'
 import { DescriptionPrompts } from './DescriptionPrompts'
 import { answersOf, withAnswers, type AnswerDraft, type AnswerDrafts } from './follow-up-answers'
 import { ProgressPanel } from './ProgressPanel'
@@ -94,6 +98,8 @@ export function ClassifyScreen(): JSX.Element {
   const description = useWatch({ control: form.control, name: 'description' })
   const answers = asked ? answersOf(t, asked.questions, drafts) : {}
   const hasAnswers = Object.keys(answers).length > 0
+  // While the prompts show, a run needs something new: an answer, or a changed description.
+  const canRun = asked === null || hasAnswers || description.trim() !== asked.description.trim()
 
   /** Adds the finished run to the inventory (on the draft's tool, else as a new tool), then opens
    *  its result. A run that can't be saved still opens (it was paid for), under a local id and
@@ -135,8 +141,15 @@ export function ClassifyScreen(): JSX.Element {
     const body: ClassifyRequest = { description: values.description, language }
     run.mutate(hasAnswers ? { ...body, answers } : body, {
       // The tool keeps the answers in its description: the run that asked for them is never saved.
+      // Cut to the systems table's limit: the answers' tail goes, never the description itself.
       onSuccess: (result) =>
-        void keep({ ...values, description: withAnswers(values.description, answers) }, result),
+        void keep(
+          {
+            ...values,
+            description: withAnswers(values.description, answers).slice(0, DESCRIPTION_MAX),
+          },
+          result,
+        ),
       onError: (error) => {
         setAsked((earlier) => askedForMore(error, values.description) ?? earlier)
       },
@@ -144,6 +157,12 @@ export function ClassifyScreen(): JSX.Element {
   }
 
   const submit = form.handleSubmit(start)
+  /** The form's own submit (Enter in a field): nothing new while the prompts show, no paid run. */
+  function submitForm(event?: BaseSyntheticEvent): Promise<void> {
+    if (canRun) return submit(event)
+    event?.preventDefault()
+    return Promise.resolve()
+  }
   return (
     <>
       <div className="flex max-w-[760px] flex-col gap-1.5">
@@ -165,7 +184,7 @@ export function ClassifyScreen(): JSX.Element {
           <DescriptionForm
             form={form}
             isRunning={run.isPending || save.isPending}
-            onSubmit={submit}
+            onSubmit={submitForm}
             hasRunAction={asked === null}
           />
           {asked && (
@@ -176,9 +195,9 @@ export function ClassifyScreen(): JSX.Element {
                 onDraftChange={(id: string, draft: AnswerDraft) => {
                   setDrafts((earlier) => ({ ...earlier, [id]: draft }))
                 }}
-                canRun={hasAnswers || description.trim() !== asked.description.trim()}
+                canRun={canRun}
                 isRunning={run.isPending || save.isPending}
-                onRun={() => void submit()}
+                onRun={() => void submitForm()}
               />
             </div>
           )}

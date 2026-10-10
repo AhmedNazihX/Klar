@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import { useId, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -8,6 +9,25 @@ import { GlassPanel } from '@/components/GlassPanel'
 
 import type { AnswerDraft, AnswerDrafts } from './follow-up-answers'
 import { QuestionAnswer } from './FollowUpQuestions'
+
+/** The three prompts' fixed ids (DESCRIPTION_QUESTION_IDS in aiact/schemas/questions.py). */
+const PROMPT_IDS = ['what_it_decides', 'who_it_affects', 'bought_or_built'] as const
+type PromptId = (typeof PROMPT_IDS)[number]
+
+function isPromptId(id: string): id is PromptId {
+  return (PROMPT_IDS as readonly string[]).includes(id)
+}
+
+/** A prompt's question and hint in the screen's language, so the card stays in one language
+ *  after a switch; the texts match the engine's (DESCRIPTION_TEXTS in aiact/engine/nodes/facts.py).
+ *  A prompt the screen doesn't know keeps the engine's words. */
+function promptTexts(t: TFunction, question: FollowUpQuestion): { text: string; hint?: string } {
+  if (!isPromptId(question.id)) return { text: question.text, hint: question.hint ?? undefined }
+  return {
+    text: t(`classify.prompts.questions.${question.id}.text`),
+    hint: t(`classify.prompts.questions.${question.id}.hint`),
+  }
+}
 
 export type DescriptionPromptsProps = {
   /** The engine's three prompts (what it decides, who it affects, bought or built), each with
@@ -49,24 +69,28 @@ export function DescriptionPrompts({
         </h2>
         <p className="m-0 text-body-small text-slate">{t('classify.prompts.intro')}</p>
       </div>
-      <div className="flex flex-col gap-2.5">
-        {questions.map((question) => (
-          <FactQuestion
-            key={question.id}
-            question={question.text}
-            hint={question.hint}
-            renderAnswer={(labelledBy) => (
-              <QuestionAnswer
-                question={question}
-                labelledBy={labelledBy}
-                drafts={drafts}
-                onDraftChange={onDraftChange}
-                isRunning={isRunning}
+      <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+        {questions.map((question) => {
+          const { text, hint } = promptTexts(t, question)
+          return (
+            <li key={question.id}>
+              <FactQuestion
+                question={text}
+                hint={hint}
+                renderAnswer={(labelledBy) => (
+                  <QuestionAnswer
+                    question={question}
+                    labelledBy={labelledBy}
+                    drafts={drafts}
+                    onDraftChange={onDraftChange}
+                    isRunning={isRunning}
+                  />
+                )}
               />
-            )}
-          />
-        ))}
-      </div>
+            </li>
+          )
+        })}
+      </ul>
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <span className="text-caption font-normal text-slate">{t('classify.prompts.footer')}</span>
         <Button disabled={!canRun || isRunning} onClick={onRun}>

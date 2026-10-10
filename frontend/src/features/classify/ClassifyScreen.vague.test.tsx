@@ -1,7 +1,7 @@
 // Classify with a description too thin to start (P20, E13, artboard `ClassifyVague`): the three
 // prompts replace the fact questions, the checks wait, nothing is saved, and Run the checks runs
 // again with the answers (decision 019). Supabase is configured, so a save would be seen.
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18n from 'i18next'
 import { http, HttpResponse } from 'msw'
@@ -24,6 +24,7 @@ import { renderRoute } from '@/test/test-utils'
 import { FIRST_RENDER_MS, inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
 
 import { clearDraft } from './classification-store'
+import { DESCRIPTION_MAX } from './description-form'
 
 vi.mock('@/lib/supabase', async (importOriginal) => {
   const actual = await importOriginal<typeof SupabaseModule>()
@@ -90,13 +91,38 @@ const TEXT = {
   },
 } as const
 
+/** The three prompts and their hints, as the engine words them, in each language. */
+const PROMPTS = {
+  en: [
+    [
+      'What does it decide or suggest?',
+      'For example: it ranks applicants, answers staff questions, plans shifts.',
+    ],
+    ['Who does it affect?', 'For example: applicants, your staff, customers.'],
+    ['Did you buy it or build it?', 'And whether you changed it or put your own name on it.'],
+  ],
+  de: [
+    [
+      'Was entscheidet es oder was schlägt es vor?',
+      'Zum Beispiel: Es reiht Bewerbungen, beantwortet Fragen von Beschäftigten, plant Schichten.',
+    ],
+    ['Wen betrifft es?', 'Zum Beispiel: Bewerbende, Ihre Beschäftigten, Kundschaft.'],
+    [
+      'Haben Sie es gekauft oder selbst entwickelt?',
+      'Und ob Sie es verändert oder Ihren eigenen Namen daraufgesetzt haben.',
+    ],
+  ],
+} as const
+
 /** Opens Classify, describes the tool thinly and runs the checks; resolves once the prompts show. */
-async function runThin(language: 'en' | 'de' = 'en') {
+async function runThin(language: 'en' | 'de' = 'en', description: string = THIN_DESCRIPTION) {
   await i18n.changeLanguage(language)
   const user = userEvent.setup()
   const rendered = renderRoute('/app/classify')
   await screen.findByRole('heading', { level: 1 }, { timeout: FIRST_RENDER_MS })
-  await user.type(screen.getByLabelText(TEXT[language].description), THIN_DESCRIPTION)
+  // A long description is pasted: typing it key by key would take minutes.
+  await user.click(screen.getByLabelText(TEXT[language].description))
+  await user.paste(description)
   await user.click(screen.getByRole('button', { name: TEXT[language].run }))
   const prompts = await screen.findByRole('region', { name: TEXT[language].title })
   return { user, prompts, ...rendered }
@@ -214,6 +240,76 @@ describe('Classify, a description too thin to start', () => {
     expect(within(prompts).getByRole('button', { name: 'Prüfungen starten' })).toBeDisabled()
     expect(screen.getByText(TEXT.de.waiting)).toBeVisible()
     expect(requests).toEqual([{ description: THIN_DESCRIPTION, language: 'de' }])
+  })
+
+  it.each([
+    ['en', 'de'],
+    ['de', 'en'],
+  ] as const)('keeps the prompts in one language after a switch from %s to %s', async (from, to) => {
+    server.use(classifyRuns(needsDescriptionEvents(from)))
+    const { prompts } = await runThin(from)
+
+    await act(async () => {
+      await i18n.changeLanguage(to)
+    })
+
+    expect(within(prompts).getByText(TEXT[to].title)).toBeVisible()
+    for (const [text, hint] of PROMPTS[to]) {
+      expect(within(prompts).getByRole('textbox', { name: text })).toBeVisible()
+      expect(within(prompts).getByText(hint)).toBeVisible()
+    }
+    for (const [text, hint] of PROMPTS[from]) {
+      expect(within(prompts).queryByText(text)).toBeNull()
+      expect(within(prompts).queryByText(hint)).toBeNull()
+    }
+  })
+
+  it('lists the three prompts', async () => {
+    server.use(classifyRuns(needsDescriptionEvents()))
+    const { prompts } = await runThin()
+
+    const list = within(prompts).getByRole('list')
+    expect(within(list).getAllByRole('listitem')).toHaveLength(3)
+  })
+
+  it('sends nothing on Enter in the name while there is nothing new to run on', async () => {
+    server.use(classifyRuns(needsDescriptionEvents(), [...WORKED_EXAMPLE_EVENTS]))
+    const { user, prompts } = await runThin()
+
+    await user.type(screen.getByLabelText('What do you call the tool?'), 'HR helper{Enter}')
+    // The one run that follows is the one the prompts' button starts, with the answer.
+    await user.type(
+      within(prompts).getByRole('textbox', { name: 'Who does it affect?' }),
+      'People applying for jobs.',
+    )
+    await user.click(within(prompts).getByRole('button', { name: 'Run the checks' }))
+
+    await expect.poll(() => saves.length).toBe(1)
+    expect(requests).toEqual([
+      { description: THIN_DESCRIPTION, language: 'en' },
+      {
+        description: THIN_DESCRIPTION,
+        language: 'en',
+        answers: { who_it_affects: 'People applying for jobs.' },
+      },
+    ])
+  })
+
+  it('saves a description near the limit whole, with as much of the answers as fits', async () => {
+    const answer = 'People applying for jobs.'
+    const long = `We use AI for HR.${' It helps.'.repeat(1998)}`
+    expect(long).toHaveLength(DESCRIPTION_MAX - 3)
+    server.use(classifyRuns(needsDescriptionEvents(), [...WORKED_EXAMPLE_EVENTS]))
+    const { user, prompts, router } = await runThin('en', long)
+
+    await user.type(within(prompts).getByRole('textbox', { name: 'Who does it affect?' }), answer)
+    await user.click(within(prompts).getByRole('button', { name: 'Run the checks' }))
+
+    await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${SYSTEM_ID}`)
+    const saved = saves[0]?.tool_description
+    expect(saved).toBe(`${long}\n\n${answer}`.slice(0, DESCRIPTION_MAX))
+    expect(saved).toHaveLength(DESCRIPTION_MAX)
+    expect(String(saved).startsWith(long)).toBe(true)
   })
 
   it('passes axe', async () => {

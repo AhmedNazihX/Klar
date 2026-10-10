@@ -2,8 +2,10 @@
 replays of five recorded engine-model answers in English and German. Every description here is
 invented (the first is INIT's worked example); none comes from the benchmark."""
 
+import json
 from datetime import date
 from functools import partial
+from pathlib import Path
 
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
@@ -542,6 +544,22 @@ def test_the_description_questions_are_worded_as_the_artboard(
     questions = facts.description_questions(language)
     assert [(q.text, q.hint) for q in questions] == expected
     assert all(q.options == () and q.if_yes is None for q in questions)
+
+
+LOCALES = Path(__file__).resolve().parents[4] / "frontend" / "src" / "i18n" / "locales"
+
+
+@pytest.mark.parametrize("language", [Language.EN, Language.DE])
+def test_the_screen_words_the_description_questions_as_the_engine(language: Language) -> None:
+    """The Classify screen shows the three prompts from its own texts, in the screen's language
+    (P20), so they must stay the engine's words."""
+    locale = json.loads((LOCALES / f"{language.value}.json").read_text(encoding="utf-8"))
+    screen = locale["classify"]["prompts"]["questions"]
+    questions = facts.description_questions(language)
+    assert list(screen) == [q.id for q in questions]
+    assert [(screen[q.id]["text"], screen[q.id]["hint"]) for q in questions] == [
+        (q.text, q.hint) for q in questions
+    ]
 
 
 def test_the_answer_schema_asks_the_model_both_flags() -> None:
