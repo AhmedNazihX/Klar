@@ -48,6 +48,7 @@ No model is involved apart from the query embedding.
 """
 
 from collections.abc import Collection, Sequence
+from dataclasses import asdict, dataclass
 from datetime import date
 from enum import Enum
 from math import isfinite
@@ -60,40 +61,63 @@ from psycopg.rows import dict_row
 from aiact.corpus.embed import vector_literal
 from aiact.db import connect
 from aiact.llm.embeddings import OpenRouterEmbeddings
+from aiact.retrieval.references import exact_references
 from aiact.retrieval.tracing import search_metadata, traced_lookup
 from aiact.schemas import DISCLAIMER, DocumentStatus, Language, LawVersion
 from aiact.schemas.base import ContractModel
 from aiact.settings import get_settings
 
 CANDIDATES = 50
-"""Rows each arm hands to the fusion; also the largest `limit` a caller may ask for."""
+"""Rows each arm hands to the fusion; also the largest `limit` a caller may ask for (X1b: 20 or
+100 rank the same)."""
 
 DEFAULT_LIMIT = 10
-RRF_K = 60
-"""The usual RRF constant: damps the gap between the first few ranks of each arm."""
+RRF_K = 10
+"""The RRF constant (X1b; 60, the usual value, before): damps the gap between the first few
+ranks of each arm. With the small keyword weight below, 2 to 20 rank alike."""
 
-KEYWORD_WEIGHT = 0.5
-"""The keyword arm's RRF weight (the meaning arm's is 1)."""
+KEYWORD_WEIGHT = 0.1
+"""The keyword arm's RRF weight (the meaning arm's is 1). X1b measured every weight from 0 to 1:
+the keyword arm only ever lowered recall on both sets (0.5 with RRF_K 60, C6's guess, cost 0.1
+of Q&A recall), so it now breaks ties between close meaning-arm ranks and no more. It still
+finds the rows its rare words name, and gives `found` its `keyword_idf`."""
 
 MAX_TERM_SHARE = 0.05
 """A query word found in more than this share of the rows in its language is left out of the
-keyword arm: it says little and would flood the arm (soft descriptions are full of such words)."""
+keyword arm: it says little and would flood the arm (soft descriptions are full of such words).
+X1b: 0.01 to 0.1 rank the same at the keyword weight above."""
 
 MIN_COMMON_ROWS = 50
 """A word is only too common when it is also in more than this many rows, so a small corpus
 (tests, a partial load) doesn't lose all its words to the share rule."""
 
-MIN_KEYWORD_IDF = 9.0
-"""The summed IDF from which a keyword hit counts as a strong match for `found`. It is above the
-most one word can score (a word in one unit: ln of the about 2,900 English units = 8.0), so it
-takes two rare words in one row. Measured in C8 on the loaded corpus: off-topic queries' best
-keyword hits score up to 8.0 on one stray word ("tell me a joke", "football results": 6.6-8.0),
-while "emotion recognition in the workplace" scores 10.7. Exact references rarely get here:
-English "Article 50" has no keyword hit at all ('50' is in 7.6% of the units, over
-`MAX_TERM_SHARE`), so the meaning arm has to find them. X1 calibrates this with the cut-off."""
-
 MAX_COSINE_DISTANCE = 2.0
 """The largest cosine distance there is (opposite vectors)."""
+
+
+@dataclass(frozen=True)
+class SearchTuning:
+    """The ranking constants, as one value so X1b's experiments can vary them
+    (`aiact evaluate embeddings --keyword-weight …`); the defaults are the chosen values."""
+
+    keyword_weight: float = KEYWORD_WEIGHT
+    rrf_k: int = RRF_K
+    max_term_share: float = MAX_TERM_SHARE
+    skips_annex_containers: bool = True
+    """Rank an annex's points, never the annex, area or section row above them (X1b: with the
+    rows that hold them in the running, a point's area outranked it in 15 of 48 Annex
+    descriptions)."""
+
+    def __post_init__(self) -> None:
+        if not (isfinite(self.keyword_weight) and self.keyword_weight >= 0):
+            raise ValueError(f"keyword_weight must be 0 or more, got {self.keyword_weight}")
+        if self.rrf_k < 1:
+            raise ValueError(f"rrf_k must be at least 1, got {self.rrf_k}")
+        if not 0 < self.max_term_share <= 1:
+            raise ValueError(f"max_term_share must be in (0, 1], got {self.max_term_share}")
+
+
+DEFAULT_TUNING = SearchTuning()
 
 
 class _FromSettings(Enum):
@@ -127,7 +151,14 @@ SCOPE: LiteralString = """
     and (p.source_example_id is null
          or not (p.source_example_id = any(%(exclude_source_example_ids)s::text[])))
 """
-"""The filters both arms apply; `p` is the provision, `d` its document in the same language."""
+"""The filters every arm applies; `p` is the provision, `d` its document in the same language."""
+
+ANNEX_CONTAINERS: LiteralString = """
+    and not (%(skips_annex_containers)s and p.provision_id like 'annex:%%'
+             and exists (select 1 from provisions c where c.parent_id = p.id))
+"""
+"""The meaning and keyword arms skip an annex row that has points under it (the whole annex, an
+Annex III area, an Annex I section), so its points compete on their own (X1b)."""
 
 STATISTICS_SCOPE: LiteralString = """
     not d.is_amending
@@ -153,7 +184,7 @@ HYBRID_SEARCH: LiteralString = """
       from provision_embeddings e
       join provisions p on p.id = e.provision_row_id and p.content_sha256 = e.content_sha256
       join documents d on d.id = p.document_id and d.language = p.language
-      where e.model = {model} and e.dims = {dims} and {scope}
+      where e.model = {model} and e.dims = {dims} and {scope} {annex_containers}
       order by distance
       limit %(candidates)s
     ),
@@ -194,16 +225,24 @@ HYBRID_SEARCH: LiteralString = """
       from provisions p
       join documents d on d.id = p.document_id and d.language = p.language
       join term_weights w on p.fts @@ w.term
-      where {scope}
+      where {scope} {annex_containers}
       group by p.id
       order by rank
       limit %(candidates)s
+    ),
+    -- The provisions the query names (`exact_references`), by id, in the order named.
+    reference_ranked as (
+      select p.id, array_position(%(reference_ids)s::text[], p.provision_id) as rank
+      from provisions p
+      join documents d on d.id = p.document_id and d.language = p.language
+      where p.provision_id = any(%(reference_ids)s::text[]) and {scope}
     ),
     fused as (
       select id,
              sum(weight / (%(rrf_k)s + rank)) as score,
              min(rank) filter (where arm = 'vector') as vector_rank,
              min(rank) filter (where arm = 'keyword') as keyword_rank,
+             min(rank) filter (where arm = 'reference') as reference_rank,
              min(measure) filter (where arm = 'vector') as distance,
              min(measure) filter (where arm = 'keyword') as keyword_idf
       from (
@@ -211,6 +250,9 @@ HYBRID_SEARCH: LiteralString = """
         union all
         select id, rank, 'keyword' as arm, %(keyword_weight)s as weight, idf as measure
         from keyword_ranked
+        union all
+        select id, rank, 'reference' as arm, 0.0 as weight, null as measure
+        from reference_ranked
       ) ranked
       group by id
     ),
@@ -223,7 +265,8 @@ HYBRID_SEARCH: LiteralString = """
       from lineage l join provisions p on p.id = l.ancestor
       where p.parent_id is not null
     )
-    select f.id, f.score, f.vector_rank, f.keyword_rank, f.distance, f.keyword_idf,
+    select f.id, f.score, f.vector_rank, f.keyword_rank, f.reference_rank, f.distance,
+           f.keyword_idf,
            p.provision_id,
            array(select l.ancestor from lineage l where l.id = f.id) as ancestors,
            d.doc_key, d.title, d.doc_type, d.status, d.law_version, p.language,
@@ -231,7 +274,7 @@ HYBRID_SEARCH: LiteralString = """
     from fused f
     join provisions p on p.id = f.id
     join documents d on d.id = p.document_id and d.language = p.language
-    order by f.score desc, f.id
+    order by f.reference_rank nulls last, f.score desc, f.id
 """
 
 
@@ -271,6 +314,9 @@ class SearchHit(ContractModel):
     it (or the meaning arm's cut-off dropped it)."""
     keyword_idf: float | None
     """The summed IDF of the query words the row has; None when only the meaning arm found it."""
+    reference_rank: int | None = None
+    """Its place among the provisions the query names ("Article 50" names `art:50`), which come
+    first; None when the query doesn't name it."""
 
 
 class SearchResults(ContractModel):
@@ -285,8 +331,9 @@ class SearchResults(ContractModel):
     max_distance: float | None
     """The meaning arm's cut-off applied; None for none."""
     found: bool
-    """True when a hit is within the cut-off (any meaning-arm hit, without one) or matches rare
-    enough words (`MIN_KEYWORD_IDF`); False means nothing relevant was found."""
+    """True when the query names a provision the corpus has, or a hit is within the cut-off (any
+    meaning-arm hit, without one) or matches rare enough words (`SEARCH_MIN_KEYWORD_IDF`); False
+    means nothing relevant was found."""
     disclaimer: str
 
 
@@ -305,6 +352,7 @@ def search_ai_act(
     limit: int = DEFAULT_LIMIT,
     embedder: QueryEmbedder | None = None,
     connection: psycopg.Connection | None = None,
+    tuning: SearchTuning = DEFAULT_TUNING,
 ) -> SearchResults:
     """The provisions in `language` that best match `query`, from the law version and date asked.
 
@@ -313,11 +361,14 @@ def search_ai_act(
     `max_distance` is the meaning arm's cosine-distance cut-off; it defaults to the
     `SEARCH_MAX_DISTANCE` setting, and None searches without one (as the engine does).
     `doc_keys` limits the search to those documents (manifest keys) inside both arms' SQL.
+    The provisions the query names by number ("Article 50", "Anhang III Nr. 4") come first, in
+    the order named (`exact_references`). `tuning` is for experiments only.
     Raises ValueError for an empty query, an unknown doc type, empty `doc_keys`, a `limit` outside
     1..CANDIDATES, a `max_distance` outside 0..2, or `original` together with `as_of`. Without
     an `embedder`, one is built from the settings; without a `connection`, one is opened from
     DATABASE_URL.
     """
+    settings = get_settings()
     params, statement = prepare_search(
         query,
         Language(language),
@@ -328,10 +379,11 @@ def search_ai_act(
         include_held_out,
         limit,
         embedder,
-        max_distance=get_settings().search_max_distance
+        max_distance=settings.search_max_distance
         if max_distance is FROM_SETTINGS
         else max_distance,
         doc_keys=doc_keys,
+        tuning=tuning,
     )
     if connection is None:
         with connect() as own_connection:
@@ -347,14 +399,19 @@ def search_ai_act(
         as_of=None if version is LawVersion.ORIGINAL else params["on"],
         hits=hits,
         max_distance=params["max_distance"],
-        found=any(_is_relevant(hit) for hit in hits),
+        found=any(_is_relevant(hit, settings.search_min_keyword_idf) for hit in hits),
         disclaimer=DISCLAIMER[Language(params["language"])],
     )
 
 
-def _is_relevant(hit: SearchHit) -> bool:
-    """The meaning arm kept it (so it is within any cut-off), or it matches rare enough words."""
-    return hit.similarity is not None or (hit.keyword_idf or 0.0) >= MIN_KEYWORD_IDF
+def _is_relevant(hit: SearchHit, min_keyword_idf: float) -> bool:
+    """The query names it, the meaning arm kept it (so it is within any cut-off), or it matches
+    rare enough words."""
+    return (
+        hit.reference_rank is not None
+        or hit.similarity is not None
+        or (hit.keyword_idf or 0.0) >= min_keyword_idf
+    )
 
 
 def prepare_search(
@@ -370,6 +427,7 @@ def prepare_search(
     *,
     max_distance: float | None = None,
     doc_keys: Collection[str] | None = None,
+    tuning: SearchTuning = DEFAULT_TUNING,
 ) -> tuple[dict[str, Any], sql.Composed]:
     """Check the arguments, embed the query, and build the statement and its parameters (public so
     tests can EXPLAIN the statement). `max_distance` is taken as given: None is no cut-off.
@@ -406,11 +464,10 @@ def prepare_search(
         "include_held_out": include_held_out,
         "max_distance": max_distance,
         "exclude_source_example_ids": list(exclude_source_example_ids),
+        "reference_ids": list(exact_references(query)),
         "candidates": CANDIDATES,
-        "rrf_k": RRF_K,
-        "max_term_share": MAX_TERM_SHARE,
         "min_common_rows": MIN_COMMON_ROWS,
-        "keyword_weight": KEYWORD_WEIGHT,
+        **asdict(tuning),
     }
     return params, _statement(embedder.model, embedder.dimensions)
 
@@ -424,6 +481,7 @@ def _statement(model: str, dims: int) -> sql.Composed:
         dims=sql.Literal(dims),
         model=sql.Literal(model),
         scope=sql.SQL(SCOPE),
+        annex_containers=sql.SQL(ANNEX_CONTAINERS),
         statistics_scope=sql.SQL(STATISTICS_SCOPE),
     )
 
@@ -494,4 +552,5 @@ def _hit(row: dict[str, Any]) -> SearchHit:
         keyword_rank=row["keyword_rank"],
         similarity=None if row["distance"] is None else 1.0 - float(row["distance"]),
         keyword_idf=None if row["keyword_idf"] is None else float(row["keyword_idf"]),
+        reference_rank=row["reference_rank"],
     )

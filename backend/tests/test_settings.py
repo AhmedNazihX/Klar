@@ -39,6 +39,7 @@ def test_env_example_leaves_model_ids_unset(monkeypatch: pytest.MonkeyPatch) -> 
         monkeypatch.delenv(field.upper(), raising=False)
     monkeypatch.delenv("EMBEDDING_DIMENSIONS", raising=False)
     monkeypatch.delenv("SEARCH_MAX_DISTANCE", raising=False)
+    monkeypatch.delenv("SEARCH_MIN_KEYWORD_IDF", raising=False)
     settings = Settings(_env_file=BACKEND_DIR / ".env.example")  # pyright: ignore[reportCallIssue]
     for field in MODEL_ID_FIELDS:
         assert getattr(settings, field) is None, field
@@ -48,7 +49,8 @@ def test_env_example_leaves_model_ids_unset(monkeypatch: pytest.MonkeyPatch) -> 
         "google-vertex/eu",
     )
     assert settings.embedding_dimensions == 1536
-    assert settings.search_max_distance is None  # no cut-off until X1 calibrates one
+    # Empty keys keep X1b's calibrated values (decision 003).
+    assert (settings.search_max_distance, settings.search_min_keyword_idf) == (0.5, 9.0)
 
 
 def test_relative_data_dir_resolves_against_backend(monkeypatch: pytest.MonkeyPatch) -> None:

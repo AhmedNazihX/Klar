@@ -42,6 +42,7 @@ from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
 from aiact.llm.generations import GenerationLookup
 from aiact.obligations import list as obligations_list
 from aiact.obligations import seed as obligations_seed
+from aiact.retrieval import search as search_module
 from aiact.settings import get_settings
 
 app = typer.Typer(no_args_is_help=True)
@@ -505,9 +506,27 @@ def eval_embeddings(
             " unknown)",
         ),
     ] = embedding_experiment.DEFAULT_MAX_COST_USD,
+    keyword_weight: Annotated[
+        float, typer.Option(min=0.0, help="The keyword arm's RRF weight (X1b tuning)")
+    ] = search_module.KEYWORD_WEIGHT,
+    rrf_k: Annotated[int, typer.Option(min=1, help="The RRF constant (X1b tuning)")] = (
+        search_module.RRF_K
+    ),
+    max_term_share: Annotated[
+        float,
+        typer.Option(min=0.000001, max=1.0, help="Keyword arm: drop words in more rows than this"),
+    ] = search_module.MAX_TERM_SHARE,
+    annex_points_only: Annotated[
+        bool,
+        typer.Option(
+            "--annex-points-only/--with-annex-containers",
+            help="Rank an annex's points, never the annex, area or section rows above them",
+        ),
+    ] = True,
 ) -> None:
     """Compare embedding arms by model-free context precision and recall on the Annex-matching
-    and Q&A sets (X1a), one recorded run per arm and set. Costs only the query embeddings."""
+    and Q&A sets (X1a), one recorded run per arm and set, ranked with the search constants given
+    (X1b tunes them; the defaults are search's own). Costs only the query embeddings."""
     arms = arm or list(embedding_experiment.ARMS)
     unknown = sorted(set(arms) - set(embedding_experiment.ARMS))
     if unknown:
@@ -522,7 +541,12 @@ def eval_embeddings(
             embedding_experiment.ExperimentSet.QA: embedding_experiment.qa_queries(load_qa_items()),
         }
         git_sha, is_dirty = runner.current_git_state()
-        options = embedding_experiment.ExperimentOptions(git_sha, is_dirty, top_k, max_cost_usd)
+        tuning = search_module.SearchTuning(
+            keyword_weight, rrf_k, max_term_share, skips_annex_containers=annex_points_only
+        )
+        options = embedding_experiment.ExperimentOptions(
+            git_sha, is_dirty, top_k, max_cost_usd, tuning
+        )
         with records.connect() as connection:
             for name in arms:
                 embedding_experiment.require_embedded(connection, name)

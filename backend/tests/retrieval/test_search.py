@@ -10,13 +10,12 @@ import pytest
 from aiact.retrieval import search
 from aiact.retrieval.search import (
     CANDIDATES,
-    MIN_KEYWORD_IDF,
     distinct_units,
     prepare_search,
     search_ai_act,
 )
 from aiact.schemas import Language, LawVersion
-from aiact.settings import Settings
+from aiact.settings import DEFAULT_MIN_KEYWORD_IDF, Settings
 
 
 class RecordingEmbedder:
@@ -194,7 +193,8 @@ def _fused_row(row_id: int, distance: float | None, keyword_idf: float | None) -
     return {
         "id": row_id, "ancestors": [], "score": 0.01, "vector_rank": None if distance is None
         else row_id, "keyword_rank": None if keyword_idf is None else row_id,
-        "distance": distance, "keyword_idf": keyword_idf, "provision_id": f"art:{row_id}",
+        "reference_rank": None, "distance": distance, "keyword_idf": keyword_idf,
+        "provision_id": f"art:{row_id}",
         "doc_key": "ai-act-consolidated", "title": "AI Act", "doc_type": "law",
         "law_version": "amended", "status": "consolidated", "language": "en", "heading": None,
         "text": "…", "valid_from": date(2024, 8, 1), "valid_to": None,
@@ -238,8 +238,8 @@ def test_hits_carry_the_similarity_and_the_keyword_idf(monkeypatch: pytest.Monke
     [
         ([], False),
         ([_fused_row(1, 0.4, None)], True),
-        ([_fused_row(1, None, MIN_KEYWORD_IDF)], True),
-        ([_fused_row(1, None, MIN_KEYWORD_IDF - 0.01), _fused_row(2, None, 1.0)], False),
+        ([_fused_row(1, None, DEFAULT_MIN_KEYWORD_IDF)], True),
+        ([_fused_row(1, None, DEFAULT_MIN_KEYWORD_IDF - 0.01), _fused_row(2, None, 1.0)], False),
     ],
     ids=["no hits", "a meaning-arm hit", "a strong keyword match", "only weak keyword matches"],
 )

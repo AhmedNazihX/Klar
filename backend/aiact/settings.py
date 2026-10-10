@@ -22,7 +22,13 @@ DEFAULT_QUERY_INSTRUCTION = (
     "retrieve the article, Annex point or recital of the AI Act that governs it"
 )
 """Qwen3's query-side task text (`EMBEDDING_QUERY_INSTRUCTION`): the "governs it" text chosen in
-decision 003 for Q&A and MCP searches. X1b gives description searches no instruction."""
+decision 003 for Q&A and MCP searches."""
+
+DEFAULT_SEARCH_MAX_DISTANCE = 0.5
+"""`SEARCH_MAX_DISTANCE`: placeholder until X1b's calibration sets it (decision 003)."""
+
+DEFAULT_MIN_KEYWORD_IDF = 9.0
+"""`SEARCH_MIN_KEYWORD_IDF`: placeholder until X1b's calibration sets it (decision 003)."""
 
 
 class Settings(BaseSettings):
@@ -71,8 +77,10 @@ class Settings(BaseSettings):
     embedding_query_instruction: str = Field(default=DEFAULT_QUERY_INSTRUCTION, min_length=1)
 
     # Search: the meaning arm's cosine-distance cut-off for Q&A and MCP (C8); None = no cut-off.
-    # Left unset until X1 calibrates it.
-    search_max_distance: float | None = Field(default=None, ge=0.0, le=2.0)
+    # The engine searches without one. Calibrated in X1b (decision 003).
+    search_max_distance: float | None = Field(default=DEFAULT_SEARCH_MAX_DISTANCE, ge=0.0, le=2.0)
+    # The summed keyword IDF from which a keyword-only hit still counts as found (C8, X1b).
+    search_min_keyword_idf: float = Field(default=DEFAULT_MIN_KEYWORD_IDF, ge=0.0)
 
     # API (P1): where `aiact api serve` listens, and the browser origins allowed to call it
     # (comma-separated in the environment). The defaults are the Vite dev server's origin

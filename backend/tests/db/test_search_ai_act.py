@@ -21,13 +21,12 @@ from aiact.llm.embeddings import OpenRouterEmbeddings
 from aiact.retrieval import search as search_module
 from aiact.retrieval.search import (
     CANDIDATES,
-    MIN_KEYWORD_IDF,
     SearchResults,
     prepare_search,
     search_ai_act,
 )
 from aiact.schemas import DISCLAIMER_DE, DISCLAIMER_EN, Language, LawVersion
-from aiact.settings import Settings
+from aiact.settings import DEFAULT_MIN_KEYWORD_IDF, Settings
 
 pytestmark = pytest.mark.db
 
@@ -155,7 +154,7 @@ LOADS = (
         ProvisionRow("guide:test-c6-code:para:1", None, None, None, "A code on zorblax.",
                      GUIDE_PUBLISHED),
         # Four words no other row has and no vector: a strong keyword-only match (C8), also in
-        # an empty database (4 x ln(about 20 units) is above MIN_KEYWORD_IDF).
+        # an empty database (4 x ln(about 20 units) is above DEFAULT_MIN_KEYWORD_IDF).
         ProvisionRow("guide:test-c6-code:para:2", None, None, None,
                      "Quorvex klimbat drossel wuffling.", GUIDE_PUBLISHED),
     )),
@@ -491,7 +490,7 @@ def test_a_strong_keyword_only_match_stays_found(corpus: psycopg.Connection):
                       max_distance=CUT_OFF)  # fmt: skip
     assert [h.provision_id for h in results.hits] == ["guide:test-c6-code:para:2"]
     idf = results.hits[0].keyword_idf
-    assert idf is not None and idf >= MIN_KEYWORD_IDF
+    assert idf is not None and idf >= DEFAULT_MIN_KEYWORD_IDF
     assert results.found
 
 
