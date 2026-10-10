@@ -329,11 +329,6 @@ def test_the_request_carries_the_pin_the_schema_and_the_cache_breakpoint() -> No
     assert str(messages[-1]["content"]).endswith(DESCRIPTION)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="recording pending: the orchestrator records it after the reviews, then drops this mark",
-)
 @pytest.mark.vcr
 def test_label_filter_roundtrip(openrouter_settings: Settings) -> None:
     """One real Haiku call on the pinned endpoint, with the real law text. Record with
