@@ -14,7 +14,6 @@ from datetime import date
 import psycopg
 import pytest
 from langchain_core.messages import AIMessage
-from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.corpus.embed import ARMS
 from aiact.eval.cases import load_qa_items
@@ -91,12 +90,6 @@ def test_b7_answerable_questions_reach_the_model(
     assert declined == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=CannotOverwriteExistingCassetteException,
-    reason="recording pending (orchestrator): the first recording didn't replay; its requests "
-    "proved deterministic on a fake network (2026-10-10), so record it again from scratch",
-)
 @pytest.mark.vcr
 def test_b7_unanswerable_questions_get_the_outside_corpus_answer(
     db: psycopg.Connection, openrouter_settings: Settings
