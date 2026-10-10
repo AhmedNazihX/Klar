@@ -16,6 +16,7 @@ import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
+from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.db import connect
 from aiact.engine.graph import build_graph
@@ -34,6 +35,7 @@ from aiact.engine.nodes.scope import (
     ScopeOutputError,
     to_outcome,
 )
+from aiact.engine.nodes.transparency import TRANSPARENCY_INSTRUCTIONS
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
@@ -648,9 +650,28 @@ def test_the_open_source_exception_names_art_50_and_its_categories() -> None:
         "synthetic audio, image, video or text",
         "emotion recognition or biometric categorisation",
         "deep fakes",
-        "only returns its result to its own user doesn't fall under it",
+        *ART_50_READING,
     ):
         assert category in flat
+
+
+ART_50_READING = (
+    "A system that only returns an analysis of its input (a score, a label, a ranking or a "
+    "prediction) to its own user doesn't fall under Art. 50(1) or 50(2).",
+    "Emotion recognition and biometric categorisation stay under Art. 50(3) whatever they return.",
+    "Text, images, audio or video a system generates is synthetic content under Art. 50(2), "
+    "whoever receives it.",
+)
+"""The user's Art. 50 reading (2026-10-06), worded the same in the scope and transparency
+prompts (BACKLOG > V8, from E6)."""
+
+
+def test_scope_and_transparency_prompts_read_art_50_alike() -> None:
+    scope_text = " ".join(node.SCOPE_INSTRUCTIONS.split())
+    transparency_text = " ".join(TRANSPARENCY_INSTRUCTIONS.split())
+    for sentence in ART_50_READING:
+        assert sentence in scope_text
+        assert sentence in transparency_text
 
 
 def test_the_node_is_pinned_to_the_engine_provider() -> None:
@@ -726,6 +747,12 @@ def _live_corpus(settings: Settings) -> Iterator[CorpusLibrary]:
         yield CorpusLibrary(connection, OpenRouterEmbeddings(settings=settings))
 
 
+@pytest.mark.xfail(
+    strict=True,
+    raises=CannotOverwriteExistingCassetteException,
+    reason="recording pending (orchestrator): V8 aligned the prompt's Art. 50 reading with "
+    "transparency.md, so the recorded request bodies are stale; delete and re-record",
+)
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
