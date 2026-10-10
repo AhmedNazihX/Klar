@@ -313,6 +313,13 @@ def test_the_model_gets_the_numbered_sources_the_instructions_and_the_reply_form
     assert "in German" in system
     assert '"compliance"' in system and '"outside_corpus"' in system
     assert "Klar never says whether anyone complies" in system
+    assert '"compliance" when the question asks for a verdict on the asker\'s own compliance' in (
+        system
+    )
+    assert (
+        "A question about what the AI Act allows, bans or requires in general is not a "
+        "compliance question: answer it from the sources with their provisions"
+    ) in system
     assert "The user asks about a classification result" not in system
     assert human == (
         "Sources:\n"
