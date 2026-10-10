@@ -601,6 +601,7 @@
       "high_risk": "Bei einem Hochrisiko-Ergebnis empfehlen wir eine rechtliche Prüfung, bevor Sie sich darauf verlassen.",
       "prohibited": "Bei einem Verbot empfehlen wir rechtliche Beratung, bevor Sie weitermachen.",
       "ambiguous": "Bei einem rechtlich unklaren Ergebnis empfehlen wir eine rechtliche Prüfung, bevor Sie sich darauf verlassen.",
+      "provider": "Die Anbieterpflichten sind umfangreich. Wir empfehlen eine rechtliche Prüfung, bevor Sie die Arbeit planen.",
       "other": "Wir empfehlen eine rechtliche Prüfung, bevor Sie sich auf dieses Ergebnis verlassen."
     },
     "legacy": {
@@ -750,6 +751,9 @@
     "provider": {
       "reason": {
         "own": "Sie entwickeln es oder lassen es entwickeln und bringen es unter Ihrem eigenen Namen in Verkehr oder nehmen es so in Betrieb, deshalb sind Sie Anbieter.",
+        "switch_a": "Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, deshalb sind Sie Anbieter.",
+        "switch_b": "Sie haben es wesentlich verändert und es bleibt ein Hochrisiko-System, deshalb sind Sie Anbieter.",
+        "switch_c": "Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.",
         "gpai": "Sie bauen es auf dem KI-Modell mit allgemeinem Verwendungszweck eines anderen Unternehmens auf, deshalb sind Sie Anbieter Ihres Systems."
       },
       "heading": "Was Sie als Anbieter tun müssen",
@@ -784,7 +788,7 @@
           "smc": "Als kleines Midcap-Unternehmen können Sie die technische Dokumentation nach Anhang IV in vereinfachter Weise bereitstellen, mit einem Formular der Kommission. Die Kommission hat das Formular noch nicht veröffentlicht; bis dahin dokumentieren Sie den vollen Anhang IV."
         },
         "internalTitle": "Keine notifizierte Stelle",
-        "internal": "Für Systeme nach Anhang III Nummer {{point}} bewerten Sie die Konformität selbst, durch eine interne Kontrolle.",
+        "internal": "Für Systeme nach Anhang III Nr. {{point}} bewerten Sie die Konformität selbst, durch eine interne Kontrolle.",
         "internalReference": "Art. 43 Abs. 2, Anhang VI"
       },
       "alsoUse": {

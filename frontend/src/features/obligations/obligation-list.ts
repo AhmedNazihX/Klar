@@ -201,15 +201,19 @@ export function ticksOn(ticks: readonly DutyTick[], toolId: string): Set<string>
   return new Set(ticks.filter((tick) => tick.toolId === toolId).map((tick) => tick.obligationKey))
 }
 
+/** The progress over these duties, given the keys ticked off on their tool (each key once). */
+export function progressOver(duties: readonly Obligation[], done: ReadonlySet<string>): Progress {
+  const keys = new Set(duties.map(tickKey).filter((key): key is string => key !== null))
+  return { done: [...keys].filter((key) => done.has(key)).length, total: keys.size }
+}
+
 /** The progress over these duties of the tool (each key once). */
 export function dutiesProgress(
   toolId: string,
   duties: readonly Obligation[],
   ticks: readonly DutyTick[],
 ): Progress {
-  const keys = new Set(duties.map(tickKey).filter((key): key is string => key !== null))
-  const done = ticksOn(ticks, toolId)
-  return { done: [...keys].filter((key) => done.has(key)).length, total: keys.size }
+  return progressOver(duties, ticksOn(ticks, toolId))
 }
 
 /** The tool's progress over all its duties. */

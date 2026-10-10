@@ -69,6 +69,8 @@ export function LighterPanel({ result }: { result: ClassificationResult }): JSX.
   if (form === null && point === null) return null
   return (
     <SidePanel heading={t('result.provider.lighter.heading')}>
+      {/* "The form isn't published yet" is also the seed's relief_note on obligation
+          hr-provider-technical-documentation (supabase/seed/obligations.yaml): change both. */}
       {form && (
         <Relief
           title={t('result.provider.lighter.formTitle')}

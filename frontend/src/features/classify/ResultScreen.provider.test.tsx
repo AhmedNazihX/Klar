@@ -56,6 +56,8 @@ const SMC_FORM =
 const SME_FORM_DE =
   'Als KMU können Sie die technische Dokumentation nach Anhang IV in vereinfachter Weise bereitstellen, mit einem Formular der Kommission. Die Kommission hat das Formular noch nicht veröffentlicht; bis dahin dokumentieren Sie den vollen Anhang IV.'
 
+const SWITCH_A_EN = "You put your own name or trademark on it, so you're the provider."
+
 type Tick = { system_id: string; obligation_key: string }
 
 let inventories: Record<string, unknown>[] = []
@@ -141,7 +143,7 @@ describe('Provider layout: duties', () => {
     await openProvider(OWN_BRAND_PROVIDER)
     const summary = region('Result')
     expect(within(summary).getByText('Provider')).toBeInTheDocument()
-    expect(summary).toHaveTextContent("You're the provider.")
+    expect(summary).toHaveTextContent(SWITCH_A_EN)
 
     const duties = region('What you need to do as the provider')
     expect(
@@ -314,6 +316,65 @@ describe('Provider layout: why the company is the provider', () => {
       expect(region(name)).toHaveTextContent(sentence)
     },
   )
+
+  it.each([
+    ['en', 'Result', SWITCH_A_EN, OWN_BRAND_PROVIDER],
+    [
+      'de',
+      'Ergebnis',
+      'Sie versehen es mit Ihrem eigenen Namen oder Ihrer Handelsmarke, deshalb sind Sie Anbieter.',
+      OWN_BRAND_PROVIDER,
+    ],
+    [
+      'en',
+      'Result',
+      "You changed what it's meant for so that it became high-risk, so you're the provider.",
+      PROVIDER_ALSO_DEPLOYER,
+    ],
+    [
+      'de',
+      'Ergebnis',
+      'Sie haben seine Zweckbestimmung so verändert, dass es zu einem Hochrisiko-System wurde, deshalb sind Sie Anbieter.',
+      PROVIDER_ALSO_DEPLOYER,
+    ],
+  ] as const)(
+    'names the Art. 25(1) point of a switch (%s): %s',
+    async (language, name, sentence, result) => {
+      await openProvider(result, { language })
+      expect(region(name)).toHaveTextContent(sentence)
+    },
+  )
+})
+
+describe('Provider layout: legal review', () => {
+  it.each([
+    [
+      'en',
+      'Result',
+      'Provider duties are substantial. We recommend a legal review before you plan the work.',
+    ],
+    [
+      'de',
+      'Ergebnis',
+      'Die Anbieterpflichten sind umfangreich. Wir empfehlen eine rechtliche Prüfung, bevor Sie die Arbeit planen.',
+    ],
+  ] as const)("uses the provider layout's line (%s)", async (language, name, line) => {
+    await openProvider(OWN_BRAND_PROVIDER, { language })
+    expect(within(region(name)).getByText(line)).toBeVisible()
+  })
+})
+
+describe('Provider layout: a legally ambiguous result', () => {
+  it('keeps the standard layout, without the provider pill', async () => {
+    // Its layout is the ambiguous one (P22), which draws no role pill.
+    await openProvider({ ...OWN_BRAND_PROVIDER, status: 'legally_ambiguous' })
+    const summary = region('Result')
+    expect(within(summary).getByText('Legally ambiguous')).toBeInTheDocument()
+    expect(within(summary).queryByText('Provider')).toBeNull()
+    expect(summary).not.toHaveTextContent(SWITCH_A_EN)
+    expect(screen.queryByRole('region', { name: 'What you need to do as the provider' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'What makes it lighter' })).toBeNull()
+  })
 })
 
 describe('Provider layout: what makes it lighter', () => {
@@ -366,7 +427,7 @@ describe('Provider layout: what makes it lighter', () => {
     [
       'de',
       'Was es leichter macht',
-      'Für Systeme nach Anhang III Nummer 5 bewerten Sie die Konformität selbst, durch eine interne Kontrolle.',
+      'Für Systeme nach Anhang III Nr. 5 bewerten Sie die Konformität selbst, durch eine interne Kontrolle.',
       'Art. 43 Abs. 2, Anhang VI',
       PROVIDER_ALSO_DEPLOYER,
     ],

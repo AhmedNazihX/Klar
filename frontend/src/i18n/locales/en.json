@@ -601,6 +601,7 @@
       "high_risk": "For a high-risk result, we recommend a legal review before you rely on it.",
       "prohibited": "For a prohibited result, we recommend legal advice before you go on.",
       "ambiguous": "For a legally ambiguous result, we recommend a legal review before you rely on it.",
+      "provider": "Provider duties are substantial. We recommend a legal review before you plan the work.",
       "other": "We recommend a legal review before you rely on this result."
     },
     "legacy": {
@@ -750,6 +751,9 @@
     "provider": {
       "reason": {
         "own": "You develop it, or have it developed, and supply or use it under your own name, so you're the provider.",
+        "switch_a": "You put your own name or trademark on it, so you're the provider.",
+        "switch_b": "You changed it substantially and it stays high-risk, so you're the provider.",
+        "switch_c": "You changed what it's meant for so that it became high-risk, so you're the provider.",
         "gpai": "You build it on another company's general-purpose AI model, so you're the provider of your system."
       },
       "heading": "What you need to do as the provider",

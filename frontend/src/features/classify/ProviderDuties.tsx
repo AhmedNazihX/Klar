@@ -3,18 +3,15 @@ import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult, Obligation, ObligationGroup } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
-import { ObligationItem } from '@/components/ObligationItem'
-import { dutiesProgress } from '@/features/obligations/obligation-list'
-import { useDutyTicks } from '@/hooks/use-duty-progress'
+import { progressOver } from '@/features/obligations/obligation-list'
 import { useLanguage } from '@/hooks/use-language'
 import type { ToolTicks as Ticks } from '@/hooks/use-tool-ticks'
-import { tickKey } from '@/lib/duty-progress'
 
+import { DutyItem } from './DutyItem'
 import { OriginalDatesNote } from './OriginalDatesNote'
-import { provisionName } from './provision-names'
 import { DUTY_GROUPS, TECHNICAL_DOCUMENTATION_ARTICLE } from './provider-layout'
 import { GpaiNote } from './ProviderNotes'
-import { DUTY_REFERENCE_WIDTH, dutyLabel, dutyNote, isTransparencyDuty } from './result-text'
+import { dutyNote, isTransparencyDuty } from './result-text'
 
 function useDocLabel(): (duty: Obligation) => string {
   const { t } = useTranslation()
@@ -41,41 +38,31 @@ export function DutyList({
   const docLabel = useDocLabel()
   return (
     <ul className="m-0 flex list-none flex-col p-0">
-      {duties.map((duty) => {
-        const key = tickKey(duty)
-        return (
-          <ObligationItem
-            key={duty.key ?? `${duty.article}:${duty.duty}`}
-            label={dutyLabel(duty, language)}
-            reference={provisionName(duty.article, language)}
-            referenceWidth={DUTY_REFERENCE_WIDTH[language]}
-            note={dutyNote(t, duty, language)}
-            tag={duty.legacy ? t('result.legacy.tag') : undefined}
-            // As on the Obligations screen: a duty with nothing to tick off gets no box.
-            isInformational={key === null}
-            docLabel={docLabel(duty)}
-            documentId={duty.document}
-            toolId={toolId}
-            checked={key !== null && ticks.done.has(key)}
-            onCheckedChange={key === null ? undefined : (isDone) => ticks.onTick(key, isDone)}
-          />
-        )
-      })}
+      {duties.map((duty) => (
+        <DutyItem
+          key={duty.key ?? `${duty.article}:${duty.duty}`}
+          duty={duty}
+          toolId={toolId}
+          note={dutyNote(t, duty, language)}
+          docLabel={docLabel(duty)}
+          done={ticks.done}
+          onTick={ticks.onTick}
+        />
+      ))}
     </ul>
   )
 }
 
 /** "3 of 21 done", over the duties that can be ticked off. */
 function DoneCount({
-  toolId,
   duties,
+  done,
 }: {
-  toolId: string
   duties: readonly Obligation[]
+  done: ReadonlySet<string>
 }): ReactNode {
   const { t } = useTranslation()
-  const ticks = useDutyTicks()
-  const progress = dutiesProgress(toolId, duties, ticks.data ?? [])
+  const progress = progressOver(duties, done)
   if (progress.total === 0) return null
   return (
     <span className="text-caption font-normal whitespace-nowrap text-slate">
@@ -89,16 +76,17 @@ export function DutiesSection({
   id,
   heading,
   intro,
-  toolId,
   duties,
+  done,
   children,
 }: {
   id?: string
   heading: ReactNode
   intro?: ReactNode
-  toolId: string
   /** Every duty the panel lists, for its count. */
   duties: readonly Obligation[]
+  /** The obligation keys ticked off on the tool. */
+  done: ReadonlySet<string>
   children: ReactNode
 }): JSX.Element {
   const headingId = useId()
@@ -115,7 +103,7 @@ export function DutiesSection({
           <h2 id={headingId} className="m-0 text-heading-panel text-ink">
             {heading}
           </h2>
-          <DoneCount toolId={toolId} duties={duties} />
+          <DoneCount duties={duties} done={done} />
         </div>
         {intro}
       </div>
@@ -184,8 +172,8 @@ export function ProviderDutiesPanel({
           <GpaiNote result={result} />
         </>
       }
-      toolId={toolId}
       duties={shown.flatMap((group) => groups[group])}
+      done={ticks.done}
     >
       {shown.map((group) => (
         <DutyGroup key={group} group={group} duties={groups[group]} toolId={toolId} ticks={ticks} />

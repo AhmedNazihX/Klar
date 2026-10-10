@@ -21,11 +21,27 @@ function withPoint(annexPoint: string | null): ClassificationResult {
   return { ...OWN_BRAND_PROVIDER, annex_point: annexPoint }
 }
 
+/** The own-brand switch, with its role step citing only `provisionId`. */
+function citingInRoleStep(provisionId: string): ClassificationResult {
+  const steps = OWN_BRAND_PROVIDER.steps.map((step) => {
+    if (step.step !== 'role_obligations') return step
+    const first = step.citations?.[0]
+    if (!first) throw new Error('the role step cites nothing')
+    return { ...step, citations: [{ ...first, provision_id: provisionId }] }
+  })
+  return { ...OWN_BRAND_PROVIDER, steps }
+}
+
 describe('isProviderLayout', () => {
   it('takes a high-risk result for a provider only', () => {
     expect(isProviderLayout(OWN_BRAND_PROVIDER)).toBe(true)
     expect(isProviderLayout(decidedHighRisk())).toBe(false)
     expect(isProviderLayout(limitedRiskProvider())).toBe(false)
+  })
+
+  it('leaves a legally ambiguous result to the ambiguous layout (P22)', () => {
+    expect(isProviderLayout({ ...OWN_BRAND_PROVIDER, status: 'needs_more_information' })).toBe(true)
+    expect(isProviderLayout({ ...OWN_BRAND_PROVIDER, status: 'legally_ambiguous' })).toBe(false)
   })
 })
 
@@ -94,11 +110,17 @@ describe('isGpaiBased', () => {
 
 describe('providerReason', () => {
   it.each([
-    ['switch', OWN_BRAND_PROVIDER],
+    ['switch_a', OWN_BRAND_PROVIDER],
+    ['switch_b', citingInRoleStep('art:25:1:b')],
+    ['switch_c', PROVIDER_ALSO_DEPLOYER],
     ['own', { ...OWN_BRAND_PROVIDER, role_switch_reason: null }],
     ['gpai', GPAI_HIGH_RISK],
   ] as const)('is %s', (expected, result) => {
     expect(providerReason(result)).toBe(expected)
+  })
+
+  it('claims no reason for a switch whose role step cites no Art. 25(1) point', () => {
+    expect(providerReason(citingInRoleStep('art:3:7'))).toBe('stated')
   })
 
   it('claims no reason when the role step did not settle the role', () => {

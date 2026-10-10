@@ -22,7 +22,7 @@ import { OriginalTextNote } from './OriginalTextNote'
 import { ProgressPanel } from './ProgressPanel'
 import { ProhibitedSummary } from './ProhibitedSummary'
 import { isProviderLayout } from './provider-layout'
-import { ProviderPanels } from './ProviderPanels'
+import { ProviderAside, ProviderPanels } from './ProviderPanels'
 import { RerunChange } from './RerunChange'
 import { DraftDocumentsLink, ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
@@ -130,15 +130,6 @@ function SummaryView({
     )
   }
 
-  const facts = (
-    <FactsPanel
-      result={result}
-      onChange={editDescription}
-      onConfirm={confirm}
-      isBusy={followUp.isRunning}
-    />
-  )
-
   return (
     <>
       {header}
@@ -156,19 +147,23 @@ function SummaryView({
         <FollowUpQuestions questions={others} runCount={runCount} {...answerProps} />
       )}
       {rerunProgress}
-      {/* A high-risk provider gets its own layout (artboard `ResultProvider`, P23). */}
-      {isProviderLayout(result) ? (
-        <ProviderPanels result={result} toolId={run.toolId} facts={facts} />
-      ) : (
-        <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
-          {result.risk_class === 'out_of_scope' ? (
-            <OutOfScopePanel result={result} />
-          ) : (
-            <DutiesPanel result={result} toolId={run.toolId} />
-          )}
-          {facts}
-        </div>
-      )}
+      <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
+        {result.risk_class === 'out_of_scope' ? (
+          <OutOfScopePanel result={result} />
+        ) : isProviderLayout(result) ? (
+          // A high-risk provider gets its own layout (artboard `ResultProvider`, P23).
+          <ProviderPanels result={result} toolId={run.toolId} />
+        ) : (
+          <DutiesPanel result={result} toolId={run.toolId} />
+        )}
+        <FactsPanel
+          result={result}
+          above={isProviderLayout(result) && <ProviderAside result={result} />}
+          onChange={editDescription}
+          onConfirm={confirm}
+          isBusy={followUp.isRunning}
+        />
+      </div>
       <StepsPanel
         result={result}
         previous={run.previous?.result}

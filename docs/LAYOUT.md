@@ -256,7 +256,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P15 holding page, P16), welcome/ (P18), classify/ (P5; the provider layout
-│       │                            ProviderPanels, ProviderDuties, ProviderNotes and provider-layout.ts, P23), inventory/ (P6), your-data/ (P12), obligations/ (P24),
+│       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23), inventory/ (P6), your-data/ (P12), obligations/ (P24),
 │       │                            documents/ (P9: the documents screen, interview, checks, downloads, a skeleton's
 │       │                            SkeletonHeader and SectionList; interview-answers.ts reads and upserts interview_answers
 │       │                            through supabase-js; DocumentsScreen.browser.test.tsx the phone and desktop layout)

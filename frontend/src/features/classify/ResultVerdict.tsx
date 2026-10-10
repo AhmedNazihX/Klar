@@ -18,17 +18,20 @@ import { riskClassOf } from '@/lib/risk-class'
 /** The roles that supply the system: Art. 111(2) counts per copy supplied (decision 022). */
 const SUPPLIER_ROLES: readonly Role[] = ['provider', 'importer', 'distributor']
 
-function StatusPills({ result }: { result: ClassificationResult }): JSX.Element {
+/** The status pills, then any pill the layout adds after them (`extra`). */
+function StatusPills({
+  result,
+  extra,
+}: {
+  result: ClassificationResult
+  extra?: ReactNode
+}): JSX.Element {
   const { t } = useTranslation()
-  // The provider layout names the role in a pill too (artboard `ResultProvider`).
-  const role = isProviderLayout(result) && (
-    <StatusPill status="decided">{t('result.roleName.provider')}</StatusPill>
-  )
   if (result.status === 'decided') {
     return (
       <>
         <StatusPill status="decided" />
-        {role}
+        {extra}
       </>
     )
   }
@@ -36,19 +39,18 @@ function StatusPills({ result }: { result: ClassificationResult }): JSX.Element 
     <>
       <StatusPill status="decided">{t('result.assumed')}</StatusPill>
       <StatusPill status={statusPill(result.status)} />
-      {role}
+      {extra}
     </>
   )
 }
 
-/** Who you are: the role line, which on the provider layout says why you're the provider (an
- *  Art. 25(1) switch keeps the engine's reason, which the reviewer view shows with its citation). */
+/** Who you are: the role line, which on the provider layout says why you're the provider. */
 function roleLine(t: TFunction, result: ClassificationResult): string | null {
   if (!result.role) return null
   if (!isProviderLayout(result)) return t(`result.role.${result.role}`)
   const reason = providerReason(result)
-  if (reason === 'own' || reason === 'gpai') return t(`result.provider.reason.${reason}`)
-  return t('result.role.provider')
+  if (reason === 'stated') return t('result.role.provider')
+  return t(`result.provider.reason.${reason}`)
 }
 
 function monthsLine(t: TFunction, isoDate: string, today: Date, original = false): string {
@@ -88,6 +90,8 @@ function useDutiesFrom(
 function legalReviewLine(t: TFunction, result: ClassificationResult): string | null {
   if (!result.legal_review) return null
   if (result.status === 'legally_ambiguous') return t('result.legalReview.ambiguous')
+  // The provider layout's own line (artboard `ResultProvider`).
+  if (isProviderLayout(result)) return t('result.legalReview.provider')
   if (result.risk_class === 'high_risk') return t('result.legalReview.high_risk')
   if (result.risk_class === 'prohibited') return t('result.legalReview.prohibited')
   return t('result.legalReview.other')
@@ -203,7 +207,17 @@ export function ResultVerdict({
   return (
     <ResultSummary
       riskClass={riskClassOf(result)}
-      status={<StatusPills result={result} />}
+      status={
+        <StatusPills
+          result={result}
+          // The provider layout names the role in a pill too (artboard `ResultProvider`).
+          extra={
+            isProviderLayout(result) && (
+              <StatusPill status="decided">{t('result.roleName.provider')}</StatusPill>
+            )
+          }
+        />
+      }
       {...summary}
       legalReview={legalReviewLine(t, result)}
     >

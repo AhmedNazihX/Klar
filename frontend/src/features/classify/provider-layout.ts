@@ -19,9 +19,14 @@ const BUILDS_ON_GPAI = 'builds_on_gpai'
 /** Annex III points 2 to 8: conformity by internal control, no notified body (Art. 43(2)). */
 const INTERNAL_CONTROL_POINTS: ReadonlySet<string> = new Set(['2', '3', '4', '5', '6', '7', '8'])
 
-/** A high-risk result for a provider gets the provider layout (a decided ban keeps its own). */
+/** A high-risk result for a provider gets the provider layout (a decided ban keeps its own). A
+ *  legally ambiguous one doesn't: it has the ambiguous layout (artboard `ResultAmbiguous`, P22). */
 export function isProviderLayout(result: ClassificationResult): boolean {
-  return result.role === 'provider' && result.risk_class === 'high_risk'
+  return (
+    result.role === 'provider' &&
+    result.risk_class === 'high_risk' &&
+    result.status !== 'legally_ambiguous'
+  )
 }
 
 /** The role step, if it ran. */
@@ -50,19 +55,30 @@ export function isGpaiBased(result: ClassificationResult): boolean {
   return citesDefinition && !isGpaiAsked(result)
 }
 
-/** Why the company is the provider, for the role sentence; `stated` when the role step didn't
- *  settle it (an assumed or ambiguous role), so the sentence claims no reason. */
-export type ProviderReason = 'switch' | 'gpai' | 'own' | 'stated'
+/** Why the company is the provider, for the role sentence: the Art. 25(1) point that made it the
+ *  provider, the GPAI build route, or in its own right (Art. 3(3)); `stated` when the role step
+ *  didn't settle it (an assumed or ambiguous role) or cites no Art. 25(1) point for a switch, so
+ *  the sentence claims no reason. */
+export type ProviderReason = 'switch_a' | 'switch_b' | 'switch_c' | 'gpai' | 'own' | 'stated'
+
+/** The Art. 25(1) points the role step cites for a switch, each with its reason. */
+const SWITCH_POINTS: Readonly<Record<string, ProviderReason>> = {
+  'art:25:1:a': 'switch_a',
+  'art:25:1:b': 'switch_b',
+  'art:25:1:c': 'switch_c',
+}
 
 export function providerReason(result: ClassificationResult): ProviderReason {
   const step = roleStep(result)
   if (step?.status !== undefined && step.status !== 'decided') return 'stated'
-  if (result.role_switch_reason) return 'switch'
-  return isGpaiBased(result) ? 'gpai' : 'own'
+  if (!result.role_switch_reason) return isGpaiBased(result) ? 'gpai' : 'own'
+  const cited = (step?.citations ?? []).map((citation) => SWITCH_POINTS[citation.provision_id])
+  return cited.find((reason) => reason !== undefined) ?? 'stated'
 }
 
 export type DutyGroups = Record<ObligationGroup, Obligation[]> & {
-  /** Duties without a group: those of the role the company keeps (a deployer's, Art. 26). */
+  /** Duties without a group: those of the role the company keeps (a deployer's, Art. 26). On a
+   *  result saved before C9 grouped the duties, the provider's own land here too. */
   other: Obligation[]
 }
 
