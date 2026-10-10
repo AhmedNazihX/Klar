@@ -15,7 +15,7 @@ from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import EngineState, FactsOutcome
 from aiact.engine.usage import UsageMeter
 from aiact.eval import engine_classifier, runner
-from aiact.eval.engine_classifier import EngineClassifier
+from aiact.eval.engine_classifier import EngineClassifier, InvalidRequestError
 from aiact.eval.runner import ClassifierFailedError, ClassifierInput, DummyClassifier, run_benchmark
 from aiact.llm import LLMConfigError
 from aiact.schemas import Language
@@ -32,6 +32,8 @@ def settings(**values: object) -> Settings:
         "engine_provider": "azure/eu",
         "embedding_model": "qwen/qwen3-embedding-8b",
         "embedding_provider": "nebius",
+        "refusal_model": "google/gemini-3.1-flash-lite",
+        "refusal_provider": "google-vertex/eu",
         **values,
     }
     return Settings(_env_file=None, **configured)  # pyright: ignore[reportCallIssue]
@@ -81,13 +83,19 @@ class Builder:
         return EngineNodes(facts=facts, checks=stub.checks, finalize=stub.finalize)
 
 
-def request(as_of: date | None = CASE_DATE, *, include_held_out: bool = False) -> ClassifierInput:
+def request(
+    as_of: date | None = CASE_DATE,
+    *,
+    include_held_out: bool = False,
+    answers: dict[str, str] | None = None,
+) -> ClassifierInput:
     return ClassifierInput(
         description="A tool that ranks job applicants.",
         language=Language.EN,
         exclude_source_example_ids=("hr-ex-002",),
         as_of=as_of,
         include_held_out=include_held_out,
+        answers=answers or {},
     )
 
 
@@ -173,6 +181,10 @@ def test_a_run_that_fails_before_spending_raises_its_own_error() -> None:
 def test_the_classifier_records_the_engine_settings() -> None:
     info = EngineClassifier(settings()).info
     assert (info.model, info.provider) == ("openai/gpt-6-luna-20260922", "azure/eu")
+    assert (info.second_model, info.second_provider) == (
+        "google/gemini-3.1-flash-lite",
+        "google-vertex/eu",
+    )
     assert info.embedding == {
         "model": "qwen/qwen3-embedding-8b",
         "provider": "nebius",
@@ -185,7 +197,36 @@ def test_the_runner_builds_the_engine_classifier(monkeypatch: pytest.MonkeyPatch
     assert isinstance(runner.build_classifier("engine"), EngineClassifier)
 
 
-@pytest.mark.parametrize("missing", ["engine_model", "embedding_provider"])
+@pytest.mark.parametrize(
+    "missing", ["engine_model", "embedding_provider", "refusal_model", "refusal_provider"]
+)
 def test_a_missing_setting_makes_it_unavailable(missing: str) -> None:
     with pytest.raises(LLMConfigError):
         EngineClassifier(settings(**{missing: None}))
+
+
+def test_fixed_answers_are_appended_to_the_description() -> None:
+    """Decision 019: the downgrade rate's second run appends the answers, as the interface does."""
+    builder = Builder()
+    answers = {"annex_iii_use": "Yes, it ranks applicants.", "human_review": "don't know"}
+    EngineClassifier(settings(), build_nodes=builder).classify(request(answers=answers))
+    [state] = builder.states
+    assert state["description"] == (
+        "A tool that ranks job applicants.\n\nAnswers to follow-up questions:\n"
+        "- annex_iii_use: Yes, it ranks applicants.\n- human_review: don't know"
+    )
+
+
+def test_a_case_without_answers_keeps_its_description() -> None:
+    builder = Builder()
+    EngineClassifier(settings(), build_nodes=builder).classify(request())
+    assert builder.states[0]["description"] == "A tool that ranks job applicants."
+
+
+def test_a_rejected_request_names_the_field_only() -> None:
+    too_long = "secret words " * 2000
+    bad = ClassifierInput(description=too_long, language=Language.EN, exclude_source_example_ids=())
+    with pytest.raises(InvalidRequestError, match="invalid at description") as raised:
+        EngineClassifier(settings(), build_nodes=Builder()).classify(bad)
+    assert "secret" not in str(raised.value)
+    assert raised.value.__cause__ is None

@@ -12,16 +12,26 @@ Citation existence is the exception: it depends on the corpus at run time, so th
 per-case `citation_existence` score `aiact evaluate run` stored and never re-checks against
 today's corpus. A run without stored citation scores shows n/a. The report never prints a
 description.
+
+Above the table go the run's settings from `eval_runs.config` (classifier, models, exclude mode,
+status, uncommitted changes, subset, appended answers; T1), each shown only when the run recorded
+it, so runs stored before a setting existed still load. Own cases are labelled development cases
+(decision 018). A run holding contaminated cases (decision 016) gets a second accuracy row
+without them, naming them. Below the table come the provider refusals (`refusals`, from each
+row's `scores.models`), the failure cases grouped by step (`failures`) and the model-written
+texts (`texts`).
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from uuid import UUID
 
 import psycopg
-from pydantic import ValidationError
+from pydantic import Field, TypeAdapter, ValidationError
 
-from aiact.eval.cases import BenchmarkCase
+from aiact.eval.cases import BenchmarkCase, CaseSet
+from aiact.eval.failures import render_failures
+from aiact.eval.isolation import ContaminatedList, load_contaminated
 from aiact.eval.metrics import (
     CITATION_EXISTENCE_KEY,
     Outcome,
@@ -30,12 +40,28 @@ from aiact.eval.metrics import (
     RunMetrics,
     summarize,
 )
-from aiact.eval.runner import SCORING_ERROR_KEY
+from aiact.eval.refusals import RefusalCase, render_refusals, summarize_refusals
+from aiact.eval.runner import MODELS_KEY, SCORING_ERROR_KEY
+from aiact.eval.texts import render_texts
 from aiact.schemas.base import ContractModel
 from aiact.schemas.result import ClassificationResult
 
 FAILED_KEY = "error"
 """A `predicted` object with this key records a failed classifier call."""
+SERVED_MODELS = TypeAdapter(dict[str, dict[str, int]])
+DEVELOPMENT_CASES = (
+    "development cases: the engine's nodes were developed against them, so Commission Pile B "
+    "carries the headline (decision 018)"
+)
+UNCOMMITTED = " (uncommitted changes: this commit may not reproduce the run)"
+EXCLUDE_MODES: Mapping[str, str] = {
+    "heldout": " (held-out examples kept out of retrieval: the reported number)",
+    "all": " (the gap run: held-out examples retrievable, never the reported number; decision 012)",
+}
+ANSWERS_FROM = (
+    "the stored key-fact answers to the questions run `{run}` asked, any other question "
+    'answered "don\'t know" (decision 019)'
+)
 
 
 class RunNotFoundError(LookupError):
@@ -47,7 +73,7 @@ class RunRecordError(ValueError):
 
 
 class RunInfo(ContractModel):
-    """The run facts printed above the table."""
+    """The run facts printed above the table; None where the run didn't record one."""
 
     id: UUID
     benchmark: str
@@ -56,6 +82,16 @@ class RunInfo(ContractModel):
     model: str | None
     cost_usd: float = 0.0
     tokens: int = 0
+    classifier: str | None = None
+    provider: str | None = None
+    second_model: str | None = None
+    second_provider: str | None = None
+    exclude_mode: str | None = None
+    subset: int | None = None
+    seed: int | None = None
+    status: str | None = None
+    is_git_dirty: bool | None = None
+    answers_from: str | None = None
 
 
 class StoredCase(ContractModel):
@@ -64,26 +100,67 @@ class StoredCase(ContractModel):
     outcome: Outcome
     is_scoring_error: bool = False
     citation_existence: bool | None = None
+    models: dict[str, dict[str, int]] = Field(default_factory=dict)
+    """Each node's calls by the model that served them (`runner.MODELS_KEY`); empty when the
+    classifier didn't report them."""
 
 
 def load_run_info(conn: psycopg.Connection, run_id: UUID) -> RunInfo:
     row = conn.execute(
-        "select id, benchmark, git_sha, started_at, config ->> 'model', cost_usd, tokens "
+        "select id, benchmark, git_sha, started_at, config, cost_usd, tokens "
         "from eval_runs where id = %s",
         (run_id,),
     ).fetchone()
     if row is None:
         raise RunNotFoundError(f"no eval run with id {run_id}")
-    run_id_value, benchmark, git_sha, started_at, model, cost_usd, tokens = row
+    run_id_value, benchmark, git_sha, started_at, config, cost_usd, tokens = row
+    return run_info(run_id_value, benchmark, git_sha, started_at, config, float(cost_usd), tokens)
+
+
+def run_info(
+    run_id: UUID,
+    benchmark: str,
+    git_sha: str,
+    started_at: datetime,
+    config: object,
+    cost_usd: float = 0.0,
+    tokens: int = 0,
+) -> RunInfo:
+    """`RunInfo` from an `eval_runs` row; a setting the config lacks, or holds in another shape,
+    stays None."""
+    settings = config if isinstance(config, Mapping) else {}
+    outcome = settings.get("outcome")
+    status = outcome.get("status") if isinstance(outcome, Mapping) else None
+    dirty = settings.get("git_dirty")
     return RunInfo(
-        id=run_id_value,
+        id=run_id,
         benchmark=benchmark,
         git_sha=git_sha,
         started_at=started_at,
-        model=model,
-        cost_usd=float(cost_usd),
+        model=_text(settings, "model"),
+        cost_usd=cost_usd,
         tokens=tokens,
+        classifier=_text(settings, "classifier"),
+        provider=_text(settings, "provider"),
+        second_model=_text(settings, "second_model"),
+        second_provider=_text(settings, "second_provider"),
+        exclude_mode=_text(settings, "exclude_mode"),
+        subset=_number(settings, "subset"),
+        seed=_number(settings, "seed"),
+        status=status if isinstance(status, str) else None,
+        is_git_dirty=dirty if isinstance(dirty, bool) else None,
+        answers_from=_text(settings, "answers_from"),
     )
+
+
+def _text(settings: Mapping[str, object], key: str) -> str | None:
+    value = settings.get(key)
+    return value if isinstance(value, str) else None
+
+
+def _number(settings: Mapping[str, object], key: str) -> int | None:
+    value = settings.get(key)
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
 
 
 def load_stored_cases(conn: psycopg.Connection, run_id: UUID) -> tuple[StoredCase, ...]:
@@ -118,22 +195,79 @@ def stored_case(
         outcome=Outcome(case=case, result=result),
         is_scoring_error=stored.get(SCORING_ERROR_KEY) is True,
         citation_existence=citation_score if isinstance(citation_score, bool) else None,
+        models=_served_models(case_id, stored.get(MODELS_KEY)),
     )
+
+
+def _served_models(case_id: str, value: object) -> dict[str, dict[str, int]]:
+    """The stored `models` score; a malformed one is a `RunRecordError` naming the case."""
+    if value is None:
+        return {}
+    try:
+        return SERVED_MODELS.validate_python(value)
+    except ValidationError as exc:
+        raise RunRecordError(f"case {case_id}: stored models are malformed") from exc
 
 
 def run_report(conn: psycopg.Connection, run_id: UUID) -> str:
     """The markdown report for one stored run."""
-    return build_report(load_run_info(conn, run_id), load_stored_cases(conn, run_id))
+    return build_report(
+        load_run_info(conn, run_id), load_stored_cases(conn, run_id), load_contaminated()
+    )
 
 
-def build_report(info: RunInfo, cases: tuple[StoredCase, ...]) -> str:
+def build_report(
+    info: RunInfo, cases: tuple[StoredCase, ...], contaminated: ContaminatedList | None = None
+) -> str:
     scored = [case for case in cases if not case.is_scoring_error]
     scoring_errors = [case.outcome.case.id for case in cases if case.is_scoring_error]
+    outcomes = [case.outcome for case in scored]
+    lines = render_markdown(info, scored_metrics(scored), scoring_errors).splitlines()
+    flagged = contaminated_cases(outcomes, contaminated)
+    if flagged and contaminated is not None:
+        clean = summarize([o for o in outcomes if o.case.id not in flagged], None)
+        lines += _contaminated_lines(flagged, contaminated.decision, clean)
+    refusals = summarize_refusals(
+        [RefusalCase(outcome=case.outcome, models=case.models) for case in scored],
+        info.second_model,
+    )
+    for section in (render_refusals(refusals), render_failures(outcomes), render_texts(outcomes)):
+        lines += ["", *section]
+    return "\n".join(lines) + "\n"
+
+
+def scored_metrics(scored: Sequence[StoredCase]) -> RunMetrics:
+    """The run's metrics, with citation existence from the scores stored at run time."""
     citations = [case.citation_existence for case in scored if case.citation_existence is not None]
-    metrics = summarize([case.outcome for case in scored], None).model_copy(
+    return summarize([case.outcome for case in scored], None).model_copy(
         update={"citation_existence": Rate(hits=sum(citations), total=len(citations))}
     )
-    return render_markdown(info, metrics, scoring_errors)
+
+
+def contaminated_cases(
+    outcomes: Sequence[Outcome], contaminated: ContaminatedList | None
+) -> dict[str, str]:
+    """The run's cases written from a contaminated example (decision 016): id -> example id."""
+    if contaminated is None:
+        return {}
+    examples = {example.example_id for example in contaminated.examples}
+    return {
+        o.case.id: o.case.source_example_id
+        for o in outcomes
+        if o.case.source_example_id is not None and o.case.source_example_id in examples
+    }
+
+
+def _contaminated_lines(flagged: Mapping[str, str], decision: str, clean: RunMetrics) -> list[str]:
+    named = ", ".join(f"{case_id} (from {example})" for case_id, example in flagged.items())
+    return [
+        "",
+        f"Contaminated cases, flagged by {decision}: {named}",
+        "",
+        "| Metric | Value | Count |",
+        "| --- | ---: | ---: |",
+        _row("Risk-class accuracy without the contaminated cases", clean.risk_class_accuracy),
+    ]
 
 
 def render_markdown(
@@ -142,8 +276,7 @@ def render_markdown(
     header = [
         f"## Run {info.id}",
         "",
-        f"- Benchmark: `{info.benchmark}`",
-        f"- Commit: `{info.git_sha}`",
+        *_settings_lines(info),
         f"- Started: {info.started_at.isoformat()}",
         f"- Model: {info.model or 'n/a'}",
         f"- Cost: ${info.cost_usd:.4f}, {info.tokens} tokens",
@@ -152,15 +285,56 @@ def render_markdown(
         "| Metric | Value | Count |",
         "| --- | ---: | ---: |",
     ]
-    lines = [*header, *(_row(name, value) for name, value in _rows(metrics))]
+    is_development = info.benchmark == CaseSet.OWN.value
+    lines = [*header, *(_row(name, value) for name, value in _rows(metrics, is_development))]
     if scoring_errors:
         lines += ["", f"Scoring failed, left out of the metrics: {', '.join(scoring_errors)}"]
     return "\n".join(lines) + "\n"
 
 
-def _rows(metrics: RunMetrics) -> list[tuple[str, Rate | int]]:
+def _settings_lines(info: RunInfo) -> list[str]:
+    """The run's recorded settings, one line each; one the run didn't record is left out."""
+    benchmark = f"- Benchmark: `{info.benchmark}`"
+    if info.benchmark == CaseSet.OWN.value:
+        benchmark += f" ({DEVELOPMENT_CASES})"
+    lines = [benchmark, f"- Commit: `{info.git_sha}`{UNCOMMITTED if info.is_git_dirty else ''}"]
+    if info.status:
+        lines.append(f"- Status: {info.status}")
+    if info.classifier:
+        lines.append(f"- Classifier: `{info.classifier}`{_served_by(info.model, info.provider)}")
+        lines.append(f"- Cases run: {_subset(info)}")
+    if info.second_model:
+        served = _served_by(info.second_model, info.second_provider)
+        lines.append(f"- Second model for refused requests (decision 033){served}")
+    if info.exclude_mode:
+        mode = EXCLUDE_MODES.get(info.exclude_mode, "")
+        lines.append(f"- Exclude mode: `{info.exclude_mode}`{mode}")
+    if info.answers_from:
+        lines.append(f"- Answers: {ANSWERS_FROM.format(run=info.answers_from)}")
+    return lines
+
+
+def _served_by(model: str | None, provider: str | None) -> str:
+    if model is None:
+        return ""
+    return f": `{model}`" + (f" on `{provider}`" if provider else "")
+
+
+def _subset(info: RunInfo) -> str:
+    if info.subset is None:
+        return "every case of the set"
+    return f"a seeded sample of {info.subset} (seed {info.seed})"
+
+
+def _rows(metrics: RunMetrics, is_development: bool = False) -> list[tuple[str, Rate | int]]:
+    accuracy = "Risk-class accuracy" + (" (development cases)" if is_development else "")
     return [
-        ("Risk-class accuracy", metrics.risk_class_accuracy),
+        (accuracy, metrics.risk_class_accuracy),
+        ("Not assessed (provider refused a check, decision 030)", metrics.not_assessed),
+        (
+            "Risk-class accuracy, not-assessed cases counted as misses",
+            metrics.risk_class_accuracy_not_assessed_as_miss,
+        ),
         ("False-low-risk rate", metrics.false_low_risk),
         ("Annex point accuracy", metrics.annex_point_accuracy),
         ("Role accuracy", metrics.role_accuracy),

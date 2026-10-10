@@ -9,7 +9,9 @@ retrieval; it never sees the label. `--exclude-mode heldout` (the reported numbe
 committed `eval/split.json`: in split mode every Pile B example is excluded, in leave-one-out mode
 the example the case was written from. `--exclude-mode all` is the gap run (INIT > Benchmark
 isolation 4; decision 012): it excludes nothing, and only it sets `include_held_out`, so
-retrieval sees the held-out examples too.
+retrieval sees the held-out examples too. `--answers-from <run>` gives each case its fixed
+answers to the questions it asked in that stored run (`answers`; the downgrade rate's second run,
+decision 019).
 
 A cost cap is checked before each case starts, so a run can overshoot it by at most the cost of
 the cases already in flight. A classifier that fails after spending raises `ClassifierFailedError`
@@ -37,6 +39,7 @@ from uuid import UUID
 from pydantic import JsonValue, ValidationError
 
 from aiact.eval import split as split_module
+from aiact.eval.answers import fixed_answers
 from aiact.eval.cases import (
     APPLIEDAI_FILE,
     CASES_DIR,
@@ -131,6 +134,9 @@ class ClassifierInput:
     """The case's own date (`BenchmarkCase.as_of`); None means the run's date."""
     include_held_out: bool = field(default=False, kw_only=True)
     """The gap run's opt-in (decision 012): set only by `--exclude-mode all`."""
+    answers: Mapping[str, str] = field(default_factory=dict, kw_only=True)
+    """Fixed answers to the follow-up questions an earlier run asked, by question id (decision
+    019; `answers.fixed_answers`); a classifier that takes answers appends them."""
 
 
 @dataclass(frozen=True)
@@ -148,12 +154,16 @@ class Classification:
 @dataclass(frozen=True)
 class ClassifierInfo:
     """The settings recorded in `eval_runs.config` (F5 requires model, embedding and retrieval;
-    null allowed). `provider` is the pinned OpenRouter endpoint, when there is one."""
+    null allowed). `provider` is the pinned OpenRouter endpoint, when there is one;
+    `second_model` on `second_provider` answers the requests the first one's provider refused
+    (decision 033)."""
 
     model: str | None
     embedding: JsonValue = None
     retrieval: JsonValue = None
     provider: str | None = None
+    second_model: str | None = None
+    second_provider: str | None = None
 
 
 class Classifier(Protocol):
@@ -329,6 +339,8 @@ class RunOptions:
     seed: int = 0
     concurrency: int = DEFAULT_CONCURRENCY
     max_cost_usd: float = DEFAULT_MAX_COST_USD
+    answers_from: UUID | None = None
+    """The stored run whose follow-up questions get the cases' fixed answers (decision 019)."""
 
     def __post_init__(self) -> None:
         if not 1 <= self.concurrency <= MAX_CONCURRENCY:
@@ -359,6 +371,8 @@ def run_config(
         "embedding": info.embedding,
         "retrieval": info.retrieval,
         "provider": info.provider,
+        "second_model": info.second_model,
+        "second_provider": info.second_provider,
         "classifier": options.classifier_name,
         "exclude_mode": options.exclude_mode.value,
         "split_mode": None if split is None else split.mode.value,
@@ -367,6 +381,7 @@ def run_config(
         "concurrency": options.concurrency,
         "max_cost_usd": options.max_cost_usd,
         "git_dirty": options.is_git_dirty,
+        "answers_from": None if options.answers_from is None else str(options.answers_from),
         "outcome": {"status": RunStatus.RUNNING.value},
     }
 
@@ -384,13 +399,18 @@ def run_benchmark(
     options: RunOptions,
     split: Split | None,
     scorer: Scorer = no_metric_scores,
+    asked: Mapping[str, Sequence[str]] | None = None,
 ) -> RunSummary:
     """Classify the (subset of) cases and record each result as it finishes.
 
     `split` must be given for `ExcludeMode.HELDOUT` and is ignored for `ExcludeMode.ALL`.
+    `asked` holds the question ids each case's run `options.answers_from` asked (both or
+    neither); each case then gets its fixed answers to them (decision 019).
     """
     if options.exclude_mode is ExcludeMode.HELDOUT and split is None:
         raise SplitError("--exclude-mode heldout needs eval/split.json")
+    if (asked is None) != (options.answers_from is None):
+        raise ValueError("answers need both the source run's id and its questions")
     active_split = split if options.exclude_mode is ExcludeMode.HELDOUT else None
     planned = [
         _Planned(
@@ -401,6 +421,7 @@ def run_benchmark(
                 exclusions_for(case, active_split),
                 case.as_of,
                 include_held_out=options.exclude_mode is ExcludeMode.ALL,
+                answers={} if asked is None else fixed_answers(case, asked.get(case.id, ())),
             ),
         )
         for case in select_subset(cases, options.subset, options.seed)

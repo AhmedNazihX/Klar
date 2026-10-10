@@ -23,6 +23,7 @@ from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
 from aiact.engine.usage import UsageMeter
 from aiact.eval import (
     academic,
+    answers,
     citation_index,
     isolation,
     label_filter,
@@ -379,8 +380,21 @@ def eval_run(
         float, typer.Option(min=0.000001, help="Start no new case once this much is spent")
     ] = runner.DEFAULT_MAX_COST_USD,
     seed: Annotated[int, typer.Option(help="Seed for the --subset sample")] = 0,
+    answers_from: Annotated[
+        UUID | None,
+        typer.Option(
+            help="A stored run of the same set: append each case's fixed answers to the "
+            "questions it asked there (the downgrade rate with answers, decision 019)"
+        ),
+    ] = None,
 ) -> None:
     """Run a classifier over a benchmark set and record it in eval_runs / eval_case_results."""
+    if answers_from is not None and classifier not in answers.ANSWERING_CLASSIFIERS:
+        names = ", ".join(sorted(answers.ANSWERING_CLASSIFIERS))
+        typer.echo(
+            f"Error: --answers-from needs a classifier that takes answers: {names}", err=True
+        )
+        raise typer.Exit(code=2)
     try:
         chosen = runner.build_classifier(classifier)
         split = runner.load_split() if exclude_mode is runner.ExcludeMode.HELDOUT else None
@@ -405,15 +419,31 @@ def eval_run(
         seed=seed,
         concurrency=concurrency,
         max_cost_usd=max_cost_usd,
+        answers_from=answers_from,
     )
     try:
         with records.connect() as connection:
+            asked = (
+                None
+                if answers_from is None
+                else answers.asked_questions(connection, answers_from, set_name.value)
+            )
             index = citation_index.load_citation_index(connection)
             scorer = metrics.metric_scorer(citation_index.citation_checker(index))
             summary = runner.run_benchmark(
-                cases, chosen, records.PostgresRunStore(connection), options, split, scorer
+                cases,
+                chosen,
+                records.PostgresRunStore(connection),
+                options,
+                split,
+                scorer,
+                asked=asked,
             )
-    except (records.DatabaseNotConfiguredError, runner.SplitError) as error:
+    except (
+        records.DatabaseNotConfiguredError,
+        runner.SplitError,
+        answers.AnswerSourceError,
+    ) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
     except psycopg.Error as error:

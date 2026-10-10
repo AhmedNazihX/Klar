@@ -10,6 +10,7 @@ from tests.schemas.builders import (
     missing_fact,
     needs_description,
     rebuild,
+    refused,
 )
 from tests.schemas.builders import steps_with as replaced_steps
 from tests.schemas.worked_example import worked_example_result
@@ -60,6 +61,20 @@ def thin_case(case_id: str) -> BenchmarkCase:
 def description_result() -> ClassificationResult:
     """A needs-a-description result: no steps, no class."""
     return needs_description()
+
+
+def refused_result(name: StepName = StepName.PROHIBITED) -> ClassificationResult:
+    """The worked example with its `name` check refused by both models: no class (decision
+    030)."""
+    return rebuild(
+        worked_example_result(),
+        steps=replaced_steps(refused(name)),
+        risk_class=None,
+        status=Status.NEEDS_MORE_INFORMATION,
+        annex_point=None,
+        obligations=(),
+        not_assessed=(name,),
+    )
 
 
 def _points(annex_point: str | None) -> tuple[str, ...]:
