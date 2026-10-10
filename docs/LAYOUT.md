@@ -16,6 +16,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check (F2, B13); frontend lint, build, test (P5)
 ├── .github/workflows/label-freeze.yml  label-freeze check, never cancelled (B10a)
 ├── .githooks/                       pre-commit and pre-merge-commit regenerate DEPENDENCIES.md, pre-push checks it (F8)
+├── Makefile                         local dev: `make dev` runs the API and the frontend together; `make db` starts Supabase
 │
 ├── backend/                         the only Python project (uv)
 │   ├── pyproject.toml               deps, ruff, pyright, pytest config; `aiact` console script (F1)
@@ -167,7 +168,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)
 │       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases); eurlex/ (C1);
 │       │                            report/ (the worked example's replayed result, P25)
-│       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6)
+│       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6);
+│       │                            a 15 s lock_timeout on every test DB connection, via PGOPTIONS (F9)
 │       ├── recordings/              recorded model responses, <module path under tests/>/<test>.yaml, e.g. llm/test_chat/ (F6);
 │       │                            <test>.corpus.json next to one: the corpus rows a replayed engine node read,
 │       │                            so the replay needs no database (E3, E4, E5); recorded and replayed by

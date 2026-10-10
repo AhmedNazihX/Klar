@@ -361,10 +361,10 @@ def test_a_recent_tick_keeps_its_user_from_the_cleanup(db: psycopg.Connection) -
         rows = _add_system(db)
         _set_profile(db, rows["inventories"], PROFILE)
     _age_rows(db, user, tuple(table for table in USER_TABLES if table != "duty_progress"))
-    _purge(db, later="29 days")
+    assert _purge(db, [user], later="29 days") == 0
     assert _user_exists(db, user)
 
     _age_rows(db, user, ("duty_progress",))
-    _purge(db, later="29 days")
+    assert _purge(db, [user], later="29 days") == 1
     assert not _user_exists(db, user)
     assert _counts(db, user) == dict.fromkeys(USER_TABLES, 0)
