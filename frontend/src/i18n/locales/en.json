@@ -20,10 +20,6 @@
   "session": {
     "failed": "We couldn't start a session in this browser, so nothing you do here can be saved. Reload the page to try again."
   },
-  "home": {
-    "title": "Is your AI tool high-risk under the EU AI Act?",
-    "body": "Describe the tool in your own words. Klar works through the Act's checks in order, shows each step and quotes the provision it relies on."
-  },
   "brand": {
     "title": "Brand tokens",
     "intro": "The colours, type, glass and components of the Klar design system, as the app renders them.",
@@ -155,7 +151,9 @@
       "privacy": "Privacy notice",
       "impressum": "Impressum",
       "contact": "Contact"
-    }
+    },
+    "menu": "Sections",
+    "menuClose": "Close sections"
   },
   "lawShort": {
     "amended": "As amended, 2026",
@@ -1141,5 +1139,177 @@
       "nothing": "Nothing to do"
     },
     "changed": "Changed: {{decision}}"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Updated for the Digital Omnibus, in force since 27 July 2026",
+      "title": "Where does your AI tool stand under the AI Act?",
+      "lead": "Describe it in plain words, in English or German. Klar runs the Act's checks in their legal order, cites the provision behind every step, and turns the result into a to-do list with dates.",
+      "measured": "See how it's measured",
+      "note": "Free, no account needed. Guidance, not legal advice.",
+      "exampleLabel": "An example: the Act's checks on one description",
+      "descriptionLabel": "Your description",
+      "description": "We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.",
+      "checks": {
+        "scope": {
+          "name": "Scope",
+          "finding": "An AI system used in the EU",
+          "cite": "Art. 2–3"
+        },
+        "prohibited": {
+          "name": "Prohibited",
+          "finding": "No match with a banned practice",
+          "cite": "Art. 5"
+        },
+        "high_risk": {
+          "name": "High-risk",
+          "finding": "Yes: recruitment, Annex III 4(a)",
+          "cite": "Art. 6(3)",
+          "quote": "“…an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons.”",
+          "evidence": "Stated: scores and ranks"
+        },
+        "transparency": {
+          "name": "Transparency",
+          "finding": "No separate duty found",
+          "cite": "Art. 50"
+        }
+      },
+      "passed": "Passed",
+      "decided": "Decided the class",
+      "role": "You're the deployer. Duties apply from 2 December 2027.",
+      "todo": "Open the to-do list"
+    },
+    "dates": {
+      "title": "The dates moved in July 2026.",
+      "lead": "The Digital Omnibus, Regulation (EU) 2026/1744, changed deadlines and added two prohibitions. Many sources online still show the old dates. Klar classifies under the amended text by default.",
+      "today": "Today",
+      "past": "Applies already",
+      "upcoming": "Still to come",
+      "items": {
+        "transparency": "Transparency duties under Article 50 apply.",
+        "prohibitions": "Two new prohibitions apply. The marking grace period ends for systems placed on the market before 2 August 2026.",
+        "annexIII": "High-risk duties for systems listed in Annex III, such as recruitment or credit scoring.",
+        "annexI": "High-risk duties for AI in products covered by EU product law (Annex I)."
+      }
+    },
+    "how": {
+      "title": "It checks in the Act's order, and shows its work.",
+      "lead": "The order is fixed and no check is skipped. Inside each step, Klar fetches the provision by number where the law says where to look, and searches by meaning where it doesn't.",
+      "checks": {
+        "scope": {
+          "name": "Scope",
+          "question": "Is it an AI system in the legal sense, and does the Act apply where you use it?",
+          "cite": "Art. 2–3"
+        },
+        "prohibited": {
+          "name": "Prohibited practices",
+          "question": "Does it match a banned use? If it does, the checks stop here.",
+          "cite": "Art. 5"
+        },
+        "high_risk": {
+          "name": "High-risk",
+          "question": "Is it listed in Annex III, and does the Article 6(3) filter exempt it? Annex I products are flagged.",
+          "cite": "Art. 6, Annex III, Annex I"
+        },
+        "transparency": {
+          "name": "Transparency",
+          "question": "Does it talk with people, or generate or change images, audio, video or text?",
+          "cite": "Art. 50"
+        }
+      },
+      "role": "Then your role, and the duties that come with it: provider, deployer, importer or distributor, including the Article 25 switch.",
+      "evidenceLead": "Every step says where its key fact came from, so you can challenge it.",
+      "evidence": {
+        "stated": "you said it",
+        "inferred": "Klar worked it out",
+        "assumed": "a default we ask you to confirm"
+      }
+    },
+    "unsure": {
+      "title": "When it isn't sure, it says so.",
+      "lead": "No confidence scores that nobody calibrated. A step can end in one of two honest outcomes instead of a guess.",
+      "info": {
+        "summary": "A fact that decides the outcome is missing. Klar names it and asks.",
+        "question": "Does the shift planner use performance or behaviour data to assign work?",
+        "yes": "Yes",
+        "no": "No",
+        "notSure": "Not sure",
+        "next": "Your answer is added to the description and the checks run again."
+      },
+      "ambiguous": {
+        "summary": "The facts are clear, but the law and guidance don't settle it. You see both readings.",
+        "narrow": "Narrow procedural task, Art. 6(3)(a)",
+        "notHighRisk": "Not high-risk",
+        "recruitment": "Recruitment use, Annex III 4(a)",
+        "next": "Klar works from the stricter reading, labelled “assumed high-risk pending legal review”, and recommends a lawyer."
+      }
+    },
+    "features": {
+      "title": "From one tool to your whole list.",
+      "inventory": {
+        "title": "AI inventory",
+        "body": "Add every tool your company uses. See them in one table, with a company-level summary of what applies and when.",
+        "screening": "Applicant screening",
+        "chat": "Customer chat assistant",
+        "routes": "Route optimisation"
+      },
+      "checklist": {
+        "title": "Obligations checklist",
+        "body": "The duties for your role and risk class, each with its article and the date it applies from.",
+        "oversight": "Assign human oversight",
+        "logs": "Keep the logs",
+        "inform": "Inform applicants",
+        "oversightCite": "Art. 26(2)",
+        "logsCite": "Art. 26(6)",
+        "informCite": "Art. 26(11)"
+      },
+      "drafts": {
+        "title": "Draft documents",
+        "body": "Short notices written from your facts, and skeletons of the heavy ones filled in through a guided interview. Nothing is invented.",
+        "document": "Notice to workers' representatives",
+        "fill": "To fill in: start date"
+      }
+    },
+    "accuracy": {
+      "title": "Accuracy is measured and published, not promised.",
+      "lead": "The main test set is built from the Commission's own worked examples of high-risk and not-high-risk systems. Half of them are removed from what Klar can search, so it can't just look up the answer.",
+      "method": "Read the method and the full results",
+      "pending": "[—%]",
+      "riskClass": {
+        "label": "Risk-class accuracy",
+        "detail": "On held-out Commission examples and own cases"
+      },
+      "falseLow": {
+        "label": "False low-risk rate",
+        "detail": "High-risk or prohibited systems labelled lower, the costliest error"
+      },
+      "citations": {
+        "label": "Citations that exist",
+        "detail": "Every cited provision is checked against the legal text"
+      },
+      "checker": {
+        "label": "Against an existing checker",
+        "versus": "vs",
+        "detail": "The same {{cases}} cases run through {{name}}",
+        "detailPending": "The same <cases>[N]</cases> cases run through <name>[CHECKER NAME]</name>"
+      }
+    },
+    "agents": {
+      "title": "Your other AI agents can ask it too.",
+      "lead": "The same engine runs behind an MCP server with four tools. Every result carries the law version and the guidance notice, even when it's shown outside Klar.",
+      "tools": {
+        "search_ai_act": "Search the law by meaning",
+        "get_provision": "Exact text of an article",
+        "list_obligations": "Duties for a role and class",
+        "classify_system": "The full engine on one tool"
+      },
+      "codeLabel": "Example result of classify_system",
+      "steps": "… 5 steps, each with citations and an evidence tag …",
+      "disclaimer": "This is guidance, not legal advice. …"
+    },
+    "cta": {
+      "title": "Start with the tool you're least sure about.",
+      "lead": "It takes a few sentences. You can add the rest of your list later."
+    }
   }
 }

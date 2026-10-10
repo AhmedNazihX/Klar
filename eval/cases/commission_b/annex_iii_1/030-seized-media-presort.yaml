@@ -13,7 +13,7 @@ description: >-
 label:
   risk_class: minimal_risk
   role: deployer
-label_citation: ["annex:III:1:a", "annex:III:6"]
+label_citation: ["annex:III:1:a", "annex:III:6", "guide:guide-high-risk-annex-iii:para:365"]
 source_example_id: hr-ex-030
 accepted_bases: ["outside_use_case"]
 label_status: settled
@@ -22,7 +22,9 @@ notes: >-
   review; it identifies no one and compares nothing with a reference database, so it is not
   remote biometric identification (Annex III point 1(a)), and it neither assesses the reliability
   of evidence nor profiles anyone (point 6). The Commission's settled verdict: outside the use
-  case. No Art. 50 duty: minimal_risk. Role: deployer of a bought tool.
+  case. No Art. 50 duty: minimal_risk. Role: deployer of a bought tool. Guideline para. (365): tools
+  that work with collected information without evaluating its reliability fall outside point 6
+  (B9 label filter, 2026-10-10, orchestrator under the user's standing delegation).
 tags:
   - "area:annex_iii_1"
   - "verdict:not_high"

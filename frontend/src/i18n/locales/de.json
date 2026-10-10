@@ -20,10 +20,6 @@
   "session": {
     "failed": "In diesem Browser konnte keine Sitzung gestartet werden, daher kann nichts gespeichert werden. Laden Sie die Seite neu, um es erneut zu versuchen."
   },
-  "home": {
-    "title": "Ist Ihr KI-Werkzeug nach der KI-Verordnung ein Hochrisiko-System?",
-    "body": "Beschreiben Sie das Werkzeug in eigenen Worten. Klar geht die Prüfungen der Verordnung der Reihe nach durch, zeigt jeden Schritt und zitiert die Vorschrift, auf die er sich stützt."
-  },
   "brand": {
     "title": "Marken-Tokens",
     "intro": "Farben, Schrift, Glas und Komponenten des Klar-Designsystems, so wie die App sie darstellt.",
@@ -155,7 +151,9 @@
       "privacy": "Datenschutzerklärung",
       "impressum": "Impressum",
       "contact": "Kontakt"
-    }
+    },
+    "menu": "Bereiche",
+    "menuClose": "Bereiche schließen"
   },
   "lawShort": {
     "amended": "Geändert, 2026",
@@ -1141,5 +1139,177 @@
       "nothing": "Nichts zu tun"
     },
     "changed": "Geändert: {{decision}}"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Aktualisiert für den Digital-Omnibus, in Kraft seit 27. Juli 2026",
+      "title": "Wo steht Ihr KI‑Tool nach der KI‑Verordnung?",
+      "lead": "Beschreiben Sie es in einfachen Worten, auf Deutsch oder Englisch. Klar prüft in der Reihenfolge der Verordnung, nennt zu jedem Schritt die Vorschrift und macht aus dem Ergebnis eine Aufgabenliste mit Fristen.",
+      "measured": "So wird gemessen",
+      "note": "Kostenlos, ohne Konto. Orientierungshilfe, keine Rechtsberatung.",
+      "exampleLabel": "Ein Beispiel: die Prüfungen der Verordnung an einer Beschreibung",
+      "descriptionLabel": "Ihre Beschreibung",
+      "description": "Wir sind ein Logistikunternehmen mit 40 Beschäftigten. Wir nutzen ein Tool, das eingehende Bewerbungen liest, bewertet und der Personalabteilung eine Rangliste zeigt. Wir haben es bei einem Anbieter gekauft und nicht verändert.",
+      "checks": {
+        "scope": {
+          "name": "Anwendungsbereich",
+          "finding": "Ein KI-System, eingesetzt in der EU",
+          "cite": "Art. 2–3"
+        },
+        "prohibited": {
+          "name": "Verbote",
+          "finding": "Keine verbotene Praktik erkannt",
+          "cite": "Art. 5"
+        },
+        "high_risk": {
+          "name": "Hochrisiko",
+          "finding": "Ja: Einstellung, Anhang III Nr. 4 Buchst. a",
+          "cite": "Art. 6 Abs. 3",
+          "quote": "„… gilt ein in Anhang III aufgeführtes KI-System immer dann als hochriskant, wenn es ein Profiling natürlicher Personen vornimmt.“",
+          "evidence": "Angegeben: bewertet und reiht"
+        },
+        "transparency": {
+          "name": "Transparenz",
+          "finding": "Keine gesonderte Pflicht gefunden",
+          "cite": "Art. 50"
+        }
+      },
+      "passed": "Bestanden",
+      "decided": "Hat die Klasse entschieden",
+      "role": "Sie sind Betreiber. Die Pflichten gelten ab 2. Dezember 2027.",
+      "todo": "Zur Aufgabenliste"
+    },
+    "dates": {
+      "title": "Die Fristen haben sich im Juli 2026 verschoben.",
+      "lead": "Der Digital-Omnibus, Verordnung (EU) 2026/1744, hat Fristen geändert und zwei Verbote ergänzt. Viele Quellen im Netz zeigen noch die alten Termine. Klar prüft standardmäßig nach der geänderten Fassung.",
+      "today": "Heute",
+      "past": "Gilt bereits",
+      "upcoming": "Steht noch bevor",
+      "items": {
+        "transparency": "Die Transparenzpflichten nach Artikel 50 gelten.",
+        "prohibitions": "Zwei neue Verbote gelten. Die Übergangsfrist für die Kennzeichnung endet für Systeme, die vor dem 2. August 2026 in Verkehr gebracht wurden.",
+        "annexIII": "Hochrisiko-Pflichten für Systeme nach Anhang III, etwa bei der Einstellung oder Kreditwürdigkeitsprüfung.",
+        "annexI": "Hochrisiko-Pflichten für KI in Produkten, die unter EU-Produktrecht fallen (Anhang I)."
+      }
+    },
+    "how": {
+      "title": "Klar prüft in der Reihenfolge der Verordnung und zeigt jeden Schritt.",
+      "lead": "Die Reihenfolge ist fest, kein Schritt wird übersprungen. In jedem Schritt ruft Klar die Vorschrift über ihre Nummer ab, wo das Gesetz die Stelle nennt, und sucht nach Bedeutung, wo nicht.",
+      "checks": {
+        "scope": {
+          "name": "Anwendungsbereich",
+          "question": "Ist es ein KI-System im Sinne der Verordnung, und gilt sie dort, wo Sie es einsetzen?",
+          "cite": "Art. 2–3"
+        },
+        "prohibited": {
+          "name": "Verbotene Praktiken",
+          "question": "Entspricht es einer verbotenen Nutzung? Dann enden die Prüfungen hier.",
+          "cite": "Art. 5"
+        },
+        "high_risk": {
+          "name": "Hochrisiko",
+          "question": "Ist es in Anhang III aufgeführt, und nimmt Artikel 6 Absatz 3 es aus? Produkte nach Anhang I werden markiert.",
+          "cite": "Art. 6, Anhang III, Anhang I"
+        },
+        "transparency": {
+          "name": "Transparenz",
+          "question": "Spricht es mit Menschen, oder erzeugt oder verändert es Bilder, Audio, Video oder Text?",
+          "cite": "Art. 50"
+        }
+      },
+      "role": "Dann Ihre Rolle und die Pflichten dazu: Anbieter, Betreiber, Einführer oder Händler, einschließlich des Rollenwechsels nach Artikel 25.",
+      "evidenceLead": "Jeder Schritt zeigt, woher seine entscheidende Tatsache stammt, damit Sie sie prüfen können.",
+      "evidence": {
+        "stated": "Sie haben es gesagt",
+        "inferred": "Klar hat es erschlossen",
+        "assumed": "eine Annahme, die Sie bestätigen"
+      }
+    },
+    "unsure": {
+      "title": "Wenn Klar unsicher ist, sagt es das.",
+      "lead": "Keine Konfidenzwerte, die niemand kalibriert hat. Ein Schritt kann mit einem von zwei ehrlichen Ergebnissen enden statt mit einer Vermutung.",
+      "info": {
+        "summary": "Eine entscheidende Tatsache fehlt. Klar benennt sie und fragt nach.",
+        "question": "Nutzt die Schichtplanung Leistungs- oder Verhaltensdaten, um Arbeit zuzuteilen?",
+        "yes": "Ja",
+        "no": "Nein",
+        "notSure": "Unsicher",
+        "next": "Ihre Antwort ergänzt die Beschreibung, und die Prüfungen laufen erneut."
+      },
+      "ambiguous": {
+        "summary": "Die Fakten sind klar, aber Verordnung und Leitlinien entscheiden es nicht. Sie sehen beide Lesarten.",
+        "narrow": "Eng gefasste Verfahrensaufgabe, Art. 6 Abs. 3 Buchst. a",
+        "notHighRisk": "Kein Hochrisiko",
+        "recruitment": "Einstellung, Anhang III Nr. 4 Buchst. a",
+        "next": "Klar arbeitet mit der strengeren Lesart, gekennzeichnet als „Hochrisiko angenommen, rechtliche Prüfung ausstehend“, und empfiehlt eine anwaltliche Prüfung."
+      }
+    },
+    "features": {
+      "title": "Vom einzelnen Tool zur ganzen Liste.",
+      "inventory": {
+        "title": "KI-Inventar",
+        "body": "Erfassen Sie jedes Tool Ihres Unternehmens. Alle in einer Tabelle, mit einer Übersicht, was wann gilt.",
+        "screening": "Bewerbervorauswahl",
+        "chat": "Kunden-Chatassistent",
+        "routes": "Routenoptimierung"
+      },
+      "checklist": {
+        "title": "Pflichten-Checkliste",
+        "body": "Die Pflichten für Ihre Rolle und Risikoklasse, jeweils mit Artikel und Geltungsbeginn.",
+        "oversight": "Menschliche Aufsicht zuweisen",
+        "logs": "Protokolle aufbewahren",
+        "inform": "Bewerbende informieren",
+        "oversightCite": "Art. 26 Abs. 2",
+        "logsCite": "Art. 26 Abs. 6",
+        "informCite": "Art. 26 Abs. 11"
+      },
+      "drafts": {
+        "title": "Dokumententwürfe",
+        "body": "Kurze Mitteilungen aus Ihren Angaben und Gerüste für die umfangreichen Dokumente, ausgefüllt im geführten Interview. Nichts wird erfunden.",
+        "document": "Mitteilung an die Arbeitnehmervertretung",
+        "fill": "Noch auszufüllen: Starttermin"
+      }
+    },
+    "accuracy": {
+      "title": "Genauigkeit wird gemessen und veröffentlicht, nicht versprochen.",
+      "lead": "Der wichtigste Testdatensatz stammt aus den Beispielen der Kommission für Hochrisiko- und andere Systeme. Die Hälfte davon kann Klar nicht durchsuchen, damit es die Antwort nicht einfach nachschlägt.",
+      "method": "Methode und vollständige Ergebnisse lesen",
+      "pending": "[—%]",
+      "riskClass": {
+        "label": "Genauigkeit der Risikoklasse",
+        "detail": "An zurückgehaltenen Beispielen der Kommission und eigenen Fällen"
+      },
+      "falseLow": {
+        "label": "Anteil zu niedrig eingestufter Fälle",
+        "detail": "Hochrisiko- oder verbotene Systeme, die niedriger eingestuft wurden: der teuerste Fehler"
+      },
+      "citations": {
+        "label": "Zitate, die existieren",
+        "detail": "Jede zitierte Vorschrift wird am Gesetzestext geprüft"
+      },
+      "checker": {
+        "label": "Im Vergleich zu einem bestehenden Prüftool",
+        "versus": "vs.",
+        "detail": "Dieselben {{cases}} Fälle, geprüft mit {{name}}",
+        "detailPending": "Dieselben <cases>[N]</cases> Fälle, geprüft mit <name>[NAME DES PRÜFTOOLS]</name>"
+      }
+    },
+    "agents": {
+      "title": "Auch Ihre anderen KI-Agenten können fragen.",
+      "lead": "Dieselbe Prüfung läuft hinter einem MCP-Server mit vier Werkzeugen. Jedes Ergebnis enthält den Rechtsstand und den Hinweis auf die Orientierungshilfe, auch außerhalb von Klar.",
+      "tools": {
+        "search_ai_act": "Die Verordnung nach Bedeutung durchsuchen",
+        "get_provision": "Genauer Wortlaut eines Artikels",
+        "list_obligations": "Pflichten für Rolle und Klasse",
+        "classify_system": "Die vollständige Prüfung für ein Tool"
+      },
+      "codeLabel": "Beispielergebnis von classify_system",
+      "steps": "… 5 Schritte, jeweils mit Zitaten und Herkunftsangabe …",
+      "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. …"
+    },
+    "cta": {
+      "title": "Beginnen Sie mit dem Tool, bei dem Sie am unsichersten sind.",
+      "lead": "Ein paar Sätze genügen. Den Rest Ihrer Liste ergänzen Sie später."
+    }
   }
 }

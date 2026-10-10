@@ -318,7 +318,7 @@ Cost of the answers compared: $0.4495.
 ### own-d-10-rebranded-health-pricing
 
 - Set: own; language: de
-- Label: high_risk, decided; role provider; annex:III:5:c; cites art:3:3, art:3:6, annex:III:5:c, art:6:3
+- Label: high_risk, decided; role provider; annex:III:5:c; cites art:3:3, art:25:1:a, art:3:6, annex:III:5:c, art:6:3
 - Second model: high_risk, decided; role distributor; annex:III:5:c
 - Differs on: role
 - Its reason: The company is a distributor placing an AI system on the market under its own name and trademark (Art. 3(7), Art. 25(1)(a)). The system evaluates creditworthiness and establishes risk pricing for natural persons in relation to life and health insurance, falling under Annex III, point 5(c). As a distributor making a substantial modification by rebranding and integrating the system into its own offering, the company becomes a provider subject to high-risk obligations under Article 16.
