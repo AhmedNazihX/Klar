@@ -168,7 +168,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── db/                      schema tests against local Supabase (`db` marker; skipped when unreachable) (F4)
 │       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases); eurlex/ (C1);
 │       │                            report/ (the worked example's replayed result, P25)
-│       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6)
+│       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6);
+│       │                            a 15 s lock_timeout on every test DB connection, via PGOPTIONS (F9)
 │       ├── recordings/              recorded model responses, <module path under tests/>/<test>.yaml, e.g. llm/test_chat/ (F6);
 │       │                            <test>.corpus.json next to one: the corpus rows a replayed engine node read,
 │       │                            so the replay needs no database (E3, E4, E5); recorded and replayed by
