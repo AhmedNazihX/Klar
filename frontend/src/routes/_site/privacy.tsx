@@ -1,13 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import type { JSX } from 'react'
-import { useTranslation } from 'react-i18next'
 
-import { ScreenPlaceholder } from '@/components/ScreenPlaceholder'
+import { PrivacyPage } from '@/features/site-pages/PrivacyPage'
 
-// Empty until P17 (artboard `Privacy`).
+// The privacy notice (artboard `Privacy`), P17. It shows the site in the visitor's current language.
 export const Route = createFileRoute('/_site/privacy')({ component: PrivacyPage })
-
-function PrivacyPage(): JSX.Element {
-  const { t } = useTranslation()
-  return <ScreenPlaceholder title={t('site.page.privacy')} />
-}

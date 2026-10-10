@@ -119,7 +119,6 @@
     "companySaved": "Company profile saved"
   },
   "screen": {
-    "placeholder": "This screen is still being built.",
     "welcome": "About your company",
     "inventory": "Your AI tools",
     "classify": "Describe a tool",
@@ -154,6 +153,159 @@
     },
     "menu": "Sections",
     "menuClose": "Close sections"
+  },
+  "sitePages": {
+    "method": {
+      "lead": "Accuracy is something we test and publish, not something we promise. This page explains the test set, what we count, and where the method has limits.",
+      "set": {
+        "title": "The test set",
+        "text": "The main test set is built from the Commission’s own worked examples of high-risk and not-high-risk systems, plus <ph>[N]</ph> cases written for Klar. Half of the Commission examples are removed from everything Klar can search, so it can’t simply look the answers up. Each case is labelled with its correct class and role by <ph>[WHO LABELS THE CASES]</ph>."
+      },
+      "count": {
+        "title": "What we count",
+        "riskClass": "Share of cases where Klar’s class matches the label: prohibited, high-risk, limited, minimal or out of scope.",
+        "falseLow": "Share of prohibited or high-risk cases that Klar labelled lower. This is the costliest error, so we report it on its own.",
+        "citations": "Share of cited provisions that exist in the legal text and say what Klar claims. Checked automatically against the consolidated Act.",
+        "checker": "The same {{cases}} cases run through {{name}}, scored the same way.",
+        "checkerPending": "The same <ph>[N]</ph> cases run through <ph>[CHECKER NAME]</ph>, scored the same way."
+      },
+      "score": {
+        "title": "How a case is scored",
+        "run": "Run",
+        "runText": "Every case goes through the full engine, in the Act’s order, with the same settings users get.",
+        "compare": "Compare",
+        "compareText": "The class, role and deciding provision are compared with the label.",
+        "citations": "Check citations",
+        "citationsText": "Every cited provision is looked up in the legal text, by number.",
+        "uncertainty": "Count uncertainty honestly",
+        "uncertaintyText": "A “needs more information” or “legally ambiguous” result counts as correct only if the label agrees the case is open."
+      },
+      "limits": {
+        "title": "Limits",
+        "size": "Size",
+        "sizeText": "The test set has <ph>[N]</ph> cases. Small differences between runs are not meaningful.",
+        "labels": "Labels",
+        "labelsText": "Labels reflect <ph>[WHO LABELS THE CASES]</ph>’s reading of the Act and may be disputed.",
+        "guidance": "Guidance",
+        "guidanceText": "Some Commission guidance is still in draft; results may shift when it’s final.",
+        "descriptions": "Descriptions",
+        "descriptionsText": "Real users describe tools less completely than test cases do. Klar is only as accurate as the description it gets.",
+        "penalties": "Penalties",
+        "penaltiesText": "Klar covers the Act’s own maximum fines (Art. 99). National penalty rules, which each Member State lays down, are out of scope."
+      },
+      "results": {
+        "title": "Results",
+        "lastRun": "Last run",
+        "lastRunPh": "[DATE]",
+        "lawVersion": "Law version",
+        "lawVersionText": "Consolidated AI Act of 27 July 2026, CELEX 02024R1689-20260727",
+        "report": "Full results",
+        "reportPh": "[LINK TO THE EVALUATION REPORT]"
+      }
+    },
+    "privacy": {
+      "lead": "How Klar handles what you type. Short version: your data stays in an anonymous session, is never used to train models, and is deleted after 30 days without activity.",
+      "template": "This is a template. Every bracketed field must be completed, and the notice reviewed by a data protection adviser, before launch.",
+      "responsible": {
+        "title": "Who is responsible",
+        "controller": "Controller",
+        "controllerText": "<ph>[NAME]</ph>, <ph>[ADDRESS]</ph>",
+        "contact": "Contact for privacy",
+        "contactPh": "[EMAIL]",
+        "dpo": "Data protection officer",
+        "dpoPh": "[NAME OR “NOT REQUIRED”]"
+      },
+      "purposes": {
+        "title": "What Klar processes, and why",
+        "descriptions": "Tool descriptions and answers",
+        "descriptionsText": "To classify your tools and draft your documents, the service you ask for. Legal basis: <ph>[TO CONFIRM, E.G. ART. 6(1)(B) GDPR]</ph>.",
+        "questions": "Questions about the Act",
+        "questionsText": "To answer them, with citations. Same basis.",
+        "logs": "Technical logs",
+        "logsText": "To keep the service secure and working, kept for <ph>[LOG RETENTION]</ph>. Legal basis: <ph>[TO CONFIRM, E.G. ART. 6(1)(F) GDPR]</ph>.",
+        "never": "What Klar never does",
+        "neverText": "Train models on your data, create profiles, or set tracking cookies."
+      },
+      "kept": {
+        "title": "What Klar keeps, and for how long",
+        "stored": "Saved in your session",
+        "storedText": "Your inventory of tools and their descriptions, their classification results, your answers for draft documents, your company profile and your checklist progress. Only you can see them.",
+        "questions": "Questions to Klar",
+        "questionsText": "Kept only in your browser for this session. Nothing you ask is saved on Klar’s side.",
+        "retention": "How long",
+        "retentionText": "Everything is deleted after 30 days without activity. In the app, Your data deletes it all at once, whenever you like."
+      },
+      "processors": {
+        "title": "Who else processes it",
+        "models": "Language models",
+        "search": "Search of the legal texts",
+        "searchText": "Nebius, reached through OpenRouter, turns your description into a search of the Act (embeddings). Nebius was chosen as an EU host, but OpenRouter gives this endpoint no region tag, so its region is <ph>[TO CONFIRM WITH NEBIUS]</ph>.",
+        "storage": "Session storage",
+        "storageText": "Supabase keeps your saved data and your anonymous session, visible only to you. Region: <ph>[REGION]</ph>.",
+        "transfers": "Transfers outside the EU",
+        "transfersPh": "[TO CONFIRM, WITH SAFEGUARDS]"
+      },
+      "rights": {
+        "title": "Your rights",
+        "text": "You can ask for access to your data, correction, deletion, restriction, a portable copy, or object to processing (Articles 15 to 21 GDPR). In the app, Your data lets you download or delete everything at once. You can also complain to a supervisory authority; for a company based in North Rhine-Westphalia that is the LDI NRW, the state data protection commissioner <ph>[CONFIRM]</ph>."
+      }
+    },
+    "impressum": {
+      "lead": "Legal notice. Angaben gemäß § 5 DDG.",
+      "template": "Template. Fill in every bracketed field before launch.",
+      "body": {
+        "providerTitle": "Anbieter",
+        "name": "Name",
+        "namePh": "[NAME / FIRMA]",
+        "address": "Anschrift",
+        "addressPh": "[STRASSE, PLZ ORT]",
+        "representedBy": "Vertreten durch",
+        "representedByPh": "[NAME, FALLS JURISTISCHE PERSON]",
+        "contactTitle": "Kontakt",
+        "email": "E-Mail",
+        "emailPh": "[E-MAIL]",
+        "phone": "Telefon",
+        "phonePh": "[TELEFON]",
+        "moreTitle": "Weitere Angaben",
+        "vatId": "Umsatzsteuer-ID",
+        "vatIdPh": "[FALLS VORHANDEN]",
+        "register": "Registereintrag",
+        "registerPh": "[FALLS VORHANDEN]",
+        "responsible": "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV",
+        "responsiblePh": "[NAME, ANSCHRIFT]",
+        "noteTitle": "Hinweis",
+        "note": "Klar bietet eine Orientierungshilfe zur KI-Verordnung, keine Rechtsberatung. Klar ist selbst ein KI-System."
+      }
+    },
+    "contact": {
+      "lead": "Questions about Klar, feedback, or a privacy request. We read everything and reply within <ph>[RESPONSE TIME]</ph>.",
+      "write": {
+        "title": "Write to us",
+        "topic": "What is it about?",
+        "question": "A question about Klar",
+        "feedback": "Feedback",
+        "privacy": "Privacy request",
+        "address": "Email",
+        "addressPh": "[CONTACT EMAIL]",
+        "send": "Write an email",
+        "how": "This opens your email program with the subject filled in. Klar has no contact form and keeps nothing you send here.",
+        "personal": "Leave out personal details of applicants or staff."
+      },
+      "subject": {
+        "question": "Klar: a question about Klar",
+        "feedback": "Klar: feedback",
+        "privacy": "Klar: privacy request"
+      },
+      "legal": {
+        "title": "Legal questions",
+        "text": "We can’t give legal advice by email. For questions about the AI Act itself, Ask about the Act answers with citations; for your own case, talk to a lawyer.",
+        "link": "Ask about the Act"
+      },
+      "privacy": {
+        "title": "Privacy requests",
+        "text": "To download or delete your data right away, use <yourData>Your data</yourData> in the app. Otherwise write to <ph>[PRIVACY EMAIL]</ph>."
+      }
+    }
   },
   "lawShort": {
     "amended": "As amended, 2026",

@@ -1,13 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import type { JSX } from 'react'
-import { useTranslation } from 'react-i18next'
 
-import { ScreenPlaceholder } from '@/components/ScreenPlaceholder'
+import { ImpressumPage } from '@/features/site-pages/ImpressumPage'
 
-// Empty until P17 (artboard `Impressum`).
+// The Impressum (artboard `Impressum`), P17. It shows the site in the visitor's current language.
 export const Route = createFileRoute('/_site/impressum')({ component: ImpressumPage })
-
-function ImpressumPage(): JSX.Element {
-  const { t } = useTranslation()
-  return <ScreenPlaceholder title={t('site.page.impressum')} />
-}

@@ -2,24 +2,16 @@ import { Link } from '@tanstack/react-router'
 import type { JSX, ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 
+import { AccuracyFigure } from '@/components/AccuracyFigure'
 import { GlassPanel } from '@/components/GlassPanel'
+import { Placeholder } from '@/components/Placeholder'
 import { Reveal } from '@/components/Reveal'
-import { LANGUAGE_LOCALES, type Language } from '@/i18n'
-import { SITE_ACCURACY, type AccuracyFigure, type SiteAccuracy } from '@/lib/accuracy'
+import { SITE_ACCURACY, type SiteAccuracy } from '@/lib/accuracy'
 
 import { SectionTitle } from './SectionTitle'
 
 // The artboard brings the four tiles in from 200 ms, 100 ms apart, after the panel.
 const TILE_DELAYS_MS = [200, 300, 400, 500] as const
-
-/** A value nobody has measured yet, marked so it can't pass for a real one (`.kl-ph`). */
-function Placeholder({ children }: { children?: ReactNode }): JSX.Element {
-  return (
-    <span data-placeholder="true" className="rounded-[6px] bg-lens-blue/8 px-1.5 text-lens-blue">
-      {children}
-    </span>
-  )
-}
 
 function Tile({
   delay,
@@ -59,15 +51,7 @@ export function AccuracySection({
 }: {
   accuracy?: SiteAccuracy
 }): JSX.Element {
-  const { t, i18n } = useTranslation()
-  const language: Language = i18n.resolvedLanguage === 'de' ? 'de' : 'en'
-  const percent = new Intl.NumberFormat(LANGUAGE_LOCALES[language], {
-    style: 'percent',
-    maximumFractionDigits: 1,
-  })
-  const pending = t('landing.accuracy.pending')
-  const show = (figure: AccuracyFigure | null): ReactNode =>
-    figure ? percent.format(figure.value) : <Placeholder>{pending}</Placeholder>
+  const { t } = useTranslation()
   const headToHead = accuracy.head_to_head
 
   return (
@@ -85,19 +69,19 @@ export function AccuracySection({
         <ul className="m-0 grid flex-1 list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2">
           <Tile
             delay={TILE_DELAYS_MS[0]}
-            value={show(accuracy.risk_class_accuracy)}
+            value={<AccuracyFigure figure={accuracy.risk_class_accuracy} />}
             label={t('landing.accuracy.riskClass.label')}
             detail={t('landing.accuracy.riskClass.detail')}
           />
           <Tile
             delay={TILE_DELAYS_MS[1]}
-            value={show(accuracy.false_low_risk_rate)}
+            value={<AccuracyFigure figure={accuracy.false_low_risk_rate} />}
             label={t('landing.accuracy.falseLow.label')}
             detail={t('landing.accuracy.falseLow.detail')}
           />
           <Tile
             delay={TILE_DELAYS_MS[2]}
-            value={show(accuracy.citations_exist)}
+            value={<AccuracyFigure figure={accuracy.citations_exist} />}
             label={t('landing.accuracy.citations.label')}
             detail={t('landing.accuracy.citations.detail')}
           />
@@ -105,11 +89,11 @@ export function AccuracySection({
             delay={TILE_DELAYS_MS[3]}
             value={
               <span className="flex items-center gap-2 text-[30px]">
-                {show(headToHead?.klar ?? null)}
+                <AccuracyFigure figure={headToHead?.klar ?? null} />
                 <span className="text-heading-small font-medium text-slate">
                   {t('landing.accuracy.checker.versus')}
                 </span>
-                {show(headToHead?.checker ?? null)}
+                <AccuracyFigure figure={headToHead?.checker ?? null} />
               </span>
             }
             label={t('landing.accuracy.checker.label')}

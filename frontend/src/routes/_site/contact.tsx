@@ -1,13 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import type { JSX } from 'react'
-import { useTranslation } from 'react-i18next'
 
-import { ScreenPlaceholder } from '@/components/ScreenPlaceholder'
+import { ContactPage } from '@/features/site-pages/ContactPage'
 
-// Empty until P17 (artboard `Contact`).
+// Contact (artboard `Contact`), P17. It shows the site in the visitor's current language.
 export const Route = createFileRoute('/_site/contact')({ component: ContactPage })
-
-function ContactPage(): JSX.Element {
-  const { t } = useTranslation()
-  return <ScreenPlaceholder title={t('site.page.contact')} />
-}
