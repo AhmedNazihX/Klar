@@ -51,7 +51,7 @@ from aiact.engine import (
 )
 from aiact.engine.classify import Retrieval
 from aiact.engine.nodes.common import Lookup
-from aiact.eval import isolation
+from aiact.eval import isolation, label_filter
 from aiact.eval.cases import CASES_DIR, QA_DIR_NAME, CaseSet
 from aiact.eval.isolation import BenchmarkText, ContaminatedList, EmbeddingCache, ExampleText
 from aiact.eval.runner import ClassifierInput
@@ -626,3 +626,15 @@ def test_a_paraphrase_with_a_close_vector_is_caught(
     caught = [m for m in matches if m.is_near_duplicate]
     assert [m.provision_id for m in caught] == [f"guide:{INJECTED_DOC}:para:3"]
     assert caught[0].cosine > 0.999
+
+
+def test_the_engine_lane_never_sees_pile_b_label_filter_output() -> None:
+    """Pile B's label-filter answers and disagreements hold its labels and the second model's
+    reasons, so their folder is in the Engine lane's deny list (B9, option A, 2026-10-10)."""
+    repo = BACKEND_DIR.parent
+    config = json.loads((repo / ".claude" / "foreman.json").read_text())
+    folder = label_filter.reports_folder(CaseSet.COMMISSION_B).relative_to(repo).as_posix()
+    assert folder in config["lanes"]["Engine"]["deny"]
+    assert label_filter.reports_folder(CaseSet.OWN) != label_filter.reports_folder(
+        CaseSet.COMMISSION_B
+    )

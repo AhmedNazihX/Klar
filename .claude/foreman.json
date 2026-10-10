@@ -26,7 +26,7 @@
       "reviewers": []
     },
     "Engine": {
-      "deny": ["eval/commission_examples", "eval/cases/commission_b", "eval/split.json"],
+      "deny": ["eval/commission_examples", "eval/cases/commission_b", "eval/split.json", "eval/reports/pile_b"],
       "allow": [],
       "reviewers": []
     }
@@ -98,9 +98,9 @@
       "enforced_by": ["checks (aiact deps check)", ".githooks pre-commit/pre-push", "CI"]
     },
     {
-      "rule": "Engine stories never see the Commission examples, the Pile B cases or the split; own cases stay readable for replay tests",
-      "source": "backlog review 2026-09-30 (T3); decision 015",
-      "enforced_by": ["lanes.Engine", "isolation-auditor"]
+      "rule": "Engine stories never see the Commission examples, the Pile B cases, the split or Pile B's label-filter output (eval/reports/pile_b); own cases stay readable for replay tests",
+      "source": "backlog review 2026-09-30 (T3); decision 015; B9 security review, user's option A 2026-10-10",
+      "enforced_by": ["lanes.Engine", "isolation-auditor", "backend/tests/test_isolation.py"]
     },
     {
       "rule": "A long Markdown document (over 20 KB) is never read whole into an agent's context: use backlog.py, the foreman:doc-reader agent, or a search and a range read",
