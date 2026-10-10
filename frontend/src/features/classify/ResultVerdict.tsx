@@ -1,23 +1,23 @@
 import type { TFunction } from 'i18next'
-import type { JSX, ReactNode } from 'react'
+import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult, LegacyStatus, RiskClass, Role } from '@/api'
-import { LawDate } from '@/components/LawDate'
 import { ResultSummary } from '@/components/ResultSummary'
 import { StatusPill } from '@/components/StatusPill'
 import { useLanguage } from '@/hooks/use-language'
 import type { Language } from '@/i18n'
 
 import { checkNumber } from './classify-progress'
-import { longDate, monthsUntil, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
-import { amendedRouteDate, basisSentence, dutiesDate, pausedStep, statusPill } from './result-text'
+import { longDate, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
+import { amendedRouteDate, basisSentence, pausedStep, statusPill } from './result-text'
+import { legalReviewLine, useDutiesFrom } from './verdict-lines'
 import { riskClassOf } from '@/lib/risk-class'
 
 /** The roles that supply the system: Art. 111(2) counts per copy supplied (decision 022). */
 const SUPPLIER_ROLES: readonly Role[] = ['provider', 'importer', 'distributor']
 
-function StatusPills({ result }: { result: ClassificationResult }): JSX.Element {
+export function StatusPills({ result }: { result: ClassificationResult }): JSX.Element {
   const { t } = useTranslation()
   if (result.status === 'decided') return <StatusPill status="decided" />
   return (
@@ -26,48 +26,6 @@ function StatusPills({ result }: { result: ClassificationResult }): JSX.Element 
       <StatusPill status={statusPill(result.status)} />
     </>
   )
-}
-
-function monthsLine(t: TFunction, isoDate: string, today: Date, original = false): string {
-  const count = monthsUntil(isoDate, today)
-  if (count > 0) return t('result.monthsAway', { count })
-  return original ? t('result.alreadyAppliesOriginal') : t('result.alreadyApplies')
-}
-
-/** The date duties apply from and how far away it is; route dates follow the law version switch. */
-function useDutiesFrom(
-  result: ClassificationResult,
-  today: Date,
-): { date: ReactNode; note: ReactNode } | null {
-  const { t } = useTranslation()
-  const language = useLanguage()
-  const date = dutiesDate(result)
-  if (result.risk_class === 'out_of_scope' || date === null) return null
-  if (date.kind === 'fixed') {
-    return { date: longDate(date.date, language), note: monthsLine(t, date.date, today) }
-  }
-  return {
-    date: (
-      <LawDate
-        amended={longDate(date.amended, language)}
-        original={longDate(date.original, language)}
-      />
-    ),
-    note: (
-      <LawDate
-        amended={monthsLine(t, date.amended, today)}
-        original={monthsLine(t, date.original, today, true)}
-      />
-    ),
-  }
-}
-
-function legalReviewLine(t: TFunction, result: ClassificationResult): string | null {
-  if (!result.legal_review) return null
-  if (result.status === 'legally_ambiguous') return t('result.legalReview.ambiguous')
-  if (result.risk_class === 'high_risk') return t('result.legalReview.high_risk')
-  if (result.risk_class === 'prohibited') return t('result.legalReview.prohibited')
-  return t('result.legalReview.other')
 }
 
 /** The class as the paused lines name it: three have their own words, the rest the generic line. */

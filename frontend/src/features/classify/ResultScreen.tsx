@@ -10,6 +10,8 @@ import { useFollowUpAnswers } from '@/hooks/use-follow-up-answers'
 import { useFollowUpRun, type FollowUpRun } from '@/hooks/use-follow-up-run'
 import { useOriginalRun } from '@/hooks/use-original-run'
 
+import { openPoint } from './ambiguous'
+import { AmbiguousSummary } from './AmbiguousSummary'
 import { isDecidedBan } from './ban'
 import { runNumber, saveDraft, type ClassificationRun } from './classification-store'
 import { DecidingQuestion } from './DecidingQuestion'
@@ -53,6 +55,8 @@ function SummaryView({
   // One run action for every question asked, under the last panel (artboard `ResultNeedsInfo`).
   const runCount = others.length + (deciding ? 1 : 0)
   const isBan = isDecidedBan(result)
+  // The open question of law a legally ambiguous result rests on (its own layout, P22).
+  const point = isBan ? null : openPoint(result)
 
   function editDescription(): void {
     // The answers go into the text, and the run onto this tool (P6), unless it was never saved.
@@ -74,9 +78,11 @@ function SummaryView({
           <Button variant="ghost" onClick={editDescription}>
             {t('result.editDescription')}
           </Button>
-          {/* There's no route to comply with a ban, so there are no documents to draft. */}
-          {!isBan && <DraftDocumentsLink toolId={run.toolId} />}
-          <ExportReportButton run={run} />
+          {/* There's no route to comply with a ban, so there are no documents to draft; the
+              ambiguous layout leaves them out as drawn (artboard `ResultAmbiguous`). */}
+          {!isBan && !point && <DraftDocumentsLink toolId={run.toolId} />}
+          {/* An ambiguous result exports from "Take it to a lawyer" (artboard `ResultAmbiguous`). */}
+          {!point && <ExportReportButton run={run} />}
         </>
       }
     />
@@ -120,6 +126,33 @@ function SummaryView({
           onConfirmFact={confirm}
           isBusy={followUp.isRunning}
           onExpandAll={() => {
+            onViewChange('reviewer')
+          }}
+        />
+        <ResultNotice result={result} isStored={run.isStored} />
+      </>
+    )
+  }
+
+  // A legally ambiguous result has its own layout (artboard `ResultAmbiguous`, P22): both
+  // readings and what would settle the question; an answer there runs the checks again (P5b).
+  if (point) {
+    return (
+      <>
+        {header}
+        {rerunChange}
+        <AmbiguousSummary
+          run={run}
+          point={point}
+          note={
+            <>
+              <OriginalTextNote run={run} onCompare={onCompare} />
+              {rerunProgress}
+            </>
+          }
+          questions={deciding ? [deciding, ...others] : others}
+          answers={answerProps}
+          onOpenReviewer={() => {
             onViewChange('reviewer')
           }}
         />

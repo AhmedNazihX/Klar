@@ -818,6 +818,33 @@
       "close": "Close"
     }
   },
+  "ambiguous": {
+    "statement": "The facts are clear, but the law doesn’t settle one point. Klar works from the stricter reading.",
+    "dutiesFromIfHighRisk": "If high-risk, duties from",
+    "readings": "The two readings",
+    "reading": "Reading {{number}}",
+    "applied": "Applied until settled",
+    "changedByOmnibus": "The Digital Omnibus changed this text.",
+    "settle": {
+      "heading": "What would settle it",
+      "answer": "Answer",
+      "draftRequest": "Draft a request",
+      "vendorReading": "How the vendor reads this point, if they assessed it"
+    },
+    "lawyer": {
+      "heading": "Take it to a lawyer",
+      "body": "The reviewer view sets out both readings, the facts and every quoted provision, ready to export.",
+      "openReviewer": "Open reviewer view"
+    },
+    "letter": {
+      "label": "Draft request to the vendor",
+      "intro": "Check the request, fill in the parts marked below, then send it from your own email.",
+      "drafting": "Drafting the request…",
+      "failed": "Klar couldn’t draft the request.",
+      "copy": "Copy request",
+      "copyFailed": "Klar couldn’t copy the request. Select it and copy it yourself."
+    }
+  },
   "inventory": {
     "count_one": "{{count}} tool, classified under the AI Act as amended on {{date}}.",
     "count_other": "{{count}} tools, classified under the AI Act as amended on {{date}}.",

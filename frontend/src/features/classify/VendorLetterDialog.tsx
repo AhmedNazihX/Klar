@@ -12,9 +12,39 @@ import { letterText } from './letter-text'
 
 type CopyState = 'idle' | 'copied' | 'failed'
 
+/** Which letter the result calls for: P28's message on a prohibited result, or its request on a
+ *  legally ambiguous one. The API picks the template from the result; only the words around it
+ *  differ here. */
+export type LetterKind = 'message' | 'request'
+
+const LETTER_COPY = {
+  message: {
+    label: 'prohibited.letter.label',
+    intro: 'prohibited.letter.intro',
+    drafting: 'prohibited.letter.drafting',
+    failed: 'prohibited.letter.failed',
+    copy: 'prohibited.letter.copy',
+    copyFailed: 'prohibited.letter.copyFailed',
+  },
+  request: {
+    label: 'ambiguous.letter.label',
+    intro: 'ambiguous.letter.intro',
+    drafting: 'ambiguous.letter.drafting',
+    failed: 'ambiguous.letter.failed',
+    copy: 'ambiguous.letter.copy',
+    copyFailed: 'ambiguous.letter.copyFailed',
+  },
+} as const
+
 /** "Copy message": the letter as plain text on the clipboard, for the user's own email, and a
  *  line saying whether it worked (a browser can refuse the clipboard). */
-function CopyMessage({ document }: { document: DraftDocument }): JSX.Element {
+function CopyMessage({
+  document,
+  kind,
+}: {
+  document: DraftDocument
+  kind: LetterKind
+}): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const [state, setState] = useState<CopyState>('idle')
@@ -32,11 +62,11 @@ function CopyMessage({ document }: { document: DraftDocument }): JSX.Element {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <Button size="sm" onClick={() => void copy()}>
-        {t('prohibited.letter.copy')}
+        {t(LETTER_COPY[kind].copy)}
       </Button>
       <span role="status" className="text-body-small text-slate">
         {state === 'copied' && t('prohibited.letter.copied')}
-        {state === 'failed' && t('prohibited.letter.copyFailed')}
+        {state === 'failed' && t(LETTER_COPY[kind].copyFailed)}
       </span>
     </div>
   )
@@ -47,10 +77,12 @@ function LetterBody({
   toolId,
   toolName,
   result,
+  kind,
 }: {
   toolId: string
   toolName: string | null
   result: ClassificationResult
+  kind: LetterKind
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
@@ -58,14 +90,14 @@ function LetterBody({
   if (letter.isPending) {
     return (
       <p role="status" className="m-0 text-body-small text-slate">
-        {t('prohibited.letter.drafting')}
+        {t(LETTER_COPY[kind].drafting)}
       </p>
     )
   }
   if (letter.isError) {
     return (
       <div role="alert" className="flex flex-col items-start gap-3">
-        <p className="m-0 text-body-small text-ink">{t('prohibited.letter.failed')}</p>
+        <p className="m-0 text-body-small text-ink">{t(LETTER_COPY[kind].failed)}</p>
         <Button variant="ghost" size="sm" onClick={() => void letter.refetch()}>
           {t('prohibited.letter.tryAgain')}
         </Button>
@@ -74,7 +106,7 @@ function LetterBody({
   }
   return (
     <>
-      <CopyMessage document={letter.data.document} />
+      <CopyMessage document={letter.data.document} kind={kind} />
       <DraftView
         document={letter.data.document}
         isSkeleton={false}
@@ -86,10 +118,11 @@ function LetterBody({
 }
 
 /**
- * "Draft a message": P28's vendor letter for a prohibited result, drafted by the API from the
- * result (the Art. 5(1) points it quotes come from the corpus, decision 031), labelled DRAFT and
- * carrying the notice. It names the tool as the user named it; the recipient and the sender are
- * theirs to fill in, and "Copy message" puts it on the clipboard for their own email.
+ * "Draft a message" (prohibited) or "Draft a request" (legally ambiguous, `kind="request"`):
+ * P28's vendor letter, drafted by the API from the result (any provision it quotes comes from
+ * the corpus, decision 031), labelled DRAFT and carrying the notice. It names the tool as the
+ * user named it; the recipient and the sender are theirs to fill in, and "Copy message" (or
+ * "Copy request") puts it on the clipboard for their own email.
  * A native modal dialog: focus stays inside, Escape closes it and focus goes back to the button
  * that opened it.
  */
@@ -99,6 +132,7 @@ export function VendorLetterDialog({
   toolId,
   toolName,
   result,
+  kind = 'message',
 }: {
   isOpen: boolean
   /** Called when the dialog closes: Close, Escape, or the browser closing it. */
@@ -108,6 +142,7 @@ export function VendorLetterDialog({
    *  in. */
   toolName: string | null
   result: ClassificationResult
+  kind?: LetterKind
 }): JSX.Element {
   const { t } = useTranslation()
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -123,7 +158,7 @@ export function VendorLetterDialog({
   return (
     <dialog
       ref={dialogRef}
-      aria-label={t('prohibited.letter.label')}
+      aria-label={t(LETTER_COPY[kind].label)}
       onClose={onClose}
       className="m-auto max-h-[calc(100dvh-32px)] w-[min(760px,calc(100vw-32px))] overflow-y-auto rounded-card border border-white/80 bg-mist p-5 text-ink shadow-glass backdrop:bg-ink/28 backdrop:backdrop-blur-sm md:p-7"
     >
@@ -131,13 +166,13 @@ export function VendorLetterDialog({
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <p className="m-0 max-w-[560px] text-body-small text-ink-2">
-              {t('prohibited.letter.intro')}
+              {t(LETTER_COPY[kind].intro)}
             </p>
             <Button variant="ghost" size="sm" onClick={() => dialogRef.current?.close()}>
               {t('prohibited.letter.close')}
             </Button>
           </div>
-          <LetterBody toolId={toolId} toolName={toolName} result={result} />
+          <LetterBody toolId={toolId} toolName={toolName} result={result} kind={kind} />
         </div>
       )}
     </dialog>
