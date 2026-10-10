@@ -145,17 +145,20 @@ function DutyGroup({
  * "What you need to do as the provider" (artboard `ResultProvider`): the duty count, then the
  * provider's duties in C9's three groups (Build it right, Prove it, After launch), each with its
  * box, its Art. 111(2) marking and its draft; the technical documentation opens its skeleton.
+ * `heading` replaces the title where the duties follow from a reading, not a decided class.
  */
 export function ProviderDutiesPanel({
   result,
   groups,
   toolId,
   ticks,
+  heading,
 }: {
   result: ClassificationResult
   groups: Record<ObligationGroup, Obligation[]>
   toolId: string
   ticks: Ticks
+  heading?: string
 }): JSX.Element {
   const { t } = useTranslation()
   const shown = DUTY_GROUPS.filter((group) => groups[group].length > 0)
@@ -164,7 +167,7 @@ export function ProviderDutiesPanel({
     result.law_version === 'original' ? t('result.todo.notModelled') : t('result.provider.intro')
   return (
     <DutiesSection
-      heading={t('result.provider.heading')}
+      heading={heading ?? t('result.provider.heading')}
       intro={
         <>
           <p className="m-0 max-w-[620px] text-body-small text-slate">{intro}</p>

@@ -909,6 +909,7 @@
       "guidance": "Endgültige Leitlinien der Kommission zur Einstufung als Hochrisiko (noch ein Entwurf, 19. Mai 2026)",
       "provider": "Die eigene Bewertung des Anbieters nach Art. 6 Abs. 3, dokumentiert nach Art. 6 Abs. 4, falls er eine vorgenommen hat"
     },
+    "providerDuties": "Wozu Sie die strengere Lesart als Anbieter verpflichtet",
     "lawyer": {
       "heading": "Rechtlich prüfen lassen",
       "body": "Die Prüfansicht zeigt beide Lesarten, die Fakten und jede zitierte Vorschrift, bereit zum Export.",

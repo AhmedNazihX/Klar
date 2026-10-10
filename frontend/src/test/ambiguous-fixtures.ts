@@ -23,6 +23,7 @@ import type { Language } from '@/i18n'
 import { env } from '@/lib/env'
 
 import fixture from './fixtures/ambiguous.json'
+import { OWN_BRAND_PROVIDER } from './provider-fixtures'
 
 const FIXTURE = fixture as unknown as {
   result: ClassificationResult
@@ -62,6 +63,18 @@ export function withLegacy(result: ClassificationResult): ClassificationResult {
     obligations: (result.obligations ?? []).map((obligation) =>
       obligation.high_risk_route ? { ...obligation, legacy: 'legacy_unchanged' } : obligation,
     ),
+  }
+}
+
+/** The recorded ambiguous result as a provider's (user decision 2026-10-10, option A): the role
+ *  set to provider and the duties a provider's high-risk result lists, taken from the recorded
+ *  own-brand provider (provider-fixtures.ts). No recorded run is both; this tests the layout,
+ *  not the duties' route or dates. */
+export function ambiguousProvider(): ClassificationResult {
+  return {
+    ...RECORDED_AMBIGUOUS,
+    role: 'provider',
+    obligations: OWN_BRAND_PROVIDER.obligations,
   }
 }
 

@@ -24,6 +24,7 @@ import { OriginalTextNote } from './OriginalTextNote'
 import { ProgressPanel } from './ProgressPanel'
 import { ProhibitedSummary } from './ProhibitedSummary'
 import { isProviderLayout } from './provider-layout'
+import { isAmbiguousProvider } from './provider-layout'
 import { ProviderAside, ProviderPanels } from './ProviderPanels'
 import { RerunChange } from './RerunChange'
 import { DraftDocumentsLink, ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
@@ -167,6 +168,19 @@ function SummaryView({
         />
         {elsewhere.length > 0 && (
           <FollowUpQuestions questions={elsewhere} runCount={runCount} {...answerProps} />
+        )}
+        {/* A provider's duties under the readings (user decision 2026-10-10, option A). */}
+        {isAmbiguousProvider(result) && (
+          <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
+            <ProviderPanels
+              result={result}
+              toolId={run.toolId}
+              dutiesHeading={t('ambiguous.providerDuties')}
+            />
+            <div className="flex min-w-0 flex-col gap-5 xl:w-[380px] xl:shrink-0">
+              <ProviderAside result={result} />
+            </div>
+          </div>
         )}
         <ResultNotice result={result} isStored={run.isStored} />
       </>
