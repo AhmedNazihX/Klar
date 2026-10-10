@@ -19,6 +19,8 @@
 /* Lexend, the verdict and the wordmark: the two weights the system uses. */
 @import '@fontsource/lexend/500.css';
 @import '@fontsource/lexend/600.css';
+/* The public pages' motion: reveals, the typewriter, the moving ground, the hero sequence (P16). */
+@import './site-motion.css';
 
 @custom-variant dark (&:is(.dark *));
 

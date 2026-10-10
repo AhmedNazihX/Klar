@@ -29,3 +29,11 @@ dist/
 
 # Strata skill graphs
 .strata
+
+# Locally installed agent skills (e.g. the LangChain set): .agents/ holds them,
+# .claude/skills/ links to them. Only the project's own skills are tracked.
+.agents/
+.claude/skills/*
+!.claude/skills/case/
+!.claude/skills/eval/
+skills-lock.json

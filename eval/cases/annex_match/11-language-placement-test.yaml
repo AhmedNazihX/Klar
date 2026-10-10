@@ -11,8 +11,8 @@ description: >-
 label:
   risk_class: high_risk
   role: provider
-  annex_point: ["annex:III:3:c"]
-label_citation: ["annex:III:3:c", "art:6:2", "guide:guide-high-risk-annex-iii:para:210", "guide:guide-high-risk-annex-iii:para:212", "art:3:3"]
+  annex_point: ["annex:III:3:c", "annex:III:3:a"]
+label_citation: ["annex:III:3:c", "annex:III:3:a", "art:6:2", "guide:guide-high-risk-annex-iii:para:210", "guide:guide-high-risk-annex-iii:para:212", "guide:guide-high-risk-annex-iii:para:217", "guide:guide-high-risk-annex-iii:para:219", "guide:guide-high-risk-annex-iii:para:226", "art:3:3"]
 notes: >-
   Label approved 2026-10-06 (checked by the orchestrator under the user's standing delegation for
   clear labels). Point: it decides which course level a person can access within educational
@@ -21,5 +21,10 @@ notes: >-
   covering 'all levels of formal and non-formal education, ... as well as adult education'
   (guide-high-risk-annex-iii para. (210)), including 'non-formal institutions, such as adult
   education and continuing educational institutions' (para. (212)). Role: builds and sells it.
+  Second point (B9 label filter, 2026-10-10, orchestrator under the user's standing delegation):
+  3(a) is accepted too, since the guidelines read 3(a) as deciding whether a person may 'be placed
+  into a specific course' (para. (217)), including assignment to courses within an institution
+  (para. (219)), while placement tests are their 3(c) example (para. (226)); as annex-match-10.
 tags:
   - "annex_iii_area:3"
+  - "multi_point"
