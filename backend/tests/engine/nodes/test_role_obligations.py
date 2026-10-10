@@ -219,6 +219,34 @@ def test_worked_example_stays_a_deployer_with_the_art_26_duties() -> None:
 
 
 @pytest.mark.parametrize(
+    ("language", "risk_class", "line"),
+    [
+        (
+            Language.EN,
+            RiskClass.HIGH_RISK,
+            "duties listed for this high-risk system (amended text).",
+        ),
+        (
+            Language.DE,
+            RiskClass.HIGH_RISK,
+            "Pflichten für ein System der Risikoklasse „Hochrisiko“ (geänderte Fassung).",
+        ),
+        (Language.EN, RiskClass.MINIMAL_RISK, "duties listed for this minimal risk system"),
+        (Language.DE, RiskClass.MINIMAL_RISK, "der Risikoklasse „minimales Risiko“"),
+    ],
+)
+def test_the_duties_line_names_the_class_and_text_in_words(
+    language: Language, risk_class: RiskClass, line: str
+) -> None:
+    # The screens show this sentence as it is: no raw key such as `high_risk` (UI review).
+    route = HighRiskRoute.ANNEX_III if risk_class is RiskClass.HIGH_RISK else None
+    answer = role_answer(risk_class=risk_class, route=route)
+    decision = to_outcome(answer, state(risk_class, route, language=language)).step.decision
+    assert line in decision
+    assert risk_class.value not in decision
+
+
+@pytest.mark.parametrize(
     ("switch", "article"),
     [
         ("own_brand", "25(1)(a)"),

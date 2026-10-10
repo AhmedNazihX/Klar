@@ -59,6 +59,7 @@ from aiact.engine.nodes.role_legacy import (
 )
 from aiact.engine.nodes.role_texts import (
     BUILDS_ON_GPAI,
+    CLASS_NAMES,
     OPERATOR_ROLE,
     OWN_NAME,
     OWN_NAME_OPEN,
@@ -702,7 +703,9 @@ def select_obligations(
     version = names[lists[0].law_version]
     counts = {v: sum(verdict is v for _, verdict in verdicts) for v in Kept if v is not Kept.YES}
     summary = (
-        texts["duties"].format(count=len(kept), risk_class=risk_class.value, version=version),
+        texts["duties"].format(
+            count=len(kept), risk_class=CLASS_NAMES[language][risk_class], version=version
+        ),
         *(texts[verdict.value].format(count=count) for verdict, count in counts.items() if count),
         *legacy_summary(kept, legacy, language, roles),
         *((texts["section_b_possible"],) if may_be_section_b(state) else ()),
