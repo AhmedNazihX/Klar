@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   // The router plugin must come before react(); it writes src/routeTree.gen.ts.
   // Tests sitting next to route files are not routes.
   plugins: [
@@ -23,8 +23,10 @@ export default defineConfig({
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },
   // The API's default CORS_ORIGINS (backend/aiact/settings.py) allow this origin; a busy port
-  // fails instead of moving to one the API would refuse.
-  server: { port: 5173, strictPort: true },
+  // fails instead of moving to one the API would refuse. Under Vitest (mode 'test') the browser
+  // project's server inherits this setting, so there a busy port moves on instead: two worktrees
+  // can run `pnpm test` at once (story F10).
+  server: { port: 5173, strictPort: mode !== 'test' },
   build: {
     // No public source maps in production (frontend-security rule).
     sourcemap: false,
@@ -50,6 +52,9 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'jsdom',
+          // Vitest's browser-mode default (the jsdom default is 5 s). A full run beside another
+          // worktree's slows a test that loads a lazy route cold several-fold (F10).
+          testTimeout: 15_000,
           include: ['src/**/*.test.{ts,tsx}'],
           exclude: ['src/**/*.browser.test.{ts,tsx}'],
           setupFiles: ['./src/test/setup.ts'],
@@ -73,4 +78,4 @@ export default defineConfig({
       },
     ],
   },
-})
+}))
