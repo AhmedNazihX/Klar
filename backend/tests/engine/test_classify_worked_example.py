@@ -233,8 +233,8 @@ def test_any_other_scope_outcome_fails(scope: StepResult) -> None:
 
 @pytest.mark.live
 def test_live_worked_example() -> None:
-    """The real pipeline: the engine model, the query embeddings and the corpus in DATABASE_URL
-    (needs `backend/.env`). The run logs its cost per node (run pytest with
+    """The real pipeline: the engine model, the query embeddings and the corpus in the local test
+    database (needs `backend/.env`'s keys). The run logs its cost per node (run pytest with
     `--log-cli-level=INFO` to see it)."""
     run = run_classification(worked_example_request(), settings=get_settings())
     assert_the_expected_result(run)

@@ -26,7 +26,7 @@ def db_connection() -> Iterator[psycopg.Connection]:
         # The URL may hold a password, so the reason names only the error type.
         reason = (
             f"test database not reachable ({type(exc).__name__}): start the local Supabase "
-            "database (`supabase start -x ...`, see CLAUDE.md) or check TEST_DATABASE_URL"
+            "database (`make db`: `supabase start -x ...`) or check TEST_DATABASE_URL"
         )
         if os.environ.get("CI"):
             pytest.fail(reason, pytrace=False)

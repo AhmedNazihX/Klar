@@ -49,7 +49,7 @@ ANY_HOST = [".*"]
 """`allowed_hosts` regexes for live tests. The block sees IP addresses, not host names."""
 
 LOCAL_TEST_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-"""The Supabase CLI's local database (`supabase start`), which CI starts too."""
+"""The Supabase CLI's local database (`make db` starts it slim), which CI starts too."""
 
 
 class DatabaseForTests(BaseSettings):
