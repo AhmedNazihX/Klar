@@ -6,6 +6,7 @@ import time
 
 import psycopg
 import pytest
+from psycopg import sql
 
 from aiact.eval.records import PostgresRunStore
 from tests.db.conftest import _database_url, rolled_back
@@ -40,6 +41,9 @@ LOCK_TIMEOUT_SECONDS = 15
 """tests/conftest.py's LOCK_TIMEOUT, pinned here as a literal."""
 WAITER_STATEMENT_TIMEOUT_SECONDS = 20
 """A little longer than the lock timeout: the most the lock test may wait."""
+SET_WAITER_STATEMENT_TIMEOUT = sql.SQL("set statement_timeout = {}").format(
+    sql.Literal(f"{WAITER_STATEMENT_TIMEOUT_SECONDS}s")
+)
 
 
 def test_every_test_connection_has_the_lock_timeout(db_connection: psycopg.Connection) -> None:
@@ -75,7 +79,7 @@ def test_a_held_lock_fails_a_waiting_test_instead_of_hanging(
     with 57014 instead of hanging."""
     key = random.getrandbits(62)  # an advisory lock no other test or worktree takes
     with psycopg.connect(_database_url(), autocommit=True) as waiter:
-        waiter.execute("set statement_timeout = '20s'")  # WAITER_STATEMENT_TIMEOUT_SECONDS
+        waiter.execute(SET_WAITER_STATEMENT_TIMEOUT)
         db_connection.execute("select pg_advisory_xact_lock(%s)", (key,))
         try:
             started = time.monotonic()
