@@ -47,6 +47,23 @@ def test_every_test_connection_has_the_lock_timeout(db_connection: psycopg.Conne
     assert settings == [(f"{LOCK_TIMEOUT_SECONDS}s",)] * 2
 
 
+def test_the_lock_timeout_survives_a_rollback_and_needs_no_startup_options(
+    db_connection: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The timeout is a committed SET after connecting, not a startup option: the hosted
+    project's session pooler drops startup options (PGOPTIONS), and a rollback of the
+    connection's first transaction must not undo it (story F11). `db_connection` only makes the
+    test skip, or fail in CI, when the database is unreachable."""
+    monkeypatch.delenv("PGOPTIONS", raising=False)
+    with (
+        psycopg.connect(_database_url()) as own,
+        psycopg.connect(_database_url(), autocommit=True) as autocommitting,
+    ):
+        own.rollback()
+        settings = [c.execute("show lock_timeout").fetchone() for c in (own, autocommitting)]
+    assert settings == [(f"{LOCK_TIMEOUT_SECONDS}s",)] * 2
+
+
 def test_a_held_lock_fails_a_waiting_test_instead_of_hanging(
     db_connection: psycopg.Connection,
 ) -> None:

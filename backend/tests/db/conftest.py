@@ -1,7 +1,7 @@
-"""Database fixtures: one connection to the local Supabase Postgres, one rolled-back transaction
-per test.
+"""Database fixtures: one connection to the Postgres in DATABASE_URL (the hosted Supabase project;
+CI and an unset DATABASE_URL use the local one), one rolled-back transaction per test.
 
-All worktrees share one local database, so nothing a test writes is ever committed. An unreachable
+All worktrees share one database, so nothing a test writes is ever committed. An unreachable
 database skips the tests locally but fails them when the `CI` environment variable is set.
 """
 
@@ -31,7 +31,7 @@ def db_connection() -> Iterator[psycopg.Connection]:
         connection = psycopg.connect(_database_url(), connect_timeout=CONNECT_TIMEOUT_SECONDS)
     except psycopg.OperationalError as exc:
         # The URL may hold a password, so the reason names only the error type.
-        reason = f"database not reachable ({type(exc).__name__}); run `supabase start`"
+        reason = f"database not reachable ({type(exc).__name__}); check DATABASE_URL"
         if os.environ.get("CI"):
             pytest.fail(reason, pytrace=False)
         pytest.skip(reason)

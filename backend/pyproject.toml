@@ -94,5 +94,5 @@ addopts = [
 ]
 markers = [
     "live: calls a real model or service; skipped unless run with -m live",
-    "db: needs the local Supabase Postgres (`supabase start`); skipped when it isn't reachable",
+    "db: needs the Postgres in DATABASE_URL (the hosted project; CI: a local one); skipped when it isn't reachable",
 ]

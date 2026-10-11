@@ -16,9 +16,10 @@ headers and provider cookies never land on disk.
 """
 
 import json
-import os
+from collections.abc import Callable
 from pathlib import Path
 
+import psycopg
 import pytest
 from pydantic import SecretStr
 from vcr.request import Request
@@ -42,19 +43,41 @@ ANY_HOST = [".*"]
 """`allowed_hosts` regexes for live tests. The block sees IP addresses, not host names."""
 
 LOCK_TIMEOUT = "15s"
-"""The longest a test's Postgres session waits for a lock. All worktrees share one local database,
-so without it a test could wait forever on a row another worktree's run holds (story F9)."""
-LOCK_TIMEOUT_OPTION = f"-c lock_timeout={LOCK_TIMEOUT}"
+"""The longest a test's Postgres session waits for a lock. All worktrees share one database, so
+without it a test could wait forever on a row another worktree's run holds (story F9)."""
+SET_LOCK_TIMEOUT = f"set lock_timeout = '{LOCK_TIMEOUT}'"
+
+
+ConnectFunction = Callable[..., psycopg.Connection]
+
+
+def _connect_with_lock_timeout(
+    connect: ConnectFunction,
+) -> "classmethod[psycopg.Connection, ..., psycopg.Connection]":
+    """`psycopg.Connection.connect`, followed by a session-level SET of the lock timeout. The SET
+    is committed on a non-autocommit connection, so a later rollback can't undo it."""
+
+    def connect_with_lock_timeout(
+        cls: type[psycopg.Connection], *args: object, **kwargs: object
+    ) -> psycopg.Connection:
+        connection = connect(cls, *args, **kwargs)
+        connection.execute(SET_LOCK_TIMEOUT)
+        if not connection.autocommit:
+            connection.commit()
+        return connection
+
+    return classmethod(connect_with_lock_timeout)
 
 
 def pytest_configure() -> None:
     """Give every Postgres connection the tests open a lock timeout: the fixtures', the ones a
-    test opens itself, `aiact.db.connect()`'s and a subprocess's. libpq reads PGOPTIONS at connect
-    time, so no connect call has to remember it. A lock wait then fails with 55P03 instead of
-    hanging the run."""
-    options = os.environ.get("PGOPTIONS", "")
-    if LOCK_TIMEOUT_OPTION not in options:
-        os.environ["PGOPTIONS"] = f"{options} {LOCK_TIMEOUT_OPTION}".strip()
+    test opens itself and `aiact.db.connect()`'s. A lock wait then fails with 55P03 instead of
+    hanging the run. It is a SET after connecting rather than PGOPTIONS, because the hosted
+    project's session pooler drops startup options (story F11); the SET works on the pooler, a
+    direct connection, the local stack and CI's database alike."""
+    original = psycopg.Connection.__dict__["connect"].__func__
+    psycopg.Connection.connect = _connect_with_lock_timeout(original)  # pyright: ignore[reportAttributeAccessIssue]
+    psycopg.connect = psycopg.Connection.connect  # the module-level alias is bound at import
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
