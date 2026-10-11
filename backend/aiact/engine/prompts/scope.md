@@ -63,9 +63,12 @@ Answer with JSON matching the schema:
   a high-risk AI system (for an Annex III use, or as a safety component of a product under
   Annex I), or it falls under Art. 5 or Art. 50. Art. 50 covers systems intended to interact
   directly with people (such as conversational systems), systems that generate synthetic audio,
-  image, video or text, emotion recognition or biometric categorisation, and deep fakes; a system
-  that only returns its result to its own user doesn't fall under it. Answer this even when
-  open_source is "no".
+  image, video or text, emotion recognition or biometric categorisation, and deep fakes. A system
+  that only returns an analysis of its input (a score, a label, a ranking or a prediction) to its
+  own user doesn't fall under Art. 50(1) or 50(2). Emotion recognition and biometric
+  categorisation stay under Art. 50(3) whatever they return. Text, images, audio or video a
+  system generates is synthetic content under Art. 50(2), whoever receives it. Answer this even
+  when open_source is "no".
 
 For every key fact:
 - answer: "yes", "no" or "unknown" ("contested" is allowed only for ai_system).

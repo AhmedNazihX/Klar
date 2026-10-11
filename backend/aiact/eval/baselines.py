@@ -95,8 +95,11 @@ class BaselineOutputError(ValueError):
     """A baseline's answer doesn't fit the result contract (a broken output)."""
 
 
-def to_result(answer: BaselineAnswer, language: Language, label: str) -> ClassificationResult:
-    """The contract result for `answer`; fields that don't apply to its class are dropped.
+def to_result(
+    answer: BaselineAnswer, language: Language, label: str, *, as_of: date | None = None
+) -> ClassificationResult:
+    """The contract result for `answer`, stamped with the case's date `as_of` (None: today);
+    fields that don't apply to its class are dropped.
 
     The Annex point is kept only for high_risk. Art. 50 duties are kept only for limited_risk
     and high_risk (Art. 50 applies alongside Chapter III); for out_of_scope, prohibited and
@@ -122,7 +125,7 @@ def to_result(answer: BaselineAnswer, language: Language, label: str) -> Classif
                 answer.transparency_duties if answer.risk_class in CLASSES_WITH_DUTIES else ()
             ),
             law_version=LawVersion.AMENDED,
-            as_of=date.today(),
+            as_of=as_of or date.today(),
             disclaimer=DISCLAIMER[language],
             follow_up_questions=tuple(step.missing_fact for step in steps if step.missing_fact),
         )
@@ -243,7 +246,7 @@ class LunaBaseline:
             cause = BaselineOutputError(_describe(exc))
             raise ClassifierFailedError(cost_usd, tokens, cause) from exc
         try:
-            result = to_result(answer, request.language, LUNA_LABEL)
+            result = to_result(answer, request.language, LUNA_LABEL, as_of=request.as_of)
         except BaselineOutputError as exc:
             raise ClassifierFailedError(cost_usd, tokens, exc) from exc
         return Classification(result=result, cost_usd=cost_usd, tokens=tokens)
@@ -345,7 +348,7 @@ class JevBaseline:
             risk.confidence,
         )
         try:
-            result = to_result(answer, request.language, JEV_LABEL)
+            result = to_result(answer, request.language, JEV_LABEL, as_of=request.as_of)
         except BaselineOutputError as exc:
             raise ClassifierFailedError(cost_usd, tokens, exc) from exc
         return Classification(result=result, cost_usd=cost_usd, tokens=tokens)

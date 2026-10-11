@@ -57,6 +57,32 @@ def test_without_a_key_nothing_is_traced() -> None:
     assert langsmith_tracer(_settings("development", "")) is None
 
 
+EU_ENDPOINT = "https://eu.api.smith.langchain.com"
+"""LangSmith's EU region: an EU-region key is refused (403) at the default US endpoint."""
+
+
+def test_traces_go_to_the_configured_endpoint() -> None:
+    settings = _settings(None, "lsv2-test-key").model_copy(
+        update={"langsmith_endpoint": EU_ENDPOINT}
+    )
+    tracer = langsmith_tracer(settings)
+    assert tracer is not None
+    assert tracer.client.api_url == "https://eu.api.smith.langchain.com"
+
+
+@pytest.mark.parametrize("endpoint", [None, ""])
+def test_without_an_endpoint_traces_go_to_the_sdk_default(
+    monkeypatch: pytest.MonkeyPatch, endpoint: str | None
+) -> None:
+    for name in ("LANGSMITH_ENDPOINT", "LANGCHAIN_ENDPOINT"):
+        monkeypatch.delenv(name, raising=False)
+    ls_utils.get_env_var.cache_clear()  # pyright: ignore[reportFunctionMemberAccess]
+    settings = _settings(None, "lsv2-test-key").model_copy(update={"langsmith_endpoint": endpoint})
+    tracer = langsmith_tracer(settings)
+    assert tracer is not None
+    assert tracer.client.api_url == "https://api.smith.langchain.com"
+
+
 def test_production_is_the_default_and_its_traces_carry_metadata_only() -> None:
     tracer = langsmith_tracer(_settings(None, "lsv2-test-key"))
     assert tracer is not None
@@ -129,7 +155,7 @@ def traced_failing_run(
         session=session,
         auto_batch_tracing=False,
     )
-    monkeypatch.setattr(tracing, "_client", lambda _key, *, is_metadata_only: client)
+    monkeypatch.setattr(tracing, "_client", lambda _key, *, is_metadata_only, api_url: client)
     tracers: list[LangChainTracer] = []
 
     def keep(settings: Settings) -> LangChainTracer | None:

@@ -45,6 +45,15 @@ never the reported number.
 
 ## 3. Run
 
+Before a run that calls a model, run `git status`. If it shows uncommitted changes, ask the user
+one question: commit first, or run dirty (the runner then records `git_dirty: true`, and the
+report's commit line says the commit may not reproduce the run). Never commit on your own to get a
+clean tree.
+
+Also run `git diff --stat labels-v1 -- eval/cases` (from the repo root). Runs use the cases as
+tagged `labels-v1` (B10b); if it lists any file, check that each change has its row in
+`eval/LABEL_CHANGES.md`, and if one hasn't, report that and stop before running.
+
 From `backend/`:
 
 ```bash
@@ -55,17 +64,26 @@ uv run aiact evaluate run --set <set> --classifier <classifier> --subset <N> \
 (Leave out `--subset` only for a confirmed full run.) If it says `DATABASE_URL is not set`, the
 local database is the Supabase CLI default: prefix the command with
 `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres` (never read `.env` to find
-out). Never commit to get a clean tree. If `git status` shows uncommitted changes, either ask the
-user to commit first, or run anyway: the runner prints an uncommitted-changes warning and
-records `git_dirty: true` in the run's config, so the recorded git_sha may not reproduce.
+out). An engine run needs `REFUSAL_MODEL` and `REFUSAL_PROVIDER` set (decision 033), and
+`LANGSMITH_API_KEY` for its traces (tool-call correctness, held-out rows retrieved), with
+`LANGSMITH_ENDPOINT` set to the account's region (an EU-region key is refused at the default US
+endpoint).
 The summary is the line starting `run <run_id>:`, which reads
 `run <run_id>: <status>, <scored>/<planned> cases (<failed> failed), $<cost>, <tokens> tokens`.
 It isn't always the last line (the uncommitted-changes warning follows it). Copy it exactly. On a non-zero exit, show the error and stop; nothing is reported.
 If the status is `cost_cap_reached`, say so plainly: the run covers fewer cases than planned.
 
 For a gap run the user wants both modes: run `heldout`, then `all`, with the same set, classifier,
-subset and seed, and report both run_ids. Don't subtract them yourself; the gap goes in the
-report only once a stored-run command computes it (V8).
+subset and seed, and report both run_ids. Don't subtract them yourself: quote the gap from
+`uv run aiact evaluate gap <heldout run_id> <all run_id>`, which refuses two runs that don't
+match (settings, appended answers, second model) or didn't both complete, and ends with the comparison's known limits. Then check each run's traces with
+`uv run aiact evaluate held-out-hits <run_id>`: the `all` run should show at least one trace that
+retrieved a held-out row, the `heldout` run none. Paste both outputs into the report verbatim.
+
+For the downgrade rate with and without key-fact answers (decision 019), run `soft_pairs` twice:
+first plain, then with `--answers-from <first run_id>`, which appends each case's stored answers
+to the questions it asked in the first run ("don't know" to any other). Report both run_ids; the
+"Downgrade rate (soft wording)" row of each report is the number.
 
 ## 4. Fetch the stored numbers
 
@@ -74,7 +92,9 @@ uv run aiact evaluate report <run_id>
 ```
 
 This reads `eval_runs` and `eval_case_results` only. Its output (a `## Run <run_id>` section with
-the metric table) is what goes into the report, unchanged.
+the run's settings, status, exclude mode and uncommitted-changes flag, the metric table, the
+accuracy without the contaminated cases when the run has any, the provider refusals, the failure
+cases grouped by step and the model-written texts) is what goes into the report, unchanged.
 
 ## 5. Write the report
 
@@ -104,8 +124,9 @@ Write or Edit tool, not the shell (shell text naming the `eval/` folder can be b
 - An existing file for today: append the block; never change earlier blocks.
 
 Rules for the file:
-- Copy numbers character for character from the two commands' output. Add no number that isn't
-  in them: no averages across runs, no gap, no rounding, no estimates.
+- Copy numbers character for character from the commands' output (`report`, and for a gap run
+  `gap` and `held-out-hits`). Add no number that isn't in them: no averages across runs, no gap
+  of your own, no rounding, no estimates.
 - Every run mentioned is named by its run_id.
 - No case descriptions (the report command never prints them; don't add any, especially from
   `appliedai`, whose texts stay in `eval/private/`).

@@ -322,7 +322,7 @@ def langsmith_source(settings: Settings) -> Client:
     key = settings.langsmith_api_key
     if key is None or not key.get_secret_value():
         raise TracingNotConfiguredError("LANGSMITH_API_KEY is not set; no trace can be read")
-    return Client(api_key=key.get_secret_value())
+    return Client(api_key=key.get_secret_value(), api_url=settings.langsmith_endpoint or None)
 
 
 class StoredTraces(ContractModel):

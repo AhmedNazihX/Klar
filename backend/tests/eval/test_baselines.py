@@ -2,6 +2,8 @@
 responses, and a run through the V1 runner. Descriptions here are invented, not benchmark cases."""
 
 import json
+from dataclasses import replace
+from datetime import date
 
 import httpx
 import pytest
@@ -292,6 +294,24 @@ def test_jev_choices_become_a_decided_result() -> None:
 def test_jev_limited_risk_keeps_its_article_50_duty() -> None:
     result = _jev(200, _jev_body("limited_risk", "art_50_4")).classify(CV_RANKER).result
     assert result.transparency_duties == ("art:50:4",)
+
+
+CASE_DATE = date(2026, 12, 3)
+"""A case's own date (B5c), after the December 2026 prohibitions apply."""
+
+
+def test_luna_result_carries_the_case_date() -> None:
+    request = replace(CV_RANKER, as_of=CASE_DATE)
+    assert _fake_luna(answer().model_dump_json()).classify(request).result.as_of == CASE_DATE
+
+
+def test_jev_result_carries_the_case_date() -> None:
+    request = replace(CV_RANKER, as_of=CASE_DATE)
+    assert _jev(200, _jev_body("high_risk")).classify(request).result.as_of == CASE_DATE
+
+
+def test_a_case_without_a_date_is_stamped_with_today() -> None:
+    assert to_result(answer(), Language.EN, "Test").as_of == date.today()
 
 
 def test_jev_unusable_answer_fails_after_paying() -> None:

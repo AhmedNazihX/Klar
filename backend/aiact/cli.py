@@ -4,8 +4,8 @@ Each area adds its commands to its group here (for example `@corpus_app.command(
 Help texts come from the callback docstrings.
 """
 
-from collections.abc import Callable
-from contextlib import nullcontext
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager, nullcontext
 from datetime import date
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -23,7 +23,10 @@ from aiact.corpus.fetch import DEFAULT_MANIFEST, Fetcher, fetch_all, make_client
 from aiact.engine.usage import UsageMeter
 from aiact.eval import (
     academic,
+    answers,
     citation_index,
+    gap,
+    held_out_hits,
     isolation,
     label_filter,
     label_filter_report,
@@ -379,8 +382,21 @@ def eval_run(
         float, typer.Option(min=0.000001, help="Start no new case once this much is spent")
     ] = runner.DEFAULT_MAX_COST_USD,
     seed: Annotated[int, typer.Option(help="Seed for the --subset sample")] = 0,
+    answers_from: Annotated[
+        UUID | None,
+        typer.Option(
+            help="A stored run of the same set: append each case's fixed answers to the "
+            "questions it asked there (the downgrade rate with answers, decision 019)"
+        ),
+    ] = None,
 ) -> None:
     """Run a classifier over a benchmark set and record it in eval_runs / eval_case_results."""
+    if answers_from is not None and classifier not in answers.ANSWERING_CLASSIFIERS:
+        names = ", ".join(sorted(answers.ANSWERING_CLASSIFIERS))
+        typer.echo(
+            f"Error: --answers-from needs a classifier that takes answers: {names}", err=True
+        )
+        raise typer.Exit(code=2)
     try:
         chosen = runner.build_classifier(classifier)
         split = runner.load_split() if exclude_mode is runner.ExcludeMode.HELDOUT else None
@@ -405,15 +421,31 @@ def eval_run(
         seed=seed,
         concurrency=concurrency,
         max_cost_usd=max_cost_usd,
+        answers_from=answers_from,
     )
     try:
         with records.connect() as connection:
+            asked = (
+                None
+                if answers_from is None
+                else answers.asked_questions(connection, answers_from, set_name.value)
+            )
             index = citation_index.load_citation_index(connection)
             scorer = metrics.metric_scorer(citation_index.citation_checker(index))
             summary = runner.run_benchmark(
-                cases, chosen, records.PostgresRunStore(connection), options, split, scorer
+                cases,
+                chosen,
+                records.PostgresRunStore(connection),
+                options,
+                split,
+                scorer,
+                asked=asked,
             )
-    except (records.DatabaseNotConfiguredError, runner.SplitError) as error:
+    except (
+        records.DatabaseNotConfiguredError,
+        runner.SplitError,
+        answers.AnswerSourceError,
+    ) as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
     except psycopg.Error as error:
@@ -708,25 +740,35 @@ def _echo_calibration(
         raise typer.Exit(code=1)
 
 
+@contextmanager
+def _read_errors_exit(*known: type[Exception]) -> Iterator[None]:
+    """Exit 2 on a read-only `evaluate` command's expected errors: an unset database or one of
+    the command's `known` errors (with its message), a database or LangSmith error (with its type
+    only: a connection error's text can name the server)."""
+    try:
+        yield
+    except (records.DatabaseNotConfiguredError, *known) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    except psycopg.Error as error:
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=2) from error
+    except LangSmithError as error:
+        name = type(error).__name__
+        typer.echo(f"Error: LangSmith error ({name}); check LANGSMITH_API_KEY", err=True)
+        raise typer.Exit(code=2) from error
+
+
 @eval_app.command("report")
 def eval_report(
     run_id: Annotated[UUID, typer.Argument(help="The eval_runs id to report on")],
 ) -> None:
     """Print a stored run's deterministic metrics as a markdown table (read-only)."""
-    try:
-        with records.connect() as connection:
-            text = report.run_report(connection, run_id)
-    except (
-        records.DatabaseNotConfiguredError,
-        report.RunNotFoundError,
-        report.RunRecordError,
-    ) as error:
-        typer.echo(f"Error: {error}", err=True)
-        raise typer.Exit(code=2) from error
-    except psycopg.Error as error:
-        # A connection error's text can name the server; only the type is printed.
-        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
-        raise typer.Exit(code=2) from error
+    with (
+        _read_errors_exit(report.RunNotFoundError, report.RunRecordError),
+        records.connect() as connection,
+    ):
+        text = report.run_report(connection, run_id)
     typer.echo(text, nl=False)
 
 
@@ -735,27 +777,47 @@ def eval_tool_calls(
     run_id: Annotated[UUID, typer.Argument(help="The eval_runs id whose traces to check")],
 ) -> None:
     """Print a stored run's tool-call correctness per step, from its LangSmith traces (V7)."""
-    try:
-        source = tool_calls.langsmith_source(get_settings())
-        with records.connect() as connection:
-            text = tool_calls.tool_call_report(connection, source, run_id)
-    except (
-        records.DatabaseNotConfiguredError,
+    with _read_errors_exit(
         tool_calls.TracingNotConfiguredError,
         tool_calls.RunNotFoundError,
         tool_calls.NoLookupRunsError,
         tool_calls.TraceRecordError,
-    ) as error:
-        typer.echo(f"Error: {error}", err=True)
-        raise typer.Exit(code=2) from error
-    except psycopg.Error as error:
-        # A connection error's text can name the server; only the type is printed.
-        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
-        raise typer.Exit(code=2) from error
-    except LangSmithError as error:
-        name = type(error).__name__
-        typer.echo(f"Error: LangSmith error ({name}); check LANGSMITH_API_KEY", err=True)
-        raise typer.Exit(code=2) from error
+    ):
+        source = tool_calls.langsmith_source(get_settings())
+        with records.connect() as connection:
+            text = tool_calls.tool_call_report(connection, source, run_id)
+    typer.echo(text, nl=False)
+
+
+@eval_app.command("gap")
+def eval_gap(
+    heldout_run: Annotated[UUID, typer.Argument(help="The --exclude-mode heldout run's id")],
+    all_run: Annotated[UUID, typer.Argument(help="The --exclude-mode all run's id (the gap run)")],
+) -> None:
+    """Print the held-out vs in-corpus gap of two stored runs of one set (read-only, V8)."""
+    with (
+        _read_errors_exit(report.RunNotFoundError, report.RunRecordError, gap.RunMismatchError),
+        records.connect() as connection,
+    ):
+        text = gap.gap_report(connection, heldout_run, all_run)
+    typer.echo(text, nl=False)
+
+
+@eval_app.command("held-out-hits")
+def eval_held_out_hits(
+    run_id: Annotated[UUID, typer.Argument(help="The eval_runs id whose traces to read")],
+) -> None:
+    """Print how many of a stored run's traces retrieved a held-out (Pile B) row (read-only,
+    V8): the gap run's should, the reported run's never."""
+    with _read_errors_exit(
+        tool_calls.TracingNotConfiguredError,
+        tool_calls.RunNotFoundError,
+        tool_calls.TraceRecordError,
+        held_out_hits.NoTraceToCheckError,
+    ):
+        source = tool_calls.langsmith_source(get_settings())
+        with records.connect() as connection:
+            text = held_out_hits.held_out_report(connection, source, run_id)
     typer.echo(text, nl=False)
 
 
@@ -959,16 +1021,11 @@ def eval_smoke_compare(
     gemini_run: Annotated[UUID, typer.Argument(help="The Gemini smoke run's eval_runs id")],
 ) -> None:
     """Apply decision 023's rule to two stored smoke runs and print the table (read-only)."""
-    try:
-        with records.connect() as connection:
-            text = _smoke_comparison(connection, {"luna": luna_run, "gemini": gemini_run})
-    except (records.DatabaseNotConfiguredError, smoke_verdict.SmokeRunError, ValueError) as error:
-        typer.echo(f"Error: {error}", err=True)
-        raise typer.Exit(code=2) from error
-    except psycopg.Error as error:
-        # A connection error's text can name the server; only the type is printed.
-        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
-        raise typer.Exit(code=2) from error
+    with (
+        _read_errors_exit(smoke_verdict.SmokeRunError, ValueError),
+        records.connect() as connection,
+    ):
+        text = _smoke_comparison(connection, {"luna": luna_run, "gemini": gemini_run})
     typer.echo(text)
 
 
@@ -1035,18 +1092,13 @@ def eval_smoke_refusals(
 ) -> None:
     """Apply decision 033's rule to stored smoke runs and print the table per node (X2b,
     read-only): does the second model answer what Luna's provider refused?"""
-    try:
-        with records.connect() as connection:
-            table, runs = smoke_refusals.compare_stored(
-                connection, list(dict.fromkeys(engine_run)), second_run
-            )
-    except (records.DatabaseNotConfiguredError, smoke_verdict.SmokeRunError, ValueError) as error:
-        typer.echo(f"Error: {error}", err=True)
-        raise typer.Exit(code=2) from error
-    except psycopg.Error as error:
-        # A connection error's text can name the server; only the type is printed.
-        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
-        raise typer.Exit(code=2) from error
+    with (
+        _read_errors_exit(smoke_verdict.SmokeRunError, ValueError),
+        records.connect() as connection,
+    ):
+        table, runs = smoke_refusals.compare_stored(
+            connection, list(dict.fromkeys(engine_run)), second_run
+        )
     typer.echo(smoke_refusals.format_table(table, runs))
 
 

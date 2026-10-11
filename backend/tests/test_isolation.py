@@ -242,6 +242,8 @@ NOT_ENTRY_POINTS: dict[str, str] = {
     "aiact.retrieval.search.SearchResults": "the result type of search_ai_act",
     "aiact.retrieval.search.prepare_search": "builds search_ai_act's statement; runs no query",
     "aiact.retrieval.search.distinct_units": "dedupes rows search_ai_act already fetched",
+    "aiact.retrieval.search.hit_metadata": "a search's trace metadata from rows it already "
+    "returned (their ids); runs no query",
     "aiact.retrieval.search.SearchTuning": "search_ai_act's ranking constants; runs no query",
     "aiact.retrieval.references.exact_references": "reads provision ids from a query's text; "
     "runs no query (search_ai_act looks them up under its own filters)",
@@ -252,6 +254,8 @@ NOT_ENTRY_POINTS: dict[str, str] = {
     "aiact.retrieval.tracing.traced_lookup": "traces a lookup it wraps; runs no query itself",
     "aiact.retrieval.tracing.provision_metadata": "a lookup's trace metadata; runs no query",
     "aiact.retrieval.tracing.search_metadata": "a search's trace metadata; runs no query",
+    "aiact.retrieval.tracing.benchmark_run": "marks lookups as a benchmark run's; runs no query",
+    "aiact.retrieval.tracing.is_benchmark_run": "reads that mark; runs no query",
 }
 """Public callables of `aiact.retrieval` that return no corpus rows by themselves, or no
 guideline rows (so never a held-out example), and why."""

@@ -11,6 +11,7 @@ from typer.testing import CliRunner
 from aiact.cli import app
 from aiact.eval import records, report
 from aiact.eval.cases import BenchmarkCase, CaseSet, load_cases
+from aiact.eval.isolation import ContaminatedExample, ContaminatedList
 from aiact.eval.metrics import metric_scorer, summarize
 from aiact.eval.report import (
     RunInfo,
@@ -32,7 +33,7 @@ from aiact.eval.runner import (
     run_benchmark,
 )
 from aiact.schemas import Citation, ClassificationResult, FollowUpQuestion, RiskClass, Role
-from tests.eval.outcomes import HIGH_ANNEX_POINT, case, outcome, result
+from tests.eval.outcomes import HIGH_ANNEX_POINT, case, outcome, refused_result, result
 
 CASE_FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "cases"
 INFO = RunInfo(
@@ -59,7 +60,7 @@ def test_report_is_a_markdown_table_of_every_metric() -> None:
     assert lines[0] == f"## Run {INFO.id}"
     assert "- Cases: 3 (1 failed)" in lines
     assert "| Metric | Value | Count |" in lines
-    assert "| Risk-class accuracy | 33.3% | 1/3 |" in lines
+    assert "| Risk-class accuracy (development cases) | 33.3% | 1/3 |" in lines
     assert "| False-low-risk rate | 50.0% | 1/2 |" in lines
     assert "| Annex point accuracy | 100.0% | 1/1 |" in lines
     assert "| Consistency | n/a | 0/0 |" in lines
@@ -72,7 +73,7 @@ def test_report_is_a_markdown_table_of_every_metric() -> None:
     assert "| Label citation cited (any of) | 0.0% | 0/2 |" in lines
     assert "| Needs a description: asked (thin cases) | n/a | 0/0 |" in lines
     assert "| Needs a description: asked wrongly (other cases) | 0.0% | 0/2 |" in lines
-    assert len(table) == 21  # header, separator and 19 metric rows
+    assert len(table) == 23  # header, separator and 21 metric rows
 
 
 def test_report_rows_show_each_commission_metric_under_its_own_name() -> None:
@@ -160,7 +161,7 @@ def test_runner_rows_feed_the_report() -> None:
 
     text = report_of(store)
     assert "- Cases: 3 (1 failed)" in text
-    assert "| Risk-class accuracy | 33.3% | 1/3 |" in text
+    assert "| Risk-class accuracy (development cases) | 33.3% | 1/3 |" in text
 
 
 def test_report_leaves_out_the_runners_own_scores() -> None:
@@ -205,6 +206,152 @@ def test_citation_existence_comes_from_the_scores_stored_at_run_time() -> None:
     )
     text = build_report(INFO, rows)
     assert "| Citation existence (at run time) | 50.0% | 1/2 |" in text
+
+
+CONFIG: dict[str, object] = {
+    "model": "openai/gpt-6-luna-20260922",
+    "provider": "azure/eu",
+    "second_model": "google/gemini-3.1-flash-lite",
+    "second_provider": "google-vertex/eu",
+    "classifier": "engine",
+    "exclude_mode": "all",
+    "subset": 20,
+    "seed": 0,
+    "git_dirty": True,
+    "answers_from": "00000000-0000-4000-8000-0000000000aa",
+    "outcome": {"status": "cost_cap_reached"},
+}
+
+
+def _info(benchmark: str = "commission_b", config: object = CONFIG) -> report.RunInfo:
+    return report.run_info(INFO.id, benchmark, INFO.git_sha, INFO.started_at, config, 0.5, 900)
+
+
+def test_the_header_names_the_runs_settings() -> None:
+    lines = render_markdown(_info(), summarize([outcome(case("a"))], always)).splitlines()
+    assert "- Benchmark: `commission_b`" in lines
+    assert (
+        f"- Commit: `{INFO.git_sha}` (uncommitted changes: this commit may not reproduce the run)"
+        in lines
+    )
+    assert "- Status: cost_cap_reached" in lines
+    assert "- Classifier: `engine`: `openai/gpt-6-luna-20260922` on `azure/eu`" in lines
+    assert "- Cases run: a seeded sample of 20 (seed 0)" in lines
+    assert (
+        "- Second model for refused requests (decision 033): "
+        "`google/gemini-3.1-flash-lite` on `google-vertex/eu`"
+    ) in lines
+    assert (
+        "- Exclude mode: `all` (the gap run: held-out examples retrievable, never the reported "
+        "number; decision 012)"
+    ) in lines
+    assert (
+        "- Answers: the stored key-fact answers to the questions run "
+        '`00000000-0000-4000-8000-0000000000aa` asked, any other question answered "don\'t know" '
+        "(decision 019)"
+    ) in lines
+    assert "| Risk-class accuracy | 100.0% | 1/1 |" in lines
+
+
+def test_a_heldout_run_on_every_case_says_so() -> None:
+    config = CONFIG | {"exclude_mode": "heldout", "subset": None, "git_dirty": False}
+    lines = render_markdown(_info(config=config), summarize([], always)).splitlines()
+    assert (
+        "- Exclude mode: `heldout` (held-out examples kept out of retrieval: the reported number)"
+        in lines
+    )
+    assert "- Cases run: every case of the set" in lines
+    assert f"- Commit: `{INFO.git_sha}`" in lines
+
+
+def test_own_cases_are_labelled_development_cases() -> None:
+    lines = render_markdown(_info("own"), summarize([outcome(case("a"))], always)).splitlines()
+    assert lines[2] == (
+        "- Benchmark: `own` (development cases: the engine's nodes were developed against them, "
+        "so Commission Pile B carries the headline (decision 018))"
+    )
+    assert "| Risk-class accuracy (development cases) | 100.0% | 1/1 |" in lines
+
+
+def test_a_run_stored_before_its_settings_were_recorded_still_loads() -> None:
+    info = _info(config={"model": None, "embedding": None, "retrieval": None})
+    assert (info.classifier, info.status, info.is_git_dirty, info.second_model) == (
+        None,
+        None,
+        None,
+        None,
+    )
+    lines = render_markdown(info, summarize([], always)).splitlines()
+    assert lines[2:5] == [
+        "- Benchmark: `commission_b`",
+        f"- Commit: `{INFO.git_sha}`",
+        f"- Started: {INFO.started_at.isoformat()}",
+    ]
+
+
+def test_settings_of_another_shape_are_left_out() -> None:
+    info = _info(config={"subset": True, "git_dirty": "yes", "outcome": "done", "seed": "0"})
+    assert (info.subset, info.is_git_dirty, info.status, info.seed) == (None, None, None, None)
+
+
+CONTAMINATED = ContaminatedList(
+    decision="docs/decisions/016-contaminated-pile-b-cases.md",
+    examples=(
+        ContaminatedExample(
+            example_id="hr-ex-269",
+            passage="guide:guide-high-risk-annex-iii:para:102",
+            coverage=0.3,
+            longest_run=10,
+            cosine=0.7,
+        ),
+    ),
+)
+
+
+def _stored(
+    label: BenchmarkCase, predicted: ClassificationResult | None, **scores: object
+) -> StoredCase:
+    dumped = {"error": {"type": "X"}} if predicted is None else predicted.model_dump(mode="json")
+    return stored_case(label.id, label.model_dump(mode="json"), dumped, scores)
+
+
+def test_a_run_with_contaminated_cases_reports_accuracy_without_them() -> None:
+    contaminated = case("cb-269-x").model_copy(update={"source_example_id": "hr-ex-269"})
+    clean = case("cb-100-y").model_copy(update={"source_example_id": "hr-ex-100"})
+    rows = (_stored(contaminated, result()), _stored(clean, result(RiskClass.MINIMAL_RISK)))
+    text = build_report(_info(), rows, CONTAMINATED)
+    assert "| Risk-class accuracy | 50.0% | 1/2 |" in text
+    assert (
+        "Contaminated cases, flagged by docs/decisions/016-contaminated-pile-b-cases.md: "
+        "cb-269-x (from hr-ex-269)"
+    ) in text
+    assert "| Risk-class accuracy without the contaminated cases | 0.0% | 0/1 |" in text
+
+
+def test_a_run_without_contaminated_cases_has_no_such_row() -> None:
+    text = build_report(_info(), (_stored(case("a"), result()),), CONTAMINATED)
+    assert "contaminated" not in text.lower()
+
+
+def test_the_report_adds_refusals_failures_and_texts() -> None:
+    gemini = "google/gemini-3.1-flash-lite"
+    models = {"facts": {"openai/gpt-6-luna-20260922": 1, gemini: 1}}
+    rows = (
+        _stored(case("a"), result(RiskClass.OUT_OF_SCOPE), models=models),
+        _stored(case("b"), refused_result()),
+    )
+    text = build_report(_info(), rows)
+    assert "| Not assessed (provider refused a check, decision 030) | 1 | |" in text
+    assert "| Risk-class accuracy, not-assessed cases counted as misses | 0.0% | 0/2 |" in text
+    assert "- Answered by the second model: 1 of 2 (50.0%): a" in text
+    assert "- Refused by both (not assessed): 1 of 2 (50.0%): b" in text
+    assert "- **scope** (1): a (expected high_risk, got out_of_scope (decided))" in text
+    assert "- Longest fact or question:" in text
+
+
+def test_malformed_stored_models_name_the_case() -> None:
+    with pytest.raises(report.RunRecordError, match="case a: stored models are malformed"):
+        _stored(case("a"), result(), models={"facts": {"m": "many"}})
 
 
 def test_a_run_without_stored_citation_scores_shows_na() -> None:

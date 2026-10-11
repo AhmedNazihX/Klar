@@ -10,6 +10,11 @@ tool-call correctness (`aiact.eval.tool_calls`) can read from a trace which look
   types a search was limited to, go into the run's metadata, which a metadata-only trace keeps.
   The search query (the description) never does: it is an input, and the engine's client hides
   inputs outside development.
+- **What a search found, in benchmark runs only.** Inside `benchmark_run()` (the benchmark's
+  engine classifier enters it per case), a search's run also records the provision ids it
+  returned (`HIT_IDS`), corpus ids only, so the gap run (V8) can show from its traces that a
+  held-out example was retrieved, and the reported run that none was. A real user's
+  classification (API, MCP) never records them.
 - **Recorded only once resolved.** The metadata is set when the lookup returns. A provision id
   can come from a model (the citation validator looks up whatever a step cited), so an id that
   resolved nowhere could carry the description's words: a failed lookup records no id, only its
@@ -21,7 +26,9 @@ tool-call correctness (`aiact.eval.tool_calls`) can read from a trace which look
 """
 
 import inspect
-from collections.abc import Callable, Collection, Mapping
+from collections.abc import Callable, Collection, Iterator, Mapping
+from contextlib import contextmanager
+from contextvars import ContextVar
 from functools import wraps
 
 from langsmith import traceable
@@ -33,11 +40,16 @@ DOC_KEYS = "lookup_doc_keys"
 """Metadata: the manifest keys a `search_ai_act` run was limited to (absent: every document)."""
 DOC_TYPES = "lookup_doc_types"
 """Metadata: the document types a `search_ai_act` run was limited to (absent: every type)."""
+HIT_IDS = "lookup_hit_ids"
+"""Metadata: the provision ids a `search_ai_act` run returned, in rank order."""
 
 HANDLES = frozenset({"connection", "embedder"})
 """Arguments that are objects, not values: never part of a run's inputs."""
 
 RUN_TYPE = "tool"
+
+_IN_BENCHMARK_RUN: ContextVar[bool] = ContextVar("aiact_in_benchmark_run", default=False)
+"""Set by `benchmark_run()`; the engine's node threads inherit it, as they inherit the trace."""
 
 MetadataOf = Callable[[Mapping[str, object]], Mapping[str, object]]
 
@@ -63,13 +75,30 @@ def _names(value: object) -> list[str] | None:
     return None
 
 
+@contextmanager
+def benchmark_run() -> Iterator[None]:
+    """Mark the lookups made inside as a benchmark run's: only they record what they returned."""
+    token = _IN_BENCHMARK_RUN.set(True)
+    try:
+        yield
+    finally:
+        _IN_BENCHMARK_RUN.reset(token)
+
+
+def is_benchmark_run() -> bool:
+    return _IN_BENCHMARK_RUN.get()
+
+
 def _without_handles(inputs: dict[str, object]) -> dict[str, object]:
     return {name: value for name, value in inputs.items() if name not in HANDLES}
 
 
-def traced_lookup[**P, R](metadata_of: MetadataOf) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """A lookup traced as a run under the current trace, with `metadata_of(inputs)` set as its
-    metadata once it returns; with no current trace, the plain lookup."""
+def traced_lookup[**P, R](
+    metadata_of: MetadataOf, result_metadata_of: Callable[[R], Mapping[str, object]] | None = None
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """A lookup traced as a run under the current trace, with `metadata_of(inputs)` (and, in a
+    benchmark run, `result_metadata_of(result)` when given) set as its metadata once it returns;
+    with no current trace, the plain lookup."""
 
     def decorate(lookup: Callable[P, R]) -> Callable[P, R]:
         signature = inspect.signature(lookup)
@@ -81,7 +110,8 @@ def traced_lookup[**P, R](metadata_of: MetadataOf) -> Callable[[Callable[P, R]],
             if run is not None:
                 bound = signature.bind(*args, **kwargs)
                 bound.apply_defaults()
-                metadata = metadata_of(bound.arguments)
+                found = result_metadata_of if is_benchmark_run() else None
+                metadata = {**metadata_of(bound.arguments), **(found(result) if found else {})}
                 run.add_metadata({k: v for k, v in metadata.items() if v is not None})
             return result
 

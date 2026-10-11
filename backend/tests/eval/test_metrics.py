@@ -59,10 +59,11 @@ from tests.eval.outcomes import (
     case,
     description_result,
     outcome,
+    refused_result,
     result,
     thin_case,
 )
-from tests.schemas.builders import ambiguous, rebuild, steps_with
+from tests.schemas.builders import ambiguous, rebuild, steps_with, stored_before_decision_030
 from tests.schemas.worked_example import cite, worked_example_result
 
 R = RiskClass
@@ -402,6 +403,7 @@ def test_case_scores_hold_only_numbers_booleans_or_null() -> None:
         "citation_accuracy": False,
         "description_asked": None,
         "description_asked_wrongly": False,
+        "not_assessed": False,
         "citation_existence": True,
     }
 
@@ -722,3 +724,50 @@ def test_the_summary_counts_both_description_rows() -> None:
     assert metrics.description_asked == Rate(hits=1, total=2)
     assert metrics.description_asked_wrongly == Rate(hits=1, total=3)
     assert metrics.risk_class_accuracy == Rate(hits=2, total=3)
+
+
+# --- not assessed: the provider refused a check (decision 030) ---------------------------------
+
+
+def test_a_refused_case_scores_only_as_not_assessed() -> None:
+    label = case("a", role=Role.DEPLOYER, annex_point=HIGH_ANNEX_POINT)
+    scores = case_scores(outcome(label, refused_result()), exists_in_worked_example)
+    assert scores.pop("not_assessed") is True
+    assert scores.pop("citation_existence") is True
+    assert set(scores.values()) == {None}
+
+
+def test_a_failed_case_has_no_not_assessed_score() -> None:
+    assert case_scores(outcome(case("a"), failed=True))["not_assessed"] is None
+
+
+def test_summarize_leaves_not_assessed_cases_out_and_counts_them_apart() -> None:
+    label = case("a", role=Role.DEPLOYER, annex_point=HIGH_ANNEX_POINT)
+    # Stored before decision 030: a refused check next to a lower class it assumed.
+    old_refusal = stored_before_decision_030(result(R.MINIMAL_RISK))
+    outcomes = [
+        outcome(label),
+        outcome(case("b", role=Role.DEPLOYER), refused_result()),
+        outcome(case("c", role=Role.PROVIDER), old_refusal),
+    ]
+    metrics = summarize(outcomes, exists_in_worked_example)
+    assert (metrics.cases, metrics.not_assessed, metrics.failed) == (3, 2, 0)
+    assert metrics.risk_class_accuracy == Rate(hits=1, total=1)
+    assert metrics.risk_class_accuracy_not_assessed_as_miss == Rate(hits=1, total=3)
+    assert metrics.false_low_risk == Rate(hits=0, total=1)
+    assert metrics.role_accuracy == Rate(hits=1, total=1)
+    assert metrics.needs_more_information.predicted == 0
+    assert metrics.citation_existence == Rate(hits=3, total=3)
+
+
+def test_a_consistency_group_with_a_not_assessed_member_is_left_out() -> None:
+    def member(case_id: str, group: str) -> BenchmarkCase:
+        return case(case_id, tags=(f"triple:{group}",))
+
+    outcomes = [
+        outcome(member("a1", "a")),
+        outcome(member("a2", "a"), refused_result()),
+        outcome(member("b1", "b")),
+        outcome(member("b2", "b")),
+    ]
+    assert consistency(outcomes) == Rate(hits=1, total=1)

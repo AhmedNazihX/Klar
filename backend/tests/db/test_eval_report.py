@@ -116,7 +116,7 @@ def test_report_from_a_stored_run_uses_the_citation_scores_of_run_time(
     report = run_report(db, run_id)
     assert f"## Run {run_id}" in report
     assert "- Model: openai/gpt-6-luna" in report
-    assert "| Risk-class accuracy | 33.3% | 1/3 |" in report
+    assert "| Risk-class accuracy (development cases) | 33.3% | 1/3 |" in report
     assert "| Citation existence (at run time) | 100.0% | 2/2 |" in report
 
     # Today's corpus loses a cited provision: the stored run's report must not change. Its
@@ -179,5 +179,5 @@ def test_a_dummy_run_written_by_the_runner_reads_back_into_the_report(
     report = run_report(db, store.run_id)
     # The dummy answers out_of_scope; a and b are labelled high_risk; c's scoring failed.
     assert "- Cases: 2 (0 failed)" in report
-    assert "| Risk-class accuracy | 0.0% | 0/2 |" in report
+    assert "| Risk-class accuracy (development cases) | 0.0% | 0/2 |" in report
     assert "Scoring failed, left out of the metrics: c" in report

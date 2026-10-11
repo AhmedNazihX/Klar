@@ -34,6 +34,7 @@ from aiact.engine.nodes.scope import (
     ScopeOutputError,
     to_outcome,
 )
+from aiact.engine.nodes.transparency import TRANSPARENCY_INSTRUCTIONS
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, CaseSet, load_yaml_file
@@ -648,9 +649,28 @@ def test_the_open_source_exception_names_art_50_and_its_categories() -> None:
         "synthetic audio, image, video or text",
         "emotion recognition or biometric categorisation",
         "deep fakes",
-        "only returns its result to its own user doesn't fall under it",
+        *ART_50_READING,
     ):
         assert category in flat
+
+
+ART_50_READING = (
+    "A system that only returns an analysis of its input (a score, a label, a ranking or a "
+    "prediction) to its own user doesn't fall under Art. 50(1) or 50(2).",
+    "Emotion recognition and biometric categorisation stay under Art. 50(3) whatever they return.",
+    "Text, images, audio or video a system generates is synthetic content under Art. 50(2), "
+    "whoever receives it.",
+)
+"""The user's Art. 50 reading (2026-10-06), worded the same in the scope and transparency
+prompts (BACKLOG > V8, from E6)."""
+
+
+def test_scope_and_transparency_prompts_read_art_50_alike() -> None:
+    scope_text = " ".join(node.SCOPE_INSTRUCTIONS.split())
+    transparency_text = " ".join(TRANSPARENCY_INSTRUCTIONS.split())
+    for sentence in ART_50_READING:
+        assert sentence in scope_text
+        assert sentence in transparency_text
 
 
 def test_the_node_is_pinned_to_the_engine_provider() -> None:
@@ -701,12 +721,31 @@ def _decides_in_scope(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
     return not outcome.matched and outcome.step.status is Status.DECIDED
 
 
+def _reads_in_scope_as(outcome: CheckOutcome, status: Status) -> bool:
+    """In scope, with the given undecided status."""
+    return not outcome.matched and outcome.step.status is status
+
+
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-b-05-regression-loan-scorecard": KnownGap(
         "the model resolves guide-definition para 42 to the label's reading A (para 42 concerns "
         "optimisation, not scoring) instead of flagging the definition as contested; class "
         "correct, status decided instead of legally_ambiguous (user, 2026-09-30)",
         _decides_in_scope,
+    ),
+    "own-b-04-card-game-opponent": KnownGap(
+        "V8's re-record (2026-10-11): the model leaves the AI-system definition open for a minimax "
+        "search with a hand-written evaluation (guide-definition para 48's own example) instead "
+        "of deciding it is not an AI system; passed in the previous recording, so likely "
+        "run-to-run variance (user, 2026-10-11: known gap, diagnosed in E14)",
+        lambda outcome, case: _reads_in_scope_as(outcome, Status.LEGALLY_AMBIGUOUS),
+    ),
+    "own-b-11-open-source-cv-ranking": KnownGap(
+        "V8's re-record (2026-10-11): the model brings in Art. 2(8)'s pre-market testing "
+        "exclusion and pauses for more information instead of deciding the open-source system "
+        "is in scope; passed in the previous recording, so likely run-to-run variance (user, "
+        "2026-10-11: known gap, diagnosed in E14)",
+        lambda outcome, case: _reads_in_scope_as(outcome, Status.NEEDS_MORE_INFORMATION),
     ),
 }
 """Recorded cases whose scope outcome differs from the label, with the reason; each fails when

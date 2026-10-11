@@ -28,6 +28,11 @@ Scoring rules decided here:
   miss only. Metrics defined on an answer (false-low-risk, Annex point, downgrade, citation
   existence, basis accuracy, label-citation accuracy, flip-variant flagging) leave failed cases
   out.
+- Not assessed (decision 030): a result whose model provider refused a check (`not_assessed`)
+  has no class to score. It is counted in its own row and left out of every other metric except
+  citation existence (its steps still cite); a consistency group with such a member is left out.
+  One extra row counts these cases as risk-class misses, so the report shows accuracy both with
+  and without them (X2b).
 - Citation existence is per case: a case hits when every citation in its result resolves.
 - Basis accuracy (decision 001) scores a case with `accepted_bases` whose label isn't ambiguous,
   on the high-risk step's own finding (`result_bases`): a high-risk finding's basis is
@@ -185,6 +190,11 @@ def accepted_classes(case: BenchmarkCase, label: CaseLabel) -> frozenset[RiskCla
     return LOW_BUCKET
 
 
+def is_not_assessed(outcome: Outcome) -> bool:
+    """Whether the model provider refused one of the result's checks (decision 030)."""
+    return outcome.result is not None and bool(outcome.result.not_assessed)
+
+
 def _answered_needs_info_on_ambiguous(outcome: Outcome) -> bool:
     result = outcome.result
     return (
@@ -300,12 +310,17 @@ def flip_variant_flagged(outcome: Outcome) -> bool | None:
 
 
 CITATION_EXISTENCE_KEY = "citation_existence"
+NOT_ASSESSED_KEY = "not_assessed"
 
 
 def case_scores(outcome: Outcome, exists: CitationExists | None = None) -> dict[str, bool | None]:
     """Every per-case score, keyed as `eval_case_results.scores` stores them. Without a citation
-    resolver (for example an empty corpus) citation existence is left out."""
-    scores = {name: scorer(outcome) for name, scorer in SCORERS.items()}
+    resolver (for example an empty corpus) citation existence is left out. A not-assessed case
+    (decision 030) scores None on every metric but its own."""
+    is_refused = is_not_assessed(outcome)
+    scores = {name: None if is_refused else scorer(outcome) for name, scorer in SCORERS.items()} | {
+        NOT_ASSESSED_KEY: is_refused if outcome.result is not None else None
+    }
     if exists is None:
         return scores
     return scores | {CITATION_EXISTENCE_KEY: citations_exist(outcome, exists)}
@@ -375,13 +390,18 @@ def needs_info_on_ambiguous(outcomes: Iterable[Outcome]) -> int:
 
 
 def consistency(outcomes: Iterable[Outcome], prefix: str = CONSISTENCY_GROUP_PREFIX) -> Rate:
-    """Groups (linked by a `prefix` tag) whose members all got a result with the same class."""
+    """Groups (linked by a `prefix` tag) whose members all got a result with the same class; a
+    group with a not-assessed member is left out (decision 030)."""
     groups: defaultdict[str, list[Outcome]] = defaultdict(list)
     for outcome in outcomes:
         for tag in outcome.case.tags:
             if tag.startswith(prefix):
                 groups[tag].append(outcome)
-    scored = [members for members in groups.values() if len(members) > 1]
+    scored = [
+        members
+        for members in groups.values()
+        if len(members) > 1 and not any(map(is_not_assessed, members))
+    ]
     hits = sum(_same_class(members) for members in scored)
     return Rate(hits=hits, total=len(scored))
 
@@ -515,7 +535,9 @@ class RunMetrics(ContractModel):
 
     cases: int
     failed: int
+    not_assessed: int
     risk_class_accuracy: Rate
+    risk_class_accuracy_not_assessed_as_miss: Rate
     false_low_risk: Rate
     annex_point_accuracy: Rate
     role_accuracy: Rate
@@ -535,25 +557,33 @@ class RunMetrics(ContractModel):
 
 
 def summarize(outcomes: Sequence[Outcome], exists: CitationExists | None) -> RunMetrics:
-    """Compute every deterministic metric over one run's outcomes."""
+    """Compute every deterministic metric over one run's outcomes. Not-assessed cases (decision
+    030) are counted on their own and left out of the other metrics, except citation existence,
+    consistency (which drops their groups) and the row that counts them as misses."""
+    assessed = [outcome for outcome in outcomes if not is_not_assessed(outcome)]
+    as_misses = [
+        Outcome(case=outcome.case) if is_not_assessed(outcome) else outcome for outcome in outcomes
+    ]
     return RunMetrics(
         cases=len(outcomes),
         failed=sum(outcome.result is None for outcome in outcomes),
-        risk_class_accuracy=rate(outcomes, risk_class_match),
-        false_low_risk=rate(outcomes, false_low_risk),
-        annex_point_accuracy=rate(outcomes, annex_point_match),
-        role_accuracy=rate(outcomes, role_match),
-        ambiguous=uncertain_outcomes(outcomes, Status.LEGALLY_AMBIGUOUS),
-        needs_more_information=uncertain_outcomes(outcomes, Status.NEEDS_MORE_INFORMATION),
-        needs_info_on_ambiguous=needs_info_on_ambiguous(outcomes),
-        downgrade=rate(outcomes, downgraded),
-        basis_accuracy=rate(outcomes, basis_match),
-        flip_variant_flagged=rate(outcomes, flip_variant_flagged),
-        citation_accuracy=rate(outcomes, citation_match),
-        description_asked=rate(outcomes, description_asked),
-        description_asked_wrongly=rate(outcomes, description_asked_wrongly),
+        not_assessed=len(outcomes) - len(assessed),
+        risk_class_accuracy=rate(assessed, risk_class_match),
+        risk_class_accuracy_not_assessed_as_miss=rate(as_misses, risk_class_match),
+        false_low_risk=rate(assessed, false_low_risk),
+        annex_point_accuracy=rate(assessed, annex_point_match),
+        role_accuracy=rate(assessed, role_match),
+        ambiguous=uncertain_outcomes(assessed, Status.LEGALLY_AMBIGUOUS),
+        needs_more_information=uncertain_outcomes(assessed, Status.NEEDS_MORE_INFORMATION),
+        needs_info_on_ambiguous=needs_info_on_ambiguous(assessed),
+        downgrade=rate(assessed, downgraded),
+        basis_accuracy=rate(assessed, basis_match),
+        flip_variant_flagged=rate(assessed, flip_variant_flagged),
+        citation_accuracy=rate(assessed, citation_match),
+        description_asked=rate(assessed, description_asked),
+        description_asked_wrongly=rate(assessed, description_asked_wrongly),
         consistency=consistency(outcomes),
         citation_existence=citation_existence(outcomes, exists),
-        appliedai_disagreement_review=appliedai_review_count(outcomes),
-        academic_disagreement_review=academic_review_count(outcomes),
+        appliedai_disagreement_review=appliedai_review_count(assessed),
+        academic_disagreement_review=academic_review_count(assessed),
     )

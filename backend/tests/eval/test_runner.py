@@ -16,8 +16,9 @@ from pydantic import JsonValue
 from typer.testing import CliRunner, Result
 
 from aiact.cli import app
-from aiact.eval import citation_index, engine_classifier, records, runner
+from aiact.eval import answers, citation_index, engine_classifier, records, runner
 from aiact.eval import split as split_module
+from aiact.eval.answers import AnswerSourceError
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseLabel, CaseSet
 from aiact.eval.runner import (
     CaseRecord,
@@ -177,6 +178,90 @@ def test_the_classifier_gets_the_case_date_or_none() -> None:
         "Made-up description 1": date(2026, 12, 15),
         "Made-up description 2": None,
     }
+
+
+SOURCE_RUN = UUID("00000000-0000-4000-8000-0000000000aa")
+
+
+def test_fixed_answers_go_to_the_questions_the_source_run_asked() -> None:
+    """Decision 019: stored answers where the case has one, "don't know" otherwise."""
+    answered = CASES[0].model_copy(update={"key_fact_answers": {"annex_iii_use": "Yes."}})
+    asked = {answered.id: ("annex_iii_use", "human_review"), CASES[1].id: ()}
+    classifier = PricedClassifier()
+    store = MemoryStore()
+    summary = run_benchmark(
+        [answered, CASES[1]],
+        classifier,
+        store,
+        options(concurrency=1, answers_from=SOURCE_RUN),
+        SPLIT,
+        asked=asked,
+    )
+    by_description = {request.description: request.answers for request in classifier.requests}
+    assert by_description == {
+        "Made-up description 1": {"annex_iii_use": "Yes.", "human_review": "weiß nicht"},
+        "Made-up description 2": {},
+    }
+    config = store.runs[summary.run_id]["config"]
+    assert isinstance(config, dict)
+    assert config["answers_from"] == str(SOURCE_RUN)
+
+
+def test_a_source_run_that_never_ran_a_planned_case_is_refused() -> None:
+    """A case the source run has no row for would silently get no answers."""
+    store = MemoryStore()
+    classifier = PricedClassifier()
+    with pytest.raises(AnswerSourceError, match=r"^1 of the 2 planned cases have no stored row"):
+        run_benchmark(
+            CASES[:2],
+            classifier,
+            store,
+            options(answers_from=SOURCE_RUN),
+            SPLIT,
+            asked={CASES[0].id: ("annex_iii_use",)},
+        )
+    assert not store.runs
+    assert not classifier.requests
+
+
+def test_a_run_without_answers_records_none() -> None:
+    classifier = PricedClassifier()
+    store = MemoryStore()
+    summary = run_benchmark(CASES[:1], classifier, store, options(), SPLIT)
+    assert classifier.requests[0].answers == {}
+    config = store.runs[summary.run_id]["config"]
+    assert isinstance(config, dict)
+    assert config["answers_from"] is None
+
+
+@pytest.mark.parametrize(
+    ("answers_from", "asked"), [(SOURCE_RUN, None), (None, {"case-001": ("q",)})]
+)
+def test_answers_need_both_the_source_run_and_its_questions(
+    answers_from: UUID | None, asked: dict[str, tuple[str, ...]] | None
+) -> None:
+    store = MemoryStore()
+    with pytest.raises(ValueError, match="answers need both"):
+        run_benchmark(
+            CASES[:1],
+            DummyClassifier(),
+            store,
+            options(answers_from=answers_from),
+            SPLIT,
+            asked=asked,
+        )
+    assert not store.runs
+
+
+def test_the_classifier_records_its_second_model() -> None:
+    class Routed(PricedClassifier):
+        info = ClassifierInfo(model="m", second_model="g", second_provider="p")
+
+    store = MemoryStore()
+    summary = run_benchmark(CASES[:1], Routed(), store, options(), SPLIT)
+    config = store.runs[summary.run_id]["config"]
+    assert isinstance(config, dict)
+    assert (config["second_model"], config["second_provider"]) == ("g", "p")
 
 
 def test_cost_cap_stops_starting_new_cases() -> None:
@@ -441,7 +526,9 @@ def test_a_failing_finish_does_not_replace_the_original_error() -> None:
 SECRET_URL = "postgresql://postgres:hunter2@db.example:5432/postgres"
 
 
-def _cli_with_database(monkeypatch: pytest.MonkeyPatch, connect: Callable[[], object]) -> Result:
+def _cli_with_database(
+    monkeypatch: pytest.MonkeyPatch, connect: Callable[[], object], *extra: str
+) -> Result:
     monkeypatch.setattr(runner, "load_benchmark", lambda case_set: CASES)
     monkeypatch.setattr(citation_index, "load_citation_index", lambda connection: frozenset())
     monkeypatch.setattr(records, "connect", connect)
@@ -450,6 +537,7 @@ def _cli_with_database(monkeypatch: pytest.MonkeyPatch, connect: Callable[[], ob
         [
             *("evaluate", "run", "--set", "commission_b"),
             *("--classifier", "dummy", "--exclude-mode", "all"),
+            *extra,
         ],
     )
 
@@ -478,7 +566,7 @@ def test_cli_reports_a_database_error_during_the_run(monkeypatch: pytest.MonkeyP
 def test_cli_run_scores_cases_with_the_v2_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[runner.Scorer] = []
 
-    def capturing_run(*args: object) -> None:
+    def capturing_run(*args: object, **kwargs: object) -> None:
         scorer = args[-1]
         assert callable(scorer)
         captured.append(scorer)  # pyright: ignore[reportArgumentType]
@@ -491,3 +579,44 @@ def test_cli_run_scores_cases_with_the_v2_metrics(monkeypatch: pytest.MonkeyPatc
     scores = scorer(CASES[0], answer)
     assert scores["risk_class_accuracy"] is False
     assert "citation_existence" not in scores  # empty corpus: nothing to check against
+
+
+def test_cli_refuses_answers_for_a_classifier_that_ignores_them() -> None:
+    result = cli.invoke(
+        app,
+        [
+            *("evaluate", "run", "--set", "soft_pairs", "--classifier", "baseline_luna"),
+            *("--answers-from", str(SOURCE_RUN)),
+        ],
+    )
+    assert result.exit_code == 2
+    assert "--answers-from needs a classifier that takes answers: dummy, engine" in result.stderr
+
+
+def test_cli_passes_the_source_runs_questions(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[object] = []
+
+    def asked(connection: object, run_id: UUID, benchmark: str) -> dict[str, tuple[str, ...]]:
+        seen.append((run_id, benchmark))
+        return {"case-001": ("q",)}
+
+    def capturing_run(*args: object, **kwargs: object) -> None:
+        seen.append(kwargs["asked"])
+        raise psycopg.errors.CheckViolation("stop here")
+
+    monkeypatch.setattr(answers, "asked_questions", asked)
+    monkeypatch.setattr(runner, "run_benchmark", capturing_run)
+    _cli_with_database(monkeypatch, contextlib.nullcontext, "--answers-from", str(SOURCE_RUN))
+    assert seen == [(SOURCE_RUN, "commission_b"), {"case-001": ("q",)}]
+
+
+def test_cli_reports_a_bad_source_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    def missing(connection: object, run_id: UUID, benchmark: str) -> None:
+        raise answers.AnswerSourceError(f"no eval run with id {run_id}")
+
+    monkeypatch.setattr(answers, "asked_questions", missing)
+    result = _cli_with_database(
+        monkeypatch, contextlib.nullcontext, "--answers-from", str(SOURCE_RUN)
+    )
+    assert result.exit_code == 2
+    assert f"Error: no eval run with id {SOURCE_RUN}" in result.stderr

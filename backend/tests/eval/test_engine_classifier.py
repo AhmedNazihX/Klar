@@ -9,15 +9,20 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
 
-from aiact.engine import ClassificationFailedError
+from aiact.engine import ClassificationFailedError, run_classification
 from aiact.engine.graph import EngineNodes
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import EngineState, FactsOutcome
 from aiact.engine.usage import UsageMeter
 from aiact.eval import engine_classifier, runner
-from aiact.eval.engine_classifier import EngineClassifier
+from aiact.eval.engine_classifier import (
+    EngineClassifier,
+    InvalidRequestError,
+    engine_request_for,
+)
 from aiact.eval.runner import ClassifierFailedError, ClassifierInput, DummyClassifier, run_benchmark
 from aiact.llm import LLMConfigError
+from aiact.retrieval.tracing import is_benchmark_run
 from aiact.schemas import Language
 from aiact.settings import Settings
 from tests.eval.test_runner import CASES, SPLIT, MemoryStore, options
@@ -32,6 +37,8 @@ def settings(**values: object) -> Settings:
         "engine_provider": "azure/eu",
         "embedding_model": "qwen/qwen3-embedding-8b",
         "embedding_provider": "nebius",
+        "refusal_model": "google/gemini-3.1-flash-lite",
+        "refusal_provider": "google-vertex/eu",
         **values,
     }
     return Settings(_env_file=None, **configured)  # pyright: ignore[reportCallIssue]
@@ -61,6 +68,7 @@ class Builder:
         self.spend = spend
         self.served = served
         self.states: list[EngineState] = []
+        self.in_benchmark_run: list[bool] = []
 
     def __call__(self, _settings: Settings, meter: UsageMeter) -> EngineNodes:
         stub = scripted_nodes(Script())
@@ -71,6 +79,7 @@ class Builder:
 
         def facts(state: EngineState) -> FactsOutcome:
             self.states.append(state)
+            self.in_benchmark_run.append(is_benchmark_run())  # read in the node's own thread
             if self.spend:
                 for _ in self.served:
                     model.invoke("describe")
@@ -81,13 +90,19 @@ class Builder:
         return EngineNodes(facts=facts, checks=stub.checks, finalize=stub.finalize)
 
 
-def request(as_of: date | None = CASE_DATE, *, include_held_out: bool = False) -> ClassifierInput:
+def request(
+    as_of: date | None = CASE_DATE,
+    *,
+    include_held_out: bool = False,
+    answers: dict[str, str] | None = None,
+) -> ClassifierInput:
     return ClassifierInput(
         description="A tool that ranks job applicants.",
         language=Language.EN,
         exclude_source_example_ids=("hr-ex-002",),
         as_of=as_of,
         include_held_out=include_held_out,
+        answers=answers or {},
     )
 
 
@@ -110,6 +125,21 @@ def test_the_gap_runs_opt_in_reaches_the_engine() -> None:
     [state] = builder.states
     assert state.get("include_held_out") is True
     assert state["exclude_source_example_ids"] == ("hr-ex-002",)
+
+
+def test_a_benchmark_case_marks_its_lookups_as_a_benchmark_runs() -> None:
+    """V8: only a benchmark run's searches record their hit ids in the trace."""
+    builder = Builder()
+    EngineClassifier(settings(), build_nodes=builder).classify(request())
+    assert builder.in_benchmark_run == [True]
+    assert is_benchmark_run() is False  # the mark ends with the case
+
+
+def test_a_users_classification_is_no_benchmark_run() -> None:
+    """The API's and MCP's path: `run_classification` called directly."""
+    builder = Builder()
+    run_classification(engine_request_for(request()), settings=settings(), build_nodes=builder)
+    assert builder.in_benchmark_run == [False]
 
 
 def test_a_case_without_a_date_runs_on_the_run_date() -> None:
@@ -173,6 +203,10 @@ def test_a_run_that_fails_before_spending_raises_its_own_error() -> None:
 def test_the_classifier_records_the_engine_settings() -> None:
     info = EngineClassifier(settings()).info
     assert (info.model, info.provider) == ("openai/gpt-6-luna-20260922", "azure/eu")
+    assert (info.second_model, info.second_provider) == (
+        "google/gemini-3.1-flash-lite",
+        "google-vertex/eu",
+    )
     assert info.embedding == {
         "model": "qwen/qwen3-embedding-8b",
         "provider": "nebius",
@@ -185,7 +219,60 @@ def test_the_runner_builds_the_engine_classifier(monkeypatch: pytest.MonkeyPatch
     assert isinstance(runner.build_classifier("engine"), EngineClassifier)
 
 
-@pytest.mark.parametrize("missing", ["engine_model", "embedding_provider"])
+@pytest.mark.parametrize(
+    "missing", ["engine_model", "embedding_provider", "refusal_model", "refusal_provider"]
+)
 def test_a_missing_setting_makes_it_unavailable(missing: str) -> None:
     with pytest.raises(LLMConfigError):
         EngineClassifier(settings(**{missing: None}))
+
+
+def test_fixed_answers_are_appended_to_the_description() -> None:
+    """Decision 019: the downgrade rate's second run appends the answers, as the interface does."""
+    builder = Builder()
+    answers = {"annex_iii_use": "Yes, it ranks applicants.", "human_review": "don't know"}
+    EngineClassifier(settings(), build_nodes=builder).classify(request(answers=answers))
+    [state] = builder.states
+    assert state["description"] == (
+        "A tool that ranks job applicants.\n\nAnswers to follow-up questions:\n"
+        "- annex_iii_use: Yes, it ranks applicants.\n- human_review: don't know"
+    )
+
+
+def test_a_case_without_answers_keeps_its_description() -> None:
+    builder = Builder()
+    EngineClassifier(settings(), build_nodes=builder).classify(request())
+    assert builder.states[0]["description"] == "A tool that ranks job applicants."
+
+
+def test_a_rejected_request_names_the_field_only() -> None:
+    too_long = "secret words " * 2000
+    bad = ClassifierInput(description=too_long, language=Language.EN, exclude_source_example_ids=())
+    with pytest.raises(InvalidRequestError, match="invalid at description") as raised:
+        EngineClassifier(settings(), build_nodes=Builder()).classify(bad)
+    assert "secret" not in str(raised.value)
+    assert raised.value.__cause__ is None
+
+
+def test_a_rejected_answer_names_the_field_not_the_question_id() -> None:
+    """An answer's `loc` is (`answers`, <question id>, …): only `answers` is named."""
+    question_id = "leipzig_night_shift"
+    bad = ClassifierInput(
+        description="A tool.",
+        language=Language.EN,
+        exclude_source_example_ids=(),
+        answers={question_id: "x" * 1_001},
+    )
+    with pytest.raises(InvalidRequestError) as raised:
+        EngineClassifier(settings(), build_nodes=Builder()).classify(bad)
+    assert str(raised.value) == "the case's request is invalid at answers"
+
+
+def test_a_request_failing_as_a_whole_gets_a_readable_message() -> None:
+    """The blank-text check validates the whole model: its error has no field (`loc` empty)."""
+    bad = ClassifierInput(description="   ", language=Language.EN, exclude_source_example_ids=())
+    with pytest.raises(InvalidRequestError) as raised:
+        EngineClassifier(settings(), build_nodes=Builder()).classify(bad)
+    assert str(raised.value) == (
+        "the case's request is invalid as a whole (for example a blank description or answer)"
+    )
