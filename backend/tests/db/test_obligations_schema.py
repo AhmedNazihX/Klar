@@ -1,7 +1,8 @@
 """The obligations migrations (supabase/migrations/*_obligations.sql, *_obligation_texts.sql) and
-the seed, against the local Supabase Postgres. After a new migration or a YAML change, apply the
-migration first (`supabase migration up --local`), then reload supabase/seed/obligations.sql
-(never `supabase db reset`: the database is shared)."""
+the seed, against the local test database. After a new migration or a YAML change, apply the
+migration first, to the local database (`supabase migration up --local`) and to the hosted project
+(`supabase db push`), then reload supabase/seed/obligations.sql into both (never reset either
+database: each is shared)."""
 
 import psycopg
 import pytest
