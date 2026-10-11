@@ -425,6 +425,61 @@ def test_a_word_only_held_out_rows_use_finds_them_only_when_opted_in(corpus: psy
     assert keyword == [example]
 
 
+TIE = replace(AMENDED, doc_key="test-c6-tie", title="Test AI Act (ties)", sha256="c" * 64)
+TIE_WORDS = ("zorvikan", "blintozar", "quaffelix", "drumbleck", "snivvetor", "plorkanim",
+             "gribbolux", "fenwhistal", "trumvexil", "kazzerpon")  # fmt: skip
+"""Made-up words; the nth is in 3n + 1 filler rows, so each has its own IDF."""
+TIED_IDS = ("art:7", "art:7:1")
+TIE_PLANS = {
+    "the planner's choice": (),
+    "sorted groups over sequential scans": (
+        "set local enable_hashagg = off",
+        "set local enable_bitmapscan = off",
+    ),
+}
+"""Plans that feed the keyword arm's sum the words in a different order per row: a sort by row
+id isn't stable, so an article and its paragraph can get their words in different orders."""
+
+
+def _tie_load(word_count: int) -> DocumentLoad:
+    """An article and its only paragraph with the same `word_count` words, plus filler rows that
+    give each word a different IDF."""
+    text = " ".join(TIE_WORDS[:word_count]) + "."
+    article = ProvisionRow("art:7", None, None, "Article 7", text, AI_ACT_IN_FORCE)
+    paragraph = ProvisionRow("art:7:1", "art:7", AI_ACT_IN_FORCE, "Article 7", text,
+                             AI_ACT_IN_FORCE)  # fmt: skip
+    fillers = [
+        (word, number)
+        for n, word in enumerate(TIE_WORDS[:word_count])
+        for number in range(3 * n + 1)
+    ]
+    rows = [
+        ProvisionRow(f"art:{30 + i}", None, None, f"Article {30 + i}", f"{word} filler {number}.",
+                     AI_ACT_IN_FORCE)
+        for i, (word, number) in enumerate(fillers)
+    ]  # fmt: skip
+    return DocumentLoad(TIE, (article, paragraph, *rows))
+
+
+@pytest.mark.parametrize("plan", TIE_PLANS)
+@pytest.mark.parametrize("word_count", [5, 7, 8, 10])
+def test_a_keyword_tie_goes_to_the_lower_id_whatever_the_plan(
+    db: psycopg.Connection, word_count: int, plan: str
+):
+    """Two rows with the same words have the same IDF sum, but a float sum's last bits depend on
+    the order it adds the words in. Ranked on the exact float, the paragraph overtook its article
+    under some plans and word statistics (F11, between the local and hosted databases); ranked
+    on the rounded sum, the lower id (the article, loaded first) wins under every plan. Several
+    word counts and plans, since which of them flip an unrounded sum depends on the statistics."""
+    load_all(db, (_tie_load(word_count),))
+    for setting in TIE_PLANS[plan]:
+        db.execute(setting)
+    query = " ".join(TIE_WORDS[:word_count])
+    hits = _search(db, query, [1.0, 0.0, 0.0], doc_keys=[TIE.doc_key]).hits
+    tied = [(h.provision_id, h.keyword_rank) for h in hits if h.provision_id in TIED_IDS]
+    assert tied == [("art:7", 1)]
+
+
 def test_the_iterative_scan_setting_does_not_leak(db: psycopg.Connection):
     """Inside a caller's transaction the search runs in a savepoint; its setting must not
     outlive it."""
