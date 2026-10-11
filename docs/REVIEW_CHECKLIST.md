@@ -38,7 +38,7 @@ Items marked *(isolation-auditor)* need folders the Engine and Corpus lanes can'
 - [ ] Every alternative the code handles separately gets its own test: each point ((ba) and (bb)), enum member, node, model arm and annex. Also test the production default path: the real connection, with no injected fake. (seen: E4, P5, X2, E10, E12, E5, E9, 14)
 - [ ] Each test's fixture really differs on the property it asserts. Two `n/a` rows, one shared transaction or `now()`, or a check that can never fail on real data all prove nothing. (seen: C2, P3, B13, F7b, P8a, 5)
 - [ ] Every new or changed user-visible string has its German twin asserted exactly, not only the English one. (seen: P18, E8, E11, 5)
-- [ ] Tests don't depend on `.env` values or a heavy load on the shared database. A test that needs `DATABASE_URL` skips when it isn't set; it doesn't fail. (seen: C8, E9, P3b, 3)
+- [ ] Tests don't depend on `.env` values or a heavy load on the shared database. Database tests use `TEST_DATABASE_URL` (default: the local Supabase), never the app's hosted `DATABASE_URL`; an unreachable test database skips them locally and fails them in CI. (seen: C8, E9, P3b, 3)
 
 ## Eval cases & harness
 - [ ] A matcher checks exactly what the case's tag claims (the grace sentence, not just its citation; the high-risk step's basis, not the final class). An unmeasured, transient or missing outcome (corpus gap, lost trace, failed lookup) is counted apart, never as a miss or as "checked". (seen: E6, F7b, X2, V7, B1, E10, 14)
