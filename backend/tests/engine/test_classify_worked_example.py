@@ -18,7 +18,6 @@ import pytest
 
 from aiact.db import connect
 from aiact.engine import (
-    ClassificationFailedError,
     ClassificationRun,
     ClassifyRequest,
     run_classification,
@@ -356,16 +355,6 @@ def replay_nodes(
         )
 
 
-SCOPE_PROMPT_RECORDING_PENDING = pytest.mark.xfail(
-    strict=True,
-    raises=ClassificationFailedError,
-    reason="recording pending (orchestrator): V8 aligned the scope prompt's Art. 50 reading with "
-    "transparency.md, so the recorded scope request is stale; delete and re-record",
-)
-"""The worked example's replays until the orchestrator re-records them (BACKLOG > V8)."""
-
-
-@SCOPE_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
     run = run_classification(

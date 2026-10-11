@@ -16,7 +16,6 @@ import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
-from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.db import connect
 from aiact.engine.graph import build_graph
@@ -722,12 +721,31 @@ def _decides_in_scope(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
     return not outcome.matched and outcome.step.status is Status.DECIDED
 
 
+def _reads_in_scope_as(outcome: CheckOutcome, status: Status) -> bool:
+    """In scope, with the given undecided status."""
+    return not outcome.matched and outcome.step.status is status
+
+
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-b-05-regression-loan-scorecard": KnownGap(
         "the model resolves guide-definition para 42 to the label's reading A (para 42 concerns "
         "optimisation, not scoring) instead of flagging the definition as contested; class "
         "correct, status decided instead of legally_ambiguous (user, 2026-09-30)",
         _decides_in_scope,
+    ),
+    "own-b-04-card-game-opponent": KnownGap(
+        "V8's re-record (2026-10-11): the model leaves the AI-system definition open for a minimax "
+        "search with a hand-written evaluation (guide-definition para 48's own example) instead "
+        "of deciding it is not an AI system; passed in the previous recording, so likely "
+        "run-to-run variance (user, 2026-10-11: known gap, diagnosed in E14)",
+        lambda outcome, case: _reads_in_scope_as(outcome, Status.LEGALLY_AMBIGUOUS),
+    ),
+    "own-b-11-open-source-cv-ranking": KnownGap(
+        "V8's re-record (2026-10-11): the model brings in Art. 2(8)'s pre-market testing "
+        "exclusion and pauses for more information instead of deciding the open-source system "
+        "is in scope; passed in the previous recording, so likely run-to-run variance (user, "
+        "2026-10-11: known gap, diagnosed in E14)",
+        lambda outcome, case: _reads_in_scope_as(outcome, Status.NEEDS_MORE_INFORMATION),
     ),
 }
 """Recorded cases whose scope outcome differs from the label, with the reason; each fails when
@@ -747,12 +765,6 @@ def _live_corpus(settings: Settings) -> Iterator[CorpusLibrary]:
         yield CorpusLibrary(connection, OpenRouterEmbeddings(settings=settings))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=CannotOverwriteExistingCassetteException,
-    reason="recording pending (orchestrator): V8 aligned the prompt's Art. 50 reading with "
-    "transparency.md, so the recorded request bodies are stale; delete and re-record",
-)
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",

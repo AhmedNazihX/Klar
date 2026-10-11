@@ -33,7 +33,6 @@ from tests.engine.test_classify_worked_example import (
     LUNA,
     LUNA_PROVIDER,
     RECORD_COMMAND,
-    SCOPE_PROMPT_RECORDING_PENDING,
     LiveCorpus,
     assert_the_expected_result,
     recorded_libraries,
@@ -289,7 +288,6 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
         )
 
 
-@SCOPE_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr(allow_playback_repeats=True)
 @pytest.mark.usefixtures("no_automatic_gc")
 def test_repeated_classifications_leave_no_http_clients_behind(

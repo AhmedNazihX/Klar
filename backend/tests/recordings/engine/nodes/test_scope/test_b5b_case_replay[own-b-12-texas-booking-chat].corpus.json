@@ -10,13 +10,14 @@
    "language": "en",
    "law_version": null,
    "provision_id": "guide:guide-definition:para:63",
-   "score": 0.023015873015873,
-   "similarity": 0.610834240913391,
+   "reference_rank": null,
+   "score": 0.0218487394957983,
+   "similarity": 0.6098512774617251,
    "status": "final",
    "text": "(63) Only certain AI systems are subject to regulatory obligations and oversight under the AI Act. The AI Act's risk-based approach means that only those systems giving rise to the most significant risks to fundamental rights and freedoms will be subject to its prohibitions laid down in Article 5 AI Act, its regulatory regime for high-risk AI systems covered by Article 6 AI Act and its transparency requirements for a limited number of pre-defined AI systems laid down in Article 50 AI Act. The vast majority of systems, even if they qualify as AI systems within the meaning of Article 3(1) AI Act, will not be subject to any regulatory requirements under the AI Act.",
    "valid_from": "2025-02-06",
    "valid_to": null,
-   "vector_rank": 3
+   "vector_rank": 8
   },
   {
    "doc_key": "guide-definition",
@@ -28,13 +29,14 @@
    "language": "en",
    "law_version": null,
    "provision_id": "guide:guide-definition:para:25",
-   "score": 0.0215300546448087,
-   "similarity": 0.505119503154699,
+   "reference_rank": null,
+   "score": 0.0217102348249889,
+   "similarity": 0.550793150209157,
    "status": "final",
    "text": "(25) Recital 12 AI Act clarifies that, 'the objectives of the AI system may be different from the intended purpose of the AI system in a specific context'. The objectives of an AI system are internal to the system, referring to the goals of the tasks to be performed and their results. For instance, a corporate virtual AI assistant system may have objectives to answer user questions on a set of documents with high accuracy in and low rate of failures. In contrast, the intended purpose is externally oriented and includes the context in which the system is designed to be deployed and how it must be operated. Indeed, according to Article 3(12) AI Act, the intended purpose of an AI system refers to the 'use for which an AI system is intended by the provider'. For example, in the case of a corporate virtual AI assistant system, the intended purpose might be to assist a certain department of a company to carry out certain tasks. This might require that the documents that the virtual assistant uses comply with certain requirements (e.g. length, formatting) and that the user questions are limited to the domain in which the system is intended to operate. This intended purpose is fulfilled not only through the system's internal operation to achieve its objectives, but also through other factors, such as the integration of the system into a broader customer service workflow, the data that is used by the system, or instructions for use.",
    "valid_from": "2025-02-06",
    "valid_to": null,
-   "vector_rank": 15
+   "vector_rank": 14
   },
   {
    "doc_key": "guide-definition",
@@ -46,8 +48,9 @@
    "language": "en",
    "law_version": null,
    "provision_id": "guide:guide-definition:para:10",
+   "reference_rank": null,
    "score": 0.0205108359133127,
-   "similarity": 0.500248849362276,
+   "similarity": 0.5477706463473739,
    "status": "final",
    "text": "(10) The definition of an AI system adopts a lifecycle-based perspective encompassing two main phases: the pre-deployment or 'building' phase of the system and the postdeployment or 'use' phase of the system 4 . The seven elements set out in that definition are not required to be present continuously throughout both phases of that lifecycle. Instead, the definition acknowledges that specific elements may appear at one phase, but may not persist across both phases. This approach to define an AI system reflects the complexity and diversity of AI systems, ensuring that the definition aligns with the AI Act's objectives by accommodating a wide range of AI systems.",
    "valid_from": "2025-02-06",
@@ -64,8 +67,9 @@
    "language": "en",
    "law_version": null,
    "provision_id": "guide:guide-definition:para:26",
+   "reference_rank": null,
    "score": 0.0193161269110636,
-   "similarity": 0.48237037658691395,
+   "similarity": 0.531798752057479,
    "status": "final",
    "text": "(26) The fifth element of an AI system is that it must be able to infer, from the input it receives, how to generate outputs. Recital 12 AI Act clarifies that \"[a] key characteristic of AI systems is their capability to infer.\" As further explained in that recital, AI systems should be distinguished from \"simpler traditional software systems or programming approaches and should not cover systems that are based on the rules defined solely by natural persons to automatically execute operations.\" This capability to infer is therefore a key, indispensable condition that distinguishes AI systems from other types of systems.",
    "valid_from": "2025-02-06",
@@ -82,13 +86,14 @@
    "language": "en",
    "law_version": null,
    "provision_id": "guide:guide-definition:para:60",
-   "score": 0.019139566395664,
-   "similarity": 0.45849338173866305,
+   "reference_rank": null,
+   "score": 0.0189926372155288,
+   "similarity": 0.502259701625092,
    "status": "final",
    "text": "(60) The seventh element of the definition of an AI system is that system's outputs 'can influence physical or virtual environments'. That element should be understood to emphasise the fact that AI systems are not passive, but actively impact the environments in which they are deployed. Reference to 'physical or virtual environments' indicates that the influence of an AI system may be both to tangible, physical objects (e.g. robot arm) and to virtual environments, including digital spaces, data flows, and software ecosystems.",
    "valid_from": "2025-02-06",
    "valid_to": null,
-   "vector_rank": 22
+   "vector_rank": 23
   }
  ],
  "{\"as_of\": \"2026-09-30\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"art:2\"}": {
