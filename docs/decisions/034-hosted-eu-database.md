@@ -61,3 +61,14 @@ of deployment readiness.
 - **Revisit if** the test suite becomes too slow to run per story (for example several times slower than local),
   if the remote database becomes a bottleneck for parallel worktrees, or if Pro's cost is a problem: then go back
   to A, or run local Postgres only (`supabase start -x …`, as CI does) for the tests.
+
+## Amendment (2026-10-11, after F11's measurement)
+F11 measured the backend suite at 188.6 s on local and 1,279.5 s on the hosted project (6.8×, all 4,941 tests pass on
+both), which meets the revisit trigger above. **The user chose (2026-10-11) to keep the tests local:** the app, the
+benchmark runs and their stored results use the hosted Frankfurt project; the test suite runs against a slim local
+Postgres (`supabase start -x` with only the services the tests need, as CI does), so Studio, Analytics and the other
+local services stay off. Reasons: ~70 extra minutes per story (about four full suite runs per story), the Free
+pooler's limit of 15 client connections (about three parallel suites), and the hosted copy is already checked
+md5-identical to local. Consequences: schema changes go to both databases (local through the migrations, hosted
+through `supabase db push`); the obligations seed reload in `post_merge` targets both; the local stack is slimmed,
+not stopped.
