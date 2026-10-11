@@ -94,5 +94,5 @@ addopts = [
 ]
 markers = [
     "live: calls a real model or service; skipped unless run with -m live",
-    "db: needs the Postgres in DATABASE_URL (the hosted project; CI: a local one); skipped when it isn't reachable",
+    "db: needs the local test database (TEST_DATABASE_URL, default 127.0.0.1:54322; `supabase start -x ...`); skipped when it isn't reachable",
 ]

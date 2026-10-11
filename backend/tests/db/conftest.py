@@ -24,7 +24,10 @@ def db_connection() -> Iterator[psycopg.Connection]:
         connection = psycopg.connect(_database_url(), connect_timeout=CONNECT_TIMEOUT_SECONDS)
     except psycopg.OperationalError as exc:
         # The URL may hold a password, so the reason names only the error type.
-        reason = f"database not reachable ({type(exc).__name__}); check DATABASE_URL"
+        reason = (
+            f"test database not reachable ({type(exc).__name__}): start the local Supabase "
+            "database (`supabase start -x ...`, see CLAUDE.md) or check TEST_DATABASE_URL"
+        )
         if os.environ.get("CI"):
             pytest.fail(reason, pytrace=False)
         pytest.skip(reason)
