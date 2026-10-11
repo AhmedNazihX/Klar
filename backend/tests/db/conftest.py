@@ -1,7 +1,8 @@
-"""Database fixtures: one connection to the Postgres in DATABASE_URL (the hosted Supabase project;
-CI and an unset DATABASE_URL use the local one), one rolled-back transaction per test.
+"""Database fixtures: one connection to the test database (`TEST_DATABASE_URL`, by default the
+Supabase CLI's local one; never the hosted project, see tests/conftest.py), one rolled-back
+transaction per test.
 
-All worktrees share one database, so nothing a test writes is ever committed. An unreachable
+All worktrees share one local database, so nothing a test writes is ever committed. An unreachable
 database skips the tests locally but fails them when the `CI` environment variable is set.
 """
 
@@ -12,17 +13,9 @@ from contextlib import contextmanager
 import psycopg
 import pytest
 
-from aiact.settings import get_settings
-
-LOCAL_SUPABASE_DB_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-"""The Supabase CLI's default local database, used when DATABASE_URL is unset."""
+from tests.conftest import database_url_for_tests as _database_url
 
 CONNECT_TIMEOUT_SECONDS = 3
-
-
-def _database_url() -> str:
-    secret = get_settings().database_url
-    return secret.get_secret_value() if secret is not None else LOCAL_SUPABASE_DB_URL
 
 
 @pytest.fixture(scope="session")
