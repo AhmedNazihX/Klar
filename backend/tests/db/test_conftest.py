@@ -38,6 +38,8 @@ def test_a_store_write_that_commits_its_own_transaction_is_rolled_back(
 
 LOCK_TIMEOUT_SECONDS = 15
 """tests/conftest.py's LOCK_TIMEOUT, pinned here as a literal."""
+WAITER_STATEMENT_TIMEOUT_SECONDS = 20
+"""A little longer than the lock timeout: the most the lock test may wait."""
 
 
 def test_every_test_connection_has_the_lock_timeout(db_connection: psycopg.Connection) -> None:
@@ -68,9 +70,12 @@ def test_a_held_lock_fails_a_waiting_test_instead_of_hanging(
     db_connection: psycopg.Connection,
 ) -> None:
     """A lock another session holds and never releases: the waiting statement fails with 55P03
-    once the lock timeout has passed, rather than waiting for ever."""
+    once the lock timeout has passed, rather than waiting for ever. The waiter's own statement
+    timeout, a little longer, bounds this test if the lock timeout is ever missing: it then fails
+    with 57014 instead of hanging."""
     key = random.getrandbits(62)  # an advisory lock no other test or worktree takes
     with psycopg.connect(_database_url(), autocommit=True) as waiter:
+        waiter.execute("set statement_timeout = '20s'")  # WAITER_STATEMENT_TIMEOUT_SECONDS
         db_connection.execute("select pg_advisory_xact_lock(%s)", (key,))
         try:
             started = time.monotonic()
@@ -79,4 +84,4 @@ def test_a_held_lock_fails_a_waiting_test_instead_of_hanging(
             waited = time.monotonic() - started
         finally:
             db_connection.rollback()
-    assert LOCK_TIMEOUT_SECONDS <= waited < LOCK_TIMEOUT_SECONDS + 5
+    assert LOCK_TIMEOUT_SECONDS <= waited < WAITER_STATEMENT_TIMEOUT_SECONDS
