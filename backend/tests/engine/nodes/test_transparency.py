@@ -79,7 +79,6 @@ from tests.engine.nodes.corpus_recording import (
     require_recording,
 )
 from tests.engine.nodes.known_gaps import (
-    E19_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1216,17 +1215,17 @@ EDITORIAL_FIXTURE = (
 deployer publishes generated text to inform the public, and the description says nothing about
 human review or editorial responsibility, so the editorial exception is a missing fact."""
 EDITORIAL_ANSWER = (
-    "Yes. A person reviews every text before it is published and holds editorial "
-    "responsibility for the publication."
+    "Yes. An editor on our staff checks every text against the monitoring data, corrects and "
+    "rewrites it where needed, and approves it before it is published; the office holds "
+    "editorial responsibility for the publication."
 )
-"""The answer to the editorial question in Art. 50(4)'s own terms: human review, and a person
-holding editorial responsibility."""
+"""The answer to the editorial question in Art. 50(4)'s terms: a substantive human review (not a
+formality), and a person holding editorial responsibility."""
 E17_RECORD_COMMAND = (
     "uv run pytest tests/engine/nodes/test_transparency.py -k answered_editorial --record-mode=once"
 )
 
 
-@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("is_answered", [False, True], ids=["asked", "answered"])
 def test_an_answered_editorial_exception_settles_art_50_4(
