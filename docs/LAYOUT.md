@@ -308,6 +308,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            user-data (counts, export file, delete), personal-data (the in-browser warning) (P12);
 │       │                            risk-class (a result's class; a needs-a-description result has none) (E13);
 │       │                            duty-progress (duty_progress ticks through supabase-js, P24);
+│       │                            quote-marks (each language's quotation marks, nested inside a quote; P11);
 │       │                            tool-runs (a tool's runs: the latest two, a follow-up run with its answers, undo by row id; P5b),
 │       │                            log (a read the screen goes on without, logged with its error code only; P5b);
 │       │                            accuracy (the site's accuracy.json, checked with zod; P16)

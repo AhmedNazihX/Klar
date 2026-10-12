@@ -2,15 +2,16 @@ import type { TFunction } from 'i18next'
 
 import type { DraftDocument, DraftSection } from '@/api'
 import type { Language } from '@/i18n'
+import { nestQuotes } from '@/lib/quote-marks'
 
 import { citationSource } from './result-text'
 
-/** A quote as plain text: the corpus's words in the letter language's quotation marks, then its
- *  source. */
+/** A quote as plain text: the corpus's words in the letter language's quotation marks (the
+ *  text's own marks nested, as the Citation shows them), then its source. */
 function quoteText(t: TFunction, section: DraftSection, language: Language): string[] {
   return (section.quotes ?? []).map((quote) =>
     t('prohibited.letter.copyQuote', {
-      quote: quote.quote,
+      quote: nestQuotes(quote.quote, quote.language),
       source: citationSource(t, quote, language),
     }),
   )
