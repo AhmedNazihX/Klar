@@ -311,4 +311,21 @@ describe('A legally ambiguous result with a question the profile answers', () =>
       expect(bodies[0]?.answers).toEqual({ eu_link: `${EU_QUESTION.text} Yes.` })
     },
   )
+
+  it('Change opens a question on the open point and puts the focus on its first answer', async () => {
+    server.use(...requestHandlers([]))
+    // The EU question as one about the provision the readings cite, so it bears on the point.
+    const onPoint: FollowUpQuestion = { ...EU_QUESTION, about: SAFETY_QUESTION.about }
+    const result: ClassificationResult = {
+      ...RECORDED_AMBIGUOUS,
+      follow_up_questions: [SAFETY_QUESTION, onPoint],
+    }
+    const { user } = await openResult(result, PROFILE)
+    await user.click(within(profileRegion()).getByRole('button', { name: 'Change' }))
+
+    const settle = screen.getByRole('region', { name: 'What would settle it' })
+    const eu = within(settle).getByRole('group', { name: EU_QUESTION.text })
+    expect(eu).toBeVisible()
+    expect(document.activeElement).toBe(within(eu).getByRole('button', { name: 'Yes' }))
+  })
 })

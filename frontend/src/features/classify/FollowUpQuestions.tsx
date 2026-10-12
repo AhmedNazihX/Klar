@@ -21,8 +21,10 @@ export type AnswerProps = {
   hasAnswers: boolean
   isRunning: boolean
   onRunAgain: () => void
-  /** The question a profile answer's Change just asked again (P29): it takes the focus. */
+  /** The question a profile answer's Change just asked again (P29): it takes the focus once. */
   reopenedId: string | null
+  /** Called once that question has taken the focus, so a later remount doesn't take it again. */
+  onReopenedFocused: () => void
 }
 
 /** A question's answer control (its options, or a field for words) with the draft it holds. The
@@ -35,18 +37,21 @@ export function QuestionAnswer({
   onDraftChange,
   isRunning,
   reopenedId,
+  onReopenedFocused,
 }: { question: FollowUpQuestion; labelledBy: string } & Pick<
   AnswerProps,
   'drafts' | 'onDraftChange' | 'isRunning'
 > &
-  Partial<Pick<AnswerProps, 'reopenedId'>>): JSX.Element {
+  Partial<Pick<AnswerProps, 'reopenedId' | 'onReopenedFocused'>>): JSX.Element {
   const { t } = useTranslation()
   const draft = drafts[question.id]
   const controlsRef = useRef<HTMLDivElement>(null)
   const isReopened = reopenedId === question.id
   useEffect(() => {
-    if (isReopened) controlsRef.current?.querySelector<HTMLElement>('button, textarea')?.focus()
-  }, [isReopened])
+    if (!isReopened) return
+    controlsRef.current?.querySelector<HTMLElement>('button, textarea')?.focus()
+    onReopenedFocused?.()
+  }, [isReopened, onReopenedFocused])
   return (
     <div ref={controlsRef} className="contents">
       <AnswerChoice<AnswerOption>

@@ -107,6 +107,9 @@ export function useFollowUpAnswers(run: ClassificationRun, followUp: FollowUpRun
       isRunning: followUp.isRunning,
       onRunAgain: sendPanels,
       reopenedId,
+      onReopenedFocused: () => {
+        setReopenedId(null)
+      },
     },
     confirm,
     tryAgain: () => {
