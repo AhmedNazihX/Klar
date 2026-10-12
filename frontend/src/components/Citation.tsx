@@ -10,6 +10,24 @@ const QUOTE_MARKS: Record<Language, readonly [string, string]> = {
   de: ['„', '“'],
 }
 
+/** How often `mark` occurs in `text`. */
+function countOf(text: string, mark: string): number {
+  return text.split(mark).length - 1
+}
+
+/**
+ * The outer quotation marks to add around `text`, so a mark the official text already has isn't
+ * doubled: the opening one unless the text starts with it (the German Art. 3 Nr. 4 opens with its
+ * own „Betreiber“), the closing one unless the text already closes every quote it opens, the
+ * outer one included. A text ending on an inner quoted term (`… als „Betreiber“`) still gets its
+ * outer close.
+ */
+function outerMarks(text: string, open: string, close: string): { open: string; close: string } {
+  const addsOpen = !text.startsWith(open)
+  const opens = countOf(text, open) + (addsOpen ? 1 : 0)
+  return { open: addsOpen ? open : '', close: countOf(text, close) < opens ? close : '' }
+}
+
 /** A quote longer than this many characters (about five lines in a step card) opens shortened. */
 const SHORTEN_ABOVE_CHARS = 400
 /** A shortened quote shows its words up to the last space within this many characters. */
@@ -48,6 +66,7 @@ export function Citation({ children, language, source, className }: CitationProp
   const opening = quoteOpening(children)
   const isShortened = opening !== null && !isExpanded
   const shown = isShortened ? `${opening} …` : children
+  const marks = outerMarks(shown, open, close)
   return (
     <figure
       className={cn(
@@ -57,11 +76,9 @@ export function Citation({ children, language, source, className }: CitationProp
     >
       <blockquote id={quoteId} lang={language} className="m-0 font-serif text-quote text-ink-2">
         <p className="m-0">
-          {/* A mark the official text already has isn't doubled: the German Art. 3 Nr. 4
-              opens with its own „Betreiber“. */}
-          {shown.startsWith(open) ? null : open}
+          {marks.open}
           {shown}
-          {shown.endsWith(close) ? null : close}
+          {marks.close}
         </p>
       </blockquote>
       {opening !== null && (

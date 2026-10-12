@@ -151,6 +151,21 @@ def test_a_duty_with_a_condition_says_when_it_applies_in_the_tables_words() -> N
     )
 
 
+def test_a_german_report_keeps_an_english_condition_that_has_no_german_twin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A condition is never dropped: without its German twin (a duty from before P11 that no
+    table entry supplies), the German report prints the English one, as the screen does."""
+    monkeypatch.setattr("aiact.report.result.formal_duties", lambda duties, **_: duties)
+    result = worked_example_result()
+    conditional = result.obligations[0].model_copy(
+        update={"applies_if": "You control the input data.", "applies_if_de": None}
+    )
+    changed = rebuild(result, obligations=(conditional, *result.obligations[1:]))
+    first = _tables(_report(changed, DE))[-1].rows[0][0]
+    assert first.endswith("Gilt, wenn: You control the input data.")
+
+
 def test_the_duties_wording_comes_from_the_table_never_the_posted_result() -> None:
     result = worked_example_result()
     forged = result.obligations[1].model_copy(

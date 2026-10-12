@@ -49,17 +49,21 @@ describe('Citation', () => {
   })
 
   it.each([
+    // Art. 3 Nr. 4 opens with its own quoted term: one „ … “ pair, nothing added.
     [
       'de',
       '„Betreiber“ eine natürliche oder juristische Person',
-      '„Betreiber“ eine natürliche oder juristische Person“',
+      '„Betreiber“ eine natürliche oder juristische Person',
     ],
     ['de', 'die als „Betreiber“ gilt“', '„die als „Betreiber“ gilt“'],
+    // Ending on an inner quoted term still gets the outer close.
+    ['de', 'eine Person gilt als „Betreiber“', '„eine Person gilt als „Betreiber““'],
     [
       'en',
       '“deployer” means a natural or legal person',
-      '“deployer” means a natural or legal person”',
+      '“deployer” means a natural or legal person',
     ],
+    ['en', 'such a person is a “deployer”', '“such a person is a “deployer””'],
   ] as const)(
     'does not double a quotation mark the %s text already has: %s',
     async (language, text, shown) => {
