@@ -1050,7 +1050,8 @@
       "heading": "Was den Punkt klären würde",
       "answer": "Beantworten",
       "draftRequest": "Anfrage entwerfen",
-      "vendorReading": "Wie der Anbieter diesen Punkt einschätzt, falls er ihn geprüft hat"
+      "vendorReading": "Wie der Anbieter diesen Punkt einschätzt, falls er ihn geprüft hat",
+      "nothing": "Klar hat keine Frage, die diesen Punkt klären würde, weder an Sie noch an jemand anderen. Eine Anwältin oder ein Anwalt kann die beiden Lesarten abwägen: siehe „Rechtlich prüfen lassen“."
     },
     "settledBy": {
       "guidance": "Endgültige Leitlinien der Kommission zur Einstufung als Hochrisiko (noch ein Entwurf, {{date}})",

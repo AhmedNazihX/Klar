@@ -16,6 +16,7 @@ import type {
   ClassifyResponse,
   FollowUpQuestion,
   Reading,
+  SettledBy,
   StepName,
   VendorLetterRequest,
 } from '@/api'
@@ -74,6 +75,8 @@ const COPY = {
     answer: 'Answer',
     draftRequest: 'Draft a request',
     vendorReading: 'How the vendor reads this point, if they assessed it',
+    nothing:
+      'Klar has no question that would settle this point, for you or for anyone else. A lawyer can weigh the two readings: see “Take it to a lawyer”.',
     recheck: /re-?check|when final/i,
     lawyer: 'Take it to a lawyer',
     lawyerBody:
@@ -122,6 +125,8 @@ const COPY = {
     answer: 'Beantworten',
     draftRequest: 'Anfrage entwerfen',
     vendorReading: 'Wie der Anbieter diesen Punkt einschätzt, falls er ihn geprüft hat',
+    nothing:
+      'Klar hat keine Frage, die diesen Punkt klären würde, weder an Sie noch an jemand anderen. Eine Anwältin oder ein Anwalt kann die beiden Lesarten abwägen: siehe „Rechtlich prüfen lassen“.',
     recheck: /erneut|neu prüf|wenn endgültig/i,
     lawyer: 'Rechtlich prüfen lassen',
     lawyerBody:
@@ -530,6 +535,57 @@ describe.each(['en', 'de'] as const)('A legally ambiguous result (%s)', (languag
     const items = settleItems(language)
     expect(items.map((item) => item.textContent)).toEqual([copy.provider])
     expect(screen.queryByRole('button', { name: copy.draftRequest })).toBeNull()
+  })
+
+  describe('with nothing to list (P30)', () => {
+    /** A provider's result: no request to the vendor, so only questions and settled_by list. */
+    const asProvider = (settledBy: SettledBy[], questions: FollowUpQuestion[] = []) =>
+      withSettledBy(
+        { ...RECORDED_AMBIGUOUS, role: 'provider', follow_up_questions: questions },
+        settledBy,
+      )
+
+    it('points to Take it to a lawyer in one line, no empty list, in its place', async () => {
+      await openAmbiguous(language, { result: asProvider([]) })
+      const settle = screen.getByRole('region', { name: copy.settle })
+      expect(within(settle).queryByRole('list')).toBeNull()
+      expect(within(settle).getByText(copy.nothing)).toBeVisible()
+      expect(settle.textContent).toBe(`${copy.settle}${copy.nothing}`)
+      // Still beside Take it to a lawyer, in the same row.
+      const lawyer = screen.getByRole('region', { name: copy.lawyer })
+      expect(lawyer.parentElement).toBe(settle.parentElement)
+      expect(settle.nextElementSibling).toBe(lawyer)
+    })
+
+    it('lists a linked question alone as today, without the line', async () => {
+      await openAmbiguous(language, { result: asProvider([], [SAFETY_QUESTION]) })
+      const items = settleItems(language)
+      expect(items).toHaveLength(1)
+      expect(items[0]).toHaveTextContent(SAFETY_QUESTION.text)
+      expect(within(items[0] as HTMLElement).getByRole('button', { name: copy.answer })).toBeVisible()
+      expect(screen.queryByText(copy.nothing)).toBeNull()
+    })
+
+    it('lists settled_by alone as today, without the line', async () => {
+      await openAmbiguous(language, {
+        result: asProvider([{ kind: 'guidance', text: COPY.en.guidance }]),
+      })
+      expect(settleItems(language).map((item) => item.textContent)).toEqual([copy.guidance])
+      expect(screen.queryByText(copy.nothing)).toBeNull()
+    })
+
+    it('lists the vendor item alone as today for a deployer, without the line', async () => {
+      await openAmbiguous(language, { result: withSettledBy(RECORDED_AMBIGUOUS, []) })
+      expect(settleItems(language).map((item) => item.textContent)).toEqual([
+        `${copy.vendorReading}${copy.draftRequest}`,
+      ])
+      expect(screen.queryByText(copy.nothing)).toBeNull()
+    })
+
+    it('has no accessibility violations (axe)', async () => {
+      const { container } = await openAmbiguous(language, { result: asProvider([]) })
+      expect((await axe(container, AXE_OPTIONS)).violations).toEqual([])
+    })
   })
 
   it('has no accessibility violations (axe), on the screen and in the request', async () => {

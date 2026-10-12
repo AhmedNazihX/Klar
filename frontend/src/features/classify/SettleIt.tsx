@@ -90,7 +90,8 @@ function guidanceText(t: TFunction, language: Language, item: SettledBy, step: S
  * the user can answer here, which run the checks again (P5b); what the vendor can say, with Draft
  * a request (P28's letter), unless the user is the provider; and the guidance the question waits
  * for, named as it stands, as a plain item: Klar promises no re-check when it is final. The two
- * kinds of settled_by are fixed (E12), so their words come from the screen's language.
+ * kinds of settled_by are fixed (E12), so their words come from the screen's language. With none
+ * of these, one line points to Take it to a lawyer instead of an empty list (P30).
  */
 export function SettleIt({
   question,
@@ -145,6 +146,10 @@ export function SettleIt({
           />
         ))
       : canAskVendor && <Item text={t('ambiguous.settle.vendorReading')} action={requestButton} />
+  // A provider with no question on the point and no settled_by has nothing to list (P30): one
+  // line pointing to Take it to a lawyer replaces the list, and the panel keeps its place.
+  const hasItems =
+    questions.length > 0 || provider.length > 0 || canAskVendor || guidance.length > 0
   return (
     <GlassPanel
       as="section"
@@ -154,15 +159,19 @@ export function SettleIt({
       <h2 id={headingId} className="m-0 mb-2.5 text-heading-panel text-ink">
         {t('ambiguous.settle.heading')}
       </h2>
-      <ul className="m-0 flex list-none flex-col p-0">
-        {questions.map((asked) => (
-          <AnswerItem key={asked.id} question={asked} {...answers} />
-        ))}
-        {vendorItems}
-        {guidance.map((item) => (
-          <Item key={item.text} text={guidanceText(t, language, item, step)} />
-        ))}
-      </ul>
+      {hasItems ? (
+        <ul className="m-0 flex list-none flex-col p-0">
+          {questions.map((asked) => (
+            <AnswerItem key={asked.id} question={asked} {...answers} />
+          ))}
+          {vendorItems}
+          {guidance.map((item) => (
+            <Item key={item.text} text={guidanceText(t, language, item, step)} />
+          ))}
+        </ul>
+      ) : (
+        <p className="m-0 text-[15px] leading-[1.45] text-slate">{t('ambiguous.settle.nothing')}</p>
+      )}
       {runCount !== undefined && (
         <div className="mt-2">
           <RunAgainButton count={runCount} {...answers} />
