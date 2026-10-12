@@ -3,9 +3,10 @@
 -- F5's check (20260928093526_eval_records.sql) allowed only number, boolean or null scores. Since
 -- X2c the runner also stores `models` = {node: {model: calls}}, so V8's first paid run failed on
 -- its first case write. Every other key stays as F5 had it; `models`, when present, must be an
--- object of objects whose values are non-negative numbers.
+-- object of objects whose values are whole, non-negative numbers (the report reads them as ints).
 --
--- Rows stored before this migration passed the stricter check, so they pass this one too.
+-- Rows stored before this migration pass this check unless they hold a scalar `models` key, which
+-- the old check allowed; no stored row has one, as the old check refused the runner's `models`.
 
 alter table public.eval_case_results drop constraint eval_case_results_scores_check;
 
@@ -25,7 +26,7 @@ alter table public.eval_case_results add constraint eval_case_results_scores_che
       jsonb_typeof(scores -> 'models') = 'object'
       and not jsonb_path_exists(
         scores -> 'models',
-        'strict $.* ? (@.type() != "object" || exists(@.* ? (@.type() != "number" || @ < 0)))'
+        'strict $.* ? (@.type() != "object" || exists(@.* ? (@.type() != "number" || @ < 0 || @.floor() != @)))'
       )
     )
   )

@@ -49,11 +49,6 @@ CASE = BenchmarkCase(
     label_citation=("art:3:1",),
 )
 
-# F5's check, as it stood before V8a: no score may be anything but a number, a boolean or null.
-PRE_V8A_SCORES_PATH = (
-    'strict $.* ? (@.type() != "number" && @.type() != "boolean" && @.type() != "null")'
-)
-
 
 class ServingClassifier:
     info = ClassifierInfo(model=FIRST_MODEL)
@@ -116,15 +111,6 @@ def test_a_failed_case_with_served_models_is_stored(db: psycopg.Connection) -> N
     assert scores["models"] == SERVED
 
 
-def test_the_pre_v8a_check_refuses_the_runner_scores(db: psycopg.Connection) -> None:
-    """What V8's run hit: the old check finds a non-scalar score in the same row."""
-    scores = {"cost_usd": 0.01, "tokens": 900, "is_error": False, "models": SERVED}
-    row = db.execute(
-        "select jsonb_path_exists(%s, %s::jsonpath)", (Jsonb(scores), PRE_V8A_SCORES_PATH)
-    ).fetchone()
-    assert row == (True,)
-
-
 def _insert_run(db: psycopg.Connection) -> UUID:
     config = {"model": FIRST_MODEL, "embedding": None, "retrieval": None}
     row = db.execute(
@@ -152,6 +138,7 @@ def _insert_scores(db: psycopg.Connection, scores: object) -> None:
         {"models": {"facts": {FIRST_MODEL: True}}},
         {"models": {"facts": {FIRST_MODEL: None}}},
         {"models": {"facts": {FIRST_MODEL: -1}}},
+        {"models": {"facts": {FIRST_MODEL: 1.5}}},
         {"models": {"facts": {FIRST_MODEL: {"calls": 1}}}},
         {"models": {"facts": [FIRST_MODEL]}},
         {"models": {"facts": 1}},
@@ -167,6 +154,7 @@ def _insert_scores(db: psycopg.Connection, scores: object) -> None:
         "boolean-calls",
         "null-calls",
         "negative-calls",
+        "fractional-calls",
         "object-calls",
         "node-is-array",
         "node-is-number",
