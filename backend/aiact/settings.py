@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     # development they carry metadata only: no description, prompt or answer (INIT > Tech stack).
     aiact_env: Literal["development", "production"] = "production"
     langsmith_api_key: SecretStr | None = None
-    langsmith_project: str = "aiact"
+    langsmith_project: str = "Klar"
     langsmith_endpoint: str | None = None
     """The LangSmith API the traces go to and are read from; an EU-region account needs
     https://eu.api.smith.langchain.com. Unset or empty: the SDK's default (the US region)."""
