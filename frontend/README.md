@@ -13,6 +13,10 @@ The second line downloads the headless Chromium that `pnpm test` needs: layout t
 (`*.browser.test.tsx`, Vitest's `browser` project) run in a real browser. On a fresh CI runner use
 `corepack pnpm exec playwright install --with-deps chromium`.
 
+Copy `.env.example` to `.env.local` and fill in the hosted Supabase project's URL and publishable
+key (decision 034): the app runs against the hosted project. The tests don't read them; their
+Supabase calls go to fixtures.
+
 ## Commands
 
 - `corepack pnpm dev`: the app on the Vite dev server

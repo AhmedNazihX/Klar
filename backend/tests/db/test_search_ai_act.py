@@ -425,6 +425,48 @@ def test_a_word_only_held_out_rows_use_finds_them_only_when_opted_in(corpus: psy
     assert keyword == [example]
 
 
+TIE = replace(AMENDED, doc_key="test-c6-tie", title="Test AI Act (ties)", sha256="c" * 64)
+TIE_WORDS = ("zorvikan", "blintozar", "quaffelix", "drumbleck", "snivvetor", "plorkanim",
+             "gribbolux", "fenwhistal")  # fmt: skip
+"""Made-up words; the nth is in `multiplier` * n + 1 filler rows, so each has its own IDF."""
+TIED_IDS = ("art:7", "art:7:1")
+
+
+def _tie_load(multiplier: int) -> DocumentLoad:
+    """An article and its only paragraph with the same words, plus filler rows that give each
+    word a different IDF."""
+    text = " ".join(TIE_WORDS) + "."
+    article = ProvisionRow("art:7", None, None, "Article 7", text, AI_ACT_IN_FORCE)
+    paragraph = ProvisionRow("art:7:1", "art:7", AI_ACT_IN_FORCE, "Article 7", text,
+                             AI_ACT_IN_FORCE)  # fmt: skip
+    fillers = [
+        (word, number) for n, word in enumerate(TIE_WORDS) for number in range(multiplier * n + 1)
+    ]
+    rows = [
+        ProvisionRow(f"art:{30 + i}", None, None, f"Article {30 + i}", f"{word} filler {number}.",
+                     AI_ACT_IN_FORCE)
+        for i, (word, number) in enumerate(fillers)
+    ]  # fmt: skip
+    return DocumentLoad(TIE, (article, paragraph, *rows))
+
+
+@pytest.mark.parametrize("multiplier", [1, 3, 5])
+def test_a_keyword_tie_goes_to_the_lower_id(db: psycopg.Connection, multiplier: int):
+    """Two rows with the same words have the same IDF sum, but a float sum's last bits depend on
+    the order it adds the words in, so ranked on the exact float the paragraph can overtake its
+    article (F11, between the local and hosted databases). Ranked on the rounded sum, the lower
+    id (the article, loaded first) wins.
+
+    Which IDFs flip an unrounded sum depends on the whole corpus's word statistics, so the three
+    multipliers are measured, not arbitrary: without the rounding, multiplier 3 fails on the
+    loaded local corpus (9,083 provisions) and 1 and 5 fail on an empty one (CI), the same on
+    every run and under both a planner-chosen and a forced sorted-groups plan."""
+    load_all(db, (_tie_load(multiplier),))
+    hits = _search(db, " ".join(TIE_WORDS), [1.0, 0.0, 0.0], doc_keys=[TIE.doc_key]).hits
+    tied = [(h.provision_id, h.keyword_rank) for h in hits if h.provision_id in TIED_IDS]
+    assert tied == [("art:7", 1)]
+
+
 def test_the_iterative_scan_setting_does_not_leak(db: psycopg.Connection):
     """Inside a caller's transaction the search runs in a savepoint; its setting must not
     outlive it."""

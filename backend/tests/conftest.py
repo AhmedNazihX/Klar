@@ -1,5 +1,5 @@
-"""Record/replay for model calls (pytest-recording over vcrpy), the network block, and a lock
-timeout on every Postgres connection the tests open.
+"""Record/replay for model calls (pytest-recording over vcrpy), the network block, the test
+database, and a lock timeout on every Postgres connection the tests open.
 
 A test marked `@pytest.mark.vcr` replays the HTTP exchanges saved in
 `tests/recordings/<module path under tests/>/<test name>.yaml`, for example
@@ -13,17 +13,24 @@ paid request. Tests marked `@pytest.mark.live` are the one exception and may con
 
 Recordings keep only the `content-type` header on both sides, so the API key, attribution
 headers and provider cookies never land on disk.
+
+The whole session uses the test database, `TEST_DATABASE_URL` (default: the Supabase CLI's local
+database), never the `DATABASE_URL` the app and the benchmark use, which is the hosted project
+(decision 034 and its amendment).
 """
 
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
 
+import psycopg
 import pytest
 from pydantic import SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from vcr.request import Request
 
-from aiact.settings import Settings, get_settings
+from aiact.settings import ENV_FILE, Settings, get_settings
 
 pytest_plugins = ["pytester"]
 
@@ -41,20 +48,70 @@ REFUSAL_ROUTE: dict[str, object] = {
 ANY_HOST = [".*"]
 """`allowed_hosts` regexes for live tests. The block sees IP addresses, not host names."""
 
+LOCAL_TEST_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+"""The Supabase CLI's local database (`make db` starts it slim), which CI starts too."""
+
+
+class DatabaseForTests(BaseSettings):
+    """`TEST_DATABASE_URL`, read like the app's settings: the environment, then `backend/.env`."""
+
+    model_config = SettingsConfigDict(
+        env_file=ENV_FILE, env_file_encoding="utf-8", env_ignore_empty=True, extra="ignore"
+    )
+
+    test_database_url: SecretStr = SecretStr(LOCAL_TEST_DATABASE_URL)
+
+
+def database_url_for_tests() -> str:
+    """The database every test uses: `TEST_DATABASE_URL`, or the local one when it is unset."""
+    return DatabaseForTests().test_database_url.get_secret_value()
+
+
+def use_the_test_database() -> None:
+    """Point `DATABASE_URL` at the test database for this process and its subprocesses. An
+    environment variable beats `backend/.env`, so `get_settings()`, `aiact.db.connect()` and every
+    fixture reach the test database, never the hosted project `.env` names for the app."""
+    os.environ["DATABASE_URL"] = database_url_for_tests()
+    get_settings.cache_clear()
+
+
 LOCK_TIMEOUT = "15s"
-"""The longest a test's Postgres session waits for a lock. All worktrees share one local database,
-so without it a test could wait forever on a row another worktree's run holds (story F9)."""
-LOCK_TIMEOUT_OPTION = f"-c lock_timeout={LOCK_TIMEOUT}"
+"""The longest a test's Postgres session waits for a lock. All worktrees share one database, so
+without it a test could wait forever on a row another worktree's run holds (story F9)."""
+SET_LOCK_TIMEOUT = f"set lock_timeout = '{LOCK_TIMEOUT}'"
+
+
+ConnectFunction = Callable[..., psycopg.Connection]
+
+
+def _connect_with_lock_timeout(
+    connect: ConnectFunction,
+) -> "classmethod[psycopg.Connection, ..., psycopg.Connection]":
+    """`psycopg.Connection.connect`, followed by a session-level SET of the lock timeout. The SET
+    is committed on a non-autocommit connection, so a later rollback can't undo it."""
+
+    def connect_with_lock_timeout(
+        cls: type[psycopg.Connection], *args: object, **kwargs: object
+    ) -> psycopg.Connection:
+        connection = connect(cls, *args, **kwargs)
+        connection.execute(SET_LOCK_TIMEOUT)
+        if not connection.autocommit:
+            connection.commit()
+        return connection
+
+    return classmethod(connect_with_lock_timeout)
 
 
 def pytest_configure() -> None:
-    """Give every Postgres connection the tests open a lock timeout: the fixtures', the ones a
-    test opens itself, `aiact.db.connect()`'s and a subprocess's. libpq reads PGOPTIONS at connect
-    time, so no connect call has to remember it. A lock wait then fails with 55P03 instead of
-    hanging the run."""
-    options = os.environ.get("PGOPTIONS", "")
-    if LOCK_TIMEOUT_OPTION not in options:
-        os.environ["PGOPTIONS"] = f"{options} {LOCK_TIMEOUT_OPTION}".strip()
+    """Before any test reads the settings: use the test database, and give every Postgres
+    connection the tests open a lock timeout (the fixtures', the ones a test opens itself and
+    `aiact.db.connect()`'s). A lock wait then fails with 55P03 instead of hanging the run. It is a
+    SET after connecting rather than PGOPTIONS, because a Supabase session pooler drops startup
+    options (story F11); the SET works there, on a direct connection and on the local database."""
+    use_the_test_database()
+    original = psycopg.Connection.__dict__["connect"].__func__
+    psycopg.Connection.connect = _connect_with_lock_timeout(original)  # pyright: ignore[reportAttributeAccessIssue]
+    psycopg.connect = psycopg.Connection.connect  # the module-level alias is bound at import
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

@@ -240,8 +240,12 @@ HYBRID_SEARCH: LiteralString = """
       ) f
       where f.frequency <= greatest(n.total * %(max_term_share)s, %(min_common_rows)s)
     ),
+    -- Ranked on the IDF sum rounded to 9 places: a float sum's last bits depend on the order the
+    -- plan adds the words in, so two rows with the same words (an article and its only matching
+    -- paragraph) would otherwise swap places between databases. A tie goes to the lower id.
     keyword_ranked as (
-      select p.id, sum(w.idf) as idf, row_number() over (order by sum(w.idf) desc, p.id) as rank
+      select p.id, sum(w.idf) as idf,
+             row_number() over (order by round(sum(w.idf)::numeric, 9) desc, p.id) as rank
       from provisions p
       join documents d on d.id = p.document_id and d.language = p.language
       join term_weights w on p.fts @@ w.term
