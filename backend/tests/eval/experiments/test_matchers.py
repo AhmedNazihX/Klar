@@ -184,6 +184,55 @@ def test_a_decided_section_b_case_names_art_2_2() -> None:
     )
 
 
+def _exempt(cited: tuple[str, ...], status: Status = Status.DECIDED) -> CheckOutcome:
+    return CheckOutcome(step=step(StepName.HIGH_RISK, status, cited), annex_iii_exempt=True)
+
+
+EXEMPT_LABEL = case(
+    "f-90",
+    RiskClass.MINIMAL_RISK,
+    citation=("annex:III:4:b", "art:6:3", "art:6:3:c"),
+    tags=(matchers.EXEMPTION_TRAP,),
+)
+"""A made-up own/f-style case labelled not high-risk on an Art. 6(3) condition."""
+
+
+def test_an_exemption_case_matches_an_exempt_step_on_its_point() -> None:
+    """E19's own/f matcher: a case labelled on an Art. 6(3) condition matches a decided exempt
+    step that cites one of its Annex III points and an Art. 6(3) condition."""
+    exempt = _exempt(("annex:III:4:b", "art:6:2", "art:6:3", "art:6:3:c", "art:6:4"))
+    assert matchers.high_risk_or_exempt_matches(exempt, EXEMPT_LABEL)
+    assert not matchers.high_risk_matches(exempt, EXEMPT_LABEL)
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    [
+        pytest.param(_exempt(("annex:III:4:a", "art:6:3:c")), id="another-point"),
+        pytest.param(_exempt(("annex:III:4:b", "art:6:3")), id="no-condition-cited"),
+        pytest.param(
+            _exempt(("annex:III:4:b", "art:6:3:c"), Status.NEEDS_MORE_INFORMATION),
+            id="not-decided",
+        ),
+        pytest.param(
+            high_risk_outcome(HighRiskRoute.ANNEX_III, "annex:III:4:b", cited=("art:6:3",)),
+            id="high-risk",
+        ),
+    ],
+)
+def test_an_exemption_case_matches_no_other_step(outcome: CheckOutcome) -> None:
+    assert not matchers.high_risk_or_exempt_matches(outcome, EXEMPT_LABEL)
+
+
+def test_only_a_case_tagged_on_art_6_3_accepts_an_exempt_step() -> None:
+    untagged = EXEMPT_LABEL.model_copy(update={"tags": ()})
+    exempt = _exempt(("annex:III:4:b", "art:6:3:c"))
+    assert not matchers.high_risk_or_exempt_matches(exempt, untagged)
+    not_high_risk = high_risk_outcome(None, None)
+    assert matchers.high_risk_or_exempt_matches(not_high_risk, untagged)
+    assert matchers.high_risk_or_exempt_matches(not_high_risk, EXEMPT_LABEL)
+
+
 def test_a_not_high_risk_label_expects_no_route_and_its_status() -> None:
     labelled = case("e-2", RiskClass.MINIMAL_RISK)
     assert matchers.high_risk_matches(high_risk_outcome(None, None), labelled)

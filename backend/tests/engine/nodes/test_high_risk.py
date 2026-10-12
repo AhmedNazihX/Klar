@@ -46,11 +46,17 @@ from aiact.engine.nodes.high_risk_retrieval import (
 )
 from aiact.engine.nodes.high_risk_texts import TEXTS, annex_i_entry, version_words
 from aiact.engine.nodes.key_facts import Answer
+from aiact.engine.nodes.open_in_law import NOT_NAMED
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
+from aiact.eval.experiments.matchers import (
+    EXEMPTION_TRAP,
+    high_risk_matches,
+    high_risk_or_exempt_matches,
+    replay_state,
+)
 from aiact.eval.experiments.matchers import WORKED_EXAMPLE as WORKED_EXAMPLE_CASE
-from aiact.eval.experiments.matchers import high_risk_matches, replay_state
 from aiact.llm import LLMConfigError, OpenRouterEmbeddings
 from aiact.llm.replies import FollowUpQuestion as ReplyQuestion
 from aiact.llm.replies import OpenQuestion
@@ -79,7 +85,6 @@ from tests.engine.built_corpus import (
 )
 from tests.engine.nodes.corpus_recording import (
     CorpusRecording,
-    RecordingPendingError,
     corpus_recording,
     lookup_call,
     require_recording,
@@ -289,13 +294,16 @@ def annex_iii(
     public_authority: Answer = Answer.NO,
     examples: tuple[str, ...] = (),
     open_question: OpenQuestion | None = None,
+    on: str = NOT_NAMED,
 ) -> AnnexIIIAnswer:
+    """`on` is the key fact an open question is about (`open_on`)."""
     return AnnexIIIAnswer.model_validate(
         {
             "point": point,
             "uses": uses,
             "public_authority": public_authority,
             **_openness(open_question),
+            "open_on": on,
             "evidence": EvidenceTag.INFERRED,
             "fact": f"Annex III: {point or 'none'}",
             "fact_numbers": (),
@@ -327,7 +335,9 @@ def annex_i(
     safety: Answer = Answer.NO,
     third_party: Answer = Answer.NO,
     open_question: OpenQuestion | None = None,
+    on: str = NOT_NAMED,
 ) -> AnnexIAnswer:
+    """`on` is the key fact an open question is about (`open_on`)."""
     return AnnexIAnswer.model_validate(
         {
             "point": point,
@@ -335,6 +345,7 @@ def annex_i(
             "safety_component_or_product": safety,
             "third_party_assessment": third_party,
             **_openness(open_question),
+            "open_on": on,
             "evidence": EvidenceTag.INFERRED,
             "fact": f"Annex I: {point or 'none'}",
             "fact_numbers": (),
@@ -576,37 +587,55 @@ def assert_ambiguous(result: CheckOutcome, route: HighRiskRoute) -> None:
     assert "pending legal review" in result.step.decision
 
 
-def test_an_open_annex_i_route_answered_on_its_stricter_reading_stays_high_risk() -> None:
-    """The in-house pattern: whether an exemption from the sector law's third-party assessment
-    means Art. 6(1)(b) is not met is open in law, so the fact is answered on its stricter
-    reading, "yes" (E19's prompt), and high-risk stays the working assumption."""
-    one = annex_i("annex:I:A:11", YES, YES, YES, open_question=OPEN)
-    result = outcome(answer(one=one))
+def test_an_open_annex_i_route_is_ambiguous_even_when_its_facts_all_read_yes() -> None:
+    result = outcome(answer(one=annex_i("annex:I:A:11", YES, YES, YES, open_question=OPEN)))
     assert_ambiguous(result, HighRiskRoute.ANNEX_I)
     assert result.annex_point == "annex:I:A:11"
 
 
-@pytest.mark.parametrize(
-    "facts",
-    [
-        pytest.param((Answer.NO, YES, YES), id="not-covered"),
-        pytest.param((YES, Answer.NO, YES), id="not-a-safety-component"),
-        pytest.param((YES, YES, Answer.NO), id="no-third-party-assessment"),
-    ],
-)
-def test_an_annex_i_route_a_fact_rules_out_is_not_held_open(
-    facts: tuple[Answer, Answer, Answer],
+ANNEX_I_FACTS = ("covered", "safety_component_or_product", "third_party_assessment")
+ANNEX_I_RULED_OUT = [
+    pytest.param((Answer.NO, YES, YES), 0, id="not-covered"),
+    pytest.param((YES, Answer.NO, YES), 1, id="not-a-safety-component"),
+    pytest.param((YES, YES, Answer.NO), 2, id="no-third-party-assessment"),
+]
+"""The Art. 6(1) facts with one answered "no", and which one."""
+
+
+@pytest.mark.parametrize(("facts", "against"), ANNEX_I_RULED_OUT)
+def test_an_annex_i_route_another_fact_rules_out_is_not_held_open(
+    facts: tuple[Answer, Answer, Answer], against: int
 ) -> None:
-    """E19's code fix: the Art. 6(1) facts are cumulative, so one answered "no" settles the
-    route as not met, even when the model marks it unsettled in law."""
-    result = outcome(answer(one=annex_i("annex:I:A:11", *facts, open_question=OPEN)))
+    """B3: the Art. 6(1) facts are cumulative, so with the open question on another of them, one
+    settled "no" settles the route as not met."""
+    other = ANNEX_I_FACTS[(against + 1) % len(ANNEX_I_FACTS)]
+    one = annex_i("annex:I:A:11", *facts, open_question=OPEN, on=other)
+    result = outcome(answer(one=one))
     assert result.step.status is Status.DECIDED
     assert result.high_risk_route is None
     assert result.step.open_question is None
 
 
-def test_an_open_annex_i_route_is_ambiguous_even_when_its_facts_all_read_yes() -> None:
-    result = outcome(answer(one=annex_i("annex:I:A:11", YES, YES, YES, open_question=OPEN)))
+@pytest.mark.parametrize(("facts", "against"), ANNEX_I_RULED_OUT)
+def test_an_annex_i_facts_own_lenient_answer_never_settles_its_open_question(
+    facts: tuple[Answer, Answer, Answer], against: int
+) -> None:
+    """B2: the in-house pattern, whether an exemption from the sector law's third-party
+    assessment means Art. 6(1)(b) is not met, is open in law; the model answers the fact "no",
+    as the description states it, and code reads it on its stricter side, so high-risk stays
+    the working assumption."""
+    one = annex_i("annex:I:A:11", *facts, open_question=OPEN, on=ANNEX_I_FACTS[against])
+    result = outcome(answer(one=one))
+    assert_ambiguous(result, HighRiskRoute.ANNEX_I)
+    assert result.annex_point == "annex:I:A:11"
+
+
+@pytest.mark.parametrize("facts", [pytest.param(p.values[0], id=p.id) for p in ANNEX_I_RULED_OUT])
+def test_an_annex_i_question_that_names_no_fact_stays_open(
+    facts: tuple[Answer, Answer, Answer],
+) -> None:
+    """B3: unsettled without naming its open fact, any "no" may be the question's lenient side."""
+    result = outcome(answer(one=annex_i("annex:I:A:11", *facts, open_question=OPEN)))
     assert_ambiguous(result, HighRiskRoute.ANNEX_I)
 
 
@@ -617,26 +646,51 @@ def test_an_open_annex_iii_point_is_ambiguous_with_high_risk_assumed() -> None:
     assert {"annex:III:4:a", "art:6:2", "art:6:3"} <= set(cited(result))
 
 
-@pytest.mark.parametrize(
-    "iii",
-    [
-        pytest.param(annex_iii("annex:III:4:a", Answer.NO, open_question=OPEN), id="use-no"),
-        pytest.param(
-            annex_iii("annex:III:5:a", YES, Answer.NO, open_question=OPEN), id="public-user-no"
-        ),
-    ],
-)
-def test_an_annex_iii_point_its_use_or_user_rules_out_is_not_held_open(
-    iii: AnnexIIIAnswer,
+ANNEX_III_RULED_OUT = [
+    pytest.param("annex:III:4:a", Answer.NO, Answer.NO, "uses", id="use-no"),
+    pytest.param("annex:III:5:a", YES, Answer.NO, "public_authority", id="public-user-no"),
+]
+"""A point with its use or the user it names answered "no", and which fact that is."""
+
+
+@pytest.mark.parametrize(("point", "uses", "user", "against"), ANNEX_III_RULED_OUT)
+def test_an_annex_iii_point_another_fact_rules_out_is_not_held_open(
+    point: str, uses: Answer, user: Answer, against: str
 ) -> None:
-    """E19's code fix (H1): a point applies to its listed use and the user it names; with
-    either answered "no" the point is ruled out, even when the model marks it unsettled."""
-    open_6_3 = art_6_3(Art63Condition.D, open_question=OPEN)
-    result = outcome(answer(iii, open_6_3))
+    """H1 and B3: a point applies to its listed use and the user it names; with the open
+    question on the other of them, the one settled "no" rules the point out, and an open Art.
+    6(3) question on it is moot."""
+    other = "public_authority" if against == "uses" else "uses"
+    iii = annex_iii(point, uses, user, open_question=OPEN, on=other)
+    result = outcome(answer(iii, art_6_3(Art63Condition.D, open_question=OPEN)))
     assert result.step.status is Status.DECIDED
     assert result.high_risk_route is None
     assert not result.annex_iii_exempt
     assert result.step.open_question is None
+
+
+@pytest.mark.parametrize(("point", "uses", "user", "against"), ANNEX_III_RULED_OUT)
+def test_an_annex_iii_facts_own_lenient_answer_never_settles_its_open_question(
+    point: str, uses: Answer, user: Answer, against: str
+) -> None:
+    """B2 and B3: open on the use, or on whether a public authority uses it (or someone acting
+    on its behalf), the model's "no" to that fact decides nothing: code reads it on its
+    stricter side, and the point stays open with high-risk assumed."""
+    iii = annex_iii(point, uses, user, open_question=OPEN, on=against)
+    result = outcome(answer(iii))
+    assert_ambiguous(result, HighRiskRoute.ANNEX_III)
+    assert result.annex_point == point
+
+
+def test_an_open_exemption_on_a_point_whose_user_is_open_stays_open() -> None:
+    """B3 for Art. 6(3) (H2): an open exemption is not dropped because the model answered the
+    user it is itself unsure of "no"; the user held strict lists the point, and the open
+    exemption keeps high-risk as the working assumption."""
+    iii = annex_iii("annex:III:5:a", YES, Answer.NO, open_question=OPEN, on="public_authority")
+    result = outcome(answer(iii, art_6_3(Art63Condition.D, open_question=OPEN)))
+    assert result.high_risk_route is HighRiskRoute.ANNEX_III
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    assert not result.annex_iii_exempt
 
 
 def test_an_open_art_6_3_exemption_is_ambiguous_with_high_risk_assumed() -> None:
@@ -1343,19 +1397,28 @@ def test_the_response_format_requires_every_field() -> None:
 
 def test_each_route_answers_its_legal_openness_right_after_its_facts() -> None:
     """Strict structured output fills fields in order, so `settled_in_law` and `open_question`
-    sit after each route's facts and before its summary."""
+    sit after each route's facts and before its summary, and on the Annex routes `open_on`
+    (E19) right after them."""
     definitions = node.HIGH_RISK_RESPONSE_FORMAT["json_schema"]
     assert isinstance(definitions, dict)
     defs = definitions["schema"]["$defs"]
+    openness = ["settled_in_law", "open_question"]
     last_facts = {
-        "AnnexIIIAnswer": "public_authority",
-        "Art63Answer": "profiling",
-        "AnnexIAnswer": "third_party_assessment",
+        "AnnexIIIAnswer": ("public_authority", [*openness, "open_on", "evidence"]),
+        "Art63Answer": ("profiling", [*openness, "evidence"]),
+        "AnnexIAnswer": ("third_party_assessment", [*openness, "open_on", "evidence"]),
     }
-    for name, last in last_facts.items():
+    for name, (last, after) in last_facts.items():
         fields = defs[name]["required"]
         at = fields.index(last)
-        assert fields[at + 1 : at + 4] == ["settled_in_law", "open_question", "evidence"]
+        assert fields[at + 1 : at + 1 + len(after)] == after
+    named = {name: defs[f"{name}OpenOn"]["enum"] for name in ("AnnexIII", "AnnexI")}
+    assert named == {
+        "AnnexIII": ["none", "uses", "public_authority"],
+        "AnnexI": ["none", "covered", "safety_component_or_product", "third_party_assessment"],
+    }
+    assert set(node.STRICT_VALUES) == {*named["AnnexIII"][1:], *named["AnnexI"][1:]}
+    assert set(node.STRICT_VALUES.values()) == {Answer.YES}
 
 
 def _prompt_annex_i_ids(language: Language) -> list[str]:
@@ -1821,26 +1884,6 @@ OWN_F_CASES = [
 OWN_F_RECORD_COMMAND = (
     "uv run pytest tests/engine/nodes/test_high_risk.py -k own_f_replay --record-mode=once"
 )
-EXEMPTION_TRAP = "trap:art_6_3_exemption"
-
-
-def own_f_matches(result: CheckOutcome, case: BenchmarkCase) -> bool:
-    """`high_risk_matches`, except that a case whose label rests on an Art. 6(3) condition
-    (`trap:art_6_3_exemption`) also matches when the step decides the system exempt on one of
-    its labelled Annex III points, citing an Art. 6(3) condition: `high_risk_matches` counts any
-    exemption as a miss for a label that is not high-risk."""
-    if high_risk_matches(result, case):
-        return True
-    if EXEMPTION_TRAP not in case.tags or not result.annex_iii_exempt:
-        return False
-    points = {pid for pid in case.label_citation if pid.startswith("annex:III:")}
-    shown = set(cited(result))  # an exempt step names its point by citing it
-    return (
-        result.high_risk_route is None
-        and result.step.status is Status.DECIDED
-        and bool(points & shown)
-        and any(pid.startswith("art:6:3:") for pid in shown)
-    )
 
 
 @pytest.fixture
@@ -1856,12 +1899,7 @@ def own_f_replay_check(
         yield check
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=RecordingPendingError,
-    reason="recording pending (orchestrator): E19's new own/f replay; record it with "
-    f"`{OWN_F_RECORD_COMMAND}`",
-)
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", OWN_F_CASES, ids=lambda case: case.id)
 def test_own_f_replay(case: BenchmarkCase, own_f_replay_check: HighRiskCheck) -> None:
@@ -1873,7 +1911,7 @@ def test_own_f_replay(case: BenchmarkCase, own_f_replay_check: HighRiskCheck) ->
     assert not whole_articles(result.step)
     step = result.step
     shown = (result.high_risk_route, result.annex_point, step.status, cited(result), step.decision)
-    assert own_f_matches(result, case), shown
+    assert high_risk_or_exempt_matches(result, case), shown
 
 
 def test_own_f_holds_b15s_nine_cases() -> None:
@@ -1888,59 +1926,55 @@ def test_own_f_holds_b15s_nine_cases() -> None:
     assert tags.count("trap:critical_infrastructure_not_safety_component") == 3
 
 
-def _exemption_case(tags: tuple[str, ...]) -> BenchmarkCase:
-    return BenchmarkCase.model_validate(
-        {
-            "id": "own-f-90-invented",
-            "set_name": "own",
-            "language": "en",
-            "description": PUMP_TOOL,
-            "label": {"risk_class": "minimal_risk", "role": "deployer"},
-            "label_citation": ["annex:III:4:b", "art:6:3", "art:6:3:c"],
-            "tags": list(tags),
-        }
-    )
-
-
-def test_an_exemption_case_matches_only_an_exempt_step_on_its_point() -> None:
-    case = _exemption_case((EXEMPTION_TRAP,))
-    exempt = outcome(answer(annex_iii("annex:III:4:b", YES), art_6_3(Art63Condition.C)))
-    assert exempt.annex_iii_exempt
-    assert own_f_matches(exempt, case)
-    assert not own_f_matches(exempt, _exemption_case(()))
-    elsewhere = outcome(answer(annex_iii("annex:III:4:a", YES), art_6_3(Art63Condition.C)))
-    assert not own_f_matches(elsewhere, case)
-    profiling = art_6_3(Art63Condition.C, profiling=YES)
-    assert not own_f_matches(outcome(answer(annex_iii("annex:III:4:b", YES), profiling)), case)
-    assert own_f_matches(outcome(answer()), case)
-
-
 E19_RULES = (
-    # The bar for an open question of law, and the stricter reading of a condition held open
+    # The bar for an open question of law, and the open fact named (B1)
     'An open question of law has a bar. Answer a route\'s `settled_in_law` "no" only when you '
     "can name the condition of Article 6 or of the Annex point whose reading is undecided for "
     "these facts",
     'being unsure, or wanting to be safe, is never a reason to answer "no".',
     'A fact the description leaves open is answered "unknown", and the application asks for it.',
-    'answer the condition the question is about on its stricter reading, "yes"',
-    'A key fact answered "no" settles its route as not met, whatever `settled_in_law` says.',
+    'answer that route\'s `settled_in_law` "no" and name the key fact the question is about in '
+    "its `open_on`.",
+    'annex_iii and annex_i then add `open_on`: when `settled_in_law` is "no", the key fact the '
+    "open question is about, by its field name",
     # H1 (guide-annex-iii paras 65, 72, 81)
-    "An Annex III point covers the use it lists, not its whole area",
+    "An Annex III point covers the use case it lists, not its whole area: only a limited set of "
+    "use cases within the broad areas is high-risk, and the list of them is exhaustive "
+    "(guidelines, paragraph 65).",
+    "directly or indirectly, in the way the point lists, whether that is its only purpose or one "
+    "among several purposes (paragraph 72).",
     "A point that names its user (5(a), 6, 7, 8(a)) doesn't apply to a system used by anyone "
     'else: answer `public_authority` "no".',
     "does not act on behalf of a public authority (paragraph 81).",
     # H2 (Art. 6(3), recital 53; guide-annex-iii paras 88-108)
-    "Apply the conditions to the facts the description gives: whether the system's task is one "
-    'of them is a reading of those facts, answered in `condition` with `settled_in_law` "yes", '
-    "not a question of law.",
+    "Apply the conditions to the facts the description gives, and answer in `condition` the one "
+    "the system's task meets.",
     # H3 (Art. 3(52), Art. 4(4) GDPR; guide-annex-iii paras 110-112)
-    "Reading, extracting, matching or filing a person's documents or records, or sorting people "
-    "by a simple characteristic such as age, without evaluating them, is not profiling",
+    "Where personal data are processed without an evaluation of personal characteristics, which "
+    "always includes a prediction, assessment or judgement about the person, there is no "
+    "profiling;",
+    "a simple classification of people by characteristics such as age, sex or height does not "
+    "necessarily amount to profiling, as that depends on the purpose of the classification",
 )
 """E19's bar and its H1-H3 rules, as high_risk.md words them."""
+
+DROPPED_RULES = (
+    "stricter reading",
+    "whatever `settled_in_law` says",
+    "not a question of law",
+    "intended purpose is that use",
+    "forecasting totals",
+    "matching or filing",
+    "decisions or totals",
+)
+"""Wording E19's fix round dropped: the stricter reading is code's (B4), Art. 6(3) is applied
+to the facts without calling it a question of fact or law (F3), and the examples that came close
+to B15's own/f cases give way to the guidelines' wording (F1, F7)."""
 
 
 def test_the_prompt_states_the_e19_rules() -> None:
     flat = " ".join(node.HIGH_RISK_INSTRUCTIONS.split())
     for rule in E19_RULES:
         assert rule in flat
+    for dropped in DROPPED_RULES:
+        assert dropped not in flat

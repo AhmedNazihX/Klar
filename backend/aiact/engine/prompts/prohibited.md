@@ -23,6 +23,9 @@ Every practice ends with the same fields:
 - `open_question`: when `settled_in_law` is "no", the question the law leaves open
   (`question`) and its two readings (`readings`), the stricter one (prohibited) first. Null
   otherwise.
+- `open_on`: when `settled_in_law` is "no", the key fact of this practice the open question is
+  about, by its field name (for example "significant_harm"); "none" when the practice is
+  settled.
 - `evidence`: where the answers come from: "stated" (the description says it), "inferred" (it
   follows from what the description says) or "assumed" (a usual default, nothing points either
   way).
@@ -38,11 +41,9 @@ yourself; being unsure, or wanting to be safe, is never a reason to answer "no".
 
 A missing fact and an open question of law are different. A fact the description leaves open is
 answered "unknown", and the application asks for it. When the facts that matter are stated but
-whether they meet a condition of Article 5 stays open in law, answer `settled_in_law` "no" and
-answer that condition on its stricter reading: "yes" for a condition of the practice, "no" for
-an exception. A condition answered against the practice ("no" for a condition, "yes" for an
-exception) settles it as not met, whatever `settled_in_law` says. Answer the other key facts as
-the description states them; do not answer them "unknown", and do not ask for a fact the
+whether they meet a condition or an exception of Article 5 stays open in law, answer
+`settled_in_law` "no", name that key fact in `open_on`, and answer the key facts as the
+description states them; do not answer them "unknown", and do not ask for a fact the
 description already gives.
 
 ## manipulation: point (a)
@@ -60,8 +61,8 @@ description already gives.
   affected), the significant-harm condition is met: answer `significant_harm` "yes". "unknown"
   when the description doesn't say what follows for the people affected, or says it doesn't
   know. When it states the effects but whether they reach the threshold of significant harm is
-  not settled by the Act or the guidelines, answer `significant_harm` "yes", its stricter
-  reading, and `settled_in_law` "no".
+  not settled by the Act or the guidelines, answer the facts as stated, `settled_in_law` "no"
+  and `open_on` "significant_harm".
 
 ## vulnerability: point (b)
 
@@ -103,10 +104,8 @@ description already gives.
   settings unrelated to the one where the data was generated or collected.
 - `disproportionate_treatment`: the score leads to worse treatment that is unjustified or out of
   proportion to the behaviour or its gravity.
-- `open_on`: when `settled_in_law` is "no", the condition the open question is about:
-  "social_scoring", "i" (`unrelated_context_treatment`) or "ii" (`disproportionate_treatment`);
-  "none" when the point is settled. Point (c) is met when (i) or (ii) is, so answer each of them
-  on its own.
+- Point (c) is met when (i) or (ii) is, so answer each of them on its own, and name in
+  `open_on` the one an open question is about.
 - Conditions (i) and (ii) (guidelines, paragraphs 163-167 and 175-177): an evaluation made
   lawfully, in line with Union and national law, for one specific purpose, from data that belongs
   to that purpose and used only for that purpose, stays outside the prohibition as long as any
@@ -135,10 +134,15 @@ description already gives.
 - `crime_risk_assessment`: the system assesses or predicts the risk that an individual person
   will commit a criminal offence. A prediction about places or areas rather than persons
   (guidelines, paragraph 212), or about companies and other legal entities (paragraph 215), is
-  "no". So is a company's risk assessment in the ordinary course of its own business, such as
-  fraud, default or misuse of its service, where an offence is at most an incidental side of the
-  risk assessed (paragraphs 210 and 211), unless the law obliges it to assess the risk of
-  specific offences or it acts for a law enforcement authority (paragraphs 208 and 209).
+  "no". So is a private entity profiling its customers for its regular business operations and
+  safety, or to protect its financial interests (for example detecting financial
+  irregularities), without the purpose of assessing the risk of the customer committing a
+  specific criminal offence (paragraph 210): a link to criminal offences is then merely
+  accidental and secondary (paragraph 211). This does not hold when the law entrusts the private
+  entity with public powers to prevent, investigate, detect or prosecute criminal offences, when
+  a law enforcement authority asks it to act on its behalf (paragraph 208), or when a legal
+  obligation requires it to assess the risk of persons committing specific offences (paragraph
+  209).
 - `solely_profiling`: that assessment rests only on profiling the person (evaluating their
   personal aspects, Art. 3(52)) or on their personality traits and characteristics, such as
   nationality, place of birth, place of residence, number of children, level of debt or type of
@@ -163,8 +167,9 @@ description already gives.
   (webcams, voice, keystrokes, sensors), ask yourself this question explicitly; "unknown" when
   the description doesn't say what the monitoring detects. Physical states such as pain or
   fatigue, the mere detection of a readily apparent expression, gesture or movement that is not
-  used to infer an emotion, and emotions or sentiment read from what people write rather than
-  from their biometric data are "no" (recital 18; guidelines, paragraphs 249 and 265).
+  used to infer an emotion, and emotions or sentiment inferred from the content of what people
+  say or write rather than from their biometric data are "no" (recital 18; guidelines,
+  paragraphs 249, 251 and 265).
 - `workplace_or_education`: the people whose emotions the system is aimed at are at their
   workplace (workers, and candidates during hiring) or in an education institution (learners,
   and applicants). Anyone outside those two settings is "no": customers, patients, travellers or
@@ -179,9 +184,9 @@ description already gives.
 
 - `biometric_categorisation`: the system sorts individual people into categories on the basis of
   their biometric data (face, voice, body features, gait or keystroke patterns). Grouping people
-  by their clothes or accessories, their social media activity, or what they say, write or buy
-  is not based on biometric data, and grouping a whole crowd without looking at each person is
-  not individual categorisation: both are "no" (guidelines, paragraphs 277 and 282).
+  by their clothes or accessories, their social media activity, or the content of what they say
+  or write is not based on biometric data, and grouping a whole crowd without looking at each
+  person is not individual categorisation: both are "no" (guidelines, paragraphs 277 and 282).
 - `sensitive_traits`: the categories deduce or infer race, political opinions, trade union
   membership, religious or philosophical beliefs, sex life or sexual orientation. Only these
   count: categories such as age, gender, skin or eye colour, health or emotions are "no"

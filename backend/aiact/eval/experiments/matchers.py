@@ -11,6 +11,8 @@ can't drift apart.
   fact (B12's rule).
 - high_risk (B5e, INIT's worked example): the label's class, route, Annex point and status, the
   tagged missing fact, the Art. 2(2) note for a decided Section B case, and every `cites:` tag.
+  For E19's own/f replay, a case labelled on an Art. 6(3) condition may instead be decided
+  exempt on its labelled Annex III point, citing a condition (`high_risk_or_exempt_matches`).
 - transparency (B5a): the label's status; no Art. 50 duty for a minimal_risk label and at least
   one for limited_risk (rule 2: the class describes the system); of the duties the labelled role
   bears itself (Art. 50(1)-(2) a provider, (3)-(4) a deployer), exactly the tagged
@@ -173,6 +175,29 @@ def high_risk_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
         and all(asked == fact for fact in tag(case, "missing_fact"))
         and (names_art_2_2 or not section_b_decided)
         and set(tag(case, "cites")) <= set(cited(outcome))
+    )
+
+
+EXEMPTION_TRAP = "trap:art_6_3_exemption"
+"""A case whose label rests on an Art. 6(3) condition (B15's own/f)."""
+
+
+def high_risk_or_exempt_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
+    """`high_risk_matches`, except that a case tagged `trap:art_6_3_exemption` also matches a
+    step that decides the system exempt on one of its labelled Annex III points, citing an Art.
+    6(3) condition: `high_risk_matches` counts any exemption as a miss for a label that is not
+    high-risk (E19's own/f replay)."""
+    if high_risk_matches(outcome, case):
+        return True
+    if EXEMPTION_TRAP not in case.tags or not outcome.annex_iii_exempt:
+        return False
+    points = {pid for pid in case.label_citation if pid.startswith("annex:III:")}
+    shown = set(cited(outcome))  # an exempt step names its point by citing it
+    return (
+        outcome.high_risk_route is None
+        and outcome.step.status is Status.DECIDED
+        and bool(points & shown)
+        and any(pid.startswith("art:6:3:") for pid in shown)
     )
 
 

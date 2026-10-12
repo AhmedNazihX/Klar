@@ -27,6 +27,7 @@ from tests.api.conftest import BASE_URL, FULL_RUN, TEST_HOST, outline, sse_event
 from tests.conftest import RECORDINGS_DIR
 from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import RecordingPendingError, corpus_recording
+from tests.engine.nodes.known_gaps import E19_PROMPTS_RECORDING_PENDING
 from tests.engine.test_classify_worked_example import (
     AS_OF,
     LUNA,
@@ -122,13 +123,7 @@ def test_other_runs_are_not_pending(events: list[ClassifyEvent], log: str) -> No
     raise_if_recording_stale(events, log)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=RecordingPendingError,
-    reason="recording pending (orchestrator): E19 changed the prohibited, high-risk and "
-    "transparency prompts, so the worked example's recorded requests are stale and the stream "
-    "ends in an error event; passes once its RECORD_COMMAND re-records that replay",
-)
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.anyio
 async def test_the_worked_example_streams_every_step_then_the_expected_result(

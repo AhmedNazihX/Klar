@@ -22,7 +22,9 @@ the Act's rules are applied here, in code:
   reading gives are the original Art. 113's.
 - **Uncertain facts:** a deciding fact left open makes the step `needs_more_information`, a
   question the law leaves open makes it `legally_ambiguous`; either way the stricter reading
-  (high-risk) is the labelled working assumption, and the step asks the deciding question.
+  (high-risk) is the labelled working assumption, and the step asks the deciding question. The
+  fact an Annex route is open on in law is read on its stricter side, so only another fact can
+  rule the route out (E19, `open_in_law`).
 - **A provider refusal** (decision 029): not assessed; high-risk on the Annex III route, whose
   duties apply first, is assumed until a person reviews the description.
 
@@ -81,6 +83,7 @@ from aiact.engine.nodes.high_risk_texts import (
     version_words,
 )
 from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
+from aiact.engine.nodes.open_in_law import NOT_NAMED, held_strict, stays_open
 from aiact.engine.nodes.questions import ask, hint, open_question
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
@@ -165,17 +168,25 @@ class RouteSummary(ContractModel):
         return True
 
 
+class AnnexIIIOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    USES = "uses"
+    PUBLIC_AUTHORITY = "public_authority"
+
+
 class AnnexIIIAnswer(RouteSummary):
     """The Annex III use. Enum fields carry no description: strict structured output rejects
     keywords next to a `$ref`; the prompt explains every field instead. Each route's
     `settled_in_law` and `open_question` come right after its facts, so the model answers them
-    in that order every time."""
+    in that order every time; on the two Annex routes `open_on` follows, naming the key fact a
+    question the law leaves open is about (E19, `open_in_law`)."""
 
     point: str | None
     uses: Answer
     public_authority: Answer
     settled_in_law: Settled
     open_question: ReplyOpenQuestion | None
+    open_on: AnnexIIIOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
@@ -192,6 +203,13 @@ class Art63Answer(RouteSummary):
     fact_numbers: tuple[int, ...]
 
 
+class AnnexIOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    COVERED = "covered"
+    SAFETY_COMPONENT_OR_PRODUCT = "safety_component_or_product"
+    THIRD_PARTY_ASSESSMENT = "third_party_assessment"
+
+
 class AnnexIAnswer(RouteSummary):
     point: str | None
     covered: Answer
@@ -199,9 +217,20 @@ class AnnexIAnswer(RouteSummary):
     third_party_assessment: Answer
     settled_in_law: Settled
     open_question: ReplyOpenQuestion | None
+    open_on: AnnexIOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+
+STRICT_VALUES: Mapping[str, Answer] = {
+    "uses": Answer.YES,
+    "public_authority": Answer.YES,
+    "covered": Answer.YES,
+    "safety_component_or_product": Answer.YES,
+    "third_party_assessment": Answer.YES,
+}
+"""Each Annex route fact's stricter value (B2): the one that keeps the route high-risk."""
 
 
 RouteAnswer = AnnexIIIAnswer | Art63Answer | AnnexIAnswer
@@ -346,7 +375,8 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
     open on it, wins; otherwise an open question of law, then an open fact, keeps high-risk as
     the working assumption; otherwise the system is exempt under Art. 6(3) or not high-risk.
     The key facts answer what the description states, so a route the law leaves open is
-    ambiguous even when its facts all read "yes"."""
+    ambiguous even when its facts all read "yes". `answer` has its open facts held strict
+    (`held_strict_answer`)."""
     iii = read_annex_iii(answer, language)
     annex_i = read_annex_i(answer.annex_i)
     unknowns = (iii.listed.missing, iii.exempt_missing, annex_i.missing)
@@ -394,22 +424,37 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
     return _open_or_settled(answer, base, iii, annex_i, iii_cited)
 
 
+def held_strict_answer(answer: HighRiskAnswer) -> HighRiskAnswer:
+    """The answer with each Annex route's open fact (`open_on`) set to its stricter value (B2),
+    as a new copy, so the model's own answer to a fact the law leaves open never decides
+    anything. A route that names no point holds nothing open."""
+    iii, one = answer.annex_iii, answer.annex_i
+    return answer.model_copy(
+        update={
+            "annex_iii": iii if iii.point is None else held_strict(iii, STRICT_VALUES),
+            "annex_i": one if one.point is None else held_strict(one, STRICT_VALUES),
+        }
+    )
+
+
 def _open_on_annex_iii(answer: HighRiskAnswer, iii: AnnexIIIReading) -> bool:
-    """The law leaves open whether a named Annex III point, or its Art. 6(3) exemption, applies;
-    never once the point is ruled out (E19): the use or the user it names is "no", which settles
-    it whatever `settled_in_law` says. An open exemption stays open: `condition` names the
-    condition the question is about."""
+    """The law leaves open whether a named Annex III point, or its Art. 6(3) exemption, applies.
+    With its open fact held strict, only another fact the point needs (its use, or the user it
+    names) answered "no" settles the point (`open_in_law.stays_open`), and an exemption
+    question is moot for a point so ruled out. An open exemption names its condition in
+    `condition`; whether it applies is never read the lenient way."""
     match = answer.annex_iii
-    if match.point not in ANNEX_III_POINTS or iii.listed.answer is Answer.NO:
+    if match.point not in ANNEX_III_POINTS:
         return False
-    return match.settled_in_law is Settled.NO or answer.art_6_3.settled_in_law is Settled.NO
+    is_listed = iii.listed.answer is not Answer.NO
+    is_exemption_open = answer.art_6_3.settled_in_law is Settled.NO and is_listed
+    return is_exemption_open or stays_open(match, iii.listed.answer)
 
 
 def _open_on_annex_i(answer: AnnexIAnswer, route: Route) -> bool:
-    """The law leaves open whether Art. 6(1) is met for a named Annex I point; never once one of
-    its cumulative facts is "no" (E19), which settles it whatever `settled_in_law` says."""
-    is_ruled_out = route.answer is Answer.NO
-    return answer.point is not None and answer.settled_in_law is Settled.NO and not is_ruled_out
+    """The law leaves open whether Art. 6(1) is met for a named Annex I point; with its open
+    fact held strict, only another of its cumulative facts answered "no" settles it."""
+    return answer.point is not None and stays_open(answer, route.answer)
 
 
 def _ambiguous(
@@ -650,11 +695,13 @@ def _decision(
 
 
 def to_outcome(
-    answer: HighRiskAnswer, state: EngineState, retrieved: Retrieved, library: HighRiskLibrary
+    given: HighRiskAnswer, state: EngineState, retrieved: Retrieved, library: HighRiskLibrary
 ) -> CheckOutcome:
-    """The high_risk step and its findings, from the model's answer and what was retrieved. The
-    cited provisions come from `retrieved` or are fetched from `library`."""
+    """The high_risk step and its findings, from the model's answer, each open fact held strict
+    (`held_strict_answer`), and what was retrieved. The cited provisions come from `retrieved`
+    or are fetched from `library`."""
     language = state["language"]
+    answer = held_strict_answer(given)
     settled = settle(answer, language)
     law = _law(answer.annex_i.point, retrieved)
     examples = _examples(answer, retrieved.guidance)

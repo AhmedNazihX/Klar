@@ -4,7 +4,7 @@ open on a fact), with what it cites and from when it applies. `prohibited` appli
 settles the step; nothing here calls a model or reads the corpus.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
@@ -22,6 +22,7 @@ from aiact.engine.nodes.key_facts import (
     need,
     negated,
 )
+from aiact.engine.nodes.open_in_law import NOT_NAMED, held_strict, stays_open
 from aiact.llm.replies import OpenQuestion
 from aiact.schemas import EvidenceTag, LawVersion
 from aiact.schemas.base import ContractModel
@@ -50,12 +51,21 @@ class PracticeSummary(ContractModel):
     """A practice's answer as `key_facts.facts_used` reads it: its `fact` sums up the reading, so
     it always counts as settled (an open fact is asked through its own question). Enum fields
     carry no description: strict structured output rejects keywords next to a `$ref`; the prompt
-    explains every field instead. Each practice's `settled_in_law` and `open_question` come right
-    after its facts, so the model answers them in that order every time."""
+    explains every field instead. Each practice's `settled_in_law`, `open_question` and `open_on`
+    come right after its facts, so the model answers them in that order every time. `open_on`
+    names the key fact a question the law leaves open is about (E19, `open_in_law`); its values
+    are the practice's key-fact fields, and "none"."""
 
     @property
     def is_known(self) -> bool:
         return True
+
+
+class ManipulationOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    MANIPULATIVE_TECHNIQUE = "manipulative_technique"
+    DISTORTS_BEHAVIOUR = "distorts_behaviour"
+    SIGNIFICANT_HARM = "significant_harm"
 
 
 class ManipulationAnswer(PracticeSummary):
@@ -64,9 +74,17 @@ class ManipulationAnswer(PracticeSummary):
     significant_harm: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
+    open_on: ManipulationOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+
+class VulnerabilityOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    EXPLOITS_VULNERABILITY = "exploits_vulnerability"
+    DISTORTS_BEHAVIOUR = "distorts_behaviour"
+    SIGNIFICANT_HARM = "significant_harm"
 
 
 class VulnerabilityAnswer(PracticeSummary):
@@ -75,9 +93,21 @@ class VulnerabilityAnswer(PracticeSummary):
     significant_harm: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
+    open_on: VulnerabilityOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+
+class SexualMaterialOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    INTIMATE_IMAGERY = "intimate_imagery"
+    CHILD_ABUSE_MATERIAL = "child_abuse_material"
+    ONLY_CONCEALS = "only_conceals"
+    CONSENT = "consent"
+    GENERATION_PURPOSE = "generation_purpose"
+    FORESEEABLE_WITHOUT_SAFEGUARDS = "foreseeable_without_safeguards"
+    DEPLOYER_GENERATION_PURPOSE = "deployer_generation_purpose"
 
 
 class SexualMaterialAnswer(PracticeSummary):
@@ -90,33 +120,39 @@ class SexualMaterialAnswer(PracticeSummary):
     deployer_generation_purpose: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
+    open_on: SexualMaterialOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
 
 
-class OpenCondition(StrEnum):
-    """Which condition of Art. 5(1)(c) a question the law leaves open is about."""
+class SocialScoringOpenOn(StrEnum):
+    """Point (c) is met by (i) or (ii), so a question open on one of them decides nothing once
+    the other is met (E4)."""
 
-    NONE = "none"
+    NONE = NOT_NAMED
     SOCIAL_SCORING = "social_scoring"
-    UNRELATED_CONTEXT = "i"
-    DISPROPORTIONATE = "ii"
+    UNRELATED_CONTEXT = "unrelated_context_treatment"
+    DISPROPORTIONATE = "disproportionate_treatment"
 
 
 class SocialScoringAnswer(PracticeSummary):
-    """`open_on` names the condition the open question concerns: point (c) is met by (i) or (ii),
-    so a question open on one of them decides nothing once the other is met."""
-
     social_scoring: Answer
     unrelated_context_treatment: Answer
     disproportionate_treatment: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
-    open_on: OpenCondition
+    open_on: SocialScoringOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+
+class CrimeRiskOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    CRIME_RISK_ASSESSMENT = "crime_risk_assessment"
+    SOLELY_PROFILING = "solely_profiling"
+    FACT_BASED_ASSESSMENT = "fact_based_assessment"
 
 
 class CrimeRiskAnswer(PracticeSummary):
@@ -125,18 +161,32 @@ class CrimeRiskAnswer(PracticeSummary):
     fact_based_assessment: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
+    open_on: CrimeRiskOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+
+class FaceScrapingOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    UNTARGETED_FACE_SCRAPING = "untargeted_face_scraping"
 
 
 class FaceScrapingAnswer(PracticeSummary):
     untargeted_face_scraping: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
+    open_on: FaceScrapingOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+
+class EmotionOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    INFERS_EMOTIONS = "infers_emotions"
+    WORKPLACE_OR_EDUCATION = "workplace_or_education"
+    MEDICAL_OR_SAFETY = "medical_or_safety"
 
 
 class EmotionAnswer(PracticeSummary):
@@ -145,9 +195,17 @@ class EmotionAnswer(PracticeSummary):
     medical_or_safety: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
+    open_on: EmotionOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+
+class BiometricCategorisationOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    BIOMETRIC_CATEGORISATION = "biometric_categorisation"
+    SENSITIVE_TRAITS = "sensitive_traits"
+    LAWFUL_LABELLING = "lawful_labelling"
 
 
 class BiometricCategorisationAnswer(PracticeSummary):
@@ -156,9 +214,21 @@ class BiometricCategorisationAnswer(PracticeSummary):
     lawful_labelling: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
+    open_on: BiometricCategorisationOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+
+class RemoteIdentificationOpenOn(StrEnum):
+    NONE = NOT_NAMED
+    REAL_TIME_IDENTIFICATION = "real_time_identification"
+    LAW_ENFORCEMENT_USE = "law_enforcement_use"
+    OBJECTIVE = "objective"
+    NATIONAL_LAW_AUTHORISATION = "national_law_authorisation"
+    PRIOR_AUTHORISATION = "prior_authorisation"
+    TARGETED_USE = "targeted_use"
+    IMPACT_ASSESSMENT_REGISTRATION = "impact_assessment_registration"
 
 
 class RemoteIdentificationAnswer(PracticeSummary):
@@ -171,9 +241,53 @@ class RemoteIdentificationAnswer(PracticeSummary):
     impact_assessment_registration: Answer
     settled_in_law: Settled
     open_question: OpenQuestion | None
+    open_on: RemoteIdentificationOpenOn
     evidence: EvidenceTag
     fact: str = Field(min_length=1)
     fact_numbers: tuple[int, ...]
+
+
+STRICT_VALUES: Mapping[str, Answer | RbiObjective] = {
+    # (a) and (b)
+    "manipulative_technique": Answer.YES,
+    "exploits_vulnerability": Answer.YES,
+    "distorts_behaviour": Answer.YES,
+    "significant_harm": Answer.YES,
+    # (ba) and (bb), with Art. 5(1a) and (1b)
+    "intimate_imagery": Answer.YES,
+    "child_abuse_material": Answer.YES,
+    "only_conceals": Answer.NO,
+    "consent": Answer.NO,
+    "generation_purpose": Answer.YES,
+    "foreseeable_without_safeguards": Answer.YES,
+    "deployer_generation_purpose": Answer.YES,
+    # (c) and (d)
+    "social_scoring": Answer.YES,
+    "unrelated_context_treatment": Answer.YES,
+    "disproportionate_treatment": Answer.YES,
+    "crime_risk_assessment": Answer.YES,
+    "solely_profiling": Answer.YES,
+    "fact_based_assessment": Answer.NO,
+    # (e), (f) and (g)
+    "untargeted_face_scraping": Answer.YES,
+    "infers_emotions": Answer.YES,
+    "workplace_or_education": Answer.YES,
+    "medical_or_safety": Answer.NO,
+    "biometric_categorisation": Answer.YES,
+    "sensitive_traits": Answer.YES,
+    "lawful_labelling": Answer.NO,
+    # (h), with the conditions of Art. 5(2), (3) and (5) that permit a use
+    "real_time_identification": Answer.YES,
+    "law_enforcement_use": Answer.YES,
+    "objective": RbiObjective.NONE,
+    "national_law_authorisation": Answer.NO,
+    "prior_authorisation": Answer.NO,
+    "targeted_use": Answer.NO,
+    "impact_assessment_registration": Answer.NO,
+}
+"""Each key fact's stricter value (B2): the one that keeps the practice prohibited. "yes" for a
+condition of a practice, "no" for an exception or a condition that permits a use, and no
+objective for Art. 5(1)(h)."""
 
 
 class ProhibitedAnswer(ContractModel):
@@ -199,6 +313,8 @@ class PracticeFields(Protocol):
     def settled_in_law(self) -> Settled: ...
     @property
     def open_question(self) -> OpenQuestion | None: ...
+    @property
+    def open_on(self) -> StrEnum: ...
     @property
     def evidence(self) -> EvidenceTag: ...
     @property
@@ -226,14 +342,10 @@ class Practice:
 
     @property
     def is_open(self) -> bool:
-        """The law leaves open whether the practice applies: only asked of a raised one, and never
-        of one a condition already rules out (E19). Its conditions are cumulative, so a key fact
-        that reads against the practice settles it, whatever `settled_in_law` says."""
-        return (
-            self.is_raised
-            and self.summary.settled_in_law is Settled.NO
-            and self.reading.answer is not Answer.NO
-        )
+        """The law leaves open whether the practice applies: only asked of a raised one. The
+        fact it is open on is read on its stricter side (`practices`), so only another fact that
+        rules the practice out settles it (E19, `open_in_law.stays_open`)."""
+        return self.is_raised and stays_open(self.summary, self.reading.answer)
 
 
 def _yes_points(pairs: Sequence[tuple[Answer, str]]) -> tuple[str, ...]:
@@ -316,15 +428,16 @@ def _other_alternative_met(answer: SocialScoringAnswer) -> bool:
     if answer.social_scoring is not Answer.YES:
         return False
     other = {
-        OpenCondition.UNRELATED_CONTEXT: answer.disproportionate_treatment,
-        OpenCondition.DISPROPORTIONATE: answer.unrelated_context_treatment,
+        SocialScoringOpenOn.UNRELATED_CONTEXT: answer.disproportionate_treatment,
+        SocialScoringOpenOn.DISPROPORTIONATE: answer.unrelated_context_treatment,
     }
     return other.get(answer.open_on) is Answer.YES
 
 
 def _settled_if_moot(answer: SocialScoringAnswer) -> SocialScoringAnswer:
     """The answer, read as settled in law when its open question is moot (the other
-    alternative is met), as a new copy; otherwise unchanged."""
+    alternative is met), as a new copy; otherwise unchanged. Read before the open fact is held
+    strict (`held_strict_answer`), so a moot alternative is neither held nor cited."""
     if not _other_alternative_met(answer):
         return answer
     return answer.model_copy(update={"settled_in_law": Settled.YES, "open_question": None})
@@ -348,7 +461,7 @@ def _profiling_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
                 ),
             ),
             is_raised=c.social_scoring is not Answer.NO,
-            summary=_settled_if_moot(c),
+            summary=c,
             cited=("art:5:1:c", *_yes_points(treatments)),
         ),
         Practice(
@@ -443,14 +556,34 @@ def _remote_identification(answer: RemoteIdentificationAnswer) -> Practice:
     )
 
 
+def held_strict_answer(answer: ProhibitedAnswer) -> ProhibitedAnswer:
+    """The answer with each practice's open fact (`open_on`) set to its stricter value (B2), as a
+    new copy: the model's own answer to a fact the law leaves open never decides anything."""
+    return answer.model_copy(
+        update={
+            "manipulation": held_strict(answer.manipulation, STRICT_VALUES),
+            "vulnerability": held_strict(answer.vulnerability, STRICT_VALUES),
+            "sexual_material": held_strict(answer.sexual_material, STRICT_VALUES),
+            "social_scoring": held_strict(_settled_if_moot(answer.social_scoring), STRICT_VALUES),
+            "crime_risk": held_strict(answer.crime_risk, STRICT_VALUES),
+            "face_scraping": held_strict(answer.face_scraping, STRICT_VALUES),
+            "emotion_recognition": held_strict(answer.emotion_recognition, STRICT_VALUES),
+            "biometric_categorisation": held_strict(answer.biometric_categorisation, STRICT_VALUES),
+            "remote_identification": held_strict(answer.remote_identification, STRICT_VALUES),
+        }
+    )
+
+
 def practices(answer: ProhibitedAnswer, law_version: LawVersion) -> tuple[Practice, ...]:
-    """Every Art. 5(1) practice read from the answer, in the order of the Act. The original
-    text has no points (ba) or (bb), so they are left out for it."""
-    sexual = _sexual_material_practices(answer.sexual_material)
+    """Every Art. 5(1) practice read from the answer, each open fact held strict
+    (`held_strict_answer`), in the order of the Act. The original text has no points (ba) or
+    (bb), so they are left out for it."""
+    held = held_strict_answer(answer)
+    sexual = _sexual_material_practices(held.sexual_material)
     return (
-        *_harm_practices(answer),
+        *_harm_practices(held),
         *(sexual if law_version is LawVersion.AMENDED else ()),
-        *_profiling_practices(answer),
-        *_biometric_practices(answer),
-        _remote_identification(answer.remote_identification),
+        *_profiling_practices(held),
+        *_biometric_practices(held),
+        _remote_identification(held.remote_identification),
     )

@@ -28,12 +28,11 @@ answer "no".
 A missing fact and an open question of law are different. A fact the description leaves open is
 answered "unknown", and the application asks for it. When the facts that matter are stated but
 whether Art. 6(1)(a) or (b), Art. 6(1a) or (1b), or an Annex III point is met stays open in law,
-answer that route's `settled_in_law` "no" and answer the condition the question is about on its
-stricter reading, "yes": `uses` for an Annex III point, the fact at issue for Annex I. A key fact
-answered "no" settles its route as not met, whatever `settled_in_law` says. When whether an Art.
-6(3) condition is met stays open in law, name that condition in `condition` and answer
-`settled_in_law` "no" for art_6_3. Answer the other key facts as the description states them; do
-not answer them "unknown", and do not ask for a fact the description already gives.
+answer that route's `settled_in_law` "no" and name the key fact the question is about in its
+`open_on`. When whether an Art. 6(3) condition is met stays open in law, name that condition in
+`condition` and answer `settled_in_law` "no" for art_6_3. Answer the key facts as the
+description states them; do not answer them "unknown", and do not ask for a fact the
+description already gives.
 
 Every route (annex_iii, art_6_3, annex_i) ends its key facts with the same two fields:
 - `settled_in_law`: "yes" when, on the facts as answered, the Act and guidance settle the
@@ -42,6 +41,9 @@ Every route (annex_iii, art_6_3, annex_i) ends its key facts with the same two f
 - `open_question`: when `settled_in_law` is "no", the question the law leaves open
   (`question`) and its two readings (`readings`), the stricter (high-risk) one first. Null when
   it is "yes".
+annex_iii and annex_i then add `open_on`: when `settled_in_law` is "no", the key fact the open
+question is about, by its field name (`uses` or `public_authority` for annex_iii; `covered`,
+`safety_component_or_product` or `third_party_assessment` for annex_i); "none" when it is "yes".
 A route that doesn't arise (no point named, or art_6_3 for a use outside Annex III) is "yes".
 
 ## annex_iii: the Annex III use (Art. 6(2))
@@ -58,16 +60,16 @@ A route that doesn't arise (no point named, or art_6_3 for a use outside Annex I
   only from the passages given; empty when none was close.
 
 Look at what the output is used for and whose situation it affects, not at the technology.
-An Annex III point covers the use it lists, not its whole area: only the listed uses within the
-areas are high-risk (guidelines, paragraph 65). Answer `uses` "yes" only when the system's
-intended purpose is that use, applied to the people the point names, for example recruiting or
-selecting natural persons, evaluating their creditworthiness, or deciding their admission to
-education. A system in the same area that does something else, such as forecasting totals or
-planning resources without evaluating or deciding about individual natural persons where the
-point is about them (paragraph 72), does not fall under the point: answer `uses` "no". A point
-that names its user (5(a), 6, 7, 8(a)) doesn't apply to a system used by anyone else: answer
-`public_authority` "no". A private body acting on its own account, voluntarily or to meet its own
-legal obligation, does not act on behalf of a public authority (paragraph 81).
+An Annex III point covers the use case it lists, not its whole area: only a limited set of use
+cases within the broad areas is high-risk, and the list of them is exhaustive (guidelines,
+paragraph 65). Where a point is about evaluating natural persons, answer `uses` "yes" when the
+system is meant to evaluate them, directly or indirectly, in the way the point lists, whether
+that is its only purpose or one among several purposes (paragraph 72). A system in the area
+whose intended uses include none of the uses the point lists does not fall under the point:
+answer `uses` "no". A point that names its user (5(a), 6, 7, 8(a)) doesn't apply to a system
+used by anyone else: answer `public_authority` "no". A private body acting on its own behalf,
+voluntarily or to comply with a legal obligation, does not act on behalf of a public authority
+(paragraph 81).
 Some points depend on who uses the system or what a decision means:
 - 5(a) needs a public authority, or someone acting for one, deciding on public benefits or
   services. When the description doesn't say whether the scheme is public or private, answer
@@ -116,10 +118,9 @@ answer `condition` "none" and `profiling` "no".
   "none" when no condition is met.
   A system whose output decides, ranks, scores or filters people for the assessment itself meets
   none of them.
-  Apply the conditions to the facts the description gives: whether the system's task is one of
-  them is a reading of those facts, answered in `condition` with `settled_in_law` "yes", not a
-  question of law. Read them narrowly (guidelines, paragraph 88), by what the output does in the
-  decision: (a) changes the format, structure or presentation of data or sorts documents into
+  Apply the conditions to the facts the description gives, and answer in `condition` the one
+  the system's task meets. Read them narrowly (guidelines, paragraph 88), by what the output
+  does in the decision: (a) changes the format, structure or presentation of data or sorts documents into
   categories without judging them, such as turning unstructured data into structured data,
   classifying incoming documents or detecting duplicates (recital 53; paragraphs 91 to 93); (c)
   compares completed human decisions with earlier patterns and only informs a proper human
@@ -129,11 +130,12 @@ answer `condition` "none" and `profiling` "no".
 - `profiling`: whether the system profiles natural persons (Art. 4(4) GDPR): it processes
   personal data to evaluate personal aspects of a person, an assessment, prediction or judgement
   about them such as their work performance, economic situation, health, preferences, interests,
-  reliability, behaviour, location or movements. Scoring or ranking people is profiling. Reading,
-  extracting, matching or filing a person's documents or records, or sorting people by a simple
-  characteristic such as age, without evaluating them, is not profiling, and neither is an
-  analysis of decisions or totals that evaluates no person (guidelines, paragraphs 110 to 112). An
-  Annex III system that profiles is always high-risk.
+  reliability, behaviour, location or movements. Scoring or ranking people is profiling. Where
+  personal data are processed without an evaluation of personal characteristics, which always
+  includes a prediction, assessment or judgement about the person, there is no profiling; a
+  simple classification of people by characteristics such as age, sex or height does not
+  necessarily amount to profiling, as that depends on the purpose of the classification
+  (guidelines, paragraphs 110 to 112). An Annex III system that profiles is always high-risk.
 
 ## annex_i: the product route (Art. 6(1))
 

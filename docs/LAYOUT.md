@@ -74,7 +74,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        the Annex I question's quotes, the readings and settled_by (E12);
 │   │   │   │                        reading_side.py: what a texts module says about one reading (E12);
 │   │   │   │                        corpus.py: the checks' one corpus reader (get_provision, search)
-│   │   │   │                        and the short connection each step reads it over (E15)
+│   │   │   │                        and the short connection each step reads it over (E15);
+│   │   │   │                        open_in_law.py: the fact a practice or Annex route is open on
+│   │   │   │                        in law, read on its stricter side (E19)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
 │   │   │   │                        high_risk_original.md: the original-text note, no Art. 6(1a)-(1c) (E11)
