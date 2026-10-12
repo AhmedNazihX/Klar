@@ -242,6 +242,13 @@ WORKPLACE_EMOTIONS = part(
 UNDRESSING_APP = part(
     SexualMaterialAnswer, intimate_imagery=Answer.YES, generation_purpose=Answer.YES
 )
+MANIPULATION = part(
+    ManipulationAnswer,
+    manipulative_technique=Answer.YES,
+    distorts_behaviour=Answer.YES,
+    significant_harm=Answer.YES,
+)
+"""Point (a) with every condition met: held open in law, it is the stricter reading (E19)."""
 POLICE_LIVE_SEARCH = {
     "real_time_identification": Answer.YES,
     "law_enforcement_use": Answer.YES,
@@ -341,15 +348,8 @@ def test_an_open_significant_harm_is_asked(
 
 
 def test_significant_harm_the_law_leaves_open_is_ambiguous_with_prohibited_assumed() -> None:
-    pressure = unsettled(
-        part(
-            ManipulationAnswer,
-            manipulative_technique=Answer.YES,
-            distorts_behaviour=Answer.YES,
-            significant_harm=Answer.NO,
-        )
-    )
-    result = outcome(answer(pressure))
+    """The harm held open in law is answered on its stricter reading, "yes" (E19's prompt)."""
+    result = outcome(answer(unsettled(MANIPULATION)))
     assert result.matched
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
     question = result.step.open_question
@@ -376,8 +376,7 @@ def test_significant_harm_the_law_leaves_open_is_ambiguous_with_prohibited_assum
 
 
 def test_an_unsettled_practice_without_its_question_gets_the_fixed_one() -> None:
-    unsettled = part(ManipulationAnswer, manipulative_technique=Answer.YES)
-    result = outcome(answer(unsettled.model_copy(update={"settled_in_law": Settled.NO})))
+    result = outcome(answer(MANIPULATION.model_copy(update={"settled_in_law": Settled.NO})))
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
     open_question = result.step.open_question
     assert open_question is not None
@@ -442,15 +441,92 @@ def test_an_open_question_on_social_scoring_itself_stays_open() -> None:
     assert outcome(answer(on_scoring)).step.status is Status.LEGALLY_AMBIGUOUS
 
 
-def test_social_scoring_with_neither_alternative_met_stays_open() -> None:
+def test_an_open_alternative_with_the_other_answered_no_stays_open() -> None:
+    """(ii) answered on its stricter reading and open in law, (i) "no": (ii) may still meet
+    point (c), so the question stays open."""
+    scoring = part(
+        SocialScoringAnswer, social_scoring=Answer.YES, disproportionate_treatment=Answer.YES
+    )
+    on_ii = unsettled(scoring).model_copy(update={"open_on": OpenCondition.DISPROPORTIONATE})
+    result = outcome(answer(on_ii))
+    assert result.matched
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+
+
+# --- E19: a practice a condition already rules out is not open -----------------------------------
+
+
+def test_social_scoring_with_neither_alternative_met_is_not_open() -> None:
+    """A purpose-bound score: social scoring, but neither (i) nor (ii) is met. Point (c) needs
+    one of them, so the practice is ruled out, whatever `settled_in_law` says."""
     scoring = part(SocialScoringAnswer, social_scoring=Answer.YES)
     result = outcome(answer(unsettled(scoring)))
+    assert not result.matched
+    assert result.step.status is Status.DECIDED
+    assert result.step.open_question is None
+    assert "Considered Art. 5(1)(c)" in result.step.decision
+
+
+@pytest.mark.parametrize(
+    ("model", "facts", "point"),
+    [
+        pytest.param(
+            ManipulationAnswer,
+            {"manipulative_technique": Answer.YES, "distorts_behaviour": Answer.YES},
+            "(a)",
+            id="a-harm-no",
+        ),
+        pytest.param(
+            CrimeRiskAnswer,
+            {"crime_risk_assessment": Answer.YES},
+            "(d)",
+            id="d-not-solely-profiling",
+        ),
+        pytest.param(
+            EmotionAnswer,
+            {
+                "infers_emotions": Answer.YES,
+                "workplace_or_education": Answer.YES,
+                "medical_or_safety": Answer.YES,
+            },
+            "(f)",
+            id="f-exception-yes",
+        ),
+        pytest.param(
+            BiometricCategorisationAnswer,
+            {"biometric_categorisation": Answer.YES},
+            "(g)",
+            id="g-no-listed-trait",
+        ),
+    ],
+)
+def test_a_practice_a_condition_rules_out_is_not_held_open(
+    model: type[PracticeSummary], facts: dict[str, Answer], point: str
+) -> None:
+    """E19's code fix: a cumulative condition answered against the practice (or its exception
+    answered "yes") settles it as not met, even when the model marks it unsettled in law."""
+    result = outcome(answer(unsettled(part(model, **facts))))
+    assert not result.matched
+    assert result.step.status is Status.DECIDED
+    assert result.step.open_question is None
+    assert f"Considered Art. 5(1){point}" in result.step.decision
+
+
+def test_a_practice_whose_conditions_all_hold_stays_open_when_the_law_leaves_it_open() -> None:
+    """The other side of E19's fix: every condition met and the law open is still ambiguous."""
+    result = outcome(
+        answer(
+            unsettled(
+                part(CrimeRiskAnswer, crime_risk_assessment=Answer.YES, solely_profiling=Answer.YES)
+            )
+        )
+    )
     assert result.matched
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
 
 
 def test_a_met_practice_beats_an_open_one() -> None:
-    pressure = unsettled(part(ManipulationAnswer, manipulative_technique=Answer.YES))
+    pressure = unsettled(MANIPULATION)
     result = outcome(answer(pressure, WORKPLACE_EMOTIONS))
     assert result.step.status is Status.DECIDED
     assert result.matched
@@ -458,7 +534,7 @@ def test_a_met_practice_beats_an_open_one() -> None:
 
 
 def test_an_open_practice_still_asks_the_open_facts_of_others() -> None:
-    pressure = unsettled(part(ManipulationAnswer, manipulative_technique=Answer.YES))
+    pressure = unsettled(MANIPULATION)
     monitoring = part(
         EmotionAnswer, infers_emotions=Answer.UNKNOWN, workplace_or_education=Answer.YES
     )
@@ -923,7 +999,7 @@ def test_a_decided_match_ends_the_run_as_prohibited() -> None:
 
 
 def test_an_ambiguous_match_runs_every_check_with_prohibited_assumed() -> None:
-    pressure = unsettled(part(ManipulationAnswer, manipulative_technique=Answer.YES))
+    pressure = unsettled(MANIPULATION)
     check = ProhibitedCheck(_settings(), chat=_fake_chat(answer(pressure)), library=FakeLibrary())
     final = _run(check)
     assert tuple(s.step for s in final.get("steps", ())) == STEP_ORDER

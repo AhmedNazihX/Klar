@@ -188,7 +188,7 @@ def test_an_open_art_6_3_question_reads_high_risk_against_exempt() -> None:
 
 
 def test_an_open_annex_iii_listing_reads_high_risk_against_not_covered() -> None:
-    result = outcome(answer(annex_iii("annex:III:4:a", Answer.NO, open_question=OPEN)))
+    result = outcome(answer(annex_iii("annex:III:4:a", YES, open_question=OPEN)))
     question = opened(result)
     stricter, lenient = question.readings
     assert lenient.title == "Not covered by Annex III point 4(a)"
@@ -234,7 +234,7 @@ def test_a_readings_consequence_dates_the_duties_by_the_law_versions_art_113(
     law_version: LawVersion, annex_i_from: date, annex_iii_from: date
 ) -> None:
     product = answer(one=annex_i(MDR, YES, YES, YES, open_question=OPEN))
-    listed = answer(annex_iii("annex:III:4:a", Answer.NO, open_question=OPEN))
+    listed = answer(annex_iii("annex:III:4:a", YES, open_question=OPEN))
     for given, start in ((product, annex_i_from), (listed, annex_iii_from)):
         stricter, _ = opened(outcome(given, law_version=law_version)).readings
         expected = f"If this holds, the high-risk duties apply from {long_date(start, 'en')}."

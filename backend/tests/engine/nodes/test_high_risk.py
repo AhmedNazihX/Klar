@@ -574,13 +574,33 @@ def assert_ambiguous(result: CheckOutcome, route: HighRiskRoute) -> None:
     assert "pending legal review" in result.step.decision
 
 
-def test_an_open_annex_i_route_stays_high_risk_even_when_its_facts_say_no() -> None:
-    """The in-house pattern: no third-party assessment as stated, but the law leaves open
-    whether that means Art. 6(1)(b) is not met. High-risk stays the working assumption."""
-    one = annex_i("annex:I:A:11", YES, YES, Answer.NO, open_question=OPEN)
+def test_an_open_annex_i_route_answered_on_its_stricter_reading_stays_high_risk() -> None:
+    """The in-house pattern: whether an exemption from the sector law's third-party assessment
+    means Art. 6(1)(b) is not met is open in law, so the fact is answered on its stricter
+    reading, "yes" (E19's prompt), and high-risk stays the working assumption."""
+    one = annex_i("annex:I:A:11", YES, YES, YES, open_question=OPEN)
     result = outcome(answer(one=one))
     assert_ambiguous(result, HighRiskRoute.ANNEX_I)
     assert result.annex_point == "annex:I:A:11"
+
+
+@pytest.mark.parametrize(
+    "facts",
+    [
+        pytest.param((Answer.NO, YES, YES), id="not-covered"),
+        pytest.param((YES, Answer.NO, YES), id="not-a-safety-component"),
+        pytest.param((YES, YES, Answer.NO), id="no-third-party-assessment"),
+    ],
+)
+def test_an_annex_i_route_a_fact_rules_out_is_not_held_open(
+    facts: tuple[Answer, Answer, Answer],
+) -> None:
+    """E19's code fix: the Art. 6(1) facts are cumulative, so one answered "no" settles the
+    route as not met, even when the model marks it unsettled in law."""
+    result = outcome(answer(one=annex_i("annex:I:A:11", *facts, open_question=OPEN)))
+    assert result.step.status is Status.DECIDED
+    assert result.high_risk_route is None
+    assert result.step.open_question is None
 
 
 def test_an_open_annex_i_route_is_ambiguous_even_when_its_facts_all_read_yes() -> None:
@@ -589,10 +609,32 @@ def test_an_open_annex_i_route_is_ambiguous_even_when_its_facts_all_read_yes() -
 
 
 def test_an_open_annex_iii_point_is_ambiguous_with_high_risk_assumed() -> None:
-    iii = annex_iii("annex:III:4:a", Answer.NO, open_question=OPEN)
+    iii = annex_iii("annex:III:4:a", YES, open_question=OPEN)
     result = outcome(answer(iii))
     assert_ambiguous(result, HighRiskRoute.ANNEX_III)
     assert {"annex:III:4:a", "art:6:2", "art:6:3"} <= set(cited(result))
+
+
+@pytest.mark.parametrize(
+    "iii",
+    [
+        pytest.param(annex_iii("annex:III:4:a", Answer.NO, open_question=OPEN), id="use-no"),
+        pytest.param(
+            annex_iii("annex:III:5:a", YES, Answer.NO, open_question=OPEN), id="public-user-no"
+        ),
+    ],
+)
+def test_an_annex_iii_point_its_use_or_user_rules_out_is_not_held_open(
+    iii: AnnexIIIAnswer,
+) -> None:
+    """E19's code fix (H1): a point applies to its listed use and the user it names; with
+    either answered "no" the point is ruled out, even when the model marks it unsettled."""
+    open_6_3 = art_6_3(Art63Condition.D, open_question=OPEN)
+    result = outcome(answer(iii, open_6_3))
+    assert result.step.status is Status.DECIDED
+    assert result.high_risk_route is None
+    assert not result.annex_iii_exempt
+    assert result.step.open_question is None
 
 
 def test_an_open_art_6_3_exemption_is_ambiguous_with_high_risk_assumed() -> None:
@@ -627,7 +669,7 @@ def test_a_decided_route_beats_an_open_question_on_the_other_route() -> None:
 
 def test_an_unsettled_route_without_its_question_gets_the_fixed_one() -> None:
     one = AnnexIAnswer.model_validate(
-        {**annex_i("annex:I:A:11", YES, YES, Answer.NO).model_dump(), "settled_in_law": "no"}
+        {**annex_i("annex:I:A:11", YES, YES, YES).model_dump(), "settled_in_law": "no"}
     )
     result = outcome(answer(one=one), language=Language.DE)
     assert result.step.status is Status.LEGALLY_AMBIGUOUS

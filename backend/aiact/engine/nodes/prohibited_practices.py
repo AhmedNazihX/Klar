@@ -226,8 +226,14 @@ class Practice:
 
     @property
     def is_open(self) -> bool:
-        """The law leaves open whether the practice applies (only asked of a raised one)."""
-        return self.is_raised and self.summary.settled_in_law is Settled.NO
+        """The law leaves open whether the practice applies: only asked of a raised one, and never
+        of one a condition already rules out (E19). Its conditions are cumulative, so a key fact
+        that reads against the practice settles it, whatever `settled_in_law` says."""
+        return (
+            self.is_raised
+            and self.summary.settled_in_law is Settled.NO
+            and self.reading.answer is not Answer.NO
+        )
 
 
 def _yes_points(pairs: Sequence[tuple[Answer, str]]) -> tuple[str, ...]:

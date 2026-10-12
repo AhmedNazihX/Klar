@@ -360,7 +360,7 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
     )
     exemption = _art63_citations(answer.art_6_3, iii.exempt)
     iii_cited = (*iii.listed.cited, *exemption) if iii.listed.cited else ()
-    iii_open, i_open = _open_on_annex_iii(answer), _open_on_annex_i(answer)
+    iii_open, i_open = _open_on_annex_iii(answer, iii), _open_on_annex_i(answer.annex_i, annex_i)
     if iii.listed.answer is Answer.YES and iii.exempt is Answer.NO and not iii_open:
         why = "iii_profiling" if answer.art_6_3.profiling is Answer.YES else "iii_no_condition"
         return replace(
@@ -394,18 +394,22 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
     return _open_or_settled(answer, base, iii, annex_i, iii_cited)
 
 
-def _open_on_annex_iii(answer: HighRiskAnswer) -> bool:
-    """The law leaves open whether a named Annex III point, or its Art. 6(3) exemption, applies."""
+def _open_on_annex_iii(answer: HighRiskAnswer, iii: AnnexIIIReading) -> bool:
+    """The law leaves open whether a named Annex III point, or its Art. 6(3) exemption, applies;
+    never once the point is ruled out (E19): the use or the user it names is "no", which settles
+    it whatever `settled_in_law` says. An open exemption stays open: `condition` names the
+    condition the question is about."""
     match = answer.annex_iii
-    if match.point not in ANNEX_III_POINTS:
+    if match.point not in ANNEX_III_POINTS or iii.listed.answer is Answer.NO:
         return False
-    exemption_open = match.uses is not Answer.NO and answer.art_6_3.settled_in_law is Settled.NO
-    return match.settled_in_law is Settled.NO or exemption_open
+    return match.settled_in_law is Settled.NO or answer.art_6_3.settled_in_law is Settled.NO
 
 
-def _open_on_annex_i(answer: HighRiskAnswer) -> bool:
-    """The law leaves open whether Art. 6(1) is met for a named Annex I point."""
-    return answer.annex_i.point is not None and answer.annex_i.settled_in_law is Settled.NO
+def _open_on_annex_i(answer: AnnexIAnswer, route: Route) -> bool:
+    """The law leaves open whether Art. 6(1) is met for a named Annex I point; never once one of
+    its cumulative facts is "no" (E19), which settles it whatever `settled_in_law` says."""
+    is_ruled_out = route.answer is Answer.NO
+    return answer.point is not None and answer.settled_in_law is Settled.NO and not is_ruled_out
 
 
 def _ambiguous(
@@ -522,9 +526,11 @@ def _if_yes(
         if annex_i.settled_in_law is Settled.YES and all(f is Answer.YES for f in others):
             return high_risk_outcome(HighRiskRoute.ANNEX_I, annex_i.point, law_version)
         return None
-    if answer.annex_iii.point not in ANNEX_III_POINTS or _open_on_annex_iii(answer):
+    if answer.annex_iii.point not in ANNEX_III_POINTS:
         return None
     iii = read_annex_iii(answer, language)
+    if _open_on_annex_iii(answer, iii):
+        return None
     is_profiling = key == PROFILING and iii.listed.answer is Answer.YES
     is_use_known = answer.annex_iii.uses is Answer.YES  # only who uses it is open
     is_listing = is_use_known and key is iii.listed.missing and iii.exempt is Answer.NO
