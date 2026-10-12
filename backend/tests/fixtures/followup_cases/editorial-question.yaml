@@ -1,0 +1,25 @@
+# E19 fixture for E17's answer loop, written from Art. 50(4) only: not a benchmark case, never
+# scored. A deployer publishes generated text to inform the public on matters of public interest,
+# and the description says nothing about human review or editorial responsibility, so Art.
+# 50(4)'s exception is a missing fact the step asks about.
+id: fixture-e19-editorial-question
+set_name: own
+language: en
+description: >-
+  We are a regional public health office. Since September 2026 we have used a text generator from
+  a software company to write the weekly bulletin on our website about air quality, pollen levels
+  and outbreaks of infectious disease in the region. The generator turns our monitoring data into
+  short articles, which appear on our website and our social media accounts.
+label:
+  risk_class: limited_risk
+  status: needs_more_information
+  role: deployer
+label_citation: ["art:50:4"]
+notes: >-
+  Art. 50(4), second subparagraph: the office deploys a system that generates text published to
+  inform the public on matters of public interest, so it must disclose that the text is
+  artificially generated unless the text has undergone human review or editorial control and a
+  natural or legal person holds editorial responsibility for it. The description says neither,
+  so the exception is the missing fact. Deployer of a bought system (Art. 3(4)).
+tags:
+  - "fixture:e19"

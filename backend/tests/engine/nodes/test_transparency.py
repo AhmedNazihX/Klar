@@ -11,6 +11,7 @@ import json
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import date
+from pathlib import Path
 from typing import cast
 
 import psycopg
@@ -78,6 +79,7 @@ from tests.engine.nodes.corpus_recording import (
     require_recording,
 )
 from tests.engine.nodes.known_gaps import (
+    E19_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1207,29 +1209,40 @@ obvious-interaction exception. own-a-14 (a known gap since E19's re-record) is l
 whether a generic synthetic voice is a deep fake (Art. 3(60)), a reading of the law no fact
 question settles, so it lists none."""
 
-EDITORIAL_CASE = "own-a-08-local-news-council-reports"
-EDITORIAL_ANSWER = (
-    "Ja. Ein Mensch prüft und bearbeitet jeden Text vor der Veröffentlichung, und unser "
-    "Unternehmen trägt die redaktionelle Verantwortung für die Veröffentlichung."
+EDITORIAL_FIXTURE = (
+    Path(__file__).resolve().parents[2] / "fixtures" / "followup_cases" / "editorial-question.yaml"
 )
-"""The user's answer to the editorial question, in the case's language (German), in Art. 50(4)'s
-own terms: human review or editorial control, and a person holding editorial responsibility."""
+"""E19's starting case for E17's loop, written from Art. 50(4) only (never a benchmark case): a
+deployer publishes generated text to inform the public, and the description says nothing about
+human review or editorial responsibility, so the editorial exception is a missing fact."""
+EDITORIAL_ANSWER = (
+    "Yes. A person reviews every text before it is published and holds editorial "
+    "responsibility for the publication."
+)
+"""The answer to the editorial question in Art. 50(4)'s own terms: human review, and a person
+holding editorial responsibility."""
 E17_RECORD_COMMAND = (
     "uv run pytest tests/engine/nodes/test_transparency.py -k answered_editorial --record-mode=once"
 )
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
+@pytest.mark.parametrize("is_answered", [False, True], ids=["asked", "answered"])
 def test_an_answered_editorial_exception_settles_art_50_4(
+    is_answered: bool,
     luna_settings: Settings,
     record_mode: str,
     vcr_cassette_dir: str,
     default_cassette_name: str,
 ) -> None:
-    """E17's loop: the case left open on Art. 50(4), run again with "yes, with editorial
-    responsibility" added to its description (P5b), no longer lists or leaves open Art. 50(4)."""
+    """E17's loop (P5b), on E19's fixture: the first pass lists Art. 50(4) and asks the
+    editorial question as its missing fact; run again with "yes, a person reviews every text and
+    holds editorial responsibility" added to the description, the second pass no longer lists,
+    asks about or leaves open Art. 50(4)."""
     require_recording(vcr_cassette_dir, default_cassette_name, record_mode)
-    (case,) = (case for case in B5A_CASES if case.id == EDITORIAL_CASE)
+    (case,) = load_yaml_file(EDITORIAL_FIXTURE)
+    answers = {"editorial_control": EDITORIAL_ANSWER} if is_answered else None
     result = _replay(
         case,
         luna_settings,
@@ -1237,10 +1250,18 @@ def test_an_answered_editorial_exception_settles_art_50_4(
         vcr_cassette_dir,
         default_cassette_name,
         E17_RECORD_COMMAND,
-        answers={"editorial_control": EDITORIAL_ANSWER},
+        answers=answers,
     )
     shown = _shown(result)
+    asked = {question.id for question in result.follow_up_questions}
+    if not is_answered:
+        assert "art:50:4" in result.transparency_duties, shown
+        assert result.step.status is Status.NEEDS_MORE_INFORMATION, shown
+        assert result.step.missing_fact is not None, shown
+        assert result.step.missing_fact.id == "editorial_control", shown
+        return
     assert "art:50:4" not in result.transparency_duties, shown
+    assert "editorial_control" not in asked, shown
     question = result.step.open_question
     assert question is None or "art:50:4" not in {
         reading.citation.provision_id for reading in question.readings if reading.citation
