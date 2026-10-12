@@ -52,8 +52,9 @@ flowchart LR
     MCPC[MCP client] -->|MCP, stdio| MCP[MCP server]
     MCP --> ENG
     API --> ENG[LangGraph engine]
-    ENG -->|chat models| OR[OpenRouter, EU endpoints]
-    ENG -->|embeddings| EMB[Qwen3-Embedding-8B on Nebius]
+    ENG -->|chat models, embeddings| OR[OpenRouter, pinned EU providers]
+    OR --> LLM[GPT-6 Luna on Azure EU; Gemini 3.1 Flash-Lite on Vertex EU]
+    OR --> EMB[Qwen3-Embedding-8B on Nebius]
     ENG --> DB[(Supabase: Postgres + pgvector)]
     API --> DB
     UI -->|anonymous session| DB
@@ -65,15 +66,20 @@ flowchart LR
 facts → scope → prohibited → high_risk → transparency → role_obligations → finalize
 ```
 
-- `facts` extracts the facts and their evidence tags. A description too thin to start (for example "We use AI for
-  HR") goes straight to `finalize` with a "needs a description" outcome, and no check runs.
+- `facts` extracts the facts and their evidence tags. A description too thin to start (for example "We use AI in
+  our shop.") goes straight to `finalize` with a "needs a description" outcome, and no check runs.
 - `scope` (Art. 2–3) and `prohibited` (Art. 5) may end the run early, but only when they matched and decided; an
   uncertain match goes on with the stricter reading as the working assumption (decision 010).
 - `high_risk` (Art. 6, Annex III, Annex I flagged), `transparency` (Art. 50) and `role_obligations` (Art. 16,
   23–26, the Art. 25 switch, the Art. 111(2) rules for systems already on the market) follow.
-- `finalize` calls no model. It sets the class and status, collects the deciding facts and follow-up questions,
-  and checks that every citation exists in the corpus under the law version and date it names, rebuilding its
-  quote from the corpus.
+- **Citation check** (`engine/citations.py`): every check node is wrapped by a validator. Each citation a step
+  makes must resolve in the corpus, in the language it quotes, under the run's law version and, for the amended
+  text and guidance, on the run's date; a citation that resolves is rebuilt from the corpus row, so its quote is
+  the corpus's own. A step citing something that doesn't resolve is run once more (a refused step is not). If a citation still doesn't
+  resolve, the step keeps the citations that do and says a person must verify it, and a decided step becomes
+  `needs_more_information`.
+- `finalize` calls no model. It sets the class and status and collects the deciding facts and follow-up
+  questions.
 - If the model provider's content filter refuses a check, the request goes once to a second pinned EU model
   (decision 033). If that also fails, the result gives no class and says a person must review it (decisions 029,
   030).
@@ -139,30 +145,21 @@ cp .env.example .env    # then fill in the keys below
 uv sync
 ```
 
-`backend/.env.example` lists and explains every key. The tests need none of them: model calls replay from
-`backend/tests/recordings/` and the network is blocked. To run the app you need `OPENROUTER_API_KEY`,
-`ENGINE_MODEL` and `ENGINE_PROVIDER` (decision 004's values are in the example), `REFUSAL_MODEL` and
-`REFUSAL_PROVIDER`, `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER`, and the hosted database's `SUPABASE_URL`,
-`SUPABASE_SERVICE_KEY` and `DATABASE_URL`. `LANGSMITH_API_KEY` is optional.
+`backend/.env.example` is the one list of keys, each explained there. The tests need none of them: model calls
+replay from `backend/tests/recordings/` and the network is blocked. To run the app you need `OPENROUTER_API_KEY`,
+the model keys (`ENGINE_MODEL`, `ENGINE_PROVIDER`, `REFUSAL_MODEL`, `REFUSAL_PROVIDER`, `EMBEDDING_MODEL`,
+`EMBEDDING_PROVIDER`) and the hosted database's `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` and `DATABASE_URL`. The
+model keys are empty in the example; the comment above each gives the decided value as an example (for the engine,
+decision 004's `openai/gpt-6-luna-20260922` on `azure/eu`). `LANGSMITH_API_KEY` is optional.
 
-**Frontend** (from `frontend/`):
+**Frontend:** copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` (the publishable key only: every `VITE_*` value ships in the public bundle). Install and
+test as `frontend/README.md` says (`pnpm install`, then Playwright's Chromium for the browser tests).
 
-```sh
-cp .env.example .env.local   # VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (publishable key only)
-corepack pnpm install --frozen-lockfile
-corepack pnpm exec playwright install chromium   # the browser tests need it
-```
-
-Every `VITE_*` value ships in the public bundle, so never put a secret there. More in `frontend/README.md`.
-
-**Tests** (from the repo root, then each folder):
-
-```sh
-make db                                   # the local test database, Postgres only
-cd backend && uv run pytest -q            # live model tests are skipped unless -m live
-uv run ruff check . && uv run ruff format --check . && uv run pyright
-cd ../frontend && corepack pnpm lint && corepack pnpm build && corepack pnpm test
-```
+**Tests:** start the local test database with `make db` (Postgres only), then run the checks CI runs, listed in
+`CLAUDE.md` › Commands and in `.claude/foreman.json` (`checks`): ruff, pyright, `uv run pytest`, `uv run aiact deps
+check` in `backend/`, and `pnpm lint`, `pnpm build`, `pnpm test` in `frontend/`. Live model tests are skipped
+unless `-m live`.
 
 `make db` applies `supabase/migrations/` and the obligations seed on its first start. `supabase stop` keeps the
 data.
@@ -173,8 +170,15 @@ reads and writes the hosted project in `backend/.env` and `frontend/.env.local`.
 **A Supabase project of your own.** Create a project in an EU region, then from the repo root: `supabase link
 --project-ref <ref>`, `supabase db push` (the schema) and `supabase config push` (anonymous sign-ins). Load the
 legal texts from the committed `data/parsed/` with `uv run aiact corpus load` (free), embed them with
-`uv run aiact corpus embed` (paid on your OpenRouter key: the whole corpus cost about $0.013 in decision 003's
-Qwen3 run), and load the obligations from `supabase/seed/obligations.sql`.
+`uv run aiact corpus embed` (paid on your OpenRouter key: about 1.3 million tokens, $0.013 in decision 003's
+Qwen3 run), and load the obligations table from `backend/` (`supabase db push` doesn't run the seed, and
+`supabase db query -f` can't run this multi-statement file):
+
+```sh
+uv run python -c "import pathlib, psycopg; from aiact.settings import get_settings; psycopg.connect(get_settings().database_url.get_secret_value(), autocommit=True).execute(pathlib.Path('../supabase/seed/obligations.sql').read_text())"
+```
+
+It loads into `DATABASE_URL` from `backend/.env`, replacing the amended-text rows, so it is safe to rerun.
 
 ## Ethics and privacy
 
@@ -191,6 +195,8 @@ leave people unprotected and the company exposed. The safeguards (INIT › Ethic
 | Outdated law | Every result states the law version and date; draft guidance is labelled as a draft |
 | Translation errors | Citations quote the official text in each language; English-only guidance stays in English and is labelled so |
 | The author is not a lawyer | Every own-case label cites the provision that settles it, or is "legally ambiguous"; no external legal review, stated openly |
+| Label bias in test data | appliedAI is industrial and German-focused; results reported per benchmark and per business function |
+| Over-reliance on automation | Step-by-step reasoning with evidence tags, so users can challenge each decision |
 | The assistant is itself an AI system | Most likely limited-risk: it tells users it is an AI on every screen (Art. 50(1)) |
 
 **Privacy** (INIT › Scope, Storage; decisions 013, 026, 027):
@@ -211,7 +217,8 @@ leave people unprotected and the company exposed. The safeguards (INIT › Ethic
   the EU, and the embedding host Nebius's region is still to be confirmed; the in-app Privacy page and "Your data"
   say so. DeepSeek and other providers EU data protection authorities have acted against are excluded.
 - **Traces carry metadata only** outside development (see Architecture), and no real user input enters the
-  evaluation.
+  evaluation. Traces go to LangSmith when a key is set; `backend/.env.example` points `LANGSMITH_ENDPOINT` at its
+  EU endpoint (`eu.api.smith.langchain.com`), and an empty value means the SDK's default, the US region.
 
 ## Limitations known so far
 
