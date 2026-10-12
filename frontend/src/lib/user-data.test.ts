@@ -15,7 +15,9 @@ describe('formatBytes', () => {
     [511, 'de', '< 1 kB'],
     [12 * 1024, 'de', '12 kB'],
     [1.5 * 1024 * 1024, 'de', '1,5 MB'],
-  ])('shows %i bytes in %s as %s', (bytes, language, shown) => {
+    [1234.5 * 1024 * 1024, 'en', '1,234.5 MB'],
+    [1234.5 * 1024 * 1024, 'de', '1.234,5 MB'],
+  ] as const)('shows %i bytes in %s as %s', (bytes, language, shown) => {
     expect(formatBytes(bytes, language)).toBe(shown)
   })
 })

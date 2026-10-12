@@ -94,10 +94,12 @@ export function InventoryTable({ rows, label }: InventoryTableProps): JSX.Elemen
                 className="relative border-b border-border-subtle last:border-b-0 hover:bg-white/40 has-[a:focus-visible]:bg-white/40 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:outline-lens-blue"
               >
                 <td className={`${CELL} ${TOOL_CELL} pl-6`}>
+                  {/* hyphens-auto breaks a long German name (Bewerbungsranking) at a syllable in
+                      the 160 px column, by <html lang>, which follows the screen's language. */}
                   <Link
                     to="/app/inventory/$toolId"
                     params={{ toolId: row.toolId }}
-                    className="block font-semibold break-words text-ink after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                    className="block font-semibold break-words hyphens-auto text-ink after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
                   >
                     {row.name}
                   </Link>

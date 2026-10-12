@@ -999,6 +999,19 @@
   "prohibited": {
     "statement": "Es entspricht einer Praktik, die Art. 5 verbietet: {{points}}. Die Prüfung endet bei Artikel 5.",
     "statementPlain": "Es entspricht einer Praktik, die Art. 5 verbietet. Die Prüfung endet bei Artikel 5.",
+    "pointLine": "{{practice}} ({{point}})",
+    "practice": {
+      "a": "Beeinflussung des Verhaltens durch unterschwellige, manipulative oder täuschende Techniken, die erheblichen Schaden verursachen",
+      "b": "Ausnutzung der Schwäche von Personen aufgrund ihres Alters, einer Behinderung oder ihrer sozialen oder wirtschaftlichen Lage",
+      "ba": "Erzeugung realistischer intimer oder sexuell expliziter Bilder, Videos oder Tonaufnahmen einer bestimmbaren Person ohne deren Zustimmung",
+      "bb": "Erzeugung von Darstellungen sexuellen Missbrauchs von Kindern",
+      "c": "Sozialbewertung, die zu ungerechtfertigter oder unverhältnismäßiger Benachteiligung führt",
+      "d": "Vorhersage des Risikos einer Straftat allein aufgrund von Profiling oder Persönlichkeitsmerkmalen",
+      "e": "Aufbau von Gesichtserkennungsdatenbanken durch ungezieltes Auslesen von Gesichtsbildern",
+      "f": "Emotionserkennung am Arbeitsplatz oder in Bildungseinrichtungen",
+      "g": "biometrische Kategorisierung, um sensible Merkmale wie ethnische Herkunft, politische Meinungen oder sexuelle Orientierung abzuleiten",
+      "h": "biometrische Echtzeit-Fernidentifizierung in öffentlich zugänglichen Räumen zur Strafverfolgung"
+    },
     "bannedSince": "Verboten seit",
     "monthsAgo_one": "vor {{count}} Monat",
     "monthsAgo_other": "vor {{count}} Monaten",

@@ -97,7 +97,7 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "Punkt offenlässt.",
         "duty": "Sie nennt die Pflicht nach {article}.",
         "duty_from": "Sie nennt die Pflicht nach {article}, die ab dem {date} gilt.",
-        "duty_legacy": "Sie nennt die Pflicht nach {article}, die erst nach einer wesentlichen "
+        "duty_legacy": "Sie nennt die Pflicht nach {article}, die erst nach einer erheblichen "
         "Änderung des Systems gilt ({legacy}).",
     },
 }

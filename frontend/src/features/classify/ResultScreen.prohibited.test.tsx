@@ -36,7 +36,8 @@ const COPY = {
     noRoute:
       'There’s no route to comply: documentation or oversight can’t make a prohibited practice allowed.',
     draft: 'Draft a message',
-    statement: 'It matches a practice Art. 5 bans: Art. 5(1)(f). The checks stop at Article 5.',
+    statement:
+      'It matches a practice Art. 5 bans: recognising emotions in the workplace or in education (Art. 5(1)(f)). The checks stop at Article 5.',
     since: 'Banned since',
     sinceDate: '2 February 2025',
     sinceAgo: '20 months ago',
@@ -86,7 +87,7 @@ const COPY = {
       'Es gibt keinen Weg zur Konformität: Dokumentation oder Aufsicht machen eine verbotene Praktik nicht zulässig.',
     draft: 'Nachricht entwerfen',
     statement:
-      'Es entspricht einer Praktik, die Art. 5 verbietet: Art. 5 Abs. 1 Buchst. f. Die Prüfung endet bei Artikel 5.',
+      'Es entspricht einer Praktik, die Art. 5 verbietet: Emotionserkennung am Arbeitsplatz oder in Bildungseinrichtungen (Art. 5 Abs. 1 Buchst. f). Die Prüfung endet bei Artikel 5.',
     since: 'Verboten seit',
     sinceDate: '2. Februar 2025',
     sinceAgo: 'vor 20 Monaten',
@@ -409,6 +410,21 @@ describe('The prohibited layout', () => {
   it('tints a decided ban’s summary red', async () => {
     await openProhibited()
     expect(summaryRegion().getAttribute('style')).toContain('rgba(255, 226, 226, 0.5)')
+  })
+
+  it.each([
+    [
+      'en',
+      'It matches a practice Art. 5 bans: recognising emotions in the workplace or in education (Art. 5(1)(f)) and biometric categorisation to infer sensitive traits such as race, political opinions or sexual orientation (Art. 5(1)(g)). The checks stop at Article 5.',
+    ],
+    [
+      'de',
+      'Es entspricht einer Praktik, die Art. 5 verbietet: Emotionserkennung am Arbeitsplatz oder in Bildungseinrichtungen (Art. 5 Abs. 1 Buchst. f) und biometrische Kategorisierung, um sensible Merkmale wie ethnische Herkunft, politische Meinungen oder sexuelle Orientierung abzuleiten (Art. 5 Abs. 1 Buchst. g). Die Prüfung endet bei Artikel 5.',
+    ],
+  ] as const)('names each ban point in plain words (%s)', async (language, statement) => {
+    const result = withBanCitations(RECORDED_PROHIBITED, ['art:5:1:g'])
+    await openProhibited(language, { result })
+    expect(within(summaryRegion()).getByText(statement)).toBeInTheDocument()
   })
 
   it('leaves out a cited point that applies only later (Art. 5(1)(ba) before 2 December 2026)', async () => {

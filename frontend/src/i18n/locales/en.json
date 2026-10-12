@@ -999,6 +999,19 @@
   "prohibited": {
     "statement": "It matches a practice Art. 5 bans: {{points}}. The checks stop at Article 5.",
     "statementPlain": "It matches a practice Art. 5 bans. The checks stop at Article 5.",
+    "pointLine": "{{practice}} ({{point}})",
+    "practice": {
+      "a": "manipulating people's behaviour with subliminal, manipulative or deceptive techniques that cause significant harm",
+      "b": "exploiting people's vulnerabilities due to their age, a disability or their social or economic situation",
+      "ba": "making realistic intimate or sexually explicit images, video or audio of an identifiable person without their consent",
+      "bb": "making child sexual abuse material",
+      "c": "social scoring that leads to unjustified or disproportionate treatment",
+      "d": "predicting a person's risk of committing a crime from profiling or personality traits alone",
+      "e": "building facial recognition databases by untargeted scraping of facial images",
+      "f": "recognising emotions in the workplace or in education",
+      "g": "biometric categorisation to infer sensitive traits such as race, political opinions or sexual orientation",
+      "h": "real-time remote biometric identification in public spaces for law enforcement"
+    },
     "bannedSince": "Banned since",
     "monthsAgo_one": "{{count}} month ago",
     "monthsAgo_other": "{{count}} months ago",

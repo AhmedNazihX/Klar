@@ -12,8 +12,29 @@ import { bannedSince, banPoints } from './ban'
 import { longDate, monthsSince } from './dates'
 import { provisionName } from './provision-names'
 
+/** The Art. 5(1) points with a plain-words line (P11, from P21's UI review): every point of the
+ *  amended text's list. */
+const PRACTICES = ['a', 'b', 'ba', 'bb', 'c', 'd', 'e', 'f', 'g', 'h'] as const
+type Practice = (typeof PRACTICES)[number]
+
+function isPractice(letter: string): letter is Practice {
+  return (PRACTICES as readonly string[]).includes(letter)
+}
+
+/** A ban point in plain words with its reference ("recognising emotions … (Art. 5(1)(f))"), or
+ *  the reference alone for a point without a line. */
+function pointLine(t: TFunction, point: string, language: Language): string {
+  const reference = provisionName(point, language)
+  const letter = point.split(':').at(-1) ?? ''
+  if (!isPractice(letter)) return reference
+  return t('prohibited.pointLine', {
+    practice: t(`prohibited.practice.${letter}`),
+    point: reference,
+  })
+}
+
 function statement(t: TFunction, result: ClassificationResult, language: Language): string {
-  const points = banPoints(result).map((point) => provisionName(point, language))
+  const points = banPoints(result).map((point) => pointLine(t, point, language))
   if (points.length === 0) return t('prohibited.statementPlain')
   const list = new Intl.ListFormat(LANGUAGE_LOCALES[language], { type: 'conjunction' })
   return t('prohibited.statement', { points: list.format(points) })
