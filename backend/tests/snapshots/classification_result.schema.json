@@ -435,6 +435,20 @@
           "description": "The condition under which the duty applies; None when it applies to every system of this role and class.",
           "title": "Applies If"
         },
+        "applies_if_de": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The condition in German; set wherever `applies_if` is, except on a stored duty whose English condition the current table no longer holds.",
+          "title": "Applies If De"
+        },
         "is_informational": {
           "default": false,
           "description": "True when the row informs (e.g. a distributor of a prohibited system) rather than stating a formal duty the Act puts on this role.",
@@ -465,6 +479,20 @@
           "default": null,
           "description": "Relief for SMEs, start-ups and small mid-caps (SMCs), if any.",
           "title": "Relief Note"
+        },
+        "relief_note_de": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The relief in German; set wherever `relief_note` is, except on a stored duty whose English relief the current table no longer holds.",
+          "title": "Relief Note De"
         },
         "note": {
           "anyOf": [

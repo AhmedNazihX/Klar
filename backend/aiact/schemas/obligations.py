@@ -19,6 +19,9 @@ ARTICLE_PATTERN = r"^art:[0-9]+[a-z]?(:[A-Za-z0-9]+)*$"
 STORED_TEXT_FIELDS = ("duty_de", "label_en", "label_de")
 """The texts C9 added, which a duty stored before C9 lacks."""
 
+STORED_GERMAN_FIELDS = {"applies_if": "applies_if_de", "relief_note": "relief_note_de"}
+"""The English texts P11 gave a German twin, which a duty stored before P11 lacks."""
+
 
 class Obligation(ContractModel):
     """One duty with its article reference and the date it applies from.
@@ -71,6 +74,12 @@ class Obligation(ContractModel):
         description="The condition under which the duty applies; None when it applies to every "
         "system of this role and class.",
     )
+    applies_if_de: str | None = Field(
+        default=None,
+        min_length=1,
+        description="The condition in German; set wherever `applies_if` is, except on a stored "
+        "duty whose English condition the current table no longer holds.",
+    )
     is_informational: bool = Field(
         default=False,
         description="True when the row informs (e.g. a distributor of a prohibited system) rather "
@@ -87,16 +96,23 @@ class Obligation(ContractModel):
     relief_note: str | None = Field(
         default=None, description="Relief for SMEs, start-ups and small mid-caps (SMCs), if any."
     )
+    relief_note_de: str | None = Field(
+        default=None,
+        min_length=1,
+        description="The relief in German; set wherever `relief_note` is, except on a stored duty "
+        "whose English relief the current table no longer holds.",
+    )
     note: str | None = None
 
     @model_validator(mode="before")
     @classmethod
     def _fill_the_texts_of_a_stored_duty(cls, data: object) -> object:
         """A duty stored before C9 (a saved result or benchmark run) has no labels, German duty,
-        group or document: they come from the current table's entry for its article (fields
-        it stored win), else its English `duty` stands in for the three texts and it gets no
-        group or document. Engine results always carry them, from the table."""
-        if not isinstance(data, dict) or all(field in data for field in STORED_TEXT_FIELDS):
+        group or document, and one stored before P11 no German condition or relief: they come
+        from the current table's entry for its article (fields it stored win), else its English
+        `duty` stands in for the three texts and it gets no group, document or German condition.
+        Engine results always carry them, from the table."""
+        if not isinstance(data, dict) or not _lacks_stored_texts(data):
             return data
         article, duty = data.get("article"), data.get("duty")
         if not isinstance(article, str) or not isinstance(duty, str) or not duty:
@@ -104,4 +120,12 @@ class Obligation(ContractModel):
         # Imported here: the obligations table module imports these schemas.
         from aiact.obligations.list import texts_for_stored_duty
 
-        return {**texts_for_stored_duty(article, duty), **data}
+        english = {field: data.get(field) for field in STORED_GERMAN_FIELDS}
+        return {**texts_for_stored_duty(article, duty, english), **data}
+
+
+def _lacks_stored_texts(data: dict[object, object]) -> bool:
+    """True when a C9 text is missing, or an English condition or relief has no German twin."""
+    if not all(field in data for field in STORED_TEXT_FIELDS):
+        return True
+    return any(data.get(en) and german not in data for en, german in STORED_GERMAN_FIELDS.items())

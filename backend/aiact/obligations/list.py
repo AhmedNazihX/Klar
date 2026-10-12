@@ -36,6 +36,7 @@ from aiact.schemas.base import ContractModel
 from aiact.schemas.obligations import (
     DOCUMENT_KEY_PATTERN,
     OBLIGATION_KEY_PATTERN,
+    STORED_GERMAN_FIELDS,
     STORED_TEXT_FIELDS,
 )
 from aiact.settings import BACKEND_DIR
@@ -93,8 +94,10 @@ class ObligationEntry(ContractModel):
     article: str = Field(min_length=1)
     applies_from: date | Mapping[HighRiskRoute, date]
     applies_if: str | None = None
+    applies_if_de: str | None = Field(default=None, min_length=1)
     is_informational: bool = False
     relief_note: str | None = None
+    relief_note_de: str | None = Field(default=None, min_length=1)
     note: str | None = None
 
     @model_validator(mode="after")
@@ -103,6 +106,7 @@ class ObligationEntry(ContractModel):
             if len(set(values)) != len(values):
                 raise ValueError(f"{self.key}: repeated value in {name}")
         self._check_group()
+        self._check_german()
         if isinstance(self.applies_from, Mapping):
             if not self.applies_from:
                 raise ValueError(f"{self.key}: applies_from needs at least one route")
@@ -119,6 +123,15 @@ class ObligationEntry(ContractModel):
             raise ValueError(f"{self.key}: a group is only for provider duties")
         if self.group is None and is_provider and RiskClass.HIGH_RISK in self.risk_classes:
             raise ValueError(f"{self.key}: a high-risk provider duty needs a group")
+
+    def _check_german(self) -> None:
+        """A condition or relief has its German twin, and a German one has its English."""
+        for english, german, name in (
+            (self.applies_if, self.applies_if_de, "applies_if"),
+            (self.relief_note, self.relief_note_de, "relief_note"),
+        ):
+            if (english is None) != (german is None):
+                raise ValueError(f"{self.key}: {name} and {name}_de go together")
 
     def dated(self) -> tuple[tuple[HighRiskRoute | None, date], ...]:
         """The (route, date) pairs; route None when the date is the same for every route."""
@@ -171,8 +184,10 @@ class ObligationTable(ContractModel):
                     applies_from=applies_from,
                     high_risk_route=route,
                     applies_if=entry.applies_if,
+                    applies_if_de=entry.applies_if_de,
                     is_informational=entry.is_informational,
                     relief_note=entry.relief_note,
+                    relief_note_de=entry.relief_note_de,
                     note=entry.note,
                 ),
             )
@@ -201,23 +216,34 @@ def default_table() -> ObligationTable:
     return load_table()
 
 
-def texts_for_stored_duty(article: str, duty: str) -> dict[str, object]:
-    """The fields a duty stored before C9 lacks: those of the committed table's entry for
-    `article` (the one with this English `duty` when several share the article), texts
-    (`STORED_TEXT_FIELDS`), `group` and `document`; else `duty` itself for the three texts and
-    no group or document, e.g. for a duty the table no longer lists."""
+def texts_for_stored_duty(
+    article: str, duty: str, english: Mapping[str, object] | None = None
+) -> dict[str, object]:
+    """The fields a stored duty may lack: those of the committed table's entry for `article`
+    (the one with this English `duty` when several share the article), texts
+    (`STORED_TEXT_FIELDS`), `group` and `document`, plus the German twin of each English text
+    in `english` (`applies_if`, `relief_note`: `STORED_GERMAN_FIELDS`) that the entry holds
+    word for word; else `duty` itself for the three texts and no group, document or German
+    twins, e.g. for a duty the table no longer lists."""
     entries = [entry for entry in default_table().obligations if entry.article == article]
     same_duty = [entry for entry in entries if entry.duty == duty]
     match = same_duty or (entries if len(entries) == 1 else [])
     if not match:
         return dict.fromkeys(STORED_TEXT_FIELDS, duty)
     entry = match[0]
+    stored = english or {}
+    twins = {
+        german: getattr(entry, german)
+        for field, german in STORED_GERMAN_FIELDS.items()
+        if stored.get(field) is not None and stored.get(field) == getattr(entry, field)
+    }
     return {
         "duty_de": entry.duty_de,
         "label_en": entry.label_en,
         "label_de": entry.label_de,
         "group": entry.group,
         "document": entry.document,
+        **twins,
     }
 
 

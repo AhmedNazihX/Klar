@@ -383,6 +383,11 @@ def test_a_duty_shared_with_another_role_is_the_same_duty_for_both() -> None:
         ({"document": "Art 26 notice"}, "document"),
         ({"label_de": ""}, "label_de"),
         ({"duty_de": ""}, "duty_de"),
+        ({"applies_if": "You control the input data."}, "applies_if and applies_if_de go together"),
+        ({"applies_if_de": "Sie kontrollieren sie."}, "applies_if and applies_if_de go together"),
+        ({"relief_note": "Simplified for SMEs."}, "relief_note and relief_note_de go together"),
+        ({"relief_note_de": "Vereinfacht."}, "relief_note and relief_note_de go together"),
+        ({"applies_if": "If so.", "applies_if_de": ""}, "applies_if_de"),
     ],
 )
 def test_invalid_entries_are_rejected(change: dict[str, object], message: str) -> None:
@@ -590,3 +595,27 @@ def test_a_roles_duties_have_distinct_keys(
     keys = [duty.key for duty in _list(role, risk_class, route)]
     assert None not in keys
     assert len(keys) == len(set(keys))
+
+
+def test_a_condition_and_a_relief_carry_their_german_twins() -> None:
+    """P11: German screens and reports show `applies_if_de` and `relief_note_de`."""
+    entry = ENTRY | {
+        "applies_if": "You control the input data.",
+        "applies_if_de": "Die Eingabedaten unterliegen Ihrer Kontrolle.",
+        "relief_note": "Simplified for SMEs.",
+        "relief_note_de": "Vereinfacht für KMU.",
+    }
+    table = ObligationTable.model_validate(_table(entry))
+    (duty,) = _list(Role.PROVIDER, RiskClass.HIGH_RISK, table=table)
+    assert duty.applies_if_de == "Die Eingabedaten unterliegen Ihrer Kontrolle."
+    assert duty.relief_note_de == "Vereinfacht für KMU."
+
+
+def test_every_committed_condition_has_its_german_twin() -> None:
+    rows = [row.obligation for row in default_table().rows()]
+    conditional = [duty for duty in rows if duty.applies_if is not None]
+    assert len({duty.applies_if for duty in conditional}) >= 20
+    assert all(duty.applies_if_de for duty in conditional)
+    assert all(duty.relief_note_de for duty in rows if duty.relief_note is not None)
+    input_data = next(duty for duty in rows if duty.article == "art:26:4")
+    assert input_data.applies_if_de == "Die Eingabedaten unterliegen Ihrer Kontrolle."

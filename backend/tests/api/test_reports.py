@@ -449,10 +449,11 @@ def test_every_reportable_table_entry_is_posted() -> None:
 
 def _printed_duty(duty: Obligation, language: str) -> str:
     """A posted table duty as the report prints it: its formal wording in `language`, then its
-    condition (English only), on one line."""
+    condition in `language` too, on one line."""
     text = duty.duty_de if language == "de" else duty.duty
     if duty.applies_if is not None:
-        text = f"{text} {APPLIES_IF[language]} {duty.applies_if}"
+        condition = duty.applies_if_de if language == "de" else duty.applies_if
+        text = f"{text} {APPLIES_IF[language]} {condition}"
     return one_line(text)
 
 

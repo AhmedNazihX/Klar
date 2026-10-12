@@ -131,20 +131,23 @@ def test_a_minimal_risk_basis_is_that_no_check_found_anything() -> None:
 
 
 def test_a_duty_with_a_condition_says_when_it_applies_in_the_tables_words() -> None:
-    """The condition is the table's (in English only, P11 owns the German), not the posted
-    one."""
+    """The condition is the table's, in the report's language (P11), not the posted one."""
     result = worked_example_result()
-    forged = result.obligations[0].model_copy(update={"applies_if": "the deployer controls it"})
+    forged = result.obligations[0].model_copy(
+        update={"applies_if": "the deployer controls it", "applies_if_de": "kontrolliert"}
+    )
     changed = rebuild(result, obligations=(forged, *result.obligations[1:]))
     assert _tables(_report(changed))[-1].rows[0][0] == (
         "Use the system according to the provider's instructions for use, with appropriate "
         "technical and organisational measures."
     )
+    assert "kontrolliert" not in _tables(_report(changed, DE))[-1].rows[0][0]
     logs = _tables(_report(changed, DE))[-1].rows[3][0]
     assert logs == (
         "Vor der Inbetriebnahme oder Verwendung am Arbeitsplatz die Arbeitnehmervertreter und "
         "die betroffenen Arbeitnehmer informieren, dass sie der Verwendung des Systems "
-        "unterliegen werden. Gilt, wenn: You are an employer and use the system at the workplace."
+        "unterliegen werden. Gilt, wenn: Sie sind Arbeitgeber und verwenden das System am "
+        "Arbeitsplatz."
     )
 
 

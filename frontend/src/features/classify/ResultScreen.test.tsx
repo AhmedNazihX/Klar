@@ -175,6 +175,31 @@ describe('Result summary', () => {
   })
 
   it.each([
+    ['en', 'Only if: You control the input data.'],
+    ['de', 'Nur wenn: Die Eingabedaten unterliegen Ihrer Kontrolle.'],
+  ] as const)('shows a duty condition in the screen language (%s)', async (language, line) => {
+    const result = decidedHighRisk()
+    const obligations = (result.obligations ?? []).map((duty) =>
+      duty.article === 'art:26:4'
+        ? { ...duty, applies_if_de: 'Die Eingabedaten unterliegen Ihrer Kontrolle.' }
+        : duty,
+    )
+    await openResult({ ...result, obligations }, { language })
+    expect(within(todoList(language)).getByText(line)).toBeInTheDocument()
+  })
+
+  it('keeps the English condition on a German screen when a stored duty has no German one', async () => {
+    const result = decidedHighRisk()
+    const obligations = (result.obligations ?? []).map((duty) =>
+      duty.article === 'art:26:4' ? { ...duty, applies_if_de: null } : duty,
+    )
+    await openResult({ ...result, obligations }, { language: 'de' })
+    expect(
+      within(todoList('de')).getByText('Nur wenn: You control the input data.'),
+    ).toBeInTheDocument()
+  })
+
+  it.each([
     ['en', 'Put trained people in charge of reviewing its output', 'Draft document'],
     ['de', 'Geschulten Personen die menschliche Aufsicht übertragen', 'Dokument entwerfen'],
   ] as const)(

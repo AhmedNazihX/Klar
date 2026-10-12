@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from aiact.obligations.list import list_obligations
+from aiact.obligations.list import default_table, list_obligations
 from aiact.schemas import (
     ClassificationResult,
     HighRiskRoute,
@@ -118,3 +118,49 @@ def test_a_result_stored_before_the_key_still_loads() -> None:
 def test_a_key_that_is_not_a_table_key_is_rejected(key: str) -> None:
     with pytest.raises(ValidationError, match="key"):
         Obligation.model_validate({**_stored("art:26:6", "Keep the logs"), "key": key})
+
+
+INPUT_DATA_EN = "You control the input data."
+INPUT_DATA_DE = "Die Eingabedaten unterliegen Ihrer Kontrolle."
+
+
+def _stored_after_c9(**fields: object) -> dict[str, object]:
+    """A deployer's Art. 26(4) duty as stored between C9 and P11: texts, no German condition."""
+    return _stored("art:26:4", "Make sure the input data is relevant.") | {
+        "duty_de": "Eingabedaten prüfen.",
+        "label_en": "Check the input data",
+        "label_de": "Eingabedaten prüfen",
+        "applies_if": INPUT_DATA_EN,
+        **fields,
+    }
+
+
+def test_a_duty_stored_before_p11_gets_the_tables_german_condition() -> None:
+    duty = Obligation.model_validate(_stored_after_c9())
+    assert duty.applies_if_de == INPUT_DATA_DE
+    assert duty.label_en == "Check the input data"  # the stored texts stay
+
+
+def test_a_stored_condition_the_table_no_longer_holds_gets_no_german_twin() -> None:
+    """The German would not translate the condition the duty was stored with."""
+    duty = Obligation.model_validate(_stored_after_c9(applies_if="An older condition."))
+    assert (duty.applies_if, duty.applies_if_de) == ("An older condition.", None)
+
+
+def test_a_stored_german_condition_is_kept() -> None:
+    duty = Obligation.model_validate(_stored_after_c9(applies_if_de="Meine Bedingung."))
+    assert duty.applies_if_de == "Meine Bedingung."
+
+
+def test_a_stored_duty_without_a_condition_gets_no_german_condition() -> None:
+    duty = Obligation.model_validate(_stored("art:26:4", "Make sure the input data is relevant."))
+    assert (duty.applies_if, duty.applies_if_de) == (None, None)
+
+
+def test_a_stored_relief_gets_its_german_twin() -> None:
+    table_entry = next(e for e in default_table().obligations if e.relief_note is not None)
+    relief = {"relief_note": table_entry.relief_note}
+    given = _stored(table_entry.article, table_entry.duty) | relief
+    duty = Obligation.model_validate(given)
+    assert duty.relief_note_de == table_entry.relief_note_de
+    assert duty.relief_note_de and duty.relief_note_de.startswith("Für KMU")
