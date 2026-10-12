@@ -21,7 +21,7 @@ from langchain_openrouter import ChatOpenRouter
 from pydantic import SecretStr
 
 from aiact.engine import classify, run_classification
-from aiact.engine.classify import ClassificationFailedError, NodeBuilder, engine_nodes
+from aiact.engine.classify import NodeBuilder, engine_nodes
 from aiact.engine.clients import engine_chats, engine_embeddings, refusal_chats
 from aiact.engine.usage import UsageMeter
 from aiact.llm import LLMConfigError
@@ -87,7 +87,7 @@ def test_every_node_gets_the_pinned_engine_model_with_its_own_output_cap() -> No
         "facts": 6000,
         "scope": 3000,
         "prohibited": 6000,
-        "high_risk": 6000,
+        "high_risk": 10000,
         "transparency": 4000,
         "role_obligations": 4000,
     }
@@ -288,14 +288,6 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
         )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=ClassificationFailedError,
-    reason="E18's re-record (2026-10-12): the worked example's recorded high-risk answer was "
-    "cut off "
-    "mid-JSON (model output glitch), so the run stops in high_risk; re-record it once in E19 "
-    "(user, 2026-10-12: no more paid runs in E18)",
-)
 @pytest.mark.vcr(allow_playback_repeats=True)
 @pytest.mark.usefixtures("no_automatic_gc")
 def test_repeated_classifications_leave_no_http_clients_behind(

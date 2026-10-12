@@ -122,14 +122,6 @@ def test_other_runs_are_not_pending(events: list[ClassifyEvent], log: str) -> No
     raise_if_recording_stale(events, log)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="E18's re-record (2026-10-12): the worked example's recorded high-risk answer was "
-    "cut off "
-    "mid-JSON (model output glitch), so the run stops in high_risk; re-record it once in E19 "
-    "(user, 2026-10-12: no more paid runs in E18)",
-)
 @pytest.mark.vcr
 @pytest.mark.anyio
 async def test_the_worked_example_streams_every_step_then_the_expected_result(

@@ -20,7 +20,7 @@ interactions:
     uri: https://openrouter.ai/api/v1/embeddings
   response:
     body:
-      string: '{"id": "gen-emb-1791816672-QhaPksz96rtVKBKCZHJP", "object": "list",
+      string: '{"id": "gen-emb-1791818529-jQf1CvBBdL9EpkOP5n7c", "object": "list",
         "data": [{"object": "embedding", "embedding": [-0.005484210792928934, 0.01459317933768034,
         0.012239440344274044, 0.038601312786340714, 0.03615342453122139, 0.005860809236764908,
         -0.03389383479952812, 0.03841301426291466, 0.0037659816443920135, 0.013369235210120678,
@@ -876,7 +876,7 @@ interactions:
       Funkspektrums. Elektrische Sicherheit und Gesundheitsschutz haben wir selbst
       nach Normen erkl\u00e4rt. Sicherheitsfunktionen hat das Ger\u00e4t keine. Seit
       September 2026 verkaufen wir ihn in Deutschland und \u00d6sterreich, in Mattschwarz
-      und Sandfarben.","role":"user"}],"max_tokens":6000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"high_risk_answer","schema":{"$defs":{"AnnexIAnswer":{"additionalProperties":false,"properties":{"point":{"anyOf":[{"type":"string","enum":["annex:I:A:2","annex:I:A:3","annex:I:A:4","annex:I:A:5","annex:I:A:6","annex:I:A:7","annex:I:A:8","annex:I:A:9","annex:I:A:10","annex:I:A:11","annex:I:A:12","annex:I:B:13","annex:I:B:14","annex:I:B:15","annex:I:B:16","annex:I:B:17","annex:I:B:18","annex:I:B:19","annex:I:B:20","annex:I:B:21"]},{"type":"null"}],"title":"Point"},"covered":{"$ref":"#/$defs/Answer"},"safety_component_or_product":{"$ref":"#/$defs/Answer"},"third_party_assessment":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
+      und Sandfarben.","role":"user"}],"max_tokens":10000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"high_risk_answer","schema":{"$defs":{"AnnexIAnswer":{"additionalProperties":false,"properties":{"point":{"anyOf":[{"type":"string","enum":["annex:I:A:2","annex:I:A:3","annex:I:A:4","annex:I:A:5","annex:I:A:6","annex:I:A:7","annex:I:A:8","annex:I:A:9","annex:I:A:10","annex:I:A:11","annex:I:A:12","annex:I:B:13","annex:I:B:14","annex:I:B:15","annex:I:B:16","annex:I:B:17","annex:I:B:18","annex:I:B:19","annex:I:B:20","annex:I:B:21"]},{"type":"null"}],"title":"Point"},"covered":{"$ref":"#/$defs/Answer"},"safety_component_or_product":{"$ref":"#/$defs/Answer"},"third_party_assessment":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
       Numbers","type":"array"}},"required":["point","covered","safety_component_or_product","third_party_assessment","settled_in_law","open_question","evidence","fact","fact_numbers"],"title":"AnnexIAnswer","type":"object"},"AnnexIIIAnswer":{"additionalProperties":false,"description":"The
       Annex III use. Enum fields carry no description: strict structured output rejects\nkeywords
       next to a `$ref`; the prompt explains every field instead. Each route''s\n`settled_in_law`
@@ -900,35 +900,34 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "{\"id\": \"gen-1791816676-BwBRpf3wBry6kvmNLPYY\", \"object\": \"chat.completion\",
-        \"created\": 1791816676, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+      string: "{\"id\": \"gen-1791818531-olCvjznQOfYXNXU0uCdM\", \"object\": \"chat.completion\",
+        \"created\": 1791818531, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
         \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
         [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
         \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
         \ \\\"annex_iii\\\": {\\n    \\\"point\\\": null,\\n    \\\"uses\\\": \\\"no\\\",\\n
         \   \\\"public_authority\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n
         \   \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Der Sprachassistent dient Wetter-, Fahrplan- und Rezeptausk\xFCnften
-        und f\xE4llt unter keinen Annex-III-Punkt.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  ,\\n  \\\"examples\\\": []\\n  },\\n  \\\"art_6_3\\\": {\\n    \\\"condition\\\":
+        \   \\\"fact\\\": \\\"Der Sprachassistent f\xE4llt unter keinen der genannten
+        Annex-III-Verwendungsbereiche.\\\",\\n    \\\"fact_numbers\\\": []\\n  ,\\n
+        \ \\\"examples\\\": []\\n  },\\n  \\\"art_6_3\\\": {\\n    \\\"condition\\\":
         \\\"none\\\",\\n    \\\"profiling\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
         \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Da der Sprachassistent unter keinen Annex-III-Punkt
-        f\xE4llt, greift der Filter nach Artikel 6 Absatz 3 nicht; ein Profiling nat\xFCrlicher
-        Personen ist nicht beschrieben.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
-        \ \\\"annex_i\\\": {\\n    \\\"point\\\": \\\"annex:I:A:6\\\",\\n    \\\"covered\\\":
-        \\\"yes\\\",\\n    \\\"safety_component_or_product\\\": \\\"no\\\",\\n    \\\"third_party_assessment\\\":
-        \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
-        null,\\n    \\\"evidence\\\": \\\"stated\\\",\\n    \\\"fact\\\": \\\"Der
-        integrierte Sprachassistent ist Teil des Funklautsprechers; das Ger\xE4t hat
-        keine Sicherheitsfunktionen, und die benannte Stelle pr\xFCfte nur die Funkfrequenznutzung.\\\",\\n
-        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"question\\\": null\\n}\", \"refusal\":
-        null}}], \"usage\": {\"prompt_tokens\": 9498, \"completion_tokens\": 1004,
-        \"total_tokens\": 10502, \"cost\": 0.001387639, \"is_byok\": false, \"prompt_tokens_details\":
-        {\"cached_tokens\": 3719, \"cache_write_tokens\": 5776, \"audio_tokens\":
-        0, \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\": 0.001387639,
-        \"upstream_inference_prompt_cost\": 0.000835439, \"upstream_inference_completions_cost\":
-        0.0005522}, \"completion_tokens_details\": {\"reasoning_tokens\": 655, \"image_tokens\":
+        \   \\\"fact\\\": \\\"Da kein Annex-III-Verwendungsbereich vorliegt, greift
+        der Filter nach Artikel 6 Absatz 3 nicht.\\\",\\n    \\\"fact_numbers\\\":
+        []\\n  },\\n  \\\"annex_i\\\": {\\n    \\\"point\\\": \\\"annex:I:A:6\\\",\\n
+        \   \\\"covered\\\": \\\"yes\\\",\\n    \\\"safety_component_or_product\\\":
+        \\\"no\\\",\\n    \\\"third_party_assessment\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
+        \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"stated\\\",\\n
+        \   \\\"fact\\\": \\\"Der Lautsprecher ist Funkanlage; die benannte Stelle
+        pr\xFCfte ausschlie\xDFlich die Nutzung des Funkspektrums, und das Ger\xE4t
+        hat keine Sicherheitsfunktionen.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
+        \ \\\"question\\\": null\\n}\", \"refusal\": null}}], \"usage\": {\"prompt_tokens\":
+        9498, \"completion_tokens\": 741, \"total_tokens\": 10239, \"cost\": 0.001242989,
+        \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\": 3719, \"cache_write_tokens\":
+        5776, \"audio_tokens\": 0, \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\":
+        0.001242989, \"upstream_inference_prompt_cost\": 0.000835439, \"upstream_inference_completions_cost\":
+        0.00040755}, \"completion_tokens_details\": {\"reasoning_tokens\": 421, \"image_tokens\":
         0, \"audio_tokens\": 0}}}"
     headers:
       content-type:

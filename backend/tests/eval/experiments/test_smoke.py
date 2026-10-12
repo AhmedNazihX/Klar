@@ -725,7 +725,7 @@ def test_each_node_is_the_engines_own_on_the_arms_pinned_model_without_retries(
 
 def test_the_high_risk_cap_leaves_room_for_reasoning() -> None:
     """E5: Luna's reasoning ran out at 3000 output tokens; the node needs 6000."""
-    assert smoke.MAX_OUTPUT_TOKENS[NodeName.HIGH_RISK] == 6000
+    assert smoke.MAX_OUTPUT_TOKENS[NodeName.HIGH_RISK] == 10000
 
 
 # --- One model's run ----------------------------------------------------------------------------

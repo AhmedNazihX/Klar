@@ -18,7 +18,7 @@ interactions:
     uri: https://openrouter.ai/api/v1/embeddings
   response:
     body:
-      string: '{"id": "gen-emb-1791816820-weVioJfxuodZVUBYTV7r", "object": "list",
+      string: '{"id": "gen-emb-1791818626-fwBrYaaOZlcV165po8pM", "object": "list",
         "data": [{"object": "embedding", "embedding": [-0.021396469324827194, 0.0017675342969596386,
         -0.00413975166156888, 0.011209889315068722, 0.023815199732780457, 0.0325598418712616,
         -0.02418731153011322, -0.005163060966879129, 0.0069771092385053635, 0.012837881222367287,
@@ -783,7 +783,7 @@ interactions:
       as the Medical Device Regulation allows for class I, we carried out the conformity
       assessment ourselves and issued our own declaration; no notified body was involved,
       and none is required for this model. It went on sale in Austria and Germany
-      in May 2026. We also sponsor a local wheelchair basketball team.","role":"user"}],"max_tokens":6000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"high_risk_answer","schema":{"$defs":{"AnnexIAnswer":{"additionalProperties":false,"properties":{"point":{"anyOf":[{"type":"string","enum":["annex:I:A:2","annex:I:A:3","annex:I:A:4","annex:I:A:5","annex:I:A:6","annex:I:A:7","annex:I:A:8","annex:I:A:9","annex:I:A:10","annex:I:A:11","annex:I:A:12","annex:I:B:13","annex:I:B:14","annex:I:B:15","annex:I:B:16","annex:I:B:17","annex:I:B:18","annex:I:B:19","annex:I:B:20","annex:I:B:21"]},{"type":"null"}],"title":"Point"},"covered":{"$ref":"#/$defs/Answer"},"safety_component_or_product":{"$ref":"#/$defs/Answer"},"third_party_assessment":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
+      in May 2026. We also sponsor a local wheelchair basketball team.","role":"user"}],"max_tokens":10000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"high_risk_answer","schema":{"$defs":{"AnnexIAnswer":{"additionalProperties":false,"properties":{"point":{"anyOf":[{"type":"string","enum":["annex:I:A:2","annex:I:A:3","annex:I:A:4","annex:I:A:5","annex:I:A:6","annex:I:A:7","annex:I:A:8","annex:I:A:9","annex:I:A:10","annex:I:A:11","annex:I:A:12","annex:I:B:13","annex:I:B:14","annex:I:B:15","annex:I:B:16","annex:I:B:17","annex:I:B:18","annex:I:B:19","annex:I:B:20","annex:I:B:21"]},{"type":"null"}],"title":"Point"},"covered":{"$ref":"#/$defs/Answer"},"safety_component_or_product":{"$ref":"#/$defs/Answer"},"third_party_assessment":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
       Numbers","type":"array"}},"required":["point","covered","safety_component_or_product","third_party_assessment","settled_in_law","open_question","evidence","fact","fact_numbers"],"title":"AnnexIAnswer","type":"object"},"AnnexIIIAnswer":{"additionalProperties":false,"description":"The
       Annex III use. Enum fields carry no description: strict structured output rejects\nkeywords
       next to a `$ref`; the prompt explains every field instead. Each route''s\n`settled_in_law`
@@ -807,31 +807,30 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791816825-c8EU1O7jHjEtHQSvWtnJ", "object": "chat.completion",
-        "created": 1791816825, "model": "openai/gpt-6-luna", "provider": "Azure",
+      string: '{"id": "gen-1791818629-rRTbUAfKn9ncBS3wJm2u", "object": "chat.completion",
+        "created": 1791818629, "model": "openai/gpt-6-luna", "provider": "Azure",
         "system_fingerprint": null, "service_tier": "default", "choices": [{"index":
         0, "logprobs": null, "finish_reason": "stop", "native_finish_reason": "completed",
         "message": {"role": "assistant", "content": "{\n  \"annex_iii\": {\n    \"point\":
         null,\n    \"uses\": \"no\",\n    \"public_authority\": \"no\",\n    \"settled_in_law\":
         \"yes\",\n    \"open_question\": null,\n    \"evidence\": \"inferred\",\n    \"fact\":
-        \"The assistant does not fall under an Annex III use.\",\n    \"fact_numbers\":
+        \"The described wheelchair assistant does not fit an Annex III use.\",\n    \"fact_numbers\":
         []\n  ,\n  \"examples\": []\n  },\n  \"art_6_3\": {\n    \"condition\": \"none\",\n    \"profiling\":
         \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
-        \"inferred\",\n    \"fact\": \"The Article 6(3) filter does not apply because
-        the system falls under no Annex III point.\",\n    \"fact_numbers\": []\n  },\n  \"annex_i\":
+        \"inferred\",\n    \"fact\": \"The system falls outside Annex III, so the
+        Article 6(3) filter does not arise.\",\n    \"fact_numbers\": []\n  },\n  \"annex_i\":
         {\n    \"point\": \"annex:I:A:11\",\n    \"covered\": \"yes\",\n    \"safety_component_or_product\":
         \"yes\",\n    \"third_party_assessment\": \"no\",\n    \"settled_in_law\":
         \"yes\",\n    \"open_question\": null,\n    \"evidence\": \"stated\",\n    \"fact\":
-        \"The wheelchair is a class I medical device covered by the Medical Device
-        Regulation; the assistant detects obstacles and brakes the chair to prevent
-        collisions, while no third-party conformity assessment is required for this
-        model.\",\n    \"fact_numbers\": []\n  },\n  \"question\": null\n}", "refusal":
-        null}}], "usage": {"prompt_tokens": 7874, "completion_tokens": 592, "total_tokens":
-        8466, "cost": 0.000937739, "is_byok": false, "prompt_tokens_details": {"cached_tokens":
-        3719, "cache_write_tokens": 4152, "audio_tokens": 0, "video_tokens": 0}, "cost_details":
-        {"upstream_inference_cost": 0.000937739, "upstream_inference_prompt_cost":
-        0.000612139, "upstream_inference_completions_cost": 0.0003256}, "completion_tokens_details":
-        {"reasoning_tokens": 273, "image_tokens": 0, "audio_tokens": 0}}}'
+        \"The wheelchair is a class I medical device; its camera-based assistant brakes
+        to avoid obstacles, and this model required no third-party conformity assessment.\",\n    \"fact_numbers\":
+        []\n  },\n  \"question\": null\n}", "refusal": null}}], "usage": {"prompt_tokens":
+        7874, "completion_tokens": 589, "total_tokens": 8463, "cost": 0.000936089,
+        "is_byok": false, "prompt_tokens_details": {"cached_tokens": 3719, "cache_write_tokens":
+        4152, "audio_tokens": 0, "video_tokens": 0}, "cost_details": {"upstream_inference_cost":
+        0.000936089, "upstream_inference_prompt_cost": 0.000612139, "upstream_inference_completions_cost":
+        0.00032395}, "completion_tokens_details": {"reasoning_tokens": 281, "image_tokens":
+        0, "audio_tokens": 0}}}'
     headers:
       content-type:
       - application/json
