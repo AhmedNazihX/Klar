@@ -22,7 +22,12 @@ from aiact.engine import (
     ClassifyRequest,
     run_classification,
 )
-from aiact.engine.classify import CorpusLibraries, NodeBuilder, engine_nodes
+from aiact.engine.classify import (
+    ClassificationFailedError,
+    CorpusLibraries,
+    NodeBuilder,
+    engine_nodes,
+)
 from aiact.engine.nodes import prohibited, transparency
 from aiact.engine.nodes.common import Lookup
 from aiact.engine.nodes.guideline_retrieval import GuidelineCorpus
@@ -355,6 +360,14 @@ def replay_nodes(
         )
 
 
+@pytest.mark.xfail(
+    strict=True,
+    raises=ClassificationFailedError,
+    reason="E18's re-record (2026-10-12): the worked example's recorded high-risk answer was "
+    "cut off "
+    "mid-JSON (model output glitch), so the run stops in high_risk; re-record it once in E19 "
+    "(user, 2026-10-12: no more paid runs in E18)",
+)
 @pytest.mark.vcr
 def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
     run = run_classification(

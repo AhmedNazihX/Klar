@@ -1,0 +1,27 @@
+# E18 negative fixture (T2), written from Art. 3(36), 3(40), 50(3) and recital 15 only: not a
+# benchmark case, never scored. The system confirms who a member is at a gym's entrance.
+id: fixture-e18-t2-turnstile-face-check
+set_name: own
+language: en
+description: >-
+  Our firm in Leipzig employs 60 people and has supplied a door-entry product to gym chains in
+  Germany since 2025. Each member signs up with a photo that is linked to their membership card.
+  When a member taps the card at the entrance turnstile, a camera takes a picture, and our model
+  compares that face with the photo on file for this one card. On a match the turnstile unlocks;
+  otherwise a staff member at the front desk gets an alert. Gyms use it to stop members lending
+  their cards to friends. The pictures taken at the turnstile are discarded after each
+  comparison.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:3:36", "art:3:40", "art:50:3", "annex:III:1:a"]
+as_of: 2026-10-01
+notes: >-
+  T2: a one-to-one check of a face against the photo stored for the card is biometric
+  verification (Art. 3(36)): it confirms who the member is and assigns nobody to a category
+  (Art. 3(40)), and it infers no emotions (Art. 3(39)), so no Art. 50(3) duty. Verification whose
+  sole purpose is to confirm a person's claimed identity is excluded from point 1(a) of Annex III
+  (recital 15 names access to premises). Provider under its own name (Art. 3(3)).
+tags:
+  - "fixture:e18"
+  - "cause:t2"

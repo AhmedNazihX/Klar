@@ -72,8 +72,14 @@ from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
     corpus_recording,
+    require_recording,
 )
-from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import (
+    NOT_ASSESSED,
+    KnownGap,
+    expect_known_gap,
+    negative_cases,
+)
 from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -948,10 +954,6 @@ def _b5a_cases() -> list[BenchmarkCase]:
 B5A_CASES = _b5a_cases()
 
 
-def _decides_no_duty(result: CheckOutcome, case: BenchmarkCase) -> bool:
-    return result.step.status is Status.DECIDED and result.transparency_duties == ()
-
-
 def _asks_about_deep_fakes(result: CheckOutcome, case: BenchmarkCase) -> bool:
     return (
         result.step.status is Status.NEEDS_MORE_INFORMATION
@@ -960,16 +962,28 @@ def _asks_about_deep_fakes(result: CheckOutcome, case: BenchmarkCase) -> bool:
 
 
 KNOWN_GAPS: dict[str, KnownGap] = {
-    "own-a-04-audiobook-voices": KnownGap(
-        "decides no Art. 50 duty: reads turning the manuscript into an audiobook as not changing "
-        "its meaning, so the Art. 50(2) marking duty the label needs is left out (E10 "
-        "re-record, user 2026-10-06)",
-        _decides_no_duty,
-    ),
     "own-a-14-practice-phone-agent": KnownGap(
         "adds Art. 50(4) and asks whether the voices are deep fakes (needs_more_information), "
         "where the label is decided with Art. 50(1) and (2) only (E10 re-record, user 2026-10-06)",
         _asks_about_deep_fakes,
+    ),
+    "own-a-08-local-news-council-reports": KnownGap(
+        "E18's re-record (2026-10-12): adds Art. 50(2) to the label's Art. 50(4) and leaves the "
+        "editorial exception legally ambiguous instead of deciding it is not met; passed before "
+        "E18, so a follow-up for E19 (user, 2026-10-12: keep as a known gap, wrap up E18)",
+        lambda result, case: (
+            result.step.status is Status.LEGALLY_AMBIGUOUS
+            and "art:50:2" in result.transparency_duties
+        ),
+    ),
+    "own-a-15-intranet-assistant-in-house": KnownGap(
+        "E18's re-record (2026-10-12): under the tighter T3 rule the model doesn't find the "
+        "obvious-interaction exception shown and lists Art. 50(1) (legally ambiguous) where the "
+        "label has Art. 50(2) only; passed before E18, so a follow-up for E19 (user, 2026-10-12)",
+        lambda result, case: (
+            result.step.status is Status.LEGALLY_AMBIGUOUS
+            and "art:50:1" in result.transparency_duties
+        ),
     ),
 }
 """Recorded cases whose Art. 50 outcome differs from the label, with the reason; each fails when
@@ -998,6 +1012,35 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
         yield GuidelineCorpus(connection, OpenRouterEmbeddings(settings=settings), node.SOURCE)
 
 
+def _replay(
+    case: BenchmarkCase,
+    settings: Settings,
+    record_mode: str,
+    cassette_dir: str,
+    cassette_name: str,
+    record_command: str,
+) -> CheckOutcome:
+    """The case's transparency step over the recorded model and corpus, its citations checked."""
+    with corpus_recording(
+        cassette_dir,
+        cassette_name,
+        record_mode,
+        record_command,
+        lambda: _live_corpus(settings),
+    ) as recording:
+        check = TransparencyCheck(settings, library=RecordedGuidelineLibrary(recording))
+        run_state = replay_state(case, AS_OF)
+        result = check(run_state)
+    assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
+    return result
+
+
+def _shown(result: CheckOutcome) -> object:
+    step = result.step
+    return (result.transparency_duties, step.status, cited(result), step.decision)
+
+
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1012,20 +1055,101 @@ def test_b5a_case_replay(
     default_cassette_name: str,
 ) -> None:
     """Each B5a case's Art. 50 outcome against its label, at the case's own date (`as_of`)."""
-    with corpus_recording(
-        vcr_cassette_dir,
-        default_cassette_name,
-        record_mode,
-        RECORD_COMMAND,
-        lambda: _live_corpus(luna_settings),
-    ) as recording:
-        check = TransparencyCheck(luna_settings, library=RecordedGuidelineLibrary(recording))
-        run_state = replay_state(case, AS_OF)
-        result = check(run_state)
-    assert not unresolved_citations(result.step, run_state)
-    assert not whole_articles(result.step)
+    result = _replay(
+        case, luna_settings, record_mode, vcr_cassette_dir, default_cassette_name, RECORD_COMMAND
+    )
     matches = transparency_matches(result, case)
-    step = result.step
-    shown = (result.transparency_duties, step.status, cited(result), step.decision)
+    shown = _shown(result)
     expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
     assert matches, shown
+
+
+# --- E18 negative fixtures: the Art. 50 over-strictness causes (T1, T2, T3) --------------------
+
+E18_CASES = [*negative_cases("t1"), *negative_cases("t2"), *negative_cases("t3")]
+NOT_A_DUTY: dict[str, tuple[str, ...]] = {
+    "fixture-e18-t1-invoice-review-report": ("art:50:2", "art:50:1"),
+    "fixture-e18-t2-turnstile-face-check": ("art:50:3",),
+    "fixture-e18-t3-patent-firm-assistant": ("art:50:1",),
+}
+"""E18's causes, by fixture: the Art. 50 paragraphs the step must not list. T1: a table of
+extracted findings is no synthetic content (guide para 65) and masking parts of the input falls
+under Art. 50(2)'s exception (guide para 92); nobody converses with it, so no Art. 50(1) either.
+T2: biometric verification is not biometric categorisation under Art. 50(3). T3: Art. 50(1)'s
+obvious exception for a chat assistant only properly trained, AI-literate and aware
+professionals use, with no public exposure (guide para 45)."""
+E18_RECORD_COMMAND = (
+    "uv run pytest tests/engine/nodes/test_transparency.py -k e18_negative --record-mode=once"
+)
+
+
+@pytest.mark.vcr
+@pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
+def test_e18_negative_replay(
+    case: BenchmarkCase,
+    luna_settings: Settings,
+    record_mode: str,
+    vcr_cassette_dir: str,
+    default_cassette_name: str,
+) -> None:
+    """Each E18 fixture's step leaves out the Art. 50 paragraph its cause wrongly listed, and
+    decides without asking about it."""
+    require_recording(vcr_cassette_dir, default_cassette_name, record_mode)
+    result = _replay(
+        case,
+        luna_settings,
+        record_mode,
+        vcr_cassette_dir,
+        default_cassette_name,
+        E18_RECORD_COMMAND,
+    )
+    shown = _shown(result)
+    for paragraph in NOT_A_DUTY[case.id]:
+        assert paragraph not in result.transparency_duties, shown
+    assert result.step.status is Status.DECIDED, shown
+
+
+E18_RULES = (
+    # T1 (Art. 50(2); guide paras 65, 92)
+    "is not synthetic content by that alone",
+    "a score, a label, a ranking, a prediction or data extracted from the input",
+    "such as a draft, an answer, a summary, an article, a picture or a voice; a report the system "
+    "writes in prose is synthetic text too.",
+    "Masking, blacking out or blurring parts of the input (a redaction) that leaves its meaning "
+    "unchanged does not substantially alter it, so Art. 50(2)'s exception for such edits takes it "
+    "out of the marking duty.",
+    "neither is output that only states an analysis of the input in structured form (see above); "
+    "a summary or a prose report is generating text.",
+    "or its semantics, such as a redaction (see above)",
+    # T2 (Art. 3(35), 3(36), 3(39), 3(40), 50(3))
+    "Biometric identification or verification (Art. 3(35), 3(36))",
+    "it establishes who a person is, not which category they belong to",
+    'Answer "no" for such a system unless it also assigns people to categories or infers their '
+    "emotions or intentions.",
+    # T3 (Art. 50(1); guide para 45)
+    "a converted file, a report or a dashboard of results, or completions offered as the user "
+    'types) is "no"',
+    "For a tool used only by an organisation's own staff, always weigh this exception, and read "
+    "it restrictively: it holds only when almost no doubt is left",
+    "Staff are one such reason when the description shows all three: they are properly trained, "
+    "they are AI literate, and they are aware that they use an AI system; and nothing exposes the "
+    "general public or vulnerable people to it.",
+    "Training on the AI system itself (what it is and how it works) can show all three together.",
+    "A professional or specialised audience stays a reason of its own only when its expertise lies "
+    "in the field the system works in, so that by that expertise and the context of use they can "
+    "tell they deal with an AI system; being an organisation's employees doesn't make its staff "
+    "such an audience by itself.",
+    "That the tool is internal, or that its users know it is AI, is not enough on its own: answer "
+    '"no" unless another reason above applies.',
+)
+"""E18's T1, T2 and T3 rules with their supporting clauses, as transparency.md words them."""
+
+
+def test_the_prompt_states_the_e18_rules() -> None:
+    flat = " ".join(node.TRANSPARENCY_INSTRUCTIONS.split())
+    for rule in E18_RULES:
+        assert rule in flat
+
+
+def test_each_art_50_cause_has_its_fixture() -> None:
+    assert [case.id for case in E18_CASES] == list(NOT_A_DUTY)

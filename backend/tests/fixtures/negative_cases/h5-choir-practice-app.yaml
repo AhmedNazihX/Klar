@@ -1,0 +1,26 @@
+# E18 negative fixture (H5), written from Art. 6(1)(a) and Annex I Section A point 6 only: not a
+# benchmark case, never scored. An app on other makers' phones is not itself radio equipment.
+id: fixture-e18-h5-choir-practice-app
+set_name: own
+language: de
+description: >-
+  Wir sind ein Musik-Start-up aus Köln mit zwölf Leuten. Unsere App „Stimmlage“ gibt es seit 2025
+  in den App-Stores; sie läuft auf den Smartphones und Tablets der Nutzerinnen und Nutzer, Geräte
+  bauen oder verkaufen wir nicht. Wer im Chor singt, übt mit der App seine Stimme: Ein von uns
+  trainiertes Modell hört über das Mikrofon zu, erkennt die gesungenen Töne und zeigt an, wo man
+  zu hoch oder zu tief liegt. Danach wählt die App die nächste Übung aus unserer Sammlung, die
+  unsere Gesangslehrerinnen eingesungen haben. Zum Üben kann man Bluetooth-Kopfhörer verbinden.
+  Die App ist kostenlos, eine Premium-Version kostet 4 Euro im Monat.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:6:1", "annex:I:A:6", "art:3:14"]
+notes: >-
+  H5: the app is stand-alone software; it is not radio equipment under Directive 2014/53/EU, and
+  under Art. 3(14) it is no safety component of the phones, tablets or headphones it is installed
+  on or paired with, so Art. 6(1)(a) is not met through Annex I Section A point 6, and no other
+  Annex I legislation applies to it. It shows an analysis of the singing and selects exercises
+  people recorded, so no Art. 50 duty. Provider under its own name (Art. 3(3)).
+tags:
+  - "fixture:e18"
+  - "cause:h5"

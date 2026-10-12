@@ -81,8 +81,14 @@ from tests.engine.nodes.corpus_recording import (
     CorpusRecording,
     corpus_recording,
     lookup_call,
+    require_recording,
 )
-from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import (
+    NOT_ASSESSED,
+    KnownGap,
+    expect_known_gap,
+    negative_cases,
+)
 from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -1492,19 +1498,7 @@ def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) 
     )
 
 
-def _decides_not_high_risk(result: CheckOutcome, case: BenchmarkCase) -> bool:
-    """Decided not high-risk on either route, with no question asked."""
-    return result.high_risk_route is None and result.step.status is Status.DECIDED
-
-
 KNOWN_GAPS: dict[str, KnownGap] = {
-    "own-e-07-grinder-burst-kit": KnownGap(
-        "decides not high-risk (no Annex III use; it reads Annex I A.11, medical devices, and "
-        "says not covered) instead of asking whether the Machinery Regulation requires a "
-        "third-party assessment (Annex I B.21) (B10c re-record of the grinder wording, user "
-        "2026-10-09)",
-        _decides_not_high_risk,
-    ),
     "own-e-10-in-house-nodule-finder": KnownGap(
         "the model treats the MDR in-house exemption as a missing fact (it asks whether a "
         "third-party assessment is required) instead of an open legal question; the label stays "
@@ -1660,3 +1654,121 @@ def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     assert not result.annex_iii_exempt, shown
     assert step.status is Status.DECIDED, shown
     assert not any(name in step.decision for name in OMNIBUS_PARAGRAPHS), shown
+
+
+# --- E18 fixtures: the high-risk over-strictness causes (H4, H5, H6), and H4's positive side ---
+#
+# Record them with `E18_RECORD_COMMAND`.
+
+E18_RECORD_COMMAND = (
+    "uv run pytest tests/engine/nodes/test_high_risk.py -k 'e18_negative or e18_positive' "
+    "--record-mode=once"
+)
+E18_CASES = [*negative_cases("h4"), *negative_cases("h5"), *negative_cases("h6")]
+NOT_THE_ROUTE: dict[str, str] = {
+    "fixture-e18-h4-water-demand-forecast": "annex:III:2",
+    "fixture-e18-h5-choir-practice-app": "annex:I:A:6",
+    "fixture-e18-h6-trade-fair-roundtables": "annex:III:1:b",
+}
+"""E18's causes, by fixture: the point the step must not read as the system's. H4: a planning
+forecast is no safety component of critical infrastructure (Art. 3(14), recital 55). H5: an app
+on others' phones is neither radio equipment nor its safety component (Art. 6(1)(a)). H6: grouping
+people by what they type into a form is no biometric categorisation by sensitive attributes."""
+
+
+@pytest.fixture
+def e18_replay_check(
+    luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
+) -> Iterator[HighRiskCheck]:
+    """`replay_check` for the E18 fixtures: a missing recording raises `RecordingPendingError`
+    (their strict xfail) rather than skipping."""
+    require_recording(vcr_cassette_dir, default_cassette_name, record_mode)
+    with _recorded_check(
+        luna_settings, record_mode, vcr_cassette_dir, default_cassette_name, E18_RECORD_COMMAND
+    ) as check:
+        yield check
+
+
+@pytest.mark.vcr
+@pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
+def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
+    """Each fixture is decided not high-risk, with no Art. 6(3) exemption, and its step neither
+    routes through nor cites the point its cause wrongly read."""
+    run_state = replay_state(case, AS_OF)
+    result = e18_replay_check(run_state)
+    assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
+    step = result.step
+    shown = (result.high_risk_route, result.annex_point, step.status, cited(result), step.decision)
+    assert result.high_risk_route is None, shown
+    assert not result.annex_iii_exempt, shown
+    assert step.status is Status.DECIDED, shown
+    assert NOT_THE_ROUTE[case.id] not in cited(result), shown
+
+
+E18_POSITIVE_CASES = negative_cases("h4-positive")
+"""H4's counterweight: a component on a road bridge whose own output detects that a load-bearing
+part needs inspection, and closes the lane until it is done, is a safety component (guide-annex-iii
+para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2."""
+
+
+@pytest.mark.vcr
+@pytest.mark.parametrize("case", E18_POSITIVE_CASES, ids=lambda case: case.id)
+def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
+    """The H4 counterpart is decided high-risk through Annex III point 2, with no Art. 6(3)
+    exemption."""
+    run_state = replay_state(case, AS_OF)
+    result = e18_replay_check(run_state)
+    assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
+    step = result.step
+    shown = (result.high_risk_route, result.annex_point, step.status, cited(result), step.decision)
+    assert result.high_risk_route is HighRiskRoute.ANNEX_III, shown
+    assert result.annex_point == "annex:III:2", shown
+    assert not result.annex_iii_exempt, shown
+    assert step.status is Status.DECIDED, shown
+
+
+def test_h4_has_its_positive_fixture() -> None:
+    assert [case.id for case in E18_POSITIVE_CASES] == [
+        "fixture-e18-h4-positive-bridge-bearing-wear"
+    ]
+
+
+E18_RULES = (
+    # H6 (Annex III point 1(b), Art. 3(40); guide-annex-iii para 167)
+    "- 1(b) is biometric categorisation according to sensitive or protected attributes",
+    "(those protected under Art. 9(1) GDPR, such as racial or ethnic origin, political opinions, "
+    "religious or philosophical beliefs, trade union membership, health, sex life or sexual "
+    "orientation)",
+    "Biometric data includes behavioural data such as keystroke patterns or gait.",
+    "Grouping people by data that is not biometric data (what they enter or buy, their clothes or "
+    "their social media activity), or by attributes that are not sensitive or protected, is not "
+    "point 1(b).",
+    # H4 (Annex III point 2, Art. 3(14); guide-annex-iii para 184, ex:065, ex:068)
+    "- 2 needs a safety component (Art. 3(14))",
+    'is not one: answer `uses` "no" for point 2.',
+    "Decide by what the system's own output does.",
+    "A component in the infrastructure whose output detects a dangerous situation that may "
+    "directly lead to physical harm to natural persons or damage to property, or detects the need "
+    "for maintenance or inspection whose omission may directly lead to such harm or damage, is a "
+    "safety component, and so is one whose output prevents, controls or limits such harm (for "
+    'example by stopping an operation): answer `uses` "yes" for point 2.',
+    "A component used solely for cybersecurity purposes is not a safety component (recital 55).",
+    # H5 (Art. 6(1)(a), Annex I Section A point 6)
+    "The Radio Equipment Directive (`annex:I:A:6`) is the AI system's route only when",
+    "Software supplied on its own that only runs on, or connects to, a phone, a router or another "
+    "radio device made by others",
+    "is neither: answer `point` null unless other listed legislation covers it.",
+)
+"""E18's H6, H4 and H5 rules with their supporting clauses, as high_risk.md words them."""
+
+
+def test_the_prompt_states_the_e18_rules() -> None:
+    flat = " ".join(node.HIGH_RISK_INSTRUCTIONS.split())
+    for rule in E18_RULES:
+        assert rule in flat
+
+
+def test_each_high_risk_cause_has_its_fixture() -> None:
+    assert [case.id for case in E18_CASES] == list(NOT_THE_ROUTE)

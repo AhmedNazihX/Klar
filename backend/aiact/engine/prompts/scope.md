@@ -67,8 +67,17 @@ Answer with JSON matching the schema:
   that only returns an analysis of its input (a score, a label, a ranking or a prediction) to its
   own user doesn't fall under Art. 50(1) or 50(2). Emotion recognition and biometric
   categorisation stay under Art. 50(3) whatever they return. Text, images, audio or video a
-  system generates is synthetic content under Art. 50(2), whoever receives it. Answer this even
-  when open_source is "no".
+  system generates is synthetic content under Art. 50(2), whoever receives it. Output that only
+  states such an analysis in structured form (a score, a label, a ranking, a prediction or data
+  extracted from the input, also listed, tabled or given as a short hint pointing to a finding)
+  is not synthetic content by that alone. Synthetic content is text, images, audio or video the
+  system composes, such as a draft, an answer, a summary, an article, a picture or a voice; a
+  report the system writes in prose is synthetic text too. Masking, blacking out or blurring
+  parts of the input (a redaction) that leaves its meaning unchanged does not substantially
+  alter it, so Art. 50(2)'s exception for such edits takes it out of the marking duty. A system
+  of a kind Art. 50 covers still falls under Art. 50 when one of its exceptions lifts the duty,
+  so answer "yes" for it: Art. 2(12) asks whether Art. 50 covers the system, not whether a duty
+  remains. Answer this even when open_source is "no".
 
 For every key fact:
 - answer: "yes", "no" or "unknown" ("contested" is allowed only for ai_system).

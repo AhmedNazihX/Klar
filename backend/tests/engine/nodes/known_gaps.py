@@ -3,15 +3,30 @@
 Each gap names the reason and the wrong reading it documents (`reads`). A replay with a gap fails
 when it starts matching its label (the entry is then removed), and fails too when it misses in
 any other way than the documented one; otherwise it is an expected failure.
+
+Also the replays a prompt change left stale until they are re-recorded, and E18's negative
+fixtures.
 """
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
 from aiact.engine.state import CheckOutcome
-from aiact.eval.cases import BenchmarkCase
+from aiact.eval.cases import BenchmarkCase, load_yaml_file
+
+NEGATIVE_CASES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "negative_cases"
+"""E18's negative fixtures: cases written from the Act's conditions for a provision that does
+not apply, never from a benchmark example, and never scored."""
+
+
+def negative_cases(cause: str) -> list[BenchmarkCase]:
+    """The negative fixtures tagged `cause:<cause>` (for example `t1`)."""
+    paths = sorted(NEGATIVE_CASES_DIR.glob("*.yaml"))
+    cases = [case for path in paths for case in load_yaml_file(path)]
+    return [case for case in cases if f"cause:{cause}" in case.tags]
 
 
 @dataclass(frozen=True)

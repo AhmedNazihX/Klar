@@ -25,6 +25,14 @@ A system that only returns an analysis of its input (a score, a label, a ranking
 to its own user doesn't fall under Art. 50(1) or 50(2). Emotion recognition and biometric
 categorisation stay under Art. 50(3) whatever they return. Text, images, audio or video a system
 generates is synthetic content under Art. 50(2), whoever receives it.
+Output that only states such an analysis in structured form (a score, a label, a ranking, a
+prediction or data extracted from the input, also listed, tabled or given as a short hint
+pointing to a finding) is not synthetic content by that alone. Synthetic content is text, images,
+audio or video the system composes, such as a draft, an answer, a summary, an article, a picture
+or a voice; a report the system writes in prose is synthetic text too. Masking, blacking out or
+blurring parts of the input (a redaction) that leaves its meaning unchanged does not
+substantially alter it, so Art. 50(2)'s exception for such edits takes it out of the marking
+duty.
 
 Each duty has the same fields, in this order:
 - `covered`: the system is of the kind the paragraph names.
@@ -57,9 +65,9 @@ and do not ask for a fact the description already gives.
   and it responds to them as a counterpart in an exchange, in writing, speech, or visual or
   physical action, whoever starts the exchange. Answer "yes" only for such a system. A system
   that only processes what its user submits and hands back the result (for example a converted
-  file, or completions offered as the user types) is "no": its user operates a tool and doesn't
-  converse with it. A chat panel or assistant inside a tool that the user converses with is still
-  a counterpart: "yes".
+  file, a report or a dashboard of results, or completions offered as the user types) is "no":
+  its user operates a tool and doesn't converse with it. A chat panel or assistant inside a
+  tool that the user converses with is still a counterpart: "yes".
 - `exception`: it is obvious to a reasonably well-informed, observant and circumspect person,
   given the circumstances and the context of use, that they are interacting with an AI system;
   or the system is authorised by law to detect, prevent, investigate or prosecute criminal
@@ -72,7 +80,19 @@ and do not ask for a fact the description already gives.
   exposure to the general public or vulnerable people; internal staff who are properly trained, AI
   literate and aware that they use AI systems; or ambient AI in an appliance whose functions are
   limited to assisting with and operating that appliance (a human-like voice or persona doesn't
-  count as such a reason). When the description names the people who interact and gives no such
+  count as such a reason). For a tool used only by an organisation's own staff, always weigh this
+  exception, and read it restrictively: it holds only when almost no doubt is left, for the
+  people who use the system, about the nature of the interaction. Staff are one such reason when
+  the description shows all three: they are properly trained, they are AI literate, and they
+  are aware that they use an AI system; and nothing exposes the general public or vulnerable
+  people to it. Training on the AI system itself (what it is and how it works) can show all
+  three together. Then answer "yes" with evidence "stated" or "inferred". A professional or
+  specialised audience stays a reason of its own only when its expertise lies in the field the
+  system works in, so that by that expertise and the context of use they can tell they deal
+  with an AI system; being an organisation's employees doesn't make its staff such an audience
+  by itself. That the tool is internal, or that its users know it is AI, is not enough on its
+  own: answer "no" unless another reason above applies.
+  When the description names the people who interact and gives no such
   reason, answer "no" with evidence "inferred"; an audience of the general public or of consumers,
   with nothing more, is the clear "no" case. Answer "unknown" only when the description really
   doesn't say who interacts with the system or how. When it says so but the guidelines leave open
@@ -81,14 +101,24 @@ and do not ask for a fact the description already gives.
 ## synthetic_content: paragraph 2
 
 - `covered`: the system generates synthetic audio, image, video or text content. Selecting,
-  ranking or playing back content that people made is not generating it.
+  ranking or playing back content that people made is not generating it, and neither is output
+  that only states an analysis of the input in structured form (see above); a summary or a
+  prose report is generating text.
 - `exception`: the system performs an assistive function for standard editing, or does not
-  substantially alter the input data the deployer provides or its semantics; or it is authorised
-  by law to detect, prevent, investigate or prosecute criminal offences.
+  substantially alter the input data the deployer provides or its semantics, such as a
+  redaction (see above); or it is authorised by law to detect, prevent, investigate or
+  prosecute criminal offences.
 
 ## emotion_biometric: paragraph 3
 
-- `covered`: the system is an emotion recognition system or a biometric categorisation system.
+- `covered`: the system is an emotion recognition system (it identifies or infers emotions or
+  intentions of natural persons on the basis of their biometric data, Art. 3(39)) or a biometric
+  categorisation system (it assigns natural persons to specific categories on the basis of their
+  biometric data, Art. 3(40)). Biometric identification or verification (Art. 3(35), 3(36)),
+  matching a person's face, voice or other biometric data to stored data to establish or confirm
+  who they are, is neither: it establishes who a person is, not which category they belong to.
+  Answer "no" for such a system unless it also assigns people to categories or infers their
+  emotions or intentions.
 - `exception`: it is permitted by law to detect, prevent or investigate criminal offences.
 
 ## deep_fake: paragraph 4, first subparagraph

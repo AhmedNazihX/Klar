@@ -61,7 +61,11 @@ from tests.engine.nodes.corpus_recording import (
     corpus_recording,
     lookup_call,
 )
-from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import (
+    NOT_ASSESSED,
+    KnownGap,
+    expect_known_gap,
+)
 from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -660,9 +664,19 @@ ART_50_READING = (
     "Emotion recognition and biometric categorisation stay under Art. 50(3) whatever they return.",
     "Text, images, audio or video a system generates is synthetic content under Art. 50(2), "
     "whoever receives it.",
+    "Output that only states such an analysis in structured form (a score, a label, a ranking, a "
+    "prediction or data extracted from the input, also listed, tabled or given as a short hint "
+    "pointing to a finding) is not synthetic content by that alone.",
+    "Synthetic content is text, images, audio or video the system composes, such as a draft, an "
+    "answer, a summary, an article, a picture or a voice; a report the system writes in prose is "
+    "synthetic text too.",
+    "Masking, blacking out or blurring parts of the input (a redaction) that leaves its meaning "
+    "unchanged does not substantially alter it, so Art. 50(2)'s exception for such edits takes it "
+    "out of the marking duty.",
 )
 """The user's Art. 50 reading (2026-10-06), worded the same in the scope and transparency
-prompts (BACKLOG > V8, from E6)."""
+prompts (BACKLOG > V8, from E6); the last three sentences are E18's T1 (Art. 50(2), guide paras
+65 and 92, user option C, 2026-10-12)."""
 
 
 def test_scope_and_transparency_prompts_read_art_50_alike() -> None:
@@ -721,31 +735,12 @@ def _decides_in_scope(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
     return not outcome.matched and outcome.step.status is Status.DECIDED
 
 
-def _reads_in_scope_as(outcome: CheckOutcome, status: Status) -> bool:
-    """In scope, with the given undecided status."""
-    return not outcome.matched and outcome.step.status is status
-
-
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-b-05-regression-loan-scorecard": KnownGap(
         "the model resolves guide-definition para 42 to the label's reading A (para 42 concerns "
         "optimisation, not scoring) instead of flagging the definition as contested; class "
         "correct, status decided instead of legally_ambiguous (user, 2026-09-30)",
         _decides_in_scope,
-    ),
-    "own-b-04-card-game-opponent": KnownGap(
-        "V8's re-record (2026-10-11): the model leaves the AI-system definition open for a minimax "
-        "search with a hand-written evaluation (guide-definition para 48's own example) instead "
-        "of deciding it is not an AI system; passed in the previous recording, so likely "
-        "run-to-run variance (user, 2026-10-11: known gap, diagnosed in E14)",
-        lambda outcome, case: _reads_in_scope_as(outcome, Status.LEGALLY_AMBIGUOUS),
-    ),
-    "own-b-11-open-source-cv-ranking": KnownGap(
-        "V8's re-record (2026-10-11): the model brings in Art. 2(8)'s pre-market testing "
-        "exclusion and pauses for more information instead of deciding the open-source system "
-        "is in scope; passed in the previous recording, so likely run-to-run variance (user, "
-        "2026-10-11: known gap, diagnosed in E14)",
-        lambda outcome, case: _reads_in_scope_as(outcome, Status.NEEDS_MORE_INFORMATION),
     ),
 }
 """Recorded cases whose scope outcome differs from the label, with the reason; each fails when

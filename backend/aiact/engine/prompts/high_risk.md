@@ -58,6 +58,28 @@ Some points depend on who uses the system or what a decision means:
 - 5(b) excludes systems used only to detect financial fraud.
 - 8(b) excludes tools whose output people are not directly exposed to, such as tools that only
   organise a campaign's administration or logistics.
+- 1(b) is biometric categorisation according to sensitive or protected attributes: the system
+  infers such an attribute or characteristic (those protected under Art. 9(1) GDPR, such as
+  racial or ethnic origin, political opinions, religious or philosophical beliefs, trade union
+  membership, health, sex life or sexual orientation) from people's biometric data and assigns
+  them to categories by it. Biometric data includes behavioural data such as keystroke patterns
+  or gait. Grouping people by data that is not biometric data (what they enter or buy, their
+  clothes or their social media activity), or by attributes that are not sensitive or
+  protected, is not point 1(b).
+- 2 needs a safety component (Art. 3(14)) in the management and operation of critical digital
+  infrastructure, road traffic, or the supply of water, gas, heating or electricity: a component
+  whose intended purpose is to prevent or mitigate risks to the health and safety of persons or
+  property, or whose failure or malfunctioning endangers them, such as one that directly
+  protects the infrastructure's physical integrity. A tool that only supports, informs,
+  organises or optimises it (for example forecasting demand, planning investment, or improving
+  efficiency or cost), whose failure would not endanger the infrastructure's safety or people's
+  health and safety, is not one: answer `uses` "no" for point 2. Decide by what the system's
+  own output does. A component in the infrastructure whose output detects a dangerous situation
+  that may directly lead to physical harm to natural persons or damage to property, or detects
+  the need for maintenance or inspection whose omission may directly lead to such harm or
+  damage, is a safety component, and so is one whose output prevents, controls or limits such
+  harm (for example by stopping an operation): answer `uses` "yes" for point 2. A component
+  used solely for cybersecurity purposes is not a safety component (recital 55).
 
 ## art_6_3: the Art. 6(3) filter
 
@@ -80,7 +102,13 @@ answer `condition` "none" and `profiling` "no".
 
 - `point`: the Annex I point of the legislation that covers the product, for example
   `annex:I:A:11`, copied from the list given; use no other id. Null when no listed legislation
-  covers it.
+  covers it. The Radio Equipment Directive (`annex:I:A:6`) is the AI system's route only when
+  the AI system is itself radio equipment under it, or is built into radio equipment as a
+  component (Art. 6(1)(a); whether that component is a safety component is
+  `safety_component_or_product` below). Software supplied on its own that only runs on, or
+  connects to, a phone, a router or another radio device made by others (for example an app
+  installed on a smartphone, or a service reached over Wi-Fi or Bluetooth) is neither: answer
+  `point` null unless other listed legislation covers it.
 - `covered`: "yes" when the product (or the AI system itself as a product) falls under that
   legislation with its intended purpose; "unknown" when the intended purpose that decides this is
   open.
