@@ -123,7 +123,7 @@
   "post_merge": [
     {
       "when": ["supabase/seed/obligations.sql"],
-      "run": "uv run --directory backend python -I -c \"import pathlib, psycopg; psycopg.connect('postgresql://postgres:postgres@127.0.0.1:54322/postgres', autocommit=True).execute(pathlib.Path('../supabase/seed/obligations.sql').read_text())\" && uv run --directory backend pytest -q tests/db/test_obligations_schema.py"
+      "run": "uv run --directory backend python -I -c \"import pathlib, psycopg; from aiact.settings import get_settings; sql = pathlib.Path('../supabase/seed/obligations.sql').read_text(); [psycopg.connect(url, autocommit=True).execute(sql).connection.close() for url in ('postgresql://postgres:postgres@127.0.0.1:54322/postgres', get_settings().database_url.get_secret_value())]\" && uv run --directory backend pytest -q tests/db/test_obligations_schema.py"
     },
     {
       "when": ["eval/cases/**", "eval/commission_examples/**", "eval/isolation/embeddings.json"],

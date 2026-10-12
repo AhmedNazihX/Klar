@@ -6,8 +6,9 @@ argument-hint: "<set> [subset N | full] [classifier] [heldout|all] [cap USD]"
 
 # Benchmark run: $ARGUMENTS
 
-You run from the main checkout (or a worktree that has `backend/.env` and a reachable local
-Supabase). Every number in the report comes from the database, by run_id, never from memory,
+You run from the main checkout (or a worktree that has `backend/.env`). Runs read the corpus from,
+and store their results in, the hosted database that `backend/.env`'s `DATABASE_URL` names
+(decision 034); the local Postgres is the tests' only. Every number in the report comes from the database, by run_id, never from memory,
 from the chat or from your own arithmetic (INIT › Evaluation; `.claude/rules/eval.md`).
 
 ## 1. Read the arguments
@@ -61,10 +62,10 @@ uv run aiact evaluate run --set <set> --classifier <classifier> --subset <N> \
   --exclude-mode <mode> --max-cost-usd <cap> --seed <seed>
 ```
 
-(Leave out `--subset` only for a confirmed full run.) If it says `DATABASE_URL is not set`, the
-local database is the Supabase CLI default: prefix the command with
-`DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres` (never read `.env` to find
-out). An engine run needs `REFUSAL_MODEL` and `REFUSAL_PROVIDER` set (decision 033), and
+(Leave out `--subset` only for a confirmed full run.) Never prefix it with a local `DATABASE_URL`:
+a run stored in the tests' database is lost to the reports. If it says `DATABASE_URL is not set`,
+stop and ask the user to set the hosted value in `backend/.env` (never read `.env` to find out).
+An engine run needs `REFUSAL_MODEL` and `REFUSAL_PROVIDER` set (decision 033), and
 `LANGSMITH_API_KEY` for its traces (tool-call correctness, held-out rows retrieved), with
 `LANGSMITH_ENDPOINT` set to the account's region (an EU-region key is refused at the default US
 endpoint).

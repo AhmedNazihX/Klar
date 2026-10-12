@@ -84,7 +84,8 @@ the database down), report `BLOCKED: app` with the error; don't work around it.
 can't get a session (counts show "–", save, import and delete controls stay disabled, or a session error shows), stop
 and find out why with at most two commands:
 - `test -e <worktree>/frontend/.env.local && echo present`. Never read, print or derive the file's values.
-- `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:54321/auth/v1/health`, which checks the local Supabase.
+- `uv run --directory <main>/backend python -I -c "import urllib.request; from aiact.settings import get_settings as g; s = g(); print(urllib.request.urlopen(urllib.request.Request(s.supabase_url.rstrip('/') + '/auth/v1/health', headers={'apikey': s.supabase_service_key.get_secret_value()}), timeout=10).status)"`,
+  which checks the hosted Supabase's auth (decision 034) and prints only the status (200 = up).
 
 Then report `BLOCKED: app — no session` with what those two showed: the env file is missing, Supabase is down, or
 both look fine (then the file probably lacks `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`). Stop your servers.
