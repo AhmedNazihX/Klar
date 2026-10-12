@@ -92,11 +92,14 @@ PUBLIC_INTEREST_TEXT = DutyRule("art:50:4", texts.PUBLIC_INTEREST_TEXT, texts.ED
 
 @dataclass(frozen=True)
 class Duty:
-    """One duty's reading: the paragraph it names, whether it applies, and the answer part."""
+    """One duty's reading: the paragraph it names, whether it applies, the answer part, and the
+    question on the paragraph's exception, which settles the duty when the law leaves it open
+    (E17)."""
 
     provision: str
     reading: Reading
     summary: DutyAnswer
+    exception: KeyQuestion
 
     @property
     def is_raised(self) -> bool:
@@ -136,6 +139,7 @@ def duties(answer: TransparencyAnswer) -> tuple[Duty, ...]:
                 need(part.exception, rule.exception, wanted=Answer.NO),
             ),
             summary=part,
+            exception=rule.exception,
         )
         for part, rule in _parts(answer)
     )
