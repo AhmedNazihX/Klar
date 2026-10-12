@@ -72,6 +72,16 @@ describe('AppFrame sidebar', () => {
     }
   })
 
+  it.each(['/app/inventory', '/app/obligations', '/app/welcome'])(
+    'does not mark the home logo as the page on %s',
+    async (path) => {
+      await openApp(path)
+      const logos = screen.getAllByRole('link', { name: 'Klar, home' }) // phone bar and sidebar
+      expect(logos.length).toBeGreaterThan(0)
+      for (const logo of logos) expect(logo).not.toHaveAttribute('aria-current')
+    },
+  )
+
   it('marks no place on screens outside the five (Welcome, Your data)', async () => {
     await openApp('/app/welcome')
     for (const link of sidebarLinks('App')) expect(link).not.toHaveAttribute('aria-current')
