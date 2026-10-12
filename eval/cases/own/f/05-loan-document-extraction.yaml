@@ -21,7 +21,7 @@ label_citation:
   - "art:3:4"
 business_function: finance
 notes: >-
-  APPROVAL PENDING (the orchestrator records the approval line). Class: the tool feeds the creditworthiness assessment of natural
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: the tool feeds the creditworthiness assessment of natural
   persons (Annex III 5(b)), but only as a preparatory task, extracting figures into the file that
   analysts verify before they assess (Art. 6(3)(d); recital 53 names file handling and linking
   data as such tasks). It evaluates no personal aspect of the applicant, so it is not profiling

@@ -648,7 +648,6 @@ def test_the_committed_purpose_bound_scoring_cases_have_both_sides() -> None:
 APPROVAL_PENDING_MARK = "APPROVAL PENDING"
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="B15 approval line pending")
 def test_no_committed_own_case_waits_for_its_approval_line() -> None:
     pending = [
         case.id

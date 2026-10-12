@@ -22,7 +22,7 @@ label_citation:
   - "art:3:4"
 business_function: customer_service
 notes: >-
-  APPROVAL PENDING (the orchestrator records the approval line). Class: heating
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: heating
   supply is critical infrastructure, but the tool only picks households for a voluntary advice
   call; it controls nothing in the plants or network, and its failure would mean a missed call,
   not a risk to people or the infrastructure, so it is not a safety component (Art. 3(14),

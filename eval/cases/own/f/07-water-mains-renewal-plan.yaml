@@ -25,7 +25,7 @@ label_citation:
   - "art:3:4"
 business_function: operations
 notes: >-
-  APPROVAL PENDING (the orchestrator records the approval line). Class: water supply is critical infrastructure, but Annex III 2
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: water supply is critical infrastructure, but Annex III 2
   covers only AI systems used as safety components in its management and operation (Art. 3(14)):
   this tool supports long-term investment planning, controls nothing, and its failure would not
   directly endanger people or the network, because operation and leak handling run on separate
