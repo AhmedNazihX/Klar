@@ -25,6 +25,7 @@ import { FactsPanel } from './FactsPanel'
 import { withAnswers } from './follow-up-answers'
 import { FollowUpQuestions } from './FollowUpQuestions'
 import { OriginalTextNote } from './OriginalTextNote'
+import { ProfileAnswers } from './ProfileAnswers'
 import { ProgressPanel } from './ProgressPanel'
 import { ProhibitedSummary } from './ProhibitedSummary'
 import { isProviderLayout } from './provider-layout'
@@ -62,10 +63,21 @@ function SummaryView({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { result } = run
-  const { deciding, others, answerProps, confirm, tryAgain } = useFollowUpAnswers(run, followUp)
+  const { deciding, others, fromProfile, changeProfileAnswer, answerProps, confirm, tryAgain } =
+    useFollowUpAnswers(run, followUp)
   const isRerunShown = followUp.isRunning || followUp.failure !== null
-  // One run action for every question asked, under the last panel (artboard `ResultNeedsInfo`).
-  const runCount = others.length + (deciding ? 1 : 0)
+  // One run action for every question asked, under the last open question's panel (artboard
+  // `ResultNeedsInfo`); the profile's panel (P29) holds it only when no question is left open.
+  const openCount = others.length + (deciding ? 1 : 0)
+  const runCount = openCount + fromProfile.length
+  const profileAnswers = fromProfile.length > 0 && (
+    <ProfileAnswers
+      questions={fromProfile}
+      onChange={changeProfileAnswer}
+      runCount={openCount === 0 ? runCount : undefined}
+      {...answerProps}
+    />
+  )
   const isBan = isDecidedBan(result)
   const isPhone = useIsPhone()
   // The open question of law a legally ambiguous result rests on (its own layout, P22).
@@ -171,7 +183,7 @@ function SummaryView({
             </>
           }
           questions={onPoint}
-          runCount={elsewhere.length === 0 && onPoint.length > 0 ? onPoint.length : undefined}
+          runCount={elsewhere.length === 0 && onPoint.length > 0 ? runCount : undefined}
           answers={answerProps}
           onOpenReviewer={() => {
             onViewChange('reviewer')
@@ -180,6 +192,7 @@ function SummaryView({
         {elsewhere.length > 0 && (
           <FollowUpQuestions questions={elsewhere} runCount={runCount} {...answerProps} />
         )}
+        {profileAnswers}
         {/* A provider's duties under the readings (user decision 2026-10-10, option A). */}
         {isAmbiguousProvider(result) && (
           <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
@@ -214,6 +227,7 @@ function SummaryView({
       {others.length > 0 && (
         <FollowUpQuestions questions={others} runCount={runCount} {...answerProps} />
       )}
+      {profileAnswers}
       {rerunProgress}
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         {result.risk_class === 'out_of_scope' ? (

@@ -1254,7 +1254,11 @@
       "no": "No",
       "not_sure": "Not sure"
     },
-    "fromProfile": "Filled in from your company profile. Please check it before you run the checks again.",
+    "profile": {
+      "heading": "From your company profile",
+      "intro": "Your company profile answers this question. Klar sends the answer with yours when you run the checks again.",
+      "change": "Change"
+    },
     "runAgain_one": "Add answer and run again",
     "runAgain_other": "Add answers and run again",
     "answerLine": "{{question}} {{answer}}.",

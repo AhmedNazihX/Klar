@@ -42,7 +42,9 @@ function Item({
   )
 }
 
-/** A question the user can answer here: Answer opens its answer control below it (P5b's loop). */
+/** A question the user can answer here: Answer opens its answer control below it (P5b's loop).
+ *  A question a profile answer's Change just reopened (P29) starts open, so it can take the
+ *  focus. */
 function AnswerItem({
   question,
   ...answers
@@ -50,7 +52,7 @@ function AnswerItem({
   const { t } = useTranslation()
   const textId = useId()
   const answerId = useId()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(answers.reopenedId === question.id)
   return (
     <Item
       text={<span id={textId}>{question.text}</span>}

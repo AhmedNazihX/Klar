@@ -1254,7 +1254,11 @@
       "no": "Nein",
       "not_sure": "Nicht sicher"
     },
-    "fromProfile": "Aus Ihrem Unternehmensprofil übernommen. Bitte prüfen Sie es, bevor Sie die Prüfungen erneut starten.",
+    "profile": {
+      "heading": "Aus Ihrem Unternehmensprofil",
+      "intro": "Ihr Unternehmensprofil beantwortet diese Frage. Klar sendet die Antwort mit Ihren Antworten, wenn Sie die Prüfungen erneut starten.",
+      "change": "Ändern"
+    },
     "runAgain_one": "Antwort hinzufügen und erneut prüfen",
     "runAgain_other": "Antworten hinzufügen und erneut prüfen",
     "answerLine": "{{question}} {{answer}}.",

@@ -1,4 +1,4 @@
-import { useId, type JSX } from 'react'
+import { useEffect, useId, useRef, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { AnswerOption, FollowUpQuestion } from '@/api'
@@ -21,39 +21,57 @@ export type AnswerProps = {
   hasAnswers: boolean
   isRunning: boolean
   onRunAgain: () => void
+  /** The question a profile answer's Change just asked again (P29): it takes the focus once. */
+  reopenedId: string | null
+  /** Called once that question has taken the focus, so a later remount doesn't take it again. */
+  onReopenedFocused: () => void
 }
 
-/** A question's answer control (its options, or a field for words) with the draft it holds. */
+/** A question's answer control (its options, or a field for words) with the draft it holds. The
+ *  question Change just brought back from the profile takes the focus on its first control, so
+ *  keyboard and screen reader users land where it now is. */
 export function QuestionAnswer({
   question,
   labelledBy,
   drafts,
   onDraftChange,
   isRunning,
+  reopenedId,
+  onReopenedFocused,
 }: { question: FollowUpQuestion; labelledBy: string } & Pick<
   AnswerProps,
   'drafts' | 'onDraftChange' | 'isRunning'
->): JSX.Element {
+> &
+  Partial<Pick<AnswerProps, 'reopenedId' | 'onReopenedFocused'>>): JSX.Element {
   const { t } = useTranslation()
   const draft = drafts[question.id]
+  const controlsRef = useRef<HTMLDivElement>(null)
+  const isReopened = reopenedId === question.id
+  useEffect(() => {
+    if (!isReopened) return
+    controlsRef.current?.querySelector<HTMLElement>('button, textarea')?.focus()
+    onReopenedFocused?.()
+  }, [isReopened, onReopenedFocused])
   return (
-    <AnswerChoice<AnswerOption>
-      labelledBy={labelledBy}
-      options={optionsOf(question).map((value) => ({
-        value,
-        label: t(`followUp.option.${value}`),
-      }))}
-      value={draft?.option}
-      onChange={(option) => {
-        onDraftChange(question.id, { option })
-      }}
-      text={draft?.text}
-      onTextChange={(text) => {
-        onDraftChange(question.id, { text })
-      }}
-      maxLength={MAX_ANSWER_CHARS}
-      disabled={isRunning}
-    />
+    <div ref={controlsRef} className="contents">
+      <AnswerChoice<AnswerOption>
+        labelledBy={labelledBy}
+        options={optionsOf(question).map((value) => ({
+          value,
+          label: t(`followUp.option.${value}`),
+        }))}
+        value={draft?.option}
+        onChange={(option) => {
+          onDraftChange(question.id, { option })
+        }}
+        text={draft?.text}
+        onTextChange={(text) => {
+          onDraftChange(question.id, { text })
+        }}
+        maxLength={MAX_ANSWER_CHARS}
+        disabled={isRunning}
+      />
+    </div>
   )
 }
 
@@ -118,12 +136,10 @@ function ConfirmQuestion({
   question,
   ...answers
 }: { question: FollowUpQuestion } & AnswerProps): JSX.Element {
-  const { t } = useTranslation()
   return (
     <FactQuestion
       question={question.text}
       hint={question.hint}
-      note={answers.drafts[question.id]?.isFromProfile ? t('followUp.fromProfile') : undefined}
       renderAnswer={(labelledBy) => (
         <QuestionAnswer question={question} labelledBy={labelledBy} {...answers} />
       )}
