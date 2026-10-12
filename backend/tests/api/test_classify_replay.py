@@ -12,13 +12,13 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from aiact.engine import FactsEvent, ResultEvent, StepEvent
+from aiact.engine import ClassifyEvent, ErrorEvent, FactsEvent, ResultEvent, StepEvent
 from aiact.engine.classify import NodeBuilder, engine_nodes
 from aiact.settings import Settings
 from tests.api.conftest import BASE_URL, FULL_RUN, TEST_HOST, outline, sse_events, use_builder
 from tests.conftest import RECORDINGS_DIR
 from tests.engine.built_corpus import built_validator
-from tests.engine.nodes.corpus_recording import corpus_recording
+from tests.engine.nodes.corpus_recording import RecordingPendingError, corpus_recording
 from tests.engine.test_classify_worked_example import (
     AS_OF,
     LUNA,
@@ -80,9 +80,20 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
         )
 
 
+STALE_RECORDING = "CannotOverwriteExistingCassetteException"
+"""What the engine logs when a node's request isn't in the recording (only its type's name)."""
+
+
+def raise_if_recording_stale(events: list[ClassifyEvent], log: str) -> None:
+    """A stale recording stops the run in an error event and the engine only logs its cause, so
+    name it here: `RecordingPendingError` rather than an assertion on the stream."""
+    if events and isinstance(events[-1], ErrorEvent) and STALE_RECORDING in log:
+        raise RecordingPendingError(f"{CASSETTE} is stale; re-record it with `{RECORD_COMMAND}`")
+
+
 @pytest.mark.xfail(
     strict=True,
-    raises=AssertionError,
+    raises=RecordingPendingError,
     reason="recording pending (orchestrator): E18 changed the scope, high-risk and transparency "
     "prompts, so the worked example's recorded requests are stale and the stream ends in an error "
     "event; passes once its RECORD_COMMAND re-records that replay",
@@ -90,7 +101,10 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
 @pytest.mark.vcr
 @pytest.mark.anyio
 async def test_the_worked_example_streams_every_step_then_the_expected_result(
-    app: FastAPI, client: httpx.AsyncClient, replay_nodes: NodeBuilder
+    app: FastAPI,
+    client: httpx.AsyncClient,
+    replay_nodes: NodeBuilder,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     use_builder(app, replay_nodes)
     body = worked_example_request().model_dump(mode="json")
@@ -98,6 +112,7 @@ async def test_the_worked_example_streams_every_step_then_the_expected_result(
     response = await client.post("/classify", json=body)
     assert response.status_code == 200
     events = sse_events(response.text)
+    raise_if_recording_stale(events, caplog.text)
     assert outline(events) == FULL_RUN
     facts = events[0]
     assert isinstance(facts, FactsEvent) and facts.facts

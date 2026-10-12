@@ -62,8 +62,10 @@ Some points depend on who uses the system or what a decision means:
   infers such an attribute or characteristic (those protected under Art. 9(1) GDPR, such as
   racial or ethnic origin, political opinions, religious or philosophical beliefs, trade union
   membership, health, sex life or sexual orientation) from people's biometric data and assigns
-  them to categories by it. Grouping people by other data (what they enter, buy or do), or by
-  attributes that are not sensitive or protected, is not point 1(b).
+  them to categories by it. Biometric data includes behavioural data such as keystroke patterns
+  or gait. Grouping people by data that is not biometric data (what they enter or buy, their
+  clothes or their social media activity), or by attributes that are not sensitive or
+  protected, is not point 1(b).
 - 2 needs a safety component (Art. 3(14)) in the management and operation of critical digital
   infrastructure, road traffic, or the supply of water, gas, heating or electricity: a component
   whose intended purpose is to prevent or mitigate risks to the health and safety of persons or
@@ -71,8 +73,11 @@ Some points depend on who uses the system or what a decision means:
   protects the infrastructure's physical integrity. A tool that only supports, informs,
   organises or optimises it (for example forecasting demand, planning investment, or improving
   efficiency or cost), whose failure would not endanger the infrastructure's safety or people's
-  health and safety, is not one: answer `uses` "no" for point 2. Monitoring that detects
-  dangerous situations, or worn parts that need maintenance before they fail, can be one.
+  health and safety, is not one: answer `uses` "no" for point 2. A component in the
+  infrastructure that monitors and detects dangerous situations, or the need for maintenance or
+  inspection whose omission may directly lead to physical harm to people or damage to property,
+  can be one. A predictive-maintenance or planning tool that is only one precaution among other
+  safety measures, which keep working without it, is not one.
 
 ## art_6_3: the Art. 6(3) filter
 
@@ -98,10 +103,10 @@ answer `condition` "none" and `profiling` "no".
   covers it. The Radio Equipment Directive (`annex:I:A:6`) is the AI system's route only when
   the AI system is itself radio equipment under it, or is built into radio equipment as a
   component (Art. 6(1)(a); whether that component is a safety component is
-  `safety_component_or_product` below). Software supplied on its own that only runs on, or connects to, a phone, a router or
-  another radio device made by others (for example an app installed on a smartphone, or a
-  service reached over Wi-Fi or Bluetooth) is neither: answer `point` null unless other listed
-  legislation covers it.
+  `safety_component_or_product` below). Software supplied on its own that only runs on, or
+  connects to, a phone, a router or another radio device made by others (for example an app
+  installed on a smartphone, or a service reached over Wi-Fi or Bluetooth) is neither: answer
+  `point` null unless other listed legislation covers it.
 - `covered`: "yes" when the product (or the AI system itself as a product) falls under that
   legislation with its intended purpose; "unknown" when the intended purpose that decides this is
   open.

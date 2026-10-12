@@ -665,14 +665,19 @@ ART_50_READING = (
     "Emotion recognition and biometric categorisation stay under Art. 50(3) whatever they return.",
     "Text, images, audio or video a system generates is synthetic content under Art. 50(2), "
     "whoever receives it.",
-    "Output that only states such an analysis (a report or list of findings, or a short hint "
-    "pointing to one) or only removes or masks parts of the input (a redaction) is not synthetic "
-    "content by that alone; synthetic content is text, images, audio or video the system "
-    "composes, such as a draft, an answer, an article, a picture or a voice.",
+    "Output that only states such an analysis in structured form (a score, a label, a ranking, a "
+    "prediction or data extracted from the input, also listed, tabled or given as a short hint "
+    "pointing to a finding) is not synthetic content by that alone.",
+    "Synthetic content is text, images, audio or video the system composes, such as a draft, an "
+    "answer, a summary, an article, a picture or a voice; a report the system writes in prose is "
+    "synthetic text too.",
+    "Masking, blacking out or blurring parts of the input (a redaction) that leaves its meaning "
+    "unchanged does not substantially alter it, so Art. 50(2)'s exception for such edits takes it "
+    "out of the marking duty.",
 )
 """The user's Art. 50 reading (2026-10-06), worded the same in the scope and transparency
-prompts (BACKLOG > V8, from E6); the last sentence is E18's T1 (Art. 50(2), user option C,
-2026-10-12)."""
+prompts (BACKLOG > V8, from E6); the last three sentences are E18's T1 (Art. 50(2), guide paras
+65 and 92, user option C, 2026-10-12)."""
 
 
 def test_scope_and_transparency_prompts_read_art_50_alike() -> None:

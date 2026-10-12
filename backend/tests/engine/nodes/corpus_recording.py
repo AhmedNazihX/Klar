@@ -124,13 +124,26 @@ class RecordedGuidelineLibrary:
 
 
 class RecordingPendingError(Exception):
-    """A new replay the orchestrator hasn't recorded yet; the `raises=` of its strict
-    "recording pending" xfail, so the replay fails instead of skipping once that mark is gone."""
+    """A replay the orchestrator hasn't recorded yet, or whose recording a prompt change left
+    stale; the `raises=` of its strict "recording pending" xfail, so the replay fails instead of
+    skipping once that mark is gone."""
+
+
+def _recording_files(cassette_dir: str, cassette_name: str) -> tuple[Path, Path]:
+    """The test's model cassette and the `<cassette_name>.corpus.json` beside it."""
+    cassette = Path(cassette_dir) / f"{cassette_name}.yaml"
+    return cassette, cassette.with_name(f"{cassette_name}{CORPUS_SUFFIX}")
+
+
+def _is_recorded(cassette_dir: str, cassette_name: str) -> bool:
+    """Both recordings exist, so a replay can run (`corpus_recording` skips it otherwise)."""
+    return all(path.exists() for path in _recording_files(cassette_dir, cassette_name))
 
 
 def require_recording(cassette_dir: str, cassette_name: str, record_mode: str) -> None:
-    """Raise `RecordingPendingError` when a replay (record mode `none`) has no cassette yet."""
-    if record_mode == "none" and not (Path(cassette_dir) / f"{cassette_name}.yaml").exists():
+    """Raise `RecordingPendingError` when a replay (record mode `none`) lacks its cassette or its
+    corpus recording: the condition under which `corpus_recording` would skip it."""
+    if record_mode == "none" and not _is_recorded(cassette_dir, cassette_name):
         raise RecordingPendingError(f"{cassette_name} has no recording yet")
 
 
@@ -145,10 +158,9 @@ def corpus_recording[S](
     """The test's `CorpusRecording`: replayed from `<cassette_name>.corpus.json` in record mode
     `none` (the test is skipped while it or the cassette is missing), recorded from `live()`
     otherwise and saved when the test ends, whether it passed or not."""
-    cassette = Path(cassette_dir) / f"{cassette_name}.yaml"
-    corpus = cassette.with_name(f"{cassette_name}{CORPUS_SUFFIX}")
+    corpus = _recording_files(cassette_dir, cassette_name)[1]
     if record_mode == "none":
-        if not (cassette.exists() and corpus.exists()):
+        if not _is_recorded(cassette_dir, cassette_name):
             pytest.skip(f"{cassette_name} has no recording yet; record it with `{record_command}`")
         yield CorpusRecording(corpus, None)
         return

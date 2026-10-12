@@ -1,0 +1,32 @@
+# E18 negative fixture (T3), written from Art. 50(1) and guide-art50 para 45's conditions only: not
+# a benchmark case, never scored. A chat assistant sold only for trained, AI-literate staff of
+# professional firms, with no client or public access.
+id: fixture-e18-t3-patent-firm-assistant
+set_name: own
+language: en
+description: >-
+  We are a legal-tech company in Munich with 35 employees. Since 2025 we have licensed a research
+  assistant to about 60 patent law firms in Germany and Austria. Patent attorneys and paralegals
+  type questions into a chat window, for example about deadlines under the European Patent
+  Convention or about earlier filings in their firm's own archive, and the assistant replies in
+  writing, with links to the passages it relied on. Our licence terms allow accounts only for a
+  firm's own patent attorneys and paralegals, and an account is activated only after the person
+  has completed our one-day course, which explains that the assistant is a large language model,
+  how such models work, where they go wrong and how to check every answer. The firms' clients
+  have no access to it.
+label:
+  risk_class: limited_risk
+  role: provider
+label_citation: ["art:50:1", "art:50:2", "art:3:3", "guide:guide-art50:para:45"]
+as_of: 2026-10-01
+notes: >-
+  T3: the assistant converses with its users, so Art. 50(1) covers it, but its only users are
+  professionals who completed a course on it, have AI literacy and know they deal with a language
+  model, and neither the public nor vulnerable people reach it: the obvious-interaction exception
+  holds (guide para 45, read restrictively), so no Art. 50(1) duty. Its written replies are
+  synthetic text, so Art. 50(2) marking applies. No Annex III use. Provider under its own name
+  (Art. 3(3)).
+tags:
+  - "fixture:e18"
+  - "cause:t3"
+  - "obligation:art:50:2"

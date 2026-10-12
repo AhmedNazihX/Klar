@@ -12,18 +12,18 @@ description: >-
   years: which reservoirs, mains and treatment capacity to build, and when. The tool plays no part
   in running the network: pumps, valves, pressure and water quality are controlled and monitored
   around the clock from our control room with separate systems and alarms. A wrong forecast would
-  bring an investment forward or push it back by a few years; the safety of the existing network
-  does not depend on it.
+  bring an investment forward or push it back by a few years.
 label:
   risk_class: minimal_risk
   role: deployer
 label_citation: ["annex:III:2", "art:3:14", "recital:55"]
 notes: >-
   H4: a long-term demand forecast for investment planning supports and organises the supply of
-  water but fulfils no safety function, and its failure would not endanger the health and safety
-  of persons or property (Art. 3(14)); it is not a safety component in the management and
-  operation of the water supply, so not Annex III point 2 (recital 55: safety components directly
-  protect the infrastructure's physical integrity). Deployer of a bought tool (Art. 3(4)).
+  water. Under Art. 3(14), it is not a component which fulfils a safety function, nor one the
+  failure or malfunctioning of which endangers the health and safety of persons or property, so it
+  does not count as a safety component in the management and operation of the water supply, and
+  not Annex III point 2 (recital 55: safety components directly protect the infrastructure's
+  physical integrity). Deployer of a bought tool (Art. 3(4)).
 tags:
   - "fixture:e18"
   - "cause:h4"

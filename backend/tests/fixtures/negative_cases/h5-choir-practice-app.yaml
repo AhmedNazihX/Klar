@@ -16,10 +16,10 @@ label:
   role: provider
 label_citation: ["art:6:1", "annex:I:A:6", "art:3:14"]
 notes: >-
-  H5: the app is software supplied on its own; it is not radio equipment under Directive
-  2014/53/EU, and it is no safety component of the phones, tablets or headphones it runs on or
-  connects to (Art. 3(14)), so Art. 6(1)(a) is not met through Annex I Section A point 6, and no
-  other listed legislation covers it. It shows an analysis of the singing and selects exercises
+  H5: the app is stand-alone software; it is not radio equipment under Directive 2014/53/EU, and
+  under Art. 3(14) it is no safety component of the phones, tablets or headphones it is installed
+  on or paired with, so Art. 6(1)(a) is not met through Annex I Section A point 6, and no other
+  Annex I legislation applies to it. It shows an analysis of the singing and selects exercises
   people recorded, so no Art. 50 duty. Provider under its own name (Art. 3(3)).
 tags:
   - "fixture:e18"

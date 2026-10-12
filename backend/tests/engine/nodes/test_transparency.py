@@ -1035,17 +1035,6 @@ def _shown(result: CheckOutcome) -> object:
     return (result.transparency_duties, step.status, cited(result), step.decision)
 
 
-NOT_A_DUTY: dict[str, str] = {
-    "own-a-15-intranet-assistant-in-house": "art:50:1",
-    "fixture-e18-t1-invoice-review-report": "art:50:2",
-    "fixture-e18-t2-turnstile-face-check": "art:50:3",
-}
-"""E18's causes, by the case that shows each: the Art. 50 paragraph the step must not list.
-T3 (own-a-15): Art. 50(1)'s obvious exception for an internal assistant used by trained staff
-(guide para 45). T1: a report, a list, hints and a redaction are not synthetic content under
-Art. 50(2). T2: biometric verification is not biometric categorisation under Art. 50(3)."""
-
-
 @E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
@@ -1066,20 +1055,24 @@ def test_b5a_case_replay(
     )
     matches = transparency_matches(result, case)
     shown = _shown(result)
-    if case.id in NOT_A_DUTY:
-        assert NOT_A_DUTY[case.id] not in result.transparency_duties, shown
     expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
     assert matches, shown
 
 
-def test_the_t3_case_is_replayed() -> None:
-    """E18's T3 check rides on own-a-15's replay: the case must stay in the replayed set."""
-    assert "own-a-15-intranet-assistant-in-house" in {case.id for case in B5A_CASES}
+# --- E18 negative fixtures: the Art. 50 over-strictness causes (T1, T2, T3) --------------------
 
-
-# --- E18 negative fixtures: the Art. 50 over-strictness causes (T1, T2) ------------------------
-
-E18_CASES = [*negative_cases("t1"), *negative_cases("t2")]
+E18_CASES = [*negative_cases("t1"), *negative_cases("t2"), *negative_cases("t3")]
+NOT_A_DUTY: dict[str, tuple[str, ...]] = {
+    "fixture-e18-t1-invoice-review-report": ("art:50:2", "art:50:1"),
+    "fixture-e18-t2-turnstile-face-check": ("art:50:3",),
+    "fixture-e18-t3-patent-firm-assistant": ("art:50:1",),
+}
+"""E18's causes, by fixture: the Art. 50 paragraphs the step must not list. T1: a table of
+extracted findings is no synthetic content (guide para 65) and masking parts of the input falls
+under Art. 50(2)'s exception (guide para 92); nobody converses with it, so no Art. 50(1) either.
+T2: biometric verification is not biometric categorisation under Art. 50(3). T3: Art. 50(1)'s
+obvious exception for a chat assistant only properly trained, AI-literate and aware
+professionals use, with no public exposure (guide para 45)."""
 E18_RECORD_COMMAND = (
     "uv run pytest tests/engine/nodes/test_transparency.py -k e18_negative --record-mode=once"
 )
@@ -1112,17 +1105,40 @@ def test_e18_negative_replay(
         E18_RECORD_COMMAND,
     )
     shown = _shown(result)
-    assert NOT_A_DUTY[case.id] not in result.transparency_duties, shown
+    for paragraph in NOT_A_DUTY[case.id]:
+        assert paragraph not in result.transparency_duties, shown
     assert result.step.status is Status.DECIDED, shown
 
 
 E18_RULES = (
+    # T1 (Art. 50(2); guide paras 65, 92)
     "is not synthetic content by that alone",
+    "a score, a label, a ranking, a prediction or data extracted from the input",
+    "such as a draft, an answer, a summary, an article, a picture or a voice; a report the system "
+    "writes in prose is synthetic text too.",
+    "Masking, blacking out or blurring parts of the input (a redaction) that leaves its meaning "
+    "unchanged does not substantially alter it, so Art. 50(2)'s exception for such edits takes it "
+    "out of the marking duty.",
+    "neither is output that only states an analysis of the input in structured form (see above); "
+    "a summary or a prose report is generating text.",
+    "or its semantics, such as a redaction (see above)",
+    # T2 (Art. 3(35), 3(36), 3(39), 3(40), 50(3))
     "Biometric identification or verification (Art. 3(35), 3(36))",
     "it establishes who a person is, not which category they belong to",
-    "For a tool used only inside an organisation by its own staff, always weigh this exception",
+    'Answer "no" for such a system unless it also assigns people to categories or infers their '
+    "emotions or intentions.",
+    # T3 (Art. 50(1); guide para 45)
+    "a converted file, a report or a dashboard of results, or completions offered as the user "
+    'types) is "no"',
+    "For a tool used only by an organisation's own staff, always weigh this exception, and read "
+    "it restrictively: it holds only when almost no doubt is left",
+    "Staff are such a reason only when the description shows all three: they are properly "
+    "trained, they are AI literate, and they are aware that they use an AI system; and nothing "
+    "exposes the general public or vulnerable people to it.",
+    "That the tool is internal, or that its users know it is AI, is not enough on its own: answer "
+    '"no".',
 )
-"""E18's T1, T2 and T3 rules, as transparency.md words them."""
+"""E18's T1, T2 and T3 rules with their supporting clauses, as transparency.md words them."""
 
 
 def test_the_prompt_states_the_e18_rules() -> None:
@@ -1132,7 +1148,4 @@ def test_the_prompt_states_the_e18_rules() -> None:
 
 
 def test_each_art_50_cause_has_its_fixture() -> None:
-    assert [case.id for case in E18_CASES] == [
-        "fixture-e18-t1-invoice-review-report",
-        "fixture-e18-t2-turnstile-face-check",
-    ]
+    assert [case.id for case in E18_CASES] == list(NOT_A_DUTY)

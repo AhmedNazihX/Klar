@@ -1690,7 +1690,7 @@ NOT_THE_ROUTE: dict[str, str] = {
 """E18's causes, by fixture: the point the step must not read as the system's. H4: a planning
 forecast is no safety component of critical infrastructure (Art. 3(14), recital 55). H5: an app
 on others' phones is neither radio equipment nor its safety component (Art. 6(1)(a)). H6: grouping
-people by what they enter is no biometric categorisation by sensitive attributes."""
+people by what they type into a form is no biometric categorisation by sensitive attributes."""
 
 
 @pytest.fixture
@@ -1730,15 +1730,30 @@ def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskChec
 
 
 E18_RULES = (
+    # H6 (Annex III point 1(b), Art. 3(40); guide-annex-iii para 167)
     "- 1(b) is biometric categorisation according to sensitive or protected attributes",
-    "Grouping people by other data (what they enter, buy or do), or by attributes that are not "
-    "sensitive or protected, is not point 1(b).",
+    "(those protected under Art. 9(1) GDPR, such as racial or ethnic origin, political opinions, "
+    "religious or philosophical beliefs, trade union membership, health, sex life or sexual "
+    "orientation)",
+    "Biometric data includes behavioural data such as keystroke patterns or gait.",
+    "Grouping people by data that is not biometric data (what they enter or buy, their clothes or "
+    "their social media activity), or by attributes that are not sensitive or protected, is not "
+    "point 1(b).",
+    # H4 (Annex III point 2, Art. 3(14); guide-annex-iii para 184, ex:065, ex:068)
     "- 2 needs a safety component (Art. 3(14))",
     'is not one: answer `uses` "no" for point 2.',
+    "A component in the infrastructure that monitors and detects dangerous situations, or the "
+    "need for maintenance or inspection whose omission may directly lead to physical harm to "
+    "people or damage to property, can be one.",
+    "A predictive-maintenance or planning tool that is only one precaution among other safety "
+    "measures, which keep working without it, is not one.",
+    # H5 (Art. 6(1)(a), Annex I Section A point 6)
     "The Radio Equipment Directive (`annex:I:A:6`) is the AI system's route only when",
+    "Software supplied on its own that only runs on, or connects to, a phone, a router or another "
+    "radio device made by others",
     "is neither: answer `point` null unless other listed legislation covers it.",
 )
-"""E18's H6, H4 and H5 rules, as high_risk.md words them."""
+"""E18's H6, H4 and H5 rules with their supporting clauses, as high_risk.md words them."""
 
 
 def test_the_prompt_states_the_e18_rules() -> None:
