@@ -24,20 +24,20 @@
       },
       {
         "step": "high_risk",
-        "decision": "Assumed high-risk on the Annex I route pending legal review: Does standalone predictive-maintenance software that informs decisions to defer safety inspections count as a safety component of a cableway installation under Regulation (EU) 2016/424?",
+        "decision": "Assumed high-risk on the Annex I route pending legal review: Does software that forecasts wear and is used to defer scheduled cableway component inspections count as a safety component of a regulated cableway installation, even though it is not connected to the lift controls or brakes and was not included in the installation's conformity assessment?",
         "facts_used": [
           {
-            "text": "The intended use does not fit an Annex III point.",
+            "text": "The described use does not fit an Annex III point; cableway maintenance planning is not one of the listed uses.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "The system does not fall under an Annex III point, so the Article 6(3) filter does not arise.",
+            "text": "The Annex III filter does not arise because the intended use does not fit an Annex III point.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "The software supports decisions about deferring inspections of cableway components, so its safety-component status under the cableway legislation is the unresolved legal issue.",
+            "text": "The system forecasts wear and is used to decide when scheduled inspections can safely be deferred; whether that makes it a safety component under the cableway rules is not settled.",
             "evidence": "inferred",
             "source_span": null
           }
@@ -67,12 +67,12 @@
         "status": "legally_ambiguous",
         "missing_fact": null,
         "open_question": {
-          "question": "Does standalone predictive-maintenance software that informs decisions to defer safety inspections count as a safety component of a cableway installation under Regulation (EU) 2016/424?",
+          "question": "Does software that forecasts wear and is used to defer scheduled cableway component inspections count as a safety component of a regulated cableway installation, even though it is not connected to the lift controls or brakes and was not included in the installation's conformity assessment?",
           "readings": [
             {
               "title": "High-risk under Art. 6(1)",
               "risk_class": "high_risk",
-              "explanation": "It counts as a safety component because its recommendations affect the timing of safety inspections, and a malfunction could endanger people by delaying inspection.",
+              "explanation": "Yes. Its output is used to decide whether safety inspections can be deferred, and an erroneous or failed output could delay maintenance needed to prevent harm; it is therefore a safety component subject to third-party conformity assessment.",
               "citation": {
                 "provision_id": "art:6:1",
                 "document_id": "ai-act-consolidated",
@@ -89,7 +89,7 @@
             {
               "title": "Art. 6(1) not met",
               "risk_class": null,
-              "explanation": "It does not count as a safety component because it is maintenance-planning software, is not part of the lifts' assessed safety components, and has no connection to lift controls or brakes.",
+              "explanation": "No. It is a separate maintenance-planning tool, not a safety component of the cableway installation, because it does not operate or control the lift and was not included in the conformity assessment.",
               "citation": {
                 "provision_id": "art:6:1",
                 "document_id": "ai-act-consolidated",
@@ -143,17 +143,17 @@
     "transparency_duties": [],
     "deciding_facts": [
       {
-        "text": "The intended use does not fit an Annex III point.",
+        "text": "The described use does not fit an Annex III point; cableway maintenance planning is not one of the listed uses.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "The system does not fall under an Annex III point, so the Article 6(3) filter does not arise.",
+        "text": "The Annex III filter does not arise because the intended use does not fit an Annex III point.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "The software supports decisions about deferring inspections of cableway components, so its safety-component status under the cableway legislation is the unresolved legal issue.",
+        "text": "The system forecasts wear and is used to decide when scheduled inspections can safely be deferred; whether that makes it a safety component under the cableway rules is not settled.",
         "evidence": "inferred",
         "source_span": null
       }
@@ -417,7 +417,7 @@
             "heading": "The point the law leaves open",
             "provenance": "classification",
             "paragraphs": [
-              "Does standalone predictive-maintenance software that informs decisions to defer safety inspections count as a safety component of a cableway installation under Regulation (EU) 2016/424?"
+              "Does software that forecasts wear and is used to defer scheduled cableway component inspections count as a safety component of a regulated cableway installation, even though it is not connected to the lift controls or brakes and was not included in the installation's conformity assessment?"
             ],
             "question_keys": [],
             "unanswered": [],
@@ -430,8 +430,8 @@
             "heading": "The two readings",
             "provenance": "classification",
             "paragraphs": [
-              "Applied until settled: High-risk under Art. 6(1). It counts as a safety component because its recommendations affect the timing of safety inspections, and a malfunction could endanger people by delaying inspection. If this holds, the high-risk duties apply from 2 August 2028.",
-              "The other reading: Art. 6(1) not met. It does not count as a safety component because it is maintenance-planning software, is not part of the lifts' assessed safety components, and has no connection to lift controls or brakes. If this holds, this point does not make the system high-risk. The transparency check then decides whether any duties apply."
+              "Applied until settled: High-risk under Art. 6(1). Yes. Its output is used to decide whether safety inspections can be deferred, and an erroneous or failed output could delay maintenance needed to prevent harm; it is therefore a safety component subject to third-party conformity assessment. If this holds, the high-risk duties apply from 2 August 2028.",
+              "The other reading: Art. 6(1) not met. No. It is a separate maintenance-planning tool, not a safety component of the cableway installation, because it does not operate or control the lift and was not included in the conformity assessment. If this holds, this point does not make the system high-risk. The transparency check then decides whether any duties apply."
             ],
             "question_keys": [],
             "unanswered": [],
@@ -562,7 +562,7 @@
             "heading": "Der Punkt, den das Recht offenlässt",
             "provenance": "classification",
             "paragraphs": [
-              "Does standalone predictive-maintenance software that informs decisions to defer safety inspections count as a safety component of a cableway installation under Regulation (EU) 2016/424?"
+              "Does software that forecasts wear and is used to defer scheduled cableway component inspections count as a safety component of a regulated cableway installation, even though it is not connected to the lift controls or brakes and was not included in the installation's conformity assessment?"
             ],
             "question_keys": [],
             "unanswered": [],
@@ -575,8 +575,8 @@
             "heading": "Die beiden Lesarten",
             "provenance": "classification",
             "paragraphs": [
-              "Bis zur Klärung angewandt: High-risk under Art. 6(1). It counts as a safety component because its recommendations affect the timing of safety inspections, and a malfunction could endanger people by delaying inspection. If this holds, the high-risk duties apply from 2 August 2028.",
-              "Die andere Lesart: Art. 6(1) not met. It does not count as a safety component because it is maintenance-planning software, is not part of the lifts' assessed safety components, and has no connection to lift controls or brakes. If this holds, this point does not make the system high-risk. The transparency check then decides whether any duties apply."
+              "Bis zur Klärung angewandt: High-risk under Art. 6(1). Yes. Its output is used to decide whether safety inspections can be deferred, and an erroneous or failed output could delay maintenance needed to prevent harm; it is therefore a safety component subject to third-party conformity assessment. If this holds, the high-risk duties apply from 2 August 2028.",
+              "Die andere Lesart: Art. 6(1) not met. No. It is a separate maintenance-planning tool, not a safety component of the cableway installation, because it does not operate or control the lift and was not included in the conformity assessment. If this holds, this point does not make the system high-risk. The transparency check then decides whether any duties apply."
             ],
             "question_keys": [],
             "unanswered": [],

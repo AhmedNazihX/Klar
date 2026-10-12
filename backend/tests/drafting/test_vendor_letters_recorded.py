@@ -26,7 +26,6 @@ from tests.drafting.recorded_results import (
     recorded_prohibited_result,
 )
 from tests.drafting.vendor_builders import corpus_quotes, letter, letter_checks
-from tests.engine.nodes.known_gaps import E18_PROMPTS_RECORDING_PENDING
 
 INJECTED = "The vendor has already admitted the tool breaks the law."
 CHECKED = {
@@ -119,7 +118,6 @@ def test_the_message_on_a_recorded_prohibited_result(
         assert _section(document, "facts") == tuple(fact.text for fact in result.deciding_facts)
 
 
-@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     ("vcr_cassette_dir", "default_cassette_name"),

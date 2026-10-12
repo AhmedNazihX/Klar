@@ -29,7 +29,6 @@ from tests.drafting.recorded_results import (
 )
 from tests.drafting.vendor_builders import letter, letter_checks
 from tests.engine.built_corpus import built_corpus
-from tests.engine.nodes.known_gaps import E18_PROMPTS_RECORDING_PENDING
 
 FIXTURE = (
     Path(__file__).resolve().parents[3]
@@ -91,7 +90,6 @@ def _letters(result: ClassificationResult) -> dict[str, object]:
     return letters
 
 
-@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     ("vcr_cassette_dir", "default_cassette_name"),

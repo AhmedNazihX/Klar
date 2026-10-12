@@ -79,13 +79,11 @@ from tests.engine.built_corpus import (
 )
 from tests.engine.nodes.corpus_recording import (
     CorpusRecording,
-    RecordingPendingError,
     corpus_recording,
     lookup_call,
     require_recording,
 )
 from tests.engine.nodes.known_gaps import (
-    E18_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1471,7 +1469,6 @@ def replay_check(
         yield check
 
 
-@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
@@ -1501,19 +1498,7 @@ def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) 
     )
 
 
-def _decides_not_high_risk(result: CheckOutcome, case: BenchmarkCase) -> bool:
-    """Decided not high-risk on either route, with no question asked."""
-    return result.high_risk_route is None and result.step.status is Status.DECIDED
-
-
 KNOWN_GAPS: dict[str, KnownGap] = {
-    "own-e-07-grinder-burst-kit": KnownGap(
-        "decides not high-risk (no Annex III use; it reads Annex I A.11, medical devices, and "
-        "says not covered) instead of asking whether the Machinery Regulation requires a "
-        "third-party assessment (Annex I B.21) (B10c re-record of the grinder wording, user "
-        "2026-10-09)",
-        _decides_not_high_risk,
-    ),
     "own-e-10-in-house-nodule-finder": KnownGap(
         "the model treats the MDR in-house exemption as a missing fact (it asks whether a "
         "third-party assessment is required) instead of an open legal question; the label stays "
@@ -1582,7 +1567,6 @@ def assert_the_screens_fields(
         assert [item.kind for item in question.settled_by] == [SettledByKind.GUIDANCE]
 
 
-@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1638,7 +1622,6 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
     return result
 
 
-@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_machinery_guard_is_annex_i_section_a(
     original_replay_check: HighRiskCheck,
@@ -1656,7 +1639,6 @@ def test_replay_original_machinery_guard_is_annex_i_section_a(
     assert "Art. 2 Abs. 2" not in step.decision, shown  # the case is German
 
 
-@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     original_replay_check: HighRiskCheck,
@@ -1707,12 +1689,6 @@ def e18_replay_check(
         yield check
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=RecordingPendingError,
-    reason="recording pending (orchestrator): E18's new fixtures; record them with "
-    f"`{E18_RECORD_COMMAND}`",
-)
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
 def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
@@ -1736,12 +1712,6 @@ part needs inspection, and closes the lane until it is done, is a safety compone
 para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2."""
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=RecordingPendingError,
-    reason="recording pending (orchestrator): E18's new fixtures; record them with "
-    f"`{E18_RECORD_COMMAND}`",
-)
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_POSITIVE_CASES, ids=lambda case: case.id)
 def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:

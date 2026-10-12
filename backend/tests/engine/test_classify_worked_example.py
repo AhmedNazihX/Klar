@@ -18,12 +18,16 @@ import pytest
 
 from aiact.db import connect
 from aiact.engine import (
-    ClassificationFailedError,
     ClassificationRun,
     ClassifyRequest,
     run_classification,
 )
-from aiact.engine.classify import CorpusLibraries, NodeBuilder, engine_nodes
+from aiact.engine.classify import (
+    ClassificationFailedError,
+    CorpusLibraries,
+    NodeBuilder,
+    engine_nodes,
+)
 from aiact.engine.nodes import prohibited, transparency
 from aiact.engine.nodes.common import Lookup
 from aiact.engine.nodes.guideline_retrieval import GuidelineCorpus
@@ -356,16 +360,14 @@ def replay_nodes(
         )
 
 
-E18_RECORDING_PENDING = pytest.mark.xfail(
+@pytest.mark.xfail(
     strict=True,
     raises=ClassificationFailedError,
-    reason="recording pending (orchestrator): E18 changed the scope, high-risk and transparency "
-    "prompts, so the recorded requests are stale; delete and re-record",
+    reason="E18's re-record (2026-10-12): the worked example's recorded high-risk answer was "
+    "cut off "
+    "mid-JSON (model output glitch), so the run stops in high_risk; re-record it once in E19 "
+    "(user, 2026-10-12: no more paid runs in E18)",
 )
-"""The worked example's replays until the orchestrator re-records them (BACKLOG > E18)."""
-
-
-@E18_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
     run = run_classification(

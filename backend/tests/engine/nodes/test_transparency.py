@@ -71,12 +71,10 @@ from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
-    RecordingPendingError,
     corpus_recording,
     require_recording,
 )
 from tests.engine.nodes.known_gaps import (
-    E18_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -956,10 +954,6 @@ def _b5a_cases() -> list[BenchmarkCase]:
 B5A_CASES = _b5a_cases()
 
 
-def _decides_no_duty(result: CheckOutcome, case: BenchmarkCase) -> bool:
-    return result.step.status is Status.DECIDED and result.transparency_duties == ()
-
-
 def _asks_about_deep_fakes(result: CheckOutcome, case: BenchmarkCase) -> bool:
     return (
         result.step.status is Status.NEEDS_MORE_INFORMATION
@@ -968,16 +962,28 @@ def _asks_about_deep_fakes(result: CheckOutcome, case: BenchmarkCase) -> bool:
 
 
 KNOWN_GAPS: dict[str, KnownGap] = {
-    "own-a-04-audiobook-voices": KnownGap(
-        "decides no Art. 50 duty: reads turning the manuscript into an audiobook as not changing "
-        "its meaning, so the Art. 50(2) marking duty the label needs is left out (E10 "
-        "re-record, user 2026-10-06)",
-        _decides_no_duty,
-    ),
     "own-a-14-practice-phone-agent": KnownGap(
         "adds Art. 50(4) and asks whether the voices are deep fakes (needs_more_information), "
         "where the label is decided with Art. 50(1) and (2) only (E10 re-record, user 2026-10-06)",
         _asks_about_deep_fakes,
+    ),
+    "own-a-08-local-news-council-reports": KnownGap(
+        "E18's re-record (2026-10-12): adds Art. 50(2) to the label's Art. 50(4) and leaves the "
+        "editorial exception legally ambiguous instead of deciding it is not met; passed before "
+        "E18, so a follow-up for E19 (user, 2026-10-12: keep as a known gap, wrap up E18)",
+        lambda result, case: (
+            result.step.status is Status.LEGALLY_AMBIGUOUS
+            and "art:50:2" in result.transparency_duties
+        ),
+    ),
+    "own-a-15-intranet-assistant-in-house": KnownGap(
+        "E18's re-record (2026-10-12): under the tighter T3 rule the model doesn't find the "
+        "obvious-interaction exception shown and lists Art. 50(1) (legally ambiguous) where the "
+        "label has Art. 50(2) only; passed before E18, so a follow-up for E19 (user, 2026-10-12)",
+        lambda result, case: (
+            result.step.status is Status.LEGALLY_AMBIGUOUS
+            and "art:50:1" in result.transparency_duties
+        ),
     ),
 }
 """Recorded cases whose Art. 50 outcome differs from the label, with the reason; each fails when
@@ -1035,7 +1041,6 @@ def _shown(result: CheckOutcome) -> object:
     return (result.transparency_duties, step.status, cited(result), step.decision)
 
 
-@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1078,12 +1083,6 @@ E18_RECORD_COMMAND = (
 )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=RecordingPendingError,
-    reason="recording pending (orchestrator): E18's new negative fixtures; record them with "
-    f"`{E18_RECORD_COMMAND}`",
-)
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
 def test_e18_negative_replay(

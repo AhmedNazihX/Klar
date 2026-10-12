@@ -124,10 +124,11 @@ def test_other_runs_are_not_pending(events: list[ClassifyEvent], log: str) -> No
 
 @pytest.mark.xfail(
     strict=True,
-    raises=RecordingPendingError,
-    reason="recording pending (orchestrator): E18 changed the scope, high-risk and transparency "
-    "prompts, so the worked example's recorded requests are stale and the stream ends in an error "
-    "event; passes once its RECORD_COMMAND re-records that replay",
+    raises=AssertionError,
+    reason="E18's re-record (2026-10-12): the worked example's recorded high-risk answer was "
+    "cut off "
+    "mid-JSON (model output glitch), so the run stops in high_risk; re-record it once in E19 "
+    "(user, 2026-10-12: no more paid runs in E18)",
 )
 @pytest.mark.vcr
 @pytest.mark.anyio
