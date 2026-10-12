@@ -19,7 +19,9 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
 
+from aiact.corpus.sources import SOURCES
 from aiact.db import connect
+from aiact.engine.classify import extended_description
 from aiact.engine.graph import EngineNodes, build_graph
 from aiact.engine.nodes import corpus as corpus_module
 from aiact.engine.nodes import prohibited_texts
@@ -55,6 +57,7 @@ from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.retrieval.search import ENGINE_TUNING, SearchHit, SearchResults
 from aiact.schemas import (
     DISCLAIMER,
+    YES_NO,
     DocumentStatus,
     EvidenceTag,
     Fact,
@@ -437,7 +440,139 @@ def test_an_open_duty_beats_an_open_fact_but_both_are_listed_and_asked() -> None
     )
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
     assert result.transparency_duties == ("art:50:1", "art:50:2")
-    assert [q.id for q in result.follow_up_questions] == ["interaction_obvious"]
+    # E17: the open duty's exception first (what would settle it), then the open fact.
+    assert [q.id for q in result.follow_up_questions] == ["alters_substance", "interaction_obvious"]
+
+
+# --- What would settle an open duty (E17) --------------------------------------------------------
+
+EDITORIAL_TEXT_EN = (
+    "Does a person review or edit each text before it is published, and does a person or company "
+    "hold editorial responsibility for the publication?"
+)
+EDITORIAL_TEXT_DE = (
+    "Prüft oder bearbeitet ein Mensch jeden Text vor der Veröffentlichung, und trägt eine Person "
+    "oder ein Unternehmen die redaktionelle Verantwortung für die Veröffentlichung?"
+)
+PUBLIC_TEXT = unsettled(duty(Answer.YES, Answer.NO, fact="It writes news texts."))
+
+
+def on_open_point(result: CheckOutcome) -> list[str]:
+    """The ids of the step's questions the result shows under "What would settle it", by the
+    frontend's rule (`ambiguous.ts`, `questionsOnPoint`): a question about, or quoting, a
+    provision the open question's readings cite, or a part of one."""
+    question = result.step.open_question
+    assert question is not None
+    cited_by_readings = {r.citation.provision_id for r in question.readings if r.citation}
+
+    def is_within(pid: str | None) -> bool:
+        return pid is not None and any(
+            pid == cited or pid.startswith(f"{cited}:") for cited in cited_by_readings
+        )
+
+    return [
+        q.id
+        for q in result.follow_up_questions
+        if is_within(q.about) or any(is_within(c.provision_id) for c in q.citations)
+    ]
+
+
+def test_art_50_4_open_in_law_asks_the_editorial_exception_on_its_point() -> None:
+    """The user's hosted run: Art. 50(4) open on text informing the public. The human-review /
+    editorial-responsibility exception of Art. 50(4)'s second subparagraph is asked, about and
+    quoting `art:50:4`, so it shows under "What would settle it"."""
+    result = outcome(answer(public_interest_text=PUBLIC_TEXT))
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    (question,) = result.follow_up_questions
+    assert question.id == "editorial_control"
+    assert question.text == EDITORIAL_TEXT_EN
+    assert question.about == "art:50:4"
+    assert [c.provision_id for c in question.citations] == ["art:50:4"]
+    assert question.citations[0] in result.step.citations
+    assert question.hint == "The answer decides whether a transparency duty applies (Art. 50(4))."
+    assert question.options == YES_NO
+    assert on_open_point(result) == ["editorial_control"]
+
+
+def test_the_editorial_exception_is_asked_in_german() -> None:
+    result = outcome(answer(public_interest_text=PUBLIC_TEXT), at=state(language=Language.DE))
+    (question,) = result.follow_up_questions
+    assert question.text == EDITORIAL_TEXT_DE
+    assert question.hint == (
+        "Die Antwort entscheidet, ob eine Transparenzpflicht gilt (Art. 50 Abs. 4)."
+    )
+    assert on_open_point(result) == ["editorial_control"]
+
+
+def test_the_editorial_exception_is_asked_under_the_original_text() -> None:
+    """Art. 50(4) reads the same in the original text; the question quotes that text's paragraph."""
+    library = FakeLibrary()
+    run = state(law_version=LawVersion.ORIGINAL)
+    result = outcome(answer(public_interest_text=PUBLIC_TEXT), at=run, library=library)
+    (question,) = result.follow_up_questions
+    assert question.id == "editorial_control"
+    assert [c.provision_id for c in question.citations] == ["art:50:4"]
+    assert all(lookup.law_version is LawVersion.ORIGINAL for _, lookup in library.lookups)
+
+
+@pytest.mark.parametrize(
+    ("part", "paragraph", "question_id"),
+    [
+        ("interaction", "art:50:1", "interaction_obvious"),
+        ("synthetic_content", "art:50:2", "alters_substance"),
+        ("public_interest_text", "art:50:4", "editorial_control"),
+    ],
+)
+def test_a_duty_open_in_law_asks_the_exception_that_settles_it(
+    part: str, paragraph: str, question_id: str
+) -> None:
+    """The duties whose exception an answer settles ask it, about and quoting their paragraph."""
+    result = outcome(answer(**{part: unsettled(APPLIES)}))
+    (question,) = result.follow_up_questions
+    assert (question.id, question.about) == (question_id, paragraph)
+    assert [c.provision_id for c in question.citations] == [paragraph]
+    assert on_open_point(result) == [question_id]
+
+
+@pytest.mark.parametrize("part", ["emotion_biometric", "deep_fake"])
+def test_a_duty_with_only_the_law_enforcement_exception_asks_nothing_to_settle_it(
+    part: str,
+) -> None:
+    """Art. 50(3) and the deep-fake duty: their open point is usually coverage, which the
+    law-enforcement question can't settle, so nothing is listed under "What would settle it"
+    (P30's line points to a lawyer instead)."""
+    result = outcome(answer(**{part: unsettled(APPLIES)}))
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    assert result.follow_up_questions == ()
+    assert on_open_point(result) == []
+
+
+@pytest.mark.parametrize(
+    "given",
+    [
+        pytest.param(answer(public_interest_text=APPLIES), id="decided"),
+        pytest.param(answer(public_interest_text=duty(Answer.YES, Answer.UNKNOWN)), id="fact"),
+    ],
+)
+def test_only_a_duty_open_in_law_adds_a_settling_question(given: TransparencyAnswer) -> None:
+    result = outcome(given)
+    assert all(not q.citations for q in result.follow_up_questions)
+    assert result.step.open_question is None
+
+
+def test_an_open_duty_names_no_guidance_without_a_real_source() -> None:
+    """Guidance under `settled_by` is guidance not yet final (decision 026 item 4). Every Art. 50
+    source the corpus holds is final, so the step names none rather than invent one."""
+    result = outcome(answer(public_interest_text=PUBLIC_TEXT))
+    question = result.step.open_question
+    assert question is not None
+    assert question.settled_by == ()
+    art_50_sources = {
+        source.id: source.status
+        for source in SOURCES
+        if source.id in {*node.SOURCE.doc_keys, "code-of-practice-transparency"}
+    }
+    assert art_50_sources == {"guide-art50": "final", "code-of-practice-transparency": "final"}
 
 
 # --- The grace period (Art. 111(4)) -------------------------------------------------------------
@@ -1019,8 +1154,10 @@ def _replay(
     cassette_dir: str,
     cassette_name: str,
     record_command: str,
+    answers: Mapping[str, str] | None = None,
 ) -> CheckOutcome:
-    """The case's transparency step over the recorded model and corpus, its citations checked."""
+    """The case's transparency step over the recorded model and corpus, its citations checked;
+    `answers` to follow-up questions are added to the description as a run adds them."""
     with corpus_recording(
         cassette_dir,
         cassette_name,
@@ -1029,7 +1166,9 @@ def _replay(
         lambda: _live_corpus(settings),
     ) as recording:
         check = TransparencyCheck(settings, library=RecordedGuidelineLibrary(recording))
-        run_state = replay_state(case, AS_OF)
+        replayed = replay_state(case, AS_OF)
+        description = extended_description(case.description, answers or {}, case.language)
+        run_state: EngineState = {**replayed, "description": description}
         result = check(run_state)
     assert not unresolved_citations(result.step, run_state)
     assert not whole_articles(result.step)
@@ -1060,8 +1199,58 @@ def test_b5a_case_replay(
     )
     matches = transparency_matches(result, case)
     shown = _shown(result)
+    if result.step.status is Status.LEGALLY_AMBIGUOUS:
+        assert on_open_point(result) == [SETTLES_OPEN_POINT[case.id]], shown
     expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
     assert matches, shown
+
+
+SETTLES_OPEN_POINT = {
+    "own-a-08-local-news-council-reports": "editorial_control",
+    "own-a-15-intranet-assistant-in-house": "interaction_obvious",
+}
+"""E17: the recorded cases the step leaves legally ambiguous, and the question listed under "What
+would settle it": Art. 50(4)'s editorial exception (the user's hosted run) and Art. 50(1)'s
+obvious-interaction exception."""
+
+EDITORIAL_CASE = "own-a-08-local-news-council-reports"
+EDITORIAL_ANSWER = (
+    "Ja. Ein Mensch prüft und bearbeitet jeden Text vor der Veröffentlichung, und unser "
+    "Unternehmen trägt die redaktionelle Verantwortung für die Veröffentlichung."
+)
+"""The user's answer to the editorial question, in the case's language (German), in Art. 50(4)'s
+own terms: human review or editorial control, and a person holding editorial responsibility."""
+E17_RECORD_COMMAND = (
+    "uv run pytest tests/engine/nodes/test_transparency.py -k answered_editorial --record-mode=once"
+)
+
+
+@pytest.mark.vcr
+def test_an_answered_editorial_exception_settles_art_50_4(
+    luna_settings: Settings,
+    record_mode: str,
+    vcr_cassette_dir: str,
+    default_cassette_name: str,
+) -> None:
+    """E17's loop: the case left open on Art. 50(4), run again with "yes, with editorial
+    responsibility" added to its description (P5b), no longer lists or leaves open Art. 50(4)."""
+    require_recording(vcr_cassette_dir, default_cassette_name, record_mode)
+    (case,) = (case for case in B5A_CASES if case.id == EDITORIAL_CASE)
+    result = _replay(
+        case,
+        luna_settings,
+        record_mode,
+        vcr_cassette_dir,
+        default_cassette_name,
+        E17_RECORD_COMMAND,
+        answers={"editorial_control": EDITORIAL_ANSWER},
+    )
+    shown = _shown(result)
+    assert "art:50:4" not in result.transparency_duties, shown
+    question = result.step.open_question
+    assert question is None or "art:50:4" not in {
+        reading.citation.provision_id for reading in question.readings if reading.citation
+    }, shown
 
 
 # --- E18 negative fixtures: the Art. 50 over-strictness causes (T1, T2, T3) --------------------

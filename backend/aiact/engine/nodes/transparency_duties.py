@@ -76,27 +76,48 @@ class TransparencyAnswer(ContractModel):
 
 @dataclass(frozen=True)
 class DutyRule:
-    """A duty's paragraph and the questions that settle its two key facts."""
+    """A duty's paragraph, the questions that settle its two key facts, and whether the
+    exception's question also settles the duty when the law leaves it open (E17).
+
+    `exception_settles` holds where a realistic open point is the exception itself (Art. 50(1)'s
+    obvious interaction, Art. 50(2)'s standard editing, Art. 50(4)'s editorial control of text).
+    Art. 50(3) and the deep-fake duty have only the law-enforcement exception, while their open
+    point is usually coverage (emotion recognition, whether content appears authentic), so
+    asking it would settle nothing."""
 
     provision: str
     covered: KeyQuestion
     exception: KeyQuestion
+    exception_settles: bool = False
+
+    @property
+    def settling(self) -> KeyQuestion | None:
+        """The question that settles the duty when the law leaves it open, if any."""
+        return self.exception if self.exception_settles else None
 
 
-INTERACTION = DutyRule("art:50:1", texts.INTERACTS_DIRECTLY, texts.INTERACTION_OBVIOUS)
-SYNTHETIC_CONTENT = DutyRule("art:50:2", texts.GENERATES_CONTENT, texts.SUBSTANTIAL_ALTERATION)
+INTERACTION = DutyRule(
+    "art:50:1", texts.INTERACTS_DIRECTLY, texts.INTERACTION_OBVIOUS, exception_settles=True
+)
+SYNTHETIC_CONTENT = DutyRule(
+    "art:50:2", texts.GENERATES_CONTENT, texts.SUBSTANTIAL_ALTERATION, exception_settles=True
+)
 EMOTION_BIOMETRIC = DutyRule("art:50:3", texts.EMOTION_OR_BIOMETRIC, texts.LAW_ENFORCEMENT)
 DEEP_FAKE = DutyRule("art:50:4", texts.DEEP_FAKE, texts.LAW_ENFORCEMENT)
-PUBLIC_INTEREST_TEXT = DutyRule("art:50:4", texts.PUBLIC_INTEREST_TEXT, texts.EDITORIAL_CONTROL)
+PUBLIC_INTEREST_TEXT = DutyRule(
+    "art:50:4", texts.PUBLIC_INTEREST_TEXT, texts.EDITORIAL_CONTROL, exception_settles=True
+)
 
 
 @dataclass(frozen=True)
 class Duty:
-    """One duty's reading: the paragraph it names, whether it applies, and the answer part."""
+    """One duty's reading: the paragraph it names, whether it applies, the answer part, and the
+    question that settles the duty when the law leaves it open, if its rule has one (E17)."""
 
     provision: str
     reading: Reading
     summary: DutyAnswer
+    settling: KeyQuestion | None
 
     @property
     def is_raised(self) -> bool:
@@ -136,6 +157,7 @@ def duties(answer: TransparencyAnswer) -> tuple[Duty, ...]:
                 need(part.exception, rule.exception, wanted=Answer.NO),
             ),
             summary=part,
+            settling=rule.settling,
         )
         for part, rule in _parts(answer)
     )
