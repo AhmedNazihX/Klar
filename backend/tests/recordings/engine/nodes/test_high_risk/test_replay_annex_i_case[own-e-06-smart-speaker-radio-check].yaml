@@ -20,7 +20,7 @@ interactions:
     uri: https://openrouter.ai/api/v1/embeddings
   response:
     body:
-      string: '{"id": "gen-emb-1791818529-jQf1CvBBdL9EpkOP5n7c", "object": "list",
+      string: '{"id": "gen-emb-1791836618-yl1v5j8stmNsGxf4el7i", "object": "list",
         "data": [{"object": "embedding", "embedding": [-0.005484210792928934, 0.01459317933768034,
         0.012239440344274044, 0.038601312786340714, 0.03615342453122139, 0.005860809236764908,
         -0.03389383479952812, 0.03841301426291466, 0.0037659816443920135, 0.013369235210120678,
@@ -434,60 +434,86 @@ interactions:
       (the description says it),\n\"inferred\" (it follows from what the description
       says) or \"assumed\" (a usual default, nothing\npoints either way). `fact` states
       the answer in one short sentence in the language asked for, and\n`fact_numbers`
-      lists the numbered facts it rests on (empty when none).\n\nA missing fact and
-      an open question of law are different. When the facts that matter are stated\nbut
-      whether Art. 6(1)(a) or (b), Art. 6(1a) or (1b), or an exemption is met stays
-      open in law,\nanswer the key facts as the description states them and answer
-      that route''s\n`settled_in_law` \"no\"; do not answer them \"unknown\", and
-      do not ask for a fact the description\nalready gives.\n\nEvery route (annex_iii,
-      art_6_3, annex_i) ends its key facts with the same two fields:\n- `settled_in_law`:
-      \"yes\" when, on the facts as answered, the Act and guidance settle the\n  route''s
-      reading; \"no\" when they leave it open. Ask yourself this for every route,
-      every time.\n- `open_question`: when `settled_in_law` is \"no\", the question
-      the law leaves open\n  (`question`) and its two readings (`readings`), the stricter
-      (high-risk) one first. Null when\n  it is \"yes\".\nA route that doesn''t arise
-      (no point named, or art_6_3 for a use outside Annex III) is \"yes\".\n\n## annex_iii:
-      the Annex III use (Art. 6(2))\n\n- `point`: the one Annex III point the system''s
-      intended use falls under, as its id, for example\n  `annex:III:4:a` or `annex:III:2`.
-      Use the most specific point. Null when no point fits.\n- `uses`: \"yes\" when
-      the intended use falls under that point; \"no\" when no Annex III point fits;\n  \"unknown\"
-      when a fact the description leaves open decides whether it fits.\n- `public_authority`:
-      whether the system is used by a public authority or on its behalf (or by an\n  EU
-      institution, body, office or agency). It matters only for points that name such
-      a user:\n  5(a), 6, 7 and 8(a) (for 8(a), a judicial authority, or alternative
-      dispute resolution). For\n  other points answer \"no\" unless the description
-      says so.\n- `examples`: the ids of the guideline examples you compared the system
-      with (`guide:\u2026:ex:\u2026`),\n  only from the passages given; empty when
-      none was close.\n\nLook at what the output is used for and whose situation it
-      affects, not at the technology.\nSome points depend on who uses the system or
-      what a decision means:\n- 5(a) needs a public authority, or someone acting for
-      one, deciding on public benefits or\n  services. When the description doesn''t
-      say whether the scheme is public or private, answer\n  `public_authority` \"unknown\".\n-
-      3(a) and 3(c) cover decisions on access, admission, assignment or the level
-      of education. A\n  scholarship or grant decision falls under them only if it
-      decides admission; when the\n  description doesn''t say, answer `uses` \"unknown\".\n-
-      6 and 7 are uses by or for law enforcement, migration, asylum or border authorities.
-      When the\n  description doesn''t name the user, answer `public_authority` \"unknown\";
-      the application then\n  states the assumption.\n- 5(b) excludes systems used
-      only to detect financial fraud.\n- 8(b) excludes tools whose output people are
-      not directly exposed to, such as tools that only\n  organise a campaign''s administration
-      or logistics.\n- 1(b) is biometric categorisation according to sensitive or
-      protected attributes: the system\n  infers such an attribute or characteristic
-      (those protected under Art. 9(1) GDPR, such as\n  racial or ethnic origin, political
-      opinions, religious or philosophical beliefs, trade union\n  membership, health,
-      sex life or sexual orientation) from people''s biometric data and assigns\n  them
-      to categories by it. Biometric data includes behavioural data such as keystroke
-      patterns\n  or gait. Grouping people by data that is not biometric data (what
-      they enter or buy, their\n  clothes or their social media activity), or by attributes
-      that are not sensitive or\n  protected, is not point 1(b).\n- 2 needs a safety
-      component (Art. 3(14)) in the management and operation of critical digital\n  infrastructure,
-      road traffic, or the supply of water, gas, heating or electricity: a component\n  whose
-      intended purpose is to prevent or mitigate risks to the health and safety of
-      persons or\n  property, or whose failure or malfunctioning endangers them, such
-      as one that directly\n  protects the infrastructure''s physical integrity. A
-      tool that only supports, informs,\n  organises or optimises it (for example
-      forecasting demand, planning investment, or improving\n  efficiency or cost),
-      whose failure would not endanger the infrastructure''s safety or people''s\n  health
+      lists the numbered facts it rests on (empty when none).\n\nAn open question
+      of law has a bar. Answer a route''s `settled_in_law` \"no\" only when you can\nname
+      the condition of Article 6 or of the Annex point whose reading is undecided
+      for these facts,\nand the Act, its recitals and the guideline passages you are
+      given leave it undecided: they point\nboth ways for a case like this one, or
+      none of them reaches it and the condition''s words fit\neither reading. When
+      the Act, a recital or a passage decides the case, the route is settled, even\nif
+      you are unsure of it yourself; being unsure, or wanting to be safe, is never
+      a reason to\nanswer \"no\".\n\nA missing fact and an open question of law are
+      different. A fact the description leaves open is\nanswered \"unknown\", and
+      the application asks for it. When the facts that matter are stated but\nwhether
+      Art. 6(1)(a) or (b), Art. 6(1a) or (1b), or an Annex III point is met stays
+      open in law,\nanswer that route''s `settled_in_law` \"no\" and name the key
+      fact the question is about in its\n`open_on`. When whether an Art. 6(3) condition
+      is met stays open in law, name that condition in\n`condition` and answer `settled_in_law`
+      \"no\" for art_6_3. Answer the key facts as the\ndescription states them; do
+      not answer them \"unknown\", and do not ask for a fact the\ndescription already
+      gives.\n\nEvery route (annex_iii, art_6_3, annex_i) ends its key facts with
+      the same two fields:\n- `settled_in_law`: \"yes\" when, on the facts as answered,
+      the Act and guidance settle the\n  route''s reading; \"no\" only when they leave
+      it open, by the bar above. Ask yourself this for\n  every route, every time.\n-
+      `open_question`: when `settled_in_law` is \"no\", the question the law leaves
+      open\n  (`question`) and its two readings (`readings`), the stricter (high-risk)
+      one first. Null when\n  it is \"yes\".\nannex_iii and annex_i then add `open_on`:
+      when `settled_in_law` is \"no\", the key fact the open\nquestion is about, by
+      its field name (`uses` or `public_authority` for annex_iii; `covered`,\n`safety_component_or_product`
+      or `third_party_assessment` for annex_i); \"none\" when it is \"yes\".\nA route
+      that doesn''t arise (no point named, or art_6_3 for a use outside Annex III)
+      is \"yes\".\n\n## annex_iii: the Annex III use (Art. 6(2))\n\n- `point`: the
+      one Annex III point the system''s intended use falls under, as its id, for example\n  `annex:III:4:a`
+      or `annex:III:2`. Use the most specific point. Null when no point fits.\n- `uses`:
+      \"yes\" when the intended use falls under that point; \"no\" when no Annex III
+      point fits;\n  \"unknown\" when a fact the description leaves open decides whether
+      it fits.\n- `public_authority`: whether the system is used by a public authority
+      or on its behalf (or by an\n  EU institution, body, office or agency). It matters
+      only for points that name such a user:\n  5(a), 6, 7 and 8(a) (for 8(a), a judicial
+      authority, or alternative dispute resolution). For\n  other points answer \"no\"
+      unless the description says so.\n- `examples`: the ids of the guideline examples
+      you compared the system with (`guide:\u2026:ex:\u2026`),\n  only from the passages
+      given; empty when none was close.\n\nLook at what the output is used for and
+      whose situation it affects, not at the technology.\nAn Annex III point covers
+      the use case it lists, not its whole area: only a limited set of use\ncases
+      within the broad areas is high-risk, and the list of them is exhaustive (guidelines,\nparagraph
+      65). Where a point is about evaluating natural persons, answer `uses` \"yes\"
+      when the\nsystem is meant to evaluate them, directly or indirectly, in the way
+      the point lists, whether\nthat is its only purpose or one among several purposes
+      (paragraph 72). A system in the area\nwhose intended uses include none of the
+      uses the point lists does not fall under the point:\nanswer `uses` \"no\". A
+      point that names its user (5(a), 6, 7, 8(a)) doesn''t apply to a system\nused
+      by anyone else: answer `public_authority` \"no\". A private body acting on its
+      own behalf,\nvoluntarily or to comply with a legal obligation, does not act
+      on behalf of a public authority\n(paragraph 81).\nSome points depend on who
+      uses the system or what a decision means:\n- 5(a) needs a public authority,
+      or someone acting for one, deciding on public benefits or\n  services. When
+      the description doesn''t say whether the scheme is public or private, answer\n  `public_authority`
+      \"unknown\".\n- 3(a) and 3(c) cover decisions on access, admission, assignment
+      or the level of education. A\n  scholarship or grant decision falls under them
+      only if it decides admission; when the\n  description doesn''t say, answer `uses`
+      \"unknown\".\n- 6 and 7 are uses by or for law enforcement, migration, asylum
+      or border authorities. When the\n  description doesn''t name the user, answer
+      `public_authority` \"unknown\"; the application then\n  states the assumption.\n-
+      5(b) excludes systems used only to detect financial fraud.\n- 8(b) excludes
+      tools whose output people are not directly exposed to, such as tools that only\n  organise
+      a campaign''s administration or logistics.\n- 1(b) is biometric categorisation
+      according to sensitive or protected attributes: the system\n  infers such an
+      attribute or characteristic (those protected under Art. 9(1) GDPR, such as\n  racial
+      or ethnic origin, political opinions, religious or philosophical beliefs, trade
+      union\n  membership, health, sex life or sexual orientation) from people''s
+      biometric data and assigns\n  them to categories by it. Biometric data includes
+      behavioural data such as keystroke patterns\n  or gait. Grouping people by data
+      that is not biometric data (what they enter or buy, their\n  clothes or their
+      social media activity), or by attributes that are not sensitive or\n  protected,
+      is not point 1(b).\n- 2 needs a safety component (Art. 3(14)) in the management
+      and operation of critical digital\n  infrastructure, road traffic, or the supply
+      of water, gas, heating or electricity: a component\n  whose intended purpose
+      is to prevent or mitigate risks to the health and safety of persons or\n  property,
+      or whose failure or malfunctioning endangers them, such as one that directly\n  protects
+      the infrastructure''s physical integrity. A tool that only supports, informs,\n  organises
+      or optimises it (for example forecasting demand, planning investment, or improving\n  efficiency
+      or cost), whose failure would not endanger the infrastructure''s safety or people''s\n  health
       and safety, is not one: answer `uses` \"no\" for point 2. Decide by what the
       system''s\n  own output does. A component in the infrastructure whose output
       detects a dangerous situation\n  that may directly lead to physical harm to
@@ -506,28 +532,43 @@ interactions:
       the completed human assessment\n  without proper human review, \"d\" it only
       prepares an assessment that a person then makes.\n  \"none\" when no condition
       is met.\n  A system whose output decides, ranks, scores or filters people for
-      the assessment itself meets\n  none of them.\n- `profiling`: whether the system
-      profiles natural persons: it processes personal data to\n  evaluate or predict
-      personal aspects such as work performance, economic situation, health,\n  preferences,
-      interests, reliability, behaviour, location or movements. Scoring or ranking
-      people\n  is profiling. An Annex III system that profiles is always high-risk.\n\n##
-      annex_i: the product route (Art. 6(1))\n\n- `point`: the Annex I point of the
-      legislation that covers the product, for example\n  `annex:I:A:11`, copied from
-      the list given; use no other id. Null when no listed legislation\n  covers it.
-      The Radio Equipment Directive (`annex:I:A:6`) is the AI system''s route only
-      when\n  the AI system is itself radio equipment under it, or is built into radio
-      equipment as a\n  component (Art. 6(1)(a); whether that component is a safety
-      component is\n  `safety_component_or_product` below). Software supplied on its
-      own that only runs on, or\n  connects to, a phone, a router or another radio
-      device made by others (for example an app\n  installed on a smartphone, or a
-      service reached over Wi-Fi or Bluetooth) is neither: answer\n  `point` null
-      unless other listed legislation covers it.\n- `covered`: \"yes\" when the product
-      (or the AI system itself as a product) falls under that\n  legislation with
-      its intended purpose; \"unknown\" when the intended purpose that decides this
-      is\n  open.\n- `safety_component_or_product`: \"yes\" when the AI system is
-      itself the product, or is a safety\n  component of it: it fulfils a safety function
-      for the product, or its failure or malfunction\n  would endanger health and
-      safety (Art. 3(14), 6(1b)). \"no\" when it is used solely for non-safety\n  aspects
+      the assessment itself meets\n  none of them.\n  Apply the conditions to the
+      facts the description gives, and answer in `condition` the one\n  the system''s
+      task meets. Read them narrowly (guidelines, paragraph 88), by what the output\n  does
+      in the decision: (a) changes the format, structure or presentation of data or
+      sorts documents into\n  categories without judging them, such as turning unstructured
+      data into structured data,\n  classifying incoming documents or detecting duplicates
+      (recital 53; paragraphs 91 to 93); (c)\n  compares completed human decisions
+      with earlier patterns and only informs a proper human\n  review (paragraphs
+      100 to 102); (d) indexes, searches, processes or links the inputs of an\n  assessment
+      that a person then makes, without itself evaluating or recommending on the case\n  (paragraphs
+      106 to 108).\n- `profiling`: whether the system profiles natural persons (Art.
+      4(4) GDPR): it processes\n  personal data to evaluate personal aspects of a
+      person, an assessment, prediction or judgement\n  about them such as their work
+      performance, economic situation, health, preferences, interests,\n  reliability,
+      behaviour, location or movements. Scoring or ranking people is profiling. Where\n  personal
+      data are processed without an evaluation of personal characteristics, which
+      always\n  includes a prediction, assessment or judgement about the person, there
+      is no profiling; a\n  simple classification of people by characteristics such
+      as age, sex or height does not\n  necessarily amount to profiling, as that depends
+      on the purpose of the classification\n  (guidelines, paragraphs 110 to 112).
+      An Annex III system that profiles is always high-risk.\n\n## annex_i: the product
+      route (Art. 6(1))\n\n- `point`: the Annex I point of the legislation that covers
+      the product, for example\n  `annex:I:A:11`, copied from the list given; use
+      no other id. Null when no listed legislation\n  covers it. The Radio Equipment
+      Directive (`annex:I:A:6`) is the AI system''s route only when\n  the AI system
+      is itself radio equipment under it, or is built into radio equipment as a\n  component
+      (Art. 6(1)(a); whether that component is a safety component is\n  `safety_component_or_product`
+      below). Software supplied on its own that only runs on, or\n  connects to, a
+      phone, a router or another radio device made by others (for example an app\n  installed
+      on a smartphone, or a service reached over Wi-Fi or Bluetooth) is neither: answer\n  `point`
+      null unless other listed legislation covers it.\n- `covered`: \"yes\" when the
+      product (or the AI system itself as a product) falls under that\n  legislation
+      with its intended purpose; \"unknown\" when the intended purpose that decides
+      this is\n  open.\n- `safety_component_or_product`: \"yes\" when the AI system
+      is itself the product, or is a safety\n  component of it: it fulfils a safety
+      function for the product, or its failure or malfunction\n  would endanger health
+      and safety (Art. 3(14), 6(1b)). \"no\" when it is used solely for non-safety\n  aspects
       such as user assistance, performance optimisation, service efficiency, automation,\n  convenience
       or quality control, and its failure would not endanger health and safety (Art.\n  6(1a)).\n-
       `third_party_assessment`: \"yes\" when that legislation requires the product
@@ -876,13 +917,14 @@ interactions:
       Funkspektrums. Elektrische Sicherheit und Gesundheitsschutz haben wir selbst
       nach Normen erkl\u00e4rt. Sicherheitsfunktionen hat das Ger\u00e4t keine. Seit
       September 2026 verkaufen wir ihn in Deutschland und \u00d6sterreich, in Mattschwarz
-      und Sandfarben.","role":"user"}],"max_tokens":10000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"high_risk_answer","schema":{"$defs":{"AnnexIAnswer":{"additionalProperties":false,"properties":{"point":{"anyOf":[{"type":"string","enum":["annex:I:A:2","annex:I:A:3","annex:I:A:4","annex:I:A:5","annex:I:A:6","annex:I:A:7","annex:I:A:8","annex:I:A:9","annex:I:A:10","annex:I:A:11","annex:I:A:12","annex:I:B:13","annex:I:B:14","annex:I:B:15","annex:I:B:16","annex:I:B:17","annex:I:B:18","annex:I:B:19","annex:I:B:20","annex:I:B:21"]},{"type":"null"}],"title":"Point"},"covered":{"$ref":"#/$defs/Answer"},"safety_component_or_product":{"$ref":"#/$defs/Answer"},"third_party_assessment":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
-      Numbers","type":"array"}},"required":["point","covered","safety_component_or_product","third_party_assessment","settled_in_law","open_question","evidence","fact","fact_numbers"],"title":"AnnexIAnswer","type":"object"},"AnnexIIIAnswer":{"additionalProperties":false,"description":"The
+      und Sandfarben.","role":"user"}],"max_tokens":10000,"model":"openai/gpt-6-luna-20260922","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["azure/eu"],"zdr":true},"response_format":{"json_schema":{"name":"high_risk_answer","schema":{"$defs":{"AnnexIAnswer":{"additionalProperties":false,"properties":{"point":{"anyOf":[{"type":"string","enum":["annex:I:A:2","annex:I:A:3","annex:I:A:4","annex:I:A:5","annex:I:A:6","annex:I:A:7","annex:I:A:8","annex:I:A:9","annex:I:A:10","annex:I:A:11","annex:I:A:12","annex:I:B:13","annex:I:B:14","annex:I:B:15","annex:I:B:16","annex:I:B:17","annex:I:B:18","annex:I:B:19","annex:I:B:20","annex:I:B:21"]},{"type":"null"}],"title":"Point"},"covered":{"$ref":"#/$defs/Answer"},"safety_component_or_product":{"$ref":"#/$defs/Answer"},"third_party_assessment":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"open_on":{"$ref":"#/$defs/AnnexIOpenOn"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
+      Numbers","type":"array"}},"required":["point","covered","safety_component_or_product","third_party_assessment","settled_in_law","open_question","open_on","evidence","fact","fact_numbers"],"title":"AnnexIAnswer","type":"object"},"AnnexIIIAnswer":{"additionalProperties":false,"description":"The
       Annex III use. Enum fields carry no description: strict structured output rejects\nkeywords
       next to a `$ref`; the prompt explains every field instead. Each route''s\n`settled_in_law`
       and `open_question` come right after its facts, so the model answers them\nin
-      that order every time.","properties":{"point":{"anyOf":[{"type":"string","enum":["annex:III:1:a","annex:III:1:b","annex:III:1:c","annex:III:2","annex:III:3:a","annex:III:3:b","annex:III:3:c","annex:III:3:d","annex:III:4:a","annex:III:4:b","annex:III:5:a","annex:III:5:b","annex:III:5:c","annex:III:5:d","annex:III:6:a","annex:III:6:b","annex:III:6:c","annex:III:6:d","annex:III:6:e","annex:III:7:a","annex:III:7:b","annex:III:7:c","annex:III:7:d","annex:III:8:a","annex:III:8:b"]},{"type":"null"}],"title":"Point"},"uses":{"$ref":"#/$defs/Answer"},"public_authority":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
-      Numbers","type":"array"},"examples":{"items":{"type":"string"},"title":"Examples","type":"array"}},"required":["point","uses","public_authority","settled_in_law","open_question","evidence","fact","fact_numbers","examples"],"title":"AnnexIIIAnswer","type":"object"},"Answer":{"enum":["yes","no","unknown"],"title":"Answer","type":"string"},"Art63Answer":{"additionalProperties":false,"properties":{"condition":{"$ref":"#/$defs/Art63Condition"},"profiling":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
+      that order every time; on the two Annex routes `open_on` follows, naming the
+      key fact a\nquestion the law leaves open is about (E19, `open_in_law`).","properties":{"point":{"anyOf":[{"type":"string","enum":["annex:III:1:a","annex:III:1:b","annex:III:1:c","annex:III:2","annex:III:3:a","annex:III:3:b","annex:III:3:c","annex:III:3:d","annex:III:4:a","annex:III:4:b","annex:III:5:a","annex:III:5:b","annex:III:5:c","annex:III:5:d","annex:III:6:a","annex:III:6:b","annex:III:6:c","annex:III:6:d","annex:III:6:e","annex:III:7:a","annex:III:7:b","annex:III:7:c","annex:III:7:d","annex:III:8:a","annex:III:8:b"]},{"type":"null"}],"title":"Point"},"uses":{"$ref":"#/$defs/Answer"},"public_authority":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"open_on":{"$ref":"#/$defs/AnnexIIIOpenOn"},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
+      Numbers","type":"array"},"examples":{"items":{"type":"string"},"title":"Examples","type":"array"}},"required":["point","uses","public_authority","settled_in_law","open_question","open_on","evidence","fact","fact_numbers","examples"],"title":"AnnexIIIAnswer","type":"object"},"AnnexIIIOpenOn":{"enum":["none","uses","public_authority"],"title":"AnnexIIIOpenOn","type":"string"},"AnnexIOpenOn":{"enum":["none","covered","safety_component_or_product","third_party_assessment"],"title":"AnnexIOpenOn","type":"string"},"Answer":{"enum":["yes","no","unknown"],"title":"Answer","type":"string"},"Art63Answer":{"additionalProperties":false,"properties":{"condition":{"$ref":"#/$defs/Art63Condition"},"profiling":{"$ref":"#/$defs/Answer"},"settled_in_law":{"$ref":"#/$defs/Settled"},"open_question":{"anyOf":[{"$ref":"#/$defs/OpenQuestion"},{"type":"null"}]},"evidence":{"$ref":"#/$defs/EvidenceTag"},"fact":{"minLength":1,"title":"Fact","type":"string"},"fact_numbers":{"items":{"type":"integer"},"title":"Fact
       Numbers","type":"array"}},"required":["condition","profiling","settled_in_law","open_question","evidence","fact","fact_numbers"],"title":"Art63Answer","type":"object"},"Art63Condition":{"description":"The
       Art. 6(3) condition met, second subparagraph (a)-(d), or none.","enum":["none","a","b","c","d"],"title":"Art63Condition","type":"string"},"EvidenceTag":{"description":"Where
       a fact came from; used instead of a numeric confidence score.","enum":["stated","inferred","assumed"],"title":"EvidenceTag","type":"string"},"FollowUpQuestion":{"additionalProperties":false,"description":"A
@@ -900,34 +942,35 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "{\"id\": \"gen-1791818531-olCvjznQOfYXNXU0uCdM\", \"object\": \"chat.completion\",
-        \"created\": 1791818531, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+      string: "{\"id\": \"gen-1791836622-pQexO25NtLI7SAao2mjv\", \"object\": \"chat.completion\",
+        \"created\": 1791836622, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
         \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
         [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
         \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
         \ \\\"annex_iii\\\": {\\n    \\\"point\\\": null,\\n    \\\"uses\\\": \\\"no\\\",\\n
         \   \\\"public_authority\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n
-        \   \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Der Sprachassistent f\xE4llt unter keinen der genannten
-        Annex-III-Verwendungsbereiche.\\\",\\n    \\\"fact_numbers\\\": []\\n  ,\\n
-        \ \\\"examples\\\": []\\n  },\\n  \\\"art_6_3\\\": {\\n    \\\"condition\\\":
+        \   \\\"open_question\\\": null,\\n    \\\"open_on\\\": \\\"none\\\",\\n    \\\"evidence\\\":
+        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Die beschriebenen Verwendungszwecke
+        fallen unter keinen Annex-III-Punkt.\\\",\\n    \\\"fact_numbers\\\": []\\n
+        \ ,\\n  \\\"examples\\\": []\\n  },\\n  \\\"art_6_3\\\": {\\n    \\\"condition\\\":
         \\\"none\\\",\\n    \\\"profiling\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
         \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Da kein Annex-III-Verwendungsbereich vorliegt, greift
-        der Filter nach Artikel 6 Absatz 3 nicht.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  },\\n  \\\"annex_i\\\": {\\n    \\\"point\\\": \\\"annex:I:A:6\\\",\\n
-        \   \\\"covered\\\": \\\"yes\\\",\\n    \\\"safety_component_or_product\\\":
+        \   \\\"fact\\\": \\\"Da kein Annex-III-Punkt einschl\xE4gig ist, greift der
+        Filter nach Artikel 6 Absatz 3 nicht; Profiling ist nicht beschrieben.\\\",\\n
+        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"annex_i\\\": {\\n    \\\"point\\\":
+        \\\"annex:I:A:6\\\",\\n    \\\"covered\\\": \\\"yes\\\",\\n    \\\"safety_component_or_product\\\":
         \\\"no\\\",\\n    \\\"third_party_assessment\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
-        \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"stated\\\",\\n
-        \   \\\"fact\\\": \\\"Der Lautsprecher ist Funkanlage; die benannte Stelle
-        pr\xFCfte ausschlie\xDFlich die Nutzung des Funkspektrums, und das Ger\xE4t
-        hat keine Sicherheitsfunktionen.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
-        \ \\\"question\\\": null\\n}\", \"refusal\": null}}], \"usage\": {\"prompt_tokens\":
-        9498, \"completion_tokens\": 741, \"total_tokens\": 10239, \"cost\": 0.001242989,
-        \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\": 3719, \"cache_write_tokens\":
+        \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"open_on\\\": \\\"none\\\",\\n
+        \   \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der Lautsprecher
+        f\xE4llt als Funkanlage unter die Funkanlagenrichtlinie; die KI hat keine
+        Sicherheitsfunktion, und die benannte Stelle pr\xFCfte nur die Nutzung des
+        Funkspektrums.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"question\\\":
+        null\\n}\", \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 10434, \"completion_tokens\":
+        1039, \"total_tokens\": 11473, \"cost\": 0.001417185, \"is_byok\": false,
+        \"prompt_tokens_details\": {\"cached_tokens\": 4655, \"cache_write_tokens\":
         5776, \"audio_tokens\": 0, \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\":
-        0.001242989, \"upstream_inference_prompt_cost\": 0.000835439, \"upstream_inference_completions_cost\":
-        0.00040755}, \"completion_tokens_details\": {\"reasoning_tokens\": 421, \"image_tokens\":
+        0.001417185, \"upstream_inference_prompt_cost\": 0.000845735, \"upstream_inference_completions_cost\":
+        0.00057145}, \"completion_tokens_details\": {\"reasoning_tokens\": 690, \"image_tokens\":
         0, \"audio_tokens\": 0}}}"
     headers:
       content-type:

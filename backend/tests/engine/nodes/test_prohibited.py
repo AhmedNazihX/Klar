@@ -80,7 +80,6 @@ from tests.engine.nodes.corpus_recording import (
     corpus_recording,
 )
 from tests.engine.nodes.known_gaps import (
-    E19_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1472,7 +1471,6 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
         yield GuidelineCorpus(connection, OpenRouterEmbeddings(settings=settings), node.SOURCE)
 
 
-@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1516,7 +1514,6 @@ DECEMBER_PROVISIONS = ("art:5:1:ba", "art:5:1:bb", "art:5:1a", "art:5:1b", "art:
 """What only the December 2026 prohibitions cite: the points, the routes and their date."""
 
 
-@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_text_reads_no_december_point(
     luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
