@@ -11,8 +11,9 @@ can't drift apart.
   fact (B12's rule).
 - high_risk (B5e, INIT's worked example): the label's class, route, Annex point and status, the
   tagged missing fact, the Art. 2(2) note for a decided Section B case, and every `cites:` tag.
-  For E19's own/f replay, a case labelled on an Art. 6(3) condition may instead be decided
-  exempt on its labelled Annex III point, citing a condition (`high_risk_or_exempt_matches`).
+  For E19's own/f replay, a case labelled on an Art. 6(3) condition may instead be found exempt
+  on its labelled Annex III point, citing a condition, decided or asking only whether the point
+  lists the use (`high_risk_or_exempt_matches`).
 - transparency (B5a): the label's status; no Art. 50 duty for a minimal_risk label and at least
   one for limited_risk (rule 2: the class describes the system); of the duties the labelled role
   bears itself (Art. 50(1)-(2) a provider, (3)-(4) a deployer), exactly the tagged
@@ -28,6 +29,13 @@ can't drift apart.
 
 from datetime import date
 
+from aiact.engine.nodes.high_risk_texts import (
+    ANNEX_III_USE,
+    DECIDES_ADMISSION,
+    JUDICIAL_USE,
+    PUBLIC_AUTHORITY_USER,
+    PUBLIC_SCHEME,
+)
 from aiact.engine.nodes.prohibited_practices import APPLICATION_DATES
 from aiact.engine.nodes.transparency import GRACE_PERIOD, PLACED_BEFORE_SENTENCE, grace_sentence
 from aiact.engine.state import CheckOutcome, EngineState
@@ -182,11 +190,26 @@ EXEMPTION_TRAP = "trap:art_6_3_exemption"
 """A case whose label rests on an Art. 6(3) condition (B15's own/f)."""
 
 
+LISTING_QUESTIONS = frozenset(
+    question.id
+    for question in (
+        ANNEX_III_USE,
+        DECIDES_ADMISSION,
+        PUBLIC_SCHEME,
+        PUBLIC_AUTHORITY_USER,
+        JUDICIAL_USE,
+    )
+)
+"""The questions that settle whether an Annex III point lists the use: the use itself, an
+admission decision, or the user the point names (`high_risk._listing_question`)."""
+
+
 def high_risk_or_exempt_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
     """`high_risk_matches`, except that a case tagged `trap:art_6_3_exemption` also matches a
-    step that decides the system exempt on one of its labelled Annex III points, citing an Art.
+    step that finds the system exempt on one of its labelled Annex III points, citing an Art.
     6(3) condition: `high_risk_matches` counts any exemption as a miss for a label that is not
-    high-risk (E19's own/f replay)."""
+    high-risk (E19's own/f replay). The step is decided, or asks only whether the point lists
+    the use: the Art. 6(4) duty depends on it, the class doesn't (E19 decision 4)."""
     if high_risk_matches(outcome, case):
         return True
     if EXEMPTION_TRAP not in case.tags or not outcome.annex_iii_exempt:
@@ -195,9 +218,24 @@ def high_risk_or_exempt_matches(outcome: CheckOutcome, case: BenchmarkCase) -> b
     shown = set(cited(outcome))  # an exempt step names its point by citing it
     return (
         outcome.high_risk_route is None
-        and outcome.step.status is Status.DECIDED
+        and _decided_or_asks_only_the_listing(outcome)
         and bool(points & shown)
         and any(pid.startswith("art:6:3:") for pid in shown)
+    )
+
+
+def _decided_or_asks_only_the_listing(outcome: CheckOutcome) -> bool:
+    step = outcome.step
+    if step.status is Status.DECIDED:
+        return True
+    missing = step.missing_fact
+    asked = {question.id for question in outcome.follow_up_questions}
+    return (
+        step.status is Status.NEEDS_MORE_INFORMATION
+        and step.open_question is None
+        and missing is not None
+        and missing.id in LISTING_QUESTIONS
+        and asked <= {missing.id}
     )
 
 

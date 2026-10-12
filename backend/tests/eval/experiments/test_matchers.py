@@ -233,6 +233,55 @@ def test_only_a_case_tagged_on_art_6_3_accepts_an_exempt_step() -> None:
     assert matchers.high_risk_or_exempt_matches(not_high_risk, EXEMPT_LABEL)
 
 
+EXEMPT_CITED = ("annex:III:4:b", "art:6:2", "art:6:3", "art:6:3:c", "art:6:4")
+
+
+def _asking(*ids: str, status: Status = Status.NEEDS_MORE_INFORMATION) -> CheckOutcome:
+    """An exempt step whose missing fact is the first of `ids`, asking all of them."""
+    asked = tuple(FollowUpQuestion(id=qid, text=f"Question {qid}?") for qid in ids)
+    exempt_step = step(StepName.HIGH_RISK, status, EXEMPT_CITED, missing=asked[0])
+    return CheckOutcome(step=exempt_step, annex_iii_exempt=True, follow_up_questions=asked)
+
+
+def test_the_listing_questions_are_the_annex_iii_ones() -> None:
+    assert {
+        "annex_iii_use",
+        "decides_admission",
+        "public_scheme",
+        "public_authority_user",
+        "judicial_use",
+    } == matchers.LISTING_QUESTIONS
+
+
+@pytest.mark.parametrize("asked", sorted(matchers.LISTING_QUESTIONS))
+def test_an_exempt_step_asking_only_the_listing_matches(asked: str) -> None:
+    """E19 decision 4: exempt either way, the step still asks whether the point lists the use
+    (the Art. 6(4) duty depends on it), so it matches a label decided on Art. 6(3)."""
+    assert matchers.high_risk_or_exempt_matches(_asking(asked), EXEMPT_LABEL)
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    [
+        pytest.param(_asking("profiling"), id="another-missing-fact"),
+        pytest.param(_asking("annex_iii_use", "profiling"), id="listing-and-another-question"),
+        pytest.param(_asking("annex_iii_use", status=Status.LEGALLY_AMBIGUOUS), id="open-question"),
+        pytest.param(
+            high_risk_outcome(
+                HighRiskRoute.ANNEX_III,
+                "annex:III:4:b",
+                Status.NEEDS_MORE_INFORMATION,
+                missing=FollowUpQuestion(id="annex_iii_use", text="What is it for?"),
+                cited=EXEMPT_CITED,
+            ),
+            id="high-risk",
+        ),
+    ],
+)
+def test_an_exempt_step_asking_anything_else_does_not_match(outcome: CheckOutcome) -> None:
+    assert not matchers.high_risk_or_exempt_matches(outcome, EXEMPT_LABEL)
+
+
 def test_a_not_high_risk_label_expects_no_route_and_its_status() -> None:
     labelled = case("e-2", RiskClass.MINIMAL_RISK)
     assert matchers.high_risk_matches(high_risk_outcome(None, None), labelled)
