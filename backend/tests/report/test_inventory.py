@@ -114,7 +114,7 @@ def test_a_german_inventory_report() -> None:
     for line in (
         "Inventarbericht Nordwerk Logistik GmbH Erstellt am 1. Oktober 2026. 4 Tools.",
         "Tool Einstufung Status Rolle Pflichten gelten ab",
-        "Applicant screening Hochrisiko Entschieden Betreiber 2. Dezember 2027",
+        "Applicant screening Hochrisiko Festgestellt Betreiber 2. Dezember 2027",
         "Ihr Tool Begrenztes Risiko (angenommen) Rechtlich unklar Anbieter 2. August 2026",
         "Shift planner Noch nicht eingestuft",
         "Art. 26 Abs. 6 2. Dezember 2027",
@@ -169,7 +169,7 @@ def test_a_prohibited_tool_says_to_stop_using_or_supplying_it() -> None:
     assert "no specific duties" not in english.lower()
     german = _pages(Language.DE, tools=(banned,))
     assert (
-        "Bild-App Verboten Entschieden Betreiber Nutzen oder liefern Sie es ab sofort nicht mehr"
+        "Bild-App Verboten Festgestellt Betreiber Nutzen oder liefern Sie es ab sofort nicht mehr"
         in german
     )
     assert "Bild-App Nutzen oder liefern Sie es ab sofort nicht mehr." in german
@@ -239,7 +239,7 @@ def test_a_tool_none_of_whose_duties_the_table_has_gets_no_date_and_only_the_lef
     for posted in original.duties:
         assert posted.label not in english
     german = _pages(Language.DE, tools=(original,))
-    assert f"Applicant screening Hochrisiko Entschieden Betreiber {NOTHING}" in german
+    assert f"Applicant screening Hochrisiko Festgestellt Betreiber {NOTHING}" in german
     assert "Dezember 2027" not in german
     assert "2 weitere Pflichten, die das Ergebnis nennt" in german
     assert "keine besonderen Pflichten" not in german
@@ -257,4 +257,4 @@ def test_a_tools_date_comes_from_the_duties_the_table_has_only() -> None:
     assert "2 February 2026" not in english
     assert "1 more duty the result lists is not in Klar's table of duties" in english
     german = _pages(Language.DE, tools=(tool,))
-    assert "Applicant screening Hochrisiko Entschieden Betreiber 2. Dezember 2027" in german
+    assert "Applicant screening Hochrisiko Festgestellt Betreiber 2. Dezember 2027" in german

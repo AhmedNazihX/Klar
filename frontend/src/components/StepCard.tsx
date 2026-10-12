@@ -79,7 +79,8 @@ function ClosedQuotes({
           onClick={() => {
             setIsOpen((previous) => !previous)
           }}
-          className="cursor-pointer border-0 bg-transparent p-0 text-label text-lens-blue hover:underline"
+          // 44 px tall on a phone (touch target), as on the desktop above md.
+          className="min-h-11 cursor-pointer border-0 bg-transparent p-0 text-label text-lens-blue hover:underline md:min-h-0"
         >
           {closed.toggleLabel}
         </button>

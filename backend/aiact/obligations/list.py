@@ -93,8 +93,10 @@ class ObligationEntry(ContractModel):
     article: str = Field(min_length=1)
     applies_from: date | Mapping[HighRiskRoute, date]
     applies_if: str | None = None
+    applies_if_de: str | None = Field(default=None, min_length=1)
     is_informational: bool = False
     relief_note: str | None = None
+    relief_note_de: str | None = Field(default=None, min_length=1)
     note: str | None = None
 
     @model_validator(mode="after")
@@ -103,6 +105,7 @@ class ObligationEntry(ContractModel):
             if len(set(values)) != len(values):
                 raise ValueError(f"{self.key}: repeated value in {name}")
         self._check_group()
+        self._check_german()
         if isinstance(self.applies_from, Mapping):
             if not self.applies_from:
                 raise ValueError(f"{self.key}: applies_from needs at least one route")
@@ -119,6 +122,15 @@ class ObligationEntry(ContractModel):
             raise ValueError(f"{self.key}: a group is only for provider duties")
         if self.group is None and is_provider and RiskClass.HIGH_RISK in self.risk_classes:
             raise ValueError(f"{self.key}: a high-risk provider duty needs a group")
+
+    def _check_german(self) -> None:
+        """A condition or relief has its German twin, and a German one has its English."""
+        for english, german, name in (
+            (self.applies_if, self.applies_if_de, "applies_if"),
+            (self.relief_note, self.relief_note_de, "relief_note"),
+        ):
+            if (english is None) != (german is None):
+                raise ValueError(f"{self.key}: {name} and {name}_de go together")
 
     def dated(self) -> tuple[tuple[HighRiskRoute | None, date], ...]:
         """The (route, date) pairs; route None when the date is the same for every route."""
@@ -171,8 +183,10 @@ class ObligationTable(ContractModel):
                     applies_from=applies_from,
                     high_risk_route=route,
                     applies_if=entry.applies_if,
+                    applies_if_de=entry.applies_if_de,
                     is_informational=entry.is_informational,
                     relief_note=entry.relief_note,
+                    relief_note_de=entry.relief_note_de,
                     note=entry.note,
                 ),
             )

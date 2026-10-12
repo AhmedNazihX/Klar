@@ -36,7 +36,8 @@ const COPY = {
     noRoute:
       'There’s no route to comply: documentation or oversight can’t make a prohibited practice allowed.',
     draft: 'Draft a message',
-    statement: 'It matches a practice Art. 5 bans: Art. 5(1)(f). The checks stop at Article 5.',
+    statement:
+      'It matches a practice Art. 5 bans: recognising emotions in the workplace or in education (Art. 5(1)(f)). The checks stop at Article 5.',
     since: 'Banned since',
     sinceDate: '2 February 2025',
     sinceAgo: '20 months ago',
@@ -86,7 +87,7 @@ const COPY = {
       'Es gibt keinen Weg zur Konformität: Dokumentation oder Aufsicht machen eine verbotene Praktik nicht zulässig.',
     draft: 'Nachricht entwerfen',
     statement:
-      'Es entspricht einer Praktik, die Art. 5 verbietet: Art. 5 Abs. 1 Buchst. f. Die Prüfung endet bei Artikel 5.',
+      'Es entspricht einer Praktik, die Art. 5 verbietet: Emotionserkennung am Arbeitsplatz oder in Bildungseinrichtungen (Art. 5 Abs. 1 Buchst. f). Die Prüfung endet bei Artikel 5.',
     since: 'Verboten seit',
     sinceDate: '2. Februar 2025',
     sinceAgo: 'vor 20 Monaten',
@@ -103,7 +104,7 @@ const COPY = {
       'Art. 99 Abs. 3, Deutsch',
       'Art. 99 Abs. 6, Deutsch',
     ],
-    stepsHeading: 'Wie Klar zum Ergebnis kam',
+    stepsHeading: 'So kam Klar zu diesem Ergebnis',
     highRisk: '3 Hochrisiko',
     transparency: '4 Transparenz',
     dutiesRow: 'Pflichten',
@@ -184,6 +185,20 @@ function textOf(provisionId: string, language: Language): string {
 
 function summaryRegion(): HTMLElement {
   return screen.getByRole('region', { name: i18n.language === 'de' ? 'Ergebnis' : 'Result' })
+}
+
+/** `result` banned under `point` alone, on a date every point applies (2 December 2026). */
+function bannedUnder(result: ClassificationResult, point: string): ClassificationResult {
+  const cited = withBanCitations(result, [point])
+  return {
+    ...cited,
+    as_of: '2026-12-02',
+    steps: cited.steps.map((step) =>
+      step.step === 'prohibited'
+        ? { ...step, citations: (step.citations ?? []).filter((c) => c.provision_id === point) }
+        : step,
+    ),
+  }
 }
 
 /** `result` with `ids` cited on its Art. 5 step after the ones it has. */
@@ -409,6 +424,132 @@ describe('The prohibited layout', () => {
   it('tints a decided ban’s summary red', async () => {
     await openProhibited()
     expect(summaryRegion().getAttribute('style')).toContain('rgba(255, 226, 226, 0.5)')
+  })
+
+  it.each([
+    [
+      'en',
+      'It matches a practice Art. 5 bans: recognising emotions in the workplace or in education (Art. 5(1)(f)) and biometric categorisation to infer sensitive traits such as race, political opinions or sexual orientation (Art. 5(1)(g)). The checks stop at Article 5.',
+    ],
+    [
+      'de',
+      'Es entspricht einer Praktik, die Art. 5 verbietet: Emotionserkennung am Arbeitsplatz oder in Bildungseinrichtungen (Art. 5 Abs. 1 Buchst. f) und biometrische Kategorisierung, um sensible Merkmale wie Rasse, politische Einstellungen oder sexuelle Ausrichtung abzuleiten (Art. 5 Abs. 1 Buchst. g). Die Prüfung endet bei Artikel 5.',
+    ],
+  ] as const)('names each ban point in plain words (%s)', async (language, statement) => {
+    const result = withBanCitations(RECORDED_PROHIBITED, ['art:5:1:g'])
+    await openProhibited(language, { result })
+    expect(within(summaryRegion()).getByText(statement)).toBeInTheDocument()
+  })
+
+  // Every Art. 5(1) point's own line, as it appears between "bans: " and ". The checks stop".
+  it.each([
+    [
+      'a',
+      'en',
+      "manipulating people's behaviour with subliminal, manipulative or deceptive techniques that cause significant harm (Art.\u00a05(1)(a))",
+    ],
+    [
+      'a',
+      'de',
+      'Beeinflussung des Verhaltens durch unterschwellige, manipulative oder täuschende Techniken, die erheblichen Schaden verursachen (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0a)',
+    ],
+    [
+      'b',
+      'en',
+      "exploiting people's vulnerabilities due to their age, a disability or their social or economic situation (Art.\u00a05(1)(b))",
+    ],
+    [
+      'b',
+      'de',
+      'Ausnutzung der Vulnerabilität oder Schutzbedürftigkeit von Personen aufgrund ihres Alters, einer Behinderung oder ihrer sozialen oder wirtschaftlichen Situation (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0b)',
+    ],
+    [
+      'ba',
+      'en',
+      'making realistic intimate or sexually explicit images, video or audio of an identifiable person without their consent (Art.\u00a05(1)(ba))',
+    ],
+    [
+      'ba',
+      'de',
+      'Erzeugung realistischer intimer oder sexuell expliziter Bilder, Videos oder Tonaufnahmen einer bestimmbaren Person ohne deren Zustimmung (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0ba)',
+    ],
+    ['bb', 'en', 'making child sexual abuse material (Art.\u00a05(1)(bb))'],
+    [
+      'bb',
+      'de',
+      'Erzeugung von Darstellungen sexuellen Missbrauchs von Kindern (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0bb)',
+    ],
+    [
+      'c',
+      'en',
+      'social scoring that leads to detrimental treatment in social contexts unrelated to where the data was collected, or to unjustified or disproportionate treatment (Art.\u00a05(1)(c))',
+    ],
+    [
+      'c',
+      'de',
+      'soziale Bewertung, die zu einer Benachteiligung in sozialen Zusammenhängen ohne Bezug zur Erhebung der Daten oder zu einer ungerechtfertigten oder unverhältnismäßigen Benachteiligung führt (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0c)',
+    ],
+    [
+      'd',
+      'en',
+      "predicting a person's risk of committing a crime from profiling or personality traits alone (Art.\u00a05(1)(d))",
+    ],
+    [
+      'd',
+      'de',
+      'Vorhersage des Risikos einer Straftat allein aufgrund von Profiling oder Persönlichkeitsmerkmalen (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0d)',
+    ],
+    [
+      'e',
+      'en',
+      'building facial recognition databases by untargeted scraping of facial images (Art.\u00a05(1)(e))',
+    ],
+    [
+      'e',
+      'de',
+      'Aufbau von Gesichtserkennungsdatenbanken durch ungezieltes Auslesen von Gesichtsbildern (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0e)',
+    ],
+    ['f', 'en', 'recognising emotions in the workplace or in education (Art.\u00a05(1)(f))'],
+    [
+      'f',
+      'de',
+      'Emotionserkennung am Arbeitsplatz oder in Bildungseinrichtungen (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0f)',
+    ],
+    [
+      'g',
+      'en',
+      'biometric categorisation to infer sensitive traits such as race, political opinions or sexual orientation (Art.\u00a05(1)(g))',
+    ],
+    [
+      'g',
+      'de',
+      'biometrische Kategorisierung, um sensible Merkmale wie Rasse, politische Einstellungen oder sexuelle Ausrichtung abzuleiten (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0g)',
+    ],
+    [
+      'h',
+      'en',
+      'real-time remote biometric identification in publicly accessible spaces for law enforcement (Art.\u00a05(1)(h))',
+    ],
+    [
+      'h',
+      'de',
+      'biometrische Echtzeit-Fernidentifizierung in öffentlich zugänglichen Räumen zur Strafverfolgung (Art.\u00a05\u00a0Abs.\u00a01\u00a0Buchst.\u00a0h)',
+    ],
+  ] as const)('names Art. 5(1)(%s) in its own plain words (%s)', async (letter, language, line) => {
+    await openProhibited(language, {
+      result: bannedUnder(RECORDED_PROHIBITED, `art:5:1:${letter}`),
+    })
+    const bans =
+      language === 'en'
+        ? 'It matches a practice Art. 5 bans: '
+        : 'Es entspricht einer Praktik, die Art. 5 verbietet: '
+    const stop =
+      language === 'en' ? '. The checks stop at Article 5.' : '. Die Prüfung endet bei Artikel 5.'
+    // As written: the reference keeps its no-break spaces, so it never breaks across lines.
+    const asWritten = { normalizer: (text: string) => text }
+    expect(
+      within(summaryRegion()).getByText(`${bans}${line}${stop}`, asWritten),
+    ).toBeInTheDocument()
   })
 
   it('leaves out a cited point that applies only later (Art. 5(1)(ba) before 2 December 2026)', async () => {

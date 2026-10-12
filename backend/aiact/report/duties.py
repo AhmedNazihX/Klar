@@ -1,7 +1,7 @@
 """The duties' texts, from Klar's obligations table, never from the posted result (decision 031,
 user 2026-10-09): a duty is looked up by the result's class, its role (and the role it also
 has), the duty's article and the law version, and the reports print the table's formal wording
-(`duty`, `duty_de`), condition (`applies_if`, English only: P11 owns its German) and short
+(`duty`, `duty_de`), condition (`applies_if`, `applies_if_de`) and short
 labels. A posted duty no table entry matches has no formal wording to print.
 
 A duty's date and its Art. 111(2) marking stay the result's own: they are the run's, not the
@@ -78,7 +78,8 @@ def formal_duties(
     law_version: LawVersion,
 ) -> tuple[Obligation, ...]:
     """The posted duties a table entry matches, each with that entry's texts (`duty`,
-    `duty_de`, `applies_if`, the labels) and `is_informational`; the others are left out."""
+    `duty_de`, `applies_if`, `applies_if_de`, the labels) and `is_informational`; the others
+    are left out."""
     found = (
         (
             duty,
@@ -103,6 +104,7 @@ def _with_texts(duty: Obligation, entry: ObligationEntry) -> Obligation:
             "label_en": entry.label_en,
             "label_de": entry.label_de,
             "applies_if": entry.applies_if,
+            "applies_if_de": entry.applies_if_de,
             "is_informational": entry.is_informational,
         }
     )

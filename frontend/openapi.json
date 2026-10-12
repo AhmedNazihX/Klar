@@ -2513,6 +2513,19 @@
             "title": "Applies If",
             "description": "The condition under which the duty applies; None when it applies to every system of this role and class."
           },
+          "applies_if_de": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applies If De",
+            "description": "The condition in German (P11), from the table; the table sets it wherever it sets `applies_if`. None on a duty stored before P11."
+          },
           "is_informational": {
             "type": "boolean",
             "title": "Is Informational",
@@ -2541,6 +2554,19 @@
             ],
             "title": "Relief Note",
             "description": "Relief for SMEs, start-ups and small mid-caps (SMCs), if any."
+          },
+          "relief_note_de": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relief Note De",
+            "description": "The relief in German (P11), from the table; the table sets it wherever it sets `relief_note`. None on a duty stored before P11."
           },
           "note": {
             "anyOf": [

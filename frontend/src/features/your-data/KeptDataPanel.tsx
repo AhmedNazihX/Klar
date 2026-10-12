@@ -2,6 +2,7 @@ import { useId, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { GlassPanel } from '@/components/GlassPanel'
+import { useLanguage } from '@/hooks/use-language'
 import { useMyDataCounts } from '@/hooks/use-my-data-counts'
 import { formatBytes, type MyDataCounts } from '@/lib/user-data'
 
@@ -18,7 +19,8 @@ const ROWS = [
 /** "What Klar keeps": a count per kind of stored data (my_data_counts), the storage used against
  *  the budget (decision 027), and the 30-day deletion (decision 013). */
 export function KeptDataPanel(): JSX.Element {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const language = useLanguage()
   const headingId = useId()
   const counts = useMyDataCounts()
   const data = counts.data
@@ -41,8 +43,8 @@ export function KeptDataPanel(): JSX.Element {
       {data && (
         <p className="m-0 border-t border-hairline pt-2.5 text-caption text-slate">
           {t('yourData.keep.storage', {
-            used: formatBytes(data.storageBytes, i18n.language),
-            budget: formatBytes(data.storageBudgetBytes, i18n.language),
+            used: formatBytes(data.storageBytes, language),
+            budget: formatBytes(data.storageBudgetBytes, language),
           })}
         </p>
       )}

@@ -50,7 +50,7 @@
     "reviewer": "Prüfansicht",
     "statuses": "Status und Herkunft",
     "icons": "Symbole",
-    "law": "Gesetzesfassung",
+    "law": "Rechtsstand",
     "lawDateSample": "Die Hochrisiko-Pflichten für Anhang III gelten ab dem <date/>."
   },
   "pill": {
@@ -69,7 +69,7 @@
     "notFound": "Diese Seite gibt es nicht."
   },
   "status": {
-    "decided": "Entschieden",
+    "decided": "Festgestellt",
     "ambiguous": "Rechtlich unklar",
     "needs-info": "Weitere Angaben nötig",
     "draft": "ENTWURF"
@@ -91,9 +91,9 @@
     "default": "Orientierungshilfe, keine Rechtsberatung. Klar ist ein KI-System."
   },
   "law": {
-    "label": "Gesetzesfassung",
-    "amended": "Geänderte Fassung, 27.07.2026",
-    "original": "Ursprüngliche Fassung, 2024",
+    "label": "Rechtsstand",
+    "amended": "Geändert, 27.07.2026",
+    "original": "Ursprünglich, 2024",
     "notice": "Sie sehen die ursprüngliche Fassung von 2024. Der digitale Omnibus hat den Hochrisiko-Termin für Anhang III auf den 2. Dezember 2027 verschoben; Klar nutzt standardmäßig die geänderte Fassung."
   },
   "nav": {
@@ -817,10 +817,10 @@
       "intro": "Ist eine dieser Angaben falsch, kann sich die Einstufung ändern.",
       "change": "Ändern",
       "confirm": "Bestätigen",
-      "accuracy": "Diese Einschätzung ist nur so genau wie die Beschreibung."
+      "accuracy": "Diese Einschätzung ist nur so genau wie Ihre Beschreibung."
     },
     "steps": {
-      "heading": "Wie Klar zum Ergebnis kam",
+      "heading": "So kam Klar zu diesem Ergebnis",
       "expandAll": "Alle Schritte mit Zitaten aufklappen",
       "facts": "Fakten",
       "role": "Rolle",
@@ -999,6 +999,19 @@
   "prohibited": {
     "statement": "Es entspricht einer Praktik, die Art. 5 verbietet: {{points}}. Die Prüfung endet bei Artikel 5.",
     "statementPlain": "Es entspricht einer Praktik, die Art. 5 verbietet. Die Prüfung endet bei Artikel 5.",
+    "pointLine": "{{practice}} ({{point}})",
+    "practice": {
+      "a": "Beeinflussung des Verhaltens durch unterschwellige, manipulative oder täuschende Techniken, die erheblichen Schaden verursachen",
+      "b": "Ausnutzung der Vulnerabilität oder Schutzbedürftigkeit von Personen aufgrund ihres Alters, einer Behinderung oder ihrer sozialen oder wirtschaftlichen Situation",
+      "ba": "Erzeugung realistischer intimer oder sexuell expliziter Bilder, Videos oder Tonaufnahmen einer bestimmbaren Person ohne deren Zustimmung",
+      "bb": "Erzeugung von Darstellungen sexuellen Missbrauchs von Kindern",
+      "c": "soziale Bewertung, die zu einer Benachteiligung in sozialen Zusammenhängen ohne Bezug zur Erhebung der Daten oder zu einer ungerechtfertigten oder unverhältnismäßigen Benachteiligung führt",
+      "d": "Vorhersage des Risikos einer Straftat allein aufgrund von Profiling oder Persönlichkeitsmerkmalen",
+      "e": "Aufbau von Gesichtserkennungsdatenbanken durch ungezieltes Auslesen von Gesichtsbildern",
+      "f": "Emotionserkennung am Arbeitsplatz oder in Bildungseinrichtungen",
+      "g": "biometrische Kategorisierung, um sensible Merkmale wie Rasse, politische Einstellungen oder sexuelle Ausrichtung abzuleiten",
+      "h": "biometrische Echtzeit-Fernidentifizierung in öffentlich zugänglichen Räumen zur Strafverfolgung"
+    },
     "bannedSince": "Verboten seit",
     "monthsAgo_one": "vor {{count}} Monat",
     "monthsAgo_other": "vor {{count}} Monaten",

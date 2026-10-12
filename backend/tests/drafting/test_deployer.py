@@ -202,6 +202,15 @@ def test_a_legacy_duty_applies_only_after_a_significant_change() -> None:
         "It lists the duty under Art. 26(7), which applies only after a significant change to "
         "the system (Art. 111(2))."
     )
+    german = draft_document(
+        TEMPLATES[WORKERS], rebuild(result, obligations=obligations), {}, Language.DE
+    )
+    # Art. 111(2)'s German term (erhebliche Veränderung), as the screens and reports say it; not
+    # Art. 3(23)'s wesentliche Veränderung.
+    assert _section(german, "duty")[1] == (
+        "Sie nennt die Pflicht nach Art. 26 Abs. 7, die erst nach einer erheblichen Änderung des "
+        "Systems gilt (Art. 111 Abs. 2)."
+    )
 
 
 def test_a_duty_listed_with_several_dates_is_refused() -> None:

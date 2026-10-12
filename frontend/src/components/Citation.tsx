@@ -2,13 +2,8 @@ import { useId, useState, type JSX, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { Language } from '@/i18n'
+import { nestQuotes, QUOTE_MARKS } from '@/lib/quote-marks'
 import { cn } from '@/lib/utils'
-
-// Each language's own quotation marks.
-const QUOTE_MARKS: Record<Language, readonly [string, string]> = {
-  en: ['“', '”'],
-  de: ['„', '“'],
-}
 
 /** A quote longer than this many characters (about five lines in a step card) opens shortened. */
 const SHORTEN_ABOVE_CHARS = 400
@@ -47,6 +42,7 @@ export function Citation({ children, language, source, className }: CitationProp
   const [open, close] = QUOTE_MARKS[language]
   const opening = quoteOpening(children)
   const isShortened = opening !== null && !isExpanded
+  const shown = nestQuotes(isShortened ? `${opening} …` : children, language)
   return (
     <figure
       className={cn(
@@ -57,7 +53,7 @@ export function Citation({ children, language, source, className }: CitationProp
       <blockquote id={quoteId} lang={language} className="m-0 font-serif text-quote text-ink-2">
         <p className="m-0">
           {open}
-          {isShortened ? `${opening} …` : children}
+          {shown}
           {close}
         </p>
       </blockquote>

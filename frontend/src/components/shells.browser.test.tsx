@@ -15,13 +15,15 @@ import { SIDEBAR_ITEM_WIDTH_PX } from './app-nav'
 
 const PHONE = { width: 390, height: 844 } as const
 const DESKTOP = { width: 1440, height: 1000 } as const
+/** How long a route may take to show its heading on a cold, shared machine (P11). */
+const COLD_LOAD_MS = 10_000
 
 async function open(path: string, language: 'en' | 'de'): Promise<void> {
   await i18n.changeLanguage(language)
   renderRoute(path)
   // The file's first test (`/app/welcome (en)`) loads the frame and its lazy route chunks cold,
   // which takes past the default second when another run shares the machine (F10).
-  await screen.findByRole('heading', { level: 1 })
+  await screen.findByRole('heading', { level: 1 }, { timeout: COLD_LOAD_MS })
   await document.fonts.ready
 }
 

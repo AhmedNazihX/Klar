@@ -32,7 +32,7 @@ ASSUMED_CLASS = _texts("{name} (assumed)", "{name} (angenommen)")
 NOT_CLASSIFIED = _texts("Not classified yet", "Noch nicht eingestuft")
 
 STATUS_NAMES: Mapping[Status, ByLanguage] = {
-    Status.DECIDED: _texts("Decided", "Entschieden"),
+    Status.DECIDED: _texts("Decided", "Festgestellt"),
     Status.NEEDS_MORE_INFORMATION: _texts("Needs more information", "Weitere Angaben nötig"),
     Status.LEGALLY_AMBIGUOUS: _texts("Legally ambiguous", "Rechtlich unklar"),
 }

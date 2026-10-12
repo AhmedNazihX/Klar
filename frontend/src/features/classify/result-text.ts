@@ -103,13 +103,22 @@ export function dutyLabel(obligation: Obligation, language: Language): string {
 /** A duty list's article column is wider in German (localisation.md: "Art. 26 Abs. 11"). */
 export const DUTY_REFERENCE_WIDTH: Record<Language, number> = { en: 86, de: 112 }
 
+/** A duty's condition in the screen's language. A duty stored before its German condition
+ *  existed (P11), or whose condition the table no longer holds, keeps its English one. */
+export function dutyCondition(obligation: Obligation, language: Language): string | null {
+  const german = language === 'de' ? obligation.applies_if_de : null
+  return german || obligation.applies_if || null
+}
+
 /** The line under a duty: its Art. 111(2) marking (decision 026 item 24), or its condition. */
 export function dutyNote(t: TFunction, obligation: Obligation, language: Language): string | null {
   if (obligation.legacy === 'legacy_unchanged') return t('result.legacy.afterChange')
   if (obligation.legacy === 'legacy_public_authority') {
     return t('result.legacy.from', { date: longDate(obligation.applies_from, language) })
   }
-  if (obligation.applies_if) return t('result.todo.onlyIf', { condition: obligation.applies_if })
+  if (obligation.applies_if) {
+    return t('result.todo.onlyIf', { condition: dutyCondition(obligation, language) })
+  }
   if (obligation.is_informational) return t('result.todo.forInformation')
   return null
 }

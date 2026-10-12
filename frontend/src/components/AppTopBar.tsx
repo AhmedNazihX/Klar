@@ -74,7 +74,13 @@ export function PhoneTopBar({
   return (
     // A header (the banner landmark), so the logo and Menu sit in a landmark like the rest.
     <header className="flex h-14 items-center justify-between rounded-pill pr-2 pl-4.5 glass md:hidden">
-      <Link to="/app" aria-label={t('app.home')} className="flex h-11 items-center rounded-md">
+      {/* Exact: every /app/* route starts with /app, and the logo isn't the page you're on. */}
+      <Link
+        to="/app"
+        activeOptions={{ exact: true }}
+        aria-label={t('app.home')}
+        className="flex h-11 items-center rounded-md"
+      >
         <KlarLogo className="h-[26px] w-auto" />
       </Link>
       <button

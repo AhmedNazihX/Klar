@@ -1018,6 +1018,12 @@ export type Obligation = {
      */
     applies_if?: string | null;
     /**
+     * Applies If De
+     *
+     * The condition in German (P11), from the table; the table sets it wherever it sets `applies_if`. None on a duty stored before P11.
+     */
+    applies_if_de?: string | null;
+    /**
      * Is Informational
      *
      * True when the row informs (e.g. a distributor of a prohibited system) rather than stating a formal duty the Act puts on this role.
@@ -1033,6 +1039,12 @@ export type Obligation = {
      * Relief for SMEs, start-ups and small mid-caps (SMCs), if any.
      */
     relief_note?: string | null;
+    /**
+     * Relief Note De
+     *
+     * The relief in German (P11), from the table; the table sets it wherever it sets `relief_note`. None on a duty stored before P11.
+     */
+    relief_note_de?: string | null;
     /**
      * Note
      */

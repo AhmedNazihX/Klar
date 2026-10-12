@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 
+import { LANGUAGE_LOCALES, type Language } from '@/i18n'
+
 // Your data (story P12) over P3's and P19's functions: my_data_counts, export_my_data and
 // delete_my_data. Each one runs as the signed-in user, so row-level security keeps it to their rows.
 
@@ -49,9 +51,9 @@ const BYTES_PER_MB = 1024 * 1024
 
 /** "12 kB", "1.5 MB": a storage figure in the reader's locale. Under a kilobyte reads "< 1 kB",
  *  so a stored row never shows as "0 kB"; nothing at all does. */
-export function formatBytes(bytes: number, language: string): string {
+export function formatBytes(bytes: number, language: Language): string {
   const isMegabytes = bytes >= BYTES_PER_MB
-  const format = new Intl.NumberFormat(language, {
+  const format = new Intl.NumberFormat(LANGUAGE_LOCALES[language], {
     style: 'unit',
     unit: isMegabytes ? 'megabyte' : 'kilobyte',
     maximumFractionDigits: isMegabytes ? 1 : 0,

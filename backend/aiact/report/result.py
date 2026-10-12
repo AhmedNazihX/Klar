@@ -347,12 +347,15 @@ def _duties_heading(result: ClassificationResult, language: Language) -> str:
 
 
 def _duty_text(duty: Obligation, language: Language) -> str:
-    """The duty's formal wording in the report's language, and its condition when it has one
-    (the table's, in English only: P11 owns the German)."""
+    """The duty's formal wording in the report's language, and its condition when it has one:
+    in German when the duty carries the German condition, else the English one, so a condition
+    is never dropped (the screen does the same: result-text.ts `dutyCondition`)."""
     text = duty.duty_de if language is Language.DE else duty.duty
-    if duty.applies_if is None:
+    german = duty.applies_if_de if language is Language.DE else None
+    condition = german or duty.applies_if
+    if condition is None:
         return text
-    return texts.APPLIES_IF[language].format(duty=text, condition=duty.applies_if)
+    return texts.APPLIES_IF[language].format(duty=text, condition=condition)
 
 
 def _article(duty: Obligation, language: Language) -> str:

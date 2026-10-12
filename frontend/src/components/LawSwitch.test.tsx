@@ -114,8 +114,8 @@ describe('LawSwitch, LawDate and LawNotice', () => {
   it('takes its labels from the active language', async () => {
     await i18n.changeLanguage('de')
     renderWithProviders(<LawSwitch />)
-    expect(await screen.findByRole('group', { name: 'Gesetzesfassung' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Ursprüngliche Fassung, 2024' })).toHaveAttribute(
+    expect(await screen.findByRole('group', { name: 'Rechtsstand' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ursprünglich, 2024' })).toHaveAttribute(
       'aria-pressed',
       'false',
     )

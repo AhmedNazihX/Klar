@@ -1,4 +1,5 @@
-"""The obligations migrations (supabase/migrations/*_obligations.sql, *_obligation_texts.sql) and
+"""The obligations migrations (supabase/migrations/*_obligations.sql, *_obligation_texts.sql,
+*_obligation_german_conditions.sql) and
 the seed, against the local test database. After a new migration or a YAML change, apply the
 migration first, to the local database (`supabase migration up --local`) and to the hosted project
 (`supabase db push`), then reload supabase/seed/obligations.sql into both (never reset either
@@ -6,6 +7,7 @@ database: each is shared)."""
 
 import psycopg
 import pytest
+from psycopg import sql
 
 from aiact.obligations.list import load_table
 
@@ -44,12 +46,17 @@ def test_seeded_rows_match_the_yaml(db: psycopg.Connection) -> None:
             row.obligation.duty_de,
             row.obligation.group.value if row.obligation.group else None,
             row.obligation.document,
+            row.obligation.applies_if,
+            row.obligation.applies_if_de,
+            row.obligation.relief_note,
+            row.obligation.relief_note_de,
         )
         for row in table.rows()
     ]
     seeded = db.execute(
         "select obligation_key, role, risk_class, high_risk_route, article, applies_from,"
-        " label_en, label_de, duty_de, duty_group, document"
+        " label_en, label_de, duty_de, duty_group, document,"
+        " applies_if, applies_if_de, relief_note, relief_note_de"
         " from obligations where law_version = %s order by position",
         (table.law_version.value,),
     ).fetchall()
@@ -68,6 +75,22 @@ def test_a_row_without_the_screens_texts_is_still_accepted(db: psycopg.Connectio
         " applies_from, law_version) values ('old-shape', 0, 'provider', 'high_risk',"
         " 'Do something.', 'art:16:a', '2026-08-02', 'amended')"
     )
+
+
+@pytest.mark.parametrize("column", ["applies_if_de", "relief_note_de"])
+def test_an_empty_german_condition_or_relief_is_rejected(
+    db: psycopg.Connection, column: str
+) -> None:
+    """P11's columns are nullable like C9's, but never empty."""
+    with pytest.raises(psycopg.errors.CheckViolation):
+        db.execute(
+            sql.SQL(
+                "insert into obligations (obligation_key, position, role, risk_class, duty,"
+                " article, applies_from, law_version, {column}) values ('empty-de', 0,"
+                " 'provider', 'high_risk', 'Do something.', 'art:16:a', '2026-08-02',"
+                " 'amended', '')"
+            ).format(column=sql.Identifier(column))
+        )
 
 
 @pytest.mark.parametrize(

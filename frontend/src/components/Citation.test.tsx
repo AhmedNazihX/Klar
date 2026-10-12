@@ -47,6 +47,31 @@ describe('Citation', () => {
     expect(await screen.findByText('„Wortlaut“')).toBeInTheDocument()
     expect(screen.queryByText(ENGLISH_ONLY_TAG)).not.toBeInTheDocument()
   })
+
+  it.each([
+    // Art. 3 Nr. 4 opens with its own quoted term.
+    [
+      'de',
+      '„Betreiber“ eine natürliche oder juristische Person, Behörde, Einrichtung oder sonstige Stelle;',
+      '„‚Betreiber‘ eine natürliche oder juristische Person, Behörde, Einrichtung oder sonstige Stelle;“',
+    ],
+    ['de', 'eine Person gilt als „Betreiber“', '„eine Person gilt als ‚Betreiber‘“'],
+    [
+      'en',
+      '“deployer” means a natural or legal person',
+      '“‘deployer’ means a natural or legal person”',
+    ],
+    // No inner marks, and an apostrophe stays as it is.
+    ['en', 'the provider’s instructions for use', '“the provider’s instructions for use”'],
+  ] as const)(
+    'always adds its own %s quotation marks and nests the text’s own: %s',
+    async (language, text, shown) => {
+      await i18n.changeLanguage(language)
+      renderWithProviders(<Citation language={language}>{text}</Citation>)
+      const quote = await screen.findByText(shown)
+      expect(quote.closest('blockquote')).toBeInTheDocument()
+    },
+  )
 })
 
 function recordedQuote(provisionId: string): string {

@@ -18,8 +18,10 @@ export function AppSidebar({ company }: { company: CompanyProfile | null }): JSX
   const { t } = useTranslation()
   return (
     <>
+      {/* Exact: every /app/* route starts with /app, and the logo isn't the page you're on. */}
       <Link
         to="/app"
+        activeOptions={{ exact: true }}
         aria-label={t('app.home')}
         className="mt-1.5 ml-3.5 flex self-start rounded-md"
       >

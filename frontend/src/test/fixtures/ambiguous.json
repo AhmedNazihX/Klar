@@ -171,9 +171,11 @@
         "applies_from": "2025-02-02",
         "high_risk_route": null,
         "applies_if": null,
+        "applies_if_de": null,
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": "The Omnibus softened this duty: the original text required ensuring \"a sufficient level of AI literacy\"; the amended text requires supporting measures and no specific level."
       },
       {
@@ -188,9 +190,11 @@
         "applies_from": "2028-08-02",
         "high_risk_route": "annex_i",
         "applies_if": null,
+        "applies_if_de": null,
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       },
       {
@@ -205,9 +209,11 @@
         "applies_from": "2028-08-02",
         "high_risk_route": "annex_i",
         "applies_if": null,
+        "applies_if_de": null,
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       },
       {
@@ -222,9 +228,11 @@
         "applies_from": "2028-08-02",
         "high_risk_route": "annex_i",
         "applies_if": "You control the input data.",
+        "applies_if_de": "Die Eingabedaten unterliegen Ihrer Kontrolle.",
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       },
       {
@@ -239,9 +247,11 @@
         "applies_from": "2028-08-02",
         "high_risk_route": "annex_i",
         "applies_if": null,
+        "applies_if_de": null,
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       },
       {
@@ -256,9 +266,11 @@
         "applies_from": "2028-08-02",
         "high_risk_route": "annex_i",
         "applies_if": null,
+        "applies_if_de": null,
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       },
       {
@@ -273,9 +285,11 @@
         "applies_from": "2028-08-02",
         "high_risk_route": "annex_i",
         "applies_if": "You are an employer and use the system at the workplace.",
+        "applies_if_de": "Sie sind Arbeitgeber und verwenden das System am Arbeitsplatz.",
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       },
       {
@@ -290,9 +304,11 @@
         "applies_from": "2028-08-02",
         "high_risk_route": "annex_i",
         "applies_if": "A data protection impact assessment is required under Art. 35 GDPR or Art. 27 of Directive (EU) 2016/680.",
+        "applies_if_de": "Eine Datenschutz-Folgenabschätzung ist nach Art. 35 DSGVO oder Art. 27 der Richtlinie (EU) 2016/680 erforderlich.",
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       },
       {
@@ -307,9 +323,11 @@
         "applies_from": "2028-08-02",
         "high_risk_route": "annex_i",
         "applies_if": null,
+        "applies_if_de": null,
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       },
       {
@@ -324,9 +342,11 @@
         "applies_from": "2026-08-02",
         "high_risk_route": null,
         "applies_if": "The system is an emotion recognition or biometric categorisation system.",
+        "applies_if_de": "Das System ist ein Emotionserkennungssystem oder ein System zur biometrischen Kategorisierung.",
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       },
       {
@@ -341,9 +361,11 @@
         "applies_from": "2026-08-02",
         "high_risk_route": null,
         "applies_if": "The system generates or manipulates deep fakes, or text published to inform the public on matters of public interest (not needed for text under human editorial control).",
+        "applies_if_de": "Das System erzeugt oder manipuliert Deepfakes oder Texte, die veröffentlicht werden, um die Öffentlichkeit über Angelegenheiten von öffentlichem Interesse zu informieren (nicht bei Texten unter redaktioneller Kontrolle eines Menschen).",
         "is_informational": false,
         "legacy": null,
         "relief_note": null,
+        "relief_note_de": null,
         "note": null
       }
     ],

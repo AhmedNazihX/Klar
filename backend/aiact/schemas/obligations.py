@@ -71,6 +71,12 @@ class Obligation(ContractModel):
         description="The condition under which the duty applies; None when it applies to every "
         "system of this role and class.",
     )
+    applies_if_de: str | None = Field(
+        default=None,
+        min_length=1,
+        description="The condition in German (P11), from the table; the table sets it wherever it "
+        "sets `applies_if`. None on a duty stored before P11.",
+    )
     is_informational: bool = Field(
         default=False,
         description="True when the row informs (e.g. a distributor of a prohibited system) rather "
@@ -86,6 +92,12 @@ class Obligation(ContractModel):
     )
     relief_note: str | None = Field(
         default=None, description="Relief for SMEs, start-ups and small mid-caps (SMCs), if any."
+    )
+    relief_note_de: str | None = Field(
+        default=None,
+        min_length=1,
+        description="The relief in German (P11), from the table; the table sets it wherever it "
+        "sets `relief_note`. None on a duty stored before P11.",
     )
     note: str | None = None
 
