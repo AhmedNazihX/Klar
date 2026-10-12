@@ -76,7 +76,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        corpus.py: the checks' one corpus reader (get_provision, search)
 │   │   │   │                        and the short connection each step reads it over (E15);
 │   │   │   │                        open_in_law.py: the fact a practice or Annex route is open on
-│   │   │   │                        in law, read on its stricter side (E19)
+│   │   │   │                        in law, read on its stricter side (E19); high_risk_answer.py:
+│   │   │   │                        the high-risk model answer, moved out of high_risk.py (E19)
 │   │   │   ├── prompts/             prompt files, one per node, e.g. facts.md (E2–E8)
 │   │   │   │                        role_obligations_legacy.md: the high-risk Art. 111(2) section (C7b)
 │   │   │   │                        high_risk_original.md: the original-text note, no Art. 6(1a)-(1c) (E11)

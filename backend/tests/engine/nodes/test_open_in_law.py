@@ -3,12 +3,8 @@ The checks' own tests drive it through their answers; these pin the shared rules
 
 import pytest
 
-from aiact.engine.nodes.high_risk import (
-    ANNEX_I_FACTS,
-    STRICT_VALUES,
-    AnnexIAnswer,
-    AnnexIOpenOn,
-)
+from aiact.engine.nodes.high_risk import ANNEX_I_FACTS
+from aiact.engine.nodes.high_risk_answer import STRICT_VALUES, AnnexIAnswer, AnnexIOpenOn
 from aiact.engine.nodes.key_facts import Answer, Settled
 from aiact.engine.nodes.open_in_law import (
     NOT_NAMED,

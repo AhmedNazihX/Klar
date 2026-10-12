@@ -26,16 +26,18 @@ from aiact.engine.nodes import corpus as corpus_module
 from aiact.engine.nodes import high_risk as node
 from aiact.engine.nodes.common import Lookup
 from aiact.engine.nodes.high_risk import (
-    AnnexIAnswer,
-    AnnexIIIAnswer,
-    Art63Answer,
-    Art63Condition,
-    HighRiskAnswer,
     HighRiskCheck,
     HighRiskOutputError,
     Settled,
     law_title,
     to_outcome,
+)
+from aiact.engine.nodes.high_risk_answer import (
+    AnnexIAnswer,
+    AnnexIIIAnswer,
+    Art63Answer,
+    Art63Condition,
+    HighRiskAnswer,
 )
 from aiact.engine.nodes.high_risk_retrieval import (
     ANNEX_III_POINTS,
@@ -703,6 +705,110 @@ def test_an_open_exemption_on_a_point_whose_user_is_open_stays_open() -> None:
     result = outcome(answer(iii, art_6_3(Art63Condition.D, open_question=OPEN)))
     assert result.high_risk_route is HighRiskRoute.ANNEX_III
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    assert not result.annex_iii_exempt
+
+
+# --- E19 decision 1: an open listing is moot once Art. 6(3) settles the exemption ----------------
+
+LISTING_OPEN = annex_iii("annex:III:4:b", YES, open_question=OPEN, on="uses")
+"""4(b) open in law on whether it lists the use, the model's own answer to it either way."""
+EXEMPT_C = art_6_3(Art63Condition.C)
+"""Art. 6(3)(c) met, no profiling, both settled in law."""
+
+
+@pytest.mark.parametrize("uses", [YES, Answer.NO], ids=["uses-yes", "uses-no"])
+def test_an_open_listing_with_a_settled_exemption_is_exempt_and_asks_the_listing(
+    uses: Answer,
+) -> None:
+    """Either reading of the listing gives "not high-risk" (unlisted, or listed and exempt), so
+    the open question is moot: the existing exempt path for an unknown listing, which still
+    asks it, since the Art. 6(4) duty depends on it."""
+    listing = annex_iii("annex:III:4:b", uses, open_question=OPEN, on="uses")
+    result = outcome(answer(listing, EXEMPT_C))
+    assert result.high_risk_route is None
+    assert result.annex_iii_exempt
+    assert result.step.open_question is None
+    assert result.step.status is Status.NEEDS_MORE_INFORMATION
+    assert result.step.missing_fact is not None
+    assert result.step.missing_fact.id == "annex_iii_use"
+    assert result.step.missing_fact.if_yes is None  # a yes keeps it exempt, not high-risk
+    assert {"annex:III:4:b", "art:6:3:c", "art:6:4"} <= set(cited(result))
+    assert "Assumed exempt under Art. 6(3) until this is answered" in result.step.decision
+
+
+def test_an_open_user_with_a_settled_exemption_asks_the_users_question() -> None:
+    """The same for a point that names its user, open on `public_authority`: 5(a) asks whether
+    the scheme is public."""
+    listing = annex_iii("annex:III:5:a", YES, Answer.NO, open_question=OPEN, on="public_authority")
+    result = outcome(answer(listing, art_6_3(Art63Condition.D)))
+    assert result.annex_iii_exempt
+    assert result.high_risk_route is None
+    assert result.step.missing_fact is not None
+    assert result.step.missing_fact.id == "public_scheme"
+
+
+@pytest.mark.parametrize(
+    "given",
+    [
+        pytest.param(
+            answer(LISTING_OPEN, art_6_3(Art63Condition.C, open_question=OPEN)),
+            id="exemption-open",
+        ),
+        pytest.param(answer(LISTING_OPEN, art_6_3()), id="no-condition"),
+        pytest.param(
+            answer(LISTING_OPEN, art_6_3(Art63Condition.C, profiling=YES)), id="profiling-yes"
+        ),
+        pytest.param(
+            answer(LISTING_OPEN, art_6_3(Art63Condition.C, profiling=Answer.UNKNOWN)),
+            id="profiling-unknown",
+        ),
+        pytest.param(
+            answer(annex_iii("annex:III:4:b", YES, open_question=OPEN), EXEMPT_C),
+            id="listing-open-unnamed",
+        ),
+        pytest.param(
+            answer(
+                LISTING_OPEN,
+                EXEMPT_C,
+                annex_i("annex:I:A:11", YES, YES, YES, open_question=OPEN, on="covered"),
+            ),
+            id="annex-i-open",
+        ),
+    ],
+)
+def test_an_open_listing_stays_open_unless_the_exemption_is_settled(given: HighRiskAnswer) -> None:
+    """Never moot when the exemption is open or not met, profiling is "yes" or unknown, the open
+    question names no listing fact, or an Annex I route is open: the step stays ambiguous with
+    high-risk assumed, as before."""
+    result = outcome(given)
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    assert result.high_risk_route is not None
+    assert not result.annex_iii_exempt
+
+
+@pytest.mark.parametrize(
+    ("given", "route"),
+    [
+        pytest.param(
+            answer(annex_iii("annex:III:4:b", Answer.NO, open_question=OPEN), EXEMPT_C),
+            None,
+            id="ruled-out",
+        ),
+        pytest.param(
+            answer(LISTING_OPEN, EXEMPT_C, MEDICAL_DEVICE),
+            HighRiskRoute.ANNEX_I,
+            id="annex-i-high-risk",
+        ),
+    ],
+)
+def test_a_point_decided_otherwise_is_not_made_exempt(
+    given: HighRiskAnswer, route: HighRiskRoute | None
+) -> None:
+    """A point ruled out (its gate "no", nothing named open) is decided not high-risk and not
+    exempt; a decided Annex I route still wins."""
+    result = outcome(given)
+    assert result.step.status is Status.DECIDED
+    assert result.high_risk_route is route
     assert not result.annex_iii_exempt
 
 
