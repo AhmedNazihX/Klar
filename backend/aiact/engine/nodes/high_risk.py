@@ -22,7 +22,9 @@ the Act's rules are applied here, in code:
   reading gives are the original Art. 113's.
 - **Uncertain facts:** a deciding fact left open makes the step `needs_more_information`, a
   question the law leaves open makes it `legally_ambiguous`; either way the stricter reading
-  (high-risk) is the labelled working assumption, and the step asks the deciding question.
+  (high-risk) is the labelled working assumption, and the step asks the deciding question. The
+  fact an Annex route is open on in law is read on its stricter side, so only another fact can
+  rule the route out (E19, `open_in_law`).
 - **A provider refusal** (decision 029): not assessed; high-risk on the Annex III route, whose
   duties apply first, is assumed until a person reviews the description.
 
@@ -32,12 +34,11 @@ Every citation is fetched through `get_provision`, or is a retrieved guideline p
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
-from enum import StrEnum
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
-from pydantic import Field, ValidationError
+from pydantic import ValidationError
 
 from aiact.engine.nodes.common import (
     cited_provisions,
@@ -47,6 +48,14 @@ from aiact.engine.nodes.common import (
     refused_check,
 )
 from aiact.engine.nodes.corpus import CorpusReading
+from aiact.engine.nodes.high_risk_answer import (
+    STRICT_VALUES,
+    AnnexIAnswer,
+    Art63Answer,
+    Art63Condition,
+    HighRiskAnswer,
+    RouteAnswer,
+)
 from aiact.engine.nodes.high_risk_questions import (
     SECTION_B_PREFIX,
     high_risk_outcome,
@@ -81,11 +90,11 @@ from aiact.engine.nodes.high_risk_texts import (
     version_words,
 )
 from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
+from aiact.engine.nodes.open_in_law import held_strict, open_field, raised, stays_open
 from aiact.engine.nodes.questions import ask, hint, open_question
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.llm import engine_route
-from aiact.llm.replies import FollowUpQuestion as ReplyQuestion
 from aiact.llm.replies import OpenQuestion as ReplyOpenQuestion
 from aiact.llm.replies import as_contract
 from aiact.llm.structured import (
@@ -108,7 +117,6 @@ from aiact.schemas import (
     StepName,
     StepResult,
 )
-from aiact.schemas.base import ContractModel
 from aiact.settings import Settings
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "high_risk.md"
@@ -144,76 +152,6 @@ AUTHORITY_RULES: Mapping[str, AuthorityRule] = {
     "annex:III:8:a": AuthorityRule(JUDICIAL_USE),
 }
 """Keyed by the point or its area (`annex:III:6` covers 6(a)-(e))."""
-
-
-class Art63Condition(StrEnum):
-    """The Art. 6(3) condition met, second subparagraph (a)-(d), or none."""
-
-    NONE = "none"
-    A = "a"
-    B = "b"
-    C = "c"
-    D = "d"
-
-
-class RouteSummary(ContractModel):
-    """A route's answer as `key_facts.facts_used` reads it: its `fact` sums up the whole route,
-    so it always counts as settled (an open fact is asked through the route's question)."""
-
-    @property
-    def is_known(self) -> bool:
-        return True
-
-
-class AnnexIIIAnswer(RouteSummary):
-    """The Annex III use. Enum fields carry no description: strict structured output rejects
-    keywords next to a `$ref`; the prompt explains every field instead. Each route's
-    `settled_in_law` and `open_question` come right after its facts, so the model answers them
-    in that order every time."""
-
-    point: str | None
-    uses: Answer
-    public_authority: Answer
-    settled_in_law: Settled
-    open_question: ReplyOpenQuestion | None
-    evidence: EvidenceTag
-    fact: str = Field(min_length=1)
-    fact_numbers: tuple[int, ...]
-    examples: tuple[str, ...]
-
-
-class Art63Answer(RouteSummary):
-    condition: Art63Condition
-    profiling: Answer
-    settled_in_law: Settled
-    open_question: ReplyOpenQuestion | None
-    evidence: EvidenceTag
-    fact: str = Field(min_length=1)
-    fact_numbers: tuple[int, ...]
-
-
-class AnnexIAnswer(RouteSummary):
-    point: str | None
-    covered: Answer
-    safety_component_or_product: Answer
-    third_party_assessment: Answer
-    settled_in_law: Settled
-    open_question: ReplyOpenQuestion | None
-    evidence: EvidenceTag
-    fact: str = Field(min_length=1)
-    fact_numbers: tuple[int, ...]
-
-
-RouteAnswer = AnnexIIIAnswer | Art63Answer | AnnexIAnswer
-
-
-class HighRiskAnswer(ContractModel):
-    """The model's whole answer; also the JSON schema it must fill."""
-
-    annex_iii: AnnexIIIAnswer
-    art_6_3: Art63Answer
-    annex_i: AnnexIAnswer
-    question: ReplyQuestion | None
 
 
 class HighRiskOutputError(ValueError):
@@ -346,7 +284,8 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
     open on it, wins; otherwise an open question of law, then an open fact, keeps high-risk as
     the working assumption; otherwise the system is exempt under Art. 6(3) or not high-risk.
     The key facts answer what the description states, so a route the law leaves open is
-    ambiguous even when its facts all read "yes"."""
+    ambiguous even when its facts all read "yes". `answer` has its open facts held strict
+    (`held_strict_answer`)."""
     iii = read_annex_iii(answer, language)
     annex_i = read_annex_i(answer.annex_i)
     unknowns = (iii.listed.missing, iii.exempt_missing, annex_i.missing)
@@ -360,7 +299,7 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
     )
     exemption = _art63_citations(answer.art_6_3, iii.exempt)
     iii_cited = (*iii.listed.cited, *exemption) if iii.listed.cited else ()
-    iii_open, i_open = _open_on_annex_iii(answer), _open_on_annex_i(answer)
+    iii_open, i_open = _open_on_annex_iii(answer, iii), _open_on_annex_i(answer.annex_i, annex_i)
     if iii.listed.answer is Answer.YES and iii.exempt is Answer.NO and not iii_open:
         why = "iii_profiling" if answer.art_6_3.profiling is Answer.YES else "iii_no_condition"
         return replace(
@@ -378,6 +317,9 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
             sentences=annex_i.sentences,
             cited=(*annex_i.cited, *iii_cited),
         )
+    moot = _moot_listing(answer, iii) if iii_open and not i_open else None
+    if moot is not None:
+        return _open_or_settled(answer, base, moot, annex_i, iii_cited)
     if iii_open:
         point = answer.annex_iii.point
         assert point is not None  # _open_on_annex_iii checked it
@@ -394,18 +336,93 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
     return _open_or_settled(answer, base, iii, annex_i, iii_cited)
 
 
-def _open_on_annex_iii(answer: HighRiskAnswer) -> bool:
-    """The law leaves open whether a named Annex III point, or its Art. 6(3) exemption, applies."""
+ANNEX_I_FACTS = frozenset({"covered", "safety_component_or_product", "third_party_assessment"})
+
+
+def annex_iii_facts(point: str | None) -> frozenset[str]:
+    """The key facts a named Annex III point reads: its use, and the user it names, if any
+    (`AUTHORITY_RULES`); none without a point. An `open_on` naming another fact is read as no
+    name (`open_in_law.open_field`)."""
+    if point is None:
+        return frozenset()
+    return frozenset({"uses", "public_authority"} if _authority_rule(point) else {"uses"})
+
+
+def annex_i_facts(point: str | None) -> frozenset[str]:
+    """The key facts a named Annex I point reads; none without a point."""
+    return frozenset() if point is None else ANNEX_I_FACTS
+
+
+def held_strict_answer(answer: HighRiskAnswer) -> HighRiskAnswer:
+    """The answer with each Annex route's open fact (`open_on`) set to its stricter value (B2),
+    as a new copy, so the model's own answer to a fact the law leaves open never decides
+    anything. A route that names no point reads no facts, so it holds nothing open."""
+    iii, one = answer.annex_iii, answer.annex_i
+    return answer.model_copy(
+        update={
+            "annex_iii": held_strict(iii, STRICT_VALUES, annex_iii_facts(iii.point)),
+            "annex_i": held_strict(one, STRICT_VALUES, annex_i_facts(one.point)),
+        }
+    )
+
+
+def _open_on_annex_iii(answer: HighRiskAnswer, iii: AnnexIIIReading) -> bool:
+    """The law leaves open whether a named Annex III point, or its Art. 6(3) exemption, applies
+    (`open_in_law`). The point's gate is its use: answered "no" and not the fact held open, the
+    point is not raised. With its open fact held strict, only another fact the point reads
+    answered "no" settles it, and an exemption question is moot for a point so ruled out. An
+    open exemption names its condition in `condition`; whether it applies is never read the
+    lenient way."""
     match = answer.annex_iii
     if match.point not in ANNEX_III_POINTS:
         return False
-    exemption_open = match.uses is not Answer.NO and answer.art_6_3.settled_in_law is Settled.NO
-    return match.settled_in_law is Settled.NO or exemption_open
+    facts = annex_iii_facts(match.point)
+    if not raised(match, "uses", match.uses, facts):
+        return False
+    is_listed = iii.listed.answer is not Answer.NO
+    is_exemption_open = answer.art_6_3.settled_in_law is Settled.NO and is_listed
+    return is_exemption_open or stays_open(match, iii.listed.answer, facts, facts)
 
 
-def _open_on_annex_i(answer: HighRiskAnswer) -> bool:
-    """The law leaves open whether Art. 6(1) is met for a named Annex I point."""
-    return answer.annex_i.point is not None and answer.annex_i.settled_in_law is Settled.NO
+def _moot_listing(answer: HighRiskAnswer, iii: AnnexIIIReading) -> AnnexIIIReading | None:
+    """The Annex III reading when the only open question of law is whether the point lists the
+    use (its `uses`, or the user it names) and Art. 6(3) settles the exemption (a condition met,
+    no profiling, both settled in law): either way the system is not high-risk, so the listing is
+    read as an open fact, which `_open_or_settled` takes as exempt and still asks, since the Art.
+    6(4) duty depends on it (decision of 2026-10-12 on E19). None when the rule doesn't apply."""
+    match, art63 = answer.annex_iii, answer.art_6_3
+    point = match.point
+    field = open_field(match, annex_iii_facts(point))
+    is_exemption_settled = (
+        art63.settled_in_law is Settled.YES
+        and art63.condition is not Art63Condition.NONE
+        and art63.profiling is Answer.NO
+        and iii.exempt is Answer.YES
+    )
+    if point is None or field is None or not is_exemption_settled:
+        return None
+    asked = iii.listed.missing or _listing_question(point, field)
+    return replace(iii, listed=replace(iii.listed, answer=Answer.UNKNOWN, missing=asked))
+
+
+def _listing_question(point: str, field: str) -> KeyQuestion:
+    """The question that settles whether `point` lists the use, for its open fact `field`: who
+    uses it (the point's user rule), or whether the use falls under the point."""
+    rule = _authority_rule(point)
+    if field == "public_authority" and rule is not None:
+        return replace(rule.question, article=_area(point)) if rule.is_assumed else rule.question
+    return DECIDES_ADMISSION if point in ADMISSION_POINTS else ANNEX_III_USE
+
+
+def _open_on_annex_i(answer: AnnexIAnswer, route: Route) -> bool:
+    """The law leaves open whether Art. 6(1) is met for a named Annex I point (`open_in_law`).
+    Its gate is `covered`: answered "no" and not the fact held open, the point is not raised.
+    With its open fact held strict, only another of its cumulative facts answered "no" settles
+    it."""
+    facts = annex_i_facts(answer.point)
+    if answer.point is None or not raised(answer, "covered", answer.covered, facts):
+        return False
+    return stays_open(answer, route.answer, facts, facts)
 
 
 def _ambiguous(
@@ -522,9 +539,11 @@ def _if_yes(
         if annex_i.settled_in_law is Settled.YES and all(f is Answer.YES for f in others):
             return high_risk_outcome(HighRiskRoute.ANNEX_I, annex_i.point, law_version)
         return None
-    if answer.annex_iii.point not in ANNEX_III_POINTS or _open_on_annex_iii(answer):
+    if answer.annex_iii.point not in ANNEX_III_POINTS:
         return None
     iii = read_annex_iii(answer, language)
+    if _open_on_annex_iii(answer, iii):
+        return None
     is_profiling = key == PROFILING and iii.listed.answer is Answer.YES
     is_use_known = answer.annex_iii.uses is Answer.YES  # only who uses it is open
     is_listing = is_use_known and key is iii.listed.missing and iii.exempt is Answer.NO
@@ -644,11 +663,13 @@ def _decision(
 
 
 def to_outcome(
-    answer: HighRiskAnswer, state: EngineState, retrieved: Retrieved, library: HighRiskLibrary
+    given: HighRiskAnswer, state: EngineState, retrieved: Retrieved, library: HighRiskLibrary
 ) -> CheckOutcome:
-    """The high_risk step and its findings, from the model's answer and what was retrieved. The
-    cited provisions come from `retrieved` or are fetched from `library`."""
+    """The high_risk step and its findings, from the model's answer, each open fact held strict
+    (`held_strict_answer`), and what was retrieved. The cited provisions come from `retrieved`
+    or are fetched from `library`."""
     language = state["language"]
+    answer = held_strict_answer(given)
     settled = settle(answer, language)
     law = _law(answer.annex_i.point, retrieved)
     examples = _examples(answer, retrieved.guidance)

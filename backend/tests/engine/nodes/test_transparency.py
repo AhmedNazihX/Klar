@@ -11,6 +11,7 @@ import json
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import date
+from pathlib import Path
 from typing import cast
 
 import psycopg
@@ -1089,35 +1090,26 @@ def _b5a_cases() -> list[BenchmarkCase]:
 B5A_CASES = _b5a_cases()
 
 
-def _asks_about_deep_fakes(result: CheckOutcome, case: BenchmarkCase) -> bool:
+def _adds_deep_fakes(result: CheckOutcome, case: BenchmarkCase) -> bool:
     return (
-        result.step.status is Status.NEEDS_MORE_INFORMATION
-        and "art:50:4" in result.transparency_duties
+        result.step.status is Status.LEGALLY_AMBIGUOUS and "art:50:4" in result.transparency_duties
     )
 
 
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-a-14-practice-phone-agent": KnownGap(
-        "adds Art. 50(4) and asks whether the voices are deep fakes (needs_more_information), "
-        "where the label is decided with Art. 50(1) and (2) only (E10 re-record, user 2026-10-06)",
-        _asks_about_deep_fakes,
-    ),
-    "own-a-08-local-news-council-reports": KnownGap(
-        "E18's re-record (2026-10-12): adds Art. 50(2) to the label's Art. 50(4) and leaves the "
-        "editorial exception legally ambiguous instead of deciding it is not met; passed before "
-        "E18, so a follow-up for E19 (user, 2026-10-12: keep as a known gap, wrap up E18)",
-        lambda result, case: (
-            result.step.status is Status.LEGALLY_AMBIGUOUS
-            and "art:50:2" in result.transparency_duties
-        ),
+        "adds Art. 50(4): E19's re-record leaves open in law whether a generic, human-sounding "
+        "synthetic voice that imitates no one is a deep fake (legally ambiguous); before, it "
+        "asked whether the voices are deep fakes (needs_more_information, E10 re-record, user "
+        "2026-10-06). The label is decided with Art. 50(1) and (2) only",
+        _adds_deep_fakes,
     ),
     "own-a-15-intranet-assistant-in-house": KnownGap(
-        "E18's re-record (2026-10-12): under the tighter T3 rule the model doesn't find the "
-        "obvious-interaction exception shown and lists Art. 50(1) (legally ambiguous) where the "
-        "label has Art. 50(2) only; passed before E18, so a follow-up for E19 (user, 2026-10-12)",
+        "E18's re-record (2026-10-12), and E19's: under the tighter T3 rule the model doesn't "
+        "find the obvious-interaction exception shown and lists Art. 50(1), where the label has "
+        "Art. 50(2) only; E19's re-record decides it (E18's left it legally ambiguous)",
         lambda result, case: (
-            result.step.status is Status.LEGALLY_AMBIGUOUS
-            and "art:50:1" in result.transparency_duties
+            result.step.status is Status.DECIDED and "art:50:1" in result.transparency_duties
         ),
     ),
 }
@@ -1200,42 +1192,56 @@ def test_b5a_case_replay(
     matches = transparency_matches(result, case)
     shown = _shown(result)
     if result.step.status is Status.LEGALLY_AMBIGUOUS:
-        assert on_open_point(result) == [SETTLES_OPEN_POINT[case.id]], shown
+        assert on_open_point(result) == list(SETTLES_OPEN_POINT[case.id]), shown
     expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
     assert matches, shown
 
 
-SETTLES_OPEN_POINT = {
-    "own-a-08-local-news-council-reports": "editorial_control",
-    "own-a-15-intranet-assistant-in-house": "interaction_obvious",
+SETTLES_OPEN_POINT: dict[str, tuple[str, ...]] = {
+    "own-a-08-local-news-council-reports": ("editorial_control",),
+    "own-a-14-practice-phone-agent": (),
+    "own-a-15-intranet-assistant-in-house": ("interaction_obvious",),
 }
-"""E17: the recorded cases the step leaves legally ambiguous, and the question listed under "What
-would settle it": Art. 50(4)'s editorial exception (the user's hosted run) and Art. 50(1)'s
-obvious-interaction exception."""
+"""E17: the recorded cases the step may leave legally ambiguous, and the questions listed under
+"What would settle it": Art. 50(4)'s editorial exception (the user's hosted run) and Art. 50(1)'s
+obvious-interaction exception. own-a-14 (a known gap since E19's re-record) is left open on
+whether a generic synthetic voice is a deep fake (Art. 3(60)), a reading of the law no fact
+question settles, so it lists none."""
 
-EDITORIAL_CASE = "own-a-08-local-news-council-reports"
-EDITORIAL_ANSWER = (
-    "Ja. Ein Mensch prüft und bearbeitet jeden Text vor der Veröffentlichung, und unser "
-    "Unternehmen trägt die redaktionelle Verantwortung für die Veröffentlichung."
+EDITORIAL_FIXTURE = (
+    Path(__file__).resolve().parents[2] / "fixtures" / "followup_cases" / "editorial-question.yaml"
 )
-"""The user's answer to the editorial question, in the case's language (German), in Art. 50(4)'s
-own terms: human review or editorial control, and a person holding editorial responsibility."""
+"""E19's starting case for E17's loop, written from Art. 50(4) only (never a benchmark case): a
+deployer publishes generated text to inform the public, and the description says nothing about
+human review or editorial responsibility, so the editorial exception is a missing fact."""
+EDITORIAL_ANSWER = (
+    "Yes. An editor on our staff checks every text against the monitoring data, corrects and "
+    "rewrites it where needed, and approves it before it is published; the office holds "
+    "editorial responsibility for the publication."
+)
+"""The answer to the editorial question in Art. 50(4)'s terms: a substantive human review (not a
+formality), and a person holding editorial responsibility."""
 E17_RECORD_COMMAND = (
     "uv run pytest tests/engine/nodes/test_transparency.py -k answered_editorial --record-mode=once"
 )
 
 
 @pytest.mark.vcr
+@pytest.mark.parametrize("is_answered", [False, True], ids=["asked", "answered"])
 def test_an_answered_editorial_exception_settles_art_50_4(
+    is_answered: bool,
     luna_settings: Settings,
     record_mode: str,
     vcr_cassette_dir: str,
     default_cassette_name: str,
 ) -> None:
-    """E17's loop: the case left open on Art. 50(4), run again with "yes, with editorial
-    responsibility" added to its description (P5b), no longer lists or leaves open Art. 50(4)."""
+    """E17's loop (P5b), on E19's fixture: the first pass lists Art. 50(4) and asks the
+    editorial question as its missing fact; run again with "yes, a person reviews every text and
+    holds editorial responsibility" added to the description, the second pass no longer lists,
+    asks about or leaves open Art. 50(4)."""
     require_recording(vcr_cassette_dir, default_cassette_name, record_mode)
-    (case,) = (case for case in B5A_CASES if case.id == EDITORIAL_CASE)
+    (case,) = load_yaml_file(EDITORIAL_FIXTURE)
+    answers = {"editorial_control": EDITORIAL_ANSWER} if is_answered else None
     result = _replay(
         case,
         luna_settings,
@@ -1243,10 +1249,18 @@ def test_an_answered_editorial_exception_settles_art_50_4(
         vcr_cassette_dir,
         default_cassette_name,
         E17_RECORD_COMMAND,
-        answers={"editorial_control": EDITORIAL_ANSWER},
+        answers=answers,
     )
     shown = _shown(result)
+    asked = {question.id for question in result.follow_up_questions}
+    if not is_answered:
+        assert "art:50:4" in result.transparency_duties, shown
+        assert result.step.status is Status.NEEDS_MORE_INFORMATION, shown
+        assert result.step.missing_fact is not None, shown
+        assert result.step.missing_fact.id == "editorial_control", shown
+        return
     assert "art:50:4" not in result.transparency_duties, shown
+    assert "editorial_control" not in asked, shown
     question = result.step.open_question
     assert question is None or "art:50:4" not in {
         reading.citation.provision_id for reading in question.readings if reading.citation
@@ -1337,6 +1351,21 @@ E18_RULES = (
 def test_the_prompt_states_the_e18_rules() -> None:
     flat = " ".join(node.TRANSPARENCY_INSTRUCTIONS.split())
     for rule in E18_RULES:
+        assert rule in flat
+
+
+E19_BAR = (
+    '"no" only when they leave it open, by the bar below.',
+    'An open question of law has a bar. Answer `settled_in_law` "no" only when you can name the '
+    "condition or exception of Article 50 whose reading is undecided for these facts",
+    'being unsure, or wanting to be safe, is never a reason to answer "no".',
+)
+"""E19's bar for an open question of law, as transparency.md words it."""
+
+
+def test_the_prompt_states_the_e19_bar() -> None:
+    flat = " ".join(node.TRANSPARENCY_INSTRUCTIONS.split())
+    for rule in E19_BAR:
         assert rule in flat
 
 

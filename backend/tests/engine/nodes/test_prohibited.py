@@ -10,6 +10,7 @@ recording run saw are stored next to each cassette (`<cassette>.corpus.json`).
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import date
+from enum import StrEnum
 from typing import cast
 
 import psycopg
@@ -31,21 +32,23 @@ from aiact.engine.nodes.guideline_retrieval import (
     retrieve,
 )
 from aiact.engine.nodes.key_facts import Answer, Settled
+from aiact.engine.nodes.open_in_law import NOT_NAMED
 from aiact.engine.nodes.prohibited import ProhibitedCheck, ProhibitedOutputError, to_outcome
 from aiact.engine.nodes.prohibited_practices import (
     DECEMBER_PROHIBITIONS_APPLY_FROM,
+    STRICT_VALUES,
     BiometricCategorisationAnswer,
     CrimeRiskAnswer,
     EmotionAnswer,
     FaceScrapingAnswer,
     ManipulationAnswer,
-    OpenCondition,
     PracticeSummary,
     ProhibitedAnswer,
     RbiObjective,
     RemoteIdentificationAnswer,
     SexualMaterialAnswer,
     SocialScoringAnswer,
+    SocialScoringOpenOn,
     VulnerabilityAnswer,
 )
 from aiact.engine.scripted import Script, scripted_nodes
@@ -186,7 +189,7 @@ def state(
 
 def part[P: PracticeSummary](model: type[P], **facts: object) -> P:
     """A practice's answer, settled in law: every key fact "no" unless given."""
-    enums = {Answer: Answer.NO, RbiObjective: RbiObjective.NONE, OpenCondition: OpenCondition.NONE}
+    enums = {Answer: Answer.NO, RbiObjective: RbiObjective.NONE}
     defaults = {
         name: enums[field.annotation]
         for name, field in model.model_fields.items()
@@ -198,6 +201,7 @@ def part[P: PracticeSummary](model: type[P], **facts: object) -> P:
             **facts,
             "settled_in_law": Settled.YES,
             "open_question": None,
+            "open_on": NOT_NAMED,
             "evidence": EvidenceTag.INFERRED,
             "fact": f"{model.__name__} reading.",
             "fact_numbers": (),
@@ -205,9 +209,19 @@ def part[P: PracticeSummary](model: type[P], **facts: object) -> P:
     )
 
 
-def unsettled[P: PracticeSummary](given: P, question: OpenQuestion = OPEN_HARM) -> P:
-    """`given` with the law leaving it open, on `question`."""
-    return given.model_copy(update={"settled_in_law": Settled.NO, "open_question": question})
+def unsettled[P: PracticeSummary](
+    given: P, question: OpenQuestion = OPEN_HARM, on: str = NOT_NAMED
+) -> P:
+    """`given` with the law leaving it open, on `question` about the key fact `on` (validated:
+    it must be one of the practice's `open_on` values)."""
+    return type(given).model_validate(
+        {
+            **given.model_dump(),
+            "settled_in_law": Settled.NO,
+            "open_question": question,
+            "open_on": on,
+        }
+    )
 
 
 def answer(*parts: PracticeSummary, guidance: tuple[int, ...] = ()) -> ProhibitedAnswer:
@@ -242,6 +256,13 @@ WORKPLACE_EMOTIONS = part(
 UNDRESSING_APP = part(
     SexualMaterialAnswer, intimate_imagery=Answer.YES, generation_purpose=Answer.YES
 )
+MANIPULATION = part(
+    ManipulationAnswer,
+    manipulative_technique=Answer.YES,
+    distorts_behaviour=Answer.YES,
+    significant_harm=Answer.YES,
+)
+"""Point (a) with every condition met."""
 POLICE_LIVE_SEARCH = {
     "real_time_identification": Answer.YES,
     "law_enforcement_use": Answer.YES,
@@ -341,15 +362,12 @@ def test_an_open_significant_harm_is_asked(
 
 
 def test_significant_harm_the_law_leaves_open_is_ambiguous_with_prohibited_assumed() -> None:
-    pressure = unsettled(
-        part(
-            ManipulationAnswer,
-            manipulative_technique=Answer.YES,
-            distorts_behaviour=Answer.YES,
-            significant_harm=Answer.NO,
-        )
-    )
-    result = outcome(answer(pressure))
+    """The harm the law leaves open is named in `open_on` and read on its stricter side in
+    code (E19, B2): the model's own "no" to it decides nothing."""
+    techniques = {"manipulative_technique": Answer.YES, "distorts_behaviour": Answer.YES}
+    harm_open = unsettled(part(ManipulationAnswer, **techniques), on="significant_harm")
+    assert harm_open.significant_harm is Answer.NO
+    result = outcome(answer(harm_open))
     assert result.matched
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
     question = result.step.open_question
@@ -376,8 +394,7 @@ def test_significant_harm_the_law_leaves_open_is_ambiguous_with_prohibited_assum
 
 
 def test_an_unsettled_practice_without_its_question_gets_the_fixed_one() -> None:
-    unsettled = part(ManipulationAnswer, manipulative_technique=Answer.YES)
-    result = outcome(answer(unsettled.model_copy(update={"settled_in_law": Settled.NO})))
+    result = outcome(answer(MANIPULATION.model_copy(update={"settled_in_law": Settled.NO})))
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
     open_question = result.step.open_question
     assert open_question is not None
@@ -393,16 +410,16 @@ def test_an_unsettled_flag_on_a_practice_not_raised_changes_nothing() -> None:
 @pytest.mark.parametrize(
     ("met", "open_on", "points"),
     [
-        ("unrelated_context_treatment", OpenCondition.DISPROPORTIONATE, ["art:5:1:c:i"]),
-        ("disproportionate_treatment", OpenCondition.UNRELATED_CONTEXT, ["art:5:1:c:ii"]),
+        ("unrelated_context_treatment", SocialScoringOpenOn.DISPROPORTIONATE, ["art:5:1:c:i"]),
+        ("disproportionate_treatment", SocialScoringOpenOn.UNRELATED_CONTEXT, ["art:5:1:c:ii"]),
     ],
 )
 def test_social_scoring_met_on_one_alternative_is_not_held_open_by_the_other(
-    met: str, open_on: OpenCondition, points: list[str]
+    met: str, open_on: SocialScoringOpenOn, points: list[str]
 ) -> None:
     """Art. 5(1)(c) needs (i) or (ii): with one met, an open other decides nothing (own-c-10)."""
     scoring = part(SocialScoringAnswer, social_scoring=Answer.YES, **{met: Answer.YES})
-    result = outcome(answer(unsettled(scoring).model_copy(update={"open_on": open_on})))
+    result = outcome(answer(unsettled(scoring, on=open_on)))
     assert result.matched
     assert result.step.status is Status.DECIDED
     assert result.step.open_question is None
@@ -415,7 +432,7 @@ def test_an_open_alternative_does_not_settle_an_unknown_social_scoring() -> None
         social_scoring=Answer.UNKNOWN,
         disproportionate_treatment=Answer.YES,
     )
-    on_i = unsettled(scoring).model_copy(update={"open_on": OpenCondition.UNRELATED_CONTEXT})
+    on_i = unsettled(scoring, on=SocialScoringOpenOn.UNRELATED_CONTEXT)
     assert outcome(answer(on_i)).step.status is Status.LEGALLY_AMBIGUOUS
 
 
@@ -427,7 +444,7 @@ def test_an_open_alternative_with_the_other_not_met_stays_open() -> None:
         unrelated_context_treatment=Answer.UNKNOWN,
         disproportionate_treatment=Answer.YES,
     )
-    on_ii = unsettled(scoring).model_copy(update={"open_on": OpenCondition.DISPROPORTIONATE})
+    on_ii = unsettled(scoring, on=SocialScoringOpenOn.DISPROPORTIONATE)
     result = outcome(answer(on_ii))
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
 
@@ -438,19 +455,219 @@ def test_an_open_question_on_social_scoring_itself_stays_open() -> None:
         social_scoring=Answer.YES,
         unrelated_context_treatment=Answer.YES,
     )
-    on_scoring = unsettled(scoring).model_copy(update={"open_on": OpenCondition.SOCIAL_SCORING})
+    on_scoring = unsettled(scoring, on=SocialScoringOpenOn.SOCIAL_SCORING)
     assert outcome(answer(on_scoring)).step.status is Status.LEGALLY_AMBIGUOUS
 
 
-def test_social_scoring_with_neither_alternative_met_stays_open() -> None:
+def test_an_open_alternative_the_model_answered_no_stays_open() -> None:
+    """E4's guard (B3): (ii) open in law and answered "no", (i) "no": the "no" on the open
+    alternative is its lenient side and decides nothing, so (ii) may still meet point (c)."""
     scoring = part(SocialScoringAnswer, social_scoring=Answer.YES)
-    result = outcome(answer(unsettled(scoring)))
+    result = outcome(answer(unsettled(scoring, on=SocialScoringOpenOn.DISPROPORTIONATE)))
+    assert result.matched
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    assert cited(result) == ["art:5:1:c", "art:5:1:c:ii"]
+
+
+# --- E19 (user decision 3, option B): the open fact held strict --------------------------------
+
+
+def test_every_key_fact_can_be_named_open_and_has_its_stricter_value() -> None:
+    """B1 and B2: each practice's `open_on` names exactly its key facts, and the code table
+    gives each one the value that keeps the practice prohibited."""
+    for name, field in ProhibitedAnswer.model_fields.items():
+        if name == "guidance_numbers":
+            continue
+        model = cast(type[PracticeSummary], field.annotation)
+        facts = [
+            fact
+            for fact, info in model.model_fields.items()
+            if info.annotation in (Answer, RbiObjective)
+        ]
+        open_on = cast(type[StrEnum], model.model_fields["open_on"].annotation)
+        assert [value.value for value in open_on] == [NOT_NAMED, *facts], name
+        assert all(fact in STRICT_VALUES for fact in facts), name
+    exceptions = {fact for fact, value in STRICT_VALUES.items() if value is Answer.NO}
+    assert exceptions == {
+        "only_conceals",
+        "consent",
+        "fact_based_assessment",
+        "medical_or_safety",
+        "lawful_labelling",
+        "national_law_authorisation",
+        "prior_authorisation",
+        "targeted_use",
+        "impact_assessment_registration",
+    }
+    assert STRICT_VALUES["objective"] is RbiObjective.NONE
+
+
+def test_social_scoring_open_on_scoring_with_neither_alternative_met_is_not_open() -> None:
+    """A purpose-bound score (B3): whether it is social scoring is open, but (i) and (ii) are
+    settled "no", and point (c) needs one of them, so the practice is ruled out."""
+    scoring = part(SocialScoringAnswer, social_scoring=Answer.YES)
+    result = outcome(answer(unsettled(scoring, on=SocialScoringOpenOn.SOCIAL_SCORING)))
+    assert not result.matched
+    assert result.step.status is Status.DECIDED
+    assert result.step.open_question is None
+    assert "Considered Art. 5(1)(c)" in result.step.decision
+
+
+RULED_OUT = [
+    pytest.param(
+        ManipulationAnswer,
+        {"manipulative_technique": Answer.YES, "distorts_behaviour": Answer.YES},
+        ("manipulative_technique", "significant_harm"),
+        "(a)",
+        id="a-harm-no",
+    ),
+    pytest.param(
+        VulnerabilityAnswer,
+        {"exploits_vulnerability": Answer.YES, "significant_harm": Answer.YES},
+        ("significant_harm", "distorts_behaviour"),
+        "(b)",
+        id="b-no-distortion",
+    ),
+    pytest.param(
+        CrimeRiskAnswer,
+        {"crime_risk_assessment": Answer.YES},
+        ("crime_risk_assessment", "solely_profiling"),
+        "(d)",
+        id="d-not-solely-profiling",
+    ),
+    pytest.param(
+        EmotionAnswer,
+        {
+            "infers_emotions": Answer.YES,
+            "workplace_or_education": Answer.YES,
+            "medical_or_safety": Answer.YES,
+        },
+        ("workplace_or_education", "medical_or_safety"),
+        "(f)",
+        id="f-exception-yes",
+    ),
+    pytest.param(
+        BiometricCategorisationAnswer,
+        {"biometric_categorisation": Answer.YES},
+        ("biometric_categorisation", "sensitive_traits"),
+        "(g)",
+        id="g-no-listed-trait",
+    ),
+    pytest.param(
+        RemoteIdentificationAnswer,
+        {"real_time_identification": Answer.YES},
+        ("real_time_identification", "law_enforcement_use"),
+        "(h)",
+        id="h-not-law-enforcement",
+    ),
+    pytest.param(
+        RemoteIdentificationAnswer,
+        POLICE_LIVE_SEARCH,
+        ("real_time_identification", "national_law_authorisation"),
+        "(h)",
+        id="h-permitted-use",
+    ),
+]
+"""Each practice with one fact against it, the fact an open question is about when another fact
+rules it out, and that fact itself."""
+
+
+@pytest.mark.parametrize(("model", "facts", "on", "point"), RULED_OUT)
+def test_a_practice_another_fact_rules_out_is_not_held_open(
+    model: type[PracticeSummary], facts: dict[str, object], on: tuple[str, str], point: str
+) -> None:
+    """B3: with the open question on another fact, a cumulative condition settled against the
+    practice (or its exception settled "yes") rules it out."""
+    result = outcome(answer(unsettled(part(model, **facts), on=on[0])))
+    assert not result.matched
+    assert result.step.status is Status.DECIDED
+    assert result.step.open_question is None
+    assert f"Considered Art. 5(1){point}" in result.step.decision
+
+
+@pytest.mark.parametrize(("model", "facts", "on", "point"), RULED_OUT)
+def test_the_open_facts_own_lenient_answer_never_rules_a_practice_out(
+    model: type[PracticeSummary], facts: dict[str, object], on: tuple[str, str], point: str
+) -> None:
+    """B2 and B3: the same answers with the question open on the fact that reads against the
+    practice: code reads it on its stricter side, so the practice stays open in law."""
+    result = outcome(answer(unsettled(part(model, **facts), on=on[1])))
+    assert result.matched
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    assert result.step.open_question is not None
+    assert f"Art. 5(1){point}" in result.step.decision
+
+
+@pytest.mark.parametrize(
+    ("model", "facts", "point"),
+    [pytest.param(p.values[0], p.values[1], p.values[3], id=p.id) for p in RULED_OUT],
+)
+def test_an_open_question_that_names_no_fact_keeps_the_practice_open(
+    model: type[PracticeSummary], facts: dict[str, object], point: str
+) -> None:
+    """B3: unsettled without naming its open fact, any "no" may be the question's lenient
+    side, so none of them rules the practice out."""
+    result = outcome(answer(unsettled(part(model, **facts))))
+    assert result.matched
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    assert f"Art. 5(1){point}" in result.step.decision
+
+
+def test_point_ba_with_consent_is_not_held_open() -> None:
+    """(ba) after 2 December 2026: consent settled "yes" rules it out when the open question is
+    on another fact; open on consent itself, it stays open (B3)."""
+    consented = UNDRESSING_APP.model_copy(update={"consent": Answer.YES})
+    after = state(as_of=AFTER_DECEMBER)
+    ruled_out = outcome(answer(unsettled(consented, on="generation_purpose")), after)
+    assert not ruled_out.matched
+    assert ruled_out.step.status is Status.DECIDED
+    assert ruled_out.step.open_question is None
+    held = outcome(answer(unsettled(consented, on="consent")), after)
+    assert held.matched
+    assert held.step.status is Status.LEGALLY_AMBIGUOUS
+
+
+@pytest.mark.parametrize(
+    ("on", "status"),
+    [
+        pytest.param("consent", Status.DECIDED, id="ba-fact"),
+        pytest.param("only_conceals", Status.DECIDED, id="ba-only-fact"),
+        pytest.param("child_abuse_material", Status.LEGALLY_AMBIGUOUS, id="bb-gate"),
+        pytest.param("generation_purpose", Status.LEGALLY_AMBIGUOUS, id="shared-route"),
+    ],
+)
+def test_point_bb_is_held_open_only_on_its_own_facts(on: str, status: Status) -> None:
+    """R3: (ba) and (bb) share one answer part. A question open on a fact only (ba) reads leaves
+    (bb) decided on its facts, prohibited, with no open question; one open on (bb)'s own gate or
+    a route both read keeps (bb) open."""
+    material = part(
+        SexualMaterialAnswer, child_abuse_material=Answer.YES, generation_purpose=Answer.YES
+    )
+    result = outcome(answer(unsettled(material, on=on)), state(as_of=AFTER_DECEMBER))
+    assert result.matched
+    assert result.step.status is status
+    is_open = status is Status.LEGALLY_AMBIGUOUS
+    assert (result.step.open_question is not None) is is_open
+    assert "art:5:1:bb" in cited(result)
+    assert "art:5:1:ba" not in cited(result)  # (ba) is not raised: no intimate imagery
+    assert "consent" not in {question.id for question in result.follow_up_questions}
+
+
+def test_a_practice_whose_conditions_all_hold_stays_open_when_the_law_leaves_it_open() -> None:
+    """The other side of E19's fix: every condition met and the law open is still ambiguous."""
+    result = outcome(
+        answer(
+            unsettled(
+                part(CrimeRiskAnswer, crime_risk_assessment=Answer.YES, solely_profiling=Answer.YES)
+            )
+        )
+    )
     assert result.matched
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
 
 
 def test_a_met_practice_beats_an_open_one() -> None:
-    pressure = unsettled(part(ManipulationAnswer, manipulative_technique=Answer.YES))
+    pressure = unsettled(MANIPULATION)
     result = outcome(answer(pressure, WORKPLACE_EMOTIONS))
     assert result.step.status is Status.DECIDED
     assert result.matched
@@ -458,7 +675,7 @@ def test_a_met_practice_beats_an_open_one() -> None:
 
 
 def test_an_open_practice_still_asks_the_open_facts_of_others() -> None:
-    pressure = unsettled(part(ManipulationAnswer, manipulative_technique=Answer.YES))
+    pressure = unsettled(MANIPULATION)
     monitoring = part(
         EmotionAnswer, infers_emotions=Answer.UNKNOWN, workplace_or_education=Answer.YES
     )
@@ -888,6 +1105,61 @@ def test_the_prompt_defaults_only_the_two_treatment_conditions() -> None:
     assert "Answer `social_scoring` on its own definition" in flat
 
 
+E19_RULES = (
+    # The bar for an open question of law, and the open fact named (B1)
+    'An open question of law has a bar. Answer `settled_in_law` "no" only when you can name the '
+    "condition of Article 5 whose reading is undecided for these facts",
+    'being unsure, or wanting to be safe, is never a reason to answer "no".',
+    'A fact the description leaves open is answered "unknown", and the application asks for it.',
+    '- `open_on`: when `settled_in_law` is "no", the key fact of this practice the open question '
+    "is about, by its field name",
+    'answer `settled_in_law` "no", name that key fact in `open_on`, and answer the key facts as '
+    "the description states them",
+    'answer the facts as stated, `settled_in_law` "no" and `open_on` "significant_harm".',
+    # P1 (Art. 5(1)(c); guidelines paras 164, 175-177)
+    "A score is not social scoring under point (c) because it scores people and has a "
+    "consequence: point (c) needs the treatment of (i) or (ii)",
+    'For such a score answer (i) and (ii) "no", with `settled_in_law` "yes"',
+    # P2 (Art. 5(1)(d), recital 42; guidelines paras 199-202, 208-215)
+    "A prediction about places or areas rather than persons (guidelines, paragraph 212)",
+    "a private entity profiling its customers for its regular business operations and safety, or "
+    "to protect its financial interests (for example detecting financial irregularities), without "
+    "the purpose of assessing the risk of the customer committing a specific criminal offence "
+    "(paragraph 210)",
+    "when a law enforcement authority asks it to act on its behalf (paragraph 208)",
+    '"no" when other real, substantial and meaningful elements carry the assessment',
+    # P3 (Art. 5(1)(f) and (g), recital 18; guidelines paras 249-283)
+    "Physical states such as pain or fatigue",
+    "emotions or sentiment inferred from the content of what people say or write rather than "
+    "from their biometric data",
+    "also when staff are caught by a system that is not aimed at them",
+    "safety means protecting life and health, not property",
+    "Grouping people by their clothes or accessories, their social media activity, or the "
+    "content of what they say or write is not based on biometric data",
+    "Only these count: categories such as age, gender, skin or eye colour, health or emotions are "
+    '"no"',
+)
+"""E19's bar and its P1-P3 rules, as prohibited.md words them."""
+
+DROPPED_RULES = (
+    "stricter reading",
+    "stricter way",
+    "whatever `settled_in_law` says",
+    "incidental side of the risk",
+    "write or buy",
+)
+"""Wording E19's fix round dropped: the stricter reading is code's (B4), and the P2 and P3
+lines now follow guideline paragraphs 208-211 and 251."""
+
+
+def test_the_prompt_states_the_e19_rules() -> None:
+    flat = " ".join(node.PROHIBITED_INSTRUCTIONS.split())
+    for rule in E19_RULES:
+        assert rule in flat
+    for dropped in DROPPED_RULES:
+        assert dropped not in flat
+
+
 def test_the_prompt_leaves_dates_to_the_application() -> None:
     """The model never sees `as_of`, so the prefix stays the same for every date."""
     early = node.prohibited_messages(state(as_of=BEFORE_DECEMBER), _retrieved())
@@ -923,7 +1195,7 @@ def test_a_decided_match_ends_the_run_as_prohibited() -> None:
 
 
 def test_an_ambiguous_match_runs_every_check_with_prohibited_assumed() -> None:
-    pressure = unsettled(part(ManipulationAnswer, manipulative_technique=Answer.YES))
+    pressure = unsettled(MANIPULATION)
     check = ProhibitedCheck(_settings(), chat=_fake_chat(answer(pressure)), library=FakeLibrary())
     final = _run(check)
     assert tuple(s.step for s in final.get("steps", ())) == STEP_ORDER

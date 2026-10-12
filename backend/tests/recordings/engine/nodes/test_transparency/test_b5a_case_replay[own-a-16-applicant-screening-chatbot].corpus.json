@@ -12,13 +12,13 @@
    "law_version": null,
    "provision_id": "guide:guide-art50:para:26",
    "reference_rank": null,
-   "score": 0.0215320910973085,
-   "similarity": 0.622728962383544,
+   "score": 0.0217391304347826,
+   "similarity": 0.622807558429919,
    "status": "final",
    "text": "(26) Article 50 AI Act applies to certain AI systems, which includes general-purpose AI systems ('GPAI systems') ( 15 ), such as chatbots supporting direct interaction with natural persons or AI systems capable of synthetic content generation or manipulation (including deep fakes) ( 16 ).",
    "valid_from": "2026-07-20",
    "valid_to": null,
-   "vector_rank": 10
+   "vector_rank": 9
   },
   {
    "doc_key": "guide-art50",
@@ -32,7 +32,7 @@
    "provision_id": "guide:guide-art50:para:11",
    "reference_rank": null,
    "score": 0.0208664546899841,
-   "similarity": 0.609839219148143,
+   "similarity": 0.608553463985338,
    "status": "final",
    "text": "(11) Providers must ensure their interactive or generative AI systems have transparency embedded into the system's design and operation and ensure all relevant transparency obligations in Articles 50(1), (2) and (5) AI Act are met at the latest when those systems are placed on the market or put into service. All natural persons interacting with the AI system or exposed to its outputs in scope must be effectively and consistently informed throughout the lifecycle of the AI system, as placed on the market or put into service by that provider (irrespective of who the deployers or other users of the system are).\n\nFor example, a company provides a generative or interactive AI application (e.g. a chatbot, image generator, AI agent) on the Union market under its own name or trademark to consumers, professional users or other legal entities who may directly use the AI system for interaction or content generation (including by integrating the system into their existing processes and using it accordingly without the need for modifications or additional components). The company is a provider responsible for compliance with the transparency obligations in Article 50(1) and/or (2) AI Act, regardless of whether the AI system is provided for free or for payment and regardless of whether the provider is established or located in the Union or in a third country.\n\nAnother example of a provider is a company or another organisation (e.g. a public authority) that has developed an interactive AI system (e.g. chatbot) in-house and puts it into service in the Union for its own use and under its name or trademark.\n\n( 3 ) Articles 2(1)(a), 3(3), (9) and (11) AI Act. For further guidance on the concepts of placing on the market, putting into service and use, see the Commission Guidelines on the prohibited artificial intelligence practices, C(2025) 5052 and Commission Notice - The 'Blue Guide' on the implementation of EU product rules 2022, 2022/C 247/01, Section 2.\n\n( 4 ) Article 2(1)(c) and recital 22 AI Act.\n\nIf a company takes an already existing generative AI system placed on the market by another provider and modifies that system (e.g. with new training data), which it afterwards puts into service under its own name or trade market, then that company becomes a provider of the new system without prejudice to the responsibility of the provider of the initial AI system for the latter.",
    "valid_from": "2026-07-20",
@@ -50,13 +50,13 @@
    "law_version": null,
    "provision_id": "guide:guide-art50:para:65",
    "reference_rank": null,
-   "score": 0.0191949940808388,
-   "similarity": 0.584632736902456,
+   "score": 0.0190444370197127,
+   "similarity": 0.584154384856057,
    "status": "final",
    "text": "(65) Furthermore, an AI system's output that merely reproduces existing content or enables the presentation or arrangement of already existing content is not covered by\n\nArticle 50(2) AI Act. This may be the case, e.g., for music playlists or other recommender systems that only select or rank existing content based on user preferences or activity, without creating anything new or manipulating the content itself. The same applies to AI systems used in internal analytical processes that extract and structure data, but do not summarise it.",
    "valid_from": "2026-07-20",
    "valid_to": null,
-   "vector_rank": 21
+   "vector_rank": 22
   },
   {
    "doc_key": "guide-art50",
@@ -69,13 +69,13 @@
    "law_version": null,
    "provision_id": "guide:guide-art50:para:45",
    "reference_rank": null,
-   "score": 0.0175425157039988,
-   "similarity": 0.560214068876859,
+   "score": 0.0174559805707347,
+   "similarity": 0.559156060218811,
    "status": "final",
    "text": "(45) Obviousness: Upon establishing the hypothetical reasonably well-informed, observant and circumspect natural person, providers should evaluate whether it will be obvious to such a person that they are directly interacting with an AI system. The exception should be interpreted restrictively given that it deprives natural persons from the protection and the right to be informed with clear and distinguishable disclosures that they are interacting with AI systems. The general awareness of consumers and other natural persons that AI systems (including chatbots and agents) exist does not imply that they recognise them in interactions. Several factors may be relevant and considered as part of the assessment whether the interaction is obvious:\n\n- The anticipated nature of the interaction: In instances where the AI system interacts physically with natural persons, pertinent elements may include the visibility of mechanical components (which would increase obviousness) or the degree to which the AI system authentically replicates its non-artificial equivalent (which would decrease obviousness). For interactions that are visual or auditory in nature, elements such as writing or speech patterns, vocal tone (robot voice vs. genuine humansounding voice), user interface design (e.g. a profile picture related to a chatbot that displays a human), and the capability for advanced personalised interaction may impact this assessment.\n\n- The composition of the target and foreseeable audience: If the interactive AI system is only available to a professional or specialised audience, without potential exposure to vulnerable groups, this could increase the possible obviousness of the artificial nature of the interaction to an average member of the respective audience. By contrast, if the AI system may be accessed by the general public or consumers that include also vulnerable persons (e.g. such as children, the elderly, persons with cognitive, physical or mental disabilities, or persons with lower AI literacy) for whom the interaction is less obvious, the exception cannot be relied upon in order to protect those vulnerable users efficiently.\n\n- Consideration should also be given to the fact that it is becoming increasingly hard for natural persons to know whether an interaction with an AI system or an actual human being is taking place. Due to the use of avatars and agents, the general anonymity of interactions online, and the capabilities of AI systems to write and interact in a human-like manner, the \"obviousness\" exception should be limited to cases where there is almost no doubt left about the nature of the interaction for an average person from the targeted and reasonably foreseeable audience.\n\nExamples of obviousness for which the transparency obligation under Article 50(1) AI Act does not apply:\n\n- AI-powered code assistance and code review chatbots available only to professional developers who by virtue of their expertise and the context of use have no reasonable expectation of interacting with a human and can easily recognise that suggestions are generated by an AI system.\n\n- An internal employee-facing assistant for properly trained staff who is AI literate and aware that they are using AI systems for internal organisational purposes (e.g. HR, legal, procurement, compliance or IT support).\n\n- Interactive AI systems intended only to be used by properly trained health professionals to support medical diagnosis and suggest related treatments.\n\n- Ambient-AI embedded in home appliances with functionalities constrained to the home appliance assistance and operation.\n\n- Interactions with AI-enabled Non-Playable Characters (NPCs) in a single-player video game where the nature of the video game makes it clear that no other natural person can participate and interact with the user and the AI nature of the interaction is also obvious for all users (including vulnerable persons).\n\nExamples that do not fulfil the obviousness-exception and for which the transparency obligation under Article 50(1) AI Act applies:\n\n- An AI-powered robotic companion pet, looking highly similar to its natural equivalent and designed to mimic typical human-pet interaction, creating ambiguity as to whether the interaction is with an AI system or not.\n\n- AI systems embedded in immersive environments (e.g. virtual or augmented reality) using realistic avatars or voices resembling humans, where users and particularly children, the elderly, or persons with disabilities may not be able to distinguish easily between human and AI interaction.\n\n- AI chatbots embedded in online platforms or assistance support tools (helpdesks) whereby users directly interact and receive AI outputs (e.g. replies to queries or other AI-generated content) they may perceive as human-generated.",
    "valid_from": "2026-07-20",
    "valid_to": null,
-   "vector_rank": 47
+   "vector_rank": 48
   },
   {
    "doc_key": "guide-art50",
@@ -89,7 +89,7 @@
    "provision_id": "guide:guide-art50:para:141",
    "reference_rank": null,
    "score": 0.0166975881261596,
-   "similarity": 0.567649500598005,
+   "similarity": 0.567216268230941,
    "status": "final",
    "text": "(141) Pursuant to Article 50(5) AI Act, the information to be provided in accordance with Article 50(1) to (4) AI Act should be provided to the natural persons concerned in a clear and distinguishable manner, at the latest at the time of the first interaction or exposure. The information should also conform to the applicable accessibility requirements. Natural persons concerned in this context include the persons directly interacting with the AI system (Article 50(1) AI Act), active or passive users and other persons exposed to the AI-generated or manipulated synthetic content (with or without direct interaction with the AI system (Article 50(2) and (4) AI Act)), and persons subject to the use of emotion recognition or biometric categorisation systems (Article 50(3) AI Act).\n\n( 39 ) Regulation (EU) 2024/1083 of the European Parliament and of the Council of 11 April 2024 establishing a common framework for media services in the internal market and amending Directive 2010/13/EU (European Media Freedom Act); OJ L, 2024/1083, 17.4.2024.",
    "valid_from": "2026-07-20",
@@ -108,7 +108,7 @@
    "provision_id": "guide:guide-art50:para:19",
    "reference_rank": null,
    "score": 0.0163934426229508,
-   "similarity": 0.671386480331426,
+   "similarity": 0.6708744568153899,
    "status": "final",
    "text": "(19) According to Article 2(10) AI Act, the regulation \"does not apply to obligations of deployers who are natural persons using AI systems in the course of a purely personal, non-professional activity\" ( 9 ). Any activity through which natural persons gain an economic benefit on a regular basis or are otherwise involved in a professional, business, trade, occupational or freelance activity should be considered as a 'professional' activity. The specification of 'purely personal' is a qualifier of non-professional, meaning that the person should act in both a personal and a non-professional capacity to fall within the scope of the exception. Any use by natural persons acting on behalf or under the authority of a deployer acting in a professional capacity will fall within the scope of the professional deployer's transparency obligations laid down in Article 50(3) and (4) AI Act.\n\nExamples of personal non-professional use of AI systems excluded from the scope:\n\n- individuals using an AI system to generate deep fakes of the members of their household;\n\n- individuals using an AI system in a personal capacity to generate text on various topics (e.g. students using AI to write their homework);\n\n- individuals using an AI system in their personal capacity to generate deep fakes disseminated on social media;",
    "valid_from": "2026-07-20",
@@ -127,7 +127,7 @@
    "provision_id": "guide:guide-art50:para:18",
    "reference_rank": null,
    "score": 0.0161290322580645,
-   "similarity": 0.659766953019267,
+   "similarity": 0.659313818257225,
    "status": "final",
    "text": "(18) Article 2 AI Act provides a number of general exclusions from the scope of the AI Act which have already been clarified in the Commission Guidelines on prohibited artificial intelligence practices ( 8 ). This section will accordingly address only those aspects that are relevant to the transparency obligations in Article 50 AI Act.\n\n( 7 ) Regulation (EU) 2022/2065 of the European Parliament and of the Council of 19 October 2022 on a Single Market For Digital Services; OJ L 277, 27.10.2022, pp. 1.\n\n( 8 ) See Section 2.5 of Commission Guidelines on prohibited artificial intelligence practices established by Regulation (EU) 2024/1689 (AI Act), Brussels, 29.7.2025, C(2025) 5052 final.",
    "valid_from": "2026-07-20",
@@ -146,7 +146,7 @@
    "provision_id": "guide:guide-art50:para:20",
    "reference_rank": null,
    "score": 0.0158730158730159,
-   "similarity": 0.656277399506879,
+   "similarity": 0.655607482456716,
    "status": "final",
    "text": "(20) The exclusion in Article 2(10) AI Act applies only as regards the obligations of deployers when using the system for purely personal, non-professional activities. The system as such remains within the scope of the AI Act as regards the obligations of providers placing the system on the market or putting it into service and of deployers using the system for professional use. The exception is also without prejudice to the application of other relevant Union and national law.\n\nFor example, the provider of the AI system used to generate deep fakes to feature on a personal Christmas card should mark those deep fakes in a machine-readable manner in accordance with the transparency obligation laid down in Article 50(2) AI Act. At the same time, the use of the system by natural persons for purely personal, non-professional activities will not be covered by the deployer obligation laid down Article 50(4) AI Act.",
    "valid_from": "2026-07-20",
@@ -154,6 +154,21 @@
    "vector_rank": 3
   }
  ],
+ "{\"as_of\": \"2026-10-01\", \"exclude_source_example_ids\": [], \"language\": \"de\", \"law_version\": \"amended\", \"lookup\": \"art:111:4\"}": {
+  "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
+  "doc_key": "ai-act-consolidated",
+  "doc_type": "law",
+  "document_title": "AI Act, consolidated text as of 27 July 2026",
+  "english_only": false,
+  "heading": "Artikel 111 — Bereits in Verkehr gebrachte oder in Betrieb genommene KI-Systeme und bereits in Verkehr gebrachte KI-Modelle mit allgemeinem Verwendungszweck",
+  "language": "de",
+  "law_version": "amended",
+  "provision_id": "art:111:4",
+  "status": "consolidated",
+  "text": "Anbieter von KI-Systemen, einschließlich KI-Systemen mit allgemeinem Verwendungszweck, die synthetische Audio-, Bild-, Video- oder Textinhalte erzeugen, die vor dem 2. August 2026 in Verkehr gebracht wurden, treffen die erforderlichen Maßnahmen, um Artikel 50 Absatz 2 bis zum 2. Dezember 2026 nachzukommen.",
+  "valid_from": "2026-07-27",
+  "valid_to": null
+ },
  "{\"as_of\": \"2026-10-01\", \"exclude_source_example_ids\": [], \"language\": \"de\", \"law_version\": \"amended\", \"lookup\": \"art:50\"}": {
   "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
   "doc_key": "ai-act-consolidated",

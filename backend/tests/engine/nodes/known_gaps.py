@@ -4,18 +4,56 @@ Each gap names the reason and the wrong reading it documents (`reads`). A replay
 when it starts matching its label (the entry is then removed), and fails too when it misses in
 any other way than the documented one; otherwise it is an expected failure.
 
-Also the replays a prompt change left stale until they are re-recorded, and E18's negative
-fixtures.
+Also how a whole run that met a stale recording is told apart from a node error, and E18's
+negative fixtures.
 """
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+from openrouter.utils.retries import PermanentError
+from vcr.errors import CannotOverwriteExistingCassetteException
 
+from aiact.engine import ClassificationFailedError
 from aiact.engine.state import CheckOutcome
 from aiact.eval.cases import BenchmarkCase, load_yaml_file
+from tests.engine.nodes.corpus_recording import RecordingPendingError
+
+STALE_RECORDING_ERRORS = (
+    CannotOverwriteExistingCassetteException,
+    PermanentError,
+    RecordingPendingError,
+)
+"""How a replay fails on a stale or missing recording: VCR refuses the new request, the
+OpenRouter SDK gives up on the refused call, or a replay with no cassette at all stops before
+the call (a stream that ends in an error event is turned into `RecordingPendingError` by its
+test)."""
+
+
+def is_stale_recording(error: BaseException) -> bool:
+    """Whether `error`, or an error in its `__cause__` chain, is a stale or missing recording."""
+    seen: BaseException | None = error
+    while seen is not None:
+        if isinstance(seen, STALE_RECORDING_ERRORS):
+            return True
+        seen = seen.__cause__
+    return False
+
+
+@contextmanager
+def stale_recording_pending() -> Iterator[None]:
+    """Re-raise a classification run a stale or missing recording stopped as
+    `RecordingPendingError`, the marker's error; any other failure as it was."""
+    try:
+        yield
+    except ClassificationFailedError as error:
+        if not is_stale_recording(error):
+            raise
+        raise RecordingPendingError(f"the {error.step} node met a stale recording") from error
+
 
 NEGATIVE_CASES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "negative_cases"
 """E18's negative fixtures: cases written from the Act's conditions for a provision that does

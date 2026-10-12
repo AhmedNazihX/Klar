@@ -38,8 +38,8 @@ Each duty has the same fields, in this order:
 - `covered`: the system is of the kind the paragraph names.
 - `exception`: one of the paragraph's own exceptions takes the system out of the duty.
 - `settled_in_law`: "yes" when, on the facts as answered, the Act and the guidelines settle
-  whether the duty applies; "no" when they leave it open. Ask yourself this for every duty,
-  every time. A duty the description doesn't raise is "yes".
+  whether the duty applies; "no" only when they leave it open, by the bar below. Ask yourself
+  this for every duty, every time. A duty the description doesn't raise is "yes".
 - `open_question`: when `settled_in_law` is "no", the question the law leaves open (`question`)
   and its two readings (`readings`), the stricter one (the duty applies) first. Null otherwise.
 - `evidence`: where the answers come from: "stated" (the description says it), "inferred" (it
@@ -52,6 +52,13 @@ Each duty has the same fields, in this order:
 description really leaves the fact open and the answer would change the outcome; never guess
 "no" to avoid a question. A duty the description gives no reason to consider is "no" for
 `covered` and `exception`, with evidence "inferred". When `covered` is "no", `exception` is "no".
+
+An open question of law has a bar. Answer `settled_in_law` "no" only when you can name the
+condition or exception of Article 50 whose reading is undecided for these facts, and the Act,
+its recitals and the guideline passages you are given leave it undecided: they point both ways
+for a case like this one, or none of them reaches it and the provision's words fit either
+reading. When the Act, a recital or a passage decides the case, the duty is settled, even if you
+are unsure of it yourself; being unsure, or wanting to be safe, is never a reason to answer "no".
 
 A missing fact and an open question of law are different. When the facts that matter are stated
 but whether they meet a condition or an exception of Article 50 stays open in law, for example

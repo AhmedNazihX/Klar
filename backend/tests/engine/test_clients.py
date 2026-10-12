@@ -29,6 +29,7 @@ from aiact.settings import Settings
 from tests.conftest import RECORDINGS_DIR, REFUSAL_ROUTE
 from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import corpus_recording
+from tests.engine.nodes.known_gaps import stale_recording_pending
 from tests.engine.test_classify_worked_example import (
     LUNA,
     LUNA_PROVIDER,
@@ -294,9 +295,10 @@ def test_repeated_classifications_leave_no_http_clients_behind(
     luna_settings: Settings, replay_nodes: NodeBuilder
 ) -> None:
     def classify() -> None:
-        run = run_classification(
-            worked_example_request(), settings=luna_settings, build_nodes=replay_nodes
-        )
+        with stale_recording_pending():
+            run = run_classification(
+                worked_example_request(), settings=luna_settings, build_nodes=replay_nodes
+            )
         assert_the_expected_result(run)
 
     classify()

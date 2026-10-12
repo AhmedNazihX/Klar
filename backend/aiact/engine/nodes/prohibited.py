@@ -22,7 +22,9 @@ Act's rules are applied here, in code:
   The original text has no points (ba) or (bb), so they are not read for it.
 - **Uncertain answers.** A practice the law leaves open makes the step `legally_ambiguous`, a
   deciding fact left open makes it `needs_more_information`; either way prohibited is the
-  labelled working assumption, `matched` is set, and the run goes on (decision 010).
+  labelled working assumption, `matched` is set, and the run goes on (decision 010). The fact a
+  practice is open on in law is read on its stricter side, so only another fact can rule the
+  practice out (E19, `open_in_law`).
 
 Every citation is fetched through `get_provision`, or is a retrieved guideline passage. The step
 cites the Art. 5 points and paragraphs its finding names, never the whole article (E16).

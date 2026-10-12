@@ -17,7 +17,7 @@ interactions:
     uri: https://openrouter.ai/api/v1/embeddings
   response:
     body:
-      string: '{"id": "gen-emb-1791816296-YkWdBCzK34Pr6d0BERxC", "object": "list",
+      string: '{"id": "gen-emb-1791837316-8u8GL22ygBf9DOQVDpNY", "object": "list",
         "data": [{"object": "embedding", "embedding": [0.00961132813245058, -0.026760952547192574,
         0.008292125537991524, 0.0027326324488967657, 0.045418236404657364, -0.01573619432747364,
         -0.029210899025201797, 0.033545419573783875, 0.01526505034416914, 0.013757390901446342,
@@ -453,38 +453,46 @@ interactions:
       kind the paragraph names.\n- `exception`: one of the paragraph''s own exceptions
       takes the system out of the duty.\n- `settled_in_law`: \"yes\" when, on the
       facts as answered, the Act and the guidelines settle\n  whether the duty applies;
-      \"no\" when they leave it open. Ask yourself this for every duty,\n  every time.
-      A duty the description doesn''t raise is \"yes\".\n- `open_question`: when `settled_in_law`
-      is \"no\", the question the law leaves open (`question`)\n  and its two readings
-      (`readings`), the stricter one (the duty applies) first. Null otherwise.\n-
-      `evidence`: where the answers come from: \"stated\" (the description says it),
-      \"inferred\" (it\n  follows from what the description says) or \"assumed\" (a
-      usual default, nothing points either\n  way).\n- `fact`: the duty''s reading
-      in one short sentence, in the language asked for.\n- `fact_numbers`: the numbered
-      facts it rests on (empty when none).\n\n`covered` and `exception` are answered
-      \"yes\", \"no\" or \"unknown\". Answer \"unknown\" only when the\ndescription
-      really leaves the fact open and the answer would change the outcome; never guess\n\"no\"
-      to avoid a question. A duty the description gives no reason to consider is \"no\"
-      for\n`covered` and `exception`, with evidence \"inferred\". When `covered` is
-      \"no\", `exception` is \"no\".\n\nA missing fact and an open question of law
-      are different. When the facts that matter are stated\nbut whether they meet
-      a condition or an exception of Article 50 stays open in law, for example\nbecause
-      the guideline passages point different ways for this kind of system, answer
-      the key facts\nas the description states them and answer `settled_in_law` \"no\";
-      do not answer them \"unknown\",\nand do not ask for a fact the description already
-      gives.\n\n## interaction: paragraph 1\n\n- `covered`: the system is intended
-      to interact directly with natural persons: people address it\n  and it responds
-      to them as a counterpart in an exchange, in writing, speech, or visual or\n  physical
-      action, whoever starts the exchange. Answer \"yes\" only for such a system.
-      A system\n  that only processes what its user submits and hands back the result
-      (for example a converted\n  file, a report or a dashboard of results, or completions
-      offered as the user types) is \"no\":\n  its user operates a tool and doesn''t
-      converse with it. A chat panel or assistant inside a\n  tool that the user converses
-      with is still a counterpart: \"yes\".\n- `exception`: it is obvious to a reasonably
-      well-informed, observant and circumspect person,\n  given the circumstances
-      and the context of use, that they are interacting with an AI system;\n  or the
-      system is authorised by law to detect, prevent, investigate or prosecute criminal\n  offences
-      and is not available for the public to report a criminal offence. The guidelines
+      \"no\" only when they leave it open, by the bar below. Ask yourself\n  this
+      for every duty, every time. A duty the description doesn''t raise is \"yes\".\n-
+      `open_question`: when `settled_in_law` is \"no\", the question the law leaves
+      open (`question`)\n  and its two readings (`readings`), the stricter one (the
+      duty applies) first. Null otherwise.\n- `evidence`: where the answers come from:
+      \"stated\" (the description says it), \"inferred\" (it\n  follows from what
+      the description says) or \"assumed\" (a usual default, nothing points either\n  way).\n-
+      `fact`: the duty''s reading in one short sentence, in the language asked for.\n-
+      `fact_numbers`: the numbered facts it rests on (empty when none).\n\n`covered`
+      and `exception` are answered \"yes\", \"no\" or \"unknown\". Answer \"unknown\"
+      only when the\ndescription really leaves the fact open and the answer would
+      change the outcome; never guess\n\"no\" to avoid a question. A duty the description
+      gives no reason to consider is \"no\" for\n`covered` and `exception`, with evidence
+      \"inferred\". When `covered` is \"no\", `exception` is \"no\".\n\nAn open question
+      of law has a bar. Answer `settled_in_law` \"no\" only when you can name the\ncondition
+      or exception of Article 50 whose reading is undecided for these facts, and the
+      Act,\nits recitals and the guideline passages you are given leave it undecided:
+      they point both ways\nfor a case like this one, or none of them reaches it and
+      the provision''s words fit either\nreading. When the Act, a recital or a passage
+      decides the case, the duty is settled, even if you\nare unsure of it yourself;
+      being unsure, or wanting to be safe, is never a reason to answer \"no\".\n\nA
+      missing fact and an open question of law are different. When the facts that
+      matter are stated\nbut whether they meet a condition or an exception of Article
+      50 stays open in law, for example\nbecause the guideline passages point different
+      ways for this kind of system, answer the key facts\nas the description states
+      them and answer `settled_in_law` \"no\"; do not answer them \"unknown\",\nand
+      do not ask for a fact the description already gives.\n\n## interaction: paragraph
+      1\n\n- `covered`: the system is intended to interact directly with natural persons:
+      people address it\n  and it responds to them as a counterpart in an exchange,
+      in writing, speech, or visual or\n  physical action, whoever starts the exchange.
+      Answer \"yes\" only for such a system. A system\n  that only processes what
+      its user submits and hands back the result (for example a converted\n  file,
+      a report or a dashboard of results, or completions offered as the user types)
+      is \"no\":\n  its user operates a tool and doesn''t converse with it. A chat
+      panel or assistant inside a\n  tool that the user converses with is still a
+      counterpart: \"yes\".\n- `exception`: it is obvious to a reasonably well-informed,
+      observant and circumspect person,\n  given the circumstances and the context
+      of use, that they are interacting with an AI system;\n  or the system is authorised
+      by law to detect, prevent, investigate or prosecute criminal\n  offences and
+      is not available for the public to report a criminal offence. The guidelines
       read\n  the first exception narrowly.\n  Answer `exception` from the description
       whenever it says who interacts with the system and in what\n  setting: judging
       from that whether it is obvious to them is an answer, not a guess. Being obvious\n  needs
@@ -802,37 +810,38 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: '{"id": "gen-1791816296-MYJFPZwBhCfrliW88u6C", "object": "chat.completion",
-        "created": 1791816296, "model": "openai/gpt-6-luna", "provider": "Azure",
+      string: '{"id": "gen-1791837316-G8b5F9cW9OAMYhaVdaiX", "object": "chat.completion",
+        "created": 1791837316, "model": "openai/gpt-6-luna", "provider": "Azure",
         "system_fingerprint": null, "service_tier": "default", "choices": [{"index":
         0, "logprobs": null, "finish_reason": "stop", "native_finish_reason": "completed",
         "message": {"role": "assistant", "content": "{\n  \"interaction\": {\n    \"covered\":
         \"no\",\n    \"exception\": \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\":
         null,\n    \"evidence\": \"stated\",\n    \"fact\": \"The plug-in offers code
-        completions as developers type; it does not converse with them.\",\n    \"fact_numbers\":
+        completions as the programmer types; it does not converse with users.\",\n    \"fact_numbers\":
         []\n  },\n  \"synthetic_content\": {\n    \"covered\": \"no\",\n    \"exception\":
         \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
-        \"inferred\",\n    \"fact\": \"It produces only source code and comments integral
-        to that code, which fall outside this duty.\",\n    \"fact_numbers\": []\n  },\n  \"emotion_biometric\":
-        {\n    \"covered\": \"no\",\n    \"exception\": \"no\",\n    \"settled_in_law\":
-        \"yes\",\n    \"open_question\": null,\n    \"evidence\": \"inferred\",\n    \"fact\":
-        \"The system does not recognise emotions or categorise people using biometric
-        data.\",\n    \"fact_numbers\": []\n  },\n  \"deep_fake\": {\n    \"covered\":
-        \"no\",\n    \"exception\": \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\":
-        null,\n    \"evidence\": \"inferred\",\n    \"fact\": \"The system generates
-        code; whether any output is a deep fake depends on how customers use it, which
-        is not described.\",\n    \"fact_numbers\": []\n  },\n  \"public_interest_text\":
-        {\n    \"covered\": \"no\",\n    \"exception\": \"no\",\n    \"settled_in_law\":
-        \"yes\",\n    \"open_question\": null,\n    \"evidence\": \"inferred\",\n    \"fact\":
-        \"The system does not generate text published to inform the public on matters
-        of public interest.\",\n    \"fact_numbers\": []\n  },\n  \"market_timing\":
-        \"placed_on_market_before\",\n  \"guidance_numbers\": [68]\n}", "refusal":
-        null}}], "usage": {"prompt_tokens": 6714, "completion_tokens": 991, "total_tokens":
-        7705, "cost": 0.001045, "is_byok": false, "prompt_tokens_details": {"cached_tokens":
-        3345, "cache_write_tokens": 3366, "audio_tokens": 0, "video_tokens": 0}, "cost_details":
-        {"upstream_inference_cost": 0.001045, "upstream_inference_prompt_cost": 0.00049995,
-        "upstream_inference_completions_cost": 0.00054505}, "completion_tokens_details":
-        {"reasoning_tokens": 563, "image_tokens": 0, "audio_tokens": 0}}}'
+        \"stated\",\n    \"fact\": \"Its outputs are source code and comments integral
+        to that code, which the guidance excludes from Article 50(2).\",\n    \"fact_numbers\":
+        []\n  },\n  \"emotion_biometric\": {\n    \"covered\": \"no\",\n    \"exception\":
+        \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
+        \"inferred\",\n    \"fact\": \"The described code-completion system does not
+        recognize emotions or categorise people using biometric data.\",\n    \"fact_numbers\":
+        []\n  },\n  \"deep_fake\": {\n    \"covered\": \"no\",\n    \"exception\":
+        \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
+        \"inferred\",\n    \"fact\": \"The system generates code and comments, not
+        image, audio or video content constituting a deep fake.\",\n    \"fact_numbers\":
+        []\n  },\n  \"public_interest_text\": {\n    \"covered\": \"no\",\n    \"exception\":
+        \"no\",\n    \"settled_in_law\": \"yes\",\n    \"open_question\": null,\n    \"evidence\":
+        \"inferred\",\n    \"fact\": \"The code and comments are provided to customer
+        developers in an editor, not published to inform the public on matters of
+        public interest.\",\n    \"fact_numbers\": []\n  },\n  \"market_timing\":
+        \"placed_on_market_before\",\n  \"guidance_numbers\": [1]\n}", "refusal":
+        null}}], "usage": {"prompt_tokens": 6857, "completion_tokens": 761, "total_tokens":
+        7618, "cost": 0.000920073, "is_byok": false, "prompt_tokens_details": {"cached_tokens":
+        3488, "cache_write_tokens": 3366, "audio_tokens": 0, "video_tokens": 0}, "cost_details":
+        {"upstream_inference_cost": 0.000920073, "upstream_inference_prompt_cost":
+        0.000501523, "upstream_inference_completions_cost": 0.00041855}, "completion_tokens_details":
+        {"reasoning_tokens": 318, "image_tokens": 0, "audio_tokens": 0}}}'
     headers:
       content-type:
       - application/json
