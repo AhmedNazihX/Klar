@@ -71,20 +71,13 @@ export type FactQuestionProps = {
   question: ReactNode
   /** Why it matters, with the provision: "If yes, you become the provider. Art. 25(1)(a)". */
   hint?: ReactNode
-  /** A line under the answer, e.g. where a pre-selected answer came from. */
-  note?: ReactNode
   /** The answer control (usually an AnswerChoice), named by the question's element id. */
   renderAnswer: (labelledBy: string) => ReactNode
 }
 
 /** A fact Klar had to assume, asked back in plain words with Yes, No and Not sure (or answered in
  *  words), and a line on why it matters. Stack several under "Please confirm N facts". */
-export function FactQuestion({
-  question,
-  hint,
-  note,
-  renderAnswer,
-}: FactQuestionProps): JSX.Element {
+export function FactQuestion({ question, hint, renderAnswer }: FactQuestionProps): JSX.Element {
   const questionId = useId()
   return (
     <div className="flex flex-col gap-2 rounded-card-small px-4 py-3.5 glass-thin">
@@ -93,7 +86,6 @@ export function FactQuestion({
       </p>
       {hint && <p className="m-0 text-caption font-normal text-slate">{hint}</p>}
       {renderAnswer(questionId)}
-      {note && <p className="m-0 text-caption font-normal text-ink-2">{note}</p>}
     </div>
   )
 }

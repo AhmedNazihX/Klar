@@ -58,7 +58,10 @@ export function useFollowUpAnswers(run: ClassificationRun, followUp: FollowUpRun
 
   const asked = askedQuestions(run.result)
   const questions = asked.deciding ? [asked.deciding, ...asked.others] : asked.others
-  const fromProfileDrafts = profileDrafts(questions, profile, changed)
+  // A question the user changed or already answered stays theirs: the profile, read later than
+  // their click perhaps, never replaces their answer.
+  const isUsers = new Set([...changed, ...Object.keys(drafts)])
+  const fromProfileDrafts = profileDrafts(questions, profile, isUsers)
   const isOpen = (question: FollowUpQuestion): boolean => !(question.id in fromProfileDrafts)
   const deciding = asked.deciding && isOpen(asked.deciding) ? asked.deciding : null
   const others = asked.others.filter(isOpen)

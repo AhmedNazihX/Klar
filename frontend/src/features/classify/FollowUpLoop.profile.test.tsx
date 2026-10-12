@@ -2,7 +2,7 @@
 // they leave the open questions and their count, show under "From your company profile" with
 // the answer and Change, and are sent when the user runs the checks again. The profile is put in
 // the query cache, as Supabase would return it (it isn't configured in the tests).
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18n from 'i18next'
 import { describe, expect, it } from 'vitest'
@@ -10,6 +10,7 @@ import { axe } from 'vitest-axe'
 
 import type { ClassificationResult, ClassifyRequest, FollowUpQuestion } from '@/api'
 import { userDataOverviewKey } from '@/hooks/use-user-data-overview'
+import { RECORDED_AMBIGUOUS, requestHandlers, SAFETY_QUESTION } from '@/test/ambiguous-fixtures'
 import type { CompanyProfile, UserDataOverview } from '@/lib/company-profile'
 import {
   annexIIINeedsInfo,
@@ -65,15 +66,19 @@ function rerunReturns(result: ClassificationResult): ClassifyRequest[] {
   return bodies
 }
 
+function overview(profile: CompanyProfile | null): UserDataOverview {
+  return { inventoryId: 'inventory-1', profile, toolCount: 1 }
+}
+
+/** The result screen, with the profile read already (`undefined`: not read yet). */
 async function openResult(
   result: ClassificationResult,
-  profile: CompanyProfile | null,
+  profile: CompanyProfile | null | undefined,
   language: 'en' | 'de' = 'en',
 ) {
   await i18n.changeLanguage(language)
   const client = createTestQueryClient()
-  const overview: UserDataOverview = { inventoryId: 'inventory-1', profile, toolCount: 1 }
-  client.setQueryData(userDataOverviewKey, overview)
+  if (profile !== undefined) client.setQueryData(userDataOverviewKey, overview(profile))
   putRun(client, {
     toolId: TOOL_ID,
     name: 'Applicant screening',
@@ -82,7 +87,7 @@ async function openResult(
   })
   const { container } = renderRoute(`/app/inventory/${TOOL_ID}`, client)
   await screen.findByRole('heading', { level: 1, name: 'Applicant screening' })
-  return { user: userEvent.setup(), container }
+  return { user: userEvent.setup(), container, client }
 }
 
 function profileRegion(name = 'From your company profile'): HTMLElement {
@@ -231,5 +236,52 @@ describe('From your company profile, in German', () => {
     )
     await expect.poll(() => bodies.length).toBe(1)
     expect(bodies[0]?.answers).toEqual({ eu_link: `${EU_QUESTION.text} Ja.` })
+  })
+})
+
+describe('An answer given before the profile is read', () => {
+  it('stays the user’s: the profile read later never replaces it', async () => {
+    const bodies = rerunReturns(decidedHighRisk())
+    const { user, client } = await openResult(
+      withQuestions([EU_QUESTION, LEGACY_QUESTION]),
+      undefined,
+    )
+    const open = screen.getByRole('region', { name: '2 open questions' })
+    const eu = within(open).getByRole('group', { name: EU_QUESTION.text })
+    await user.click(within(eu).getByRole('button', { name: 'No' }))
+
+    act(() => {
+      client.setQueryData(
+        userDataOverviewKey,
+        overview({ ...PROFILE, establishedIn: 'DE', usedIn: null }),
+      )
+    })
+    expect(screen.queryByRole('region', { name: 'From your company profile' })).toBeNull()
+    expect(within(eu).getByRole('button', { name: 'No' })).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(within(open).getByRole('button', { name: 'Add answers and run again' }))
+    await expect.poll(() => bodies.length).toBe(1)
+    expect(bodies[0]?.answers).toEqual({ eu_link: `${EU_QUESTION.text} No.` })
+  })
+})
+
+describe('A legally ambiguous result with a question the profile answers', () => {
+  it('shows the profile answer with the one run action, and sends it', async () => {
+    server.use(...requestHandlers([]))
+    const bodies = rerunReturns(RECORDED_AMBIGUOUS)
+    const result: ClassificationResult = {
+      ...RECORDED_AMBIGUOUS,
+      follow_up_questions: [SAFETY_QUESTION, EU_QUESTION],
+    }
+    const { user } = await openResult(result, PROFILE)
+
+    const fromProfile = profileRegion()
+    expect(fromProfile).toHaveTextContent(EU_QUESTION.text)
+    expect(screen.queryByRole('group', { name: EU_QUESTION.text })).toBeNull()
+    expect(screen.getAllByRole('button', { name: /run again/ })).toHaveLength(1)
+
+    await user.click(within(fromProfile).getByRole('button', { name: 'Add answers and run again' }))
+    await expect.poll(() => bodies.length).toBe(1)
+    expect(bodies[0]?.answers).toEqual({ eu_link: `${EU_QUESTION.text} Yes.` })
   })
 })

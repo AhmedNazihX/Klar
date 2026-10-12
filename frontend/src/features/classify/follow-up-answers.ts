@@ -156,14 +156,15 @@ function isEuFromProfile(profile: CompanyProfile | null): boolean {
 }
 
 /** The answers the company profile gives (decision 026 item 2): Yes to the EU question when the
- *  profile says the tools are used in the EU or the company is established there, unless the user
- *  chose to answer it themselves (`changed`). The screen shows them apart from the open questions
- *  (story P29); they are sent only when the user runs the checks again, with the other answers.
- *  The profile itself never reaches the engine (decision 026 item 7). */
+ *  profile says the tools are used in the EU or the company is established there, unless the
+ *  user answers it themselves (`changed`: Change, or an answer given before the profile was
+ *  read). The screen shows them apart from the open questions (story P29); they are sent only
+ *  when the user runs the checks again, with the other answers. The profile itself never
+ *  reaches the engine (decision 026 item 7). */
 export function profileDrafts(
   questions: readonly FollowUpQuestion[],
   profile: CompanyProfile | null,
-  changed: ReadonlySet<string> = new Set(),
+  changed: ReadonlySet<string>,
 ): AnswerDrafts {
   const asked = questions.some((question) => question.id === EU_LINK)
   if (!asked || changed.has(EU_LINK) || !isEuFromProfile(profile)) return {}
