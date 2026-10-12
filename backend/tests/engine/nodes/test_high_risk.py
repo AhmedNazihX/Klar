@@ -748,6 +748,19 @@ def test_an_open_user_with_a_settled_exemption_asks_the_users_question() -> None
     assert result.step.missing_fact.id == "public_scheme"
 
 
+def test_an_open_admission_listing_with_a_settled_exemption_asks_whether_it_decides_admission() -> (
+    None
+):
+    """An admission point (3(a)) asks its own listing question, not the generic use one."""
+    listing = annex_iii("annex:III:3:a", YES, open_question=OPEN, on="uses")
+    result = outcome(answer(listing, EXEMPT_C))
+    assert result.annex_iii_exempt
+    assert result.high_risk_route is None
+    assert result.step.status is Status.NEEDS_MORE_INFORMATION
+    assert result.step.missing_fact is not None
+    assert result.step.missing_fact.id == "decides_admission"
+
+
 @pytest.mark.parametrize(
     "given",
     [

@@ -243,6 +243,17 @@ def _asking(*ids: str, status: Status = Status.NEEDS_MORE_INFORMATION) -> CheckO
     return CheckOutcome(step=exempt_step, annex_iii_exempt=True, follow_up_questions=asked)
 
 
+def _built_past_validation(outcome: CheckOutcome, **changes: object) -> CheckOutcome:
+    """The outcome with `changes` set on it (or, for a step field, on its step) without the models
+    validators, which refuse these combinations: the matcher must not trust them to."""
+    step_fields = {
+        key: value for key, value in changes.items() if key in type(outcome.step).model_fields
+    }
+    own = {key: value for key, value in changes.items() if key not in step_fields}
+    stepped = outcome.step.model_copy(update=step_fields)
+    return outcome.model_copy(update={**own, "step": stepped})
+
+
 def test_the_listing_questions_are_the_annex_iii_ones() -> None:
     assert {
         "annex_iii_use",
@@ -266,6 +277,23 @@ def test_an_exempt_step_asking_only_the_listing_matches(asked: str) -> None:
         pytest.param(_asking("profiling"), id="another-missing-fact"),
         pytest.param(_asking("annex_iii_use", "profiling"), id="listing-and-another-question"),
         pytest.param(_asking("annex_iii_use", status=Status.LEGALLY_AMBIGUOUS), id="open-question"),
+        pytest.param(
+            _built_past_validation(
+                _asking("annex_iii_use", status=Status.LEGALLY_AMBIGUOUS),
+                missing_fact=FollowUpQuestion(id="annex_iii_use", text="Use?"),
+            ),
+            id="open-question-and-listing",
+        ),
+        pytest.param(
+            _built_past_validation(
+                _asking("annex_iii_use"), high_risk_route=HighRiskRoute.ANNEX_III
+            ),
+            id="exempt-with-a-high-risk-route",
+        ),
+        pytest.param(
+            _built_past_validation(_asking("annex_iii_use"), missing_fact=None),
+            id="no-missing-fact",
+        ),
         pytest.param(
             high_risk_outcome(
                 HighRiskRoute.ANNEX_III,
