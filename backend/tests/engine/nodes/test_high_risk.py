@@ -630,13 +630,27 @@ def test_an_annex_i_facts_own_lenient_answer_never_settles_its_open_question(
     assert result.annex_point == "annex:I:A:11"
 
 
-@pytest.mark.parametrize("facts", [pytest.param(p.values[0], id=p.id) for p in ANNEX_I_RULED_OUT])
-def test_an_annex_i_question_that_names_no_fact_stays_open(
-    facts: tuple[Answer, Answer, Answer],
+@pytest.mark.parametrize(
+    ("facts", "is_open"),
+    [
+        pytest.param((Answer.NO, YES, YES), False, id="not-covered"),
+        pytest.param((YES, Answer.NO, YES), True, id="not-a-safety-component"),
+        pytest.param((YES, YES, Answer.NO), True, id="no-third-party-assessment"),
+    ],
+)
+def test_an_annex_i_question_that_names_no_fact_stays_open_once_raised(
+    facts: tuple[Answer, Answer, Answer], is_open: bool
 ) -> None:
-    """B3: unsettled without naming its open fact, any "no" may be the question's lenient side."""
+    """R1: `covered` is the route's gate, so answered "no" and not the fact held open, the route
+    is not raised, whatever `settled_in_law` says. A raised route left unsettled without
+    naming its open fact stays open: any other "no" may be the question's lenient side."""
     result = outcome(answer(one=annex_i("annex:I:A:11", *facts, open_question=OPEN)))
-    assert_ambiguous(result, HighRiskRoute.ANNEX_I)
+    if is_open:
+        assert_ambiguous(result, HighRiskRoute.ANNEX_I)
+        return
+    assert result.step.status is Status.DECIDED
+    assert result.high_risk_route is None
+    assert result.step.open_question is None
 
 
 def test_an_open_annex_iii_point_is_ambiguous_with_high_risk_assumed() -> None:
@@ -647,7 +661,7 @@ def test_an_open_annex_iii_point_is_ambiguous_with_high_risk_assumed() -> None:
 
 
 ANNEX_III_RULED_OUT = [
-    pytest.param("annex:III:4:a", Answer.NO, Answer.NO, "uses", id="use-no"),
+    pytest.param("annex:III:5:a", Answer.NO, YES, "uses", id="use-no"),
     pytest.param("annex:III:5:a", YES, Answer.NO, "public_authority", id="public-user-no"),
 ]
 """A point with its use or the user it names answered "no", and which fact that is."""
@@ -691,6 +705,56 @@ def test_an_open_exemption_on_a_point_whose_user_is_open_stays_open() -> None:
     assert result.high_risk_route is HighRiskRoute.ANNEX_III
     assert result.step.status is Status.LEGALLY_AMBIGUOUS
     assert not result.annex_iii_exempt
+
+
+@pytest.mark.parametrize(
+    ("point", "uses", "user", "is_open"),
+    [
+        pytest.param("annex:III:4:a", Answer.NO, Answer.NO, False, id="use-no"),
+        pytest.param("annex:III:5:a", YES, Answer.NO, True, id="5a-user-no"),
+    ],
+)
+def test_an_annex_iii_question_that_names_no_fact_stays_open_once_raised(
+    point: str, uses: Answer, user: Answer, is_open: bool
+) -> None:
+    """R1, the Annex III twin: `uses` is the point's gate, so 4(a) answered "no" and not held
+    open is not raised (not high-risk), whatever `settled_in_law` says. 5(a) with its use met
+    is raised, and left unsettled without a name it stays open."""
+    result = outcome(answer(annex_iii(point, uses, user, open_question=OPEN)))
+    if is_open:
+        assert_ambiguous(result, HighRiskRoute.ANNEX_III)
+        return
+    assert result.step.status is Status.DECIDED
+    assert result.high_risk_route is None
+    assert result.annex_point is None
+    assert result.step.open_question is None
+
+
+@pytest.mark.parametrize(
+    ("uses", "user"),
+    [
+        pytest.param(Answer.NO, Answer.NO, id="use-no"),
+        pytest.param(YES, Answer.NO, id="use-yes"),
+        pytest.param(Answer.UNKNOWN, Answer.NO, id="use-unknown"),
+    ],
+)
+def test_an_open_on_naming_a_fact_the_point_does_not_read_reads_as_none(
+    uses: Answer, user: Answer
+) -> None:
+    """R2: 4(a) names no user, so `public_authority` is no fact of it; a question named on it
+    reads as unnamed (it is not held strict), and R1 applies as for "none"."""
+    misnamed = outcome(
+        answer(annex_iii("annex:III:4:a", uses, user, open_question=OPEN, on="public_authority"))
+    )
+    unnamed = outcome(answer(annex_iii("annex:III:4:a", uses, user, open_question=OPEN)))
+    assert misnamed == unnamed
+    held = node.held_strict_answer(
+        answer(annex_iii("annex:III:4:a", uses, user, open_question=OPEN, on="public_authority"))
+    )
+    assert held.annex_iii.public_authority is Answer.NO
+    assert node.annex_iii_facts("annex:III:4:a") == {"uses"}
+    assert node.annex_iii_facts("annex:III:5:a") == {"uses", "public_authority"}
+    assert node.annex_iii_facts(None) == frozenset()
 
 
 def test_an_open_art_6_3_exemption_is_ambiguous_with_high_risk_assumed() -> None:
@@ -1960,6 +2024,7 @@ E19_RULES = (
 
 DROPPED_RULES = (
     "stricter reading",
+    "stricter way",
     "whatever `settled_in_law` says",
     "not a question of law",
     "intended purpose is that use",

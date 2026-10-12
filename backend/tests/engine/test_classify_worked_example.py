@@ -55,7 +55,7 @@ from aiact.schemas import (
 from aiact.settings import Settings, get_settings
 from tests.engine.built_corpus import built_validator, unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import CorpusRecording, corpus_recording, lookup_call
-from tests.engine.nodes.known_gaps import E19_PROMPTS_RECORDING_PENDING
+from tests.engine.nodes.known_gaps import E19_PROMPTS_RECORDING_PENDING, stale_recording_pending
 
 LUNA = "openai/gpt-6-luna-20260922"
 LUNA_PROVIDER = "azure/eu"
@@ -363,7 +363,8 @@ def replay_nodes(
 @E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
-    run = run_classification(
-        worked_example_request(), settings=luna_settings, build_nodes=replay_nodes
-    )
+    with stale_recording_pending():
+        run = run_classification(
+            worked_example_request(), settings=luna_settings, build_nodes=replay_nodes
+        )
     assert_the_expected_result(run)

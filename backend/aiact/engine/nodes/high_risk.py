@@ -83,7 +83,7 @@ from aiact.engine.nodes.high_risk_texts import (
     version_words,
 )
 from aiact.engine.nodes.key_facts import Answer, Settled, facts_used
-from aiact.engine.nodes.open_in_law import NOT_NAMED, held_strict, stays_open
+from aiact.engine.nodes.open_in_law import NOT_NAMED, held_strict, raised, stays_open
 from aiact.engine.nodes.questions import ask, hint, open_question
 from aiact.engine.nodes.role_texts import KeyQuestion
 from aiact.engine.state import CheckOutcome, EngineState
@@ -424,37 +424,63 @@ def settle(answer: HighRiskAnswer, language: Language) -> Settlement:
     return _open_or_settled(answer, base, iii, annex_i, iii_cited)
 
 
+ANNEX_I_FACTS = frozenset({"covered", "safety_component_or_product", "third_party_assessment"})
+
+
+def annex_iii_facts(point: str | None) -> frozenset[str]:
+    """The key facts a named Annex III point reads: its use, and the user it names, if any
+    (`AUTHORITY_RULES`); none without a point. An `open_on` naming another fact is read as no
+    name (`open_in_law.open_field`)."""
+    if point is None:
+        return frozenset()
+    return frozenset({"uses", "public_authority"} if _authority_rule(point) else {"uses"})
+
+
+def annex_i_facts(point: str | None) -> frozenset[str]:
+    """The key facts a named Annex I point reads; none without a point."""
+    return frozenset() if point is None else ANNEX_I_FACTS
+
+
 def held_strict_answer(answer: HighRiskAnswer) -> HighRiskAnswer:
     """The answer with each Annex route's open fact (`open_on`) set to its stricter value (B2),
     as a new copy, so the model's own answer to a fact the law leaves open never decides
-    anything. A route that names no point holds nothing open."""
+    anything. A route that names no point reads no facts, so it holds nothing open."""
     iii, one = answer.annex_iii, answer.annex_i
     return answer.model_copy(
         update={
-            "annex_iii": iii if iii.point is None else held_strict(iii, STRICT_VALUES),
-            "annex_i": one if one.point is None else held_strict(one, STRICT_VALUES),
+            "annex_iii": held_strict(iii, STRICT_VALUES, annex_iii_facts(iii.point)),
+            "annex_i": held_strict(one, STRICT_VALUES, annex_i_facts(one.point)),
         }
     )
 
 
 def _open_on_annex_iii(answer: HighRiskAnswer, iii: AnnexIIIReading) -> bool:
-    """The law leaves open whether a named Annex III point, or its Art. 6(3) exemption, applies.
-    With its open fact held strict, only another fact the point needs (its use, or the user it
-    names) answered "no" settles the point (`open_in_law.stays_open`), and an exemption
-    question is moot for a point so ruled out. An open exemption names its condition in
-    `condition`; whether it applies is never read the lenient way."""
+    """The law leaves open whether a named Annex III point, or its Art. 6(3) exemption, applies
+    (`open_in_law`). The point's gate is its use: answered "no" and not the fact held open, the
+    point is not raised. With its open fact held strict, only another fact the point reads
+    answered "no" settles it, and an exemption question is moot for a point so ruled out. An
+    open exemption names its condition in `condition`; whether it applies is never read the
+    lenient way."""
     match = answer.annex_iii
     if match.point not in ANNEX_III_POINTS:
         return False
+    facts = annex_iii_facts(match.point)
+    if not raised(match, "uses", match.uses, facts):
+        return False
     is_listed = iii.listed.answer is not Answer.NO
     is_exemption_open = answer.art_6_3.settled_in_law is Settled.NO and is_listed
-    return is_exemption_open or stays_open(match, iii.listed.answer)
+    return is_exemption_open or stays_open(match, iii.listed.answer, facts, facts)
 
 
 def _open_on_annex_i(answer: AnnexIAnswer, route: Route) -> bool:
-    """The law leaves open whether Art. 6(1) is met for a named Annex I point; with its open
-    fact held strict, only another of its cumulative facts answered "no" settles it."""
-    return answer.point is not None and stays_open(answer, route.answer)
+    """The law leaves open whether Art. 6(1) is met for a named Annex I point (`open_in_law`).
+    Its gate is `covered`: answered "no" and not the fact held open, the point is not raised.
+    With its open fact held strict, only another of its cumulative facts answered "no" settles
+    it."""
+    facts = annex_i_facts(answer.point)
+    if answer.point is None or not raised(answer, "covered", answer.covered, facts):
+        return False
+    return stays_open(answer, route.answer, facts, facts)
 
 
 def _ambiguous(

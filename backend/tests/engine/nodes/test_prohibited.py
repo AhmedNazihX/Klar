@@ -628,6 +628,32 @@ def test_point_ba_with_consent_is_not_held_open() -> None:
     assert held.step.status is Status.LEGALLY_AMBIGUOUS
 
 
+@pytest.mark.parametrize(
+    ("on", "status"),
+    [
+        pytest.param("consent", Status.DECIDED, id="ba-fact"),
+        pytest.param("only_conceals", Status.DECIDED, id="ba-only-fact"),
+        pytest.param("child_abuse_material", Status.LEGALLY_AMBIGUOUS, id="bb-gate"),
+        pytest.param("generation_purpose", Status.LEGALLY_AMBIGUOUS, id="shared-route"),
+    ],
+)
+def test_point_bb_is_held_open_only_on_its_own_facts(on: str, status: Status) -> None:
+    """R3: (ba) and (bb) share one answer part. A question open on a fact only (ba) reads leaves
+    (bb) decided on its facts, prohibited, with no open question; one open on (bb)'s own gate or
+    a route both read keeps (bb) open."""
+    material = part(
+        SexualMaterialAnswer, child_abuse_material=Answer.YES, generation_purpose=Answer.YES
+    )
+    result = outcome(answer(unsettled(material, on=on)), state(as_of=AFTER_DECEMBER))
+    assert result.matched
+    assert result.step.status is status
+    is_open = status is Status.LEGALLY_AMBIGUOUS
+    assert (result.step.open_question is not None) is is_open
+    assert "art:5:1:bb" in cited(result)
+    assert "art:5:1:ba" not in cited(result)  # (ba) is not raised: no intimate imagery
+    assert "consent" not in {question.id for question in result.follow_up_questions}
+
+
 def test_a_practice_whose_conditions_all_hold_stays_open_when_the_law_leaves_it_open() -> None:
     """The other side of E19's fix: every condition met and the law open is still ambiguous."""
     result = outcome(
@@ -1118,6 +1144,7 @@ E19_RULES = (
 
 DROPPED_RULES = (
     "stricter reading",
+    "stricter way",
     "whatever `settled_in_law` says",
     "incidental side of the risk",
     "write or buy",

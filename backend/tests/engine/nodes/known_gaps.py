@@ -8,7 +8,8 @@ Also the replays a prompt change left stale until they are re-recorded, and E18'
 fixtures.
 """
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,27 +22,51 @@ from aiact.engine.state import CheckOutcome
 from aiact.eval.cases import BenchmarkCase, load_yaml_file
 from tests.engine.nodes.corpus_recording import RecordingPendingError
 
+STALE_RECORDING_ERRORS = (
+    CannotOverwriteExistingCassetteException,
+    PermanentError,
+    RecordingPendingError,
+)
+"""How a replay fails on a stale or missing recording: VCR refuses the new request, the
+OpenRouter SDK gives up on the refused call, or a replay with no cassette at all stops before
+the call (a stream that ends in an error event is turned into `RecordingPendingError` by its
+test)."""
+
 E19_PROMPTS_RECORDING_PENDING = pytest.mark.xfail(
     strict=True,
-    raises=(
-        CannotOverwriteExistingCassetteException,
-        PermanentError,
-        RecordingPendingError,
-        ClassificationFailedError,
-    ),
+    raises=STALE_RECORDING_ERRORS,
     reason="recording pending (orchestrator): E19 changed the prohibited, high-risk and "
     "transparency prompts and response formats (the bar for an open question of law, `open_on` "
     "and the over-strictness rules), so the recorded requests are stale, and own/f has no "
     "recording yet; delete and re-record",
 )
 """The one marker for every replay E19 made stale or added, until the orchestrator records
-them (BACKLOG > E19). A replay fails on a stale recording in one of four ways, depending on
-where it meets the changed request: VCR refuses the new request
-(`CannotOverwriteExistingCassetteException`), the OpenRouter SDK gives up on the refused call
-(`PermanentError`), a replay with no cassette at all stops before the call
-(`RecordingPendingError`), or a whole classification run reports its failed check
-(`ClassificationFailedError`); a stream that ends in an error event is turned into
-`RecordingPendingError` by its test."""
+them (BACKLOG > E19). A whole classification run wraps its failed node in
+`ClassificationFailedError`; such a test runs inside `stale_recording_pending`, so only a stale
+recording counts and any other node error fails it."""
+
+
+def is_stale_recording(error: BaseException) -> bool:
+    """Whether `error`, or an error in its `__cause__` chain, is a stale or missing recording."""
+    seen: BaseException | None = error
+    while seen is not None:
+        if isinstance(seen, STALE_RECORDING_ERRORS):
+            return True
+        seen = seen.__cause__
+    return False
+
+
+@contextmanager
+def stale_recording_pending() -> Iterator[None]:
+    """Re-raise a classification run a stale or missing recording stopped as
+    `RecordingPendingError`, the marker's error; any other failure as it was."""
+    try:
+        yield
+    except ClassificationFailedError as error:
+        if not is_stale_recording(error):
+            raise
+        raise RecordingPendingError(f"the {error.step} node met a stale recording") from error
+
 
 NEGATIVE_CASES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "negative_cases"
 """E18's negative fixtures: cases written from the Act's conditions for a provision that does

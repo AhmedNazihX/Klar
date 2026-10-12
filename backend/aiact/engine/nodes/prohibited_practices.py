@@ -22,7 +22,14 @@ from aiact.engine.nodes.key_facts import (
     need,
     negated,
 )
-from aiact.engine.nodes.open_in_law import NOT_NAMED, held_strict, stays_open
+from aiact.engine.nodes.open_in_law import (
+    NOT_NAMED,
+    HeldOpen,
+    OpenOn,
+    held_strict,
+    raised,
+    stays_open,
+)
 from aiact.llm.replies import OpenQuestion
 from aiact.schemas import EvidenceTag, LawVersion
 from aiact.schemas.base import ContractModel
@@ -325,11 +332,31 @@ class PracticeFields(Protocol):
     def is_known(self) -> bool: ...
 
 
+def _part_facts(part: OpenOn) -> frozenset[str]:
+    """The key facts of a practice's answer part: its `open_on` values but "none"."""
+    return frozenset(value.value for value in type(part.open_on)) - {NOT_NAMED}
+
+
+def _raised(part: OpenOn, gate_field: str, gate: Answer) -> bool:
+    """`open_in_law.raised` for a practice's gate, its first key fact (E4)."""
+    return raised(part, gate_field, gate, _part_facts(part))
+
+
+SEXUAL_ROUTES = (
+    "generation_purpose",
+    "foreseeable_without_safeguards",
+    "deployer_generation_purpose",
+)
+POINT_BA_FACTS = frozenset({"intimate_imagery", "only_conceals", "consent", *SEXUAL_ROUTES})
+POINT_BB_FACTS = frozenset({"child_abuse_material", *SEXUAL_ROUTES})
+"""The facts points (ba) and (bb) each read from the answer part they share."""
+
+
 @dataclass(frozen=True)
 class Practice:
     """One practice's reading: whether it is met, whether the description raises it at all (its
-    first key fact isn't "no"), the answer part it rests on, what it cites, and from when it
-    applies."""
+    first key fact isn't "no", `open_in_law.raised`), the answer part it rests on, what it
+    cites, and from when it applies."""
 
     point: str
     reading: Reading
@@ -339,13 +366,17 @@ class Practice:
     applies_from: date = PROHIBITIONS_APPLY_FROM
     is_permitted_use: bool = False
     """An Art. 5(1)(h) use the exception allows: the Art. 5(4) notification applies."""
+    facts: frozenset[str] | None = None
+    """The key facts the practice reads; None for every fact of its answer part."""
 
     @property
     def is_open(self) -> bool:
         """The law leaves open whether the practice applies: only asked of a raised one. The
         fact it is open on is read on its stricter side (`practices`), so only another fact that
         rules the practice out settles it (E19, `open_in_law.stays_open`)."""
-        return self.is_raised and stays_open(self.summary, self.reading.answer)
+        part = _part_facts(self.summary)
+        own = part if self.facts is None else self.facts
+        return self.is_raised and stays_open(self.summary, self.reading.answer, own, part)
 
 
 def _yes_points(pairs: Sequence[tuple[Answer, str]]) -> tuple[str, ...]:
@@ -364,7 +395,7 @@ def _harm_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
                 need(a.distorts_behaviour, distorts),
                 need(a.significant_harm, harm),
             ),
-            is_raised=a.manipulative_technique is not Answer.NO,
+            is_raised=_raised(a, "manipulative_technique", a.manipulative_technique),
             summary=a,
             cited=("art:5:1:a",),
         ),
@@ -375,7 +406,7 @@ def _harm_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
                 need(b.distorts_behaviour, distorts),
                 need(b.significant_harm, harm),
             ),
-            is_raised=b.exploits_vulnerability is not Answer.NO,
+            is_raised=_raised(b, "exploits_vulnerability", b.exploits_vulnerability),
             summary=b,
             cited=("art:5:1:b",),
         ),
@@ -407,18 +438,20 @@ def _sexual_material_practices(answer: SexualMaterialAnswer) -> tuple[Practice, 
                 need(answer.consent, texts.CONSENT, wanted=Answer.NO),
                 routes,
             ),
-            is_raised=answer.intimate_imagery is not Answer.NO,
+            is_raised=_raised(answer, "intimate_imagery", answer.intimate_imagery),
             summary=answer,
             cited=("art:5:1:ba", *route_points, *conceals, APPLICATION_DATES),
             applies_from=DECEMBER_PROHIBITIONS_APPLY_FROM,
+            facts=POINT_BA_FACTS,
         ),
         Practice(
             point="art:5:1:bb",
             reading=every(need(answer.child_abuse_material, texts.CHILD_ABUSE_MATERIAL), routes),
-            is_raised=answer.child_abuse_material is not Answer.NO,
+            is_raised=_raised(answer, "child_abuse_material", answer.child_abuse_material),
             summary=answer,
             cited=("art:5:1:bb", *route_points, APPLICATION_DATES),
             applies_from=DECEMBER_PROHIBITIONS_APPLY_FROM,
+            facts=POINT_BB_FACTS,
         ),
     )
 
@@ -460,7 +493,7 @@ def _profiling_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
                     need(c.disproportionate_treatment, texts.DISPROPORTIONATE_TREATMENT),
                 ),
             ),
-            is_raised=c.social_scoring is not Answer.NO,
+            is_raised=_raised(c, "social_scoring", c.social_scoring),
             summary=c,
             cited=("art:5:1:c", *_yes_points(treatments)),
         ),
@@ -471,7 +504,7 @@ def _profiling_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
                 need(d.solely_profiling, texts.SOLELY_PROFILING),
                 need(d.fact_based_assessment, texts.FACT_BASED_ASSESSMENT, wanted=Answer.NO),
             ),
-            is_raised=d.crime_risk_assessment is not Answer.NO,
+            is_raised=_raised(d, "crime_risk_assessment", d.crime_risk_assessment),
             summary=d,
             cited=("art:5:1:d",),
         ),
@@ -486,7 +519,7 @@ def _biometric_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
         Practice(
             point="art:5:1:e",
             reading=need(e.untargeted_face_scraping, texts.UNTARGETED_FACE_SCRAPING),
-            is_raised=e.untargeted_face_scraping is not Answer.NO,
+            is_raised=_raised(e, "untargeted_face_scraping", e.untargeted_face_scraping),
             summary=e,
             cited=("art:5:1:e",),
         ),
@@ -497,7 +530,8 @@ def _biometric_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
                 need(f.workplace_or_education, texts.WORKPLACE_OR_EDUCATION),
                 need(f.medical_or_safety, texts.MEDICAL_OR_SAFETY, wanted=Answer.NO),
             ),
-            is_raised=Answer.NO not in (f.infers_emotions, f.workplace_or_education),
+            is_raised=_raised(f, "infers_emotions", f.infers_emotions)
+            and _raised(f, "workplace_or_education", f.workplace_or_education),
             summary=f,
             cited=("art:5:1:f",),
         ),
@@ -508,7 +542,7 @@ def _biometric_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
                 need(g.sensitive_traits, texts.SENSITIVE_TRAITS),
                 need(g.lawful_labelling, texts.LAWFUL_LABELLING, wanted=Answer.NO),
             ),
-            is_raised=g.biometric_categorisation is not Answer.NO,
+            is_raised=_raised(g, "biometric_categorisation", g.biometric_categorisation),
             summary=g,
             cited=("art:5:1:g",),
         ),
@@ -549,7 +583,7 @@ def _remote_identification(answer: RemoteIdentificationAnswer) -> Practice:
             need(answer.law_enforcement_use, texts.LAW_ENFORCEMENT_USE),
             negated(permitted),
         ),
-        is_raised=answer.real_time_identification is not Answer.NO,
+        is_raised=_raised(answer, "real_time_identification", answer.real_time_identification),
         summary=answer,
         cited=("art:5:1:h", *conditions, *(("art:5:4",) if is_permitted else ())),
         is_permitted_use=is_permitted,
@@ -561,17 +595,22 @@ def held_strict_answer(answer: ProhibitedAnswer) -> ProhibitedAnswer:
     new copy: the model's own answer to a fact the law leaves open never decides anything."""
     return answer.model_copy(
         update={
-            "manipulation": held_strict(answer.manipulation, STRICT_VALUES),
-            "vulnerability": held_strict(answer.vulnerability, STRICT_VALUES),
-            "sexual_material": held_strict(answer.sexual_material, STRICT_VALUES),
-            "social_scoring": held_strict(_settled_if_moot(answer.social_scoring), STRICT_VALUES),
-            "crime_risk": held_strict(answer.crime_risk, STRICT_VALUES),
-            "face_scraping": held_strict(answer.face_scraping, STRICT_VALUES),
-            "emotion_recognition": held_strict(answer.emotion_recognition, STRICT_VALUES),
-            "biometric_categorisation": held_strict(answer.biometric_categorisation, STRICT_VALUES),
-            "remote_identification": held_strict(answer.remote_identification, STRICT_VALUES),
+            "manipulation": _held(answer.manipulation),
+            "vulnerability": _held(answer.vulnerability),
+            "sexual_material": _held(answer.sexual_material),
+            "social_scoring": _held(_settled_if_moot(answer.social_scoring)),
+            "crime_risk": _held(answer.crime_risk),
+            "face_scraping": _held(answer.face_scraping),
+            "emotion_recognition": _held(answer.emotion_recognition),
+            "biometric_categorisation": _held(answer.biometric_categorisation),
+            "remote_identification": _held(answer.remote_identification),
         }
     )
+
+
+def _held[P: HeldOpen](part: P) -> P:
+    """`open_in_law.held_strict` for one practice's answer part."""
+    return held_strict(part, STRICT_VALUES, _part_facts(part))
 
 
 def practices(answer: ProhibitedAnswer, law_version: LawVersion) -> tuple[Practice, ...]:
