@@ -1,0 +1,35 @@
+id: own-f-04-gehaltsrunde-auswertung
+set_name: own
+language: de
+description: >-
+  Wir sind ein Maschinenbauunternehmen aus Oberfranken mit rund 2.300 Beschäftigten. Nach jeder
+  jährlichen Gehaltsrunde, wenn alle Erhöhungen von den Führungskräften festgelegt und den
+  Beschäftigten mitgeteilt sind, lässt unsere Personalabteilung ein Analysewerkzeug aus unserer
+  HR-Suite über die abgeschlossenen Entscheidungen laufen. Es sucht nach Auffälligkeiten, etwa ob
+  eine Abteilung bei gleicher Eingruppierung deutlich unter dem Schnitt liegt oder ob
+  Teilzeitkräfte systematisch weniger bekommen, und erstellt einen anonymisierten Bericht für
+  Geschäftsleitung und Betriebsrat. An den einzelnen Erhöhungen ändert das nichts; was auffällt,
+  fließt in die Leitlinien für die nächste Runde, die wieder Menschen festlegen. Die HR-Suite
+  nutzen wir außerdem für die Urlaubsplanung.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation:
+  - "art:6:3"
+  - "art:6:3:c"
+  - "annex:III:4:b"
+  - "art:3:4"
+business_function: hr
+notes: >-
+  APPROVAL PENDING (the orchestrator records the approval line). Class: pay rises are decisions affecting the terms of
+  work-related relationships (Annex III 4(b)), but the tool only runs after those human decisions
+  are complete, looks for patterns and deviations across them, and changes no individual
+  decision; its findings go to people who set the next round's guidelines (Art. 6(3)(c)). It
+  produces an anonymised report on groups, not an evaluation of individual workers, so the
+  profiling sentence of Art. 6(3) does not apply. Not high-risk; no Art. 50 duty: minimal_risk.
+  Role: bought as part of an HR suite and used under its authority (Art. 3(4)): deployer.
+  Trap: an HR tool reading pay decisions looks like 4(b). Doubt: none on the law.
+tags:
+  - "category:f"
+  - "trap:art_6_3_exemption"
+  - "obligation:art:4:1"

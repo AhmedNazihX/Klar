@@ -1,0 +1,50 @@
+id: own-f-06-pflegedienst-leistungsprofil
+set_name: own
+language: de
+description: >-
+  Wir sind ein ambulanter Pflegedienst in Hamburg mit rund 180 Pflegekräften. Ab Januar 2028
+  wollen wir für die jährlichen Mitarbeitergespräche ein neues Zusatzmodul unserer
+  Tourenplanungssoftware nutzen. Es wertet für jede Pflegekraft die Daten des vergangenen Jahres
+  aus – Einsatzdauer im Vergleich zur Planzeit, Verspätungen, Beschwerden von Angehörigen,
+  Krankheitstage – und erstellt daraus ein Leistungsprofil mit einer vorgeschlagenen Einstufung
+  von A bis D. Laut Anbieter dient das nur der Vorbereitung: Die Pflegedienstleitung führt das
+  Gespräch und entscheidet selbst über die Jahresprämie und eine mögliche Höhergruppierung. In
+  der Testphase hat sie die Einstufung meistens übernommen. Die Software erstellt außerdem die
+  Abrechnungen mit den Pflegekassen.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:4:b"
+label_citation:
+  - "annex:III:4:b"
+  - "art:6:2"
+  - "art:6:3"
+  - "art:3:4"
+business_function: hr
+notes: >-
+  APPROVAL PENDING (the orchestrator records the approval line). Class: the module monitors and evaluates the performance and
+  behaviour of workers and feeds decisions on bonuses and promotion (Annex III 4(b), Art. 6(2)).
+  The vendor calls it preparatory (Art. 6(3)(d)), but it evaluates each worker's performance,
+  reliability and health (sick days), which is profiling, and an Annex III system that profiles
+  is always high-risk (Art. 6(3), last subparagraph). Date: use starts January 2028, after
+  2 December 2027, so Art. 111(2) does not arise. Role: bought and used unchanged under its
+  authority (Art. 3(4)): deployer. Included: 26(4) (its tour data is the input), 26(7)
+  (employer: inform workers' representatives and the workers), 26(11) (decisions about natural
+  persons). Kept because the facts don't settle the condition: 26(9) (DPIA) and 86(1) (whether a
+  bonus or promotion decision has legal or similarly significant effects; as in own-d-04). Left
+  out: 26(8) and 27 (a private care service, not a public body). Trap: "only preparation"
+  invites the Art. 6(3)(d) exemption.
+tags:
+  - "category:f"
+  - "trap:art_6_3_profiling"
+  - "obligation:art:4:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:7"
+  - "obligation:art:26:9"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:86:1"

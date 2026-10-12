@@ -1,0 +1,51 @@
+id: own-c-19-nursing-vacancy-scores
+set_name: own
+language: en
+description: >-
+  We are a private group of four hospitals in northern Italy with around 5,000 staff. From
+  February 2028 we will use the new recruitment module of our HR software vendor for nursing
+  vacancies. Applicants fill in an online form and upload their diplomas; the module looks at
+  their years of experience on comparable wards, the shift patterns they can work, their
+  specialist training and their Italian level, and gives each application a score for that
+  vacancy. Our ward managers invite the highest-scoring applicants to interviews, and anyone
+  turned down can ask for a person to look at their application again. The module only uses what
+  the applicant sends us for the job; it does not search social media or other sources. The same
+  vendor also runs our payroll.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:4:a"
+label_citation:
+  - "annex:III:4:a"
+  - "art:6:2"
+  - "art:6:3"
+  - "art:5:1:c"
+  - "guide:guide-prohibited:para:176"
+  - "art:3:4"
+business_function: hr
+notes: >-
+  APPROVAL PENDING (the orchestrator records the approval line). Class: the module evaluates and ranks candidates for a vacancy,
+  Annex III 4(a) (Art. 6(2)); scoring applicants is profiling, so Art. 6(3) cannot take it out.
+  Not social scoring: the data comes only from the application for this job and the treatment
+  (an interview invitation or not) stays in that hiring context and is proportionate (Art.
+  5(1)(c)(i) and (ii) not met; guidelines para. 176). Date: use starts February 2028, after
+  2 December 2027, so Art. 111(2) does not arise. Role: bought and used unchanged under its
+  authority (Art. 3(4)): deployer. Included: 26(4) (it sets the form that supplies the input),
+  26(11) (decisions about natural persons). Kept because the facts don't settle the condition:
+  26(9) (DPIA) and 86(1) (whether an interview refusal has legal or similarly significant
+  effects). Left out: 26(7) (applicants are not its workers), 26(8) and 27 (a private group, not
+  a public body). Trap: a score
+  that decides who is treated unfavourably reads like social scoring.
+tags:
+  - "category:c"
+  - "trap:purpose_bound_scoring"
+  - "obligation:art:4:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:9"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:86:1"

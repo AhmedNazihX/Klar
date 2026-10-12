@@ -600,6 +600,29 @@ def test_every_headline_own_case_has_a_business_function() -> None:
     assert missing == []
 
 
+ANNEX_III_NEGATIVES_FOLDER = "f"
+ANNEX_III_NEGATIVES_COUNT = 9
+
+
+def test_the_committed_annex_iii_negatives_have_their_count_tag_and_languages() -> None:
+    """B15: own/f holds 9 Annex III cases, each `own-f-…` and tagged `category:f`, in both
+    languages with at least a quarter German, and only one of them high-risk (the profiling
+    case that Art. 6(3) can't exempt)."""
+    folder = CASES_DIR / CaseSet.OWN.value / ANNEX_III_NEGATIVES_FOLDER
+    cases = [case for path in sorted(folder.glob("*.yaml")) for case in load_yaml_file(path)]
+    assert len(cases) == ANNEX_III_NEGATIVES_COUNT
+    assert all(case.id.startswith("own-f-") and "category:f" in case.tags for case in cases)
+    languages = Counter(case.language for case in cases)
+    assert set(languages) == {Language.EN, Language.DE}
+    assert languages[Language.DE] / len(cases) >= MIN_GERMAN_SHARE
+    high = [
+        c.id
+        for c in cases
+        if isinstance(c.label, CaseLabel) and c.label.risk_class is RiskClass.HIGH_RISK
+    ]
+    assert high == ["own-f-06-pflegedienst-leistungsprofil"]
+
+
 def test_business_function_is_one_of_the_closed_list() -> None:
     case = BenchmarkCase.model_validate(with_changes(business_function="consumer_product"))
     assert case.business_function is BusinessFunction.CONSUMER_PRODUCT

@@ -11,6 +11,7 @@ import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
+from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.engine.graph import CheckNode, EngineGraph, EngineNodes, build_graph
 from aiact.engine.nodes import facts
@@ -629,8 +630,26 @@ OWN_CASES = [
 ]
 """Every own case. A thin-description case (its label expects no class) must come back thin;
 every other one is replayed by a check node, so it must not."""
-CHECK_CATEGORIES = frozenset("abcde")
-"""The own categories the check nodes replay (`own-<category>-…`)."""
+CHECK_CATEGORIES = frozenset("abcdef")
+"""The own categories with a described system (`own-<category>-…`); f is Annex III (B15)."""
+RECORDING_PENDING = frozenset(
+    {
+        "own-c-18-car-sharing-driving-score",
+        "own-c-19-nursing-vacancy-scores",
+        "own-c-20-fitnessclub-vertraeglichkeitswert",
+        "own-f-01-depot-headcount-forecast",
+        "own-f-02-tafel-kundenausweis",
+        "own-f-03-exam-booklet-matching",
+        "own-f-04-gehaltsrunde-auswertung",
+        "own-f-05-loan-document-extraction",
+        "own-f-06-pflegedienst-leistungsprofil",
+        "own-f-07-water-mains-renewal-plan",
+        "own-f-08-gaszaehler-wechselplanung",
+        "own-f-09-district-heating-advice-calls",
+    }
+)
+"""B15's cases, whose facts replay waits for its recording: each fails strictly once recorded,
+so the entry is removed."""
 
 
 def expects_description(case: BenchmarkCase) -> bool:
@@ -677,6 +696,14 @@ loudly once it reads as its label expects, so the entry is removed."""
                 )
             ]
             if case.id in SECOND_MODEL_GAPS
+            else [
+                pytest.mark.xfail(
+                    strict=True,
+                    raises=CannotOverwriteExistingCassetteException,
+                    reason="recording pending (B15)",
+                )
+            ]
+            if case.id in RECORDING_PENDING
             else [],
         )
         for case in OWN_CASES

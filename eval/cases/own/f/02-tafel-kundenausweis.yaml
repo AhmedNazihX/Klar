@@ -1,0 +1,33 @@
+id: own-f-02-tafel-kundenausweis
+set_name: own
+language: de
+description: >-
+  Wir sind ein gemeinnütziger Tafel-Verein in Dortmund mit 120 Ehrenamtlichen und versorgen jede
+  Woche rund 2.000 Haushalte mit gespendeten Lebensmitteln. Seit dem Frühjahr nutzen wir die
+  Software eines kleinen Anbieters: Sie liest bei der Anmeldung die hochgeladenen Nachweise aus,
+  etwa Bürgergeld-, Renten- oder Wohngeldbescheide, gleicht sie mit unseren Einkommensgrenzen ab
+  und schlägt vor, ob der Haushalt einen Kundenausweis bekommt und für wie viele Personen. Am Ende
+  entscheidet unser Vorstand. Wir handeln dabei ganz auf eigene Rechnung: Die Stadt beauftragt
+  uns nicht und zahlt uns nichts, und einen Anspruch auf unsere Lebensmittel gibt es nicht.
+  Nebenbei plant die Software auch die Abholtouren bei den Supermärkten.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation:
+  - "annex:III:5:a"
+  - "art:6:2"
+  - "art:3:4"
+business_function: public_services
+notes: >-
+  APPROVAL PENDING (the orchestrator records the approval line). Class: the software evaluates whether households are eligible for
+  help, but Annex III 5(a) covers only systems used by public authorities or on their behalf to
+  evaluate eligibility for essential public assistance benefits; a private charity acting on its
+  own account, with no mandate or funding from the town, is neither, and its food parcels are not
+  a public benefit. So Art. 6(2) does not apply; no Art. 50 duty: minimal_risk. Role: bought and
+  used under its authority (Art. 3(4)): deployer. Trap: a benefit-eligibility check in a welfare
+  setting reads like Annex III 5(a). Doubt: whether the description rules out "on behalf
+  of" is read as yes (the town neither mandates nor funds the charity).
+tags:
+  - "category:f"
+  - "trap:annex_iii_area_not_use"
+  - "obligation:art:4:1"

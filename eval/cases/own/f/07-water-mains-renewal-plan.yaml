@@ -1,0 +1,35 @@
+id: own-f-07-water-mains-renewal-plan
+set_name: own
+language: en
+description: >-
+  We are a regional water utility in Flanders supplying about 400,000 households through 9,000 km
+  of mains. Our asset team uses a machine-learning tool from an engineering consultancy that ranks
+  pipe sections by how likely they are to burst in the next ten years, based on pipe age, material,
+  soil type and past repairs. We use the ranking to draw up our five-year pipe replacement
+  programme and its budget, which our engineers review and the board approves. The tool has no
+  connection to pumps, valves or the control room and does not watch the network as it runs;
+  leaks and pressure are handled by our separate control systems. We also use the same consultancy
+  for our hydraulic models.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation:
+  - "annex:III:2"
+  - "art:3:14"
+  - "recital:55"
+  - "art:6:2"
+  - "art:3:4"
+business_function: operations
+notes: >-
+  APPROVAL PENDING (the orchestrator records the approval line). Class: water supply is critical infrastructure, but Annex III 2
+  covers only AI systems used as safety components in its management and operation (Art. 3(14)):
+  this tool supports long-term investment planning, controls nothing, and its failure would not
+  directly endanger people or the network, because operation and leak handling run on separate
+  systems (recital 55). So Art. 6(2) does not apply; no Art. 50 duty: minimal_risk. Role: bought
+  and used under its authority (Art. 3(4)): deployer. Trap: an AI tool at a water utility reads
+  like 2. Doubt: one could argue burst prediction protects the network's physical integrity; read
+  as no, since it only shapes a multi-year plan that people approve.
+tags:
+  - "category:f"
+  - "trap:critical_infrastructure_not_safety_component"
+  - "obligation:art:4:1"

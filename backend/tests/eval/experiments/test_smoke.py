@@ -182,11 +182,13 @@ def test_x2b_probes_prohibited_on_own_c_and_transparency_on_own_a() -> None:
     assert smoke.MAX_OUTPUT_TOKENS[NodeName.TRANSPARENCY] == 4000
 
 
-def test_x2b_run_1_plans_facts_on_all_77_own_cases() -> None:
-    """The DoD's "facts on all own cases": 74 cases the checks use and the 3 thin ones."""
+def test_x2b_run_1_plans_facts_on_all_own_cases_the_checks_use() -> None:
+    """The DoD's "facts on all own cases": 77 cases the checks use (74 at X2b, plus B15's three
+    in own/c; own/f has no check probe) and the 3 thin ones."""
     probes = smoke.plan_probes(nodes=tuple(NodeName))
     facts_cases = {probe.case.id for probe in probes if probe.node is NodeName.FACTS}
-    assert len(facts_cases) == 77
+    assert len(facts_cases) == 80
+    assert not any(case_id.startswith("own-f-") for case_id in facts_cases)
     assert {
         "own-t-01-ai-for-hr",
         "own-t-02-sales-team-ai-tool",
