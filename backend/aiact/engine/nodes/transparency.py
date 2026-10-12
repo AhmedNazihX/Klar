@@ -15,8 +15,9 @@ are applied here, in code:
   paragraph's exceptions takes it out.
 - **Uncertain answers.** A duty the law leaves open makes the step `legally_ambiguous`, a deciding
   fact left open makes it `needs_more_information`; either way the duty is listed as the
-  working assumption. A duty open in law also asks its paragraph's exception, quoting the
-  paragraph, so the result names what would settle it (E17).
+  working assumption. A duty open in law whose exception an answer can settle (Art. 50(1),
+  50(2), and 50(4) for text) also asks that exception, quoting the paragraph, so the result
+  names what would settle it (E17).
 - **The grace period (Art. 111(4)).** A system generating synthetic content that was placed on
   the market before 2 August 2026 has until 2 December 2026 to mark its outputs. The duty is
   listed either way; on a date before that deadline the decision gives it and cites Art. 111(4).
@@ -220,25 +221,28 @@ def _open_question(duty: Duty, state: EngineState, citations: Sequence[Citation]
     does_not = ReadingSide(
         words["does_not_apply"], words["does_not_apply_consequence"], None, duty.provision
     )
-    return open_question(plain, applies, does_not, citations, settled_by=())
+    return open_question(plain, applies, does_not, citations)
 
 
 def _settling_question(
     duty: Duty, language: Language, citations: Sequence[Citation]
-) -> FollowUpQuestion:
+) -> tuple[FollowUpQuestion, ...]:
     """What would settle a duty the law leaves open, as a question the user can answer (E17): the
-    exception its paragraph gives (Art. 50(4)'s human review or editorial control with editorial
-    responsibility, Art. 50(1)'s obvious interaction, Art. 50(2)'s standard editing, the
-    law-enforcement authorisation), quoting the duty's paragraph so the result lists it with the
-    open point. It is asked whatever the model read of the exception: an answer added to the
-    description re-runs the check (decision 019)."""
+    exception an answer can settle (`DutyRule.exception_settles`: Art. 50(4)'s human review or
+    editorial control with editorial responsibility, Art. 50(1)'s obvious interaction, Art.
+    50(2)'s standard editing), quoting the duty's paragraph so the result lists it with the open
+    point; none for a duty without one. It is asked whatever the model read of the exception: an
+    answer added to the description re-runs the check (decision 019)."""
+    if duty.settling is None:
+        return ()
     paragraph = quoted(duty.provision, citations)
-    return ask(
-        duty.exception,
+    question = ask(
+        duty.settling,
         language,
         StepName.TRANSPARENCY,
         citations=(paragraph,) if paragraph else (),
     )
+    return (question,)
 
 
 def _finding(settled: Settlement, language: Language, question: str) -> tuple[str, ...]:
@@ -331,7 +335,7 @@ def to_outcome(
     is_ambiguous = settled.status is Status.LEGALLY_AMBIGUOUS
     opened = settled.opened[0] if is_ambiguous else None
     open_question = _open_question(opened, state, citations) if opened else None
-    settling = (_settling_question(opened, language, citations),) if opened else ()
+    settling = _settling_question(opened, language, citations) if opened else ()
     questions = tuple(ask(key, language, StepName.TRANSPARENCY) for key in settled.missing)
     is_missing = settled.status is Status.NEEDS_MORE_INFORMATION
     missing_fact = questions[0] if is_missing else None
@@ -351,19 +355,8 @@ def to_outcome(
     return CheckOutcome(
         step=step,
         transparency_duties=settled.provisions,
-        follow_up_questions=_each_once(
-            (*settling, *questions, *(grace.questions if grace else ()))
-        ),
+        follow_up_questions=(*settling, *questions, *(grace.questions if grace else ())),
     )
-
-
-def _each_once(questions: Sequence[FollowUpQuestion]) -> tuple[FollowUpQuestion, ...]:
-    """Each question id once, the first kept: the settling question, which quotes its paragraph,
-    wins over the same exception asked as another duty's open fact."""
-    by_id: dict[str, FollowUpQuestion] = {}
-    for question in questions:
-        by_id.setdefault(question.id, question)
-    return tuple(by_id.values())
 
 
 def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:

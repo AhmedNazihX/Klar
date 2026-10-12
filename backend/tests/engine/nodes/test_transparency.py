@@ -517,39 +517,35 @@ def test_the_editorial_exception_is_asked_under_the_original_text() -> None:
 
 
 @pytest.mark.parametrize(
-    ("part", "paragraph", "question_id", "about"),
+    ("part", "paragraph", "question_id"),
     [
-        ("interaction", "art:50:1", "interaction_obvious", "art:50:1"),
-        ("synthetic_content", "art:50:2", "alters_substance", "art:50:2"),
-        ("emotion_biometric", "art:50:3", "authorised_for_law_enforcement", "art:50"),
-        ("deep_fake", "art:50:4", "authorised_for_law_enforcement", "art:50"),
-        ("public_interest_text", "art:50:4", "editorial_control", "art:50:4"),
+        ("interaction", "art:50:1", "interaction_obvious"),
+        ("synthetic_content", "art:50:2", "alters_substance"),
+        ("public_interest_text", "art:50:4", "editorial_control"),
     ],
 )
-def test_each_duty_open_in_law_asks_its_paragraphs_exception(
-    part: str, paragraph: str, question_id: str, about: str
+def test_a_duty_open_in_law_asks_the_exception_that_settles_it(
+    part: str, paragraph: str, question_id: str
 ) -> None:
-    """Every duty's exception, quoting the duty's paragraph: the law-enforcement question is
-    about Art. 50 as a whole (it serves several paragraphs), so its quote links it."""
+    """The duties whose exception an answer settles ask it, about and quoting their paragraph."""
     result = outcome(answer(**{part: unsettled(APPLIES)}))
     (question,) = result.follow_up_questions
-    assert (question.id, question.about) == (question_id, about)
+    assert (question.id, question.about) == (question_id, paragraph)
     assert [c.provision_id for c in question.citations] == [paragraph]
     assert on_open_point(result) == [question_id]
 
 
-def test_the_settling_question_is_asked_once_and_keeps_its_quote() -> None:
-    """The law-enforcement exception, settling an open deep fake and open on a fact for emotion
-    recognition, is asked once, with the quote of the open paragraph."""
-    result = outcome(
-        answer(
-            deep_fake=unsettled(APPLIES),
-            emotion_biometric=duty(Answer.YES, Answer.UNKNOWN),
-        )
-    )
-    (question,) = result.follow_up_questions
-    assert question.id == "authorised_for_law_enforcement"
-    assert [c.provision_id for c in question.citations] == ["art:50:4"]
+@pytest.mark.parametrize("part", ["emotion_biometric", "deep_fake"])
+def test_a_duty_with_only_the_law_enforcement_exception_asks_nothing_to_settle_it(
+    part: str,
+) -> None:
+    """Art. 50(3) and the deep-fake duty: their open point is usually coverage, which the
+    law-enforcement question can't settle, so nothing is listed under "What would settle it"
+    (P30's line points to a lawyer instead)."""
+    result = outcome(answer(**{part: unsettled(APPLIES)}))
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    assert result.follow_up_questions == ()
+    assert on_open_point(result) == []
 
 
 @pytest.mark.parametrize(
