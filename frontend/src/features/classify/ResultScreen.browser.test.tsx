@@ -123,7 +123,7 @@ describe('the step rows on a desktop', () => {
   it.each(['en', 'de'] as const)('keep every citation on one line (%s)', async (language) => {
     await page.viewport(DESKTOP.width, DESKTOP.height)
     await openResult(language)
-    const heading = language === 'en' ? 'How Klar got here' : 'Wie Klar zum Ergebnis kam'
+    const heading = language === 'en' ? 'How Klar got here' : 'So kam Klar zu diesem Ergebnis'
     const section = screen.getByRole('region', { name: heading })
     const references = within(section).getAllByText(/^(Art\.|Annex|Anhang)/)
     expect(references.length).toBeGreaterThan(0)

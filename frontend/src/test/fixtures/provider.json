@@ -1369,7 +1369,7 @@
         "applies_from": "2027-12-02",
         "high_risk_route": "annex_iii",
         "applies_if": "Decisions taken on the basis of the system's output produce legal effects on people or similarly significantly affect them (not for Annex III point 2, critical infrastructure).",
-        "applies_if_de": "Entscheidungen auf Grundlage seiner Ausgaben haben rechtliche Auswirkungen auf Personen oder beeinträchtigen sie ähnlich erheblich (nicht bei Anhang III Nr. 2).",
+        "applies_if_de": "Entscheidungen auf Grundlage der Ausgaben des Systems haben rechtliche Auswirkungen auf Personen oder beeinträchtigen sie ähnlich erheblich (nicht bei Anhang III Nr. 2).",
         "is_informational": false,
         "legacy": null,
         "relief_note": null,

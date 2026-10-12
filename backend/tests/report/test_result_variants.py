@@ -213,7 +213,7 @@ def test_the_german_wording_of_open_and_empty_cases() -> None:
     banned = _report(prohibited_result(), DE)
     assert _grid(banned) == {
         "Einstufung": "Verboten",
-        "Status": "Entschieden",
+        "Status": "Festgestellt",
         "Rolle": "Nicht ermittelt",
         "Pflichten gelten ab": "Keine besonderen Pflichten",
     }

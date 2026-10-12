@@ -47,6 +47,7 @@ export function Citation({ children, language, source, className }: CitationProp
   const [open, close] = QUOTE_MARKS[language]
   const opening = quoteOpening(children)
   const isShortened = opening !== null && !isExpanded
+  const shown = isShortened ? `${opening} …` : children
   return (
     <figure
       className={cn(
@@ -56,9 +57,11 @@ export function Citation({ children, language, source, className }: CitationProp
     >
       <blockquote id={quoteId} lang={language} className="m-0 font-serif text-quote text-ink-2">
         <p className="m-0">
-          {open}
-          {isShortened ? `${opening} …` : children}
-          {close}
+          {/* A mark the official text already has isn't doubled: the German Art. 3 Nr. 4
+              opens with its own „Betreiber“. */}
+          {shown.startsWith(open) ? null : open}
+          {shown}
+          {shown.endsWith(close) ? null : close}
         </p>
       </blockquote>
       {opening !== null && (

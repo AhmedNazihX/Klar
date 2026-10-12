@@ -487,7 +487,7 @@ describe('Inventory, the table', () => {
     ])
     expect(rows[4]?.[4]).toBe('Nur nach einer erheblichen ÄnderungArt. 111 Abs. 2')
     expect(rows[5]?.[4]).toBe('Ab dem 2. Aug. 2030Art. 111 Abs. 2')
-    expect(rows[6]?.slice(3)).toEqual(['Art. 50 Abs. 4', 'Seit dem 2. Aug. 2026', 'Entschieden'])
+    expect(rows[6]?.slice(3)).toEqual(['Art. 50 Abs. 4', 'Seit dem 2. Aug. 2026', 'Festgestellt'])
     expect(rows[7]?.[3]).toBe('Keine besondere Pflicht')
     expect(rows[9]?.[5]).toBe('Noch nicht geprüft')
     expect(rows[10]?.[5]).toBe('Gespeichertes Ergebnis nicht lesbar')

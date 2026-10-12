@@ -233,7 +233,7 @@ def test_a_german_render_uses_german_citation_style_and_terms() -> None:
         f"{COMPANY}. Erstellt am 1. Oktober 2026.",
         "Geprüft nach der Verordnung (EU) 2024/1689 in geänderter Fassung, konsolidierter Text "
         "vom 27. Juli 2026 (CELEX 02024R1689-20260727), wie sie am 27. September 2026 gilt.",
-        "Einstufung Status Rolle Pflichten gelten ab Hochrisiko Entschieden Betreiber "
+        "Einstufung Status Rolle Pflichten gelten ab Hochrisiko Festgestellt Betreiber "
         "2. Dezember 2027",
         "Grundlage Das Tool ist in Anhang III Nr. 4 Buchst. a aufgeführt: Einstellung und "
         "Auswahl von Personen.",

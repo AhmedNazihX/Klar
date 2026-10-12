@@ -47,6 +47,28 @@ describe('Citation', () => {
     expect(await screen.findByText('„Wortlaut“')).toBeInTheDocument()
     expect(screen.queryByText(ENGLISH_ONLY_TAG)).not.toBeInTheDocument()
   })
+
+  it.each([
+    [
+      'de',
+      '„Betreiber“ eine natürliche oder juristische Person',
+      '„Betreiber“ eine natürliche oder juristische Person“',
+    ],
+    ['de', 'die als „Betreiber“ gilt“', '„die als „Betreiber“ gilt“'],
+    [
+      'en',
+      '“deployer” means a natural or legal person',
+      '“deployer” means a natural or legal person”',
+    ],
+  ] as const)(
+    'does not double a quotation mark the %s text already has: %s',
+    async (language, text, shown) => {
+      await i18n.changeLanguage(language)
+      renderWithProviders(<Citation language={language}>{text}</Citation>)
+      const quote = await screen.findByText(shown)
+      expect(quote.closest('blockquote')).toBeInTheDocument()
+    },
+  )
 })
 
 function recordedQuote(provisionId: string): string {

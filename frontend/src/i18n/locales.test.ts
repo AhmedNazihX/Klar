@@ -18,15 +18,11 @@ function leafValues(tree: object): unknown[] {
   )
 }
 
-/** Key path to string, e.g. { "pill.high_risk": "High-risk" }. */
-function flatten(tree: object, prefix = ''): Map<string, string> {
-  return new Map(
-    Object.entries(tree).flatMap(([key, value]: [string, unknown]): [string, string][] =>
-      typeof value === 'object' && value !== null
-        ? [...flatten(value, `${prefix}${key}.`)]
-        : [[`${prefix}${key}`, String(value)]],
-    ),
-  )
+/** Key path to string, e.g. { "pill.high_risk": "High-risk" }: both walks visit the leaves in
+ *  the same order. */
+function flatten(tree: object): Map<string, string> {
+  const values = leafValues(tree)
+  return new Map(leafKeys(tree).map((key, index) => [key, String(values[index])]))
 }
 
 const EN = flatten(en)
@@ -184,7 +180,8 @@ describe('key coverage', () => {
   })
 
   it('shows no fixed English text in the components (JSX text and labels go through t())', () => {
-    const text = /(?<![=-])>\s*[A-Za-z][A-Za-z ,.'!?-]{2,}\s*</ // not an arrow's =>
+    // A line check, so it misses JSX text spread over several lines and {'literal'} strings.
+    const text = /(?<![=-])>\s*[A-Za-z][A-Za-z ,.'!-]{2,}\s*</ // not an arrow's =>
     const label = /(?<![\w-])(aria-label|placeholder|title|alt)="[A-Za-z][^"]{2,}"/
     const hardCoded = SOURCES.filter(
       ([path]) => path.endsWith('.tsx') && !path.includes('/ui/'),

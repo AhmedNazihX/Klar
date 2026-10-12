@@ -68,6 +68,15 @@ describe('parseStoredResult', () => {
     expect(duty.key).toBeUndefined()
   })
 
+  it('keeps a duty condition in both languages, and one stored before P11 without German', () => {
+    const condition = { applies_if: 'You control it.', applies_if_de: 'Sie kontrollieren es.' }
+    expect(parseStoredResult(withFirstDuty(condition))?.obligations?.[0]).toMatchObject(condition)
+    const english = { applies_if: 'You control it.' }
+    const before = parseStoredResult(withFirstDuty(english))?.obligations?.[0]
+    expect(before).toMatchObject(english)
+    expect(before?.applies_if_de).toBeUndefined()
+  })
+
   it('keeps a duty key of 200 characters', () => {
     const key = 'a'.repeat(200)
     expect(parseStoredResult(withFirstDuty({ key }))?.obligations?.[0]?.key).toBe(key)
@@ -91,6 +100,8 @@ describe('parseStoredResult', () => {
     ['a duty key that is no table key', withFirstDuty({ key: 'Drop table;' })],
     ['a duty key past 200 characters', withFirstDuty({ key: 'a'.repeat(201) })],
     ['a duty key that is no text', withFirstDuty({ key: 7 })],
+    ['a condition that is no text', withFirstDuty({ applies_if: 5 })],
+    ['a German condition that is no text', withFirstDuty({ applies_if_de: { x: 1 } })],
     [
       'a CELEX number that is no text',
       { ...WORKED_EXAMPLE, law_text: { ...WORKED_EXAMPLE.law_text, celex: 2024 } },

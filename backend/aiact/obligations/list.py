@@ -36,7 +36,6 @@ from aiact.schemas.base import ContractModel
 from aiact.schemas.obligations import (
     DOCUMENT_KEY_PATTERN,
     OBLIGATION_KEY_PATTERN,
-    STORED_GERMAN_FIELDS,
     STORED_TEXT_FIELDS,
 )
 from aiact.settings import BACKEND_DIR
@@ -216,34 +215,23 @@ def default_table() -> ObligationTable:
     return load_table()
 
 
-def texts_for_stored_duty(
-    article: str, duty: str, english: Mapping[str, object] | None = None
-) -> dict[str, object]:
-    """The fields a stored duty may lack: those of the committed table's entry for `article`
-    (the one with this English `duty` when several share the article), texts
-    (`STORED_TEXT_FIELDS`), `group` and `document`, plus the German twin of each English text
-    in `english` (`applies_if`, `relief_note`: `STORED_GERMAN_FIELDS`) that the entry holds
-    word for word; else `duty` itself for the three texts and no group, document or German
-    twins, e.g. for a duty the table no longer lists."""
+def texts_for_stored_duty(article: str, duty: str) -> dict[str, object]:
+    """The fields a duty stored before C9 lacks: those of the committed table's entry for
+    `article` (the one with this English `duty` when several share the article), texts
+    (`STORED_TEXT_FIELDS`), `group` and `document`; else `duty` itself for the three texts and
+    no group or document, e.g. for a duty the table no longer lists."""
     entries = [entry for entry in default_table().obligations if entry.article == article]
     same_duty = [entry for entry in entries if entry.duty == duty]
     match = same_duty or (entries if len(entries) == 1 else [])
     if not match:
         return dict.fromkeys(STORED_TEXT_FIELDS, duty)
     entry = match[0]
-    stored = english or {}
-    twins = {
-        german: getattr(entry, german)
-        for field, german in STORED_GERMAN_FIELDS.items()
-        if stored.get(field) is not None and stored.get(field) == getattr(entry, field)
-    }
     return {
         "duty_de": entry.duty_de,
         "label_en": entry.label_en,
         "label_de": entry.label_de,
         "group": entry.group,
         "document": entry.document,
-        **twins,
     }
 
 

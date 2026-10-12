@@ -41,13 +41,13 @@ const NAMES = {
   },
   de: {
     back: 'KI-Inventar',
-    law: 'Gesetzesfassung',
+    law: 'Rechtsstand',
     amended: 'Geändert, 2026',
     original: 'Ursprünglich, 2024',
     result: 'Ergebnis',
     todo: 'Was Sie tun müssen',
     facts: 'Das Ergebnis beruht auf',
-    steps: 'Wie Klar zum Ergebnis kam',
+    steps: 'So kam Klar zu diesem Ergebnis',
     composer: 'Frage zu diesem Ergebnis',
     documents: 'Dokumente entwerfen',
   },
@@ -175,6 +175,21 @@ describe('the result at 390 px', () => {
             `${element.tagName} "${element.getAttribute('aria-label') ?? element.textContent}" ${String(Math.round(box.width))}x${String(Math.round(box.height))}`,
         )
       expect(small).toEqual([])
+    },
+  )
+
+  it.each([
+    ['en', 'Show the provision'],
+    ['de', 'Vorschrift zeigen'],
+  ] as const)(
+    'makes a checked step’s provision toggle 44 px tall (%s)',
+    async (language, toggle) => {
+      await openResult(language)
+      const user = userEvent.setup()
+      const steps = screen.getByRole('region', { name: NAMES[language].steps })
+      await user.click(within(steps).getByRole('button', { name: /^4 / }))
+      const button = await within(steps).findByRole('button', { name: toggle })
+      expect(targetBox(button).height).toBeGreaterThanOrEqual(MIN_TARGET_PX)
     },
   )
 

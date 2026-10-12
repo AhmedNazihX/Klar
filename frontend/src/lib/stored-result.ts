@@ -66,6 +66,10 @@ const ObligationSchema = z.looseObject({
   high_risk_route: z.enum(['annex_iii', 'annex_i']).nullish(),
   legacy: z.enum(['legacy_unchanged', 'legacy_public_authority']).nullish(),
   is_informational: z.boolean().optional(),
+  // Its condition, shown as "Only if: …"; the German one came with P11, so a duty stored before
+  // it has none and keeps the English.
+  applies_if: z.string().nullish(),
+  applies_if_de: z.string().nullish(),
 })
 
 const StoredResultSchema = z.looseObject({

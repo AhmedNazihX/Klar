@@ -1020,7 +1020,7 @@ export type Obligation = {
     /**
      * Applies If De
      *
-     * The condition in German; set wherever `applies_if` is, except on a stored duty whose English condition the current table no longer holds.
+     * The condition in German (P11), from the table; the table sets it wherever it sets `applies_if`. None on a duty stored before P11.
      */
     applies_if_de?: string | null;
     /**
@@ -1042,7 +1042,7 @@ export type Obligation = {
     /**
      * Relief Note De
      *
-     * The relief in German; set wherever `relief_note` is, except on a stored duty whose English relief the current table no longer holds.
+     * The relief in German (P11), from the table; the table sets it wherever it sets `relief_note`. None on a duty stored before P11.
      */
     relief_note_de?: string | null;
     /**

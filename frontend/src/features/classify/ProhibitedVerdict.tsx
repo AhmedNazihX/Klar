@@ -14,6 +14,8 @@ import { provisionName } from './provision-names'
 
 /** The Art. 5(1) points with a plain-words line (P11, from P21's UI review): every point of the
  *  amended text's list. */
+const NO_BREAK_SPACE = '\u00a0'
+
 const PRACTICES = ['a', 'b', 'ba', 'bb', 'c', 'd', 'e', 'f', 'g', 'h'] as const
 type Practice = (typeof PRACTICES)[number]
 
@@ -24,7 +26,8 @@ function isPractice(letter: string): letter is Practice {
 /** A ban point in plain words with its reference ("recognising emotions … (Art. 5(1)(f))"), or
  *  the reference alone for a point without a line. */
 function pointLine(t: TFunction, point: string, language: Language): string {
-  const reference = provisionName(point, language)
+  // No-break spaces: a citation never breaks across lines (localisation.md), even on a phone.
+  const reference = provisionName(point, language).replaceAll(' ', NO_BREAK_SPACE)
   const letter = point.split(':').at(-1) ?? ''
   if (!isPractice(letter)) return reference
   return t('prohibited.pointLine', {
