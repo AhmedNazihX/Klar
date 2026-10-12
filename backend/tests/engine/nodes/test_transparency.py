@@ -1135,8 +1135,11 @@ E18_RULES = (
     "Staff are one such reason when the description shows all three: they are properly trained, "
     "they are AI literate, and they are aware that they use an AI system; and nothing exposes the "
     "general public or vulnerable people to it.",
-    "A mandatory training on the AI tools the staff use can show all three together.",
-    "A professional or specialised audience, as above, stays a reason of its own.",
+    "Training on the AI system itself (what it is and how it works) can show all three together.",
+    "A professional or specialised audience stays a reason of its own only when its expertise lies "
+    "in the field the system works in, so that by that expertise and the context of use they can "
+    "tell they deal with an AI system; being an organisation's employees doesn't make its staff "
+    "such an audience by itself.",
     "That the tool is internal, or that its users know it is AI, is not enough on its own: answer "
     '"no" unless another reason above applies.',
 )

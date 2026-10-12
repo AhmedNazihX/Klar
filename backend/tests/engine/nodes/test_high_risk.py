@@ -1731,9 +1731,9 @@ def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskChec
 
 
 E18_POSITIVE_CASES = negative_cases("h4-positive")
-"""H4's counterweight: a component in a gas network whose own output detects a dangerous
-condition and stops the operation is a safety component (guide-annex-iii para 184), so the H4
-rule must keep it under Annex III point 2."""
+"""H4's counterweight: a component on a road bridge whose own output detects that a load-bearing
+part needs inspection, and closes the lane until it is done, is a safety component (guide-annex-iii
+para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2."""
 
 
 @pytest.mark.xfail(
@@ -1761,7 +1761,7 @@ def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskChec
 
 def test_h4_has_its_positive_fixture() -> None:
     assert [case.id for case in E18_POSITIVE_CASES] == [
-        "fixture-e18-h4-positive-gas-station-shutoff"
+        "fixture-e18-h4-positive-bridge-bearing-wear"
     ]
 
 
@@ -1779,11 +1779,12 @@ E18_RULES = (
     "- 2 needs a safety component (Art. 3(14))",
     'is not one: answer `uses` "no" for point 2.',
     "Decide by what the system's own output does.",
-    "A component in the infrastructure whose output detects a dangerous situation, or detects the "
-    "need for maintenance or inspection whose omission may directly lead to physical harm to "
-    "natural persons or damage to property, is a safety component, and so is one whose output "
-    "prevents, controls or limits such harm (for example by stopping an operation): answer `uses` "
-    '"yes" for point 2.',
+    "A component in the infrastructure whose output detects a dangerous situation that may "
+    "directly lead to physical harm to natural persons or damage to property, or detects the need "
+    "for maintenance or inspection whose omission may directly lead to such harm or damage, is a "
+    "safety component, and so is one whose output prevents, controls or limits such harm (for "
+    'example by stopping an operation): answer `uses` "yes" for point 2.',
+    "A component used solely for cybersecurity purposes is not a safety component (recital 55).",
     # H5 (Art. 6(1)(a), Annex I Section A point 6)
     "The Radio Equipment Directive (`annex:I:A:6`) is the AI system's route only when",
     "Software supplied on its own that only runs on, or connects to, a phone, a router or another "

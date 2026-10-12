@@ -85,10 +85,13 @@ and do not ask for a fact the description already gives.
   people who use the system, about the nature of the interaction. Staff are one such reason when
   the description shows all three: they are properly trained, they are AI literate, and they
   are aware that they use an AI system; and nothing exposes the general public or vulnerable
-  people to it. A mandatory training on the AI tools the staff use can show all three together.
-  Then answer "yes" with evidence "stated" or "inferred". A professional or specialised
-  audience, as above, stays a reason of its own. That the tool is internal, or that its users
-  know it is AI, is not enough on its own: answer "no" unless another reason above applies.
+  people to it. Training on the AI system itself (what it is and how it works) can show all
+  three together. Then answer "yes" with evidence "stated" or "inferred". A professional or
+  specialised audience stays a reason of its own only when its expertise lies in the field the
+  system works in, so that by that expertise and the context of use they can tell they deal
+  with an AI system; being an organisation's employees doesn't make its staff such an audience
+  by itself. That the tool is internal, or that its users know it is AI, is not enough on its
+  own: answer "no" unless another reason above applies.
   When the description names the people who interact and gives no such
   reason, answer "no" with evidence "inferred"; an audience of the general public or of consumers,
   with nothing more, is the clear "no" case. Answer "unknown" only when the description really

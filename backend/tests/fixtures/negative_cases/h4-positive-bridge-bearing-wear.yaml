@@ -1,0 +1,28 @@
+# E18 positive counterpart to the H4 fixture, written from Annex III point 2, Art. 3(14) and guide
+# para 184(b) and (c) only: not a benchmark case, never scored. Its own output detects a needed
+# inspection of a load-bearing part on a road bridge and acts on it, so it stays high-risk.
+id: fixture-e18-h4-positive-bridge-bearing-wear
+set_name: own
+language: en
+description: >-
+  We operate a motorway concession with four long river bridges. Since 2025 strain gauges,
+  accelerometers and cameras on the bearings and expansion joints of each bridge have fed a model
+  we bought from an engineering software house. The model estimates how far each bearing and
+  joint has worn and spots fresh cracks in them. When it judges that a part needs checking, it
+  books an inspection crew in our maintenance system and, through the traffic control system,
+  closes the lane above that part until the crew has signed the inspection off.
+label:
+  risk_class: high_risk
+  role: deployer
+label_citation: ["annex:III:2", "art:3:14", "art:6:2", "guide:guide-high-risk-annex-iii:para:184"]
+notes: >-
+  H4, positive side: the model is a component in the management and operation of road traffic
+  infrastructure. Its own output detects that a load-bearing part needs inspection, and a missed
+  inspection of a worn or cracked bearing could, without anything in between, hurt road users or
+  damage the bridge (guide para 184(b)); it also closes the lane itself until the check is
+  done (para 184(c)). In Art. 3(14)'s sense it is therefore a safety component, so Annex III
+  point 2 applies (Art. 6(2)). It profiles nobody and acts on its own output, so no Art. 6(3)
+  condition. Deployer of a bought model (Art. 3(4)).
+tags:
+  - "fixture:e18"
+  - "cause:h4-positive"
