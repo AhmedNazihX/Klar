@@ -54,6 +54,7 @@ from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
 from aiact.eval.experiments.matchers import (
     EXEMPTION_TRAP,
+    case_label,
     high_risk_matches,
     high_risk_or_exempt_matches,
     replay_state,
@@ -1760,16 +1761,28 @@ def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     assert high_risk_matches(result, WORKED_EXAMPLE_CASE)
 
 
+def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """High-risk assumed on the case's Annex I point, asking whether a third-party conformity
+    assessment is required (Art. 6(1)(b))."""
+    missing = result.step.missing_fact
+    return (
+        result.step.status is Status.NEEDS_MORE_INFORMATION
+        and result.high_risk_route is HighRiskRoute.ANNEX_I
+        and result.annex_point in case_label(case).annex_point
+        and missing is not None
+        and missing.id == "third_party_assessment"
+        and missing.about == "art:6:1:b"
+    )
+
+
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-e-10-in-house-nodule-finder": KnownGap(
-        "E18's re-record with the 10000-token cap (2026-10-12): the model decides not high-risk "
-        "(not an Annex I product needing a third-party assessment), a false low risk against the "
-        "legally_ambiguous MDR in-house exemption; the previous recording asked the "
-        "third-party-assessment question, so likely run-to-run variance; diagnose first in E19 "
-        "(user, 2026-10-12: known gap, no more runs in E18)",
-        lambda result, case: (
-            result.high_risk_route is None and result.step.status is Status.DECIDED
-        ),
+        "E19's re-record (2026-10-12): high-risk is assumed on the Annex I route (MDR, "
+        "annex:I:A:11) until the third-party-assessment question is answered "
+        "(needs_more_information), where the label leaves the MDR in-house exemption legally "
+        "ambiguous; the miss is the status only, no longer a false low risk (E18's recording "
+        "decided not high-risk)",
+        _asks_for_third_party_assessment,
     ),
 }
 """Recorded cases whose high-risk outcome differs from the label, with the reason and the
@@ -1778,8 +1791,17 @@ reading they give instead; each fails when it starts matching, so the entry is r
 
 MEDICAL_DEVICES = "(EU) 2017/745"
 """The Medical Device Regulation, as both languages name it."""
+MDR_HIGH_RISK = AnswerOutcome(
+    risk_class=RiskClass.HIGH_RISK,
+    high_risk_route=HighRiskRoute.ANNEX_I,
+    provision_id="annex:I:A:11",
+    duties_from=date(2028, 8, 2),
+)
+"""What a yes to own-e-10's third-party question settles: high-risk under the MDR, its duties
+from the Annex I date (E12 DoD, restored by E19 once the step asks it again)."""
 PRODUCT_LAW_QUESTIONS: dict[str, tuple[str, AnswerOutcome | None]] = {
     "own-e-08-heart-rhythm-app": ("intended_purpose", None),  # a second Annex I fact is open
+    "own-e-10-in-house-nodule-finder": ("third_party_assessment", MDR_HIGH_RISK),
 }
 """Recorded cases whose step asks an Annex I question, and what a yes settles (E12 DoD)."""
 AMBIGUOUS_CASE = "own-e-09-ropeway-wear-forecast"
