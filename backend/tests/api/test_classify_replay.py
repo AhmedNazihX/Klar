@@ -122,6 +122,13 @@ def test_other_runs_are_not_pending(events: list[ClassifyEvent], log: str) -> No
     raise_if_recording_stale(events, log)
 
 
+@pytest.mark.xfail(
+    strict=True,
+    raises=RecordingPendingError,
+    reason="recording pending (orchestrator): E19 changed the prohibited, high-risk and "
+    "transparency prompts, so the worked example's recorded requests are stale and the stream "
+    "ends in an error event; passes once its RECORD_COMMAND re-records that replay",
+)
 @pytest.mark.vcr
 @pytest.mark.anyio
 async def test_the_worked_example_streams_every_step_then_the_expected_result(

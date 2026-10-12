@@ -18,6 +18,7 @@ import pytest
 
 from aiact.db import connect
 from aiact.engine import (
+    ClassificationFailedError,
     ClassificationRun,
     ClassifyRequest,
     run_classification,
@@ -341,6 +342,15 @@ def luna_settings(openrouter_settings: Settings) -> Settings:
     )
 
 
+E19_RECORDING_PENDING = pytest.mark.xfail(
+    strict=True,
+    raises=ClassificationFailedError,
+    reason="recording pending (orchestrator): E19 changed the prohibited, high-risk and "
+    "transparency prompts, so the recorded requests are stale; delete and re-record",
+)
+"""The worked example's replays until the orchestrator re-records them (BACKLOG > E19)."""
+
+
 @pytest.fixture
 def replay_nodes(
     luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
@@ -359,6 +369,7 @@ def replay_nodes(
         )
 
 
+@E19_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
     run = run_classification(

@@ -79,11 +79,13 @@ from tests.engine.built_corpus import (
 )
 from tests.engine.nodes.corpus_recording import (
     CorpusRecording,
+    RecordingPendingError,
     corpus_recording,
     lookup_call,
     require_recording,
 )
 from tests.engine.nodes.known_gaps import (
+    E19_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1511,6 +1513,7 @@ def replay_check(
         yield check
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
@@ -1592,6 +1595,7 @@ def assert_the_screens_fields(
         assert [item.kind for item in question.settled_by] == [SettledByKind.GUIDANCE]
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1647,6 +1651,7 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
     return result
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_machinery_guard_is_annex_i_section_a(
     original_replay_check: HighRiskCheck,
@@ -1664,6 +1669,7 @@ def test_replay_original_machinery_guard_is_annex_i_section_a(
     assert "Art. 2 Abs. 2" not in step.decision, shown  # the case is German
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     original_replay_check: HighRiskCheck,
@@ -1714,6 +1720,7 @@ def e18_replay_check(
         yield check
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
 def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
@@ -1737,6 +1744,7 @@ part needs inspection, and closes the lane until it is done, is a safety compone
 para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2."""
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_POSITIVE_CASES, ids=lambda case: case.id)
 def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
@@ -1797,3 +1805,142 @@ def test_the_prompt_states_the_e18_rules() -> None:
 
 def test_each_high_risk_cause_has_its_fixture() -> None:
     assert [case.id for case in E18_CASES] == list(NOT_THE_ROUTE)
+
+
+# --- E19: own/f, the larger over-strict groups on Annex III (B15's cases) ----------------------
+#
+# B15's Annex III negatives and their profiling counterpart: H1 (own-f-01, 02: the area but not
+# the listed use or user), H2 (own-f-03, 04, 05: an Art. 6(3) condition met on the facts), H3
+# (own-f-06: evaluating workers is profiling, so high-risk) and H4 (own-f-07, 08, 09: no safety
+# component of critical infrastructure).
+
+OWN_F_CASES_DIR = CASES_DIR / CaseSet.OWN.value / "f"
+OWN_F_CASES = [
+    case for path in sorted(OWN_F_CASES_DIR.glob("*.yaml")) for case in load_yaml_file(path)
+]
+OWN_F_RECORD_COMMAND = (
+    "uv run pytest tests/engine/nodes/test_high_risk.py -k own_f_replay --record-mode=once"
+)
+EXEMPTION_TRAP = "trap:art_6_3_exemption"
+
+
+def own_f_matches(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """`high_risk_matches`, except that a case whose label rests on an Art. 6(3) condition
+    (`trap:art_6_3_exemption`) also matches when the step decides the system exempt on one of
+    its labelled Annex III points, citing an Art. 6(3) condition: `high_risk_matches` counts any
+    exemption as a miss for a label that is not high-risk."""
+    if high_risk_matches(result, case):
+        return True
+    if EXEMPTION_TRAP not in case.tags or not result.annex_iii_exempt:
+        return False
+    points = {pid for pid in case.label_citation if pid.startswith("annex:III:")}
+    shown = set(cited(result))  # an exempt step names its point by citing it
+    return (
+        result.high_risk_route is None
+        and result.step.status is Status.DECIDED
+        and bool(points & shown)
+        and any(pid.startswith("art:6:3:") for pid in shown)
+    )
+
+
+@pytest.fixture
+def own_f_replay_check(
+    luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
+) -> Iterator[HighRiskCheck]:
+    """`replay_check` for own/f: a missing recording raises `RecordingPendingError` (its strict
+    xfail) rather than skipping."""
+    require_recording(vcr_cassette_dir, default_cassette_name, record_mode)
+    with _recorded_check(
+        luna_settings, record_mode, vcr_cassette_dir, default_cassette_name, OWN_F_RECORD_COMMAND
+    ) as check:
+        yield check
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=RecordingPendingError,
+    reason="recording pending (orchestrator): E19's new own/f replay; record it with "
+    f"`{OWN_F_RECORD_COMMAND}`",
+)
+@pytest.mark.vcr
+@pytest.mark.parametrize("case", OWN_F_CASES, ids=lambda case: case.id)
+def test_own_f_replay(case: BenchmarkCase, own_f_replay_check: HighRiskCheck) -> None:
+    """Each own/f case against its label: never high-risk on an area alone, an Art. 6(3)
+    condition applied to the facts rather than held open, profiling kept high-risk."""
+    run_state = replay_state(case, AS_OF)
+    result = own_f_replay_check(run_state)
+    assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
+    step = result.step
+    shown = (result.high_risk_route, result.annex_point, step.status, cited(result), step.decision)
+    assert own_f_matches(result, case), shown
+
+
+def test_own_f_holds_b15s_nine_cases() -> None:
+    """The replay's set: B15's nine Annex III cases, each cause with its cases."""
+    assert [case.id[: len("own-f-01")] for case in OWN_F_CASES] == [
+        f"own-f-{n:02d}" for n in range(1, 10)
+    ]
+    tags = [tag for case in OWN_F_CASES for tag in case.tags if tag.startswith("trap:")]
+    assert tags.count(EXEMPTION_TRAP) == 3
+    assert tags.count("trap:annex_iii_area_not_use") == 2
+    assert tags.count("trap:art_6_3_profiling") == 1
+    assert tags.count("trap:critical_infrastructure_not_safety_component") == 3
+
+
+def _exemption_case(tags: tuple[str, ...]) -> BenchmarkCase:
+    return BenchmarkCase.model_validate(
+        {
+            "id": "own-f-90-invented",
+            "set_name": "own",
+            "language": "en",
+            "description": PUMP_TOOL,
+            "label": {"risk_class": "minimal_risk", "role": "deployer"},
+            "label_citation": ["annex:III:4:b", "art:6:3", "art:6:3:c"],
+            "tags": list(tags),
+        }
+    )
+
+
+def test_an_exemption_case_matches_only_an_exempt_step_on_its_point() -> None:
+    case = _exemption_case((EXEMPTION_TRAP,))
+    exempt = outcome(answer(annex_iii("annex:III:4:b", YES), art_6_3(Art63Condition.C)))
+    assert exempt.annex_iii_exempt
+    assert own_f_matches(exempt, case)
+    assert not own_f_matches(exempt, _exemption_case(()))
+    elsewhere = outcome(answer(annex_iii("annex:III:4:a", YES), art_6_3(Art63Condition.C)))
+    assert not own_f_matches(elsewhere, case)
+    profiling = art_6_3(Art63Condition.C, profiling=YES)
+    assert not own_f_matches(outcome(answer(annex_iii("annex:III:4:b", YES), profiling)), case)
+    assert own_f_matches(outcome(answer()), case)
+
+
+E19_RULES = (
+    # The bar for an open question of law, and the stricter reading of a condition held open
+    'An open question of law has a bar. Answer a route\'s `settled_in_law` "no" only when you '
+    "can name the condition of Article 6 or of the Annex point whose reading is undecided for "
+    "these facts",
+    'being unsure, or wanting to be safe, is never a reason to answer "no".',
+    'A fact the description leaves open is answered "unknown", and the application asks for it.',
+    'answer the condition the question is about on its stricter reading, "yes"',
+    'A key fact answered "no" settles its route as not met, whatever `settled_in_law` says.',
+    # H1 (guide-annex-iii paras 65, 72, 81)
+    "An Annex III point covers the use it lists, not its whole area",
+    "A point that names its user (5(a), 6, 7, 8(a)) doesn't apply to a system used by anyone "
+    'else: answer `public_authority` "no".',
+    "does not act on behalf of a public authority (paragraph 81).",
+    # H2 (Art. 6(3), recital 53; guide-annex-iii paras 88-108)
+    "Apply the conditions to the facts the description gives: whether the system's task is one "
+    'of them is a reading of those facts, answered in `condition` with `settled_in_law` "yes", '
+    "not a question of law.",
+    # H3 (Art. 3(52), Art. 4(4) GDPR; guide-annex-iii paras 110-112)
+    "Reading, extracting, matching or filing a person's documents or records, or sorting people "
+    "by a simple characteristic such as age, without evaluating them, is not profiling",
+)
+"""E19's bar and its H1-H3 rules, as high_risk.md words them."""
+
+
+def test_the_prompt_states_the_e19_rules() -> None:
+    flat = " ".join(node.HIGH_RISK_INSTRUCTIONS.split())
+    for rule in E19_RULES:
+        assert rule in flat

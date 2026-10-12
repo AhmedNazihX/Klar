@@ -78,6 +78,7 @@ from tests.engine.nodes.corpus_recording import (
     require_recording,
 )
 from tests.engine.nodes.known_gaps import (
+    E19_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1180,6 +1181,7 @@ def _shown(result: CheckOutcome) -> object:
     return (result.transparency_duties, step.status, cited(result), step.decision)
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1225,6 +1227,7 @@ E17_RECORD_COMMAND = (
 )
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_an_answered_editorial_exception_settles_art_50_4(
     luna_settings: Settings,
@@ -1272,6 +1275,7 @@ E18_RECORD_COMMAND = (
 )
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
 def test_e18_negative_replay(
@@ -1337,6 +1341,21 @@ E18_RULES = (
 def test_the_prompt_states_the_e18_rules() -> None:
     flat = " ".join(node.TRANSPARENCY_INSTRUCTIONS.split())
     for rule in E18_RULES:
+        assert rule in flat
+
+
+E19_BAR = (
+    '"no" only when they leave it open, by the bar below.',
+    'An open question of law has a bar. Answer `settled_in_law` "no" only when you can name the '
+    "condition or exception of Article 50 whose reading is undecided for these facts",
+    'being unsure, or wanting to be safe, is never a reason to answer "no".',
+)
+"""E19's bar for an open question of law, as transparency.md words it."""
+
+
+def test_the_prompt_states_the_e19_bar() -> None:
+    flat = " ".join(node.TRANSPARENCY_INSTRUCTIONS.split())
+    for rule in E19_BAR:
         assert rule in flat
 
 

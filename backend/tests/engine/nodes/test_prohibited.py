@@ -77,6 +77,7 @@ from tests.engine.nodes.corpus_recording import (
     corpus_recording,
 )
 from tests.engine.nodes.known_gaps import (
+    E19_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -477,6 +478,12 @@ def test_social_scoring_with_neither_alternative_met_is_not_open() -> None:
             id="a-harm-no",
         ),
         pytest.param(
+            VulnerabilityAnswer,
+            {"exploits_vulnerability": Answer.YES, "significant_harm": Answer.YES},
+            "(b)",
+            id="b-no-distortion",
+        ),
+        pytest.param(
             CrimeRiskAnswer,
             {"crime_risk_assessment": Answer.YES},
             "(d)",
@@ -498,6 +505,12 @@ def test_social_scoring_with_neither_alternative_met_is_not_open() -> None:
             "(g)",
             id="g-no-listed-trait",
         ),
+        pytest.param(
+            RemoteIdentificationAnswer,
+            {"real_time_identification": Answer.YES},
+            "(h)",
+            id="h-not-law-enforcement",
+        ),
     ],
 )
 def test_a_practice_a_condition_rules_out_is_not_held_open(
@@ -510,6 +523,15 @@ def test_a_practice_a_condition_rules_out_is_not_held_open(
     assert result.step.status is Status.DECIDED
     assert result.step.open_question is None
     assert f"Considered Art. 5(1){point}" in result.step.decision
+
+
+def test_point_ba_with_consent_is_not_held_open() -> None:
+    """(ba) after 2 December 2026: consent answered "yes" rules it out, even when unsettled."""
+    consented = unsettled(UNDRESSING_APP.model_copy(update={"consent": Answer.YES}))
+    result = outcome(answer(consented), state(as_of=AFTER_DECEMBER))
+    assert not result.matched
+    assert result.step.status is Status.DECIDED
+    assert result.step.open_question is None
 
 
 def test_a_practice_whose_conditions_all_hold_stays_open_when_the_law_leaves_it_open() -> None:
@@ -964,6 +986,43 @@ def test_the_prompt_defaults_only_the_two_treatment_conditions() -> None:
     assert "Answer `social_scoring` on its own definition" in flat
 
 
+E19_RULES = (
+    # The bar for an open question of law, and the stricter reading of a condition held open
+    'An open question of law has a bar. Answer `settled_in_law` "no" only when you can name the '
+    "condition of Article 5 whose reading is undecided for these facts",
+    'being unsure, or wanting to be safe, is never a reason to answer "no".',
+    'A fact the description leaves open is answered "unknown", and the application asks for it.',
+    'answer that condition on its stricter reading: "yes" for a condition of the practice, "no" '
+    "for an exception.",
+    'A condition answered against the practice ("no" for a condition, "yes" for an exception) '
+    "settles it as not met, whatever `settled_in_law` says.",
+    'answer `significant_harm` "yes", its stricter reading, and `settled_in_law` "no".',
+    # P1 (Art. 5(1)(c); guidelines paras 164, 175-177)
+    "A score is not social scoring under point (c) because it scores people and has a "
+    "consequence: point (c) needs the treatment of (i) or (ii)",
+    'For such a score answer (i) and (ii) "no", with `settled_in_law` "yes"',
+    # P2 (Art. 5(1)(d), recital 42; guidelines paras 199-202, 208-215)
+    "A prediction about places or areas rather than persons (guidelines, paragraph 212)",
+    "where an offence is at most an incidental side of the risk assessed",
+    '"no" when other real, substantial and meaningful elements carry the assessment',
+    # P3 (Art. 5(1)(f) and (g), recital 18; guidelines paras 249-283)
+    "Physical states such as pain or fatigue",
+    "also when staff are caught by a system that is not aimed at them",
+    "safety means protecting life and health, not property",
+    "Grouping people by their clothes or accessories, their social media activity, or what they "
+    "say, write or buy is not based on biometric data",
+    "Only these count: categories such as age, gender, skin or eye colour, health or emotions are "
+    '"no"',
+)
+"""E19's bar and its P1-P3 rules, as prohibited.md words them."""
+
+
+def test_the_prompt_states_the_e19_rules() -> None:
+    flat = " ".join(node.PROHIBITED_INSTRUCTIONS.split())
+    for rule in E19_RULES:
+        assert rule in flat
+
+
 def test_the_prompt_leaves_dates_to_the_application() -> None:
     """The model never sees `as_of`, so the prefix stays the same for every date."""
     early = node.prohibited_messages(state(as_of=BEFORE_DECEMBER), _retrieved())
@@ -1275,6 +1334,7 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
         yield GuidelineCorpus(connection, OpenRouterEmbeddings(settings=settings), node.SOURCE)
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1318,6 +1378,7 @@ DECEMBER_PROVISIONS = ("art:5:1:ba", "art:5:1:bb", "art:5:1a", "art:5:1b", "art:
 """What only the December 2026 prohibitions cite: the points, the routes and their date."""
 
 
+@E19_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_text_reads_no_december_point(
     luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str

@@ -13,9 +13,21 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+from openrouter.utils.retries import PermanentError
+from vcr.errors import CannotOverwriteExistingCassetteException
 
 from aiact.engine.state import CheckOutcome
 from aiact.eval.cases import BenchmarkCase, load_yaml_file
+
+E19_PROMPTS_RECORDING_PENDING = pytest.mark.xfail(
+    strict=True,
+    raises=(CannotOverwriteExistingCassetteException, PermanentError),
+    reason="recording pending (orchestrator): E19 changed the prohibited, high-risk and "
+    "transparency prompts (the bar for an open question of law and the over-strictness rules), "
+    "so the recorded requests are stale; delete and re-record",
+)
+"""The replays whose recorded request E19's prompt rules changed, until the orchestrator
+re-records them (BACKLOG > E19)."""
 
 NEGATIVE_CASES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "negative_cases"
 """E18's negative fixtures: cases written from the Act's conditions for a provision that does

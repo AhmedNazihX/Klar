@@ -30,6 +30,7 @@ from tests.conftest import RECORDINGS_DIR, REFUSAL_ROUTE
 from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import corpus_recording
 from tests.engine.test_classify_worked_example import (
+    E19_RECORDING_PENDING,
     LUNA,
     LUNA_PROVIDER,
     RECORD_COMMAND,
@@ -288,6 +289,7 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
         )
 
 
+@E19_RECORDING_PENDING
 @pytest.mark.vcr(allow_playback_repeats=True)
 @pytest.mark.usefixtures("no_automatic_gc")
 def test_repeated_classifications_leave_no_http_clients_behind(
