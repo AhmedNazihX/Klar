@@ -1132,11 +1132,13 @@ E18_RULES = (
     'types) is "no"',
     "For a tool used only by an organisation's own staff, always weigh this exception, and read "
     "it restrictively: it holds only when almost no doubt is left",
-    "Staff are such a reason only when the description shows all three: they are properly "
-    "trained, they are AI literate, and they are aware that they use an AI system; and nothing "
-    "exposes the general public or vulnerable people to it.",
+    "Staff are one such reason when the description shows all three: they are properly trained, "
+    "they are AI literate, and they are aware that they use an AI system; and nothing exposes the "
+    "general public or vulnerable people to it.",
+    "A mandatory training on the AI tools the staff use can show all three together.",
+    "A professional or specialised audience, as above, stays a reason of its own.",
     "That the tool is internal, or that its users know it is AI, is not enough on its own: answer "
-    '"no".',
+    '"no" unless another reason above applies.',
 )
 """E18's T1, T2 and T3 rules with their supporting clauses, as transparency.md words them."""
 

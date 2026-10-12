@@ -1674,12 +1674,13 @@ def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     assert not any(name in step.decision for name in OMNIBUS_PARAGRAPHS), shown
 
 
-# --- E18 negative fixtures: the high-risk over-strictness causes (H4, H5, H6) ------------------
+# --- E18 fixtures: the high-risk over-strictness causes (H4, H5, H6), and H4's positive side ---
 #
 # Record them with `E18_RECORD_COMMAND`.
 
 E18_RECORD_COMMAND = (
-    "uv run pytest tests/engine/nodes/test_high_risk.py -k e18_negative --record-mode=once"
+    "uv run pytest tests/engine/nodes/test_high_risk.py -k 'e18_negative or e18_positive' "
+    "--record-mode=once"
 )
 E18_CASES = [*negative_cases("h4"), *negative_cases("h5"), *negative_cases("h6")]
 NOT_THE_ROUTE: dict[str, str] = {
@@ -1709,7 +1710,7 @@ def e18_replay_check(
 @pytest.mark.xfail(
     strict=True,
     raises=RecordingPendingError,
-    reason="recording pending (orchestrator): E18's new negative fixtures; record them with "
+    reason="recording pending (orchestrator): E18's new fixtures; record them with "
     f"`{E18_RECORD_COMMAND}`",
 )
 @pytest.mark.vcr
@@ -1729,6 +1730,41 @@ def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskChec
     assert NOT_THE_ROUTE[case.id] not in cited(result), shown
 
 
+E18_POSITIVE_CASES = negative_cases("h4-positive")
+"""H4's counterweight: a component in a gas network whose own output detects a dangerous
+condition and stops the operation is a safety component (guide-annex-iii para 184), so the H4
+rule must keep it under Annex III point 2."""
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=RecordingPendingError,
+    reason="recording pending (orchestrator): E18's new fixtures; record them with "
+    f"`{E18_RECORD_COMMAND}`",
+)
+@pytest.mark.vcr
+@pytest.mark.parametrize("case", E18_POSITIVE_CASES, ids=lambda case: case.id)
+def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
+    """The H4 counterpart is decided high-risk through Annex III point 2, with no Art. 6(3)
+    exemption."""
+    run_state = replay_state(case, AS_OF)
+    result = e18_replay_check(run_state)
+    assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
+    step = result.step
+    shown = (result.high_risk_route, result.annex_point, step.status, cited(result), step.decision)
+    assert result.high_risk_route is HighRiskRoute.ANNEX_III, shown
+    assert result.annex_point == "annex:III:2", shown
+    assert not result.annex_iii_exempt, shown
+    assert step.status is Status.DECIDED, shown
+
+
+def test_h4_has_its_positive_fixture() -> None:
+    assert [case.id for case in E18_POSITIVE_CASES] == [
+        "fixture-e18-h4-positive-gas-station-shutoff"
+    ]
+
+
 E18_RULES = (
     # H6 (Annex III point 1(b), Art. 3(40); guide-annex-iii para 167)
     "- 1(b) is biometric categorisation according to sensitive or protected attributes",
@@ -1742,11 +1778,12 @@ E18_RULES = (
     # H4 (Annex III point 2, Art. 3(14); guide-annex-iii para 184, ex:065, ex:068)
     "- 2 needs a safety component (Art. 3(14))",
     'is not one: answer `uses` "no" for point 2.',
-    "A component in the infrastructure that monitors and detects dangerous situations, or the "
+    "Decide by what the system's own output does.",
+    "A component in the infrastructure whose output detects a dangerous situation, or detects the "
     "need for maintenance or inspection whose omission may directly lead to physical harm to "
-    "people or damage to property, can be one.",
-    "A predictive-maintenance or planning tool that is only one precaution among other safety "
-    "measures, which keep working without it, is not one.",
+    "natural persons or damage to property, is a safety component, and so is one whose output "
+    "prevents, controls or limits such harm (for example by stopping an operation): answer `uses` "
+    '"yes" for point 2.',
     # H5 (Art. 6(1)(a), Annex I Section A point 6)
     "The Radio Equipment Directive (`annex:I:A:6`) is the AI system's route only when",
     "Software supplied on its own that only runs on, or connects to, a phone, a router or another "

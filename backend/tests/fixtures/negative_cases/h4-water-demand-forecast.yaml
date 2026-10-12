@@ -16,14 +16,14 @@ description: >-
 label:
   risk_class: minimal_risk
   role: deployer
-label_citation: ["annex:III:2", "art:3:14", "recital:55"]
+label_citation: ["annex:III:2", "art:3:14", "recital:55", "guide:guide-high-risk-annex-iii:para:181"]
 notes: >-
   H4: a long-term demand forecast for investment planning supports and organises the supply of
-  water. Under Art. 3(14), it is not a component which fulfils a safety function, nor one the
-  failure or malfunctioning of which endangers the health and safety of persons or property, so it
-  does not count as a safety component in the management and operation of the water supply, and
-  not Annex III point 2 (recital 55: safety components directly protect the infrastructure's
-  physical integrity). Deployer of a bought tool (Art. 3(4)).
+  water. Its output detects no dangerous situation and no need for maintenance, and a wrong
+  forecast only moves an investment in time, so under Art. 3(14) it does not count as a safety
+  component in running the water supply and is not Annex III point 2 (guide para 181 leaves out
+  tools that only support, inform, organise or optimise; recital 55: safety components directly
+  protect the infrastructure's physical integrity). Deployer of a bought tool (Art. 3(4)).
 tags:
   - "fixture:e18"
   - "cause:h4"

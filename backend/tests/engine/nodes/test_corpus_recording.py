@@ -14,7 +14,13 @@ from aiact.eval.cases import CASES_DIR, CaseSet, load_yaml_file
 from aiact.retrieval.provisions import Provision, ProvisionNotFoundError
 from aiact.schemas import DISCLAIMER, DocumentStatus, Language, LawVersion
 from tests.conftest import RECORDINGS_DIR
-from tests.engine.nodes.corpus_recording import CORPUS_SUFFIX, CorpusRecording, corpus_recording
+from tests.engine.nodes.corpus_recording import (
+    CORPUS_SUFFIX,
+    CorpusRecording,
+    RecordingPendingError,
+    corpus_recording,
+    require_recording,
+)
 
 LOOKUP = Lookup(Language.EN, LawVersion.AMENDED, date(2026, 9, 30), ())
 NODE_RECORDINGS = RECORDINGS_DIR / "engine" / "nodes"
@@ -137,3 +143,27 @@ def test_every_recorded_replay_case_has_its_recording(
     """Every case of a recorded replay has its cassette: none may skip for a missing file."""
     expected = {f"{test}[{case_id}]" for case_id in _case_ids(category)} | extra
     assert expected <= _stems(NODE_RECORDINGS / module, ".yaml")
+
+
+# --- require_recording (E18): a pending recording fails its strict xfail, never skips ----------
+
+
+def _write_recording(folder: Path, *suffixes: str) -> None:
+    for suffix in suffixes:
+        (folder / f"case{suffix}").write_text("{}", encoding="utf-8")
+
+
+@pytest.mark.parametrize("present", [(), (".yaml",), (CORPUS_SUFFIX,)])
+def test_a_replay_missing_either_file_is_pending(tmp_path: Path, present: tuple[str, ...]) -> None:
+    _write_recording(tmp_path, *present)
+    with pytest.raises(RecordingPendingError, match="case"):
+        require_recording(str(tmp_path), "case", "none")
+
+
+def test_a_replay_with_both_files_is_not_pending(tmp_path: Path) -> None:
+    _write_recording(tmp_path, ".yaml", CORPUS_SUFFIX)
+    require_recording(str(tmp_path), "case", "none")
+
+
+def test_a_recording_run_is_never_pending(tmp_path: Path) -> None:
+    require_recording(str(tmp_path), "case", "once")

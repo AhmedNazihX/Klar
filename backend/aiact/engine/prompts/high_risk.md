@@ -73,11 +73,12 @@ Some points depend on who uses the system or what a decision means:
   protects the infrastructure's physical integrity. A tool that only supports, informs,
   organises or optimises it (for example forecasting demand, planning investment, or improving
   efficiency or cost), whose failure would not endanger the infrastructure's safety or people's
-  health and safety, is not one: answer `uses` "no" for point 2. A component in the
-  infrastructure that monitors and detects dangerous situations, or the need for maintenance or
-  inspection whose omission may directly lead to physical harm to people or damage to property,
-  can be one. A predictive-maintenance or planning tool that is only one precaution among other
-  safety measures, which keep working without it, is not one.
+  health and safety, is not one: answer `uses` "no" for point 2. Decide by what the system's
+  own output does. A component in the infrastructure whose output detects a dangerous
+  situation, or detects the need for maintenance or inspection whose omission may directly lead
+  to physical harm to natural persons or damage to property, is a safety component, and so is one
+  whose output prevents, controls or limits such harm (for example by stopping an operation):
+  answer `uses` "yes" for point 2.
 
 ## art_6_3: the Art. 6(3) filter
 

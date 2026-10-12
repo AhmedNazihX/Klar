@@ -12,8 +12,16 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from aiact.engine import ClassifyEvent, ErrorEvent, FactsEvent, ResultEvent, StepEvent
+from aiact.engine import (
+    ClassifyEvent,
+    ErrorEvent,
+    FactsEvent,
+    ResultEvent,
+    StepEvent,
+    StepStartedEvent,
+)
 from aiact.engine.classify import NodeBuilder, engine_nodes
+from aiact.schemas import StepName
 from aiact.settings import Settings
 from tests.api.conftest import BASE_URL, FULL_RUN, TEST_HOST, outline, sse_events, use_builder
 from tests.conftest import RECORDINGS_DIR
@@ -89,6 +97,29 @@ def raise_if_recording_stale(events: list[ClassifyEvent], log: str) -> None:
     name it here: `RecordingPendingError` rather than an assertion on the stream."""
     if events and isinstance(events[-1], ErrorEvent) and STALE_RECORDING in log:
         raise RecordingPendingError(f"{CASSETTE} is stale; re-record it with `{RECORD_COMMAND}`")
+
+
+STOPPED = ErrorEvent(step="scope", message="classification failed")
+STARTED = StepStartedEvent(step=StepName.SCOPE)
+STALE_LOG = f"classification stopped in scope: {STALE_RECORDING}"
+
+
+def test_a_run_stopped_by_a_stale_recording_is_pending() -> None:
+    with pytest.raises(RecordingPendingError, match=CASSETTE):
+        raise_if_recording_stale([STARTED, STOPPED], STALE_LOG)
+
+
+@pytest.mark.parametrize(
+    ("events", "log"),
+    [
+        ([STARTED, STOPPED], "classification stopped in scope: ValueError"),
+        ([STOPPED, STARTED], STALE_LOG),
+        ([], STALE_LOG),
+    ],
+    ids=["error-without-stale-log", "stale-log-without-final-error", "no-events"],
+)
+def test_other_runs_are_not_pending(events: list[ClassifyEvent], log: str) -> None:
+    raise_if_recording_stale(events, log)
 
 
 @pytest.mark.xfail(

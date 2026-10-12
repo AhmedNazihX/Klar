@@ -5,7 +5,7 @@ id: fixture-e18-t1-invoice-review-report
 set_name: own
 language: en
 description: >-
-  We are a 40-person software company in Ghent. Our product checks incoming supplier invoices for
+  Our Ghent-based software firm has 40 staff. Our product checks incoming supplier invoices for
   the accounts payable teams of mid-sized firms. A clerk uploads a batch of invoices as PDF files;
   a model we trained reads each invoice, compares it with the purchase order and the supplier's
   master data, and returns a review report: a table of the invoices it flagged, each with a reason

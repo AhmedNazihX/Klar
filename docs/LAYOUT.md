@@ -175,7 +175,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── db/                      schema tests against the local test database, TEST_DATABASE_URL (`db` marker; skipped when unreachable) (F4, F11)
 │       ├── fixtures/                small hand-made inputs (HTML snippets, sample cases); eurlex/ (C1);
 │       │                            report/ (the worked example's replayed result, P25);
-│       │                            negative_cases/ (hand-written negative fixtures from the Act's conditions, never scored, E18)
+│       │                            negative_cases/ (hand-written negative fixtures from the Act's conditions, with H4's positive counterpart, never scored, E18)
 │       ├── conftest.py              record/replay config (pytest-recording) and the network block; only `live` tests get through (F6);
 │       │                            the test database (TEST_DATABASE_URL, never the hosted DATABASE_URL) and a 15 s lock_timeout
 │       │                            on every test DB connection, SET after connecting (F9, F11)

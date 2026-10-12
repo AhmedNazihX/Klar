@@ -82,11 +82,13 @@ and do not ask for a fact the description already gives.
   limited to assisting with and operating that appliance (a human-like voice or persona doesn't
   count as such a reason). For a tool used only by an organisation's own staff, always weigh this
   exception, and read it restrictively: it holds only when almost no doubt is left, for the
-  people who use the system, about the nature of the interaction. Staff are such a reason only
-  when the description shows all three: they are properly trained, they are AI literate, and
-  they are aware that they use an AI system; and nothing exposes the general public or
-  vulnerable people to it. Then answer "yes" with evidence "stated" or "inferred". That the
-  tool is internal, or that its users know it is AI, is not enough on its own: answer "no".
+  people who use the system, about the nature of the interaction. Staff are one such reason when
+  the description shows all three: they are properly trained, they are AI literate, and they
+  are aware that they use an AI system; and nothing exposes the general public or vulnerable
+  people to it. A mandatory training on the AI tools the staff use can show all three together.
+  Then answer "yes" with evidence "stated" or "inferred". A professional or specialised
+  audience, as above, stays a reason of its own. That the tool is internal, or that its users
+  know it is AI, is not enough on its own: answer "no" unless another reason above applies.
   When the description names the people who interact and gives no such
   reason, answer "no" with evidence "inferred"; an audience of the general public or of consumers,
   with nothing more, is the clear "no" case. Answer "unknown" only when the description really

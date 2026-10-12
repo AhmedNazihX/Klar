@@ -74,8 +74,10 @@ Answer with JSON matching the schema:
   system composes, such as a draft, an answer, a summary, an article, a picture or a voice; a
   report the system writes in prose is synthetic text too. Masking, blacking out or blurring
   parts of the input (a redaction) that leaves its meaning unchanged does not substantially
-  alter it, so Art. 50(2)'s exception for such edits takes it out of the marking duty. Answer
-  this even when open_source is "no".
+  alter it, so Art. 50(2)'s exception for such edits takes it out of the marking duty. A system
+  of a kind Art. 50 covers still falls under Art. 50 when one of its exceptions lifts the duty,
+  so answer "yes" for it: Art. 2(12) asks whether the system falls under the article, not
+  whether a duty remains. Answer this even when open_source is "no".
 
 For every key fact:
 - answer: "yes", "no" or "unknown" ("contested" is allowed only for ai_system).
