@@ -17,6 +17,7 @@ label_citation:
   - "annex:III:2"
   - "art:3:14"
   - "recital:55"
+  - "guide:guide-high-risk-annex-iii:para:181"
   - "art:6:2"
   - "art:3:4"
 business_function: operations
@@ -26,7 +27,8 @@ notes: >-
   no access to network control, pressure regulation or fault reporting, and the safety-relevant
   work (the swap and the leak test) is done by people under the operator's procedures. Its
   failure would delay meter swaps, not endanger people or the network, so it is not a safety
-  component (Art. 3(14), recital 55) and Annex III 2 does not apply; no Art. 50 duty:
+  component (Art. 3(14), recital 55; it is organisational, not a direct protective function,
+  guidelines para. 181) and Annex III 2 does not apply; no Art. 50 duty:
   minimal_risk. Role: bought and used under its authority (Art. 3(4)): deployer. Trap: an AI tool
   in a gas network reads like 2. Doubt: none on the law.
 tags:

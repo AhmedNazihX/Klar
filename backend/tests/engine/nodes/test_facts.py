@@ -629,13 +629,14 @@ OWN_CASES = [
     case for path in sorted(OWN_CASES_DIR.rglob("*.yaml")) for case in load_yaml_file(path)
 ]
 """Every own case. A thin-description case (its label expects no class) must come back thin;
-every other one is replayed by a check node, so it must not."""
-CHECK_CATEGORIES = frozenset("abcdef")
+every described one must not. Categories a-e are also replayed by a check node; own/f (B15)
+has no check-node replay until E19."""
+DESCRIBED_CATEGORIES = frozenset("abcdef")
 """The own categories with a described system (`own-<category>-…`); f is Annex III (B15)."""
 RECORDING_PENDING = frozenset(
     {
         "own-c-18-car-sharing-driving-score",
-        "own-c-19-nursing-vacancy-scores",
+        "own-c-19-physio-master-auswahl",
         "own-c-20-fitnessclub-vertraeglichkeitswert",
         "own-f-01-depot-headcount-forecast",
         "own-f-02-tafel-kundenausweis",
@@ -656,9 +657,9 @@ def expects_description(case: BenchmarkCase) -> bool:
     return isinstance(case.label, CaseLabel) and case.label.expects_description
 
 
-def test_the_own_cases_cover_every_check_category_in_both_languages() -> None:
+def test_the_own_cases_cover_every_described_category_in_both_languages() -> None:
     described = [case for case in OWN_CASES if not expects_description(case)]
-    assert {case.id.split("-")[1] for case in described} == CHECK_CATEGORIES
+    assert {case.id.split("-")[1] for case in described} == DESCRIBED_CATEGORIES
     assert {case.language for case in described} == {Language.EN, Language.DE}
 
 

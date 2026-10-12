@@ -623,6 +623,41 @@ def test_the_committed_annex_iii_negatives_have_their_count_tag_and_languages() 
     assert high == ["own-f-06-pflegedienst-leistungsprofil"]
 
 
+PURPOSE_BOUND_SCORING_CASES = (
+    "own-c-18-car-sharing-driving-score",
+    "own-c-19-physio-master-auswahl",
+    "own-c-20-fitnessclub-vertraeglichkeitswert",
+)
+PURPOSE_BOUND_TAGS = frozenset({"trap:purpose_bound_scoring", "prohibition:art:5:1:c"})
+
+
+def test_the_committed_purpose_bound_scoring_cases_have_both_sides() -> None:
+    """B15: own/c holds the purpose-bound scoring cases, at least one social scoring
+    (prohibited) and at least one purpose-bound scoring that is not, each tagged as such."""
+    cases = {case.id: case for case in load_cases(CaseSet.OWN)}
+    scoring = [cases[case_id] for case_id in PURPOSE_BOUND_SCORING_CASES]
+    assert all(
+        "category:c" in case.tags and PURPOSE_BOUND_TAGS & set(case.tags) for case in scoring
+    )
+    classes = [case.label.risk_class for case in scoring if isinstance(case.label, CaseLabel)]
+    assert len(classes) == len(scoring)
+    assert RiskClass.PROHIBITED in classes
+    assert any(risk_class is not RiskClass.PROHIBITED for risk_class in classes)
+
+
+APPROVAL_PENDING_MARK = "APPROVAL PENDING"
+
+
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason="B15 approval line pending")
+def test_no_committed_own_case_waits_for_its_approval_line() -> None:
+    pending = [
+        case.id
+        for case in load_cases(CaseSet.OWN)
+        if case.notes and APPROVAL_PENDING_MARK in case.notes
+    ]
+    assert pending == []
+
+
 def test_business_function_is_one_of_the_closed_list() -> None:
     case = BenchmarkCase.model_validate(with_changes(business_function="consumer_product"))
     assert case.business_function is BusinessFunction.CONSUMER_PRODUCT

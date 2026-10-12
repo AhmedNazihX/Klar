@@ -106,7 +106,7 @@ def test_every_cassette_has_its_corpus_file_and_back(module: str) -> None:
 RECORDING_PENDING = frozenset(
     {
         "test_b5c_case_replay[own-c-18-car-sharing-driving-score]",
-        "test_b5c_case_replay[own-c-19-nursing-vacancy-scores]",
+        "test_b5c_case_replay[own-c-19-physio-master-auswahl]",
         "test_b5c_case_replay[own-c-20-fitnessclub-vertraeglichkeitswert]",
     }
 )

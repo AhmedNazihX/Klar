@@ -17,6 +17,10 @@ label_citation:
   - "annex:III:2"
   - "art:3:14"
   - "recital:55"
+  - "guide:guide-high-risk-annex-iii:para:181"
+  - "guide:guide-high-risk-annex-iii:para:184"
+  - "guide:guide-high-risk-annex-iii:ex:065"
+  - "guide:guide-high-risk-annex-iii:ex:068"
   - "art:6:2"
   - "art:3:4"
 business_function: operations
@@ -25,10 +29,16 @@ notes: >-
   covers only AI systems used as safety components in its management and operation (Art. 3(14)):
   this tool supports long-term investment planning, controls nothing, and its failure would not
   directly endanger people or the network, because operation and leak handling run on separate
-  systems (recital 55). So Art. 6(2) does not apply; no Art. 50 duty: minimal_risk. Role: bought
-  and used under its authority (Art. 3(4)): deployer. Trap: an AI tool at a water utility reads
-  like 2. Doubt: one could argue burst prediction protects the network's physical integrity; read
-  as no, since it only shapes a multi-year plan that people approve.
+  systems (recital 55). It is supportive and planning-oriented, not a direct protective function
+  (guidelines para. 181), and predictive maintenance planning is not a safety component where
+  other safeguards keep the network safe (examples ex:065, ex:068). So Art. 6(2) does not apply;
+  no Art. 50 duty: minimal_risk. Role: bought and used under its authority (Art. 3(4)): deployer.
+  Trap: an AI tool at a water utility reads like 2. Doubt: para. 184(b) makes a safety component
+  of "a component in the critical infrastructure to monitor and detect the need to schedule
+  maintenance" whose omission may directly lead to harm; read as not met, because this desk tool
+  is not a component of the network, does not watch it as it runs, and only shapes a multi-year
+  replacement plan that engineers review and the board approves, while leaks and pressure are
+  handled by separate control systems.
 tags:
   - "category:f"
   - "trap:critical_infrastructure_not_safety_component"
