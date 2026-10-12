@@ -13,6 +13,7 @@ import { userDataOverviewKey } from '@/hooks/use-user-data-overview'
 import { RECORDED_AMBIGUOUS, requestHandlers, SAFETY_QUESTION } from '@/test/ambiguous-fixtures'
 import type { CompanyProfile, UserDataOverview } from '@/lib/company-profile'
 import {
+  ANNEX_III_QUESTION,
   annexIIINeedsInfo,
   classifyHandler,
   decidedHighRisk,
@@ -110,11 +111,10 @@ describe('A question the company profile answers', () => {
     expect(fromProfile).toHaveTextContent(EU_QUESTION.text)
     expect(within(fromProfile).getByText('Yes')).toBeVisible()
     expect(within(fromProfile).getByRole('button', { name: 'Change' })).toBeEnabled()
-    // One run action, under the last panel, for both questions.
+    // One run action, under the open question (the last one left open), for both questions.
     expect(screen.getAllByRole('button', { name: /run again/ })).toHaveLength(1)
-    expect(
-      within(fromProfile).getByRole('button', { name: 'Add answers and run again' }),
-    ).toBeEnabled()
+    expect(within(open).getByRole('button', { name: 'Add answers and run again' })).toBeEnabled()
+    expect(within(fromProfile).queryByRole('button', { name: /run again/ })).toBeNull()
     expect((await axe(container, AXE_OPTIONS)).violations).toEqual([])
   })
 
@@ -127,9 +127,7 @@ describe('A question the company profile answers', () => {
         name: 'No',
       }),
     )
-    await user.click(
-      within(profileRegion()).getByRole('button', { name: 'Add answers and run again' }),
-    )
+    await user.click(within(open).getByRole('button', { name: 'Add answers and run again' }))
 
     await expect.poll(() => bodies.length).toBe(1)
     expect(bodies[0]?.answers).toEqual({
@@ -158,6 +156,8 @@ describe('A question the company profile answers', () => {
     expect(screen.queryByRole('region', { name: 'From your company profile' })).toBeNull()
     const open = screen.getByRole('region', { name: '2 open questions' })
     const eu = within(open).getByRole('group', { name: EU_QUESTION.text })
+    // The focus follows the question to where it now is, on its first answer.
+    expect(document.activeElement).toBe(within(eu).getByRole('button', { name: 'Yes' }))
     for (const button of within(eu).getAllByRole('button')) {
       expect(button).toHaveAttribute('aria-pressed', 'false')
     }
@@ -185,7 +185,23 @@ describe('A question the company profile answers', () => {
     expect(screen.queryByRole('region', { name: EU_QUESTION.text })).toBeNull()
     expect(profileRegion()).toHaveTextContent(EU_QUESTION.text)
     await user.click(within(profileRegion()).getByRole('button', { name: 'Change' }))
-    expect(screen.getByRole('region', { name: EU_QUESTION.text })).toBeInTheDocument()
+    const question = screen.getByRole('region', { name: EU_QUESTION.text })
+    expect(question).toContainElement(document.activeElement as HTMLElement)
+  })
+
+  it('leaves the run action under the question that decides a paused result', async () => {
+    const result: ClassificationResult = {
+      ...annexIIINeedsInfo(),
+      follow_up_questions: [...(annexIIINeedsInfo().follow_up_questions ?? []), EU_QUESTION],
+    }
+    await openResult(result, PROFILE)
+    const deciding = screen.getByRole('region', { name: ANNEX_III_QUESTION })
+    expect(screen.getAllByRole('button', { name: /run again/ })).toHaveLength(1)
+    // Two questions: the deciding one and the profile's answer.
+    expect(
+      within(deciding).getByRole('button', { name: 'Add answers and run again' }),
+    ).toBeEnabled()
+    expect(within(profileRegion()).queryByRole('button', { name: /run again/ })).toBeNull()
   })
 })
 
@@ -231,8 +247,11 @@ describe('From your company profile, in German', () => {
     expect(within(fromProfile).getByText('Ja')).toBeVisible()
     expect(within(fromProfile).getByRole('button', { name: 'Ändern' })).toBeEnabled()
 
+    expect(within(fromProfile).queryByRole('button', { name: /erneut prüfen/ })).toBeNull()
     await user.click(
-      within(fromProfile).getByRole('button', { name: 'Antworten hinzufügen und erneut prüfen' }),
+      within(screen.getByRole('region', { name: '1 offene Frage' })).getByRole('button', {
+        name: 'Antworten hinzufügen und erneut prüfen',
+      }),
     )
     await expect.poll(() => bodies.length).toBe(1)
     expect(bodies[0]?.answers).toEqual({ eu_link: `${EU_QUESTION.text} Ja.` })
@@ -266,22 +285,30 @@ describe('An answer given before the profile is read', () => {
 })
 
 describe('A legally ambiguous result with a question the profile answers', () => {
-  it('shows the profile answer with the one run action, and sends it', async () => {
-    server.use(...requestHandlers([]))
-    const bodies = rerunReturns(RECORDED_AMBIGUOUS)
-    const result: ClassificationResult = {
-      ...RECORDED_AMBIGUOUS,
-      follow_up_questions: [SAFETY_QUESTION, EU_QUESTION],
-    }
-    const { user } = await openResult(result, PROFILE)
+  it.each([
+    ['beside a question on the open point, which keeps the run action', [SAFETY_QUESTION], false],
+    ['alone, so its panel holds the run action', [], true],
+  ] as const)(
+    'shows the profile answer %s, and sends it',
+    async (_label, otherQuestions, isRunInProfile) => {
+      server.use(...requestHandlers([]))
+      const bodies = rerunReturns(RECORDED_AMBIGUOUS)
+      const result: ClassificationResult = {
+        ...RECORDED_AMBIGUOUS,
+        follow_up_questions: [...otherQuestions, EU_QUESTION],
+      }
+      const { user } = await openResult(result, PROFILE)
 
-    const fromProfile = profileRegion()
-    expect(fromProfile).toHaveTextContent(EU_QUESTION.text)
-    expect(screen.queryByRole('group', { name: EU_QUESTION.text })).toBeNull()
-    expect(screen.getAllByRole('button', { name: /run again/ })).toHaveLength(1)
+      const fromProfile = profileRegion()
+      expect(fromProfile).toHaveTextContent(EU_QUESTION.text)
+      expect(screen.queryByRole('group', { name: EU_QUESTION.text })).toBeNull()
+      const [runAgain] = screen.getAllByRole('button', { name: /run again/ })
+      expect(screen.getAllByRole('button', { name: /run again/ })).toHaveLength(1)
+      expect(fromProfile.contains(runAgain ?? null)).toBe(isRunInProfile)
 
-    await user.click(within(fromProfile).getByRole('button', { name: 'Add answers and run again' }))
-    await expect.poll(() => bodies.length).toBe(1)
-    expect(bodies[0]?.answers).toEqual({ eu_link: `${EU_QUESTION.text} Yes.` })
-  })
+      await user.click(runAgain as HTMLElement)
+      await expect.poll(() => bodies.length).toBe(1)
+      expect(bodies[0]?.answers).toEqual({ eu_link: `${EU_QUESTION.text} Yes.` })
+    },
+  )
 })

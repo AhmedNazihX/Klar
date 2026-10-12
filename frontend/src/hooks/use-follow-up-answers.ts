@@ -53,6 +53,8 @@ export function useFollowUpAnswers(run: ClassificationRun, followUp: FollowUpRun
   const [confirmed, setConfirmed] = useState<Answers>({})
   // The profile answers the user chose to give themselves (Change).
   const [changed, setChanged] = useState<ReadonlySet<string>>(new Set())
+  // The question Change asked again last, which takes the focus.
+  const [reopenedId, setReopenedId] = useState<string | null>(null)
   // Whether the last run was a fact card's Confirm, so Try again repeats that, not the panels.
   const [wasConfirm, setWasConfirm] = useState(false)
 
@@ -94,6 +96,7 @@ export function useFollowUpAnswers(run: ClassificationRun, followUp: FollowUpRun
     fromProfile,
     changeProfileAnswer: (id: string) => {
       setChanged((earlier) => new Set([...earlier, id]))
+      setReopenedId(id)
     },
     answerProps: {
       drafts: shown,
@@ -103,6 +106,7 @@ export function useFollowUpAnswers(run: ClassificationRun, followUp: FollowUpRun
       hasAnswers: Object.keys(given).length > 0,
       isRunning: followUp.isRunning,
       onRunAgain: sendPanels,
+      reopenedId,
     },
     confirm,
     tryAgain: () => {
