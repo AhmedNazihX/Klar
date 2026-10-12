@@ -74,7 +74,6 @@ from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
-    RecordingPendingError,
     corpus_recording,
     require_recording,
 )
@@ -1226,12 +1225,6 @@ E17_RECORD_COMMAND = (
 )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=RecordingPendingError,
-    reason="recording pending (orchestrator): E17's answered Art. 50(4) replay; record it with "
-    f"`{E17_RECORD_COMMAND}`",
-)
 @pytest.mark.vcr
 def test_an_answered_editorial_exception_settles_art_50_4(
     luna_settings: Settings,
