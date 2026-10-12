@@ -4,8 +4,8 @@ Each gap names the reason and the wrong reading it documents (`reads`). A replay
 when it starts matching its label (the entry is then removed), and fails too when it misses in
 any other way than the documented one; otherwise it is an expected failure.
 
-Also the replays a prompt change left stale until they are re-recorded, and E18's negative
-fixtures.
+Also how a whole run that met a stale recording is told apart from a node error, and E18's
+negative fixtures.
 """
 
 from collections.abc import Callable, Iterator, Mapping
@@ -31,19 +31,6 @@ STALE_RECORDING_ERRORS = (
 OpenRouter SDK gives up on the refused call, or a replay with no cassette at all stops before
 the call (a stream that ends in an error event is turned into `RecordingPendingError` by its
 test)."""
-
-E19_PROMPTS_RECORDING_PENDING = pytest.mark.xfail(
-    strict=True,
-    raises=STALE_RECORDING_ERRORS,
-    reason="recording pending (orchestrator): E19 changed the prohibited, high-risk and "
-    "transparency prompts and response formats (the bar for an open question of law, `open_on` "
-    "and the over-strictness rules), so the recorded requests are stale, and own/f has no "
-    "recording yet; delete and re-record",
-)
-"""The one marker for every replay E19 made stale or added, until the orchestrator records
-them (BACKLOG > E19). A whole classification run wraps its failed node in
-`ClassificationFailedError`; such a test runs inside `stale_recording_pending`, so only a stale
-recording counts and any other node error fails it."""
 
 
 def is_stale_recording(error: BaseException) -> bool:

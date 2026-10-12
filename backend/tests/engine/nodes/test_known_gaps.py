@@ -1,5 +1,5 @@
-"""E19's recording-pending marker takes a failed classification run only when a stale or missing
-recording stopped it; any other node error must still fail the replay."""
+"""`stale_recording_pending` turns a failed classification run into `RecordingPendingError` only
+when a stale or missing recording stopped it; any other node error must still fail the replay."""
 
 import pytest
 
@@ -7,7 +7,6 @@ from aiact.engine import ClassificationFailedError
 from aiact.engine.usage import RunUsage
 from tests.engine.nodes.corpus_recording import RecordingPendingError
 from tests.engine.nodes.known_gaps import (
-    E19_PROMPTS_RECORDING_PENDING,
     STALE_RECORDING_ERRORS,
     is_stale_recording,
     stale_recording_pending,
@@ -30,10 +29,8 @@ def wrapped(cause: BaseException) -> BaseException:
         return error
 
 
-def test_the_marker_expects_only_stale_recording_errors() -> None:
-    assert E19_PROMPTS_RECORDING_PENDING.kwargs["raises"] == STALE_RECORDING_ERRORS
+def test_a_classification_failure_is_never_a_stale_recording_by_itself() -> None:
     assert ClassificationFailedError not in STALE_RECORDING_ERRORS
-    assert E19_PROMPTS_RECORDING_PENDING.kwargs["strict"] is True
 
 
 @pytest.mark.parametrize(
