@@ -1,0 +1,29 @@
+# E18 negative fixture (T1), written from Art. 50(2)'s conditions only: not a benchmark case,
+# never scored. Its output is a report, a list, short hints and a redaction, none of them content
+# the system composes.
+id: fixture-e18-t1-invoice-review-report
+set_name: own
+language: en
+description: >-
+  We are a 40-person software company in Ghent. Our product checks incoming supplier invoices for
+  the accounts payable teams of mid-sized firms. A clerk uploads a batch of invoices as PDF files;
+  a model we trained reads each invoice, compares it with the purchase order and the supplier's
+  master data, and returns a review report: a list of the invoices it flagged, each with the reason
+  and a short pointer such as "amount differs from order 4711 by EUR 120" or "VAT number does not
+  match the supplier". For the archive it also returns a copy of each invoice with the bank account
+  numbers blacked out. It writes no letters, e-mails, summaries or other texts, and there is no
+  chat: the clerk decides what to do with each flagged invoice. We have sold it to about 300
+  companies in the EU since 2024.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["art:50:2", "art:50:1", "art:3:3"]
+as_of: 2026-10-01
+notes: >-
+  T1: the report, the list of flagged invoices, the one-line pointers and the masked copies state
+  the system's analysis of its input or remove parts of it; the system composes no text, image,
+  audio or video, so no Art. 50(2) marking duty. No chat or other exchange with the clerk, so no
+  Art. 50(1) duty either. No Annex III use. Provider under its own name (Art. 3(3)).
+tags:
+  - "fixture:e18"
+  - "cause:t1"

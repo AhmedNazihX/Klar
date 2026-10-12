@@ -25,6 +25,10 @@ A system that only returns an analysis of its input (a score, a label, a ranking
 to its own user doesn't fall under Art. 50(1) or 50(2). Emotion recognition and biometric
 categorisation stay under Art. 50(3) whatever they return. Text, images, audio or video a system
 generates is synthetic content under Art. 50(2), whoever receives it.
+Output that only states such an analysis (a report or list of findings, or a short hint pointing
+to one) or only removes or masks parts of the input (a redaction) is not synthetic content by
+that alone; synthetic content is text, images, audio or video the system composes, such as a
+draft, an answer, an article, a picture or a voice.
 
 Each duty has the same fields, in this order:
 - `covered`: the system is of the kind the paragraph names.
@@ -57,8 +61,8 @@ and do not ask for a fact the description already gives.
   and it responds to them as a counterpart in an exchange, in writing, speech, or visual or
   physical action, whoever starts the exchange. Answer "yes" only for such a system. A system
   that only processes what its user submits and hands back the result (for example a converted
-  file, or completions offered as the user types) is "no": its user operates a tool and doesn't
-  converse with it. A chat panel or assistant inside a tool that the user converses with is still
+  file, a report or a dashboard of results, or completions offered as the user types) is "no":
+  its user operates a tool and doesn't converse with it. A chat panel or assistant inside a tool that the user converses with is still
   a counterpart: "yes".
 - `exception`: it is obvious to a reasonably well-informed, observant and circumspect person,
   given the circumstances and the context of use, that they are interacting with an AI system;
@@ -72,7 +76,11 @@ and do not ask for a fact the description already gives.
   exposure to the general public or vulnerable people; internal staff who are properly trained, AI
   literate and aware that they use AI systems; or ambient AI in an appliance whose functions are
   limited to assisting with and operating that appliance (a human-like voice or persona doesn't
-  count as such a reason). When the description names the people who interact and gives no such
+  count as such a reason). For a tool used only inside an organisation by its own staff, always
+  weigh this exception: when the description says they are trained to use it as an AI tool, or
+  otherwise shows they know it is an AI system, and nothing exposes the general public or
+  vulnerable people to it, that is such a reason: answer "yes" with evidence "stated" or
+  "inferred". When the description names the people who interact and gives no such
   reason, answer "no" with evidence "inferred"; an audience of the general public or of consumers,
   with nothing more, is the clear "no" case. Answer "unknown" only when the description really
   doesn't say who interacts with the system or how. When it says so but the guidelines leave open
@@ -81,14 +89,22 @@ and do not ask for a fact the description already gives.
 ## synthetic_content: paragraph 2
 
 - `covered`: the system generates synthetic audio, image, video or text content. Selecting,
-  ranking or playing back content that people made is not generating it.
+  ranking or playing back content that people made is not generating it, and neither is output
+  that only states an analysis of the input or only masks parts of it (see above).
 - `exception`: the system performs an assistive function for standard editing, or does not
   substantially alter the input data the deployer provides or its semantics; or it is authorised
   by law to detect, prevent, investigate or prosecute criminal offences.
 
 ## emotion_biometric: paragraph 3
 
-- `covered`: the system is an emotion recognition system or a biometric categorisation system.
+- `covered`: the system is an emotion recognition system (it identifies or infers emotions or
+  intentions of natural persons on the basis of their biometric data, Art. 3(39)) or a biometric
+  categorisation system (it assigns natural persons to specific categories on the basis of their
+  biometric data, Art. 3(40)). Biometric identification or verification (Art. 3(35), 3(36)),
+  matching a person's face, voice or other biometric data to stored data to establish or confirm
+  who they are, is neither: it establishes who a person is, not which category they belong to.
+  Answer "no" for such a system unless it also assigns people to categories or infers their
+  emotions or intentions.
 - `exception`: it is permitted by law to detect, prevent or investigate criminal offences.
 
 ## deep_fake: paragraph 4, first subparagraph

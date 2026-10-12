@@ -1,0 +1,29 @@
+# E18 negative fixture (H4), written from Annex III point 2, Art. 3(14) and recital 55 only: not a
+# benchmark case, never scored. A planning forecast whose error doesn't endanger the network.
+id: fixture-e18-h4-water-demand-forecast
+set_name: own
+language: en
+description: >-
+  We are the municipal water utility of a city of about 400,000 people. Since 2025 our planning
+  department has used a forecasting tool, which we bought from a consultancy that sells it to
+  several utilities, to estimate drinking-water demand in each supply district over the next 20
+  years from our consumption records, population projections and climate scenarios. The planners
+  use the forecasts to draw up the long-term investment plan the city council approves every five
+  years: which reservoirs, mains and treatment capacity to build, and when. The tool plays no part
+  in running the network: pumps, valves, pressure and water quality are controlled and monitored
+  around the clock from our control room with separate systems and alarms. A wrong forecast would
+  bring an investment forward or push it back by a few years; the safety of the existing network
+  does not depend on it.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation: ["annex:III:2", "art:3:14", "recital:55"]
+notes: >-
+  H4: a long-term demand forecast for investment planning supports and organises the supply of
+  water but fulfils no safety function, and its failure would not endanger the health and safety
+  of persons or property (Art. 3(14)); it is not a safety component in the management and
+  operation of the water supply, so not Annex III point 2 (recital 55: safety components directly
+  protect the infrastructure's physical integrity). Deployer of a bought tool (Art. 3(4)).
+tags:
+  - "fixture:e18"
+  - "cause:h4"

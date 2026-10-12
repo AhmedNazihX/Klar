@@ -123,6 +123,17 @@ class RecordedGuidelineLibrary:
         )
 
 
+class RecordingPendingError(Exception):
+    """A new replay the orchestrator hasn't recorded yet; the `raises=` of its strict
+    "recording pending" xfail, so the replay fails instead of skipping once that mark is gone."""
+
+
+def require_recording(cassette_dir: str, cassette_name: str, record_mode: str) -> None:
+    """Raise `RecordingPendingError` when a replay (record mode `none`) has no cassette yet."""
+    if record_mode == "none" and not (Path(cassette_dir) / f"{cassette_name}.yaml").exists():
+        raise RecordingPendingError(f"{cassette_name} has no recording yet")
+
+
 @contextmanager
 def corpus_recording[S](
     cassette_dir: str,

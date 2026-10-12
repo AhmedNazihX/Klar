@@ -61,7 +61,12 @@ from tests.engine.nodes.corpus_recording import (
     corpus_recording,
     lookup_call,
 )
-from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import (
+    E18_PROMPTS_RECORDING_PENDING,
+    NOT_ASSESSED,
+    KnownGap,
+    expect_known_gap,
+)
 from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -660,9 +665,14 @@ ART_50_READING = (
     "Emotion recognition and biometric categorisation stay under Art. 50(3) whatever they return.",
     "Text, images, audio or video a system generates is synthetic content under Art. 50(2), "
     "whoever receives it.",
+    "Output that only states such an analysis (a report or list of findings, or a short hint "
+    "pointing to one) or only removes or masks parts of the input (a redaction) is not synthetic "
+    "content by that alone; synthetic content is text, images, audio or video the system "
+    "composes, such as a draft, an answer, an article, a picture or a voice.",
 )
 """The user's Art. 50 reading (2026-10-06), worded the same in the scope and transparency
-prompts (BACKLOG > V8, from E6)."""
+prompts (BACKLOG > V8, from E6); the last sentence is E18's T1 (Art. 50(2), user option C,
+2026-10-12)."""
 
 
 def test_scope_and_transparency_prompts_read_art_50_alike() -> None:
@@ -765,6 +775,7 @@ def _live_corpus(settings: Settings) -> Iterator[CorpusLibrary]:
         yield CorpusLibrary(connection, OpenRouterEmbeddings(settings=settings))
 
 
+@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",

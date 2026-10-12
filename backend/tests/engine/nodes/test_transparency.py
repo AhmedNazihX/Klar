@@ -71,9 +71,17 @@ from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     RecordedGuidelineLibrary,
+    RecordingPendingError,
     corpus_recording,
+    require_recording,
 )
-from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import (
+    E18_PROMPTS_RECORDING_PENDING,
+    NOT_ASSESSED,
+    KnownGap,
+    expect_known_gap,
+    negative_cases,
+)
 from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -998,6 +1006,47 @@ def _live_corpus(settings: Settings) -> Iterator[GuidelineCorpus]:
         yield GuidelineCorpus(connection, OpenRouterEmbeddings(settings=settings), node.SOURCE)
 
 
+def _replay(
+    case: BenchmarkCase,
+    settings: Settings,
+    record_mode: str,
+    cassette_dir: str,
+    cassette_name: str,
+    record_command: str,
+) -> CheckOutcome:
+    """The case's transparency step over the recorded model and corpus, its citations checked."""
+    with corpus_recording(
+        cassette_dir,
+        cassette_name,
+        record_mode,
+        record_command,
+        lambda: _live_corpus(settings),
+    ) as recording:
+        check = TransparencyCheck(settings, library=RecordedGuidelineLibrary(recording))
+        run_state = replay_state(case, AS_OF)
+        result = check(run_state)
+    assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
+    return result
+
+
+def _shown(result: CheckOutcome) -> object:
+    step = result.step
+    return (result.transparency_duties, step.status, cited(result), step.decision)
+
+
+NOT_A_DUTY: dict[str, str] = {
+    "own-a-15-intranet-assistant-in-house": "art:50:1",
+    "fixture-e18-t1-invoice-review-report": "art:50:2",
+    "fixture-e18-t2-turnstile-face-check": "art:50:3",
+}
+"""E18's causes, by the case that shows each: the Art. 50 paragraph the step must not list.
+T3 (own-a-15): Art. 50(1)'s obvious exception for an internal assistant used by trained staff
+(guide para 45). T1: a report, a list, hints and a redaction are not synthetic content under
+Art. 50(2). T2: biometric verification is not biometric categorisation under Art. 50(3)."""
+
+
+@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1012,20 +1061,78 @@ def test_b5a_case_replay(
     default_cassette_name: str,
 ) -> None:
     """Each B5a case's Art. 50 outcome against its label, at the case's own date (`as_of`)."""
-    with corpus_recording(
-        vcr_cassette_dir,
-        default_cassette_name,
-        record_mode,
-        RECORD_COMMAND,
-        lambda: _live_corpus(luna_settings),
-    ) as recording:
-        check = TransparencyCheck(luna_settings, library=RecordedGuidelineLibrary(recording))
-        run_state = replay_state(case, AS_OF)
-        result = check(run_state)
-    assert not unresolved_citations(result.step, run_state)
-    assert not whole_articles(result.step)
+    result = _replay(
+        case, luna_settings, record_mode, vcr_cassette_dir, default_cassette_name, RECORD_COMMAND
+    )
     matches = transparency_matches(result, case)
-    step = result.step
-    shown = (result.transparency_duties, step.status, cited(result), step.decision)
+    shown = _shown(result)
+    if case.id in NOT_A_DUTY:
+        assert NOT_A_DUTY[case.id] not in result.transparency_duties, shown
     expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
     assert matches, shown
+
+
+def test_the_t3_case_is_replayed() -> None:
+    """E18's T3 check rides on own-a-15's replay: the case must stay in the replayed set."""
+    assert "own-a-15-intranet-assistant-in-house" in {case.id for case in B5A_CASES}
+
+
+# --- E18 negative fixtures: the Art. 50 over-strictness causes (T1, T2) ------------------------
+
+E18_CASES = [*negative_cases("t1"), *negative_cases("t2")]
+E18_RECORD_COMMAND = (
+    "uv run pytest tests/engine/nodes/test_transparency.py -k e18_negative --record-mode=once"
+)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=RecordingPendingError,
+    reason="recording pending (orchestrator): E18's new negative fixtures; record them with "
+    f"`{E18_RECORD_COMMAND}`",
+)
+@pytest.mark.vcr
+@pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
+def test_e18_negative_replay(
+    case: BenchmarkCase,
+    luna_settings: Settings,
+    record_mode: str,
+    vcr_cassette_dir: str,
+    default_cassette_name: str,
+) -> None:
+    """Each E18 fixture's step leaves out the Art. 50 paragraph its cause wrongly listed, and
+    decides without asking about it."""
+    require_recording(vcr_cassette_dir, default_cassette_name, record_mode)
+    result = _replay(
+        case,
+        luna_settings,
+        record_mode,
+        vcr_cassette_dir,
+        default_cassette_name,
+        E18_RECORD_COMMAND,
+    )
+    shown = _shown(result)
+    assert NOT_A_DUTY[case.id] not in result.transparency_duties, shown
+    assert result.step.status is Status.DECIDED, shown
+
+
+E18_RULES = (
+    "is not synthetic content by that alone",
+    "Biometric identification or verification (Art. 3(35), 3(36))",
+    "it establishes who a person is, not which category they belong to",
+    "For a tool used only inside an organisation by its own staff, always weigh this exception",
+)
+"""E18's T1, T2 and T3 rules, as transparency.md words them."""
+
+
+def test_the_prompt_states_the_e18_rules() -> None:
+    flat = " ".join(node.TRANSPARENCY_INSTRUCTIONS.split())
+    for rule in E18_RULES:
+        assert rule in flat
+
+
+def test_each_art_50_cause_has_its_fixture() -> None:
+    assert [case.id for case in E18_CASES] == [
+        "fixture-e18-t1-invoice-review-report",
+        "fixture-e18-t2-turnstile-face-check",
+    ]

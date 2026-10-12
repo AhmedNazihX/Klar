@@ -79,10 +79,18 @@ from tests.engine.built_corpus import (
 )
 from tests.engine.nodes.corpus_recording import (
     CorpusRecording,
+    RecordingPendingError,
     corpus_recording,
     lookup_call,
+    require_recording,
 )
-from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import (
+    E18_PROMPTS_RECORDING_PENDING,
+    NOT_ASSESSED,
+    KnownGap,
+    expect_known_gap,
+    negative_cases,
+)
 from tests.engine.nodes.pinned import assert_pinned_route
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -1463,6 +1471,7 @@ def replay_check(
         yield check
 
 
+@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
@@ -1573,6 +1582,7 @@ def assert_the_screens_fields(
         assert [item.kind for item in question.settled_by] == [SettledByKind.GUIDANCE]
 
 
+@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1628,6 +1638,7 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
     return result
 
 
+@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_machinery_guard_is_annex_i_section_a(
     original_replay_check: HighRiskCheck,
@@ -1645,6 +1656,7 @@ def test_replay_original_machinery_guard_is_annex_i_section_a(
     assert "Art. 2 Abs. 2" not in step.decision, shown  # the case is German
 
 
+@E18_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     original_replay_check: HighRiskCheck,
@@ -1660,3 +1672,80 @@ def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     assert not result.annex_iii_exempt, shown
     assert step.status is Status.DECIDED, shown
     assert not any(name in step.decision for name in OMNIBUS_PARAGRAPHS), shown
+
+
+# --- E18 negative fixtures: the high-risk over-strictness causes (H4, H5, H6) ------------------
+#
+# Record them with `E18_RECORD_COMMAND`.
+
+E18_RECORD_COMMAND = (
+    "uv run pytest tests/engine/nodes/test_high_risk.py -k e18_negative --record-mode=once"
+)
+E18_CASES = [*negative_cases("h4"), *negative_cases("h5"), *negative_cases("h6")]
+NOT_THE_ROUTE: dict[str, str] = {
+    "fixture-e18-h4-water-demand-forecast": "annex:III:2",
+    "fixture-e18-h5-choir-practice-app": "annex:I:A:6",
+    "fixture-e18-h6-trade-fair-roundtables": "annex:III:1:b",
+}
+"""E18's causes, by fixture: the point the step must not read as the system's. H4: a planning
+forecast is no safety component of critical infrastructure (Art. 3(14), recital 55). H5: an app
+on others' phones is neither radio equipment nor its safety component (Art. 6(1)(a)). H6: grouping
+people by what they enter is no biometric categorisation by sensitive attributes."""
+
+
+@pytest.fixture
+def e18_replay_check(
+    luna_settings: Settings, record_mode: str, vcr_cassette_dir: str, default_cassette_name: str
+) -> Iterator[HighRiskCheck]:
+    """`replay_check` for the E18 fixtures: a missing recording raises `RecordingPendingError`
+    (their strict xfail) rather than skipping."""
+    require_recording(vcr_cassette_dir, default_cassette_name, record_mode)
+    with _recorded_check(
+        luna_settings, record_mode, vcr_cassette_dir, default_cassette_name, E18_RECORD_COMMAND
+    ) as check:
+        yield check
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=RecordingPendingError,
+    reason="recording pending (orchestrator): E18's new negative fixtures; record them with "
+    f"`{E18_RECORD_COMMAND}`",
+)
+@pytest.mark.vcr
+@pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
+def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
+    """Each fixture is decided not high-risk, with no Art. 6(3) exemption, and its step neither
+    routes through nor cites the point its cause wrongly read."""
+    run_state = replay_state(case, AS_OF)
+    result = e18_replay_check(run_state)
+    assert not unresolved_citations(result.step, run_state)
+    assert not whole_articles(result.step)
+    step = result.step
+    shown = (result.high_risk_route, result.annex_point, step.status, cited(result), step.decision)
+    assert result.high_risk_route is None, shown
+    assert not result.annex_iii_exempt, shown
+    assert step.status is Status.DECIDED, shown
+    assert NOT_THE_ROUTE[case.id] not in cited(result), shown
+
+
+E18_RULES = (
+    "- 1(b) is biometric categorisation according to sensitive or protected attributes",
+    "Grouping people by other data (what they enter, buy or do), or by attributes that are not "
+    "sensitive or protected, is not point 1(b).",
+    "- 2 needs a safety component (Art. 3(14))",
+    'is not one: answer `uses` "no" for point 2.',
+    "The Radio Equipment Directive (`annex:I:A:6`) is the AI system's route only when",
+    "is neither: answer `point` null unless other listed legislation covers it.",
+)
+"""E18's H6, H4 and H5 rules, as high_risk.md words them."""
+
+
+def test_the_prompt_states_the_e18_rules() -> None:
+    flat = " ".join(node.HIGH_RISK_INSTRUCTIONS.split())
+    for rule in E18_RULES:
+        assert rule in flat
+
+
+def test_each_high_risk_cause_has_its_fixture() -> None:
+    assert [case.id for case in E18_CASES] == list(NOT_THE_ROUTE)

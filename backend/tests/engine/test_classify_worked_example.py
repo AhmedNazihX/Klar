@@ -18,6 +18,7 @@ import pytest
 
 from aiact.db import connect
 from aiact.engine import (
+    ClassificationFailedError,
     ClassificationRun,
     ClassifyRequest,
     run_classification,
@@ -355,6 +356,16 @@ def replay_nodes(
         )
 
 
+E18_RECORDING_PENDING = pytest.mark.xfail(
+    strict=True,
+    raises=ClassificationFailedError,
+    reason="recording pending (orchestrator): E18 changed the scope, high-risk and transparency "
+    "prompts, so the recorded requests are stale; delete and re-record",
+)
+"""The worked example's replays until the orchestrator re-records them (BACKLOG > E18)."""
+
+
+@E18_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
     run = run_classification(

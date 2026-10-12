@@ -1,0 +1,24 @@
+# E18 negative fixture (H6), written from Annex III point 1(b) and Art. 3(40) only: not a benchmark
+# case, never scored. It groups people by what they enter, with no biometric data.
+id: fixture-e18-h6-trade-fair-roundtables
+set_name: own
+language: en
+description: >-
+  We organise a large trade fair for the packaging industry, with about 30,000 visitors over three
+  days. When they register, visitors enter their industry, job role, company size and the topics
+  they want to discuss. Since 2025 a matching tool we developed has grouped registered visitors
+  into roundtables of eight to ten people with similar topics and roles, and suggests to each
+  visitor which roundtable to join; visitors can pick another one. The tool uses only what
+  visitors enter themselves: no photos, video, voice or other biometric data, and nothing about
+  their health, origin, beliefs or similar personal attributes.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation: ["annex:III:1:b", "art:3:40"]
+notes: >-
+  H6: the tool groups people by data they enter, not by biometric data, and infers no sensitive or
+  protected attribute, so it is no biometric categorisation (Art. 3(40)) and not Annex III point
+  1(b). No other Annex III point. Provider of a tool it developed for its own use (Art. 3(3)).
+tags:
+  - "fixture:e18"
+  - "cause:h6"
