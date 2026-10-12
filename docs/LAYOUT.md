@@ -203,8 +203,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                in aiact/eval/cases.py (qa/ holds QAItem items, loaded by load_qa_items; F7b)
 │   │   ├── commission_b/            <area>/<NNN>-<slug>.yaml: one rewrite per Pile B example, by Annex area
 │   │   │                            (annex_i, annex_iii_1 … annex_iii_8), NNN its hr-ex number (B4)
-│   │   ├── own/<category>/          a–e, the letter in the case id and its `category:` tag: a transparency, b scope,
-│   │   │                            c prohibited practices, d roles, e Annex I (B5a–e; aligned in B10c)
+│   │   ├── own/<category>/          a–f, the letter in the case id and its `category:` tag: a transparency, b scope,
+│   │   │                            c prohibited practices, d roles, e Annex I (B5a–e; aligned in B10c),
+│   │   │                            f Annex III negatives: area without the listed use, Art. 6(3), critical
+│   │   │                            infrastructure without a safety component (B15)
 │   │   ├── own/thin/                thin-description cases (own-t-*): no class, needs_more_information (E13, decision 032)
 │   │   ├── soft_pairs/              (B6)
 │   │   ├── qa/                      (B7)

@@ -1,0 +1,35 @@
+id: own-c-20-fitnessclub-vertraeglichkeitswert
+set_name: own
+language: de
+description: >-
+  Wir betreiben eine Kette von 40 Sport- und Wellnessclubs in Süddeutschland mit rund 90.000
+  Mitgliedern. Seit Anfang 2026 prüfen wir neue Mitgliedsanträge mit einer Software eines
+  Münchner Start-ups. Sie wertet neben den Angaben im Antrag auch aus, was die Person in den
+  letzten Jahren öffentlich in sozialen Netzwerken gepostet hat, welche Bewertungen sie auf
+  Online-Portalen geschrieben hat, ihre Beiträge in Nachbarschaftsforen und gemeldete
+  Verkehrsverstöße, und berechnet daraus einen Wert für „soziale Verträglichkeit“. Wer unter
+  einem festen Schwellenwert liegt, bekommt keine Mitgliedschaft. Den Wert übernehmen wir so, wie
+  der Anbieter ihn liefert. Gerade bauen wir außerdem in drei Clubs neue Saunabereiche.
+label:
+  risk_class: prohibited
+  role: deployer
+label_citation:
+  - "art:5:1:c"
+  - "art:5:1:c:i"
+  - "art:5:1:c:ii"
+  - "guide:guide-prohibited:para:166"
+  - "art:3:4"
+business_function: sales
+notes: >-
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: the software
+  evaluates applicants over a period of time (several years of posts, reviews, forum entries,
+  traffic offences) on their social behaviour, and the score leads to unfavourable treatment (no
+  membership) in a context unrelated to where the data was generated (Art. 5(1)(c)(i);
+  guidelines para. 166); refusing a club membership over online posts and traffic fines is also
+  out of proportion to that behaviour (ii). Prohibited since 2 February 2025; Art. 5(1)(c)
+  applies to private bodies too. No Annex III use, which does not matter once prohibited. Role:
+  bought and used unchanged under its authority (Art. 3(4)): deployer.
+tags:
+  - "category:c"
+  - "prohibition:art:5:1:c"
+  - "obligations:none"

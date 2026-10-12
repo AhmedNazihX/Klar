@@ -1,0 +1,34 @@
+id: own-c-18-car-sharing-driving-score
+set_name: own
+language: en
+description: >-
+  We run a car-sharing service in three Dutch cities with about 1,200 cars and 60,000 members.
+  Our own data team built a model that gives every member a driving score from the trip data our
+  cars record: hard braking, speeding against the posted limit, damage found after a trip and late
+  returns. Members with a low score pay a higher deposit, and a member whose score stays very low
+  for three months is suspended from the service. Members see their score and the trips behind it
+  in the app and can appeal to our support team. The score is not shared with anyone and is used
+  for nothing else. Last spring we also added electric cargo bikes to the fleet.
+label:
+  risk_class: minimal_risk
+  role: provider
+label_citation:
+  - "art:5:1:c"
+  - "guide:guide-prohibited:para:176"
+  - "guide:guide-prohibited:para:177"
+  - "art:3:3"
+business_function: consumer_product
+notes: >-
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: the score evaluates members over time on their behaviour,
+  but only on data from the service itself (their trips in its cars), and the treatment (a higher
+  deposit, suspension after a sustained low score, with an appeal) stays in that same context and
+  is proportionate to the driving, so neither Art. 5(1)(c)(i) nor (ii) is met (guidelines para.
+  176; para. 177 names telematic driving data used in its own context as legitimate). No Annex III
+  use (a deposit is not credit, and it is not life or health insurance), no Art. 50 duty:
+  minimal_risk. Role: built in-house and put into service for its own use (Art. 3(3)), also the
+  deployer. Trap: a behaviour score with a detrimental consequence reads like social scoring.
+tags:
+  - "category:c"
+  - "trap:purpose_bound_scoring"
+  - "also_role:deployer"
+  - "obligation:art:4:1"

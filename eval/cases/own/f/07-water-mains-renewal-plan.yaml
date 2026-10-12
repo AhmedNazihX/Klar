@@ -1,0 +1,45 @@
+id: own-f-07-water-mains-renewal-plan
+set_name: own
+language: en
+description: >-
+  We are a regional water utility in Flanders supplying about 400,000 households through 9,000 km
+  of mains. Our asset team uses a machine-learning tool from an engineering consultancy that ranks
+  pipe sections by how likely they are to burst in the next ten years, based on pipe age, material,
+  soil type and past repairs. We use the ranking to draw up our five-year pipe replacement
+  programme and its budget, which our engineers review and the board approves. The tool has no
+  connection to pumps, valves or the control room and does not watch the network as it runs;
+  leaks and pressure are handled by our separate control systems. We also use the same consultancy
+  for our hydraulic models.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation:
+  - "annex:III:2"
+  - "art:3:14"
+  - "recital:55"
+  - "guide:guide-high-risk-annex-iii:para:181"
+  - "guide:guide-high-risk-annex-iii:para:184"
+  - "guide:guide-high-risk-annex-iii:ex:065"
+  - "guide:guide-high-risk-annex-iii:ex:068"
+  - "art:6:2"
+  - "art:3:4"
+business_function: operations
+notes: >-
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: water supply is critical infrastructure, but Annex III 2
+  covers only AI systems used as safety components in its management and operation (Art. 3(14)):
+  this tool supports long-term investment planning, controls nothing, and its failure would not
+  directly endanger people or the network, because operation and leak handling run on separate
+  systems (recital 55). It is supportive and planning-oriented, not a direct protective function
+  (guidelines para. 181), and predictive maintenance planning is not a safety component where
+  other safeguards keep the network safe (examples ex:065, ex:068). So Art. 6(2) does not apply;
+  no Art. 50 duty: minimal_risk. Role: bought and used under its authority (Art. 3(4)): deployer.
+  Trap: an AI tool at a water utility reads like 2. Doubt: para. 184(b) makes a safety component
+  of "a component in the critical infrastructure to monitor and detect the need to schedule
+  maintenance" whose omission may directly lead to harm; read as not met, because this desk tool
+  is not a component of the network, does not watch it as it runs, and only shapes a multi-year
+  replacement plan that engineers review and the board approves, while leaks and pressure are
+  handled by separate control systems.
+tags:
+  - "category:f"
+  - "trap:critical_infrastructure_not_safety_component"
+  - "obligation:art:4:1"

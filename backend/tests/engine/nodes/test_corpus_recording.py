@@ -136,4 +136,5 @@ def test_every_recorded_replay_case_has_its_recording(
 ) -> None:
     """Every case of a recorded replay has its cassette: none may skip for a missing file."""
     expected = {f"{test}[{case_id}]" for case_id in _case_ids(category)} | extra
-    assert expected <= _stems(NODE_RECORDINGS / module, ".yaml")
+    recorded = _stems(NODE_RECORDINGS / module, ".yaml")
+    assert expected <= recorded

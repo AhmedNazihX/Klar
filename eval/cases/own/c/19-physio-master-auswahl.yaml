@@ -1,0 +1,52 @@
+id: own-c-19-physio-master-auswahl
+set_name: own
+language: de
+description: >-
+  Wir sind eine private Hochschule für Gesundheitsberufe in Nordrhein-Westfalen mit rund 3.000
+  Studierenden. Für unseren Masterstudiengang Physiotherapie mit 40 Plätzen nutzen wir ab dem
+  Wintersemester 2028/29 ein Auswahlmodul unseres Campus-Management-Anbieters. Es liest aus den
+  hochgeladenen Unterlagen das Bachelorzeugnis, die Noten in den Kernfächern, die nachgewiesenen
+  Praxisstunden und das Motivationsschreiben und vergibt jeder Bewerbung einen Punktwert. Die
+  Auswahlkommission lässt von oben nach unten zu, bis die Plätze vergeben sind, und schaut sich
+  nur die Grenzfälle rund um Platz 40 genauer an. Das Modul verwendet ausschließlich, was die
+  Bewerberinnen und Bewerber für diesen Studiengang einreichen. Über denselben Anbieter läuft
+  auch unsere Raumplanung.
+label:
+  risk_class: high_risk
+  role: deployer
+  annex_point: "annex:III:3:a"
+label_citation:
+  - "annex:III:3:a"
+  - "art:6:2"
+  - "art:6:3"
+  - "art:5:1:c"
+  - "guide:guide-prohibited:para:176"
+  - "art:3:4"
+business_function: education
+notes: >-
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: the module scores
+  applicants and the score decides admission to a programme (Annex III 3(a), Art. 6(2));
+  scoring each applicant's grades, practice and statement is profiling, so Art. 6(3) cannot take
+  it out. Not social scoring: the data comes only from the application for this programme and
+  the treatment (admitted or not) stays in that admission context and is proportionate (Art.
+  5(1)(c)(i) and (ii) not met; guidelines para. 176). Date: use starts with the winter semester
+  2028/29, after 2 December 2027, so Art. 111(2) does not arise. Role: bought and used unchanged
+  under its authority (Art. 3(4)): deployer. Included: 26(4) (it receives and passes on the
+  uploaded documents that are the input), 26(11) (decisions about natural persons). Kept because
+  the facts don't settle the condition: 26(9) (DPIA) and 86(1) (whether a refused admission has
+  legal or similarly significant effects). Left out: 26(7) (applicants are not its workers),
+  26(8) and 27 (a private institution, not a public body). Trap: a score that decides who is
+  turned away reads like social scoring.
+tags:
+  - "category:c"
+  - "trap:purpose_bound_scoring"
+  - "obligation:art:4:1"
+  - "obligation:art:26:1"
+  - "obligation:art:26:2"
+  - "obligation:art:26:4"
+  - "obligation:art:26:5"
+  - "obligation:art:26:6"
+  - "obligation:art:26:9"
+  - "obligation:art:26:11"
+  - "obligation:art:26:12"
+  - "obligation:art:86:1"

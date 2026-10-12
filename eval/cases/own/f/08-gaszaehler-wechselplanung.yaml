@@ -1,0 +1,37 @@
+id: own-f-08-gaszaehler-wechselplanung
+set_name: own
+language: de
+description: >-
+  Als Gasnetzbetreiber rund um Kiel versorgen wir gut 60.000 Haushalte und Betriebe über
+  unsere Leitungen. Für den vorgeschriebenen Turnuswechsel der Gaszähler setzen wir seit diesem
+  Jahr eine KI-gestützte Planungssoftware ein. Sie schlägt vor, welche Zähler in welcher Woche
+  getauscht werden, bündelt die Termine nach Straßenzügen, berücksichtigt Wunschtermine der
+  Kunden und stellt die Tagestouren unserer Monteure zusammen. Auf die Netzsteuerung, die
+  Druckregelanlagen oder die Störungsannahme hat die Software keinen Zugriff; den Tausch selbst
+  und die Dichtheitsprüfung erledigen die Monteure nach unseren Arbeitsanweisungen. Gekauft haben
+  wir sie bei einem Softwarehaus aus Lübeck, das uns auch die Lagerverwaltung liefert.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation:
+  - "annex:III:2"
+  - "art:3:14"
+  - "recital:55"
+  - "guide:guide-high-risk-annex-iii:para:181"
+  - "art:6:2"
+  - "art:3:4"
+business_function: operations
+notes: >-
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: gas supply is
+  critical infrastructure, but the software only plans appointments and technician routes; it has
+  no access to network control, pressure regulation or fault reporting, and the safety-relevant
+  work (the swap and the leak test) is done by people under the operator's procedures. Its
+  failure would delay meter swaps, not endanger people or the network, so it is not a safety
+  component (Art. 3(14), recital 55; it is organisational, not a direct protective function,
+  guidelines para. 181) and Annex III 2 does not apply; no Art. 50 duty:
+  minimal_risk. Role: bought and used under its authority (Art. 3(4)): deployer. Trap: an AI tool
+  in a gas network reads like 2. Doubt: none on the law.
+tags:
+  - "category:f"
+  - "trap:critical_infrastructure_not_safety_component"
+  - "obligation:art:4:1"

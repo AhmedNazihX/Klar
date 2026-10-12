@@ -600,6 +600,63 @@ def test_every_headline_own_case_has_a_business_function() -> None:
     assert missing == []
 
 
+ANNEX_III_NEGATIVES_FOLDER = "f"
+ANNEX_III_NEGATIVES_COUNT = 9
+
+
+def test_the_committed_annex_iii_negatives_have_their_count_tag_and_languages() -> None:
+    """B15: own/f holds 9 Annex III cases, each `own-f-…` and tagged `category:f`, in both
+    languages with at least a quarter German, and only one of them high-risk (the profiling
+    case that Art. 6(3) can't exempt)."""
+    folder = CASES_DIR / CaseSet.OWN.value / ANNEX_III_NEGATIVES_FOLDER
+    cases = [case for path in sorted(folder.glob("*.yaml")) for case in load_yaml_file(path)]
+    assert len(cases) == ANNEX_III_NEGATIVES_COUNT
+    assert all(case.id.startswith("own-f-") and "category:f" in case.tags for case in cases)
+    languages = Counter(case.language for case in cases)
+    assert set(languages) == {Language.EN, Language.DE}
+    assert languages[Language.DE] / len(cases) >= MIN_GERMAN_SHARE
+    high = [
+        c.id
+        for c in cases
+        if isinstance(c.label, CaseLabel) and c.label.risk_class is RiskClass.HIGH_RISK
+    ]
+    assert high == ["own-f-06-pflegedienst-leistungsprofil"]
+
+
+PURPOSE_BOUND_SCORING_CASES = (
+    "own-c-18-car-sharing-driving-score",
+    "own-c-19-physio-master-auswahl",
+    "own-c-20-fitnessclub-vertraeglichkeitswert",
+)
+PURPOSE_BOUND_TAGS = frozenset({"trap:purpose_bound_scoring", "prohibition:art:5:1:c"})
+
+
+def test_the_committed_purpose_bound_scoring_cases_have_both_sides() -> None:
+    """B15: own/c holds the purpose-bound scoring cases, at least one social scoring
+    (prohibited) and at least one purpose-bound scoring that is not, each tagged as such."""
+    cases = {case.id: case for case in load_cases(CaseSet.OWN)}
+    scoring = [cases[case_id] for case_id in PURPOSE_BOUND_SCORING_CASES]
+    assert all(
+        "category:c" in case.tags and PURPOSE_BOUND_TAGS & set(case.tags) for case in scoring
+    )
+    classes = [case.label.risk_class for case in scoring if isinstance(case.label, CaseLabel)]
+    assert len(classes) == len(scoring)
+    assert RiskClass.PROHIBITED in classes
+    assert any(risk_class is not RiskClass.PROHIBITED for risk_class in classes)
+
+
+APPROVAL_PENDING_MARK = "APPROVAL PENDING"
+
+
+def test_no_committed_own_case_waits_for_its_approval_line() -> None:
+    pending = [
+        case.id
+        for case in load_cases(CaseSet.OWN)
+        if case.notes and APPROVAL_PENDING_MARK in case.notes
+    ]
+    assert pending == []
+
+
 def test_business_function_is_one_of_the_closed_list() -> None:
     case = BenchmarkCase.model_validate(with_changes(business_function="consumer_product"))
     assert case.business_function is BusinessFunction.CONSUMER_PRODUCT

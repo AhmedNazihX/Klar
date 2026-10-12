@@ -1,0 +1,37 @@
+id: own-f-09-district-heating-advice-calls
+set_name: own
+language: en
+description: >-
+  We operate the district heating network of a city in eastern Poland, serving about 45,000
+  flats and houses. Every month a tool we bought from a Warsaw analytics firm goes through our
+  customers' heat-meter readings, compares each home with similar ones and with the weather, and
+  flags homes whose use is unusually high. Our customer team then phones those households and
+  offers a free, voluntary energy-advice visit; nobody has to take it, and the tariff stays the
+  same either way. The calls are made by our staff, and the tool writes no messages. It has no
+  access to the heating plants, pumps or network control, which run on separate systems. We are
+  also switching to paperless invoices this year.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation:
+  - "annex:III:2"
+  - "art:3:14"
+  - "recital:55"
+  - "guide:guide-high-risk-annex-iii:para:181"
+  - "art:6:2"
+  - "art:3:4"
+business_function: customer_service
+notes: >-
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: heating
+  supply is critical infrastructure, but the tool only picks households for a voluntary advice
+  call; it controls nothing in the plants or network, and its failure would mean a missed call,
+  not a risk to people or the infrastructure, so it is not a safety component (Art. 3(14),
+  recital 55; it is supportive, not a direct protective function, guidelines para. 181) and
+  Annex III 2 does not apply. No other Annex III use (the offer is voluntary and
+  changes no tariff or service), and no Art. 50 duty, since people make the calls and the tool
+  generates no content: minimal_risk. Role: bought and used under its authority (Art. 3(4)):
+  deployer. Trap: an AI tool at a heating network operator reads like 2. Doubt: none on the law.
+tags:
+  - "category:f"
+  - "trap:critical_infrastructure_not_safety_component"
+  - "obligation:art:4:1"

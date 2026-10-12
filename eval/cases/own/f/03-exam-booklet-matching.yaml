@@ -1,0 +1,33 @@
+id: own-f-03-exam-booklet-matching
+set_name: own
+language: en
+description: >-
+  We are a technical university in Austria with 14,000 students. Written exams are taken on paper
+  booklets with a printed QR code. Afterwards our examinations office scans all booklets, and a
+  tool we bought from an e-assessment vendor reads the QR code and the handwritten student number
+  on the cover, matches each booklet to the right student and course, and files the scan in the
+  marker's folder. When the code and the number don't agree, it puts the booklet aside for a staff
+  member to sort by hand. The tool never reads the answers and plays no part in marking: lecturers
+  mark every booklet themselves. The vendor's package also includes booking rooms for exams.
+label:
+  risk_class: minimal_risk
+  role: deployer
+label_citation:
+  - "art:6:3"
+  - "art:6:3:a"
+  - "recital:53"
+  - "annex:III:3:b"
+  - "art:3:4"
+business_function: education
+notes: >-
+  approved by user 2026-10-12 (labels checked by the orchestrator against the cited provisions; the user approved all 12 B15 cases without reviewing each one). Class: the tool works inside the assessment of learning outcomes
+  (Annex III 3(b)), but only performs a narrow procedural task, matching and filing scans, and
+  does not influence the marks (Art. 6(3)(a), recital 53); it does no profiling. So it is not
+  high-risk; no Art. 50 duty: minimal_risk. A reader could also say it never reaches 3(b), since
+  it does not evaluate anything; the class is the same either way. Role: bought and used
+  unchanged under its authority (Art. 3(4)): deployer (the Art. 6(4) documentation and
+  registration fall on the vendor). Trap: an exam tool reads like 3(b).
+tags:
+  - "category:f"
+  - "trap:art_6_3_exemption"
+  - "obligation:art:4:1"
