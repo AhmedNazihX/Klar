@@ -552,7 +552,7 @@ describe('A stored tool after an answer', () => {
   })
 })
 
-describe('The company profile pre-selects the EU answer (decision 026 item 2)', () => {
+describe('The company profile answers the EU question (decision 026 item 2, P29)', () => {
   const EU_LINK: FollowUpQuestion = {
     id: 'eu_link',
     text: 'Is the system placed on the market or used in the EU, or is its output used in the EU?',
@@ -566,26 +566,27 @@ describe('The company profile pre-selects the EU answer (decision 026 item 2)', 
   it.each([
     ['used in the EU', { used_in: 'eu_and_outside' }],
     ['established in an EU country', { established_in: 'DE' }],
-  ] as const)('pre-selects Yes for a company %s; it is sent only on a run', async (_, profile) => {
-    inventories = [inventoryRow(profile)]
-    const toolId = storeTool(asksEuLink())
-    const { user } = await openTool(toolId)
-    const panel = screen.getByRole('region', { name: '1 open question' })
-    const group = within(panel).getByRole('group', { name: EU_LINK.text })
-    await expect
-      .poll(() => within(group).getByRole('button', { name: 'Yes' }).getAttribute('aria-pressed'))
-      .toBe('true')
-    expect(panel).toHaveTextContent(
-      'Filled in from your company profile. Please check it before you run the checks again.',
-    )
-    expect(classifyBodies).toEqual([])
+  ] as const)(
+    'answers Yes for a company %s, apart from the open questions; it is sent only on a run',
+    async (_, profile) => {
+      inventories = [inventoryRow(profile)]
+      const toolId = storeTool(asksEuLink())
+      const { user } = await openTool(toolId)
+      const fromProfile = await screen.findByRole('region', { name: 'From your company profile' })
+      expect(fromProfile).toHaveTextContent(EU_LINK.text)
+      expect(within(fromProfile).getByText('Yes')).toBeVisible()
+      expect(screen.queryByRole('region', { name: /open question/ })).toBeNull()
+      expect(classifyBodies).toEqual([])
 
-    await user.click(within(panel).getByRole('button', { name: 'Add answer and run again' }))
-    await expect.poll(() => classifyBodies.length).toBe(1)
-    expect(classifyBodies[0]?.answers).toEqual({ eu_link: `${EU_LINK.text} Yes.` })
-  })
+      await user.click(
+        within(fromProfile).getByRole('button', { name: 'Add answer and run again' }),
+      )
+      await expect.poll(() => classifyBodies.length).toBe(1)
+      expect(classifyBodies[0]?.answers).toEqual({ eu_link: `${EU_LINK.text} Yes.` })
+    },
+  )
 
-  it('pre-selects nothing for a company established outside the EU', async () => {
+  it('leaves the question open for a company established outside the EU', async () => {
     inventories = [inventoryRow({ established_in: 'US' })]
     const toolId = storeTool(asksEuLink())
     await openTool(toolId, 'de')
@@ -598,25 +599,15 @@ describe('The company profile pre-selects the EU answer (decision 026 item 2)', 
     expect(
       within(panel).getByRole('button', { name: 'Antwort hinzufügen und erneut prüfen' }),
     ).toBeDisabled()
-  })
-
-  it('says where a pre-selected answer came from, in German', async () => {
-    inventories = [inventoryRow({ used_in: 'eu' })]
-    const toolId = storeTool(asksEuLink())
-    await openTool(toolId, 'de')
-    expect(
-      await screen.findByText(
-        'Aus Ihrem Unternehmensprofil übernommen. Bitte prüfen Sie es, bevor Sie die Prüfungen erneut starten.',
-      ),
-    ).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Aus Ihrem Unternehmensprofil' })).toBeNull()
   })
 
   it.each([
-    ['en', 'Confirm', 'Confirmed: HR reviews every shortlist.'],
-    ['de', 'Bestätigen', 'Bestätigt: HR reviews every shortlist.'],
+    ['en', 'Confirm', 'Confirmed: HR reviews every shortlist.', 'From your company profile'],
+    ['de', 'Bestätigen', 'Bestätigt: HR reviews every shortlist.', 'Aus Ihrem Unternehmensprofil'],
   ] as const)(
-    'Confirm on a fact card sends only that fact with the run, not the pre-filled answer (%s)',
-    async (language, confirm, line) => {
+    'Confirm on a fact card sends only that fact with the run, not the profile answer (%s)',
+    async (language, confirm, line, fromProfile) => {
       inventories = [inventoryRow({ used_in: 'eu' })]
       const result: ClassificationResult = {
         ...asksEuLink(),
@@ -629,10 +620,7 @@ describe('The company profile pre-selects the EU answer (decision 026 item 2)', 
         { id: RUN_2, run_no: 2, result, inputs: { description: 'd', answers: earlier } },
       ]
       const { user } = await openTool(toolId, language)
-      const panel = screen.getByRole('region', { name: /^1 (open question|offene Frage)$/ })
-      await expect
-        .poll(() => within(panel).getAllByRole('button', { pressed: true }).length)
-        .toBe(1)
+      await screen.findByRole('region', { name: fromProfile })
 
       const facts = screen.getByRole('complementary', {
         name: language === 'en' ? 'The result rests on' : 'Das Ergebnis beruht auf',

@@ -107,9 +107,6 @@ export function DecidingQuestion({
       </h2>
       {question.hint && <p className="m-0 text-body-small text-slate">{question.hint}</p>}
       <QuestionAnswer question={question} labelledBy={headingId} {...answers} />
-      {answers.drafts[question.id]?.isFromProfile && (
-        <p className="m-0 text-caption font-normal text-ink-2">{t('followUp.fromProfile')}</p>
-      )}
       {question.if_yes && (
         <dl className="m-0 grid gap-2.5 md:grid-cols-2">
           <div className="flex flex-col gap-2 rounded-card-small px-4 py-3 glass-thin">

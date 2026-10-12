@@ -118,12 +118,10 @@ function ConfirmQuestion({
   question,
   ...answers
 }: { question: FollowUpQuestion } & AnswerProps): JSX.Element {
-  const { t } = useTranslation()
   return (
     <FactQuestion
       question={question.text}
       hint={question.hint}
-      note={answers.drafts[question.id]?.isFromProfile ? t('followUp.fromProfile') : undefined}
       renderAnswer={(labelledBy) => (
         <QuestionAnswer question={question} labelledBy={labelledBy} {...answers} />
       )}

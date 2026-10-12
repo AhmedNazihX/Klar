@@ -23,7 +23,7 @@ export const MAX_ANSWERS = 40
 export const ANSWER_OPTIONS: readonly AnswerOption[] = ['yes', 'no', 'not_sure']
 
 /** What the user has given for one question so far: a choice, or words. */
-export type AnswerDraft = { option?: AnswerOption; text?: string; isFromProfile?: boolean }
+export type AnswerDraft = { option?: AnswerOption; text?: string }
 export type AnswerDrafts = Readonly<Record<string, AnswerDraft>>
 
 /** The Art. 2(1) question the company profile can answer (decision 026 item 2). */
@@ -155,14 +155,17 @@ function isEuFromProfile(profile: CompanyProfile | null): boolean {
   return profile.establishedIn !== null && EU_MEMBER_STATES.has(profile.establishedIn)
 }
 
-/** The drafts the profile fills in before the user answers (decision 026 item 2): Yes to the EU
- *  question when the profile says the tools are used in the EU or the company is established
- *  there. They are only pre-selected: nothing is sent until the user runs the checks again. */
+/** The answers the company profile gives (decision 026 item 2): Yes to the EU question when the
+ *  profile says the tools are used in the EU or the company is established there, unless the user
+ *  chose to answer it themselves (`changed`). The screen shows them apart from the open questions
+ *  (story P29); they are sent only when the user runs the checks again, with the other answers.
+ *  The profile itself never reaches the engine (decision 026 item 7). */
 export function profileDrafts(
   questions: readonly FollowUpQuestion[],
   profile: CompanyProfile | null,
+  changed: ReadonlySet<string> = new Set(),
 ): AnswerDrafts {
   const asked = questions.some((question) => question.id === EU_LINK)
-  if (!asked || !isEuFromProfile(profile)) return {}
-  return { [EU_LINK]: { option: 'yes', isFromProfile: true } }
+  if (!asked || changed.has(EU_LINK) || !isEuFromProfile(profile)) return {}
+  return { [EU_LINK]: { option: 'yes' } }
 }
