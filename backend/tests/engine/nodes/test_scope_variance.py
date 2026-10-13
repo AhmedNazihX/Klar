@@ -42,11 +42,7 @@ from aiact.schemas import EvidenceTag, Fact, Status
 from aiact.settings import Settings
 from tests.conftest import RECORDINGS_DIR
 from tests.engine.built_corpus import unresolved_citations, whole_articles
-from tests.engine.nodes.corpus_recording import (
-    RecordingPendingError,
-    corpus_recording,
-    require_recording,
-)
+from tests.engine.nodes.corpus_recording import corpus_recording, require_recording
 from tests.engine.nodes.test_scope import (
     LUNA,
     LUNA_PROVIDER,
@@ -186,12 +182,6 @@ def _live_corpus(settings: Settings) -> Iterator[CorpusLibrary]:
 
 
 @pytest.mark.vcr
-@pytest.mark.xfail(
-    strict=True,
-    raises=RecordingPendingError,
-    reason="recording pending (orchestrator, after the user's go-ahead on the cost): E14's "
-    f"{RUNS} runs of the scope step on the worked example",
-)
 def test_worked_example_scope_varies_only_between_inits_readings(
     luna_settings: Settings,
     record_mode: str,

@@ -2,9 +2,8 @@
 
 - **Date:** 2026-10-13
 - **Story:** E14 (docs/BACKLOG.md); affects E17's deferred items, the high-risk and role prompts, and the own-a-14 label
-- **Status:** proposed (waiting for the user): the diagnoses are final except the worked example's, which is
-  provisional until its five runs are recorded; those wait for the go-ahead on their cost, and the three follow-ups
-  below are the user's to choose
+- **Status:** proposed (waiting for the user): the diagnoses are final, including the worked example's after its
+  five runs were recorded (2026-10-13); the three follow-ups below are the user's to choose
 
 ## Question
 After E19 the node replays still have five known gaps, and E19's recording showed two cases that flipped once
@@ -32,7 +31,7 @@ scope request.
 | own-a-15-intranet-assistant-in-house (transparency) | `interaction.exception`: yes before E18's T3 rule (6f15db0, be9fda1), open in law (710f1f1) and no (69ec0a0) after it. Both later runs say the mandatory training on AI tools isn't shown to be about this assistant | Not variance: a reading of T3's wording ("training on the AI system itself … can show all three together") against guide-art50 para 45's example (staff who are properly trained, AI literate and aware that they use AI systems). This is over-strictness, so it is E18 and E19's area | Known gap; E19's follow-up |
 | own-e-09-ropeway-wear-forecast (high-risk, passes) | `annex_i.settled_in_law` no in 6 of 7 runs, yes in 1 (69ec0a0). On the current prompt: 69ec0a0 decided, c2a81f3 open (the current one, which passes) | Variance: the safety-component question is open in law in all the other runs | Passes; no entry |
 | own-c-15-debt-collection-chat-pressure (prohibited, passes) | On the current prompt: 69ec0a0 `social_scoring` yes with `disproportionate_treatment` yes (point (c) decided), 4126434 the same with `disproportionate_treatment` no (the current one, which passes). Earlier: no and no (be9fda1, 7f02474), and open in law (2df6387) | Variance: 69ec0a0 counts the deceptive deadlines, which every debtor gets, as treatment resulting from a score. The prompt already says "the score leads to worse treatment", so no rule is missing | Passes; no entry |
-| INIT worked example (scope) | `ai_system` unknown in all 6 whole-run recordings (7f02474, 5033d93, 66e3ae6, 710f1f1, cc2962a, 69ec0a0; the last three on the current scope prompt), so every recorded run asks. The only "decided" run is the user's live P5 check (2026-10-07), which was not recorded, so what it answered is inferred: it must have read `ai_system` yes, since that is the only scope answer that pauses the step and every other answer was the same in all 6 | **Provisional:** variance on `ai_system` only, between the two readings INIT › Worked example accepts ("the engine may ask … or assume it is an AI system; either is accepted"). The prompt is clear: "unknown" when the answer depends on how the system works and the description doesn't say, which this one doesn't. No fix. The five-run recording confirms or refutes it: runs that ask `ai_system` _n_ of 5, decided _n_ of 5, any other reading _n_ of 5 (to fill in once recorded) | Five fresh runs pending (see below) |
+| INIT worked example (scope) | `ai_system` unknown in all 6 whole-run recordings (7f02474, 5033d93, 66e3ae6, 710f1f1, cc2962a, 69ec0a0; the last three on the current scope prompt), so every recorded run asks. The only "decided" run is the user's live P5 check (2026-10-07), which was not recorded, so what it answered is inferred: it must have read `ai_system` yes, since that is the only scope answer that pauses the step and every other answer was the same in all 6. The five fresh runs on the whole run's request (2026-10-13): asks `ai_system` 5 of 5, decided 0 of 5, any other reading 0 of 5 | A stable reading, not observed variance: 11 of 11 recorded runs ask `ai_system`, and the "decided" reading is unseen in any recording, so the live run that decided was a rare outlier. Both readings are the ones INIT › Worked example accepts ("the engine may ask … or assume it is an AI system; either is accepted"), and the prompt is clear: "unknown" when the answer depends on how the system works and the description doesn't say, which this one doesn't. No fix | Passes; `test_worked_example_scope_varies_only_between_inits_readings` holds every run to INIT's two readings |
 
 ## Decision
 No prompt or node change in E14. Each gap stays with its diagnosis in its `KNOWN_GAPS` reason. Two of the gaps
@@ -40,14 +39,12 @@ No prompt or node change in E14. Each gap stays with its diagnosis in its `KNOWN
 because E14 is the variance diagnosis only (user, 2026-10-12), and each fix changes a prompt every replay of its node
 reads. own-a-14 is a label question.
 
-The worked example's diagnosis is provisional until its five runs are recorded: no recorded run decided, so the
-variance itself rests on one unrecorded live run. The runs are measured by
-`test_worked_example_scope_varies_only_between_inits_readings`. Every run must be one of INIT's two readings, and
-nothing else may waver. If all five ask, the "decided" reading stays unseen in any recording, and the row says so; if
-any run pauses on another question, or ends out of scope or contested, the diagnosis is refuted and the prompt is
-looked at again. Estimated cost: the scope call in the
-worked-example cassette cost $0.00114 (OpenRouter `usage.cost`, 4,431 prompt and 965 completion tokens), so five runs
-cost about $0.006, plus five embedding calls under $0.00001.
+The worked example's five runs are measured by
+`test_worked_example_scope_varies_only_between_inits_readings`: every run must be one of INIT's two readings, and
+nothing else may waver. All five asked `ai_system`, so the "decided" reading stays unseen in any recording, and the
+one live run that decided (2026-10-07) is a rare outlier between two accepted readings. No run paused on another
+question or ended out of scope or contested, so nothing points to the prompt. Cost of the five runs: $0.0039
+(OpenRouter `usage.cost` in the recording; estimated beforehand at about $0.006).
 
 ## Follow-ups (the user's to choose)
 1. **Role prompt (own-d-03).** One sentence in role_obligations.md's `role`: when the company builds its own system on
@@ -65,11 +62,9 @@ cost about $0.006, plus five embedding calls under $0.00001.
    voice? guide-art50 para 113 points the other way. A label change goes through eval/LABEL_CHANGES.md.
 
 ## Consequences
-- `tests/engine/nodes/test_scope_variance.py`: the five-run replay, a strict "recording pending" xfail until it is
-  recorded (`uv run pytest tests/engine/nodes/test_scope_variance.py --record-mode=once`, then drop the mark).
-  Once recorded, the counts of runs that ask (`ai_system` unknown) and that decide go into the worked example's row
-  above, which then stops being provisional. `test_the_runs_repeat_the_whole_runs_scope_request` (free) holds the
-  runs' facts and description to the whole-run recording's scope request.
+- `tests/engine/nodes/test_scope_variance.py`: the five-run replay, recorded on 2026-10-13 (5 of 5 ask
+  `ai_system`). `test_the_runs_repeat_the_whole_runs_scope_request` (free) holds the runs' facts and description to
+  the whole-run recording's scope request.
 - The KNOWN_GAPS reasons in test_scope.py, test_role_obligations.py, test_high_risk.py and test_transparency.py name
   their E14 diagnosis.
 - Revisit when a prompt named above changes, or when a re-record flips a gap the other way.
