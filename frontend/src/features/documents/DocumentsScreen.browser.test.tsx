@@ -201,16 +201,17 @@ describe('the Documents screen on a phone, in German', () => {
     expect(document.activeElement).toBe(toggle)
   })
 
-  it.each([
-    ['a document', `/app/documents/art_17_quality_management?tool=${DRIVERS}`],
-    ['the first document', `/app/documents?tool=${DRIVERS}`],
-  ])('gives the focus to the toggle after another document opens, from %s', async (_, path) => {
+  it('gives the focus to the new toggle when a picked document mounts the screen anew', async () => {
+    // From the first document's route to a document's own: the screen mounts anew, so the
+    // toggle that had the focus is gone. (Between two documents' routes the screen stays, and
+    // so does its toggle.)
     const shown = qualityManagement()
     await page.viewport(PHONE.width, PHONE.height)
     await i18n.changeLanguage('de')
-    renderRoute(path, seededClient(shown, 'de'))
+    renderRoute(`/app/documents?tool=${DRIVERS}`, seededClient(shown, 'de'))
     const label = `Dokumente (${String(shown.documents.length)})`
-    await userEvent.click(await screen.findByRole('button', { name: label }))
+    const first = await screen.findByRole('button', { name: label })
+    await userEvent.click(first)
     const list = screen.getByRole('navigation', { name: 'Dokumente' })
     const other = within(list)
       .getAllByRole('link')
@@ -222,11 +223,51 @@ describe('the Documents screen on a phone, in German', () => {
     await expect
       .poll(() => document.querySelector(`a[aria-current="page"][href="${href}"]`))
       .not.toBeNull()
-    // The toggle on screen now, whichever element it is after the route changed.
-    await expect
-      .poll(() => document.activeElement)
-      .toBe(screen.getByRole('button', { name: label }))
-    expect(screen.getByRole('button', { name: label })).toHaveAttribute('aria-expanded', 'false')
+    // The toggle on screen now: a new element, the screen having mounted anew.
+    const now = screen.getByRole('button', { name: label })
+    expect(now).not.toBe(first)
+    await expect.poll(() => document.activeElement).toBe(now)
+    expect(now).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('leaves the focus where it is when a new toggle mounts without it', async () => {
+    const shown = qualityManagement()
+    await page.viewport(PHONE.width, PHONE.height)
+    await i18n.changeLanguage('de')
+    const { router } = renderRoute(`/app/documents?tool=${DRIVERS}`, seededClient(shown, 'de'))
+    const label = `Dokumente (${String(shown.documents.length)})`
+    const first = await screen.findByRole('button', { name: label })
+    // Focus on a control outside the screen, which stays when the screen mounts anew.
+    const outside = document.createElement('button')
+    outside.textContent = 'Outside'
+    document.body.append(outside)
+    try {
+      outside.focus()
+      await router.navigate({ href: `/app/documents/${shown.template}?tool=${DRIVERS}` })
+      await expect.poll(() => screen.getByRole('button', { name: label })).not.toBe(first)
+      expect(document.activeElement).toBe(outside)
+    } finally {
+      outside.remove()
+    }
+  })
+
+  it('drops the hand-off when the screen goes with no toggle in its place', async () => {
+    // The toggle has the focus as the screen goes, and nothing takes it in that commit: a
+    // toggle mounted later, by another visit, must not take the focus.
+    const shown = qualityManagement()
+    await page.viewport(PHONE.width, PHONE.height)
+    await i18n.changeLanguage('de')
+    const path = `/app/documents/${shown.template}?tool=${DRIVERS}`
+    const label = `Dokumente (${String(shown.documents.length)})`
+    const { unmount } = renderRoute(path, seededClient(shown, 'de'))
+    const gone = await screen.findByRole('button', { name: label })
+    gone.focus()
+    unmount()
+    // The next visit comes after that commit's microtasks.
+    await Promise.resolve()
+    renderRoute(path, seededClient(shown, 'de'))
+    const next = await screen.findByRole('button', { name: label })
+    expect(document.activeElement).not.toBe(next)
   })
 
   it("closes a skeleton's section list too, and opens it on request", async () => {

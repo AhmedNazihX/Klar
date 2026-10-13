@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useState, type JSX, type ReactNode } from 'react'
+import { useId, useLayoutEffect, useState, type JSX, type ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -11,8 +11,10 @@ const OPEN_FROM = {
 /** The list whose toggle takes the focus as it mounts. Picking a link can change the route (from
  *  /app/documents to a document), which mounts the screen anew: the toggle that had the focus is
  *  gone with the old screen, and the focus would fall to the page's start. The old toggle names
- *  its list here as it goes, and the new one takes the focus in the same commit; whatever no new
- *  toggle takes is dropped once that commit is done. */
+ *  its list here as it goes, and the new one takes the focus in the same commit (React runs a
+ *  removed component's layout cleanups before the new ones' layout effects); a name no new
+ *  toggle takes is dropped once that commit is done, so a toggle mounted later never takes the
+ *  focus. */
 let focusOnMount: string | null = null
 
 /** What the list inside gets: its id (the toggle controls it), its display class, and `close`,
@@ -44,7 +46,8 @@ export function ClosedOnSmallScreens({
   const classes = OPEN_FROM[openFrom]
   // Focus is outside React; the toggle is found by its id. Before the old toggle leaves the page (a
   // layout effect's cleanup runs while it is still there), it hands the focus on to the toggle of
-  // the same list on the new one.
+  // the same list on the new one, which takes it in its own layout effect, in that same commit: a
+  // passive effect could run after the microtask has dropped the name.
   useLayoutEffect(() => {
     const toggle = document.getElementById(toggleId)
     return () => {
@@ -55,7 +58,7 @@ export function ClosedOnSmallScreens({
       })
     }
   }, [name, toggleId])
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (focusOnMount !== name) return
     focusOnMount = null
     document.getElementById(toggleId)?.focus()
