@@ -29,6 +29,18 @@ function offsetX(light: HTMLElement | undefined): number {
   return Number(/translate3d\(([-\d.e]+)px/.exec(light?.style.transform ?? '')?.[1])
 }
 
+/** The cursor light's vertical offset, in px, from its transform. */
+function offsetY(light: HTMLElement | undefined): number {
+  return Number(/translate3d\([-\d.e]+px, ([-\d.e]+)px/.exec(light?.style.transform ?? '')?.[1])
+}
+
+/** Places the ground as if the page were scrolled `scrolled` px down. */
+function scrollGroundTo(ground: HTMLElement, scrolled: number): void {
+  vi.spyOn(ground, 'getBoundingClientRect').mockReturnValue(
+    DOMRect.fromRect({ x: 0, y: -scrolled, width: 1440, height: 5000 }),
+  )
+}
+
 function renderGround(): { ground: HTMLElement; light: (kind: string) => HTMLElement[] } {
   const { container } = render(
     <MistGround>
@@ -79,6 +91,24 @@ describe('MistGround', () => {
       expect(offsetX(cursor)).toBeCloseTo(9, 6)
       frames.run(1)
       expect(offsetX(cursor)).toBeCloseTo(9 + 91 * 0.09, 6)
+    })
+
+    it('keeps the cursor light under a still pointer while the page scrolls', () => {
+      const { ground, light } = renderGround()
+      const [cursor] = light('cursor')
+      scrollGroundTo(ground, 0)
+      fireEvent.pointerMove(ground, { clientX: 500, clientY: 400 })
+      frames.run(1)
+      expect(offsetY(cursor)).toBe(20)
+      // The page scrolls 300 px under the pointer, which doesn't move on screen.
+      scrollGroundTo(ground, 300)
+      act(() => {
+        window.dispatchEvent(new Event('scroll'))
+      })
+      frames.run(200)
+      // 400 px down the screen is now 700 px down the ground; the light centres on it.
+      expect(Math.abs(offsetY(cursor) - 320)).toBeLessThan(1)
+      expect(offsetX(cursor)).toBe(120)
     })
 
     it('drifts the two lights at different speeds as the page scrolls', () => {

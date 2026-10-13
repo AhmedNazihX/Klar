@@ -24,7 +24,15 @@ function startLights(ground: HTMLElement, lights: HTMLElement[], cursor: HTMLEle
   let cursorFrame = 0
   let at: Point = { x: 0, y: 0 }
   let target: Point = { x: 0, y: 0 }
+  // The pointer on screen: a scroll moves the ground under it without a pointer event.
+  let pointer: Point = { x: 0, y: 0 }
   let isOn = false
+
+  function aimAtPointer(): void {
+    const box = ground.getBoundingClientRect()
+    target = { x: pointer.x - box.left, y: pointer.y - box.top }
+    if (!cursorFrame) cursorFrame = requestAnimationFrame(follow)
+  }
 
   function follow(): void {
     at = {
@@ -38,14 +46,13 @@ function startLights(ground: HTMLElement, lights: HTMLElement[], cursor: HTMLEle
   }
 
   function onPointerMove(event: PointerEvent): void {
-    const box = ground.getBoundingClientRect()
-    target = { x: event.clientX - box.left, y: event.clientY - box.top }
+    pointer = { x: event.clientX, y: event.clientY }
+    aimAtPointer()
     if (!isOn) {
       isOn = true
       at = target
       cursor.dataset.on = 'true'
     }
-    if (!cursorFrame) cursorFrame = requestAnimationFrame(follow)
   }
 
   function onPointerLeave(): void {
@@ -61,6 +68,7 @@ function startLights(ground: HTMLElement, lights: HTMLElement[], cursor: HTMLEle
       const [lightA, lightB] = lights
       if (lightA) lightA.style.transform = `translateY(${offset * DRIFT_A}px)`
       if (lightB) lightB.style.transform = `translateY(${offset * DRIFT_B}px)`
+      if (isOn) aimAtPointer()
     })
   }
 
