@@ -10,7 +10,8 @@ Pile B examples are stored in `provisions`, tagged and held out, so this checks 
 3. No benchmark text (Pile B example or case description) is repeated in a retrievable row:
    by word 6-grams everywhere (the judge validation's invented texts too), and by embedding
    cosine where the corpus vectors exist. The two retellings decision 016 keeps sit below every
-   limit, so the checks pass with them, not by exempting them. Their overlap is recorded in `eval/isolation/contaminated.json` and pinned by
+   limit, so the checks pass with them, not by exempting them. Their overlap is recorded in
+   `eval/isolation/contaminated.json` and pinned by
    `test_the_contaminated_overlaps_are_as_recorded` (and the local cosine re-check).
 The injection tests show each check fails on a planted leak, inside a rolled-back transaction.
 

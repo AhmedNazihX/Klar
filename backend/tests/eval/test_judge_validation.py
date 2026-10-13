@@ -23,6 +23,7 @@ from aiact.eval.judge import (
     JevJudge,
     JudgeError,
     JudgeItem,
+    backup_messages,
 )
 from aiact.eval.judge_validation import (
     JudgeRecord,
@@ -357,6 +358,20 @@ def test_reworded_backup_instructions_ask_the_case_again(monkeypatch: pytest.Mon
     monkeypatch.setattr(judge, "BACKUP_INSTRUCTIONS", BACKUP_INSTRUCTIONS + "Be brief.\n")
     assert input_sha256(case) != before
     assert cases_to_run([case], record, ROUTE) == (case,)
+
+
+def test_what_jev_alone_reads_counts_in_the_hash(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The backup's messages repeat Jev's question and texts today; the hash doesn't rely on it."""
+    case = make_case()
+    fixed = backup_messages(case)
+    monkeypatch.setattr(judge_validation, "backup_messages", lambda item: fixed)
+    before = input_sha256(case)
+    spec = CHECKS[case.check]
+    question = spec.question.model_copy(update={"instructions": "Is the fact in the text?"})
+    monkeypatch.setitem(CHECKS, case.check, replace(spec, question=question))
+    reworded = input_sha256(case)
+    assert reworded != before
+    assert input_sha256(case.model_copy(update={"claim": "It is planned."})) != reworded
 
 
 def test_a_missing_answers_file_has_no_records(tmp_path: Path) -> None:
