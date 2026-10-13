@@ -1710,8 +1710,9 @@ company has that builds its own system on another provider's model."""
 
 def b5d_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
     """Everything `test_b5d_case_replay` asserts: the role, exactly the tagged Art. 25(1)
-    switches, any tagged `also_role`, no deployer role kept on a case without one tagged (E20: the
-    base-role rule for a builder on a GPAI model must not add one, as on own-d-06), and
+    switches, any tagged `also_role`, no deployer role kept on a case with no `also_role` tag (E20:
+    the base-role rule for a builder on a GPAI model must not add one, as on own-d-06; another
+    kept role, such as importer under a provider working assumption, may stand), and
     `role_matches`."""
     label = case.label
     assert isinstance(label, CaseLabel)
@@ -1758,7 +1759,8 @@ def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     """Each B5d case's expected role, from the class its label gives, and its status when the
     label is legally ambiguous (own-d-12, closed by E8's contested answer); a case tagged with
     Art. 25(1) switches cites exactly those points (every switch that applies is reported, user,
-    2026-10-06), one tagged `also_role:` keeps that role, and an untagged one keeps none (E20).
+    2026-10-06), one tagged `also_role:` keeps that role, and an untagged one keeps no deployer
+    role (E20).
     Replays the recording
     `recordings/engine/nodes/test_role_obligations/test_b5d_case_replay[<id>].yaml`; a missing
     one fails. Record with `RECORD_COMMAND`."""
