@@ -1,10 +1,14 @@
 """The end-to-end runs beyond INIT's worked example in English (P13), recorded here and replayed by
 the e2e API (`replay_server.py`): the worked example answered on its result screen (its Art. 3(1)
-answer and the company profile's EU answer), and the worked example in German. Each request is
-the exact body the app sends, from `frontend/e2e/runs.json`, so the browser's run finds it.
+answer and the company profile's EU answer), and the worked example in German, recorded on
+2026-10-13; and (P31) the worked example with No to a Yes/No question (not for public
+authorities, Art. 111(2)) and a German prohibited result (emotion recognition at work). Each
+request is the exact body the app sends, from `frontend/e2e/runs.json`, so the browser's run
+finds it.
 
 Recording calls the engine model, the query embeddings and the local test database's corpus:
-`RECORD_COMMAND` (in `runs.py`), the orchestrator's paid step; recorded on 2026-10-13.
+`RECORD_COMMAND` (in `runs.py`), the orchestrator's paid step, after the reviews. Until then a new
+run is a strict "recording pending" xfail; drop the mark once it is recorded.
 """
 
 from collections.abc import Iterator
@@ -13,15 +17,25 @@ import pytest
 
 from aiact.engine import run_classification
 from aiact.engine.classify import NodeBuilder
-from aiact.schemas import Language, RiskClass
+from aiact.schemas import Language, RiskClass, Status, StepName
 from aiact.settings import Settings
 from tests.e2e.runs import E2E_RECORDINGS, RECORD_COMMAND, e2e_runs
-from tests.engine.nodes.corpus_recording import corpus_recording, require_recording
+from tests.engine.nodes.corpus_recording import (
+    RecordingPendingError,
+    corpus_recording,
+    require_recording,
+)
 from tests.engine.nodes.known_gaps import stale_recording_pending
 from tests.engine.replayed_engine import live_corpus, luna_settings, replayed_nodes
 
 RUNS = e2e_runs()
 ANNEX_III_4_A = "annex:III:4:a"
+ART_5_1_F = "art:5:1:f"
+PENDING = pytest.mark.xfail(
+    strict=True,
+    raises=RecordingPendingError,
+    reason=f"recording pending: record it with `{RECORD_COMMAND}`",
+)
 
 
 @pytest.fixture(scope="module")
@@ -83,6 +97,42 @@ def test_the_worked_example_in_german_is_high_risk(
         run = run_classification(RUNS[name], settings=luna_settings, build_nodes=run_nodes)
     assert run.result.risk_class is RiskClass.HIGH_RISK
     assert run.result.annex_point == ANNEX_III_4_A
+
+
+@PENDING
+@pytest.mark.vcr
+@pytest.mark.parametrize("name", ["worked_example_not_for_authorities"])
+def test_a_no_to_a_yes_no_question_is_not_asked_again(
+    name: str, luna_settings: Settings, run_nodes: NodeBuilder
+) -> None:
+    """The worked example answered No on "Is the system meant for use by public authorities?" (with
+    the profile's EU answer): neither answered question is asked again, and the class stays
+    high-risk under Annex III 4(a)."""
+    with stale_recording_pending():
+        run = run_classification(RUNS[name], settings=luna_settings, build_nodes=run_nodes)
+    result = run.result
+    asked = {question.id for question in result.follow_up_questions}
+    assert result.risk_class is RiskClass.HIGH_RISK
+    assert result.annex_point == ANNEX_III_4_A
+    assert not asked & {"for_public_authority", "eu_link"}, asked
+
+
+@PENDING
+@pytest.mark.vcr
+@pytest.mark.parametrize("name", ["prohibited_de"])
+def test_emotion_recognition_at_work_in_german_is_prohibited(
+    name: str, luna_settings: Settings, run_nodes: NodeBuilder
+) -> None:
+    """Staff moods read from their faces at work, run in German: a decided ban under
+    Art. 5(1)(f), which the German result names."""
+    assert RUNS[name].language is Language.DE
+    with stale_recording_pending():
+        run = run_classification(RUNS[name], settings=luna_settings, build_nodes=run_nodes)
+    result = run.result
+    assert result.risk_class is RiskClass.PROHIBITED
+    assert result.status is Status.DECIDED
+    prohibited = next(step for step in result.steps if step.step is StepName.PROHIBITED)
+    assert ART_5_1_F in {citation.provision_id for citation in prohibited.citations}
 
 
 def _parametrised_runs() -> set[str]:
