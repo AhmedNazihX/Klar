@@ -43,6 +43,7 @@ from aiact.settings import Settings
 from tests.conftest import RECORDINGS_DIR
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import corpus_recording, require_recording
+from tests.engine.nodes.known_gaps import STALE_RECORDING_ERRORS
 from tests.engine.nodes.test_scope import (
     LUNA,
     LUNA_PROVIDER,
@@ -73,20 +74,37 @@ def _fact(text: str, evidence: EvidenceTag, quote: str | None = None) -> Fact:
 
 WORKED_EXAMPLE_FACTS = (
     _fact(
-        "The tool reads job applications, scores them, and gives HR a ranked shortlist.",
+        "The tool scores job applications and presents HR with a ranked shortlist of applicants.",
         EvidenceTag.STATED,
         "reads incoming job applications, scores them, and shows HR a ranked shortlist.",
     ),
-    _fact("The tool is used to screen applicants for employment.", EvidenceTag.INFERRED),
     _fact(
-        "The company bought the tool from a vendor and did not change it.",
+        "The company bought the tool from a vendor and says it did not change it.",
         EvidenceTag.STATED,
         "We bought it from a vendor and didn't change it.",
     ),
-    _fact("The tool is used in the EU.", EvidenceTag.ASSUMED),
+    _fact(
+        "The scores appear to evaluate individual applicants using information in their "
+        "applications.",
+        EvidenceTag.INFERRED,
+    ),
+    _fact(
+        "The tool is assumed to be used in or placed on the market in the EU.",
+        EvidenceTag.ASSUMED,
+    ),
 )
 """The facts the facts node extracted from the worked example in the whole-run recording
-(`WHOLE_RUN_CASSETTE`'s first reply: each fact's text, evidence tag and quote)."""
+(`WHOLE_RUN_CASSETTE`'s first reply: each fact's text, evidence tag and quote), as E20's
+re-record of the whole run gave them."""
+
+WHOLE_RUN_FACTS_PENDING = pytest.mark.xfail(
+    strict=True,
+    raises=STALE_RECORDING_ERRORS,
+    reason="recording pending (orchestrator): E20 re-recorded the whole run, whose facts the "
+    "five runs repeat (WORKED_EXAMPLE_FACTS), so their recorded request is stale; delete and "
+    "re-record",
+)
+"""The five scope runs, until the orchestrator records them on the new whole run's facts."""
 
 DECIDED = "in scope, decided"
 ASKS_AI_SYSTEM = "in scope as the working assumption, asks whether the tool infers"
@@ -165,7 +183,7 @@ def test_the_runs_repeat_the_whole_runs_scope_request() -> None:
     """The five runs measure the input that wavered: the request with the facts node's facts."""
     sent = scope_messages(worked_example_state(), (), ())
     assert _case_context(sent[-1]) == _case_context(_whole_run_scope_request())
-    assert "Facts:\n1. [stated] The tool reads job applications" in _case_context(sent[-1])
+    assert "Facts:\n1. [stated] The tool scores job applications" in _case_context(sent[-1])
 
 
 @pytest.fixture
@@ -181,6 +199,7 @@ def _live_corpus(settings: Settings) -> Iterator[CorpusLibrary]:
         yield CorpusLibrary(connection, OpenRouterEmbeddings(settings=settings))
 
 
+@WHOLE_RUN_FACTS_PENDING
 @pytest.mark.vcr
 def test_worked_example_scope_varies_only_between_inits_readings(
     luna_settings: Settings,
