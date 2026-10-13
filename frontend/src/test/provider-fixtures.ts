@@ -24,10 +24,6 @@ export const OWN_BRAND_PROVIDER = recorded('own-d-01-own-brand-screening')
  *  the provider under Art. 25(1)(c) and also the deployer, Annex III point 5(a). */
 export const PROVIDER_ALSO_DEPLOYER = recorded('own-d-13-mailroom-tool-benefits')
 
-/** own-d-03 (English): a hiring workflow built on a general-purpose AI assistant; the provider
- *  through the GPAI build route (Art. 3(68)), high-risk under Annex III point 4(a). */
-export const GPAI_HIGH_RISK = recorded('own-d-03-assistant-repurposed-hiring')
-
 /** own-d-06 (German): a shop chat built on a third-party large language model; the provider
  *  through the GPAI build route, limited risk (Art. 50(1)). */
 export const GPAI_LIMITED = recorded('own-d-06-shop-chat-on-llm')
@@ -42,4 +38,13 @@ export function ownBrandCiting(...provisionIds: string[]): ClassificationResult 
     return { ...step, citations: provisionIds.map((id) => ({ ...first, provision_id: id })) }
   })
   return { ...OWN_BRAND_PROVIDER, steps }
+}
+
+/** A high-risk provider through the GPAI build route (Art. 3(68)), with no Art. 25 switch:
+ *  OWN_BRAND_PROVIDER (Annex III point 4(a)) with its role step citing Art. 3(68). No recorded
+ *  case reads so since E20's re-record (own-d-03 now reads its label's Art. 25(1)(c) switch and
+ *  the deployer role); GPAI_LIMITED is the recorded GPAI build route. */
+export const GPAI_HIGH_RISK: ClassificationResult = {
+  ...ownBrandCiting('art:3:68'),
+  role_switch_reason: null,
 }
