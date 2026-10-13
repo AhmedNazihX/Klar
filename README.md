@@ -30,8 +30,8 @@ advice.
 - **Compares law versions:** classify under the Act as amended by the Digital Omnibus (Regulation (EU) 2026/1744)
   or under the original text (see Limitations).
 - **Answers questions** about a result, or general AI Act questions within its corpus, with citations.
-- **Offers lookup tools to other AI agents** through an MCP server (`search_ai_act`, `get_provision`,
-  `list_obligations`).
+- **Offers its tools to other AI agents** through an MCP server: the lookups (`search_ai_act`, `get_provision`,
+  `list_obligations`) and the full classification (`classify_system`, on the caller's own OpenRouter key).
 
 **What it is not**
 
@@ -166,6 +166,26 @@ data.
 
 **Run the app:** `make dev` starts the API on `:8000` and the web app on `:5173` (Ctrl-C stops both). The app
 reads and writes the hosted project in `backend/.env` and `frontend/.env.local`.
+
+**Use it from Claude Desktop (MCP).** Add the server to Claude Desktop's config (Settings › Developer › Edit
+Config; on macOS `~/Library/Application Support/Claude/claude_desktop_config.json`) with absolute paths (`which
+uv` for the first), then restart Claude Desktop:
+
+```json
+{
+  "mcpServers": {
+    "aiact": {
+      "command": "/absolute/path/to/uv",
+      "args": ["run", "--directory", "/absolute/path/to/repo/backend", "aiact", "mcp", "serve"],
+      "env": { "MCP_OPENROUTER_API_KEY": "sk-or-v1-your-own-key" }
+    }
+  }
+}
+```
+
+The server (`aiact mcp serve`, over stdio) reads the database and the model ids from `backend/.env`.
+`classify_system` runs only on `MCP_OPENROUTER_API_KEY`, your own OpenRouter key, never on the app's
+`OPENROUTER_API_KEY`, which embeds the lookups' search queries. A classification takes about a minute.
 
 **A Supabase project of your own.** Create a project in an EU region, then from the repo root: `supabase link
 --project-ref <ref>`, `supabase db push` (the schema) and `supabase config push` (anonymous sign-ins). Load the
