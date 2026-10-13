@@ -47,11 +47,6 @@ ITEM = JudgeItem(
 )
 IMPORT_CHECK_TIMEOUT_S = 120
 """Importing every module (the engine, LangGraph, Docling) takes a few seconds."""
-RECORDING_PENDING = pytest.mark.xfail(
-    raises=CannotOverwriteExistingCassetteException,
-    strict=True,
-    reason="recording pending: the orchestrator records it after the reviews (V4)",
-)
 
 
 def _settings(**values: object) -> Settings:
@@ -120,7 +115,7 @@ def test_the_backup_prompt_puts_each_criterion_on_its_own_answer() -> None:
 
 
 def test_the_margin_and_the_yes_point_are_pinned() -> None:
-    assert (judge.UNSURE_MARGIN, judge.YES_AT) == (0.3, 0.5)
+    assert (judge.UNSURE_MARGIN, judge.YES_AT) == (0.1, 0.5)
 
 
 @pytest.mark.parametrize(
@@ -181,8 +176,8 @@ def test_a_sure_jev_decides_alone(p_yes: float, holds: bool) -> None:
 
 def test_an_unsure_jev_hands_over_to_the_backup_judge_and_both_costs_count() -> None:
     backup = FakeBackup(holds=False)
-    verdict = Judge(FakeJev(0.6), backup).judge(ITEM)
-    assert (verdict.holds, verdict.decided_by, verdict.p_yes) == (False, "backup", 0.6)
+    verdict = Judge(FakeJev(0.55), backup).judge(ITEM)
+    assert (verdict.holds, verdict.decided_by, verdict.p_yes) == (False, "backup", 0.55)
     assert verdict.reason == "The text says inform, not consent."
     assert verdict.cost_usd == pytest.approx(0.00024)
     assert verdict.tokens == 1400
@@ -335,7 +330,7 @@ def test_the_default_route_is_haiku_5_5_pinned_to_its_eu_endpoint_with_one_attem
 
 def test_the_production_judge_is_jev_then_the_pinned_backup() -> None:
     built = Judge.from_settings(_settings())
-    assert built.margin == 0.3
+    assert built.margin == 0.1
     assert built._jev.model == JEV  # pyright: ignore[reportPrivateUsage]
     assert built._backup.model == HAIKU  # pyright: ignore[reportPrivateUsage]
 
@@ -458,7 +453,6 @@ def _unwrapped[T](call: Callable[[], T]) -> T:
         raise
 
 
-@RECORDING_PENDING
 @pytest.mark.vcr
 def test_jev_judge_roundtrip(openrouter_settings: Settings) -> None:
     """Record with `uv run pytest tests/eval/test_judge.py -k roundtrip --record-mode=once`."""
@@ -467,7 +461,6 @@ def test_jev_judge_roundtrip(openrouter_settings: Settings) -> None:
     assert answer.cost_usd > 0
 
 
-@RECORDING_PENDING
 @pytest.mark.vcr
 def test_backup_judge_roundtrip(openrouter_settings: Settings) -> None:
     """Haiku 5.5 on its pinned EU endpoint; needs the model allowed in the OpenRouter guardrail."""

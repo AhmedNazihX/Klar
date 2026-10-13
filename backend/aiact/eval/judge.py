@@ -50,10 +50,10 @@ from aiact.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
-UNSURE_MARGIN = 0.3
+UNSURE_MARGIN = 0.1
 """Jev's answer is unsure, and goes to the backup judge, when its probability of yes lies within
-this distance of 0.5 (here: strictly between 0.2 and 0.8). Provisional until the validation run;
-decision 006 records the chosen value."""
+this distance of 0.5 (here: strictly between 0.4 and 0.6). Chosen by the user from the validation
+run's margin table (decision 006, 2026-10-13)."""
 YES_AT = 0.5
 """Jev's probability of yes from which its answer is yes."""
 

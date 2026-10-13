@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-13
 - **Story:** V4 (docs/BACKLOG.md)
-- **Status:** proposed (waiting for the user: the hand labels, the validation run, then the margin)
+- **Status:** accepted (2026-10-13, the user: margin 0.1; backup judge Haiku 5.5 once allowed in the guardrail, validated on both 4.5 and 5.5)
 
 ## Question
 INIT › Evaluation › Judge: the checks that need judgement (citation support, evidence tags, Q&A
@@ -58,11 +58,51 @@ margin.
 | C. Jev first, Haiku 4.5 for unsure items | no guardrail change; ten times Haiku 5.5's price | at most $0.32 by the same bound (the CLI gives no estimate for a backup model other than Haiku 5.5, and warns); the probe call cost $0.00094, so about $0.05 in practice | prices above; probe |
 
 The validation numbers (agreement with the labels, Cohen's kappa, Jev's Brier score and
-calibration error, and the margin table) come from `eval/judge_validation/report.md` after the
-run. They are not here yet: the 48 cases await the user's labels.
+calibration error, and the margin table) come from `eval/judge_validation/report.md`.
 
-## Decision (proposed)
-Keep option A, the INIT design, with the margin `report.md` recommends: the smallest margin with
+## Validation result (2026-10-13)
+- **Run:** Jev (`typesafe/jev-1.13`) and Claude Haiku 4.5 on `google-vertex/europe` answered all
+  48 cases, none failed; $0.0529 OpenRouter. Haiku 5.5 is blocked in the OpenRouter workspace
+  guardrail, so the user chose option C through `JUDGE_BACKUP_MODEL=anthropic/claude-haiku-4.5`
+  in `backend/.env`, keeping 5.5 as the code default (the label filter's zero-retention route,
+  decision 005). `test_backup_judge_roundtrip` stays recording-pending until 5.5 is allowed.
+- **Labels (48: 21 yes, 27 no).** At the user's request a fresh Claude Opus agent drafted them,
+  reading only `cases.yaml` and the README, never the judges' answers; its 36 clear cases were
+  taken as drafted. The user labelled jv-en-01 to -04 (en-02 and en-03 corrected to no on review)
+  and decided the 8 cases the agent marked hard (en-11 no, en-13 yes, en-24 no, de-02 yes, de-06
+  yes, de-07 no, de-09 yes, de-18 no). Rules applied: an evidence tag is stated only when the text
+  says it (a likely reading is no); a left-out detail makes an answer no only when it changes what
+  the answer tells the asker; a point of Art. 5(1) cited without the list's opening sentence
+  supports "prohibited". Caveat: the labels are Claude's reading checked by the user, not an
+  independent human reference; Haiku (a Claude model) still agreed less with them than Jev.
+
+| Judge | Agreement with the labels | Cohen's kappa |
+| --- | --- | --- |
+| Jev alone (margin 0) | 45/48 (94%) | 0.87 |
+| Haiku 4.5 alone (margin 0.5) | 39/48 (81%) | 0.62 |
+| Jev, Haiku 4.5 when unsure (margin 0.1, 1 case sent) | 46/48 (96%) | 0.92 |
+| margin 0.2 (4 sent) / 0.3 (12 sent) | 43/48 (90%) / 41/48 (85%) | 0.79 / 0.71 |
+
+Jev's calibration over the 48 labelled cases: Brier score 0.052, expected calibration error
+0.089 (all 22 cases below 0.2 labelled no, all 14 at 0.8 or above labelled yes). By check, Jev
+was 12/12 on citation support and invented content; Haiku 4.5 was 8/12 on invented content.
+0.1 beats 0.0 by one case (jv-de-09), within noise on 48 cases.
+
+**Re-run with Haiku 5.5 (same day).** The user then allowed `anthropic/claude-haiku-5.5` in the
+guardrail and removed the 4.5 line, so the backup judge is the code default again; the 48 cases
+were asked again ($0.0090 OpenRouter) and `test_backup_judge_roundtrip` recorded. Haiku 5.5 alone
+agrees 45/48 (94%, κ 0.88), as often as Jev (45/48, κ 0.87; Brier 0.053, calibration error
+0.087 on this run); by check 12/12 citation support, 11/12 evidence tags, 11/12 Q&A, 11/12
+invented content. Combined: margin 0.1 sends 1 case and agrees 46/48 (κ 0.92); every margin
+from 0.2 to 0.5 agrees 45/48. Margin 0.1 stays the choice. `report.md` and `answers.jsonl` hold
+this run.
+
+## Decision
+Option A, the INIT design: Jev first, Claude Haiku 5.5 (the code default) for unsure items,
+and the unsure margin 0.1 (`UNSURE_MARGIN`), the report's smallest margin with the highest
+agreement with the hand labels (user, 2026-10-13). Option C (Haiku 4.5) was measured first while
+5.5 was blocked; it chose the same margin. The rule as first proposed:
+the margin `report.md` recommends, the smallest margin with
 the highest agreement with the hand labels. If the backup judge alone (margin 0.5) agrees more
 often than every smaller margin, Jev adds nothing and option B applies. The code ships with a
 provisional margin of 0.3 (`UNSURE_MARGIN`), to be replaced by the measured one.
