@@ -1,0 +1,18 @@
+{
+  "as_of": "2026-10-06",
+  "workedExample": "We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.",
+  "runs": {
+    "worked_example_answered": {
+      "description": "We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.",
+      "language": "en",
+      "answers": {
+        "ai_system": "It is trained on data: the vendor's model learned from past applications how to score and rank new ones.",
+        "eu_link": "Is the tool placed on the market or used in the EU, or are its outputs used there? Yes."
+      }
+    },
+    "worked_example_de": {
+      "description": "Wir sind ein Logistikunternehmen mit 40 Beschäftigten. Wir nutzen ein Tool, das eingehende Bewerbungen liest, bewertet und der Personalabteilung eine Rangliste zeigt. Wir haben es bei einem Anbieter gekauft und nicht verändert.",
+      "language": "de"
+    }
+  }
+}
