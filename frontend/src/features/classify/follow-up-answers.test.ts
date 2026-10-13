@@ -149,6 +149,42 @@ describe('Edit description', () => {
       hasDroppedAnswers: true,
     })
   })
+
+  it('leaves out an answer one character too long, and keeps one that fits exactly', () => {
+    const description = 'd'.repeat(19_970)
+    // 19,970 + 2 + 29 = 20,001: one over.
+    expect(withAnswers(description, { a: 'a'.repeat(29) })).toEqual({
+      text: description,
+      hasDroppedAnswers: true,
+    })
+    // 19,970 + 2 + 28 = 20,000: exactly at the limit.
+    const exact = withAnswers(description, { a: 'a'.repeat(28) })
+    expect(exact).toEqual({ text: `${description}\n\n${'a'.repeat(28)}`, hasDroppedAnswers: false })
+    expect(exact.text).toHaveLength(20_000)
+  })
+
+  it('cuts a description over the limit on its own, and leaves every answer out', () => {
+    const description = 'd'.repeat(20_000) + 'e'.repeat(50)
+    expect(withAnswers(description, undefined)).toEqual({
+      text: 'd'.repeat(20_000),
+      hasDroppedAnswers: false,
+    })
+    expect(withAnswers(description, { a: 'Yes.' })).toEqual({
+      text: 'd'.repeat(20_000),
+      hasDroppedAnswers: true,
+    })
+  })
+
+  it.each([0, 1_000, 18_000, 19_000, 19_998, 19_999, 20_000, 25_000])(
+    'never opens with more than 20,000 characters (a description of %i)',
+    (length) => {
+      // 40 answers of 1,000 characters each, the API's most.
+      const answers = Object.fromEntries(
+        Array.from({ length: 40 }, (_, index) => [`q${String(index)}`, 'a'.repeat(1_000)]),
+      )
+      expect(withAnswers('d'.repeat(length), answers).text.length).toBeLessThanOrEqual(20_000)
+    },
+  )
 })
 
 describe('the questions a result asks', () => {
