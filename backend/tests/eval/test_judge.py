@@ -458,7 +458,6 @@ def _unwrapped[T](call: Callable[[], T]) -> T:
         raise
 
 
-@RECORDING_PENDING
 @pytest.mark.vcr
 def test_jev_judge_roundtrip(openrouter_settings: Settings) -> None:
     """Record with `uv run pytest tests/eval/test_judge.py -k roundtrip --record-mode=once`."""
