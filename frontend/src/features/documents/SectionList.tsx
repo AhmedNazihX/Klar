@@ -36,7 +36,7 @@ export function SectionList({
       padded={false}
       className={cn('flex shrink-0 flex-col gap-0.5 px-3 py-3 lg:py-4', className)}
     >
-      <ClosedOnSmallScreens label={toggle} openFrom="lg">
+      <ClosedOnSmallScreens name="sections" label={toggle} openFrom="lg">
         {(list) => (
           <nav id={list.id} aria-label={label} className={cn('flex-col', list.className)}>
             <p className="m-0 px-3 pt-1 pb-2 text-label font-medium text-slate">{label}</p>

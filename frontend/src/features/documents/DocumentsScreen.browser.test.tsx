@@ -120,7 +120,10 @@ function seededClient(shown: Page, language: Language): QueryClient {
 async function open(shown: Page, viewport: Viewport, language: Language): Promise<HTMLElement> {
   await page.viewport(viewport.width, viewport.height)
   await i18n.changeLanguage(language)
-  renderRoute(`/app/documents/${shown.template}?tool=${shown.toolId}`, seededClient(shown, language))
+  renderRoute(
+    `/app/documents/${shown.template}?tool=${shown.toolId}`,
+    seededClient(shown, language),
+  )
   const article = await screen.findByRole('article', {
     name: language === 'de' ? 'Dokumentvorschau' : 'Document preview',
   })
@@ -198,6 +201,34 @@ describe('the Documents screen on a phone, in German', () => {
     expect(document.activeElement).toBe(toggle)
   })
 
+  it.each([
+    ['a document', `/app/documents/art_17_quality_management?tool=${DRIVERS}`],
+    ['the first document', `/app/documents?tool=${DRIVERS}`],
+  ])('gives the focus to the toggle after another document opens, from %s', async (_, path) => {
+    const shown = qualityManagement()
+    await page.viewport(PHONE.width, PHONE.height)
+    await i18n.changeLanguage('de')
+    renderRoute(path, seededClient(shown, 'de'))
+    const label = `Dokumente (${String(shown.documents.length)})`
+    await userEvent.click(await screen.findByRole('button', { name: label }))
+    const list = screen.getByRole('navigation', { name: 'Dokumente' })
+    const other = within(list)
+      .getAllByRole('link')
+      .find((link) => link.getAttribute('aria-current') !== 'page')
+    if (!other) throw new Error('The list has one document only.')
+    const href = other.getAttribute('href') ?? ''
+    await userEvent.click(other)
+    // The picked document is the current page now (its link, whichever element it is).
+    await expect
+      .poll(() => document.querySelector(`a[aria-current="page"][href="${href}"]`))
+      .not.toBeNull()
+    // The toggle on screen now, whichever element it is after the route changed.
+    await expect
+      .poll(() => document.activeElement)
+      .toBe(screen.getByRole('button', { name: label }))
+    expect(screen.getByRole('button', { name: label })).toHaveAttribute('aria-expanded', 'false')
+  })
+
   it("closes a skeleton's section list too, and opens it on request", async () => {
     await open(qualityManagement(), PHONE, 'de')
     const toggle = screen.getByRole('button', { name: 'Abschnitte nach Art. 17 (15)' })
@@ -222,7 +253,7 @@ describe('the Documents screen on a desktop', () => {
     expect(await firstTabbedInto([list, article, interview])).toBe(list)
   })
 
-  it('has a skeleton\'s numbered sections on the left and first, and the documents list after (DocSkeleton)', async () => {
+  it("has a skeleton's numbered sections on the left and first, and the documents list after (DocSkeleton)", async () => {
     const article = await open(
       {
         toolId: DRIVERS,

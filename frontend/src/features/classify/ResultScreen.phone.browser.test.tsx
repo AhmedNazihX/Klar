@@ -13,7 +13,7 @@ import { page } from 'vitest/browser'
 
 import { decidedHighRisk, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
-import { MIN_TARGET_PX, smallTouchTargets, targetBox } from '@/test/touch-targets'
+import { MIN_TARGET_PX, shownControls, smallTouchTargets, targetBox } from '@/test/touch-targets'
 
 import { putRun } from './classification-store'
 
@@ -157,10 +157,7 @@ describe('the result at 390 px', () => {
     'makes every touch target at least 44 px (%s)',
     async (language) => {
       await openResult(language)
-      const targets = [
-        ...document.querySelectorAll<HTMLElement>('a[href], button, input, textarea, select'),
-      ].filter((element) => element.getClientRects().length > 0)
-      expect(targets.length).toBeGreaterThan(20)
+      expect(shownControls().length).toBeGreaterThan(20)
       expect(smallTouchTargets()).toEqual([])
     },
   )

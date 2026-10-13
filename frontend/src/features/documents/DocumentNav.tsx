@@ -143,7 +143,7 @@ export function DocumentNav({
       padded={false}
       className={cn('flex w-full shrink-0 flex-col gap-2.5 px-3.5 py-3 xl:py-5', className)}
     >
-      <ClosedOnSmallScreens label={label} openFrom="xl">
+      <ClosedOnSmallScreens name="documents" label={label} openFrom="xl">
         {(list) => (
           <nav
             id={list.id}

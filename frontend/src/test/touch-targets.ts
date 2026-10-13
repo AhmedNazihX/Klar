@@ -6,6 +6,13 @@ export const MIN_TARGET_PX = 44
 
 const CONTROLS = 'a[href], button, input, textarea, select, summary'
 
+/** Every control under `root` a finger can hit: those shown, hidden ones left out. */
+export function shownControls(root: ParentNode = document): HTMLElement[] {
+  return [...root.querySelectorAll<HTMLElement>(CONTROLS)].filter(
+    (element) => element.getClientRects().length > 0,
+  )
+}
+
 /** Whether the element stretches over its positioned ancestor with an absolute `::after` (a whole
  *  table row as one link, InventoryTable): the finger hits that ancestor. */
 function isStretched(element: HTMLElement): boolean {
@@ -23,8 +30,7 @@ export function targetBox(element: HTMLElement): DOMRect {
 /** Every shown control under `root` smaller than 44 px either way, described for the failure
  *  message ("BUTTON "Show all" 120x20"); none when the screen keeps the rule. */
 export function smallTouchTargets(root: ParentNode = document): string[] {
-  return [...root.querySelectorAll<HTMLElement>(CONTROLS)]
-    .filter((element) => element.getClientRects().length > 0)
+  return shownControls(root)
     .map((element) => ({ element, box: targetBox(element) }))
     .filter(({ box }) => box.width < MIN_TARGET_PX || box.height < MIN_TARGET_PX)
     .map(
