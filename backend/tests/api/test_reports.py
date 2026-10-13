@@ -15,6 +15,7 @@ from fastapi import FastAPI
 
 from aiact.api import create_app
 from aiact.api.dependencies import ApiContext
+from aiact.api.files import block_texts
 from aiact.api.reports import (
     INVENTORY_MAX_CHARS,
     INVENTORY_MAX_LINES,
@@ -242,7 +243,7 @@ def test_the_report_caps_are_pinned() -> None:
         INVENTORY_MAX_LINES,
         INVENTORY_MAX_CHARS,
         MAX_NAME_CHARS,
-    ) == (100, 6_000, 200_000, 200)
+    ) == (100, 11_500, 330_000, 200)
 
 
 async def test_a_hundred_tools_of_a_dozen_duties_each_fit(
@@ -266,10 +267,11 @@ async def test_a_report_too_long_for_a_file_is_a_413_before_rendering(
     monkeypatch.setattr(
         RenderWorker, "run", lambda _worker, _fn, paper: rendered.append(paper) or b"%"
     )
-    # 2,500 duties the table has (so each prints), three cells each: over the line cap, within
-    # the body cap.
+    # 4,000 duties the table has (so each prints its own label), three cells each: over the
+    # line cap, within the body cap.
+    duty = {"label": "x", "article": "art:26:6", "applies_from": "2027-12-02"}
     body = {
-        "tools": [_tool(duties=_tool()["duties"] * 100)] * 25,
+        "tools": [_tool(duties=[duty] * 100)] * 40,
         "language": "en",
         "format": "pdf",
     }
@@ -643,3 +645,54 @@ async def test_each_report_passes_the_size_class_on(
         assert response.status_code == 200, path
         text = one_line(" ".join(pdf_pages(response.content)))
         assert ("Relief for your company" in text) is is_shown, path
+
+
+async def test_an_invalid_size_class_is_a_422_on_every_report(client: httpx.AsyncClient) -> None:
+    tools = {"tools": [_provider_tool()], "language": "en", "format": "pdf"}
+    requests = {
+        "/reports/result": _body(size_class="large"),
+        "/reports/inventory": {**tools, "size_class": "large"},
+        "/reports/checklist": {**tools, "law_version": AMENDED, "size_class": "large"},
+    }
+    for path, body in requests.items():
+        response = await client.post(path, json=body)
+        assert response.status_code == 422, path
+        assert response.json()["errors"][0]["loc"] == ["body", "size_class"], path
+
+
+@pytest.mark.parametrize(
+    ("path", "fields"),
+    [("/reports/inventory", {}), ("/reports/checklist", {"law_version": AMENDED})],
+)
+async def test_a_hundred_high_risk_providers_of_an_sme_in_german_fit_the_file_caps(
+    report_app: Callable[..., FastAPI],
+    monkeypatch: pytest.MonkeyPatch,
+    path: str,
+    fields: dict[str, str],
+) -> None:
+    """The longest single-role duty list (26 duties), with the table's German labels and an
+    SME's relief notes, for `MAX_TOOLS` tools, is made, not refused as too long. The default
+    body cap admits about 80 such tools, so this app's is raised."""
+    rendered: list[Paper] = []
+    monkeypatch.setattr(
+        RenderWorker, "run", lambda _worker, _fn, paper: rendered.append(paper) or b"%PDF"
+    )
+    duties = list_obligations(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
+    labelled = [
+        {"label": duty.label_de, "article": duty.article, "applies_from": str(duty.applies_from)}
+        for duty in duties.obligations
+    ]
+    assert len(labelled) == 26
+    tools = [
+        _tool(name=f"Werkzeug {number}", role="provider", duties=labelled) for number in range(100)
+    ]
+    body = {"tools": tools, "language": "de", "format": "pdf", "size_class": "sme", **fields}
+    app = report_app(api_max_body_bytes=1_048_576)
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
+        response = await client.post(path, json=body)
+    assert response.status_code == 200
+    (paper,) = rendered
+    texts = [text for block in paper.blocks for text in block_texts(block)]
+    # Two relief notes a tool: the quality management system and Annex IV.
+    assert sum("Erleichterung für Ihr Unternehmen" in text for text in texts) == 200

@@ -57,13 +57,29 @@ from aiact.report import (
 from aiact.schemas import Language, LawVersion
 from aiact.schemas.base import ContractModel
 
-INVENTORY_MAX_LINES = 6_000
-"""The inventory report's line cap: its tables count each cell as a line, and a hundred tools
-of a dozen duties each come to about 4,600 (the drafted documents keep `MAX_FILE_LINES`)."""
-INVENTORY_MAX_CHARS = 200_000
-"""The inventory report's character cap: a hundred tools of a dozen duties each, with the
-table's German labels, come to about 135,000 and render in about two seconds (the drafted
-documents keep `MAX_FILE_CHARS`)."""
+INVENTORY_MAX_LINES = 11_500
+"""The inventory report's and the checklist's line cap: their tables count each cell as a
+line. Sized for the longest single-role duty list: a hundred high-risk provider tools (26
+duties each on the Annex III route) come to 8,806 lines in the inventory report and 11,101 in
+the checklist, with its done cell (measured 2026-10-14; the drafted documents keep
+`MAX_FILE_LINES`). A hundred providers that also deploy (43 duties each) go past it: a 413."""
+INVENTORY_MAX_CHARS = 330_000
+"""The inventory report's and the checklist's character cap, sized like the line cap with the
+table's German labels and an SME's relief notes (two provider duties carry one of about 300
+characters): a hundred high-risk provider tools come to 303,077 characters in the inventory
+report and 314,336 in the checklist, which render in about 3.2 s as a PDF and 1.3 s as a Word
+file, within the export time limit (measured 2026-10-14; the drafted documents keep
+`MAX_FILE_CHARS`). The default body cap admits about 80 such tools; the file caps hold up to
+`MAX_TOOLS` where the body cap is raised."""
+
+ReportSizeClass = Annotated[
+    SizeClass | None,
+    Field(
+        description="The company profile's size class; an SME's or a small mid-cap's report "
+        "shows the duties' relief notes under the amended text. Null without a profile."
+    ),
+]
+"""The size class each report request takes (`is_relieved`)."""
 
 RENDERERS: dict[ExportFormat, Renderer] = {"docx": render_docx, "pdf": render_pdf}
 
@@ -96,19 +112,15 @@ class ResultReportRequest(ContractModel):
     company: Name | None = Field(
         default=None, description="The company's name from its profile; null without one."
     )
-    size_class: SizeClass | None = Field(
-        default=None,
-        description="The company profile's size class; an SME's or a small mid-cap's report "
-        "shows the duties' relief notes under the amended text. Null without a profile.",
-    )
+    size_class: ReportSizeClass = None
 
 
 class InventoryReportRequest(ContractModel):
     """Every tool of the user's inventory, summarised, and the report wanted."""
 
     MAX_TOOLS: ClassVar[int] = 100
-    """Far above an SME's inventory; a hundred tools of a dozen duties each fit the file caps
-    and render in about a second and a half."""
+    """Far above an SME's inventory; a hundred high-risk provider tools fit the file caps
+    (`INVENTORY_MAX_CHARS`)."""
 
     tools: tuple[InventoryTool, ...] = Field(max_length=MAX_TOOLS)
     language: Language = Field(description="The language of the report's wording and notice.")
@@ -116,11 +128,7 @@ class InventoryReportRequest(ContractModel):
     company: Name | None = Field(
         default=None, description="The company's name from its profile; null without one."
     )
-    size_class: SizeClass | None = Field(
-        default=None,
-        description="The company profile's size class; an SME's or a small mid-cap's report "
-        "shows the duties' relief notes under the amended text. Null without a profile.",
-    )
+    size_class: ReportSizeClass = None
 
 
 class ChecklistRequest(ContractModel):
@@ -137,11 +145,7 @@ class ChecklistRequest(ContractModel):
     company: Name | None = Field(
         default=None, description="The company's name from its profile; null without one."
     )
-    size_class: SizeClass | None = Field(
-        default=None,
-        description="The company profile's size class; an SME's or a small mid-cap's report "
-        "shows the duties' relief notes under the amended text. Null without a profile.",
-    )
+    size_class: ReportSizeClass = None
 
 
 def report_date() -> date:
