@@ -7,9 +7,9 @@ probability lies strictly within m of 0.5, or when Jev failed.
 
 ## Summary
 
-- Jev: `typesafe/jev-1.13`; backup judge: `anthropic/claude-haiku-4.5` on `google-vertex/europe`.
-- Cases: 48 (24 EN, 24 DE); labelled: 0 (0 yes, 0 no); answered by both judges: 48; measured (labelled, with a current record): 0.
-- Cost of the answers counted here: $0.0529.
+- Jev: `typesafe/jev-1.13`; backup judge: `anthropic/claude-haiku-5.5` on `google-vertex/europe`.
+- Cases: 48 (24 EN, 24 DE); labelled: 48 (21 yes, 27 no); answered by both judges: 48; measured (labelled, with a current record): 48.
+- Cost of the answers counted here: $0.0090.
 
 ## Agreement with the hand labels
 
@@ -17,43 +17,48 @@ Agreed / cases (rate, Cohen's kappa); a judge that failed on a case leaves it ou
 
 | Cases | Jev | Backup judge |
 | --- | --- | --- |
-| all | no cases | no cases |
-| EN | no cases | no cases |
-| DE | no cases | no cases |
-| citation_support | no cases | no cases |
-| evidence_tag | no cases | no cases |
-| qa_support | no cases | no cases |
-| invented_content | no cases | no cases |
+| all | 45/48 (94%, κ 0.87) | 45/48 (94%, κ 0.88) |
+| EN | 24/24 (100%, κ 1.00) | 23/24 (96%, κ 0.92) |
+| DE | 21/24 (88%, κ 0.75) | 22/24 (92%, κ 0.83) |
+| citation_support | 12/12 (100%, κ 1.00) | 12/12 (100%, κ 1.00) |
+| evidence_tag | 10/12 (83%, κ 0.66) | 11/12 (92%, κ 0.83) |
+| qa_support | 11/12 (92%, κ 0.83) | 11/12 (92%, κ 0.83) |
+| invented_content | 12/12 (100%, κ 1.00) | 11/12 (92%, κ 0.82) |
 
 ## Jev and the backup judge
 
-Over every case both answered, labelled or not: 40/48 (83%, κ 0.67).
+Over every case both answered, labelled or not: 46/48 (96%, κ 0.92).
 
 ## Jev's calibration
 
-Over 0 labelled cases: Brier score n/a (0 is perfect), expected calibration error n/a.
+Over 48 labelled cases: Brier score 0.053 (0 is perfect), expected calibration error 0.087.
 
 | Probability of yes | Cases | Mean probability | Labelled yes |
 | --- | --- | --- | --- |
-| [0.0, 0.2) | 0 | n/a | n/a |
-| [0.2, 0.4) | 0 | n/a | n/a |
-| [0.4, 0.6) | 0 | n/a | n/a |
-| [0.6, 0.8) | 0 | n/a | n/a |
-| [0.8, 1.0] | 0 | n/a | n/a |
+| [0.0, 0.2) | 23 | 0.071 | 0.000 |
+| [0.2, 0.4) | 2 | 0.270 | 0.000 |
+| [0.4, 0.6) | 1 | 0.410 | 1.000 |
+| [0.6, 0.8) | 6 | 0.707 | 0.833 |
+| [0.8, 1.0] | 16 | 0.896 | 0.938 |
 
 ## Unsure margin
 
 | Margin | Sent to the backup judge | Combined judge vs labels | Not measured |
 | --- | --- | --- | --- |
-| 0.0 | 0 | no cases | 0 |
-| 0.1 | 0 | no cases | 0 |
-| 0.2 | 0 | no cases | 0 |
-| 0.3 | 0 | no cases | 0 |
-| 0.4 | 0 | no cases | 0 |
-| 0.5 | 0 | no cases | 0 |
+| 0.0 | 0 | 45/48 (94%, κ 0.87) | 0 |
+| 0.1 | 1 | 46/48 (96%, κ 0.92) | 0 |
+| 0.2 | 5 | 45/48 (94%, κ 0.88) | 0 |
+| 0.3 | 9 | 45/48 (94%, κ 0.88) | 0 |
+| 0.4 | 21 | 45/48 (94%, κ 0.88) | 0 |
+| 0.5 | 48 | 45/48 (94%, κ 0.88) | 0 |
 
-No labelled case has a record yet, so no margin can be recommended.
+Highest agreement at the smallest margin: **0.1**.
 
 ## Cases a judge got wrong
 
-None.
+| Case | Check | Label | Jev's probability of yes | Backup judge |
+| --- | --- | --- | --- | --- |
+| jv-en-24 | invented_content | no | 0.330 | yes |
+| jv-de-07 | evidence_tag | no | 0.740 | yes |
+| jv-de-09 | evidence_tag | yes | 0.410 | yes |
+| jv-de-18 | qa_support | no | 0.800 | yes |
