@@ -385,6 +385,29 @@ describe('Obligations, what each section holds', () => {
   })
 
   it.each([
+    ['en', 'From 2 December 2027', 'Art. 6(4)'],
+    ['de', 'Ab dem 2. Dezember 2027', 'Art. 6 Abs. 4'],
+  ] as const)(
+    '(%s) keeps the plain title of a dated section no route section shares, its article beside it',
+    async (language, title, article) => {
+      const chat = limitedRisk()
+      const [literacy] = chat.obligations ?? []
+      if (!literacy) throw new Error('The fixture has duties.')
+      const assessment = {
+        ...literacy,
+        key: 'art-6-4',
+        article: 'art:6:4',
+        applies_from: '2027-12-02',
+      }
+      tools = [toolRow('Customer chat assistant', { ...chat, obligations: [assessment] })]
+      await openObligations('/app/obligations', language)
+      const lone = section(title)
+      expect(lone).toHaveAccessibleDescription(article)
+      expect(lone).toHaveTextContent('Customer chat assistant')
+    },
+  )
+
+  it.each([
     ['en', 'Other duties from 2 December 2027', 'No specific duties'],
     ['de', 'Weitere Pflichten ab dem 2. Dezember 2027', 'Keine besonderen Pflichten'],
   ] as const)(

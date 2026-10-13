@@ -52,13 +52,16 @@ function categoryNote(
   }
 }
 
-/** "From …", or with what the section holds in front: "Art. 6(4) from 2 December 2027". */
+/** "From …", or with what the section holds in front: "Art. 6(4) from 2 December 2027". The date
+ *  stays on one line ("2. Dezember 2027" at 390 px). */
 function fromTitle(isoDate: string, language: Language, what: string | null): ReactNode {
   return (
     <Trans
       i18nKey={what ? 'obligations.section.fromWhat' : 'obligations.section.from'}
       values={what ? { what } : undefined}
-      components={{ date: <span>{longDate(isoDate, language)}</span> }}
+      components={{
+        date: <span className="whitespace-nowrap">{longDate(isoDate, language)}</span>,
+      }}
     />
   )
 }

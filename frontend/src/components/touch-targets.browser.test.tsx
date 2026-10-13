@@ -65,6 +65,7 @@ function everyKindOfTool(): InventoryTool[] {
     tool('Old screener', legacyMarkedDeployer()),
     tool('Product photo generator', limitedRisk()),
     tool('Spam filter', minimalRisk()),
+    tool('Driver scoring', PROVIDER_RESULT, PROVIDER_TOOL),
     tool('Draft tool', null),
   ]
 }
@@ -124,8 +125,39 @@ describe('touch targets at 390 px', () => {
     const path = `/app/obligations${group === 'tool' ? '?group=tool' : ''}`
     await open(path, language, withTools(everyKindOfTool()))
     await openEveryList()
+    // The high-risk provider's card links to its own screen: that link is measured too.
+    const openProvider = language === 'en' ? 'Open the provider duties' : 'Anbieterpflichten öffnen'
+    expect(screen.getByRole('link', { name: openProvider })).toBeVisible()
     expect(smallTouchTargets().join('\n')).toBe('')
   })
+
+  it.each([
+    ['en', 'Art. 6(4) from', '2 December 2027'],
+    ['de', 'Art. 6 Abs. 4 ab dem', '2. Dezember 2027'],
+  ] as const)(
+    'Obligations by date keeps a named section’s date on one line (%s)',
+    async (language, what, date) => {
+      // An Art. 6(4) duty on the Annex III route's date: its section names the article in front.
+      const chat = limitedRisk()
+      const [literacy] = chat.obligations ?? []
+      if (!literacy) throw new Error('The fixture has duties.')
+      const assessment = {
+        ...literacy,
+        key: 'art-6-4',
+        article: 'art:6:4',
+        applies_from: '2027-12-02',
+      }
+      const tools = [
+        tool('Applicant screening', decidedHighRisk()),
+        tool('Customer chat assistant', { ...chat, obligations: [assessment] }),
+      ]
+      await open('/app/obligations', language, withTools(tools))
+      const heading = screen.getByRole('heading', { level: 2, name: `${what} ${date}` })
+      const dateSpan = [...heading.querySelectorAll('span')].find((s) => s.textContent === date)
+      if (!dateSpan) throw new Error('The heading has no date span.')
+      expect(dateSpan.getClientRects()).toHaveLength(1)
+    },
+  )
 
   it.each(
     LANGUAGES.flatMap((language) => [
