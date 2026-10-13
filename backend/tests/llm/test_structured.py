@@ -1,6 +1,7 @@
 """`parse_reply`: a reply the provider's content filter stopped is a refusal, not a broken output
 (decision 029); an answer that parses is used whatever the finish reason. `ChatRoute`: only such
-a refusal sends the same request once to the second model (decision 033)."""
+a refusal sends the same request once to the second model (decision 033), and only a reply the
+output cap cut off is asked once more of the same model (E20)."""
 
 import logging
 from collections.abc import Callable
@@ -104,12 +105,62 @@ def test_a_filtered_reply_that_parses_is_used_and_never_retried() -> None:
     assert second.seen == []
 
 
-@pytest.mark.parametrize("finish_reason", ["stop", "length", None])
+@pytest.mark.parametrize("finish_reason", ["stop", None])
 def test_a_broken_reply_is_never_retried(finish_reason: str | None) -> None:
-    second = chat()
+    first, second = chat(reply(REFUSAL, finish_reason)), chat()
     with pytest.raises(ValidationError):
-        ChatRoute(chat(reply(REFUSAL, finish_reason)), second).ask(MESSAGES, FORMAT, Small)
+        ChatRoute(first, second).ask(MESSAGES, FORMAT, Small)
+    assert len(first.seen) == 1
     assert second.seen == []
+
+
+# --- A reply cut off at the output cap (E20) ----------------------------------------------------
+
+CUT_OFF_TEXT = '{"value": 1, "numbers": [1,2,3,4,5,6,7,8,9,10,11,12,13'
+"""A runaway answer the output cap cut off mid-list, as the German worked example's was."""
+
+
+def test_a_cut_off_reply_is_asked_once_more_of_the_same_model() -> None:
+    first = chat(reply(CUT_OFF_TEXT, "length"), reply('{"value": 2}', "stop"))
+    second = chat()
+    assert ChatRoute(first, second).ask(MESSAGES, FORMAT, Small) == Small(value=2)
+    assert len(first.seen) == 2
+    assert first.seen[1][0] == first.seen[0][0] == MESSAGES
+    assert first.seen[1][1]["response_format"] == first.seen[0][1]["response_format"] == FORMAT
+    assert second.seen == []
+
+
+def test_a_reply_cut_off_twice_is_a_validation_error_after_two_calls() -> None:
+    first, second = chat(reply(CUT_OFF_TEXT, "length"), reply(CUT_OFF_TEXT, "length")), chat()
+    with pytest.raises(ValidationError):
+        ChatRoute(first, second).ask(MESSAGES, FORMAT, Small)
+    assert len(first.seen) == 2
+    assert second.seen == []
+
+
+def test_a_cut_off_reply_that_parses_is_used_without_another_call() -> None:
+    first = chat(reply('{"value": 3}', "length"))
+    assert ChatRoute(first).ask(MESSAGES, FORMAT, Small) == Small(value=3)
+    assert len(first.seen) == 1
+
+
+def test_a_refusal_on_the_second_try_goes_to_the_second_model() -> None:
+    first = chat(reply(CUT_OFF_TEXT, "length"), REFUSED)
+    second = chat(reply('{"value": 4}', "stop"))
+    assert ChatRoute(first, second).ask(MESSAGES, FORMAT, Small) == Small(value=4)
+    assert (len(first.seen), len(second.seen)) == (2, 1)
+
+
+def test_the_second_try_logs_the_finish_reason_but_never_the_reply(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    first = chat(reply(CUT_OFF_TEXT, "length"), reply('{"value": 2}', "stop"))
+    with caplog.at_level(logging.WARNING, logger="aiact.llm.structured"):
+        ChatRoute(first).ask(MESSAGES, FORMAT, Small)
+    assert [record.getMessage() for record in caplog.records] == [
+        "the reply was cut off at the output cap; asking once more"
+    ]
+    assert "numbers" not in caplog.text
 
 
 def test_a_transport_error_is_never_retried() -> None:

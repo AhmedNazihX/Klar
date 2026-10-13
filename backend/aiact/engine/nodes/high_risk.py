@@ -125,9 +125,9 @@ ORIGINAL_INSTRUCTIONS = PROMPT_PATH.with_name("high_risk_original.md").read_text
 """How the Annex I key facts are read under the original text, which has no Art. 6(1a)-(1c)."""
 
 MAX_OUTPUT_TOKENS = 10000
-"""Bounds a runaway answer; the engine model also spends reasoning tokens (decision 005), and a
-case where both routes apply (own-e-14) used all of 3000 on reasoning before any answer. Raised
-from 6000 after E18: the worked example's answer hit 6000 (finish_reason "length")."""
+"""Bounds a runaway answer (E18's and E20's cut-offs were a `fact_numbers` list counting on into
+the thousands; `ChatRoute` asks once more). Reasoning counts too (decision 005): own-e-14 used
+all of 3000 on it. A usual answer takes under 3000; raised from 6000 after E18."""
 
 EXAMPLE_MARK = ":ex:"
 """Guideline worked examples have ids like `guide:guide-high-risk-annex-iii:ex:042`."""

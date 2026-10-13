@@ -4,7 +4,8 @@ The model fills a JSON Schema built from a Pydantic model, and the reply is vali
 the same model. Validation errors are described by location and message only, so a user's
 description quoted back in an error never reaches a log or an exception. A reply the provider's
 content filter stopped is told apart from a broken one (`parse_reply`, decision 029), and goes
-once to a second pinned model when the caller has one (`ChatRoute`, decision 033).
+once to a second pinned model when the caller has one (`ChatRoute`, decision 033). A reply the
+output cap cut off before it parses is asked once more of the same model (`ChatRoute`, E20).
 """
 
 import logging
@@ -22,6 +23,8 @@ logger = logging.getLogger(__name__)
 CONTENT_FILTER = "content_filter"
 """The `finish_reason` a provider sends when its content filter blocked the request or the
 answer (OpenRouter passes it on; LangChain puts it in `response_metadata`)."""
+CUT_OFF = "length"
+"""The `finish_reason` of a reply the call's output cap (`max_tokens`) cut off."""
 TRANSIENT_STATUSES = frozenset({408, 429})
 """The 4xx statuses worth a refusal's step: a timeout and a rate limit. Every 5xx is too."""
 SERVER_ERROR = 500
@@ -131,13 +134,33 @@ class ChatRoute:
         second model), and also when the second call fails transiently (`is_transient_failure`),
         because the route must never end worse than no route (decision 033); a 4xx config or
         request error of the second call still raises. Raises `ValidationError` when the first
-        model's answer doesn't fit."""
+        model's answer doesn't fit, after `_ask_first`'s one more try for a cut-off reply."""
         try:
-            return parse_reply(self._invoke(self.chat, messages, response_format), model)
+            return self._ask_first(messages, response_format, model)
         except ProviderRefusalError:
             if self.refusal_chat is None:
                 raise
         return self._ask_second(self.refusal_chat, messages, response_format, model)
+
+    def _ask_first[M: BaseModel](
+        self,
+        messages: Sequence[BaseMessage],
+        response_format: Mapping[str, object],
+        model: type[M],
+    ) -> M:
+        """The first model's answer. A reply cut off at the output cap that doesn't parse (a
+        runaway answer, such as a number list counting on into the thousands, E20) is asked once
+        more of the same model, and logged by its finish reason only; a second cut-off raises
+        `ValidationError` like any reply that doesn't fit. Each call is a call of its own, so
+        the run's usage counts both."""
+        reply = self._invoke(self.chat, messages, response_format)
+        try:
+            return parse_reply(reply, model)
+        except ValidationError:
+            if reply.response_metadata.get("finish_reason") != CUT_OFF:
+                raise
+        logger.warning("the reply was cut off at the output cap; asking once more")
+        return parse_reply(self._invoke(self.chat, messages, response_format), model)
 
     def _ask_second[M: BaseModel](
         self,
