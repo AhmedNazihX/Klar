@@ -41,6 +41,7 @@ from aiact.api.dependencies import (
     limit_lookups,
 )
 from aiact.api.errors import MAX_ERRORS, UNPROCESSABLE, Unprocessable, invalid_field
+from aiact.corpus.build import LoadError
 from aiact.drafting import (
     CheckResult,
     DraftDocument,
@@ -56,7 +57,12 @@ from aiact.drafting import (
 )
 from aiact.drafting.documents import DocumentNotCalledForError
 from aiact.drafting.models import QuestionKey
-from aiact.engine.citations import CitationSource, CorpusCitations, load_omnibus_changes
+from aiact.engine.citations import (
+    CitationSource,
+    CorpusCitations,
+    OmnibusChanges,
+    load_omnibus_changes,
+)
 from aiact.engine.nodes.common import provision_citation
 from aiact.schemas import Citation, ClassificationResult, Language, LawVersion
 from aiact.schemas.base import ContractModel
@@ -142,7 +148,7 @@ class CorpusQuotes:
         law_version: LawVersion,
         as_of: date | None,
     ) -> tuple[Citation, ...]:
-        omnibus = load_omnibus_changes(self.data_dir)
+        omnibus = _omnibus_changes(self.data_dir)
         with self.open_source() as source:
             found = [source.provision(pid, language, law_version, as_of) for pid in provision_ids]
         return tuple(
@@ -151,6 +157,21 @@ class CorpusQuotes:
             )
             for provision in found
         )
+
+
+class OmnibusUnreadableError(RuntimeError):
+    """The parsed Omnibus, which marks the provisions it changed, can't be read or loaded; the
+    app answers it like an unreachable corpus (a 503 that names nothing). It carries the
+    failure's type only."""
+
+
+def _omnibus_changes(data_dir: Path) -> OmnibusChanges:
+    """The Omnibus's amendment records (`load_omnibus_changes`, read once per `data_dir`); a file
+    that can't be read or loaded is tried again on the next request."""
+    try:
+        return load_omnibus_changes(data_dir)
+    except (OSError, LoadError, ValidationError) as exc:
+        raise OmnibusUnreadableError(type(exc).__name__) from None
 
 
 @contextmanager

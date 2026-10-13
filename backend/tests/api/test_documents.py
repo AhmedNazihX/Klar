@@ -7,6 +7,8 @@ the route on the database."""
 
 import logging
 from collections.abc import Iterator
+from contextlib import nullcontext
+from pathlib import Path
 
 import httpx
 import psycopg
@@ -22,6 +24,7 @@ from aiact.api.documents import (
     NO_LETTER,
     UNKNOWN_POINT,
     UNKNOWN_QUESTION,
+    CorpusQuotes,
     VendorLetter,
     VendorLetterRequest,
     law_quotes,
@@ -38,6 +41,7 @@ from tests.drafting.vendor_builders import (
     prohibited_result,
     prohibited_step,
 )
+from tests.engine.built_corpus import built_corpus
 from tests.schemas.builders import stored_before_decision_030
 from tests.schemas.worked_example import cite, worked_example_result
 
@@ -249,3 +253,27 @@ async def test_the_corpus_is_read_only_for_a_message_and_a_down_database_is_a_50
     message = await client.post(PATH, json=_body(prohibited_result()))
     assert message.status_code == 503
     assert message.json() == {"detail": CORPUS_UNAVAILABLE}
+
+
+@pytest.mark.parametrize("contents", [None, "not json\n"])
+async def test_an_unreadable_omnibus_is_a_503_that_names_nothing(
+    app: FastAPI,
+    client: httpx.AsyncClient,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    contents: str | None,
+) -> None:
+    """The parsed Omnibus marks the quotes it changed: a missing or broken file is the corpus
+    being unavailable (a 503, as Q&A answers it), not a 500 with a traceback (P13)."""
+    if contents is not None:
+        parsed = tmp_path / "parsed"
+        parsed.mkdir()
+        (parsed / "omnibus.en.jsonl").write_text(contents, encoding="utf-8")
+    app.dependency_overrides[law_quotes] = lambda: CorpusQuotes(
+        lambda: nullcontext(built_corpus()), tmp_path
+    )
+    with caplog.at_level(logging.ERROR):
+        message = await client.post(PATH, json=_body(prohibited_result()))
+    assert message.status_code == 503
+    assert message.json() == {"detail": CORPUS_UNAVAILABLE}
+    assert str(tmp_path) not in caplog.text

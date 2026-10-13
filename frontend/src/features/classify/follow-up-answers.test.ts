@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest'
 import type { ClassificationResult, FollowUpQuestion } from '@/api'
 import { decidedHighRisk } from '@/test/classify-fixtures'
 
+import { DescriptionFormSchema } from './description-form'
+
 import {
   answerableQuestions,
   answersOf,
@@ -121,6 +123,16 @@ describe('Edit description', () => {
     )
     expect(withAnswers('We use a tool.', {})).toBe('We use a tool.')
     expect(withAnswers('We use a tool.', undefined)).toBe('We use a tool.')
+  })
+
+  it('stops at the form’s 20,000 characters, so the form takes the text it opens with', () => {
+    const description = 'd'.repeat(19_990)
+    const edited = withAnswers(description, { a: 'An answer longer than the room left.' })
+    expect(edited).toHaveLength(20_000)
+    expect(edited).toBe(`${description}\n\nAn answe`)
+    expect(DescriptionFormSchema.safeParse({ name: '', description: edited }).success).toBe(true)
+    // Within the limit, nothing is cut.
+    expect(withAnswers('d'.repeat(19_000), { a: 'Short.' })).toHaveLength(19_008)
   })
 })
 

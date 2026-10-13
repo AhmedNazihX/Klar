@@ -5,6 +5,7 @@ import { EU_MEMBER_STATES } from '@/features/welcome/countries'
 import type { CompanyProfile } from '@/lib/company-profile'
 import type { Answers } from '@/lib/tool-runs'
 
+import { DESCRIPTION_MAX } from './description-form'
 import { pausedStep, restingFacts } from './result-text'
 
 // The follow-up loop's answers (story P5b, decision 019): what the user picked or wrote for each
@@ -51,10 +52,14 @@ export function answerableQuestions(result: ClassificationResult): FollowUpQuest
 }
 
 /** The description with the answers a run used, one per line, for "Edit description": the user
- *  sees and keeps what they answered when they rewrite it (decision 019 appends them too). */
+ *  sees and keeps what they answered when they rewrite it (decision 019 appends them too). Cut
+ *  at the form's limit (`DESCRIPTION_MAX`): a description near it with its answers can run past
+ *  it (up to 40 answers of 1,000 characters each), and the form would refuse the text it opens
+ *  with. */
 export function withAnswers(description: string, answers: Answers | undefined): string {
   const lines = Object.values(answers ?? {})
-  return lines.length === 0 ? description : [description, '', ...lines].join('\n')
+  const text = lines.length === 0 ? description : [description, '', ...lines].join('\n')
+  return text.slice(0, DESCRIPTION_MAX)
 }
 
 /** One answer as the engine reads it, or null when the draft says nothing (Not sure, blank
