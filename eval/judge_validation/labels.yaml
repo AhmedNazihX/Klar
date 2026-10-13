@@ -19,7 +19,7 @@
 #   by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate
 #   safeguards for the rights and freedoms of third parties, unless those systems are available for
 #   the public to report a criminal offence.
-jv-en-01:
+jv-en-01: yes
 
 # ── jv-en-02 · citation_support · en ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -33,7 +33,7 @@ jv-en-01:
 #   subject to the use of the high-risk AI system. This information shall be provided, where
 #   applicable, in accordance with the rules and procedures laid down in Union and national law and
 #   practice on information of workers and their representatives.
-jv-en-02:
+jv-en-02: no
 
 # ── jv-en-03 · citation_support · en ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -56,7 +56,7 @@ jv-en-02:
 #   purposes of the use cases listed in Annex III.
 #   Notwithstanding the first subparagraph, an AI system referred to in Annex III shall always be
 #   considered to be high-risk where the AI system performs profiling of natural persons.
-jv-en-03:
+jv-en-03: no
 
 # ── jv-en-04 · citation_support · en ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -67,7 +67,7 @@ jv-en-03:
 #   Art. 2(6)
 #   This Regulation does not apply to AI systems or AI models, including their output, specifically
 #   developed and put into service for the sole purpose of scientific research and development.
-jv-en-04:
+jv-en-04: yes
 
 # ── jv-en-05 · citation_support · en ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -83,7 +83,7 @@ jv-en-04:
 #   fundamental rights shall have the right to obtain from the deployer clear and meaningful
 #   explanations of the role of the AI system in the decision-making procedure and the main elements
 #   of the decision taken.
-jv-en-05:
+jv-en-05: no
 
 # ── jv-en-06 · citation_support · en ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -96,7 +96,7 @@ jv-en-05:
 #   subject to administrative fines of up to EUR 35 000 000 or, if the offender is an undertaking,
 #   up to 7 % of its total worldwide annual turnover for the preceding financial year, whichever is
 #   higher.
-jv-en-06:
+jv-en-06: yes
 
 # ── jv-en-07 · evidence_tag · en ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -106,7 +106,7 @@ jv-en-06:
 #   We run a ferry line between three islands. A chatbot on our booking website, built for us by a
 #   digital agency and run under our brand, answers passengers' questions about timetables, luggage
 #   and refunds. When it can't answer, it hands the chat over to our service desk.
-jv-en-07:
+jv-en-07: yes
 
 # ── jv-en-08 · evidence_tag · en ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -116,7 +116,7 @@ jv-en-07:
 #   We run a ferry line between three islands. A chatbot on our booking website, built for us by a
 #   digital agency and run under our brand, answers passengers' questions about timetables, luggage
 #   and refunds. When it can't answer, it hands the chat over to our service desk.
-jv-en-08:
+jv-en-08: no
 
 # ── jv-en-09 · evidence_tag · en ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -127,7 +127,7 @@ jv-en-08:
 #   shop will sell the next day, from past sales, the weather forecast and public holidays. Shop
 #   managers see the forecast each afternoon and adjust the order before it goes to the central
 #   bakery.
-jv-en-09:
+jv-en-09: yes
 
 # ── jv-en-10 · evidence_tag · en ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -138,7 +138,7 @@ jv-en-09:
 #   shop will sell the next day, from past sales, the weather forecast and public holidays. Shop
 #   managers see the forecast each afternoon and adjust the order before it goes to the central
 #   bakery.
-jv-en-10:
+jv-en-10: no
 
 # ── jv-en-11 · evidence_tag · en ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -148,7 +148,7 @@ jv-en-10:
 #   We plan to use an AI tool that drafts weekly shift rosters for the 300 workers in our warehouse,
 #   from their availability, their skills, their certifications and preferred days. A supervisor
 #   checks and approves each roster before it is published.
-jv-en-11:
+jv-en-11: no
 
 # ── jv-en-12 · evidence_tag · en ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -158,7 +158,7 @@ jv-en-11:
 #   We plan to use an AI tool that drafts weekly shift rosters for the 300 workers in our warehouse,
 #   from their availability, their skills, their certifications and preferred days. A supervisor
 #   checks and approves each roster before it is published.
-jv-en-12:
+jv-en-12: no
 
 # ── jv-en-13 · qa_support · en ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -183,7 +183,7 @@ jv-en-12:
 #   (ii) 2 August 2028 as regards AI systems classified as high-risk pursuant to Article 6(1) and
 #   Annex I;
 #   (d) Articles 102 to 110 shall apply from 27 July 2026.
-jv-en-13:
+jv-en-13: yes
 
 # ── jv-en-14 · qa_support · en ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -202,7 +202,7 @@ jv-en-13:
 #   by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate
 #   safeguards for the rights and freedoms of third parties, unless those systems are available for
 #   the public to report a criminal offence.
-jv-en-14:
+jv-en-14: no
 
 # ── jv-en-15 · qa_support · en ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -230,7 +230,7 @@ jv-en-14:
 #   instructions for use;
 #   (f) the measures to be taken in the case of the materialisation of those risks, including the
 #   arrangements for internal governance and complaint mechanisms.
-jv-en-15:
+jv-en-15: no
 
 # ── jv-en-16 · qa_support · en ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -244,7 +244,7 @@ jv-en-15:
 #   ‘deployer’ means a natural or legal person, public authority, agency or other body using an AI
 #   system under its authority except where the AI system is used in the course of a personal non-
 #   professional activity;
-jv-en-16:
+jv-en-16: yes
 
 # ── jv-en-17 · qa_support · en ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -263,7 +263,7 @@ jv-en-16:
 #   Art. 99(6)
 #   In the case of SMEs, including start-ups, each fine referred to in this Article shall be up to
 #   the percentages or amount referred to in paragraphs 3, 4 and 5, whichever thereof is lower.
-jv-en-17:
+jv-en-17: yes
 
 # ── jv-en-18 · qa_support · en ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -288,7 +288,7 @@ jv-en-17:
 #   3. The Board shall adopt recommendations, taking into account European competence frameworks, to
 #   support the Commission and Member States in the promotion of AI literacy required under
 #   paragraph 1, including by setting out common objectives.
-jv-en-18:
+jv-en-18: no
 
 # ── jv-en-19 · invented_content · en ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -302,7 +302,7 @@ jv-en-18:
 #   Human oversight: the dispatch lead, Maria Koch, reviews the plan each morning and can change any
 #   route.
 #   Logs: kept for 12 months.
-jv-en-19:
+jv-en-19: yes
 
 # ── jv-en-20 · invented_content · en ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -316,7 +316,7 @@ jv-en-19:
 #   Human oversight: the dispatch lead, Maria Koch, reviews the plan each morning and can change any
 #   route.
 #   Logs: kept for 12 months.
-jv-en-20:
+jv-en-20: no
 
 # ── jv-en-21 · invented_content · en ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -330,7 +330,7 @@ jv-en-20:
 #   Human oversight: the dispatch lead, Maria Koch, reviews the plan each morning and can change any
 #   route.
 #   Logs: kept for 12 months.
-jv-en-21:
+jv-en-21: no
 
 # ── jv-en-22 · invented_content · en ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -345,7 +345,7 @@ jv-en-21:
 #   Affected persons: household customers.
 #   Oversight: two customer-service team leads approve every payment-plan offer.
 #   Complaints: through the existing customer complaints hotline.
-jv-en-22:
+jv-en-22: yes
 
 # ── jv-en-23 · invented_content · en ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -359,7 +359,7 @@ jv-en-22:
 #   Affected persons: household customers.
 #   Oversight: two customer-service team leads approve every payment-plan offer.
 #   Complaints: through the existing customer complaints hotline.
-jv-en-23:
+jv-en-23: no
 
 # ── jv-en-24 · invented_content · en ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -374,7 +374,7 @@ jv-en-23:
 #   Affected persons: household customers.
 #   Oversight: two customer-service team leads approve every payment-plan offer.
 #   Complaints: through the existing customer complaints hotline.
-jv-en-24:
+jv-en-24: no
 
 # ── jv-de-01 · citation_support · de ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -398,7 +398,7 @@ jv-en-24:
 #   (3) Das KI-Gremium nimmt unter Berücksichtigung der europäischen Kompetenzrahmen Empfehlungen
 #   an, um die Kommission und die Mitgliedstaaten unter anderem durch die Festlegung gemeinsamer
 #   Ziele bei der Förderung der KI-Kompetenz gemäß Absatz 1 zu unterstützen.
-jv-de-01:
+jv-de-01: no
 
 # ── jv-de-02 · citation_support · de ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -419,7 +419,7 @@ jv-de-01:
 #   eine unterstützende Funktion für die Standardbearbeitung ausführen oder die vom Betreiber
 #   bereitgestellten Eingabedaten oder deren Semantik nicht wesentlich verändern oder wenn sie zur
 #   Aufdeckung, Verhütung, Ermittlung oder Verfolgung von Straftaten gesetzlich zugelassen sind.
-jv-de-02:
+jv-de-02: yes
 
 # ── jv-de-03 · citation_support · de ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -437,7 +437,7 @@ jv-de-02:
 #   Finanzdienstleistungen Anforderungen in Bezug auf ihre Regelungen oder Verfahren der internen
 #   Unternehmensführung unterliegen, bewahren die Protokolle als Teil der gemäß einschlägigem
 #   Unionsecht über Finanzdienstleistungen aufzubewahrenden Dokumentation auf.
-jv-de-03:
+jv-de-03: no
 
 # ── jv-de-04 · citation_support · de ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -449,7 +449,7 @@ jv-de-03:
 #   „Betreiber“ eine natürliche oder juristische Person, Behörde, Einrichtung oder sonstige Stelle,
 #   die ein KI-System in eigener Verantwortung verwendet, es sei denn, das KI-System wird im Rahmen
 #   einer persönlichen und nicht beruflichen Tätigkeit verwendet;
-jv-de-04:
+jv-de-04: yes
 
 # ── jv-de-05 · citation_support · de ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -461,7 +461,7 @@ jv-de-04:
 #   Anbieter von in der Union in Verkehr gebrachten Hochrisiko-KI-Systemen melden schwerwiegende
 #   Vorfälle den Marktüberwachungsbehörden der Mitgliedstaaten, in denen der Vorfall stattgefunden
 #   hat.
-jv-de-05:
+jv-de-05: no
 
 # ── jv-de-06 · citation_support · de ────────────────────────────────────────
 # QUESTION: Does the CITED TEXT support the CLAIM? yes = everything the claim states follows from the cited text; a different actor, condition, deadline or amount is no.
@@ -474,7 +474,7 @@ jv-de-05:
 #   KI-Systemen zur Ableitung von Emotionen einer natürlichen Person am Arbeitsplatz und in
 #   Bildungseinrichtungen, es sei denn, die Verwendung des KI-Systems soll aus medizinischen Gründen
 #   oder Sicherheitsgründen eingeführt oder auf den Markt gebracht werden;
-jv-de-06:
+jv-de-06: yes
 
 # ── jv-de-07 · evidence_tag · de ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -484,7 +484,7 @@ jv-de-06:
 #   Unser Weingut setzt an der Sortieranlage eine Kamera mit Bilderkennung ein. Das System erkennt
 #   faule oder unreife Trauben und bläst sie mit einem Luftstoß vom Band. Die Anlage haben wir 2025
 #   bei einem Maschinenbauer gekauft.
-jv-de-07:
+jv-de-07: no
 
 # ── jv-de-08 · evidence_tag · de ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -494,7 +494,7 @@ jv-de-07:
 #   Unser Weingut setzt an der Sortieranlage eine Kamera mit Bilderkennung ein. Das System erkennt
 #   faule oder unreife Trauben und bläst sie mit einem Luftstoß vom Band. Die Anlage haben wir 2025
 #   bei einem Maschinenbauer gekauft.
-jv-de-08:
+jv-de-08: no
 
 # ── jv-de-09 · evidence_tag · de ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -505,7 +505,7 @@ jv-de-08:
 #   Kursbuchungen vorhersagen, welche Mitglieder in den nächsten drei Monaten voraussichtlich
 #   kündigen, damit wir ihnen einen Rabatt anbieten können. Ob ein Rabatt angeboten wird,
 #   entscheidet die Studioleitung.
-jv-de-09:
+jv-de-09: yes
 
 # ── jv-de-10 · evidence_tag · de ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -516,7 +516,7 @@ jv-de-09:
 #   Kursbuchungen vorhersagen, welche Mitglieder in den nächsten drei Monaten voraussichtlich
 #   kündigen, damit wir ihnen einen Rabatt anbieten können. Ob ein Rabatt angeboten wird,
 #   entscheidet die Studioleitung.
-jv-de-10:
+jv-de-10: no
 
 # ── jv-de-11 · evidence_tag · de ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -526,7 +526,7 @@ jv-de-10:
 #   Wir sind ein Start-up aus Leipzig. Unsere App wandelt diktierte Arztbriefe in Text um und
 #   schlägt eine Gliederung vor; die Ärztin oder der Arzt prüft und unterschreibt jeden Brief. Wir
 #   verkaufen die App unter unserem Namen an Praxen in ganz Deutschland.
-jv-de-11:
+jv-de-11: yes
 
 # ── jv-de-12 · evidence_tag · de ────────────────────────────────────────
 # QUESTION: Does the DESCRIPTION state the FACT (in any words)? yes = it says it; a fact it only makes likely, leaves open or contradicts is no.
@@ -536,7 +536,7 @@ jv-de-11:
 #   Wir sind ein Start-up aus Leipzig. Unsere App wandelt diktierte Arztbriefe in Text um und
 #   schlägt eine Gliederung vor; die Ärztin oder der Arzt prüft und unterschreibt jeden Brief. Wir
 #   verkaufen die App unter unserem Namen an Praxen in ganz Deutschland.
-jv-de-12:
+jv-de-12: yes
 
 # ── jv-de-13 · qa_support · de ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -562,7 +562,7 @@ jv-de-12:
 #   ii) 2. August 2028 in Bezug auf KI-Systeme, die gemäß Artikel 6 Absatz 1 und Anhang I als
 #   hochriskant eingestuft sind;
 #   d) Die Artikel 102 bis 110 gelten ab dem 27. Juli 2026.
-jv-de-13:
+jv-de-13: yes
 
 # ── jv-de-14 · qa_support · de ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -579,7 +579,7 @@ jv-de-13:
 #   Aufdeckung, Verhütung oder Ermittlung von Straftaten zugelassene KI-Systeme, die zur
 #   biometrischen Kategorisierung und Emotionserkennung im Einklang mit dem Unionsrecht verwendet
 #   werden, sofern geeignete Schutzvorkehrungen für die Rechte und Freiheiten Dritter bestehen.
-jv-de-14:
+jv-de-14: no
 
 # ── jv-de-15 · qa_support · de ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -603,7 +603,7 @@ jv-de-14:
 #   allgemeinem Verwendungszweck, das nicht als hochriskant eingestuft wurde und bereits in Verkehr
 #   gebracht oder in Betrieb genommen wurde, so verändern, dass das betreffende KI-System zu einem
 #   Hochrisiko-KI-System im Sinne von Artikel 6 wird.
-jv-de-15:
+jv-de-15: yes
 
 # ── jv-de-16 · qa_support · de ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -622,7 +622,7 @@ jv-de-15:
 #   Finanzdienstleistungen Anforderungen in Bezug auf ihre Regelungen oder Verfahren der internen
 #   Unternehmensführung unterliegen, bewahren die Protokolle als Teil der gemäß einschlägigem
 #   Unionsecht über Finanzdienstleistungen aufzubewahrenden Dokumentation auf.
-jv-de-16:
+jv-de-16: yes
 
 # ── jv-de-17 · qa_support · de ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -636,7 +636,7 @@ jv-de-16:
 #   oder KI-Modellen, bevor diese in Verkehr gebracht oder in Betrieb genommen werden. Solche
 #   Tätigkeiten werden im Einklang mit dem geltenden Unionsrecht durchgeführt. Tests unter
 #   Realbedingungen fallen nicht unter diesen Ausschluss.
-jv-de-17:
+jv-de-17: no
 
 # ── jv-de-18 · qa_support · de ────────────────────────────────────────
 # QUESTION: Does every statement in the ANSWER follow from the SOURCES? yes = all of it does.
@@ -655,7 +655,7 @@ jv-de-17:
 #   Gesundheit, ihre Sicherheit oder ihre Grundrechte beeinträchtigt, haben das Recht, vom Betreiber
 #   eine klare und aussagekräftige Erläuterung zur Rolle des KI-Systems im Entscheidungsprozess und
 #   zu den wichtigsten Elementen der getroffenen Entscheidung zu erhalten.
-jv-de-18:
+jv-de-18: no
 
 # ── jv-de-19 · invented_content · de ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -668,7 +668,7 @@ jv-de-18:
 #   Pflegekräfte.
 #   Aufsicht: Die Pflegedienstleitung prüft jeden Tourenplan und kann ihn ändern.
 #   Information: Die Mitarbeitenden wurden im März 2026 über den Einsatz informiert.
-jv-de-19:
+jv-de-19: yes
 
 # ── jv-de-20 · invented_content · de ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -681,7 +681,7 @@ jv-de-19:
 #   Pflegekräfte.
 #   Aufsicht: Die Pflegedienstleitung prüft jeden Tourenplan und kann ihn ändern.
 #   Information: Die Mitarbeitenden wurden im März 2026 über den Einsatz informiert.
-jv-de-20:
+jv-de-20: no
 
 # ── jv-de-21 · invented_content · de ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -694,7 +694,7 @@ jv-de-20:
 #   Pflegekräfte.
 #   Aufsicht: Die Pflegedienstleitung prüft jeden Tourenplan und kann ihn ändern.
 #   Information: Die Mitarbeitenden wurden im März 2026 über den Einsatz informiert.
-jv-de-21:
+jv-de-21: no
 
 # ── jv-de-22 · invented_content · de ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -708,7 +708,7 @@ jv-de-21:
 #   Trainingsdaten: 48.000 Fotos aus österreichischen Obstgärten der Jahre 2021 bis 2024.
 #   Genauigkeit: 91 % richtig erkannte Krankheiten im Test mit 2.000 Fotos.
 #   Bekannte Grenze: schwächere Ergebnisse bei Gegenlicht.
-jv-de-22:
+jv-de-22: yes
 
 # ── jv-de-23 · invented_content · de ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -721,7 +721,7 @@ jv-de-22:
 #   Trainingsdaten: 48.000 Fotos aus österreichischen Obstgärten der Jahre 2021 bis 2024.
 #   Genauigkeit: 91 % richtig erkannte Krankheiten im Test mit 2.000 Fotos.
 #   Bekannte Grenze: schwächere Ergebnisse bei Gegenlicht.
-jv-de-23:
+jv-de-23: no
 
 # ── jv-de-24 · invented_content · de ────────────────────────────────────────
 # QUESTION: Does every fact in the PASSAGE come from the SUPPLIED FACTS? yes = nothing invented; general wording that states no fact is fine.
@@ -734,4 +734,4 @@ jv-de-23:
 #   Trainingsdaten: 48.000 Fotos aus österreichischen Obstgärten der Jahre 2021 bis 2024.
 #   Genauigkeit: 91 % richtig erkannte Krankheiten im Test mit 2.000 Fotos.
 #   Bekannte Grenze: schwächere Ergebnisse bei Gegenlicht.
-jv-de-24:
+jv-de-24: no
