@@ -17,7 +17,6 @@ from aiact.engine import ClassifyEvent, ErrorEvent, ResultEvent
 from aiact.schemas import RiskClass
 from aiact.settings import Settings, get_settings
 from tests.api.conftest import BASE_URL, FULL_RUN, TEST_HOST, outline, sse_events
-from tests.api.test_classify_replay import raise_if_recording_stale
 from tests.conftest import REPLAY_API_KEY
 from tests.e2e.replay_server import (
     Message,
@@ -40,7 +39,7 @@ from tests.e2e.runs import (
     replayed_recordings,
     run_date,
 )
-from tests.engine.nodes.known_gaps import E20_PROMPTS_RECORDING_PENDING
+from tests.engine.nodes.known_gaps import E20_PROMPTS_RECORDING_PENDING, raise_if_recording_stale
 from tests.engine.replayed_engine import LUNA
 from tests.engine.test_classify_worked_example import AS_OF, worked_example_request
 
