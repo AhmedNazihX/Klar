@@ -101,7 +101,7 @@ class JudgedStatus(StrEnum):
     COMPLETED = "completed"
     COST_CAP_REACHED = "cost_cap_reached"
     UNREACHED = "unreached"
-    """A judge's call reached no model; the case it was on isn't stored."""
+    """The backup judge's call reached no model; the case it was on isn't stored."""
 
 
 @dataclass(frozen=True)
@@ -290,8 +290,9 @@ def judge_run(
     options: JudgedOptions,
 ) -> JudgedSummary:
     """Judge the planned cases in order, writing each case's tallies as it finishes; no new case
-    starts once `options.max_cost_usd` is spent. A call that reached no model stops the pass;
-    the case it was on isn't stored. The store refuses another judge's run (`save_settings`)."""
+    starts once `options.max_cost_usd` is spent. The backup judge's call reaching no model stops
+    the pass; the case it was on isn't stored. The store refuses another judge's run
+    (`save_settings`)."""
     store.save_settings(run.id, settings)
     totals: dict[JudgeCheck, CheckScore] = {}
     judged = 0

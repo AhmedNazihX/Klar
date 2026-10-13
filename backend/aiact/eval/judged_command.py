@@ -1,5 +1,6 @@
 """The `aiact evaluate judged` command (V5), kept out of `aiact/cli.py`, which registers it."""
 
+import math
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from typing import Annotated
@@ -48,13 +49,25 @@ def _errors_exit() -> Iterator[None]:
         raise typer.Exit(code=2) from error
 
 
+def _finite(value: float) -> float:
+    """Refuse `nan` and `inf`: they pass the option's range check and would switch the cap off."""
+    if not math.isfinite(value):
+        raise typer.BadParameter("must be a finite number")
+    return value
+
+
 def judged(
     run_id: Annotated[UUID, typer.Argument(help="The eval_runs id whose results to judge")],
     dry_run: Annotated[
         bool, typer.Option(help="Print the items and the cost estimate; make no call")
     ] = False,
     max_cost_usd: Annotated[
-        float, typer.Option(min=0.000001, help="Start no new case once this much is spent")
+        float,
+        typer.Option(
+            min=0.000001,
+            callback=_finite,
+            help="Start no new case once this much is spent",
+        ),
     ] = judged_run.DEFAULT_MAX_COST_USD,
     concurrency: Annotated[
         int, typer.Option(min=1, max=judged_run.MAX_CONCURRENCY, help="Items judged at once")
@@ -114,7 +127,8 @@ def _echo_summary(summary: judged_run.JudgedSummary) -> None:
         typer.echo("Stopped at the cost cap; run again to go on", err=True)
     if summary.status is judged_run.JudgedStatus.UNREACHED:
         typer.echo(
-            "Stopped: a judge's call reached no model (key, endpoint, guardrail or network); the "
-            "case it was on isn't stored. Fix the route and run again to go on",
+            "Stopped: the backup judge's call reached no model (key, endpoint, guardrail or "
+            "network); the case it was on isn't stored. Fix the route and run again to go on",
             err=True,
         )
+        raise typer.Exit(code=1)

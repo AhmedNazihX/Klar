@@ -16,11 +16,13 @@ P8a's deterministic check instead (`code_checked_documents`).
 
 An item the judge couldn't answer (a refused or broken reply, `JudgeError`, with what it spent)
 or one too long to send (`JudgeItem`'s caps) is "not measured": counted apart, never as a fail.
-A call that reached no model (key, endpoint, guardrail or network) is no item's failure: it
-stops the pass (`JudgeUnreachedError`). Each check's tally (`CheckScore`) is stored in a case's
-`eval_case_results.scores` as flat numbers (`stored_scores`; the table's check allows numbers
-there) and summed into the run report's "Judged metrics" table (`render_judged`). The judge's
-settings (models and unsure margin) are the run's `config.judged`.
+A call that reached no model (key, endpoint, guardrail or network) is no item's failure: when
+the backup judge's call is the one that reached none (V4's judge falls back to the backup on a
+Jev error, by design), it stops the pass (`JudgeUnreachedError`). Each check's tally
+(`CheckScore`) is stored in a case's `eval_case_results.scores` as flat numbers
+(`stored_scores`; the table's check allows numbers there) and summed into the run report's
+"Judged metrics" table (`render_judged`). The judge's settings (models and unsure margin) are
+the run's `config.judged`.
 
 The judge sends what it reads to Jev, which has no EU endpoint (decision 006): only benchmark
 cases, the corpus's text and the engine's answers to them reach it, never a user's description.
@@ -73,11 +75,13 @@ class JudgedRecordError(ValueError):
 
 
 class JudgeUnreachedError(RuntimeError):
-    """A judge's call reached no model (key, endpoint, guardrail or network): the pass stops and
-    the case isn't stored, so a rerun judges it. Carries what the case's items spent."""
+    """The backup judge's call reached no model (key, endpoint, guardrail or network): the pass
+    stops and the case isn't stored, so a rerun judges it. Carries what the case's items spent."""
 
     def __init__(self, cost_usd: float, tokens: int) -> None:
-        super().__init__("a judge's call reached no model (key, endpoint, guardrail or network)")
+        super().__init__(
+            "the backup judge's call reached no model (key, endpoint, guardrail or network)"
+        )
         self.cost_usd = cost_usd
         self.tokens = tokens
 
@@ -234,7 +238,8 @@ def judge_plan(
 ) -> dict[JudgeCheck, CheckScore]:
     """Each check's tally over its items, `concurrency` items in flight at once. Every check of
     the plan gets a tally, an empty one when it has no item. Raises `JudgeUnreachedError`, with
-    what the items sent spent, when a call reached no model; no item starts after it."""
+    what the items sent spent, when the backup judge's call reached no model; no item starts
+    after it."""
     flat = [(check, item) for check, items in plan.items() for item in items]
     unreached = threading.Event()
 

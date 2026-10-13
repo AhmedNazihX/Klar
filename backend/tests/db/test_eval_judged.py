@@ -170,3 +170,31 @@ def test_the_corpus_source_reads_a_stored_hit_from_the_corpus(db: psycopg.Connec
     assert text is not None
     assert text.startswith("[art:6:3] ")
     assert read({"doc_key": DOCUMENT_ID, "provision_id": "art:999:9"}, Language.EN) is None
+
+
+def test_a_qa_runs_report_leaves_out_a_row_with_no_answer_drawn_from_the_sources(
+    db: psycopg.Connection,
+) -> None:
+    run_id = _insert_run(db, judged_run.QA_BENCHMARK)
+    answered = QAItem(
+        id="qa-en-01",
+        language=Language.EN,
+        question="When do the rules apply?",
+        required_provision_ids=("art:113",),
+        reference_answer="From 2 August 2026.",
+    )
+    refused = answered.model_copy(update={"id": "qa-en-02"})
+    retrieved = [{"doc_key": DOCUMENT_ID, "provision_id": "art:113"}]
+    for item, kind in ((answered, "answered"), (refused, "refused")):
+        predicted = {"answer": "From 2 August 2026.", "answer_kind": kind, "retrieved": retrieved}
+        _insert_case(db, run_id, item.id, item.model_dump(mode="json"), predicted)
+
+    run = load_run(db, run_id)
+    planned = plan_run(run, lambda hit, language: "[art:113] text")
+    assert [planned_case.case_id for planned_case in planned] == ["qa-en-01"]
+    judge_run(run, planned, Holding(), SETTINGS, PostgresJudgedStore(db), JudgedOptions())
+
+    report = run_report(db, run_id)
+    assert "- Items: 2, 1 with an answer drawn from the sources" in report
+    assert "- Cases judged: 1 of 1" in report
+    assert "| Q&A support | 100.0% | 1/1 | 0 | 0 | $0.0001 | $0.000100 |" in report

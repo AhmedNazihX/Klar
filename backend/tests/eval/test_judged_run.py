@@ -570,7 +570,19 @@ def _never(*args: object) -> StoredRun:
     raise AssertionError("a bad option loads nothing")
 
 
-def test_a_pass_stopped_by_an_unreached_call_says_so(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("cap", ["nan", "inf"])
+def test_a_cost_cap_that_is_not_finite_is_refused(
+    monkeypatch: pytest.MonkeyPatch, cap: str
+) -> None:
+    """`nan` and `inf` pass a float range check and would switch the cap off."""
+    monkeypatch.setattr(judged_run, "load_run", _never)
+    outcome = cli.invoke(app, ["evaluate", "judged", str(uuid4()), "--max-cost-usd", cap])
+    assert outcome.exit_code == 2
+    assert "finite" in outcome.stderr
+
+
+def _command_ending_with(monkeypatch: pytest.MonkeyPatch, status: JudgedStatus) -> UUID:
+    """Wire `evaluate judged` to a pass that stops with `status`; returns the run's id."""
     run = _run(_classified("a"))
     monkeypatch.setattr(records, "connect", FakeConnection)
     monkeypatch.setattr(judged_command, "get_settings", _settings)
@@ -578,11 +590,25 @@ def test_a_pass_stopped_by_an_unreached_call_says_so(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(judge, "BackupJudge", FakeRouteJudge)
     monkeypatch.setattr(judged_run, "load_run", lambda conn, run_id: run)
     monkeypatch.setattr(
-        judged_run,
-        "judge_run",
-        lambda *args: JudgedSummary(JudgedStatus.UNREACHED, 1, 0, {}, 0.0006, 0),
+        judged_run, "judge_run", lambda *args: JudgedSummary(status, 1, 0, {}, 0.0006, 0)
     )
-    outcome = cli.invoke(app, ["evaluate", "judged", str(run.id)])
-    assert outcome.exit_code == 0, outcome.output
+    return run.id
+
+
+def test_a_pass_stopped_by_an_unreached_call_says_so_and_exits_1(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_id = _command_ending_with(monkeypatch, JudgedStatus.UNREACHED)
+    outcome = cli.invoke(app, ["evaluate", "judged", str(run_id)])
+    assert outcome.exit_code == 1, outcome.output
     assert "0 of 1 cases judged, 0 items not measured; $0.0006" in outcome.stdout
-    assert "Stopped: a judge's call reached no model" in outcome.stderr
+    assert "Stopped: the backup judge's call reached no model" in outcome.stderr
+
+
+def test_a_pass_stopped_at_the_cost_cap_says_so_and_exits_0(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_id = _command_ending_with(monkeypatch, JudgedStatus.COST_CAP_REACHED)
+    outcome = cli.invoke(app, ["evaluate", "judged", str(run_id)])
+    assert outcome.exit_code == 0, outcome.output
+    assert "Stopped at the cost cap; run again to go on" in outcome.stderr
