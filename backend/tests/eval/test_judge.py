@@ -1,8 +1,10 @@
 """The judge (V4): Jev first, the backup LLM judge for unsure items. The claims here are invented,
 not benchmark cases; the recorded round trips use a committed validation case."""
 
-import ast
 import json
+import os
+import subprocess
+import sys
 from collections.abc import Callable
 
 import httpx
@@ -43,6 +45,8 @@ SOURCE = "Deployers who are employers shall inform workers' representatives and 
 ITEM = JudgeItem(
     check=JudgeCheck.CITATION_SUPPORT, language=Language.EN, claim=CLAIM, source=SOURCE
 )
+IMPORT_CHECK_TIMEOUT_S = 120
+"""Importing every module (the engine, LangGraph, Docling) takes a few seconds."""
 RECORDING_PENDING = pytest.mark.xfail(
     raises=CannotOverwriteExistingCassetteException,
     strict=True,
@@ -386,37 +390,54 @@ def test_the_backup_request_carries_the_pin_and_the_json_schema() -> None:
 
 # --- Jev reads benchmark material only ----------------------------------------------------------
 
-SERVING_PACKAGES = ("api", "engine", "drafting", "mcp")
-"""The code that serves users; Jev has no EU endpoint, so none of it may reach the judge."""
+IMPORT_CHECK = """
+import importlib, json, pkgutil, socket, sys
+
+def refuse(*args, **kwargs):
+    raise RuntimeError("a module opened a connection at import time")
+
+socket.socket.connect = refuse
+socket.create_connection = refuse
+
+import aiact
+
+EXCLUDED = ("aiact.eval", "aiact.cli")
+
+def walk(package):
+    # pkgutil.walk_packages would import aiact.eval itself to look inside it
+    for info in pkgutil.iter_modules(package.__path__, package.__name__ + "."):
+        if any(info.name == name or info.name.startswith(name + ".") for name in EXCLUDED):
+            continue
+        module = importlib.import_module(info.name)
+        if info.ispkg:
+            walk(module)
+
+walk(aiact)
+print(json.dumps(sorted(name for name in sys.modules if name.split(".")[:2] == ["aiact", "eval"])))
+"""
+"""Imports every module of `aiact` except the benchmark package and the CLI (which runs it), with
+connections refused, and prints the benchmark modules that got loaded on the way."""
+UNREACHABLE_DB = "postgresql://import-check.invalid:5432/none"
 
 
-def _eval_imports(source: str) -> list[str]:
-    """The `aiact.eval` modules (and the names from them) that `source` imports."""
-    found: list[str] = []
-    for node in ast.walk(ast.parse(source)):
-        if isinstance(node, ast.Import):
-            found += [alias.name for alias in node.names]
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            found += [f"{node.module}.{alias.name}" for alias in node.names]
-    return [name for name in found if name == "aiact.eval" or name.startswith("aiact.eval.")]
-
-
-def test_the_import_finder_catches_every_form() -> None:
-    source = "import aiact.eval.judge\nfrom aiact.eval import judge\nfrom aiact import eval\n"
-    assert _eval_imports(source) == ["aiact.eval.judge", "aiact.eval.judge", "aiact.eval"]
-    assert _eval_imports("from aiact.evaluation import x\nimport aiact.llm\n") == []
-
-
-@pytest.mark.parametrize("package", SERVING_PACKAGES)
-def test_no_serving_code_imports_the_eval_package(package: str) -> None:
-    files = sorted((BACKEND_DIR / "aiact" / package).rglob("*.py"))
-    assert files
-    found = {
-        str(path.relative_to(BACKEND_DIR)): names
-        for path in files
-        if (names := _eval_imports(path.read_text(encoding="utf-8")))
-    }
-    assert found == {}
+def test_nothing_outside_the_benchmark_package_imports_it() -> None:
+    """Jev has no EU endpoint, so the judge must never be reachable from code that serves users.
+    A fresh interpreter (the test process has already imported `aiact.eval`) imports every other
+    module; any import form counts, relative, dynamic or transitive. No module may need a
+    database or the network to import: connections are refused and the database URLs point
+    nowhere."""
+    env = os.environ | {"DATABASE_URL": UNREACHABLE_DB, "TEST_DATABASE_URL": UNREACHABLE_DB}
+    result = subprocess.run(
+        [sys.executable, "-c", IMPORT_CHECK],
+        cwd=BACKEND_DIR,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=IMPORT_CHECK_TIMEOUT_S,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr[-2_000:]
+    assert json.loads(result.stdout.splitlines()[-1]) == []
 
 
 # --- recorded round trips ------------------------------------------------------------------------

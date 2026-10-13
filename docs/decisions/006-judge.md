@@ -30,8 +30,9 @@ margin.
   no EU endpoint; the judge only reads benchmark cases, Act text and the engine's answers to
   benchmark cases, never a user's description. This is an exception to decision 005's EU rule
   for model calls, limited to benchmark material: `judge.py` and `JevJudge` say so, and a test
-  (`test_no_serving_code_imports_the_eval_package`) holds that nothing serving users
-  (`aiact.api`, `aiact.engine`, `aiact.drafting`, `aiact.mcp`) imports `aiact.eval`.
+  (`test_nothing_outside_the_benchmark_package_imports_it`) imports every `aiact` module but
+  `aiact.eval` and the CLI in a fresh interpreter and finds no `aiact.eval` module loaded, so no
+  code serving users (API, engine, drafting, MCP, Q&A, reports) reaches the judge, by any import.
 
 ### The LLM judge's route
 | Model | EU ZDR endpoint | Price (in / out per M tokens) | JSON schema output | Source |

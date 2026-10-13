@@ -20,8 +20,8 @@ The margin is validated on the hand-labelled cases in `eval/judge_validation/`
 
 Jev has no EU endpoint (decision 006), so the judge must only ever read benchmark material: the
 validation cases, the Act's text and the engine's answers to benchmark cases, never a user's
-description. Nothing that serves users (`aiact.api`, `aiact.engine`, `aiact.drafting`,
-`aiact.mcp`) imports `aiact.eval`; a test holds that.
+description. No module outside `aiact.eval` imports it, the CLI that runs the benchmark aside; a
+test imports every other module in a fresh interpreter and holds that.
 """
 
 import logging
