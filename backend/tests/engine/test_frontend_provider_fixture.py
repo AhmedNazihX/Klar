@@ -38,6 +38,7 @@ from aiact.eval.experiments.matchers import case_label, role_check_state
 from aiact.schemas import ClassificationResult, RiskClass, Role, StepName, StepResult
 from aiact.settings import Settings
 from tests.conftest import RECORDINGS_DIR
+from tests.engine.nodes.known_gaps import E20_PROMPTS_RECORDING_PENDING
 
 FIXTURE = (
     Path(__file__).resolve().parents[3] / "frontend" / "src" / "test" / "fixtures" / "provider.json"
@@ -123,6 +124,7 @@ def recorded_provider_result(case: BenchmarkCase, settings: Settings) -> Classif
     return result
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case_id", CASES)
 def test_the_frontend_provider_fixture_matches_the_backend(

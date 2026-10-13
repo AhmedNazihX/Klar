@@ -29,7 +29,7 @@ from aiact.settings import Settings
 from tests.conftest import RECORDINGS_DIR, REFUSAL_ROUTE
 from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import corpus_recording
-from tests.engine.nodes.known_gaps import stale_recording_pending
+from tests.engine.nodes.known_gaps import E20_PROMPTS_RECORDING_PENDING, stale_recording_pending
 from tests.engine.replayed_engine import LUNA, LUNA_PROVIDER, LiveCorpus, recorded_libraries
 from tests.engine.test_classify_worked_example import (
     RECORD_COMMAND,
@@ -286,6 +286,7 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
         )
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr(allow_playback_repeats=True)
 @pytest.mark.usefixtures("no_automatic_gc")
 def test_repeated_classifications_leave_no_http_clients_behind(

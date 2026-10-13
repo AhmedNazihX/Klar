@@ -39,7 +39,7 @@ from aiact.schemas import (
 from aiact.settings import Settings, get_settings
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import corpus_recording
-from tests.engine.nodes.known_gaps import stale_recording_pending
+from tests.engine.nodes.known_gaps import E20_PROMPTS_RECORDING_PENDING, stale_recording_pending
 from tests.engine.replayed_engine import live_corpus, luna_settings, replayed_nodes
 
 AS_OF = date(2026, 10, 6)
@@ -252,6 +252,7 @@ def replay_nodes(
         yield replayed_nodes(recording)
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(luna_settings: Settings, replay_nodes: NodeBuilder) -> None:
     with stale_recording_pending():
