@@ -708,7 +708,8 @@
       "network": "Der Dienst hat nicht geantwortet. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
       "incomplete": "Die Verbindung brach ab, bevor die Prüfungen fertig waren.",
       "needsDescription": "Klar muss wissen, was das Tool entscheidet und wen es betrifft. Ergänzen Sie das in Ihrer Beschreibung und starten Sie die Prüfungen erneut.",
-      "providerRefused": "Der Inhaltsfilter des Modellanbieters hat eine Prüfung blockiert, daher konnte sie nicht automatisch geprüft werden. Es wird keine Risikoklasse angegeben: Ein Mensch muss die Beschreibung prüfen."
+      "providerRefused": "Der Inhaltsfilter des Modellanbieters hat eine Prüfung blockiert, daher konnte sie nicht automatisch geprüft werden. Es wird keine Risikoklasse angegeben: Ein Mensch muss die Beschreibung prüfen.",
+      "providerRefusedRerun": "Der Inhaltsfilter des Modellanbieters hat im neuen Durchlauf eine Prüfung blockiert, daher konnte sie nicht automatisch geprüft werden: Ein Mensch muss die Beschreibung und Ihre Antworten prüfen."
     },
     "rerun": {
       "title": "Ihr bisheriges Ergebnis gilt weiter",
@@ -1186,7 +1187,8 @@
       "start": "Nach ursprünglicher Fassung prüfen",
       "running": "Prüfung nach ursprünglicher Fassung läuft …",
       "retry": "Erneut versuchen",
-      "stopped": "Die Prüfung nach der ursprünglichen Fassung wurde angehalten. {{reason}}"
+      "stopped": "Die Prüfung nach der ursprünglichen Fassung wurde angehalten. {{reason}}",
+      "refused": "Der Inhaltsfilter des Modellanbieters hat die Prüfung nach der ursprünglichen Fassung von 2024 blockiert, deshalb kann Klar Einstufung und Rolle danach nicht vergleichen. Ihr Ergebnis nach der geänderten Fassung gilt weiter."
     },
     "dutiesNotModelled": "Pflichten nach der ursprünglichen Fassung sind nicht modelliert: Klars Pflichtenlisten folgen nur der geänderten Fassung."
   },

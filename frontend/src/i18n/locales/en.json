@@ -708,7 +708,8 @@
       "network": "The service didn't respond. Check your connection and try again.",
       "incomplete": "The connection ended before the checks finished.",
       "needsDescription": "Klar needs to know what the tool decides and who it affects. Add that to your description and run it again.",
-      "providerRefused": "The model provider's content filter blocked a check, so it couldn't be assessed automatically. No risk class is given: a person must review the description."
+      "providerRefused": "The model provider's content filter blocked a check, so it couldn't be assessed automatically. No risk class is given: a person must review the description.",
+      "providerRefusedRerun": "The model provider's content filter blocked a check in the new run, so it couldn't be assessed automatically: a person must review the description and your answers."
     },
     "rerun": {
       "title": "Your earlier result still stands",
@@ -1186,7 +1187,8 @@
       "start": "Check under the original text",
       "running": "Checking under the original text…",
       "retry": "Try again",
-      "stopped": "The check under the original text stopped. {{reason}}"
+      "stopped": "The check under the original text stopped. {{reason}}",
+      "refused": "The model provider's content filter blocked the check under the original 2024 text, so Klar can't compare the class and role under it. Your result under the amended text still stands."
     },
     "dutiesNotModelled": "Duties under the original text aren't modelled: Klar's duty lists follow the amended text only."
   },

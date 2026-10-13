@@ -109,20 +109,25 @@ describe("ProgressPanel, a result's re-run the model provider refused", () => {
     [
       'en',
       'Your earlier result still stands',
+      "The model provider's content filter blocked a check in the new run, so it couldn't be assessed automatically: a person must review the description and your answers.",
       "Your answers are kept. Klar never guesses a class for a check it couldn't assess, so the new run gives no result.",
       "Blocked by the model provider's content filter: not assessed.",
     ],
     [
       'de',
       'Ihr bisheriges Ergebnis gilt weiter',
+      'Der Inhaltsfilter des Modellanbieters hat im neuen Durchlauf eine Prüfung blockiert, daher konnte sie nicht automatisch geprüft werden: Ein Mensch muss die Beschreibung und Ihre Antworten prüfen.',
       'Ihre Antworten bleiben erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb ergibt der neue Durchlauf kein Ergebnis.',
       'Vom Inhaltsfilter des Modellanbieters blockiert: nicht geprüft.',
     ],
   ] as const)(
     'says the earlier result stands, and leaves the blocked checks to their rows (%s)',
-    async (language, title, body, row) => {
+    async (language, title, reason, body, row) => {
       const alert = await renderRefused(language, true)
       expect(alert).toHaveTextContent(title)
+      expect(alert).toHaveTextContent(reason)
+      // The earlier result still shows: the alert never says no class is given.
+      expect(alert).not.toHaveTextContent(/No risk class is given|keine Risikoklasse/)
       expect(alert).toHaveTextContent(body)
       expect(alert).toHaveTextContent(PERSON_REVIEW.text)
       expect(alert).not.toHaveTextContent(/so there's no result|deshalb gibt es kein Ergebnis/)

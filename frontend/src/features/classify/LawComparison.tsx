@@ -100,10 +100,17 @@ function ChangedSteps({ steps }: { steps: readonly ChangedStep[] }): JSX.Element
 
 /** Before the original text is checked: the button that runs it (a paid run, so only on a click),
  *  or why the last try stopped. A run the model provider's filter refused isn't offered again: the
- *  same text would most likely be refused again (decision 030), as on the Classify screen. */
+ *  same text would most likely be refused again (decision 030), as on the Classify screen. Its
+ *  alert alone says so, and that the amended result stands; nothing offers to run it again. */
 function CheckOriginal({ original }: { original: OriginalRun }): JSX.Element {
   const { t } = useTranslation()
-  const isRefused = original.failure?.kind === 'provider_refused'
+  if (original.failure?.kind === 'provider_refused') {
+    return (
+      <p role="alert" className="m-0 text-body-small text-ink">
+        {t('diff.check.refused')}
+      </p>
+    )
+  }
   return (
     <div className="flex flex-col items-start gap-2.5">
       <p className="m-0 text-body-small text-ink-2">{t('diff.check.hint')}</p>
@@ -112,7 +119,7 @@ function CheckOriginal({ original }: { original: OriginalRun }): JSX.Element {
           {t('diff.check.stopped', { reason: failureReason(t, original.failure) })}
         </p>
       )}
-      {!isRefused && <RunOriginalButton original={original} />}
+      <RunOriginalButton original={original} />
     </div>
   )
 }

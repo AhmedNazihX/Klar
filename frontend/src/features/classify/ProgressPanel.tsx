@@ -161,7 +161,8 @@ function WaitingForDescription(): JSX.Element {
  *  review the description. The run went on to every check, or ended at a later stopping check
  *  that decided, so nothing here says every check ran. No Try again: the filter would likely
  *  block it again. On a result's re-run the earlier result stays on screen, so the alert says it
- *  still stands, and the rows below alone mark the blocked checks. */
+ *  still stands, never that no class is given, and the rows below alone mark the blocked checks.
+ *  The person-review question it lists is the engine's, in the run's language. */
 function RefusedAlert({
   failure,
   isRerun,
@@ -177,7 +178,9 @@ function RefusedAlert({
       <p className="m-0 text-body-small font-semibold text-ink">
         {isRerun ? t('progress.rerun.title') : t('progress.refused.title')}
       </p>
-      <p className="m-0 text-caption font-normal text-ink-2">{failureReason(t, failure)}</p>
+      <p className="m-0 text-caption font-normal text-ink-2">
+        {isRerun ? t('progress.reason.providerRefusedRerun') : failureReason(t, failure)}
+      </p>
       {!isRerun && (
         <>
           <p className="m-0 text-caption font-normal text-ink-2">{t('progress.refused.blocked')}</p>

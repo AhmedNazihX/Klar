@@ -589,19 +589,28 @@ describe('Original Act vs amended, the remaining lines', () => {
   )
 
   it.each([
-    ['en', 'Check under the original text', /^The check under the original text stopped\. /],
-    ['de', 'Nach ursprünglicher Fassung prüfen', /^Die Prüfung nach der ursprünglichen Fassung /],
+    [
+      'en',
+      'Check under the original text',
+      "The model provider's content filter blocked the check under the original 2024 text, so Klar can't compare the class and role under it. Your result under the amended text still stands.",
+      'Klar can run the checks again',
+    ],
+    [
+      'de',
+      'Nach ursprünglicher Fassung prüfen',
+      'Der Inhaltsfilter des Modellanbieters hat die Prüfung nach der ursprünglichen Fassung von 2024 blockiert, deshalb kann Klar Einstufung und Rolle danach nicht vergleichen. Ihr Ergebnis nach der geänderten Fassung gilt weiter.',
+      'Klar kann die Prüfungen',
+    ],
   ] as const)(
     'offers no new run once the provider refused the original-text check (%s)',
-    async (language, start, stopped) => {
+    async (language, start, refused, hint) => {
       const bodies = classifyReturning(providerRefused())
       const { user } = await openResult({ result: decidedHighRisk(), view: 'reviewer', language })
       await user.click(within(comparison(language)).getByRole('button', { name: start }))
       const alert = await within(comparison(language)).findByRole('alert')
-      expect(alert).toHaveTextContent(stopped)
-      expect(alert).toHaveTextContent(
-        language === 'en' ? /content filter blocked a check/ : /Inhaltsfilter/,
-      )
+      expect(alert).toHaveTextContent(refused)
+      // Nothing says the checks can run again under the original text.
+      expect(comparison(language)).not.toHaveTextContent(hint)
       expect(within(comparison(language)).queryByRole('button')).toBeNull()
       expect(bodies).toHaveLength(1)
     },
