@@ -66,7 +66,7 @@ from aiact.schemas import (
 )
 from aiact.settings import Settings, get_settings
 
-SERVER_NAME = "aiact"
+SERVER_NAME = "Klar"
 MAX_QUERY_CHARS = 4000
 """The longest query accepted: room for a full system description, not for a document."""
 

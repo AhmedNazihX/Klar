@@ -174,7 +174,7 @@ uv` for the first), then restart Claude Desktop:
 ```json
 {
   "mcpServers": {
-    "aiact": {
+    "Klar": {
       "command": "/absolute/path/to/uv",
       "args": ["run", "--directory", "/absolute/path/to/repo/backend", "aiact", "mcp", "serve"],
       "env": { "MCP_OPENROUTER_API_KEY": "sk-or-v1-your-own-key" }
