@@ -1,9 +1,10 @@
 // The main flow in German (decision 026, story P11): the app's own words switch with the language,
 // and a German description is classified in German.
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 import {
   RUNS,
+  type RunName,
   endIfRecordingPending,
   expectResult,
   saveProfile,
@@ -70,7 +71,8 @@ test('a German description is classified in German', async ({ page }) => {
 const BANNED = RUNS.prohibited_de
 const BANNED_TOOL = 'Stimmungskamera'
 
-test('a German ban is decided, and named in plain words in both languages', async ({ page }) => {
+/** Classifies the German ban from the Classify screen, in German, and opens its result. */
+async function classifyBan(page: Page): Promise<void> {
   await saveProfile(page)
   await page
     .getByRole('group', { name: 'Language' })
@@ -84,6 +86,10 @@ test('a German ban is decided, and named in plain words in both languages', asyn
   await expect(page.getByRole('heading', { level: 1, name: BANNED_TOOL }).or(stopped)).toBeVisible()
   await endIfRecordingPending('prohibited_de', stopped)
   await expectResult(page, BANNED_TOOL)
+}
+
+test('a German ban is decided, and named in plain words in both languages', async ({ page }) => {
+  await classifyBan(page)
 
   const result = page.getByRole('region', { name: 'Ergebnis', exact: true })
   await expect(result).toContainText('Verboten')
@@ -101,4 +107,46 @@ test('a German ban is decided, and named in plain words in both languages', asyn
   await expect(english).toContainText(
     'recognising emotions in the workplace or in education (Art. 5(1)(f))',
   )
+})
+
+/** The re-run a Confirm on the ban makes (P13 note 4d): the exact body the app sends once the user
+ *  confirms the first fact the recorded ban assumed. Its answer is the recorded ban's own fact, so
+ *  it is added to runs.json only after prohibited_de is recorded; until then this flow says what
+ *  to add (the body it sent) and ends as an expected failure. */
+const CONFIRMED_RUN = 'prohibited_de_confirmed'
+const CONFIRMED = (RUNS as Record<string, unknown>)[CONFIRMED_RUN]
+
+test('a Confirm on the ban runs the checks again, and Undo brings the ban back', async ({
+  page,
+}, testInfo) => {
+  await classifyBan(page)
+  const facts = page.getByRole('complementary', { name: 'Das Ergebnis beruht auf' })
+  const confirm = facts.getByRole('button', { name: 'Bestätigen' }).first()
+  await expect(confirm, 'the recorded ban rests on an assumed fact to confirm').toBeVisible()
+  const request = page.waitForRequest((sent) => sent.url().endsWith('/classify'))
+  await confirm.click()
+  const body: unknown = (await request).postDataJSON()
+  if (CONFIRMED === undefined) {
+    testInfo.annotations.push({ type: 'add to runs.json', description: JSON.stringify(body) })
+    test.fail(true, `add this body to frontend/e2e/runs.json as ${CONFIRMED_RUN}, then record it`)
+    throw new Error(`${CONFIRMED_RUN} is not in runs.json yet: ${JSON.stringify(body)}`)
+  }
+  // The body the backend's e2e recording was made from: a change here means the recording no
+  // longer answers the app's request.
+  expect(body).toEqual(CONFIRMED)
+
+  const banner = page.getByText(
+    /^Ihre Antwort hat (das Ergebnis geändert|die Einstufung nicht geändert)\.$/,
+  )
+  const stopped = page.getByRole('alert').filter({ hasText: NO_RECORDING })
+  await expect(banner.or(stopped)).toBeVisible()
+  await endIfRecordingPending(CONFIRMED_RUN as RunName, stopped)
+  await expect(page.getByText('Durchlauf 2 von 2')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Antwort rückgängig machen' }).click()
+  await expect(banner).toBeHidden()
+  await expectResult(page, BANNED_TOOL)
+  const result = page.getByRole('region', { name: 'Ergebnis', exact: true })
+  await expect(result).toContainText('Verboten')
+  await expect(page.getByRole('region', { name: 'Warum die Prüfung endete' })).toBeVisible()
 })

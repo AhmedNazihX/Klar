@@ -2,7 +2,8 @@
 the e2e API (`replay_server.py`): the worked example answered on its result screen (its Art. 3(1)
 answer and the company profile's EU answer), and the worked example in German, recorded on
 2026-10-13; and (P31) the worked example with No to a Yes/No question (not for public
-authorities, Art. 111(2)) and a German prohibited result (emotion recognition at work). Each
+authorities, Art. 111(2)), a German prohibited result (emotion recognition at work) and that
+ban re-run after a Confirm (`prohibited_de_confirmed`, once runs.json has it). Each
 request is the exact body the app sends, from `frontend/e2e/runs.json`, so the browser's run
 finds it.
 
@@ -133,6 +134,31 @@ def test_emotion_recognition_at_work_in_german_is_prohibited(
     assert result.status is Status.DECIDED
     prohibited = next(step for step in result.steps if step.step is StepName.PROHIBITED)
     assert ART_5_1_F in {citation.provision_id for citation in prohibited.citations}
+
+
+CONFIRMED_BAN = "prohibited_de_confirmed"
+CONFIRMED_RUNS = [name for name in (CONFIRMED_BAN,) if name in RUNS]
+"""The ban re-run after a Confirm (P31, P13 note 4d). Its body answers with the recorded ban's own
+assumed fact, so `runs.json` gets it only once `prohibited_de` is recorded (german.spec.ts says
+which body to add); until then this test has no run to record."""
+
+
+@PENDING
+@pytest.mark.vcr
+@pytest.mark.parametrize("name", CONFIRMED_RUNS)
+def test_a_confirmed_fact_keeps_the_german_ban(
+    name: str, luna_settings: Settings, run_nodes: NodeBuilder
+) -> None:
+    """The German ban with its assumed fact confirmed: still a decided ban under Art. 5(1)(f), and
+    the confirmed fact is not asked about again."""
+    assert RUNS[name].language is Language.DE
+    with stale_recording_pending():
+        run = run_classification(RUNS[name], settings=luna_settings, build_nodes=run_nodes)
+    result = run.result
+    asked = {question.id for question in result.follow_up_questions}
+    assert result.risk_class is RiskClass.PROHIBITED
+    assert result.status is Status.DECIDED
+    assert not asked & set(RUNS[name].answers), asked
 
 
 def _parametrised_runs() -> set[str]:
