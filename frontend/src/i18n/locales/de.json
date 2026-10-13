@@ -1202,7 +1202,6 @@
       "stop": "Jetzt beenden",
       "stopNote": "Verbotene Praktiken, Art. 5",
       "since": "In Kraft seit dem {{date}}",
-      "sinceWhat": "{{what}} in Kraft seit dem {{date}}",
       "inForce": "In Kraft",
       "from": "Ab dem <date/>",
       "fromWhat": "{{what}} ab dem <date/>",

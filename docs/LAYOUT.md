@@ -305,7 +305,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5; ResultScreen.phone.browser.test.tsx the result at 390 px, P26; the provider layout
 │       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23; the ambiguous
 │       │                            layout AmbiguousSummary, AmbiguousVerdict, ReadingCards, SettleIt, TakeItToALawyer, P22), inventory/ (P6), your-data/ (P12), obligations/ (P24),
-│       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads),
+│       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads; SourceDocuments, the texts list Ask and the reviewer view share, P31),
 │       │                            site-pages/ (P17: MethodPage, PrivacyPage, ImpressumPage, ContactPage, their shared SitePageParts,
 │       │                            contact-mail.ts: the Contact page's mailto link and its still-empty address;
 │       │                            SitePages.phone.browser.test.tsx the pages at 360 and 390 px),
@@ -343,6 +343,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    browser-setup.ts (the browser project), shell-routes.ts (every screen route, by frame) (P15),
 │                                    user-data-handlers.ts (MSW handlers for the user's Supabase data, P18),
 │                                    timeouts.ts (FIRST_RENDER_MS, testing-library's wait in both setups, F10),
+│                                    touch-targets.ts (the 44 px rule for the phone tests; components/touch-targets.browser.test.tsx measures the app screens, P31),
 │                                    your-data-store.ts (an in-memory user-data store behind the counts, export, import and delete, P12),
 │                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded

@@ -52,25 +52,13 @@ function categoryNote(
   }
 }
 
-/** "In force since …" or "From …", or with what the section holds in front: "Art. 6(4) from
- *  2 December 2027". */
-function datedTitle(
-  t: TFunction,
-  section: Extract<DateSection, { kind: 'since' | 'from' }>,
-  language: Language,
-  what: string | null,
-): ReactNode {
-  const date = longDate(section.date, language)
-  if (section.kind === 'since') {
-    return what
-      ? t('obligations.section.sinceWhat', { what, date })
-      : t('obligations.section.since', { date })
-  }
+/** "From …", or with what the section holds in front: "Art. 6(4) from 2 December 2027". */
+function fromTitle(isoDate: string, language: Language, what: string | null): ReactNode {
   return (
     <Trans
       i18nKey={what ? 'obligations.section.fromWhat' : 'obligations.section.from'}
       values={what ? { what } : undefined}
-      components={{ date: <span>{date}</span> }}
+      components={{ date: <span>{longDate(isoDate, language)}</span> }}
     />
   )
 }
@@ -89,17 +77,20 @@ function sectionHeading(
         note: t('obligations.section.stopNote'),
       }
     case 'since':
+      return {
+        title: t('obligations.section.since', { date: longDate(section.date, language) }),
+        tag: t('obligations.section.inForce'),
+        note: categoryNote(t, section.category, language),
+      }
     case 'from': {
       const what = categoryNote(t, section.category, language)
-      // Beside a route section of the same date, the title names what the section holds, so
-      // the two never read "From 2 December 2027" twice; the line beside it then says no more.
+      // Beside a route section of the same date (always titled "From …"), the title names what
+      // the section holds, so the two never read "From 2 December 2027" twice; the line beside
+      // it then says no more. A twin whose date has come reads "In force since …" anyway.
       const named = section.hasRouteTwin && what ? what : null
       return {
-        title: datedTitle(t, section, language, named),
-        tag:
-          section.kind === 'since'
-            ? t('obligations.section.inForce')
-            : whenTag(t, section.date, today),
+        title: fromTitle(section.date, language, named),
+        tag: whenTag(t, section.date, today),
         note: named ? undefined : what,
       }
     }
