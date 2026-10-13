@@ -57,6 +57,29 @@ function alsoCiting(result: ClassificationResult, documentId: string): Classific
   }
 }
 
+/** `result` with every quote's source and Omnibus mark changed by `change`. */
+function withQuotes(
+  result: ClassificationResult,
+  change: (citation: Citation) => Partial<Citation>,
+): ClassificationResult {
+  return {
+    ...result,
+    steps: result.steps.map((step) => ({
+      ...step,
+      citations: step.citations?.map((citation) => ({ ...citation, ...change(citation) })),
+    })),
+  }
+}
+
+/** An amending act the corpus holds without a law version. */
+const AMENDING_ACT: DocumentInfo = {
+  ...(DOCUMENTS[2] as DocumentInfo),
+  doc_key: 'amending-act',
+  title: 'An amending act',
+  law_version: null,
+  is_amending: true,
+}
+
 /** Each listed text as "title, kind", in order. */
 async function textsUsed(heading: string): Promise<string[]> {
   const panel = screen.getByRole('region', { name: heading })
@@ -69,11 +92,13 @@ async function textsUsed(heading: string): Promise<string[]> {
 describe('Texts used', () => {
   it('lists the texts the amended result quotes with their status, under the questions', async () => {
     // The worked example quotes the consolidated Act, marked where the Omnibus changed it, and a
-    // recital of the original Regulation, which the amended text leaves out; it quotes no
-    // guidance, so the guidelines the corpus also holds aren't listed.
+    // recital of the original Regulation (the consolidated text has none), listed although the
+    // amended text otherwise leaves the original out; it quotes no guidance, so the guidelines
+    // the corpus also holds aren't listed.
     await openReviewer(WORKED_EXAMPLE, 'en')
     expect(await textsUsed('Texts used')).toEqual([
       'AI Act, consolidated 27 Jul 2026Consolidation',
+      'Regulation (EU) 2024/1689Law',
       'Regulation (EU) 2026/1744Law',
     ])
     const questions = screen.getByRole('region', { name: 'Questions about this result' })
@@ -81,27 +106,38 @@ describe('Texts used', () => {
     expect(questions.compareDocumentPosition(texts) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('lists the law before the guidance, whatever order the result quotes them in', async () => {
-    await openReviewer(alsoCiting(WORKED_EXAMPLE, 'guide-high-risk-annex-iii'), 'en')
+  it('leaves the amending act out when no quote is marked as changed by it', async () => {
+    const result = withQuotes(WORKED_EXAMPLE, () => ({ changed_by_omnibus: false }))
+    await openReviewer(result, 'en', [...DOCUMENTS, AMENDING_ACT])
     expect(await textsUsed('Texts used')).toEqual([
       'AI Act, consolidated 27 Jul 2026Consolidation',
+      'Regulation (EU) 2024/1689Law',
+    ])
+  })
+
+  it('lists the law before the guidance, whatever order the corpus lists them in', async () => {
+    // The guideline comes first in the corpus list and in the result's quotes.
+    const guidanceFirst = [DOCUMENTS[3], DOCUMENTS[0], DOCUMENTS[1], DOCUMENTS[2]] as DocumentInfo[]
+    await openReviewer(
+      alsoCiting(WORKED_EXAMPLE, 'guide-high-risk-annex-iii'),
+      'en',
+      guidanceFirst,
+    )
+    expect(await textsUsed('Texts used')).toEqual([
+      'AI Act, consolidated 27 Jul 2026Consolidation',
+      'Regulation (EU) 2024/1689Law',
       'Regulation (EU) 2026/1744Law',
       'Guidelines on high-risk classificationDraft',
     ])
   })
 
-  it('lists only the original texts for a result run under the original Act', async () => {
-    // An amending act without a law version, quoted by the result, stays hidden under the
-    // original text, as the amended consolidation and the Omnibus do.
-    const amending: DocumentInfo = {
-      ...(DOCUMENTS[2] as DocumentInfo),
-      doc_key: 'amending-act',
-      title: 'An amending act',
-      law_version: null,
-      is_amending: true,
-    }
-    const result = alsoCiting({ ...WORKED_EXAMPLE, law_version: 'original' }, 'amending-act')
-    await openReviewer(result, 'en', [...DOCUMENTS, amending])
+  it('adds no amending act to a result run under the original Act', async () => {
+    // Every quote from the original Regulation, two still marked as changed: neither the
+    // Omnibus nor an amending act without a law version is read under the original text.
+    const result = withQuotes({ ...WORKED_EXAMPLE, law_version: 'original' }, () => ({
+      document_id: 'ai-act',
+    }))
+    await openReviewer(result, 'en', [...DOCUMENTS, AMENDING_ACT])
     expect(await textsUsed('Texts used')).toEqual(['Regulation (EU) 2024/1689Law'])
   })
 
