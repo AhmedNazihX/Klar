@@ -255,20 +255,29 @@ async def test_the_corpus_is_read_only_for_a_message_and_a_down_database_is_a_50
     assert message.json() == {"detail": CORPUS_UNAVAILABLE}
 
 
-@pytest.mark.parametrize("contents", [None, "not json\n"])
-async def test_an_unreadable_omnibus_is_a_503_that_names_nothing(
+@pytest.mark.parametrize(
+    ("contents", "failure"),
+    [
+        (None, "FileNotFoundError"),
+        (b"not json\n", "ValidationError"),
+        (b"\xff\xfe not utf-8\n", "UnicodeDecodeError"),
+    ],
+)
+async def test_an_unreadable_omnibus_is_a_503_that_logs_its_failure_type_only(
     app: FastAPI,
     client: httpx.AsyncClient,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
-    contents: str | None,
+    contents: bytes | None,
+    failure: str,
 ) -> None:
-    """The parsed Omnibus marks the quotes it changed: a missing or broken file is the corpus
-    being unavailable (a 503, as Q&A answers it), not a 500 with a traceback (P13)."""
+    """The parsed Omnibus marks the quotes it changed: a missing, broken or non-UTF-8 file is
+    the corpus being unavailable (a 503, as Q&A answers it), not a 500 with a traceback (P13).
+    The one log line names the error's and the failure's type, never the file's path."""
     if contents is not None:
         parsed = tmp_path / "parsed"
         parsed.mkdir()
-        (parsed / "omnibus.en.jsonl").write_text(contents, encoding="utf-8")
+        (parsed / "omnibus.en.jsonl").write_bytes(contents)
     app.dependency_overrides[law_quotes] = lambda: CorpusQuotes(
         lambda: nullcontext(built_corpus()), tmp_path
     )
@@ -276,4 +285,7 @@ async def test_an_unreadable_omnibus_is_a_503_that_names_nothing(
         message = await client.post(PATH, json=_body(prohibited_result()))
     assert message.status_code == 503
     assert message.json() == {"detail": CORPUS_UNAVAILABLE}
+    assert [record.getMessage() for record in caplog.records] == [
+        f"corpus lookup failed: OmnibusUnavailableError ({failure})"
+    ]
     assert str(tmp_path) not in caplog.text

@@ -11,11 +11,12 @@ from typing import Any
 import pytest
 from langchain_openrouter import ChatOpenRouter
 
+from aiact import omnibus as omnibus_records
 from aiact.engine.citations import OmnibusChanges
 from aiact.llm import LLMConfigError
+from aiact.omnibus import OmnibusUnavailableError
 from aiact.qa import clients
 from aiact.qa.clients import (
-    OmnibusUnavailableError,
     corpus_quotes,
     corpus_searcher,
     qa_chat,
@@ -177,7 +178,7 @@ def test_the_corpus_quotes_replace_a_posted_quote_and_drop_what_it_doesnt_have(
         return OmnibusChanges(date(2026, 7, 27), frozenset({kept.provision_id}))
 
     monkeypatch.setattr(clients, "CorpusCitations", FakeCorpus)
-    monkeypatch.setattr(clients, "load_omnibus_changes", omnibus)
+    monkeypatch.setattr(omnibus_records, "load_omnibus_changes", omnibus)
     quotes = corpus_quotes(connect, DATA_DIR)  # pyright: ignore[reportArgumentType]
     on = date(2026, 10, 1)
     (quoted,) = quotes([kept, unknown], LawVersion.AMENDED, on)
@@ -237,13 +238,18 @@ def test_the_omnibus_records_are_read_once_per_data_dir(
 
 @pytest.mark.parametrize(
     ("content", "failure"),
-    [(None, "FileNotFoundError"), ("", "LoadError"), ("{not json\n", "ValidationError")],
+    [
+        (None, "FileNotFoundError"),
+        (b"", "LoadError"),
+        (b"{not json\n", "ValidationError"),
+        (b"\xff not utf-8\n", "UnicodeDecodeError"),
+    ],
 )
 def test_omnibus_records_that_cant_be_read_raise_their_type_only(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, content: str | None, failure: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, content: bytes | None, failure: str
 ) -> None:
     if content is not None:
         (tmp_path / "parsed").mkdir()
-        (tmp_path / "parsed" / "omnibus.en.jsonl").write_text(content)
+        (tmp_path / "parsed" / "omnibus.en.jsonl").write_bytes(content)
     with pytest.raises(OmnibusUnavailableError, match=rf"^{failure}$"):
         _quote_one(tmp_path, monkeypatch)

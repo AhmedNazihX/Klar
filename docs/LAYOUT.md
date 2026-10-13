@@ -34,6 +34,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            LONG_DATE_PATTERNS, reading them back (P28, moved from drafting)
 │   │   ├── provision_names.py       how a result names an article provision or Annex point (EN, DE), shared by
 │   │   │                            the engine's texts and drafting (P8a, moved out of E4–E6's texts)
+│   │   ├── omnibus.py               the parsed Omnibus's records as Q&A and the vendor letter read them, an
+│   │   │                            unreadable file as OmnibusUnavailableError (the app's 503) (P31)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3);
 │   │   │                            the screens' question fields (hint, options, if_yes, structured
 │   │   │                            readings, settled_by) and law_text.py: the CELEX label (E12)

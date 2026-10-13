@@ -27,9 +27,9 @@ from fastapi.routing import APIRoute
 from aiact.api import classify, documents, drafts, lookups, qa, reports
 from aiact.api.body_limit import BodySizeLimit
 from aiact.api.dependencies import ApiContext, context_for
-from aiact.api.documents import OmnibusUnreadableError
 from aiact.api.errors import invalid_request
 from aiact.db import DatabaseNotConfiguredError
+from aiact.omnibus import OmnibusUnavailableError
 from aiact.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_exception_handler(RequestValidationError, invalid_request)
     app.add_exception_handler(DatabaseNotConfiguredError, _corpus_unavailable)
     app.add_exception_handler(psycopg.OperationalError, _corpus_unavailable)
-    app.add_exception_handler(OmnibusUnreadableError, _corpus_unavailable)
+    app.add_exception_handler(OmnibusUnavailableError, _corpus_unavailable)
     return app
 
 
@@ -100,9 +100,17 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 async def _corpus_unavailable(_request: Request, exc: Exception) -> JSONResponse:
-    """503 for a database that is unset or unreachable; only the error's type is logged (its
-    text may name the server)."""
-    logger.error("corpus lookup failed: %s", type(exc).__name__)
+    """503 for a database that is unset or unreachable, or a parsed Omnibus that can't be read;
+    only the error's type is logged, with the failure's type an unreadable Omnibus carries (its
+    text may name the server or the file's path)."""
+    logger.error("corpus lookup failed: %s", _failure(exc))
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE, content={"detail": CORPUS_UNAVAILABLE}
     )
+
+
+def _failure(exc: Exception) -> str:
+    """The error's type, and for an unreadable Omnibus the failure's type it carries."""
+    if isinstance(exc, OmnibusUnavailableError):
+        return f"{type(exc).__name__} ({exc.failure})"
+    return type(exc).__name__
