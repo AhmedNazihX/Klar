@@ -58,7 +58,10 @@ function ChoiceField({
   return (
     <div className="flex flex-col gap-2">
       {choices.map((choice) => (
-        <label key={choice.key} className="flex items-center gap-2.5 text-body-small text-ink">
+        <label
+          key={choice.key}
+          className="flex min-h-11 items-center gap-2.5 text-body-small text-ink md:min-h-0"
+        >
           <input
             type="radio"
             value={choice.key}

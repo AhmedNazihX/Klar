@@ -43,6 +43,9 @@
   --color-lens-blue-bottom: #2641c9;
   --color-lens-blue-light: #4a66f0;
   --color-lens-blue-soft: rgba(45, 75, 224, 0.07);
+  /* Lens blue at 8% over white, opaque: a placeholder's tint, so its Lens blue text keeps 5.8:1
+     over any light behind it (a see-through tint dropped to 3.2:1 over the blue mesh light, P31). */
+  --color-placeholder-tint: #eef1fd;
   --color-glass-top: rgba(255, 255, 255, 0.68);
   --color-glass-bottom: rgba(255, 255, 255, 0.3);
   --color-glass-rim: rgba(255, 255, 255, 0.8);

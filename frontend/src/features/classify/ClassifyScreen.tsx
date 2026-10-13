@@ -49,7 +49,13 @@ function DraftToolNote({
   return (
     <p className="m-0 mb-3 flex flex-wrap items-center gap-x-2 text-body-small text-slate">
       {t('classify.draftTool.note', { name: toolName(t, tool.name) })}
-      <Button variant="link" size="sm" className="h-auto px-0" onClick={onNewTool}>
+      {/* 44 px tall on a phone (touch target), its text's height on a desktop. */}
+      <Button
+        variant="link"
+        size="sm"
+        className="h-auto min-h-11 px-0 md:min-h-0"
+        onClick={onNewTool}
+      >
         {t('classify.draftTool.newTool')}
       </Button>
     </p>

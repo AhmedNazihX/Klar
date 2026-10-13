@@ -275,7 +275,7 @@ export function NoDutiesSection({ tools }: { tools: readonly CheckedTool[] }): J
             <Link
               to="/app/inventory/$toolId"
               params={{ toolId: tool.toolId }}
-              className="flex items-center gap-2.5 rounded-item px-3.5 py-2 text-body-small font-medium text-ink no-underline glass-thin hover:underline"
+              className="flex min-h-11 items-center gap-2.5 rounded-item px-3.5 py-2 text-body-small font-medium text-ink no-underline glass-thin hover:underline md:min-h-0"
             >
               {toolName(t, tool.name)}
               <RiskPill kind={riskClassOf(tool.result)} />

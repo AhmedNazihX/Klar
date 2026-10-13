@@ -42,7 +42,7 @@ export function ProcessorsPanel(): JSX.Element {
       <p className="m-0 text-caption font-normal text-ink-2">{t('yourData.who.noTraining')}</p>
       <Link
         to="/privacy"
-        className="mt-auto self-start rounded-md text-label text-lens-blue hover:underline"
+        className="mt-auto inline-flex min-h-11 items-center self-start rounded-md text-label text-lens-blue hover:underline md:min-h-0"
       >
         {t('yourData.who.privacyLink')}
       </Link>

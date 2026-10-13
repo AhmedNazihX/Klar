@@ -13,6 +13,7 @@ import { page } from 'vitest/browser'
 
 import { decidedHighRisk, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
+import { MIN_TARGET_PX, smallTouchTargets, targetBox } from '@/test/touch-targets'
 
 import { putRun } from './classification-store'
 
@@ -20,8 +21,6 @@ const PHONE = { width: 390, height: 844 } as const
 const SMALL_PHONE = { width: 375, height: 812 } as const
 const DESKTOP = { width: 1440, height: 1000 } as const
 const TOOL_ID = 'applicant-screening'
-/** The smallest touch target, in px (WCAG 2.5.5). */
-const MIN_TARGET_PX = 44
 
 type Language = 'en' | 'de'
 
@@ -85,11 +84,6 @@ function sectionsInOrder(language: Language): HTMLElement[] {
     screen.getByRole('textbox', { name: names.composer }),
     screen.getByRole('link', { name: names.documents }),
   ]
-}
-
-/** The box a finger can hit: a checkbox's is the label around it. */
-function targetBox(element: HTMLElement): DOMRect {
-  return (element.closest('label') ?? element).getBoundingClientRect()
 }
 
 describe('the result at 390 px', () => {
@@ -167,14 +161,7 @@ describe('the result at 390 px', () => {
         ...document.querySelectorAll<HTMLElement>('a[href], button, input, textarea, select'),
       ].filter((element) => element.getClientRects().length > 0)
       expect(targets.length).toBeGreaterThan(20)
-      const small = targets
-        .map((element) => ({ element, box: targetBox(element) }))
-        .filter(({ box }) => box.width < MIN_TARGET_PX || box.height < MIN_TARGET_PX)
-        .map(
-          ({ element, box }) =>
-            `${element.tagName} "${element.getAttribute('aria-label') ?? element.textContent}" ${String(Math.round(box.width))}x${String(Math.round(box.height))}`,
-        )
-      expect(small).toEqual([])
+      expect(smallTouchTargets()).toEqual([])
     },
   )
 
