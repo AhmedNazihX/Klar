@@ -578,6 +578,7 @@
     "namePlaceholder": "For example: Applicant screening",
     "nameTooLong": "Keep the name under 200 characters.",
     "descriptionLabel": "In your own words",
+    "answersDropped": "Some of your answers didn't fit within the description's 20,000 characters, so they were left out.",
     "descriptionRequired": "Describe the tool in a sentence or two first.",
     "descriptionTooLong": "Keep the description under 20,000 characters.",
     "tipsLabel": "Helpful to mention:",

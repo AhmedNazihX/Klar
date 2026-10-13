@@ -30,7 +30,7 @@ import { openQuestionCount } from '@/features/inventory/tool-facts'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 
-import { putRun, type ClassificationRun } from './classification-store'
+import { clearDraft, putRun, type ClassificationRun } from './classification-store'
 import { uniqueFacts } from './result-text'
 
 const TOOL_ID = 'applicant-screening'
@@ -134,6 +134,46 @@ describe('Answering the question that decides a result', () => {
       expect(await screen.findByRole('heading', { level: 2, name: heading })).toBeVisible()
     },
   )
+
+  it.each([
+    [
+      'en',
+      'Edit description',
+      'In your own words',
+      "Some of your answers didn't fit within the description's 20,000 characters, so they were left out.",
+    ],
+    [
+      'de',
+      'Beschreibung bearbeiten',
+      'In Ihren eigenen Worten',
+      'Einige Ihrer Antworten passten nicht in die 20.000 Zeichen der Beschreibung und wurden weggelassen.',
+    ],
+  ] as const)(
+    'opens Edit description with the answers that fit, and says when one was left out (%s)',
+    async (language, edit, label, note) => {
+      const description = 'd'.repeat(19_990)
+      const { user } = await openResult(minimalRisk(), {
+        language,
+        run: { description, answers: { a: 'Yes.', b: 'An answer too long for the room left.' } },
+      })
+      await user.click(screen.getByRole('button', { name: edit }))
+      const field = await screen.findByRole('textbox', { name: label })
+      expect(field).toHaveValue(`${description}\n\nYes.`)
+      expect(field).toHaveAccessibleDescription(expect.stringContaining(note) as string)
+      clearDraft()
+    },
+  )
+
+  it('opens Edit description without a note when every answer fits', async () => {
+    const { user } = await openResult(minimalRisk(), {
+      run: { description: 'We rank applicants.', answers: { a: 'Yes.' } },
+    })
+    await user.click(screen.getByRole('button', { name: 'Edit description' }))
+    const field = await screen.findByRole('textbox', { name: 'In your own words' })
+    expect(field).toHaveValue('We rank applicants.\n\nYes.')
+    expect(screen.queryByText(/didn't fit within/)).not.toBeInTheDocument()
+    clearDraft()
+  })
 
   it('lists what changed in the inventory, obligations and needs-you lists', async () => {
     rerunReturns(minimalRisk())

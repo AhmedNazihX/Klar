@@ -86,10 +86,8 @@ function SummaryView({
   function editDescription(): void {
     // The answers go into the text, and the run onto this tool (P6), unless it was never saved.
     const tool = run.saveFailure ? null : { toolId: run.toolId, name: run.name }
-    saveDraft(
-      { name: run.name ?? '', description: withAnswers(run.description, run.answers) },
-      tool,
-    )
+    const { text, hasDroppedAnswers } = withAnswers(run.description, run.answers)
+    saveDraft({ name: run.name ?? '', description: text }, tool, hasDroppedAnswers)
     void navigate({ to: '/app/classify' })
   }
 

@@ -235,7 +235,9 @@ describe('Classify, a description too thin to start', () => {
     ).toBeVisible()
     expect(within(prompts).getByRole('textbox', { name: 'Wen betrifft es?' })).toBeVisible()
     expect(
-      within(prompts).getByRole('textbox', { name: 'Haben Sie es gekauft oder selbst entwickelt?' }),
+      within(prompts).getByRole('textbox', {
+        name: 'Haben Sie es gekauft oder selbst entwickelt?',
+      }),
     ).toBeVisible()
     expect(within(prompts).getByRole('button', { name: 'Prüfungen starten' })).toBeDisabled()
     expect(screen.getByText(TEXT.de.waiting)).toBeVisible()
@@ -245,24 +247,27 @@ describe('Classify, a description too thin to start', () => {
   it.each([
     ['en', 'de'],
     ['de', 'en'],
-  ] as const)('keeps the prompts in one language after a switch from %s to %s', async (from, to) => {
-    server.use(classifyRuns(needsDescriptionEvents(from)))
-    const { prompts } = await runThin(from)
+  ] as const)(
+    'keeps the prompts in one language after a switch from %s to %s',
+    async (from, to) => {
+      server.use(classifyRuns(needsDescriptionEvents(from)))
+      const { prompts } = await runThin(from)
 
-    await act(async () => {
-      await i18n.changeLanguage(to)
-    })
+      await act(async () => {
+        await i18n.changeLanguage(to)
+      })
 
-    expect(within(prompts).getByText(TEXT[to].title)).toBeVisible()
-    for (const [text, hint] of PROMPTS[to]) {
-      expect(within(prompts).getByRole('textbox', { name: text })).toBeVisible()
-      expect(within(prompts).getByText(hint)).toBeVisible()
-    }
-    for (const [text, hint] of PROMPTS[from]) {
-      expect(within(prompts).queryByText(text)).toBeNull()
-      expect(within(prompts).queryByText(hint)).toBeNull()
-    }
-  })
+      expect(within(prompts).getByText(TEXT[to].title)).toBeVisible()
+      for (const [text, hint] of PROMPTS[to]) {
+        expect(within(prompts).getByRole('textbox', { name: text })).toBeVisible()
+        expect(within(prompts).getByText(hint)).toBeVisible()
+      }
+      for (const [text, hint] of PROMPTS[from]) {
+        expect(within(prompts).queryByText(text)).toBeNull()
+        expect(within(prompts).queryByText(hint)).toBeNull()
+      }
+    },
+  )
 
   it('lists the three prompts', async () => {
     server.use(classifyRuns(needsDescriptionEvents()))
@@ -295,7 +300,7 @@ describe('Classify, a description too thin to start', () => {
     ])
   })
 
-  it('saves a description near the limit whole, with as much of the answers as fits', async () => {
+  it('saves a description near the limit whole, leaving out an answer that doesn’t fit', async () => {
     const answer = 'People applying for jobs.'
     const long = `We use AI for HR.${' It helps.'.repeat(1998)}`
     expect(long).toHaveLength(DESCRIPTION_MAX - 3)
@@ -307,9 +312,9 @@ describe('Classify, a description too thin to start', () => {
 
     await expect.poll(() => router.state.location.pathname).toBe(`/app/inventory/${SYSTEM_ID}`)
     const saved = saves[0]?.tool_description
-    expect(saved).toBe(`${long}\n\n${answer}`.slice(0, DESCRIPTION_MAX))
-    expect(saved).toHaveLength(DESCRIPTION_MAX)
-    expect(String(saved).startsWith(long)).toBe(true)
+    // The answer whole would run past the limit, so it goes; never part of it.
+    expect(`${long}\n\n${answer}`.length).toBeGreaterThan(DESCRIPTION_MAX)
+    expect(saved).toBe(long)
   })
 
   it('passes axe', async () => {

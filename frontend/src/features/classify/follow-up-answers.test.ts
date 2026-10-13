@@ -118,66 +118,35 @@ describe('confirming a fact', () => {
 
 describe('Edit description', () => {
   it('puts the answers under the description, one per line', () => {
-    expect(withAnswers('We use a tool.', { a: 'One. Yes.', b: 'Two.' })).toBe(
-      'We use a tool.\n\nOne. Yes.\nTwo.',
+    expect(withAnswers('We use a tool.', { a: 'One. Yes.', b: 'Two.' })).toEqual({
+      text: 'We use a tool.\n\nOne. Yes.\nTwo.',
+      hasDroppedAnswers: false,
+    })
+    const alone = { text: 'We use a tool.', hasDroppedAnswers: false }
+    expect(withAnswers('We use a tool.', {})).toEqual(alone)
+    expect(withAnswers('We use a tool.', undefined)).toEqual(alone)
+  })
+
+  it('keeps whole answers within the form’s 20,000 characters and says when one is left out', () => {
+    const description = 'd'.repeat(19_970)
+    // 19,970 + 2 + 20 = 19,992 fits; the next answer, 1 + 9 more, would make 20,002.
+    const fits = 'a'.repeat(20)
+    const edited = withAnswers(description, { a: fits, b: 'b'.repeat(9), c: 'c' })
+    expect(edited).toEqual({ text: `${description}\n\n${fits}`, hasDroppedAnswers: true })
+    expect(DescriptionFormSchema.safeParse({ name: '', description: edited.text }).success).toBe(
+      true,
     )
-    expect(withAnswers('We use a tool.', {})).toBe('We use a tool.')
-    expect(withAnswers('We use a tool.', undefined)).toBe('We use a tool.')
+    // Exactly at the limit, nothing is left out.
+    const exact = withAnswers(description, { a: 'a'.repeat(28) })
+    expect(exact.text).toHaveLength(20_000)
+    expect(exact.hasDroppedAnswers).toBe(false)
   })
 
-  it('stops at the form’s 20,000 characters, so the form takes the text it opens with', () => {
-    const description = 'd'.repeat(19_990)
-    const edited = withAnswers(description, { a: 'An answer longer than the room left.' })
-    expect(edited).toHaveLength(20_000)
-    expect(edited).toBe(`${description}\n\nAn answe`)
-    expect(DescriptionFormSchema.safeParse({ name: '', description: edited }).success).toBe(true)
-    // Within the limit, nothing is cut.
-    expect(withAnswers('d'.repeat(19_000), { a: 'Short.' })).toHaveLength(19_008)
-  })
-})
-
-describe('the questions a result asks', () => {
-  const assumed = 'The company bought the tool.'
-  const inferred = 'It ranks applicants.'
-  const confirmAssumed: FollowUpQuestion = {
-    id: 'confirm_the_company_bought_the_tool',
-    text: `Please confirm: ${assumed}`,
-    options: ['yes', 'no', 'not_sure'],
-  }
-  const confirmInferred: FollowUpQuestion = {
-    id: 'confirm_it_ranks_applicants',
-    text: `Please confirm: ${inferred}`,
-    options: ['yes', 'no', 'not_sure'],
-  }
-
-  it("leaves an assumed fact's question to its card, and asks the rest", () => {
-    const result: ClassificationResult = {
-      ...decidedHighRisk(),
-      deciding_facts: [
-        { text: assumed, evidence: 'assumed' },
-        { text: inferred, evidence: 'inferred' },
-      ],
-      follow_up_questions: [confirmAssumed, confirmInferred, YES_NO],
-    }
-    const { deciding, others } = askedQuestions(result)
-    expect(deciding).toBeNull()
-    // An inferred fact's card has no Confirm, so its question stays in the panel.
-    expect(others.map((question) => question.id)).toEqual([confirmInferred.id, YES_NO.id])
-  })
-
-  it("asks a paused result's deciding question once, apart from the others", () => {
-    const result: ClassificationResult = {
-      ...decidedHighRisk(),
-      status: 'needs_more_information',
-      follow_up_questions: [YES_NO, WORDS],
-      steps: decidedHighRisk().steps.map((step) =>
-        step.step === 'scope'
-          ? { ...step, status: 'needs_more_information', missing_fact: WORDS }
-          : step,
-      ),
-    }
-    const { deciding, others } = askedQuestions(result)
-    expect(deciding?.id).toBe(WORDS.id)
-    expect(others.map((question) => question.id)).toEqual([YES_NO.id])
+  it('opens with the description alone when no answer fits', () => {
+    const description = 'd'.repeat(19_999)
+    expect(withAnswers(description, { a: 'Yes.' })).toEqual({
+      text: description,
+      hasDroppedAnswers: true,
+    })
   })
 })

@@ -578,6 +578,7 @@
     "namePlaceholder": "Zum Beispiel: Bewerbungsvorauswahl",
     "nameTooLong": "Halten Sie den Namen unter 200 Zeichen.",
     "descriptionLabel": "In Ihren eigenen Worten",
+    "answersDropped": "Einige Ihrer Antworten passten nicht in die 20.000 Zeichen der Beschreibung und wurden weggelassen.",
     "descriptionRequired": "Beschreiben Sie das Tool zuerst in ein, zwei Sätzen.",
     "descriptionTooLong": "Halten Sie die Beschreibung unter 20.000 Zeichen.",
     "tipsLabel": "Hilfreich sind Angaben zu:",
