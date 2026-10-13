@@ -1689,7 +1689,9 @@ def _provider_through_gpai(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
 KNOWN_GAPS: dict[str, KnownGap] = {
     "own-d-03-assistant-repurposed-hiring": KnownGap(
         "reaches provider through the GPAI build route (Art. 3(3), 3(68)) instead of the Art. "
-        "25(1)(c) switch, and keeps no deployer role (E10 re-record, user 2026-10-06)",
+        "25(1)(c) switch, and keeps no deployer role (E10 re-record, user 2026-10-06). E14: "
+        "variance; the base role was 'deployer' (which matches) in four of five recordings, "
+        "including E8's on the same prompt, and 'provider' in this one",
         _provider_through_gpai,
     ),
 }
