@@ -1172,12 +1172,14 @@
     "assumedClass": "{{riskClass}}, angenommen",
     "noValue": "–",
     "notChecked": "Noch nicht geprüft",
+    "notCheckedRefused": "Nicht geprüft",
     "note": {
       "changed": "Die blau markierten Werte hat der digitale Omnibus geändert, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026.",
       "unchanged": "Der digitale Omnibus, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026, hat an dieser Tabelle nichts geändert.",
       "classSame": "Die Klasse ist gleich geblieben.",
       "dateChanged": "Das blau markierte Datum hat der digitale Omnibus geändert, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026.",
-      "notChecked": "Klasse und Rolle nach der ursprünglichen Fassung hat Klar noch nicht geprüft."
+      "notChecked": "Klasse und Rolle nach der ursprünglichen Fassung hat Klar noch nicht geprüft.",
+      "notCheckedRefused": "Klasse und Rolle nach der ursprünglichen Fassung konnte Klar nicht prüfen."
     },
     "steps": {
       "heading": "Geänderte Prüfschritte",

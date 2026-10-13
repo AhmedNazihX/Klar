@@ -43,15 +43,17 @@ function diffRow(t: TFunction, row: ComparisonRow): VersionDiffRow {
 
 /** What the table says about the Omnibus, one sentence each. Before the original text is checked
  *  only the date is known: whether the Omnibus moved it, then that class and role aren't checked
- *  yet. After: whether anything changed, then that the class didn't when something else did. */
+ *  yet, or couldn't be once the model provider refused the check (`isRefused`). After: whether
+ *  anything changed, then that the class didn't when something else did. */
 function diffNote(
   t: TFunction,
   rows: readonly ComparisonRow[],
   original: ClassificationResult | undefined,
+  isRefused: boolean,
 ): string {
   const hasChange = rows.some((row) => row.isKnown && row.original !== row.amended)
   if (!original) {
-    const notChecked = t('diff.note.notChecked')
+    const notChecked = t(isRefused ? 'diff.note.notCheckedRefused' : 'diff.note.notChecked')
     return hasChange ? `${t('diff.note.dateChanged')} ${notChecked}` : notChecked
   }
   const classRow = rows.find((row) => row.id === 'class')
@@ -169,7 +171,8 @@ export function LawComparison({
     headingRef.current?.focus()
     onFocused?.()
   }, [shouldTakeFocus, onFocused])
-  const rows = comparisonRows(t, run.result, original.result, language)
+  const isRefused = original.failure?.kind === 'provider_refused'
+  const rows = comparisonRows(t, run.result, original.result, language, isRefused)
   return (
     <GlassPanel
       as="section"
@@ -186,7 +189,7 @@ export function LawComparison({
       </h2>
       <VersionDiff
         rows={rows.map((row) => diffRow(t, row))}
-        note={diffNote(t, rows, original.result)}
+        note={diffNote(t, rows, original.result, isRefused)}
       />
       <div aria-live="polite" className="flex flex-col gap-3.5">
         {original.result ? (
