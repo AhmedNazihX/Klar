@@ -6,15 +6,16 @@ instead of live ones, the way the API's replay test does (`tests/api/test_classi
 The recordings are E10's worked example and every e2e run recorded so far (`runs.py`), merged
 into one cassette and one corpus file for the server's lifetime. vcrpy replays in record mode
 `none`, so a request without a recording ends that run in an `error` event and nothing ever
-reaches the network: no key is read (the process never loads `backend/.env`'s values) and no
-model is paid for.
+reaches the network: no model is paid for. The process never reads `backend/.env` (`use_only`),
+so a developer's machine runs it with the settings CI has, and no key is ever loaded. The engine
+runs on the settings the recordings were made with (`tests/engine/replayed_engine.py`).
 
 A run is classified on the recordings' date (`as_of` in `runs.json`): the app sends no date, so
 `PinnedRunDate` adds it to each `POST /classify` body that has none, as the API's default
 (today) would otherwise ask the recorded corpus slices for a date they don't have.
 
 The lookups, documents and reports read the end-to-end Supabase stack's database
-(`frontend/e2e/supabase`, port 54332), which must be loopback: the server refuses any other.
+(`frontend/e2e/supabase`, port 54332), and no other.
 """
 
 import argparse
@@ -25,10 +26,8 @@ import tempfile
 from collections.abc import Awaitable, Callable, Iterator, MutableMapping, Sequence
 from contextlib import contextmanager
 from datetime import date
-from functools import partial
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
 
 import uvicorn
 import vcr
@@ -39,18 +38,11 @@ from vcr.record_mode import RecordMode
 
 from aiact.api import create_app
 from aiact.api.dependencies import node_builder
-from aiact.engine.classify import NodeBuilder, engine_nodes
 from aiact.settings import Settings, get_settings
 from tests.conftest import REFUSAL_ROUTE, REPLAY_API_KEY
 from tests.e2e.runs import Recording, replayed_recordings, run_date
-from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import CorpusRecording
-from tests.engine.test_classify_worked_example import (
-    LUNA,
-    LUNA_PROVIDER,
-    LiveCorpus,
-    recorded_libraries,
-)
+from tests.engine.replayed_engine import LiveCorpus, luna_settings, replayed_nodes
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +51,8 @@ E2E_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54332/postgres"
 DEFAULT_PORT = 8766
 DEFAULT_ORIGIN = "http://127.0.0.1:4174"
 """The Playwright run's `vite preview` (`frontend/playwright.config.ts`)."""
-LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
+LOOPBACK = ("127.0.0.1", "localhost")
+"""The API's allowed hosts: the e2e frontend calls it on 127.0.0.1."""
 MATCH_ON = ("method", "scheme", "host", "path", "query", "body")
 """As the tests' `vcr_config` matches recorded requests (`tests/conftest.py`)."""
 GENEROUS_LIMIT = 10_000
@@ -183,22 +176,16 @@ def _replaying(body: bytes, receive: Receive, *, more_body: bool = False) -> Rec
     return replay
 
 
-def replay_settings(database_url: str, origin: str) -> Settings:
-    """The app's settings without `backend/.env`: the replay's placeholder key and models (as the
-    worked example was recorded), no tracing, the e2e database, the e2e origin, and limits no
-    test run reaches."""
-    host = urlsplit(database_url).hostname
-    if host not in LOOPBACK:
-        raise ValueError(f"the e2e database must be local, not {host}")
-    return Settings(
+def replay_settings(origin: str) -> Settings:
+    """The app's settings without `backend/.env`: the replay's placeholder key, the engine as the
+    recordings were made (Luna, no tracing), the e2e database, the e2e origin, and limits no test
+    run reaches."""
+    settings = Settings(
         _env_file=None,  # pyright: ignore[reportCallIssue]
         openrouter_api_key=SecretStr(REPLAY_API_KEY),
-        engine_model=LUNA,
-        engine_provider=LUNA_PROVIDER,
-        langsmith_api_key=None,
-        database_url=SecretStr(database_url),
+        database_url=SecretStr(E2E_DATABASE_URL),
         cors_origins=(origin,),
-        api_allowed_hosts=tuple(sorted(LOOPBACK - {"::1"})),
+        api_allowed_hosts=LOOPBACK,
         rate_limit_classify=GENEROUS_LIMIT,
         rate_limit_lookups=GENEROUS_LIMIT,
         rate_limit_qa=GENEROUS_LIMIT,
@@ -207,30 +194,25 @@ def replay_settings(database_url: str, origin: str) -> Settings:
         export_max_concurrent=PARALLEL_SLOTS,
         **REFUSAL_ROUTE,
     )
-
-
-def replay_nodes(corpus: Path) -> NodeBuilder:
-    """The engine's own nodes over the recorded corpus answers, with citations checked against
-    the corpus built from `data/parsed/` (as in the worked example's replay)."""
-    recording = CorpusRecording[LiveCorpus](corpus, None)
-    return partial(
-        engine_nodes, libraries=recorded_libraries(recording), validator=built_validator()
-    )
+    return luna_settings(settings)
 
 
 def replay_api(settings: Settings, corpus: Path) -> FastAPI:
-    """The API with its classifications replayed from `corpus` (and the cassette in force)."""
+    """The API with its classifications replayed from `corpus` (and the cassette in force): the
+    engine's own nodes over the recorded corpus answers, citations checked against the corpus
+    built from `data/parsed/` (as in the worked example's replay)."""
     app = create_app(settings)
-    nodes = replay_nodes(corpus)
+    nodes = replayed_nodes(CorpusRecording[LiveCorpus](corpus, None))
     app.dependency_overrides[node_builder] = lambda: nodes
     return app
 
 
-def use_only(database_url: str) -> None:
+def use_only() -> None:
     """Make the process's own settings (`get_settings()`, which `aiact.db.connect` and a few
-    defaults read) give the replay's key and database rather than `backend/.env`'s: an
-    environment variable beats the file."""
-    os.environ["DATABASE_URL"] = database_url
+    defaults read) the replay's rather than `backend/.env`'s: no `Settings` in this process reads
+    the file, and the database and key come from the environment."""
+    Settings.model_config["env_file"] = None
+    os.environ["DATABASE_URL"] = E2E_DATABASE_URL
     os.environ["OPENROUTER_API_KEY"] = REPLAY_API_KEY
     get_settings.cache_clear()
 
@@ -242,13 +224,12 @@ def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--origin", default=DEFAULT_ORIGIN, help="the e2e frontend's origin")
-    parser.add_argument("--database-url", default=E2E_DATABASE_URL)
     return parser.parse_args()
 
 
-def serve(port: int, origin: str, database_url: str) -> None:
-    settings = replay_settings(database_url, origin)
-    use_only(database_url)
+def serve(port: int, origin: str) -> None:
+    settings = replay_settings(origin)
+    use_only()
     recordings = replayed_recordings()
     logger.info("replaying %s", ", ".join(r.stem.name for r in recordings))
     with tempfile.TemporaryDirectory(prefix="aiact-e2e-") as folder:
@@ -265,4 +246,4 @@ if __name__ == "__main__":
     for noisy in ("vcr", "httpx"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
     arguments = _arguments()
-    serve(arguments.port, arguments.origin, arguments.database_url)
+    serve(arguments.port, arguments.origin)

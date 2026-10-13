@@ -9,28 +9,21 @@ run is a strict "recording pending" xfail; drop the mark once it is recorded.
 """
 
 from collections.abc import Iterator
-from functools import partial
 
 import pytest
 
 from aiact.engine import run_classification
-from aiact.engine.classify import NodeBuilder, engine_nodes
+from aiact.engine.classify import NodeBuilder
 from aiact.schemas import Language, RiskClass
 from aiact.settings import Settings
 from tests.e2e.runs import E2E_RECORDINGS, RECORD_COMMAND, e2e_runs
-from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import (
     RecordingPendingError,
     corpus_recording,
     require_recording,
 )
 from tests.engine.nodes.known_gaps import stale_recording_pending
-from tests.engine.test_classify_worked_example import (
-    LUNA,
-    LUNA_PROVIDER,
-    _live_corpus,  # pyright: ignore[reportPrivateUsage]
-    recorded_libraries,
-)
+from tests.engine.replayed_engine import live_corpus, luna_settings, replayed_nodes
 
 RUNS = e2e_runs()
 ANNEX_III_4_A = "annex:III:4:a"
@@ -52,12 +45,10 @@ def default_cassette_name(name: str) -> str:
     return name
 
 
-@pytest.fixture
-def luna_settings(openrouter_settings: Settings) -> Settings:
-    """As the worked example was recorded: Luna, and no LangSmith key (no trace is sent)."""
-    return openrouter_settings.model_copy(
-        update={"engine_model": LUNA, "engine_provider": LUNA_PROVIDER, "langsmith_api_key": None}
-    )
+@pytest.fixture(name="luna_settings")
+def luna_settings_fixture(openrouter_settings: Settings) -> Settings:
+    """As the worked example was recorded, and as the e2e API replays (`replayed_engine`)."""
+    return luna_settings(openrouter_settings)
 
 
 @pytest.fixture
@@ -70,11 +61,9 @@ def run_nodes(
         default_cassette_name,
         record_mode,
         RECORD_COMMAND,
-        lambda: _live_corpus(luna_settings),
+        lambda: live_corpus(luna_settings),
     ) as recording:
-        yield partial(
-            engine_nodes, libraries=recorded_libraries(recording), validator=built_validator()
-        )
+        yield replayed_nodes(recording)
 
 
 @PENDING
@@ -108,6 +97,19 @@ def test_the_worked_example_in_german_is_high_risk(
     assert run.result.annex_point == ANNEX_III_4_A
 
 
+def _parametrised_runs() -> set[str]:
+    """The runs this module's recording tests are parametrised with (`name`)."""
+    return {
+        value
+        for test in globals().values()
+        for mark in getattr(test, "pytestmark", ())
+        if mark.name == "parametrize" and mark.args[0] == "name"
+        for value in mark.args[1]
+    }
+
+
 def test_every_run_has_its_recording_test() -> None:
-    """A run added to `runs.json` gets a recording test here, or the e2e API never replays it."""
-    assert set(RUNS) == {"worked_example_answered", "worked_example_de"}
+    """A run added to `runs.json` gets a recording test here, or the e2e API never replays it;
+    and every recording test records a run the flows make."""
+    assert RUNS, "runs.json names no run"
+    assert set(RUNS) == _parametrised_runs()

@@ -191,6 +191,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            tests/engine/nodes/corpus_recording.py (E4)
 │       ├── engine/built_corpus.py   the corpus built in memory from data/parsed/, which the replays check
 │       │                            their citations against (no database in CI) (E9)
+│       ├── engine/replayed_engine.py  the engine as the worked example was recorded (Luna settings, the
+│       │                            recorded corpus libraries, the replayed nodes), shared by its replay,
+│       │                            the e2e recordings and the e2e API (E10, P13)
 │       ├── engine/nodes/pinned.py   assert_pinned_route: a node's engine and refusal models, each pinned (X2c)
 │       ├── snapshots/               committed JSON snapshots, e.g. the result's JSON Schema (F3)
 │       ├── export/reading.py        a PDF's and a Word file's text read back for the tests (P9)

@@ -15,10 +15,10 @@ from pydantic import SecretStr
 
 from aiact.engine import ClassifyEvent, ErrorEvent, ResultEvent
 from aiact.schemas import RiskClass
+from aiact.settings import Settings, get_settings
 from tests.api.conftest import BASE_URL, FULL_RUN, TEST_HOST, outline, sse_events
 from tests.conftest import REPLAY_API_KEY
 from tests.e2e.replay_server import (
-    E2E_DATABASE_URL,
     Message,
     PinnedRunDate,
     Receive,
@@ -29,6 +29,7 @@ from tests.e2e.replay_server import (
     replay_api,
     replay_settings,
     replayed_model_calls,
+    use_only,
 )
 from tests.e2e.runs import (
     RUNS_FILE,
@@ -38,11 +39,14 @@ from tests.e2e.runs import (
     replayed_recordings,
     run_date,
 )
-from tests.engine.test_classify_worked_example import AS_OF, LUNA, worked_example_request
+from tests.engine.replayed_engine import LUNA
+from tests.engine.test_classify_worked_example import AS_OF, worked_example_request
 
 ORIGIN = "http://127.0.0.1:4174"
 AS_OF_TEXT = "2026-10-06"
 MAX_BYTES = 1_024
+E2E_DB = "postgresql://postgres:postgres@127.0.0.1:54332/postgres"
+HOSTED_DB = "postgresql://postgres@aws-1-eu-central-1.pooler.supabase.com:5432/postgres"
 
 
 @pytest.fixture
@@ -188,33 +192,50 @@ def test_the_runs_file_types_the_worked_example_on_its_recording_date() -> None:
     data = json.loads(RUNS_FILE.read_text(encoding="utf-8"))
     assert data["workedExample"] == worked_example_request().description
     assert run_date() == AS_OF == date(2026, 10, 6)
-    runs = e2e_runs()
-    assert set(runs) == {"worked_example_answered", "worked_example_de"}
-    assert all(run.as_of == AS_OF for run in runs.values())
+    assert all(run.as_of == AS_OF for run in e2e_runs().values())
 
 
 # --- The settings -------------------------------------------------------------------------------
 
 
 def test_the_settings_use_the_replay_key_and_model_and_no_tracing() -> None:
-    settings = replay_settings(E2E_DATABASE_URL, ORIGIN)
+    settings = replay_settings(ORIGIN)
     assert settings.openrouter_api_key == SecretStr(REPLAY_API_KEY)
     assert settings.engine_model == LUNA == "openai/gpt-6-luna-20260922"
+    assert settings.engine_provider == "azure/eu"
     assert settings.langsmith_api_key is None
+    assert settings.database_url == SecretStr(E2E_DB)
     assert settings.cors_origins == (ORIGIN,)
     assert settings.export_max_concurrent == 8
 
 
-@pytest.mark.parametrize(
-    "url",
-    [
-        "postgresql://postgres@db.example.supabase.co:5432/postgres",
-        "postgresql://postgres@aws-1-eu-central-1.pooler.supabase.com:5432/postgres",
-    ],
-)
-def test_a_database_off_this_machine_is_refused(url: str) -> None:
-    with pytest.raises(ValueError, match="must be local"):
-        replay_settings(url, ORIGIN)
+@pytest.fixture
+def env_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """`backend/.env` stood in for by a file that names a hosted database and a tracing key; the
+    settings, the environment and the settings cache are put back afterwards."""
+    file = tmp_path / ".env"
+    file.write_text(
+        f"DATABASE_URL={HOSTED_DB}\nLANGSMITH_API_KEY=from-the-file\nOPENROUTER_API_KEY=key-from-the-file\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setitem(Settings.model_config, "env_file", file)
+    for name in ("DATABASE_URL", "OPENROUTER_API_KEY", "LANGSMITH_API_KEY"):
+        # Empty is unset to the settings (`env_ignore_empty`), and is undone afterwards even
+        # where the variable didn't exist (a `delenv` of a missing one wouldn't be).
+        monkeypatch.setenv(name, "")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
+@pytest.mark.usefixtures("env_file")
+def test_the_process_settings_never_read_the_env_file() -> None:
+    assert get_settings().langsmith_api_key == SecretStr("from-the-file")
+    use_only()
+    settings = get_settings()
+    assert settings.database_url == SecretStr(E2E_DB)
+    assert settings.openrouter_api_key == SecretStr(REPLAY_API_KEY)
+    assert settings.langsmith_api_key is None
 
 
 # --- A whole classification ---------------------------------------------------------------------
@@ -224,9 +245,7 @@ def test_a_database_off_this_machine_is_refused(url: str) -> None:
 def replayed(tmp_path: Path) -> Iterator[FastAPI]:
     """The replay API as `serve` builds it, over the merged recordings, its test host allowed."""
     recordings = replayed_recordings()
-    settings = replay_settings(E2E_DATABASE_URL, ORIGIN).model_copy(
-        update={"api_allowed_hosts": (TEST_HOST,)}
-    )
+    settings = replay_settings(ORIGIN).model_copy(update={"api_allowed_hosts": (TEST_HOST,)})
     cassette = merged_cassette(recordings, tmp_path / "cassette.yaml")
     app = replay_api(settings, merged_corpus(recordings, tmp_path / "corpus.json"))
     with replayed_model_calls(cassette, ignore_hosts=[TEST_HOST]):
