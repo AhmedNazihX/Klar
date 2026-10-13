@@ -92,6 +92,45 @@ describe('questionsOnPoint', () => {
     ).toEqual([['quoting'], ['role']])
   })
 
+  it('counts a question about the paragraph an open point belongs to, never its whole article', () => {
+    const point = pointOn('art:6:1:a', ['art:6:1:a'])
+    expect(
+      split(point, [
+        question('paragraph', 'art:6:1'),
+        question('article', 'art:6'),
+        question('sibling', 'art:6:1:b'),
+      ]),
+    ).toEqual([['paragraph'], ['article', 'sibling']])
+    const area = pointOn('annex:III:5:a', ['annex:III:5:a'])
+    expect(split(area, [question('area', 'annex:III:5'), question('annex', 'annex:III')])).toEqual([
+      ['area'],
+      ['annex'],
+    ])
+  })
+
+  it('falls back on the step’s citations when the readings cite nothing', () => {
+    const step = RECORDED_AMBIGUOUS.steps.find((candidate) => candidate.open_question)
+    const open = step?.open_question
+    if (!step || !open) throw new Error('The recorded result has no open question.')
+    const readings = open.readings.map((reading) => ({
+      ...reading,
+      citation: null,
+    })) as typeof open.readings
+    const uncited: ClassificationResult = {
+      ...RECORDED_AMBIGUOUS,
+      steps: RECORDED_AMBIGUOUS.steps.map((candidate) =>
+        candidate === step ? { ...step, open_question: { ...open, readings } } : candidate,
+      ),
+    }
+    const point = openPoint(uncited)
+    if (!point) throw new Error('No open point.')
+    expect(point.provisions).toEqual(step.citations?.map((citation) => citation.provision_id))
+    expect(split(point, [question('safety', 'art:6:1:a'), question('role', 'art:25:1')])).toEqual([
+      ['safety'],
+      ['role'],
+    ])
+  })
+
   it('never matches a provision that only shares a prefix of its number', () => {
     expect(
       split(pointOn('art:50:1'), [

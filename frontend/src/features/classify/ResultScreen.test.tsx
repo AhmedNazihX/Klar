@@ -677,6 +677,51 @@ describe('Result variants (decision 026)', () => {
     expect(within(todo).getAllByText('Art. 111(2)')).toHaveLength(2)
   })
 
+  it.each([
+    [
+      'en',
+      'Result',
+      'annex:III:4:a',
+      '2027-12-02',
+      'before 2 December 2027',
+      'before 2 August 2026',
+    ],
+    [
+      'de',
+      'Ergebnis',
+      'annex:III:4:a',
+      '2027-12-02',
+      'vor dem 2. Dezember 2027',
+      'vor dem 2. August 2026',
+    ],
+    // The original Art. 111(2) has one cut-off for every route, not Art. 113's 2027 for Annex I.
+    ['en', 'Result', 'annex:I:A:1', '2028-08-02', 'before 2 August 2028', 'before 2 August 2026'],
+  ] as const)(
+    'dates the Art. 111(2) sentences by the law switch (%s, %s)',
+    async (language, region, point, routeDate, amended, original) => {
+      const base = legacyMarked()
+      const route = point.startsWith('annex:I:') ? 'annex_i' : 'annex_iii'
+      const result: ClassificationResult = {
+        ...base,
+        annex_point: point,
+        obligations: (base.obligations ?? []).map((duty) =>
+          duty.legacy === 'legacy_unchanged'
+            ? { ...duty, high_risk_route: route, applies_from: routeDate }
+            : { ...duty, high_risk_route: route },
+        ),
+      }
+      await openResult(result, { language })
+      const note = within(screen.getByRole('region', { name: region })).getByRole('note')
+      const amendedOnly = [...note.querySelectorAll('.law-amended-only')]
+      const originalOnly = [...note.querySelectorAll('.law-original-only')]
+      // Both marking sentences and the per-copy caveat, each under both texts.
+      expect(amendedOnly).toHaveLength(3)
+      expect(originalOnly).toHaveLength(3)
+      for (const sentence of amendedOnly) expect(sentence).toHaveTextContent(amended)
+      for (const sentence of originalOnly) expect(sentence).toHaveTextContent(original)
+    },
+  )
+
   it("marks a deployer's legacy duties without the per-copy caveat (item 24)", async () => {
     await openResult(legacyMarkedDeployer())
     const note = within(screen.getByRole('region', { name: 'Result' })).getByRole('note')

@@ -375,18 +375,21 @@ describe('Obligations, what each section holds', () => {
       }),
     ]
     await openObligations()
-    const [route, plain] = screen.getAllByRole('region', { name: /^From 2 December 2027/ })
+    // One "From 2 December 2027"; the other names what it holds in its title.
+    const [route, ...others] = screen.getAllByRole('region', { name: /^From 2 December 2027/ })
+    expect(others).toEqual([])
     expect(route).toHaveAccessibleDescription('High-risk, Annex III')
-    expect(plain).toHaveAccessibleDescription('Art. 6(4)')
+    const plain = section('Art. 6(4) from 2 December 2027')
+    expect(plain).not.toHaveAccessibleDescription()
     expect(plain).toHaveTextContent('Customer chat assistant')
   })
 
   it.each([
-    ['en', /^From 2 December 2027/, 'Other duties', 'No specific duties'],
-    ['de', /^Ab dem 2\. Dezember 2027/, 'Weitere Pflichten', 'Keine besonderen Pflichten'],
+    ['en', 'Other duties from 2 December 2027', 'No specific duties'],
+    ['de', 'Weitere Pflichten ab dem 2. Dezember 2027', 'Keine besonderen Pflichten'],
   ] as const)(
     '(%s) calls a same-date section of several articles "other duties"; By tool shows a tool without any',
-    async (language, sameDay, other, none) => {
+    async (language, other, none) => {
       const chat = limitedRisk()
       const [literacy] = chat.obligations ?? []
       if (!literacy) throw new Error('The fixture has duties.')
@@ -403,8 +406,7 @@ describe('Obligations, what each section holds', () => {
         toolRow('Invoice matching', outOfScope()),
       ]
       const { user } = await openObligations('/app/obligations', language)
-      const [, plain] = screen.getAllByRole('region', { name: sameDay })
-      expect(plain).toHaveAccessibleDescription(other)
+      expect(section(other)).toHaveTextContent('Customer chat assistant')
 
       await user.click(
         screen.getByRole('button', { name: language === 'en' ? 'By tool' : 'Nach Tool' }),

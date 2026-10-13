@@ -19,14 +19,24 @@ export type ToolDuties = { tool: CheckedTool; duties: Obligation[] }
 export type SectionCategory =
   { kind: 'transparency' } | { kind: 'article'; article: string } | { kind: 'other' }
 
+/** A section of duties dated outside a high-risk route. `hasRouteTwin` when a route section has
+ *  the same (amended) date: the heading then names what the section holds, so the two read apart
+ *  (P24's two "From 2 December 2027" sections). */
+type DatedSection = {
+  date: string
+  category: SectionCategory | null
+  hasRouteTwin: boolean
+  tools: ToolDuties[]
+}
+
 /** The By date sections, in the screen's order. */
 export type DateSection =
   /** A prohibited tool's duties: stop now (Art. 5). */
   | { kind: 'stop'; tools: ToolDuties[] }
   /** Duties whose date has come. */
-  | { kind: 'since'; date: string; category: SectionCategory | null; tools: ToolDuties[] }
+  | ({ kind: 'since' } & DatedSection)
   /** Duties whose date is still ahead (an Art. 111(2) 2030 date included). */
-  | { kind: 'from'; date: string; category: SectionCategory | null; tools: ToolDuties[] }
+  | ({ kind: 'from' } & DatedSection)
   /** A high-risk route's duties: its Chapter III date, which the Digital Omnibus moved. */
   | { kind: 'route'; route: HighRiskRoute; amended: string; original: string; tools: ToolDuties[] }
   /** Art. 111(2): duties that apply only after a significant change. */
@@ -149,10 +159,11 @@ function toSection(
     case 'route':
       return { kind: 'route', route: slot.route, ...routeDates(slot.route, slot.amended), tools }
     case 'dated': {
-      const category = categoryOf(tools, routeDays.has(slot.date))
+      const hasRouteTwin = routeDays.has(slot.date)
+      const dated = { date: slot.date, category: categoryOf(tools, hasRouteTwin), hasRouteTwin }
       return slot.date <= isoDay(today)
-        ? { kind: 'since', date: slot.date, category, tools }
-        : { kind: 'from', date: slot.date, category, tools }
+        ? { kind: 'since', ...dated, tools }
+        : { kind: 'from', ...dated, tools }
     }
   }
 }
