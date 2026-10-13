@@ -4791,6 +4791,150 @@
      }
     ]
    }
+  },
+  "de_answered": {
+   "art_50_3_disclosure": {
+    "document": {
+     "template": "art_50_3_disclosure",
+     "title": "Hinweis: Emotionserkennung und biometrische Kategorisierung",
+     "article": "art:50:3",
+     "language": "de",
+     "label": "DRAFT",
+     "note": null,
+     "sections": [
+      {
+       "key": "duty",
+       "heading": "Seine Einstufung",
+       "provenance": "classification",
+       "paragraphs": [
+        "Ihre Einstufung: begrenztes Risiko.",
+        "Sie nennt die Pflicht nach Art. 50 Abs. 3."
+       ],
+       "question_keys": [],
+       "unanswered": [],
+       "status": "drafted",
+       "requirement": null,
+       "quotes": []
+      },
+      {
+       "key": "notice",
+       "heading": "Der Hinweis",
+       "provenance": "interview",
+       "paragraphs": [
+        "Hier ist ein KI-System zur Emotionserkennung und biometrischen Kategorisierung in Betrieb."
+       ],
+       "question_keys": [
+        "recognises"
+       ],
+       "unanswered": [],
+       "status": "drafted",
+       "requirement": null,
+       "quotes": []
+      },
+      {
+       "key": "why",
+       "heading": "Warum er angezeigt wird",
+       "provenance": "template",
+       "paragraphs": [
+        "Nach Artikel 50 Absatz 3 der KI-Verordnung muss ein Betreiber eines Emotionserkennungssystems oder eines Systems zur biometrischen Kategorisierung die betroffenen Personen über den Betrieb des Systems informieren und ihre personenbezogenen Daten im Einklang mit der DSGVO verarbeiten."
+       ],
+       "question_keys": [],
+       "unanswered": [],
+       "status": "drafted",
+       "requirement": null,
+       "quotes": []
+      },
+      {
+       "key": "placement",
+       "heading": "Wo er angezeigt wird",
+       "provenance": "interview",
+       "paragraphs": [],
+       "question_keys": [
+        "placement"
+       ],
+       "unanswered": [
+        "placement"
+       ],
+       "status": "questions",
+       "requirement": null,
+       "quotes": []
+      },
+      {
+       "key": "contact",
+       "heading": "Ansprechpartner für Ihre Daten",
+       "provenance": "interview",
+       "paragraphs": [],
+       "question_keys": [
+        "contact"
+       ],
+       "unanswered": [
+        "contact"
+       ],
+       "status": "questions",
+       "requirement": null,
+       "quotes": []
+      }
+     ],
+     "unanswered": 2,
+     "status": "needs_answers",
+     "law_version": "amended",
+     "as_of": "2026-09-27",
+     "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen."
+    },
+    "checks": [
+     {
+      "check": "sections_present",
+      "passed": true,
+      "problems": []
+     },
+     {
+      "check": "nothing_invented",
+      "passed": true,
+      "problems": []
+     },
+     {
+      "check": "facts_match",
+      "passed": true,
+      "problems": []
+     }
+    ],
+    "questions": [
+     {
+      "key": "recognises",
+      "text": "Erkennt das System Emotionen, ordnet es Personen anhand biometrischer Daten Kategorien zu oder beides?",
+      "section": "notice",
+      "choices": [
+       {
+        "key": "emotion_recognition",
+        "label": "Es erkennt Emotionen",
+        "title": "Hinweis: Emotionserkennung"
+       },
+       {
+        "key": "biometric_categorisation",
+        "label": "Es ordnet Personen anhand biometrischer Daten Kategorien zu",
+        "title": "Hinweis: biometrische Kategorisierung"
+       },
+       {
+        "key": "both",
+        "label": "Beides",
+        "title": "Hinweis: Emotionserkennung und biometrische Kategorisierung"
+       }
+      ]
+     },
+     {
+      "key": "placement",
+      "text": "Wo und wann sehen Personen diesen Hinweis?",
+      "section": "placement",
+      "choices": []
+     },
+     {
+      "key": "contact",
+      "text": "An wen können sich Personen zur Verarbeitung ihrer personenbezogenen Daten wenden?",
+      "section": "contact",
+      "choices": []
+     }
+    ]
+   }
   }
  }
 }

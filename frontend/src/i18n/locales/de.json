@@ -320,6 +320,7 @@
     "drafting": "Die Dokumente werden entworfen …",
     "draftingOne": "Das Dokument wird entworfen …",
     "draftFailed": "Klar konnte die Dokumente für dieses Tool nicht entwerfen.",
+    "resultUnreadable": "Klar kann das gespeicherte Ergebnis dieses Tools nicht lesen und deshalb keine Dokumente dafür entwerfen. Führen Sie die Prüfungen für das Tool erneut durch.",
     "documentFailed": "Klar konnte dieses Dokument nicht entwerfen.",
     "tooLarge": "Die Antworten zu diesem Dokument sind zusammen zu lang. Bitte kürzen Sie einige Antworten.",
     "staleDraft": "Der angezeigte Entwurf enthält Ihre neuesten Antworten noch nicht.",

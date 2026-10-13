@@ -150,6 +150,28 @@ describe('Documents list', () => {
     ])
   })
 
+  it.each([
+    ['en', 'Documents', /^Documents \(\d+\)$/],
+    ['de', 'Dokumente', /^Dokumente \(\d+\)$/],
+  ] as const)(
+    'names the list toggle without a count until every list is in (%s)',
+    async (language, loading, counted) => {
+      let release = (): void => undefined
+      const gate = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      // Held, then passed on to the fixture's own list handler.
+      server.use(http.post(LIST_URL, async () => gate))
+      await openDocuments('/app/documents', { language })
+      const toggle = await screen.findByRole('button', { name: loading })
+      expect(toggle).not.toHaveTextContent(/\(0\)/)
+      release()
+      await vi.waitFor(() => {
+        expect(toggle).toHaveAccessibleName(counted)
+      })
+    },
+  )
+
   it('says there is nothing to draft before a tool is classified', async () => {
     await openDocuments('/app/documents', { tools: [] })
     expect(
@@ -349,11 +371,14 @@ describe('The Art. 50(3) disclosure', () => {
         'page',
       )
       expect(within(nav).queryByText(/ oder | or /)).not.toBeInTheDocument()
-      if (language === 'en') {
-        // The fixture's drafts with an answer are English: the draft's title is the drafter's.
-        const article = await preview()
-        expect(within(article).getByRole('heading', { level: 1 })).toHaveTextContent(title)
-      }
+      // The draft's own title, as the drafter writes it in the screen's language.
+      const article = await preview(language === 'de' ? 'Dokumentvorschau' : 'Document preview')
+      expect(within(article).getByRole('heading', { level: 1 })).toHaveTextContent(title)
+      expect(article).toHaveTextContent(
+        language === 'de'
+          ? 'Hier ist ein KI-System zur Emotionserkennung und biometrischen'
+          : 'An AI system for emotion recognition and biometric categorisation',
+      )
     },
   )
 
@@ -755,6 +780,37 @@ describe('Accessibility', () => {
     await preview()
     expect((await axe(choice.container, AXE_OPTIONS)).violations).toEqual([])
   })
+})
+
+describe('A stored result the API can’t read', () => {
+  it.each([
+    [
+      'en',
+      'For Applicant screening',
+      "Klar can't read this tool's saved result, so it can't draft its documents. Run the tool's checks again.",
+    ],
+    [
+      'de',
+      'Für Applicant screening',
+      'Klar kann das gespeicherte Ergebnis dieses Tools nicht lesen und deshalb keine Dokumente dafür entwerfen. Führen Sie die Prüfungen für das Tool erneut durch.',
+    ],
+  ] as const)(
+    'says so beside the tool and offers no retry (%s)',
+    async (language, region, line) => {
+      let calls = 0
+      server.use(
+        http.post(LIST_URL, () => {
+          calls += 1
+          return HttpResponse.json({ detail: 'invalid' }, { status: 422 })
+        }),
+      )
+      await openDocuments('/app/documents', { language })
+      const group = await screen.findByRole('region', { name: region })
+      expect(await within(group).findByRole('alert')).toHaveTextContent(line)
+      expect(within(group).queryByRole('button')).toBeNull()
+      expect(calls).toBe(1)
+    },
+  )
 })
 
 describe('Something fails', () => {

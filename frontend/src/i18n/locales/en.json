@@ -320,6 +320,7 @@
     "drafting": "Drafting the documents…",
     "draftingOne": "Drafting the document…",
     "draftFailed": "Klar couldn't draft this tool's documents.",
+    "resultUnreadable": "Klar can't read this tool's saved result, so it can't draft its documents. Run the tool's checks again.",
     "documentFailed": "Klar couldn't draft this document.",
     "tooLarge": "This document's answers are too long to send together. Please shorten some answers.",
     "staleDraft": "The draft shown doesn't hold your latest answers yet.",

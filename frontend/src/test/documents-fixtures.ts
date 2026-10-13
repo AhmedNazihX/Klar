@@ -5,8 +5,8 @@
 // checked_draft) with no model call: the recorded worked example as a deployer (no answers; one
 // answer to the workers notice; German), the backend tests' provider result with its skeletons
 // for an SME (no answers; one answer to Annex IV), and a limited-risk result with the Art. 50(3)
-// disclosure (no answer; "both" chosen). Each draft set is keyed by template id. The Supabase
-// and API handlers below serve them.
+// disclosure (no answer; "both" chosen, in English and German). Each draft set is keyed by
+// template id. The Supabase and API handlers below serve them.
 import { http, HttpResponse, type HttpHandler } from 'msw'
 
 import type { CheckedDraft, ClassificationResult, ListedDocument } from '@/api'
@@ -17,7 +17,13 @@ import { SUPABASE_URL } from './supabase-fixtures'
 
 type Drafts = Readonly<Record<string, CheckedDraft>>
 type Lists = { en: { documents: ListedDocument[] }; de: { documents: ListedDocument[] } }
-type ResultDocuments = { list: Lists; en: Drafts; en_answered: Drafts; de?: Drafts }
+type ResultDocuments = {
+  list: Lists
+  en: Drafts
+  en_answered: Drafts
+  de?: Drafts
+  de_answered?: Drafts
+}
 
 const FIXTURE = fixture as unknown as {
   provider_result: ClassificationResult
@@ -58,11 +64,14 @@ function documentsOf(result: ClassificationResult): ResultDocuments {
   return DEPLOYER_DOCUMENTS
 }
 
-/** The fixture `POST /documents/draft` would answer `body` with. The provider and limited-risk
- *  drafts are English only: a German screen shows them with its own words in German. */
+/** The fixture `POST /documents/draft` would answer `body` with. The provider's drafts, and the
+ *  deployer's answered ones, are English only: a German screen shows them with its own words in
+ *  German. */
 function draftFor(body: DraftBody): CheckedDraft | undefined {
   const documents = documentsOf(body.result)
   const answered = Object.values(body.answers).some((answer) => answer.trim() !== '')
+  const germanAnswered = body.language === 'de' ? documents.de_answered?.[body.template] : null
+  if (answered && germanAnswered) return germanAnswered
   if (answered) return documents.en_answered[body.template] ?? documents.en[body.template]
   if (body.language === 'de' && documents.de) return documents.de[body.template]
   return documents.en[body.template]

@@ -8,7 +8,10 @@ const OPEN_FROM = {
   xl: { toggle: 'xl:hidden', closed: 'hidden xl:flex' },
 } as const
 
-/** What the list inside gets: its id (the toggle controls it), its display class, and `close`. */
+/** What the list inside gets: its id (the toggle controls it), its display class, and `close`,
+ *  which closes it and gives the focus back to the toggle: a link picked in the list disappears
+ *  with it, and the focus would otherwise fall to the page's start. Where the list always shows,
+ *  the toggle is hidden, so the focus stays where it is. */
 export type ClosedListProps = { id: string; className: string; close: () => void }
 
 /**
@@ -26,11 +29,13 @@ export function ClosedOnSmallScreens({
   children: (list: ClosedListProps) => ReactNode
 }): JSX.Element {
   const id = useId()
+  const toggleId = useId()
   const [isOpen, setIsOpen] = useState(false)
   const classes = OPEN_FROM[openFrom]
   return (
     <>
       <button
+        id={toggleId}
         type="button"
         aria-expanded={isOpen}
         aria-controls={id}
@@ -63,6 +68,8 @@ export function ClosedOnSmallScreens({
         className: isOpen ? 'flex' : classes.closed,
         close: () => {
           setIsOpen(false)
+          // Focus is outside React; the toggle is found by its id when the list closes.
+          document.getElementById(toggleId)?.focus()
         },
       })}
     </>

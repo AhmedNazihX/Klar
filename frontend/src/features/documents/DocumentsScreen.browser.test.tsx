@@ -185,6 +185,19 @@ describe('the Documents screen on a phone, in German', () => {
     },
   )
 
+  it('gives the focus back to the toggle when a picked document closes the list', async () => {
+    const shown = emotionDisclosure()
+    await open(shown, PHONE, 'de')
+    const toggle = screen.getByRole('button', {
+      name: `Dokumente (${String(shown.documents.length)})`,
+    })
+    await userEvent.click(toggle)
+    const list = screen.getByRole('navigation', { name: 'Dokumente' })
+    await userEvent.click(within(list).getByRole('link', { current: 'page' }))
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(document.activeElement).toBe(toggle)
+  })
+
   it("closes a skeleton's section list too, and opens it on request", async () => {
     await open(qualityManagement(), PHONE, 'de')
     const toggle = screen.getByRole('button', { name: 'Abschnitte nach Art. 17 (15)' })
