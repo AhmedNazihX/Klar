@@ -1794,7 +1794,10 @@ KNOWN_GAPS: dict[str, KnownGap] = {
         "annex:I:A:11) until the third-party-assessment question is answered "
         "(needs_more_information), where the label leaves the MDR in-house exemption legally "
         "ambiguous; the miss is the status only, no longer a false low risk (E18's recording "
-        "decided not high-risk)",
+        "decided not high-risk). E14: variance on the current prompt, no fix; of E19's two "
+        "recordings one asks (this one) and one answers the assessment 'no' and decides not "
+        "high-risk, and none of the seven recordings since E5 leaves it open in law; a "
+        "re-record can read 'no' again (E14's decision record)",
         _asks_for_third_party_assessment,
     ),
 }

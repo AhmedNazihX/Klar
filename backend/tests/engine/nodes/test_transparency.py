@@ -1101,13 +1101,17 @@ KNOWN_GAPS: dict[str, KnownGap] = {
         "adds Art. 50(4): E19's re-record leaves open in law whether a generic, human-sounding "
         "synthetic voice that imitates no one is a deep fake (legally ambiguous); before, it "
         "asked whether the voices are deep fakes (needs_more_information, E10 re-record, user "
-        "2026-10-06). The label is decided with Art. 50(1) and (2) only",
+        "2026-10-06). The label is decided with Art. 50(1) and (2) only. E14: not variance but "
+        "a label question for the user; the Art. 50 guidelines (para 113) count realistic "
+        "AI-generated personas and voices as persons, which supports the deep-fake reading",
         _adds_deep_fakes,
     ),
     "own-a-15-intranet-assistant-in-house": KnownGap(
         "E18's re-record (2026-10-12), and E19's: under the tighter T3 rule the model doesn't "
         "find the obvious-interaction exception shown and lists Art. 50(1), where the label has "
-        "Art. 50(2) only; E19's re-record decides it (E18's left it legally ambiguous)",
+        "Art. 50(2) only; E19's re-record decides it (E18's left it legally ambiguous). E14: "
+        "not variance; both recordings since T3 read the general AI-tools training as not "
+        "specific to this assistant, a reading of the T3 wording (E18, E19 follow-up)",
         lambda result, case: (
             result.step.status is Status.DECIDED and "art:50:1" in result.transparency_duties
         ),

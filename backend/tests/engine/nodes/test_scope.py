@@ -739,7 +739,8 @@ KNOWN_GAPS: dict[str, KnownGap] = {
     "own-b-05-regression-loan-scorecard": KnownGap(
         "the model resolves guide-definition para 42 to the label's reading A (para 42 concerns "
         "optimisation, not scoring) instead of flagging the definition as contested; class "
-        "correct, status decided instead of legally_ambiguous (user, 2026-09-30)",
+        "correct, status decided instead of legally_ambiguous (user, 2026-09-30). E14: not "
+        "variance; all five recordings since E3 read it so",
         _decides_in_scope,
     ),
 }
