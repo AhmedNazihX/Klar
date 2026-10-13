@@ -35,7 +35,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3);
 │   │   │                            the screens' question fields (hint, options, if_yes, structured
 │   │   │                            readings, settled_by) and law_text.py: the CELEX label (E12)
-│   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev (V3)
+│   │   ├── llm/                     OpenRouter chat + embeddings clients, record/replay (F6); decisions.py: Decisions API for Jev,
+│   │   │                            choice questions (V3) and yes/no (noul) questions (V4)
 │   │   │                            replies.py: the question shapes a model writes, frozen with the recordings (E12)
 │   │   │                            chat.py: engine_chat_model, the engine model pinned to ENGINE_PROVIDER (E3);
 │   │   │                            reply_usage, a reply's cost and tokens (E10); refusal_chat_model and
@@ -115,7 +116,11 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── held_out_hits.py     held-out rows a stored run's traces retrieved; `aiact evaluate held-out-hits` (V8)
 │   │   │   ├── citation_index.py    citation existence against the corpus (doc_key, provision, language, version) (V2)
 │   │   │   ├── baselines.py         `baseline_luna` (engine model, one prompt, no retrieval) and `baseline_jev` (V3)
-│   │   │   ├── judge.py             (V4)
+│   │   │   ├── judge.py             the judge: Jev's probability of yes first, the pinned backup LLM judge for
+│   │   │   │                        unsure items, the four checks' questions (V4, decision 006)
+│   │   │   ├── judge_validation.py  the hand-labelled cases and labels, both judges' resumable answers, agreement,
+│   │   │   │                        calibration and the unsure-margin table; `aiact evaluate judge-validation` (V4)
+│   │   │   ├── judge_report.py      eval/judge_validation/report.md from the answers and the labels (V4)
 │   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support, invented content (V5)
 │   │   │   ├── ragas_metrics.py     context precision/recall, faithfulness, provision recall on the Q&A set;
 │   │   │   │                        `aiact evaluate ragas`, stored in eval_runs (V6)
@@ -223,7 +228,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                never in the corpus tables; `aiact evaluate isolation-embed` (B13);
 │   │                                contaminated.json: Pile B examples retold in the corpus, with the
 │   │                                measured overlap (decision 016; `isolation.load_contaminated`)
-│   ├── judge_validation/            hand-labelled judge cases (V4)
+│   ├── judge_validation/            hand-labelled judge cases (V4): cases.yaml (48, EN and DE), labels.yaml (the user's),
+│   │                                answers.jsonl and report.md (written by `aiact evaluate judge-validation`), README.md
 │   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1);
 │   │                                label_filter_answers.jsonl: the second model's answers (B9)
 │   │   └── pile_b/                  label_filter_answers.jsonl and label_disagreements.md for commission_b
