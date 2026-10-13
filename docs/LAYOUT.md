@@ -124,6 +124,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   │                        calibration and the unsure-margin table; `aiact evaluate judge-validation` (V4)
 │   │   │   ├── judge_report.py      eval/judge_validation/report.md from the answers and the labels (V4)
 │   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support, invented content (V5)
+│   │   │   ├── judged_run.py        judging a stored run's rows, tallies merged into their scores, cost cap (V5)
+│   │   │   ├── judged_command.py    `aiact evaluate judged <run_id>`, registered by cli.py (V5)
 │   │   │   ├── ragas_metrics.py     context precision/recall, faithfulness, provision recall on the Q&A set;
 │   │   │   │                        `aiact evaluate ragas`, stored in eval_runs (V6)
 │   │   │   ├── tool_calls.py        tool-call correctness per step from a stored run's LangSmith traces;

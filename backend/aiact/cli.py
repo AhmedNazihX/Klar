@@ -30,6 +30,7 @@ from aiact.eval import (
     isolation,
     judge_report,
     judge_validation,
+    judged_command,
     label_filter,
     label_filter_report,
     label_freeze,
@@ -299,6 +300,9 @@ def corpus_embed(
 @eval_app.callback()
 def eval_() -> None:
     """Benchmark split, runs and metrics."""
+
+
+eval_app.command("judged")(judged_command.judged)
 
 
 @eval_app.command("academic-import")

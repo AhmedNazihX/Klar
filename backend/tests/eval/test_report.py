@@ -12,6 +12,8 @@ from aiact.cli import app
 from aiact.eval import records, report
 from aiact.eval.cases import BenchmarkCase, CaseSet, load_cases
 from aiact.eval.isolation import ContaminatedExample, ContaminatedList
+from aiact.eval.judge import UNSURE_MARGIN, JudgeCheck
+from aiact.eval.judged import CheckScore, stored_scores
 from aiact.eval.metrics import metric_scorer, summarize
 from aiact.eval.report import (
     RunInfo,
@@ -357,6 +359,64 @@ def test_malformed_stored_models_name_the_case() -> None:
 def test_a_run_without_stored_citation_scores_shows_na() -> None:
     text = build_report(INFO, (_row("a", {"risk_class_accuracy": True}),))
     assert "| Citation existence (at run time) | n/a | 0/0 |" in text
+
+
+# --- judged metrics (V5) -------------------------------------------------------------------------
+
+JUDGE = {
+    "jev_model": "typesafe/jev-1.13",
+    "backup_model": "anthropic/claude-haiku-5.5",
+    "backup_provider": "google-vertex/europe",
+    "margin": UNSURE_MARGIN,
+}
+
+
+def _judged_scores(check: JudgeCheck, score: CheckScore) -> dict[str, object]:
+    return {"risk_class_accuracy": True, **stored_scores({check: score})}
+
+
+def test_the_judged_scores_stored_with_the_cases_appear_in_the_report() -> None:
+    citation = JudgeCheck.CITATION_SUPPORT
+    rows = (
+        _row("a", _judged_scores(citation, CheckScore(held=4, judged=5, cost_usd=0.0005))),
+        _row(
+            "b",
+            _judged_scores(citation, CheckScore(held=1, judged=1, not_measured=1, cost_usd=0.0001)),
+        ),
+        _row("c", {"risk_class_accuracy": True}),
+        _stored(case("d"), None),
+    )
+    info = report.run_info(INFO.id, "own", INFO.git_sha, INFO.started_at, {"judged": JUDGE})
+    lines = build_report(info, rows).splitlines()
+    assert "### Judged metrics" in lines
+    assert "- Cases judged: 2 of 3" in lines
+    assert "| Citation support | 83.3% | 5/6 | 1 | 0 | $0.0006 | $0.000086 |" in lines
+    assert any(line.startswith("- Judge: Jev `typesafe/jev-1.13`, backup ") for line in lines)
+    assert "- Judge cost: $0.0006, 0 tokens (not in the run's cost above)" in lines
+
+
+def test_a_run_not_judged_says_how_to_judge_it() -> None:
+    text = build_report(INFO, (_row("a", {"risk_class_accuracy": True}),))
+    assert text.rstrip().endswith(
+        "Judged metrics: not judged yet (`aiact evaluate judged <run_id>`)."
+    )
+
+
+def test_a_malformed_judged_score_names_the_case() -> None:
+    with pytest.raises(report.RunRecordError, match="case a: stored judged scores of"):
+        _row("a", {"judged_evidence_tag_held": -2})
+
+
+def test_a_qa_runs_report_shows_q_and_a_support() -> None:
+    info = report.run_info(INFO.id, "qa", INFO.git_sha, INFO.started_at, {"judged": JUDGE}, 0.2)
+    qa = JudgeCheck.QA_SUPPORT
+    judged = ({qa: CheckScore(held=1, judged=1)}, {qa: CheckScore(held=0, judged=1)}, {})
+    lines = report.build_qa_report(info, judged).splitlines()
+    assert lines[0] == f"## Run {INFO.id}"
+    assert "- Benchmark: `qa`" in lines
+    assert "- Items: 3" in lines
+    assert "- Cases judged: 2 of 3" in lines
+    assert "| Q&A support | 50.0% | 1/2 | 0 | 0 | $0.0000 | $0.000000 |" in lines
 
 
 # --- CLI ---------------------------------------------------------------------------------------

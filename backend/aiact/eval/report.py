@@ -18,8 +18,10 @@ status, uncommitted changes, subset, appended answers; T1), each shown only when
 it, so runs stored before a setting existed still load. Own cases are labelled development cases
 (decision 018). A run holding contaminated cases (decision 016) gets a second accuracy row
 without them, naming them. Below the table come the provider refusals (`refusals`, from each
-row's `scores.models`), the failure cases grouped by step (`failures`) and the model-written
-texts (`texts`).
+row's `scores.models`), the failure cases grouped by step (`failures`), the model-written
+texts (`texts`) and the judged metrics (`judged`, V5): the tallies `aiact evaluate judged`
+stored in each row's scores, never judged again here. A Q&A run (`aiact evaluate ragas`) gets
+its settings and its judged metrics only.
 """
 
 from collections.abc import Mapping, Sequence
@@ -32,6 +34,17 @@ from pydantic import Field, TypeAdapter, ValidationError
 from aiact.eval.cases import BenchmarkCase, CaseSet
 from aiact.eval.failures import render_failures
 from aiact.eval.isolation import ContaminatedList, load_contaminated
+from aiact.eval.judge import JudgeCheck
+from aiact.eval.judged import (
+    CheckScore,
+    JudgedRecordError,
+    JudgedSettings,
+    parse_settings,
+    read_stored,
+    render_judged,
+    run_totals,
+)
+from aiact.eval.judged_run import QA_BENCHMARK
 from aiact.eval.metrics import (
     CITATION_EXISTENCE_KEY,
     Outcome,
@@ -92,6 +105,8 @@ class RunInfo(ContractModel):
     status: str | None = None
     is_git_dirty: bool | None = None
     answers_from: str | None = None
+    judged: JudgedSettings | None = None
+    """The judge the run's results were judged with (`aiact evaluate judged`, V5)."""
 
 
 class StoredCase(ContractModel):
@@ -103,6 +118,8 @@ class StoredCase(ContractModel):
     models: dict[str, dict[str, int]] = Field(default_factory=dict)
     """Each node's calls by the model that served them (`runner.MODELS_KEY`); empty when the
     classifier didn't report them."""
+    judged: dict[JudgeCheck, CheckScore] = Field(default_factory=dict)
+    """The judged tallies (V5); empty when the case wasn't judged."""
 
 
 def load_run_info(conn: psycopg.Connection, run_id: UUID) -> RunInfo:
@@ -150,6 +167,7 @@ def run_info(
         status=status if isinstance(status, str) else None,
         is_git_dirty=dirty if isinstance(dirty, bool) else None,
         answers_from=_text(settings, "answers_from"),
+        judged=parse_settings(settings),
     )
 
 
@@ -196,7 +214,16 @@ def stored_case(
         is_scoring_error=stored.get(SCORING_ERROR_KEY) is True,
         citation_existence=citation_score if isinstance(citation_score, bool) else None,
         models=_served_models(case_id, stored.get(MODELS_KEY)),
+        judged=_judged(case_id, stored),
     )
+
+
+def _judged(case_id: str, scores: Mapping[str, object]) -> dict[JudgeCheck, CheckScore]:
+    """The stored judged tallies; a malformed one is a `RunRecordError` naming the case."""
+    try:
+        return read_stored(scores)
+    except JudgedRecordError as exc:
+        raise RunRecordError(f"case {case_id}: {exc}") from exc
 
 
 def _served_models(case_id: str, value: object) -> dict[str, dict[str, int]]:
@@ -210,10 +237,46 @@ def _served_models(case_id: str, value: object) -> dict[str, dict[str, int]]:
 
 
 def run_report(conn: psycopg.Connection, run_id: UUID) -> str:
-    """The markdown report for one stored run."""
-    return build_report(
-        load_run_info(conn, run_id), load_stored_cases(conn, run_id), load_contaminated()
+    """The markdown report for one stored run; a Q&A run's holds its judged metrics."""
+    info = load_run_info(conn, run_id)
+    if info.benchmark == QA_BENCHMARK:
+        return build_qa_report(info, load_judged_scores(conn, run_id))
+    return build_report(info, load_stored_cases(conn, run_id), load_contaminated())
+
+
+def load_judged_scores(
+    conn: psycopg.Connection, run_id: UUID
+) -> tuple[dict[JudgeCheck, CheckScore], ...]:
+    """Each stored row's judged tallies, whatever the run's rows hold besides."""
+    rows = conn.execute(
+        "select case_id, scores from eval_case_results where run_id = %s order by case_id",
+        (run_id,),
+    ).fetchall()
+    return tuple(
+        _judged(case_id, scores if isinstance(scores, Mapping) else {}) for case_id, scores in rows
     )
+
+
+def build_qa_report(info: RunInfo, judged: Sequence[Mapping[JudgeCheck, CheckScore]]) -> str:
+    """A Q&A run's report: its settings and its judged metrics (Q&A support)."""
+    lines = [
+        f"## Run {info.id}",
+        "",
+        *_settings_lines(info),
+        f"- Started: {info.started_at.isoformat()}",
+        f"- Cost: ${info.cost_usd:.4f}, {info.tokens} tokens",
+        f"- Items: {len(judged)}",
+        "",
+        *_judged_lines(judged, len(judged), info.judged),
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _judged_lines(
+    judged: Sequence[Mapping[JudgeCheck, CheckScore]], cases: int, settings: JudgedSettings | None
+) -> list[str]:
+    tallies = [scores for scores in judged if scores]
+    return render_judged(run_totals(tallies), len(tallies), cases, settings)
 
 
 def build_report(
@@ -231,7 +294,15 @@ def build_report(
         [RefusalCase(outcome=case.outcome, models=case.models) for case in scored],
         info.second_model,
     )
-    for section in (render_refusals(refusals), render_failures(outcomes), render_texts(outcomes)):
+    answered = [case for case in cases if case.outcome.result is not None]
+    judged = _judged_lines([case.judged for case in answered], len(answered), info.judged)
+    sections = (
+        render_refusals(refusals),
+        render_failures(outcomes),
+        render_texts(outcomes),
+        judged,
+    )
+    for section in sections:
         lines += ["", *section]
     return "\n".join(lines) + "\n"
 
