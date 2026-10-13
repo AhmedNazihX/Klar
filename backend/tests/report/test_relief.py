@@ -10,6 +10,7 @@ from aiact.export import Paper, Table
 from aiact.obligations.list import list_obligations
 from aiact.report import checklist_report, inventory_report, result_report
 from aiact.report.checklist import ChecklistDuty, ChecklistTool
+from aiact.report.common import is_relieved
 from aiact.report.inventory import InventoryDuty, InventoryTool
 from aiact.schemas import (
     ClassificationResult,
@@ -94,6 +95,26 @@ def test_a_larger_company_or_no_profile_sees_no_relief(size_class: str | None) -
             _provider_result(), language=language, prepared_on=ON, size_class=size_class
         )
         assert not any("Relief" in r or "Erleichterung" in r for r in _duty_rows(paper))
+
+
+@pytest.mark.parametrize(
+    ("size_class", "law_version", "expected"),
+    [
+        ("sme", LawVersion.AMENDED, True),
+        ("smc", LawVersion.AMENDED, True),
+        ("sme", LawVersion.ORIGINAL, False),
+        ("smc", LawVersion.ORIGINAL, False),
+        ("none", LawVersion.AMENDED, False),
+        (None, LawVersion.AMENDED, False),
+        ("sme", None, False),
+    ],
+)
+def test_the_relief_is_for_an_sme_or_a_small_mid_cap_under_the_amended_text_only(
+    size_class: str | None, law_version: LawVersion | None, expected: bool
+) -> None:
+    """The guard itself: a result stored under the original text gets no relief whatever the
+    size (its duties come from the amended table, so the report-level test alone can't fail)."""
+    assert is_relieved(size_class, law_version) is expected
 
 
 def test_no_relief_under_the_original_text() -> None:
