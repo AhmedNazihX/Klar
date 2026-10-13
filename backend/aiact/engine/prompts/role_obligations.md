@@ -19,6 +19,10 @@ Answer each key fact with JSON matching the schema:
   - "distributor": it makes a system available on the EU market without being its provider or
     importer (Art. 3(7)).
   - null: the description doesn't say and nothing points either way.
+  When the company builds its own system on another provider's model (builds_on_gpai below),
+  answer "deployer" when it also uses that system itself under its own authority, and
+  "provider" when only others use it; the application then adds the provider role, since one
+  operator may hold more than one role at once (Art. 3(4); recital 83).
 - builds_on_gpai: the company builds its own AI system on top of a general-purpose AI model from
   another provider, for example by integrating a foundation model through an API into its own
   product. Merely using a ready-made general-purpose AI system (a chat assistant) as it is, is

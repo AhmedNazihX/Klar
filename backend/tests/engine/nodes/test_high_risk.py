@@ -54,7 +54,6 @@ from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
 from aiact.eval.experiments.matchers import (
     EXEMPTION_TRAP,
-    case_label,
     high_risk_matches,
     high_risk_or_exempt_matches,
     replay_state,
@@ -93,6 +92,7 @@ from tests.engine.nodes.corpus_recording import (
     require_recording,
 )
 from tests.engine.nodes.known_gaps import (
+    E20_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1759,6 +1759,7 @@ def replay_check(
         yield check
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
@@ -1774,54 +1775,30 @@ def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     assert high_risk_matches(result, WORKED_EXAMPLE_CASE)
 
 
-def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) -> bool:
-    """High-risk assumed on the case's Annex I point, asking whether a third-party conformity
-    assessment is required (Art. 6(1)(b))."""
-    missing = result.step.missing_fact
-    return (
-        result.step.status is Status.NEEDS_MORE_INFORMATION
-        and result.high_risk_route is HighRiskRoute.ANNEX_I
-        and result.annex_point in case_label(case).annex_point
-        and missing is not None
-        and missing.id == "third_party_assessment"
-        and missing.about == "art:6:1:b"
-    )
-
-
-KNOWN_GAPS: dict[str, KnownGap] = {
-    "own-e-10-in-house-nodule-finder": KnownGap(
-        "E19's re-record (2026-10-12): high-risk is assumed on the Annex I route (MDR, "
-        "annex:I:A:11) until the third-party-assessment question is answered "
-        "(needs_more_information), where the label leaves the MDR in-house exemption legally "
-        "ambiguous; the miss is the status only, no longer a false low risk (E18's recording "
-        "decided not high-risk). E14: variance on the current prompt, no fix; of E19's two "
-        "recordings one asks (this one) and one answers the assessment 'no' and decides not "
-        "high-risk, and none of the seven recordings since E5 leaves it open in law; a "
-        "re-record can read 'no' again (E14's decision record)",
-        _asks_for_third_party_assessment,
-    ),
-}
+KNOWN_GAPS: dict[str, KnownGap] = {}
 """Recorded cases whose high-risk outcome differs from the label, with the reason and the
-reading they give instead; each fails when it starts matching, so the entry is removed."""
+reading they give instead; each fails when it starts matching, so the entry is removed. E20
+removed own-e-10's (an in-house MDR device asked, or read "no", on the third-party assessment;
+decision 035 follow-up 2): the exemption rule in high_risk.md holds it open in law."""
 
 
 MEDICAL_DEVICES = "(EU) 2017/745"
 """The Medical Device Regulation, as both languages name it."""
-MDR_HIGH_RISK = AnswerOutcome(
-    risk_class=RiskClass.HIGH_RISK,
-    high_risk_route=HighRiskRoute.ANNEX_I,
-    provision_id="annex:I:A:11",
-    duties_from=date(2028, 8, 2),
-)
-"""What a yes to own-e-10's third-party question settles: high-risk under the MDR, its duties
-from the Annex I date (E12 DoD, restored by E19 once the step asks it again)."""
 PRODUCT_LAW_QUESTIONS: dict[str, tuple[str, AnswerOutcome | None]] = {
     "own-e-08-heart-rhythm-app": ("intended_purpose", None),  # a second Annex I fact is open
-    "own-e-10-in-house-nodule-finder": ("third_party_assessment", MDR_HIGH_RISK),
 }
-"""Recorded cases whose step asks an Annex I question, and what a yes settles (E12 DoD)."""
-AMBIGUOUS_CASE = "own-e-09-ropeway-wear-forecast"
-"""The recorded case whose step leaves an Annex I question open in law (E12 DoD)."""
+"""Recorded cases whose step asks an Annex I question, and what a yes settles (E12 DoD; what a
+yes to the third-party question settles is pinned in test_high_risk_questions.py)."""
+AMBIGUOUS_CASES = frozenset({"own-e-09-ropeway-wear-forecast", "own-e-10-in-house-nodule-finder"})
+"""The recorded cases whose step leaves an Annex I question open in law (E12 DoD): own-e-09 on
+the safety component, own-e-10 on the third-party assessment its in-house exemption leaves
+open (E20)."""
+ANNEX_I_READING_TITLES = {
+    Language.EN: ("High-risk under Art. 6(1)", "Art. 6(1) not met"),
+    Language.DE: ("Hochrisiko nach Art. 6 Abs. 1", "Art. 6 Abs. 1 nicht erfüllt"),
+}
+"""An open Annex I question's two reading titles, by language (own-e-09 is English, own-e-10
+German)."""
 
 
 def assert_the_screens_fields(
@@ -1843,17 +1820,18 @@ def assert_the_screens_fields(
         assert [c.provision_id for c in missing.citations] == ["annex:I:A:11", "art:6:1"]
         assert missing.options == YES_NO
         assert missing.if_yes == if_yes
-    if case.id == AMBIGUOUS_CASE:
+    if case.id in AMBIGUOUS_CASES:
         question = step.open_question
         assert question is not None
         stricter, lenient = question.readings
+        high_title, not_met_title = ANNEX_I_READING_TITLES[run_state["language"]]
         assert (stricter.title, stricter.risk_class, stricter.is_applied) == (
-            "High-risk under Art. 6(1)",
+            high_title,
             RiskClass.HIGH_RISK,
             True,
         )
         assert (lenient.title, lenient.risk_class, lenient.is_applied) == (
-            "Art. 6(1) not met",
+            not_met_title,
             None,
             False,
         )
@@ -1864,6 +1842,7 @@ def assert_the_screens_fields(
         assert [item.kind for item in question.settled_by] == [SettledByKind.GUIDANCE]
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1919,6 +1898,7 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
     return result
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_machinery_guard_is_annex_i_section_a(
     original_replay_check: HighRiskCheck,
@@ -1936,6 +1916,7 @@ def test_replay_original_machinery_guard_is_annex_i_section_a(
     assert "Art. 2 Abs. 2" not in step.decision, shown  # the case is German
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     original_replay_check: HighRiskCheck,
@@ -1986,6 +1967,7 @@ def e18_replay_check(
         yield check
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
 def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
@@ -2009,6 +1991,7 @@ part needs inspection, and closes the lane until it is done, is a safety compone
 para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2."""
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_POSITIVE_CASES, ids=lambda case: case.id)
 def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
@@ -2100,6 +2083,7 @@ def own_f_replay_check(
         yield check
 
 
+@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", OWN_F_CASES, ids=lambda case: case.id)
 def test_own_f_replay(case: BenchmarkCase, own_f_replay_check: HighRiskCheck) -> None:
@@ -2179,3 +2163,31 @@ def test_the_prompt_states_the_e19_rules() -> None:
         assert rule in flat
     for dropped in DROPPED_RULES:
         assert dropped not in flat
+
+
+E20_RULE = (
+    "An exemption from that legislation's conformity procedure that the company relies on (for "
+    'example an in-house or own-use exemption, or a derogation) is never "no" by itself. While '
+    "the description doesn't show that the exemption's conditions are met, answer \"unknown\". "
+    'Once it does, whether Art. 6(1)(b) still applies is open in law: the product "is required '
+    "to undergo a third-party conformity assessment\" can mean the product's class under that "
+    'legislation or the product as the company handles it. Answer `settled_in_law` "no" and '
+    '`open_on` "third_party_assessment".'
+)
+"""E20's rule on an exemption from the sector law's conformity procedure (decision 035 follow-up
+2), as high_risk.md words it: Art. 6(1)(b)'s "is required to undergo" read both ways."""
+E20_ORIGINAL_RULE = (
+    "An exemption from that legislation's conformity procedure that the company relies on is "
+    'read as the instructions say: never "no" by itself.'
+)
+"""The same rule kept under the original text, whose overlay redefines `third_party_assessment`."""
+
+
+def test_the_prompt_states_the_e20_exemption_rule() -> None:
+    """The rule sits in `third_party_assessment`, after its definition and before the next
+    section, and the original text's overlay keeps it."""
+    flat = " ".join(node.HIGH_RISK_INSTRUCTIONS.split())
+    assert E20_RULE in flat
+    start = flat.index("- `third_party_assessment`:")
+    assert start < flat.index(E20_RULE) < flat.index("## question")
+    assert E20_ORIGINAL_RULE in " ".join(node.ORIGINAL_INSTRUCTIONS.split())
