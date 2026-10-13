@@ -150,3 +150,49 @@ describe('Edit description', () => {
     })
   })
 })
+
+describe('the questions a result asks', () => {
+  const assumed = 'The company bought the tool.'
+  const inferred = 'It ranks applicants.'
+  const confirmAssumed: FollowUpQuestion = {
+    id: 'confirm_the_company_bought_the_tool',
+    text: `Please confirm: ${assumed}`,
+    options: ['yes', 'no', 'not_sure'],
+  }
+  const confirmInferred: FollowUpQuestion = {
+    id: 'confirm_it_ranks_applicants',
+    text: `Please confirm: ${inferred}`,
+    options: ['yes', 'no', 'not_sure'],
+  }
+
+  it("leaves an assumed fact's question to its card, and asks the rest", () => {
+    const result: ClassificationResult = {
+      ...decidedHighRisk(),
+      deciding_facts: [
+        { text: assumed, evidence: 'assumed' },
+        { text: inferred, evidence: 'inferred' },
+      ],
+      follow_up_questions: [confirmAssumed, confirmInferred, YES_NO],
+    }
+    const { deciding, others } = askedQuestions(result)
+    expect(deciding).toBeNull()
+    // An inferred fact's card has no Confirm, so its question stays in the panel.
+    expect(others.map((question) => question.id)).toEqual([confirmInferred.id, YES_NO.id])
+  })
+
+  it("asks a paused result's deciding question once, apart from the others", () => {
+    const result: ClassificationResult = {
+      ...decidedHighRisk(),
+      status: 'needs_more_information',
+      follow_up_questions: [YES_NO, WORDS],
+      steps: decidedHighRisk().steps.map((step) =>
+        step.step === 'scope'
+          ? { ...step, status: 'needs_more_information', missing_fact: WORDS }
+          : step,
+      ),
+    }
+    const { deciding, others } = askedQuestions(result)
+    expect(deciding?.id).toBe(WORDS.id)
+    expect(others.map((question) => question.id)).toEqual([YES_NO.id])
+  })
+})

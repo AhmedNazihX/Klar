@@ -1,12 +1,4 @@
-import {
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type JSX,
-  type ReactNode,
-} from 'react'
+import { useEffect, useId, useLayoutEffect, useState, type JSX, type ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -47,13 +39,14 @@ export function ClosedOnSmallScreens({
   children: (list: ClosedListProps) => ReactNode
 }): JSX.Element {
   const id = useId()
-  const toggleRef = useRef<HTMLButtonElement>(null)
+  const toggleId = useId()
   const [isOpen, setIsOpen] = useState(false)
   const classes = OPEN_FROM[openFrom]
-  // Focus is outside React. Before the old toggle leaves the page (a layout effect's cleanup runs
-  // while it is still there), it hands the focus on to the toggle of the same list on the new one.
+  // Focus is outside React; the toggle is found by its id. Before the old toggle leaves the page (a
+  // layout effect's cleanup runs while it is still there), it hands the focus on to the toggle of
+  // the same list on the new one.
   useLayoutEffect(() => {
-    const toggle = toggleRef.current
+    const toggle = document.getElementById(toggleId)
     return () => {
       if (toggle === null || document.activeElement !== toggle) return
       focusOnMount = name
@@ -61,16 +54,16 @@ export function ClosedOnSmallScreens({
         focusOnMount = null
       })
     }
-  }, [name])
+  }, [name, toggleId])
   useEffect(() => {
     if (focusOnMount !== name) return
     focusOnMount = null
-    toggleRef.current?.focus()
-  }, [name])
+    document.getElementById(toggleId)?.focus()
+  }, [name, toggleId])
   return (
     <>
       <button
-        ref={toggleRef}
+        id={toggleId}
         type="button"
         aria-expanded={isOpen}
         aria-controls={id}
@@ -103,7 +96,7 @@ export function ClosedOnSmallScreens({
         className: isOpen ? 'flex' : classes.closed,
         close: () => {
           setIsOpen(false)
-          toggleRef.current?.focus()
+          document.getElementById(toggleId)?.focus()
         },
       })}
     </>
