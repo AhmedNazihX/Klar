@@ -47,11 +47,6 @@ ITEM = JudgeItem(
 )
 IMPORT_CHECK_TIMEOUT_S = 120
 """Importing every module (the engine, LangGraph, Docling) takes a few seconds."""
-RECORDING_PENDING = pytest.mark.xfail(
-    raises=CannotOverwriteExistingCassetteException,
-    strict=True,
-    reason="recording pending: the orchestrator records it after the reviews (V4)",
-)
 
 
 def _settings(**values: object) -> Settings:
@@ -466,7 +461,6 @@ def test_jev_judge_roundtrip(openrouter_settings: Settings) -> None:
     assert answer.cost_usd > 0
 
 
-@RECORDING_PENDING
 @pytest.mark.vcr
 def test_backup_judge_roundtrip(openrouter_settings: Settings) -> None:
     """Haiku 5.5 on its pinned EU endpoint; needs the model allowed in the OpenRouter guardrail."""

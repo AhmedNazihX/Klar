@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-13
 - **Story:** V4 (docs/BACKLOG.md)
-- **Status:** accepted (2026-10-13, the user: margin 0.1, backup judge Haiku 4.5 through `.env`)
+- **Status:** accepted (2026-10-13, the user: margin 0.1; backup judge Haiku 5.5 once allowed in the guardrail, validated on both 4.5 and 5.5)
 
 ## Question
 INIT › Evaluation › Judge: the checks that need judgement (citation support, evidence tags, Q&A
@@ -88,12 +88,20 @@ Jev's calibration over the 48 labelled cases: Brier score 0.052, expected calibr
 was 12/12 on citation support and invented content; Haiku 4.5 was 8/12 on invented content.
 0.1 beats 0.0 by one case (jv-de-09), within noise on 48 cases.
 
+**Re-run with Haiku 5.5 (same day).** The user then allowed `anthropic/claude-haiku-5.5` in the
+guardrail and removed the 4.5 line, so the backup judge is the code default again; the 48 cases
+were asked again ($0.0090 OpenRouter) and `test_backup_judge_roundtrip` recorded. Haiku 5.5 alone
+agrees 45/48 (94%, κ 0.88), as often as Jev (45/48, κ 0.87; Brier 0.053, calibration error
+0.087 on this run); by check 12/12 citation support, 11/12 evidence tags, 11/12 Q&A, 11/12
+invented content. Combined: margin 0.1 sends 1 case and agrees 46/48 (κ 0.92); every margin
+from 0.2 to 0.5 agrees 45/48. Margin 0.1 stays the choice. `report.md` and `answers.jsonl` hold
+this run.
+
 ## Decision
-Option C in effect: the INIT design (Jev first, an LLM judge for unsure items) with Claude
-Haiku 4.5 as the backup judge, and the unsure margin 0.1 (`UNSURE_MARGIN`), the report's smallest
-margin with the highest agreement with the hand labels (user, 2026-10-13). W1 runs from a checkout
-whose `backend/.env` sets the 4.5 backup; switching back to 5.5 means removing that line and
-running the validation again (48 cases asked again, at most $0.04). The rule as first proposed:
+Option A, the INIT design: Jev first, Claude Haiku 5.5 (the code default) for unsure items,
+and the unsure margin 0.1 (`UNSURE_MARGIN`), the report's smallest margin with the highest
+agreement with the hand labels (user, 2026-10-13). Option C (Haiku 4.5) was measured first while
+5.5 was blocked; it chose the same margin. The rule as first proposed:
 the margin `report.md` recommends, the smallest margin with
 the highest agreement with the hand labels. If the backup judge alone (margin 0.5) agrees more
 often than every smaller margin, Jev adds nothing and option B applies. The code ships with a

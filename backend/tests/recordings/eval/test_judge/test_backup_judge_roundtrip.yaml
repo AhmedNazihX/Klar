@@ -1,0 +1,53 @@
+interactions:
+- request:
+    body: '{"messages":[{"content":"You check the output of an assistant that classifies
+      AI systems under the EU AI Act. Answer the question below about the two texts
+      you are given, judging only from what they say; nothing will be looked up for
+      you. Texts may be in English or German.\n\nQuestion: Does the cited legal text
+      support the claim? The claim must follow from what the text itself says. A text
+      on the same topic that doesn''t say it, or that names a different actor, condition,
+      deadline or amount, doesn''t support it.\nAnswer yes when: Everything the claim
+      states follows from the cited text.\nAnswer no when: The cited text doesn''t
+      say what the claim states, or says otherwise.\n\nAnswer with JSON matching the
+      schema: holds is true for yes and false for no; reason says in one or two English
+      sentences what decided it.\n","role":"system"},{"content":"claim:\nAn employer
+      that deploys a high-risk AI system at the workplace must obtain the written
+      consent of each affected worker before using it.\n\ncited_text:\nArt. 26(7)\nBefore
+      putting into service or using a high-risk AI system at the workplace, deployers
+      who are employers shall inform workers\u2019 representatives and the affected
+      workers that they will be subject to the use of the high-risk AI system. This
+      information shall be provided, where applicable, in accordance with the rules
+      and procedures laid down in Union and national law and practice on information
+      of workers and their representatives.","role":"user"}],"max_tokens":600,"model":"anthropic/claude-haiku-5.5","provider":{"allow_fallbacks":false,"data_collection":"deny","order":["google-vertex/europe"],"zdr":true},"response_format":{"json_schema":{"name":"judge_verdict","schema":{"additionalProperties":false,"description":"The
+      backup judge''s verdict; also the JSON schema it fills.","properties":{"holds":{"description":"true
+      when the check passes (the answer is yes).","title":"Holds","type":"boolean"},"reason":{"description":"One
+      or two sentences in English.","minLength":1,"title":"Reason","type":"string"}},"required":["holds","reason"],"title":"BackupAnswer","type":"object"}},"type":"json_schema"},"stream":false,"temperature":0.0}'
+    headers:
+      content-type:
+      - application/json
+    method: POST
+    uri: https://openrouter.ai/api/v1/chat/completions
+  response:
+    body:
+      string: '{"id": "gen-1791922082-kjmVtnkQdHPmPyRijLZX", "object": "chat.completion",
+        "created": 1791922082, "model": "anthropic/claude-haiku-5.5", "provider":
+        "Google", "system_fingerprint": null, "service_tier": null, "choices": [{"index":
+        0, "logprobs": null, "finish_reason": "stop", "native_finish_reason": "end_turn",
+        "message": {"role": "assistant", "content": "{\"holds\": false, \"reason\":
+        \"Article 26(7) requires employers to inform workers'' representatives and
+        affected workers before using a high-risk AI system at the workplace, but
+        it does not require obtaining their written consent. The claim adds a consent
+        requirement the text does not contain.\"}", "refusal": null}}], "usage": {"prompt_tokens":
+        727, "completion_tokens": 88, "total_tokens": 815, "cost": 0.00012837, "is_byok":
+        false, "prompt_tokens_details": {"cached_tokens": 0, "cache_write_tokens":
+        0, "audio_tokens": 0, "video_tokens": 0}, "cost_details": {"upstream_inference_cost":
+        0.00012837, "upstream_inference_prompt_cost": 7.997e-05, "upstream_inference_completions_cost":
+        4.84e-05}, "completion_tokens_details": {"reasoning_tokens": 0, "image_tokens":
+        0, "audio_tokens": 0}}}'
+    headers:
+      content-type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1
