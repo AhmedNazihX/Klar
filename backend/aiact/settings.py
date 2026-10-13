@@ -53,6 +53,10 @@ class Settings(BaseSettings):
 
     # Model access
     openrouter_api_key: SecretStr | None = None
+    # The MCP `classify_system` tool's key (P2b): MCP users bring their own OpenRouter key, so the
+    # tool never spends OPENROUTER_API_KEY (INIT > Tech stack, Billing). Set it in the MCP client's
+    # config for this server; without it the tool refuses to run.
+    mcp_openrouter_api_key: SecretStr | None = None
 
     # Database
     supabase_url: str | None = None

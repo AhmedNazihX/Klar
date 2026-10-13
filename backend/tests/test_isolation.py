@@ -33,6 +33,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any, get_type_hints
 
+import anyio
 import psycopg
 import pytest
 import yaml
@@ -57,12 +58,14 @@ from aiact.eval.cases import CASES_DIR, QA_DIR_NAME, CaseSet
 from aiact.eval.isolation import BenchmarkText, ContaminatedList, EmbeddingCache, ExampleText
 from aiact.eval.runner import ClassifierInput
 from aiact.eval.split import SPLIT_FILE, Split, SplitMode
+from aiact.mcp.server import build_server
 from aiact.retrieval import search as search_module
 from aiact.retrieval.provisions import ProvisionNotFoundError, get_provision
 from aiact.retrieval.search import CANDIDATES as SEARCH_CANDIDATES
 from aiact.retrieval.search import search_ai_act
 from aiact.settings import BACKEND_DIR, Settings, get_settings
 from tests.db.conftest import db, db_connection  # noqa: F401  (fixtures)
+from tests.mcp.test_server import HIDDEN_ARGUMENTS, property_names
 
 pytestmark = pytest.mark.db
 
@@ -360,9 +363,21 @@ REQUEST_MODELS: dict[str, type[BaseModel]] = {
     "aiact.api POST /classify body": get_type_hints(api_classify.started_run)["body"],
     "aiact.api POST /qa body": get_type_hints(api_qa.ask_question)["body"],
 }
-"""Every public request model (the bodies P1 and P2b accept): none may carry the opt-in. Add
-the MCP tool's request model here when it exists. The API's query parameters are checked in
-tests/api/test_app.py (no parameter or schema property in its OpenAPI document is an opt-in)."""
+"""Every public request model (the bodies P1 and P2b accept): none may carry the opt-in. The MCP
+`classify_system` tool builds a `ClassifyRequest` from its arguments, whose model the SDK makes
+from the tool's signature: `test_no_mcp_tool_takes_the_opt_in` checks every tool's arguments.
+The API's query parameters are checked in tests/api/test_app.py (no parameter or schema property
+in its OpenAPI document is an opt-in)."""
+
+
+def test_no_mcp_tool_takes_the_opt_in() -> None:
+    """P2b: the four MCP tools, classify_system among them, as an outside agent sees them,
+    nested arguments and `$defs` included (the hidden names are tests/mcp/test_server.py's)."""
+    assert {OPT_IN_PARAMETER, "exclude_source_example_ids"} <= HIDDEN_ARGUMENTS
+    tools = anyio.run(build_server().list_tools)
+    assert "classify_system" in {tool.name for tool in tools}
+    for tool in tools:
+        assert property_names(tool.input_schema).isdisjoint(HIDDEN_ARGUMENTS), tool.name
 
 
 @pytest.mark.parametrize("name", sorted(ENGINE_OPT_INS))
