@@ -20,7 +20,7 @@ interactions:
     uri: https://openrouter.ai/api/v1/embeddings
   response:
     body:
-      string: '{"id": "gen-emb-1791836715-QWwzHPscDPqOkAetkKvR", "object": "list",
+      string: '{"id": "gen-emb-1791921357-oVqtgwgPGyNymr4AsODM", "object": "list",
         "data": [{"object": "embedding", "embedding": [-0.004968659952282906, 0.01469404622912407,
         0.012433423660695553, 0.038995739072561264, 0.0365467295050621, 0.006075422745198011,
         -0.0337209515273571, 0.03824219852685928, 0.0040267338044941425, 0.012716001830995083,
@@ -580,36 +580,45 @@ interactions:
       6(1c)).\n  \"unknown\" when the description leaves open facts the legislation''s
       conformity route depends on.\n  When the description says the conformity route
       is not decided yet, answer \"unknown\"; do not\n  fill it in from what you know
-      of the sector law.\n\nWhen no legislation covers the product, answer `point`
-      null and every key fact \"no\".\n\n## question\n\n- `question`: when you answered
-      a key fact \"unknown\" and none of the cases above covers it, the\n  one question
-      that would settle it (`id` a short snake_case name, `text` in the language asked\n  for,
-      `about` \"high_risk\"). Otherwise null.\n\nWrite every `fact`, question and
-      reading in the language the user message asks for (`en`:\nEnglish, `de`: German).
-      Answer with JSON matching the schema, and nothing else.\n","role":"system"},{"content":"Law
-      version:\nThe text read here is the original AI Act (Regulation (EU) 2024/1689
-      as published in 2024), not\nthe text as amended by the Digital Omnibus. It has
-      no Art. 6(1a), (1b) or (1c): where the\ninstructions name them, read `annex_i`
-      by Art. 6(1) and the definition in Art. 3(14) alone.\n- `safety_component_or_product`:
-      \"yes\" when the AI system is itself the product, or is a component\n  of it
-      that fulfils a safety function for it, or whose failure or malfunctioning endangers
-      the\n  health and safety of persons or property (Art. 3(14)); otherwise \"no\".\n-
-      `third_party_assessment`: \"yes\" when that legislation requires the product
-      to undergo a\n  third-party conformity assessment before it is placed on the
-      market or put into service,\n  whatever risks the assessment covers (radio spectrum
-      use and electromagnetic interference\n  included); \"no\" when the manufacturer
-      may assess conformity itself.\n\nAnnex I:\n[annex:I:A:1] Richtlinie 2006/42/EG
-      \u00fcber Maschinen (mit Wirkung vom 20. Januar 2027 aufgehoben durch die Verordnung
-      (EU) 2023/1230 \u00fcber Maschinen; Verweise auf die Richtlinie gelten als Verweise
-      auf diese Verordnung)\n[annex:I:A:2] Richtlinie 2009/48/EG \u00fcber die Sicherheit
-      von Spielzeug\n[annex:I:A:3] Richtlinie 2013/53/EU \u00fcber Sportboote und
-      Wassermotorr\u00e4der\n[annex:I:A:4] Richtlinie 2014/33/EU \u00fcber Aufz\u00fcge
-      und Sicherheitsbauteile f\u00fcr Aufz\u00fcge\n[annex:I:A:5] Richtlinie 2014/34/EU
-      \u00fcber Ger\u00e4te und Schutzsysteme zur bestimmungsgem\u00e4\u00dfen Verwendung
-      in explosionsgef\u00e4hrdeten Bereichen\n[annex:I:A:6] Richtlinie 2014/53/EU
-      \u00fcber Funkanlagen\n[annex:I:A:7] Richtlinie 2014/68/EU \u00fcber Druckger\u00e4te\n[annex:I:A:8]
-      Verordnung (EU) 2016/424 \u00fcber Seilbahnen\n[annex:I:A:9] Verordnung (EU)
-      2016/425 \u00fcber pers\u00f6nliche Schutzausr\u00fcstungen\n[annex:I:A:10]
+      of the sector law.\n  An exemption from that legislation''s conformity procedure
+      that the company relies on (for\n  example an in-house or own-use exemption,
+      or a derogation) is never \"no\" by itself. While the\n  description doesn''t
+      show that the exemption''s conditions are met, answer \"unknown\". Once it\n  does,
+      whether Art. 6(1)(b) still applies is open in law: the product \"is required
+      to undergo a\n  third-party conformity assessment\" can mean the product''s
+      class under that legislation or\n  the product as the company handles it. Answer
+      `settled_in_law` \"no\" and `open_on`\n  \"third_party_assessment\".\n\nWhen
+      no legislation covers the product, answer `point` null and every key fact \"no\".\n\n##
+      question\n\n- `question`: when you answered a key fact \"unknown\" and none
+      of the cases above covers it, the\n  one question that would settle it (`id`
+      a short snake_case name, `text` in the language asked\n  for, `about` \"high_risk\").
+      Otherwise null.\n\nWrite every `fact`, question and reading in the language
+      the user message asks for (`en`:\nEnglish, `de`: German). Answer with JSON matching
+      the schema, and nothing else.\n","role":"system"},{"content":"Law version:\nThe
+      text read here is the original AI Act (Regulation (EU) 2024/1689 as published
+      in 2024), not\nthe text as amended by the Digital Omnibus. It has no Art. 6(1a),
+      (1b) or (1c): where the\ninstructions name them, read `annex_i` by Art. 6(1)
+      and the definition in Art. 3(14) alone.\n- `safety_component_or_product`: \"yes\"
+      when the AI system is itself the product, or is a component\n  of it that fulfils
+      a safety function for it, or whose failure or malfunctioning endangers the\n  health
+      and safety of persons or property (Art. 3(14)); otherwise \"no\".\n- `third_party_assessment`:
+      \"yes\" when that legislation requires the product to undergo a\n  third-party
+      conformity assessment before it is placed on the market or put into service,\n  whatever
+      risks the assessment covers (radio spectrum use and electromagnetic interference\n  included);
+      \"no\" when the manufacturer may assess conformity itself. An exemption from
+      that\n  legislation''s conformity procedure that the company relies on is read
+      as the instructions\n  say: never \"no\" by itself.\n\nAnnex I:\n[annex:I:A:1]
+      Richtlinie 2006/42/EG \u00fcber Maschinen (mit Wirkung vom 20. Januar 2027 aufgehoben
+      durch die Verordnung (EU) 2023/1230 \u00fcber Maschinen; Verweise auf die Richtlinie
+      gelten als Verweise auf diese Verordnung)\n[annex:I:A:2] Richtlinie 2009/48/EG
+      \u00fcber die Sicherheit von Spielzeug\n[annex:I:A:3] Richtlinie 2013/53/EU
+      \u00fcber Sportboote und Wassermotorr\u00e4der\n[annex:I:A:4] Richtlinie 2014/33/EU
+      \u00fcber Aufz\u00fcge und Sicherheitsbauteile f\u00fcr Aufz\u00fcge\n[annex:I:A:5]
+      Richtlinie 2014/34/EU \u00fcber Ger\u00e4te und Schutzsysteme zur bestimmungsgem\u00e4\u00dfen
+      Verwendung in explosionsgef\u00e4hrdeten Bereichen\n[annex:I:A:6] Richtlinie
+      2014/53/EU \u00fcber Funkanlagen\n[annex:I:A:7] Richtlinie 2014/68/EU \u00fcber
+      Druckger\u00e4te\n[annex:I:A:8] Verordnung (EU) 2016/424 \u00fcber Seilbahnen\n[annex:I:A:9]
+      Verordnung (EU) 2016/425 \u00fcber pers\u00f6nliche Schutzausr\u00fcstungen\n[annex:I:A:10]
       Verordnung (EU) 2016/426 \u00fcber Ger\u00e4te zur Verbrennung gasf\u00f6rmiger
       Brennstoffe\n[annex:I:A:11] Verordnung (EU) 2017/745 \u00fcber Medizinprodukte\n[annex:I:A:12]
       Verordnung (EU) 2017/746 \u00fcber In-vitro-Diagnostika\n[annex:I:B:13] Verordnung
@@ -955,37 +964,35 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "{\"id\": \"gen-1791836716-WSg5ymdD5ittUifziqHa\", \"object\": \"chat.completion\",
-        \"created\": 1791836716, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+      string: "{\"id\": \"gen-1791921357-LAp1UUyuM27YICShRmiO\", \"object\": \"chat.completion\",
+        \"created\": 1791921357, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
         \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
         [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
         \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
         \ \\\"annex_iii\\\": {\\n    \\\"point\\\": null,\\n    \\\"uses\\\": \\\"no\\\",\\n
         \   \\\"public_authority\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n
         \   \\\"open_question\\\": null,\\n    \\\"open_on\\\": \\\"none\\\",\\n    \\\"evidence\\\":
-        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Die beschriebenen Verwendungen des
-        Sprachassistenten fallen unter keinen Annex-III-Punkt.\\\",\\n    \\\"fact_numbers\\\":
-        []\\n  ,\\n  \\\"examples\\\": []\\n  },\\n  \\\"art_6_3\\\": {\\n    \\\"condition\\\":
+        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der Sprachassistent ist f\xFCr keine
+        der aufgef\xFChrten Annex-III-Verwendungen bestimmt.\\\",\\n    \\\"fact_numbers\\\":
+        []\\n ,\\n  \\\"examples\\\": []\\n  },\\n  \\\"art_6_3\\\": {\\n    \\\"condition\\\":
         \\\"none\\\",\\n    \\\"profiling\\\": \\\"no\\\",\\n    \\\"settled_in_law\\\":
         \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Da keine Annex-III-Verwendung vorliegt, ist der Filter
-        nach Artikel 6 Absatz 3 nicht anwendbar; eine Profilbildung ist nicht beschrieben.\\\",\\n
-        \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"annex_i\\\": {\\n    \\\"point\\\":
-        \\\"annex:I:A:6\\\",\\n    \\\"covered\\\": \\\"yes\\\",\\n    \\\"safety_component_or_product\\\":
-        \\\"no\\\",\\n    \\\"third_party_assessment\\\": \\\"yes\\\",\\n    \\\"settled_in_law\\\":
-        \\\"yes\\\",\\n    \\\"open_question\\\": null,\\n    \\\"open_on\\\": \\\"none\\\",\\n
-        \   \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der Sprachassistent
-        ist als Komponente in den unter die Funkanlagenrichtlinie fallenden Lautsprecher
-        eingebaut; er ist keine Sicherheitskomponente und die beschriebene Pr\xFCfung
-        durch eine benannte Stelle betrifft die Funkanlage.\\\",\\n    \\\"fact_numbers\\\":
+        \   \\\"fact\\\": \\\"Da keine Annex-III-Verwendung vorliegt, greift die Pr\xFCfung
+        nach Artikel 6 Absatz 3 nicht ein.\\\",\\n    \\\"fact_numbers\\\": []\\n
+        \ },\\n  \\\"annex_i\\\": {\\n    \\\"point\\\": \\\"annex:I:A:6\\\",\\n    \\\"covered\\\":
+        \\\"yes\\\",\\n    \\\"safety_component_or_product\\\": \\\"no\\\",\\n    \\\"third_party_assessment\\\":
+        \\\"yes\\\",\\n    \\\"settled_in_law\\\": \\\"yes\\\",\\n    \\\"open_question\\\":
+        null,\\n    \\\"open_on\\\": \\\"none\\\",\\n    \\\"evidence\\\": \\\"stated\\\",\\n
+        \   \\\"fact\\\": \\\"Der Lautsprecher f\xE4llt unter die Funkanlagenrichtlinie;
+        eine benannte Stelle hat ihn hinsichtlich der Funkfrequenznutzung gepr\xFCft,
+        w\xE4hrend Sicherheitsfunktionen fehlen.\\\",\\n    \\\"fact_numbers\\\":
         []\\n  },\\n  \\\"question\\\": null\\n}\", \"refusal\": null}}], \"usage\":
-        {\"prompt_tokens\": 10704, \"completion_tokens\": 1391, \"total_tokens\":
-        12095, \"cost\": 0.00164791, \"is_byok\": false, \"prompt_tokens_details\":
-        {\"cached_tokens\": 4655, \"cache_write_tokens\": 6046, \"audio_tokens\":
-        0, \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\": 0.00164791,
-        \"upstream_inference_prompt_cost\": 0.00088286, \"upstream_inference_completions_cost\":
-        0.00076505}, \"completion_tokens_details\": {\"reasoning_tokens\": 1030, \"image_tokens\":
-        0, \"audio_tokens\": 0}}}"
+        {\"prompt_tokens\": 10875, \"completion_tokens\": 847, \"total_tokens\": 11722,
+        \"cost\": 0.0013545125, \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\":
+        4795, \"cache_write_tokens\": 6077, \"audio_tokens\": 0, \"video_tokens\":
+        0}, \"cost_details\": {\"upstream_inference_cost\": 0.0013545125, \"upstream_inference_prompt_cost\":
+        0.0008886625, \"upstream_inference_completions_cost\": 0.00046585}, \"completion_tokens_details\":
+        {\"reasoning_tokens\": 509, \"image_tokens\": 0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
       - application/json

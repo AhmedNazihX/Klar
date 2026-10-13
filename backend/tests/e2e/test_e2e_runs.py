@@ -17,7 +17,7 @@ from aiact.schemas import Language, RiskClass
 from aiact.settings import Settings
 from tests.e2e.runs import E2E_RECORDINGS, RECORD_COMMAND, e2e_runs
 from tests.engine.nodes.corpus_recording import corpus_recording, require_recording
-from tests.engine.nodes.known_gaps import E20_PROMPTS_RECORDING_PENDING, stale_recording_pending
+from tests.engine.nodes.known_gaps import stale_recording_pending
 from tests.engine.replayed_engine import live_corpus, luna_settings, replayed_nodes
 
 RUNS = e2e_runs()
@@ -56,7 +56,6 @@ def run_nodes(
         yield replayed_nodes(recording)
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("name", ["worked_example_answered"])
 def test_the_answered_worked_example_no_longer_asks_its_answer(
@@ -73,7 +72,6 @@ def test_the_answered_worked_example_no_longer_asks_its_answer(
     assert not asked & {"ai_system", "eu_link"}, asked
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("name", ["worked_example_de"])
 def test_the_worked_example_in_german_is_high_risk(

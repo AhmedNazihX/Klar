@@ -93,7 +93,6 @@ from tests.engine.nodes.corpus_recording import (
     require_recording,
 )
 from tests.engine.nodes.known_gaps import (
-    E20_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1760,7 +1759,6 @@ def replay_check(
         yield check
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
@@ -1881,7 +1879,6 @@ def assert_the_screens_fields(
         assert [item.kind for item in question.settled_by] == [SettledByKind.GUIDANCE]
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -1941,7 +1938,6 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
     return result
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_machinery_guard_is_annex_i_section_a(
     original_replay_check: HighRiskCheck,
@@ -1959,7 +1955,6 @@ def test_replay_original_machinery_guard_is_annex_i_section_a(
     assert "Art. 2 Abs. 2" not in step.decision, shown  # the case is German
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     original_replay_check: HighRiskCheck,
@@ -2010,7 +2005,6 @@ def e18_replay_check(
         yield check
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
 def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
@@ -2034,7 +2028,6 @@ part needs inspection, and closes the lane until it is done, is a safety compone
 para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2."""
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_POSITIVE_CASES, ids=lambda case: case.id)
 def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
@@ -2126,7 +2119,6 @@ def own_f_replay_check(
         yield check
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", OWN_F_CASES, ids=lambda case: case.id)
 def test_own_f_replay(case: BenchmarkCase, own_f_replay_check: HighRiskCheck) -> None:

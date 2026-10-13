@@ -61,7 +61,6 @@ from aiact.settings import Settings
 from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.known_gaps import (
-    E20_PROMPTS_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1675,7 +1674,6 @@ RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_role_obligations.py --re
 """Records the role replays; a missing recording fails its replay, never a skip."""
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 def test_recorded_rebrander_becomes_the_provider(luna_settings: Settings) -> None:
     run_state = state(description=REBRANDER)
@@ -1748,7 +1746,6 @@ def test_a_provider_only_builder_matches_only_without_a_deployer_role(
     assert b5d_matches(outcome, case) is is_match
 
 
-@E20_PROMPTS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",

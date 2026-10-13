@@ -33,17 +33,6 @@ the call (a stream that ends in an error event is turned into `RecordingPendingE
 test)."""
 
 
-E20_PROMPTS_RECORDING_PENDING = pytest.mark.xfail(
-    strict=True,
-    raises=STALE_RECORDING_ERRORS,
-    reason="recording pending (orchestrator): E20 changed the high-risk and role prompts (the "
-    "sector-law exemption rule, the base role of a builder on another provider's model), so the "
-    "recorded requests are stale; delete and re-record",
-)
-"""The replays whose recorded request E20's prompt rules changed, until the orchestrator
-re-records them (BACKLOG > E20)."""
-
-
 def is_stale_recording(error: BaseException) -> bool:
     """Whether `error`, or an error in its `__cause__` chain, is a stale or missing recording."""
     seen: BaseException | None = error

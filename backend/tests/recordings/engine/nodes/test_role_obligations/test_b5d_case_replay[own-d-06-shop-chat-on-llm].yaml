@@ -18,43 +18,47 @@ interactions:
       name\n    or trademark of a provider established outside the EU (Art. 3(6)).\n  -
       \"distributor\": it makes a system available on the EU market without being
       its provider or\n    importer (Art. 3(7)).\n  - null: the description doesn''t
-      say and nothing points either way.\n- builds_on_gpai: the company builds its
-      own AI system on top of a general-purpose AI model from\n  another provider,
-      for example by integrating a foundation model through an API into its own\n  product.
-      Merely using a ready-made general-purpose AI system (a chat assistant) as it
-      is, is\n  \"no\".\n- own_brand (Art. 25(1)(a)): the company puts its own name
-      or trademark on a system that someone\n  else already placed on the market or
-      put into service.\n- substantial_modification (Art. 25(1)(b)): the company makes
-      a substantial modification to a\n  system that was already high-risk for the
-      purpose its provider intended and is already on the\n  market or in service:
-      a change the provider''s initial conformity assessment didn''t foresee or\n  plan,
-      that affects whether the system meets the high-risk requirements or changes
-      its intended\n  purpose (Art. 3(23)), for example retraining it for new tasks
-      or changing how it decides. Mere\n  configuration, and changes the provider''s
-      documentation foresees, are \"no\". Answer \"contested\"\n  when the description
-      says what the company changed and what the provider''s documentation says\n  about
-      such a change, but the Act and its definition don''t settle whether that change
-      is\n  substantial: that is a question of law, not a missing fact. Answer \"unknown\"
-      only when the\n  description hints at a change but doesn''t say what was changed
-      or what the provider''s\n  documentation says about it.\n- changed_purpose (Art.
-      25(1)(c)): the company uses a system, including a general-purpose AI\n  system,
-      that was not high-risk for the purpose its provider intended, for a purpose
-      the provider\n  did not intend, and that new purpose is what makes it high-risk
-      (for example using a general\n  chat assistant to rank job applicants).\n- conditions:
-      one answer per listed condition, by its id: does the condition hold for this
-      system\n  and this company?\n\nFor every key fact:\n- answer: \"yes\", \"no\"
-      or \"unknown\" (substantial_modification may also be \"contested\").\n- evidence:
-      \"stated\" when the description says it, \"inferred\" when it follows from what
-      the\n  description says, \"assumed\" when the description is silent and you
-      take the usual default.\n- fact: the answer as one short fact, in the language
-      asked for (for example \"The company bought\n  the tool and did not change it\").\n-
-      fact_numbers: the numbers of the listed facts the answer rests on; empty when
-      none do.\n\nWhen the description is silent about a switch and nothing hints
-      at it, answer \"no\" with evidence\n\"assumed\": a company that buys a tool
-      is normally a deployer that did not rebrand, modify or\nrepurpose it. Answer
-      \"unknown\" only when the description hints at the fact but doesn''t settle
-      it\n(for example \"we adapted the vendor''s model\" without saying how). For
-      a condition, answer\n\"unknown\" when the description doesn''t settle it.\n","role":"system"},{"content":"Language
+      say and nothing points either way.\n  When the company builds its own system
+      on another provider''s model (builds_on_gpai below),\n  answer \"deployer\"
+      when it also uses that system itself under its own authority, and\n  \"provider\"
+      when only others use it; the application then adds the provider role, since
+      one\n  operator may hold more than one role at once (Art. 3(4); recital 83).\n-
+      builds_on_gpai: the company builds its own AI system on top of a general-purpose
+      AI model from\n  another provider, for example by integrating a foundation model
+      through an API into its own\n  product. Merely using a ready-made general-purpose
+      AI system (a chat assistant) as it is, is\n  \"no\".\n- own_brand (Art. 25(1)(a)):
+      the company puts its own name or trademark on a system that someone\n  else
+      already placed on the market or put into service.\n- substantial_modification
+      (Art. 25(1)(b)): the company makes a substantial modification to a\n  system
+      that was already high-risk for the purpose its provider intended and is already
+      on the\n  market or in service: a change the provider''s initial conformity
+      assessment didn''t foresee or\n  plan, that affects whether the system meets
+      the high-risk requirements or changes its intended\n  purpose (Art. 3(23)),
+      for example retraining it for new tasks or changing how it decides. Mere\n  configuration,
+      and changes the provider''s documentation foresees, are \"no\". Answer \"contested\"\n  when
+      the description says what the company changed and what the provider''s documentation
+      says\n  about such a change, but the Act and its definition don''t settle whether
+      that change is\n  substantial: that is a question of law, not a missing fact.
+      Answer \"unknown\" only when the\n  description hints at a change but doesn''t
+      say what was changed or what the provider''s\n  documentation says about it.\n-
+      changed_purpose (Art. 25(1)(c)): the company uses a system, including a general-purpose
+      AI\n  system, that was not high-risk for the purpose its provider intended,
+      for a purpose the provider\n  did not intend, and that new purpose is what makes
+      it high-risk (for example using a general\n  chat assistant to rank job applicants).\n-
+      conditions: one answer per listed condition, by its id: does the condition hold
+      for this system\n  and this company?\n\nFor every key fact:\n- answer: \"yes\",
+      \"no\" or \"unknown\" (substantial_modification may also be \"contested\").\n-
+      evidence: \"stated\" when the description says it, \"inferred\" when it follows
+      from what the\n  description says, \"assumed\" when the description is silent
+      and you take the usual default.\n- fact: the answer as one short fact, in the
+      language asked for (for example \"The company bought\n  the tool and did not
+      change it\").\n- fact_numbers: the numbers of the listed facts the answer rests
+      on; empty when none do.\n\nWhen the description is silent about a switch and
+      nothing hints at it, answer \"no\" with evidence\n\"assumed\": a company that
+      buys a tool is normally a deployer that did not rebrand, modify or\nrepurpose
+      it. Answer \"unknown\" only when the description hints at the fact but doesn''t
+      settle it\n(for example \"we adapted the vendor''s model\" without saying how).
+      For a condition, answer\n\"unknown\" when the description doesn''t settle it.\n","role":"system"},{"content":"Language
       for facts: de\n\nRisk class so far: limited_risk\n\nEarlier checks:\n-\n\nConditions:\n-\n\nFacts:\n-\n\nDescription:\nWir
       sind ein Start-up aus Graz mit elf Leuten und verkaufen Onlineshops einen Kundenservice-Chat,
       der auf der Shopseite Fragen zu Lieferzeiten, Retouren und Gr\u00f6\u00dfen
@@ -85,38 +89,38 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "{\"id\": \"gen-1791312634-GzNYXCGSVlT4TMXiGRTQ\", \"object\": \"chat.completion\",
-        \"created\": 1791312634, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
+      string: "{\"id\": \"gen-1791921558-0Mte9icbkCNmMlWyafu5\", \"object\": \"chat.completion\",
+        \"created\": 1791921558, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
         \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
         [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
         \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\n
         \ \\\"role\\\": {\\n    \\\"role\\\": \\\"provider\\\",\\n    \\\"evidence\\\":
-        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Das Unternehmen entwickelt durch
-        die Integration des Sprachmodells ein eigenes Chat-System und verkauft es
-        unter dem eigenen Produktnamen.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
-        \ \\\"builds_on_gpai\\\": {\\n    \\\"answer\\\": \\\"yes\\\",\\n    \\\"evidence\\\":
-        \\\"stated\\\",\\n    \\\"fact\\\": \\\"Das Unternehmen integriert das Sprachmodell
-        eines anderen Anbieters \xFCber dessen Schnittstelle in sein eigenes Chat-System.\\\",\\n
+        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Das Start-up entwickelt den Chat
+        auf Grundlage eines fremden Sprachmodells und vertreibt ihn unter dem eigenen
+        Produktnamen.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"builds_on_gpai\\\":
+        {\\n    \\\"answer\\\": \\\"yes\\\",\\n    \\\"evidence\\\": \\\"stated\\\",\\n
+        \   \\\"fact\\\": \\\"Der Chat wird mit dem Sprachmodell eines anderen Anbieters
+        \xFCber dessen Schnittstelle aufgebaut und in ein eigenes Produkt integriert.\\\",\\n
         \   \\\"fact_numbers\\\": []\\n  },\\n  \\\"own_brand\\\": {\\n    \\\"answer\\\":
         \\\"no\\\",\\n    \\\"evidence\\\": \\\"inferred\\\",\\n    \\\"fact\\\":
-        \\\"Das Unternehmen verkauft sein eigenes integriertes System unter \u201EFrieda\u201C;
-        es benennt kein bereits von einem anderen Anbieter auf den Markt gebrachtes
-        System um.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"substantial_modification\\\":
-        {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Beschrieben ist ein eigenes Chat-System, nicht die nachtr\xE4gliche
-        wesentliche \xC4nderung eines bereits hochriskanten Systems eines anderen
-        Anbieters.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n  \\\"changed_purpose\\\":
-        {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\": \\\"inferred\\\",\\n
-        \   \\\"fact\\\": \\\"Der Kundenservice-Chat beantwortet Fragen zu Lieferzeiten,
-        Retouren und Gr\xF6\xDFen; es wird keine Nutzung f\xFCr einen vom Anbieter
-        nicht vorgesehenen hochriskanten Zweck beschrieben.\\\",\\n    \\\"fact_numbers\\\":
+        \\\"Das Start-up vertreibt einen selbst aufgebauten Chat unter \u201EFrieda\u201C
+        und \xFCbernimmt nicht lediglich ein bereits von jemand anderem auf den Markt
+        gebrachtes System unter eigener Marke.\\\",\\n    \\\"fact_numbers\\\": []\\n
+        \ },\\n  \\\"substantial_modification\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n
+        \   \\\"evidence\\\": \\\"stated\\\",\\n    \\\"fact\\\": \\\"Das System ist
+        als limited_risk eingestuft, nicht als bereits f\xFCr seinen vorgesehenen
+        Zweck hochriskantes System.\\\",\\n    \\\"fact_numbers\\\": []\\n  },\\n
+        \ \\\"changed_purpose\\\": {\\n    \\\"answer\\\": \\\"no\\\",\\n    \\\"evidence\\\":
+        \\\"inferred\\\",\\n    \\\"fact\\\": \\\"Der Chat beantwortet Kundenservicefragen
+        und leitet Beschwerden weiter; eine Nutzung f\xFCr einen Zweck, der das System
+        hochriskant macht, ist nicht beschrieben.\\\",\\n    \\\"fact_numbers\\\":
         []\\n  },\\n  \\\"conditions\\\": []\\n}\", \"refusal\": null}}], \"usage\":
-        {\"prompt_tokens\": 1816, \"completion_tokens\": 519, \"total_tokens\": 2335,
-        \"cost\": 0.000327734, \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\":
-        1639, \"cache_write_tokens\": 174, \"audio_tokens\": 0, \"video_tokens\":
-        0}, \"cost_details\": {\"upstream_inference_cost\": 0.000327734, \"upstream_inference_prompt_cost\":
-        4.2284e-05, \"upstream_inference_completions_cost\": 0.00028545}, \"completion_tokens_details\":
-        {\"reasoning_tokens\": 181, \"image_tokens\": 0, \"audio_tokens\": 0}}}"
+        {\"prompt_tokens\": 1900, \"completion_tokens\": 954, \"total_tokens\": 2854,
+        \"cost\": 0.000567908, \"is_byok\": false, \"prompt_tokens_details\": {\"cached_tokens\":
+        1723, \"cache_write_tokens\": 174, \"audio_tokens\": 0, \"video_tokens\":
+        0}, \"cost_details\": {\"upstream_inference_cost\": 0.000567908, \"upstream_inference_prompt_cost\":
+        4.3208e-05, \"upstream_inference_completions_cost\": 0.0005247}, \"completion_tokens_details\":
+        {\"reasoning_tokens\": 618, \"image_tokens\": 0, \"audio_tokens\": 0}}}"
     headers:
       content-type:
       - application/json
