@@ -1,4 +1,4 @@
-# NNN · The engine's known gaps after E19: variance, rule or label
+# 035 · The engine's known gaps after E19: variance, rule or label
 
 - **Date:** 2026-10-13
 - **Story:** E14 (docs/BACKLOG.md); affects E17's deferred items, the high-risk and role prompts, and the own-a-14 label
@@ -57,7 +57,8 @@ question or ended out of scope or contested, so nothing points to the prompt. Co
    description doesn't show the exemption's conditions are met. Once it does, whether Art. 6(1)(b) still applies is
    open in law (`open_on` "third_party_assessment"), because the Act's "is required to undergo" fits both readings and
    the Annex I guidelines don't reach it. Cost: a re-record of every high-risk replay. Benefit: it removes a
-   false-low-risk reading seen in 2 of 7 runs.
+   false-low-risk reading seen in 2 of 7 runs. **User decision (2026-10-13): do it** (story E20, before W1;
+   re-recording the 30 high-risk replays cost about $0.04 at their recorded prices).
 3. **Label (own-a-14).** Should Art. 50(4) stay out of the label for a generic, very human-sounding synthetic phone
    voice? guide-art50 para 113 points the other way. A label change goes through eval/LABEL_CHANGES.md.
 
