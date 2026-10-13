@@ -5,18 +5,19 @@ import type { ClassificationResult } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
 import { useLanguage } from '@/hooks/use-language'
 
-import { banPoints, banStep } from './ban'
+import { banDecisionNote, banPoints } from './ban'
 import { provisionName } from './provision-names'
 import { ProvisionQuote } from './ProvisionQuote'
 
 /** "Why the checks stopped": each Art. 5(1) point the ban rests on, quoted from the corpus in
- *  the screen's language, and the Art. 5 step's own decision. */
+ *  the screen's language, and what the Art. 5 step's decision adds to the verdict and the facts
+ *  beside it (a point that applies only later), never a repeat of them. */
 export function WhyChecksStopped({ result }: { result: ClassificationResult }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
   const points = banPoints(result)
-  const step = banStep(result)
+  const note = banDecisionNote(result)
   return (
     <GlassPanel
       as="section"
@@ -36,7 +37,7 @@ export function WhyChecksStopped({ result }: { result: ClassificationResult }): 
       {points.map((point) => (
         <ProvisionQuote key={point} provisionId={point} result={result} />
       ))}
-      {step && <p className="m-0 text-label font-normal text-slate">{step.decision}</p>}
+      {note && <p className="m-0 text-label font-normal text-slate">{note}</p>}
     </GlassPanel>
   )
 }

@@ -1,7 +1,7 @@
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { ClassificationResult } from '@/api'
+import type { ClassificationResult, StepName } from '@/api'
 import { Button } from '@/components/Button'
 import { RiskPill } from '@/components/RiskPill'
 import { StatusPill } from '@/components/StatusPill'
@@ -9,16 +9,18 @@ import { useLanguage } from '@/hooks/use-language'
 import type { OriginalRun } from '@/hooks/use-original-run'
 
 import { ResultQuestions } from '@/features/ask/ResultQuestions'
+import { SourceDocuments } from '@/features/ask/SourceDocuments'
 import type { QaThread } from '@/hooks/use-qa-thread'
 
+import { isDecidedBan } from './ban'
 import type { ClassificationRun } from './classification-store'
 import { ExportReportButton } from './ExportReportButton'
 import { LawComparison } from './LawComparison'
 import { provisionName } from './provision-names'
 import { ResultHeader, ViewSwitch, type ResultView } from './ResultHeader'
 import { ResultNotice } from './ResultNotice'
-import { decidingStep, statusPill, SUMMARY_ROWS } from './result-text'
-import { DutiesStepCard, EngineStepCard, FactsStepCard } from './StepCards'
+import { decidingStep, statusPill, SUMMARY_ROWS, type SummaryRowId } from './result-text'
+import { DutiesStepCard, EngineStepCard, FactsStepCard, NotCheckedStepCard } from './StepCards'
 import { riskClassOf } from '@/lib/risk-class'
 
 const JSON_INDENT = 2
@@ -34,6 +36,46 @@ function exportJson(run: ClassificationRun): void {
   link.download = `${run.toolId}.json`
   link.click()
   URL.revokeObjectURL(url)
+}
+
+/** One row of the reviewer view in full. On a decided ban the steps after Art. 5 never ran, and
+ *  their cards say so, as the summary's rows do (artboard `ResultProhibited`). */
+function ReviewerStep({
+  id,
+  result,
+  deciding,
+}: {
+  id: SummaryRowId
+  result: ClassificationResult
+  deciding: StepName | null
+}): JSX.Element | null {
+  const { t } = useTranslation()
+  const isBan = isDecidedBan(result)
+  const notChecked = isBan ? t('prohibited.notChecked') : t('result.steps.notChecked')
+  if (id === 'facts') return <FactsStepCard result={result} headingLevel={2} />
+  if (id === 'duties') {
+    if (isBan) {
+      return (
+        <NotCheckedStepCard name={t('result.steps.duties')} reason={notChecked} headingLevel={2} />
+      )
+    }
+    return <DutiesStepCard result={result} headingLevel={2} hasOriginalNote />
+  }
+  const name = id === 'role_obligations' ? t('result.steps.role') : t(`progress.check.${id}`)
+  const step = result.steps.find((candidate) => candidate.step === id)
+  if (!step) {
+    // Without a ban, a step is missing only from a result stored without it: nothing to show.
+    return isBan ? <NotCheckedStepCard name={name} reason={notChecked} headingLevel={2} /> : null
+  }
+  return (
+    <EngineStepCard
+      name={name}
+      step={step}
+      result={result}
+      headingLevel={2}
+      highlight={deciding === id}
+    />
+  )
 }
 
 function ResultPills({ result }: { result: ClassificationResult }): JSX.Element {
@@ -57,7 +99,8 @@ function ResultPills({ result }: { result: ClassificationResult }): JSX.Element 
  * The reviewer view (artboard `Reviewer`): every step expanded, in the Act's order, with its
  * decision, the facts it rests on with their evidence tags, and the quoted provisions. The step
  * that decided a High-risk result is highlighted. Beside the steps, "Original Act vs amended"
- * (VersionDiff, P10), and under it "Questions about this result" (P7).
+ * (VersionDiff, P10), under it "Questions about this result" (P7), then the texts Klar reads ("Texts
+ * used", with their status).
  */
 export function ReviewerView({
   run,
@@ -104,25 +147,9 @@ export function ReviewerView({
       <ResultPills result={result} />
       <div className="flex min-w-0 flex-col items-stretch gap-5 xl:flex-row xl:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-5">
-          {SUMMARY_ROWS.map((id) => {
-            if (id === 'facts') return <FactsStepCard key={id} result={result} headingLevel={2} />
-            if (id === 'duties')
-              return <DutiesStepCard key={id} result={result} headingLevel={2} hasOriginalNote />
-            const step = result.steps.find((candidate) => candidate.step === id)
-            if (!step) return null
-            const name =
-              id === 'role_obligations' ? t('result.steps.role') : t(`progress.check.${id}`)
-            return (
-              <EngineStepCard
-                key={id}
-                name={name}
-                step={step}
-                result={result}
-                headingLevel={2}
-                highlight={deciding === id}
-              />
-            )
-          })}
+          {SUMMARY_ROWS.map((id) => (
+            <ReviewerStep key={id} id={id} result={result} deciding={deciding} />
+          ))}
         </div>
         <div className="flex min-w-0 flex-col gap-4 xl:w-[380px] xl:shrink-0">
           {/* The comparison needs the amended result as its one side: a result run under the
@@ -136,6 +163,7 @@ export function ReviewerView({
             />
           )}
           <ResultQuestions qa={questions} />
+          <SourceDocuments heading={t('ask.sources.textsUsed')} lawVersion={result.law_version} />
         </div>
       </div>
       <ResultNotice result={result} isStored={run.isStored} />

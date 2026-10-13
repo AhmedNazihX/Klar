@@ -48,7 +48,9 @@ describe('ProgressPanel, a description too thin to start (E13, artboard Classify
 
   it('says the same in German', async () => {
     await renderThin('de')
-    const panel = await screen.findByRole('region', { name: 'Prüfung in der Reihenfolge der Verordnung' })
+    const panel = await screen.findByRole('region', {
+      name: 'Prüfung in der Reihenfolge der Verordnung',
+    })
     expect(within(panel).getByText('Wartet auf eine Beschreibung')).toBeVisible()
     expect(
       within(panel).getByText(
@@ -86,7 +88,7 @@ function refusedProgress(): ProgressState {
   }
 }
 
-async function renderRefused(language: 'en' | 'de'): Promise<HTMLElement> {
+async function renderRefused(language: 'en' | 'de', isRerun = false): Promise<HTMLElement> {
   await i18n.changeLanguage(language)
   renderWithProviders(
     <ProgressPanel
@@ -94,11 +96,42 @@ async function renderRefused(language: 'en' | 'de'): Promise<HTMLElement> {
       isRunning={false}
       failure={{ kind: 'provider_refused', steps: ['prohibited'], questions: [PERSON_REVIEW.text] }}
       onTryAgain={() => {}}
-      onSaveForLater={() => {}}
+      // A result's re-run has nothing waiting to be saved (ResultScreen passes none).
+      onSaveForLater={isRerun ? undefined : () => {}}
+      isRerun={isRerun}
     />,
   )
   return screen.findByRole('alert')
 }
+
+describe("ProgressPanel, a result's re-run the model provider refused", () => {
+  it.each([
+    [
+      'en',
+      'Your earlier result still stands',
+      "Your answers are kept. Klar never guesses a class for a check it couldn't assess, so the new run gives no result.",
+      "Blocked by the model provider's content filter: not assessed.",
+    ],
+    [
+      'de',
+      'Ihr bisheriges Ergebnis gilt weiter',
+      'Ihre Antworten bleiben erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb ergibt der neue Durchlauf kein Ergebnis.',
+      'Vom Inhaltsfilter des Modellanbieters blockiert: nicht geprüft.',
+    ],
+  ] as const)(
+    'says the earlier result stands, and leaves the blocked checks to their rows (%s)',
+    async (language, title, body, row) => {
+      const alert = await renderRefused(language, true)
+      expect(alert).toHaveTextContent(title)
+      expect(alert).toHaveTextContent(body)
+      expect(alert).toHaveTextContent(PERSON_REVIEW.text)
+      expect(alert).not.toHaveTextContent(/so there's no result|deshalb gibt es kein Ergebnis/)
+      expect(within(alert).queryByRole('list')).toBeNull()
+      expect(within(alert).queryByRole('button')).toBeNull()
+      expect(screen.getByText(row)).toBeInTheDocument()
+    },
+  )
+})
 
 describe('ProgressPanel, a check the model provider refused (decision 030)', () => {
   it('names the blocked check, gives no class, asks for a person review and offers no retry', async () => {
@@ -108,9 +141,11 @@ describe('ProgressPanel, a check the model provider refused (decision 030)', () 
       "The model provider's content filter blocked a check, so it couldn't be assessed automatically. No risk class is given: a person must review the description.",
     )
     expect(alert).toHaveTextContent("The model provider's content filter blocked these checks:")
-    expect(within(alert).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
-      '2 Prohibited practices',
-    ])
+    expect(
+      within(alert)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['2 Prohibited practices'])
     expect(alert).toHaveTextContent(PERSON_REVIEW.text)
     expect(alert).toHaveTextContent(
       "Your description is kept. Klar never guesses a class for a check it couldn't assess, so there's no result.",
@@ -134,9 +169,11 @@ describe('ProgressPanel, a check the model provider refused (decision 030)', () 
     expect(alert).toHaveTextContent(
       'Der Inhaltsfilter des Modellanbieters hat diese Prüfungen blockiert:',
     )
-    expect(within(alert).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
-      '2 Verbotene Praktiken',
-    ])
+    expect(
+      within(alert)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['2 Verbotene Praktiken'])
     expect(alert).toHaveTextContent(
       'Ihre Beschreibung bleibt erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb gibt es kein Ergebnis.',
     )

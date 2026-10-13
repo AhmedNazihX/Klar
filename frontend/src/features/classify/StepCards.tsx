@@ -109,6 +109,29 @@ export function EngineStepCard({
   )
 }
 
+/** A step that never ran (the checks after a decided ban), with why: a card like the others, so
+ *  the reviewer view lists every step in the Act's order. */
+export function NotCheckedStepCard({
+  name,
+  reason,
+  headingLevel = 3,
+}: {
+  name: string
+  reason: string
+  headingLevel?: HeadingLevel
+}): JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <StepCard
+      name={name}
+      headingLevel={headingLevel}
+      decisionLabel={t('result.steps.decision')}
+      decision={reason}
+      factLabel={t('result.steps.factsUsed')}
+    />
+  )
+}
+
 /** The facts Klar read from the description, each with where it came from. */
 export function FactsStepCard({
   result,

@@ -682,7 +682,8 @@
       "subtitle": "Nicht jede Prüfung konnte bewertet werden.",
       "blocked": "Der Inhaltsfilter des Modellanbieters hat diese Prüfungen blockiert:",
       "row": "Vom Inhaltsfilter des Modellanbieters blockiert: nicht geprüft.",
-      "body": "Ihre Beschreibung bleibt erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb gibt es kein Ergebnis."
+      "body": "Ihre Beschreibung bleibt erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb gibt es kein Ergebnis.",
+      "rerunBody": "Ihre Antworten bleiben erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb ergibt der neue Durchlauf kein Ergebnis."
     },
     "accuracy": "Diese Einschätzung ist nur so genau wie Ihre Beschreibung.",
     "stopped": {
@@ -1335,6 +1336,7 @@
     },
     "sources": {
       "heading": "Grundlage der Antworten",
+      "textsUsed": "Verwendete Texte",
       "loading": "Die Texte werden geladen …",
       "failed": "Die Liste der Texte kann gerade nicht angezeigt werden.",
       "kind": {

@@ -99,9 +99,11 @@ function ChangedSteps({ steps }: { steps: readonly ChangedStep[] }): JSX.Element
 }
 
 /** Before the original text is checked: the button that runs it (a paid run, so only on a click),
- *  or why the last try stopped. */
+ *  or why the last try stopped. A run the model provider's filter refused isn't offered again: the
+ *  same text would most likely be refused again (decision 030), as on the Classify screen. */
 function CheckOriginal({ original }: { original: OriginalRun }): JSX.Element {
   const { t } = useTranslation()
+  const isRefused = original.failure?.kind === 'provider_refused'
   return (
     <div className="flex flex-col items-start gap-2.5">
       <p className="m-0 text-body-small text-ink-2">{t('diff.check.hint')}</p>
@@ -110,14 +112,21 @@ function CheckOriginal({ original }: { original: OriginalRun }): JSX.Element {
           {t('diff.check.stopped', { reason: failureReason(t, original.failure) })}
         </p>
       )}
-      <Button variant="ghost" size="sm" onClick={original.start} disabled={original.isRunning}>
-        {original.isRunning
-          ? t('diff.check.running')
-          : original.failure
-            ? t('diff.check.retry')
-            : t('diff.check.start')}
-      </Button>
+      {!isRefused && <RunOriginalButton original={original} />}
     </div>
+  )
+}
+
+function RunOriginalButton({ original }: { original: OriginalRun }): JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <Button variant="ghost" size="sm" onClick={original.start} disabled={original.isRunning}>
+      {original.isRunning
+        ? t('diff.check.running')
+        : original.failure
+          ? t('diff.check.retry')
+          : t('diff.check.start')}
+    </Button>
   )
 }
 

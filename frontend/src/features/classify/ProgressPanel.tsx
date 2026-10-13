@@ -160,31 +160,42 @@ function WaitingForDescription(): JSX.Element {
 /** The model provider blocked some checks (decision 030): which ones, and that a person must
  *  review the description. The run went on to every check, or ended at a later stopping check
  *  that decided, so nothing here says every check ran. No Try again: the filter would likely
- *  block it again. */
+ *  block it again. On a result's re-run the earlier result stays on screen, so the alert says it
+ *  still stands, and the rows below alone mark the blocked checks. */
 function RefusedAlert({
   failure,
+  isRerun,
   onSaveForLater,
 }: {
   failure: Extract<ClassifyFailure, { kind: 'provider_refused' }>
+  isRerun: boolean
   onSaveForLater?: () => void
 }): JSX.Element {
   const { t } = useTranslation()
   return (
     <div role="alert" className="flex flex-col gap-3 rounded-card-small px-4 py-3.5 glass-thin">
-      <p className="m-0 text-body-small font-semibold text-ink">{t('progress.refused.title')}</p>
+      <p className="m-0 text-body-small font-semibold text-ink">
+        {isRerun ? t('progress.rerun.title') : t('progress.refused.title')}
+      </p>
       <p className="m-0 text-caption font-normal text-ink-2">{failureReason(t, failure)}</p>
-      <p className="m-0 text-caption font-normal text-ink-2">{t('progress.refused.blocked')}</p>
-      <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-caption font-normal text-ink-2">
-        {failure.steps.map((step) => (
-          <li key={step}>{t(`progress.check.${step}`)}</li>
-        ))}
-      </ul>
+      {!isRerun && (
+        <>
+          <p className="m-0 text-caption font-normal text-ink-2">{t('progress.refused.blocked')}</p>
+          <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-caption font-normal text-ink-2">
+            {failure.steps.map((step) => (
+              <li key={step}>{t(`progress.check.${step}`)}</li>
+            ))}
+          </ul>
+        </>
+      )}
       {failure.questions.map((question) => (
         <p key={question} className="m-0 text-caption font-normal text-ink">
           {question}
         </p>
       ))}
-      <p className="m-0 text-caption font-normal text-ink-2">{t('progress.refused.body')}</p>
+      <p className="m-0 text-caption font-normal text-ink-2">
+        {isRerun ? t('progress.refused.rerunBody') : t('progress.refused.body')}
+      </p>
       {onSaveForLater && (
         <div className="flex flex-wrap gap-2.5">
           <Button size="sm" variant="ghost" onClick={onSaveForLater}>
@@ -287,7 +298,7 @@ export function ProgressPanel({
         {line && <p className="m-0 text-caption font-normal text-slate">{line}</p>}
       </div>
       {failure?.kind === 'provider_refused' && (
-        <RefusedAlert failure={failure} onSaveForLater={onSaveForLater} />
+        <RefusedAlert failure={failure} isRerun={isRerun} onSaveForLater={onSaveForLater} />
       )}
       {failure && failure.kind !== 'provider_refused' && !isWaiting && (
         <StoppedAlert

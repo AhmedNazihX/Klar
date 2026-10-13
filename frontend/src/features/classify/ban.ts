@@ -2,6 +2,8 @@ import type { ClassificationResult, StepResult } from '@/api'
 
 import { hasAssessedClass } from '@/lib/risk-class'
 
+import { restingFacts } from './result-text'
+
 /** A point of the Art. 5(1) list of prohibited practices, such as `art:5:1:f`; not one of its
  *  sub-points or Art. 5(1a)'s routes (the backend reads a point the same way). */
 const ART_5_POINT = /^art:5:1:[a-z]+$/
@@ -46,6 +48,33 @@ export function banPoints(result: ClassificationResult): string[] {
   const ids = (banStep(result)?.citations ?? []).map((citation) => citation.provision_id)
   const points = ids.filter((id) => ART_5_POINT.test(id) && appliesFrom(id) <= result.as_of)
   return [...new Set(points)]
+}
+
+/** The opening sentence of a decided ban's Art. 5 decision, "Prohibited under Art. 5(1)(f)." in
+ *  the run's language (backend `prohibited_texts.TEXTS`). It ends at the first full stop before a
+ *  capital or the end, so the stops inside "Art. 5 Abs. 1 Buchst. f" don't end it. */
+const BAN_LEAD = /^(?:Prohibited under|Verboten nach) .+?\.(?=\s+\p{Lu}|\s*$)/u
+
+/** `text` without the first of `prefixes` it starts with, trimmed; null when none does. */
+function withoutPrefix(text: string, prefixes: readonly string[]): string | null {
+  const prefix = prefixes.find((candidate) => candidate !== '' && text.startsWith(candidate))
+  return prefix === undefined ? null : text.slice(prefix.length).trim()
+}
+
+/** What the Art. 5 step's decision adds to the screen around "Why the checks stopped", or null.
+ *  A decided ban's decision is its opening sentence, then each deciding fact, then a sentence for
+ *  each point that applies only later (backend `prohibited._finding`). The verdict and the
+ *  heading already name the points, and the facts panel beside it shows the facts, so only the
+ *  rest is new. */
+export function banDecisionNote(result: ClassificationResult): string | null {
+  const step = banStep(result)
+  if (!step) return null
+  const facts = [...restingFacts(result), ...(step.facts_used ?? [])].map((fact) => fact.text)
+  let rest = step.decision.trim().replace(BAN_LEAD, '').trim()
+  for (let next = withoutPrefix(rest, facts); next !== null; next = withoutPrefix(rest, facts)) {
+    rest = next
+  }
+  return rest === '' ? null : rest
 }
 
 /** The date the tool has been banned since: the earliest start among the points it rests on

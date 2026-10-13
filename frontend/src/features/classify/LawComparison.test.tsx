@@ -15,6 +15,7 @@ import {
   decidedHighRisk,
   legacyForPublicAuthorities,
   minimalRisk,
+  providerRefused,
   sseBody,
   WORKED_EXAMPLE,
   WORKED_EXAMPLE_DESCRIPTION,
@@ -584,6 +585,25 @@ describe('Original Act vs amended, the remaining lines', () => {
       const panel = comparison(language)
       expect(diffRows(panel)[0]?.[2]).toBe(assumed)
       expect(panel).toHaveTextContent(hint)
+    },
+  )
+
+  it.each([
+    ['en', 'Check under the original text', /^The check under the original text stopped\. /],
+    ['de', 'Nach ursprünglicher Fassung prüfen', /^Die Prüfung nach der ursprünglichen Fassung /],
+  ] as const)(
+    'offers no new run once the provider refused the original-text check (%s)',
+    async (language, start, stopped) => {
+      const bodies = classifyReturning(providerRefused())
+      const { user } = await openResult({ result: decidedHighRisk(), view: 'reviewer', language })
+      await user.click(within(comparison(language)).getByRole('button', { name: start }))
+      const alert = await within(comparison(language)).findByRole('alert')
+      expect(alert).toHaveTextContent(stopped)
+      expect(alert).toHaveTextContent(
+        language === 'en' ? /content filter blocked a check/ : /Inhaltsfilter/,
+      )
+      expect(within(comparison(language)).queryByRole('button')).toBeNull()
+      expect(bodies).toHaveLength(1)
     },
   )
 

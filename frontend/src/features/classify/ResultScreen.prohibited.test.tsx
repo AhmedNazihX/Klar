@@ -421,6 +421,35 @@ describe('The prohibited layout', () => {
     expect(screen.getByRole('link', { name: 'Draft documents' })).toBeInTheDocument()
   })
 
+  it('quotes the ban under why the checks stopped without repeating the facts beside it', async () => {
+    await openProhibited('de')
+    const [fact] = RECORDED_PROHIBITED.deciding_facts ?? []
+    if (!fact) throw new Error('The recorded ban rests on no fact.')
+    const why = screen.getByRole('region', { name: COPY.de.why })
+    await within(why).findByRole('blockquote')
+    expect(why).not.toHaveTextContent(fact.text)
+    expect(why).not.toHaveTextContent('Verboten nach')
+    const facts = screen.getByRole('complementary', { name: 'Das Ergebnis beruht auf' })
+    expect(within(facts).getByText(fact.text)).toBeInTheDocument()
+  })
+
+  it('says under why the checks stopped when a cited point applies only later', async () => {
+    const step = RECORDED_PROHIBITED.steps.find((candidate) => candidate.step === 'prohibited')
+    if (!step) throw new Error('The recorded ban has no Art. 5 step.')
+    const later =
+      'Art. 5 Abs. 1 Buchst. ba gilt erst ab dem 2. Dezember 2026 (Art. 113 Buchst. a), daher ' +
+      'verbietet es dieses System am 30. September 2026 noch nicht.'
+    const result: ClassificationResult = {
+      ...RECORDED_PROHIBITED,
+      steps: RECORDED_PROHIBITED.steps.map((candidate) =>
+        candidate === step ? { ...step, decision: `${step.decision} ${later}` } : candidate,
+      ),
+    }
+    await openProhibited('de', { result })
+    const why = screen.getByRole('region', { name: COPY.de.why })
+    expect(within(why).getByText(later)).toBeInTheDocument()
+  })
+
   it('tints a decided ban’s summary red', async () => {
     await openProhibited()
     expect(summaryRegion().getAttribute('style')).toContain('rgba(255, 226, 226, 0.5)')

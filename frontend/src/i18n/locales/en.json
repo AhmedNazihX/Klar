@@ -682,7 +682,8 @@
       "subtitle": "Not every check could be assessed.",
       "blocked": "The model provider's content filter blocked these checks:",
       "row": "Blocked by the model provider's content filter: not assessed.",
-      "body": "Your description is kept. Klar never guesses a class for a check it couldn't assess, so there's no result."
+      "body": "Your description is kept. Klar never guesses a class for a check it couldn't assess, so there's no result.",
+      "rerunBody": "Your answers are kept. Klar never guesses a class for a check it couldn't assess, so the new run gives no result."
     },
     "accuracy": "This assessment is only as accurate as the description you give.",
     "stopped": {
@@ -1335,6 +1336,7 @@
     },
     "sources": {
       "heading": "Answers draw on",
+      "textsUsed": "Texts used",
       "loading": "Loading the texts …",
       "failed": "The list of texts can’t be shown right now.",
       "kind": {
