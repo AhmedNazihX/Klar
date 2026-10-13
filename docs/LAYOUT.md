@@ -123,7 +123,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── judge_validation.py  the hand-labelled cases and labels, both judges' resumable answers, agreement,
 │   │   │   │                        calibration and the unsure-margin table; `aiact evaluate judge-validation` (V4)
 │   │   │   ├── judge_report.py      eval/judge_validation/report.md from the answers and the labels (V4)
-│   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support, invented content (V5)
+│   │   │   ├── judged.py            judged metrics: citation support, evidence tags, Q&A support (V5)
 │   │   │   ├── judged_run.py        judging a stored run's rows, tallies merged into their scores, cost cap (V5)
 │   │   │   ├── judged_command.py    `aiact evaluate judged <run_id>`, registered by cli.py (V5)
 │   │   │   ├── ragas_metrics.py     context precision/recall, faithfulness, provision recall on the Q&A set;

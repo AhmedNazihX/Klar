@@ -5,9 +5,8 @@ from collections.abc import Callable
 
 import pytest
 
-from aiact.drafting.documents import templates_for
 from aiact.drafting.draft import draft_document
-from aiact.drafting.models import Provenance
+from aiact.drafting.models import DraftDocument, Provenance
 from aiact.drafting.prefill import DutyDateError
 from aiact.eval import judged
 from aiact.eval.judge import (
@@ -24,26 +23,29 @@ from aiact.eval.judge import (
 )
 from aiact.eval.judged import (
     CheckScore,
+    CodeCheck,
     JudgedRecordError,
     JudgedSettings,
+    JudgeUnreachedError,
     citation_support_items,
+    code_checked_documents,
     evidence_tag_items,
-    invented_content_items,
     is_judged,
     judge_one,
     judge_plan,
     parse_settings,
     planned_item,
+    qa_answer,
     qa_support_item,
     read_stored,
+    render_code_check,
     render_judged,
     run_totals,
     stored_scores,
-    supplied_facts,
 )
 from aiact.llm import DecisionsError
-from aiact.schemas import Language, StepName
-from tests.schemas.builders import ambiguous, rebuild
+from aiact.schemas import EvidenceTag, Fact, Language, SourceSpan, StepName
+from tests.schemas.builders import rebuild
 from tests.schemas.worked_example import worked_example_result
 
 DESCRIPTION = "A made-up description of a made-up tool."
@@ -128,71 +130,37 @@ def test_inferred_and_assumed_facts_are_not_judged_as_stated() -> None:
     assert "No prohibited practice is described" not in stated  # inferred
 
 
-def test_invented_content_sends_every_drafted_section_but_the_templates_wording() -> None:
+def _stated(text: str) -> Fact:
+    return Fact(text=text, evidence=EvidenceTag.STATED, source_span=SourceSpan(start=0, end=4))
+
+
+def test_a_stated_fact_only_in_deciding_facts_or_a_step_is_sent_once() -> None:
     result = worked_example_result()
-    items = invented_content_items(result, EN)
-    expected = [
-        "\n".join(section.paragraphs)
-        for template in templates_for(result)
-        for section in draft_document(template, result, {}, EN).sections
-        if section.paragraphs and section.provenance is not Provenance.TEMPLATE
+    deciding_only, step_only = _stated("Deciding only"), _stated("Step only")
+    steps = [step.model_dump() for step in result.steps]
+    steps[0]["facts_used"] = [
+        *steps[0]["facts_used"],
+        step_only.model_dump(),
+        step_only.model_dump(),
     ]
-    assert [item and item.claim for item in items] == expected
-    assert len(items) == 6
-    assert all(item and item.source == supplied_facts(result, {}, EN) for item in items)
-    assert any(item and "Your classification: high-risk" in item.claim for item in items)
-
-
-def test_the_users_answers_are_judged_and_supplied() -> None:
-    result = worked_example_result()
-    answers = {"art_26_2_oversight": {"overseers": "Our HR lead, Dana Weiss."}}
-    items = invented_content_items(result, EN, answers)
-    answered = [item for item in items if item and "Dana Weiss" in item.claim]
-    assert len(answered) == 1
-    assert "Answer (overseers): Our HR lead, Dana Weiss." in answered[0].source
-    assert len(items) == len(invented_content_items(result, EN)) + 1
-
-
-def test_a_document_that_cant_be_drafted_is_one_item_not_measured(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def fails(*args: object, **kwargs: object) -> object:
-        raise DutyDateError("two dates")
-
-    monkeypatch.setattr(judged, "draft_document", fails)
-    assert invented_content_items(worked_example_result(), EN) == (None, None, None)
-
-
-def test_supplied_facts_name_what_the_result_found() -> None:
-    text = supplied_facts(worked_example_result(), {"tool": "HireRank"}, EN)
-    lines = text.splitlines()
-    assert "Stated fact: The tool scores and ranks applicants" in lines
-    assert "Fact the result rests on: The tool is used under the vendor's name" in lines
-    assert "Classification: high-risk (status: decided)" in lines
-    assert "Annex point: Annex III point 4(a)" in lines
-    assert "Role: deployer" in lines
-    assert (
-        "Duty under Art. 26(7): Inform workers' representatives before use at the workplace "
-        "(applies from 2 December 2027)"
-    ) in lines
-    assert "Answer (tool): HireRank" in lines
-
-
-def test_supplied_facts_are_named_in_the_documents_language() -> None:
-    text = supplied_facts(worked_example_result(), {}, Language.DE)
-    assert "Classification: Hochrisiko (status: decided)" in text
-    assert "Annex point: Anhang III Nummer 4 Buchstabe a" in text
-    assert "(applies from 2. Dezember 2027)" in text
-
-
-def test_an_open_question_and_its_readings_are_supplied() -> None:
-    result = worked_example_result()
-    steps = [ambiguous(s.step) if s.step is StepName.HIGH_RISK else s for s in result.steps]
-    question = next(s.open_question for s in steps if s.open_question)
-    open_result = rebuild(result, steps=[s.model_dump() for s in steps], status="legally_ambiguous")
-    lines = supplied_facts(open_result, {}, EN).splitlines()
-    assert f"Open question: {question.question}" in lines
-    assert f"Reading: {question.readings[1].explanation}" in lines
+    steps[1]["facts_used"] = [*steps[1]["facts_used"], deciding_only.model_dump()]
+    extended = rebuild(
+        result,
+        deciding_facts=[
+            *(f.model_dump() for f in result.deciding_facts),
+            deciding_only.model_dump(),
+        ],
+        steps=steps,
+    )
+    assert deciding_only not in extended.facts and step_only not in extended.facts
+    claims = [item and item.claim for item in evidence_tag_items(extended, DESCRIPTION, EN)]
+    assert claims == [
+        "The company uses a tool bought from a vendor",
+        "The tool scores and ranks applicants",
+        "The tool was not modified",
+        "Deciding only",
+        "Step only",
+    ]
 
 
 def test_qa_support_puts_question_and_answer_against_the_sources() -> None:
@@ -201,6 +169,17 @@ def test_qa_support_puts_question_and_answer_against_the_sources() -> None:
     assert item.check is JudgeCheck.QA_SUPPORT
     assert item.claim == "Question: When?\nAnswer: From 2 August 2026."
     assert item.source == "[art:113] Art. 113\n\nmore"
+
+
+def test_a_qa_answer_is_judged_only_when_drawn_from_the_sources() -> None:
+    hits: list[object] = [{"doc_key": "ai-act", "provision_id": "art:113"}]
+    answered = {"answer": "From 2 August 2026.", "answer_kind": "answered", "retrieved": hits}
+    assert qa_answer(answered) == ("From 2 August 2026.", hits)
+    assert qa_answer(answered | {"answer_kind": None}) is not None  # V6's stand-in answerer
+    assert qa_answer(answered | {"answer_kind": "refused"}) is None
+    assert qa_answer(answered | {"error": {"type": "X", "message": "y"}}) is None
+    assert qa_answer(answered | {"answer": None}) is None
+    assert qa_answer(None) is None
 
 
 def test_an_answer_without_sources_cant_be_judged() -> None:
@@ -225,11 +204,18 @@ def test_a_verdict_counts_held_or_not_with_its_cost() -> None:
     )
 
 
-def test_a_judge_error_is_not_measured_with_what_it_spent() -> None:
-    error = JudgeError("ConnectTimeout", 0.0007, 300, is_call_failed=True)
+def test_a_broken_reply_is_not_measured_with_what_it_spent() -> None:
+    error = JudgeError("the reply didn't fit the schema", 0.0007, 300)
     score = judge_one(FakeJudges(lambda item: error), _item())
     assert score == CheckScore(not_measured=1, cost_usd=0.0007, tokens=300)
     assert score.rate.total == 0
+
+
+def test_a_call_that_reached_no_model_is_raised_not_counted() -> None:
+    error = JudgeError("ConnectTimeout", 0.0007, 300, is_call_failed=True)
+    with pytest.raises(JudgeError) as raised:
+        judge_one(FakeJudges(lambda item: error), _item())
+    assert raised.value is error
 
 
 def test_an_item_that_cant_be_sent_is_not_measured_and_costs_nothing() -> None:
@@ -250,19 +236,36 @@ class FakeJev(JevJudge):
 
 
 class FailingBackup(BackupJudge):
-    def __init__(self) -> None:
+    """The backup judge failing: a call that reached no model, or a broken reply."""
+
+    def __init__(self, is_call_failed: bool = True) -> None:
         self.model, self.provider = "anthropic/claude-haiku-5.5", "google-vertex/europe"
+        self._is_call_failed = is_call_failed
 
     def ask(self, item: JudgeItem) -> BackupVerdict:
-        raise JudgeError("ConnectTimeout", 0.0006, 0, is_cost_estimated=True, is_call_failed=True)
+        raise JudgeError(
+            "ConnectTimeout" if self._is_call_failed else "ValidationError",
+            0.0006,
+            0,
+            is_cost_estimated=self._is_call_failed,
+            is_call_failed=self._is_call_failed,
+        )
 
 
-def test_the_real_judge_failing_on_both_sides_is_not_measured_with_both_costs() -> None:
-    judge = Judge(FakeJev(None), FailingBackup(), UNSURE_MARGIN)
+def test_the_real_judge_with_a_broken_backup_reply_is_not_measured_with_both_costs() -> None:
+    judge = Judge(FakeJev(None), FailingBackup(is_call_failed=False), UNSURE_MARGIN)
     score = judge_one(judge, _item())
     assert score.not_measured == 1
     assert score.judged == 0
     assert score.cost_usd == pytest.approx(0.00064)
+
+
+def test_the_real_judge_with_an_unreached_backup_raises_with_both_costs() -> None:
+    judge = Judge(FakeJev(0.5), FailingBackup(), UNSURE_MARGIN)
+    with pytest.raises(JudgeError) as raised:
+        judge_one(judge, _item())
+    assert raised.value.is_call_failed
+    assert raised.value.cost_usd == pytest.approx(0.00064)
 
 
 def test_a_sure_jev_answer_through_the_real_judge_is_a_verdict() -> None:
@@ -274,20 +277,38 @@ def test_a_sure_jev_answer_through_the_real_judge_is_a_verdict() -> None:
 def test_a_plan_is_tallied_per_check(concurrency: int) -> None:
     def answer(item: JudgeItem) -> Verdict | JudgeError:
         if item.claim == "fails":
-            return JudgeError("ReadTimeout", 0.001, 10)
+            return JudgeError("the reply didn't fit the schema", 0.001, 10)
         return _verdict(item.claim == "holds")
 
     plan = {
         JudgeCheck.CITATION_SUPPORT: (_item(claim="holds"), _item(claim="no"), None),
         JudgeCheck.EVIDENCE_TAG: (_item(JudgeCheck.EVIDENCE_TAG, "fails"),),
-        JudgeCheck.INVENTED_CONTENT: (),
+        JudgeCheck.QA_SUPPORT: (),
     }
     scores = judge_plan(FakeJudges(answer), plan, concurrency)
     assert scores[JudgeCheck.CITATION_SUPPORT] == CheckScore(
         held=1, judged=2, not_measured=1, cost_usd=0.0002, tokens=200
     )
     assert scores[JudgeCheck.EVIDENCE_TAG] == CheckScore(not_measured=1, cost_usd=0.001, tokens=10)
-    assert scores[JudgeCheck.INVENTED_CONTENT] == CheckScore()
+    assert scores[JudgeCheck.QA_SUPPORT] == CheckScore()
+
+
+def test_a_call_that_reached_no_model_stops_the_plan_with_what_it_spent() -> None:
+    def answer(item: JudgeItem) -> Verdict | JudgeError:
+        if item.claim == "unreached":
+            return JudgeError("ConnectTimeout", 0.0006, 7, is_call_failed=True)
+        return _verdict(True)
+
+    fake = FakeJudges(answer)
+    plan = {
+        JudgeCheck.CITATION_SUPPORT: (_item(claim="holds"), _item(claim="unreached")),
+        JudgeCheck.EVIDENCE_TAG: (_item(JudgeCheck.EVIDENCE_TAG, "after"),),
+    }
+    with pytest.raises(JudgeUnreachedError) as raised:
+        judge_plan(fake, plan, concurrency=1)
+    assert raised.value.cost_usd == pytest.approx(0.0007)
+    assert raised.value.tokens == 107
+    assert [item.claim for item in fake.items] == ["holds", "unreached"]  # none after it
 
 
 # --- stored scores -------------------------------------------------------------------------------
@@ -358,6 +379,7 @@ def test_the_section_shows_rates_what_wasnt_measured_and_the_cost() -> None:
             held=9, judged=10, not_measured=2, backup=1, cost_usd=0.0012, tokens=4000
         ),
         JudgeCheck.EVIDENCE_TAG: CheckScore(held=3, judged=4, cost_usd=0.0004, tokens=1000),
+        JudgeCheck.QA_SUPPORT: CheckScore(held=1, judged=2, backup=2, cost_usd=0.0002),
     }
     lines = render_judged(totals, 5, 6, SETTINGS)
     assert lines[0] == "### Judged metrics"
@@ -366,10 +388,13 @@ def test_the_section_shows_rates_what_wasnt_measured_and_the_cost() -> None:
         f"`google-vertex/europe`, unsure margin {UNSURE_MARGIN} (decision 006)"
     ) in lines
     assert "- Cases judged: 5 of 6" in lines
-    assert "- Judge cost: $0.0016, 5000 tokens (not in the run's cost above)" in lines
-    assert "| Citation support | 90.0% | 9/10 | 2 | 1 | $0.0012 | $0.000100 |" in lines
-    assert "| Evidence-tag accuracy | 75.0% | 3/4 | 0 | 0 | $0.0004 | $0.000100 |" in lines
-    assert not any(line.startswith("| No invented content") for line in lines)
+    assert "- Judge cost: $0.0018, 5000 tokens (not in the run's cost above)" in lines
+    rows = [line for line in lines if line.startswith("| ")][2:]  # after the head and rule
+    assert rows == [
+        "| Citation support | 90.0% | 9/10 | 2 | 1 | $0.0012 | $0.000100 |",
+        "| Evidence-tag accuracy | 75.0% | 3/4 | 0 | 0 | $0.0004 | $0.000100 |",
+        "| Q&A support | 50.0% | 1/2 | 0 | 2 | $0.0002 | $0.000100 |",
+    ]
     assert lines[-1].startswith("Not measured: ")
 
 
@@ -383,3 +408,50 @@ def test_a_run_not_judged_says_so() -> None:
     assert render_judged({}, 0, 3, None) == [
         "Judged metrics: not judged yet (`aiact evaluate judged <run_id>`)."
     ]
+
+
+def test_a_stored_invented_content_tally_is_not_read() -> None:
+    stored = stored_scores({JudgeCheck.INVENTED_CONTENT: CheckScore(held=1, judged=1)})
+    assert read_stored(stored) == {}
+
+
+# --- no invented content, checked by code ------------------------------------------------------
+
+
+def test_the_code_check_passes_every_drafted_document_of_a_result() -> None:
+    result = worked_example_result()
+    check = code_checked_documents([(result, EN), (result, Language.DE)])
+    assert check == CodeCheck(passed=6, checked=6)
+    assert render_code_check(check) == [
+        "- No invented content: checked by code (P8a's `check_nothing_invented` on each document "
+        "the results call for), not judged: 100.0%, 6/6 documents"
+    ]
+
+
+def test_a_document_with_an_added_sentence_fails_the_code_check(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def tampered(*args: object, **kwargs: object) -> DraftDocument:
+        document = draft_document(*args, **kwargs)  # pyright: ignore[reportArgumentType]
+        sections = [
+            section.model_copy(
+                update={"paragraphs": (*section.paragraphs, "It is also certified.")}
+            )
+            if section.provenance is Provenance.CLASSIFICATION
+            else section
+            for section in document.sections
+        ]
+        return document.model_copy(update={"sections": tuple(sections)})
+
+    monkeypatch.setattr(judged, "draft_document", tampered)
+    assert code_checked_documents([(worked_example_result(), EN)]) == CodeCheck(0, 3)
+
+
+def test_a_document_that_cant_be_drafted_isnt_checked(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fails(*args: object, **kwargs: object) -> object:
+        raise DutyDateError("two dates")
+
+    monkeypatch.setattr(judged, "draft_document", fails)
+    check = code_checked_documents([(worked_example_result(), EN)])
+    assert check == CodeCheck(passed=0, checked=0, not_drafted=3)
+    assert render_code_check(check)[0].endswith("n/a, 0/0 documents; 3 couldn't be drafted")

@@ -396,10 +396,24 @@ def test_the_judged_scores_stored_with_the_cases_appear_in_the_report() -> None:
 
 
 def test_a_run_not_judged_says_how_to_judge_it() -> None:
-    text = build_report(INFO, (_row("a", {"risk_class_accuracy": True}),))
-    assert text.rstrip().endswith(
-        "Judged metrics: not judged yet (`aiact evaluate judged <run_id>`)."
+    lines = build_report(INFO, (_row("a", {"risk_class_accuracy": True}),)).splitlines()
+    assert lines[-3:] == [
+        "Judged metrics: not judged yet (`aiact evaluate judged <run_id>`).",
+        "",
+        "- No invented content: checked by code (P8a's `check_nothing_invented` on each document "
+        "the results call for), not judged: 100.0%, 3/3 documents",
+    ]
+
+
+def test_no_invented_content_is_checked_by_code_on_the_answered_cases_only() -> None:
+    rows = (
+        _row("a", {"risk_class_accuracy": True}),
+        _row("b", {"risk_class_accuracy": True}),
+        _stored(case("c"), None),
     )
+    text = build_report(INFO, rows)
+    assert "not judged: 100.0%, 6/6 documents" in text
+    assert "No invented content (drafted documents)" not in text
 
 
 def test_a_malformed_judged_score_names_the_case() -> None:
@@ -410,11 +424,12 @@ def test_a_malformed_judged_score_names_the_case() -> None:
 def test_a_qa_runs_report_shows_q_and_a_support() -> None:
     info = report.run_info(INFO.id, "qa", INFO.git_sha, INFO.started_at, {"judged": JUDGE}, 0.2)
     qa = JudgeCheck.QA_SUPPORT
-    judged = ({qa: CheckScore(held=1, judged=1)}, {qa: CheckScore(held=0, judged=1)}, {})
-    lines = report.build_qa_report(info, judged).splitlines()
+    # Two judged rows, one still to judge, one with nothing to judge (a fixed answer).
+    rows = ({qa: CheckScore(held=1, judged=1)}, {qa: CheckScore(held=0, judged=1)}, {}, None)
+    lines = report.build_qa_report(info, rows).splitlines()
     assert lines[0] == f"## Run {INFO.id}"
     assert "- Benchmark: `qa`" in lines
-    assert "- Items: 3" in lines
+    assert "- Items: 4, 3 with an answer drawn from the sources" in lines
     assert "- Cases judged: 2 of 3" in lines
     assert "| Q&A support | 50.0% | 1/2 | 0 | 0 | $0.0000 | $0.000000 |" in lines
 

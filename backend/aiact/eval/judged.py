@@ -1,54 +1,52 @@
-"""Judged metrics: the four checks that need judgement, scored by V4's judge (INIT > Metrics,
-Judge; story V5).
+"""Judged metrics: the checks that need judgement, scored by V4's judge (INIT > Metrics, Judge;
+story V5).
 
 - Citation support: each step that cites provisions is one item; its decision is the claim and
   the quotes it cites, each under its provision's name, are the cited text.
 - Evidence-tag accuracy: each distinct fact tagged "stated" (the result's facts, its deciding
-  facts and every step's facts) is one item, judged against the case's description.
-- No invented content: the documents the result calls for (P8a's deployer documents, P8b's
-  skeletons, P28's vendor letter) are drafted as `aiact.drafting` drafts them, and each section
-  that isn't the template's own wording (pre-filled from the result, or the user's answers
-  written up) is one item, judged against the facts supplied: the user's answers and what the
-  result found (`supplied_facts`). It complements the deterministic "No content you didn't
-  supply" check (`aiact.drafting.checks`).
+  facts and every step's facts) is one item, judged against the text the engine read: the case's
+  description, with the fixed answers appended on an `--answers-from` run.
 - Q&A support: a Q&A answer is one item, its question and answer the claim and the provisions
   it was answered from the sources (`qa_support_item`).
 
-An item the judge couldn't answer (`JudgeError`, with what it spent) or one too long to send
-(`JudgeItem`'s caps) is "not measured": counted apart, never as a fail. Each check's tally
-(`CheckScore`) is stored in a case's `eval_case_results.scores` as flat numbers
-(`stored_scores`; the table's check allows numbers there) and summed into the run report's
-"Judged metrics" table (`render_judged`). The judge's settings (models and unsure margin) are
-the run's `config.judged`.
+No invented content is not judged (the user's decision, 2026-10-13; decision 006 > Consequences):
+drafting is model-free (the template's wording, the result's facts and the user's answers word
+for word), so a judge would only re-read text that is correct by construction. The report shows
+P8a's deterministic check instead (`code_checked_documents`).
+
+An item the judge couldn't answer (a refused or broken reply, `JudgeError`, with what it spent)
+or one too long to send (`JudgeItem`'s caps) is "not measured": counted apart, never as a fail.
+A call that reached no model (key, endpoint, guardrail or network) is no item's failure: it
+stops the pass (`JudgeUnreachedError`). Each check's tally (`CheckScore`) is stored in a case's
+`eval_case_results.scores` as flat numbers (`stored_scores`; the table's check allows numbers
+there) and summed into the run report's "Judged metrics" table (`render_judged`). The judge's
+settings (models and unsure margin) are the run's `config.judged`.
 
 The judge sends what it reads to Jev, which has no EU endpoint (decision 006): only benchmark
 cases, the corpus's text and the engine's answers to them reach it, never a user's description.
 """
 
 import logging
+import threading
 from collections.abc import Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
+from dataclasses import dataclass
 from typing import Protocol, Self
 
 from pydantic import Field, ValidationError
 
-from aiact.dates import long_date
+from aiact.drafting.checks import check_nothing_invented
 from aiact.drafting.documents import templates_for
-from aiact.drafting.draft import Answers, UnwritableTextError, draft_document
-from aiact.drafting.models import Provenance
-from aiact.drafting.prefill import CLASS_NAMES, DutyDateError, NoClassError
+from aiact.drafting.draft import UnwritableTextError, draft_document
+from aiact.drafting.prefill import DutyDateError, NoClassError
 from aiact.eval.judge import JudgeCheck, JudgeError, JudgeItem, Verdict
 from aiact.eval.metrics import Rate
-from aiact.provision_names import annex_point_name, provision_name
-from aiact.schemas import (
-    Citation,
-    ClassificationResult,
-    EvidenceTag,
-    Language,
-    LegacyStatus,
-    Obligation,
-)
+from aiact.eval.ragas_metrics import ANSWER_KIND
+from aiact.eval.runner import is_failed
+from aiact.provision_names import provision_name
+from aiact.qa.models import AnswerKind
+from aiact.report.result import LAW_PROVISIONS
+from aiact.schemas import Citation, ClassificationResult, EvidenceTag, Language
 from aiact.schemas.base import ContractModel
 from aiact.schemas.evidence import Fact
 
@@ -58,31 +56,30 @@ Planned = JudgeItem | None
 """An item to judge, or None for one that can't be sent (too long, or nothing to judge it
 against): counted as not measured."""
 
-CLASSIFICATION_CHECKS = (
-    JudgeCheck.CITATION_SUPPORT,
-    JudgeCheck.EVIDENCE_TAG,
-    JudgeCheck.INVENTED_CONTENT,
-)
-"""The checks judged on a classification run's results."""
-QA_CHECKS = (JudgeCheck.QA_SUPPORT,)
-"""The check judged on a Q&A run's answers."""
-
 KEY_PREFIX = "judged"
 SCORE_FIELDS = ("held", "judged", "not_measured", "backup", "cost_usd", "tokens")
 """A check's tally as `scores` stores it: `judged_<check>_<field>`."""
-NAMED_PROVISION_PREFIXES = ("art:", "annex:")
-"""Provisions `provision_name` names; any other id (a recital, a guideline unit) stays an id."""
 
 CHECK_NAMES: Mapping[JudgeCheck, str] = {
     JudgeCheck.CITATION_SUPPORT: "Citation support",
     JudgeCheck.EVIDENCE_TAG: "Evidence-tag accuracy",
-    JudgeCheck.INVENTED_CONTENT: "No invented content (drafted documents)",
     JudgeCheck.QA_SUPPORT: "Q&A support",
 }
+"""The checks V5 judges, as the report names them; V4's invented-content check isn't one."""
 
 
 class JudgedRecordError(ValueError):
     """A stored judged score isn't a whole, non-negative number; the message names the key."""
+
+
+class JudgeUnreachedError(RuntimeError):
+    """A judge's call reached no model (key, endpoint, guardrail or network): the pass stops and
+    the case isn't stored, so a rerun judges it. Carries what the case's items spent."""
+
+    def __init__(self, cost_usd: float, tokens: int) -> None:
+        super().__init__("a judge's call reached no model (key, endpoint, guardrail or network)")
+        self.cost_usd = cost_usd
+        self.tokens = tokens
 
 
 # --- the items -----------------------------------------------------------------------------------
@@ -105,7 +102,8 @@ def cited_text(citations: Iterable[Citation]) -> str:
 
 
 def _provision_heading(provision_id: str, language: Language) -> str:
-    if provision_id.startswith(NAMED_PROVISION_PREFIXES):
+    """The Act's provisions by name; any other id (a recital, a guideline unit) stays an id."""
+    if provision_id.startswith(LAW_PROVISIONS):
         return provision_name(provision_id, language)
     return provision_id
 
@@ -132,11 +130,27 @@ def stated_facts(result: ClassificationResult) -> tuple[str, ...]:
 def evidence_tag_items(
     result: ClassificationResult, description: str, language: Language
 ) -> tuple[Planned, ...]:
-    """One item per stated fact: is it in the description?"""
+    """One item per stated fact: is it in `description`, the text the engine read?"""
     return tuple(
         planned_item(JudgeCheck.EVIDENCE_TAG, language, fact, description)
         for fact in stated_facts(result)
     )
+
+
+def qa_answer(predicted: object) -> tuple[str, list[object]] | None:
+    """The answer and the hits it was drawn from, when a stored Q&A prediction holds one to
+    judge; None for a failed answer, a row with no answer, or one of P7's fixed answers (outside
+    the corpus, a compliance question, refused), which claims nothing from the hits. V6's
+    stand-in answerer stores no kind; its answers are judged."""
+    if is_failed(predicted) or not isinstance(predicted, Mapping):
+        return None
+    answer, retrieved = predicted.get("answer"), predicted.get("retrieved")
+    kind = predicted.get(ANSWER_KIND)
+    if not isinstance(answer, str) or not isinstance(retrieved, list):
+        return None
+    if kind is not None and kind != AnswerKind.ANSWERED.value:
+        return None
+    return answer, retrieved
 
 
 def qa_support_item(
@@ -147,93 +161,6 @@ def qa_support_item(
         return None
     claim = f"Question: {question}\nAnswer: {answer}"
     return planned_item(JudgeCheck.QA_SUPPORT, language, claim, "\n\n".join(sources))
-
-
-DRAFTING_ERRORS = (DutyDateError, NoClassError, UnwritableTextError)
-"""A document that can't be drafted from the result: counted as one item not measured."""
-
-
-def invented_content_items(
-    result: ClassificationResult,
-    language: Language,
-    answers: Mapping[str, Answers] | None = None,
-) -> tuple[Planned, ...]:
-    """One item per drafted section that isn't the template's own wording: does it keep to the
-    supplied facts? `answers` are the interview answers by template id; without them only the
-    pre-filled sections have content. Corpus quotes (decision 031) aren't read: a quoting
-    section is drafted without them, its own paragraphs unchanged."""
-    answers = answers or {}
-    items: list[Planned] = []
-    for template in templates_for(result):
-        template_answers = answers.get(template.id, {})
-        try:
-            document = draft_document(template, result, template_answers, language)
-        except DRAFTING_ERRORS as exc:
-            logger.warning("%s couldn't be drafted: %s", template.id, type(exc).__name__)
-            items.append(None)
-            continue
-        source = supplied_facts(result, template_answers, language)
-        items += [
-            planned_item(
-                JudgeCheck.INVENTED_CONTENT, language, "\n".join(section.paragraphs), source
-            )
-            for section in document.sections
-            if section.paragraphs and section.provenance is not Provenance.TEMPLATE
-        ]
-    return tuple(items)
-
-
-def supplied_facts(result: ClassificationResult, answers: Answers, language: Language) -> str:
-    """What a document may state, as labelled lines: the user's answers and what the result
-    found (its facts, class, role, duties, the text of the Act and the date it was read at, and
-    any open question), named as the documents name them."""
-    as_of = long_date(result.as_of, language)
-    lines = [f"Stated fact: {fact}" for fact in stated_facts(result)]
-    lines += [f"Fact the result rests on: {fact.text}" for fact in result.deciding_facts]
-    lines += _classification_lines(result, language)
-    lines += [_duty_line(duty, language) for duty in result.obligations]
-    lines.append(f"Text of the AI Act: {result.law_version.value}, as of {as_of}")
-    lines += _open_question_lines(result)
-    lines += [f"Answer ({key}): {answer}" for key, answer in answers.items()]
-    return "\n".join(lines)
-
-
-def _classification_lines(result: ClassificationResult, language: Language) -> list[str]:
-    lines: list[str] = []
-    if result.assessed_class is not None:
-        name = CLASS_NAMES[language][result.assessed_class]
-        lines.append(f"Classification: {name} (status: {result.status.value})")
-    if result.annex_point is not None:
-        lines.append(f"Annex point: {annex_point_name(result.annex_point, language)}")
-    roles = [role.value for role in (result.role, result.also_role) if role is not None]
-    if roles:
-        lines.append(f"Role: {', '.join(roles)}")
-    cited = dict.fromkeys(
-        _provision_heading(c.provision_id, language)
-        for step in result.steps
-        for c in step.citations
-    )
-    if cited:
-        lines.append(f"Provisions the classification cites: {', '.join(cited)}")
-    return lines
-
-
-def _duty_line(duty: Obligation, language: Language) -> str:
-    text = duty.duty_de if language is Language.DE else duty.duty
-    if duty.legacy is LegacyStatus.UNCHANGED:
-        when = "only after a significant change to the system"
-    else:
-        when = f"from {long_date(duty.applies_from, language)}"
-    return f"Duty under {_provision_heading(duty.article, language)}: {text} (applies {when})"
-
-
-def _open_question_lines(result: ClassificationResult) -> list[str]:
-    lines: list[str] = []
-    for question in (step.open_question for step in result.steps if step.open_question):
-        lines.append(f"Open question: {question.question}")
-        lines += [f"Reading: {reading.explanation}" for reading in question.readings]
-        lines += [f"Settled by: {settled.text}" for settled in question.settled_by]
-    return lines
 
 
 # --- judging -------------------------------------------------------------------------------------
@@ -277,12 +204,15 @@ class CheckScore(ContractModel):
 
 
 def judge_one(judge: Judges, item: Planned) -> CheckScore:
-    """One item's tally. A `JudgeError` is not measured, with what the item spent."""
+    """One item's tally. A `JudgeError` is not measured, with what the item spent; one whose
+    call reached no model (`is_call_failed`) is raised again, for the pass to stop."""
     if item is None:
         return CheckScore(not_measured=1)
     try:
         verdict = judge.judge(item)
     except JudgeError as exc:
+        if exc.is_call_failed:
+            raise
         logger.warning("%s not measured: %s", item.check.value, exc)
         return CheckScore(not_measured=1, cost_usd=exc.cost_usd, tokens=exc.tokens)
     return CheckScore(
@@ -294,14 +224,38 @@ def judge_one(judge: Judges, item: Planned) -> CheckScore:
     )
 
 
+Outcome = CheckScore | JudgeError | None
+"""An item's tally, the error of a call that reached no model, or None for an item skipped
+after one."""
+
+
 def judge_plan(
     judge: Judges, plan: Mapping[JudgeCheck, Sequence[Planned]], concurrency: int = 1
 ) -> dict[JudgeCheck, CheckScore]:
     """Each check's tally over its items, `concurrency` items in flight at once. Every check of
-    the plan gets a tally, an empty one when it has no item."""
+    the plan gets a tally, an empty one when it has no item. Raises `JudgeUnreachedError`, with
+    what the items sent spent, when a call reached no model; no item starts after it."""
     flat = [(check, item) for check, items in plan.items() for item in items]
+    unreached = threading.Event()
+
+    def outcome(item: Planned) -> Outcome:
+        if unreached.is_set():
+            return None
+        try:
+            return judge_one(judge, item)
+        except JudgeError as exc:
+            unreached.set()
+            logger.warning("a judge's call reached no model; stopping the pass: %s", exc)
+            return exc
+
     with ThreadPoolExecutor(max_workers=concurrency) as pool:
-        scores = list(pool.map(partial(judge_one, judge), [item for _, item in flat]))
+        outcomes = list(pool.map(outcome, [item for _, item in flat]))
+    scores = [score for score in outcomes if isinstance(score, CheckScore)]
+    if unreached.is_set():
+        spent = [done for done in outcomes if done is not None]
+        raise JudgeUnreachedError(
+            sum(done.cost_usd for done in spent), sum(done.tokens for done in spent)
+        )
     totals = dict.fromkeys(plan, CheckScore())
     for (check, _), score in zip(flat, scores, strict=True):
         totals = totals | {check: totals[check] + score}
@@ -328,7 +282,7 @@ def read_stored(scores: Mapping[str, object]) -> dict[JudgeCheck, CheckScore]:
     """The tallies a case's scores hold, by check; a check with no stored key is left out.
     Raises `JudgedRecordError` for a value that isn't a non-negative number."""
     found: dict[JudgeCheck, CheckScore] = {}
-    for check in JudgeCheck:
+    for check in CHECK_NAMES:
         keys = {field: score_key(check, field) for field in SCORE_FIELDS}
         if not any(key in scores for key in keys.values()):
             continue
@@ -352,6 +306,56 @@ def run_totals(cases: Iterable[Mapping[JudgeCheck, CheckScore]]) -> dict[JudgeCh
         for check, score in scores.items():
             totals = totals | {check: totals.get(check, CheckScore()) + score}
     return totals
+
+
+# --- no invented content, checked by code --------------------------------------------------------
+
+DRAFTING_ERRORS = (DutyDateError, NoClassError, UnwritableTextError)
+"""A document that can't be drafted from its result: counted apart, not checked."""
+
+
+@dataclass(frozen=True)
+class CodeCheck:
+    """P8a's "No content you didn't supply" check over a run's drafted documents."""
+
+    passed: int = 0
+    checked: int = 0
+    not_drafted: int = 0
+
+    @property
+    def rate(self) -> Rate:
+        return Rate(hits=self.passed, total=self.checked)
+
+
+def code_checked_documents(results: Iterable[tuple[ClassificationResult, Language]]) -> CodeCheck:
+    """Each document a result calls for, drafted as `aiact.drafting` drafts it (no interview
+    answers, no corpus quotes) in the case's language, and checked by `check_nothing_invented`.
+    No model call."""
+    passed = checked = not_drafted = 0
+    for result, language in results:
+        for template in templates_for(result):
+            try:
+                document = draft_document(template, result, {}, language)
+            except DRAFTING_ERRORS as exc:
+                logger.warning("%s couldn't be drafted: %s", template.id, type(exc).__name__)
+                not_drafted += 1
+                continue
+            checked += 1
+            passed += check_nothing_invented(document, result, {}).passed
+    return CodeCheck(passed, checked, not_drafted)
+
+
+def render_code_check(check: CodeCheck) -> list[str]:
+    """The report's line for no invented content: checked by code, not judged."""
+    rate = check.rate
+    line = (
+        f"- No invented content: checked by code (P8a's `check_nothing_invented` on each "
+        f"document the results call for), not judged: {rate.percent}, {rate.hits}/{rate.total} "
+        "documents"
+    )
+    if check.not_drafted:
+        line += f"; {check.not_drafted} couldn't be drafted"
+    return [line]
 
 
 # --- the judge's settings and the report ---------------------------------------------------------
@@ -378,8 +382,8 @@ def parse_settings(config: object) -> JudgedSettings | None:
 
 NOT_JUDGED = "Judged metrics: not judged yet (`aiact evaluate judged <run_id>`)."
 NOT_MEASURED_NOTE = (
-    "Not measured: the judge couldn't answer, or the item was too long to send; never counted "
-    "as a fail."
+    "Not measured: the judge's reply was refused or broken, or the item was too long to send; "
+    "never counted as a fail."
 )
 
 
@@ -390,7 +394,8 @@ def render_judged(
     settings: JudgedSettings | None,
 ) -> list[str]:
     """The report's "Judged metrics" section: each check's rate, what wasn't measured, what the
-    backup judge decided and what the judge spent, per item and in all."""
+    backup judge decided and what the judge spent, per item and in all. `cases` counts the rows
+    a pass would judge."""
     if not totals:
         return [NOT_JUDGED]
     spent = sum(score.cost_usd for score in totals.values())
@@ -408,7 +413,7 @@ def render_judged(
         "| Metric | Value | Count | Not measured | Backup decided | Cost | Cost per item |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
-    lines += [_judged_row(check, totals[check]) for check in JudgeCheck if check in totals]
+    lines += [_judged_row(check, totals[check]) for check in CHECK_NAMES if check in totals]
     return [*lines, "", NOT_MEASURED_NOTE]
 
 

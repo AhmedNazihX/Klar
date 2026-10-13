@@ -76,6 +76,8 @@ RUN_SCORE_KEYS = frozenset({"cost_usd", "tokens", "is_error", SCORING_ERROR_KEY,
 """Scores the runner itself writes; a metric scorer may not use these names."""
 
 ERROR_MESSAGE_LIMIT = 300
+FAILED_KEY = "error"
+"""A `predicted` object with this key records a failed classifier (or answer) call."""
 
 ServedModels = Mapping[str, Mapping[str, int]]
 """`{node: {model: calls}}`, as `MODELS_KEY` stores it."""
@@ -84,6 +86,11 @@ StoredScore = Score | dict[str, JsonValue]
 """A stored row's score: a metric's or one of the runner's own (`RUN_SCORE_KEYS`), whose
 `MODELS_KEY` alone is a mapping."""
 Scorer = Callable[[BenchmarkCase, ClassificationResult], Mapping[str, Score]]
+
+
+def is_failed(predicted: object) -> bool:
+    """Whether a stored `predicted` records a failed call rather than a result."""
+    return isinstance(predicted, Mapping) and FAILED_KEY in predicted
 
 
 class ExcludeMode(StrEnum):
@@ -609,7 +616,7 @@ def _failed_record(case: BenchmarkCase, exc: Exception) -> CaseRecord:
     }
     return CaseRecord(
         case.id,
-        {"error": error},
+        {FAILED_KEY: error},
         label_record(case),
         {"cost_usd": cost_usd, "tokens": tokens, "is_error": True, **_served(models)},
         None,

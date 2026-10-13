@@ -1,5 +1,5 @@
 """Judging a stored run (V5): what is planned, the cost cap, resuming and the judge's settings.
-The judges and the store are fakes; the database round trip is in tests/db/test_judged_run.py."""
+The judges and the store are fakes; the database round trip is in tests/db/test_eval_judged.py."""
 
 from collections.abc import Mapping
 from datetime import UTC, date, datetime
@@ -9,25 +9,30 @@ import pytest
 from typer.testing import CliRunner
 
 from aiact.cli import app
-from aiact.eval import judged_command, judged_run, ragas_metrics, records
+from aiact.engine import extended_description
+from aiact.eval import judge, judged_command, judged_run, records
 from aiact.eval.cases import QAItem
 from aiact.eval.judge import (
     BACKUP_CALL_ESTIMATE_USD,
     JEV_CALL_ESTIMATE_USD,
     UNSURE_MARGIN,
+    Judge,
     JudgeCheck,
+    JudgeError,
     JudgeItem,
     Verdict,
 )
-from aiact.eval.judged import JudgedSettings
+from aiact.eval.judged import CheckScore, JudgedSettings
 from aiact.eval.judged_run import (
     JudgedOptions,
     JudgedRowError,
     JudgedSettingsError,
     JudgedStatus,
+    JudgedSummary,
     PlannedCase,
     StoredRow,
     StoredRun,
+    check_settings,
     estimate_usd,
     item_counts,
     judge_run,
@@ -46,6 +51,7 @@ SETTINGS = JudgedSettings(
     margin=UNSURE_MARGIN,
 )
 STARTED = datetime(2026, 10, 1, 9, 0, tzinfo=UTC)
+PRICED = "anthropic/claude-haiku-5.5"
 QA_ITEM = QAItem(
     id="qa-en-01",
     language=Language.EN,
@@ -70,8 +76,13 @@ def _failed(case_id: str) -> StoredRow:
     return StoredRow(case_id, case(case_id).model_dump(mode="json"), error, {"is_error": True})
 
 
-def _run(*rows: StoredRow, benchmark: str = "own", settings: JudgedSettings | None = None):
-    return StoredRun(uuid4(), benchmark, STARTED, settings, rows)
+def _run(
+    *rows: StoredRow,
+    benchmark: str = "own",
+    settings: JudgedSettings | None = None,
+    asked: Mapping[str, tuple[str, ...]] | None = None,
+) -> StoredRun:
+    return StoredRun(uuid4(), benchmark, STARTED, settings, rows, asked)
 
 
 def _qa_row(**predicted: object) -> StoredRow:
@@ -116,16 +127,48 @@ class MemoryStore:
 # --- planning ------------------------------------------------------------------------------------
 
 
-def test_a_classification_run_plans_three_checks_per_answered_case() -> None:
+def test_a_classification_run_plans_two_checks_per_answered_case() -> None:
     planned = plan_run(_run(_classified("a"), _failed("b")), _no_source)
     assert [case.case_id for case in planned] == ["a"]
-    assert list(planned[0].plan) == [
-        JudgeCheck.CITATION_SUPPORT,
-        JudgeCheck.EVIDENCE_TAG,
-        JudgeCheck.INVENTED_CONTENT,
-    ]
+    assert list(planned[0].plan) == [JudgeCheck.CITATION_SUPPORT, JudgeCheck.EVIDENCE_TAG]
     evidence = planned[0].plan[JudgeCheck.EVIDENCE_TAG]
     assert all(item and item.source == "A made-up system." for item in evidence)
+
+
+HUMAN_REVIEW = "An HR officer checks every ranking."
+
+
+def _answered_row(case_id: str) -> StoredRow:
+    """A case whose stored answer to `human_review` states a fact the description doesn't."""
+    answered = case(case_id).model_copy(update={"key_fact_answers": {"human_review": HUMAN_REVIEW}})
+    predicted = worked_example_result().model_dump(mode="json")
+    return StoredRow(case_id, answered.model_dump(mode="json"), predicted, {})
+
+
+def test_an_answers_run_judges_evidence_against_the_text_the_engine_read() -> None:
+    planned = plan_run(
+        _run(_answered_row("a"), asked={"a": ("human_review", "profiling")}), _no_source
+    )
+    expected = (
+        "A made-up system.\n\nAnswers to follow-up questions:\n"
+        f"- human_review: {HUMAN_REVIEW}\n- profiling: don't know"
+    )
+    answers = {"human_review": HUMAN_REVIEW, "profiling": "don't know"}
+    assert extended_description("A made-up system.", answers, Language.EN) == expected
+    evidence = planned[0].plan[JudgeCheck.EVIDENCE_TAG]
+    assert evidence
+    assert all(item and item.source == expected for item in evidence)
+
+
+def test_an_answers_run_whose_case_asked_nothing_reads_the_description_alone() -> None:
+    planned = plan_run(_run(_answered_row("a"), asked={"a": ()}), _no_source)
+    evidence = planned[0].plan[JudgeCheck.EVIDENCE_TAG]
+    assert all(item and item.source == "A made-up system." for item in evidence)
+
+
+def test_an_answers_run_missing_a_case_in_its_source_names_the_case() -> None:
+    with pytest.raises(JudgedRowError, match="case a: the answers' source run has no row"):
+        plan_run(_run(_answered_row("a"), asked={"b": ()}), _no_source)
 
 
 def test_cases_already_judged_are_not_planned_again() -> None:
@@ -150,8 +193,7 @@ def test_a_qa_run_plans_q_and_a_support_from_the_sources() -> None:
 
 
 def test_the_qa_benchmark_name_is_the_ragas_runs() -> None:
-    assert judged_run.QA_BENCHMARK == ragas_metrics.BENCHMARK == "qa"
-    assert judged_run.ANSWER_KIND_KEY == ragas_metrics.ANSWER_KIND
+    assert judged_run.QA_BENCHMARK == "qa"
 
 
 @pytest.mark.parametrize("kind", ["outside_corpus", "compliance", "refused"])
@@ -178,15 +220,39 @@ def test_a_source_the_corpus_lost_leaves_the_answer_not_measured() -> None:
     assert planned[0].plan[JudgeCheck.QA_SUPPORT] == (None,)
 
 
-def test_item_counts_and_the_estimate_count_only_sendable_items() -> None:
+def test_item_counts_count_only_sendable_items() -> None:
     planned = (
         PlannedCase("a", {JudgeCheck.EVIDENCE_TAG: (None,)}),
         PlannedCase("b", plan_run(_run(_qa_row(), benchmark="qa"), _source)[0].plan),
     )
     assert item_counts(planned) == {JudgeCheck.EVIDENCE_TAG: 0, JudgeCheck.QA_SUPPORT: 1}
-    per_item = JEV_CALL_ESTIMATE_USD + BACKUP_CALL_ESTIMATE_USD
-    assert estimate_usd(10, "anthropic/claude-haiku-5.5") == pytest.approx(10 * per_item)
-    assert estimate_usd(10, "example/unpriced-model") is None
+
+
+def _planned(*items: JudgeItem | None) -> tuple[PlannedCase, ...]:
+    return (PlannedCase("a", {JudgeCheck.EVIDENCE_TAG: items}),)
+
+
+def _evidence(claim: str, source: str) -> JudgeItem:
+    return JudgeItem(
+        check=JudgeCheck.EVIDENCE_TAG, language=Language.EN, claim=claim, source=source
+    )
+
+
+def test_the_estimate_is_sized_from_each_items_texts() -> None:
+    item = _evidence("c", "s")
+    chars = sum(len(message.text) for message in judge.backup_messages(item))
+    # Jev $0.042 and Haiku 5.5 $0.11 per million input tokens, 600 output tokens at $0.55.
+    expected = (-(-chars // 3) * (0.042 + 0.11) + 600 * 0.55) / 1_000_000
+    estimate = estimate_usd(_planned(item, None), "anthropic/claude-haiku-5.5")
+    assert estimate == pytest.approx(expected)
+    assert estimate_usd(_planned(item), "example/unpriced-model") is None
+
+
+def test_a_long_item_is_estimated_above_the_validation_cases_bound() -> None:
+    bound = JEV_CALL_ESTIMATE_USD + BACKUP_CALL_ESTIMATE_USD  # 3,000 prompt tokens an item
+    estimate = estimate_usd(_planned(_evidence("c" * 4_000, "s" * 16_000)), PRICED)
+    assert estimate is not None
+    assert estimate > bound
 
 
 # --- judging -------------------------------------------------------------------------------------
@@ -201,32 +267,89 @@ def test_each_judged_case_is_stored_with_the_settings() -> None:
     assert (summary.cases_planned, summary.cases_judged) == (2, 2)
     assert store.settings == [SETTINGS]
     assert set(store.cases) == {"a", "b"}
-    # The worked example: 5 citing steps, 3 stated facts, 6 drafted sections.
+    # The worked example: 5 citing steps, 3 stated facts.
     assert store.cases["a"]["judged_citation_support_judged"] == 5
     assert store.cases["a"]["judged_evidence_tag_judged"] == 3
-    assert store.cases["a"]["judged_invented_content_held"] == 6
-    assert summary.cost_usd == pytest.approx(2 * 14 * 0.001)
-    assert len(judge.items) == 28
+    assert not any(key.startswith("judged_invented_content") for key in store.cases["a"])
+    assert summary.cost_usd == pytest.approx(2 * 8 * 0.001)
+    assert len(judge.items) == 16
 
 
 def test_no_case_starts_once_the_cap_is_spent() -> None:
     run = _run(_classified("a"), _classified("b"), _classified("c"))
     store = MemoryStore()
-    options = JudgedOptions(max_cost_usd=0.02)
+    options = JudgedOptions(max_cost_usd=0.012)
     summary = judge_run(run, plan_run(run, _no_source), Holding(), SETTINGS, store, options)
     assert summary.status is JudgedStatus.COST_CAP_REACHED
-    assert summary.cases_judged == 2  # 0.014 spent after the first case, 0.028 after the second
+    assert summary.cases_judged == 2  # 0.008 spent after the first case, 0.016 after the second
     assert set(store.cases) == {"a", "b"}
 
 
-def test_another_judge_than_the_stored_one_is_refused() -> None:
-    other = SETTINGS.model_copy(update={"margin": UNSURE_MARGIN / 2})
-    run = _run(_classified("a"), settings=other)
+def test_no_case_starts_once_exactly_the_cap_is_spent() -> None:
+    run = _run(_classified("a"), _classified("b"))
     store = MemoryStore()
+    holding = Holding(cost=0.125)  # 8 items: exactly $1.00 after the first case
+    options = JudgedOptions(max_cost_usd=1.0)
+    summary = judge_run(run, plan_run(run, _no_source), holding, SETTINGS, store, options)
+    assert summary.status is JudgedStatus.COST_CAP_REACHED
+    assert summary.cost_usd == 1.0
+    assert set(store.cases) == {"a"}
+
+
+class UnreachedAt(Holding):
+    """Holds every item until call number `at` reaches no model (a ConnectTimeout)."""
+
+    def __init__(self, at: int) -> None:
+        super().__init__()
+        self.at = at
+        self.calls = 0
+
+    def judge(self, item: JudgeItem) -> Verdict:
+        self.calls += 1
+        if self.calls == self.at:
+            raise JudgeError("ConnectTimeout", 0.0006, 0, is_call_failed=True)
+        return super().judge(item)
+
+
+def test_a_call_that_reaches_no_model_stops_the_pass_and_a_rerun_judges_the_case() -> None:
+    rows = (_classified("a"), _classified("b"), _classified("c"))
+    run, store = _run(*rows), MemoryStore()
+    unreached = UnreachedAt(10)  # the second case's second item
+    options = JudgedOptions(concurrency=1)
+    summary = judge_run(run, plan_run(run, _no_source), unreached, SETTINGS, store, options)
+    assert summary.status is JudgedStatus.UNREACHED
+    assert summary.cases_judged == 1
+    assert set(store.cases) == {"a"}
+    assert unreached.calls == 10  # nothing sent after the unreached call
+    assert summary.cost_usd == pytest.approx(9 * 0.001 + 0.0006)
+
+    stored = [
+        StoredRow(row.case_id, row.label, row.predicted, store.cases.get(row.case_id, row.scores))
+        for row in rows
+    ]
+    rerun = _run(*stored, settings=SETTINGS)
+    planned = plan_run(rerun, _no_source)
+    assert [case.case_id for case in planned] == ["b", "c"]
+    again = judge_run(rerun, planned, Holding(), SETTINGS, store, options)
+    assert again.status is JudgedStatus.COMPLETED
+    assert store.cases["b"]["judged_citation_support_judged"] == 5
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("jev_model", "typesafe/jev-2.0"),
+        ("backup_model", "anthropic/claude-haiku-4.5"),
+        ("backup_provider", "anthropic"),
+        ("margin", 0.05),
+    ],
+)
+def test_another_judge_than_the_stored_one_is_refused(field: str, value: object) -> None:
+    other = SETTINGS.model_copy(update={field: value})
     with pytest.raises(JudgedSettingsError, match="one run's tallies come from one judge"):
-        judge_run(run, plan_run(run, _no_source), Holding(), SETTINGS, store, JudgedOptions())
-    assert store.settings == []
-    assert store.cases == {}
+        check_settings(_run(_classified("a"), settings=other), SETTINGS)
+    check_settings(_run(_classified("a"), settings=SETTINGS), SETTINGS)
+    check_settings(_run(_classified("a")), SETTINGS)
 
 
 def test_the_same_judge_goes_on_where_it_stopped() -> None:
@@ -238,14 +361,9 @@ def test_the_same_judge_goes_on_where_it_stopped() -> None:
     assert set(store.cases) == {"b"}
 
 
-@pytest.mark.parametrize(("cost", "concurrency"), [(0.0, 1), (1.0, 0), (1.0, 17)])
-def test_options_are_bounded(cost: float, concurrency: int) -> None:
-    with pytest.raises(ValueError):
-        JudgedOptions(max_cost_usd=cost, concurrency=concurrency)
-
-
 def test_defaults_are_pinned() -> None:
-    assert judged_run.DEFAULT_MAX_COST_USD == 0.5
+    assert judged_run.DEFAULT_MAX_COST_USD == 0.10
+    assert judged_run.CHARS_PER_TOKEN == 3
     assert judged_run.DEFAULT_CONCURRENCY == 4
     assert judged_run.MAX_CONCURRENCY == 16
 
@@ -356,9 +474,12 @@ def test_a_dry_run_prints_the_plan_and_makes_no_call(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(judged_run, "judge_run", no_judging)
     outcome = cli.invoke(app, ["evaluate", "judged", str(run.id), "--dry-run"])
     assert outcome.exit_code == 0, outcome.output
-    assert outcome.stdout.startswith("1 cases to judge, 14 items (Citation support: 5, ")
+    assert outcome.stdout.startswith(
+        "1 cases to judge, 8 items (Citation support: 5, Evidence-tag accuracy: 3) with "
+    )
     assert "margin " + str(UNSURE_MARGIN) in outcome.stdout
-    assert "at most $" in outcome.stdout
+    assert "estimated at most $" in outcome.stdout
+    assert "(cap $0.10)" in outcome.stdout
 
 
 def test_a_run_judged_by_another_judge_exits_2(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -382,3 +503,86 @@ def test_an_unknown_run_exits_2(monkeypatch: pytest.MonkeyPatch) -> None:
     outcome = cli.invoke(app, ["evaluate", "judged", str(uuid4())])
     assert outcome.exit_code == 2
     assert outcome.stderr.startswith("Error: no eval run with id")
+
+
+class FakeRouteJudge:
+    """Stands in for `JevJudge` and `BackupJudge`: built from the settings, never called."""
+
+    def __init__(self, settings: Settings) -> None:
+        self.settings = settings
+
+
+def test_the_command_passes_its_options_and_the_runs_date_to_the_pass(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = _run(_qa_row(), benchmark="qa")
+    seen: dict[str, object] = {}
+
+    def source_as_of(conn: object, as_of: date) -> judged_run.SourceReader:
+        seen["as_of"] = as_of
+        return _source
+
+    def judging(
+        judged: StoredRun,
+        planned: tuple[PlannedCase, ...],
+        built: object,
+        chosen: JudgedSettings,
+        store: object,
+        options: JudgedOptions,
+    ) -> JudgedSummary:
+        seen.update(run=judged, planned=planned, judge=built, chosen=chosen, options=options)
+        totals = {JudgeCheck.QA_SUPPORT: CheckScore(held=1, judged=1, cost_usd=0.001)}
+        return JudgedSummary(JudgedStatus.COMPLETED, 1, 1, totals)
+
+    monkeypatch.setattr(records, "connect", FakeConnection)
+    monkeypatch.setattr(judged_command, "get_settings", _settings)
+    monkeypatch.setattr(judge, "JevJudge", FakeRouteJudge)
+    monkeypatch.setattr(judge, "BackupJudge", FakeRouteJudge)
+    monkeypatch.setattr(judged_run, "load_run", lambda conn, run_id: run)
+    monkeypatch.setattr(judged_run, "corpus_source", source_as_of)
+    monkeypatch.setattr(judged_run, "judge_run", judging)
+    arguments = ["--max-cost-usd", "0.05", "--concurrency", "2"]
+    outcome = cli.invoke(app, ["evaluate", "judged", str(run.id), *arguments])
+    assert outcome.exit_code == 0, outcome.output
+    assert seen["as_of"] == date(2026, 10, 1)
+    assert seen["run"] is run
+    assert seen["planned"] == plan_run(run, _source)
+    built = seen["judge"]
+    assert isinstance(built, Judge)
+    assert built.margin == UNSURE_MARGIN
+    assert seen["chosen"] == SETTINGS
+    assert seen["options"] == JudgedOptions(max_cost_usd=0.05, concurrency=2)
+    assert "1 of 1 cases judged, 0 items not measured; $0.0010" in outcome.stdout
+
+
+@pytest.mark.parametrize(
+    "arguments", [["--concurrency", "0"], ["--concurrency", "17"], ["--max-cost-usd", "0"]]
+)
+def test_the_commands_options_are_bounded(
+    monkeypatch: pytest.MonkeyPatch, arguments: list[str]
+) -> None:
+    monkeypatch.setattr(judged_run, "load_run", _never)
+    outcome = cli.invoke(app, ["evaluate", "judged", str(uuid4()), *arguments])
+    assert outcome.exit_code == 2
+
+
+def _never(*args: object) -> StoredRun:
+    raise AssertionError("a bad option loads nothing")
+
+
+def test_a_pass_stopped_by_an_unreached_call_says_so(monkeypatch: pytest.MonkeyPatch) -> None:
+    run = _run(_classified("a"))
+    monkeypatch.setattr(records, "connect", FakeConnection)
+    monkeypatch.setattr(judged_command, "get_settings", _settings)
+    monkeypatch.setattr(judge, "JevJudge", FakeRouteJudge)
+    monkeypatch.setattr(judge, "BackupJudge", FakeRouteJudge)
+    monkeypatch.setattr(judged_run, "load_run", lambda conn, run_id: run)
+    monkeypatch.setattr(
+        judged_run,
+        "judge_run",
+        lambda *args: JudgedSummary(JudgedStatus.UNREACHED, 1, 0, {}, 0.0006, 0),
+    )
+    outcome = cli.invoke(app, ["evaluate", "judged", str(run.id)])
+    assert outcome.exit_code == 0, outcome.output
+    assert "0 of 1 cases judged, 0 items not measured; $0.0006" in outcome.stdout
+    assert "Stopped: a judge's call reached no model" in outcome.stderr

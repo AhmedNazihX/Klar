@@ -477,8 +477,14 @@ def finite(value: object) -> float | None:
 
 
 def context_text(hit: SearchHit) -> str:
-    """One hit as a context: its provision id and document, then its heading and text."""
-    lines = [f"[{hit.provision_id}] {hit.document_title}", hit.heading, hit.text]
+    """One hit as a context (`source_text`)."""
+    return source_text(hit.provision_id, hit.document_title, hit.heading, hit.text)
+
+
+def source_text(provision_id: str, document_title: str, heading: str | None, text: str) -> str:
+    """A provision as the answer was given it: its id and document, then its heading and text.
+    V5's judge reads a stored hit again in this form (`judged_run.corpus_source`)."""
+    lines = [f"[{provision_id}] {document_title}", heading, text]
     return "\n".join(line for line in lines if line)
 
 

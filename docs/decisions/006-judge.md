@@ -128,3 +128,12 @@ them again). Accepting this record also accepts Jev's non-EU route for benchmark
 - V6's RAGAS faithfulness stays the independent cross-check on Jev's verdicts (INIT; V6's note).
 - Revisit when Jev's version changes (thresholds don't transfer between models), or when V5's
   manual sample disagrees with the judge noticeably more often than the validation did.
+- No invented content is not judged (user, 2026-10-13, V5's review). Drafting is model-free: a
+  document holds the template's wording, the result's facts and the user's interview answers
+  copied word for word, so a judge could only re-read text that is correct by construction, at a
+  cost. The deterministic check `aiact/drafting/checks.py::check_nothing_invented` (P8a) is the
+  real guard: the run report shows its result over the run's drafted documents ("No invented
+  content: checked by code"), and V5 judges citation support, evidence tags and Q&A support
+  only. This departs from INIT › Evaluation › Judge, which lists "no invented content in
+  documents" among the judged checks. The question validated above stays in `aiact.eval.judge`
+  (`JudgeCheck.INVENTED_CONTENT`), ready if drafting ever writes text with a model.
