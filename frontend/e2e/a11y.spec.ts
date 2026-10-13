@@ -3,7 +3,15 @@
 // reduced motion.
 import { expect, test } from '@playwright/test'
 
-import { contrastViolations, runningAnimations, workedExampleResult } from './app.ts'
+import {
+  TOOL_NAME,
+  WORKED_EXAMPLE,
+  contrastViolations,
+  expectResult,
+  runningAnimations,
+  saveProfile,
+  workedExampleResult,
+} from './app.ts'
 
 test('the landing page and Welcome meet the colour contrast minimum', async ({ page }) => {
   await page.goto('/')
@@ -34,13 +42,32 @@ test.describe('with reduced motion', () => {
   test.use({ reducedMotion: 'reduce' })
 
   // Read as soon as each screen shows: without the preference, the landing page's timeline, the
-  // segmented controls and the app's load motion are all still running then.
+  // segmented controls and the app's load motion are all still running then. Those are started
+  // by script only when motion is allowed; the running check's ring (CheckProgress, check-spin)
+  // is CSS alone, which only index.css › reduced-motion stops.
   test('nothing moves on the landing page or in the app', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     expect(await runningAnimations(page), 'landing').toEqual([])
 
-    await workedExampleResult(page)
+    // Hold the run before it reaches the API, so its first check shows as running.
+    let release = (): void => {}
+    const isReleased = new Promise<void>((resolve) => (release = resolve))
+    await page.route(
+      (url) => url.pathname === '/classify',
+      async (route) => {
+        await isReleased
+        await route.continue()
+      },
+    )
+    await saveProfile(page)
+    await page.getByRole('textbox', { name: 'What do you call the tool?' }).fill(TOOL_NAME)
+    await page.getByRole('textbox', { name: 'In your own words' }).fill(WORKED_EXAMPLE)
+    await page.getByRole('button', { name: 'Run the checks' }).click()
+    await expect(page.locator('.check-ring')).toBeVisible()
+    expect(await runningAnimations(page), 'a running check').toEqual([])
+    release()
+    await expectResult(page, TOOL_NAME)
     expect(await runningAnimations(page), 'result').toEqual([])
 
     await page

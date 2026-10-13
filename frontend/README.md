@@ -57,7 +57,10 @@ running. The e2e stack applies the migrations and the obligations seed only when
 after a new migration or a seed change, recreate it with
 `supabase stop --workdir frontend/e2e --no-backup`, then `make e2e-db`.
 
-A flow on a run that isn't recorded yet (`e2e/runs.json`) is expected to fail (`test.fail`) and
+A flow on a run that isn't recorded yet (`e2e/runs.json`) runs until the app shows the run
+stopped for want of its recording, then ends there as an expected failure (`test.fail`) that
 names the command that records it: `cd backend && uv run pytest tests/e2e/test_e2e_runs.py
---record-mode=once` (live, paid model calls). A flow also checks that the app's request still
-matches the recorded one.
+--record-mode=once` (live, paid model calls). Any other failure, before that point or a run that
+doesn't stop, fails the flow. A flow also checks that the app's request still matches the
+recorded one. The downloaded PDF and Word files are read back with the backend's own test reader
+(`backend/tests/export/reading.py`), so the run needs the backend's environment (`uv sync`).

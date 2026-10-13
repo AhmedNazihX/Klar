@@ -4,10 +4,8 @@ import { expect, test } from '@playwright/test'
 
 import {
   RUNS,
-  RecordingPendingError,
+  endIfRecordingPending,
   expectResult,
-  isRecorded,
-  recordingPending,
   saveProfile,
   workedExampleResult,
 } from './app.ts'
@@ -42,7 +40,6 @@ test('a result switched to German shows the law switch, pills and duty condition
 })
 
 test('a German description is classified in German', async ({ page }) => {
-  test.fail(!isRecorded('worked_example_de'), recordingPending('worked_example_de'))
   await saveProfile(page)
   await page
     .getByRole('group', { name: 'Language' })
@@ -54,8 +51,7 @@ test('a German description is classified in German', async ({ page }) => {
 
   const stopped = page.getByRole('alert').filter({ hasText: NO_RECORDING })
   await expect(page.getByRole('heading', { level: 1, name: GERMAN_TOOL }).or(stopped)).toBeVisible()
-  if (await stopped.isVisible())
-    throw new RecordingPendingError(recordingPending('worked_example_de'))
+  await endIfRecordingPending('worked_example_de', stopped)
   await expectResult(page, GERMAN_TOOL)
 
   const result = page.getByRole('region', { name: 'Ergebnis', exact: true })

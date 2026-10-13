@@ -3,15 +3,7 @@
 // sent too, then undoes the answer.
 import { expect, test, type Page } from '@playwright/test'
 
-import {
-  RUNS,
-  RecordingPendingError,
-  TOOL_NAME,
-  expectResult,
-  isRecorded,
-  recordingPending,
-  workedExampleResult,
-} from './app.ts'
+import { RUNS, TOOL_NAME, endIfRecordingPending, expectResult, workedExampleResult } from './app.ts'
 
 const ANSWERED = RUNS.worked_example_answered
 const DECIDING_QUESTION = /How does the system produce its outputs/
@@ -37,16 +29,13 @@ test('the re-run sends the answer and the profile’s EU answer, as recorded', a
 test('an answer re-runs the checks, and Undo answer brings the paused result back', async ({
   page,
 }) => {
-  test.fail(!isRecorded('worked_example_answered'), recordingPending('worked_example_answered'))
   await workedExampleResult(page)
   await answerAndRunAgain(page)
 
   const banner = page.getByText(/^Your answer (changed the result|didn't change the class)\.$/)
   const stopped = page.getByRole('alert').filter({ hasText: NO_RECORDING })
   await expect(banner.or(stopped)).toBeVisible()
-  if (await stopped.isVisible()) {
-    throw new RecordingPendingError(recordingPending('worked_example_answered'))
-  }
+  await endIfRecordingPending('worked_example_answered', stopped)
   await expect(page.getByText('Run 2 of 2')).toBeVisible()
   await expect(page.getByText(ANSWERED.answers.ai_system, { exact: false })).toBeVisible()
   await expect(page.getByRole('heading', { level: 2, name: DECIDING_QUESTION })).toBeHidden()

@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 
-import { expect, type Locator, type Page, type TestInfo } from '@playwright/test'
+import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test'
 import type { AxeResults, Result } from 'axe-core'
 
 import runsFile from './runs.json' with { type: 'json' }
@@ -26,19 +26,31 @@ const RECORDINGS = path.resolve(
 const RECORD_COMMAND = 'cd backend && uv run pytest tests/e2e/test_e2e_runs.py --record-mode=once'
 
 /** Whether the API has a recording for `name` (its model cassette and its corpus answers). */
-export function isRecorded(name: RunName): boolean {
+function isRecorded(name: RunName): boolean {
   return ['.yaml', '.corpus.json'].every((suffix) =>
     existsSync(path.join(RECORDINGS, `${name}${suffix}`)),
   )
 }
 
-/** Why a flow on `name` is expected to fail until it is recorded. */
-export function recordingPending(name: RunName): string {
+function recordingPending(name: RunName): string {
   return `recording pending: the API has no recording of ${name} yet; record it with \`${RECORD_COMMAND}\``
 }
 
 /** The run's request failed because the API had no recording for it (an `error` event). */
-export class RecordingPendingError extends Error {}
+class RecordingPendingError extends Error {}
+
+/**
+ * Where a flow on `name` meets its run's outcome. Recorded, it returns and the flow goes on.
+ * Unrecorded, the run must have stopped for want of its recording (`stopped` shows); the flow then
+ * ends here as an expected failure. It is marked expected only now, so any failure before this
+ * point, or a run that didn't stop, fails the test for real.
+ */
+export async function endIfRecordingPending(name: RunName, stopped: Locator): Promise<void> {
+  if (isRecorded(name)) return
+  await expect(stopped, 'an unrecorded run stops').toBeVisible()
+  test.fail(true, recordingPending(name))
+  throw new RecordingPendingError(recordingPending(name))
+}
 
 // --- Steps --------------------------------------------------------------------------------------
 
