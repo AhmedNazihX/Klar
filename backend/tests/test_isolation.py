@@ -8,9 +8,10 @@ Pile B examples are stored in `provisions`, tagged and held out, so this checks 
    vector). Every other public callable of `aiact/retrieval/` must be in `NOT_ENTRY_POINTS` with
    a reason, or `test_every_retrieval_callable_is_registered_or_explained` fails.
 3. No benchmark text (Pile B example or case description) is repeated in a retrievable row:
-   by word 6-grams everywhere, and by embedding cosine where the corpus vectors exist. The two
-   retellings decision 016 keeps sit below every limit, so the checks pass with them, not by
-   exempting them. Their overlap is recorded in `eval/isolation/contaminated.json` and pinned by
+   by word 6-grams everywhere (the judge validation's invented texts too), and by embedding
+   cosine where the corpus vectors exist. The two retellings decision 016 keeps sit below every
+   limit, so the checks pass with them, not by exempting them. Their overlap is recorded in
+   `eval/isolation/contaminated.json` and pinned by
    `test_the_contaminated_overlaps_are_as_recorded` (and the local cosine re-check).
 The injection tests show each check fails on a planted leak, inside a rolled-back transaction.
 
@@ -53,7 +54,7 @@ from aiact.engine import (
 )
 from aiact.engine.classify import Retrieval
 from aiact.engine.nodes.common import Lookup
-from aiact.eval import isolation, label_filter
+from aiact.eval import isolation, judge_validation, label_filter
 from aiact.eval.cases import CASES_DIR, QA_DIR_NAME, CaseSet
 from aiact.eval.isolation import BenchmarkText, ContaminatedList, EmbeddingCache, ExampleText
 from aiact.eval.runner import ClassifierInput
@@ -109,6 +110,19 @@ def pile_b_texts(split: Split, examples: tuple[ExampleText, ...]) -> tuple[Bench
 def benchmark_texts(pile_b_texts: tuple[BenchmarkText, ...]) -> tuple[BenchmarkText, ...]:
     """Pile B and every case description, the appliedAI extraction too when it is present."""
     return pile_b_texts + isolation.case_texts()
+
+
+@pytest.fixture(scope="module")
+def judge_validation_texts(split: Split) -> tuple[BenchmarkText, ...]:
+    """The judge validation cases that quote no provision (V4): their descriptions, facts and
+    documents are invented. The others quote the Act word for word, and their claims restate
+    it, by design."""
+    return tuple(
+        BenchmarkText(f"{case.id}:{part}", text)
+        for case in judge_validation.load_cases()
+        if not case.provisions
+        for part, text in (("claim", case.claim), ("source", case.source))
+    )
 
 
 @pytest.fixture
@@ -490,9 +504,13 @@ def contaminated(split: Split) -> ContaminatedList:
 
 
 def test_no_benchmark_text_repeats_a_retrievable_row(
-    corpus: psycopg.Connection, benchmark_texts: tuple[BenchmarkText, ...]
+    corpus: psycopg.Connection,
+    benchmark_texts: tuple[BenchmarkText, ...],
+    judge_validation_texts: tuple[BenchmarkText, ...],
 ) -> None:
-    matches = isolation.closest_by_ngram(benchmark_texts, isolation.retrievable_rows(corpus))
+    assert len(judge_validation_texts) == 48  # 24 invented cases, claim and source each
+    texts = benchmark_texts + judge_validation_texts
+    matches = isolation.closest_by_ngram(texts, isolation.retrievable_rows(corpus))
     assert [m for m in matches if m.is_near_duplicate] == [], matches[:5]
 
 

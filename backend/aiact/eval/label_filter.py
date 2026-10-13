@@ -28,18 +28,13 @@ from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
-from pydantic import Field, ValidationError
+from pydantic import Field
 
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, ParsedProvision, load_jsonl
 from aiact.eval.cases import EVAL_DIR, OWN_LABELLED_SETS, BenchmarkCase, CaseSet, load_cases
 from aiact.llm import chat_model
-from aiact.llm.chat import reply_usage
-from aiact.llm.structured import (
-    ProviderRefusalError,
-    describe_validation_error,
-    json_schema_format,
-    parse_reply,
-)
+from aiact.llm.chat import invoke_structured
+from aiact.llm.structured import json_schema_format
 from aiact.provision_names import provision_name
 from aiact.schemas import Language, RiskClass, Role, Status
 from aiact.schemas.base import ContractModel
@@ -267,24 +262,23 @@ class LabelFilter:
     def label(self, case: BenchmarkCase, run_date: date) -> FilterRecord:
         """The second model's label for `case`; a failed call is a record with its error, and
         its cost counts (the estimate when none came back)."""
-        record = self._record(case, run_date)
-        try:
-            reply = self._chat.invoke(
-                filter_messages(case, self.law, run_date), response_format=RESPONSE_FORMAT
-            )
-        except Exception as exc:
-            logger.warning("label filter call for %s failed: %s", case.id, type(exc).__name__)
-            return record(
-                None, _error(exc), CALL_ESTIMATE_USD, 0, is_estimated=True, is_call_failed=True
-            )
-        cost, tokens = reply_usage(reply)
-        is_estimated = cost is None
-        spent = CALL_ESTIMATE_USD if cost is None else cost
-        try:
-            answer = parse_reply(reply, FilterAnswer)
-        except (ValidationError, ProviderRefusalError) as exc:
-            return record(None, _error(exc), spent, tokens, is_estimated=is_estimated)
-        return record(answer, None, spent, tokens, is_estimated=is_estimated)
+        reply = invoke_structured(
+            self._chat,
+            filter_messages(case, self.law, run_date),
+            FilterAnswer,
+            RESPONSE_FORMAT,
+            CALL_ESTIMATE_USD,
+        )
+        if reply.is_call_failed:
+            logger.warning("label filter call for %s failed: %s", case.id, reply.error)
+        return self._record(case, run_date)(
+            reply.answer,
+            reply.error,
+            reply.cost_usd,
+            reply.tokens,
+            is_estimated=reply.is_cost_estimated,
+            is_call_failed=reply.is_call_failed,
+        )
 
     def _record(self, case: BenchmarkCase, run_date: date) -> Callable[..., FilterRecord]:
         def make(
@@ -312,15 +306,6 @@ class LabelFilter:
             )
 
         return make
-
-
-def _error(exc: Exception) -> str:
-    """Metadata only: a validation error by location and message, anything else by type."""
-    if isinstance(exc, ValidationError):
-        return f"answer doesn't fit the schema: {describe_validation_error(exc)}"
-    if isinstance(exc, ProviderRefusalError):
-        return "refused by the provider's content filter"
-    return type(exc).__name__
 
 
 # --- the run ------------------------------------------------------------------------------------

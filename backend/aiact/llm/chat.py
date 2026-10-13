@@ -1,17 +1,19 @@
 """LangChain chat models over OpenRouter.
 
-The model id comes from settings by role (`ENGINE_MODEL`, `JUDGE_MODEL`, …), so switching a
-model for a baseline or a judge is a setting, not a code change. Every model is built with
+The model id comes from settings by role (`ENGINE_MODEL`, `LABEL_FILTER_MODEL`, …), so switching
+a model for a baseline is a setting, not a code change. Every model is built with
 the privacy routing flags from `aiact.llm.routing`.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import Literal
 
 import openrouter
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, BaseMessage
 from langchain_openrouter import ChatOpenRouter
+from pydantic import BaseModel, ValidationError
 
 from aiact.llm.routing import (
     APP_TITLE,
@@ -20,10 +22,10 @@ from aiact.llm.routing import (
     require_api_key,
     require_setting,
 )
-from aiact.llm.structured import ChatRoute
+from aiact.llm.structured import ChatRoute, ProviderRefusalError, failure_metadata, parse_reply
 from aiact.settings import Settings, get_settings
 
-ModelRole = Literal["engine", "judge", "judge_backup", "label_filter", "ragas"]
+ModelRole = Literal["engine", "label_filter", "ragas"]
 """Which configured model to use; `<role>` reads the `<ROLE>_MODEL` setting."""
 
 DEFAULT_TEMPERATURE = 0.0
@@ -40,6 +42,45 @@ def reply_usage(reply: AIMessage) -> tuple[float | None, int]:
     cost = reply.response_metadata.get("cost")
     tokens = reply.usage_metadata["total_tokens"] if reply.usage_metadata else 0
     return (float(cost) if isinstance(cost, int | float) else None), tokens
+
+
+@dataclass(frozen=True)
+class StructuredReply[M: BaseModel]:
+    """One structured call: the answer, or what failed (`error`, metadata only; `cause`, the
+    exception itself, for the caller's cause chain), and what the call spent."""
+
+    answer: M | None
+    error: str | None
+    cause: Exception | None
+    cost_usd: float
+    tokens: int
+    is_cost_estimated: bool
+    """No cost came back with the reply, or no reply came back; the estimate was charged."""
+    is_call_failed: bool
+    """No reply came back (transport, auth, endpoint), as opposed to a reply that was refused or
+    broke the schema."""
+
+
+def invoke_structured[M: BaseModel](
+    chat: BaseChatModel,
+    messages: Sequence[BaseMessage],
+    model: type[M],
+    response_format: Mapping[str, object],
+    estimate_usd: float,
+) -> StructuredReply[M]:
+    """Ask `chat` once for JSON matching `model`. Never raises for the call or its answer: a
+    failed call is charged `estimate_usd`, as is a reply that reports no cost."""
+    try:
+        reply = chat.invoke(list(messages), response_format=response_format)
+    except Exception as exc:
+        return StructuredReply(None, failure_metadata(exc), exc, estimate_usd, 0, True, True)
+    cost, tokens = reply_usage(reply)
+    spent = estimate_usd if cost is None else cost
+    try:
+        answer = parse_reply(reply, model)
+    except (ValidationError, ProviderRefusalError) as exc:
+        return StructuredReply(None, failure_metadata(exc), exc, spent, tokens, cost is None, False)
+    return StructuredReply(answer, None, None, spent, tokens, cost is None, False)
 
 
 def reply_model(reply: AIMessage) -> str | None:

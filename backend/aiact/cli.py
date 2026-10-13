@@ -28,6 +28,8 @@ from aiact.eval import (
     gap,
     held_out_hits,
     isolation,
+    judge_report,
+    judge_validation,
     label_filter,
     label_filter_report,
     label_freeze,
@@ -57,6 +59,7 @@ from aiact.eval.experiments import (
     smoke_verdict,
 )
 from aiact.eval.experiments.smoke_served import VerifyAll
+from aiact.eval.judge import PRICED_BACKUP_MODEL, BackupJudge, JevJudge
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
 from aiact.llm.generations import GenerationLookup
 from aiact.obligations import list as obligations_list
@@ -1261,6 +1264,74 @@ def _label_filter_check(reports: tuple[label_filter_report.GroupReport, ...]) ->
         is_ok = is_ok and result.is_ok
     if not is_ok:
         raise typer.Exit(code=1)
+
+
+@eval_app.command("judge-validation")
+def eval_judge_validation(
+    dry_run: Annotated[
+        bool, typer.Option(help="Print the plan and the cost estimate; make no call")
+    ] = False,
+    report_only: Annotated[
+        bool, typer.Option(help="Make no call; write the report from the answers so far")
+    ] = False,
+    max_cost_usd: Annotated[
+        float, typer.Option(min=0.000001, help="Start no new case once this much would be spent")
+    ] = judge_validation.DEFAULT_MAX_COST_USD,
+) -> None:
+    """The judge's validation (V4): Jev and the backup judge answer every case in
+    eval/judge_validation/cases.yaml (cases already answered are not sent again), then
+    report.md compares them with the hand labels in labels.yaml."""
+    settings = get_settings()
+    route = judge_validation.Route(
+        settings.judge_model, settings.judge_backup_model, settings.judge_backup_provider
+    )
+    try:
+        cases = judge_validation.load_cases(judge_validation.CASES_FILE)
+        labels = judge_validation.load_labels(cases, judge_validation.LABELS_FILE)
+        records = judge_validation.read_records(judge_validation.ANSWERS_FILE)
+    except (judge_validation.JudgeValidationError, ValueError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    todo = judge_validation.cases_to_run(cases, records, route)
+    estimate = judge_validation.estimate_usd(len(todo), route.backup_model)
+    cost = "COST UNKNOWN" if estimate is None else f"at most ${estimate:.4f}"
+    typer.echo(
+        f"{len(cases)} cases ({len(labels)} labelled), {len(todo)} to answer with "
+        f"{route.jev_model} and {route.backup_model} on {route.backup_provider}; {cost} "
+        f"(cap ${max_cost_usd:.2f})"
+    )
+    if estimate is None:
+        typer.echo(f"WARNING: prices known for {PRICED_BACKUP_MODEL} only; check the cap", err=True)
+    if dry_run:
+        return
+    if todo and not report_only:
+        _judge_validation_run(todo, settings, max_cost_usd)
+        records = judge_validation.read_records(judge_validation.ANSWERS_FILE)
+    text = judge_report.format_report(cases, labels, records, route)
+    judge_validation.REPORT_FILE.write_text(text, encoding="utf-8")
+    typer.echo(f"Written: {judge_validation.REPORT_FILE}")
+
+
+def _judge_validation_run(
+    todo: tuple[judge_validation.ValidationCase, ...], settings: Settings, max_cost_usd: float
+) -> None:
+    try:
+        jev, backup = JevJudge(settings), BackupJudge(settings)
+    except LLMConfigError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=2) from error
+    summary = judge_validation.run_validation(
+        todo,
+        lambda case: judge_validation.judge_case(case, jev, backup),
+        max_cost_usd=max_cost_usd,
+        path=judge_validation.ANSWERS_FILE,
+    )
+    typer.echo(
+        f"{summary.answered} answered by both judges, {summary.failed} with a failed judge, of "
+        f"{summary.planned}; ${summary.cost_usd:.4f}, {summary.tokens} tokens"
+    )
+    if summary.stopped is not None:
+        typer.echo(f"Stopped early: {summary.stopped.value}; run again to go on", err=True)
 
 
 @mcp_app.callback()

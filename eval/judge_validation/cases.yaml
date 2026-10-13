@@ -1,0 +1,497 @@
+# Judge validation cases (story V4, decision 006). Each case is a claim and the text it must
+# rest on; the hand label lives in labels.yaml. Legal sources are quoted word for word from
+# data/parsed/ai-act-consolidated.<language>.jsonl (the amended text); descriptions and
+# supplied facts are invented for this set. Never ingested into the corpus.
+- id: jv-en-01
+  check: citation_support
+  language: en
+  provisions:
+  - art:50:1
+  claim: Providers must design an AI system that talks directly with people so that those people are told
+    they are dealing with an AI system, unless this is obvious to a reasonably well-informed and observant
+    person.
+  source: |-
+    Art. 50(1)
+    Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system, unless this is obvious from the point of view of a natural person who is reasonably well-informed, observant and circumspect, taking into account the circumstances and the context of use. This obligation shall not apply to AI systems authorised by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, unless those systems are available for the public to report a criminal offence.
+- id: jv-en-02
+  check: citation_support
+  language: en
+  provisions:
+  - art:26:7
+  claim: An employer that deploys a high-risk AI system at the workplace must obtain the written consent
+    of each affected worker before using it.
+  source: |-
+    Art. 26(7)
+    Before putting into service or using a high-risk AI system at the workplace, deployers who are employers shall inform workers’ representatives and the affected workers that they will be subject to the use of the high-risk AI system. This information shall be provided, where applicable, in accordance with the rules and procedures laid down in Union and national law and practice on information of workers and their representatives.
+- id: jv-en-03
+  check: citation_support
+  language: en
+  provisions:
+  - art:6:3
+  claim: An Annex III system that only performs a narrow procedural task is not high-risk, even when it
+    profiles natural persons.
+  source: |-
+    Art. 6(3)
+    By derogation from paragraph 2, an AI system referred to in Annex III shall not be considered to be high-risk where it does not pose a significant risk of harm to the health, safety or fundamental rights of natural persons, including by not materially influencing the outcome of decision making.
+    The first subparagraph shall apply where any of the following conditions is fulfilled:
+    (a) the AI system is intended to perform a narrow procedural task;
+    (b) the AI system is intended to improve the result of a previously completed human activity;
+    (c) the AI system is intended to detect decision-making patterns or deviations from prior decision-making patterns and is not meant to replace or influence the previously completed human assessment, without proper human review; or
+    (d) the AI system is intended to perform a preparatory task to an assessment relevant for the purposes of the use cases listed in Annex III.
+    Notwithstanding the first subparagraph, an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons.
+- id: jv-en-04
+  check: citation_support
+  language: en
+  provisions:
+  - art:2:6
+  claim: The Regulation does not apply to an AI system developed and put into service for the sole purpose
+    of scientific research and development.
+  source: |-
+    Art. 2(6)
+    This Regulation does not apply to AI systems or AI models, including their output, specifically developed and put into service for the sole purpose of scientific research and development.
+- id: jv-en-05
+  check: citation_support
+  language: en
+  provisions:
+  - art:86:1
+  claim: Anyone affected by a decision based on a high-risk AI system's output may ask the provider of
+    the system to explain the system's role in the decision.
+  source: |-
+    Art. 86(1)
+    Any affected person subject to a decision which is taken by the deployer on the basis of the output from a high-risk AI system listed in Annex III, with the exception of systems listed under point 2 thereof, and which produces legal effects or similarly significantly affects that person in a way that they consider to have an adverse impact on their health, safety or fundamental rights shall have the right to obtain from the deployer clear and meaningful explanations of the role of the AI system in the decision-making procedure and the main elements of the decision taken.
+- id: jv-en-06
+  check: citation_support
+  language: en
+  provisions:
+  - art:99:3
+  claim: Breaching an Article 5 prohibition can cost a company up to EUR 35 million or 7% of its worldwide
+    annual turnover for the preceding financial year, whichever is higher.
+  source: |-
+    Art. 99(3)
+    Non-compliance with the prohibition of the AI practices referred to in Article 5 shall be subject to administrative fines of up to EUR 35 000 000 or, if the offender is an undertaking, up to 7 % of its total worldwide annual turnover for the preceding financial year, whichever is higher.
+- id: jv-en-07
+  check: evidence_tag
+  language: en
+  claim: The system interacts directly with natural persons.
+  source: |-
+    We run a ferry line between three islands. A chatbot on our booking website, built for us by a digital agency and run under our brand, answers passengers' questions about timetables, luggage and refunds. When it can't answer, it hands the chat over to our service desk.
+- id: jv-en-08
+  check: evidence_tag
+  language: en
+  claim: The company developed the chatbot itself.
+  source: |-
+    We run a ferry line between three islands. A chatbot on our booking website, built for us by a digital agency and run under our brand, answers passengers' questions about timetables, luggage and refunds. When it can't answer, it hands the chat over to our service desk.
+- id: jv-en-09
+  check: evidence_tag
+  language: en
+  claim: A person reviews the system's output before it is acted on.
+  source: |-
+    We run 14 bakeries. A forecasting tool we license predicts how many loaves of each kind every shop will sell the next day, from past sales, the weather forecast and public holidays. Shop managers see the forecast each afternoon and adjust the order before it goes to the central bakery.
+- id: jv-en-10
+  check: evidence_tag
+  language: en
+  claim: The system processes customers' personal data.
+  source: |-
+    We run 14 bakeries. A forecasting tool we license predicts how many loaves of each kind every shop will sell the next day, from past sales, the weather forecast and public holidays. Shop managers see the forecast each afternoon and adjust the order before it goes to the central bakery.
+- id: jv-en-11
+  check: evidence_tag
+  language: en
+  claim: The system allocates tasks to workers based on their individual behaviour or personal traits.
+  source: |-
+    We plan to use an AI tool that drafts weekly shift rosters for the 300 workers in our warehouse, from their availability, their skills, their certifications and preferred days. A supervisor checks and approves each roster before it is published.
+- id: jv-en-12
+  check: evidence_tag
+  language: en
+  claim: The system is already in use.
+  source: |-
+    We plan to use an AI tool that drafts weekly shift rosters for the 300 workers in our warehouse, from their availability, their skills, their certifications and preferred days. A supervisor checks and approves each roster before it is published.
+- id: jv-en-13
+  check: qa_support
+  language: en
+  provisions:
+  - art:113
+  claim: |-
+    Question: From when do the high-risk requirements apply to an Annex III system?
+    Answer: Under Article 113(c)(i), Chapter III Sections 1 to 3 apply from 2 December 2027 to AI systems classified as high-risk under Article 6(2) and Annex III.
+  source: |-
+    Art. 113
+    This Regulation shall enter into force on the twentieth day following that of its publication in the Official Journal of the European Union.
+    It shall apply from 2 August 2026.
+    However:
+    (a) Chapters I and II shall apply from 2 February 2025, with the exception of Article 5(1), first subparagraph, points (ba) and (bb), and Article 5(1a) and (1b) which shall apply from 2 December 2026;
+    (b) Chapter III Section 4, Chapter V, Chapter VII and Chapter XII and Article 78 shall apply from 2 August 2025, with the exception of Article 101;
+    (c) Chapter III, Sections 1, 2, and 3, with the exception of Article 6(5), shall apply from:
+    (i) 2 December 2027 as regards AI systems classified as high-risk pursuant to Article 6(2) and Annex III; and
+    (ii) 2 August 2028 as regards AI systems classified as high-risk pursuant to Article 6(1) and Annex I;
+    (d) Articles 102 to 110 shall apply from 27 July 2026.
+- id: jv-en-14
+  check: qa_support
+  language: en
+  provisions:
+  - art:50:1
+  claim: |-
+    Question: Does a company that deploys a customer-service chatbot have to tell customers they are talking to an AI?
+    Answer: Yes. Article 50(1) requires the deployer to show a notice at the start of every conversation saying that the customer is talking to an AI system.
+  source: |-
+    Art. 50(1)
+    Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system, unless this is obvious from the point of view of a natural person who is reasonably well-informed, observant and circumspect, taking into account the circumstances and the context of use. This obligation shall not apply to AI systems authorised by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, unless those systems are available for the public to report a criminal offence.
+- id: jv-en-15
+  check: qa_support
+  language: en
+  provisions:
+  - art:27:1
+  claim: |-
+    Question: Who has to carry out a fundamental rights impact assessment?
+    Answer: Every deployer of a high-risk AI system, before using it for the first time.
+  source: |-
+    Art. 27(1)
+    Prior to deploying a high-risk AI system referred to in Article 6(2), with the exception of high-risk AI systems intended to be used in the area listed in point 2 of Annex III, deployers that are bodies governed by public law, or are private entities providing public services, and deployers of high-risk AI systems referred to in points 5 (b) and (c) of Annex III, shall perform an assessment of the impact on fundamental rights that the use of such system may produce. For that purpose, deployers shall perform an assessment consisting of:
+    (a) a description of the deployer’s processes in which the high-risk AI system will be used in line with its intended purpose;
+    (b) a description of the period of time within which, and the frequency with which, each high-risk AI system is intended to be used;
+    (c) the categories of natural persons and groups likely to be affected by its use in the specific context;
+    (d) the specific risks of harm likely to have an impact on the categories of natural persons or groups of persons identified pursuant to point (c) of this paragraph, taking into account the information given by the provider pursuant to Article 13;
+    (e) a description of the implementation of human oversight measures, according to the instructions for use;
+    (f) the measures to be taken in the case of the materialisation of those risks, including the arrangements for internal governance and complaint mechanisms.
+- id: jv-en-16
+  check: qa_support
+  language: en
+  provisions:
+  - art:3:4
+  claim: |-
+    Question: Is a company that uses an AI tool only for its own internal work a deployer?
+    Answer: Yes. A deployer is any natural or legal person, public authority, agency or other body using an AI system under its authority; only use in a personal non-professional activity is excluded.
+  source: |-
+    Art. 3(4)
+    ‘deployer’ means a natural or legal person, public authority, agency or other body using an AI system under its authority except where the AI system is used in the course of a personal non-professional activity;
+- id: jv-en-17
+  check: qa_support
+  language: en
+  provisions:
+  - art:99:3
+  - art:99:6
+  claim: |-
+    Question: Are smaller companies fined less for breaking the AI Act?
+    Answer: For SMEs, including start-ups, each fine is capped at the lower of the percentage and the fixed amount, so for a breach of Article 5 the cap is the lower of EUR 35 million and 7% of worldwide annual turnover.
+  source: |-
+    Art. 99(3)
+    Non-compliance with the prohibition of the AI practices referred to in Article 5 shall be subject to administrative fines of up to EUR 35 000 000 or, if the offender is an undertaking, up to 7 % of its total worldwide annual turnover for the preceding financial year, whichever is higher.
+
+    Art. 99(6)
+    In the case of SMEs, including start-ups, each fine referred to in this Article shall be up to the percentages or amount referred to in paragraphs 3, 4 and 5, whichever thereof is lower.
+- id: jv-en-18
+  check: qa_support
+  language: en
+  provisions:
+  - art:4
+  claim: |-
+    Question: Do we have to make sure our staff are AI literate?
+    Answer: Providers and deployers must take measures to support the AI literacy of their staff, and they must guarantee that every employee who uses AI reaches a certified level of AI literacy.
+  source: |-
+    Art. 4
+    1. Providers and deployers of AI systems shall take measures to support the development of AI literacy of their staff and other persons dealing with the operation and use of AI systems on their behalf, taking into account their technical knowledge, experience, education and training and the context the AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems are to be used. This obligation does not require providers or deployers to guarantee any specific level of AI literacy of any individual.
+    2. The Commission and the Member States shall support and facilitate the efforts of providers and deployers of AI systems, in particular SMEs, in fulfilling their obligation under paragraph 1 of this Article. For that purpose, the Commission shall publish practical examples of how to comply with that obligation on the single information platform referred to in Article 62(3), point (b).
+    3. The Board shall adopt recommendations, taking into account European competence frameworks, to support the Commission and Member States in the promotion of AI literacy required under paragraph 1, including by setting out common objectives.
+- id: jv-en-19
+  check: invented_content
+  language: en
+  claim: Nordlicht Logistics GmbH uses RouteWise to plan the delivery routes of its 40 vans. Each morning
+    the dispatch lead reviews the plan and can change any route.
+  source: |-
+    Company: Nordlicht Logistics GmbH, Hamburg.
+    System: RouteWise, licensed from a software vendor; it plans the delivery routes of the company's 40 vans.
+    Human oversight: the dispatch lead, Maria Koch, reviews the plan each morning and can change any route.
+    Logs: kept for 12 months.
+- id: jv-en-20
+  check: invented_content
+  language: en
+  claim: Nordlicht Logistics GmbH uses RouteWise to plan the delivery routes of its 40 vans. The dispatch
+    lead, Maria Koch, reviews the plan each morning, and the system's logs are kept for 24 months.
+  source: |-
+    Company: Nordlicht Logistics GmbH, Hamburg.
+    System: RouteWise, licensed from a software vendor; it plans the delivery routes of the company's 40 vans.
+    Human oversight: the dispatch lead, Maria Koch, reviews the plan each morning and can change any route.
+    Logs: kept for 12 months.
+- id: jv-en-21
+  check: invented_content
+  language: en
+  claim: Human oversight is assigned to the dispatch lead, Maria Koch, who has completed the vendor's
+    two-day oversight training and can change any route.
+  source: |-
+    Company: Nordlicht Logistics GmbH, Hamburg.
+    System: RouteWise, licensed from a software vendor; it plans the delivery routes of the company's 40 vans.
+    Human oversight: the dispatch lead, Maria Koch, reviews the plan each morning and can change any route.
+    Logs: kept for 12 months.
+- id: jv-en-22
+  check: invented_content
+  language: en
+  claim: The system flags household customers who may fall behind on their bills, so that staff can offer
+    them a payment plan. Two customer-service team leads approve every offer, and affected customers can
+    complain through the existing hotline.
+  source: |-
+    Deployer: Stadtwerke Kiel, a public utility.
+    System: an AI tool that flags household customers likely to fall behind on their bills, so that staff can offer them a payment plan.
+    Affected persons: household customers.
+    Oversight: two customer-service team leads approve every payment-plan offer.
+    Complaints: through the existing customer complaints hotline.
+- id: jv-en-23
+  check: invented_content
+  language: en
+  claim: The tool flags household customers likely to fall behind on their bills. Flagged customers have
+    their supply checked every month, and two team leads approve every payment-plan offer.
+  source: |-
+    Deployer: Stadtwerke Kiel, a public utility.
+    System: an AI tool that flags household customers likely to fall behind on their bills, so that staff can offer them a payment plan.
+    Affected persons: household customers.
+    Oversight: two customer-service team leads approve every payment-plan offer.
+    Complaints: through the existing customer complaints hotline.
+- id: jv-en-24
+  check: invented_content
+  language: en
+  claim: Stadtwerke Kiel, as deployer, uses the system in line with its intended purpose and the provider's
+    instructions for use, and will review this assessment whenever the circumstances of use change.
+  source: |-
+    Deployer: Stadtwerke Kiel, a public utility.
+    System: an AI tool that flags household customers likely to fall behind on their bills, so that staff can offer them a payment plan.
+    Affected persons: household customers.
+    Oversight: two customer-service team leads approve every payment-plan offer.
+    Complaints: through the existing customer complaints hotline.
+- id: jv-de-01
+  check: citation_support
+  language: de
+  provisions:
+  - art:4
+  claim: Anbieter und Betreiber müssen sicherstellen, dass ihr Personal über ein ausreichendes Maß an
+    KI-Kompetenz verfügt.
+  source: |-
+    Art. 4
+    (1) Die Anbieter und Betreiber von KI-Systemen ergreifen Maßnahmen, um die Entwicklung der KI-Kompetenz ihres Personals und anderer Personen zu unterstützen, die in ihrem Auftrag mit dem Betrieb und der Nutzung von KI-Systemen befasst sind, wobei ihre technischen Kenntnisse, ihre Erfahrung, ihre Aus- und Fortbildung und der Kontext, in dem die KI-Systeme eingesetzt werden sollen, sowie die Personen oder Personengruppen, bei denen die KI-Systeme eingesetzt werden sollen, zu berücksichtigen sind. Diese Verpflichtung verpflichtet Anbieter oder Betreiber nicht, für irgendeine Person ein bestimmtes Niveau an KI-Kompetenz zu garantieren.
+    (2) Die Kommission und die Mitgliedstaaten unterstützen und fördern die Bemühungen der Anbieter und Betreiber von KI-Systemen und insbesondere von KMU, ihre Verpflichtung nach Absatz 1 dieses Artikels zu erfüllen. Zu diesem Zweck veröffentlicht die Kommission praktische Beispiele dafür, wie diese Verpflichtung erfüllt wird auf der in Artikel 62 Absatz 3 Buchstabe b genannten zentralen Informationsplattform.
+    (3) Das KI-Gremium nimmt unter Berücksichtigung der europäischen Kompetenzrahmen Empfehlungen an, um die Kommission und die Mitgliedstaaten unter anderem durch die Festlegung gemeinsamer Ziele bei der Förderung der KI-Kompetenz gemäß Absatz 1 zu unterstützen.
+- id: jv-de-02
+  check: citation_support
+  language: de
+  provisions:
+  - art:50:2
+  claim: Anbieter von KI-Systemen, die synthetische Texte erzeugen, müssen dafür sorgen, dass die Ausgaben
+    in einem maschinenlesbaren Format gekennzeichnet und als künstlich erzeugt erkennbar sind.
+  source: |-
+    Art. 50 Abs. 2
+    Anbieter von KI-Systemen, einschließlich KI-Systemen mit allgemeinem Verwendungszweck, die synthetische Audio-, Bild-, Video- oder Textinhalte erzeugen, stellen sicher, dass die Ausgaben des KI-Systems in einem maschinenlesbaren Format gekennzeichnet und als künstlich erzeugt oder manipuliert erkennbar sind. Die Anbieter sorgen dafür, dass — soweit technisch möglich — ihre technischen Lösungen wirksam, interoperabel, belastbar und zuverlässig sind und berücksichtigen dabei die Besonderheiten und Beschränkungen der verschiedenen Arten von Inhalten, die Umsetzungskosten und den allgemein anerkannten Stand der Technik, wie er in den einschlägigen technischen Normen zum Ausdruck kommen kann. Diese Pflicht gilt nicht, soweit die KI-Systeme eine unterstützende Funktion für die Standardbearbeitung ausführen oder die vom Betreiber bereitgestellten Eingabedaten oder deren Semantik nicht wesentlich verändern oder wenn sie zur Aufdeckung, Verhütung, Ermittlung oder Verfolgung von Straftaten gesetzlich zugelassen sind.
+- id: jv-de-03
+  check: citation_support
+  language: de
+  provisions:
+  - art:26:6
+  claim: Betreiber von Hochrisiko-KI-Systemen müssen die automatisch erzeugten Protokolle mindestens zwei
+    Jahre aufbewahren.
+  source: |-
+    Art. 26 Abs. 6
+    Betreiber von Hochrisiko-KI-Systemen bewahren die von ihrem Hochrisiko-KI-System automatisch erzeugten Protokolle, soweit diese Protokolle ihrer Kontrolle unterliegen, für einen der Zweckbestimmung des Hochrisiko-KI-Systems angemessenen Zeitraum von mindestens sechs Monaten auf, sofern im geltenden Unionsrecht, insbesondere im Unionsrecht über den Schutz personenbezogener Daten, oder im geltenden nationalen Recht nichts anderes bestimmt ist.
+    Betreiber, die Finanzinstitute sind und gemäß den Rechtsvorschriften der Union über Finanzdienstleistungen Anforderungen in Bezug auf ihre Regelungen oder Verfahren der internen Unternehmensführung unterliegen, bewahren die Protokolle als Teil der gemäß einschlägigem Unionsecht über Finanzdienstleistungen aufzubewahrenden Dokumentation auf.
+- id: jv-de-04
+  check: citation_support
+  language: de
+  provisions:
+  - art:3:4
+  claim: Wer ein KI-System nur im Rahmen einer persönlichen und nicht beruflichen Tätigkeit verwendet,
+    ist kein Betreiber im Sinne der Verordnung.
+  source: |-
+    Art. 3 Abs. 4
+    „Betreiber“ eine natürliche oder juristische Person, Behörde, Einrichtung oder sonstige Stelle, die ein KI-System in eigener Verantwortung verwendet, es sei denn, das KI-System wird im Rahmen einer persönlichen und nicht beruflichen Tätigkeit verwendet;
+- id: jv-de-05
+  check: citation_support
+  language: de
+  provisions:
+  - art:73:1
+  claim: Anbieter von Hochrisiko-KI-Systemen müssen schwerwiegende Vorfälle der Europäischen Kommission
+    melden.
+  source: |-
+    Art. 73 Abs. 1
+    Anbieter von in der Union in Verkehr gebrachten Hochrisiko-KI-Systemen melden schwerwiegende Vorfälle den Marktüberwachungsbehörden der Mitgliedstaaten, in denen der Vorfall stattgefunden hat.
+- id: jv-de-06
+  check: citation_support
+  language: de
+  provisions:
+  - art:5:1:f
+  claim: Die Ableitung von Emotionen am Arbeitsplatz ist verboten, es sei denn, das System soll aus medizinischen
+    Gründen oder Sicherheitsgründen eingesetzt werden.
+  source: |-
+    Art. 5 Abs. 1 Buchst. f
+    das Inverkehrbringen, die Inbetriebnahme für diesen spezifischen Zweck oder die Verwendung von KI-Systemen zur Ableitung von Emotionen einer natürlichen Person am Arbeitsplatz und in Bildungseinrichtungen, es sei denn, die Verwendung des KI-Systems soll aus medizinischen Gründen oder Sicherheitsgründen eingeführt oder auf den Markt gebracht werden;
+- id: jv-de-07
+  check: evidence_tag
+  language: de
+  claim: Das System sortiert Trauben ohne menschliches Eingreifen aus.
+  source: |-
+    Unser Weingut setzt an der Sortieranlage eine Kamera mit Bilderkennung ein. Das System erkennt faule oder unreife Trauben und bläst sie mit einem Luftstoß vom Band. Die Anlage haben wir 2025 bei einem Maschinenbauer gekauft.
+- id: jv-de-08
+  check: evidence_tag
+  language: de
+  claim: Das System ist ein Sicherheitsbauteil der Sortiermaschine.
+  source: |-
+    Unser Weingut setzt an der Sortieranlage eine Kamera mit Bilderkennung ein. Das System erkennt faule oder unreife Trauben und bläst sie mit einem Luftstoß vom Band. Die Anlage haben wir 2025 bei einem Maschinenbauer gekauft.
+- id: jv-de-09
+  check: evidence_tag
+  language: de
+  claim: Das System bewertet einzelne natürliche Personen.
+  source: |-
+    Wir betreiben 30 Fitnessstudios. Ein Modell soll aus Besuchszeiten, Vertragsdaten und Kursbuchungen vorhersagen, welche Mitglieder in den nächsten drei Monaten voraussichtlich kündigen, damit wir ihnen einen Rabatt anbieten können. Ob ein Rabatt angeboten wird, entscheidet die Studioleitung.
+- id: jv-de-10
+  check: evidence_tag
+  language: de
+  claim: Das System verarbeitet Gesundheitsdaten.
+  source: |-
+    Wir betreiben 30 Fitnessstudios. Ein Modell soll aus Besuchszeiten, Vertragsdaten und Kursbuchungen vorhersagen, welche Mitglieder in den nächsten drei Monaten voraussichtlich kündigen, damit wir ihnen einen Rabatt anbieten können. Ob ein Rabatt angeboten wird, entscheidet die Studioleitung.
+- id: jv-de-11
+  check: evidence_tag
+  language: de
+  claim: Das Unternehmen bringt das System unter seinem eigenen Namen in Verkehr.
+  source: |-
+    Wir sind ein Start-up aus Leipzig. Unsere App wandelt diktierte Arztbriefe in Text um und schlägt eine Gliederung vor; die Ärztin oder der Arzt prüft und unterschreibt jeden Brief. Wir verkaufen die App unter unserem Namen an Praxen in ganz Deutschland.
+- id: jv-de-12
+  check: evidence_tag
+  language: de
+  claim: Ein Mensch prüft jede Ausgabe des Systems, bevor sie verwendet wird.
+  source: |-
+    Wir sind ein Start-up aus Leipzig. Unsere App wandelt diktierte Arztbriefe in Text um und schlägt eine Gliederung vor; die Ärztin oder der Arzt prüft und unterschreibt jeden Brief. Wir verkaufen die App unter unserem Namen an Praxen in ganz Deutschland.
+- id: jv-de-13
+  check: qa_support
+  language: de
+  provisions:
+  - art:113
+  claim: |-
+    Frage: Ab wann gelten die Verbote nach Artikel 5?
+    Antwort: Die Kapitel I und II und damit die Verbote nach Artikel 5 gelten seit dem 2. Februar 2025; nur Artikel 5 Absatz 1 Buchstaben ba und bb sowie die Absätze 1a und 1b gelten erst ab dem 2. Dezember 2026.
+  source: |-
+    Art. 113
+    Diese Verordnung tritt am zwanzigsten Tag nach ihrer Veröffentlichung im Amtsblatt der Europäischen Union in Kraft.
+    Sie gilt ab dem 2. August 2026.
+    Jedoch:
+    a) Die Kapitel I und II gelten ab dem 2. Februar 2025, mit Ausnahme von Artikel 5 Absatz 1 Unterabsatz 1 Buchstaben ba und bb und Artikel 5 Absätze 1a und 1b, die ab dem 2. Dezember 2026 gelten;
+    b) Kapitel III Abschnitt 4, Kapitel V, Kapitel VII und Kapitel XII sowie Artikel 78 gelten ab dem 2. August 2025, mit Ausnahme des Artikels 101;
+    c) Kapitel III Abschnitte 1, 2 und 3, mit Ausnahme von Artikel 6 Absatz 5, gelten ab dem:
+    i) 2. Dezember 2027 in Bezug auf KI-Systeme, die gemäß Artikel 6 Absatz 2 und Anhang III als hochriskant eingestuft sind, und
+    ii) 2. August 2028 in Bezug auf KI-Systeme, die gemäß Artikel 6 Absatz 1 und Anhang I als hochriskant eingestuft sind;
+    d) Die Artikel 102 bis 110 gelten ab dem 27. Juli 2026.
+- id: jv-de-14
+  check: qa_support
+  language: de
+  provisions:
+  - art:50:3
+  claim: |-
+    Frage: Müssen Betreiber eines Emotionserkennungssystems die Betroffenen informieren?
+    Antwort: Ja. Betreiber müssen die betroffenen Personen über den Betrieb des Systems informieren und vorher ihre ausdrückliche Einwilligung einholen.
+  source: |-
+    Art. 50 Abs. 3
+    Die Betreiber eines Emotionserkennungssystems oder eines Systems zur biometrischen Kategorisierung informieren die davon betroffenen natürlichen Personen über den Betrieb des Systems und verarbeiten personenbezogene Daten gemäß den Verordnungen (EU) 2016/679 und (EU) 2018/1725 und der Richtlinie (EU) 2016/680. Diese Pflicht gilt nicht für gesetzlich zur Aufdeckung, Verhütung oder Ermittlung von Straftaten zugelassene KI-Systeme, die zur biometrischen Kategorisierung und Emotionserkennung im Einklang mit dem Unionsrecht verwendet werden, sofern geeignete Schutzvorkehrungen für die Rechte und Freiheiten Dritter bestehen.
+- id: jv-de-15
+  check: qa_support
+  language: de
+  provisions:
+  - art:25:1
+  claim: |-
+    Frage: Wann wird ein Händler zum Anbieter eines Hochrisiko-KI-Systems?
+    Antwort: Unter anderem, wenn er ein bereits in Verkehr gebrachtes Hochrisiko-KI-System mit seinem Namen oder seiner Handelsmarke versieht oder es so wesentlich verändert, dass es hochriskant bleibt.
+  source: |-
+    Art. 25 Abs. 1
+    In den folgenden Fällen gelten Händler, Einführer, Betreiber oder sonstige Dritte als Anbieter eines Hochrisiko-KI-Systems für die Zwecke dieser Verordnung und unterliegen den Anbieterpflichten gemäß Artikel 16:
+    a) wenn sie ein bereits in Verkehr gebrachtes oder in Betrieb genommenes Hochrisiko-KI-System mit ihrem Namen oder ihrer Handelsmarke versehen, unbeschadet vertraglicher Vereinbarungen, die eine andere Aufteilung der Pflichten vorsehen;
+    b) wenn sie eine wesentliche Veränderung eines Hochrisiko-KI-Systems, das bereits in Verkehr gebracht oder in Betrieb genommen wurde, so vornehmen, dass es weiterhin ein Hochrisiko-KI-System gemäß Artikel 6 bleibt;
+    c) wenn sie die Zweckbestimmung eines KI-Systems, einschließlich eines KI-Systems mit allgemeinem Verwendungszweck, das nicht als hochriskant eingestuft wurde und bereits in Verkehr gebracht oder in Betrieb genommen wurde, so verändern, dass das betreffende KI-System zu einem Hochrisiko-KI-System im Sinne von Artikel 6 wird.
+- id: jv-de-16
+  check: qa_support
+  language: de
+  provisions:
+  - art:26:6
+  claim: |-
+    Frage: Wie lange müssen Betreiber die Protokolle eines Hochrisiko-KI-Systems aufbewahren?
+    Antwort: Mindestens sechs Monate, soweit die Protokolle ihrer Kontrolle unterliegen und das Unionsrecht oder das nationale Recht nichts anderes bestimmt.
+  source: |-
+    Art. 26 Abs. 6
+    Betreiber von Hochrisiko-KI-Systemen bewahren die von ihrem Hochrisiko-KI-System automatisch erzeugten Protokolle, soweit diese Protokolle ihrer Kontrolle unterliegen, für einen der Zweckbestimmung des Hochrisiko-KI-Systems angemessenen Zeitraum von mindestens sechs Monaten auf, sofern im geltenden Unionsrecht, insbesondere im Unionsrecht über den Schutz personenbezogener Daten, oder im geltenden nationalen Recht nichts anderes bestimmt ist.
+    Betreiber, die Finanzinstitute sind und gemäß den Rechtsvorschriften der Union über Finanzdienstleistungen Anforderungen in Bezug auf ihre Regelungen oder Verfahren der internen Unternehmensführung unterliegen, bewahren die Protokolle als Teil der gemäß einschlägigem Unionsecht über Finanzdienstleistungen aufzubewahrenden Dokumentation auf.
+- id: jv-de-17
+  check: qa_support
+  language: de
+  provisions:
+  - art:2:8
+  claim: |-
+    Frage: Gilt die KI-Verordnung für Tests eines KI-Systems vor der Markteinführung?
+    Antwort: Nein. Forschungs-, Test- und Entwicklungstätigkeiten vor dem Inverkehrbringen sind ausgenommen, und das gilt auch für Tests unter Realbedingungen.
+  source: |-
+    Art. 2 Abs. 8
+    Diese Verordnung gilt nicht für Forschungs-, Test- und Entwicklungstätigkeiten zu KI-Systemen oder KI-Modellen, bevor diese in Verkehr gebracht oder in Betrieb genommen werden. Solche Tätigkeiten werden im Einklang mit dem geltenden Unionsrecht durchgeführt. Tests unter Realbedingungen fallen nicht unter diesen Ausschluss.
+- id: jv-de-18
+  check: qa_support
+  language: de
+  provisions:
+  - art:86:1
+  claim: |-
+    Frage: Welche Rechte haben Personen, über die mit Hilfe eines Hochrisiko-KI-Systems entschieden wurde?
+    Antwort: Sie können vom Betreiber eine klare und aussagekräftige Erläuterung zur Rolle des KI-Systems im Entscheidungsprozess und zu den wichtigsten Elementen der Entscheidung verlangen; für Systeme nach Anhang III Nummer 2 gilt das nicht.
+  source: |-
+    Art. 86 Abs. 1
+    Personen, die von einer Entscheidung betroffen sind, die der Betreiber auf der Grundlage der Ausgaben eines in Anhang III aufgeführten Hochrisiko-KI-Systems, mit Ausnahme der in Nummer 2 des genannten Anhangs aufgeführten Systeme, getroffen hat und die rechtliche Auswirkungen hat oder sie in ähnlicher Art erheblich auf eine Weise beeinträchtigt, die ihrer Ansicht nach ihre Gesundheit, ihre Sicherheit oder ihre Grundrechte beeinträchtigt, haben das Recht, vom Betreiber eine klare und aussagekräftige Erläuterung zur Rolle des KI-Systems im Entscheidungsprozess und zu den wichtigsten Elementen der getroffenen Entscheidung zu erhalten.
+- id: jv-de-19
+  check: invented_content
+  language: de
+  claim: Die Pflegedienst Sonnenhof GmbH setzt den Tourenplaner CareRoute ein, der die Hausbesuche ihrer
+    25 Pflegekräfte plant. Die Pflegedienstleitung prüft jeden Plan und kann ihn ändern.
+  source: |-
+    Betreiber: Pflegedienst Sonnenhof GmbH, Freiburg.
+    System: der Tourenplaner „CareRoute“ eines Softwareanbieters; er plant die Hausbesuche der 25 Pflegekräfte.
+    Aufsicht: Die Pflegedienstleitung prüft jeden Tourenplan und kann ihn ändern.
+    Information: Die Mitarbeitenden wurden im März 2026 über den Einsatz informiert.
+- id: jv-de-20
+  check: invented_content
+  language: de
+  claim: Die Mitarbeitenden und der Betriebsrat wurden im März 2026 über den Einsatz von CareRoute informiert.
+  source: |-
+    Betreiber: Pflegedienst Sonnenhof GmbH, Freiburg.
+    System: der Tourenplaner „CareRoute“ eines Softwareanbieters; er plant die Hausbesuche der 25 Pflegekräfte.
+    Aufsicht: Die Pflegedienstleitung prüft jeden Tourenplan und kann ihn ändern.
+    Information: Die Mitarbeitenden wurden im März 2026 über den Einsatz informiert.
+- id: jv-de-21
+  check: invented_content
+  language: de
+  claim: CareRoute plant die Hausbesuche der 25 Pflegekräfte. Die Pflegedienstleitung prüft die Tourenpläne
+    einmal pro Woche.
+  source: |-
+    Betreiber: Pflegedienst Sonnenhof GmbH, Freiburg.
+    System: der Tourenplaner „CareRoute“ eines Softwareanbieters; er plant die Hausbesuche der 25 Pflegekräfte.
+    Aufsicht: Die Pflegedienstleitung prüft jeden Tourenplan und kann ihn ändern.
+    Information: Die Mitarbeitenden wurden im März 2026 über den Einsatz informiert.
+- id: jv-de-22
+  check: invented_content
+  language: de
+  claim: LeafScan wurde mit 48.000 Fotos aus österreichischen Obstgärten der Jahre 2021 bis 2024 trainiert
+    und erkannte im Test mit 2.000 Fotos 91 % der Krankheiten richtig. Bei Gegenlicht sind die Ergebnisse
+    schwächer.
+  source: |-
+    Anbieter: AgriSense AG, Linz.
+    System: „LeafScan“ erkennt Krankheiten an Apfelblättern auf Handyfotos.
+    Trainingsdaten: 48.000 Fotos aus österreichischen Obstgärten der Jahre 2021 bis 2024.
+    Genauigkeit: 91 % richtig erkannte Krankheiten im Test mit 2.000 Fotos.
+    Bekannte Grenze: schwächere Ergebnisse bei Gegenlicht.
+- id: jv-de-23
+  check: invented_content
+  language: de
+  claim: LeafScan erkennt Krankheiten an Apfelblättern mit einer Genauigkeit von 91 % und funktioniert
+    bei allen Lichtverhältnissen gleich zuverlässig.
+  source: |-
+    Anbieter: AgriSense AG, Linz.
+    System: „LeafScan“ erkennt Krankheiten an Apfelblättern auf Handyfotos.
+    Trainingsdaten: 48.000 Fotos aus österreichischen Obstgärten der Jahre 2021 bis 2024.
+    Genauigkeit: 91 % richtig erkannte Krankheiten im Test mit 2.000 Fotos.
+    Bekannte Grenze: schwächere Ergebnisse bei Gegenlicht.
+- id: jv-de-24
+  check: invented_content
+  language: de
+  claim: Die AgriSense AG bringt LeafScan als Anbieter in Verkehr. Die App unterstützt Obstbauern bei
+    der Diagnose; über eine Behandlung entscheiden sie stets selbst.
+  source: |-
+    Anbieter: AgriSense AG, Linz.
+    System: „LeafScan“ erkennt Krankheiten an Apfelblättern auf Handyfotos.
+    Trainingsdaten: 48.000 Fotos aus österreichischen Obstgärten der Jahre 2021 bis 2024.
+    Genauigkeit: 91 % richtig erkannte Krankheiten im Test mit 2.000 Fotos.
+    Bekannte Grenze: schwächere Ergebnisse bei Gegenlicht.

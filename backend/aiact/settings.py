@@ -75,8 +75,13 @@ class Settings(BaseSettings):
     # Model ids (OpenRouter slugs; confirmed by stories X2 and X3)
     engine_model: str | None = None
     engine_provider: str | None = None
-    judge_model: str | None = None
-    judge_backup_model: str | None = None
+    # The judge (V4, decision 006): Jev answers first through OpenRouter's Decisions API (it has
+    # no EU endpoint; it only reads benchmark material). Unsure items go to the backup model on
+    # its EU zero-retention endpoint, pinned with fallbacks off; override model and provider
+    # together.
+    judge_model: str = "typesafe/jev-1.13"
+    judge_backup_model: str = "anthropic/claude-haiku-5.5"
+    judge_backup_provider: str = "google-vertex/europe"
     # The second-model label filter (B9): Claude Haiku 4.5 on its EU zero-retention endpoint
     # (decision 005), pinned with fallbacks off; override both together.
     label_filter_model: str = "anthropic/claude-haiku-4.5"

@@ -86,6 +86,16 @@ def describe_validation_error(exc: ValidationError) -> str:
     )
 
 
+def failure_metadata(exc: Exception) -> str:
+    """A failed structured call as metadata only: a validation error by location and message, a
+    refusal as such, anything else by type."""
+    if isinstance(exc, ValidationError):
+        return f"answer doesn't fit the schema: {describe_validation_error(exc)}"
+    if isinstance(exc, ProviderRefusalError):
+        return "refused by the provider's content filter"
+    return type(exc).__name__
+
+
 def parse_reply[M: BaseModel](reply: BaseMessage, model: type[M]) -> M:
     """The reply as `model`. An answer that parses is used whatever the finish reason (a
     `content_filter` reply can still carry one). Raises `ProviderRefusalError` when the content

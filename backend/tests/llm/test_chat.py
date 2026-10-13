@@ -1,3 +1,5 @@
+from typing import get_args
+
 import httpx
 import pytest
 from langchain_core.messages import AIMessage
@@ -7,6 +9,7 @@ from pydantic import SecretStr
 
 from aiact.llm import (
     LLMConfigError,
+    ModelRole,
     chat_model,
     engine_chat_model,
     engine_route,
@@ -23,8 +26,14 @@ def _settings(**values: object) -> Settings:
 
 
 def test_model_id_comes_from_settings_by_role() -> None:
-    model = chat_model("judge", settings=_settings(judge_model="vendor/judge-model"))
-    assert model.model_name == "vendor/judge-model"
+    settings = _settings(label_filter_model="vendor/filter-model")
+    assert chat_model("label_filter", settings=settings).model_name == "vendor/filter-model"
+
+
+def test_the_judge_has_no_chat_role() -> None:
+    """Jev refuses chat completions, and the backup judge is built pinned (`BackupJudge`): a
+    role would build either as an unpinned chat model."""
+    assert get_args(ModelRole) == ("engine", "label_filter", "ragas")
 
 
 def test_unset_model_id_is_a_config_error(monkeypatch: pytest.MonkeyPatch) -> None:

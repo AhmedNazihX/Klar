@@ -6,14 +6,20 @@ from aiact.settings import BACKEND_DIR, DEFAULT_DATA_DIR, Settings
 
 MODEL_ID_FIELDS = (
     "engine_model",
-    "judge_model",
-    "judge_backup_model",
     "refusal_model",
     "refusal_provider",
     "embedding_model",
     "embedding_provider",
 )
-DEFAULTED_ROUTES = ("ragas_model", "ragas_provider", "label_filter_model", "label_filter_provider")
+DEFAULTED_ROUTES = (
+    "ragas_model",
+    "ragas_provider",
+    "label_filter_model",
+    "label_filter_provider",
+    "judge_model",
+    "judge_backup_model",
+    "judge_backup_provider",
+)
 """Model routes with a default (decision 005): empty keys in `.env.example` keep it."""
 
 
@@ -55,6 +61,13 @@ def test_env_example_leaves_model_ids_unset(monkeypatch: pytest.MonkeyPatch) -> 
         "anthropic/claude-haiku-4.5",
         "google-vertex/europe",
     )
+    # The judge: Jev first, Claude Haiku 5.5 on its EU zero-retention endpoint for unsure items
+    # (decision 006).
+    assert (
+        settings.judge_model,
+        settings.judge_backup_model,
+        settings.judge_backup_provider,
+    ) == ("typesafe/jev-1.13", "anthropic/claude-haiku-5.5", "google-vertex/europe")
     assert settings.embedding_dimensions == 1536
     # Empty keys keep X1b's calibrated values (decision 003).
     assert (settings.search_max_distance, settings.search_min_keyword_idf) == (0.30, 24.0)
