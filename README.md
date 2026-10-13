@@ -186,6 +186,7 @@ uv` for the first), then restart Claude Desktop:
 The server (`aiact mcp serve`, over stdio) reads the database and the model ids from `backend/.env`.
 `classify_system` runs only on `MCP_OPENROUTER_API_KEY`, your own OpenRouter key, never on the app's
 `OPENROUTER_API_KEY`, which embeds the lookups' search queries. A classification takes about a minute.
+The key's OpenRouter spending limit is its only budget cap.
 
 **A Supabase project of your own.** Create a project in an EU region, then from the repo root: `supabase link
 --project-ref <ref>`, `supabase db push` (the schema) and `supabase config push` (anonymous sign-ins). Load the

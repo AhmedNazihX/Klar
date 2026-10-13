@@ -16,9 +16,10 @@ import pytest
 from langchain_openrouter import ChatOpenRouter
 from mcp import Client
 from mcp.types import CallToolResult, TextContent
+from openrouter.components.security import Security
 from pydantic import SecretStr
 
-from aiact.engine.clients import engine_chats, refusal_chats
+from aiact.engine.clients import engine_chats, engine_embeddings, refusal_chats
 from aiact.engine.graph import EngineNodes
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
@@ -53,7 +54,20 @@ from tests.conftest import REFUSAL_ROUTE
 LOOKUPS = {"search_ai_act", "get_provision", "list_obligations"}
 TOOLS = {*LOOKUPS, "classify_system"}
 HIDDEN_ARGUMENTS = {"include_held_out", "exclude_source_example_ids", "max_distance"}
-"""Search options an outside agent must never set (decision 012; C8's cut-off is the server's)."""
+"""Search options an outside agent must never set (decision 012; C8's cut-off is the server's);
+tests/test_isolation.py checks the same names."""
+
+
+def property_names(schema: object) -> set[str]:
+    """Every property name anywhere in a JSON Schema: the top level, nested objects, `$defs`,
+    `anyOf` branches and array items, so an opt-in inside a model argument is found too."""
+    if isinstance(schema, list):
+        return set().union(*(property_names(item) for item in schema))
+    if not isinstance(schema, dict):
+        return set()
+    properties = schema.get("properties")
+    names = set(properties) if isinstance(properties, dict) else set()
+    return names.union(*(property_names(value) for value in schema.values()))
 
 
 class NoConnection:
@@ -95,13 +109,18 @@ def _error_text(result: CallToolResult) -> str:
 
 
 @pytest.mark.anyio
-async def test_the_server_lists_the_four_tools_as_read_only(client: Client) -> None:
+async def test_the_server_lists_the_lookups_as_read_only_and_classify_as_paid(
+    client: Client,
+) -> None:
     tools = (await client.list_tools()).tools
     assert {tool.name for tool in tools} == TOOLS
     for tool in tools:
-        assert tool.annotations is not None and tool.annotations.read_only_hint
+        assert tool.annotations is not None
+        # A classification spends the user's credit: a client must not run it unasked.
+        assert tool.annotations.read_only_hint is (tool.name in LOOKUPS)
         # A lookup gives the same answer twice; a classification is a model's reading.
         assert tool.annotations.idempotent_hint is (tool.name in LOOKUPS)
+        assert tool.annotations.open_world_hint is (tool.name not in LOOKUPS)
         assert tool.output_schema is not None
         assert tool.description and "\n    " not in tool.description  # no source indentation
         assert {"law_version", "disclaimer"} <= set(tool.output_schema["properties"])
@@ -110,7 +129,26 @@ async def test_the_server_lists_the_four_tools_as_read_only(client: Client) -> N
 @pytest.mark.anyio
 async def test_no_tool_exposes_the_held_out_or_exclude_options(client: Client) -> None:
     for tool in (await client.list_tools()).tools:
-        assert set(tool.input_schema["properties"]).isdisjoint(HIDDEN_ARGUMENTS), tool.name
+        assert property_names(tool.input_schema).isdisjoint(HIDDEN_ARGUMENTS), tool.name
+
+
+def test_property_names_reach_nested_objects_and_defs() -> None:
+    """An opt-in in a model argument: under `$defs`, behind an `anyOf`, or in an array's items."""
+    schema = {
+        "properties": {
+            "query": {"type": "string"},
+            "options": {"anyOf": [{"$ref": "#/$defs/Options"}, {"type": "null"}]},
+            "filters": {"items": {"properties": {"max_distance": {"type": "number"}}}},
+        },
+        "$defs": {"Options": {"properties": {"include_held_out": {"type": "boolean"}}}},
+    }
+    assert property_names(schema) == {
+        "query",
+        "options",
+        "filters",
+        "max_distance",
+        "include_held_out",
+    }
 
 
 @pytest.mark.anyio
@@ -395,10 +433,8 @@ class ScriptedEngine:
 
 
 def _fails(_state: EngineState) -> CheckOutcome:
-    try:
-        raise ValueError(f"input_value='{SECRET}'")
-    except ValueError as exc:
-        raise RuntimeError("the reply did not fit the schema") from exc
+    """The node's own error, so the secret sits on `ClassificationFailedError.__cause__`."""
+    raise ValueError(f"input_value='{SECRET}'")
 
 
 async def _classify(
@@ -476,24 +512,40 @@ async def test_the_run_goes_on_the_callers_own_key() -> None:
     assert settings.openrouter_api_key.get_secret_value() == OWN_KEY
 
 
-def test_the_engines_models_are_built_on_the_callers_own_key() -> None:
-    """Every paid call of a run: each node's engine and refusal model (the embedder is built
-    from the same settings)."""
-    settings = own_key_settings(
-        mcp_settings(
-            engine_model="openai/gpt-6-luna-20260922",
-            engine_provider="azure/eu",
-            embedding_model="qwen/qwen3-embedding-8b",
-            embedding_provider="nebius",
-            **REFUSAL_ROUTE,
-        )
+def _routed_settings() -> Settings:
+    """`mcp_settings` with every model of a run routed, as a deployed server has them."""
+    return mcp_settings(
+        engine_model="openai/gpt-6-luna-20260922",
+        engine_provider="azure/eu",
+        embedding_model="qwen/qwen3-embedding-8b",
+        embedding_provider="nebius",
+        **REFUSAL_ROUTE,
     )
+
+
+def test_the_engines_models_are_built_on_the_callers_own_key() -> None:
+    """Every paid call of a run: each node's engine and refusal model, and the query embedder."""
+    settings = own_key_settings(_routed_settings())
     models = [*engine_chats(settings).values(), *refusal_chats(settings).values()]
     assert len(models) == 12
     for model in models:
         assert isinstance(model, ChatOpenRouter)
         assert model.openrouter_api_key is not None
         assert model.openrouter_api_key.get_secret_value() == OWN_KEY
+    security = engine_embeddings(settings)._client.sdk_configuration.security
+    assert isinstance(security, Security)
+    assert security.api_key == OWN_KEY != APP_KEY
+
+
+def test_every_run_reuses_the_clients_built_on_the_callers_key() -> None:
+    """E15: each call makes its own copy of the settings; equal copies find the clients the
+    first run built, so no run builds (and leaks) a client of its own."""
+    settings = _routed_settings()
+    first, again = own_key_settings(settings), own_key_settings(settings)
+    assert first == again
+    assert engine_chats(first) is engine_chats(again)
+    assert refusal_chats(first) is refusal_chats(again)
+    assert engine_embeddings(first) is engine_embeddings(again)
 
 
 @pytest.mark.anyio
@@ -605,7 +657,11 @@ async def test_a_failed_check_names_the_check_and_nothing_else(
         result = await _classify({"description": DESCRIPTION}, engine)
     text = _error_text(result)
     assert "the high_risk node failed, so the run gives no class" in text
-    assert "check that MCP_OPENROUTER_API_KEY is a valid OpenRouter key" in text
+    # One possible cause among others: a paused database fails the run the same way.
+    assert text.endswith(
+        ". Try again later; if it keeps failing, the cause may be MCP_OPENROUTER_API_KEY (not a "
+        "valid OpenRouter key, or out of credit) or this server's database connection"
+    )
     assert result.structured_content is None
     for seen in (text, caplog.text):
         for private in (SECRET, DESCRIPTION, OWN_KEY, APP_KEY, "Traceback"):

@@ -81,17 +81,18 @@ INSTRUCTIONS = (
 )
 
 READ_ONLY = ToolAnnotations(read_only_hint=True, idempotent_hint=True, open_world_hint=False)
-CLASSIFY = ToolAnnotations(read_only_hint=True, idempotent_hint=False, open_world_hint=True)
-"""A classification changes nothing, but an outside model answers it (paid), so two runs can
-differ."""
+CLASSIFY = ToolAnnotations(read_only_hint=False, idempotent_hint=False, open_world_hint=True)
+"""A classification changes no data, but an outside model answers it, so two runs can differ,
+and every run spends the user's OpenRouter credit: not read only, so a client that approves
+read-only tools by itself still asks before each run."""
 
 MISSING_KEY = (
     "classify_system runs on your own OpenRouter key: set MCP_OPENROUTER_API_KEY in this "
     "server's env in your MCP client's config, then restart the server"
 )
 FAILED_RUN_HINT = (
-    "Try again later; if it keeps failing, check that MCP_OPENROUTER_API_KEY is a valid "
-    "OpenRouter key with credit"
+    "Try again later; if it keeps failing, the cause may be MCP_OPENROUTER_API_KEY (not a valid "
+    "OpenRouter key, or out of credit) or this server's database connection"
 )
 
 ConnectionFactory = Callable[[], AbstractContextManager[psycopg.Connection]]

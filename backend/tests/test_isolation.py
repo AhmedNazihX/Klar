@@ -65,6 +65,7 @@ from aiact.retrieval.search import CANDIDATES as SEARCH_CANDIDATES
 from aiact.retrieval.search import search_ai_act
 from aiact.settings import BACKEND_DIR, Settings, get_settings
 from tests.db.conftest import db, db_connection  # noqa: F401  (fixtures)
+from tests.mcp.test_server import HIDDEN_ARGUMENTS, property_names
 
 pytestmark = pytest.mark.db
 
@@ -370,12 +371,13 @@ in its OpenAPI document is an opt-in)."""
 
 
 def test_no_mcp_tool_takes_the_opt_in() -> None:
-    """P2b: the four MCP tools, classify_system among them, as an outside agent sees them."""
+    """P2b: the four MCP tools, classify_system among them, as an outside agent sees them,
+    nested arguments and `$defs` included (the hidden names are tests/mcp/test_server.py's)."""
+    assert {OPT_IN_PARAMETER, "exclude_source_example_ids"} <= HIDDEN_ARGUMENTS
     tools = anyio.run(build_server().list_tools)
     assert "classify_system" in {tool.name for tool in tools}
     for tool in tools:
-        arguments = set(tool.input_schema["properties"])
-        assert arguments.isdisjoint({OPT_IN_PARAMETER, "exclude_source_example_ids"}), tool.name
+        assert property_names(tool.input_schema).isdisjoint(HIDDEN_ARGUMENTS), tool.name
 
 
 @pytest.mark.parametrize("name", sorted(ENGINE_OPT_INS))
