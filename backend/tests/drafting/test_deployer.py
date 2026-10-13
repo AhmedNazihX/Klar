@@ -318,7 +318,6 @@ def test_the_art_50_3_choice_is_asked_in_both_languages() -> None:
     ]
 
 
-
 @pytest.mark.parametrize("template_id", [ART_50_3, "art_50_4_disclosure"])
 def test_a_disclosure_calls_its_text_the_disclosure_in_english(template_id: str) -> None:
     """P31 (D5): an Art. 50 disclosure's wording section and its placement question say
@@ -331,6 +330,7 @@ def test_a_disclosure_calls_its_text_the_disclosure_in_english(template_id: str)
         Language.EN: "Where and when will people see this disclosure?",
         Language.DE: "Wo und wann sehen Personen diesen Hinweis?",
     }
+
 
 # --- The draft's own rules -----------------------------------------------------------------------
 
