@@ -1,0 +1,77 @@
+# The end-to-end tests' own Supabase stack (story P13): Postgres, Auth, the REST API and the gateway,
+# nothing else. It is a second local project beside the shared test database (`supabase/`, Postgres
+# only, project "aiact" on 54322): its own containers and ports, so starting, filling or stopping
+# it never touches the database every worktree's backend tests share. Same migrations (the
+# `migrations` link) and the same obligations seed as the app's project.
+#
+#   supabase start --workdir frontend/e2e     (from the repo root; `make e2e-db` does it)
+#   supabase stop --workdir frontend/e2e      (keeps its data)
+#
+# Each test is a new anonymous visitor writing only its own rows, so the tests never see each
+# other's data and nothing needs resetting between runs. The stack holds nothing but test data:
+# `supabase stop --workdir frontend/e2e --no-backup` throws it all away.
+project_id = "aiact_e2e"
+
+[api]
+enabled = true
+port = 54331
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54332
+shadow_port = 54330
+major_version = 17
+
+[db.pooler]
+enabled = false
+
+[db.migrations]
+enabled = true
+
+[db.seed]
+enabled = true
+sql_paths = ["../../../supabase/seed/obligations.sql"]
+
+[realtime]
+enabled = false
+
+[studio]
+enabled = false
+
+[local_smtp]
+enabled = false
+
+[storage]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:4173"
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+# The app's session: every visitor signs in anonymously (P4).
+enable_anonymous_sign_ins = true
+enable_manual_linking = false
+
+[auth.rate_limit]
+# Every e2e test is a new anonymous visitor from 127.0.0.1: the app project's 30 an hour would
+# stop a second local run within the hour.
+anonymous_users = 1000
+sign_in_sign_ups = 1000
+token_refresh = 1000
+
+[auth.email]
+enable_signup = false
+
+[auth.sms]
+enable_signup = false

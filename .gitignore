@@ -37,3 +37,9 @@ dist/
 !.claude/skills/case/
 !.claude/skills/eval/
 skills-lock.json
+
+# Playwright end-to-end runs (frontend/, P13): the e2e build and the reports
+dist-e2e/
+playwright-report/
+test-results/
+blob-report/

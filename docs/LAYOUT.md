@@ -13,10 +13,12 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 ├── AI Act Classification Assistant — Capstone Init Document.md   the design (INIT)
 ├── AE.CAP_afa.md                    course brief
 ├── .gitignore
-├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check (F2, B13); frontend lint, build, test (P5)
+├── .github/workflows/ci.yml         lint, types, tests, deps check, isolation check (F2, B13); frontend lint, build, test (P5);
+│                                    end-to-end tests, Playwright against the replay API and the e2e Supabase stack (P13)
 ├── .github/workflows/label-freeze.yml  label-freeze check, never cancelled (B10a)
 ├── .githooks/                       pre-commit and pre-merge-commit regenerate DEPENDENCIES.md, pre-push checks it (F8)
-├── Makefile                         local dev: `make dev` runs the API and the frontend together; `make db` starts Supabase
+├── Makefile                         local dev: `make dev` runs the API and the frontend together; `make db` starts Supabase;
+│                                    `make e2e-db` starts the e2e stack and loads its corpus, `make e2e` runs the e2e tests (P13)
 │
 ├── backend/                         the only Python project (uv)
 │   ├── pyproject.toml               deps, ruff, pyright, pytest config; `aiact` console script (F1)
@@ -192,6 +194,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       ├── engine/nodes/pinned.py   assert_pinned_route: a node's engine and refusal models, each pinned (X2c)
 │       ├── snapshots/               committed JSON snapshots, e.g. the result's JSON Schema (F3)
 │       ├── export/reading.py        a PDF's and a Word file's text read back for the tests (P9)
+│       ├── e2e/                     the end-to-end tests' backend (P13): replay_server.py (`python -m tests.e2e.replay_server`,
+│       │                            the API with classifications replayed from recordings), runs.py (the runs it replays,
+│       │                            from frontend/e2e/runs.json), test_e2e_runs.py (records the runs beyond the worked example,
+│       │                            into recordings/e2e/test_e2e_runs/), test_replay_server.py
 │       ├── test_network_guard.py    proves unmarked tests can't reach the network (F6)
 │       └── test_isolation.py        benchmark isolation check (B13)
 │
@@ -250,7 +256,13 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── openapi-ts.config.ts         `pnpm gen:api`: openapi.json → src/api/ (hey-api) (P4)
 │   ├── openapi.json                 exported from FastAPI; the TS client is generated from it (P1)
 │   ├── components.json              shadcn/ui CLI config (P4)
-│   ├── eslint.config.js, .prettierrc.json, tsconfig*.json   lint, format, types (app, test, node; browser for `*.browser.test.tsx`, P15) (P4)
+│   ├── eslint.config.js, .prettierrc.json, tsconfig*.json   lint, format, types (app, test, node; browser for `*.browser.test.tsx`, P15;
+│   │                                e2e for e2e/ and playwright.config.ts, P13) (P4)
+│   ├── playwright.config.ts         the end-to-end run: the replay API and `vite preview` as its servers, Chromium (P13)
+│   ├── e2e/                         Playwright end-to-end tests, <flow>.spec.ts, and their helpers (app.ts, files.ts, stack.ts);
+│   │                                runs.json, the classifications the flows make beyond the worked example (the backend
+│   │                                records the same bodies); supabase/config.toml, the e2e tests' own Supabase project
+│   │                                (Postgres, Auth, REST on 54331-54332; `migrations` links supabase/migrations) (P13)
 │   ├── .env.example                 VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (public values only) (P4)
 │   ├── public/                      static files: favicon.svg (P4)
 │   └── src/
@@ -368,5 +380,5 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 | Tests mirror the package (`tests/corpus/test_eurlex.py` for `aiact/corpus/eurlex.py`); model calls use `tests/recordings/` | Findable tests; no live calls in CI |
 | Migrations only via `supabase migration new`; never edit a merged migration | Parallel stories can't collide on names |
 | Frontend tests sit next to the file they test (`RiskPill.test.tsx`); layout tests that need a real browser are `*.browser.test.tsx`; `frontend/src/api/` is generated only | One place per component; the client always matches the API schema |
-| Gitignored: `.env`, `data/raw/`, `eval/private/`, `.claude/worktrees/`, `.claude/settings.local.json`, `frontend/node_modules/`, `frontend/dist/` | Secrets, large downloads, unlicensed data, agent scratch, build output |
+| Gitignored: `.env`, `data/raw/`, `eval/private/`, `.claude/worktrees/`, `.claude/settings.local.json`, `frontend/node_modules/`, `frontend/dist/`, the e2e run's `dist-e2e/`, `playwright-report/`, `test-results/` | Secrets, large downloads, unlicensed data, agent scratch, build output |
 | A new top-level folder or package area needs an entry here in the same story | Keeps this file the source of truth |
