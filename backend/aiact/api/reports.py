@@ -43,6 +43,7 @@ from aiact.api.files import (
     refuse_too_long,
     rendered,
 )
+from aiact.drafting.models import SizeClass
 from aiact.export import Paper, render_docx, render_pdf
 from aiact.report import (
     ChecklistTool,
@@ -95,6 +96,11 @@ class ResultReportRequest(ContractModel):
     company: Name | None = Field(
         default=None, description="The company's name from its profile; null without one."
     )
+    size_class: SizeClass | None = Field(
+        default=None,
+        description="The company profile's size class; an SME's or a small mid-cap's report "
+        "shows the duties' relief notes under the amended text. Null without a profile.",
+    )
 
 
 class InventoryReportRequest(ContractModel):
@@ -109,6 +115,11 @@ class InventoryReportRequest(ContractModel):
     format: ExportFormat
     company: Name | None = Field(
         default=None, description="The company's name from its profile; null without one."
+    )
+    size_class: SizeClass | None = Field(
+        default=None,
+        description="The company profile's size class; an SME's or a small mid-cap's report "
+        "shows the duties' relief notes under the amended text. Null without a profile.",
     )
 
 
@@ -125,6 +136,11 @@ class ChecklistRequest(ContractModel):
     format: ExportFormat
     company: Name | None = Field(
         default=None, description="The company's name from its profile; null without one."
+    )
+    size_class: SizeClass | None = Field(
+        default=None,
+        description="The company profile's size class; an SME's or a small mid-cap's report "
+        "shows the duties' relief notes under the amended text. Null without a profile.",
     )
 
 
@@ -165,6 +181,7 @@ def export_result_report(
             prepared_on=prepared_on,
             tool_name=body.tool_name,
             company=body.company,
+            size_class=body.size_class,
         )
     except NoClassError:
         message = NOT_ASSESSED if result.not_assessed else NO_CLASS
@@ -189,7 +206,11 @@ def export_inventory_report(
     """The inventory report: every tool with its class, status, role and first duty date, then
     each tool's duties, as a PDF or Word file. Guidance, not legal advice."""
     paper = inventory_report(
-        body.tools, language=body.language, prepared_on=prepared_on, company=body.company
+        body.tools,
+        language=body.language,
+        prepared_on=prepared_on,
+        company=body.company,
+        size_class=body.size_class,
     )
     refuse_too_long(paper, TOO_LONG, max_chars=INVENTORY_MAX_CHARS, max_lines=INVENTORY_MAX_LINES)
     return _file(request, context, paper, body.format, INVENTORY_STEM)
@@ -217,6 +238,7 @@ def export_obligations_checklist(
         law_version=body.law_version,
         prepared_on=prepared_on,
         company=body.company,
+        size_class=body.size_class,
     )
     # The inventory report's caps: a checklist row has one cell more, and still fits them.
     refuse_too_long(paper, TOO_LONG, max_chars=INVENTORY_MAX_CHARS, max_lines=INVENTORY_MAX_LINES)

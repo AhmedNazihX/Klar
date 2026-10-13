@@ -308,6 +308,11 @@ LEFT_OUT: Mapping[bool, ByLanguage] = {
 """Posted duties no entry of the obligations table matches (`aiact.report.duties`), by whether
 there is exactly one."""
 APPLIES_IF = _texts("{duty} Applies if: {condition}", "{duty} Gilt, wenn: {condition}")
+RELIEF = _texts(
+    "{duty} Relief for your company: {relief}", "{duty} Erleichterung für Ihr Unternehmen: {relief}"
+)
+"""A duty with the relief the obligations table gives SMEs and small mid-caps, as the screens
+show it under the duty (`result.duty.relief` in the locales)."""
 LEGACY_FROM = _texts("{date} ({article})", "{date} ({article})")
 
 LEGAL_REVIEW = _texts("Points for legal review", "Punkte für die rechtliche Prüfung")

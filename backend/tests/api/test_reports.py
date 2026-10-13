@@ -33,6 +33,7 @@ from aiact.schemas import (
     ClassificationResult,
     EvidenceTag,
     Fact,
+    HighRiskRoute,
     Obligation,
     RiskClass,
     Role,
@@ -607,3 +608,38 @@ async def test_the_checklist_and_the_inventory_report_name_the_law_version(
     )
     assert checked in " ".join(pdf_pages(checklist.content))
     assert checked in " ".join(pdf_pages(inventory.content))
+
+
+# --- Relief notes for an SME or a small mid-cap (P31, user decision D6) ---------------------------
+
+
+def _provider_tool() -> dict[str, Any]:
+    duty = {
+        "label": "Set up a quality management system",
+        "article": "art:16:c",
+        "applies_from": "2027-12-02",
+    }
+    return _tool(role="provider", duties=[duty])
+
+
+@pytest.mark.parametrize(
+    ("size_class", "is_shown"), [("sme", True), ("smc", True), ("none", False), (None, False)]
+)
+async def test_each_report_passes_the_size_class_on(
+    client: httpx.AsyncClient, size_class: str | None, is_shown: bool
+) -> None:
+    """The profile's size class reaches every report: an SME's or a small mid-cap's lists the
+    table's relief note under the duty."""
+    duties = list_obligations(Role.PROVIDER, RiskClass.HIGH_RISK, HighRiskRoute.ANNEX_III)
+    result = rebuild(worked_example_result(), role=Role.PROVIDER, obligations=duties.obligations)
+    tools = {"tools": [_provider_tool()], "language": "en", "format": "pdf"}
+    requests = {
+        "/reports/result": _body(result, size_class=size_class),
+        "/reports/inventory": {**tools, "size_class": size_class},
+        "/reports/checklist": {**tools, "law_version": AMENDED, "size_class": size_class},
+    }
+    for path, body in requests.items():
+        response = await client.post(path, json=body)
+        assert response.status_code == 200, path
+        text = one_line(" ".join(pdf_pages(response.content)))
+        assert ("Relief for your company" in text) is is_shown, path

@@ -28,14 +28,17 @@ from aiact.report import texts
 from aiact.report.common import (
     MAX_NAME_CHARS,
     Name,
+    SizeValue,
     after_duties,
     class_name,
     day,
     duty_cells,
     duty_header,
     footer,
+    is_relieved,
     stop_line,
     tool_duties_from,
+    with_relief,
 )
 from aiact.report.duties import DutyTiming, table_entry
 from aiact.schemas import HighRiskRoute, Language, LawVersion, LegacyStatus, RiskClass, Role, Status
@@ -103,11 +106,13 @@ def inventory_report(
     language: Language,
     prepared_on: date,
     company: str | None = None,
+    size_class: SizeValue | None = None,
 ) -> Paper:
-    """The inventory as a report in `language`: the overview table, then each tool's duties."""
+    """The inventory as a report in `language`: the overview table, then each tool's duties,
+    with their relief notes for an SME or a small mid-cap (`size_class`, `is_relieved`)."""
     count = texts.TOOL_COUNT[len(tools) == 1][language].format(count=len(tools))
     prepared = texts.PREPARED[language].format(date=day(prepared_on, language))
-    listed = tuple((tool, _duties(tool, language)) for tool in tools)
+    listed = tuple((tool, _duties(tool, language, size_class)) for tool in tools)
     return Paper(
         language=language,
         kicker=texts.INVENTORY_KICKER[language],
@@ -122,16 +127,28 @@ def inventory_report(
     )
 
 
-def _duties(tool: InventoryTool, language: Language) -> _Duties:
-    listed = (listed_duty(tool, posted, language) for posted in tool.duties)
+def _duties(tool: InventoryTool, language: Language, size_class: SizeValue | None) -> _Duties:
+    listed = (listed_duty(tool, posted, language, size_class) for posted in tool.duties)
     found = tuple(duty for duty in listed if duty is not None)
     return _Duties(found=found, left_out=len(tool.duties) - len(found))
 
 
-def listed_duty(tool: InventoryTool, duty: InventoryDuty, language: Language) -> ListedDuty | None:
-    """The duty as a report lists it, when the table has it; else None (left out, counted)."""
+def listed_duty(
+    tool: InventoryTool,
+    duty: InventoryDuty,
+    language: Language,
+    size_class: SizeValue | None = None,
+) -> ListedDuty | None:
+    """The duty as a report lists it, when the table has it; else None (left out, counted).
+    Its label carries the table's relief note for an SME or a small mid-cap (`is_relieved`)."""
     entry = _entry(tool, duty)
-    return None if entry is None else _found(duty, entry, language)
+    if entry is None:
+        return None
+    found = _found(duty, entry, language)
+    if not is_relieved(size_class, tool.law_version):
+        return found
+    label = with_relief(found.label, entry.relief_note, entry.relief_note_de, language)
+    return found._replace(label=label)
 
 
 def _entry(tool: InventoryTool, duty: InventoryDuty) -> ObligationEntry | None:

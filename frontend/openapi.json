@@ -1031,6 +1031,17 @@
             ],
             "title": "Company",
             "description": "The company's name from its profile; null without one."
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The company profile's size class; an SME's or a small mid-cap's report shows the duties' relief notes under the amended text. Null without a profile."
           }
         },
         "additionalProperties": false,
@@ -2184,6 +2195,17 @@
             ],
             "title": "Company",
             "description": "The company's name from its profile; null without one."
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The company profile's size class; an SME's or a small mid-cap's report shows the duties' relief notes under the amended text. Null without a profile."
           }
         },
         "additionalProperties": false,
@@ -3006,6 +3028,17 @@
             ],
             "title": "Company",
             "description": "The company's name from its profile; null without one."
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The company profile's size class; an SME's or a small mid-cap's report shows the duties' relief notes under the amended text. Null without a profile."
           }
         },
         "additionalProperties": false,
