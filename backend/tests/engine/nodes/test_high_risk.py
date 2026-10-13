@@ -29,6 +29,7 @@ from aiact.engine.nodes.high_risk import (
     HighRiskCheck,
     HighRiskOutputError,
     Settled,
+    annex_i_facts,
     law_title,
     to_outcome,
 )
@@ -48,7 +49,7 @@ from aiact.engine.nodes.high_risk_retrieval import (
 )
 from aiact.engine.nodes.high_risk_texts import TEXTS, annex_i_entry, version_words
 from aiact.engine.nodes.key_facts import Answer
-from aiact.engine.nodes.open_in_law import NOT_NAMED
+from aiact.engine.nodes.open_in_law import NOT_NAMED, open_field
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
@@ -1789,10 +1790,13 @@ PRODUCT_LAW_QUESTIONS: dict[str, tuple[str, AnswerOutcome | None]] = {
 }
 """Recorded cases whose step asks an Annex I question, and what a yes settles (E12 DoD; what a
 yes to the third-party question settles is pinned in test_high_risk_questions.py)."""
-AMBIGUOUS_CASES = frozenset({"own-e-09-ropeway-wear-forecast", "own-e-10-in-house-nodule-finder"})
-"""The recorded cases whose step leaves an Annex I question open in law (E12 DoD): own-e-09 on
-the safety component, own-e-10 on the third-party assessment its in-house exemption leaves
-open (E20)."""
+AMBIGUOUS_CASES = {
+    "own-e-09-ropeway-wear-forecast": "safety_component_or_product",
+    "own-e-10-in-house-nodule-finder": "third_party_assessment",
+}
+"""The recorded cases whose step leaves an Annex I question open in law (E12 DoD), with the key
+fact it is open on: own-e-09 the safety component, own-e-10 the third-party assessment its
+in-house exemption leaves open (E20)."""
 ANNEX_I_READING_TITLES = {
     Language.EN: ("High-risk under Art. 6(1)", "Art. 6(1) not met"),
     Language.DE: ("Hochrisiko nach Art. 6 Abs. 1", "Art. 6 Abs. 1 nicht erfüllt"),
@@ -1801,13 +1805,47 @@ ANNEX_I_READING_TITLES = {
 German)."""
 
 
+def annex_i_open_fact(given: HighRiskAnswer) -> str | None:
+    """The key fact the model's Annex I answer holds open in law, as the node reads it (None when
+    settled, or open on no fact its point reads); the step itself doesn't name it."""
+    return open_field(given.annex_i, annex_i_facts(given.annex_i.point))
+
+
+@pytest.mark.parametrize(
+    ("on", "is_expected"),
+    [("third_party_assessment", True), ("safety_component_or_product", False), (NOT_NAMED, False)],
+)
+def test_own_e_10s_question_is_expected_open_on_the_third_party_assessment_only(
+    on: str, is_expected: bool
+) -> None:
+    """The screen check's open fact can fail: own-e-10 open on another fact, or on none, isn't
+    the reading E20 asks for."""
+    given = answer(one=annex_i("annex:I:A:11", YES, YES, Answer.UNKNOWN, open_question=OPEN, on=on))
+    expected = AMBIGUOUS_CASES["own-e-10-in-house-nodule-finder"]
+    assert (annex_i_open_fact(given) == expected) is is_expected
+
+
+def answers_read(monkeypatch: pytest.MonkeyPatch) -> list[HighRiskAnswer]:
+    """Every model answer the high_risk node turns into its step, as `to_outcome` receives it."""
+    seen: list[HighRiskAnswer] = []
+
+    def spy(
+        given: HighRiskAnswer, state: EngineState, found: Retrieved, library: HighRiskLibrary
+    ) -> CheckOutcome:
+        seen.append(given)
+        return to_outcome(given, state, found, library)
+
+    monkeypatch.setattr(node, "to_outcome", spy)
+    return seen
+
+
 def assert_the_screens_fields(
-    result: CheckOutcome, run_state: EngineState, case: BenchmarkCase
+    result: CheckOutcome, given: HighRiskAnswer, run_state: EngineState, case: BenchmarkCase
 ) -> None:
     """E12's DoD on the recorded cases, after E9's citation check over the built corpus: the
     product-law question names the law, quotes Art. 6(1) and the Annex I entry, offers yes/no
-    and knows what a yes settles; the open question has two structured readings whose quotes
-    all pass the check."""
+    and knows what a yes settles; the open question is on the case's key fact (from the model's
+    answer `given`) and has two structured readings whose quotes all pass the check."""
     checked = built_validator().check(result.step, run_state)
     assert not checked.unresolved
     step = with_checked_citations(result, checked, run_state["language"]).step
@@ -1821,6 +1859,7 @@ def assert_the_screens_fields(
         assert missing.options == YES_NO
         assert missing.if_yes == if_yes
     if case.id in AMBIGUOUS_CASES:
+        assert annex_i_open_fact(given) == AMBIGUOUS_CASES[case.id], given.annex_i.open_on
         question = step.open_question
         assert question is not None
         stricter, lenient = question.readings
@@ -1849,16 +1888,20 @@ def assert_the_screens_fields(
     ANNEX_I_CASES or [pytest.param(None, marks=pytest.mark.skip(reason="no Annex I cases"))],
     ids=lambda case: case.id if isinstance(case, BenchmarkCase) else "no-cases",
 )
-def test_replay_annex_i_case(case: BenchmarkCase, replay_check: HighRiskCheck) -> None:
+def test_replay_annex_i_case(
+    case: BenchmarkCase, replay_check: HighRiskCheck, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Each B5e case against its label and tags; a `KNOWN_GAPS` case is an expected failure."""
     run_state = replay_state(case, AS_OF)
+    seen = answers_read(monkeypatch)
     result = replay_check(run_state)
+    [given] = seen
     assert not unresolved_citations(result.step, run_state)
     assert not whole_articles(result.step)
     matches = high_risk_matches(result, case)
     step = result.step
     shown = (result.high_risk_route, result.annex_point, step.status, step.decision)
-    assert_the_screens_fields(result, run_state, case)
+    assert_the_screens_fields(result, given, run_state, case)
     expect_known_gap(KNOWN_GAPS, result, case, matches=matches, shown=shown)
     assert matches, shown
 
