@@ -4,8 +4,7 @@ answer and the company profile's EU answer), and the worked example in German. E
 the exact body the app sends, from `frontend/e2e/runs.json`, so the browser's run finds it.
 
 Recording calls the engine model, the query embeddings and the local test database's corpus:
-`RECORD_COMMAND` (in `runs.py`), the orchestrator's paid step, after the reviews. Until then each
-run is a strict "recording pending" xfail; drop the mark once it is recorded.
+`RECORD_COMMAND` (in `runs.py`), the orchestrator's paid step; recorded on 2026-10-13.
 """
 
 from collections.abc import Iterator
@@ -17,21 +16,12 @@ from aiact.engine.classify import NodeBuilder
 from aiact.schemas import Language, RiskClass
 from aiact.settings import Settings
 from tests.e2e.runs import E2E_RECORDINGS, RECORD_COMMAND, e2e_runs
-from tests.engine.nodes.corpus_recording import (
-    RecordingPendingError,
-    corpus_recording,
-    require_recording,
-)
+from tests.engine.nodes.corpus_recording import corpus_recording, require_recording
 from tests.engine.nodes.known_gaps import stale_recording_pending
 from tests.engine.replayed_engine import live_corpus, luna_settings, replayed_nodes
 
 RUNS = e2e_runs()
 ANNEX_III_4_A = "annex:III:4:a"
-PENDING = pytest.mark.xfail(
-    strict=True,
-    raises=RecordingPendingError,
-    reason=f"recording pending: record it with `{RECORD_COMMAND}`",
-)
 
 
 @pytest.fixture(scope="module")
@@ -66,7 +56,6 @@ def run_nodes(
         yield replayed_nodes(recording)
 
 
-@PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("name", ["worked_example_answered"])
 def test_the_answered_worked_example_no_longer_asks_its_answer(
@@ -83,7 +72,6 @@ def test_the_answered_worked_example_no_longer_asks_its_answer(
     assert not asked & {"ai_system", "eu_link"}, asked
 
 
-@PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("name", ["worked_example_de"])
 def test_the_worked_example_in_german_is_high_risk(
