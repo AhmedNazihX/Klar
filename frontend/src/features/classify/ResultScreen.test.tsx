@@ -535,6 +535,28 @@ describe('Result statuses, the Annex III route', () => {
     },
   )
 
+  it.each([
+    ['en', 'Where the checks stand', 'Waiting for your answer', 'No match with a banned practice'],
+    [
+      'de',
+      'Stand der Prüfungen',
+      'Wartet auf Ihre Antwort',
+      'Kein Treffer bei den verbotenen Praktiken',
+    ],
+  ] as const)(
+    'says where the checks stand on a paused result, later rows with their real outcome (%s)',
+    async (language, heading, waiting, later) => {
+      await openResult(pausedAt('scope', 'minimal_risk'), { language })
+      const rowsHeading = language === 'en' ? 'How Klar got here' : 'So kam Klar zu diesem Ergebnis'
+      expect(screen.queryByRole('region', { name: rowsHeading })).not.toBeInTheDocument()
+      const section = screen.getByRole('region', { name: heading })
+      const scope = language === 'en' ? /^1 Scope/ : /^1 Anwendungsbereich/
+      expect(within(section).getByRole('button', { name: scope })).toHaveTextContent(waiting)
+      const prohibited = language === 'en' ? /^2 Prohibited/ : /^2 Verbotene/
+      expect(within(section).getByRole('button', { name: prohibited })).toHaveTextContent(later)
+    },
+  )
+
   it('passes axe with the deciding question (needs more information)', async () => {
     const { container } = await openResult(annexIIINeedsInfo())
     const results = await axe(container, AXE_OPTIONS)

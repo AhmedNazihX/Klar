@@ -1,7 +1,7 @@
 import { useId, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { DocumentInfo } from '@/api'
+import type { ClassificationResult, DocumentInfo } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
 import type { LawVersion } from '@/components/LawSwitch'
 import { useCorpusDocuments } from '@/hooks/use-corpus-documents'
@@ -29,18 +29,40 @@ function shownDocuments(
   )
 }
 
+/** The order of the artboard `Reviewer`'s "Texts used": the law first, then the guidance. */
+const DOC_TYPE_ORDER: readonly DocumentInfo['doc_type'][] = ['law', 'guideline', 'code']
+
+/** The texts `result` quotes: those its citations come from, and the amending act when a quote
+ *  is marked as changed by it (the consolidated text carries its wording). The law first, then
+ *  the guidance, each in the list's own order. */
+function usedDocuments(
+  documents: readonly DocumentInfo[],
+  result: ClassificationResult,
+): DocumentInfo[] {
+  const citations = result.steps.flatMap((step) => step.citations ?? [])
+  const cited = new Set(citations.map((citation) => citation.document_id))
+  const isAmendmentQuoted = citations.some((citation) => citation.changed_by_omnibus)
+  const used = documents.filter(
+    (document) => cited.has(document.doc_key) || (document.is_amending && isAmendmentQuoted),
+  )
+  return DOC_TYPE_ORDER.flatMap((docType) => used.filter((d) => d.doc_type === docType))
+}
+
 /**
  * The legal texts Klar reads (`GET /documents`), each with its kind, a draft marked as one and a
- * text only in English marked as such, under `heading`: "Answers draw on" on the Ask screen
- * (artboard `Ask`), "Texts used" in the reviewer view (artboard `Reviewer`). Every text the
- * corpus holds in the screen's language, under the law version the answers or the result use.
+ * text only in English marked as such, under `heading`, for the law version the answers or the
+ * result use: on the Ask screen every text, "Answers draw on" (artboard `Ask`); in the reviewer
+ * view, "Texts used" (artboard `Reviewer`), only those the result quotes.
  */
 export function SourceDocuments({
   heading,
   lawVersion,
+  usedBy,
 }: {
   heading: string
   lawVersion: LawVersion
+  /** The result whose quoted texts alone are listed; every text without it. */
+  usedBy?: ClassificationResult
 }): JSX.Element {
   const { t } = useTranslation()
   const documents = useCorpusDocuments(useLanguage())
@@ -60,7 +82,10 @@ export function SourceDocuments({
       )}
       {documents.isSuccess && (
         <ul className="m-0 flex list-none flex-col gap-2.5 p-0 text-body-small">
-          {shownDocuments(documents.data, lawVersion).map((document) => {
+          {shownDocuments(
+            usedBy ? usedDocuments(documents.data, usedBy) : documents.data,
+            lawVersion,
+          ).map((document) => {
             const kind = documentKind(document)
             return (
               <li key={document.doc_key} className="flex items-start justify-between gap-2.5">

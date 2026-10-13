@@ -5,19 +5,20 @@ import type { ClassificationResult } from '@/api'
 import { GlassPanel } from '@/components/GlassPanel'
 import { useLanguage } from '@/hooks/use-language'
 
-import { banDecisionNote, banPoints } from './ban'
+import { banPoints, laterPoints } from './ban'
+import { longDate } from './dates'
 import { provisionName } from './provision-names'
 import { ProvisionQuote } from './ProvisionQuote'
 
 /** "Why the checks stopped": each Art. 5(1) point the ban rests on, quoted from the corpus in
- *  the screen's language, and what the Art. 5 step's decision adds to the verdict and the facts
- *  beside it (a point that applies only later), never a repeat of them. */
+ *  the screen's language, then when each cited point that doesn't apply yet starts to (the only
+ *  part of the Art. 5 step's decision the verdict and the facts beside it don't already say). */
 export function WhyChecksStopped({ result }: { result: ClassificationResult }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
   const headingId = useId()
   const points = banPoints(result)
-  const note = banDecisionNote(result)
+  const later = laterPoints(result)
   return (
     <GlassPanel
       as="section"
@@ -37,7 +38,15 @@ export function WhyChecksStopped({ result }: { result: ClassificationResult }): 
       {points.map((point) => (
         <ProvisionQuote key={point} provisionId={point} result={result} />
       ))}
-      {note && <p className="m-0 text-label font-normal text-slate">{note}</p>}
+      {later.map(({ point, appliesFrom }) => (
+        <p key={point} className="m-0 text-label font-normal text-slate">
+          {t('prohibited.why.laterPoint', {
+            point: provisionName(point, language),
+            start: longDate(appliesFrom, language),
+            asOf: longDate(result.as_of, language),
+          })}
+        </p>
+      ))}
     </GlassPanel>
   )
 }

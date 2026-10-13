@@ -80,9 +80,7 @@ STEP_REFERENCES: Mapping[StepName, ByLanguage] = {
 STEP_OUTCOMES: Mapping[str, ByLanguage] = MappingProxyType(
     {
         "notChecked": _texts("Not checked", "Nicht geprüft"),
-        "paused": _texts(
-            "Assumed for now: one fact is missing", "Vorerst angenommen: eine Angabe fehlt"
-        ),
+        "paused": _texts("Waiting for your answer", "Wartet auf Ihre Antwort"),
         "ambiguous": _texts(
             "Legally ambiguous: the stricter reading applies",
             "Rechtlich unklar: Es gilt die strengere Lesart",
@@ -269,6 +267,8 @@ FACTS = _texts("Facts the result rests on", "Fakten, auf denen das Ergebnis beru
 FACT_HEADER = (_texts("Fact", "Fakt"), _texts("Source", "Quelle"))
 NO_FACTS = _texts("The result lists no facts.", "Das Ergebnis nennt keine Fakten.")
 STEPS = _texts("How the result was reached", "Wie das Ergebnis zustande kam")
+PAUSED_STEPS = _texts("Where the checks stand", "Stand der Prüfungen")
+"""The steps' heading on a result waiting for an answer, as the Result screen says it."""
 STEP_HEADER = (
     _texts("Step", "Schritt"),
     _texts("Decision", "Entscheidung"),

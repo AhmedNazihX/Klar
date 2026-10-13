@@ -259,7 +259,12 @@ describe.each(['en', 'de'] as const)('A recorded prohibited result (%s)', (langu
 
     expect(stepRow(copy.highRisk)).toHaveTextContent(copy.notChecked)
     expect(stepRow(copy.transparency)).toHaveTextContent(copy.notChecked)
-    expect(stepRow(copy.dutiesRow)).toHaveTextContent(copy.notChecked)
+    // The summary stops at 4 Transparency (artboard `ResultProhibited`); the reviewer view keeps
+    // the Duties row.
+    const stepsRegion = screen.getByRole('region', { name: copy.stepsHeading })
+    expect(
+      within(stepsRegion).queryByRole('button', { name: new RegExp(`^${copy.dutiesRow}`) }),
+    ).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: copy.duties })).not.toBeInTheDocument()
   })
 
@@ -433,22 +438,63 @@ describe('The prohibited layout', () => {
     expect(within(facts).getByText(fact.text)).toBeInTheDocument()
   })
 
-  it('says under why the checks stopped when a cited point applies only later', async () => {
-    const step = RECORDED_PROHIBITED.steps.find((candidate) => candidate.step === 'prohibited')
-    if (!step) throw new Error('The recorded ban has no Art. 5 step.')
-    const later =
-      'Art. 5 Abs. 1 Buchst. ba gilt erst ab dem 2. Dezember 2026 (Art. 113 Buchst. a), daher ' +
-      'verbietet es dieses System am 30. September 2026 noch nicht.'
-    const result: ClassificationResult = {
+  /** The recorded ban whose Art. 5 decision states `summary` (the model's own wording of the
+   *  fact, when the step's facts are numbered) while the fact itself sits only in `where`. */
+  function summarised(
+    where: 'deciding_facts' | 'facts_used',
+    summary: string,
+  ): ClassificationResult {
+    const fact = {
+      text: 'It reads staff moods from their voices.',
+      evidence: 'inferred' as const,
+      source_span: null,
+    }
+    return {
       ...RECORDED_PROHIBITED,
-      steps: RECORDED_PROHIBITED.steps.map((candidate) =>
-        candidate === step ? { ...step, decision: `${step.decision} ${later}` } : candidate,
+      deciding_facts: where === 'deciding_facts' ? [fact] : [],
+      steps: RECORDED_PROHIBITED.steps.map((step) =>
+        step.step === 'prohibited'
+          ? {
+              ...step,
+              decision: `Prohibited under Art. 5(1)(f). ${summary}`,
+              facts_used: where === 'facts_used' ? [fact] : [],
+            }
+          : step,
       ),
     }
-    await openProhibited('de', { result })
-    const why = screen.getByRole('region', { name: COPY.de.why })
-    expect(within(why).getByText(later)).toBeInTheDocument()
-  })
+  }
+
+  it.each(['deciding_facts', 'facts_used'] as const)(
+    'repeats none of the decision when the fact is only in %s and the decision words it its own way',
+    async (where) => {
+      const summary = 'The system infers the emotions of call-centre staff.'
+      await openProhibited('en', { result: summarised(where, summary) })
+      const why = screen.getByRole('region', { name: COPY.en.why })
+      await within(why).findByRole('blockquote')
+      expect(why).not.toHaveTextContent(summary)
+      expect(why).not.toHaveTextContent('Prohibited under')
+      expect(within(why).queryByText(/applies only from/)).not.toBeInTheDocument()
+    },
+  )
+
+  it.each([
+    [
+      'en',
+      'Art. 5(1)(ba) applies only from 2 December 2026 (Art. 113(a)), so on 30 September 2026 it does not yet prohibit this system.',
+    ],
+    [
+      'de',
+      'Art. 5 Abs. 1 Buchst. ba gilt erst ab dem 2. Dezember 2026 (Art. 113 Buchst. a), daher verbietet es dieses System am 30. September 2026 noch nicht.',
+    ],
+  ] as const)(
+    'says under why the checks stopped when a cited point applies only later (%s)',
+    async (language, later) => {
+      const result = withBanCitations(RECORDED_PROHIBITED, ['art:5:1:ba'])
+      await openProhibited(language, { result })
+      const why = screen.getByRole('region', { name: COPY[language].why })
+      expect(within(why).getByText(later)).toBeInTheDocument()
+    },
+  )
 
   it('tints a decided ban’s summary red', async () => {
     await openProhibited()
@@ -587,7 +633,8 @@ describe('The prohibited layout', () => {
     const why = screen.getByRole('region', { name: 'Why the checks stopped' })
     expect(await within(why).findByText('Art. 5(1)(f), English')).toBeInTheDocument()
     expect(within(why).getAllByRole('blockquote')).toHaveLength(1)
-    expect(within(why).queryByText(/5\(1\)\(ba\)/)).not.toBeInTheDocument()
+    // Not quoted: it applies only later, which the line under the quote says.
+    expect(within(why).getByText(/^Art\. 5\(1\)\(ba\) applies only from/)).toBeInTheDocument()
     expect(within(summaryRegion()).getByText(COPY.en.statement)).toBeInTheDocument()
     expect(within(summaryRegion()).getByText(COPY.en.sinceDate)).toBeInTheDocument()
     await screen.findAllByText('Art. 99(6), English')

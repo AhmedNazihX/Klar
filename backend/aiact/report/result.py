@@ -239,7 +239,9 @@ def _steps(result: ClassificationResult, language: Language) -> tuple[Block, ...
         if name in by_name
     )
     header = tuple(column[language] for column in texts.STEP_HEADER)
-    return (Heading(texts.STEPS[language]), Table(header, rows, STEP_WIDTHS))
+    paused = result.status is Status.NEEDS_MORE_INFORMATION
+    heading = (texts.PAUSED_STEPS if paused else texts.STEPS)[language]
+    return (Heading(heading), Table(header, rows, STEP_WIDTHS))
 
 
 def _outcome(step: StepResult, result: ClassificationResult, language: Language) -> str:

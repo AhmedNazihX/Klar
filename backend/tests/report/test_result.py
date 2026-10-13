@@ -173,7 +173,7 @@ def test_the_steps_say_what_the_result_screen_says_in_german() -> None:
     steps = _tables(_report(replayed_result(), DE))[1]
     assert [row[:2] for row in steps.rows] == [
         ("Rolle", "Betreiber"),
-        ("1 Anwendungsbereich", "Vorerst angenommen: eine Angabe fehlt"),
+        ("1 Anwendungsbereich", "Wartet auf Ihre Antwort"),
         ("2 Verbotene Praktiken", "Kein Treffer bei den verbotenen Praktiken"),
         ("3 Hochrisiko", "Ja: Einstellung und Auswahl von Personen"),
         ("4 Transparenz", "Keine eigene Pflicht gefunden"),
@@ -326,7 +326,9 @@ def test_an_open_question_and_a_missing_fact_are_points_for_legal_review() -> No
     assert "3 High-risk Legally ambiguous: the stricter reading applies" in ambiguous_page[0]
     assert "Open question of law (3 High-risk):" in one_line(" ".join(ambiguous_page))
     paused = " ".join(_pages(needs_information_result()))
-    assert "3 High-risk Assumed for now: one fact is missing" in paused
+    assert "Where the checks stand" in paused
+    assert "How the result was reached" not in paused
+    assert "3 High-risk Waiting for your answer" in paused
     assert "Missing fact (3 High-risk): Is the tool used in the EU?" in paused
 
 

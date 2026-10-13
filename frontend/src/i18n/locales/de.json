@@ -823,6 +823,7 @@
     },
     "steps": {
       "heading": "So kam Klar zu diesem Ergebnis",
+      "pausedHeading": "Stand der Prüfungen",
       "expandAll": "Alle Schritte mit Zitaten aufklappen",
       "facts": "Fakten",
       "role": "Rolle",
@@ -831,7 +832,7 @@
       "factsLine_other": "{{count}} Fakten gefunden, {{assumed}} angenommen",
       "yourDescription": "Ihre Beschreibung",
       "notChecked": "Nicht geprüft",
-      "paused": "Vorerst angenommen: eine Angabe fehlt",
+      "paused": "Wartet auf Ihre Antwort",
       "ambiguous": "Rechtlich unklar: Es gilt die strengere Lesart",
       "inScope": "Anwendbar",
       "outOfScope": "Außerhalb des Anwendungsbereichs",
@@ -854,7 +855,8 @@
       "showProvision_one": "Vorschrift zeigen",
       "showProvision_other": "Vorschriften zeigen",
       "noFacts": "Keine einzelne Angabe; siehe die Entscheidung.",
-      "runHeading": "Durchlauf {{number}}: wie Klar zum Ergebnis kam"
+      "runHeading": "Durchlauf {{number}}: wie Klar zum Ergebnis kam",
+      "pausedRunHeading": "Durchlauf {{number}}: Stand der Prüfungen"
     },
     "reviewer": {
       "exportJson": "Als JSON exportieren"
@@ -1034,7 +1036,8 @@
       "body": "des gesamten weltweiten Jahresumsatzes eines Unternehmens im vorangegangenen Geschäftsjahr, je nachdem, welcher Betrag höher ist. Für KMU, einschließlich Start-ups, gilt der niedrigere Betrag."
     },
     "why": {
-      "heading": "Warum die Prüfung endete"
+      "heading": "Warum die Prüfung endete",
+      "laterPoint": "{{point}} gilt erst ab dem {{start}} (Art. 113 Buchst. a), daher verbietet es dieses System am {{asOf}} noch nicht."
     },
     "quote": {
       "loading": "Der Text von {{provision}} wird geladen …",

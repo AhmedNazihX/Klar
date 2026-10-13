@@ -823,6 +823,7 @@
     },
     "steps": {
       "heading": "How Klar got here",
+      "pausedHeading": "Where the checks stand",
       "expandAll": "Expand every step with quotes",
       "facts": "Facts",
       "role": "Role",
@@ -831,7 +832,7 @@
       "factsLine_other": "{{count}} facts found, {{assumed}} assumed",
       "yourDescription": "Your description",
       "notChecked": "Not checked",
-      "paused": "Assumed for now: one fact is missing",
+      "paused": "Waiting for your answer",
       "ambiguous": "Legally ambiguous: the stricter reading applies",
       "inScope": "In scope",
       "outOfScope": "Out of scope",
@@ -854,7 +855,8 @@
       "showProvision_one": "Show the provision",
       "showProvision_other": "Show the provisions",
       "noFacts": "No single fact; see the decision.",
-      "runHeading": "Run {{number}}: how Klar got here"
+      "runHeading": "Run {{number}}: how Klar got here",
+      "pausedRunHeading": "Run {{number}}: where the checks stand"
     },
     "reviewer": {
       "exportJson": "Export as JSON"
@@ -1034,7 +1036,8 @@
       "body": "of a company’s total worldwide annual turnover for the preceding financial year, whichever is higher. For SMEs, including start-ups, whichever is lower."
     },
     "why": {
-      "heading": "Why the checks stopped"
+      "heading": "Why the checks stopped",
+      "laterPoint": "{{point}} applies only from {{start}} (Art. 113(a)), so on {{asOf}} it does not yet prohibit this system."
     },
     "quote": {
       "loading": "Loading the text of {{provision}}…",

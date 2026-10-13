@@ -3,14 +3,15 @@
 // it wasn't checked (artboard `ResultProhibited`, as the summary's rows say).
 import { screen, within } from '@testing-library/react'
 import i18n from 'i18next'
+import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 
-import type { ClassificationResult } from '@/api'
+import type { Citation, ClassificationResult, DocumentInfo } from '@/api'
 import type { Language } from '@/i18n'
 import { WORKED_EXAMPLE, WORKED_EXAMPLE_DESCRIPTION } from '@/test/classify-fixtures'
 import { server } from '@/test/msw-server'
 import { RECORDED_PROHIBITED, prohibitedHandlers } from '@/test/prohibited-fixtures'
-import { corpusDocumentsHandler } from '@/test/qa-fixtures'
+import { corpusDocumentsHandler, DOCUMENTS, DOCUMENTS_URL } from '@/test/qa-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 
 import { putRun } from './classification-store'
@@ -18,8 +19,15 @@ import { putRun } from './classification-store'
 const TOOL_ID = 'applicant-screening'
 const TOOL_NAME = 'Applicant screening'
 
-async function openReviewer(result: ClassificationResult, language: Language): Promise<void> {
+async function openReviewer(
+  result: ClassificationResult,
+  language: Language,
+  documents?: DocumentInfo[],
+): Promise<void> {
   server.use(corpusDocumentsHandler(), ...prohibitedHandlers({ lookups: [], letterBodies: [] }))
+  if (documents) {
+    server.use(http.get(DOCUMENTS_URL, () => HttpResponse.json({ documents, disclaimer: 'x' })))
+  }
   await i18n.changeLanguage(language)
   const client = createTestQueryClient()
   putRun(client, {
@@ -32,6 +40,23 @@ async function openReviewer(result: ClassificationResult, language: Language): P
   await screen.findByRole('heading', { level: 1, name: TOOL_NAME })
 }
 
+/** `result` with a quote from `documentId` cited first on its first step. */
+function alsoCiting(result: ClassificationResult, documentId: string): ClassificationResult {
+  const [first, ...rest] = result.steps
+  if (!first) throw new Error('The result has no step.')
+  const quote: Citation = {
+    provision_id: 'guide:x:para:1',
+    document_id: documentId,
+    language: 'en',
+    quote: 'q',
+    changed_by_omnibus: false,
+  }
+  return {
+    ...result,
+    steps: [{ ...first, citations: [quote, ...(first.citations ?? [])] }, ...rest],
+  }
+}
+
 /** Each listed text as "title, kind", in order. */
 async function textsUsed(heading: string): Promise<string[]> {
   const panel = screen.getByRole('region', { name: heading })
@@ -42,28 +67,46 @@ async function textsUsed(heading: string): Promise<string[]> {
 }
 
 describe('Texts used', () => {
-  it('lists the texts of the amended Act with their status, under the questions', async () => {
+  it('lists the texts the amended result quotes with their status, under the questions', async () => {
+    // The worked example quotes the consolidated Act, marked where the Omnibus changed it, and a
+    // recital of the original Regulation, which the amended text leaves out; it quotes no
+    // guidance, so the guidelines the corpus also holds aren't listed.
     await openReviewer(WORKED_EXAMPLE, 'en')
     expect(await textsUsed('Texts used')).toEqual([
       'AI Act, consolidated 27 Jul 2026Consolidation',
       'Regulation (EU) 2026/1744Law',
-      'Guidelines on high-risk classificationDraft',
     ])
     const questions = screen.getByRole('region', { name: 'Questions about this result' })
     const texts = screen.getByRole('region', { name: 'Texts used' })
     expect(questions.compareDocumentPosition(texts) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('lists the original texts for a result run under the original Act', async () => {
-    await openReviewer({ ...WORKED_EXAMPLE, law_version: 'original' }, 'en')
+  it('lists the law before the guidance, whatever order the result quotes them in', async () => {
+    await openReviewer(alsoCiting(WORKED_EXAMPLE, 'guide-high-risk-annex-iii'), 'en')
     expect(await textsUsed('Texts used')).toEqual([
-      'Regulation (EU) 2024/1689Law',
+      'AI Act, consolidated 27 Jul 2026Consolidation',
+      'Regulation (EU) 2026/1744Law',
       'Guidelines on high-risk classificationDraft',
     ])
   })
 
+  it('lists only the original texts for a result run under the original Act', async () => {
+    // An amending act without a law version, quoted by the result, stays hidden under the
+    // original text, as the amended consolidation and the Omnibus do.
+    const amending: DocumentInfo = {
+      ...(DOCUMENTS[2] as DocumentInfo),
+      doc_key: 'amending-act',
+      title: 'An amending act',
+      law_version: null,
+      is_amending: true,
+    }
+    const result = alsoCiting({ ...WORKED_EXAMPLE, law_version: 'original' }, 'amending-act')
+    await openReviewer(result, 'en', [...DOCUMENTS, amending])
+    expect(await textsUsed('Texts used')).toEqual(['Regulation (EU) 2024/1689Law'])
+  })
+
   it('reads in German, a text only in English marked as such', async () => {
-    await openReviewer(WORKED_EXAMPLE, 'de')
+    await openReviewer(alsoCiting(WORKED_EXAMPLE, 'guide-high-risk-annex-iii'), 'de')
     expect(await textsUsed('Verwendete Texte')).toEqual([
       'KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026Konsolidierte Fassung',
       'Guidelines on high-risk classificationnur auf EnglischEntwurf',

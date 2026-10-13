@@ -12,7 +12,7 @@ import { ResultQuestions } from '@/features/ask/ResultQuestions'
 import { SourceDocuments } from '@/features/ask/SourceDocuments'
 import type { QaThread } from '@/hooks/use-qa-thread'
 
-import { isDecidedBan } from './ban'
+import { isUncheckedOnBan } from './ban'
 import type { ClassificationRun } from './classification-store'
 import { ExportReportButton } from './ExportReportButton'
 import { LawComparison } from './LawComparison'
@@ -50,23 +50,20 @@ function ReviewerStep({
   deciding: StepName | null
 }): JSX.Element | null {
   const { t } = useTranslation()
-  const isBan = isDecidedBan(result)
-  const notChecked = isBan ? t('prohibited.notChecked') : t('result.steps.notChecked')
   if (id === 'facts') return <FactsStepCard result={result} headingLevel={2} />
-  if (id === 'duties') {
-    if (isBan) {
-      return (
-        <NotCheckedStepCard name={t('result.steps.duties')} reason={notChecked} headingLevel={2} />
-      )
-    }
-    return <DutiesStepCard result={result} headingLevel={2} hasOriginalNote />
+  const name =
+    id === 'duties'
+      ? t('result.steps.duties')
+      : id === 'role_obligations'
+        ? t('result.steps.role')
+        : t(`progress.check.${id}`)
+  if (isUncheckedOnBan(result, id)) {
+    return <NotCheckedStepCard name={name} reason={t('prohibited.notChecked')} headingLevel={2} />
   }
-  const name = id === 'role_obligations' ? t('result.steps.role') : t(`progress.check.${id}`)
+  if (id === 'duties') return <DutiesStepCard result={result} headingLevel={2} hasOriginalNote />
   const step = result.steps.find((candidate) => candidate.step === id)
-  if (!step) {
-    // Without a ban, a step is missing only from a result stored without it: nothing to show.
-    return isBan ? <NotCheckedStepCard name={name} reason={notChecked} headingLevel={2} /> : null
-  }
+  // Without a ban, a step is missing only from a result stored without it: nothing to show.
+  if (!step) return null
   return (
     <EngineStepCard
       name={name}
@@ -99,8 +96,8 @@ function ResultPills({ result }: { result: ClassificationResult }): JSX.Element 
  * The reviewer view (artboard `Reviewer`): every step expanded, in the Act's order, with its
  * decision, the facts it rests on with their evidence tags, and the quoted provisions. The step
  * that decided a High-risk result is highlighted. Beside the steps, "Original Act vs amended"
- * (VersionDiff, P10), under it "Questions about this result" (P7), then the texts Klar reads ("Texts
- * used", with their status).
+ * (VersionDiff, P10), under it "Questions about this result" (P7), then the texts the result quotes
+ * ("Texts used", with their status).
  */
 export function ReviewerView({
   run,
@@ -163,7 +160,11 @@ export function ReviewerView({
             />
           )}
           <ResultQuestions qa={questions} />
-          <SourceDocuments heading={t('ask.sources.textsUsed')} lawVersion={result.law_version} />
+          <SourceDocuments
+            heading={t('ask.sources.textsUsed')}
+            lawVersion={result.law_version}
+            usedBy={result}
+          />
         </div>
       </div>
       <ResultNotice result={result} isStored={run.isStored} />

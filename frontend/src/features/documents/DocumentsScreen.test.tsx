@@ -328,9 +328,7 @@ describe('The Art. 50(3) disclosure', () => {
       'Both',
     ])
     // The choice's hint names no document: this one is a disclosure, not a notice.
-    expect(choice).toHaveAccessibleDescription(
-      'Klar writes its own set wording for what you pick.',
-    )
+    expect(choice).toHaveAccessibleDescription('Klar writes its own set wording for what you pick.')
     await user.click(within(choice).getByRole('radio', { name: 'Both' }))
     await user.click(within(interview).getByRole('button', { name: 'Save answer' }))
     await vi.waitFor(() => {
