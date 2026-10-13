@@ -114,6 +114,7 @@ function DutyList({
           <DutyItem
             key={duty.key ?? `${duty.article}:${duty.duty}`}
             duty={duty}
+            result={tool.result}
             toolId={tool.toolId}
             note={noteOf(t, tool, duty, language, today)}
             docLabel={t('obligations.card.draftReady')}

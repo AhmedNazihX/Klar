@@ -26,10 +26,13 @@ function useDocLabel(): (duty: Obligation) => string {
 /** Duties with their boxes, the Art. 111(2) marking and their draft documents (as in P5). */
 export function DutyList({
   duties,
+  result,
   toolId,
   ticks,
 }: {
   duties: readonly Obligation[]
+  /** The result that lists the duties. */
+  result: ClassificationResult
   toolId: string
   ticks: Ticks
 }): JSX.Element {
@@ -42,6 +45,7 @@ export function DutyList({
         <DutyItem
           key={duty.key ?? `${duty.article}:${duty.duty}`}
           duty={duty}
+          result={result}
           toolId={toolId}
           note={dutyNote(t, duty, language)}
           docLabel={docLabel(duty)}
@@ -116,11 +120,13 @@ export function DutiesSection({
 function DutyGroup({
   group,
   duties,
+  result,
   toolId,
   ticks,
 }: {
   group: ObligationGroup
   duties: readonly Obligation[]
+  result: ClassificationResult
   toolId: string
   ticks: Ticks
 }): JSX.Element {
@@ -136,7 +142,7 @@ function DutyGroup({
           {t(`result.provider.group.${group}.note`)}
         </span>
       </div>
-      <DutyList duties={duties} toolId={toolId} ticks={ticks} />
+      <DutyList duties={duties} result={result} toolId={toolId} ticks={ticks} />
     </section>
   )
 }
@@ -179,7 +185,14 @@ export function ProviderDutiesPanel({
       done={ticks.done}
     >
       {shown.map((group) => (
-        <DutyGroup key={group} group={group} duties={groups[group]} toolId={toolId} ticks={ticks} />
+        <DutyGroup
+          key={group}
+          group={group}
+          duties={groups[group]}
+          result={result}
+          toolId={toolId}
+          ticks={ticks}
+        />
       ))}
     </DutiesSection>
   )

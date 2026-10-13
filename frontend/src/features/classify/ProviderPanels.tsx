@@ -59,7 +59,7 @@ export function ProviderPanels({
           duties={groups.other}
           done={ticks.done}
         >
-          <DutyList duties={groups.other} toolId={toolId} ticks={ticks} />
+          <DutyList duties={groups.other} result={result} toolId={toolId} ticks={ticks} />
         </DutiesSection>
       )}
     </div>

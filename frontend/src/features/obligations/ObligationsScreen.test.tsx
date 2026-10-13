@@ -20,6 +20,7 @@ import {
 } from '@/test/classify-fixtures'
 import { ambiguousResult, prohibitedResult, toolRow } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
+import { obligationsTableHandler } from '@/test/relief-fixtures'
 import { SUPABASE_URL } from '@/test/supabase-fixtures'
 import { renderRoute } from '@/test/test-utils'
 import { inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
@@ -586,13 +587,23 @@ describe('Obligations, relief notes under a duty (P31, D6)', () => {
   const RELIEF = 'Keep it short for a small company (Art. 4).'
   const RELIEF_DE = 'Für ein kleines Unternehmen kurz halten (Art. 4).'
 
-  /** A limited-risk tool whose first duty carries a relief note in both languages. */
+  /** The obligations table's lookups (`role/risk_class`). */
+  let asked: string[] = []
+  beforeEach(() => {
+    asked = []
+    // The table gives the AI literacy duty a relief note in both languages.
+    server.use(
+      obligationsTableHandler(
+        { 'ai-literacy': { relief_note: RELIEF, relief_note_de: RELIEF_DE } },
+        asked,
+      ),
+    )
+  })
+
+  /** A limited-risk deployer's tool, stored without relief notes: the screen reads the
+   *  table's. */
   function relievedTool(): Record<string, unknown> {
-    const chat = limitedRisk()
-    const [first, ...rest] = chat.obligations ?? []
-    if (!first) throw new Error('The fixture has duties.')
-    const relieved = { ...first, relief_note: RELIEF, relief_note_de: RELIEF_DE }
-    return toolRow('Customer chat assistant', { ...chat, obligations: [relieved, ...rest] })
+    return toolRow('Customer chat assistant', limitedRisk())
   }
 
   it.each([
@@ -605,6 +616,7 @@ describe('Obligations, relief notes under a duty (P31, D6)', () => {
       tools = [relievedTool()]
       await openObligations('/app/obligations', language)
       expect(await screen.findByText(line)).toBeInTheDocument()
+      expect(asked).toContain('deployer/limited_risk')
     },
   )
 

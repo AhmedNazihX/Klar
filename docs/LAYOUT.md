@@ -328,6 +328,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-provision.ts (a provision's text from the corpus), use-vendor-letter.ts (P28's letter) (P21)
 │       │                            use-qa-thread.ts (a Q&A thread over POST /qa), use-result-questions.ts (a result run's thread), use-corpus-documents.ts (GET /documents) (P7)
 │       │                            use-media-query.ts (a CSS media query kept current; under use-prefers-reduced-motion.ts and use-is-phone.ts, the phone layout) (P26)
+│       │                            use-relief-notes.ts (the obligations table's relief notes by duty key, GET /obligations) (P31)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
@@ -355,6 +356,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    documents-fixtures.ts + fixtures/documents.drafts.json (lists and drafts dumped
 │                                    from the backend's drafter, and the documents handlers, P9)
 │                                    qa-fixtures.ts (POST /qa answers and GET /documents, P7)
+                                    relief-fixtures.ts (GET /obligations with the table's relief notes, P31)
 │                                    placeholders.ts (bracketed unknowns outside a marked placeholder, P17)
 │                                    prohibited-fixtures.ts + fixtures/prohibited.json (the recorded prohibited result,
 │                                    its vendor letters and the provisions it quotes, dumped and drift-checked by

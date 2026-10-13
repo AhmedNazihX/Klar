@@ -118,11 +118,7 @@ describe('Texts used', () => {
   it('lists the law before the guidance, whatever order the corpus lists them in', async () => {
     // The guideline comes first in the corpus list and in the result's quotes.
     const guidanceFirst = [DOCUMENTS[3], DOCUMENTS[0], DOCUMENTS[1], DOCUMENTS[2]] as DocumentInfo[]
-    await openReviewer(
-      alsoCiting(WORKED_EXAMPLE, 'guide-high-risk-annex-iii'),
-      'en',
-      guidanceFirst,
-    )
+    await openReviewer(alsoCiting(WORKED_EXAMPLE, 'guide-high-risk-annex-iii'), 'en', guidanceFirst)
     expect(await textsUsed('Texts used')).toEqual([
       'AI Act, consolidated 27 Jul 2026Consolidation',
       'Regulation (EU) 2024/1689Law',
