@@ -3,8 +3,10 @@
 A decision model doesn't chat: it takes some state and named typed questions and returns an
 answer with probabilities per question (`POST /api/alpha/decisions`; OpenRouter docs, API
 reference > alphadecisions). `typesafe/jev-1.13` refuses chat completions and works only here
-(decision 005). Only `choice` questions are supported so far. Every request sends the same
-privacy routing as the chat and embedding clients.
+(decision 005). Two question types are supported: `choice` (one key of its criteria, with a
+probability per key; V3's baseline) and `noul` (a yes/no question answered with the probability
+of yes; V4's judge). Every request sends the same privacy routing as the chat and embedding
+clients.
 """
 
 from collections.abc import Mapping
@@ -18,6 +20,9 @@ from aiact.settings import Settings, get_settings
 
 DECISIONS_URL = "https://openrouter.ai/api/alpha/decisions"
 DEFAULT_TIMEOUT_SECONDS = 60.0
+
+type State = str | Mapping[str, str]
+"""What the questions are about: a plain text, or named fields (which the API prefers)."""
 
 
 class DecisionsError(RuntimeError):
@@ -39,6 +44,25 @@ class ChoiceQuestion(BaseModel):
     criteria: Mapping[str, str] = Field(min_length=2)
 
 
+class NoulCriteria(BaseModel):
+    """When the answer is yes (`true`) and when it is no (`false`)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    true: str = Field(min_length=1)
+    false: str = Field(min_length=1)
+
+
+class NoulQuestion(BaseModel):
+    """A yes/no question; its answer is the probability of yes."""
+
+    model_config = ConfigDict(frozen=True)
+
+    type: Literal["noul"] = "noul"
+    instructions: str = Field(min_length=1)
+    criteria: NoulCriteria
+
+
 class ChoiceAnswer(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -46,6 +70,14 @@ class ChoiceAnswer(BaseModel):
     choice: str
     confidence: float | None = None
     probabilities: Mapping[str, float] = Field(default_factory=dict)
+
+
+class NoulAnswer(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    type: Literal["noul"]
+    noul: float = Field(ge=0.0, le=1.0)
+    """The probability that the answer is yes."""
 
 
 class DecisionsUsage(BaseModel):
@@ -61,12 +93,26 @@ class DecisionsUsage(BaseModel):
 
 
 class DecisionsResponse(BaseModel):
+    """The answers to `choice` questions."""
+
     model_config = ConfigDict(frozen=True)
 
     id: str | None = None
     model: str
     provider: str | None = None
     answers: Mapping[str, ChoiceAnswer]
+    usage: DecisionsUsage
+
+
+class NoulResponse(BaseModel):
+    """The answers to `noul` questions."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str | None = None
+    model: str
+    provider: str | None = None
+    answers: Mapping[str, NoulAnswer]
     usage: DecisionsUsage
 
 
@@ -95,15 +141,37 @@ class DecisionsClient:
         }
         self._http = http or httpx.Client(timeout=DEFAULT_TIMEOUT_SECONDS)
 
-    def choose(self, state: str, questions: Mapping[str, ChoiceQuestion]) -> DecisionsResponse:
+    def choose(self, state: State, questions: Mapping[str, ChoiceQuestion]) -> DecisionsResponse:
         """Ask every question about `state`; each answer's choice is one of its criteria keys.
 
         Raises `DecisionsError` for an HTTP error (nothing spent) or an unusable answer (with
         the cost the response reported).
         """
+        parsed = _parse(self._post(state, questions), DecisionsResponse)
+        for name, question in questions.items():
+            answer = parsed.answers.get(name)
+            if answer is None or answer.choice not in question.criteria:
+                raise _invalid(name, "choice", parsed.usage)
+        return parsed
+
+    def ask(self, state: State, questions: Mapping[str, NoulQuestion]) -> NoulResponse:
+        """Ask every yes/no question about `state`; each answer is the probability of yes.
+
+        Raises `DecisionsError` for an HTTP error (nothing spent) or an unusable answer (with
+        the cost the response reported).
+        """
+        parsed = _parse(self._post(state, questions), NoulResponse)
+        missing = [name for name in questions if name not in parsed.answers]
+        if missing:
+            raise _invalid(missing[0], "answer", parsed.usage)
+        return parsed
+
+    def _post(
+        self, state: State, questions: Mapping[str, ChoiceQuestion] | Mapping[str, NoulQuestion]
+    ) -> bytes:
         body = {
             "model": self.model,
-            "state": state,
+            "state": state if isinstance(state, str) else dict(state),
             "questions": {name: question.model_dump() for name, question in questions.items()},
             "provider": provider_preferences(),
         }
@@ -113,21 +181,20 @@ class DecisionsClient:
             raise DecisionsError(f"decisions request failed: {type(exc).__name__}") from exc
         if response.is_error:
             raise DecisionsError(f"decisions request failed with HTTP {response.status_code}")
-        return _parse(response.content, questions)
+        return response.content
 
 
-def _parse(content: bytes, questions: Mapping[str, ChoiceQuestion]) -> DecisionsResponse:
+def _parse[R: (DecisionsResponse, NoulResponse)](content: bytes, model: type[R]) -> R:
     try:
-        parsed = DecisionsResponse.model_validate_json(content)
+        return model.model_validate_json(content)
     except ValidationError as exc:
         message = f"unexpected decisions response: {exc.error_count()} errors"
         raise _unusable(content, message) from exc
-    for name, question in questions.items():
-        answer = parsed.answers.get(name)
-        if answer is None or answer.choice not in question.criteria:
-            usage = parsed.usage
-            raise DecisionsError(f"question {name!r} has no valid choice", usage.cost, usage.tokens)
-    return parsed
+
+
+def _invalid(name: str, kind: str, usage: DecisionsUsage) -> DecisionsError:
+    """A question left without a valid answer; the call was still paid for."""
+    return DecisionsError(f"question {name!r} has no valid {kind}", usage.cost, usage.tokens)
 
 
 def _unusable(content: bytes, message: str) -> DecisionsError:

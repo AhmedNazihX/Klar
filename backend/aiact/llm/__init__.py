@@ -16,6 +16,9 @@ from aiact.llm.decisions import (
     DecisionsClient,
     DecisionsError,
     DecisionsResponse,
+    NoulCriteria,
+    NoulQuestion,
+    NoulResponse,
 )
 from aiact.llm.embeddings import EmbeddingError, OpenRouterEmbeddings
 from aiact.llm.routing import LLMConfigError, provider_preferences
@@ -28,6 +31,9 @@ __all__ = [
     "EmbeddingError",
     "LLMConfigError",
     "ModelRole",
+    "NoulCriteria",
+    "NoulQuestion",
+    "NoulResponse",
     "OpenRouterEmbeddings",
     "chat_model",
     "engine_chat_model",
