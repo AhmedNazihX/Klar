@@ -5,7 +5,7 @@ searches and lookups against the database are in tests/db/test_mcp_server.py), a
 OpenRouter key."""
 
 import logging
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Iterator, Mapping
 from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass, field
 from datetime import date
@@ -19,12 +19,14 @@ from mcp.types import CallToolResult, TextContent
 from openrouter.components.security import Security
 from pydantic import SecretStr
 
+from aiact.engine import classify as classify_module
+from aiact.engine.classify import engine_nodes
 from aiact.engine.clients import engine_chats, engine_embeddings, refusal_chats
 from aiact.engine.graph import EngineNodes
 from aiact.engine.scripted import Script, scripted_nodes
 from aiact.engine.state import CheckOutcome, EngineState, FactsOutcome
 from aiact.engine.usage import UsageMeter
-from aiact.llm import EmbeddingError
+from aiact.llm import EmbeddingError, OpenRouterEmbeddings
 from aiact.mcp import server as server_module
 from aiact.mcp.server import (
     MAX_PROVISION_ID_CHARS,
@@ -48,7 +50,7 @@ from aiact.schemas import (
     StepName,
     StepResult,
 )
-from aiact.settings import Settings
+from aiact.settings import Settings, get_settings
 from tests.conftest import REFUSAL_ROUTE
 
 LOOKUPS = {"search_ai_act", "get_provision", "list_obligations"}
@@ -94,6 +96,17 @@ class NoEmbedder:
 @pytest.fixture
 def anyio_backend() -> str:
     return "asyncio"
+
+
+@pytest.fixture(autouse=True)
+def _only_fake_keys(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """The environment carries the fake keys, and an environment variable beats backend/.env: a
+    `get_settings()` reach (a bug these tests catch) never brings a real key into a test."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", APP_KEY)
+    monkeypatch.setenv("MCP_OPENROUTER_API_KEY", OWN_KEY)
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 @pytest.fixture
@@ -399,6 +412,18 @@ SCRIPT = Script(
 )
 
 
+def _on_own_key(key: SecretStr | str | None) -> bool:
+    """Whether `key` is the MCP user's own. A bool, so a failing assert prints no key."""
+    value = key.get_secret_value() if isinstance(key, SecretStr) else key
+    return value == OWN_KEY
+
+
+def _embedder_key(embedder: OpenRouterEmbeddings) -> str | None:
+    """The key the embedder's OpenRouter client sends."""
+    security = embedder._client.sdk_configuration.security
+    return security.api_key if isinstance(security, Security) else None
+
+
 def mcp_settings(**values: object) -> Settings:
     """Settings with the app's key and the MCP user's own, unless `values` say otherwise."""
     configured: dict[str, object] = {
@@ -508,8 +533,7 @@ async def test_the_run_goes_on_the_callers_own_key() -> None:
     engine = ScriptedEngine()
     assert not (await _classify({"description": DESCRIPTION}, engine)).is_error
     [settings] = engine.settings
-    assert settings.openrouter_api_key is not None
-    assert settings.openrouter_api_key.get_secret_value() == OWN_KEY
+    assert _on_own_key(settings.openrouter_api_key), "the run is not on the caller's own key"
 
 
 def _routed_settings() -> Settings:
@@ -530,11 +554,27 @@ def test_the_engines_models_are_built_on_the_callers_own_key() -> None:
     assert len(models) == 12
     for model in models:
         assert isinstance(model, ChatOpenRouter)
-        assert model.openrouter_api_key is not None
-        assert model.openrouter_api_key.get_secret_value() == OWN_KEY
-    security = engine_embeddings(settings)._client.sdk_configuration.security
-    assert isinstance(security, Security)
-    assert security.api_key == OWN_KEY != APP_KEY
+        assert _on_own_key(model.openrouter_api_key), "a model is not on the caller's own key"
+    embedder_on_own_key = _on_own_key(_embedder_key(engine_embeddings(settings)))
+    assert embedder_on_own_key, "the embedder is not on the caller's own key"
+
+
+def test_the_engines_own_nodes_embed_on_the_callers_own_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The production `build_nodes` passes the run's settings to the query embedder. Building
+    the nodes calls no model and opens no connection."""
+    built: list[OpenRouterEmbeddings] = []
+
+    def noting_embeddings(settings: Settings) -> OpenRouterEmbeddings:
+        built.append(engine_embeddings(settings))
+        return built[-1]
+
+    monkeypatch.setattr(classify_module, "engine_embeddings", noting_embeddings)
+    engine_nodes(own_key_settings(_routed_settings()), UsageMeter())
+    [embedder] = built
+    embedder_on_own_key = _on_own_key(_embedder_key(embedder))
+    assert embedder_on_own_key, "the nodes' embedder is not on the caller's own key"
 
 
 def test_every_run_reuses_the_clients_built_on_the_callers_key() -> None:
