@@ -1,0 +1,10 @@
+{
+  // End-to-end tests (e2e/, Playwright, P13) and their config: Node-side code that drives a browser.
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.e2e.tsbuildinfo",
+    "lib": ["ES2023", "DOM"],
+    "resolveJsonModule": true
+  },
+  "include": ["e2e", "playwright.config.ts"]
+}

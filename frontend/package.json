@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "e2e": "playwright test",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -44,6 +45,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@hey-api/openapi-ts": "^0.99.0",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-plugin": "^1.168.41",
     "@testing-library/jest-dom": "^7.0.1",

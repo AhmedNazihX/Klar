@@ -219,6 +219,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | zod | runtime | ^4.6.5 | 4.6.5 | MIT | TypeScript-first schema declaration and validation library with static type inf… |
 | @eslint/js | dev | ^10.0.1 | 10.0.1 | MIT | ESLint JavaScript language implementation |
 | @hey-api/openapi-ts | dev | ^0.99.0 | 0.99.0 | MIT | 🌀 OpenAPI to TypeScript code generator. Production-grade SDKs, Zod schemas, Tan… |
+| @playwright/test | dev | 1.63.0 | 1.63.0 | Apache-2.0 | A high-level API to automate web browsers |
 | @tailwindcss/vite | dev | ^4.3.3 | 4.3.3 | MIT | A utility-first CSS framework for rapidly building custom user interfaces. |
 | @tanstack/router-plugin | dev | ^1.168.41 | 1.168.41 | MIT | Modern and scalable routing for React applications |
 | @testing-library/jest-dom | dev | ^7.0.1 | 7.0.1 | MIT | Custom jest matchers to test the state of the DOM |
@@ -756,7 +757,7 @@ Source: `frontend/pnpm-lock.yaml`.
 | pkce-challenge | 5.0.1 | MIT | shadcn |
 | pkg-types | 2.3.3 | MIT | @hey-api/openapi-ts |
 | pkg-up | 3.1.0 | MIT | shadcn |
-| playwright-core | 1.63.0 | Apache-2.0 | @testing-library/jest-dom, @vitest/browser-playwright, playwright, vitest, vite… |
+| playwright-core | 1.63.0 | Apache-2.0 | @playwright/test, @testing-library/jest-dom, @vitest/browser-playwright, playwr… |
 | pngjs | 7.0.0 | MIT | @testing-library/jest-dom, @vitest/browser-playwright, vitest, vitest-axe |
 | postcss-selector-parser | 7.1.6 | MIT | shadcn |
 | powershell-utils | 0.1.0 | MIT | @hey-api/openapi-ts, shadcn |

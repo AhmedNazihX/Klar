@@ -9,7 +9,7 @@ import tseslint from 'typescript-eslint'
 
 export default defineConfig([
   // Generated: the API client, the route tree, and the shadcn primitives (kept as the CLI writes them).
-  globalIgnores(['dist', 'src/api', 'src/routeTree.gen.ts', 'src/components/ui']),
+  globalIgnores(['dist', 'dist-e2e', 'playwright-report', 'test-results', 'src/api', 'src/routeTree.gen.ts', 'src/components/ui']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -38,7 +38,7 @@ export default defineConfig([
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   {
-    files: ['*.config.ts'],
+    files: ['*.config.ts', 'e2e/**'],
     languageOptions: { globals: globals.node },
   },
 ])

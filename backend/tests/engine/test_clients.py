@@ -30,13 +30,10 @@ from tests.conftest import RECORDINGS_DIR, REFUSAL_ROUTE
 from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import corpus_recording
 from tests.engine.nodes.known_gaps import stale_recording_pending
+from tests.engine.replayed_engine import LUNA, LUNA_PROVIDER, LiveCorpus, recorded_libraries
 from tests.engine.test_classify_worked_example import (
-    LUNA,
-    LUNA_PROVIDER,
     RECORD_COMMAND,
-    LiveCorpus,
     assert_the_expected_result,
-    recorded_libraries,
     worked_example_request,
 )
 

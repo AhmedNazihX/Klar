@@ -27,14 +27,11 @@ from tests.api.conftest import BASE_URL, FULL_RUN, TEST_HOST, outline, sse_event
 from tests.conftest import RECORDINGS_DIR
 from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import RecordingPendingError, corpus_recording
+from tests.engine.replayed_engine import LUNA, LUNA_PROVIDER, LiveCorpus, recorded_libraries
 from tests.engine.test_classify_worked_example import (
     AS_OF,
-    LUNA,
-    LUNA_PROVIDER,
     RECORD_COMMAND,
-    LiveCorpus,
     assert_the_expected_classification,
-    recorded_libraries,
     worked_example_request,
 )
 

@@ -120,6 +120,90 @@ jobs:
       - name: Test
         run: corepack pnpm test
 
+  e2e:
+    # Story P13: the built app in Chromium (Playwright) against the API in replay mode (recorded
+    # model replies, no key, no network: backend/tests/e2e/replay_server.py) and the e2e Supabase
+    # stack (frontend/e2e/supabase: Postgres, Auth, REST), with the corpus loaded for the lookups.
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          working-directory: backend
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install the backend
+        working-directory: backend
+        run: uv sync --locked
+
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.117.0
+
+      # Its own project and ports (frontend/e2e/supabase/config.toml), as on a developer's machine.
+      - name: Start the e2e Supabase stack
+        run: >-
+          supabase start --workdir frontend/e2e
+          -x imgproxy,postgres-meta,vector,logflare,supavisor,mailpit,studio,edge-runtime,realtime,storage-api
+
+      - name: Load the corpus into the e2e database
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54332/postgres
+        run: uv run aiact corpus load --stats "$RUNNER_TEMP/corpus_stats.md"
+
+      - name: Enable corepack's pnpm
+        working-directory: frontend
+        run: |
+          corepack enable
+          corepack install --global "$(node -p "require('./package.json').packageManager")"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install the frontend
+        working-directory: frontend
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Cache the Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+
+      - name: Install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        run: corepack pnpm exec playwright install --with-deps chromium
+
+      - name: Install Chromium's system libraries
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: frontend
+        run: corepack pnpm exec playwright install-deps chromium
+
+      # Builds the app against the e2e stack, starts the replay API and `vite preview`, runs the flows.
+      - name: End-to-end tests
+        working-directory: frontend
+        run: corepack pnpm e2e
+
+      - name: Keep the report of a failed run
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
   isolation:
     # Story B13: the benchmark isolation check against the corpus loaded from the committed
     # data/parsed/. AIACT_REQUIRE_CORPUS turns a missing corpus or eval/ into a failure. The
