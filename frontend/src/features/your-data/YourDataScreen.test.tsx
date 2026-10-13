@@ -424,6 +424,7 @@ describe('Your data, the report (PDF)', () => {
           language,
           format: 'pdf',
           company: 'Nordwerk Logistik GmbH',
+          size_class: null,
         },
       ])
     },

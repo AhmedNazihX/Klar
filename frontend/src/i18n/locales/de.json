@@ -718,6 +718,9 @@
     }
   },
   "result": {
+    "duty": {
+      "relief": "Erleichterung für Ihr Unternehmen: {{relief}}"
+    },
     "notFound": {
       "body": "Dieses Tool ist nicht in Ihrem Inventar. Vielleicht wurde es gelöscht oder in einem anderen Browser geprüft.",
       "action": "Tool einstufen"

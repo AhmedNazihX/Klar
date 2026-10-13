@@ -46,6 +46,8 @@ const NOT_CHECKED = "Klar keeps the list; it doesn't check the work for you."
 type Tick = { system_id: string; obligation_key: string }
 
 let tools: Record<string, unknown>[] = []
+/** The company profile's size class (P31's relief notes). */
+let sizeClass: 'sme' | 'smc' | 'none' | null = null
 let ticks: Tick[] = []
 let writes: string[] = []
 let checklists: unknown[] = []
@@ -88,13 +90,14 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(TODAY)
   tools = []
+  sizeClass = null
   ticks = []
   writes = []
   checklists = []
   downloads = []
   server.use(
     ...userDataHandlers(
-      () => [inventoryRow({ company_name: 'Nordwerk Logistik GmbH' })],
+      () => [inventoryRow({ company_name: 'Nordwerk Logistik GmbH', size_class: sizeClass })],
       () => tools.length,
       () => tools,
     ),
@@ -576,6 +579,59 @@ describe('Obligations, dates', () => {
     ).toHaveAttribute('role', 'note')
     // Annex III's original date has come: the next date is Art. 111(2)'s, the same under both.
     expect(section('Next date')).toHaveTextContent('2 August 2030')
+  })
+})
+
+describe('Obligations, relief notes under a duty (P31, D6)', () => {
+  const RELIEF = 'Keep it short for a small company (Art. 4).'
+  const RELIEF_DE = 'Für ein kleines Unternehmen kurz halten (Art. 4).'
+
+  /** A limited-risk tool whose first duty carries a relief note in both languages. */
+  function relievedTool(): Record<string, unknown> {
+    const chat = limitedRisk()
+    const [first, ...rest] = chat.obligations ?? []
+    if (!first) throw new Error('The fixture has duties.')
+    const relieved = { ...first, relief_note: RELIEF, relief_note_de: RELIEF_DE }
+    return toolRow('Customer chat assistant', { ...chat, obligations: [relieved, ...rest] })
+  }
+
+  it.each([
+    ['sme', 'en', `Relief for your company: ${RELIEF}`],
+    ['smc', 'de', `Erleichterung für Ihr Unternehmen: ${RELIEF_DE}`],
+  ] as const)(
+    'shows the relief under the duty for a company of size %s (%s)',
+    async (size, language, line) => {
+      sizeClass = size
+      tools = [relievedTool()]
+      await openObligations('/app/obligations', language)
+      expect(await screen.findByText(line)).toBeInTheDocument()
+    },
+  )
+
+  it.each([['none'], [null]] as const)('shows no relief for size class %s', async (size) => {
+    sizeClass = size
+    tools = [relievedTool()]
+    await openObligations()
+    await screen.findByText('Nordwerk Logistik GmbH')
+    expect(screen.queryByText(/^Relief for your company: /)).toBeNull()
+  })
+
+  it('shows no relief under the original text', async () => {
+    sizeClass = 'sme'
+    tools = [relievedTool()]
+    await openObligations('/app/obligations?law=original')
+    await screen.findByText('Nordwerk Logistik GmbH')
+    expect(screen.queryByText(/^Relief for your company: /)).toBeNull()
+  })
+
+  it('sends the size class with the checklist', async () => {
+    sizeClass = 'smc'
+    tools = [relievedTool()]
+    const { user } = await openObligations()
+    await screen.findByText('Nordwerk Logistik GmbH')
+    await user.click(screen.getByRole('button', { name: 'Download Word' }))
+    await vi.waitFor(() => expect(checklists).toHaveLength(1))
+    expect(checklists[0]).toMatchObject({ size_class: 'smc' })
   })
 })
 

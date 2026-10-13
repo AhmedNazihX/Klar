@@ -37,7 +37,7 @@ beforeEach(() => {
   vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }))
   server.use(
     ...userDataHandlers(
-      () => [inventoryRow({ company_name: COMPANY })],
+      () => [inventoryRow({ company_name: COMPANY, size_class: 'sme' })],
       () => 1,
     ),
   )
@@ -102,6 +102,7 @@ describe('Export PDF', () => {
           format: 'pdf',
           tool_name: 'Applicant screening',
           company: COMPANY,
+          size_class: 'sme',
         },
       ])
     },
@@ -122,6 +123,7 @@ describe('Export PDF', () => {
         format: 'pdf',
         tool_name: 'Applicant screening',
         company: COMPANY,
+        size_class: 'sme',
       },
     ])
     expect(reports[0]).toMatchObject({ result: { status: 'legally_ambiguous' } })

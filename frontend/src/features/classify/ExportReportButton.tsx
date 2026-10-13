@@ -39,6 +39,7 @@ export function ExportReportButton({
             format: 'pdf',
             tool_name: run.name,
             company: overview.data?.profile?.companyName ?? null,
+            size_class: overview.data?.profile?.sizeClass ?? null,
           })
         }}
       >

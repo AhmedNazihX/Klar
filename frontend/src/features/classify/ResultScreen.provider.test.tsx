@@ -473,6 +473,41 @@ describe('A legally ambiguous provider result (user decision 2026-10-10, option 
   )
 })
 
+describe('Provider layout: relief notes under the duties (P31, D6)', () => {
+  const QMS_RELIEF =
+    'Relief for your company: The quality management system may be proportionate to the size of the organisation for SMEs, including start-ups, and SMCs (Art. 17(2)). SMEs without partner or linked enterprises may comply with certain elements in a simplified manner (Art. 63(1)).'
+  const QMS_RELIEF_DE =
+    'Erleichterung für Ihr Unternehmen: Für KMU, einschließlich Start-up-Unternehmen, und kleine Midcap-Unternehmen kann das Qualitätsmanagementsystem in einem angemessenen Verhältnis zur Größe der Organisation stehen (Art. 17 Abs. 2). KMU ohne Partnerunternehmen oder verbundene Unternehmen können bestimmte Elemente in vereinfachter Weise einhalten (Art. 63 Abs. 1).'
+
+  it.each([
+    ['sme', 'en', QMS_RELIEF, /^Relief for your company: /],
+    ['smc', 'en', QMS_RELIEF, /^Relief for your company: /],
+    ['sme', 'de', QMS_RELIEF_DE, /^Erleichterung für Ihr Unternehmen: /],
+    ['smc', 'de', QMS_RELIEF_DE, /^Erleichterung für Ihr Unternehmen: /],
+  ] as const)(
+    'shows the relief under its duty for a company of size %s (%s)',
+    async (sizeClass, language, relief, any) => {
+      await openProvider(OWN_BRAND_PROVIDER, { sizeClass, language })
+      expect(screen.getByText(relief)).toBeInTheDocument()
+      // The two duties the table gives a relief: the quality management system and Annex IV.
+      expect(screen.getAllByText(any)).toHaveLength(2)
+    },
+  )
+
+  it.each([['none'], [null], [undefined]] as const)(
+    'shows no relief for size class %s (undefined: no profile)',
+    async (sizeClass) => {
+      await openProvider(OWN_BRAND_PROVIDER, { sizeClass })
+      expect(screen.queryByText(/^Relief for your company: /)).toBeNull()
+    },
+  )
+
+  it('shows no relief under the original text: the notes name small mid-caps', async () => {
+    await openProvider(OWN_BRAND_PROVIDER, { sizeClass: 'sme', law: 'original' })
+    expect(screen.queryByText(/^Relief for your company: /)).toBeNull()
+  })
+})
+
 describe('Provider layout: what makes it lighter', () => {
   it.each([
     ['sme', SME_FORM],

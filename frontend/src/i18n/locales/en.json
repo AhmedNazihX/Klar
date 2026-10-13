@@ -718,6 +718,9 @@
     }
   },
   "result": {
+    "duty": {
+      "relief": "Relief for your company: {{relief}}"
+    },
     "notFound": {
       "body": "This tool isn't in your inventory. It may have been deleted, or it was checked in another browser.",
       "action": "Classify a tool"
